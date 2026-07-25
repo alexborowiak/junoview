@@ -802,16 +802,16 @@ body.creating-docs .apptop{
   box-shadow:0 0 0 9999px rgba(4,8,12,.62);transition:left .25s,top .25s,
   width .25s,height .25s;}
 .tour-hole.center{box-shadow:0 0 0 9999px rgba(4,8,12,.74);}
-.tour-tip{position:fixed;width:min(340px,88vw);background:#0f1c29;
-  border:1px solid #ffffff26;border-radius:12px;padding:15px 16px 12px;
+.tour-tip{position:fixed;width:min(400px,90vw);background:#0f1c29;
+  border:1px solid #ffffff26;border-radius:12px;padding:17px 19px 14px;
   box-shadow:0 18px 50px #000a;color:#dce6ee;transition:left .2s,top .2s;}
-.tour-tip-h{display:flex;align-items:baseline;gap:9px;margin-bottom:7px;}
-.tour-step{font-family:var(--mono);font-size:10px;color:#5fc3d8;flex:none;}
-.tour-title{font-size:15px;font-weight:600;color:#eef4f8;}
-.tour-text{font-size:13px;line-height:1.55;color:#b7c6d2;margin-bottom:13px;}
+.tour-tip-h{display:flex;align-items:baseline;gap:9px;margin-bottom:9px;}
+.tour-step{font-family:var(--mono);font-size:11.5px;color:#5fc3d8;flex:none;}
+.tour-title{font-size:18px;font-weight:600;color:#eef4f8;}
+.tour-text{font-size:15.5px;line-height:1.6;color:#c3d0db;margin-bottom:15px;}
 .tour-btns{display:flex;align-items:center;gap:8px;}
-.tour-btns button{font-family:var(--sans);font-size:12px;border-radius:16px;
-  padding:5px 14px;cursor:pointer;border:1px solid #ffffff22;
+.tour-btns button{font-family:var(--sans);font-size:13.5px;border-radius:16px;
+  padding:7px 16px;cursor:pointer;border:1px solid #ffffff22;
   background:#ffffff0d;color:#dce6ee;}
 .tour-btns button:hover{background:#ffffff18;}
 .tour-next{background:#39a9c026;border-color:#39a9c066;color:#bfeaf5;}
@@ -842,6 +842,10 @@ body.creating-docs .apptop{
 .help-body code{font-family:var(--mono);font-size:12px;
   background:var(--paper-2);border:1px solid var(--paper-3);
   border-radius:4px;padding:1px 5px;}
+.help-body kbd{font-family:var(--mono);font-size:11.5px;
+  background:var(--paper-2);border:1px solid var(--paper-3);
+  border-bottom-width:2px;border-radius:5px;padding:1px 6px;
+  color:var(--ink-2);white-space:nowrap;}
 .help-body table{border-collapse:collapse;margin:8px 0;width:100%;}
 .help-body td{border:1px solid var(--paper-3);padding:6px 10px;
   vertical-align:top;}
@@ -1609,6 +1613,8 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .dc-head .dbtn,.dc-menuwrap .dbtn{height:30px;box-sizing:border-box;
   padding:0 12px;display:inline-flex;align-items:center;gap:6px;
   line-height:1;letter-spacing:.04em;white-space:nowrap;}
+.dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
+.dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
 .dc-menuwrap{position:relative;}
 .dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
   background:#16273a;border:1px solid #ffffff22;border-radius:8px;
@@ -1730,14 +1736,15 @@ body.slide-editing .apptop{display:none;}
 .edit-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
   padding:9px 16px;border-bottom:1px solid #ffffff14;
   background:#0e1926;flex:none;}
-/* the format bar keeps its row reserved (visibility, not display) and
-   scrolls instead of wrapping — the canvas below must NEVER shift when
-   a selection appears */
-.et-fmt{flex-basis:100%;display:flex;align-items:center;gap:7px;
-  flex-wrap:nowrap;overflow-x:auto;min-height:30px;
-  scrollbar-width:thin;}
+/* the format bar WRAPS so every control for the selected item is visible (no
+   controls hidden off-screen), and reserves a fixed height so the canvas below
+   doesn't jump when a selection appears */
+.et-fmt{flex-basis:100%;display:flex;align-items:center;align-content:center;
+  gap:8px 9px;flex-wrap:wrap;min-height:62px;}
 .et-fmt>*{flex:none;}
 .et-fmt[hidden]{display:flex;visibility:hidden;}
+/* subtle group separators between the swatches / text / shape / arrange sets */
+.fmt-lab{margin-left:4px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--amber);}
 .et-hint{font-size:11px;color:#7e93a4;}
@@ -1835,6 +1842,21 @@ select#fmt-font[hidden]{display:none;}
   font-family:var(--mono);font-size:2.4vh;line-height:1;color:#8aa0b0;
   pointer-events:none;}
 .vpage .slide-pageno{color:#8aa0b0;}
+/* ---- PDF / print export: one fixed-size 16:9 slide per page ---- */
+#print-root{position:fixed;left:-99999px;top:0;width:1280px;z-index:-1;}
+.print-page{width:1280px;height:720px;position:relative;overflow:hidden;
+  background:#0b141d;}
+.print-page .slide{position:absolute;inset:0;background:#0b141d;}
+.print-page .annot-layer{pointer-events:none;}
+@media print{
+  @page{size:1280px 720px;margin:0;}
+  html,body{background:#0b141d;}
+  body.printing>*{display:none!important;}
+  body.printing #print-root{display:block!important;position:static;
+    left:0;top:0;width:auto;z-index:auto;}
+  .print-page{page-break-after:always;break-after:page;}
+  .print-page:last-child{page-break-after:auto;break-after:auto;}
+}
 
 /* annotation layer */
 .annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
@@ -1930,8 +1952,10 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
   color:#a9bccb;padding:0 12px 9px;margin:0;overflow:hidden;
   display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
 .slide-emptyhint{position:absolute;inset:0;display:flex;
-  align-items:center;justify-content:center;color:#54677a;
-  font-size:14px;margin:0;}
+  align-items:center;justify-content:center;text-align:center;
+  color:#54677a;font-size:14px;line-height:1.6;margin:0;padding:0 8%;
+  pointer-events:none;}
+.slide-emptyhint b{color:#7e93a4;}
 .an-cell .cardbody{flex:1;min-height:0;display:flex;
   flex-direction:column;padding:8px;}
 /* the .cb-fig figure-part wrapper must pass the flex height through in slide
@@ -5307,6 +5331,10 @@ that run.</li>
 to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
 one; <b>&#9654; Animate</b> an item so it appears on click; and switch on
 <b>slide numbers</b> from the File menu.</li>
+<li>Editor shortcuts: <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Shift+Z</kbd> undo &amp;
+redo, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+G</kbd> group, <kbd>Del</kbd>
+remove, <b>arrow keys</b> nudge (hold <kbd>Shift</kbd> for bigger steps).
+<i>File &rarr; Export PDF</i> saves the whole deck as a PDF (or prints it).</li>
 <li><b>&#9654; Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one
@@ -5425,6 +5453,7 @@ through Ko-fi. Thank you.</p>
             <div class="dc-msep"></div>
             <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
             <button class="dc-mi" id="mi-autosave" hidden></button>
+            <button class="dc-mi" id="mi-pdf">Export PDF / print&#8230;</button>
             <button class="dc-mi" id="mi-dl">Download JSON</button>
             <button class="dc-mi" id="mi-load">Load deck
               JSON&#8230;</button>
@@ -5433,6 +5462,10 @@ through Ko-fi. Thank you.</p>
           </div>
         </div>
         <button class="dbtn" id="dc-save">Save</button>
+        <button class="dbtn dc-icon" id="dc-undo" disabled
+          title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+        <button class="dbtn dc-icon" id="dc-redo" disabled
+          title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
         <span class="dc-spring"></span>
         <span class="deck-status" id="deck-status"></span>
       </div>
@@ -5512,7 +5545,8 @@ through Ko-fi. Thank you.</p>
         <span class="et-hint" id="et-hint"></span>
         <span class="deck-spring"></span>
         <span class="et-fmt" id="et-fmt" hidden>
-          <span class="fmt-lab" id="fmt-txlab" hidden>T</span>
+          <span class="fmt-lab" id="fmt-txlab" hidden
+            title="Text colour">Text</span>
           <button class="sw" data-c="#ff6b57"
             style="background:#ff6b57" title="Coral"></button>
           <button class="sw" data-c="#f0a848"
@@ -5525,7 +5559,8 @@ through Ko-fi. Thank you.</p>
             style="background:#ffffff" title="White"></button>
           <button class="sw" data-c="#16202b"
             style="background:#16202b" title="Ink"></button>
-          <span class="fmt-lab" id="fmt-bglab" hidden>box</span>
+          <span class="fmt-lab" id="fmt-bglab" hidden
+            title="Fill / background colour">Fill</span>
           <button class="sw swbg trans" data-c="none" hidden
             title="Transparent box"></button>
           <button class="sw swbg" data-c="#0e1926" hidden
@@ -7420,10 +7455,10 @@ through Ko-fi. Thank you.</p>
   var pres=null, source='auto', mode='view', cur=0, activePane=0;
   function loadPresentation(name){
     var d=loadDraft(name);
-    if(d){pres=d;source='draft';return;}
+    if(d){pres=d;source='draft';histReset();return;}
     var s=savedByName(name);
-    if(s){pres=normPres(deep(s));source='saved';return;}
-    pres=defaultPres();source='auto';
+    if(s){pres=normPres(deep(s));source='saved';histReset();return;}
+    pres=defaultPres();source='auto';histReset();
   }
   var last=lsGet(PFX+'last');
   if(last&&(loadDraft(last)||savedByName(last))) loadPresentation(last);
@@ -7462,6 +7497,48 @@ through Ko-fi. Thank you.</p>
     lsSet(PFX+'last',pres.name||'untitled');
     status();
     scheduleAutosave();
+    histPush();
+  }
+  /* ---------- undo / redo (snapshots of the slide content) ---------- */
+  var undoStack=[],redoStack=[],histSnap=null;
+  function histState(){
+    return JSON.stringify({slides:pres.slides||[],showNums:pres.showNums||0});
+  }
+  function histReset(){
+    histSnap=histState();undoStack=[];redoStack=[];updateUndoBtns();
+  }
+  function histPush(){
+    var st=histState();
+    if(st===histSnap) return;         /* nothing actually changed */
+    undoStack.push(histSnap);
+    if(undoStack.length>50) undoStack.shift();
+    redoStack.length=0;histSnap=st;updateUndoBtns();
+  }
+  function histRestore(snap){
+    var d;try{d=JSON.parse(snap);}catch(e){return;}
+    pres.slides=d.slides||[];
+    if(d.showNums) pres.showNums=1; else delete pres.showNums;
+    if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
+    activePane=-1;selAnnot=null;selSet=[];
+    /* persist WITHOUT recording a new history entry */
+    source='draft';
+    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
+    status();scheduleAutosave();refresh();
+  }
+  function undo(){
+    if(!undoStack.length) return;
+    redoStack.push(histSnap);histSnap=undoStack.pop();
+    updateUndoBtns();histRestore(histSnap);
+  }
+  function redo(){
+    if(!redoStack.length) return;
+    undoStack.push(histSnap);histSnap=redoStack.pop();
+    updateUndoBtns();histRestore(histSnap);
+  }
+  function updateUndoBtns(){
+    var u=$('#dc-undo'),r=$('#dc-redo');
+    if(u) u.disabled=!undoStack.length;
+    if(r) r.disabled=!redoStack.length;
   }
 
   /* ---------- DOM cloning from the cards already on the page ---------- */
@@ -8174,6 +8251,10 @@ through Ko-fi. Thank you.</p>
       if(mode==='view'&&!(s.annots||[]).length){
         bs.innerHTML='<p class="slide-emptyhint">Empty slide — pick a '
           +'layout or use ✎ Swap to edit view.</p>';
+      } else if(mode==='edit'&&!(s.annots||[]).length){
+        bs.innerHTML='<p class="slide-emptyhint">This slide is empty.'
+          +'<br>Click a card in your notebook, or use '
+          +'<b>+ Text</b> / <b>+ Image</b> / <b>+ Shapes</b> to start.</p>';
       }
       stage.appendChild(bs);
     }
@@ -9266,6 +9347,25 @@ through Ko-fi. Thank you.</p>
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
   }
+  /* nudge the selection with the arrow keys (Shift = bigger step) */
+  function nudgeSel(dx,dy){
+    var s=pres.slides[cur]; if(!s) return;
+    if(selAnnot==='t'||selAnnot==='s'){
+      var tp=titleProps(s,selAnnot);tp.x+=dx;tp.y+=dy;
+    } else {
+      var idxs=selSet.filter(function(i){return typeof i==='number';});
+      if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+      if(!idxs.length||!s.annots) return;
+      idxs.forEach(function(i){
+        var a=s.annots[i]; if(!a) return;
+        if(a.k==='arrow'){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;}
+        else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
+      });
+    }
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);paintSel(l);}
+  }
   var dupBtn=$('#fmt-dup');
   if(dupBtn) dupBtn.addEventListener('click',duplicateSel);
   var grpBtn=$('#fmt-group');
@@ -10158,6 +10258,7 @@ through Ko-fi. Thank you.</p>
   }
   function openDeck(m){
     deckEl.hidden=false;
+    histReset();   /* undo history starts fresh per editing session */
     status();
     setUIMode(m||'view');
     routeSync();
@@ -10213,6 +10314,10 @@ through Ko-fi. Thank you.</p>
     inp.focus();inp.select();
   });
   $('#dc-play').addEventListener('click',function(){setUIMode('view');});
+  var undoBtn=$('#dc-undo');
+  if(undoBtn) undoBtn.addEventListener('click',undo);
+  var redoBtn=$('#dc-redo');
+  if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
     setUIMode('create');});
   $('#deck-prev').addEventListener('click',function(){backStep();});
@@ -10368,6 +10473,15 @@ through Ko-fi. Thank you.</p>
       else if(mode==='view'||mode==='edit') setUIMode('create');
       else closeDeck();
     }
+    else if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')
+            &&mode!=='view'){
+      e.preventDefault();
+      if(e.shiftKey) redo(); else undo();
+    }
+    else if((e.ctrlKey||e.metaKey)&&(e.key==='y'||e.key==='Y')
+            &&mode!=='view'){
+      e.preventDefault();redo();
+    }
     else if(mode==='edit'){
       if(e.key==='Delete'||e.key==='Backspace'){
         e.preventDefault();deleteSel();
@@ -10378,6 +10492,13 @@ through Ko-fi. Thank you.</p>
       else if((e.ctrlKey||e.metaKey)&&(e.key==='g'||e.key==='G')){
         e.preventDefault();
         if(e.shiftKey) ungroupSel(); else groupSel();
+      }
+      else if(e.key.indexOf('Arrow')===0
+              &&(selSet.length||selAnnot!==null)){
+        e.preventDefault();
+        var st=e.shiftKey?2:0.4;
+        nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
+                 e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
       }
     }
     else if(mode==='view'){
@@ -10751,6 +10872,59 @@ through Ko-fi. Thank you.</p>
     var fi=document.getElementById('deckfile');
     if(fi) fi.click();
   });
+  /* ---- Export PDF / print: render every slide at a fixed size (so text,
+     which is sized from the layer height, comes out right) into off-screen
+     pages, then hand off to the browser's Print -> Save as PDF ---- */
+  function buildPrintSlide(s,idx){
+    var slideEl;
+    if(s&&s.layout==='title'){
+      slideEl=document.createElement('div');
+      slideEl.className='slide slide-titlefree';
+      slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
+    } else {
+      slideEl=document.createElement('div');
+      slideEl.className='slide slide-blank';
+    }
+    if(s) attachAnnots(slideEl,s);      /* renders view-style (no handles) */
+    if(pres.showNums){
+      var pn=document.createElement('div');
+      pn.className='slide-pageno';pn.textContent=(idx+1);
+      slideEl.appendChild(pn);
+    }
+    return slideEl;
+  }
+  function printDeck(){
+    if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
+    var old=document.getElementById('print-root');
+    if(old) old.remove();
+    var savedMode=mode,savedReveal=revealCount,savedCur=cur;
+    mode='view';revealCount=99999;              /* all builds fully revealed */
+    var root=document.createElement('div');root.id='print-root';
+    pres.slides.forEach(function(s,i){
+      cur=i;
+      var page=document.createElement('div');page.className='print-page';
+      page.appendChild(buildPrintSlide(s,i));
+      root.appendChild(page);
+    });
+    mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    document.body.appendChild(root);
+    document.body.classList.add('printing');
+    if(typeset) typeset(root);
+    var done=false;
+    function cleanup(){
+      if(done) return;done=true;
+      document.body.classList.remove('printing');
+      var r=document.getElementById('print-root'); if(r) r.remove();
+      window.removeEventListener('afterprint',cleanup);
+    }
+    window.addEventListener('afterprint',cleanup);
+    /* let layout + MathJax settle, then open the print dialog */
+    setTimeout(function(){try{window.print();}catch(e){}
+      setTimeout(cleanup,800);},120);
+    return root;   /* returned for headless testing */
+  }
+  window.SemDeckPrint=printDeck;   /* test hook */
+  menuAction('#mi-pdf',function(){printDeck();});
   (function(){
     var fi=document.getElementById('deckfile');
     if(!fi) return;
