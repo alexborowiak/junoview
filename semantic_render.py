@@ -3216,6 +3216,114 @@ body:not(.light) .welcome-links a{color:#5fc3d8;}
 .nbshell.raw .rawview{display:block;}
 #view-raw[aria-pressed="true"]{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:#fff;}
+
+/* ---------- tree view (the analysis graph as a full, expandable view) --- */
+#view-tree[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.treeview{display:none;padding:14px 20px 24vh;}
+.nbshell.tree .content{display:none;}
+.nbshell.tree .rawview{display:none;}
+.nbshell.tree .treeview{display:block;}
+.tree-toolbar{position:sticky;top:0;z-index:3;display:flex;flex-wrap:wrap;
+  align-items:center;gap:8px;padding:8px 2px 12px;margin-bottom:6px;
+  background:linear-gradient(var(--paper-2) 72%,transparent);}
+.tree-toolbar .tt-title{font-family:var(--mono);font-size:10px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3);
+  margin-right:auto;}
+.tt-btn{font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink-2);
+  padding:5px 10px;border-radius:var(--rad);cursor:pointer;
+  transition:all .15s;}
+.tt-btn:hover{border-color:var(--cyan);color:var(--ink);}
+.tt-hidden-note{font-family:var(--mono);font-size:10.5px;color:var(--amber);
+  display:none;align-items:center;gap:6px;}
+.tree-canvas.has-hidden ~ .tt-hidden-note,
+.tree-toolbar .tt-hidden-note.show{display:inline-flex;}
+.tree-scroll{overflow:auto;position:relative;
+  border:1px solid var(--line);border-radius:12px;background:
+  radial-gradient(circle at 1px 1px,var(--line) 1px,transparent 0) 0 0/22px 22px,
+  var(--paper);}
+.tree-canvas{position:relative;min-width:100%;width:max-content;
+  padding:26px 26px 40px;}
+.tree-edges{position:absolute;top:0;left:0;
+  pointer-events:none;overflow:visible;z-index:0;}
+.tree-edge{fill:none;stroke:var(--amber-soft);stroke-width:1.6;}
+.tree-edge.lit{stroke:var(--cyan);stroke-width:2.4;}
+.tree-lane{position:relative;z-index:1;display:flex;flex-wrap:nowrap;
+  justify-content:center;align-items:flex-start;gap:26px;
+  margin:0 0 52px;}
+.tree-lane:last-child{margin-bottom:0;}
+.tree-node{--nc:#4a5564;position:relative;flex:0 0 auto;width:190px;
+  background:var(--paper);border:1px solid var(--line);border-radius:10px;
+  border-top:3px solid var(--nc);box-shadow:0 1px 3px #16202b12;
+  transition:box-shadow .15s,border-color .15s;}
+.tree-node.active{border-color:var(--cyan);box-shadow:0 3px 14px #39a9c033;}
+.tree-node-head{display:flex;align-items:center;gap:7px;padding:9px 9px 9px 11px;
+  cursor:pointer;}
+.tn-dot{width:8px;height:8px;border-radius:50%;background:var(--nc);
+  flex:none;}
+.tn-title{flex:1;min-width:0;font-size:12.5px;font-weight:600;
+  color:var(--ink);line-height:1.3;overflow:hidden;text-overflow:ellipsis;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.tn-kind{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);}
+.tn-btn{flex:none;background:none;border:none;color:var(--ink-3);
+  cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;border-radius:5px;
+  opacity:.55;transition:opacity .12s,background .12s,transform .15s;}
+.tn-btn:hover{opacity:1;background:var(--paper-2);}
+.tree-node.expanded .tn-chev{transform:rotate(90deg);}
+.tree-node-body{display:none;border-top:1px solid var(--line);
+  max-height:360px;overflow:auto;padding:10px 12px;}
+.tree-node.expanded .tree-node-body{display:block;}
+.tree-node-body .card{margin:0;border:none;box-shadow:none;opacity:1;
+  transform:none;padding:0;}
+.tree-node-body .figframe img{max-height:260px;}
+/* hidden node -> slim dimmed chip (restore from its eye) */
+.tree-node.tn-off{width:auto;border-top-color:var(--line);opacity:.6;}
+.tree-node.tn-off .tn-title{-webkit-line-clamp:1;font-weight:500;
+  color:var(--ink-3);font-size:11px;}
+.tree-node.tn-off .tree-node-body,
+.tree-node.tn-off .tn-chev{display:none;}
+.tree-empty{padding:40px 10px;text-align:center;color:var(--ink-3);
+  font-size:13px;}
+
+/* ---------- present (full-screen document) mode -------------------- */
+body.doc-presenting{--presrail-w:0px;padding-top:0;padding-left:0;
+  overflow:hidden;}
+body.doc-presenting .apptop,
+body.doc-presenting .presrail,
+body.doc-presenting .presrail-show{display:none!important;}
+body.doc-presenting .docs{position:fixed;inset:0;z-index:82;overflow:auto;
+  background:var(--paper-2);}
+body.doc-presenting .shell{grid-template-columns:1fr;display:block;}
+body.doc-presenting .nbshell .rail{display:none;}
+body.doc-presenting .content{max-width:1000px;margin:0 auto;
+  padding:56px 30px 30vh;}
+body.doc-presenting .treeview{padding:56px 26px 24vh;height:100vh;}
+body.doc-presenting .docbar{display:none;}
+.present-bar{position:fixed;top:14px;right:16px;z-index:140;display:flex;
+  align-items:center;gap:6px;padding:6px 8px;border-radius:10px;
+  background:#0d1a24ee;border:1px solid #ffffff1f;
+  box-shadow:0 6px 22px #00000045;}
+.present-bar[hidden]{display:none;}
+.pb-btn{font-family:var(--mono);font-size:11px;letter-spacing:.02em;
+  border:1px solid #ffffff26;background:#ffffff10;color:#e7eff5;
+  padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s;}
+.pb-btn:hover{background:#ffffff1e;border-color:var(--cyan);color:#fff;}
+.pb-exit{border-color:#e0806033;}
+.pb-sep{width:1px;height:18px;background:#ffffff22;}
+.pb-collapse{font-family:var(--mono);font-size:13px;border:1px solid #ffffff26;
+  background:#ffffff10;color:#cfe0ea;width:26px;height:26px;border-radius:6px;
+  cursor:pointer;padding:0;line-height:1;}
+.pb-collapse:hover{color:#fff;border-color:var(--cyan);}
+body.present-bar-hidden .present-bar{display:none;}
+.present-bar-show{position:fixed;top:14px;right:0;z-index:140;width:24px;
+  height:34px;border:1px solid #ffffff26;border-right:none;
+  border-radius:8px 0 0 8px;background:#0d1a24ee;color:#cfe0ea;cursor:pointer;
+  font-size:13px;padding:0;display:none;}
+.present-bar-show[hidden]{display:none;}
+body.doc-presenting.present-bar-hidden .present-bar-show{display:block;}
+.present-bar-show:hover{color:#fff;border-color:var(--cyan);}
 .rawcell{position:relative;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;
   padding:14px 16px 14px 16px;margin:12px 0;}
@@ -3356,7 +3464,7 @@ _JS = r"""
     APP.active=stem;
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
     renderTabs();
-    renderRawBtn();
+    renderRawBtn();renderViewBtns();relayoutActiveTree();
     updateHash();
     document.dispatchEvent(new CustomEvent('sem:activate',
       {detail:{stem:stem}}));
@@ -3717,14 +3825,332 @@ _JS = r"""
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh) return;
     var on=sh.el.classList.toggle('raw');
+    if(on) sh.el.classList.remove('tree');   /* raw + tree are exclusive */
     if(on&&!sh.el.dataset.rawTypeset){
       sh.el.dataset.rawTypeset='1';
       var rv=$('.rawview',sh.el);
       if(rv&&window.MathJax&&MathJax.typesetPromise)
         MathJax.typesetPromise([rv]).catch(function(){});
     }
-    renderRawBtn();
+    renderRawBtn();renderViewBtns();
   });
+
+  /* ---- tree view: the analysis graph as a full, expandable view, plus a
+     full-screen "present" mode for either view. Both the Narrative document
+     and the Tree map can be presented; the Tree is built client-side from
+     this shell's own card index (nb-data) + its rendered card DOM, so it
+     works identically in the static file, the app and the web build. ---- */
+  var treeBtn=$('#view-tree');
+  function renderViewBtns(){
+    var sh=APP.active&&APP.shells[APP.active];
+    var isTree=!!(sh&&sh.el.classList.contains('tree'));
+    if(treeBtn){
+      treeBtn.setAttribute('aria-pressed',isTree.toString());
+      treeBtn.textContent=isTree?'▤ Document':'□ Tree view';
+      treeBtn.disabled=!sh||!!(sh&&sh.trace);
+    }
+    var pv=$('#pb-view');
+    if(pv){pv.innerHTML=isTree?'▤ Narrative':'□ Tree';
+      pv.disabled=!!(sh&&sh.trace);}
+  }
+  function toggleTree(){
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh||sh.trace) return;
+    var on=sh.el.classList.toggle('tree');
+    if(on){ sh.el.classList.remove('raw'); buildTree(sh); }
+    renderRawBtn();renderViewBtns();
+    if(on) relayoutActiveTree();
+  }
+  if(treeBtn) treeBtn.addEventListener('click',toggleTree);
+
+  var TREE_FILL={figure:'#39a9c0',diagnostic:'#39a9c0',dataset:'#4d90c0',
+    transform:'#5b7589',metric:'#46a892',note:'#cf9a4e',text:'#8ba0b2',
+    imports:'#a3855c','function':'#46a892',data:'#4d90c0',constant:'#9a7cc0',
+    settings:'#5b7589',plotting:'#39a9c0',print:'#cf9a4e',code:'#8ba0b2'};
+  function treeColor(it){
+    if(it.kind==='figure'||it.kind==='diagnostic') return TREE_FILL.figure;
+    if(it.kind==='note') return TREE_FILL.note;
+    var cks=it.codeKinds||[it.codeKind||'code'];
+    return TREE_FILL[cks[0]]||TREE_FILL[it.kind]||'#4a5564';
+  }
+  var TSVGNS='http://www.w3.org/2000/svg';
+  function relayoutActiveTree(){
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh||!sh.el.classList.contains('tree')) return;
+    var host=$('.treeview',sh.el);
+    if(host) requestAnimationFrame(function(){treeLayoutEdges(host);});
+  }
+  function buildTree(sh){
+    var host=$('.treeview',sh.el); if(!host) return;
+    if(host.dataset.built){ relayoutActiveTree(); return; }
+    host.dataset.built='1';
+    var items=(sh.data&&sh.data.items)||[];
+    /* one node per card that is actually present in this shell's DOM */
+    var byAnchor={},nodes=[];
+    items.forEach(function(it){
+      var card=$('.card[id="card-'+it.card+'"]',sh.el);
+      if(!card) return;
+      var nd={it:it,card:card,anchor:it.anchor,parents:[],depth:0};
+      byAnchor[it.anchor]=nd; nodes.push(nd);
+    });
+    host.textContent='';
+    if(!nodes.length){
+      var em=document.createElement('div');em.className='tree-empty';
+      em.textContent='No cells to map in this notebook.';
+      host.appendChild(em); return;
+    }
+    var idx={}; nodes.forEach(function(nd,i){idx[nd.anchor]=i;});
+    /* ancestors named in each cell's data-flow chain (transitively reduced
+       to direct parents) — same shape as the plot-trace dependency graph,
+       but over EVERY cell, not one plot's lineage */
+    var anc=nodes.map(function(nd){
+      var set={};
+      (nd.it.chain||[]).forEach(function(a){if(idx[a]!==undefined)set[a]=1;});
+      return set;
+    });
+    nodes.forEach(function(nd,i){
+      var a=Object.keys(anc[i]);
+      nd.parents=a.filter(function(p){
+        return !a.some(function(q){
+          return q!==p&&anc[idx[q]]&&anc[idx[q]][p];});
+      }).map(function(p){return idx[p];});
+    });
+    var depth=nodes.map(function(){return -1;});
+    function dep(i){
+      if(depth[i]>=0) return depth[i];
+      depth[i]=0;                        /* cycle guard */
+      var m=0; nodes[i].parents.forEach(function(p){m=Math.max(m,dep(p)+1);});
+      depth[i]=m; return m;
+    }
+    nodes.forEach(function(nd,i){nd.depth=dep(i);});
+    var maxD=0; nodes.forEach(function(nd){if(nd.depth>maxD)maxD=nd.depth;});
+    var lanes=[]; for(var L=0;L<=maxD;L++) lanes.push([]);
+    nodes.forEach(function(nd,i){nd.ti=i; lanes[nd.depth].push(nd);});
+
+    /* ---- toolbar ---- */
+    var bar=document.createElement('div');bar.className='tree-toolbar';
+    var ttl=document.createElement('span');ttl.className='tt-title';
+    ttl.textContent='analysis tree';bar.appendChild(ttl);
+    function toolBtn(label,fn){
+      var b=document.createElement('button');b.className='tt-btn';
+      b.type='button';b.textContent=label;b.addEventListener('click',fn);
+      bar.appendChild(b);return b;
+    }
+    toolBtn('Expand all',function(){
+      /* batch across frames — cloning every card at once can jank a big
+         notebook; yield between chunks, relayout once at the end */
+      var els=$$('.tree-node',host).filter(function(el){
+        return !el.classList.contains('tn-off')
+          &&!el.classList.contains('expanded');});
+      var i=0,BATCH=6;
+      (function step(){
+        for(var end=Math.min(i+BATCH,els.length);i<end;i++){
+          els[i].classList.add('expanded');fillNode(els[i]);}
+        if(i<els.length) requestAnimationFrame(step);
+        else relayoutActiveTree();
+      })();
+    });
+    toolBtn('Collapse all',function(){
+      $$('.tree-node.expanded',host).forEach(function(el){
+        el.classList.remove('expanded');});
+      relayoutActiveTree();
+    });
+    toolBtn('Reset',function(){
+      $$('.tree-node',host).forEach(function(el){
+        el.classList.remove('expanded');el.classList.remove('tn-off');});
+      updateHiddenNote();relayoutActiveTree();
+    });
+    toolBtn('☲ Present',function(){enterDocPresent();});
+    var hnote=document.createElement('span');hnote.className='tt-hidden-note';
+    bar.appendChild(hnote);
+    host.appendChild(bar);
+
+    /* ---- scroll + canvas + edge layer ---- */
+    var scroll=document.createElement('div');scroll.className='tree-scroll';
+    var canvas=document.createElement('div');canvas.className='tree-canvas';
+    var svg=document.createElementNS(TSVGNS,'svg');
+    svg.setAttribute('class','tree-edges');
+    canvas.appendChild(svg);
+
+    function fillNode(el){
+      var body=$('.tree-node-body',el); if(!body||body.dataset.filled) return;
+      body.dataset.filled='1';
+      var nd=nodes[+el.dataset.ti]; if(!nd) return;
+      var clone=nd.card.cloneNode(true);
+      clone.removeAttribute('id');clone.classList.add('in');
+      $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
+      $$('.cell-eye,.plot-trace-btn,.card-anchor',clone)
+        .forEach(function(x){x.remove();});
+      body.appendChild(clone);
+      /* cloneNode does not copy listeners: re-wire the clone so its code
+         toggle / fig-fold / note-expand work (as the Plot-trace tab does) */
+      var stem=(sh.data&&sh.data.stem)||sh.el.dataset.nb||'';
+      wireCardBehaviors(clone,stem);
+      $$('.mdmore',clone).forEach(function(x){x.remove();});
+      $$('.cardbody[data-mdclamp]',clone).forEach(function(bd){
+        bd.removeAttribute('data-mdclamp');
+        bd.classList.remove('mdclamp');bd.classList.remove('mdopen');});
+      mdClampScan(clone);
+      if(window.MathJax&&MathJax.typesetPromise)
+        MathJax.typesetPromise([body]).catch(function(){});
+    }
+    function updateHiddenNote(){
+      var n=$$('.tree-node.tn-off',host).length;
+      hnote.classList.toggle('show',n>0);
+      hnote.textContent=n?('◉ '+n+' hidden'):'';
+    }
+
+    lanes.forEach(function(lane){
+      var laneEl=document.createElement('div');laneEl.className='tree-lane';
+      lane.forEach(function(nd){
+        var el=document.createElement('div');el.className='tree-node';
+        el.dataset.ti=nd.ti;
+        el.dataset.parents=nd.parents.join(',');
+        el.style.setProperty('--nc',treeColor(nd.it));
+        var head=document.createElement('div');head.className='tree-node-head';
+        var dot=document.createElement('span');dot.className='tn-dot';
+        head.appendChild(dot);
+        var tw=document.createElement('div');tw.style.flex='1';tw.style.minWidth='0';
+        var tt=document.createElement('div');tt.className='tn-title';
+        tt.textContent=nd.it.title||nd.anchor;tw.appendChild(tt);
+        var kd=document.createElement('div');kd.className='tn-kind';
+        kd.textContent=nd.it.kind||'cell';tw.appendChild(kd);
+        head.appendChild(tw);
+        var eye=document.createElement('button');eye.className='tn-btn tn-eye';
+        eye.type='button';eye.innerHTML='&#128065;';eye.title='Hide this cell';
+        head.appendChild(eye);
+        var chev=document.createElement('button');chev.className='tn-btn tn-chev';
+        chev.type='button';chev.innerHTML='&#8250;';
+        chev.title='Expand to see the cell';
+        head.appendChild(chev);
+        var body=document.createElement('div');body.className='tree-node-body';
+        el.appendChild(head);el.appendChild(body);
+        head.addEventListener('click',function(e){
+          if(e.target.closest('.tn-eye')) return;
+          if(el.classList.contains('tn-off')) return;
+          var open=el.classList.toggle('expanded');
+          if(open) fillNode(el);
+          relayoutActiveTree();
+        });
+        eye.addEventListener('click',function(e){
+          e.stopPropagation();
+          var off=el.classList.toggle('tn-off');
+          if(off){el.classList.remove('expanded');
+            eye.title='Show this cell';}
+          else eye.title='Hide this cell';
+          updateHiddenNote();relayoutActiveTree();
+        });
+        el.addEventListener('mouseenter',function(){litEdges(host,nd.ti,true);});
+        el.addEventListener('mouseleave',function(){litEdges(host,nd.ti,false);});
+        laneEl.appendChild(el);
+      });
+      canvas.appendChild(laneEl);
+    });
+    scroll.appendChild(canvas);host.appendChild(scroll);
+    relayoutActiveTree();
+  }
+  function litEdges(host,ti,on){
+    var el=$('.tree-node[data-ti="'+ti+'"]',host);
+    if(el) el.classList.toggle('active',on);
+    $$('.tree-edge',host).forEach(function(p){
+      if(p.dataset.from===String(ti)||p.dataset.to===String(ti))
+        p.classList.toggle('lit',on);
+    });
+  }
+  function treeLayoutEdges(host){
+    var svg=$('.tree-edges',host),canvas=$('.tree-canvas',host);
+    if(!svg||!canvas) return;
+    var cb=canvas.getBoundingClientRect();
+    if(!cb.width) return;                 /* not visible yet */
+    var W=canvas.scrollWidth,H=canvas.scrollHeight;
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('width',W);svg.setAttribute('height',H);
+    svg.style.width=W+'px';svg.style.height=H+'px';   /* px, not 100%, so the
+      viewBox maps 1:1 even when lanes overflow and the canvas scrolls */
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+    var heads={};
+    $$('.tree-node',host).forEach(function(el){
+      var h=$('.tree-node-head',el); if(!h) return;
+      var r=h.getBoundingClientRect();
+      heads[el.dataset.ti]={cx:r.left-cb.left+canvas.scrollLeft+r.width/2,
+        top:r.top-cb.top+canvas.scrollTop,
+        bot:r.bottom-cb.top+canvas.scrollTop,
+        off:el.classList.contains('tn-off')};
+    });
+    $$('.tree-node',host).forEach(function(el){
+      var ci=heads[el.dataset.ti]; if(!ci) return;
+      (el.dataset.parents||'').split(',').filter(Boolean).forEach(function(pi){
+        var pr=heads[pi]; if(!pr) return;
+        var x1=pr.cx,y1=pr.bot,x2=ci.cx,y2=ci.top,mid=(y1+y2)/2;
+        var path=document.createElementNS(TSVGNS,'path');
+        path.setAttribute('class','tree-edge'+((ci.off||pr.off)?' dim':''));
+        path.setAttribute('d','M'+x1+' '+y1+' C'+x1+' '+mid+' '
+          +x2+' '+mid+' '+x2+' '+y2);
+        path.dataset.from=pi;path.dataset.to=el.dataset.ti;
+        svg.appendChild(path);
+      });
+    });
+  }
+
+  /* ---- present (full-screen) mode for the active document ---- */
+  var docsEl=$('#docs');
+  function enterDocPresent(){
+    var sh=APP.active&&APP.shells[APP.active]; if(!sh) return;
+    document.body.classList.add('doc-presenting');
+    document.body.classList.remove('present-bar-hidden');
+    /* the controls must live INSIDE #docs: when #docs goes fullscreen it is
+       promoted to the browser top layer, and a sibling bar would render
+       beneath it (dead). As descendants they join the top layer. */
+    var pb=$('#present-bar'); if(pb){pb.hidden=false;
+      if(docsEl) docsEl.appendChild(pb);}
+    var pbs=$('#present-bar-show'); if(pbs){pbs.hidden=false;
+      if(docsEl) docsEl.appendChild(pbs);}
+    renderViewBtns();relayoutActiveTree();
+    try{
+      if(docsEl&&docsEl.requestFullscreen&&!document.fullscreenElement)
+        docsEl.requestFullscreen().catch(function(){});
+    }catch(e){}
+  }
+  function exitDocPresent(){
+    if(!document.body.classList.contains('doc-presenting')) return;
+    document.body.classList.remove('doc-presenting');
+    document.body.classList.remove('present-bar-hidden');
+    var pb=$('#present-bar'); if(pb){pb.hidden=true;
+      document.body.appendChild(pb);}
+    var pbs=$('#present-bar-show'); if(pbs){pbs.hidden=true;
+      document.body.appendChild(pbs);}
+    try{if(document.fullscreenElement) document.exitFullscreen().catch(function(){});}
+    catch(e){}
+    relayoutActiveTree();
+  }
+  var dpBtn=$('#doc-present');
+  if(dpBtn) dpBtn.addEventListener('click',enterDocPresent);
+  (function(){
+    var x=$('#pb-exit'); if(x) x.addEventListener('click',exitDocPresent);
+    var v=$('#pb-view'); if(v) v.addEventListener('click',function(){
+      toggleTree();renderViewBtns();});
+    var c=$('#pb-collapse'); if(c) c.addEventListener('click',function(){
+      document.body.classList.add('present-bar-hidden');});
+    var s=$('#present-bar-show'); if(s) s.addEventListener('click',function(){
+      document.body.classList.remove('present-bar-hidden');});
+  })();
+  document.addEventListener('fullscreenchange',function(){
+    if(!document.fullscreenElement
+       &&document.body.classList.contains('doc-presenting'))
+      exitDocPresent();
+  });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Escape'&&document.body.classList.contains('doc-presenting')){
+      exitDocPresent();
+    }
+  });
+  var treeRelayoutTimer=null;
+  window.addEventListener('resize',function(){
+    if(treeRelayoutTimer) clearTimeout(treeRelayoutTimer);
+    treeRelayoutTimer=setTimeout(relayoutActiveTree,120);
+  });
+  window.SemView={tree:toggleTree,present:enterDocPresent,
+    exitPresent:exitDocPresent,buildTree:buildTree};
 
   /* ---- theme toggle (chrome only; the slide canvas stays dark) --- */
   var themeBtn=$('#theme-btn');
@@ -4290,8 +4716,9 @@ _JS = r"""
     $$('.navsec,.navitem',shell).forEach(function(a){
       a.addEventListener('click',function(e){
         e.preventDefault();
-        if(shell.classList.contains('raw')){
-          shell.classList.remove('raw');renderRawBtn();
+        if(shell.classList.contains('raw')||shell.classList.contains('tree')){
+          shell.classList.remove('raw');shell.classList.remove('tree');
+          renderRawBtn();renderViewBtns();
         }
         var id=(a.getAttribute('href')||'').slice(1);
         var el=id?$('[id="'+id+'"]',shell):null;
@@ -4490,7 +4917,7 @@ _JS = r"""
          back to the last remaining notebook (or trace) tab */
       var back=(sh.trace&&APP.shells[sh.source])?sh.source
         :(APP.order[APP.order.length-1]||APP.traces[APP.traces.length-1]);
-      if(back) activate(back); else renderRawBtn();
+      if(back) activate(back); else {renderRawBtn();renderViewBtns();}
     }
     renderTabs();
     if(sh.trace) return;   /* a trace tab is not a notebook — no teardown */
@@ -5074,6 +5501,7 @@ _DECK_HTML = """
               <button class="dbtn etm" id="fmt-replace"
                 title="Swap in a different notebook card">&#8644;
                 Replace</button>
+              <span class="rbn-partslot" id="fmt-parts" hidden></span>
               <span class="sh-drop" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
                   aria-expanded="false"
@@ -5983,6 +6411,11 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
   color:#fff;}
 .cellpartbtn:hover{border-color:var(--cyan);color:#fff;}
 .cellpartbtn.split{color:#9fb2c2;}
+/* the same part-picker, hosted in the top ribbon's Object group */
+.rbn-partslot{display:inline-flex;align-items:center;}
+.rbn-partslot[hidden]{display:none;}
+#fmt-parts .cellparts{position:static;display:inline-flex;gap:4px;
+  flex-wrap:nowrap;bottom:auto;left:auto;right:auto;z-index:auto;}
 
 /* picking a card for a cell frame */
 .pickbar{position:fixed;top:var(--chrome-h);left:var(--presrail-w);
@@ -5999,7 +6432,7 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
    merged slides list (fills the width; drag the panel edge to resize) */
 .pane-editor{aspect-ratio:16/9;display:grid;gap:6px;background:#0b141d;
   border:1px solid #ffffff22;border-radius:8px;padding:6px;
-  margin:0;width:100%;}
+  margin:0;width:100%;overflow:hidden;}
 .pane-editor.full{grid-template-columns:1fr;grid-template-rows:1fr;}
 .pane-editor.halves{grid-template-columns:1fr 1fr;grid-template-rows:1fr;}
 .pane-editor.quarters{grid-template-columns:1fr 1fr;
@@ -6053,7 +6486,7 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
 .film-view .pane-editor{width:100%;margin:0;}
 .mini-diagram{width:116px;height:66px;flex:none;display:grid;gap:2px;
   background:#0b141d;border:1px solid #ffffff22;border-radius:4px;
-  padding:2px;}
+  padding:2px;overflow:hidden;}
 .mini-diagram.full{grid-template-columns:1fr;}
 .mini-diagram.halves{grid-template-columns:1fr 1fr;}
 .mini-diagram.quarters{grid-template-columns:1fr 1fr;
@@ -6449,7 +6882,10 @@ _DECK_JS = r"""
     var b=cloneBody(ref);
     if(!b) return cloneCode(ref);
     if(part==='figure'){
-      $$('.cb-out,.xr-wrap,pre.result,pre.stream,.rich',b)
+      /* the figure part is JUST the figure — drop outputs AND any markdown
+         note / caption that rides along in the card body */
+      $$('.cb-out,.xr-wrap,pre.result,pre.stream,.rich,'
+        +'.note,.note-src,.htmltoggle,.caption',b)
         .forEach(function(n){if(n.parentNode) n.parentNode.removeChild(n);});
     } else if(part==='output'){
       $$('.cb-fig,.figframe,.figpager',b).forEach(function(n){
@@ -7566,29 +8002,10 @@ _DECK_JS = r"""
             c.appendChild(b);
           }
           applyCellColor(c,a);
-          if((a.h||30)>=55){
-            var card=cardEl(it.ns);
-            var cap=card?card.querySelector('.caption'):null;
-            if(cap){
-              var capc=stripIds(cap.cloneNode(true));
-              capc.classList.add('an-cellcap');
-              c.appendChild(capc);
-            }
-          }
-          if(editing){
-            var rb=document.createElement('button');
-            rb.className='an-cellbtn';
-            rb.innerHTML='&#8644; Replace';
-            rb.title='Swap in a different notebook card';
-            rb.addEventListener('mousedown',function(e){
-              if(tool==='select') e.stopPropagation();});
-            rb.addEventListener('click',function(e){
-              if(tool!=='select') return;
-              e.stopPropagation();startPick(i);});
-            c.appendChild(rb);
-            var pc=buildPartChooser(s,i);
-            if(pc) c.appendChild(pc);
-          }
+          /* No on-frame Replace / part-picker / caption: those controls now
+             live in the top ribbon's Object group (cleaner), and a placed
+             figure is JUST the figure — so the selection outline hugs the
+             content instead of a caption-padded box. */
         } else if(editing){
           var pb=document.createElement('button');
           pb.className='an-cellpick';
@@ -7805,6 +8222,16 @@ _DECK_JS = r"""
     show('#fmt-replace',kind==='cell');
     show('#fmt-cropwrap',kind==='image'||kind==='cell');
     show('#fmt-animwrap',isNum);
+    /* the code/figure/output part-picker (+ split) — moved off the frame
+       into the ribbon's Object group */
+    var partsSlot=$('#fmt-parts');
+    if(partsSlot){
+      partsSlot.innerHTML='';
+      var pcr=(kind==='cell'&&typeof selAnnot==='number')
+        ?buildPartChooser(s,selAnnot):null;
+      if(pcr) partsSlot.appendChild(pcr);
+      partsSlot.hidden=!pcr;
+    }
     var animBtn=$('#fmt-anim');
     if(animBtn&&isNum){
       var an=a.anim&&a.anim.type;
@@ -9504,6 +9931,10 @@ _DECK_JS = r"""
       return;
     }
     if(deckEl.hidden) return;
+    /* while the document is being presented full screen over an open
+       builder, its own Esc / Ctrl+Z own the keyboard — don't let the deck
+       also close or undo underneath it */
+    if(document.body.classList.contains('doc-presenting')) return;
     var tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='select'||tag==='textarea') return;
     if(e.target.isContentEditable) return;
@@ -10078,6 +10509,7 @@ _SHELL_TEMPLATE = """<div class="shell nbshell" data-nb="{stem}"{path_attr}>
     <div class="rawview">
       {rawview}
     </div>
+    <div class="treeview" aria-label="Analysis tree view"></div>
   </main>
   <script type="application/json" class="nb-data">{nb_data}</script>
 </div>
@@ -10121,6 +10553,13 @@ _TEMPLATE = """<!doctype html>
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
  (cells in order, directives visible)">Raw notebook</button>
+    <button class="toggle" id="view-tree"
+      title="Tree view: the analysis as a dependency map you can expand,
+ collapse and hide cell by cell. Toggle back for the narrative document.">
+      &#9633; Tree view</button>
+    <button class="toggle" id="doc-present"
+      title="Present this document full screen (Narrative or Tree). Esc to
+ exit.">&#9974; Present</button>
     <span class="appbar-spring"></span>
     <button class="toggle" id="theme-btn"
       title="Switch between dark and light theme">&#9788;</button>
@@ -10167,6 +10606,18 @@ _TEMPLATE = """<!doctype html>
 </nav>
 <button class="presrail-show" id="presrail-show"
   title="Show presentations">&#187;</button>
+<div class="present-bar" id="present-bar" hidden>
+  <button class="pb-btn" id="pb-view"
+    title="Switch between the Narrative document and the Tree view">
+    &#9633; Tree</button>
+  <span class="pb-sep" aria-hidden="true"></span>
+  <button class="pb-btn pb-exit" id="pb-exit"
+    title="Exit full screen (Esc)">&#10005; Exit</button>
+  <button class="pb-collapse" id="pb-collapse"
+    title="Hide these controls">&#187;</button>
+</div>
+<button class="present-bar-show" id="present-bar-show"
+  title="Show controls" hidden>&#171;</button>
 <div class="docs" id="docs">
 {shells}
 </div>
@@ -11070,6 +11521,21 @@ def _self_test() -> None:
     assert "mdClampScan" in out and "mdclamp" in out
     assert "vo-xall" in out and "fullscreenchange" in out
 
+    # Tree view (analysis graph as a full, expandable view) + a full-screen
+    # "present" mode for either the Narrative document or the Tree — both are
+    # baked into every runtime (one _TEMPLATE), built client-side per shell.
+    assert 'id="view-tree"' in out and 'class="treeview"' in out
+    assert ".nbshell.tree .content{display:none" in out
+    assert ".nbshell.tree .treeview{display:block" in out
+    assert "function buildTree" in out and "function treeLayoutEdges" in out
+    assert "function renderViewBtns" in out and "window.SemView" in out
+    assert "tree-lane" in out and "tree-node-head" in out and "tree-edge" in out
+    # present mode: button, floating control bar + its restore edge-arrow
+    assert 'id="doc-present"' in out and 'id="present-bar"' in out
+    assert 'id="present-bar-show"' in out and 'id="pb-collapse"' in out
+    assert "function enterDocPresent" in out and "function exitDocPresent" in out
+    assert "body.doc-presenting" in out and "present-bar-hidden" in out
+
     # id-less figure cells anchor by POSITION, and that anchor survives a
     # content edit (the code-derived title changes, the anchor must not) —
     # so a deck frame keeps resolving after the notebook is refreshed
@@ -11242,6 +11708,14 @@ def _self_test() -> None:
             "border-color:transparent" in out)
     assert ".deck.editing .an-cell.sel .an-cellbtn{display:block" in out
     assert ".deck.editing .an-cell.sel .cellparts" in out
+    # Object controls (Replace + code/figure/output part-picker) now live in
+    # the ribbon, not floating on the frame; a placed figure is just the figure
+    assert 'id="fmt-parts"' in out and "rbn-partslot" in out
+    # thumbnail slide surfaces clip overflow (a figure dragged past the slide
+    # edge can't bleed into the next thumbnail)
+    assert "margin:0;width:100%;overflow:hidden" in out
+    # tree canvas sizes to its widest lane so centered lanes never clip left
+    assert "width:max-content" in out
     # the empty placeholder keeps its dashed box; the header is an overlay
     # (out of flow) so selecting a frame doesn't reflow the figure
     assert ".deck.editing .an-cell.empty{background:#0e192699" in out
