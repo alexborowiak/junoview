@@ -4924,10 +4924,6 @@ _DECK_HTML = """
           title="Delete the selected item (Del)">Delete</button>
         <span class="et-hint" id="et-hint"></span>
         <span class="deck-spring"></span>
-        <button class="dbtn viewtoggle" id="et-notebook"
-          title="Bring up your notebooks in the editor to scroll or pick
- cells — swap back to the slide any time">&#9636;
-          Swap to notebooks</button>
         <span class="et-fmt" id="et-fmt" hidden>
           <span class="fmt-lab" id="fmt-txlab" hidden>T</span>
           <button class="sw" data-c="#ff6b57"
@@ -5701,7 +5697,9 @@ select#fmt-font[hidden]{display:none;}
   display:flex;align-items:flex-start;gap:.35em;}
 .an-text.nobg{background:none;border:none;
   text-shadow:0 1px 4px #000d,0 0 10px #0009;}
-.an-tx{white-space:pre-wrap;min-width:14px;outline:none;}
+/* fill the box (minus the move handle) so text-align actually positions the
+   text — a content-sized flex item can't be aligned */
+.an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
 ul.an-ul{margin:0;padding-left:1.15em;list-style:disc;}
 ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
 .an-handle{cursor:move;color:#8ba0b2;font-size:.65em;flex:none;
@@ -5757,6 +5755,10 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
    badge, no frame border (the editor/builder keep them for orientation) */
 .vpage .an-cell{border:none;background:none;}
 .vpage .an-cellhead{display:none;}
+/* playback: a framed cell is just its content (no dark card box / cyan border),
+   so a shape-crop reads as the shape even on slides without a code trace */
+.deck:not(.editing) .deck-stage .an-cell{border:none;background:none;}
+.deck:not(.editing) .deck-stage .an-cellhead{display:none;}
 .an-cellhead{flex:none;display:flex;align-items:center;gap:8px;
   padding:8px 30px 0 12px;min-width:0;}
 .an-cellhead-t{font-size:13px;font-weight:600;color:#dbe7ef;
@@ -6050,6 +6052,7 @@ _DECK_JS = r"""
         return o;
       })};
     if(typeof p.folder==='string'&&p.folder) out.folder=p.folder;
+    if(p.showNums) out.showNums=1;   /* keep the slide-numbers preference */
     return out;
   }
   function registerShell(stem,data){
@@ -7075,16 +7078,26 @@ _DECK_JS = r"""
      plain fallback. Only colour + basic inline styles survive the sanitiser. */
   var RICH_TAGS={span:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1};
   function sanitizeRich(html){
-    var tmp=document.createElement('div');
-    tmp.innerHTML=String(html||'');
+    /* parse into an INERT template fragment — no image loads, no inline event
+       handlers ever run (unlike a live-document div), so merely sanitising
+       hostile HTML can never execute code */
+    var tpl=document.createElement('template');
+    tpl.innerHTML=String(html||'');
+    /* walk with a live cursor (not a stale snapshot) so nodes promoted by
+       unwrapping an unknown tag are ALSO inspected — otherwise a dangerous
+       element nested one level in survives */
     (function walk(node){
-      Array.prototype.slice.call(node.childNodes).forEach(function(n){
-        if(n.nodeType===3) return;               /* text node: keep */
-        if(n.nodeType!==1){node.removeChild(n);return;}
+      var n=node.firstChild;
+      while(n){
+        var next=n.nextSibling;
+        if(n.nodeType===3){n=next;continue;}      /* text node: keep */
+        if(n.nodeType!==1){node.removeChild(n);n=next;continue;}
         var tag=(n.tagName||'').toLowerCase();
-        if(!RICH_TAGS[tag]){                      /* unwrap unknown tags */
+        if(!RICH_TAGS[tag]){                       /* unwrap unknown tags */
+          var first=n.firstChild;
           while(n.firstChild) node.insertBefore(n.firstChild,n);
-          node.removeChild(n);return;
+          node.removeChild(n);
+          n=first||next;continue;                  /* re-walk promoted nodes */
         }
         var color=(n.style&&n.style.color)||
           (tag==='font'?(n.getAttribute('color')||''):'');
@@ -7093,10 +7106,12 @@ _DECK_JS = r"""
         names.forEach(function(nm){n.removeAttribute(nm);});
         if(color) n.style.color=color;
         walk(n);
-      });
-    })(tmp);
-    return {html:tmp.innerHTML,
-      rich:!!tmp.querySelector('span[style],font,b,strong,i,em,u,s')};
+        n=next;
+      }
+    })(tpl.content);
+    return {html:tpl.innerHTML,
+      rich:!!tpl.content.querySelector(
+        'span[style],font,b,strong,i,em,u,s')};
   }
   function activeTextEditable(){
     var ae=document.activeElement;
@@ -7433,8 +7448,13 @@ _DECK_JS = r"""
           el.appendChild(bd);
         } else if(mode==='view'){
           if(bpos[bi]>=revealCount) el.classList.add('an-prebuild');
-          else if(bpos[bi]===revealCount-1)
-            el.classList.add('an-anim-'+(ba.anim.type||'fade'));
+          else if(bpos[bi]===revealCount-1){
+            var atype=ba.anim.type||'fade';
+            /* rise/zoom animate transform, which would fight a rotation and
+               snap at the end — a rotated item fades in instead */
+            if(ba.rot&&(atype==='rise'||atype==='zoom')) atype='fade';
+            el.classList.add('an-anim-'+atype);
+          }
         }
       });
     }
@@ -7554,11 +7574,25 @@ _DECK_JS = r"""
   }
   function fmtApply(fn){
     var s=pres.slides[cur]; if(!s) return;
-    var a=annotByIdx(s,selAnnot); if(!a) return;
-    fn(a);
+    /* apply to EVERY selected item (a group or shift-multi-select), not just
+       the primary — otherwise formatting a multi-selection silently changes
+       only one item and collapses the selection */
+    var targets=selSet.filter(function(i){return typeof i==='number';});
+    if(targets.length){
+      targets.forEach(function(i){if(s.annots[i]) fn(s.annots[i]);});
+    } else {
+      var a=annotByIdx(s,selAnnot); if(!a) return;
+      fn(a);
+    }
     markDirty();
     var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s);selectAnnot(l,selAnnot);}
+    if(!l) return;
+    renderAnnots(l,s);
+    if(targets.length>1){        /* keep the multi-selection alive */
+      selSet=targets.slice();paintSel(l);
+      var d=$('#et-del'); if(d) d.disabled=false;
+      showFmt();
+    } else selectAnnot(l,selAnnot);
   }
   function pctPoint(layer,ev){
     var r=layer.getBoundingClientRect();
@@ -7716,7 +7750,10 @@ _DECK_JS = r"""
         }
         var ai=arrowAt(layer,s,ev);
         if(ai>=0){
-          selectAnnot(layer,ai);
+          /* honour shift/multi-select the same way the item branch does */
+          if(ev.shiftKey){selectAnnot(layer,ai,true);return;}
+          if(selSet.indexOf(ai)<0) selectAnnot(layer,ai,false);
+          else {selAnnot=ai;paintSel(layer);showFmt();}
           startMove(layer,s,ai,ev);
           return;
         }
@@ -7954,6 +7991,10 @@ _DECK_JS = r"""
     var s=pres.slides[cur];
     if(!s||typeof selAnnot!=='number'||!s.annots) return;
     var cp=JSON.parse(JSON.stringify(s.annots[selAnnot]));
+    /* a copy is its own item: never silently join the source's group, and
+       give it its own build step rather than sharing the source's */
+    delete cp.grp;
+    if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
     if(cp.k==='arrow'){
       cp.x1+=3;cp.y1+=3;cp.x2+=3;cp.y2+=3;
     } else {cp.x=(cp.x||0)+3;cp.y=(cp.y||0)+3;}
@@ -8023,67 +8064,65 @@ _DECK_JS = r"""
     };
     rd.readAsDataURL(f);
   });
-  /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
-  (function(){
-    var cwrap=$('#fmt-cropwrap'),cbtn=$('#fmt-crop'),cmenu=$('#fmt-crop-menu');
-    if(!cwrap||!cbtn||!cmenu) return;
-    CROP_SHAPES.forEach(function(p){
+  /* the format bar scrolls horizontally (overflow), which would CLIP a normal
+     absolute dropdown — so the Crop / Animate menus float with position:fixed,
+     positioned under their button each time they open */
+  function floatMenu(btn,menu){
+    menu.style.position='fixed';
+    menu.style.zIndex='240';
+    var r=btn.getBoundingClientRect();
+    menu.style.top=(r.bottom+4)+'px';
+    var mw=menu.offsetWidth||170;
+    menu.style.left=Math.max(8,
+      Math.min(r.left,window.innerWidth-mw-8))+'px';
+    menu.style.right='auto';menu.style.bottom='auto';
+  }
+  function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick){
+    var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
+    if(!wrap||!btn||!menu) return;
+    opts.forEach(function(p){
       var o=document.createElement('button');
-      o.className='sh-opt';o.dataset.shape=p[0];
+      o.className='sh-opt';o.setAttribute('data-'+attr,p[0]);
       o.title=p[1];o.textContent=p[1];
       o.addEventListener('click',function(e){
-        e.stopPropagation();
-        fmtApply(function(a){
-          a.crop=a.crop||{};
-          if(p[0]==='rect'){
-            delete a.crop.shape;
-            if(!(a.crop.t||a.crop.r||a.crop.b||a.crop.l)) delete a.crop;
-          } else a.crop.shape=p[0];
-        });
-        cmenu.hidden=true;cbtn.setAttribute('aria-expanded','false');
+        e.stopPropagation();onPick(p[0]);
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');
       });
-      cmenu.appendChild(o);
+      menu.appendChild(o);
     });
-    cbtn.addEventListener('click',function(e){
+    btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=cmenu.hidden;
-      cmenu.hidden=!willOpen;
-      cbtn.setAttribute('aria-expanded',willOpen.toString());
+      var willOpen=menu.hidden;
+      menu.hidden=!willOpen;
+      btn.setAttribute('aria-expanded',willOpen.toString());
+      if(willOpen) floatMenu(btn,menu);
     });
     document.addEventListener('click',function(e){
-      if(!cmenu.hidden&&!cwrap.contains(e.target)){
-        cmenu.hidden=true;cbtn.setAttribute('aria-expanded','false');}
+      if(!menu.hidden&&!wrap.contains(e.target)){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
     });
-  })();
+  }
+  /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
+  wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
+    CROP_SHAPES,'shape',function(shape){
+      fmtApply(function(a){
+        a.crop=a.crop||{};
+        if(shape==='rect'){
+          delete a.crop.shape;
+          if(!(a.crop.t||a.crop.r||a.crop.b||a.crop.l)) delete a.crop;
+        } else a.crop.shape=shape;
+      });
+    });
   /* ---- animation dropdown: reveal-on-click builds (fade / rise / zoom) ---- */
-  (function(){
-    var awrap=$('#fmt-animwrap'),abtn=$('#fmt-anim'),amenu=$('#fmt-anim-menu');
-    if(!awrap||!abtn||!amenu) return;
+  wireFloatDropdown('fmt-animwrap','fmt-anim','fmt-anim-menu',
     [['none','No animation'],['fade','Fade in'],['rise','Rise up'],
-     ['zoom','Zoom in']].forEach(function(p){
-      var o=document.createElement('button');
-      o.className='sh-opt';o.dataset.anim=p[0];o.textContent=p[1];
-      o.addEventListener('click',function(e){
-        e.stopPropagation();
-        fmtApply(function(a){
-          if(p[0]==='none') delete a.anim;
-          else a.anim={type:p[0],
-            order:(a.anim&&a.anim.order)||nextAnimOrder(pres.slides[cur])};
-        });
-        amenu.hidden=true;abtn.setAttribute('aria-expanded','false');
+     ['zoom','Zoom in']],'anim',function(type){
+      fmtApply(function(a){
+        if(type==='none') delete a.anim;
+        else a.anim={type:type,
+          order:(a.anim&&a.anim.order)||nextAnimOrder(pres.slides[cur])};
       });
-      amenu.appendChild(o);
     });
-    abtn.addEventListener('click',function(e){
-      e.stopPropagation();
-      var willOpen=amenu.hidden;amenu.hidden=!willOpen;
-      abtn.setAttribute('aria-expanded',willOpen.toString());
-    });
-    document.addEventListener('click',function(e){
-      if(!amenu.hidden&&!awrap.contains(e.target)){
-        amenu.hidden=true;abtn.setAttribute('aria-expanded','false');}
-    });
-  })();
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
     var s=pres.slides[cur];
@@ -8096,17 +8135,20 @@ _DECK_JS = r"""
   function go(n){
     var prev=cur;
     cur=Math.max(0,Math.min(pres.slides.length-1,n));
+    if(cur===prev) return;   /* clamped no-op: keep build + selection state */
     /* stepping back into a slide shows it fully built; forward starts fresh */
     revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
+    selAnnot=null;selSet=[];   /* never carry a selection across slides */
     refresh();
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
-  /* advance: reveal the next build, else move to the next slide */
+  /* advance: reveal the next build, else move to the next slide (no-op at the
+     very end, so the final slide never collapses back to its pre-build state) */
   function advance(){
     var s=pres.slides[cur];
     if(mode==='view'&&s&&revealCount<slideBuildIdx(s).length){
       revealCount++;renderSlide();
-    } else go(cur+1);
+    } else if(cur<pres.slides.length-1) go(cur+1);
   }
   function backStep(){
     if(mode==='view'&&revealCount>0){revealCount--;renderSlide();}
@@ -8433,9 +8475,9 @@ _DECK_JS = r"""
       }
     }
     if(eb){
-      eb.disabled=!s||mode==='edit';
+      eb.disabled=!s;
       eb.innerHTML=(mode==='edit')
-        ?'&#10003; Editing this slide':'&#9998; Swap to edit view';
+        ?'&#9636; Swap to notebooks':'&#9998; Swap to edit view';
     }
   }
   /* the current slide's interactive frame editor — embedded inline as
@@ -8602,7 +8644,7 @@ _DECK_JS = r"""
       var tt=document.createElement('span');tt.className='film-t';
       tt.textContent=slideTitle(s);lbl.appendChild(tt);
       if(i!==cur) lbl.addEventListener('click',function(){
-        cur=i;activePane=-1;refresh();});
+        cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
       row.appendChild(lbl);
       var ctr=document.createElement('span');ctr.className='film-ctr';
       [['↑',function(){moveSlide(i,-1);},'Move slide up'],
@@ -8920,10 +8962,11 @@ _DECK_JS = r"""
     var l=stage.querySelector('.annot-layer');
     if(l) selectAnnot(l,null);
   });
+  /* ONE mode toggle: swaps between the slide editor and the notebook view */
   var editBtn=$('#dc-edit');
   if(editBtn) editBtn.addEventListener('click',function(){
-    if(!pres.slides[cur]) return;
-    setUIMode('edit');
+    if(mode==='edit') setUIMode('create');
+    else if(pres.slides[cur]) setUIMode('edit');
   });
   var delBtn=$('#et-del');
   if(delBtn) delBtn.addEventListener('click',deleteSel);
@@ -8989,14 +9032,6 @@ _DECK_JS = r"""
         shMenu.hidden=true;shBtn.setAttribute('aria-expanded','false');}
     });
   })();
-  /* ---- slide view <-> notebook view ----
-     "Swap to notebooks" brings the notebooks up inside the editor (create
-     mode); it never leaves the presentation. "Swap to edit view" takes you
-     back to the slide. */
-  var nbViewBtn=$('#et-notebook');
-  if(nbViewBtn) nbViewBtn.addEventListener('click',function(){
-    setUIMode('create');
-  });
   var downBtn=$('#deck-down');
   if(downBtn) downBtn.addEventListener('click',scrollToTrace);
   var upBtn=$('#deck-up');
@@ -10655,9 +10690,10 @@ def _self_test() -> None:
     assert 'data-tool="cell"' in out and "Notebook cell" in out
     assert "et-bigcell" not in out
     assert 'id="sh-btn"' in out and 'id="sh-menu"' in out and "var SHAPE_LIST" in out
-    # "Notebook view" now switches to create mode (never exits); "Done" and the
-    # floating "Back to slide" pill are gone
-    assert 'id="et-notebook"' in out
+    # ONE mode toggle (dc-edit) swaps slide-editor <-> notebook view; the old
+    # separate "et-notebook" button, "Done" and the "Back to slide" pill are gone
+    assert "Swap to notebooks" in out and "Swap to edit view" in out
+    assert 'id="et-notebook"' not in out
     assert 'id="et-done"' not in out and 'id="slide-return"' not in out
     # a markdown cell frame carries its own text + background colour
     assert "function applyCellColor" in out and "--nb-tx" in out
@@ -10684,6 +10720,18 @@ def _self_test() -> None:
     # build animations (reveal on click)
     assert 'id="fmt-anim"' in out and "function slideBuildIdx" in out
     assert "an-prebuild" in out and "an-anim-fade" in out
+    # hardening from the adversarial review of the editor batch:
+    # - rich-text sanitiser parses INERTLY (template) + re-walks unwrapped nodes
+    assert "createElement('template')" in out and "tpl.content" in out
+    # - Crop/Animate menus float (position:fixed) out of the format-bar overflow
+    assert "function floatMenu" in out and "menu.style.position='fixed'" in out
+    # - the slide-numbers preference survives normalisation/reload
+    assert "out.showNums=1" in out
+    # - selection never carries across slides (no phantom group moves/crashes)
+    assert "selAnnot=null;selSet=[];refresh()" in out
+    assert "if(cur===prev) return" in out
+    # - formatting applies to the whole selection; text-align actually positions
+    assert "targets=selSet.filter" in out and "flex:1;}" in out
     assert 'id="theme-btn"' in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
