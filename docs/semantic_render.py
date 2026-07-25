@@ -2483,14 +2483,20 @@ your notebook (from <i>any</i> open tab, so one deck can mix several
 notebooks) to fill it; swap later with &#8644; Replace. Pick a slide
 layout from the diagrams (full, halves, rows, quarters, a
 <b>title slide</b>, or a <b>blank canvas</b>).</li>
-<li>The editor is PowerPoint-style: <b>+ Text</b>, <b>+ Arrow</b>, and
-<b>+ Shapes</b> (rectangle, ellipse, star, arrow, cloud, and more).
-Select anything for colours, text size, line thickness, dash and fill;
-use <b>Swap to notebooks</b> to scroll your cells and swap back.</li>
-<li><b>&#9654; Present</b> plays full screen. Arrow keys &larr;/&rarr;
-move through the story; on slides with code, &darr; descends the
-<b>code trail</b> &mdash; every cell that made the figure, one per
-screen, in execution order &mdash; and &uarr; climbs back out.</li>
+<li>The editor is a full slide editor: <b>+ Text</b>, <b>+ Arrow</b>,
+<b>+ Shapes</b> (rectangle, ellipse, star, arrow, cloud, and more) and
+<b>&#128443; Image</b>. Select anything for colours, precise point size,
+alignment, bold / italic / underline, line thickness, dash, fill and a
+smooth opacity slider. <b>Highlight</b> part of a text box to recolour just
+that run.</li>
+<li><b>Crop</b> an image <i>or</i> a notebook cell (figure, markdown or code)
+to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
+one; <b>&#9654; Animate</b> an item so it appears on click; and switch on
+<b>slide numbers</b> from the File menu.</li>
+<li><b>&#9654; Present</b> plays full screen. Arrow keys / click
+&larr;/&rarr; step through builds and slides; on slides with code, &darr;
+descends the <b>code trail</b> &mdash; every cell that made the figure, one
+per screen, in execution order &mdash; and &uarr; climbs back out.</li>
 </ul>
 
 <h3>Saving</h3>
@@ -2747,7 +2753,15 @@ body.creating-docs .apptop{
   border-radius:50%;background:var(--cyan);box-shadow:0 0 0 6px #39a9c022;
   flex:none;}
 .welcome-tag{font-size:clamp(17px,2.4vw,21px);line-height:1.5;font-weight:500;
-  color:var(--ink-2);margin:0 auto 30px;max-width:540px;}
+  color:var(--ink-2);margin:0 auto 20px;max-width:560px;}
+.welcome-lead{font-size:15.5px;line-height:1.65;color:var(--ink-3);
+  margin:0 auto 30px;max-width:580px;}
+.welcome-lead b{color:var(--ink-2);}
+.welcome-note{max-width:560px;margin:26px auto 0;text-align:left;
+  font-size:14.5px;line-height:1.55;color:var(--ink-2);
+  background:#39a9c010;border:1px solid #39a9c026;
+  border-left:3px solid var(--cyan);border-radius:10px;padding:13px 16px;}
+.welcome-note b{color:var(--cyan-deep);}
 .welcome-steps{list-style:none;margin:0 auto 30px;padding:0;max-width:560px;
   text-align:left;display:flex;flex-direction:column;gap:15px;}
 .welcome-steps li{display:flex;align-items:flex-start;gap:15px;
@@ -3148,6 +3162,11 @@ body:not(.light) .rawmd h5,body:not(.light) .rawmd h6{color:#e6edf3;}
 body:not(.light) .welcome{background:#0b141d;}
 body:not(.light) .welcome-wordmark{color:#7fd8ea;}
 body:not(.light) .welcome-tag{color:#d3dee7;}
+body:not(.light) .welcome-lead{color:#9fb1bf;}
+body:not(.light) .welcome-lead b{color:#d3dee7;}
+body:not(.light) .welcome-note{background:#39a9c016;border-color:#39a9c033;
+  border-left-color:var(--cyan);color:#c2d0da;}
+body:not(.light) .welcome-note b{color:#8fe0f0;}
 body:not(.light) .welcome-steps li{color:#b3c2ce;}
 body:not(.light) .ws-n{background:#39a9c026;color:#8fe0f0;}
 body:not(.light) .welcome-drop{color:#7e93a4;}
@@ -4815,6 +4834,8 @@ _DECK_HTML = """
             <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
             <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
             <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <div class="dc-msep"></div>
             <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
             <button class="dc-mi" id="mi-autosave" hidden></button>
             <button class="dc-mi" id="mi-dl">Download JSON</button>
@@ -4896,6 +4917,9 @@ _DECK_HTML = """
             + Shapes &#9662;</button>
           <div class="sh-menu" id="sh-menu" hidden></div>
         </span>
+        <button class="dbtn" id="et-image"
+          title="Add an image from your computer">&#128443; Image</button>
+        <input type="file" id="img-file" accept="image/*" hidden>
         <button class="dbtn" id="et-del" disabled
           title="Delete the selected item (Del)">Delete</button>
         <span class="et-hint" id="et-hint"></span>
@@ -4935,6 +4959,11 @@ _DECK_HTML = """
             title="Smaller text">A&#8722;</button>
           <button class="dbtn etm" id="fmt-bigger"
             title="Bigger text">A+</button>
+          <span class="fmt-szwrap" id="fmt-szwrap" hidden
+            title="Text size (points)">
+            <input class="fmt-num" id="fmt-size" type="number"
+              min="6" max="240" step="1" aria-label="Text size in points">
+            <span class="fmt-unit">pt</span></span>
           <select class="etm" id="fmt-font" hidden
             title="Text font">
             <option value="sans">Sans</option>
@@ -4947,6 +4976,12 @@ _DECK_HTML = """
             title="Bold"><b>B</b></button>
           <button class="dbtn etm" id="fmt-ital"
             title="Italic"><i>I</i></button>
+          <button class="dbtn etm" id="fmt-under"
+            title="Underline"><u>U</u></button>
+          <button class="dbtn etm" id="fmt-strike"
+            title="Strikethrough"><s>S</s></button>
+          <button class="dbtn etm" id="fmt-align"
+            title="Text alignment (click to cycle)">&#9636; Left</button>
           <button class="dbtn etm" id="fmt-list"
             title="Bullet list (Enter adds a point)">&#8226; List</button>
           <button class="dbtn etm" id="fmt-line"
@@ -4957,14 +4992,21 @@ _DECK_HTML = """
             title="Fill on/off">Fill</button>
           <button class="dbtn etm" id="fmt-shape"
             title="Cycle the shape (rectangle, ellipse, star, …)">&#9711;</button>
-          <button class="dbtn etm" id="fmt-op"
-            title="Cycle transparency">Op</button>
+          <span class="fmt-opwrap" id="fmt-opwrap"
+            title="Opacity (0&ndash;100%)">
+            <input class="fmt-range" id="fmt-op" type="range"
+              min="0" max="100" step="1" aria-label="Opacity percent">
+            <span class="fmt-opval" id="fmt-opval">100%</span></span>
           <button class="dbtn etm" id="fmt-rotl"
             title="Rotate left 15&#176;">&#10226;</button>
           <button class="dbtn etm" id="fmt-rotr"
             title="Rotate right 15&#176;">&#10227;</button>
           <button class="dbtn etm" id="fmt-dup"
             title="Duplicate (Ctrl+D)">&#10697;</button>
+          <button class="dbtn etm" id="fmt-group"
+            title="Group the selected items (Ctrl+G)">&#9783; Group</button>
+          <button class="dbtn etm" id="fmt-ungroup"
+            title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
           <button class="dbtn etm" id="fmt-front"
             title="Bring to front">&#8613;</button>
           <button class="dbtn etm" id="fmt-back"
@@ -4972,6 +5014,20 @@ _DECK_HTML = """
           <button class="dbtn etm" id="fmt-replace"
             title="Swap in a different notebook card">&#8644;
             Replace</button>
+          <span class="sh-drop" id="fmt-cropwrap" hidden>
+            <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
+              aria-expanded="false"
+              title="Crop to a shape (rectangle, ellipse, star, …)">&#9986;
+              Crop &#9662;</button>
+            <div class="sh-menu" id="fmt-crop-menu" hidden></div>
+          </span>
+          <span class="sh-drop" id="fmt-animwrap" hidden>
+            <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
+              aria-expanded="false"
+              title="Animate this item so it appears on click">&#9654;
+              Animate &#9662;</button>
+            <div class="sh-menu" id="fmt-anim-menu" hidden></div>
+          </span>
         </span>
       </div>
       <button class="deck-arrow prev" id="deck-prev"
@@ -5564,6 +5620,18 @@ select#fmt-font{background:#16273a;border:1px solid #ffffff22;
 select#fmt-font[hidden]{display:none;}
 .dbtn.etm[aria-pressed="true"]{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:#fff;}
+/* precise point-size input + opacity slider live in the format bar */
+.fmt-szwrap,.fmt-opwrap{display:inline-flex;align-items:center;gap:4px;
+  flex:none;}
+.fmt-szwrap[hidden]{display:none;}
+.fmt-num{width:44px;background:#16273a;border:1px solid #ffffff22;
+  color:#cdd9e3;font-family:var(--mono);font-size:11px;padding:4px 5px;
+  border-radius:6px;-moz-appearance:textfield;}
+.fmt-num::-webkit-outer-spin-button,
+.fmt-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.fmt-unit,.fmt-opval{font-family:var(--mono);font-size:10.5px;color:#7e93a4;}
+.fmt-opval{min-width:34px;text-align:right;}
+.fmt-range{width:96px;accent-color:var(--cyan);cursor:pointer;height:16px;}
 .sw{width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
   border:2px solid #ffffff30;}
 .sw[aria-pressed="true"]{border-color:#fff;
@@ -5576,6 +5644,39 @@ select#fmt-font[hidden]{display:none;}
   transform:rotate(-45deg);}
 .deck.editing .deck-arrow,.deck.editing .deck-foot{display:none;}
 .slide{position:relative;}
+/* image annotations */
+.an-image{position:absolute;}
+.an-imgel{width:100%;height:100%;object-fit:cover;display:block;
+  pointer-events:none;border-radius:2px;}
+.deck.editing .an-image{cursor:move;}
+.deck.editing .an-image.sel{outline:2px solid var(--cyan);outline-offset:1px;}
+/* multi-selection / group: a dashed outline, no per-item resize handles */
+.deck.editing .an-item.grpsel{outline:1.5px dashed var(--cyan);
+  outline-offset:1px;}
+.deck.editing .an-item.grpsel .an-resize,
+.deck.editing .an-item.grpsel .an-handle,
+.deck.editing .an-item.grpsel .an-cellbtn,
+.deck.editing .an-item.grpsel .cellparts{display:none!important;}
+/* build animations: staged items hide until revealed, then animate in */
+.an-prebuild{opacity:0!important;pointer-events:none!important;}
+@keyframes anIn-fade{from{opacity:0}to{opacity:1}}
+@keyframes anIn-rise{from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:none}}
+@keyframes anIn-zoom{from{opacity:0;transform:scale(.85)}
+  to{opacity:1;transform:none}}
+.an-anim-fade{animation:anIn-fade .45s ease;}
+.an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
+.an-anim-zoom{animation:anIn-zoom .45s ease;}
+/* the build-order badge shown in the editor */
+.an-buildno{position:absolute;top:-9px;left:-9px;z-index:5;min-width:16px;
+  height:16px;border-radius:8px;background:var(--amber);color:#241a05;
+  font-family:var(--mono);font-size:10px;font-weight:700;display:flex;
+  align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
+/* optional per-deck slide numbers (bottom-right, part of the slide) */
+.slide-pageno{position:absolute;right:2.6%;bottom:3.2%;z-index:4;
+  font-family:var(--mono);font-size:2.4vh;line-height:1;color:#8aa0b0;
+  pointer-events:none;}
+.vpage .slide-pageno{color:#8aa0b0;}
 
 /* annotation layer */
 .annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
@@ -6814,6 +6915,21 @@ _DECK_JS = r"""
     if(s&&slideEl){
       attachAnnots(slideEl,s);
       typeset(slideEl);
+      if(mode==='view'){
+        /* click anywhere on the slide advances the build / next slide */
+        slideEl.style.cursor='pointer';
+        slideEl.addEventListener('click',function(e){
+          if(e.target.closest&&e.target.closest('button,a,input,select'))
+            return;
+          advance();
+        });
+      }
+      if(pres.showNums){
+        var pn=document.createElement('div');
+        pn.className='slide-pageno';
+        pn.textContent=(cur+1);
+        slideEl.appendChild(pn);
+      }
     }
     /* playback: the code trace flows beneath the slide — scroll (or
        ArrowDown) between them; steps expand in place */
@@ -6832,8 +6948,12 @@ _DECK_JS = r"""
     }
     stage.scrollTop=0;
     updateVNav();
-    $('#deck-prev').disabled=cur<=0;
-    $('#deck-next').disabled=cur>=pres.slides.length-1;
+    /* Next stays live while builds remain on the last slide; Prev while any
+       build can be stepped back on the first slide */
+    var moreBuilds=(mode==='view'&&s&&revealCount<slideBuildIdx(s).length);
+    var fewerBuilds=(mode==='view'&&revealCount>0);
+    $('#deck-prev').disabled=(cur<=0&&!fewerBuilds);
+    $('#deck-next').disabled=(cur>=pres.slides.length-1&&!moreBuilds);
   }
 
   /* ---------- free annotations: text, arrows, boxes, cell frames -----
@@ -6846,6 +6966,47 @@ _DECK_JS = r"""
     mono:'var(--mono)',system:'system-ui,sans-serif',
     hand:"'Segoe Print','Comic Sans MS',cursive"};
   var tool='select', selAnnot=null, picking=-1;
+  /* selSet = every item in the current selection (a group, or a shift-click
+     multi-select); selAnnot is the primary one that drives the format bar */
+  var selSet=[];
+  function groupMembers(s,idx){
+    if(!s||typeof idx!=='number') return [idx];
+    var a=(s.annots||[])[idx];
+    if(!a||a.grp==null) return [idx];
+    var out=[];
+    (s.annots||[]).forEach(function(x,i){if(x.grp===a.grp) out.push(i);});
+    return out.length?out:[idx];
+  }
+  function nextGrp(s){
+    var mx=0;(s.annots||[]).forEach(function(x){
+      if(typeof x.grp==='number'&&x.grp>mx) mx=x.grp;});
+    return mx+1;
+  }
+  /* build animations: items carrying a.anim reveal one step at a time during
+     playback (click / arrow / space); revealCount is how many are shown */
+  var revealCount=0;
+  function slideBuildIdx(s){
+    var arr=[];
+    (s&&s.annots||[]).forEach(function(a,i){if(a&&a.anim) arr.push(i);});
+    arr.sort(function(x,y){
+      return ((s.annots[x].anim.order||0)-(s.annots[y].anim.order||0));});
+    return arr;
+  }
+  function nextAnimOrder(s){
+    var mx=0;(s&&s.annots||[]).forEach(function(a){
+      if(a&&a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;});
+    return mx+1;
+  }
+  function paintSel(layer){
+    var multi=selSet.length>1;
+    $$('[data-idx]',layer).forEach(function(el){
+      var raw=el.getAttribute('data-idx');
+      var key=(raw==='t'||raw==='s')?raw:+raw;
+      var on=selSet.indexOf(key)>=0;
+      el.classList.toggle('sel',on);
+      el.classList.toggle('grpsel',on&&multi);
+    });
+  }
   var pendingShape='rect';   /* which shape the "+ Shapes" tool draws */
   function titleProps(s,which){
     var key=which==='t'?'tprops':'sprops';
@@ -6878,6 +7039,93 @@ _DECK_JS = r"""
       a.bgcol==='none'?'transparent':a.bgcol);
     else el.style.removeProperty('--nb-bg');
   }
+  /* crop masks: images AND notebook cells (figures, markdown, code) can be
+     clipped to a shape, or trimmed with a rectangular inset. clip-path scales
+     with the element, so it survives responsive slide sizing. */
+  var CROP_SHAPES=[['rect','Rectangle'],['round','Rounded'],
+    ['ellipse','Ellipse'],['circle','Circle'],['triangle','Triangle'],
+    ['diamond','Diamond'],['pentagon','Pentagon'],['hexagon','Hexagon'],
+    ['star','Star'],['arrow','Arrow']];
+  var CROP_CLIP={
+    round:'inset(0 round 14%)',
+    ellipse:'ellipse(50% 50% at 50% 50%)',
+    circle:'circle(50% at 50% 50%)',
+    triangle:'polygon(50% 0%,100% 100%,0% 100%)',
+    diamond:'polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
+    pentagon:'polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%)',
+    hexagon:'polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)',
+    star:'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,'
+      +'21% 91%,32% 57%,2% 35%,39% 35%)',
+    arrow:'polygon(0% 30%,55% 30%,55% 8%,100% 50%,55% 92%,55% 70%,0% 70%)'};
+  function cropCss(a){
+    if(!a||!a.crop) return '';
+    var c=a.crop,sh=c.shape||'rect';
+    if(sh!=='rect'&&CROP_CLIP[sh]) return CROP_CLIP[sh];
+    var t=c.t||0,r=c.r||0,b=c.b||0,l=c.l||0;
+    if(t||r||b||l) return 'inset('+t+'% '+r+'% '+b+'% '+l+'%)';
+    return '';
+  }
+  function applyCrop(el,a){
+    if(!el) return;
+    var cc=cropCss(a);
+    if(cc){el.style.clipPath=cc;el.style.webkitClipPath=cc;}
+  }
+  /* rich text: a text box can carry per-character colour (highlight a run and
+     recolour just it). Stored as sanitised HTML in a.html; a.text keeps the
+     plain fallback. Only colour + basic inline styles survive the sanitiser. */
+  var RICH_TAGS={span:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1};
+  function sanitizeRich(html){
+    var tmp=document.createElement('div');
+    tmp.innerHTML=String(html||'');
+    (function walk(node){
+      Array.prototype.slice.call(node.childNodes).forEach(function(n){
+        if(n.nodeType===3) return;               /* text node: keep */
+        if(n.nodeType!==1){node.removeChild(n);return;}
+        var tag=(n.tagName||'').toLowerCase();
+        if(!RICH_TAGS[tag]){                      /* unwrap unknown tags */
+          while(n.firstChild) node.insertBefore(n.firstChild,n);
+          node.removeChild(n);return;
+        }
+        var color=(n.style&&n.style.color)||
+          (tag==='font'?(n.getAttribute('color')||''):'');
+        var names=[],k;
+        for(k=0;k<n.attributes.length;k++) names.push(n.attributes[k].name);
+        names.forEach(function(nm){n.removeAttribute(nm);});
+        if(color) n.style.color=color;
+        walk(n);
+      });
+    })(tmp);
+    return {html:tmp.innerHTML,
+      rich:!!tmp.querySelector('span[style],font,b,strong,i,em,u,s')};
+  }
+  function activeTextEditable(){
+    var ae=document.activeElement;
+    if(ae&&ae.classList&&ae.classList.contains('an-tx')&&ae.isContentEditable
+       &&ae.contentEditable!=='plaintext-only') return ae;
+    return null;
+  }
+  function selectionInside(el){
+    var sel=window.getSelection();
+    if(!sel||sel.rangeCount===0||sel.isCollapsed) return false;
+    var r=sel.getRangeAt(0);
+    return el.contains(r.startContainer)&&el.contains(r.endContainer);
+  }
+  /* colour just the highlighted run inside the text box being edited;
+     returns false when there is no live selection to recolour */
+  function colorSelection(col){
+    var el=activeTextEditable();
+    if(!el||!selectionInside(el)) return false;
+    try{document.execCommand('styleWithCSS',false,true);}catch(e){}
+    try{document.execCommand('foreColor',false,col);}catch(e){}
+    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    if(a){
+      var r=sanitizeRich(el.innerHTML);
+      a.text=el.innerText;
+      if(r.rich) a.html=r.html; else delete a.html;
+      markDirty();
+    }
+    return true;
+  }
   function mkHandle(){
     var h=document.createElement('span');h.className='an-handle';
     h.title='Drag to move';h.textContent='⠿';
@@ -6895,11 +7143,9 @@ _DECK_JS = r"""
     renderAnnots(layer,s);
     if(mode==='edit') wireEditor(layer,s);
   }
-  function editableText(layer,el,getVal,setVal,idx){
+  function editableText(layer,el,getVal,setVal,idx,rich){
     try{
-      el.contentEditable=(el.tagName==='UL')?'true':'plaintext-only';
-      if(el.contentEditable!=='plaintext-only'&&el.tagName!=='UL')
-        el.contentEditable='true';
+      el.contentEditable=(el.tagName==='UL'||rich)?'true':'plaintext-only';
     }catch(e){el.contentEditable='true';}
     el.spellcheck=false;
     el.addEventListener('focus',function(){
@@ -6911,7 +7157,8 @@ _DECK_JS = r"""
     el.addEventListener('blur',function(){
       var v=(el.innerText||'').replace(/\r/g,'')
         .replace(/\n+$/,'');
-      setVal(v);
+      var r=rich?sanitizeRich(el.innerHTML):null;
+      setVal(v,r);
       markDirty();
     });
     el.addEventListener('mousedown',function(e){
@@ -6944,6 +7191,9 @@ _DECK_JS = r"""
         d.style.color=p.color||'#f0f6fa';
         if(p.b) d.style.fontWeight='700';
         if(p.i) d.style.fontStyle='italic';
+        var tdeco=(p.u?'underline ':'')+(p.strike?'line-through':'');
+        if(tdeco.trim()) d.style.textDecoration=tdeco.trim();
+        if(p.align) d.style.textAlign=p.align;
         if(p.font&&FONTMAP[p.font])
           d.style.fontFamily=FONTMAP[p.font];
         applyCommon(d,p,'translate(-50%,-50%)');
@@ -7062,6 +7312,7 @@ _DECK_JS = r"""
           var b=framePart(it.ns,a.part);
           if(b){
             if(a.ts) b.style.zoom=a.ts;
+            applyCrop(b,a);
             c.appendChild(b);
           }
           applyCellColor(c,a);
@@ -7111,6 +7362,9 @@ _DECK_JS = r"""
         d2.style.color=a.color||'#ffffff';
         if(a.b) d2.style.fontWeight='700';
         if(a.i) d2.style.fontStyle='italic';
+        var deco=(a.u?'underline ':'')+(a.strike?'line-through':'');
+        if(deco.trim()) d2.style.textDecoration=deco.trim();
+        if(a.align) d2.style.textAlign=a.align;
         if(a.font&&FONTMAP[a.font])
           d2.style.fontFamily=FONTMAP[a.font];
         if(a.bg!==0&&a.bgc){
@@ -7134,27 +7388,76 @@ _DECK_JS = r"""
         } else {
           tx2=document.createElement('span');
           tx2.className='an-tx';
-          tx2.textContent=a.text||'';
+          if(a.html) tx2.innerHTML=sanitizeRich(a.html).html;
+          else tx2.textContent=a.text||'';
         }
         if(editing){
           editableText(layer,tx2,
             function(){return a.text;},
-            function(v){a.text=v;},i);
+            function(v,r){a.text=v;
+              if(r&&r.rich&&!a.list) a.html=r.html; else delete a.html;},
+            i,!a.list);
         }
         d2.appendChild(tx2);
         layer.appendChild(d2);
+      } else if(a.k==='image'){
+        var im=document.createElement('div');
+        im.className='an-item an-image'+(selAnnot===i?' sel':'');
+        im.style.left=a.x+'%';im.style.top=a.y+'%';
+        im.style.width=(a.w||30)+'%';im.style.height=(a.h||24)+'%';
+        applyCommon(im,a);
+        im.setAttribute('data-idx',i);
+        var img=document.createElement('img');
+        img.className='an-imgel';img.src=a.src||'';img.alt='';
+        img.draggable=false;
+        applyCrop(img,a);
+        im.appendChild(img);
+        if(editing){im.appendChild(mkHandle());im.appendChild(mkResize());}
+        layer.appendChild(im);
       }
     });
+    /* build animations: number the builds in the editor; in playback, hide the
+       ones not yet revealed and animate the one just revealed */
+    if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
+      var builds=slideBuildIdx(s),bpos={};
+      builds.forEach(function(idx,p){bpos[idx]=p;});
+      $$('.an-item[data-idx]',layer).forEach(function(el){
+        var raw=el.getAttribute('data-idx');
+        if(raw==='t'||raw==='s') return;
+        var bi=+raw,ba=(s.annots||[])[bi];
+        if(!ba||!ba.anim||bpos[bi]==null) return;
+        if(editing){
+          var bd=document.createElement('span');
+          bd.className='an-buildno';bd.textContent=(bpos[bi]+1);
+          bd.title='Animation '+(bpos[bi]+1)+' — '+(ba.anim.type||'fade');
+          el.appendChild(bd);
+        } else if(mode==='view'){
+          if(bpos[bi]>=revealCount) el.classList.add('an-prebuild');
+          else if(bpos[bi]===revealCount-1)
+            el.classList.add('an-anim-'+(ba.anim.type||'fade'));
+        }
+      });
+    }
     layer.appendChild(svgTop);
   }
-  function selectAnnot(layer,idx){
-    selAnnot=idx;
-    $$('[data-idx]',layer).forEach(function(el){
-      el.classList.toggle('sel',
-        idx!==null&&el.getAttribute('data-idx')===String(idx));
-    });
+  function selectAnnot(layer,idx,additive){
+    var s=pres.slides[cur];
+    if(idx===null){selAnnot=null;selSet=[];}
+    else {
+      var mem=groupMembers(s,idx);
+      if(additive&&typeof idx==='number'){
+        if(selSet.indexOf(idx)>=0){
+          selSet=selSet.filter(function(i){return mem.indexOf(i)<0;});
+          selAnnot=selSet.length?selSet[selSet.length-1]:null;
+        } else {
+          mem.forEach(function(i){if(selSet.indexOf(i)<0) selSet.push(i);});
+          selAnnot=idx;
+        }
+      } else {selAnnot=idx;selSet=mem.slice();}
+    }
+    paintSel(layer);
     var d=$('#et-del');
-    if(d) d.disabled=(typeof idx!=='number');
+    if(d) d.disabled=!selSet.some(function(i){return typeof i==='number';});
     showFmt();
   }
   function defaultColor(kind){
@@ -7182,13 +7485,13 @@ _DECK_JS = r"""
       cellText=!!ci&&ci.kind!=='figure'&&ci.kind!=='diagnostic';
       noteCell=!!ci&&ci.kind==='note';
     }
+    var isText=(kind==='text');
+    var isNum=(typeof selAnnot==='number');
     $$('.sw:not(.swbg)',bar).forEach(function(sw){
-      sw.hidden=(kind==='cell'&&!noteCell);
+      sw.hidden=!(isText||noteCell);
       var cur_=(kind==='cell')?(a.txcol||''):(a.color||defaultColor(kind));
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
-    var isText=(kind==='text');
-    var isNum=(typeof selAnnot==='number');
     show('#fmt-smaller',isText||cellText);
     show('#fmt-bigger',isText||cellText);
     var fontSel=$('#fmt-font');
@@ -7198,18 +7501,34 @@ _DECK_JS = r"""
     }
     show('#fmt-bold',isText,!!a.b);
     show('#fmt-ital',isText,!!a.i);
+    show('#fmt-under',isText,!!a.u);
+    show('#fmt-strike',isText,!!a.strike);
+    show('#fmt-align',isText);
+    var alBtn=$('#fmt-align');
+    if(alBtn&&isText){
+      var al=a.align||'left';
+      alBtn.textContent=al.charAt(0).toUpperCase()+al.slice(1);
+    }
+    show('#fmt-szwrap',isText);
+    var szIn=$('#fmt-size');
+    if(szIn&&isText&&document.activeElement!==szIn)
+      szIn.value=Math.round((a.size||2.6)*5.4);
     show('#fmt-list',isText&&isNum,!!a.list);
     show('#fmt-line',kind==='arrow'||kind==='rect');
     show('#fmt-dash',kind==='arrow'||kind==='rect',!!a.dash);
     show('#fmt-fill',kind==='rect',!!a.fill);
     show('#fmt-shape',kind==='rect',!!a.shape&&a.shape!=='rect');
-    show('#fmt-op',true);
-    var opBtn=$('#fmt-op');
-    if(opBtn) opBtn.textContent='Op '
-      +Math.round((a.op==null?1:a.op)*100)+'%';
+    show('#fmt-opwrap',true);
+    var opR=$('#fmt-op'),opV=$('#fmt-opval');
+    var opPct=Math.round((a.op==null?1:a.op)*100);
+    if(opR) opR.value=opPct;
+    if(opV) opV.textContent=opPct+'%';
     show('#fmt-rotl',kind!=='arrow');
     show('#fmt-rotr',kind!=='arrow');
     show('#fmt-dup',isNum);
+    var nSel=selSet.filter(function(i){return typeof i==='number';}).length;
+    show('#fmt-group',nSel>=2);
+    show('#fmt-ungroup',isNum&&a.grp!=null);
     show('#fmt-front',isNum&&kind!=='arrow');
     show('#fmt-back',isNum&&kind!=='arrow');
     var plainText=isText&&typeof selAnnot==='number';
@@ -7224,6 +7543,14 @@ _DECK_JS = r"""
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
     show('#fmt-replace',kind==='cell');
+    show('#fmt-cropwrap',kind==='image'||kind==='cell');
+    show('#fmt-animwrap',isNum);
+    var animBtn=$('#fmt-anim');
+    if(animBtn&&isNum){
+      var an=a.anim&&a.anim.type;
+      var lbl={fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]||'Animate';
+      animBtn.innerHTML='&#9654; '+lbl+' &#9662;';
+    }
   }
   function fmtApply(fn){
     var s=pres.slides[cur]; if(!s) return;
@@ -7242,15 +7569,25 @@ _DECK_JS = r"""
     ev0.preventDefault();
     var a=annotByIdx(s,idx); if(!a) return;
     var start=pctPoint(layer,ev0);
-    var orig=JSON.parse(JSON.stringify(a));
+    /* drag the whole current selection (group / multi-select) together */
+    var movers=selSet.filter(function(i){return typeof i==='number';});
+    if(typeof idx==='number'&&movers.indexOf(idx)<0) movers=[idx];
+    var origs={};
+    movers.forEach(function(i){
+      origs[i]=JSON.parse(JSON.stringify((s.annots||[])[i]));});
+    var single=(typeof idx!=='number')?JSON.parse(JSON.stringify(a)):null;
     function mm(ev){
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
-      if(a.k==='arrow'){
-        a.x1=orig.x1+dx;a.y1=orig.y1+dy;
-        a.x2=orig.x2+dx;a.y2=orig.y2+dy;
-      } else {a.x=orig.x+dx;a.y=orig.y+dy;}
-      renderAnnots(layer,s);selectAnnot(layer,idx);
+      if(single){a.x=single.x+dx;a.y=single.y+dy;}
+      else movers.forEach(function(i){
+        var m=(s.annots||[])[i],o=origs[i];
+        if(!m||!o) return;
+        if(m.k==='arrow'){
+          m.x1=o.x1+dx;m.y1=o.y1+dy;m.x2=o.x2+dx;m.y2=o.y2+dy;
+        } else {m.x=o.x+dx;m.y=o.y+dy;}
+      });
+      renderAnnots(layer,s);paintSel(layer);
     }
     function mu(){
       document.removeEventListener('mousemove',mm);
@@ -7386,10 +7723,21 @@ _DECK_JS = r"""
         if(item){
           var raw=item.getAttribute('data-idx');
           var idx=(raw==='t'||raw==='s')?raw:+raw;
-          selectAnnot(layer,idx);
+          /* Shift+click adds/removes from the selection (for grouping);
+             it never starts a drag */
+          if(ev.shiftKey&&typeof idx==='number'){
+            selectAnnot(layer,idx,true);return;
+          }
+          /* clicking an item already in a multi-selection keeps the set and
+             drags the whole group */
+          if(selSet.indexOf(idx)<0) selectAnnot(layer,idx,false);
+          else {selAnnot=idx;paintSel(layer);showFmt();}
           var handleOnly=item.classList.contains('an-text')
             ||item.classList.contains('an-title');
-          if(!handleOnly
+          /* a grouped/multi-selected item drags from its body too (its move
+             handle is hidden), so the whole group moves as one */
+          var grouped=(selSet.length>1&&selSet.indexOf(idx)>=0);
+          if(grouped||!handleOnly
              ||(t.classList&&t.classList.contains('an-handle')))
             startMove(layer,s,idx,ev);
         } else selectAnnot(layer,null);
@@ -7447,15 +7795,38 @@ _DECK_JS = r"""
   }
   function deleteSel(){
     var s=pres.slides[cur];
-    if(!s||typeof selAnnot!=='number'||!s.annots
-       ||selAnnot>=s.annots.length) return;
-    s.annots.splice(selAnnot,1);
+    if(!s||!s.annots) return;
+    var idxs=selSet.filter(function(i){return typeof i==='number';});
+    if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+    if(!idxs.length) return;
+    idxs.sort(function(x,y){return y-x;}).forEach(function(i){
+      if(i>=0&&i<s.annots.length) s.annots.splice(i,1);});
     if(!s.annots.length) delete s.annots;
-    selAnnot=null;markDirty();
+    selAnnot=null;selSet=[];markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,s);
     var d=$('#et-del'); if(d) d.disabled=true;
     showFmt();
+  }
+  function groupSel(){
+    var s=pres.slides[cur]; if(!s||!s.annots) return;
+    var idxs=selSet.filter(function(i){return typeof i==='number';});
+    if(idxs.length<2) return;
+    var gid=nextGrp(s);
+    idxs.forEach(function(i){if(s.annots[i]) s.annots[i].grp=gid;});
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,idxs[0]);}
+  }
+  function ungroupSel(){
+    var s=pres.slides[cur];
+    if(!s||typeof selAnnot!=='number'||!s.annots) return;
+    var a=s.annots[selAnnot]; if(!a||a.grp==null) return;
+    var g=a.grp;
+    s.annots.forEach(function(x){if(x.grp===g) delete x.grp;});
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,selAnnot);}
   }
 
   /* ---------- picking: click a notebook card into a cell frame ------- */
@@ -7500,7 +7871,13 @@ _DECK_JS = r"""
 
   /* ---------- format bar wiring ---------- */
   $$('#et-fmt .sw:not(.swbg)').forEach(function(sw){
+    sw.addEventListener('mousedown',function(e){
+      /* keep the caret/selection in the text box so we can recolour just
+         the highlighted run instead of the whole box */
+      if(activeTextEditable()) e.preventDefault();
+    });
     sw.addEventListener('click',function(){
+      if(colorSelection(sw.dataset.c)) return;
       fmtApply(function(a){
         if(a.k==='cell') a.txcol=sw.dataset.c;
         else a.color=sw.dataset.c;
@@ -7542,18 +7919,31 @@ _DECK_JS = r"""
   });
   onFmt('#fmt-bold',function(a){a.b=a.b?0:1;});
   onFmt('#fmt-ital',function(a){a.i=a.i?0:1;});
+  onFmt('#fmt-under',function(a){a.u=a.u?0:1;});
+  onFmt('#fmt-strike',function(a){a.strike=a.strike?0:1;});
+  onFmt('#fmt-align',function(a){
+    var order=['left','center','right','justify'];
+    var ni=(order.indexOf(a.align||'left')+1)%order.length;
+    if(order[ni]==='left') delete a.align; else a.align=order[ni];});
   onFmt('#fmt-list',function(a){a.list=a.list?0:1;});
   onFmt('#fmt-shape',function(a){
     /* cycle the selected shape through the whole set */
     var order=SHAPE_LIST.map(function(p){return p[0];});
     var ni=(order.indexOf(a.shape||'rect')+1)%order.length;
     if(order[ni]==='rect') delete a.shape; else a.shape=order[ni];});
-  onFmt('#fmt-op',function(a){
-    var steps=[1,0.75,0.5,0.25];
-    var cur_=a.op==null?1:a.op;
-    var k=steps.indexOf(cur_);
-    a.op=steps[(k+1)%steps.length];
-    if(a.op===1) delete a.op;});
+  var opRangeEl=$('#fmt-op');
+  if(opRangeEl) opRangeEl.addEventListener('input',function(){
+    var pct=Math.max(0,Math.min(100,+this.value));
+    fmtApply(function(a){
+      if(pct>=100) delete a.op; else a.op=pct/100;});
+  });
+  var szInEl=$('#fmt-size');
+  if(szInEl) szInEl.addEventListener('change',function(){
+    var pt=+this.value;
+    if(!(pt>0)) return;
+    pt=Math.max(6,Math.min(240,pt));
+    fmtApply(function(a){a.size=pt/5.4;});
+  });
   onFmt('#fmt-rotl',function(a){
     a.rot=(((a.rot||0)-15)%360+360)%360;
     if(!a.rot) delete a.rot;});
@@ -7574,6 +7964,10 @@ _DECK_JS = r"""
   }
   var dupBtn=$('#fmt-dup');
   if(dupBtn) dupBtn.addEventListener('click',duplicateSel);
+  var grpBtn=$('#fmt-group');
+  if(grpBtn) grpBtn.addEventListener('click',groupSel);
+  var ungBtn=$('#fmt-ungroup');
+  if(ungBtn) ungBtn.addEventListener('click',ungroupSel);
   function zMove(front){
     var s=pres.slides[cur];
     if(!s||typeof selAnnot!=='number'||!s.annots) return;
@@ -7599,16 +7993,124 @@ _DECK_JS = r"""
   if(pickCancel) pickCancel.addEventListener('click',function(){
     endPick();
   });
+  /* ---- add an image: read the file as a data URI, embed + place it ---- */
+  function placeImage(src,ar){
+    var s=pres.slides[cur]; if(!s) return;
+    var l=stage.querySelector('.annot-layer');
+    var lr=l?l.getBoundingClientRect():null;
+    var w=40,h=32;
+    if(ar&&lr&&lr.height){h=w*(lr.width/lr.height)*ar;}
+    h=Math.max(8,Math.min(86,h));
+    s.annots=s.annots||[];
+    s.annots.push({k:'image',x:Math.max(2,50-w/2),
+      y:Math.max(2,50-h/2),w:w,h:h,src:src});
+    markDirty();
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+  }
+  var etImage=$('#et-image'),imgFile=$('#img-file');
+  if(etImage&&imgFile) etImage.addEventListener('click',function(){
+    imgFile.value='';imgFile.click();});
+  if(imgFile) imgFile.addEventListener('change',function(){
+    var f=this.files&&this.files[0]; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      var src=rd.result;
+      var probe=new Image();
+      probe.onload=function(){
+        placeImage(src,(probe.naturalHeight||3)/(probe.naturalWidth||4));};
+      probe.onerror=function(){placeImage(src,0);};
+      probe.src=src;
+    };
+    rd.readAsDataURL(f);
+  });
+  /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
+  (function(){
+    var cwrap=$('#fmt-cropwrap'),cbtn=$('#fmt-crop'),cmenu=$('#fmt-crop-menu');
+    if(!cwrap||!cbtn||!cmenu) return;
+    CROP_SHAPES.forEach(function(p){
+      var o=document.createElement('button');
+      o.className='sh-opt';o.dataset.shape=p[0];
+      o.title=p[1];o.textContent=p[1];
+      o.addEventListener('click',function(e){
+        e.stopPropagation();
+        fmtApply(function(a){
+          a.crop=a.crop||{};
+          if(p[0]==='rect'){
+            delete a.crop.shape;
+            if(!(a.crop.t||a.crop.r||a.crop.b||a.crop.l)) delete a.crop;
+          } else a.crop.shape=p[0];
+        });
+        cmenu.hidden=true;cbtn.setAttribute('aria-expanded','false');
+      });
+      cmenu.appendChild(o);
+    });
+    cbtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=cmenu.hidden;
+      cmenu.hidden=!willOpen;
+      cbtn.setAttribute('aria-expanded',willOpen.toString());
+    });
+    document.addEventListener('click',function(e){
+      if(!cmenu.hidden&&!cwrap.contains(e.target)){
+        cmenu.hidden=true;cbtn.setAttribute('aria-expanded','false');}
+    });
+  })();
+  /* ---- animation dropdown: reveal-on-click builds (fade / rise / zoom) ---- */
+  (function(){
+    var awrap=$('#fmt-animwrap'),abtn=$('#fmt-anim'),amenu=$('#fmt-anim-menu');
+    if(!awrap||!abtn||!amenu) return;
+    [['none','No animation'],['fade','Fade in'],['rise','Rise up'],
+     ['zoom','Zoom in']].forEach(function(p){
+      var o=document.createElement('button');
+      o.className='sh-opt';o.dataset.anim=p[0];o.textContent=p[1];
+      o.addEventListener('click',function(e){
+        e.stopPropagation();
+        fmtApply(function(a){
+          if(p[0]==='none') delete a.anim;
+          else a.anim={type:p[0],
+            order:(a.anim&&a.anim.order)||nextAnimOrder(pres.slides[cur])};
+        });
+        amenu.hidden=true;abtn.setAttribute('aria-expanded','false');
+      });
+      amenu.appendChild(o);
+    });
+    abtn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=amenu.hidden;amenu.hidden=!willOpen;
+      abtn.setAttribute('aria-expanded',willOpen.toString());
+    });
+    document.addEventListener('click',function(e){
+      if(!amenu.hidden&&!awrap.contains(e.target)){
+        amenu.hidden=true;abtn.setAttribute('aria-expanded','false');}
+    });
+  })();
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
     var s=pres.slides[cur];
     var l=stage.querySelector('.annot-layer');
     if(s&&l) renderAnnots(l,s);
   });
+  function buildsForSlide(i){
+    var s=pres.slides[i];return s?slideBuildIdx(s).length:0;
+  }
   function go(n){
+    var prev=cur;
     cur=Math.max(0,Math.min(pres.slides.length-1,n));
+    /* stepping back into a slide shows it fully built; forward starts fresh */
+    revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
     refresh();
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
+  }
+  /* advance: reveal the next build, else move to the next slide */
+  function advance(){
+    var s=pres.slides[cur];
+    if(mode==='view'&&s&&revealCount<slideBuildIdx(s).length){
+      revealCount++;renderSlide();
+    } else go(cur+1);
+  }
+  function backStep(){
+    if(mode==='view'&&revealCount>0){revealCount--;renderSlide();}
+    else go(cur-1);
   }
 
   /* ---------- create mode: sidebar UI ---------- */
@@ -7911,6 +8413,7 @@ _DECK_JS = r"""
     renderPresTabs();
   }
   function renderControls(){
+    updateNumsLabel();
     var s=pres.slides[cur];
     $$('#layout-row .lay').forEach(function(b){
       /* layouts are arrangement COMMANDS now; only the title slide is
@@ -7977,7 +8480,7 @@ _DECK_JS = r"""
         if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
         frame.appendChild(ch);
         var b=framePart(it.ns,a.part);
-        if(b){if(a.ts) b.style.zoom=a.ts;frame.appendChild(b);}
+        if(b){if(a.ts) b.style.zoom=a.ts;applyCrop(b,a);frame.appendChild(b);}
         applyCellColor(frame,a);
         p.title=it.nb+' — '+it.title;
         p.appendChild(frame);
@@ -8321,7 +8824,8 @@ _DECK_JS = r"""
       editing&&!deckEl.hidden);
     document.body.classList.toggle('deck-open',
       !creating&&!deckEl.hidden);
-    selAnnot=null;
+    selAnnot=null;selSet=[];
+    if(m==='view') revealCount=0;   /* start the build sequence fresh */
     var db=$('#et-del'); if(db) db.disabled=true;
     var fb=$('#et-fmt'); if(fb) fb.hidden=true;
     if(editing) setTool('select');
@@ -8406,8 +8910,8 @@ _DECK_JS = r"""
   $('#dc-play').addEventListener('click',function(){setUIMode('view');});
   $('#deck-exit').addEventListener('click',function(){
     setUIMode('create');});
-  $('#deck-prev').addEventListener('click',function(){go(cur-1);});
-  $('#deck-next').addEventListener('click',function(){go(cur+1);});
+  $('#deck-prev').addEventListener('click',function(){backStep();});
+  $('#deck-next').addEventListener('click',function(){advance();});
   /* click the letterbox AROUND the slide to clear the selection (clicks on
      the canvas itself are already handled by the annot-layer). Scoped to the
      stage element only, so it never fights a fresh text/arrow placement. */
@@ -8573,12 +9077,16 @@ _DECK_JS = r"""
       else if((e.ctrlKey||e.metaKey)&&(e.key==='d'||e.key==='D')){
         e.preventDefault();duplicateSel();
       }
+      else if((e.ctrlKey||e.metaKey)&&(e.key==='g'||e.key==='G')){
+        e.preventDefault();
+        if(e.shiftKey) ungroupSel(); else groupSel();
+      }
     }
     else if(mode==='view'){
       if(e.key==='ArrowRight'||e.key==='PageDown'
-         ||(e.key===' '&&tag!=='button')){e.preventDefault();go(cur+1);}
+         ||(e.key===' '&&tag!=='button')){e.preventDefault();advance();}
       else if(e.key==='ArrowLeft'||e.key==='PageUp'){
-        e.preventDefault();go(cur-1);}
+        e.preventDefault();backStep();}
       else if(e.key==='ArrowDown'){
         e.preventDefault();
         if((stage.scrollTop||0)<60) scrollToTrace();
@@ -8740,6 +9248,15 @@ _DECK_JS = r"""
     pres.slides=autoSlides(true);cur=0;activePane=0;
     markDirty();refresh();
     toast(pres.slides.length+' slides: figures + docs, in order');
+  });
+  function updateNumsLabel(){
+    var b=$('#mi-nums');
+    if(b) b.textContent='Slide numbers: '+(pres.showNums?'on':'off');
+  }
+  menuAction('#mi-nums',function(){
+    if(pres.showNums){delete pres.showNums;} else {pres.showNums=1;}
+    updateNumsLabel();markDirty();refresh();
+    toast('Slide numbers '+(pres.showNums?'on':'off'));
   });
   $('#pres-name').addEventListener('input',function(){
     var old=pres.name;
@@ -9147,8 +9664,16 @@ _TEMPLATE = """<!doctype html>
 <div class="welcome" id="welcome" hidden>
   <div class="welcome-box">
     <div class="welcome-wordmark"><span class="ww-dot"></span>PlotLine</div>
-    <p class="welcome-tag">Interactive, auto-syncing displays and filters
-      for your Jupyter notebooks.</p>
+    <p class="welcome-tag">Turn your Jupyter notebooks into interactive
+      documents &mdash; and presentations that refresh themselves.</p>
+    <p class="welcome-lead">A notebook is where you work an analysis out: the
+      code, the figures and the notes that explain them, all in one place.
+      PlotLine reads that notebook and turns it into a clean document you can
+      filter &mdash; hide code, print output or whole sections to shape what
+      people see, or pull just the code behind a single figure. Take it a step
+      further and build slide-style presentations from the very same cells;
+      then change the notebook, hit <b>refresh</b>, and your slides update in
+      one click.</p>
     <ol class="welcome-steps">
       <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from
         local files or a GitHub URL.</span></li>
@@ -9159,6 +9684,10 @@ _TEMPLATE = """<!doctype html>
       <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
         latest changes into your slides &mdash; automatically.</span></li>
     </ol>
+    <p class="welcome-note"><b>Your documentation lives in the notebook.</b>
+      Write it in markdown right next to the code, and link it straight into a
+      presentation &mdash; one source of truth for the analysis and the story
+      you tell about it.</p>
     <div class="welcome-btns">
       <button class="dbtn primary" id="welcome-open">Browse
         files&#8230;</button>
@@ -10137,6 +10666,24 @@ def _self_test() -> None:
     assert "var SHAPE_PATHS" in out and "function drawShapeSvg" in out
     assert ".an-rect.an-svgshape" in out and "an-shape-svg" in out
     assert 'id="fmt-op"' in out and 'id="fmt-rotl"' in out
+    # rich slide editor: precise pt size, alignment, underline/strike, a
+    # CONTINUOUS opacity slider (not fixed steps), and per-deck slide numbers
+    assert 'id="fmt-size"' in out and 'id="fmt-align"' in out
+    assert 'id="fmt-under"' in out and 'id="fmt-strike"' in out
+    assert 'id="fmt-op"' in out and 'type="range"' in out
+    assert 'id="mi-nums"' in out and "slide-pageno" in out
+    # images + crop-to-shape (images AND notebook cells)
+    assert 'id="et-image"' in out and 'id="img-file"' in out
+    assert "function applyCrop" in out and "var CROP_CLIP" in out
+    assert 'id="fmt-crop"' in out and "an-image" in out
+    # group / ungroup with multi-select
+    assert 'id="fmt-group"' in out and 'id="fmt-ungroup"' in out
+    assert "function groupMembers" in out and "function paintSel" in out
+    # rich text: recolour just the highlighted run
+    assert "function colorSelection" in out and "function sanitizeRich" in out
+    # build animations (reveal on click)
+    assert 'id="fmt-anim"' in out and "function slideBuildIdx" in out
+    assert "an-prebuild" in out and "an-anim-fade" in out
     assert 'id="theme-btn"' in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
@@ -10330,9 +10877,13 @@ def _self_test() -> None:
     assert "ko-fi.com/plotline" in web_page
     assert 'id="support-btn"' in web_page
     assert 'id="welcome-demo"' in web_page
-    # welcome screen: big wordmark, a real tagline, numbered getting-started
+    # welcome screen: big wordmark, a real tagline, a narrative lead + a note
+    # that documentation lives in the notebook, then numbered getting-started
     assert 'class="welcome-wordmark"' in web_page
-    assert "Interactive, auto-syncing displays and filters" in web_page
+    assert "Turn your Jupyter notebooks into interactive" in web_page
+    assert 'class="welcome-lead"' in web_page
+    assert 'class="welcome-note"' in web_page
+    assert "Your documentation lives in the notebook" in web_page
     assert 'class="welcome-steps"' in web_page and web_page.count('class="ws-n"') == 4
     # the GitHub repo link is intentionally NOT surfaced in the UI (privacy)
     assert _REPO_URL not in web_page
