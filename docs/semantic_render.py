@@ -3873,7 +3873,7 @@ _JS = r"""
     if(back) back.style.visibility=i>0?'visible':'hidden';
     if(next) next.textContent=(i===steps.length-1)?'Done':'Next';
     var r=tourRect(step);
-    var tw=Math.min(340,window.innerWidth*0.88),th=tip.offsetHeight||170;
+    var tw=Math.min(400,window.innerWidth*0.90),th=tip.offsetHeight||170;
     if(r){
       var pad=6;
       hole.classList.remove('center');
@@ -4902,142 +4902,194 @@ _DECK_HTML = """
       </div>
     </aside>
     <div class="deck-stagewrap" id="deck-stagewrap">
-      <div class="edit-tools" id="edit-tools" hidden>
-        <button class="dbtn primary" id="dc-play"
-          title="Play the presentation fullscreen">&#9654; Present</button>
-        <div class="dc-menuwrap">
-          <button class="dbtn" id="dc-nbs-btn" aria-haspopup="true"
-            aria-expanded="false"
-            title="Notebooks that went into this presentation">&#128218;
-            Open notebooks</button>
-          <div class="dc-menu dc-nbs-menu" id="dc-nbs-menu" hidden></div>
-        </div>
-        <button class="dbtn et" data-tool="cell"
-          aria-pressed="false"
-          title="Drop a notebook card onto the slide — you pick which one from
- your notebook">&#43; Notebook cell</button>
-        <span class="et-div" aria-hidden="true"></span>
-        <button class="dbtn et" data-tool="select"
-          aria-pressed="true">Select</button>
-        <button class="dbtn et" data-tool="text" aria-pressed="false">
-          + Text</button>
-        <button class="dbtn et" data-tool="arrow" aria-pressed="false">
-          + Arrow</button>
-        <span class="sh-drop" id="sh-drop">
-          <button class="dbtn" id="sh-btn" aria-haspopup="true"
-            aria-expanded="false"
-            title="Draw a shape (rectangle, ellipse, arrow, star, …)">
-            + Shapes &#9662;</button>
-          <div class="sh-menu" id="sh-menu" hidden></div>
-        </span>
-        <button class="dbtn" id="et-image"
-          title="Add an image from your computer">&#128443; Image</button>
-        <input type="file" id="img-file" accept="image/*" hidden>
-        <button class="dbtn" id="et-del" disabled
-          title="Delete the selected item (Del)">Delete</button>
-        <span class="et-hint" id="et-hint"></span>
-        <span class="deck-spring"></span>
-        <span class="et-fmt" id="et-fmt" hidden>
-          <span class="fmt-lab" id="fmt-txlab" hidden
-            title="Text colour">Text</span>
-          <button class="sw" data-c="#ff6b57"
-            style="background:#ff6b57" title="Coral"></button>
-          <button class="sw" data-c="#f0a848"
-            style="background:#f0a848" title="Amber"></button>
-          <button class="sw" data-c="#39a9c0"
-            style="background:#39a9c0" title="Cyan"></button>
-          <button class="sw" data-c="#46a892"
-            style="background:#46a892" title="Green"></button>
-          <button class="sw" data-c="#ffffff"
-            style="background:#ffffff" title="White"></button>
-          <button class="sw" data-c="#16202b"
-            style="background:#16202b" title="Ink"></button>
-          <span class="fmt-lab" id="fmt-bglab" hidden
-            title="Fill / background colour">Fill</span>
-          <button class="sw swbg trans" data-c="none" hidden
-            title="Transparent box"></button>
-          <button class="sw swbg" data-c="#0e1926" hidden
-            style="background:#0e1926" title="Dark box"></button>
-          <button class="sw swbg" data-c="#ffffff" hidden
-            style="background:#ffffff" title="White box"></button>
-          <button class="sw swbg" data-c="#ff6b57" hidden
-            style="background:#ff6b57" title="Coral box"></button>
-          <button class="sw swbg" data-c="#f0a848" hidden
-            style="background:#f0a848" title="Amber box"></button>
-          <button class="sw swbg" data-c="#39a9c0" hidden
-            style="background:#39a9c0" title="Cyan box"></button>
-          <button class="dbtn etm" id="fmt-smaller"
-            title="Smaller text">A&#8722;</button>
-          <button class="dbtn etm" id="fmt-bigger"
-            title="Bigger text">A+</button>
-          <span class="fmt-szwrap" id="fmt-szwrap" hidden
-            title="Text size (points)">
-            <input class="fmt-num" id="fmt-size" type="number"
-              min="6" max="240" step="1" aria-label="Text size in points">
-            <span class="fmt-unit">pt</span></span>
-          <select class="etm" id="fmt-font" hidden
-            title="Text font">
-            <option value="sans">Sans</option>
-            <option value="serif">Serif</option>
-            <option value="mono">Mono</option>
-            <option value="system">System</option>
-            <option value="hand">Hand</option>
-          </select>
-          <button class="dbtn etm" id="fmt-bold"
-            title="Bold"><b>B</b></button>
-          <button class="dbtn etm" id="fmt-ital"
-            title="Italic"><i>I</i></button>
-          <button class="dbtn etm" id="fmt-under"
-            title="Underline"><u>U</u></button>
-          <button class="dbtn etm" id="fmt-strike"
-            title="Strikethrough"><s>S</s></button>
-          <button class="dbtn etm" id="fmt-align"
-            title="Text alignment (click to cycle)">&#9636; Left</button>
-          <button class="dbtn etm" id="fmt-list"
-            title="Bullet list (Enter adds a point)">&#8226; List</button>
-          <button class="dbtn etm" id="fmt-line"
-            title="Cycle line thickness">Line</button>
-          <button class="dbtn etm" id="fmt-dash"
-            title="Dashed on/off">Dash</button>
-          <button class="dbtn etm" id="fmt-fill"
-            title="Fill on/off">Fill</button>
-          <button class="dbtn etm" id="fmt-shape"
-            title="Cycle the shape (rectangle, ellipse, star, …)">&#9711;</button>
-          <span class="fmt-opwrap" id="fmt-opwrap"
-            title="Opacity (0&ndash;100%)">
-            <input class="fmt-range" id="fmt-op" type="range"
-              min="0" max="100" step="1" aria-label="Opacity percent">
-            <span class="fmt-opval" id="fmt-opval">100%</span></span>
-          <button class="dbtn etm" id="fmt-rotl"
-            title="Rotate left 15&#176;">&#10226;</button>
-          <button class="dbtn etm" id="fmt-rotr"
-            title="Rotate right 15&#176;">&#10227;</button>
-          <button class="dbtn etm" id="fmt-dup"
-            title="Duplicate (Ctrl+D)">&#10697;</button>
-          <button class="dbtn etm" id="fmt-group"
-            title="Group the selected items (Ctrl+G)">&#9783; Group</button>
-          <button class="dbtn etm" id="fmt-ungroup"
-            title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
-          <button class="dbtn etm" id="fmt-front"
-            title="Bring to front">&#8613;</button>
-          <button class="dbtn etm" id="fmt-back"
-            title="Send to back">&#8615;</button>
-          <button class="dbtn etm" id="fmt-replace"
-            title="Swap in a different notebook card">&#8644;
-            Replace</button>
-          <span class="sh-drop" id="fmt-cropwrap" hidden>
-            <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
-              aria-expanded="false"
-              title="Crop to a shape (rectangle, ellipse, star, …)">&#9986;
-              Crop &#9662;</button>
-            <div class="sh-menu" id="fmt-crop-menu" hidden></div>
+      <div class="edit-tools ribbon" id="edit-tools" hidden>
+        <div class="rbn-static">
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn primary" id="dc-play"
+                title="Play the presentation full screen (from this slide)">
+                &#9654; Present</button>
+            </span>
+            <span class="rbn-lab">Show</span>
           </span>
-          <span class="sh-drop" id="fmt-animwrap" hidden>
-            <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
-              aria-expanded="false"
-              title="Animate this item so it appears on click">&#9654;
-              Animate &#9662;</button>
-            <div class="sh-menu" id="fmt-anim-menu" hidden></div>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <div class="dc-menuwrap">
+                <button class="dbtn" id="dc-nbs-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Notebooks that went into this presentation">&#128218;
+                  Open notebooks</button>
+                <div class="dc-menu dc-nbs-menu" id="dc-nbs-menu" hidden></div>
+              </div>
+            </span>
+            <span class="rbn-lab">Notebooks</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn et" data-tool="cell" aria-pressed="false"
+                title="Drop a notebook card onto the slide — you pick which
+ one from your notebook">&#43; Notebook cell</button>
+              <button class="dbtn et" data-tool="text" aria-pressed="false">
+                + Text</button>
+              <button class="dbtn et" data-tool="arrow"
+                aria-pressed="false">+ Arrow</button>
+              <span class="sh-drop" id="sh-drop">
+                <button class="dbtn" id="sh-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Draw a shape (rectangle, ellipse, arrow, star, …)">
+                  + Shapes &#9662;</button>
+                <div class="sh-menu" id="sh-menu" hidden></div>
+              </span>
+              <button class="dbtn" id="et-image"
+                title="Add an image from your computer">&#128443; Image</button>
+              <input type="file" id="img-file" accept="image/*" hidden>
+            </span>
+            <span class="rbn-lab">Insert</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn et" data-tool="select"
+                aria-pressed="true">Select</button>
+              <button class="dbtn" id="et-del" disabled
+                title="Delete the selected item (Del)">Delete</button>
+            </span>
+            <span class="rbn-lab">Edit</span>
+          </span>
+          <span class="et-hint" id="et-hint"></span>
+        </div>
+        <span class="et-fmt" id="et-fmt" hidden>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="fmt-lab" id="fmt-txlab" hidden
+                title="Text colour">Text</span>
+              <button class="sw" data-c="#ff6b57"
+                style="background:#ff6b57" title="Coral"></button>
+              <button class="sw" data-c="#f0a848"
+                style="background:#f0a848" title="Amber"></button>
+              <button class="sw" data-c="#39a9c0"
+                style="background:#39a9c0" title="Cyan"></button>
+              <button class="sw" data-c="#46a892"
+                style="background:#46a892" title="Green"></button>
+              <button class="sw" data-c="#ffffff"
+                style="background:#ffffff" title="White"></button>
+              <button class="sw" data-c="#16202b"
+                style="background:#16202b" title="Ink"></button>
+              <span class="fmt-lab" id="fmt-bglab" hidden
+                title="Fill / background colour">Fill</span>
+              <button class="sw swbg trans" data-c="none" hidden
+                title="Transparent box"></button>
+              <button class="sw swbg" data-c="#0e1926" hidden
+                style="background:#0e1926" title="Dark box"></button>
+              <button class="sw swbg" data-c="#ffffff" hidden
+                style="background:#ffffff" title="White box"></button>
+              <button class="sw swbg" data-c="#ff6b57" hidden
+                style="background:#ff6b57" title="Coral box"></button>
+              <button class="sw swbg" data-c="#f0a848" hidden
+                style="background:#f0a848" title="Amber box"></button>
+              <button class="sw swbg" data-c="#39a9c0" hidden
+                style="background:#39a9c0" title="Cyan box"></button>
+            </span>
+            <span class="rbn-lab">Colour</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-smaller"
+                title="Smaller text">A&#8722;</button>
+              <button class="dbtn etm" id="fmt-bigger"
+                title="Bigger text">A+</button>
+              <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                title="Text size (points)">
+                <input class="fmt-num" id="fmt-size" type="number"
+                  min="6" max="240" step="1"
+                  aria-label="Text size in points">
+                <span class="fmt-unit">pt</span></span>
+              <select class="etm" id="fmt-font" hidden title="Text font">
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+                <option value="system">System</option>
+                <option value="hand">Hand</option>
+              </select>
+              <button class="dbtn etm" id="fmt-bold"
+                title="Bold"><b>B</b></button>
+              <button class="dbtn etm" id="fmt-ital"
+                title="Italic"><i>I</i></button>
+              <button class="dbtn etm" id="fmt-under"
+                title="Underline"><u>U</u></button>
+              <button class="dbtn etm" id="fmt-strike"
+                title="Strikethrough"><s>S</s></button>
+              <button class="dbtn etm" id="fmt-align"
+                title="Text alignment (click to cycle)">&#9636; Left</button>
+              <button class="dbtn etm" id="fmt-list"
+                title="Bullet list (Enter adds a point)">&#8226; List</button>
+            </span>
+            <span class="rbn-lab">Text</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-line"
+                title="Cycle line thickness">Line</button>
+              <button class="dbtn etm" id="fmt-dash"
+                title="Dashed on/off">Dash</button>
+              <button class="dbtn etm" id="fmt-fill"
+                title="Fill on/off">Fill</button>
+              <button class="dbtn etm" id="fmt-shape"
+                title="Cycle the shape (rectangle, ellipse, star, …)">
+                &#9711;</button>
+            </span>
+            <span class="rbn-lab">Shape</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="fmt-opwrap" id="fmt-opwrap"
+                title="Opacity (0&ndash;100%)">
+                <input class="fmt-range" id="fmt-op" type="range"
+                  min="0" max="100" step="1" aria-label="Opacity percent">
+                <span class="fmt-opval" id="fmt-opval">100%</span></span>
+            </span>
+            <span class="rbn-lab">Opacity</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-rotl"
+                title="Rotate left 15&#176;">&#10226;</button>
+              <button class="dbtn etm" id="fmt-rotr"
+                title="Rotate right 15&#176;">&#10227;</button>
+              <button class="dbtn etm" id="fmt-dup"
+                title="Duplicate (Ctrl+D)">&#10697;</button>
+              <button class="dbtn etm" id="fmt-group"
+                title="Group the selected items (Ctrl+G)">&#9783;
+                Group</button>
+              <button class="dbtn etm" id="fmt-ungroup"
+                title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
+              <button class="dbtn etm" id="fmt-front"
+                title="Bring to front">&#8613;</button>
+              <button class="dbtn etm" id="fmt-back"
+                title="Send to back">&#8615;</button>
+            </span>
+            <span class="rbn-lab">Arrange</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-replace"
+                title="Swap in a different notebook card">&#8644;
+                Replace</button>
+              <span class="sh-drop" id="fmt-cropwrap" hidden>
+                <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Crop to a shape (rectangle, ellipse, star, …)">
+                  &#9986; Crop &#9662;</button>
+                <div class="sh-menu" id="fmt-crop-menu" hidden></div>
+              </span>
+              <span class="sh-drop" id="fmt-animwrap" hidden>
+                <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Animate this item so it appears on click">&#9654;
+                  Animate &#9662;</button>
+                <div class="sh-menu" id="fmt-anim-menu" hidden></div>
+              </span>
+            </span>
+            <span class="rbn-lab">Object</span>
           </span>
         </span>
       </div>
@@ -5582,21 +5634,35 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 body.slide-editing .apptop{display:none;}
 .deck.editing .deck-create{flex:0 0 var(--dc-w);
   border-right:1px solid #ffffff22;}
-.edit-tools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
-  padding:9px 16px;border-bottom:1px solid #ffffff14;
+/* ---- PowerPoint-style ribbon: labelled groups, always the same height ---- */
+.edit-tools.ribbon{display:flex;flex-direction:column;align-items:stretch;
+  gap:0;padding:7px 16px 6px;border-bottom:1px solid #ffffff14;
   background:#0e1926;flex:none;}
-/* the format bar WRAPS so every control for the selected item is visible (no
-   controls hidden off-screen), and reserves a fixed height so the canvas below
-   doesn't jump when a selection appears */
-.et-fmt{flex-basis:100%;display:flex;align-items:center;align-content:center;
-  gap:8px 9px;flex-wrap:wrap;min-height:62px;}
-.et-fmt>*{flex:none;}
+.rbn-static{display:flex;align-items:stretch;flex-wrap:wrap;gap:2px;}
+.rbn-grp{display:flex;flex-direction:column;align-items:center;
+  justify-content:space-between;gap:6px;padding:2px 15px;position:relative;
+  min-width:0;}
+.rbn-grp[hidden]{display:none;}
+.rbn-grp+.rbn-grp::before{content:"";position:absolute;left:0;top:2px;
+  bottom:15px;width:1px;background:#ffffff1a;}
+.rbn-grp.rbn-first::before{display:none;}
+.rbn-row{display:flex;align-items:center;justify-content:center;gap:6px;
+  flex-wrap:wrap;flex:1;min-height:32px;}
+.rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
+/* the contextual format row: one grouped row of a FIXED reserved height (it
+   scrolls sideways if the groups don't fit) so selecting an item never grows
+   the ribbon / shifts the canvas below it */
+.et-fmt{display:flex;align-items:stretch;flex-wrap:nowrap;gap:2px;margin-top:7px;
+  padding-top:8px;border-top:1px solid #ffffff12;height:56px;overflow-x:auto;
+  overflow-y:hidden;scrollbar-width:thin;}
 .et-fmt[hidden]{display:flex;visibility:hidden;}
-/* subtle group separators between the swatches / text / shape / arrange sets */
-.fmt-lab{margin-left:4px;}
+.et-fmt .rbn-grp{flex:none;}
+.fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--amber);}
-.et-hint{font-size:11px;color:#7e93a4;}
+.et-hint{font-size:11px;color:#7e93a4;align-self:center;margin-left:auto;
+  padding:0 4px 10px;}
 .et-div{width:1px;height:22px;background:#ffffff26;flex:none;margin:0 3px;}
 /* the "+ Shapes" dropdown */
 .sh-drop{position:relative;display:inline-block;}
@@ -6261,6 +6327,9 @@ _DECK_JS = r"""
     source='draft';
     lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
     status();scheduleAutosave();refresh();
+    /* nothing is selected after a restore — clear the format bar + Delete */
+    var db=$('#et-del'); if(db) db.disabled=true;
+    if(typeof showFmt==='function') showFmt();
   }
   function undo(){
     if(!undoStack.length) return;
@@ -7266,6 +7335,13 @@ _DECK_JS = r"""
   function renderAnnots(layer,s){
     var editing=(mode==='edit');
     layer.innerHTML='';
+    /* drop the "empty slide" hint once the slide has any content (placement
+       only re-renders the layer, not the whole slide, so clear it here) */
+    var _host=layer.parentNode;
+    if(_host){
+      var _eh=_host.querySelector('.slide-emptyhint');
+      if(_eh&&(s.annots||[]).length) _eh.remove();
+    }
     /* two svg layers: fat invisible hit-lines UNDER the items (so
        frames stay clickable), visible strokes ON TOP of everything
        (click-transparent) so arrows are never hidden behind frames */
@@ -7588,8 +7664,11 @@ _DECK_JS = r"""
     }
     var isText=(kind==='text');
     var isNum=(typeof selAnnot==='number');
+    /* the colour swatches drive a.color for text / arrows / shapes, and a.txcol
+       for a markdown note — but NOT images or figure/code cells */
+    var colourable=isText||kind==='arrow'||kind==='rect'||noteCell;
     $$('.sw:not(.swbg)',bar).forEach(function(sw){
-      sw.hidden=!(isText||noteCell);
+      sw.hidden=!colourable;
       var cur_=(kind==='cell')?(a.txcol||''):(a.color||defaultColor(kind));
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
@@ -7652,6 +7731,25 @@ _DECK_JS = r"""
       var lbl={fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]||'Animate';
       animBtn.innerHTML='&#9654; '+lbl+' &#9662;';
     }
+    syncRibbonGroups();
+  }
+  /* hide a ribbon group whose controls are all hidden, and drop the divider
+     before the first visible group — so the format ribbon stays tidy */
+  function syncRibbonGroups(){
+    var bar=$('#et-fmt'); if(!bar) return;
+    var first=null;
+    $$('.rbn-grp',bar).forEach(function(g){
+      var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
+      for(var i=0;i<kids.length;i++){
+        var n=kids[i],blocked=false;
+        while(n&&n!==g){if(n.hidden){blocked=true;break;}n=n.parentNode;}
+        if(!blocked){vis=true;break;}
+      }
+      g.hidden=!vis;
+      g.classList.remove('rbn-first');
+      if(vis&&!first) first=g;
+    });
+    if(first) first.classList.add('rbn-first');
   }
   function fmtApply(fn){
     var s=pres.slides[cur]; if(!s) return;
@@ -8733,8 +8831,10 @@ _DECK_JS = r"""
       var lbl=document.createElement('div');lbl.className='film-label';
       var num=document.createElement('span');num.className='film-n';
       num.textContent=(i+1);lbl.appendChild(num);
-      if(i===cur&&s.layout!=='title'){
-        /* the selected slide IS the big interactive editor */
+      if(i===cur&&mode==='create'&&s.layout!=='title'){
+        /* notebook view: the current slide IS the big inline pane editor
+           (paired with your visible notebook cells to fill it). In slide
+           view the CANVAS is the single editor, so the strip stays thumbnails */
         var view=document.createElement('div');view.className='film-view';
         view.appendChild(buildSlideEditor(s));
         lbl.appendChild(view);
@@ -9612,24 +9712,6 @@ _DECK_JS = r"""
   /* ---- Export PDF / print: render every slide at a fixed size (so text,
      which is sized from the layer height, comes out right) into off-screen
      pages, then hand off to the browser's Print -> Save as PDF ---- */
-  function buildPrintSlide(s,idx){
-    var slideEl;
-    if(s&&s.layout==='title'){
-      slideEl=document.createElement('div');
-      slideEl.className='slide slide-titlefree';
-      slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
-    } else {
-      slideEl=document.createElement('div');
-      slideEl.className='slide slide-blank';
-    }
-    if(s) attachAnnots(slideEl,s);      /* renders view-style (no handles) */
-    if(pres.showNums){
-      var pn=document.createElement('div');
-      pn.className='slide-pageno';pn.textContent=(idx+1);
-      slideEl.appendChild(pn);
-    }
-    return slideEl;
-  }
   function printDeck(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var old=document.getElementById('print-root');
@@ -9637,14 +9719,28 @@ _DECK_JS = r"""
     var savedMode=mode,savedReveal=revealCount,savedCur=cur;
     mode='view';revealCount=99999;              /* all builds fully revealed */
     var root=document.createElement('div');root.id='print-root';
+    /* attach the container FIRST (off-screen but laid out) so each slide has a
+       real 720px height when its text is sized from the layer — otherwise a
+       detached layer measures 0 and text bakes in ~17% too small */
+    document.body.appendChild(root);
     pres.slides.forEach(function(s,i){
       cur=i;
       var page=document.createElement('div');page.className='print-page';
-      page.appendChild(buildPrintSlide(s,i));
-      root.appendChild(page);
+      var slideEl=document.createElement('div');
+      if(s&&s.layout==='title'){
+        slideEl.className='slide slide-titlefree';
+        slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
+      } else slideEl.className='slide slide-blank';
+      page.appendChild(slideEl);
+      root.appendChild(page);            /* in the DOM before annots render */
+      if(s) attachAnnots(slideEl,s);     /* view-style; fontPx reads 720px */
+      if(pres.showNums){
+        var pn=document.createElement('div');
+        pn.className='slide-pageno';pn.textContent=(i+1);
+        slideEl.appendChild(pn);
+      }
     });
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
-    document.body.appendChild(root);
     document.body.classList.add('printing');
     if(typeset) typeset(root);
     var done=false;
@@ -10913,6 +11009,10 @@ def _self_test() -> None:
         and "print-page" in out
     assert "function nudgeSel" in out
     assert ".tour-text{font-size:15.5px" in out
+    # PowerPoint-style ribbon: labelled groups; colour swatches for arrows/shapes
+    assert "edit-tools ribbon" in out and 'class="rbn-grp"' in out
+    assert 'class="rbn-lab"' in out and "function syncRibbonGroups" in out
+    assert "colourable=isText||kind==='arrow'||kind==='rect'" in out
     assert 'id="theme-btn"' in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
