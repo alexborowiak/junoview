@@ -1777,6 +1777,47 @@ body.slide-editing .apptop{display:none;}
   padding:7px 4px 5px;cursor:pointer;color:#c9d6e2;font-family:var(--sans);}
 .sh-opt:hover{background:#39a9c022;border-color:#39a9c066;color:#fff;}
 .sh-ico{width:26px;height:22px;display:block;}
+/* filled crop-shape preview in the Crop menu (same clip-path as the effect) */
+.crop-ico{width:30px;height:22px;display:block;border-radius:2px;
+  background:linear-gradient(135deg,#8fd8ea,#39a9c0);}
+/* a shape-cropped figure fills its frame so the mask actually bites into it
+   (a contained figure would just have its letterbox clipped, looking unchanged) */
+.an-cell.an-cropped .figframe{padding:0;}
+.an-cell.an-cropped .figframe img{object-fit:cover;width:100%;height:100%;
+  max-width:none;max-height:none;}
+/* the animation pane: effect picker + build-order sequence */
+.sh-menu.anim-pane{display:block;grid-template-columns:none;width:340px;
+  padding:11px 12px;max-height:min(72vh,460px);overflow-y:auto;text-align:left;}
+.anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7e93a4;margin:0 2px 6px;}
+.anim-eff+.anim-h,.anim-merge+.anim-h,.anim-empty+.anim-h{margin-top:13px;}
+.anim-empty{font-size:12px;color:#8ba0b2;padding:1px 2px 5px;line-height:1.5;}
+.anim-eff{display:flex;flex-wrap:wrap;gap:5px;}
+.anim-effb{flex:1;min-width:52px;background:#16273a;border:1px solid #ffffff1f;
+  color:#cdd9e3;border-radius:7px;padding:7px 6px;font-size:12px;cursor:pointer;
+  font-family:var(--sans);}
+.anim-effb:hover{border-color:#39a9c088;color:#fff;}
+.anim-effb.on{background:var(--cyan-deep);border-color:var(--cyan);color:#fff;}
+.anim-merge{display:flex;gap:6px;margin-top:8px;}
+.anim-mini{background:#16273a;border:1px solid #ffffff1f;color:#bcccd8;
+  border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
+  font-family:var(--sans);}
+.anim-mini.wide{flex:1;}
+.anim-mini:hover:not(:disabled){border-color:#39a9c088;color:#fff;}
+.anim-mini:disabled{opacity:.4;cursor:default;}
+.anim-seq{display:flex;flex-direction:column;gap:4px;}
+.anim-step{display:flex;align-items:center;gap:8px;background:#101c28;
+  border:1px solid #ffffff12;border-radius:8px;padding:5px 7px;}
+.anim-num{flex:none;width:20px;height:20px;border-radius:50%;
+  background:var(--amber);color:#241a05;font-family:var(--mono);font-size:11px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;}
+.anim-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
+.anim-chip{font-size:11px;color:#bcccd8;background:#1c2c3d;border-radius:5px;
+  padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:150px;}
+.anim-chip.cur{background:var(--cyan-deep);color:#fff;}
+.anim-stepctr{flex:none;display:flex;gap:2px;}
+.anim-stepctr .anim-mini{padding:3px 6px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
 .dbtn.viewtoggle{border-color:#39a9c05c;color:#8fd4e4;}
@@ -8366,7 +8407,7 @@ through Ko-fi. Thank you.</p>
     updateVNav();
     /* Next stays live while builds remain on the last slide; Prev while any
        build can be stepped back on the first slide */
-    var moreBuilds=(mode==='view'&&s&&revealCount<slideBuildIdx(s).length);
+    var moreBuilds=(mode==='view'&&s&&revealCount<slideBuildSteps(s).count);
     var fewerBuilds=(mode==='view'&&revealCount>0);
     $('#deck-prev').disabled=(cur<=0&&!fewerBuilds);
     $('#deck-next').disabled=(cur>=pres.slides.length-1&&!moreBuilds);
@@ -8408,10 +8449,39 @@ through Ko-fi. Thank you.</p>
       return ((s.annots[x].anim.order||0)-(s.annots[y].anim.order||0));});
     return arr;
   }
+  /* a build "step" is a distinct anim.order — items sharing an order appear
+     TOGETHER on the same click. Returns {map: order->step-index, count} */
+  function slideBuildSteps(s){
+    var seen={};
+    (s&&s.annots||[]).forEach(function(a){
+      if(a&&a.anim) seen[a.anim.order||0]=1;});
+    var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
+    var map={};keys.forEach(function(o,i){map[o]=i;});
+    return {map:map,count:keys.length};
+  }
+  /* ordered list of steps for the animation pane: [{order, items:[idx,…]}] */
+  function animSeq(s){
+    var by={},order=[];
+    (s&&s.annots||[]).forEach(function(a,i){
+      if(a&&a.anim){var o=a.anim.order||0;
+        if(!by[o]){by[o]=[];order.push(o);}by[o].push(i);}});
+    order.sort(function(x,y){return x-y;});
+    return order.map(function(o){return {order:o,items:by[o]};});
+  }
   function nextAnimOrder(s){
-    var mx=0;(s&&s.annots||[]).forEach(function(a){
+    var mx=-1;(s&&s.annots||[]).forEach(function(a){
       if(a&&a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;});
     return mx+1;
+  }
+  function itemLabel(s,idx){
+    var a=(s&&s.annots||[])[idx]; if(!a) return 'item';
+    if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
+    if(a.k==='image') return 'Image';
+    if(a.k==='arrow') return 'Arrow';
+    if(a.k==='rect') return (a.shape?a.shape:'Shape');
+    if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
+      return it&&it.title?it.title.slice(0,18):'Cell';}
+    return 'item';
   }
   function paintSel(layer){
     var multi=selSet.length>1;
@@ -8485,6 +8555,13 @@ through Ko-fi. Thank you.</p>
     if(!el) return;
     var cc=cropCss(a);
     if(cc){el.style.clipPath=cc;el.style.webkitClipPath=cc;}
+  }
+  /* a little filled preview of a crop shape (uses the very same clip-path) */
+  function cropIcon(shape){
+    var d=document.createElement('span');d.className='crop-ico';
+    var cc=CROP_CLIP[shape];
+    if(cc){d.style.clipPath=cc;d.style.webkitClipPath=cc;}
+    return d;
   }
   /* rich text: a text box can carry per-character colour (highlight a run and
      recolour just it). Stored as sanitised HTML in a.html; a.text keeps the
@@ -8748,6 +8825,7 @@ through Ko-fi. Thank you.</p>
           if(b){
             if(a.ts) b.style.zoom=a.ts;
             applyCrop(b,a);
+            if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(b);
           }
           applyCellColor(c,a);
@@ -8854,26 +8932,28 @@ through Ko-fi. Thank you.</p>
     /* build animations: number the builds in the editor; in playback, hide the
        ones not yet revealed and animate the one just revealed */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
-      var builds=slideBuildIdx(s),bpos={};
-      builds.forEach(function(idx,p){bpos[idx]=p;});
+      var steps=slideBuildSteps(s);
       $$('.an-item[data-idx]',layer).forEach(function(el){
         var raw=el.getAttribute('data-idx');
         if(raw==='t'||raw==='s') return;
         var bi=+raw,ba=(s.annots||[])[bi];
-        if(!ba||!ba.anim||bpos[bi]==null) return;
+        if(!ba||!ba.anim) return;
+        var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
+        if(st==null) return;
         if(editing){
           var bd=document.createElement('span');
-          bd.className='an-buildno';bd.textContent=(bpos[bi]+1);
-          bd.title='Animation '+(bpos[bi]+1)+' — '+(ba.anim.type||'fade');
+          bd.className='an-buildno';bd.textContent=(st+1);
+          bd.title='Build '+(st+1)+' — '+(ba.anim.type||'fade')
+            +' (items on the same build appear together)';
           el.appendChild(bd);
         } else if(mode==='view'){
-          if(bpos[bi]>=revealCount) el.classList.add('an-prebuild');
-          else if(bpos[bi]===revealCount-1){
+          if(st>=revealCount) el.classList.add('an-prebuild');
+          else if(st===revealCount-1){
             var atype=ba.anim.type||'fade';
-            /* rise/zoom animate transform, which would fight a rotation and
-               snap at the end — a rotated item fades in instead */
+            /* "appear" is instant (no keyframe); rise/zoom animate transform,
+               which would fight a rotation and snap — a rotated item fades */
             if(ba.rot&&(atype==='rise'||atype==='zoom')) atype='fade';
-            el.classList.add('an-anim-'+atype);
+            if(atype!=='appear') el.classList.add('an-anim-'+atype);
           }
         }
       });
@@ -8991,7 +9071,8 @@ through Ko-fi. Thank you.</p>
     var animBtn=$('#fmt-anim');
     if(animBtn&&isNum){
       var an=a.anim&&a.anim.type;
-      var lbl={fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]||'Animate';
+      var lbl={appear:'Appear',fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]
+        ||'Animate';
       animBtn.innerHTML='&#9654; '+lbl+' &#9662;';
     }
     syncRibbonGroups();
@@ -9538,13 +9619,17 @@ through Ko-fi. Thank you.</p>
       Math.min(r.left,window.innerWidth-mw-8))+'px';
     menu.style.right='auto';menu.style.bottom='auto';
   }
-  function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick){
+  function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick,iconFn){
     var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
     if(!wrap||!btn||!menu) return;
     opts.forEach(function(p){
       var o=document.createElement('button');
-      o.className='sh-opt';o.setAttribute('data-'+attr,p[0]);
-      o.title=p[1];o.textContent=p[1];
+      o.className='sh-opt';o.setAttribute('data-'+attr,p[0]);o.title=p[1];
+      if(iconFn){
+        var ic=iconFn(p[0]); if(ic) o.appendChild(ic);
+        var lbl=document.createElement('span');
+        lbl.className='sh-opt-t';lbl.textContent=p[1];o.appendChild(lbl);
+      } else o.textContent=p[1];
       o.addEventListener('click',function(e){
         e.stopPropagation();onPick(p[0]);
         menu.hidden=true;btn.setAttribute('aria-expanded','false');
@@ -9573,17 +9658,136 @@ through Ko-fi. Thank you.</p>
           if(!(a.crop.t||a.crop.r||a.crop.b||a.crop.l)) delete a.crop;
         } else a.crop.shape=shape;
       });
-    });
-  /* ---- animation dropdown: reveal-on-click builds (fade / rise / zoom) ---- */
-  wireFloatDropdown('fmt-animwrap','fmt-anim','fmt-anim-menu',
-    [['none','No animation'],['fade','Fade in'],['rise','Rise up'],
-     ['zoom','Zoom in']],'anim',function(type){
-      fmtApply(function(a){
+    },cropIcon);
+  /* ---- animation PANE: effect + build order. Items on the same build appear
+     TOGETHER; each build is one click in playback. ---- */
+  (function(){
+    var wrap=$('#fmt-animwrap'),btn=$('#fmt-anim'),menu=$('#fmt-anim-menu');
+    if(!wrap||!btn||!menu) return;
+    menu.classList.add('anim-pane');
+    function rerender(){
+      var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s);paintSel(l);}
+    }
+    function renumber(s){animSeq(s).forEach(function(st,i){
+      st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
+    function stepOf(s,idx){var r=-1;animSeq(s).forEach(function(st,i){
+      if(st.items.indexOf(idx)>=0) r=i;});return r;}
+    function commit(s){markDirty();rerender();render();}
+    function setType(type){
+      var s=pres.slides[cur]; if(!s) return;
+      var idxs=selSet.filter(function(i){return typeof i==='number';});
+      if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+      var no=nextAnimOrder(s);            /* new anims share one build step */
+      idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
         if(type==='none') delete a.anim;
-        else a.anim={type:type,
-          order:(a.anim&&a.anim.order)||nextAnimOrder(pres.slides[cur])};
-      });
-    });
+        else if(a.anim) a.anim.type=type;
+        else a.anim={type:type,order:no};});
+      commit(s);
+    }
+    function mergeUp(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a||!a.anim) return;var q=animSeq(s),si=stepOf(s,selAnnot);
+      if(si>0){a.anim.order=q[si-1].order;renumber(s);commit(s);}
+    }
+    function splitOwn(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a||!a.anim) return;
+      a.anim.order=(a.anim.order||0)+0.5;renumber(s);commit(s);
+    }
+    function moveStep(si,dir){
+      var s=pres.slides[cur],q=animSeq(s),tj=si+dir;
+      if(tj<0||tj>=q.length) return;
+      var oa=q[si].order,ob=q[tj].order;
+      q[si].items.forEach(function(i){s.annots[i].anim.order=ob;});
+      q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
+      renumber(s);commit(s);
+    }
+    function render(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      menu.innerHTML='';
+      var h1=document.createElement('div');h1.className='anim-h';
+      h1.textContent='How it appears';menu.appendChild(h1);
+      if(!a||typeof selAnnot!=='number'){
+        var em=document.createElement('div');em.className='anim-empty';
+        em.textContent='Select an item first, then pick an effect.';
+        menu.appendChild(em);
+      } else {
+        var eff=document.createElement('div');eff.className='anim-eff';
+        [['none','None'],['appear','Appear'],['fade','Fade'],
+         ['rise','Rise'],['zoom','Zoom']].forEach(function(p){
+          var b=document.createElement('button');b.className='anim-effb';
+          b.textContent=p[1];
+          if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
+          b.addEventListener('click',function(e){e.stopPropagation();
+            setType(p[0]);});
+          eff.appendChild(b);});
+        menu.appendChild(eff);
+        if(a.anim){
+          var si0=stepOf(s,selAnnot),q0=animSeq(s);
+          var mrow=document.createElement('div');mrow.className='anim-merge';
+          var mb=document.createElement('button');mb.className='anim-mini wide';
+          mb.textContent='↑ Appear with previous';mb.disabled=(si0<=0);
+          mb.title='Reveal this on the same click as the build above';
+          mb.addEventListener('click',function(e){e.stopPropagation();
+            mergeUp();});
+          mrow.appendChild(mb);
+          if(q0[si0]&&q0[si0].items.length>1){
+            var sb=document.createElement('button');sb.className='anim-mini wide';
+            sb.textContent='↓ Own click';
+            sb.addEventListener('click',function(e){e.stopPropagation();
+              splitOwn();});
+            mrow.appendChild(sb);
+          }
+          menu.appendChild(mrow);
+        }
+      }
+      var h2=document.createElement('div');h2.className='anim-h';
+      h2.textContent='Build order — each row is one click';
+      menu.appendChild(h2);
+      var seq=animSeq(s);
+      if(!seq.length){
+        var e2=document.createElement('div');e2.className='anim-empty';
+        e2.textContent='Nothing animated on this slide yet.';
+        menu.appendChild(e2);
+      } else {
+        var list=document.createElement('div');list.className='anim-seq';
+        seq.forEach(function(st,si){
+          var row=document.createElement('div');row.className='anim-step';
+          var n=document.createElement('span');n.className='anim-num';
+          n.textContent=(si+1);row.appendChild(n);
+          var chips=document.createElement('span');chips.className='anim-chips';
+          st.items.forEach(function(idx){
+            var c=document.createElement('span');
+            c.className='anim-chip'+(idx===selAnnot?' cur':'');
+            c.textContent=itemLabel(s,idx)+' · '
+              +((s.annots[idx].anim.type)||'fade');
+            c.addEventListener('click',function(e){e.stopPropagation();
+              var l=stage.querySelector('.annot-layer');
+              if(l) selectAnnot(l,idx); render();});
+            chips.appendChild(c);});
+          row.appendChild(chips);
+          var ctr=document.createElement('span');ctr.className='anim-stepctr';
+          [['↑',-1],['↓',1]].forEach(function(m){
+            var b=document.createElement('button');b.className='anim-mini';
+            b.textContent=m[0];
+            b.disabled=(m[1]<0?si===0:si===seq.length-1);
+            b.addEventListener('click',function(e){e.stopPropagation();
+              moveStep(si,m[1]);});
+            ctr.appendChild(b);});
+          row.appendChild(ctr);
+          list.appendChild(row);});
+        menu.appendChild(list);
+      }
+    }
+    btn.addEventListener('click',function(e){e.stopPropagation();
+      var willOpen=menu.hidden;menu.hidden=!willOpen;
+      btn.setAttribute('aria-expanded',willOpen.toString());
+      if(willOpen){render();floatMenu(btn,menu);}});
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}});
+  })();
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
     var s=pres.slides[cur];
@@ -9591,7 +9795,7 @@ through Ko-fi. Thank you.</p>
     if(s&&l) renderAnnots(l,s);
   });
   function buildsForSlide(i){
-    var s=pres.slides[i];return s?slideBuildIdx(s).length:0;
+    var s=pres.slides[i];return s?slideBuildSteps(s).count:0;
   }
   function go(n){
     var prev=cur;
@@ -9607,7 +9811,7 @@ through Ko-fi. Thank you.</p>
      very end, so the final slide never collapses back to its pre-build state) */
   function advance(){
     var s=pres.slides[cur];
-    if(mode==='view'&&s&&revealCount<slideBuildIdx(s).length){
+    if(mode==='view'&&s&&revealCount<slideBuildSteps(s).count){
       revealCount++;renderSlide();
     } else if(cur<pres.slides.length-1) go(cur+1);
   }
