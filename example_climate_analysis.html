@@ -754,10 +754,18 @@ body.creating-docs .apptop{
 
 /* ---------- welcome (app mode, nothing open) ---------- */
 .welcome{position:fixed;left:0;right:0;top:var(--chrome-h);bottom:0;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--paper-2);z-index:5;overflow:auto;}
+  overflow:auto;background:var(--paper-2);z-index:5;}
 .welcome[hidden]{display:none;}
-.welcome-box{text-align:center;max-width:680px;padding:24px 30px 44px;}
+.welcome-box{text-align:center;max-width:680px;margin:0 auto;
+  padding:0 30px 60px;}
+/* the hero fills the first screen; the numbered steps sit below it, seen on
+   scroll (with a small "How it works" cue) */
+.welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
+  flex-direction:column;justify-content:center;padding:24px 0;}
+.welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
+.welcome-more{padding:36px 0 10px;border-top:1px solid var(--line);
+  max-width:560px;margin:0 auto;}
 /* big centered hero logo, then the wordmark below it */
 .welcome-hero{display:flex;justify-content:center;margin-bottom:4px;}
 .welcome-hero .jv-logo{width:clamp(88px,15vw,132px);height:auto;
@@ -5428,26 +5436,42 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
 </div>
 <div class="welcome" id="welcome" hidden>
   <div class="welcome-box">
-    <div class="welcome-hero"><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg></div>
-    <div class="welcome-wordmark">Junoview</div>
-    <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
-    <div class="welcome-btns">
-      <button class="dbtn primary" id="welcome-open">&#128193; Browse
-        files&#8230;</button>
-      <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
-        example notebook</button>
+    <div class="welcome-top">
+      <div class="welcome-hero"><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg></div>
+      <div class="welcome-wordmark">Junoview</div>
+      <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
+      <div class="welcome-btns">
+        <button class="dbtn primary" id="welcome-open">Browse
+          files&#8230;</button>
+        <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
+          example notebook</button>
+      </div>
+      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
+        this window.</p>
+      <div class="welcome-links">
+        <a href="#" id="welcome-tour">Take a tour</a>
+        <span class="wl-sep">&middot;</span>
+        <a href="#" id="welcome-help">How to use</a>
+        <span class="wl-sep">&middot;</span>
+        <a href="https://ko-fi.com/plotline" target="_blank"
+          rel="noopener">Support &#9829;</a>
+      </div>
+      <div class="recent" id="welcome-recent"></div>
+      <div class="welcome-scrollcue" aria-hidden="true">How it works
+        &#8595;</div>
     </div>
-    <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
-      this window.</p>
-    <div class="welcome-links">
-      <a href="#" id="welcome-tour">Take a tour</a>
-      <span class="wl-sep">&middot;</span>
-      <a href="#" id="welcome-help">How to use</a>
-      <span class="wl-sep">&middot;</span>
-      <a href="https://ko-fi.com/plotline" target="_blank"
-        rel="noopener">Support &#9829;</a>
+    <div class="welcome-more">
+      <ol class="welcome-steps">
+        <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from
+          local files or a GitHub URL.</span></li>
+        <li><span class="ws-n">2</span><span>Filter by cell type, and trace
+          back every cell that builds a plot.</span></li>
+        <li><span class="ws-n">3</span><span>Build presentations from figures,
+          markdown and code straight out of the notebook.</span></li>
+        <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
+          latest changes into your slides &mdash; automatically.</span></li>
+      </ol>
     </div>
-    <div class="recent" id="welcome-recent"></div>
   </div>
 </div>
 <div class="helpdlg" id="helpdlg" hidden>

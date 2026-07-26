@@ -2875,10 +2875,18 @@ body.creating-docs .apptop{
 
 /* ---------- welcome (app mode, nothing open) ---------- */
 .welcome{position:fixed;left:0;right:0;top:var(--chrome-h);bottom:0;
-  display:flex;align-items:center;justify-content:center;
-  background:var(--paper-2);z-index:5;overflow:auto;}
+  overflow:auto;background:var(--paper-2);z-index:5;}
 .welcome[hidden]{display:none;}
-.welcome-box{text-align:center;max-width:680px;padding:24px 30px 44px;}
+.welcome-box{text-align:center;max-width:680px;margin:0 auto;
+  padding:0 30px 60px;}
+/* the hero fills the first screen; the numbered steps sit below it, seen on
+   scroll (with a small "How it works" cue) */
+.welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
+  flex-direction:column;justify-content:center;padding:24px 0;}
+.welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
+.welcome-more{padding:36px 0 10px;border-top:1px solid var(--line);
+  max-width:560px;margin:0 auto;}
 /* big centered hero logo, then the wordmark below it */
 .welcome-hero{display:flex;justify-content:center;margin-bottom:4px;}
 .welcome-hero .jv-logo{width:clamp(88px,15vw,132px);height:auto;
@@ -11151,26 +11159,42 @@ _TEMPLATE = """<!doctype html>
 </div>
 <div class="welcome" id="welcome" hidden>
   <div class="welcome-box">
-    <div class="welcome-hero">{logo}</div>
-    <div class="welcome-wordmark">Junoview</div>
-    <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
-    <div class="welcome-btns">
-      <button class="dbtn primary" id="welcome-open">&#128193; Browse
-        files&#8230;</button>
-      <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
-        example notebook</button>
+    <div class="welcome-top">
+      <div class="welcome-hero">{logo}</div>
+      <div class="welcome-wordmark">Junoview</div>
+      <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
+      <div class="welcome-btns">
+        <button class="dbtn primary" id="welcome-open">Browse
+          files&#8230;</button>
+        <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
+          example notebook</button>
+      </div>
+      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
+        this window.</p>
+      <div class="welcome-links">
+        <a href="#" id="welcome-tour">Take a tour</a>
+        <span class="wl-sep">&middot;</span>
+        <a href="#" id="welcome-help">How to use</a>
+        <span class="wl-sep">&middot;</span>
+        <a href="{kofi}" target="_blank"
+          rel="noopener">Support &#9829;</a>
+      </div>
+      <div class="recent" id="welcome-recent"></div>
+      <div class="welcome-scrollcue" aria-hidden="true">How it works
+        &#8595;</div>
     </div>
-    <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
-      this window.</p>
-    <div class="welcome-links">
-      <a href="#" id="welcome-tour">Take a tour</a>
-      <span class="wl-sep">&middot;</span>
-      <a href="#" id="welcome-help">How to use</a>
-      <span class="wl-sep">&middot;</span>
-      <a href="{kofi}" target="_blank"
-        rel="noopener">Support &#9829;</a>
+    <div class="welcome-more">
+      <ol class="welcome-steps">
+        <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from
+          local files or a GitHub URL.</span></li>
+        <li><span class="ws-n">2</span><span>Filter by cell type, and trace
+          back every cell that builds a plot.</span></li>
+        <li><span class="ws-n">3</span><span>Build presentations from figures,
+          markdown and code straight out of the notebook.</span></li>
+        <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
+          latest changes into your slides &mdash; automatically.</span></li>
+      </ol>
     </div>
-    <div class="recent" id="welcome-recent"></div>
   </div>
 </div>
 <div class="helpdlg" id="helpdlg" hidden>
@@ -12467,6 +12491,8 @@ def _self_test() -> None:
     assert 'class="welcome-hero"' in web_page and 'class="welcome-wordmark"' in web_page
     assert "Filter, view and present your Jupyter notebooks" in web_page
     assert 'class="welcome-btns"' in web_page and 'id="welcome-open"' in web_page
+    # the getting-started steps moved to the bottom (seen on scroll)
+    assert 'class="welcome-more"' in web_page and web_page.count('class="ws-n"') == 4
     # rebrand: PlotLine -> Junoview, with the peacock-eye ocellus mark
     assert "Junoview" in out and "PlotLine" not in out
     assert out.count('class="jv-logo"') >= 2   # welcome hero + presrail brand
