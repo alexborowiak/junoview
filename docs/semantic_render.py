@@ -262,11 +262,53 @@ def _looks_like_dataframe(htmltext: str) -> bool:
 
 @dataclass
 class RenderedOutput:
-    kind: str          # "image" | "xarray" | "html" | "text" | "error"
+    kind: str          # "image"|"video"|"plotly"|"xarray"|"html"|"text"|"error"
     payload: str       # html fragment ready to drop in
     has_image: bool = False
     has_xarray: bool = False
+    has_interactive: bool = False   # embeds live JS (plotly/bokeh/vega/…)
     ot: str = "print"  # output-type slug for the Output-types filter
+
+
+_B64_STRIP_RE = re.compile(r"[^A-Za-z0-9+/=]")
+
+
+def _b64(v) -> str:
+    """A notebook base64 payload may be a str or a list of str lines. Restrict
+    to the base64 alphabet so a crafted (non-base64) value cannot break out of
+    the surrounding src="data:...;base64,{b64}" attribute (XSS)."""
+    s = v if isinstance(v, str) else "".join(v)
+    return _B64_STRIP_RE.sub("", s)
+
+
+# any embedded <script> in a cell OUTPUT (never in a markdown note) is
+# neutralised at build time and re-run on the client so interactive plots
+# (plotly / bokeh / vega / folium) work in every runtime. The notebook was
+# executed to produce this output, so its own <script> is treated as trusted
+# — exactly as nbconvert/JupyterLab do.
+_SCRIPT_OPEN_RE = re.compile(r"<script\b([^>]*)>", re.I)
+_TYPE_ATTR_RE = re.compile(r"""\s*type\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)""", re.I)
+
+
+def _defuse_scripts(fragment: str) -> tuple[str, bool]:
+    """Rewrite <script ...> to an inert type the browser won't auto-run.
+    Returns (html, had_script). The client re-activates them on mount."""
+    had = False
+
+    def repl(m: "re.Match") -> str:
+        nonlocal had
+        had = True
+        attrs = _TYPE_ATTR_RE.sub("", m.group(1))
+        return f'<script type="text/plotline-embed"{attrs}>'
+
+    return _SCRIPT_OPEN_RE.sub(repl, fragment), had
+
+
+def _looks_interactive(htmltext: str) -> bool:
+    low = htmltext.lower()
+    return any(k in low for k in (
+        "plotly", "bokeh", "vega", "require(", "folium", "leaflet",
+        "<script"))
 
 
 _NUM_RE = re.compile(r"^[-+]?(\d[\d_]*\.?\d*|\.\d+)([eE][-+]?\d+)?j?$")
@@ -361,15 +403,51 @@ def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
                     ot="print"))
         elif otype in ("execute_result", "display_data"):
             data = out.get("data", {})
-            if "image/png" in data:
-                b64 = data["image/png"]
-                b64 = b64 if isinstance(b64, str) else "".join(b64)
-                b64 = b64.strip().replace("\n", "")
+            plotly_key = "application/vnd.plotly.v1+json"
+            video_key = next((m for m in ("video/mp4", "video/webm",
+                                          "video/ogg") if m in data), None)
+            if plotly_key in data:
+                # an interactive Plotly figure — embed the spec; the client
+                # lazily loads plotly.js and draws it
+                spec = json.dumps(data[plotly_key], ensure_ascii=False)
+                spec = html.escape(spec, quote=True).replace("</", "<\\/")
+                rendered.append(RenderedOutput(
+                    "plotly",
+                    f'<div class="figframe plotframe">'
+                    f'<div class="plotly-embed" data-plotly="{spec}">'
+                    f'</div></div>',
+                    has_interactive=True, ot="result"))
+            elif video_key:
+                b64 = _b64(data[video_key])
+                rendered.append(RenderedOutput(
+                    "video",
+                    f'<div class="figframe"><video class="vid-out" controls '
+                    f'loop muted playsinline preload="metadata" '
+                    f'src="data:{video_key};base64,{b64}"></video></div>',
+                    has_image=True, ot="result"))
+            elif "image/png" in data:
                 rendered.append(RenderedOutput(
                     "image",
                     f'<div class="figframe">'
                     f'<img loading="lazy" alt="figure output" '
-                    f'src="data:image/png;base64,{b64}"></div>',
+                    f'src="data:image/png;base64,{_b64(data["image/png"])}">'
+                    f'</div>',
+                    has_image=True))
+            elif "image/gif" in data:
+                rendered.append(RenderedOutput(
+                    "image",
+                    f'<div class="figframe"><img loading="lazy" '
+                    f'alt="animation" class="gif-out" '
+                    f'src="data:image/gif;base64,{_b64(data["image/gif"])}">'
+                    f'</div>',
+                    has_image=True))
+            elif "image/jpeg" in data:
+                rendered.append(RenderedOutput(
+                    "image",
+                    f'<div class="figframe"><img loading="lazy" '
+                    f'alt="figure output" '
+                    f'src="data:image/jpeg;base64,{_b64(data["image/jpeg"])}">'
+                    f'</div>',
                     has_image=True))
             elif "image/svg+xml" in data:
                 svg = _as_text(data["image/svg+xml"])
@@ -389,10 +467,13 @@ def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
                         f'<div class="rich ot-dataframe">{htmltext}</div>',
                         ot="dataframe"))
                 else:
+                    safe, had = _defuse_scripts(htmltext)
+                    live = had or _looks_interactive(htmltext)
+                    cls = "rich ot-result" + (" plotframe" if live else "")
                     rendered.append(RenderedOutput(
-                        "html",
-                        f'<div class="rich ot-result">{htmltext}</div>',
-                        ot="result"))
+                        "plotly" if live else "html",
+                        f'<div class="{cls}">{safe}</div>',
+                        has_interactive=live, ot="result"))
             elif "text/plain" in data:
                 text = _as_text(data["text/plain"])
                 if text.strip():
@@ -2209,6 +2290,17 @@ body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
   padding:8px;overflow:auto;text-align:center;}
 .figframe img{max-width:100%;height:auto;display:block;margin:0 auto;}
 .figframe svg{max-width:100%;height:auto;}
+/* interactive plots (plotly/bokeh/vega/folium) + video / gif outputs */
+.figframe.plotframe{overflow:hidden;padding:0;}
+.plotly-embed{width:100%;min-height:340px;}
+.plotframe .rich,.plotframe .js-plotly-plot{width:100%;}
+.vid-out{max-width:100%;height:auto;display:block;margin:0 auto;
+  border-radius:6px;background:#000;}
+/* in a slide frame these fill the frame like a figure */
+.an-cell .plotly-embed,.spane .plotly-embed,
+.slide-fig .plotly-embed{min-height:0;height:100%;flex:1;}
+.an-cell .vid-out,.spane .vid-out,.slide-fig .vid-out{max-height:100%;
+  width:auto;}
 
 /* several figures from one cell: pager with prev/next arrows */
 .figpager .figpage{display:none;}
@@ -3986,6 +4078,7 @@ _JS = r"""
          toggle / fig-fold / note-expand work (as the Plot-trace tab does) */
       var stem=(sh.data&&sh.data.stem)||sh.el.dataset.nb||'';
       wireCardBehaviors(clone,stem);
+      activateOutputs(clone,true);   /* draw plotly specs in the tree node */
       $$('.mdmore',clone).forEach(function(x){x.remove();});
       $$('.cardbody[data-mdclamp]',clone).forEach(function(bd){
         bd.removeAttribute('data-mdclamp');
@@ -4476,6 +4569,74 @@ _JS = r"""
     });
   }
   APP.mdscan=mdClampScan;
+
+  /* ---- interactive outputs: run neutralised output scripts (plotly-html /
+     bokeh / vega / folium) and draw embedded Plotly figure specs. Cell output
+     was produced by running the notebook, so its own <script> is trusted
+     (nbconvert does the same). jsonOnly=true for CLONES (deck / tree) — their
+     duplicate element ids would clash if arbitrary scripts re-ran, but the
+     id-less Plotly spec draws cleanly on the element itself. ---- */
+  function ensurePlotly(cb){
+    if(window.Plotly) return cb();
+    window.__plCbs=window.__plCbs||[];window.__plCbs.push(cb);
+    if(window.__plLoading) return;
+    window.__plLoading=1;
+    var s=document.createElement('script');
+    s.src='https://cdn.plot.ly/plotly-2.35.2.min.js';
+    s.async=true;
+    s.onload=function(){var q=window.__plCbs||[];window.__plCbs=[];
+      q.forEach(function(f){try{f();}catch(e){}});};
+    /* keep the queue on failure: a later ensurePlotly retries the load and
+       onload then draws the figures that were pending when it first failed
+       (the draw callback skips already-rendered divs, so no double-draw) */
+    s.onerror=function(){window.__plLoading=0;};
+    document.head.appendChild(s);
+  }
+  function activateOutputs(root,jsonOnly){
+    root=root||document;
+    if(!jsonOnly){
+      /* revive in DOCUMENT ORDER: an external <script src> must finish
+         loading before the following (often inline) init runs, else the lib
+         (Plotly/Bokeh/vegaEmbed) is undefined when the init executes. So we
+         chain: block on each src script's onload before inserting the next. */
+      var list=[].filter.call(
+        root.querySelectorAll('script[type="text/plotline-embed"]'),
+        function(o){return !o.dataset.ran;});
+      (function runNext(i){
+        if(i>=list.length) return;
+        var old=list[i]; old.dataset.ran='1';
+        var s=document.createElement('script');
+        for(var j=0;j<old.attributes.length;j++){
+          var a=old.attributes[j];
+          if(a.name==='type'||a.name==='data-ran') continue;
+          try{s.setAttribute(a.name,a.value);}catch(e){}
+        }
+        var hasSrc=!!old.getAttribute('src');
+        if(hasSrc){s.async=false;
+          s.onload=s.onerror=function(){runNext(i+1);};}
+        else s.textContent=old.textContent;   /* inline runs on insert */
+        if(old.parentNode) old.parentNode.replaceChild(s,old);
+        if(!hasSrc) runNext(i+1);
+      })(0);
+    }
+    var pe=root.querySelectorAll('.plotly-embed[data-plotly]');
+    if(!pe.length) return;
+    ensurePlotly(function(){
+      if(!window.Plotly) return;
+      [].forEach.call(pe,function(div){
+        /* a cloned card may carry a static copy already — leave it be */
+        if(div.querySelector('.js-plotly-plot,.plotly')) return;
+        var raw=div.getAttribute('data-plotly'); if(!raw) return;
+        try{
+          var spec=JSON.parse(raw);
+          window.Plotly.newPlot(div,spec.data||[],spec.layout||{},
+            {responsive:true,displaylogo:false});
+        }catch(e){}
+      });
+    });
+  }
+  window.SemActivate=activateOutputs;
+
   /* Per-card behaviours, shared by the docs shell and the Plot-trace tab so
      the trace is a genuine subset of the docs with every control live.
      (Nav/graph wiring stays in initShell — the trace tab has no sidebar.) */
@@ -4754,6 +4915,7 @@ _JS = r"""
        fig-fold, section collapse/hide incl. the nav chevrons): shared with
        the Plot-trace tab so the trace is a true subset of the docs ---- */
     wireCardBehaviors(shell,stem);
+    activateOutputs(shell);   /* run plotly/bokeh/vega + draw plotly specs */
 
     /* ---- register ---- */
     var replaced=!!APP.shells[stem];
@@ -4860,6 +5022,7 @@ _JS = r"""
     host.appendChild(shell);
     /* wire the clones so their code toggles, eyes, collapse + fig-fold work */
     wireCardBehaviors(shell,stem);
+    activateOutputs(shell,true);   /* draw plotly specs on the clones */
     APP.shells[key]={el:shell,data:{},path:'',title:title||'Plot trace',
       trace:true,source:stem};
     if(APP.traces.indexOf(key)<0) APP.traces.push(key);
@@ -5296,26 +5459,8 @@ _DECK_HTML = """
         <button class="dbtn" id="dc-edit"
           title="Swap to the slide editor — add text, arrows and boxes">
           &#9998; Swap to edit view</button>
-        <div class="dc-row" id="layout-row">
-          <button class="dbtn lay" data-lay="full" title="One pane">
-            <span class="layico full"><i></i></span></button>
-          <button class="dbtn lay" data-lay="halves"
-            title="Two panes, side by side">
-            <span class="layico halves"><i></i><i></i></span></button>
-          <button class="dbtn lay" data-lay="rows"
-            title="Two panes, stacked">
-            <span class="layico rows"><i></i><i></i></span></button>
-          <button class="dbtn lay" data-lay="quarters" title="Four panes">
-            <span class="layico quarters"><i></i><i></i><i></i><i></i>
-            </span></button>
-          <button class="dbtn lay" data-lay="title"
-            title="Title slide (free text)">
-            <span class="layico title"><i class="tl1"></i>
-            <i class="tl2"></i></span></button>
-          <button class="dbtn lay" data-lay="blank"
-            title="Blank canvas — build it with the slide editor">
-            <span class="layico blank"></span></button>
-        </div>
+        <div class="lay-picker" id="layout-row"
+          aria-label="Slide layouts"></div>
         <div class="title-editor" id="title-editor" hidden>
           <input id="ts-title" type="text" placeholder="Slide title"
             spellcheck="false" autocomplete="off">
@@ -5401,6 +5546,8 @@ _DECK_HTML = """
                 style="background:#ffffff" title="White"></button>
               <button class="sw" data-c="#16202b"
                 style="background:#16202b" title="Ink"></button>
+              <button class="sw sw-custom" id="sw-custom" data-target="text"
+                title="Custom colour — hex, rgb or rgba"></button>
               <span class="fmt-lab" id="fmt-bglab" hidden
                 title="Fill / background colour">Fill</span>
               <button class="sw swbg trans" data-c="none" hidden
@@ -5415,6 +5562,9 @@ _DECK_HTML = """
                 style="background:#f0a848" title="Amber box"></button>
               <button class="sw swbg" data-c="#39a9c0" hidden
                 style="background:#39a9c0" title="Cyan box"></button>
+              <button class="sw swbg sw-custom" id="swbg-custom" hidden
+                data-target="fill"
+                title="Custom fill colour — hex, rgb or rgba"></button>
             </span>
             <span class="rbn-lab">Colour</span>
           </span>
@@ -5554,6 +5704,33 @@ _DECK_HTML = """
   slide</span>
   <span class="deck-spring"></span>
   <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
+</div>
+<div class="color-pop" id="color-pop" hidden>
+  <div class="cp-head" id="cp-head">Custom colour</div>
+  <input type="color" id="cp-native" class="cp-native" value="#39a9c0"
+    aria-label="Pick a colour">
+  <div class="cp-row">
+    <span class="cp-lab">Hex</span>
+    <input type="text" id="cp-hex" class="cp-in" spellcheck="false"
+      autocomplete="off" placeholder="#39a9c0" maxlength="9">
+  </div>
+  <div class="cp-row">
+    <span class="cp-lab">RGB</span>
+    <input type="text" id="cp-rgb" class="cp-in" spellcheck="false"
+      autocomplete="off" placeholder="rgba(57, 169, 192, 1)">
+  </div>
+  <div class="cp-row cp-arow">
+    <span class="cp-lab">Alpha</span>
+    <input type="range" id="cp-alpha" class="cp-alpha" min="0" max="100"
+      step="1" value="100" aria-label="Opacity">
+    <span class="cp-aval" id="cp-aval">100%</span>
+  </div>
+  <div class="cp-recent" id="cp-recent"></div>
+  <div class="cp-foot">
+    <span class="cp-preview" id="cp-preview"></span>
+    <span class="deck-spring"></span>
+    <button class="dbtn cp-apply" id="cp-apply">Apply</button>
+  </div>
 </div>
 """
 
@@ -6029,6 +6206,23 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 .layico.blank{display:block;border:1.5px dashed #8ba0b2;
   border-radius:3px;}
 .dbtn.lay[aria-pressed="true"] .layico.blank{border-color:#fff;}
+/* scrollable slide-template catalog (buttons generated from LAYOUTS) */
+.lay-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+  max-height:224px;overflow-y:auto;overflow-x:hidden;
+  padding:2px 3px 4px;margin:0;}
+.lay-picker .lay{padding:4px;display:flex;flex-direction:column;
+  align-items:stretch;gap:3px;line-height:1;height:auto;}
+.layico2{position:relative;width:100%;aspect-ratio:16/9;background:#0b141d;
+  border:1px solid #ffffff1a;border-radius:3px;overflow:hidden;}
+.dbtn.lay[aria-pressed="true"] .layico2{border-color:#fff;}
+.layico2 .li-cell{position:absolute;background:#2a4761;
+  border:1px solid #4d7ea3;border-radius:1px;box-sizing:border-box;}
+.layico2 .li-text{position:absolute;box-sizing:border-box;opacity:.8;
+  background:repeating-linear-gradient(#9fb2c2 0 1.5px,transparent 1.5px 4px);}
+.lay-lb{font-family:var(--mono);font-size:8px;letter-spacing:.02em;
+  color:#8ba0b2;text-align:center;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;}
+.dbtn.lay[aria-pressed="true"] .lay-lb{color:#fff;}
 /* title-slide text inputs */
 .title-editor{display:flex;flex-direction:column;gap:7px;}
 .title-editor[hidden]{display:none;}
@@ -6191,6 +6385,49 @@ select#fmt-font[hidden]{display:none;}
 .sw.trans::after{content:"";position:absolute;left:-2px;right:-2px;
   top:50%;height:2px;background:#ff6b57;
   transform:rotate(-45deg);}
+/* custom-colour swatch: a rainbow chip that opens the full picker */
+.sw.sw-custom{background:conic-gradient(from 0deg,#ff6b57,#f0a848,#46a892,
+  #39a9c0,#7a6cff,#ff6b57);position:relative;overflow:hidden;}
+.sw.sw-custom::after{content:"+";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-size:11px;line-height:1;
+  color:#fff;font-weight:800;text-shadow:0 1px 2px #000b;}
+/* professional colour picker popover (hex / rgb / rgba + alpha + recents) */
+.color-pop{position:fixed;z-index:160;width:236px;background:#0e1b28;
+  border:1px solid #ffffff26;border-radius:10px;padding:12px;
+  box-shadow:0 16px 46px #000a;display:flex;flex-direction:column;gap:9px;
+  font-family:var(--sans);}
+.color-pop[hidden]{display:none;}
+.cp-head{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:#8ba0b2;}
+.cp-native{width:100%;height:38px;border:1px solid #ffffff22;border-radius:6px;
+  background:none;cursor:pointer;padding:2px;}
+.cp-row{display:flex;align-items:center;gap:8px;}
+.cp-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#7e93a4;width:38px;flex:none;}
+.cp-in{flex:1;min-width:0;background:#16273a;border:1px solid #ffffff22;
+  color:#dce6ee;font-family:var(--mono);font-size:12px;padding:6px 8px;
+  border-radius:6px;}
+.cp-in:focus{outline:none;border-color:var(--cyan);}
+.cp-in.bad{border-color:#ff6b57;}
+.cp-alpha{flex:1;min-width:0;accent-color:var(--cyan);}
+.cp-aval{font-family:var(--mono);font-size:10px;color:#8ba0b2;width:34px;
+  text-align:right;flex:none;}
+.cp-recent{display:flex;flex-wrap:wrap;gap:5px;}
+.cp-recent:empty{display:none;}
+.cp-sw-chk{background-image:linear-gradient(45deg,#33475a 25%,transparent 25%,
+  transparent 75%,#33475a 75%),linear-gradient(45deg,#33475a 25%,#1a2836 25%,
+  #1a2836 75%,#33475a 75%);background-size:8px 8px;
+  background-position:0 0,4px 4px;}
+.cp-rsw{width:18px;height:18px;border-radius:4px;border:1px solid #ffffff22;
+  cursor:pointer;padding:0;position:relative;overflow:hidden;}
+.cp-rsw::after{content:"";position:absolute;inset:0;background:var(--cpc);}
+.cp-foot{display:flex;align-items:center;gap:8px;}
+.cp-preview{width:28px;height:28px;border-radius:6px;border:1px solid #ffffff26;
+  flex:none;position:relative;overflow:hidden;}
+.cp-preview::after{content:"";position:absolute;inset:0;
+  background:var(--cpc,#39a9c0);}
+.cp-apply{background:var(--cyan-deep);border-color:var(--cyan-deep);
+  color:#fff;}
 .deck.editing .deck-arrow,.deck.editing .deck-foot{display:none;}
 .slide{position:relative;}
 /* image annotations */
@@ -6552,6 +6789,119 @@ _DECK_JS = r"""
     quarters:[[2,2,47.5,47],[50.5,2,47.5,47],
               [2,51,47.5,47],[50.5,51,47.5,47]]
   };
+  /* the slide-template catalog: each layout is a list of typed slots —
+     notebook-card frames (k:'cell') and plain text boxes (k:'text', with a
+     placeholder + size). A title slide is simply two text boxes; there is no
+     special title mode. h on a text slot is only used to draw the picker
+     preview (the real text box auto-sizes to its content). */
+  var LAYOUTS=[
+    {id:'title',label:'Title',items:[
+      {k:'text',x:12,y:33,w:76,h:16,text:'Presentation title',size:7,b:1,
+        align:'center'},
+      {k:'text',x:12,y:55,w:76,h:8,text:'Subtitle',size:3.4,align:'center'}]},
+    {id:'section',label:'Section',items:[
+      {k:'text',x:8,y:41,w:84,h:18,text:'Section',size:8,b:1,
+        align:'center'}]},
+    {id:'title-body',label:'Title + text',items:[
+      {k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1},
+      {k:'text',x:6,y:24,w:88,h:64,text:'Body text',size:3}]},
+    {id:'full',label:'One panel',items:[
+      {k:'cell',x:3,y:4,w:94,h:91}]},
+    {id:'title-full',label:'Title + panel',items:[
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'cell',x:4,y:20,w:92,h:76}]},
+    {id:'halves',label:'Two panels',items:[
+      {k:'cell',x:2,y:7,w:47.5,h:86},{k:'cell',x:50.5,y:7,w:47.5,h:86}]},
+    {id:'title-halves',label:'Title + two',items:[
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'cell',x:3,y:20,w:46.5,h:76},{k:'cell',x:50.5,y:20,w:46.5,h:76}]},
+    {id:'rows',label:'Stacked',items:[
+      {k:'cell',x:6,y:2,w:88,h:47},{k:'cell',x:6,y:51,w:88,h:47}]},
+    {id:'title-rows',label:'Title + stack',items:[
+      {k:'text',x:5,y:4,w:90,h:10,text:'Title',size:5,b:1},
+      {k:'cell',x:6,y:17,w:88,h:39},{k:'cell',x:6,y:58,w:88,h:39}]},
+    {id:'quarters',label:'Four panels',items:[
+      {k:'cell',x:2,y:2,w:47.5,h:47},{k:'cell',x:50.5,y:2,w:47.5,h:47},
+      {k:'cell',x:2,y:51,w:47.5,h:47},{k:'cell',x:50.5,y:51,w:47.5,h:47}]},
+    {id:'text-cell',label:'Text | panel',items:[
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:3},
+      {k:'cell',x:49,y:20,w:47,h:76}]},
+    {id:'cell-text',label:'Panel | text',items:[
+      {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
+      {k:'cell',x:4,y:20,w:47,h:76},
+      {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:3}]},
+    {id:'cell-above',label:'Panel / text',items:[
+      {k:'cell',x:4,y:4,w:92,h:62},
+      {k:'text',x:6,y:70,w:88,h:26,text:'Body text',size:2.8}]},
+    {id:'text-above',label:'Text / panel',items:[
+      {k:'text',x:6,y:5,w:88,h:14,text:'Title',size:4.4,b:1},
+      {k:'cell',x:4,y:22,w:92,h:74}]},
+    {id:'blank',label:'Blank',items:[]}
+  ];
+  var LAYOUTBYID={};
+  LAYOUTS.forEach(function(l){LAYOUTBYID[l.id]=l;});
+  /* apply a template to a slide: reposition the cards/text it already has
+     into the template's slots (in order), fill empty slots with placeholders,
+     and keep any free decorations (arrows/images/shapes) the user added. */
+  function applyLayout(s,layout){
+    if(!s||!layout) return;
+    s.layout='blank';s.lay=layout.id;
+    var old=s.annots||[];
+    var cells=old.filter(function(a){return a.k==='cell';});
+    var texts=old.filter(function(a){return a.k==='text';});
+    var keep=old.filter(function(a){return a.k!=='cell'&&a.k!=='text';});
+    var ci=0,ti=0,next=[];
+    (layout.items||[]).forEach(function(it){
+      if(it.k==='cell'){
+        var c=cells[ci++]||{k:'cell',ref:null};
+        c.k='cell';c.x=it.x;c.y=it.y;c.w=it.w;c.h=it.h;
+        next.push(c);
+      } else {
+        var t=texts[ti++];
+        if(t){t.x=it.x;t.y=it.y;t.w=it.w;
+          if(!t.text) t.text=it.text||'Text';
+          next.push(t);
+        } else next.push({k:'text',x:it.x,y:it.y,w:it.w,
+          text:it.text||'Text',size:it.size||2.8,color:'#ffffff',
+          bg:0,align:it.align||'left',b:it.b?1:0});
+      }
+    });
+    /* don't lose placed cards / typed text beyond the template's slots */
+    for(;ci<cells.length;ci++) if(cells[ci].ref) next.push(cells[ci]);
+    for(;ti<texts.length;ti++) next.push(texts[ti]);
+    s.annots=keep.concat(next);
+    if(!s.annots.length) delete s.annots;
+  }
+  function layIcon(layout){
+    var ic=document.createElement('span');ic.className='layico2';
+    (layout.items||[]).forEach(function(it){
+      var b=document.createElement('span');
+      b.className=(it.k==='text'?'li-text':'li-cell');
+      b.style.left=it.x+'%';b.style.top=it.y+'%';
+      b.style.width=(it.w||20)+'%';b.style.height=(it.h||20)+'%';
+      ic.appendChild(b);
+    });
+    return ic;
+  }
+  function renderLayoutPicker(){
+    var row=$('#layout-row'); if(!row||row.dataset.built) return;
+    row.dataset.built='1';row.innerHTML='';
+    LAYOUTS.forEach(function(layout){
+      var b=document.createElement('button');
+      b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
+      b.title=layout.label;
+      b.appendChild(layIcon(layout));
+      var lb=document.createElement('span');lb.className='lay-lb';
+      lb.textContent=layout.label;b.appendChild(lb);
+      b.addEventListener('click',function(){
+        var s=pres.slides[cur]; if(!s) return;
+        applyLayout(s,layout);
+        activePane=-1;markDirty();refresh();
+      });
+      row.appendChild(b);
+    });
+  }
   function slideCells(s){
     return (s&&s.annots||[]).map(function(a,i){return {a:a,i:i};})
       .filter(function(p){return p.a.k==='cell';});
@@ -7075,7 +7425,7 @@ _DECK_JS = r"""
       svg.setAttribute('preserveAspectRatio','none');
       var p=document.createElementNS(SVGNS,'path');
       p.setAttribute('d',SHAPE_PATHS[shp]||'');
-      p.setAttribute('fill',fill?(col+'2b'):'none');
+      p.setAttribute('fill',fill?shapeFill(col,0x2b/255):'none');
       p.setAttribute('stroke',col);
       p.setAttribute('stroke-width',sw||3);
       p.setAttribute('vector-effect','non-scaling-stroke');
@@ -7531,14 +7881,6 @@ _DECK_JS = r"""
     } else {
       var bs=document.createElement('div');
       bs.className='slide slide-blank';
-      if(mode==='view'&&!(s.annots||[]).length){
-        bs.innerHTML='<p class="slide-emptyhint">Empty slide — pick a '
-          +'layout or use ✎ Swap to edit view.</p>';
-      } else if(mode==='edit'&&!(s.annots||[]).length){
-        bs.innerHTML='<p class="slide-emptyhint">This slide is empty.'
-          +'<br>Click a card in your notebook, or use '
-          +'<b>+ Text</b> / <b>+ Image</b> / <b>+ Shapes</b> to start.</p>';
-      }
       stage.appendChild(bs);
     }
     var slideEl=stage.firstElementChild;
@@ -7820,6 +8162,9 @@ _DECK_JS = r"""
     slideEl.appendChild(layer);
     renderAnnots(layer,s);
     if(mode==='edit') wireEditor(layer,s);
+    /* draw any Plotly figures cloned into cell frames (json specs only —
+       cloned scripts would clash on duplicate ids) */
+    if(window.SemActivate) window.SemActivate(layer,true);
   }
   function editableText(layer,el,getVal,setVal,idx,rich){
     try{
@@ -7962,7 +8307,7 @@ _DECK_JS = r"""
           r.style.borderColor=col;
           r.style.borderWidth=(a.sw||3)+'px';
           r.style.borderStyle=a.dash?'dashed':'solid';
-          r.style.background=a.fill?(col+'26'):'transparent';
+          r.style.background=a.fill?shapeFill(col,0x26/255):'transparent';
           if(shp==='ellipse') r.style.borderRadius='50%';
         }
         applyCommon(r,a);
@@ -8594,7 +8939,7 @@ _DECK_JS = r"""
   },true);
 
   /* ---------- format bar wiring ---------- */
-  $$('#et-fmt .sw:not(.swbg)').forEach(function(sw){
+  $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('mousedown',function(e){
       /* keep the caret/selection in the text box so we can recolour just
          the highlighted run instead of the whole box */
@@ -8625,7 +8970,7 @@ _DECK_JS = r"""
     a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);});
   onFmt('#fmt-dash',function(a){a.dash=a.dash?0:1;});
   onFmt('#fmt-fill',function(a){a.fill=a.fill?0:1;});
-  $$('#et-fmt .swbg').forEach(function(sw){
+  $$('#et-fmt .swbg:not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('click',function(){
       fmtApply(function(a){
         if(a.k==='cell'){a.bgcol=sw.dataset.c;}
@@ -8634,6 +8979,174 @@ _DECK_JS = r"""
       });
     });
   });
+
+  /* ---------- professional colour picker: hex / rgb / rgba + alpha + a
+     recent-colours strip. Text swatches and the fill swatches each get a
+     rainbow "＋" chip that opens it; any CSS colour string is accepted. ---- */
+  var cpEl=$('#color-pop'), cpTarget='text', cpRGBA={r:57,g:169,b:192,a:1};
+  /* a live text selection captured when the picker opens, so a custom colour
+     can recolour just the highlighted run (focus moves to the popup on apply) */
+  var cpSavedEl=null, cpSavedRange=null;
+  function clamp255(n){n=Math.round(+n||0);return n<0?0:n>255?255:n;}
+  function hex2(n){return ('0'+clamp255(n).toString(16)).slice(-2);}
+  function toHex(c){return '#'+hex2(c.r)+hex2(c.g)+hex2(c.b);}
+  function toStr(c){
+    return c.a>=1?toHex(c):('rgba('+clamp255(c.r)+', '+clamp255(c.g)+', '
+      +clamp255(c.b)+', '+(Math.round(c.a*100)/100)+')');
+  }
+  /* faint fill tint of a shape's colour — PARSE first so translucent rgba()
+     colours work, not just #rrggbb (a hex-suffix concat would corrupt them);
+     `alpha` is the tint fraction of 255 (matches the old 0x26 / 0x2b). */
+  function shapeFill(col,alpha){
+    var c=parseColor(col); if(!c) return 'transparent';
+    return 'rgba('+clamp255(c.r)+', '+clamp255(c.g)+', '+clamp255(c.b)+', '
+      +(Math.round(c.a*alpha*1000)/1000)+')';
+  }
+  function parseColor(str){
+    if(!str) return null;
+    str=String(str).trim();
+    var m=str.match(/^#([0-9a-f]{3,8})$/i);
+    if(m){
+      var h=m[1];
+      if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+      else if(h.length===4) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];
+      if(h.length===6||h.length===8) return {
+        r:parseInt(h.slice(0,2),16),g:parseInt(h.slice(2,4),16),
+        b:parseInt(h.slice(4,6),16),
+        a:h.length===8?parseInt(h.slice(6,8),16)/255:1};
+      return null;
+    }
+    m=str.match(/^rgba?\(([^)]+)\)$/i);
+    if(m){
+      var p=m[1].split(/[,\s/]+/).filter(Boolean);
+      if(p.length>=3){var pa=parseFloat(p[3]);
+        return {r:clamp255(parseFloat(p[0])),g:clamp255(parseFloat(p[1])),
+          b:clamp255(parseFloat(p[2])),
+          a:p.length>3?(isFinite(pa)?Math.max(0,Math.min(1,pa)):1):1};}
+    }
+    return null;
+  }
+  function cpSync(from){
+    var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),
+        al=$('#cp-alpha'),av=$('#cp-aval'),pv=$('#cp-preview');
+    if(nat&&from!=='native') nat.value=toHex(cpRGBA);
+    if(hx&&from!=='hex') hx.value=cpRGBA.a>=1?toHex(cpRGBA)
+      :toHex(cpRGBA)+hex2(Math.round(cpRGBA.a*255));
+    if(rg&&from!=='rgb') rg.value='rgba('+clamp255(cpRGBA.r)+', '
+      +clamp255(cpRGBA.g)+', '+clamp255(cpRGBA.b)+', '
+      +(Math.round(cpRGBA.a*100)/100)+')';
+    if(al&&from!=='alpha') al.value=Math.round(cpRGBA.a*100);
+    if(av) av.textContent=Math.round(cpRGBA.a*100)+'%';
+    if(pv) pv.style.setProperty('--cpc',toStr(cpRGBA));
+    if(hx) hx.classList.remove('bad');
+    if(rg) rg.classList.remove('bad');
+  }
+  function cpRecent(){
+    try{return JSON.parse(localStorage.getItem('plotline-colors')||'[]');}
+    catch(e){return [];}
+  }
+  function cpPushRecent(str){
+    var arr=cpRecent().filter(function(x){return x!==str;});
+    arr.unshift(str);
+    try{localStorage.setItem('plotline-colors',
+      JSON.stringify(arr.slice(0,12)));}catch(e){}
+  }
+  function cpRenderRecent(){
+    var box=$('#cp-recent'); if(!box) return;
+    box.innerHTML='';
+    cpRecent().forEach(function(str){
+      var b=document.createElement('button');
+      b.className='cp-rsw cp-sw-chk';b.type='button';b.title=str;
+      b.style.setProperty('--cpc',str);
+      b.addEventListener('click',function(){
+        var c=parseColor(str); if(c){cpRGBA=c;cpSync();}});
+      box.appendChild(b);
+    });
+  }
+  function cpCurrentFor(target){
+    var s=pres.slides[cur];
+    var a=(s&&selAnnot!==null)?annotByIdx(s,selAnnot):null;
+    if(!a) return null;
+    if(target==='fill')
+      return a.k==='cell'?(a.bgcol||null):(a.bg===0?null:(a.bgc||null));
+    return a.k==='cell'?(a.txcol||null):(a.color||null);
+  }
+  function openColorPop(target,anchor){
+    if(!cpEl) return;
+    cpTarget=target;
+    cpSavedEl=null;cpSavedRange=null;
+    if(target==='text'){
+      var te=activeTextEditable();
+      if(te&&selectionInside(te)) try{
+        cpSavedEl=te;
+        cpSavedRange=window.getSelection().getRangeAt(0).cloneRange();
+      }catch(e){cpSavedEl=null;cpSavedRange=null;}
+    }
+    var head=$('#cp-head');
+    if(head) head.textContent=target==='fill'?'Custom fill':'Custom colour';
+    var c0=parseColor(cpCurrentFor(target))||{r:57,g:169,b:192,a:1};
+    cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpRenderRecent();cpSync();
+    cpEl.hidden=false;
+    var r=anchor.getBoundingClientRect(),w=236;
+    var ph=cpEl.getBoundingClientRect().height||300;
+    var left=Math.max(8,Math.min(r.left,window.innerWidth-w-8));
+    var top=r.bottom+8;
+    if(top+ph>window.innerHeight-8) top=Math.max(8,r.top-ph-8);
+    cpEl.style.left=left+'px';cpEl.style.top=top+'px';
+  }
+  function cpApply(){
+    var str=toStr(cpRGBA);
+    if(cpTarget==='text'){
+      var did=false;
+      /* restore the highlighted run (focus moved to the popup) and recolour
+         just it, like the preset swatches do; else colour the whole box */
+      if(cpSavedEl&&cpSavedRange&&document.body.contains(cpSavedEl)) try{
+        cpSavedEl.focus();
+        var sel=window.getSelection();
+        sel.removeAllRanges();sel.addRange(cpSavedRange);
+        did=colorSelection(str);
+      }catch(e){did=false;}
+      if(!did) fmtApply(function(a){
+        if(a.k==='cell') a.txcol=str; else a.color=str;});
+    } else fmtApply(function(a){
+      if(a.k==='cell') a.bgcol=str; else {a.bg=1;a.bgc=str;}});
+    cpSavedEl=null;cpSavedRange=null;
+    cpPushRecent(str);
+    if(cpEl) cpEl.hidden=true;
+  }
+  (function(){
+    var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),al=$('#cp-alpha');
+    if(nat) nat.addEventListener('input',function(){
+      var c=parseColor(nat.value);
+      if(c){cpRGBA.r=c.r;cpRGBA.g=c.g;cpRGBA.b=c.b;cpSync('native');}});
+    if(hx) hx.addEventListener('input',function(){
+      var v=hx.value.trim(),c=parseColor(v);
+      if(c){cpRGBA=c;cpSync('hex');} else hx.classList.toggle('bad',v!=='');});
+    if(rg) rg.addEventListener('input',function(){
+      var v=rg.value.trim(),c=parseColor(v);
+      if(c){cpRGBA=c;cpSync('rgb');} else rg.classList.toggle('bad',v!=='');});
+    if(al) al.addEventListener('input',function(){
+      cpRGBA.a=(+al.value)/100;cpSync('alpha');});
+    var ap=$('#cp-apply'); if(ap) ap.addEventListener('click',cpApply);
+    var swc=$('#sw-custom');
+    if(swc){
+      swc.addEventListener('mousedown',function(e){
+        if(activeTextEditable()) e.preventDefault();});
+      swc.addEventListener('click',function(){openColorPop('text',swc);});
+    }
+    var swbgc=$('#swbg-custom');
+    if(swbgc) swbgc.addEventListener('click',function(){
+      openColorPop('fill',swbgc);});
+    document.addEventListener('mousedown',function(e){
+      if(cpEl&&!cpEl.hidden&&!cpEl.contains(e.target)
+         &&e.target!==swc&&e.target!==swbgc) cpEl.hidden=true;
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&cpEl&&!cpEl.hidden){e.stopPropagation();
+        cpEl.hidden=true;}
+    },true);
+  })();
   var fontSelEl=$('#fmt-font');
   if(fontSelEl) fontSelEl.addEventListener('change',function(){
     var v=this.value;
@@ -9287,10 +9800,9 @@ _DECK_JS = r"""
     updateNumsLabel();
     var s=pres.slides[cur];
     $$('#layout-row .lay').forEach(function(b){
-      /* layouts are arrangement COMMANDS now; only the title slide is
-         a persistent state worth showing as pressed */
+      /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',
-        (!!s&&s.layout==='title'&&b.dataset.lay==='title').toString());
+        (!!s&&s.lay===b.dataset.lay).toString());
       b.disabled=!s;
     });
     var te=$('#title-editor'), eb=$('#dc-edit');
@@ -10054,41 +10566,7 @@ _DECK_JS = r"""
     cur=at;activePane=-1;
     markDirty();refresh();
   });
-  $$('#layout-row .lay').forEach(function(b){
-    b.addEventListener('click',function(){
-      var s=pres.slides[cur]; if(!s) return;
-      var lay=b.dataset.lay;
-      if(lay==='title'){
-        s.layout='title';
-        if(s.title===undefined) s.title='';
-        if(s.sub===undefined) s.sub='';
-      } else if(lay==='blank'){
-        /* blank = clear the empty frames, keep everything placed */
-        s.layout='blank';
-        s.annots=(s.annots||[]).filter(function(a){
-          return a.k!=='cell'||a.ref;});
-        if(!s.annots.length) delete s.annots;
-      } else {
-        /* arrange: reposition existing frames into the preset rects,
-           add empty frames for any leftover preset slots */
-        s.layout='blank';
-        var rects=PRESETS[lay]||[];
-        var cells=slideCells(s);
-        s.annots=s.annots||[];
-        rects.forEach(function(r,i){
-          if(cells[i]){
-            cells[i].a.x=r[0];cells[i].a.y=r[1];
-            cells[i].a.w=r[2];cells[i].a.h=r[3];
-          } else {
-            s.annots.push({k:'cell',x:r[0],y:r[1],w:r[2],h:r[3],
-              ref:null});
-          }
-        });
-      }
-      activePane=-1;
-      markDirty();refresh();
-    });
-  });
+  renderLayoutPicker();
   /* title-slide text fields (panel); the slide canvas mirrors them */
   [['#ts-title','title'],['#ts-sub','sub']].forEach(function(p){
     var inp=$(p[0]); if(!inp) return;
@@ -11399,6 +11877,45 @@ def _self_test() -> None:
     _rout = render_outputs([
         {"output_type": "execute_result", "data": {"text/plain": "[1, 2, 3]"}}])
     assert _rout and _rout[0].ot == "list" and "ot-list" in _rout[0].payload
+    # richer plot/output types: gif, jpeg, video, and interactive Plotly
+    _gif = render_outputs([{"output_type": "display_data",
+        "data": {"image/gif": "R0lGOD"}}])
+    assert _gif and _gif[0].has_image and "data:image/gif;base64,R0lGOD" \
+        in _gif[0].payload and "gif-out" in _gif[0].payload
+    _jpg = render_outputs([{"output_type": "display_data",
+        "data": {"image/jpeg": "/9j/4A"}}])
+    assert _jpg and "data:image/jpeg;base64,/9j/4A" in _jpg[0].payload
+    # a crafted (non-base64) media payload cannot break out of src="data:..."
+    _xss = render_outputs([{"output_type": "display_data",
+        "data": {"image/gif": '"><script>alert(1)</script>'}}])
+    assert _xss and "<script" not in _xss[0].payload \
+        and "alert(1)" not in _xss[0].payload
+    _vid = render_outputs([{"output_type": "display_data",
+        "data": {"video/mp4": "AAAAIG"}}])
+    assert _vid and _vid[0].kind == "video" and "<video" in _vid[0].payload \
+        and "data:video/mp4;base64,AAAAIG" in _vid[0].payload
+    _ply = render_outputs([{"output_type": "display_data", "data": {
+        "application/vnd.plotly.v1+json": {"data": [{"y": [1, 2]}],
+                                           "layout": {}},
+        "image/png": "aGk="}}])
+    assert _ply and _ply[0].kind == "plotly" and _ply[0].has_interactive \
+        and "plotly-embed" in _ply[0].payload and "data-plotly=" in _ply[0].payload
+    # an interactive text/html output (embedded <script>) is neutralised at
+    # build time (client re-runs it) and flagged interactive
+    _int = render_outputs([{"output_type": "display_data", "data": {
+        "text/html": '<div id="p"></div><script>Plotly.newPlot("p",[])'
+                     '</script>'}}])
+    assert _int and _int[0].has_interactive \
+        and 'type="text/plotline-embed"' in _int[0].payload \
+        and "plotframe" in _int[0].payload
+    # a plain (script-less) html result is untouched and NOT flagged interactive
+    _plain = render_outputs([{"output_type": "execute_result", "data": {
+        "text/html": "<b>hello</b>"}}])
+    assert _plain and not _plain[0].has_interactive \
+        and "plotframe" not in _plain[0].payload
+    # the client re-activates neutralised scripts + draws plotly specs
+    assert "function activateOutputs" in out and "window.SemActivate" in out
+    assert 'text/plotline-embed' in out and "cdn.plot.ly" in out
     assert ".ckf-dot.ot-sw-numeric" in out and ".ckf-dot.ot-sw-dataframe" in out
     # the sidebar key sits at the TOP (before the first section row)
     _nav = render_nav(doc)
@@ -11610,7 +12127,12 @@ def _self_test() -> None:
     t_slide = pres2[0]["slides"][1]
     assert t_slide["layout"] == "title" and t_slide["title"] == "Hi"
     assert t_slide["panes"] == [] and t_slide["annots"][0]["text"] == "note"
-    assert 'data-lay="rows"' in out and 'data-lay="title"' in out
+    # the layout picker is a scrollable catalog generated from LAYOUTS; a
+    # title slide is just two text boxes (no special title mode)
+    assert "var LAYOUTS" in out and "function applyLayout" in out
+    assert "id:'title'" in out and "id:'rows'" in out and "id:'blank'" in out
+    assert "id:'title-text-cell'" in out or "id:'text-cell'" in out
+    assert 'id="layout-row"' in out and "renderLayoutPicker" in out
     assert 'id="edit-tools"' in out and 'id="dc-edit"' in out
     assert 'id="et-fmt"' in out and 'data-tool="cell"' in out
     # URL routing: a unique, restorable hash per view (#/doc/<stem>, #/pres/…)
@@ -11638,6 +12160,11 @@ def _self_test() -> None:
     # a markdown cell frame carries its own text + background colour
     assert "function applyCellColor" in out and "--nb-tx" in out
     assert "a.txcol=sw.dataset.c" in out and "a.bgcol=sw.dataset.c" in out
+    # professional colour picker: hex / rgb / rgba + alpha + custom swatches
+    assert 'id="color-pop"' in out and 'id="sw-custom"' in out
+    assert 'id="swbg-custom"' in out and 'id="cp-hex"' in out
+    assert 'id="cp-rgb"' in out and 'id="cp-alpha"' in out
+    assert "function parseColor" in out and "function openColorPop" in out
     # shapes render as SVG paths (star/cloud/…) or glyphs (!/?); box+ellipse CSS
     assert "var SHAPE_PATHS" in out and "function drawShapeSvg" in out
     assert ".an-rect.an-svgshape" in out and "an-shape-svg" in out
@@ -11825,7 +12352,7 @@ def _self_test() -> None:
     assert pres3[0]["slides"][0]["tprops"]["x"] == 30
     blank = pres3[0]["slides"][1]
     assert blank["panes"] == [] and blank["annots"][0]["ref"] == "demo::clim"
-    assert 'data-lay="blank"' in out and "an-cellbtn" in out
+    assert "lay-picker" in out and "an-cellbtn" in out
 
     # raw notebook view: cells as authored, directives visible
     assert 'id="view-raw"' in out and 'class="rawview"' in out
