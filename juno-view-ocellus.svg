@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-labelledby="title desc">
+<title id="title">Juno View</title>
+<desc id="desc">A peacock feather eye of concentric teal, amber, blue and dark rings, ringed by twelve barbs with three amber dots.</desc>
+<g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8">
+<line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/>
+<line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/>
+<line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/>
+<line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/>
+<line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/>
+<line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/>
+<line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/>
+<line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/>
+<line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/>
+<line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/>
+<line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/>
+<line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/>
+</g>
+<circle cx="100" cy="100" r="66" fill="#0F6E56"/>
+<circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/>
+<circle cx="100" cy="100" r="42" fill="#185FA5"/>
+<circle cx="100" cy="100" r="18" fill="#04342C"/>
+<circle cx="100" cy="12" r="7.5" fill="#EF9F27"/>
+<circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/>
+<circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/>
+</svg>

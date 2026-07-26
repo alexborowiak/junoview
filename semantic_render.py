@@ -108,35 +108,35 @@ from typing import Any
 _REPO_URL = "https://github.com/alexborowiak/semantic-rendering"
 _KOFI_URL = "https://ko-fi.com/plotline"
 
-# The Junoview mark: a banded Jupiter (with the Great Red Spot) orbited by the
-# Juno probe — NASA's Juno viewed Jupiter, Junoview views your Jupyter. Inline
-# SVG so it stays crisp and self-contained in every runtime.
+# The Junoview mark: a peacock-feather "ocellus" (eye) — concentric teal /
+# amber / blue / dark rings inside twelve barbs with three amber dots. Inline
+# SVG so it stays crisp and self-contained in every runtime (juno-view-ocellus).
 _LOGO_SVG = (
-    '<svg class="jv-logo" viewBox="0 0 34 32" fill="none" '
+    '<svg class="jv-logo" viewBox="0 0 200 200" '
     'xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview">'
-    '<defs>'
-    '<radialGradient id="jvP" cx="37%" cy="31%" r="82%">'
-    '<stop offset="0" stop-color="#f8ddaa"/>'
-    '<stop offset=".55" stop-color="#e3a659"/>'
-    '<stop offset="1" stop-color="#a9692a"/>'
-    '</radialGradient>'
-    '<clipPath id="jvC"><circle cx="13" cy="16" r="8.6"/></clipPath>'
-    '</defs>'
-    '<g transform="rotate(-22 14 16)">'
-    '<ellipse cx="14" cy="16" rx="16.4" ry="6.3" stroke="#39a9c0" '
-    'stroke-width="1.5" opacity=".9"/></g>'
-    '<circle cx="13" cy="16" r="8.6" fill="url(#jvP)"/>'
-    '<g clip-path="url(#jvC)" opacity=".9">'
-    '<ellipse cx="13" cy="10.6" rx="10" ry="1.3" fill="#c98a3e"/>'
-    '<ellipse cx="13" cy="14" rx="11" ry="1.6" fill="#f4d49b"/>'
-    '<ellipse cx="13" cy="17.6" rx="11" ry="1.5" fill="#ab6b2b"/>'
-    '<ellipse cx="13" cy="20.8" rx="9.2" ry="1.2" fill="#d89b56"/>'
-    '<ellipse cx="16.1" cy="18" rx="2" ry="1.4" fill="#cf5136"/></g>'
-    '<circle cx="13" cy="16" r="8.6" fill="none" stroke="#0b141d" '
-    'stroke-width=".5" opacity=".25"/>'
-    '<g transform="rotate(-22 14 16)">'
-    '<circle cx="30.4" cy="16" r="2.1" fill="#7bd3e6" '
-    'stroke="#0b141d" stroke-width=".7"/></g>'
+    '<g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" '
+    'opacity="0.8">'
+    '<line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/>'
+    '<line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/>'
+    '<line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/>'
+    '<line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/>'
+    '<line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/>'
+    '<line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/>'
+    '<line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/>'
+    '<line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/>'
+    '<line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/>'
+    '<line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/>'
+    '<line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/>'
+    '<line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/>'
+    '</g>'
+    '<circle cx="100" cy="100" r="66" fill="#0F6E56"/>'
+    '<circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" '
+    'stroke-width="3.5"/>'
+    '<circle cx="100" cy="100" r="42" fill="#185FA5"/>'
+    '<circle cx="100" cy="100" r="18" fill="#04342C"/>'
+    '<circle cx="100" cy="12" r="7.5" fill="#EF9F27"/>'
+    '<circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/>'
+    '<circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/>'
     '</svg>'
 )
 _FAVICON = "data:image/svg+xml," + urllib.parse.quote(_LOGO_SVG)
@@ -2879,16 +2879,16 @@ body.creating-docs .apptop{
   background:var(--paper-2);z-index:5;overflow:auto;}
 .welcome[hidden]{display:none;}
 .welcome-box{text-align:center;max-width:680px;padding:24px 30px 44px;}
-.welcome-wordmark{display:inline-flex;align-items:center;gap:15px;
-  font-family:var(--mono);font-size:clamp(36px,7vw,52px);font-weight:600;
-  letter-spacing:.1em;color:var(--cyan-deep);margin-bottom:16px;}
-.ww-dot{width:clamp(13px,2.4vw,18px);height:clamp(13px,2.4vw,18px);
-  border-radius:50%;background:var(--cyan);box-shadow:0 0 0 6px #39a9c022;
-  flex:none;}
-/* the Junoview mark (Juno orbiting Jupiter) */
+/* big centered hero logo, then the wordmark below it */
+.welcome-hero{display:flex;justify-content:center;margin-bottom:4px;}
+.welcome-hero .jv-logo{width:clamp(88px,15vw,132px);height:auto;
+  filter:drop-shadow(0 6px 18px #0007);}
+.welcome-wordmark{font-family:var(--mono);font-size:clamp(42px,8.5vw,66px);
+  font-weight:600;letter-spacing:.06em;color:var(--cyan-deep);
+  margin:2px 0 12px;}
+.ww-dot{display:none;}
+/* the Junoview mark (peacock-eye ocellus) — sized by context */
 .jv-logo{flex:none;display:inline-block;vertical-align:middle;}
-.welcome-wordmark .jv-logo{width:clamp(40px,6.4vw,58px);height:auto;
-  filter:drop-shadow(0 2px 6px #0006);}
 .welcome-tag{font-size:clamp(17px,2.4vw,21px);line-height:1.5;font-weight:500;
   color:var(--ink-2);margin:0 auto 20px;max-width:560px;}
 .welcome-lead{font-size:15.5px;line-height:1.65;color:var(--ink-3);
@@ -2917,14 +2917,22 @@ body.creating-docs .apptop{
   border-radius:6px;cursor:pointer;text-align:left;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;direction:rtl;}
 .recent-i:hover{border-color:var(--cyan);}
-.welcome-btns{display:flex;gap:10px;justify-content:center;
-  flex-wrap:wrap;}
-.welcome-btns .dbtn{border-color:var(--line);background:#fff;
-  color:var(--ink-2);font-size:15px;padding:12px 22px;}
-.welcome-btns .dbtn:hover{border-color:var(--cyan);color:var(--ink);}
+.welcome-btns{display:flex;gap:12px;justify-content:center;
+  flex-wrap:wrap;margin-top:4px;}
+.welcome-btns .dbtn{font-size:16px;font-weight:600;padding:14px 26px;
+  border-radius:10px;border:1.5px solid var(--cyan-deep);cursor:pointer;
+  transition:all .15s;}
 .welcome-btns .dbtn.primary{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:#fff;}
-.welcome-btns .dbtn.primary:hover{background:var(--cyan);}
+  border-color:var(--cyan-deep);color:#fff;box-shadow:0 6px 18px #39a9c033;}
+.welcome-btns .dbtn.primary:hover{background:var(--cyan);
+  border-color:var(--cyan);}
+.welcome-btns .dbtn.ghost{background:transparent;border-color:var(--cyan);
+  color:var(--cyan-deep);}
+.welcome-btns .dbtn.ghost:hover{background:#39a9c018;}
+/* dark welcome (default): keep the secondary button clearly readable */
+body:not(.light) .welcome-btns .dbtn.ghost{color:#8fe0f0;
+  border-color:#39a9c0;background:#39a9c012;}
+body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .welcome-links{margin-top:20px;font-size:14px;color:var(--ink-3);}
 .welcome-links a{color:var(--cyan-deep);text-decoration:none;}
 .welcome-links a:hover{text-decoration:underline;}
@@ -11143,36 +11151,14 @@ _TEMPLATE = """<!doctype html>
 </div>
 <div class="welcome" id="welcome" hidden>
   <div class="welcome-box">
-    <div class="welcome-wordmark">{logo}Junoview</div>
-    <p class="welcome-tag">Turn your Jupyter notebooks into interactive
-      documents &mdash; and presentations that refresh themselves.</p>
-    <p class="welcome-lead">A notebook is where you work an analysis out: the
-      code, the figures and the notes that explain them, all in one place.
-      Junoview reads that notebook and turns it into a clean document you can
-      filter &mdash; hide code, print output or whole sections to shape what
-      people see, or pull just the code behind a single figure. Take it a step
-      further and build slide-style presentations from the very same cells;
-      then change the notebook, hit <b>refresh</b>, and your slides update in
-      one click.</p>
-    <ol class="welcome-steps">
-      <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from
-        local files or a GitHub URL.</span></li>
-      <li><span class="ws-n">2</span><span>Filter by cell type, and trace back
-        every cell that builds a plot.</span></li>
-      <li><span class="ws-n">3</span><span>Build presentations from figures,
-        markdown and code straight out of the notebook.</span></li>
-      <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
-        latest changes into your slides &mdash; automatically.</span></li>
-    </ol>
-    <p class="welcome-note"><b>Your documentation lives in the notebook.</b>
-      Write it in markdown right next to the code, and link it straight into a
-      presentation &mdash; one source of truth for the analysis and the story
-      you tell about it.</p>
+    <div class="welcome-hero">{logo}</div>
+    <div class="welcome-wordmark">Junoview</div>
+    <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
     <div class="welcome-btns">
-      <button class="dbtn primary" id="welcome-open">Browse
+      <button class="dbtn primary" id="welcome-open">&#128193; Browse
         files&#8230;</button>
-      <button class="dbtn" id="welcome-demo" hidden>Try the example
-        notebook</button>
+      <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
+        example notebook</button>
     </div>
     <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
       this window.</p>
@@ -12477,19 +12463,16 @@ def _self_test() -> None:
     assert 'id="support-btn"' in web_page
     assert 'id="welcome-demo"' in web_page
     # welcome screen: big wordmark, a real tagline, a narrative lead + a note
-    # that documentation lives in the notebook, then numbered getting-started
-    assert 'class="welcome-wordmark"' in web_page
-    assert "Turn your Jupyter notebooks into interactive" in web_page
-    # rebrand: PlotLine -> Junoview, with the Juno-orbiting-Jupiter mark
+    # a tight welcome hero: big logo, wordmark, one tagline, prominent buttons
+    assert 'class="welcome-hero"' in web_page and 'class="welcome-wordmark"' in web_page
+    assert "Filter, view and present your Jupyter notebooks" in web_page
+    assert 'class="welcome-btns"' in web_page and 'id="welcome-open"' in web_page
+    # rebrand: PlotLine -> Junoview, with the peacock-eye ocellus mark
     assert "Junoview" in out and "PlotLine" not in out
-    assert out.count('class="jv-logo"') >= 2   # welcome + presrail brand
+    assert out.count('class="jv-logo"') >= 2   # welcome hero + presrail brand
     assert 'rel="icon"' in out and "data:image/svg+xml," in out
     assert "<title>Junoview" in web_page
     assert 'content="Junoview"' in _WEB_LOADER and "PlotLine" not in _WEB_LOADER
-    assert 'class="welcome-lead"' in web_page
-    assert 'class="welcome-note"' in web_page
-    assert "Your documentation lives in the notebook" in web_page
-    assert 'class="welcome-steps"' in web_page and web_page.count('class="ws-n"') == 4
     # the GitHub repo link is intentionally NOT surfaced in the UI (privacy)
     assert _REPO_URL not in web_page
     assert "#| title:" in web_page          # directives documented in help
