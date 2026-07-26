@@ -11,9 +11,34 @@ pip install junoview   # then: junoview
 **▶ [Live demo — no install](https://plotline-nb.dev/example_climate_analysis.html)** &nbsp;·&nbsp; a real climate-diagnostics notebook, rendered.
 <!-- TODO: update the link to the junoview domain once it's live. -->
 
-<!-- TODO: drop a 30-second screen recording here — it drives more adoption
-     than any prose. Record with the browser, save as docs/demo.gif, then:
-     ![Junoview demo](docs/demo.gif) -->
+<!-- ─────────────────────────────────────────────────────────────────────────
+  SHOT LIST — record these and drop them in (this is what sells a visual tool).
+  Tooling: ScreenToGif (Windows, free) for GIFs, OR record an .mp4 and drag it
+  straight into this README on github.com — GitHub hosts the video and MP4 is
+  far smaller than GIF. Keep each clip 8–20s, a smallish browser window,
+  ~12–15 fps. Save GIFs under docs/gifs/ (they'll also be served on the site).
+  Then uncomment the matching line below.
+
+  1. HERO — the whole loop (~25s): open a notebook → figure-first document →
+     toggle a filter (hide code) → drop a figure into a slide → Present.
+     ![Junoview in a minute](docs/gifs/hero.gif)
+
+  2. Figure-first + filters (~12s): plots up front, code collapsed; click
+     Plots / Code / Output to reshape what people see.
+     ![Filter a notebook](docs/gifs/filter.gif)
+
+  3. Plot trace / Tree view (~10s): click a figure's "Plot trace" (or the Tree
+     view) to see exactly which cells built it.
+     ![Trace a plot](docs/gifs/trace.gif)
+
+  4. Build + Present (~20s): pick a slide template, drop figures/text, Present
+     full screen.
+     ![Build a slide deck](docs/gifs/present.gif)
+
+  5. Refresh — the killer one (~10s): change the notebook, hit Refresh, the
+     slides update automatically.
+     ![Slides that refresh themselves](docs/gifs/refresh.gif)
+───────────────────────────────────────────────────────────────────────── -->
 
 ---
 

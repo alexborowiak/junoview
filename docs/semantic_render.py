@@ -3996,15 +3996,15 @@ _JS = r"""
     if(treeBtn){
       treeBtn.setAttribute('aria-pressed',isTree.toString());
       treeBtn.textContent=isTree?'▤ Document':'□ Tree view';
-      treeBtn.disabled=!sh||!!(sh&&sh.trace);
+      treeBtn.disabled=!sh;
     }
     var pv=$('#pb-view');
     if(pv){pv.innerHTML=isTree?'▤ Narrative':'□ Tree';
-      pv.disabled=!!(sh&&sh.trace);}
+      pv.disabled=!sh;}
   }
   function toggleTree(){
     var sh=APP.active&&APP.shells[APP.active];
-    if(!sh||sh.trace) return;
+    if(!sh) return;
     var on=sh.el.classList.toggle('tree');
     if(on){ sh.el.classList.remove('raw'); buildTree(sh); }
     renderRawBtn();renderViewBtns();
@@ -5058,6 +5058,53 @@ _JS = r"""
     shell.className='shell nbshell tracetab';
     shell.dataset.nb=key;
     shell.dataset.src=stem;   /* the real notebook a placed clone resolves to */
+    /* the lineage items actually present (covers the fallback case too) —
+       they power the sidebar nav and the Tree view of this trace */
+    var haveIds={};
+    $$('.card',section).forEach(function(c){
+      haveIds[c.id.replace(/^card-/,'')]=1;});
+    var lineage=((src.data&&src.data.items)||[]).filter(function(it){
+      return haveIds[it.card];});
+    /* a real sidebar, so the ☰ sections toggle works here like in a
+       notebook tab: one nav entry per lineage step */
+    var KCLS={figure:'k-figure',diagnostic:'k-figure',dataset:'k-dataset',
+      transform:'k-transform',metric:'k-metric',text:'k-print',
+      note:'k-note',code:'k-code'};
+    var rail=document.createElement('aside');rail.className='rail';
+    var rh=document.createElement('div');rh.className='railhead';
+    var rt=document.createElement('h1');rt.className='railtitle';
+    rt.textContent=title||'Plot trace';
+    var rmeta=document.createElement('div');rmeta.className='railmeta';
+    rmeta.textContent=lineage.length+' steps · from '+stem;
+    rh.appendChild(rt);rh.appendChild(rmeta);rail.appendChild(rh);
+    var nav=document.createElement('nav');nav.className='nav';
+    nav.setAttribute('aria-label','Plot lineage');
+    lineage.forEach(function(it){
+      var a=document.createElement('a');
+      var kc=KCLS[it.kind]||'k-code';
+      if(kc!=='k-figure'&&it.codeKinds
+         &&(it.codeKinds.length!==1||it.codeKinds[0]!=='code'))
+        kc+=' ckmain-'+it.codeKind;
+      a.className='navitem '+kc;
+      a.href='#card-'+it.card;
+      var d=document.createElement('span');d.className='dot';
+      var t=document.createElement('span');t.className='navitem-t';
+      t.textContent=it.title;
+      a.appendChild(d);a.appendChild(t);
+      nav.appendChild(a);
+    });
+    nav.addEventListener('click',function(e){
+      var a=e.target.closest?e.target.closest('.navitem'):null;
+      if(!a) return;
+      e.preventDefault();
+      var id=(a.getAttribute('href')||'').slice(1);
+      var el=id?shell.querySelector('[id="'+id+'"]'):null;
+      if(el){el.scrollIntoView({behavior:'smooth',block:'center'});
+        el.classList.add('target-flash');
+        setTimeout(function(){el.classList.remove('target-flash');},1200);}
+    });
+    rail.appendChild(nav);
+    shell.appendChild(rail);
     var stage=document.createElement('main');stage.className='stage';
     var content=document.createElement('div');content.className='content';
     var head=document.createElement('div');head.className='tracetab-head';
@@ -5074,13 +5121,19 @@ _JS = r"""
       content.appendChild(gw);}
     content.appendChild(section);
     stage.appendChild(content);
+    /* an (initially empty) tree host so Tree view works on this trace */
+    var tv=document.createElement('div');tv.className='treeview';
+    tv.setAttribute('aria-label','Analysis tree view');
+    stage.appendChild(tv);
     shell.appendChild(stage);
     var host=$('#docs')||document.body;
     host.appendChild(shell);
     /* wire the clones so their code toggles, eyes, collapse + fig-fold work */
     wireCardBehaviors(shell,stem);
     activateOutputs(shell,true);   /* draw plotly specs on the clones */
-    APP.shells[key]={el:shell,data:{},path:'',title:title||'Plot trace',
+    APP.shells[key]={el:shell,
+      data:{stem:stem,items:lineage},   /* subset: feeds buildTree */
+      path:'',title:title||'Plot trace',
       trace:true,source:stem};
     if(APP.traces.indexOf(key)<0) APP.traces.push(key);
     activate(key);
@@ -5555,6 +5608,21 @@ _DECK_HTML = """
           </span>
           <span class="rbn-grp">
             <span class="rbn-row">
+              <span class="sh-drop" id="lay-drop">
+                <button class="dbtn" id="lay-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Slide templates &mdash; apply a layout to this
+ slide">&#9638; Layouts &#9662;</button>
+                <div class="sh-menu lay-menu" id="lay-menu" hidden>
+                  <div class="lay-picker" id="layout-menu-grid"
+                    aria-label="Slide layouts"></div>
+                </div>
+              </span>
+            </span>
+            <span class="rbn-lab">Slide</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
               <button class="dbtn et" data-tool="cell" aria-pressed="false"
                 title="Drop a notebook card onto the slide — you pick which
  one from your notebook">&#43; Notebook cell</button>
@@ -5575,18 +5643,45 @@ _DECK_HTML = """
             </span>
             <span class="rbn-lab">Insert</span>
           </span>
-          <span class="rbn-grp">
-            <span class="rbn-row">
-              <button class="dbtn et" data-tool="select"
-                aria-pressed="true">Select</button>
-              <button class="dbtn" id="et-del" disabled
-                title="Delete the selected item (Del)">Delete</button>
-            </span>
-            <span class="rbn-lab">Edit</span>
-          </span>
-          <span class="et-hint" id="et-hint"></span>
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-dup"
+                title="Duplicate (Ctrl+D)">&#10697;</button>
+              <button class="dbtn etm" id="fmt-group"
+                title="Group the selected items (Ctrl+G)">&#9783;
+                Group</button>
+              <button class="dbtn etm" id="fmt-ungroup"
+                title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
+              <button class="dbtn etm" id="fmt-front"
+                title="Bring to front">&#8613;</button>
+              <button class="dbtn etm" id="fmt-back"
+                title="Send to back">&#8615;</button>
+              <button class="dbtn etm" id="fmt-rotl"
+                title="Rotate left 15&#176;">&#10226;</button>
+              <button class="dbtn etm" id="fmt-rotr"
+                title="Rotate right 15&#176;">&#10227;</button>
+            </span>
+            <span class="rbn-lab">Arrange</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="fmt-opwrap" id="fmt-opwrap"
+                title="Opacity (0&ndash;100%)">
+                <input class="fmt-range" id="fmt-op" type="range"
+                  min="0" max="100" step="1" aria-label="Opacity percent">
+                <span class="fmt-opval" id="fmt-opval">100%</span></span>
+              <span class="sh-drop" id="fmt-animwrap" hidden>
+                <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Animate this item so it appears on click">&#9654;
+                  Animate &#9662;</button>
+                <div class="sh-menu" id="fmt-anim-menu" hidden></div>
+              </span>
+            </span>
+            <span class="rbn-lab">Effects</span>
+          </span>
           <span class="rbn-grp">
             <span class="rbn-row">
               <span class="fmt-lab" id="fmt-txlab" hidden
@@ -5675,39 +5770,6 @@ _DECK_HTML = """
           </span>
           <span class="rbn-grp">
             <span class="rbn-row">
-              <span class="fmt-opwrap" id="fmt-opwrap"
-                title="Opacity (0&ndash;100%)">
-                <input class="fmt-range" id="fmt-op" type="range"
-                  min="0" max="100" step="1" aria-label="Opacity percent">
-                <span class="fmt-opval" id="fmt-opval">100%</span></span>
-            </span>
-            <span class="rbn-lab">Opacity</span>
-          </span>
-          <span class="rbn-grp">
-            <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-rotl"
-                title="Rotate left 15&#176;">&#10226;</button>
-              <button class="dbtn etm" id="fmt-rotr"
-                title="Rotate right 15&#176;">&#10227;</button>
-              <button class="dbtn etm" id="fmt-dup"
-                title="Duplicate (Ctrl+D)">&#10697;</button>
-              <button class="dbtn etm" id="fmt-group"
-                title="Group the selected items (Ctrl+G)">&#9783;
-                Group</button>
-              <button class="dbtn etm" id="fmt-ungroup"
-                title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
-              <button class="dbtn etm" id="fmt-front"
-                title="Bring to front">&#8613;</button>
-              <button class="dbtn etm" id="fmt-back"
-                title="Send to back">&#8615;</button>
-            </span>
-            <span class="rbn-lab">Arrange</span>
-          </span>
-          <span class="rbn-grp">
-            <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-replace"
-                title="Swap in a different notebook card">&#8644;
-                Replace</button>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
               <span class="sh-drop" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
@@ -5716,17 +5778,17 @@ _DECK_HTML = """
                   &#9986; Crop &#9662;</button>
                 <div class="sh-menu" id="fmt-crop-menu" hidden></div>
               </span>
-              <span class="sh-drop" id="fmt-animwrap" hidden>
-                <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Animate this item so it appears on click">&#9654;
-                  Animate &#9662;</button>
-                <div class="sh-menu" id="fmt-anim-menu" hidden></div>
-              </span>
+              <button class="dbtn etm" id="fmt-replace"
+                title="Swap in a different notebook card">&#8644;
+                Replace</button>
+              <button class="dbtn etm" id="fmt-locate"
+                title="Jump to this card in its notebook &mdash; see where
+ the plot came from">&#8982; Locate in notebook</button>
             </span>
             <span class="rbn-lab">Object</span>
           </span>
         </span>
+        <span class="et-hint" id="et-hint"></span>
       </div>
       <button class="deck-arrow prev" id="deck-prev"
         title="Previous slide (&#8592;)"
@@ -6016,7 +6078,7 @@ body:not(.light) .plot-trace-btn:hover{color:#5fc3d8;border-color:#39a9c066;}
    No sidebar — the content spans the full width. ---- */
 /* :not([hidden]) both raises specificity above .nbshell[hidden]{display:none}
    AND stops matching once activate() hides the tab, so switching tabs works */
-.nbshell.tracetab:not([hidden]){display:block;}
+.nbshell.tracetab:not([hidden]){display:grid;}
 .nbshell.tracetab .stage{width:100%;}
 .tracetab-head{margin:0 0 14px;padding-bottom:12px;
   border-bottom:1px solid #ffffff14;}
@@ -6311,13 +6373,23 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    and comes back for cell-picking / on Done. */
 .deck.editing{left:var(--presrail-w);top:0;}
 body.slide-editing .apptop{display:none;}
-.deck.editing .deck-create{flex:0 0 var(--dc-w);
+/* while editing, the panel is just chrome + film strip (the template
+   catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
+   slide canvas gets the width */
+.deck.editing .deck-create{flex:0 0 min(var(--dc-w),248px);
   border-right:1px solid #ffffff22;}
-/* ---- PowerPoint-style ribbon: labelled groups, always the same height ---- */
-.edit-tools.ribbon{display:flex;flex-direction:column;align-items:stretch;
-  gap:0;padding:7px 16px 6px;border-bottom:1px solid #ffffff14;
-  background:#0e1926;flex:none;}
-.rbn-static{display:flex;align-items:stretch;flex-wrap:wrap;gap:2px;}
+.deck.editing #layout-row{display:none;}
+.deck.editing .dc-resize{display:none;}
+/* ---- PowerPoint-style ribbon: labelled groups, always the same height ----
+   ONE wrapping flow: the static groups and the contextual format groups are
+   display:contents, so every group flows into the same rows — no dedicated
+   row per section, no wasted band. min-height reserves two rows so
+   selecting/deselecting never grows the ribbon or shifts the canvas. */
+.edit-tools.ribbon{display:flex;flex-wrap:wrap;align-items:stretch;
+  align-content:flex-start;gap:2px;row-gap:4px;
+  padding:7px 16px 6px;border-bottom:1px solid #ffffff14;
+  background:#0e1926;flex:none;min-height:122px;}
+.rbn-static{display:contents;}
 .rbn-grp{display:flex;flex-direction:column;align-items:center;
   justify-content:space-between;gap:6px;padding:2px 15px;position:relative;
   min-width:0;}
@@ -6329,14 +6401,11 @@ body.slide-editing .apptop{display:none;}
   flex-wrap:wrap;flex:1;min-height:32px;}
 .rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
-/* the contextual format row: groups WRAP onto a second row instead of
-   scrolling. It reserves a fixed two-row min-height so a one- or two-row
-   selection is always the same height — selecting an item never grows the
-   ribbon / shifts the canvas below it. */
-.et-fmt{display:flex;align-items:stretch;flex-wrap:wrap;align-content:flex-start;
-  gap:2px;row-gap:4px;margin-top:7px;padding-top:8px;
-  border-top:1px solid #ffffff12;min-height:108px;}
-.et-fmt[hidden]{display:flex;visibility:hidden;}
+/* the contextual format groups flow into the same rows as the static ones;
+   when nothing is selected they stay in layout (invisible) so the ribbon
+   height never jumps */
+.et-fmt{display:contents;}
+.et-fmt[hidden]{display:contents;visibility:hidden;}
 .et-fmt .rbn-grp{flex:none;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
@@ -6665,6 +6734,17 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
   flex-direction:column;}
 .an-cell .figframe img{max-width:100%;max-height:100%;width:auto;
   height:auto;object-fit:contain;margin:0;}
+/* a FIGURE frame is just the plot: no inner padding, and after render the
+   frame snaps to the image's aspect ratio (snapFigAspect) — so the selection
+   outline and resize handle sit exactly on the plot, with no letterbox gap
+   and no title header (the tooltip + Locate in notebook carry its name) */
+.an-cell.an-figonly{border-radius:4px;}
+.an-cell.an-figonly .cardbody{padding:0;}
+.an-cell.an-figonly .figframe{padding:0;}
+/* the frame already matches the plot's aspect, so filling it (up- OR
+   down-scaling) keeps the plot edge-to-edge under the outline */
+.an-cell.an-figonly .figframe img{width:100%;height:100%;
+  max-width:none;max-height:none;object-fit:contain;}
 .an-cell .note{flex:1;min-height:0;overflow:auto;
   background:var(--nb-bg,#f7fafc);
   color:var(--nb-tx,var(--ink-2));border-radius:6px;padding:10px 14px;
@@ -6709,8 +6789,21 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
 /* the same part-picker, hosted in the top ribbon's Object group */
 .rbn-partslot{display:inline-flex;align-items:center;}
 .rbn-partslot[hidden]{display:none;}
-#fmt-parts .cellparts{position:static;display:inline-flex;gap:4px;
+#fmt-parts .cellparts{position:static;display:inline-flex;gap:6px;
   flex-wrap:nowrap;bottom:auto;left:auto;right:auto;z-index:auto;}
+/* in the ribbon the figure/code/output/split pills dress like every other
+   ribbon button — same face, same size */
+#fmt-parts .cellpartbtn{font-family:var(--mono);font-size:11px;
+  letter-spacing:normal;background:#ffffff0a;border:1px solid #ffffff22;
+  border-radius:6px;color:#cdd9e3;padding:5px 9px;line-height:normal;}
+#fmt-parts .cellpartbtn:hover{border-color:var(--cyan);color:#fff;}
+#fmt-parts .cellpartbtn.on{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+/* the Layouts dropdown: the whole template catalog, off the panel and
+   into a ribbon menu */
+.sh-menu.lay-menu{display:block;width:442px;max-height:min(64vh,470px);
+  overflow-y:auto;padding:8px;}
+.lay-menu .lay-picker{margin:0;}
 
 /* picking a card for a cell frame */
 .pickbar{position:fixed;top:var(--chrome-h);left:var(--presrail-w);
@@ -6943,23 +7036,47 @@ _DECK_JS = r"""
     return ic;
   }
   function renderLayoutPicker(){
-    var row=$('#layout-row'); if(!row||row.dataset.built) return;
-    row.dataset.built='1';row.innerHTML='';
-    LAYOUTS.forEach(function(layout){
-      var b=document.createElement('button');
-      b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
-      b.title=layout.label;
-      b.appendChild(layIcon(layout));
-      var lb=document.createElement('span');lb.className='lay-lb';
-      lb.textContent=layout.label;b.appendChild(lb);
-      b.addEventListener('click',function(){
-        var s=pres.slides[cur]; if(!s) return;
-        applyLayout(s,layout);
-        activePane=-1;markDirty();refresh();
+    /* the same catalog renders twice: in the builder panel (create mode)
+       and in the ribbon's Layouts dropdown (edit mode) */
+    ['#layout-row','#layout-menu-grid'].forEach(function(sel){
+      var row=$(sel); if(!row||row.dataset.built) return;
+      row.dataset.built='1';row.innerHTML='';
+      LAYOUTS.forEach(function(layout){
+        var b=document.createElement('button');
+        b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
+        b.title=layout.label;
+        b.appendChild(layIcon(layout));
+        var lb=document.createElement('span');lb.className='lay-lb';
+        lb.textContent=layout.label;b.appendChild(lb);
+        b.addEventListener('click',function(){
+          var s=pres.slides[cur]; if(!s) return;
+          applyLayout(s,layout);
+          activePane=-1;markDirty();refresh();
+          closeLayMenu();
+        });
+        row.appendChild(b);
       });
-      row.appendChild(b);
     });
   }
+  /* the ribbon's Layouts dropdown open/close */
+  function closeLayMenu(){
+    var lm=$('#lay-menu'),lb=$('#lay-btn');
+    if(lm&&!lm.hidden){lm.hidden=true;
+      if(lb) lb.setAttribute('aria-expanded','false');}
+  }
+  (function(){
+    var lb=$('#lay-btn'),lm=$('#lay-menu'),ld=$('#lay-drop');
+    if(!lb||!lm) return;
+    lb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=lm.hidden;
+      lm.hidden=!willOpen;
+      lb.setAttribute('aria-expanded',willOpen.toString());
+    });
+    document.addEventListener('click',function(e){
+      if(!lm.hidden&&ld&&!ld.contains(e.target)) closeLayMenu();
+    });
+  })();
   function slideCells(s){
     return (s&&s.annots||[]).map(function(a,i){return {a:a,i:i};})
       .filter(function(p){return p.a.k==='cell';});
@@ -8248,6 +8365,47 @@ _DECK_JS = r"""
       selectAnnot(layer,idx);
     });
   }
+  /* a figure frame hugs its plot: the frame ELEMENT is sized to the
+     image's contained fit inside the stored rect, so the selection outline
+     + resize handle sit exactly on the plot with no letterbox gap. The
+     stored rect is left alone at render time (a slide renders at several
+     scales — stage, film thumbnails, vpage — and mutating the model from
+     whichever layer happens to render would compound); only an explicit
+     resize gesture normalises it (startResize). */
+  function figFit(layer,a,img){
+    if(!img||!img.naturalWidth||!img.naturalHeight) return null;
+    var lw=layer.clientWidth,lh=layer.clientHeight;
+    if(!lw||!lh) return null;
+    var fw=lw*(a.w||34)/100,fh=lh*(a.h||30)/100;
+    var r=img.naturalWidth/img.naturalHeight;
+    var w2=Math.min(fw,fh*r),h2=w2/r;
+    return {x:(a.x||0)+(fw-w2)/2/lw*100,
+            y:(a.y||0)+(fh-h2)/2/lh*100,
+            w:w2/lw*100,h:h2/lh*100,ratio:r};
+  }
+  function figImg(c){
+    if(c.querySelector('.figpager')) return null;   /* pager: several plots */
+    var imgs=$$('.figframe img',c);
+    return imgs.length===1?imgs[0]:null;   /* plotly/html figs: no fit */
+  }
+  function fitFigFrame(layer,a,c){
+    var img=figImg(c); if(!img) return;
+    var tries=0;
+    function go(){
+      /* the slide renders detached (no layout yet) and a freshly cloned
+         <img> can lack its natural size — retry over a few frames until
+         both have real dimensions; a replaced render just stops */
+      var f=c.isConnected?figFit(layer,a,img):null;
+      if(!f){if(tries++<8) requestAnimationFrame(go);return;}
+      c.style.left=f.x+'%';c.style.top=f.y+'%';
+      c.style.width=f.w+'%';c.style.height=f.h+'%';
+    }
+    if(!img.naturalWidth){
+      img.addEventListener('load',go,{once:true});
+      if(img.decode) img.decode().then(go).catch(function(){});
+    }
+    go();
+  }
   function renderAnnots(layer,s){
     var editing=(mode==='edit');
     layer.innerHTML='';
@@ -8383,26 +8541,35 @@ _DECK_JS = r"""
         c.setAttribute('data-idx',i);
         if(it){
           c.title=it.nb+' — '+it.title;
-          var ch=document.createElement('div');
-          ch.className='an-cellhead';
-          var chT=document.createElement('span');
-          chT.className='an-cellhead-t';
-          chT.textContent=it.title;
-          ch.appendChild(chT);
           var pt0=partOf(a),facs0=facetList(it.ns);
-          if(facs0.length>1||pt0==='code'){
-            var pl=document.createElement('span');
-            pl.className='an-cellpart';pl.textContent=pt0;
-            ch.appendChild(pl);
+          /* a figure frame carries NO title header, even selected — a
+             placed plot is JUST the plot (its name lives in the tooltip
+             and the ribbon's Locate in notebook) */
+          if(pt0!=='figure'){
+            var ch=document.createElement('div');
+            ch.className='an-cellhead';
+            var chT=document.createElement('span');
+            chT.className='an-cellhead-t';
+            chT.textContent=it.title;
+            ch.appendChild(chT);
+            if(facs0.length>1||pt0==='code'){
+              var pl=document.createElement('span');
+              pl.className='an-cellpart';pl.textContent=pt0;
+              ch.appendChild(pl);
+            }
+            if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
+            c.appendChild(ch);
           }
-          if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
-          c.appendChild(ch);
           var b=framePart(it.ns,a.part);
           if(b){
             if(a.ts) b.style.zoom=a.ts;
             applyCrop(b,a);
             if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(b);
+          }
+          if(pt0==='figure'&&!a.crop){
+            c.classList.add('an-figonly');
+            fitFigFrame(layer,a,c);
           }
           applyCellColor(c,a);
           /* No on-frame Replace / part-picker / caption: those controls now
@@ -8623,6 +8790,7 @@ _DECK_JS = r"""
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
     show('#fmt-replace',kind==='cell');
+    show('#fmt-locate',kind==='cell'&&!!a.ref);
     show('#fmt-cropwrap',kind==='image'||kind==='cell');
     show('#fmt-animwrap',isNum);
     /* the code/figure/output part-picker (+ split) — moved off the frame
@@ -8728,6 +8896,13 @@ _DECK_JS = r"""
     var start=pctPoint(layer,ev0);
     var el=layer.querySelector('.an-item[data-idx="'+idx+'"]');
     var lr=layer.getBoundingClientRect();
+    /* a figure frame: first snap the stored rect to the plot it visually
+       hugs, then keep the plot's aspect locked while dragging */
+    var figRatio=0;
+    if(a.k==='cell'&&el&&el.classList.contains('an-figonly')){
+      var ff=figFit(layer,a,figImg(el));
+      if(ff){a.x=ff.x;a.y=ff.y;a.w=ff.w;a.h=ff.h;figRatio=ff.ratio;}
+    }
     var er=el?el.getBoundingClientRect():null;
     var ow=a.w||(er?er.width/lr.width*100:10);
     var oh=a.h||(er?er.height/lr.height*100:10);
@@ -8735,6 +8910,8 @@ _DECK_JS = r"""
       var p=pctPoint(layer,ev);
       a.w=Math.max(4,ow+p.x-start.x);
       if(a.k!=='text') a.h=Math.max(4,oh+p.y-start.y);
+      if(figRatio&&lr.height)
+        a.h=a.w*(lr.width/(lr.height*figRatio));
       renderAnnots(layer,s);selectAnnot(layer,idx);
     }
     function mu(){
@@ -9307,6 +9484,24 @@ _DECK_JS = r"""
   if(repBtn) repBtn.addEventListener('click',function(){
     if(typeof selAnnot==='number') startPick(selAnnot);
   });
+  /* Locate in notebook: leave the deck and land on the card this frame
+     was placed from — its home in the notebook, scrolled to + flashed */
+  var locBtn=$('#fmt-locate');
+  if(locBtn) locBtn.addEventListener('click',function(){
+    var s=pres.slides[cur]; if(!s) return;
+    var a=annotByIdx(s,selAnnot);
+    if(!a||a.k!=='cell'||!a.ref) return;
+    var it=resolveRef(a.ref);
+    var card=cardEl(a.ref);
+    if(!it||!card){toast("That card's notebook is not open");return;}
+    closeDeck();
+    if(APP.activate) APP.activate(it.nb);
+    setTimeout(function(){
+      card.scrollIntoView({behavior:'smooth',block:'center'});
+      card.classList.add('target-flash');
+      setTimeout(function(){card.classList.remove('target-flash');},1400);
+    },60);
+  });
   var pickCancel=$('#pick-cancel');
   if(pickCancel) pickCancel.addEventListener('click',function(){
     endPick();
@@ -9857,7 +10052,7 @@ _DECK_JS = r"""
   function renderControls(){
     updateNumsLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay').forEach(function(b){
+    $$('#layout-row .lay,#layout-menu-grid .lay').forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',
         (!!s&&s.lay===b.dataset.lay).toString());
@@ -10512,6 +10707,15 @@ _DECK_JS = r"""
       var vf=$('#vfull');
       if(vf&&!vf.hidden) closeVFull();
       else if(mode==='view'&&(stage.scrollTop||0)>50) scrollToSlide();
+      else if(mode==='edit'
+              &&(tool!=='select'||selAnnot!==null||selSet.length)){
+        /* first Esc drops the tool / selection; the next one leaves the
+           editor (there are no Select/Delete buttons — Esc and Del do it) */
+        setTool('select');
+        var l=stage.querySelector('.annot-layer');
+        if(l) selectAnnot(l,null);
+        else {selAnnot=null;selSet=[];showFmt();}
+      }
       else if(mode==='view'||mode==='edit') setUIMode('create');
       else closeDeck();
     }
@@ -12203,6 +12407,24 @@ def _self_test() -> None:
     assert 'id="layout-row"' in out and "renderLayoutPicker" in out
     assert 'id="edit-tools"' in out and 'id="dc-edit"' in out
     assert 'id="et-fmt"' in out and 'data-tool="cell"' in out
+    # ribbon declutter: ONE wrapping flow (static + format groups share
+    # rows), no Select/Delete group (Esc deselects, Del removes), Animate
+    # merged into an Effects group, and common groups (Arrange, Effects)
+    # come FIRST so buttons don't jump between selection types
+    assert ".rbn-static{display:contents;}" in out
+    assert ".et-fmt{display:contents;}" in out
+    assert 'id="et-del"' not in out and 'data-tool="select"' not in out
+    assert ">Effects</span>" in out and 'id="fmt-animwrap"' in out
+    assert out.index('id="fmt-dup"') < out.index('id="fmt-txlab"')
+    # slide templates live in a ribbon Layouts dropdown while editing; the
+    # panel keeps the catalog only in create mode and stays slim in edit
+    assert 'id="lay-btn"' in out and 'id="layout-menu-grid"' in out
+    assert ".deck.editing #layout-row{display:none;}" in out
+    assert "min(var(--dc-w),248px)" in out
+    # the ribbon part-picker pills dress like the other ribbon buttons
+    assert "#fmt-parts .cellpartbtn{" in out
+    # plot-trace tabs get a real sidebar (lineage nav) and Tree view
+    assert "aria-label','Plot lineage'" in out.replace('"', "'")
     # URL routing: a unique, restorable hash per view (#/doc/<stem>, #/pres/…)
     assert "function applyHash" in out and "APP.updateHash=updateHash" in out
     assert "'#/doc/'" in out and "'#/pres/'" in out
@@ -12306,6 +12528,15 @@ def _self_test() -> None:
     # Object controls (Replace + code/figure/output part-picker) now live in
     # the ribbon, not floating on the frame; a placed figure is just the figure
     assert 'id="fmt-parts"' in out and "rbn-partslot" in out
+    # a figure frame hugs its plot: the frame element fits the image's
+    # contained rect with no inner padding and no title header, so the
+    # selection outline sits exactly on the plot
+    assert "function fitFigFrame" in out and "an-figonly" in out
+    assert "function figFit" in out
+    assert ".an-cell.an-figonly .figframe{padding:0;}" in out
+    assert ".an-cell.an-figonly .cardbody{padding:0;}" in out
+    # ribbon Object group: Locate in notebook jumps to the frame's source card
+    assert 'id="fmt-locate"' in out and "#fmt-locate" in out
     # thumbnail slide surfaces clip overflow (a figure dragged past the slide
     # edge can't bleed into the next thumbnail)
     assert "margin:0;width:100%;overflow:hidden" in out
@@ -12338,7 +12569,7 @@ def _self_test() -> None:
     assert "APP.openTraceTab" in out and "APP.traceGoto" in out
     # an inactive trace tab must still hide: the display rule is scoped so it
     # never overrides .nbshell[hidden]{display:none}
-    assert ".nbshell.tracetab:not([hidden]){display:block" in out
+    assert ".nbshell.tracetab:not([hidden]){display:grid" in out
     # a placed clone resolves to its source notebook (dataset.src)
     assert "shell.dataset.src=stem" in out
     # the trace tab shares the docs per-card wiring (true subset, not a widget)
