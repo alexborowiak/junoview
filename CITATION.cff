@@ -13,7 +13,7 @@ authors:
     family-names: "Borowiak"
     # orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: add your ORCID
     affiliation: "University of Leeds"
-license: MIT
+license: Apache-2.0
 repository-code: "https://github.com/alexborowiak/semantic-rendering"  # TODO: update if the repo is renamed to junoview
 url: "https://plotline-nb.dev"  # TODO: update to the junoview domain once live
 version: "0.1.0"
