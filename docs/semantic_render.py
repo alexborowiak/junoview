@@ -6313,12 +6313,13 @@ body.slide-editing .apptop{display:none;}
   flex-wrap:wrap;flex:1;min-height:32px;}
 .rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
-/* the contextual format row: one grouped row of a FIXED reserved height (it
-   scrolls sideways if the groups don't fit) so selecting an item never grows
-   the ribbon / shifts the canvas below it */
-.et-fmt{display:flex;align-items:stretch;flex-wrap:nowrap;gap:2px;margin-top:7px;
-  padding-top:8px;border-top:1px solid #ffffff12;height:56px;overflow-x:auto;
-  overflow-y:hidden;scrollbar-width:thin;}
+/* the contextual format row: groups WRAP onto a second row instead of
+   scrolling. It reserves a fixed two-row min-height so a one- or two-row
+   selection is always the same height — selecting an item never grows the
+   ribbon / shifts the canvas below it. */
+.et-fmt{display:flex;align-items:stretch;flex-wrap:wrap;align-content:flex-start;
+  gap:2px;row-gap:4px;margin-top:7px;padding-top:8px;
+  border-top:1px solid #ffffff12;min-height:108px;}
 .et-fmt[hidden]{display:flex;visibility:hidden;}
 .et-fmt .rbn-grp{flex:none;}
 .fmt-lab{margin-left:2px;}
