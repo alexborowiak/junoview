@@ -1,6 +1,21 @@
-# PlotLine
+# Junoview
 
-**Streamline presentations from Jupyter. Display your plots and documentation.**
+**Figure-first viewing of executed Jupyter notebooks — and presentations built from the same cells.**
+
+> NASA's **Juno** probe viewed Jupiter; **Junoview** views your **Jupyter**.
+
+```bash
+pip install junoview   # then: junoview
+```
+
+**▶ [Live demo — no install](https://plotline-nb.dev/example_climate_analysis.html)** &nbsp;·&nbsp; a real climate-diagnostics notebook, rendered.
+<!-- TODO: update the link to the junoview domain once it's live. -->
+
+<!-- TODO: drop a 30-second screen recording here — it drives more adoption
+     than any prose. Record with the browser, save as docs/demo.gif, then:
+     ![Junoview demo](docs/demo.gif) -->
+
+---
 
 Turn an **executed** Jupyter notebook into a figure-first, nonlinear analysis
 environment. Instead of rendering every cell with equal weight (the Quarto /
@@ -48,7 +63,7 @@ beneath it, and a vertical **presentations rail** down the left edge.
   bottom-left brings it back. While the builder is docked, notebook tabs
   keep working — switch tabs to pull cards from different notebooks into
   the same deck.
-- Open tabs and recent files are remembered in `plotline_project.json` next to
+- Open tabs and recent files are remembered in `junoview_project.json` next to
   where you launched the app — restart later and your workspace comes back.
 - Presentations can **mix cards from every open tab** (see below) and save
   into the same project file.
@@ -128,14 +143,13 @@ server is for your own machine.
 
 ### Install as a command
 
-The repo is pip-installable (`pyproject.toml` included):
-
 ```bash
-pip install .            # or: pipx install .
-plotline                 # launches the app from anywhere
+pip install junoview     # or: pipx install junoview
+junoview                 # launches the app from anywhere
 ```
 
-The Jupyter widget extras come with `pip install ".[widget]"`.
+Or from a checkout: `pip install .` (add `pipx` to isolate it). The Jupyter
+widget extras come with `pip install "junoview[widget]"`.
 
 ---
 
@@ -438,7 +452,7 @@ rail; **New** starts one, *File → Rename* (or clicking the name in the
 builder) renames it. Saving routes:
 
 1. **App mode: autosave to project** (default on) — every change is
-   written to `plotline_project.json` in the app's root folder about a
+   written to `junoview_project.json` in the app's root folder about a
    second after you make it, alongside your open-tab session. Toggle it
    with *File → Autosave*; with it off, *File → Save to project* saves
    manually. *File → Delete presentation* removes one.

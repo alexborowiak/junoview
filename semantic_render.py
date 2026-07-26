@@ -11379,6 +11379,16 @@ def build_web(outdir: Path) -> None:
     if example.exists():
         (outdir / "example_climate_analysis.ipynb").write_bytes(
             example.read_bytes())
+        # also render an INSTANT static demo (no Pyodide load, no install) —
+        # a hosted, clickable "live demo above the fold"
+        try:
+            doc = parse_notebook(json.loads(
+                example.read_text(encoding="utf-8")))
+            doc.source_name = "example_climate_analysis"
+            (outdir / "example_climate_analysis.html").write_text(
+                render_page([doc], mode="static"), encoding="utf-8")
+        except Exception:
+            pass
 
 
 _WEB_LOADER = r"""<!doctype html>

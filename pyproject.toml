@@ -19,6 +19,11 @@ classifiers = [
     "Framework :: Jupyter",
 ]
 
+[project.urls]
+# TODO: point these at the junoview repo/domain once they exist
+Homepage = "https://github.com/alexborowiak/semantic-rendering"
+Repository = "https://github.com/alexborowiak/semantic-rendering"
+
 [project.optional-dependencies]
 widget = ["anywidget", "ipywidgets"]
 
