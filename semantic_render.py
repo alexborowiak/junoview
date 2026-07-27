@@ -95,6 +95,7 @@ import json
 import keyword
 import re
 import secrets
+import subprocess
 import sys
 import threading
 import tokenize
@@ -301,6 +302,8 @@ class RenderedOutput:
     has_xarray: bool = False
     has_interactive: bool = False   # embeds live JS (plotly/bokeh/vega/…)
     ot: str = "print"  # output-type slug for the Output-types filter
+    pt: str = ""       # plot-type slug (matplotlib/plotly/bokeh/…) — set on
+                       # everything that lands in a card's PLOT part
 
 
 _B64_STRIP_RE = re.compile(r"[^A-Za-z0-9+/=]")
@@ -337,11 +340,31 @@ def _defuse_scripts(fragment: str) -> tuple[str, bool]:
     return _SCRIPT_OPEN_RE.sub(repl, fragment), had
 
 
+_PLOT_MARKER_RE = re.compile(
+    r"bk-root|bokehjs|plotly-graph-div|js-plotly-plot|vega-embed|vega-lite|"
+    r"folium-map|leaflet-container|require\(|<script|<iframe", re.I)
+
+
 def _looks_interactive(htmltext: str) -> bool:
+    """True only on REAL embed machinery (scripts, iframes, library
+    containers) — prose that merely mentions a library name must not turn
+    a printed table into a 'figure'."""
+    return bool(_PLOT_MARKER_RE.search(htmltext))
+
+
+def _plot_lib(htmltext: str) -> str:
+    """Which plotting library a live HTML embed comes from — the slug feeds
+    the Plot-types filter ('widget' = some other interactive embed)."""
     low = htmltext.lower()
-    return any(k in low for k in (
-        "plotly", "bokeh", "vega", "require(", "folium", "leaflet",
-        "<script"))
+    if "bokeh" in low:
+        return "bokeh"
+    if "vega" in low or "altair" in low:
+        return "vega"
+    if "folium" in low or "leaflet" in low:
+        return "folium"
+    if "plotly" in low:
+        return "plotly"
+    return "widget"
 
 
 _NUM_RE = re.compile(r"^[-+]?(\d[\d_]*\.?\d*|\.\d+)([eE][-+]?\d+)?j?$")
@@ -446,47 +469,51 @@ def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
                 spec = html.escape(spec, quote=True).replace("</", "<\\/")
                 rendered.append(RenderedOutput(
                     "plotly",
-                    f'<div class="figframe plotframe">'
+                    f'<div class="figframe plotframe" data-pt="plotly">'
                     f'<div class="plotly-embed" data-plotly="{spec}">'
                     f'</div></div>',
-                    has_interactive=True, ot="result"))
+                    has_interactive=True, ot="result", pt="plotly"))
             elif video_key:
                 b64 = _b64(data[video_key])
                 rendered.append(RenderedOutput(
                     "video",
-                    f'<div class="figframe"><video class="vid-out" controls '
+                    f'<div class="figframe" data-pt="video">'
+                    f'<video class="vid-out" controls '
                     f'loop muted playsinline preload="metadata" '
                     f'src="data:{video_key};base64,{b64}"></video></div>',
-                    has_image=True, ot="result"))
+                    has_image=True, ot="result", pt="video"))
             elif "image/png" in data:
                 rendered.append(RenderedOutput(
                     "image",
-                    f'<div class="figframe">'
+                    f'<div class="figframe" data-pt="matplotlib">'
                     f'<img loading="lazy" alt="figure output" '
                     f'src="data:image/png;base64,{_b64(data["image/png"])}">'
                     f'</div>',
-                    has_image=True))
+                    has_image=True, pt="matplotlib"))
             elif "image/gif" in data:
                 rendered.append(RenderedOutput(
                     "image",
-                    f'<div class="figframe"><img loading="lazy" '
+                    f'<div class="figframe" data-pt="animation">'
+                    f'<img loading="lazy" '
                     f'alt="animation" class="gif-out" '
                     f'src="data:image/gif;base64,{_b64(data["image/gif"])}">'
                     f'</div>',
-                    has_image=True))
+                    has_image=True, pt="animation"))
             elif "image/jpeg" in data:
                 rendered.append(RenderedOutput(
                     "image",
-                    f'<div class="figframe"><img loading="lazy" '
+                    f'<div class="figframe" data-pt="matplotlib">'
+                    f'<img loading="lazy" '
                     f'alt="figure output" '
                     f'src="data:image/jpeg;base64,{_b64(data["image/jpeg"])}">'
                     f'</div>',
-                    has_image=True))
+                    has_image=True, pt="matplotlib"))
             elif "image/svg+xml" in data:
                 svg = _as_text(data["image/svg+xml"])
                 rendered.append(RenderedOutput(
-                    "image", f'<div class="figframe">{svg}</div>',
-                    has_image=True))
+                    "image",
+                    f'<div class="figframe" data-pt="matplotlib">{svg}</div>',
+                    has_image=True, pt="matplotlib"))
             elif "text/html" in data:
                 htmltext = _as_text(data["text/html"])
                 if _looks_like_xarray(htmltext):
@@ -502,11 +529,20 @@ def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
                 else:
                     safe, had = _defuse_scripts(htmltext)
                     live = had or _looks_interactive(htmltext)
-                    cls = "rich ot-result" + (" plotframe" if live else "")
-                    rendered.append(RenderedOutput(
-                        "plotly" if live else "html",
-                        f'<div class="{cls}">{safe}</div>',
-                        has_interactive=live, ot="result"))
+                    if live:
+                        # a live embed is a PLOT (bokeh/vega/folium/… — it
+                        # joins the card's plot part and the Plot-types filter)
+                        lib = _plot_lib(htmltext)
+                        rendered.append(RenderedOutput(
+                            "plotly",
+                            f'<div class="rich ot-result plotframe" '
+                            f'data-pt="{lib}">{safe}</div>',
+                            has_interactive=True, ot="result", pt=lib))
+                    else:
+                        rendered.append(RenderedOutput(
+                            "html",
+                            f'<div class="rich ot-result">{safe}</div>',
+                            ot="result"))
             elif "text/plain" in data:
                 text = _as_text(data["text/plain"])
                 if text.strip():
@@ -596,7 +632,8 @@ def _slug(text: str, used: set[str]) -> str:
 
 
 def _infer_kind(item_outputs: list[RenderedOutput]) -> str:
-    if any(o.has_image for o in item_outputs):
+    # a live embed (plotly/bokeh/vega/folium) is a figure, same as an image
+    if any(o.has_image or o.has_interactive for o in item_outputs):
         return "figure"
     if any(o.has_xarray for o in item_outputs):
         return "dataset"
@@ -745,7 +782,8 @@ def _finalize_item(item: Item, used_slugs: set[str],
     multi = len(members) > 1
 
     def has_img(m):
-        return any(o.has_image for o in m["outputs"])
+        # a live embed (plotly/bokeh/…) is a figure face, same as an image
+        return any(o.has_image or o.has_interactive for o in m["outputs"])
 
     # the card's face: the cell that draws the figure (or the last with output)
     primary = next(
@@ -1586,16 +1624,23 @@ def render_item(item: Item) -> str:
             badge = " · ".join(item.code_kinds[:3])
             kclass += f" ckmain-{item.code_kind}"
             kclass += "".join(f" ck-{c}" for c in item.code_kinds)
-    # a cell's output splits into a PLOT part (figures) and an OUTPUT part
-    # (printed results) so the Plots and Output filters can act on them
-    # independently of each other and of the cell's Code
-    imgs = [o for o in item.outputs if o.has_image]
-    others = [o for o in item.outputs if not o.has_image]
+    # a cell's output splits into a PLOT part (figures — static images AND
+    # live embeds like plotly/bokeh/vega/folium) and an OUTPUT part (printed
+    # results) so the Plots and Output filters can act on them independently
+    # of each other and of the cell's Code
+    imgs = [o for o in item.outputs if o.has_image or o.has_interactive]
+    others = [o for o in item.outputs
+              if not (o.has_image or o.has_interactive)]
     fig_html = (_fig_pager(imgs) if len(imgs) > 1
                 else "".join(o.payload for o in imgs))
     cb_parts = []
     if fig_html:
-        cb_parts.append(f'<div class="cb-part cb-fig">{fig_html}</div>')
+        pt_types: list[str] = []
+        for o in imgs:
+            if o.pt and o.pt not in pt_types:
+                pt_types.append(o.pt)
+        pt_attr = f' data-pt="{" ".join(pt_types)}"' if pt_types else ""
+        cb_parts.append(f'<div class="cb-part cb-fig"{pt_attr}>{fig_html}</div>')
     if others:
         ot_types: list[str] = []
         for o in others:
@@ -2671,7 +2716,7 @@ through Ko-fi. Thank you.</p>
 # App chrome (controls bar + tab rows), welcome screen, open dialog,
 # drag-drop hint
 _APP_CSS = r"""
-:root{--appbar-h:44px;--tabsrow-h:44px;--chrome-h:88px;--dc-w:430px;
+:root{--appbar-h:64px;--tabsrow-h:44px;--chrome-h:108px;--dc-w:430px;
   --presrail-w:176px;}
 body.presrail-min{--presrail-w:46px;}
 
@@ -2679,8 +2724,10 @@ body.presrail-min{--presrail-w:46px;}
 .apptop{position:fixed;top:0;left:0;right:0;height:var(--chrome-h);
   z-index:90;display:flex;flex-direction:column;background:#0a141d;
   border-bottom:1px solid #ffffff14;}
-.appbar{display:flex;align-items:center;gap:8px;height:var(--appbar-h);
-  padding:0 12px 0 0;border-bottom:1px solid #ffffff0d;
+/* top-aligned: every main button sits on one first row; the small
+   "… types ▾" pickers hang underneath their parent filter */
+.appbar{display:flex;align-items:flex-start;gap:8px;height:var(--appbar-h);
+  padding:8px 12px 0 0;border-bottom:1px solid #ffffff0d;
   overflow-x:auto;scrollbar-width:none;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold — the
@@ -2688,11 +2735,23 @@ body.presrail-min{--presrail-w:46px;}
 .appbar .toggle,.appbar .appbar-link{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
   padding-top:0;padding-bottom:0;line-height:1;}
+/* a filter GROUP stacks its advanced types picker under its main button
+   (Plot types under Plots, Code types under Code, …) so the bar stays
+   narrow instead of growing ever wider */
+.fgrp{flex:none;display:flex;flex-direction:column;align-items:stretch;
+  gap:3px;}
+.fgrp .toggle{width:100%;text-align:left;}
+.appbar .toggle.sub{height:18px;font-size:9.5px;padding:0 8px;
+  color:#8ba0b2;border-color:#ffffff14;background:none;}
+.appbar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
+body.light .appbar .toggle.sub{color:var(--ink-3);border-color:var(--line);
+  background:none;}
+body.light .appbar .toggle.sub:hover{color:var(--ink);}
 .appbar-spring{flex:1;}
 /* a thin rule that marks where the content FILTERS end and the view/theme
-   controls begin */
+   controls begin — centred against the 30px first row */
 .appbar-div{flex:none;width:1px;height:20px;background:#ffffff26;
-  margin:0 5px;border-radius:1px;}
+  margin:5px 5px 0;border-radius:1px;}
 body.light .appbar-div{background:#00000022;}
 /* dark variants of the show/hide toggles */
 .appbar .toggle{border-color:#ffffff22;background:#ffffff0a;color:#cdd9e3;}
@@ -3118,13 +3177,64 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-dot.ot-sw-module{background:#8a6d4a;}
 .ckf-dot.ot-sw-object{background:#8a93a0;}
 .ckf-empty{color:#7e93a4;font-size:11px;padding:8px;}
-#ck-filter-btn.on,#ot-filter-btn.on{border-color:var(--cyan);color:#fff;
-  background:#39a9c022;}
+#ck-filter-btn.on,#ot-filter-btn.on,#pt-filter-btn.on{
+  border-color:var(--cyan);color:#fff;background:#39a9c022;}
 /* an output hidden by the advanced Output-types filter */
 .ot-off{display:none;}
+/* a figure hidden by the advanced Plot-types filter */
+.cb-fig .pt-off{display:none!important;}
+/* Plot-types menu swatches: one colour per plotting library */
+.ckf-dot.pt-sw-matplotlib{background:#39a9c0;}
+.ckf-dot.pt-sw-plotly{background:#4d90c0;}
+.ckf-dot.pt-sw-bokeh{background:#cf9a4e;}
+.ckf-dot.pt-sw-vega{background:#9a7cc0;}
+.ckf-dot.pt-sw-folium{background:#46a892;}
+.ckf-dot.pt-sw-animation{background:#8fd4e4;}
+.ckf-dot.pt-sw-video{background:#5b7589;}
+.ckf-dot.pt-sw-widget{background:#8ba0b2;}
 body.light .ckfilter-menu{background:#fff;border-color:var(--line);}
 body.light .ckf-row{color:var(--ink-2);}
 body.light .ckf-row:hover{background:#00000008;}
+
+/* ---------- add-a-note: a pencil on every card (app mode) that writes a
+   markdown cell into the .ipynb, with an optional git commit ---------- */
+.card-addnote{flex:none;background:none;border:none;cursor:pointer;
+  font-size:13px;line-height:1;padding:1px 4px;opacity:0;
+  color:var(--ink-3);}
+.card:hover .card-addnote,.card-addnote:focus{opacity:.55;}
+.card-addnote:hover{opacity:1;color:var(--cyan-deep);}
+.note-dlg{position:fixed;inset:0;z-index:230;background:#00000088;
+  display:flex;align-items:center;justify-content:center;}
+.note-dlg[hidden]{display:none;}
+.note-dlg-box{width:min(560px,92vw);background:#16273a;
+  border:1px solid #ffffff22;border-radius:12px;padding:16px 18px;
+  box-shadow:0 18px 60px #000a;display:flex;flex-direction:column;gap:10px;}
+.note-dlg-h{font-weight:600;color:#eef4f8;font-size:15px;}
+.note-dlg-sub{font-size:11.5px;color:#8ba0b2;font-family:var(--mono);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#note-dlg-src{background:#0e1926;border:1px solid #ffffff22;
+  border-radius:8px;color:#e6edf3;font-family:var(--mono);font-size:13px;
+  padding:10px 12px;resize:vertical;min-height:110px;}
+#note-dlg-src:focus{outline:none;border-color:var(--cyan);}
+.note-dlg-git{display:flex;align-items:center;gap:8px;font-size:12.5px;
+  color:#cdd9e3;cursor:pointer;}
+.note-dlg-btns{display:flex;gap:8px;justify-content:flex-end;
+  align-items:center;}
+.note-dlg-err{flex:1;font-size:11.5px;color:#e08a7a;}
+.doc-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);
+  z-index:240;background:#16273a;border:1px solid #39a9c066;
+  border-radius:9px;color:#e6edf3;font-size:13px;padding:10px 16px;
+  box-shadow:0 10px 30px #00000088;max-width:min(640px,92vw);}
+.doc-toast a{color:#7fd0e0;}
+.doc-toast[hidden]{display:none;}
+body.light .note-dlg-box{background:#fff;border-color:var(--line);}
+body.light .note-dlg-h{color:var(--ink);}
+body.light #note-dlg-src{background:#f7fafc;color:var(--ink);
+  border-color:var(--line);}
+body.light .note-dlg-git{color:var(--ink-2);}
+body.light .doc-toast{background:#fff;color:var(--ink);
+  border-color:var(--cyan);}
+body.light .doc-toast a{color:var(--cyan-deep);}
 body.light .ckf-h{color:var(--ink-3);}
 
 /* ---------- instant tooltips (replaces slow native titles) -------- */
@@ -3761,18 +3871,81 @@ _JS = r"""
           var fig=c.querySelector('.cb-fig'),
               out=c.querySelector('.cb-out'),
               cw=c.querySelector('.codewrap');
-          if(fig){
-            fig.classList.toggle('part-off',plotState==='hidden');
-            fig.classList.toggle('part-fold',plotState==='collapsed');
-            if(plotState!=='collapsed') fig.classList.remove('part-open');
-          }
           if(out){
             out.classList.toggle('part-off',outState==='hidden');
             out.classList.toggle('part-fold',outState==='collapsed');
             if(outState!=='collapsed') out.classList.remove('part-open');
           }
           if(cw) cw.classList.toggle('code-off',codeState==='hidden'||ckOff);
-          var figVis=!!fig&&plotState!=='hidden';
+          /* the advanced Plot-types filter hides individual figures by
+             library (matplotlib / plotly / bokeh / …). Stamp pt-off on
+             every frame, then fold pager pages and the part upward; the
+             plot part counts as visible only if some figure survives. */
+          var figVis=false;
+          if(fig&&plotState!=='hidden'){
+            $$('[data-pt]',fig).forEach(function(n){
+              var pts=n.dataset.pt.split(' ').filter(Boolean);
+              n.classList.toggle('pt-off',
+                pts.length>0&&pts.every(function(t){return ptHidden[t];}));
+            });
+            /* a pager PAGE is off when every frame on it is off; keep the
+               'current' page a visible one and the ‹1 / N› count honest */
+            $$('.figpage',fig).forEach(function(p){
+              var fr=$$('[data-pt]',p);
+              p.classList.toggle('pt-off',
+                fr.length>0&&fr.every(function(n){
+                  return n.classList.contains('pt-off');}));
+            });
+            $$('.figpager',fig).forEach(function(pgr){
+              var pages=$$(':scope > .figpage',pgr);
+              var vis=pages.filter(function(p){
+                return !p.classList.contains('pt-off');});
+              var curp=pages.filter(function(p){
+                return p.classList.contains('current');})[0];
+              if(vis.length&&(!curp||curp.classList.contains('pt-off'))){
+                if(curp) curp.classList.remove('current');
+                vis[0].classList.add('current');
+                if(window.SemActivate) window.SemActivate(vis[0],true);
+              }
+              var ct=pgr.querySelector('.fp-count');
+              if(ct&&vis.length){
+                var ci=vis.indexOf(pgr.querySelector(
+                  ':scope > .figpage.current'));
+                ct.textContent=(Math.max(0,ci)+1)+' / '+vis.length;
+              }
+              var nav=pgr.querySelector('.figpager-nav');
+              if(nav) nav.style.display=vis.length>1?'':'none';
+            });
+            [].forEach.call(fig.children,function(el){
+              var off;
+              if(el.classList.contains('figpager')){
+                var pgs=$$('.figpage',el);
+                off=pgs.length>0&&pgs.every(function(p){
+                  return p.classList.contains('pt-off');});
+              } else {
+                var pts=(el.dataset&&el.dataset.pt)
+                  ?el.dataset.pt.split(' ')
+                  :$$('[data-pt]',el).map(function(n){return n.dataset.pt;});
+                pts=pts.filter(Boolean);
+                off=pts.length>0&&pts.every(function(t){
+                  return ptHidden[t];});
+              }
+              el.classList.toggle('pt-off',off);
+              if(!off) figVis=true;
+            });
+            if(!fig.children.length) figVis=true;
+          }
+          if(fig){
+            /* every plot type-hidden -> the part folds away entirely (no
+               "Show plot" stub over nothing) */
+            var allPtOff=plotState!=='hidden'
+              &&!figVis&&fig.children.length>0;
+            fig.classList.toggle('part-off',
+              plotState==='hidden'||allPtOff);
+            fig.classList.toggle('part-fold',
+              plotState==='collapsed'&&!allPtOff);
+            if(plotState!=='collapsed') fig.classList.remove('part-open');
+          }
           /* the advanced Output-types filter hides individual outputs by kind;
              the output part counts as visible only if some output survives */
           var outVis=false;
@@ -3826,6 +3999,8 @@ _JS = r"""
     if(fb) fb.classList.toggle('on',Object.keys(ckHidden).length>0);
     var ob=$('#ot-filter-btn');
     if(ob) ob.classList.toggle('on',Object.keys(otHidden).length>0);
+    var pb=$('#pt-filter-btn');
+    if(pb) pb.classList.toggle('on',Object.keys(ptHidden).length>0);
   }
   /* advanced filter menu: hide specific code subtypes */
   function presentCkTypes(){
@@ -3859,11 +4034,20 @@ _JS = r"""
       m.appendChild(row);
     });
   }
+  /* only one advanced filter menu open at a time */
+  function closeFilterMenus(except){
+    ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu']
+      .forEach(function(sel){
+        if(sel===except) return;
+        var m=$(sel); if(m&&!m.hidden) m.hidden=true;
+      });
+  }
   var ckBtn=$('#ck-filter-btn'),ckMenu=$('#ck-filter-menu');
   if(ckBtn) ckBtn.addEventListener('click',function(e){
     e.stopPropagation();
     if(!ckMenu) return;
     if(ckMenu.hidden){
+      closeFilterMenus('#ck-filter-menu');
       renderCkMenu();ckMenu.hidden=false;
       var r=ckBtn.getBoundingClientRect();
       ckMenu.style.top=(r.bottom+6)+'px';
@@ -3875,6 +4059,56 @@ _JS = r"""
     if(ckMenu&&!ckMenu.hidden&&!ckMenu.contains(e.target)
        &&e.target!==ckBtn) ckMenu.hidden=true;
   });
+  /* advanced PLOT-type filter: hide figures by the library that drew them
+     (matplotlib images, plotly, bokeh, vega/altair, folium, animations,
+     video, other widgets) — like the code-type filter, but for plots */
+  var ptHidden={};
+  var PT_TYPES=['matplotlib','plotly','bokeh','vega','folium',
+    'animation','video','widget'];
+  function presentPtTypes(){
+    var set={};
+    $$('.nbshell .cb-fig[data-pt]').forEach(function(c){
+      c.dataset.pt.split(' ').forEach(function(t){if(t)set[t]=1;});});
+    var out=PT_TYPES.filter(function(t){return set[t];});
+    Object.keys(set).forEach(function(t){
+      if(PT_TYPES.indexOf(t)<0) out.push(t);});  /* unknown slugs still show */
+    return out;
+  }
+  function renderPtMenu(){
+    var m=$('#pt-filter-menu'); if(!m) return;
+    m.innerHTML='';
+    var types=presentPtTypes();
+    if(!types.length){
+      m.innerHTML='<div class="ckf-empty">No plots yet</div>';return;}
+    var h=document.createElement('div');h.className='ckf-h';
+    h.textContent='show plot types';m.appendChild(h);
+    types.forEach(function(t){
+      var row=document.createElement('label');row.className='ckf-row';
+      var cb=document.createElement('input');cb.type='checkbox';
+      cb.checked=!ptHidden[t];
+      cb.addEventListener('change',function(){
+        if(cb.checked) delete ptHidden[t]; else ptHidden[t]=1;
+        applyFilters();});
+      var sw=document.createElement('span');sw.className='ckf-dot pt-sw-'+t;
+      var tx=document.createElement('span');tx.textContent=t;
+      row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
+      m.appendChild(row);});
+  }
+  var ptBtn=$('#pt-filter-btn'),ptMenu=$('#pt-filter-menu');
+  if(ptBtn) ptBtn.addEventListener('click',function(e){
+    e.stopPropagation();
+    if(!ptMenu) return;
+    if(ptMenu.hidden){
+      closeFilterMenus('#pt-filter-menu');
+      renderPtMenu();ptMenu.hidden=false;
+      var r=ptBtn.getBoundingClientRect();
+      ptMenu.style.top=(r.bottom+6)+'px';
+      ptMenu.style.left=Math.max(6,
+        Math.min(r.left,window.innerWidth-190))+'px';
+    } else ptMenu.hidden=true;});
+  document.addEventListener('click',function(e){
+    if(ptMenu&&!ptMenu.hidden&&!ptMenu.contains(e.target)
+       &&e.target!==ptBtn) ptMenu.hidden=true;});
   /* advanced OUTPUT-type filter: hide specific printed-output kinds (print,
      dataset, result, error) — like the code-type filter, but for output */
   var otHidden={};
@@ -3917,6 +4151,7 @@ _JS = r"""
     e.stopPropagation();
     if(!otMenu) return;
     if(otMenu.hidden){
+      closeFilterMenus('#ot-filter-menu');
       renderOtMenu();otMenu.hidden=false;
       var r=otBtn.getBoundingClientRect();
       otMenu.style.top=(r.bottom+6)+'px';
@@ -4128,7 +4363,7 @@ _JS = r"""
       var clone=nd.card.cloneNode(true);
       clone.removeAttribute('id');clone.classList.add('in');
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
-      $$('.cell-eye,.plot-trace-btn,.card-anchor',clone)
+      $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
         .forEach(function(x){x.remove();});
       body.appendChild(clone);
       /* cloneNode does not copy listeners: re-wire the clone so its code
@@ -4514,16 +4749,26 @@ _JS = r"""
     var pg=b.closest('.figpager'); if(!pg) return;
     e.preventDefault();e.stopPropagation();
     var pages=[].slice.call(pg.querySelectorAll(':scope > .figpage'));
-    if(!pages.length) return;
-    var cur=0;
-    pages.forEach(function(p,i){
-      if(p.classList.contains('current')) cur=i;});
-    var nx=(cur+(b.classList.contains('fp-next')?1:-1)
-      +pages.length)%pages.length;
-    pages[cur].classList.remove('current');
-    pages[nx].classList.add('current');
+    /* pages whose plot type is filtered out are skipped by the pager */
+    var vis=pages.filter(function(p){
+      return !p.classList.contains('pt-off');});
+    if(!vis.length) return;
+    var curEl=pg.querySelector(':scope > .figpage.current');
+    var ci=curEl?vis.indexOf(curEl):0; if(ci<0) ci=0;
+    var nx=(ci+(b.classList.contains('fp-next')?1:-1)
+      +vis.length)%vis.length;
+    if(curEl) curEl.classList.remove('current');
+    vis[nx].classList.add('current');
     var ct=pg.querySelector('.fp-count');
-    if(ct) ct.textContent=(nx+1)+' / '+pages.length;
+    if(ct) ct.textContent=(nx+1)+' / '+vis.length;
+    /* a live embed (plotly/bokeh/…) drawn while its page was display:none
+       has no size — draw it now it is visible, and resize what's drawn */
+    var page=vis[nx];
+    if(window.SemActivate) window.SemActivate(page,true);
+    if(window.Plotly&&window.Plotly.Plots)
+      [].forEach.call(page.querySelectorAll('.js-plotly-plot'),
+        function(g){try{window.Plotly.Plots.resize(g);}catch(err){}});
+    try{window.dispatchEvent(new Event('resize'));}catch(err){}
   },true);
 
   /* ---- raw-HTML notes: toggle rendered <-> source ----------------- */
@@ -4627,6 +4872,122 @@ _JS = r"""
   }
   APP.mdscan=mdClampScan;
 
+  /* ---- "add a note": a pencil on every card (app mode, local files).
+     Saves a markdown cell into the .ipynb right after that card's cells;
+     optionally git-commits it, linking the commit on GitHub. ---- */
+  var noteCtx=null;
+  function noteEls(){
+    return {dlg:$('#note-dlg'),src:$('#note-dlg-src'),sub:$('#note-dlg-sub'),
+      gitrow:$('#note-dlg-gitrow'),commit:$('#note-dlg-commit'),
+      gitlab:$('#note-dlg-gitlab'),err:$('#note-dlg-err'),
+      save:$('#note-dlg-save')};
+  }
+  function docToast(text,url,label,ms){
+    var t=$('#doc-toast'); if(!t) return;
+    t.textContent=text;
+    if(url){
+      t.appendChild(document.createTextNode(' — '));
+      var a=document.createElement('a');
+      a.href=url;a.target='_blank';a.rel='noopener';
+      a.textContent=label||url;
+      t.appendChild(a);
+    }
+    t.hidden=false;
+    clearTimeout(t._tm);
+    t._tm=setTimeout(function(){t.hidden=true;},ms||6500);
+  }
+  function closeNoteDlg(){
+    var e=noteEls(); if(e.dlg) e.dlg.hidden=true;
+    noteCtx=null;
+  }
+  function openNoteDlg(stem,anchor,title){
+    var sh=APP.shells[stem];
+    if(!sh||!sh.path||/^https?:/i.test(sh.path)) return;
+    var e=noteEls(); if(!e.dlg) return;
+    noteCtx={stem:stem,path:sh.path,anchor:anchor};
+    e.sub.textContent='after “'+title+'” · saved into '
+      +sh.path;
+    e.src.value='';e.err.textContent='';
+    e.gitrow.hidden=true;e.commit.checked=false;
+    e.dlg.hidden=false;e.src.focus();
+    api('/api/gitstate',{path:sh.path}).then(function(g){
+      if(g&&g.repo&&noteCtx){
+        e.gitrow.hidden=false;
+        e.gitlab.textContent='also commit to git'
+          +(g.github
+            ?' ('+g.github.replace('https://github.com/','')+')':'');
+      }
+    }).catch(function(){});
+  }
+  (function(){
+    var e=noteEls(); if(!e.dlg) return;
+    var cancel=$('#note-dlg-cancel');
+    if(cancel) cancel.addEventListener('click',closeNoteDlg);
+    e.dlg.addEventListener('click',function(ev){
+      if(ev.target===e.dlg) closeNoteDlg();});
+    document.addEventListener('keydown',function(ev){
+      if(ev.key==='Escape'&&!e.dlg.hidden){
+        ev.stopPropagation();closeNoteDlg();}
+    },true);
+    e.save.addEventListener('click',function(){
+      if(!noteCtx) return;
+      var src=e.src.value.trim();
+      if(!src){e.err.textContent='Write something first';return;}
+      e.save.disabled=true;e.err.textContent='';
+      api('/api/addnote',{path:noteCtx.path,after:noteCtx.anchor,
+        source:src,commit:!!(e.commit.checked&&!e.gitrow.hidden)})
+      .then(function(j){
+        e.save.disabled=false;
+        closeNoteDlg();
+        mountShellHTML(j.shell,j.path);
+        var sh2=APP.shells[j.stem];
+        var card=sh2&&sh2.el.querySelector(
+          '.card[data-anchor="cell:'+j.cell+'"]');
+        if(card){
+          card.scrollIntoView({behavior:'smooth',block:'center'});
+          card.classList.add('target-flash');
+          setTimeout(function(){
+            card.classList.remove('target-flash');},1400);
+        }
+        var g=j.git&&j.git.commit;
+        if(g&&g.ok)
+          docToast('Note saved ✓ · committed '+(g.sha||''),
+            g.url||'',g.url?'view on GitHub':'');
+        else if(g&&!g.ok)
+          docToast('Note saved ✓ · git commit failed: '
+            +(g.error||''),'','',9000);
+        else docToast('Note saved into the notebook ✓');
+      }).catch(function(err){
+        e.save.disabled=false;
+        e.err.textContent=(err&&err.message)||'save failed';
+      });
+    });
+  })();
+  function wireAddNote(shell,stem){
+    /* only where the server can WRITE: app mode + a local .ipynb (never
+       static exports, URL-opened notebooks or Plot-trace clones) */
+    if(APP.mode!=='app') return;
+    if(shell.classList.contains('tracetab')) return;
+    var p=shell.dataset.path||'';
+    if(!p||/^https?:/i.test(p)) return;
+    $$('.card',shell).forEach(function(card){
+      var head=$('.cardhead',card); if(!head) return;
+      if(head.querySelector('.card-addnote')) return;
+      var b=document.createElement('button');
+      b.className='card-addnote';b.type='button';
+      b.innerHTML='&#9998;';
+      b.title='Add a markdown note after this cell (saved into the '
+        +'.ipynb; optionally committed to git)';
+      b.addEventListener('click',function(ev){
+        ev.preventDefault();ev.stopPropagation();
+        var t=$('.cardtitle',card);
+        openNoteDlg(stem,card.dataset.anchor,
+          ((t&&t.textContent)||'this cell').trim());
+      });
+      head.insertBefore(b,head.querySelector('.cell-eye')||null);
+    });
+  }
+
   /* ---- interactive outputs: run neutralised output scripts (plotly-html /
      bokeh / vega / folium) and draw embedded Plotly figure specs. Cell output
      was produced by running the notebook, so its own <script> is trusted
@@ -4677,6 +5038,12 @@ _JS = r"""
       })(0);
     }
     var pe=root.querySelectorAll('.plotly-embed[data-plotly]');
+    /* skip embeds on hidden pager pages — a plot drawn into display:none
+       has no size; the pager draws it (via SemActivate) when flipped to */
+    pe=[].filter.call(pe,function(d){
+      var p=d.closest&&d.closest('.figpage');
+      return !p||p.classList.contains('current');
+    });
     if(!pe.length) return;
     ensurePlotly(function(){
       if(!window.Plotly) return;
@@ -4972,6 +5339,7 @@ _JS = r"""
        fig-fold, section collapse/hide incl. the nav chevrons): shared with
        the Plot-trace tab so the trace is a true subset of the docs ---- */
     wireCardBehaviors(shell,stem);
+    wireAddNote(shell,stem);  /* app mode: pencil to add a markdown note */
     activateOutputs(shell);   /* run plotly/bokeh/vega + draw plotly specs */
 
     /* ---- register ---- */
@@ -5044,9 +5412,9 @@ _JS = r"""
       var only=src.el.querySelector('.content .card');
       if(only) section.appendChild(only.cloneNode(true));
     }
-    /* the trace tab has no sidebar, so a per-cell eye could hide a lineage
-       cell with no way to bring it back — drop the eye, start all visible */
-    $$('.cell-eye',section).forEach(function(b){
+    /* clones: drop per-cell eyes (no way back) and add-note pencils (their
+       listeners don't survive cloneNode; notes belong on the source tab) */
+    $$('.cell-eye,.card-addnote',section).forEach(function(b){
       if(b.parentNode) b.parentNode.removeChild(b);});
     $$('.card.cell-off',section).forEach(function(c){
       c.classList.remove('cell-off');});
@@ -7361,7 +7729,16 @@ _DECK_JS = r"""
   function cloneBody(ref){
     var c=cardEl(ref); if(!c) return null;
     var b=$('.cardbody',c); if(!b) return null;
-    return stripIds(b.cloneNode(true));
+    b=stripIds(b.cloneNode(true));
+    /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
+       must not ride into slides — a placed frame shows its part in full */
+    $$('.pt-off,.ot-off,.part-off,.part-fold,.code-off',b)
+      .forEach(function(n){
+        ['pt-off','ot-off','part-off','part-fold','part-open','code-off']
+          .forEach(function(cl){n.classList.remove(cl);});
+      });
+    $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
+    return b;
   }
   function cloneCode(ref){
     var c=cardEl(ref); if(!c) return null;
@@ -7378,9 +7755,10 @@ _DECK_JS = r"""
       if(!f.code&&card.querySelector('.codeinner')) f.code=true;
       var body=$('.cardbody',card);
       if(body){
-        f.figure=!!body.querySelector('.figframe,.figpager');
+        /* live embeds (plotly/bokeh/vega/folium) are figures too */
+        f.figure=!!body.querySelector('.figframe,.figpager,.plotframe');
         f.output=!!body.querySelector(
-          'pre.result,pre.stream,.rich,.xr-wrap,.note')
+          'pre.result,pre.stream,.rich:not(.plotframe),.xr-wrap,.note')
           ||(!f.figure&&!!(body.textContent||'').trim());
       }
     }
@@ -7408,12 +7786,13 @@ _DECK_JS = r"""
     if(!b) return cloneCode(ref);
     if(part==='figure'){
       /* the figure part is JUST the figure — drop outputs AND any markdown
-         note / caption that rides along in the card body */
-      $$('.cb-out,.xr-wrap,pre.result,pre.stream,.rich,'
+         note / caption that rides along in the card body (a .plotframe is
+         a live figure, e.g. bokeh/vega/folium — keep it) */
+      $$('.cb-out,.xr-wrap,pre.result,pre.stream,.rich:not(.plotframe),'
         +'.note,.note-src,.htmltoggle,.caption',b)
         .forEach(function(n){if(n.parentNode) n.parentNode.removeChild(n);});
     } else if(part==='output'){
-      $$('.cb-fig,.figframe,.figpager',b).forEach(function(n){
+      $$('.cb-fig,.figframe,.figpager,.plotframe',b).forEach(function(n){
         if(n.parentNode) n.parentNode.removeChild(n);});
     }
     return b;
@@ -11271,25 +11650,36 @@ _TEMPLATE = """<!doctype html>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <div class="appbar">
-    <button class="toggle tv" id="tv-plots"
-      title="Plots / figures — the headline of each cell. Click to cycle:
+    <span class="fgrp">
+      <button class="toggle tv" id="tv-plots"
+        title="Plots / figures — the headline of each cell. Click to cycle:
  Visible -> Collapsed -> Hidden"></button>
-    <button class="toggle tv" id="tv-markdown"
-      title="Markdown / note cards. Click to cycle: Visible -> Collapsed
+      <button class="toggle sub" id="pt-filter-btn"
+        title="Advanced: hide specific PLOT types (matplotlib, plotly,
+ bokeh, vega, folium, …)">Plot types &#9662;</button>
+    </span>
+    <span class="fgrp">
+      <button class="toggle tv" id="tv-markdown"
+        title="Markdown / note cards. Click to cycle: Visible -> Collapsed
  -> Hidden"></button>
-    <button class="toggle tv" id="tv-code"
-      title="Code — the source in every cell (imports, prints, plotting, …).
+    </span>
+    <span class="fgrp">
+      <button class="toggle tv" id="tv-code"
+        title="Code — the source in every cell (imports, prints, plotting, …).
  Click to cycle: Visible -> Collapsed -> Hidden"></button>
-    <button class="toggle" id="ck-filter-btn"
-      title="Advanced: hide specific CODE cell types (imports, plotting,
+      <button class="toggle sub" id="ck-filter-btn"
+        title="Advanced: hide specific CODE cell types (imports, plotting,
  …)">Code types &#9662;</button>
-    <button class="toggle tv" id="tv-output"
-      title="Printed output — the tables, values and text a cell prints.
+    </span>
+    <span class="fgrp">
+      <button class="toggle tv" id="tv-output"
+        title="Printed output — the tables, values and text a cell prints.
  Everything a notebook produces is 'output'; plots are just the one kind
  pulled out into their own filter (on the left). Click to show / hide"></button>
-    <button class="toggle" id="ot-filter-btn"
-      title="Advanced: hide specific OUTPUT types (print, dataset, result,
+      <button class="toggle sub" id="ot-filter-btn"
+        title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)">Output types &#9662;</button>
+    </span>
     <span class="appbar-div" aria-hidden="true"></span>
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
@@ -11457,6 +11847,27 @@ _TEMPLATE = """<!doctype html>
 <div class="drophint" id="drophint" hidden>Drop .ipynb files to open</div>
 <div class="ckfilter-menu" id="ck-filter-menu" hidden></div>
 <div class="ckfilter-menu" id="ot-filter-menu" hidden></div>
+<div class="ckfilter-menu" id="pt-filter-menu" hidden></div>
+<div class="note-dlg" id="note-dlg" hidden>
+  <div class="note-dlg-box">
+    <div class="note-dlg-h">Add a markdown note</div>
+    <div class="note-dlg-sub" id="note-dlg-sub"></div>
+    <textarea id="note-dlg-src" rows="6" spellcheck="true"
+      placeholder="Write markdown &mdash; a comment, an interpretation, a
+ TODO&#8230;"></textarea>
+    <label class="note-dlg-git" id="note-dlg-gitrow" hidden>
+      <input type="checkbox" id="note-dlg-commit">
+      <span id="note-dlg-gitlab">also commit to git</span>
+    </label>
+    <div class="note-dlg-btns">
+      <span class="note-dlg-err" id="note-dlg-err"></span>
+      <button class="dbtn" id="note-dlg-cancel">Cancel</button>
+      <button class="dbtn primary" id="note-dlg-save">Save to
+ notebook</button>
+    </div>
+  </div>
+</div>
+<div class="doc-toast" id="doc-toast" hidden></div>
 <input type="file" id="fileinput" accept=".ipynb" multiple hidden>
 <input type="file" id="deckfile" accept=".json" hidden>
 {deck_shell}
@@ -11831,6 +12242,88 @@ def _app_page(state: _AppState) -> str:
     })
 
 
+def _new_cell_id() -> str:
+    return secrets.token_hex(4)
+
+
+def insert_note_cell(nb: dict, after_anchor: str,
+                     source: str) -> tuple[dict, int, str]:
+    """Insert a markdown cell into notebook JSON right after the cell(s)
+    that render the card `after_anchor` (append at the end when the anchor
+    is empty or unknown). Pure — file IO stays with the caller.
+    Returns (nb, insert_index, new_cell_id)."""
+    cells = nb.setdefault("cells", [])
+    idx = len(cells)                       # default: append at the end
+    if after_anchor:
+        doc = parse_notebook(nb)
+        target = None
+        for sec in doc.sections:
+            for it in sec.items:
+                if (it.anchor or it.item_id) == after_anchor:
+                    target = it
+                    break
+            if target:
+                break
+        if target is not None:
+            if target.members:             # code card: after its LAST cell
+                idx = max(m["idx"] for m in target.members) + 1
+            elif target.anchor.startswith("cell:"):   # a markdown note
+                cid = target.anchor[5:]
+                for i, c in enumerate(cells):
+                    if str(c.get("id") or "") == cid:
+                        idx = i + 1
+                        break
+    new_id = _new_cell_id()
+    cells.insert(idx, {"cell_type": "markdown", "id": new_id,
+                       "metadata": {}, "source": source})
+    return nb, idx, new_id
+
+
+def _github_web_url(remote: str) -> str:
+    """git remote -> the repo's web URL (GitHub only; '' otherwise)."""
+    m = re.match(r"(?:git@github\.com:|https?://github\.com/)"
+                 r"([^/\s]+/[^/\s]+?)(?:\.git)?/?$", (remote or "").strip())
+    return f"https://github.com/{m.group(1)}" if m else ""
+
+
+def _git_run(f: Path, *args) -> "subprocess.CompletedProcess":
+    return subprocess.run(["git", "-C", str(f.parent), *args],
+                          capture_output=True, text=True, timeout=15)
+
+
+def _git_info(f: Path) -> dict:
+    """Is this file inside a git work tree, and where does it push to?"""
+    try:
+        top = _git_run(f, "rev-parse", "--is-inside-work-tree")
+        if top.returncode != 0 or top.stdout.strip() != "true":
+            return {"repo": False}
+        rem = _git_run(f, "config", "--get", "remote.origin.url")
+        remote = rem.stdout.strip() if rem.returncode == 0 else ""
+        return {"repo": True, "remote": remote,
+                "github": _github_web_url(remote)}
+    except Exception:
+        return {"repo": False}
+
+
+def _git_commit_file(f: Path, message: str) -> dict:
+    """Stage + commit ONE file; returns {ok, sha, url} or {ok, error}."""
+    try:
+        add = _git_run(f, "add", "--", str(f))
+        if add.returncode != 0:
+            return {"ok": False,
+                    "error": (add.stderr or add.stdout).strip()[:400]}
+        com = _git_run(f, "commit", "-m", message, "--", str(f))
+        if com.returncode != 0:
+            return {"ok": False,
+                    "error": (com.stdout + com.stderr).strip()[:400]}
+        sha = _git_run(f, "rev-parse", "--short", "HEAD").stdout.strip()
+        gh = _git_info(f).get("github") or ""
+        return {"ok": True, "sha": sha,
+                "url": f"{gh}/commit/{sha}" if gh else ""}
+    except Exception as e:                  # noqa: BLE001 -- surfaced in UI
+        return {"ok": False, "error": f"{type(e).__name__}: {e}"}
+
+
 def _make_handler(state: _AppState):
     class Handler(http.server.BaseHTTPRequestHandler):
         def log_message(self, *args):       # keep the terminal quiet
@@ -11909,6 +12402,10 @@ def _make_handler(state: _AppState):
                 elif url.path == "/api/close":
                     state.note_close(str(body.get("path") or ""))
                     self._json({"ok": True})
+                elif url.path == "/api/addnote":
+                    self._json(self._add_note(body))
+                elif url.path == "/api/gitstate":
+                    self._json(self._git_state(body))
                 else:
                     self._json({"error": "not found"}, 404)
             except FileNotFoundError as e:
@@ -11942,6 +12439,53 @@ def _make_handler(state: _AppState):
             state.note_open(f)
             return {"stem": doc.source_name, "path": str(f),
                     "shell": render_shell(doc, path=str(f))}
+
+        def _resolve_nb_path(self, raw: str) -> Path:
+            f = Path(raw).expanduser()
+            if not f.is_absolute():
+                f = state.root / f
+            f = f.resolve()
+            if not f.exists():
+                raise FileNotFoundError(f"{f} not found")
+            if f.suffix.lower() != ".ipynb":
+                raise ValueError(f"{f.name} is not a .ipynb file")
+            return f
+
+        def _add_note(self, body: dict) -> dict:
+            """Insert a markdown note cell into the .ipynb on disk (after the
+            card the user clicked), optionally git-commit it, and hand back a
+            freshly rendered shell."""
+            raw = str(body.get("path") or "").strip().strip('"')
+            if not raw:
+                raise ValueError("no path given")
+            if _is_url(raw):
+                raise ValueError("this notebook was opened from a URL — "
+                                 "notes can only be saved to a local file")
+            src = str(body.get("source") or "").strip()
+            if not src:
+                raise ValueError("the note is empty")
+            f = self._resolve_nb_path(raw)
+            nb = json.loads(f.read_text(encoding="utf-8"))
+            nb, idx, cell_id = insert_note_cell(
+                nb, str(body.get("after") or ""), src)
+            f.write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n",
+                         encoding="utf-8")
+            git = _git_info(f)
+            if body.get("commit") and git.get("repo"):
+                first = src.splitlines()[0][:60]
+                git["commit"] = _git_commit_file(
+                    f, str(body.get("message") or "") or f"Note: {first}")
+            doc = load_doc(f)
+            doc.source_name = _stem_for(f, state.stems_taken(skip=f))
+            return {"stem": doc.source_name, "path": str(f),
+                    "cell": cell_id, "index": idx, "git": git,
+                    "shell": render_shell(doc, path=str(f))}
+
+        def _git_state(self, body: dict) -> dict:
+            raw = str(body.get("path") or "").strip().strip('"')
+            if not raw or _is_url(raw):
+                return {"repo": False}
+            return _git_info(self._resolve_nb_path(raw))
 
         def _parse_nb(self, body: dict) -> dict:
             nb = body.get("nb")
@@ -12185,6 +12729,89 @@ def _self_test() -> None:
         "text/html": "<b>hello</b>"}}])
     assert _plain and not _plain[0].has_interactive \
         and "plotframe" not in _plain[0].payload
+    # PLOT-TYPES: every plot fragment carries a data-pt slug — matplotlib
+    # for static images, plotly/bokeh/vega/folium/widget for live embeds —
+    # and live embeds are FIGURES (plot part + figure kind), not output
+    assert _ply[0].pt == "plotly" and 'data-pt="plotly"' in _ply[0].payload
+    assert _int[0].pt == "plotly" and _vid[0].pt == "video"
+    assert _jpg[0].pt == "matplotlib" \
+        and 'data-pt="matplotlib"' in _jpg[0].payload
+    assert _plain[0].pt == ""
+    assert _plot_lib("<div>BokehJS says hi</div>") == "bokeh"
+    assert _plot_lib("<div>vegaEmbed(spec)</div>") == "vega"
+    assert _plot_lib("<div class='leaflet-map'></div>") == "folium"
+    assert _plot_lib("<script>custom()</script>") == "widget"
+    # prose that merely NAMES a library is not a live embed (no phantom
+    # "Plot N" figures from a version table) — real machinery is
+    assert not _looks_interactive("<table><td>plotly 5.22</td></table>")
+    assert not _looks_interactive("bokeh results are in the paper")
+    assert _looks_interactive("<div class='bk-root'></div>")
+    assert _looks_interactive("<script>anything()</script>")
+    assert _looks_interactive("<iframe srcdoc='...'></iframe>")
+    _prose = render_outputs([{"output_type": "execute_result", "data": {
+        "text/html": "<table><td>made with plotly</td></table>"}}])
+    assert _prose and not _prose[0].has_interactive and _prose[0].pt == ""
+    # one advanced filter menu at a time; doc filter state never rides into
+    # slide clones; hidden pager pages defer their plotly draw to the flip
+    assert "function closeFilterMenus" in out
+    assert "'.pt-off,.ot-off,.part-off,.part-fold,.code-off'" in out
+    assert "figpage')" in out and "Plots.resize" in out
+    # ---- add-a-note: a markdown cell lands right after the card's cells
+    # (grouped code cards use their LAST member cell; a note card maps back
+    # through its cell:<id> anchor; unknown/empty anchors append) ----
+    _nb2 = {"cells": [
+        {"cell_type": "markdown", "id": "m0", "source": "just a note"},
+        {"cell_type": "code", "id": "c0",
+         "source": "#| id: load\nload()", "outputs": []},
+        {"cell_type": "code", "id": "c1",
+         "source": "#| display: figure\n#| id: figx\nplot()",
+         "outputs": [{"output_type": "display_data",
+                      "data": {"image/png": "aGk="}}]},
+    ]}
+    _r, _i, _cid = insert_note_cell(
+        json.loads(json.dumps(_nb2)), "figx", "a **note**")
+    assert _i == 3 and _r["cells"][3]["cell_type"] == "markdown" \
+        and _r["cells"][3]["source"] == "a **note**" \
+        and _r["cells"][3]["id"] == _cid
+    _r2, _i2, _ = insert_note_cell(
+        json.loads(json.dumps(_nb2)), "load", "mid note")
+    assert _i2 == 2 and _r2["cells"][2]["source"] == "mid note"
+    _r3, _i3, _ = insert_note_cell(
+        json.loads(json.dumps(_nb2)), "cell:m0", "x")
+    assert _i3 == 1
+    _r4, _i4, _ = insert_note_cell(json.loads(json.dumps(_nb2)), "", "x")
+    assert _i4 == 3
+    _r5, _i5, _ = insert_note_cell(json.loads(json.dumps(_nb2)), "nope", "x")
+    assert _i5 == 3
+    assert _github_web_url("git@github.com:alice/proj.git") \
+        == "https://github.com/alice/proj"
+    assert _github_web_url("https://github.com/alice/proj") \
+        == "https://github.com/alice/proj"
+    assert _github_web_url("https://gitlab.com/x/y") == ""
+    # the UI: pencil per card (app mode only), editor dialog, git checkbox
+    assert 'id="note-dlg"' in out and 'id="doc-toast"' in out
+    assert "function wireAddNote" in out and "'/api/addnote'" in out
+    assert "'/api/gitstate'" in out and "card-addnote" in out
+    _live_doc = parse_notebook({"cells": [
+        {"cell_type": "code", "source": "m", "outputs": [
+            {"output_type": "display_data",
+             "data": {"text/html": "<div class='folium-map'></div>"}}]}]})
+    _live_items = [it for s in _live_doc.sections for it in s.items]
+    assert _live_items and _live_items[0].kind == "figure"
+    _live_html = render_item(_live_items[0])
+    assert 'data-pt="folium"' in _live_html \
+        and 'class="cb-part cb-fig" data-pt="folium"' in _live_html
+    # the appbar stacks each advanced types picker under its parent filter
+    # (Plot types under Plots, Code types under Code, Output types under
+    # Output) so the filter row stays narrow
+    assert 'id="pt-filter-btn"' in out and 'id="pt-filter-menu"' in out
+    assert "function renderPtMenu" in out and "presentPtTypes" in out
+    assert ".ckf-dot.pt-sw-bokeh" in out and ".ckf-dot.pt-sw-matplotlib" in out
+    assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
+    assert out.count('class="fgrp"') == 4
+    assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
+            < out.index('id="tv-markdown"'))
+    assert "--appbar-h:64px" in out and "--chrome-h:108px" in out
     # the client re-activates neutralised scripts + draws plotly specs
     assert "function activateOutputs" in out and "window.SemActivate" in out
     assert 'text/plotline-embed' in out and "cdn.plot.ly" in out
