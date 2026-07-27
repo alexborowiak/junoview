@@ -5493,6 +5493,39 @@ _JS = r"""
     var sub=document.createElement('span');sub.className='tracetab-sub';
     sub.textContent='the cells that build this plot, from '+stem;
     head.appendChild(eb);head.appendChild(h);head.appendChild(sub);
+    /* view switcher IN the header: the same lineage as a readable LIST of
+       cells or as an expandable dependency TREE (columns by step). The
+       appbar's Tree button does the same, but here it's discoverable. */
+    var vsw=document.createElement('div');vsw.className='trace-viewsw';
+    var bList=document.createElement('button');
+    bList.className='dbtn tvw';bList.type='button';
+    bList.innerHTML='&#9776; Cells';
+    bList.title='The lineage as a readable list of cells';
+    var bTree=document.createElement('button');
+    bTree.className='dbtn tvw';bTree.type='button';
+    bTree.innerHTML='&#9633; Tree';
+    bTree.title='The lineage as an expandable dependency tree — columns '
+      +'by step, click a node to open the cell';
+    function syncVsw(){
+      var on=shell.classList.contains('tree');
+      bList.classList.toggle('on',!on);
+      bTree.classList.toggle('on',on);
+    }
+    function setTraceView(tree){
+      if(shell.classList.contains('tree')===tree){syncVsw();return;}
+      if(window.SemView&&window.SemView.tree) window.SemView.tree();
+      else shell.classList.toggle('tree');
+      syncVsw();
+    }
+    bList.addEventListener('click',function(){setTraceView(false);});
+    bTree.addEventListener('click',function(){setTraceView(true);});
+    vsw.appendChild(bList);vsw.appendChild(bTree);
+    syncVsw();
+    try{      /* the appbar Tree button toggles too — stay in sync */
+      new MutationObserver(syncVsw)
+        .observe(shell,{attributes:true,attributeFilter:['class']});
+    }catch(e){}
+    head.appendChild(vsw);
     content.appendChild(head);
     if(graph){var gw=document.createElement('div');
       gw.className='tracetab-graph';gw.appendChild(graph);
@@ -6531,7 +6564,15 @@ body:not(.light) .plot-trace-btn:hover{color:#5fc3d8;border-color:#39a9c066;}
 .nbshell.tracetab:not([hidden]){display:grid;}
 .nbshell.tracetab .stage{width:100%;}
 .tracetab-head{margin:0 0 14px;padding-bottom:12px;
-  border-bottom:1px solid #ffffff14;}
+  border-bottom:1px solid #ffffff14;position:relative;}
+/* Cells | Tree switcher, right in the trace header */
+.trace-viewsw{position:absolute;right:0;top:6px;display:flex;gap:6px;}
+.dbtn.tvw.on{background:var(--cyan-deep);border-color:var(--cyan-deep);
+  color:#fff;}
+body.light .trace-viewsw .dbtn{background:#fff;border-color:var(--line);
+  color:var(--ink-2);}
+body.light .trace-viewsw .dbtn.tvw.on{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
 .tracetab-eyebrow{display:block;font-family:var(--mono);font-size:10px;
   letter-spacing:.22em;text-transform:uppercase;color:#5fc3d8;}
 .tracetab-t{margin:5px 0 2px;font-size:22px;font-weight:650;color:#eef4f8;
@@ -7259,6 +7300,11 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
 .sh-menu.lay-menu{display:block;width:442px;max-height:min(64vh,470px);
   overflow-y:auto;padding:8px;}
 .lay-menu .lay-picker{margin:0;}
+/* catalog section headings (Slide layouts / Poster layouts) */
+.lay-sec{grid-column:1/-1;font-family:var(--mono);font-size:9px;
+  letter-spacing:.14em;text-transform:uppercase;color:#66798a;
+  padding:7px 2px 1px;}
+.lay-sec:first-child{padding-top:1px;}
 
 /* picking a card for a cell frame */
 .pickbar{position:fixed;top:var(--chrome-h);left:var(--presrail-w);
@@ -7444,7 +7490,57 @@ _DECK_JS = r"""
     {id:'text-above',label:'Text / panel',items:[
       {k:'text',x:6,y:5,w:88,h:14,text:'Title',size:4.4,b:1},
       {k:'cell',x:4,y:22,w:92,h:74}]},
-    {id:'blank',label:'Blank',items:[]}
+    {id:'blank',label:'Blank',items:[]},
+    /* ---- POSTER templates (portrait-page geometry: banner + columns) ---- */
+    {id:'poster-3col',label:'Poster · 3 columns',poster:1,items:[
+      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+        align:'center'},
+      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
+        size:1.5,align:'center'},
+      {k:'cell',x:2.5,y:9.5,w:29.7,h:27.5},
+      {k:'cell',x:2.5,y:38.8,w:29.7,h:27.5},
+      {k:'cell',x:2.5,y:68.1,w:29.7,h:27.5},
+      {k:'cell',x:35.15,y:9.5,w:29.7,h:27.5},
+      {k:'cell',x:35.15,y:38.8,w:29.7,h:27.5},
+      {k:'cell',x:35.15,y:68.1,w:29.7,h:27.5},
+      {k:'cell',x:67.8,y:9.5,w:29.7,h:27.5},
+      {k:'cell',x:67.8,y:38.8,w:29.7,h:27.5},
+      {k:'cell',x:67.8,y:68.1,w:29.7,h:27.5}]},
+    {id:'poster-2col',label:'Poster · 2 columns',poster:1,items:[
+      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+        align:'center'},
+      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
+        size:1.5,align:'center'},
+      {k:'cell',x:2.5,y:9.5,w:46.25,h:27.5},
+      {k:'cell',x:2.5,y:38.8,w:46.25,h:27.5},
+      {k:'cell',x:2.5,y:68.1,w:46.25,h:27.5},
+      {k:'cell',x:51.25,y:9.5,w:46.25,h:27.5},
+      {k:'cell',x:51.25,y:38.8,w:46.25,h:27.5},
+      {k:'cell',x:51.25,y:68.1,w:46.25,h:27.5}]},
+    {id:'poster-fig',label:'Poster · hero figure',poster:1,items:[
+      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+        align:'center'},
+      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
+        size:1.5,align:'center'},
+      {k:'cell',x:2.5,y:9.5,w:95,h:44},
+      {k:'cell',x:2.5,y:55.5,w:29.7,h:25},
+      {k:'cell',x:35.15,y:55.5,w:29.7,h:25},
+      {k:'cell',x:67.8,y:55.5,w:29.7,h:25},
+      {k:'text',x:2.5,y:83,w:95,h:14,
+        text:'Key findings — summarise the story here.',size:1.8}]},
+    {id:'poster-flow',label:'Poster · intro / results',poster:1,items:[
+      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+        align:'center'},
+      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
+        size:1.5,align:'center'},
+      {k:'text',x:2.5,y:10,w:95,h:8,
+        text:'Introduction — motivation, question, data.',size:1.8},
+      {k:'cell',x:2.5,y:20.5,w:46.25,h:34},
+      {k:'cell',x:51.25,y:20.5,w:46.25,h:34},
+      {k:'cell',x:2.5,y:56.5,w:46.25,h:34},
+      {k:'cell',x:51.25,y:56.5,w:46.25,h:34},
+      {k:'text',x:2.5,y:92.5,w:95,h:6,
+        text:'Conclusions — what it means, what is next.',size:1.8}]}
   ];
   var LAYOUTBYID={};
   LAYOUTS.forEach(function(l){LAYOUTBYID[l.id]=l;});
@@ -7482,6 +7578,8 @@ _DECK_JS = r"""
   }
   function layIcon(layout){
     var ic=document.createElement('span');ic.className='layico2';
+    /* poster templates preview at PORTRAIT aspect, whatever the page */
+    if(layout.poster) ic.style.aspectRatio='841 / 1189';
     (layout.items||[]).forEach(function(it){
       var b=document.createElement('span');
       b.className=(it.k==='text'?'li-text':'li-cell');
@@ -7493,24 +7591,36 @@ _DECK_JS = r"""
   }
   function renderLayoutPicker(){
     /* the same catalog renders twice: in the builder panel (create mode)
-       and in the ribbon's Layouts dropdown (edit mode) */
+       and in the ribbon's Layouts dropdown (edit mode) — grouped into
+       Slide vs Poster templates, poster group FIRST on a poster page */
+    var posterFirst=/^a\d/.test(String((pres&&pres.page)||''));
+    var variant=posterFirst?'p':'s';
     ['#layout-row','#layout-menu-grid'].forEach(function(sel){
-      var row=$(sel); if(!row||row.dataset.built) return;
-      row.dataset.built='1';row.innerHTML='';
-      LAYOUTS.forEach(function(layout){
-        var b=document.createElement('button');
-        b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
-        b.title=layout.label;
-        b.appendChild(layIcon(layout));
-        var lb=document.createElement('span');lb.className='lay-lb';
-        lb.textContent=layout.label;b.appendChild(lb);
-        b.addEventListener('click',function(){
-          var s=pres.slides[cur]; if(!s) return;
-          applyLayout(s,layout);
-          activePane=-1;markDirty();refresh();
-          closeLayMenu();
+      var row=$(sel); if(!row||row.dataset.built===variant) return;
+      row.dataset.built=variant;row.innerHTML='';
+      var slides=LAYOUTS.filter(function(l){return !l.poster;});
+      var posters=LAYOUTS.filter(function(l){return l.poster;});
+      var groups=posterFirst
+        ?[['Poster layouts',posters],['Slide layouts',slides]]
+        :[['Slide layouts',slides],['Poster layouts',posters]];
+      groups.forEach(function(g){
+        var h=document.createElement('div');h.className='lay-sec';
+        h.textContent=g[0];row.appendChild(h);
+        g[1].forEach(function(layout){
+          var b=document.createElement('button');
+          b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
+          b.title=layout.label;
+          b.appendChild(layIcon(layout));
+          var lb=document.createElement('span');lb.className='lay-lb';
+          lb.textContent=layout.label;b.appendChild(lb);
+          b.addEventListener('click',function(){
+            var s=pres.slides[cur]; if(!s) return;
+            applyLayout(s,layout);
+            activePane=-1;markDirty();refresh();
+            closeLayMenu();
+          });
+          row.appendChild(b);
         });
-        row.appendChild(b);
       });
     });
   }
@@ -7553,6 +7663,7 @@ _DECK_JS = r"""
     $$('#page-menu .page-opt').forEach(function(o){
       o.setAttribute('aria-pressed',
         (o.dataset.page===pg.id).toString());});
+    renderLayoutPicker();   /* poster pages list poster templates first */
   }
   function sizeSlideTo(slideEl,zoom){
     var pg=pageOf();
@@ -10691,11 +10802,14 @@ _DECK_JS = r"""
       t.setAttribute('role','tab');
       t.dataset.pres=nm;
       t.dataset.folder=folder||'';
+      var isPoster=/^a\d/.test(String((byName[nm]&&byName[nm].page)||''));
       t.title=(isCur&&editing
         ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
-        :('Open presentation "'+nm+'" in the builder'))
+        :('Open '+(isPoster?'poster':'presentation')+' "'+nm
+          +'" in the builder'))
         +'\nDrag onto a folder to file it';
-      t.innerHTML='<span class="pr-ico">&#9654;</span>';
+      t.innerHTML='<span class="pr-ico">'
+        +(isPoster?'&#9645;':'&#9654;')+'</span>';
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
@@ -10840,6 +10954,18 @@ _DECK_JS = r"""
     source='auto';
     cur=0;activePane=0;
     openDeck('edit');   /* land straight in the slide editor */
+  }
+  function newPoster(){
+    var n2=1,name='poster';
+    while(savedByName(name)||loadDraft(name)){
+      n2++;name='poster-'+n2;}
+    /* like a new presentation, nothing persists until the first edit */
+    var s=emptySlide();
+    pres={name:name,slides:[s],page:'a0p'};
+    applyLayout(s,LAYOUTBYID['poster-3col']||LAYOUTS[0]);
+    source='auto';
+    cur=0;activePane=-1;
+    openDeck('edit');
   }
 
   function renderPresRow(){
@@ -11346,6 +11472,8 @@ _DECK_JS = r"""
   if(prDocs) prDocs.addEventListener('click',function(){closeDeck();});
   var prNew=document.getElementById('pr-new');
   if(prNew) prNew.addEventListener('click',newPresentation);
+  var prNewPost=document.getElementById('pr-newpost');
+  if(prNewPost) prNewPost.addEventListener('click',newPoster);
   $('#pres-current').addEventListener('click',function(){
     var inp=$('#pres-name');
     this.hidden=true;
@@ -12162,6 +12290,11 @@ _TEMPLATE = """<!doctype html>
     title="Create a new presentation">
     <span class="pr-ico">+</span>
     <span class="pr-t">+ New presentation</span></button>
+  <button class="pr-btn" id="pr-newpost"
+    title="Create a new poster &mdash; an A0 portrait page with a poster
+ template applied (change size via Page, layout via Layouts)">
+    <span class="pr-ico">&#9645;</span>
+    <span class="pr-t">+ New poster</span></button>
   <button class="pr-btn" id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
@@ -13073,6 +13206,20 @@ def _self_test() -> None:
     assert 'id="selpane"' in out and 'id="objects-btn"' in out
     assert "function renderSelPane" in out and "a.hide&&editing" in out
     assert "an-locked" in out and ".sp-row" in out
+    # POSTERS: a "+ New poster" rail button lands in the editor on an A0
+    # portrait page with a poster template applied; the catalog groups
+    # Slide vs Poster templates (poster group FIRST on a poster page)
+    # the trace tab carries its own "Cells | Tree" switcher in its header
+    # (same lineage as list or expandable dependency columns; the appbar
+    # Tree button stays in sync via a class MutationObserver)
+    assert "trace-viewsw" in out and "function setTraceView" in out
+    assert ".dbtn.tvw.on{background:var(--cyan-deep)" in out
+    assert 'id="pr-newpost"' in out and "function newPoster" in out
+    assert "page:'a0p'" in out
+    assert "id:'poster-3col'" in out and "id:'poster-2col'" in out
+    assert "id:'poster-fig'" in out and "id:'poster-flow'" in out
+    assert "'Poster layouts'" in out and "'Slide layouts'" in out
+    assert ".lay-sec{grid-column:1/-1" in out
     assert 'id="dc-close"' not in out
     assert 'id="dc-play"' in out and 'id="film-list"' in out
     assert 'id="layout-row"' in out and "buildSlideEditor" in out
