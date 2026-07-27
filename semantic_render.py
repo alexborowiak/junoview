@@ -945,6 +945,8 @@ def _as_presentations(obj: Any) -> list:
         entry = {"name": str(p.get("name") or "deck"), "slides": slides}
         if isinstance(p.get("folder"), str) and p["folder"].strip():
             entry["folder"] = p["folder"].strip()
+        if isinstance(p.get("page"), str) and p["page"].strip():
+            entry["page"] = p["page"].strip()   # page-size preset id
         out.append(entry)
     return out
 
@@ -2644,7 +2646,7 @@ several cells under one figure (see the README for details)</td></tr>
 
 <h3>Presentations</h3>
 <ul>
-<li>The <b>left rail</b> lists presentations under a <b>Documents</b>
+<li>The <b>left rail</b> lists presentations under a <b>Notebooks</b>
 button &mdash; exactly one is active, so that button is always the way
 back. <b>New</b> starts one; <b>&#171;</b> shrinks or hides the
 rail.</li>
@@ -2813,7 +2815,7 @@ body.light .tabrow-open:hover{background:#39a9c033;color:#084b58;}
   padding:0 10px 0 14px;flex:none;user-select:none;}
 
 /* ---------- presentations rail: vertical stack on the left edge.
-   Exactly ONE item is active at a time: "Documents" (no builder) or a
+   Exactly ONE item is active at a time: "Notebooks" (no builder) or a
    presentation (builder open) — so the way out is always visible. */
 .presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
   z-index:95;background:#0a141d;border-right:1px solid #ffffff1f;
@@ -2834,14 +2836,22 @@ body.light .presrail-brand{color:var(--cyan-deep);}
   font-family:var(--sans);font-size:12.5px;color:#8ba0b2;cursor:pointer;
   text-align:left;min-width:0;transition:background .12s,color .12s;}
 .pr-item:hover{background:#ffffff0c;color:#cdd9e3;}
-.pr-item.current{background:#39a9c022;color:#eef4f8;font-weight:600;}
+/* ONE active style, radio-consistent: whichever of Notebooks / a
+   presentation is open gets the same filled-cyan treatment */
+.pr-item.current{background:var(--cyan-deep);color:#fff;font-weight:600;}
 .pr-item.editing{background:var(--cyan-deep);color:#fff;font-weight:600;}
 .pr-ico{font-size:11px;flex:none;width:16px;text-align:center;
   opacity:.85;}
 .pr-item.ptab .pr-ico{font-size:8.5px;color:var(--cyan);}
 .pr-item.editing .pr-ico{color:#fff;}
 .pr-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
-.pr-docs{margin-bottom:6px;}
+/* the Notebooks button reads as a BUTTON (bordered like + New
+   presentation), not a plain label */
+.pr-docs{margin-bottom:6px;border:1px solid #ffffff22;border-radius:8px;}
+.pr-docs:hover{border-color:var(--cyan);}
+.pr-docs.current{border-color:var(--cyan-deep);}
+body.light .pr-docs{border-color:var(--line);}
+body.light .pr-docs:hover{border-color:var(--cyan);}
 .pr-label{font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;
   text-transform:uppercase;color:#4e93a6;padding:10px 10px 6px;
   user-select:none;white-space:nowrap;overflow:hidden;}
@@ -3263,7 +3273,7 @@ body.light .presrail{background:#f4f7fa;
   border-right-color:var(--line);}
 body.light .pr-item{color:var(--ink-3);}
 body.light .pr-item:hover{background:#00000008;color:var(--ink);}
-body.light .pr-item.current{background:#39a9c01f;color:var(--ink);}
+body.light .pr-item.current{background:var(--cyan-deep);color:#fff;}
 body.light .pr-item.editing{background:var(--cyan-deep);color:#fff;}
 body.light .pr-item.ptab .pr-ico{color:var(--cyan-deep);}
 body.light .pr-item.editing .pr-ico{color:#fff;}
@@ -5986,6 +5996,22 @@ _DECK_HTML = """
                     aria-label="Slide layouts"></div>
                 </div>
               </span>
+              <span class="sh-drop" id="page-drop">
+                <button class="dbtn" id="page-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Page size &mdash; slides (16:9, 4:3) or a poster
+ (A4&ndash;A0, portrait or landscape)">&#9645; Page &#9662;</button>
+                <div class="sh-menu page-menu" id="page-menu" hidden></div>
+              </span>
+              <button class="dbtn etm" id="zoom-out"
+                title="Zoom out">&#8722;</button>
+              <button class="dbtn etm" id="zoom-val"
+                title="Zoom &mdash; click to fit the window">Fit</button>
+              <button class="dbtn etm" id="zoom-in"
+                title="Zoom in">+</button>
+              <button class="dbtn" id="objects-btn" aria-pressed="false"
+                title="Objects pane &mdash; list, hide and lock everything
+ on this slide">&#9776; Objects</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -6158,6 +6184,12 @@ _DECK_HTML = """
         </span>
         <span class="et-hint" id="et-hint"></span>
       </div>
+      <aside class="selpane" id="selpane" hidden>
+        <div class="selpane-h"><span>Objects</span>
+          <button class="dbtn dc-icon" id="selpane-close"
+            title="Close">&#10005;</button></div>
+        <div class="selpane-list" id="selpane-list"></div>
+      </aside>
       <button class="deck-arrow prev" id="deck-prev"
         title="Previous slide (&#8592;)"
         aria-label="Previous slide">&#8249;</button>
@@ -6258,14 +6290,64 @@ body.deck-open{overflow:hidden;}
 .deck-stage{flex:1;min-height:0;display:flex;padding:26px 78px 6px;
   overflow:hidden;}
 
-/* editing: the slide is a real bounded 16:9 surface, so you can see
-   exactly where things will sit when presented */
+/* editing: the slide is a real bounded page surface (16:9 by default —
+   the Page dropdown can make it 4:3 or a poster), so you can see exactly
+   where things will sit when presented */
 .deck.editing .deck-stage{align-items:center;justify-content:center;
   padding:18px 26px 10px;}
 .deck.editing .slide{flex:none;width:100%;max-height:100%;
-  aspect-ratio:16/9;margin:auto;background:#0b141d;
+  aspect-ratio:var(--page-ar,16/9);margin:auto;background:#0b141d;
   border:2px solid #ffffff2b;border-radius:12px;
   box-shadow:0 14px 60px #00000066,inset 0 0 0 1px #00000055;}
+/* zoomed past the window: the stage scrolls, content anchors top-left
+   (margin:auto still centers it while it fits) */
+.deck.editing .deck-stage.zoomed{overflow:auto;
+  align-items:flex-start;justify-content:flex-start;}
+/* a custom page (poster / portrait) letterboxes in playback too */
+.deck.custom-page .vpage{display:flex;}
+/* the Page dropdown menu */
+.sh-menu.page-menu{display:block;width:252px;padding:6px;}
+.page-menu .page-opt{display:block;width:100%;text-align:left;}
+.page-menu .page-opt[aria-pressed="true"]{color:#fff;
+  background:var(--cyan-deep);border-radius:6px;}
+/* the Objects pane: everything on the slide — select, hide, lock */
+.selpane{position:absolute;top:8px;right:8px;bottom:8px;width:232px;
+  z-index:60;background:#101c28f2;border:1px solid #ffffff22;
+  border-radius:10px;display:flex;flex-direction:column;
+  box-shadow:0 14px 44px #00000066;}
+.selpane[hidden]{display:none;}
+.selpane-h{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 8px 7px 12px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
+  border-bottom:1px solid #ffffff14;}
+.selpane-list{flex:1;overflow-y:auto;padding:5px;}
+.selpane-empty{color:#54677a;font-size:12px;padding:12px;}
+.sp-row{display:flex;align-items:center;gap:7px;
+  border-radius:7px;padding:6px 7px;color:#c9d6e2;font-size:12px;
+  cursor:pointer;}
+.sp-row:hover{background:#ffffff0c;}
+.sp-row.sel{background:#39a9c022;color:#fff;}
+.sp-row.offrow .sp-t{opacity:.45;text-decoration:line-through;}
+.sp-kind{flex:none;width:8px;height:8px;border-radius:2px;
+  background:#8ba0b2;}
+.sp-kind.k-cell{background:var(--cyan);}
+.sp-kind.k-text{background:#f0a848;}
+.sp-kind.k-rect,.sp-kind.k-arrow{background:#ff6b57;}
+.sp-kind.k-image{background:#46a892;}
+.sp-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.sp-act{flex:none;background:none;border:none;color:#5f7386;
+  cursor:pointer;font-size:12px;padding:1px 3px;border-radius:4px;
+  line-height:1;}
+.sp-act:hover{color:#fff;background:#ffffff14;}
+.sp-act.on{color:var(--cyan);}
+body.light .selpane{background:#fffffff5;border-color:var(--line);}
+body.light .sp-row{color:var(--ink-2);}
+body.light .sp-row.sel{background:#39a9c022;color:var(--ink);}
+body.light .sp-act:hover{color:var(--ink);background:#00000010;}
+/* locked objects: visible but untouchable on the canvas */
+.deck.editing .an-locked,.deck.editing .an-locked *{
+  pointer-events:none!important;cursor:default!important;}
 
 /* vertical "code trail": each slide can descend into the cells that
    made it (down arrow / ArrowDown), one step per screen */
@@ -6974,6 +7056,11 @@ select#fmt-font[hidden]{display:none;}
   .print-page:last-child{page-break-after:auto;break-after:auto;}
 }
 
+/* snap-to-align guide lines (drawn only mid-drag) */
+.snapline{position:absolute;z-index:45;pointer-events:none;}
+.snapline.snap-v{top:0;bottom:0;width:0;border-left:1.5px dashed #ff6b57;}
+.snapline.snap-h{left:0;right:0;height:0;border-top:1.5px dashed #ff6b57;}
+
 /* annotation layer */
 .annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
 .deck.editing .annot-layer{pointer-events:auto;cursor:crosshair;}
@@ -7186,7 +7273,8 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
 /* pane editor: the current slide as clickable regions */
 /* the current slide's interactive editor — the single big view in the
    merged slides list (fills the width; drag the panel edge to resize) */
-.pane-editor{aspect-ratio:16/9;display:grid;gap:6px;background:#0b141d;
+.pane-editor{aspect-ratio:var(--page-ar,16/9);display:grid;gap:6px;
+  background:#0b141d;
   border:1px solid #ffffff22;border-radius:8px;padding:6px;
   margin:0;width:100%;overflow:hidden;}
 .pane-editor.full{grid-template-columns:1fr;grid-template-rows:1fr;}
@@ -7426,18 +7514,210 @@ _DECK_JS = r"""
       });
     });
   }
-  /* the ribbon's Layouts dropdown open/close */
+  /* the ribbon's Layouts / Page dropdowns: open one, the other closes */
   function closeLayMenu(){
     var lm=$('#lay-menu'),lb=$('#lay-btn');
     if(lm&&!lm.hidden){lm.hidden=true;
       if(lb) lb.setAttribute('aria-expanded','false');}
   }
+  function closePageMenu(){
+    var pm=$('#page-menu'),pb=$('#page-btn');
+    if(pm&&!pm.hidden){pm.hidden=true;
+      if(pb) pb.setAttribute('aria-expanded','false');}
+  }
+  /* ---- page size: slides or a poster — ONE builder for both. The page
+     is a per-presentation preset; a poster is just a big page. ---- */
+  var PAGE_PRESETS=[
+    {id:'16x9',label:'Slides 16:9',aw:16,ah:9,mm:[339,191]},
+    {id:'4x3',label:'Slides 4:3',aw:4,ah:3,mm:[254,190]},
+    {id:'a4p',label:'A4 portrait',aw:210,ah:297,mm:[210,297]},
+    {id:'a4l',label:'A4 landscape',aw:297,ah:210,mm:[297,210]},
+    {id:'a1p',label:'Poster A1 portrait',aw:594,ah:841,mm:[594,841]},
+    {id:'a1l',label:'Poster A1 landscape',aw:841,ah:594,mm:[841,594]},
+    {id:'a0p',label:'Poster A0 portrait',aw:841,ah:1189,mm:[841,1189]},
+    {id:'a0l',label:'Poster A0 landscape',aw:1189,ah:841,mm:[1189,841]}];
+  function pageOf(){
+    var id=pres&&pres.page;
+    for(var i=0;i<PAGE_PRESETS.length;i++)
+      if(PAGE_PRESETS[i].id===id) return PAGE_PRESETS[i];
+    return PAGE_PRESETS[0];
+  }
+  var deckZoom=0;               /* 0 = fit-to-window */
+  function applyPage(){
+    var pg=pageOf();
+    deckEl.style.setProperty('--page-ar',pg.aw+' / '+pg.ah);
+    deckEl.classList.toggle('custom-page',pg.id!=='16x9');
+    var b=$('#page-btn');
+    if(b) b.innerHTML='&#9645; '
+      +(pg.id==='16x9'?'Page':esc(pg.label))+' &#9662;';
+    $$('#page-menu .page-opt').forEach(function(o){
+      o.setAttribute('aria-pressed',
+        (o.dataset.page===pg.id).toString());});
+  }
+  function sizeSlideTo(slideEl,zoom){
+    var pg=pageOf();
+    var pad=36;
+    var aw=stage.clientWidth-pad,ah=stage.clientHeight-pad;
+    if(!slideEl||aw<=60||ah<=60) return;
+    var fitW=Math.min(aw,ah*pg.aw/pg.ah);
+    var w=fitW*(zoom||1),h=w*pg.ah/pg.aw;
+    slideEl.style.width=w+'px';
+    slideEl.style.height=h+'px';
+    /* the stylesheet's flex:1 / max-height:100% must not fight the explicit
+       page size — else zoom grows width-only (distortion) and playback
+       letterboxing never bites */
+    slideEl.style.flex='none';
+    slideEl.style.maxWidth='none';
+    slideEl.style.maxHeight='none';
+    slideEl.style.margin='auto';
+    stage.classList.toggle('zoomed',w>aw+1||h>ah+1);
+  }
+  function applyZoom(){
+    if(deckEl.hidden) return;
+    var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+    if(mode==='edit'){
+      sizeSlideTo(slideEl,deckZoom||1);
+      var zl=$('#zoom-val');
+      if(zl) zl.textContent=deckZoom
+        ?Math.round(deckZoom*100)+'%':'Fit';
+    } else if(deckEl.classList.contains('custom-page')){
+      /* playing a poster / portrait page letterboxes to the page */
+      sizeSlideTo(slideEl,1);
+    }
+  }
+  function setZoom(z){deckZoom=z;applyZoom();}
+  (function(){
+    var zi=$('#zoom-in'),zo=$('#zoom-out'),zv=$('#zoom-val');
+    if(zi) zi.addEventListener('click',function(){
+      setZoom(Math.min(6,(deckZoom||1)*1.25));});
+    if(zo) zo.addEventListener('click',function(){
+      setZoom(Math.max(0.25,(deckZoom||1)/1.25));});
+    if(zv) zv.addEventListener('click',function(){setZoom(0);});
+    window.addEventListener('resize',function(){
+      if(!deckEl.hidden) applyZoom();});
+  })();
+  (function(){
+    var pb=$('#page-btn'),pm=$('#page-menu'),pd=$('#page-drop');
+    if(!pb||!pm) return;
+    PAGE_PRESETS.forEach(function(pg){
+      var o=document.createElement('button');
+      o.className='dc-mi page-opt';o.type='button';
+      o.dataset.page=pg.id;
+      o.textContent=pg.label
+        +(pg.id==='16x9'?'':' · '+pg.mm[0]+'×'+pg.mm[1]+' mm');
+      o.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
+        pm.hidden=true;pb.setAttribute('aria-expanded','false');
+        deckZoom=0;
+        markDirty();applyPage();refresh();
+      });
+      pm.appendChild(o);
+    });
+    pb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=pm.hidden;
+      if(willOpen) closeLayMenu();
+      pm.hidden=!willOpen;
+      pb.setAttribute('aria-expanded',willOpen.toString());
+    });
+    document.addEventListener('click',function(e){
+      if(!pm.hidden&&pd&&!pd.contains(e.target)){
+        pm.hidden=true;pb.setAttribute('aria-expanded','false');}
+    });
+  })();
+  /* ---- Objects pane (layers v1): list / select / hide / lock ---- */
+  function annotLabel(a){
+    if(a.k==='cell'){
+      var it=a.ref?resolveRef(a.ref):null;
+      return it?it.title:'Empty frame';
+    }
+    if(a.k==='text')
+      return 'Text — '+(String(a.text||'').trim().slice(0,26)||'(empty)');
+    if(a.k==='image') return 'Image';
+    if(a.k==='arrow') return 'Arrow';
+    if(a.k==='rect') return 'Shape — '+(a.shape||'box');
+    return a.k;
+  }
+  function renderSelPane(){
+    var pane=$('#selpane'),list=$('#selpane-list');
+    if(!pane||pane.hidden||!list) return;
+    list.innerHTML='';
+    var s=pres.slides[cur];
+    var ann=(s&&s.annots)||[];
+    if(!ann.length){
+      list.innerHTML='<div class="selpane-empty">Nothing on this '
+        +'slide yet.</div>';
+      return;
+    }
+    /* handlers resolve the CURRENT slide's annot at event time (never a
+       closure) — the pane can't mutate or repaint a stale slide */
+    function liveAnnot(i){
+      var s2=pres.slides[cur];
+      return (s2&&s2.annots||[])[i]||null;
+    }
+    function toggleFlag(i,flag){
+      var a2=liveAnnot(i);
+      if(!a2){renderSelPane();return;}
+      if(a2[flag]) delete a2[flag]; else a2[flag]=1;
+      markDirty();
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+      renderSelPane();
+    }
+    function row(a,i){
+      var r=document.createElement('div');
+      r.className='sp-row'+(selSet.indexOf(i)>=0?' sel':'')
+        +(a.hide?' offrow':'');
+      var k=document.createElement('span');
+      k.className='sp-kind k-'+a.k;r.appendChild(k);
+      var t=document.createElement('span');t.className='sp-t';
+      t.textContent=annotLabel(a);t.title=t.textContent;
+      r.appendChild(t);
+      var eye=document.createElement('button');
+      eye.className='sp-act'+(a.hide?' on':'');eye.type='button';
+      eye.innerHTML='&#128065;';
+      eye.title=a.hide?'Show while editing'
+        :'Hide while editing (still shows when presenting)';
+      eye.addEventListener('click',function(e){
+        e.stopPropagation();toggleFlag(i,'hide');});
+      r.appendChild(eye);
+      var lk=document.createElement('button');
+      lk.className='sp-act'+(a.lock?' on':'');lk.type='button';
+      lk.innerHTML='&#128274;';
+      lk.title=a.lock?'Unlock':'Lock (can’t be clicked or '
+        +'dragged on the canvas)';
+      lk.addEventListener('click',function(e){
+        e.stopPropagation();toggleFlag(i,'lock');});
+      r.appendChild(lk);
+      r.addEventListener('click',function(){
+        if(!liveAnnot(i)){renderSelPane();return;}
+        var l=stage.querySelector('.annot-layer');
+        if(l) selectAnnot(l,i);
+        renderSelPane();
+      });
+      list.appendChild(r);
+    }
+    for(var i=ann.length-1;i>=0;i--) row(ann[i],i);  /* front-most first */
+  }
+  (function(){
+    var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
+    if(!ob||!pane) return;
+    function set(open){
+      pane.hidden=!open;
+      ob.setAttribute('aria-pressed',open.toString());
+      if(open) renderSelPane();
+    }
+    ob.addEventListener('click',function(){set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+  })();
   (function(){
     var lb=$('#lay-btn'),lm=$('#lay-menu'),ld=$('#lay-drop');
     if(!lb||!lm) return;
     lb.addEventListener('click',function(e){
       e.stopPropagation();
       var willOpen=lm.hidden;
+      if(willOpen) closePageMenu();
       lm.hidden=!willOpen;
       lb.setAttribute('aria-expanded',willOpen.toString());
     });
@@ -7521,6 +7801,7 @@ _DECK_JS = r"""
       })};
     if(typeof p.folder==='string'&&p.folder) out.folder=p.folder;
     if(p.showNums) out.showNums=1;   /* keep the slide-numbers preference */
+    if(typeof p.page==='string'&&p.page) out.page=p.page;  /* page preset */
     return out;
   }
   function registerShell(stem,data){
@@ -7624,6 +7905,7 @@ _DECK_JS = r"""
 
   var pres=null, source='auto', mode='view', cur=0, activePane=0;
   function loadPresentation(name){
+    deckZoom=0;   /* zoom is per-session, reset per presentation */
     var d=loadDraft(name);
     if(d){pres=d;source='draft';histReset();return;}
     var s=savedByName(name);
@@ -7668,6 +7950,7 @@ _DECK_JS = r"""
     status();
     scheduleAutosave();
     histPush();
+    renderSelPane();   /* keep the Objects pane in step (no-op if closed) */
   }
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
   var undoStack=[],redoStack=[],histSnap=null;
@@ -8439,6 +8722,11 @@ _DECK_JS = r"""
     }
     var slideEl=stage.firstElementChild;
     if(s&&slideEl){
+      /* size the page BEFORE annots render, so % geometry, fonts and
+         figure fits all read the final canvas dimensions */
+      applyPage();
+      if(mode==='edit'||deckEl.classList.contains('custom-page'))
+        applyZoom();
       attachAnnots(slideEl,s);
       typeset(slideEl);
       if(mode==='view'){
@@ -8457,6 +8745,7 @@ _DECK_JS = r"""
         slideEl.appendChild(pn);
       }
     }
+    renderSelPane();   /* keep the Objects pane on the CURRENT slide */
     /* playback: the code trace flows beneath the slide — scroll (or
        ArrowDown) between them; steps expand in place */
     stage.classList.remove('scrolly');
@@ -8843,6 +9132,9 @@ _DECK_JS = r"""
     }
 
     (s.annots||[]).forEach(function(a,i){
+      /* hidden via the Objects pane: skipped while editing, still
+         rendered in playback / print */
+      if(a.hide&&editing) return;
       if(a.k==='arrow'){
         var col=a.color||'#ff6b57';
         var mk=document.createElementNS(AN_NS,'marker');
@@ -8874,7 +9166,7 @@ _DECK_JS = r"""
         hit.setAttribute('class','an-arrow-hit an-item');
         hit.setAttribute('data-idx',i);
         svg.appendChild(hit);
-        if(editing){
+        if(editing&&!a.lock){   /* a locked arrow gets no live endpoints */
           ['1','2'].forEach(function(which){
             var ep=document.createElement('span');
             ep.className='an-endpt an-endpt-'+which
@@ -9062,6 +9354,13 @@ _DECK_JS = r"""
       });
     }
     layer.appendChild(svgTop);
+    /* locked via the Objects pane: visible but untouchable on the canvas
+       (select / unlock through the pane) */
+    if(editing) (s.annots||[]).forEach(function(a,i){
+      if(!a.lock) return;
+      $$('.an-item[data-idx="'+i+'"]',layer).forEach(function(el){
+        el.classList.add('an-locked');});
+    });
   }
   function selectAnnot(layer,idx,additive){
     var s=pres.slides[cur];
@@ -9082,7 +9381,12 @@ _DECK_JS = r"""
     var d=$('#et-del');
     if(d) d.disabled=!selSet.some(function(i){return typeof i==='number';});
     showFmt();
+    /* refresh the Objects pane only when the selection actually CHANGED
+       (resize/endpoint drags re-select every mousemove) */
+    var sig=String(selAnnot)+'|'+selSet.join(',');
+    if(sig!==lastSelSig){lastSelSig=sig;renderSelPane();}
   }
+  var lastSelSig='';
   function defaultColor(kind){
     return kind==='text'?'#ffffff':'#ff6b57';
   }
@@ -9236,20 +9540,119 @@ _DECK_JS = r"""
     return {x:Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100)),
             y:Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100))};
   }
+  /* ---- snap-to-align: while dragging or resizing, edges and centers
+     snap to the canvas (edges + middle) and to every other object's
+     edges + centers, with dashed guide lines. Hold Alt to disable. ---- */
+  var SNAP_PX=6;
+  function annotRectPct(layer,s,i){
+    var a=(s.annots||[])[i]; if(!a) return null;
+    if(a.k==='arrow')
+      return {l:Math.min(a.x1,a.x2),r:Math.max(a.x1,a.x2),
+              t:Math.min(a.y1,a.y2),b:Math.max(a.y1,a.y2)};
+    var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+    /* auto-sized items (text) AND aspect-fitted figure frames answer with
+       their RENDERED rect — snapping must align to the visible plot, not
+       a letterboxed stored box */
+    if(el&&(a.w==null||a.h==null
+            ||el.classList.contains('an-figonly'))){
+      var lr=layer.getBoundingClientRect();
+      if(lr.width&&lr.height){
+        var er=el.getBoundingClientRect();
+        return {l:(er.left-lr.left)/lr.width*100,
+                r:(er.right-lr.left)/lr.width*100,
+                t:(er.top-lr.top)/lr.height*100,
+                b:(er.bottom-lr.top)/lr.height*100};
+      }
+    }
+    if(a.w==null||a.h==null) return null;
+    return {l:a.x,r:a.x+a.w,t:a.y,b:a.y+a.h};
+  }
+  function snapTargets(layer,s,skip){
+    var xs=[0,50,100],ys=[0,50,100];
+    (s.annots||[]).forEach(function(a,i){
+      if(skip.indexOf(i)>=0||a.hide) return;
+      var r=annotRectPct(layer,s,i);
+      if(!r) return;
+      xs.push(r.l,(r.l+r.r)/2,r.r);
+      ys.push(r.t,(r.t+r.b)/2,r.b);
+    });
+    return {xs:xs,ys:ys};
+  }
+  function bestSnap(cands,vals,thr){
+    var best=null;
+    for(var i=0;i<vals.length;i++) for(var j=0;j<cands.length;j++){
+      var d=cands[j]-vals[i];
+      if(Math.abs(d)<=thr&&(!best||Math.abs(d)<Math.abs(best.d)))
+        best={d:d,at:cands[j]};
+    }
+    return best;
+  }
+  function snapThr(layer){
+    var r=layer.getBoundingClientRect();
+    return {x:r.width?SNAP_PX/r.width*100:1,
+            y:r.height?SNAP_PX/r.height*100:1};
+  }
+  function drawSnapGuides(layer,sx,sy){
+    $$('.snapline',layer).forEach(function(n){n.remove();});
+    if(sx!=null){
+      var v=document.createElement('div');
+      v.className='snapline snap-v';v.style.left=sx+'%';
+      layer.appendChild(v);
+    }
+    if(sy!=null){
+      var h=document.createElement('div');
+      h.className='snapline snap-h';h.style.top=sy+'%';
+      layer.appendChild(h);
+    }
+  }
+  function clearSnapGuides(layer){
+    $$('.snapline',layer).forEach(function(n){n.remove();});
+  }
   function startMove(layer,s,idx,ev0){
     ev0.preventDefault();
     var a=annotByIdx(s,idx); if(!a) return;
     var start=pctPoint(layer,ev0);
-    /* drag the whole current selection (group / multi-select) together */
+    /* drag the whole current selection (group / multi-select) together —
+       locked members stay put (lock = can't be dragged) */
     var movers=selSet.filter(function(i){return typeof i==='number';});
     if(typeof idx==='number'&&movers.indexOf(idx)<0) movers=[idx];
+    movers=movers.filter(function(i){
+      var m=(s.annots||[])[i];return m&&!m.lock;});
     var origs={};
     movers.forEach(function(i){
       origs[i]=JSON.parse(JSON.stringify((s.annots||[])[i]));});
     var single=(typeof idx!=='number')?JSON.parse(JSON.stringify(a)):null;
+    var thr=snapThr(layer);
+    var targets=snapTargets(layer,s,movers);
+    /* snap by the union bounding box of everything being dragged
+       (hidden members travel along but contribute no snap geometry) */
+    var origBB=null;
+    movers.forEach(function(i){
+      var m=(s.annots||[])[i];
+      if(!m||m.hide) return;
+      var r=annotRectPct(layer,s,i); if(!r) return;
+      origBB=origBB?{l:Math.min(origBB.l,r.l),r:Math.max(origBB.r,r.r),
+        t:Math.min(origBB.t,r.t),b:Math.max(origBB.b,r.b)}:r;
+    });
     function mm(ev){
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
+      var sx=null,sy=null;
+      if(!ev.altKey){
+        if(single){       /* a title item positions by its CENTER */
+          var bx0=bestSnap(targets.xs,[single.x+dx],thr.x);
+          var by0=bestSnap(targets.ys,[single.y+dy],thr.y);
+          if(bx0){dx+=bx0.d;sx=bx0.at;}
+          if(by0){dy+=by0.d;sy=by0.at;}
+        } else if(origBB){
+          var bb={l:origBB.l+dx,r:origBB.r+dx,
+                  t:origBB.t+dy,b:origBB.b+dy};
+          var bx=bestSnap(targets.xs,[bb.l,(bb.l+bb.r)/2,bb.r],thr.x);
+          var by=bestSnap(targets.ys,[bb.t,(bb.t+bb.b)/2,bb.b],thr.y);
+          if(bx){dx+=bx.d;sx=bx.at;}
+          if(by){dy+=by.d;sy=by.at;}
+        }
+      }
       if(single){a.x=single.x+dx;a.y=single.y+dy;}
       else movers.forEach(function(i){
         var m=(s.annots||[])[i],o=origs[i];
@@ -9259,10 +9662,12 @@ _DECK_JS = r"""
         } else {m.x=o.x+dx;m.y=o.y+dy;}
       });
       renderAnnots(layer,s);paintSel(layer);
+      drawSnapGuides(layer,sx,sy);
     }
     function mu(){
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
+      clearSnapGuides(layer);
       markDirty();
     }
     document.addEventListener('mousemove',mm);
@@ -9285,17 +9690,33 @@ _DECK_JS = r"""
     var er=el?el.getBoundingClientRect():null;
     var ow=a.w||(er?er.width/lr.width*100:10);
     var oh=a.h||(er?er.height/lr.height*100:10);
+    var thr=snapThr(layer);
+    var targets=snapTargets(layer,s,[idx]);
     function mm(ev){
       var p=pctPoint(layer,ev);
       a.w=Math.max(4,ow+p.x-start.x);
       if(a.k!=='text') a.h=Math.max(4,oh+p.y-start.y);
+      var sx=null,sy=null;
+      if(!ev.altKey){
+        /* the moving edges snap; an aspect-locked figure snaps its width
+           and lets the height follow the plot's ratio. A guide only shows
+           when the snap actually landed (the 4% minimum can cancel it). */
+        var bx=bestSnap(targets.xs,[a.x+a.w],thr.x);
+        if(bx&&a.w+bx.d>=4){a.w=a.w+bx.d;sx=bx.at;}
+        if(a.k!=='text'&&!figRatio){
+          var by=bestSnap(targets.ys,[a.y+a.h],thr.y);
+          if(by&&a.h+by.d>=4){a.h=a.h+by.d;sy=by.at;}
+        }
+      }
       if(figRatio&&lr.height)
         a.h=a.w*(lr.width/(lr.height*figRatio));
       renderAnnots(layer,s);selectAnnot(layer,idx);
+      drawSnapGuides(layer,sx,sy);
     }
     function mu(){
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
+      clearSnapGuides(layer);
       markDirty();
     }
     document.addEventListener('mousemove',mm);
@@ -9341,7 +9762,7 @@ _DECK_JS = r"""
   function startEndpoint(layer,s,idx,ep,ev0){
     ev0.preventDefault();
     var a=(s.annots||[])[idx];
-    if(!a||a.k!=='arrow') return;
+    if(!a||a.k!=='arrow'||a.lock) return;
     function mm(ev){
       var p=pctPoint(layer,ev);
       a['x'+ep]=p.x;a['y'+ep]=p.y;
@@ -9361,7 +9782,7 @@ _DECK_JS = r"""
     var px=ev.clientX-r.left,py=ev.clientY-r.top;
     var best=-1,bestD=12;
     s.annots.forEach(function(a,i){
-      if(a.k!=='arrow') return;
+      if(a.k!=='arrow'||a.lock||a.hide) return;
       var d=distToSeg(px,py,
         a.x1/100*r.width,a.y1/100*r.height,
         a.x2/100*r.width,a.y2/100*r.height);
@@ -9827,7 +10248,7 @@ _DECK_JS = r"""
       if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
       if(!idxs.length||!s.annots) return;
       idxs.forEach(function(i){
-        var a=s.annots[i]; if(!a) return;
+        var a=s.annots[i]; if(!a||a.lock) return;  /* locked: no nudge */
         if(a.k==='arrow'){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;}
         else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
       });
@@ -10131,7 +10552,7 @@ _DECK_JS = r"""
 
   /* ---------- create mode: sidebar UI ---------- */
   /* ---------- presentations rail (vertical, left edge) ----------
-     One item is active at any time: the "Documents" button (builder
+     One item is active at any time: the "Notebooks" button (builder
      closed) or a presentation (builder open editing it). */
   var presstrip=document.getElementById('presstrip');
   var FOLDKEY='sempresfold:'+SCOPE;
@@ -10263,14 +10684,15 @@ _DECK_JS = r"""
     function presItem(nm,folder){
       var isCur=nm===pres.name;
       var t=document.createElement('button');
-      t.className='pr-item ptab'+(isCur?' current':'')
-        +(isCur&&editing?' editing':'')
+      /* radio model: a row lights up ONLY while its deck is open — back on
+         the notebook view, no presentation stays highlighted */
+      t.className='pr-item ptab'+(isCur&&editing?' current editing':'')
         +(savedNames.indexOf(nm)<0?' draftonly':'');
       t.setAttribute('role','tab');
       t.dataset.pres=nm;
       t.dataset.folder=folder||'';
       t.title=(isCur&&editing
-        ?('Editing "'+nm+'" — click Documents (top left) to go back')
+        ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
         :('Open presentation "'+nm+'" in the builder'))
         +'\nDrag onto a folder to file it';
       t.innerHTML='<span class="pr-ico">&#9654;</span>';
@@ -10843,6 +11265,11 @@ _DECK_JS = r"""
       !creating&&!deckEl.hidden);
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
+    if(!editing){                   /* Objects pane is an editing tool */
+      var sp=$('#selpane'); if(sp) sp.hidden=true;
+      var ob=$('#objects-btn');
+      if(ob) ob.setAttribute('aria-pressed','false');
+    }
     var db=$('#et-del'); if(db) db.disabled=true;
     var fb=$('#et-fmt'); if(fb) fb.hidden=true;
     if(editing) setTool('select');
@@ -11477,6 +11904,17 @@ _DECK_JS = r"""
        real 720px height when its text is sized from the layer — otherwise a
        detached layer measures 0 and text bakes in ~17% too small */
     document.body.appendChild(root);
+    /* a custom page (4:3 / A-series poster) exports at ITS size, not 16:9 */
+    var pg=pageOf();
+    if(pg.id!=='16x9'){
+      var pw=Math.round(pg.mm[0]/25.4*96),ph=Math.round(pg.mm[1]/25.4*96);
+      var pst=document.createElement('style');
+      pst.textContent='#print-root{width:'+pw+'px;}'
+        +'.print-page{width:'+pw+'px;height:'+ph+'px;}'
+        +'@media print{@page{size:'+pg.mm[0]+'mm '+pg.mm[1]+'mm;'
+        +'margin:0;}}';
+      root.appendChild(pst);
+    }
     pres.slides.forEach(function(s,i){
       cur=i;
       var page=document.createElement('div');page.className='print-page';
@@ -11715,9 +12153,9 @@ _TEMPLATE = """<!doctype html>
 <nav class="presrail" id="presrail" aria-label="Presentations">
   <div class="presrail-brand">{logo}<span class="prb-full">Junoview</span></div>
   <button class="pr-item pr-docs current" id="pr-docs"
-    title="Document view — closes the presentation builder">
+    title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico">&#9636;</span>
-    <span class="pr-t">Documents</span></button>
+    <span class="pr-t">Notebooks</span></button>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
   <button class="pr-btn" id="pr-new"
@@ -12606,7 +13044,35 @@ def _self_test() -> None:
     assert 'id="presstrip"' in out and 'id="tv-markdown"' in out
     assert 'id="pr-docs"' in out and 'id="pr-new"' in out
     assert 'id="deck-docs"' in out
-    # the redundant builder "Close" is gone (presrail Documents handles it)
+    # the redundant builder "Close" is gone (presrail Notebooks handles it)
+    # rail radio model: a presentation row lights up ONLY while its deck is
+    # open; the Notebooks button is a bordered button with the SAME active
+    # style (no stale half-highlight after going back to the notebooks)
+    assert '<span class="pr-t">Notebooks</span>' in out
+    assert "isCur&&editing?' current editing'" in out
+    assert ".pr-item.current{background:var(--cyan-deep)" in out
+    assert ".pr-docs{margin-bottom:6px;border:1px solid" in out
+    # SNAP-TO-ALIGN: dragging/resizing snaps edges + centers to the canvas
+    # and other objects, with dashed guide lines; Alt disables; aspect-locked
+    # figures snap width and let height follow the plot ratio
+    assert "function snapTargets" in out and "function bestSnap" in out
+    assert "function drawSnapGuides" in out and "ev.altKey" in out
+    assert ".snapline.snap-v" in out and ".snapline.snap-h" in out
+    # PAGE SIZE / POSTER: a per-presentation preset (16:9, 4:3, A4-A0) —
+    # one builder for slides AND posters; zoom while editing; the preset
+    # survives JS normPres and the Python save path; PDF exports at size
+    assert "var PAGE_PRESETS" in out and 'id="page-btn"' in out
+    assert "--page-ar" in out and "function applyZoom" in out
+    assert 'id="zoom-in"' in out and 'id="zoom-out"' in out
+    assert "out.page=p.page" in out
+    assert _as_presentations([{"name": "po", "page": "a0p",
+                               "slides": []}])[0]["page"] == "a0p"
+    assert "page" not in _as_presentations([{"name": "s", "slides": []}])[0]
+    assert ".deck.editing .deck-stage.zoomed{overflow:auto" in out
+    # OBJECTS PANE (layers v1): list every object, hide-while-editing, lock
+    assert 'id="selpane"' in out and 'id="objects-btn"' in out
+    assert "function renderSelPane" in out and "a.hide&&editing" in out
+    assert "an-locked" in out and ".sp-row" in out
     assert 'id="dc-close"' not in out
     assert 'id="dc-play"' in out and 'id="film-list"' in out
     assert 'id="layout-row"' in out and "buildSlideEditor" in out
