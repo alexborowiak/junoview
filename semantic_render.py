@@ -98,6 +98,7 @@ import secrets
 import subprocess
 import sys
 import threading
+import time
 import tokenize
 import urllib.parse
 import urllib.request
@@ -5510,6 +5511,56 @@ _JS = r"""
   }
 
   /* ================= app mode: open / close / reload ================= */
+  /* a refresh keeps YOUR VIEW: hidden cells/sections, collapsed sections,
+     tree/raw mode and the scroll position carry over the shell swap
+     (anchors + section ids are stable across re-parses) */
+  function captureViewState(el){
+    return {
+      cellsOff:$$('.card.cell-off',el).map(function(c){
+        return c.dataset.anchor;}).filter(Boolean),
+      secsOff:$$('.section.sec-off',el).map(function(s2){
+        return s2.dataset.sec;}).filter(Boolean),
+      secsClosed:$$('.section.sec-collapsed',el).map(function(s2){
+        return s2.dataset.sec;}).filter(Boolean),
+      tree:el.classList.contains('tree'),
+      raw:el.classList.contains('raw'),
+      scroll:window.scrollY||0
+    };
+  }
+  function restoreViewState(shell,stem,keep){
+    keep.cellsOff.forEach(function(an){
+      var card=shell.querySelector(
+        '.card[data-anchor="'+String(an).replace(/"/g,'\\"')+'"]');
+      if(!card) return;
+      card.classList.add('cell-off');
+      var id=card.id.replace(/^card-/,'');
+      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
+      if(nav) nav.classList.add('cell-off');
+    });
+    keep.secsOff.forEach(function(sid){
+      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
+      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      if(sec) sec.classList.add('sec-off');
+      if(row) row.classList.add('sec-off');
+    });
+    keep.secsClosed.forEach(function(sid){
+      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
+      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      var items=shell.querySelector('.navitems[data-sec="'+sid+'"]');
+      if(sec) sec.classList.add('sec-collapsed');
+      if(row) row.classList.add('collapsed');
+      if(items) items.classList.add('nav-collapsed');
+    });
+    if(keep.raw&&!keep.tree) shell.classList.add('raw');
+    if(keep.tree){
+      shell.classList.add('tree');
+      var sh=APP.shells[stem];
+      if(sh) buildTree(sh);
+    }
+    applyFilters();
+    renderRawBtn();renderViewBtns();
+    if(keep.tree) relayoutActiveTree();
+  }
   function mountShellHTML(htmlStr,path){
     var host=$('#docs');
     var tmp=document.createElement('div');
@@ -5519,6 +5570,7 @@ _JS = r"""
     if(path) shell.dataset.path=path;
     var stem=shell.dataset.nb;
     var old=APP.shells[stem];
+    var keep=(old&&old.el)?captureViewState(old.el):null;
     /* a reload replaces the notebook's cards — its Plot-trace tabs now hold
        stale clones, so close them (a fresh trace re-clones the new cards) */
     if(old) APP.traces.slice().forEach(function(k){
@@ -5527,11 +5579,18 @@ _JS = r"""
     if(old&&old.el.parentNode) host.replaceChild(shell,old.el);
     else host.appendChild(shell);
     initShell(shell);
+    if(keep) restoreViewState(shell,stem,keep);
     if(path&&APP.noteRecent) APP.noteRecent(path);
     activate(stem);
+    if(keep&&keep.scroll){
+      window.scrollTo(0,keep.scroll);
+      /* once more after images/math settle the layout */
+      setTimeout(function(){window.scrollTo(0,keep.scroll);},150);
+    }
     if(window.MathJax&&MathJax.typesetPromise)
       MathJax.typesetPromise([shell]).catch(function(){});
   }
+  APP.mountShellHTML=mountShellHTML;
   /* ---- "Plot trace" opens in its OWN TAB: a genuine subset of the docs
      holding just this plot's lineage cells + the dependency graph. The tab
      is a real .nbshell, so every global filter and per-card control works
@@ -5800,7 +5859,12 @@ _JS = r"""
     pend=OPENBUSY[url]={s:silent};
     if(!silent) setDlgBusy(true);
     function done(){delete OPENBUSY[url];if(!pend.s) setDlgBusy(false);}
-    fetch(url).then(function(r){
+    /* GitHub's raw CDN caches for minutes: bust its cache key on every
+       (re)fetch so a refresh sees the latest commit immediately */
+    var fu=url;
+    if(/^https?:\/\/[^\/]*githubusercontent\.com\//i.test(url))
+      fu=url+(url.indexOf('?')<0?'?':'&')+'jvr='+Date.now();
+    fetch(fu,{cache:'no-store'}).then(function(r){
       if(!r.ok) throw new Error('HTTP '+r.status);
       return r.text();
     }).then(function(txt){
@@ -5969,6 +6033,13 @@ _JS = r"""
     if(openBtn) openBtn.addEventListener('click',showDlg);
     var wOpen=$('#welcome-open');
     if(wOpen) wOpen.addEventListener('click',showDlg);
+    /* same dialog, but landed on the URL path: paste a GitHub link */
+    var wUrl=$('#welcome-url');
+    if(wUrl) wUrl.addEventListener('click',function(){
+      showDlg();
+      var inp2=$('#odlg-input');
+      if(inp2) setTimeout(function(){inp2.focus();},50);
+    });
     var up=$('#odlg-up');
     if(up&&!isWeb) up.addEventListener('click',function(){
       if(up.dataset.parent) listDir(up.dataset.parent);});
@@ -12473,8 +12544,10 @@ _TEMPLATE = """<!doctype html>
       <div class="welcome-wordmark">Junoview</div>
       <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
       <div class="welcome-btns">
-        <button class="dbtn primary" id="welcome-open">Browse
-          files&#8230;</button>
+        <button class="dbtn primary" id="welcome-open">&#128193; Open
+          local files&#8230;</button>
+        <button class="dbtn ghost" id="welcome-url">&#128279; From
+          GitHub / URL&#8230;</button>
         <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
           example notebook</button>
       </div>
@@ -12661,11 +12734,23 @@ def _normalize_nb_url(url: str) -> str:
     return url
 
 
+def _cache_bust(url: str) -> str:
+    """GitHub's raw CDN caches files for minutes — a fresh query param makes
+    a new cache key, so a refresh sees the latest commit immediately."""
+    host = urllib.parse.urlsplit(url).netloc.lower()
+    if host.endswith("githubusercontent.com"):
+        sep = "&" if "?" in url else "?"
+        return f"{url}{sep}jvr={int(time.time())}"
+    return url
+
+
 def _fetch_notebook_url(url: str) -> tuple[str, dict]:
     """Download a notebook from a URL; returns (filename, nb dict)."""
     url = _normalize_nb_url(url)
     req = urllib.request.Request(
-        url, headers={"User-Agent": "semantic-render"})
+        _cache_bust(url), headers={"User-Agent": "semantic-render",
+                                   "Cache-Control": "no-cache",
+                                   "Pragma": "no-cache"})
     with urllib.request.urlopen(req, timeout=30) as r:
         data = r.read()
     nb = json.loads(data.decode("utf-8"))
@@ -14131,6 +14216,24 @@ def _self_test() -> None:
     assert 'class="welcome-hero"' in web_page and 'class="welcome-wordmark"' in web_page
     assert "Filter, view and present your Jupyter notebooks" in web_page
     assert 'class="welcome-btns"' in web_page and 'id="welcome-open"' in web_page
+    # BOTH open paths are explicit on the welcome: local files and a
+    # GitHub/URL button that opens the dialog focused on the URL input
+    assert 'id="welcome-url"' in web_page and "'#welcome-url'" in out
+    # GitHub raw fetches bust the CDN cache (server + web builds; the raw
+    # CDN otherwise serves stale content for minutes), and a notebook
+    # refresh keeps the VIEW: hidden cells/sections, collapsed sections,
+    # tree/raw mode and scroll all survive the shell swap
+    assert _cache_bust("https://raw.githubusercontent.com/a/b/c.ipynb"
+                       ).startswith(
+        "https://raw.githubusercontent.com/a/b/c.ipynb?jvr=")
+    assert _cache_bust("https://example.com/n.ipynb") \
+        == "https://example.com/n.ipynb"
+    assert "cache:'no-store'" in out and "jvr='+Date.now()" in out
+    assert "function captureViewState" in out
+    assert "function restoreViewState" in out
+    assert "APP.mountShellHTML=mountShellHTML" in out
+    assert "Open\n          local files" in out.replace("\r\n", "\n") \
+        or "Open local files" in re.sub(r"\s+", " ", out)
     # the getting-started steps moved to the bottom (seen on scroll)
     assert 'class="welcome-more"' in web_page and web_page.count('class="ws-n"') == 4
     # rebrand: PlotLine -> Junoview, with the peacock-eye ocellus mark
