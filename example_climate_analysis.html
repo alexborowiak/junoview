@@ -1719,6 +1719,37 @@ body.light .sp-act:hover{color:var(--ink);background:#00000010;}
   gap:14px;padding:64px 0 60px;min-height:70%;}   /* top clears the ↑ arrow */
 .vtrace .vo-groups{flex:none;align-items:flex-start;}
 .vtrace .vo-col{overflow:visible;}
+/* several plots: the thumbnails PICK which trace shows */
+.vo-plots .vo-thumb-btn{cursor:pointer;opacity:.45;
+  transition:opacity .15s;}
+.vo-plots .vo-thumb-btn:hover{opacity:.8;}
+.vo-plots .vo-thumb-btn.sel{opacity:1;}
+/* the docs dependency tree, hosted under a slide (always dark — the
+   playback canvas is dark in both themes) */
+.deck-tracetree .treeview{display:block;padding:0 4px 30px;}
+.deck-tracetree .tt-present{display:none;}
+.deck-tracetree .tree-toolbar{
+  background:linear-gradient(#0b141d 72%,transparent);}
+.deck-tracetree .tree-toolbar .tt-title{color:#7e93a4;}
+.deck-tracetree .tt-btn{background:#101c28;border-color:#ffffff22;
+  color:#cdd9e3;}
+.deck-tracetree .tt-btn:hover{border-color:var(--cyan);color:#fff;}
+.deck-tracetree .tree-scroll{border-color:#ffffff1a;background:
+  radial-gradient(circle at 1px 1px,#ffffff12 1px,transparent 0)
+  0 0/22px 22px,#0e1926;}
+.deck-tracetree .tree-node{
+  background:color-mix(in srgb,var(--nc) 12%,#101c28);
+  border-color:#ffffff1c;border-top-color:var(--nc);
+  box-shadow:0 1px 3px #00000040;}
+.deck-tracetree .tree-node.active{border-color:var(--cyan);}
+.deck-tracetree .tn-title{color:#e6edf3;}
+.deck-tracetree .tn-btn{color:#8ba0b2;}
+.deck-tracetree .tn-btn:hover{background:#ffffff14;}
+.deck-tracetree .tn-resize{border-color:#8ba0b2;}
+.deck-tracetree .tree-node-body{border-top-color:#ffffff14;}
+.deck-tracetree .tree-node.tn-off{border-top-color:#ffffff1c;}
+.deck-tracetree .tree-node.tn-off .tn-title{color:#7e93a4;}
+.deck-tracetree .tree-empty{color:#7e93a4;}
 .deck-codepill{position:absolute;left:50%;transform:translateX(-50%);
   bottom:16px;z-index:7;display:flex;align-items:center;gap:8px;
   background:#16273ae0;border:1px solid #ffffff2e;border-radius:22px;
@@ -6968,16 +6999,19 @@ through Ko-fi. Thank you.</p>
     return TREE_FILL[cks[0]]||TREE_FILL[it.kind]||'#4a5564';
   }
   var TSVGNS='http://www.w3.org/2000/svg';
+  /* host-scoped: works for ANY tree (docs shells and the deck's trace
+     tree). rAF can be throttled (background tab / headless) and late
+     content (MathJax, image decode) shifts nodes — the timer pass
+     re-routes edges regardless; treeLayoutEdges is idempotent + cheap. */
+  function relayoutTreeHost(host){
+    if(!host) return;
+    requestAnimationFrame(function(){treeLayoutEdges(host);});
+    setTimeout(function(){treeLayoutEdges(host);},120);
+  }
   function relayoutActiveTree(){
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh||!sh.el.classList.contains('tree')) return;
-    var host=$('.treeview',sh.el);
-    if(!host) return;
-    requestAnimationFrame(function(){treeLayoutEdges(host);});
-    /* rAF can be throttled (background tab / headless) and late content
-       (MathJax, image decode) shifts nodes — a timer pass re-routes the
-       edges regardless. treeLayoutEdges is idempotent and cheap. */
-    setTimeout(function(){treeLayoutEdges(host);},120);
+    relayoutTreeHost($('.treeview',sh.el));
   }
   /* tree zoom: CSS zoom on the canvas (layout scales, scrollbars stay
      honest); edges divide their measurements back into layout pixels */
@@ -6987,7 +7021,7 @@ through Ko-fi. Thank you.</p>
     canvas.style.zoom=z;
     var zl=$('.tt-zoomval',host);
     if(zl) zl.textContent=Math.round(z*100)+'%';
-    relayoutActiveTree();
+    relayoutTreeHost(host);
   }
   function treeZoomBy(host,f){
     var canvas=$('.tree-canvas',host); if(!canvas) return;
@@ -6995,7 +7029,7 @@ through Ko-fi. Thank you.</p>
   }
   function buildTree(sh){
     var host=$('.treeview',sh.el); if(!host) return;
-    if(host.dataset.built){ relayoutActiveTree(); return; }
+    if(host.dataset.built){ relayoutTreeHost(host); return; }
     host.dataset.built='1';
     var items=(sh.data&&sh.data.items)||[];
     /* one node per card that is actually present in this shell's DOM */
@@ -7079,13 +7113,13 @@ through Ko-fi. Thank you.</p>
         for(var end=Math.min(i+BATCH,els.length);i<end;i++){
           els[i].classList.add('expanded');fillNode(els[i]);}
         if(i<els.length) requestAnimationFrame(step);
-        else relayoutActiveTree();
+        else relayoutTreeHost(host);
       })();
     });
     toolBtn('Collapse all',function(){
       $$('.tree-node.expanded',host).forEach(function(el){
         el.classList.remove('expanded');});
-      relayoutActiveTree();
+      relayoutTreeHost(host);
     });
     toolBtn('−',function(){treeZoomBy(host,1/1.2);})
       .title='Zoom out';
@@ -7103,7 +7137,7 @@ through Ko-fi. Thank you.</p>
       order.forEach(function(c){canvas.classList.remove(c);});
       canvas.classList.add(nx);
       wBtn.textContent='Width: '+WNAMES[nx];
-      relayoutActiveTree();
+      relayoutTreeHost(host);
     });
     wBtn.title='Cell width — cycle Small / Medium / Large '
       +'(drag a cell’s corner to size it individually)';
@@ -7112,10 +7146,11 @@ through Ko-fi. Thank you.</p>
     var unhideBtn=toolBtn('Unhide all',function(){
       $$('.tree-node.tn-off',host).forEach(function(el){
         el.classList.remove('tn-off');});
-      updateHiddenNote();relayoutActiveTree();
+      updateHiddenNote();relayoutTreeHost(host);
     });
     unhideBtn.style.display='none';
-    toolBtn('☲ Present',function(){enterDocPresent();});
+    toolBtn('☲ Present',function(){enterDocPresent();})
+      .classList.add('tt-present');
     var hnote=document.createElement('span');hnote.className='tt-hidden-note';
     bar.appendChild(hnote);
     host.appendChild(bar);
@@ -7162,7 +7197,7 @@ through Ko-fi. Thank you.</p>
        images decoding, corner-resizes, width presets. Watching the nodes
        is the one mechanism that catches all of them. */
     var ro=window.ResizeObserver
-      ?new ResizeObserver(function(){relayoutActiveTree();}):null;
+      ?new ResizeObserver(function(){relayoutTreeHost(host);}):null;
     host._ro=ro;
     lanes.forEach(function(lane){
       var laneEl=document.createElement('div');laneEl.className='tree-lane';
@@ -7212,7 +7247,7 @@ through Ko-fi. Thank you.</p>
           function mu(){
             document.removeEventListener('mousemove',mm);
             document.removeEventListener('mouseup',mu);
-            relayoutActiveTree();
+            relayoutTreeHost(host);
           }
           document.addEventListener('mousemove',mm);
           document.addEventListener('mouseup',mu);
@@ -7223,7 +7258,7 @@ through Ko-fi. Thank you.</p>
           if(el.classList.contains('tn-off')) return;
           var open=el.classList.toggle('expanded');
           if(open) fillNode(el);
-          relayoutActiveTree();
+          relayoutTreeHost(host);
         });
         eye.addEventListener('click',function(e){
           e.stopPropagation();
@@ -7231,7 +7266,7 @@ through Ko-fi. Thank you.</p>
           if(off){el.classList.remove('expanded');
             eye.title='Show this cell';}
           else eye.title='Hide this cell';
-          updateHiddenNote();relayoutActiveTree();
+          updateHiddenNote();relayoutTreeHost(host);
         });
         el.addEventListener('mouseenter',function(){litEdges(host,nd.ti,true);});
         el.addEventListener('mouseleave',function(){litEdges(host,nd.ti,false);});
@@ -7240,7 +7275,8 @@ through Ko-fi. Thank you.</p>
       canvas.appendChild(laneEl);
     });
     scroll.appendChild(canvas);host.appendChild(scroll);
-    relayoutActiveTree();
+    if(ro) ro.observe(canvas);   /* window resizes shift lanes too */
+    relayoutTreeHost(host);
   }
   function litEdges(host,ti,on){
     var el=$('.tree-node[data-ti="'+ti+'"]',host);
@@ -9638,6 +9674,8 @@ through Ko-fi. Thank you.</p>
      transforms -> plot), deduped, in execution order — one cell per
      screen below the slide. */
   var vGroups=[];
+  var traceSel=0;          /* which plot's trace shows (thumbnail pick) */
+  var traceView='cells';   /* 'cells' list or 'tree' (docs tree, reused) */
   var TRACE_COLORS=['#39a9c0','#ff6b57','#f0a848','#46a892',
     '#c98fd0','#5b8dd6'];
   function hiddenSet(s){
@@ -9883,6 +9921,27 @@ through Ko-fi. Thank you.</p>
     });
     return {groups:groups,flat:flat};
   }
+  /* the SELECTED plot's lineage as the docs dependency tree: a pseudo-
+     shell (hidden card clones + a .treeview) fed to the docs builder, so
+     zoom / width / expand / resize all behave exactly like the Tree view */
+  function traceTreeNode(g){
+    var wrap=document.createElement('div');
+    wrap.className='deck-tracetree';
+    var store=document.createElement('div');store.hidden=true;
+    var items=[];
+    (g.steps||[]).forEach(function(st){
+      items.push(st);
+      var c=cardEl(st.ns);
+      if(c) store.appendChild(c.cloneNode(true));  /* ids kept: the tree
+        builder looks nodes up by card id WITHIN this wrapper */
+    });
+    var tv=document.createElement('div');tv.className='treeview';
+    wrap.appendChild(store);wrap.appendChild(tv);
+    if(window.SemView&&window.SemView.buildTree)
+      window.SemView.buildTree({el:wrap,
+        data:{stem:g.it.nb,items:items}});
+    return wrap;
+  }
   function plotThumb(g,glow){
     var w=document.createElement('div');w.className='vo-plot';
     if(glow){
@@ -10035,9 +10094,23 @@ through Ko-fi. Thank you.</p>
         return showHidden||!hidden[st.ns];})};
     }).filter(function(x){return x.vis.length;});
     var multi=visGroups.length>1;
+    if(traceSel>=visGroups.length) traceSel=0;
     var v=document.createElement('div');v.className='vtrace';
     var doRebuild=function(){rebuild(v);};
     var tl=document.createElement('div');tl.className='vo-title';
+    /* the same lineage two ways: a readable list of Cells, or the
+       expandable dependency Tree (the docs tree, reused) */
+    var isTree=(traceView==='tree');
+    [['&#9776; Cells','cells','The lineage as a readable list of steps'],
+     ['&#9633; Tree','tree','The lineage as an expandable dependency '
+      +'tree — columns by step']].forEach(function(bv){
+      var b=document.createElement('button');
+      b.className='vo-xall'+((traceView===bv[1])?' on':'');
+      b.innerHTML=bv[0];b.title=bv[2];
+      b.addEventListener('click',function(){
+        if(traceView!==bv[1]){traceView=bv[1];doRebuild();}});
+      tl.appendChild(b);
+    });
     var xa=document.createElement('button');xa.className='vo-xall';
     xa.textContent='Expand all';
     xa.title='Open the code of every step';
@@ -10046,8 +10119,8 @@ through Ko-fi. Thank you.</p>
     ca.textContent='Collapse all';
     ca.title='Fold every step back down';
     ca.addEventListener('click',function(){setAllSteps(v,false);});
-    tl.appendChild(xa);tl.appendChild(ca);
-    if(nHidden){
+    if(!isTree){tl.appendChild(xa);tl.appendChild(ca);}
+    if(!isTree&&nHidden){
       var sh=document.createElement('button');
       sh.className='vo-xall'+(showHidden?' on':'');
       sh.textContent=showHidden?'Hide hidden'
@@ -10065,19 +10138,34 @@ through Ko-fi. Thank you.</p>
       ckSet[(st.codeKinds&&st.codeKinds[0])||'code']=1;
       var ot=stepOt(st); if(ot) otSet[ot]=1;});});
     var ckList=Object.keys(ckSet),otList=Object.keys(otSet);
-    if(ckList.length)
+    if(!isTree&&ckList.length)
       tl.appendChild(traceFilterDropdown('code',ckList,traceCkHidden,v));
-    if(otList.length)
+    if(!isTree&&otList.length)
       tl.appendChild(traceFilterDropdown('output',otList,traceOtHidden,v));
     v.appendChild(tl);
+    /* several plots: the thumbnails PICK whose trace shows (one at a
+       time), instead of every trace rendering side by side */
     if(multi){
       var strip=document.createElement('div');strip.className='vo-plots';
-      visGroups.forEach(function(x){
-        strip.appendChild(plotThumb(x.g,true));});
+      visGroups.forEach(function(x,i){
+        var th=plotThumb(x.g,i===traceSel);
+        th.classList.add('vo-thumb-btn');
+        if(i===traceSel) th.classList.add('sel');
+        th.title='Show the code trace for “'+x.g.it.title+'”';
+        th.addEventListener('click',function(){
+          if(traceSel!==i){traceSel=i;doRebuild();}});
+        strip.appendChild(th);
+      });
       v.appendChild(strip);
     }
+    if(isTree){
+      var tg=visGroups[traceSel];
+      if(tg) v.appendChild(traceTreeNode(tg.g));
+      applyTraceFilter(v);
+      return v;
+    }
     var cols=document.createElement('div');cols.className='vo-groups';
-    visGroups.forEach(function(x){
+    [visGroups[traceSel]].filter(Boolean).forEach(function(x){
       var g=x.g,vis=x.vis;
       var col=document.createElement('div');col.className='vo-col';
       if(multi){
@@ -10183,6 +10271,7 @@ through Ko-fi. Thank you.</p>
     var s=pres.slides[cur];
     stage.innerHTML='';
     vGroups=[];
+    traceSel=0;   /* each slide starts on its first plot's trace */
     closeVFull();
     if(!s){
       stage.innerHTML='<div class="slide slide-empty"><p>No slides yet.'
