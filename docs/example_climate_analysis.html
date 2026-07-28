@@ -6970,7 +6970,12 @@ through Ko-fi. Thank you.</p>
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh||!sh.el.classList.contains('tree')) return;
     var host=$('.treeview',sh.el);
-    if(host) requestAnimationFrame(function(){treeLayoutEdges(host);});
+    if(!host) return;
+    requestAnimationFrame(function(){treeLayoutEdges(host);});
+    /* rAF can be throttled (background tab / headless) and late content
+       (MathJax, image decode) shifts nodes — a timer pass re-routes the
+       edges regardless. treeLayoutEdges is idempotent and cheap. */
+    setTimeout(function(){treeLayoutEdges(host);},120);
   }
   /* tree zoom: CSS zoom on the canvas (layout scales, scrollbars stay
      honest); edges divide their measurements back into layout pixels */
@@ -7151,10 +7156,17 @@ through Ko-fi. Thank you.</p>
       unhideBtn.style.display=n?'':'none';
     }
 
+    /* edges must follow EVERY size change — expanding, MathJax finishing,
+       images decoding, corner-resizes, width presets. Watching the nodes
+       is the one mechanism that catches all of them. */
+    var ro=window.ResizeObserver
+      ?new ResizeObserver(function(){relayoutActiveTree();}):null;
+    host._ro=ro;
     lanes.forEach(function(lane){
       var laneEl=document.createElement('div');laneEl.className='tree-lane';
       lane.forEach(function(nd){
         var el=document.createElement('div');el.className='tree-node';
+        if(ro) ro.observe(el);
         el.dataset.ti=nd.ti;
         el.dataset.parents=nd.parents.join(',');
         el.style.setProperty('--nc',treeColor(nd.it));

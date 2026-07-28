@@ -4314,7 +4314,12 @@ _JS = r"""
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh||!sh.el.classList.contains('tree')) return;
     var host=$('.treeview',sh.el);
-    if(host) requestAnimationFrame(function(){treeLayoutEdges(host);});
+    if(!host) return;
+    requestAnimationFrame(function(){treeLayoutEdges(host);});
+    /* rAF can be throttled (background tab / headless) and late content
+       (MathJax, image decode) shifts nodes — a timer pass re-routes the
+       edges regardless. treeLayoutEdges is idempotent and cheap. */
+    setTimeout(function(){treeLayoutEdges(host);},120);
   }
   /* tree zoom: CSS zoom on the canvas (layout scales, scrollbars stay
      honest); edges divide their measurements back into layout pixels */
@@ -4495,10 +4500,17 @@ _JS = r"""
       unhideBtn.style.display=n?'':'none';
     }
 
+    /* edges must follow EVERY size change — expanding, MathJax finishing,
+       images decoding, corner-resizes, width presets. Watching the nodes
+       is the one mechanism that catches all of them. */
+    var ro=window.ResizeObserver
+      ?new ResizeObserver(function(){relayoutActiveTree();}):null;
+    host._ro=ro;
     lanes.forEach(function(lane){
       var laneEl=document.createElement('div');laneEl.className='tree-lane';
       lane.forEach(function(nd){
         var el=document.createElement('div');el.className='tree-node';
+        if(ro) ro.observe(el);
         el.dataset.ti=nd.ti;
         el.dataset.parents=nd.parents.join(',');
         el.style.setProperty('--nc',treeColor(nd.it));
@@ -13353,6 +13365,11 @@ def _self_test() -> None:
     # barycenter pass aligning children under parents, and type-tinted
     # nodes with the kind label in the type colour
     assert "function treeZoomSet" in out and "tt-zoomval" in out
+    # edges re-route on ANY node size change (expand / MathJax / image
+    # decode / resize): ResizeObserver on every node + a timer pass that
+    # survives rAF throttling
+    assert "new ResizeObserver" in out and "host._ro=ro" in out
+    assert "setTimeout(function(){treeLayoutEdges(host);},120)" in out
     assert "'tree-canvas tw-m'" in out
     assert ".tree-canvas.tw-l .tree-node{width:340px" in out
     assert "tn-resize" in out and "barycenter" in out
