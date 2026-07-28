@@ -439,6 +439,8 @@ def _repr_kind(text: str) -> str:
         return "numeric"
     if s.startswith(("array(", "tensor(", "np.", "matrix(")):
         return "array"
+    if s.startswith(("defaultdict(", "OrderedDict(", "Counter(")):
+        return "dict"
     if "\n" in s:                                  # multi-line reprs
         if re.search(r"\[\d+ rows? x \d+ columns?\]\s*$", s):
             return "dataframe"                      # pandas DataFrame text repr
@@ -612,6 +614,8 @@ class Section:
     section_id: str
     level: int = 2                 # heading level: 1 (h1) or 2 (h2)
     items: list[Item] = field(default_factory=list)
+    from_heading: bool = False     # authored `#`/`##` heading — keep even
+                                   # when no cards land under it
 
 
 @dataclass
@@ -751,6 +755,10 @@ def _classify_code(code: str) -> list[str]:
         return ["code"]
     body = tree.body
     if not body:
+        # nothing executes — a fully commented-out cell is its own kind,
+        # so the Code-types filter can hide these in one click
+        if any(ln.strip() for ln in code.splitlines()):
+            return ["comments"]
         return ["code"]
     imp = (ast.Import, ast.ImportFrom)
     defs = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
@@ -774,6 +782,17 @@ def _classify_code(code: str) -> list[str]:
                for n in body):
             return ["constant"]
         return ["code"]
+    # imports/defs alone must not hide REAL work: a cell that also runs
+    # statements no specific kind matched (cluster setup, transforms, …)
+    # is "imports · code", not just "imports"
+    other = [n for n in body if not isinstance(n, imp + defs)]
+    if other and not any(c in cats for c in
+                         ("data", "settings", "plotting", "print")):
+        if all(isinstance(n, ast.Assign) and _is_const_value(n.value)
+               for n in other):
+            cats.append("constant")
+        else:
+            cats.append("code")
     return cats
 
 
@@ -1173,10 +1192,12 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
                         # "Overview" bucket rather than spawning a twin
                         cur_section = auto_overview
                         cur_section.level = level
+                        cur_section.from_heading = True
                         auto_overview = None
                     else:
                         cur_section = Section(text, _slug(text, used_slugs))
                         cur_section.level = level
+                        cur_section.from_heading = True
                         doc.sections.append(cur_section)
                     cur_subsection = ""
                     handled_heading = True
@@ -1265,7 +1286,9 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
             if (it.is_note or it.kind not in ("", "hidden"))
             and not (it.node_id and it.node_id in consumed_ids)
         ]
-    doc.sections = [s for s in doc.sections if s.items]
+    # keep AUTHORED headings even when nothing lands under them (a `#`
+    # heading followed straight by another used to vanish entirely)
+    doc.sections = [s for s in doc.sections if s.items or s.from_heading]
     # name any unnamed plot "Plot 1", "Plot 2", … (a figure with no explicit
     # title just echoes its first code line — give it a real name instead)
     plot_n = 0
@@ -1653,6 +1676,11 @@ def render_item(item: Item) -> str:
         cb_parts.append(
             f'<div class="cb-part cb-out" data-ot="{" ".join(ot_types)}">'
             + "".join(o.payload for o in others) + "</div>")
+        if role == "output":
+            # the badge speaks the Output-types filter's language — a
+            # defaultdict repr reads "dict", not a generic "print" (which
+            # the Print checkbox then doesn't hide)
+            badge = ot_types[0]
     out_html = "".join(cb_parts)
 
     # code: one or more labelled steps folded behind a single toggle
@@ -1722,16 +1750,20 @@ def render_item(item: Item) -> str:
     htmlsrc = ""
     if item.is_note:
         body = f'<div class="note">{md_to_html(item.caption)}</div>'
+        # a note with no real heading gets NO title row — the amber edge
+        # says "markdown" on hover instead of a generic MARKDOWN · Note
+        if item.title.strip().lower() == "note":
+            kclass += " note-untitled"
         # notes containing raw HTML render it, with a source toggle.
         # kept OUTSIDE .cardbody so a long-note clamp can't clip it.
         if _MD_HTMLBLOCK_RE.search(item.caption):
             htmlsrc = (
                 '<pre class="note-src code"><code>'
                 f'{html.escape(item.caption)}</code></pre>'
-                '<button class="htmltoggle">'
-                '<span class="chev">&#8250;</span>'
-                '<span class="ht-show">Show raw HTML</span>'
-                '<span class="ht-hide">Show rendered</span></button>')
+                '<button class="htmltoggle" '
+                'title="Toggle this note between rendered and raw HTML">'
+                '<span class="ht-show">&lt;/&gt;</span>'
+                '<span class="ht-hide">&#10005; raw</span></button>')
         caption = ""
 
     return (
@@ -2110,6 +2142,7 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 .navitem.ckmain-settings .dot,.nk.ckmain-settings .dot{background:#5b7589;}
 .navitem.ckmain-plotting .dot,.nk.ckmain-plotting .dot{background:#39a9c0;}
 .navitem.ckmain-print .dot,.nk.ckmain-print .dot{background:#cf9a4e;}
+.navitem.ckmain-comments .dot,.nk.ckmain-comments .dot{background:#5f7386;}
 /* light theme needs its own — a generic body.light .dot outranks these */
 body.light .navitem.ckmain-imports .dot,body.light .nk.ckmain-imports .dot{
   background:#a3855c;}
@@ -2123,6 +2156,7 @@ body.light .navitem.ckmain-settings .dot,body.light .nk.ckmain-settings .dot{
   background:#5b7589;}
 body.light .navitem.ckmain-plotting .dot,body.light .nk.ckmain-plotting .dot{
   background:#39a9c0;}
+body.light .navitem.ckmain-comments .dot,body.light .nk.ckmain-comments .dot{background:#5f7386;}
 body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   background:#cf9a4e;}
 
@@ -2352,6 +2386,7 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .ckmain-settings .badge{background:#5b758918;color:#41566a;}
 .ckmain-plotting .badge{background:#39a9c018;color:var(--cyan-deep);}
 .ckmain-print .badge{background:#cf9a4e1f;color:#8a6326;}
+.ckmain-comments .badge{background:#5f73861f;color:#4c5b66;}
 /* dark theme (default) needs its own — a generic dark .badge otherwise
    outranks the base rules above */
 body:not(.light) .ckmain-imports .badge{background:#8a6d4a2b;color:#c8a877;}
@@ -2361,6 +2396,7 @@ body:not(.light) .ckmain-constant .badge{background:#9a7cc02b;color:#c3a9e0;}
 body:not(.light) .ckmain-settings .badge{background:#5b75892b;color:#a7bccd;}
 body:not(.light) .ckmain-plotting .badge{background:#39a9c02b;color:#5fc3d8;}
 body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
+body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 .cardtitle{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;
   flex:1;min-width:0;}
 /* titles that merely echo the first code line label the item in the
@@ -2410,23 +2446,46 @@ body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
   cursor:pointer;}
 .mdmore:hover{border-color:var(--cyan);color:var(--ink);}
 
-/* notes with raw HTML: rendered by default, source behind a toggle */
+/* notes with raw HTML: rendered by default, the source behind a tiny
+   </> button floating top-right (visible on hover) */
 .note-src{display:none;margin:9px 0 0;}
 .card.showhtml .cardbody>.note{display:none;}
 .card.showhtml .note-src{display:block;}
-.htmltoggle{font-family:var(--mono);font-size:11px;
-  letter-spacing:.05em;color:var(--ink-3);background:none;border:none;
-  cursor:pointer;padding:2px 6px;margin-top:9px;display:inline-flex;
-  align-items:center;gap:7px;border-radius:5px;transition:color .15s;}
-.htmltoggle:hover{color:var(--cyan-deep);}
-.htmltoggle .chev{display:inline-block;transition:transform .2s;
-  font-size:14px;}
+.htmltoggle{position:absolute;top:8px;right:64px;z-index:2;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  color:var(--ink-3);background:none;border:1px solid var(--line);
+  cursor:pointer;padding:2px 7px;border-radius:5px;opacity:0;
+  transition:opacity .15s,color .15s;}
+.card:hover .htmltoggle,.htmltoggle:focus,
+.card.showhtml .htmltoggle{opacity:.8;}
+.htmltoggle:hover{opacity:1;color:var(--cyan-deep);
+  border-color:var(--cyan);}
 .htmltoggle .ht-hide{display:none;}
-.card.showhtml .htmltoggle .chev{transform:rotate(90deg);}
 .card.showhtml .htmltoggle .ht-show{display:none;}
 .card.showhtml .htmltoggle .ht-hide{display:inline;}
 .an-cell .htmltoggle,.an-cell .note-src,
 .spane .htmltoggle,.spane .note-src{display:none;}
+/* markdown notes: minimal chrome. No MARKDOWN badge; a note with no real
+   heading drops its "Note" title row too — controls float top-right, and
+   hovering the card pops a small amber "markdown" label by its edge */
+.card[data-note="1"]{position:relative;}
+.card[data-note="1"] .badge{display:none;}
+.card.note-untitled>.cardhead{position:absolute;top:6px;right:8px;
+  z-index:2;margin:0;gap:6px;}
+.card.note-untitled .cardtitle{display:none;}
+.card.note-untitled::after{content:"markdown";position:absolute;
+  left:14px;top:8px;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
+  opacity:0;transition:opacity .15s;pointer-events:none;}
+.card.note-untitled:hover::after{opacity:.85;}
+/* tables inside notes render as real tables, not floating rows */
+.note table{border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+.note th,.note td{border:1px solid #00000022;padding:5px 11px;
+  text-align:left;}
+.note th{background:#00000008;font-weight:600;}
+body:not(.light) .note th,body:not(.light) .note td{
+  border-color:#ffffff26;}
+body:not(.light) .note th{background:#ffffff0d;}
 
 pre.result,pre.stream,pre.error{font-family:var(--mono);font-size:12px;
   background:var(--paper-2);border:1px solid var(--paper-3);
@@ -3167,6 +3226,7 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-dot.ckmain-settings{background:#5b7589;}
 .ckf-dot.ckmain-plotting{background:#39a9c0;}
 .ckf-dot.ckmain-print{background:#cf9a4e;}
+.ckf-dot.ckmain-comments{background:#5f7386;}
 .ckf-dot.ot-sw-print{background:#5f7d8c;}
 .ckf-dot.ot-sw-dataset{background:#4d90c0;}
 .ckf-dot.ot-sw-result{background:#9a7cc0;}
@@ -4012,7 +4072,7 @@ _JS = r"""
   var CODE_LABEL={visible:'Visible',collapsed:'Collapsed',hidden:'Hidden'};
   var ckHidden={};   /* advanced: code subtypes the user has hidden */
   var CK_TYPES=['imports','function','data','settings',
-    'plotting','print','constant','code'];
+    'plotting','print','comments','constant','code'];
   function setTvBtn(id,label,state){
     var b=$('#'+id); if(!b) return;
     b.innerHTML='<span class="tdot"></span>'+label+': '+CODE_LABEL[state];
@@ -14693,6 +14753,39 @@ def _self_test() -> None:
     # commit message + date), opening the notebook as it was at any commit
     assert "git commits" in out and "vers-sub" in out
     assert "commit:cm.id" in out and "'git:'+cm.id" in out
+    # classifier honesty: imports + real work reads "imports · code", a
+    # fully commented-out cell is its own filterable "comments" kind
+    assert _classify_code(
+        "import dask\n\ngw = dask.Gateway()\ngw.scale(20)") \
+        == ["imports", "code"]
+    assert _classify_code("import x\nimport y") == ["imports"]
+    assert _classify_code("# only\n# comments") == ["comments"]
+    assert _classify_code("") == ["code"]
+    assert "'comments','constant','code']" in out
+    assert ".ckf-dot.ckmain-comments" in out
+    # authored headings never vanish: a `#` followed straight by another
+    # heading keeps BOTH sections (header-only sections render fine)
+    hdoc = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "# Trends"},
+        {"cell_type": "markdown", "source": "# Functions"},
+        {"cell_type": "code", "source": "x = 1", "outputs": []}]})
+    assert [s.title for s in hdoc.sections] == ["Trends", "Functions"]
+    # a defaultdict repr is a DICT for the Output-types filter, and the
+    # card badge speaks the same language (so unchecking it works)
+    assert _repr_kind("defaultdict(dict, {'a': 1})") == "dict"
+    odoc = parse_notebook({"cells": [{"cell_type": "code", "source": "d",
+        "outputs": [{"output_type": "execute_result", "data":
+                     {"text/plain": "defaultdict(dict, {'a': 1})"}}]}]})
+    o_html = render_item(odoc.sections[0].items[0])
+    assert 'data-ot="dict"' in o_html and '>dict</span>' in o_html
+    # markdown notes: minimal chrome — no badge, untitled notes drop the
+    # "Note" row, hover says markdown, raw-HTML toggle floats minimal,
+    # and note tables render as real tables
+    assert "note-untitled" in out
+    assert 'content:"markdown"' in out
+    assert ".note table{border-collapse:collapse" in out
+    assert ".htmltoggle{position:absolute" in out
+    assert '.card[data-note="1"] .badge{display:none;}' in out
     import tempfile
     with tempfile.TemporaryDirectory() as vtd:
         vf = Path(vtd) / "exp.ipynb"

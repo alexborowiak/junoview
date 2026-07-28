@@ -118,6 +118,7 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 .navitem.ckmain-settings .dot,.nk.ckmain-settings .dot{background:#5b7589;}
 .navitem.ckmain-plotting .dot,.nk.ckmain-plotting .dot{background:#39a9c0;}
 .navitem.ckmain-print .dot,.nk.ckmain-print .dot{background:#cf9a4e;}
+.navitem.ckmain-comments .dot,.nk.ckmain-comments .dot{background:#5f7386;}
 /* light theme needs its own — a generic body.light .dot outranks these */
 body.light .navitem.ckmain-imports .dot,body.light .nk.ckmain-imports .dot{
   background:#a3855c;}
@@ -131,6 +132,7 @@ body.light .navitem.ckmain-settings .dot,body.light .nk.ckmain-settings .dot{
   background:#5b7589;}
 body.light .navitem.ckmain-plotting .dot,body.light .nk.ckmain-plotting .dot{
   background:#39a9c0;}
+body.light .navitem.ckmain-comments .dot,body.light .nk.ckmain-comments .dot{background:#5f7386;}
 body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   background:#cf9a4e;}
 
@@ -360,6 +362,7 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .ckmain-settings .badge{background:#5b758918;color:#41566a;}
 .ckmain-plotting .badge{background:#39a9c018;color:var(--cyan-deep);}
 .ckmain-print .badge{background:#cf9a4e1f;color:#8a6326;}
+.ckmain-comments .badge{background:#5f73861f;color:#4c5b66;}
 /* dark theme (default) needs its own — a generic dark .badge otherwise
    outranks the base rules above */
 body:not(.light) .ckmain-imports .badge{background:#8a6d4a2b;color:#c8a877;}
@@ -369,6 +372,7 @@ body:not(.light) .ckmain-constant .badge{background:#9a7cc02b;color:#c3a9e0;}
 body:not(.light) .ckmain-settings .badge{background:#5b75892b;color:#a7bccd;}
 body:not(.light) .ckmain-plotting .badge{background:#39a9c02b;color:#5fc3d8;}
 body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
+body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 .cardtitle{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;
   flex:1;min-width:0;}
 /* titles that merely echo the first code line label the item in the
@@ -418,23 +422,46 @@ body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
   cursor:pointer;}
 .mdmore:hover{border-color:var(--cyan);color:var(--ink);}
 
-/* notes with raw HTML: rendered by default, source behind a toggle */
+/* notes with raw HTML: rendered by default, the source behind a tiny
+   </> button floating top-right (visible on hover) */
 .note-src{display:none;margin:9px 0 0;}
 .card.showhtml .cardbody>.note{display:none;}
 .card.showhtml .note-src{display:block;}
-.htmltoggle{font-family:var(--mono);font-size:11px;
-  letter-spacing:.05em;color:var(--ink-3);background:none;border:none;
-  cursor:pointer;padding:2px 6px;margin-top:9px;display:inline-flex;
-  align-items:center;gap:7px;border-radius:5px;transition:color .15s;}
-.htmltoggle:hover{color:var(--cyan-deep);}
-.htmltoggle .chev{display:inline-block;transition:transform .2s;
-  font-size:14px;}
+.htmltoggle{position:absolute;top:8px;right:64px;z-index:2;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  color:var(--ink-3);background:none;border:1px solid var(--line);
+  cursor:pointer;padding:2px 7px;border-radius:5px;opacity:0;
+  transition:opacity .15s,color .15s;}
+.card:hover .htmltoggle,.htmltoggle:focus,
+.card.showhtml .htmltoggle{opacity:.8;}
+.htmltoggle:hover{opacity:1;color:var(--cyan-deep);
+  border-color:var(--cyan);}
 .htmltoggle .ht-hide{display:none;}
-.card.showhtml .htmltoggle .chev{transform:rotate(90deg);}
 .card.showhtml .htmltoggle .ht-show{display:none;}
 .card.showhtml .htmltoggle .ht-hide{display:inline;}
 .an-cell .htmltoggle,.an-cell .note-src,
 .spane .htmltoggle,.spane .note-src{display:none;}
+/* markdown notes: minimal chrome. No MARKDOWN badge; a note with no real
+   heading drops its "Note" title row too — controls float top-right, and
+   hovering the card pops a small amber "markdown" label by its edge */
+.card[data-note="1"]{position:relative;}
+.card[data-note="1"] .badge{display:none;}
+.card.note-untitled>.cardhead{position:absolute;top:6px;right:8px;
+  z-index:2;margin:0;gap:6px;}
+.card.note-untitled .cardtitle{display:none;}
+.card.note-untitled::after{content:"markdown";position:absolute;
+  left:14px;top:8px;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
+  opacity:0;transition:opacity .15s;pointer-events:none;}
+.card.note-untitled:hover::after{opacity:.85;}
+/* tables inside notes render as real tables, not floating rows */
+.note table{border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+.note th,.note td{border:1px solid #00000022;padding:5px 11px;
+  text-align:left;}
+.note th{background:#00000008;font-weight:600;}
+body:not(.light) .note th,body:not(.light) .note td{
+  border-color:#ffffff26;}
+body:not(.light) .note th{background:#ffffff0d;}
 
 pre.result,pre.stream,pre.error{font-family:var(--mono);font-size:12px;
   background:var(--paper-2);border:1px solid var(--paper-3);
@@ -997,6 +1024,7 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-dot.ckmain-settings{background:#5b7589;}
 .ckf-dot.ckmain-plotting{background:#39a9c0;}
 .ckf-dot.ckmain-print{background:#cf9a4e;}
+.ckf-dot.ckmain-comments{background:#5f7386;}
 .ckf-dot.ot-sw-print{background:#5f7d8c;}
 .ckf-dot.ot-sw-dataset{background:#4d90c0;}
 .ckf-dot.ot-sw-result{background:#9a7cc0;}
@@ -2845,7 +2873,7 @@ enso_pattern <span class="op">=</span> <span class="op">(</span>np<span class="o
 
 <span class="co"># episodic blocking south of Australia (~50S, 150E)</span>
 block_days <span class="op">=</span> rng<span class="op">.</span>random<span class="op">(</span>time<span class="op">.</span>size<span class="op">)</span> <span class="op">&lt;</span> <span class="nu">0.09</span>
-blob <span class="op">=</span> np<span class="op">.</span>exp<span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="op">(</span><span class="op">(</span>lat<span class="op">[</span><span class="op">:</span><span class="op">,</span> <span class="kw">None</span><span class="op">]</span><span class="op">+</span><span class="nu">50</span><span class="op">)</span><span class="op">/</span><span class="nu">9</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span> <span class="op">-</span> <span class="op">(</span><span class="op">(</span><span class="op">(</span>lon<span class="op">[</span><span class="kw">None</span><span class="op">,</span> <span class="op">:</span><span class="op">]</span><span class="op">-</span><span class="nu">150</span><span class="op">)</span><span class="op">/</span><span class="nu">16</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="nu">130</span></code></pre></div></div></div></div></article><article class="card k-dataset ckmain-data ck-data" id="card-z500" data-kind="dataset" data-role="output" data-node="z500" data-ck="data" data-note="0" data-anchor="z500" tabindex="-1"><header class="cardhead"><span class="badge">data</span><h3 class="cardtitle">Daily Z500 field, Southern Hemisphere (synthetic)</h3><span class="nodeid">z500</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+blob <span class="op">=</span> np<span class="op">.</span>exp<span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="op">(</span><span class="op">(</span>lat<span class="op">[</span><span class="op">:</span><span class="op">,</span> <span class="kw">None</span><span class="op">]</span><span class="op">+</span><span class="nu">50</span><span class="op">)</span><span class="op">/</span><span class="nu">9</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span> <span class="op">-</span> <span class="op">(</span><span class="op">(</span><span class="op">(</span>lon<span class="op">[</span><span class="kw">None</span><span class="op">,</span> <span class="op">:</span><span class="op">]</span><span class="op">-</span><span class="nu">150</span><span class="op">)</span><span class="op">/</span><span class="nu">16</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="nu">130</span></code></pre></div></div></div></div></article><article class="card k-dataset ckmain-data ck-data" id="card-z500" data-kind="dataset" data-role="output" data-node="z500" data-ck="data" data-note="0" data-anchor="z500" tabindex="-1"><header class="cardhead"><span class="badge">dataset</span><h3 class="cardtitle">Daily Z500 field, Southern Hemisphere (synthetic)</h3><span class="nodeid">z500</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
@@ -3477,7 +3505,7 @@ memory (z)  : 79 MB
       <span class="st">f&quot;</span><span class="st">(</span><span class="op">{</span>time<span class="op">.</span>size<span class="op">:</span><span class="st">,</span><span class="op">}</span><span class="st"> days)</span><span class="st">&quot;</span><span class="op">)</span>
 <span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">grid        : </span><span class="op">{</span>lat<span class="op">.</span>size<span class="op">}</span><span class="st"> lat x </span><span class="op">{</span>lon<span class="op">.</span>size<span class="op">}</span><span class="st"> lon  (2.5 deg)</span><span class="st">&quot;</span><span class="op">)</span>
 <span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">domain      : </span><span class="op">{</span>lat<span class="op">.</span><span class="bn">min</span><span class="op">(</span><span class="op">)</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> to </span><span class="op">{</span>lat<span class="op">.</span><span class="bn">max</span><span class="op">(</span><span class="op">)</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> deg lat, full longitude</span><span class="st">&quot;</span><span class="op">)</span>
-<span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">memory (z)  : </span><span class="op">{</span>ds<span class="op">.</span>z500<span class="op">.</span>nbytes<span class="op">/</span><span class="nu">1e6</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> MB</span><span class="st">&quot;</span><span class="op">)</span></code></pre></div></div></div></div></article></section><section class="section" id="sec-transforms" data-sec="transforms"><div class="sectionhead sectionhead-l2"><button class="sec-chev" data-sec="transforms" aria-expanded="true" title="Collapse / expand this section">&#9662;</button><div class="sectionhead-txt"><span class="eyebrow">section</span><h2>Transforms</h2></div><button class="sec-eye" data-sec="transforms" title="Hide this whole section (restore it from the sidebar)" aria-label="Hide this whole section">&#128065;</button></div><article class="card k-note" id="card-note-3" data-kind="note" data-role="markdown" data-node="" data-note="1" data-anchor="cell:4f6551c3" tabindex="-1"><header class="cardhead"><span class="badge">markdown</span><h3 class="cardtitle">Transforms</h3><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="note"><p>Anomalies are defined against a day-of-year climatology,</p><p>$$z&#x27;(x,t) = z(x,t) - \bar{z}_{d(t)}(x), \qquad \bar{z}_d(x) = \frac{1}{N_y} \sum_{y=1}^{N_y} z(x, t_{y,d})$$</p><p>so the seasonal cycle drops out and what remains is the circulation<br>variability the diagnostics are after. The <code>groupby(&#x27;time.dayofyear&#x27;)</code><br>idiom computes $\bar{z}_d$ and subtracts it in one pass.</p></div></div></article><article class="card k-transform" id="card-clim" data-kind="transform" data-role="output" data-node="clim" data-ck="code" data-note="0" data-anchor="clim" tabindex="-1"><header class="cardhead"><span class="badge">transform</span><h3 class="cardtitle">Day-of-year climatology</h3><span class="nodeid">clim</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"></div><div class="prov"><span class="prov-l">derives from</span><a class="depchip" href="#" data-dep="z500">z500</a></div><div class="codewrap bare" data-open='1'><button class="codetoggle" aria-expanded="true"><span class="chev">›</span><span class="ct-show">Show code</span><span class="ct-hide">Hide code</span></button><div class="codebody"><div class="codeinner"><div class="codestep"><pre class="code"><code>clim <span class="op">=</span> ds<span class="op">.</span>z500<span class="op">.</span>groupby<span class="op">(</span><span class="st">&#x27;time.dayofyear&#x27;</span><span class="op">)</span><span class="op">.</span>mean<span class="op">(</span><span class="st">&#x27;time&#x27;</span><span class="op">)</span></code></pre></div></div></div></div></article><article class="card k-transform" id="card-anom" data-kind="transform" data-role="output" data-node="anom" data-ck="code" data-note="0" data-anchor="anom" tabindex="-1"><header class="cardhead"><span class="badge">transform</span><h3 class="cardtitle">Seasonal-cycle removal -&gt; daily anomalies</h3><span class="nodeid">anom</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">memory (z)  : </span><span class="op">{</span>ds<span class="op">.</span>z500<span class="op">.</span>nbytes<span class="op">/</span><span class="nu">1e6</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> MB</span><span class="st">&quot;</span><span class="op">)</span></code></pre></div></div></div></div></article></section><section class="section" id="sec-transforms" data-sec="transforms"><div class="sectionhead sectionhead-l2"><button class="sec-chev" data-sec="transforms" aria-expanded="true" title="Collapse / expand this section">&#9662;</button><div class="sectionhead-txt"><span class="eyebrow">section</span><h2>Transforms</h2></div><button class="sec-eye" data-sec="transforms" title="Hide this whole section (restore it from the sidebar)" aria-label="Hide this whole section">&#128065;</button></div><article class="card k-note" id="card-note-3" data-kind="note" data-role="markdown" data-node="" data-note="1" data-anchor="cell:4f6551c3" tabindex="-1"><header class="cardhead"><span class="badge">markdown</span><h3 class="cardtitle">Transforms</h3><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="note"><p>Anomalies are defined against a day-of-year climatology,</p><p>$$z&#x27;(x,t) = z(x,t) - \bar{z}_{d(t)}(x), \qquad \bar{z}_d(x) = \frac{1}{N_y} \sum_{y=1}^{N_y} z(x, t_{y,d})$$</p><p>so the seasonal cycle drops out and what remains is the circulation<br>variability the diagnostics are after. The <code>groupby(&#x27;time.dayofyear&#x27;)</code><br>idiom computes $\bar{z}_d$ and subtracts it in one pass.</p></div></div></article><article class="card k-transform" id="card-clim" data-kind="transform" data-role="output" data-node="clim" data-ck="code" data-note="0" data-anchor="clim" tabindex="-1"><header class="cardhead"><span class="badge">transform</span><h3 class="cardtitle">Day-of-year climatology</h3><span class="nodeid">clim</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"></div><div class="prov"><span class="prov-l">derives from</span><a class="depchip" href="#" data-dep="z500">z500</a></div><div class="codewrap bare" data-open='1'><button class="codetoggle" aria-expanded="true"><span class="chev">›</span><span class="ct-show">Show code</span><span class="ct-hide">Hide code</span></button><div class="codebody"><div class="codeinner"><div class="codestep"><pre class="code"><code>clim <span class="op">=</span> ds<span class="op">.</span>z500<span class="op">.</span>groupby<span class="op">(</span><span class="st">&#x27;time.dayofyear&#x27;</span><span class="op">)</span><span class="op">.</span>mean<span class="op">(</span><span class="st">&#x27;time&#x27;</span><span class="op">)</span></code></pre></div></div></div></div></article><article class="card k-transform" id="card-anom" data-kind="transform" data-role="output" data-node="anom" data-ck="code" data-note="0" data-anchor="anom" tabindex="-1"><header class="cardhead"><span class="badge">dataset</span><h3 class="cardtitle">Seasonal-cycle removal -&gt; daily anomalies</h3><span class="nodeid">anom</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
@@ -6711,7 +6739,7 @@ through Ko-fi. Thank you.</p>
   var CODE_LABEL={visible:'Visible',collapsed:'Collapsed',hidden:'Hidden'};
   var ckHidden={};   /* advanced: code subtypes the user has hidden */
   var CK_TYPES=['imports','function','data','settings',
-    'plotting','print','constant','code'];
+    'plotting','print','comments','constant','code'];
   function setTvBtn(id,label,state){
     var b=$('#'+id); if(!b) return;
     b.innerHTML='<span class="tdot"></span>'+label+': '+CODE_LABEL[state];
