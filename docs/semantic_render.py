@@ -87,6 +87,7 @@ from __future__ import annotations
 import argparse
 import ast
 import base64
+import hashlib
 import html
 import html.parser
 import http.server
@@ -3188,6 +3189,22 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-dot.ot-sw-module{background:#8a6d4a;}
 .ckf-dot.ot-sw-object{background:#8a93a0;}
 .ckf-empty{color:#7e93a4;font-size:11px;padding:8px;}
+/* the tab's ⌚ Versions menu */
+.vers-menu{min-width:232px;max-width:330px;
+  max-height:min(70vh,540px);overflow-y:auto;}
+.vers-row{display:block;width:100%;text-align:left;background:none;
+  border:none;color:#cdd9e3;font-family:var(--mono);font-size:11.5px;
+  padding:6px 8px;border-radius:5px;cursor:pointer;}
+.vers-row .vers-l{display:block;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.vers-row .vers-sub{display:block;font-size:9.5px;color:#7e93a4;
+  margin-top:1px;}
+.vers-row:hover{background:#ffffff0c;}
+.vers-row.on{color:#7fd0e0;}
+.vers-row.on .vers-l{color:#7fd0e0;}
+body.light .vers-row{color:var(--ink-2);}
+body.light .vers-row:hover{background:#00000008;}
+.tab-vermark{color:#f0a848;margin-right:4px;flex:none;font-size:12px;}
 #ck-filter-btn.on,#ot-filter-btn.on,#pt-filter-btn.on{
   border-color:var(--cyan);color:#fff;background:#39a9c022;}
 /* an output hidden by the advanced Output-types filter */
@@ -3702,6 +3719,95 @@ _JS = r"""
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
   }
+  /* ---- the tab's ⌚ Versions menu: automatic snapshots per open/reload */
+  var versMenu=null;
+  function closeVersMenu(){if(versMenu){versMenu.remove();versMenu=null;}}
+  document.addEventListener('click',function(e){
+    if(versMenu&&!versMenu.contains(e.target)) closeVersMenu();});
+  function showVersMenu(btn,stem){
+    /* the ⌚ button TOGGLES its own menu (no reopen flicker) */
+    if(versMenu&&versMenu.dataset.stem===stem){closeVersMenu();return;}
+    closeVersMenu();
+    var sh=APP.shells[stem]; if(!sh||!sh.path) return;
+    var m=document.createElement('div');
+    m.className='ckfilter-menu vers-menu';
+    m.dataset.stem=stem;
+    var r=btn.getBoundingClientRect();
+    m.style.top=(r.bottom+6)+'px';
+    m.style.left=Math.max(6,
+      Math.min(r.left,window.innerWidth-340))+'px';
+    m.innerHTML='<div class="ckf-h">notebook versions</div>'
+      +'<div class="ckf-empty vers-load">loading…</div>';
+    document.body.appendChild(m);versMenu=m;
+    api('/api/versions',{path:sh.path}).then(function(j){
+      if(versMenu!==m) return;
+      var ld=m.querySelector('.vers-load'); if(ld) ld.remove();
+      function row(label,cur,fn,sub){
+        var b=document.createElement('button');
+        b.className='vers-row'+(cur?' on':'');b.type='button';
+        var l1=document.createElement('span');l1.className='vers-l';
+        l1.textContent=label;b.appendChild(l1);
+        if(sub){
+          var l2=document.createElement('span');l2.className='vers-sub';
+          l2.textContent=sub;b.appendChild(l2);
+        }
+        b.title=label+(sub?'\n'+sub:'');
+        b.addEventListener('click',function(e2){
+          e2.stopPropagation();closeVersMenu();fn();});
+        m.appendChild(b);
+      }
+      function openVer(req,toastMsg){
+        api('/api/openversion',req).then(function(o){
+          mountShellHTML(o.shell,o.path);
+          var s2=APP.shells[o.stem];
+          if(s2){
+            s2.version=o.version;
+            /* a version view is READ-ONLY: no add-note pencils (they
+               would write into the LIVE file from an old anchor map) */
+            $$('.card-addnote',s2.el).forEach(function(n){n.remove();});
+            renderTabs();
+          }
+          docToast(toastMsg+' — ↻ or the ⌚ menu returns to live');
+        }).catch(function(err){
+          alert('Open failed: '+err.message);});
+      }
+      row('● Live — the file on disk',!sh.version,function(){
+        openPath(sh.path);});
+      /* the notebook's GIT history: hash + message per commit */
+      var commits=j.commits||[];
+      if(commits.length){
+        var h1=document.createElement('div');h1.className='ckf-h';
+        h1.textContent='git commits';m.appendChild(h1);
+        commits.forEach(function(cm){
+          row(cm.id+' · '+cm.msg,sh.version==='git:'+cm.id,function(){
+            openVer({path:sh.path,commit:cm.id},
+              'Viewing commit '+cm.id+' “'+cm.msg+'”');
+          },cm.date);
+        });
+      }
+      if((j.versions||[]).length){
+        var h2=document.createElement('div');h2.className='ckf-h';
+        h2.textContent='auto snapshots';m.appendChild(h2);
+      }
+      (j.versions||[]).forEach(function(v){
+        row(v.label,sh.version===v.id,function(){
+          openVer({path:sh.path,id:v.id},
+            'Viewing the snapshot from '+v.label);
+        });
+      });
+      if(!(j.versions||[]).length&&!commits.length){
+        var d=document.createElement('div');d.className='ckf-empty';
+        d.textContent='No history yet — a snapshot is kept every time '
+          +'this notebook is opened or refreshed, and git commits show '
+          +'here when the notebook is in a repository.';
+        m.appendChild(d);
+      }
+    }).catch(function(err){
+      if(versMenu===m)
+        m.innerHTML='<div class="ckf-empty">'
+          +String((err&&err.message)||err)+'</div>';
+    });
+  }
   function makeTab(stem){
     var sh=APP.shells[stem]; if(!sh) return null;
     var t=document.createElement('div');
@@ -3731,6 +3837,13 @@ _JS = r"""
         closeNotebook(stem);});
       t.appendChild(xc);
     } else if(APP.mode==='app'||APP.mode==='web'){
+      if(sh.version){
+        var vm=document.createElement('span');vm.className='tab-vermark';
+        vm.textContent='⌚';
+        vm.title='Viewing an earlier version — ↻ or the ⌚ menu '
+          +'returns to live';
+        t.insertBefore(vm,lbl);
+      }
       if(sh.path){
         var r=document.createElement('button');r.className='tab-b';
         r.innerHTML='&#8635;';
@@ -3739,6 +3852,16 @@ _JS = r"""
         r.addEventListener('click',function(e){e.stopPropagation();
           openPath(sh.path);});
         t.appendChild(r);
+        /* automatic snapshots (kept per open/reload): reopen any of them */
+        if(APP.mode==='app'&&!/^https?:/.test(sh.path)){
+          var vb=document.createElement('button');
+          vb.className='tab-b tab-verbtn';
+          vb.innerHTML='&#8986;';
+          vb.title='Versions — view an earlier snapshot of this notebook';
+          vb.addEventListener('click',function(e){e.stopPropagation();
+            showVersMenu(vb,stem);});
+          t.appendChild(vb);
+        }
       }
       var x=document.createElement('button');x.className='tab-b';
       x.innerHTML='&#10005;';x.title='Close tab';
@@ -6431,6 +6554,10 @@ _DECK_HTML = """
               <button class="dbtn etm" id="fmt-locate"
                 title="Jump to this card in its notebook &mdash; see where
  the plot came from">&#8982; Locate in notebook</button>
+              <button class="dbtn etm" id="fmt-revert"
+                title="Swap this frame between the LIVE figure and the one
+ from before the last notebook refresh (rescue a figure a re-run
+ broke without giving up the others)">&#10226; Previous figure</button>
             </span>
             <span class="rbn-lab">Object</span>
           </span>
@@ -7347,6 +7474,14 @@ select#fmt-font[hidden]{display:none;}
   .print-page{page-break-after:always;break-after:page;}
   .print-page:last-child{page-break-after:auto;break-after:auto;}
 }
+
+/* a frame reverted to its pre-refresh figure */
+.deck.editing .an-cell.an-frozen{outline:1.5px dashed #f0a848;
+  outline-offset:2px;}
+.an-frozenchip{position:absolute;top:5px;left:5px;z-index:3;
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  background:#f0a84822;border:1px solid #f0a84866;color:#f0c078;
+  border-radius:5px;padding:2px 6px;pointer-events:none;}
 
 /* snap-to-align guide lines (drawn only mid-drag) */
 .snapline{position:absolute;z-index:45;pointer-events:none;}
@@ -8371,6 +8506,11 @@ _DECK_JS = r"""
     $$('[id]',node).forEach(function(n){n.removeAttribute('id');});
     return node;
   }
+  /* per-frame figure history: every successful live clone is remembered;
+     on a notebook reload those become the "previous figure" a frame can
+     revert to (session-only — snapshots never enter the saved deck) */
+  var frameSnaps={},frameSnapsPrev={};
+  var frozenFrames=new WeakMap();   /* annot -> snapshot html it shows */
   function cloneBody(ref){
     var c=cardEl(ref); if(!c) return null;
     var b=$('.cardbody',c); if(!b) return null;
@@ -8383,6 +8523,8 @@ _DECK_JS = r"""
           .forEach(function(cl){n.classList.remove(cl);});
       });
     $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
+    var it=resolveRef(ref);
+    if(it) frameSnaps[it.ns]=b.outerHTML;
     return b;
   }
   function cloneCode(ref){
@@ -8423,12 +8565,7 @@ _DECK_JS = r"""
     if(a.part&&a.part!=='auto'&&hasFacet(f,a.part)) return a.part;
     return autoPart(f);
   }
-  function framePart(ref,part){
-    var f=cellFacets(ref);
-    if(!part||part==='auto'||!hasFacet(f,part)) part=autoPart(f);
-    if(part==='code') return cloneCode(ref)||cloneBody(ref);
-    var b=cloneBody(ref);
-    if(!b) return cloneCode(ref);
+  function applyPartFilter(b,part){
     if(part==='figure'){
       /* the figure part is JUST the figure — drop outputs AND any markdown
          note / caption that rides along in the card body (a .plotframe is
@@ -8441,6 +8578,26 @@ _DECK_JS = r"""
         if(n.parentNode) n.parentNode.removeChild(n);});
     }
     return b;
+  }
+  function framePart(ref,part){
+    var f=cellFacets(ref);
+    if(!part||part==='auto'||!hasFacet(f,part)) part=autoPart(f);
+    if(part==='code') return cloneCode(ref)||cloneBody(ref);
+    var b=cloneBody(ref);
+    if(!b) return cloneCode(ref);
+    return applyPartFilter(b,part);
+  }
+  /* render a frame from a REMEMBERED body (the pre-refresh figure) */
+  function framePartFromSnap(html,part){
+    var t=document.createElement('template');
+    t.innerHTML=html;
+    var b=t.content.firstElementChild;
+    if(!b) return null;
+    b=b.cloneNode(true);
+    var hasFig=!!b.querySelector('.figframe,.figpager,.plotframe');
+    if(!part||part==='auto'||part==='code')
+      part=hasFig?'figure':'output';   /* snapshots hold no code part */
+    return applyPartFilter(b,part);
   }
   function facetList(ref){
     var f=cellFacets(ref),out=[];
@@ -9646,12 +9803,26 @@ _DECK_JS = r"""
             if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
             c.appendChild(ch);
           }
-          var b=framePart(it.ns,a.part);
+          var fro=frozenFrames.get(a);
+          var b=fro?framePartFromSnap(fro,a.part):framePart(it.ns,a.part);
+          if(fro&&!b) b=framePart(it.ns,a.part);
           if(b){
             if(a.ts) b.style.zoom=a.ts;
             applyCrop(b,a);
             if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(b);
+          }
+          if(fro){
+            c.classList.add('an-frozen');
+            if(editing){
+              var fz=document.createElement('span');
+              fz.className='an-frozenchip';
+              fz.textContent='⟲ previous';
+              fz.title='This frame shows the figure from BEFORE the last '
+                +'notebook refresh — select it and press “Live figure” '
+                +'to catch up';
+              c.appendChild(fz);
+            }
           }
           if(pt0==='figure'&&!a.crop){
             c.classList.add('an-figonly');
@@ -9889,6 +10060,15 @@ _DECK_JS = r"""
     });
     show('#fmt-replace',kind==='cell');
     show('#fmt-locate',kind==='cell'&&!!a.ref);
+    var frozen=(kind==='cell')&&frozenFrames.has(a);
+    var hasPrev=(kind==='cell')&&!!a.ref
+      &&!!frameSnapsPrev[normRef(a.ref)];
+    show('#fmt-revert',frozen||hasPrev);
+    if(frozen||hasPrev){
+      var rvb=$('#fmt-revert');
+      if(rvb) rvb.innerHTML=frozen
+        ?'&#8635; Live figure':'&#10226; Previous figure';
+    }
     show('#fmt-cropwrap',kind==='image'||kind==='cell');
     show('#fmt-animwrap',isNum);
     /* the code/figure/output part-picker (+ split) — moved off the frame
@@ -10698,6 +10878,26 @@ _DECK_JS = r"""
   var repBtn=$('#fmt-replace');
   if(repBtn) repBtn.addEventListener('click',function(){
     if(typeof selAnnot==='number') startPick(selAnnot);
+  });
+  /* Previous figure <-> Live figure: rescue ONE frame after a notebook
+     re-run broke its plot, without giving up the other frames' updates */
+  var revBtn=$('#fmt-revert');
+  if(revBtn) revBtn.addEventListener('click',function(){
+    var s=pres.slides[cur]; if(!s) return;
+    var a=annotByIdx(s,selAnnot);
+    if(!a||a.k!=='cell'||!a.ref) return;
+    if(frozenFrames.has(a)){
+      frozenFrames.delete(a);
+      toast('Back to the live figure');
+    } else {
+      var prev=frameSnapsPrev[normRef(a.ref)];
+      if(!prev){toast('No pre-refresh figure for this frame yet');return;}
+      frozenFrames.set(a,prev);
+      toast('Showing the figure from before the refresh');
+    }
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);paintSel(l);}
+    showFmt();
   });
   /* Locate in notebook: leave the deck and land on the card this frame
      was placed from — its home in the notebook, scrolled to + flashed */
@@ -12457,6 +12657,15 @@ _DECK_JS = r"""
 
   /* ---------- tabs opened / closed while the page lives ---------- */
   document.addEventListener('sem:shell',function(e){
+    if(e.detail.replaced){
+      /* the notebook was reloaded: what every frame showed until now
+         becomes the "previous figure" it can revert to */
+      var pfx=e.detail.stem+'::';
+      Object.keys(frameSnaps).forEach(function(k){
+        if(k.indexOf(pfx)===0){
+          frameSnapsPrev[k]=frameSnaps[k];delete frameSnaps[k];}
+      });
+    }
     registerShell(e.detail.stem,e.detail.data||{});
     if(source==='auto'&&(!pres.slides||!pres.slides.length))
       pres=defaultPres();
@@ -13168,6 +13377,31 @@ def insert_note_cell(nb: dict, after_anchor: str,
     return nb, idx, new_id
 
 
+def _versions_dir(f: Path) -> Path:
+    return f.parent / ".junoview_versions" / f.stem
+
+
+def _store_version(f: Path, cap: int = 25) -> None:
+    """Automatic notebook snapshots: every open / reload keeps a copy
+    (deduped by content, capped) so earlier runs stay reachable from the
+    tab's Versions menu. Never allowed to block an open."""
+    try:
+        data = f.read_bytes()
+        h = hashlib.sha1(data).hexdigest()[:10]
+        d = _versions_dir(f)
+        d.mkdir(parents=True, exist_ok=True)
+        vers = sorted(d.glob("*.ipynb"))
+        if vers and vers[-1].stem.rsplit("_", 1)[-1] == h:
+            return                      # unchanged since the last snapshot
+        stamp = time.strftime("%Y%m%d-%H%M%S")
+        (d / f"{stamp}_{h}.ipynb").write_bytes(data)
+        vers = sorted(d.glob("*.ipynb"))
+        for old in vers[:-cap]:
+            old.unlink()
+    except Exception:
+        pass
+
+
 def _github_web_url(remote: str) -> str:
     """git remote -> the repo's web URL (GitHub only; '' otherwise)."""
     m = re.match(r"(?:git@github\.com:|https?://github\.com/)"
@@ -13176,8 +13410,12 @@ def _github_web_url(remote: str) -> str:
 
 
 def _git_run(f: Path, *args) -> "subprocess.CompletedProcess":
+    # explicit utf-8: git speaks utf-8, but text=True alone would decode
+    # with the locale (cp1252 on Windows) and a single curly quote or
+    # emoji in a commit message would blow up the whole read
     return subprocess.run(["git", "-C", str(f.parent), *args],
-                          capture_output=True, text=True, timeout=15)
+                          capture_output=True, text=True,
+                          encoding="utf-8", errors="replace", timeout=15)
 
 
 def _git_info(f: Path) -> dict:
@@ -13192,6 +13430,60 @@ def _git_info(f: Path) -> dict:
                 "github": _github_web_url(remote)}
     except Exception:
         return {"repo": False}
+
+
+def _git_file_log(f: Path, n: int = 25) -> list:
+    """Commits touching this notebook: [{id, msg, date, path}], newest
+    first. --name-only records the file's path AT EACH COMMIT, so commits
+    from before a rename stay openable."""
+    try:
+        r = _git_run(f, "log", "--follow", "--name-only", "-n", str(n),
+                     "--format=%h%x1f%s%x1f%ad",
+                     "--date=format:%d %b %Y · %H:%M", "--", str(f))
+        if r.returncode != 0:
+            return []
+        out: list = []
+        for line in r.stdout.splitlines():
+            if "\x1f" in line:
+                parts = line.split("\x1f")
+                # a literal 0x1f in the subject shifts fields: the date is
+                # always the LAST part, the message everything between
+                out.append({"id": parts[0],
+                            "msg": "\x1f".join(parts[1:-1]),
+                            "date": parts[-1] if len(parts) > 2 else "",
+                            "path": ""})
+            elif line.strip() and out and not out[-1]["path"]:
+                out[-1]["path"] = line.strip()
+        return out
+    except Exception:
+        return []
+
+
+def _git_show_notebook(f: Path, commit: str) -> dict:
+    """The notebook's JSON as it was at COMMIT (git show hash:relpath).
+    Bytes + explicit utf-8 — text mode would decode with the locale."""
+    top = _git_run(f, "rev-parse", "--show-toplevel")
+    if top.returncode != 0:
+        raise ValueError("not in a git repository")
+    rel = f.resolve().relative_to(
+        Path(top.stdout.strip()).resolve()).as_posix()
+    # a renamed notebook lived under a DIFFERENT path in old commits —
+    # use the path git recorded for that commit when we have it
+    for e in _git_file_log(f, 100):
+        if e["id"] == commit and e.get("path"):
+            rel = e["path"]
+            break
+    r = subprocess.run(
+        ["git", "-C", str(f.parent), "show", f"{commit}:{rel}"],
+        capture_output=True, timeout=20)
+    if r.returncode != 0:
+        raise FileNotFoundError(
+            r.stderr.decode("utf-8", "replace").strip()[:200]
+            or "commit not found")
+    nb = json.loads(r.stdout.decode("utf-8"))
+    if not isinstance(nb, dict) or "cells" not in nb:
+        raise ValueError("that commit's file is not a notebook")
+    return nb
 
 
 def _git_commit_file(f: Path, message: str) -> dict:
@@ -13295,6 +13587,10 @@ def _make_handler(state: _AppState):
                     self._json(self._add_note(body))
                 elif url.path == "/api/gitstate":
                     self._json(self._git_state(body))
+                elif url.path == "/api/versions":
+                    self._json(self._versions(body))
+                elif url.path == "/api/openversion":
+                    self._json(self._open_version(body))
                 else:
                     self._json({"error": "not found"}, 404)
             except FileNotFoundError as e:
@@ -13323,6 +13619,7 @@ def _make_handler(state: _AppState):
                 raise FileNotFoundError(f"{f} not found")
             if f.suffix.lower() != ".ipynb":
                 raise ValueError(f"{f.name} is not a .ipynb file")
+            _store_version(f)   # every open/reload keeps a snapshot
             doc = load_doc(f)
             doc.source_name = _stem_for(f, state.stems_taken(skip=f))
             state.note_open(f)
@@ -13354,6 +13651,7 @@ def _make_handler(state: _AppState):
             if not src:
                 raise ValueError("the note is empty")
             f = self._resolve_nb_path(raw)
+            _store_version(f)   # keep the pre-note state reachable
             nb = json.loads(f.read_text(encoding="utf-8"))
             nb, idx, cell_id = insert_note_cell(
                 nb, str(body.get("after") or ""), src)
@@ -13375,6 +13673,57 @@ def _make_handler(state: _AppState):
             if not raw or _is_url(raw):
                 return {"repo": False}
             return _git_info(self._resolve_nb_path(raw))
+
+        def _versions(self, body: dict) -> dict:
+            raw = str(body.get("path") or "").strip().strip('"')
+            if not raw or _is_url(raw):
+                return {"versions": []}
+            f = self._resolve_nb_path(raw)
+            out = []
+            for v in sorted(_versions_dir(f).glob("*.ipynb"),
+                            reverse=True):
+                stamp = v.stem.split("_", 1)[0]
+                try:
+                    label = time.strftime(
+                        "%d %b %Y · %H:%M:%S",
+                        time.strptime(stamp, "%Y%m%d-%H%M%S"))
+                except ValueError:
+                    label = v.stem
+                out.append({"id": v.name, "label": label})
+            git = _git_info(f)
+            commits = _git_file_log(f) if git.get("repo") else []
+            return {"versions": out, "commits": commits}
+
+        def _open_version(self, body: dict) -> dict:
+            """Render an earlier snapshot OR a git commit's notebook INTO
+            the notebook's tab (same stem + path, so deck refs keep
+            resolving); ↻ returns to live."""
+            raw = str(body.get("path") or "").strip().strip('"')
+            vid = str(body.get("id") or "")
+            commit = str(body.get("commit") or "")
+            if commit:
+                if not re.fullmatch(r"[0-9a-fA-F]{4,40}", commit):
+                    raise ValueError("bad commit id")
+                fc = self._resolve_nb_path(raw)
+                nbc = _git_show_notebook(fc, commit)
+                doc = parse_notebook(nbc)
+                doc.source_name = _stem_for(
+                    fc, state.stems_taken(skip=fc))
+                return {"stem": doc.source_name, "path": str(fc),
+                        "version": "git:" + commit,
+                        "shell": render_shell(doc, path=str(fc))}
+            if not re.fullmatch(r"[\w.\-]+\.ipynb", vid):
+                raise ValueError("bad version id")
+            f = self._resolve_nb_path(raw)
+            vd = _versions_dir(f).resolve()
+            vf = (vd / vid).resolve()
+            if vf.parent != vd or not vf.exists():
+                raise FileNotFoundError("version not found")
+            doc = load_doc(vf)
+            doc.source_name = _stem_for(f, state.stems_taken(skip=f))
+            return {"stem": doc.source_name, "path": str(f),
+                    "version": vid,
+                    "shell": render_shell(doc, path=str(f))}
 
         def _parse_nb(self, body: dict) -> dict:
             nb = body.get("nb")
@@ -14329,6 +14678,32 @@ def _self_test() -> None:
     assert "function relayoutTreeHost" in out
     assert ".deck-tracetree .tt-present{display:none" in out
     assert ".deck-tracetree .tree-node{" in out
+    # per-frame figure rescue: every live clone is remembered; a notebook
+    # reload rotates snapshots to "previous"; the ribbon's Previous/Live
+    # figure button swaps ONE frame without touching the others
+    assert "var frameSnaps={},frameSnapsPrev={}" in out
+    assert "frozenFrames=new WeakMap()" in out
+    assert "function framePartFromSnap" in out and "an-frozenchip" in out
+    assert 'id="fmt-revert"' in out and "Previous figure" in out
+    # automatic notebook versions: stored per open/reload (deduped, capped),
+    # listed + reopened from the tab's ⌚ menu into the SAME stem/path
+    assert "'/api/versions'" in out and "'/api/openversion'" in out
+    assert "function showVersMenu" in out and "tab-verbtn" in out
+    # …and the ⌚ menu also lists the notebook's GIT history (short hash +
+    # commit message + date), opening the notebook as it was at any commit
+    assert "git commits" in out and "vers-sub" in out
+    assert "commit:cm.id" in out and "'git:'+cm.id" in out
+    import tempfile
+    with tempfile.TemporaryDirectory() as vtd:
+        vf = Path(vtd) / "exp.ipynb"
+        vf.write_text('{"cells": []}', encoding="utf-8")
+        _store_version(vf)
+        _store_version(vf)      # unchanged -> deduped, still one snapshot
+        vs = list(_versions_dir(vf).glob("*.ipynb"))
+        assert len(vs) == 1
+        vf.write_text('{"cells": [1]}', encoding="utf-8")
+        _store_version(vf)
+        assert len(list(_versions_dir(vf).glob("*.ipynb"))) == 2
     assert "Open\n          local files" in out.replace("\r\n", "\n") \
         or "Open local files" in re.sub(r"\s+", " ", out)
     # the getting-started steps moved to the bottom (seen on scroll)
