@@ -6618,6 +6618,10 @@ _DECK_HTML = """
                 title="Swap this frame between the LIVE figure and the one
  from before the last notebook refresh (rescue a figure a re-run
  broke without giving up the others)">&#10226; Previous figure</button>
+              <button class="dbtn etm" id="fmt-lockver"
+                title="Pin this figure to its notebook&rsquo;s current git
+ commit &mdash; refreshes stop changing it, and it renders even with the
+ notebook closed">&#128274; Lock figure</button>
             </span>
             <span class="rbn-lab">Object</span>
           </span>
@@ -7534,6 +7538,18 @@ select#fmt-font[hidden]{display:none;}
   .print-page{page-break-after:always;break-after:page;}
   .print-page:last-child{page-break-after:auto;break-after:auto;}
 }
+
+/* a frame LOCKED to a git commit */
+.an-lockchip{position:absolute;top:5px;left:5px;z-index:3;
+  font-family:var(--mono);font-size:9px;letter-spacing:.04em;
+  background:#46a89222;border:1px solid #46a89266;color:#7fd0b8;
+  border-radius:5px;padding:2px 6px;pointer-events:auto;cursor:help;}
+.an-lockchip.warn{background:#ff6b5722;border-color:#ff6b5766;
+  color:#ff9d8e;}
+.deck:not(.editing) .an-lockchip{display:none;}
+.an-verwait{flex:1;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:#7e93a4;padding:16px;
+  text-align:center;}
 
 /* a frame reverted to its pre-refresh figure */
 .deck.editing .an-cell.an-frozen{outline:1.5px dashed #f0a848;
@@ -8646,6 +8662,74 @@ _DECK_JS = r"""
     var b=cloneBody(ref);
     if(!b) return cloneCode(ref);
     return applyPartFilter(b,part);
+  }
+  /* ---- figure LOCKS: a frame pinned to a git commit renders that
+     commit's card (fetched once, cached) — refresh never touches it, and
+     the source notebook doesn't even have to be open ---- */
+  var verCards={},verMeta={},verPending={};
+  function lockParts(a){
+    var r=normRef(a.ref)||String(a.ref||'');
+    var pr=splitRef(r);
+    if(!pr[0]) return null;
+    var path=nbPathFor(pr[0]);
+    if(!path||/^https?:/i.test(path)) return null;
+    return {stem:pr[0],anchor:pr[1],path:path,
+      key:path+'@'+a.lockver.commit+'::'+pr[1],
+      pkey:path+'@'+a.lockver.commit};
+  }
+  function fetchVerCards(path,commit,anchors){
+    var pkey=path+'@'+commit;
+    var pend=verPending[pkey]=verPending[pkey]||{};
+    anchors=anchors.filter(function(an){
+      return verCards[pkey+'::'+an]===undefined&&!pend[an];});
+    if(!anchors.length) return Promise.resolve();
+    anchors.forEach(function(an){pend[an]=1;});
+    return APP.api('/api/versioncards',
+      {path:path,commit:commit,anchors:anchors})
+    .then(function(j){
+      verMeta[pkey]={msg:j.msg||'',date:j.date||''};
+      anchors.forEach(function(an){
+        verCards[pkey+'::'+an]=(j.cards||{})[an]||null;
+        delete pend[an];
+      });
+      var l=stage.querySelector('.annot-layer');
+      var s=pres.slides[cur];
+      if(l&&s&&!deckEl.hidden){renderAnnots(l,s);paintSel(l);}
+    }).catch(function(){
+      anchors.forEach(function(an){
+        verCards[pkey+'::'+an]=null;delete pend[an];});
+    });
+  }
+  /* undefined = loading, null = unavailable, object = the card */
+  function verCardFor(a){
+    if(!(a.lockver&&a.lockver.commit)||APP.mode!=='app') return null;
+    var lp=lockParts(a); if(!lp) return null;
+    var hit=verCards[lp.key];
+    if(hit!==undefined) return hit;
+    fetchVerCards(lp.path,a.lockver.commit,[lp.anchor]);
+    return undefined;
+  }
+  function frameFromVerCard(card,part){
+    var t=document.createElement('template');t.innerHTML=card.html||'';
+    var b=t.content.querySelector('.cardbody');
+    if(!b) return null;
+    b=stripIds(b.cloneNode(true));
+    return framePartFromSnap(b.outerHTML,part);
+  }
+  function lockChip(c,a,ok){
+    c.classList.add('an-locked-ver');
+    var lp=lockParts(a);
+    var meta=(lp&&verMeta[lp.pkey])||{};
+    var msg=a.lockver.msg||meta.msg||'';
+    var date=a.lockver.date||meta.date||'';
+    var fz=document.createElement('span');
+    fz.className='an-lockchip'+(ok?'':' warn');
+    fz.textContent='🔒 '+a.lockver.commit;
+    fz.title=(ok?'Locked to commit ':'Locked to commit (content '
+      +'unavailable — showing live) ')+a.lockver.commit
+      +(msg?' — “'+msg+'”':'')+(date?' · '+date:'')
+      +'\nRefresh never changes this frame. Unlock via the ribbon.';
+    c.appendChild(fz);
   }
   /* render a frame from a REMEMBERED body (the pre-refresh figure) */
   function framePartFromSnap(html,part){
@@ -9836,13 +9920,43 @@ _DECK_JS = r"""
       } else if(a.k==='cell'){
         var c=document.createElement('div');
         var it=a.ref?resolveRef(a.ref):null;
-        c.className='an-item an-cell'+(it?'':' empty')
+        var locked=!!(a.lockver&&a.lockver.commit);
+        var lkCard=locked?verCardFor(a):null;
+        c.className='an-item an-cell'+((it||locked)?'':' empty')
           +(selAnnot===i?' sel':'');
         c.style.left=a.x+'%';c.style.top=a.y+'%';
         c.style.width=(a.w||34)+'%';c.style.height=(a.h||30)+'%';
         applyCommon(c,a);
         c.setAttribute('data-idx',i);
-        if(it){
+        if(locked&&lkCard){
+          /* pinned to a git commit: render THAT version's card — refresh
+             never touches it, the notebook needn't even be open */
+          c.title=(lkCard.title||'')+' @ '+a.lockver.commit;
+          var vb=frameFromVerCard(lkCard,a.part);
+          if(vb){
+            if(a.ts) vb.style.zoom=a.ts;
+            applyCrop(vb,a);
+            if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
+            c.appendChild(vb);
+            if(!a.crop&&vb.querySelector(
+                '.figframe,.figpager,.plotframe')){
+              c.classList.add('an-figonly');
+              fitFigFrame(layer,a,c);
+            }
+          }
+          lockChip(c,a,true);
+          applyCellColor(c,a);
+        } else if(locked&&lkCard===undefined){
+          var w8=document.createElement('div');w8.className='an-verwait';
+          w8.textContent='🔒 '+a.lockver.commit+' — loading…';
+          c.appendChild(w8);
+        } else if(locked&&!it){
+          var w9=document.createElement('div');w9.className='an-verwait';
+          w9.textContent='🔒 '+a.lockver.commit+' — not available';
+          c.appendChild(w9);
+          lockChip(c,a,false);
+        } else if(it){
+          if(locked) lockChip(c,a,false);  /* lock set, live fallback */
           c.title=it.nb+' — '+it.title;
           var pt0=partOf(a),facs0=facetList(it.ns);
           /* a figure frame carries NO title header, even selected — a
@@ -10120,14 +10234,22 @@ _DECK_JS = r"""
     });
     show('#fmt-replace',kind==='cell');
     show('#fmt-locate',kind==='cell'&&!!a.ref);
+    var lockedV=(kind==='cell')&&!!(a.lockver&&a.lockver.commit);
     var frozen=(kind==='cell')&&frozenFrames.has(a);
     var hasPrev=(kind==='cell')&&!!a.ref
       &&!!frameSnapsPrev[normRef(a.ref)];
-    show('#fmt-revert',frozen||hasPrev);
-    if(frozen||hasPrev){
+    show('#fmt-revert',(frozen||hasPrev)&&!lockedV);
+    if((frozen||hasPrev)&&!lockedV){
       var rvb=$('#fmt-revert');
       if(rvb) rvb.innerHTML=frozen
         ?'&#8635; Live figure':'&#10226; Previous figure';
+    }
+    var canLock=(kind==='cell')&&!!a.ref&&APP.mode==='app';
+    show('#fmt-lockver',canLock);
+    if(canLock){
+      var lvb=$('#fmt-lockver');
+      if(lvb) lvb.innerHTML=lockedV
+        ?'&#128275; Unlock figure':'&#128274; Lock figure';
     }
     show('#fmt-cropwrap',kind==='image'||kind==='cell');
     show('#fmt-animwrap',isNum);
@@ -10958,6 +11080,56 @@ _DECK_JS = r"""
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);paintSel(l);}
     showFmt();
+  });
+  /* Lock figure <-> Unlock: pin a frame to its notebook's current git
+     commit — refreshes stop touching it (and it renders even when the
+     notebook is closed) */
+  function lockFrame(a){
+    var pr=splitRef(normRef(a.ref)||String(a.ref||''));
+    var path=pr[0]?nbPathFor(pr[0]):null;
+    if(!path||/^https?:/i.test(path)){
+      toast('Locking needs a local notebook file');
+      return Promise.resolve(false);
+    }
+    var sh=APP.shells[pr[0]];
+    if(sh&&sh.version&&/^git:/.test(sh.version)){
+      a.lockver={commit:sh.version.slice(4)};
+      toast('Locked to '+a.lockver.commit+' (the version being viewed)');
+      return Promise.resolve(true);
+    }
+    return APP.api('/api/gitstate',{path:path}).then(function(g){
+      if(!g||!g.repo||!g.commit){
+        toast('Not in a git repository — commit the notebook first');
+        return false;
+      }
+      a.lockver={commit:g.commit.id,msg:g.commit.msg||'',
+        date:g.commit.date||''};
+      toast('Locked to '+g.commit.id
+        +(g.commit.msg?' “'+g.commit.msg+'”':''));
+      return true;
+    }).catch(function(e){
+      toast('Lock failed: '+((e&&e.message)||e));
+      return false;
+    });
+  }
+  var lockVBtn=$('#fmt-lockver');
+  if(lockVBtn) lockVBtn.addEventListener('click',function(){
+    var s=pres.slides[cur]; if(!s) return;
+    var a=annotByIdx(s,selAnnot);
+    if(!a||a.k!=='cell'||!a.ref) return;
+    function done(){
+      markDirty();
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s);paintSel(l);}
+      showFmt();
+    }
+    if(a.lockver){
+      delete a.lockver;
+      toast('Unlocked — this figure follows notebook refreshes again');
+      done();
+      return;
+    }
+    lockFrame(a).then(function(ok){if(ok) done();});
   });
   /* Locate in notebook: leave the deck and land on the card this frame
      was placed from — its home in the notebook, scrolled to + flashed */
@@ -11876,6 +12048,79 @@ _DECK_JS = r"""
     var m=$('#dc-nbs-menu'); if(m) m.hidden=true;
     var b=$('#dc-nbs-btn'); if(b) b.setAttribute('aria-expanded','false');
   }
+  /* ---- Lock all / Unlock all / prefetch locked versions ---- */
+  function allCellAnnots(){
+    var out=[];
+    (pres.slides||[]).forEach(function(s){
+      (s.annots||[]).forEach(function(a){
+        if(a.k==='cell'&&a.ref) out.push(a);});});
+    return out;
+  }
+  function lockAllFrames(){
+    if(APP.mode!=='app'){toast('Locking needs the Junoview app');return;}
+    var ann=allCellAnnots().filter(function(a){return !a.lockver;});
+    if(!ann.length){toast('Every figure is already locked');return;}
+    var byStem={};
+    ann.forEach(function(a){
+      var pr=splitRef(normRef(a.ref)||String(a.ref||''));
+      if(pr[0]) (byStem[pr[0]]=byStem[pr[0]]||[]).push(a);
+    });
+    var stems=Object.keys(byStem),done=0,locked=0,norepo=0;
+    if(!stems.length){toast('Nothing to lock');return;}
+    stems.forEach(function(st){
+      var path=nbPathFor(st);
+      function fin(){
+        if(++done!==stems.length) return;
+        markDirty();refresh();
+        toast(locked
+          ?('Locked '+locked+' figure'+(locked===1?'':'s')
+            +(norepo?' — '+norepo+' not in git':''))
+          :'Nothing lockable — are the notebooks committed to git?');
+      }
+      if(!path||/^https?:/i.test(path)){
+        norepo+=byStem[st].length;fin();return;}
+      APP.api('/api/gitstate',{path:path}).then(function(g){
+        if(g&&g.repo&&g.commit){
+          byStem[st].forEach(function(a){
+            a.lockver={commit:g.commit.id,msg:g.commit.msg||'',
+              date:g.commit.date||''};
+            locked++;
+          });
+        } else norepo+=byStem[st].length;
+        fin();
+      }).catch(fin);
+    });
+  }
+  function unlockAllFrames(){
+    var ann=allCellAnnots().filter(function(a){return a.lockver;});
+    if(!ann.length){toast('No locked figures');return;}
+    if(!window.confirm('Unlock all '+ann.length+' figure'
+      +(ann.length===1?'':'s')+'? They will follow notebook refreshes '
+      +'again — locked versions stop showing.')) return;
+    ann.forEach(function(a){delete a.lockver;});
+    markDirty();refresh();
+    toast('Unlocked '+ann.length+' figure'+(ann.length===1?'':'s'));
+  }
+  function loadLockedVersions(){
+    var groups={};
+    allCellAnnots().forEach(function(a){
+      if(!(a.lockver&&a.lockver.commit)) return;
+      var lp=lockParts(a); if(!lp) return;
+      (groups[lp.pkey]=groups[lp.pkey]||{path:lp.path,
+        commit:a.lockver.commit,anchors:[]});
+      if(groups[lp.pkey].anchors.indexOf(lp.anchor)<0)
+        groups[lp.pkey].anchors.push(lp.anchor);
+    });
+    var keys=Object.keys(groups);
+    if(!keys.length){toast('No locked figures to load');return;}
+    var total=0;
+    keys.forEach(function(k){total+=groups[k].anchors.length;});
+    toast('Loading '+total+' locked figure'+(total===1?'':'s')
+      +' from '+keys.length+' version'+(keys.length===1?'':'s')+'…');
+    keys.forEach(function(k){
+      fetchVerCards(groups[k].path,groups[k].commit,
+        groups[k].anchors);});
+  }
   function renderNbsMenu(){
     var m=$('#dc-nbs-menu'); if(!m) return;
     m.innerHTML='';
@@ -11915,6 +12160,26 @@ _DECK_JS = r"""
       rb.title='Reload every notebook this presentation uses from disk / URL';
       rb.addEventListener('click',function(){openPresNbs(false);});
       acts.appendChild(ob);acts.appendChild(rb);m.appendChild(acts);
+      if(APP.mode==='app'){
+        var acts2=document.createElement('div');acts2.className='dc-nbacts';
+        var la=document.createElement('button');la.className='dbtn';
+        la.innerHTML='&#128274; Lock all figures';
+        la.title='Pin every frame to its notebook’s current git commit — '
+          +'refreshes stop changing them';
+        la.addEventListener('click',function(){lockAllFrames();});
+        var ua=document.createElement('button');ua.className='dbtn';
+        ua.innerHTML='&#128275; Unlock all';
+        ua.title='Every frame follows notebook refreshes again';
+        ua.addEventListener('click',function(){unlockAllFrames();});
+        var lv=document.createElement('button');lv.className='dbtn';
+        lv.innerHTML='&#10227; Load locked versions';
+        lv.title='Fetch every locked figure’s content from git — the '
+          +'notebooks don’t need to be open';
+        lv.addEventListener('click',function(){loadLockedVersions();});
+        acts2.appendChild(la);acts2.appendChild(ua);
+        acts2.appendChild(lv);
+        m.appendChild(acts2);
+      }
     } else {
       var note=document.createElement('div');note.className='dc-nbs-empty';
       note.textContent='Open / refresh is available in the Junoview app.';
@@ -13651,6 +13916,8 @@ def _make_handler(state: _AppState):
                     self._json(self._versions(body))
                 elif url.path == "/api/openversion":
                     self._json(self._open_version(body))
+                elif url.path == "/api/versioncards":
+                    self._json(self._version_cards(body))
                 else:
                     self._json({"error": "not found"}, 404)
             except FileNotFoundError as e:
@@ -13732,7 +13999,39 @@ def _make_handler(state: _AppState):
             raw = str(body.get("path") or "").strip().strip('"')
             if not raw or _is_url(raw):
                 return {"repo": False}
-            return _git_info(self._resolve_nb_path(raw))
+            f = self._resolve_nb_path(raw)
+            info = _git_info(f)
+            if info.get("repo"):
+                log = _git_file_log(f, 1)
+                if log:            # the commit a figure LOCK binds to
+                    info["commit"] = log[0]
+            return info
+
+        def _version_cards(self, body: dict) -> dict:
+            """Render SPECIFIC cards from a git version of a notebook —
+            locked deck frames fetch these without touching the tab."""
+            raw = str(body.get("path") or "").strip().strip('"')
+            commit = str(body.get("commit") or "")
+            anchors = [str(x) for x in (body.get("anchors") or [])
+                       if isinstance(x, str)][:200]
+            if not re.fullmatch(r"[0-9a-fA-F]{4,40}", commit):
+                raise ValueError("bad commit id")
+            f = self._resolve_nb_path(raw)
+            nb = _git_show_notebook(f, commit)
+            doc = parse_notebook(nb)
+            by_anchor = {}
+            for sec in doc.sections:
+                for it in sec.items:
+                    by_anchor[it.anchor or it.item_id] = it
+            cards = {}
+            for an in anchors:
+                it = by_anchor.get(an)
+                cards[an] = ({"html": render_item(it), "title": it.title}
+                             if it is not None else None)
+            meta = next((e for e in _git_file_log(f, 100)
+                         if e["id"] == commit), {})
+            return {"commit": commit, "msg": meta.get("msg", ""),
+                    "date": meta.get("date", ""), "cards": cards}
 
         def _versions(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')
@@ -14753,6 +15052,15 @@ def _self_test() -> None:
     # commit message + date), opening the notebook as it was at any commit
     assert "git commits" in out and "vers-sub" in out
     assert "commit:cm.id" in out and "'git:'+cm.id" in out
+    # figure LOCKS: pin a frame to a git commit — refresh can't touch it,
+    # a closed notebook still renders it, Lock/Unlock all + prefetch live
+    # in the Notebooks menu, and the chip names the commit
+    assert 'id="fmt-lockver"' in out and "a.lockver" in out
+    assert "'/api/versioncards'" in out and "function fetchVerCards" in out
+    assert "function lockAllFrames" in out
+    assert "function unlockAllFrames" in out and "window.confirm" in out
+    assert "function loadLockedVersions" in out and "an-lockchip" in out
+    assert "function frameFromVerCard" in out and "an-verwait" in out
     # classifier honesty: imports + real work reads "imports · code", a
     # fully commented-out cell is its own filterable "comments" kind
     assert _classify_code(
