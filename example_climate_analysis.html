@@ -137,6 +137,18 @@ body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
 .navsec-l3{margin-left:24px;}
 .navsec-l3 .navsec{font-size:11.5px;font-weight:500;
   color:var(--chrome-ink-2);padding:6px 10px;}
+/* Long notebooks: let the browser skip layout+paint for cards that are
+   off-screen. Measured on a 260-card document this is where the time
+   goes — not our JS, which runs in ~1ms. `auto` remembers each card's
+   last real size, so the scrollbar stays honest. */
+.content .card{content-visibility:auto;contain-intrinsic-size:auto 300px;}
+/* …but never for a card that has been CLONED somewhere it must render in
+   full: slide frames, tree nodes, trace steps, the raw view, printing */
+.an-cell .card,.spane .card,.slide-fig .card,.tree-node .card,
+.vo-step .card,.print-page .card,.rawview .card,.figmax .card{
+  content-visibility:visible;contain-intrinsic-size:none;}
+@media print{.content .card{content-visibility:visible!important;
+  contain-intrinsic-size:none!important;}}
 /* fully hidden (filtered out) cards + their sidebar entries disappear */
 .card.is-hidden,.section.is-hidden{display:none;}
 .navitem.nav-hidden,.navsec-row.nav-hidden,.navitems.nav-hidden{
@@ -7062,6 +7074,7 @@ through Ko-fi. Thank you.</p>
     APP.active=stem;
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
     renderTabs();
+    invalidateSids();   /* the section list belongs to the new tab */
     renderRawBtn();renderViewBtns();relayoutActiveTree();
     /* filters belong to the NOTEBOOK, so the whole filter bar has to be
        rebound to the tab you just switched to (and its "Apply to" picker
@@ -7289,12 +7302,22 @@ through Ko-fi. Thank you.</p>
   /* ---- which sections the appbar is currently EDITING, and how to read
      and write their filter state ------------------------------------- */
   function activeStem(){return APP.active||'';}
+  /* the section list is asked for many times per filter change (every
+     readF, countF and anyType goes through it), so it is memoised per
+     notebook and dropped whenever a shell is mounted or swapped */
+  var sidMemo=null,sidMemoFor=null;
+  function invalidateSids(){sidMemo=null;sidMemoFor=null;}
+  APP.invalidateSids=invalidateSids;
   function allSids(){
     var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    if(sidMemoFor===APP.active&&sidMemo) return sidMemo;
     /* a Plot-trace tab builds bare <section> wrappers with no data-sec —
        they are not real notebook sections and must not become rows */
-    return sh?$$('.section',sh.el).map(function(s){return s.dataset.sec;})
-      .filter(Boolean):[];
+    sidMemo=$$('.section',sh.el).map(function(s){return s.dataset.sec;})
+      .filter(Boolean);
+    sidMemoFor=APP.active;
+    return sidMemo;
   }
   function targetSids(){
     /* seed here, not only in the button renderer: a freshly activated
@@ -7759,12 +7782,14 @@ through Ko-fi. Thank you.</p>
       });
     });
     renderTypeButtons();
-    /* an advanced picker lights up when ANY selected section hides a type */
+    /* an advanced picker lights up when ANY selected section hides a type
+       (one section-list lookup for all three, not one each) */
+    var anyStem=activeStem(),anyIds=targetSids();
     function anyType(map){
-      var stem=activeStem(),ids=targetSids(),n=0;
-      if(!ids.length) return Object.keys(FDEFof(stem)[map]).length>0;
-      ids.forEach(function(id){
-        if(Object.keys(stateFor(stem,id)[map]).length) n++;});
+      var n=0;
+      if(!anyIds.length) return Object.keys(FDEFof(anyStem)[map]).length>0;
+      anyIds.forEach(function(id){
+        if(Object.keys(stateFor(anyStem,id)[map]).length) n++;});
       return n>0;
     }
     var fb=$('#ck-filter-btn');
@@ -9252,15 +9277,25 @@ through Ko-fi. Thank you.</p>
     if(!base||!avail) return 3;
     return Math.max(1,Math.min(3,avail/base));
   }
+  /* live embeds size themselves to their container, so a resized figure
+     has to be told. Only the embeds actually present are touched, and the
+     global resize event — which makes every other listener relayout — is
+     fired ONLY when there is something that needs it. */
+  var embedT=null;
   function resizeEmbeds(root){
-    setTimeout(function(){
+    clearTimeout(embedT);
+    embedT=setTimeout(function(){
+      var plots=[];
+      try{plots=$$('.js-plotly-plot',root&&root.querySelectorAll
+        ?root:document);}catch(e){}
+      if(!plots.length) return;
       try{
         if(window.Plotly&&Plotly.Plots)
-          $$('.js-plotly-plot',root).forEach(function(g){
+          plots.forEach(function(g){
             try{Plotly.Plots.resize(g);}catch(e){}});
       }catch(e){}
       try{window.dispatchEvent(new Event('resize'));}catch(e){}
-    },60);
+    },80);
   }
   /* ---- ⤢ : one figure, full screen. The node is CLONED (ids stripped) so
      the live figure in the feed is never detached. ---- */
@@ -10074,6 +10109,7 @@ through Ko-fi. Thank you.</p>
     if(old&&old.el.parentNode) host.replaceChild(shell,old.el);
     else host.appendChild(shell);
     initShell(shell);
+    invalidateSids();   /* this notebook's sections were just replaced */
     if(keep) restoreViewState(shell,stem,keep);
     /* a VERSION of a notebook you already have open is not a new
        document — it must not turn up in Recent as a separate file */
