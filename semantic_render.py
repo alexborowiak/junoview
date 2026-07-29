@@ -612,10 +612,11 @@ class Item:
 class Section:
     title: str
     section_id: str
-    level: int = 2                 # heading level: 1 (h1) or 2 (h2)
+    level: int = 2                 # heading tier: 1 (#), 2 (##) or 3 (###)
+    number: str = ""               # outline number ("2", "2.1", "2.1.3")
     items: list[Item] = field(default_factory=list)
-    from_heading: bool = False     # authored `#`/`##` heading — keep even
-                                   # when no cards land under it
+    from_heading: bool = False     # authored `#`/`##`/`###` heading — keep
+                                   # even when no cards land under it
 
 
 @dataclass
@@ -1161,7 +1162,10 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
     def ensure_section() -> Section:
         nonlocal cur_section, auto_overview
         if cur_section is None:
-            cur_section = Section("Overview", _slug("overview", used_slugs))
+            # section slugs live in a "sec " namespace so a heading can never
+            # steal a card's title slug (deck refs point at card ids)
+            cur_section = Section("Overview",
+                                  _slug("sec overview", used_slugs))
             auto_overview = cur_section
             doc.sections.append(cur_section)
         return cur_section
@@ -1177,13 +1181,15 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
             lead = _lead_heading(source)
             if lead:
                 level, text, rest = lead
-                if level <= 2:
-                    # Every heading opens its own section, in document order.
+                if level <= 3:
+                    # Every #/##/### heading opens its own REAL section (three
+                    # tiers, each collapsible + hideable), in document order.
                     # Markdown headings are POSITIONAL: two headings that share
                     # a title (e.g. a `## Summary` under each model) are two
                     # distinct sections, unlike the declarative `#| section:`
                     # directive which groups by name. The first h1 also names
-                    # the document.
+                    # the document. #### and deeper stay lightweight kicker
+                    # labels within their section.
                     if level == 1 and not title_locked:
                         doc.title = text
                         title_locked = True
@@ -1193,15 +1199,19 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
                         cur_section = auto_overview
                         cur_section.level = level
                         cur_section.from_heading = True
-                        auto_overview = None
                     else:
-                        cur_section = Section(text, _slug(text, used_slugs))
+                        cur_section = Section(
+                            text, _slug("sec " + text, used_slugs))
                         cur_section.level = level
                         cur_section.from_heading = True
                         doc.sections.append(cur_section)
+                    # the claim window closes at the FIRST heading either way:
+                    # a later "### Overview" deep in the document must NOT
+                    # teleport its content into the preamble bucket
+                    auto_overview = None
                     cur_subsection = ""
                     handled_heading = True
-                else:  # level >= 3 -> subsection marker
+                else:  # level >= 4 -> in-section kicker label
                     cur_subsection = text
                     handled_heading = True
                 # prose after the heading becomes a note
@@ -1233,10 +1243,15 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
         if not seen_before:
             if "section" in directives:
                 sec_name = directives["section"]
+                # group-by-name stays a TIER-2 concept: a positional ###
+                # sub-heading that happens to share the name must not
+                # capture directive-declared cells
                 existing = next(
-                    (s for s in doc.sections if s.title == sec_name), None)
+                    (s for s in doc.sections
+                     if s.title == sec_name and s.level <= 2), None)
                 if existing is None:
-                    cur_section = Section(sec_name, _slug(sec_name, used_slugs))
+                    cur_section = Section(
+                        sec_name, _slug("sec " + sec_name, used_slugs))
                     doc.sections.append(cur_section)
                 else:
                     cur_section = existing
@@ -1299,6 +1314,21 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
                 plot_n += 1
                 it.title = f"Plot {plot_n}"
                 it.title_echo = False
+    # outline numbers ("2", "2.1", "2.1.3") make the three section tiers
+    # unmistakable in the doc eyebrows. A tier the document NEVER uses is
+    # dropped from every number (# + ### with no ## reads "1.1", not
+    # "1.0.1"); a tier that exists but hasn't opened yet stays as an
+    # honest 0 ("0.1" for a ## before the first #) so two different
+    # sections can never share a number.
+    present = {max(1, min(3, s.level)) for s in doc.sections}
+    counters = [0, 0, 0]
+    for s in doc.sections:
+        lv = max(1, min(3, s.level))
+        counters[lv - 1] += 1
+        for i in range(lv, 3):
+            counters[i] = 0
+        s.number = ".".join(str(counters[i]) for i in range(lv)
+                            if (i + 1) in present)
     _build_chains(doc)
     doc.raw_html = render_raw(nb)
     return doc
@@ -1577,9 +1607,28 @@ def md_to_html(text: str) -> str:
                      if ln.strip()]
         if not raw_lines:
             continue
-        # blocks that ARE html render as html (like Jupyter), sanitized
+        # blocks that ARE html render as html (like Jupyter), sanitized —
+        # but `- ` list lines inside the block still become a real list
+        # (<b>Title</b> straight above bullets is a common notebook style)
         if _MD_HTMLBLOCK_RE.match(raw_lines[0]):
-            out.append(_sanitize_html("\n".join(raw_lines)))
+            k = 0
+            while k < len(raw_lines):
+                run: list[str] = []
+                if _MD_BULLET_RE.match(raw_lines[k]):
+                    while (k < len(raw_lines)
+                           and _MD_BULLET_RE.match(raw_lines[k])):
+                        run.append(raw_lines[k])
+                        k += 1
+                    lis = "".join(
+                        f"<li>{inline(_MD_BULLET_RE.sub('', html.escape(ln)))}"
+                        f"</li>" for ln in run)
+                    out.append(f"<ul>{lis}</ul>")
+                else:
+                    while (k < len(raw_lines)
+                           and not _MD_BULLET_RE.match(raw_lines[k])):
+                        run.append(raw_lines[k])
+                        k += 1
+                    out.append(_sanitize_html("\n".join(run)))
             continue
         lines = [html.escape(ln) for ln in raw_lines]
         if all(_MD_BULLET_RE.match(ln) for ln in lines):
@@ -1625,7 +1674,7 @@ def _fig_pager(imgs) -> str:
         f'&#8250;</button></div></div>')
 
 
-def render_item(item: Item) -> str:
+def render_item(item: Item, sec_id: str = "") -> str:
     badge = _BADGE.get(item.kind, item.kind)
     kclass = _kind_class(item.kind)
     # a card's FILTER ROLE (what top-bar filter governs it) — distinct from
@@ -1667,7 +1716,16 @@ def render_item(item: Item) -> str:
             if o.pt and o.pt not in pt_types:
                 pt_types.append(o.pt)
         pt_attr = f' data-pt="{" ".join(pt_types)}"' if pt_types else ""
-        cb_parts.append(f'<div class="cb-part cb-fig"{pt_attr}>{fig_html}</div>')
+        cb_parts.append(
+            f'<div class="cb-part cb-fig"{pt_attr}>'
+            f'<div class="figzoom" aria-hidden="false">'
+            f'<button class="fz-btn fz-out" title="Smaller (this figure)"'
+            f'>&#8722;</button>'
+            f'<button class="fz-btn fz-in" title="Bigger (this figure)"'
+            f'>&#43;</button>'
+            f'<button class="fz-btn fz-max" '
+            f'title="Expand this figure full screen">&#10530;</button>'
+            f'</div>{fig_html}</div>')
     if others:
         ot_types: list[str] = []
         for o in others:
@@ -1766,10 +1824,15 @@ def render_item(item: Item) -> str:
                 '<span class="ht-hide">&#10005; raw</span></button>')
         caption = ""
 
+    # the card carries its OWN section id: per-section filters must survive
+    # being cloned out of the document (tree view, plot-trace tab), where a
+    # DOM-ancestor lookup would find no section and silently fall back to
+    # the notebook default
     return (
         f'<article class="card {kclass}" id="card-{item.item_id}" '
         f'data-kind="{item.kind}" data-role="{role}" '
         f'data-node="{item.node_id}"{ck_attr} '
+        f'data-secid="{html.escape(sec_id)}" '
         f'data-note="{"1" if item.is_note else "0"}" '
         f'data-anchor="{html.escape(item.anchor or item.item_id)}" tabindex="-1">'
         f'<header class="cardhead">'
@@ -1836,11 +1899,20 @@ def render_nav(doc: Document) -> str:
                 parts.append(f'<span class="nk {kc}"><span class="dot">'
                              f'</span>{lab}</span>')
         parts.append('</div>')
-    for s in doc.sections:
-        figs = sum(1 for it in s.items if it.kind in ("figure", "diagnostic"))
+    figs_own = [sum(1 for it in s.items
+                    if it.kind in ("figure", "diagnostic"))
+                for s in doc.sections]
+    for si, s in enumerate(doc.sections):
+        # the badge counts the whole SUBTREE (deeper tiers that follow), so
+        # a collapsed parent still advertises the figures inside it
+        figs = figs_own[si]
+        for sj in range(si + 1, len(doc.sections)):
+            if doc.sections[sj].level <= s.level:
+                break
+            figs += figs_own[sj]
         parts.append(
             f'<div class="navsec-row navsec-l{s.level}" '
-            f'data-sec="{s.section_id}">'
+            f'data-sec="{s.section_id}" data-level="{s.level}">'
             f'<button class="navsec-chev" aria-expanded="true" '
             f'title="Collapse this section">▾</button>'
             f'<a class="navsec" href="#sec-{s.section_id}" '
@@ -1851,7 +1923,8 @@ def render_nav(doc: Document) -> str:
             f'title="Hide or show this whole section" '
             f'aria-label="Hide or show this whole section">&#128065;</span>'
             f'</div>')
-        parts.append(f'<div class="navitems" data-sec="{s.section_id}">')
+        parts.append(f'<div class="navitems navitems-l{s.level}" '
+                     f'data-sec="{s.section_id}">')
         last_sub = None
         for it in s.items:
             if it.subsection and it.subsection != last_sub:
@@ -1879,15 +1952,17 @@ def render_sections(doc: Document) -> str:
     """The stage content: every section with its cards. Reused by the widget."""
     sections_html: list[str] = []
     for s in doc.sections:
-        cards = "".join(render_item(it) for it in s.items)
         sid = s.section_id
+        cards = "".join(render_item(it, sid) for it in s.items)
+        eyebrow = f'section {s.number}' if s.number else 'section'
         sections_html.append(
-            f'<section class="section" id="sec-{sid}" data-sec="{sid}">'
+            f'<section class="section sec-l{s.level}" id="sec-{sid}" '
+            f'data-sec="{sid}" data-level="{s.level}">'
             f'<div class="sectionhead sectionhead-l{s.level}">'
             f'<button class="sec-chev" data-sec="{sid}" aria-expanded="true" '
             f'title="Collapse / expand this section">&#9662;</button>'
             f'<div class="sectionhead-txt">'
-            f'<span class="eyebrow">section</span>'
+            f'<span class="eyebrow">{eyebrow}</span>'
             f'<h2>{html.escape(s.title)}</h2></div>'
             f'<button class="sec-eye" data-sec="{sid}" '
             f'title="Hide this whole section (restore it from the sidebar)" '
@@ -1922,6 +1997,7 @@ def deck_payload(doc: Document) -> str:
                 "codeKinds": it.code_kinds,
                 "section": s.section_id,
                 "sectitle": s.title,
+                "secnum": s.number,
                 "subsection": it.subsection or "",
                 "hasCode": any(st.code.strip() for st in it.steps),
                 "chain": it.chain,
@@ -2088,10 +2164,13 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 .navsec-chev:hover{color:var(--chrome-ink);}
 .navsec-row.collapsed .navsec-chev{transform:rotate(-90deg);}
 .navitems.nav-collapsed{display:none;}
-/* h2 headings sit slightly nested under their h1 */
+/* the three heading tiers nest progressively (indent + shrinking type) */
 .navsec-l1 .navsec{font-size:14px;}
 .navsec-l2{margin-left:12px;}
 .navsec-l2 .navsec{font-size:12.5px;font-weight:500;}
+.navsec-l3{margin-left:24px;}
+.navsec-l3 .navsec{font-size:11.5px;font-weight:500;
+  color:var(--chrome-ink-2);padding:6px 10px;}
 /* fully hidden (filtered out) cards + their sidebar entries disappear */
 .card.is-hidden,.section.is-hidden{display:none;}
 .navitem.nav-hidden,.navsec-row.nav-hidden,.navitems.nav-hidden{
@@ -2103,6 +2182,9 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 .navsec-c:empty{display:none;}
 .navitems{margin:2px 0 4px 4px;padding-left:8px;
   border-left:1px solid var(--chrome-line);}
+/* cell lists indent with their section's tier */
+.navitems-l2{margin-left:16px;}
+.navitems-l3{margin-left:28px;}
 .navsub{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--chrome-ink-2);
   padding:9px 10px 3px;}
@@ -2244,6 +2326,14 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .toggle.tv.half .tdot{background:var(--amber);}
 .toggle.tv.off .tdot{opacity:.3;background:currentColor;}
 .toggle.tv.off{color:var(--ink-3);}
+/* the selected sections disagree about this filter */
+.toggle.tv.mixed .tdot{background:linear-gradient(90deg,
+  var(--cyan) 50%,var(--ink-3) 50%);opacity:1;}
+/* "Apply to" is set to no sections at all — nothing to filter */
+.toggle.notarget{opacity:.4;cursor:not-allowed;}
+/* a section filtered differently from the notebook default says so */
+.section.has-fover .sectionhead .eyebrow::after{content:" · filtered";
+  color:var(--amber);letter-spacing:.12em;}
 
 /* ---------- content ---------- */
 .content{max-width:920px;margin:0 auto;padding:30px 28px 30vh;}
@@ -2252,13 +2342,21 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   border-bottom:1px solid var(--line);
   display:flex;align-items:center;gap:8px;}
 .sectionhead-txt{flex:1;min-width:0;}
-.sectionhead-l2 h2{font-size:21px;}
-.sectionhead-l2{padding-top:16px;}
 .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
   text-transform:uppercase;color:var(--cyan-deep);display:block;
   margin-bottom:6px;}
 .sectionhead h2{font-size:26px;font-weight:600;margin:0;letter-spacing:-.02em;
   color:var(--ink);}
+/* three heading tiers (# / ## / ###): descending size + indent, and the
+   deepest drops the underline so the levels read apart at a glance.
+   (These must FOLLOW the base .sectionhead h2 rule — same specificity.) */
+.sectionhead-l2 h2{font-size:21px;}
+.sectionhead-l2{padding-top:16px;}
+.sectionhead-l3 h2{font-size:17px;}
+.sectionhead-l3{padding-top:10px;border-bottom:none;padding-bottom:2px;}
+.sectionhead-l3 .eyebrow{font-size:9px;margin-bottom:3px;}
+.section.sec-l2 .sectionhead{margin-left:14px;}
+.section.sec-l3 .sectionhead{margin-left:28px;}
 /* main-view section controls: a collapse chevron (left) + a hide eye (right,
    on hover) — the sidebar has the same two, kept in sync */
 .sec-chev{flex:none;background:none;border:none;color:var(--ink-3);
@@ -2277,6 +2375,11 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 /* hidden drops the whole section from the document (restore from the sidebar) */
 .section.sec-off{display:none;}
 .navsec-row.sec-off{opacity:.5;}
+/* the tiers are a real hierarchy: collapsing / hiding an ancestor section
+   folds every deeper section that follows it (recalcSecCascade sets these) */
+.section.sec-under,.section.sec-under-off{display:none;}
+.navsec-row.nav-under,.navitems.nav-under{display:none;}
+.navsec-row.sec-under-off{opacity:.5;}
 /* a hidden section keeps only its (dimmed) header row — fold its cell links
    away too, else they stay bright but point at a display:none target */
 .navsec-row.sec-off+.navitems{display:none;}
@@ -2406,6 +2509,44 @@ body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
   background:var(--paper-2);padding:2px 7px;border-radius:4px;flex:none;}
 
 .cardbody{padding-left:6px;}
+/* ---- figure zoom: a per-figure factor (--fz, set inline by the +/- on the
+   figure) multiplied by the feed-wide factor (--fzall on the shell). The
+   figure grows past the text column and stays centred. ---- */
+.nbshell{--fzall:1;}
+.cb-fig{--fz:1;position:relative;}
+.cb-fig>.figframe,.cb-fig>.figpager{
+  width:calc(100% * var(--fz) * var(--fzall));
+  margin-left:calc((1 - var(--fz) * var(--fzall)) * 50%);}
+.figzoom{position:absolute;top:6px;right:6px;z-index:4;display:flex;gap:3px;
+  opacity:0;transition:opacity .13s;}
+.card:hover .figzoom,.figzoom:focus-within{opacity:1;}
+.fz-btn{font-family:var(--mono);font-size:12px;line-height:1;width:23px;
+  height:23px;padding:0;border-radius:5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink-2);}
+.fz-btn:hover{border-color:var(--cyan);color:var(--ink);}
+body:not(.light) .fz-btn{background:#0d1a24d9;border-color:#ffffff2b;
+  color:#cfe0ea;}
+body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
+/* the tree/trace clones and slide frames never carry the zoom chrome */
+.tree-node .figzoom,.an-cell .figzoom,.spane .figzoom,.slide-fig .figzoom,
+.vo-step .figzoom,.print-page .figzoom{display:none!important;}
+.an-cell .cb-fig>.figframe,.spane .cb-fig>.figframe,
+.slide-fig .cb-fig>.figframe,.tree-node .cb-fig>.figframe,
+.an-cell .cb-fig>.figpager,.spane .cb-fig>.figpager,
+.slide-fig .cb-fig>.figpager,.tree-node .cb-fig>.figpager{
+  width:100%;margin-left:0;}
+/* full-screen figure viewer (⤢) */
+.figmax{position:fixed;inset:0;z-index:300;background:#050b11f2;
+  display:flex;align-items:center;justify-content:center;padding:34px;}
+.figmax[hidden]{display:none;}
+.figmax-box{max-width:96vw;max-height:92vh;overflow:auto;background:#fff;
+  border-radius:10px;padding:10px;}
+.figmax-box img,.figmax-box svg{max-width:100%;max-height:88vh;
+  width:auto;height:auto;display:block;margin:0 auto;}
+.figmax-close{position:fixed;top:16px;right:18px;font-family:var(--mono);
+  font-size:12px;padding:7px 12px;border-radius:7px;cursor:pointer;
+  border:1px solid #ffffff30;background:#0d1a24ee;color:#e7eff5;}
+.figmax-close:hover{border-color:var(--cyan);color:#fff;}
 .figframe{background:#fff;border:1px solid var(--paper-3);border-radius:8px;
   padding:8px;overflow:auto;text-align:center;}
 .figframe img{max-width:100%;height:auto;display:block;margin:0 auto;}
@@ -2593,6 +2734,10 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
   .scrim.show{display:block;}
   .content{padding:22px 18px 30vh;}
   .sectionhead h2{font-size:22px;}
+  .sectionhead-l2 h2{font-size:19px;}
+  .sectionhead-l3 h2{font-size:16px;}
+  .section.sec-l2 .sectionhead{margin-left:8px;}
+  .section.sec-l3 .sectionhead{margin-left:16px;}
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -3280,6 +3425,28 @@ body.light .vers-row:hover{background:#00000008;}
 .ckf-dot.pt-sw-animation{background:#8fd4e4;}
 .ckf-dot.pt-sw-video{background:#5b7589;}
 .ckf-dot.pt-sw-widget{background:#8ba0b2;}
+/* "Apply to" scope picker: the section tree, tier-indented + tickable */
+.scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
+  overflow-y:auto;}
+.scope-row{text-transform:none;align-items:center;gap:5px;}
+.scope-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
+.scope-l2{padding-left:16px;}
+.scope-l3{padding-left:32px;opacity:.9;}
+/* the expand arrow that reveals a heading's sub-headings */
+.scope-tw{width:14px;flex:none;display:flex;justify-content:center;}
+.scope-chev{background:none;border:none;padding:0;cursor:pointer;
+  color:#7e93a4;font-size:10px;line-height:1;
+  transition:transform .13s,color .13s;}
+.scope-chev.open{transform:rotate(90deg);}
+.scope-chev:hover{color:var(--cyan);}
+/* how many sub-headings ride along with this one */
+.scope-n{font-family:var(--mono);font-size:9px;color:var(--cyan);
+  background:#39a9c018;border-radius:20px;padding:1px 5px;margin-left:6px;}
+.ckf-all{display:block;width:100%;text-align:left;font-family:var(--mono);
+  font-size:11px;color:var(--cyan);background:#39a9c014;
+  border:1px solid #39a9c033;border-radius:5px;padding:5px 7px;
+  margin:0 0 6px;cursor:pointer;}
+.ckf-all:hover{background:#39a9c026;color:#eaf6fa;}
 body.light .ckfilter-menu{background:#fff;border-color:var(--line);}
 body.light .ckf-row{color:var(--ink-2);}
 body.light .ckf-row:hover{background:#00000008;}
@@ -3686,6 +3853,12 @@ body.doc-presenting .docs{position:fixed;inset:0;z-index:82;overflow:auto;
   background:var(--paper-2);}
 body.doc-presenting .shell{grid-template-columns:1fr;display:block;}
 body.doc-presenting .nbshell .rail{display:none;}
+/* the sidebar can slide back IN while presenting (⚌ Sections) */
+body.doc-presenting.present-rail .nbshell .rail{display:block;
+  position:fixed;left:0;top:0;bottom:0;width:290px;z-index:84;
+  overflow-y:auto;background:var(--chrome);
+  border-right:1px solid var(--chrome-line);}
+body.doc-presenting.present-rail .content{margin-left:290px;}
 body.doc-presenting .content{max-width:1000px;margin:0 auto;
   padding:56px 30px 30vh;}
 body.doc-presenting .treeview{padding:56px 26px 24vh;height:100vh;}
@@ -3693,8 +3866,21 @@ body.doc-presenting .docbar{display:none;}
 .present-bar{position:fixed;top:14px;right:16px;z-index:140;display:flex;
   align-items:center;gap:6px;padding:6px 8px;border-radius:10px;
   background:#0d1a24ee;border:1px solid #ffffff1f;
-  box-shadow:0 6px 22px #00000045;}
+  box-shadow:0 6px 22px #00000045;max-width:calc(100vw - 32px);}
 .present-bar[hidden]{display:none;}
+/* the collapsible tray: every control except Exit. The relocated appbar
+   filter groups keep their own styling, just re-coloured for the bar */
+.pb-tray{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  justify-content:flex-end;max-width:calc(100vw - 190px);}
+.pb-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  justify-content:flex-end;}
+.pb-tools .fgrp{display:flex;align-items:center;gap:4px;}
+.pb-tools .toggle{border-color:#ffffff26;background:#ffffff10;color:#e7eff5;
+  height:26px;font-size:11px;}
+.pb-tools .toggle.sub{height:22px;font-size:10.5px;}
+.pb-tools .toggle:hover{border-color:var(--cyan);color:#fff;}
+.pb-tools .toggle.tv.off{color:#7c8b9a;}
+.pb-tools .appbar-div{width:1px;height:18px;background:#ffffff22;}
 .pb-btn{font-family:var(--mono);font-size:11px;letter-spacing:.02em;
   border:1px solid #ffffff26;background:#ffffff10;color:#e7eff5;
   padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s;}
@@ -3960,6 +4146,12 @@ _JS = r"""
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
     renderTabs();
     renderRawBtn();renderViewBtns();relayoutActiveTree();
+    /* filters belong to the NOTEBOOK, so the whole filter bar has to be
+       rebound to the tab you just switched to (and its "Apply to" picker
+       closed — its rows are namespaced to the previous notebook) */
+    var scm=$('#sec-scope-menu');
+    if(scm&&!scm.hidden) scm.hidden=true;
+    renderTypeButtons();renderScopeBtn();
     updateHash();
     document.dispatchEvent(new CustomEvent('sem:activate',
       {detail:{stem:stem}}));
@@ -4066,31 +4258,390 @@ _JS = r"""
      one state per ROLE. Markdown / Code / Plots / Output all cycle
      Visible -> Collapsed -> Hidden. The button LABEL shows the current
      state, not the action. */
-  var mdState='visible',codeState='collapsed',plotState='visible';
-  var outState='visible';                 /* 3-state, like the rest */
+  /* FILTERS ARE PER SECTION. `FDEF` is the notebook-wide default; a section
+     the user has filtered differently gets its own state in `secF` (keyed
+     stem::section so two notebooks never share one). Everything reads
+     stateFor(); the appbar edits whichever sections "Apply to" selects. */
+  /* a brief message for filter actions (the deck's toast lives inside the
+     deck, which is hidden while you are reading the document) */
+  var docToastEl=null,docToastT=null;
+  function docToast(msg){
+    if(!docToastEl){
+      docToastEl=document.createElement('div');
+      docToastEl.className='deck-toast';
+    }
+    docToastEl.textContent=msg;
+    docToastEl.hidden=false;
+    (document.fullscreenElement||document.body).appendChild(docToastEl);
+    clearTimeout(docToastT);
+    docToastT=setTimeout(function(){docToastEl.hidden=true;},3400);
+  }
+  /* a Plot-trace tab opens UNFILTERED — it is a fresh reading of the cells
+     behind one figure, so the document's hidden code must not follow it
+     (and its code shows, since the code is the point of a trace) */
+  function newF(trace){
+    return {md:'visible',code:trace?'visible':'collapsed',
+      plot:'visible',out:'visible',ck:{},ot:{},pt:{}};
+  }
+  /* EVERYTHING here is per notebook: the default, the per-section
+     overrides and the "Apply to" pick. One notebook's filters must never
+     reach into another open tab. */
+  var defBy={},secF={},pickBy={};
+  function FDEFof(stem){
+    var k=String(stem||'');
+    if(!defBy[k]){
+      var sh=APP.shells&&APP.shells[k];
+      defBy[k]=newF(!!(sh&&sh.trace));
+    }
+    return defBy[k];
+  }
+  /* copy one notebook's filters onto another. `withOverrides` carries the
+     per-section tweaks too — right for a trace (its cards keep the source's
+     section ids), wrong across notebooks (their section ids differ). */
+  function copyFiltersTo(destStem,srcStem,withOverrides){
+    var s=String(srcStem),d=String(destStem);
+    if(s===d) return;
+    defBy[d]=cloneF(FDEFof(s));
+    var dpre=d+'::',spre=s+'::',k;
+    for(k in secF){if(k.indexOf(dpre)===0) delete secF[k];}
+    for(k in secScope){if(k.indexOf(dpre)===0) delete secScope[k];}
+    pickBy[d]=false;
+    if(withOverrides){
+      for(k in secF){
+        if(k.indexOf(spre)===0)
+          secF[dpre+k.slice(spre.length)]=cloneF(secF[k]);
+      }
+    }
+  }
+  function copyMap(o){
+    var r={};for(var k in o){if(o[k]) r[k]=o[k];}return r;
+  }
+  function cloneF(s){
+    return {md:s.md,code:s.code,plot:s.plot,out:s.out,
+      ck:copyMap(s.ck),ot:copyMap(s.ot),pt:copyMap(s.pt)};
+  }
+  function fkey(stem,sid){return String(stem||'')+'::'+String(sid||'');}
+  /* which section a CARD belongs to. data-secid travels with the node, so
+     clones (tree view, plot-trace) keep obeying their source section. */
+  function secIdOf(card){
+    if(!card) return '';
+    if(card.dataset&&card.dataset.secid) return card.dataset.secid;
+    var s=card.closest?card.closest('.section'):null;
+    return (s&&s.dataset.sec)||'';
+  }
+  function stateFor(stem,sid){
+    return secF[fkey(stem,sid)]||FDEFof(stem);
+  }
   var CODE_CYCLE=['visible','collapsed','hidden'];
-  var CODE_LABEL={visible:'Visible',collapsed:'Collapsed',hidden:'Hidden'};
-  var ckHidden={};   /* advanced: code subtypes the user has hidden */
+  var CODE_LABEL={visible:'Visible',collapsed:'Collapsed',hidden:'Hidden',
+    mixed:'Mixed'};
   var CK_TYPES=['imports','function','data','settings',
     'plotting','print','comments','constant','code'];
+  /* ---- "Apply to": which sections the filters act on. Empty = the whole
+     notebook (every section). Ticking sections narrows the filters to
+     them, so one chapter can hide its code while the next keeps it. ---- */
+  var secScope={};
+  /* an EXPLICIT mode (per notebook): without it, unticking the last
+     section would read as an empty set and silently mean "the whole
+     notebook" — the opposite of what the user just asked for */
+  function scopePick(){return !!pickBy[String(activeStem())];}
+  function setScopePick(v){pickBy[String(activeStem())]=!!v;}
+  function scopeAll(){return !scopePick();}
+  function scopeCount(){return targetSids().length;}
+  function renderScopeBtn(){
+    var b=$('#sec-scope-btn'); if(!b) return;
+    var n=scopeCount();
+    var lab=!scopePick()?'Entire notebook'
+      :(n?(n+' section'+(n>1?'s':'')):'No sections');
+    b.innerHTML='Apply to: '+lab+' &#9662;';
+    b.classList.toggle('on',scopePick());
+  }
+  /* ---- which sections the appbar is currently EDITING, and how to read
+     and write their filter state ------------------------------------- */
+  function activeStem(){return APP.active||'';}
+  function allSids(){
+    var sh=APP.active&&APP.shells[APP.active];
+    /* a Plot-trace tab builds bare <section> wrappers with no data-sec —
+       they are not real notebook sections and must not become rows */
+    return sh?$$('.section',sh.el).map(function(s){return s.dataset.sec;})
+      .filter(Boolean):[];
+  }
+  function targetSids(){
+    /* "Entire notebook" edits every section; a pick edits just those */
+    var ids=allSids();
+    if(scopeAll()) return ids;
+    return ids.filter(function(id){
+      return !!secScope[fkey(activeStem(),id)];});
+  }
+  /* the value of one filter across the selection — 'mixed' when they
+     disagree, so the button never lies about a heterogeneous selection */
+  function readF(key){
+    var stem=activeStem(),ids=targetSids();
+    if(!ids.length) return FDEFof(stem)[key];
+    var first=stateFor(stem,ids[0])[key],same=true;
+    ids.forEach(function(id){
+      if(stateFor(stem,id)[key]!==first) same=false;});
+    return same?first:'mixed';
+  }
+  /* how many of the selected sections hide this code/output/plot type */
+  function countF(map,type){
+    var stem=activeStem(),ids=targetSids(),n=0;
+    if(!ids.length) return FDEFof(stem)[map][type]?1:0;
+    ids.forEach(function(id){
+      if(stateFor(stem,id)[map][type]) n++;});
+    return n;
+  }
+  function targetCount(){
+    var n=targetSids().length;
+    return n||1;
+  }
+  /* apply a change to the selection. "Entire notebook" also rewrites the
+     existing per-section overrides for THAT property, so the notebook
+     really does become uniform without losing a section's other choices */
+  function writeF(fn){
+    var stem=activeStem(),ids=targetSids();
+    if(scopeAll()){
+      fn(FDEFof(stem));
+      ids.forEach(function(id){
+        var o=secF[fkey(stem,id)];
+        if(o) fn(o);
+      });
+    } else {
+      ids.forEach(function(id){
+        var k=fkey(stem,id);
+        if(!secF[k]) secF[k]=cloneF(FDEFof(stem));
+        fn(secF[k]);
+      });
+    }
+    pruneF(stem);
+    markSecOverrides();
+  }
+  function sameMap(x,y){
+    var kx=Object.keys(x);
+    if(kx.length!==Object.keys(y).length) return false;
+    for(var i=0;i<kx.length;i++){if(!y[kx[i]]) return false;}
+    return true;
+  }
+  function sameF(a,b){
+    return a.md===b.md&&a.code===b.code&&a.plot===b.plot&&a.out===b.out
+      &&sameMap(a.ck,b.ck)&&sameMap(a.ot,b.ot)&&sameMap(a.pt,b.pt);
+  }
+  /* an override that has drifted back to its notebook's default is NOT an
+     override — drop it, else the section keeps a "· filtered" badge that
+     lies. Scoped to ONE notebook: another tab's overrides are compared
+     against a different default and must not be touched. */
+  function pruneF(stem){
+    var pre=String(stem||'')+'::';
+    for(var k in secF){
+      if(k.indexOf(pre)!==0) continue;
+      if(secF[k]&&sameF(secF[k],FDEFof(stem))) delete secF[k];
+    }
+  }
+  /* a section filtered differently from the rest says so in its header */
+  function markSecOverrides(){
+    $$('.nbshell').forEach(function(sh){
+      var stem=sh.dataset.nb;
+      $$('.section',sh).forEach(function(s){
+        s.classList.toggle('has-fover',
+          !!secF[fkey(stem,s.dataset.sec)]);
+      });
+    });
+  }
+  /* Reset clears THIS notebook: its default, its per-section overrides and
+     its "Apply to" pick. Other open tabs keep their own filters. */
+  function resetFilters(){
+    var stem=String(activeStem()),pre=stem+'::';
+    defBy[stem]=newF();
+    pickBy[stem]=false;
+    [secF,secScope,scopeOpen].forEach(function(m){
+      for(var k in m){if(k.indexOf(pre)===0) delete m[k];}
+    });
+    markSecOverrides();renderScopeBtn();
+    var m=$('#sec-scope-menu');
+    if(m&&!m.hidden) renderScopeMenu();   /* an open picker must not lie */
+    applyFilters();applyCodeState();
+  }
+  var scopeOpen={};   /* which parent rows are expanded in the picker */
+  function scopeTree(){
+    /* the section list as a tree: each node knows the ids of its whole
+       subtree (the deeper sections that follow it) */
+    var sh=APP.active&&APP.shells[APP.active];
+    var rows=sh?$$('.section',sh.el):[];
+    var stem=activeStem();
+    return rows.map(function(s,i){
+      var lv=+(s.dataset.level||2),kids=[];
+      for(var j=i+1;j<rows.length;j++){
+        if(+(rows[j].dataset.level||2)<=lv) break;
+        kids.push(fkey(stem,rows[j].dataset.sec));
+      }
+      var t=s.querySelector('.sectionhead h2');
+      var eb=s.querySelector('.sectionhead .eyebrow');
+      return {id:fkey(stem,s.dataset.sec),lv:lv,kids:kids,
+        num:eb?(eb.textContent||'').replace(/^section\s*/i,'').trim():'',
+        title:(t&&t.textContent)||s.dataset.sec};
+    });
+  }
+  function renderScopeMenu(){
+    var m=$('#sec-scope-menu'); if(!m) return;
+    m.innerHTML='';
+    var nodes=scopeTree();
+    var h=document.createElement('div');h.className='ckf-h';
+    h.textContent='apply the filters to';m.appendChild(h);
+    var all=document.createElement('button');
+    all.className='ckf-all';
+    all.textContent=scopeAll()?'Pick sections…':'Entire notebook';
+    all.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(scopeAll()){
+        /* "pick sections" starts from everything ticked, so the first
+           untick is a subtraction rather than an empty selection */
+        setScopePick(true);
+        nodes.forEach(function(n){secScope[n.id]=1;});
+      } else {
+        setScopePick(false);
+        nodes.forEach(function(n){delete secScope[n.id];});
+      }
+      renderScopeMenu();renderScopeBtn();applyFilters();
+    });
+    m.appendChild(all);
+    if(!nodes.length){
+      var e0=document.createElement('div');e0.className='ckf-empty';
+      e0.textContent='No sections in this notebook';
+      m.appendChild(e0);return;
+    }
+    function on(id){return scopeAll()||!!secScope[id];}
+    function setSub(n,val){
+      /* a heading carries its sub-headings with it */
+      secScope[n.id]=val?1:0;
+      n.kids.forEach(function(k){secScope[k]=val?1:0;});
+    }
+    /* a row is visible only while every ancestor is expanded */
+    var hideUnder=null;
+    nodes.forEach(function(n,i){
+      if(hideUnder!=null&&n.lv<=hideUnder) hideUnder=null;
+      var hidden=(hideUnder!=null);
+      if(!hidden&&n.kids.length&&!scopeOpen[n.id]) hideUnder=n.lv;
+      if(hidden) return;
+      var row=document.createElement('label');
+      row.className='ckf-row scope-row scope-l'+n.lv;
+      var tw=document.createElement('span');tw.className='scope-tw';
+      if(n.kids.length){
+        var ch=document.createElement('button');
+        ch.className='scope-chev'+(scopeOpen[n.id]?' open':'');
+        ch.type='button';
+        ch.innerHTML='&#9656;';
+        ch.title=(scopeOpen[n.id]?'Collapse':'Expand')
+          +' the sub-headings under this one';
+        ch.addEventListener('click',function(e){
+          e.preventDefault();e.stopPropagation();
+          scopeOpen[n.id]=!scopeOpen[n.id];
+          renderScopeMenu();
+        });
+        tw.appendChild(ch);
+      }
+      row.appendChild(tw);
+      var cb=document.createElement('input');
+      cb.type='checkbox';
+      var selfOn=on(n.id);
+      cb.checked=selfOn;
+      /* subtree disagrees with the heading -> a dash, not a tick */
+      cb.indeterminate=n.kids.some(function(k){return on(k)!==selfOn;});
+      cb.addEventListener('change',function(e){
+        e.stopPropagation();
+        if(scopeAll()&&!cb.checked){
+          /* first untick out of "entire notebook": everything else stays */
+          setScopePick(true);
+          nodes.forEach(function(x){secScope[x.id]=1;});
+        }
+        setSub(n,cb.checked);
+        renderScopeMenu();renderScopeBtn();applyFilters();
+      });
+      var tx=document.createElement('span');tx.className='scope-t';
+      tx.textContent=(n.num?n.num+'  ':'')+n.title;
+      if(n.kids.length){
+        var cnt=document.createElement('span');
+        cnt.className='scope-n';
+        cnt.textContent=n.kids.length;
+        cnt.title=n.kids.length+' sub-section'
+          +(n.kids.length>1?'s':'')+' inside';
+        tx.appendChild(cnt);
+      }
+      row.appendChild(cb);row.appendChild(tx);
+      m.appendChild(row);
+    });
+  }
   function setTvBtn(id,label,state){
     var b=$('#'+id); if(!b) return;
-    b.innerHTML='<span class="tdot"></span>'+label+': '+CODE_LABEL[state];
+    b.innerHTML='<span class="tdot"></span>'+label+': '
+      +(CODE_LABEL[state]||state);
     b.classList.toggle('off',state==='hidden');
     b.classList.toggle('half',state==='collapsed');
+    b.classList.toggle('mixed',state==='mixed');
     b.setAttribute('data-cs',state);
   }
+  /* which cross-notebook filter buttons make sense for the active tab */
+  function renderFilterExtras(){
+    var sh=APP.active&&APP.shells[APP.active];
+    var isTrace=!!(sh&&sh.trace);
+    var ti=$('#trace-inherit');
+    if(ti) ti.hidden=!isTrace;
+    /* a trace has no real sections, so "Apply to" has nothing to pick */
+    var sc=$('#sec-scope-btn');
+    if(sc) sc.hidden=isTrace;
+    var fa=$('#filters-all');
+    if(fa){
+      fa.hidden=isTrace;
+      var n=(APP.order||[]).length;
+      fa.disabled=n<2;
+      fa.classList.toggle('notarget',n<2);
+      fa.title=n<2
+        ?'Open a second notebook to copy these filters across'
+        :'Give every other open notebook the filters this one is using';
+    }
+  }
   function renderTypeButtons(){
-    setTvBtn('tv-markdown','Markdown',mdState);
-    setTvBtn('tv-code','Code',codeState);
-    setTvBtn('tv-plots','Plots',plotState);
-    setTvBtn('tv-output','Output',outState);
+    setTvBtn('tv-markdown','Markdown',readF('md'));
+    setTvBtn('tv-code','Code',readF('code'));
+    setTvBtn('tv-plots','Plots',readF('plot'));
+    setTvBtn('tv-output','Output',readF('out'));
+    renderFilterExtras();
+    /* "Apply to" with nothing ticked: the filters have no target, so say
+       so instead of letting clicks do nothing */
+    var none=scopePick()&&targetSids().length===0;
+    ['tv-markdown','tv-code','tv-plots','tv-output',
+     'ck-filter-btn','ot-filter-btn','pt-filter-btn'].forEach(function(id){
+      var b=$('#'+id); if(!b) return;
+      /* keep the button's real explanation to restore afterwards */
+      if(b.dataset.tip0==null) b.dataset.tip0=b.getAttribute('title')||'';
+      b.disabled=none;
+      b.classList.toggle('notarget',none);
+      b.title=none?'Pick at least one section in "Apply to" first'
+        :b.dataset.tip0;
+    });
+  }
+  /* the figure part's real children (the zoom buttons are chrome) */
+  function figCount(fig){
+    var n=0;
+    [].forEach.call(fig.children,function(el){
+      if(!el.classList.contains('figzoom')) n++;});
+    return n;
   }
   function applyFilters(){
     $$('.nbshell').forEach(function(sh){
+      var stem=sh.dataset.nb;
       $$('.card',sh).forEach(function(c){
-        /* a per-cell eye can hide one cell regardless of the global filters */
+        /* a per-cell eye can hide one cell regardless of the filters */
         var off=c.classList.contains('cell-off');
+        /* EVERY card obeys ITS OWN section's filter state, so one chapter
+           can hide code while the next keeps it (the vars below shadow the
+           old globals, which is why the body reads unchanged) */
+        /* the card's OWN section id, stamped at render time — a clone in
+           the tree view or a Plot-trace tab has no .section ancestor, and
+           an ancestor lookup would silently fall back to the default */
+        var st=stateFor(stem,secIdOf(c));
+        var mdState=st.md,codeState=st.code,plotState=st.plot,
+            outState=st.out;
+        var ckHidden=st.ck,otHidden=st.ot,ptHidden=st.pt;
         var note=c.dataset.note==='1';
         var filtGone;
         if(note){
@@ -4154,6 +4705,7 @@ _JS = r"""
             });
             [].forEach.call(fig.children,function(el){
               var off;
+              if(el.classList.contains('figzoom')) return;  /* chrome */
               if(el.classList.contains('figpager')){
                 var pgs=$$('.figpage',el);
                 off=pgs.length>0&&pgs.every(function(p){
@@ -4169,13 +4721,13 @@ _JS = r"""
               el.classList.toggle('pt-off',off);
               if(!off) figVis=true;
             });
-            if(!fig.children.length) figVis=true;
+            if(!figCount(fig)) figVis=true;
           }
           if(fig){
             /* every plot type-hidden -> the part folds away entirely (no
                "Show plot" stub over nothing) */
             var allPtOff=plotState!=='hidden'
-              &&!figVis&&fig.children.length>0;
+              &&!figVis&&figCount(fig)>0;
             fig.classList.toggle('part-off',
               plotState==='hidden'||allPtOff);
             fig.classList.toggle('part-fold',
@@ -4231,12 +4783,38 @@ _JS = r"""
       });
     });
     renderTypeButtons();
+    /* an advanced picker lights up when ANY selected section hides a type */
+    function anyType(map){
+      var stem=activeStem(),ids=targetSids(),n=0;
+      if(!ids.length) return Object.keys(FDEFof(stem)[map]).length>0;
+      ids.forEach(function(id){
+        if(Object.keys(stateFor(stem,id)[map]).length) n++;});
+      return n>0;
+    }
     var fb=$('#ck-filter-btn');
-    if(fb) fb.classList.toggle('on',Object.keys(ckHidden).length>0);
+    if(fb) fb.classList.toggle('on',anyType('ck'));
     var ob=$('#ot-filter-btn');
-    if(ob) ob.classList.toggle('on',Object.keys(otHidden).length>0);
+    if(ob) ob.classList.toggle('on',anyType('ot'));
     var pb=$('#pt-filter-btn');
-    if(pb) pb.classList.toggle('on',Object.keys(ptHidden).length>0);
+    if(pb) pb.classList.toggle('on',anyType('pt'));
+    renderScopeBtn();
+    markSecOverrides();
+    syncTypeMenus();
+  }
+  /* refresh an OPEN type menu's ticks in place. Rebuilding it mid-click
+     would yank the rows out from under a user ticking several in a row. */
+  function syncTypeMenus(){
+    ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu']
+      .forEach(function(sel){
+        $$(sel+' .ckf-row').forEach(function(r){
+          var t=r.dataset.t,map=r.dataset.map;
+          if(!t||!map) return;
+          var cb=$('input',r); if(!cb) return;
+          var n=countF(map,t);
+          cb.checked=n===0;
+          cb.indeterminate=n>0&&n<targetCount();
+        });
+      });
   }
   /* advanced filter menu: hide specific code subtypes */
   function presentCkTypes(){
@@ -4257,10 +4835,15 @@ _JS = r"""
     h.textContent='show code types';m.appendChild(h);
     types.forEach(function(t){
       var row=document.createElement('label');row.className='ckf-row';
+      row.dataset.t=t;row.dataset.map='ck';
       var cb=document.createElement('input');cb.type='checkbox';
-      cb.checked=!ckHidden[t];
+      var nHid=countF('ck',t);
+      cb.checked=nHid===0;
+      cb.indeterminate=nHid>0&&nHid<targetCount();
       cb.addEventListener('change',function(){
-        if(cb.checked) delete ckHidden[t]; else ckHidden[t]=1;
+        var show=cb.checked;
+        writeF(function(s){
+          if(show) delete s.ck[t]; else s.ck[t]=1;});
         applyFilters();
       });
       var sw=document.createElement('span');
@@ -4272,12 +4855,32 @@ _JS = r"""
   }
   /* only one advanced filter menu open at a time */
   function closeFilterMenus(except){
-    ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu']
+    ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu',
+     '#sec-scope-menu']
       .forEach(function(sel){
         if(sel===except) return;
         var m=$(sel); if(m&&!m.hidden) m.hidden=true;
       });
   }
+  var scBtn=$('#sec-scope-btn'),scMenu=$('#sec-scope-menu');
+  if(scBtn) scBtn.addEventListener('click',function(e){
+    e.stopPropagation();
+    if(!scMenu) return;
+    if(scMenu.hidden){
+      closeFilterMenus('#sec-scope-menu');
+      renderScopeMenu();scMenu.hidden=false;
+      var r=scBtn.getBoundingClientRect();
+      scMenu.style.top=(r.bottom+6)+'px';
+      scMenu.style.left=Math.max(6,
+        Math.min(r.left,window.innerWidth-260))+'px';
+    } else scMenu.hidden=true;
+  });
+  if(scMenu) scMenu.addEventListener('click',function(e){
+    e.stopPropagation();});
+  /* like the other pickers: a click anywhere else closes it */
+  document.addEventListener('click',function(e){
+    if(scMenu&&!scMenu.hidden&&e.target!==scBtn
+       &&!scMenu.contains(e.target)) scMenu.hidden=true;});
   var ckBtn=$('#ck-filter-btn'),ckMenu=$('#ck-filter-menu');
   if(ckBtn) ckBtn.addEventListener('click',function(e){
     e.stopPropagation();
@@ -4298,7 +4901,6 @@ _JS = r"""
   /* advanced PLOT-type filter: hide figures by the library that drew them
      (matplotlib images, plotly, bokeh, vega/altair, folium, animations,
      video, other widgets) — like the code-type filter, but for plots */
-  var ptHidden={};
   var PT_TYPES=['matplotlib','plotly','bokeh','vega','folium',
     'animation','video','widget'];
   function presentPtTypes(){
@@ -4320,10 +4922,15 @@ _JS = r"""
     h.textContent='show plot types';m.appendChild(h);
     types.forEach(function(t){
       var row=document.createElement('label');row.className='ckf-row';
+      row.dataset.t=t;row.dataset.map='pt';
       var cb=document.createElement('input');cb.type='checkbox';
-      cb.checked=!ptHidden[t];
+      var nHidP=countF('pt',t);
+      cb.checked=nHidP===0;
+      cb.indeterminate=nHidP>0&&nHidP<targetCount();
       cb.addEventListener('change',function(){
-        if(cb.checked) delete ptHidden[t]; else ptHidden[t]=1;
+        var show=cb.checked;
+        writeF(function(s){
+          if(show) delete s.pt[t]; else s.pt[t]=1;});
         applyFilters();});
       var sw=document.createElement('span');sw.className='ckf-dot pt-sw-'+t;
       var tx=document.createElement('span');tx.textContent=t;
@@ -4347,7 +4954,6 @@ _JS = r"""
        &&e.target!==ptBtn) ptMenu.hidden=true;});
   /* advanced OUTPUT-type filter: hide specific printed-output kinds (print,
      dataset, result, error) — like the code-type filter, but for output */
-  var otHidden={};
   /* preferred ordering; any other slug present (a finer repr type) is appended
      after these so the menu never drops a type it doesn't already know */
   var OT_TYPES=['print','numeric','string','bool','none','list','tuple','set',
@@ -4372,10 +4978,15 @@ _JS = r"""
     h.textContent='show output types';m.appendChild(h);
     types.forEach(function(t){
       var row=document.createElement('label');row.className='ckf-row';
+      row.dataset.t=t;row.dataset.map='ot';
       var cb=document.createElement('input');cb.type='checkbox';
-      cb.checked=!otHidden[t];
+      var nHidO=countF('ot',t);
+      cb.checked=nHidO===0;
+      cb.indeterminate=nHidO>0&&nHidO<targetCount();
       cb.addEventListener('change',function(){
-        if(cb.checked) delete otHidden[t]; else otHidden[t]=1;
+        var show=cb.checked;
+        writeF(function(s){
+          if(show) delete s.ot[t]; else s.ot[t]=1;});
         applyFilters();});
       var sw=document.createElement('span');sw.className='ckf-dot ot-sw-'+t;
       var tx=document.createElement('span');tx.textContent=t;
@@ -4400,30 +5011,74 @@ _JS = r"""
   /* the code state drives every code block: code cards AND the blocks
      folded under every figure / dataset card. Visible = expanded,
      Collapsed = folded, Hidden = the block disappears entirely. */
-  function setAllCode(open,root){
-    $$('.codewrap',root||document).forEach(function(w){
-      if(open) w.setAttribute('data-open','');
-      else w.removeAttribute('data-open');
-      var btn=$('.codetoggle',w);
-      if(btn) btn.setAttribute('aria-expanded',open?'true':'false');
+  function setCodeOpen(w,open){
+    if(open) w.setAttribute('data-open','');
+    else w.removeAttribute('data-open');
+    var btn=$('.codetoggle',w);
+    if(btn) btn.setAttribute('aria-expanded',open?'true':'false');
+  }
+  /* fold/expand each codewrap (data-open) to ITS OWN section's state.
+     HIDING a codewrap (code-off) is owned by applyFilters — the Code
+     filter plus the code-type filter. */
+  function applyCodeState(root){
+    var shells=(root&&root.classList
+      &&root.classList.contains('nbshell'))
+      ?[root]:$$('.nbshell',root||document);
+    shells.forEach(function(sh){
+      var stem=sh.dataset.nb;
+      $$('.codewrap',sh).forEach(function(w){
+        setCodeOpen(w,stateFor(stem,secIdOf(w.closest('.card')))
+          .code==='visible');
+      });
     });
   }
-  /* fold vs expand every codewrap (data-open). HIDING a codewrap (code-off)
-     is owned by applyFilters — the Code filter + the code-type filter. */
-  function applyCodeState(root){setAllCode(codeState==='visible',root);}
   function cycle3(s){return CODE_CYCLE[(CODE_CYCLE.indexOf(s)+1)%3];}
+  /* one click = advance the SELECTED sections. A mixed selection lands on
+     a definite state first (Visible) rather than advancing from a lie. */
+  function cycleF(key){
+    var cur=readF(key);
+    var next=(cur==='mixed')?'visible':cycle3(cur);
+    writeF(function(s){s[key]=next;});
+    applyFilters();
+    if(key==='code') applyCodeState();
+  }
   var mkBtn=$('#tv-markdown');
-  if(mkBtn) mkBtn.addEventListener('click',function(){
-    mdState=cycle3(mdState);applyFilters();});
+  if(mkBtn) mkBtn.addEventListener('click',function(){cycleF('md');});
   var plBtn=$('#tv-plots');
-  if(plBtn) plBtn.addEventListener('click',function(){
-    plotState=cycle3(plotState);applyFilters();});
+  if(plBtn) plBtn.addEventListener('click',function(){cycleF('plot');});
   var opBtn=$('#tv-output');
-  if(opBtn) opBtn.addEventListener('click',function(){
-    outState=cycle3(outState);applyFilters();});
+  if(opBtn) opBtn.addEventListener('click',function(){cycleF('out');});
   var cb=$('#tv-code');
-  if(cb) cb.addEventListener('click',function(){
-    codeState=cycle3(codeState);applyFilters();applyCodeState();});
+  if(cb) cb.addEventListener('click',function(){cycleF('code');});
+  var rsBtn=$('#filters-reset');
+  if(rsBtn) rsBtn.addEventListener('click',function(){
+    resetFilters();
+    docToast('Filters reset for this notebook');
+  });
+  /* a trace opens unfiltered; this pulls its source document's filters in
+     (its clones carry the source's section ids, so the per-section tweaks
+     land on exactly the right cells) */
+  var tiBtn=$('#trace-inherit');
+  if(tiBtn) tiBtn.addEventListener('click',function(){
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh||!sh.trace||!sh.source) return;
+    copyFiltersTo(APP.active,sh.source,true);
+    renderTypeButtons();renderScopeBtn();
+    applyFilters();applyCodeState();
+    docToast('Using the filters from '+sh.source);
+  });
+  var faBtn=$('#filters-all');
+  if(faBtn) faBtn.addEventListener('click',function(){
+    var src=String(activeStem()),n=0;
+    (APP.order||[]).forEach(function(s){
+      if(String(s)===src) return;
+      copyFiltersTo(s,src,false);n++;
+    });
+    if(!n){docToast('No other notebooks are open');return;}
+    applyFilters();applyCodeState();
+    docToast('Applied these filters to '+n+' other notebook'
+      +(n>1?'s':'')+' — their per-section tweaks were cleared');
+  });
   renderTypeButtons();
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */
@@ -4822,10 +5477,46 @@ _JS = r"""
 
   /* ---- present (full-screen) mode for the active document ---- */
   var docsEl=$('#docs');
+  /* The present bar carries the REAL filter controls: they are moved out of
+     the appbar on enter and put back (in place) on exit, so every existing
+     handler, menu and state read keeps working — no duplicate widgets. */
+  var pbMoved=[];
+  var PB_TOOLS=['#pt-grp','#md-grp','#ck-grp','#ot-grp','#sec-scope-grp',
+                '#fig-size-grp','#view-raw','#view-tree'];
+  var PB_MENUS=['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu',
+                '#sec-scope-menu'];
+  function pbTakeTools(){
+    var host=$('#pb-tools'); if(!host) return;
+    pbMoved=[];
+    PB_TOOLS.forEach(function(sel){
+      var el=$(sel); if(!el) return;
+      pbMoved.push({el:el,parent:el.parentNode,next:el.nextSibling});
+      host.appendChild(el);
+    });
+    /* the dropdowns are position:fixed at body level — inside a fullscreen
+       #docs they would paint UNDER the top layer, so they ride along */
+    PB_MENUS.forEach(function(sel){
+      var m=$(sel); if(!m||!docsEl) return;
+      pbMoved.push({el:m,parent:m.parentNode,next:m.nextSibling});
+      m.hidden=true;docsEl.appendChild(m);
+    });
+  }
+  function pbReturnTools(){
+    /* restore in reverse so each insertBefore anchor is still valid */
+    pbMoved.slice().reverse().forEach(function(m){
+      if(!m.parent) return;
+      if(m.el.classList.contains('ckfilter-menu')) m.el.hidden=true;
+      if(m.next&&m.next.parentNode===m.parent)
+        m.parent.insertBefore(m.el,m.next);
+      else m.parent.appendChild(m.el);
+    });
+    pbMoved=[];
+  }
   function enterDocPresent(){
     var sh=APP.active&&APP.shells[APP.active]; if(!sh) return;
     document.body.classList.add('doc-presenting');
     document.body.classList.remove('present-bar-hidden');
+    pbTakeTools();
     /* the controls must live INSIDE #docs: when #docs goes fullscreen it is
        promoted to the browser top layer, and a sibling bar would render
        beneath it (dead). As descendants they join the top layer. */
@@ -4843,6 +5534,8 @@ _JS = r"""
     if(!document.body.classList.contains('doc-presenting')) return;
     document.body.classList.remove('doc-presenting');
     document.body.classList.remove('present-bar-hidden');
+    document.body.classList.remove('present-rail');
+    pbReturnTools();
     var pb=$('#present-bar'); if(pb){pb.hidden=true;
       document.body.appendChild(pb);}
     var pbs=$('#present-bar-show'); if(pbs){pbs.hidden=true;
@@ -4859,6 +5552,11 @@ _JS = r"""
       toggleTree();renderViewBtns();});
     var c=$('#pb-collapse'); if(c) c.addEventListener('click',function(){
       document.body.classList.add('present-bar-hidden');});
+    var rl=$('#pb-rail'); if(rl) rl.addEventListener('click',function(){
+      var on=document.body.classList.toggle('present-rail');
+      rl.setAttribute('aria-pressed',on.toString());
+      relayoutActiveTree();
+    });
     var s=$('#present-bar-show'); if(s) s.addEventListener('click',function(){
       document.body.classList.remove('present-bar-hidden');});
   })();
@@ -5404,6 +6102,100 @@ _JS = r"""
   }
   window.SemActivate=activateOutputs;
 
+  /* The #/##/### section tiers form a real hierarchy: collapsing or hiding
+     a section also folds every DEEPER section that follows it, until a
+     heading at the same tier (or shallower) closes the subtree. Sections
+     stay flat siblings in the DOM — this pass just stamps the classes. */
+  function recalcSecCascade(sh){
+    var hideLv=null,offLv=null;
+    $$('.section',sh).forEach(function(sec){
+      var lv=+(sec.dataset.level||2);
+      if(hideLv!=null&&lv<=hideLv) hideLv=null;
+      if(offLv!=null&&lv<=offLv) offLv=null;
+      sec.classList.toggle('sec-under',hideLv!=null);
+      sec.classList.toggle('sec-under-off',offLv!=null);
+      var sid=sec.dataset.sec;
+      var row=sh.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      var items=sh.querySelector('.navitems[data-sec="'+sid+'"]');
+      if(row){
+        row.classList.toggle('nav-under',hideLv!=null);
+        row.classList.toggle('sec-under-off',offLv!=null);
+      }
+      if(items) items.classList.toggle('nav-under',
+        hideLv!=null||offLv!=null);
+      if(hideLv==null&&sec.classList.contains('sec-collapsed')) hideLv=lv;
+      if(offLv==null&&sec.classList.contains('sec-off')) offLv=lv;
+    });
+  }
+  /* ---- figure zoom: live embeds (plotly/bokeh/vega) size themselves to
+     their container once, so a resized figure must be told to re-fit ---- */
+  function resizeEmbeds(root){
+    setTimeout(function(){
+      try{
+        if(window.Plotly&&Plotly.Plots)
+          $$('.js-plotly-plot',root).forEach(function(g){
+            try{Plotly.Plots.resize(g);}catch(e){}});
+      }catch(e){}
+      try{window.dispatchEvent(new Event('resize'));}catch(e){}
+    },60);
+  }
+  /* ---- ⤢ : one figure, full screen. The node is CLONED (ids stripped) so
+     the live figure in the feed is never detached. ---- */
+  function openFigMax(fig){
+    var host=$('#figmax'),box=$('#figmax-box');
+    if(!host||!box||!fig) return;
+    box.innerHTML='';
+    var src=fig.querySelector(
+      '.figpage.current, .figframe, .figpager')||fig;
+    var cl=src.cloneNode(true);
+    $$('[id]',cl).forEach(function(n){n.removeAttribute('id');});
+    if(cl.removeAttribute) cl.removeAttribute('id');
+    $$('.figzoom',cl).forEach(function(n){
+      if(n.parentNode) n.parentNode.removeChild(n);});
+    box.appendChild(cl);
+    /* a fullscreen document keeps its own top layer — the overlay must
+       live inside it or it paints underneath */
+    var fsc=document.fullscreenElement;
+    (fsc||document.body).appendChild(host);
+    host.hidden=false;
+    resizeEmbeds(box);
+  }
+  function closeFigMax(){
+    var host=$('#figmax'),box=$('#figmax-box');
+    if(!host) return;
+    host.hidden=true;
+    if(box) box.innerHTML='';
+    if(host.parentNode!==document.body) document.body.appendChild(host);
+  }
+  (function(){
+    var host=$('#figmax'); if(!host) return;
+    host.addEventListener('click',function(e){
+      if(e.target===host||e.target.id==='figmax-close') closeFigMax();});
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&!host.hidden){e.stopPropagation();closeFigMax();}
+    },true);
+  })();
+  /* ---- universal figure size for the whole feed (appbar +/-) ---- */
+  var figAll=1;
+  function applyFigAll(){
+    $$('.nbshell').forEach(function(sh){
+      if(figAll===1) sh.style.removeProperty('--fzall');
+      else sh.style.setProperty('--fzall',figAll);});
+    var lab=$('#fig-size-val');
+    if(lab) lab.textContent=Math.round(figAll*100)+'%';
+    resizeEmbeds(document);
+  }
+  function bumpFigAll(mult){
+    figAll=Math.max(0.4,Math.min(2.5,Math.round(figAll*mult*100)/100));
+    applyFigAll();
+  }
+  (function(){
+    var i=$('#fig-bigger'),o=$('#fig-smaller'),v=$('#fig-size-val');
+    if(i) i.addEventListener('click',function(){bumpFigAll(1.15);});
+    if(o) o.addEventListener('click',function(){bumpFigAll(1/1.15);});
+    if(v) v.addEventListener('click',function(){figAll=1;applyFigAll();});
+  })();
+  APP.applyFigAll=applyFigAll;
   /* Per-card behaviours, shared by the docs shell and the Plot-trace tab so
      the trace is a genuine subset of the docs with every control live.
      (Nav/graph wiring stays in initShell — the trace tab has no sidebar.) */
@@ -5480,12 +6272,14 @@ _JS = r"""
         +'.navsec-row[data-sec="'+sid+'"] .navsec-chev');
       [].forEach.call(chevs,function(ch){
         ch.setAttribute('aria-expanded',(!val).toString());});
+      recalcSecCascade(shell);   /* fold/unfold the deeper tiers below */
     }
     function setSecOff(sid,val){
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
       var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
       if(sec) sec.classList.toggle('sec-off',val);
       if(row) row.classList.toggle('sec-off',val);
+      recalcSecCascade(shell);   /* hide/restore the deeper tiers below */
       applyFilters();   /* keep the sidebar in step (a hidden section stays) */
     }
     function isCollapsed(sid){
@@ -5523,6 +6317,24 @@ _JS = r"""
       var toggle=function(e){
         e.preventDefault();e.stopPropagation();
         var row=sp.closest('.navsec-row'); if(!row) return;
+        if(row.classList.contains('sec-under-off')){
+          /* dimmed because an ANCESTOR is hidden: restore the hidden
+             ancestors (bringing this row back with them) instead of
+             stamping a stray hide on the child itself */
+          var rows=$$('.navsec-row',shell);
+          var lv=+(row.dataset.level||2);
+          for(var k=rows.indexOf(row)-1;k>=0;k--){
+            var r2=rows[k],l2=+(r2.dataset.level||2);
+            if(l2>=lv) continue;
+            if(r2.classList.contains('sec-off'))
+              setSecOff(r2.dataset.sec,false);
+            lv=l2;
+            if(l2<=1) break;
+          }
+          if(row.classList.contains('sec-off'))
+            setSecOff(row.dataset.sec,false);
+          return;
+        }
         setSecOff(row.dataset.sec,!row.classList.contains('sec-off'));
       };
       sp.addEventListener('click',toggle);
@@ -5543,6 +6355,26 @@ _JS = r"""
       f.addEventListener('click',function(){
         if(f.classList.contains('part-fold')) f.classList.toggle('part-open');
       });
+    });
+    /* ---- per-figure zoom (+ / - / expand full screen) ---- */
+    $$('.cb-fig .figzoom',shell).forEach(function(z){
+      var fig=z.parentNode;
+      function bump(mult){
+        var cur=parseFloat(fig.style.getPropertyValue('--fz'))||1;
+        var next=Math.max(0.35,Math.min(3,
+          Math.round(cur*mult*100)/100));
+        if(next===1) fig.style.removeProperty('--fz');
+        else fig.style.setProperty('--fz',next);
+        resizeEmbeds(fig);
+      }
+      z.addEventListener('click',function(e){e.stopPropagation();});
+      var bi=$('.fz-in',z),bo=$('.fz-out',z),bx=$('.fz-max',z);
+      if(bi) bi.addEventListener('click',function(e){
+        e.stopPropagation();bump(1.25);});
+      if(bo) bo.addEventListener('click',function(e){
+        e.stopPropagation();bump(1/1.25);});
+      if(bx) bx.addEventListener('click',function(e){
+        e.stopPropagation();openFigMax(fig);});
     });
     /* ---- output folded by Output = Collapsed reveals on click. Open-only
        (unlike a figure): the output is text/tables you may want to select,
@@ -5739,6 +6571,7 @@ _JS = r"""
       if(row) row.classList.add('collapsed');
       if(items) items.classList.add('nav-collapsed');
     });
+    recalcSecCascade(shell);   /* re-fold the tiers under restored state */
     if(keep.raw&&!keep.tree) shell.classList.add('raw');
     if(keep.tree){
       shell.classList.add('tree');
@@ -5983,6 +6816,13 @@ _JS = r"""
     });
     if(sh.el.parentNode) sh.el.parentNode.removeChild(sh.el);
     delete APP.shells[stem];
+    /* drop this notebook's filter state — otherwise it lingers forever and
+       a later notebook with the same stem reopens pre-filtered */
+    var pre=String(stem)+'::';
+    delete defBy[String(stem)];delete pickBy[String(stem)];
+    [secF,secScope,scopeOpen].forEach(function(m){
+      for(var k in m){if(k.indexOf(pre)===0) delete m[k];}
+    });
     var list=sh.trace?APP.traces:APP.order;
     var i=list.indexOf(stem);
     if(i>=0) list.splice(i,1);
@@ -6492,6 +7332,20 @@ _DECK_HTML = """
                 title="Rotate left 15&#176;">&#10226;</button>
               <button class="dbtn etm" id="fmt-rotr"
                 title="Rotate right 15&#176;">&#10227;</button>
+              <button class="dbtn etm" id="fmt-arline"
+                title="Arrange the selected items in a row: middles aligned, equal gaps"
+                >&#8943; Row</button>
+              <button class="dbtn etm" id="fmt-argrid"
+                title="Arrange the selected items in a grid">&#8862;
+                Grid</button>
+              <span class="sh-drop" id="fmt-samewrap" hidden>
+                <button class="dbtn etm" id="fmt-same" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Make the selected items the same size">&#9713;
+                  Same size &#9662;</button>
+                <div class="sh-menu same-menu" id="fmt-same-menu"
+                  hidden></div>
+              </span>
             </span>
             <span class="rbn-lab">Arrange</span>
           </span>
@@ -7368,6 +8222,10 @@ body.slide-editing .apptop{display:none;}
 .an-cell.an-cropped .figframe{padding:0;}
 .an-cell.an-cropped .figframe img{object-fit:cover;width:100%;height:100%;
   max-width:none;max-height:none;}
+/* the "Same size" picker: a plain single-column list of text options */
+.sh-menu.same-menu{display:block;width:196px;padding:6px;}
+.same-menu .sh-opt{flex-direction:row;justify-content:flex-start;
+  width:100%;padding:7px 9px;font-size:12px;text-align:left;}
 /* the animation pane: effect picker + build-order sequence */
 .sh-menu.anim-pane{display:block;grid-template-columns:none;width:340px;
   padding:11px 12px;max-height:min(72vh,460px);overflow-y:auto;text-align:left;}
@@ -7599,10 +8457,22 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
 .an-arrow-line.sel{filter:drop-shadow(0 0 5px #39a9c0cc);}
 .an-arrow-hit{stroke:transparent;stroke-width:16;fill:none;}
 .deck.editing .an-arrow-hit{cursor:move;}
-.an-resize{position:absolute;right:-7px;bottom:-7px;width:15px;
+.an-resize{position:absolute;width:15px;
   height:15px;border-radius:4px;background:var(--cyan);
-  border:2px solid #0b141d;cursor:nwse-resize;display:none;z-index:3;}
+  border:2px solid #0b141d;display:none;z-index:3;}
+.an-rs-se{right:-7px;bottom:-7px;cursor:nwse-resize;}
+.an-rs-nw{left:-7px;top:-7px;cursor:nwse-resize;}
+.an-rs-ne{right:-7px;top:-7px;cursor:nesw-resize;}
+.an-rs-sw{left:-7px;bottom:-7px;cursor:nesw-resize;}
 .an-item.sel .an-resize{display:block;}
+/* free-rotation grip above the item (drag; Shift snaps to 15 deg) */
+.an-rotate{position:absolute;top:-30px;left:50%;margin-left:-8px;
+  width:16px;height:16px;border-radius:50%;background:#0e1926;
+  border:2px solid var(--cyan);cursor:grab;display:none;z-index:3;}
+.an-rotate::after{content:"";position:absolute;left:50%;top:100%;
+  width:2px;height:11px;background:var(--cyan);margin-left:-1px;}
+.an-item.sel .an-rotate{display:block;}
+.deck.editing .an-item.grpsel .an-rotate{display:none!important;}
 .an-endpt{position:absolute;width:15px;height:15px;
   margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--cyan);
   border:2px solid #0b141d;display:none;z-index:6;
@@ -9344,7 +10214,9 @@ _DECK_JS = r"""
           });
       }
       vis.forEach(function(st,k){
-        var sec=st.sectitle||'',sub=st.subsection||'';
+        /* partition by section ID, not title — two "### Summary" sections
+           under different chapters must NOT merge into one block */
+        var sec=st.section||st.sectitle||'',sub=st.subsection||'';
         if(sec!==lastSec){
           wireSecEye();                       /* finish the previous section */
           secNs=[];secHdr=null;
@@ -9353,7 +10225,9 @@ _DECK_JS = r"""
             var chev=document.createElement('span');
             chev.className='vo-sec-chev';chev.innerHTML='&#9662;';
             var lab=document.createElement('span');
-            lab.className='vo-sec-lab';lab.textContent=sec;
+            lab.className='vo-sec-lab';
+            lab.textContent=(st.secnum?st.secnum+' · ':'')
+              +(st.sectitle||sec);
             var eye=document.createElement('span');
             eye.className='vo-sec-eye';eye.innerHTML='&#128065;';
             eye.title='Hide or show this whole section';
@@ -9711,8 +10585,20 @@ _DECK_JS = r"""
     return h;
   }
   function mkResize(){
-    var r=document.createElement('span');r.className='an-resize';
-    r.title='Drag to resize';
+    /* all four corners resize (anchored on the opposite corner) */
+    var frag=document.createDocumentFragment();
+    ['nw','ne','sw','se'].forEach(function(cn){
+      var r=document.createElement('span');
+      r.className='an-resize an-rs-'+cn;
+      r.dataset.corner=cn;
+      r.title='Drag to resize';
+      frag.appendChild(r);
+    });
+    return frag;
+  }
+  function mkRotate(){
+    var r=document.createElement('span');r.className='an-rotate';
+    r.title='Drag to rotate freely (Shift snaps to 15°)';
     return r;
   }
   function attachAnnots(slideEl,s){
@@ -9828,7 +10714,8 @@ _DECK_JS = r"""
           d.style.fontFamily=FONTMAP[p.font];
         applyCommon(d,p,'translate(-50%,-50%)');
         d.setAttribute('data-idx',which);
-        if(editing) d.appendChild(mkHandle());
+        if(editing){d.appendChild(mkHandle());
+          d.appendChild(mkRotate());}
         var tx=document.createElement('span');tx.className='an-tx';
         var val=which==='t'?s.title:s.sub;
         tx.textContent=val
@@ -9915,7 +10802,8 @@ _DECK_JS = r"""
         }
         applyCommon(r,a);
         r.setAttribute('data-idx',i);
-        if(editing) r.appendChild(mkResize());
+        if(editing){r.appendChild(mkResize());
+          r.appendChild(mkRotate());}
         layer.appendChild(r);
       } else if(a.k==='cell'){
         var c=document.createElement('div');
@@ -10019,7 +10907,8 @@ _DECK_JS = r"""
             e.stopPropagation();startPick(i);});
           c.appendChild(pb);
         }
-        if(editing) c.appendChild(mkResize());
+        if(editing){c.appendChild(mkResize());
+          c.appendChild(mkRotate());}
         layer.appendChild(c);
       } else if(a.k==='text'){
         var d2=document.createElement('div');
@@ -10043,7 +10932,8 @@ _DECK_JS = r"""
         applyCommon(d2,a);
         d2.setAttribute('data-idx',i);
         if(editing) d2.appendChild(mkHandle());
-        if(editing) d2.appendChild(mkResize());
+        if(editing){d2.appendChild(mkResize());
+          d2.appendChild(mkRotate());}
         var tx2;
         if(a.list){
           tx2=document.createElement('ul');
@@ -10080,7 +10970,8 @@ _DECK_JS = r"""
         img.draggable=false;
         applyCrop(img,a);
         im.appendChild(img);
-        if(editing){im.appendChild(mkHandle());im.appendChild(mkResize());}
+        if(editing){im.appendChild(mkHandle());im.appendChild(mkResize());
+          im.appendChild(mkRotate());}
         layer.appendChild(im);
       }
     });
@@ -10221,6 +11112,9 @@ _DECK_JS = r"""
     show('#fmt-ungroup',isNum&&a.grp!=null);
     show('#fmt-front',isNum&&kind!=='arrow');
     show('#fmt-back',isNum&&kind!=='arrow');
+    show('#fmt-arline',nSel>=2);
+    show('#fmt-argrid',nSel>=2);
+    show('#fmt-samewrap',nSel>=2);
     var plainText=isText&&typeof selAnnot==='number';
     var showBg=plainText||noteCell;
     show('#fmt-txlab',(isText&&kind!=='cell')||noteCell);
@@ -10450,10 +11344,13 @@ _DECK_JS = r"""
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
   }
-  function startResize(layer,s,idx,ev0){
+  function startResize(layer,s,idx,ev0,corner){
     ev0.preventDefault();ev0.stopPropagation();
     var a=annotByIdx(s,idx);
     if(!a||typeof idx!=='number') return;
+    corner=corner||'se';
+    var east=corner.indexOf('e')>=0,west=corner.indexOf('w')>=0;
+    var south=corner.indexOf('s')>=0,north=corner.indexOf('n')>=0;
     var start=pctPoint(layer,ev0);
     var el=layer.querySelector('.an-item[data-idx="'+idx+'"]');
     var lr=layer.getBoundingClientRect();
@@ -10465,28 +11362,44 @@ _DECK_JS = r"""
       if(ff){a.x=ff.x;a.y=ff.y;a.w=ff.w;a.h=ff.h;figRatio=ff.ratio;}
     }
     var er=el?el.getBoundingClientRect():null;
+    var ox=a.x||0,oy=a.y||0;
     var ow=a.w||(er?er.width/lr.width*100:10);
     var oh=a.h||(er?er.height/lr.height*100:10);
     var thr=snapThr(layer);
     var targets=snapTargets(layer,s,[idx]);
     function mm(ev){
       var p=pctPoint(layer,ev);
-      a.w=Math.max(4,ow+p.x-start.x);
-      if(a.k!=='text') a.h=Math.max(4,oh+p.y-start.y);
+      var dx=p.x-start.x,dy=p.y-start.y;
+      /* the dragged corner moves; the opposite corner stays anchored */
+      if(east) a.w=Math.max(4,ow+dx);
+      if(west){var ww=Math.max(4,ow-dx);a.x=ox+(ow-ww);a.w=ww;}
+      if(a.k!=='text'){
+        if(south) a.h=Math.max(4,oh+dy);
+        if(north){var nh=Math.max(4,oh-dy);a.y=oy+(oh-nh);a.h=nh;}
+      }
       var sx=null,sy=null;
       if(!ev.altKey){
         /* the moving edges snap; an aspect-locked figure snaps its width
            and lets the height follow the plot's ratio. A guide only shows
            when the snap actually landed (the 4% minimum can cancel it). */
-        var bx=bestSnap(targets.xs,[a.x+a.w],thr.x);
-        if(bx&&a.w+bx.d>=4){a.w=a.w+bx.d;sx=bx.at;}
+        var bx=bestSnap(targets.xs,[east?a.x+a.w:a.x],thr.x);
+        if(bx){
+          if(east){if(a.w+bx.d>=4){a.w=a.w+bx.d;sx=bx.at;}}
+          else if(a.w-bx.d>=4){a.x=a.x+bx.d;a.w=a.w-bx.d;sx=bx.at;}
+        }
         if(a.k!=='text'&&!figRatio){
-          var by=bestSnap(targets.ys,[a.y+a.h],thr.y);
-          if(by&&a.h+by.d>=4){a.h=a.h+by.d;sy=by.at;}
+          var by=bestSnap(targets.ys,[south?a.y+a.h:a.y],thr.y);
+          if(by){
+            if(south){if(a.h+by.d>=4){a.h=a.h+by.d;sy=by.at;}}
+            else if(a.h-by.d>=4){a.y=a.y+by.d;a.h=a.h-by.d;sy=by.at;}
+          }
         }
       }
-      if(figRatio&&lr.height)
-        a.h=a.w*(lr.width/(lr.height*figRatio));
+      if(figRatio&&lr.height){
+        var fh=a.w*(lr.width/(lr.height*figRatio));
+        if(north) a.y=oy+oh-fh;   /* keep the bottom edge anchored */
+        a.h=fh;
+      }
       renderAnnots(layer,s);selectAnnot(layer,idx);
       drawSnapGuides(layer,sx,sy);
     }
@@ -10494,6 +11407,36 @@ _DECK_JS = r"""
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
       clearSnapGuides(layer);
+      markDirty();
+    }
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
+  }
+  function startRotate(layer,s,idx,ev0){
+    ev0.preventDefault();ev0.stopPropagation();
+    var a=annotByIdx(s,idx);
+    if(!a) return;
+    function mm(ev){
+      var el=layer.querySelector('.an-item[data-idx="'+idx+'"]');
+      if(!el) return;
+      /* the visual centre is rotation-invariant, so measuring the live
+         bounding box keeps the pivot stable while the item spins */
+      var r=el.getBoundingClientRect();
+      var ang=Math.atan2(ev.clientY-(r.top+r.height/2),
+                         ev.clientX-(r.left+r.width/2))*180/Math.PI+90;
+      if(ev.shiftKey) ang=Math.round(ang/15)*15;
+      ang=((ang%360)+360)%360;
+      if(ang>180) ang-=360;
+      /* a small magnetic dead-zone so items land EXACTLY straight */
+      [0,90,-90,180,-180].forEach(function(v){
+        if(Math.abs(ang-v)<=1) ang=(v===-180)?180:v;});
+      a.rot=Math.round(ang*10)/10||0;
+      renderAnnots(layer,s);paintSel(layer);
+    }
+    function mu(){
+      document.removeEventListener('mousemove',mm);
+      document.removeEventListener('mouseup',mu);
+      if(!a.rot) delete a.rot;
       markDirty();
     }
     document.addEventListener('mousemove',mm);
@@ -10589,7 +11532,14 @@ _DECK_JS = r"""
           var rawR=item.getAttribute('data-idx');
           var idxR=(rawR==='t'||rawR==='s')?rawR:+rawR;
           selectAnnot(layer,idxR);
-          startResize(layer,s,idxR,ev);
+          startResize(layer,s,idxR,ev,t.dataset.corner);
+          return;
+        }
+        if(item&&t.classList&&t.classList.contains('an-rotate')){
+          var rawRo=item.getAttribute('data-idx');
+          var idxRo=(rawRo==='t'||rawRo==='s')?rawRo:+rawRo;
+          selectAnnot(layer,idxRo);
+          startRotate(layer,s,idxRo,ev);
           return;
         }
         var ai=arrowAt(layer,s,ev);
@@ -11057,6 +12007,109 @@ _DECK_JS = r"""
   var backBtn=$('#fmt-back');
   if(backBtn) backBtn.addEventListener('click',function(){
     zMove(false);});
+  /* ---- Row / Grid arrange + "Make same size" (multi-selection) ---- */
+  function selRects(){
+    /* the selected, laid-out items with their VISUAL rects (an aspect-
+       fitted figure answers with the plot it shows, not its stored box) */
+    var s=pres.slides[cur]; if(!s) return [];
+    var l=stage.querySelector('.annot-layer'); if(!l) return [];
+    return selSet.filter(function(i){return typeof i==='number';})
+      .map(function(i){
+        var a=(s.annots||[])[i];
+        if(!a||a.k==='arrow'||a.lock||a.hide) return null;
+        var r=annotRectPct(l,s,i);
+        return r?{i:i,a:a,r:r,w:r.r-r.l,h:r.b-r.t}:null;
+      }).filter(Boolean);
+  }
+  function selBBox(items){
+    var bb={l:1e9,r:-1e9,t:1e9,b:-1e9};
+    items.forEach(function(x){
+      bb.l=Math.min(bb.l,x.r.l);bb.r=Math.max(bb.r,x.r.r);
+      bb.t=Math.min(bb.t,x.r.t);bb.b=Math.max(bb.b,x.r.b);});
+    return bb;
+  }
+  function placeAt(x,l2,t2){
+    x.a.x=l2;x.a.y=t2;
+    /* figure frames: pin the model to the visual box so the aspect fit
+       re-renders the plot exactly in the slot we computed */
+    if(x.a.k==='cell'){x.a.w=x.w;x.a.h=x.h;}
+  }
+  function rerenderSel(){
+    markDirty();
+    var s=pres.slides[cur];
+    var l=stage.querySelector('.annot-layer');
+    if(l&&s){renderAnnots(l,s);paintSel(l);}
+  }
+  function arrangeRow(){
+    var items=selRects(); if(items.length<2) return;
+    var bb=selBBox(items);
+    items.sort(function(p,q){return p.r.l-q.r.l;});
+    var sum=0;items.forEach(function(x){sum+=x.w;});
+    /* keep the selection's horizontal span; if the items cannot fit in
+       it side by side, fall back to a small fixed gap */
+    var gap=(bb.r-bb.l>=sum)
+      ?((bb.r-bb.l-sum)/(items.length-1)):1.5;
+    var cy=(bb.t+bb.b)/2,x0=bb.l;
+    items.forEach(function(x){
+      placeAt(x,x0,cy-x.h/2);x0+=x.w+gap;});
+    rerenderSel();
+  }
+  function arrangeGrid(){
+    var items=selRects(); if(items.length<2) return;
+    var bb=selBBox(items);
+    /* reading order: rows top-to-bottom, then left-to-right */
+    items.sort(function(p,q){return (p.r.t-q.r.t)||(p.r.l-q.r.l);});
+    var n=items.length;
+    var cols=Math.ceil(Math.sqrt(n)),rows=Math.ceil(n/cols);
+    var mw=0,mh=0;
+    items.forEach(function(x){mw=Math.max(mw,x.w);mh=Math.max(mh,x.h);});
+    /* grid cells at least as big as the largest item, growing past the
+       current bounding box when the items started stacked */
+    var cw=Math.max((bb.r-bb.l)/cols,mw+2);
+    var ch=Math.max((bb.b-bb.t)/rows,mh+2);
+    var ox=Math.max(0,Math.min(bb.l,100-cw*cols));
+    var oy=Math.max(0,Math.min(bb.t,100-ch*rows));
+    items.forEach(function(x,k){
+      placeAt(x,
+        ox+(k%cols)*cw+(cw-x.w)/2,
+        oy+Math.floor(k/cols)*ch+(ch-x.h)/2);
+    });
+    rerenderSel();
+  }
+  function sameSize(mode){
+    var items=selRects(); if(items.length<2) return;
+    var nums=selSet.filter(function(i){return typeof i==='number';});
+    var ref=null;
+    if(mode==='first'||mode==='last'){
+      var want=(mode==='first')?nums[0]:nums[nums.length-1];
+      ref=items.filter(function(x){return x.i===want;})[0];
+    } else {
+      items.forEach(function(x){
+        if(!ref||(mode==='smallest'
+          ?x.w*x.h<ref.w*ref.h:x.w*x.h>ref.w*ref.h)) ref=x;});
+    }
+    if(!ref) ref=items[items.length-1];  /* the reference was an arrow */
+    items.forEach(function(x){
+      if(x===ref) return;
+      if(x.a.k==='cell'){x.a.x=x.r.l;x.a.y=x.r.t;}
+      x.a.w=ref.w;
+      if(x.a.k!=='text') x.a.h=ref.h;
+    });
+    toast('Same size: matched the '+
+      (mode==='first'?'first selected':mode==='last'?'last selected'
+       :mode)+' item');
+    rerenderSel();
+  }
+  var arRowBtn=$('#fmt-arline');
+  if(arRowBtn) arRowBtn.addEventListener('click',arrangeRow);
+  var arGridBtn=$('#fmt-argrid');
+  if(arGridBtn) arGridBtn.addEventListener('click',arrangeGrid);
+  wireFloatDropdown('fmt-samewrap','fmt-same','fmt-same-menu',
+    [['last','Match LAST selected'],
+     ['first','Match FIRST selected'],
+     ['largest','Match the largest'],
+     ['smallest','Match the smallest']],'same',
+    function(mode){sameSize(mode);});
   var repBtn=$('#fmt-replace');
   if(repBtn) repBtn.addEventListener('click',function(){
     if(typeof selAnnot==='number') startPick(selAnnot);
@@ -13054,7 +14107,7 @@ _TEMPLATE = """<!doctype html>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <div class="appbar">
-    <span class="fgrp">
+    <span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
  Visible -> Collapsed -> Hidden"></button>
@@ -13062,12 +14115,12 @@ _TEMPLATE = """<!doctype html>
         title="Advanced: hide specific PLOT types (matplotlib, plotly,
  bokeh, vega, folium, …)">Plot types &#9662;</button>
     </span>
-    <span class="fgrp">
+    <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
         title="Markdown / note cards. Click to cycle: Visible -> Collapsed
  -> Hidden"></button>
     </span>
-    <span class="fgrp">
+    <span class="fgrp" id="ck-grp">
       <button class="toggle tv" id="tv-code"
         title="Code — the source in every cell (imports, prints, plotting, …).
  Click to cycle: Visible -> Collapsed -> Hidden"></button>
@@ -13075,7 +14128,7 @@ _TEMPLATE = """<!doctype html>
         title="Advanced: hide specific CODE cell types (imports, plotting,
  …)">Code types &#9662;</button>
     </span>
-    <span class="fgrp">
+    <span class="fgrp" id="ot-grp">
       <button class="toggle tv" id="tv-output"
         title="Printed output — the tables, values and text a cell prints.
  Everything a notebook produces is 'output'; plots are just the one kind
@@ -13083,6 +14136,33 @@ _TEMPLATE = """<!doctype html>
       <button class="toggle sub" id="ot-filter-btn"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)">Output types &#9662;</button>
+    </span>
+    <span class="fgrp" id="sec-scope-grp">
+      <button class="toggle sub" id="sec-scope-btn"
+        title="Choose WHICH sections the filters above act on — tick the
+ headings and sub-headings to include, change the filters, then pick a
+ different set and filter those differently. Each section remembers its
+ own filters. Default: the entire notebook."
+        >Apply to: Entire notebook &#9662;</button>
+      <button class="toggle sub" id="filters-all"
+        title="Give every other open notebook the filters this one is
+ using">&#8649; All notebooks</button>
+      <button class="toggle sub" id="trace-inherit" hidden
+        title="This trace opened unfiltered. Click to copy the filters from
+ the notebook it came from.">&#8615; Filters from document</button>
+      <button class="toggle sub" id="filters-reset"
+        title="Reset every filter — and every per-section override — in
+ THIS notebook back to the defaults">&#8635; Reset</button>
+    </span>
+    <span class="fgrp" id="fig-size-grp">
+      <button class="toggle sub" id="fig-smaller"
+        title="Make every figure in the feed smaller">&#8722;</button>
+      <button class="toggle sub" id="fig-size-val"
+        title="Figure size across the whole feed — click to reset to 100%"
+        >100%</button>
+      <button class="toggle sub" id="fig-bigger"
+        title="Make every figure in the feed bigger (each figure also has
+ its own +/- and an expand button on hover)">&#43;</button>
     </span>
     <span class="appbar-div" aria-hidden="true"></span>
     <button class="toggle" id="view-raw"
@@ -13146,9 +14226,17 @@ _TEMPLATE = """<!doctype html>
 <button class="presrail-show" id="presrail-show"
   title="Show presentations">&#187;</button>
 <div class="present-bar" id="present-bar" hidden>
-  <button class="pb-btn" id="pb-view"
-    title="Switch between the Narrative document and the Tree view">
-    &#9633; Tree</button>
+  <!-- everything except Exit lives in the collapsible tray: the real
+       filter groups are MOVED here on enter (and back on exit) so they
+       keep their ids and wiring -->
+  <div class="pb-tray" id="pb-tray">
+    <span class="pb-tools" id="pb-tools"></span>
+    <button class="pb-btn" id="pb-rail"
+      title="Show or hide the section sidebar">&#9776; Sections</button>
+    <button class="pb-btn" id="pb-view"
+      title="Switch between the Narrative document and the Tree view">
+      &#9633; Tree</button>
+  </div>
   <span class="pb-sep" aria-hidden="true"></span>
   <button class="pb-btn pb-exit" id="pb-exit"
     title="Exit full screen (Esc)">&#10005; Exit</button>
@@ -13256,9 +14344,15 @@ _TEMPLATE = """<!doctype html>
   </div>
 </div>
 <div class="drophint" id="drophint" hidden>Drop .ipynb files to open</div>
+<div class="figmax" id="figmax" hidden>
+  <button class="figmax-close" id="figmax-close"
+    title="Close (Esc)">&#10005; Close</button>
+  <div class="figmax-box" id="figmax-box"></div>
+</div>
 <div class="ckfilter-menu" id="ck-filter-menu" hidden></div>
 <div class="ckfilter-menu" id="ot-filter-menu" hidden></div>
 <div class="ckfilter-menu" id="pt-filter-menu" hidden></div>
+<div class="ckfilter-menu scope-menu" id="sec-scope-menu" hidden></div>
 <div class="note-dlg" id="note-dlg" hidden>
   <div class="note-dlg-box">
     <div class="note-dlg-h">Add a markdown note</div>
@@ -13715,6 +14809,11 @@ def _store_version(f: Path, cap: int = 25) -> None:
         h = hashlib.sha1(data).hexdigest()[:10]
         d = _versions_dir(f)
         d.mkdir(parents=True, exist_ok=True)
+        # a self-ignoring snapshot store: our own bookkeeping must never
+        # show up as untracked noise in the user's `git status`
+        gi = d.parent / ".gitignore"
+        if not gi.exists():
+            gi.write_text("*\n", encoding="utf-8")
         vers = sorted(d.glob("*.ipynb"))
         if vers and vers[-1].stem.rsplit("_", 1)[-1] == h:
             return                      # unchanged since the last snapshot
@@ -14469,7 +15568,8 @@ def _self_test() -> None:
     assert "function renderPtMenu" in out and "presentPtTypes" in out
     assert ".ckf-dot.pt-sw-bokeh" in out and ".ckf-dot.pt-sw-matplotlib" in out
     assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
-    assert out.count('class="fgrp"') == 4
+    # 4 type filters + the "Apply to" scope + the feed-wide figure sizer
+    assert out.count('class="fgrp"') == 6
     assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
             < out.index('id="tv-markdown"'))
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
@@ -14498,7 +15598,7 @@ def _self_test() -> None:
     assert 'id="tv-markdown"' in out and 'id="tv-plots"' in out
     assert 'id="tv-output"' in out and 'id="tv-code"' in out
     # Output is 3-state: it cycles like the rest and its part can fold
-    assert "outState=cycle3(outState)" in out
+    assert "cycleF('out')" in out and "return CODE_CYCLE[" in out
     assert ".cb-out.part-fold" in out and 'content:"\\25b8  Show output"' in out
     # PART-BASED: a cell's output splits into a filterable figure + output part;
     # the Code filter reaches the code (codewrap) in EVERY non-markdown cell
@@ -14571,6 +15671,12 @@ def _self_test() -> None:
     assert '"stem": "demo"' in out or '"stem":"demo"' in out
     # markdown notes: bullets + bold survive, math left for MathJax
     assert "<li>point one</li>" in out and "<strong>two</strong>" in out
+    # a raw-HTML lead (<b>Title</b>) no longer swallows the "- " bullets
+    # under it — the list still renders as a real list
+    _mdh = md_to_html("<b>Signal-to-noise</b>\n- Signal is S\n- Noise is N")
+    assert "<b>Signal-to-noise</b>" in _mdh
+    assert _mdh.count("<li>") == 2 and "<ul>" in _mdh
+    assert "- Signal" not in _mdh
     assert "\\bar{z}$" in out  # ' is escaped to &#x27;; DOM text is intact
     # anchors fall back to node id / cell id
     items = [it for s in doc.sections for it in s.items]
@@ -14615,6 +15721,68 @@ def _self_test() -> None:
     assert 'id="present-bar-show"' in out and 'id="pb-collapse"' in out
     assert "function enterDocPresent" in out and "function exitDocPresent" in out
     assert "body.doc-presenting" in out and "present-bar-hidden" in out
+    # present mode carries the REAL filter/code controls in a collapsible
+    # tray (moved, not duplicated) — only Exit stays outside it — and the
+    # section sidebar can slide back in
+    assert 'id="pb-tray"' in out and 'id="pb-tools"' in out
+    assert "function pbTakeTools" in out and "function pbReturnTools" in out
+    assert "'#pt-grp','#md-grp','#ck-grp','#ot-grp'" in out
+    assert 'id="pb-rail"' in out and "body.doc-presenting.present-rail" in out
+    # …and the fixed-position filter menus ride into the fullscreen layer
+    assert "var PB_MENUS=" in out
+    # figure zoom: per-figure -/+/expand, a feed-wide sizer, a full-screen
+    # viewer, and the multiplied width factor
+    assert 'class="figzoom"' in out and "fz-in" in out and "fz-max" in out
+    assert 'id="fig-bigger"' in out and 'id="fig-smaller"' in out
+    assert "function openFigMax" in out and 'id="figmax-box"' in out
+    assert "width:calc(100% * var(--fz) * var(--fzall))" in out
+    assert "function figCount" in out      # zoom chrome never counts as a plot
+    # "Apply to": filters can be scoped to ticked sections/sub-sections
+    assert 'id="sec-scope-btn"' in out and 'id="sec-scope-menu"' in out
+    assert "function renderScopeMenu" in out and "var secScope=" in out
+    assert "function scopeAll" in out and "scope-l3" in out
+    # …as an EXPANDABLE tree: a heading carries its sub-headings when
+    # ticked, and its arrow reveals them
+    assert "function scopeTree" in out and "var scopeOpen=" in out
+    assert "scope-chev" in out and "cb.indeterminate" in out
+    assert "function setSub" in out
+    # …and picking is an explicit MODE, so unticking everything means
+    # "no sections", never a silent fallback to the whole notebook
+    assert "function scopePick" in out and "'No sections'" in out
+    # FILTERS BELONG TO SECTIONS: each section carries its own state, so
+    # one chapter can hide code while the next collapses plots. The appbar
+    # reads/writes whichever sections "Apply to" selects, says "Mixed"
+    # when they disagree, and Reset clears every override.
+    assert "function stateFor" in out and "function newF" in out
+    assert "function readF" in out and "function writeF" in out
+    assert "function cycleF" in out and "mixed:'Mixed'" in out
+    assert ".toggle.tv.mixed .tdot" in out
+    assert 'id="filters-reset"' in out and "function resetFilters" in out
+    assert "function markSecOverrides" in out and "has-fover" in out
+    # an override that drifts back to the default stops being an override
+    # (no lying "· filtered" badge), and an empty pick disables the filters
+    assert "function pruneF" in out and "function sameF" in out
+    assert ".toggle.notarget" in out and "b.dataset.tip0" in out
+    # per-notebook isolation (the adversarial review's top findings): the
+    # DEFAULT and the pick are per stem, a tab switch rebinds the bar, and
+    # closing a notebook drops its filter state
+    assert "function FDEFof" in out and "var defBy={},secF={},pickBy={}" in out
+    assert "renderTypeButtons();renderScopeBtn();" in out
+    assert "delete defBy[String(stem)]" in out
+    # a card carries its own section id, so tree/trace CLONES keep obeying
+    # their source section instead of silently reverting to the default
+    assert 'data-secid="' in out and "function secIdOf" in out
+    assert "stateFor(stem,secIdOf(c))" in out
+    # a Plot-trace tab opens UNFILTERED (its own default, code showing) and
+    # offers to pull in the document's filters; any notebook can push its
+    # filters to all the others (greyed out when it is the only one open)
+    assert "function newF(trace)" in out and "code:trace?'visible'" in out
+    assert 'id="trace-inherit"' in out and "function copyFiltersTo" in out
+    assert 'id="filters-all"' in out and "fa.disabled=n<2" in out
+    assert "function renderFilterExtras" in out and "function docToast" in out
+    # per-section state is namespaced by notebook, so two tabs whose
+    # sections share a slug never trample each other
+    assert "function fkey" in out and "stateFor(stem," in out
 
     # id-less figure cells anchor by POSITION, and that anchor survives a
     # content edit (the code-derived title changes, the anchor must not) —
@@ -15061,6 +16229,16 @@ def _self_test() -> None:
     assert "function unlockAllFrames" in out and "window.confirm" in out
     assert "function loadLockedVersions" in out and "an-lockchip" in out
     assert "function frameFromVerCard" in out and "an-verwait" in out
+    # resize from ANY corner (opposite corner anchored) + a free-rotation
+    # grip above the item (Shift snaps to 15°)
+    assert "an-rs-nw" in out and "an-rs-sw" in out \
+        and "t.dataset.corner" in out
+    assert "function startRotate" in out and "an-rotate" in out
+    # multi-select arrange: Row / Grid, and "Same size" matching the
+    # first/last-selected (or largest/smallest) item
+    assert 'id="fmt-arline"' in out and 'id="fmt-argrid"' in out
+    assert "function arrangeRow" in out and "function arrangeGrid" in out
+    assert "function sameSize" in out and 'id="fmt-same-menu"' in out
     # classifier honesty: imports + real work reads "imports · code", a
     # fully commented-out cell is its own filterable "comments" kind
     assert _classify_code(
@@ -15078,6 +16256,84 @@ def _self_test() -> None:
         {"cell_type": "markdown", "source": "# Functions"},
         {"cell_type": "code", "source": "x = 1", "outputs": []}]})
     assert [s.title for s in hdoc.sections] == ["Trends", "Functions"]
+    # THREE section tiers: #/##/### are all real sections (levels 1/2/3)
+    # with outline numbers; #### stays an in-section kicker label
+    tdoc = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "# Opening and Processing"},
+        {"cell_type": "markdown", "source": "## ERA5"},
+        {"cell_type": "markdown", "source": "### Processing"},
+        {"cell_type": "code", "source": "p = 1", "outputs": []},
+        {"cell_type": "markdown", "source": "#### Opening"},
+        {"cell_type": "code", "source": "q = 1", "outputs": []},
+        {"cell_type": "markdown", "source": "## CMIP6"}]})
+    assert [(s.title, s.level, s.number) for s in tdoc.sections] == [
+        ("Opening and Processing", 1, "1"), ("ERA5", 2, "1.1"),
+        ("Processing", 3, "1.1.1"), ("CMIP6", 2, "1.2")]
+    proc = tdoc.sections[2]
+    assert [it.subsection for it in proc.items] == ["", "Opening"]
+    # a document that never uses h1 drops the unused leading counter
+    t2 = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "## A"},
+        {"cell_type": "markdown", "source": "### B"}]})
+    assert [(s.number) for s in t2.sections] == ["1", "1.1"]
+    # a tier the document NEVER uses vanishes from numbers ("1.1", not the
+    # phantom "1.0.1"); a tier that exists but hasn't opened yet stays 0 so
+    # two sections can never share a number ("0.1" / "1" / "1.1")
+    t3 = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "# A"},
+        {"cell_type": "markdown", "source": "### B"},
+        {"cell_type": "markdown", "source": "### C"}]})
+    assert [s.number for s in t3.sections] == ["1", "1.1", "1.2"]
+    t4 = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "## A"},
+        {"cell_type": "markdown", "source": "# B"},
+        {"cell_type": "markdown", "source": "## C"}]})
+    assert [s.number for s in t4.sections] == ["0.1", "1", "1.1"]
+    # a LATE "### Overview" must not claim the synthetic preamble bucket
+    # and teleport its content to the top (the claim window closes at the
+    # first heading)
+    t5 = parse_notebook({"cells": [
+        {"cell_type": "code", "source": "import os", "outputs": []},
+        {"cell_type": "markdown", "source": "# Intro"},
+        {"cell_type": "markdown", "source": "### Overview"},
+        {"cell_type": "code", "source": "late = 1", "outputs": []}]})
+    assert [s.title for s in t5.sections] == \
+        ["Overview", "Intro", "Overview"]
+    assert t5.sections[0].level == 2 and t5.sections[2].level == 3
+    assert "late = 1" in t5.sections[2].items[0].members[0]["code"]
+    # "#| section:" groups by name at TIER 2 only — a positional ###
+    # sub-heading sharing the name must not capture directive cells
+    t6 = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "# Model A"},
+        {"cell_type": "markdown", "source": "### Summary"},
+        {"cell_type": "code", "source": "sa = 1", "outputs": []},
+        {"cell_type": "code", "source": "#| section: Summary\nsx = 1",
+         "outputs": []}]})
+    t6_sum = [s for s in t6.sections if s.title == "Summary"]
+    assert len(t6_sum) == 2
+    assert t6_sum[0].level == 3 and t6_sum[1].level == 2
+    assert "sx = 1" in t6_sum[1].items[0].members[0]["code"]
+    # section slugs live in their own namespace: a ### heading never
+    # steals a same-titled card's slug (deck refs stay stable)
+    t7 = parse_notebook({"cells": [
+        {"cell_type": "markdown", "source": "### Trend map"},
+        {"cell_type": "code", "source": "#| title: Trend map\nplot()",
+         "outputs": []}]})
+    assert t7.sections[0].section_id == "sec-trend-map"
+    assert t7.sections[0].items[0].item_id == "trend-map"
+    # the playback trace partitions by section ID (same-titled sections
+    # stay apart) and labels the divider with the outline number
+    assert "var sec=st.section||st.sectitle||''" in out
+    assert '"secnum"' in out
+    # tiers reach the DOM: data-level + tier classes on sections, nav rows
+    # and cell lists; the eyebrow carries the outline number; and the
+    # collapse/hide CASCADE (an ancestor folds the deeper tiers) shipped
+    assert 'data-level="2"' in out and "sectionhead-l" in out
+    assert ".sectionhead-l3 h2" in out and ".navsec-l3" in out
+    assert "navitems-l" in out and '<span class="eyebrow">section 1<' in out
+    assert "function recalcSecCascade" in out
+    assert ".section.sec-under,.section.sec-under-off{display:none;}" in out
+    assert ".navsec-row.nav-under,.navitems.nav-under{display:none;}" in out
     # a defaultdict repr is a DICT for the Output-types filter, and the
     # card badge speaks the same language (so unchecking it works)
     assert _repr_kind("defaultdict(dict, {'a': 1})") == "dict"
