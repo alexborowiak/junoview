@@ -2590,6 +2590,13 @@ body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 .card.has-fig{--fz:1;
   width:calc(100% * var(--fz) * var(--fzall));
   margin-left:calc((1 - var(--fz) * var(--fzall)) * 50%);}
+/* a wider card is not a bigger figure: a PNG at its natural size ignores
+   a roomier box, because max-width only CAPS. While zoomed, the image
+   fills the frame so it actually grows. */
+.card.has-fig.zoomed .figframe img,
+.card.has-fig.zoomed .figframe svg,
+.card.has-fig.zoomed .figpage img{
+  width:100%;max-width:none;height:auto;}
 .cb-fig{position:relative;}
 /* top-LEFT on purpose: Plotly/Bokeh draw their own toolbar top-right, and
    the two would sit on top of each other. Invisible until you point at the
@@ -3089,12 +3096,16 @@ body.light .fgrp-cap{color:var(--ink-3);}
 .appbar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
   color:#04222b;font-weight:600;}
 .appbar .toggle.primary:hover{filter:brightness(1.08);color:#04222b;}
-.appbar .toggle.sub,.present-bar .toggle.sub{height:22px;font-size:10.5px;padding:0 9px;
-  color:#8ba0b2;border-color:#ffffff14;background:none;}
-.appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
-body.light .appbar .toggle.sub,.present-bar .toggle.sub{color:var(--ink-3);border-color:var(--line);
-  background:none;}
-body.light .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{color:var(--ink);}
+.appbar .toggle.sub,.present-bar .toggle.sub{height:22px;font-size:10.5px;
+  padding:0 9px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
+.appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
+  color:#fff;border-color:var(--cyan);}
+/* both selectors need the body.light prefix — without it the LIGHT rule
+   applies to the present bar in dark mode too */
+body.light .appbar .toggle.sub,body.light .present-bar .toggle.sub{
+  color:var(--ink-3);border-color:var(--line);background:#00000005;}
+body.light .appbar .toggle.sub:hover,
+body.light .present-bar .toggle.sub:hover{color:var(--ink);}
 /* push the trailing controls right WITHOUT a growing spacer: a flex:1
    spacer fills the first line and shoves everything after it onto a
    second row, even when there is room */
@@ -3102,11 +3113,13 @@ body.light .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{color:var(--
 .appbar-spring{flex:1;}
 /* a thin rule that marks where the content FILTERS end and the view/theme
    controls begin — centred against the 30px first row */
-.appbar-div{flex:none;width:1px;height:20px;background:#ffffff26;
-  margin:5px 2px 0;border-radius:1px;}
-body.light .appbar-div{background:#00000022;}
+/* group separators: full-height so the bar reads as distinct groups
+   (file · filters · scope+size · view · app), not one long run */
+.appbar-div{flex:none;width:1px;height:46px;background:#ffffff38;
+  margin:1px 0 0;border-radius:1px;}
+body.light .appbar-div{background:#00000026;}
 /* dark variants of the show/hide toggles */
-.appbar .toggle,.present-bar .toggle{border-color:#ffffff22;background:#ffffff0a;color:#cdd9e3;}
+.appbar .toggle,.present-bar .toggle{border-color:#ffffff40;background:#ffffff12;color:#d7e3ec;}
 .appbar-link{text-decoration:none;display:inline-flex;
   align-items:center;}
 .appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
@@ -6475,6 +6488,16 @@ _JS = r"""
      their container once, so a resized figure must be told to re-fit ---- */
   /* how far a card can grow before it runs past the stage and drags a
      horizontal scrollbar onto the whole page */
+  /* "zoomed" = this card's figure should FILL its frame (see the CSS):
+     only then does a wider card actually show a bigger plot */
+  function syncZoomed(card){
+    if(!card||!card.classList) return;
+    var own=parseFloat(card.style.getPropertyValue('--fz'))||1;
+    /* any deliberate zoom — smaller as well as bigger — makes the plot
+       track its frame; at exactly 1 it goes back to its natural size */
+    card.classList.toggle('zoomed',
+      Math.abs(own*(figAll||1)-1)>0.001);
+  }
   function maxZoomFor(card){
     var stage=card&&card.closest?card.closest('.stage'):null;
     var host=card&&card.parentNode;
@@ -6535,7 +6558,9 @@ _JS = r"""
   function applyFigAll(){
     $$('.nbshell').forEach(function(sh){
       if(figAll===1) sh.style.removeProperty('--fzall');
-      else sh.style.setProperty('--fzall',figAll);});
+      else sh.style.setProperty('--fzall',figAll);
+      $$('.card.has-fig',sh).forEach(syncZoomed);
+    });
     var lab=$('#fig-size-val');
     if(lab) lab.textContent=Math.round(figAll*100)+'%';
     resizeEmbeds(document);
@@ -6730,6 +6755,7 @@ _JS = r"""
           Math.round(cur*mult*100)/100));
         if(next===1) card.style.removeProperty('--fz');
         else card.style.setProperty('--fz',next);
+        syncZoomed(card);
         resizeEmbeds(card);
       }
       z.addEventListener('click',function(e){e.stopPropagation();});
@@ -15108,6 +15134,7 @@ _TEMPLATE = """<!doctype html>
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)">Types &#9662;</button>
     </span>
+    <span class="appbar-div" aria-hidden="true"></span>
     <span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Choose WHICH sections the filters above act on — select the
@@ -15156,6 +15183,7 @@ _TEMPLATE = """<!doctype html>
     </span>
     <!-- nothing hidden behind a menu: these all fit -->
     <span class="btn-grp appbar-right">
+      <span class="appbar-div" aria-hidden="true"></span>
       <button class="toggle" id="theme-btn"
         title="Switch between dark and light theme">&#9788;</button>
       <a class="toggle appbar-link" id="support-btn" href="{kofi}"
@@ -16795,6 +16823,13 @@ def _self_test() -> None:
     # the zoom widens the CARD, so its border/header grow with the figure
     # instead of the plot spilling outside its own cell
     assert ".card.has-fig{--fz:1;" in out
+    # a roomier card is not a bigger plot: max-width only caps, so a
+    # zoomed figure must FILL its frame or nothing visibly changes
+    assert ".card.has-fig.zoomed .figframe img" in out
+    assert "function syncZoomed" in out
+    # the app bar reads as groups: full-height separators between them
+    assert ".appbar-div{flex:none;width:1px;height:46px" in out
+    assert out.count('class="appbar-div"') == 4
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
     assert 'has-fig' in render_item(parse_notebook({"cells": [
         {"cell_type": "code", "source": "plot()", "outputs": [
