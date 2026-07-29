@@ -76,6 +76,28 @@ body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
 .rf-live{color:#7fd0b8;}
 .rf-old{color:var(--amber);}
+/* the commit hash doubles as the way in to every version */
+.rf-hashbtn{background:none;border:none;padding:0;cursor:pointer;
+  text-align:left;font:inherit;color:var(--cyan);display:inline-flex;
+  align-items:center;gap:5px;}
+.rf-hashbtn:hover{text-decoration:underline;}
+.rf-caret{font-size:8px;transition:transform .13s;}
+.rf-hashbtn.open .rf-caret{transform:rotate(180deg);}
+.rf-commits{margin-top:7px;max-height:240px;overflow-y:auto;
+  border-top:1px solid var(--chrome-line);padding-top:6px;}
+.rf-commits[hidden]{display:none;}
+.rf-commit{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;
+  width:100%;text-align:left;background:none;border:1px solid transparent;
+  border-radius:5px;padding:5px 6px;cursor:pointer;color:inherit;}
+.rf-commit:hover{background:#ffffff0e;border-color:var(--chrome-line);}
+.rf-ch{font-family:var(--mono);font-size:10px;color:var(--cyan);}
+.rf-cm{font-family:var(--sans);font-size:11px;color:var(--chrome-ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rf-cd{grid-column:2;font-family:var(--mono);font-size:9px;
+  color:var(--chrome-ink-2);}
+body.light .rf-commit:hover{background:#00000008;}
+body.light .rf-cm{color:var(--ink-2);}
+body.light .rf-cd{color:var(--ink-3);}
 body.light .rf-btn{border-color:var(--line);color:var(--ink-3);}
 body.light .rf-btn:hover{color:var(--ink);}
 body.light .rf-panel{background:#00000005;border-color:var(--line);}
@@ -9367,6 +9389,41 @@ through Ko-fi. Thank you.</p>
     });
   }
   APP.wireCardBehaviors=wireCardBehaviors;
+  /* ---- a notebook opened straight from GitHub still has a history: read
+     it from the public API, so the hash + version list work with no local
+     clone. Handles both the raw. and the blob/ form of the URL. ---- */
+  function ghFromUrl(u){
+    var m=/^https?:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/(.+)$/
+      .exec(u||'');
+    if(!m) m=/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(?:blob|raw)\/([^\/]+)\/(.+)$/
+      .exec(u||'');
+    if(!m) return null;
+    return {owner:m[1],repo:m[2],ref:m[3],
+      path:m[4].split('?')[0].split('#')[0]};
+  }
+  function ghRawAt(gh,sha){
+    return 'https://raw.githubusercontent.com/'+gh.owner+'/'+gh.repo
+      +'/'+sha+'/'+gh.path;
+  }
+  function ghCommits(gh){
+    var url='https://api.github.com/repos/'+encodeURIComponent(gh.owner)
+      +'/'+encodeURIComponent(gh.repo)+'/commits?per_page=25&sha='
+      +encodeURIComponent(gh.ref)+'&path='+encodeURIComponent(gh.path);
+    return fetch(url,{headers:{'Accept':'application/vnd.github+json'}})
+      .then(function(r){
+        if(r.status===403)
+          throw new Error('GitHub rate limit — try again later');
+        if(!r.ok) throw new Error('GitHub said '+r.status);
+        return r.json();
+      }).then(function(list){
+        return (list||[]).map(function(c){
+          var d=((c.commit||{}).author||{}).date||'';
+          var msg=((c.commit||{}).message||'').split('\n')[0];
+          return {id:String(c.sha||'').slice(0,10),full:c.sha,
+            msg:msg,date:d?d.slice(0,10):''};
+        });
+      });
+  }
   /* ---- File info: where this notebook came from. The path, the git
      commit it is sitting on, and the way in to every earlier version —
      all in one place at the top of the sidebar, with Reload beside it. */
@@ -9426,6 +9483,82 @@ through Ko-fi. Thank you.</p>
           'Leave this old version and reload the file as it is now',
           function(){openPath(path);}));
       }
+      /* --- the commit list, shown under the hash when you click it --- */
+      function commitList(commits,openAt){
+        var box=document.createElement('div');
+        box.className='rf-commits';box.hidden=true;
+        commits.forEach(function(c){
+          var b=document.createElement('button');
+          b.className='rf-commit';b.type='button';
+          var h=document.createElement('span');
+          h.className='rf-ch';h.textContent=c.id;
+          var m=document.createElement('span');
+          m.className='rf-cm';m.textContent=c.msg||'(no message)';
+          var d=document.createElement('span');
+          d.className='rf-cd';d.textContent=c.date||'';
+          b.appendChild(h);b.appendChild(m);b.appendChild(d);
+          b.title='Open the notebook as it was at '+c.id;
+          b.addEventListener('click',function(e){
+            e.stopPropagation();openAt(c);});
+          box.appendChild(b);
+        });
+        if(!commits.length){
+          var e0=document.createElement('div');
+          e0.className='rf-v rf-sub';
+          e0.textContent='no commits found for this file';
+          box.appendChild(e0);
+        }
+        return box;
+      }
+      /* the hash IS the way in: click it to see every version */
+      function hashRow(label,c,commits,openAt){
+        var r=document.createElement('div');r.className='rf-row';
+        var kk=document.createElement('div');kk.className='rf-k';
+        kk.textContent=label;
+        var btn=document.createElement('button');
+        btn.className='rf-v hash rf-hashbtn';btn.type='button';
+        var hid=document.createElement('span');hid.textContent=c.id;
+        var car=document.createElement('span');
+        car.className='rf-caret';car.textContent='▾';
+        btn.appendChild(hid);btn.appendChild(car);
+        btn.title='Show every version of this notebook';
+        var sub=document.createElement('div');
+        sub.className='rf-v rf-sub';
+        sub.textContent=(c.msg||'')+(c.date?('  ·  '+c.date):'');
+        var list=commitList(commits,openAt);
+        btn.addEventListener('click',function(e){
+          e.stopPropagation();
+          list.hidden=!list.hidden;
+          btn.classList.toggle('open',!list.hidden);
+        });
+        r.appendChild(kk);r.appendChild(btn);r.appendChild(sub);
+        r.appendChild(list);
+        return r;
+      }
+      /* ---- a notebook opened from GitHub: read its history from the
+         GitHub API, so the same hash/versions work with no local repo --- */
+      var gh=isUrlPath?ghFromUrl(path):null;
+      if(gh){
+        var ghr=row('github',gh.owner+'/'+gh.repo+' · '+gh.ref);
+        panel.insertBefore(ghr,acts);
+        var pend=row('history','loading commits…');
+        panel.insertBefore(pend,acts);
+        ghCommits(gh).then(function(commits){
+          if(pend.parentNode) pend.parentNode.removeChild(pend);
+          if(!commits.length) return;
+          panel.insertBefore(hashRow('current commit',commits[0],commits,
+            function(c){openPath(ghRawAt(gh,c.id));}),acts);
+        }).catch(function(e){
+          var v=$('.rf-v',pend);
+          if(v) v.textContent=(e&&e.message)||'could not reach GitHub';
+        });
+        acts.appendChild(act('↗ GitHub',
+          'Open this file on GitHub',function(){
+            try{window.open('https://github.com/'+gh.owner+'/'+gh.repo
+              +'/blob/'+gh.ref+'/'+gh.path,'_blank','noopener');}catch(e){}
+          }));
+        return;
+      }
       if(!(APP.mode==='app'&&path&&!isUrlPath)) return;
       /* git details come from the server */
       var gr=row('git','checking…');
@@ -9439,12 +9572,20 @@ through Ko-fi. Thank you.</p>
         v.textContent=(g.branch?('branch '+g.branch):'in a git repository');
         var c=g.commit;
         if(c&&c.id){
-          var cr=row('current commit',c.id,'hash');
-          var sub=document.createElement('div');
-          sub.className='rf-v rf-sub';
-          sub.textContent=(c.msg||'')+(c.date?('  ·  '+c.date):'');
-          $('.rf-v',cr).parentNode.appendChild(sub);
-          panel.insertBefore(cr,acts);
+          /* the hash expands into the full commit list, each openable */
+          APP.api('/api/versions',{path:path}).then(function(j){
+            var commits=(j&&j.commits)||[c];
+            panel.insertBefore(hashRow('current commit',c,commits,
+              function(cm){
+                APP.api('/api/openversion',{path:path,commit:cm.id})
+                  .then(function(r){
+                    if(r&&r.shell) mountShellHTML(r.shell,r.path||path);
+                  }).catch(function(){});
+              }),acts);
+          }).catch(function(){
+            panel.insertBefore(hashRow('current commit',c,[c],
+              function(){}),acts);
+          });
         }
         if(g.github){
           acts.appendChild(act('↗ GitHub',
