@@ -3245,7 +3245,7 @@ through Ko-fi. Thank you.</p>
 # App chrome (controls bar + tab rows), welcome screen, open dialog,
 # drag-drop hint
 _APP_CSS = r"""
-:root{--appbar-h:84px;--tabsrow-h:44px;--chrome-h:112px;--dc-w:430px;
+:root{--appbar-h:104px;--tabsrow-h:44px;--chrome-h:112px;--dc-w:430px;
   --presrail-w:176px;}
 body.presrail-min{--presrail-w:46px;}
 
@@ -3259,14 +3259,20 @@ body.presrail-min{--presrail-w:46px;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It WRAPS —
    a horizontal scrollbar in a toolbar just hides things. */
-.appbar{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;
+/* align-items:stretch so every SECTION is as tall as the bar and a
+   single-button group (+ Open) can fill both rows rather than floating at
+   the top of an empty column */
+.appbar{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;
   justify-content:center;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
-   bar gets (the builder can squeeze it) or what glyph they hold */
+   bar gets (the builder can squeeze it) or what glyph they hold.
+   34px is THE ribbon button height and it is set exactly once — a second
+   rule further down used to quietly win and leave the sub-pickers taller
+   than the buttons they hang under (2026-07-29) */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
-  flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
+  flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
   padding:0 14px;line-height:1;font-size:12px;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
@@ -3274,16 +3280,32 @@ body.presrail-min{--presrail-w:46px;}
 .fgrp{flex:none;display:flex;flex-direction:column;align-items:stretch;
   gap:3px;}
 .fgrp .toggle{width:100%;text-align:left;}
+/* a HORIZONTAL group: its caption sits to the LEFT of the buttons instead
+   of under them, so two of them stack in the height of one filter column
+   (the size steppers) */
+.fgrp-h{flex-direction:row;align-items:center;gap:8px;}
+.fgrp-h .fgrp-cap{order:-1;text-align:right;min-width:50px;line-height:1;
+  height:auto;}
 /* two small buttons sharing one row, so a group never grows past the two
    rows the app bar is tall */
-/* a labelled SECTION of the ribbon: its controls, then its name — the
-   same idea as the slide editor's ribbon groups */
-.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:4px;
+/* a labelled SECTION of the ribbon: its NAME, then its controls — the
+   label reads as a heading for the group below it (2026-07-29: it used to
+   sit underneath and read as a caption for whatever came next) */
+.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:5px;
   flex:none;}
-.abgrp-row{display:flex;align-items:flex-start;gap:6px;}
+.abgrp-row{display:flex;align-items:flex-start;gap:6px;flex:1;}
+/* + Open is one button in its own section, so it takes the full height */
+#ab-file .abgrp-row{align-items:stretch;}
+/* the chain matters: the row stretches the .fgrp (cross axis), but inside
+   the .fgrp the button's height is the MAIN axis — so it needs flex:1 or
+   it just sits at its natural 34px */
+#ab-file .abgrp-row .fgrp{flex:1;}
+#ab-file .abgrp-row .toggle{height:auto;min-height:34px;flex:1;}
+/* stacked rows inside one section (the two size steppers) */
+.abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
-  line-height:1;opacity:.75;}
+  line-height:1;opacity:.75;order:-1;}
 body.light .abgrp-lab{color:var(--ink-3);}
 /* buttons that belong together and must wrap as one unit */
 .btn-grp{display:flex;gap:4px;flex:none;align-items:flex-start;
@@ -3313,8 +3335,12 @@ body.light .fgrp-cap{color:var(--ink-3);}
 .appbar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
   color:#04222b;font-weight:600;}
 .appbar .toggle.primary:hover{filter:brightness(1.08);color:#04222b;}
-.appbar .toggle.sub,.present-bar .toggle.sub{height:25px;font-size:11px;
-  padding:0 9px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
+/* ONE button height across the whole ribbon (2026-07-29, user: "make all
+   buttons have same height"). A sub-picker is still visually quieter —
+   dimmer text, fainter border, smaller type — but it is never shorter,
+   because a short button beside a tall one reads as a broken grid. */
+.appbar .toggle.sub,.present-bar .toggle.sub{height:34px;font-size:11px;
+  padding:0 10px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
 .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
   color:#fff;border-color:var(--cyan);}
 /* both selectors need the body.light prefix — without it the LIGHT rule
@@ -3332,7 +3358,10 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    controls begin — centred against the 30px first row */
 /* group separators: full-height so the bar reads as distinct groups
    (file · filters · scope+size · view · app), not one long run */
-.appbar-div{flex:none;width:1px;height:60px;background:#ffffff38;
+/* the stacked View column: Raw over Tree */
+.vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;}
+.vw-stack .toggle{width:100%;justify-content:center;}
+.appbar-div{flex:none;width:1px;height:82px;background:#ffffff38;
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:#00000026;}
 /* dark variants of the show/hide toggles */
@@ -5615,7 +5644,7 @@ _JS = r"""
     var isTree=!!(sh&&sh.el.classList.contains('tree'));
     if(treeBtn){
       treeBtn.setAttribute('aria-pressed',isTree.toString());
-      treeBtn.textContent=isTree?'▤ Document':'□ Tree view';
+      treeBtn.textContent=isTree?'Document':'Tree';
       treeBtn.disabled=!sh;
     }
     var pv=$('#pb-view');
@@ -16365,7 +16394,7 @@ _TEMPLATE = """<!doctype html>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
-    <span class="abgrp" id="ab-size"><span class="abgrp-row"><span class="fgrp" id="fig-size-grp">
+    <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller"
           title="Make every figure in the feed smaller">&#8722;</button>
@@ -16378,7 +16407,7 @@ _TEMPLATE = """<!doctype html>
       </span>
       <span class="fgrp-cap">Figures</span>
     </span>
-    <span class="fgrp" id="md-size-grp">
+    <span class="fgrp fgrp-h" id="md-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="md-smaller"
           title="Smaller markdown / prose text">&#8722;</button>
@@ -16394,6 +16423,9 @@ _TEMPLATE = """<!doctype html>
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
+    <!-- Raw over Tree in one column, Present beside them: two short
+         buttons stacked cost the bar half the width of three in a line -->
+    <span class="vw-stack">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
  (cells in order, directives visible)">Raw</button>
@@ -16401,6 +16433,7 @@ _TEMPLATE = """<!doctype html>
       title="Tree view: the analysis as a dependency map you can expand,
  collapse and hide cell by cell. Toggle back for the narrative document.">
       Tree</button>
+    </span>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
  exit.">Present</button>
@@ -17904,7 +17937,9 @@ def _self_test() -> None:
     assert ".ckf-dot.pt-sw-bokeh" in out and ".ckf-dot.pt-sw-matplotlib" in out
     assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
     # file + 4 type filters + scope/reset + copy + figure & text size
-    assert out.count('class="fgrp"') == 9
+    # 7 vertical filter/scope groups + 2 horizontal size steppers (fgrp-h)
+    assert out.count('class="fgrp"') == 7
+    assert out.count('class="fgrp fgrp-h"') == 2
     # the ribbon is organised into LABELLED sections
     assert out.count('class="abgrp-lab"') == 6
     assert 'class="abgrp" id="ab-filters"' in out
@@ -17927,10 +17962,10 @@ def _self_test() -> None:
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
     assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
             < out.index('id="tv-markdown"'))
-    assert "--appbar-h:84px" in out and "--chrome-h:112px" in out
+    assert "--appbar-h:104px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:flex-start;gap:8px;" \
+    assert ".appbar{display:flex;align-items:stretch;gap:8px;" \
         "flex-wrap:wrap;" in out
     assert "justify-content:center;" in out   # the bar is centred
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
@@ -17940,7 +17975,7 @@ def _self_test() -> None:
     # they describe, rather than being duplicated in the ribbon
     assert "rf-btn rf-info" in out and "rf-btn rf-reload" in out
     # sub filter buttons are comfortably tall; expanded tree nodes widen
-    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:25px" in out
+    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:34px" in out
     assert ".tree-node.expanded{width:min(380px" in out
     # the client re-activates neutralised scripts + draws plotly specs
     assert "function activateOutputs" in out and "window.SemActivate" in out
@@ -18140,7 +18175,7 @@ def _self_test() -> None:
     assert ".card.has-fig.zoomed .figframe img" in out
     assert "function syncZoomed" in out
     # the app bar reads as groups: full-height separators between them
-    assert ".appbar-div{flex:none;width:1px;height:60px" in out
+    assert ".appbar-div{flex:none;width:1px;height:82px" in out
     # 4 in the filter ribbon + 2 grouping the custom-view styling bar
     assert out.count('class="appbar-div"') == 6
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
