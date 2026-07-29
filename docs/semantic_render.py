@@ -2558,8 +2558,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .cb-out.part-fold.part-open>*:not(.ot-off){display:revert;}
 .cb-out.part-fold.part-open::before{display:none;}
 
+/* one line: badge, title (elided if long), then the actions pinned to the
+   RIGHT. Without nowrap a long title pushed "Plot trace" onto its own row */
 .cardhead{display:flex;align-items:center;gap:10px;margin-bottom:12px;
-  padding-left:6px;}
+  padding-left:6px;flex-wrap:nowrap;min-width:0;}
 /* per-cell eye on the card header: hide this one cell (restore via sidebar) */
 .cell-eye{margin-left:auto;flex:none;background:none;border:none;
   color:var(--ink-3);cursor:pointer;font-size:13px;line-height:1;
@@ -2601,7 +2603,8 @@ body:not(.light) .ckmain-plotting .badge{background:#39a9c02b;color:#5fc3d8;}
 body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
 body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 .cardtitle{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;
-  flex:1;min-width:0;}
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
 /* titles that merely echo the first code line label the item in the
    nav, but are not repeated as a heading on the card */
 .cardtitle.echo{display:none;}
@@ -3081,14 +3084,14 @@ body.presrail-min{--presrail-w:46px;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It WRAPS —
    a horizontal scrollbar in a toolbar just hides things. */
-.appbar{display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;
+.appbar{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
-  padding:0 10px;line-height:1;}
+  padding:0 13px;line-height:1;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
    narrow instead of growing ever wider */
@@ -3110,7 +3113,7 @@ body.presrail-min{--presrail-w:46px;}
 /* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
    these below their natural width, so the label sat on the border. */
 .fgrp-row .toggle{flex:none;width:auto;justify-content:center;
-  text-align:center;padding-left:10px;padding-right:10px;}
+  text-align:center;padding-left:12px;padding-right:12px;}
 /* square steppers/icons sit beside the thing they act on */
 .fgrp-row .toggle.fz-step{flex:none;width:30px;padding:0;
   justify-content:center;font-size:14px;}
@@ -4921,7 +4924,9 @@ _JS = r"""
   function applyFilters(){
     $$('.nbshell').forEach(function(sh){
       var stem=sh.dataset.nb;
-      $$('.card',sh).forEach(function(c){
+      /* only the DOCUMENT feed: the tree view holds clones of these same
+         cards and must always show every node in full */
+      $$('.content .card',sh).forEach(function(c){
         /* a per-cell eye can hide one cell regardless of the filters */
         var off=c.classList.contains('cell-off');
         /* EVERY card obeys ITS OWN section's filter state, so one chapter
@@ -5321,7 +5326,7 @@ _JS = r"""
       ?[root]:$$('.nbshell',root||document);
     shells.forEach(function(sh){
       var stem=sh.dataset.nb;
-      $$('.codewrap',sh).forEach(function(w){
+      $$('.content .codewrap',sh).forEach(function(w){
         setCodeOpen(w,stateFor(stem,secIdOf(w.closest('.card')))
           .code==='visible');
       });
@@ -5615,6 +5620,14 @@ _JS = r"""
       var nd=nodes[+el.dataset.ti]; if(!nd) return;
       var clone=nd.card.cloneNode(true);
       clone.removeAttribute('id');clone.classList.add('in');
+      /* the tree is the WHOLE analysis: a node shows its cell in full,
+         whatever the document's filters are currently hiding */
+      clone.classList.remove('is-hidden','cell-off','collapsed','zoomed');
+      clone.style.removeProperty('--fz');
+      $$('.code-off',clone).forEach(function(x){
+        x.classList.remove('code-off');});
+      $$('.part-off,.part-fold,.pt-off,.ot-off',clone).forEach(function(x){
+        x.classList.remove('part-off','part-fold','pt-off','ot-off');});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
       $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
         .forEach(function(x){x.remove();});
@@ -5834,6 +5847,7 @@ _JS = r"""
     document.body.classList.remove('pb-folded');
     document.body.classList.remove('present-rail');
     pbReturnTools();
+    renderViewBtns();   /* the Tree button must work again immediately */
     var pb=$('#present-bar'); if(pb){pb.hidden=true;
       document.body.appendChild(pb);}
     var pbs=$('#present-bar-show'); if(pbs){pbs.hidden=true;
@@ -6833,6 +6847,7 @@ _JS = r"""
         else card.style.setProperty('--fz',next);
         syncZoomed(card);
         resizeEmbeds(card);
+        scheduleSaveLayout();   /* this size is yours to keep */
       }
       z.addEventListener('click',function(e){e.stopPropagation();});
       var bi=$('.fz-in',z),bo=$('.fz-out',z),bx=$('.fz-max',z);
@@ -7453,7 +7468,10 @@ _JS = r"""
   function saveLayout(stem){
     try{
       var sh=APP.shells[stem];
-      if(!sh||!sh.el||sh.trace||!sh.path) return;
+      if(!sh||!sh.el||sh.trace) return;
+      /* a static export has no path — fall back to the notebook's name so
+         the layout still sticks for that page */
+      var key=sh.path||('stem:'+stem);
       var st=captureViewState(sh.el);
       delete st.scroll;                 /* where you were is not layout */
       var pre=String(stem)+'::';
@@ -7464,8 +7482,14 @@ _JS = r"""
       for(var k2 in secScope){
         if(k2.indexOf(pre)===0&&secScope[k2])
           st.scope.push(k2.slice(pre.length));}
+      /* the size you set on individual figures is part of your layout */
+      st.figs={};
+      $$('.card.has-fig',sh.el).forEach(function(c){
+        var f=parseFloat(c.style.getPropertyValue('--fz'));
+        if(f&&f!==1&&c.dataset.anchor) st.figs[c.dataset.anchor]=f;
+      });
       st.v=1;
-      localStorage.setItem(viewKey(sh.path),JSON.stringify(st));
+      localStorage.setItem(viewKey(key),JSON.stringify(st));
     }catch(e){}
   }
   var saveT=null;
@@ -7494,6 +7518,13 @@ _JS = r"""
       scopeSeeded[String(stem)]=1;
     }
     invalidateSids();
+    Object.keys(st.figs||{}).forEach(function(an){
+      var c=shell.querySelector(
+        '.card[data-anchor="'+String(an).replace(/"/g,'\\"')+'"]');
+      if(!c) return;
+      c.style.setProperty('--fz',st.figs[an]);
+      syncZoomed(c);
+    });
     restoreViewState(shell,stem,{
       cellsOff:st.cellsOff||[],secsOff:st.secsOff||[],
       secsClosed:st.secsClosed||[],tree:!!st.tree,raw:!!st.raw});
@@ -7521,7 +7552,8 @@ _JS = r"""
     /* a reload keeps the live view; a fresh open restores the layout you
        last left this notebook in */
     if(keep) restoreViewState(shell,stem,keep);
-    else loadLayout(shell,stem,path||shell.dataset.path||'');
+    else loadLayout(shell,stem,
+      path||shell.dataset.path||('stem:'+stem));
     /* a VERSION of a notebook you already have open is not a new
        document — it must not turn up in Recent as a separate file */
     if(path&&!quiet&&APP.noteRecent) APP.noteRecent(path);
@@ -8784,6 +8816,9 @@ body.light .sp-act:hover{color:var(--ink);background:#00000010;}
 .vfull-body{flex:1;min-height:0;overflow:auto;}
 
 /* the figure "Plot trace" button */
+/* the card's actions live together at the top RIGHT */
+.plot-trace-btn{margin-left:auto;}
+.plot-trace-btn+.cell-eye{margin-left:0;}
 .plot-trace-btn{flex:none;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.02em;border:1px solid var(--line);background:var(--paper-2);
   color:var(--ink-2);border-radius:20px;padding:3px 10px;cursor:pointer;
@@ -15282,18 +15317,12 @@ _TEMPLATE = """<!doctype html>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <div class="appbar">
+    <!-- File info + reload live at the top of the sidebar, beside the
+         notebook they describe; only Open belongs to the app itself -->
     <span class="fgrp" id="file-grp">
-      <span class="fgrp-row">
-        <button class="toggle primary" id="tab-open" hidden
-          title="Open a notebook (.ipynb) from your computer or a
- URL">Open</button>
-        <button class="toggle" id="file-info-btn" disabled
-          title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open">File info
-          &#9662;</button>
-        <button class="toggle fz-step" id="file-reload" disabled
-          title="Reload this notebook">&#8635;</button>
-      </span>
+      <button class="toggle primary" id="tab-open" hidden
+        title="Open a notebook (.ipynb) from your computer or a
+ URL">&#43; Open</button>
     </span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="fgrp" id="pt-grp">
@@ -16794,7 +16823,7 @@ def _self_test() -> None:
     assert out.count('class="fgrp"') == 8
     # Open / File / Reload lead the ribbon, at full size
     assert 'class="toggle primary" id="tab-open"' in out
-    assert 'id="file-info-btn"' in out and 'id="file-reload"' in out
+    assert 'id="file-info-btn"' not in out   # they live in the sidebar
     assert (out.index('id="tab-open"') < out.index('id="tv-plots"'))
     # the scope + copy buttons are full-size, like the filters they act on
     assert 'class="toggle" id="sec-scope-btn"' in out
@@ -16811,14 +16840,14 @@ def _self_test() -> None:
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:flex-start;gap:4px;" \
+    assert ".appbar{display:flex;align-items:flex-start;gap:6px;" \
         "flex-wrap:wrap;" in out
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
     assert "function measureChrome" in out
     assert "'--chrome-h',h+'px'" in out
-    # …and File info is disabled-until-ready, never hidden-then-inserted
-    assert 'id="file-info-btn" disabled' in out
-    assert 'id="file-reload" disabled' in out
+    # …and File info + reload live in the SIDEBAR, beside the notebook
+    # they describe, rather than being duplicated in the ribbon
+    assert "rf-btn rf-info" in out and "rf-btn rf-reload" in out
     # sub filter buttons are comfortably tall; expanded tree nodes widen
     assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:22px" in out
     assert ".tree-node.expanded{width:min(380px" in out
@@ -17078,6 +17107,8 @@ def _self_test() -> None:
     # collapsed sections, tree/raw mode, and the whole filter setup)
     assert "function saveLayout" in out and "function loadLayout" in out
     assert "'junoview:layout:'" in out
+    # …including the size you set on an INDIVIDUAL figure
+    assert "st.figs={}" in out and "c.style.setProperty('--fz'" in out
     assert "else loadLayout(shell,stem," in out
     assert "function scheduleSaveLayout" in out
     # a tab opened AT A COMMIT keeps the notebook's name, with the short
