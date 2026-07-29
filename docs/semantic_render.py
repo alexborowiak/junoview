@@ -2146,6 +2146,36 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
   color:#eef4f8;letter-spacing:-.01em;}
 .railmeta{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink-2);
   margin-top:8px;letter-spacing:.02em;}
+/* where this notebook came from: path + git commit + earlier versions,
+   with the reload button beside it (it used to hide on the tab) */
+.railfile{display:flex;gap:4px;margin-top:11px;}
+.rf-btn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  border:1px solid var(--chrome-line);background:none;color:var(--chrome-ink-2);
+  padding:5px 8px;border-radius:5px;cursor:pointer;transition:all .13s;
+  display:inline-flex;align-items:center;gap:5px;line-height:1;}
+.rf-btn:hover{border-color:var(--cyan);color:var(--chrome-ink);}
+.rf-info{flex:1;justify-content:flex-start;min-width:0;}
+.rf-reload{flex:none;font-size:12px;padding:5px 9px;}
+.rf-btn[hidden]{display:none!important;}
+.rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
+  border-radius:7px;padding:9px 10px;background:#ffffff08;}
+.rf-panel[hidden]{display:none;}
+.rf-row{display:flex;flex-direction:column;gap:2px;margin-bottom:9px;}
+.rf-row:last-child{margin-bottom:0;}
+.rf-k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
+.rf-v{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink);
+  word-break:break-all;line-height:1.5;}
+.rf-v.hash{color:var(--cyan);}
+.rf-sub{color:var(--chrome-ink-2);font-size:9.5px;}
+.rf-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
+.rf-live{color:#7fd0b8;}
+.rf-old{color:var(--amber);}
+body.light .rf-btn{border-color:var(--line);color:var(--ink-3);}
+body.light .rf-btn:hover{color:var(--ink);}
+body.light .rf-panel{background:#00000005;border-color:var(--line);}
+body.light .rf-v{color:var(--ink-2);}
+body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
 
 /* ---------- nav ---------- */
 .nav{padding:14px 12px 8px;flex:1 0 auto;}
@@ -4162,25 +4192,8 @@ _JS = r"""
           +'returns to live';
         t.insertBefore(vm,lbl);
       }
-      if(sh.path){
-        var r=document.createElement('button');r.className='tab-b';
-        r.innerHTML='&#8635;';
-        r.title=/^https?:/.test(sh.path)
-          ?'Reload from URL':'Reload from disk';
-        r.addEventListener('click',function(e){e.stopPropagation();
-          openPath(sh.path);});
-        t.appendChild(r);
-        /* automatic snapshots (kept per open/reload): reopen any of them */
-        if(APP.mode==='app'&&!/^https?:/.test(sh.path)){
-          var vb=document.createElement('button');
-          vb.className='tab-b tab-verbtn';
-          vb.innerHTML='&#8986;';
-          vb.title='Versions — view an earlier snapshot of this notebook';
-          vb.addEventListener('click',function(e){e.stopPropagation();
-            showVersMenu(vb,stem);});
-          t.appendChild(vb);
-        }
-      }
+      /* reload + versions used to hide on the tab, where nobody found
+         them; they live in the sidebar's File info block now */
       var x=document.createElement('button');x.className='tab-b';
       x.innerHTML='&#10005;';x.title='Close tab';
       x.addEventListener('click',function(e){e.stopPropagation();
@@ -6502,12 +6515,110 @@ _JS = r"""
     });
   }
   APP.wireCardBehaviors=wireCardBehaviors;
+  /* ---- File info: where this notebook came from. The path, the git
+     commit it is sitting on, and the way in to every earlier version —
+     all in one place at the top of the sidebar, with Reload beside it. */
+  function wireFileInfo(shell,stem){
+    var bar=$('.railfile',shell),panel=$('.rf-panel',shell);
+    if(!bar||!panel) return;
+    var info=$('.rf-info',bar),rel=$('.rf-reload',bar);
+    var path=shell.dataset.path||'';
+    var isUrlPath=/^https?:/i.test(path);
+    if(rel){
+      rel.hidden=!path;
+      rel.title=isUrlPath?'Reload from the URL':'Reload from disk';
+      rel.addEventListener('click',function(){
+        if(path) openPath(path);});
+    }
+    function row(k,v,cls){
+      var r=document.createElement('div');r.className='rf-row';
+      var kk=document.createElement('div');kk.className='rf-k';
+      kk.textContent=k;
+      var vv=document.createElement('div');
+      vv.className='rf-v'+(cls?' '+cls:'');
+      vv.textContent=v;
+      r.appendChild(kk);r.appendChild(vv);
+      return r;
+    }
+    function act(label,title,fn){
+      var b=document.createElement('button');
+      b.className='rf-btn';b.type='button';
+      b.textContent=label;b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
+      return b;
+    }
+    function fill(){
+      panel.innerHTML='';
+      var sh=APP.shells[stem]||{};
+      panel.appendChild(row(isUrlPath?'address':'file on disk',
+        path||'not saved to a file'));
+      /* which version of the notebook you are looking at right now */
+      var ver=sh.version||'';
+      var vrow;
+      if(ver){
+        vrow=row('you are viewing',
+          /^git:/.test(ver)?('an earlier commit — '+ver.slice(4))
+            :'an earlier snapshot','rf-old');
+      } else vrow=row('you are viewing','the current file','rf-live');
+      panel.appendChild(vrow);
+      var acts=document.createElement('div');acts.className='rf-acts';
+      panel.appendChild(acts);
+      if(APP.mode==='app'&&path&&!isUrlPath){
+        acts.appendChild(act('⌚ Version history…',
+          'Every saved snapshot and git commit of this notebook — '
+          +'open any of them',
+          function(b){showVersMenu(b,stem);}));
+      }
+      if(ver){
+        acts.appendChild(act('↻ Back to current',
+          'Leave this old version and reload the file as it is now',
+          function(){openPath(path);}));
+      }
+      if(!(APP.mode==='app'&&path&&!isUrlPath)) return;
+      /* git details come from the server */
+      var gr=row('git','checking…');
+      panel.insertBefore(gr,acts);
+      APP.api('/api/gitstate',{path:path}).then(function(g){
+        var v=$('.rf-v',gr);
+        if(!g||!g.repo){
+          v.textContent='not in a git repository';
+          return;
+        }
+        v.textContent=(g.branch?('branch '+g.branch):'in a git repository');
+        var c=g.commit;
+        if(c&&c.id){
+          var cr=row('current commit',c.id,'hash');
+          var sub=document.createElement('div');
+          sub.className='rf-v rf-sub';
+          sub.textContent=(c.msg||'')+(c.date?('  ·  '+c.date):'');
+          $('.rf-v',cr).parentNode.appendChild(sub);
+          panel.insertBefore(cr,acts);
+        }
+        if(g.github){
+          acts.appendChild(act('↗ GitHub',
+            'Open this repository on GitHub',function(){
+              try{window.open(g.github,'_blank','noopener');}catch(e){}
+            }));
+        }
+      }).catch(function(){
+        var v=$('.rf-v',gr);
+        if(v) v.textContent='could not read git';
+      });
+    }
+    if(info) info.addEventListener('click',function(){
+      var open=panel.hidden;
+      panel.hidden=!open;
+      info.setAttribute('aria-expanded',open.toString());
+      if(open) fill();
+    });
+  }
   function initShell(shell){
     var data={};
     var de=$('.nb-data',shell);
     if(de){try{data=JSON.parse(de.textContent);}catch(e){}}
     var stem=shell.dataset.nb||data.stem||('nb-'+(APP.order.length+1));
     mdClampScan(shell);
+    wireFileInfo(shell,stem);
 
     /* ---- filename + path bar at the top of the document ---- */
     var db=$('.docbar',shell);
@@ -14427,6 +14538,15 @@ _SHELL_TEMPLATE = """<div class="shell nbshell" data-nb="{stem}"{path_attr}>
     <div class="railhead">
       <h1 class="railtitle">{title}</h1>
       <div class="railmeta">{meta}</div>
+      <div class="railfile">
+        <button class="rf-btn rf-info" type="button"
+          title="Where this notebook came from — its path, its git commit,
+ and every earlier version you can open">&#128196; File info
+          &#9662;</button>
+        <button class="rf-btn rf-reload" type="button"
+          title="Reload this notebook from disk">&#8635;</button>
+      </div>
+      <div class="rf-panel" hidden></div>
     </div>
     {nav}
     {graph_panel}
@@ -15219,7 +15339,9 @@ def _git_info(f: Path) -> dict:
             return {"repo": False}
         rem = _git_run(f, "config", "--get", "remote.origin.url")
         remote = rem.stdout.strip() if rem.returncode == 0 else ""
-        return {"repo": True, "remote": remote,
+        br = _git_run(f, "rev-parse", "--abbrev-ref", "HEAD")
+        branch = br.stdout.strip() if br.returncode == 0 else ""
+        return {"repo": True, "remote": remote, "branch": branch,
                 "github": _github_web_url(remote)}
     except Exception:
         return {"repo": False}
@@ -16628,7 +16750,13 @@ def _self_test() -> None:
     # automatic notebook versions: stored per open/reload (deduped, capped),
     # listed + reopened from the tab's ⌚ menu into the SAME stem/path
     assert "'/api/versions'" in out and "'/api/openversion'" in out
-    assert "function showVersMenu" in out and "tab-verbtn" in out
+    # File info: path + git commit + version history, in the sidebar where
+    # you can find it (reload moved off the tab and sits beside it)
+    assert "function wireFileInfo" in out and 'class="rf-panel"' in out
+    assert "rf-info" in out and "rf-reload" in out
+    assert "current commit" in out and "Version history" in out
+    assert "tab-verbtn" not in out      # the buried tab buttons are gone
+    assert "function showVersMenu" in out
     # …and the ⌚ menu also lists the notebook's GIT history (short hash +
     # commit message + date), opening the notebook as it was at any commit
     assert "git commits" in out and "vers-sub" in out

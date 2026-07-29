@@ -46,6 +46,36 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
   color:#eef4f8;letter-spacing:-.01em;}
 .railmeta{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink-2);
   margin-top:8px;letter-spacing:.02em;}
+/* where this notebook came from: path + git commit + earlier versions,
+   with the reload button beside it (it used to hide on the tab) */
+.railfile{display:flex;gap:4px;margin-top:11px;}
+.rf-btn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  border:1px solid var(--chrome-line);background:none;color:var(--chrome-ink-2);
+  padding:5px 8px;border-radius:5px;cursor:pointer;transition:all .13s;
+  display:inline-flex;align-items:center;gap:5px;line-height:1;}
+.rf-btn:hover{border-color:var(--cyan);color:var(--chrome-ink);}
+.rf-info{flex:1;justify-content:flex-start;min-width:0;}
+.rf-reload{flex:none;font-size:12px;padding:5px 9px;}
+.rf-btn[hidden]{display:none!important;}
+.rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
+  border-radius:7px;padding:9px 10px;background:#ffffff08;}
+.rf-panel[hidden]{display:none;}
+.rf-row{display:flex;flex-direction:column;gap:2px;margin-bottom:9px;}
+.rf-row:last-child{margin-bottom:0;}
+.rf-k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
+.rf-v{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink);
+  word-break:break-all;line-height:1.5;}
+.rf-v.hash{color:var(--cyan);}
+.rf-sub{color:var(--chrome-ink-2);font-size:9.5px;}
+.rf-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
+.rf-live{color:#7fd0b8;}
+.rf-old{color:var(--amber);}
+body.light .rf-btn{border-color:var(--line);color:var(--ink-3);}
+body.light .rf-btn:hover{color:var(--ink);}
+body.light .rf-panel{background:#00000005;border-color:var(--line);}
+body.light .rf-v{color:var(--ink-2);}
+body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
 
 /* ---------- nav ---------- */
 .nav{padding:14px 12px 8px;flex:1 0 auto;}
@@ -3054,6 +3084,15 @@ window.MathJax = {
     <div class="railhead">
       <h1 class="railtitle">Southern Hemisphere blocking &amp; ENSO diagnostics</h1>
       <div class="railmeta">7 figures · 1 datasets · 10 sections</div>
+      <div class="railfile">
+        <button class="rf-btn rf-info" type="button"
+          title="Where this notebook came from — its path, its git commit,
+ and every earlier version you can open">&#128196; File info
+          &#9662;</button>
+        <button class="rf-btn rf-reload" type="button"
+          title="Reload this notebook from disk">&#8635;</button>
+      </div>
+      <div class="rf-panel" hidden></div>
     </div>
     <nav class="nav" aria-label="Analysis sections"><div class="navkey"><span class="navkey-h">key</span><span class="nk k-note"><span class="dot"></span>markdown</span><span class="navkey-div" aria-hidden="true"></span><span class="nk k-figure"><span class="dot"></span>figure</span><span class="navkey-div" aria-hidden="true"></span><span class="nk k-code"><span class="dot"></span>code</span><span class="nk k-transform"><span class="dot"></span>transform</span><span class="nk ckmain-data"><span class="dot"></span>data</span><span class="nk ckmain-print"><span class="dot"></span>print</span></div><div class="navsec-row navsec-l1" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics" data-level="1"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-southern-hemisphere-blocking-enso-diagnostics" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics"><span class="navsec-t">Southern Hemisphere blocking &amp; ENSO diagnostics</span><span class="navsec-c">7</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l1" data-sec="sec-southern-hemisphere-blocking-enso-diagnostics"><a class="navitem k-note" href="#card-note" data-item="note"><span class="dot"></span><span class="navitem-t">Southern Hemisphere blocking &amp; ENSO diagnostics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l2" data-sec="sec-dataset" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-dataset" data-sec="sec-dataset"><span class="navsec-t">Dataset</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l2" data-sec="sec-dataset"><a class="navitem k-note" href="#card-note-2" data-item="note-2"><span class="dot"></span><span class="navitem-t">Dataset</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-code" href="#card-imports-plotting-style" data-item="imports-plotting-style"><span class="dot"></span><span class="navitem-t">Imports &amp; plotting style</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-transform" href="#card-grid" data-item="grid"><span class="dot"></span><span class="navitem-t">Grid &amp; time axis</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-transform" href="#card-modes" data-item="modes"><span class="dot"></span><span class="navitem-t">Synthetic climatology &amp; variability modes</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-dataset ckmain-data" href="#card-z500" data-item="z500"><span class="dot"></span><span class="navitem-t">Daily Z500 field, Southern Hemisphere (synthetic)</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-metric ckmain-print" href="#card-coverage" data-item="coverage"><span class="dot"></span><span class="navitem-t">Temporal &amp; spatial coverage</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l2" data-sec="sec-transforms" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-transforms" data-sec="sec-transforms"><span class="navsec-t">Transforms</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l2" data-sec="sec-transforms"><a class="navitem k-note" href="#card-note-3" data-item="note-3"><span class="dot"></span><span class="navitem-t">Transforms</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-transform" href="#card-clim" data-item="clim"><span class="dot"></span><span class="navitem-t">Day-of-year climatology</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-transform" href="#card-anom" data-item="anom"><span class="dot"></span><span class="navitem-t">Seasonal-cycle removal -&gt; daily anomalies</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l2" data-sec="sec-blocking-diagnostics" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-blocking-diagnostics" data-sec="sec-blocking-diagnostics"><span class="navsec-t">Blocking diagnostics</span><span class="navsec-c">4</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l2" data-sec="sec-blocking-diagnostics"><a class="navitem k-note" href="#card-note-4" data-item="note-4"><span class="dot"></span><span class="navitem-t">Blocking diagnostics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><div class="navsub">Climatology</div><a class="navitem k-figure" href="#card-clim-map" data-item="clim-map"><span class="dot"></span><span class="navitem-t">DJF mean Z500 and the climatological ridge</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l3" data-sec="sec-the-blocking-index" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-the-blocking-index" data-sec="sec-the-blocking-index"><span class="navsec-t">The blocking index</span><span class="navsec-c">2</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l3" data-sec="sec-the-blocking-index"><a class="navitem k-note" href="#card-note-5" data-item="note-5"><span class="dot"></span><span class="navitem-t">The blocking index</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><div class="navsub">Blocking frequency</div><a class="navitem k-transform" href="#card-tasman" data-item="tasman"><span class="dot"></span><span class="navitem-t">Tasman sector box-mean series</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-transform" href="#card-blockidx" data-item="blockidx"><span class="dot"></span><span class="navitem-t">Blocking threshold &amp; DJF frequency</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-figure" href="#card-block-freq" data-item="block-freq"><span class="dot"></span><span class="navitem-t">Tasman blocking frequency by austral summer</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-metric ckmain-print" href="#card-block-stat" data-item="block-stat"><span class="dot"></span><span class="navitem-t">Blocking summary statistics</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><div class="navsub">Regional composite</div><a class="navitem k-figure" href="#card-block-comp" data-item="block-comp"><span class="dot"></span><span class="navitem-t">Composite Z500 anomaly on blocked days</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l3" data-sec="sec-zonal-mean-evolution" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-zonal-mean-evolution" data-sec="sec-zonal-mean-evolution"><span class="navsec-t">Zonal-mean evolution</span><span class="navsec-c">1</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l3" data-sec="sec-zonal-mean-evolution"><a class="navitem k-note" href="#card-note-6" data-item="note-6"><span class="dot"></span><span class="navitem-t">Zonal-mean evolution</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-figure" href="#card-zonal-hov" data-item="zonal-hov"><span class="dot"></span><span class="navitem-t">Zonal-mean Z500 anomaly (time-latitude)</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l2" data-sec="sec-enso-diagnostics" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-enso-diagnostics" data-sec="sec-enso-diagnostics"><span class="navsec-t">ENSO diagnostics</span><span class="navsec-c">3</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l2" data-sec="sec-enso-diagnostics"><a class="navitem k-transform" href="#card-enso-idx" data-item="enso-idx"><span class="dot"></span><span class="navitem-t">Project anomalies onto the ENSO pattern</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l3" data-sec="sec-index-construction" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-index-construction" data-sec="sec-index-construction"><span class="navsec-t">Index construction</span><span class="navsec-c">3</span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l3" data-sec="sec-index-construction"><a class="navitem k-note" href="#card-note-7" data-item="note-7"><span class="dot"></span><span class="navitem-t">Index construction</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-figure" href="#card-nino34" data-item="nino34"><span class="dot"></span><span class="navitem-t">ENSO index from the leading SH anomaly mode</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><div class="navsub">Teleconnections</div><a class="navitem k-figure" href="#card-enso-comp" data-item="enso-comp"><span class="dot"></span><span class="navitem-t">Warm-phase teleconnection composite</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a><a class="navitem k-figure" href="#card-enso-spec" data-item="enso-spec"><span class="dot"></span><span class="navitem-t">Power spectrum of the ENSO index</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l2" data-sec="sec-interpretation" data-level="2"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-interpretation" data-sec="sec-interpretation"><span class="navsec-t">Interpretation</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l2" data-sec="sec-interpretation"><a class="navitem k-note" href="#card-note-8" data-item="note-8"><span class="dot"></span><span class="navitem-t">Interpretation</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div><div class="navsec-row navsec-l3" data-sec="sec-caveats" data-level="3"><button class="navsec-chev" aria-expanded="true" title="Collapse this section">▾</button><a class="navsec" href="#sec-sec-caveats" data-sec="sec-caveats"><span class="navsec-t">Caveats</span><span class="navsec-c"></span></a><span class="navsec-eye" role="button" tabindex="0" title="Hide or show this whole section" aria-label="Hide or show this whole section">&#128065;</span></div><div class="navitems navitems-l3" data-sec="sec-caveats"><a class="navitem k-note" href="#card-note-9" data-item="note-9"><span class="dot"></span><span class="navitem-t">Caveats</span><span class="navitem-eye" role="button" tabindex="0" title="Hide or show this cell" aria-label="Hide or show this cell">&#128065;</span></a></div></nav>
     <div class="railgraph"><div class="railgraph-h"><span class="eyebrow">analysis graph</span><button class="rg-collapse" aria-expanded="true" title="Collapse graph">–</button></div><div class="railgraph-b"><svg viewBox="0 0 268 530" width="100%" height="530" class="provsvg" role="img" aria-label="Analysis provenance graph"><path class="provedge" d="M 134.0 41.0 C 134.0 58.0 134.0 58.0 134.0 75.0" data-from="grid" data-to="modes"/><path class="provedge" d="M 134.0 41.0 C 134.0 90.0 134.0 90.0 134.0 139.0" data-from="grid" data-to="z500"/><path class="provedge" d="M 134.0 105.0 C 134.0 122.0 134.0 122.0 134.0 139.0" data-from="modes" data-to="z500"/><path class="provedge" d="M 134.0 169.0 C 134.0 186.0 55.3 186.0 55.3 203.0" data-from="z500" data-to="coverage"/><path class="provedge" d="M 134.0 169.0 C 134.0 186.0 134.0 186.0 134.0 203.0" data-from="z500" data-to="clim"/><path class="provedge" d="M 134.0 233.0 C 134.0 250.0 134.0 250.0 134.0 267.0" data-from="clim" data-to="anom"/><path class="provedge" d="M 134.0 169.0 C 134.0 186.0 212.7 186.0 212.7 203.0" data-from="z500" data-to="clim_map"/><path class="provedge" d="M 134.0 297.0 C 134.0 314.0 55.3 314.0 55.3 331.0" data-from="anom" data-to="tasman"/><path class="provedge" d="M 55.3 361.0 C 55.3 378.0 45.5 378.0 45.5 395.0" data-from="tasman" data-to="blockidx"/><path class="provedge" d="M 45.5 425.0 C 45.5 442.0 55.3 442.0 55.3 459.0" data-from="blockidx" data-to="block_freq"/><path class="provedge" d="M 45.5 425.0 C 45.5 442.0 134.0 442.0 134.0 459.0" data-from="blockidx" data-to="block_stat"/><path class="provedge" d="M 134.0 297.0 C 134.0 378.0 212.7 378.0 212.7 459.0" data-from="anom" data-to="block_comp"/><path class="provedge" d="M 45.5 425.0 C 45.5 442.0 212.7 442.0 212.7 459.0" data-from="blockidx" data-to="block_comp"/><path class="provedge" d="M 134.0 297.0 C 134.0 314.0 134.0 314.0 134.0 331.0" data-from="anom" data-to="zonal_hov"/><path class="provedge" d="M 134.0 297.0 C 134.0 314.0 212.7 314.0 212.7 331.0" data-from="anom" data-to="enso_idx"/><path class="provedge" d="M 134.0 105.0 C 134.0 218.0 212.7 218.0 212.7 331.0" data-from="modes" data-to="enso_idx"/><path class="provedge" d="M 212.7 361.0 C 212.7 378.0 104.5 378.0 104.5 395.0" data-from="enso_idx" data-to="nino34"/><path class="provedge" d="M 134.0 297.0 C 134.0 346.0 163.5 346.0 163.5 395.0" data-from="anom" data-to="enso_comp"/><path class="provedge" d="M 212.7 361.0 C 212.7 378.0 163.5 378.0 163.5 395.0" data-from="enso_idx" data-to="enso_comp"/><path class="provedge" d="M 212.7 361.0 C 212.7 378.0 222.5 378.0 222.5 395.0" data-from="enso_idx" data-to="enso_spec"/><g class="provnode" data-node="grid" data-target="grid" tabindex="0" role="button" aria-label="Go to Grid &amp; time axis"><rect x="105.0" y="11.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="30.0" text-anchor="middle">grid</text></g><g class="provnode" data-node="modes" data-target="modes" tabindex="0" role="button" aria-label="Go to Synthetic climatology &amp; variability modes"><rect x="105.0" y="75.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="94.0" text-anchor="middle">modes</text></g><g class="provnode" data-node="z500" data-target="z500" tabindex="0" role="button" aria-label="Go to Daily Z500 field, Southern Hemisphere (synthetic)"><rect x="105.0" y="139.0" rx="5" width="58.0" height="30" fill="#2f6f9e"/><text x="134.0" y="158.0" text-anchor="middle">z500</text></g><g class="provnode" data-node="coverage" data-target="coverage" tabindex="0" role="button" aria-label="Go to Temporal &amp; spatial coverage"><rect x="18.5" y="203.0" rx="5" width="73.6" height="30" fill="#2c8c7d"/><text x="55.3" y="222.0" text-anchor="middle">coverage</text></g><g class="provnode" data-node="clim" data-target="clim" tabindex="0" role="button" aria-label="Go to Day-of-year climatology"><rect x="105.0" y="203.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="222.0" text-anchor="middle">clim</text></g><g class="provnode" data-node="anom" data-target="anom" tabindex="0" role="button" aria-label="Go to Seasonal-cycle removal -&gt; daily anomalies"><rect x="105.0" y="267.0" rx="5" width="58.0" height="30" fill="#3b5566"/><text x="134.0" y="286.0" text-anchor="middle">anom</text></g><g class="provnode" data-node="clim_map" data-target="clim-map" tabindex="0" role="button" aria-label="Go to DJF mean Z500 and the climatological ridge"><rect x="175.9" y="203.0" rx="5" width="73.6" height="30" fill="#2f9bb0"/><text x="212.7" y="222.0" text-anchor="middle">clim_map</text></g><g class="provnode" data-node="tasman" data-target="tasman" tabindex="0" role="button" aria-label="Go to Tasman sector box-mean series"><rect x="25.7" y="331.0" rx="5" width="59.2" height="30" fill="#3b5566"/><text x="55.3" y="350.0" text-anchor="middle">tasman</text></g><g class="provnode" data-node="blockidx" data-target="blockidx" tabindex="0" role="button" aria-label="Go to Blocking threshold &amp; DJF frequency"><rect x="8.7" y="395.0" rx="5" width="73.6" height="30" fill="#3b5566"/><text x="45.5" y="414.0" text-anchor="middle">blockidx</text></g><g class="provnode" data-node="block_freq" data-target="block-freq" tabindex="0" role="button" aria-label="Go to Tasman blocking frequency by austral summer"><rect x="11.3" y="459.0" rx="5" width="88.0" height="30" fill="#2f9bb0"/><text x="55.3" y="478.0" text-anchor="middle">block_freq</text></g><g class="provnode" data-node="block_stat" data-target="block-stat" tabindex="0" role="button" aria-label="Go to Blocking summary statistics"><rect x="90.0" y="459.0" rx="5" width="88.0" height="30" fill="#2c8c7d"/><text x="134.0" y="478.0" text-anchor="middle">block_stat</text></g><g class="provnode" data-node="block_comp" data-target="block-comp" tabindex="0" role="button" aria-label="Go to Composite Z500 anomaly on blocked days"><rect x="168.7" y="459.0" rx="5" width="88.0" height="30" fill="#2f9bb0"/><text x="212.7" y="478.0" text-anchor="middle">block_comp</text></g><g class="provnode" data-node="zonal_hov" data-target="zonal-hov" tabindex="0" role="button" aria-label="Go to Zonal-mean Z500 anomaly (time-latitude)"><rect x="93.6" y="331.0" rx="5" width="80.8" height="30" fill="#2f9bb0"/><text x="134.0" y="350.0" text-anchor="middle">zonal_hov</text></g><g class="provnode" data-node="enso_idx" data-target="enso-idx" tabindex="0" role="button" aria-label="Go to Project anomalies onto the ENSO pattern"><rect x="175.9" y="331.0" rx="5" width="73.6" height="30" fill="#3b5566"/><text x="212.7" y="350.0" text-anchor="middle">enso_idx</text></g><g class="provnode" data-node="nino34" data-target="nino34" tabindex="0" role="button" aria-label="Go to ENSO index from the leading SH anomaly mode"><rect x="74.9" y="395.0" rx="5" width="59.2" height="30" fill="#2f9bb0"/><text x="104.5" y="414.0" text-anchor="middle">nino34</text></g><g class="provnode" data-node="enso_comp" data-target="enso-comp" tabindex="0" role="button" aria-label="Go to Warm-phase teleconnection composite"><rect x="123.1" y="395.0" rx="5" width="80.8" height="30" fill="#2f9bb0"/><text x="163.5" y="414.0" text-anchor="middle">enso_comp</text></g><g class="provnode" data-node="enso_spec" data-target="enso-spec" tabindex="0" role="button" aria-label="Go to Power spectrum of the ENSO index"><rect x="182.1" y="395.0" rx="5" width="80.8" height="30" fill="#2f9bb0"/><text x="222.5" y="414.0" text-anchor="middle">enso_spec</text></g></svg></div></div>
@@ -6876,25 +6915,8 @@ through Ko-fi. Thank you.</p>
           +'returns to live';
         t.insertBefore(vm,lbl);
       }
-      if(sh.path){
-        var r=document.createElement('button');r.className='tab-b';
-        r.innerHTML='&#8635;';
-        r.title=/^https?:/.test(sh.path)
-          ?'Reload from URL':'Reload from disk';
-        r.addEventListener('click',function(e){e.stopPropagation();
-          openPath(sh.path);});
-        t.appendChild(r);
-        /* automatic snapshots (kept per open/reload): reopen any of them */
-        if(APP.mode==='app'&&!/^https?:/.test(sh.path)){
-          var vb=document.createElement('button');
-          vb.className='tab-b tab-verbtn';
-          vb.innerHTML='&#8986;';
-          vb.title='Versions — view an earlier snapshot of this notebook';
-          vb.addEventListener('click',function(e){e.stopPropagation();
-            showVersMenu(vb,stem);});
-          t.appendChild(vb);
-        }
-      }
+      /* reload + versions used to hide on the tab, where nobody found
+         them; they live in the sidebar's File info block now */
       var x=document.createElement('button');x.className='tab-b';
       x.innerHTML='&#10005;';x.title='Close tab';
       x.addEventListener('click',function(e){e.stopPropagation();
@@ -9216,12 +9238,110 @@ through Ko-fi. Thank you.</p>
     });
   }
   APP.wireCardBehaviors=wireCardBehaviors;
+  /* ---- File info: where this notebook came from. The path, the git
+     commit it is sitting on, and the way in to every earlier version —
+     all in one place at the top of the sidebar, with Reload beside it. */
+  function wireFileInfo(shell,stem){
+    var bar=$('.railfile',shell),panel=$('.rf-panel',shell);
+    if(!bar||!panel) return;
+    var info=$('.rf-info',bar),rel=$('.rf-reload',bar);
+    var path=shell.dataset.path||'';
+    var isUrlPath=/^https?:/i.test(path);
+    if(rel){
+      rel.hidden=!path;
+      rel.title=isUrlPath?'Reload from the URL':'Reload from disk';
+      rel.addEventListener('click',function(){
+        if(path) openPath(path);});
+    }
+    function row(k,v,cls){
+      var r=document.createElement('div');r.className='rf-row';
+      var kk=document.createElement('div');kk.className='rf-k';
+      kk.textContent=k;
+      var vv=document.createElement('div');
+      vv.className='rf-v'+(cls?' '+cls:'');
+      vv.textContent=v;
+      r.appendChild(kk);r.appendChild(vv);
+      return r;
+    }
+    function act(label,title,fn){
+      var b=document.createElement('button');
+      b.className='rf-btn';b.type='button';
+      b.textContent=label;b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
+      return b;
+    }
+    function fill(){
+      panel.innerHTML='';
+      var sh=APP.shells[stem]||{};
+      panel.appendChild(row(isUrlPath?'address':'file on disk',
+        path||'not saved to a file'));
+      /* which version of the notebook you are looking at right now */
+      var ver=sh.version||'';
+      var vrow;
+      if(ver){
+        vrow=row('you are viewing',
+          /^git:/.test(ver)?('an earlier commit — '+ver.slice(4))
+            :'an earlier snapshot','rf-old');
+      } else vrow=row('you are viewing','the current file','rf-live');
+      panel.appendChild(vrow);
+      var acts=document.createElement('div');acts.className='rf-acts';
+      panel.appendChild(acts);
+      if(APP.mode==='app'&&path&&!isUrlPath){
+        acts.appendChild(act('⌚ Version history…',
+          'Every saved snapshot and git commit of this notebook — '
+          +'open any of them',
+          function(b){showVersMenu(b,stem);}));
+      }
+      if(ver){
+        acts.appendChild(act('↻ Back to current',
+          'Leave this old version and reload the file as it is now',
+          function(){openPath(path);}));
+      }
+      if(!(APP.mode==='app'&&path&&!isUrlPath)) return;
+      /* git details come from the server */
+      var gr=row('git','checking…');
+      panel.insertBefore(gr,acts);
+      APP.api('/api/gitstate',{path:path}).then(function(g){
+        var v=$('.rf-v',gr);
+        if(!g||!g.repo){
+          v.textContent='not in a git repository';
+          return;
+        }
+        v.textContent=(g.branch?('branch '+g.branch):'in a git repository');
+        var c=g.commit;
+        if(c&&c.id){
+          var cr=row('current commit',c.id,'hash');
+          var sub=document.createElement('div');
+          sub.className='rf-v rf-sub';
+          sub.textContent=(c.msg||'')+(c.date?('  ·  '+c.date):'');
+          $('.rf-v',cr).parentNode.appendChild(sub);
+          panel.insertBefore(cr,acts);
+        }
+        if(g.github){
+          acts.appendChild(act('↗ GitHub',
+            'Open this repository on GitHub',function(){
+              try{window.open(g.github,'_blank','noopener');}catch(e){}
+            }));
+        }
+      }).catch(function(){
+        var v=$('.rf-v',gr);
+        if(v) v.textContent='could not read git';
+      });
+    }
+    if(info) info.addEventListener('click',function(){
+      var open=panel.hidden;
+      panel.hidden=!open;
+      info.setAttribute('aria-expanded',open.toString());
+      if(open) fill();
+    });
+  }
   function initShell(shell){
     var data={};
     var de=$('.nb-data',shell);
     if(de){try{data=JSON.parse(de.textContent);}catch(e){}}
     var stem=shell.dataset.nb||data.stem||('nb-'+(APP.order.length+1));
     mdClampScan(shell);
+    wireFileInfo(shell,stem);
 
     /* ---- filename + path bar at the top of the document ---- */
     var db=$('.docbar',shell);
