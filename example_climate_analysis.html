@@ -2128,6 +2128,17 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
   border-radius:5px;cursor:pointer;transition:background .12s;}
 .dc-mi:hover{background:#39a9c026;}
 .dc-msep{height:1px;background:#ffffff14;margin:4px 6px;}
+/* the "Saved to" picker: a heading + a tick beside the current target */
+.dc-mhead{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
+  text-transform:uppercase;color:#7e93a4;padding:5px 11px 6px;}
+.dc-mi[aria-pressed="true"]{color:#fff;}
+.dc-mi[aria-pressed="true"]::before{content:"\2713  ";color:var(--cyan);}
+.dc-mi[disabled]{opacity:.45;cursor:default;}
+.dbtn.dc-target{font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.02em;max-width:230px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.dbtn.dc-target.tg-file{border-color:#46a89266;color:#8fd8c4;}
+body.light .dc-mhead{color:var(--ink-3);}
 body.creating-docs .docs{margin-left:min(var(--dc-w),94vw);}
 body.creating-docs .card{cursor:copy;}
 body.creating-docs .card:hover{outline:2px solid var(--cyan);
@@ -6131,13 +6142,25 @@ per screen, in execution order &mdash; and &uarr; climbs back out.</li>
 
 <h3>Saving</h3>
 <ul>
-<li>Edits <b>autosave as drafts</b> in your browser as you work.</li>
-<li>Desktop app: presentations autosave to
+<li>The <b>Saved to:</b> button beside <b>Save</b> says where this
+presentation lives, and lets you change it:
+<ul>
+<li><b>Browser</b> &mdash; kept in this browser, autosaving as you edit.
+Fine for a quick deck, but it is tied to this browser on this machine.</li>
+<li><b>A file on your computer</b> &mdash; pick a spot once and Junoview
+writes a <code>.junoview</code> file there. It <b>remembers that file
+between visits</b>, so Save (and autosave) go straight back to it &mdash;
+no re-picking, no downloads folder full of near-identical JSON.</li>
+<li><b>This project</b> (desktop app) &mdash;
 <code>junoview_project.json</code> next to where you launched it,
 along with your open tabs.</li>
-<li>Anywhere: <i>File &rarr; Download JSON</i> saves a deck as a
-file on your machine; <i>File &rarr; Load deck JSON</i> brings it back
-&mdash; later, or on another computer.</li>
+</ul></li>
+<li>A <code>.junoview</code> file is plain JSON with a friendlier name.
+Drop one next to its notebook as <code><i>notebook</i>.junoview</code>
+and it loads itself the next time you open that notebook.</li>
+<li><i>File &rarr; Download a copy</i> gives you a standalone
+<code>.junoview</code> to share; <i>File &rarr; Open a .junoview
+file</i> brings one back &mdash; later, or on another computer.</li>
 <li>Decks are robust to notebook edits: slides reference cells by
 <b>stable ids</b>, never position &mdash; re-upload an edited notebook
 and everything still resolves; a deleted cell just leaves an empty
@@ -6239,7 +6262,7 @@ through Ko-fi. Thank you.</p>
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
 <input type="file" id="fileinput" accept=".ipynb" multiple hidden>
-<input type="file" id="deckfile" accept=".json" hidden>
+<input type="file" id="deckfile" accept=".junoview,.json" hidden>
 
 <div class="deck" id="deck" hidden>
   <div class="deck-top">
@@ -6269,14 +6292,31 @@ through Ko-fi. Thank you.</p>
             <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
             <button class="dc-mi" id="mi-autosave" hidden></button>
             <button class="dc-mi" id="mi-pdf">Export PDF / print&#8230;</button>
-            <button class="dc-mi" id="mi-dl">Download JSON</button>
-            <button class="dc-mi" id="mi-load">Load deck
-              JSON&#8230;</button>
+            <button class="dc-mi" id="mi-dl">Download a copy
+              (.junoview)</button>
+            <button class="dc-mi" id="mi-load">Open a .junoview
+              file&#8230;</button>
             <button class="dc-mi" id="mi-discard">Discard changes</button>
             <button class="dc-mi" id="mi-del">Delete presentation</button>
           </div>
         </div>
         <button class="dbtn" id="dc-save">Save</button>
+        <span class="dc-menuwrap">
+          <button class="dbtn dc-target" id="dc-target" aria-haspopup="true"
+            aria-expanded="false"
+            title="Where this presentation is saved">
+            Saved to: Browser &#9662;</button>
+          <div class="dc-menu" id="target-menu" hidden>
+            <div class="dc-mhead">where this presentation is saved</div>
+            <button class="dc-mi" id="tg-project" hidden>This project</button>
+            <button class="dc-mi" id="tg-browser">This browser</button>
+            <button class="dc-mi" id="tg-file">A file on your
+              computer&#8230;</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="tg-pick" hidden>Choose a different
+              file&#8230;</button>
+          </div>
+        </span>
         <button class="dbtn dc-icon" id="dc-undo" disabled
           title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
         <button class="dbtn dc-icon" id="dc-redo" disabled
@@ -14884,11 +14924,167 @@ through Ko-fi. Thank you.</p>
           toast('Save failed: '+(e&&e.message?e.message:e));
       });
   }
+  /* ---------- WHERE this presentation is saved -----------------------
+     'project' (app mode: junoview_project.json), 'browser' (this browser,
+     the default everywhere else) or 'file' (a .junoview file you pick).
+     A picked file is REMEMBERED: the FileSystemFileHandle is stored in
+     IndexedDB, so the next visit saves straight back to the same place
+     without asking again (the browser only re-asks for permission). */
+  var TGKEY='semopts:'+SCOPE+':savetarget';
+  var HKEY='deck:'+SCOPE;
+  var canPickFile=!!window.showSaveFilePicker;
+  var saveTarget=lsGet(TGKEY)
+    ||(APP.mode==='app'?'project':'browser');
+  if(saveTarget==='project'&&APP.mode!=='app') saveTarget='browser';
+  if(saveTarget==='file'&&!canPickFile) saveTarget='browser';
+  var fileHandle=null,fileName='';
+  function idb(){
+    return new Promise(function(res,rej){
+      var r,done=false;
+      function fail(e){if(!done){done=true;rej(e);}}
+      function okd(v){if(!done){done=true;res(v);}}
+      /* a blocked or wedged open must never leave the caller hanging */
+      setTimeout(function(){fail(new Error('indexeddb timeout'));},4000);
+      try{r=indexedDB.open('junoview',1);}catch(e){fail(e);return;}
+      r.onupgradeneeded=function(){
+        try{r.result.createObjectStore('handles');}catch(e){}};
+      r.onsuccess=function(){okd(r.result);};
+      r.onerror=function(){fail(r.error);};
+      r.onblocked=function(){fail(new Error('indexeddb blocked'));};
+    });
+  }
+  function idbPut(k,v){
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction('handles','readwrite');
+        /* .put can throw synchronously (DataCloneError) */
+        try{t.objectStore('handles').put(v,k);}catch(e){rej(e);return;}
+        t.oncomplete=function(){res();};
+        t.onerror=function(){rej(t.error);};
+        t.onabort=function(){rej(t.error);};
+      });
+    });
+  }
+  function idbGet(k){
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction('handles','readonly');
+        var q=t.objectStore('handles').get(k);
+        q.onsuccess=function(){res(q.result);};
+        q.onerror=function(){rej(q.error);};
+      });
+    });
+  }
+  function permOK(h){
+    if(!h||!h.queryPermission) return Promise.resolve(!!h);
+    return h.queryPermission({mode:'readwrite'})
+      .then(function(s){return s==='granted';}).catch(function(){
+        return false;});
+  }
+  function permAsk(h){
+    if(!h) return Promise.resolve(false);
+    return permOK(h).then(function(ok){
+      if(ok||!h.requestPermission) return ok;
+      return h.requestPermission({mode:'readwrite'})
+        .then(function(s){return s==='granted';})
+        .catch(function(){return false;});
+    });
+  }
+  function pickSaveFile(){
+    if(!canPickFile) return Promise.resolve(null);
+    return window.showSaveFilePicker({
+      suggestedName:(pres.name||'presentation')+'.junoview',
+      types:[{description:'Junoview presentation',
+        accept:{'application/json':['.junoview','.json']}}]
+    }).then(function(h){
+      fileHandle=h;fileName=h.name||'';
+      /* REMEMBERING the file is best-effort: it must never delay or block
+         the save itself, so it runs in the background */
+      idbPut(HKEY,h).catch(function(){});
+      return h;
+    });
+  }
+  function deckFileText(){
+    return JSON.stringify({junoview:1,
+      presentations:plainIfSingle(mergedPresentations())},null,2);
+  }
+  /* write to the remembered file. `silent` = an autosave: never pops a
+     permission prompt (there is no user gesture behind it) */
+  function saveToFile(silent){
+    if(!fileHandle&&silent) return Promise.resolve(false);
+    return (fileHandle?Promise.resolve(fileHandle):pickSaveFile())
+      .then(function(h){
+        if(!h) return false;
+        return (silent?permOK(h):permAsk(h)).then(function(ok){
+          if(!ok){
+            if(!silent) toast('Junoview needs permission to write '
+              +(fileName||'that file'));
+            return false;
+          }
+          return h.createWritable().then(function(w){
+            return Promise.resolve(w.write(deckFileText()))
+              .then(function(){return w.close();});
+          }).then(function(){
+            lsDel(PFX+(pres.name||'untitled'));
+            saveStamp=new Date();saveKind=silent?'auto':'manual';
+            source='saved';status();renderTargetBtn();renderPresRow();
+            if(!silent) toast('Saved to '+(fileName||'your file'));
+            return true;
+          });
+        });
+      }).catch(function(e){
+        if(!silent&&(!e||e.name!=='AbortError'))
+          toast('Save failed: '+((e&&e.message)||e));
+        return false;
+      });
+  }
+  function targetLabel(){
+    if(saveTarget==='project') return 'This project';
+    if(saveTarget==='file') return fileName||'a file (not chosen yet)';
+    return 'Browser';
+  }
+  function renderTargetBtn(){
+    var b=$('#dc-target'); if(!b) return;
+    b.innerHTML='Saved to: '+esc(targetLabel())+' &#9662;';
+    b.classList.toggle('tg-file',saveTarget==='file');
+    var pj=$('#tg-project'); if(pj) pj.hidden=(APP.mode!=='app');
+    var pk=$('#tg-pick'); if(pk) pk.hidden=(saveTarget!=='file');
+    var tf=$('#tg-file');
+    if(tf) tf.textContent=canPickFile
+      ?'A file on your computer…'
+      :'A file (this browser can’t — use Download a copy)';
+    if(tf) tf.disabled=!canPickFile;
+    [['#tg-project','project'],['#tg-browser','browser'],
+     ['#tg-file','file']].forEach(function(p){
+      var el=$(p[0]);
+      if(el) el.setAttribute('aria-pressed',(saveTarget===p[1]).toString());
+    });
+    b.setAttribute('data-tip',
+      saveTarget==='file'
+        ?'Saving writes '+(fileName||'a .junoview file')
+          +' — Junoview remembers it between visits'
+        :saveTarget==='project'
+          ?'Saving writes junoview_project.json next to your notebooks'
+          :'Kept in this browser. Switch to a file to save it on your '
+            +'computer as .junoview');
+  }
+  function setTarget(t){
+    saveTarget=t;lsSet(TGKEY,t);
+    renderTargetBtn();renderSaveBtn();status();
+  }
   var AUTOKEY='semopts:'+SCOPE+':autosave';
   var autosaveOn=(APP.mode==='app')&&lsGet(AUTOKEY)!=='0';
   var autoTimer=null;
   function scheduleAutosave(){
-    if(!autosaveOn||APP.mode!=='app') return;
+    /* a remembered file autosaves too — silently, and only while the
+       browser still grants write permission (after a reload it waits for
+       the first Save click, which carries the user gesture it needs) */
+    if(saveTarget==='file'){
+      clearTimeout(autoTimer);
+      autoTimer=setTimeout(function(){saveToFile(true);},1200);
+      return;
+    }
+    if(!autosaveOn||APP.mode!=='app'||saveTarget!=='project') return;
     clearTimeout(autoTimer);
     autoTimer=setTimeout(function(){saveToProject(true);},1200);
   }
@@ -14912,7 +15108,11 @@ through Ko-fi. Thank you.</p>
   var saveBtn=$('#dc-save');
   function renderSaveBtn(){
     if(!saveBtn) return;
-    if(APP.mode==='app'){
+    if(saveTarget==='file'){
+      saveBtn.setAttribute('data-tip','Save now to '
+        +(fileName||'the .junoview file you pick')
+        +' — Junoview remembers it between visits');
+    } else if(saveTarget==='project'&&APP.mode==='app'){
       saveBtn.setAttribute('data-tip','Save now to '
         +'junoview_project.json'
         +(autosaveOn
@@ -14920,26 +15120,84 @@ through Ko-fi. Thank you.</p>
             +'second later'
           :' — autosave is OFF, only this button saves'));
     } else {
-      saveBtn.setAttribute('data-tip','Presentations are kept in '
-        +'this browser automatically as you edit — Save confirms '
-        +'it; use File › Download JSON for a shareable file');
+      saveBtn.setAttribute('data-tip','Kept in this browser '
+        +'automatically as you edit — Save confirms it. Switch '
+        +'"Saved to" to keep it as a file on your computer');
     }
     saveBtn.removeAttribute('title');
   }
   if(saveBtn) saveBtn.addEventListener('click',function(){
-    if(APP.mode==='app'){
-      if(!requireName()) return;
-      saveToProject(false);
-      return;
-    }
+    if(!requireName()) return;
+    if(saveTarget==='project'&&APP.mode==='app'){saveToProject(false);return;}
+    if(saveTarget==='file'){saveToFile(false);return;}
     lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
     lsSet(PFX+'last',pres.name||'untitled');
     saveStamp=new Date();saveKind='manual';
     status();
     toast('Kept in this browser — it also autosaves as you edit. '
-      +'File › Download JSON gives you a file.');
+      +'Switch "Saved to" to a file to keep it on your computer.');
   });
   renderSaveBtn();
+  /* ---- the "Saved to" picker ---- */
+  (function(){
+    var wrap=$('#dc-target')&&$('#dc-target').parentNode;
+    var btn=$('#dc-target'),menu=$('#target-menu');
+    if(!btn||!menu) return;
+    function close(){menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open.toString());
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
+    var pj=$('#tg-project');
+    if(pj) pj.addEventListener('click',function(){
+      close();setTarget('project');
+      toast('Saving now writes junoview_project.json');
+    });
+    var br=$('#tg-browser');
+    if(br) br.addEventListener('click',function(){
+      close();setTarget('browser');
+      toast('Kept in this browser from now on');
+    });
+    function chooseFile(){
+      close();
+      if(!canPickFile){
+        toast('This browser can’t save straight to a file — '
+          +'use File › Download a copy');
+        return;
+      }
+      if(!requireName()) return;
+      pickSaveFile().then(function(h){
+        if(!h) return;
+        setTarget('file');
+        return saveToFile(false);
+      }).catch(function(e){
+        if(!e||e.name!=='AbortError')
+          toast('Could not choose a file: '+((e&&e.message)||e));
+      });
+    }
+    var tf=$('#tg-file');
+    if(tf) tf.addEventListener('click',function(){
+      if(saveTarget==='file'&&fileHandle){
+        close();setTarget('file');
+        toast('Saving writes '+fileName);
+        return;
+      }
+      chooseFile();
+    });
+    var pk=$('#tg-pick');
+    if(pk) pk.addEventListener('click',chooseFile);
+    /* a file chosen on an earlier visit is still remembered */
+    idbGet(HKEY).then(function(h){
+      if(!h) return;
+      fileHandle=h;fileName=h.name||'';
+      renderTargetBtn();renderSaveBtn();
+    }).catch(function(){});
+    renderTargetBtn();
+  })();
 
   /* direct save-into-.ipynb is parked for now (kept for later) */
   var ENABLE_SAVE_TO_IPYNB=false;
@@ -14989,18 +15247,14 @@ through Ko-fi. Thank you.</p>
     writeBtn.hidden=true;
   }
   menuAction('#mi-dl',function(){
-    var blob=new Blob(
-      [JSON.stringify({presentations:plainIfSingle(mergedPresentations())},
-        null,2)],
-      {type:'application/json'});
+    var blob=new Blob([deckFileText()],{type:'application/json'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=(APP.order.length===1?APP.order[0]:'project')+'.deck.json';
+    a.download=(APP.order.length===1?APP.order[0]:'project')+'.junoview';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
     toast(APP.order.length===1
-      ?'Downloaded. Keep it next to the .ipynb (auto-loads) '
-        +'or bake in with --embed-deck.'
+      ?'Downloaded. Keep it next to the .ipynb and it loads itself.'
       :'Downloaded. Load it with --deck, or save to the project instead.');
   });
   menuAction('#mi-load',function(){
