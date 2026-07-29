@@ -2160,6 +2160,11 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
 .rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
   border-radius:7px;padding:9px 10px;background:#ffffff08;}
 .rf-panel[hidden]{display:none;}
+/* the same panel, floated under the ribbon's File button */
+.rf-panel.rf-float{position:fixed;z-index:200;margin-top:0;width:312px;
+  background:#16273a;border-color:#ffffff22;
+  box-shadow:0 12px 40px #00000066;}
+body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-row{display:flex;flex-direction:column;gap:2px;margin-bottom:9px;}
 .rf-row:last-child{margin-bottom:0;}
 .rf-k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
@@ -3022,10 +3027,13 @@ body.presrail-min{--presrail-w:46px;}
    rows the app bar is tall */
 .fgrp-row{display:flex;gap:3px;align-items:stretch;}
 .fgrp-row .toggle{flex:1;min-width:0;justify-content:center;
-  text-align:center;padding-left:6px;padding-right:6px;}
-/* the -/+ steppers stay square next to the percentage they act on */
-.fgrp-row .toggle.fz-step{flex:none;width:26px;padding:0;
-  justify-content:center;font-size:13px;}
+  text-align:center;padding-left:9px;padding-right:9px;}
+/* square steppers/icons sit beside the thing they act on */
+.fgrp-row .toggle.fz-step{flex:none;width:30px;padding:0;
+  justify-content:center;font-size:14px;}
+.appbar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
+  color:#04222b;font-weight:600;}
+.appbar .toggle.primary:hover{filter:brightness(1.08);color:#04222b;}
 .appbar .toggle.sub{height:22px;font-size:10.5px;padding:0 9px;
   color:#8ba0b2;border-color:#ffffff14;background:none;}
 .appbar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
@@ -3061,19 +3069,6 @@ body.light .appbar-div{background:#00000022;}
 body.light .tabsrow .menubtn{border-color:var(--line);}
 body.light .tabsrow .menubtn span,body.light .tabsrow .menubtn span::before,
 body.light .tabsrow .menubtn span::after{background:var(--ink-2);}
-/* Open lives on the tab line now (a prominent + at the start), so it reads
-   as "add a document tab" rather than getting lost among the filter toggles */
-.tabrow-open{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
-  font-weight:600;display:inline-flex;align-items:center;flex:none;
-  margin:7px 4px 0 10px;padding:0 14px;height:29px;cursor:pointer;
-  white-space:nowrap;border:1px solid var(--cyan);border-radius:8px;
-  background:#39a9c026;color:#bfeaf5;}
-.tabrow-open:hover{background:#39a9c03d;color:#fff;}
-.tabrow-open[hidden]{display:none;}
-body.light .tabrow-open{background:#39a9c01c;color:#0b6b7e;
-  border-color:#39a9c0aa;}
-body.light .tabrow-open:hover{background:#39a9c033;color:#084b58;}
-
 .tabsrow{display:flex;align-items:stretch;height:var(--tabsrow-h);
   background:#0d1a26;}
 .tabstrip{display:flex;align-items:stretch;overflow-x:auto;
@@ -6642,13 +6637,60 @@ _JS = r"""
         if(v) v.textContent='could not read git';
       });
     }
-    if(info) info.addEventListener('click',function(){
+    function toggle(anchor){
       var open=panel.hidden;
       panel.hidden=!open;
-      info.setAttribute('aria-expanded',open.toString());
+      if(info) info.setAttribute('aria-expanded',open.toString());
       if(open) fill();
-    });
+      /* opened from the ribbon: float it under that button instead of
+         letting it sit inside a sidebar that may be hidden */
+      if(anchor&&open){
+        panel.classList.add('rf-float');
+        var r=anchor.getBoundingClientRect();
+        panel.style.top=(r.bottom+6)+'px';
+        panel.style.left=Math.max(8,
+          Math.min(r.left,window.innerWidth-320))+'px';
+      } else if(!anchor){
+        panel.classList.remove('rf-float');
+        panel.style.top='';panel.style.left='';
+      }
+    }
+    if(info) info.addEventListener('click',function(){toggle(null);});
+    /* the ribbon's File button drives whichever notebook is active */
+    APP.fileInfoToggle=APP.fileInfoToggle||{};
+    APP.fileInfoToggle[stem]=toggle;
   }
+  (function(){
+    var fb=$('#file-info-btn'),rb=$('#file-reload');
+    function activeSh(){return APP.active&&APP.shells[APP.active];}
+    function sync(){
+      var sh=activeSh();
+      var has=!!(sh&&sh.path&&!sh.trace);
+      if(fb) fb.hidden=!has;
+      if(rb){
+        rb.hidden=!has;
+        rb.title=(sh&&/^https?:/i.test(sh.path||''))
+          ?'Reload from the URL':'Reload from disk';
+      }
+    }
+    if(fb) fb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var t=APP.fileInfoToggle&&APP.fileInfoToggle[APP.active];
+      if(t) t(fb);
+    });
+    if(rb) rb.addEventListener('click',function(){
+      var sh=activeSh(); if(sh&&sh.path) openPath(sh.path);});
+    document.addEventListener('click',function(e){
+      var sh=activeSh(); if(!sh||!sh.el) return;
+      var p=$('.rf-panel',sh.el);
+      if(p&&!p.hidden&&p.classList.contains('rf-float')
+         &&e.target!==fb&&!p.contains(e.target)) p.hidden=true;
+    });
+    document.addEventListener('sem:activate',sync);
+    document.addEventListener('sem:shell',sync);
+    APP.syncFileBtns=sync;
+    sync();
+  })();
   function initShell(shell){
     var data={};
     var de=$('.nb-data',shell);
@@ -14622,6 +14664,19 @@ _TEMPLATE = """<!doctype html>
 <div class="scrim" id="scrim"></div>
 <header class="apptop" id="apptop">
   <div class="appbar">
+    <span class="fgrp" id="file-grp">
+      <span class="fgrp-row">
+        <button class="toggle primary" id="tab-open" hidden
+          title="Open a notebook (.ipynb) from your computer or a
+ URL">&#43; Open</button>
+        <button class="toggle" id="file-info-btn" hidden
+          title="Where this notebook came from — its path, its git commit,
+ and every earlier version you can open">&#128196; File &#9662;</button>
+        <button class="toggle fz-step" id="file-reload" hidden
+          title="Reload this notebook">&#8635;</button>
+      </span>
+    </span>
+    <span class="appbar-div" aria-hidden="true"></span>
     <span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
@@ -14653,7 +14708,7 @@ _TEMPLATE = """<!doctype html>
  error)">Output types &#9662;</button>
     </span>
     <span class="fgrp" id="sec-scope-grp">
-      <button class="toggle sub" id="sec-scope-btn"
+      <button class="toggle" id="sec-scope-btn"
         title="Choose WHICH sections the filters above act on — select the
  headings and sub-headings to include, change the filters, then select a
  different set and filter those differently. Each section remembers its
@@ -14664,7 +14719,7 @@ _TEMPLATE = """<!doctype html>
  notebook back to the defaults">&#8635; Reset filters</button>
     </span>
     <span class="fgrp" id="copy-grp">
-      <button class="toggle sub" id="filters-all"
+      <button class="toggle" id="filters-all"
         title="Copy the filters this notebook is using onto every other
  open notebook (their own per-section changes are cleared)"
         >&#8649; Copy filters to all notebooks</button>
@@ -14675,12 +14730,12 @@ _TEMPLATE = """<!doctype html>
     </span>
     <span class="fgrp" id="fig-size-grp">
       <span class="fgrp-row">
-        <button class="toggle sub fz-step" id="fig-smaller"
+        <button class="toggle fz-step" id="fig-smaller"
           title="Make every figure in the feed smaller">&#8722;</button>
-        <button class="toggle sub" id="fig-size-val"
+        <button class="toggle" id="fig-size-val"
           title="Figure size across the whole feed — click to reset to 100%"
           >Figures 100%</button>
-        <button class="toggle sub fz-step" id="fig-bigger"
+        <button class="toggle fz-step" id="fig-bigger"
           title="Make every figure in the feed bigger (each figure also has
  its own +/- and an expand button on hover)">&#43;</button>
       </span>
@@ -14711,8 +14766,6 @@ _TEMPLATE = """<!doctype html>
     <button class="menubtn" id="menubtn" aria-label="Toggle sections"
       title="Show or hide the section sidebar (table of contents)">
       <span></span></button>
-    <button class="tabrow-open" id="tab-open" hidden
-      title="Open a notebook (.ipynb)">&#43; Open</button>
     <div class="tabstrip" id="tabstrip" role="tablist"
       aria-label="Open notebooks"></div>
   </div>
@@ -16099,8 +16152,16 @@ def _self_test() -> None:
     assert "function renderPtMenu" in out and "presentPtTypes" in out
     assert ".ckf-dot.pt-sw-bokeh" in out and ".ckf-dot.pt-sw-matplotlib" in out
     assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
-    # 4 type filters + scope/reset + copy-to-all + the figure sizer
-    assert out.count('class="fgrp"') == 7
+    # file actions + 4 type filters + scope/reset + copy-to-all + figures
+    assert out.count('class="fgrp"') == 8
+    # Open / File / Reload lead the ribbon, at full size
+    assert 'class="toggle primary" id="tab-open"' in out
+    assert 'id="file-info-btn"' in out and 'id="file-reload"' in out
+    assert (out.index('id="tab-open"') < out.index('id="tv-plots"'))
+    # the scope + copy buttons are full-size, like the filters they act on
+    assert 'class="toggle" id="sec-scope-btn"' in out
+    assert 'class="toggle" id="filters-all"' in out
+    assert 'class="toggle" id="fig-size-val"' in out
     assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
             < out.index('id="tv-markdown"'))
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
@@ -16555,11 +16616,12 @@ def _self_test() -> None:
     assert 'id="fmt-list"' in out and 'id="fmt-shape"' in out
     assert 'id="fmt-dup"' in out and 'id="fmt-front"' in out
     assert 'id="pickbar"' in out and 'id="fmt-replace"' in out
-    # top-left declutter: no "docs" label; the hamburger moved onto the tab
-    # line (between the tabsrow and the tabstrip)
+    # top-left declutter: no "docs" label; the hamburger sits on the tab
+    # line, and Open has moved up to the ribbon's file group
     assert 'class="tabs-label"' not in out
     assert (out.index('class="tabsrow"') < out.index('id="menubtn"')
             < out.index('id="tabstrip"'))
+    assert 'class="tabrow-open"' not in out
     assert ".tabsrow .menubtn" in out
     # slide-editor declutter: an unselected edit frame is transparent + borderless
     # and its chrome (border/title/Replace/parts) returns only when selected
@@ -16652,7 +16714,7 @@ def _self_test() -> None:
     assert "focusStem" not in out and 'id="focusbar"' not in out
     # toolbar: content filters, a grouping divider, Open moved to the tab line
     assert 'class="appbar-div"' in out
-    assert 'class="tabrow-open" id="tab-open"' in out
+    assert 'id="tab-open"' in out
     _ap = out.index('id="tv-plots"')          # filter order plots→…→output-types
     assert (_ap < out.index('id="tv-markdown"') < out.index('id="tv-code"')
             < out.index('id="ck-filter-btn"') < out.index('id="tv-output"')
