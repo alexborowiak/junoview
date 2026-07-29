@@ -710,9 +710,12 @@ body.presrail-min{--presrail-w:46px;}
 .fgrp .toggle{width:100%;text-align:left;}
 /* two small buttons sharing one row, so a group never grows past the two
    rows the app bar is tall */
-.fgrp-row{display:flex;gap:3px;}
+.fgrp-row{display:flex;gap:3px;align-items:stretch;}
 .fgrp-row .toggle{flex:1;min-width:0;justify-content:center;
   text-align:center;padding-left:6px;padding-right:6px;}
+/* the -/+ steppers stay square next to the percentage they act on */
+.fgrp-row .toggle.fz-step{flex:none;width:26px;padding:0;
+  justify-content:center;font-size:13px;}
 .appbar .toggle.sub{height:22px;font-size:10.5px;padding:0 9px;
   color:#8ba0b2;border-color:#ffffff14;background:none;}
 .appbar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
@@ -1635,62 +1638,66 @@ body.doc-presenting .content{max-width:1000px;margin:0 auto;
   padding:56px 30px 30vh;}
 body.doc-presenting .treeview{padding:56px 26px 24vh;height:100vh;}
 body.doc-presenting .docbar{display:none;}
-/* The presenting controls: a compact panel pinned to one CORNER (not a
-   band across the whole top), so slide content stays readable. */
-.present-bar{position:fixed;top:14px;right:16px;z-index:140;display:flex;
-  align-items:flex-start;gap:6px;padding:7px 8px;border-radius:10px;
-  background:#0d1a24f2;border:1px solid #ffffff1f;
-  box-shadow:0 6px 22px #00000055;max-width:min(560px,calc(100vw - 32px));}
-.present-bar[hidden]{display:none;}
-.present-bar.pb-tl{top:14px;left:16px;right:auto;}
-.present-bar.pb-bl{top:auto;bottom:14px;left:16px;right:auto;}
-.present-bar.pb-br{top:auto;bottom:14px;right:16px;left:auto;}
-/* the collapsible tray: every control except Back. The relocated appbar
-   filter groups keep their own styling, just re-coloured for the bar */
-.pb-tray{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
-  justify-content:flex-end;max-width:min(430px,calc(100vw - 190px));}
-.pb-tools{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
-  justify-content:flex-end;}
-.pb-tools .fgrp{display:flex;align-items:center;gap:4px;}
-.pb-tools .toggle{border-color:#ffffff26;background:#ffffff10;color:#e7eff5;
-  height:26px;font-size:11px;}
-.pb-tools .toggle.sub{height:22px;font-size:10.5px;}
-.pb-tools .toggle:hover{border-color:var(--cyan);color:#fff;}
-.pb-tools .toggle.tv.off{color:#7c8b9a;}
-.pb-tools .appbar-div{width:1px;height:18px;background:#ffffff22;}
-/* identical to the app bar's .toggle so nothing looks like a different
-   control just because you are presenting */
-.pb-btn{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
-  border:1px solid #ffffff22;background:#ffffff0a;color:#cdd9e3;
-  padding:7px 12px;border-radius:var(--rad);cursor:pointer;
-  transition:all .15s;display:inline-flex;align-items:center;gap:7px;
-  height:30px;box-sizing:border-box;line-height:1;}
-.pb-btn:hover{border-color:var(--cyan);color:#fff;}
-.pb-btn[hidden]{display:none!important;}
-.pb-btn[aria-pressed="true"]{background:#eef4f8;color:#0d1a24;
-  border-color:#eef4f8;}
-.pb-exit{border-color:#39a9c059;color:#eaf6fa;}
-.pb-sep{width:1px;height:18px;background:#ffffff22;}
-.pb-collapse{font-family:var(--mono);font-size:14px;border:1px solid #ffffff22;
-  background:#ffffff0a;color:#cfe0ea;width:30px;height:30px;
+/* ---- presenting controls: a DOCKED bar, top or right ---------------
+   Docked top it is the app bar, verbatim: same paddings, same groups,
+   same two rows. Docked right the same groups turn into stacked rows.
+   The document is inset by the bar, so nothing floats over content. */
+.present-bar{position:fixed;z-index:140;display:flex;
+  background:var(--chrome);border-color:#ffffff1f;}
+.present-bar[hidden]{display:none!important;}
+.pb-tools{display:flex;align-items:flex-start;}
+.pb-own{display:flex;align-items:flex-start;}
+/* --- docked across the TOP: identical to the app bar --- */
+body.pbpos-top .present-bar{top:0;left:0;right:0;
+  align-items:flex-start;gap:8px;padding:11px 16px;
+  border-bottom:1px solid #ffffff1f;
+  transition:transform .18s ease;}
+body.pbpos-top .pb-tools{flex-wrap:wrap;gap:8px;}
+body.pbpos-top .pb-own{flex-wrap:wrap;gap:6px;margin-left:auto;}
+body.pbpos-top .present-bar .pb-collapse{margin-left:6px;}
+body.doc-presenting.pbpos-top .docs{top:var(--pbh,64px);}
+body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%);}
+/* --- docked down the RIGHT: the groups become rows --- */
+body.pbpos-right .present-bar{top:0;right:0;bottom:0;width:var(--pbw,232px);
+  flex-direction:column;align-items:stretch;gap:8px;padding:12px;
+  overflow-y:auto;border-left:1px solid #ffffff1f;
+  transition:transform .18s ease;}
+body.pbpos-right .pb-tools{flex-direction:column;align-items:stretch;
+  gap:8px;}
+body.pbpos-right .pb-own{flex-direction:column;align-items:stretch;gap:6px;}
+/* a two-row group reads as one row per control when it is this narrow */
+body.pbpos-right .pb-tools .fgrp{width:100%;}
+body.pbpos-right .pb-tools .fgrp-row{flex-wrap:wrap;}
+body.pbpos-right .present-bar .toggle{width:100%;justify-content:flex-start;}
+body.pbpos-right .present-bar .fgrp-row .toggle.fz-step{width:26px;
+  justify-content:center;}
+body.pbpos-right .present-bar .appbar-div{display:none;}
+body.doc-presenting.pbpos-right .docs{right:var(--pbw,232px);}
+body.pbpos-right.pb-folded .present-bar{transform:translateX(101%);}
+body.pbpos-right.pb-folded .docs{right:0;}
+body.pbpos-top.pb-folded .docs{top:0;}
+.pb-exit{border-color:#39a9c059!important;color:#eaf6fa!important;}
+.pb-exit:hover{background:#39a9c026!important;}
+.pb-collapse{font-family:var(--mono);font-size:12px;border:1px solid #ffffff22;
+  background:#ffffff0a;color:#cfe0ea;width:30px;height:30px;flex:none;
   border-radius:var(--rad);cursor:pointer;padding:0;line-height:1;
   box-sizing:border-box;}
 .pb-collapse:hover{color:#fff;border-color:var(--cyan);}
-body.present-bar-hidden .present-bar{display:none;}
-/* folded away: a proper labelled pill, not a sliver you have to hunt for */
-.present-bar-show{position:fixed;top:14px;right:16px;z-index:140;
+body.pbpos-right .pb-collapse{width:100%;}
+/* folded away: the small handle left over, on the edge it folded into */
+.present-bar-show{position:fixed;z-index:141;
   font-family:var(--mono);font-size:11px;letter-spacing:.04em;
-  border:1px solid #ffffff26;border-radius:var(--rad);
-  background:#0d1a24f2;color:#cfe0ea;cursor:pointer;height:30px;
-  padding:0 12px;display:none;align-items:center;gap:7px;
-  box-shadow:0 6px 22px #00000055;}
+  border:1px solid #ffffff26;background:var(--chrome);color:#cfe0ea;
+  cursor:pointer;height:30px;padding:0 12px;display:none;
+  align-items:center;gap:7px;box-shadow:0 6px 22px #00000055;}
 .present-bar-show[hidden]{display:none!important;}
-body.doc-presenting.present-bar-hidden .present-bar-show{
-  display:inline-flex;}
+body.doc-presenting.pb-folded .present-bar-show{display:inline-flex;}
 .present-bar-show:hover{color:#fff;border-color:var(--cyan);}
-.present-bar-show.pb-tl{left:16px;right:auto;}
-.present-bar-show.pb-bl{top:auto;bottom:14px;left:16px;right:auto;}
-.present-bar-show.pb-br{top:auto;bottom:14px;right:16px;left:auto;}
+/* top: the handle hangs from the top edge; right: it tucks to the side */
+body.pbpos-top .present-bar-show{top:0;right:18px;border-top:none;
+  border-radius:0 0 var(--rad) var(--rad);}
+body.pbpos-right .present-bar-show{top:14px;right:0;border-right:none;
+  border-radius:var(--rad) 0 0 var(--rad);}
 .rawcell{position:relative;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;
   padding:14px 16px 14px 16px;margin:12px 0;}
@@ -2965,33 +2972,36 @@ window.MathJax = {
     </span>
     <span class="fgrp" id="sec-scope-grp">
       <button class="toggle sub" id="sec-scope-btn"
-        title="Choose WHICH sections the filters above act on — tick the
- headings and sub-headings to include, change the filters, then pick a
+        title="Choose WHICH sections the filters above act on — select the
+ headings and sub-headings to include, change the filters, then select a
  different set and filter those differently. Each section remembers its
- own filters. Default: the entire notebook."
-        >Apply to: Entire notebook &#9662;</button>
-      <span class="fgrp-row">
-        <button class="toggle sub" id="filters-all"
-          title="Give every other open notebook the filters this one is
- using">&#8649; All notebooks</button>
-        <button class="toggle sub" id="filters-reset"
-          title="Reset every filter — and every per-section override — in
- THIS notebook back to the defaults">&#8635; Reset</button>
-      </span>
+ own filters."
+        >Apply to: All sections &#9662;</button>
+      <button class="toggle sub" id="filters-reset"
+        title="Put every filter — and every per-section change — in THIS
+ notebook back to the defaults">&#8635; Reset filters</button>
+    </span>
+    <span class="fgrp" id="copy-grp">
+      <button class="toggle sub" id="filters-all"
+        title="Copy the filters this notebook is using onto every other
+ open notebook (their own per-section changes are cleared)"
+        >&#8649; Copy filters to all notebooks</button>
       <button class="toggle sub" id="trace-inherit" hidden
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from.">&#8615; Use the
  document&#8217;s filters</button>
     </span>
     <span class="fgrp" id="fig-size-grp">
-      <button class="toggle sub" id="fig-smaller"
-        title="Make every figure in the feed smaller">&#8722;</button>
-      <button class="toggle sub" id="fig-size-val"
-        title="Figure size across the whole feed — click to reset to 100%"
-        >Figures 100%</button>
-      <button class="toggle sub" id="fig-bigger"
-        title="Make every figure in the feed bigger (each figure also has
+      <span class="fgrp-row">
+        <button class="toggle sub fz-step" id="fig-smaller"
+          title="Make every figure in the feed smaller">&#8722;</button>
+        <button class="toggle sub" id="fig-size-val"
+          title="Figure size across the whole feed — click to reset to 100%"
+          >Figures 100%</button>
+        <button class="toggle sub fz-step" id="fig-bigger"
+          title="Make every figure in the feed bigger (each figure also has
  its own +/- and an expand button on hover)">&#43;</button>
+      </span>
     </span>
     <span class="appbar-div" aria-hidden="true"></span>
     <button class="toggle" id="view-raw"
@@ -3054,27 +3064,27 @@ window.MathJax = {
 </nav>
 <button class="presrail-show" id="presrail-show"
   title="Show presentations">&#187;</button>
+<!-- Presenting controls: a DOCKED bar (across the top, or down the right),
+     never a panel floating over the slide. The real app-bar groups are
+     MOVED into #pb-tools on enter and put back on exit, so the top bar is
+     literally the same controls you were just using. -->
 <div class="present-bar" id="present-bar" hidden>
-  <!-- everything except Exit lives in the collapsible tray: the real
-       filter groups are MOVED here on enter (and back on exit) so they
-       keep their ids and wiring -->
-  <div class="pb-tray" id="pb-tray">
-    <span class="pb-tools" id="pb-tools"></span>
-    <button class="pb-btn" id="pb-rail"
+  <div class="pb-tools" id="pb-tools"></div>
+  <div class="pb-own">
+    <button class="toggle" id="pb-rail"
       title="Show or hide the section sidebar">&#9776; Sections</button>
-    <button class="pb-btn" id="pb-view"
+    <button class="toggle" id="pb-view"
       title="Switch between the Narrative document and the Tree view">
       &#9633; Tree</button>
-    <button class="pb-btn" id="pb-move"
-      title="Move these controls to another corner of the screen">
-      &#10021; Move</button>
+    <button class="toggle" id="pb-move"
+      title="Dock these controls across the top or down the right">
+      &#8646; Dock right</button>
+    <button class="toggle pb-exit" id="pb-exit"
+      title="Stop presenting and go back to the document (Esc). Nothing is
+ closed or lost.">&#10005; Exit presentation</button>
   </div>
-  <span class="pb-sep" aria-hidden="true"></span>
-  <button class="pb-btn pb-exit" id="pb-exit"
-    title="Leave full screen and go back to the document (Esc). Nothing is
- closed or lost.">&#8617; Back</button>
   <button class="pb-collapse" id="pb-collapse"
-    title="Fold these controls away">&#8942;</button>
+    title="Fold these controls out of the way">&#9650;</button>
 </div>
 <button class="present-bar-show" id="present-bar-show"
   title="Show the presenting controls" hidden>&#9776; Controls</button>
@@ -8304,7 +8314,7 @@ through Ko-fi. Thank you.</p>
      handler, menu and state read keeps working — no duplicate widgets. */
   var pbMoved=[];
   var PB_TOOLS=['#pt-grp','#md-grp','#ck-grp','#ot-grp','#sec-scope-grp',
-                '#fig-size-grp','#view-raw','#view-tree'];
+                '#copy-grp','#fig-size-grp','#view-raw','#view-tree'];
   var PB_MENUS=['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu',
                 '#sec-scope-menu'];
   function pbTakeTools(){
@@ -8337,7 +8347,7 @@ through Ko-fi. Thank you.</p>
   function enterDocPresent(){
     var sh=APP.active&&APP.shells[APP.active]; if(!sh) return;
     document.body.classList.add('doc-presenting');
-    document.body.classList.remove('present-bar-hidden');
+    document.body.classList.remove('pb-folded');
     pbTakeTools();
     /* the controls must live INSIDE #docs: when #docs goes fullscreen it is
        promoted to the browser top layer, and a sibling bar would render
@@ -8346,7 +8356,9 @@ through Ko-fi. Thank you.</p>
       if(docsEl) docsEl.appendChild(pb);}
     var pbs=$('#present-bar-show'); if(pbs){pbs.hidden=false;
       if(docsEl) docsEl.appendChild(pbs);}
-    renderViewBtns();relayoutActiveTree();
+    renderViewBtns();
+    if(APP.applyPbDock) APP.applyPbDock();   /* size the inset */
+    relayoutActiveTree();
     try{
       if(docsEl&&docsEl.requestFullscreen&&!document.fullscreenElement)
         docsEl.requestFullscreen().catch(function(){});
@@ -8355,7 +8367,7 @@ through Ko-fi. Thank you.</p>
   function exitDocPresent(){
     if(!document.body.classList.contains('doc-presenting')) return;
     document.body.classList.remove('doc-presenting');
-    document.body.classList.remove('present-bar-hidden');
+    document.body.classList.remove('pb-folded');
     document.body.classList.remove('present-rail');
     pbReturnTools();
     var pb=$('#present-bar'); if(pb){pb.hidden=true;
@@ -8373,7 +8385,8 @@ through Ko-fi. Thank you.</p>
     var v=$('#pb-view'); if(v) v.addEventListener('click',function(){
       toggleTree();renderViewBtns();});
     var c=$('#pb-collapse'); if(c) c.addEventListener('click',function(){
-      document.body.classList.add('present-bar-hidden');});
+      document.body.classList.add('pb-folded');
+      relayoutActiveTree();});
     var rl=$('#pb-rail');
     if(rl){
       rl.setAttribute('aria-pressed','false');
@@ -8384,32 +8397,59 @@ through Ko-fi. Thank you.</p>
         relayoutActiveTree();
       });
     }
-    /* park the controls in whichever corner is out of the way — remembered
-       between talks */
-    var PBPOS=['','pb-tl','pb-bl','pb-br'];
-    var PBNAME=['top right','top left','bottom left','bottom right'];
-    var PKEY='junoview:presentbar:pos';
-    var pbPos=0;
-    try{pbPos=Math.max(0,PBPOS.indexOf(
-      localStorage.getItem(PKEY)||''));}catch(e){}
-    function applyPbPos(){
-      var bar=$('#present-bar'),sho=$('#present-bar-show');
-      [bar,sho].forEach(function(el){
-        if(!el) return;
-        PBPOS.forEach(function(c){if(c) el.classList.remove(c);});
-        if(PBPOS[pbPos]) el.classList.add(PBPOS[pbPos]);
-      });
+    /* dock across the top (where it IS the app bar) or down the right
+       (where the groups become rows) — remembered between talks */
+    var PKEY='junoview:presentbar:dock';
+    var pbDock='top';
+    try{pbDock=(localStorage.getItem(PKEY)==='right')?'right':'top';}
+    catch(e){}
+    /* the document is inset by the bar's real size, so the bar never
+       covers content — measured, because the bar wraps to fit */
+    function measurePb(){
+      var bar=$('#present-bar');
+      if(!bar||bar.hidden) return;
+      var r=bar.getBoundingClientRect();
+      if(pbDock==='top')
+        document.body.style.setProperty('--pbh',Math.ceil(r.height)+'px');
+      else
+        document.body.style.setProperty('--pbw',Math.ceil(r.width)+'px');
+    }
+    function applyPbDock(){
+      document.body.classList.toggle('pbpos-top',pbDock==='top');
+      document.body.classList.toggle('pbpos-right',pbDock==='right');
       var mv=$('#pb-move');
-      if(mv) mv.title='These controls sit '+PBNAME[pbPos]
-        +' — click to move them to the '+PBNAME[(pbPos+1)%4];
-      try{localStorage.setItem(PKEY,PBPOS[pbPos]);}catch(e){}
+      if(mv){
+        mv.innerHTML=(pbDock==='top')
+          ?'&#8646; Dock right':'&#8645; Dock on top';
+        mv.title=(pbDock==='top')
+          ?'Move these controls down the right-hand side'
+          :'Move these controls back across the top';
+      }
+      var cb=$('#pb-collapse');
+      if(cb){
+        cb.innerHTML=(pbDock==='top')?'&#9650;':'&#9654;';
+        cb.title=(pbDock==='top')
+          ?'Fold the bar up out of the way'
+          :'Fold the bar off to the right';
+      }
+      var sh=$('#present-bar-show');
+      if(sh) sh.innerHTML=(pbDock==='top')
+        ?'&#9776; Controls':'&#9776;';
+      try{localStorage.setItem(PKEY,pbDock);}catch(e){}
+      measurePb();relayoutActiveTree();
+      setTimeout(measurePb,60);   /* after the wrap settles */
     }
     var mv=$('#pb-move');
     if(mv) mv.addEventListener('click',function(){
-      pbPos=(pbPos+1)%PBPOS.length;applyPbPos();});
-    applyPbPos();
+      pbDock=(pbDock==='top')?'right':'top';applyPbDock();});
+    APP.applyPbDock=applyPbDock;
+    APP.measurePb=measurePb;
+    window.addEventListener('resize',function(){
+      if(document.body.classList.contains('doc-presenting')) measurePb();});
+    applyPbDock();
     var s=$('#present-bar-show'); if(s) s.addEventListener('click',function(){
-      document.body.classList.remove('present-bar-hidden');});
+      document.body.classList.remove('pb-folded');
+      measurePb();relayoutActiveTree();});
   })();
   document.addEventListener('fullscreenchange',function(){
     if(!document.fullscreenElement
