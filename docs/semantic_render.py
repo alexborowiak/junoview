@@ -2153,10 +2153,12 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
    with the reload button beside it (it used to hide on the tab) */
 .railfile{display:flex;gap:4px;margin-top:11px;}
 .rf-btn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
-  border:1px solid var(--chrome-line);background:none;color:var(--chrome-ink-2);
-  padding:5px 8px;border-radius:5px;cursor:pointer;transition:all .13s;
+  border:1px solid #ffffff40;background:#ffffff12;color:var(--chrome-ink);
+  padding:6px 10px;border-radius:5px;cursor:pointer;transition:all .13s;
   display:inline-flex;align-items:center;gap:5px;line-height:1;}
-.rf-btn:hover{border-color:var(--cyan);color:var(--chrome-ink);}
+.rf-btn:hover{border-color:var(--cyan);color:#fff;background:#ffffff1e;}
+body.light .rf-btn{border-color:var(--line);background:#fff;
+  color:var(--ink-2);}
 .rf-info{flex:1;justify-content:flex-start;min-width:0;}
 .rf-reload{flex:none;font-size:12px;padding:5px 9px;}
 .rf-btn[hidden]{display:none!important;}
@@ -2185,12 +2187,15 @@ body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
 .rf-live{color:#7fd0b8;}
 .rf-old{color:var(--amber);}
-/* the commit hash doubles as the way in to every version */
-.rf-hashbtn{background:none;border:none;padding:0;cursor:pointer;
-  text-align:left;font:inherit;color:var(--cyan);display:inline-flex;
-  align-items:center;gap:5px;}
-.rf-hashbtn:hover{text-decoration:underline;}
-.rf-caret{font-size:8px;transition:transform .13s;}
+/* the commit hash IS a control, so it has to look like one */
+.rf-hashbtn{background:#39a9c018;border:1px solid #39a9c059;
+  padding:4px 9px;cursor:pointer;border-radius:5px;
+  text-align:left;font-family:var(--mono);font-size:10.5px;
+  color:var(--cyan);display:inline-flex;align-items:center;gap:7px;
+  align-self:flex-start;max-width:100%;}
+.rf-hashbtn:hover{background:#39a9c02e;border-color:var(--cyan);
+  color:#eaf6fa;}
+.rf-caret{font-size:8px;transition:transform .13s;opacity:.85;}
 .rf-hashbtn.open .rf-caret{transform:rotate(180deg);}
 .rf-commits{margin-top:7px;max-height:240px;overflow-y:auto;
   border-top:1px solid var(--chrome-line);padding-top:6px;}
@@ -3074,12 +3079,12 @@ body.presrail-min{--presrail-w:46px;}
    a horizontal scrollbar in a toolbar just hides things. */
 .appbar{display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap;
   min-height:var(--appbar-h);
-  padding:8px 10px 6px 0;border-bottom:1px solid #ffffff0d;}
+  padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
-  padding:0 9px;line-height:1;}
+  padding:0 10px;line-height:1;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
    narrow instead of growing ever wider */
@@ -3089,7 +3094,7 @@ body.presrail-min{--presrail-w:46px;}
 /* two small buttons sharing one row, so a group never grows past the two
    rows the app bar is tall */
 /* buttons that belong together and must wrap as one unit */
-.btn-grp{display:flex;gap:6px;flex:none;align-items:flex-start;
+.btn-grp{display:flex;gap:4px;flex:none;align-items:flex-start;
   position:relative;}
 .btn-grp[hidden]{display:none!important;}
 /* the "…" overflow: rarely-used items, out of the way but one click deep */
@@ -3098,8 +3103,10 @@ body.presrail-min{--presrail-w:46px;}
 .more-link{display:flex;align-items:center;gap:7px;text-decoration:none;
   text-transform:none;font-family:var(--sans);font-size:12px;}
 .fgrp-row{display:flex;gap:3px;align-items:stretch;}
-.fgrp-row .toggle{flex:1;min-width:0;justify-content:center;
-  text-align:center;padding-left:9px;padding-right:9px;}
+/* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
+   these below their natural width, so the label sat on the border. */
+.fgrp-row .toggle{flex:none;width:auto;justify-content:center;
+  text-align:center;padding-left:10px;padding-right:10px;}
 /* square steppers/icons sit beside the thing they act on */
 .fgrp-row .toggle.fz-step{flex:none;width:30px;padding:0;
   justify-content:center;font-size:14px;}
@@ -15152,7 +15159,7 @@ _TEMPLATE = """<!doctype html>
       <span class="fgrp-row">
         <button class="toggle primary" id="tab-open" hidden
           title="Open a notebook (.ipynb) from your computer or a
- URL">&#43; Open</button>
+ URL">Open</button>
         <button class="toggle" id="file-info-btn" disabled
           title="Where this notebook came from — its path, its git commit,
  and every earlier version you can open">File info
