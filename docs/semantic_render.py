@@ -2164,16 +2164,22 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
   border-radius:7px;padding:9px 10px;background:#ffffff08;}
 .rf-panel[hidden]{display:none;}
 /* the same panel, floated under the ribbon's File button */
-.rf-panel.rf-float{position:fixed;z-index:200;margin-top:0;width:312px;
+.rf-panel.rf-float{position:fixed;z-index:200;margin-top:0;width:372px;
   background:#16273a;border-color:#ffffff22;
   box-shadow:0 12px 40px #00000066;}
 body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
-.rf-row{display:flex;flex-direction:column;gap:2px;margin-bottom:9px;}
+.rf-row{display:flex;flex-direction:column;gap:1px;margin-bottom:8px;
+  min-width:0;}
 .rf-row:last-child{margin-bottom:0;}
 .rf-k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--chrome-ink-2);}
+/* one tidy line per fact: truncate, don't break a URL mid-word across
+   three lines. The full value is on the element's title. */
 .rf-v{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink);
-  word-break:break-all;line-height:1.5;}
+  line-height:1.5;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* the commit message is prose — it may wrap, on word boundaries */
+.rf-v.rf-sub{white-space:normal;overflow-wrap:anywhere;}
 .rf-v.hash{color:var(--cyan);}
 .rf-sub{color:var(--chrome-ink-2);font-size:9.5px;}
 .rf-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
@@ -6895,6 +6901,8 @@ _JS = r"""
       rel.addEventListener('click',function(){
         if(path) openPath(path);});
     }
+    /* one line per fact, truncated with the full value on hover — a raw
+       URL broken mid-word across three lines is what made this a mess */
     function row(k,v,cls){
       var r=document.createElement('div');r.className='rf-row';
       var kk=document.createElement('div');kk.className='rf-k';
@@ -6902,8 +6910,20 @@ _JS = r"""
       var vv=document.createElement('div');
       vv.className='rf-v'+(cls?' '+cls:'');
       vv.textContent=v;
+      vv.title=v;
       r.appendChild(kk);r.appendChild(vv);
       return r;
+    }
+    function baseName(p){
+      var b=String(p||'').split('?')[0].split('#')[0]
+        .split(/[\\/\\\\]/).pop();
+      try{b=decodeURIComponent(b);}catch(e){}
+      return b||String(p||'');
+    }
+    function folderOf(p){
+      var s=String(p||'').split('?')[0].split('#')[0];
+      var i=Math.max(s.lastIndexOf('/'),s.lastIndexOf('\\\\'));
+      return i>0?s.slice(0,i):s;
     }
     function act(label,title,fn){
       var b=document.createElement('button');
@@ -6919,16 +6939,20 @@ _JS = r"""
     function fill(){
       panel.innerHTML='';
       var sh=APP.shells[stem]||{};
-      panel.appendChild(row(isUrlPath?'address':'file on disk',
-        path||'not saved to a file'));
+      var ghp=isUrlPath?ghFromUrl(path):null;
+      /* the NAME first, then where it lives — not a wrapped raw URL */
+      panel.appendChild(row('file',baseName(path)||'untitled'));
+      panel.appendChild(row(isUrlPath?'from':'folder',
+        ghp?(ghp.owner+'/'+ghp.repo)
+          :(path?folderOf(path):'not saved to a file')));
       /* which version of the notebook you are looking at right now */
       var ver=sh.version||'';
       var vrow;
       if(ver){
-        vrow=row('you are viewing',
+        vrow=row('showing',
           /^git:/.test(ver)?('an earlier commit — '+ver.slice(4))
             :'an earlier snapshot','rf-old');
-      } else vrow=row('you are viewing','the current file','rf-live');
+      } else vrow=row('showing','the latest version','rf-live');
       panel.appendChild(vrow);
       var acts=document.createElement('div');acts.className='rf-acts';
       panel.appendChild(acts);
@@ -7007,16 +7031,14 @@ _JS = r"""
       }
       /* ---- a notebook opened from GitHub: read its history from the
          GitHub API, so the same hash/versions work with no local repo --- */
-      var gh=isUrlPath?ghFromUrl(path):null;
+      var gh=ghp;
       if(gh){
-        var ghr=row('github',gh.owner+'/'+gh.repo+' · '+gh.ref);
-        panel.insertBefore(ghr,acts);
-        var pend=row('history','loading commits…');
+        var pend=row('commit','loading history…');
         panel.insertBefore(pend,acts);
         ghCommits(gh).then(function(commits){
           if(pend.parentNode) pend.parentNode.removeChild(pend);
           if(!commits.length) return;
-          panel.insertBefore(hashRow('current commit',commits[0],commits,
+          panel.insertBefore(hashRow('commit',commits[0],commits,
             function(c,newTab){
               /* every commit is the SAME file at a different moment — it
                  belongs in this tab, not a new one, and it is not a new
@@ -7051,7 +7073,7 @@ _JS = r"""
           /* the hash expands into the full commit list, each openable */
           APP.api('/api/versions',{path:path}).then(function(j){
             var commits=(j&&j.commits)||[c];
-            panel.insertBefore(hashRow('current commit',c,commits,
+            panel.insertBefore(hashRow('commit',c,commits,
               function(cm,newTab){
                 /* same file, different moment — it replaces this tab and
                    is not a new entry in Recent */
