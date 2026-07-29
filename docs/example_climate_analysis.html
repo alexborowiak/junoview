@@ -721,15 +721,23 @@ body.presrail-min{--presrail-w:46px;}
 /* square steppers/icons sit beside the thing they act on */
 .fgrp-row .toggle.fz-step{flex:none;width:30px;padding:0;
   justify-content:center;font-size:14px;}
-.appbar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
+.fgrp-row .toggle.fz-val{flex:none;width:52px;padding:0;
+  justify-content:center;}
+/* a caption naming a group of small buttons, so the buttons stay narrow
+   instead of each carrying the label */
+.fgrp-cap{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
+  line-height:22px;height:22px;white-space:nowrap;}
+body.light .fgrp-cap{color:var(--ink-3);}
+.appbar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
   color:#04222b;font-weight:600;}
 .appbar .toggle.primary:hover{filter:brightness(1.08);color:#04222b;}
-.appbar .toggle.sub{height:22px;font-size:10.5px;padding:0 9px;
+.appbar .toggle.sub,.present-bar .toggle.sub{height:22px;font-size:10.5px;padding:0 9px;
   color:#8ba0b2;border-color:#ffffff14;background:none;}
-.appbar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
-body.light .appbar .toggle.sub{color:var(--ink-3);border-color:var(--line);
+.appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
+body.light .appbar .toggle.sub,.present-bar .toggle.sub{color:var(--ink-3);border-color:var(--line);
   background:none;}
-body.light .appbar .toggle.sub:hover{color:var(--ink);}
+body.light .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{color:var(--ink);}
 .appbar-spring{flex:1;}
 /* a thin rule that marks where the content FILTERS end and the view/theme
    controls begin — centred against the 30px first row */
@@ -737,11 +745,11 @@ body.light .appbar .toggle.sub:hover{color:var(--ink);}
   margin:5px 5px 0;border-radius:1px;}
 body.light .appbar-div{background:#00000022;}
 /* dark variants of the show/hide toggles */
-.appbar .toggle{border-color:#ffffff22;background:#ffffff0a;color:#cdd9e3;}
+.appbar .toggle,.present-bar .toggle{border-color:#ffffff22;background:#ffffff0a;color:#cdd9e3;}
 .appbar-link{text-decoration:none;display:inline-flex;
   align-items:center;}
-.appbar .toggle:hover{border-color:var(--cyan);color:#fff;}
-.appbar .toggle.tv.off{color:#69788a;}
+.appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;
@@ -761,9 +769,15 @@ body.light .tabsrow .menubtn span,body.light .tabsrow .menubtn span::before,
 body.light .tabsrow .menubtn span::after{background:var(--ink-2);}
 .tabsrow{display:flex;align-items:stretch;height:var(--tabsrow-h);
   background:#0d1a26;}
+/* tabs line up with the DOCUMENT, not with the outline beneath them —
+   the strip starts where the sidebar ends (and slides back when the
+   sidebar is toggled off) */
 .tabstrip{display:flex;align-items:stretch;overflow-x:auto;
   min-width:0;scrollbar-width:thin;flex:0 1 auto;
-  gap:5px;padding:6px 8px 0;}
+  gap:5px;padding:6px 8px 0;
+  margin-left:calc(var(--rail-w) - 52px);
+  transition:margin-left .2s ease;}
+body.no-rail .tabstrip{margin-left:0;}
 .tab{display:flex;align-items:center;gap:8px;padding:0 10px 0 15px;
   max-width:260px;min-width:0;cursor:pointer;user-select:none;
   font-size:13px;color:#96a9ba;background:#ffffff08;
@@ -1273,11 +1287,11 @@ body.light .ckf-h{color:var(--ink-3);}
    canvas stays dark (decks look identical on every machine) -------- */
 body.light .apptop{background:#f4f7fa;border-color:var(--line);}
 body.light .appbar{border-bottom-color:var(--line);}
-body.light .appbar .toggle{border-color:var(--line);background:#fff;
+body.light .appbar .toggle,body.light .present-bar .toggle{border-color:var(--line);background:#fff;
   color:var(--ink-2);}
-body.light .appbar .toggle:hover{border-color:var(--cyan);
+body.light .appbar .toggle:hover,body.light .present-bar .toggle:hover{border-color:var(--cyan);
   color:var(--ink);}
-body.light .appbar .toggle.tv.off{color:var(--ink-3);}
+body.light .appbar .toggle.tv.off,body.light .present-bar .toggle.tv.off{color:var(--ink-3);}
 body.light .tabsrow{background:#e9eef3;}
 body.light .tab{border-color:var(--line);background:#00000006;
   color:var(--ink-3);}
@@ -1673,26 +1687,29 @@ body.pbpos-right.pb-folded .docs{right:0;}
 body.pbpos-top.pb-folded .docs{top:0;}
 .pb-exit{border-color:#39a9c059!important;color:#eaf6fa!important;}
 .pb-exit:hover{background:#39a9c026!important;}
-.pb-collapse{font-family:var(--mono);font-size:12px;border:1px solid #ffffff22;
-  background:#ffffff0a;color:#cfe0ea;width:30px;height:30px;flex:none;
-  border-radius:var(--rad);cursor:pointer;padding:0;line-height:1;
-  box-sizing:border-box;}
-.pb-collapse:hover{color:#fff;border-color:var(--cyan);}
-body.pbpos-right .pb-collapse{width:100%;}
-/* folded away: the small handle left over, on the edge it folded into */
-.present-bar-show{position:fixed;z-index:141;
-  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
-  border:1px solid #ffffff26;background:var(--chrome);color:#cfe0ea;
-  cursor:pointer;height:30px;padding:0 12px;display:none;
-  align-items:center;gap:7px;box-shadow:0 6px 22px #00000055;}
-.present-bar-show[hidden]{display:none!important;}
-body.doc-presenting.pb-folded .present-bar-show{display:inline-flex;}
-.present-bar-show:hover{color:#fff;border-color:var(--cyan);}
-/* top: the handle hangs from the top edge; right: it tucks to the side */
-body.pbpos-top .present-bar-show{top:0;right:18px;border-top:none;
-  border-radius:0 0 var(--rad) var(--rad);}
-body.pbpos-right .present-bar-show{top:14px;right:0;border-right:none;
-  border-radius:var(--rad) 0 0 var(--rad);}
+/* The fold/unfold button: ONE control, always in the same place and
+   always the same shape, whether the bar is showing or hidden. */
+.pb-toggle{position:fixed;top:9px;right:10px;z-index:142;
+  font-family:var(--mono);font-size:13px;line-height:1;
+  border:1px solid #ffffff22;background:#16273aee;color:#cfe0ea;
+  cursor:pointer;width:30px;height:30px;padding:0;
+  border-radius:var(--rad);display:none;align-items:center;
+  justify-content:center;box-shadow:0 4px 14px #00000055;}
+.pb-toggle[hidden]{display:none!important;}
+body.doc-presenting .pb-toggle{display:inline-flex;}
+.pb-toggle:hover{color:#fff;border-color:var(--cyan);}
+body.light .pb-toggle{background:#fff;border-color:var(--line);
+  color:var(--ink-2);}
+/* auto-hide (taskbar style): the bar sits off-screen and slides back the
+   moment the pointer reaches that edge. The document keeps the full
+   screen — the bar overlays on peek instead of pushing content around. */
+body.pb-auto.doc-presenting.pbpos-top .docs{top:0;}
+body.pb-auto.doc-presenting.pbpos-right .docs{right:0;}
+body.pb-auto.pbpos-top:not(.pb-peek) .present-bar{
+  transform:translateY(-101%);}
+body.pb-auto.pbpos-right:not(.pb-peek) .present-bar{
+  transform:translateX(101%);}
+body.pb-auto.pb-peek .present-bar{transform:none!important;}
 .rawcell{position:relative;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;
   padding:14px 16px 14px 16px;margin:12px 0;}
@@ -2942,7 +2959,8 @@ window.MathJax = {
  URL">&#43; Open</button>
         <button class="toggle" id="file-info-btn" hidden
           title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open">&#128196; File &#9662;</button>
+ and every earlier version you can open">&#128196; File info
+          &#9662;</button>
         <button class="toggle fz-step" id="file-reload" hidden
           title="Reload this notebook">&#8635;</button>
       </span>
@@ -2993,7 +3011,7 @@ window.MathJax = {
       <button class="toggle" id="filters-all"
         title="Copy the filters this notebook is using onto every other
  open notebook (their own per-section changes are cleared)"
-        >&#8649; Copy filters to all notebooks</button>
+        >&#8649; Copy to all</button>
       <button class="toggle sub" id="trace-inherit" hidden
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from.">&#8615; Use the
@@ -3003,13 +3021,14 @@ window.MathJax = {
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller"
           title="Make every figure in the feed smaller">&#8722;</button>
-        <button class="toggle" id="fig-size-val"
+        <button class="toggle fz-val" id="fig-size-val"
           title="Figure size across the whole feed — click to reset to 100%"
-          >Figures 100%</button>
+          >100%</button>
         <button class="toggle fz-step" id="fig-bigger"
           title="Make every figure in the feed bigger (each figure also has
  its own +/- and an expand button on hover)">&#43;</button>
       </span>
+      <span class="fgrp-cap">Figure size</span>
     </span>
     <span class="appbar-div" aria-hidden="true"></span>
     <button class="toggle" id="view-raw"
@@ -3085,15 +3104,20 @@ window.MathJax = {
     <button class="toggle" id="pb-move"
       title="Dock these controls across the top or down the right">
       &#8646; Dock right</button>
+    <button class="toggle" id="pb-auto"
+      aria-pressed="false"
+      title="Auto-hide: keep the bar out of the way and slide it back in
+ when you move to that edge — like the Windows taskbar">&#8681;
+      Auto-hide</button>
     <button class="toggle pb-exit" id="pb-exit"
       title="Stop presenting and go back to the document (Esc). Nothing is
  closed or lost.">&#10005; Exit presentation</button>
   </div>
-  <button class="pb-collapse" id="pb-collapse"
-    title="Fold these controls out of the way">&#9650;</button>
 </div>
-<button class="present-bar-show" id="present-bar-show"
-  title="Show the presenting controls" hidden>&#9776; Controls</button>
+<!-- ONE button does both fold and unfold, and it never moves: it is
+     pinned to the same spot whether the bar is in or out -->
+<button class="pb-toggle" id="present-bar-show"
+  title="Hide or show the presenting controls" hidden>&#9776;</button>
 <div class="docs" id="docs">
 <div class="shell nbshell" data-nb="example_climate_analysis">
   <aside class="rail">
@@ -8390,9 +8414,6 @@ through Ko-fi. Thank you.</p>
     var x=$('#pb-exit'); if(x) x.addEventListener('click',exitDocPresent);
     var v=$('#pb-view'); if(v) v.addEventListener('click',function(){
       toggleTree();renderViewBtns();});
-    var c=$('#pb-collapse'); if(c) c.addEventListener('click',function(){
-      document.body.classList.add('pb-folded');
-      relayoutActiveTree();});
     var rl=$('#pb-rail');
     if(rl){
       rl.setAttribute('aria-pressed','false');
@@ -8431,16 +8452,7 @@ through Ko-fi. Thank you.</p>
           ?'Move these controls down the right-hand side'
           :'Move these controls back across the top';
       }
-      var cb=$('#pb-collapse');
-      if(cb){
-        cb.innerHTML=(pbDock==='top')?'&#9650;':'&#9654;';
-        cb.title=(pbDock==='top')
-          ?'Fold the bar up out of the way'
-          :'Fold the bar off to the right';
-      }
-      var sh=$('#present-bar-show');
-      if(sh) sh.innerHTML=(pbDock==='top')
-        ?'&#9776; Controls':'&#9776;';
+      if(APP.syncPbToggle) APP.syncPbToggle();
       try{localStorage.setItem(PKEY,pbDock);}catch(e){}
       measurePb();relayoutActiveTree();
       setTimeout(measurePb,60);   /* after the wrap settles */
@@ -8453,9 +8465,58 @@ through Ko-fi. Thank you.</p>
     window.addEventListener('resize',function(){
       if(document.body.classList.contains('doc-presenting')) measurePb();});
     applyPbDock();
-    var s=$('#present-bar-show'); if(s) s.addEventListener('click',function(){
-      document.body.classList.remove('pb-folded');
-      measurePb();relayoutActiveTree();});
+    /* one button, one place: it folds the bar away and brings it back */
+    var s=$('#present-bar-show');
+    function syncToggleBtn(){
+      if(!s) return;
+      var folded=document.body.classList.contains('pb-folded');
+      s.innerHTML=folded?'&#9776;'
+        :(pbDock==='top'?'&#9650;':'&#9654;');
+      s.title=folded?'Show the presenting controls'
+        :'Hide the presenting controls';
+    }
+    if(s) s.addEventListener('click',function(){
+      document.body.classList.toggle('pb-folded');
+      syncToggleBtn();measurePb();relayoutActiveTree();});
+    APP.syncPbToggle=syncToggleBtn;
+    /* ---- auto-hide, like the taskbar ---- */
+    var AKEY='junoview:presentbar:autohide';
+    var pbAuto=false;
+    try{pbAuto=localStorage.getItem(AKEY)==='1';}catch(e){}
+    function applyAuto(){
+      document.body.classList.toggle('pb-auto',pbAuto);
+      var ab=$('#pb-auto');
+      if(ab) ab.setAttribute('aria-pressed',pbAuto?'true':'false');
+      if(!pbAuto) document.body.classList.remove('pb-peek');
+      try{localStorage.setItem(AKEY,pbAuto?'1':'0');}catch(e){}
+      measurePb();relayoutActiveTree();
+    }
+    var ab=$('#pb-auto');
+    if(ab) ab.addEventListener('click',function(){
+      pbAuto=!pbAuto;
+      if(pbAuto) document.body.classList.remove('pb-folded');
+      applyAuto();syncToggleBtn();
+    });
+    document.addEventListener('mousemove',function(e){
+      if(!pbAuto||!document.body.classList.contains('doc-presenting'))
+        return;
+      var bar=$('#present-bar');
+      var peeking=document.body.classList.contains('pb-peek');
+      var near=(pbDock==='top')?(e.clientY<=4)
+        :(e.clientX>=window.innerWidth-4);
+      if(near){
+        if(!peeking) document.body.classList.add('pb-peek');
+        return;
+      }
+      if(!peeking||!bar) return;
+      /* leave a margin so the bar does not vanish the instant you aim
+         at a button near its edge */
+      var r=bar.getBoundingClientRect();
+      var out=e.clientX<r.left-40||e.clientX>r.right+40
+        ||e.clientY<r.top-40||e.clientY>r.bottom+40;
+      if(out) document.body.classList.remove('pb-peek');
+    });
+    applyAuto();syncToggleBtn();
   })();
   document.addEventListener('fullscreenchange',function(){
     if(!document.fullscreenElement
@@ -9079,7 +9140,7 @@ through Ko-fi. Thank you.</p>
       if(figAll===1) sh.style.removeProperty('--fzall');
       else sh.style.setProperty('--fzall',figAll);});
     var lab=$('#fig-size-val');
-    if(lab) lab.textContent='Figures '+Math.round(figAll*100)+'%';
+    if(lab) lab.textContent=Math.round(figAll*100)+'%';
     resizeEmbeds(document);
   }
   function bumpFigAll(mult){
@@ -9379,10 +9440,13 @@ through Ko-fi. Thank you.</p>
       panel.hidden=!open;
       if(info) info.setAttribute('aria-expanded',open.toString());
       if(open) fill();
-      /* opened from the ribbon: float it under that button instead of
-         letting it sit inside a sidebar that may be hidden */
+      /* opened from the ribbon: float it under that button. It has to be
+         re-parented to <body> — .rail is position:sticky, which makes its
+         own stacking context, so any z-index inside it still loses to the
+         fixed header and the panel opens BEHIND the ribbon. */
       if(anchor&&open){
         panel.classList.add('rf-float');
+        document.body.appendChild(panel);
         var r=anchor.getBoundingClientRect();
         panel.style.top=(r.bottom+6)+'px';
         panel.style.left=Math.max(8,
@@ -9390,6 +9454,8 @@ through Ko-fi. Thank you.</p>
       } else if(!anchor){
         panel.classList.remove('rf-float');
         panel.style.top='';panel.style.left='';
+        var head=$('.railhead',shell);
+        if(head&&panel.parentNode!==head) head.appendChild(panel);
       }
     }
     if(info) info.addEventListener('click',function(){toggle(null);});
@@ -9418,10 +9484,9 @@ through Ko-fi. Thank you.</p>
     if(rb) rb.addEventListener('click',function(){
       var sh=activeSh(); if(sh&&sh.path) openPath(sh.path);});
     document.addEventListener('click',function(e){
-      var sh=activeSh(); if(!sh||!sh.el) return;
-      var p=$('.rf-panel',sh.el);
-      if(p&&!p.hidden&&p.classList.contains('rf-float')
-         &&e.target!==fb&&!p.contains(e.target)) p.hidden=true;
+      /* the floated panel now lives on <body>, so find it there */
+      var p=document.querySelector('body > .rf-panel.rf-float');
+      if(p&&!p.hidden&&e.target!==fb&&!p.contains(e.target)) p.hidden=true;
     });
     document.addEventListener('sem:activate',sync);
     document.addEventListener('sem:shell',sync);
