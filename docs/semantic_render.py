@@ -928,7 +928,25 @@ def _as_presentations(obj: Any) -> list:
         return []
     out = []
     for p in pres:
-        if not isinstance(p, dict) or not isinstance(p.get("slides"), list):
+        if not isinstance(p, dict):
+            continue
+        # A CUSTOM VIEW is not a slide deck: it is a saved, styled, filtered
+        # view of ONE notebook, so it carries style / view / filters instead
+        # of slides. It keeps an empty `slides` list so every consumer that
+        # reaches for .slides still works. (2026-07-29)
+        if p.get("kind") == "view":
+            entry = {"name": str(p.get("name") or "view"), "kind": "view",
+                     "slides": []}
+            if isinstance(p.get("nb"), str) and p["nb"].strip():
+                entry["nb"] = p["nb"].strip()
+            for key in ("style", "view", "filters"):
+                if isinstance(p.get(key), dict):
+                    entry[key] = p[key]
+            if isinstance(p.get("folder"), str) and p["folder"].strip():
+                entry["folder"] = p["folder"].strip()
+            out.append(entry)
+            continue
+        if not isinstance(p.get("slides"), list):
             continue
         slides = []
         for s in p["slides"]:
@@ -1923,8 +1941,11 @@ def render_nav(doc: Document) -> str:
             f'<span class="navsec-t">{html.escape(s.title)}</span>'
             f'<span class="navsec-c">{figs or ""}</span></a>'
             f'<span class="navsec-eye" role="button" tabindex="0" '
+            f'title="Hide or show just this heading" '
+            f'aria-label="Hide or show just this heading">&#128065;</span>'
+            f'<span class="navsec-hideall" role="button" tabindex="0" '
             f'title="Hide or show this whole section" '
-            f'aria-label="Hide or show this whole section">&#128065;</span>'
+            f'aria-label="Hide or show this whole section">&#8801;</span>'
             f'</div>')
         parts.append(f'<div class="navitems navitems-l{s.level}" '
                      f'data-sec="{s.section_id}">')
@@ -1968,8 +1989,12 @@ def render_sections(doc: Document) -> str:
             f'<span class="eyebrow">{eyebrow}</span>'
             f'<h2>{html.escape(s.title)}</h2></div>'
             f'<button class="sec-eye" data-sec="{sid}" '
-            f'title="Hide this whole section (restore it from the sidebar)" '
-            f'aria-label="Hide this whole section">&#128065;</button>'
+            f'title="Hide just this heading (the cards below stay)" '
+            f'aria-label="Hide just this heading">&#128065;</button>'
+            f'<button class="sec-hideall" data-sec="{sid}" '
+            f'title="Hide this whole section — the heading and every card '
+            f'in it (restore it from the sidebar)" '
+            f'aria-label="Hide this whole section">hide section</button>'
             f'</div>{cards}</section>')
     return "".join(sections_html)
 
@@ -2162,6 +2187,97 @@ body.light .rf-btn{border-color:var(--line);background:#fff;
 .rf-info{flex:1;justify-content:flex-start;min-width:0;}
 .rf-reload{flex:none;font-size:12px;padding:5px 9px;}
 .rf-btn[hidden]{display:none!important;}
+/* ---- CUSTOM VIEW: the styling bar + style panel (2026-07-29) --------
+   A custom view is edited IN the document (you see exactly what you get),
+   so its chrome is a second bar under the filter ribbon rather than a
+   separate stage. */
+.stylebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:7px 16px 8px;border-top:1px solid var(--chrome-line);
+  background:#0f1b28;}
+body.light .stylebar{background:#eef3f7;}
+.stylebar[hidden]{display:none;}
+.sb-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);opacity:.8;}
+body.light .sb-lab{color:var(--ink-3);}
+.sb-name{font-family:var(--sans);font-size:13px;font-weight:600;
+  color:var(--chrome-ink);max-width:220px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+body.light .sb-name{color:var(--ink);}
+.sb-spring{flex:1;}
+.sb-hint{font-family:var(--mono);font-size:9px;letter-spacing:.05em;
+  color:var(--chrome-ink-2);opacity:.75;}
+body.light .sb-hint{color:var(--ink-3);}
+.stylebar .toggle{height:30px;box-sizing:border-box;padding:0 13px;
+  font-size:11.5px;flex:none;white-space:nowrap;
+  border:1px solid #ffffff40;background:#ffffff12;color:#d7e3ec;
+  border-radius:6px;cursor:pointer;font-family:var(--mono);
+  display:inline-flex;align-items:center;line-height:1;}
+.stylebar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.stylebar .toggle[hidden]{display:none!important;}
+.stylebar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
+  color:#04222b;font-weight:600;}
+.stylebar .toggle[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+body.light .stylebar .toggle{background:#fff;border-color:var(--line);
+  color:var(--ink-2);}
+body.light .stylebar .toggle:hover{border-color:var(--cyan);color:var(--ink);}
+body.light .stylebar .toggle.primary{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+/* the panel floats at body level — a sticky/positioned ancestor would
+   trap it behind the header (the File-info panel learned this already) */
+.stylepanel{position:fixed;z-index:210;width:302px;max-height:74vh;
+  overflow-y:auto;background:#16273a;border:1px solid #ffffff22;
+  border-radius:9px;padding:11px 12px 13px;
+  box-shadow:0 14px 44px #00000070;}
+.stylepanel[hidden]{display:none;}
+body.light .stylepanel{background:#fff;border-color:var(--line);
+  box-shadow:0 14px 44px #00000026;}
+.sp-h{font-family:var(--mono);font-size:9px;letter-spacing:.15em;
+  text-transform:uppercase;color:#7e93a4;padding:0 0 8px;}
+body.light .sp-h{color:var(--ink-3);}
+.sp-sub{font-size:11.5px;color:#9fb2c2;padding:0 0 9px;line-height:1.45;}
+body.light .sp-sub{color:var(--ink-3);}
+.sp-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.sp-rl{flex:1;font-size:12px;color:#cdd9e3;}
+body.light .sp-rl{color:var(--ink-2);}
+.sp-row input[type=color]{width:34px;height:24px;padding:0;flex:none;
+  background:none;border:1px solid #ffffff2e;border-radius:5px;
+  cursor:pointer;}
+.sp-row input[type=range]{width:118px;flex:none;}
+.sp-row select,.sp-num{background:#0f1b28;border:1px solid #ffffff2e;
+  color:#cdd9e3;font-family:var(--mono);font-size:11px;padding:4px 6px;
+  border-radius:5px;flex:none;}
+body.light .sp-row select,body.light .sp-num{background:#fff;
+  border-color:var(--line);color:var(--ink-2);}
+.sp-num{width:56px;}
+.sp-val{font-family:var(--mono);font-size:10px;color:#7e93a4;width:38px;
+  text-align:right;flex:none;}
+.sp-btns{display:flex;gap:6px;padding-top:10px;margin-top:8px;
+  border-top:1px solid #ffffff14;}
+.sp-btns .toggle{flex:1;justify-content:center;}
+.sp-warn{font-size:11px;color:#e6b877;padding:7px 0 2px;line-height:1.4;}
+/* while styling: markdown cells and headings advertise that they are
+   clickable targets, and each carries its own style button */
+body.styling .card[data-note="1"],body.styling .sectionhead{cursor:pointer;}
+body.styling .card[data-note="1"]:hover,
+body.styling .sectionhead:hover{outline:2px dashed var(--cyan);
+  outline-offset:3px;}
+body.styling .card[data-note="1"].sty-sel,
+body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
+  outline-offset:3px;}
+.sty-btn{position:absolute;top:6px;left:8px;z-index:6;
+  font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;padding:3px 7px;border-radius:5px;
+  border:1px solid var(--cyan);background:var(--paper);color:var(--cyan-deep);
+  cursor:pointer;opacity:0;transition:opacity .12s;}
+.card[data-note="1"]:hover .sty-btn,.sty-btn:focus-visible{opacity:1;}
+.sty-btn:hover{background:var(--cyan);color:#04222b;}
+/* a section's style button sits on its header line, before the eye */
+.sectionhead .sty-btn{position:static;opacity:.7;margin-left:auto;}
+.sectionhead:hover .sty-btn{opacity:1;}
+/* a target that carries its OWN style says so — that is what the
+   "Override individual styles" button is about */
+.sty-own{border-color:var(--amber)!important;color:var(--amber)!important;}
 .rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
   border-radius:7px;padding:9px 10px;background:#ffffff08;}
 .rf-panel[hidden]{display:none;}
@@ -2438,21 +2554,27 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 /* ---------- content ---------- */
 .content{max-width:920px;margin:0 auto;padding:30px 28px 30vh;}
 .section{margin-bottom:14px;scroll-margin-top:70px;}
+/* headings read the --hd-* vars for the same reason the notes read
+   --md-*: a custom view can restyle every heading, one section's
+   heading, or leave them alone (the fallbacks are the stock design) */
 .sectionhead{padding:24px 0 6px;margin-bottom:8px;
-  border-bottom:1px solid var(--line);
+  border-bottom:var(--hd-bw,1px) solid var(--hd-bd,var(--line));
+  background:var(--hd-bg,transparent);
   display:flex;align-items:center;gap:8px;}
 .sectionhead-txt{flex:1;min-width:0;}
 .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--cyan-deep);display:block;
-  margin-bottom:6px;}
-.sectionhead h2{font-size:26px;font-weight:600;margin:0;letter-spacing:-.02em;
-  color:var(--ink);}
+  text-transform:uppercase;color:var(--hd-accent,var(--cyan-deep));
+  display:var(--hd-eyebrow,block);margin-bottom:6px;}
+.sectionhead h2{font-size:calc(26px * var(--hd-size,1));
+  font-weight:var(--hd-wt,600);margin:0;letter-spacing:-.02em;
+  color:var(--hd-col,var(--ink));text-transform:var(--hd-caps,none);
+  font-family:var(--hd-font,inherit);}
 /* three heading tiers (# / ## / ###): descending size + indent, and the
    deepest drops the underline so the levels read apart at a glance.
    (These must FOLLOW the base .sectionhead h2 rule — same specificity.) */
-.sectionhead-l2 h2{font-size:21px;}
+.sectionhead-l2 h2{font-size:calc(21px * var(--hd-size,1));}
 .sectionhead-l2{padding-top:16px;}
-.sectionhead-l3 h2{font-size:17px;}
+.sectionhead-l3 h2{font-size:calc(17px * var(--hd-size,1));}
 .sectionhead-l3{padding-top:10px;border-bottom:none;padding-bottom:2px;}
 .sectionhead-l3 .eyebrow{font-size:9px;margin-bottom:3px;}
 .section.sec-l2 .sectionhead{margin-left:14px;}
@@ -2469,9 +2591,36 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   border-radius:5px;opacity:0;transition:opacity .12s,background .12s;}
 .sectionhead:hover .sec-eye,.sec-eye:focus-visible{opacity:.5;}
 .sec-eye:hover{opacity:1;background:var(--paper-2);}
+/* the eye hides the HEADING only; this names the bigger action in words —
+   a glyph could not say "and everything in it" (2026-07-29) */
+.sec-hideall{flex:none;background:none;border:1px solid transparent;
+  color:var(--ink-3);cursor:pointer;font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;line-height:1;padding:5px 8px;
+  border-radius:5px;opacity:0;white-space:nowrap;
+  transition:opacity .12s,background .12s,border-color .12s;}
+.sectionhead:hover .sec-hideall,.sec-hideall:focus-visible{opacity:.65;}
+.sec-hideall:hover{opacity:1;background:var(--paper-2);
+  border-color:var(--line);color:var(--ink-2);}
 /* collapsed folds the section's cards away; the header stays clickable */
 .section.sec-collapsed .card{display:none;}
 .section.sec-collapsed .sectionhead{margin-bottom:0;}
+/* HEADING hidden: the title and its eyebrow go, the cards stay. The head
+   itself survives as a thin hover strip so the controls that brought it
+   here can bring it back in place (no round trip to the sidebar). */
+.section.sec-headoff .sectionhead-txt{display:none;}
+.section.sec-headoff .sectionhead{padding:8px 0 0;margin-bottom:0;
+  border-bottom:none;min-height:0;opacity:.35;}
+.section.sec-headoff .sectionhead:hover{opacity:1;}
+.section.sec-headoff .sec-eye{opacity:.5;position:relative;}
+/* a struck-through eye = "hidden, click to bring it back" (the sidebar
+   already uses exactly this mark for a hidden section) */
+.section.sec-headoff .sec-eye::after,
+.navsec-row.head-off .navsec-eye::after{content:"";position:absolute;
+  left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
+  transform:rotate(-18deg);border-radius:2px;}
+.navsec-row.head-off .navsec-t{opacity:.55;text-decoration:line-through;
+  text-decoration-thickness:1px;}
+.navsec-row.head-off .navsec-eye{opacity:.9;position:relative;}
 /* hidden drops the whole section from the document (restore from the sidebar) */
 .section.sec-off{display:none;}
 .navsec-row.sec-off{opacity:.5;}
@@ -2483,19 +2632,25 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 /* a hidden section keeps only its (dimmed) header row — fold its cell links
    away too, else they stay bright but point at a display:none target */
 .navsec-row.sec-off+.navitems{display:none;}
-.navsec-eye{flex:none;font-size:11px;line-height:1;padding:1px 4px;
-  border-radius:4px;position:relative;opacity:0;color:inherit;cursor:pointer;
-  transition:opacity .12s,background .12s;}
-.navsec-row:hover .navsec-eye,.navsec-eye:focus{opacity:.6;}
-.navsec-eye:hover{opacity:1;background:#ffffff14;}
-.navsec-row.sec-off .navsec-eye{opacity:.9;}
-.navsec-row.sec-off .navsec-eye::after{content:"";position:absolute;
+.navsec-eye,.navsec-hideall{flex:none;font-size:11px;line-height:1;
+  padding:1px 4px;border-radius:4px;position:relative;opacity:0;
+  color:inherit;cursor:pointer;transition:opacity .12s,background .12s;}
+.navsec-hideall{font-size:13px;}
+.navsec-row:hover .navsec-eye,.navsec-eye:focus,
+.navsec-row:hover .navsec-hideall,.navsec-hideall:focus{opacity:.6;}
+.navsec-eye:hover,.navsec-hideall:hover{opacity:1;background:#ffffff14;}
+.navsec-row.sec-off .navsec-hideall{opacity:.9;}
+/* the strike belongs on whichever control did the hiding: ≡ for the whole
+   section, the eye for the heading alone */
+.navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
   left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
   transform:rotate(-18deg);border-radius:2px;}
 
 /* ---------- cards ---------- */
 .card{background:var(--paper);border:1px solid var(--line);
-  border-radius:10px;padding:18px 18px 16px;margin:14px 0;
+  border-radius:10px;padding:18px 18px 16px;
+  /* --vw-gap: a custom view sets the rhythm of the whole feed */
+  margin:var(--vw-gap,14px) 0;
   scroll-margin-top:78px;position:relative;
   box-shadow:0 1px 2px #1a26340a;
   opacity:0;transform:translateY(10px);
@@ -2723,7 +2878,14 @@ body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
 /* markdown notes: minimal chrome. No MARKDOWN badge; a note with no real
    heading drops its "Note" title row too — controls float top-right, and
    hovering the card pops a small amber "markdown" label by its edge */
-.card[data-note="1"]{position:relative;}
+/* the markdown card's own box: background / border / padding / radius are
+   all view-stylable, defaulting to the stock card look */
+.card[data-note="1"]{position:relative;
+  background:var(--md-bg,var(--paper));
+  border-color:var(--md-bd,var(--line));
+  border-width:var(--md-bw,1px);
+  border-radius:var(--md-rad,10px);
+  padding:var(--md-pad,18px) var(--md-pad,18px) calc(var(--md-pad,18px) - 2px);}
 .card[data-note="1"] .badge{display:none;}
 .card.note-untitled>.cardhead{position:absolute;top:6px;right:8px;
   z-index:2;margin:0;gap:6px;}
@@ -2759,11 +2921,21 @@ pre.error{background:#fbf0ee;border-color:#f0d2cc;color:#8a3221;}
 
 /* prose scales with the "Text size" control (--mdscale on the shell) —
    markdown notes and captions, not code or output */
-.nbshell{--mdscale:1;}
-.note{font-family:var(--serif);font-size:calc(15px * var(--mdscale));
-  line-height:1.65;color:var(--ink-2);}
-.note .caption{font-family:var(--serif);font-style:normal;color:var(--ink-2);
-  margin:0;padding:0;border:none;font-size:calc(15px * var(--mdscale));}
+.nbshell{--mdscale:1;background:var(--vw-bg,transparent);}
+/* ---- CUSTOM VIEW styling (2026-07-29) -----------------------------
+   Every prose/heading property a custom view can set reads from an
+   INHERITED custom property, which is what gives the cascade for free:
+   the value is stamped on .nbshell for "all markdown cells", on a
+   .section for one section, or on a .card for one cell — narrowest
+   wins, exactly like the user's mental model. Defaults in the var()
+   fallbacks keep an unstyled document byte-identical to before. */
+.note{font-family:var(--md-font,var(--serif));
+  font-size:calc(15px * var(--mdscale) * var(--md-size,1));
+  line-height:var(--md-lh,1.65);color:var(--md-col,var(--ink-2));
+  text-align:var(--md-align,start);}
+.note .caption{font-family:var(--md-font,var(--serif));font-style:normal;
+  color:var(--md-col,var(--ink-2));margin:0;padding:0;border:none;
+  font-size:calc(15px * var(--mdscale) * var(--md-size,1));}
 
 .caption{font-family:var(--serif);font-size:calc(14px * var(--mdscale));
   color:var(--ink-2);margin:13px 0 0;padding-left:6px;line-height:1.6;}
@@ -3843,8 +4015,13 @@ body.light .rg-collapse:hover{color:var(--ink);
 /* ---------- dark document (default theme; body.light keeps paper) --- */
 body:not(.light){background:#0b141d;}
 body:not(.light) .stage{background:#0b141d;}
-body:not(.light) .sectionhead{border-bottom-color:#ffffff14;}
-body:not(.light) .sectionhead h2{color:#e6edf3;}
+/* dark mode is explicit overrides, not variable swaps — so every rule a
+   custom view can restyle must honour its var here TOO, or styling does
+   nothing at all in the default theme (2026-07-29) */
+body:not(.light) .sectionhead{
+  border-bottom-color:var(--hd-bd,#ffffff14);}
+body:not(.light) .sectionhead h2{color:var(--hd-col,#e6edf3);}
+body:not(.light) .eyebrow{color:var(--hd-accent,#5fc3d8);}
 body:not(.light) .card{background:#101c28;border-color:#ffffff14;
   box-shadow:0 1px 2px #00000040;}
 body:not(.light) .card:hover{box-shadow:0 6px 22px #00000055;}
@@ -3859,8 +4036,11 @@ body:not(.light) .k-metric .badge{background:#46a89222;color:#6fcab4;}
 body:not(.light) .k-note .badge{background:#cf9a4e26;color:#dfb277;}
 body:not(.light) .k-print .badge{background:#5f7d8c2b;color:#a6c2cf;}
 body:not(.light) .nodeid{background:#ffffff0f;color:#8ba0b2;}
-body:not(.light) .note{color:#c3cfda;}
-body:not(.light) .note .caption{color:#c3cfda;}
+body:not(.light) .note{color:var(--md-col,#c3cfda);}
+body:not(.light) .note .caption{color:var(--md-col,#c3cfda);}
+/* a markdown card's own box is view-stylable in dark mode too */
+body:not(.light) .card[data-note="1"]{background:var(--md-bg,#101c28);
+  border-color:var(--md-bd,#ffffff14);}
 body:not(.light) .caption{color:#9fb0bf;}
 body:not(.light) pre.result,body:not(.light) pre.stream{
   background:#0d1926;border-color:#ffffff14;color:#c9d6e2;}
@@ -6665,7 +6845,10 @@ _JS = r"""
     var lab=$('#fig-size-val');
     if(lab) lab.textContent=Math.round(figAll*100)+'%';
     resizeEmbeds(document);
+    scheduleSaveLayout();
   }
+  APP.getFigAll=function(){return figAll;};
+  APP.setFigAll=function(v){figAll=v||1;applyFigAll();};
   function bumpFigAll(mult){
     /* same ceiling, measured on a real card in the active notebook */
     var probe=$('.nbshell:not([hidden]) .card.has-fig');
@@ -6792,6 +6975,21 @@ _JS = r"""
       scheduleSaveLayout();
       applyFilters();   /* keep the sidebar in step (a hidden section stays) */
     }
+    /* hiding the HEADING is a different, smaller action than hiding the
+       section: the cards stay in the document, only the title goes. */
+    function setSecHeadOff(sid,val){
+      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
+      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      if(sec) sec.classList.toggle('sec-headoff',val);
+      if(row) row.classList.toggle('head-off',val);
+      scheduleSaveLayout();
+    }
+    function isHeadOff(sid){
+      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
+      if(sec) return sec.classList.contains('sec-headoff');
+      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      return !!(row&&row.classList.contains('head-off'));
+    }
     function isCollapsed(sid){
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
       return !!(sec&&sec.classList.contains('sec-collapsed'));
@@ -6820,10 +7018,28 @@ _JS = r"""
     $$('.sec-eye',shell).forEach(function(b){
       b.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
-        setSecOff(b.dataset.sec,true);   /* hide the whole section */
+        /* the heading only — and it toggles, because the thin hover strip
+           left behind still carries this button */
+        setSecHeadOff(b.dataset.sec,!isHeadOff(b.dataset.sec));
+      });
+    });
+    $$('.sec-hideall',shell).forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        setSecOff(b.dataset.sec,true);   /* heading AND every card */
       });
     });
     $$('.navsec-eye',shell).forEach(function(sp){
+      var toggle=function(e){
+        e.preventDefault();e.stopPropagation();
+        var row=sp.closest('.navsec-row'); if(!row) return;
+        setSecHeadOff(row.dataset.sec,!isHeadOff(row.dataset.sec));
+      };
+      sp.addEventListener('click',toggle);
+      sp.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '||e.key==='Spacebar') toggle(e);});
+    });
+    $$('.navsec-hideall',shell).forEach(function(sp){
       var toggle=function(e){
         e.preventDefault();e.stopPropagation();
         var row=sp.closest('.navsec-row'); if(!row) return;
@@ -7452,6 +7668,8 @@ _JS = r"""
         return c.dataset.anchor;}).filter(Boolean),
       secsOff:$$('.section.sec-off',el).map(function(s2){
         return s2.dataset.sec;}).filter(Boolean),
+      secsHeadOff:$$('.section.sec-headoff',el).map(function(s2){
+        return s2.dataset.sec;}).filter(Boolean),
       secsClosed:$$('.section.sec-collapsed',el).map(function(s2){
         return s2.dataset.sec;}).filter(Boolean),
       tree:el.classList.contains('tree'),
@@ -7474,6 +7692,12 @@ _JS = r"""
       var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
       if(sec) sec.classList.add('sec-off');
       if(row) row.classList.add('sec-off');
+    });
+    (keep.secsHeadOff||[]).forEach(function(sid){
+      var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
+      var row=shell.querySelector('.navsec-row[data-sec="'+sid+'"]');
+      if(sec) sec.classList.add('sec-headoff');
+      if(row) row.classList.add('head-off');
     });
     keep.secsClosed.forEach(function(sid){
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
@@ -7501,47 +7725,38 @@ _JS = r"""
   function viewKey(path){
     return 'junoview:layout:'+String(path||'');
   }
-  function saveLayout(stem){
-    try{
-      var sh=APP.shells[stem];
-      if(!sh||!sh.el||sh.trace) return;
-      /* a static export has no path — fall back to the notebook's name so
-         the layout still sticks for that page */
-      var key=sh.path||('stem:'+stem);
-      var st=captureViewState(sh.el);
-      delete st.scroll;                 /* where you were is not layout */
-      var pre=String(stem)+'::';
-      st.def=FDEFof(stem);
-      st.sec={};st.scope=[];
-      for(var k in secF){
-        if(k.indexOf(pre)===0) st.sec[k.slice(pre.length)]=secF[k];}
-      for(var k2 in secScope){
-        if(k2.indexOf(pre)===0&&secScope[k2])
-          st.scope.push(k2.slice(pre.length));}
-      /* the size you set on individual figures is part of your layout */
-      st.figs={};
-      $$('.card.has-fig',sh.el).forEach(function(c){
-        var f=parseFloat(c.style.getPropertyValue('--fz'));
-        if(f&&f!==1&&c.dataset.anchor) st.figs[c.dataset.anchor]=f;
-      });
-      st.v=1;
-      localStorage.setItem(viewKey(key),JSON.stringify(st));
-    }catch(e){}
+  /* "your whole view", as data: hidden cells and sections, hidden
+     headings, collapsed sections, tree/raw, every filter (including the
+     per-section ones) and the figure/text sizes. ONE function builds it,
+     so the layout cache and a saved custom view can never drift apart. */
+  function layoutSnapshot(stem){
+    var sh=APP.shells[stem];
+    if(!sh||!sh.el) return null;
+    var st=captureViewState(sh.el);
+    delete st.scroll;                   /* where you were is not layout */
+    var pre=String(stem)+'::';
+    st.def=FDEFof(stem);
+    st.sec={};st.scope=[];
+    for(var k in secF){
+      if(k.indexOf(pre)===0) st.sec[k.slice(pre.length)]=secF[k];}
+    for(var k2 in secScope){
+      if(k2.indexOf(pre)===0&&secScope[k2])
+        st.scope.push(k2.slice(pre.length));}
+    /* the size you set on individual figures is part of your layout */
+    st.figs={};
+    $$('.card.has-fig',sh.el).forEach(function(c){
+      var f=parseFloat(c.style.getPropertyValue('--fz'));
+      if(f&&f!==1&&c.dataset.anchor) st.figs[c.dataset.anchor]=f;
+    });
+    /* the two feed-wide sizers are layout too — a setting that resets on
+       every visit reads as a feature that was taken away */
+    st.figall=APP.getFigAll?APP.getFigAll():1;
+    st.mdall=APP.getMdAll?APP.getMdAll():1;
+    st.v=1;
+    return st;
   }
-  var saveT=null;
-  function scheduleSaveLayout(){
-    clearTimeout(saveT);
-    saveT=setTimeout(function(){
-      if(APP.active) saveLayout(APP.active);},400);
-  }
-  APP.scheduleSaveLayout=scheduleSaveLayout;
-  function loadLayout(shell,stem,path){
-    var st=null;
-    try{
-      var raw=localStorage.getItem(viewKey(path));
-      if(raw) st=JSON.parse(raw);
-    }catch(e){}
-    if(!st||st.v!==1) return false;
+  function applySnapshot(shell,stem,st){
+    if(!st) return false;
     /* the filter state first, so the one applyFilters below is enough */
     if(st.def) defBy[String(stem)]=cloneF(st.def);
     var pre=String(stem)+'::';
@@ -7554,6 +7769,10 @@ _JS = r"""
       scopeSeeded[String(stem)]=1;
     }
     invalidateSids();
+    if(APP.setFigAll) APP.setFigAll(st.figall||1);
+    if(APP.setMdAll) APP.setMdAll(st.mdall||1);
+    $$('.card.has-fig',shell).forEach(function(c){
+      c.style.removeProperty('--fz');syncZoomed(c);});
     Object.keys(st.figs||{}).forEach(function(an){
       var c=shell.querySelector(
         '.card[data-anchor="'+String(an).replace(/"/g,'\\"')+'"]');
@@ -7563,9 +7782,464 @@ _JS = r"""
     });
     restoreViewState(shell,stem,{
       cellsOff:st.cellsOff||[],secsOff:st.secsOff||[],
+      secsHeadOff:st.secsHeadOff||[],
       secsClosed:st.secsClosed||[],tree:!!st.tree,raw:!!st.raw});
     return true;
   }
+  APP.layoutSnapshot=layoutSnapshot;
+  APP.applySnapshot=function(stem,st){
+    var sh=APP.shells[stem];
+    if(!sh||!sh.el) return false;
+    /* a restore must CLEAR what the document is wearing now, or the old
+       hidden cells/sections survive underneath the incoming view */
+    $$('.card.cell-off',sh.el).forEach(function(c){
+      c.classList.remove('cell-off');});
+    $$('.section',sh.el).forEach(function(s2){
+      s2.classList.remove('sec-off','sec-headoff','sec-collapsed');});
+    $$('.navsec-row',sh.el).forEach(function(r){
+      r.classList.remove('sec-off','head-off','collapsed');});
+    $$('.navitems',sh.el).forEach(function(n){
+      n.classList.remove('nav-collapsed');});
+    $$('.navitem.cell-off',sh.el).forEach(function(n){
+      n.classList.remove('cell-off');});
+    sh.el.classList.remove('tree','raw');
+    return applySnapshot(sh.el,stem,st);
+  };
+  function saveLayout(stem){
+    try{
+      var sh=APP.shells[stem];
+      if(!sh||!sh.el||sh.trace) return;
+      /* a static export has no path — fall back to the notebook's name so
+         the layout still sticks for that page */
+      var key=sh.path||('stem:'+stem);
+      var st=layoutSnapshot(stem);
+      if(!st) return;
+      localStorage.setItem(viewKey(key),JSON.stringify(st));
+    }catch(e){}
+  }
+  var saveT=null;
+  function scheduleSaveLayout(){
+    clearTimeout(saveT);
+    saveT=setTimeout(function(){
+      if(!APP.active) return;
+      saveLayout(APP.active);
+      /* a custom view IS this snapshot plus its styling, so every filter
+         or hide you change while editing one belongs to it */
+      if(APP.syncStylingView) APP.syncStylingView();
+    },400);
+  }
+  APP.scheduleSaveLayout=scheduleSaveLayout;
+  function loadLayout(shell,stem,path){
+    var st=null;
+    try{
+      var raw=localStorage.getItem(viewKey(path));
+      if(raw) st=JSON.parse(raw);
+    }catch(e){}
+    if(!st||st.v!==1) return false;
+    return applySnapshot(shell,stem,st);
+  }
+  /* ================= CUSTOM VIEW: styling the document =================
+     A custom view is a saved, restyled, filtered view of ONE notebook. It
+     is edited in the document itself, so what you see is what it is.
+
+     Every property maps to an inherited CSS variable, which is what buys
+     the cascade the user asked for: stamp it on .nbshell and it styles
+     every markdown cell; stamp it on a .section and that section wins;
+     stamp it on a .card and that one cell wins. "Override individual
+     styles" is then just deleting the narrower entries. ------------- */
+  var STY=null,styView=null,styOnChange=null,styTarget=null;
+  var MD_PROPS=[
+    {k:'col',v:'--md-col',t:'color',lab:'Text colour'},
+    {k:'size',v:'--md-size',t:'num',lab:'Text size',
+      d:1,min:0.6,max:2.4,step:0.05,pct:1},
+    {k:'lh',v:'--md-lh',t:'num',lab:'Line height',
+      d:1.65,min:1.1,max:2.4,step:0.05},
+    {k:'bg',v:'--md-bg',t:'color',lab:'Background'},
+    {k:'bd',v:'--md-bd',t:'color',lab:'Border colour'},
+    {k:'bw',v:'--md-bw',t:'px',lab:'Border width',d:1,min:0,max:6,step:1},
+    {k:'rad',v:'--md-rad',t:'px',lab:'Corner radius',
+      d:10,min:0,max:28,step:1},
+    {k:'pad',v:'--md-pad',t:'px',lab:'Padding',d:18,min:2,max:44,step:1},
+    {k:'font',v:'--md-font',t:'font',lab:'Font'},
+    {k:'align',v:'--md-align',t:'align',lab:'Alignment'}
+  ];
+  var HD_PROPS=[
+    {k:'hcol',v:'--hd-col',t:'color',lab:'Heading colour'},
+    {k:'hsize',v:'--hd-size',t:'num',lab:'Heading size',
+      d:1,min:0.6,max:2.4,step:0.05,pct:1},
+    {k:'hwt',v:'--hd-wt',t:'weight',lab:'Weight'},
+    {k:'hfont',v:'--hd-font',t:'font',lab:'Font'},
+    {k:'hcaps',v:'--hd-caps',t:'caps',lab:'Capitals'},
+    {k:'hbg',v:'--hd-bg',t:'color',lab:'Background'},
+    {k:'hbd',v:'--hd-bd',t:'color',lab:'Rule colour'},
+    {k:'hbw',v:'--hd-bw',t:'px',lab:'Rule width',d:1,min:0,max:8,step:1},
+    {k:'haccent',v:'--hd-accent',t:'color',lab:'Accent ("section N")'},
+    {k:'heyebrow',v:'--hd-eyebrow',t:'show',lab:'Show "section N"'}
+  ];
+  var DOC_PROPS=[
+    {k:'paper',v:'--vw-bg',t:'color',lab:'Page background'},
+    {k:'gap',v:'--vw-gap',t:'px',lab:'Space between cells',
+      d:14,min:0,max:48,step:1}
+  ];
+  var FONTS=[['','Default'],['var(--serif)','Serif'],
+             ['var(--sans)','Sans'],['var(--mono)','Mono']];
+  var ALIGNS=[['','Default'],['start','Left'],['center','Centre'],
+              ['end','Right'],['justify','Justified']];
+  var WEIGHTS=[['','Default'],['400','Regular'],['500','Medium'],
+               ['600','Semibold'],['700','Bold']];
+  function cssVal(p,val){
+    if(p.t==='px') return String(val)+'px';
+    if(p.t==='caps') return val?'uppercase':'none';
+    if(p.t==='show') return val?'block':'none';
+    return String(val);
+  }
+  function stamp(el,obj,props){
+    props.forEach(function(p){
+      var v=obj?obj[p.k]:null;
+      if(v===undefined||v===null||v==='') el.style.removeProperty(p.v);
+      else el.style.setProperty(p.v,cssVal(p,v));
+    });
+  }
+  function ALLPROPS(){return MD_PROPS.concat(HD_PROPS).concat(DOC_PROPS);}
+  function styShell(){
+    /* a custom view belongs to ONE notebook: style that one, whatever tab
+       happens to be in front, so switching tabs can never bleed a view's
+       styling onto a different notebook */
+    var stem=(styView&&styView.nb)||APP.active;
+    var sh=APP.shells[stem];
+    return (sh&&sh.el&&!sh.trace)?sh.el:null;
+  }
+  function countNarrow(){
+    var S=STY||{};
+    return Object.keys(S.sec||{}).length+Object.keys(S.cell||{}).length;
+  }
+  function cellsInSection(sid){
+    var el=styShell(); if(!el) return [];
+    var sec=el.querySelector('.section[data-sec="'+sid+'"]');
+    if(!sec) return [];
+    return [].map.call(sec.querySelectorAll('.card[data-note="1"]'),
+      function(c){return c.dataset.anchor;}).filter(Boolean);
+  }
+  function applyViewStyle(){
+    var el=styShell(); if(!el) return;
+    var S=STY||{};
+    stamp(el,S.all,MD_PROPS);
+    stamp(el,S.head,HD_PROPS);
+    stamp(el,S.doc,DOC_PROPS);
+    $$('.section',el).forEach(function(s2){
+      var o=(S.sec||{})[s2.dataset.sec];
+      stamp(s2,o,MD_PROPS);stamp(s2,o,HD_PROPS);
+    });
+    $$('.card[data-note="1"]',el).forEach(function(c){
+      stamp(c,(S.cell||{})[c.dataset.anchor],MD_PROPS);
+    });
+    markStyOwn();
+  }
+  function clearStamps(){
+    var el=styShell(); if(!el) return;
+    var props=ALLPROPS();
+    [el].concat([].slice.call(el.querySelectorAll(
+      '.section,.card[data-note="1"]'))).forEach(function(n){
+      props.forEach(function(p){n.style.removeProperty(p.v);});
+    });
+  }
+  /* a target wearing its OWN style is marked, so "Override individual
+     styles" is never a blind action */
+  function markStyOwn(){
+    var el=styShell(); if(!el) return;
+    var S=STY||{};
+    $$('.sty-btn',el).forEach(function(b){
+      var own=b.dataset.styKind==='sec'
+        ?!!(S.sec||{})[b.dataset.styId]
+        :!!(S.cell||{})[b.dataset.styId];
+      b.classList.toggle('sty-own',own);
+      b.textContent=own?'styled':'style';
+    });
+    var ov=$('#sb-override');
+    if(ov){
+      var n=countNarrow();
+      ov.hidden=!n;
+      ov.textContent='Override '+n+' individual style'+(n===1?'':'s');
+    }
+  }
+  function ensureStyBtns(){
+    var el=styShell(); if(!el) return;
+    $$('.card[data-note="1"]',el).forEach(function(c){
+      if(c.querySelector(':scope > .sty-btn')) return;
+      var b=document.createElement('button');
+      b.className='sty-btn';b.type='button';b.textContent='style';
+      b.dataset.styKind='cell';b.dataset.styId=c.dataset.anchor||'';
+      b.title='Style just this markdown cell';
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        openStyPanel({kind:'cell',id:b.dataset.styId},b);
+      });
+      c.appendChild(b);
+    });
+    $$('.sectionhead',el).forEach(function(h){
+      if(h.querySelector(':scope > .sty-btn')) return;
+      var sec=h.closest('.section'); if(!sec) return;
+      var b=document.createElement('button');
+      b.className='sty-btn';b.type='button';b.textContent='style';
+      b.dataset.styKind='sec';b.dataset.styId=sec.dataset.sec||'';
+      b.title='Style this section — its heading and its markdown cells';
+      b.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        openStyPanel({kind:'sec',id:b.dataset.styId},b);
+      });
+      h.insertBefore(b,h.querySelector('.sec-eye')||null);
+    });
+  }
+  function dropStyBtns(){
+    $$('.sty-btn').forEach(function(b){b.remove();});
+    $$('.sty-sel').forEach(function(n){n.classList.remove('sty-sel');});
+  }
+  function styModelFor(t){
+    var S=STY||{};
+    if(t.kind==='all') return S.all||(S.all={});
+    if(t.kind==='head') return S.head||(S.head={});
+    if(t.kind==='doc') return S.doc||(S.doc={});
+    if(t.kind==='sec'){
+      S.sec=S.sec||{};return S.sec[t.id]||(S.sec[t.id]={});}
+    S.cell=S.cell||{};return S.cell[t.id]||(S.cell[t.id]={});
+  }
+  function styPropsFor(t){
+    if(t.kind==='head') return HD_PROPS;
+    if(t.kind==='doc') return DOC_PROPS;
+    if(t.kind==='sec') return MD_PROPS.concat(HD_PROPS);
+    return MD_PROPS;
+  }
+  function styTitleFor(t){
+    if(t.kind==='all') return 'every markdown cell';
+    if(t.kind==='head') return 'every heading';
+    if(t.kind==='doc') return 'the page';
+    if(t.kind==='sec'){
+      var el=styShell();
+      var h=el&&el.querySelector(
+        '.section[data-sec="'+t.id+'"] .sectionhead h2');
+      return 'section “'+((h&&h.textContent)||t.id)+'”';
+    }
+    var el2=styShell();
+    var c=el2&&el2.querySelector(
+      '.card[data-anchor="'+String(t.id).replace(/"/g,'\\"')+'"]');
+    var ct=c&&c.querySelector('.cardtitle');
+    return 'the cell “'+((ct&&ct.textContent.trim())||t.id)+'”';
+  }
+  function styDirty(){
+    applyViewStyle();
+    if(styView&&styOnChange){
+      styView.style=STY;
+      styOnChange();
+    }
+  }
+  function closeStyPanel(){
+    var p=$('#stylepanel');
+    if(p){p.hidden=true;p.innerHTML='';}
+    styTarget=null;
+    $$('.sty-sel').forEach(function(n){n.classList.remove('sty-sel');});
+    ['#sb-md','#sb-hd','#sb-doc'].forEach(function(s){
+      var b=$(s); if(b) b.setAttribute('aria-pressed','false');});
+  }
+  function openStyPanel(t,anchor){
+    var p=$('#stylepanel'); if(!p||!STY) return;
+    closeStyPanel();
+    styTarget=t;
+    if(p.parentNode!==document.body) document.body.appendChild(p);
+    var model=styModelFor(t),props=styPropsFor(t);
+    var h=document.createElement('div');h.className='sp-h';
+    h.textContent='style '+(t.kind==='all'?'all markdown'
+      :t.kind==='head'?'all headings':t.kind==='doc'?'page':t.kind);
+    p.appendChild(h);
+    var sub=document.createElement('div');sub.className='sp-sub';
+    sub.textContent='Applies to '+styTitleFor(t)+'.';
+    p.appendChild(sub);
+    props.forEach(function(pr){
+      var row=document.createElement('div');row.className='sp-row';
+      var lab=document.createElement('span');lab.className='sp-rl';
+      lab.textContent=pr.lab;row.appendChild(lab);
+      var val=model[pr.k];
+      if(pr.t==='color'){
+        var ci=document.createElement('input');ci.type='color';
+        ci.value=/^#/.test(String(val||''))?val:'#3fa9c4';
+        ci.addEventListener('input',function(){
+          model[pr.k]=ci.value;styDirty();});
+        row.appendChild(ci);
+        var cx=document.createElement('button');cx.className='toggle';
+        cx.type='button';cx.textContent='clear';
+        cx.style.height='24px';cx.style.padding='0 8px';
+        cx.addEventListener('click',function(){
+          delete model[pr.k];styDirty();openStyPanel(t,anchor);});
+        row.appendChild(cx);
+      } else if(pr.t==='num'||pr.t==='px'){
+        var r=document.createElement('input');r.type='range';
+        r.min=pr.min;r.max=pr.max;r.step=pr.step;
+        r.value=(val==null||val==='')?pr.d:val;
+        var out=document.createElement('span');out.className='sp-val';
+        var show=function(v){
+          out.textContent=pr.pct?Math.round(v*100)+'%'
+            :(pr.t==='px'?v+'px':Number(v).toFixed(2));};
+        show(r.value);
+        r.addEventListener('input',function(){
+          var v=pr.t==='px'?parseInt(r.value,10):parseFloat(r.value);
+          model[pr.k]=v;show(v);styDirty();});
+        row.appendChild(r);row.appendChild(out);
+      } else {
+        var sel=document.createElement('select');
+        var opts=pr.t==='font'?FONTS:pr.t==='align'?ALIGNS
+          :pr.t==='weight'?WEIGHTS
+          :[['','Default'],['1','Yes'],['0','No']];
+        opts.forEach(function(o){
+          var op=document.createElement('option');
+          op.value=o[0];op.textContent=o[1];sel.appendChild(op);});
+        sel.value=(val==null||val==='')?'':String(val);
+        sel.addEventListener('change',function(){
+          if(sel.value==='') delete model[pr.k];
+          else model[pr.k]=(pr.t==='caps'||pr.t==='show')
+            ?(sel.value==='1'?1:0):sel.value;
+          styDirty();});
+        row.appendChild(sel);
+      }
+      p.appendChild(row);
+    });
+    /* the override action, scoped to what this panel edits */
+    var narrow=t.kind==='all'||t.kind==='head'?countNarrow()
+      :t.kind==='sec'?cellsInSection(t.id).filter(function(a){
+        return !!(STY.cell||{})[a];}).length:0;
+    if(narrow){
+      var w=document.createElement('div');w.className='sp-warn';
+      w.textContent=narrow+' item'+(narrow===1?'':'s')+' inside this '
+        +'still carry their own style, so they ignore what you set here.';
+      p.appendChild(w);
+      var ob=document.createElement('button');ob.className='toggle';
+      ob.type='button';ob.style.width='100%';
+      ob.textContent='Override those '+narrow+' individual style'
+        +(narrow===1?'':'s');
+      ob.addEventListener('click',function(){
+        if(t.kind==='sec'){
+          cellsInSection(t.id).forEach(function(a){
+            if(STY.cell) delete STY.cell[a];});
+        } else {STY.sec={};STY.cell={};}
+        styDirty();openStyPanel(t,anchor);
+      });
+      p.appendChild(ob);
+    }
+    var btns=document.createElement('div');btns.className='sp-btns';
+    var clr=document.createElement('button');clr.className='toggle';
+    clr.type='button';clr.textContent='Clear this style';
+    clr.addEventListener('click',function(){
+      if(t.kind==='sec'&&STY.sec) delete STY.sec[t.id];
+      else if(t.kind==='cell'&&STY.cell) delete STY.cell[t.id];
+      else if(t.kind==='all') STY.all={};
+      else if(t.kind==='head') STY.head={};
+      else if(t.kind==='doc') STY.doc={};
+      styDirty();closeStyPanel();
+    });
+    var done=document.createElement('button');
+    done.className='toggle primary';done.type='button';
+    done.textContent='Close';
+    done.addEventListener('click',closeStyPanel);
+    btns.appendChild(clr);btns.appendChild(done);
+    p.appendChild(btns);
+    p.hidden=false;
+    /* place it under whatever opened it, clamped to the window */
+    var r2=(anchor||$('#sb-md')).getBoundingClientRect();
+    var pr2=p.getBoundingClientRect();
+    p.style.top=Math.min(r2.bottom+7,
+      Math.max(8,window.innerHeight-pr2.height-8))+'px';
+    p.style.left=Math.max(8,
+      Math.min(r2.left,window.innerWidth-pr2.width-8))+'px';
+    if(t.kind==='sec'||t.kind==='cell'){
+      var el3=styShell();
+      var node=t.kind==='sec'
+        ?el3.querySelector('.section[data-sec="'+t.id+'"] .sectionhead')
+        :el3.querySelector('.card[data-anchor="'
+          +String(t.id).replace(/"/g,'\\"')+'"]');
+      if(node) node.classList.add('sty-sel');
+    }
+    var bmap={all:'#sb-md',head:'#sb-hd',doc:'#sb-doc'};
+    if(bmap[t.kind]){
+      var bb=$(bmap[t.kind]);
+      if(bb) bb.setAttribute('aria-pressed','true');
+    }
+  }
+  APP.enterStyling=function(view,onChange){
+    if(!view) return false;
+    styView=view;
+    STY=view.style||(view.style={});
+    styOnChange=onChange||null;
+    document.body.classList.add('styling');
+    var b=$('#stylebar'); if(b) b.hidden=false;
+    var n=$('#sb-name'); if(n) n.textContent=view.name||'';
+    ensureStyBtns();
+    applyViewStyle();
+    measureChrome();
+    return true;
+  };
+  APP.exitStyling=function(){
+    if(!STY) return;
+    closeStyPanel();
+    clearStamps();
+    dropStyBtns();
+    STY=null;styView=null;styOnChange=null;
+    document.body.classList.remove('styling');
+    var b=$('#stylebar'); if(b) b.hidden=true;
+    measureChrome();
+  };
+  APP.stylingView=function(){return styView;};
+  APP.syncStylingView=function(){
+    if(!styView||!styOnChange||!APP.active) return;
+    var snap=layoutSnapshot(APP.active);
+    if(!snap) return;
+    styView.view=snap;
+    styView.nb=APP.active;
+    styOnChange();
+  };
+  (function(){
+    var md=$('#sb-md'),hd=$('#sb-hd'),dc=$('#sb-doc');
+    if(md) md.addEventListener('click',function(){
+      openStyPanel({kind:'all',id:''},md);});
+    if(hd) hd.addEventListener('click',function(){
+      openStyPanel({kind:'head',id:''},hd);});
+    if(dc) dc.addEventListener('click',function(){
+      openStyPanel({kind:'doc',id:''},dc);});
+    var ov=$('#sb-override');
+    if(ov) ov.addEventListener('click',function(){
+      if(!STY) return;
+      STY.sec={};STY.cell={};styDirty();closeStyPanel();});
+    var rs=$('#sb-reset');
+    if(rs) rs.addEventListener('click',function(){
+      if(!STY) return;
+      STY.all={};STY.head={};STY.doc={};STY.sec={};STY.cell={};
+      styDirty();closeStyPanel();});
+    /* clicking the BODY of a markdown cell or a heading styles that one
+       (real controls — chevrons, eyes, links — still do their own job) */
+    document.addEventListener('click',function(e){
+      if(!STY) return;
+      var p=$('#stylepanel');
+      if(p&&!p.hidden&&p.contains(e.target)) return;
+      if(e.target.closest('.stylebar')) return;
+      if(e.target.closest('button,a,input,select,textarea')) return;
+      var card=e.target.closest('.card[data-note="1"]');
+      if(card){
+        e.preventDefault();e.stopPropagation();
+        openStyPanel({kind:'cell',id:card.dataset.anchor||''},card);
+        return;
+      }
+      var head=e.target.closest('.sectionhead');
+      if(head){
+        var sec=head.closest('.section');
+        e.preventDefault();e.stopPropagation();
+        openStyPanel({kind:'sec',id:(sec&&sec.dataset.sec)||''},head);
+        return;
+      }
+      if(p&&!p.hidden) closeStyPanel();
+    },true);
+    /* a refresh re-mounts the shell: re-stamp and re-hang the buttons */
+    document.addEventListener('sem:shell',function(){
+      if(!STY) return;
+      ensureStyBtns();applyViewStyle();
+    });
+  })();
   function mountShellHTML(htmlStr,path,quiet){
     var host=$('#docs');
     var tmp=document.createElement('div');
@@ -9039,6 +9713,25 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
   line-height:1;letter-spacing:.04em;white-space:nowrap;}
 .dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
 .dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
+/* ---- POSTER MODE: bigger chrome (2026-07-29) ------------------------
+   A poster is authored at A0/A1 on a big screen, and the buttons that
+   were sized for a 16:9 slide read as tiny beside it. Everything the
+   deck editor draws steps up one size while the page is a poster. */
+.deck.poster-page .dbtn{font-size:12.5px;padding:8px 14px;}
+.deck.poster-page .dc-head .dbtn,
+.deck.poster-page .dc-menuwrap .dbtn{height:36px;padding:0 15px;
+  font-size:12.5px;}
+.deck.poster-page .dc-head .dbtn.dc-icon{padding:0 11px;font-size:17px;}
+.deck.poster-page .edit-tools .dbtn{height:34px;box-sizing:border-box;
+  display:inline-flex;align-items:center;font-size:12.5px;}
+.deck.poster-page .dbtn.etm{padding:0 12px;}
+.deck.poster-page .deck-status{height:34px;font-size:11px;}
+/* the template catalog gets two bigger previews per row instead of three */
+.deck.poster-page .lay-picker{grid-template-columns:repeat(2,1fr);
+  max-height:300px;}
+.deck.poster-page .lay-lb{font-size:9.5px;}
+.deck.poster-page .dbtn.lay{padding:5px;}
+.deck.poster-page .dc-label{font-size:10px;}
 .dc-menuwrap{position:relative;}
 .dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
   background:#16273a;border:1px solid #ffffff22;border-radius:8px;
@@ -9846,56 +10539,246 @@ _DECK_JS = r"""
       {k:'text',x:6,y:5,w:88,h:14,text:'Title',size:4.4,b:1},
       {k:'cell',x:4,y:22,w:92,h:74}]},
     {id:'blank',label:'Blank',items:[]},
-    /* ---- POSTER templates (portrait-page geometry: banner + columns) ---- */
-    {id:'poster-3col',label:'Poster · 3 columns',poster:1,items:[
-      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+    /* ---- POSTER templates -------------------------------------------
+       Modelled on what actually hangs in a conference poster hall: a title
+       banner over authors/affiliation, NUMBERED section headings (a reader
+       walking past needs to know the reading order), prose for
+       Introduction / Discussion / Conclusions and figure panels for
+       Results, and a footer for references, funding and contact. The
+       headings are real text boxes, so they are editable like anything
+       else. `land:1` marks the templates shaped for a landscape page.
+       Text `size` is a % of page HEIGHT, so the landscape templates carry
+       larger numbers for the same physical type size. ---- */
+    {id:'poster-3col',label:'3 columns · classic',poster:1,items:[
+      {k:'text',x:3,y:1.4,w:94,h:3.6,
+        text:'Poster title — the finding in one line',size:3.1,b:1,
         align:'center'},
-      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
-        size:1.5,align:'center'},
-      {k:'cell',x:2.5,y:9.5,w:29.7,h:27.5},
-      {k:'cell',x:2.5,y:38.8,w:29.7,h:27.5},
-      {k:'cell',x:2.5,y:68.1,w:29.7,h:27.5},
-      {k:'cell',x:35.15,y:9.5,w:29.7,h:27.5},
-      {k:'cell',x:35.15,y:38.8,w:29.7,h:27.5},
-      {k:'cell',x:35.15,y:68.1,w:29.7,h:27.5},
-      {k:'cell',x:67.8,y:9.5,w:29.7,h:27.5},
-      {k:'cell',x:67.8,y:38.8,w:29.7,h:27.5},
-      {k:'cell',x:67.8,y:68.1,w:29.7,h:27.5}]},
-    {id:'poster-2col',label:'Poster · 2 columns',poster:1,items:[
-      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+      {k:'text',x:8,y:5.4,w:84,h:2.2,
+        text:'Author, Author · Institution · contact@institution.edu',
+        size:1.4,align:'center'},
+      {k:'text',x:2.5,y:9.2,w:29.7,h:2.6,text:'1 · Introduction',
+        size:1.9,b:1},
+      {k:'text',x:2.5,y:12.4,w:29.7,h:13,
+        text:'Why this matters, the question you asked, and what was '
+          +'already known.',size:1.35},
+      {k:'text',x:2.5,y:26.8,w:29.7,h:2.6,text:'2 · Data & methods',
+        size:1.9,b:1},
+      {k:'text',x:2.5,y:30,w:29.7,h:10.5,
+        text:'Data sources, processing and the analysis in brief.',
+        size:1.35},
+      {k:'cell',x:2.5,y:42,w:29.7,h:22},
+      {k:'text',x:2.5,y:65.6,w:29.7,h:2.6,text:'3 · Key numbers',
+        size:1.9,b:1},
+      {k:'cell',x:2.5,y:68.8,w:29.7,h:22.8},
+      {k:'text',x:35.15,y:9.2,w:29.7,h:2.6,text:'4 · Results',
+        size:1.9,b:1},
+      {k:'cell',x:35.15,y:12.4,w:29.7,h:37.5},
+      {k:'cell',x:35.15,y:51.5,w:29.7,h:40.1},
+      {k:'text',x:67.8,y:9.2,w:29.7,h:2.6,text:'5 · Results continued',
+        size:1.9,b:1},
+      {k:'cell',x:67.8,y:12.4,w:29.7,h:29},
+      {k:'text',x:67.8,y:43,w:29.7,h:2.6,text:'6 · Discussion',
+        size:1.9,b:1},
+      {k:'text',x:67.8,y:46.2,w:29.7,h:17.5,
+        text:'What the results mean, and the caveats.',size:1.35},
+      {k:'text',x:67.8,y:65.6,w:29.7,h:2.6,text:'7 · Conclusions',
+        size:1.9,b:1},
+      {k:'text',x:67.8,y:68.8,w:29.7,h:22.8,
+        text:'The take-home messages, as short bullets.',size:1.4},
+      {k:'text',x:2.5,y:93.4,w:95,h:4.6,
+        text:'References · Funding & acknowledgements · '
+          +'Code and data: github.com/…',size:1.1}]},
+    {id:'poster-2col',label:'2 columns · wide figures',poster:1,items:[
+      {k:'text',x:3,y:1.4,w:94,h:3.8,text:'Poster title',size:3.3,b:1,
         align:'center'},
-      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
-        size:1.5,align:'center'},
-      {k:'cell',x:2.5,y:9.5,w:46.25,h:27.5},
-      {k:'cell',x:2.5,y:38.8,w:46.25,h:27.5},
-      {k:'cell',x:2.5,y:68.1,w:46.25,h:27.5},
-      {k:'cell',x:51.25,y:9.5,w:46.25,h:27.5},
-      {k:'cell',x:51.25,y:38.8,w:46.25,h:27.5},
-      {k:'cell',x:51.25,y:68.1,w:46.25,h:27.5}]},
-    {id:'poster-fig',label:'Poster · hero figure',poster:1,items:[
-      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+      {k:'text',x:8,y:5.6,w:84,h:2.2,
+        text:'Author, Author · Institution',size:1.5,align:'center'},
+      {k:'text',x:2.5,y:9.4,w:46,h:2.8,text:'1 · Introduction',
+        size:2.1,b:1},
+      {k:'text',x:2.5,y:12.8,w:46,h:14,
+        text:'Motivation, the question, and the gap this fills.',
+        size:1.5},
+      {k:'text',x:2.5,y:28.2,w:46,h:2.8,text:'2 · Methods',size:2.1,b:1},
+      {k:'text',x:2.5,y:31.6,w:46,h:12.5,
+        text:'Data and analysis, in enough detail to be believed.',
+        size:1.5},
+      {k:'cell',x:2.5,y:45.6,w:46,h:24},
+      {k:'text',x:2.5,y:71.4,w:46,h:2.8,text:'4 · Take-home message',
+        size:2.1,b:1},
+      {k:'text',x:2.5,y:74.8,w:46,h:15,
+        text:'The one thing you want remembered.',size:1.7,b:1},
+      {k:'text',x:51.5,y:9.4,w:46,h:2.8,text:'3 · Results',size:2.1,b:1},
+      {k:'cell',x:51.5,y:12.8,w:46,h:37},
+      {k:'cell',x:51.5,y:51.2,w:46,h:38.6},
+      {k:'text',x:2.5,y:92,w:95,h:5.5,
+        text:'References · Acknowledgements · contact@institution.edu',
+        size:1.2}]},
+    {id:'poster-fig',label:'Hero figure',poster:1,items:[
+      {k:'text',x:3,y:1.4,w:94,h:3.6,text:'Poster title',size:3.1,b:1,
         align:'center'},
-      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
-        size:1.5,align:'center'},
-      {k:'cell',x:2.5,y:9.5,w:95,h:44},
-      {k:'cell',x:2.5,y:55.5,w:29.7,h:25},
-      {k:'cell',x:35.15,y:55.5,w:29.7,h:25},
-      {k:'cell',x:67.8,y:55.5,w:29.7,h:25},
-      {k:'text',x:2.5,y:83,w:95,h:14,
-        text:'Key findings — summarise the story here.',size:1.8}]},
-    {id:'poster-flow',label:'Poster · intro / results',poster:1,items:[
-      {k:'text',x:3,y:1.2,w:94,h:4,text:'Poster title',size:3.2,b:1,
+      {k:'text',x:8,y:5.4,w:84,h:2.2,
+        text:'Author, Author · Institution',size:1.4,align:'center'},
+      {k:'text',x:2.5,y:9.4,w:95,h:2.8,text:'Headline result',
+        size:2,b:1},
+      {k:'cell',x:2.5,y:12.8,w:95,h:42},
+      {k:'text',x:2.5,y:56.4,w:95,h:2.6,text:'Supporting evidence',
+        size:1.8,b:1},
+      {k:'cell',x:2.5,y:59.8,w:29.7,h:22},
+      {k:'cell',x:35.15,y:59.8,w:29.7,h:22},
+      {k:'cell',x:67.8,y:59.8,w:29.7,h:22},
+      {k:'text',x:2.5,y:83.6,w:46,h:2.6,text:'What it means',
+        size:1.8,b:1},
+      {k:'text',x:2.5,y:86.8,w:46,h:8,
+        text:'Interpretation and limitations.',size:1.35},
+      {k:'text',x:51.5,y:83.6,w:46,h:2.6,text:'Methods in brief',
+        size:1.8,b:1},
+      {k:'text',x:51.5,y:86.8,w:46,h:8,
+        text:'Data, model, validation.',size:1.35},
+      {k:'text',x:2.5,y:95.6,w:95,h:3.6,
+        text:'References · contact@institution.edu',size:1}]},
+    {id:'poster-flow',label:'Intro → results → conclusions',poster:1,
+      items:[
+      {k:'text',x:3,y:1.4,w:94,h:3.6,text:'Poster title',size:3.1,b:1,
         align:'center'},
-      {k:'text',x:8,y:5.6,w:84,h:2.5,text:'Authors · affiliations',
-        size:1.5,align:'center'},
-      {k:'text',x:2.5,y:10,w:95,h:8,
-        text:'Introduction — motivation, question, data.',size:1.8},
-      {k:'cell',x:2.5,y:20.5,w:46.25,h:34},
-      {k:'cell',x:51.25,y:20.5,w:46.25,h:34},
-      {k:'cell',x:2.5,y:56.5,w:46.25,h:34},
-      {k:'cell',x:51.25,y:56.5,w:46.25,h:34},
-      {k:'text',x:2.5,y:92.5,w:95,h:6,
-        text:'Conclusions — what it means, what is next.',size:1.8}]}
+      {k:'text',x:8,y:5.4,w:84,h:2.2,
+        text:'Author, Author · Institution',size:1.4,align:'center'},
+      {k:'text',x:2.5,y:9.4,w:95,h:2.6,text:'1 · Introduction',
+        size:1.9,b:1},
+      {k:'text',x:2.5,y:12.6,w:95,h:7.5,
+        text:'Motivation, question, and data — two or three sentences.',
+        size:1.4},
+      {k:'text',x:2.5,y:21.6,w:95,h:2.6,text:'2 · Results',size:1.9,b:1},
+      {k:'cell',x:2.5,y:24.8,w:46,h:32},
+      {k:'cell',x:51.5,y:24.8,w:46,h:32},
+      {k:'cell',x:2.5,y:58.4,w:46,h:27},
+      {k:'cell',x:51.5,y:58.4,w:46,h:27},
+      {k:'text',x:2.5,y:87,w:95,h:2.6,text:'3 · Conclusions',
+        size:1.9,b:1},
+      {k:'text',x:2.5,y:90.2,w:95,h:6,
+        text:'What it means, and what is next.',size:1.4},
+      {k:'text',x:2.5,y:96.8,w:95,h:2.8,
+        text:'References · Acknowledgements · contact@institution.edu',
+        size:1}]},
+    {id:'poster-billboard',label:'Billboard · one big message',poster:1,
+      items:[
+      {k:'text',x:3,y:1.6,w:94,h:3.2,text:'Poster title',size:2.6,b:1,
+        align:'center'},
+      {k:'text',x:8,y:5.2,w:84,h:2,
+        text:'Author, Author · Institution',size:1.3,align:'center'},
+      {k:'text',x:5,y:9.6,w:90,h:15,
+        text:'The one sentence a passer-by should remember.',
+        size:4.6,b:1,align:'center'},
+      {k:'cell',x:5,y:26.5,w:90,h:37},
+      {k:'text',x:2.5,y:66,w:29.7,h:2.6,text:'Why it matters',
+        size:1.7,b:1},
+      {k:'text',x:2.5,y:69.2,w:29.7,h:20,
+        text:'The problem, in plain words.',size:1.25},
+      {k:'text',x:35.15,y:66,w:29.7,h:2.6,text:'How we did it',
+        size:1.7,b:1},
+      {k:'text',x:35.15,y:69.2,w:29.7,h:20,
+        text:'Data, method, validation.',size:1.25},
+      {k:'text',x:67.8,y:66,w:29.7,h:2.6,text:'Detail & references',
+        size:1.7,b:1},
+      {k:'text',x:67.8,y:69.2,w:29.7,h:20,
+        text:'Caveats, citations, funding.',size:1.25},
+      {k:'text',x:2.5,y:91,w:95,h:3.4,
+        text:'Paper, code and data: github.com/… · contact@institution.edu',
+        size:1.05,align:'center'}]},
+    {id:'poster-4col',label:'4 columns · dense',poster:1,items:[
+      {k:'text',x:3,y:1.2,w:94,h:3.2,text:'Poster title',size:2.9,b:1,
+        align:'center'},
+      {k:'text',x:8,y:4.9,w:84,h:2,
+        text:'Author, Author · Institution',size:1.3,align:'center'},
+      {k:'text',x:2.5,y:8.8,w:21.87,h:2.4,text:'1 · Introduction',
+        size:1.7,b:1},
+      {k:'text',x:2.5,y:11.8,w:21.87,h:16,
+        text:'Motivation and question.',size:1.25},
+      {k:'text',x:2.5,y:29.2,w:21.87,h:2.4,text:'2 · Methods',
+        size:1.7,b:1},
+      {k:'text',x:2.5,y:32.2,w:21.87,h:14,
+        text:'Data and analysis.',size:1.25},
+      {k:'cell',x:2.5,y:47.6,w:21.87,h:20},
+      {k:'cell',x:2.5,y:69,w:21.87,h:22.5},
+      {k:'text',x:26.87,y:8.8,w:21.87,h:2.4,text:'3 · Results',
+        size:1.7,b:1},
+      {k:'cell',x:26.87,y:11.8,w:21.87,h:26},
+      {k:'cell',x:26.87,y:39.6,w:21.87,h:26},
+      {k:'cell',x:26.87,y:67.4,w:21.87,h:24.1},
+      {k:'text',x:51.25,y:8.8,w:21.87,h:2.4,text:'4 · Results continued',
+        size:1.7,b:1},
+      {k:'cell',x:51.25,y:11.8,w:21.87,h:26},
+      {k:'cell',x:51.25,y:39.6,w:21.87,h:26},
+      {k:'cell',x:51.25,y:67.4,w:21.87,h:24.1},
+      {k:'text',x:75.62,y:8.8,w:21.87,h:2.4,text:'5 · Discussion',
+        size:1.7,b:1},
+      {k:'text',x:75.62,y:11.8,w:21.87,h:24,
+        text:'Interpretation and caveats.',size:1.25},
+      {k:'text',x:75.62,y:37.2,w:21.87,h:2.4,text:'6 · Conclusions',
+        size:1.7,b:1},
+      {k:'text',x:75.62,y:40.2,w:21.87,h:22,
+        text:'The take-home messages.',size:1.3},
+      {k:'text',x:75.62,y:63.8,w:21.87,h:2.4,text:'References',
+        size:1.7,b:1},
+      {k:'text',x:75.62,y:66.8,w:21.87,h:24.7,
+        text:'Citations and funding.',size:1.05},
+      {k:'text',x:2.5,y:93,w:95,h:5,
+        text:'Acknowledgements · contact@institution.edu',size:1.05}]},
+    {id:'poster-land3',label:'Landscape · 3 columns',poster:1,land:1,
+      items:[
+      {k:'text',x:2.5,y:2.2,w:95,h:6,text:'Poster title',size:4.4,b:1,
+        align:'center'},
+      {k:'text',x:10,y:9,w:80,h:3.4,
+        text:'Author, Author · Institution · contact@institution.edu',
+        size:2,align:'center'},
+      {k:'text',x:2.5,y:15.5,w:29.7,h:4,text:'1 · Introduction',
+        size:2.6,b:1},
+      {k:'text',x:2.5,y:20.5,w:29.7,h:20,
+        text:'Motivation, the question, and what was already known.',
+        size:1.85},
+      {k:'text',x:2.5,y:42.5,w:29.7,h:4,text:'2 · Methods',size:2.6,b:1},
+      {k:'text',x:2.5,y:47.5,w:29.7,h:16,
+        text:'Data sources and analysis.',size:1.85},
+      {k:'cell',x:2.5,y:65.5,w:29.7,h:22.5},
+      {k:'text',x:35.15,y:15.5,w:29.7,h:4,text:'3 · Results',
+        size:2.6,b:1},
+      {k:'cell',x:35.15,y:20.5,w:29.7,h:32},
+      {k:'cell',x:35.15,y:54.5,w:29.7,h:33.5},
+      {k:'text',x:67.8,y:15.5,w:29.7,h:4,text:'4 · Discussion',
+        size:2.6,b:1},
+      {k:'text',x:67.8,y:20.5,w:29.7,h:23,
+        text:'What the results mean, and the caveats.',size:1.85},
+      {k:'text',x:67.8,y:45.5,w:29.7,h:4,text:'5 · Conclusions',
+        size:2.6,b:1},
+      {k:'text',x:67.8,y:50.5,w:29.7,h:37.5,
+        text:'The take-home messages, as short bullets.',size:1.9},
+      {k:'text',x:2.5,y:89.5,w:95,h:7,
+        text:'References · Funding · Code and data: github.com/…',
+        size:1.5}]},
+    {id:'poster-land-fig',label:'Landscape · hero + notes',poster:1,
+      land:1,items:[
+      {k:'text',x:2.5,y:2.2,w:95,h:6,text:'Poster title',size:4.4,b:1,
+        align:'center'},
+      {k:'text',x:10,y:9,w:80,h:3.2,
+        text:'Author, Author · Institution',size:1.9,align:'center'},
+      {k:'text',x:2.5,y:15.5,w:63,h:4,text:'Headline result',
+        size:2.6,b:1},
+      {k:'cell',x:2.5,y:20.5,w:63,h:60},
+      {k:'text',x:2.5,y:82,w:63,h:6.5,
+        text:'What this figure shows, and the key numbers.',size:1.6},
+      {k:'text',x:67.8,y:15.5,w:29.7,h:4,text:'Introduction',
+        size:2.4,b:1},
+      {k:'text',x:67.8,y:20.5,w:29.7,h:22,
+        text:'Motivation and question.',size:1.8},
+      {k:'text',x:67.8,y:44,w:29.7,h:4,text:'Methods',size:2.4,b:1},
+      {k:'text',x:67.8,y:49,w:29.7,h:14,
+        text:'Data and analysis.',size:1.8},
+      {k:'text',x:67.8,y:64.5,w:29.7,h:4,text:'Conclusions',
+        size:2.4,b:1},
+      {k:'text',x:67.8,y:69.5,w:29.7,h:19,
+        text:'The take-home messages.',size:1.85},
+      {k:'text',x:2.5,y:89.5,w:95,h:7,
+        text:'References · Acknowledgements · contact@institution.edu',
+        size:1.5}]}
   ];
   var LAYOUTBYID={};
   LAYOUTS.forEach(function(l){LAYOUTBYID[l.id]=l;});
@@ -9933,8 +10816,10 @@ _DECK_JS = r"""
   }
   function layIcon(layout){
     var ic=document.createElement('span');ic.className='layico2';
-    /* poster templates preview at PORTRAIT aspect, whatever the page */
-    if(layout.poster) ic.style.aspectRatio='841 / 1189';
+    /* a poster template previews at its OWN aspect — a landscape template
+       drawn in a portrait box is unrecognisable */
+    if(layout.poster)
+      ic.style.aspectRatio=layout.land?'1189 / 841':'841 / 1189';
     (layout.items||[]).forEach(function(it){
       var b=document.createElement('span');
       b.className=(it.k==='text'?'li-text':'li-cell');
@@ -9946,36 +10831,38 @@ _DECK_JS = r"""
   }
   function renderLayoutPicker(){
     /* the same catalog renders twice: in the builder panel (create mode)
-       and in the ribbon's Layouts dropdown (edit mode) — grouped into
-       Slide vs Poster templates, poster group FIRST on a poster page */
-    var posterFirst=/^a\d/.test(String((pres&&pres.page)||''));
-    var variant=posterFirst?'p':'s';
+       and in the ribbon's Layouts dropdown (edit mode). A poster page is
+       offered POSTER templates ONLY and a slide page SLIDE templates only
+       — the other family was never applicable, just noise to scroll past
+       (2026-07-29). Within the poster family, the templates shaped like
+       the current page come first. */
+    var pg=pageOf();
+    var isPoster=!!pg.poster;
+    var land=pg.aw>pg.ah;
+    var variant=(isPoster?'p':'s')+(land?'l':'p');
     ['#layout-row','#layout-menu-grid'].forEach(function(sel){
       var row=$(sel); if(!row||row.dataset.built===variant) return;
       row.dataset.built=variant;row.innerHTML='';
-      var slides=LAYOUTS.filter(function(l){return !l.poster;});
-      var posters=LAYOUTS.filter(function(l){return l.poster;});
-      var groups=posterFirst
-        ?[['Poster layouts',posters],['Slide layouts',slides]]
-        :[['Slide layouts',slides],['Poster layouts',posters]];
-      groups.forEach(function(g){
-        var h=document.createElement('div');h.className='lay-sec';
-        h.textContent=g[0];row.appendChild(h);
-        g[1].forEach(function(layout){
-          var b=document.createElement('button');
-          b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
-          b.title=layout.label;
-          b.appendChild(layIcon(layout));
-          var lb=document.createElement('span');lb.className='lay-lb';
-          lb.textContent=layout.label;b.appendChild(lb);
-          b.addEventListener('click',function(){
-            var s=pres.slides[cur]; if(!s) return;
-            applyLayout(s,layout);
-            activePane=-1;markDirty();refresh();
-            closeLayMenu();
-          });
-          row.appendChild(b);
+      var list=LAYOUTS.filter(function(l){return !!l.poster===isPoster;});
+      if(isPoster) list=list.slice().sort(function(a,b){
+        return (!!a.land===land?0:1)-(!!b.land===land?0:1);});
+      var h=document.createElement('div');h.className='lay-sec';
+      h.textContent=isPoster?'Poster layouts':'Slide layouts';
+      row.appendChild(h);
+      list.forEach(function(layout){
+        var b=document.createElement('button');
+        b.className='dbtn lay';b.dataset.lay=layout.id;b.type='button';
+        b.title=layout.label;
+        b.appendChild(layIcon(layout));
+        var lb=document.createElement('span');lb.className='lay-lb';
+        lb.textContent=layout.label;b.appendChild(lb);
+        b.addEventListener('click',function(){
+          var s=pres.slides[cur]; if(!s) return;
+          applyLayout(s,layout);
+          activePane=-1;markDirty();refresh();
+          closeLayMenu();
         });
+        row.appendChild(b);
       });
     });
   }
@@ -9997,10 +10884,16 @@ _DECK_JS = r"""
     {id:'4x3',label:'Slides 4:3',aw:4,ah:3,mm:[254,190]},
     {id:'a4p',label:'A4 portrait',aw:210,ah:297,mm:[210,297]},
     {id:'a4l',label:'A4 landscape',aw:297,ah:210,mm:[297,210]},
-    {id:'a1p',label:'Poster A1 portrait',aw:594,ah:841,mm:[594,841]},
-    {id:'a1l',label:'Poster A1 landscape',aw:841,ah:594,mm:[841,594]},
-    {id:'a0p',label:'Poster A0 portrait',aw:841,ah:1189,mm:[841,1189]},
-    {id:'a0l',label:'Poster A0 landscape',aw:1189,ah:841,mm:[1189,841]}];
+    /* poster:1 = "this is a poster" — it selects the poster template
+       family and the bigger editor chrome. A4 is a page, not a poster. */
+    {id:'a1p',label:'Poster A1 portrait',aw:594,ah:841,mm:[594,841],
+      poster:1},
+    {id:'a1l',label:'Poster A1 landscape',aw:841,ah:594,mm:[841,594],
+      poster:1},
+    {id:'a0p',label:'Poster A0 portrait',aw:841,ah:1189,mm:[841,1189],
+      poster:1},
+    {id:'a0l',label:'Poster A0 landscape',aw:1189,ah:841,mm:[1189,841],
+      poster:1}];
   function pageOf(){
     var id=pres&&pres.page;
     for(var i=0;i<PAGE_PRESETS.length;i++)
@@ -10012,6 +10905,9 @@ _DECK_JS = r"""
     var pg=pageOf();
     deckEl.style.setProperty('--page-ar',pg.aw+' / '+pg.ah);
     deckEl.classList.toggle('custom-page',pg.id!=='16x9');
+    /* poster work happens at arm's length from a wall-sized page — the
+       editor's own chrome grows to match (2026-07-29) */
+    deckEl.classList.toggle('poster-page',!!pg.poster);
     var b=$('#page-btn');
     if(b) b.innerHTML='&#9645; '
       +(pg.id==='16x9'?'Page':esc(pg.label))+' &#9662;';
@@ -13615,13 +14511,20 @@ _DECK_JS = r"""
       t.dataset.pres=nm;
       t.dataset.folder=folder||'';
       var isPoster=/^a\d/.test(String((byName[nm]&&byName[nm].page)||''));
-      t.title=(isCur&&editing
+      var isView=isViewPres(byName[nm]);
+      /* a custom view lights up while ITS styling bar is open, not while
+         the slide stage is (it never opens the slide stage) */
+      var vwOpen=isView&&isCur
+        &&document.body.classList.contains('styling');
+      if(vwOpen) t.className+=' current editing';
+      var kindWord=isView?'custom view':isPoster?'poster':'presentation';
+      t.title=((isCur&&(editing||vwOpen))
         ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
-        :('Open '+(isPoster?'poster':'presentation')+' "'+nm
-          +'" in the builder'))
+        :('Open '+kindWord+' "'+nm+'"'
+          +(isView?' — restyles the notebook itself':' in the builder')))
         +'\nDrag onto a folder to file it';
       t.innerHTML='<span class="pr-ico">'
-        +(isPoster?'&#9645;':'&#9654;')+'</span>';
+        +(isView?'&#8801;':isPoster?'&#9645;':'&#9654;')+'</span>';
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
@@ -13639,6 +14542,7 @@ _DECK_JS = r"""
       });
       t.addEventListener('click',function(){
         if(isCur&&!deckEl.hidden) return;
+        if(vwOpen) return;            /* already the open custom view */
         choosePresentation(nm);
       });
       return t;
@@ -13748,11 +14652,15 @@ _DECK_JS = r"""
   var newFoldBtn=document.getElementById('pr-newfold');
   if(newFoldBtn) newFoldBtn.addEventListener('click',newFolder);
   function choosePresentation(nm){
+    var A=window.SemApp||{};
     if(nm!==pres.name){
+      if(A.exitStyling) A.exitStyling();   /* leave any open custom view */
       lsSet(PFX+'last',nm);
       loadPresentation(nm);
       cur=0;activePane=-1;
     }
+    /* a custom view is edited in the document; a deck on the slide stage */
+    if(isViewPres(pres)){openCustomView();return;}
     openDeck('edit');   /* land straight in the slide editor */
   }
   function newPresentation(){
@@ -13767,6 +14675,47 @@ _DECK_JS = r"""
     cur=0;activePane=0;
     openDeck('edit');   /* land straight in the slide editor */
   }
+  /* ---- CUSTOM VIEW: a third kind of saved thing (2026-07-29) ---------
+     Not slides. A custom view remembers how the NOTEBOOK looks: the
+     styling of its markdown cells and headings, plus the whole filter /
+     hidden-cell / figure-size state. It opens in the document, not on the
+     slide stage, so the styling bar edits what you are looking at. ---- */
+  function isViewPres(p){return !!(p&&p.kind==='view');}
+  function newCustomView(){
+    var A=window.SemApp||{};
+    var stem=A.active;
+    if(!stem||!A.enterStyling){
+      toast('Open a notebook first — a custom view restyles a notebook');
+      return;
+    }
+    var n2=1,name='custom view';
+    while(savedByName(name)||loadDraft(name)){
+      n2++;name='custom view '+n2;}
+    /* seeded from what you are looking at right now, so a new view never
+       throws away the filters you already set up */
+    pres={name:name,kind:'view',nb:stem,style:{},
+          view:(A.layoutSnapshot&&A.layoutSnapshot(stem))||{}};
+    source='auto';
+    cur=0;activePane=-1;
+    openCustomView();
+  }
+  function openCustomView(){
+    var A=window.SemApp||{};
+    closeDeck();                     /* the document, not the slide stage */
+    if(pres.nb&&A.shells&&A.shells[pres.nb]&&A.activate)
+      A.activate(pres.nb);
+    if(pres.view&&A.applySnapshot)
+      A.applySnapshot(pres.nb||A.active,pres.view);
+    A.enterStyling(pres,function(){markDirty();});
+    renderPresTabs();
+    status();
+  }
+  function closeCustomView(){
+    var A=window.SemApp||{};
+    if(A.exitStyling) A.exitStyling();
+    renderPresTabs();
+  }
+  window.SemApp.viewClose=closeCustomView;
   function newPoster(){
     var n2=1,name='poster';
     while(savedByName(name)||loadDraft(name)){
@@ -14379,6 +15328,10 @@ _DECK_JS = r"""
   if(prNew) prNew.addEventListener('click',newPresentation);
   var prNewPost=document.getElementById('pr-newpost');
   if(prNewPost) prNewPost.addEventListener('click',newPoster);
+  var prNewView=document.getElementById('pr-newview');
+  if(prNewView) prNewView.addEventListener('click',newCustomView);
+  var sbDone=document.getElementById('sb-done');
+  if(sbDone) sbDone.addEventListener('click',closeCustomView);
   $('#pres-current').addEventListener('click',function(){
     var inp=$('#pres-name');
     this.hidden=true;
@@ -15473,7 +16426,37 @@ _TEMPLATE = """<!doctype html>
     <div class="tabstrip" id="tabstrip" role="tablist"
       aria-label="Open notebooks"></div>
   </div>
+  <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
+       insets the document by it automatically, and so the normal filter
+       ribbon stays available (a custom view saves your filters too) -->
+  <div class="stylebar" id="stylebar" hidden>
+    <span class="sb-lab">custom view</span>
+    <span class="sb-name" id="sb-name"></span>
+    <span class="appbar-div"></span>
+    <button class="toggle" id="sb-md" type="button"
+      title="Style EVERY markdown cell in this view">All markdown</button>
+    <button class="toggle" id="sb-hd" type="button"
+      title="Style EVERY heading in this view">All headings</button>
+    <button class="toggle" id="sb-doc" type="button"
+      title="Page colour, accent colour and spacing">Document</button>
+    <span class="appbar-div"></span>
+    <button class="toggle" id="sb-override" type="button" hidden
+      title="Clear the styles set on individual sections and cells, so
+ they follow the view-wide style again">Override individual styles</button>
+    <button class="toggle" id="sb-reset" type="button"
+      title="Remove every style in this view (filters and hidden cells
+ are kept)">Reset styling</button>
+    <span class="sb-spring"></span>
+    <span class="sb-hint">click a markdown cell or heading to style just
+      that one</span>
+    <button class="toggle primary" id="sb-done" type="button"
+      title="Stop editing this custom view and go back to your notebooks"
+      >Done</button>
+  </div>
 </header>
+<!-- the style panel is re-parented to <body> when it opens: the header is
+     position:sticky, so a panel inside it would paint behind the page -->
+<div class="stylepanel" id="stylepanel" hidden></div>
 <nav class="presrail" id="presrail" aria-label="Presentations">
   <div class="presrail-brand">{logo}<span class="prb-full">Junoview</span></div>
   <button class="pr-item pr-docs current" id="pr-docs"
@@ -15491,6 +16474,12 @@ _TEMPLATE = """<!doctype html>
  template applied (change size via Page, layout via Layouts)">
     <span class="pr-ico">&#9645;</span>
     <span class="pr-t">+ New poster</span></button>
+  <button class="pr-btn" id="pr-newview"
+    title="New custom view &mdash; a saved, restyled, filtered view of the
+ notebook itself (not slides). Style all markdown cells, one section or a
+ single cell, and keep your filters and hidden cells with it.">
+    <span class="pr-ico">&#8801;</span>
+    <span class="pr-t">+ New custom view</span></button>
   <button class="pr-btn" id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
@@ -16662,6 +17651,51 @@ def _self_test() -> None:
     # Tree button stays in sync via a class MutationObserver)
     assert "trace-viewsw" in out and "function setTraceView" in out
     assert ".dbtn.tvw.on{background:var(--cyan-deep)" in out
+    # ---- CUSTOM VIEWS: a third saved kind, styling the notebook itself
+    assert 'id="pr-newview"' in out and "function newCustomView" in out
+    assert "function openCustomView" in out and "function isViewPres" in out
+    assert 'id="stylebar"' in out and 'id="stylepanel"' in out
+    for _sb in ("sb-md", "sb-hd", "sb-doc", "sb-override", "sb-reset",
+                "sb-done", "sb-name"):
+        assert f'id="{_sb}"' in out, _sb
+    # the cascade is inherited custom properties: shell -> section -> card
+    assert "var MD_PROPS=[" in out and "var HD_PROPS=[" in out
+    assert "APP.enterStyling=function(view,onChange)" in out
+    assert "APP.exitStyling=function()" in out
+    assert "APP.syncStylingView=function()" in out
+    assert "function applyViewStyle" in out and "function stamp(el,obj" in out
+    assert ".note{font-family:var(--md-font,var(--serif));" in out
+    assert "color:var(--md-col,var(--ink-2))" in out
+    assert 'background:var(--md-bg,var(--paper))' in out
+    assert "font-size:calc(26px * var(--hd-size,1))" in out
+    assert "color:var(--hd-col,var(--ink))" in out
+    assert "display:var(--hd-eyebrow,block)" in out
+    assert "margin:var(--vw-gap,14px) 0;" in out
+    # dark mode overrides colour explicitly, so it must honour the vars too
+    # (without this the whole feature silently did nothing in the default
+    # theme — an equality-only test walked right past it)
+    assert "body:not(.light) .note{color:var(--md-col,#c3cfda);}" in out
+    assert "body:not(.light) .sectionhead h2{color:var(--hd-col,#e6edf3);}" \
+        in out
+    assert 'body:not(.light) .card[data-note="1"]{' \
+        'background:var(--md-bg,#101c28);' in out
+    # a view styles ITS notebook, never whatever tab is in front
+    assert "var stem=(styView&&styView.nb)||APP.active;" in out
+    # per-target buttons + the override affordance
+    assert "function ensureStyBtns" in out and "b.className='sty-btn'" in out
+    assert "function markStyOwn" in out and "sty-own" in out
+    assert "'Override those '+narrow+' individual style'" in out
+    # a view round-trips through the notebook's saved presentations
+    _v = _as_presentations([{"name": "v", "kind": "view", "nb": "nb1",
+                             "style": {"all": {"size": 1.4}},
+                             "view": {"def": {"code": 0}, "v": 1},
+                             "filters": {}, "folder": "f"}])
+    assert _v[0]["kind"] == "view" and _v[0]["nb"] == "nb1"
+    assert _v[0]["style"]["all"]["size"] == 1.4
+    assert _v[0]["view"]["def"] == {"code": 0} and _v[0]["slides"] == []
+    assert _v[0]["folder"] == "f"
+    # a view entry has no slides, and must not be dropped for that
+    assert _as_presentations([{"name": "x", "kind": "view"}])[0]["name"] == "x"
     assert 'id="pr-newpost"' in out and "function newPoster" in out
     assert "page:'a0p'" in out
     assert "id:'poster-3col'" in out and "id:'poster-2col'" in out
@@ -16876,7 +17910,7 @@ def _self_test() -> None:
     assert 'class="abgrp" id="ab-filters"' in out
     # markdown/prose text scales with its own +/- control
     assert 'id="md-bigger"' in out and 'id="md-smaller"' in out
-    assert "--mdscale" in out and "calc(15px * var(--mdscale))" in out
+    assert "--mdscale" in out and "calc(15px * var(--mdscale) * var(--md-size,1))" in out
     # Open / File / Reload lead the ribbon, at full size
     assert 'class="toggle primary" id="tab-open"' in out
     assert 'id="file-info-btn"' not in out   # they live in the sidebar
@@ -17107,7 +18141,8 @@ def _self_test() -> None:
     assert "function syncZoomed" in out
     # the app bar reads as groups: full-height separators between them
     assert ".appbar-div{flex:none;width:1px;height:60px" in out
-    assert out.count('class="appbar-div"') == 4
+    # 4 in the filter ribbon + 2 grouping the custom-view styling bar
+    assert out.count('class="appbar-div"') == 6
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
     assert 'has-fig' in render_item(parse_notebook({"cells": [
         {"cell_type": "code", "source": "plot()", "outputs": [
@@ -17294,6 +18329,35 @@ def _self_test() -> None:
     assert "id:'title-text-cell'" in out or "id:'text-cell'" in out
     assert 'id="layout-row"' in out and "renderLayoutPicker" in out
     assert 'id="edit-tools"' in out and 'id="dc-edit"' in out
+    # a poster page offers POSTER templates only and a slide page slide
+    # templates only — never both lists (2026-07-29)
+    assert "return !!l.poster===isPoster;" in out
+    assert "isPoster?'Poster layouts':'Slide layouts'" in out
+    # ...and the poster family sorts the page's own orientation first,
+    # previewing each template at its real aspect
+    assert "(!!a.land===land?0:1)-(!!b.land===land?0:1)" in out
+    assert "layout.land?'1189 / 841':'841 / 1189'" in out
+    # poster templates read like a real conference poster: numbered
+    # section headings, prose for intro/discussion, figures for results
+    for _pl in ("poster-3col", "poster-2col", "poster-fig", "poster-flow",
+                "poster-billboard", "poster-4col", "poster-land3",
+                "poster-land-fig"):
+        assert f"id:'{_pl}'" in out, _pl
+    assert "text:'1 · Introduction'" in out
+    assert "text:'2 · Data & methods'" in out
+    assert "text:'7 · Conclusions'" in out
+    assert "Funding & acknowledgements" in out
+    assert "land:1" in out and "poster:1" in out
+    # the A-series poster presets are what turns poster mode on; A4 is a
+    # page, so it keeps the slide templates
+    assert "id:'a0p',label:'Poster A0 portrait',aw:841,ah:1189," \
+        "mm:[841,1189],\n      poster:1}" in out
+    assert "id:'a4p',label:'A4 portrait',aw:210,ah:297,mm:[210,297]}" in out
+    # poster mode grows the editor's own chrome
+    assert "classList.toggle('poster-page',!!pg.poster)" in out
+    assert ".deck.poster-page .dbtn{font-size:12.5px;padding:8px 14px;}" in out
+    assert ".deck.poster-page .lay-picker{grid-template-columns:" \
+        "repeat(2,1fr);" in out
     assert 'id="et-fmt"' in out and 'data-tool="cell"' in out
     # ribbon declutter: ONE wrapping flow (static + format groups share
     # rows), no Select/Delete group (Esc deselects, Del removes), Animate
@@ -17404,7 +18468,7 @@ def _self_test() -> None:
     assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
-    assert "'#fig-size-grp','#view-grp'" in out
+    assert "'#fig-size-grp','#md-size-grp','#view-grp'" in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
     assert 'id="fmt-list"' in out and 'id="fmt-shape"' in out
@@ -17516,6 +18580,33 @@ def _self_test() -> None:
     # sections collapse + hide in the MAIN view (chevron + eye), synced to nav
     assert 'class="sec-chev"' in out and 'class="sec-eye"' in out
     assert 'class="navsec-eye"' in out
+    # TWO hide actions per section (2026-07-29): the eye takes the HEADING
+    # only (the cards stay), and a second, word-labelled button takes the
+    # whole section. Both exist in the document and in the sidebar.
+    assert 'class="sec-hideall"' in out and 'class="navsec-hideall"' in out
+    assert 'title="Hide just this heading (the cards below stay)"' in out
+    assert ">hide section</button>" in out
+    assert "function setSecHeadOff" in out and "function isHeadOff" in out
+    assert ".section.sec-headoff .sectionhead-txt{display:none;}" in out
+    # the heading's own head survives as a thin hover strip, so the eye
+    # that hid it can bring it back in place
+    assert ".section.sec-headoff .sectionhead{padding:8px 0 0;" in out
+    assert ".section.sec-headoff .sectionhead:hover{opacity:1;}" in out
+    assert ".navsec-row.head-off .navsec-t{opacity:.55;" \
+        "text-decoration:line-through;" in out
+    # ...and it is part of the saved layout, like every other view setting
+    assert "secsHeadOff:$$('.section.sec-headoff'" in out
+    assert "(keep.secsHeadOff||[]).forEach" in out
+    assert "st.secsHeadOff||[]" in out
+    # the two feed-wide sizers are layout too
+    assert "st.figall=APP.getFigAll?APP.getFigAll():1;" in out
+    assert "st.mdall=APP.getMdAll?APP.getMdAll():1;" in out
+    assert "if(APP.setFigAll) APP.setFigAll(st.figall||1);" in out
+    assert "if(APP.setMdAll) APP.setMdAll(st.mdall||1);" in out
+    # ONE snapshot builder feeds both the layout cache and a custom view
+    assert "function layoutSnapshot" in out and "function applySnapshot" in out
+    assert "APP.layoutSnapshot=layoutSnapshot;" in out
+    assert "APP.applySnapshot=function(stem,st)" in out
     assert ".section.sec-collapsed .card{display:none" in out
     assert ".section.sec-off{display:none" in out
     assert "function setSecCollapsed" in out and "function setSecOff" in out
