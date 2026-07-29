@@ -2189,10 +2189,19 @@ body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-commits{margin-top:7px;max-height:240px;overflow-y:auto;
   border-top:1px solid var(--chrome-line);padding-top:6px;}
 .rf-commits[hidden]{display:none;}
+.rf-crow{display:flex;align-items:stretch;gap:3px;}
 .rf-commit{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;
-  width:100%;text-align:left;background:none;border:1px solid transparent;
+  flex:1;min-width:0;text-align:left;background:none;
+  border:1px solid transparent;
   border-radius:5px;padding:5px 6px;cursor:pointer;color:inherit;}
 .rf-commit:hover{background:#ffffff0e;border-color:var(--chrome-line);}
+/* the same version, but side by side instead of in place */
+.rf-newtab{flex:none;width:26px;background:none;cursor:pointer;
+  border:1px solid transparent;border-radius:5px;
+  color:var(--chrome-ink-2);font-size:12px;line-height:1;}
+.rf-newtab:hover{background:#ffffff0e;border-color:var(--chrome-line);
+  color:var(--chrome-ink);}
+body.light .rf-newtab:hover{background:#00000008;}
 .rf-ch{font-family:var(--mono);font-size:10px;color:var(--cyan);}
 .rf-cm{font-family:var(--sans);font-size:11px;color:var(--chrome-ink);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -3038,14 +3047,14 @@ body.presrail-min{--presrail-w:46px;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It WRAPS —
    a horizontal scrollbar in a toolbar just hides things. */
-.appbar{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
+.appbar{display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap;
   min-height:var(--appbar-h);
   padding:8px 10px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
-  padding:0 10px;line-height:1;}
+  padding:0 9px;line-height:1;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
    narrow instead of growing ever wider */
@@ -3578,6 +3587,10 @@ body.light .scope-row.on{background:#39a9c022;color:var(--ink);}
 /* how many sub-headings ride along with this one */
 .scope-n{font-family:var(--mono);font-size:9px;color:var(--cyan);
   background:#39a9c018;border-radius:20px;padding:1px 5px;margin-left:6px;}
+/* the footer action in the Apply-to menu */
+.scope-copy{margin:8px 0 0;border-top:1px solid #ffffff1f;
+  border-radius:0 0 5px 5px;padding-top:8px;}
+.scope-copy[disabled]{opacity:.45;cursor:default;}
 .ckf-all{display:block;width:100%;text-align:left;font-family:var(--mono);
   font-size:11px;color:var(--cyan);background:#39a9c014;
   border:1px solid #39a9c033;border-radius:5px;padding:5px 7px;
@@ -4660,10 +4673,25 @@ _JS = r"""
       renderScopeMenu();renderScopeBtn();applyFilters();
     });
     m.appendChild(all);
+    /* …and, at the foot, send these filters to the other notebooks */
+    var many=(APP.order||[]).length>1;
+    var cp=document.createElement('button');
+    cp.className='ckf-all scope-copy';
+    cp.textContent='Copy these filters to all notebooks';
+    cp.disabled=!many;
+    cp.title=many
+      ?'Every other open notebook gets the filters this one is using '
+        +'(their own per-section changes are cleared)'
+      :'Open a second notebook to copy these filters across';
+    cp.addEventListener('click',function(e){
+      e.stopPropagation();
+      var mm=$('#sec-scope-menu'); if(mm) mm.hidden=true;
+      copyFiltersToAll();
+    });
     if(!nodes.length){
       var e0=document.createElement('div');e0.className='ckf-empty';
       e0.textContent='No sections in this notebook';
-      m.appendChild(e0);return;
+      m.appendChild(e0);m.appendChild(cp);return;
     }
     function on(id){return !!secScope[id];}
     function setSub(n,val){
@@ -4729,6 +4757,7 @@ _JS = r"""
         if(e.key==='Enter'||e.key===' '||e.key==='Spacebar') pick(e);});
       m.appendChild(row);
     });
+    m.appendChild(cp);
   }
   function setTvBtn(id,label,state){
     var b=$('#'+id); if(!b) return;
@@ -5256,8 +5285,9 @@ _JS = r"""
     applyFilters();applyCodeState();
     docToast('Using the filters from '+sh.source);
   });
-  var faBtn=$('#filters-all');
-  if(faBtn) faBtn.addEventListener('click',function(){
+  /* "these filters, everywhere" — lives at the foot of the Apply-to menu,
+     which is already the control for WHERE the filters land */
+  function copyFiltersToAll(){
     var src=String(activeStem()),n=0;
     (APP.order||[]).forEach(function(s){
       if(String(s)===src) return;
@@ -5267,7 +5297,7 @@ _JS = r"""
     applyFilters();applyCodeState();
     docToast('Applied these filters to '+n+' other notebook'
       +(n>1?'s':'')+' — their per-section tweaks were cleared');
-  });
+  }
   renderTypeButtons();
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */
@@ -5806,22 +5836,32 @@ _JS = r"""
       document.body.classList.toggle('pb-folded');
       syncToggleBtn();measurePb();relayoutActiveTree();});
     APP.syncPbToggle=syncToggleBtn;
-    /* ---- auto-hide, like the taskbar ---- */
-    var AKEY='junoview:presentbar:autohide';
-    var pbAuto=false;
-    try{pbAuto=localStorage.getItem(AKEY)==='1';}catch(e){}
+    /* ---- auto-hide is the DEFAULT while presenting (the slide is the
+       point, not the chrome); "Pin" keeps the bar in place, the way a
+       taskbar or a docked panel does ---- */
+    var AKEY='junoview:presentbar:pinned';
+    var pbPinned=false;
+    try{pbPinned=localStorage.getItem(AKEY)==='1';}catch(e){}
+    var pbAuto=!pbPinned;
     function applyAuto(){
+      pbAuto=!pbPinned;
       document.body.classList.toggle('pb-auto',pbAuto);
       var ab=$('#pb-auto');
-      if(ab) ab.setAttribute('aria-pressed',pbAuto?'true':'false');
+      if(ab){
+        ab.setAttribute('aria-pressed',pbPinned?'true':'false');
+        ab.title=pbPinned
+          ?'Unpin: let the bar hide itself and slide back when you move '
+            +'to that edge'
+          :'Pin the bar so it stays put';
+      }
       if(!pbAuto) document.body.classList.remove('pb-peek');
-      try{localStorage.setItem(AKEY,pbAuto?'1':'0');}catch(e){}
+      try{localStorage.setItem(AKEY,pbPinned?'1':'0');}catch(e){}
       measurePb();relayoutActiveTree();
     }
     var ab=$('#pb-auto');
     if(ab) ab.addEventListener('click',function(){
-      pbAuto=!pbAuto;
-      if(pbAuto) document.body.classList.remove('pb-folded');
+      pbPinned=!pbPinned;
+      if(!pbPinned) document.body.classList.remove('pb-folded');
       applyAuto();syncToggleBtn();
     });
     document.addEventListener('mousemove',function(e){
@@ -5868,8 +5908,7 @@ _JS = r"""
   function applyTheme(light){
     document.body.classList.toggle('light',light);
     if(themeBtn){
-      themeBtn.innerHTML=(light?'&#9789;':'&#9788;')
-        +' Light / dark theme';
+      themeBtn.innerHTML=light?'&#9789;':'&#9788;';
       themeBtn.setAttribute('data-tip',light
         ?'Switch to the dark theme':'Switch to the light theme');
       themeBtn.removeAttribute('title');
@@ -6729,6 +6768,38 @@ _JS = r"""
     return 'https://raw.githubusercontent.com/'+gh.owner+'/'+gh.repo
       +'/'+sha+'/'+gh.path;
   }
+  /* Open a URL that is ANOTHER VERSION of a notebook already open. With
+     `intoStem` it replaces that tab (same file, different moment) and is
+     kept out of Recent; without it, a normal open in its own tab. */
+  function openUrlVersion(url,intoStem,verTag){
+    if(!intoStem){openPath(url);return;}
+    function land(shellHtml){
+      mountShellHTML(shellHtml,url,true);
+      var sh=APP.shells[intoStem];
+      if(sh){sh.version=verTag||'';sh.path=url;}
+      renderTabs();
+    }
+    if(APP.mode==='web'){
+      fetch(url,{cache:'no-store'}).then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.text();
+      }).then(function(txt){
+        if(!webReady()) throw new Error('Python is still loading');
+        var name=decodeURIComponent(
+          url.split('?')[0].split('/').pop()||'notebook.ipynb');
+        /* exclude the tab we are replacing from the taken names, so the
+           parser reproduces ITS stem instead of minting a second one */
+        var taken=APP.order.filter(function(s){return s!==intoStem;});
+        land(window.semPy.parse(name,txt,taken));
+      }).catch(function(e){
+        alert('Could not open that version: '+((e&&e.message)||e));});
+      return;
+    }
+    api('/api/open',{path:url,stem:intoStem}).then(function(j){
+      land(j.shell);
+    }).catch(function(e){
+      alert('Could not open that version: '+((e&&e.message)||e));});
+  }
   function ghCommits(gh){
     var url='https://api.github.com/repos/'+encodeURIComponent(gh.owner)
       +'/'+encodeURIComponent(gh.repo)+'/commits?per_page=25&sha='
@@ -6780,6 +6851,10 @@ _JS = r"""
       b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
       return b;
     }
+    function closePanel(){
+      panel.hidden=true;
+      if(info) info.setAttribute('aria-expanded','false');
+    }
     function fill(){
       panel.innerHTML='';
       var sh=APP.shells[stem]||{};
@@ -6812,6 +6887,7 @@ _JS = r"""
         var box=document.createElement('div');
         box.className='rf-commits';box.hidden=true;
         commits.forEach(function(c){
+          var row=document.createElement('div');row.className='rf-crow';
           var b=document.createElement('button');
           b.className='rf-commit';b.type='button';
           var h=document.createElement('span');
@@ -6821,10 +6897,19 @@ _JS = r"""
           var d=document.createElement('span');
           d.className='rf-cd';d.textContent=c.date||'';
           b.appendChild(h);b.appendChild(m);b.appendChild(d);
-          b.title='Open the notebook as it was at '+c.id;
+          b.title='View this notebook as it was at '+c.id
+            +' (same tab — it is the same file)';
           b.addEventListener('click',function(e){
-            e.stopPropagation();openAt(c);});
-          box.appendChild(b);
+            e.stopPropagation();closePanel();openAt(c,false);});
+          /* …or side by side, when you actually want to compare */
+          var nt=document.createElement('button');
+          nt.className='rf-newtab';nt.type='button';
+          nt.textContent='⧉';
+          nt.title='Open this version in a new tab, to compare';
+          nt.addEventListener('click',function(e){
+            e.stopPropagation();closePanel();openAt(c,true);});
+          row.appendChild(b);row.appendChild(nt);
+          box.appendChild(row);
         });
         if(!commits.length){
           var e0=document.createElement('div');
@@ -6871,7 +6956,13 @@ _JS = r"""
           if(pend.parentNode) pend.parentNode.removeChild(pend);
           if(!commits.length) return;
           panel.insertBefore(hashRow('current commit',commits[0],commits,
-            function(c){openPath(ghRawAt(gh,c.id));}),acts);
+            function(c,newTab){
+              /* every commit is the SAME file at a different moment — it
+                 belongs in this tab, not a new one, and it is not a new
+                 entry in Recent. "⧉" is the explicit opt-in to compare. */
+              openUrlVersion(ghRawAt(gh,c.full||c.id),
+                newTab?null:stem,'git:'+c.id);
+            }),acts);
         }).catch(function(e){
           var v=$('.rf-v',pend);
           if(v) v.textContent=(e&&e.message)||'could not reach GitHub';
@@ -6900,10 +6991,14 @@ _JS = r"""
           APP.api('/api/versions',{path:path}).then(function(j){
             var commits=(j&&j.commits)||[c];
             panel.insertBefore(hashRow('current commit',c,commits,
-              function(cm){
-                APP.api('/api/openversion',{path:path,commit:cm.id})
+              function(cm,newTab){
+                /* same file, different moment — it replaces this tab and
+                   is not a new entry in Recent */
+                APP.api('/api/openversion',
+                  {path:path,commit:cm.id,stem:newTab?'':stem})
                   .then(function(r){
-                    if(r&&r.shell) mountShellHTML(r.shell,r.path||path);
+                    if(r&&r.shell)
+                      mountShellHTML(r.shell,r.path||path,!newTab);
                   }).catch(function(){});
               }),acts);
           }).catch(function(){
@@ -6945,7 +7040,18 @@ _JS = r"""
         if(head&&panel.parentNode!==head) head.appendChild(panel);
       }
     }
-    if(info) info.addEventListener('click',function(){toggle(null);});
+    if(info) info.addEventListener('click',function(e){
+      e.stopPropagation();toggle(null);});
+    /* clicking anywhere else closes it — wherever it is anchored */
+    document.addEventListener('click',function(e){
+      if(panel.hidden||panel.contains(e.target)) return;
+      if(info&&info.contains(e.target)) return;
+      var fb=$('#file-info-btn');
+      if(fb&&fb.contains(e.target)) return;
+      closePanel();
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key==='Escape'&&!panel.hidden) closePanel();});
     /* the ribbon's File button drives whichever notebook is active */
     APP.fileInfoToggle=APP.fileInfoToggle||{};
     APP.fileInfoToggle[stem]=toggle;
@@ -7179,7 +7285,7 @@ _JS = r"""
     renderRawBtn();renderViewBtns();
     if(keep.tree) relayoutActiveTree();
   }
-  function mountShellHTML(htmlStr,path){
+  function mountShellHTML(htmlStr,path,quiet){
     var host=$('#docs');
     var tmp=document.createElement('div');
     tmp.innerHTML=htmlStr;
@@ -7198,7 +7304,9 @@ _JS = r"""
     else host.appendChild(shell);
     initShell(shell);
     if(keep) restoreViewState(shell,stem,keep);
-    if(path&&APP.noteRecent) APP.noteRecent(path);
+    /* a VERSION of a notebook you already have open is not a new
+       document — it must not turn up in Recent as a separate file */
+    if(path&&!quiet&&APP.noteRecent) APP.noteRecent(path);
     activate(stem);
     if(keep&&keep.scroll){
       window.scrollTo(0,keep.scroll);
@@ -14912,7 +15020,7 @@ _SHELL_TEMPLATE = """<div class="shell nbshell" data-nb="{stem}"{path_attr}>
       <div class="railfile">
         <button class="rf-btn rf-info" type="button"
           title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open">&#128196; File info
+ and every earlier version you can open">File info
           &#9662;</button>
         <button class="rf-btn rf-reload" type="button"
           title="Reload this notebook from disk">&#8635;</button>
@@ -14963,7 +15071,7 @@ _TEMPLATE = """<!doctype html>
  URL">&#43; Open</button>
         <button class="toggle" id="file-info-btn" disabled
           title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open">&#128196; File info
+ and every earlier version you can open">File info
           &#9662;</button>
         <button class="toggle fz-step" id="file-reload" disabled
           title="Reload this notebook">&#8635;</button>
@@ -15013,6 +15121,7 @@ _TEMPLATE = """<!doctype html>
     </span>
     <span class="fgrp" id="copy-grp">
       <button class="toggle sub" id="trace-inherit" hidden
+        data-keep="1"
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from.">&#8615; Use the
  document&#8217;s filters</button>
@@ -15040,34 +15149,22 @@ _TEMPLATE = """<!doctype html>
     <button class="toggle" id="view-tree"
       title="Tree view: the analysis as a dependency map you can expand,
  collapse and hide cell by cell. Toggle back for the narrative document.">
-      &#9633; Tree</button>
+      Tree</button>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
- exit.">&#9974; Present</button>
+ exit.">Present</button>
     </span>
-    <!-- the occasional things live behind one button so the bar fits on
-         a single row; the controls you actually use stay in the open -->
-    <span class="btn-grp more-wrap appbar-right">
-      <button class="toggle" id="more-btn" aria-haspopup="true"
-        aria-expanded="false"
-        title="Help, and how to support Junoview">&#8943;</button>
-      <div class="ckfilter-menu more-menu" id="more-menu" hidden>
-        <button class="ckf-all" id="theme-btn"
-          title="Switch between dark and light theme">&#9788;
-          Light / dark theme</button>
-        <button class="ckf-all" id="filters-all"
-          title="Copy the filters this notebook is using onto every other
- open notebook (their own per-section changes are cleared)"
-          >&#8649; Copy filters to all notebooks</button>
-        <button class="ckf-all" id="help-btn"
-          title="How to use, and everything this tool can do">?
-          Help</button>
-        <a class="ckf-row more-link" id="support-btn" href="{kofi}"
-          target="_blank" rel="noopener"
-          title="Support Junoview on Ko-fi — funds an online, hosted
- version with accounts (save + share your docs and talks, like
- Overleaf)">&#9829; Support Junoview</a>
-      </div>
+    <!-- nothing hidden behind a menu: these all fit -->
+    <span class="btn-grp appbar-right">
+      <button class="toggle" id="theme-btn"
+        title="Switch between dark and light theme">&#9788;</button>
+      <a class="toggle appbar-link" id="support-btn" href="{kofi}"
+        target="_blank" rel="noopener"
+        title="Support Junoview on Ko-fi — funds an online, hosted version
+ with accounts (save + share your docs and talks, like Overleaf)"
+        >&#9829;</a>
+      <button class="toggle" id="help-btn"
+        title="How to use, and everything this tool can do">Help</button>
     </span>
   </div>
   <div class="tabsrow">
@@ -15118,15 +15215,14 @@ _TEMPLATE = """<!doctype html>
       title="Show or hide the section sidebar">&#9776; Sections</button>
     <button class="toggle" id="pb-view"
       title="Switch between the Narrative document and the Tree view">
-      &#9633; Tree</button>
+      Tree</button>
     <button class="toggle" id="pb-move"
       title="Dock these controls across the top or down the right">
       &#8646; Dock right</button>
     <button class="toggle" id="pb-auto"
       aria-pressed="false"
-      title="Auto-hide: keep the bar out of the way and slide it back in
- when you move to that edge — like the Windows taskbar">&#8681;
-      Auto-hide</button>
+      title="Pin the bar so it stays put. Unpinned it hides itself and
+ slides back when you move to that edge.">Pin</button>
     <button class="toggle pb-exit" id="pb-exit"
       title="Stop presenting and go back to the document (Esc). Nothing is
  closed or lost.">&#10005; Exit presentation</button>
@@ -15925,13 +16021,19 @@ def _make_handler(state: _AppState):
             raw = str(body.get("path") or "").strip().strip('"')
             if not raw:
                 raise ValueError("no path given")
+            # "stem" = load this INTO an open tab (another version of the
+            # same notebook): keep its name and leave the recent list alone
+            into = str(body.get("stem") or "").strip()
             if _is_url(raw):
                 url = _normalize_nb_url(raw)
                 doc = doc_from_url(url)
-                doc.source_name = _stem_for(
-                    Path(doc.source_name + ".ipynb"),
-                    state.stems_taken(skip_str=url))
-                state.note_open(url)
+                if into:
+                    doc.source_name = into
+                else:
+                    doc.source_name = _stem_for(
+                        Path(doc.source_name + ".ipynb"),
+                        state.stems_taken(skip_str=url))
+                    state.note_open(url)
                 return {"stem": doc.source_name, "path": url,
                         "shell": render_shell(doc, path=url)}
             f = Path(raw).expanduser()
@@ -15944,8 +16046,11 @@ def _make_handler(state: _AppState):
                 raise ValueError(f"{f.name} is not a .ipynb file")
             _store_version(f)   # every open/reload keeps a snapshot
             doc = load_doc(f)
-            doc.source_name = _stem_for(f, state.stems_taken(skip=f))
-            state.note_open(f)
+            if into:
+                doc.source_name = into
+            else:
+                doc.source_name = _stem_for(f, state.stems_taken(skip=f))
+                state.note_open(f)
             return {"stem": doc.source_name, "path": str(f),
                     "shell": render_shell(doc, path=str(f))}
 
@@ -16473,7 +16578,7 @@ def _self_test() -> None:
     assert (out.index('id="tab-open"') < out.index('id="tv-plots"'))
     # the scope + copy buttons are full-size, like the filters they act on
     assert 'class="toggle" id="sec-scope-btn"' in out
-    assert 'id="filters-all"' in out
+    assert "function copyFiltersToAll" in out
     assert 'class="toggle fz-val" id="fig-size-val"' in out
     # …and the zoom row is captioned instead of each button carrying it
     assert 'class="fgrp-cap">Figure size' in out
@@ -16486,7 +16591,7 @@ def _self_test() -> None:
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:flex-start;gap:6px;" \
+    assert ".appbar{display:flex;align-items:flex-start;gap:5px;" \
         "flex-wrap:wrap;" in out
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
     assert "function measureChrome" in out
@@ -16643,7 +16748,17 @@ def _self_test() -> None:
     assert 'id="present-bar-show"' in out and 'class="pb-toggle"' in out
     assert 'id="pb-collapse"' not in out
     assert 'id="pb-auto"' in out and "body.pb-auto.pb-peek" in out
-    assert "'junoview:presentbar:autohide'" in out
+    # presenting: hiding itself is the DEFAULT, "Pin" keeps it in place
+    assert "'junoview:presentbar:pinned'" in out
+    assert "var pbAuto=!pbPinned" in out and "Pin</button>" in out
+    # a version is the SAME file: it replaces the tab and stays out of
+    # Recent, with an explicit "open in a new tab" to compare instead
+    assert "function openUrlVersion" in out and ".rf-newtab" in out
+    assert "if(path&&!quiet&&APP.noteRecent)" in out
+    assert "{path:url,stem:intoStem}" in out
+    # …and the picker closes on an outside click, Esc, or a choice
+    assert "function closePanel" in out
+    assert "if(e.key==='Escape'&&!panel.hidden) closePanel();" in out
     assert "function syncToggleBtn" in out
     assert "function enterDocPresent" in out and "function exitDocPresent" in out
     assert "body.doc-presenting" in out and "pb-folded" in out
@@ -16765,7 +16880,7 @@ def _self_test() -> None:
     # filters to all the others (greyed out when it is the only one open)
     assert "function newF(trace)" in out and "code:trace?'visible'" in out
     assert 'id="trace-inherit"' in out and "function copyFiltersTo" in out
-    assert 'id="filters-all"' in out and "fa.disabled=n<2" in out
+    assert "function copyFiltersToAll" in out and ".scope-copy" in out
     assert "function renderFilterExtras" in out and "function docToast" in out
     # per-section state is namespaced by notebook, so two tabs whose
     # sections share a slug never trample each other
@@ -16958,8 +17073,8 @@ def _self_test() -> None:
     # Support moved behind a "…" so the bar fits on one row
     assert 'class="btn-grp" id="view-grp"' in out
     assert (out.index('id="view-grp"') < out.index('id="view-raw"')
-            < out.index('id="doc-present"') < out.index('id="more-btn"'))
-    assert 'id="more-btn"' in out and 'id="more-menu"' in out
+            < out.index('id="doc-present"') < out.index('id="theme-btn"'))
+    assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
     assert "'#fig-size-grp','#view-grp'" in out
