@@ -2410,6 +2410,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   border-color:var(--ink);}
 .toggle .tdot{width:6px;height:6px;border-radius:50%;background:currentColor;
   opacity:.4;}
+/* every state word occupies the same slot, so the bar never re-flows
+   just because a filter changed (On / Folded / Off / Mixed) */
+.tvstate{display:inline-block;width:4.4ch;text-align:left;
+  margin-left:.4em;overflow:hidden;}
 .toggle[aria-pressed="true"] .tdot{opacity:1;background:var(--cyan);}
 /* view-mode buttons (Docs / Present): pressed = the view you are in */
 .toggle.mode[aria-pressed="true"]{background:var(--ink);color:#eef4f8;
@@ -3077,7 +3081,7 @@ body.presrail-min{--presrail-w:46px;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It WRAPS —
    a horizontal scrollbar in a toolbar just hides things. */
-.appbar{display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap;
+.appbar{display:flex;align-items:flex-start;gap:4px;flex-wrap:wrap;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
@@ -3110,7 +3114,7 @@ body.presrail-min{--presrail-w:46px;}
 /* square steppers/icons sit beside the thing they act on */
 .fgrp-row .toggle.fz-step{flex:none;width:30px;padding:0;
   justify-content:center;font-size:14px;}
-.fgrp-row .toggle.fz-val{flex:none;width:52px;padding:0;
+.fgrp-row .toggle.fz-val{flex:none;width:46px;padding:0;
   justify-content:center;}
 /* a caption naming a group of small buttons, so the buttons stay narrow
    instead of each carrying the label */
@@ -3187,6 +3191,12 @@ body.no-rail .tabstrip{margin-left:0;}
 .tab.current{background:#0b141d;color:#e6edf3;font-weight:600;
   border-color:#ffffff1f;}
 .tab-t{overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+/* a version tab: name on top, the commit it is pinned to underneath */
+.tab-t.tab-t-ver{display:flex;flex-direction:column;line-height:1.15;
+  padding:3px 0;}
+.tab-ver{font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;
+  color:var(--cyan);opacity:.9;font-weight:400;}
+body.light .tab-ver{color:var(--cyan-deep);}
 .tab-b{background:none;border:none;color:inherit;opacity:.55;
   cursor:pointer;font-size:13px;padding:4px 6px;border-radius:5px;
   line-height:1;flex:none;}
@@ -4285,7 +4295,18 @@ _JS = r"""
       t.appendChild(ic);
       lbl.textContent=sh.title||'Plot trace';
     } else {
-      lbl.textContent=stem;
+      /* a tab opened AT A COMMIT keeps the notebook's name and wears the
+         short hash underneath — "draft_01-2" told you nothing */
+      lbl.textContent=sh.label||stem;
+      if(sh.version){
+        lbl.classList.add('tab-t-ver');
+        var vs=document.createElement('span');
+        vs.className='tab-ver';
+        vs.textContent=/^git:/.test(sh.version)
+          ?sh.version.slice(4):'earlier version';
+        vs.title='This tab is showing an earlier version';
+        lbl.appendChild(vs);
+      }
     }
     t.appendChild(lbl);
     /* a trace sub-tab is always closeable (in every mode); notebook tabs get
@@ -4531,8 +4552,10 @@ _JS = r"""
     return secF[fkey(stem,sid)]||FDEFof(stem);
   }
   var CODE_CYCLE=['visible','collapsed','hidden'];
-  var CODE_LABEL={visible:'On',collapsed:'Folded',hidden:'Off',
-    mixed:'Mixed'};
+  /* short enough that every state fits one fixed slot, so the button —
+     and everything to the right of it — never moves */
+  var CODE_LABEL={visible:'On',collapsed:'Fold',hidden:'Off',
+    mixed:'Mix'};
   var CK_TYPES=['imports','function','data','settings',
     'plotting','print','comments','constant','code'];
   /* ---- "Apply to": which sections the filters act on. Empty = the whole
@@ -4810,8 +4833,10 @@ _JS = r"""
   }
   function setTvBtn(id,label,state){
     var b=$('#'+id); if(!b) return;
-    b.innerHTML='<span class="tdot"></span>'+label+': '
-      +(CODE_LABEL[state]||state);
+    /* the state word sits in a fixed-width slot: without it the button
+       (and everything after it) jumps as On -> Folded -> Off */
+    b.innerHTML='<span class="tdot"></span>'+label
+      +'<span class="tvstate">'+(CODE_LABEL[state]||state)+'</span>';
     b.classList.toggle('off',state==='hidden');
     b.classList.toggle('half',state==='collapsed');
     b.classList.toggle('mixed',state==='mixed');
@@ -5069,6 +5094,7 @@ _JS = r"""
     renderScopeBtn();
     markSecOverrides();
     syncTypeMenus();
+    scheduleSaveLayout();   /* remember this for next time */
   }
   /* refresh an OPEN type menu's ticks in place. Rebuilding it mid-click
      would yank the rows out from under a user ticking several in a row. */
@@ -6705,6 +6731,7 @@ _JS = r"""
       [].forEach.call(chevs,function(ch){
         ch.setAttribute('aria-expanded',(!val).toString());});
       recalcSecCascade(shell);   /* fold/unfold the deeper tiers below */
+      scheduleSaveLayout();
     }
     function setSecOff(sid,val){
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
@@ -6712,6 +6739,7 @@ _JS = r"""
       if(sec) sec.classList.toggle('sec-off',val);
       if(row) row.classList.toggle('sec-off',val);
       recalcSecCascade(shell);   /* hide/restore the deeper tiers below */
+      scheduleSaveLayout();
       applyFilters();   /* keep the sidebar in step (a hidden section stays) */
     }
     function isCollapsed(sid){
@@ -6845,13 +6873,44 @@ _JS = r"""
   /* Open a URL that is ANOTHER VERSION of a notebook already open. With
      `intoStem` it replaces that tab (same file, different moment) and is
      kept out of Recent; without it, a normal open in its own tab. */
-  function openUrlVersion(url,intoStem,verTag){
-    if(!intoStem){openPath(url);return;}
+  function openUrlVersion(url,intoStem,verTag,label){
+    function tag(st){
+      var sh=APP.shells[st];
+      if(!sh) return;
+      sh.version=verTag||'';sh.path=url;
+      if(label) sh.label=label;
+      renderTabs();
+    }
+    if(!intoStem){
+      /* its OWN tab, but still named for the notebook with the commit
+         underneath — not "draft_01-2" */
+      if(APP.mode==='web'){
+        fetch(url,{cache:'no-store'}).then(function(r){
+          if(!r.ok) throw new Error('HTTP '+r.status);
+          return r.text();
+        }).then(function(txt){
+          if(!webReady()) throw new Error('Python is still loading');
+          var name=decodeURIComponent(
+            url.split('?')[0].split('/').pop()||'notebook.ipynb');
+          var shell=window.semPy.parse(name,txt,APP.order.slice());
+          mountShellHTML(shell,url,true);
+          var tmp=document.createElement('div');tmp.innerHTML=shell;
+          var el=tmp.querySelector('.nbshell');
+          tag(el?el.dataset.nb:'');
+        }).catch(function(e){
+          alert('Could not open that version: '+((e&&e.message)||e));});
+        return;
+      }
+      api('/api/open',{path:url}).then(function(j){
+        mountShellHTML(j.shell,url,true);
+        tag(j.stem);
+      }).catch(function(e){
+        alert('Could not open that version: '+((e&&e.message)||e));});
+      return;
+    }
     function land(shellHtml){
       mountShellHTML(shellHtml,url,true);
-      var sh=APP.shells[intoStem];
-      if(sh){sh.version=verTag||'';sh.path=url;}
-      renderTabs();
+      tag(intoStem);
     }
     if(APP.mode==='web'){
       fetch(url,{cache:'no-store'}).then(function(r){
@@ -7051,7 +7110,8 @@ _JS = r"""
                  belongs in this tab, not a new one, and it is not a new
                  entry in Recent. "⧉" is the explicit opt-in to compare. */
               openUrlVersion(ghRawAt(gh,c.full||c.id),
-                newTab?null:stem,'git:'+c.id);
+                newTab?null:stem,'git:'+c.id,
+                (APP.shells[stem]||{}).label||stem);
             }),acts);
         }).catch(function(e){
           var v=$('.rf-v',pend);
@@ -7087,8 +7147,16 @@ _JS = r"""
                 APP.api('/api/openversion',
                   {path:path,commit:cm.id,stem:newTab?'':stem})
                   .then(function(r){
-                    if(r&&r.shell)
-                      mountShellHTML(r.shell,r.path||path,!newTab);
+                    if(!r||!r.shell) return;
+                    mountShellHTML(r.shell,r.path||path,!newTab);
+                    var st=r.stem||stem;
+                    var s2=APP.shells[st];
+                    if(s2){
+                      s2.version='git:'+cm.id;
+                      if(!s2.label) s2.label=(APP.shells[stem]||{}).label
+                        ||stem;
+                      renderTabs();
+                    }
                   }).catch(function(){});
               }),acts);
           }).catch(function(){
@@ -7375,6 +7443,62 @@ _JS = r"""
     renderRawBtn();renderViewBtns();
     if(keep.tree) relayoutActiveTree();
   }
+  /* ---- YOUR LAYOUT, remembered per notebook -------------------------
+     Hidden cells, hidden/collapsed sections, tree-or-raw mode and the
+     whole filter setup are kept against the notebook's PATH, so closing
+     the browser and coming back finds the document as you left it. ---- */
+  function viewKey(path){
+    return 'junoview:layout:'+String(path||'');
+  }
+  function saveLayout(stem){
+    try{
+      var sh=APP.shells[stem];
+      if(!sh||!sh.el||sh.trace||!sh.path) return;
+      var st=captureViewState(sh.el);
+      delete st.scroll;                 /* where you were is not layout */
+      var pre=String(stem)+'::';
+      st.def=FDEFof(stem);
+      st.sec={};st.scope=[];
+      for(var k in secF){
+        if(k.indexOf(pre)===0) st.sec[k.slice(pre.length)]=secF[k];}
+      for(var k2 in secScope){
+        if(k2.indexOf(pre)===0&&secScope[k2])
+          st.scope.push(k2.slice(pre.length));}
+      st.v=1;
+      localStorage.setItem(viewKey(sh.path),JSON.stringify(st));
+    }catch(e){}
+  }
+  var saveT=null;
+  function scheduleSaveLayout(){
+    clearTimeout(saveT);
+    saveT=setTimeout(function(){
+      if(APP.active) saveLayout(APP.active);},400);
+  }
+  APP.scheduleSaveLayout=scheduleSaveLayout;
+  function loadLayout(shell,stem,path){
+    var st=null;
+    try{
+      var raw=localStorage.getItem(viewKey(path));
+      if(raw) st=JSON.parse(raw);
+    }catch(e){}
+    if(!st||st.v!==1) return false;
+    /* the filter state first, so the one applyFilters below is enough */
+    if(st.def) defBy[String(stem)]=cloneF(st.def);
+    var pre=String(stem)+'::';
+    for(var k in secF){if(k.indexOf(pre)===0) delete secF[k];}
+    for(var k2 in secScope){if(k2.indexOf(pre)===0) delete secScope[k2];}
+    Object.keys(st.sec||{}).forEach(function(sid){
+      secF[pre+sid]=cloneF(st.sec[sid]);});
+    if(Array.isArray(st.scope)&&st.scope.length){
+      st.scope.forEach(function(sid){secScope[pre+sid]=1;});
+      scopeSeeded[String(stem)]=1;
+    }
+    invalidateSids();
+    restoreViewState(shell,stem,{
+      cellsOff:st.cellsOff||[],secsOff:st.secsOff||[],
+      secsClosed:st.secsClosed||[],tree:!!st.tree,raw:!!st.raw});
+    return true;
+  }
   function mountShellHTML(htmlStr,path,quiet){
     var host=$('#docs');
     var tmp=document.createElement('div');
@@ -7394,7 +7518,10 @@ _JS = r"""
     else host.appendChild(shell);
     initShell(shell);
     invalidateSids();   /* this notebook's sections were just replaced */
+    /* a reload keeps the live view; a fresh open restores the layout you
+       last left this notebook in */
     if(keep) restoreViewState(shell,stem,keep);
+    else loadLayout(shell,stem,path||shell.dataset.path||'');
     /* a VERSION of a notebook you already have open is not a new
        document — it must not turn up in Recent as a separate file */
     if(path&&!quiet&&APP.noteRecent) APP.noteRecent(path);
@@ -16684,7 +16811,7 @@ def _self_test() -> None:
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:flex-start;gap:5px;" \
+    assert ".appbar{display:flex;align-items:flex-start;gap:4px;" \
         "flex-wrap:wrap;" in out
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
     assert "function measureChrome" in out
@@ -16947,6 +17074,18 @@ def _self_test() -> None:
     # "no sections", never a silent fallback to the whole notebook
     # the picker is a plain SELECTION: highlighted rows, one constant
     # "Select all", and only the little arrow expands a heading
+    # YOUR LAYOUT is remembered per notebook (hidden cells, hidden and
+    # collapsed sections, tree/raw mode, and the whole filter setup)
+    assert "function saveLayout" in out and "function loadLayout" in out
+    assert "'junoview:layout:'" in out
+    assert "else loadLayout(shell,stem," in out
+    assert "function scheduleSaveLayout" in out
+    # a tab opened AT A COMMIT keeps the notebook's name, with the short
+    # hash underneath — not a "-2" suffix
+    assert "vs.className='tab-ver'" in out and ".tab-t.tab-t-ver" in out
+    assert "sh.label||stem" in out
+    # a filter button never changes width as its state word changes
+    assert 'class="tvstate"' in out and ".tvstate{display:inline-block" in out
     assert "function seedScope" in out and "'Select all'" in out
     assert ".scope-row.on{" in out and ".scope-row.part{" in out
     assert "'none'" in out and "scope-chev" in out
@@ -16957,7 +17096,7 @@ def _self_test() -> None:
     # when they disagree, and Reset clears every override.
     assert "function stateFor" in out and "function newF" in out
     assert "function readF" in out and "function writeF" in out
-    assert "function cycleF" in out and "mixed:'Mixed'" in out
+    assert "function cycleF" in out and "mixed:'Mix'" in out
     assert ".toggle.tv.mixed .tdot" in out
     assert 'id="filters-reset"' in out and "function resetFilters" in out
     assert "function markSecOverrides" in out and "has-fover" in out
