@@ -1711,6 +1711,9 @@ def render_item(item: Item, sec_id: str = "") -> str:
                 else "".join(o.payload for o in imgs))
     cb_parts = []
     if fig_html:
+        # the zoom controls widen the whole CARD, so its border and header
+        # grow with the figure instead of the plot spilling out of them
+        kclass += " has-fig"
         pt_types: list[str] = []
         for o in imgs:
             if o.pt and o.pt not in pt_types:
@@ -2570,14 +2573,15 @@ body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
   background:var(--paper-2);padding:2px 7px;border-radius:4px;flex:none;}
 
 .cardbody{padding-left:6px;}
-/* ---- figure zoom: a per-figure factor (--fz, set inline by the +/- on the
-   figure) multiplied by the feed-wide factor (--fzall on the shell). The
-   figure grows past the text column and stays centred. ---- */
+/* ---- figure zoom: a per-figure factor (--fz, set inline by the +/- on
+   the card) multiplied by the feed-wide factor (--fzall on the shell).
+   The CARD grows — border, header and all — so a bigger figure is never
+   sitting outside its own cell. It stays centred on the column. ---- */
 .nbshell{--fzall:1;}
-.cb-fig{--fz:1;position:relative;}
-.cb-fig>.figframe,.cb-fig>.figpager{
+.card.has-fig{--fz:1;
   width:calc(100% * var(--fz) * var(--fzall));
   margin-left:calc((1 - var(--fz) * var(--fzall)) * 50%);}
+.cb-fig{position:relative;}
 /* top-LEFT on purpose: Plotly/Bokeh draw their own toolbar top-right, and
    the two would sit on top of each other. Invisible until you point at the
    card, and un-clickable while invisible so you never hit it blind. */
@@ -2591,14 +2595,14 @@ body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 body:not(.light) .fz-btn{background:#0d1a24d9;border-color:#ffffff2b;
   color:#cfe0ea;}
 body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
-/* the tree/trace clones and slide frames never carry the zoom chrome */
+/* the tree/trace clones and slide frames never carry the zoom chrome, and
+   a cloned card is sized by its frame — never by the feed's zoom */
 .tree-node .figzoom,.an-cell .figzoom,.spane .figzoom,.slide-fig .figzoom,
 .vo-step .figzoom,.print-page .figzoom{display:none!important;}
-.an-cell .cb-fig>.figframe,.spane .cb-fig>.figframe,
-.slide-fig .cb-fig>.figframe,.tree-node .cb-fig>.figframe,
-.an-cell .cb-fig>.figpager,.spane .cb-fig>.figpager,
-.slide-fig .cb-fig>.figpager,.tree-node .cb-fig>.figpager{
-  width:100%;margin-left:0;}
+.an-cell .card.has-fig,.spane .card.has-fig,.slide-fig .card.has-fig,
+.tree-node .card.has-fig,.vo-step .card.has-fig,
+.print-page .card.has-fig,.rawview .card.has-fig{
+  width:100%!important;margin-left:0!important;}
 /* full-screen figure viewer (⤢) */
 .figmax{position:fixed;inset:0;z-index:300;background:#050b11f2;
   display:flex;align-items:center;justify-content:center;padding:34px;}
@@ -3034,14 +3038,14 @@ body.presrail-min{--presrail-w:46px;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It WRAPS —
    a horizontal scrollbar in a toolbar just hides things. */
-.appbar{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;
+.appbar{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
   min-height:var(--appbar-h);
-  padding:8px 12px 6px 0;border-bottom:1px solid #ffffff0d;}
+  padding:8px 10px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold */
-.appbar .toggle,.appbar .appbar-link{
+.appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
-  padding-top:0;padding-bottom:0;line-height:1;}
+  padding:0 10px;line-height:1;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
    narrow instead of growing ever wider */
@@ -3050,6 +3054,15 @@ body.presrail-min{--presrail-w:46px;}
 .fgrp .toggle{width:100%;text-align:left;}
 /* two small buttons sharing one row, so a group never grows past the two
    rows the app bar is tall */
+/* buttons that belong together and must wrap as one unit */
+.btn-grp{display:flex;gap:6px;flex:none;align-items:flex-start;
+  position:relative;}
+.btn-grp[hidden]{display:none!important;}
+/* the "…" overflow: rarely-used items, out of the way but one click deep */
+.more-menu{min-width:210px;padding:6px;}
+.more-menu .ckf-all{margin-bottom:4px;}
+.more-link{display:flex;align-items:center;gap:7px;text-decoration:none;
+  text-transform:none;font-family:var(--sans);font-size:12px;}
 .fgrp-row{display:flex;gap:3px;align-items:stretch;}
 .fgrp-row .toggle{flex:1;min-width:0;justify-content:center;
   text-align:center;padding-left:9px;padding-right:9px;}
@@ -3073,11 +3086,15 @@ body.light .fgrp-cap{color:var(--ink-3);}
 body.light .appbar .toggle.sub,.present-bar .toggle.sub{color:var(--ink-3);border-color:var(--line);
   background:none;}
 body.light .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{color:var(--ink);}
+/* push the trailing controls right WITHOUT a growing spacer: a flex:1
+   spacer fills the first line and shoves everything after it onto a
+   second row, even when there is room */
+.appbar .appbar-right{margin-left:auto;}
 .appbar-spring{flex:1;}
 /* a thin rule that marks where the content FILTERS end and the view/theme
    controls begin — centred against the 30px first row */
 .appbar-div{flex:none;width:1px;height:20px;background:#ffffff26;
-  margin:5px 5px 0;border-radius:1px;}
+  margin:5px 2px 0;border-radius:1px;}
 body.light .appbar-div{background:#00000022;}
 /* dark variants of the show/hide toggles */
 .appbar .toggle,.present-bar .toggle{border-color:#ffffff22;background:#ffffff0a;color:#cdd9e3;}
@@ -4722,12 +4739,41 @@ _JS = r"""
     b.classList.toggle('mixed',state==='mixed');
     b.setAttribute('data-cs',state);
   }
+  /* the "…" overflow (Help + Support): one click deep, so the bar fits */
+  (function(){
+    var wrap=$('#more-btn')&&$('#more-btn').parentNode;
+    var btn=$('#more-btn'),menu=$('#more-menu');
+    if(!btn||!menu) return;
+    function close(){menu.hidden=true;
+      btn.setAttribute('aria-expanded','false');}
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open.toString());
+      if(open){
+        var r=btn.getBoundingClientRect();
+        menu.style.top=(r.bottom+6)+'px';
+        menu.style.left=Math.max(8,
+          Math.min(r.left,window.innerWidth-224))+'px';
+      }
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
+    menu.addEventListener('click',function(){close();});
+  })();
   /* which cross-notebook filter buttons make sense for the active tab */
   function renderFilterExtras(){
     var sh=APP.active&&APP.shells[APP.active];
     var isTrace=!!(sh&&sh.trace);
+    /* "Present" is meaningless while you are already presenting */
+    var dp=$('#doc-present');
+    if(dp) dp.hidden=document.body.classList.contains('doc-presenting');
     var ti=$('#trace-inherit');
     if(ti) ti.hidden=!isTrace;
+    /* an empty group still costs a gap in the bar */
+    var cg=$('#copy-grp');
+    if(cg) cg.hidden=!isTrace;
     /* a trace has no real sections, so "Apply to" has nothing to pick */
     var sc=$('#sec-scope-btn');
     if(sc) sc.hidden=isTrace;
@@ -5625,7 +5671,7 @@ _JS = r"""
      handler, menu and state read keeps working — no duplicate widgets. */
   var pbMoved=[];
   var PB_TOOLS=['#pt-grp','#md-grp','#ck-grp','#ot-grp','#sec-scope-grp',
-                '#copy-grp','#fig-size-grp','#view-raw','#view-tree'];
+                '#copy-grp','#fig-size-grp','#view-grp'];
   var PB_MENUS=['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu',
                 '#sec-scope-menu'];
   function pbTakeTools(){
@@ -5822,7 +5868,8 @@ _JS = r"""
   function applyTheme(light){
     document.body.classList.toggle('light',light);
     if(themeBtn){
-      themeBtn.innerHTML=light?'&#9789; Dark':'&#9788; Light';
+      themeBtn.innerHTML=(light?'&#9789;':'&#9788;')
+        +' Light / dark theme';
       themeBtn.setAttribute('data-tip',light
         ?'Switch to the dark theme':'Switch to the light theme');
       themeBtn.removeAttribute('title');
@@ -6387,6 +6434,17 @@ _JS = r"""
   }
   /* ---- figure zoom: live embeds (plotly/bokeh/vega) size themselves to
      their container once, so a resized figure must be told to re-fit ---- */
+  /* how far a card can grow before it runs past the stage and drags a
+     horizontal scrollbar onto the whole page */
+  function maxZoomFor(card){
+    var stage=card&&card.closest?card.closest('.stage'):null;
+    var host=card&&card.parentNode;
+    if(!stage||!host||!host.getBoundingClientRect) return 3;
+    var avail=stage.getBoundingClientRect().width-28;
+    var base=host.getBoundingClientRect().width;
+    if(!base||!avail) return 3;
+    return Math.max(1,Math.min(3,avail/base));
+  }
   function resizeEmbeds(root){
     setTimeout(function(){
       try{
@@ -6444,7 +6502,11 @@ _JS = r"""
     resizeEmbeds(document);
   }
   function bumpFigAll(mult){
-    figAll=Math.max(0.4,Math.min(2.5,Math.round(figAll*mult*100)/100));
+    /* same ceiling, measured on a real card in the active notebook */
+    var probe=$('.nbshell:not([hidden]) .card.has-fig');
+    var cap=probe?maxZoomFor(probe):2.5;
+    figAll=Math.max(0.4,Math.min(Math.max(1,Math.min(2.5,cap)),
+      Math.round(figAll*mult*100)/100));
     applyFigAll();
   }
   (function(){
@@ -6617,13 +6679,19 @@ _JS = r"""
     /* ---- per-figure zoom (+ / - / expand full screen) ---- */
     $$('.cb-fig .figzoom',shell).forEach(function(z){
       var fig=z.parentNode;
+      /* the factor lives on the CARD: widening the card takes its border
+         and header with it, so the figure never sits outside its cell */
+      var card=fig.closest('.card')||fig;
       function bump(mult){
-        var cur=parseFloat(fig.style.getPropertyValue('--fz'))||1;
-        var next=Math.max(0.35,Math.min(3,
+        var cur=parseFloat(card.style.getPropertyValue('--fz'))||1;
+        /* the ceiling is what actually fits — growing past the stage
+           would put a scrollbar under the whole document */
+        var cap=maxZoomFor(card)/(figAll||1);
+        var next=Math.max(0.35,Math.min(Math.max(1,cap),
           Math.round(cur*mult*100)/100));
-        if(next===1) fig.style.removeProperty('--fz');
-        else fig.style.setProperty('--fz',next);
-        resizeEmbeds(fig);
+        if(next===1) card.style.removeProperty('--fz');
+        else card.style.setProperty('--fz',next);
+        resizeEmbeds(card);
       }
       z.addEventListener('click',function(e){e.stopPropagation();});
       var bi=$('.fz-in',z),bo=$('.fz-out',z),bx=$('.fz-max',z);
@@ -14908,7 +14976,7 @@ _TEMPLATE = """<!doctype html>
  Visible -> Collapsed -> Hidden"></button>
       <button class="toggle sub" id="pt-filter-btn"
         title="Advanced: hide specific PLOT types (matplotlib, plotly,
- bokeh, vega, folium, …)">Plot types &#9662;</button>
+ bokeh, vega, folium, …)">Types &#9662;</button>
     </span>
     <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
@@ -14921,7 +14989,7 @@ _TEMPLATE = """<!doctype html>
  Click to cycle: Visible -> Collapsed -> Hidden"></button>
       <button class="toggle sub" id="ck-filter-btn"
         title="Advanced: hide specific CODE cell types (imports, plotting,
- …)">Code types &#9662;</button>
+ …)">Types &#9662;</button>
     </span>
     <span class="fgrp" id="ot-grp">
       <button class="toggle tv" id="tv-output"
@@ -14930,7 +14998,7 @@ _TEMPLATE = """<!doctype html>
  pulled out into their own filter (on the left). Click to show / hide"></button>
       <button class="toggle sub" id="ot-filter-btn"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
- error)">Output types &#9662;</button>
+ error)">Types &#9662;</button>
     </span>
     <span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
@@ -14944,10 +15012,6 @@ _TEMPLATE = """<!doctype html>
  notebook back to the defaults">&#8635; Reset</button>
     </span>
     <span class="fgrp" id="copy-grp">
-      <button class="toggle" id="filters-all"
-        title="Copy the filters this notebook is using onto every other
- open notebook (their own per-section changes are cleared)"
-        >&#8649; Copy to all</button>
       <button class="toggle sub" id="trace-inherit" hidden
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from.">&#8615; Use the
@@ -14967,6 +15031,9 @@ _TEMPLATE = """<!doctype html>
       <span class="fgrp-cap">Figure size</span>
     </span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <!-- Raw / Tree / Present stay together: they are one idea (how you are
+         looking at the document) and must not wrap apart -->
+    <span class="btn-grp" id="view-grp">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
  (cells in order, directives visible)">Raw</button>
@@ -14977,16 +15044,31 @@ _TEMPLATE = """<!doctype html>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
  exit.">&#9974; Present</button>
-    <span class="appbar-spring"></span>
-    <button class="toggle" id="theme-btn"
-      title="Switch between dark and light theme">&#9788;</button>
-    <a class="toggle appbar-link" id="support-btn" href="{kofi}"
-      target="_blank" rel="noopener"
-      title="Support Junoview on Ko-fi — funds an online, hosted version with
- accounts (save + share your docs and talks, like Overleaf)">Support
- &#9829;</a>
-    <button class="toggle" id="help-btn"
-      title="How to use, and everything this tool can do">Help</button>
+    </span>
+    <!-- the occasional things live behind one button so the bar fits on
+         a single row; the controls you actually use stay in the open -->
+    <span class="btn-grp more-wrap appbar-right">
+      <button class="toggle" id="more-btn" aria-haspopup="true"
+        aria-expanded="false"
+        title="Help, and how to support Junoview">&#8943;</button>
+      <div class="ckfilter-menu more-menu" id="more-menu" hidden>
+        <button class="ckf-all" id="theme-btn"
+          title="Switch between dark and light theme">&#9788;
+          Light / dark theme</button>
+        <button class="ckf-all" id="filters-all"
+          title="Copy the filters this notebook is using onto every other
+ open notebook (their own per-section changes are cleared)"
+          >&#8649; Copy filters to all notebooks</button>
+        <button class="ckf-all" id="help-btn"
+          title="How to use, and everything this tool can do">?
+          Help</button>
+        <a class="ckf-row more-link" id="support-btn" href="{kofi}"
+          target="_blank" rel="noopener"
+          title="Support Junoview on Ko-fi — funds an online, hosted
+ version with accounts (save + share your docs and talks, like
+ Overleaf)">&#9829; Support Junoview</a>
+      </div>
+    </span>
   </div>
   <div class="tabsrow">
     <button class="menubtn" id="menubtn" aria-label="Toggle sections"
@@ -16391,7 +16473,7 @@ def _self_test() -> None:
     assert (out.index('id="tab-open"') < out.index('id="tv-plots"'))
     # the scope + copy buttons are full-size, like the filters they act on
     assert 'class="toggle" id="sec-scope-btn"' in out
-    assert 'class="toggle" id="filters-all"' in out
+    assert 'id="filters-all"' in out
     assert 'class="toggle fz-val" id="fig-size-val"' in out
     # …and the zoom row is captioned instead of each button carrying it
     assert 'class="fgrp-cap">Figure size' in out
@@ -16404,7 +16486,7 @@ def _self_test() -> None:
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:flex-start;gap:8px;" \
+    assert ".appbar{display:flex;align-items:flex-start;gap:6px;" \
         "flex-wrap:wrap;" in out
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
     assert "function measureChrome" in out
@@ -16595,7 +16677,16 @@ def _self_test() -> None:
     assert 'class="figzoom"' in out and "fz-in" in out and "fz-max" in out
     assert 'id="fig-bigger"' in out and 'id="fig-smaller"' in out
     assert "function openFigMax" in out and 'id="figmax-box"' in out
+    # the zoom widens the CARD, so its border/header grow with the figure
+    # instead of the plot spilling outside its own cell
+    assert ".card.has-fig{--fz:1;" in out
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
+    assert 'has-fig' in render_item(parse_notebook({"cells": [
+        {"cell_type": "code", "source": "plot()", "outputs": [
+            {"output_type": "display_data",
+             "data": {"image/png": "iVBORw0KGgo="}}]}]}).sections[0].items[0])
+    # …and a card cloned into a slide / tree / trace ignores it
+    assert ".an-cell .card.has-fig,.spane .card.has-fig" in out
     assert "function figCount" in out      # zoom chrome never counts as a plot
     # …the per-figure controls sit top-LEFT (a Plotly/Bokeh toolbar owns
     # top-right) and cannot be clicked while invisible
@@ -16863,6 +16954,15 @@ def _self_test() -> None:
     assert "anim-pane" in out and "anim-effb" in out
     assert "['appear','Appear']" in out and "an-anim-fade" in out
     assert 'id="theme-btn"' in out
+    # Raw / Tree / Present are one unit and never wrap apart; Help and
+    # Support moved behind a "…" so the bar fits on one row
+    assert 'class="btn-grp" id="view-grp"' in out
+    assert (out.index('id="view-grp"') < out.index('id="view-raw"')
+            < out.index('id="doc-present"') < out.index('id="more-btn"'))
+    assert 'id="more-btn"' in out and 'id="more-menu"' in out
+    assert ".btn-grp{display:flex" in out
+    # …and present mode carries the group, not the loose buttons
+    assert "'#fig-size-grp','#view-grp'" in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
     assert 'id="fmt-list"' in out and 'id="fmt-shape"' in out
