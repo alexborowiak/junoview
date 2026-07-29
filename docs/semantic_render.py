@@ -2517,9 +2517,12 @@ body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 .cb-fig>.figframe,.cb-fig>.figpager{
   width:calc(100% * var(--fz) * var(--fzall));
   margin-left:calc((1 - var(--fz) * var(--fzall)) * 50%);}
-.figzoom{position:absolute;top:6px;right:6px;z-index:4;display:flex;gap:3px;
-  opacity:0;transition:opacity .13s;}
-.card:hover .figzoom,.figzoom:focus-within{opacity:1;}
+/* top-LEFT on purpose: Plotly/Bokeh draw their own toolbar top-right, and
+   the two would sit on top of each other. Invisible until you point at the
+   card, and un-clickable while invisible so you never hit it blind. */
+.figzoom{position:absolute;top:6px;left:6px;z-index:4;display:flex;gap:3px;
+  opacity:0;pointer-events:none;transition:opacity .13s;}
+.card:hover .figzoom,.figzoom:focus-within{opacity:1;pointer-events:auto;}
 .fz-btn{font-family:var(--mono);font-size:12px;line-height:1;width:23px;
   height:23px;padding:0;border-radius:5px;cursor:pointer;
   border:1px solid var(--line);background:var(--paper);color:var(--ink-2);}
@@ -2798,6 +2801,26 @@ when Code is Hidden.</li>
 <i>dict</i>, <i>error</i>&hellip; on the output side, to hide just
 those. Only the types actually present in the notebook are listed.
 Untick every code type and it is the same as hiding code.</li>
+<li><b>Apply to</b> chooses <i>which sections</i> the filters above act
+on. Tick a few headings, set the filters, then pick a different set and
+filter those differently &mdash; every section remembers its own
+filters, and a section that differs says <i>&middot; filtered</i> next
+to its heading. <b>&#8649; All notebooks</b> copies these filters to
+every other open notebook; <b>&#8635; Reset</b> clears them for this
+one.</li>
+</ul>
+
+<h3>Figure size</h3>
+<ul>
+<li><b>Figures 100%</b> in the top bar (with <b>&minus;</b> and
+<b>&#43;</b> either side) resizes <i>every</i> figure in the feed &mdash;
+click the percentage to snap back to 100%. Figures grow past the text
+column, so a wide plot really does get wider.</li>
+<li><b>Point at any figure</b> and its own <b>&minus; &#43;</b> appear at
+the top left: those resize just that one, on top of the feed-wide
+setting.</li>
+<li>The <b>&#10530;</b> button next to them opens that figure
+<b>full screen</b> &mdash; Esc or a click outside closes it.</li>
 </ul>
 
 <h3>The sidebar</h3>
@@ -6182,7 +6205,7 @@ _JS = r"""
       if(figAll===1) sh.style.removeProperty('--fzall');
       else sh.style.setProperty('--fzall',figAll);});
     var lab=$('#fig-size-val');
-    if(lab) lab.textContent=Math.round(figAll*100)+'%';
+    if(lab) lab.textContent='Figures '+Math.round(figAll*100)+'%';
     resizeEmbeds(document);
   }
   function bumpFigAll(mult){
@@ -14159,7 +14182,7 @@ _TEMPLATE = """<!doctype html>
         title="Make every figure in the feed smaller">&#8722;</button>
       <button class="toggle sub" id="fig-size-val"
         title="Figure size across the whole feed — click to reset to 100%"
-        >100%</button>
+        >Figures 100%</button>
       <button class="toggle sub" id="fig-bigger"
         title="Make every figure in the feed bigger (each figure also has
  its own +/- and an expand button on hover)">&#43;</button>
@@ -15737,6 +15760,12 @@ def _self_test() -> None:
     assert "function openFigMax" in out and 'id="figmax-box"' in out
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
     assert "function figCount" in out      # zoom chrome never counts as a plot
+    # …the per-figure controls sit top-LEFT (a Plotly/Bokeh toolbar owns
+    # top-right) and cannot be clicked while invisible
+    assert ".figzoom{position:absolute;top:6px;left:6px" in out
+    assert "opacity:0;pointer-events:none" in out
+    # …and both are documented in Help, so they are findable without hunting
+    assert "<h3>Figure size</h3>" in out and "Figures 100%" in out
     # "Apply to": filters can be scoped to ticked sections/sub-sections
     assert 'id="sec-scope-btn"' in out and 'id="sec-scope-menu"' in out
     assert "function renderScopeMenu" in out and "var secScope=" in out
