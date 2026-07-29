@@ -2757,12 +2757,15 @@ pre.error{background:#fbf0ee;border-color:#f0d2cc;color:#8a3221;}
   background:#46a8920d;border-color:#46a89233;color:#1f5f54;
   font-weight:500;}
 
-.note{font-family:var(--serif);font-size:15px;line-height:1.65;
-  color:var(--ink-2);}
+/* prose scales with the "Text size" control (--mdscale on the shell) —
+   markdown notes and captions, not code or output */
+.nbshell{--mdscale:1;}
+.note{font-family:var(--serif);font-size:calc(15px * var(--mdscale));
+  line-height:1.65;color:var(--ink-2);}
 .note .caption{font-family:var(--serif);font-style:normal;color:var(--ink-2);
-  margin:0;padding:0;border:none;font-size:15px;}
+  margin:0;padding:0;border:none;font-size:calc(15px * var(--mdscale));}
 
-.caption{font-family:var(--serif);font-size:14px;
+.caption{font-family:var(--serif);font-size:calc(14px * var(--mdscale));
   color:var(--ink-2);margin:13px 0 0;padding-left:6px;line-height:1.6;}
 
 /* a cell's printed output part, adjacent to its figure part (Output filter) */
@@ -3070,7 +3073,7 @@ through Ko-fi. Thank you.</p>
 # App chrome (controls bar + tab rows), welcome screen, open dialog,
 # drag-drop hint
 _APP_CSS = r"""
-:root{--appbar-h:68px;--tabsrow-h:44px;--chrome-h:112px;--dc-w:430px;
+:root{--appbar-h:84px;--tabsrow-h:44px;--chrome-h:112px;--dc-w:430px;
   --presrail-w:176px;}
 body.presrail-min{--presrail-w:46px;}
 
@@ -3084,14 +3087,15 @@ body.presrail-min{--presrail-w:46px;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It WRAPS —
    a horizontal scrollbar in a toolbar just hides things. */
-.appbar{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
+.appbar{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;
+  justify-content:center;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
-  padding:0 13px;line-height:1;}
+  padding:0 14px;line-height:1;font-size:12px;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
    narrow instead of growing ever wider */
@@ -3100,6 +3104,15 @@ body.presrail-min{--presrail-w:46px;}
 .fgrp .toggle{width:100%;text-align:left;}
 /* two small buttons sharing one row, so a group never grows past the two
    rows the app bar is tall */
+/* a labelled SECTION of the ribbon: its controls, then its name — the
+   same idea as the slide editor's ribbon groups */
+.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:4px;
+  flex:none;}
+.abgrp-row{display:flex;align-items:flex-start;gap:6px;}
+.abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);text-align:center;
+  line-height:1;opacity:.75;}
+body.light .abgrp-lab{color:var(--ink-3);}
 /* buttons that belong together and must wrap as one unit */
 .btn-grp{display:flex;gap:4px;flex:none;align-items:flex-start;
   position:relative;}
@@ -3115,7 +3128,7 @@ body.presrail-min{--presrail-w:46px;}
 .fgrp-row .toggle{flex:none;width:auto;justify-content:center;
   text-align:center;padding-left:12px;padding-right:12px;}
 /* square steppers/icons sit beside the thing they act on */
-.fgrp-row .toggle.fz-step{flex:none;width:30px;padding:0;
+.fgrp-row .toggle.fz-step{flex:none;width:34px;padding:0;
   justify-content:center;font-size:14px;}
 .fgrp-row .toggle.fz-val{flex:none;width:46px;padding:0;
   justify-content:center;}
@@ -3128,7 +3141,7 @@ body.light .fgrp-cap{color:var(--ink-3);}
 .appbar .toggle.primary,.present-bar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
   color:#04222b;font-weight:600;}
 .appbar .toggle.primary:hover{filter:brightness(1.08);color:#04222b;}
-.appbar .toggle.sub,.present-bar .toggle.sub{height:22px;font-size:10.5px;
+.appbar .toggle.sub,.present-bar .toggle.sub{height:25px;font-size:11px;
   padding:0 9px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
 .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
   color:#fff;border-color:var(--cyan);}
@@ -3141,13 +3154,13 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
 /* push the trailing controls right WITHOUT a growing spacer: a flex:1
    spacer fills the first line and shoves everything after it onto a
    second row, even when there is room */
-.appbar .appbar-right{margin-left:auto;}
+
 .appbar-spring{flex:1;}
 /* a thin rule that marks where the content FILTERS end and the view/theme
    controls begin — centred against the 30px first row */
 /* group separators: full-height so the bar reads as distinct groups
    (file · filters · scope+size · view · app), not one long run */
-.appbar-div{flex:none;width:1px;height:46px;background:#ffffff38;
+.appbar-div{flex:none;width:1px;height:60px;background:#ffffff38;
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:#00000026;}
 /* dark variants of the show/hide toggles */
@@ -5791,7 +5804,7 @@ _JS = r"""
      handler, menu and state read keeps working — no duplicate widgets. */
   var pbMoved=[];
   var PB_TOOLS=['#pt-grp','#md-grp','#ck-grp','#ot-grp','#sec-scope-grp',
-                '#copy-grp','#fig-size-grp','#view-grp'];
+                '#copy-grp','#fig-size-grp','#md-size-grp','#view-grp'];
   var PB_MENUS=['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu',
                 '#sec-scope-menu'];
   function pbTakeTools(){
@@ -6666,6 +6679,29 @@ _JS = r"""
     if(i) i.addEventListener('click',function(){bumpFigAll(1.15);});
     if(o) o.addEventListener('click',function(){bumpFigAll(1/1.15);});
     if(v) v.addEventListener('click',function(){figAll=1;applyFigAll();});
+  })();
+  /* ---- markdown / prose text size (the same idea, for words) ---- */
+  var mdAll=1;
+  function applyMdAll(){
+    $$('.nbshell').forEach(function(sh){
+      if(mdAll===1) sh.style.removeProperty('--mdscale');
+      else sh.style.setProperty('--mdscale',mdAll);});
+    var lab=$('#md-size-val');
+    if(lab) lab.textContent=Math.round(mdAll*100)+'%';
+    scheduleSaveLayout();
+  }
+  APP.applyMdAll=applyMdAll;
+  APP.setMdAll=function(v){mdAll=v||1;applyMdAll();};
+  APP.getMdAll=function(){return mdAll;};
+  (function(){
+    var i=$('#md-bigger'),o=$('#md-smaller'),v=$('#md-size-val');
+    function bump(m){
+      mdAll=Math.max(0.7,Math.min(2,Math.round(mdAll*m*100)/100));
+      applyMdAll();
+    }
+    if(i) i.addEventListener('click',function(){bump(1.12);});
+    if(o) o.addEventListener('click',function(){bump(1/1.12);});
+    if(v) v.addEventListener('click',function(){mdAll=1;applyMdAll();});
   })();
   APP.applyFigAll=applyFigAll;
   /* Per-card behaviours, shared by the docs shell and the Plot-trace tab so
@@ -15319,13 +15355,13 @@ _TEMPLATE = """<!doctype html>
   <div class="appbar">
     <!-- File info + reload live at the top of the sidebar, beside the
          notebook they describe; only Open belongs to the app itself -->
-    <span class="fgrp" id="file-grp">
+    <span class="abgrp" id="ab-file"><span class="abgrp-row"><span class="fgrp" id="file-grp">
       <button class="toggle primary" id="tab-open" hidden
         title="Open a notebook (.ipynb) from your computer or a
  URL">&#43; Open</button>
-    </span>
+    </span></span><span class="abgrp-lab">File</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
-    <span class="fgrp" id="pt-grp">
+    <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
  Visible -> Collapsed -> Hidden"></button>
@@ -15354,9 +15390,9 @@ _TEMPLATE = """<!doctype html>
       <button class="toggle sub" id="ot-filter-btn"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)">Types &#9662;</button>
-    </span>
+    </span></span><span class="abgrp-lab">Filters</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
-    <span class="fgrp" id="sec-scope-grp">
+    <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Choose WHICH sections the filters above act on — select the
  headings and sub-headings to include, change the filters, then select a
@@ -15374,7 +15410,9 @@ _TEMPLATE = """<!doctype html>
  it the same filters as the notebook it came from.">&#8615; Use the
  document&#8217;s filters</button>
     </span>
-    <span class="fgrp" id="fig-size-grp">
+    </span><span class="abgrp-lab">Apply to</span></span>
+    <span class="appbar-div" aria-hidden="true"></span>
+    <span class="abgrp" id="ab-size"><span class="abgrp-row"><span class="fgrp" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller"
           title="Make every figure in the feed smaller">&#8722;</button>
@@ -15385,12 +15423,24 @@ _TEMPLATE = """<!doctype html>
           title="Make every figure in the feed bigger (each figure also has
  its own +/- and an expand button on hover)">&#43;</button>
       </span>
-      <span class="fgrp-cap">Figure size</span>
+      <span class="fgrp-cap">Figures</span>
     </span>
+    <span class="fgrp" id="md-size-grp">
+      <span class="fgrp-row">
+        <button class="toggle fz-step" id="md-smaller"
+          title="Smaller markdown / prose text">&#8722;</button>
+        <button class="toggle fz-val" id="md-size-val"
+          title="Markdown text size — click to reset to 100%"
+          >100%</button>
+        <button class="toggle fz-step" id="md-bigger"
+          title="Larger markdown / prose text">&#43;</button>
+      </span>
+      <span class="fgrp-cap">Text</span>
+    </span></span><span class="abgrp-lab">Size</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
-    <span class="btn-grp" id="view-grp">
+    <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
  (cells in order, directives visible)">Raw</button>
@@ -15401,10 +15451,10 @@ _TEMPLATE = """<!doctype html>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
  exit.">Present</button>
-    </span>
+    </span></span><span class="abgrp-lab">View</span></span>
     <!-- nothing hidden behind a menu: these all fit -->
-    <span class="btn-grp appbar-right">
-      <span class="appbar-div" aria-hidden="true"></span>
+    <span class="abgrp appbar-right" id="ab-app"><span class="abgrp-row">
+    <span class="btn-grp">
       <button class="toggle" id="theme-btn"
         title="Switch between dark and light theme">&#9788;</button>
       <a class="toggle appbar-link" id="support-btn" href="{kofi}"
@@ -15414,7 +15464,7 @@ _TEMPLATE = """<!doctype html>
         >&#9829;</a>
       <button class="toggle" id="help-btn"
         title="How to use, and everything this tool can do">Help</button>
-    </span>
+    </span></span><span class="abgrp-lab">App</span></span>
   </div>
   <div class="tabsrow">
     <button class="menubtn" id="menubtn" aria-label="Toggle sections"
@@ -16819,8 +16869,14 @@ def _self_test() -> None:
     assert "function renderPtMenu" in out and "presentPtTypes" in out
     assert ".ckf-dot.pt-sw-bokeh" in out and ".ckf-dot.pt-sw-matplotlib" in out
     assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
-    # file actions + 4 type filters + scope/reset + copy-to-all + figures
-    assert out.count('class="fgrp"') == 8
+    # file + 4 type filters + scope/reset + copy + figure & text size
+    assert out.count('class="fgrp"') == 9
+    # the ribbon is organised into LABELLED sections
+    assert out.count('class="abgrp-lab"') == 6
+    assert 'class="abgrp" id="ab-filters"' in out
+    # markdown/prose text scales with its own +/- control
+    assert 'id="md-bigger"' in out and 'id="md-smaller"' in out
+    assert "--mdscale" in out and "calc(15px * var(--mdscale))" in out
     # Open / File / Reload lead the ribbon, at full size
     assert 'class="toggle primary" id="tab-open"' in out
     assert 'id="file-info-btn"' not in out   # they live in the sidebar
@@ -16830,18 +16886,19 @@ def _self_test() -> None:
     assert "function copyFiltersToAll" in out
     assert 'class="toggle fz-val" id="fig-size-val"' in out
     # …and the zoom row is captioned instead of each button carrying it
-    assert 'class="fgrp-cap">Figure size' in out
+    assert 'class="fgrp-cap">Figures' in out
     # the present bar shares the app bar's button theming (it used to fall
     # back to the LIGHT styling in dark mode)
     assert ".appbar .toggle,.present-bar .toggle{" in out
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
     assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
             < out.index('id="tv-markdown"'))
-    assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
+    assert "--appbar-h:84px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:flex-start;gap:6px;" \
+    assert ".appbar{display:flex;align-items:flex-start;gap:8px;" \
         "flex-wrap:wrap;" in out
+    assert "justify-content:center;" in out   # the bar is centred
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
     assert "function measureChrome" in out
     assert "'--chrome-h',h+'px'" in out
@@ -16849,7 +16906,7 @@ def _self_test() -> None:
     # they describe, rather than being duplicated in the ribbon
     assert "rf-btn rf-info" in out and "rf-btn rf-reload" in out
     # sub filter buttons are comfortably tall; expanded tree nodes widen
-    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:22px" in out
+    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:25px" in out
     assert ".tree-node.expanded{width:min(380px" in out
     # the client re-activates neutralised scripts + draws plotly specs
     assert "function activateOutputs" in out and "window.SemActivate" in out
@@ -17049,7 +17106,7 @@ def _self_test() -> None:
     assert ".card.has-fig.zoomed .figframe img" in out
     assert "function syncZoomed" in out
     # the app bar reads as groups: full-height separators between them
-    assert ".appbar-div{flex:none;width:1px;height:46px" in out
+    assert ".appbar-div{flex:none;width:1px;height:60px" in out
     assert out.count('class="appbar-div"') == 4
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
     assert 'has-fig' in render_item(parse_notebook({"cells": [
