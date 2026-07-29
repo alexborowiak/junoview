@@ -2309,6 +2309,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   border:1px solid var(--line);background:#fff;color:var(--ink-2);
   padding:7px 12px;border-radius:var(--rad);cursor:pointer;
   transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+/* an author `display` beats the UA's [hidden] rule, so say it explicitly —
+   without this, every el.hidden=true on a .toggle silently does nothing */
+.toggle[hidden],.dbtn[hidden],.fgrp[hidden],.fgrp-row[hidden]{
+  display:none!important;}
 .toggle:hover{border-color:var(--cyan);color:var(--ink);}
 .toggle[aria-pressed="true"]{background:var(--ink);color:#eef4f8;
   border-color:var(--ink);}
@@ -2984,6 +2988,11 @@ body.presrail-min{--presrail-w:46px;}
 .fgrp{flex:none;display:flex;flex-direction:column;align-items:stretch;
   gap:3px;}
 .fgrp .toggle{width:100%;text-align:left;}
+/* two small buttons sharing one row, so a group never grows past the two
+   rows the app bar is tall */
+.fgrp-row{display:flex;gap:3px;}
+.fgrp-row .toggle{flex:1;min-width:0;justify-content:center;
+  text-align:center;padding-left:6px;padding-right:6px;}
 .appbar .toggle.sub{height:22px;font-size:10.5px;padding:0 9px;
   color:#8ba0b2;border-color:#ffffff14;background:none;}
 .appbar .toggle.sub:hover{color:#fff;border-color:var(--cyan);}
@@ -3463,7 +3472,15 @@ body.light .vers-row:hover{background:#00000008;}
 /* "Apply to" scope picker: the section tree, tier-indented + tickable */
 .scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
   overflow-y:auto;}
-.scope-row{text-transform:none;align-items:center;gap:5px;}
+/* selection is the ROW itself — highlighted means "the filters act here" */
+.scope-row{text-transform:none;align-items:center;gap:5px;cursor:pointer;
+  border:1px solid transparent;user-select:none;}
+.scope-row.on{background:#39a9c024;border-color:#39a9c059;color:#eaf6fa;}
+.scope-row.on:hover{background:#39a9c033;}
+/* only some of the sub-headings inside are selected */
+.scope-row.part{background:#39a9c010;border-color:#39a9c033;}
+.scope-row:focus-visible{outline:2px solid var(--cyan);outline-offset:1px;}
+body.light .scope-row.on{background:#39a9c022;color:var(--ink);}
 .scope-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;}
 .scope-l2{padding-left:16px;}
 .scope-l3{padding-left:32px;opacity:.9;}
@@ -3898,16 +3915,21 @@ body.doc-presenting .content{max-width:1000px;margin:0 auto;
   padding:56px 30px 30vh;}
 body.doc-presenting .treeview{padding:56px 26px 24vh;height:100vh;}
 body.doc-presenting .docbar{display:none;}
+/* The presenting controls: a compact panel pinned to one CORNER (not a
+   band across the whole top), so slide content stays readable. */
 .present-bar{position:fixed;top:14px;right:16px;z-index:140;display:flex;
-  align-items:center;gap:6px;padding:6px 8px;border-radius:10px;
-  background:#0d1a24ee;border:1px solid #ffffff1f;
-  box-shadow:0 6px 22px #00000045;max-width:calc(100vw - 32px);}
+  align-items:flex-start;gap:6px;padding:7px 8px;border-radius:10px;
+  background:#0d1a24f2;border:1px solid #ffffff1f;
+  box-shadow:0 6px 22px #00000055;max-width:min(560px,calc(100vw - 32px));}
 .present-bar[hidden]{display:none;}
-/* the collapsible tray: every control except Exit. The relocated appbar
+.present-bar.pb-tl{top:14px;left:16px;right:auto;}
+.present-bar.pb-bl{top:auto;bottom:14px;left:16px;right:auto;}
+.present-bar.pb-br{top:auto;bottom:14px;right:16px;left:auto;}
+/* the collapsible tray: every control except Back. The relocated appbar
    filter groups keep their own styling, just re-coloured for the bar */
-.pb-tray{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
-  justify-content:flex-end;max-width:calc(100vw - 190px);}
-.pb-tools{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+.pb-tray{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
+  justify-content:flex-end;max-width:min(430px,calc(100vw - 190px));}
+.pb-tools{display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap;
   justify-content:flex-end;}
 .pb-tools .fgrp{display:flex;align-items:center;gap:4px;}
 .pb-tools .toggle{border-color:#ffffff26;background:#ffffff10;color:#e7eff5;
@@ -3916,24 +3938,39 @@ body.doc-presenting .docbar{display:none;}
 .pb-tools .toggle:hover{border-color:var(--cyan);color:#fff;}
 .pb-tools .toggle.tv.off{color:#7c8b9a;}
 .pb-tools .appbar-div{width:1px;height:18px;background:#ffffff22;}
-.pb-btn{font-family:var(--mono);font-size:11px;letter-spacing:.02em;
-  border:1px solid #ffffff26;background:#ffffff10;color:#e7eff5;
-  padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s;}
-.pb-btn:hover{background:#ffffff1e;border-color:var(--cyan);color:#fff;}
-.pb-exit{border-color:#e0806033;}
+/* identical to the app bar's .toggle so nothing looks like a different
+   control just because you are presenting */
+.pb-btn{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  border:1px solid #ffffff22;background:#ffffff0a;color:#cdd9e3;
+  padding:7px 12px;border-radius:var(--rad);cursor:pointer;
+  transition:all .15s;display:inline-flex;align-items:center;gap:7px;
+  height:30px;box-sizing:border-box;line-height:1;}
+.pb-btn:hover{border-color:var(--cyan);color:#fff;}
+.pb-btn[hidden]{display:none!important;}
+.pb-btn[aria-pressed="true"]{background:#eef4f8;color:#0d1a24;
+  border-color:#eef4f8;}
+.pb-exit{border-color:#39a9c059;color:#eaf6fa;}
 .pb-sep{width:1px;height:18px;background:#ffffff22;}
-.pb-collapse{font-family:var(--mono);font-size:13px;border:1px solid #ffffff26;
-  background:#ffffff10;color:#cfe0ea;width:26px;height:26px;border-radius:6px;
-  cursor:pointer;padding:0;line-height:1;}
+.pb-collapse{font-family:var(--mono);font-size:14px;border:1px solid #ffffff22;
+  background:#ffffff0a;color:#cfe0ea;width:30px;height:30px;
+  border-radius:var(--rad);cursor:pointer;padding:0;line-height:1;
+  box-sizing:border-box;}
 .pb-collapse:hover{color:#fff;border-color:var(--cyan);}
 body.present-bar-hidden .present-bar{display:none;}
-.present-bar-show{position:fixed;top:14px;right:0;z-index:140;width:24px;
-  height:34px;border:1px solid #ffffff26;border-right:none;
-  border-radius:8px 0 0 8px;background:#0d1a24ee;color:#cfe0ea;cursor:pointer;
-  font-size:13px;padding:0;display:none;}
-.present-bar-show[hidden]{display:none;}
-body.doc-presenting.present-bar-hidden .present-bar-show{display:block;}
+/* folded away: a proper labelled pill, not a sliver you have to hunt for */
+.present-bar-show{position:fixed;top:14px;right:16px;z-index:140;
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  border:1px solid #ffffff26;border-radius:var(--rad);
+  background:#0d1a24f2;color:#cfe0ea;cursor:pointer;height:30px;
+  padding:0 12px;display:none;align-items:center;gap:7px;
+  box-shadow:0 6px 22px #00000055;}
+.present-bar-show[hidden]{display:none!important;}
+body.doc-presenting.present-bar-hidden .present-bar-show{
+  display:inline-flex;}
 .present-bar-show:hover{color:#fff;border-color:var(--cyan);}
+.present-bar-show.pb-tl{left:16px;right:auto;}
+.present-bar-show.pb-bl{top:auto;bottom:14px;left:16px;right:auto;}
+.present-bar-show.pb-br{top:auto;bottom:14px;right:16px;left:auto;}
 .rawcell{position:relative;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;
   padding:14px 16px 14px 16px;margin:12px 0;}
@@ -4321,7 +4358,7 @@ _JS = r"""
   /* EVERYTHING here is per notebook: the default, the per-section
      overrides and the "Apply to" pick. One notebook's filters must never
      reach into another open tab. */
-  var defBy={},secF={},pickBy={};
+  var defBy={},secF={};
   function FDEFof(stem){
     var k=String(stem||'');
     if(!defBy[k]){
@@ -4340,7 +4377,7 @@ _JS = r"""
     var dpre=d+'::',spre=s+'::',k;
     for(k in secF){if(k.indexOf(dpre)===0) delete secF[k];}
     for(k in secScope){if(k.indexOf(dpre)===0) delete secScope[k];}
-    pickBy[d]=false;
+    delete scopeSeeded[d];
     if(withOverrides){
       for(k in secF){
         if(k.indexOf(spre)===0)
@@ -4375,21 +4412,34 @@ _JS = r"""
   /* ---- "Apply to": which sections the filters act on. Empty = the whole
      notebook (every section). Ticking sections narrows the filters to
      them, so one chapter can hide its code while the next keeps it. ---- */
-  var secScope={};
-  /* an EXPLICIT mode (per notebook): without it, unticking the last
-     section would read as an empty set and silently mean "the whole
-     notebook" — the opposite of what the user just asked for */
-  function scopePick(){return !!pickBy[String(activeStem())];}
-  function setScopePick(v){pickBy[String(activeStem())]=!!v;}
-  function scopeAll(){return !scopePick();}
+  /* The selection is just a SET of highlighted sections — no modes. A
+     notebook starts with everything selected (so filters act on all of
+     it), and "Select all" puts it back. */
+  var secScope={},scopeSeeded={};
+  /* a notebook starts with every section selected. The flag matters:
+     "the user deselected everything" and "not set up yet" are both an
+     empty set, and only the second should be filled in. */
+  function seedScope(){
+    var stem=String(activeStem()),ids=allSids();
+    if(scopeSeeded[stem]||!ids.length) return;
+    scopeSeeded[stem]=1;
+    ids.forEach(function(id){secScope[fkey(stem,id)]=1;});
+  }
+  function scopeAll(){
+    var ids=allSids();
+    if(!ids.length) return true;
+    var stem=activeStem();
+    return ids.every(function(id){return !!secScope[fkey(stem,id)];});
+  }
   function scopeCount(){return targetSids().length;}
   function renderScopeBtn(){
     var b=$('#sec-scope-btn'); if(!b) return;
-    var n=scopeCount();
-    var lab=!scopePick()?'Entire notebook'
-      :(n?(n+' section'+(n>1?'s':'')):'No sections');
+    seedScope();
+    var n=scopeCount(),tot=allSids().length;
+    var lab=(!tot||n===tot)?'All sections'
+      :(n?(n+' of '+tot+' sections'):'No sections');
     b.innerHTML='Apply to: '+lab+' &#9662;';
-    b.classList.toggle('on',scopePick());
+    b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
      and write their filter state ------------------------------------- */
@@ -4402,11 +4452,13 @@ _JS = r"""
       .filter(Boolean):[];
   }
   function targetSids(){
-    /* "Entire notebook" edits every section; a pick edits just those */
-    var ids=allSids();
-    if(scopeAll()) return ids;
-    return ids.filter(function(id){
-      return !!secScope[fkey(activeStem(),id)];});
+    /* seed here, not only in the button renderer: a freshly activated
+       notebook must already read as "all sections" the first time any
+       filter asks, or the whole bar renders itself disabled */
+    seedScope();
+    var stem=activeStem();
+    return allSids().filter(function(id){
+      return !!secScope[fkey(stem,id)];});
   }
   /* the value of one filter across the selection — 'mixed' when they
      disagree, so the button never lies about a heterogeneous selection */
@@ -4486,11 +4538,13 @@ _JS = r"""
      its "Apply to" pick. Other open tabs keep their own filters. */
   function resetFilters(){
     var stem=String(activeStem()),pre=stem+'::';
-    defBy[stem]=newF();
-    pickBy[stem]=false;
+    var sh=APP.shells&&APP.shells[stem];
+    defBy[stem]=newF(!!(sh&&sh.trace));
     [secF,secScope,scopeOpen].forEach(function(m){
       for(var k in m){if(k.indexOf(pre)===0) delete m[k];}
     });
+    delete scopeSeeded[stem];
+    seedScope();          /* back to "All sections" */
     markSecOverrides();renderScopeBtn();
     var m=$('#sec-scope-menu');
     if(m&&!m.hidden) renderScopeMenu();   /* an open picker must not lie */
@@ -4522,20 +4576,13 @@ _JS = r"""
     var nodes=scopeTree();
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='apply the filters to';m.appendChild(h);
+    /* one button, one meaning, one label — always "Select all" */
     var all=document.createElement('button');
     all.className='ckf-all';
-    all.textContent=scopeAll()?'Pick sections…':'Entire notebook';
+    all.textContent='Select all';
     all.addEventListener('click',function(e){
       e.stopPropagation();
-      if(scopeAll()){
-        /* "pick sections" starts from everything ticked, so the first
-           untick is a subtraction rather than an empty selection */
-        setScopePick(true);
-        nodes.forEach(function(n){secScope[n.id]=1;});
-      } else {
-        setScopePick(false);
-        nodes.forEach(function(n){delete secScope[n.id];});
-      }
+      nodes.forEach(function(n){secScope[n.id]=1;});
       renderScopeMenu();renderScopeBtn();applyFilters();
     });
     m.appendChild(all);
@@ -4544,11 +4591,12 @@ _JS = r"""
       e0.textContent='No sections in this notebook';
       m.appendChild(e0);return;
     }
-    function on(id){return scopeAll()||!!secScope[id];}
+    function on(id){return !!secScope[id];}
     function setSub(n,val){
       /* a heading carries its sub-headings with it */
-      secScope[n.id]=val?1:0;
-      n.kids.forEach(function(k){secScope[k]=val?1:0;});
+      if(val) secScope[n.id]=1; else delete secScope[n.id];
+      n.kids.forEach(function(k){
+        if(val) secScope[k]=1; else delete secScope[k];});
     }
     /* a row is visible only while every ancestor is expanded */
     var hideUnder=null;
@@ -4557,15 +4605,26 @@ _JS = r"""
       var hidden=(hideUnder!=null);
       if(!hidden&&n.kids.length&&!scopeOpen[n.id]) hideUnder=n.lv;
       if(hidden) return;
-      var row=document.createElement('label');
-      row.className='ckf-row scope-row scope-l'+n.lv;
+      var selfOn=on(n.id);
+      /* the WHOLE ROW is the selection control (highlighted = selected);
+         only the little arrow expands or collapses */
+      var part=n.kids.some(function(k){return on(k)!==selfOn;});
+      var row=document.createElement('div');
+      row.className='ckf-row scope-row scope-l'+n.lv
+        +(selfOn?' on':'')+(part?' part':'');
+      row.setAttribute('role','button');
+      row.tabIndex=0;
+      row.title=(selfOn?'Selected':'Not selected')
+        +(n.kids.length?' — click to '+(selfOn?'drop':'add')
+          +' this heading and the '+n.kids.length+' inside it'
+          :' — click to '+(selfOn?'drop':'add')+' this section');
       var tw=document.createElement('span');tw.className='scope-tw';
       if(n.kids.length){
         var ch=document.createElement('button');
         ch.className='scope-chev'+(scopeOpen[n.id]?' open':'');
         ch.type='button';
         ch.innerHTML='&#9656;';
-        ch.title=(scopeOpen[n.id]?'Collapse':'Expand')
+        ch.title=(scopeOpen[n.id]?'Hide':'Show')
           +' the sub-headings under this one';
         ch.addEventListener('click',function(e){
           e.preventDefault();e.stopPropagation();
@@ -4575,22 +4634,6 @@ _JS = r"""
         tw.appendChild(ch);
       }
       row.appendChild(tw);
-      var cb=document.createElement('input');
-      cb.type='checkbox';
-      var selfOn=on(n.id);
-      cb.checked=selfOn;
-      /* subtree disagrees with the heading -> a dash, not a tick */
-      cb.indeterminate=n.kids.some(function(k){return on(k)!==selfOn;});
-      cb.addEventListener('change',function(e){
-        e.stopPropagation();
-        if(scopeAll()&&!cb.checked){
-          /* first untick out of "entire notebook": everything else stays */
-          setScopePick(true);
-          nodes.forEach(function(x){secScope[x.id]=1;});
-        }
-        setSub(n,cb.checked);
-        renderScopeMenu();renderScopeBtn();applyFilters();
-      });
       var tx=document.createElement('span');tx.className='scope-t';
       tx.textContent=(n.num?n.num+'  ':'')+n.title;
       if(n.kids.length){
@@ -4601,7 +4644,15 @@ _JS = r"""
           +(n.kids.length>1?'s':'')+' inside';
         tx.appendChild(cnt);
       }
-      row.appendChild(cb);row.appendChild(tx);
+      row.appendChild(tx);
+      function pick(e){
+        e.preventDefault();e.stopPropagation();
+        setSub(n,!selfOn);
+        renderScopeMenu();renderScopeBtn();applyFilters();
+      }
+      row.addEventListener('click',pick);
+      row.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '||e.key==='Spacebar') pick(e);});
       m.appendChild(row);
     });
   }
@@ -4642,7 +4693,7 @@ _JS = r"""
     renderFilterExtras();
     /* "Apply to" with nothing ticked: the filters have no target, so say
        so instead of letting clicks do nothing */
-    var none=scopePick()&&targetSids().length===0;
+    var none=allSids().length>0&&targetSids().length===0;
     ['tv-markdown','tv-code','tv-plots','tv-output',
      'ck-filter-btn','ot-filter-btn','pt-filter-btn'].forEach(function(id){
       var b=$('#'+id); if(!b) return;
@@ -5587,11 +5638,40 @@ _JS = r"""
       toggleTree();renderViewBtns();});
     var c=$('#pb-collapse'); if(c) c.addEventListener('click',function(){
       document.body.classList.add('present-bar-hidden');});
-    var rl=$('#pb-rail'); if(rl) rl.addEventListener('click',function(){
-      var on=document.body.classList.toggle('present-rail');
-      rl.setAttribute('aria-pressed',on.toString());
-      relayoutActiveTree();
-    });
+    var rl=$('#pb-rail');
+    if(rl){
+      rl.setAttribute('aria-pressed','false');
+      rl.addEventListener('click',function(){
+        var on=document.body.classList.toggle('present-rail');
+        rl.setAttribute('aria-pressed',on.toString());
+        rl.title=on?'Hide the section sidebar':'Show the section sidebar';
+        relayoutActiveTree();
+      });
+    }
+    /* park the controls in whichever corner is out of the way — remembered
+       between talks */
+    var PBPOS=['','pb-tl','pb-bl','pb-br'];
+    var PBNAME=['top right','top left','bottom left','bottom right'];
+    var PKEY='junoview:presentbar:pos';
+    var pbPos=0;
+    try{pbPos=Math.max(0,PBPOS.indexOf(
+      localStorage.getItem(PKEY)||''));}catch(e){}
+    function applyPbPos(){
+      var bar=$('#present-bar'),sho=$('#present-bar-show');
+      [bar,sho].forEach(function(el){
+        if(!el) return;
+        PBPOS.forEach(function(c){if(c) el.classList.remove(c);});
+        if(PBPOS[pbPos]) el.classList.add(PBPOS[pbPos]);
+      });
+      var mv=$('#pb-move');
+      if(mv) mv.title='These controls sit '+PBNAME[pbPos]
+        +' — click to move them to the '+PBNAME[(pbPos+1)%4];
+      try{localStorage.setItem(PKEY,PBPOS[pbPos]);}catch(e){}
+    }
+    var mv=$('#pb-move');
+    if(mv) mv.addEventListener('click',function(){
+      pbPos=(pbPos+1)%PBPOS.length;applyPbPos();});
+    applyPbPos();
     var s=$('#present-bar-show'); if(s) s.addEventListener('click',function(){
       document.body.classList.remove('present-bar-hidden');});
   })();
@@ -6854,7 +6934,7 @@ _JS = r"""
     /* drop this notebook's filter state — otherwise it lingers forever and
        a later notebook with the same stem reopens pre-filtered */
     var pre=String(stem)+'::';
-    delete defBy[String(stem)];delete pickBy[String(stem)];
+    delete defBy[String(stem)];delete scopeSeeded[String(stem)];
     [secF,secScope,scopeOpen].forEach(function(m){
       for(var k in m){if(k.indexOf(pre)===0) delete m[k];}
     });
@@ -7214,7 +7294,8 @@ _DECK_HTML = """
       title="Back to the document view">Docs</button>
     <span class="deck-spring"></span>
     <button class="dbtn" id="deck-exit"
-      title="Exit playback, back to the builder">&#10005; Exit</button>
+      title="Stop presenting and go back to the slide builder (Esc).
+ Nothing is closed or lost.">&#8617; Back</button>
   </div>
   <div class="deck-main">
     <aside class="deck-create" id="deck-create" hidden>
@@ -14421,15 +14502,18 @@ _TEMPLATE = """<!doctype html>
  different set and filter those differently. Each section remembers its
  own filters. Default: the entire notebook."
         >Apply to: Entire notebook &#9662;</button>
-      <button class="toggle sub" id="filters-all"
-        title="Give every other open notebook the filters this one is
+      <span class="fgrp-row">
+        <button class="toggle sub" id="filters-all"
+          title="Give every other open notebook the filters this one is
  using">&#8649; All notebooks</button>
-      <button class="toggle sub" id="trace-inherit" hidden
-        title="This trace opened unfiltered. Click to copy the filters from
- the notebook it came from.">&#8615; Filters from document</button>
-      <button class="toggle sub" id="filters-reset"
-        title="Reset every filter — and every per-section override — in
+        <button class="toggle sub" id="filters-reset"
+          title="Reset every filter — and every per-section override — in
  THIS notebook back to the defaults">&#8635; Reset</button>
+      </span>
+      <button class="toggle sub" id="trace-inherit" hidden
+        title="This plot trace opened unfiltered, on purpose. Click to give
+ it the same filters as the notebook it came from.">&#8615; Use the
+ document&#8217;s filters</button>
     </span>
     <span class="fgrp" id="fig-size-grp">
       <button class="toggle sub" id="fig-smaller"
@@ -14513,15 +14597,19 @@ _TEMPLATE = """<!doctype html>
     <button class="pb-btn" id="pb-view"
       title="Switch between the Narrative document and the Tree view">
       &#9633; Tree</button>
+    <button class="pb-btn" id="pb-move"
+      title="Move these controls to another corner of the screen">
+      &#10021; Move</button>
   </div>
   <span class="pb-sep" aria-hidden="true"></span>
   <button class="pb-btn pb-exit" id="pb-exit"
-    title="Exit full screen (Esc)">&#10005; Exit</button>
+    title="Leave full screen and go back to the document (Esc). Nothing is
+ closed or lost.">&#8617; Back</button>
   <button class="pb-collapse" id="pb-collapse"
-    title="Hide these controls">&#187;</button>
+    title="Fold these controls away">&#8942;</button>
 </div>
 <button class="present-bar-show" id="present-bar-show"
-  title="Show controls" hidden>&#171;</button>
+  title="Show the presenting controls" hidden>&#9776; Controls</button>
 <div class="docs" id="docs">
 {shells}
 </div>
@@ -16009,6 +16097,14 @@ def _self_test() -> None:
     assert "function pbTakeTools" in out and "function pbReturnTools" in out
     assert "'#pt-grp','#md-grp','#ck-grp','#ot-grp'" in out
     assert 'id="pb-rail"' in out and "body.doc-presenting.present-rail" in out
+    # …the presenting controls look like the app bar's, say "Back" (not the
+    # alarming "Exit"), park in any corner, and fold to a labelled pill
+    assert 'id="pb-move"' in out and "function applyPbPos" in out
+    assert ".present-bar.pb-bl" in out and "'junoview:presentbar:pos'" in out
+    assert "&#8617; Back</button>" in out and "&#10005; Exit" not in out
+    assert "&#9776; Controls</button>" in out
+    assert ".pb-btn{font-family:var(--mono);font-size:11px;" \
+        "letter-spacing:.04em;" in out
     # …and the fixed-position filter menus ride into the fullscreen layer
     assert "var PB_MENUS=" in out
     # figure zoom: per-figure -/+/expand, a feed-wide sizer, a full-screen
@@ -16060,7 +16156,12 @@ def _self_test() -> None:
     assert "function setSub" in out
     # …and picking is an explicit MODE, so unticking everything means
     # "no sections", never a silent fallback to the whole notebook
-    assert "function scopePick" in out and "'No sections'" in out
+    # the picker is a plain SELECTION: highlighted rows, one constant
+    # "Select all", and only the little arrow expands a heading
+    assert "function seedScope" in out and "'Select all'" in out
+    assert ".scope-row.on{" in out and ".scope-row.part{" in out
+    assert "'No sections'" in out and "scope-chev" in out
+    assert "type='checkbox'" not in out.split("scope-row")[1][:900]
     # FILTERS BELONG TO SECTIONS: each section carries its own state, so
     # one chapter can hide code while the next collapses plots. The appbar
     # reads/writes whichever sections "Apply to" selects, says "Mixed"
@@ -16078,7 +16179,7 @@ def _self_test() -> None:
     # per-notebook isolation (the adversarial review's top findings): the
     # DEFAULT and the pick are per stem, a tab switch rebinds the bar, and
     # closing a notebook drops its filter state
-    assert "function FDEFof" in out and "var defBy={},secF={},pickBy={}" in out
+    assert "function FDEFof" in out and "var defBy={},secF={}" in out
     assert "renderTypeButtons();renderScopeBtn();" in out
     assert "delete defBy[String(stem)]" in out
     # a card carries its own section id, so tree/trace CLONES keep obeying
