@@ -3003,17 +3003,20 @@ _APP_CSS = r"""
 body.presrail-min{--presrail-w:46px;}
 
 /* ---------- row 1: global controls; row 2: notebook + presentation tabs */
-.apptop{position:fixed;top:0;left:0;right:0;height:var(--chrome-h);
+/* the header sizes to its content: --chrome-h is measured from the real
+   element (see measureChrome), so a bar that needs a second line pushes
+   the page down instead of hiding controls off the right-hand edge */
+.apptop{position:fixed;top:0;left:0;right:0;min-height:var(--chrome-h);
   z-index:90;display:flex;flex-direction:column;background:#0a141d;
   border-bottom:1px solid #ffffff14;}
 /* top-aligned: every main button sits on one first row; the small
-   "… types ▾" pickers hang underneath their parent filter */
-.appbar{display:flex;align-items:flex-start;gap:8px;height:var(--appbar-h);
-  padding:8px 12px 0 0;border-bottom:1px solid #ffffff0d;
-  overflow-x:auto;scrollbar-width:none;}
+   "… types ▾" pickers hang underneath their parent filter. It WRAPS —
+   a horizontal scrollbar in a toolbar just hides things. */
+.appbar{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap;
+  min-height:var(--appbar-h);
+  padding:8px 12px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
-   bar gets (the builder can squeeze it) or what glyph they hold — the
-   bar scrolls instead, and a fixed height stops content stretching */
+   bar gets (the builder can squeeze it) or what glyph they hold */
 .appbar .toggle,.appbar .appbar-link{
   flex:none;white-space:nowrap;height:30px;box-sizing:border-box;
   padding-top:0;padding-bottom:0;line-height:1;}
@@ -4437,7 +4440,7 @@ _JS = r"""
     return secF[fkey(stem,sid)]||FDEFof(stem);
   }
   var CODE_CYCLE=['visible','collapsed','hidden'];
-  var CODE_LABEL={visible:'Visible',collapsed:'Collapsed',hidden:'Hidden',
+  var CODE_LABEL={visible:'On',collapsed:'Folded',hidden:'Off',
     mixed:'Mixed'};
   var CK_TYPES=['imports','function','data','settings',
     'plotting','print','comments','constant','code'];
@@ -4468,9 +4471,9 @@ _JS = r"""
     var b=$('#sec-scope-btn'); if(!b) return;
     seedScope();
     var n=scopeCount(),tot=allSids().length;
-    var lab=(!tot||n===tot)?'All sections'
-      :(n?(n+' of '+tot+' sections'):'No sections');
-    b.innerHTML='Apply to: '+lab+' &#9662;';
+    var lab=(!tot||n===tot)?'All'
+      :(n?(n+' of '+tot):'none');
+    b.innerHTML='Sections: '+lab+' &#9662;';
     b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
@@ -5205,13 +5208,13 @@ _JS = r"""
     if(!rawBtn) return;
     var sh=APP.active&&APP.shells[APP.active];
     if(sh&&sh.trace){   /* a Plot-trace tab has no raw notebook of its own */
-      rawBtn.textContent='Raw notebook';
+      rawBtn.textContent='Raw';
       rawBtn.setAttribute('aria-pressed','false');
       rawBtn.disabled=true;return;
     }
     var on=!!(sh&&sh.el.classList.contains('raw'));
     rawBtn.setAttribute('aria-pressed',on.toString());
-    rawBtn.textContent=on?'Formatted view':'Raw notebook';
+    rawBtn.textContent=on?'Formatted':'Raw';
     rawBtn.disabled=!sh;
   }
   if(rawBtn) rawBtn.addEventListener('click',function(){
@@ -6082,6 +6085,25 @@ _JS = r"""
 
   /* ---- ☰ toggles the section sidebar (TOC). Desktop: body.tocshow
      (hidden by default, pref persisted); mobile keeps the slide-in. */
+  /* the header is allowed to wrap, so the page offset has to follow its
+     REAL height — otherwise a second row of controls hides under the
+     document (or leaves a gap when it fits on one) */
+  var chromeT=null;
+  function measureChrome(){
+    if(chromeT) return;
+    chromeT=setTimeout(function(){
+      chromeT=null;
+      var top=$('#apptop'); if(!top) return;
+      var h=Math.ceil(top.getBoundingClientRect().height);
+      if(h>0) document.documentElement.style.setProperty(
+        '--chrome-h',h+'px');
+    },0);
+  }
+  APP.measureChrome=measureChrome;
+  window.addEventListener('resize',measureChrome);
+  document.addEventListener('sem:shell',measureChrome);
+  document.addEventListener('sem:activate',measureChrome);
+  measureChrome();
   var menuBtn=$('#menubtn');
   function applyToc(show){
     document.body.classList.toggle('tocshow',show);
@@ -6722,15 +6744,18 @@ _JS = r"""
   (function(){
     var fb=$('#file-info-btn'),rb=$('#file-reload');
     function activeSh(){return APP.active&&APP.shells[APP.active];}
+    /* these are DISABLED, never hidden: a button that appears once the
+       notebook finishes loading shoves the whole bar sideways */
     function sync(){
       var sh=activeSh();
       var has=!!(sh&&sh.path&&!sh.trace);
-      if(fb) fb.hidden=!has;
+      if(fb) fb.disabled=!has;
       if(rb){
-        rb.hidden=!has;
+        rb.disabled=!has;
         rb.title=(sh&&/^https?:/i.test(sh.path||''))
           ?'Reload from the URL':'Reload from disk';
       }
+      measureChrome();
     }
     if(fb) fb.addEventListener('click',function(e){
       e.stopPropagation();
@@ -14727,11 +14752,11 @@ _TEMPLATE = """<!doctype html>
         <button class="toggle primary" id="tab-open" hidden
           title="Open a notebook (.ipynb) from your computer or a
  URL">&#43; Open</button>
-        <button class="toggle" id="file-info-btn" hidden
+        <button class="toggle" id="file-info-btn" disabled
           title="Where this notebook came from — its path, its git commit,
  and every earlier version you can open">&#128196; File info
           &#9662;</button>
-        <button class="toggle fz-step" id="file-reload" hidden
+        <button class="toggle fz-step" id="file-reload" disabled
           title="Reload this notebook">&#8635;</button>
       </span>
     </span>
@@ -14772,10 +14797,10 @@ _TEMPLATE = """<!doctype html>
  headings and sub-headings to include, change the filters, then select a
  different set and filter those differently. Each section remembers its
  own filters."
-        >Apply to: All sections &#9662;</button>
+        >Sections: All &#9662;</button>
       <button class="toggle sub" id="filters-reset"
         title="Put every filter — and every per-section change — in THIS
- notebook back to the defaults">&#8635; Reset filters</button>
+ notebook back to the defaults">&#8635; Reset</button>
     </span>
     <span class="fgrp" id="copy-grp">
       <button class="toggle" id="filters-all"
@@ -14803,11 +14828,11 @@ _TEMPLATE = """<!doctype html>
     <span class="appbar-div" aria-hidden="true"></span>
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
- (cells in order, directives visible)">Raw notebook</button>
+ (cells in order, directives visible)">Raw</button>
     <button class="toggle" id="view-tree"
       title="Tree view: the analysis as a dependency map you can expand,
  collapse and hide cell by cell. Toggle back for the narrative document.">
-      &#9633; Tree view</button>
+      &#9633; Tree</button>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
  exit.">&#9974; Present</button>
@@ -16236,6 +16261,16 @@ def _self_test() -> None:
     assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
             < out.index('id="tv-markdown"'))
     assert "--appbar-h:68px" in out and "--chrome-h:112px" in out
+    # the ribbon WRAPS and the page offset follows its real height, so a
+    # control can never end up off the right-hand edge behind a scrollbar
+    assert ".appbar{display:flex;align-items:flex-start;gap:8px;" \
+        "flex-wrap:wrap;" in out
+    assert "overflow-x:auto;scrollbar-width:none;}" not in out
+    assert "function measureChrome" in out
+    assert "'--chrome-h',h+'px'" in out
+    # …and File info is disabled-until-ready, never hidden-then-inserted
+    assert 'id="file-info-btn" disabled' in out
+    assert 'id="file-reload" disabled' in out
     # sub filter buttons are comfortably tall; expanded tree nodes widen
     assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:22px" in out
     assert ".tree-node.expanded{width:min(380px" in out
@@ -16467,7 +16502,7 @@ def _self_test() -> None:
     # "Select all", and only the little arrow expands a heading
     assert "function seedScope" in out and "'Select all'" in out
     assert ".scope-row.on{" in out and ".scope-row.part{" in out
-    assert "'No sections'" in out and "scope-chev" in out
+    assert "'none'" in out and "scope-chev" in out
     assert "type='checkbox'" not in out.split("scope-row")[1][:900]
     # FILTERS BELONG TO SECTIONS: each section carries its own state, so
     # one chapter can hide code while the next collapses plots. The appbar
