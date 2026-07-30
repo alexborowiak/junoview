@@ -2710,9 +2710,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
    itself survives as a thin hover strip so the controls that brought it
    here can bring it back in place (no round trip to the sidebar). */
 .section.sec-headoff .sectionhead-txt{display:none;}
-.section.sec-headoff .sectionhead{padding:8px 0 0;margin-bottom:0;
-  border-bottom:none;min-height:0;opacity:.35;}
-.section.sec-headoff .sectionhead:hover{opacity:1;}
+/* a hidden heading leaves NO trace in the feed — the faint stub that used
+   to remain read as a rendering artefact. It lives in the sidebar only,
+   which is where you bring it back from (2026-07-30). */
+.section.sec-headoff .sectionhead{display:none;}
 .section.sec-headoff .sec-eye{opacity:.5;position:relative;}
 /* a struck-through eye = "hidden, click to bring it back" (the sidebar
    already uses exactly this mark for a hidden section) */
@@ -3642,6 +3643,16 @@ body.presrail-min .pr-ico{width:auto;}
 /* fully hidden: a small edge handle brings it back */
 body.presrail-hidden{--presrail-w:0px;}
 body.presrail-hidden .presrail{display:none;}
+/* ---- rail auto-hide (OFF by default), same taskbar model as the
+   present bar: the panel leaves, the document takes the full width, and
+   the panel slides back when the pointer reaches the left edge ---- */
+body.prrail-auto{--presrail-w:0px;}
+body.prrail-auto .presrail{transform:translateX(-101%);
+  transition:transform .18s ease;box-shadow:0 0 40px #00000066;}
+body.prrail-auto.prrail-peek .presrail{transform:none;}
+body.prrail-auto .presrail-show{display:none;}
+#pr-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
+#pr-auto .bic{width:13px;height:13px;}
 .presrail-show{position:fixed;left:0;bottom:20px;z-index:96;width:22px;
   height:46px;border:1px solid #ffffff22;border-left:none;
   border-radius:0 8px 8px 0;background:#0a141d;color:#7fb6c6;
@@ -4498,6 +4509,10 @@ body.doc-presenting.pbpos-right .docs{right:var(--pbw,232px);}
 body.pbpos-right.pb-folded .present-bar{transform:translateX(101%);}
 body.pbpos-right.pb-folded .docs{right:0;}
 body.pbpos-top.pb-folded .docs{top:0;}
+/* Exit sits in the VERY top-right corner, out of the wrap flow, so a
+   narrow window can never push the way out onto a second row */
+body.pbpos-top .pb-exit{position:absolute;top:8px;right:48px;z-index:3;}
+body.pbpos-right .pb-exit{order:-1;}
 .pb-exit{border-color:#39a9c059!important;color:#eaf6fa!important;}
 .pb-exit:hover{background:#39a9c026!important;}
 /* The fold/unfold button: ONE control, always in the same place and
@@ -6711,6 +6726,32 @@ _JS = r"""
 
   /* ---- presentations rail: full -> icons -> hidden (edge handle
      brings it back) ---- */
+  /* ---- rail auto-hide: opt-in, remembered, and it never fights the
+     collapse states (turning it on leaves them alone) ---- */
+  (function(){
+    var AK='junoview:presrail:auto';
+    var btn=$('#pr-auto'),on=false;
+    try{on=localStorage.getItem(AK)==='1';}catch(e){}
+    function apply(){
+      document.body.classList.toggle('prrail-auto',on);
+      if(!on) document.body.classList.remove('prrail-peek');
+      if(btn) btn.setAttribute('aria-pressed',on?'true':'false');
+      try{localStorage.setItem(AK,on?'1':'0');}catch(e){}
+      if(APP.measureChrome) APP.measureChrome();
+    }
+    if(btn) btn.addEventListener('click',function(e){
+      e.stopPropagation();on=!on;apply();});
+    document.addEventListener('mousemove',function(e){
+      if(!on) return;
+      var peek=document.body.classList.contains('prrail-peek');
+      if(!peek&&e.clientX<=4) document.body.classList.add('prrail-peek');
+      else if(peek&&e.clientX>Math.max(200,
+        (($('#presrail')||{}).getBoundingClientRect
+          ?$('#presrail').getBoundingClientRect().right:200)+40))
+        document.body.classList.remove('prrail-peek');
+    });
+    apply();
+  })();
   var prCollapse=$('#pr-collapse'), prShow=$('#presrail-show');
   function railState(){
     return document.body.classList.contains('presrail-hidden')?'hidden'
@@ -7253,7 +7294,35 @@ _JS = r"""
       recalcSecCascade(shell);   /* hide/restore the deeper tiers below */
       scheduleSaveLayout();
       applyFilters();   /* keep the sidebar in step (a hidden section stays) */
+      syncUnhideBtn(shell);
     }
+    /* ---- "Show all hidden": the way back when nothing is left in the
+       feed to click. It only appears while something IS hidden. ---- */
+    function syncUnhideBtn(sh){
+      var b=sh.querySelector('.rf-unhide'); if(!b) return;
+      var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
+        +'.content .card.cell-off').length;
+      b.hidden=!n;
+      b.textContent='Show all hidden ('+n+')';
+    }
+    (function(){
+      var ub=shell.querySelector('.rf-unhide');
+      if(!ub) return;
+      ub.addEventListener('click',function(e){
+        e.stopPropagation();
+        $$('.section',shell).forEach(function(s2){
+          s2.classList.remove('sec-off','sec-headoff');});
+        $$('.navsec-row',shell).forEach(function(r){
+          r.classList.remove('sec-off','head-off','sec-under-off');});
+        $$('.content .card.cell-off',shell).forEach(function(c){
+          c.classList.remove('cell-off');});
+        $$('.navitem.cell-off',shell).forEach(function(nv){
+          nv.classList.remove('cell-off');});
+        recalcSecCascade(shell);
+        applyFilters();scheduleSaveLayout();syncUnhideBtn(shell);
+      });
+      syncUnhideBtn(shell);
+    })();
     /* hiding the HEADING is a different, smaller action than hiding the
        section: the cards stay in the document, only the title goes. */
     function setSecHeadOff(sid,val){
@@ -7262,6 +7331,7 @@ _JS = r"""
       if(sec) sec.classList.toggle('sec-headoff',val);
       if(row) row.classList.toggle('head-off',val);
       scheduleSaveLayout();
+      syncUnhideBtn(shell);
     }
     function isHeadOff(sid){
       var sec=shell.querySelector('.section[data-sec="'+sid+'"]');
@@ -16570,6 +16640,11 @@ _SHELL_TEMPLATE = """<div class="shell nbshell" data-nb="{stem}"{path_attr}>
           &#9662;</button>
         <button class="rf-btn rf-reload" type="button"
           title="Reload this notebook from disk">&#8635;</button>
+        <!-- shown only while something IS hidden: a permanent button for a
+             state you are usually not in is clutter -->
+        <button class="rf-btn rf-unhide" type="button" hidden
+          title="Bring back every hidden section, heading and cell in this
+ notebook">Show all hidden</button>
       </div>
       <div class="rf-panel" hidden></div>
     </div>
@@ -16600,6 +16675,11 @@ _TEMPLATE = """<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{title}</title>
+<!-- a generator tag, NOT a description: the page's content belongs to
+     whoever exported it, so we name the tool without describing their
+     notebook for them -->
+<meta name="generator" content="Junoview — figure-first Jupyter notebook
+ viewer and presentation builder (https://junoview.dev)">
 <link rel="icon" href="{favicon}">
 <style>{css}</style>
 <style>{app_css}</style>
@@ -16797,6 +16877,10 @@ _TEMPLATE = """<!doctype html>
       2.2 2h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v6c0 .7-.5 1.2-1.2
       1.2H2.2C1.5 12 1 11.5 1 10.8z"/></svg></span>
     <span class="pr-t">+ New folder</span></button>
+  <button class="pr-collapse" id="pr-auto" aria-pressed="false"
+    title="Auto-hide: the panel slides away and comes back when you move
+ the pointer to the left edge. Off by default."
+    ><i data-ic="pin"></i></button>
   <button class="pr-collapse" id="pr-collapse"
     title="Collapse this panel">&#171;</button>
 </nav>
@@ -18922,10 +19006,21 @@ def _self_test() -> None:
     assert ">hide section</button>" in out
     assert "function setSecHeadOff" in out and "function isHeadOff" in out
     assert ".section.sec-headoff .sectionhead-txt{display:none;}" in out
-    # the heading's own head survives as a thin hover strip, so the eye
-    # that hid it can bring it back in place
-    assert ".section.sec-headoff .sectionhead{padding:8px 0 0;" in out
-    assert ".section.sec-headoff .sectionhead:hover{opacity:1;}" in out
+    # a hidden heading leaves NO trace in the feed: the sidebar is the only
+    # place it shows, and "Show all hidden" is the way back
+    assert ".section.sec-headoff .sectionhead{display:none;}" in out
+    assert 'class="rf-btn rf-unhide"' in out
+    # the presentations rail can auto-hide, OFF by default
+    assert 'id="pr-auto" aria-pressed="false"' in out
+    assert "body.prrail-auto.prrail-peek .presrail{transform:none;}" in out
+    assert "'junoview:presrail:auto'" in out
+    assert "function syncUnhideBtn" in out
+    # every exported page names the tool (a generator tag, not a fake
+    # description of someone else's notebook)
+    assert '<meta name="generator" content="Junoview' in out
+    assert "https://junoview.dev" in out
+    assert "body.pbpos-top .pb-exit{position:absolute;top:8px;right:48px" in out
+    assert ".section.sec-headoff .sectionhead:hover" not in out
     assert ".navsec-row.head-off .navsec-t{opacity:.55;" \
         "text-decoration:line-through;" in out
     # ...and it is part of the saved layout, like every other view setting

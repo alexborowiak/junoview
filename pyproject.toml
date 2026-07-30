@@ -5,24 +5,44 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "junoview"
 version = "0.1.0"
-description = "Junoview — figure-first Jupyter notebook viewing and slide decks. Streamline presentations from Jupyter: display your plots and documentation, single file, stdlib only"
+# The summary leads with the PROBLEM, not the product name: PyPI shows
+# this line in search results, and "Junoview" alone competes with an
+# unrelated product of nearly the same name.
+description = "Read executed Jupyter notebooks as figures instead of cells — filter code and output away, hide sections, and build slides or a conference poster from the same cells. Single file, stdlib only."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
 authors = [{ name = "Alex Borowiak" }]
-keywords = ["jupyter", "notebook", "visualization", "presentation", "report"]
+keywords = [
+    "jupyter", "jupyter-notebook", "ipynb", "notebook-viewer",
+    "visualization", "data-visualization", "presentation", "slides",
+    "poster", "report", "reproducible-research", "matplotlib", "plotly",
+    "xarray", "anywidget", "science",
+]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Framework :: Jupyter",
+    "Framework :: Matplotlib",
+    "Topic :: Scientific/Engineering :: Visualization",
+    "Topic :: Multimedia :: Graphics :: Presentation",
+    "Environment :: Web Environment",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
 ]
 
 [project.urls]
-# TODO: point these at the junoview repo/domain once they exist
-Homepage = "https://github.com/alexborowiak/semantic-rendering"
+Homepage = "https://junoview.dev"
+Documentation = "https://junoview.dev"
 Repository = "https://github.com/alexborowiak/semantic-rendering"
+Issues = "https://github.com/alexborowiak/semantic-rendering/issues"
 
 [project.optional-dependencies]
 widget = ["anywidget", "ipywidgets"]
