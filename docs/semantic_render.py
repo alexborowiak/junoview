@@ -114,6 +114,89 @@ _KOFI_URL = "https://ko-fi.com/plotline"
 # The Junoview mark: a peacock-feather "ocellus" (eye) — concentric teal /
 # amber / blue / dark rings inside twelve barbs with three amber dots. Inline
 # SVG so it stays crisp and self-contained in every runtime (juno-view-ocellus).
+# --- the chrome icon set -------------------------------------------------
+# Inline SVG, never emoji: emoji render as tofu boxes in this app's mono
+# font (that cost several rounds once already). One grid (16x16), one
+# style (stroke, currentColor), so every button reads as the same family.
+# Markup uses <i data-ic="key"></i> tokens which _icons() expands, so the
+# templates stay readable and the artwork lives in exactly one place.
+_ICON_PATHS = {
+    # files / app
+    "open": '<path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 '
+            '1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/>',
+    "reload": '<path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/>'
+              '<path d="M13.6 2.2v3.1h-3.1"/>',
+    "info": '<circle cx="8" cy="8" r="6.2"/><path d="M8 7.4v4"/>'
+            '<path d="M8 4.9v.1"/>',
+    # filters: one per content type
+    "plots": '<path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/>'
+             '<path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/>',
+    "markdown": '<path d="M2.6 4.2h10.8"/><path d="M2.6 7.4h10.8"/>'
+                '<path d="M2.6 10.6h7.2"/>',
+    "code": '<path d="M5.6 5.2 2.4 8l3.2 2.8"/>'
+            '<path d="M10.4 5.2 13.6 8l-3.2 2.8"/>',
+    "output": '<rect x="2.2" y="3.2" width="11.6" height="9.6" rx="1.2"/>'
+              '<path d="M4.6 6.6 6.4 8l-1.8 1.4"/><path d="M8.4 10h3"/>',
+    # a sub-picker: a funnel, the universal "narrow this down"
+    "types": '<path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/>',
+    # scope + reset
+    "scope": '<path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/>'
+             '<path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/>'
+             '<path d="m2.2 8 .9.9L4.7 7.2"/>',
+    "reset": '<path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/>'
+             '<path d="M2.4 2.2v3.1h3.1"/>',
+    "inherit": '<path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/>'
+               '<path d="M2.6 13.4h10.8"/>',
+    # sizes
+    "minus": '<path d="M3.6 8h8.8"/>',
+    "plus": '<path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/>',
+    # views
+    "raw": '<path d="M6.2 3.2 4 12.8"/><path d="M9.8 3.2 12 12.8"/>'
+           '<path d="M2.6 6.4h10.8"/><path d="M2.6 9.6h10.8"/>',
+    "tree": '<rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/>'
+            '<rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/>'
+            '<rect x="10" y="11" width="4.4" height="3.2" rx=".8"/>'
+            '<path d="M8 5v3.2M3.8 11V8.2h8.4V11"/>',
+    "doc": '<path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8'
+           '-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/>'
+           '<path d="M5.4 9h5.2M5.4 11.4h3.4"/>',
+    "present": '<rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/>'
+               '<path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/>',
+    # the presenting bar's own controls
+    "outline": '<rect x="1.8" y="2.6" width="12.4" height="10.8" rx="1.2"/>'
+               '<path d="M6.2 2.6v10.8"/><path d="M3.2 5.6h1.8M3.2 8h1.8"/>',
+    "docktop": '<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
+               '<path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/>',
+    "dockright": '<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
+                 '<path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/>',
+    "pin": '<path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/>'
+           '<path d="M8 8.4v5.7"/>',
+    "exit": '<path d="M4 4l8 8"/><path d="M12 4l-8 8"/>',
+    # app
+    "theme": '<circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/>'
+             '<path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/>',
+    "heart": '<path d="M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 '
+             '0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z"/>',
+    "help": '<circle cx="8" cy="8" r="6.2"/>'
+            '<path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/>'
+            '<path d="M8.6 12v.1"/>',
+    # custom views
+    "style": '<path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/>'
+             '<path d="m9.2 4 2.8 2.8"/>',
+}
+
+
+def _icons(markup: str) -> str:
+    """Swap every ``<i data-ic="key"></i>`` token for its inline SVG."""
+    def sub(m: re.Match) -> str:
+        body = _ICON_PATHS.get(m.group(1))
+        if body is None:
+            return ""
+        return ('<svg class="bic" viewBox="0 0 16 16" aria-hidden="true" '
+                'focusable="false">' + body + '</svg>')
+    return re.sub(r'<i data-ic="([a-z]+)"></i>', sub, markup)
+
+
 _LOGO_SVG = (
     '<svg class="jv-logo" viewBox="0 0 200 200" '
     'xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview">'
@@ -2103,7 +2186,7 @@ def render_page(docs: list[Document], mode: str = "static",
         title = f"{docs[0].title} (+{len(docs) - 1})"
     else:
         title = "Junoview"
-    return _TEMPLATE.format(
+    return _icons(_TEMPLATE.format(
         title=html.escape(title),
         shells=shells,
         css=_CSS,
@@ -2119,7 +2202,7 @@ def render_page(docs: list[Document], mode: str = "static",
         help_html=_HELP_HTML,
         logo=_LOGO_SVG,
         favicon=_FAVICON,
-    )
+    ))
 
 
 def render_html(doc: Document, source_name: str | None = None) -> str:
@@ -3273,7 +3356,18 @@ body.presrail-min{--presrail-w:46px;}
    than the buttons they hang under (2026-07-29) */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
-  padding:0 14px;line-height:1;font-size:12px;}
+  padding:0 13px;line-height:1;font-size:12px;gap:7px;}
+/* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
+   font). One 16-grid, stroke-only, currentColor — so an icon is always
+   the same weight as the label beside it and follows the theme. ---- */
+.bic{width:13px;height:13px;flex:none;display:block;
+  stroke:currentColor;stroke-width:1.5;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
+.toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
+/* an icon-only button is square, not a wide slab with a dot in it */
+.appbar .toggle.fz-step,.present-bar .toggle.fz-step,
+#theme-btn,#support-btn{padding:0;justify-content:center;}
+.btxt{display:inline-block;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
    narrow instead of growing ever wider */
@@ -4299,8 +4393,12 @@ body.pbpos-top .present-bar{top:0;left:0;right:0;
   align-items:flex-start;gap:8px;padding:11px 16px;
   border-bottom:1px solid #ffffff1f;
   transition:transform .18s ease;}
-body.pbpos-top .pb-tools{flex-wrap:wrap;gap:8px;}
-body.pbpos-top .pb-own{flex-wrap:wrap;gap:6px;margin-left:auto;}
+/* docked top the bar IS the ribbon: the same labelled sections, aligned
+   the same way, so nothing has to re-learn its layout */
+body.pbpos-top .present-bar{align-items:stretch;}
+body.pbpos-top .pb-tools{flex-wrap:wrap;gap:8px;align-items:stretch;}
+body.pbpos-top .pb-own{flex-wrap:wrap;gap:6px;margin-left:auto;
+  align-items:flex-end;}
 body.pbpos-top .present-bar .pb-collapse{margin-left:6px;}
 body.doc-presenting.pbpos-top .docs{top:var(--pbh,64px);}
 body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%);}
@@ -4314,10 +4412,25 @@ body.pbpos-right .pb-tools{flex-direction:column;align-items:stretch;
 body.pbpos-right .pb-own{flex-direction:column;align-items:stretch;gap:6px;}
 /* a two-row group reads as one row per control when it is this narrow */
 body.pbpos-right .pb-tools .fgrp{width:100%;}
-body.pbpos-right .pb-tools .fgrp-row{flex-wrap:wrap;}
+/* NEVER wrap a group's own row here: with width:100% on every button, a
+   wrapping row put the -, the 100% and the + each on their own line and
+   the size steppers exploded down the sidebar */
+body.pbpos-right .pb-tools .fgrp-row{flex-wrap:nowrap;}
 body.pbpos-right .present-bar .toggle{width:100%;justify-content:flex-start;}
-body.pbpos-right .present-bar .fgrp-row .toggle.fz-step{width:26px;
+/* a stepper stays one line: caption, then -, value, + sharing the width */
+body.pbpos-right .present-bar .fgrp-h{align-items:center;gap:6px;}
+body.pbpos-right .present-bar .fgrp-h .fgrp-cap{min-width:44px;}
+body.pbpos-right .present-bar .fgrp-h .fgrp-row{flex:1;}
+body.pbpos-right .present-bar .fgrp-row .toggle.fz-step{width:30px;
+  flex:none;justify-content:center;}
+body.pbpos-right .present-bar .fgrp-row .toggle.fz-val{flex:1;width:auto;
   justify-content:center;}
+/* the labelled sections stack down the bar and keep their captions */
+body.pbpos-right .present-bar .abgrp{width:100%;}
+body.pbpos-right .present-bar .abgrp-row{flex:none;flex-wrap:wrap;}
+body.pbpos-right .present-bar .abgrp-lab{text-align:left;}
+body.pbpos-right .present-bar .btn-grp{width:100%;flex-wrap:wrap;}
+body.pbpos-right .present-bar .vw-stack{flex:1;}
 body.pbpos-right .present-bar .appbar-div{display:none;}
 body.doc-presenting.pbpos-right .docs{right:var(--pbw,232px);}
 body.pbpos-right.pb-folded .present-bar{transform:translateX(101%);}
@@ -4347,7 +4460,11 @@ body.pb-auto.pbpos-top:not(.pb-peek) .present-bar{
   transform:translateY(-101%);}
 body.pb-auto.pbpos-right:not(.pb-peek) .present-bar{
   transform:translateX(101%);}
-body.pb-auto.pb-peek .present-bar{transform:none!important;}
+/* :not(.pb-folded) matters — this rule used to win outright, so an
+   explicit fold was invisible and the fold handle looked dead */
+body.pb-auto.pb-peek:not(.pb-folded) .present-bar{transform:none!important;}
+body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%)!important;}
+body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .rawcell{position:relative;background:var(--paper);
   border:1px solid var(--line);border-radius:10px;
   padding:14px 16px 14px 16px;margin:12px 0;}
@@ -5059,9 +5176,25 @@ _JS = r"""
   function setTvBtn(id,label,state){
     var b=$('#'+id); if(!b) return;
     /* the state word sits in a fixed-width slot: without it the button
-       (and everything after it) jumps as On -> Folded -> Off */
-    b.innerHTML='<span class="tdot"></span>'+label
-      +'<span class="tvstate">'+(CODE_LABEL[state]||state)+'</span>';
+       (and everything after it) jumps as On -> Folded -> Off.
+       Only the two SPANS are written — rewriting innerHTML here would
+       delete the button's icon, which is an <svg> sibling. */
+    var dot=b.querySelector('.tdot'),txt=b.querySelector('.btxt'),
+        st=b.querySelector('.tvstate');
+    if(!dot){
+      dot=document.createElement('span');dot.className='tdot';
+      b.appendChild(dot);
+    }
+    if(!txt){
+      txt=document.createElement('span');txt.className='btxt';
+      b.appendChild(txt);
+    }
+    if(!st){
+      st=document.createElement('span');st.className='tvstate';
+      b.appendChild(st);
+    }
+    txt.textContent=label;
+    st.textContent=CODE_LABEL[state]||state;
     b.classList.toggle('off',state==='hidden');
     b.classList.toggle('half',state==='collapsed');
     b.classList.toggle('mixed',state==='mixed');
@@ -5606,17 +5739,30 @@ _JS = r"""
 
   /* ---- raw notebook toggle (applies to the ACTIVE tab) ---- */
   var rawBtn=$('#view-raw');
+  /* write a button's LABEL without touching its icon: every chrome button
+     carries an <svg class="bic"> first child, and textContent= on the
+     button would silently delete it */
+  function setBtnText(b,txt){
+    if(!b) return;
+    var s=b.querySelector('.btxt');
+    if(!s){
+      s=document.createElement('span');s.className='btxt';
+      b.appendChild(s);
+    }
+    s.textContent=txt;
+  }
+  APP.setBtnText=setBtnText;
   function renderRawBtn(){
     if(!rawBtn) return;
     var sh=APP.active&&APP.shells[APP.active];
     if(sh&&sh.trace){   /* a Plot-trace tab has no raw notebook of its own */
-      rawBtn.textContent='Raw';
+      setBtnText(rawBtn,'Raw');
       rawBtn.setAttribute('aria-pressed','false');
       rawBtn.disabled=true;return;
     }
     var on=!!(sh&&sh.el.classList.contains('raw'));
     rawBtn.setAttribute('aria-pressed',on.toString());
-    rawBtn.textContent=on?'Formatted':'Raw';
+    setBtnText(rawBtn,on?'Formatted':'Raw');
     rawBtn.disabled=!sh;
   }
   if(rawBtn) rawBtn.addEventListener('click',function(){
@@ -5644,12 +5790,13 @@ _JS = r"""
     var isTree=!!(sh&&sh.el.classList.contains('tree'));
     if(treeBtn){
       treeBtn.setAttribute('aria-pressed',isTree.toString());
-      treeBtn.textContent=isTree?'Document':'Tree';
+      /* write the LABEL only: the button's icon is a sibling <svg> and
+         textContent= would delete it */
+      setBtnText(treeBtn,isTree?'Document':'Tree');
       treeBtn.disabled=!sh;
     }
-    var pv=$('#pb-view');
-    if(pv){pv.innerHTML=isTree?'▤ Narrative':'□ Tree';
-      pv.disabled=!sh;}
+    /* there is no #pb-view: while presenting, this very button moves into
+       the present bar with the rest of the View section */
   }
   function toggleTree(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -6012,8 +6159,12 @@ _JS = r"""
      the appbar on enter and put back (in place) on exit, so every existing
      handler, menu and state read keeps working — no duplicate widgets. */
   var pbMoved=[];
-  var PB_TOOLS=['#pt-grp','#md-grp','#ck-grp','#ot-grp','#sec-scope-grp',
-                '#copy-grp','#fig-size-grp','#md-size-grp','#view-grp'];
+  /* move the whole LABELLED SECTIONS, not the bare groups inside them.
+     Moving the inner groups left their .abgrp wrappers behind, so the
+     present bar lost the ribbon's grid: the two size steppers stopped
+     being stacked, Raw/Tree came apart from Present, and the section
+     names (FILTERS / SIZE / VIEW) vanished. Now the bar IS the ribbon. */
+  var PB_TOOLS=['#ab-filters','#ab-scope','#ab-size','#ab-view'];
   var PB_MENUS=['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu',
                 '#sec-scope-menu'];
   function pbTakeTools(){
@@ -6082,8 +6233,9 @@ _JS = r"""
   if(dpBtn) dpBtn.addEventListener('click',enterDocPresent);
   (function(){
     var x=$('#pb-exit'); if(x) x.addEventListener('click',exitDocPresent);
-    var v=$('#pb-view'); if(v) v.addEventListener('click',function(){
-      toggleTree();renderViewBtns();});
+    /* deliberately NO #pb-view: while presenting, the ribbon's whole View
+       section (Raw / Tree / Present) MOVES into this bar, so there is
+       never a second Tree button with a second name */
     var rl=$('#pb-rail');
     if(rl){
       rl.setAttribute('aria-pressed','false');
@@ -6094,6 +6246,13 @@ _JS = r"""
         relayoutActiveTree();
       });
     }
+    /* the two dock icons, swapped in place so the glyph always shows the
+       edge the button would move the bar TO */
+    var PB_ICO={
+      right:'<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
+        +'<path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/>',
+      top:'<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
+        +'<path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/>'};
     /* dock across the top (where it IS the app bar) or down the right
        (where the groups become rows) — remembered between talks */
     var PKEY='junoview:presentbar:dock';
@@ -6116,8 +6275,14 @@ _JS = r"""
       document.body.classList.toggle('pbpos-right',pbDock==='right');
       var mv=$('#pb-move');
       if(mv){
-        mv.innerHTML=(pbDock==='top')
-          ?'&#8646; Dock right':'&#8645; Dock on top';
+        /* name the DESTINATION, never the current position: "Dock right"
+           while docked right reads as a state, and the user cannot tell
+           whether it is telling them where the bar is or offering to move
+           it. "Move right" / "Move to top" can only be an action. */
+        if(APP.setBtnText)
+          APP.setBtnText(mv,pbDock==='top'?'Move right':'Move to top');
+        var mi=mv.querySelector('.bic');
+        if(mi) mi.innerHTML=(pbDock==='top')?PB_ICO.right:PB_ICO.top;
         mv.title=(pbDock==='top')
           ?'Move these controls down the right-hand side'
           :'Move these controls back across the top';
@@ -6137,16 +6302,36 @@ _JS = r"""
     applyPbDock();
     /* one button, one place: it folds the bar away and brings it back */
     var s=$('#present-bar-show');
+    /* Is the bar actually on screen right now? Auto-hide and an explicit
+       fold are two different mechanisms and BOTH move it, so the handle
+       has to ask about the result, not about one flag. */
+    function pbHidden(){
+      return document.body.classList.contains('pb-folded')
+        ||(pbAuto&&!document.body.classList.contains('pb-peek'));
+    }
     function syncToggleBtn(){
       if(!s) return;
-      var folded=document.body.classList.contains('pb-folded');
-      s.innerHTML=folded?'&#9776;'
+      var hidden=pbHidden();
+      /* never a hamburger: ☰ is the OUTLINE button's glyph, and two
+         controls wearing the same symbol is what made this one look
+         broken. A chevron points the way the bar will travel. */
+      s.innerHTML=hidden
+        ?(pbDock==='top'?'&#9660;':'&#9664;')
         :(pbDock==='top'?'&#9650;':'&#9654;');
-      s.title=folded?'Show the presenting controls'
+      s.title=hidden?'Show the presenting controls'
         :'Hide the presenting controls';
+      s.setAttribute('aria-expanded',(!hidden).toString());
     }
     if(s) s.addEventListener('click',function(){
-      document.body.classList.toggle('pb-folded');
+      /* it used to just toggle pb-folded — which auto-hide (the default)
+         overrode with !important, so the button did nothing at all */
+      if(pbHidden()){
+        document.body.classList.remove('pb-folded');
+        if(pbAuto) document.body.classList.add('pb-peek');
+      } else {
+        document.body.classList.add('pb-folded');
+        document.body.classList.remove('pb-peek');
+      }
       syncToggleBtn();measurePb();relayoutActiveTree();});
     APP.syncPbToggle=syncToggleBtn;
     /* ---- auto-hide is the DEFAULT while presenting (the slide is the
@@ -6161,11 +6346,13 @@ _JS = r"""
       document.body.classList.toggle('pb-auto',pbAuto);
       var ab=$('#pb-auto');
       if(ab){
-        ab.setAttribute('aria-pressed',pbPinned?'true':'false');
-        ab.title=pbPinned
-          ?'Unpin: let the bar hide itself and slide back when you move '
-            +'to that edge'
-          :'Pin the bar so it stays put';
+        /* the button is called "Auto-hide", so PRESSED must mean auto-hide
+           is on — it used to mean "pinned", the exact opposite */
+        ab.setAttribute('aria-pressed',pbAuto?'true':'false');
+        ab.title=pbAuto
+          ?'Auto-hide is on: the bar slides away and comes back when you '
+            +'move to its edge. Click to keep it in place.'
+          :'The bar stays in place. Click to let it hide itself again.';
       }
       if(!pbAuto) document.body.classList.remove('pb-peek');
       try{localStorage.setItem(AKEY,pbPinned?'1':'0');}catch(e){}
@@ -16340,38 +16527,38 @@ _TEMPLATE = """<!doctype html>
     <span class="abgrp" id="ab-file"><span class="abgrp-row"><span class="fgrp" id="file-grp">
       <button class="toggle primary" id="tab-open" hidden
         title="Open a notebook (.ipynb) from your computer or a
- URL">&#43; Open</button>
+ URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
- Visible -> Collapsed -> Hidden"></button>
+ Visible -> Collapsed -> Hidden"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="pt-filter-btn"
         title="Advanced: hide specific PLOT types (matplotlib, plotly,
- bokeh, vega, folium, …)">Types &#9662;</button>
+ bokeh, vega, folium, …)"><i data-ic="types"></i>Types</button>
     </span>
     <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
         title="Markdown / note cards. Click to cycle: Visible -> Collapsed
- -> Hidden"></button>
+ -> Hidden"><i data-ic="markdown"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
     </span>
     <span class="fgrp" id="ck-grp">
       <button class="toggle tv" id="tv-code"
         title="Code — the source in every cell (imports, prints, plotting, …).
- Click to cycle: Visible -> Collapsed -> Hidden"></button>
+ Click to cycle: Visible -> Collapsed -> Hidden"><i data-ic="code"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ck-filter-btn"
         title="Advanced: hide specific CODE cell types (imports, plotting,
- …)">Types &#9662;</button>
+ …)"><i data-ic="types"></i>Types</button>
     </span>
     <span class="fgrp" id="ot-grp">
       <button class="toggle tv" id="tv-output"
         title="Printed output — the tables, values and text a cell prints.
  Everything a notebook produces is 'output'; plots are just the one kind
- pulled out into their own filter (on the left). Click to show / hide"></button>
+ pulled out into their own filter (on the left). Click to show / hide"><i data-ic="output"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ot-filter-btn"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
- error)">Types &#9662;</button>
+ error)"><i data-ic="types"></i>Types</button>
     </span></span><span class="abgrp-lab">Filters</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
@@ -16380,42 +16567,42 @@ _TEMPLATE = """<!doctype html>
  headings and sub-headings to include, change the filters, then select a
  different set and filter those differently. Each section remembers its
  own filters."
-        >Sections: All &#9662;</button>
+        ><i data-ic="scope"></i><span class="btxt">Sections: All</span></button>
       <button class="toggle sub" id="filters-reset"
         title="Put every filter — and every per-section change — in THIS
- notebook back to the defaults">&#8635; Reset</button>
+ notebook back to the defaults"><i data-ic="reset"></i>Reset</button>
     </span>
     <span class="fgrp" id="copy-grp">
       <button class="toggle sub" id="trace-inherit" hidden
         data-keep="1"
         title="This plot trace opened unfiltered, on purpose. Click to give
- it the same filters as the notebook it came from.">&#8615; Use the
- document&#8217;s filters</button>
+ it the same filters as the notebook it came from."><i data-ic="inherit"></i
+ >Use the document&#8217;s filters</button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller"
-          title="Make every figure in the feed smaller">&#8722;</button>
+          title="Make every figure in the feed smaller"><i data-ic="minus"></i></button>
         <button class="toggle fz-val" id="fig-size-val"
           title="Figure size across the whole feed — click to reset to 100%"
           >100%</button>
         <button class="toggle fz-step" id="fig-bigger"
           title="Make every figure in the feed bigger (each figure also has
- its own +/- and an expand button on hover)">&#43;</button>
+ its own +/- and an expand button on hover)"><i data-ic="plus"></i></button>
       </span>
       <span class="fgrp-cap">Figures</span>
     </span>
     <span class="fgrp fgrp-h" id="md-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="md-smaller"
-          title="Smaller markdown / prose text">&#8722;</button>
+          title="Smaller markdown / prose text"><i data-ic="minus"></i></button>
         <button class="toggle fz-val" id="md-size-val"
           title="Markdown text size — click to reset to 100%"
           >100%</button>
         <button class="toggle fz-step" id="md-bigger"
-          title="Larger markdown / prose text">&#43;</button>
+          title="Larger markdown / prose text"><i data-ic="plus"></i></button>
       </span>
       <span class="fgrp-cap">Text</span>
     </span></span><span class="abgrp-lab">Size</span></span>
@@ -16428,28 +16615,28 @@ _TEMPLATE = """<!doctype html>
     <span class="vw-stack">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
- (cells in order, directives visible)">Raw</button>
+ (cells in order, directives visible)"><i data-ic="raw"></i><span class="btxt">Raw</span></button>
     <button class="toggle" id="view-tree"
       title="Tree view: the analysis as a dependency map you can expand,
- collapse and hide cell by cell. Toggle back for the narrative document.">
-      Tree</button>
+ collapse and hide cell by cell. Toggle back for the narrative document."
+      ><i data-ic="tree"></i><span class="btxt">Tree</span></button>
     </span>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
- exit.">Present</button>
+ exit."><i data-ic="present"></i>Present</button>
     </span></span><span class="abgrp-lab">View</span></span>
     <!-- nothing hidden behind a menu: these all fit -->
     <span class="abgrp appbar-right" id="ab-app"><span class="abgrp-row">
     <span class="btn-grp">
       <button class="toggle" id="theme-btn"
-        title="Switch between dark and light theme">&#9788;</button>
+        title="Switch between dark and light theme"><i data-ic="theme"></i></button>
       <a class="toggle appbar-link" id="support-btn" href="{kofi}"
         target="_blank" rel="noopener"
         title="Support Junoview on Ko-fi — funds an online, hosted version
  with accounts (save + share your docs and talks, like Overleaf)"
-        >&#9829;</a>
+        ><i data-ic="heart"></i></a>
       <button class="toggle" id="help-btn"
-        title="How to use, and everything this tool can do">Help</button>
+        title="How to use, and everything this tool can do"><i data-ic="help"></i>Help</button>
     </span></span><span class="abgrp-lab">App</span></span>
   </div>
   <div class="tabsrow">
@@ -16532,21 +16719,26 @@ _TEMPLATE = """<!doctype html>
 <div class="present-bar" id="present-bar" hidden>
   <div class="pb-tools" id="pb-tools"></div>
   <div class="pb-own">
-    <button class="toggle" id="pb-rail"
-      title="Show or hide the section sidebar">&#9776; Sections</button>
-    <button class="toggle" id="pb-view"
-      title="Switch between the Narrative document and the Tree view">
-      Tree</button>
+    <!-- "Outline" not "Sections": the ribbon already has "Sections: All"
+         for filter SCOPE, and two controls called Sections that do
+         different things is exactly what confused the user. Tree/Raw are
+         NOT duplicated here either — the whole View section travels in. -->
+    <button class="toggle" id="pb-rail" aria-pressed="false"
+      title="Show or hide the outline (the list of sections) down the left"
+      ><i data-ic="outline"></i><span class="btxt">Outline</span></button>
+    <!-- the dock button names the DESTINATION, never where the bar is now -->
     <button class="toggle" id="pb-move"
-      title="Dock these controls across the top or down the right">
-      &#8646; Dock right</button>
-    <button class="toggle" id="pb-auto"
-      aria-pressed="false"
-      title="Pin the bar so it stays put. Unpinned it hides itself and
- slides back when you move to that edge.">Pin</button>
+      title="Move these controls to the other edge"
+      ><i data-ic="dockright"></i><span class="btxt">Move right</span
+      ></button>
+    <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself -->
+    <button class="toggle" id="pb-auto" aria-pressed="true"
+      title="Auto-hide: the bar slides away and comes back when you move
+ to its edge. Switch it off to keep the bar in place."
+      ><i data-ic="pin"></i><span class="btxt">Auto-hide</span></button>
     <button class="toggle pb-exit" id="pb-exit"
       title="Stop presenting and go back to the document (Esc). Nothing is
- closed or lost.">&#10005; Exit presentation</button>
+ closed or lost."><i data-ic="exit"></i>Exit presentation</button>
   </div>
 </div>
 <!-- ONE button does both fold and unfold, and it never moves: it is
@@ -18125,7 +18317,7 @@ def _self_test() -> None:
     assert 'id="pb-auto"' in out and "body.pb-auto.pb-peek" in out
     # presenting: hiding itself is the DEFAULT, "Pin" keeps it in place
     assert "'junoview:presentbar:pinned'" in out
-    assert "var pbAuto=!pbPinned" in out and "Pin</button>" in out
+    assert "var pbAuto=!pbPinned" in out and "Auto-hide</span></button>" in out
     # a version is the SAME file: it replaces the tab and stays out of
     # Recent, with an explicit "open in a new tab" to compare instead
     assert "function openUrlVersion" in out and ".rf-newtab" in out
@@ -18146,18 +18338,20 @@ def _self_test() -> None:
     assert "body.doc-presenting.pbpos-right .docs{right:var(--pbw" in out
     assert "translateY(-101%)" in out and "translateX(101%)" in out
     assert "function measurePb" in out and "function applyPbDock" in out
-    assert "&#10005; Exit presentation</button>" in out
+    assert "Exit presentation</button>" in out
     # present mode carries the REAL filter/code controls in a collapsible
     # tray (moved, not duplicated) — only Exit stays outside it — and the
     # section sidebar can slide back in
     assert 'id="pb-tools"' in out and 'class="pb-own"' in out
     assert "function pbTakeTools" in out and "function pbReturnTools" in out
-    assert "'#pt-grp','#md-grp','#ck-grp','#ot-grp'" in out
+    # the present bar takes the whole labelled SECTIONS, so it reproduces the
+    # ribbon grid instead of flattening the groups into its own wrap flow
+    assert "var PB_TOOLS=['#ab-filters','#ab-scope','#ab-size','#ab-view'];" in out
     assert 'id="pb-rail"' in out and "body.doc-presenting.present-rail" in out
     # …the presenting controls ARE the app bar's (same .toggle class, not
     # a bespoke look-alike), and the dock choice is remembered
     assert 'id="pb-move"' in out and "'junoview:presentbar:dock'" in out
-    assert '<button class="toggle" id="pb-rail"' in out
+    assert '<button class="toggle" id="pb-rail" aria-pressed="false"' in out
     assert '<button class="toggle pb-exit" id="pb-exit"' in out
     assert '<button class="toggle" id="pb-auto"' in out
     # …and the fixed-position filter menus ride into the fullscreen layer
@@ -18503,7 +18697,7 @@ def _self_test() -> None:
     assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
-    assert "'#fig-size-grp','#md-size-grp','#view-grp'" in out
+    assert "'#ab-size','#ab-view'" in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
     assert 'id="fmt-list"' in out and 'id="fmt-shape"' in out
