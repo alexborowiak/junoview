@@ -3817,6 +3817,21 @@ body.creating-docs .apptop{
 .welcome-note b{color:var(--cyan-deep);}
 .welcome-steps{list-style:none;margin:0 auto 30px;padding:0;max-width:560px;
   text-align:left;display:flex;flex-direction:column;gap:15px;}
+/* the welcome-screen demo reel */
+.wtour{margin-top:26px;display:grid;gap:26px;text-align:left;}
+.wtour[hidden]{display:none!important;}
+.wtour-head{display:flex;align-items:center;gap:12px;}
+.wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--cyan-deep);}
+.wtour figure{margin:0;}
+.wtour img{width:100%;height:auto;display:block;border-radius:10px;
+  border:1px solid var(--line);background:var(--paper-2);}
+.wtour.lite img{display:none;}
+.wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
+.wtour figcaption{font-size:12.5px;line-height:1.6;color:var(--ink-3);
+  padding:9px 2px 0;}
+.wtour figcaption b{display:block;color:var(--ink);font-weight:600;
+  font-size:14px;margin-bottom:4px;}
 .welcome-steps li{display:flex;align-items:flex-start;gap:15px;
   font-size:16.5px;line-height:1.5;color:var(--ink-2);}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:#39a9c018;
@@ -4342,7 +4357,22 @@ body:not(.light) .welcome-lead b{color:#d3dee7;}
 body:not(.light) .welcome-note{background:#39a9c016;border-color:#39a9c033;
   border-left-color:var(--cyan);color:#c2d0da;}
 body:not(.light) .welcome-note b{color:#8fe0f0;}
-body:not(.light) .welcome-steps li{color:#b3c2ce;}
+body:not(.light) /* the welcome-screen demo reel */
+.wtour{margin-top:26px;display:grid;gap:26px;text-align:left;}
+.wtour[hidden]{display:none!important;}
+.wtour-head{display:flex;align-items:center;gap:12px;}
+.wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--cyan-deep);}
+.wtour figure{margin:0;}
+.wtour img{width:100%;height:auto;display:block;border-radius:10px;
+  border:1px solid var(--line);background:var(--paper-2);}
+.wtour.lite img{display:none;}
+.wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
+.wtour figcaption{font-size:12.5px;line-height:1.6;color:var(--ink-3);
+  padding:9px 2px 0;}
+.wtour figcaption b{display:block;color:var(--ink);font-weight:600;
+  font-size:14px;margin-bottom:4px;}
+.welcome-steps li{color:#b3c2ce;}
 body:not(.light) .ws-n{background:#39a9c026;color:#8fe0f0;}
 body:not(.light) .welcome-drop{color:#7e93a4;}
 body:not(.light) .welcome-drop b{color:#c9d6e2;}
@@ -9303,6 +9333,55 @@ _JS = r"""
     });
   }
 
+  /* ---- the welcome screen's demo reel ---------------------------------
+     The GIFs sit beside the page (docs/gifs/). A locally rendered file or
+     an export has no such folder, so nothing is assumed: each image is
+     probed, a figure that 404s removes itself, and if none load the whole
+     block stays hidden. Their URLs wait in data-src, so with the demos
+     off the page downloads none of them (~22 MB) rather than fetching
+     and hiding them. Off by default on a metered or slow connection, or
+     when reduced motion is asked for; your own choice wins and sticks. */
+  (function(){
+    var KEY='junoview:demos';
+    var t=$('#wtour'),btn=$('#wtour-toggle');
+    if(!t||!btn) return;
+    var conn=navigator.connection||{};
+    var slow=!!conn.saveData
+      ||/2g$/.test(String(conn.effectiveType||''))
+      ||String(conn.effectiveType||'')==='3g';
+    var reduce=window.matchMedia
+      &&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var saved=null;
+    try{saved=localStorage.getItem(KEY);}catch(e){}
+    var on=saved===null?!(slow||reduce):saved==='1';
+    var probed=false;
+    function paint(){
+      t.classList.toggle('lite',!on);
+      btn.setAttribute('aria-pressed',on?'true':'false');
+      btn.textContent=on?'Hide the demos':'Show the demos';
+      if(!on||probed) return;
+      probed=true;
+      $$('img[data-src]',t).forEach(function(im){
+        im.addEventListener('error',function(){
+          var fig=im.closest('figure'); if(fig) fig.remove();
+          if(!t.querySelector('figure')) t.hidden=true;
+        });
+        im.src=im.getAttribute('data-src');
+        im.removeAttribute('data-src');
+      });
+    }
+    /* does the folder exist at all? one HEAD-ish probe decides whether the
+       section is offered, so a local render never shows broken frames */
+    var probe=new Image();
+    probe.addEventListener('load',function(){t.hidden=false;paint();});
+    probe.addEventListener('error',function(){t.hidden=true;});
+    probe.src='gifs/code_folding.gif';
+    btn.addEventListener('click',function(){
+      on=!on;
+      try{localStorage.setItem(KEY,on?'1':'0');}catch(e){}
+      paint();
+    });
+  })();
   if(APP.mode==='app'||APP.mode==='web'){
     var isWeb=(APP.mode==='web');
     if(openBtn) openBtn.addEventListener('click',showDlg);
@@ -17214,6 +17293,57 @@ _TEMPLATE = """<!doctype html>
         <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
           latest changes into your slides &mdash; automatically.</span></li>
       </ol>
+      <!-- The demo reel, simplest first. The GIFs live beside the page
+           (docs/gifs/); a local render has no such folder, so each figure
+           removes itself if its image 404s and the whole block hides when
+           none of them load. Their URLs wait in data-src so a slow
+           connection downloads nothing until you ask. -->
+      <div class="wtour" id="wtour" hidden>
+        <div class="wtour-head">
+          <span class="wtour-t">See it work</span>
+          <button class="dbtn ghost" id="wtour-toggle" type="button"
+            aria-pressed="false">Show the demos</button>
+        </div>
+        <figure>
+          <img data-src="gifs/code_folding.gif" alt="Folding code away">
+          <figcaption><b>Hide the code &mdash; see just the results</b>
+          Every cell's code folds away behind one click.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/code_types.gif" alt="Filtering by code type">
+          <figcaption><b>Filter your notebook &mdash; show only the cells
+          you want</b> Imports, plotting and prints are told apart, so you
+          can switch off the housekeeping.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/remove_what_you_dont_want.gif"
+            alt="Hiding cells and sections">
+          <figcaption><b>Get rid of what you don't need</b> Hide any cell,
+          heading or whole section. Nothing is deleted.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/make_figure_and_text_bigger_and_present_them.gif"
+            alt="Resizing figures and text">
+          <figcaption><b>Make it big enough to read</b> Grow the figures
+          and the text, then go full screen and talk to it.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/plot_trace.gif" alt="Tracing a plot">
+          <figcaption><b>Ask any plot where it came from</b> Plot trace
+          opens the exact chain of cells that made it.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/tree_view.gif" alt="The analysis as a map">
+          <figcaption><b>See the whole analysis at once</b> Your notebook
+          as a map of what depends on what.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/create_presentation.gif"
+            alt="Building a slide deck">
+          <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag
+          your figures onto slides, arrange them, present.</figcaption>
+        </figure>
+      </div>
     </div>
   </div>
 </div>
@@ -18312,6 +18442,12 @@ def _self_test() -> None:
         assert _ICON_PATHS[_ni][:24] in out, _ni
     # and the feature is documented where people look for it
     assert "Custom views &mdash; a styled, filtered copy" in out
+    # the welcome screen carries the demo reel, deferred behind data-src
+    assert 'id="wtour"' in out and 'id="wtour-toggle"' in out
+    assert out.count('<img data-src="gifs/') == 7
+    assert "<img src=\"gifs/" not in out          # never fetched eagerly
+    assert ".wtour.lite img{display:none;}" in out
+    assert "probe.src='gifs/code_folding.gif';" in out
     assert "+ New custom view</b> in the left rail" in out
     assert "function openCustomView" in out and "function isViewPres" in out
     assert 'id="stylebar"' in out and 'id="stylepanel"' in out
