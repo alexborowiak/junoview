@@ -27,7 +27,11 @@
   --rad:6px; --rail-w:300px;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+/* reserve the scrollbar's width at all times: without it, switching to a
+   view that does not scroll the page (the tree) widens the viewport and
+   the CENTRED ribbon slides sideways — every button moving a few px is
+   exactly the jump the user reported (2026-07-30) */
+html{scroll-behavior:smooth;scrollbar-gutter:stable}
 body{margin:0;font-family:var(--sans);color:var(--ink);
   background:var(--paper-2);line-height:1.5;
   -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
@@ -496,6 +500,25 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
    to remain read as a rendering artefact. It lives in the sidebar only,
    which is where you bring it back from (2026-07-30). */
 .section.sec-headoff .sectionhead{display:none;}
+/* ...unless the sidebar's "Show all hidden" is revealing them. That is a
+   PEEK, not a reset: everything stays hidden underneath, marked amber so
+   you can tell what you are looking at, and one more click puts it all
+   away again. Each item's own eye still works while revealed, which is
+   how you keep just the one you wanted back. */
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead{display:flex;}
+.nbshell.reveal-hidden .section.sec-off,
+.nbshell.reveal-hidden .section.sec-under-off,
+.nbshell.reveal-hidden .content .card.cell-off.is-hidden{display:block;}
+.nbshell.reveal-hidden .section.sec-off,
+.nbshell.reveal-hidden .section.sec-under-off,
+.nbshell.reveal-hidden .content .card.cell-off.is-hidden,
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead{
+  outline:1px dashed var(--amber);outline-offset:4px;opacity:.62;}
+.nbshell.reveal-hidden .section.sec-off:hover,
+.nbshell.reveal-hidden .content .card.cell-off.is-hidden:hover,
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead:hover{opacity:1;}
+.rf-unhide[aria-pressed="true"]{border-color:var(--amber);
+  color:var(--amber);}
 .section.sec-headoff .sec-eye{opacity:.5;position:relative;}
 /* a struck-through eye = "hidden, click to bring it back" (the sidebar
    already uses exactly this mark for a hidden section) */
@@ -943,8 +966,13 @@ body.presrail-min{--presrail-w:46px;}
 /* align-items:stretch so every SECTION is as tall as the bar and a
    single-button group (+ Open) can fill both rows rather than floating at
    the top of an empty column */
+/* NOT centred: a centred bar re-centres whenever the viewport width
+   changes — switching to the tree removes the page scrollbar and every
+   button slid 15px sideways, which is precisely the "buttons move when I
+   change view" complaint. Left-aligned, a button's position depends only
+   on what is before it (2026-07-30). */
 .appbar{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;
-  justify-content:center;
+  justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
@@ -954,7 +982,7 @@ body.presrail-min{--presrail-w:46px;}
    than the buttons they hang under (2026-07-29) */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
-  padding:0 11px;line-height:1;font-size:12px;gap:6px;}
+  padding:0 10px;line-height:1;font-size:12px;gap:6px;}
 /* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
    font). One 16-grid, stroke-only, currentColor — so an icon is always
    the same weight as the label beside it and follows the theme. ---- */
@@ -1057,8 +1085,12 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    controls begin — centred against the 30px first row */
 /* group separators: full-height so the bar reads as distinct groups
    (file · filters · scope+size · view · app), not one long run */
-/* the stacked View column: Raw over Tree */
-.vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;}
+/* the stacked View column: Raw over Tree. Its width is FIXED to the
+   longest label it can hold ("Document"), because the Tree button renames
+   itself and a wider word would shove Present sideways — the same fixed
+   slot the filter state words use, for the same reason (2026-07-30) */
+.vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
+  min-width:124px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
 .appbar-div{flex:none;width:1px;height:82px;background:#ffffff38;
   margin:1px 0 0;border-radius:1px;}
@@ -1871,7 +1903,10 @@ body:not(.light) .welcome-links a{color:#5fc3d8;}
 .nbshell.tree .content{display:none;}
 .nbshell.tree .rawview{display:none;}
 .nbshell.tree .treeview{display:block;}
-.tree-toolbar{position:sticky;top:0;z-index:3;display:flex;flex-wrap:wrap;
+/* sticks BELOW the chrome, never under it: --chrome-h is the measured
+   height of the real header, so this tracks a one- or two-row ribbon */
+.tree-toolbar{position:sticky;top:calc(var(--chrome-h) + 6px);z-index:3;
+  display:flex;flex-wrap:wrap;
   align-items:center;gap:8px;padding:8px 2px 12px;margin-bottom:6px;
   background:linear-gradient(var(--paper-2) 72%,transparent);}
 .tree-toolbar .tt-title{font-family:var(--mono);font-size:10px;
@@ -3412,7 +3447,7 @@ window.MathJax = {
         data-keep="1"
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from."><i data-ic="inherit"></i
- >Use the document&#8217;s filters</button>
+ >Match document</button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
@@ -8589,7 +8624,60 @@ through Ko-fi. Thank you.</p>
     }
     /* there is no #pb-view: while presenting, this very button moves into
        the present bar with the rest of the View section */
+    syncTreeRibbon(isTree);
   }
+  /* ---- the tree shows the WHOLE analysis, so the filters do not apply
+     there. Grey them out rather than removing them: a control that
+     vanishes takes its neighbours' positions with it, and the whole point
+     is that a button never moves when you change view (2026-07-30). ---- */
+  function syncTreeRibbon(isTree){
+    var why='Filters do not apply in the tree — it always shows every '
+      +'cell, so you can see the whole analysis. Switch back to Document '
+      +'to filter.';
+    ['#tv-plots','#tv-markdown','#tv-code','#tv-output','#pt-filter-btn',
+     '#ck-filter-btn','#ot-filter-btn','#sec-scope-btn','#sec-reset',
+     '#trace-inherit'].forEach(function(sel){
+      var b=$(sel); if(!b) return;
+      if(isTree){
+        if(!b.dataset.t0) b.dataset.t0=b.title||'';
+        b.disabled=true;b.title=why;
+      } else if(b.dataset.t0!==undefined){
+        b.disabled=false;b.title=b.dataset.t0;
+      }
+    });
+    /* the figure sizer has nothing to size in the tree (node clones drop
+       --fz), so the same three buttons drive the TREE ZOOM instead — same
+       place, same shape, caption says which */
+    var cap=$('#fig-size-grp .fgrp-cap');
+    if(cap) cap.textContent=isTree?'Tree':'Figures';
+    var fv=$('#fig-size-val');
+    if(fv) fv.title=isTree
+      ?'Tree zoom — click to reset to 100%'
+      :'Figure size across the whole feed — click to reset to 100%';
+    if(isTree&&APP.treeZoomPct) applyTreeZoomLabel();
+  }
+  function activeTreeHost(){
+    var sh=APP.active&&APP.shells[APP.active];
+    return sh?sh.el.querySelector('.treeview'):null;
+  }
+  function applyTreeZoomLabel(){
+    var host=activeTreeHost(); if(!host) return;
+    var cv=host.querySelector('.tree-canvas'); if(!cv) return;
+    var v=$('#fig-size-val');
+    if(v) v.textContent=Math.round(
+      (parseFloat(cv.style.zoom||'1')||1)*100)+'%';
+  }
+  APP.treeZoomPct=applyTreeZoomLabel;
+  /* the ribbon's size steppers, routed by view */
+  APP.ribbonSizeStep=function(dir){
+    var sh=APP.active&&APP.shells[APP.active];
+    var isTree=!!(sh&&sh.el.classList.contains('tree'));
+    if(!isTree) return false;
+    var host=activeTreeHost(); if(!host) return true;
+    if(dir===0) treeZoomSet(host,1); else treeZoomBy(host,dir>0?1.2:1/1.2);
+    applyTreeZoomLabel();
+    return true;   /* handled: do not also zoom the figures */
+  };
   function toggleTree(){
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh) return;
@@ -8733,12 +8821,9 @@ through Ko-fi. Thank you.</p>
         el.classList.remove('expanded');});
       relayoutTreeHost(host);
     });
-    toolBtn('−',function(){treeZoomBy(host,1/1.2);})
-      .title='Zoom out';
-    var zoomLbl=toolBtn('100%',function(){treeZoomSet(host,1);});
-    zoomLbl.classList.add('tt-zoomval');
-    zoomLbl.title='Zoom — click to reset';
-    toolBtn('+',function(){treeZoomBy(host,1.2);}).title='Zoom in';
+    /* zoom lives on the RIBBON in tree view (the Size section's stepper
+       drives it), so it is not repeated down here — one control, one
+       place, and it does not move when you change view */
     var WNAMES={'tw-s':'S','tw-m':'M','tw-l':'L'};
     var wBtn=toolBtn('Width: M',function(){
       var canvas=$('.tree-canvas',host); if(!canvas) return;
@@ -9894,9 +9979,16 @@ through Ko-fi. Thank you.</p>
   }
   (function(){
     var i=$('#fig-bigger'),o=$('#fig-smaller'),v=$('#fig-size-val');
-    if(i) i.addEventListener('click',function(){bumpFigAll(1.15);});
-    if(o) o.addEventListener('click',function(){bumpFigAll(1/1.15);});
-    if(v) v.addEventListener('click',function(){figAll=1;applyFigAll();});
+    /* in TREE view these same three buttons drive the tree's zoom — the
+       tree has no figures to size, and a size control that lives in a
+       different place per view is exactly what the user asked us to stop
+       doing. ribbonSizeStep returns true when it handled it. */
+    if(i) i.addEventListener('click',function(){
+      if(!APP.ribbonSizeStep(1)) bumpFigAll(1.15);});
+    if(o) o.addEventListener('click',function(){
+      if(!APP.ribbonSizeStep(-1)) bumpFigAll(1/1.15);});
+    if(v) v.addEventListener('click',function(){
+      if(!APP.ribbonSizeStep(0)){figAll=1;applyFigAll();}});
   })();
   /* ---- markdown / prose text size (the same idea, for words) ---- */
   var mdAll=1;
@@ -10011,30 +10103,33 @@ through Ko-fi. Thank you.</p>
       applyFilters();   /* keep the sidebar in step (a hidden section stays) */
       syncUnhideBtn(shell);
     }
-    /* ---- "Show all hidden": the way back when nothing is left in the
-       feed to click. It only appears while something IS hidden. ---- */
+    /* ---- "Show all hidden": a REVEAL TOGGLE, not a reset. It brings the
+       hidden sections, headings and cells back into view — marked, so you
+       can see which ones they are — and clicking again puts them away.
+       Nothing about what is hidden changes, so the saved layout is
+       untouched and you can hide them all again with one click. While
+       they are revealed each one's own eye still works, which is how you
+       un-hide just the one you actually wanted back. ---- */
     function syncUnhideBtn(sh){
       var b=sh.querySelector('.rf-unhide'); if(!b) return;
       var n=sh.querySelectorAll('.section.sec-off,.section.sec-headoff,'
         +'.content .card.cell-off').length;
-      b.hidden=!n;
-      b.textContent='Show all hidden ('+n+')';
+      var on=sh.classList.contains('reveal-hidden');
+      /* with nothing hidden the button has no job — unless it is still
+         revealing, in which case it is the only way back */
+      b.hidden=!n&&!on;
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.textContent=on?('Hide them again ('+n+')')
+                      :('Show all hidden ('+n+')');
+      if(!n&&on) sh.classList.remove('reveal-hidden');
     }
     (function(){
       var ub=shell.querySelector('.rf-unhide');
       if(!ub) return;
       ub.addEventListener('click',function(e){
         e.stopPropagation();
-        $$('.section',shell).forEach(function(s2){
-          s2.classList.remove('sec-off','sec-headoff');});
-        $$('.navsec-row',shell).forEach(function(r){
-          r.classList.remove('sec-off','head-off','sec-under-off');});
-        $$('.content .card.cell-off',shell).forEach(function(c){
-          c.classList.remove('cell-off');});
-        $$('.navitem.cell-off',shell).forEach(function(nv){
-          nv.classList.remove('cell-off');});
-        recalcSecCascade(shell);
-        applyFilters();scheduleSaveLayout();syncUnhideBtn(shell);
+        shell.classList.toggle('reveal-hidden');
+        syncUnhideBtn(shell);
       });
       syncUnhideBtn(shell);
     })();
