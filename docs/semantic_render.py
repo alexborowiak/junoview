@@ -183,6 +183,18 @@ _ICON_PATHS = {
     # custom views
     "style": '<path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/>'
              '<path d="m9.2 4 2.8 2.8"/>',
+    # the three "+ New ..." rail buttons. Collapsed to icons they used to be
+    # "+", a rectangle and a triple bar — three near-identical glyphs for
+    # three different kinds of thing, so each now shows what it makes.
+    "newdeck": '<rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/>'
+               '<path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/>'
+               '<path d="M10.8 7.2h5.2"/>',
+    "newposter": '<rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/>'
+                 '<path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/>'
+                 '<path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/>',
+    "newview": '<path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/>'
+               '<path d="M4.6 8.4h4M4.6 10.8h2.6"/>'
+               '<path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/>',
 }
 
 
@@ -3241,6 +3253,27 @@ dataset, metric, text, code, hidden</td></tr>
 <tr><td><code>#| group:</code> / <code>#| stack:</code></td><td>fold
 several cells under one figure (see the README for details)</td></tr>
 </table>
+
+<h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
+<ul>
+<li><b>+ New custom view</b> in the left rail (under + New presentation
+and + New poster) saves <i>how the notebook itself looks</i>. It is not
+slides: it opens in the document, with a styling bar under the
+ribbon.</li>
+<li>Style <b>All markdown</b>, <b>All headings</b> or the <b>Document</b>
+(page colour, spacing) &mdash; or click any single markdown cell or
+heading to style just that one. Colour, size, background, border, corner
+radius, padding, font and alignment.</li>
+<li>Narrowest wins: a cell beats its section, a section beats the whole
+view. Anything carrying its own style is marked, and <b>Override N
+individual styles</b> clears them so they follow the view again.</li>
+<li>Your <b>filters</b>, hidden cells, hidden headings, collapsed
+sections, figure sizes and text size are saved <i>with</i> the view
+&mdash; so it is also the place to keep an elaborate filter setup you
+want back later.</li>
+<li>Click the view in the rail to reopen it; <b>Done</b> returns the
+document to its normal styling.</li>
+</ul>
 
 <h3>Presentations</h3>
 <ul>
@@ -16687,18 +16720,18 @@ _TEMPLATE = """<!doctype html>
   <div class="pr-list" id="presstrip" role="tablist"></div>
   <button class="pr-btn" id="pr-new"
     title="Create a new presentation">
-    <span class="pr-ico">+</span>
+    <span class="pr-ico"><i data-ic="newdeck"></i></span>
     <span class="pr-t">+ New presentation</span></button>
   <button class="pr-btn" id="pr-newpost"
     title="Create a new poster &mdash; an A0 portrait page with a poster
  template applied (change size via Page, layout via Layouts)">
-    <span class="pr-ico">&#9645;</span>
+    <span class="pr-ico"><i data-ic="newposter"></i></span>
     <span class="pr-t">+ New poster</span></button>
   <button class="pr-btn" id="pr-newview"
     title="New custom view &mdash; a saved, restyled, filtered view of the
  notebook itself (not slides). Style all markdown cells, one section or a
  single cell, and keep your filters and hidden cells with it.">
-    <span class="pr-ico">&#8801;</span>
+    <span class="pr-ico"><i data-ic="newview"></i></span>
     <span class="pr-t">+ New custom view</span></button>
   <button class="pr-btn" id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
@@ -17878,6 +17911,14 @@ def _self_test() -> None:
     assert ".dbtn.tvw.on{background:var(--cyan-deep)" in out
     # ---- CUSTOM VIEWS: a third saved kind, styling the notebook itself
     assert 'id="pr-newview"' in out and "function newCustomView" in out
+    # the three '+ New ...' rail buttons must be tellable apart when the
+    # rail is collapsed to icons (they were '+', a box and a triple bar)
+    for _ni in ("newdeck", "newposter", "newview"):
+        assert f'<i data-ic="{_ni}"></i>' not in out, _ni   # expanded
+        assert _ICON_PATHS[_ni][:24] in out, _ni
+    # and the feature is documented where people look for it
+    assert "Custom views &mdash; a styled, filtered copy" in out
+    assert "+ New custom view</b> in the left rail" in out
     assert "function openCustomView" in out and "function isViewPres" in out
     assert 'id="stylebar"' in out and 'id="stylepanel"' in out
     for _sb in ("sb-md", "sb-hd", "sb-doc", "sb-override", "sb-reset",
