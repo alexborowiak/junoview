@@ -3534,6 +3534,19 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    controls begin — centred against the 30px first row */
 /* group separators: full-height so the bar reads as distinct groups
    (file · filters · scope+size · view · app), not one long run */
+/* ---- TREE VIEW: the filters do not apply there, so they GO — but the
+   controls that remain must not slide left to fill the hole, or the
+   button you use to get back moves every time you switch view. The trick
+   is an auto margin: Size / View / App are pushed to the right end, so
+   they sit in the same place whether the filter sections are there or
+   not (a growing spacer would fill line 1 and force a wrap; an auto
+   margin is applied after line breaking). ---- */
+#ab-size{margin-left:auto;}
+body.tree-mode #ab-filters,body.tree-mode #ab-scope,
+body.tree-mode .appbar-div.filt-div,
+body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
+body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
+body.tree-mode #copy-grp{display:none!important;}
 /* the stacked View column: Raw over Tree. Its width is FIXED to the
    longest label it can hold ("Document"), because the Tree button renames
    itself and a wider word would shove Present sideways — the same fixed
@@ -5916,6 +5929,10 @@ _JS = r"""
      vanishes takes its neighbours' positions with it, and the whole point
      is that a button never moves when you change view (2026-07-30). ---- */
   function syncTreeRibbon(isTree){
+    /* the CSS removes the filter sections outright in tree view; the
+       disabling below is belt-and-braces for anything that stays reachable
+       (a present-bar copy, keyboard focus mid-transition) */
+    document.body.classList.toggle('tree-mode',isTree);
     var why='Filters do not apply in the tree — it always shows every '
       +'cell, so you can see the whole analysis. Switch back to Document '
       +'to filter.';
@@ -16792,7 +16809,7 @@ _TEMPLATE = """<!doctype html>
         title="Open a notebook (.ipynb) from your computer or a
  URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
-    <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-div filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
@@ -16823,7 +16840,7 @@ _TEMPLATE = """<!doctype html>
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)"><i data-ic="types"></i></button>
     </span></span><span class="abgrp-lab">Filters</span></span>
-    <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-div filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Choose WHICH sections the filters above act on — select the
@@ -18652,8 +18669,9 @@ def _self_test() -> None:
     assert "function syncZoomed" in out
     # the app bar reads as groups: full-height separators between them
     assert ".appbar-div{flex:none;width:1px;height:82px" in out
-    # 4 in the filter ribbon + 2 grouping the custom-view styling bar
-    assert out.count('class="appbar-div"') == 6
+    # 2 plain ribbon dividers + 2 grouping the custom-view styling bar
+    # (the other 2 carry filt-div and disappear with the filters in tree)
+    assert out.count('class="appbar-div"') == 4
     assert "width:calc(100% * var(--fz) * var(--fzall))" in out
     assert 'has-fig' in render_item(parse_notebook({"cells": [
         {"cell_type": "code", "source": "plot()", "outputs": [
@@ -19116,6 +19134,11 @@ def _self_test() -> None:
     # vanishes drags its neighbours' positions with it), and the Size
     # stepper drives the tree zoom from the same place on the ribbon
     assert "function syncTreeRibbon" in out
+    # tree view REMOVES the filter sections; Size/View/App are anchored to
+    # the right by an auto margin so they do not slide into the hole
+    assert "#ab-size{margin-left:auto;}" in out
+    assert "document.body.classList.toggle('tree-mode',isTree);" in out
+    assert out.count('class="appbar-div filt-div"') == 2
     assert "APP.ribbonSizeStep=function(dir)" in out
     assert "if(!APP.ribbonSizeStep(1)) bumpFigAll(1.15);" in out
     assert "cap.textContent=isTree?'Tree':'Figures'" in out
