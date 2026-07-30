@@ -2851,6 +2851,15 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
    RIGHT. Without nowrap a long title pushed "Plot trace" onto its own row */
 .cardhead{display:flex;align-items:center;gap:10px;margin-bottom:12px;
   padding-left:6px;flex-wrap:nowrap;min-width:0;}
+/* The card's actions sit together at the top RIGHT in EVERY context a
+   card renders — document, tree node, trace step, widget, export. These
+   two lines used to live in the DECK stylesheet, so a card rendered
+   without it lost the alignment and "Plot trace" dropped onto its own
+   line under the title (2026-07-30). Layout of a card belongs with the
+   card, not with whichever feature happened to add the button. */
+.cardhead .plot-trace-btn{margin-left:auto;flex:none;white-space:nowrap;}
+.cardhead .plot-trace-btn+.cell-eye{margin-left:0;}
+.cardhead .badge,.cardhead .cell-eye{flex:none;}
 /* per-cell eye on the card header: hide this one cell (restore via sidebar) */
 .cell-eye{margin-left:auto;flex:none;background:none;border:none;
   color:var(--ink-3);cursor:pointer;font-size:13px;line-height:1;
@@ -4410,8 +4419,13 @@ body:not(.light) .welcome-links a{color:#5fc3d8;}
   padding:26px 26px 40px;}
 .tree-edges{position:absolute;top:0;left:0;
   pointer-events:none;overflow:visible;z-index:0;}
-.tree-edge{fill:none;stroke:var(--amber-soft);stroke-width:1.6;}
-.tree-edge.lit{stroke:var(--cyan);stroke-width:2.4;}
+/* branches are tinted per edge by the child's type (set inline in
+   treeLayoutEdges); this is the fallback for any edge without one.
+   !important so hover and dimming still beat the inline tint. */
+.tree-edge{fill:none;stroke:var(--amber-soft);stroke-width:1.6;
+  opacity:.75;}
+.tree-edge.lit{stroke:var(--cyan)!important;stroke-width:2.4;opacity:1;}
+.tree-edge.dim{opacity:.25;}
 .tree-lane{position:relative;z-index:1;display:flex;flex-wrap:nowrap;
   justify-content:center;align-items:flex-start;gap:26px;
   margin:0 0 52px;}
@@ -6411,6 +6425,9 @@ _JS = r"""
         cx:(r.left-cb.left+r.width/2)/z+canvas.scrollLeft,
         top:(r.top-cb.top)/z+canvas.scrollTop,
         bot:(r.bottom-cb.top)/z+canvas.scrollTop,
+        /* the node's own type colour, so its incoming branch can carry it */
+        nc:el.style.getPropertyValue('--nc')
+          ||getComputedStyle(el).getPropertyValue('--nc'),
         off:el.classList.contains('tn-off')};
     });
     $$('.tree-node',host).forEach(function(el){
@@ -6420,6 +6437,12 @@ _JS = r"""
         var x1=pr.cx,y1=pr.bot,x2=ci.cx,y2=ci.top,mid=(y1+y2)/2;
         var path=document.createElementNS(TSVGNS,'path');
         path.setAttribute('class','tree-edge'+((ci.off||pr.off)?' dim':''));
+        /* a branch takes the colour of what it PRODUCES — the child — so
+           you can follow "where do the figures come from" by colour alone,
+           and the lanes read as coloured flows rather than one grey mesh.
+           The .lit hover and .dim states still override it in CSS. */
+        var nc=(el.style.getPropertyValue('--nc')||ci.nc||'').trim();
+        if(nc) path.style.stroke=nc;
         path.setAttribute('d','M'+x1+' '+y1+' C'+x1+' '+mid+' '
           +x2+' '+mid+' '+x2+' '+y2);
         path.dataset.from=pi;path.dataset.to=el.dataset.ti;
@@ -18726,6 +18749,9 @@ def _self_test() -> None:
     assert "function buildTree" in out and "function treeLayoutEdges" in out
     assert "function renderViewBtns" in out and "window.SemView" in out
     assert "tree-lane" in out and "tree-node-head" in out and "tree-edge" in out
+    # each branch is tinted by the type of the node it feeds
+    assert "if(nc) path.style.stroke=nc;" in out
+    assert ".tree-edge.lit{stroke:var(--cyan)!important;" in out
     # present mode: button, floating control bar + its restore edge-arrow
     assert 'id="doc-present"' in out and 'id="present-bar"' in out
     # ONE fold/unfold button, pinned in one place, plus taskbar auto-hide
@@ -19260,6 +19286,11 @@ def _self_test() -> None:
     assert 'id="tree-collapse"' in out and 'id="tree-width"' in out
     assert "body.tree-mode #ab-tree{display:flex!important;}" in out
     assert ".abgrp[hidden]{display:none!important;}" in out
+    # card actions are anchored top-right by the BASE stylesheet, so a
+    # card keeps its header layout even where the deck CSS is absent
+    _base = out.split("_DECK_CSS")[0]
+    assert ".cardhead .plot-trace-btn{margin-left:auto;flex:none;" in out
+    assert ".cardhead .plot-trace-btn+.cell-eye{margin-left:0;}" in out
     assert "APP.syncTreeTools=syncTreeTools;" in out
     # Expand all opens the CODE too, not just the node
     assert "cw.setAttribute('data-open','1');" in out
