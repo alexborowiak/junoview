@@ -46,7 +46,7 @@
   /* the tour: shown while Pyodide downloads, and it is the only "front
      page" this domain has — the app boots straight into index.html */
   body{align-items:flex-start;}
-  .boot{max-width:960px;padding:46px 24px 70px;text-align:left;}
+  .boot{max-width:1180px;padding:46px 24px 70px;text-align:left;}
   .boot h1{font-size:15px;}
   .tag{font-size:15px!important;line-height:1.6!important;
     color:#cdd9e3!important;max-width:640px;margin:14px 0 20px;}
@@ -54,14 +54,16 @@
   .tag2{font-size:12.5px!important;color:#7e93a4!important;
     max-width:640px;margin:0 0 4px;}
   .tag2 code{color:#39a9c0;}
-  .tour{margin-top:38px;display:grid;gap:34px;}
+  .tour{margin-top:38px;display:grid;gap:40px;}
+  .tour-said{border-left:2px solid #2a7d90;padding-left:15px;}
+  .tour-said figcaption{padding-top:0;}
   .tour figure{margin:0;}
   .tour img{width:100%;height:auto;display:block;border-radius:10px;
     border:1px solid #ffffff1f;background:#101c28;}
-  .tour figcaption{font-size:12.5px;line-height:1.65;color:#7e93a4;
-    padding:10px 2px 0;max-width:680px;}
-  .tour figcaption b{display:block;color:#eef4f8;font-weight:600;
-    font-size:14.5px;letter-spacing:.01em;margin-bottom:5px;}
+  .tour figcaption{font-size:14px;line-height:1.65;color:#a8b8c6;
+    padding:11px 2px 0;max-width:760px;}
+  .tour figcaption b{display:block;color:#eef4f8;font-weight:700;
+    font-size:17px;line-height:1.35;margin-bottom:6px;}
   /* slow-connection mode: the words are the pitch, so they stay — only
      the multi-megabyte GIFs go (and they are never fetched at all: the
      URL waits in data-src until the demos are switched on) */
@@ -143,8 +145,15 @@
       <img data-src="gifs/create_presentation.gif" alt="Building a slide deck"
         loading="lazy" width="900" height="500">
       <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag your
-      figures onto slides, arrange them, present. They stay linked to the
-      notebook they came from.</figcaption>
+      figures onto slides, arrange them, present.</figcaption>
+    </figure>
+    <!-- no GIF: it is the promise the whole thing rests on, and it reads
+         better as a plain statement than as another animation -->
+    <figure class="tour-said">
+      <figcaption><b>Re-run the notebook and the slides catch up</b>
+      Your figures stay linked to the cells that made them, so when you
+      update your notebook it updates straight away in the presentation
+      &mdash; no re-exporting, no re-pasting screenshots.</figcaption>
     </figure>
   </div>
 </div>

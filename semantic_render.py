@@ -169,6 +169,8 @@ _ICON_PATHS = {
                '<path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/>',
     "dockright": '<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
                  '<path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/>',
+    "autohide": '<rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/>'
+                 '<path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/>',
     "pin": '<path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/>'
            '<path d="M8 8.4v5.7"/>',
     "exit": '<path d="M4 4l8 8"/><path d="M12 4l-8 8"/>',
@@ -3703,6 +3705,12 @@ body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
 .pr-fico{display:flex;align-items:center;color:#7590a5;flex:none;}
 .pr-folder:hover .pr-fico{color:#9fb2c2;}
 body.presrail-min .pr-fico{display:none;}
+/* the two panel controls sit together as a pair at the foot of the rail:
+   one collapses it, one makes it slide away by itself */
+.pr-foot{margin-top:auto;display:flex;gap:6px;align-items:stretch;}
+.pr-foot .pr-collapse{margin-top:0;flex:1;justify-content:center;}
+.pr-foot #pr-auto{flex:none;width:34px;justify-content:center;}
+#pr-auto .bic{width:14px;height:14px;}
 .pr-collapse{margin-top:auto;background:none;border:1px solid #ffffff1f;
   border-radius:7px;color:#69788a;font-size:13px;padding:5px 0;
   cursor:pointer;}
@@ -3717,8 +3725,14 @@ body.presrail-hidden .presrail{display:none;}
 /* ---- rail auto-hide (OFF by default), same taskbar model as the
    present bar: the panel leaves, the document takes the full width, and
    the panel slides back when the pointer reaches the left edge ---- */
+/* --presrail-w drives the DOCUMENT offset and goes to 0 so the page
+   takes the full width. The panel itself must keep a real width, or
+   translateX(-100%) is 100% of nothing — it never moved, and its
+   contents simply overflowed a 0px box as loose floating icons. */
 body.prrail-auto{--presrail-w:0px;}
-body.prrail-auto .presrail{transform:translateX(-101%);
+body.prrail-auto .presrail{width:176px;overflow:hidden;}
+body.prrail-auto.presrail-min .presrail{width:46px;}
+body.prrail-auto .presrail{transform:translateX(-100%);
   transition:transform .18s ease;box-shadow:0 0 40px #00000066;}
 body.prrail-auto.prrail-peek .presrail{transform:none;}
 body.prrail-auto .presrail-show{display:none;}
@@ -3818,7 +3832,10 @@ body.creating-docs .apptop{
 .welcome-steps{list-style:none;margin:0 auto 30px;padding:0;max-width:560px;
   text-align:left;display:flex;flex-direction:column;gap:15px;}
 /* the welcome-screen demo reel */
-.wtour{margin-top:26px;display:grid;gap:26px;text-align:left;}
+/* the demos are the point of this section, so they get the width: the
+   welcome box is narrow, the reel breaks out of it */
+.wtour{margin-top:30px;display:grid;gap:40px;text-align:left;
+  width:min(1180px,92vw);margin-left:50%;transform:translateX(-50%);}
 .wtour[hidden]{display:none!important;}
 .wtour-head{display:flex;align-items:center;gap:12px;}
 .wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
@@ -3828,10 +3845,13 @@ body.creating-docs .apptop{
   border:1px solid var(--line);background:var(--paper-2);}
 .wtour.lite img{display:none;}
 .wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
-.wtour figcaption{font-size:12.5px;line-height:1.6;color:var(--ink-3);
-  padding:9px 2px 0;}
-.wtour figcaption b{display:block;color:var(--ink);font-weight:600;
-  font-size:14px;margin-bottom:4px;}
+/* the text-only card: it has no image to carry it, so it gets the rule */
+.wtour-said{border-left:2px solid var(--cyan-deep);padding-left:15px;}
+.wtour-said figcaption{padding-top:0;}
+.wtour figcaption{font-size:14px;line-height:1.65;color:var(--ink-2);
+  padding:11px 2px 0;}
+.wtour figcaption b{display:block;color:var(--ink);font-weight:700;
+  font-size:17px;line-height:1.35;margin-bottom:6px;}
 .welcome-steps li{display:flex;align-items:flex-start;gap:15px;
   font-size:16.5px;line-height:1.5;color:var(--ink-2);}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:#39a9c018;
@@ -4358,7 +4378,10 @@ body:not(.light) .welcome-note{background:#39a9c016;border-color:#39a9c033;
   border-left-color:var(--cyan);color:#c2d0da;}
 body:not(.light) .welcome-note b{color:#8fe0f0;}
 body:not(.light) /* the welcome-screen demo reel */
-.wtour{margin-top:26px;display:grid;gap:26px;text-align:left;}
+/* the demos are the point of this section, so they get the width: the
+   welcome box is narrow, the reel breaks out of it */
+.wtour{margin-top:30px;display:grid;gap:40px;text-align:left;
+  width:min(1180px,92vw);margin-left:50%;transform:translateX(-50%);}
 .wtour[hidden]{display:none!important;}
 .wtour-head{display:flex;align-items:center;gap:12px;}
 .wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
@@ -4368,10 +4391,13 @@ body:not(.light) /* the welcome-screen demo reel */
   border:1px solid var(--line);background:var(--paper-2);}
 .wtour.lite img{display:none;}
 .wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
-.wtour figcaption{font-size:12.5px;line-height:1.6;color:var(--ink-3);
-  padding:9px 2px 0;}
-.wtour figcaption b{display:block;color:var(--ink);font-weight:600;
-  font-size:14px;margin-bottom:4px;}
+/* the text-only card: it has no image to carry it, so it gets the rule */
+.wtour-said{border-left:2px solid var(--cyan-deep);padding-left:15px;}
+.wtour-said figcaption{padding-top:0;}
+.wtour figcaption{font-size:14px;line-height:1.65;color:var(--ink-2);
+  padding:11px 2px 0;}
+.wtour figcaption b{display:block;color:var(--ink);font-weight:700;
+  font-size:17px;line-height:1.35;margin-bottom:6px;}
 .welcome-steps li{color:#b3c2ce;}
 body:not(.light) .ws-n{background:#39a9c026;color:#8fe0f0;}
 body:not(.light) .welcome-drop{color:#7e93a4;}
@@ -9364,7 +9390,7 @@ _JS = r"""
       $$('img[data-src]',t).forEach(function(im){
         im.addEventListener('error',function(){
           var fig=im.closest('figure'); if(fig) fig.remove();
-          if(!t.querySelector('figure')) t.hidden=true;
+          if(!t.querySelector('img')) t.hidden=true;
         });
         im.src=im.getAttribute('data-src');
         im.removeAttribute('data-src');
@@ -17210,12 +17236,16 @@ _TEMPLATE = """<!doctype html>
       2.2 2h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v6c0 .7-.5 1.2-1.2
       1.2H2.2C1.5 12 1 11.5 1 10.8z"/></svg></span>
     <span class="pr-t">+ New folder</span></button>
-  <button class="pr-collapse" id="pr-auto" aria-pressed="false"
-    title="Auto-hide: the panel slides away and comes back when you move
- the pointer to the left edge. Off by default."
-    ><i data-ic="pin"></i></button>
-  <button class="pr-collapse" id="pr-collapse"
-    title="Collapse this panel">&#171;</button>
+  <!-- the two panel controls as a pair: collapse it, or let it hide
+       itself. Neither is "pin" — nothing is being pinned. -->
+  <div class="pr-foot">
+    <button class="pr-collapse" id="pr-collapse"
+      title="Collapse this panel">&#171;</button>
+    <button class="pr-collapse" id="pr-auto" aria-pressed="false"
+      title="Auto-hide: the panel slides out of the way and comes back
+ when you move the pointer to the left edge. Off by default."
+      ><i data-ic="autohide"></i></button>
+  </div>
 </nav>
 <button class="presrail-show" id="presrail-show"
   title="Show presentations">&#187;</button>
@@ -17342,6 +17372,15 @@ _TEMPLATE = """<!doctype html>
             alt="Building a slide deck">
           <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag
           your figures onto slides, arrange them, present.</figcaption>
+        </figure>
+        <!-- no GIF for this one: it is the promise the whole thing rests
+             on, and it reads better as a plain statement -->
+        <figure class="wtour-said">
+          <figcaption><b>Re-run the notebook and the slides catch up</b>
+          Your figures stay linked to the cells that made them, so when
+          you update your notebook it updates straight away in the
+          presentation &mdash; no re-exporting, no re-pasting
+          screenshots.</figcaption>
         </figure>
       </div>
     </div>
@@ -18445,6 +18484,12 @@ def _self_test() -> None:
     # the welcome screen carries the demo reel, deferred behind data-src
     assert 'id="wtour"' in out and 'id="wtour-toggle"' in out
     assert out.count('<img data-src="gifs/') == 7
+    # the promise the product rests on, stated in words (no GIF for it)
+    assert 'class="wtour-said"' in out
+    # the reel breaks out of the 560px welcome column or the demos are
+    # unreadable thumbnails
+    assert "width:min(1180px,92vw);margin-left:50%;transform:translateX(-50%)" in out
+    assert 'it updates straight away in the' in out
     assert "<img src=\"gifs/" not in out          # never fetched eagerly
     assert ".wtour.lite img{display:none;}" in out
     assert "probe.src='gifs/code_folding.gif';" in out
@@ -19410,6 +19455,14 @@ def _self_test() -> None:
     # the presentations rail can auto-hide, OFF by default
     assert 'id="pr-auto" aria-pressed="false"' in out
     assert "body.prrail-auto.prrail-peek .presrail{transform:none;}" in out
+    # the panel keeps a real width while auto-hidden, or translateX(-100%)
+    # is 100% of nothing and its contents overflow a 0px box as artefacts
+    assert "body.prrail-auto .presrail{width:176px;overflow:hidden;}" in out
+    assert "transform:translateX(-100%);" in out
+    # data-ic placeholders are EXPANDED at render time, so assert on the
+    # icon's path data, not on the placeholder that legitimately vanishes
+    assert 'class="pr-foot"' in out
+    assert _ICON_PATHS["autohide"][:26] in out
     assert "'junoview:presrail:auto'" in out
     assert "function syncUnhideBtn" in out
     # tree view: filters are DISABLED, not removed (a control that
