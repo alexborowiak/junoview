@@ -2998,7 +2998,10 @@ body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
   opacity:0;transition:opacity .15s;pointer-events:none;}
 .card.note-untitled:hover::after{opacity:.85;}
 /* tables inside notes render as real tables, not floating rows */
-.note table{border-collapse:collapse;margin:10px 0;font-size:13.5px;}
+/* a table is text too: it must follow the TEXT stepper and a custom
+   view's markdown size, or "make the text bigger" visibly skips it */
+.note table{border-collapse:collapse;margin:10px 0;
+  font-size:calc(13.5px * var(--mdscale,1) * var(--md-size,1));}
 .note th,.note td{border:1px solid #00000022;padding:5px 11px;
   text-align:left;}
 .note th{background:#00000008;font-weight:600;}
@@ -3100,7 +3103,10 @@ pre.code .op{color:#9fb1c0;}
 
 /* ---------- empty / fallback ---------- */
 .rich{overflow:auto;}
-.rich table{border-collapse:collapse;font-size:13px;}
+/* rich OUTPUT (dataframes and friends) follows the feed-wide text
+   stepper too — but not --md-size, which styles markdown cells only */
+.rich table{border-collapse:collapse;
+  font-size:calc(13px * var(--mdscale,1));}
 .rich th,.rich td{border:1px solid var(--line);padding:4px 8px;}
 
 /* ---------- focus ---------- */
@@ -18229,6 +18235,10 @@ def _self_test() -> None:
     # markdown/prose text scales with its own +/- control
     assert 'id="md-bigger"' in out and 'id="md-smaller"' in out
     assert "--mdscale" in out and "calc(15px * var(--mdscale) * var(--md-size,1))" in out
+    # tables are text too — both had hard-coded sizes and sat out every
+    # text-size change until 2026-07-30
+    assert "font-size:calc(13.5px * var(--mdscale,1) * var(--md-size,1));" in out
+    assert "font-size:calc(13px * var(--mdscale,1));" in out
     # Open / File / Reload lead the ribbon, at full size
     assert 'class="toggle primary" id="tab-open"' in out
     assert 'id="file-info-btn"' not in out   # they live in the sidebar
