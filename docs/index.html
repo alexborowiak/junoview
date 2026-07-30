@@ -62,6 +62,18 @@
     padding:10px 2px 0;max-width:680px;}
   .tour figcaption b{display:block;color:#eef4f8;font-weight:600;
     font-size:14.5px;letter-spacing:.01em;margin-bottom:5px;}
+  /* slow-connection mode: the words are the pitch, so they stay — only
+     the multi-megabyte GIFs go (and they are never fetched at all: the
+     URL waits in data-src until the demos are switched on) */
+  .tour.lite img{display:none;}
+  .tour.lite figure{border-left:2px solid #16273a;padding-left:14px;}
+  .tour.lite figcaption{padding-top:0;}
+  .demo-toggle{margin:6px 0 0;background:none;border:1px solid #ffffff26;
+    color:#7e93a4;font:inherit;font-size:11.5px;padding:5px 11px;
+    border-radius:6px;cursor:pointer;}
+  .demo-toggle:hover{border-color:#39a9c0;color:#cdd9e3;}
+  .demo-note{font-size:11px!important;color:#5d7488!important;
+    margin:8px 0 0!important;}
   @media (max-width:640px){.boot{padding:26px 14px 50px;}
     .tour{gap:24px;}}
 </style>
@@ -74,6 +86,9 @@
   same cells into slides or a poster.</p>
   <p class="tag2">Drop in an <code>.ipynb</code> you have already run.
   It stays on your computer &mdash; nothing is uploaded.</p>
+  <button class="demo-toggle" id="demo-toggle" type="button"
+    aria-pressed="false">Loading demos&#8230;</button>
+  <p class="demo-note" id="demo-note"></p>
   <p id="bootmsg">Loading the Python runtime (first visit only takes a
   few seconds)&#8230;</p>
   <div class="bar"><i></i></div>
@@ -82,21 +97,21 @@
        lazy so the loader is never competing with 22 MB of GIFs. -->
   <div class="tour">
     <figure>
-      <img src="gifs/code_folding.gif" alt="Folding code away"
+      <img data-src="gifs/code_folding.gif" alt="Folding code away"
         width="900" height="500">
       <figcaption><b>Hide the code &mdash; see just the results</b>
       Every cell's code folds away behind one click. The figure stays,
       the wall of code doesn't.</figcaption>
     </figure>
     <figure>
-      <img src="gifs/code_types.gif" alt="Filtering by code type"
+      <img data-src="gifs/code_types.gif" alt="Filtering by code type"
         loading="lazy" width="900" height="500">
       <figcaption><b>Filter your notebook &mdash; show only the cells you
       want</b> Junoview tells imports from plotting from prints, so you
       can switch off the housekeeping and keep the science.</figcaption>
     </figure>
     <figure>
-      <img src="gifs/remove_what_you_dont_want.gif"
+      <img data-src="gifs/remove_what_you_dont_want.gif"
         alt="Hiding cells and sections" loading="lazy"
         width="900" height="500">
       <figcaption><b>Get rid of what you don't need</b> Hide any cell,
@@ -104,7 +119,7 @@
       each section. Nothing is deleted: one click brings it back.</figcaption>
     </figure>
     <figure>
-      <img src="gifs/make_figure_and_text_bigger_and_present_them.gif"
+      <img data-src="gifs/make_figure_and_text_bigger_and_present_them.gif"
         alt="Resizing figures and text" loading="lazy"
         width="900" height="500">
       <figcaption><b>Make it big enough to read</b> Grow the figures and
@@ -112,20 +127,20 @@
       full screen and talk to it.</figcaption>
     </figure>
     <figure>
-      <img src="gifs/plot_trace.gif" alt="Tracing a plot to its source"
+      <img data-src="gifs/plot_trace.gif" alt="Tracing a plot to its source"
         loading="lazy" width="900" height="500">
       <figcaption><b>Ask any plot where it came from</b> Plot trace opens
       the exact chain of cells that made it, in its own tab.</figcaption>
     </figure>
     <figure>
-      <img src="gifs/tree_view.gif" alt="The analysis as a dependency map"
+      <img data-src="gifs/tree_view.gif" alt="The analysis as a dependency map"
         loading="lazy" width="900" height="500">
       <figcaption><b>See the whole analysis at once</b> Tree view draws
       your notebook as a map of what depends on what, colour-coded by
       kind.</figcaption>
     </figure>
     <figure>
-      <img src="gifs/create_presentation.gif" alt="Building a slide deck"
+      <img data-src="gifs/create_presentation.gif" alt="Building a slide deck"
         loading="lazy" width="900" height="500">
       <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag your
       figures onto slides, arrange them, present. They stay linked to the
@@ -133,6 +148,62 @@
     </figure>
   </div>
 </div>
+<script>
+/* ---- slow-connection mode -------------------------------------------
+   The demo GIFs are ~22 MB. Their URLs sit in data-src and are only
+   promoted to src when demos are ON, so switching them off costs zero
+   bytes rather than downloading and hiding them. Off by default when the
+   browser says the connection is poor, the user has Data Saver on, or
+   they have asked for reduced motion — and their explicit choice, once
+   made, beats all of that and is remembered.                        --- */
+(function(){
+  var KEY='junoview:demos';
+  var tour=document.querySelector('.tour');
+  var btn=document.getElementById('demo-toggle');
+  var note=document.getElementById('demo-note');
+  if(!tour||!btn) return;
+  var conn=navigator.connection||navigator.mozConnection
+    ||navigator.webkitConnection||{};
+  var slow=!!conn.saveData
+    ||/(^|-)(slow-)?2g$/.test(String(conn.effectiveType||''))
+    ||String(conn.effectiveType||'')==='3g';
+  var reduce=window.matchMedia
+    &&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var saved=null;
+  try{saved=localStorage.getItem(KEY);}catch(e){}
+  var on=saved===null?!(slow||reduce):saved==='1';
+  function why(){
+    if(saved!==null) return '';
+    if(conn.saveData) return 'Data Saver is on, so the demos start off.';
+    if(slow) return 'Your connection looks slow, so the demos start off.';
+    if(reduce) return 'You have asked for reduced motion, so the demos '
+      +'start off.';
+    return '';
+  }
+  function apply(){
+    tour.classList.toggle('lite',!on);
+    btn.setAttribute('aria-pressed',on?'true':'false');
+    btn.textContent=on
+      ?'Hide the demos (saves ~22 MB)'
+      :'Show the demos (~22 MB of animations)';
+    if(note) note.textContent=on?'':(why()
+      ||'Demos are off — the descriptions below still explain each one.');
+    if(on){
+      /* promote data-src -> src once; the browser then fetches them */
+      [].forEach.call(tour.querySelectorAll('img[data-src]'),function(im){
+        im.src=im.getAttribute('data-src');
+        im.removeAttribute('data-src');
+      });
+    }
+  }
+  btn.addEventListener('click',function(){
+    on=!on;saved=on?'1':'0';
+    try{localStorage.setItem(KEY,saved);}catch(e){}
+    apply();
+  });
+  apply();
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script>
 (async function(){
