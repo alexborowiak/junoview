@@ -2619,6 +2619,13 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .toggle:hover{border-color:var(--cyan);color:var(--ink);}
 .toggle[aria-pressed="true"]{background:var(--ink);color:#eef4f8;
   border-color:var(--ink);}
+/* the state colour rides on the button's own ICON now — a separate dot
+   said the same thing twice and cost the bar ~56px it did not have */
+.toggle.tv .tdot{display:none;}
+.toggle.tv .bic{color:var(--cyan);opacity:1;}
+.toggle.tv.half .bic{color:var(--amber);}
+.toggle.tv.off .bic{opacity:.4;}
+.toggle.tv.mixed .bic{color:var(--amber);opacity:.8;}
 .toggle .tdot{width:6px;height:6px;border-radius:50%;background:currentColor;
   opacity:.4;}
 /* every state word occupies the same slot, so the bar never re-flows
@@ -3378,7 +3385,7 @@ body.presrail-min{--presrail-w:46px;}
 /* align-items:stretch so every SECTION is as tall as the bar and a
    single-button group (+ Open) can fill both rows rather than floating at
    the top of an empty column */
-.appbar{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;
+.appbar{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;
   justify-content:center;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
@@ -3389,11 +3396,11 @@ body.presrail-min{--presrail-w:46px;}
    than the buttons they hang under (2026-07-29) */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
-  padding:0 13px;line-height:1;font-size:12px;gap:7px;}
+  padding:0 11px;line-height:1;font-size:12px;gap:6px;}
 /* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
    font). One 16-grid, stroke-only, currentColor — so an icon is always
    the same weight as the label beside it and follows the theme. ---- */
-.bic{width:13px;height:13px;flex:none;display:block;
+.bic{width:15px;height:15px;flex:none;display:block;
   stroke:currentColor;stroke-width:1.5;fill:none;
   stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
 .toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
@@ -3428,6 +3435,13 @@ body.presrail-min{--presrail-w:46px;}
    it just sits at its natural 34px */
 #ab-file .abgrp-row .fgrp{flex:1;}
 #ab-file .abgrp-row .toggle{height:auto;min-height:34px;flex:1;}
+/* Present is the important control in its section and had dead space
+   under it, so it spans both rows beside the Raw/Tree stack */
+#ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
+#ab-view #doc-present{height:auto;min-height:34px;}
+/* an icon-only button is square, never a wide slab around a small glyph */
+#pt-filter-btn,#ck-filter-btn,#ot-filter-btn,#help-btn{padding:0 11px;
+  justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -3601,7 +3615,9 @@ body.light .pr-docs:hover{border-color:var(--cyan);}
   background .15s;}
 .pr-btn:hover{border-color:var(--cyan);color:#fff;
   background:#39a9c014;}
-.pr-btn .pr-ico{display:none;}
+/* the icon shows at every rail width: it is what makes the three
+   "+ New ..." buttons tellable apart, collapsed OR expanded */
+.pr-btn .pr-ico{display:flex;align-items:center;justify-content:center;}
 body.presrail-min .pr-btn .pr-t{display:none;}
 body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
   justify-content:center;}
@@ -4427,11 +4443,18 @@ body.pbpos-top .present-bar{top:0;left:0;right:0;
   border-bottom:1px solid #ffffff1f;
   transition:transform .18s ease;}
 /* docked top the bar IS the ribbon: the same labelled sections, aligned
-   the same way, so nothing has to re-learn its layout */
-body.pbpos-top .present-bar{align-items:stretch;}
-body.pbpos-top .pb-tools{flex-wrap:wrap;gap:8px;align-items:stretch;}
-body.pbpos-top .pb-own{flex-wrap:wrap;gap:6px;margin-left:auto;
-  align-items:flex-end;}
+   the same way, so nothing has to re-learn its layout.
+   display:contents is the whole trick. As flex ITEMS, .pb-tools and
+   .pb-own were each shrunk below their content width (flex-shrink:1) and
+   so each wrapped INSIDE itself — the bar grew to three ragged rows while
+   still having room to spare. With their boxes removed, the sections and
+   the bar's own buttons share ONE wrapping flow, exactly like .appbar. */
+body.pbpos-top .present-bar{align-items:stretch;flex-wrap:wrap;gap:6px;}
+body.pbpos-top .pb-tools,body.pbpos-top .pb-own{display:contents;}
+/* an auto margin on the first of its own buttons right-aligns the group
+   without a growing spacer (a spacer would fill line 1 and force a wrap) */
+body.pbpos-top .pb-own #pb-rail{margin-left:auto;}
+body.pbpos-right .pb-tools,body.pbpos-right .pb-own{display:contents;}
 body.pbpos-top .present-bar .pb-collapse{margin-left:6px;}
 body.doc-presenting.pbpos-top .docs{top:var(--pbh,64px);}
 body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%);}
@@ -6312,8 +6335,9 @@ _JS = r"""
            while docked right reads as a state, and the user cannot tell
            whether it is telling them where the bar is or offering to move
            it. "Move right" / "Move to top" can only be an action. */
-        if(APP.setBtnText)
-          APP.setBtnText(mv,pbDock==='top'?'Move right':'Move to top');
+        /* icon-only: the glyph IS the destination edge, and the title
+           still says it in words. The present bar is the tightest bar we
+           have — these words cost it the Exit button's place on line 1. */
         var mi=mv.querySelector('.bic');
         if(mi) mi.innerHTML=(pbDock==='top')?PB_ICO.right:PB_ICO.top;
         mv.title=(pbDock==='top')
@@ -11372,6 +11396,18 @@ _DECK_JS = r"""
        `stem` when it came from one notebook, else best-effort);
        folder, title-slide text and free annotations ride along.
        Legacy grid-pane slides convert to preset cell-frame layouts. */
+    /* A CUSTOM VIEW has no slides to normalise — and it must keep kind /
+       nb / style / view or it comes back as a plain deck and clicking its
+       row opens the slide editor instead (that was the bug where a custom
+       view "took you to the presentation below it"). */
+    if(p&&p.kind==='view'){
+      var v={name:String(p.name||'view'),kind:'view',slides:[],
+        nb:typeof p.nb==='string'?p.nb:'',
+        style:p.style?JSON.parse(JSON.stringify(p.style)):{},
+        view:p.view?JSON.parse(JSON.stringify(p.view)):{}};
+      if(typeof p.folder==='string'&&p.folder) v.folder=p.folder;
+      return v;
+    }
     function ns(a){
       if(!a) return null;
       if(String(a).indexOf('::')>=0) return a;
@@ -14772,8 +14808,12 @@ _DECK_JS = r"""
         :('Open '+kindWord+' "'+nm+'"'
           +(isView?' — restyles the notebook itself':' in the builder')))
         +'\nDrag onto a folder to file it';
+      /* the same drawn icons as the "+ New ..." buttons, so a row and the
+         button that made it read as the same kind of thing */
       t.innerHTML='<span class="pr-ico">'
-        +(isView?'&#8801;':isPoster?'&#9645;':'&#9654;')+'</span>';
+        +'<svg class="bic" viewBox="0 0 16 16" aria-hidden="true">'
+        +(isView?RAIL_ICO.view:isPoster?RAIL_ICO.poster:RAIL_ICO.deck)
+        +'</svg></span>';
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
@@ -14930,6 +14970,15 @@ _DECK_JS = r"""
      hidden-cell / figure-size state. It opens in the document, not on the
      slide stage, so the styling bar edits what you are looking at. ---- */
   function isViewPres(p){return !!(p&&p.kind==='view');}
+  /* rail row icons — the same artwork the "+ New ..." buttons carry */
+  var RAIL_ICO={
+    deck:'<rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/>'
+      +'<path d="M3.6 12.8h5.6"/>',
+    poster:'<rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/>'
+      +'<path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/>',
+    view:'<path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/>'
+      +'<path d="M4.6 8.4h4M4.6 10.8h2.6"/>'
+      +'<path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/>'};
   function newCustomView(){
     var A=window.SemApp||{};
     var stem=A.active;
@@ -16569,7 +16618,7 @@ _TEMPLATE = """<!doctype html>
  Visible -> Collapsed -> Hidden"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="pt-filter-btn"
         title="Advanced: hide specific PLOT types (matplotlib, plotly,
- bokeh, vega, folium, …)"><i data-ic="types"></i>Types</button>
+ bokeh, vega, folium, …)"><i data-ic="types"></i></button>
     </span>
     <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
@@ -16582,7 +16631,7 @@ _TEMPLATE = """<!doctype html>
  Click to cycle: Visible -> Collapsed -> Hidden"><i data-ic="code"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ck-filter-btn"
         title="Advanced: hide specific CODE cell types (imports, plotting,
- …)"><i data-ic="types"></i>Types</button>
+ …)"><i data-ic="types"></i></button>
     </span>
     <span class="fgrp" id="ot-grp">
       <button class="toggle tv" id="tv-output"
@@ -16591,7 +16640,7 @@ _TEMPLATE = """<!doctype html>
  pulled out into their own filter (on the left). Click to show / hide"><i data-ic="output"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ot-filter-btn"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
- error)"><i data-ic="types"></i>Types</button>
+ error)"><i data-ic="types"></i></button>
     </span></span><span class="abgrp-lab">Filters</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
@@ -16669,7 +16718,7 @@ _TEMPLATE = """<!doctype html>
  with accounts (save + share your docs and talks, like Overleaf)"
         ><i data-ic="heart"></i></a>
       <button class="toggle" id="help-btn"
-        title="How to use, and everything this tool can do"><i data-ic="help"></i>Help</button>
+        title="How to use, and everything this tool can do" aria-label="Help"><i data-ic="help"></i></button>
     </span></span><span class="abgrp-lab">App</span></span>
   </div>
   <div class="tabsrow">
@@ -16714,10 +16763,18 @@ _TEMPLATE = """<!doctype html>
   <div class="presrail-brand">{logo}<span class="prb-full">Junoview</span></div>
   <button class="pr-item pr-docs current" id="pr-docs"
     title="Back to your notebooks — closes the presentation builder">
-    <span class="pr-ico">&#9636;</span>
+    <span class="pr-ico"><i data-ic="doc"></i></span>
     <span class="pr-t">Notebooks</span></button>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
+  <!-- custom view FIRST: it is the one that acts on the notebook you are
+       already looking at, so it belongs nearest the notebook list -->
+  <button class="pr-btn" id="pr-newview"
+    title="New custom view &mdash; a saved, restyled, filtered view of the
+ notebook itself (not slides). Style all markdown cells, one section or a
+ single cell, and keep your filters and hidden cells with it.">
+    <span class="pr-ico"><i data-ic="newview"></i></span>
+    <span class="pr-t">+ New custom view</span></button>
   <button class="pr-btn" id="pr-new"
     title="Create a new presentation">
     <span class="pr-ico"><i data-ic="newdeck"></i></span>
@@ -16727,12 +16784,6 @@ _TEMPLATE = """<!doctype html>
  template applied (change size via Page, layout via Layouts)">
     <span class="pr-ico"><i data-ic="newposter"></i></span>
     <span class="pr-t">+ New poster</span></button>
-  <button class="pr-btn" id="pr-newview"
-    title="New custom view &mdash; a saved, restyled, filtered view of the
- notebook itself (not slides). Style all markdown cells, one section or a
- single cell, and keep your filters and hidden cells with it.">
-    <span class="pr-ico"><i data-ic="newview"></i></span>
-    <span class="pr-t">+ New custom view</span></button>
   <button class="pr-btn" id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
@@ -16762,8 +16813,7 @@ _TEMPLATE = """<!doctype html>
     <!-- the dock button names the DESTINATION, never where the bar is now -->
     <button class="toggle" id="pb-move"
       title="Move these controls to the other edge"
-      ><i data-ic="dockright"></i><span class="btxt">Move right</span
-      ></button>
+      ><i data-ic="dockright"></i></button>
     <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself -->
     <button class="toggle" id="pb-auto" aria-pressed="true"
       title="Auto-hide: the bar slides away and comes back when you move
@@ -18198,7 +18248,7 @@ def _self_test() -> None:
     assert "--appbar-h:104px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:stretch;gap:8px;" \
+    assert ".appbar{display:flex;align-items:stretch;gap:6px;" \
         "flex-wrap:wrap;" in out
     assert "justify-content:center;" in out   # the bar is centred
     assert "overflow-x:auto;scrollbar-width:none;}" not in out
@@ -18739,6 +18789,10 @@ def _self_test() -> None:
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
     assert "'#ab-size','#ab-view'" in out
+    # the present bar is ONE wrapping flow (display:contents), not two
+    # flex items that each shrink and wrap inside themselves
+    assert "body.pbpos-top .pb-tools,body.pbpos-top .pb-own{display:contents;}" in out
+    assert "body.pbpos-top .pb-own #pb-rail{margin-left:auto;}" in out
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
     assert 'id="fmt-list"' in out and 'id="fmt-shape"' in out

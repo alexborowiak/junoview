@@ -396,6 +396,13 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .toggle:hover{border-color:var(--cyan);color:var(--ink);}
 .toggle[aria-pressed="true"]{background:var(--ink);color:#eef4f8;
   border-color:var(--ink);}
+/* the state colour rides on the button's own ICON now — a separate dot
+   said the same thing twice and cost the bar ~56px it did not have */
+.toggle.tv .tdot{display:none;}
+.toggle.tv .bic{color:var(--cyan);opacity:1;}
+.toggle.tv.half .bic{color:var(--amber);}
+.toggle.tv.off .bic{opacity:.4;}
+.toggle.tv.mixed .bic{color:var(--amber);opacity:.8;}
 .toggle .tdot{width:6px;height:6px;border-radius:50%;background:currentColor;
   opacity:.4;}
 /* every state word occupies the same slot, so the bar never re-flows
@@ -924,7 +931,7 @@ body.presrail-min{--presrail-w:46px;}
 /* align-items:stretch so every SECTION is as tall as the bar and a
    single-button group (+ Open) can fill both rows rather than floating at
    the top of an empty column */
-.appbar{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap;
+.appbar{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;
   justify-content:center;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
@@ -935,11 +942,11 @@ body.presrail-min{--presrail-w:46px;}
    than the buttons they hang under (2026-07-29) */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
-  padding:0 13px;line-height:1;font-size:12px;gap:7px;}
+  padding:0 11px;line-height:1;font-size:12px;gap:6px;}
 /* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
    font). One 16-grid, stroke-only, currentColor — so an icon is always
    the same weight as the label beside it and follows the theme. ---- */
-.bic{width:13px;height:13px;flex:none;display:block;
+.bic{width:15px;height:15px;flex:none;display:block;
   stroke:currentColor;stroke-width:1.5;fill:none;
   stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
 .toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
@@ -974,6 +981,13 @@ body.presrail-min{--presrail-w:46px;}
    it just sits at its natural 34px */
 #ab-file .abgrp-row .fgrp{flex:1;}
 #ab-file .abgrp-row .toggle{height:auto;min-height:34px;flex:1;}
+/* Present is the important control in its section and had dead space
+   under it, so it spans both rows beside the Raw/Tree stack */
+#ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
+#ab-view #doc-present{height:auto;min-height:34px;}
+/* an icon-only button is square, never a wide slab around a small glyph */
+#pt-filter-btn,#ck-filter-btn,#ot-filter-btn,#help-btn{padding:0 11px;
+  justify-content:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -1147,7 +1161,9 @@ body.light .pr-docs:hover{border-color:var(--cyan);}
   background .15s;}
 .pr-btn:hover{border-color:var(--cyan);color:#fff;
   background:#39a9c014;}
-.pr-btn .pr-ico{display:none;}
+/* the icon shows at every rail width: it is what makes the three
+   "+ New ..." buttons tellable apart, collapsed OR expanded */
+.pr-btn .pr-ico{display:flex;align-items:center;justify-content:center;}
 body.presrail-min .pr-btn .pr-t{display:none;}
 body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
   justify-content:center;}
@@ -1973,11 +1989,18 @@ body.pbpos-top .present-bar{top:0;left:0;right:0;
   border-bottom:1px solid #ffffff1f;
   transition:transform .18s ease;}
 /* docked top the bar IS the ribbon: the same labelled sections, aligned
-   the same way, so nothing has to re-learn its layout */
-body.pbpos-top .present-bar{align-items:stretch;}
-body.pbpos-top .pb-tools{flex-wrap:wrap;gap:8px;align-items:stretch;}
-body.pbpos-top .pb-own{flex-wrap:wrap;gap:6px;margin-left:auto;
-  align-items:flex-end;}
+   the same way, so nothing has to re-learn its layout.
+   display:contents is the whole trick. As flex ITEMS, .pb-tools and
+   .pb-own were each shrunk below their content width (flex-shrink:1) and
+   so each wrapped INSIDE itself — the bar grew to three ragged rows while
+   still having room to spare. With their boxes removed, the sections and
+   the bar's own buttons share ONE wrapping flow, exactly like .appbar. */
+body.pbpos-top .present-bar{align-items:stretch;flex-wrap:wrap;gap:6px;}
+body.pbpos-top .pb-tools,body.pbpos-top .pb-own{display:contents;}
+/* an auto margin on the first of its own buttons right-aligns the group
+   without a growing spacer (a spacer would fill line 1 and force a wrap) */
+body.pbpos-top .pb-own #pb-rail{margin-left:auto;}
+body.pbpos-right .pb-tools,body.pbpos-right .pb-own{display:contents;}
 body.pbpos-top .present-bar .pb-collapse{margin-left:6px;}
 body.doc-presenting.pbpos-top .docs{top:var(--pbh,64px);}
 body.pbpos-top.pb-folded .present-bar{transform:translateY(-101%);}
@@ -3322,7 +3345,7 @@ window.MathJax = {
  Visible -> Collapsed -> Hidden"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/><path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="pt-filter-btn"
         title="Advanced: hide specific PLOT types (matplotlib, plotly,
- bokeh, vega, folium, …)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg>Types</button>
+ bokeh, vega, folium, …)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg></button>
     </span>
     <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
@@ -3335,7 +3358,7 @@ window.MathJax = {
  Click to cycle: Visible -> Collapsed -> Hidden"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.6 5.2 2.4 8l3.2 2.8"/><path d="M10.4 5.2 13.6 8l-3.2 2.8"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ck-filter-btn"
         title="Advanced: hide specific CODE cell types (imports, plotting,
- …)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg>Types</button>
+ …)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg></button>
     </span>
     <span class="fgrp" id="ot-grp">
       <button class="toggle tv" id="tv-output"
@@ -3344,7 +3367,7 @@ window.MathJax = {
  pulled out into their own filter (on the left). Click to show / hide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3.2" width="11.6" height="9.6" rx="1.2"/><path d="M4.6 6.6 6.4 8l-1.8 1.4"/><path d="M8.4 10h3"/></svg><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ot-filter-btn"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
- error)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg>Types</button>
+ error)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg></button>
     </span></span><span class="abgrp-lab">Filters</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
@@ -3422,7 +3445,7 @@ window.MathJax = {
  with accounts (save + share your docs and talks, like Overleaf)"
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z"/></svg></a>
       <button class="toggle" id="help-btn"
-        title="How to use, and everything this tool can do"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/><path d="M8.6 12v.1"/></svg>Help</button>
+        title="How to use, and everything this tool can do" aria-label="Help"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/><path d="M8.6 12v.1"/></svg></button>
     </span></span><span class="abgrp-lab">App</span></span>
   </div>
   <div class="tabsrow">
@@ -3467,10 +3490,18 @@ window.MathJax = {
   <div class="presrail-brand"><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg><span class="prb-full">Junoview</span></div>
   <button class="pr-item pr-docs current" id="pr-docs"
     title="Back to your notebooks — closes the presentation builder">
-    <span class="pr-ico">&#9636;</span>
+    <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg></span>
     <span class="pr-t">Notebooks</span></button>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
+  <!-- custom view FIRST: it is the one that acts on the notebook you are
+       already looking at, so it belongs nearest the notebook list -->
+  <button class="pr-btn" id="pr-newview"
+    title="New custom view &mdash; a saved, restyled, filtered view of the
+ notebook itself (not slides). Style all markdown cells, one section or a
+ single cell, and keep your filters and hidden cells with it.">
+    <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/><path d="M4.6 8.4h4M4.6 10.8h2.6"/><path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/></svg></span>
+    <span class="pr-t">+ New custom view</span></button>
   <button class="pr-btn" id="pr-new"
     title="Create a new presentation">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/><path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg></span>
@@ -3480,12 +3511,6 @@ window.MathJax = {
  template applied (change size via Page, layout via Layouts)">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/><path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg></span>
     <span class="pr-t">+ New poster</span></button>
-  <button class="pr-btn" id="pr-newview"
-    title="New custom view &mdash; a saved, restyled, filtered view of the
- notebook itself (not slides). Style all markdown cells, one section or a
- single cell, and keep your filters and hidden cells with it.">
-    <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/><path d="M4.6 8.4h4M4.6 10.8h2.6"/><path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/></svg></span>
-    <span class="pr-t">+ New custom view</span></button>
   <button class="pr-btn" id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
@@ -3515,8 +3540,7 @@ window.MathJax = {
     <!-- the dock button names the DESTINATION, never where the bar is now -->
     <button class="toggle" id="pb-move"
       title="Move these controls to the other edge"
-      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/></svg><span class="btxt">Move right</span
-      ></button>
+      ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/></svg></button>
     <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself -->
     <button class="toggle" id="pb-auto" aria-pressed="true"
       title="Auto-hide: the bar slides away and comes back when you move
@@ -9012,8 +9036,9 @@ through Ko-fi. Thank you.</p>
            while docked right reads as a state, and the user cannot tell
            whether it is telling them where the bar is or offering to move
            it. "Move right" / "Move to top" can only be an action. */
-        if(APP.setBtnText)
-          APP.setBtnText(mv,pbDock==='top'?'Move right':'Move to top');
+        /* icon-only: the glyph IS the destination edge, and the title
+           still says it in words. The present bar is the tightest bar we
+           have — these words cost it the Exit button's place on line 1. */
         var mi=mv.querySelector('.bic');
         if(mi) mi.innerHTML=(pbDock==='top')?PB_ICO.right:PB_ICO.top;
         mv.title=(pbDock==='top')
@@ -12427,6 +12452,18 @@ through Ko-fi. Thank you.</p>
        `stem` when it came from one notebook, else best-effort);
        folder, title-slide text and free annotations ride along.
        Legacy grid-pane slides convert to preset cell-frame layouts. */
+    /* A CUSTOM VIEW has no slides to normalise — and it must keep kind /
+       nb / style / view or it comes back as a plain deck and clicking its
+       row opens the slide editor instead (that was the bug where a custom
+       view "took you to the presentation below it"). */
+    if(p&&p.kind==='view'){
+      var v={name:String(p.name||'view'),kind:'view',slides:[],
+        nb:typeof p.nb==='string'?p.nb:'',
+        style:p.style?JSON.parse(JSON.stringify(p.style)):{},
+        view:p.view?JSON.parse(JSON.stringify(p.view)):{}};
+      if(typeof p.folder==='string'&&p.folder) v.folder=p.folder;
+      return v;
+    }
     function ns(a){
       if(!a) return null;
       if(String(a).indexOf('::')>=0) return a;
@@ -15827,8 +15864,12 @@ through Ko-fi. Thank you.</p>
         :('Open '+kindWord+' "'+nm+'"'
           +(isView?' — restyles the notebook itself':' in the builder')))
         +'\nDrag onto a folder to file it';
+      /* the same drawn icons as the "+ New ..." buttons, so a row and the
+         button that made it read as the same kind of thing */
       t.innerHTML='<span class="pr-ico">'
-        +(isView?'&#8801;':isPoster?'&#9645;':'&#9654;')+'</span>';
+        +'<svg class="bic" viewBox="0 0 16 16" aria-hidden="true">'
+        +(isView?RAIL_ICO.view:isPoster?RAIL_ICO.poster:RAIL_ICO.deck)
+        +'</svg></span>';
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
@@ -15985,6 +16026,15 @@ through Ko-fi. Thank you.</p>
      hidden-cell / figure-size state. It opens in the document, not on the
      slide stage, so the styling bar edits what you are looking at. ---- */
   function isViewPres(p){return !!(p&&p.kind==='view');}
+  /* rail row icons — the same artwork the "+ New ..." buttons carry */
+  var RAIL_ICO={
+    deck:'<rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/>'
+      +'<path d="M3.6 12.8h5.6"/>',
+    poster:'<rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/>'
+      +'<path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/>',
+    view:'<path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/>'
+      +'<path d="M4.6 8.4h4M4.6 10.8h2.6"/>'
+      +'<path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/>'};
   function newCustomView(){
     var A=window.SemApp||{};
     var stem=A.active;
