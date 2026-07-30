@@ -1107,6 +1107,8 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    not (a growing spacer would fill line 1 and force a wrap; an auto
    margin is applied after line breaking). ---- */
 #ab-size{margin-left:auto;}
+body.tree-mode #ab-tree{margin-left:auto;}
+body.tree-mode #ab-size{margin-left:0;}
 /* the Tree section takes the Filters slot while the tree is on */
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
@@ -3439,27 +3441,6 @@ window.MathJax = {
         title="Open a notebook (.ipynb) from your computer or a
  URL"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
-    <!-- TREE section: sits exactly where Filters sits in Document view,
-         because it plays the same role — it is what shapes WHAT YOU SEE
-         in this view. Only rendered while the tree is on. -->
-    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
-      <span class="fgrp" id="tree-fold-grp">
-        <button class="toggle" id="tree-expand" type="button"
-          title="Expand every node — show each cell's content in the map"
-          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg>Expand all</button>
-        <button class="toggle sub" id="tree-collapse" type="button"
-          title="Collapse every node back to its title"
-          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg>Collapse all</button>
-      </span>
-      <span class="fgrp" id="tree-width-grp">
-        <button class="toggle" id="tree-width" type="button"
-          title="Cell width — cycles Small / Medium / Large (drag a cell's
- corner to size just that one)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 8h12.8"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/><path d="M11.8 5.4 14.4 8l-2.6 2.6"/></svg>Width: M</button>
-        <button class="toggle sub" id="tree-unhide" type="button" hidden
-          title="Bring back the nodes you hid with their eye"
-          >Unhide all</button>
-      </span>
-    </span><span class="abgrp-lab">Tree</span></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
@@ -3512,6 +3493,27 @@ window.MathJax = {
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <!-- TREE section: sits exactly where Filters sits in Document view,
+         because it plays the same role — it is what shapes WHAT YOU SEE
+         in this view. Only rendered while the tree is on. -->
+    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
+      <span class="fgrp" id="tree-fold-grp">
+        <button class="toggle" id="tree-expand" type="button"
+          title="Expand every node — show each cell's content in the map"
+          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg>Expand all</button>
+        <button class="toggle sub" id="tree-collapse" type="button"
+          title="Collapse every node back to its title"
+          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg>Collapse all</button>
+      </span>
+      <span class="fgrp" id="tree-width-grp">
+        <button class="toggle" id="tree-width" type="button"
+          title="Cell width — cycles Small / Medium / Large (drag a cell's
+ corner to size just that one)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 8h12.8"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/><path d="M11.8 5.4 14.4 8l-2.6 2.6"/></svg>Width: M</button>
+        <button class="toggle sub" id="tree-unhide" type="button" hidden
+          title="Bring back the nodes you hid with their eye"
+          >Unhide all</button>
+      </span>
+    </span><span class="abgrp-lab">Tree</span></span>
     <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller"

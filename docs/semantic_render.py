@@ -3564,6 +3564,8 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    not (a growing spacer would fill line 1 and force a wrap; an auto
    margin is applied after line breaking). ---- */
 #ab-size{margin-left:auto;}
+body.tree-mode #ab-tree{margin-left:auto;}
+body.tree-mode #ab-size{margin-left:0;}
 /* the Tree section takes the Filters slot while the tree is on */
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
@@ -16928,27 +16930,6 @@ _TEMPLATE = """<!doctype html>
         title="Open a notebook (.ipynb) from your computer or a
  URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
-    <!-- TREE section: sits exactly where Filters sits in Document view,
-         because it plays the same role — it is what shapes WHAT YOU SEE
-         in this view. Only rendered while the tree is on. -->
-    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
-      <span class="fgrp" id="tree-fold-grp">
-        <button class="toggle" id="tree-expand" type="button"
-          title="Expand every node — show each cell's content in the map"
-          ><i data-ic="expand"></i>Expand all</button>
-        <button class="toggle sub" id="tree-collapse" type="button"
-          title="Collapse every node back to its title"
-          ><i data-ic="collapse"></i>Collapse all</button>
-      </span>
-      <span class="fgrp" id="tree-width-grp">
-        <button class="toggle" id="tree-width" type="button"
-          title="Cell width — cycles Small / Medium / Large (drag a cell's
- corner to size just that one)"><i data-ic="width"></i>Width: M</button>
-        <button class="toggle sub" id="tree-unhide" type="button" hidden
-          title="Bring back the nodes you hid with their eye"
-          ><i data-ic="eye"></i>Unhide all</button>
-      </span>
-    </span><span class="abgrp-lab">Tree</span></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
@@ -17001,6 +16982,27 @@ _TEMPLATE = """<!doctype html>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <!-- TREE section: sits exactly where Filters sits in Document view,
+         because it plays the same role — it is what shapes WHAT YOU SEE
+         in this view. Only rendered while the tree is on. -->
+    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
+      <span class="fgrp" id="tree-fold-grp">
+        <button class="toggle" id="tree-expand" type="button"
+          title="Expand every node — show each cell's content in the map"
+          ><i data-ic="expand"></i>Expand all</button>
+        <button class="toggle sub" id="tree-collapse" type="button"
+          title="Collapse every node back to its title"
+          ><i data-ic="collapse"></i>Collapse all</button>
+      </span>
+      <span class="fgrp" id="tree-width-grp">
+        <button class="toggle" id="tree-width" type="button"
+          title="Cell width — cycles Small / Medium / Large (drag a cell's
+ corner to size just that one)"><i data-ic="width"></i>Width: M</button>
+        <button class="toggle sub" id="tree-unhide" type="button" hidden
+          title="Bring back the nodes you hid with their eye"
+          ><i data-ic="eye"></i>Unhide all</button>
+      </span>
+    </span><span class="abgrp-lab">Tree</span></span>
     <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
         <button class="toggle fz-step" id="fig-smaller"
@@ -19281,6 +19283,10 @@ def _self_test() -> None:
     # tree view REMOVES the filter sections; Size/View/App are anchored to
     # the right by an auto margin so they do not slide into the hole
     assert "#ab-size{margin-left:auto;}" in out
+    # in tree view the right-hand block starts at the Tree section, so its
+    # controls sit WITH the others instead of marooned at the far left
+    assert "body.tree-mode #ab-tree{margin-left:auto;}" in out
+    assert "body.tree-mode #ab-size{margin-left:0;}" in out
     # the tree's own controls are ON THE RIBBON, in the Filters slot
     assert 'id="ab-tree"' in out and 'id="tree-expand"' in out
     assert 'id="tree-collapse"' in out and 'id="tree-width"' in out
