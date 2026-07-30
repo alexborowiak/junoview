@@ -183,6 +183,14 @@ _ICON_PATHS = {
     # custom views
     "style": '<path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/>'
              '<path d="m9.2 4 2.8 2.8"/>',
+    # tree-view controls: arrows OUT of a box = expand, INTO it = collapse,
+    # and a left-right measure = width
+    "expand": '<path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/>'
+              '<path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/>',
+    "collapse": '<path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/>'
+                '<path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/>',
+    "width": '<path d="M1.6 8h12.8"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/>'
+             '<path d="M11.8 5.4 14.4 8l-2.6 2.6"/>',
     # the three "+ New ..." rail buttons. Collapsed to icons they used to be
     # "+", a rectangle and a triple bar — three near-identical glyphs for
     # three different kinds of thing, so each now shows what it makes.
@@ -3462,6 +3470,11 @@ body.presrail-min{--presrail-w:46px;}
    sit underneath and read as a caption for whatever came next) */
 .abgrp{display:flex;flex-direction:column;align-items:stretch;gap:5px;
   flex:none;}
+/* the house rule again: an author `display:` beats the UA [hidden] rule,
+   so every base rule that sets display needs its own [hidden] override —
+   without this the tree-only section showed in Document view too and
+   pushed the whole bar onto a second row */
+.abgrp[hidden]{display:none!important;}
 .abgrp-row{display:flex;align-items:flex-start;gap:6px;flex:1;}
 /* + Open is one button in its own section, so it takes the full height */
 #ab-file .abgrp-row{align-items:stretch;}
@@ -3542,6 +3555,8 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    not (a growing spacer would fill line 1 and force a wrap; an auto
    margin is applied after line breaking). ---- */
 #ab-size{margin-left:auto;}
+/* the Tree section takes the Filters slot while the tree is on */
+body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
 body.tree-mode .appbar-div.filt-div,
 body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
@@ -4367,8 +4382,12 @@ body:not(.light) .welcome-links a{color:#5fc3d8;}
 .nbshell.tree .treeview{display:block;}
 /* sticks BELOW the chrome, never under it: --chrome-h is the measured
    height of the real header, so this tracks a one- or two-row ribbon */
-.tree-toolbar{position:sticky;top:calc(var(--chrome-h) + 6px);z-index:3;
-  display:flex;flex-wrap:wrap;
+/* every control moved onto the ribbon (2026-07-30), so the floating bar
+   itself is gone — nothing hovers over the canvas or hides under the
+   chrome any more. The rule is kept for the title/hidden-note styling. */
+.tree-toolbar{display:none;
+  position:sticky;top:calc(var(--chrome-h) + 6px);z-index:3;
+  flex-wrap:wrap;
   align-items:center;gap:8px;padding:8px 2px 12px;margin-bottom:6px;
   background:linear-gradient(var(--paper-2) 72%,transparent);}
 .tree-toolbar .tt-title{font-family:var(--mono);font-size:10px;
@@ -4409,6 +4428,8 @@ body:not(.light) .welcome-links a{color:#5fc3d8;}
 .tree-canvas.tw-l .tree-node.expanded{width:min(540px,88vw);}
 .tree-canvas .tree-node.tn-off{width:auto;}
 .tree-node.active{border-color:var(--cyan);box-shadow:0 3px 14px #39a9c033;}
+.tree-node-head .tn-title{overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;min-width:0;}
 .tree-node-head{display:flex;align-items:center;gap:7px;padding:9px 9px 9px 11px;
   cursor:pointer;}
 .tn-dot{width:8px;height:8px;border-radius:50%;background:var(--nc);
@@ -5970,6 +5991,81 @@ _JS = r"""
       (parseFloat(cv.style.zoom||'1')||1)*100)+'%';
   }
   APP.treeZoomPct=applyTreeZoomLabel;
+  /* ---- the tree's own controls, on the RIBBON. They used to live in a
+     floating toolbar over the canvas, which the ribbon covered. Each acts
+     on whichever tree is in front (activeTreeHost), so there is one copy,
+     in one place, styled like every other ribbon button. ---- */
+  var TW_NAMES={'tw-s':'S','tw-m':'M','tw-l':'L'};
+  function treeCanvas(){
+    var h=activeTreeHost();
+    return h?h.querySelector('.tree-canvas'):null;
+  }
+  function syncTreeTools(){
+    var cv=treeCanvas(),host=activeTreeHost();
+    var wb=$('#tree-width');
+    if(wb&&cv){
+      var cur=['tw-s','tw-m','tw-l'].filter(function(c){
+        return cv.classList.contains(c);})[0]||'tw-m';
+      setBtnText(wb,'Width: '+TW_NAMES[cur]);
+    }
+    var ub=$('#tree-unhide');
+    if(ub) ub.hidden=!(host&&host.querySelector('.tree-node.tn-off'));
+  }
+  APP.syncTreeTools=syncTreeTools;
+  (function(){
+    var ex=$('#tree-expand'),co=$('#tree-collapse'),
+        wd=$('#tree-width'),un=$('#tree-unhide');
+    if(ex) ex.addEventListener('click',function(){
+      var host=activeTreeHost(); if(!host) return;
+      /* batch across frames — cloning every card at once janks a big
+         notebook; yield between chunks, relayout once at the end */
+      var els=$$('.tree-node',host).filter(function(el){
+        return !el.classList.contains('tn-off')
+          &&!el.classList.contains('expanded');});
+      var i=0,BATCH=6;
+      (function step(){
+        for(var end=Math.min(i+BATCH,els.length);i<end;i++){
+          els[i].classList.add('expanded');fillNode(els[i]);
+          /* "Expand all" means SHOW THE CODE, not merely open the node:
+             a card clone arrives with its code folded behind a "Show
+             code" toggle, so expanding left you looking at a title and a
+             chevron. Open every code block inside it too. */
+          $$('.codewrap',els[i]).forEach(function(cw){
+            cw.setAttribute('data-open','1');
+            var tg=cw.querySelector('.codetoggle');
+            if(tg) tg.setAttribute('aria-expanded','true');
+          });
+        }
+        if(i<els.length) requestAnimationFrame(step);
+        else relayoutTreeHost(host);
+      })();
+    });
+    if(co) co.addEventListener('click',function(){
+      var host=activeTreeHost(); if(!host) return;
+      $$('.tree-node.expanded',host).forEach(function(el){
+        el.classList.remove('expanded');});
+      relayoutTreeHost(host);
+    });
+    if(wd) wd.addEventListener('click',function(){
+      var host=activeTreeHost(),cv=treeCanvas(); if(!cv) return;
+      var order=['tw-m','tw-l','tw-s'];
+      var cur=order.filter(function(c){
+        return cv.classList.contains(c);})[0]||'tw-m';
+      var nx=order[(order.indexOf(cur)+1)%order.length];
+      order.forEach(function(c){cv.classList.remove(c);});
+      cv.classList.add(nx);
+      syncTreeTools();
+      relayoutTreeHost(host);
+    });
+    if(un) un.addEventListener('click',function(){
+      var host=activeTreeHost(); if(!host) return;
+      $$('.tree-node.tn-off',host).forEach(function(n){
+        n.classList.remove('tn-off');});
+      var cv=treeCanvas(); if(cv) cv.classList.remove('has-hidden');
+      syncTreeTools();
+      relayoutTreeHost(host);
+    });
+  })();
   /* the ribbon's size steppers, routed by view */
   APP.ribbonSizeStep=function(dir){
     var sh=APP.active&&APP.shells[APP.active];
@@ -16809,6 +16905,27 @@ _TEMPLATE = """<!doctype html>
         title="Open a notebook (.ipynb) from your computer or a
  URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
+    <!-- TREE section: sits exactly where Filters sits in Document view,
+         because it plays the same role — it is what shapes WHAT YOU SEE
+         in this view. Only rendered while the tree is on. -->
+    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
+      <span class="fgrp" id="tree-fold-grp">
+        <button class="toggle" id="tree-expand" type="button"
+          title="Expand every node — show each cell's content in the map"
+          ><i data-ic="expand"></i>Expand all</button>
+        <button class="toggle sub" id="tree-collapse" type="button"
+          title="Collapse every node back to its title"
+          ><i data-ic="collapse"></i>Collapse all</button>
+      </span>
+      <span class="fgrp" id="tree-width-grp">
+        <button class="toggle" id="tree-width" type="button"
+          title="Cell width — cycles Small / Medium / Large (drag a cell's
+ corner to size just that one)"><i data-ic="width"></i>Width: M</button>
+        <button class="toggle sub" id="tree-unhide" type="button" hidden
+          title="Bring back the nodes you hid with their eye"
+          ><i data-ic="eye"></i>Unhide all</button>
+      </span>
+    </span><span class="abgrp-lab">Tree</span></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
@@ -18422,11 +18539,12 @@ def _self_test() -> None:
     assert ".ckf-dot.pt-sw-bokeh" in out and ".ckf-dot.pt-sw-matplotlib" in out
     assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
     # file + 4 type filters + scope/reset + copy + figure & text size
-    # 7 vertical filter/scope groups + 2 horizontal size steppers (fgrp-h)
-    assert out.count('class="fgrp"') == 7
+    # 7 filter/scope groups + 2 tree-view groups (fold, width);
+    # the 2 size steppers carry fgrp-h and are counted separately
+    assert out.count('class="fgrp"') == 9
     assert out.count('class="fgrp fgrp-h"') == 2
     # the ribbon is organised into LABELLED sections
-    assert out.count('class="abgrp-lab"') == 6
+    assert out.count('class="abgrp-lab"') == 7   # + Tree (tree view only)
     assert 'class="abgrp" id="ab-filters"' in out
     # markdown/prose text scales with its own +/- control
     assert 'id="md-bigger"' in out and 'id="md-smaller"' in out
@@ -19137,6 +19255,16 @@ def _self_test() -> None:
     # tree view REMOVES the filter sections; Size/View/App are anchored to
     # the right by an auto margin so they do not slide into the hole
     assert "#ab-size{margin-left:auto;}" in out
+    # the tree's own controls are ON THE RIBBON, in the Filters slot
+    assert 'id="ab-tree"' in out and 'id="tree-expand"' in out
+    assert 'id="tree-collapse"' in out and 'id="tree-width"' in out
+    assert "body.tree-mode #ab-tree{display:flex!important;}" in out
+    assert ".abgrp[hidden]{display:none!important;}" in out
+    assert "APP.syncTreeTools=syncTreeTools;" in out
+    # Expand all opens the CODE too, not just the node
+    assert "cw.setAttribute('data-open','1');" in out
+    # ...and the floating toolbar it replaced is gone
+    assert ".tree-toolbar{display:none;" in out
     assert "document.body.classList.toggle('tree-mode',isTree);" in out
     assert out.count('class="appbar-div filt-div"') == 2
     assert "APP.ribbonSizeStep=function(dir)" in out
