@@ -54,28 +54,14 @@
   .tag2{font-size:12.5px!important;color:#7e93a4!important;
     max-width:640px;margin:0 0 4px;}
   .tag2 code{color:#39a9c0;}
-  .tour{margin-top:38px;display:grid;gap:40px;}
-  .tour-said{border-left:2px solid #2a7d90;padding-left:15px;}
-  .tour-said figcaption{padding-top:0;}
-  .tour figure{margin:0;}
-  .tour img{width:100%;height:auto;display:block;border-radius:10px;
-    border:1px solid #ffffff1f;background:#101c28;}
-  .tour figcaption{font-size:14px;line-height:1.65;color:#a8b8c6;
-    padding:11px 2px 0;max-width:760px;}
-  .tour figcaption b{display:block;color:#eef4f8;font-weight:700;
-    font-size:17px;line-height:1.35;margin-bottom:6px;}
-  /* slow-connection mode: the words are the pitch, so they stay — only
-     the multi-megabyte GIFs go (and they are never fetched at all: the
-     URL waits in data-src until the demos are switched on) */
-  .tour.lite img{display:none;}
-  .tour.lite figure{border-left:2px solid #16273a;padding-left:14px;}
-  .tour.lite figcaption{padding-top:0;}
-  .demo-toggle{margin:6px 0 0;background:none;border:1px solid #ffffff26;
-    color:#7e93a4;font:inherit;font-size:11.5px;padding:5px 11px;
-    border-radius:6px;cursor:pointer;}
-  .demo-toggle:hover{border-color:#39a9c0;color:#cdd9e3;}
-  .demo-note{font-size:11px!important;color:#5d7488!important;
-    margin:8px 0 0!important;}
+  /* the tip: one useful thing to know while the runtime starts */
+  .tip{margin-top:26px;display:flex;gap:11px;align-items:flex-start;
+    max-width:640px;border-left:2px solid #2a7d90;padding:2px 0 2px 14px;}
+  .tip[hidden]{display:none;}
+  .tip-k{font-size:9px;letter-spacing:.2em;text-transform:uppercase;
+    color:#39a9c0;padding-top:3px;flex:none;}
+  .tip-t{font-size:13px;line-height:1.65;color:#a8b8c6;}
+  .tip-t b{color:#eef4f8;font-weight:600;}
   @media (max-width:640px){.boot{padding:26px 14px 50px;}
     .tour{gap:24px;}}
 </style>
@@ -88,129 +74,48 @@
   same cells into slides or a poster.</p>
   <p class="tag2">Drop in an <code>.ipynb</code> you have already run.
   It stays on your computer &mdash; nothing is uploaded.</p>
-  <button class="demo-toggle" id="demo-toggle" type="button"
-    aria-pressed="false">Loading demos&#8230;</button>
-  <p class="demo-note" id="demo-note"></p>
-  <p id="bootmsg">Loading the Python runtime (first visit only takes a
-  few seconds)&#8230;</p>
+  <p id="bootmsg">Starting&#8230;</p>
   <div class="bar"><i></i></div>
-  <!-- the tour runs while Pyodide downloads: simplest first, the
-       presentation builder last. Only the first is eager; the rest are
-       lazy so the loader is never competing with 22 MB of GIFs. -->
-  <div class="tour">
-    <figure>
-      <img data-src="gifs/code_folding.gif" alt="Folding code away"
-        width="900" height="500">
-      <figcaption><b>Hide the code &mdash; see just the results</b>
-      Every cell's code folds away behind one click. The figure stays,
-      the wall of code doesn't.</figcaption>
-    </figure>
-    <figure>
-      <img data-src="gifs/code_types.gif" alt="Filtering by code type"
-        loading="lazy" width="900" height="500">
-      <figcaption><b>Filter your notebook &mdash; show only the cells you
-      want</b> Junoview tells imports from plotting from prints, so you
-      can switch off the housekeeping and keep the science.</figcaption>
-    </figure>
-    <figure>
-      <img data-src="gifs/remove_what_you_dont_want.gif"
-        alt="Hiding cells and sections" loading="lazy"
-        width="900" height="500">
-      <figcaption><b>Get rid of what you don't need</b> Hide any cell,
-      any heading, any whole section &mdash; and set it differently for
-      each section. Nothing is deleted: one click brings it back.</figcaption>
-    </figure>
-    <figure>
-      <img data-src="gifs/make_figure_and_text_bigger_and_present_them.gif"
-        alt="Resizing figures and text" loading="lazy"
-        width="900" height="500">
-      <figcaption><b>Make it big enough to read</b> Grow the figures and
-      the text &mdash; one plot, or the whole document &mdash; then go
-      full screen and talk to it.</figcaption>
-    </figure>
-    <figure>
-      <img data-src="gifs/plot_trace.gif" alt="Tracing a plot to its source"
-        loading="lazy" width="900" height="500">
-      <figcaption><b>Ask any plot where it came from</b> Plot trace opens
-      the exact chain of cells that made it, in its own tab.</figcaption>
-    </figure>
-    <figure>
-      <img data-src="gifs/tree_view.gif" alt="The analysis as a dependency map"
-        loading="lazy" width="900" height="500">
-      <figcaption><b>See the whole analysis at once</b> Tree view draws
-      your notebook as a map of what depends on what, colour-coded by
-      kind.</figcaption>
-    </figure>
-    <figure>
-      <img data-src="gifs/create_presentation.gif" alt="Building a slide deck"
-        loading="lazy" width="900" height="500">
-      <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag your
-      figures onto slides, arrange them, present.</figcaption>
-    </figure>
-    <!-- no GIF: it is the promise the whole thing rests on, and it reads
-         better as a plain statement than as another animation -->
-    <figure class="tour-said">
-      <figcaption><b>Re-run the notebook and the slides catch up</b>
-      Your figures stay linked to the cells that made them, so when you
-      update your notebook it updates straight away in the presentation
-      &mdash; no re-exporting, no re-pasting screenshots.</figcaption>
-    </figure>
+  <!-- a different tip each visit: the wait is short, so this is a thing
+       worth knowing rather than an apology for a delay -->
+  <div class="tip" id="tip" hidden>
+    <span class="tip-k">Tip</span>
+    <span class="tip-t" id="tip-t"></span>
   </div>
 </div>
 <script>
-/* ---- slow-connection mode -------------------------------------------
-   The demo GIFs are ~22 MB. Their URLs sit in data-src and are only
-   promoted to src when demos are ON, so switching them off costs zero
-   bytes rather than downloading and hiding them. Off by default when the
-   browser says the connection is poor, the user has Data Saver on, or
-   they have asked for reduced motion — and their explicit choice, once
-   made, beats all of that and is remembered.                        --- */
 (function(){
-  var KEY='junoview:demos';
-  var tour=document.querySelector('.tour');
-  var btn=document.getElementById('demo-toggle');
-  var note=document.getElementById('demo-note');
-  if(!tour||!btn) return;
-  var conn=navigator.connection||navigator.mozConnection
-    ||navigator.webkitConnection||{};
-  var slow=!!conn.saveData
-    ||/(^|-)(slow-)?2g$/.test(String(conn.effectiveType||''))
-    ||String(conn.effectiveType||'')==='3g';
-  var reduce=window.matchMedia
-    &&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var saved=null;
-  try{saved=localStorage.getItem(KEY);}catch(e){}
-  var on=saved===null?!(slow||reduce):saved==='1';
-  function why(){
-    if(saved!==null) return '';
-    if(conn.saveData) return 'Data Saver is on, so the demos start off.';
-    if(slow) return 'Your connection looks slow, so the demos start off.';
-    if(reduce) return 'You have asked for reduced motion, so the demos '
-      +'start off.';
-    return '';
+  var TIPS=[
+    'Press <b>Code: Off</b> to strip a notebook down to its figures, then '
+      +'<b>Present</b> to show it full screen.',
+    'The <b>Types</b> button under each filter is finer-grained: keep the '
+      +'plotting code, drop the imports.',
+    '<b>Apply to</b> sets filters per section &mdash; show the code in '
+      +'Methods and hide it everywhere else.',
+    'Click <b>Plot trace</b> on any figure to see the exact chain of cells '
+      +'that produced it.',
+    '<b>Tree</b> lays the whole notebook out as a dependency map, so you '
+      +'can see what feeds what.',
+    'The eye on a cell, heading or section hides it. Nothing is deleted, '
+      +'and <b>Show all hidden</b> in the sidebar brings it back.',
+    'A <b>custom view</b> saves your filters and restyles the markdown &mdash; '
+      +'a reusable way to look at the same notebook.',
+    'Drag a figure onto a slide, then re-run the notebook: the slide '
+      +'follows. No re-exporting screenshots.',
+    '<b>+ New poster</b> gives you an A0 page with a conference-poster '
+      +'template already applied.',
+    'Everything runs in your browser. Your notebooks never leave your '
+      +'computer.',
+    'Opened from a GitHub URL? <b>File info</b> shows the commit, and you '
+      +'can open any earlier version of the notebook.',
+    'The <b>Text</b> and <b>Figures</b> steppers scale prose and plots '
+      +'separately &mdash; handy on a projector.'
+  ];
+  var el=document.getElementById('tip-t'),box=document.getElementById('tip');
+  if(el&&box){
+    el.innerHTML=TIPS[Math.floor(Math.random()*TIPS.length)];
+    box.hidden=false;
   }
-  function apply(){
-    tour.classList.toggle('lite',!on);
-    btn.setAttribute('aria-pressed',on?'true':'false');
-    btn.textContent=on
-      ?'Hide the demos (saves ~22 MB)'
-      :'Show the demos (~22 MB of animations)';
-    if(note) note.textContent=on?'':(why()
-      ||'Demos are off — the descriptions below still explain each one.');
-    if(on){
-      /* promote data-src -> src once; the browser then fetches them */
-      [].forEach.call(tour.querySelectorAll('img[data-src]'),function(im){
-        im.src=im.getAttribute('data-src');
-        im.removeAttribute('data-src');
-      });
-    }
-  }
-  btn.addEventListener('click',function(){
-    on=!on;saved=on?'1':'0';
-    try{localStorage.setItem(KEY,saved);}catch(e){}
-    apply();
-  });
-  apply();
 })();
 </script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>

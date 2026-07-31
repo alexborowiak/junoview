@@ -3439,7 +3439,7 @@ body.presrail-min{--presrail-w:46px;}
    button slid 15px sideways, which is precisely the "buttons move when I
    change view" complaint. Left-aligned, a button's position depends only
    on what is before it (2026-07-30). */
-.appbar{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;
+.appbar{display:flex;align-items:stretch;gap:5px;flex-wrap:wrap;
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
@@ -3450,7 +3450,7 @@ body.presrail-min{--presrail-w:46px;}
    than the buttons they hang under (2026-07-29) */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
-  padding:0 10px;line-height:1;font-size:12px;gap:6px;}
+  padding:0 9px;line-height:1;font-size:12px;gap:6px;}
 /* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
    font). One 16-grid, stroke-only, currentColor — so an icon is always
    the same weight as the label beside it and follows the theme. ---- */
@@ -3458,9 +3458,13 @@ body.presrail-min{--presrail-w:46px;}
   stroke:currentColor;stroke-width:1.5;fill:none;
   stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
 .toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
-/* an icon-only button is square, not a wide slab with a dot in it */
+/* An icon-only button is SQUARE and never shrinks. `padding:0` alone gave
+   it no floor, so the moment the bar ran short of room these were being
+   squeezed to 9px — narrower than the icon inside them — and the App
+   group read as a row of slivers (2026-07-31). */
 .appbar .toggle.fz-step,.present-bar .toggle.fz-step,
-#theme-btn,#support-btn{padding:0;justify-content:center;}
+#theme-btn,#support-btn{padding:0;justify-content:center;
+  width:34px;min-width:34px;flex:none;}
 .btxt{display:inline-block;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
@@ -3498,9 +3502,13 @@ body.presrail-min{--presrail-w:46px;}
    under it, so it spans both rows beside the Raw/Tree stack */
 #ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
 #ab-view #doc-present{height:auto;min-height:34px;}
-/* an icon-only button is square, never a wide slab around a small glyph */
-#pt-filter-btn,#ck-filter-btn,#ot-filter-btn,#help-btn{padding:0 11px;
-  justify-content:center;}
+/* the type pickers and Help are icon-only too — same floor, same square */
+#pt-filter-btn,#ck-filter-btn,#ot-filter-btn,#help-btn{padding:0;
+  justify-content:center;width:34px;min-width:34px;flex:none;}
+#ab-app .btn-grp{flex:none;gap:5px;}
+#ab-app .btn-grp>*{flex:none;}
+/* Present spans two rows: centre its content in the taller box */
+#ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
 .abgrp-row.abgrp-stack{flex-direction:column;align-items:stretch;gap:5px;}
 .abgrp-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -3580,7 +3588,7 @@ body.tree-mode #copy-grp{display:none!important;}
    itself and a wider word would shove Present sideways — the same fixed
    slot the filter state words use, for the same reason (2026-07-30) */
 .vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
-  min-width:124px;}
+  min-width:106px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
 .appbar-div{flex:none;width:1px;height:82px;background:#ffffff38;
   margin:1px 0 0;border-radius:1px;}
@@ -3807,8 +3815,14 @@ body.creating-docs .apptop{
   flex-direction:column;justify-content:center;padding:24px 0;}
 .welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
+/* wide enough for the demo reel; the numbered steps keep their own narrow
+   measure below. The reel used to break OUT of this 560px column using a
+   VIEWPORT-relative width — on a page inset by the rail that overflowed
+   to the left and slid under the fixed rail, which is what clipped
+   "Hide the code" to "ide the code" (2026-07-31). */
 .welcome-more{padding:36px 0 10px;border-top:1px solid var(--line);
-  max-width:560px;margin:0 auto;}
+  max-width:900px;margin:0 auto;}
+.welcome-steps{max-width:560px;margin-left:auto;margin-right:auto;}
 /* big centered hero logo, then the wordmark below it */
 .welcome-hero{display:flex;justify-content:center;margin-bottom:4px;}
 .welcome-hero .jv-logo{width:clamp(88px,15vw,132px);height:auto;
@@ -3835,7 +3849,7 @@ body.creating-docs .apptop{
 /* the demos are the point of this section, so they get the width: the
    welcome box is narrow, the reel breaks out of it */
 .wtour{margin-top:30px;display:grid;gap:40px;text-align:left;
-  width:min(1180px,92vw);margin-left:50%;transform:translateX(-50%);}
+  width:100%;max-width:880px;margin-left:auto;margin-right:auto;}
 .wtour[hidden]{display:none!important;}
 .wtour-head{display:flex;align-items:center;gap:12px;}
 .wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
@@ -3847,11 +3861,21 @@ body.creating-docs .apptop{
 .wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
 /* the text-only card: it has no image to carry it, so it gets the rule */
 .wtour-said{border-left:2px solid var(--cyan-deep);padding-left:15px;}
+/* one real quote, from a real person, with what they actually said */
+.wquote{margin:44px auto 0;max-width:560px;text-align:center;
+  padding:24px 22px;border:1px solid var(--line);border-radius:12px;
+  background:var(--paper-2);}
+.wq-stars{color:#e0a33a;font-size:15px;letter-spacing:3px;}
+.wquote blockquote{margin:11px 0 14px;font-family:var(--serif);
+  font-size:18px;line-height:1.5;color:var(--ink);}
+.wquote figcaption{font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);display:flex;flex-direction:column;gap:3px;}
+.wquote figcaption span{font-size:10px;opacity:.8;}
 .wtour-said figcaption{padding-top:0;}
-.wtour figcaption{font-size:14px;line-height:1.65;color:var(--ink-2);
-  padding:11px 2px 0;}
+.wtour figcaption{font-size:15.5px;line-height:1.7;color:var(--ink-2);
+  padding:13px 2px 0;}
 .wtour figcaption b{display:block;color:var(--ink);font-weight:700;
-  font-size:17px;line-height:1.35;margin-bottom:6px;}
+  font-size:19px;line-height:1.35;margin-bottom:7px;}
 .welcome-steps li{display:flex;align-items:flex-start;gap:15px;
   font-size:16.5px;line-height:1.5;color:var(--ink-2);}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:#39a9c018;
@@ -4381,7 +4405,7 @@ body:not(.light) /* the welcome-screen demo reel */
 /* the demos are the point of this section, so they get the width: the
    welcome box is narrow, the reel breaks out of it */
 .wtour{margin-top:30px;display:grid;gap:40px;text-align:left;
-  width:min(1180px,92vw);margin-left:50%;transform:translateX(-50%);}
+  width:100%;max-width:880px;margin-left:auto;margin-right:auto;}
 .wtour[hidden]{display:none!important;}
 .wtour-head{display:flex;align-items:center;gap:12px;}
 .wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
@@ -4393,11 +4417,21 @@ body:not(.light) /* the welcome-screen demo reel */
 .wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
 /* the text-only card: it has no image to carry it, so it gets the rule */
 .wtour-said{border-left:2px solid var(--cyan-deep);padding-left:15px;}
+/* one real quote, from a real person, with what they actually said */
+.wquote{margin:44px auto 0;max-width:560px;text-align:center;
+  padding:24px 22px;border:1px solid var(--line);border-radius:12px;
+  background:var(--paper-2);}
+.wq-stars{color:#e0a33a;font-size:15px;letter-spacing:3px;}
+.wquote blockquote{margin:11px 0 14px;font-family:var(--serif);
+  font-size:18px;line-height:1.5;color:var(--ink);}
+.wquote figcaption{font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);display:flex;flex-direction:column;gap:3px;}
+.wquote figcaption span{font-size:10px;opacity:.8;}
 .wtour-said figcaption{padding-top:0;}
-.wtour figcaption{font-size:14px;line-height:1.65;color:var(--ink-2);
-  padding:11px 2px 0;}
+.wtour figcaption{font-size:15.5px;line-height:1.7;color:var(--ink-2);
+  padding:13px 2px 0;}
 .wtour figcaption b{display:block;color:var(--ink);font-weight:700;
-  font-size:17px;line-height:1.35;margin-bottom:6px;}
+  font-size:19px;line-height:1.35;margin-bottom:7px;}
 .welcome-steps li{color:#b3c2ce;}
 body:not(.light) .ws-n{background:#39a9c026;color:#8fe0f0;}
 body:not(.light) .welcome-drop{color:#7e93a4;}
@@ -17383,6 +17417,13 @@ _TEMPLATE = """<!doctype html>
           screenshots.</figcaption>
         </figure>
       </div>
+      <figure class="wquote">
+        <div class="wq-stars" aria-label="5 out of 5">
+          &#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <blockquote>Its v cool. I'll legit use it for supervisory
+          meetings.</blockquote>
+        <figcaption>Alanah Chapman<span>PhD Candidate</span></figcaption>
+      </figure>
     </div>
   </div>
 </div>
@@ -18486,9 +18527,16 @@ def _self_test() -> None:
     assert out.count('<img data-src="gifs/') == 7
     # the promise the product rests on, stated in words (no GIF for it)
     assert 'class="wtour-said"' in out
+    assert 'class="wquote"' in out and 'Alanah Chapman' in out
+    assert out.count('&#9733;') == 5   # a five-star rating, five stars
     # the reel breaks out of the 560px welcome column or the demos are
     # unreadable thumbnails
-    assert "width:min(1180px,92vw);margin-left:50%;transform:translateX(-50%)" in out
+    # the reel sits INSIDE its container: a viewport-relative width on a
+    # rail-inset column overflowed left, under the fixed rail
+    assert "width:100%;max-width:880px;margin-left:auto;margin-right:auto;}" in out
+    # the reel is sized by its CONTAINER, never the viewport: a vw width
+    # inside a rail-inset column overflows left, under the fixed rail
+    assert ".wtour{margin-top:30px;display:grid;gap:40px;text-align:left;\n  width:100%;max-width:880px;" in out
     assert 'it updates straight away in the' in out
     assert "<img src=\"gifs/" not in out          # never fetched eagerly
     assert ".wtour.lite img{display:none;}" in out
@@ -18778,7 +18826,7 @@ def _self_test() -> None:
     assert "--appbar-h:104px" in out and "--chrome-h:112px" in out
     # the ribbon WRAPS and the page offset follows its real height, so a
     # control can never end up off the right-hand edge behind a scrollbar
-    assert ".appbar{display:flex;align-items:stretch;gap:6px;" \
+    assert ".appbar{display:flex;align-items:stretch;gap:5px;" \
         "flex-wrap:wrap;" in out
     # left-aligned, NOT centred: centring re-centres on any viewport
     # width change, so every button slid when the scrollbar came and went
@@ -19471,6 +19519,10 @@ def _self_test() -> None:
     assert "function syncTreeRibbon" in out
     # tree view REMOVES the filter sections; Size/View/App are anchored to
     # the right by an auto margin so they do not slide into the hole
+    # icon-only buttons need a WIDTH floor, not just padding:0 — with
+    # nothing to stop them they were squeezed to 9px in a tight bar
+    assert "width:34px;min-width:34px;flex:none;" in out
+    assert "#ab-app .btn-grp>*{flex:none;}" in out
     assert "#ab-size{margin-left:auto;}" in out
     # in tree view the right-hand block starts at the Tree section, so its
     # controls sit WITH the others instead of marooned at the far left
@@ -19501,7 +19553,7 @@ def _self_test() -> None:
     assert "scrollbar-gutter:stable" in out
     # the View stack is a FIXED slot: the Tree button renames itself to
     # "Document" and a wider word would shove Present sideways
-    assert ".vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;\n  min-width:124px;}" in out
+    assert ".vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;\n  min-width:106px;}" in out
     assert ">Match document</button>" in out
     # it is a REVEAL toggle, not a reset: nothing about what is hidden
     # changes, so one more click puts it all back
