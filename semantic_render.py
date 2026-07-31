@@ -3880,8 +3880,12 @@ body.creating-docs .apptop{
   padding:0 2px 13px;}
 /* dark mode sets text colour explicitly, so the reel needs its own pair
    or the captions fall back to a washed-out grey that is hard to read */
-body:not(.light) .wtour figcaption{color:#c3cfda;}
-body:not(.light) .wtour figcaption b{color:#f2f7fb;}
+/* white, explicitly, not through a variable: every var-based colour here
+   landed too close to the welcome panel's own background to read */
+body:not(.light) .wtour figcaption{color:#dbe6ef;}
+body:not(.light) .wtour figcaption b{color:#fff;}
+body.light .wtour figcaption{color:#33414f;}
+body.light .wtour figcaption b{color:#0f1b28;}
 body:not(.light) .wquote blockquote{color:#eef4f8;}
 .wtour figcaption b{display:block;color:var(--ink);font-weight:700;
   font-size:19px;line-height:1.35;margin-bottom:7px;}
@@ -4445,8 +4449,12 @@ body:not(.light) /* the welcome-screen demo reel */
   padding:0 2px 13px;}
 /* dark mode sets text colour explicitly, so the reel needs its own pair
    or the captions fall back to a washed-out grey that is hard to read */
-body:not(.light) .wtour figcaption{color:#c3cfda;}
-body:not(.light) .wtour figcaption b{color:#f2f7fb;}
+/* white, explicitly, not through a variable: every var-based colour here
+   landed too close to the welcome panel's own background to read */
+body:not(.light) .wtour figcaption{color:#dbe6ef;}
+body:not(.light) .wtour figcaption b{color:#fff;}
+body.light .wtour figcaption{color:#33414f;}
+body.light .wtour figcaption b{color:#0f1b28;}
 body:not(.light) .wquote blockquote{color:#eef4f8;}
 .wtour figcaption b{display:block;color:var(--ink);font-weight:700;
   font-size:19px;line-height:1.35;margin-bottom:7px;}
@@ -18554,7 +18562,8 @@ def _self_test() -> None:
     assert "width:100%;max-width:880px;margin-left:auto;margin-right:auto;}" in out
     # caption ABOVE its clip, and readable in the default dark theme
     assert ".wtour figcaption{order:-1;}" in out
-    assert "body:not(.light) .wtour figcaption b{color:#f2f7fb;}" in out
+    assert "body:not(.light) .wtour figcaption b{color:#fff;}" in out
+    assert "body.light .wtour figcaption b{color:#0f1b28;}" in out
     # the reel is sized by its CONTAINER, never the viewport: a vw width
     # inside a rail-inset column overflows left, under the fixed rail
     assert ".wtour{margin-top:30px;display:grid;gap:40px;text-align:left;\n  width:100%;max-width:880px;" in out
