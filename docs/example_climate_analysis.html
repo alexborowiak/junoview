@@ -1043,9 +1043,17 @@ body.presrail-min{--presrail-w:46px;}
    under it, so it spans both rows beside the Raw/Tree stack */
 #ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
 #ab-view #doc-present{height:auto;min-height:34px;}
-/* the type pickers and Help are icon-only too — same floor, same square */
-#pt-filter-btn,#ck-filter-btn,#ot-filter-btn,#help-btn{padding:0;
-  justify-content:center;width:34px;min-width:34px;flex:none;}
+/* Help is icon-only and stands alone, so it stays a square */
+#help-btn{padding:0;justify-content:center;width:34px;min-width:34px;
+  flex:none;}
+/* The type pickers are NOT standalone: each sits directly under the filter
+   it refines and takes that filter's width. A narrow square under a wide
+   button reads as a separate control that happens to be nearby, instead of
+   as that filter's own "advanced" affordance — and it left the row of
+   groups with a ragged bottom edge. Width comes from the column
+   (align-items:stretch), so there is nothing to keep in sync by hand. */
+#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{padding:0;
+  justify-content:center;width:100%;flex:none;}
 #ab-app .btn-grp{flex:none;gap:5px;}
 #ab-app .btn-grp>*{flex:none;}
 /* Present spans two rows: centre its content in the taller box */
@@ -1329,6 +1337,12 @@ body.presrail-min .pr-item.infolder{padding-left:0;}
 
 .nbshell[hidden]{display:none;}
 body{padding-top:var(--chrome-h);padding-left:var(--presrail-w);}
+/* nothing open: the welcome screen is the whole window. The ribbon only
+   acts on a document, and Open lives on the welcome screen too, so the bar
+   would be a row of dead controls. --chrome-h is measured from the real
+   header and stays at its last value while hidden, hence padding-top:0. */
+body.welcoming .apptop{display:none;}
+body.welcoming{padding-top:0;}
 .apptop{left:var(--presrail-w);}
 .welcome{left:var(--presrail-w);}
 .rail{top:var(--chrome-h);height:calc(100vh - var(--chrome-h));}
@@ -2180,6 +2194,11 @@ body.doc-presenting .nbshell .rail{display:none;}
 /* the sidebar can slide back IN while presenting (⚌ Sections) */
 body.doc-presenting.present-rail .nbshell .rail{display:block;
   position:fixed;left:0;top:0;bottom:0;width:290px;z-index:84;
+  /* height:auto matters. The docked rail is sized `100vh - --chrome-h` so
+     it clears the app ribbon; presenting hides that ribbon and pins the
+     rail top:0/bottom:0, but an explicit height beats `bottom`, so the
+     rail kept stopping one ribbon-height short of the floor. */
+  height:auto;
   overflow-y:auto;background:var(--chrome);
   border-right:1px solid var(--chrome-line);}
 body.doc-presenting.present-rail .content{margin-left:290px;}
@@ -2208,11 +2227,23 @@ body.pbpos-top .present-bar{top:0;left:0;right:0;
    so each wrapped INSIDE itself — the bar grew to three ragged rows while
    still having room to spare. With their boxes removed, the sections and
    the bar's own buttons share ONE wrapping flow, exactly like .appbar. */
-body.pbpos-top .present-bar{align-items:stretch;flex-wrap:wrap;gap:6px;}
+body.pbpos-top .present-bar{align-items:stretch;flex-wrap:wrap;gap:6px;
+  /* keeps the wrap flow clear of the pinned Exit / fold corner; the real
+     width is measured in measurePb(), this is the pre-measurement guess */
+  padding-right:var(--pb-corner,232px);}
 body.pbpos-top .pb-tools,body.pbpos-top .pb-own{display:contents;}
-/* an auto margin on the first of its own buttons right-aligns the group
+/* Outline sits at the LEFT edge, because the outline it opens is down the
+   left: a control that lives at the opposite end of the bar from the thing
+   it moves reads as belonging to something else. */
+body.pbpos-top .pb-own #pb-rail{order:-1;margin-right:6px;}
+/* an auto margin on the first of the REMAINING buttons right-aligns them
    without a growing spacer (a spacer would fill line 1 and force a wrap) */
-body.pbpos-top .pb-own #pb-rail{margin-left:auto;}
+body.pbpos-top .pb-own #pb-move{margin-left:auto;}
+/* never shrink these below their labels. They are flex items of the bar
+   (their wrapper is display:contents), so without this they were squeezed
+   narrower than their text and "Outline", "Exit presentation" and
+   "Auto-hide" overprinted each other in the top-right corner. */
+body.pbpos-top .pb-own .toggle{flex:none;}
 body.pbpos-right .pb-tools,body.pbpos-right .pb-own{display:contents;}
 body.pbpos-top .present-bar .pb-collapse{margin-left:6px;}
 body.doc-presenting.pbpos-top .docs{top:var(--pbh,64px);}
@@ -7601,7 +7632,12 @@ through Ko-fi. Thank you.</p>
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
     var wel=$('#welcome');
-    if(wel) wel.hidden=!(canOpen&&!APP.order.length);
+    var welcoming=canOpen&&!APP.order.length;
+    if(wel) wel.hidden=!welcoming;
+    /* With nothing open there is nothing for the ribbon to act on: every
+       filter, size and view control is inert, and Open is already on the
+       welcome screen itself. Hiding it lets the welcome own the window. */
+    document.body.classList.toggle('welcoming',welcoming);
     var demo=$('#welcome-demo');
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
@@ -9478,8 +9514,18 @@ through Ko-fi. Thank you.</p>
       var bar=$('#present-bar');
       if(!bar||bar.hidden) return;
       var r=bar.getBoundingClientRect();
-      if(pbDock==='top')
+      if(pbDock==='top'){
         document.body.style.setProperty('--pbh',Math.ceil(r.height)+'px');
+        /* Exit and the fold button are PINNED to the top-right corner, out
+           of the wrap flow, so that a narrow window can never push the way
+           out onto a second row. Being out of flow, they reserve no space:
+           measure what they occupy and pad the bar by it, or the buttons
+           that did stay in the flow render underneath them. */
+        var ex=$('#pb-exit');
+        document.body.style.setProperty('--pb-corner', ex
+          ? Math.ceil(window.innerWidth-ex.getBoundingClientRect().left)+10+'px'
+          : '60px');
+      }
       else
         document.body.style.setProperty('--pbw',Math.ceil(r.width)+'px');
     }

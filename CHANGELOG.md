@@ -68,7 +68,33 @@ zip.
   `make_widget_demo.py`; neither has ever been in the repository. The example
   notebooks they claimed to generate are committed and ship already executed.
 
-### Fixed
+### Fixed — interface
+
+All five predate the package split. The rendered HTML was verified byte-identical
+to the old single-file renderer, so these were latent all along rather than
+introduced by the move.
+
+- **The outline rail stopped short of the floor while presenting.** Docked, the
+  rail is sized `100vh - --chrome-h` to clear the app ribbon. Presenting hides
+  that ribbon and pins the rail `top:0;bottom:0` — but an explicit height beats
+  `bottom`, so the rail ended exactly one ribbon-height above the bottom.
+- **Outline sat at the far right of the present bar**, while the outline it
+  opens is down the left. It now sits at the left end, beside what it moves.
+- **The present bar's own buttons overprinted each other.** Exit and the fold
+  button are pinned to the top-right corner, deliberately out of the wrap flow
+  so a narrow window cannot push the way out onto a second row — but being out
+  of flow they reserved no space, so Auto-hide and the dock button rendered
+  underneath them. The bar now pads itself clear of that corner, measured from
+  the real button rather than hard-coded.
+- **The type-picker buttons were 34px squares** sitting under filter buttons
+  three to four times their width, which read as separate controls and left the
+  filter row ragged along the bottom. They now take the width of the filter they
+  refine. Help keeps its square: it stands alone.
+- **The ribbon showed on the welcome screen**, where every filter, size and view
+  control is inert and Open is already on the welcome screen itself. It is now
+  hidden until something is open.
+
+### Fixed — packaging and tooling
 
 - **`python -m build` could not build the package at all.** `pyproject.toml`
   carried both a PEP 639 `license = "Apache-2.0"` expression and the superseded

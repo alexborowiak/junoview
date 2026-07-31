@@ -87,3 +87,16 @@ def test_present_bar_shares_appbar_toggle_theming_and_sizing(out):
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
     assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:34px" in out
     assert ".tree-node.expanded{width:min(380px" in out
+
+
+def test_presenting_outline_rail_reaches_the_floor(out):
+    """The outline rail is full height while presenting.
+
+    Docked, the rail is sized `100vh - --chrome-h` so it clears the app
+    ribbon. Presenting hides that ribbon and pins the rail top:0/bottom:0 --
+    but an explicit height beats `bottom`, so without resetting it the rail
+    stopped exactly one ribbon-height short of the floor.
+    """
+    assert "body.doc-presenting.present-rail .nbshell .rail{display:block;" in out
+    assert "position:fixed;left:0;top:0;bottom:0;width:290px;z-index:84;" in out
+    assert "height:auto;" in out

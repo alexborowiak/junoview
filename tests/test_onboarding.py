@@ -121,3 +121,16 @@ def test_exported_page_names_the_generator(out):
     """
     assert '<meta name="generator" content="Junoview' in out
     assert "https://junoview.dev" in out
+
+
+def test_welcome_screen_hides_the_ribbon(out):
+    """With nothing open the welcome owns the window.
+
+    Every filter, size and view control acts on a document, so with none
+    open the ribbon is a row of dead controls -- and Open is already on the
+    welcome screen itself, twice (local files and URL).
+    """
+    assert "body.welcoming .apptop{display:none;}" in out
+    assert "body.welcoming{padding-top:0;}" in out
+    # driven from the same place that decides to show the welcome
+    assert "classList.toggle('welcoming',welcoming)" in out

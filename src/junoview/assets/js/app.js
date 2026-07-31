@@ -40,7 +40,12 @@
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
     var wel=$('#welcome');
-    if(wel) wel.hidden=!(canOpen&&!APP.order.length);
+    var welcoming=canOpen&&!APP.order.length;
+    if(wel) wel.hidden=!welcoming;
+    /* With nothing open there is nothing for the ribbon to act on: every
+       filter, size and view control is inert, and Open is already on the
+       welcome screen itself. Hiding it lets the welcome own the window. */
+    document.body.classList.toggle('welcoming',welcoming);
     var demo=$('#welcome-demo');
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
@@ -1917,8 +1922,18 @@
       var bar=$('#present-bar');
       if(!bar||bar.hidden) return;
       var r=bar.getBoundingClientRect();
-      if(pbDock==='top')
+      if(pbDock==='top'){
         document.body.style.setProperty('--pbh',Math.ceil(r.height)+'px');
+        /* Exit and the fold button are PINNED to the top-right corner, out
+           of the wrap flow, so that a narrow window can never push the way
+           out onto a second row. Being out of flow, they reserve no space:
+           measure what they occupy and pad the bar by it, or the buttons
+           that did stay in the flow render underneath them. */
+        var ex=$('#pb-exit');
+        document.body.style.setProperty('--pb-corner', ex
+          ? Math.ceil(window.innerWidth-ex.getBoundingClientRect().left)+10+'px'
+          : '60px');
+      }
       else
         document.body.style.setProperty('--pbw',Math.ceil(r.width)+'px');
     }

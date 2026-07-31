@@ -107,7 +107,17 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
     # flex items that each shrink and wrap inside themselves
     assert ("body.pbpos-top .pb-tools,body.pbpos-top .pb-own"
             "{display:contents;}" in out)
-    assert "body.pbpos-top .pb-own #pb-rail{margin-left:auto;}" in out
+    # Outline opens the rail down the LEFT, so it sits at the left end of
+    # the bar; the bar's own buttons right-align from the one after it.
+    assert "body.pbpos-top .pb-own #pb-rail{order:-1;margin-right:6px;}" in out
+    assert "body.pbpos-top .pb-own #pb-move{margin-left:auto;}" in out
+    # being flex items of the bar (their wrapper is display:contents) they
+    # were shrunk under their labels and overprinted one another
+    assert "body.pbpos-top .pb-own .toggle{flex:none;}" in out
+    # Exit and the fold button are pinned out of the flow, so the flow has
+    # to be padded clear of them or it renders underneath
+    assert "padding-right:var(--pb-corner,232px);}" in out
+    assert "'--pb-corner'" in out          # measured for real at runtime
 
 
 def test_top_left_declutter_puts_hamburger_on_the_tab_line(out):

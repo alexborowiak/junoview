@@ -231,3 +231,21 @@ def test_reveal_hidden_is_a_toggle_not_a_reset(out):
     ) in out
     assert "shell.classList.toggle('reveal-hidden')" in out
     assert "'Hide them again ('+n+')'" in out
+
+
+def test_type_picker_matches_the_width_of_its_filter(out):
+    """Each type picker spans the filter it sits under.
+
+    The pickers used to be 34px squares like the standalone Help button. A
+    narrow square under a wide button reads as a separate control that
+    happens to be nearby, rather than as that filter's own "advanced"
+    affordance -- and it left the row of filter groups ragged along the
+    bottom. Help keeps its square, because it stands alone.
+    """
+    assert ("#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{padding:0;\n"
+            "  justify-content:center;width:100%;flex:none;}" in out)
+    assert ("#help-btn{padding:0;justify-content:center;width:34px;"
+            "min-width:34px;\n  flex:none;}" in out)
+    # the width comes from the column, so there is nothing to keep in sync
+    assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
+           "align-items:stretch;" in out

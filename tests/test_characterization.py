@@ -27,14 +27,20 @@ from junoview.render.page import render_page
 EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
     / "example_climate_analysis.ipynb"
 
-# md5 of the rendered page as a string, recorded before the single-file module
-# was split into the junoview package, and unchanged since.
+# md5 of the rendered page as a string.
 #
 # Deliberately hashed in memory rather than after writing to disk: `write_text`
 # translates \n to \r\n on Windows, so the file's bytes -- and its hash -- differ
 # by platform while the render itself does not.
-EXPECTED_MD5 = "acb063d9a149173591bd127488ca6190"
-EXPECTED_BYTES = 1646507
+#
+# Changed once since the package split, for five UI fixes: the presenting
+# outline rail now reaches the floor, Outline moved to the left end of the
+# present bar beside the rail it opens, the bar's own buttons no longer
+# overprint the pinned Exit corner, the type-picker buttons match the width of
+# the filter they sit under, and the ribbon is hidden while the welcome screen
+# is up. Before those it matched the pre-split renderer exactly.
+EXPECTED_MD5 = "f83796c46990f19feb0acd892b0e0721"
+EXPECTED_BYTES = 1649310
 
 
 def _render_example() -> str:
