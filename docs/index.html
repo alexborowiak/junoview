@@ -45,18 +45,12 @@
   @keyframes sl{from{margin-left:0}to{margin-left:70%}}
   /* the tour: shown while Pyodide downloads, and it is the only "front
      page" this domain has — the app boots straight into index.html */
-  body{align-items:flex-start;}
-  .boot{max-width:1180px;padding:46px 24px 70px;text-align:left;}
-  .boot h1{font-size:15px;}
-  .tag{font-size:15px!important;line-height:1.6!important;
-    color:#cdd9e3!important;max-width:640px;margin:14px 0 20px;}
-  .tag b{color:#eef4f8;}
-  .tag2{font-size:12.5px!important;color:#7e93a4!important;
-    max-width:640px;margin:0 0 4px;}
-  .tag2 code{color:#39a9c0;}
+  .boot{max-width:520px;padding:30px;text-align:center;}
+  .boot h1{font-size:15px;margin:0 0 22px;}
+  #bootmsg{margin:0;font-size:11.5px;color:#5d7488;}
   /* the tip: one useful thing to know while the runtime starts */
-  .tip{margin-top:26px;display:flex;gap:11px;align-items:flex-start;
-    max-width:640px;border-left:2px solid #2a7d90;padding:2px 0 2px 14px;}
+  .tip{margin-top:30px;display:flex;gap:10px;align-items:flex-start;
+    text-align:left;padding:0;}
   .tip[hidden]{display:none;}
   .tip-k{font-size:9px;letter-spacing:.2em;text-transform:uppercase;
     color:#39a9c0;padding-top:3px;flex:none;}
@@ -69,11 +63,6 @@
 <body>
 <div class="boot" id="boot">
   <h1>Junoview</h1>
-  <p class="tag">Your notebook, without the clutter. <b>See the figures,
-  hide the code, keep only the cells you want</b> &mdash; then turn the
-  same cells into slides or a poster.</p>
-  <p class="tag2">Drop in an <code>.ipynb</code> you have already run.
-  It stays on your computer &mdash; nothing is uploaded.</p>
   <p id="bootmsg">Starting&#8230;</p>
   <div class="bar"><i></i></div>
   <!-- a different tip each visit: the wait is short, so this is a thing
