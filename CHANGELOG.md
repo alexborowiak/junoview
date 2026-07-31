@@ -37,6 +37,10 @@ python -m junoview nb.ipynb           # or this
 | `example_climate_analysis.ipynb` | `examples/` |
 | `semantic_app.bat` | `junoview.bat` |
 
+Because the example notebooks moved, a `junoview_project.json` written before
+this release has **Recent** entries pointing at the old locations. Reopen them
+from `examples/` and the list corrects itself.
+
 About three-quarters of the old file was CSS and JavaScript held in Python
 string literals. Those are now ordinary `.css` / `.js` / `.html` files, so they
 get syntax highlighting, linting and readable diffs. They are read through
@@ -76,6 +80,12 @@ zip.
   silently lost the reel. (Nothing appeared broken — the page probes for one
   GIF and hides the section if it 404s — it just never showed.) `build_web`
   now copies them when it can find them.
+- **`junoview.bat` could not launch anything.** The rewritten launcher called
+  `where junoview`, which finds the batch file itself and re-invokes it; it set
+  `PYTHONPATH` inside a parenthesised block, where the value is not visible to
+  the command beside it; and it called bare `python`, which on Windows usually
+  resolves to the Microsoft Store stub rather than an interpreter. It now finds
+  a real Python (overridable with `JUNOVIEW_PYTHON`) and never looks itself up.
 - **Syntax highlighting marked the wrong names as builtins.** The highlighter
   used `dir(__builtins__)`, which is the builtins module's names when run as a
   script but the module `__dict__`'s methods when imported. Highlighting was
