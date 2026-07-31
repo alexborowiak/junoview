@@ -1,0 +1,395 @@
+
+<div class="deck" id="deck" hidden>
+  <div class="deck-top">
+    <button class="dbtn" id="deck-docs"
+      title="Back to the document view">Docs</button>
+    <span class="deck-spring"></span>
+    <button class="dbtn" id="deck-exit"
+      title="Stop presenting and go back to the slide builder (Esc).
+ Nothing is closed or lost.">&#8617; Back</button>
+  </div>
+  <div class="deck-main">
+    <aside class="deck-create" id="deck-create" hidden>
+      <div class="dc-resize" id="dc-resize"
+        title="Drag to resize the builder panel"></div>
+      <div class="dc-head">
+        <div class="dc-menuwrap">
+          <button class="dbtn" id="dc-file" aria-haspopup="true"
+            aria-expanded="false">File &#9662;</button>
+          <div class="dc-menu" id="dc-menu" hidden>
+            <button class="dc-mi" id="mi-new">New presentation</button>
+            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
+            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
+            <button class="dc-mi" id="mi-autosave" hidden></button>
+            <button class="dc-mi" id="mi-pdf">Export PDF / print&#8230;</button>
+            <button class="dc-mi" id="mi-dl">Download a copy
+              (.junoview)</button>
+            <button class="dc-mi" id="mi-load">Open a .junoview
+              file&#8230;</button>
+            <button class="dc-mi" id="mi-discard">Discard changes</button>
+            <button class="dc-mi" id="mi-del">Delete presentation</button>
+          </div>
+        </div>
+        <button class="dbtn" id="dc-save">Save</button>
+        <span class="dc-menuwrap">
+          <button class="dbtn dc-target" id="dc-target" aria-haspopup="true"
+            aria-expanded="false"
+            title="Where this presentation is saved">
+            Saved to: Browser &#9662;</button>
+          <div class="dc-menu" id="target-menu" hidden>
+            <div class="dc-mhead">where this presentation is saved</div>
+            <button class="dc-mi" id="tg-project" hidden>This project</button>
+            <button class="dc-mi" id="tg-browser">This browser</button>
+            <button class="dc-mi" id="tg-file">A file on your
+              computer&#8230;</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="tg-pick" hidden>Choose a different
+              file&#8230;</button>
+          </div>
+        </span>
+        <button class="dbtn dc-icon" id="dc-undo" disabled
+          title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+        <button class="dbtn dc-icon" id="dc-redo" disabled
+          title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        <span class="dc-spring"></span>
+        <span class="deck-status" id="deck-status"></span>
+      </div>
+      <div class="dc-block dc-controls">
+        <div class="dc-presname" id="pres-current" hidden></div>
+        <input id="pres-name" type="text" placeholder="presentation name"
+          spellcheck="false" autocomplete="off" hidden>
+        <button class="dbtn" id="dc-edit"
+          title="Swap to the slide editor — add text, arrows and boxes">
+          &#9998; Swap to edit view</button>
+        <div class="lay-picker" id="layout-row"
+          aria-label="Slide layouts"></div>
+        <div class="title-editor" id="title-editor" hidden>
+          <input id="ts-title" type="text" placeholder="Slide title"
+            spellcheck="false" autocomplete="off">
+          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
+            spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+      <div class="dc-block dc-film">
+        <div class="film-list" id="film-list"></div>
+        <button class="dbtn addslide" id="film-add">+ Add slide</button>
+      </div>
+    </aside>
+    <div class="deck-stagewrap" id="deck-stagewrap">
+      <div class="edit-tools ribbon" id="edit-tools" hidden>
+        <div class="rbn-static">
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn primary" id="dc-play"
+                title="Play the presentation full screen (from this slide)">
+                &#9654; Present</button>
+            </span>
+            <span class="rbn-lab">Show</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <div class="dc-menuwrap">
+                <button class="dbtn" id="dc-nbs-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Notebooks that went into this presentation">&#128218;
+                  Open notebooks</button>
+                <div class="dc-menu dc-nbs-menu" id="dc-nbs-menu" hidden></div>
+              </div>
+            </span>
+            <span class="rbn-lab">Notebooks</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="sh-drop" id="lay-drop">
+                <button class="dbtn" id="lay-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Slide templates &mdash; apply a layout to this
+ slide">&#9638; Layouts &#9662;</button>
+                <div class="sh-menu lay-menu" id="lay-menu" hidden>
+                  <div class="lay-picker" id="layout-menu-grid"
+                    aria-label="Slide layouts"></div>
+                </div>
+              </span>
+              <span class="sh-drop" id="page-drop">
+                <button class="dbtn" id="page-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Page size &mdash; slides (16:9, 4:3) or a poster
+ (A4&ndash;A0, portrait or landscape)">&#9645; Page &#9662;</button>
+                <div class="sh-menu page-menu" id="page-menu" hidden></div>
+              </span>
+              <button class="dbtn etm" id="zoom-out"
+                title="Zoom out">&#8722;</button>
+              <button class="dbtn etm" id="zoom-val"
+                title="Zoom &mdash; click to fit the window">Fit</button>
+              <button class="dbtn etm" id="zoom-in"
+                title="Zoom in">+</button>
+              <button class="dbtn" id="objects-btn" aria-pressed="false"
+                title="Objects pane &mdash; list, hide and lock everything
+ on this slide">&#9776; Objects</button>
+            </span>
+            <span class="rbn-lab">Slide</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn et" data-tool="cell" aria-pressed="false"
+                title="Drop a notebook card onto the slide — you pick which
+ one from your notebook">&#43; Notebook cell</button>
+              <button class="dbtn et" data-tool="text" aria-pressed="false">
+                + Text</button>
+              <button class="dbtn et" data-tool="arrow"
+                aria-pressed="false">+ Arrow</button>
+              <span class="sh-drop" id="sh-drop">
+                <button class="dbtn" id="sh-btn" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Draw a shape (rectangle, ellipse, arrow, star, …)">
+                  + Shapes &#9662;</button>
+                <div class="sh-menu" id="sh-menu" hidden></div>
+              </span>
+              <button class="dbtn" id="et-image"
+                title="Add an image from your computer">&#128443; Image</button>
+              <input type="file" id="img-file" accept="image/*" hidden>
+            </span>
+            <span class="rbn-lab">Insert</span>
+          </span>
+        </div>
+        <span class="et-fmt" id="et-fmt" hidden>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-dup"
+                title="Duplicate (Ctrl+D)">&#10697;</button>
+              <button class="dbtn etm" id="fmt-group"
+                title="Group the selected items (Ctrl+G)">&#9783;
+                Group</button>
+              <button class="dbtn etm" id="fmt-ungroup"
+                title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
+              <button class="dbtn etm" id="fmt-front"
+                title="Bring to front">&#8613;</button>
+              <button class="dbtn etm" id="fmt-back"
+                title="Send to back">&#8615;</button>
+              <button class="dbtn etm" id="fmt-rotl"
+                title="Rotate left 15&#176;">&#10226;</button>
+              <button class="dbtn etm" id="fmt-rotr"
+                title="Rotate right 15&#176;">&#10227;</button>
+              <button class="dbtn etm" id="fmt-arline"
+                title="Arrange the selected items in a row: middles aligned, equal gaps"
+                >&#8943; Row</button>
+              <button class="dbtn etm" id="fmt-argrid"
+                title="Arrange the selected items in a grid">&#8862;
+                Grid</button>
+              <span class="sh-drop" id="fmt-samewrap" hidden>
+                <button class="dbtn etm" id="fmt-same" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Make the selected items the same size">&#9713;
+                  Same size &#9662;</button>
+                <div class="sh-menu same-menu" id="fmt-same-menu"
+                  hidden></div>
+              </span>
+            </span>
+            <span class="rbn-lab">Arrange</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="fmt-opwrap" id="fmt-opwrap"
+                title="Opacity (0&ndash;100%)">
+                <input class="fmt-range" id="fmt-op" type="range"
+                  min="0" max="100" step="1" aria-label="Opacity percent">
+                <span class="fmt-opval" id="fmt-opval">100%</span></span>
+              <span class="sh-drop" id="fmt-animwrap" hidden>
+                <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Animate this item so it appears on click">&#9654;
+                  Animate &#9662;</button>
+                <div class="sh-menu" id="fmt-anim-menu" hidden></div>
+              </span>
+            </span>
+            <span class="rbn-lab">Effects</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="fmt-lab" id="fmt-txlab" hidden
+                title="Text colour">Text</span>
+              <button class="sw" data-c="#ff6b57"
+                style="background:#ff6b57" title="Coral"></button>
+              <button class="sw" data-c="#f0a848"
+                style="background:#f0a848" title="Amber"></button>
+              <button class="sw" data-c="#39a9c0"
+                style="background:#39a9c0" title="Cyan"></button>
+              <button class="sw" data-c="#46a892"
+                style="background:#46a892" title="Green"></button>
+              <button class="sw" data-c="#ffffff"
+                style="background:#ffffff" title="White"></button>
+              <button class="sw" data-c="#16202b"
+                style="background:#16202b" title="Ink"></button>
+              <button class="sw sw-custom" id="sw-custom" data-target="text"
+                title="Custom colour — hex, rgb or rgba"></button>
+              <span class="fmt-lab" id="fmt-bglab" hidden
+                title="Fill / background colour">Fill</span>
+              <button class="sw swbg trans" data-c="none" hidden
+                title="Transparent box"></button>
+              <button class="sw swbg" data-c="#0e1926" hidden
+                style="background:#0e1926" title="Dark box"></button>
+              <button class="sw swbg" data-c="#ffffff" hidden
+                style="background:#ffffff" title="White box"></button>
+              <button class="sw swbg" data-c="#ff6b57" hidden
+                style="background:#ff6b57" title="Coral box"></button>
+              <button class="sw swbg" data-c="#f0a848" hidden
+                style="background:#f0a848" title="Amber box"></button>
+              <button class="sw swbg" data-c="#39a9c0" hidden
+                style="background:#39a9c0" title="Cyan box"></button>
+              <button class="sw swbg sw-custom" id="swbg-custom" hidden
+                data-target="fill"
+                title="Custom fill colour — hex, rgb or rgba"></button>
+            </span>
+            <span class="rbn-lab">Colour</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-smaller"
+                title="Smaller text">A&#8722;</button>
+              <button class="dbtn etm" id="fmt-bigger"
+                title="Bigger text">A+</button>
+              <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                title="Text size (points)">
+                <input class="fmt-num" id="fmt-size" type="number"
+                  min="6" max="240" step="1"
+                  aria-label="Text size in points">
+                <span class="fmt-unit">pt</span></span>
+              <select class="etm" id="fmt-font" hidden title="Text font">
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+                <option value="system">System</option>
+                <option value="hand">Hand</option>
+              </select>
+              <button class="dbtn etm" id="fmt-bold"
+                title="Bold"><b>B</b></button>
+              <button class="dbtn etm" id="fmt-ital"
+                title="Italic"><i>I</i></button>
+              <button class="dbtn etm" id="fmt-under"
+                title="Underline"><u>U</u></button>
+              <button class="dbtn etm" id="fmt-strike"
+                title="Strikethrough"><s>S</s></button>
+              <button class="dbtn etm" id="fmt-align"
+                title="Text alignment (click to cycle)">&#9636; Left</button>
+              <button class="dbtn etm" id="fmt-list"
+                title="Bullet list (Enter adds a point)">&#8226; List</button>
+            </span>
+            <span class="rbn-lab">Text</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-line"
+                title="Cycle line thickness">Line</button>
+              <button class="dbtn etm" id="fmt-dash"
+                title="Dashed on/off">Dash</button>
+              <button class="dbtn etm" id="fmt-fill"
+                title="Fill on/off">Fill</button>
+              <button class="dbtn etm" id="fmt-shape"
+                title="Cycle the shape (rectangle, ellipse, star, …)">
+                &#9711;</button>
+            </span>
+            <span class="rbn-lab">Shape</span>
+          </span>
+          <span class="rbn-grp">
+            <span class="rbn-row">
+              <span class="rbn-partslot" id="fmt-parts" hidden></span>
+              <span class="sh-drop" id="fmt-cropwrap" hidden>
+                <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Crop to a shape (rectangle, ellipse, star, …)">
+                  &#9986; Crop &#9662;</button>
+                <div class="sh-menu" id="fmt-crop-menu" hidden></div>
+              </span>
+              <button class="dbtn etm" id="fmt-replace"
+                title="Swap in a different notebook card">&#8644;
+                Replace</button>
+              <button class="dbtn etm" id="fmt-locate"
+                title="Jump to this card in its notebook &mdash; see where
+ the plot came from">&#8982; Locate in notebook</button>
+              <button class="dbtn etm" id="fmt-revert"
+                title="Swap this frame between the LIVE figure and the one
+ from before the last notebook refresh (rescue a figure a re-run
+ broke without giving up the others)">&#10226; Previous figure</button>
+              <button class="dbtn etm" id="fmt-lockver"
+                title="Pin this figure to its notebook&rsquo;s current git
+ commit &mdash; refreshes stop changing it, and it renders even with the
+ notebook closed">&#128274; Lock figure</button>
+            </span>
+            <span class="rbn-lab">Object</span>
+          </span>
+        </span>
+        <span class="et-hint" id="et-hint"></span>
+      </div>
+      <aside class="selpane" id="selpane" hidden>
+        <div class="selpane-h"><span>Objects</span>
+          <button class="dbtn dc-icon" id="selpane-close"
+            title="Close">&#10005;</button></div>
+        <div class="selpane-list" id="selpane-list"></div>
+      </aside>
+      <button class="deck-arrow prev" id="deck-prev"
+        title="Previous slide (&#8592;)"
+        aria-label="Previous slide">&#8249;</button>
+      <div class="deck-stage" id="deck-stage"></div>
+      <button class="deck-arrow next" id="deck-next"
+        title="Next slide (&#8594;)"
+        aria-label="Next slide">&#8250;</button>
+      <button class="deck-arrow up" id="deck-up" hidden
+        title="Back to the slide (&#8593;)"
+        aria-label="Back up to the slide">&#8593;</button>
+      <button class="deck-codepill" id="deck-down" hidden
+        title="Scroll down to the code trace (&#8595;)"
+        aria-label="Show the code trace that made this slide">
+        <span class="cp-arr">&#8595;</span> Show code</button>
+      <span class="deck-count" id="deck-count"></span>
+    </div>
+  </div>
+  <div class="vfull" id="vfull" hidden>
+    <div class="vfull-head">
+      <span class="chain-badge" id="vfull-badge"></span>
+      <span class="vfull-t" id="vfull-t"></span>
+      <button class="dbtn" id="vfull-close"
+        title="Close (Esc)">&#10005; Close</button>
+    </div>
+    <div class="vfull-body" id="vfull-body"></div>
+  </div>
+  <div class="deck-toast" id="deck-toast" hidden></div>
+</div>
+<div class="pickbar" id="pickbar" hidden>
+  <span>&#128204; Click a card in the notebook to place it in the
+  slide</span>
+  <span class="deck-spring"></span>
+  <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
+</div>
+<div class="color-pop" id="color-pop" hidden>
+  <div class="cp-head" id="cp-head">Custom colour</div>
+  <input type="color" id="cp-native" class="cp-native" value="#39a9c0"
+    aria-label="Pick a colour">
+  <div class="cp-row">
+    <span class="cp-lab">Hex</span>
+    <input type="text" id="cp-hex" class="cp-in" spellcheck="false"
+      autocomplete="off" placeholder="#39a9c0" maxlength="9">
+  </div>
+  <div class="cp-row">
+    <span class="cp-lab">RGB</span>
+    <input type="text" id="cp-rgb" class="cp-in" spellcheck="false"
+      autocomplete="off" placeholder="rgba(57, 169, 192, 1)">
+  </div>
+  <div class="cp-row cp-arow">
+    <span class="cp-lab">Alpha</span>
+    <input type="range" id="cp-alpha" class="cp-alpha" min="0" max="100"
+      step="1" value="100" aria-label="Opacity">
+    <span class="cp-aval" id="cp-aval">100%</span>
+  </div>
+  <div class="cp-recent" id="cp-recent"></div>
+  <div class="cp-foot">
+    <span class="cp-preview" id="cp-preview"></span>
+    <span class="deck-spring"></span>
+    <button class="dbtn cp-apply" id="cp-apply">Apply</button>
+  </div>
+</div>

@@ -1,0 +1,6 @@
+
+@media (max-width:860px){
+  .rail{position:static;transform:none;width:auto;max-height:none;height:auto;
+    box-shadow:none;}
+  .menubtn{display:none;}
+}

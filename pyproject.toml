@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "junoview"
-version = "0.1.0"
+version = "0.2.0"
 # The summary leads with the PROBLEM, not the product name: PyPI shows
 # this line in search results, and "Junoview" alone competes with an
 # unrelated product of nearly the same name.
-description = "Read executed Jupyter notebooks as figures instead of cells — filter code and output away, hide sections, and build slides or a conference poster from the same cells. Single file, stdlib only."
+description = "Read executed Jupyter notebooks as figures instead of cells — filter code and output away, hide sections, and build slides or a conference poster from the same cells. Pure stdlib, no runtime dependencies."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "Apache-2.0"
@@ -34,7 +34,8 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Visualization",
     "Topic :: Multimedia :: Graphics :: Presentation",
     "Environment :: Web Environment",
-    "License :: OSI Approved :: Apache Software License",
+    # No "License ::" classifier: PEP 639 superseded those by the `license`
+    # expression above, and setuptools now refuses a build that has both.
     "Operating System :: OS Independent",
 ]
 
@@ -46,9 +47,58 @@ Issues = "https://github.com/alexborowiak/semantic-rendering/issues"
 
 [project.optional-dependencies]
 widget = ["anywidget", "ipywidgets"]
+dev = ["pytest>=7", "ruff>=0.5", "mypy>=1.8"]
 
 [project.scripts]
-junoview = "semantic_render:main"
+junoview = "junoview.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.setuptools]
+# Deprecation shims re-exporting the package, so `import semantic_render` and
+# `import semantic_widget` still work. Plain modules, not part of the package.
 py-modules = ["semantic_render", "semantic_widget"]
+
+[tool.setuptools.package-data]
+# The frontend is real .css/.js/.html files rather than Python string
+# constants, so it has to be declared as package data to reach the wheel.
+# Listed by extension rather than `assets/**/*`, which also sweeps up
+# __pycache__/*.pyc.
+junoview = ["assets/css/*.css", "assets/js/*.js", "assets/html/*.html",
+            "py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+# "src" so a fresh clone can run `pytest` before `pip install -e .`;
+# "tests" so modules can share tests/helpers.py by plain import.
+pythonpath = ["src", "tests"]
+
+[tool.ruff]
+# The house style is 79 columns and the code mostly sits there; the linter
+# allows a little more so a handful of pre-existing 80-82 column lines don't
+# have to be rewrapped for no reason. Match the lines around you.
+line-length = 88
+src = ["src", "tests"]
+# Notebooks are example data, and docs/ is a generated build. Neither is code
+# anyone edits by hand, and linting them buries the findings that matter.
+extend-exclude = ["docs", "*.ipynb"]
+
+[tool.mypy]
+files = ["src/junoview"]
+python_version = "3.10"
+# anywidget/traitlets are optional extras and ship no stubs.
+ignore_missing_imports = true
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# The shim exists to re-export; every import in it is unused by definition.
+"src/semantic_render.py" = ["F401"]
+# Long lines in these are embedded CSS/JS/HTML or notebook-source literals.
+# Rewrapping them would obscure the payload without making anything clearer.
+"src/junoview/widget.py" = ["E501"]
+"src/junoview/render/items.py" = ["E501"]
+"tests/conftest.py" = ["E501"]

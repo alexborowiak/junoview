@@ -1,9 +1,29 @@
+# Python
 __pycache__/
-*.pyc
-semantic_project.json
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# Tooling caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Browser profiles left behind by headless-browser test runs.
+# `python tools/clean_scratch.py` removes them.
 edgeprof*/
+chromeprof*/
+
+# Local working state, not part of the project
+junoview_project.json
+semantic_project.json
+
+# Scratch renders
 scratch_*.html
 *_spliced.html
-dist/
-build/
-*.egg-info/

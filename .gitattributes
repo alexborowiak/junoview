@@ -1,0 +1,23 @@
+# The renderer reads these assets and splices them into its HTML output, so
+# their bytes are part of the product. Pin them to LF: a CRLF checkout would
+# otherwise change the rendered page from one machine to the next.
+*.css   text eol=lf
+*.js    text eol=lf
+*.html  text eol=lf
+*.py    text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.cff   text eol=lf
+
+# Binary, never touched.
+*.gif   binary
+*.png   binary
+*.svg   text eol=lf
+*.ipynb text eol=lf
+
+# GitHub language stats: the committed Pages build and the example notebooks
+# are output, not the codebase people should be judged on.
+docs/**            linguist-generated=true
+examples/*.html    linguist-generated=true

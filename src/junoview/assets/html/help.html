@@ -1,0 +1,222 @@
+
+<h3>What this is</h3>
+<p>A <b>figure-first view of executed Jupyter notebooks</b>. Instead of a
+wall of cells, you get the scientific structure: figures, datasets and
+notes as cards, code folded underneath, sections in a sidebar, and a
+provenance graph of how each result derives from the data. On top of
+that sits a <b>presentation builder</b>: turn any notebooks into slides
+and present straight from the browser.</p>
+<p>Everything runs locally &mdash; in the web version, notebooks are
+processed <i>in your browser</i> and never uploaded anywhere.</p>
+
+<h3>Open notebooks</h3>
+<ul>
+<li><b>Drag &amp; drop</b> one or more <code>.ipynb</code> files
+anywhere onto the window.</li>
+<li><b>+ Open</b> (top left) &mdash; a file picker, or paste a
+<b>URL</b> to a notebook (GitHub links are converted automatically).</li>
+<li>Notebooks must be <b>executed</b> (run once in Jupyter so outputs
+are saved) &mdash; nothing is re-run here.</li>
+<li>Every notebook is a <b>tab</b>: click to switch, <b>&#8635;</b>
+re-reads it after you re-run it in Jupyter, <b>&#10005;</b> closes.</li>
+</ul>
+
+<h3>Filtering what you see</h3>
+<p>Four buttons in the top bar &mdash; <b>Plots</b>, <b>Markdown</b>,
+<b>Code</b>, <b>Output</b> &mdash; each shows its CURRENT state and
+cycles when clicked. They apply to every tab at once. A thin divider
+sets them apart from the view controls (Raw notebook, theme) on the
+right. <b>Plots</b> comes first because a figure is the headline of a
+cell; everything else a notebook produces is, loosely, its
+<i>output</i>.</p>
+<ul>
+<li>All four &mdash; <b>Plots</b>, <b>Markdown</b>, <b>Code</b> and
+<b>Output</b> (printed tables, values, text) &mdash; cycle
+<i>Visible &rarr; Collapsed &rarr; Hidden</i>. <i>Collapsed</i> folds
+that part away behind a click-to-open toggle; <i>Hidden</i> removes it.</li>
+<li><b>Code means the code in EVERY cell</b> &mdash; imports, prints,
+plotting, a bare expression &mdash; not just standalone code cells. So
+<i>Code: Collapsed</i> tucks the source away under every figure and
+result at once, and a cell that is <i>only</i> code disappears entirely
+when Code is Hidden.</li>
+<li><b>Code types</b> and <b>Output types</b> (the two
+<b>&#9662;</b> menus) are finer control: untick <i>imports</i>,
+<i>plotting</i>&hellip; on the code side, or <i>print</i>,
+<i>dataset</i>, <i>numeric</i>, <i>string</i>, <i>list</i>,
+<i>dict</i>, <i>error</i>&hellip; on the output side, to hide just
+those. Only the types actually present in the notebook are listed.
+Untick every code type and it is the same as hiding code.</li>
+<li><b>Apply to</b> chooses <i>which sections</i> the filters above act
+on. Tick a few headings, set the filters, then pick a different set and
+filter those differently &mdash; every section remembers its own
+filters, and a section that differs says <i>&middot; filtered</i> next
+to its heading. <b>&#8649; All notebooks</b> copies these filters to
+every other open notebook; <b>&#8635; Reset</b> clears them for this
+one.</li>
+</ul>
+
+<h3>Figure size</h3>
+<ul>
+<li><b>Figures 100%</b> in the top bar (with <b>&minus;</b> and
+<b>&#43;</b> either side) resizes <i>every</i> figure in the feed &mdash;
+click the percentage to snap back to 100%. Figures grow past the text
+column, so a wide plot really does get wider.</li>
+<li><b>Point at any figure</b> and its own <b>&minus; &#43;</b> appear at
+the top left: those resize just that one, on top of the feed-wide
+setting.</li>
+<li>The <b>&#10530;</b> button next to them opens that figure
+<b>full screen</b> &mdash; Esc or a click outside closes it.</li>
+</ul>
+
+<h3>The sidebar</h3>
+<ul>
+<li>A <b>key</b> at the top names every card type present; below it,
+sections and a jump-to link for every cell.</li>
+<li><b>Collapse or hide a whole section</b> from its chevron and eye
+&mdash; in the sidebar <i>or</i> on the section heading in the document
+itself; the two stay in sync. A hidden section leaves the document but
+keeps its (dimmed) sidebar row so you can bring it back.</li>
+<li>The <b>eye</b> beside any cell &mdash; in the sidebar or on the card
+itself &mdash; hides just that one cell; a cell hidden this way stays in
+the sidebar (dimmed) so its eye can bring it back.</li>
+<li>The <b>analysis graph</b> at the sidebar's foot jumps to any node
+that declared an <code>#| id:</code>.</li>
+</ul>
+
+<h3>Plot trace</h3>
+<p>Every figure has a <b>&#9903; Plot trace</b> button. It opens a new
+tab holding just the cells that build that plot &mdash; its whole
+lineage, load &rarr; transform &rarr; plot &mdash; with a dependency
+graph at the top. The tab is the same document view, just subset to
+those cells, so every filter and button still works exactly as it does
+in the full document. Close the tab (its <b>&times;</b>) when you are
+done; the original document is untouched.</p>
+
+<h3>Raw notebook</h3>
+<p><b>Raw notebook</b> flips the current tab to the notebook exactly as
+authored &mdash; cells in order, directives visible &mdash; so you can
+always see where a title or caption came from.</p>
+
+<h3>Make notebooks render better (optional)</h3>
+<p>Add <code>#|</code> directive lines to the top of a code cell; they
+are parsed and hidden from display. Everything works without them
+&mdash; they are how you take control:</p>
+<table>
+<tr><td><code>#| title:</code></td><td>card title (else inferred from
+the first comment)</td></tr>
+<tr><td><code>#| caption:</code></td><td>interpretation text under the
+output</td></tr>
+<tr><td><code>#| section:</code></td><td>start a section (or use a
+markdown <code>##</code> heading)</td></tr>
+<tr><td><code>#| id:</code></td><td>stable name; makes the cell a node
+in the graph and a reliable slide anchor</td></tr>
+<tr><td><code>#| depends: a, b</code></td><td>declare inputs; draws
+the graph edges</td></tr>
+<tr><td><code>#| display:</code></td><td>force a card type: figure,
+dataset, metric, text, code, hidden</td></tr>
+<tr><td><code>#| group:</code> / <code>#| stack:</code></td><td>fold
+several cells under one figure (see the README for details)</td></tr>
+</table>
+
+<h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
+<ul>
+<li><b>+ New custom view</b> in the left rail (under + New presentation
+and + New poster) saves <i>how the notebook itself looks</i>. It is not
+slides: it opens in the document, with a styling bar under the
+ribbon.</li>
+<li>Style <b>All markdown</b>, <b>All headings</b> or the <b>Document</b>
+(page colour, spacing) &mdash; or click any single markdown cell or
+heading to style just that one. Colour, size, background, border, corner
+radius, padding, font and alignment.</li>
+<li>Narrowest wins: a cell beats its section, a section beats the whole
+view. Anything carrying its own style is marked, and <b>Override N
+individual styles</b> clears them so they follow the view again.</li>
+<li>Your <b>filters</b>, hidden cells, hidden headings, collapsed
+sections, figure sizes and text size are saved <i>with</i> the view
+&mdash; so it is also the place to keep an elaborate filter setup you
+want back later.</li>
+<li>Click the view in the rail to reopen it; <b>Done</b> returns the
+document to its normal styling.</li>
+</ul>
+
+<h3>Presentations</h3>
+<ul>
+<li>The <b>left rail</b> lists presentations under a <b>Notebooks</b>
+button &mdash; exactly one is active, so that button is always the way
+back. <b>New</b> starts one; <b>&#171;</b> shrinks or hides the
+rail.</li>
+<li>A presentation opens straight in the <b>slide editor</b>. Add
+content with <b>+ Notebook cell</b> &mdash; a draggable, resizable frame
+that holds any notebook card: drop it on the slide, then click a card in
+your notebook (from <i>any</i> open tab, so one deck can mix several
+notebooks) to fill it; swap later with &#8644; Replace. Pick a slide
+layout from the diagrams (full, halves, rows, quarters, a
+<b>title slide</b>, or a <b>blank canvas</b>).</li>
+<li>The editor is a full slide editor: <b>+ Text</b>, <b>+ Arrow</b>,
+<b>+ Shapes</b> (rectangle, ellipse, star, arrow, cloud, and more) and
+<b>&#128443; Image</b>. Select anything for colours, precise point size,
+alignment, bold / italic / underline, line thickness, dash, fill and a
+smooth opacity slider. <b>Highlight</b> part of a text box to recolour just
+that run.</li>
+<li><b>Crop</b> an image <i>or</i> a notebook cell (figure, markdown or code)
+to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
+one; <b>&#9654; Animate</b> an item so it appears on click; and switch on
+<b>slide numbers</b> from the File menu.</li>
+<li>Editor shortcuts: <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Shift+Z</kbd> undo &amp;
+redo, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+G</kbd> group, <kbd>Del</kbd>
+remove, <b>arrow keys</b> nudge (hold <kbd>Shift</kbd> for bigger steps).
+<i>File &rarr; Export PDF</i> saves the whole deck as a PDF (or prints it).</li>
+<li><b>&#9654; Present</b> plays full screen. Arrow keys / click
+&larr;/&rarr; step through builds and slides; on slides with code, &darr;
+descends the <b>code trail</b> &mdash; every cell that made the figure, one
+per screen, in execution order &mdash; and &uarr; climbs back out.</li>
+</ul>
+
+<h3>Saving</h3>
+<ul>
+<li>The <b>Saved to:</b> button beside <b>Save</b> says where this
+presentation lives, and lets you change it:
+<ul>
+<li><b>Browser</b> &mdash; kept in this browser, autosaving as you edit.
+Fine for a quick deck, but it is tied to this browser on this machine.</li>
+<li><b>A file on your computer</b> &mdash; pick a spot once and Junoview
+writes a <code>.junoview</code> file there. It <b>remembers that file
+between visits</b>, so Save (and autosave) go straight back to it &mdash;
+no re-picking, no downloads folder full of near-identical JSON.</li>
+<li><b>This project</b> (desktop app) &mdash;
+<code>junoview_project.json</code> next to where you launched it,
+along with your open tabs.</li>
+</ul></li>
+<li>A <code>.junoview</code> file is plain JSON with a friendlier name.
+Drop one next to its notebook as <code><i>notebook</i>.junoview</code>
+and it loads itself the next time you open that notebook.</li>
+<li><i>File &rarr; Download a copy</i> gives you a standalone
+<code>.junoview</code> to share; <i>File &rarr; Open a .junoview
+file</i> brings one back &mdash; later, or on another computer.</li>
+<li>Decks are robust to notebook edits: slides reference cells by
+<b>stable ids</b>, never position &mdash; re-upload an edited notebook
+and everything still resolves; a deleted cell just leaves an empty
+frame you can refill.</li>
+</ul>
+
+<h3>Run it locally</h3>
+<p>The whole tool is one Python file with no dependencies. For daily
+use &mdash; local file browsing, project files, session restore:
+<code>pip install</code> the repo and run <code>junoview</code>,
+or just download <code>semantic_render.py</code> and run
+<code>python semantic_render.py</code>.</p>
+
+<h3>Support this project &#9829;</h3>
+<p>Junoview is free and open source, built and maintained in the open.
+If it saves you time, a <b>Support</b> contribution genuinely helps
+&mdash; and it funds where this is going:</p>
+<ul>
+<li>An <b>online, hosted Junoview with accounts</b> (think Overleaf,
+but for notebook figures + talks): save your documents and
+presentations to the cloud, pick up on any device, and share a link
+with collaborators &mdash; instead of juggling JSON files.</li>
+<li>Keeping the local + in-browser versions <b>free forever</b>, with
+regular improvements.</li>
+</ul>
+<p>Use the <b>Support &#9829;</b> button (top bar) &mdash; it goes
+through Ko-fi. Thank you.</p>

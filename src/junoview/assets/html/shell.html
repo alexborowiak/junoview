@@ -1,0 +1,39 @@
+<div class="shell nbshell" data-nb="{stem}"{path_attr}>
+  <aside class="rail">
+    <div class="railhead">
+      <h1 class="railtitle">{title}</h1>
+      <div class="railmeta">{meta}</div>
+      <div class="railfile">
+        <button class="rf-btn rf-info" type="button"
+          title="Where this notebook came from — its path, its git commit,
+ and every earlier version you can open">File info
+          &#9662;</button>
+        <button class="rf-btn rf-reload" type="button"
+          title="Reload this notebook from disk">&#8635;</button>
+        <!-- shown only while something IS hidden: a permanent button for a
+             state you are usually not in is clutter -->
+        <button class="rf-btn rf-unhide" type="button" hidden
+          title="Bring back every hidden section, heading and cell in this
+ notebook">Show all hidden</button>
+      </div>
+      <div class="rf-panel" hidden></div>
+    </div>
+    {nav}
+    {graph_panel}
+  </aside>
+  <main class="stage">
+    <div class="content">
+      <div class="docbar" hidden>
+        <span class="docbar-ic">&#128196;</span>
+        <span class="docbar-nm">{stem}</span>
+        <span class="docbar-p"></span>
+      </div>
+      {sections}
+    </div>
+    <div class="rawview">
+      {rawview}
+    </div>
+    <div class="treeview" aria-label="Analysis tree view"></div>
+  </main>
+  <script type="application/json" class="nb-data">{nb_data}</script>
+</div>

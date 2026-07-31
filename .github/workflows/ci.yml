@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -e ".[dev]"
+      - run: pytest
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install -e ".[dev]"
+      - run: ruff check .
+      - run: mypy
+
+  build:
+    name: package builds and the CLI runs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: pip install build
+      - run: python -m build
+
+      # Install the wheel somewhere clean and drive the real entry point. This
+      # is what catches a missing asset: the package imports fine from a source
+      # checkout even when package-data is misdeclared, and only fails once
+      # installed.
+      - name: install the wheel and render a notebook
+        run: |
+          python -m venv /tmp/venv
+          /tmp/venv/bin/pip install dist/*.whl
+          cd /tmp
+          /tmp/venv/bin/junoview "$GITHUB_WORKSPACE/examples/example_climate_analysis.ipynb" -o /tmp/out.html
+          test -s /tmp/out.html
+
+      - name: build the static web app
+        run: |
+          /tmp/venv/bin/junoview --build-web /tmp/web
+          test -s /tmp/web/index.html
+          test -s /tmp/web/junoview.zip
+
+      - name: the web bundle is reproducible
+        run: |
+          /tmp/venv/bin/junoview --build-web /tmp/web2
+          cmp /tmp/web/junoview.zip /tmp/web2/junoview.zip

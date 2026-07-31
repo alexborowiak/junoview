@@ -1,0 +1,161 @@
+"""What the local app knows: open notebooks, the project file, the file browser.
+
+One :class:`_AppState` per running app. Presentations and recent files persist
+to a project JSON next to where the app was started, so a session survives a
+restart.
+"""
+
+from __future__ import annotations
+
+import json
+import secrets
+import threading
+from pathlib import Path
+
+from ..notebook.loader import _is_url, _stem_for, doc_from_url, load_doc
+from ..notebook.presentations import _as_presentations
+from ..render.page import render_page
+
+_PROJECT_FILE = "junoview_project.json"
+
+
+class _AppState:
+    """Project file + open-tab session, shared across requests."""
+
+    def __init__(self, root: Path):
+        self.root = root.resolve()
+        self.token = secrets.token_hex(8)
+        self.lock = threading.Lock()
+        self.presentations: list = []
+        self.open: list[str] = []
+        self.recent: list[str] = []
+        self._load()
+
+    @property
+    def project_path(self) -> Path:
+        return self.root / _PROJECT_FILE
+
+    def _load(self) -> None:
+        path = self.project_path
+        if not path.exists():
+            # load older project files if present (migrate to the new name on
+            # the next save): the former plotline_ name, then the original
+            for legacy_name in ("plotline_project.json", "semantic_project.json"):
+                legacy = self.root / legacy_name
+                if legacy.exists():
+                    path = legacy
+                    break
+        try:
+            d = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        if not isinstance(d, dict):
+            return
+        self.presentations = _as_presentations(d.get("presentations"))
+        for name in ("open", "recent"):
+            v = d.get(name)
+            setattr(self, name,
+                    [str(x) for x in v if isinstance(x, str)]
+                    if isinstance(v, list) else [])
+
+    def _write(self) -> None:
+        self.project_path.write_text(
+            json.dumps({"presentations": self.presentations,
+                        "open": self.open, "recent": self.recent},
+                       indent=1, ensure_ascii=False) + "\n",
+            encoding="utf-8")
+
+    def note_open(self, path: Path | str) -> None:
+        with self.lock:
+            s = str(path)
+            if s not in self.open:
+                self.open.append(s)
+            self.recent = ([s] + [r for r in self.recent if r != s])[:10]
+            self._write()
+
+    def note_close(self, path: str) -> None:
+        with self.lock:
+            self.open = [p for p in self.open if p != path]
+            self._write()
+
+    def save_presentations(self, pres: list) -> None:
+        with self.lock:
+            self.presentations = pres
+            self._write()
+
+    def stems_taken(self, skip: Path | None = None,
+                    skip_str: str | None = None) -> set[str]:
+        """Deduped stems of the open tabs (mirrors the page-build order)."""
+        taken: set[str] = set()
+        for p in self.open:
+            if skip is not None and not _is_url(p) and Path(p) == skip:
+                continue
+            if skip_str is not None and p == skip_str:
+                continue
+            taken.add(_stem_for(Path(p), taken))
+        return taken
+
+
+def _list_dir(raw: str) -> dict:
+    d = Path(raw).expanduser()
+    if not d.is_dir():
+        raise FileNotFoundError(f"{d} is not a folder")
+    d = d.resolve()
+    dirs, nbs = [], []
+    try:
+        entries = sorted(d.iterdir(), key=lambda p: p.name.lower())
+    except OSError:
+        entries = []
+    for p in entries:
+        name = p.name
+        if name.startswith(".") or name == "__pycache__":
+            continue
+        try:
+            if p.is_dir():
+                dirs.append({"name": name, "path": str(p)})
+            elif p.suffix.lower() == ".ipynb":
+                kb = max(1, p.stat().st_size // 1024)
+                nbs.append({"name": name, "path": str(p), "size": f"{kb} KB"})
+        except OSError:
+            continue
+    parent = str(d.parent) if d.parent != d else ""
+    return {"dir": str(d), "parent": parent, "dirs": dirs, "notebooks": nbs}
+
+
+def _app_page(state: _AppState) -> str:
+    """Rebuild the whole app page from the session's open notebooks."""
+    docs, paths, pruned = [], {}, []
+    taken: set[str] = set()
+    for p in list(state.open):
+        if _is_url(p):
+            try:
+                doc = doc_from_url(p)
+            except Exception:       # noqa: BLE001 -- likely transient
+                continue            # keep the URL in the session
+            doc.source_name = _stem_for(
+                Path(doc.source_name + ".ipynb"), taken)
+            taken.add(doc.source_name)
+            paths[doc.source_name] = p
+            docs.append(doc)
+            continue
+        f = Path(p)
+        try:
+            doc = load_doc(f)
+        except (OSError, ValueError):
+            pruned.append(p)
+            continue
+        doc.source_name = _stem_for(f, taken)
+        taken.add(doc.source_name)
+        paths[doc.source_name] = str(f)
+        docs.append(doc)
+    if pruned:                      # notebooks meanwhile deleted / moved
+        with state.lock:
+            state.open = [p for p in state.open if p not in pruned]
+            state._write()
+    return render_page(docs, mode="app", app_cfg={
+        "token": state.token,
+        "root": str(state.root),
+        "presentations": state.presentations,
+        "recent": state.recent,
+        "paths": paths,
+    })

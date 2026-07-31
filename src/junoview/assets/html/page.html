@@ -1,0 +1,477 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title>
+<!-- a generator tag, NOT a description: the page's content belongs to
+     whoever exported it, so we name the tool without describing their
+     notebook for them -->
+<meta name="generator" content="Junoview — figure-first Jupyter notebook
+ viewer and presentation builder (https://junoview.dev)">
+<link rel="icon" href="{favicon}">
+<style>{css}</style>
+<style>{app_css}</style>
+<style>{deck_css}</style>
+{mathjax}
+</head>
+<body>
+<div class="scrim" id="scrim"></div>
+<header class="apptop" id="apptop">
+  <div class="appbar">
+    <!-- File info + reload live at the top of the sidebar, beside the
+         notebook they describe; only Open belongs to the app itself -->
+    <span class="abgrp" id="ab-file"><span class="abgrp-row"><span class="fgrp" id="file-grp">
+      <button class="toggle primary" id="tab-open" hidden
+        title="Open a notebook (.ipynb) from your computer or a
+ URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
+    </span></span><span class="abgrp-lab">File</span></span>
+    <span class="appbar-div filt-div" aria-hidden="true"></span>
+    <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
+      <button class="toggle tv" id="tv-plots"
+        title="Plots / figures — the headline of each cell. Click to cycle:
+ Visible -> Collapsed -> Hidden"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+      <button class="toggle sub" id="pt-filter-btn"
+        title="Advanced: hide specific PLOT types (matplotlib, plotly,
+ bokeh, vega, folium, …)"><i data-ic="types"></i></button>
+    </span>
+    <span class="fgrp" id="md-grp">
+      <button class="toggle tv" id="tv-markdown"
+        title="Markdown / note cards. Click to cycle: Visible -> Collapsed
+ -> Hidden"><i data-ic="markdown"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+    </span>
+    <span class="fgrp" id="ck-grp">
+      <button class="toggle tv" id="tv-code"
+        title="Code — the source in every cell (imports, prints, plotting, …).
+ Click to cycle: Visible -> Collapsed -> Hidden"><i data-ic="code"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+      <button class="toggle sub" id="ck-filter-btn"
+        title="Advanced: hide specific CODE cell types (imports, plotting,
+ …)"><i data-ic="types"></i></button>
+    </span>
+    <span class="fgrp" id="ot-grp">
+      <button class="toggle tv" id="tv-output"
+        title="Printed output — the tables, values and text a cell prints.
+ Everything a notebook produces is 'output'; plots are just the one kind
+ pulled out into their own filter (on the left). Click to show / hide"><i data-ic="output"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+      <button class="toggle sub" id="ot-filter-btn"
+        title="Advanced: hide specific OUTPUT types (print, dataset, result,
+ error)"><i data-ic="types"></i></button>
+    </span></span><span class="abgrp-lab">Filters</span></span>
+    <span class="appbar-div filt-div" aria-hidden="true"></span>
+    <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
+      <button class="toggle" id="sec-scope-btn"
+        title="Choose WHICH sections the filters above act on — select the
+ headings and sub-headings to include, change the filters, then select a
+ different set and filter those differently. Each section remembers its
+ own filters."
+        ><i data-ic="scope"></i><span class="btxt">Sections: All</span></button>
+      <button class="toggle sub" id="filters-reset"
+        title="Put every filter — and every per-section change — in THIS
+ notebook back to the defaults"><i data-ic="reset"></i>Reset</button>
+    </span>
+    <span class="fgrp" id="copy-grp">
+      <button class="toggle sub" id="trace-inherit" hidden
+        data-keep="1"
+        title="This plot trace opened unfiltered, on purpose. Click to give
+ it the same filters as the notebook it came from."><i data-ic="inherit"></i
+ >Match document</button>
+    </span>
+    </span><span class="abgrp-lab">Apply to</span></span>
+    <span class="appbar-div" aria-hidden="true"></span>
+    <!-- TREE section: sits exactly where Filters sits in Document view,
+         because it plays the same role — it is what shapes WHAT YOU SEE
+         in this view. Only rendered while the tree is on. -->
+    <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
+      <span class="fgrp" id="tree-fold-grp">
+        <button class="toggle" id="tree-expand" type="button"
+          title="Expand every node — show each cell's content in the map"
+          ><i data-ic="expand"></i>Expand all</button>
+        <button class="toggle sub" id="tree-collapse" type="button"
+          title="Collapse every node back to its title"
+          ><i data-ic="collapse"></i>Collapse all</button>
+      </span>
+      <span class="fgrp" id="tree-width-grp">
+        <button class="toggle" id="tree-width" type="button"
+          title="Cell width — cycles Small / Medium / Large (drag a cell's
+ corner to size just that one)"><i data-ic="width"></i>Width: M</button>
+        <button class="toggle sub" id="tree-unhide" type="button" hidden
+          title="Bring back the nodes you hid with their eye"
+          ><i data-ic="eye"></i>Unhide all</button>
+      </span>
+    </span><span class="abgrp-lab">Tree</span></span>
+    <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
+      <span class="fgrp-row">
+        <button class="toggle fz-step" id="fig-smaller"
+          title="Make every figure in the feed smaller"><i data-ic="minus"></i></button>
+        <button class="toggle fz-val" id="fig-size-val"
+          title="Figure size across the whole feed — click to reset to 100%"
+          >100%</button>
+        <button class="toggle fz-step" id="fig-bigger"
+          title="Make every figure in the feed bigger (each figure also has
+ its own +/- and an expand button on hover)"><i data-ic="plus"></i></button>
+      </span>
+      <span class="fgrp-cap">Figures</span>
+    </span>
+    <span class="fgrp fgrp-h" id="md-size-grp">
+      <span class="fgrp-row">
+        <button class="toggle fz-step" id="md-smaller"
+          title="Smaller markdown / prose text"><i data-ic="minus"></i></button>
+        <button class="toggle fz-val" id="md-size-val"
+          title="Markdown text size — click to reset to 100%"
+          >100%</button>
+        <button class="toggle fz-step" id="md-bigger"
+          title="Larger markdown / prose text"><i data-ic="plus"></i></button>
+      </span>
+      <span class="fgrp-cap">Text</span>
+    </span></span><span class="abgrp-lab">Size</span></span>
+    <span class="appbar-div" aria-hidden="true"></span>
+    <!-- Raw / Tree / Present stay together: they are one idea (how you are
+         looking at the document) and must not wrap apart -->
+    <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
+    <!-- Raw over Tree in one column, Present beside them: two short
+         buttons stacked cost the bar half the width of three in a line -->
+    <span class="vw-stack">
+    <button class="toggle" id="view-raw"
+      title="Toggle between the semantic view and the raw notebook
+ (cells in order, directives visible)"><i data-ic="raw"></i><span class="btxt">Raw</span></button>
+    <button class="toggle" id="view-tree"
+      title="Tree view: the analysis as a dependency map you can expand,
+ collapse and hide cell by cell. Toggle back for the narrative document."
+      ><i data-ic="tree"></i><span class="btxt">Tree</span></button>
+    </span>
+    <button class="toggle" id="doc-present"
+      title="Present this document full screen (Narrative or Tree). Esc to
+ exit."><i data-ic="present"></i>Present</button>
+    </span></span><span class="abgrp-lab">View</span></span>
+    <!-- nothing hidden behind a menu: these all fit -->
+    <span class="abgrp appbar-right" id="ab-app"><span class="abgrp-row">
+    <span class="btn-grp">
+      <button class="toggle" id="theme-btn"
+        title="Switch between dark and light theme"><i data-ic="theme"></i></button>
+      <a class="toggle appbar-link" id="support-btn" href="{kofi}"
+        target="_blank" rel="noopener"
+        title="Support Junoview on Ko-fi — funds an online, hosted version
+ with accounts (save + share your docs and talks, like Overleaf)"
+        ><i data-ic="heart"></i></a>
+      <button class="toggle" id="help-btn"
+        title="How to use, and everything this tool can do" aria-label="Help"><i data-ic="help"></i></button>
+    </span></span><span class="abgrp-lab">App</span></span>
+  </div>
+  <div class="tabsrow">
+    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
+      title="Show or hide the section sidebar (table of contents)">
+      <span></span></button>
+    <div class="tabstrip" id="tabstrip" role="tablist"
+      aria-label="Open notebooks"></div>
+  </div>
+  <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
+       insets the document by it automatically, and so the normal filter
+       ribbon stays available (a custom view saves your filters too) -->
+  <div class="stylebar" id="stylebar" hidden>
+    <span class="sb-lab">custom view</span>
+    <span class="sb-name" id="sb-name"></span>
+    <span class="appbar-div"></span>
+    <button class="toggle" id="sb-md" type="button"
+      title="Style EVERY markdown cell in this view">All markdown</button>
+    <button class="toggle" id="sb-hd" type="button"
+      title="Style EVERY heading in this view">All headings</button>
+    <button class="toggle" id="sb-doc" type="button"
+      title="Page colour, accent colour and spacing">Document</button>
+    <span class="appbar-div"></span>
+    <button class="toggle" id="sb-override" type="button" hidden
+      title="Clear the styles set on individual sections and cells, so
+ they follow the view-wide style again">Override individual styles</button>
+    <button class="toggle" id="sb-reset" type="button"
+      title="Remove every style in this view (filters and hidden cells
+ are kept)">Reset styling</button>
+    <span class="sb-spring"></span>
+    <span class="sb-hint">click a markdown cell or heading to style just
+      that one</span>
+    <button class="toggle primary" id="sb-done" type="button"
+      title="Stop editing this custom view and go back to your notebooks"
+      >Done</button>
+  </div>
+</header>
+<!-- the style panel is re-parented to <body> when it opens: the header is
+     position:sticky, so a panel inside it would paint behind the page -->
+<div class="stylepanel" id="stylepanel" hidden></div>
+<nav class="presrail" id="presrail" aria-label="Presentations">
+  <div class="presrail-brand">{logo}<span class="prb-full">Junoview</span></div>
+  <button class="pr-item pr-docs current" id="pr-docs"
+    title="Back to your notebooks — closes the presentation builder">
+    <span class="pr-ico"><i data-ic="doc"></i></span>
+    <span class="pr-t">Notebooks</span></button>
+  <div class="pr-label">presentations</div>
+  <div class="pr-list" id="presstrip" role="tablist"></div>
+  <!-- custom view FIRST: it is the one that acts on the notebook you are
+       already looking at, so it belongs nearest the notebook list -->
+  <button class="pr-btn" id="pr-newview"
+    title="New custom view &mdash; a saved, restyled, filtered view of the
+ notebook itself (not slides). Style all markdown cells, one section or a
+ single cell, and keep your filters and hidden cells with it.">
+    <span class="pr-ico"><i data-ic="newview"></i></span>
+    <span class="pr-t">+ New custom view</span></button>
+  <button class="pr-btn" id="pr-new"
+    title="Create a new presentation">
+    <span class="pr-ico"><i data-ic="newdeck"></i></span>
+    <span class="pr-t">+ New presentation</span></button>
+  <button class="pr-btn" id="pr-newpost"
+    title="Create a new poster &mdash; an A0 portrait page with a poster
+ template applied (change size via Page, layout via Layouts)">
+    <span class="pr-ico"><i data-ic="newposter"></i></span>
+    <span class="pr-t">+ New poster</span></button>
+  <button class="pr-btn" id="pr-newfold"
+    title="New folder &#8212; drag presentations into it">
+    <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
+      height="12" fill="currentColor"><path d="M1 3.2C1 2.5 1.5 2
+      2.2 2h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v6c0 .7-.5 1.2-1.2
+      1.2H2.2C1.5 12 1 11.5 1 10.8z"/></svg></span>
+    <span class="pr-t">+ New folder</span></button>
+  <!-- the two panel controls as a pair: collapse it, or let it hide
+       itself. Neither is "pin" — nothing is being pinned. -->
+  <div class="pr-foot">
+    <button class="pr-collapse" id="pr-collapse"
+      title="Collapse this panel">&#171;</button>
+    <button class="pr-collapse" id="pr-auto" aria-pressed="false"
+      title="Auto-hide: the panel slides out of the way and comes back
+ when you move the pointer to the left edge. Off by default."
+      ><i data-ic="autohide"></i></button>
+  </div>
+</nav>
+<button class="presrail-show" id="presrail-show"
+  title="Show presentations">&#187;</button>
+<!-- Presenting controls: a DOCKED bar (across the top, or down the right),
+     never a panel floating over the slide. The real app-bar groups are
+     MOVED into #pb-tools on enter and put back on exit, so the top bar is
+     literally the same controls you were just using. -->
+<div class="present-bar" id="present-bar" hidden>
+  <div class="pb-tools" id="pb-tools"></div>
+  <div class="pb-own">
+    <!-- "Outline" not "Sections": the ribbon already has "Sections: All"
+         for filter SCOPE, and two controls called Sections that do
+         different things is exactly what confused the user. Tree/Raw are
+         NOT duplicated here either — the whole View section travels in. -->
+    <button class="toggle" id="pb-rail" aria-pressed="false"
+      title="Show or hide the outline (the list of sections) down the left"
+      ><i data-ic="outline"></i><span class="btxt">Outline</span></button>
+    <!-- the dock button names the DESTINATION, never where the bar is now -->
+    <button class="toggle" id="pb-move"
+      title="Move these controls to the other edge"
+      ><i data-ic="dockright"></i></button>
+    <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself -->
+    <button class="toggle" id="pb-auto" aria-pressed="true"
+      title="Auto-hide: the bar slides away and comes back when you move
+ to its edge. Switch it off to keep the bar in place."
+      ><i data-ic="pin"></i><span class="btxt">Auto-hide</span></button>
+    <button class="toggle pb-exit" id="pb-exit"
+      title="Stop presenting and go back to the document (Esc). Nothing is
+ closed or lost."><i data-ic="exit"></i>Exit presentation</button>
+  </div>
+</div>
+<!-- ONE button does both fold and unfold, and it never moves: it is
+     pinned to the same spot whether the bar is in or out -->
+<button class="pb-toggle" id="present-bar-show"
+  title="Hide or show the presenting controls" hidden>&#9776;</button>
+<div class="docs" id="docs">
+{shells}
+</div>
+<div class="welcome" id="welcome" hidden>
+  <div class="welcome-box">
+    <div class="welcome-top">
+      <div class="welcome-hero">{logo}</div>
+      <div class="welcome-wordmark">Junoview</div>
+      <p class="welcome-tag">Filter, view and present your Jupyter notebooks.</p>
+      <div class="welcome-btns">
+        <button class="dbtn primary" id="welcome-open">&#128193; Open
+          local files&#8230;</button>
+        <button class="dbtn ghost" id="welcome-url">&#128279; From
+          GitHub / URL&#8230;</button>
+        <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
+          example notebook</button>
+      </div>
+      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
+        this window.</p>
+      <div class="welcome-links">
+        <a href="#" id="welcome-tour">Take a tour</a>
+        <span class="wl-sep">&middot;</span>
+        <a href="#" id="welcome-help">How to use</a>
+        <span class="wl-sep">&middot;</span>
+        <a href="{kofi}" target="_blank"
+          rel="noopener">Support &#9829;</a>
+      </div>
+      <div class="recent" id="welcome-recent"></div>
+      <div class="welcome-scrollcue" aria-hidden="true">How it works
+        &#8595;</div>
+    </div>
+    <div class="welcome-more">
+      <ol class="welcome-steps">
+        <li><span class="ws-n">1</span><span>Open your notebooks &mdash; from
+          local files or a GitHub URL.</span></li>
+        <li><span class="ws-n">2</span><span>Filter by cell type, and trace
+          back every cell that builds a plot.</span></li>
+        <li><span class="ws-n">3</span><span>Build presentations from figures,
+          markdown and code straight out of the notebook.</span></li>
+        <li><span class="ws-n">4</span><span>Hit refresh to pull the notebook's
+          latest changes into your slides &mdash; automatically.</span></li>
+      </ol>
+      <!-- The demo reel, simplest first. The GIFs live beside the page
+           (docs/gifs/); a local render has no such folder, so each figure
+           removes itself if its image 404s and the whole block hides when
+           none of them load. Their URLs wait in data-src so a slow
+           connection downloads nothing until you ask. -->
+      <div class="wtour" id="wtour" hidden>
+        <div class="wtour-head">
+          <span class="wtour-t">See it work</span>
+          <button class="dbtn ghost" id="wtour-toggle" type="button"
+            aria-pressed="false">Show the demos</button>
+        </div>
+        <figure>
+          <img data-src="gifs/code_folding.gif" alt="Folding code away">
+          <figcaption><b>Hide the code &mdash; see just the results</b>
+          Every cell's code folds away behind one click.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/code_types.gif" alt="Filtering by code type">
+          <figcaption><b>Filter your notebook &mdash; show only the cells
+          you want</b> Imports, plotting and prints are told apart, so you
+          can switch off the housekeeping.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/remove_what_you_dont_want.gif"
+            alt="Hiding cells and sections">
+          <figcaption><b>Get rid of what you don't need</b> Hide any cell,
+          heading or whole section. Nothing is deleted.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/make_figure_and_text_bigger_and_present_them.gif"
+            alt="Resizing figures and text">
+          <figcaption><b>Make it big enough to read</b> Grow the figures
+          and the text, then go full screen and talk to it.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/plot_trace.gif" alt="Tracing a plot">
+          <figcaption><b>Ask any plot where it came from</b> Plot trace
+          opens the exact chain of cells that made it.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/tree_view.gif" alt="The analysis as a map">
+          <figcaption><b>See the whole analysis at once</b> Your notebook
+          as a map of what depends on what.</figcaption>
+        </figure>
+        <figure>
+          <img data-src="gifs/create_presentation.gif"
+            alt="Building a slide deck">
+          <figcaption><b>Turn it into a talk &mdash; or a poster</b> Drag
+          your figures onto slides, arrange them, present.</figcaption>
+        </figure>
+        <!-- no GIF for this one: it is the promise the whole thing rests
+             on, and it reads better as a plain statement -->
+        <figure class="wtour-said">
+          <figcaption><b>Re-run the notebook and the slides catch up</b>
+          Your figures stay linked to the cells that made them, so when
+          you update your notebook it updates straight away in the
+          presentation &mdash; no re-exporting, no re-pasting
+          screenshots.</figcaption>
+        </figure>
+      </div>
+      <figure class="wquote">
+        <div class="wq-stars" aria-label="5 out of 5">
+          &#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <blockquote>Its v cool. I'll legit use it for supervisory
+          meetings.</blockquote>
+        <figcaption>Alanah Chapman<span>PhD Candidate</span></figcaption>
+      </figure>
+    </div>
+  </div>
+</div>
+<div class="helpdlg" id="helpdlg" hidden>
+  <div class="help-box">
+    <div class="help-head">
+      <span class="help-title">How to use</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="help-tour" title="Take the guided tour">&#9654;
+        Take a tour</button>
+      <button class="dbtn" id="help-close" title="Close">&#10005;</button>
+    </div>
+    <div class="help-body">
+      {help_html}
+    </div>
+  </div>
+</div>
+<div class="tour" id="tour" hidden>
+  <div class="tour-hole" id="tour-hole"></div>
+  <div class="tour-tip" id="tour-tip">
+    <div class="tour-tip-h">
+      <span class="tour-step" id="tour-step"></span>
+      <span class="tour-title" id="tour-title"></span>
+    </div>
+    <div class="tour-text" id="tour-text"></div>
+    <div class="tour-btns">
+      <button class="tour-skip" id="tour-skip">Skip tour</button>
+      <span class="deck-spring"></span>
+      <button id="tour-back">Back</button>
+      <button class="tour-next" id="tour-next">Next</button>
+    </div>
+  </div>
+</div>
+<div class="opendlg" id="opendlg" hidden>
+  <div class="odlg-box">
+    <div class="odlg-head">
+      <button class="dbtn" id="odlg-up" title="Parent folder">&#8593; Up</button>
+      <span class="odlg-path" id="odlg-path"></span>
+      <button class="dbtn" id="odlg-files" hidden>Choose
+        files&#8230;</button>
+      <button class="dbtn" id="odlg-close" title="Close">&#10005;</button>
+    </div>
+    <div class="odlg-recent" id="odlg-recent" hidden></div>
+    <div class="odlg-list" id="odlg-list"></div>
+    <div class="odlg-foot">
+      <div class="odlg-inrow">
+        <input id="odlg-input" type="text" spellcheck="false"
+          autocomplete="off"
+          placeholder="&#8230;or paste a folder or .ipynb path">
+        <button class="dbtn" id="odlg-go"
+          title="Open the path or URL typed on the left">Open</button>
+      </div>
+      <div class="odlg-load" id="odlg-load" hidden><span></span></div>
+    </div>
+  </div>
+</div>
+<div class="drophint" id="drophint" hidden>Drop .ipynb files to open</div>
+<div class="figmax" id="figmax" hidden>
+  <button class="figmax-close" id="figmax-close"
+    title="Close (Esc)">&#10005; Close</button>
+  <div class="figmax-box" id="figmax-box"></div>
+</div>
+<div class="ckfilter-menu" id="ck-filter-menu" hidden></div>
+<div class="ckfilter-menu" id="ot-filter-menu" hidden></div>
+<div class="ckfilter-menu" id="pt-filter-menu" hidden></div>
+<div class="ckfilter-menu scope-menu" id="sec-scope-menu" hidden></div>
+<div class="note-dlg" id="note-dlg" hidden>
+  <div class="note-dlg-box">
+    <div class="note-dlg-h">Add a markdown note</div>
+    <div class="note-dlg-sub" id="note-dlg-sub"></div>
+    <textarea id="note-dlg-src" rows="6" spellcheck="true"
+      placeholder="Write markdown &mdash; a comment, an interpretation, a
+ TODO&#8230;"></textarea>
+    <label class="note-dlg-git" id="note-dlg-gitrow" hidden>
+      <input type="checkbox" id="note-dlg-commit">
+      <span id="note-dlg-gitlab">also commit to git</span>
+    </label>
+    <div class="note-dlg-btns">
+      <span class="note-dlg-err" id="note-dlg-err"></span>
+      <button class="dbtn" id="note-dlg-cancel">Cancel</button>
+      <button class="dbtn primary" id="note-dlg-save">Save to
+ notebook</button>
+    </div>
+  </div>
+</div>
+<div class="doc-toast" id="doc-toast" hidden></div>
+<input type="file" id="fileinput" accept=".ipynb" multiple hidden>
+<input type="file" id="deckfile" accept=".junoview,.json" hidden>
+{deck_shell}
+<script type="application/json" id="app-data">{app_data}</script>
+<script>{js}</script>
+<script>{deck_js}</script>
+</body>
+</html>

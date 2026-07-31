@@ -1,0 +1,1232 @@
+
+.deck{position:fixed;inset:0;z-index:100;background:#0b141d;color:#dce6ee;
+  display:flex;flex-direction:column;font-family:var(--sans);}
+.deck[hidden]{display:none!important;}
+.deck [hidden]:not(.et-fmt){display:none!important;}
+body.deck-open{overflow:hidden;}
+
+.deck-top{display:flex;align-items:center;gap:9px;padding:10px 18px;
+  border-bottom:1px solid #ffffff14;background:#0e1926;flex:none;}
+.deck-brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--cyan);}
+.deck-status{font-family:var(--mono);font-size:10px;padding:0 10px;
+  height:30px;box-sizing:border-box;display:inline-flex;align-items:center;
+  border-radius:15px;background:#ffffff12;color:#9fb2c2;letter-spacing:.04em;
+  white-space:nowrap;}
+.deck-status.draft{background:#cf9a4e26;color:#e6b877;}
+.deck-status.saved{background:#46a89226;color:#7fd0bd;}
+.deck-status:empty{display:none;}
+.deck-spring{flex:1;}
+.dbtn{font-family:var(--mono);font-size:11px;border:1px solid #ffffff22;
+  background:#ffffff0a;color:#cdd9e3;padding:6px 11px;border-radius:6px;
+  cursor:pointer;transition:all .15s;}
+.dbtn:hover{border-color:var(--cyan);color:#fff;}
+.dbtn.primary{background:var(--cyan);border-color:var(--cyan);color:#fff;
+  font-weight:600;box-shadow:0 0 0 1px #39a9c066,0 2px 12px #39a9c066;}
+.dbtn.primary:hover{background:#4bbcd2;border-color:#4bbcd2;
+  box-shadow:0 0 0 1px #39a9c088,0 2px 16px #39a9c088;}
+.dbtn[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.deck-save{display:flex;gap:7px;align-items:center;}
+
+.deck-main{flex:1;display:flex;min-height:0;}
+.deck-stagewrap{flex:1;display:flex;flex-direction:column;min-width:0;
+  position:relative;}
+.deck-stage{flex:1;min-height:0;display:flex;padding:26px 78px 6px;
+  overflow:hidden;}
+
+/* editing: the slide is a real bounded page surface (16:9 by default —
+   the Page dropdown can make it 4:3 or a poster), so you can see exactly
+   where things will sit when presented */
+.deck.editing .deck-stage{align-items:center;justify-content:center;
+  padding:18px 26px 10px;}
+.deck.editing .slide{flex:none;width:100%;max-height:100%;
+  aspect-ratio:var(--page-ar,16/9);margin:auto;background:#0b141d;
+  border:2px solid #ffffff2b;border-radius:12px;
+  box-shadow:0 14px 60px #00000066,inset 0 0 0 1px #00000055;}
+/* zoomed past the window: the stage scrolls, content anchors top-left
+   (margin:auto still centers it while it fits) */
+.deck.editing .deck-stage.zoomed{overflow:auto;
+  align-items:flex-start;justify-content:flex-start;}
+/* a custom page (poster / portrait) letterboxes in playback too */
+.deck.custom-page .vpage{display:flex;}
+/* the Page dropdown menu */
+.sh-menu.page-menu{display:block;width:252px;padding:6px;}
+.page-menu .page-opt{display:block;width:100%;text-align:left;}
+.page-menu .page-opt[aria-pressed="true"]{color:#fff;
+  background:var(--cyan-deep);border-radius:6px;}
+/* the Objects pane: everything on the slide — select, hide, lock */
+.selpane{position:absolute;top:8px;right:8px;bottom:8px;width:232px;
+  z-index:60;background:#101c28f2;border:1px solid #ffffff22;
+  border-radius:10px;display:flex;flex-direction:column;
+  box-shadow:0 14px 44px #00000066;}
+.selpane[hidden]{display:none;}
+.selpane-h{display:flex;align-items:center;justify-content:space-between;
+  padding:8px 8px 7px 12px;font-family:var(--mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
+  border-bottom:1px solid #ffffff14;}
+.selpane-list{flex:1;overflow-y:auto;padding:5px;}
+.selpane-empty{color:#54677a;font-size:12px;padding:12px;}
+.sp-row{display:flex;align-items:center;gap:7px;
+  border-radius:7px;padding:6px 7px;color:#c9d6e2;font-size:12px;
+  cursor:pointer;}
+.sp-row:hover{background:#ffffff0c;}
+.sp-row.sel{background:#39a9c022;color:#fff;}
+.sp-row.offrow .sp-t{opacity:.45;text-decoration:line-through;}
+.sp-kind{flex:none;width:8px;height:8px;border-radius:2px;
+  background:#8ba0b2;}
+.sp-kind.k-cell{background:var(--cyan);}
+.sp-kind.k-text{background:#f0a848;}
+.sp-kind.k-rect,.sp-kind.k-arrow{background:#ff6b57;}
+.sp-kind.k-image{background:#46a892;}
+.sp-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.sp-act{flex:none;background:none;border:none;color:#5f7386;
+  cursor:pointer;font-size:12px;padding:1px 3px;border-radius:4px;
+  line-height:1;}
+.sp-act:hover{color:#fff;background:#ffffff14;}
+.sp-act.on{color:var(--cyan);}
+body.light .selpane{background:#fffffff5;border-color:var(--line);}
+body.light .sp-row{color:var(--ink-2);}
+body.light .sp-row.sel{background:#39a9c022;color:var(--ink);}
+body.light .sp-act:hover{color:var(--ink);background:#00000010;}
+/* locked objects: visible but untouchable on the canvas */
+.deck.editing .an-locked,.deck.editing .an-locked *{
+  pointer-events:none!important;cursor:default!important;}
+
+/* vertical "code trail": each slide can descend into the cells that
+   made it (down arrow / ArrowDown), one step per screen */
+.vstack{flex:1;min-width:0;display:flex;flex-direction:column;
+  transition:transform .35s ease;}
+.vslide{flex:none;height:100%;display:flex;min-height:0;min-width:0;}
+.vslide.vstep{padding:10px 0 4px;}
+.vstep-in{flex:1;display:flex;flex-direction:column;min-height:0;
+  min-width:0;background:#0e1926;border:1px solid #ffffff10;
+  border-radius:12px;padding:16px 20px;}
+.vstep-head{display:flex;align-items:center;gap:10px;flex:none;
+  margin-bottom:10px;min-width:0;}
+.vstep-t{font-size:15px;font-weight:600;color:#dbe7ef;flex:1;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.vstep-n{font-family:var(--mono);font-size:10.5px;color:#7e93a4;
+  flex:none;}
+.vstep-body{flex:1;min-height:0;overflow:auto;}
+.vstep-none{color:#7e93a4;font-size:13px;}
+.vstep-thumb{flex:none;height:34px;max-width:56px;object-fit:contain;
+  border-radius:5px;background:#fff;padding:2px;}
+
+/* the trace map: minimised, numbered steps grouped per plot, arranged
+   like the plots on the slide; colours tie group <-> plot */
+.vslide.voverview{padding:10px 0 4px;}
+.vo-in{flex:1;display:flex;flex-direction:column;min-height:0;
+  min-width:0;gap:12px;}
+.vo-title{flex:none;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.18em;text-transform:uppercase;color:#7e93a4;
+  text-align:center;display:flex;gap:10px;align-items:center;
+  justify-content:center;flex-wrap:wrap;}
+/* match the docs top-bar toggles so the trail feels part of the same tool */
+.vo-xall,.vo-fbtn{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  text-transform:none;background:#ffffff0a;border:1px solid #ffffff22;
+  color:#cdd9e3;border-radius:var(--rad);padding:6px 12px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;transition:all .15s;}
+.vo-xall:hover,.vo-fbtn:hover{border-color:var(--cyan);color:#fff;}
+/* the trail's Code-types / Output-types filter dropdowns */
+.vo-fdrop{position:relative;display:inline-block;}
+.vo-fmenu{position:absolute;top:calc(100% + 5px);left:0;z-index:40;
+  background:#16273a;border:1px solid #ffffff22;border-radius:8px;padding:5px;
+  min-width:150px;display:flex;flex-direction:column;text-align:left;
+  box-shadow:0 12px 34px #00000077;}
+.vo-fmenu[hidden]{display:none;}
+.vo-fmenu .ckf-row{display:flex;align-items:center;gap:8px;padding:5px 8px;
+  border-radius:5px;cursor:pointer;color:#dce6ee;font-size:12px;
+  font-family:var(--sans);text-transform:none;letter-spacing:0;}
+.vo-fmenu .ckf-row:hover{background:#39a9c022;}
+.vo-step.vo-filtered{display:none;}
+.vo-plots{flex:none;display:flex;gap:16px;justify-content:center;
+  flex-wrap:wrap;}
+.vo-plot{display:flex;flex-direction:column;align-items:center;gap:6px;
+  padding:9px 11px;border-radius:10px;background:#0e1926;
+  border:2px solid #ffffff22;}
+.vo-plot img{max-height:11vh;max-width:16vw;width:auto;height:auto;
+  object-fit:contain;border-radius:6px;background:#fff;padding:2px;}
+.vo-plot-t{font-size:11px;color:#dbe7ef;max-width:16vw;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.vo-groups{flex:1;min-height:0;display:flex;gap:14px;}
+.vo-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px;
+  border:1.5px solid #ffffff1f;border-radius:12px;padding:11px;
+  overflow:auto;background:#0e1926;}
+.vo-col-h{flex:none;font-size:12.5px;font-weight:600;color:#dbe7ef;
+  display:flex;align-items:center;gap:8px;min-width:0;}
+.vo-col-h span{overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* section (## heading) + subsection (### heading) dividers in the trace */
+.vo-sec{font-family:var(--mono);font-size:10px;font-weight:600;
+  letter-spacing:.12em;text-transform:uppercase;color:#dbe7ef;
+  padding:8px 2px 4px;margin-top:6px;
+  border-bottom:1px solid #ffffff1f;
+  display:flex;align-items:center;gap:7px;}
+.vo-col>.vo-sec:first-of-type,.vo-col-h+.vo-sec{margin-top:0;}
+/* section collapse chevron + hide eye (mirror the docs sidebar/section head) */
+.vo-sec-chev{flex:none;font-size:11px;line-height:1;color:#7e93a4;
+  cursor:pointer;transition:transform .15s,color .15s;}
+.vo-sec-chev:hover{color:#cdd9e3;}
+.vo-sec.collapsed .vo-sec-chev{transform:rotate(-90deg);}
+.vo-sec-lab{flex:1;min-width:0;cursor:pointer;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.vo-sec-eye{flex:none;font-size:11px;line-height:1;color:#7e93a4;
+  cursor:pointer;opacity:0;padding:1px 4px;border-radius:4px;
+  transition:opacity .12s,color .12s,background .12s;}
+.vo-sec:hover .vo-sec-eye{opacity:.65;}
+.vo-sec-eye:hover{opacity:1;color:#fff;background:#ffffff14;}
+.vo-sec-body{display:flex;flex-direction:column;gap:8px;}
+.vo-sec-body.vo-sec-fold{display:none;}
+.vo-subsec{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;
+  color:#8ba0b2;padding:5px 2px 2px;}
+.vo-step{display:flex;flex-direction:column;background:#12202e;
+  border:1px solid #ffffff14;border-radius:8px;overflow:hidden;
+  flex:none;min-width:0;transition:border-color .15s;}
+.vo-step-h{display:flex;align-items:center;gap:9px;width:100%;
+  padding:9px 11px;background:none;border:none;cursor:pointer;
+  text-align:left;font-family:var(--sans);color:#c3d2df;min-width:0;}
+.vo-step-h:hover{background:#1a2c3d;}
+.vo-num{font-family:var(--mono);font-size:11px;font-weight:600;
+  width:22px;height:22px;border-radius:6px;display:flex;
+  align-items:center;justify-content:center;flex:none;
+  background:#39a9c022;color:#5fc3d8;}
+.vo-step-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:12.5px;}
+.vo-chev{flex:none;color:#8ba0b2;font-size:13px;
+  transition:transform .2s;}
+.vo-step.open .vo-chev{transform:rotate(90deg);}
+.vo-full{background:none;border:none;color:#8ba0b2;cursor:pointer;
+  font-size:13px;flex:none;padding:2px 5px;border-radius:4px;}
+.vo-full:hover{color:#fff;background:#ffffff14;}
+/* eyeball: hide a step while presenting */
+.vo-eye{background:none;border:none;color:#8ba0b2;cursor:pointer;
+  font-size:12px;flex:none;padding:2px 5px;border-radius:4px;
+  line-height:1;opacity:.75;position:relative;}
+.vo-eye:hover{color:#fff;background:#ffffff14;opacity:1;}
+.vo-eye.off{color:#63758a;}
+.vo-eye.off::after{content:"";position:absolute;left:4px;right:4px;
+  top:calc(50% - 1px);height:1.6px;background:currentColor;
+  transform:rotate(-18deg);border-radius:2px;}
+.vo-step.hidden{opacity:.5;border-style:dashed;}
+.vo-step.hidden .vo-step-t::after{content:" · hidden";
+  color:#8ba0b2;font-family:var(--mono);font-size:10px;
+  letter-spacing:.04em;}
+.vo-xall.on,.vo-fbtn.on{border-color:var(--cyan);color:#fff;
+  background:#39a9c022;}
+.vo-step-b{display:none;padding:2px 10px 10px;}
+.vo-step.open .vo-step-b{display:block;}
+
+/* scrollable playback: the slide fills the screen, the trace flows
+   beneath it — scroll (or ArrowDown) between them */
+.deck-stage.scrolly{display:block;overflow-y:auto;
+  scroll-snap-type:y proximity;padding-top:0;padding-bottom:0;}
+/* the slide fills the viewport EXACTLY so the code trace sits fully
+   below the fold — its buttons never peek out under the slide */
+.vpage{height:100%;box-sizing:border-box;padding:22px 0 8px;
+  display:flex;flex-direction:column;min-width:0;
+  scroll-snap-align:start;}
+.vtrace{scroll-snap-align:start;display:flex;flex-direction:column;
+  gap:14px;padding:64px 0 60px;min-height:70%;}   /* top clears the ↑ arrow */
+.vtrace .vo-groups{flex:none;align-items:flex-start;}
+.vtrace .vo-col{overflow:visible;}
+/* several plots: the thumbnails PICK which trace shows */
+.vo-plots .vo-thumb-btn{cursor:pointer;opacity:.45;
+  transition:opacity .15s;}
+.vo-plots .vo-thumb-btn:hover{opacity:.8;}
+.vo-plots .vo-thumb-btn.sel{opacity:1;}
+/* the docs dependency tree, hosted under a slide (always dark — the
+   playback canvas is dark in both themes) */
+.deck-tracetree .treeview{display:block;padding:0 4px 30px;}
+.deck-tracetree .tt-present{display:none;}
+.deck-tracetree .tree-toolbar{
+  background:linear-gradient(#0b141d 72%,transparent);}
+.deck-tracetree .tree-toolbar .tt-title{color:#7e93a4;}
+.deck-tracetree .tt-btn{background:#101c28;border-color:#ffffff22;
+  color:#cdd9e3;}
+.deck-tracetree .tt-btn:hover{border-color:var(--cyan);color:#fff;}
+.deck-tracetree .tree-scroll{border-color:#ffffff1a;background:
+  radial-gradient(circle at 1px 1px,#ffffff12 1px,transparent 0)
+  0 0/22px 22px,#0e1926;}
+.deck-tracetree .tree-node{
+  background:color-mix(in srgb,var(--nc) 12%,#101c28);
+  border-color:#ffffff1c;border-top-color:var(--nc);
+  box-shadow:0 1px 3px #00000040;}
+.deck-tracetree .tree-node.active{border-color:var(--cyan);}
+.deck-tracetree .tn-title{color:#e6edf3;}
+.deck-tracetree .tn-btn{color:#8ba0b2;}
+.deck-tracetree .tn-btn:hover{background:#ffffff14;}
+.deck-tracetree .tn-resize{border-color:#8ba0b2;}
+.deck-tracetree .tree-node-body{border-top-color:#ffffff14;}
+.deck-tracetree .tree-node.tn-off{border-top-color:#ffffff1c;}
+.deck-tracetree .tree-node.tn-off .tn-title{color:#7e93a4;}
+.deck-tracetree .tree-empty{color:#7e93a4;}
+.deck-codepill{position:absolute;left:50%;transform:translateX(-50%);
+  bottom:16px;z-index:7;display:flex;align-items:center;gap:8px;
+  background:#16273ae0;border:1px solid #ffffff2e;border-radius:22px;
+  color:#cdd9e3;font-family:var(--mono);font-size:11.5px;
+  padding:9px 17px;cursor:pointer;backdrop-filter:blur(4px);
+  transition:border-color .15s,color .15s;}
+.deck-codepill:hover{border-color:var(--cyan);color:#fff;}
+.deck-codepill[hidden]{display:none;}
+.cp-arr{font-size:14px;line-height:1;}
+.deck-arrow.up{left:50%;top:12px;transform:translateX(-50%);
+  width:44px;height:44px;font-size:24px;}
+.deck-count{position:absolute;right:18px;bottom:12px;z-index:7;
+  font-family:var(--mono);font-size:11.5px;color:#7e93a4;}
+.deck.creating .deck-count,.deck.editing .deck-count{display:none;}
+
+/* one step, full screen */
+.vfull{position:fixed;inset:0;z-index:135;background:#0b141dfa;
+  display:flex;flex-direction:column;padding:22px 44px 30px;}
+.vfull[hidden]{display:none;}
+.vfull-head{display:flex;align-items:center;gap:12px;flex:none;
+  margin-bottom:14px;}
+.vfull-t{font-size:17px;font-weight:600;color:#eef4f8;flex:1;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.vfull-body{flex:1;min-height:0;overflow:auto;}
+
+/* the figure "Plot trace" button */
+/* the card's actions live together at the top RIGHT */
+.plot-trace-btn{margin-left:auto;}
+.plot-trace-btn+.cell-eye{margin-left:0;}
+.plot-trace-btn{flex:none;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.02em;border:1px solid var(--line);background:var(--paper-2);
+  color:var(--ink-2);border-radius:20px;padding:3px 10px;cursor:pointer;
+  transition:background .15s,color .15s,border-color .15s;white-space:nowrap;}
+.plot-trace-btn:hover{background:#39a9c016;color:var(--cyan-deep);
+  border-color:#39a9c055;}
+body:not(.light) .plot-trace-btn{background:#0e1824;color:#8ba0b2;
+  border-color:#ffffff1f;}
+body:not(.light) .plot-trace-btn:hover{color:#5fc3d8;border-color:#39a9c066;}
+/* ---- Plot-trace TAB: a real notebook shell holding just this plot's
+   lineage cells, so every global filter + per-card control works inside it.
+   No sidebar — the content spans the full width. ---- */
+/* :not([hidden]) both raises specificity above .nbshell[hidden]{display:none}
+   AND stops matching once activate() hides the tab, so switching tabs works */
+.nbshell.tracetab:not([hidden]){display:grid;}
+.nbshell.tracetab .stage{width:100%;}
+.tracetab-head{margin:0 0 14px;padding-bottom:12px;
+  border-bottom:1px solid #ffffff14;position:relative;}
+/* Cells | Tree switcher, right in the trace header */
+.trace-viewsw{position:absolute;right:0;top:6px;display:flex;gap:6px;}
+.dbtn.tvw.on{background:var(--cyan-deep);border-color:var(--cyan-deep);
+  color:#fff;}
+body.light .trace-viewsw .dbtn{background:#fff;border-color:var(--line);
+  color:var(--ink-2);}
+body.light .trace-viewsw .dbtn.tvw.on{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.tracetab-eyebrow{display:block;font-family:var(--mono);font-size:10px;
+  letter-spacing:.22em;text-transform:uppercase;color:#5fc3d8;}
+.tracetab-t{margin:5px 0 2px;font-size:22px;font-weight:650;color:#eef4f8;
+  line-height:1.2;}
+.tracetab-sub{font-size:12.5px;color:#8fa6b4;}
+.tracetab-graph{margin:0 0 18px;}
+.tracetab-graph .plotgraph-wrap{margin:0;}
+body.light .tracetab-head{border-color:#0000000f;}
+body.light .tracetab-t{color:#122029;}
+body.light .tracetab-sub{color:#5a6b76;}
+/* the ◈ badge + tint that marks a Plot-trace tab in the tab strip */
+/* a Plot-trace SUB-tab: smaller + indented + cyan-tinted so it reads as a
+   child of the notebook tab immediately before it */
+.tab.tab-sub{margin-left:6px;max-width:200px;font-size:12px;
+  padding:0 8px 0 10px;background:#39a9c00f;border-color:#39a9c03d;}
+.tab.tab-sub:hover{background:#39a9c01c;}
+.tab.tab-sub.current{background:#39a9c022;color:#dff3f8;
+  border-color:#39a9c07a;}
+.tab-trace-ic{color:#5fc3d8;margin-right:4px;font-size:12px;flex:none;
+  opacity:.85;}
+.tab.tab-sub .tab-t{max-width:150px;}
+/* a small gap + hook line before a sub-tab hints the parent→child nesting */
+.tab.tab-sub::before{content:"";width:8px;height:1px;background:#39a9c066;
+  margin:0 1px 0 -6px;align-self:center;flex:none;}
+body.light .tab.tab-sub{background:#39a9c012;border-color:#39a9c04d;}
+body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
+/* per-plot dependency graph */
+.plotgraph-wrap{margin:0 0 18px;padding:12px 12px 6px;
+  background:#0e1824;border:1px solid #ffffff12;border-radius:10px;}
+.pg-eyebrow{font-family:var(--mono);font-size:9.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:#63758a;margin-bottom:8px;}
+.plotgraph{display:block;width:100%;height:auto;}
+.pg-edge{fill:none;stroke:#f0a848;stroke-width:1.6;opacity:.6;}
+.pg-node{cursor:pointer;}
+.pg-node rect{stroke:#ffffff26;stroke-width:1;
+  transition:filter .15s;}
+.pg-node:hover rect,.pg-node:focus rect{filter:brightness(1.18);
+  stroke:#ffffff66;}
+.pg-node:focus{outline:none;}
+.pg-node text{font-family:var(--sans);font-size:12px;fill:#0b141d;
+  font-weight:600;pointer-events:none;}
+
+.slide{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;
+  animation:slidein .28s ease;}
+@keyframes slidein{from{opacity:0;transform:translateY(8px);}
+  to{opacity:1;transform:none;}}
+.slide-titlecard{align-items:center;justify-content:center;text-align:center;
+  gap:12px;}
+.slide-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;
+  text-transform:uppercase;color:var(--cyan);margin:0;}
+.slide-titlecard h2{font-size:clamp(28px,4.5vw,54px);font-weight:600;
+  letter-spacing:-.02em;color:#f0f6fa;margin:0;max-width:82%;line-height:1.15;}
+.slide-meta{font-family:var(--mono);font-size:12px;color:#7e93a4;margin:0;}
+.slide-empty{align-items:center;justify-content:center;color:#7e93a4;
+  font-size:14px;text-align:center;}
+
+.slide-head h3{font-size:clamp(18px,2.2vw,28px);font-weight:600;color:#eef4f8;
+  margin:0 0 14px;letter-spacing:-.015em;}
+.slide-body{flex:1;display:flex;gap:26px;min-height:0;}
+.slide-fig{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0;}
+.slide-fig .cardbody{flex:1;min-height:0;display:flex;flex-direction:column;
+  padding-left:0;}
+.slide-fig .figframe{flex:1;min-height:0;display:flex;align-items:center;
+  justify-content:center;border:none;border-radius:10px;padding:14px;
+  overflow:hidden;background:none;}
+.slide-fig .figframe img{max-width:100%;max-height:100%;width:auto;height:auto;
+  object-fit:contain;margin:0;}
+.slide-fig .note{background:#f7fafc;color:var(--ink-2);border-radius:12px;
+  padding:26px 32px;overflow:auto;font-size:16.5px;line-height:1.7;}
+.slide-fig .caption{flex:none;color:#a9bccb;margin-top:12px;padding-left:2px;
+  font-size:14.5px;}
+.slide-fig pre.result,.slide-fig pre.stream{flex:none;overflow:auto;}
+.slide-fig .xr-wrap{flex:1;min-height:0;overflow:auto;}
+
+/* halves / quarters slide layouts */
+.slide-grid{flex:1;display:grid;gap:16px;min-height:0;}
+.slide-grid.halves{grid-template-columns:1fr 1fr;}
+.slide-grid.quarters{grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;}
+.spane{display:flex;flex-direction:column;min-width:0;min-height:0;
+  background:#0e1926;border:1px solid #ffffff10;border-radius:10px;
+  padding:12px 14px;}
+.spane-t{font-size:13.5px;font-weight:600;color:#dbe7ef;margin:0 0 8px;
+  letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;flex:none;}
+.spane .cardbody{flex:1;min-height:0;display:flex;flex-direction:column;
+  padding-left:0;}
+.spane .figframe{flex:1;min-height:0;display:flex;align-items:center;
+  justify-content:center;border:none;border-radius:8px;padding:8px;
+  overflow:hidden;}
+.spane .figframe img{max-width:100%;max-height:100%;width:auto;height:auto;
+  object-fit:contain;margin:0;}
+.spane .note{flex:1;min-height:0;background:#f7fafc;color:var(--ink-2);
+  border-radius:8px;padding:14px 18px;overflow:auto;font-size:13.5px;
+  line-height:1.6;}
+.spane .xr-wrap,.spane pre.result,.spane pre.stream{overflow:auto;
+  min-height:0;}
+.spane.empty{align-items:center;justify-content:center;color:#54677a;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;}
+
+.chain-sec{border-top:1px solid #ffffff10;}
+.chain-sec:first-child{border-top:none;}
+.chain-h{display:flex;align-items:center;gap:10px;width:100%;
+  padding:9px 4px;margin:0;background:none;border:none;cursor:pointer;
+  font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#9fb2c2;text-align:left;border-radius:6px;
+  transition:color .15s,background .15s;}
+.chain-h:hover{color:#e6eef4;background:#ffffff08;}
+.chain-chev{display:inline-block;font-size:14px;line-height:1;flex:none;
+  transition:transform .2s;}
+.chain-h[aria-expanded="true"] .chain-chev{transform:rotate(90deg);}
+.chain-badge{font-size:9px;padding:2px 7px;border-radius:4px;
+  background:#39a9c01f;color:#5fc3d8;letter-spacing:.1em;flex:none;
+  text-transform:lowercase;}
+.chain-badge.ckmain-imports{background:#8a6d4a2b;color:#c8a877;}
+.chain-badge.ckmain-function{background:#46a8922b;color:#7fd0bd;}
+.chain-badge.ckmain-data{background:#4d90c02b;color:#8fbfe0;}
+.chain-badge.ckmain-constant{background:#9a7cc02b;color:#c3a9e0;}
+.chain-badge.ckmain-settings{background:#5b75892b;color:#a7bccd;}
+.chain-badge.ckmain-plotting{background:#39a9c02b;color:#5fc3d8;}
+.chain-badge.ckmain-print{background:#cf9a4e2b;color:#dfb277;}
+.chain-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.chain-b{padding:0 4px 10px;}
+
+.deck-arrow{position:absolute;top:50%;transform:translateY(-50%);width:52px;
+  height:52px;border-radius:50%;border:1px solid #ffffff22;background:#ffffff0a;
+  color:#cdd9e3;font-size:30px;line-height:1;cursor:pointer;z-index:5;
+  transition:all .15s;}
+.deck-arrow:hover{border-color:var(--cyan);color:#fff;background:#39a9c022;}
+.deck-arrow:disabled{opacity:.22;cursor:default;}
+.deck-arrow.prev{left:13px;}
+.deck-arrow.next{right:13px;}
+
+.deck-foot{display:flex;align-items:center;justify-content:center;gap:16px;
+  padding:9px 18px 13px;flex:none;}
+.deck-count{font-family:var(--mono);font-size:11.5px;color:#7e93a4;}
+.deck-drawer{max-height:44vh;overflow-y:auto;background:#0e1b25;
+  border-top:1px solid #ffffff14;padding:14px 78px 22px;flex:none;}
+.deck-drawer .steplabel{color:#8fa3b4;}
+.deck-drawer pre.result,.deck-drawer pre.stream{background:#13222f;
+  border-color:#ffffff14;color:#b6c6d3;}
+
+/* ---------- create mode: deck docks left, document stays interactive */
+.deck.creating{width:min(var(--dc-w),94vw);right:auto;
+  border-right:1px solid #ffffff22;box-shadow:8px 0 40px #00000055;}
+.deck.creating .deck-stagewrap{display:none;}
+.deck.creating .deck-top{display:none;}
+
+/* create panel header: File menu + status */
+.dc-head{display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-bottom:1px solid #ffffff14;background:#0b141d;flex-wrap:wrap;}
+/* every header button is the same chip as the top-bar toggles */
+.dc-head .dbtn,.dc-menuwrap .dbtn{height:30px;box-sizing:border-box;
+  padding:0 12px;display:inline-flex;align-items:center;gap:6px;
+  line-height:1;letter-spacing:.04em;white-space:nowrap;}
+.dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
+.dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
+/* ---- POSTER MODE: bigger chrome (2026-07-29) ------------------------
+   A poster is authored at A0/A1 on a big screen, and the buttons that
+   were sized for a 16:9 slide read as tiny beside it. Everything the
+   deck editor draws steps up one size while the page is a poster. */
+.deck.poster-page .dbtn{font-size:12.5px;padding:8px 14px;}
+.deck.poster-page .dc-head .dbtn,
+.deck.poster-page .dc-menuwrap .dbtn{height:36px;padding:0 15px;
+  font-size:12.5px;}
+.deck.poster-page .dc-head .dbtn.dc-icon{padding:0 11px;font-size:17px;}
+.deck.poster-page .edit-tools .dbtn{height:34px;box-sizing:border-box;
+  display:inline-flex;align-items:center;font-size:12.5px;}
+.deck.poster-page .dbtn.etm{padding:0 12px;}
+.deck.poster-page .deck-status{height:34px;font-size:11px;}
+/* the template catalog gets two bigger previews per row instead of three */
+.deck.poster-page .lay-picker{grid-template-columns:repeat(2,1fr);
+  max-height:300px;}
+.deck.poster-page .lay-lb{font-size:9.5px;}
+.deck.poster-page .dbtn.lay{padding:5px;}
+.deck.poster-page .dc-label{font-size:10px;}
+.dc-menuwrap{position:relative;}
+.dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
+  background:#16273a;border:1px solid #ffffff22;border-radius:8px;
+  padding:5px;min-width:214px;display:flex;flex-direction:column;
+  box-shadow:0 12px 34px #00000066;}
+.dc-mi{text-align:left;background:none;border:none;color:#dce6ee;
+  font-size:12.5px;font-family:var(--sans);padding:8px 11px;
+  border-radius:5px;cursor:pointer;transition:background .12s;}
+.dc-mi:hover{background:#39a9c026;}
+.dc-msep{height:1px;background:#ffffff14;margin:4px 6px;}
+/* the "Saved to" picker: a heading + a tick beside the current target */
+.dc-mhead{font-family:var(--mono);font-size:9px;letter-spacing:.13em;
+  text-transform:uppercase;color:#7e93a4;padding:5px 11px 6px;}
+.dc-mi[aria-pressed="true"]{color:#fff;}
+.dc-mi[aria-pressed="true"]::before{content:"\2713  ";color:var(--cyan);}
+.dc-mi[disabled]{opacity:.45;cursor:default;}
+.dbtn.dc-target{font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.02em;max-width:230px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.dbtn.dc-target.tg-file{border-color:#46a89266;color:#8fd8c4;}
+body.light .dc-mhead{color:var(--ink-3);}
+body.creating-docs .docs{margin-left:min(var(--dc-w),94vw);}
+body.creating-docs .card{cursor:copy;}
+body.creating-docs .card:hover{outline:2px solid var(--cyan);
+  outline-offset:2px;}
+
+.deck-create{flex:1;overflow-y:auto;display:flex;flex-direction:column;
+  min-height:0;background:#0e1926;}
+/* fixed so it hugs the panel's right edge in both creating (docked
+   deck) and editing (flex column) modes, and survives panel scroll */
+.dc-resize{position:fixed;top:0;bottom:0;width:6px;z-index:130;
+  cursor:col-resize;
+  left:calc(var(--presrail-w) + min(var(--dc-w),94vw) - 1px);}
+.dc-resize:hover,.dc-resize.on{background:#39a9c066;}
+@media(max-width:860px){.dc-resize{display:none;}}
+.dc-block{padding:10px 14px 9px;border-bottom:1px solid #ffffff14;}
+/* the slides list is the main working area — give it the lion's share
+   and let it be the panel's primary scroller */
+.dc-block.dc-film{flex:1 1 auto;display:flex;flex-direction:column;
+  min-height:240px;border-bottom:none;padding-bottom:8px;}
+.dc-block.dc-film .film-list{flex:1;overflow-y:auto;min-height:0;}
+.dc-label{display:block;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:#7e93a4;
+  margin-bottom:8px;}
+.dc-row{display:flex;gap:6px;flex-wrap:wrap;}
+.dc-hint{font-size:11.5px;color:#7e93a4;line-height:1.5;margin:9px 0 0;}
+.dc-spring{flex:1;}
+/* the presentation name lives on the left rail — no need to repeat it
+   in the builder; keep the element for the File > Rename flow only */
+#pres-current{display:none;}
+.dc-controls{display:flex;flex-direction:column;gap:9px;}
+/* the "Notebooks" popover: list + open-all / refresh-all */
+.dc-nbs-menu{min-width:252px;max-width:330px;gap:1px;}
+.dc-nbs-menuh{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7e93a4;padding:6px 9px 5px;}
+.dc-nbs-empty{font-size:11.5px;color:#8ba0b2;padding:8px 10px;line-height:1.5;}
+.dc-nbrow{display:flex;align-items:center;gap:8px;padding:6px 9px;
+  border-radius:5px;font-size:12px;color:#dce6ee;}
+.dc-nbrow.clickable{cursor:pointer;}
+.dc-nbrow.clickable:hover{background:#39a9c020;}
+.dc-nbrow-dot{width:7px;height:7px;border-radius:50%;flex:none;
+  background:#5b7589;}
+.dc-nbrow.open .dc-nbrow-dot{background:#46c08a;}
+.dc-nbrow.avail .dc-nbrow-dot{background:#f0a848;}
+.dc-nbrow.gone .dc-nbrow-dot{background:#8a5a5a;}
+.dc-nbrow-nm{flex:1;font-family:var(--mono);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.dc-nbrow.gone .dc-nbrow-nm{color:#98a7b5;}
+.dc-nbrow-st{font-family:var(--mono);font-size:9.5px;color:#7e93a4;flex:none;}
+.dc-nbacts{display:flex;gap:6px;padding:8px 6px 3px;margin-top:4px;
+  border-top:1px solid #ffffff14;}
+.dc-nbacts .dbtn{flex:1;text-align:center;justify-content:center;
+  font-size:11.5px;}
+#pres-name{width:100%;background:#16273a;border:1px solid #ffffff22;
+  color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
+  border-radius:6px;box-sizing:border-box;}
+#pres-name:focus{outline:none;border-color:var(--cyan);}
+.dbtn.lay[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+/* layout picker: little diagrams instead of words */
+.dbtn.lay{padding:5px 7px;line-height:0;}
+.layico{display:grid;gap:2px;width:34px;height:22px;}
+.layico.full{grid-template-columns:1fr;}
+.layico.halves{grid-template-columns:1fr 1fr;}
+.layico.rows{grid-template-rows:1fr 1fr;}
+.layico.quarters{grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;}
+.layico i{background:#8ba0b2;border-radius:2px;display:block;}
+.dbtn.lay[aria-pressed="true"] .layico i{background:#fff;}
+.layico.title{display:block;position:relative;}
+.layico.title i{position:absolute;border-radius:2px;}
+.layico.title .tl1{left:15%;right:15%;top:26%;height:24%;}
+.layico.title .tl2{left:28%;right:28%;top:62%;height:12%;opacity:.5;}
+.layico.blank{display:block;border:1.5px dashed #8ba0b2;
+  border-radius:3px;}
+.dbtn.lay[aria-pressed="true"] .layico.blank{border-color:#fff;}
+/* scrollable slide-template catalog (buttons generated from LAYOUTS) */
+.lay-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+  max-height:224px;overflow-y:auto;overflow-x:hidden;
+  padding:2px 3px 4px;margin:0;}
+.lay-picker .lay{padding:4px;display:flex;flex-direction:column;
+  align-items:stretch;gap:3px;line-height:1;height:auto;}
+.layico2{position:relative;width:100%;aspect-ratio:16/9;background:#0b141d;
+  border:1px solid #ffffff1a;border-radius:3px;overflow:hidden;}
+.dbtn.lay[aria-pressed="true"] .layico2{border-color:#fff;}
+.layico2 .li-cell{position:absolute;background:#2a4761;
+  border:1px solid #4d7ea3;border-radius:1px;box-sizing:border-box;}
+.layico2 .li-text{position:absolute;box-sizing:border-box;opacity:.8;
+  background:repeating-linear-gradient(#9fb2c2 0 1.5px,transparent 1.5px 4px);}
+.lay-lb{font-family:var(--mono);font-size:8px;letter-spacing:.02em;
+  color:#8ba0b2;text-align:center;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;}
+.dbtn.lay[aria-pressed="true"] .lay-lb{color:#fff;}
+/* title-slide text inputs */
+.title-editor{display:flex;flex-direction:column;gap:7px;}
+.title-editor[hidden]{display:none;}
+.title-editor input{background:#16273a;border:1px solid #ffffff22;
+  color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:8px 9px;
+  border-radius:6px;}
+.title-editor input:focus{outline:none;border-color:var(--cyan);}
+.pane-editor[hidden]{display:none;}
+#dc-edit{width:100%;}
+/* freeform slot editor + film thumbnails: boxes at frame positions */
+.pane-editor.freeform{display:block;position:relative;}
+.pane-editor.freeform .pane.slot{position:absolute;padding:4px 16px
+  4px 6px;}
+.pane-editor.freeform .pane.slot .pane-t{font-size:9.5px;
+  -webkit-line-clamp:2;}
+.mini-diagram.free{display:block;position:relative;}
+.mini-diagram.free .mini-pane{position:absolute;}
+.mini-diagram.title{grid-template-columns:1fr;}
+.mini-pane.is-title{background:#12202e;}
+.mini-pane.is-title::before{content:"";position:absolute;left:18%;
+  right:18%;top:32%;height:18%;background:#4d90c0;border-radius:1px;}
+.mini-pane.is-title::after{content:"";position:absolute;left:30%;
+  right:30%;top:60%;height:9%;background:#4d90c066;}
+
+/* ---------- slide editor ----------
+   Editing docks like an IDE: the builder panel stays on the left and
+   the slide canvas takes the document area. The document chrome (tabs,
+   filters) is hidden while editing — it acts on the hidden documents —
+   and comes back for cell-picking / on Done. */
+.deck.editing{left:var(--presrail-w);top:0;}
+body.slide-editing .apptop{display:none;}
+/* while editing, the panel is just chrome + film strip (the template
+   catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
+   slide canvas gets the width */
+.deck.editing .deck-create{flex:0 0 min(var(--dc-w),248px);
+  border-right:1px solid #ffffff22;}
+.deck.editing #layout-row{display:none;}
+.deck.editing .dc-resize{display:none;}
+/* ---- PowerPoint-style ribbon: labelled groups, always the same height ----
+   ONE wrapping flow: the static groups and the contextual format groups are
+   display:contents, so every group flows into the same rows — no dedicated
+   row per section, no wasted band. min-height reserves two rows so
+   selecting/deselecting never grows the ribbon or shifts the canvas. */
+.edit-tools.ribbon{display:flex;flex-wrap:wrap;align-items:stretch;
+  align-content:flex-start;gap:2px;row-gap:4px;
+  padding:7px 16px 6px;border-bottom:1px solid #ffffff14;
+  background:#0e1926;flex:none;min-height:122px;}
+.rbn-static{display:contents;}
+.rbn-grp{display:flex;flex-direction:column;align-items:center;
+  justify-content:space-between;gap:6px;padding:2px 15px;position:relative;
+  min-width:0;}
+.rbn-grp[hidden]{display:none;}
+.rbn-grp+.rbn-grp::before{content:"";position:absolute;left:0;top:2px;
+  bottom:15px;width:1px;background:#ffffff1a;}
+.rbn-grp.rbn-first::before{display:none;}
+.rbn-row{display:flex;align-items:center;justify-content:center;gap:6px;
+  flex-wrap:wrap;flex:1;min-height:32px;}
+.rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
+/* the contextual format groups flow into the same rows as the static ones;
+   when nothing is selected they stay in layout (invisible) so the ribbon
+   height never jumps */
+.et-fmt{display:contents;}
+.et-fmt[hidden]{display:contents;visibility:hidden;}
+.et-fmt .rbn-grp{flex:none;}
+.fmt-lab{margin-left:2px;}
+.et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--amber);}
+.et-hint{font-size:11px;color:#7e93a4;align-self:center;margin-left:auto;
+  padding:0 4px 10px;}
+.et-div{width:1px;height:22px;background:#ffffff26;flex:none;margin:0 3px;}
+/* the "+ Shapes" dropdown */
+.sh-drop{position:relative;display:inline-block;}
+#sh-btn[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.sh-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:60;
+  background:#16273a;border:1px solid #ffffff26;border-radius:9px;padding:6px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
+  box-shadow:0 14px 38px #0009;width:210px;}
+.sh-menu[hidden]{display:none;}
+.sh-opt{display:flex;flex-direction:column;align-items:center;gap:3px;
+  background:none;border:1px solid transparent;border-radius:7px;
+  padding:7px 4px 5px;cursor:pointer;color:#c9d6e2;font-family:var(--sans);}
+.sh-opt:hover{background:#39a9c022;border-color:#39a9c066;color:#fff;}
+.sh-ico{width:26px;height:22px;display:block;}
+/* filled crop-shape preview in the Crop menu (same clip-path as the effect) */
+.crop-ico{width:30px;height:22px;display:block;border-radius:2px;
+  background:linear-gradient(135deg,#8fd8ea,#39a9c0);}
+/* a shape-cropped figure fills its frame so the mask actually bites into it
+   (a contained figure would just have its letterbox clipped, looking unchanged) */
+.an-cell.an-cropped .figframe{padding:0;}
+.an-cell.an-cropped .figframe img{object-fit:cover;width:100%;height:100%;
+  max-width:none;max-height:none;}
+/* the "Same size" picker: a plain single-column list of text options */
+.sh-menu.same-menu{display:block;width:196px;padding:6px;}
+.same-menu .sh-opt{flex-direction:row;justify-content:flex-start;
+  width:100%;padding:7px 9px;font-size:12px;text-align:left;}
+/* the animation pane: effect picker + build-order sequence */
+.sh-menu.anim-pane{display:block;grid-template-columns:none;width:340px;
+  padding:11px 12px;max-height:min(72vh,460px);overflow-y:auto;text-align:left;}
+.anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7e93a4;margin:0 2px 6px;}
+.anim-eff+.anim-h,.anim-merge+.anim-h,.anim-empty+.anim-h{margin-top:13px;}
+.anim-empty{font-size:12px;color:#8ba0b2;padding:1px 2px 5px;line-height:1.5;}
+.anim-eff{display:flex;flex-wrap:wrap;gap:5px;}
+.anim-effb{flex:1;min-width:52px;background:#16273a;border:1px solid #ffffff1f;
+  color:#cdd9e3;border-radius:7px;padding:7px 6px;font-size:12px;cursor:pointer;
+  font-family:var(--sans);}
+.anim-effb:hover{border-color:#39a9c088;color:#fff;}
+.anim-effb.on{background:var(--cyan-deep);border-color:var(--cyan);color:#fff;}
+.anim-merge{display:flex;gap:6px;margin-top:8px;}
+.anim-mini{background:#16273a;border:1px solid #ffffff1f;color:#bcccd8;
+  border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
+  font-family:var(--sans);}
+.anim-mini.wide{flex:1;}
+.anim-mini:hover:not(:disabled){border-color:#39a9c088;color:#fff;}
+.anim-mini:disabled{opacity:.4;cursor:default;}
+.anim-seq{display:flex;flex-direction:column;gap:4px;}
+.anim-step{display:flex;align-items:center;gap:8px;background:#101c28;
+  border:1px solid #ffffff12;border-radius:8px;padding:5px 7px;}
+.anim-num{flex:none;width:20px;height:20px;border-radius:50%;
+  background:var(--amber);color:#241a05;font-family:var(--mono);font-size:11px;
+  font-weight:700;display:flex;align-items:center;justify-content:center;}
+.anim-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
+.anim-chip{font-size:11px;color:#bcccd8;background:#1c2c3d;border-radius:5px;
+  padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;max-width:150px;}
+.anim-chip.cur{background:var(--cyan-deep);color:#fff;}
+.anim-stepctr{flex:none;display:flex;gap:2px;}
+.anim-stepctr .anim-mini{padding:3px 6px;}
+.sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
+.sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
+.dbtn.viewtoggle{border-color:#39a9c05c;color:#8fd4e4;}
+.dbtn.viewtoggle:hover{border-color:var(--cyan);color:#fff;
+  background:#39a9c01e;}
+/* the floating "back to slide" toggle shown while scrolling the notebook */
+/* SVG shapes fill their frame; the div carries no border/box for these */
+.an-rect.an-svgshape{border:none!important;border-radius:0;
+  background:none!important;}
+.an-shape-svg{position:absolute;inset:0;width:100%;height:100%;
+  overflow:visible;display:block;pointer-events:none;}
+/* var() doesn't resolve in an SVG font-family attribute — set it via CSS */
+.an-shape-svg text,.sh-ico text{font-family:var(--sans);}
+.dbtn.et[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.dbtn.etm{padding:5px 9px;}
+select#fmt-font{background:#16273a;border:1px solid #ffffff22;
+  color:#cdd9e3;font-family:var(--mono);font-size:11px;
+  padding:5px 6px;border-radius:6px;}
+select#fmt-font[hidden]{display:none;}
+.dbtn.etm[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+/* precise point-size input + opacity slider live in the format bar */
+.fmt-szwrap,.fmt-opwrap{display:inline-flex;align-items:center;gap:4px;
+  flex:none;}
+.fmt-szwrap[hidden]{display:none;}
+.fmt-num{width:44px;background:#16273a;border:1px solid #ffffff22;
+  color:#cdd9e3;font-family:var(--mono);font-size:11px;padding:4px 5px;
+  border-radius:6px;-moz-appearance:textfield;}
+.fmt-num::-webkit-outer-spin-button,
+.fmt-num::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.fmt-unit,.fmt-opval{font-family:var(--mono);font-size:10.5px;color:#7e93a4;}
+.fmt-opval{min-width:34px;text-align:right;}
+.fmt-range{width:96px;accent-color:var(--cyan);cursor:pointer;height:16px;}
+.sw{width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
+  border:2px solid #ffffff30;}
+.sw[aria-pressed="true"]{border-color:#fff;
+  box-shadow:0 0 0 2px #39a9c0aa;}
+.fmt-lab{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:#7e93a4;}
+.sw.trans{background:#16273a;position:relative;overflow:hidden;}
+.sw.trans::after{content:"";position:absolute;left:-2px;right:-2px;
+  top:50%;height:2px;background:#ff6b57;
+  transform:rotate(-45deg);}
+/* custom-colour swatch: a rainbow chip that opens the full picker */
+.sw.sw-custom{background:conic-gradient(from 0deg,#ff6b57,#f0a848,#46a892,
+  #39a9c0,#7a6cff,#ff6b57);position:relative;overflow:hidden;}
+.sw.sw-custom::after{content:"+";position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;font-size:11px;line-height:1;
+  color:#fff;font-weight:800;text-shadow:0 1px 2px #000b;}
+/* professional colour picker popover (hex / rgb / rgba + alpha + recents) */
+.color-pop{position:fixed;z-index:160;width:236px;background:#0e1b28;
+  border:1px solid #ffffff26;border-radius:10px;padding:12px;
+  box-shadow:0 16px 46px #000a;display:flex;flex-direction:column;gap:9px;
+  font-family:var(--sans);}
+.color-pop[hidden]{display:none;}
+.cp-head{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:#8ba0b2;}
+.cp-native{width:100%;height:38px;border:1px solid #ffffff22;border-radius:6px;
+  background:none;cursor:pointer;padding:2px;}
+.cp-row{display:flex;align-items:center;gap:8px;}
+.cp-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#7e93a4;width:38px;flex:none;}
+.cp-in{flex:1;min-width:0;background:#16273a;border:1px solid #ffffff22;
+  color:#dce6ee;font-family:var(--mono);font-size:12px;padding:6px 8px;
+  border-radius:6px;}
+.cp-in:focus{outline:none;border-color:var(--cyan);}
+.cp-in.bad{border-color:#ff6b57;}
+.cp-alpha{flex:1;min-width:0;accent-color:var(--cyan);}
+.cp-aval{font-family:var(--mono);font-size:10px;color:#8ba0b2;width:34px;
+  text-align:right;flex:none;}
+.cp-recent{display:flex;flex-wrap:wrap;gap:5px;}
+.cp-recent:empty{display:none;}
+.cp-sw-chk{background-image:linear-gradient(45deg,#33475a 25%,transparent 25%,
+  transparent 75%,#33475a 75%),linear-gradient(45deg,#33475a 25%,#1a2836 25%,
+  #1a2836 75%,#33475a 75%);background-size:8px 8px;
+  background-position:0 0,4px 4px;}
+.cp-rsw{width:18px;height:18px;border-radius:4px;border:1px solid #ffffff22;
+  cursor:pointer;padding:0;position:relative;overflow:hidden;}
+.cp-rsw::after{content:"";position:absolute;inset:0;background:var(--cpc);}
+.cp-foot{display:flex;align-items:center;gap:8px;}
+.cp-preview{width:28px;height:28px;border-radius:6px;border:1px solid #ffffff26;
+  flex:none;position:relative;overflow:hidden;}
+.cp-preview::after{content:"";position:absolute;inset:0;
+  background:var(--cpc,#39a9c0);}
+.cp-apply{background:var(--cyan-deep);border-color:var(--cyan-deep);
+  color:#fff;}
+.deck.editing .deck-arrow,.deck.editing .deck-foot{display:none;}
+.slide{position:relative;}
+/* image annotations */
+.an-image{position:absolute;}
+.an-imgel{width:100%;height:100%;object-fit:cover;display:block;
+  pointer-events:none;border-radius:2px;}
+.deck.editing .an-image{cursor:move;}
+.deck.editing .an-image.sel{outline:2px solid var(--cyan);outline-offset:1px;}
+/* multi-selection / group: a dashed outline, no per-item resize handles */
+.deck.editing .an-item.grpsel{outline:1.5px dashed var(--cyan);
+  outline-offset:1px;}
+.deck.editing .an-item.grpsel .an-resize,
+.deck.editing .an-item.grpsel .an-handle,
+.deck.editing .an-item.grpsel .an-cellbtn,
+.deck.editing .an-item.grpsel .cellparts{display:none!important;}
+/* build animations: staged items hide until revealed, then animate in */
+.an-prebuild{opacity:0!important;pointer-events:none!important;}
+@keyframes anIn-fade{from{opacity:0}to{opacity:1}}
+@keyframes anIn-rise{from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:none}}
+@keyframes anIn-zoom{from{opacity:0;transform:scale(.85)}
+  to{opacity:1;transform:none}}
+.an-anim-fade{animation:anIn-fade .45s ease;}
+.an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
+.an-anim-zoom{animation:anIn-zoom .45s ease;}
+/* the build-order badge shown in the editor */
+.an-buildno{position:absolute;top:-9px;left:-9px;z-index:5;min-width:16px;
+  height:16px;border-radius:8px;background:var(--amber);color:#241a05;
+  font-family:var(--mono);font-size:10px;font-weight:700;display:flex;
+  align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
+/* optional per-deck slide numbers (bottom-right, part of the slide) */
+.slide-pageno{position:absolute;right:2.6%;bottom:3.2%;z-index:4;
+  font-family:var(--mono);font-size:2.4vh;line-height:1;color:#8aa0b0;
+  pointer-events:none;}
+.vpage .slide-pageno{color:#8aa0b0;}
+/* ---- PDF / print export: one fixed-size 16:9 slide per page ---- */
+#print-root{position:fixed;left:-99999px;top:0;width:1280px;z-index:-1;}
+.print-page{width:1280px;height:720px;position:relative;overflow:hidden;
+  background:#0b141d;}
+.print-page .slide{position:absolute;inset:0;background:#0b141d;}
+.print-page .annot-layer{pointer-events:none;}
+@media print{
+  @page{size:1280px 720px;margin:0;}
+  html,body{background:#0b141d;}
+  body.printing>*{display:none!important;}
+  body.printing #print-root{display:block!important;position:static;
+    left:0;top:0;width:auto;z-index:auto;}
+  .print-page{page-break-after:always;break-after:page;}
+  .print-page:last-child{page-break-after:auto;break-after:auto;}
+}
+
+/* a frame LOCKED to a git commit */
+.an-lockchip{position:absolute;top:5px;left:5px;z-index:3;
+  font-family:var(--mono);font-size:9px;letter-spacing:.04em;
+  background:#46a89222;border:1px solid #46a89266;color:#7fd0b8;
+  border-radius:5px;padding:2px 6px;pointer-events:auto;cursor:help;}
+.an-lockchip.warn{background:#ff6b5722;border-color:#ff6b5766;
+  color:#ff9d8e;}
+.deck:not(.editing) .an-lockchip{display:none;}
+.an-verwait{flex:1;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11px;color:#7e93a4;padding:16px;
+  text-align:center;}
+
+/* a frame reverted to its pre-refresh figure */
+.deck.editing .an-cell.an-frozen{outline:1.5px dashed #f0a848;
+  outline-offset:2px;}
+.an-frozenchip{position:absolute;top:5px;left:5px;z-index:3;
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  background:#f0a84822;border:1px solid #f0a84866;color:#f0c078;
+  border-radius:5px;padding:2px 6px;pointer-events:none;}
+
+/* snap-to-align guide lines (drawn only mid-drag) */
+.snapline{position:absolute;z-index:45;pointer-events:none;}
+.snapline.snap-v{top:0;bottom:0;width:0;border-left:1.5px dashed #ff6b57;}
+.snapline.snap-h{left:0;right:0;height:0;border-top:1.5px dashed #ff6b57;}
+
+/* annotation layer */
+.annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
+.deck.editing .annot-layer{pointer-events:auto;cursor:crosshair;}
+.deck.editing .annot-layer.tool-select{cursor:default;}
+.deck.editing .annot-layer:not(.tool-select) .an-item,
+.deck.editing .annot-layer:not(.tool-select) .an-item *{
+  cursor:crosshair!important;}
+.annot-layer>svg{position:absolute;inset:0;width:100%;height:100%;
+  overflow:visible;pointer-events:none;}
+.deck.editing .annot-layer>svg{pointer-events:auto;}
+.annot-layer>svg.an-svgtop{pointer-events:none!important;z-index:5;}
+.an-item{pointer-events:none;}
+.deck.editing .an-item{pointer-events:auto;}
+.an-rect{position:absolute;border:3px solid #ff6b57;border-radius:4px;}
+.deck.editing .an-rect{cursor:move;}
+.an-rect.sel,.an-text.sel,.an-title.sel,.an-cell.sel{
+  outline:2px dashed var(--cyan);outline-offset:3px;}
+.an-text{position:absolute;max-width:60%;font-family:var(--sans);
+  line-height:1.35;color:#fff;background:#0e1926d9;
+  border:1px solid #ffffff2e;border-radius:8px;padding:.35em .55em;
+  display:flex;align-items:flex-start;gap:.35em;}
+.an-text.nobg{background:none;border:none;
+  text-shadow:0 1px 4px #000d,0 0 10px #0009;}
+/* fill the box (minus the move handle) so text-align actually positions the
+   text — a content-sized flex item can't be aligned */
+.an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
+ul.an-ul{margin:0;padding-left:1.15em;list-style:disc;}
+ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
+.an-handle{cursor:move;color:#8ba0b2;font-size:.65em;flex:none;
+  user-select:none;margin-top:.3em;}
+.an-handle:hover{color:#fff;}
+.an-arrow-line{fill:none;}
+.an-arrow-line.sel{filter:drop-shadow(0 0 5px #39a9c0cc);}
+.an-arrow-hit{stroke:transparent;stroke-width:16;fill:none;}
+.deck.editing .an-arrow-hit{cursor:move;}
+.an-resize{position:absolute;width:15px;
+  height:15px;border-radius:4px;background:var(--cyan);
+  border:2px solid #0b141d;display:none;z-index:3;}
+.an-rs-se{right:-7px;bottom:-7px;cursor:nwse-resize;}
+.an-rs-nw{left:-7px;top:-7px;cursor:nwse-resize;}
+.an-rs-ne{right:-7px;top:-7px;cursor:nesw-resize;}
+.an-rs-sw{left:-7px;bottom:-7px;cursor:nesw-resize;}
+.an-item.sel .an-resize{display:block;}
+/* free-rotation grip above the item (drag; Shift snaps to 15 deg) */
+.an-rotate{position:absolute;top:-30px;left:50%;margin-left:-8px;
+  width:16px;height:16px;border-radius:50%;background:#0e1926;
+  border:2px solid var(--cyan);cursor:grab;display:none;z-index:3;}
+.an-rotate::after{content:"";position:absolute;left:50%;top:100%;
+  width:2px;height:11px;background:var(--cyan);margin-left:-1px;}
+.an-item.sel .an-rotate{display:block;}
+.deck.editing .an-item.grpsel .an-rotate{display:none!important;}
+.an-endpt{position:absolute;width:15px;height:15px;
+  margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--cyan);
+  border:2px solid #0b141d;display:none;z-index:6;
+  pointer-events:none;}
+.deck.editing .an-endpt.sel{display:block;pointer-events:auto;
+  cursor:grab;}
+
+/* movable title / subtitle on title slides */
+.an-title{position:absolute;transform:translate(-50%,-50%);
+  max-width:88%;text-align:center;display:flex;gap:.4em;
+  align-items:flex-start;justify-content:center;
+  font-family:var(--sans);line-height:1.2;}
+.an-title.t-main .an-tx{font-weight:600;letter-spacing:-.018em;}
+.slide-titlefree .ttl-eyebrow{position:absolute;top:7%;left:0;right:0;
+  text-align:center;font-family:var(--mono);font-size:11px;
+  letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);}
+
+/* notebook-cell frames */
+.an-cell{position:absolute;background:#0e1926;
+  border:1.5px solid #39a9c05c;border-radius:10px;overflow:hidden;
+  display:flex;flex-direction:column;}
+/* edit mode: an UNSELECTED frame is just its content — transparent (so it
+   never blocks what's behind), no border, no title header. The border, title,
+   Replace and part-picker all return only when the frame is SELECTED, so you
+   can read the slide as it will present. */
+.deck.editing .an-cell{cursor:move;background:none;border-color:transparent;}
+.deck.editing .an-cell.sel{border-color:var(--cyan);background:#0b141d88;}
+/* an EMPTY frame keeps its dashed dark placeholder box (a card goes here) */
+.deck.editing .an-cell.empty{background:#0e192699;border-color:#39a9c05c;}
+/* the title header is an OVERLAY (out of flow) shown only when selected, so
+   selecting a frame never reflows/shrinks the figure underneath it */
+.deck.editing .an-cell .an-cellhead,
+.pane.filled .an-cellhead{position:absolute;top:0;left:0;right:0;z-index:2;
+  display:none;padding:7px 30px 10px 12px;
+  background:linear-gradient(#0b141de0,#0b141d00);}
+.deck.editing .an-cell.sel .an-cellhead,
+.pane.filled.active .an-cellhead{display:flex;}
+.deck:not(.editing) .an-cell.empty{display:none;}
+/* clean playback: a frame is just its content — no header title, no
+   badge, no frame border (the editor/builder keep them for orientation) */
+.vpage .an-cell{border:none;background:none;}
+.vpage .an-cellhead{display:none;}
+/* playback: a framed cell is just its content (no dark card box / cyan border),
+   so a shape-crop reads as the shape even on slides without a code trace */
+.deck:not(.editing) .deck-stage .an-cell{border:none;background:none;}
+.deck:not(.editing) .deck-stage .an-cellhead{display:none;}
+.an-cellhead{flex:none;display:flex;align-items:center;gap:8px;
+  padding:8px 30px 0 12px;min-width:0;}
+.an-cellhead-t{font-size:13px;font-weight:600;color:#dbe7ef;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;
+  min-width:0;}
+.an-cellcap{flex:none;font-family:var(--serif);font-size:12.5px;
+  color:#a9bccb;padding:0 12px 9px;margin:0;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+.slide-emptyhint{position:absolute;inset:0;display:flex;
+  align-items:center;justify-content:center;text-align:center;
+  color:#54677a;font-size:14px;line-height:1.6;margin:0;padding:0 8%;
+  pointer-events:none;}
+.slide-emptyhint b{color:#7e93a4;}
+.an-cell .cardbody{flex:1;min-height:0;display:flex;
+  flex-direction:column;padding:8px;}
+/* the .cb-fig figure-part wrapper must pass the flex height through in slide
+   frames, else .figframe's flex:1 fit-to-frame sizing is inert and plots clip */
+.an-cell .cb-fig,.spane .cb-fig,.slide-fig .cb-fig{flex:1;min-height:0;
+  display:flex;flex-direction:column;}
+.an-cell .figframe{flex:1;min-height:0;display:flex;
+  align-items:center;justify-content:center;overflow:hidden;
+  border:none;padding:6px;}
+/* a frame wider/taller than its figure shows TRANSPARENT space around
+   the plot, not a white box (the plot keeps its own background) */
+.an-cell .figframe,.spane .figframe{background:none;}
+.an-cell .figframe+.figframe{border-top:1px solid #ffffff10;}
+.an-cell .figpager{flex:1;min-height:0;display:flex;
+  flex-direction:column;}
+.an-cell .figpager .figpage{display:none;}
+.an-cell .figpager .figpage.current{flex:1;min-height:0;display:flex;
+  flex-direction:column;}
+.an-cell .fp-btn{background:transparent;border-color:#ffffff22;
+  color:#cdd9e3;}
+.an-cell .fp-count{color:#7e93a4;}
+.an-cell .cardbody.mdclamp,.spane .cardbody.mdclamp{max-height:none;}
+.an-cell .cardbody.mdclamp::after,
+.spane .cardbody.mdclamp::after{display:none;}
+.spane .figpager{flex:1;min-height:0;display:flex;
+  flex-direction:column;}
+.spane .figpager .figpage.current{flex:1;min-height:0;display:flex;
+  flex-direction:column;}
+.an-cell .figframe img{max-width:100%;max-height:100%;width:auto;
+  height:auto;object-fit:contain;margin:0;}
+/* a FIGURE frame is just the plot: no inner padding, and after render the
+   frame snaps to the image's aspect ratio (snapFigAspect) — so the selection
+   outline and resize handle sit exactly on the plot, with no letterbox gap
+   and no title header (the tooltip + Locate in notebook carry its name) */
+.an-cell.an-figonly{border-radius:4px;}
+.an-cell.an-figonly .cardbody{padding:0;}
+.an-cell.an-figonly .figframe{padding:0;}
+/* the frame already matches the plot's aspect, so filling it (up- OR
+   down-scaling) keeps the plot edge-to-edge under the outline */
+.an-cell.an-figonly .figframe img{width:100%;height:100%;
+  max-width:none;max-height:none;object-fit:contain;}
+.an-cell .note{flex:1;min-height:0;overflow:auto;
+  background:var(--nb-bg,#f7fafc);
+  color:var(--nb-tx,var(--ink-2));border-radius:6px;padding:10px 14px;
+  font-size:13px;}
+/* a recoloured markdown card carries its text colour to every child
+   (headings, lists, bold) so the whole note reads in the chosen colour */
+.an-cell[style*="--nb-tx"] .note,
+.an-cell[style*="--nb-tx"] .note *{color:var(--nb-tx);}
+.an-cell .xr-wrap,.an-cell pre.result,.an-cell pre.stream{
+  overflow:auto;min-height:0;}
+.an-cell.empty{align-items:center;justify-content:center;
+  border-style:dashed;background:#0e192699;}
+.an-cellpick{background:none;border:none;color:#7fb6c6;
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+  cursor:pointer;padding:14px;text-align:center;line-height:1.5;}
+.an-cellpick:hover{color:#fff;}
+.an-cellbtn{position:absolute;top:5px;right:5px;z-index:3;display:none;
+  background:#0e1926ee;border:1px solid #39a9c066;border-radius:6px;
+  color:#7fd0e0;font-family:var(--mono);font-size:10px;padding:4px 9px;
+  cursor:pointer;}
+/* Replace shows only for the SELECTED frame (not on hover) — declutter */
+.deck.editing .an-cell.sel .an-cellbtn{display:block;}
+.an-cellbtn:hover{color:#fff;border-color:var(--cyan);}
+/* which part of a cell a frame shows: code / figure / output */
+.an-cellpart{font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;color:#7fb6c6;background:#39a9c022;
+  border-radius:4px;padding:1px 6px;flex:none;}
+/* the code/figure/output picker sits along the BOTTOM of the frame so
+   it never covers the title header or the part badge at the top */
+.cellparts{position:absolute;bottom:5px;left:5px;right:5px;z-index:5;
+  display:none;gap:3px;flex-wrap:wrap;justify-content:center;}
+/* the part-picker shows only for the SELECTED frame (not on hover) */
+.deck.editing .an-cell.sel .cellparts,
+.pane.filled.active .cellparts{display:flex;}
+.cellpartbtn{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;
+  background:#0e1926ee;border:1px solid #ffffff2b;border-radius:5px;
+  color:#c9d6e2;padding:3px 7px;cursor:pointer;line-height:1;}
+.cellpartbtn.on{background:var(--cyan-deep);border-color:var(--cyan-deep);
+  color:#fff;}
+.cellpartbtn:hover{border-color:var(--cyan);color:#fff;}
+.cellpartbtn.split{color:#9fb2c2;}
+/* the same part-picker, hosted in the top ribbon's Object group */
+.rbn-partslot{display:inline-flex;align-items:center;}
+.rbn-partslot[hidden]{display:none;}
+#fmt-parts .cellparts{position:static;display:inline-flex;gap:6px;
+  flex-wrap:nowrap;bottom:auto;left:auto;right:auto;z-index:auto;}
+/* in the ribbon the figure/code/output/split pills dress like every other
+   ribbon button — same face, same size */
+#fmt-parts .cellpartbtn{font-family:var(--mono);font-size:11px;
+  letter-spacing:normal;background:#ffffff0a;border:1px solid #ffffff22;
+  border-radius:6px;color:#cdd9e3;padding:5px 9px;line-height:normal;}
+#fmt-parts .cellpartbtn:hover{border-color:var(--cyan);color:#fff;}
+#fmt-parts .cellpartbtn.on{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+/* the Layouts dropdown: the whole template catalog, off the panel and
+   into a ribbon menu */
+.sh-menu.lay-menu{display:block;width:442px;max-height:min(64vh,470px);
+  overflow-y:auto;padding:8px;}
+.lay-menu .lay-picker{margin:0;}
+/* catalog section headings (Slide layouts / Poster layouts) */
+.lay-sec{grid-column:1/-1;font-family:var(--mono);font-size:9px;
+  letter-spacing:.14em;text-transform:uppercase;color:#66798a;
+  padding:7px 2px 1px;}
+.lay-sec:first-child{padding-top:1px;}
+
+/* picking a card for a cell frame */
+.pickbar{position:fixed;top:var(--chrome-h);left:var(--presrail-w);
+  right:0;z-index:99;background:var(--cyan-deep);color:#fff;
+  padding:9px 16px;font-size:13px;display:flex;gap:12px;
+  align-items:center;box-shadow:0 6px 24px #00000055;}
+.pickbar[hidden]{display:none;}
+.pickbar .dbtn{border-color:#ffffff55;color:#fff;}
+body.picking .card{cursor:copy;}
+body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
+
+/* pane editor: the current slide as clickable regions */
+/* the current slide's interactive editor — the single big view in the
+   merged slides list (fills the width; drag the panel edge to resize) */
+.pane-editor{aspect-ratio:var(--page-ar,16/9);display:grid;gap:6px;
+  background:#0b141d;
+  border:1px solid #ffffff22;border-radius:8px;padding:6px;
+  margin:0;width:100%;overflow:hidden;}
+.pane-editor.full{grid-template-columns:1fr;grid-template-rows:1fr;}
+.pane-editor.halves{grid-template-columns:1fr 1fr;grid-template-rows:1fr;}
+.pane-editor.quarters{grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;}
+.pane{position:relative;background:#12202e;border:1px dashed #ffffff26;
+  border-radius:6px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;padding:6px 18px 6px 8px;overflow:hidden;
+  transition:border-color .15s,background .15s;}
+/* a filled frame shows the ACTUAL slide content (an .an-cell fills it),
+   so the builder preview is exactly what will be presented */
+.pane.filled{padding:0;background:none;border:none;overflow:visible;}
+.pane.filled .an-cell{position:absolute;inset:0;width:auto;height:auto;
+  cursor:pointer;pointer-events:none;}
+.pane.active{outline:2px solid var(--cyan);outline-offset:1px;}
+.pane.empty.active{border-color:var(--cyan);border-style:solid;
+  background:#39a9c018;box-shadow:0 0 0 2px #39a9c04d inset;}
+.pane.empty.active .pane-t{color:var(--cyan);}
+.pane-t{font-size:10.5px;line-height:1.35;color:#c3d2df;text-align:center;
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;
+  -webkit-box-orient:vertical;}
+.pane.empty .pane-t{color:#54677a;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.1em;text-transform:uppercase;}
+.pane-x{position:absolute;top:3px;right:3px;z-index:4;background:#0e1926cc;
+  border:1px solid #ffffff22;border-radius:5px;color:#c9d6e2;
+  cursor:pointer;font-size:11px;padding:2px 6px;line-height:1;}
+.pane-x:hover{color:#fff;border-color:var(--cyan);}
+
+/* filmstrip: mini slide thumbnails */
+.film-list{flex:1;overflow-y:auto;min-height:60px;margin:0 -4px;
+  padding:0 4px;}
+.film-row{display:flex;align-items:center;gap:4px;border-radius:7px;
+  margin-bottom:3px;cursor:grab;}
+.film-row.current{background:#39a9c01c;outline:1px solid #39a9c055;
+  align-items:flex-start;}
+.film-row.dragging{opacity:.45;}
+.film-row.drop-above{box-shadow:0 -2px 0 var(--cyan);}
+.film-row.drop-below{box-shadow:0 2px 0 var(--cyan);}
+.film-label{flex:1;display:flex;align-items:center;gap:9px;background:none;
+  border:none;color:#c3d2df;font-size:11.5px;padding:5px 6px;cursor:pointer;
+  text-align:left;min-width:0;font-family:var(--sans);}
+.film-label .film-t{overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.film-label .film-n{font-family:var(--mono);font-size:9.5px;color:#6c8093;
+  width:15px;flex:none;text-align:right;}
+/* the selected slide expands: number on top, big editor, title below */
+.film-row.current .film-label{flex-direction:column;align-items:stretch;
+  gap:6px;cursor:default;}
+.film-row.current .film-n{align-self:flex-start;text-align:left;
+  color:var(--cyan);}
+.film-view{width:100%;min-width:0;}
+.film-view .pane-editor{width:100%;margin:0;}
+.mini-diagram{width:116px;height:66px;flex:none;display:grid;gap:2px;
+  background:#0b141d;border:1px solid #ffffff22;border-radius:4px;
+  padding:2px;overflow:hidden;}
+.mini-diagram.full{grid-template-columns:1fr;}
+.mini-diagram.halves{grid-template-columns:1fr 1fr;}
+.mini-diagram.quarters{grid-template-columns:1fr 1fr;
+  grid-template-rows:1fr 1fr;}
+.mini-pane{position:relative;overflow:hidden;border-radius:2px;
+  background:#1b2c3e;display:flex;align-items:center;
+  justify-content:center;}
+.mini-pane img{width:100%;height:100%;object-fit:contain;display:block;
+  background:#fff;}
+.mini-pane.is-note{background:#eef2f6 repeating-linear-gradient(180deg,
+  #eef2f6 0,#eef2f6 4px,#b9c8d4 4px,#b9c8d4 5px);
+  background-clip:padding-box;border:2px solid #eef2f6;}
+.mini-pane.is-code{font-family:var(--mono);font-size:8.5px;
+  color:#6f8ba3;background:#101d2a;}
+.mini-pane.is-fig{background:#2a4761;}
+.mini-pane.empty{background:#12202e;}
+
+/* pane editor: faint live preview behind the title */
+.pane-img{position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;opacity:.4;}
+.pane.filled .pane-t{position:relative;z-index:1;color:#eef4f8;
+  text-shadow:0 1px 3px #000c,0 0 8px #0008;}
+.film-ctr{display:none;gap:1px;padding-right:5px;flex:none;}
+.film-row:hover .film-ctr,.film-row.current .film-ctr{display:flex;}
+.film-mini{background:none;border:none;color:#8ba0b2;cursor:pointer;
+  font-size:11px;padding:2px 4px;border-radius:4px;}
+.film-mini:hover{background:#ffffff14;color:#fff;}
+.addslide{margin-top:8px;}
+
+.deck-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#16273a;border:1px solid var(--cyan);color:#e6eef4;
+  font-size:12.5px;font-family:var(--mono);padding:9px 16px;border-radius:8px;
+  z-index:120;box-shadow:0 8px 30px #00000066;max-width:80vw;}
+
+@media (max-width:860px){
+  .deck-stage{padding:16px 52px 4px;}
+  .deck-drawer{padding:12px 20px 18px;}
+  .slide-grid.halves,.slide-grid.quarters{grid-template-columns:1fr;
+    grid-template-rows:none;grid-auto-rows:1fr;}
+}
+@media (prefers-reduced-motion:reduce){.slide{animation:none;}}

@@ -1,0 +1,946 @@
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap');
+
+:root{
+  --ink:#16202b; --ink-2:#33414f; --ink-3:#69788a;
+  --paper:#fbfcfd; --paper-2:#eef2f6; --paper-3:#e2e8ee;
+  --line:#d8e0e8;
+  --chrome:#11202c; --chrome-2:#16273544; --chrome-line:#ffffff14;
+  --chrome-ink:#cdd9e3; --chrome-ink-2:#7e93a4;
+  --cyan:#39a9c0; --cyan-deep:#1f7e93;
+  --amber:#cf9a4e; --amber-soft:#caa06a66;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --serif:'IBM Plex Serif',Georgia,serif;
+  --rad:6px; --rail-w:300px;
+}
+*{box-sizing:border-box}
+/* reserve the scrollbar's width at all times: without it, switching to a
+   view that does not scroll the page (the tree) widens the viewport and
+   the CENTRED ribbon slides sideways — every button moving a few px is
+   exactly the jump the user reported (2026-07-30) */
+html{scroll-behavior:smooth;scrollbar-gutter:stable}
+body{margin:0;font-family:var(--sans);color:var(--ink);
+  background:var(--paper-2);line-height:1.5;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+
+/* ---------- layout ---------- */
+.shell{display:grid;grid-template-columns:var(--rail-w) 1fr;min-height:100vh;}
+.rail{position:sticky;top:0;height:100vh;overflow-y:auto;
+  background:var(--chrome);color:var(--chrome-ink);
+  border-right:1px solid var(--chrome-line);
+  display:flex;flex-direction:column;}
+.stage{min-width:0;}
+
+/* ---------- rail header ---------- */
+.railhead{padding:22px 22px 16px;border-bottom:1px solid var(--chrome-line);}
+.brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
+  text-transform:uppercase;color:var(--cyan);margin:0 0 12px;display:flex;
+  align-items:center;gap:8px;}
+.brand::before{content:"";width:7px;height:7px;border-radius:50%;
+  background:var(--cyan);box-shadow:0 0 0 3px #39a9c029;}
+.railtitle{font-size:18px;font-weight:600;line-height:1.25;margin:0;
+  color:#eef4f8;letter-spacing:-.01em;}
+.railmeta{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink-2);
+  margin-top:8px;letter-spacing:.02em;}
+/* where this notebook came from: path + git commit + earlier versions,
+   with the reload button beside it (it used to hide on the tab) */
+.railfile{display:flex;gap:4px;margin-top:11px;}
+.rf-btn{font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  border:1px solid #ffffff40;background:#ffffff12;color:var(--chrome-ink);
+  padding:6px 10px;border-radius:5px;cursor:pointer;transition:all .13s;
+  display:inline-flex;align-items:center;gap:5px;line-height:1;}
+.rf-btn:hover{border-color:var(--cyan);color:#fff;background:#ffffff1e;}
+body.light .rf-btn{border-color:var(--line);background:#fff;
+  color:var(--ink-2);}
+.rf-info{flex:1;justify-content:flex-start;min-width:0;}
+.rf-reload{flex:none;font-size:12px;padding:5px 9px;}
+.rf-btn[hidden]{display:none!important;}
+/* ---- CUSTOM VIEW: the styling bar + style panel (2026-07-29) --------
+   A custom view is edited IN the document (you see exactly what you get),
+   so its chrome is a second bar under the filter ribbon rather than a
+   separate stage. */
+.stylebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  padding:7px 16px 8px;border-top:1px solid var(--chrome-line);
+  background:#0f1b28;}
+body.light .stylebar{background:#eef3f7;}
+.stylebar[hidden]{display:none;}
+.sb-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);opacity:.8;}
+body.light .sb-lab{color:var(--ink-3);}
+.sb-name{font-family:var(--sans);font-size:13px;font-weight:600;
+  color:var(--chrome-ink);max-width:220px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+body.light .sb-name{color:var(--ink);}
+.sb-spring{flex:1;}
+.sb-hint{font-family:var(--mono);font-size:9px;letter-spacing:.05em;
+  color:var(--chrome-ink-2);opacity:.75;}
+body.light .sb-hint{color:var(--ink-3);}
+.stylebar .toggle{height:30px;box-sizing:border-box;padding:0 13px;
+  font-size:11.5px;flex:none;white-space:nowrap;
+  border:1px solid #ffffff40;background:#ffffff12;color:#d7e3ec;
+  border-radius:6px;cursor:pointer;font-family:var(--mono);
+  display:inline-flex;align-items:center;line-height:1;}
+.stylebar .toggle:hover{border-color:var(--cyan);color:#fff;}
+.stylebar .toggle[hidden]{display:none!important;}
+.stylebar .toggle.primary{background:var(--cyan);border-color:var(--cyan);
+  color:#04222b;font-weight:600;}
+.stylebar .toggle[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+body.light .stylebar .toggle{background:#fff;border-color:var(--line);
+  color:var(--ink-2);}
+body.light .stylebar .toggle:hover{border-color:var(--cyan);color:var(--ink);}
+body.light .stylebar .toggle.primary{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+/* the panel floats at body level — a sticky/positioned ancestor would
+   trap it behind the header (the File-info panel learned this already) */
+.stylepanel{position:fixed;z-index:210;width:302px;max-height:74vh;
+  overflow-y:auto;background:#16273a;border:1px solid #ffffff22;
+  border-radius:9px;padding:11px 12px 13px;
+  box-shadow:0 14px 44px #00000070;}
+.stylepanel[hidden]{display:none;}
+body.light .stylepanel{background:#fff;border-color:var(--line);
+  box-shadow:0 14px 44px #00000026;}
+.sp-h{font-family:var(--mono);font-size:9px;letter-spacing:.15em;
+  text-transform:uppercase;color:#7e93a4;padding:0 0 8px;}
+body.light .sp-h{color:var(--ink-3);}
+.sp-sub{font-size:11.5px;color:#9fb2c2;padding:0 0 9px;line-height:1.45;}
+body.light .sp-sub{color:var(--ink-3);}
+.sp-row{display:flex;align-items:center;gap:8px;padding:4px 0;}
+.sp-rl{flex:1;font-size:12px;color:#cdd9e3;}
+body.light .sp-rl{color:var(--ink-2);}
+.sp-row input[type=color]{width:34px;height:24px;padding:0;flex:none;
+  background:none;border:1px solid #ffffff2e;border-radius:5px;
+  cursor:pointer;}
+.sp-row input[type=range]{width:118px;flex:none;}
+.sp-row select,.sp-num{background:#0f1b28;border:1px solid #ffffff2e;
+  color:#cdd9e3;font-family:var(--mono);font-size:11px;padding:4px 6px;
+  border-radius:5px;flex:none;}
+body.light .sp-row select,body.light .sp-num{background:#fff;
+  border-color:var(--line);color:var(--ink-2);}
+.sp-num{width:56px;}
+.sp-val{font-family:var(--mono);font-size:10px;color:#7e93a4;width:38px;
+  text-align:right;flex:none;}
+.sp-btns{display:flex;gap:6px;padding-top:10px;margin-top:8px;
+  border-top:1px solid #ffffff14;}
+.sp-btns .toggle{flex:1;justify-content:center;}
+.sp-warn{font-size:11px;color:#e6b877;padding:7px 0 2px;line-height:1.4;}
+/* while styling: markdown cells and headings advertise that they are
+   clickable targets, and each carries its own style button */
+body.styling .card[data-note="1"],body.styling .sectionhead{cursor:pointer;}
+body.styling .card[data-note="1"]:hover,
+body.styling .sectionhead:hover{outline:2px dashed var(--cyan);
+  outline-offset:3px;}
+body.styling .card[data-note="1"].sty-sel,
+body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
+  outline-offset:3px;}
+.sty-btn{position:absolute;top:6px;left:8px;z-index:6;
+  font-family:var(--mono);font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;padding:3px 7px;border-radius:5px;
+  border:1px solid var(--cyan);background:var(--paper);color:var(--cyan-deep);
+  cursor:pointer;opacity:0;transition:opacity .12s;}
+.card[data-note="1"]:hover .sty-btn,.sty-btn:focus-visible{opacity:1;}
+.sty-btn:hover{background:var(--cyan);color:#04222b;}
+/* a section's style button sits on its header line, before the eye */
+.sectionhead .sty-btn{position:static;opacity:.7;margin-left:auto;}
+.sectionhead:hover .sty-btn{opacity:1;}
+/* a target that carries its OWN style says so — that is what the
+   "Override individual styles" button is about */
+.sty-own{border-color:var(--amber)!important;color:var(--amber)!important;}
+.rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
+  border-radius:7px;padding:9px 10px;background:#ffffff08;}
+.rf-panel[hidden]{display:none;}
+/* the same panel, floated under the ribbon's File button */
+.rf-panel.rf-float{position:fixed;z-index:200;margin-top:0;width:372px;
+  background:#16273a;border-color:#ffffff22;
+  box-shadow:0 12px 40px #00000066;}
+body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
+.rf-row{display:flex;flex-direction:column;gap:1px;margin-bottom:8px;
+  min-width:0;}
+.rf-row:last-child{margin-bottom:0;}
+.rf-k{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--chrome-ink-2);}
+/* one tidy line per fact: truncate, don't break a URL mid-word across
+   three lines. The full value is on the element's title. */
+.rf-v{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink);
+  line-height:1.5;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* the commit message is prose — it may wrap, on word boundaries */
+.rf-v.rf-sub{white-space:normal;overflow-wrap:anywhere;}
+.rf-v.hash{color:var(--cyan);}
+.rf-sub{color:var(--chrome-ink-2);font-size:9.5px;}
+.rf-acts{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px;}
+.rf-live{color:#7fd0b8;}
+.rf-old{color:var(--amber);}
+/* the commit hash IS a control, so it has to look like one */
+.rf-hashbtn{background:#39a9c018;border:1px solid #39a9c059;
+  padding:4px 9px;cursor:pointer;border-radius:5px;
+  text-align:left;font-family:var(--mono);font-size:10.5px;
+  color:var(--cyan);display:inline-flex;align-items:center;gap:7px;
+  align-self:flex-start;max-width:100%;}
+.rf-hashbtn:hover{background:#39a9c02e;border-color:var(--cyan);
+  color:#eaf6fa;}
+.rf-caret{font-size:8px;transition:transform .13s;opacity:.85;}
+.rf-hashbtn.open .rf-caret{transform:rotate(180deg);}
+.rf-commits{margin-top:7px;max-height:240px;overflow-y:auto;
+  border-top:1px solid var(--chrome-line);padding-top:6px;}
+.rf-commits[hidden]{display:none;}
+.rf-crow{display:flex;align-items:stretch;gap:3px;}
+.rf-commit{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;
+  flex:1;min-width:0;text-align:left;background:none;
+  border:1px solid transparent;
+  border-radius:5px;padding:5px 6px;cursor:pointer;color:inherit;}
+.rf-commit:hover{background:#ffffff0e;border-color:var(--chrome-line);}
+/* the same version, but side by side instead of in place */
+.rf-newtab{flex:none;width:26px;background:none;cursor:pointer;
+  border:1px solid transparent;border-radius:5px;
+  color:var(--chrome-ink-2);font-size:12px;line-height:1;}
+.rf-newtab:hover{background:#ffffff0e;border-color:var(--chrome-line);
+  color:var(--chrome-ink);}
+body.light .rf-newtab:hover{background:#00000008;}
+.rf-ch{font-family:var(--mono);font-size:10px;color:var(--cyan);}
+.rf-cm{font-family:var(--sans);font-size:11px;color:var(--chrome-ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.rf-cd{grid-column:2;font-family:var(--mono);font-size:9px;
+  color:var(--chrome-ink-2);}
+body.light .rf-commit:hover{background:#00000008;}
+body.light .rf-cm{color:var(--ink-2);}
+body.light .rf-cd{color:var(--ink-3);}
+body.light .rf-btn{border-color:var(--line);color:var(--ink-3);}
+body.light .rf-btn:hover{color:var(--ink);}
+body.light .rf-panel{background:#00000005;border-color:var(--line);}
+body.light .rf-v{color:var(--ink-2);}
+body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
+
+/* ---------- nav ---------- */
+.nav{padding:14px 12px 8px;flex:1 0 auto;}
+.navsec{display:flex;justify-content:space-between;align-items:center;
+  gap:8px;padding:9px 10px;margin-top:6px;border-radius:var(--rad);
+  text-decoration:none;color:var(--chrome-ink);font-weight:600;font-size:13.5px;
+  letter-spacing:-.005em;transition:background .15s,color .15s;}
+.navsec:hover{background:#ffffff0c;}
+.navsec.active{background:#39a9c014;color:#eef4f8;}
+/* a section row = a collapse chevron + the (clickable) section link */
+.navsec-row{display:flex;align-items:center;gap:1px;margin-top:6px;}
+.navsec-row .navsec{flex:1;margin-top:0;min-width:0;}
+.navsec-chev{background:none;border:none;color:var(--chrome-ink-2);
+  cursor:pointer;font-size:10px;line-height:1;padding:6px 3px;flex:none;
+  border-radius:4px;transition:transform .15s,color .15s;}
+.navsec-chev:hover{color:var(--chrome-ink);}
+.navsec-row.collapsed .navsec-chev{transform:rotate(-90deg);}
+.navitems.nav-collapsed{display:none;}
+/* the three heading tiers nest progressively (indent + shrinking type) */
+.navsec-l1 .navsec{font-size:14px;}
+.navsec-l2{margin-left:12px;}
+.navsec-l2 .navsec{font-size:12.5px;font-weight:500;}
+.navsec-l3{margin-left:24px;}
+.navsec-l3 .navsec{font-size:11.5px;font-weight:500;
+  color:var(--chrome-ink-2);padding:6px 10px;}
+/* Long notebooks: let the browser skip layout+paint for cards that are
+   off-screen. Measured on a 260-card document this is where the time
+   goes — not our JS, which runs in ~1ms. `auto` remembers each card's
+   last real size, so the scrollbar stays honest. */
+.content .card{content-visibility:auto;contain-intrinsic-size:auto 300px;}
+/* …but never for a card that has been CLONED somewhere it must render in
+   full: slide frames, tree nodes, trace steps, the raw view, printing */
+.an-cell .card,.spane .card,.slide-fig .card,.tree-node .card,
+.vo-step .card,.print-page .card,.rawview .card,.figmax .card{
+  content-visibility:visible;contain-intrinsic-size:none;}
+@media print{.content .card{content-visibility:visible!important;
+  contain-intrinsic-size:none!important;}}
+/* fully hidden (filtered out) cards + their sidebar entries disappear */
+.card.is-hidden,.section.is-hidden{display:none;}
+.navitem.nav-hidden,.navsec-row.nav-hidden,.navitems.nav-hidden{
+  display:none;}
+.navsec-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.navsec-c{font-family:var(--mono);font-size:10px;color:var(--cyan);
+  background:#39a9c016;border-radius:20px;padding:1px 7px;min-width:18px;
+  text-align:center;}
+.navsec-c:empty{display:none;}
+.navitems{margin:2px 0 4px 4px;padding-left:8px;
+  border-left:1px solid var(--chrome-line);}
+/* cell lists indent with their section's tier */
+.navitems-l2{margin-left:16px;}
+.navitems-l3{margin-left:28px;}
+.navsub{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);
+  padding:9px 10px 3px;}
+.navitem{display:flex;align-items:center;gap:9px;padding:5px 10px;
+  border-radius:5px;text-decoration:none;color:var(--chrome-ink-2);
+  font-size:12.5px;transition:color .15s,background .15s;}
+.navitem:hover{color:var(--chrome-ink);background:#ffffff08;}
+.navitem.active{color:#eef4f8;}
+.navitem-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* per-cell eye in the sidebar: click to hide/show a single cell. A cell
+   hidden this way STAYS in the sidebar (dimmed, slashed eye) to restore. */
+.navitem-eye{flex:none;font-size:11px;line-height:1;padding:1px 4px;
+  border-radius:4px;position:relative;opacity:0;color:inherit;
+  transition:opacity .12s,background .12s;}
+.navitem:hover .navitem-eye,.navitem-eye:focus{opacity:.6;}
+.navitem-eye:hover{opacity:1;background:#ffffff14;}
+.navitem.cell-off{opacity:.5;}
+.navitem.cell-off .navitem-eye{opacity:.9;}
+.navitem.cell-off .navitem-eye::after{content:"";position:absolute;
+  left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
+  transform:rotate(-18deg);border-radius:2px;}
+.navitem .dot{width:9px;height:9px;border-radius:3px;flex:none;
+  background:var(--chrome-ink-2);}
+.navitem.k-figure .dot,.nk.k-figure .dot{background:var(--cyan);}
+.navitem.k-dataset .dot,.nk.k-dataset .dot{background:#4d90c0;}
+.navitem.k-transform .dot,.nk.k-transform .dot{background:#5b7589;}
+.navitem.k-metric .dot,.nk.k-metric .dot{background:#46a892;}
+.navitem.k-note .dot,.nk.k-note .dot{background:var(--amber);
+  border-radius:50%;}
+.navitem.k-code .dot,.nk.k-code .dot{background:#56627033;
+  border:1px solid #ffffff22;}
+.navitem.ckmain-imports .dot,.nk.ckmain-imports .dot{background:#a3855c;}
+.navitem.ckmain-function .dot,.nk.ckmain-function .dot{background:#46a892;}
+.navitem.ckmain-data .dot,.nk.ckmain-data .dot{background:#4d90c0;}
+.navitem.ckmain-constant .dot,.nk.ckmain-constant .dot{background:#9a7cc0;}
+.navitem.ckmain-settings .dot,.nk.ckmain-settings .dot{background:#5b7589;}
+.navitem.ckmain-plotting .dot,.nk.ckmain-plotting .dot{background:#39a9c0;}
+.navitem.ckmain-print .dot,.nk.ckmain-print .dot{background:#cf9a4e;}
+.navitem.ckmain-comments .dot,.nk.ckmain-comments .dot{background:#5f7386;}
+/* light theme needs its own — a generic body.light .dot outranks these */
+body.light .navitem.ckmain-imports .dot,body.light .nk.ckmain-imports .dot{
+  background:#a3855c;}
+body.light .navitem.ckmain-function .dot,body.light .nk.ckmain-function .dot{
+  background:#46a892;}
+body.light .navitem.ckmain-data .dot,body.light .nk.ckmain-data .dot{
+  background:#4d90c0;}
+body.light .navitem.ckmain-constant .dot,body.light .nk.ckmain-constant .dot{
+  background:#9a7cc0;}
+body.light .navitem.ckmain-settings .dot,body.light .nk.ckmain-settings .dot{
+  background:#5b7589;}
+body.light .navitem.ckmain-plotting .dot,body.light .nk.ckmain-plotting .dot{
+  background:#39a9c0;}
+body.light .navitem.ckmain-comments .dot,body.light .nk.ckmain-comments .dot{background:#5f7386;}
+body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
+  background:#cf9a4e;}
+
+/* ---------- nav key (what the dot colours mean) ---------- */
+.navkey{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;
+  padding:10px 12px 12px;margin:8px 10px 0;
+  border-top:1px solid var(--chrome-line);}
+.navkey-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);flex:0 0 100%;}
+.nk{display:inline-flex;align-items:center;gap:6px;font-size:11px;
+  font-family:var(--mono);color:var(--chrome-ink-2);}
+.nk .dot{width:6px;height:6px;border-radius:2px;flex:none;
+  background:var(--chrome-ink-2);}
+/* a thin rule marking the markdown | plots | code | output groups */
+.navkey-div{width:1px;height:11px;flex:none;align-self:center;
+  background:var(--chrome-line);margin:0 -3px;}
+body.light .navkey-div{background:var(--line);}
+
+/* ---------- rail graph (signature) ---------- */
+.railgraph{border-top:1px solid var(--chrome-line);padding:14px 14px 20px;
+  margin-top:auto;background:#0c1822;}
+.railgraph-h{display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:8px;}
+.railgraph .eyebrow{color:var(--amber);}
+.rg-collapse{background:none;border:1px solid var(--chrome-line);
+  color:var(--chrome-ink-2);width:22px;height:22px;border-radius:5px;
+  cursor:pointer;font-size:14px;line-height:1;}
+.rg-collapse:hover{color:var(--chrome-ink);border-color:#ffffff33;}
+.railgraph-b{overflow:auto;max-height:46vh;transition:max-height .3s ease;}
+.railgraph.collapsed .railgraph-b{max-height:0;overflow:hidden;}
+.provsvg text{font-family:var(--mono);font-size:9.5px;fill:#dfeaf1;
+  pointer-events:none;}
+.provedge{fill:none;stroke:var(--amber-soft);stroke-width:1.4;
+  transition:stroke .2s,stroke-width .2s;}
+.provedge.lit{stroke:var(--amber);stroke-width:2.2;}
+.provnode{cursor:pointer;}
+.provnode rect{transition:filter .2s,stroke .2s;stroke:transparent;stroke-width:2;}
+.provnode:hover rect{filter:brightness(1.18);}
+.provnode.active rect{stroke:var(--cyan);filter:brightness(1.12)
+  drop-shadow(0 0 6px #39a9c077);}
+.provnode:focus-visible rect{stroke:var(--cyan);outline:none;}
+
+/* ---------- document identity bar (filename + full path) ---------- */
+.docbar{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+  padding:2px 0 14px;margin-bottom:6px;border-bottom:1px solid var(--line);}
+.docbar[hidden]{display:none;}
+.docbar-ic{font-size:13px;flex:none;opacity:.7;}
+.docbar-nm{font-size:15px;font-weight:600;color:var(--ink);
+  letter-spacing:-.01em;}
+.docbar-p{font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  max-width:100%;min-width:0;flex:1;direction:rtl;text-align:left;}
+.docbar-p:empty{display:none;}
+body:not(.light) .docbar{border-bottom-color:#ffffff14;}
+body:not(.light) .docbar-nm{color:#e6edf3;}
+body:not(.light) .docbar-p{color:#8ba0b2;}
+
+/* ---------- toolbar ---------- */
+.toolbar{position:sticky;top:0;z-index:20;display:flex;align-items:center;
+  gap:12px;padding:12px 28px;background:#fbfcfdf2;
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);}
+.menubtn{display:none;}
+.tb-title{font-family:var(--mono);font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);margin-right:auto;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tb-actions{display:flex;gap:8px;flex:none;}
+.toggle{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  border:1px solid var(--line);background:#fff;color:var(--ink-2);
+  padding:7px 12px;border-radius:var(--rad);cursor:pointer;
+  transition:all .15s;display:inline-flex;align-items:center;gap:7px;}
+/* an author `display` beats the UA's [hidden] rule, so say it explicitly —
+   without this, every el.hidden=true on a .toggle silently does nothing */
+.toggle[hidden],.dbtn[hidden],.fgrp[hidden],.fgrp-row[hidden]{
+  display:none!important;}
+.toggle:hover{border-color:var(--cyan);color:var(--ink);}
+.toggle[aria-pressed="true"]{background:var(--ink);color:#eef4f8;
+  border-color:var(--ink);}
+/* the state colour rides on the button's own ICON now — a separate dot
+   said the same thing twice and cost the bar ~56px it did not have */
+.toggle.tv .tdot{display:none;}
+.toggle.tv .bic{color:var(--cyan);opacity:1;}
+.toggle.tv.half .bic{color:var(--amber);}
+.toggle.tv.off .bic{opacity:.4;}
+.toggle.tv.mixed .bic{color:var(--amber);opacity:.8;}
+.toggle .tdot{width:6px;height:6px;border-radius:50%;background:currentColor;
+  opacity:.4;}
+/* every state word occupies the same slot, so the bar never re-flows
+   just because a filter changed (On / Folded / Off / Mixed) */
+.tvstate{display:inline-block;width:4.4ch;text-align:left;
+  margin-left:.4em;overflow:hidden;}
+.toggle[aria-pressed="true"] .tdot{opacity:1;background:var(--cyan);}
+/* view-mode buttons (Docs / Present): pressed = the view you are in */
+.toggle.mode[aria-pressed="true"]{background:var(--ink);color:#eef4f8;
+  border-color:var(--ink);}
+.tb-sep{width:1px;height:22px;background:var(--line);margin:0 4px;
+  flex:none;}
+/* per-type state buttons: label shows the CURRENT state. Code cycles
+   Visible (cyan dot) -> Collapsed (amber, half) -> Hidden (dim). */
+.toggle.tv .tdot{opacity:1;background:var(--cyan);}
+.toggle.tv.half .tdot{background:var(--amber);}
+.toggle.tv.off .tdot{opacity:.3;background:currentColor;}
+.toggle.tv.off{color:var(--ink-3);}
+/* the selected sections disagree about this filter */
+.toggle.tv.mixed .tdot{background:linear-gradient(90deg,
+  var(--cyan) 50%,var(--ink-3) 50%);opacity:1;}
+/* "Apply to" is set to no sections at all — nothing to filter */
+.toggle.notarget{opacity:.4;cursor:not-allowed;}
+/* a section filtered differently from the notebook default says so */
+.section.has-fover .sectionhead .eyebrow::after{content:" · filtered";
+  color:var(--amber);letter-spacing:.12em;}
+
+/* ---------- content ---------- */
+.content{max-width:920px;margin:0 auto;padding:30px 28px 30vh;}
+.section{margin-bottom:14px;scroll-margin-top:70px;}
+/* headings read the --hd-* vars for the same reason the notes read
+   --md-*: a custom view can restyle every heading, one section's
+   heading, or leave them alone (the fallbacks are the stock design) */
+.sectionhead{padding:24px 0 6px;margin-bottom:8px;
+  border-bottom:var(--hd-bw,1px) solid var(--hd-bd,var(--line));
+  background:var(--hd-bg,transparent);
+  display:flex;align-items:center;gap:8px;}
+.sectionhead-txt{flex:1;min-width:0;}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--hd-accent,var(--cyan-deep));
+  display:var(--hd-eyebrow,block);margin-bottom:6px;}
+.sectionhead h2{font-size:calc(26px * var(--hd-size,1));
+  font-weight:var(--hd-wt,600);margin:0;letter-spacing:-.02em;
+  color:var(--hd-col,var(--ink));text-transform:var(--hd-caps,none);
+  font-family:var(--hd-font,inherit);}
+/* three heading tiers (# / ## / ###): descending size + indent, and the
+   deepest drops the underline so the levels read apart at a glance.
+   (These must FOLLOW the base .sectionhead h2 rule — same specificity.) */
+.sectionhead-l2 h2{font-size:calc(21px * var(--hd-size,1));}
+.sectionhead-l2{padding-top:16px;}
+.sectionhead-l3 h2{font-size:calc(17px * var(--hd-size,1));}
+.sectionhead-l3{padding-top:10px;border-bottom:none;padding-bottom:2px;}
+.sectionhead-l3 .eyebrow{font-size:9px;margin-bottom:3px;}
+.section.sec-l2 .sectionhead{margin-left:14px;}
+.section.sec-l3 .sectionhead{margin-left:28px;}
+/* main-view section controls: a collapse chevron (left) + a hide eye (right,
+   on hover) — the sidebar has the same two, kept in sync */
+.sec-chev{flex:none;background:none;border:none;color:var(--ink-3);
+  cursor:pointer;font-size:13px;line-height:1;padding:4px 4px;
+  border-radius:4px;transition:transform .15s,color .15s;}
+.sec-chev:hover{color:var(--ink);}
+.section.sec-collapsed .sec-chev{transform:rotate(-90deg);}
+.sec-eye{flex:none;background:none;border:none;color:var(--ink-3);
+  cursor:pointer;font-size:14px;line-height:1;padding:3px 6px;
+  border-radius:5px;opacity:0;transition:opacity .12s,background .12s;}
+.sectionhead:hover .sec-eye,.sec-eye:focus-visible{opacity:.5;}
+.sec-eye:hover{opacity:1;background:var(--paper-2);}
+/* the eye hides the HEADING only; this names the bigger action in words —
+   a glyph could not say "and everything in it" (2026-07-29) */
+.sec-hideall{flex:none;background:none;border:1px solid transparent;
+  color:var(--ink-3);cursor:pointer;font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;line-height:1;padding:5px 8px;
+  border-radius:5px;opacity:0;white-space:nowrap;
+  transition:opacity .12s,background .12s,border-color .12s;}
+.sectionhead:hover .sec-hideall,.sec-hideall:focus-visible{opacity:.65;}
+.sec-hideall:hover{opacity:1;background:var(--paper-2);
+  border-color:var(--line);color:var(--ink-2);}
+/* collapsed folds the section's cards away; the header stays clickable */
+.section.sec-collapsed .card{display:none;}
+.section.sec-collapsed .sectionhead{margin-bottom:0;}
+/* HEADING hidden: the title and its eyebrow go, the cards stay. The head
+   itself survives as a thin hover strip so the controls that brought it
+   here can bring it back in place (no round trip to the sidebar). */
+.section.sec-headoff .sectionhead-txt{display:none;}
+/* a hidden heading leaves NO trace in the feed — the faint stub that used
+   to remain read as a rendering artefact. It lives in the sidebar only,
+   which is where you bring it back from (2026-07-30). */
+.section.sec-headoff .sectionhead{display:none;}
+/* ...unless the sidebar's "Show all hidden" is revealing them. That is a
+   PEEK, not a reset: everything stays hidden underneath, marked amber so
+   you can tell what you are looking at, and one more click puts it all
+   away again. Each item's own eye still works while revealed, which is
+   how you keep just the one you wanted back. */
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead{display:flex;}
+.nbshell.reveal-hidden .section.sec-off,
+.nbshell.reveal-hidden .section.sec-under-off,
+.nbshell.reveal-hidden .content .card.cell-off.is-hidden{display:block;}
+.nbshell.reveal-hidden .section.sec-off,
+.nbshell.reveal-hidden .section.sec-under-off,
+.nbshell.reveal-hidden .content .card.cell-off.is-hidden,
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead{
+  outline:1px dashed var(--amber);outline-offset:4px;opacity:.62;}
+.nbshell.reveal-hidden .section.sec-off:hover,
+.nbshell.reveal-hidden .content .card.cell-off.is-hidden:hover,
+.nbshell.reveal-hidden .section.sec-headoff .sectionhead:hover{opacity:1;}
+.rf-unhide[aria-pressed="true"]{border-color:var(--amber);
+  color:var(--amber);}
+.section.sec-headoff .sec-eye{opacity:.5;position:relative;}
+/* a struck-through eye = "hidden, click to bring it back" (the sidebar
+   already uses exactly this mark for a hidden section) */
+.section.sec-headoff .sec-eye::after,
+.navsec-row.head-off .navsec-eye::after{content:"";position:absolute;
+  left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
+  transform:rotate(-18deg);border-radius:2px;}
+.navsec-row.head-off .navsec-t{opacity:.55;text-decoration:line-through;
+  text-decoration-thickness:1px;}
+.navsec-row.head-off .navsec-eye{opacity:.9;position:relative;}
+/* hidden drops the whole section from the document (restore from the sidebar) */
+.section.sec-off{display:none;}
+.navsec-row.sec-off{opacity:.5;}
+/* the tiers are a real hierarchy: collapsing / hiding an ancestor section
+   folds every deeper section that follows it (recalcSecCascade sets these) */
+.section.sec-under,.section.sec-under-off{display:none;}
+.navsec-row.nav-under,.navitems.nav-under{display:none;}
+.navsec-row.sec-under-off{opacity:.5;}
+/* a hidden section keeps only its (dimmed) header row — fold its cell links
+   away too, else they stay bright but point at a display:none target */
+.navsec-row.sec-off+.navitems{display:none;}
+.navsec-eye,.navsec-hideall{flex:none;font-size:11px;line-height:1;
+  padding:1px 4px;border-radius:4px;position:relative;opacity:0;
+  color:inherit;cursor:pointer;transition:opacity .12s,background .12s;}
+.navsec-hideall{font-size:13px;}
+.navsec-row:hover .navsec-eye,.navsec-eye:focus,
+.navsec-row:hover .navsec-hideall,.navsec-hideall:focus{opacity:.6;}
+.navsec-eye:hover,.navsec-hideall:hover{opacity:1;background:#ffffff14;}
+.navsec-row.sec-off .navsec-hideall{opacity:.9;}
+/* the strike belongs on whichever control did the hiding: ≡ for the whole
+   section, the eye for the heading alone */
+.navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
+  left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
+  transform:rotate(-18deg);border-radius:2px;}
+
+/* ---------- cards ---------- */
+.card{background:var(--paper);border:1px solid var(--line);
+  border-radius:10px;padding:18px 18px 16px;
+  /* --vw-gap: a custom view sets the rhythm of the whole feed */
+  margin:var(--vw-gap,14px) 0;
+  scroll-margin-top:78px;position:relative;
+  box-shadow:0 1px 2px #1a26340a;
+  opacity:0;transform:translateY(10px);
+  transition:opacity .5s ease,transform .5s ease,box-shadow .2s,border-color .2s;}
+.card.in{opacity:1;transform:none;}
+.card:hover{box-shadow:0 6px 22px #1a26341a;}
+.card::before{content:"";position:absolute;left:0;top:16px;bottom:16px;
+  width:3px;border-radius:3px;background:var(--line);
+  transition:background .2s;}
+.card.k-figure::before{background:var(--cyan);}
+.card.k-dataset::before{background:#4d90c0;}
+.card.k-transform::before{background:#5b7589;}
+.card.k-metric::before{background:#46a892;}
+.card.k-note::before{background:var(--amber);}
+.card.k-code::before{background:var(--paper-3);}
+.card.target-flash{border-color:var(--cyan);box-shadow:0 0 0 3px #39a9c033;}
+
+/* a markdown note the Markdown filter has COLLAPSED: only the header shows;
+   click the header to expand in place, click again to fold. The :not(.expanded)
+   guard means expanding simply reverts to the note's normal rules (so a
+   "Show raw HTML" note behaves correctly). */
+.card.collapsed{padding:9px 16px;}
+.card.collapsed:not(.expanded)>.cardbody,
+.card.collapsed:not(.expanded)>.caption,
+.card.collapsed:not(.expanded)>.prov,
+.card.collapsed:not(.expanded)>.note-src,
+.card.collapsed:not(.expanded)>.htmltoggle{display:none;}
+.card.collapsed>.cardhead{margin-bottom:0;cursor:pointer;}
+.card.collapsed .cardtitle::before{content:"\25b8";margin-right:7px;
+  color:var(--ink-3);display:inline-block;font-size:.85em;
+  transition:transform .2s;}
+.card.collapsed.expanded .cardtitle::before{transform:rotate(90deg);}
+.card.collapsed>.cardhead:hover .cardtitle{color:var(--ink);}
+.card.collapsed.expanded{padding:18px 18px 16px;}
+.card.collapsed.expanded>.cardhead{margin-bottom:12px;}
+
+/* ---- cell output parts: figure + printed output, filtered independently ---- */
+.cb-part{display:block;}
+.cb-fig.part-off,.cb-out.part-off{display:none;}
+/* Plots = Collapsed folds a figure to a slim "show plot" bar (click to open) */
+.cb-fig.part-fold>*{display:none;}
+.cb-fig.part-fold{cursor:pointer;border:1px dashed var(--line);border-radius:8px;
+  padding:8px 12px;position:relative;min-height:0;}
+.cb-fig.part-fold::before{content:"\25b8  Show plot";font-family:var(--mono);
+  font-size:11px;color:var(--ink-3);letter-spacing:.02em;}
+.cb-fig.part-fold:hover::before{color:var(--cyan-deep);}
+.cb-fig.part-fold.part-open{cursor:default;border:none;padding:0;}
+.cb-fig.part-fold.part-open>*{display:revert;}
+.cb-fig.part-fold.part-open::before{display:none;}
+/* Output = Collapsed folds the printed output the same way (click to reveal) */
+.cb-out.part-fold>*{display:none;}
+.cb-out.part-fold{cursor:pointer;border:1px dashed var(--line);border-radius:8px;
+  padding:8px 12px;margin-top:12px;position:relative;min-height:0;}
+.cb-out.part-fold::before{content:"\25b8  Show output";font-family:var(--mono);
+  font-size:11px;color:var(--ink-3);letter-spacing:.02em;}
+.cb-out.part-fold:hover::before{color:var(--cyan-deep);}
+.cb-out.part-fold.part-open{cursor:default;border:none;padding:0;}
+/* :not(.ot-off) so a child hidden by the Output-types filter stays hidden
+   even when the collapsed output is opened */
+.cb-out.part-fold.part-open>*:not(.ot-off){display:revert;}
+.cb-out.part-fold.part-open::before{display:none;}
+
+/* one line: badge, title (elided if long), then the actions pinned to the
+   RIGHT. Without nowrap a long title pushed "Plot trace" onto its own row */
+.cardhead{display:flex;align-items:center;gap:10px;margin-bottom:12px;
+  padding-left:6px;flex-wrap:nowrap;min-width:0;}
+/* The card's actions sit together at the top RIGHT in EVERY context a
+   card renders — document, tree node, trace step, widget, export. These
+   two lines used to live in the DECK stylesheet, so a card rendered
+   without it lost the alignment and "Plot trace" dropped onto its own
+   line under the title (2026-07-30). Layout of a card belongs with the
+   card, not with whichever feature happened to add the button. */
+.cardhead .plot-trace-btn{margin-left:auto;flex:none;white-space:nowrap;}
+.cardhead .plot-trace-btn+.cell-eye{margin-left:0;}
+.cardhead .badge,.cardhead .cell-eye{flex:none;}
+/* per-cell eye on the card header: hide this one cell (restore via sidebar) */
+.cell-eye{margin-left:auto;flex:none;background:none;border:none;
+  color:var(--ink-3);cursor:pointer;font-size:13px;line-height:1;
+  padding:2px 6px;border-radius:5px;opacity:0;
+  transition:opacity .15s,background .15s;}
+.card:hover .cell-eye,.cell-eye:focus-visible{opacity:.55;}
+.cell-eye:hover{opacity:1;background:var(--paper-2);}
+/* code fully hidden: the code tucked under figures disappears too */
+.codewrap.code-off{display:none;}
+.badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;padding:3px 8px;border-radius:4px;
+  background:var(--paper-2);color:var(--ink-3);flex:none;}
+.k-figure .badge{background:#39a9c014;color:var(--cyan-deep);}
+.k-dataset .badge{background:#4d90c014;color:#2f6f9e;}
+.k-transform .badge{background:#5b758914;color:#41566a;}
+.k-metric .badge{background:#46a89214;color:#2c8c7d;}
+.k-note .badge{background:#cf9a4e1f;color:#8a6326;}
+/* printed-output cells read "print" (a steel tone, distinct from md notes) */
+.k-print .badge{background:#5f7d8c1f;color:#3f5c6a;}
+.navitem.k-print .dot,.nk.k-print .dot{background:#5f7d8c;}
+.card.k-print::before{background:#5f7d8c;}
+/* code subtypes (base rules read on the light paper theme) */
+.ckmain-imports .badge{background:#8a6d4a1a;color:#7a5e38;}
+.ckmain-function .badge{background:#46a89218;color:#2c8c7d;}
+.ckmain-data .badge{background:#4d90c018;color:#2f6f9e;}
+.ckmain-constant .badge{background:#9a7cc01f;color:#6d4f95;}
+.ckmain-settings .badge{background:#5b758918;color:#41566a;}
+.ckmain-plotting .badge{background:#39a9c018;color:var(--cyan-deep);}
+.ckmain-print .badge{background:#cf9a4e1f;color:#8a6326;}
+.ckmain-comments .badge{background:#5f73861f;color:#4c5b66;}
+/* dark theme (default) needs its own — a generic dark .badge otherwise
+   outranks the base rules above */
+body:not(.light) .ckmain-imports .badge{background:#8a6d4a2b;color:#c8a877;}
+body:not(.light) .ckmain-function .badge{background:#46a8922b;color:#7fd0bd;}
+body:not(.light) .ckmain-data .badge{background:#4d90c02b;color:#8fbfe0;}
+body:not(.light) .ckmain-constant .badge{background:#9a7cc02b;color:#c3a9e0;}
+body:not(.light) .ckmain-settings .badge{background:#5b75892b;color:#a7bccd;}
+body:not(.light) .ckmain-plotting .badge{background:#39a9c02b;color:#5fc3d8;}
+body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
+body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
+.cardtitle{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;
+  flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* titles that merely echo the first code line label the item in the
+   nav, but are not repeated as a heading on the card */
+.cardtitle.echo{display:none;}
+.nodeid{font-family:var(--mono);font-size:10px;color:var(--ink-3);
+  background:var(--paper-2);padding:2px 7px;border-radius:4px;flex:none;}
+
+.cardbody{padding-left:6px;}
+/* ---- figure zoom: a per-figure factor (--fz, set inline by the +/- on
+   the card) multiplied by the feed-wide factor (--fzall on the shell).
+   The CARD grows — border, header and all — so a bigger figure is never
+   sitting outside its own cell. It stays centred on the column. ---- */
+.nbshell{--fzall:1;}
+.card.has-fig{--fz:1;
+  width:calc(100% * var(--fz) * var(--fzall));
+  margin-left:calc((1 - var(--fz) * var(--fzall)) * 50%);}
+/* a wider card is not a bigger figure: a PNG at its natural size ignores
+   a roomier box, because max-width only CAPS. While zoomed, the image
+   fills the frame so it actually grows. */
+.card.has-fig.zoomed .figframe img,
+.card.has-fig.zoomed .figframe svg,
+.card.has-fig.zoomed .figpage img{
+  width:100%;max-width:none;height:auto;}
+.cb-fig{position:relative;}
+/* top-LEFT on purpose: Plotly/Bokeh draw their own toolbar top-right, and
+   the two would sit on top of each other. Invisible until you point at the
+   card, and un-clickable while invisible so you never hit it blind. */
+.figzoom{position:absolute;top:6px;left:6px;z-index:4;display:flex;gap:3px;
+  opacity:0;pointer-events:none;transition:opacity .13s;}
+.card:hover .figzoom,.figzoom:focus-within{opacity:1;pointer-events:auto;}
+.fz-btn{font-family:var(--mono);font-size:12px;line-height:1;width:23px;
+  height:23px;padding:0;border-radius:5px;cursor:pointer;
+  border:1px solid var(--line);background:var(--paper);color:var(--ink-2);}
+.fz-btn:hover{border-color:var(--cyan);color:var(--ink);}
+body:not(.light) .fz-btn{background:#0d1a24d9;border-color:#ffffff2b;
+  color:#cfe0ea;}
+body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
+/* the tree/trace clones and slide frames never carry the zoom chrome, and
+   a cloned card is sized by its frame — never by the feed's zoom */
+.tree-node .figzoom,.an-cell .figzoom,.spane .figzoom,.slide-fig .figzoom,
+.vo-step .figzoom,.print-page .figzoom{display:none!important;}
+.an-cell .card.has-fig,.spane .card.has-fig,.slide-fig .card.has-fig,
+.tree-node .card.has-fig,.vo-step .card.has-fig,
+.print-page .card.has-fig,.rawview .card.has-fig{
+  width:100%!important;margin-left:0!important;}
+/* full-screen figure viewer (⤢) */
+.figmax{position:fixed;inset:0;z-index:300;background:#050b11f2;
+  display:flex;align-items:center;justify-content:center;padding:34px;}
+.figmax[hidden]{display:none;}
+.figmax-box{max-width:96vw;max-height:92vh;overflow:auto;background:#fff;
+  border-radius:10px;padding:10px;}
+.figmax-box img,.figmax-box svg{max-width:100%;max-height:88vh;
+  width:auto;height:auto;display:block;margin:0 auto;}
+.figmax-close{position:fixed;top:16px;right:18px;font-family:var(--mono);
+  font-size:12px;padding:7px 12px;border-radius:7px;cursor:pointer;
+  border:1px solid #ffffff30;background:#0d1a24ee;color:#e7eff5;}
+.figmax-close:hover{border-color:var(--cyan);color:#fff;}
+.figframe{background:#fff;border:1px solid var(--paper-3);border-radius:8px;
+  padding:8px;overflow:auto;text-align:center;}
+.figframe img{max-width:100%;height:auto;display:block;margin:0 auto;}
+.figframe svg{max-width:100%;height:auto;}
+/* interactive plots (plotly/bokeh/vega/folium) + video / gif outputs */
+.figframe.plotframe{overflow:hidden;padding:0;}
+.plotly-embed{width:100%;min-height:340px;}
+.plotframe .rich,.plotframe .js-plotly-plot{width:100%;}
+.vid-out{max-width:100%;height:auto;display:block;margin:0 auto;
+  border-radius:6px;background:#000;}
+/* in a slide frame these fill the frame like a figure */
+.an-cell .plotly-embed,.spane .plotly-embed,
+.slide-fig .plotly-embed{min-height:0;height:100%;flex:1;}
+.an-cell .vid-out,.spane .vid-out,.slide-fig .vid-out{max-height:100%;
+  width:auto;}
+
+/* several figures from one cell: pager with prev/next arrows */
+.figpager .figpage{display:none;}
+.figpager .figpage.current{display:block;}
+.figpager-nav{display:flex;align-items:center;justify-content:center;
+  gap:10px;margin-top:6px;}
+.fp-btn{font-family:var(--mono);font-size:15px;line-height:1;
+  border:1px solid var(--paper-3);background:#fff;color:var(--ink-2);
+  border-radius:6px;width:28px;height:22px;cursor:pointer;padding:0;}
+.fp-btn:hover{border-color:var(--cyan);color:var(--ink);}
+.fp-count{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);}
+
+/* huge markdown notes: clamped with a Show more toggle */
+.cardbody.mdclamp{max-height:440px;overflow:hidden;position:relative;}
+.cardbody.mdclamp::after{content:"";position:absolute;left:0;right:0;
+  bottom:0;height:64px;pointer-events:none;
+  background:linear-gradient(#fbfcfd00,var(--paper));}
+.cardbody.mdclamp.mdopen{max-height:none;}
+.cardbody.mdclamp.mdopen::after{display:none;}
+.mdmore{display:block;margin:8px 0 0 6px;font-family:var(--mono);
+  font-size:10.5px;border:1px solid var(--line);background:#fff;
+  color:var(--cyan-deep);border-radius:6px;padding:4px 12px;
+  cursor:pointer;}
+.mdmore:hover{border-color:var(--cyan);color:var(--ink);}
+
+/* notes with raw HTML: rendered by default, the source behind a tiny
+   </> button floating top-right (visible on hover) */
+.note-src{display:none;margin:9px 0 0;}
+.card.showhtml .cardbody>.note{display:none;}
+.card.showhtml .note-src{display:block;}
+.htmltoggle{position:absolute;top:8px;right:64px;z-index:2;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  color:var(--ink-3);background:none;border:1px solid var(--line);
+  cursor:pointer;padding:2px 7px;border-radius:5px;opacity:0;
+  transition:opacity .15s,color .15s;}
+.card:hover .htmltoggle,.htmltoggle:focus,
+.card.showhtml .htmltoggle{opacity:.8;}
+.htmltoggle:hover{opacity:1;color:var(--cyan-deep);
+  border-color:var(--cyan);}
+.htmltoggle .ht-hide{display:none;}
+.card.showhtml .htmltoggle .ht-show{display:none;}
+.card.showhtml .htmltoggle .ht-hide{display:inline;}
+.an-cell .htmltoggle,.an-cell .note-src,
+.spane .htmltoggle,.spane .note-src{display:none;}
+/* markdown notes: minimal chrome. No MARKDOWN badge; a note with no real
+   heading drops its "Note" title row too — controls float top-right, and
+   hovering the card pops a small amber "markdown" label by its edge */
+/* the markdown card's own box: background / border / padding / radius are
+   all view-stylable, defaulting to the stock card look */
+.card[data-note="1"]{position:relative;
+  background:var(--md-bg,var(--paper));
+  border-color:var(--md-bd,var(--line));
+  border-width:var(--md-bw,1px);
+  border-radius:var(--md-rad,10px);
+  padding:var(--md-pad,18px) var(--md-pad,18px) calc(var(--md-pad,18px) - 2px);}
+.card[data-note="1"] .badge{display:none;}
+.card.note-untitled>.cardhead{position:absolute;top:6px;right:8px;
+  z-index:2;margin:0;gap:6px;}
+.card.note-untitled .cardtitle{display:none;}
+.card.note-untitled::after{content:"markdown";position:absolute;
+  left:14px;top:8px;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.16em;text-transform:uppercase;color:var(--amber);
+  opacity:0;transition:opacity .15s;pointer-events:none;}
+.card.note-untitled:hover::after{opacity:.85;}
+/* tables inside notes render as real tables, not floating rows */
+/* a table is text too: it must follow the TEXT stepper and a custom
+   view's markdown size, or "make the text bigger" visibly skips it */
+.note table{border-collapse:collapse;margin:10px 0;
+  font-size:calc(13.5px * var(--mdscale,1) * var(--md-size,1));}
+.note th,.note td{border:1px solid #00000022;padding:5px 11px;
+  text-align:left;}
+.note th{background:#00000008;font-weight:600;}
+body:not(.light) .note th,body:not(.light) .note td{
+  border-color:#ffffff26;}
+body:not(.light) .note th{background:#ffffff0d;}
+
+pre.result,pre.stream,pre.error{font-family:var(--mono);font-size:12px;
+  background:var(--paper-2);border:1px solid var(--paper-3);
+  border-radius:7px;padding:11px 13px;overflow:auto;margin:0;line-height:1.45;}
+pre.error{background:#fbf0ee;border-color:#f0d2cc;color:#8a3221;}
+/* a huge printout (1000s of lines) scrolls inside a capped box in the
+   document + raw views instead of running the whole page on. Short
+   outputs are unaffected; slide frames keep their own sizing. */
+.content pre.result,.content pre.stream,.content pre.error,
+.content .rich,.content .xr-wrap,
+.rawview pre.result,.rawview pre.stream,.rawview .rich,
+.rawview .xr-wrap{max-height:min(440px,62vh);overflow:auto;}
+.card.k-metric .cardbody pre.result{font-size:14px;
+  background:#46a8920d;border-color:#46a89233;color:#1f5f54;
+  font-weight:500;}
+
+/* prose scales with the "Text size" control (--mdscale on the shell) —
+   markdown notes and captions, not code or output */
+.nbshell{--mdscale:1;background:var(--vw-bg,transparent);}
+/* ---- CUSTOM VIEW styling (2026-07-29) -----------------------------
+   Every prose/heading property a custom view can set reads from an
+   INHERITED custom property, which is what gives the cascade for free:
+   the value is stamped on .nbshell for "all markdown cells", on a
+   .section for one section, or on a .card for one cell — narrowest
+   wins, exactly like the user's mental model. Defaults in the var()
+   fallbacks keep an unstyled document byte-identical to before. */
+.note{font-family:var(--md-font,var(--serif));
+  font-size:calc(15px * var(--mdscale) * var(--md-size,1));
+  line-height:var(--md-lh,1.65);color:var(--md-col,var(--ink-2));
+  text-align:var(--md-align,start);}
+.note .caption{font-family:var(--md-font,var(--serif));font-style:normal;
+  color:var(--md-col,var(--ink-2));margin:0;padding:0;border:none;
+  font-size:calc(15px * var(--mdscale) * var(--md-size,1));}
+
+.caption{font-family:var(--serif);font-size:calc(14px * var(--mdscale));
+  color:var(--ink-2);margin:13px 0 0;padding-left:6px;line-height:1.6;}
+
+/* a cell's printed output part, adjacent to its figure part (Output filter) */
+.cb-out{margin-top:12px;}
+.cb-fig+.cb-out{margin-top:14px;}
+
+.prov{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  margin:13px 0 0;padding-left:6px;}
+.prov-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--amber);}
+.depchip{font-family:var(--mono);font-size:11px;color:var(--ink-2);
+  text-decoration:none;background:#cf9a4e14;border:1px solid #cf9a4e33;
+  padding:2px 9px;border-radius:20px;transition:all .15s;}
+.depchip:hover{background:var(--amber);color:#fff;border-color:var(--amber);}
+
+/* ---------- code ---------- */
+.codewrap{margin:13px 0 0;border-top:1px solid var(--line);padding-top:11px;}
+.codewrap.bare{border-top:none;padding-top:0;margin-top:10px;}
+.codetoggle{font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+  color:var(--ink-3);background:none;border:none;cursor:pointer;padding:2px 6px;
+  display:inline-flex;align-items:center;gap:7px;border-radius:5px;
+  transition:color .15s;}
+.codetoggle:hover{color:var(--cyan-deep);}
+.codetoggle .chev{display:inline-block;transition:transform .2s;font-size:14px;}
+.ct-hide{display:none;}
+.codewrap[data-open] .codetoggle .chev{transform:rotate(90deg);}
+.codewrap[data-open] .ct-show{display:none;}
+.codewrap[data-open] .ct-hide{display:inline;}
+.codebody{display:grid;grid-template-rows:0fr;transition:grid-template-rows .28s ease;}
+.codewrap[data-open] .codebody{grid-template-rows:1fr;}
+.codebody>.codeinner,.codeinner{overflow:hidden;min-height:0;}
+.codestep{margin-top:14px;}
+.codestep:first-child{margin-top:0;}
+.codestep-h{display:flex;align-items:center;gap:9px;margin:0 0 7px;}
+.stepnum{font-family:var(--mono);font-size:10px;font-weight:600;
+  width:19px;height:19px;border-radius:5px;display:inline-flex;
+  align-items:center;justify-content:center;background:#cf9a4e1f;
+  color:#8a6326;flex:none;}
+.steplabel{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);}
+.codestep-out{margin-top:9px;}
+.codestep pre.code{margin:0;}
+.ct-steps{margin-left:9px;color:var(--ink-3);}
+pre.code{font-family:var(--mono);font-size:12.5px;line-height:1.55;
+  background:#0e1b25;color:#c9d6e0;border-radius:8px;padding:14px 16px;
+  margin:9px 0 2px;overflow:auto;}
+pre.code .kw{color:#6bb8d6;}
+pre.code .bn{color:#86c5a8;}
+pre.code .st{color:#d8a36a;}
+pre.code .nu{color:#c98fd0;}
+pre.code .co{color:#5d7185;}
+pre.code .op{color:#9fb1c0;}
+
+/* ---------- xarray repr ---------- */
+.xr-wrap{font-size:13px;overflow:auto;border:1px solid var(--paper-3);
+  border-radius:8px;padding:4px 8px;background:#fff;}
+.xr-wrap .xr-array-wrap,.xr-wrap .xr-var-list{font-family:var(--mono);}
+
+/* ---------- empty / fallback ---------- */
+.rich{overflow:auto;}
+/* rich OUTPUT (dataframes and friends) follows the feed-wide text
+   stepper too — but not --md-size, which styles markdown cells only */
+.rich table{border-collapse:collapse;
+  font-size:calc(13px * var(--mdscale,1));}
+.rich th,.rich td{border:1px solid var(--line);padding:4px 8px;}
+
+/* ---------- focus ---------- */
+a:focus-visible,button:focus-visible,.toggle:focus-visible{
+  outline:2px solid var(--cyan);outline-offset:2px;}
+
+/* ---------- responsive ---------- */
+@media (max-width:860px){
+  .shell{grid-template-columns:1fr;}
+  .rail{position:fixed;left:0;top:0;width:min(86vw,330px);z-index:60;
+    transform:translateX(-102%);transition:transform .3s ease;
+    box-shadow:0 0 40px #00000055;}
+  .rail.open{transform:none;}
+  .menubtn{display:inline-flex;align-items:center;justify-content:center;
+    width:36px;height:36px;border:1px solid var(--line);background:#fff;
+    border-radius:var(--rad);cursor:pointer;flex:none;}
+  .menubtn span,.menubtn span::before,.menubtn span::after{content:"";
+    display:block;width:16px;height:2px;background:var(--ink);position:relative;}
+  .menubtn span::before{position:absolute;top:-5px;}
+  .menubtn span::after{position:absolute;top:5px;}
+  .scrim{position:fixed;inset:0;background:#0a131b66;z-index:55;display:none;}
+  .scrim.show{display:block;}
+  .content{padding:22px 18px 30vh;}
+  .sectionhead h2{font-size:22px;}
+  .sectionhead-l2 h2{font-size:19px;}
+  .sectionhead-l3 h2{font-size:16px;}
+  .section.sec-l2 .sectionhead{margin-left:8px;}
+  .section.sec-l3 .sectionhead{margin-left:16px;}
+}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;scroll-behavior:auto!important;}
+  .card{opacity:1;transform:none;}
+}

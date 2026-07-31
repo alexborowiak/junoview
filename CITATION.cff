@@ -3,10 +3,10 @@ message: "If you use Junoview in your work, please cite it."
 title: "Junoview"
 abstract: >-
   Figure-first viewing of executed Jupyter notebooks, plus a slide-deck
-  builder. A single-file, standard-library-only tool that recovers the
-  scientific structure of a run notebook and renders it as a navigable,
-  figure-first document with a live provenance graph — and builds
-  presentations from the same cells.
+  builder. A standard-library-only tool that recovers the scientific
+  structure of a run notebook and renders it as a navigable, figure-first
+  document with a live provenance graph — and builds presentations from
+  the same cells.
 type: software
 authors:
   - given-names: "Alex"
@@ -15,8 +15,8 @@ authors:
     affiliation: "University of Leeds"
 license: Apache-2.0
 repository-code: "https://github.com/alexborowiak/semantic-rendering"  # TODO: update if the repo is renamed to junoview
-url: "https://plotline-nb.dev"  # TODO: update to the junoview domain once live
-version: "0.1.0"
+url: "https://junoview.dev"
+version: "0.2.0"
 keywords:
   - jupyter
   - notebook
