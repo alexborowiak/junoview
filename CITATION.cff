@@ -12,9 +12,8 @@ authors:
   - given-names: "Alex"
     family-names: "Borowiak"
     # orcid: "https://orcid.org/0000-0000-0000-0000"  # TODO: add your ORCID
-    affiliation: "University of Leeds"
 license: Apache-2.0
-repository-code: "https://github.com/alexborowiak/semantic-rendering"  # TODO: update if the repo is renamed to junoview
+repository-code: "https://github.com/alexborowiak/junoview"
 url: "https://junoview.dev"
 version: "0.2.0"
 keywords:

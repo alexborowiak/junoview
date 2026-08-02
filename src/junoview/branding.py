@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 import urllib.parse
 
-_REPO_URL = "https://github.com/alexborowiak/semantic-rendering"
+_REPO_URL = "https://github.com/alexborowiak/junoview"
 
 
 _KOFI_URL = "https://ko-fi.com/plotline"

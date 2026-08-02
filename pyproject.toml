@@ -42,8 +42,8 @@ classifiers = [
 [project.urls]
 Homepage = "https://junoview.dev"
 Documentation = "https://junoview.dev"
-Repository = "https://github.com/alexborowiak/semantic-rendering"
-Issues = "https://github.com/alexborowiak/semantic-rendering/issues"
+Repository = "https://github.com/alexborowiak/junoview"
+Issues = "https://github.com/alexborowiak/junoview/issues"
 
 [project.optional-dependencies]
 widget = ["anywidget", "ipywidgets"]

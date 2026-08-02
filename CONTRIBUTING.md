@@ -6,8 +6,8 @@ with a notebook that reproduces the problem are especially useful.
 ## Getting set up
 
 ```bash
-git clone https://github.com/alexborowiak/semantic-rendering
-cd semantic-rendering
+git clone https://github.com/alexborowiak/junoview
+cd junoview
 pip install -e ".[dev]"
 ```
 
