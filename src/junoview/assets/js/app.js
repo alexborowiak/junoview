@@ -2399,6 +2399,20 @@
       var h=Math.ceil(top.getBoundingClientRect().height);
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
+      /* Tree view drops the filter and scope sections. Record how wide
+         they are together, so the Tree section can reserve the same slot
+         and Size / View stay put across the switch -- the button you use
+         to get back must not move under the pointer. Measured rather than
+         guessed, so relabelling a filter cannot put it out of step. */
+      if(!document.body.classList.contains('tree-mode')){
+        var f=$('#ab-filters'), s=$('#ab-scope');
+        if(f&&s){
+          var w=Math.ceil(s.getBoundingClientRect().right
+                          -f.getBoundingClientRect().left);
+          if(w>0) document.documentElement.style.setProperty(
+            '--filters-slot',w+'px');
+        }
+      }
     },0);
   }
   APP.measureChrome=measureChrome;

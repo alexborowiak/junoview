@@ -1124,14 +1124,14 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    (file · filters · scope+size · view · app), not one long run */
 /* ---- TREE VIEW: the filters do not apply there, so they GO — but the
    controls that remain must not slide left to fill the hole, or the
-   button you use to get back moves every time you switch view. The trick
-   is an auto margin: Size / View / App are pushed to the right end, so
-   they sit in the same place whether the filter sections are there or
-   not (a growing spacer would fill line 1 and force a wrap; an auto
-   margin is applied after line breaking). ---- */
-#ab-size{margin-left:auto;}
-body.tree-mode #ab-tree{margin-left:auto;}
-body.tree-mode #ab-size{margin-left:0;}
+   button you use to get back moves every time you switch view.
+   This used to be `margin-left:auto` on Size, pinning it to the RIGHT
+   edge. That holds it still, but it also opens a gap between Apply-to and
+   Size as wide as whatever space is left over — and the gap grew by the
+   width of the App group when those buttons moved to the tab row. Instead
+   the filter slot keeps a stable width, so the groups can pack left
+   normally and Size still does not move when the filters swap out. ---- */
+body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}
 /* the Tree section takes the Filters slot while the tree is on */
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
@@ -10013,6 +10013,20 @@ through Ko-fi. Thank you.</p>
       var h=Math.ceil(top.getBoundingClientRect().height);
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
+      /* Tree view drops the filter and scope sections. Record how wide
+         they are together, so the Tree section can reserve the same slot
+         and Size / View stay put across the switch -- the button you use
+         to get back must not move under the pointer. Measured rather than
+         guessed, so relabelling a filter cannot put it out of step. */
+      if(!document.body.classList.contains('tree-mode')){
+        var f=$('#ab-filters'), s=$('#ab-scope');
+        if(f&&s){
+          var w=Math.ceil(s.getBoundingClientRect().right
+                          -f.getBoundingClientRect().left);
+          if(w>0) document.documentElement.style.setProperty(
+            '--filters-slot',w+'px');
+        }
+      }
     },0);
   }
   APP.measureChrome=measureChrome;

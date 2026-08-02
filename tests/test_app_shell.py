@@ -188,17 +188,22 @@ def test_tree_view_ribbon_disables_filters_and_anchors_right(out):
     ribbon.
     """
     assert "function syncTreeRibbon" in out
-    # tree view REMOVES the filter sections; Size/View/App are anchored to
-    # the right by an auto margin so they do not slide into the hole
     # icon-only buttons need a WIDTH floor, not just padding:0 -- with
     # nothing to stop them they were squeezed to 9px in a tight bar
     assert "width:34px;min-width:34px;flex:none;" in out
     assert "#ab-app .btn-grp>*{flex:none;}" in out
-    assert "#ab-size{margin-left:auto;}" in out
-    # in tree view the right-hand block starts at the Tree section, so its
-    # controls sit WITH the others instead of marooned at the far left
-    assert "body.tree-mode #ab-tree{margin-left:auto;}" in out
-    assert "body.tree-mode #ab-size{margin-left:0;}" in out
+    # Tree view removes the filter and scope sections, and Size / View must
+    # not slide into the hole -- the button you use to get back would move
+    # under the pointer. This used to be `#ab-size{margin-left:auto}`,
+    # pinning them to the right EDGE, which left a 429px hole between
+    # Apply-to and Size in document view. Now the Tree section reserves the
+    # width the filters occupied, so the groups pack left and still hold
+    # their place across the switch.
+    assert "#ab-size{margin-left:auto;}" not in out
+    assert "body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}" in out
+    # the slot is measured from the real groups, not guessed, so relabelling
+    # a filter cannot put the two views out of step
+    assert "'--filters-slot',w+'px'" in out
     # the tree's own controls are ON THE RIBBON, in the Filters slot
     assert 'id="ab-tree"' in out and 'id="tree-expand"' in out
     assert 'id="tree-collapse"' in out and 'id="tree-width"' in out

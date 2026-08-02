@@ -94,6 +94,13 @@ introduced by the move.
   control is inert and Open is already on the welcome screen itself. It is now
   hidden until something is open, and the welcome starts at the top of the
   window rather than below the band the hidden ribbon used to reserve.
+- **A 429px hole sat between Apply-to and the Figures/Text size controls.**
+  `#ab-size` carried `margin-left:auto`, pinning Size / View to the right edge
+  so they would not slide when Tree view removes the filter sections — but that
+  turns every pixel of leftover width into a gap, and it widened further when
+  the app buttons left the ribbon. The Tree section now reserves the width the
+  filters occupied instead, measured from the real groups, so the ribbon packs
+  left with even 11px gaps *and* Size still holds its place across the switch.
 - **The ribbon grew a nearly-empty second row on narrower windows.** Theme,
   Support and Help were the ribbon's last group and so the first thing to wrap:
   below roughly 1500px they took a whole row to themselves, spending 50px of

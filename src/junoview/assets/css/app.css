@@ -165,14 +165,14 @@ body.light .present-bar .toggle.sub:hover{color:var(--ink);}
    (file · filters · scope+size · view · app), not one long run */
 /* ---- TREE VIEW: the filters do not apply there, so they GO — but the
    controls that remain must not slide left to fill the hole, or the
-   button you use to get back moves every time you switch view. The trick
-   is an auto margin: Size / View / App are pushed to the right end, so
-   they sit in the same place whether the filter sections are there or
-   not (a growing spacer would fill line 1 and force a wrap; an auto
-   margin is applied after line breaking). ---- */
-#ab-size{margin-left:auto;}
-body.tree-mode #ab-tree{margin-left:auto;}
-body.tree-mode #ab-size{margin-left:0;}
+   button you use to get back moves every time you switch view.
+   This used to be `margin-left:auto` on Size, pinning it to the RIGHT
+   edge. That holds it still, but it also opens a gap between Apply-to and
+   Size as wide as whatever space is left over — and the gap grew by the
+   width of the App group when those buttons moved to the tab row. Instead
+   the filter slot keeps a stable width, so the groups can pack left
+   normally and Size still does not move when the filters swap out. ---- */
+body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}
 /* the Tree section takes the Filters slot while the tree is on */
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
