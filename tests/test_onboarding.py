@@ -134,3 +134,11 @@ def test_welcome_screen_hides_the_ribbon(out):
     assert "body.welcoming{padding-top:0;}" in out
     # driven from the same place that decides to show the welcome
     assert "classList.toggle('welcoming',welcoming)" in out
+    # ...and the welcome starts at the top, rather than leaving the hidden
+    # ribbon's reserved band as an empty strip above the hero
+    assert "body.welcoming .welcome{top:0;}" in out
+    assert "body.welcoming .welcome-top{min-height:calc(100vh - 30px);}" in out
+    # a short window makes the hero taller than its box; plain `center`
+    # overflows it equally both ways and slices the logo off the top, where
+    # a scroll container cannot reach it
+    assert "justify-content:safe center;}" in out

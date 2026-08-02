@@ -97,6 +97,13 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:center;width:100%;flex:none;}
 #ab-app .btn-grp{flex:none;gap:5px;}
 #ab-app .btn-grp>*{flex:none;}
+/* the app group lives at the right of the tab row (see page.html): centred
+   in that row's height, hard against its right edge, and with no caption —
+   a stacked label does not fit 44px, and the three icons carry tooltips */
+.tabsrow #ab-app{margin-left:auto;justify-content:center;padding:0 10px;
+  flex:none;}
+.tabsrow #ab-app .abgrp-row{align-items:center;flex:none;}
+.tabsrow #ab-app .abgrp-lab{display:none;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
@@ -403,12 +410,22 @@ body.creating-docs .apptop{
 .welcome{position:fixed;left:0;right:0;top:var(--chrome-h);bottom:0;
   overflow:auto;background:var(--paper-2);z-index:5;}
 .welcome[hidden]{display:none;}
+/* the ribbon is hidden while this is up, so start at the very top rather
+   than leaving its reserved band as an empty strip above the hero */
+body.welcoming .welcome{top:0;}
+body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-box{text-align:center;max-width:680px;margin:0 auto;
   padding:0 30px 60px;}
 /* the hero fills the first screen; the numbered steps sit below it, seen on
    scroll (with a small "How it works" cue) */
 .welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
-  flex-direction:column;justify-content:center;padding:24px 0;}
+  flex-direction:column;justify-content:center;padding:24px 0;
+  /* `safe` centring: on a short window the hero is taller than its box, and
+     plain `center` overflows it EQUALLY both ways -- the top half goes above
+     the scroll container's origin, where it cannot be scrolled to, and the
+     logo gets sliced off. `safe` falls back to flex-start in that case.
+     Declared second so browsers that do not parse it keep plain `center`. */
+  justify-content:safe center;}
 .welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
 /* wide enough for the demo reel; the numbered steps keep their own narrow

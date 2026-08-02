@@ -1056,6 +1056,13 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:center;width:100%;flex:none;}
 #ab-app .btn-grp{flex:none;gap:5px;}
 #ab-app .btn-grp>*{flex:none;}
+/* the app group lives at the right of the tab row (see page.html): centred
+   in that row's height, hard against its right edge, and with no caption —
+   a stacked label does not fit 44px, and the three icons carry tooltips */
+.tabsrow #ab-app{margin-left:auto;justify-content:center;padding:0 10px;
+  flex:none;}
+.tabsrow #ab-app .abgrp-row{align-items:center;flex:none;}
+.tabsrow #ab-app .abgrp-lab{display:none;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
@@ -1362,12 +1369,22 @@ body.creating-docs .apptop{
 .welcome{position:fixed;left:0;right:0;top:var(--chrome-h);bottom:0;
   overflow:auto;background:var(--paper-2);z-index:5;}
 .welcome[hidden]{display:none;}
+/* the ribbon is hidden while this is up, so start at the very top rather
+   than leaving its reserved band as an empty strip above the hero */
+body.welcoming .welcome{top:0;}
+body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-box{text-align:center;max-width:680px;margin:0 auto;
   padding:0 30px 60px;}
 /* the hero fills the first screen; the numbered steps sit below it, seen on
    scroll (with a small "How it works" cue) */
 .welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
-  flex-direction:column;justify-content:center;padding:24px 0;}
+  flex-direction:column;justify-content:center;padding:24px 0;
+  /* `safe` centring: on a short window the hero is taller than its box, and
+     plain `center` overflows it EQUALLY both ways -- the top half goes above
+     the scroll container's origin, where it cannot be scrolled to, and the
+     logo gets sliced off. `safe` falls back to flex-start in that case.
+     Declared second so browsers that do not parse it keep plain `center`. */
+  justify-content:safe center;}
 .welcome-scrollcue{margin-top:34px;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);opacity:.7;}
 /* wide enough for the demo reel; the numbered steps keep their own narrow
@@ -3703,7 +3720,19 @@ window.MathJax = {
       title="Present this document full screen (Narrative or Tree). Esc to
  exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg>Present</button>
     </span></span><span class="abgrp-lab">View</span></span>
-    <!-- nothing hidden behind a menu: these all fit -->
+  </div>
+  <div class="tabsrow">
+    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
+      title="Show or hide the section sidebar (table of contents)">
+      <span></span></button>
+    <div class="tabstrip" id="tabstrip" role="tablist"
+      aria-label="Open notebooks"></div>
+    <!-- The app buttons sit at the right of the TAB ROW rather than in the
+         ribbon. As the ribbon's last group they were the first thing to
+         wrap, and below roughly 1500px they took a whole row to themselves:
+         50px of chrome spent on three icons, with a wide empty band under
+         the filters. The tab row is always there and always has room at its
+         right, so nothing has to wrap at all. -->
     <span class="abgrp appbar-right" id="ab-app"><span class="abgrp-row">
     <span class="btn-grp">
       <button class="toggle" id="theme-btn"
@@ -3716,13 +3745,6 @@ window.MathJax = {
       <button class="toggle" id="help-btn"
         title="How to use, and everything this tool can do" aria-label="Help"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/><path d="M8.6 12v.1"/></svg></button>
     </span></span><span class="abgrp-lab">App</span></span>
-  </div>
-  <div class="tabsrow">
-    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
-      title="Show or hide the section sidebar (table of contents)">
-      <span></span></button>
-    <div class="tabstrip" id="tabstrip" role="tablist"
-      aria-label="Open notebooks"></div>
   </div>
   <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
        insets the document by it automatically, and so the normal filter

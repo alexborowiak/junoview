@@ -33,14 +33,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # translates \n to \r\n on Windows, so the file's bytes -- and its hash -- differ
 # by platform while the render itself does not.
 #
-# Changed once since the package split, for five UI fixes: the presenting
-# outline rail now reaches the floor, Outline moved to the left end of the
-# present bar beside the rail it opens, the bar's own buttons no longer
-# overprint the pinned Exit corner, the type-picker buttons match the width of
-# the filter they sit under, and the ribbon is hidden while the welcome screen
-# is up. Before those it matched the pre-split renderer exactly.
-EXPECTED_MD5 = "f83796c46990f19feb0acd892b0e0721"
-EXPECTED_BYTES = 1649310
+# The package split itself changed nothing: this matched the old single-file
+# renderer byte for byte. It has moved since only for the chrome fixes listed
+# under "Fixed — interface" in CHANGELOG.md, each of which has its own test
+# pinning the specific rule. If this is the ONLY test that fails, you changed
+# the page's bytes without meaning to.
+EXPECTED_MD5 = "e4dad6cd357017d6fb25a8e66cedd7f1"
+EXPECTED_BYTES = 1650748
 
 
 def _render_example() -> str:

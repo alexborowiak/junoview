@@ -92,7 +92,20 @@ introduced by the move.
   refine. Help keeps its square: it stands alone.
 - **The ribbon showed on the welcome screen**, where every filter, size and view
   control is inert and Open is already on the welcome screen itself. It is now
-  hidden until something is open.
+  hidden until something is open, and the welcome starts at the top of the
+  window rather than below the band the hidden ribbon used to reserve.
+- **The ribbon grew a nearly-empty second row on narrower windows.** Theme,
+  Support and Help were the ribbon's last group and so the first thing to wrap:
+  below roughly 1500px they took a whole row to themselves, spending 50px of
+  chrome on three icon buttons and leaving a wide empty band under the filters.
+  They now sit at the right of the tab row, which is always rendered and always
+  has room there, so the ribbon is a constant 149px at every width.
+- **The welcome hero could be sliced off at the top.** It is centred with
+  `justify-content:center`, which on a short window overflows its box *equally*
+  in both directions — and the top half lands above the scroll container's
+  origin, where nothing can scroll to it. The logo lost its upper half. Now
+  centred with `safe center`, which falls back to flex-start when the content
+  does not fit.
 
 ### Fixed — packaging and tooling
 

@@ -224,3 +224,24 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
     # (web restore) satisfies a still-pending initial route
     assert "history.replaceState" in out and "pendingRoute" in out
     assert "document.addEventListener('sem:shell'" in out
+
+
+def test_app_buttons_sit_in_the_tab_row_not_the_ribbon(out):
+    """Theme / Support / Help live at the right of the tab row.
+
+    As the ribbon's last group they were the first thing to wrap, and below
+    roughly 1500px they claimed a whole row for three icon buttons -- 50px
+    of chrome, and a wide empty band under the filters. The tab row is
+    always rendered and always has room at its right, so moving them there
+    makes the ribbon one row at every width.
+    """
+    # the group is inside the tab row, after the tab strip
+    assert out.index('id="tabstrip"') < out.index('id="ab-app"')
+    assert out.index('id="ab-app"') < out.index('class="stylebar"')
+    # ...and styled for that row rather than for a captioned ribbon group
+    assert (".tabsrow #ab-app{margin-left:auto;justify-content:center;"
+            "padding:0 10px;" in out)
+    assert ".tabsrow #ab-app .abgrp-lab{display:none;}" in out
+    # all three buttons came with it
+    for button in ('id="theme-btn"', 'id="support-btn"', 'id="help-btn"'):
+        assert button in out, button
