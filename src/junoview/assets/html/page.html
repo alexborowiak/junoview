@@ -67,14 +67,14 @@
         ><i data-ic="scope"></i><span class="btxt">Sections: All</span></button>
       <button class="toggle sub" id="filters-reset"
         title="Put every filter — and every per-section change — in THIS
- notebook back to the defaults"><i data-ic="reset"></i>Reset</button>
+ notebook back to the defaults"><i data-ic="reset"></i><span class="btxt">Reset</span></button>
     </span>
     <span class="fgrp" id="copy-grp">
       <button class="toggle sub" id="trace-inherit" hidden
         data-keep="1"
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from."><i data-ic="inherit"></i
- >Match document</button>
+ ><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
@@ -85,18 +85,18 @@
       <span class="fgrp" id="tree-fold-grp">
         <button class="toggle" id="tree-expand" type="button"
           title="Expand every node — show each cell's content in the map"
-          ><i data-ic="expand"></i>Expand all</button>
+          ><i data-ic="expand"></i><span class="btxt">Expand all</span></button>
         <button class="toggle sub" id="tree-collapse" type="button"
           title="Collapse every node back to its title"
-          ><i data-ic="collapse"></i>Collapse all</button>
+          ><i data-ic="collapse"></i><span class="btxt">Collapse all</span></button>
       </span>
       <span class="fgrp" id="tree-width-grp">
         <button class="toggle" id="tree-width" type="button"
           title="Cell width — cycles Small / Medium / Large (drag a cell's
- corner to size just that one)"><i data-ic="width"></i>Width: M</button>
+ corner to size just that one)"><i data-ic="width"></i><span class="btxt">Width: M</span></button>
         <button class="toggle sub" id="tree-unhide" type="button" hidden
           title="Bring back the nodes you hid with their eye"
-          ><i data-ic="eye"></i>Unhide all</button>
+          ><i data-ic="eye"></i><span class="btxt">Unhide all</span></button>
       </span>
     </span><span class="abgrp-lab">Tree</span></span>
     <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
@@ -141,22 +141,16 @@
     </span>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
- exit."><i data-ic="present"></i>Present</button>
+ exit."><i data-ic="present"></i><span class="btxt">Present</span></button>
     </span></span><span class="abgrp-lab">View</span></span>
-  </div>
-  <div class="tabsrow">
-    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
-      title="Show or hide the section sidebar (table of contents)">
-      <span></span></button>
-    <div class="tabstrip" id="tabstrip" role="tablist"
-      aria-label="Open notebooks"></div>
-    <!-- The app buttons sit at the right of the TAB ROW rather than in the
-         ribbon. As the ribbon's last group they were the first thing to
-         wrap, and below roughly 1500px they took a whole row to themselves:
-         50px of chrome spent on three icons, with a wide empty band under
-         the filters. The tab row is always there and always has room at its
-         right, so nothing has to wrap at all. -->
-    <span class="abgrp appbar-right" id="ab-app"><span class="abgrp-row">
+    <span class="appbar-div" aria-hidden="true"></span>
+    <!-- App: theme / support / help. These sat at the right of the TAB ROW
+         while the ribbon still wrapped — as its last group they were the
+         first thing to spill onto a second line. The ribbon does not wrap
+         any more (it compacts, see fitRibbon), so they are back among the
+         other labelled sections where they read as part of the toolbar
+         instead of floating over the tab strip (2026-08-03). -->
+    <span class="abgrp" id="ab-app"><span class="abgrp-row">
     <span class="btn-grp">
       <button class="toggle" id="theme-btn"
         title="Switch between dark and light theme"><i data-ic="theme"></i></button>
@@ -168,6 +162,13 @@
       <button class="toggle" id="help-btn"
         title="How to use, and everything this tool can do" aria-label="Help"><i data-ic="help"></i></button>
     </span></span><span class="abgrp-lab">App</span></span>
+  </div>
+  <div class="tabsrow">
+    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
+      title="Show or hide the section sidebar (table of contents)">
+      <span></span></button>
+    <div class="tabstrip" id="tabstrip" role="tablist"
+      aria-label="Open notebooks"></div>
   </div>
   <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
        insets the document by it automatically, and so the normal filter

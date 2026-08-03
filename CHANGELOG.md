@@ -107,6 +107,17 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **The ribbon could still wrap onto a second row — now it never does.** On a
+  narrower laptop the View group (and everything after it) spilled onto a new
+  line, spending a whole extra band of chrome and squeezing the notebook. The
+  bar no longer wraps at all: `fitRibbon()` compacts it in stages until it
+  fits — first the filter state words go (the dot still shows each state),
+  then every label (icon-only buttons, tooltips carry the names), then the
+  stepper captions and dividers. Only a window too narrow even for icon-only
+  buttons scrolls the bar sideways; a second row is never an option. Theme,
+  Support and Help move back from the tab row into the ribbon as a labelled
+  App group at its right end — floating over the tab strip they read as lost,
+  and with the bar unable to wrap they cost nothing there.
 - **The welcome hero could be sliced off at the top.** It is centred with
   `justify-content:center`, which on a short window overflows its box *equally*
   in both directions — and the top half lands above the scroll container's

@@ -970,8 +970,15 @@ body.presrail-min{--presrail-w:46px;}
   z-index:90;display:flex;flex-direction:column;background:#0a141d;
   border-bottom:1px solid #ffffff14;}
 /* top-aligned: every main button sits on one first row; the small
-   "… types ▾" pickers hang underneath their parent filter. It WRAPS —
-   a horizontal scrollbar in a toolbar just hides things. */
+   "… types ▾" pickers hang underneath their parent filter. It NEVER
+   WRAPS (2026-08-03, user, on a narrower laptop: groups spilling onto a
+   second line cost a whole extra band of chrome and "make it soooo hard
+   to read the notebook"). Instead fitRibbon() compacts the bar in stages
+   — body.rbc1 drops the state words, .rbc2 the labels (icon-only,
+   tooltips carry the names), .rbc3 the captions and dividers — and only
+   a bar too narrow even for icon-only buttons scrolls sideways. A thin
+   scrollbar at the very edge of usable widths beats a second row that
+   appears at ordinary ones. */
 /* align-items:stretch so every SECTION is as tall as the bar and a
    single-button group (+ Open) can fill both rows rather than floating at
    the top of an empty column */
@@ -980,9 +987,9 @@ body.presrail-min{--presrail-w:46px;}
    button slid 15px sideways, which is precisely the "buttons move when I
    change view" complaint. Left-aligned, a button's position depends only
    on what is before it (2026-07-30). */
-.appbar{display:flex;align-items:stretch;gap:5px;flex-wrap:wrap;
+.appbar{display:flex;align-items:stretch;gap:5px;flex-wrap:nowrap;
   justify-content:flex-start;padding-left:8px;
-  min-height:var(--appbar-h);
+  min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold.
@@ -1056,13 +1063,14 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:center;width:100%;flex:none;}
 #ab-app .btn-grp{flex:none;gap:5px;}
 #ab-app .btn-grp>*{flex:none;}
-/* the app group lives at the right of the tab row (see page.html): centred
-   in that row's height, hard against its right edge, and with no caption —
-   a stacked label does not fit 44px, and the three icons carry tooltips */
-.tabsrow #ab-app{margin-left:auto;justify-content:center;padding:0 10px;
-  flex:none;}
-.tabsrow #ab-app .abgrp-row{align-items:center;flex:none;}
-.tabsrow #ab-app .abgrp-lab{display:none;}
+/* the app group (theme / support / help) sits at the RIGHT END of the
+   ribbon, pushed there by an auto margin. It lived on the tab row while
+   the ribbon wrapped — as the last ribbon group it was the first thing
+   to spill — but floating over the tab strip it read as lost, not
+   placed. The ribbon compacts instead of wrapping now, so it is back
+   among the labelled sections (2026-08-03). When the bar overflows into
+   its scroll fallback the auto margin collapses to 0 on its own. */
+#ab-app{margin-left:auto;padding-right:8px;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
@@ -1155,6 +1163,24 @@ body.light .appbar-div{background:#00000026;}
   align-items:center;}
 .appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
+/* ---- ribbon COMPACTION stages (see fitRibbon in app.js): applied one at
+   a time until the bar fits its width, so it never wraps to a second row.
+   Each stage removes the least informative text still showing:
+   rbc1 — the filter state words ("On" / "Fold"); the dot still shows it
+   rbc2 — every label: icon-only buttons, the tooltips carry the names.
+          The fixed View slot also goes — it exists to stop a RENAMED
+          button changing width, and an icon-only button cannot rename
+   rbc3 — the stepper captions and group dividers; tighter gaps ---- */
+body.rbc1 .appbar .tvstate{display:none;}
+body.rbc2 .appbar .btxt{display:none;}
+/* not the steppers/values: their fixed 34/46px boxes centre their own
+   content, and 8px of side padding would squeeze the "100%" value */
+body.rbc2 .appbar .toggle:not(.fz-step):not(.fz-val){
+  padding-left:8px;padding-right:8px;}
+body.rbc2 .vw-stack{min-width:0;}
+body.rbc3 .appbar{gap:3px;}
+body.rbc3 .appbar .appbar-div{display:none;}
+body.rbc3 .appbar .fgrp-h .fgrp-cap{display:none;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;
@@ -3644,14 +3670,14 @@ window.MathJax = {
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg><span class="btxt">Sections: All</span></button>
       <button class="toggle sub" id="filters-reset"
         title="Put every filter — and every per-section change — in THIS
- notebook back to the defaults"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/></svg>Reset</button>
+ notebook back to the defaults"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/></svg><span class="btxt">Reset</span></button>
     </span>
     <span class="fgrp" id="copy-grp">
       <button class="toggle sub" id="trace-inherit" hidden
         data-keep="1"
         title="This plot trace opened unfiltered, on purpose. Click to give
  it the same filters as the notebook it came from."><i data-ic="inherit"></i
- >Match document</button>
+ ><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-div" aria-hidden="true"></span>
@@ -3662,18 +3688,18 @@ window.MathJax = {
       <span class="fgrp" id="tree-fold-grp">
         <button class="toggle" id="tree-expand" type="button"
           title="Expand every node — show each cell's content in the map"
-          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg>Expand all</button>
+          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg><span class="btxt">Expand all</span></button>
         <button class="toggle sub" id="tree-collapse" type="button"
           title="Collapse every node back to its title"
-          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg>Collapse all</button>
+          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg><span class="btxt">Collapse all</span></button>
       </span>
       <span class="fgrp" id="tree-width-grp">
         <button class="toggle" id="tree-width" type="button"
           title="Cell width — cycles Small / Medium / Large (drag a cell's
- corner to size just that one)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 8h12.8"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/><path d="M11.8 5.4 14.4 8l-2.6 2.6"/></svg>Width: M</button>
+ corner to size just that one)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 8h12.8"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/><path d="M11.8 5.4 14.4 8l-2.6 2.6"/></svg><span class="btxt">Width: M</span></button>
         <button class="toggle sub" id="tree-unhide" type="button" hidden
           title="Bring back the nodes you hid with their eye"
-          >Unhide all</button>
+          ><span class="btxt">Unhide all</span></button>
       </span>
     </span><span class="abgrp-lab">Tree</span></span>
     <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
@@ -3718,22 +3744,16 @@ window.MathJax = {
     </span>
     <button class="toggle" id="doc-present"
       title="Present this document full screen (Narrative or Tree). Esc to
- exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg>Present</button>
+ exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg><span class="btxt">Present</span></button>
     </span></span><span class="abgrp-lab">View</span></span>
-  </div>
-  <div class="tabsrow">
-    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
-      title="Show or hide the section sidebar (table of contents)">
-      <span></span></button>
-    <div class="tabstrip" id="tabstrip" role="tablist"
-      aria-label="Open notebooks"></div>
-    <!-- The app buttons sit at the right of the TAB ROW rather than in the
-         ribbon. As the ribbon's last group they were the first thing to
-         wrap, and below roughly 1500px they took a whole row to themselves:
-         50px of chrome spent on three icons, with a wide empty band under
-         the filters. The tab row is always there and always has room at its
-         right, so nothing has to wrap at all. -->
-    <span class="abgrp appbar-right" id="ab-app"><span class="abgrp-row">
+    <span class="appbar-div" aria-hidden="true"></span>
+    <!-- App: theme / support / help. These sat at the right of the TAB ROW
+         while the ribbon still wrapped — as its last group they were the
+         first thing to spill onto a second line. The ribbon does not wrap
+         any more (it compacts, see fitRibbon), so they are back among the
+         other labelled sections where they read as part of the toolbar
+         instead of floating over the tab strip (2026-08-03). -->
+    <span class="abgrp" id="ab-app"><span class="abgrp-row">
     <span class="btn-grp">
       <button class="toggle" id="theme-btn"
         title="Switch between dark and light theme"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg></button>
@@ -3745,6 +3765,13 @@ window.MathJax = {
       <button class="toggle" id="help-btn"
         title="How to use, and everything this tool can do" aria-label="Help"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.2"/><path d="M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1"/><path d="M8.6 12v.1"/></svg></button>
     </span></span><span class="abgrp-lab">App</span></span>
+  </div>
+  <div class="tabsrow">
+    <button class="menubtn" id="menubtn" aria-label="Toggle sections"
+      title="Show or hide the section sidebar (table of contents)">
+      <span></span></button>
+    <div class="tabstrip" id="tabstrip" role="tablist"
+      aria-label="Open notebooks"></div>
   </div>
   <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
        insets the document by it automatically, and so the normal filter
@@ -8062,7 +8089,9 @@ through Ko-fi. Thank you.</p>
     var n=scopeCount(),tot=allSids().length;
     var lab=(!tot||n===tot)?'All'
       :(n?(n+' of '+tot):'none');
-    b.innerHTML='Sections: '+lab+' &#9662;';
+    /* write the LABEL, not innerHTML — innerHTML= wiped the scope icon
+       (and the .btxt span the ribbon compaction stages hide) */
+    setBtnText(b,'Sections: '+lab+' ▾');
     b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
@@ -9968,6 +9997,10 @@ through Ko-fi. Thank you.</p>
       prCollapse.title=st==='full'
         ?'Collapse to icons (click again to hide)':'Hide this panel';
     try{localStorage.setItem('sempresrail2',st);}catch(e){}
+    /* the rail's width is the ribbon's left edge: re-run the ribbon
+       fit + chrome measure whenever it changes (guarded — the first call
+       runs before measureChrome is assigned, and init calls it anyway) */
+    if(APP.measureChrome) APP.measureChrome();
   }
   var railPref=null;
   try{railPref=localStorage.getItem('sempresrail2');}catch(e){}
@@ -10001,15 +10034,35 @@ through Ko-fi. Thank you.</p>
 
   /* ---- ☰ toggles the section sidebar (TOC). Desktop: body.tocshow
      (hidden by default, pref persisted); mobile keeps the slide-in. */
-  /* the header is allowed to wrap, so the page offset has to follow its
-     REAL height — otherwise a second row of controls hides under the
-     document (or leaves a gap when it fits on one) */
+  /* ---- the ribbon must NEVER wrap onto a second row (2026-08-03: on a
+     narrower laptop the View + App groups spilled onto a new line and the
+     extra band of chrome ate the notebook's viewing space). Escalate
+     through the compaction stages (see the body.rbc* rules in app.css)
+     until the bar fits — each stage removes the least informative text
+     still showing. Reset first so a WIDER window relaxes back. Beyond
+     rbc3 the bar scrolls sideways (overflow-x:auto): at that point even
+     icon-only buttons do not fit and a thin scrollbar is the only option
+     that is not a second row. */
+  function fitRibbon(){
+    var bar=$('.appbar'); if(!bar) return;
+    var cl=document.body.classList;
+    cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
+    for(var lv=1;lv<=3&&bar.scrollWidth>bar.clientWidth+1;lv++)
+      cl.add('rbc'+lv);
+  }
+  /* the header can still be more than one row TALL (the sub-pickers hang
+     under their filters), so the page offset has to follow its REAL
+     height — otherwise the controls hide under the document (or leave a
+     gap) */
   var chromeT=null;
   function measureChrome(){
     if(chromeT) return;
     chromeT=setTimeout(function(){
       chromeT=null;
       var top=$('#apptop'); if(!top) return;
+      /* compact BEFORE measuring: the stages change the bar's height
+         requirements as well as its width */
+      fitRibbon();
       var h=Math.ceil(top.getBoundingClientRect().height);
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
@@ -10033,6 +10086,15 @@ through Ko-fi. Thank you.</p>
   window.addEventListener('resize',measureChrome);
   document.addEventListener('sem:shell',measureChrome);
   document.addEventListener('sem:activate',measureChrome);
+  /* the bar's width also changes WITHOUT a window resize — the rail
+     collapses, the builder docks (creating-docs), its edge is dragged —
+     so watch the element itself. Safe from feedback: the rbc* classes
+     change the bar's CONTENT, never its own border box. */
+  if(window.ResizeObserver){
+    var barEl=$('.appbar');
+    if(barEl) new ResizeObserver(function(){measureChrome();})
+      .observe(barEl);
+  }
   measureChrome();
   var menuBtn=$('#menubtn');
   function applyToc(show){

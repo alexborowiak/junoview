@@ -2,10 +2,10 @@
 sidebar. Covers ribbon composition and counts (labelled groups, the file
 group leading with Open, full-size scope/copy buttons, size steppers, the
 fixed-width View slot, the Raw/Tree/Present group staying one unit), the
-wrapping left-aligned layout with a measured page offset, the decluttered
-top-left with the hamburger on the tab line, and the TOC toggle / resizable
-builder / dark document chrome. The sidebar's nav key legend and the raw
-notebook view live here too.
+never-wrapping left-aligned layout that compacts in stages with a measured
+page offset, the decluttered top-left with the hamburger on the tab line,
+and the TOC toggle / resizable builder / dark document chrome. The
+sidebar's nav key legend and the raw notebook view live here too.
 """
 
 from __future__ import annotations
@@ -49,19 +49,33 @@ def test_scope_copy_and_zoom_controls_are_full_size(out):
     assert 'class="fgrp-cap">Figures' in out
 
 
-def test_appbar_wraps_left_aligned_with_measured_page_offset(out):
-    """The ribbon WRAPS and the page offset follows its real height.
+def test_appbar_never_wraps_it_compacts_in_stages(out):
+    """The ribbon NEVER wraps onto a second row — it COMPACTS instead.
 
-    That way a control can never end up off the right-hand edge behind a
-    scrollbar. It is left-aligned, NOT centred: centring re-centres on
-    any viewport width change, so every button slid when the scrollbar
-    came and went.
+    A second row of chrome eats the notebook's viewing space (2026-08-03,
+    on a narrower laptop the View and App groups spilled onto a new
+    line). fitRibbon() escalates body.rbc1/2/3 — state words, then
+    labels, then captions — until the bar fits its width; only below
+    even icon-only width does it scroll sideways. Still left-aligned,
+    NOT centred: centring re-centres on any viewport width change, so
+    every button slid when the scrollbar came and went. The page offset
+    follows the header's real height as before.
     """
     assert "--appbar-h:104px" in out and "--chrome-h:112px" in out
     assert ".appbar{display:flex;align-items:stretch;gap:5px;" \
-        "flex-wrap:wrap;" in out
+        "flex-wrap:nowrap;" in out
     assert "justify-content:flex-start;padding-left:8px;" in out
-    assert "overflow-x:auto;scrollbar-width:none;}" not in out
+    assert "overflow-x:auto;scrollbar-width:thin;" in out
+    assert "function fitRibbon" in out
+    # the stages: state words -> labels -> captions/dividers
+    assert "body.rbc1 .appbar .tvstate{display:none;}" in out
+    assert "body.rbc2 .appbar .btxt{display:none;}" in out
+    assert "body.rbc3 .appbar .appbar-div{display:none;}" in out
+    # a wider window relaxes the compaction back before re-escalating
+    assert "cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');" in out
+    # the bar re-fits when its width changes WITHOUT a window resize
+    # (rail collapse, docked builder, dragged builder edge)
+    assert "new ResizeObserver(function(){measureChrome();})" in out
     assert "function measureChrome" in out
     assert "'--chrome-h',h+'px'" in out
 
@@ -81,7 +95,10 @@ def test_ribbon_size_stepper_and_fixed_view_slot(out):
         ".vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;"
         "\n  min-width:106px;}"
     ) in out
-    assert ">Match document</button>" in out
+    # …but the fixed slot goes when the bar compacts to icon-only: an
+    # icon-only button cannot rename itself wider
+    assert "body.rbc2 .vw-stack{min-width:0;}" in out
+    assert '<span class="btxt">Match document</span></button>' in out
 
 
 def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
@@ -231,22 +248,22 @@ def test_lineage_sidebar_and_restorable_hash_routing(out):
     assert "document.addEventListener('sem:shell'" in out
 
 
-def test_app_buttons_sit_in_the_tab_row_not_the_ribbon(out):
-    """Theme / Support / Help live at the right of the tab row.
+def test_app_buttons_sit_at_the_right_end_of_the_ribbon(out):
+    """Theme / Support / Help are a labelled ribbon group, pushed right.
 
-    As the ribbon's last group they were the first thing to wrap, and below
-    roughly 1500px they claimed a whole row for three icon buttons -- 50px
-    of chrome, and a wide empty band under the filters. The tab row is
-    always rendered and always has room at its right, so moving them there
-    makes the ribbon one row at every width.
+    They sat at the right of the TAB ROW while the ribbon still wrapped
+    (as its last group they were the first thing to spill), but floating
+    over the tab strip they read as lost rather than placed. The ribbon
+    compacts instead of wrapping now, so they are back among the other
+    labelled sections -- right-aligned by an auto margin that collapses
+    on its own when the bar overflows into its scroll fallback.
     """
-    # the group is inside the tab row, after the tab strip
-    assert out.index('id="tabstrip"') < out.index('id="ab-app"')
-    assert out.index('id="ab-app"') < out.index('class="stylebar"')
-    # ...and styled for that row rather than for a captioned ribbon group
-    assert (".tabsrow #ab-app{margin-left:auto;justify-content:center;"
-            "padding:0 10px;" in out)
-    assert ".tabsrow #ab-app .abgrp-lab{display:none;}" in out
+    # the group is the ribbon's last section, after View, before the tabs
+    assert out.index('id="doc-present"') < out.index('id="ab-app"')
+    assert out.index('id="ab-app"') < out.index('class="tabsrow"')
+    assert "#ab-app{margin-left:auto;padding-right:8px;}" in out
+    # nothing still styles it for the tab row
+    assert ".tabsrow #ab-app" not in out
     # all three buttons came with it
     for button in ('id="theme-btn"', 'id="support-btn"', 'id="help-btn"'):
         assert button in out, button

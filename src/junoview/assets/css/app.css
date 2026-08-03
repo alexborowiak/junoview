@@ -11,8 +11,15 @@ body.presrail-min{--presrail-w:46px;}
   z-index:90;display:flex;flex-direction:column;background:#0a141d;
   border-bottom:1px solid #ffffff14;}
 /* top-aligned: every main button sits on one first row; the small
-   "… types ▾" pickers hang underneath their parent filter. It WRAPS —
-   a horizontal scrollbar in a toolbar just hides things. */
+   "… types ▾" pickers hang underneath their parent filter. It NEVER
+   WRAPS (2026-08-03, user, on a narrower laptop: groups spilling onto a
+   second line cost a whole extra band of chrome and "make it soooo hard
+   to read the notebook"). Instead fitRibbon() compacts the bar in stages
+   — body.rbc1 drops the state words, .rbc2 the labels (icon-only,
+   tooltips carry the names), .rbc3 the captions and dividers — and only
+   a bar too narrow even for icon-only buttons scrolls sideways. A thin
+   scrollbar at the very edge of usable widths beats a second row that
+   appears at ordinary ones. */
 /* align-items:stretch so every SECTION is as tall as the bar and a
    single-button group (+ Open) can fill both rows rather than floating at
    the top of an empty column */
@@ -21,9 +28,9 @@ body.presrail-min{--presrail-w:46px;}
    button slid 15px sideways, which is precisely the "buttons move when I
    change view" complaint. Left-aligned, a button's position depends only
    on what is before it (2026-07-30). */
-.appbar{display:flex;align-items:stretch;gap:5px;flex-wrap:wrap;
+.appbar{display:flex;align-items:stretch;gap:5px;flex-wrap:nowrap;
   justify-content:flex-start;padding-left:8px;
-  min-height:var(--appbar-h);
+  min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold.
@@ -97,13 +104,14 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:center;width:100%;flex:none;}
 #ab-app .btn-grp{flex:none;gap:5px;}
 #ab-app .btn-grp>*{flex:none;}
-/* the app group lives at the right of the tab row (see page.html): centred
-   in that row's height, hard against its right edge, and with no caption —
-   a stacked label does not fit 44px, and the three icons carry tooltips */
-.tabsrow #ab-app{margin-left:auto;justify-content:center;padding:0 10px;
-  flex:none;}
-.tabsrow #ab-app .abgrp-row{align-items:center;flex:none;}
-.tabsrow #ab-app .abgrp-lab{display:none;}
+/* the app group (theme / support / help) sits at the RIGHT END of the
+   ribbon, pushed there by an auto margin. It lived on the tab row while
+   the ribbon wrapped — as the last ribbon group it was the first thing
+   to spill — but floating over the tab strip it read as lost, not
+   placed. The ribbon compacts instead of wrapping now, so it is back
+   among the labelled sections (2026-08-03). When the bar overflows into
+   its scroll fallback the auto margin collapses to 0 on its own. */
+#ab-app{margin-left:auto;padding-right:8px;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
@@ -196,6 +204,24 @@ body.light .appbar-div{background:#00000026;}
   align-items:center;}
 .appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
+/* ---- ribbon COMPACTION stages (see fitRibbon in app.js): applied one at
+   a time until the bar fits its width, so it never wraps to a second row.
+   Each stage removes the least informative text still showing:
+   rbc1 — the filter state words ("On" / "Fold"); the dot still shows it
+   rbc2 — every label: icon-only buttons, the tooltips carry the names.
+          The fixed View slot also goes — it exists to stop a RENAMED
+          button changing width, and an icon-only button cannot rename
+   rbc3 — the stepper captions and group dividers; tighter gaps ---- */
+body.rbc1 .appbar .tvstate{display:none;}
+body.rbc2 .appbar .btxt{display:none;}
+/* not the steppers/values: their fixed 34/46px boxes centre their own
+   content, and 8px of side padding would squeeze the "100%" value */
+body.rbc2 .appbar .toggle:not(.fz-step):not(.fz-val){
+  padding-left:8px;padding-right:8px;}
+body.rbc2 .vw-stack{min-width:0;}
+body.rbc3 .appbar{gap:3px;}
+body.rbc3 .appbar .appbar-div{display:none;}
+body.rbc3 .appbar .fgrp-h .fgrp-cap{display:none;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;

@@ -448,7 +448,9 @@
     var n=scopeCount(),tot=allSids().length;
     var lab=(!tot||n===tot)?'All'
       :(n?(n+' of '+tot):'none');
-    b.innerHTML='Sections: '+lab+' &#9662;';
+    /* write the LABEL, not innerHTML — innerHTML= wiped the scope icon
+       (and the .btxt span the ribbon compaction stages hide) */
+    setBtnText(b,'Sections: '+lab+' ▾');
     b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
@@ -2354,6 +2356,10 @@
       prCollapse.title=st==='full'
         ?'Collapse to icons (click again to hide)':'Hide this panel';
     try{localStorage.setItem('sempresrail2',st);}catch(e){}
+    /* the rail's width is the ribbon's left edge: re-run the ribbon
+       fit + chrome measure whenever it changes (guarded — the first call
+       runs before measureChrome is assigned, and init calls it anyway) */
+    if(APP.measureChrome) APP.measureChrome();
   }
   var railPref=null;
   try{railPref=localStorage.getItem('sempresrail2');}catch(e){}
@@ -2387,15 +2393,35 @@
 
   /* ---- ☰ toggles the section sidebar (TOC). Desktop: body.tocshow
      (hidden by default, pref persisted); mobile keeps the slide-in. */
-  /* the header is allowed to wrap, so the page offset has to follow its
-     REAL height — otherwise a second row of controls hides under the
-     document (or leaves a gap when it fits on one) */
+  /* ---- the ribbon must NEVER wrap onto a second row (2026-08-03: on a
+     narrower laptop the View + App groups spilled onto a new line and the
+     extra band of chrome ate the notebook's viewing space). Escalate
+     through the compaction stages (see the body.rbc* rules in app.css)
+     until the bar fits — each stage removes the least informative text
+     still showing. Reset first so a WIDER window relaxes back. Beyond
+     rbc3 the bar scrolls sideways (overflow-x:auto): at that point even
+     icon-only buttons do not fit and a thin scrollbar is the only option
+     that is not a second row. */
+  function fitRibbon(){
+    var bar=$('.appbar'); if(!bar) return;
+    var cl=document.body.classList;
+    cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
+    for(var lv=1;lv<=3&&bar.scrollWidth>bar.clientWidth+1;lv++)
+      cl.add('rbc'+lv);
+  }
+  /* the header can still be more than one row TALL (the sub-pickers hang
+     under their filters), so the page offset has to follow its REAL
+     height — otherwise the controls hide under the document (or leave a
+     gap) */
   var chromeT=null;
   function measureChrome(){
     if(chromeT) return;
     chromeT=setTimeout(function(){
       chromeT=null;
       var top=$('#apptop'); if(!top) return;
+      /* compact BEFORE measuring: the stages change the bar's height
+         requirements as well as its width */
+      fitRibbon();
       var h=Math.ceil(top.getBoundingClientRect().height);
       if(h>0) document.documentElement.style.setProperty(
         '--chrome-h',h+'px');
@@ -2419,6 +2445,15 @@
   window.addEventListener('resize',measureChrome);
   document.addEventListener('sem:shell',measureChrome);
   document.addEventListener('sem:activate',measureChrome);
+  /* the bar's width also changes WITHOUT a window resize — the rail
+     collapses, the builder docks (creating-docs), its edge is dragged —
+     so watch the element itself. Safe from feedback: the rbc* classes
+     change the bar's CONTENT, never its own border box. */
+  if(window.ResizeObserver){
+    var barEl=$('.appbar');
+    if(barEl) new ResizeObserver(function(){measureChrome();})
+      .observe(barEl);
+  }
   measureChrome();
   var menuBtn=$('#menubtn');
   function applyToc(show){

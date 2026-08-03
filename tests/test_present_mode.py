@@ -47,9 +47,10 @@ def test_present_bar_reproduces_the_appbar_ribbon_groups(out):
     assert ("var PB_TOOLS=['#ab-filters','#ab-scope','#ab-size','#ab-view'];"
             in out)
     assert ".appbar-div{flex:none;width:1px;height:82px" in out
-    # 2 plain ribbon dividers + 2 grouping the custom-view styling bar
+    # 3 plain ribbon dividers (the third closes View off from the
+    # right-aligned App group) + 2 grouping the custom-view styling bar
     # (the other 2 carry filt-div and disappear with the filters in tree)
-    assert out.count('class="appbar-div"') == 4
+    assert out.count('class="appbar-div"') == 5
 
 
 def test_present_bar_has_one_fold_button_and_autohide(out):
