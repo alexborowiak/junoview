@@ -24,10 +24,23 @@
             <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
             <div class="dc-msep"></div>
             <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <div class="dc-mi dc-pagebg" id="mi-pagebg"
+              title="The page's own background — pick white for a poster
+ that goes to a print shop">Page background
+              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
+              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
+              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
+              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
+              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+            </div>
             <div class="dc-msep"></div>
             <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
             <button class="dc-mi" id="mi-autosave" hidden></button>
             <button class="dc-mi" id="mi-pdf">Export PDF / print&#8230;</button>
+            <button class="dc-mi" id="mi-html"
+              title="A single .html file anyone can open — no Junoview
+ needed. Arrow keys page through it; Ctrl+P prints at page size">Export
+ standalone HTML</button>
             <button class="dc-mi" id="mi-dl">Download a copy
               (.junoview)</button>
             <button class="dc-mi" id="mi-load">Open a .junoview
@@ -153,6 +166,9 @@
               </span>
               <button class="dbtn" id="et-image"
                 title="Add an image from your computer">&#128443; Image</button>
+              <button class="dbtn et" id="dc-qr"
+                title="Insert a QR code that links to your repo / paper /
+ data — generated right here, prints crisp (vector)">&#9641; QR code</button>
               <input type="file" id="img-file" accept="image/*" hidden>
             </span>
             <span class="rbn-lab">Insert</span>

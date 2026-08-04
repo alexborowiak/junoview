@@ -107,6 +107,30 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **Posters can finally be printed.** The page has its own background
+  now (File → Page background): pick white and the whole chrome — text
+  boxes, frames, page numbers — recolours for dark-on-light, and the
+  export prints white instead of the app's navy. New posters start
+  white, because posters exist to be printed. Explicit per-item colours
+  are never touched.
+- **File → Export standalone HTML.** One self-contained .html anyone can
+  open without Junoview — styles inline, every figure a data: URI. It
+  reads as stacked pages, arrow keys step through slides, and Ctrl+P in
+  the exported file prints at true page size. "Send me the slides" is
+  now one button plus one attachment.
+- **Poster figures warn before they print fuzzy.** On poster pages, any
+  raster figure whose effective density lands under 150 dpi gets a small
+  ⚠ chip with the fix in its tooltip (savefig(dpi=300), or emit SVG —
+  which is vector and never flagged). The poster hall is the wrong place
+  to discover a soft figure.
+- **The crop menu gained the rectangular Trim it always deserved.** The
+  t/r/b/l inset lived in the model with no UI; now four steppers in the
+  crop menu trim whitespace off any figure or image — the most common
+  poster edit — live on the selection, with Reset.
+- **Insert → QR code.** A self-contained QR generator (no third-party
+  service, byte mode, ECC M, up to ~200 characters) emits crisp vector
+  SVG sized for print. Machine-decode-verified across all supported
+  sizes. Point it at the repo the poster footer already promises.
 - **Keyboard shortcuts, advertised where you'd look for them.** The
   document view: `P`/`M`/`C`/`O` cycle the four filters, `R` raw view,
   `T` tree, `F` presents full screen, `+`/`−`/`0` size figures,

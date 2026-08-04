@@ -38,8 +38,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # under "Fixed — interface" in CHANGELOG.md, each of which has its own test
 # pinning the specific rule. If this is the ONLY test that fails, you changed
 # the page's bytes without meaning to.
-EXPECTED_MD5 = "84c2bd04b6e9dc7ef7c1d5f0b95fb2d4"
-EXPECTED_BYTES = 1686497
+EXPECTED_MD5 = "aa17249c1b0c331bed3e0c146e6ea5f5"
+EXPECTED_BYTES = 1707536
 
 
 def _render_example() -> str:

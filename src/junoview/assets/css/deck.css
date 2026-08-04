@@ -858,6 +858,56 @@ select#fmt-font[hidden]{display:none;}
   font-family:var(--mono);font-size:2.4vh;line-height:1;color:#8aa0b0;
   pointer-events:none;}
 .vpage .slide-pageno{color:#8aa0b0;}
+/* ---- page background + LIGHT pages (2026-08-04): pres.pageBg sets
+   --page-bg on the deck; a light colour flips .page-light, which
+   recolours the DEFAULT chrome (text boxes, frames, page numbers) for
+   dark-on-light reading. Explicit per-item colours always win — these
+   rules only replace the dark-theme defaults. White is the default for
+   NEW posters: posters exist to be printed. ---- */
+.deck .deck-stage .slide{background:var(--page-bg,transparent);}
+.page-light .slide{color:#1b2733;}
+.page-light .an-text{color:#1b2733;background:#ffffffd9;
+  border-color:#00000024;}
+.page-light .an-text.nobg{text-shadow:none;}
+.page-light .an-cell{background:#fff;border-color:#00000030;}
+.page-light .an-cell pre.result,.page-light .an-cell pre.stream{
+  background:#fff;color:#1b2733;border-color:#00000018;}
+.page-light .an-cell .note{color:#1b2733;}
+.page-light .an-handle{color:#5a6b78;}
+.page-light .slide-pageno{color:#5a6b78;}
+.page-light .ttl-eyebrow{color:#1d7a90;}
+/* the File-menu page background swatches */
+.dc-pagebg{display:flex;align-items:center;gap:6px;cursor:default;}
+.pgbg-sw{width:18px;height:18px;border-radius:5px;flex:none;
+  border:1px solid #ffffff38;cursor:pointer;display:inline-block;}
+.pgbg-sw[data-bg="#ffffff"]{background:#fff;}
+.pgbg-sw[data-bg="#f6f2ea"]{background:#f6f2ea;}
+.pgbg-sw[data-bg="#eef1f4"]{background:#eef1f4;}
+.pgbg-sw[data-bg="#0b141d"]{background:#0b141d;}
+.pgbg-sw[data-bg="#000000"]{background:#000;}
+.pgbg-sw:hover{border-color:var(--cyan);}
+.pgbg-sw.on{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan);}
+/* ---- print-resolution warning chip on poster figures ---- */
+.dpi-warn{position:absolute;top:6px;right:6px;z-index:5;
+  font-family:var(--mono);font-size:10px;line-height:1;
+  padding:3px 7px;border-radius:5px;background:#3a2a10ee;
+  color:#f0a848;border:1px solid #f0a84855;pointer-events:auto;}
+.page-light .dpi-warn{background:#fff3e0ee;color:#9a6108;
+  border-color:#9a610833;}
+/* ---- the crop menu's Trim row ---- */
+.crop-inset{display:flex;align-items:center;gap:4px;margin-top:6px;
+  padding-top:6px;border-top:1px solid #ffffff1a;}
+.crop-inset .ci-lab{font-family:var(--mono);font-size:9px;
+  letter-spacing:.08em;text-transform:uppercase;color:#8ba0b2;
+  flex:none;margin-right:2px;}
+.crop-inset input{width:44px;background:#0b141d;color:#dce6ee;
+  border:1px solid #ffffff26;border-radius:5px;font-size:11px;
+  padding:3px 4px;font-family:var(--mono);}
+.crop-inset input:focus{border-color:var(--cyan);outline:none;}
+.crop-inset .ci-reset{background:none;border:1px solid #ffffff26;
+  color:#8ba0b2;border-radius:5px;font-size:10px;padding:3px 7px;
+  cursor:pointer;}
+.crop-inset .ci-reset:hover{border-color:var(--cyan);color:#fff;}
 /* ---- PDF / print export: one fixed-size 16:9 slide per page ---- */
 #print-root{position:fixed;left:-99999px;top:0;width:1280px;z-index:-1;}
 .print-page{width:1280px;height:720px;position:relative;overflow:hidden;
