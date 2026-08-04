@@ -583,7 +583,7 @@
     if(a.k==='text')
       return 'Text — '+(String(a.text||'').trim().slice(0,26)||'(empty)');
     if(a.k==='image') return 'Image';
-    if(a.k==='arrow') return 'Arrow';
+    if(a.k==='arrow') return a.nohead?'Line':'Arrow';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
   }
@@ -1980,7 +1980,7 @@
     var a=(s&&s.annots||[])[idx]; if(!a) return 'item';
     if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
     if(a.k==='image') return 'Image';
-    if(a.k==='arrow') return 'Arrow';
+    if(a.k==='arrow') return a.nohead?'Line':'Arrow';
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
       return it&&it.title?it.title.slice(0,18):'Cell';}
@@ -2295,17 +2295,22 @@
       if(a.hide&&editing) return;
       if(a.k==='arrow'){
         var col=a.color||'#ff6b57';
-        var mk=document.createElementNS(AN_NS,'marker');
-        mk.setAttribute('id','an-head-'+i);
-        mk.setAttribute('viewBox','0 0 10 10');
-        mk.setAttribute('refX','8');mk.setAttribute('refY','5');
-        mk.setAttribute('markerWidth','6.5');
-        mk.setAttribute('markerHeight','6.5');
-        mk.setAttribute('orient','auto-start-reverse');
-        var mp=document.createElementNS(AN_NS,'path');
-        mp.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
-        mp.setAttribute('fill',col);
-        mk.appendChild(mp);defs.appendChild(mk);
+        /* a LINE is an arrow with no head (a.nohead) — same endpoints,
+           colour, width, dash; only the marker is skipped (2026-08-04:
+           the poster section divider) */
+        if(!a.nohead){
+          var mk=document.createElementNS(AN_NS,'marker');
+          mk.setAttribute('id','an-head-'+i);
+          mk.setAttribute('viewBox','0 0 10 10');
+          mk.setAttribute('refX','8');mk.setAttribute('refY','5');
+          mk.setAttribute('markerWidth','6.5');
+          mk.setAttribute('markerHeight','6.5');
+          mk.setAttribute('orient','auto-start-reverse');
+          var mp=document.createElementNS(AN_NS,'path');
+          mp.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
+          mp.setAttribute('fill',col);
+          mk.appendChild(mp);defs.appendChild(mk);
+        }
         var ln=document.createElementNS(AN_NS,'line');
         ln.setAttribute('x1',a.x1+'%');ln.setAttribute('y1',a.y1+'%');
         ln.setAttribute('x2',a.x2+'%');ln.setAttribute('y2',a.y2+'%');
@@ -2316,7 +2321,7 @@
         ln.setAttribute('stroke-width',a.sw||3);
         if(a.dash) ln.setAttribute('stroke-dasharray','9 7');
         if(a.op!=null&&a.op<1) ln.style.opacity=a.op;
-        ln.setAttribute('marker-end','url(#an-head-'+i+')');
+        if(!a.nohead) ln.setAttribute('marker-end','url(#an-head-'+i+')');
         svgTop.appendChild(ln);
         var hit=document.createElementNS(AN_NS,'line');
         hit.setAttribute('x1',a.x1+'%');hit.setAttribute('y1',a.y1+'%');
@@ -4001,6 +4006,23 @@
       +btoa(unescape(encodeURIComponent(svg)));
   }
   window.SemDeckQr=qrMatrix;   /* test hook */
+  /* ---- + Line: a horizontal rule, the poster section divider
+     (2026-08-04). It IS an arrow with no head (a.nohead), so endpoint
+     drags, colour, width, dash, lock and the Objects pane all come for
+     free. Inserted horizontal — that is what a divider wants to be —
+     and angled by dragging an endpoint. */
+  var lineBtn=$('#dc-line');
+  if(lineBtn) lineBtn.addEventListener('click',function(){
+    var s=pres.slides[cur];
+    if(!s){toast('Add a slide first');return;}
+    s.annots=s.annots||[];
+    s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1,sw:3,
+      color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'});
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    else renderSlide();
+  });
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){
     var s=pres.slides[cur];

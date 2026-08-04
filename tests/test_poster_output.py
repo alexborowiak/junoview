@@ -62,6 +62,25 @@ def test_crop_menu_gained_the_rectangular_trim_ui(out):
     assert ".crop-inset input{" in out
 
 
+def test_line_insert_and_toolbar_icons(out):
+    """+ Line inserts a horizontal rule — an arrow with no head
+    (a.nohead), so endpoint drags, colour, width, dash, lock and the
+    Objects pane come free — and the deck toolbar's insert buttons carry
+    real SVG icons in the app ribbon's 16-grid stroke style instead of
+    mismatched unicode glyphs.
+    """
+    assert 'id="dc-line"' in out
+    assert ("s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1,"
+            in out)
+    assert "if(!a.nohead) ln.setAttribute('marker-end'" in out
+    assert "a.nohead?'Line':'Arrow'" in out
+    # a line on a light page defaults dark, and vice versa
+    assert "color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'" in out
+    # every <i data-ic> token was substituted into an inline SVG
+    assert "<i data-ic=" not in out
+    assert ".dbtn .bic{display:inline-block;" in out
+
+
 def test_qr_generator_is_self_contained_and_vector(out):
     """A poster QR must not depend on a third-party service: the encoder
     (byte mode, ECC M, versions 1-10, spec mask scoring) lives in deck.js

@@ -110,6 +110,34 @@ _ICON_PATHS = {
     "newview": '<path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/>'
                '<path d="M4.6 8.4h4M4.6 10.8h2.6"/>'
                '<path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/>',
+    # the deck editor's toolbar (2026-08-04): the insert buttons carried
+    # bare "+" labels and mismatched unicode glyphs; each now shows what
+    # it inserts, in the same 16-grid stroke style as the app ribbon.
+    "play": '<path d="M5.2 3.2v9.6l7.8-4.8Z"/>',
+    "cellcard": '<rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/>'
+                '<path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/>'
+                '<path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/>',
+    "text": '<path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/>'
+            '<path d="M6.2 12.8h3.6"/>',
+    "arrow": '<path d="M3.4 12.6 12.6 3.4"/><path d="M7.8 3.4h4.8v4.8"/>',
+    "hline": '<path d="M2 8h12"/><path d="M2 5.8v4.4"/>'
+             '<path d="M14 5.8v4.4"/>',
+    "shapes": '<rect x="2.2" y="5.6" width="7" height="7" rx="1"/>'
+              '<circle cx="10.6" cy="5.8" r="3.4"/>',
+    "image": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
+             '<circle cx="5.7" cy="6.4" r="1.1"/>'
+             '<path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/>',
+    "qr": '<rect x="2.2" y="2.2" width="4.4" height="4.4"/>'
+          '<rect x="9.4" y="2.2" width="4.4" height="4.4"/>'
+          '<rect x="2.2" y="9.4" width="4.4" height="4.4"/>'
+          '<path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/>'
+          '<path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/>',
+    "layouts": '<rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/>'
+               '<rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/>'
+               '<rect x="2" y="8.8" width="12" height="4.6" rx=".8"/>',
+    "pagep": '<rect x="4" y="1.8" width="8" height="12.4" rx="1"/>',
+    "objects": '<path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/>'
+               '<path d="m2 9.2 6 3.2 6-3.2"/>',
 }
 
 

@@ -101,7 +101,7 @@
             <span class="rbn-row">
               <button class="dbtn primary" id="dc-play"
                 title="Play the presentation full screen (from this slide)">
-                &#9654; Present</button>
+                <i data-ic="play"></i> Present</button>
             </span>
             <span class="rbn-lab">Show</span>
           </span>
@@ -123,7 +123,7 @@
                 <button class="dbtn" id="lay-btn" aria-haspopup="true"
                   aria-expanded="false"
                   title="Slide templates &mdash; apply a layout to this
- slide">&#9638; Layouts &#9662;</button>
+ slide"><i data-ic="layouts"></i> Layouts &#9662;</button>
                 <div class="sh-menu lay-menu" id="lay-menu" hidden>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>
@@ -133,7 +133,8 @@
                 <button class="dbtn" id="page-btn" aria-haspopup="true"
                   aria-expanded="false"
                   title="Page size &mdash; slides (16:9, 4:3) or a poster
- (A4&ndash;A0, portrait or landscape)">&#9645; Page &#9662;</button>
+ (A4&ndash;A0, portrait or landscape)"><i data-ic="pagep"></i> Page
+ &#9662;</button>
                 <div class="sh-menu page-menu" id="page-menu" hidden></div>
               </span>
               <button class="dbtn etm" id="zoom-out"
@@ -144,7 +145,7 @@
                 title="Zoom in">+</button>
               <button class="dbtn" id="objects-btn" aria-pressed="false"
                 title="Objects pane &mdash; list, hide and lock everything
- on this slide">&#9776; Objects</button>
+ on this slide"><i data-ic="objects"></i> Objects</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -152,23 +153,30 @@
             <span class="rbn-row">
               <button class="dbtn et" data-tool="cell" aria-pressed="false"
                 title="Drop a notebook card onto the slide — you pick which
- one from your notebook">&#43; Notebook cell</button>
-              <button class="dbtn et" data-tool="text" aria-pressed="false">
-                + Text</button>
+ one from your notebook"><i data-ic="cellcard"></i> Notebook cell</button>
+              <button class="dbtn et" data-tool="text" aria-pressed="false"
+                title="Add a text box"><i data-ic="text"></i> Text</button>
               <button class="dbtn et" data-tool="arrow"
-                aria-pressed="false">+ Arrow</button>
+                aria-pressed="false" title="Draw an arrow"
+                ><i data-ic="arrow"></i> Arrow</button>
+              <button class="dbtn" id="dc-line"
+                title="Add a horizontal line — a section divider for
+ posters and slides. Drag its endpoints to reroute or angle it."
+                ><i data-ic="hline"></i> Line</button>
               <span class="sh-drop" id="sh-drop">
                 <button class="dbtn" id="sh-btn" aria-haspopup="true"
                   aria-expanded="false"
                   title="Draw a shape (rectangle, ellipse, arrow, star, …)">
-                  + Shapes &#9662;</button>
+                  <i data-ic="shapes"></i> Shapes &#9662;</button>
                 <div class="sh-menu" id="sh-menu" hidden></div>
               </span>
               <button class="dbtn" id="et-image"
-                title="Add an image from your computer">&#128443; Image</button>
+                title="Add an image from your computer"
+                ><i data-ic="image"></i> Image</button>
               <button class="dbtn et" id="dc-qr"
                 title="Insert a QR code that links to your repo / paper /
- data — generated right here, prints crisp (vector)">&#9641; QR code</button>
+ data — generated right here, prints crisp (vector)"
+                ><i data-ic="qr"></i> QR code</button>
               <input type="file" id="img-file" accept="image/*" hidden>
             </span>
             <span class="rbn-lab">Insert</span>

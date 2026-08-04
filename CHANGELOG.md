@@ -107,6 +107,16 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **Insert → Line, and a properly iconed toolbar.** A horizontal rule —
+  the poster section divider — inserts with one click and reroutes by
+  its endpoints; under the hood it is an arrow with no head, so colour,
+  width, dash, lock and the Objects pane all apply. The editor's insert
+  buttons (Notebook cell, Text, Arrow, Line, Shapes, Image, QR) and the
+  Present/Layouts/Page/Objects controls now carry real SVG icons in the
+  app ribbon's stroke style instead of mismatched unicode glyphs — and a
+  new build-time guarantee that every icon token substituted caught the
+  "Match document" button's icon, which a line-wrapped tag had silently
+  swallowed since it shipped.
 - **Posters can finally be printed.** The page has its own background
   now (File → Page background): pick white and the whole chrome — text
   boxes, frames, page numbers — recolours for dark-on-light, and the

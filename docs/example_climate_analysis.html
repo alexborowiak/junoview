@@ -3340,6 +3340,10 @@ select#fmt-font[hidden]{display:none;}
   font-family:var(--mono);font-size:2.4vh;line-height:1;color:#8aa0b0;
   pointer-events:none;}
 .vpage .slide-pageno{color:#8aa0b0;}
+/* the toolbar icons share the app ribbon's 16-grid stroke style; inside
+   a .dbtn they sit inline beside the label */
+.dbtn .bic{display:inline-block;vertical-align:-2px;width:13px;
+  height:13px;margin-right:4px;}
 /* ---- page background + LIGHT pages (2026-08-04): pres.pageBg sets
    --page-bg on the deck; a light colour flips .page-light, which
    recolours the DEFAULT chrome (text boxes, frames, page numbers) for
@@ -3834,8 +3838,8 @@ window.MathJax = {
       <button class="toggle sub" id="trace-inherit" hidden
         data-keep="1"
         title="This plot trace opened unfiltered, on purpose. Click to give
- it the same filters as the notebook it came from."><i data-ic="inherit"></i
- ><span class="btxt">Match document</span></button>
+ it the same filters as the notebook it came from."
+        ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
     <span class="appbar-flex" aria-hidden="true"></span>
@@ -7543,7 +7547,7 @@ through Ko-fi. Thank you.</p>
             <span class="rbn-row">
               <button class="dbtn primary" id="dc-play"
                 title="Play the presentation full screen (from this slide)">
-                &#9654; Present</button>
+                <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</button>
             </span>
             <span class="rbn-lab">Show</span>
           </span>
@@ -7565,7 +7569,7 @@ through Ko-fi. Thank you.</p>
                 <button class="dbtn" id="lay-btn" aria-haspopup="true"
                   aria-expanded="false"
                   title="Slide templates &mdash; apply a layout to this
- slide">&#9638; Layouts &#9662;</button>
+ slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layouts &#9662;</button>
                 <div class="sh-menu lay-menu" id="lay-menu" hidden>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>
@@ -7575,7 +7579,8 @@ through Ko-fi. Thank you.</p>
                 <button class="dbtn" id="page-btn" aria-haspopup="true"
                   aria-expanded="false"
                   title="Page size &mdash; slides (16:9, 4:3) or a poster
- (A4&ndash;A0, portrait or landscape)">&#9645; Page &#9662;</button>
+ (A4&ndash;A0, portrait or landscape)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4" y="1.8" width="8" height="12.4" rx="1"/></svg> Page
+ &#9662;</button>
                 <div class="sh-menu page-menu" id="page-menu" hidden></div>
               </span>
               <button class="dbtn etm" id="zoom-out"
@@ -7586,7 +7591,7 @@ through Ko-fi. Thank you.</p>
                 title="Zoom in">+</button>
               <button class="dbtn" id="objects-btn" aria-pressed="false"
                 title="Objects pane &mdash; list, hide and lock everything
- on this slide">&#9776; Objects</button>
+ on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Objects</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -7594,23 +7599,30 @@ through Ko-fi. Thank you.</p>
             <span class="rbn-row">
               <button class="dbtn et" data-tool="cell" aria-pressed="false"
                 title="Drop a notebook card onto the slide — you pick which
- one from your notebook">&#43; Notebook cell</button>
-              <button class="dbtn et" data-tool="text" aria-pressed="false">
-                + Text</button>
+ one from your notebook"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</button>
+              <button class="dbtn et" data-tool="text" aria-pressed="false"
+                title="Add a text box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Text</button>
               <button class="dbtn et" data-tool="arrow"
-                aria-pressed="false">+ Arrow</button>
+                aria-pressed="false" title="Draw an arrow"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 12.6 12.6 3.4"/><path d="M7.8 3.4h4.8v4.8"/></svg> Arrow</button>
+              <button class="dbtn" id="dc-line"
+                title="Add a horizontal line — a section divider for
+ posters and slides. Drag its endpoints to reroute or angle it."
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 8h12"/><path d="M2 5.8v4.4"/><path d="M14 5.8v4.4"/></svg> Line</button>
               <span class="sh-drop" id="sh-drop">
                 <button class="dbtn" id="sh-btn" aria-haspopup="true"
                   aria-expanded="false"
                   title="Draw a shape (rectangle, ellipse, arrow, star, …)">
-                  + Shapes &#9662;</button>
+                  <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="5.6" width="7" height="7" rx="1"/><circle cx="10.6" cy="5.8" r="3.4"/></svg> Shapes &#9662;</button>
                 <div class="sh-menu" id="sh-menu" hidden></div>
               </span>
               <button class="dbtn" id="et-image"
-                title="Add an image from your computer">&#128443; Image</button>
+                title="Add an image from your computer"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg> Image</button>
               <button class="dbtn et" id="dc-qr"
                 title="Insert a QR code that links to your repo / paper /
- data — generated right here, prints crisp (vector)">&#9641; QR code</button>
+ data — generated right here, prints crisp (vector)"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.2" width="4.4" height="4.4"/><rect x="9.4" y="2.2" width="4.4" height="4.4"/><rect x="2.2" y="9.4" width="4.4" height="4.4"/><path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/><path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/></svg> QR code</button>
               <input type="file" id="img-file" accept="image/*" hidden>
             </span>
             <span class="rbn-lab">Insert</span>
@@ -13643,7 +13655,7 @@ through Ko-fi. Thank you.</p>
     if(a.k==='text')
       return 'Text — '+(String(a.text||'').trim().slice(0,26)||'(empty)');
     if(a.k==='image') return 'Image';
-    if(a.k==='arrow') return 'Arrow';
+    if(a.k==='arrow') return a.nohead?'Line':'Arrow';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
   }
@@ -15040,7 +15052,7 @@ through Ko-fi. Thank you.</p>
     var a=(s&&s.annots||[])[idx]; if(!a) return 'item';
     if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
     if(a.k==='image') return 'Image';
-    if(a.k==='arrow') return 'Arrow';
+    if(a.k==='arrow') return a.nohead?'Line':'Arrow';
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
       return it&&it.title?it.title.slice(0,18):'Cell';}
@@ -15355,17 +15367,22 @@ through Ko-fi. Thank you.</p>
       if(a.hide&&editing) return;
       if(a.k==='arrow'){
         var col=a.color||'#ff6b57';
-        var mk=document.createElementNS(AN_NS,'marker');
-        mk.setAttribute('id','an-head-'+i);
-        mk.setAttribute('viewBox','0 0 10 10');
-        mk.setAttribute('refX','8');mk.setAttribute('refY','5');
-        mk.setAttribute('markerWidth','6.5');
-        mk.setAttribute('markerHeight','6.5');
-        mk.setAttribute('orient','auto-start-reverse');
-        var mp=document.createElementNS(AN_NS,'path');
-        mp.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
-        mp.setAttribute('fill',col);
-        mk.appendChild(mp);defs.appendChild(mk);
+        /* a LINE is an arrow with no head (a.nohead) — same endpoints,
+           colour, width, dash; only the marker is skipped (2026-08-04:
+           the poster section divider) */
+        if(!a.nohead){
+          var mk=document.createElementNS(AN_NS,'marker');
+          mk.setAttribute('id','an-head-'+i);
+          mk.setAttribute('viewBox','0 0 10 10');
+          mk.setAttribute('refX','8');mk.setAttribute('refY','5');
+          mk.setAttribute('markerWidth','6.5');
+          mk.setAttribute('markerHeight','6.5');
+          mk.setAttribute('orient','auto-start-reverse');
+          var mp=document.createElementNS(AN_NS,'path');
+          mp.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
+          mp.setAttribute('fill',col);
+          mk.appendChild(mp);defs.appendChild(mk);
+        }
         var ln=document.createElementNS(AN_NS,'line');
         ln.setAttribute('x1',a.x1+'%');ln.setAttribute('y1',a.y1+'%');
         ln.setAttribute('x2',a.x2+'%');ln.setAttribute('y2',a.y2+'%');
@@ -15376,7 +15393,7 @@ through Ko-fi. Thank you.</p>
         ln.setAttribute('stroke-width',a.sw||3);
         if(a.dash) ln.setAttribute('stroke-dasharray','9 7');
         if(a.op!=null&&a.op<1) ln.style.opacity=a.op;
-        ln.setAttribute('marker-end','url(#an-head-'+i+')');
+        if(!a.nohead) ln.setAttribute('marker-end','url(#an-head-'+i+')');
         svgTop.appendChild(ln);
         var hit=document.createElementNS(AN_NS,'line');
         hit.setAttribute('x1',a.x1+'%');hit.setAttribute('y1',a.y1+'%');
@@ -17061,6 +17078,23 @@ through Ko-fi. Thank you.</p>
       +btoa(unescape(encodeURIComponent(svg)));
   }
   window.SemDeckQr=qrMatrix;   /* test hook */
+  /* ---- + Line: a horizontal rule, the poster section divider
+     (2026-08-04). It IS an arrow with no head (a.nohead), so endpoint
+     drags, colour, width, dash, lock and the Objects pane all come for
+     free. Inserted horizontal — that is what a divider wants to be —
+     and angled by dragging an endpoint. */
+  var lineBtn=$('#dc-line');
+  if(lineBtn) lineBtn.addEventListener('click',function(){
+    var s=pres.slides[cur];
+    if(!s){toast('Add a slide first');return;}
+    s.annots=s.annots||[];
+    s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1,sw:3,
+      color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'});
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    else renderSlide();
+  });
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){
     var s=pres.slides[cur];
