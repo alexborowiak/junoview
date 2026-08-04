@@ -1350,10 +1350,17 @@ body.prrail-auto.presrail-min .presrail{width:46px;}
 body.prrail-auto .presrail{transform:translateX(-100%);
   transition:transform .18s ease;box-shadow:0 0 40px #00000066;}
 body.prrail-auto.prrail-peek .presrail{transform:none;}
+/* the peeking rail must ride ABOVE the deck editor (z-index:100): with
+   the rail on auto-hide, entering the poster/slide editor left no
+   visible way back — the rail slid in UNDERNEATH the deck and the user
+   "lost the sidebar" (2026-08-04) */
+body.prrail-auto.prrail-peek .presrail{z-index:130;}
 body.prrail-auto .presrail-show{display:none;}
 #pr-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
 #pr-auto .bic{width:13px;height:13px;}
-.presrail-show{position:fixed;left:0;bottom:20px;z-index:96;width:22px;
+/* z-index 130: the reveal tab must stay clickable OVER the deck editor
+   (z-index:100), or a hidden rail has no way back while editing */
+.presrail-show{position:fixed;left:0;bottom:20px;z-index:130;width:22px;
   height:46px;border:1px solid #ffffff22;border-left:none;
   border-radius:0 8px 8px 0;background:#0a141d;color:#7fb6c6;
   cursor:pointer;display:none;font-size:12px;padding:0;}
@@ -2462,7 +2469,7 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .deck{position:fixed;inset:0;z-index:100;background:#0b141d;color:#dce6ee;
   display:flex;flex-direction:column;font-family:var(--sans);}
 .deck[hidden]{display:none!important;}
-.deck [hidden]:not(.et-fmt){display:none!important;}
+.deck [hidden]{display:none!important;}
 body.deck-open{overflow:hidden;}
 
 .deck-top{display:flex;align-items:center;gap:9px;padding:10px 18px;
@@ -2937,25 +2944,17 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
   line-height:1;letter-spacing:.04em;white-space:nowrap;}
 .dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
 .dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
-/* ---- POSTER MODE: bigger chrome (2026-07-29) ------------------------
-   A poster is authored at A0/A1 on a big screen, and the buttons that
-   were sized for a 16:9 slide read as tiny beside it. Everything the
-   deck editor draws steps up one size while the page is a poster. */
-.deck.poster-page .dbtn{font-size:12.5px;padding:8px 14px;}
-.deck.poster-page .dc-head .dbtn,
-.deck.poster-page .dc-menuwrap .dbtn{height:36px;padding:0 15px;
-  font-size:12.5px;}
-.deck.poster-page .dc-head .dbtn.dc-icon{padding:0 11px;font-size:17px;}
-.deck.poster-page .edit-tools .dbtn{height:34px;box-sizing:border-box;
-  display:inline-flex;align-items:center;font-size:12.5px;}
-.deck.poster-page .dbtn.etm{padding:0 12px;}
-.deck.poster-page .deck-status{height:34px;font-size:11px;}
-/* the template catalog gets two bigger previews per row instead of three */
+/* ---- POSTER MODE chrome: SAME density as slides (2026-08-04). The
+   2026-07-29 "bigger chrome" upsizing inflated every ribbon chip —
+   including the six INVISIBLE contextual format groups held in the wrap
+   flow — so the toolbar wrapped into 5-7 blank rows: a ~430px dead band
+   that starved the stage and left an A0 portrait ~300px wide. The
+   editor's chrome is chrome; only the PAGE deserves the space. The
+   template catalog keeps its two-up poster previews. */
 .deck.poster-page .lay-picker{grid-template-columns:repeat(2,1fr);
   max-height:300px;}
 .deck.poster-page .lay-lb{font-size:9.5px;}
 .deck.poster-page .dbtn.lay{padding:5px;}
-.deck.poster-page .dc-label{font-size:10px;}
 .dc-menuwrap{position:relative;}
 .dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
   background:#16273a;border:1px solid #ffffff22;border-radius:8px;
@@ -3128,11 +3127,16 @@ body.slide-editing .apptop{display:none;}
   flex-wrap:wrap;flex:1;min-height:32px;}
 .rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
-/* the contextual format groups flow into the same rows as the static ones;
-   when nothing is selected they stay in layout (invisible) so the ribbon
-   height never jumps */
+/* the contextual format groups flow into the same rows as the static
+   ones. Hidden means GONE (2026-08-04): keeping them in layout as
+   visibility:hidden reserved every row they would wrap into — on a
+   narrowed poster stage that was 5-7 rows of invisible buttons, a huge
+   dead band. The ribbon's min-height still reserves two rows, so the
+   common select/deselect does not shift the canvas; a selection whose
+   groups need a third row may grow it slightly — an honest jump beats a
+   permanent void. */
 .et-fmt{display:contents;}
-.et-fmt[hidden]{display:contents;visibility:hidden;}
+.et-fmt[hidden]{display:none;}
 .et-fmt .rbn-grp{flex:none;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
@@ -13379,6 +13383,45 @@ through Ko-fi. Thank you.</p>
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
       if(!deckEl.hidden) applyZoom();});
+    /* the ribbon's height CHANGES now (the contextual format groups
+       leave the layout when hidden), and so does the page picker — any
+       toolbar reflow resizes the stage, so the page re-fits itself
+       rather than waiting for a window resize */
+    if(window.ResizeObserver){
+      var et=$('#edit-tools');
+      if(et) new ResizeObserver(function(){
+        if(!deckEl.hidden) applyZoom();}).observe(et);
+    }
+    /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:
+       a Windows precision-trackpad pinch arrives as a wheel event with
+       ctrlKey=true (macOS Chrome reports the same; meta accepted to
+       match the editor's other shortcuts). The point under the cursor
+       stays put: measure the slide before and after, then correct the
+       stage scroll — rect math survives the margin:auto centring and
+       the .zoomed overflow flip without reproducing either. */
+    stage.addEventListener('wheel',function(e){
+      if(!(e.ctrlKey||e.metaKey)||mode!=='edit'||deckEl.hidden) return;
+      e.preventDefault();
+      var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+      var r=slideEl.getBoundingClientRect();
+      if(!r.width||!r.height) return;
+      var fx=(e.clientX-r.left)/r.width,
+          fy=(e.clientY-r.top)/r.height;
+      var z=Math.min(6,Math.max(0.25,
+        (deckZoom||1)*Math.exp(-e.deltaY*0.002)));
+      setZoom(z);
+      /* setZoom is synchronous: .zoomed (overflow:auto) is already on
+         when these scroll writes land */
+      var nr=slideEl.getBoundingClientRect();
+      stage.scrollLeft+=(nr.left+fx*nr.width)-e.clientX;
+      stage.scrollTop+=(nr.top+fy*nr.height)-e.clientY;
+    },{passive:false});
+    /* over the rest of the open editor (ribbon, film strip, panes) a
+       pinch must not browser-zoom the whole app either — swallow it,
+       without zooming the page */
+    deckEl.addEventListener('wheel',function(e){
+      if((e.ctrlKey||e.metaKey)&&!deckEl.hidden) e.preventDefault();
+    },{passive:false});
   })();
   (function(){
     var pb=$('#page-btn'),pm=$('#page-menu'),pd=$('#page-drop');
@@ -18039,11 +18082,13 @@ through Ko-fi. Thank you.</p>
       setTimeout(function(){card.classList.remove('target-flash');},700);
       return;
     }
-    /* deliberate placement: a card lands in the frame the user has
-       SELECTED (armed). When the slide has NO frames yet, the click is
-       unambiguous so we create one; when it HAS empty frames but none
-       is armed, require a selection first (so cards don't jump in while
-       you read the notebook). */
+    /* placement: an ARMED frame wins; with none armed the card takes the
+       first EMPTY frame in reading order. Poster templates ship full of
+       placeholder frames, and demanding a selection before every single
+       click made "Swap to notebooks" feel broken (2026-08-04) — in
+       create mode clicking a card IS the intent to place it, so
+       successive clicks fill successive slots. A slide with no frames
+       at all still creates one. */
     var target=annotByIdx(s,activePane);
     if(!target||target.k!=='cell'||target.ref){
       if(slideCells(s).length===0){
@@ -18051,8 +18096,18 @@ through Ko-fi. Thank you.</p>
         s.annots.push({k:'cell',x:8,y:8,w:84,h:84,ref:null});
         target=annotByIdx(s,s.annots.length-1);
       } else {
-        toast('Select an empty frame on the slide first, then click');
-        return;
+        var best=null;
+        (s.annots||[]).forEach(function(a){
+          if(a.k!=='cell'||a.ref) return;
+          if(!best||a.y<best.y-0.5
+             ||(Math.abs(a.y-best.y)<=0.5&&a.x<best.x)) best=a;
+        });
+        if(best) target=best;
+        else {
+          toast('Every frame is full — select a frame on the page '
+            +'to replace');
+          return;
+        }
       }
     }
     e.preventDefault();e.stopPropagation();

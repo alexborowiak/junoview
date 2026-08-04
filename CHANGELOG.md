@@ -107,6 +107,28 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **The poster editor was starving its own canvas.** Its toolbar kept six
+  hidden contextual format groups IN the layout (invisible, to avoid a
+  height jump on selection), and poster mode inflated every button — so
+  the invisible chips wrapped into a ~430px dead band and an A0 portrait
+  rendered ~300px wide, pushed into a corner. Poster chrome now keeps the
+  slide density, hidden groups leave the layout (the two-row min-height
+  still steadies the common case), and the page re-fits itself whenever
+  the toolbar's height changes.
+- **Trackpad pinch zooms the poster, not the browser.** A pinch (or
+  ctrl+scroll) over the editor's canvas rescales the page around the
+  cursor — same 25%–600% range as the −/Fit/+ buttons — and is swallowed
+  over the rest of the editor so the app never browser-zooms mid-edit.
+- **A hidden presentations rail kept a way back from the editor.** Both
+  the reveal tab and the auto-hide peek slid in UNDER the full-screen
+  editor, so entering a poster with the rail hidden left no visible exit
+  ("you kind of lose the side bar"). Both now ride above it.
+- **Placing cells on a poster no longer nags.** In the docked
+  swap-to-notebooks view, a clicked card lands in the first empty frame
+  (reading order) when none is armed — poster templates ship full of
+  placeholder frames, and demanding a frame selection before every click
+  made the flow feel broken. An armed frame still wins; a full page asks
+  you to pick a frame to replace.
 - **A figure that titles itself in code now names its card.** With no
   `#| title:` and no leading `#` comment, a figure cell whose code calls
   `fig.suptitle("…")`, `ax.set_title("…")`, `plt.title("…")` or passes a

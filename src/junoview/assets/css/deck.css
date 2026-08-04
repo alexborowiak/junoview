@@ -2,7 +2,7 @@
 .deck{position:fixed;inset:0;z-index:100;background:#0b141d;color:#dce6ee;
   display:flex;flex-direction:column;font-family:var(--sans);}
 .deck[hidden]{display:none!important;}
-.deck [hidden]:not(.et-fmt){display:none!important;}
+.deck [hidden]{display:none!important;}
 body.deck-open{overflow:hidden;}
 
 .deck-top{display:flex;align-items:center;gap:9px;padding:10px 18px;
@@ -477,25 +477,17 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
   line-height:1;letter-spacing:.04em;white-space:nowrap;}
 .dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
 .dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
-/* ---- POSTER MODE: bigger chrome (2026-07-29) ------------------------
-   A poster is authored at A0/A1 on a big screen, and the buttons that
-   were sized for a 16:9 slide read as tiny beside it. Everything the
-   deck editor draws steps up one size while the page is a poster. */
-.deck.poster-page .dbtn{font-size:12.5px;padding:8px 14px;}
-.deck.poster-page .dc-head .dbtn,
-.deck.poster-page .dc-menuwrap .dbtn{height:36px;padding:0 15px;
-  font-size:12.5px;}
-.deck.poster-page .dc-head .dbtn.dc-icon{padding:0 11px;font-size:17px;}
-.deck.poster-page .edit-tools .dbtn{height:34px;box-sizing:border-box;
-  display:inline-flex;align-items:center;font-size:12.5px;}
-.deck.poster-page .dbtn.etm{padding:0 12px;}
-.deck.poster-page .deck-status{height:34px;font-size:11px;}
-/* the template catalog gets two bigger previews per row instead of three */
+/* ---- POSTER MODE chrome: SAME density as slides (2026-08-04). The
+   2026-07-29 "bigger chrome" upsizing inflated every ribbon chip —
+   including the six INVISIBLE contextual format groups held in the wrap
+   flow — so the toolbar wrapped into 5-7 blank rows: a ~430px dead band
+   that starved the stage and left an A0 portrait ~300px wide. The
+   editor's chrome is chrome; only the PAGE deserves the space. The
+   template catalog keeps its two-up poster previews. */
 .deck.poster-page .lay-picker{grid-template-columns:repeat(2,1fr);
   max-height:300px;}
 .deck.poster-page .lay-lb{font-size:9.5px;}
 .deck.poster-page .dbtn.lay{padding:5px;}
-.deck.poster-page .dc-label{font-size:10px;}
 .dc-menuwrap{position:relative;}
 .dc-menu{position:absolute;left:0;top:calc(100% + 6px);z-index:30;
   background:#16273a;border:1px solid #ffffff22;border-radius:8px;
@@ -668,11 +660,16 @@ body.slide-editing .apptop{display:none;}
   flex-wrap:wrap;flex:1;min-height:32px;}
 .rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
   text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
-/* the contextual format groups flow into the same rows as the static ones;
-   when nothing is selected they stay in layout (invisible) so the ribbon
-   height never jumps */
+/* the contextual format groups flow into the same rows as the static
+   ones. Hidden means GONE (2026-08-04): keeping them in layout as
+   visibility:hidden reserved every row they would wrap into — on a
+   narrowed poster stage that was 5-7 rows of invisible buttons, a huge
+   dead band. The ribbon's min-height still reserves two rows, so the
+   common select/deselect does not shift the canvas; a selection whose
+   groups need a third row may grow it slightly — an honest jump beats a
+   permanent void. */
 .et-fmt{display:contents;}
-.et-fmt[hidden]{display:contents;visibility:hidden;}
+.et-fmt[hidden]{display:none;}
 .et-fmt .rbn-grp{flex:none;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;

@@ -237,11 +237,41 @@ def test_ribbon_is_one_wrapping_flow_with_stable_group_order(out):
     """
     assert ".rbn-static{display:contents;}" in out
     assert ".et-fmt{display:contents;}" in out
+    # hidden format groups LEAVE the layout (2026-08-04): reserving their
+    # rows as visibility:hidden was a permanent dead band; the ribbon's
+    # min-height still holds two rows, and the stage re-fits via a
+    # ResizeObserver when the ribbon's height changes
+    assert ".et-fmt[hidden]{display:none;}" in out
+    assert "new ResizeObserver(function(){\n        if(!deckEl.hidden) applyZoom();}).observe(et);" in out
     assert 'id="et-del"' not in out and 'data-tool="select"' not in out
     assert ">Effects</span>" in out and 'id="fmt-animwrap"' in out
     assert out.index('id="fmt-dup"') < out.index('id="fmt-txlab"')
     # the ribbon part-picker pills dress like the other ribbon buttons
     assert "#fmt-parts .cellpartbtn{" in out
+
+
+def test_poster_editing_ergonomics_pinch_zoom_escape_and_placement(out):
+    """2026-08-04 poster-edit pass: pinch zooms the PAGE, the hidden rail
+    keeps a way back, and create-mode clicks fill frames.
+
+    A trackpad pinch arrives as ctrl+wheel: a non-passive listener on the
+    stage preventDefaults the browser zoom and rescales the page around
+    the cursor (rect-anchored, so margin:auto centring and the .zoomed
+    overflow flip are handled by measurement, not math). The rail's
+    reveal tab and auto-hide peek ride ABOVE the deck editor
+    (z-index 130 > 100) so "you kind of lose the side bar" cannot
+    happen. And with no frame armed, a clicked card takes the first
+    EMPTY frame in reading order instead of toasting on every click.
+    """
+    assert "stage.addEventListener('wheel',function(e){" in out
+    assert "(deckZoom||1)*Math.exp(-e.deltaY*0.002)" in out
+    assert "stage.scrollLeft+=(nr.left+fx*nr.width)-e.clientX;" in out
+    assert "},{passive:false});" in out
+    assert (".presrail-show{position:fixed;left:0;bottom:20px;"
+            "z-index:130;" in out)
+    assert "body.prrail-auto.prrail-peek .presrail{z-index:130;}" in out
+    assert "if(best) target=best;" in out
+    assert "Every frame is full" in out
 
 
 def test_format_bar_carries_the_object_controls(out):

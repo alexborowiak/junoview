@@ -73,17 +73,19 @@ def test_poster_templates_read_like_a_real_conference_poster(out):
     assert "land:1" in out and "poster:1" in out
 
 
-def test_a_series_presets_switch_poster_mode_and_grow_chrome(out):
+def test_a_series_presets_switch_poster_mode_without_growing_chrome(out):
     """The A-series poster presets are what turns poster mode on; A4 is a
-    page, so it keeps the slide templates.  Poster mode then grows the
-    editor's own chrome.
+    page, so it keeps the slide templates. Poster mode does NOT inflate
+    the editor's chrome any more (2026-08-04): the upsized buttons made
+    the invisible format groups wrap into a ~430px dead band that starved
+    the stage until an A0 portrait rendered ~300px wide. Only the
+    two-up template catalog stays poster-specific.
     """
     assert "id:'a0p',label:'Poster A0 portrait',aw:841,ah:1189," \
         "mm:[841,1189],\n      poster:1}" in out
     assert "id:'a4p',label:'A4 portrait',aw:210,ah:297,mm:[210,297]}" in out
-    # poster mode grows the editor's own chrome
     assert "classList.toggle('poster-page',!!pg.poster)" in out
-    assert ".deck.poster-page .dbtn{font-size:12.5px;padding:8px 14px;}" in out
+    assert ".deck.poster-page .dbtn{" not in out
     assert ".deck.poster-page .lay-picker{grid-template-columns:" \
         "repeat(2,1fr);" in out
     assert 'id="et-fmt"' in out and 'data-tool="cell"' in out

@@ -487,6 +487,45 @@
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
       if(!deckEl.hidden) applyZoom();});
+    /* the ribbon's height CHANGES now (the contextual format groups
+       leave the layout when hidden), and so does the page picker — any
+       toolbar reflow resizes the stage, so the page re-fits itself
+       rather than waiting for a window resize */
+    if(window.ResizeObserver){
+      var et=$('#edit-tools');
+      if(et) new ResizeObserver(function(){
+        if(!deckEl.hidden) applyZoom();}).observe(et);
+    }
+    /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:
+       a Windows precision-trackpad pinch arrives as a wheel event with
+       ctrlKey=true (macOS Chrome reports the same; meta accepted to
+       match the editor's other shortcuts). The point under the cursor
+       stays put: measure the slide before and after, then correct the
+       stage scroll — rect math survives the margin:auto centring and
+       the .zoomed overflow flip without reproducing either. */
+    stage.addEventListener('wheel',function(e){
+      if(!(e.ctrlKey||e.metaKey)||mode!=='edit'||deckEl.hidden) return;
+      e.preventDefault();
+      var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+      var r=slideEl.getBoundingClientRect();
+      if(!r.width||!r.height) return;
+      var fx=(e.clientX-r.left)/r.width,
+          fy=(e.clientY-r.top)/r.height;
+      var z=Math.min(6,Math.max(0.25,
+        (deckZoom||1)*Math.exp(-e.deltaY*0.002)));
+      setZoom(z);
+      /* setZoom is synchronous: .zoomed (overflow:auto) is already on
+         when these scroll writes land */
+      var nr=slideEl.getBoundingClientRect();
+      stage.scrollLeft+=(nr.left+fx*nr.width)-e.clientX;
+      stage.scrollTop+=(nr.top+fy*nr.height)-e.clientY;
+    },{passive:false});
+    /* over the rest of the open editor (ribbon, film strip, panes) a
+       pinch must not browser-zoom the whole app either — swallow it,
+       without zooming the page */
+    deckEl.addEventListener('wheel',function(e){
+      if((e.ctrlKey||e.metaKey)&&!deckEl.hidden) e.preventDefault();
+    },{passive:false});
   })();
   (function(){
     var pb=$('#page-btn'),pm=$('#page-menu'),pd=$('#page-drop');
@@ -5147,11 +5186,13 @@
       setTimeout(function(){card.classList.remove('target-flash');},700);
       return;
     }
-    /* deliberate placement: a card lands in the frame the user has
-       SELECTED (armed). When the slide has NO frames yet, the click is
-       unambiguous so we create one; when it HAS empty frames but none
-       is armed, require a selection first (so cards don't jump in while
-       you read the notebook). */
+    /* placement: an ARMED frame wins; with none armed the card takes the
+       first EMPTY frame in reading order. Poster templates ship full of
+       placeholder frames, and demanding a selection before every single
+       click made "Swap to notebooks" feel broken (2026-08-04) — in
+       create mode clicking a card IS the intent to place it, so
+       successive clicks fill successive slots. A slide with no frames
+       at all still creates one. */
     var target=annotByIdx(s,activePane);
     if(!target||target.k!=='cell'||target.ref){
       if(slideCells(s).length===0){
@@ -5159,8 +5200,18 @@
         s.annots.push({k:'cell',x:8,y:8,w:84,h:84,ref:null});
         target=annotByIdx(s,s.annots.length-1);
       } else {
-        toast('Select an empty frame on the slide first, then click');
-        return;
+        var best=null;
+        (s.annots||[]).forEach(function(a){
+          if(a.k!=='cell'||a.ref) return;
+          if(!best||a.y<best.y-0.5
+             ||(Math.abs(a.y-best.y)<=0.5&&a.x<best.x)) best=a;
+        });
+        if(best) target=best;
+        else {
+          toast('Every frame is full — select a frame on the page '
+            +'to replace');
+          return;
+        }
       }
     }
     e.preventDefault();e.stopPropagation();

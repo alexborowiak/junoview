@@ -373,10 +373,17 @@ body.prrail-auto.presrail-min .presrail{width:46px;}
 body.prrail-auto .presrail{transform:translateX(-100%);
   transition:transform .18s ease;box-shadow:0 0 40px #00000066;}
 body.prrail-auto.prrail-peek .presrail{transform:none;}
+/* the peeking rail must ride ABOVE the deck editor (z-index:100): with
+   the rail on auto-hide, entering the poster/slide editor left no
+   visible way back — the rail slid in UNDERNEATH the deck and the user
+   "lost the sidebar" (2026-08-04) */
+body.prrail-auto.prrail-peek .presrail{z-index:130;}
 body.prrail-auto .presrail-show{display:none;}
 #pr-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
 #pr-auto .bic{width:13px;height:13px;}
-.presrail-show{position:fixed;left:0;bottom:20px;z-index:96;width:22px;
+/* z-index 130: the reveal tab must stay clickable OVER the deck editor
+   (z-index:100), or a hidden rail has no way back while editing */
+.presrail-show{position:fixed;left:0;bottom:20px;z-index:130;width:22px;
   height:46px;border:1px solid #ffffff22;border-left:none;
   border-radius:0 8px 8px 0;background:#0a141d;color:#7fb6c6;
   cursor:pointer;display:none;font-size:12px;padding:0;}
