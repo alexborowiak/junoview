@@ -49,33 +49,45 @@ def test_scope_copy_and_zoom_controls_are_full_size(out):
     assert 'class="fgrp-cap">Figures' in out
 
 
-def test_appbar_never_wraps_it_compacts_in_stages(out):
-    """The ribbon NEVER wraps onto a second row — it COMPACTS instead.
+def test_appbar_never_wraps_and_never_degrades_to_icons(out):
+    """The ribbon NEVER wraps — and compaction NEVER hides a label.
 
-    A second row of chrome eats the notebook's viewing space (2026-08-03,
-    on a narrower laptop the View and App groups spilled onto a new
-    line). fitRibbon() escalates body.rbc1/2/3 — state words, then
-    labels, then captions — until the bar fits its width; only below
-    even icon-only width does it scroll sideways. Still left-aligned,
-    NOT centred: centring re-centres on any viewport width change, so
-    every button slid when the scrollbar came and went. The page offset
-    follows the header's real height as before.
+    A second row of chrome eats the notebook's viewing space (2026-08-03).
+    The first compaction design stripped buttons down to bare icons, and
+    at that it FIRED WRONGLY: measured against the fallback font's wider
+    text it over-compacted at full width, then stuck, because the bar's
+    box never changes when the real font arrives (2026-08-04, user:
+    icon-only "makes no sense to look at" — PowerPoint fits its ribbon by
+    being DENSE, not by deleting labels). So: dense 28px buttons, stages
+    that only tighten spacing / drop state words, a font-load re-fit, and
+    a sideways scroll as the only overflow of last resort.
     """
-    assert "--appbar-h:104px" in out and "--chrome-h:112px" in out
-    assert ".appbar{display:flex;align-items:stretch;gap:5px;" \
+    assert "--appbar-h:88px" in out and "--chrome-h:96px" in out
+    assert ".appbar{display:flex;align-items:stretch;gap:4px;" \
         "flex-wrap:nowrap;" in out
     assert "justify-content:flex-start;padding-left:8px;" in out
     assert "overflow-x:auto;scrollbar-width:thin;" in out
     assert "function fitRibbon" in out
-    # the stages: state words -> labels -> captions/dividers
-    assert "body.rbc1 .appbar .tvstate{display:none;}" in out
-    assert "body.rbc2 .appbar .btxt{display:none;}" in out
-    assert "body.rbc3 .appbar .appbar-div{display:none;}" in out
-    # a wider window relaxes the compaction back before re-escalating
+    # dense, PowerPoint-style: 28px is THE ribbon button height
+    assert "flex:none;white-space:nowrap;height:28px;" in out
+    # the stages: tighter spacing, then the redundant state words —
+    # NEVER the labels. No rule may ever hide .btxt in the ribbon.
+    assert "body.rbc1 .appbar{gap:3px;}" in out
+    assert "body.rbc2 .appbar .tvstate{display:none;}" in out
+    assert ".appbar .btxt{display:none" not in out
+    # the icon-only stage is GONE: no body.rbc3 rule may exist (the string
+    # survives only as fitRibbon clearing the stale class from old sessions)
+    assert "body.rbc3" not in out
+    # a wider window relaxes the compaction back before re-escalating,
+    # and a stale rbc3 from an old session is cleared too
     assert "cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');" in out
+    # a hidden bar measures 0 wide — never escalate against that
+    assert "if(!bar||!bar.clientWidth) return;" in out
     # the bar re-fits when its width changes WITHOUT a window resize
-    # (rail collapse, docked builder, dragged builder edge)
+    # (rail collapse, docked builder, dragged builder edge)...
     assert "new ResizeObserver(function(){measureChrome();})" in out
+    # ...and when the fonts land: the fallback-font fit must not stick
+    assert "document.fonts.ready.then(function(){measureChrome();});" in out
     assert "function measureChrome" in out
     assert "'--chrome-h',h+'px'" in out
 
@@ -93,11 +105,8 @@ def test_ribbon_size_stepper_and_fixed_view_slot(out):
     # "Document" and a wider word would shove Present sideways
     assert (
         ".vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;"
-        "\n  min-width:106px;}"
+        "\n  min-width:92px;}"
     ) in out
-    # …but the fixed slot goes when the bar compacts to icon-only: an
-    # icon-only button cannot rename itself wider
-    assert "body.rbc2 .vw-stack{min-width:0;}" in out
     assert '<span class="btxt">Match document</span></button>' in out
 
 
@@ -207,7 +216,7 @@ def test_tree_view_ribbon_disables_filters_and_anchors_right(out):
     assert "function syncTreeRibbon" in out
     # icon-only buttons need a WIDTH floor, not just padding:0 -- with
     # nothing to stop them they were squeezed to 9px in a tight bar
-    assert "width:34px;min-width:34px;flex:none;" in out
+    assert "width:28px;min-width:28px;flex:none;" in out
     assert "#ab-app .btn-grp>*{flex:none;}" in out
     # Tree view removes the filter and scope sections, and Size / View must
     # not slide into the hole -- the button you use to get back would move

@@ -31,7 +31,7 @@ def test_output_type_filter_ui(out):
 
     The Output-types menu must actually surface the finer slugs (not filter
     them out against a stale allow-list), and opening a collapsed output
-    must not re-show type-filtered children.
+    must not re-show type-filtered or type-folded children.
     """
     assert 'id="ot-filter-btn"' in out and 'id="ot-filter-menu"' in out
     assert "function presentOtTypes" in out and ".ot-off{display:none" in out
@@ -41,7 +41,68 @@ def test_output_type_filter_ui(out):
     assert "var OT_TYPES=['print','numeric'" in out
     assert "if(OT_TYPES.indexOf(t)<0) out.push(t)" in out
     # opening a collapsed output must not re-show type-filtered children
-    assert ".cb-out.part-fold.part-open>*:not(.ot-off){display:revert" in out
+    assert (".cb-out.part-fold.part-open>*:not(.ot-off):not(.ot-fold)"
+            "{display:revert" in out)
+
+
+def test_output_hide_rule_beats_embedded_payload_styles(out):
+    """The hide rule must WIN against CSS shipped inside the output itself.
+
+    An xarray repr embeds `.xr-wrap{display:block !important}` (its own
+    anti-fallback rule), and junoview's wrapper used to share that class
+    name — so "hide Dataset" lost the cascade fight and the card stayed
+    fully visible (2026-08-03). Two defences, both pinned: the wrapper is
+    a junoview-owned class the payload's stylesheet cannot name, and the
+    hide rule is scoped + !important so a same-specificity embedded rule
+    can never out-order it.
+    """
+    assert 'class="jv-xr ot-dataset"' in out
+    assert 'class="xr-wrap ot-dataset"' not in out
+    assert ".cb-out>.ot-off{display:none!important;}" in out
+    # junoview's own styling followed the wrapper to its new name
+    assert ".jv-xr{font-size:13px;" in out
+
+
+def test_output_types_menu_is_per_type_tri_state_with_counts(out):
+    """Each output type row: a count and its OWN On/Fold/Off (2026-08-03).
+
+    The menu lists only the ACTIVE notebook's types — scanning every open
+    tab used to put other documents' types in the menu — with an
+    occurrence count per type. Each row carries a tri-state cycler;
+    setting one detaches that type from the overall Output filter until
+    the menu's reset re-attaches it. Legacy saved states used 1 for
+    "hidden" and must keep meaning that.
+    """
+    # the scan is scoped to the active notebook's document feed
+    assert "var sh=APP.active&&APP.shells[APP.active];" in out
+    assert "'.content .card .cb-out'" in out
+    # counts: "dataset (3)"
+    assert "var otCounts={};" in out
+    assert "tx.textContent=t+' ('+(otCounts[t]||0)+')';" in out
+    # the per-type tri-state, cycling like the main filters
+    assert "var st=document.createElement('button');" in out
+    assert "st.className='ckf-state';" in out
+    assert "writeF(function(s){s.ot[t]=nx;});" in out
+    # a folded output leaves a per-output stub that reopens just itself
+    assert ".cb-out>.ot-fold:not(.ot-open){display:none!important;}" in out
+    assert "stub.className='ot-stub';" in out
+    # reset re-attaches every type to the overall Output filter
+    assert "rs.id='ot-reset';" in out
+    assert "'Reset: match Output'" in out
+    assert "writeF(function(s){s.ot={};});" in out
+    # legacy 1 still reads as 'hidden', and map equality compares VALUES
+    assert "function otVal(v)" in out
+    assert "return v?'hidden':null;" in out
+    assert "if(otVal(x[kx[i]])!==otVal(y[kx[i]])) return false;" in out
+    # a type with no override follows the overall Output state
+    assert "vals[otVal(s.ot[t])||s.out]=1;" in out
+
+
+def test_code_and_plot_type_menus_show_counts_for_active_notebook(out):
+    """The Code-types and Plot-types menus count like the Output menu."""
+    assert "var ckCounts={};" in out and "var ptCounts={};" in out
+    assert "tx.textContent=t+' ('+(ckCounts[t]||0)+')';" in out
+    assert "tx.textContent=t+' ('+(ptCounts[t]||0)+')';" in out
 
 
 def test_plot_type_picker_nests_under_the_plots_filter(out):
@@ -65,7 +126,10 @@ def test_filter_menu_and_pager_javascript_wiring(out):
     defer their plotly draw to the flip.
     """
     assert "function closeFilterMenus" in out
-    assert "'.pt-off,.ot-off,.part-off,.part-fold,.code-off'" in out
+    # the strip selector carries every filter class INCLUDING the per-type
+    # fold — a folded output must arrive on a slide in full
+    assert "'.pt-off,.ot-off,.ot-fold,.part-off,.part-fold,.code-off'" in out
+    assert "$$('.ot-stub',b).forEach(function(n){n.remove();});" in out
     assert "figpage')" in out and "Plots.resize" in out
 
 
@@ -244,8 +308,8 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     """
     assert ("#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{padding:0;\n"
             "  justify-content:center;width:100%;flex:none;}" in out)
-    assert ("#help-btn{padding:0;justify-content:center;width:34px;"
-            "min-width:34px;\n  flex:none;}" in out)
+    assert ("#help-btn{padding:0;justify-content:center;width:28px;"
+            "min-width:28px;\n  flex:none;}" in out)
     # the width comes from the column, so there is nothing to keep in sync
     assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
            "align-items:stretch;" in out

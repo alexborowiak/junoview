@@ -107,6 +107,33 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **The ribbon compacted to bare icons and stuck that way.** Two faults in
+  the first never-wrap design: its last resort stripped button labels to
+  icons ("makes no sense to look at" — a ribbon fits by being DENSE, the
+  PowerPoint way, not by deleting names), and the fit ran before the web
+  fonts loaded, so the fallback font's wider text over-compacted the bar at
+  full width and nothing ever re-measured it. Now the ribbon is dense by
+  default (28px buttons, tighter type and gaps), the compaction stages only
+  tighten spacing and drop the "On/Fold" state words — labels can never
+  disappear — and the fit re-runs when the fonts land. Past the last stage
+  the bar scrolls sideways; icons-only is gone for good.
+- **Hiding "Dataset" in the Output-types menu did nothing.** xarray's repr
+  ships its own stylesheet inside the output, declaring
+  `.xr-wrap{display:block !important}` — and junoview's wrapper shared that
+  class name, so the menu's hide rule lost the cascade fight and the card
+  stayed fully visible (dataframes, with no embedded CSS, hid fine, which
+  made it look random). The wrapper is now junoview-owned (`jv-xr`) and the
+  hide rule is scoped + `!important`, so no payload stylesheet can override
+  the filter again.
+- **Each output type now has its own On / Fold / Off.** The Output-types
+  menu lists only the types actually in the ACTIVE notebook (it used to
+  scan every open tab) with a count per type — "dataset (3)" — and every
+  row carries a small tri-state cycler. Set one and that type stops
+  following the overall Output filter: fold just the datasets, keep the
+  prints, hide the errors. A folded output leaves a slim per-output stub
+  that reopens just itself, and "Reset: match Output" puts every type back
+  under the overall filter. The Code-types and Plot-types menus gained the
+  same active-notebook scoping and counts.
 - **The ribbon could still wrap onto a second row — now it never does.** On a
   narrower laptop the View group (and everything after it) spilled onto a new
   line, spending a whole extra band of chrome and squeezing the notebook. The

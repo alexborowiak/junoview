@@ -616,9 +616,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   font-size:11px;color:var(--ink-3);letter-spacing:.02em;}
 .cb-out.part-fold:hover::before{color:var(--cyan-deep);}
 .cb-out.part-fold.part-open{cursor:default;border:none;padding:0;}
-/* :not(.ot-off) so a child hidden by the Output-types filter stays hidden
-   even when the collapsed output is opened */
-.cb-out.part-fold.part-open>*:not(.ot-off){display:revert;}
+/* :not(.ot-off):not(.ot-fold) so a child hidden or folded by the
+   Output-types menu stays that way even when the collapsed output part is
+   opened (the per-output states outrank the part-level fold) */
+.cb-out.part-fold.part-open>*:not(.ot-off):not(.ot-fold){display:revert;}
 .cb-out.part-fold.part-open::before{display:none;}
 
 /* one line: badge, title (elided if long), then the actions pinned to the
@@ -832,9 +833,9 @@ pre.error{background:#fbf0ee;border-color:#f0d2cc;color:#8a3221;}
    document + raw views instead of running the whole page on. Short
    outputs are unaffected; slide frames keep their own sizing. */
 .content pre.result,.content pre.stream,.content pre.error,
-.content .rich,.content .xr-wrap,
+.content .rich,.content .jv-xr,
 .rawview pre.result,.rawview pre.stream,.rawview .rich,
-.rawview .xr-wrap{max-height:min(440px,62vh);overflow:auto;}
+.rawview .jv-xr{max-height:min(440px,62vh);overflow:auto;}
 .card.k-metric .cardbody pre.result{font-size:14px;
   background:#46a8920d;border-color:#46a89233;color:#1f5f54;
   font-weight:500;}
@@ -912,9 +913,13 @@ pre.code .co{color:#5d7185;}
 pre.code .op{color:#9fb1c0;}
 
 /* ---------- xarray repr ---------- */
-.xr-wrap{font-size:13px;overflow:auto;border:1px solid var(--paper-3);
+/* jv-xr is OUR wrapper around the repr; xarray's own inner div is the one
+   that carries .xr-wrap. They used to share the class name, and xarray's
+   embedded `.xr-wrap{display:block !important}` overrode every junoview
+   hide/fold rule on the wrapper (2026-08-03) */
+.jv-xr{font-size:13px;overflow:auto;border:1px solid var(--paper-3);
   border-radius:8px;padding:4px 8px;background:#fff;}
-.xr-wrap .xr-array-wrap,.xr-wrap .xr-var-list{font-family:var(--mono);}
+.jv-xr .xr-array-wrap,.jv-xr .xr-var-list{font-family:var(--mono);}
 
 /* ---------- empty / fallback ---------- */
 .rich{overflow:auto;}
@@ -958,7 +963,7 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
 }
 </style>
 <style>
-:root{--appbar-h:104px;--tabsrow-h:44px;--chrome-h:112px;--dc-w:430px;
+:root{--appbar-h:88px;--tabsrow-h:44px;--chrome-h:96px;--dc-w:430px;
   --presrail-w:176px;}
 body.presrail-min{--presrail-w:46px;}
 
@@ -987,22 +992,25 @@ body.presrail-min{--presrail-w:46px;}
    button slid 15px sideways, which is precisely the "buttons move when I
    change view" complaint. Left-aligned, a button's position depends only
    on what is before it (2026-07-30). */
-.appbar{display:flex;align-items:stretch;gap:5px;flex-wrap:nowrap;
+.appbar{display:flex;align-items:stretch;gap:4px;flex-wrap:nowrap;
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold.
-   34px is THE ribbon button height and it is set exactly once — a second
+   28px is THE ribbon button height and it is set exactly once — a second
    rule further down used to quietly win and leave the sub-pickers taller
-   than the buttons they hang under (2026-07-29) */
+   than the buttons they hang under (2026-07-29).
+   DENSE on purpose (2026-08-04, user, pointing at PowerPoint): the way a
+   real ribbon fits everything on one row is small, tightly-packed
+   controls with their labels INTACT — never by degrading to icons. */
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
-  flex:none;white-space:nowrap;height:34px;box-sizing:border-box;
-  padding:0 9px;line-height:1;font-size:12px;gap:6px;}
+  flex:none;white-space:nowrap;height:28px;box-sizing:border-box;
+  padding:0 7px;line-height:1;font-size:11.5px;gap:5px;}
 /* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
    font). One 16-grid, stroke-only, currentColor — so an icon is always
    the same weight as the label beside it and follows the theme. ---- */
-.bic{width:15px;height:15px;flex:none;display:block;
+.bic{width:14px;height:14px;flex:none;display:block;
   stroke:currentColor;stroke-width:1.5;fill:none;
   stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
 .toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
@@ -1012,7 +1020,7 @@ body.presrail-min{--presrail-w:46px;}
    group read as a row of slivers (2026-07-31). */
 .appbar .toggle.fz-step,.present-bar .toggle.fz-step,
 #theme-btn,#support-btn{padding:0;justify-content:center;
-  width:34px;min-width:34px;flex:none;}
+  width:28px;min-width:28px;flex:none;}
 .btxt{display:inline-block;}
 /* a filter GROUP stacks its advanced types picker under its main button
    (Plot types under Plots, Code types under Code, …) so the bar stays
@@ -1031,27 +1039,27 @@ body.presrail-min{--presrail-w:46px;}
 /* a labelled SECTION of the ribbon: its NAME, then its controls — the
    label reads as a heading for the group below it (2026-07-29: it used to
    sit underneath and read as a caption for whatever came next) */
-.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:5px;
+.abgrp{display:flex;flex-direction:column;align-items:stretch;gap:4px;
   flex:none;}
 /* the house rule again: an author `display:` beats the UA [hidden] rule,
    so every base rule that sets display needs its own [hidden] override —
    without this the tree-only section showed in Document view too and
    pushed the whole bar onto a second row */
 .abgrp[hidden]{display:none!important;}
-.abgrp-row{display:flex;align-items:flex-start;gap:6px;flex:1;}
+.abgrp-row{display:flex;align-items:flex-start;gap:5px;flex:1;}
 /* + Open is one button in its own section, so it takes the full height */
 #ab-file .abgrp-row{align-items:stretch;}
 /* the chain matters: the row stretches the .fgrp (cross axis), but inside
    the .fgrp the button's height is the MAIN axis — so it needs flex:1 or
-   it just sits at its natural 34px */
+   it just sits at its natural 28px */
 #ab-file .abgrp-row .fgrp{flex:1;}
-#ab-file .abgrp-row .toggle{height:auto;min-height:34px;flex:1;}
+#ab-file .abgrp-row .toggle{height:auto;min-height:28px;flex:1;}
 /* Present is the important control in its section and had dead space
    under it, so it spans both rows beside the Raw/Tree stack */
 #ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
-#ab-view #doc-present{height:auto;min-height:34px;}
+#ab-view #doc-present{height:auto;min-height:28px;}
 /* Help is icon-only and stands alone, so it stays a square */
-#help-btn{padding:0;justify-content:center;width:34px;min-width:34px;
+#help-btn{padding:0;justify-content:center;width:28px;min-width:28px;
   flex:none;}
 /* The type pickers are NOT standalone: each sits directly under the filter
    it refines and takes that filter's width. A narrow square under a wide
@@ -1092,11 +1100,11 @@ body.light .abgrp-lab{color:var(--ink-3);}
 /* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
    these below their natural width, so the label sat on the border. */
 .fgrp-row .toggle{flex:none;width:auto;justify-content:center;
-  text-align:center;padding-left:12px;padding-right:12px;}
+  text-align:center;padding-left:10px;padding-right:10px;}
 /* square steppers/icons sit beside the thing they act on */
-.fgrp-row .toggle.fz-step{flex:none;width:34px;padding:0;
-  justify-content:center;font-size:14px;}
-.fgrp-row .toggle.fz-val{flex:none;width:46px;padding:0;
+.fgrp-row .toggle.fz-step{flex:none;width:28px;padding:0;
+  justify-content:center;font-size:13px;}
+.fgrp-row .toggle.fz-val{flex:none;width:42px;padding:0;
   justify-content:center;}
 /* a caption naming a group of small buttons, so the buttons stay narrow
    instead of each carrying the label */
@@ -1111,8 +1119,8 @@ body.light .fgrp-cap{color:var(--ink-3);}
    buttons have same height"). A sub-picker is still visually quieter —
    dimmer text, fainter border, smaller type — but it is never shorter,
    because a short button beside a tall one reads as a broken grid. */
-.appbar .toggle.sub,.present-bar .toggle.sub{height:34px;font-size:11px;
-  padding:0 10px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
+.appbar .toggle.sub,.present-bar .toggle.sub{height:28px;font-size:10.5px;
+  padding:0 8px;color:#93a8ba;border-color:#ffffff2e;background:#ffffff08;}
 .appbar .toggle.sub:hover,.present-bar .toggle.sub:hover{
   color:#fff;border-color:var(--cyan);}
 /* both selectors need the body.light prefix — without it the LIGHT rule
@@ -1152,9 +1160,9 @@ body.tree-mode #copy-grp{display:none!important;}
    itself and a wider word would shove Present sideways — the same fixed
    slot the filter state words use, for the same reason (2026-07-30) */
 .vw-stack{display:flex;flex-direction:column;gap:4px;flex:none;
-  min-width:106px;}
+  min-width:92px;}
 .vw-stack .toggle{width:100%;justify-content:center;}
-.appbar-div{flex:none;width:1px;height:82px;background:#ffffff38;
+.appbar-div{flex:none;width:1px;height:70px;background:#ffffff38;
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:#00000026;}
 /* dark variants of the show/hide toggles */
@@ -1165,22 +1173,21 @@ body.light .appbar-div{background:#00000026;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
 /* ---- ribbon COMPACTION stages (see fitRibbon in app.js): applied one at
    a time until the bar fits its width, so it never wraps to a second row.
-   Each stage removes the least informative text still showing:
-   rbc1 — the filter state words ("On" / "Fold"); the dot still shows it
-   rbc2 — every label: icon-only buttons, the tooltips carry the names.
-          The fixed View slot also goes — it exists to stop a RENAMED
-          button changing width, and an icon-only button cannot rename
-   rbc3 — the stepper captions and group dividers; tighter gaps ---- */
-body.rbc1 .appbar .tvstate{display:none;}
-body.rbc2 .appbar .btxt{display:none;}
-/* not the steppers/values: their fixed 34/46px boxes centre their own
-   content, and 8px of side padding would squeeze the "100%" value */
-body.rbc2 .appbar .toggle:not(.fz-step):not(.fz-val){
-  padding-left:8px;padding-right:8px;}
-body.rbc2 .vw-stack{min-width:0;}
-body.rbc3 .appbar{gap:3px;}
-body.rbc3 .appbar .appbar-div{display:none;}
-body.rbc3 .appbar .fgrp-h .fgrp-cap{display:none;}
+   THE LABELS NEVER DISAPPEAR (2026-08-04, user: an icon-only bar "makes
+   no sense to look at" — the first version of these stages stripped
+   buttons to bare icons and that was wrong). The stages only tighten
+   spacing and drop the redundant state words; a bar that still cannot
+   fit scrolls sideways instead:
+   rbc1 — tighter gaps and button padding, nothing removed
+   rbc2 — the filter state words ("On"/"Fold") go — the coloured dot
+          still shows each state and the button name stays — and the
+          Figures/Text side-captions go (the +/- tooltips carry them) */
+body.rbc1 .appbar{gap:3px;}
+/* not the steppers/values: their fixed square boxes centre themselves */
+body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
+  padding-left:5px;padding-right:5px;}
+body.rbc2 .appbar .tvstate{display:none;}
+body.rbc2 .appbar .fgrp-h .fgrp-cap{display:none;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;
@@ -1697,6 +1704,33 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-dot.ot-sw-module{background:#8a6d4a;}
 .ckf-dot.ot-sw-object{background:#8a93a0;}
 .ckf-empty{color:#7e93a4;font-size:11px;padding:8px;}
+/* the Output-types menu rows carry a per-type On/Fold/Off cycler instead
+   of a checkbox: the type's own three-state filter, independent of the
+   overall Output button once set. The name takes the slack so every
+   cycler sits in one right-aligned column. */
+.ckf-name{flex:1;min-width:0;}
+.ckf-state{flex:none;font-family:var(--mono);font-size:10px;width:44px;
+  padding:3px 0;text-align:center;border-radius:5px;cursor:pointer;
+  border:1px solid #ffffff2e;background:none;color:#93a8ba;
+  text-transform:none;}
+.ckf-state:hover{border-color:var(--cyan);color:#fff;}
+/* INHERITED (no override): dimmed and dashed — it merely reports what the
+   overall Output filter is doing. OVERRIDDEN: solid, it owns its state. */
+.ckf-state{border-style:dashed;}
+.ckf-state.ovr{border-style:solid;color:#d7e3ec;background:#ffffff0c;}
+.ckf-state.ovr.s-hidden{color:#69788a;}
+.ckf-state.ovr.s-collapsed{color:#9fc0d0;}
+body.light .ckf-state{border-color:var(--line);color:var(--ink-3);}
+body.light .ckf-state.ovr{color:var(--ink);background:#00000006;}
+body.light .ckf-state:hover{border-color:var(--cyan);color:var(--ink);}
+/* one click puts every type back under the overall Output filter */
+.ckf-reset{display:block;width:100%;margin-top:6px;padding:5px 6px;
+  font-family:var(--mono);font-size:10.5px;color:#93a8ba;background:none;
+  border:1px solid #ffffff22;border-radius:5px;cursor:pointer;}
+.ckf-reset:hover:enabled{border-color:var(--cyan);color:#fff;}
+.ckf-reset:disabled{opacity:.45;cursor:default;}
+body.light .ckf-reset{border-color:var(--line);color:var(--ink-3);}
+body.light .ckf-reset:hover:enabled{color:var(--ink);}
 /* the tab's ⌚ Versions menu */
 .vers-menu{min-width:232px;max-width:330px;
   max-height:min(70vh,540px);overflow-y:auto;}
@@ -1715,8 +1749,26 @@ body.light .vers-row:hover{background:#00000008;}
 .tab-vermark{color:#f0a848;margin-right:4px;flex:none;font-size:12px;}
 #ck-filter-btn.on,#ot-filter-btn.on,#pt-filter-btn.on{
   border-color:var(--cyan);color:#fff;background:#39a9c022;}
-/* an output hidden by the advanced Output-types filter */
-.ot-off{display:none;}
+/* an output hidden by the advanced Output-types filter. Scoped + !important
+   on purpose: output payloads embed their OWN <style> blocks (xarray ships
+   `.xr-wrap{display:block !important}`), and a bare `.ot-off{display:none}`
+   lost that cascade fight — the wrapper rename (jv-xr) fixed the known case,
+   this rule is the general defence, mirroring .cb-fig .pt-off below. The
+   extra .cb-out> raises specificity so a same-specificity embedded
+   !important cannot win the document-order tiebreak. */
+.cb-out>.ot-off{display:none!important;}
+/* one output FOLDED by its own per-type state (Output-types menu): the
+   payload hides and a slim .ot-stub button stands in for it; clicking the
+   stub sets .ot-open on the payload */
+.cb-out>.ot-fold:not(.ot-open){display:none!important;}
+.ot-stub{display:block;width:100%;text-align:left;cursor:pointer;
+  border:1px dashed var(--line);border-radius:8px;background:none;
+  padding:8px 12px;margin-top:12px;font-family:var(--mono);
+  font-size:11px;color:var(--ink-3);letter-spacing:.02em;
+  text-transform:capitalize;}
+.ot-stub:hover{color:var(--cyan-deep);}
+body:not(.light) .ot-stub{border-color:#ffffff2a;color:#93a8ba;}
+body:not(.light) .ot-stub:hover{color:var(--cyan);}
 /* a figure hidden by the advanced Plot-types filter */
 .cb-fig .pt-off{display:none!important;}
 /* Plot-types menu swatches: one colour per plotting library */
@@ -1979,7 +2031,7 @@ body:not(.light) pre.error{background:#38180f;border-color:#6b352a;
 body:not(.light) .card.k-metric .cardbody pre.result{
   background:#46a89216;border-color:#46a89240;color:#7fd0bd;}
 body:not(.light) .figframe{border-color:#ffffff1f;}
-body:not(.light) .xr-wrap,body:not(.light) .rich{background:#fbfcfd;
+body:not(.light) .jv-xr,body:not(.light) .rich{background:#fbfcfd;
   border:1px solid #ffffff1f;border-radius:8px;padding:8px;
   color:var(--ink);}
 body:not(.light) .codewrap{border-top-color:#ffffff14;}
@@ -2769,7 +2821,7 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .slide-fig .caption{flex:none;color:#a9bccb;margin-top:12px;padding-left:2px;
   font-size:14.5px;}
 .slide-fig pre.result,.slide-fig pre.stream{flex:none;overflow:auto;}
-.slide-fig .xr-wrap{flex:1;min-height:0;overflow:auto;}
+.slide-fig .jv-xr{flex:1;min-height:0;overflow:auto;}
 
 /* halves / quarters slide layouts */
 .slide-grid{flex:1;display:grid;gap:16px;min-height:0;}
@@ -2792,7 +2844,7 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .spane .note{flex:1;min-height:0;background:#f7fafc;color:var(--ink-2);
   border-radius:8px;padding:14px 18px;overflow:auto;font-size:13.5px;
   line-height:1.6;}
-.spane .xr-wrap,.spane pre.result,.spane pre.stream{overflow:auto;
+.spane .jv-xr,.spane pre.result,.spane pre.stream{overflow:auto;
   min-height:0;}
 .spane.empty{align-items:center;justify-content:center;color:#54677a;
   font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
@@ -3439,7 +3491,7 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
    (headings, lists, bold) so the whole note reads in the chosen colour */
 .an-cell[style*="--nb-tx"] .note,
 .an-cell[style*="--nb-tx"] .note *{color:var(--nb-tx);}
-.an-cell .xr-wrap,.an-cell pre.result,.an-cell pre.stream{
+.an-cell .jv-xr,.an-cell pre.result,.an-cell pre.stream{
   overflow:auto;min-height:0;}
 .an-cell.empty{align-items:center;justify-content:center;
   border-style:dashed;background:#0e192699;}
@@ -3951,7 +4003,7 @@ enso_pattern <span class="op">=</span> <span class="op">(</span>np<span class="o
 
 <span class="co"># episodic blocking south of Australia (~50S, 150E)</span>
 block_days <span class="op">=</span> rng<span class="op">.</span>random<span class="op">(</span>time<span class="op">.</span>size<span class="op">)</span> <span class="op">&lt;</span> <span class="nu">0.09</span>
-blob <span class="op">=</span> np<span class="op">.</span>exp<span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="op">(</span><span class="op">(</span>lat<span class="op">[</span><span class="op">:</span><span class="op">,</span> <span class="kw">None</span><span class="op">]</span><span class="op">+</span><span class="nu">50</span><span class="op">)</span><span class="op">/</span><span class="nu">9</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span> <span class="op">-</span> <span class="op">(</span><span class="op">(</span><span class="op">(</span>lon<span class="op">[</span><span class="kw">None</span><span class="op">,</span> <span class="op">:</span><span class="op">]</span><span class="op">-</span><span class="nu">150</span><span class="op">)</span><span class="op">/</span><span class="nu">16</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="nu">130</span></code></pre></div></div></div></div></article><article class="card k-dataset ckmain-data ck-data" id="card-z500" data-kind="dataset" data-role="output" data-node="z500" data-ck="data" data-secid="sec-dataset" data-note="0" data-anchor="z500" tabindex="-1"><header class="cardhead"><span class="badge">dataset</span><h3 class="cardtitle">Daily Z500 field, Southern Hemisphere (synthetic)</h3><span class="nodeid">z500</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+blob <span class="op">=</span> np<span class="op">.</span>exp<span class="op">(</span><span class="op">-</span><span class="op">(</span><span class="op">(</span><span class="op">(</span>lat<span class="op">[</span><span class="op">:</span><span class="op">,</span> <span class="kw">None</span><span class="op">]</span><span class="op">+</span><span class="nu">50</span><span class="op">)</span><span class="op">/</span><span class="nu">9</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span> <span class="op">-</span> <span class="op">(</span><span class="op">(</span><span class="op">(</span>lon<span class="op">[</span><span class="kw">None</span><span class="op">,</span> <span class="op">:</span><span class="op">]</span><span class="op">-</span><span class="nu">150</span><span class="op">)</span><span class="op">/</span><span class="nu">16</span><span class="op">)</span><span class="op">**</span><span class="nu">2</span><span class="op">)</span><span class="op">)</span> <span class="op">*</span> <span class="nu">130</span></code></pre></div></div></div></div></article><article class="card k-dataset ckmain-data ck-data" id="card-z500" data-kind="dataset" data-role="output" data-node="z500" data-ck="data" data-secid="sec-dataset" data-note="0" data-anchor="z500" tabindex="-1"><header class="cardhead"><span class="badge">dataset</span><h3 class="cardtitle">Daily Z500 field, Southern Hemisphere (synthetic)</h3><span class="nodeid">z500</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="jv-xr ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
@@ -4583,7 +4635,7 @@ memory (z)  : 79 MB
       <span class="st">f&quot;</span><span class="st">(</span><span class="op">{</span>time<span class="op">.</span>size<span class="op">:</span><span class="st">,</span><span class="op">}</span><span class="st"> days)</span><span class="st">&quot;</span><span class="op">)</span>
 <span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">grid        : </span><span class="op">{</span>lat<span class="op">.</span>size<span class="op">}</span><span class="st"> lat x </span><span class="op">{</span>lon<span class="op">.</span>size<span class="op">}</span><span class="st"> lon  (2.5 deg)</span><span class="st">&quot;</span><span class="op">)</span>
 <span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">domain      : </span><span class="op">{</span>lat<span class="op">.</span><span class="bn">min</span><span class="op">(</span><span class="op">)</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> to </span><span class="op">{</span>lat<span class="op">.</span><span class="bn">max</span><span class="op">(</span><span class="op">)</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> deg lat, full longitude</span><span class="st">&quot;</span><span class="op">)</span>
-<span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">memory (z)  : </span><span class="op">{</span>ds<span class="op">.</span>z500<span class="op">.</span>nbytes<span class="op">/</span><span class="nu">1e6</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> MB</span><span class="st">&quot;</span><span class="op">)</span></code></pre></div></div></div></div></article></section><section class="section sec-l2" id="sec-sec-transforms" data-sec="sec-transforms" data-level="2"><div class="sectionhead sectionhead-l2"><button class="sec-chev" data-sec="sec-transforms" aria-expanded="true" title="Collapse / expand this section">&#9662;</button><div class="sectionhead-txt"><span class="eyebrow">section 1.2</span><h2>Transforms</h2></div><button class="sec-eye" data-sec="sec-transforms" title="Hide just this heading (the cards below stay)" aria-label="Hide just this heading">&#128065;</button><button class="sec-hideall" data-sec="sec-transforms" title="Hide this whole section — the heading and every card in it (restore it from the sidebar)" aria-label="Hide this whole section">hide section</button></div><article class="card k-note" id="card-note-3" data-kind="note" data-role="markdown" data-node="" data-secid="sec-transforms" data-note="1" data-anchor="cell:4f6551c3" tabindex="-1"><header class="cardhead"><span class="badge">markdown</span><h3 class="cardtitle">Transforms</h3><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="note"><p>Anomalies are defined against a day-of-year climatology,</p><p>$$z&#x27;(x,t) = z(x,t) - \bar{z}_{d(t)}(x), \qquad \bar{z}_d(x) = \frac{1}{N_y} \sum_{y=1}^{N_y} z(x, t_{y,d})$$</p><p>so the seasonal cycle drops out and what remains is the circulation<br>variability the diagnostics are after. The <code>groupby(&#x27;time.dayofyear&#x27;)</code><br>idiom computes $\bar{z}_d$ and subtracts it in one pass.</p></div></div></article><article class="card k-transform" id="card-clim" data-kind="transform" data-role="output" data-node="clim" data-ck="code" data-secid="sec-transforms" data-note="0" data-anchor="clim" tabindex="-1"><header class="cardhead"><span class="badge">transform</span><h3 class="cardtitle">Day-of-year climatology</h3><span class="nodeid">clim</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"></div><div class="prov"><span class="prov-l">derives from</span><a class="depchip" href="#" data-dep="z500">z500</a></div><div class="codewrap bare" data-open='1'><button class="codetoggle" aria-expanded="true"><span class="chev">›</span><span class="ct-show">Show code</span><span class="ct-hide">Hide code</span></button><div class="codebody"><div class="codeinner"><div class="codestep"><pre class="code"><code>clim <span class="op">=</span> ds<span class="op">.</span>z500<span class="op">.</span>groupby<span class="op">(</span><span class="st">&#x27;time.dayofyear&#x27;</span><span class="op">)</span><span class="op">.</span>mean<span class="op">(</span><span class="st">&#x27;time&#x27;</span><span class="op">)</span></code></pre></div></div></div></div></article><article class="card k-transform" id="card-anom" data-kind="transform" data-role="output" data-node="anom" data-ck="code" data-secid="sec-transforms" data-note="0" data-anchor="anom" tabindex="-1"><header class="cardhead"><span class="badge">dataset</span><h3 class="cardtitle">Seasonal-cycle removal -&gt; daily anomalies</h3><span class="nodeid">anom</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+<span class="bn">print</span><span class="op">(</span><span class="st">f&quot;</span><span class="st">memory (z)  : </span><span class="op">{</span>ds<span class="op">.</span>z500<span class="op">.</span>nbytes<span class="op">/</span><span class="nu">1e6</span><span class="op">:</span><span class="st">.0f</span><span class="op">}</span><span class="st"> MB</span><span class="st">&quot;</span><span class="op">)</span></code></pre></div></div></div></div></article></section><section class="section sec-l2" id="sec-sec-transforms" data-sec="sec-transforms" data-level="2"><div class="sectionhead sectionhead-l2"><button class="sec-chev" data-sec="sec-transforms" aria-expanded="true" title="Collapse / expand this section">&#9662;</button><div class="sectionhead-txt"><span class="eyebrow">section 1.2</span><h2>Transforms</h2></div><button class="sec-eye" data-sec="sec-transforms" title="Hide just this heading (the cards below stay)" aria-label="Hide just this heading">&#128065;</button><button class="sec-hideall" data-sec="sec-transforms" title="Hide this whole section — the heading and every card in it (restore it from the sidebar)" aria-label="Hide this whole section">hide section</button></div><article class="card k-note" id="card-note-3" data-kind="note" data-role="markdown" data-node="" data-secid="sec-transforms" data-note="1" data-anchor="cell:4f6551c3" tabindex="-1"><header class="cardhead"><span class="badge">markdown</span><h3 class="cardtitle">Transforms</h3><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="note"><p>Anomalies are defined against a day-of-year climatology,</p><p>$$z&#x27;(x,t) = z(x,t) - \bar{z}_{d(t)}(x), \qquad \bar{z}_d(x) = \frac{1}{N_y} \sum_{y=1}^{N_y} z(x, t_{y,d})$$</p><p>so the seasonal cycle drops out and what remains is the circulation<br>variability the diagnostics are after. The <code>groupby(&#x27;time.dayofyear&#x27;)</code><br>idiom computes $\bar{z}_d$ and subtracts it in one pass.</p></div></div></article><article class="card k-transform" id="card-clim" data-kind="transform" data-role="output" data-node="clim" data-ck="code" data-secid="sec-transforms" data-note="0" data-anchor="clim" tabindex="-1"><header class="cardhead"><span class="badge">transform</span><h3 class="cardtitle">Day-of-year climatology</h3><span class="nodeid">clim</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"></div><div class="prov"><span class="prov-l">derives from</span><a class="depchip" href="#" data-dep="z500">z500</a></div><div class="codewrap bare" data-open='1'><button class="codetoggle" aria-expanded="true"><span class="chev">›</span><span class="ct-show">Show code</span><span class="ct-hide">Hide code</span></button><div class="codebody"><div class="codeinner"><div class="codestep"><pre class="code"><code>clim <span class="op">=</span> ds<span class="op">.</span>z500<span class="op">.</span>groupby<span class="op">(</span><span class="st">&#x27;time.dayofyear&#x27;</span><span class="op">)</span><span class="op">.</span>mean<span class="op">(</span><span class="st">&#x27;time&#x27;</span><span class="op">)</span></code></pre></div></div></div></div></article><article class="card k-transform" id="card-anom" data-kind="transform" data-role="output" data-node="anom" data-ck="code" data-secid="sec-transforms" data-note="0" data-anchor="anom" tabindex="-1"><header class="cardhead"><span class="badge">dataset</span><h3 class="cardtitle">Seasonal-cycle removal -&gt; daily anomalies</h3><span class="nodeid">anom</span><button class="cell-eye" type="button" title="Hide this cell (it stays in the sidebar so you can bring it back)" aria-label="Hide this cell">&#128065;</button></header><div class="cardbody"><div class="cb-part cb-out" data-ot="dataset"><div class="jv-xr ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
@@ -5387,7 +5439,7 @@ ds <span class="op">=</span> xr<span class="op">.</span>Dataset<span class="op">
     attrs<span class="op">=</span><span class="op">{</span><span class="st">&#x27;title&#x27;</span><span class="op">:</span> <span class="st">&#x27;Synthetic SH Z500&#x27;</span><span class="op">,</span> <span class="st">&#x27;units&#x27;</span><span class="op">:</span> <span class="st">&#x27;m&#x27;</span><span class="op">,</span> <span class="st">&#x27;source&#x27;</span><span class="op">:</span> <span class="st">&#x27;demo&#x27;</span><span class="op">}</span><span class="op">,</span>
 <span class="op">)</span>
 ds<span class="op">.</span>z500<span class="op">.</span>attrs<span class="op">.</span>update<span class="op">(</span>long_name<span class="op">=</span><span class="st">&#x27;500 hPa geopotential height&#x27;</span><span class="op">,</span> units<span class="op">=</span><span class="st">&#x27;m&#x27;</span><span class="op">)</span>
-ds</code></pre><div class="rawout"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+ds</code></pre><div class="rawout"><div class="jv-xr ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
@@ -6022,7 +6074,7 @@ clim <span class="op">=</span> ds<span class="op">.</span>z500<span class="op">.
 <span class="co">#| caption: Day-of-year climatology subtracted with a groupby, the standard first move before any circulation diagnostic. Everything downstream reads from these anomalies.</span>
 z_anom <span class="op">=</span> <span class="op">(</span>ds<span class="op">.</span>z500<span class="op">.</span>groupby<span class="op">(</span><span class="st">&#x27;time.dayofyear&#x27;</span><span class="op">)</span> <span class="op">-</span> clim<span class="op">)</span><span class="op">.</span>rename<span class="op">(</span><span class="st">&#x27;z500_anom&#x27;</span><span class="op">)</span>
 z_anom<span class="op">.</span>attrs<span class="op">.</span>update<span class="op">(</span>long_name<span class="op">=</span><span class="st">&#x27;Z500 anomaly&#x27;</span><span class="op">,</span> units<span class="op">=</span><span class="st">&#x27;m&#x27;</span><span class="op">)</span>
-z_anom</code></pre><div class="rawout"><div class="xr-wrap ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
+z_anom</code></pre><div class="rawout"><div class="jv-xr ot-dataset"><div><svg style="position: absolute; width: 0; height: 0; overflow: hidden">
 <defs>
 <symbol id="icon-database" viewBox="0 0 32 32">
 <path d="M16 0c-8.837 0-16 2.239-16 5v4c0 2.761 7.163 5 16 5s16-2.239 16-5v-4c0-2.761-7.163-5-16-5z"></path>
@@ -8058,6 +8110,16 @@ through Ko-fi. Thank you.</p>
      and everything to the right of it — never moves */
   var CODE_LABEL={visible:'On',collapsed:'Fold',hidden:'Off',
     mixed:'Mix'};
+  /* a per-type OUTPUT override is 'visible' | 'collapsed' | 'hidden';
+     absent = the type follows the overall Output filter. Saved layouts
+     from before the tri-state stored 1 for "hidden" — read that as
+     'hidden' forever, old states must keep meaning what they meant. */
+  function otVal(v){
+    if(v==='visible'||v==='collapsed'||v==='hidden') return v;
+    return v?'hidden':null;
+  }
+  /* ot-* classes that are STATE, not type — the type regex must skip them */
+  var OT_STATE_CLASSES=['off','fold','open','stub'];
   var CK_TYPES=['imports','function','data','settings',
     'plotting','print','comments','constant','code'];
   /* ---- "Apply to": which sections the filters act on. Empty = the whole
@@ -8169,7 +8231,11 @@ through Ko-fi. Thank you.</p>
   function sameMap(x,y){
     var kx=Object.keys(x);
     if(kx.length!==Object.keys(y).length) return false;
-    for(var i=0;i<kx.length;i++){if(!y[kx[i]]) return false;}
+    /* VALUES matter now, not just key presence: the ot map holds
+       tri-states, and {dataset:'hidden'} !== {dataset:'collapsed'}.
+       otVal normalises so a legacy 1 still equals 'hidden'. */
+    for(var i=0;i<kx.length;i++){
+      if(otVal(x[kx[i]])!==otVal(y[kx[i]])) return false;}
     return true;
   }
   function sameF(a,b){
@@ -8472,7 +8538,13 @@ through Ko-fi. Thank you.</p>
           var fig=c.querySelector('.cb-fig'),
               out=c.querySelector('.cb-out'),
               cw=c.querySelector('.codewrap');
-          if(out){
+          /* with NO per-type overrides the whole output part answers to
+             the Output filter (one part-level fold/hide, as always).
+             With overrides, state applies PER OUTPUT instead — a type
+             set to On must show even under Output: Off, so the part
+             stays and each child carries its own effective state. */
+          var otAnyOv=Object.keys(otHidden).length>0;
+          if(out&&!otAnyOv){
             out.classList.toggle('part-off',outState==='hidden');
             out.classList.toggle('part-fold',outState==='collapsed');
             if(outState!=='collapsed') out.classList.remove('part-open');
@@ -8548,18 +8620,58 @@ through Ko-fi. Thank you.</p>
               plotState==='collapsed'&&!allPtOff);
             if(plotState!=='collapsed') fig.classList.remove('part-open');
           }
-          /* the advanced Output-types filter hides individual outputs by kind;
-             the output part counts as visible only if some output survives */
+          /* the advanced Output-types menu gives each kind its own
+             On / Fold / Off; a type with no override follows the overall
+             Output state. The part counts as visible only if some output
+             (or its fold stub) survives. */
           var outVis=false;
-          if(out&&outState!=='hidden'){
-            [].forEach.call(out.children,function(el){
+          if(out&&otAnyOv){
+            out.classList.remove('part-fold','part-open');
+            var kids=[].slice.call(out.children);
+            kids.forEach(function(el){
+              if(el.classList.contains('ot-stub')) return; /* with its target */
               var mm=(el.className||'').match(/\bot-([a-z]+)\b/);
-              var typ=mm&&mm[1]!=='off'?mm[1]:null;
-              var otOff=!!(typ&&otHidden[typ]);
-              el.classList.toggle('ot-off',otOff);
-              if(!otOff) outVis=true;
+              var typ=mm&&OT_STATE_CLASSES.indexOf(mm[1])<0?mm[1]:null;
+              var eff=typ?(otVal(otHidden[typ])||outState):outState;
+              el.classList.toggle('ot-off',eff==='hidden');
+              el.classList.toggle('ot-fold',eff==='collapsed');
+              if(eff!=='collapsed') el.classList.remove('ot-open');
+              /* a folded output leaves a slim "▸ type" stub in its place,
+                 exactly like the part-level "Show output" bar but per
+                 output — the stub toggles just this one open */
+              var stub=el.previousElementSibling;
+              if(stub&&!stub.classList.contains('ot-stub')) stub=null;
+              if(eff==='collapsed'){
+                if(!stub){
+                  stub=document.createElement('button');
+                  stub.type='button';stub.className='ot-stub';
+                  out.insertBefore(stub,el);
+                }
+                var lab=typ||'output';
+                stub.textContent=(el.classList.contains('ot-open')
+                  ?'▾  ':'▸  ')+lab;
+                stub.onclick=function(){
+                  var open=el.classList.toggle('ot-open');
+                  stub.textContent=(open?'▾  ':'▸  ')+lab;
+                };
+              } else if(stub) stub.remove();
+              if(eff!=='hidden') outVis=true;
             });
-            if(!out.children.length) outVis=true;
+            /* every output effectively hidden -> the part goes entirely,
+               so no empty box lingers where the outputs were */
+            var realKids=kids.filter(function(el){
+              return !el.classList.contains('ot-stub');});
+            if(!realKids.length) outVis=true;
+            out.classList.toggle('part-off',!outVis);
+          } else if(out){
+            /* no overrides: clear any per-output state left behind
+               (snapshot first — removing stubs mid-walk skips nodes) */
+            [].slice.call(out.children).forEach(function(el){
+              if(el.classList.contains('ot-stub')){el.remove();return;}
+              el.classList.remove('ot-off','ot-fold','ot-open');
+              if(outState!=='hidden') outVis=true;
+            });
+            if(!out.children.length&&outState!=='hidden') outVis=true;
           }
           var codeVis=!!cw&&codeState!=='hidden'&&!ckOff;
           filtGone=!figVis&&!outVis&&!codeVis;
@@ -8618,26 +8730,49 @@ through Ko-fi. Thank you.</p>
     syncTypeMenus();
     scheduleSaveLayout();   /* remember this for next time */
   }
-  /* refresh an OPEN type menu's ticks in place. Rebuilding it mid-click
-     would yank the rows out from under a user ticking several in a row. */
+  /* refresh an OPEN type menu's controls in place. Rebuilding it
+     mid-click would yank the rows out from under a user working down
+     the list. */
   function syncTypeMenus(){
+    var anyOtOvr=false;
     ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu']
       .forEach(function(sel){
         $$(sel+' .ckf-row').forEach(function(r){
           var t=r.dataset.t,map=r.dataset.map;
           if(!t||!map) return;
+          /* an Output-types row carries a tri-state cycler, not a box */
+          var st=$('.ckf-state',r);
+          if(st){
+            var vs=otEffVals(t);
+            var one=vs.length===1?vs[0]:'mixed';
+            st.textContent=CODE_LABEL[one]||CODE_LABEL.mixed;
+            var ovr=countF(map,t)>0;
+            if(ovr) anyOtOvr=true;
+            st.className='ckf-state s-'+one+(ovr?' ovr':'');
+            return;
+          }
           var cb=$('input',r); if(!cb) return;
           var n=countF(map,t);
           cb.checked=n===0;
           cb.indeterminate=n>0&&n<targetCount();
         });
       });
+    var rs=$('#ot-reset');
+    if(rs) rs.disabled=!anyOtOvr;
   }
   /* advanced filter menu: hide specific code subtypes */
+  var ckCounts={};
   function presentCkTypes(){
-    var set={};
-    $$('.nbshell .card[data-ck]').forEach(function(c){
-      c.dataset.ck.split(' ').forEach(function(t){set[t]=1;});});
+    var set={};ckCounts={};
+    /* the ACTIVE notebook's document feed only, like presentOtTypes */
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    $$('.content .card[data-ck]',sh.el).forEach(function(c){
+      /* the FIRST slug is the one the filter acts on (applyFilters
+         hides by it), so it is the one the menu counts */
+      var t=c.dataset.ck.split(' ')[0];
+      if(t){set[t]=1;ckCounts[t]=(ckCounts[t]||0)+1;}
+    });
     return CK_TYPES.filter(function(t){return set[t];});
   }
   function renderCkMenu(){
@@ -8665,7 +8800,8 @@ through Ko-fi. Thank you.</p>
       });
       var sw=document.createElement('span');
       sw.className='ckf-dot ckmain-'+t;
-      var tx=document.createElement('span');tx.textContent=t;
+      var tx=document.createElement('span');
+      tx.textContent=t+' ('+(ckCounts[t]||0)+')';
       row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
       m.appendChild(row);
     });
@@ -8720,10 +8856,24 @@ through Ko-fi. Thank you.</p>
      video, other widgets) — like the code-type filter, but for plots */
   var PT_TYPES=['matplotlib','plotly','bokeh','vega','folium',
     'animation','video','widget'];
+  var ptCounts={};
   function presentPtTypes(){
-    var set={};
-    $$('.nbshell .cb-fig[data-pt]').forEach(function(c){
-      c.dataset.pt.split(' ').forEach(function(t){if(t)set[t]=1;});});
+    var set={};ptCounts={};
+    /* the ACTIVE notebook's document feed only, like presentOtTypes.
+       Counted per FRAME (each drawn figure), not per part, so a pager
+       of 4 matplotlib panels reads "matplotlib (4)". */
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    $$('.content .card .cb-fig [data-pt]',sh.el).forEach(function(n){
+      n.dataset.pt.split(' ').forEach(function(t){
+        if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
+    });
+    /* a single-frame part carries data-pt on the part itself */
+    $$('.content .card .cb-fig[data-pt]',sh.el).forEach(function(c){
+      if(c.querySelector('[data-pt]')) return;   /* frames counted above */
+      c.dataset.pt.split(' ').forEach(function(t){
+        if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
+    });
     var out=PT_TYPES.filter(function(t){return set[t];});
     Object.keys(set).forEach(function(t){
       if(PT_TYPES.indexOf(t)<0) out.push(t);});  /* unknown slugs still show */
@@ -8750,7 +8900,8 @@ through Ko-fi. Thank you.</p>
           if(show) delete s.pt[t]; else s.pt[t]=1;});
         applyFilters();});
       var sw=document.createElement('span');sw.className='ckf-dot pt-sw-'+t;
-      var tx=document.createElement('span');tx.textContent=t;
+      var tx=document.createElement('span');
+      tx.textContent=t+' ('+(ptCounts[t]||0)+')';
       row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
       m.appendChild(row);});
   }
@@ -8776,14 +8927,38 @@ through Ko-fi. Thank you.</p>
   var OT_TYPES=['print','numeric','string','bool','none','list','tuple','set',
     'dict','array','series','dataframe','dataset','function','class','module',
     'object','value','result','error'];
+  /* how many outputs of each type the ACTIVE notebook holds — filled by
+     presentOtTypes, read by the menu labels ("dataset (3)") */
+  var otCounts={};
   function presentOtTypes(){
-    var set={};
-    $$('.nbshell .cb-out[data-ot]').forEach(function(c){
-      c.dataset.ot.split(' ').forEach(function(t){if(t)set[t]=1;});});
+    var set={};otCounts={};
+    /* the ACTIVE notebook only — scanning every .nbshell put the other
+       open tabs' types in this notebook's menu — and only the document
+       feed, so tree/slide clones can never double-count */
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    $$('.content .card .cb-out',sh.el).forEach(function(o){
+      [].forEach.call(o.children,function(el){
+        var mm=(el.className||'').match(/\bot-([a-z]+)\b/);
+        if(!mm||OT_STATE_CLASSES.indexOf(mm[1])>=0) return;
+        set[mm[1]]=1;otCounts[mm[1]]=(otCounts[mm[1]]||0)+1;
+      });
+    });
     var out=OT_TYPES.filter(function(t){return set[t];});
     Object.keys(set).forEach(function(t){
       if(OT_TYPES.indexOf(t)<0) out.push(t);});   /* unknown slugs still show */
     return out;
+  }
+  /* the EFFECTIVE state(s) of one output type across the targeted
+     sections: its own override where set, else the overall Output state.
+     More than one distinct value -> the button reads "Mix". */
+  function otEffVals(t){
+    var stem=activeStem(),ids=targetSids(),vals={};
+    (ids.length?ids:[null]).forEach(function(id){
+      var s=id===null?FDEFof(stem):stateFor(stem,id);
+      vals[otVal(s.ot[t])||s.out]=1;
+    });
+    return Object.keys(vals);
   }
   function renderOtMenu(){
     var m=$('#ot-filter-menu'); if(!m) return;
@@ -8794,21 +8969,41 @@ through Ko-fi. Thank you.</p>
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='show output types';m.appendChild(h);
     types.forEach(function(t){
-      var row=document.createElement('label');row.className='ckf-row';
+      var row=document.createElement('div');row.className='ckf-row';
       row.dataset.t=t;row.dataset.map='ot';
-      var cb=document.createElement('input');cb.type='checkbox';
-      var nHidO=countF('ot',t);
-      cb.checked=nHidO===0;
-      cb.indeterminate=nHidO>0&&nHidO<targetCount();
-      cb.addEventListener('change',function(){
-        var show=cb.checked;
-        writeF(function(s){
-          if(show) delete s.ot[t]; else s.ot[t]=1;});
-        applyFilters();});
       var sw=document.createElement('span');sw.className='ckf-dot ot-sw-'+t;
-      var tx=document.createElement('span');tx.textContent=t;
-      row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
+      var tx=document.createElement('span');tx.className='ckf-name';
+      tx.textContent=t+' ('+(otCounts[t]||0)+')';
+      /* the type's own On/Fold/Off, cycling like the main filters. One
+         click detaches it from the overall Output state ("does its own
+         thing") until the reset below re-attaches it. */
+      var st=document.createElement('button');st.type='button';
+      st.className='ckf-state';
+      st.title='This type’s own filter: On → Fold → Off. '
+        +'Set, it no longer follows the Output button; Reset below '
+        +'re-attaches it.';
+      st.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        var vs=otEffVals(t);
+        var cur=vs.length===1?vs[0]:'hidden';   /* Mix -> next is On */
+        var nx=CODE_CYCLE[(CODE_CYCLE.indexOf(cur)+1)%CODE_CYCLE.length];
+        writeF(function(s){s.ot[t]=nx;});
+        applyFilters();
+      });
+      row.appendChild(sw);row.appendChild(tx);row.appendChild(st);
       m.appendChild(row);});
+    /* every type back under the overall Output filter */
+    var rs=document.createElement('button');rs.type='button';
+    rs.id='ot-reset';rs.className='ckf-reset';
+    rs.textContent='Reset: match Output';
+    rs.title='Clear every per-type state above, so all output types '
+      +'follow the Output filter again';
+    rs.addEventListener('click',function(){
+      writeF(function(s){s.ot={};});
+      applyFilters();
+    });
+    m.appendChild(rs);
+    syncTypeMenus();
   }
   var otBtn=$('#ot-filter-btn'),otMenu=$('#ot-filter-menu');
   if(otBtn) otBtn.addEventListener('click',function(e){
@@ -9286,8 +9481,12 @@ through Ko-fi. Thank you.</p>
       clone.style.removeProperty('--fz');
       $$('.code-off',clone).forEach(function(x){
         x.classList.remove('code-off');});
-      $$('.part-off,.part-fold,.pt-off,.ot-off',clone).forEach(function(x){
-        x.classList.remove('part-off','part-fold','pt-off','ot-off');});
+      $$('.part-off,.part-fold,.pt-off,.ot-off,.ot-fold',clone)
+        .forEach(function(x){
+          x.classList.remove('part-off','part-fold','pt-off','ot-off',
+            'ot-fold','ot-open');});
+      /* per-output fold stubs are filter chrome, not content */
+      $$('.ot-stub',clone).forEach(function(x){x.remove();});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
       $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
         .forEach(function(x){x.remove();});
@@ -10038,16 +10237,21 @@ through Ko-fi. Thank you.</p>
      narrower laptop the View + App groups spilled onto a new line and the
      extra band of chrome ate the notebook's viewing space). Escalate
      through the compaction stages (see the body.rbc* rules in app.css)
-     until the bar fits — each stage removes the least informative text
-     still showing. Reset first so a WIDER window relaxes back. Beyond
-     rbc3 the bar scrolls sideways (overflow-x:auto): at that point even
-     icon-only buttons do not fit and a thin scrollbar is the only option
-     that is not a second row. */
+     until the bar fits. The stages only TIGHTEN — labels are never
+     hidden (2026-08-04, user: the icon-only stage "makes no sense to
+     look at"; a dense bar with names beats a cryptic one). Reset first
+     so a WIDER window relaxes back; past rbc2 the bar scrolls sideways
+     (overflow-x:auto) — a thin scrollbar, never a second row and never
+     bare icons. rbc3 is also removed here in case an older session left
+     it stamped on the body. */
   function fitRibbon(){
-    var bar=$('.appbar'); if(!bar) return;
+    var bar=$('.appbar');
+    /* a HIDDEN bar (welcome screen, present mode) measures 0 wide — do
+       not escalate against that, it is not a real fit */
+    if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
     cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
-    for(var lv=1;lv<=3&&bar.scrollWidth>bar.clientWidth+1;lv++)
+    for(var lv=1;lv<=2&&bar.scrollWidth>bar.clientWidth+1;lv++)
       cl.add('rbc'+lv);
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
@@ -10095,6 +10299,13 @@ through Ko-fi. Thank you.</p>
     if(barEl) new ResizeObserver(function(){measureChrome();})
       .observe(barEl);
   }
+  /* fonts change text metrics: a fit measured against the FALLBACK font
+     saw wider labels, over-compacted, and then STUCK — the bar's box
+     never changes when the real font arrives, so neither resize nor the
+     ResizeObserver re-fires. Re-fit once the fonts are truly in
+     (2026-08-04: the ribbon sat icon-only beside a mile of empty bar). */
+  if(document.fonts&&document.fonts.ready)
+    document.fonts.ready.then(function(){measureChrome();});
   measureChrome();
   var menuBtn=$('#menubtn');
   function applyToc(show){
@@ -13437,11 +13648,14 @@ through Ko-fi. Thank you.</p>
     b=stripIds(b.cloneNode(true));
     /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
        must not ride into slides — a placed frame shows its part in full */
-    $$('.pt-off,.ot-off,.part-off,.part-fold,.code-off',b)
+    $$('.pt-off,.ot-off,.ot-fold,.part-off,.part-fold,.code-off',b)
       .forEach(function(n){
-        ['pt-off','ot-off','part-off','part-fold','part-open','code-off']
+        ['pt-off','ot-off','ot-fold','ot-open','part-off','part-fold',
+         'part-open','code-off']
           .forEach(function(cl){n.classList.remove(cl);});
       });
+    /* per-output fold stubs are filter chrome, not content */
+    $$('.ot-stub',b).forEach(function(n){n.remove();});
     $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
     var it=resolveRef(ref);
     if(it) frameSnaps[it.ns]=b.outerHTML;
@@ -13465,7 +13679,7 @@ through Ko-fi. Thank you.</p>
         /* live embeds (plotly/bokeh/vega/folium) are figures too */
         f.figure=!!body.querySelector('.figframe,.figpager,.plotframe');
         f.output=!!body.querySelector(
-          'pre.result,pre.stream,.rich:not(.plotframe),.xr-wrap,.note')
+          'pre.result,pre.stream,.rich:not(.plotframe),.jv-xr,.note')
           ||(!f.figure&&!!(body.textContent||'').trim());
       }
     }
@@ -13490,7 +13704,7 @@ through Ko-fi. Thank you.</p>
       /* the figure part is JUST the figure — drop outputs AND any markdown
          note / caption that rides along in the card body (a .plotframe is
          a live figure, e.g. bokeh/vega/folium — keep it) */
-      $$('.cb-out,.xr-wrap,pre.result,pre.stream,.rich:not(.plotframe),'
+      $$('.cb-out,.jv-xr,pre.result,pre.stream,.rich:not(.plotframe),'
         +'.note,.note-src,.htmltoggle,.caption',b)
         .forEach(function(n){if(n.parentNode) n.parentNode.removeChild(n);});
     } else if(part==='output'){

@@ -924,11 +924,14 @@
     b=stripIds(b.cloneNode(true));
     /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
        must not ride into slides — a placed frame shows its part in full */
-    $$('.pt-off,.ot-off,.part-off,.part-fold,.code-off',b)
+    $$('.pt-off,.ot-off,.ot-fold,.part-off,.part-fold,.code-off',b)
       .forEach(function(n){
-        ['pt-off','ot-off','part-off','part-fold','part-open','code-off']
+        ['pt-off','ot-off','ot-fold','ot-open','part-off','part-fold',
+         'part-open','code-off']
           .forEach(function(cl){n.classList.remove(cl);});
       });
+    /* per-output fold stubs are filter chrome, not content */
+    $$('.ot-stub',b).forEach(function(n){n.remove();});
     $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
     var it=resolveRef(ref);
     if(it) frameSnaps[it.ns]=b.outerHTML;
@@ -952,7 +955,7 @@
         /* live embeds (plotly/bokeh/vega/folium) are figures too */
         f.figure=!!body.querySelector('.figframe,.figpager,.plotframe');
         f.output=!!body.querySelector(
-          'pre.result,pre.stream,.rich:not(.plotframe),.xr-wrap,.note')
+          'pre.result,pre.stream,.rich:not(.plotframe),.jv-xr,.note')
           ||(!f.figure&&!!(body.textContent||'').trim());
       }
     }
@@ -977,7 +980,7 @@
       /* the figure part is JUST the figure — drop outputs AND any markdown
          note / caption that rides along in the card body (a .plotframe is
          a live figure, e.g. bokeh/vega/folium — keep it) */
-      $$('.cb-out,.xr-wrap,pre.result,pre.stream,.rich:not(.plotframe),'
+      $$('.cb-out,.jv-xr,pre.result,pre.stream,.rich:not(.plotframe),'
         +'.note,.note-src,.htmltoggle,.caption',b)
         .forEach(function(n){if(n.parentNode) n.parentNode.removeChild(n);});
     } else if(part==='output'){

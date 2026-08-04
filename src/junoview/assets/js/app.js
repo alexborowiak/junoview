@@ -417,6 +417,16 @@
      and everything to the right of it — never moves */
   var CODE_LABEL={visible:'On',collapsed:'Fold',hidden:'Off',
     mixed:'Mix'};
+  /* a per-type OUTPUT override is 'visible' | 'collapsed' | 'hidden';
+     absent = the type follows the overall Output filter. Saved layouts
+     from before the tri-state stored 1 for "hidden" — read that as
+     'hidden' forever, old states must keep meaning what they meant. */
+  function otVal(v){
+    if(v==='visible'||v==='collapsed'||v==='hidden') return v;
+    return v?'hidden':null;
+  }
+  /* ot-* classes that are STATE, not type — the type regex must skip them */
+  var OT_STATE_CLASSES=['off','fold','open','stub'];
   var CK_TYPES=['imports','function','data','settings',
     'plotting','print','comments','constant','code'];
   /* ---- "Apply to": which sections the filters act on. Empty = the whole
@@ -528,7 +538,11 @@
   function sameMap(x,y){
     var kx=Object.keys(x);
     if(kx.length!==Object.keys(y).length) return false;
-    for(var i=0;i<kx.length;i++){if(!y[kx[i]]) return false;}
+    /* VALUES matter now, not just key presence: the ot map holds
+       tri-states, and {dataset:'hidden'} !== {dataset:'collapsed'}.
+       otVal normalises so a legacy 1 still equals 'hidden'. */
+    for(var i=0;i<kx.length;i++){
+      if(otVal(x[kx[i]])!==otVal(y[kx[i]])) return false;}
     return true;
   }
   function sameF(a,b){
@@ -831,7 +845,13 @@
           var fig=c.querySelector('.cb-fig'),
               out=c.querySelector('.cb-out'),
               cw=c.querySelector('.codewrap');
-          if(out){
+          /* with NO per-type overrides the whole output part answers to
+             the Output filter (one part-level fold/hide, as always).
+             With overrides, state applies PER OUTPUT instead — a type
+             set to On must show even under Output: Off, so the part
+             stays and each child carries its own effective state. */
+          var otAnyOv=Object.keys(otHidden).length>0;
+          if(out&&!otAnyOv){
             out.classList.toggle('part-off',outState==='hidden');
             out.classList.toggle('part-fold',outState==='collapsed');
             if(outState!=='collapsed') out.classList.remove('part-open');
@@ -907,18 +927,58 @@
               plotState==='collapsed'&&!allPtOff);
             if(plotState!=='collapsed') fig.classList.remove('part-open');
           }
-          /* the advanced Output-types filter hides individual outputs by kind;
-             the output part counts as visible only if some output survives */
+          /* the advanced Output-types menu gives each kind its own
+             On / Fold / Off; a type with no override follows the overall
+             Output state. The part counts as visible only if some output
+             (or its fold stub) survives. */
           var outVis=false;
-          if(out&&outState!=='hidden'){
-            [].forEach.call(out.children,function(el){
+          if(out&&otAnyOv){
+            out.classList.remove('part-fold','part-open');
+            var kids=[].slice.call(out.children);
+            kids.forEach(function(el){
+              if(el.classList.contains('ot-stub')) return; /* with its target */
               var mm=(el.className||'').match(/\bot-([a-z]+)\b/);
-              var typ=mm&&mm[1]!=='off'?mm[1]:null;
-              var otOff=!!(typ&&otHidden[typ]);
-              el.classList.toggle('ot-off',otOff);
-              if(!otOff) outVis=true;
+              var typ=mm&&OT_STATE_CLASSES.indexOf(mm[1])<0?mm[1]:null;
+              var eff=typ?(otVal(otHidden[typ])||outState):outState;
+              el.classList.toggle('ot-off',eff==='hidden');
+              el.classList.toggle('ot-fold',eff==='collapsed');
+              if(eff!=='collapsed') el.classList.remove('ot-open');
+              /* a folded output leaves a slim "▸ type" stub in its place,
+                 exactly like the part-level "Show output" bar but per
+                 output — the stub toggles just this one open */
+              var stub=el.previousElementSibling;
+              if(stub&&!stub.classList.contains('ot-stub')) stub=null;
+              if(eff==='collapsed'){
+                if(!stub){
+                  stub=document.createElement('button');
+                  stub.type='button';stub.className='ot-stub';
+                  out.insertBefore(stub,el);
+                }
+                var lab=typ||'output';
+                stub.textContent=(el.classList.contains('ot-open')
+                  ?'▾  ':'▸  ')+lab;
+                stub.onclick=function(){
+                  var open=el.classList.toggle('ot-open');
+                  stub.textContent=(open?'▾  ':'▸  ')+lab;
+                };
+              } else if(stub) stub.remove();
+              if(eff!=='hidden') outVis=true;
             });
-            if(!out.children.length) outVis=true;
+            /* every output effectively hidden -> the part goes entirely,
+               so no empty box lingers where the outputs were */
+            var realKids=kids.filter(function(el){
+              return !el.classList.contains('ot-stub');});
+            if(!realKids.length) outVis=true;
+            out.classList.toggle('part-off',!outVis);
+          } else if(out){
+            /* no overrides: clear any per-output state left behind
+               (snapshot first — removing stubs mid-walk skips nodes) */
+            [].slice.call(out.children).forEach(function(el){
+              if(el.classList.contains('ot-stub')){el.remove();return;}
+              el.classList.remove('ot-off','ot-fold','ot-open');
+              if(outState!=='hidden') outVis=true;
+            });
+            if(!out.children.length&&outState!=='hidden') outVis=true;
           }
           var codeVis=!!cw&&codeState!=='hidden'&&!ckOff;
           filtGone=!figVis&&!outVis&&!codeVis;
@@ -977,26 +1037,49 @@
     syncTypeMenus();
     scheduleSaveLayout();   /* remember this for next time */
   }
-  /* refresh an OPEN type menu's ticks in place. Rebuilding it mid-click
-     would yank the rows out from under a user ticking several in a row. */
+  /* refresh an OPEN type menu's controls in place. Rebuilding it
+     mid-click would yank the rows out from under a user working down
+     the list. */
   function syncTypeMenus(){
+    var anyOtOvr=false;
     ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu']
       .forEach(function(sel){
         $$(sel+' .ckf-row').forEach(function(r){
           var t=r.dataset.t,map=r.dataset.map;
           if(!t||!map) return;
+          /* an Output-types row carries a tri-state cycler, not a box */
+          var st=$('.ckf-state',r);
+          if(st){
+            var vs=otEffVals(t);
+            var one=vs.length===1?vs[0]:'mixed';
+            st.textContent=CODE_LABEL[one]||CODE_LABEL.mixed;
+            var ovr=countF(map,t)>0;
+            if(ovr) anyOtOvr=true;
+            st.className='ckf-state s-'+one+(ovr?' ovr':'');
+            return;
+          }
           var cb=$('input',r); if(!cb) return;
           var n=countF(map,t);
           cb.checked=n===0;
           cb.indeterminate=n>0&&n<targetCount();
         });
       });
+    var rs=$('#ot-reset');
+    if(rs) rs.disabled=!anyOtOvr;
   }
   /* advanced filter menu: hide specific code subtypes */
+  var ckCounts={};
   function presentCkTypes(){
-    var set={};
-    $$('.nbshell .card[data-ck]').forEach(function(c){
-      c.dataset.ck.split(' ').forEach(function(t){set[t]=1;});});
+    var set={};ckCounts={};
+    /* the ACTIVE notebook's document feed only, like presentOtTypes */
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    $$('.content .card[data-ck]',sh.el).forEach(function(c){
+      /* the FIRST slug is the one the filter acts on (applyFilters
+         hides by it), so it is the one the menu counts */
+      var t=c.dataset.ck.split(' ')[0];
+      if(t){set[t]=1;ckCounts[t]=(ckCounts[t]||0)+1;}
+    });
     return CK_TYPES.filter(function(t){return set[t];});
   }
   function renderCkMenu(){
@@ -1024,7 +1107,8 @@
       });
       var sw=document.createElement('span');
       sw.className='ckf-dot ckmain-'+t;
-      var tx=document.createElement('span');tx.textContent=t;
+      var tx=document.createElement('span');
+      tx.textContent=t+' ('+(ckCounts[t]||0)+')';
       row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
       m.appendChild(row);
     });
@@ -1079,10 +1163,24 @@
      video, other widgets) — like the code-type filter, but for plots */
   var PT_TYPES=['matplotlib','plotly','bokeh','vega','folium',
     'animation','video','widget'];
+  var ptCounts={};
   function presentPtTypes(){
-    var set={};
-    $$('.nbshell .cb-fig[data-pt]').forEach(function(c){
-      c.dataset.pt.split(' ').forEach(function(t){if(t)set[t]=1;});});
+    var set={};ptCounts={};
+    /* the ACTIVE notebook's document feed only, like presentOtTypes.
+       Counted per FRAME (each drawn figure), not per part, so a pager
+       of 4 matplotlib panels reads "matplotlib (4)". */
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    $$('.content .card .cb-fig [data-pt]',sh.el).forEach(function(n){
+      n.dataset.pt.split(' ').forEach(function(t){
+        if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
+    });
+    /* a single-frame part carries data-pt on the part itself */
+    $$('.content .card .cb-fig[data-pt]',sh.el).forEach(function(c){
+      if(c.querySelector('[data-pt]')) return;   /* frames counted above */
+      c.dataset.pt.split(' ').forEach(function(t){
+        if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
+    });
     var out=PT_TYPES.filter(function(t){return set[t];});
     Object.keys(set).forEach(function(t){
       if(PT_TYPES.indexOf(t)<0) out.push(t);});  /* unknown slugs still show */
@@ -1109,7 +1207,8 @@
           if(show) delete s.pt[t]; else s.pt[t]=1;});
         applyFilters();});
       var sw=document.createElement('span');sw.className='ckf-dot pt-sw-'+t;
-      var tx=document.createElement('span');tx.textContent=t;
+      var tx=document.createElement('span');
+      tx.textContent=t+' ('+(ptCounts[t]||0)+')';
       row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
       m.appendChild(row);});
   }
@@ -1135,14 +1234,38 @@
   var OT_TYPES=['print','numeric','string','bool','none','list','tuple','set',
     'dict','array','series','dataframe','dataset','function','class','module',
     'object','value','result','error'];
+  /* how many outputs of each type the ACTIVE notebook holds — filled by
+     presentOtTypes, read by the menu labels ("dataset (3)") */
+  var otCounts={};
   function presentOtTypes(){
-    var set={};
-    $$('.nbshell .cb-out[data-ot]').forEach(function(c){
-      c.dataset.ot.split(' ').forEach(function(t){if(t)set[t]=1;});});
+    var set={};otCounts={};
+    /* the ACTIVE notebook only — scanning every .nbshell put the other
+       open tabs' types in this notebook's menu — and only the document
+       feed, so tree/slide clones can never double-count */
+    var sh=APP.active&&APP.shells[APP.active];
+    if(!sh) return [];
+    $$('.content .card .cb-out',sh.el).forEach(function(o){
+      [].forEach.call(o.children,function(el){
+        var mm=(el.className||'').match(/\bot-([a-z]+)\b/);
+        if(!mm||OT_STATE_CLASSES.indexOf(mm[1])>=0) return;
+        set[mm[1]]=1;otCounts[mm[1]]=(otCounts[mm[1]]||0)+1;
+      });
+    });
     var out=OT_TYPES.filter(function(t){return set[t];});
     Object.keys(set).forEach(function(t){
       if(OT_TYPES.indexOf(t)<0) out.push(t);});   /* unknown slugs still show */
     return out;
+  }
+  /* the EFFECTIVE state(s) of one output type across the targeted
+     sections: its own override where set, else the overall Output state.
+     More than one distinct value -> the button reads "Mix". */
+  function otEffVals(t){
+    var stem=activeStem(),ids=targetSids(),vals={};
+    (ids.length?ids:[null]).forEach(function(id){
+      var s=id===null?FDEFof(stem):stateFor(stem,id);
+      vals[otVal(s.ot[t])||s.out]=1;
+    });
+    return Object.keys(vals);
   }
   function renderOtMenu(){
     var m=$('#ot-filter-menu'); if(!m) return;
@@ -1153,21 +1276,41 @@
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='show output types';m.appendChild(h);
     types.forEach(function(t){
-      var row=document.createElement('label');row.className='ckf-row';
+      var row=document.createElement('div');row.className='ckf-row';
       row.dataset.t=t;row.dataset.map='ot';
-      var cb=document.createElement('input');cb.type='checkbox';
-      var nHidO=countF('ot',t);
-      cb.checked=nHidO===0;
-      cb.indeterminate=nHidO>0&&nHidO<targetCount();
-      cb.addEventListener('change',function(){
-        var show=cb.checked;
-        writeF(function(s){
-          if(show) delete s.ot[t]; else s.ot[t]=1;});
-        applyFilters();});
       var sw=document.createElement('span');sw.className='ckf-dot ot-sw-'+t;
-      var tx=document.createElement('span');tx.textContent=t;
-      row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
+      var tx=document.createElement('span');tx.className='ckf-name';
+      tx.textContent=t+' ('+(otCounts[t]||0)+')';
+      /* the type's own On/Fold/Off, cycling like the main filters. One
+         click detaches it from the overall Output state ("does its own
+         thing") until the reset below re-attaches it. */
+      var st=document.createElement('button');st.type='button';
+      st.className='ckf-state';
+      st.title='This type’s own filter: On → Fold → Off. '
+        +'Set, it no longer follows the Output button; Reset below '
+        +'re-attaches it.';
+      st.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        var vs=otEffVals(t);
+        var cur=vs.length===1?vs[0]:'hidden';   /* Mix -> next is On */
+        var nx=CODE_CYCLE[(CODE_CYCLE.indexOf(cur)+1)%CODE_CYCLE.length];
+        writeF(function(s){s.ot[t]=nx;});
+        applyFilters();
+      });
+      row.appendChild(sw);row.appendChild(tx);row.appendChild(st);
       m.appendChild(row);});
+    /* every type back under the overall Output filter */
+    var rs=document.createElement('button');rs.type='button';
+    rs.id='ot-reset';rs.className='ckf-reset';
+    rs.textContent='Reset: match Output';
+    rs.title='Clear every per-type state above, so all output types '
+      +'follow the Output filter again';
+    rs.addEventListener('click',function(){
+      writeF(function(s){s.ot={};});
+      applyFilters();
+    });
+    m.appendChild(rs);
+    syncTypeMenus();
   }
   var otBtn=$('#ot-filter-btn'),otMenu=$('#ot-filter-menu');
   if(otBtn) otBtn.addEventListener('click',function(e){
@@ -1645,8 +1788,12 @@
       clone.style.removeProperty('--fz');
       $$('.code-off',clone).forEach(function(x){
         x.classList.remove('code-off');});
-      $$('.part-off,.part-fold,.pt-off,.ot-off',clone).forEach(function(x){
-        x.classList.remove('part-off','part-fold','pt-off','ot-off');});
+      $$('.part-off,.part-fold,.pt-off,.ot-off,.ot-fold',clone)
+        .forEach(function(x){
+          x.classList.remove('part-off','part-fold','pt-off','ot-off',
+            'ot-fold','ot-open');});
+      /* per-output fold stubs are filter chrome, not content */
+      $$('.ot-stub',clone).forEach(function(x){x.remove();});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
       $$('.cell-eye,.plot-trace-btn,.card-anchor,.card-addnote',clone)
         .forEach(function(x){x.remove();});
@@ -2397,16 +2544,21 @@
      narrower laptop the View + App groups spilled onto a new line and the
      extra band of chrome ate the notebook's viewing space). Escalate
      through the compaction stages (see the body.rbc* rules in app.css)
-     until the bar fits — each stage removes the least informative text
-     still showing. Reset first so a WIDER window relaxes back. Beyond
-     rbc3 the bar scrolls sideways (overflow-x:auto): at that point even
-     icon-only buttons do not fit and a thin scrollbar is the only option
-     that is not a second row. */
+     until the bar fits. The stages only TIGHTEN — labels are never
+     hidden (2026-08-04, user: the icon-only stage "makes no sense to
+     look at"; a dense bar with names beats a cryptic one). Reset first
+     so a WIDER window relaxes back; past rbc2 the bar scrolls sideways
+     (overflow-x:auto) — a thin scrollbar, never a second row and never
+     bare icons. rbc3 is also removed here in case an older session left
+     it stamped on the body. */
   function fitRibbon(){
-    var bar=$('.appbar'); if(!bar) return;
+    var bar=$('.appbar');
+    /* a HIDDEN bar (welcome screen, present mode) measures 0 wide — do
+       not escalate against that, it is not a real fit */
+    if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
     cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
-    for(var lv=1;lv<=3&&bar.scrollWidth>bar.clientWidth+1;lv++)
+    for(var lv=1;lv<=2&&bar.scrollWidth>bar.clientWidth+1;lv++)
       cl.add('rbc'+lv);
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
@@ -2454,6 +2606,13 @@
     if(barEl) new ResizeObserver(function(){measureChrome();})
       .observe(barEl);
   }
+  /* fonts change text metrics: a fit measured against the FALLBACK font
+     saw wider labels, over-compacted, and then STUCK — the bar's box
+     never changes when the real font arrives, so neither resize nor the
+     ResizeObserver re-fires. Re-fit once the fonts are truly in
+     (2026-08-04: the ribbon sat icon-only beside a mile of empty bar). */
+  if(document.fonts&&document.fonts.ready)
+    document.fonts.ready.then(function(){measureChrome();});
   measureChrome();
   var menuBtn=$('#menubtn');
   function applyToc(show){

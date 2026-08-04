@@ -604,9 +604,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   font-size:11px;color:var(--ink-3);letter-spacing:.02em;}
 .cb-out.part-fold:hover::before{color:var(--cyan-deep);}
 .cb-out.part-fold.part-open{cursor:default;border:none;padding:0;}
-/* :not(.ot-off) so a child hidden by the Output-types filter stays hidden
-   even when the collapsed output is opened */
-.cb-out.part-fold.part-open>*:not(.ot-off){display:revert;}
+/* :not(.ot-off):not(.ot-fold) so a child hidden or folded by the
+   Output-types menu stays that way even when the collapsed output part is
+   opened (the per-output states outrank the part-level fold) */
+.cb-out.part-fold.part-open>*:not(.ot-off):not(.ot-fold){display:revert;}
 .cb-out.part-fold.part-open::before{display:none;}
 
 /* one line: badge, title (elided if long), then the actions pinned to the
@@ -820,9 +821,9 @@ pre.error{background:#fbf0ee;border-color:#f0d2cc;color:#8a3221;}
    document + raw views instead of running the whole page on. Short
    outputs are unaffected; slide frames keep their own sizing. */
 .content pre.result,.content pre.stream,.content pre.error,
-.content .rich,.content .xr-wrap,
+.content .rich,.content .jv-xr,
 .rawview pre.result,.rawview pre.stream,.rawview .rich,
-.rawview .xr-wrap{max-height:min(440px,62vh);overflow:auto;}
+.rawview .jv-xr{max-height:min(440px,62vh);overflow:auto;}
 .card.k-metric .cardbody pre.result{font-size:14px;
   background:#46a8920d;border-color:#46a89233;color:#1f5f54;
   font-weight:500;}
@@ -900,9 +901,13 @@ pre.code .co{color:#5d7185;}
 pre.code .op{color:#9fb1c0;}
 
 /* ---------- xarray repr ---------- */
-.xr-wrap{font-size:13px;overflow:auto;border:1px solid var(--paper-3);
+/* jv-xr is OUR wrapper around the repr; xarray's own inner div is the one
+   that carries .xr-wrap. They used to share the class name, and xarray's
+   embedded `.xr-wrap{display:block !important}` overrode every junoview
+   hide/fold rule on the wrapper (2026-08-03) */
+.jv-xr{font-size:13px;overflow:auto;border:1px solid var(--paper-3);
   border-radius:8px;padding:4px 8px;background:#fff;}
-.xr-wrap .xr-array-wrap,.xr-wrap .xr-var-list{font-family:var(--mono);}
+.jv-xr .xr-array-wrap,.jv-xr .xr-var-list{font-family:var(--mono);}
 
 /* ---------- empty / fallback ---------- */
 .rich{overflow:auto;}

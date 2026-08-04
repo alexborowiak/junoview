@@ -46,7 +46,7 @@ def test_present_bar_reproduces_the_appbar_ribbon_groups(out):
     """
     assert ("var PB_TOOLS=['#ab-filters','#ab-scope','#ab-size','#ab-view'];"
             in out)
-    assert ".appbar-div{flex:none;width:1px;height:82px" in out
+    assert ".appbar-div{flex:none;width:1px;height:70px" in out
     # 3 plain ribbon dividers (the third closes View off from the
     # right-aligned App group) + 2 grouping the custom-view styling bar
     # (the other 2 carry filt-div and disappear with the filters in tree)
@@ -86,7 +86,7 @@ def test_present_bar_shares_appbar_toggle_theming_and_sizing(out):
     """
     assert ".appbar .toggle,.present-bar .toggle{" in out
     assert "body.light .appbar .toggle,body.light .present-bar .toggle{" in out
-    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:34px" in out
+    assert ".appbar .toggle.sub,.present-bar .toggle.sub{height:28px" in out
     assert ".tree-node.expanded{width:min(380px" in out
 
 

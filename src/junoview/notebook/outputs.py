@@ -262,9 +262,16 @@ def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
             elif "text/html" in data:
                 htmltext = _as_text(data["text/html"])
                 if _looks_like_xarray(htmltext):
+                    # jv-xr, NOT xr-wrap: xarray's repr ships its own
+                    # <style> declaring `.xr-wrap{display:block !important}`
+                    # (an anti-fallback rule for ITS inner div). While our
+                    # wrapper shared that class name, the !important won the
+                    # cascade against the Output-types filter's
+                    # `.ot-off{display:none}` and a hidden Dataset stayed
+                    # fully visible (2026-08-03).
                     rendered.append(RenderedOutput(
                         "xarray",
-                        f'<div class="xr-wrap ot-dataset">{htmltext}</div>',
+                        f'<div class="jv-xr ot-dataset">{htmltext}</div>',
                         has_xarray=True, ot="dataset"))
                 elif _looks_like_dataframe(htmltext):
                     rendered.append(RenderedOutput(

@@ -391,7 +391,7 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .slide-fig .caption{flex:none;color:#a9bccb;margin-top:12px;padding-left:2px;
   font-size:14.5px;}
 .slide-fig pre.result,.slide-fig pre.stream{flex:none;overflow:auto;}
-.slide-fig .xr-wrap{flex:1;min-height:0;overflow:auto;}
+.slide-fig .jv-xr{flex:1;min-height:0;overflow:auto;}
 
 /* halves / quarters slide layouts */
 .slide-grid{flex:1;display:grid;gap:16px;min-height:0;}
@@ -414,7 +414,7 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .spane .note{flex:1;min-height:0;background:#f7fafc;color:var(--ink-2);
   border-radius:8px;padding:14px 18px;overflow:auto;font-size:13.5px;
   line-height:1.6;}
-.spane .xr-wrap,.spane pre.result,.spane pre.stream{overflow:auto;
+.spane .jv-xr,.spane pre.result,.spane pre.stream{overflow:auto;
   min-height:0;}
 .spane.empty{align-items:center;justify-content:center;color:#54677a;
   font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
@@ -1061,7 +1061,7 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
    (headings, lists, bold) so the whole note reads in the chosen colour */
 .an-cell[style*="--nb-tx"] .note,
 .an-cell[style*="--nb-tx"] .note *{color:var(--nb-tx);}
-.an-cell .xr-wrap,.an-cell pre.result,.an-cell pre.stream{
+.an-cell .jv-xr,.an-cell pre.result,.an-cell pre.stream{
   overflow:auto;min-height:0;}
 .an-cell.empty{align-items:center;justify-content:center;
   border-style:dashed;background:#0e192699;}
