@@ -133,9 +133,9 @@ def test_code_and_plot_type_menus_are_tri_state_like_the_output_menu(out):
     assert "typeMenuRow('pt',t,ptCounts[t]||0,'pt-sw-'+t)" in out
     assert "typeMenuReset('ck','ck-reset')" in out
     assert "typeMenuReset('pt','pt-reset')" in out
-    # code: the per-type state reaches both hiding and folding
-    assert "var ckEff=ckT?(otVal(ckHidden[ckT])||codeState):codeState;" in out
-    assert "var eff=t?(otVal(s.ck[t])||s.code):s.code;" in out
+    # code: the per-type + per-label states reach both hiding and folding
+    assert "var ckEff=ckExp.length?ckExp.reduce(stricterState):codeState;" in out
+    assert "var eff=exp.length?exp.reduce(stricterState):s.code;" in out
     # plots: any override switches the part to per-frame mode (exactly the
     # output part's model) with fold stubs; On-under-Off follows for free
     assert ".cb-fig [data-pt].pt-fold{cursor:pointer;" in out
@@ -197,8 +197,13 @@ def test_plots_filter_by_author_label_titled_vs_untitled(out, items):
     assert ".ckf-dot.pt-sw-titled" in out
     # restrictive combination; explicit beats inherited
     assert "function stricterState" in out
-    assert "var vl=otVal(ptHidden[figLab]); if(vl) exp.push(vl);" in out
+    assert "var vl=otVal(ptHidden[cardLab]); if(vl) exp.push(vl);" in out
     assert "var eff=exp.length?exp.reduce(stricterState):plotState;" in out
+    # code cells have titles too: the SAME rows in the Code-types menu,
+    # keyed on the card-level data-labelled stamp
+    assert "typeMenuRow('ck','titled'," in out
+    assert "typeMenuRow('ck','untitled'," in out
+    assert "ckCounts[lab]=(ckCounts[lab]||0)+1;" in out
 
 
 def test_filter_menu_and_pager_javascript_wiring(out):

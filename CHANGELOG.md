@@ -107,15 +107,15 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
-- **Plots can be filtered by whether the author labelled them.** A figure
-  counts as *titled* when its cell carries a `#| title:`, a `#| caption:`,
-  or a leading `#` comment heading — names derived from the code (a
-  function name, a first line) do not count. When a notebook has both
-  kinds, the Plot-types menu lists titled/untitled rows alongside the
-  libraries — count plus the same On/Fold/Off cycler as every other
-  row — so "only show plots I gave a title" is one click:
-  untitled → Off. A frame under both a library state and a label state
-  follows the stricter of the two.
+- **Plots AND code can be filtered by whether the author labelled them.**
+  A cell counts as *titled* when it carries a `#| title:`, a
+  `#| caption:`, or a leading `#` comment heading — names derived from
+  the code (a function name, a first line) do not count. When a notebook
+  has both kinds, the Plot-types and Code-types menus list
+  titled/untitled rows alongside their other types — count plus the same
+  On/Fold/Off cycler as every other row — so "only show plots I gave a
+  title" is one click: untitled → Off. Something under both a type state
+  and a label state follows the stricter of the two.
 - **No ribbon words disappear, ever.** The compaction stage that hid the
   On/Fold state words was "confusing without these" — it is gone. The one
   remaining stage tightens spacing only; below that the bar scrolls.

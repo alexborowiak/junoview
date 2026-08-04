@@ -91,11 +91,8 @@ def render_item(item: Item, sec_id: str = "") -> str:
             if o.pt and o.pt not in pt_types:
                 pt_types.append(o.pt)
         pt_attr = f' data-pt="{" ".join(pt_types)}"' if pt_types else ""
-        # the labelled/unlabelled plot filter reads this: 1 when the author
-        # gave the cell a title/caption, 0 for auto-derived names only
-        lab_attr = f' data-labelled="{1 if item.labelled else 0}"'
         cb_parts.append(
-            f'<div class="cb-part cb-fig"{pt_attr}{lab_attr}>'
+            f'<div class="cb-part cb-fig"{pt_attr}>'
             f'<div class="figzoom" aria-hidden="false">'
             f'<button class="fz-btn fz-out" title="Smaller (this figure)"'
             f'>&#8722;</button>'
@@ -206,12 +203,16 @@ def render_item(item: Item, sec_id: str = "") -> str:
     # being cloned out of the document (tree view, plot-trace tab), where a
     # DOM-ancestor lookup would find no section and silently fall back to
     # the notebook default
+    # data-labelled: the titled/untitled filters (Plot-types AND
+    # Code-types menus) read this — 1 when the author gave the cell a
+    # title/caption, 0 for auto-derived names only
     return (
         f'<article class="card {kclass}" id="card-{item.item_id}" '
         f'data-kind="{item.kind}" data-role="{role}" '
         f'data-node="{item.node_id}"{ck_attr} '
         f'data-secid="{html.escape(sec_id)}" '
         f'data-note="{"1" if item.is_note else "0"}" '
+        f'data-labelled="{1 if item.labelled else 0}" '
         f'data-anchor="{html.escape(item.anchor or item.item_id)}" tabindex="-1">'
         f'<header class="cardhead">'
         f'<span class="badge">{badge}</span>'

@@ -849,10 +849,19 @@
           /* PART-BASED: every non-markdown cell may hold a code part, a plot
              part and an output part; each answers to its OWN filter. The card
              disappears only when none of its parts remain visible. */
+          /* whether the author LABELLED this cell (title/caption/leading
+             comment) — the titled/untitled rows of BOTH the Code-types
+             and Plot-types menus key on it */
+          var cardLab=c.dataset.labelled==='1'?'titled':'untitled';
           /* the card's code follows its TYPE's own tri-state where one is
-             set (the Code-types menu), else the overall Code filter */
+             set (the Code-types menu) and its LABEL's tri-state — the
+             stricter explicit state wins, any explicit beats the
+             inherited overall Code filter */
           var ckT=c.dataset.ck?c.dataset.ck.split(' ')[0]:null;
-          var ckEff=ckT?(otVal(ckHidden[ckT])||codeState):codeState;
+          var ckExp=[];
+          if(ckT){var vck=otVal(ckHidden[ckT]); if(vck) ckExp.push(vck);}
+          var vcl=otVal(ckHidden[cardLab]); if(vcl) ckExp.push(vcl);
+          var ckEff=ckExp.length?ckExp.reduce(stricterState):codeState;
           var fig=c.querySelector('.cb-fig'),
               out=c.querySelector('.cb-out'),
               cw=c.querySelector('.codewrap');
@@ -876,10 +885,6 @@
              A type overridden to On even shows under Plots = Off. */
           var figVis=false;
           var ptAnyOv=Object.keys(ptHidden).length>0;
-          /* whether THIS card's figure carries an author label — the
-             titled/untitled pseudo-types in the Plot-types menu act on
-             it alongside the library types */
-          var figLab=fig&&fig.dataset.labelled==='1'?'titled':'untitled';
           var wasFigOpen=!!fig&&fig.classList.contains('part-open');
           if(fig){
             $$('[data-pt]',fig).forEach(function(n){
@@ -892,7 +897,7 @@
               var exp=[];
               pts.forEach(function(t){
                 var v=otVal(ptHidden[t]); if(v) exp.push(v);});
-              var vl=otVal(ptHidden[figLab]); if(vl) exp.push(vl);
+              var vl=otVal(ptHidden[cardLab]); if(vl) exp.push(vl);
               var eff=exp.length?exp.reduce(stricterState):plotState;
               n.classList.toggle('pt-off',eff==='hidden');
               n.classList.toggle('pt-fold',eff==='collapsed');
@@ -1127,9 +1132,12 @@
     if(!sh) return [];
     $$('.content .card[data-ck]',sh.el).forEach(function(c){
       /* the FIRST slug is the one the filter acts on (applyFilters
-         hides by it), so it is the one the menu counts */
+         hides by it), so it is the one the menu counts; each card also
+         tallies its titled/untitled label for the label rows */
       var t=c.dataset.ck.split(' ')[0];
       if(t){set[t]=1;ckCounts[t]=(ckCounts[t]||0)+1;}
+      var lab=c.dataset.labelled==='1'?'titled':'untitled';
+      ckCounts[lab]=(ckCounts[lab]||0)+1;
     });
     return CK_TYPES.filter(function(t){return set[t];});
   }
@@ -1189,9 +1197,15 @@
     var m=$('#ck-filter-menu'); if(!m) return;
     m.innerHTML='';
     var types=presentCkTypes();
-    overriddenTypes('ck').forEach(function(t){
+    var ov=overriddenTypes('ck');
+    ov.forEach(function(t){
+      if(t==='titled'||t==='untitled') return;   /* rows added below */
       if(types.indexOf(t)<0) types.push(t);});
-    if(!types.length){
+    /* code cells have titles too: the same titled/untitled rows as the
+       Plot-types menu, shown when the notebook has both kinds */
+    var showLab=((ckCounts.titled||0)>0&&(ckCounts.untitled||0)>0)
+      ||ov.indexOf('titled')>=0||ov.indexOf('untitled')>=0;
+    if(!types.length&&!showLab){
       m.innerHTML='<div class="ckf-empty">No typed code cells yet</div>';
       return;
     }
@@ -1200,6 +1214,12 @@
     types.forEach(function(t){
       m.appendChild(typeMenuRow('ck',t,ckCounts[t]||0,'ckmain-'+t));
     });
+    if(showLab){
+      m.appendChild(typeMenuRow('ck','titled',
+        ckCounts.titled||0,'pt-sw-titled'));
+      m.appendChild(typeMenuRow('ck','untitled',
+        ckCounts.untitled||0,'pt-sw-untitled'));
+    }
     m.appendChild(typeMenuReset('ck','ck-reset'));
     syncTypeMenus();
   }
@@ -1263,7 +1283,8 @@
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh) return [];
     $$('.content .card .cb-fig',sh.el).forEach(function(f){
-      var lab=f.dataset.labelled==='1'?'titled':'untitled';
+      var card=f.closest('.card');
+      var lab=card&&card.dataset.labelled==='1'?'titled':'untitled';
       var frames=$$('[data-pt]',f);
       /* a single-frame part carries data-pt on the part itself */
       if(!frames.length&&f.dataset.pt) frames=[f];
@@ -1437,7 +1458,11 @@
         var c=w.closest('.card');
         var s=stateFor(stem,secIdOf(c));
         var t=c&&c.dataset.ck?c.dataset.ck.split(' ')[0]:null;
-        var eff=t?(otVal(s.ck[t])||s.code):s.code;
+        var lab=c&&c.dataset.labelled==='1'?'titled':'untitled';
+        var exp=[];
+        if(t){var v=otVal(s.ck[t]); if(v) exp.push(v);}
+        var vl=otVal(s.ck[lab]); if(vl) exp.push(vl);
+        var eff=exp.length?exp.reduce(stricterState):s.code;
         setCodeOpen(w,eff==='visible');
       });
     });
