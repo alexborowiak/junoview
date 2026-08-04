@@ -83,8 +83,39 @@ def _scope_selectors(prelude: str, root: str) -> str:
     return ",".join(out)
 
 
+def _strip_comments(css: str) -> str:
+    """Drop /* … */ blocks (string-aware, so a comment INSIDE a quoted
+    value survives)."""
+    out, i, n, instr = [], 0, len(css), None
+    while i < n:
+        c = css[i]
+        if instr:
+            if c == instr:
+                instr = None
+            out.append(c)
+        elif c in "\"'":
+            instr = c
+            out.append(c)
+        elif c == "/" and css[i + 1:i + 2] == "*":
+            end = css.find("*/", i + 2)
+            i = n if end < 0 else end + 1   # +1 more below
+        else:
+            out.append(c)
+        i += 1
+    return "".join(out)
+
+
 def _scope_css(css: str, root: str = ".snb-root") -> str:
-    """Prefix every rule in `css` with `root` (quote/paren/brace aware)."""
+    """Prefix every rule in `css` with `root` (comment/quote/paren/brace
+    aware).
+
+    Comments MUST go first: this scanner is quote-aware, and an apostrophe
+    inside a comment ("the scrollbar's width") read as an opening quote
+    swallowed every rule until the next quote character — whole stretches
+    of core.css silently vanished from the widget, which is why its card
+    headers stacked their title and actions vertically for weeks
+    (2026-08-04)."""
+    css = _strip_comments(css)
     out, i, n = [], 0, len(css)
     while i < n:
         # scan to the next top-level '{' or ';'

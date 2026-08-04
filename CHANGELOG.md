@@ -107,6 +107,24 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **A figure that titles itself in code now names its card.** With no
+  `#| title:` and no leading `#` comment, a figure cell whose code calls
+  `fig.suptitle("…")`, `ax.set_title("…")`, `plt.title("…")` or passes a
+  literal `title=` (plotly express, pandas/xarray `.plot`) takes that
+  string as its card title — the plot's own name beats a function name or
+  an echoed code line. `suptitle` wins over axes titles; several distinct
+  axes titles name no one card; f-strings and variables are skipped
+  rather than guessed. A plot-call title also counts as *titled* for the
+  labelled/unlabelled filters.
+- **The Jupyter widget silently lost half its stylesheet — including the
+  card-header layout.** The widget scopes core.css under `.snb-root` with
+  a hand-rolled scanner that was quote-aware but not comment-aware: an
+  apostrophe inside a comment ("the scrollbar's width") opened a phantom
+  string that swallowed every rule until the next quote. Whole stretches
+  of CSS vanished, so in JupyterLab the card headers stacked — badge,
+  then title, then the Plot-trace / eye actions on their own line at the
+  left — instead of one row with the actions pinned right. Comments are
+  now stripped before scanning, and tests pin the scoped output.
 - **Plots AND code can be filtered by whether the author labelled them.**
   A cell counts as *titled* when it carries a `#| title:`, a
   `#| caption:`, or a leading `#` comment heading — names derived from

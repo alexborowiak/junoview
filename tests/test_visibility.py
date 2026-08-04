@@ -206,6 +206,46 @@ def test_plots_filter_by_author_label_titled_vs_untitled(out, items):
     assert "ckCounts[lab]=(ckCounts[lab]||0)+1;" in out
 
 
+def test_plot_call_titles_name_untitled_figure_cards():
+    """A figure with no `#| title:` and no comment heading takes the
+    title its own plot call carries (2026-08-04): fig.suptitle first,
+    else a single distinct axes-level title (ax.set_title / plt.title /
+    title=). Literal strings only — an f-string cannot be resolved
+    without running the cell. Directives and leading comment headings
+    still win, and a plot-call title makes the cell "titled" for the
+    labelled/unlabelled filters.
+    """
+    png = {"output_type": "display_data", "data": {"image/png": "aGk="}}
+
+    def item_of(src):
+        doc = parse_notebook({"cells": [
+            {"cell_type": "code", "source": src, "outputs": [png]}]})
+        return [i for s in doc.sections for i in s.items][0]
+
+    # ax.set_title literal -> the card title, and it counts as labelled
+    it = item_of("fig, ax = plt.subplots()\nax.set_title('DJF mean height')")
+    assert it.title == "DJF mean height" and it.labelled is True
+    assert it.title_echo is False
+    # figure-level suptitle beats axes titles
+    it = item_of("fig.suptitle('Whole figure')\nax.set_title('One panel')")
+    assert it.title == "Whole figure"
+    # several DISTINCT axes titles name no one card...
+    it = item_of("ax1.set_title('A')\nax2.set_title('B')")
+    assert it.title != "A" and it.labelled is False
+    # ...but the same title repeated across panels is unambiguous
+    it = item_of("ax1.set_title('Same')\nax2.set_title('Same')")
+    assert it.title == "Same"
+    # f-strings cannot be resolved -> skipped, cell stays unlabelled
+    it = item_of("ax.set_title(f'{var} anomaly')")
+    assert it.labelled is False
+    # a leading `#` comment heading still wins over the plot call
+    it = item_of("# My banner\nax.set_title('Plot title')")
+    assert it.title == "My banner"
+    # the title= keyword (plotly express, pandas/xarray .plot) works too
+    it = item_of("px.line(df, title='Trend over time')")
+    assert it.title == "Trend over time" and it.labelled is True
+
+
 def test_filter_menu_and_pager_javascript_wiring(out):
     """One advanced filter menu at a time.
 

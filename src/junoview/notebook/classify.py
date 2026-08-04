@@ -76,6 +76,61 @@ def _title_from_code(code: str) -> tuple[str, bool]:
     return "Code", False
 
 
+def _plot_title_from_code(code: str) -> str:
+    """The title the PLOT gives itself in code.
+
+    ``fig.suptitle("…")``, ``ax.set_title("…")``, ``plt.title("…")`` or a
+    ``title=`` / ``title_text=`` keyword (matplotlib, plotly, pandas /
+    xarray ``.plot``) — a cell that names its own figure has already been
+    titled by its author, just not through a directive. Only LITERAL
+    strings count: an f-string or a variable cannot be resolved without
+    running the cell, so guessing is worse than declining. Figure-level
+    ``suptitle`` wins; otherwise a SINGLE distinct axes-level title —
+    four subplots with four different titles name no one card.
+    """
+    try:
+        tree = ast.parse(code)
+    except SyntaxError:
+        return ""
+
+    def lit(node) -> str:
+        if (isinstance(node, ast.Constant) and isinstance(node.value, str)
+                and node.value.strip()):
+            return node.value.strip()
+        return ""
+
+    sup: list[str] = []
+    axes: list[str] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Call):
+            continue
+        # method calls only: a bare `title(...)` could be anyone's function
+        if isinstance(node.func, ast.Attribute):
+            meth = node.func.attr
+            if meth == "suptitle" and node.args:
+                t = lit(node.args[0])
+                if t:
+                    sup.append(t)
+            elif meth in ("set_title", "title") and node.args:
+                t = lit(node.args[0])
+                if t:
+                    axes.append(t)
+        for kw in node.keywords or []:
+            if kw.arg in ("title", "title_text"):
+                t = lit(kw.value)
+                if not t and isinstance(kw.value, ast.Dict):
+                    # plotly's title=dict(text="…")
+                    for k2, v2 in zip(kw.value.keys, kw.value.values):
+                        if isinstance(k2, ast.Constant) and k2.value == "text":
+                            t = lit(v2)
+                if t:
+                    axes.append(t)
+    if sup:
+        return sup[0]
+    uniq = list(dict.fromkeys(axes))
+    return uniq[0] if len(uniq) == 1 else ""
+
+
 def _csv(value: str) -> list[str]:
     return [x.strip() for x in value.split(",") if x.strip()]
 

@@ -19,7 +19,7 @@ sensible layout from each cell's outputs.
 |-----------------|----------------------------------------------------------------------|
 | `#| section:`   | Start a top-level section (also doable with a Markdown `##` heading). |
 | `#| subsection:`| Nested group inside the current section.                             |
-| `#| title:`     | Human title for the card (otherwise inferred from the code).        |
+| `#| title:`     | Human title for the card. Otherwise inferred from the code: a leading `# comment` heading, then the plot's own title (`fig.suptitle`, `ax.set_title`, `plt.title`, or a literal `title=` keyword), then function names. |
 | `#| display:`   | Card type: `figure` `dataset` `transform` `diagnostic` `metric` `text` `code` `hidden`. |
 | `#| code:`      | Default code visibility: `hidden` (default) or `show`.              |
 | `#| id:`        | Stable slug for this cell — makes it a node in the provenance graph. |
