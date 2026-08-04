@@ -431,6 +431,10 @@
   }
   /* ot-* classes that are STATE, not type — the type regex must skip them */
   var OT_STATE_CLASSES=['off','fold','open','stub'];
+  /* when two explicit per-type states apply to one frame (its library
+     AND its titled/untitled label), the more restrictive one wins */
+  var ST_RANK={visible:0,collapsed:1,hidden:2};
+  function stricterState(a,b){return ST_RANK[b]>ST_RANK[a]?b:a;}
   var CK_TYPES=['imports','function','data','settings',
     'plotting','print','comments','constant','code'];
   /* ---- "Apply to": which sections the filters act on. Empty = the whole
@@ -871,24 +875,30 @@
              as visible only if some figure (or its fold stub) survives.
              A type overridden to On even shows under Plots = Off. */
           var figVis=false;
-          var anyPtVisible=false;
-          for(var pk in ptHidden){
-            if(otVal(ptHidden[pk])==='visible'){anyPtVisible=true;break;}}
-          function ptFrameOff(t){
-            var v=otVal(ptHidden[t]);
-            return v?v==='hidden':plotState==='hidden';
-          }
-          if(fig&&(plotState!=='hidden'||anyPtVisible)){
+          var ptAnyOv=Object.keys(ptHidden).length>0;
+          /* whether THIS card's figure carries an author label — the
+             titled/untitled pseudo-types in the Plot-types menu act on
+             it alongside the library types */
+          var figLab=fig&&fig.dataset.labelled==='1'?'titled':'untitled';
+          var wasFigOpen=!!fig&&fig.classList.contains('part-open');
+          if(fig){
             $$('[data-pt]',fig).forEach(function(n){
+              if(!ptAnyOv){
+                n.classList.remove('pt-off','pt-fold','pt-open');return;}
+              /* explicit overrides (library AND labelled dimension)
+                 combine restrictively; ANY explicit beats the inherited
+                 overall state — an override "does its own thing" */
               var pts=n.dataset.pt.split(' ').filter(Boolean);
-              var off=pts.length>0&&pts.every(ptFrameOff);
-              /* a frame folds only by an EXPLICIT per-type Fold — the
-                 overall Plots = Fold folds the whole part instead */
-              var fold=!off&&pts.length>0&&pts.every(function(t){
-                return otVal(ptHidden[t])==='collapsed';});
-              n.classList.toggle('pt-off',off);
-              n.classList.toggle('pt-fold',fold);
-              if(!fold) n.classList.remove('pt-open');
+              var exp=[];
+              pts.forEach(function(t){
+                var v=otVal(ptHidden[t]); if(v) exp.push(v);});
+              var vl=otVal(ptHidden[figLab]); if(vl) exp.push(vl);
+              var eff=exp.length?exp.reduce(stricterState):plotState;
+              n.classList.toggle('pt-off',eff==='hidden');
+              n.classList.toggle('pt-fold',eff==='collapsed');
+              if(eff==='collapsed'&&wasFigOpen)
+                n.classList.add('pt-open');
+              if(eff!=='collapsed') n.classList.remove('pt-open');
             });
             /* a pager PAGE is off when every frame on it is off; keep the
                'current' page a visible one and the ‹1 / N› count honest */
@@ -926,26 +936,30 @@
                 off=pgs.length>0&&pgs.every(function(p){
                   return p.classList.contains('pt-off');});
               } else {
-                var pts=(el.dataset&&el.dataset.pt)
-                  ?el.dataset.pt.split(' ')
-                  :$$('[data-pt]',el).map(function(n){return n.dataset.pt;});
-                pts=pts.filter(Boolean);
-                off=pts.length>0&&pts.every(ptFrameOff);
+                /* the frame's own class, or — for a wrapper — whether
+                   every framed descendant is off */
+                var infr=$$('[data-pt]',el);
+                off=el.classList.contains('pt-off')
+                  ||(infr.length>0&&infr.every(function(n){
+                      return n.classList.contains('pt-off');}));
               }
               el.classList.toggle('pt-off',off);
               if(!off) figVis=true;
             });
             if(!figCount(fig)) figVis=true;
           }
-          if(fig){
-            /* every plot type-hidden -> the part folds away entirely (no
-               "Show plot" stub over nothing) */
-            var allPtOff=(plotState!=='hidden'||anyPtVisible)
-              &&!figVis&&figCount(fig)>0;
+          if(fig&&ptAnyOv){
+            /* per-frame mode, exactly like the output part: the part-
+               level fold yields to the frames' own states, and the part
+               vanishes only when nothing survives (no "Show plot" stub
+               over nothing) */
+            fig.classList.remove('part-fold','part-open');
             fig.classList.toggle('part-off',
-              (plotState==='hidden'&&!anyPtVisible)||allPtOff);
-            fig.classList.toggle('part-fold',
-              plotState==='collapsed'&&!allPtOff);
+              !figVis&&figCount(fig)>0);
+          } else if(fig){
+            if(plotState==='hidden') figVis=false;
+            fig.classList.toggle('part-off',plotState==='hidden');
+            fig.classList.toggle('part-fold',plotState==='collapsed');
             if(plotState!=='collapsed') fig.classList.remove('part-open');
           }
           /* the advanced Output-types menu gives each kind its own
@@ -1244,18 +1258,20 @@
     var set={};ptCounts={};
     /* the ACTIVE notebook's document feed only, like presentOtTypes.
        Counted per FRAME (each drawn figure), not per part, so a pager
-       of 4 matplotlib panels reads "matplotlib (4)". */
+       of 4 matplotlib panels reads "matplotlib (4)". Every frame also
+       tallies its part's titled/untitled label for the label rows. */
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh) return [];
-    $$('.content .card .cb-fig [data-pt]',sh.el).forEach(function(n){
-      n.dataset.pt.split(' ').forEach(function(t){
-        if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
-    });
-    /* a single-frame part carries data-pt on the part itself */
-    $$('.content .card .cb-fig[data-pt]',sh.el).forEach(function(c){
-      if(c.querySelector('[data-pt]')) return;   /* frames counted above */
-      c.dataset.pt.split(' ').forEach(function(t){
-        if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
+    $$('.content .card .cb-fig',sh.el).forEach(function(f){
+      var lab=f.dataset.labelled==='1'?'titled':'untitled';
+      var frames=$$('[data-pt]',f);
+      /* a single-frame part carries data-pt on the part itself */
+      if(!frames.length&&f.dataset.pt) frames=[f];
+      frames.forEach(function(n){
+        ptCounts[lab]=(ptCounts[lab]||0)+1;
+        n.dataset.pt.split(' ').forEach(function(t){
+          if(t){set[t]=1;ptCounts[t]=(ptCounts[t]||0)+1;}});
+      });
     });
     var out=PT_TYPES.filter(function(t){return set[t];});
     Object.keys(set).forEach(function(t){
@@ -1266,15 +1282,31 @@
     var m=$('#pt-filter-menu'); if(!m) return;
     m.innerHTML='';
     var types=presentPtTypes();
-    overriddenTypes('pt').forEach(function(t){
+    var ov=overriddenTypes('pt');
+    ov.forEach(function(t){
+      if(t==='titled'||t==='untitled') return;   /* their own section */
       if(types.indexOf(t)<0) types.push(t);});
-    if(!types.length){
+    /* the LABELLED dimension: filter plots by whether the author gave
+       them a title/caption. Only offered when the notebook actually has
+       both kinds (or a stale override must stay clearable) — "only
+       titled plots" is meaningless when everything is titled. */
+    var showLab=((ptCounts.titled||0)>0&&(ptCounts.untitled||0)>0)
+      ||ov.indexOf('titled')>=0||ov.indexOf('untitled')>=0;
+    if(!types.length&&!showLab){
       m.innerHTML='<div class="ckf-empty">No plots yet</div>';return;}
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='show plot types';m.appendChild(h);
     types.forEach(function(t){
       m.appendChild(typeMenuRow('pt',t,ptCounts[t]||0,'pt-sw-'+t));
     });
+    /* plain rows in the one list, after the libraries — no sub-heading
+       (2026-08-04, user: "these should just be in the filter options") */
+    if(showLab){
+      m.appendChild(typeMenuRow('pt','titled',
+        ptCounts.titled||0,'pt-sw-titled'));
+      m.appendChild(typeMenuRow('pt','untitled',
+        ptCounts.untitled||0,'pt-sw-untitled'));
+    }
     m.appendChild(typeMenuReset('pt','pt-reset'));
     syncTypeMenus();
   }

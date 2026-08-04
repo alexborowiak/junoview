@@ -830,6 +830,9 @@ body:not(.light) .ot-stub:hover{color:var(--cyan);}
 .ckf-dot.pt-sw-animation{background:#8fd4e4;}
 .ckf-dot.pt-sw-video{background:#5b7589;}
 .ckf-dot.pt-sw-widget{background:#8ba0b2;}
+/* the labelled dimension of the Plot-types menu */
+.ckf-dot.pt-sw-titled{background:#6cc08f;}
+.ckf-dot.pt-sw-untitled{background:#5f7386;}
 /* "Apply to" scope picker: the section tree, tier-indented + tickable */
 .scope-menu{min-width:250px;max-width:330px;max-height:min(64vh,440px);
   overflow-y:auto;}

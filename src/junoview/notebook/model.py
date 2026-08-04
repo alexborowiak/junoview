@@ -38,6 +38,9 @@ class Item:
     subsection: str = ""
     is_note: bool = False          # pure-markdown interpretation card
     title_echo: bool = False       # title merely repeats a code line
+    labelled: bool = False         # AUTHOR-added label (`#| title:`,
+                                   # caption, or a leading `#` comment) —
+                                   # not a name derived from the code
     code_kind: str = "code"        # primary code kind (code_kinds[0])
     code_kinds: list = field(default_factory=lambda: ["code"])
     steps: list[CodeStep] = field(default_factory=list)  # folded code chunks

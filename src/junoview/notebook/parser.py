@@ -104,6 +104,14 @@ def _finalize_item(item: Item, used_slugs: set[str],
     item.caption = (primary["d"].get("caption")
                     or next((m["d"]["caption"] for m in members
                              if m["d"].get("caption")), ""))
+    # an AUTHOR-added label: explicit `#| title:`, a caption, or a leading
+    # `#` comment heading. A title derived from function names or code
+    # lines is bookkeeping, not labelling — the labelled/unlabelled plot
+    # filter keys on this distinction.
+    lead = [ln.strip() for ln in primary["code"].splitlines()
+            if ln.strip() and not ln.strip().startswith("#|")]
+    item.labelled = bool(explicit or item.caption
+                         or (bool(lead) and lead[0].startswith("#")))
     item.node_id = next(
         (m["d"]["id"].strip() for m in members if m["d"].get("id", "").strip()), "")
 

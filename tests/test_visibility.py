@@ -10,6 +10,8 @@ reveal-hidden as a toggle rather than a reset.
 
 from __future__ import annotations
 
+from junoview.notebook.parser import parse_notebook
+
 
 def test_output_is_capped_and_all_four_filters_cycle_three_states(out):
     """Huge printed output is capped + scrollable in the document view.
@@ -134,11 +136,11 @@ def test_code_and_plot_type_menus_are_tri_state_like_the_output_menu(out):
     # code: the per-type state reaches both hiding and folding
     assert "var ckEff=ckT?(otVal(ckHidden[ckT])||codeState):codeState;" in out
     assert "var eff=t?(otVal(s.ck[t])||s.code):s.code;" in out
-    # plots: per-frame fold stubs + the On-under-Off rescue
+    # plots: any override switches the part to per-frame mode (exactly the
+    # output part's model) with fold stubs; On-under-Off follows for free
     assert ".cb-fig [data-pt].pt-fold{cursor:pointer;" in out
     assert '"\\25b8  " attr(data-pt)' in out
-    assert "var anyPtVisible=false;" in out
-    assert "(plotState==='hidden'&&!anyPtVisible)||allPtOff" in out
+    assert "var ptAnyOv=Object.keys(ptHidden).length>0;" in out
 
 
 def test_plot_type_picker_nests_under_the_plots_filter(out):
@@ -153,6 +155,50 @@ def test_plot_type_picker_nests_under_the_plots_filter(out):
     assert 'class="fgrp"' in out and ".cb-fig .pt-off{display:none" in out
     assert (out.index('id="tv-plots"') < out.index('id="pt-filter-btn"')
             < out.index('id="tv-markdown"'))
+
+
+def test_plots_filter_by_author_label_titled_vs_untitled(out, items):
+    """Plots filter by whether the author LABELLED them (2026-08-04).
+
+    A figure is "titled" when the author added a `#| title:`, a
+    `#| caption:`, or a leading `#` comment heading — a name derived from
+    function names or code lines is bookkeeping, not labelling. The
+    Plot-types menu lists plain titled/untitled rows in the one list
+    (count + On/Fold/Off like every other row — no sub-heading), shown
+    only when the notebook has both kinds. A frame combines its library state with its
+    label state restrictively, and any explicit override beats the
+    inherited overall Plots state — so "only show titled plots" is:
+    untitled → Off.
+    """
+    # the demo's figures all carry #| title: — labelled
+    clim = [it for it in items if it.anchor == "clim"][0]
+    assert clim.labelled is True
+    assert 'data-labelled="1"' in out
+    # a bare figure cell (no title/caption/leading comment) is NOT
+    bare = parse_notebook({"cells": [
+        {"cell_type": "code", "source": "plot()",
+         "outputs": [{"output_type": "display_data",
+                      "data": {"image/png": "aGk="}}]}]})
+    bare_item = [i for s in bare.sections for i in s.items][0]
+    assert bare_item.labelled is False
+    # ...while a leading `# comment` heading IS an author label
+    led = parse_notebook({"cells": [
+        {"cell_type": "code",
+         "source": "# Sea surface temperature\nplot()",
+         "outputs": [{"output_type": "display_data",
+                      "data": {"image/png": "aGk="}}]}]})
+    led_item = [i for s in led.sections for i in s.items][0]
+    assert led_item.labelled is True
+    # menu: label tallies + plain rows in the single list (no sub-heading)
+    assert "ptCounts[lab]=(ptCounts[lab]||0)+1;" in out
+    assert "'by label'" not in out
+    assert "typeMenuRow('pt','titled'," in out
+    assert "typeMenuRow('pt','untitled'," in out
+    assert ".ckf-dot.pt-sw-titled" in out
+    # restrictive combination; explicit beats inherited
+    assert "function stricterState" in out
+    assert "var vl=otVal(ptHidden[figLab]); if(vl) exp.push(vl);" in out
+    assert "var eff=exp.length?exp.reduce(stricterState):plotState;" in out
 
 
 def test_filter_menu_and_pager_javascript_wiring(out):
