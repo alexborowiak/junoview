@@ -32,6 +32,16 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
+/* the bar FILLS its row (2026-08-04, user: on a laptop the packed-left
+   groups ended in one dead gap and read as broken): leftover width is
+   distributed into small flexible spacers flanking each divider, so the
+   sections spread evenly across the window. Each spacer is CAPPED —
+   on a huge monitor the groups ease apart a little and the rest of the
+   slack pools before the right-pinned App group, instead of stranding
+   the sections across half the screen. Under pressure the spacers
+   collapse to 0 first, so compaction and the scroll fallback measure
+   the same content width as an unspaced bar. */
+.appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold.
    28px is THE ribbon button height and it is set exactly once — a second
@@ -188,6 +198,7 @@ body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
 body.tree-mode .appbar-div.filt-div,
+body.tree-mode .appbar-flex.filt-div,
 body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
 body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
 body.tree-mode #copy-grp{display:none!important;}
@@ -207,23 +218,17 @@ body.light .appbar-div{background:#00000026;}
   align-items:center;}
 .appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
-/* ---- ribbon COMPACTION stages (see fitRibbon in app.js): applied one at
-   a time until the bar fits its width, so it never wraps to a second row.
-   THE LABELS NEVER DISAPPEAR (2026-08-04, user: an icon-only bar "makes
-   no sense to look at" — the first version of these stages stripped
-   buttons to bare icons and that was wrong). The stages only tighten
-   spacing and drop the redundant state words; a bar that still cannot
-   fit scrolls sideways instead:
-   rbc1 — tighter gaps and button padding, nothing removed
-   rbc2 — the filter state words ("On"/"Fold") go — the coloured dot
-          still shows each state and the button name stays — and the
-          Figures/Text side-captions go (the +/- tooltips carry them) */
+/* ---- ribbon COMPACTION (see fitRibbon in app.js): ONE stage, spacing
+   only, then the bar scrolls sideways. NO WORDS EVER DISAPPEAR
+   (2026-08-04, user, twice: first the icon-only stage "makes no sense to
+   look at", then hiding just the On/Fold state words was "confusing
+   without these"). Every act of hiding text to save width has been
+   rejected — the bar stays fully worded at every size, and width comes
+   from density and, at the very edge, a thin scrollbar. */
 body.rbc1 .appbar{gap:3px;}
 /* not the steppers/values: their fixed square boxes centre themselves */
 body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
   padding-left:5px;padding-right:5px;}
-body.rbc2 .appbar .tvstate{display:none;}
-body.rbc2 .appbar .fgrp-h .fgrp-cap{display:none;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;
@@ -756,9 +761,18 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-state.ovr{border-style:solid;color:#d7e3ec;background:#ffffff0c;}
 .ckf-state.ovr.s-hidden{color:#69788a;}
 .ckf-state.ovr.s-collapsed{color:#9fc0d0;}
+/* hover must beat the per-state colours above, or the feedback dies on
+   exactly the overridden buttons */
+.ckf-state.ovr:hover{color:#fff;border-color:var(--cyan);}
 body.light .ckf-state{border-color:var(--line);color:var(--ink-3);}
 body.light .ckf-state.ovr{color:var(--ink);background:#00000006;}
-body.light .ckf-state:hover{border-color:var(--cyan);color:var(--ink);}
+/* the light theme needs its own per-state colours: without these the
+   generic body.light .ovr rule out-specifies them and Off/Fold read
+   identically to On */
+body.light .ckf-state.ovr.s-hidden{color:var(--ink-3);}
+body.light .ckf-state.ovr.s-collapsed{color:#3a7d92;}
+body.light .ckf-state:hover,body.light .ckf-state.ovr:hover{
+  border-color:var(--cyan);color:var(--ink);}
 /* one click puts every type back under the overall Output filter */
 .ckf-reset{display:block;width:100%;margin-top:6px;padding:5px 6px;
   font-family:var(--mono);font-size:10.5px;color:#93a8ba;background:none;

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -m pytest *)",
+      "PowerShell(python -m pytest *)",
+      "Bash(unzip -l *)",
+      "Bash(unzip -p *)",
+      "PowerShell(Set-Location *)"
+    ]
+  }
+}

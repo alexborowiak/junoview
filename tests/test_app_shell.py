@@ -73,8 +73,11 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     # the stages: tighter spacing, then the redundant state words —
     # NEVER the labels. No rule may ever hide .btxt in the ribbon.
     assert "body.rbc1 .appbar{gap:3px;}" in out
-    assert "body.rbc2 .appbar .tvstate{display:none;}" in out
+    # NO stage may hide any words — not labels, not the On/Fold state
+    # words (2026-08-04, user twice). rbc2's word-hiding stage is gone.
     assert ".appbar .btxt{display:none" not in out
+    assert ".appbar .tvstate{display:none" not in out
+    assert "body.rbc2" not in out
     # the icon-only stage is GONE: no body.rbc3 rule may exist (the string
     # survives only as fitRibbon clearing the stale class from old sessions)
     assert "body.rbc3" not in out
@@ -90,6 +93,24 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     assert "document.fonts.ready.then(function(){measureChrome();});" in out
     assert "function measureChrome" in out
     assert "'--chrome-h',h+'px'" in out
+
+
+def test_appbar_fills_its_row_with_capped_flexible_spacers(out):
+    """Leftover ribbon width is DISTRIBUTED, not left as one dead gap.
+
+    On a laptop the packed-left groups ended in a void before the App
+    group and read as broken (2026-08-04). Capped flexible spacers flank
+    each divider: at laptop widths the sections spread to fill the row;
+    on a huge monitor the caps stop them drifting apart and the slack
+    pools before the right-pinned App group; under pressure the spacers
+    collapse to 0 first so compaction sees an unspaced bar.
+    """
+    assert out.count('class="appbar-flex') == 10
+    assert ".appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}" in out
+    # the middle pair leaves with the filter sections in Tree view; the
+    # measured filters slot spans (and so compensates for) their width
+    assert 'class="appbar-flex filt-div"' in out
+    assert "body.tree-mode .appbar-flex.filt-div," in out
 
 
 def test_ribbon_size_stepper_and_fixed_view_slot(out):

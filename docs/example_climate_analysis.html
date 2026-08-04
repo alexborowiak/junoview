@@ -620,6 +620,19 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
    Output-types menu stays that way even when the collapsed output part is
    opened (the per-output states outrank the part-level fold) */
 .cb-out.part-fold.part-open>*:not(.ot-off):not(.ot-fold){display:revert;}
+/* one FRAME folded by its plot-type's own Fold (the Plot-types menu):
+   the frame's content hides and the frame itself becomes the stub strip,
+   exactly the part-fold pattern one level down. Click to open; the strip
+   stays above the opened figure so it can be folded back. */
+.cb-fig [data-pt].pt-fold{cursor:pointer;border:1px dashed var(--line);
+  border-radius:8px;padding:8px 12px;min-height:0;}
+.cb-fig [data-pt].pt-fold:not(.pt-open)>*{display:none;}
+.cb-fig [data-pt].pt-fold::before{content:"\25b8  " attr(data-pt);
+  display:block;font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);letter-spacing:.02em;}
+.cb-fig [data-pt].pt-fold:hover::before{color:var(--cyan-deep);}
+.cb-fig [data-pt].pt-fold.pt-open::before{
+  content:"\25be  " attr(data-pt);margin-bottom:6px;}
 .cb-out.part-fold.part-open::before{display:none;}
 
 /* one line: badge, title (elided if long), then the actions pinned to the
@@ -996,6 +1009,16 @@ body.presrail-min{--presrail-w:46px;}
   justify-content:flex-start;padding-left:8px;
   min-height:var(--appbar-h);overflow-x:auto;scrollbar-width:thin;
   padding:8px 6px 6px 0;border-bottom:1px solid #ffffff0d;}
+/* the bar FILLS its row (2026-08-04, user: on a laptop the packed-left
+   groups ended in one dead gap and read as broken): leftover width is
+   distributed into small flexible spacers flanking each divider, so the
+   sections spread evenly across the window. Each spacer is CAPPED —
+   on a huge monitor the groups ease apart a little and the rest of the
+   slack pools before the right-pinned App group, instead of stranding
+   the sections across half the screen. Under pressure the spacers
+   collapse to 0 first, so compaction and the scroll fallback measure
+   the same content width as an unspaced bar. */
+.appbar-flex{flex:1 1 0;min-width:0;max-width:36px;}
 /* buttons keep one line and one uniform size no matter how narrow the
    bar gets (the builder can squeeze it) or what glyph they hold.
    28px is THE ribbon button height and it is set exactly once — a second
@@ -1152,6 +1175,7 @@ body.tree-mode #ab-tree{min-width:var(--filters-slot,675px);}
 body.tree-mode #ab-tree{display:flex!important;}
 body.tree-mode #ab-filters,body.tree-mode #ab-scope,
 body.tree-mode .appbar-div.filt-div,
+body.tree-mode .appbar-flex.filt-div,
 body.tree-mode #pt-grp,body.tree-mode #md-grp,body.tree-mode #ck-grp,
 body.tree-mode #ot-grp,body.tree-mode #sec-scope-grp,
 body.tree-mode #copy-grp{display:none!important;}
@@ -1171,23 +1195,17 @@ body.light .appbar-div{background:#00000026;}
   align-items:center;}
 .appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
 .appbar .toggle.tv.off,.present-bar .toggle.tv.off{color:#69788a;}
-/* ---- ribbon COMPACTION stages (see fitRibbon in app.js): applied one at
-   a time until the bar fits its width, so it never wraps to a second row.
-   THE LABELS NEVER DISAPPEAR (2026-08-04, user: an icon-only bar "makes
-   no sense to look at" — the first version of these stages stripped
-   buttons to bare icons and that was wrong). The stages only tighten
-   spacing and drop the redundant state words; a bar that still cannot
-   fit scrolls sideways instead:
-   rbc1 — tighter gaps and button padding, nothing removed
-   rbc2 — the filter state words ("On"/"Fold") go — the coloured dot
-          still shows each state and the button name stays — and the
-          Figures/Text side-captions go (the +/- tooltips carry them) */
+/* ---- ribbon COMPACTION (see fitRibbon in app.js): ONE stage, spacing
+   only, then the bar scrolls sideways. NO WORDS EVER DISAPPEAR
+   (2026-08-04, user, twice: first the icon-only stage "makes no sense to
+   look at", then hiding just the On/Fold state words was "confusing
+   without these"). Every act of hiding text to save width has been
+   rejected — the bar stays fully worded at every size, and width comes
+   from density and, at the very edge, a thin scrollbar. */
 body.rbc1 .appbar{gap:3px;}
 /* not the steppers/values: their fixed square boxes centre themselves */
 body.rbc1 .appbar .toggle:not(.fz-step):not(.fz-val){
   padding-left:5px;padding-right:5px;}
-body.rbc2 .appbar .tvstate{display:none;}
-body.rbc2 .appbar .fgrp-h .fgrp-cap{display:none;}
 /* the sidebar toggle now lives on the tab line, next to Open + the tabs
    (the doc-navigation controls), not up among the filters */
 .tabsrow .menubtn{display:inline-flex;align-items:center;
@@ -1720,9 +1738,18 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:#39a9c026;}
 .ckf-state.ovr{border-style:solid;color:#d7e3ec;background:#ffffff0c;}
 .ckf-state.ovr.s-hidden{color:#69788a;}
 .ckf-state.ovr.s-collapsed{color:#9fc0d0;}
+/* hover must beat the per-state colours above, or the feedback dies on
+   exactly the overridden buttons */
+.ckf-state.ovr:hover{color:#fff;border-color:var(--cyan);}
 body.light .ckf-state{border-color:var(--line);color:var(--ink-3);}
 body.light .ckf-state.ovr{color:var(--ink);background:#00000006;}
-body.light .ckf-state:hover{border-color:var(--cyan);color:var(--ink);}
+/* the light theme needs its own per-state colours: without these the
+   generic body.light .ovr rule out-specifies them and Off/Fold read
+   identically to On */
+body.light .ckf-state.ovr.s-hidden{color:var(--ink-3);}
+body.light .ckf-state.ovr.s-collapsed{color:#3a7d92;}
+body.light .ckf-state:hover,body.light .ckf-state.ovr:hover{
+  border-color:var(--cyan);color:var(--ink);}
 /* one click puts every type back under the overall Output filter */
 .ckf-reset{display:block;width:100%;margin-top:6px;padding:5px 6px;
   font-family:var(--mono);font-size:10.5px;color:#93a8ba;background:none;
@@ -3681,7 +3708,9 @@ window.MathJax = {
         title="Open a notebook (.ipynb) from your computer or a
  URL"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
@@ -3712,7 +3741,12 @@ window.MathJax = {
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z"/></svg></button>
     </span></span><span class="abgrp-lab">Filters</span></span>
+    <!-- this middle pair carries filt-div too: it vanishes with the
+         filter sections in Tree view, and the measured filters slot
+         (which spans it) compensates for its width -->
+    <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
+    <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Choose WHICH sections the filters above act on — select the
@@ -3732,7 +3766,9 @@ window.MathJax = {
  ><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
          because it plays the same role — it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
@@ -3779,7 +3815,9 @@ window.MathJax = {
       </span>
       <span class="fgrp-cap">Text</span>
     </span></span><span class="abgrp-lab">Size</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
@@ -3798,7 +3836,9 @@ window.MathJax = {
       title="Present this document full screen (Narrative or Tree). Esc to
  exit."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg><span class="btxt">Present</span></button>
     </span></span><span class="abgrp-lab">View</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- App: theme / support / help. These sat at the right of the TAB ROW
          while the ribbon still wrapped — as its last group they were the
          first thing to spill onto a second line. The ribbon does not wrap
@@ -7920,10 +7960,14 @@ through Ko-fi. Thank you.</p>
     invalidateSids();   /* the section list belongs to the new tab */
     renderRawBtn();renderViewBtns();relayoutActiveTree();
     /* filters belong to the NOTEBOOK, so the whole filter bar has to be
-       rebound to the tab you just switched to (and its "Apply to" picker
-       closed — its rows are namespaced to the previous notebook) */
-    var scm=$('#sec-scope-menu');
-    if(scm&&!scm.hidden) scm.hidden=true;
+       rebound to the tab you just switched to — and EVERY open picker
+       closed, not just "Apply to": the type menus' rows and counts are
+       namespaced to the previous notebook too, and two switch paths skip
+       the outside-click closers entirely (the tab ✕ stopPropagates; the
+       hash router involves no click at all). A stale menu left open wrote
+       the OLD notebook's type overrides into the NEW notebook's state
+       (2026-08-04, adversarial review). */
+    closeFilterMenus();
     renderTypeButtons();renderScopeBtn();
     updateHash();
     document.dispatchEvent(new CustomEvent('sem:activate',
@@ -8534,7 +8578,10 @@ through Ko-fi. Thank you.</p>
           /* PART-BASED: every non-markdown cell may hold a code part, a plot
              part and an output part; each answers to its OWN filter. The card
              disappears only when none of its parts remain visible. */
-          var ckOff=!!(c.dataset.ck&&ckHidden[c.dataset.ck.split(' ')[0]]);
+          /* the card's code follows its TYPE's own tri-state where one is
+             set (the Code-types menu), else the overall Code filter */
+          var ckT=c.dataset.ck?c.dataset.ck.split(' ')[0]:null;
+          var ckEff=ckT?(otVal(ckHidden[ckT])||codeState):codeState;
           var fig=c.querySelector('.cb-fig'),
               out=c.querySelector('.cb-out'),
               cw=c.querySelector('.codewrap');
@@ -8549,17 +8596,32 @@ through Ko-fi. Thank you.</p>
             out.classList.toggle('part-fold',outState==='collapsed');
             if(outState!=='collapsed') out.classList.remove('part-open');
           }
-          if(cw) cw.classList.toggle('code-off',codeState==='hidden'||ckOff);
-          /* the advanced Plot-types filter hides individual figures by
-             library (matplotlib / plotly / bokeh / …). Stamp pt-off on
-             every frame, then fold pager pages and the part upward; the
-             plot part counts as visible only if some figure survives. */
+          if(cw) cw.classList.toggle('code-off',ckEff==='hidden');
+          /* the advanced Plot-types menu gives each library its own
+             On / Fold / Off; a type with no override follows the overall
+             Plots filter. Stamp pt-off / pt-fold on every frame, then
+             fold pager pages and the part upward; the plot part counts
+             as visible only if some figure (or its fold stub) survives.
+             A type overridden to On even shows under Plots = Off. */
           var figVis=false;
-          if(fig&&plotState!=='hidden'){
+          var anyPtVisible=false;
+          for(var pk in ptHidden){
+            if(otVal(ptHidden[pk])==='visible'){anyPtVisible=true;break;}}
+          function ptFrameOff(t){
+            var v=otVal(ptHidden[t]);
+            return v?v==='hidden':plotState==='hidden';
+          }
+          if(fig&&(plotState!=='hidden'||anyPtVisible)){
             $$('[data-pt]',fig).forEach(function(n){
               var pts=n.dataset.pt.split(' ').filter(Boolean);
-              n.classList.toggle('pt-off',
-                pts.length>0&&pts.every(function(t){return ptHidden[t];}));
+              var off=pts.length>0&&pts.every(ptFrameOff);
+              /* a frame folds only by an EXPLICIT per-type Fold — the
+                 overall Plots = Fold folds the whole part instead */
+              var fold=!off&&pts.length>0&&pts.every(function(t){
+                return otVal(ptHidden[t])==='collapsed';});
+              n.classList.toggle('pt-off',off);
+              n.classList.toggle('pt-fold',fold);
+              if(!fold) n.classList.remove('pt-open');
             });
             /* a pager PAGE is off when every frame on it is off; keep the
                'current' page a visible one and the ‹1 / N› count honest */
@@ -8601,8 +8663,7 @@ through Ko-fi. Thank you.</p>
                   ?el.dataset.pt.split(' ')
                   :$$('[data-pt]',el).map(function(n){return n.dataset.pt;});
                 pts=pts.filter(Boolean);
-                off=pts.length>0&&pts.every(function(t){
-                  return ptHidden[t];});
+                off=pts.length>0&&pts.every(ptFrameOff);
               }
               el.classList.toggle('pt-off',off);
               if(!off) figVis=true;
@@ -8612,10 +8673,10 @@ through Ko-fi. Thank you.</p>
           if(fig){
             /* every plot type-hidden -> the part folds away entirely (no
                "Show plot" stub over nothing) */
-            var allPtOff=plotState!=='hidden'
+            var allPtOff=(plotState!=='hidden'||anyPtVisible)
               &&!figVis&&figCount(fig)>0;
             fig.classList.toggle('part-off',
-              plotState==='hidden'||allPtOff);
+              (plotState==='hidden'&&!anyPtVisible)||allPtOff);
             fig.classList.toggle('part-fold',
               plotState==='collapsed'&&!allPtOff);
             if(plotState!=='collapsed') fig.classList.remove('part-open');
@@ -8626,6 +8687,12 @@ through Ko-fi. Thank you.</p>
              (or its fold stub) survives. */
           var outVis=false;
           if(out&&otAnyOv){
+            /* a part the reader had OPENED stays open: its part-open
+               becomes ot-open on each newly folded child, instead of
+               snapping everything they were reading shut (2026-08-04,
+               adversarial review). part-open only exists in part-level
+               mode, so this fires exactly once, at the switch. */
+            var wasPartOpen=out.classList.contains('part-open');
             out.classList.remove('part-fold','part-open');
             var kids=[].slice.call(out.children);
             kids.forEach(function(el){
@@ -8635,6 +8702,8 @@ through Ko-fi. Thank you.</p>
               var eff=typ?(otVal(otHidden[typ])||outState):outState;
               el.classList.toggle('ot-off',eff==='hidden');
               el.classList.toggle('ot-fold',eff==='collapsed');
+              if(eff==='collapsed'&&wasPartOpen)
+                el.classList.add('ot-open');
               if(eff!=='collapsed') el.classList.remove('ot-open');
               /* a folded output leaves a slim "▸ type" stub in its place,
                  exactly like the part-level "Show output" bar but per
@@ -8665,15 +8734,22 @@ through Ko-fi. Thank you.</p>
             out.classList.toggle('part-off',!outVis);
           } else if(out){
             /* no overrides: clear any per-output state left behind
-               (snapshot first — removing stubs mid-walk skips nodes) */
+               (snapshot first — removing stubs mid-walk skips nodes).
+               The mirror of the transition above: an output the reader
+               had opened per-type keeps the part open after a reset,
+               rather than snapping shut behind the fold bar. */
+            var hadOtOpen=false;
             [].slice.call(out.children).forEach(function(el){
               if(el.classList.contains('ot-stub')){el.remove();return;}
+              if(el.classList.contains('ot-open')) hadOtOpen=true;
               el.classList.remove('ot-off','ot-fold','ot-open');
               if(outState!=='hidden') outVis=true;
             });
             if(!out.children.length&&outState!=='hidden') outVis=true;
+            if(hadOtOpen&&outState==='collapsed')
+              out.classList.add('part-open');
           }
-          var codeVis=!!cw&&codeState!=='hidden'&&!ckOff;
+          var codeVis=!!cw&&ckEff!=='hidden';
           filtGone=!figVis&&!outVis&&!codeVis;
           c.classList.remove('collapsed','expanded');   /* parts fold, not cards */
         }
@@ -8730,35 +8806,36 @@ through Ko-fi. Thank you.</p>
     syncTypeMenus();
     scheduleSaveLayout();   /* remember this for next time */
   }
+  /* every type menu speaks the same language: the map it edits, the
+     overall filter it inherits from, and the word on that filter's
+     ribbon button */
+  var MENU_KEY={ck:'code',pt:'plot',ot:'out'};
+  var MENU_LABEL={ck:'Code',pt:'Plots',ot:'Output'};
   /* refresh an OPEN type menu's controls in place. Rebuilding it
      mid-click would yank the rows out from under a user working down
      the list. */
   function syncTypeMenus(){
-    var anyOtOvr=false;
     ['#ck-filter-menu','#pt-filter-menu','#ot-filter-menu']
       .forEach(function(sel){
         $$(sel+' .ckf-row').forEach(function(r){
           var t=r.dataset.t,map=r.dataset.map;
           if(!t||!map) return;
-          /* an Output-types row carries a tri-state cycler, not a box */
-          var st=$('.ckf-state',r);
-          if(st){
-            var vs=otEffVals(t);
-            var one=vs.length===1?vs[0]:'mixed';
-            st.textContent=CODE_LABEL[one]||CODE_LABEL.mixed;
-            var ovr=countF(map,t)>0;
-            if(ovr) anyOtOvr=true;
-            st.className='ckf-state s-'+one+(ovr?' ovr':'');
-            return;
-          }
-          var cb=$('input',r); if(!cb) return;
-          var n=countF(map,t);
-          cb.checked=n===0;
-          cb.indeterminate=n>0&&n<targetCount();
+          var st=$('.ckf-state',r); if(!st) return;
+          var vs=effVals(map,MENU_KEY[map],t);
+          /* per-section disagreement reads "Mix", like the main buttons */
+          var one=vs.length===1?vs[0]:'mixed';
+          st.textContent=CODE_LABEL[one]||CODE_LABEL.mixed;
+          st.className='ckf-state s-'+one
+            +(countF(map,t)>0?' ovr':'');
         });
       });
-    var rs=$('#ot-reset');
-    if(rs) rs.disabled=!anyOtOvr;
+    /* from the STATE, not the rendered rows — an override for a type
+       with no rendered row must still enable the reset */
+    [['#ot-reset','ot'],['#ck-reset','ck'],['#pt-reset','pt']]
+      .forEach(function(p){
+        var rs=$(p[0]);
+        if(rs) rs.disabled=!overriddenTypes(p[1]).length;
+      });
   }
   /* advanced filter menu: hide specific code subtypes */
   var ckCounts={};
@@ -8775,10 +8852,64 @@ through Ko-fi. Thank you.</p>
     });
     return CK_TYPES.filter(function(t){return set[t];});
   }
+  /* one row of any type menu: dot, "name (count)", and the type's OWN
+     On/Fold/Off cycler. Setting it detaches the type from its overall
+     filter ("does its own thing") until that menu's reset re-attaches
+     it. The whole row cycles, like the old full-row checkbox label. */
+  function typeMenuRow(map,t,count,dotClass){
+    var key=MENU_KEY[map];
+    var row=document.createElement('div');row.className='ckf-row';
+    row.dataset.t=t;row.dataset.map=map;
+    var sw=document.createElement('span');
+    sw.className='ckf-dot '+dotClass;
+    var tx=document.createElement('span');tx.className='ckf-name';
+    tx.textContent=t+' ('+count+')';
+    var st=document.createElement('button');st.type='button';
+    st.className='ckf-state';
+    st.title='This type’s own filter: On → Fold → Off. '
+      +'Set, it no longer follows the '+MENU_LABEL[map]+' button; '
+      +'Reset below re-attaches it.';
+    st.addEventListener('click',function(e){
+      e.preventDefault();e.stopPropagation();
+      var vs=effVals(map,key,t);
+      var cur=vs.length===1?vs[0]:'hidden';   /* Mix -> next is On */
+      var nx=cycle3(cur);
+      writeF(function(s){s[map][t]=nx;});
+      applyFilters();
+      if(map==='ck') applyCodeState();
+    });
+    row.addEventListener('click',function(e){
+      if(e.target!==st) st.click();});
+    row.appendChild(sw);row.appendChild(tx);row.appendChild(st);
+    return row;
+  }
+  /* the menu's reset: every type back under the overall filter — for the
+     WHOLE notebook, not just the targeted sections, or a stale override
+     in an untargeted section survives every reset that claims to clear
+     it */
+  function typeMenuReset(map,id){
+    var rs=document.createElement('button');rs.type='button';
+    rs.id=id;rs.className='ckf-reset';
+    rs.textContent='Reset: match '+MENU_LABEL[map];
+    rs.title='Clear every per-type state above, so all types follow '
+      +'the '+MENU_LABEL[map]+' filter again';
+    rs.addEventListener('click',function(){
+      var stem=activeStem();
+      FDEFof(stem)[map]={};
+      var pre=String(stem)+'::';
+      for(var k in secF){if(k.indexOf(pre)===0) secF[k][map]={};}
+      pruneF(stem);markSecOverrides();
+      applyFilters();
+      if(map==='ck') applyCodeState();
+    });
+    return rs;
+  }
   function renderCkMenu(){
     var m=$('#ck-filter-menu'); if(!m) return;
     m.innerHTML='';
     var types=presentCkTypes();
+    overriddenTypes('ck').forEach(function(t){
+      if(types.indexOf(t)<0) types.push(t);});
     if(!types.length){
       m.innerHTML='<div class="ckf-empty">No typed code cells yet</div>';
       return;
@@ -8786,25 +8917,10 @@ through Ko-fi. Thank you.</p>
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='show code types';m.appendChild(h);
     types.forEach(function(t){
-      var row=document.createElement('label');row.className='ckf-row';
-      row.dataset.t=t;row.dataset.map='ck';
-      var cb=document.createElement('input');cb.type='checkbox';
-      var nHid=countF('ck',t);
-      cb.checked=nHid===0;
-      cb.indeterminate=nHid>0&&nHid<targetCount();
-      cb.addEventListener('change',function(){
-        var show=cb.checked;
-        writeF(function(s){
-          if(show) delete s.ck[t]; else s.ck[t]=1;});
-        applyFilters();
-      });
-      var sw=document.createElement('span');
-      sw.className='ckf-dot ckmain-'+t;
-      var tx=document.createElement('span');
-      tx.textContent=t+' ('+(ckCounts[t]||0)+')';
-      row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
-      m.appendChild(row);
+      m.appendChild(typeMenuRow('ck',t,ckCounts[t]||0,'ckmain-'+t));
     });
+    m.appendChild(typeMenuReset('ck','ck-reset'));
+    syncTypeMenus();
   }
   /* only one advanced filter menu open at a time */
   function closeFilterMenus(except){
@@ -8883,27 +8999,17 @@ through Ko-fi. Thank you.</p>
     var m=$('#pt-filter-menu'); if(!m) return;
     m.innerHTML='';
     var types=presentPtTypes();
+    overriddenTypes('pt').forEach(function(t){
+      if(types.indexOf(t)<0) types.push(t);});
     if(!types.length){
       m.innerHTML='<div class="ckf-empty">No plots yet</div>';return;}
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='show plot types';m.appendChild(h);
     types.forEach(function(t){
-      var row=document.createElement('label');row.className='ckf-row';
-      row.dataset.t=t;row.dataset.map='pt';
-      var cb=document.createElement('input');cb.type='checkbox';
-      var nHidP=countF('pt',t);
-      cb.checked=nHidP===0;
-      cb.indeterminate=nHidP>0&&nHidP<targetCount();
-      cb.addEventListener('change',function(){
-        var show=cb.checked;
-        writeF(function(s){
-          if(show) delete s.pt[t]; else s.pt[t]=1;});
-        applyFilters();});
-      var sw=document.createElement('span');sw.className='ckf-dot pt-sw-'+t;
-      var tx=document.createElement('span');
-      tx.textContent=t+' ('+(ptCounts[t]||0)+')';
-      row.appendChild(cb);row.appendChild(sw);row.appendChild(tx);
-      m.appendChild(row);});
+      m.appendChild(typeMenuRow('pt',t,ptCounts[t]||0,'pt-sw-'+t));
+    });
+    m.appendChild(typeMenuReset('pt','pt-reset'));
+    syncTypeMenus();
   }
   var ptBtn=$('#pt-filter-btn'),ptMenu=$('#pt-filter-menu');
   if(ptBtn) ptBtn.addEventListener('click',function(e){
@@ -8949,14 +9055,30 @@ through Ko-fi. Thank you.</p>
       if(OT_TYPES.indexOf(t)<0) out.push(t);});   /* unknown slugs still show */
     return out;
   }
-  /* the EFFECTIVE state(s) of one output type across the targeted
-     sections: its own override where set, else the overall Output state.
-     More than one distinct value -> the button reads "Mix". */
-  function otEffVals(t){
+  /* every type carrying an override ANYWHERE in this notebook (default
+     or any section) — even one whose cells/outputs no longer exist. A
+     stale override still changes rendering and still lights the funnel,
+     so the menu must SHOW it (count 0) and the reset must reach it, or
+     it becomes invisible and unclearable (2026-08-04, adversarial
+     review: saved layouts + re-run notebooks). */
+  function overriddenTypes(map){
+    var stem=activeStem(),set={};
+    Object.keys(FDEFof(stem)[map]).forEach(function(t){set[t]=1;});
+    var pre=String(stem)+'::';
+    for(var k in secF){
+      if(k.indexOf(pre)===0)
+        Object.keys(secF[k][map]).forEach(function(t){set[t]=1;});
+    }
+    return Object.keys(set);
+  }
+  /* the EFFECTIVE state(s) of one type across the targeted sections:
+     its own override where set, else the overall filter it inherits
+     from. More than one distinct value -> the button reads "Mix". */
+  function effVals(map,key,t){
     var stem=activeStem(),ids=targetSids(),vals={};
     (ids.length?ids:[null]).forEach(function(id){
       var s=id===null?FDEFof(stem):stateFor(stem,id);
-      vals[otVal(s.ot[t])||s.out]=1;
+      vals[otVal(s[map][t])||s[key]]=1;
     });
     return Object.keys(vals);
   }
@@ -8964,45 +9086,18 @@ through Ko-fi. Thank you.</p>
     var m=$('#ot-filter-menu'); if(!m) return;
     m.innerHTML='';
     var types=presentOtTypes();
+    /* overridden-but-absent types still show (count 0), or their
+       override could never be seen or cleared */
+    overriddenTypes('ot').forEach(function(t){
+      if(types.indexOf(t)<0) types.push(t);});
     if(!types.length){
       m.innerHTML='<div class="ckf-empty">No printed output yet</div>';return;}
     var h=document.createElement('div');h.className='ckf-h';
     h.textContent='show output types';m.appendChild(h);
     types.forEach(function(t){
-      var row=document.createElement('div');row.className='ckf-row';
-      row.dataset.t=t;row.dataset.map='ot';
-      var sw=document.createElement('span');sw.className='ckf-dot ot-sw-'+t;
-      var tx=document.createElement('span');tx.className='ckf-name';
-      tx.textContent=t+' ('+(otCounts[t]||0)+')';
-      /* the type's own On/Fold/Off, cycling like the main filters. One
-         click detaches it from the overall Output state ("does its own
-         thing") until the reset below re-attaches it. */
-      var st=document.createElement('button');st.type='button';
-      st.className='ckf-state';
-      st.title='This type’s own filter: On → Fold → Off. '
-        +'Set, it no longer follows the Output button; Reset below '
-        +'re-attaches it.';
-      st.addEventListener('click',function(e){
-        e.preventDefault();e.stopPropagation();
-        var vs=otEffVals(t);
-        var cur=vs.length===1?vs[0]:'hidden';   /* Mix -> next is On */
-        var nx=CODE_CYCLE[(CODE_CYCLE.indexOf(cur)+1)%CODE_CYCLE.length];
-        writeF(function(s){s.ot[t]=nx;});
-        applyFilters();
-      });
-      row.appendChild(sw);row.appendChild(tx);row.appendChild(st);
-      m.appendChild(row);});
-    /* every type back under the overall Output filter */
-    var rs=document.createElement('button');rs.type='button';
-    rs.id='ot-reset';rs.className='ckf-reset';
-    rs.textContent='Reset: match Output';
-    rs.title='Clear every per-type state above, so all output types '
-      +'follow the Output filter again';
-    rs.addEventListener('click',function(){
-      writeF(function(s){s.ot={};});
-      applyFilters();
+      m.appendChild(typeMenuRow('ot',t,otCounts[t]||0,'ot-sw-'+t));
     });
-    m.appendChild(rs);
+    m.appendChild(typeMenuReset('ot','ot-reset'));
     syncTypeMenus();
   }
   var otBtn=$('#ot-filter-btn'),otMenu=$('#ot-filter-menu');
@@ -9029,9 +9124,10 @@ through Ko-fi. Thank you.</p>
     var btn=$('.codetoggle',w);
     if(btn) btn.setAttribute('aria-expanded',open?'true':'false');
   }
-  /* fold/expand each codewrap (data-open) to ITS OWN section's state.
-     HIDING a codewrap (code-off) is owned by applyFilters — the Code
-     filter plus the code-type filter. */
+  /* fold/expand each codewrap (data-open) to ITS OWN section's state —
+     through its code-TYPE's tri-state when one is set (the Code-types
+     menu), else the overall Code filter. HIDING a codewrap (code-off)
+     is owned by applyFilters. */
   function applyCodeState(root){
     var shells=(root&&root.classList
       &&root.classList.contains('nbshell'))
@@ -9039,8 +9135,11 @@ through Ko-fi. Thank you.</p>
     shells.forEach(function(sh){
       var stem=sh.dataset.nb;
       $$('.content .codewrap',sh).forEach(function(w){
-        setCodeOpen(w,stateFor(stem,secIdOf(w.closest('.card')))
-          .code==='visible');
+        var c=w.closest('.card');
+        var s=stateFor(stem,secIdOf(c));
+        var t=c&&c.dataset.ck?c.dataset.ck.split(' ')[0]:null;
+        var eff=t?(otVal(s.ck[t])||s.code):s.code;
+        setCodeOpen(w,eff==='visible');
       });
     });
   }
@@ -9481,10 +9580,10 @@ through Ko-fi. Thank you.</p>
       clone.style.removeProperty('--fz');
       $$('.code-off',clone).forEach(function(x){
         x.classList.remove('code-off');});
-      $$('.part-off,.part-fold,.pt-off,.ot-off,.ot-fold',clone)
+      $$('.part-off,.part-fold,.pt-off,.pt-fold,.ot-off,.ot-fold',clone)
         .forEach(function(x){
-          x.classList.remove('part-off','part-fold','pt-off','ot-off',
-            'ot-fold','ot-open');});
+          x.classList.remove('part-off','part-fold','pt-off','pt-fold',
+            'pt-open','ot-off','ot-fold','ot-open');});
       /* per-output fold stubs are filter chrome, not content */
       $$('.ot-stub',clone).forEach(function(x){x.remove();});
       $$('[id]',clone).forEach(function(x){x.removeAttribute('id');});
@@ -10237,13 +10336,13 @@ through Ko-fi. Thank you.</p>
      narrower laptop the View + App groups spilled onto a new line and the
      extra band of chrome ate the notebook's viewing space). Escalate
      through the compaction stages (see the body.rbc* rules in app.css)
-     until the bar fits. The stages only TIGHTEN — labels are never
-     hidden (2026-08-04, user: the icon-only stage "makes no sense to
-     look at"; a dense bar with names beats a cryptic one). Reset first
-     so a WIDER window relaxes back; past rbc2 the bar scrolls sideways
-     (overflow-x:auto) — a thin scrollbar, never a second row and never
-     bare icons. rbc3 is also removed here in case an older session left
-     it stamped on the body. */
+     until the bar fits. ONE stage, spacing only — NO WORDS are ever
+     hidden (2026-08-04, user, twice: icon-only buttons "make no sense to
+     look at", and even losing just the On/Fold state words was
+     "confusing without these"). Reset first so a WIDER window relaxes
+     back; past rbc1 the bar scrolls sideways (overflow-x:auto) — a thin
+     scrollbar, never a second row, never missing words. rbc2/rbc3 are
+     also removed here in case an older session left them stamped. */
   function fitRibbon(){
     var bar=$('.appbar');
     /* a HIDDEN bar (welcome screen, present mode) measures 0 wide — do
@@ -10251,8 +10350,7 @@ through Ko-fi. Thank you.</p>
     if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
     cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
-    for(var lv=1;lv<=2&&bar.scrollWidth>bar.clientWidth+1;lv++)
-      cl.add('rbc'+lv);
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('rbc1');
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
      under their filters), so the page offset has to follow its REAL
@@ -10926,9 +11024,19 @@ through Ko-fi. Thank you.</p>
         if(c.classList.contains('collapsed')) c.classList.toggle('expanded');
       });
     });
-    /* ---- a figure folded by Plots = Collapsed opens on click ---- */
+    /* ---- a figure folded by Plots = Collapsed opens on click; a FRAME
+       folded by its plot-type's own Fold toggles on its stub strip.
+       Open, only the strip itself refolds — a click on the figure
+       content must not snap it shut ---- */
     $$('.cb-fig',shell).forEach(function(f){
-      f.addEventListener('click',function(){
+      f.addEventListener('click',function(e){
+        var fr=e.target&&e.target.closest
+          ?e.target.closest('[data-pt].pt-fold'):null;
+        if(fr){
+          if(!fr.classList.contains('pt-open')||e.target===fr)
+            fr.classList.toggle('pt-open');
+          return;
+        }
         if(f.classList.contains('part-fold')) f.classList.toggle('part-open');
       });
     });
@@ -13648,10 +13756,10 @@ through Ko-fi. Thank you.</p>
     b=stripIds(b.cloneNode(true));
     /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
        must not ride into slides — a placed frame shows its part in full */
-    $$('.pt-off,.ot-off,.ot-fold,.part-off,.part-fold,.code-off',b)
+    $$('.pt-off,.pt-fold,.ot-off,.ot-fold,.part-off,.part-fold,.code-off',b)
       .forEach(function(n){
-        ['pt-off','ot-off','ot-fold','ot-open','part-off','part-fold',
-         'part-open','code-off']
+        ['pt-off','pt-fold','pt-open','ot-off','ot-fold','ot-open',
+         'part-off','part-fold','part-open','code-off']
           .forEach(function(cl){n.classList.remove(cl);});
       });
     /* per-output fold stubs are filter chrome, not content */

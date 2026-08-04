@@ -26,7 +26,9 @@
         title="Open a notebook (.ipynb) from your computer or a
  URL"><i data-ic="open"></i><span class="btxt">Open</span></button>
     </span></span><span class="abgrp-lab">File</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
@@ -57,7 +59,12 @@
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)"><i data-ic="types"></i></button>
     </span></span><span class="abgrp-lab">Filters</span></span>
+    <!-- this middle pair carries filt-div too: it vanishes with the
+         filter sections in Tree view, and the measured filters slot
+         (which spans it) compensates for its width -->
+    <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="appbar-div filt-div" aria-hidden="true"></span>
+    <span class="appbar-flex filt-div" aria-hidden="true"></span>
     <span class="abgrp" id="ab-scope"><span class="abgrp-row"><span class="fgrp" id="sec-scope-grp">
       <button class="toggle" id="sec-scope-btn"
         title="Choose WHICH sections the filters above act on — select the
@@ -77,7 +84,9 @@
  ><span class="btxt">Match document</span></button>
     </span>
     </span><span class="abgrp-lab">Apply to</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- TREE section: sits exactly where Filters sits in Document view,
          because it plays the same role — it is what shapes WHAT YOU SEE
          in this view. Only rendered while the tree is on. -->
@@ -124,7 +133,9 @@
       </span>
       <span class="fgrp-cap">Text</span>
     </span></span><span class="abgrp-lab">Size</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- Raw / Tree / Present stay together: they are one idea (how you are
          looking at the document) and must not wrap apart -->
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
@@ -143,7 +154,9 @@
       title="Present this document full screen (Narrative or Tree). Esc to
  exit."><i data-ic="present"></i><span class="btxt">Present</span></button>
     </span></span><span class="abgrp-lab">View</span></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <span class="appbar-div" aria-hidden="true"></span>
+    <span class="appbar-flex" aria-hidden="true"></span>
     <!-- App: theme / support / help. These sat at the right of the TAB ROW
          while the ribbon still wrapped — as its last group they were the
          first thing to spill onto a second line. The ribbon does not wrap

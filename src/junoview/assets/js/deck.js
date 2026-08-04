@@ -924,10 +924,10 @@
     b=stripIds(b.cloneNode(true));
     /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
        must not ride into slides — a placed frame shows its part in full */
-    $$('.pt-off,.ot-off,.ot-fold,.part-off,.part-fold,.code-off',b)
+    $$('.pt-off,.pt-fold,.ot-off,.ot-fold,.part-off,.part-fold,.code-off',b)
       .forEach(function(n){
-        ['pt-off','ot-off','ot-fold','ot-open','part-off','part-fold',
-         'part-open','code-off']
+        ['pt-off','pt-fold','pt-open','ot-off','ot-fold','ot-open',
+         'part-off','part-fold','part-open','code-off']
           .forEach(function(cl){n.classList.remove(cl);});
       });
     /* per-output fold stubs are filter chrome, not content */

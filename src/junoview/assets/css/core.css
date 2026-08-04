@@ -608,6 +608,19 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
    Output-types menu stays that way even when the collapsed output part is
    opened (the per-output states outrank the part-level fold) */
 .cb-out.part-fold.part-open>*:not(.ot-off):not(.ot-fold){display:revert;}
+/* one FRAME folded by its plot-type's own Fold (the Plot-types menu):
+   the frame's content hides and the frame itself becomes the stub strip,
+   exactly the part-fold pattern one level down. Click to open; the strip
+   stays above the opened figure so it can be folded back. */
+.cb-fig [data-pt].pt-fold{cursor:pointer;border:1px dashed var(--line);
+  border-radius:8px;padding:8px 12px;min-height:0;}
+.cb-fig [data-pt].pt-fold:not(.pt-open)>*{display:none;}
+.cb-fig [data-pt].pt-fold::before{content:"\25b8  " attr(data-pt);
+  display:block;font-family:var(--mono);font-size:11px;
+  color:var(--ink-3);letter-spacing:.02em;}
+.cb-fig [data-pt].pt-fold:hover::before{color:var(--cyan-deep);}
+.cb-fig [data-pt].pt-fold.pt-open::before{
+  content:"\25be  " attr(data-pt);margin-bottom:6px;}
 .cb-out.part-fold.part-open::before{display:none;}
 
 /* one line: badge, title (elided if long), then the actions pinned to the

@@ -107,6 +107,33 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **No ribbon words disappear, ever.** The compaction stage that hid the
+  On/Fold state words was "confusing without these" — it is gone. The one
+  remaining stage tightens spacing only; below that the bar scrolls.
+- **All three type menus are now tri-state.** Code types and Plot types
+  work exactly like Output types: every row shows "name (count)" and its
+  own On / Fold / Off cycler, every menu has its own "Reset: match …".
+  A code type's Fold folds those cells' code behind its toggle; a plot
+  type's Fold collapses that library's figures to slim stub strips that
+  open in place; a plot type set to On shows even while Plots is Off.
+- **The ribbon now fills its row.** Packed-left groups on a laptop ended in
+  one dead gap before the App buttons and read as broken. Capped flexible
+  spacers beside each divider distribute the leftover width, so the
+  sections spread evenly at laptop widths; on a huge monitor the caps keep
+  the groups from drifting apart and the slack pools before the
+  right-pinned App group. Under pressure the spacers collapse first, so
+  the never-wrap compaction is unaffected.
+- **Per-type output filters hardened after an adversarial review.**
+  Switching tabs now closes every filter picker — a menu left open across
+  a tab switch (tab ✕, or browser back/forward) kept the old notebook's
+  rows and wrote its overrides into the new notebook's state. An override
+  for a type no longer in the notebook (saved layout, re-run notebook)
+  now still shows as a row with count 0 and keeps "Reset: match Output"
+  enabled — it used to become invisible and unclearable while still
+  forcing per-output rendering; the reset also clears the whole notebook,
+  not just the sections "Apply to" targets. Setting or resetting per-type
+  states no longer snaps shut outputs the reader had opened. And the whole
+  menu row cycles its type's state, as the old full-row checkbox did.
 - **The ribbon compacted to bare icons and stuck that way.** Two faults in
   the first never-wrap design: its last resort stripped button labels to
   icons ("makes no sense to look at" — a ribbon fits by being DENSE, the

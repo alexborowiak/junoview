@@ -76,33 +76,69 @@ def test_output_types_menu_is_per_type_tri_state_with_counts(out):
     # the scan is scoped to the active notebook's document feed
     assert "var sh=APP.active&&APP.shells[APP.active];" in out
     assert "'.content .card .cb-out'" in out
-    # counts: "dataset (3)"
+    # counts: "dataset (3)" — via the shared row builder
     assert "var otCounts={};" in out
-    assert "tx.textContent=t+' ('+(otCounts[t]||0)+')';" in out
+    assert "typeMenuRow('ot',t,otCounts[t]||0,'ot-sw-'+t)" in out
     # the per-type tri-state, cycling like the main filters
-    assert "var st=document.createElement('button');" in out
+    assert "function typeMenuRow" in out
     assert "st.className='ckf-state';" in out
-    assert "writeF(function(s){s.ot[t]=nx;});" in out
+    assert "writeF(function(s){s[map][t]=nx;});" in out
     # a folded output leaves a per-output stub that reopens just itself
     assert ".cb-out>.ot-fold:not(.ot-open){display:none!important;}" in out
     assert "stub.className='ot-stub';" in out
-    # reset re-attaches every type to the overall Output filter
-    assert "rs.id='ot-reset';" in out
-    assert "'Reset: match Output'" in out
-    assert "writeF(function(s){s.ot={};});" in out
+    # reset re-attaches every type to the overall filter — notebook-wide,
+    # so a stale override in an untargeted section (or the default)
+    # cannot survive it
+    assert "typeMenuReset('ot','ot-reset')" in out
+    assert "rs.textContent='Reset: match '+MENU_LABEL[map];" in out
+    assert "FDEFof(stem)[map]={};" in out
+    assert "if(k.indexOf(pre)===0) secF[k][map]={};" in out
     # legacy 1 still reads as 'hidden', and map equality compares VALUES
     assert "function otVal(v)" in out
     assert "return v?'hidden':null;" in out
     assert "if(otVal(x[kx[i]])!==otVal(y[kx[i]])) return false;" in out
-    # a type with no override follows the overall Output state
-    assert "vals[otVal(s.ot[t])||s.out]=1;" in out
+    # a type with no override follows the overall filter it belongs to
+    assert "vals[otVal(s[map][t])||s[key]]=1;" in out
+    # -- hardened by the adversarial review (2026-08-04): --
+    # an override for a type ABSENT from the notebook (saved layout, re-run
+    # notebook) still renders a row (count 0), still enables the reset, and
+    # the reset clears the WHOLE notebook, not just the targeted sections
+    assert "function overriddenTypes" in out
+    assert "if(rs) rs.disabled=!overriddenTypes(p[1]).length;" in out
+    # switching tabs closes EVERY picker — a stale menu wrote the old
+    # notebook's overrides into the new notebook's state
+    assert out.count("closeFilterMenus();") >= 1
+    # entering/leaving per-type mode keeps what the reader had open
+    assert "var wasPartOpen=out.classList.contains('part-open');" in out
+    assert "if(hadOtOpen&&outState==='collapsed')" in out
+    # the whole row cycles, like the old full-row checkbox label did
+    assert "if(e.target!==st) st.click();" in out
 
 
-def test_code_and_plot_type_menus_show_counts_for_active_notebook(out):
-    """The Code-types and Plot-types menus count like the Output menu."""
+def test_code_and_plot_type_menus_are_tri_state_like_the_output_menu(out):
+    """ALL THREE type menus speak the same language (2026-08-04, user:
+    "what happened to the filter options being more complete with the
+    on, off, fold / usage").
+
+    Every row: dot, "name (count)", and the type's own On/Fold/Off via
+    the shared builder; every menu ends in its own reset. A code type's
+    Fold folds those cells' code behind its toggle; a plot type's Fold
+    folds each of that library's frames to a slim stub strip that opens in
+    place. A plot type set to On shows even under Plots = Off.
+    """
     assert "var ckCounts={};" in out and "var ptCounts={};" in out
-    assert "tx.textContent=t+' ('+(ckCounts[t]||0)+')';" in out
-    assert "tx.textContent=t+' ('+(ptCounts[t]||0)+')';" in out
+    assert "typeMenuRow('ck',t,ckCounts[t]||0,'ckmain-'+t)" in out
+    assert "typeMenuRow('pt',t,ptCounts[t]||0,'pt-sw-'+t)" in out
+    assert "typeMenuReset('ck','ck-reset')" in out
+    assert "typeMenuReset('pt','pt-reset')" in out
+    # code: the per-type state reaches both hiding and folding
+    assert "var ckEff=ckT?(otVal(ckHidden[ckT])||codeState):codeState;" in out
+    assert "var eff=t?(otVal(s.ck[t])||s.code):s.code;" in out
+    # plots: per-frame fold stubs + the On-under-Off rescue
+    assert ".cb-fig [data-pt].pt-fold{cursor:pointer;" in out
+    assert '"\\25b8  " attr(data-pt)' in out
+    assert "var anyPtVisible=false;" in out
+    assert "(plotState==='hidden'&&!anyPtVisible)||allPtOff" in out
 
 
 def test_plot_type_picker_nests_under_the_plots_filter(out):
@@ -128,7 +164,8 @@ def test_filter_menu_and_pager_javascript_wiring(out):
     assert "function closeFilterMenus" in out
     # the strip selector carries every filter class INCLUDING the per-type
     # fold — a folded output must arrive on a slide in full
-    assert "'.pt-off,.ot-off,.ot-fold,.part-off,.part-fold,.code-off'" in out
+    assert ("'.pt-off,.pt-fold,.ot-off,.ot-fold,.part-off,.part-fold,"
+            ".code-off'" in out)
     assert "$$('.ot-stub',b).forEach(function(n){n.remove();});" in out
     assert "figpage')" in out and "Plots.resize" in out
 
@@ -149,7 +186,9 @@ def test_section_scope_is_an_expandable_selection_tree(out):
     assert "function renderScopeMenu" in out and "var secScope=" in out
     assert "function scopeAll" in out and "scope-l3" in out
     assert "function scopeTree" in out and "var scopeOpen=" in out
-    assert "scope-chev" in out and "cb.indeterminate" in out
+    # (the type menus' checkboxes are gone — per-section disagreement now
+    # reads "Mix" on their cyclers, so no cb.indeterminate remains)
+    assert "scope-chev" in out
     assert "function setSub" in out
     assert "function seedScope" in out and "'Select all'" in out
     assert ".scope-row.on{" in out and ".scope-row.part{" in out
