@@ -107,6 +107,15 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **Keyboard shortcuts, advertised where you'd look for them.** The
+  document view: `P`/`M`/`C`/`O` cycle the four filters, `R` raw view,
+  `T` tree, `F` presents full screen, `+`/`−`/`0` size figures,
+  `Ctrl+B` toggles the sections sidebar, `Ctrl+O` opens a notebook, `?`
+  opens Help. The deck editor adds `F5` to present (PowerPoint) and
+  `+`/`−`/`0` page zoom beside its existing Ctrl+Z/Y/D/G and arrow
+  nudges. A shortcut fires its button, so behaviour can never drift —
+  and every one shows as a key chip in that button's hover tooltip,
+  with a full reference table in Help.
 - **The poster editor was starving its own canvas.** Its toolbar kept six
   hidden contextual format groups IN the layout (invisible, to avoid a
   height jump on selection), and poster mode inflated every button — so

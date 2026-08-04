@@ -925,6 +925,21 @@ body.light .ckf-h{color:var(--ink-3);}
   padding:6px 10px;border-radius:7px;border:1px solid #39a9c055;
   box-shadow:0 6px 24px #00000066;pointer-events:none;max-width:290px;
   white-space:pre-line;display:none;}
+/* the shortcut chip a data-kbd control appends to its tooltip */
+.apptip-kbd{display:inline-block;margin-left:8px;padding:1px 7px;
+  border:1px solid #ffffff33;border-bottom-width:2px;border-radius:4px;
+  background:#ffffff10;font-family:var(--mono);font-size:10px;
+  color:#8fd4e4;vertical-align:middle;}
+/* the Help overlay's shortcut reference uses the same chip look */
+.helpdlg kbd{display:inline-block;min-width:20px;text-align:center;
+  padding:1px 7px;border:1px solid #ffffff2e;border-bottom-width:2px;
+  border-radius:4px;background:#ffffff0c;font-family:var(--mono);
+  font-size:11px;}
+.help-keys{display:grid;grid-template-columns:max-content 1fr;
+  gap:6px 14px;align-items:center;margin:8px 0 4px;}
+body.light .apptip-kbd{border-color:#00000026;background:#00000008;
+  color:#1d7a90;}
+body.light .helpdlg kbd{border-color:#00000026;background:#00000006;}
 
 /* ---------- light theme: the app chrome flips, the presentation
    canvas stays dark (decks look identical on every machine) -------- */

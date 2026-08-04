@@ -5135,6 +5135,13 @@
         nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
                  e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
       }
+      /* page zoom from the keyboard, mirroring the -/Fit/+ buttons */
+      else if(!e.ctrlKey&&!e.metaKey
+              &&(e.key==='+'||e.key==='='||e.key==='-'||e.key==='0')){
+        var zb=$(e.key==='-'?'#zoom-out'
+          :e.key==='0'?'#zoom-val':'#zoom-in');
+        if(zb){e.preventDefault();zb.click();}
+      }
     }
     else if(mode==='view'){
       if(e.key==='ArrowRight'||e.key==='PageDown'
@@ -5154,7 +5161,20 @@
           behavior:'smooth'});
       }
     }
+    /* F5 — the PowerPoint convention — presents from the current slide
+       in either editing view (it shadows the browser's refresh only
+       while the editor is open, a deliberate trade) */
+    if(e.key==='F5'&&(mode==='edit'||mode==='create')){
+      var pl=$('#dc-play');
+      if(pl){e.preventDefault();pl.click();}
+    }
   });
+  /* every deck shortcut is advertised in its button's tooltip, exactly
+     like the document ribbon's (the data-kbd chip in app.js) */
+  [['#dc-play','F5'],['#dc-undo','Ctrl+Z'],['#dc-redo','Ctrl+Y'],
+   ['#zoom-in','+'],['#zoom-out','-'],['#zoom-val','0']]
+    .forEach(function(p){
+      var el=$(p[0]); if(el) el.dataset.kbd=p[1];});
 
   /* ---------- create mode: click a card in ANY open tab to place it */
   document.addEventListener('click',function(e){

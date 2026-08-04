@@ -95,6 +95,34 @@ def test_appbar_never_wraps_and_never_degrades_to_icons(out):
     assert "'--chrome-h',h+'px'" in out
 
 
+def test_keyboard_shortcuts_are_conventional_and_advertised(out):
+    """Every shortcut fires its BUTTON, and is advertised twice
+    (2026-08-04): as a key chip in the control's own tooltip (data-kbd)
+    and in Help's reference table. Keys follow conventions from other
+    apps — filter initials P/M/C/O, R/T views, F fullscreen-present,
+    ? help, Ctrl+B sidebar (VS Code), Ctrl+O open, +/−/0 sizing, and F5
+    to present inside the deck editor (PowerPoint).
+    """
+    assert "var APP_KEYS=[" in out
+    assert "{k:'P',sel:'#tv-plots'}" in out
+    assert "{k:'F',sel:'#doc-present'}" in out
+    assert "{k:'Ctrl+B',sel:'#menubtn'}" in out
+    assert "el.dataset.kbd=s.k" in out
+    # a shortcut clicks its control, so behaviour can never drift
+    assert "e.preventDefault();el.click();" in out
+    # typing fields keep their keys; other modes own their own keyboards
+    assert "t.closest('input,textarea,select')" in out
+    # tooltip chip + Help table
+    assert "kEl.className='apptip-kbd';kEl.textContent=kb;" in out
+    assert ".apptip-kbd{display:inline-block;" in out
+    assert "<h3>Keyboard shortcuts</h3>" in out
+    assert 'class="help-keys"' in out
+    # deck editor: F5 presents, +/−/0 zoom, chips on its buttons too
+    assert "if(e.key==='F5'&&(mode==='edit'||mode==='create')){" in out
+    assert ("[['#dc-play','F5'],['#dc-undo','Ctrl+Z'],"
+            "['#dc-redo','Ctrl+Y']," in out)
+
+
 def test_appbar_fills_its_row_with_capped_flexible_spacers(out):
     """Leftover ribbon width is DISTRIBUTED, not left as one dead gap.
 

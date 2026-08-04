@@ -1902,6 +1902,21 @@ body.light .ckf-h{color:var(--ink-3);}
   padding:6px 10px;border-radius:7px;border:1px solid #39a9c055;
   box-shadow:0 6px 24px #00000066;pointer-events:none;max-width:290px;
   white-space:pre-line;display:none;}
+/* the shortcut chip a data-kbd control appends to its tooltip */
+.apptip-kbd{display:inline-block;margin-left:8px;padding:1px 7px;
+  border:1px solid #ffffff33;border-bottom-width:2px;border-radius:4px;
+  background:#ffffff10;font-family:var(--mono);font-size:10px;
+  color:#8fd4e4;vertical-align:middle;}
+/* the Help overlay's shortcut reference uses the same chip look */
+.helpdlg kbd{display:inline-block;min-width:20px;text-align:center;
+  padding:1px 7px;border:1px solid #ffffff2e;border-bottom-width:2px;
+  border-radius:4px;background:#ffffff0c;font-family:var(--mono);
+  font-size:11px;}
+.help-keys{display:grid;grid-template-columns:max-content 1fr;
+  gap:6px 14px;align-items:center;margin:8px 0 4px;}
+body.light .apptip-kbd{border-color:#00000026;background:#00000008;
+  color:#1d7a90;}
+body.light .helpdlg kbd{border-color:#00000026;background:#00000006;}
 
 /* ---------- light theme: the app chrome flips, the presentation
    canvas stays dark (decks look identical on every machine) -------- */
@@ -7143,6 +7158,40 @@ done; the original document is untouched.</p>
 authored &mdash; cells in order, directives visible &mdash; so you can
 always see where a title or caption came from.</p>
 
+<h3>Keyboard shortcuts</h3>
+<p>Every shortcut also shows as a key chip in its button&rsquo;s
+tooltip.</p>
+<div class="help-keys">
+<span><kbd>P</kbd> <kbd>M</kbd> <kbd>C</kbd> <kbd>O</kbd></span>
+<span>Cycle the Plots / Markdown / Code / Output filters</span>
+<span><kbd>R</kbd></span><span>Raw notebook view</span>
+<span><kbd>T</kbd></span><span>Tree view</span>
+<span><kbd>F</kbd></span><span>Present the document full screen</span>
+<span><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></span>
+<span>Figure size bigger / smaller / reset</span>
+<span><kbd>Ctrl</kbd>+<kbd>B</kbd></span><span>Toggle the sections
+sidebar</span>
+<span><kbd>Ctrl</kbd>+<kbd>O</kbd></span><span>Open a notebook</span>
+<span><kbd>?</kbd></span><span>This help</span>
+</div>
+<p>In the presentation / poster editor:</p>
+<div class="help-keys">
+<span><kbd>F5</kbd></span><span>Present from the current slide</span>
+<span><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
+<span>Undo / redo</span>
+<span><kbd>Ctrl</kbd>+<kbd>D</kbd></span><span>Duplicate the
+selection</span>
+<span><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></span>
+<span>Group / ungroup</span>
+<span><kbd>Del</kbd></span><span>Remove the selection</span>
+<span>Arrows / <kbd>Shift</kbd>+arrows</span>
+<span>Nudge the selection (fine / coarse)</span>
+<span><kbd>+</kbd> <kbd>&minus;</kbd> <kbd>0</kbd></span>
+<span>Zoom the page in / out / fit (trackpad pinch works too)</span>
+<span><kbd>Esc</kbd></span>
+<span>Drop the selection, then leave the editor</span>
+</div>
+
 <h3>Make notebooks render better (optional)</h3>
 <p>Add <code>#|</code> directive lines to the top of a code cell; they
 are parsed and hidden from display. Everything works without them
@@ -10148,6 +10197,14 @@ through Ko-fi. Thank you.</p>
     tipTimer=setTimeout(function(){
       if(tipTarget!==t||!document.contains(t)){return;}
       tipEl.textContent=tip;
+      /* a control with a shortcut says so IN its tooltip: the key is
+         only discoverable where you'd already be looking */
+      var kb=t.getAttribute&&t.getAttribute('data-kbd');
+      if(kb){
+        var kEl=document.createElement('kbd');
+        kEl.className='apptip-kbd';kEl.textContent=kb;
+        tipEl.appendChild(kEl);
+      }
       tipEl.style.display='block';
       var r=t.getBoundingClientRect();
       var tw=tipEl.offsetWidth,th=tipEl.offsetHeight;
@@ -10164,6 +10221,47 @@ through Ko-fi. Thank you.</p>
   });
   document.addEventListener('mousedown',hideTip,true);
   document.addEventListener('scroll',hideTip,true);
+
+  /* ---- keyboard shortcuts (2026-08-04): conventional keys only — the
+     four filters by their initials, R/T for the views, F to present
+     (the fullscreen convention), ? for help, Ctrl+B for the sidebar
+     (VS Code), Ctrl+O to open, +/−/0 for figure size (the zoom
+     convention). A shortcut FIRES ITS BUTTON (el.click()) so behaviour
+     can never drift from the control it mirrors, and every one is
+     advertised as a key chip in that control's own tooltip (data-kbd)
+     and in Help. The deck editor owns its own keys (deck.js). ---- */
+  var APP_KEYS=[
+    {k:'P',sel:'#tv-plots'},{k:'M',sel:'#tv-markdown'},
+    {k:'C',sel:'#tv-code'},{k:'O',sel:'#tv-output'},
+    {k:'R',sel:'#view-raw'},{k:'T',sel:'#view-tree'},
+    {k:'F',sel:'#doc-present'},{k:'?',sel:'#help-btn'},
+    {k:'Ctrl+B',sel:'#menubtn'},{k:'Ctrl+O',sel:'#tab-open'},
+    {k:'+',sel:'#fig-bigger'},{k:'-',sel:'#fig-smaller'},
+    {k:'0',sel:'#fig-size-val'}];
+  APP_KEYS.forEach(function(s){
+    var el=$(s.sel); if(el) el.dataset.kbd=s.k;});
+  document.addEventListener('keydown',function(e){
+    if(e.defaultPrevented||e.altKey) return;
+    var t=e.target;
+    if(t&&t.closest&&t.closest('input,textarea,select')) return;
+    if(t&&t.isContentEditable) return;
+    /* the DOCUMENT's keys: not while presenting, editing a deck,
+       picking a cell, or on the welcome screen */
+    var b=document.body.classList;
+    if(b.contains('doc-presenting')||b.contains('deck-open')
+       ||b.contains('creating-docs')||b.contains('slide-editing')
+       ||b.contains('picking')||b.contains('welcoming')) return;
+    var ctrl=e.ctrlKey||e.metaKey;
+    var combo=(ctrl?'Ctrl+':'')
+      +(e.key.length===1?e.key.toUpperCase():e.key);
+    for(var i=0;i<APP_KEYS.length;i++){
+      if(APP_KEYS[i].k!==combo) continue;
+      var el=$(APP_KEYS[i].sel);
+      if(!el||el.hidden||el.disabled) return;
+      e.preventDefault();el.click();
+      return;
+    }
+  });
 
   /* ---- guided tour: a spotlight + tooltip that steps through the UI;
      skippable, shown once, or re-run from "Take a tour" ---- */
@@ -18031,6 +18129,13 @@ through Ko-fi. Thank you.</p>
         nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
                  e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
       }
+      /* page zoom from the keyboard, mirroring the -/Fit/+ buttons */
+      else if(!e.ctrlKey&&!e.metaKey
+              &&(e.key==='+'||e.key==='='||e.key==='-'||e.key==='0')){
+        var zb=$(e.key==='-'?'#zoom-out'
+          :e.key==='0'?'#zoom-val':'#zoom-in');
+        if(zb){e.preventDefault();zb.click();}
+      }
     }
     else if(mode==='view'){
       if(e.key==='ArrowRight'||e.key==='PageDown'
@@ -18050,7 +18155,20 @@ through Ko-fi. Thank you.</p>
           behavior:'smooth'});
       }
     }
+    /* F5 — the PowerPoint convention — presents from the current slide
+       in either editing view (it shadows the browser's refresh only
+       while the editor is open, a deliberate trade) */
+    if(e.key==='F5'&&(mode==='edit'||mode==='create')){
+      var pl=$('#dc-play');
+      if(pl){e.preventDefault();pl.click();}
+    }
   });
+  /* every deck shortcut is advertised in its button's tooltip, exactly
+     like the document ribbon's (the data-kbd chip in app.js) */
+  [['#dc-play','F5'],['#dc-undo','Ctrl+Z'],['#dc-redo','Ctrl+Y'],
+   ['#zoom-in','+'],['#zoom-out','-'],['#zoom-val','0']]
+    .forEach(function(p){
+      var el=$(p[0]); if(el) el.dataset.kbd=p[1];});
 
   /* ---------- create mode: click a card in ANY open tab to place it */
   document.addEventListener('click',function(e){

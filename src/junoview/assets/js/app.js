@@ -2408,6 +2408,14 @@
     tipTimer=setTimeout(function(){
       if(tipTarget!==t||!document.contains(t)){return;}
       tipEl.textContent=tip;
+      /* a control with a shortcut says so IN its tooltip: the key is
+         only discoverable where you'd already be looking */
+      var kb=t.getAttribute&&t.getAttribute('data-kbd');
+      if(kb){
+        var kEl=document.createElement('kbd');
+        kEl.className='apptip-kbd';kEl.textContent=kb;
+        tipEl.appendChild(kEl);
+      }
       tipEl.style.display='block';
       var r=t.getBoundingClientRect();
       var tw=tipEl.offsetWidth,th=tipEl.offsetHeight;
@@ -2424,6 +2432,47 @@
   });
   document.addEventListener('mousedown',hideTip,true);
   document.addEventListener('scroll',hideTip,true);
+
+  /* ---- keyboard shortcuts (2026-08-04): conventional keys only — the
+     four filters by their initials, R/T for the views, F to present
+     (the fullscreen convention), ? for help, Ctrl+B for the sidebar
+     (VS Code), Ctrl+O to open, +/−/0 for figure size (the zoom
+     convention). A shortcut FIRES ITS BUTTON (el.click()) so behaviour
+     can never drift from the control it mirrors, and every one is
+     advertised as a key chip in that control's own tooltip (data-kbd)
+     and in Help. The deck editor owns its own keys (deck.js). ---- */
+  var APP_KEYS=[
+    {k:'P',sel:'#tv-plots'},{k:'M',sel:'#tv-markdown'},
+    {k:'C',sel:'#tv-code'},{k:'O',sel:'#tv-output'},
+    {k:'R',sel:'#view-raw'},{k:'T',sel:'#view-tree'},
+    {k:'F',sel:'#doc-present'},{k:'?',sel:'#help-btn'},
+    {k:'Ctrl+B',sel:'#menubtn'},{k:'Ctrl+O',sel:'#tab-open'},
+    {k:'+',sel:'#fig-bigger'},{k:'-',sel:'#fig-smaller'},
+    {k:'0',sel:'#fig-size-val'}];
+  APP_KEYS.forEach(function(s){
+    var el=$(s.sel); if(el) el.dataset.kbd=s.k;});
+  document.addEventListener('keydown',function(e){
+    if(e.defaultPrevented||e.altKey) return;
+    var t=e.target;
+    if(t&&t.closest&&t.closest('input,textarea,select')) return;
+    if(t&&t.isContentEditable) return;
+    /* the DOCUMENT's keys: not while presenting, editing a deck,
+       picking a cell, or on the welcome screen */
+    var b=document.body.classList;
+    if(b.contains('doc-presenting')||b.contains('deck-open')
+       ||b.contains('creating-docs')||b.contains('slide-editing')
+       ||b.contains('picking')||b.contains('welcoming')) return;
+    var ctrl=e.ctrlKey||e.metaKey;
+    var combo=(ctrl?'Ctrl+':'')
+      +(e.key.length===1?e.key.toUpperCase():e.key);
+    for(var i=0;i<APP_KEYS.length;i++){
+      if(APP_KEYS[i].k!==combo) continue;
+      var el=$(APP_KEYS[i].sel);
+      if(!el||el.hidden||el.disabled) return;
+      e.preventDefault();el.click();
+      return;
+    }
+  });
 
   /* ---- guided tour: a spotlight + tooltip that steps through the UI;
      skippable, shown once, or re-run from "Take a tour" ---- */
