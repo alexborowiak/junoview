@@ -20,6 +20,23 @@ sensible layout from each cell's outputs.
 | `#| section:`   | Start a top-level section (also doable with a Markdown `##` heading). |
 | `#| subsection:`| Nested group inside the current section.                             |
 | `#| title:`     | Human title for the card. Otherwise inferred from the code: a leading `# comment` heading, then the plot's own title (`fig.suptitle`, `ax.set_title`, `plt.title`, or a literal `title=` keyword), then function names. |
+
+**Shorthand.** Every directive also has a bracket spelling — a short key in
+brackets, no colon: `#(t)` title, `#(c)` caption, `#(s)` section, `#(ss)`
+subsection, `#(i)` id, `#(d)` depends, `#(g)` group, `#(o)` order. Full names
+work in brackets too (`#(display) figure`), and the two spellings mix freely.
+
+**Multi-line captions.** `#()` continues the previous directive on a wrapped
+line (joined with a space); repeating `#(c)` starts a deliberate new caption
+line:
+
+```python
+#(t) Composite Z500 anomaly
+#(c) Averaged over all blocked days,
+#()  1980–2020.
+#(c) Shading: anomaly (m). Contours: climatology.
+plot()
+```
 | `#| display:`   | Card type: `figure` `dataset` `transform` `diagnostic` `metric` `text` `code` `hidden`. |
 | `#| code:`      | Default code visibility: `hidden` (default) or `show`.              |
 | `#| id:`        | Stable slug for this cell — makes it a node in the provenance graph. |

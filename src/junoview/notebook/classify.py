@@ -11,6 +11,7 @@ from __future__ import annotations
 import ast
 import re
 
+from .directives import is_directive_line
 from .outputs import RenderedOutput
 
 
@@ -44,7 +45,7 @@ def _title_from_code(code: str) -> tuple[str, bool]:
     merely repeats a line of the cell's code — such titles still label the
     item in the nav but are not repeated as a heading on the card."""
     lines = [ln.strip() for ln in code.splitlines() if ln.strip()]
-    lines = [ln for ln in lines if not ln.startswith("#|")]
+    lines = [ln for ln in lines if not is_directive_line(ln)]
     if lines and lines[0].startswith("#"):
         return (lines[0].lstrip("#").strip() or "Code"), False
     funcs: list[tuple[str, bool]] = []      # (name, is_function)

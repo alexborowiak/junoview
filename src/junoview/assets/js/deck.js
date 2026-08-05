@@ -91,7 +91,7 @@
       {k:'text',x:2.5,y:12.4,w:29.7,h:13,
         text:'Why this matters, the question you asked, and what was '
           +'already known.',size:1.35},
-      {k:'text',x:2.5,y:26.8,w:29.7,h:2.6,text:'2 · Data & methods',
+      {k:'text',x:2.5,y:26.8,w:29.7,h:2.6,text:'2 · Methods',
         size:1.9,b:1},
       {k:'text',x:2.5,y:30,w:29.7,h:10.5,
         text:'Data sources, processing and the analysis in brief.',
@@ -104,7 +104,7 @@
         size:1.9,b:1},
       {k:'cell',x:35.15,y:12.4,w:29.7,h:37.5},
       {k:'cell',x:35.15,y:51.5,w:29.7,h:40.1},
-      {k:'text',x:67.8,y:9.2,w:29.7,h:2.6,text:'5 · Results continued',
+      {k:'text',x:67.8,y:9.2,w:29.7,h:2.6,text:'5 · More results',
         size:1.9,b:1},
       {k:'cell',x:67.8,y:12.4,w:29.7,h:29},
       {k:'text',x:67.8,y:43,w:29.7,h:2.6,text:'6 · Discussion',
@@ -234,7 +234,7 @@
       {k:'cell',x:26.87,y:11.8,w:21.87,h:26},
       {k:'cell',x:26.87,y:39.6,w:21.87,h:26},
       {k:'cell',x:26.87,y:67.4,w:21.87,h:24.1},
-      {k:'text',x:51.25,y:8.8,w:21.87,h:2.4,text:'4 · Results continued',
+      {k:'text',x:51.25,y:8.8,w:21.87,h:2.4,text:'4 · More results',
         size:1.7,b:1},
       {k:'cell',x:51.25,y:11.8,w:21.87,h:26},
       {k:'cell',x:51.25,y:39.6,w:21.87,h:26},
@@ -334,7 +334,10 @@
           if(!t.text) t.text=it.text||'Text';
           next.push(t);
         } else next.push({k:'text',x:it.x,y:it.y,w:it.w,
-          text:it.text||'Text',size:it.size||2.8,color:'#ffffff',
+          /* NO baked colour: the default lives in CSS so the page
+             theme decides — a stamped '#ffffff' made template text
+             white-on-white on light posters (2026-08-05 review) */
+          text:it.text||'Text',size:it.size||2.8,
           bg:0,align:it.align||'left',b:it.b?1:0});
       }
     });
@@ -762,6 +765,9 @@
     if(typeof p.folder==='string'&&p.folder) out.folder=p.folder;
     if(p.showNums) out.showNums=1;   /* keep the slide-numbers preference */
     if(typeof p.page==='string'&&p.page) out.page=p.page;  /* page preset */
+    /* the page background survives every load path — normPres dropping
+       it turned saved white posters navy again (2026-08-05 review) */
+    if(typeof p.pageBg==='string'&&p.pageBg) out.pageBg=p.pageBg;
     return out;
   }
   function registerShell(stem,data){
@@ -1825,7 +1831,11 @@
       function judge(){
         if(!document.contains(cell)||!img.naturalWidth) return;
         var sr=slideEl.getBoundingClientRect();
-        var cr=cell.getBoundingClientRect();
+        /* the IMAGE's own drawn rect, not the frame's: a letterboxed
+           figure prints far narrower than its cell, and judging the
+           cell flagged sharp figures (2026-08-05 review) */
+        var ir=img.getBoundingClientRect();
+        var cr=ir.width?ir:cell.getBoundingClientRect();
         if(!sr.width||!cr.width) return;
         var mmw=cr.width/sr.width*pg.mm[0];
         var dpi=Math.round(img.naturalWidth/(mmw/25.4));
@@ -2000,7 +2010,7 @@
   function titleProps(s,which){
     var key=which==='t'?'tprops':'sprops';
     if(!s[key]) s[key]=(which==='t')
-      ?{x:50,y:42,size:6,color:'#f0f6fa'}
+      ?{x:50,y:42,size:6}          /* colours come from the page theme */
       :{x:50,y:58,size:2.6,color:'#7e93a4'};
     return s[key];
   }
@@ -2231,9 +2241,20 @@
     }
     go();
   }
+  var dpiT=null;
   function renderAnnots(layer,s){
     var editing=(mode==='edit');
     layer.innerHTML='';
+    /* every layer rebuild destroys the dpi chips — re-judge (debounced)
+       once the edit settles, so resizing a figure ONTO a poster column
+       actually raises the warning it exists for (2026-08-05 review) */
+    if(editing&&pageOf().poster){
+      clearTimeout(dpiT);
+      dpiT=setTimeout(function(){
+        var se=stage.querySelector('.slide');
+        if(se&&mode==='edit') checkFigDpi(se);
+      },300);
+    }
     /* drop the "empty slide" hint once the slide has any content (placement
        only re-renders the layer, not the whole slide, so clear it here) */
     var _host=layer.parentNode;
@@ -2259,7 +2280,7 @@
           +(selAnnot===which?' sel':'');
         d.style.left=p.x+'%';d.style.top=p.y+'%';
         d.style.fontSize=fontPx(layer,p.size);
-        d.style.color=p.color||'#f0f6fa';
+        if(p.color) d.style.color=p.color;   /* default lives in CSS */
         if(p.b) d.style.fontWeight='700';
         if(p.i) d.style.fontStyle='italic';
         var tdeco=(p.u?'underline ':'')+(p.strike?'line-through':'');
@@ -2476,7 +2497,11 @@
           +(selAnnot===i?' sel':'');
         d2.style.left=a.x+'%';d2.style.top=a.y+'%';
         d2.style.fontSize=fontPx(layer,a.size);
-        d2.style.color=a.color||'#ffffff';
+        /* only an EXPLICIT colour goes inline: the default comes from
+           CSS so .page-light can flip it — a baked '#ffffff' default
+           made every template text white-on-white on a light poster
+           (2026-08-05 review) */
+        if(a.color) d2.style.color=a.color;
         if(a.b) d2.style.fontWeight='700';
         if(a.i) d2.style.fontStyle='italic';
         var deco=(a.u?'underline ':'')+(a.strike?'line-through':'');
@@ -2603,11 +2628,21 @@
   }
   function showFmt(){
     var bar=$('#et-fmt'); if(!bar) return;
+    var et=$('#edit-tools');
     var s=pres.slides[cur];
     var a=(s&&selAnnot!==null)?annotByIdx(s,selAnnot):null;
-    if(!a){bar.hidden=true;return;}
+    if(!a){
+      bar.hidden=true;
+      if(et) et.classList.remove('fmt-open');
+      return;
+    }
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     bar.hidden=false;
+    /* the contextual groups REPLACE the Insert group instead of adding
+       a third toolbar row — the canvas must not shrink when you select
+       something (2026-08-05, user: "you can't really see the poster
+       you are working on") */
+    if(et) et.classList.add('fmt-open');
     function show(id,on,pressed){
       var el=$(id); if(!el) return;
       el.hidden=!on;
@@ -2744,7 +2779,7 @@
     });
     if(first) first.classList.add('rbn-first');
   }
-  function fmtApply(fn){
+  function fmtApply(fn,quiet){
     var s=pres.slides[cur]; if(!s) return;
     /* apply to EVERY selected item (a group or shift-multi-select), not just
        the primary — otherwise formatting a multi-selection silently changes
@@ -2756,7 +2791,12 @@
       var a=annotByIdx(s,selAnnot); if(!a) return;
       fn(a);
     }
-    markDirty();
+    /* quiet = live preview inside a continuous gesture (a Trim stepper
+       being held, a value being typed): redraw but push NO history —
+       the gesture's end commits ONE undo entry instead of one per
+       keystroke evicting real edits from the 50-slot stack
+       (2026-08-05 review) */
+    if(!quiet) markDirty();
     var l=stage.querySelector('.annot-layer');
     if(!l) return;
     renderAnnots(l,s);
@@ -3139,7 +3179,7 @@
       if(tool==='text'){
         s.annots=s.annots||[];
         s.annots.push({k:'text',x:p.x,y:p.y,text:'Text',
-          size:2.6,color:'#ffffff',bg:1});
+          size:2.6,bg:1});   /* colour comes from the page theme */
         var idx2=s.annots.length-1;
         markDirty();setTool('select');
         renderAnnots(layer,s);selectAnnot(layer,idx2);
@@ -4156,7 +4196,11 @@
           if(v) a.crop[p[0]]=v; else delete a.crop[p[0]];
           if(!a.crop.shape&&!a.crop.t&&!a.crop.r&&!a.crop.b&&!a.crop.l)
             delete a.crop;
-        });
+        },true);              /* live preview, no history */
+      });
+      /* the gesture's END (blur / spinner release) commits ONE entry */
+      inp.addEventListener('change',function(){
+        fmtApply(function(){});
       });
       inputs[p[0]]=inp;row.appendChild(inp);
     });
@@ -5242,6 +5286,7 @@
     }
     var db=$('#et-del'); if(db) db.disabled=true;
     var fb=$('#et-fmt'); if(fb) fb.hidden=true;
+    var etb=$('#edit-tools'); if(etb) etb.classList.remove('fmt-open');
     if(editing) setTool('select');
     /* real full screen while presenting (browser chrome gone) */
     try{
@@ -6167,6 +6212,19 @@
     if(typeset) typeset(root);
     return root;
   }
+  /* wait for MathJax to actually FINISH on the built pages before using
+     them — the print dialog tolerates late typesetting (the live DOM
+     keeps working underneath it) but a serialised export is a hard
+     cutoff: whatever maths was unfinished ships as raw TeX forever
+     (2026-08-05 review) */
+  function afterTypeset(root,fn){
+    try{
+      if(window.MathJax&&MathJax.typesetPromise)
+        return MathJax.typesetPromise([root])
+          .catch(function(){}).then(fn);
+    }catch(e){}
+    setTimeout(fn,200);
+  }
   function printDeck(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var root=buildPrintRoot();
@@ -6175,7 +6233,9 @@
     function cleanup(){
       if(done) return;done=true;
       document.body.classList.remove('printing');
-      var r=document.getElementById('print-root'); if(r) r.remove();
+      /* remove OUR root by reference — an id lookup could tear down a
+         newer root built by a crossing export/print (2026-08-05 review) */
+      if(root.parentNode) root.remove();
       window.removeEventListener('afterprint',cleanup);
     }
     window.addEventListener('afterprint',cleanup);
@@ -6195,7 +6255,7 @@
   function exportDeckHtml(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     var root=buildPrintRoot();
-    setTimeout(function(){
+    afterTypeset(root,function(){
       var css='';
       $$('style',document.head).forEach(function(st){
         css+=st.textContent+'\n';});
@@ -6216,8 +6276,10 @@
         +'<style>body{margin:0;background:#20262c;}'
         +'#print-root{position:static!important;left:auto!important;'
         +'width:auto!important;}'
-        +'.print-page{margin:18px auto;box-shadow:0 8px 40px #0008;'
-        +'max-width:100%;}'
+        /* NO max-width: the pages are fixed-px boxes and clamping the
+           width alone broke their aspect (2026-08-05 review). A huge
+           poster page simply scrolls — the browser's own zoom fits it. */
+        +'.print-page{margin:18px auto;box-shadow:0 8px 40px #0008;}'
         +'@media print{body{background:none;}'
         +'.print-page{margin:0;box-shadow:none;}}'
         +'</style></head><body>'
@@ -6228,10 +6290,10 @@
       a.download=(pres.name||'presentation')+'.html';
       document.body.appendChild(a);a.click();a.remove();
       setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
-      var r=document.getElementById('print-root'); if(r) r.remove();
+      if(root.parentNode) root.remove();   /* by reference, never by id */
       toast('Standalone HTML saved — opens anywhere; Ctrl+P there '
         +'prints at page size');
-    },200);
+    });
   }
   menuAction('#mi-html',function(){exportDeckHtml();});
   /* page background swatches (File menu) */

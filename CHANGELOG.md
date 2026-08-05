@@ -107,6 +107,30 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **Directive shorthand: `#(t)` and friends.** Every `#| key: value`
+  directive now has a bracket spelling — `#(t)` title, `#(c)` caption,
+  `#(s)` section, `#(i)` id, `#(d)` depends and the rest, full names in
+  brackets too, both spellings mixable. `#()` continues the previous
+  directive on a wrapped line, and repeating `#(c)` starts a deliberate
+  new caption line — a repeated `#| caption:` used to silently OVERWRITE
+  the first line.
+- **The poster editor was reviewed adversarially and hardened.** The page
+  background survives reloads (it was stripped on every load path — a
+  saved white poster reopened navy and would have PRINTED navy); template
+  and default text no longer bake an inline white (white posters showed
+  white-on-white, i.e. nothing); placeholder frames, captions, hints and
+  the title-slide eyebrow all recolour on light pages; the standalone
+  export waits for MathJax (raw TeX could ship in the file) and no longer
+  distorts page aspect on screen; print and export can no longer tear
+  down each other's pages; the dpi warning measures the drawn image, and
+  re-checks after every edit (it used to vanish on the first drag); Trim
+  steppers commit ONE undo entry per gesture instead of one per
+  keystroke.
+- **Selecting something no longer shrinks the poster.** The contextual
+  format groups now REPLACE the Insert group (PowerPoint's
+  contextual-tab move), so the toolbar keeps its two rows and the canvas
+  keeps its size. Long template headings ("2 · Data & methods") were
+  shortened so nothing wraps onto the text below it.
 - **Insert → Line, and a properly iconed toolbar.** A horizontal rule —
   the poster section divider — inserts with one click and reroutes by
   its endpoints; under the hood it is an arrow with no head, so colour,

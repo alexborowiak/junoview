@@ -67,7 +67,12 @@ def test_poster_templates_read_like_a_real_conference_poster(out):
                 "poster-land-fig"):
         assert f"id:'{_pl}'" in out, _pl
     assert "text:'1 · Introduction'" in out
-    assert "text:'2 · Data & methods'" in out
+    # heading labels stay SHORT enough for one line in their column — a
+    # wrapped heading's second line landed on the text below it
+    # (2026-08-05, "2 · Data & methods" / "5 · Results continued")
+    assert "text:'2 · Methods'" in out
+    assert "text:'5 · More results'" in out
+    assert "text:'2 · Data & methods'" not in out
     assert "text:'7 · Conclusions'" in out
     assert "Funding & acknowledgements" in out
     assert "land:1" in out and "poster:1" in out

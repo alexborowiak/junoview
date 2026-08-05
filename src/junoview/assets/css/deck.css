@@ -671,6 +671,11 @@ body.slide-editing .apptop{display:none;}
 .et-fmt{display:contents;}
 .et-fmt[hidden]{display:none;}
 .et-fmt .rbn-grp{flex:none;}
+/* a SELECTION swaps the Insert group for the contextual format groups
+   (PowerPoint's contextual-tab move): the toolbar keeps its two rows and
+   the canvas keeps its size — it used to grow a third row and shrink
+   the poster whenever you clicked anything (2026-08-05) */
+.edit-tools.fmt-open .rbn-insert{display:none;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--amber);}
@@ -879,7 +884,16 @@ select#fmt-font[hidden]{display:none;}
 .page-light .an-cell .note{color:#1b2733;}
 .page-light .an-handle{color:#5a6b78;}
 .page-light .slide-pageno{color:#5a6b78;}
-.page-light .ttl-eyebrow{color:#1d7a90;}
+/* needs the .slide-titlefree qualifier to OUTRANK the later dark rule of
+   equal specificity — without it this was dead CSS (2026-08-05 review) */
+.page-light .slide-titlefree .ttl-eyebrow{color:#1d7a90;}
+.page-light .an-title{color:#16222c;}
+/* the on-page chrome the first pass missed: figure captions, the empty
+   hint and slide meta were dark-theme greys on a white page */
+.page-light .an-cellcap{color:#4a5a66;}
+.page-light .slide-emptyhint,.page-light .slide-emptyhint b{
+  color:#6a7a86;}
+.page-light .slide-meta{color:#5a6b78;}
 /* the File-menu page background swatches */
 .dc-pagebg{display:flex;align-items:center;gap:6px;cursor:default;}
 .pgbg-sw{width:18px;height:18px;border-radius:5px;flex:none;
@@ -1012,6 +1026,7 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
   cursor:grab;}
 
 /* movable title / subtitle on title slides */
+.an-title{color:#f0f6fa;}   /* default lives HERE so .page-light can win */
 .an-title{position:absolute;transform:translate(-50%,-50%);
   max-width:88%;text-align:center;display:flex;gap:.4em;
   align-items:flex-start;justify-content:center;
@@ -1031,6 +1046,12 @@ ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
    can read the slide as it will present. */
 .deck.editing .an-cell{cursor:move;background:none;border-color:transparent;}
 .deck.editing .an-cell.sel{border-color:var(--cyan);background:#0b141d88;}
+/* light pages: the placeholder/selected frame washes must flip too —
+   these outrank the dark rules above by the extra .page-light class
+   (2026-08-05: white posters showed navy placeholder boxes) */
+.deck.page-light.editing .an-cell.sel{background:#ffffffd0;}
+.deck.page-light.editing .an-cell.empty{background:#00000008;
+  border-color:#00000030;}
 /* an EMPTY frame keeps its dashed dark placeholder box (a card goes here) */
 .deck.editing .an-cell.empty{background:#0e192699;border-color:#39a9c05c;}
 /* the title header is an OVERLAY (out of flow) shown only when selected, so

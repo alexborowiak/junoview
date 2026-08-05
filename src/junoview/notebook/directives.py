@@ -13,6 +13,22 @@ import re
 
 _DIRECTIVE_RE = re.compile(r"^\s*#\|\s*([A-Za-z_]+)\s*:\s*(.*?)\s*$")
 
+# the bracket SHORTHAND (2026-08-05, user: "the bracket symbols are easier
+# to use"): `#(t) My title` — a short key in brackets, no colon. Full
+# names work in brackets too (`#(title) …`), and `#()` continues the
+# previous directive on a wrapped line.
+_SHORT_RE = re.compile(r"^\s*#\(\s*([A-Za-z_]*)\s*\)\s*(.*?)\s*$")
+
+_SHORT_KEYS = {
+    "t": "title", "c": "caption", "s": "section", "ss": "subsection",
+    "i": "id", "d": "depends", "g": "group", "o": "order",
+}
+
+
+def is_directive_line(line: str) -> bool:
+    """True for either directive spelling — ``#| k: v`` or ``#(k) v``."""
+    return bool(_DIRECTIVE_RE.match(line) or _SHORT_RE.match(line))
+
 
 _HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*$")
 
@@ -57,24 +73,53 @@ _DISPLAY_TYPES = {
 
 
 def split_directives(source: str) -> tuple[dict[str, str], str]:
-    """Pull the leading `#| k: v` block off a code cell.
+    """Pull the leading directive block off a code cell.
 
-    Returns (directives, remaining_source). Directives may be preceded by
-    blank lines; the block ends at the first non-directive, non-blank line.
+    Two spellings, freely mixed: ``#| key: value`` and the shorthand
+    ``#(k) value`` (t/c/s/ss/i/d/g/o, or any full name). Returns
+    (directives, remaining_source). Directives may be preceded by blank
+    lines; the block ends at the first non-directive, non-blank line.
+
+    Continuation (2026-08-05 — a two-line ``#| caption:`` used to
+    silently OVERWRITE line one): ``#()`` extends the previous directive
+    with a space (a wrapped sentence), while repeating ``caption`` /
+    ``title`` joins with a newline / a space (a deliberate new line vs a
+    long title). Other repeated keys keep last-wins.
     """
     lines = source.splitlines()
     directives: dict[str, str] = {}
+    last_key = ""
     i = 0
     while i < len(lines):
         line = lines[i]
         if not line.strip():
             i += 1
             continue
+        key: str | None = None
+        value = ""
         m = _DIRECTIVE_RE.match(line)
-        if not m:
+        if m:
+            key, value = m.group(1).lower(), m.group(2)
+        else:
+            m2 = _SHORT_RE.match(line)
+            if m2:
+                short = m2.group(1).lower()
+                value = m2.group(2)
+                key = _SHORT_KEYS.get(short, short)   # "" stays ""
+        if key is None:
             break
-        key, value = m.group(1).lower(), m.group(2)
-        directives[key] = value
+        if key == "":                       # `#()` — continue previous
+            if last_key and value:
+                directives[last_key] = (
+                    directives.get(last_key, "") + " " + value).strip()
+            i += 1
+            continue
+        if key in directives and key in ("caption", "title"):
+            joiner = "\n" if key == "caption" else " "
+            directives[key] = directives[key] + joiner + value
+        else:
+            directives[key] = value
+        last_key = key
         i += 1
     remaining = "\n".join(lines[i:]).strip("\n")
     return directives, remaining

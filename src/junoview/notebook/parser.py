@@ -18,7 +18,12 @@ from .classify import (
     _slug,
     _title_from_code,
 )
-from .directives import _DISPLAY_TYPES, _lead_heading, split_directives
+from .directives import (
+    _DISPLAY_TYPES,
+    _lead_heading,
+    is_directive_line,
+    split_directives,
+)
 from .model import CodeStep, Document, Item, Section
 from .outputs import _as_text, render_outputs
 from .presentations import _as_presentations
@@ -97,7 +102,7 @@ def _finalize_item(item: Item, used_slugs: set[str],
     explicit = next(
         (m["d"]["title"] for m in members if m["d"].get("title")), "")
     lead = [ln.strip() for ln in primary["code"].splitlines()
-            if ln.strip() and not ln.strip().startswith("#|")]
+            if ln.strip() and not is_directive_line(ln)]
     lead_comment = bool(lead) and lead[0].startswith("#")
     # a figure that titles ITSELF in code — fig.suptitle("…"),
     # ax.set_title("…"), title= — names its card when the author gave
