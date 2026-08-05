@@ -54,7 +54,7 @@
           <button class="dbtn dc-target" id="dc-target" aria-haspopup="true"
             aria-expanded="false"
             title="Where this presentation is saved">
-            Saved to: Browser &#9662;</button>
+            &#8594; Browser &#9662;</button>
           <div class="dc-menu" id="target-menu" hidden>
             <div class="dc-mhead">where this presentation is saved</div>
             <button class="dc-mi" id="tg-project" hidden>This project</button>
@@ -97,6 +97,14 @@
     <div class="deck-stagewrap" id="deck-stagewrap">
       <div class="edit-tools ribbon" id="edit-tools" hidden>
         <div class="rbn-static">
+          <!-- filled by fileToRibbon() while editing: File / Save /
+               Saved-to / undo / redo / status / Swap-to-notebooks move
+               here from the docked panel, which then holds ONLY the
+               slide strip — and disappears entirely for posters -->
+          <span class="rbn-grp" id="rbn-file">
+            <span class="rbn-row" id="rbn-file-row"></span>
+            <span class="rbn-lab">File</span>
+          </span>
           <span class="rbn-grp">
             <span class="rbn-row">
               <button class="dbtn primary" id="dc-play"
@@ -234,41 +242,62 @@
             </span>
             <span class="rbn-lab">Effects</span>
           </span>
+          <!-- colour swatches live behind two POPUP buttons: fourteen
+               always-visible circles said "look at me" louder than the
+               poster did (2026-08-05, user: "do you need to display all
+               the colours all the time?") -->
           <span class="rbn-grp">
             <span class="rbn-row">
-              <span class="fmt-lab" id="fmt-txlab" hidden
-                title="Text colour">Text</span>
-              <button class="sw" data-c="#ff6b57"
-                style="background:#ff6b57" title="Coral"></button>
-              <button class="sw" data-c="#f0a848"
-                style="background:#f0a848" title="Amber"></button>
-              <button class="sw" data-c="#39a9c0"
-                style="background:#39a9c0" title="Cyan"></button>
-              <button class="sw" data-c="#46a892"
-                style="background:#46a892" title="Green"></button>
-              <button class="sw" data-c="#ffffff"
-                style="background:#ffffff" title="White"></button>
-              <button class="sw" data-c="#16202b"
-                style="background:#16202b" title="Ink"></button>
-              <button class="sw sw-custom" id="sw-custom" data-target="text"
-                title="Custom colour — hex, rgb or rgba"></button>
-              <span class="fmt-lab" id="fmt-bglab" hidden
-                title="Fill / background colour">Fill</span>
-              <button class="sw swbg trans" data-c="none" hidden
-                title="Transparent box"></button>
-              <button class="sw swbg" data-c="#0e1926" hidden
-                style="background:#0e1926" title="Dark box"></button>
-              <button class="sw swbg" data-c="#ffffff" hidden
-                style="background:#ffffff" title="White box"></button>
-              <button class="sw swbg" data-c="#ff6b57" hidden
-                style="background:#ff6b57" title="Coral box"></button>
-              <button class="sw swbg" data-c="#f0a848" hidden
-                style="background:#f0a848" title="Amber box"></button>
-              <button class="sw swbg" data-c="#39a9c0" hidden
-                style="background:#39a9c0" title="Cyan box"></button>
-              <button class="sw swbg sw-custom" id="swbg-custom" hidden
-                data-target="fill"
-                title="Custom fill colour — hex, rgb or rgba"></button>
+              <span class="sh-drop">
+                <button class="dbtn" id="fmt-txcol-btn" hidden
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Colour of the selected text / line / shape">
+                  Colour &#9662;</button>
+                <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
+                  <span class="fmt-lab" id="fmt-txlab" hidden
+                    title="Text colour">Text</span>
+                  <button class="sw" data-c="#ff6b57"
+                    style="background:#ff6b57" title="Coral"></button>
+                  <button class="sw" data-c="#f0a848"
+                    style="background:#f0a848" title="Amber"></button>
+                  <button class="sw" data-c="#39a9c0"
+                    style="background:#39a9c0" title="Cyan"></button>
+                  <button class="sw" data-c="#46a892"
+                    style="background:#46a892" title="Green"></button>
+                  <button class="sw" data-c="#ffffff"
+                    style="background:#ffffff" title="White"></button>
+                  <button class="sw" data-c="#16202b"
+                    style="background:#16202b" title="Ink"></button>
+                  <button class="sw sw-custom" id="sw-custom"
+                    data-target="text"
+                    title="Custom colour — hex, rgb or rgba"></button>
+                </div>
+              </span>
+              <span class="sh-drop">
+                <button class="dbtn" id="fmt-fillcol-btn" hidden
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Fill / background colour of the selected box">
+                  Fill &#9662;</button>
+                <div class="sh-menu sw-menu" id="fmt-fillcol-menu" hidden>
+                  <span class="fmt-lab" id="fmt-bglab" hidden
+                    title="Fill / background colour">Fill</span>
+                  <button class="sw swbg trans" data-c="none" hidden
+                    title="Transparent box"></button>
+                  <button class="sw swbg" data-c="#0e1926" hidden
+                    style="background:#0e1926" title="Dark box"></button>
+                  <button class="sw swbg" data-c="#ffffff" hidden
+                    style="background:#ffffff" title="White box"></button>
+                  <button class="sw swbg" data-c="#ff6b57" hidden
+                    style="background:#ff6b57" title="Coral box"></button>
+                  <button class="sw swbg" data-c="#f0a848" hidden
+                    style="background:#f0a848" title="Amber box"></button>
+                  <button class="sw swbg" data-c="#39a9c0" hidden
+                    style="background:#39a9c0" title="Cyan box"></button>
+                  <button class="sw swbg sw-custom" id="swbg-custom" hidden
+                    data-target="fill"
+                    title="Custom fill colour — hex, rgb or rgba"></button>
+                </div>
+              </span>
             </span>
             <span class="rbn-lab">Colour</span>
           </span>

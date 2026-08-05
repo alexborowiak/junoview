@@ -28,7 +28,9 @@ def test_slide_templates_live_in_a_ribbon_layouts_dropdown(out):
     """
     assert 'id="lay-btn"' in out and 'id="layout-menu-grid"' in out
     assert ".deck.editing #layout-row{display:none;}" in out
-    assert "min(var(--dc-w),248px)" in out
+    # 200px: while editing the panel is ONLY slide thumbnails (the File
+    # controls ride in the ribbon), so it slimmed from 248px (2026-08-05)
+    assert "min(var(--dc-w),200px)" in out
 
 
 def test_poster_templates_and_catalog_grouping(out):

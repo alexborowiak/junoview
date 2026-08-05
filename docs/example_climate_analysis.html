@@ -3117,7 +3117,9 @@ body.slide-editing .apptop{display:none;}
 /* while editing, the panel is just chrome + film strip (the template
    catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
    slide canvas gets the width */
-.deck.editing .deck-create{flex:0 0 min(var(--dc-w),248px);
+/* 200px: the panel is ONLY thumbnails now, and the width goes to the
+   toolbar + canvas instead (2026-08-05) */
+.deck.editing .deck-create{flex:0 0 min(var(--dc-w),200px);
   border-right:1px solid #ffffff22;}
 .deck.editing #layout-row{display:none;}
 .deck.editing .dc-resize{display:none;}
@@ -3349,6 +3351,18 @@ select#fmt-font[hidden]{display:none;}
    a .dbtn they sit inline beside the label */
 .dbtn .bic{display:inline-block;vertical-align:-2px;width:13px;
   height:13px;margin-right:4px;}
+/* a POSTER is one page: no slide strip, no docked panel at all — the
+   File controls ride in the ribbon while editing (2026-08-05, user:
+   "the poster mode doesn't really need slides") */
+.deck.editing.poster-page .deck-create{display:none!important;}
+/* the borrowed File controls sit inline in their ribbon group */
+#rbn-file-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+#rbn-file-row .deck-status{margin-left:2px;}
+/* panel styling gave Swap-to-notebooks width:100% — inline here */
+#rbn-file-row #dc-edit{width:auto;}
+/* the colour popups: one row of swatches, roomy hit targets */
+.sw-menu{display:flex;align-items:center;gap:7px;padding:9px 11px;}
+.sw-menu .fmt-lab{display:none;}
 /* ---- page background + LIGHT pages (2026-08-04): pres.pageBg sets
    --page-bg on the deck; a light colour flips .page-light, which
    recolours the DEFAULT chrome (text boxes, frames, page numbers) for
@@ -7521,7 +7535,7 @@ through Ko-fi. Thank you.</p>
           <button class="dbtn dc-target" id="dc-target" aria-haspopup="true"
             aria-expanded="false"
             title="Where this presentation is saved">
-            Saved to: Browser &#9662;</button>
+            &#8594; Browser &#9662;</button>
           <div class="dc-menu" id="target-menu" hidden>
             <div class="dc-mhead">where this presentation is saved</div>
             <button class="dc-mi" id="tg-project" hidden>This project</button>
@@ -7564,6 +7578,14 @@ through Ko-fi. Thank you.</p>
     <div class="deck-stagewrap" id="deck-stagewrap">
       <div class="edit-tools ribbon" id="edit-tools" hidden>
         <div class="rbn-static">
+          <!-- filled by fileToRibbon() while editing: File / Save /
+               Saved-to / undo / redo / status / Swap-to-notebooks move
+               here from the docked panel, which then holds ONLY the
+               slide strip — and disappears entirely for posters -->
+          <span class="rbn-grp" id="rbn-file">
+            <span class="rbn-row" id="rbn-file-row"></span>
+            <span class="rbn-lab">File</span>
+          </span>
           <span class="rbn-grp">
             <span class="rbn-row">
               <button class="dbtn primary" id="dc-play"
@@ -7701,41 +7723,62 @@ through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Effects</span>
           </span>
+          <!-- colour swatches live behind two POPUP buttons: fourteen
+               always-visible circles said "look at me" louder than the
+               poster did (2026-08-05, user: "do you need to display all
+               the colours all the time?") -->
           <span class="rbn-grp">
             <span class="rbn-row">
-              <span class="fmt-lab" id="fmt-txlab" hidden
-                title="Text colour">Text</span>
-              <button class="sw" data-c="#ff6b57"
-                style="background:#ff6b57" title="Coral"></button>
-              <button class="sw" data-c="#f0a848"
-                style="background:#f0a848" title="Amber"></button>
-              <button class="sw" data-c="#39a9c0"
-                style="background:#39a9c0" title="Cyan"></button>
-              <button class="sw" data-c="#46a892"
-                style="background:#46a892" title="Green"></button>
-              <button class="sw" data-c="#ffffff"
-                style="background:#ffffff" title="White"></button>
-              <button class="sw" data-c="#16202b"
-                style="background:#16202b" title="Ink"></button>
-              <button class="sw sw-custom" id="sw-custom" data-target="text"
-                title="Custom colour — hex, rgb or rgba"></button>
-              <span class="fmt-lab" id="fmt-bglab" hidden
-                title="Fill / background colour">Fill</span>
-              <button class="sw swbg trans" data-c="none" hidden
-                title="Transparent box"></button>
-              <button class="sw swbg" data-c="#0e1926" hidden
-                style="background:#0e1926" title="Dark box"></button>
-              <button class="sw swbg" data-c="#ffffff" hidden
-                style="background:#ffffff" title="White box"></button>
-              <button class="sw swbg" data-c="#ff6b57" hidden
-                style="background:#ff6b57" title="Coral box"></button>
-              <button class="sw swbg" data-c="#f0a848" hidden
-                style="background:#f0a848" title="Amber box"></button>
-              <button class="sw swbg" data-c="#39a9c0" hidden
-                style="background:#39a9c0" title="Cyan box"></button>
-              <button class="sw swbg sw-custom" id="swbg-custom" hidden
-                data-target="fill"
-                title="Custom fill colour — hex, rgb or rgba"></button>
+              <span class="sh-drop">
+                <button class="dbtn" id="fmt-txcol-btn" hidden
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Colour of the selected text / line / shape">
+                  Colour &#9662;</button>
+                <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
+                  <span class="fmt-lab" id="fmt-txlab" hidden
+                    title="Text colour">Text</span>
+                  <button class="sw" data-c="#ff6b57"
+                    style="background:#ff6b57" title="Coral"></button>
+                  <button class="sw" data-c="#f0a848"
+                    style="background:#f0a848" title="Amber"></button>
+                  <button class="sw" data-c="#39a9c0"
+                    style="background:#39a9c0" title="Cyan"></button>
+                  <button class="sw" data-c="#46a892"
+                    style="background:#46a892" title="Green"></button>
+                  <button class="sw" data-c="#ffffff"
+                    style="background:#ffffff" title="White"></button>
+                  <button class="sw" data-c="#16202b"
+                    style="background:#16202b" title="Ink"></button>
+                  <button class="sw sw-custom" id="sw-custom"
+                    data-target="text"
+                    title="Custom colour — hex, rgb or rgba"></button>
+                </div>
+              </span>
+              <span class="sh-drop">
+                <button class="dbtn" id="fmt-fillcol-btn" hidden
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Fill / background colour of the selected box">
+                  Fill &#9662;</button>
+                <div class="sh-menu sw-menu" id="fmt-fillcol-menu" hidden>
+                  <span class="fmt-lab" id="fmt-bglab" hidden
+                    title="Fill / background colour">Fill</span>
+                  <button class="sw swbg trans" data-c="none" hidden
+                    title="Transparent box"></button>
+                  <button class="sw swbg" data-c="#0e1926" hidden
+                    style="background:#0e1926" title="Dark box"></button>
+                  <button class="sw swbg" data-c="#ffffff" hidden
+                    style="background:#ffffff" title="White box"></button>
+                  <button class="sw swbg" data-c="#ff6b57" hidden
+                    style="background:#ff6b57" title="Coral box"></button>
+                  <button class="sw swbg" data-c="#f0a848" hidden
+                    style="background:#f0a848" title="Amber box"></button>
+                  <button class="sw swbg" data-c="#39a9c0" hidden
+                    style="background:#39a9c0" title="Cyan box"></button>
+                  <button class="sw swbg sw-custom" id="swbg-custom" hidden
+                    data-target="fill"
+                    title="Custom fill colour — hex, rgb or rgba"></button>
+                </div>
+              </span>
             </span>
             <span class="rbn-lab">Colour</span>
           </span>
@@ -15807,6 +15850,13 @@ through Ko-fi. Thank you.</p>
     var showBg=plainText||noteCell;
     show('#fmt-txlab',(isText&&kind!=='cell')||noteCell);
     show('#fmt-bglab',showBg);
+    /* the popup buttons mirror what their menus can act on; the label
+       reads "Text" when it recolours words, "Colour" for lines/shapes */
+    show('#fmt-txcol-btn',kind!=='image');
+    var tcb=$('#fmt-txcol-btn');
+    if(tcb) tcb.textContent=(isText||kind==='cell')
+      ?'Text ▾':'Colour ▾';
+    show('#fmt-fillcol-btn',showBg);
     $$('.swbg',bar).forEach(function(sw){
       sw.hidden=!showBg;
       var cur_=(kind==='cell')
@@ -16394,6 +16444,29 @@ through Ko-fi. Thank you.</p>
   },true);
 
   /* ---------- format bar wiring ---------- */
+  /* the two colour POPUPS: open on their buttons, close on outside
+     click or on picking a swatch (custom keeps its own panel flow) */
+  [['#fmt-txcol-btn','#fmt-txcol-menu'],
+   ['#fmt-fillcol-btn','#fmt-fillcol-menu']].forEach(function(pair){
+    var btn=$(pair[0]),menu=$(pair[1]);
+    if(!btn||!menu) return;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open.toString());
+      if(open) floatMenu(btn,menu);
+    });
+    menu.addEventListener('click',function(e){
+      var sw=e.target.closest&&e.target.closest('.sw');
+      if(sw&&!sw.classList.contains('sw-custom')){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+  });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('mousedown',function(e){
       /* keep the caret/selection in the text box so we can recolour just
@@ -18355,11 +18428,45 @@ through Ko-fi. Thank you.</p>
   }
 
   /* ---------- mode switching ---------- */
+  /* ---- edit mode borrows the FILE controls into the ribbon
+     (2026-08-05, user: the docked column "basically just feels like
+     having the File button open all the time"). The real nodes MOVE —
+     every existing handler and menu keeps working — and move back when
+     create mode needs the panel again. With its head gone the panel is
+     just the slide strip, and posters (one page, no slides) drop the
+     panel entirely. ---- */
+  var fileMoved=[];
+  function fileToRibbon(){
+    var row=$('#rbn-file-row');
+    if(!row||fileMoved.length) return;
+    var head=deckEl.querySelector('.dc-head');
+    if(head) [].slice.call(head.children).forEach(function(el){
+      if(el.classList.contains('dc-spring')) return;
+      fileMoved.push({el:el,parent:head,next:el.nextSibling});
+      row.appendChild(el);
+    });
+    var sw=$('#dc-edit');
+    if(sw){
+      fileMoved.push({el:sw,parent:sw.parentNode,next:sw.nextSibling});
+      row.appendChild(sw);
+    }
+  }
+  function fileToPanel(){
+    /* restore in reverse so each insertBefore anchor is still valid */
+    fileMoved.slice().reverse().forEach(function(mv){
+      if(!mv.parent) return;
+      if(mv.next&&mv.next.parentNode===mv.parent)
+        mv.parent.insertBefore(mv.el,mv.next);
+      else mv.parent.appendChild(mv.el);
+    });
+    fileMoved=[];
+  }
   function setUIMode(m){
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
+    if(editing) fileToRibbon(); else fileToPanel();
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
@@ -18416,6 +18523,7 @@ through Ko-fi. Thank you.</p>
         document.exitFullscreen().catch(function(){});
     }catch(err){}
     closeVFull();
+    fileToPanel();          /* the panel gets its controls back */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
@@ -19034,7 +19142,11 @@ through Ko-fi. Thank you.</p>
   }
   function renderTargetBtn(){
     var b=$('#dc-target'); if(!b) return;
-    b.innerHTML='Saved to: '+esc(targetLabel())+' &#9662;';
+    /* the label is just the DESTINATION — "Saved to:" lives in the
+       tooltip. The long form was the widest thing in the ribbon's File
+       group and wrapped the whole toolbar to a third row (2026-08-05). */
+    b.innerHTML='&#8594; '+esc(targetLabel())+' &#9662;';
+    b.title='Where this presentation is saved — click to change';
     b.classList.toggle('tg-file',saveTarget==='file');
     var pj=$('#tg-project'); if(pj) pj.hidden=(APP.mode!=='app');
     var pk=$('#tg-pick'); if(pk) pk.hidden=(saveTarget!=='file');

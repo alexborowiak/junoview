@@ -107,6 +107,16 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **The editor got out of the poster's way.** While editing, the File
+  controls (File / Save / Saved-to / undo / redo / Swap to notebooks)
+  ride in the toolbar as a normal group — the docked panel head had read
+  as a permanently-open File menu. The panel keeps only the slide strip,
+  and posters drop it entirely: a poster is one page and needs no
+  slides, so it now runs edge to edge. The fourteen always-visible
+  colour swatches collapsed into two popup buttons (Text ▾ / Fill ▾)
+  that open on demand and close on pick. Verified with real
+  screenshots: a poster with a selection now shows two toolbar rows and
+  the page fills everything below them.
 - **Directive shorthand: `#(t)` and friends.** Every `#| key: value`
   directive now has a bracket spelling — `#(t)` title, `#(c)` caption,
   `#(s)` section, `#(i)` id, `#(d)` depends and the rest, full names in

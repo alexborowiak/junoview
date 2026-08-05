@@ -635,7 +635,9 @@ body.slide-editing .apptop{display:none;}
 /* while editing, the panel is just chrome + film strip (the template
    catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
    slide canvas gets the width */
-.deck.editing .deck-create{flex:0 0 min(var(--dc-w),248px);
+/* 200px: the panel is ONLY thumbnails now, and the width goes to the
+   toolbar + canvas instead (2026-08-05) */
+.deck.editing .deck-create{flex:0 0 min(var(--dc-w),200px);
   border-right:1px solid #ffffff22;}
 .deck.editing #layout-row{display:none;}
 .deck.editing .dc-resize{display:none;}
@@ -867,6 +869,18 @@ select#fmt-font[hidden]{display:none;}
    a .dbtn they sit inline beside the label */
 .dbtn .bic{display:inline-block;vertical-align:-2px;width:13px;
   height:13px;margin-right:4px;}
+/* a POSTER is one page: no slide strip, no docked panel at all — the
+   File controls ride in the ribbon while editing (2026-08-05, user:
+   "the poster mode doesn't really need slides") */
+.deck.editing.poster-page .deck-create{display:none!important;}
+/* the borrowed File controls sit inline in their ribbon group */
+#rbn-file-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+#rbn-file-row .deck-status{margin-left:2px;}
+/* panel styling gave Swap-to-notebooks width:100% — inline here */
+#rbn-file-row #dc-edit{width:auto;}
+/* the colour popups: one row of swatches, roomy hit targets */
+.sw-menu{display:flex;align-items:center;gap:7px;padding:9px 11px;}
+.sw-menu .fmt-lab{display:none;}
 /* ---- page background + LIGHT pages (2026-08-04): pres.pageBg sets
    --page-bg on the deck; a light colour flips .page-light, which
    recolours the DEFAULT chrome (text boxes, frames, page numbers) for

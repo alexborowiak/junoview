@@ -2714,6 +2714,13 @@
     var showBg=plainText||noteCell;
     show('#fmt-txlab',(isText&&kind!=='cell')||noteCell);
     show('#fmt-bglab',showBg);
+    /* the popup buttons mirror what their menus can act on; the label
+       reads "Text" when it recolours words, "Colour" for lines/shapes */
+    show('#fmt-txcol-btn',kind!=='image');
+    var tcb=$('#fmt-txcol-btn');
+    if(tcb) tcb.textContent=(isText||kind==='cell')
+      ?'Text ▾':'Colour ▾';
+    show('#fmt-fillcol-btn',showBg);
     $$('.swbg',bar).forEach(function(sw){
       sw.hidden=!showBg;
       var cur_=(kind==='cell')
@@ -3301,6 +3308,29 @@
   },true);
 
   /* ---------- format bar wiring ---------- */
+  /* the two colour POPUPS: open on their buttons, close on outside
+     click or on picking a swatch (custom keeps its own panel flow) */
+  [['#fmt-txcol-btn','#fmt-txcol-menu'],
+   ['#fmt-fillcol-btn','#fmt-fillcol-menu']].forEach(function(pair){
+    var btn=$(pair[0]),menu=$(pair[1]);
+    if(!btn||!menu) return;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open.toString());
+      if(open) floatMenu(btn,menu);
+    });
+    menu.addEventListener('click',function(e){
+      var sw=e.target.closest&&e.target.closest('.sw');
+      if(sw&&!sw.classList.contains('sw-custom')){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+  });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('mousedown',function(e){
       /* keep the caret/selection in the text box so we can recolour just
@@ -5262,11 +5292,45 @@
   }
 
   /* ---------- mode switching ---------- */
+  /* ---- edit mode borrows the FILE controls into the ribbon
+     (2026-08-05, user: the docked column "basically just feels like
+     having the File button open all the time"). The real nodes MOVE —
+     every existing handler and menu keeps working — and move back when
+     create mode needs the panel again. With its head gone the panel is
+     just the slide strip, and posters (one page, no slides) drop the
+     panel entirely. ---- */
+  var fileMoved=[];
+  function fileToRibbon(){
+    var row=$('#rbn-file-row');
+    if(!row||fileMoved.length) return;
+    var head=deckEl.querySelector('.dc-head');
+    if(head) [].slice.call(head.children).forEach(function(el){
+      if(el.classList.contains('dc-spring')) return;
+      fileMoved.push({el:el,parent:head,next:el.nextSibling});
+      row.appendChild(el);
+    });
+    var sw=$('#dc-edit');
+    if(sw){
+      fileMoved.push({el:sw,parent:sw.parentNode,next:sw.nextSibling});
+      row.appendChild(sw);
+    }
+  }
+  function fileToPanel(){
+    /* restore in reverse so each insertBefore anchor is still valid */
+    fileMoved.slice().reverse().forEach(function(mv){
+      if(!mv.parent) return;
+      if(mv.next&&mv.next.parentNode===mv.parent)
+        mv.parent.insertBefore(mv.el,mv.next);
+      else mv.parent.appendChild(mv.el);
+    });
+    fileMoved=[];
+  }
   function setUIMode(m){
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
+    if(editing) fileToRibbon(); else fileToPanel();
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
@@ -5323,6 +5387,7 @@
         document.exitFullscreen().catch(function(){});
     }catch(err){}
     closeVFull();
+    fileToPanel();          /* the panel gets its controls back */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
@@ -5941,7 +6006,11 @@
   }
   function renderTargetBtn(){
     var b=$('#dc-target'); if(!b) return;
-    b.innerHTML='Saved to: '+esc(targetLabel())+' &#9662;';
+    /* the label is just the DESTINATION — "Saved to:" lives in the
+       tooltip. The long form was the widest thing in the ribbon's File
+       group and wrapped the whole toolbar to a third row (2026-08-05). */
+    b.innerHTML='&#8594; '+esc(targetLabel())+' &#9662;';
+    b.title='Where this presentation is saved — click to change';
     b.classList.toggle('tg-file',saveTarget==='file');
     var pj=$('#tg-project'); if(pj) pj.hidden=(APP.mode!=='app');
     var pk=$('#tg-pick'); if(pk) pk.hidden=(saveTarget!=='file');

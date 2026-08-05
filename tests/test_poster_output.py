@@ -81,6 +81,25 @@ def test_line_insert_and_toolbar_icons(out):
     assert ".dbtn .bic{display:inline-block;" in out
 
 
+def test_edit_mode_is_minimal_file_in_ribbon_colours_in_popups(out):
+    """2026-08-05, user: "focus more on usability". Editing borrows the
+    File controls into a ribbon group (the docked panel head read as a
+    permanently-open File menu); the panel keeps only the slide strip —
+    and disappears entirely for posters, which are one page and need no
+    slides. The fourteen always-visible colour swatches became two popup
+    buttons.
+    """
+    assert 'id="rbn-file"' in out and 'id="rbn-file-row"' in out
+    assert "function fileToRibbon" in out and "function fileToPanel" in out
+    assert "if(editing) fileToRibbon(); else fileToPanel();" in out
+    assert ".deck.editing.poster-page .deck-create{display:none!important;}" in out
+    assert 'id="fmt-txcol-btn"' in out and 'id="fmt-fillcol-btn"' in out
+    assert 'id="fmt-txcol-menu"' in out and 'id="fmt-fillcol-menu"' in out
+    assert "show('#fmt-fillcol-btn',showBg);" in out
+    # picking a swatch closes its popup; the custom swatch keeps its panel
+    assert "if(sw&&!sw.classList.contains('sw-custom')){" in out
+
+
 def test_qr_generator_is_self_contained_and_vector(out):
     """A poster QR must not depend on a third-party service: the encoder
     (byte mode, ECC M, versions 1-10, spec mask scoring) lives in deck.js
