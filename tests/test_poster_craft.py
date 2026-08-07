@@ -1,0 +1,199 @@
+"""The editing affordances a poster needs before anyone trusts it in print.
+
+Everything here answers a specific way a real poster goes wrong: a typo that
+nothing flagged, an item copied nowhere because there was no clipboard, edges
+that never quite agreed, whitespace that was almost even, a figure that
+printed soft. String pins against the built page; the behaviour was verified
+out-of-band in a headless browser -- spellcheck reported ``true`` on canvas
+text, a copy/paste took a poster from 20 items to 21, the pre-print check
+found "inside the margin" on a real placement, and crop marks grew the
+exported sheet to 851x1199mm while the page stayed exactly A0.
+"""
+
+from __future__ import annotations
+
+
+def test_items_drag_from_their_body_not_a_handle(out):
+    """A text box could only be moved by a small six-dot handle, because
+    the words were editable on contact and clicking them put a caret in
+    instead of picking the box up. Click to select and drag, DOUBLE-click
+    to type -- and the handle, which also sat on top of the artwork you
+    were trying to judge, is gone (2026-08-07, user: "just make it normal
+    moving controls").
+    """
+    assert "function mkHandle" not in out
+    assert "an-handle'" not in out          # nothing builds one any more
+    assert "el.contentEditable='false';" in out
+    assert "el.addEventListener('dblclick'" in out
+    # everything drags from its body; only a box being typed in does not
+    assert "if(!item.classList.contains('an-editing'))" in out
+    assert ".deck.editing .an-text,.deck.editing .an-title{cursor:move;}" in out
+
+
+def test_the_top_bar_names_what_it_belongs_to(out):
+    """Buttons with a void beside them read as floating chrome. For a
+    poster this is also the only place the name appears, since the panel
+    that normally carries it is hidden.
+    """
+    assert 'id="deck-title"' in out
+    assert "ti.textContent=(mode==='edit'&&pres&&pres.name)?pres.name:'';" in out
+    # openDeck calls status() before the mode is set, so it runs again
+    assert "if(!creating) renderSlide();\n    /* the bar's title" in out
+
+
+def test_text_scales_with_the_page_at_every_zoom(out):
+    """Text is a percentage of the page height, worked out from the layer
+    when the annotations render. Zooming resized the page but never
+    re-rendered them, so every text kept its old size and burst out of its
+    box; and a hard 9px floor meant that at a small zoom the text stopped
+    shrinking while its box carried on (2026-08-07, user: "when you zoom
+    out the text fucks up"). Measured after the fix: 3% -> 4.1px,
+    11% -> 15.8px, 22% -> 31.1px, nothing overflowing at any level.
+    """
+    assert "return Math.max(0.5,h*(size||2.6)/100)+'px';" in out
+    assert "Math.max(9,h*(size||2.6)/100)" not in out
+    # resizing the page has to re-render what is sized from it
+    assert "if(s0&&l0){renderAnnots(l0,s0);paintSel(l0);}" in out
+
+
+def test_insert_groups_by_what_a_tool_does(out):
+    """Source order IS the layout once the rows fill across, so things you
+    PLACE share the top row and things you DRAW share the bottom one --
+    which is how Line and Arrow, the same tool with and without a head,
+    end up beside each other (2026-08-07, user).
+    """
+    place = [out.index('data-tool="cell"'), out.index('data-tool="text"'),
+             out.index('id="et-image"'), out.index('id="dc-qr"')]
+    draw = [out.index('id="sh-btn"'), out.index('id="dc-line"'),
+            out.index('data-tool="arrow"')]
+    assert place == sorted(place), "the placing tools are out of order"
+    assert draw == sorted(draw), "the drawing tools are out of order"
+    assert max(place) < min(draw), "placing and drawing tools are interleaved"
+    # Objects is a way of LOOKING at the page, so it sits with View
+    assert out.index('id="objects-btn"') > out.index('id="vw-check"')
+
+
+def test_a_poster_has_no_slides_anywhere(out):
+    """A poster is ONE PAGE. Every slide affordance was still reachable
+    from it: the thumbnail strip and "+ Add slide" were hidden only while
+    editing, so the builder still offered them; the ribbon group was
+    labelled "Slide"; the File menu offered slide numbers; and Auto-build
+    -- one slide per figure -- would turn a poster into seven of them.
+    (2026-08-07, user: "why does poster still have slides".)
+    """
+    # the strip, the counter and the step arrows go in EVERY mode
+    assert ".deck.poster-page .dc-film{display:none!important;}" in out
+    assert ".deck.poster-page .deck-count{display:none!important;}" in out
+    assert ".deck.poster-page .deck-arrow{display:none!important;}" in out
+    # the group is called Page, and only a deck is told about slides
+    assert "slideLab.textContent=pg.poster?'Page':'Slide';" in out
+    assert "if(nums) nums.hidden=!!pg.poster;" in out
+    assert "if(add) add.hidden=!!pg.poster;" in out
+    # ...and a poster cannot GAIN pages through auto-build
+    assert "['#mi-auto-figs','#mi-auto-figdocs'].forEach" in out
+    # all of it keyed on the page, so switching back to 16:9 restores it
+    assert "deckEl.classList.toggle('poster-page',!!pg.poster);" in out
+
+
+def test_spellcheck_is_on_for_editable_text(out):
+    """It used to be off everywhere, so a typo could travel all the way to
+    a printed A0 poster with nothing ever flagging it. Only editable text
+    is checked, so Present and every export stay squiggle-free.
+    """
+    assert "el.spellcheck=true;" in out
+    assert "el.spellcheck=false" not in out
+
+
+def test_copy_cut_paste_including_images_from_the_clipboard(out):
+    """Ctrl+D duplicates in place, which cannot carry an item to another
+    poster and cannot bring anything in. Paste rides the real paste event
+    so a screenshot or logo on the system clipboard lands on the page.
+    """
+    assert "function copySel" in out and "function cutSel" in out
+    assert "function pasteBuf" in out and "function pasteImageFile" in out
+    assert "document.addEventListener('paste'" in out
+    assert "items[i].type.indexOf('image/')===0" in out
+    # a paste is its own item, never silently joining the source's group
+    assert "delete cp.grp;" in out
+    # typing into a text box must still paste text, not an annotation
+    assert "e.target.isContentEditable) return;" in out
+
+
+def test_align_and_distribute_measure_the_visual_rect(out):
+    """Row and Grid re-arrange into a formation; aligning leaves items
+    where they are and makes one edge agree. Equal GAPS, not equal
+    centres -- with different-sized items it is the whitespace the eye
+    measures.
+    """
+    assert "function alignSel" in out and "function distributeSel" in out
+    for edge in ("left", "right", "hcenter", "top", "bottom", "vmiddle"):
+        assert f"edge==='{edge}'" in out, edge
+    assert "var gap=(span-sum)/(items.length-1);" in out
+    assert 'wireFloatDropdown(\'fmt-alignwrap\'' in out
+    assert 'id="fmt-align-menu"' in out
+
+
+def test_equal_gap_guides_while_dragging(out):
+    """Only items on the same band count as neighbours, and an edge snap
+    beats a gap snap: agreeing with a line is a stronger intention than
+    matching a distance.
+    """
+    assert "function bestGap" in out and "function gapCands" in out
+    assert "function drawGapMarks" in out
+    assert "var overlap=horiz?(r.b>bb.t&&r.t<bb.b):(r.r>bb.l&&r.l<bb.r);" in out
+    assert "if(!bx){" in out and "if(!by){" in out
+
+
+def test_custom_guides_belong_to_the_presentation(out):
+    """Dragged off a ruler, dropped back on it to delete, and saved with
+    the poster -- a guide you had to redraw every session is a chore.
+    """
+    assert "function customGuides" in out and "function startGuideDrag" in out
+    assert "pres.guides={x:g.x,y:g.y}" in out
+    assert "if(v==null||v<0||v>100){cg[axis].splice(idx,1);}" in out
+    # the ruler bars take clicks; the rest of the overlay stays transparent
+    assert ".ruler{position:absolute;" in out and "pointer-events:auto;}" in out
+
+
+def test_fonts_come_from_one_table(out):
+    """The picker, the canvas CSS and the .pptx writer all read the same
+    list, so they cannot drift; an unlisted value is a family you typed
+    and passes through to both the browser and PowerPoint.
+    """
+    assert "var FONTS=[" in out
+    assert "function fontCss" in out and "function fontPpt" in out
+    assert "FONTS.forEach(function(f){FONTMAP[f.id]=f.css;" in out
+    for fam in ("Arial", "Helvetica", "Georgia", "Garamond", "Verdana"):
+        assert fam in out, fam
+    assert "value=\"__custom\"" in out
+    assert "font:fontPpt(a.font)" in out          # the pptx writer agrees
+
+
+def test_preflight_composes_signals_that_already_existed(out):
+    """The dpi judgement, the margin, the page bounds and the page
+    background were all already known. What was missing was one place
+    that asks them all at once.
+    """
+    assert "function preflight" in out
+    assert "function contrast" in out and "function relLum" in out
+    assert "runs off the page" in out
+    assert "is inside the margin" in out
+    assert "Text is hard to read" in out
+    assert "Empty frame" in out
+    assert "$$('.dpi-warn',slideEl)" in out       # reuses the existing chip
+    assert 'id="vw-check"' in out and 'id="preflight"' in out
+    # 4.5:1 is the WCAG AA threshold
+    assert "cr<4.5" in out
+
+
+def test_crop_marks_grow_the_sheet_not_the_page(out):
+    """An A0 poster must stay 841x1189mm whether or not trim marks are
+    asked for; the marks need somewhere to live, so the SHEET grows.
+    """
+    assert "BLEED_MM=5" in out
+    assert "var sheetW=pg.mm[0]+2*bleed,sheetH=pg.mm[1]+2*bleed;" in out
+    assert "'@media print{@page{size:'+sheetW+'mm '+sheetH+'mm;'" in out
+    assert 'id="mi-crop"' in out and "pres.cropMarks" in out
+    assert "cropmark cm-" in out
+    # always black: an instruction to a machine, not part of the design
+    assert ".cropmark::before,.cropmark::after{content:\"\";" in out

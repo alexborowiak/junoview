@@ -51,7 +51,12 @@ def test_text_becomes_editable_shapes_not_a_picture(out):
     assert "txBox=\"1\"" in out          # a real text box
     assert "<p:pic>" in out              # pictures
     assert "<p:cxnSp>" in out            # lines/arrows are connectors
-    assert "a:prstDash" in out and "a:tailEnd" in out
+    # dash presets and arrow ends are emitted through helpers now
+    # (2026-08-07, when each gained a choice of styles), so the tag names
+    # arrive as arguments rather than as literals at the write site
+    assert "a:prstDash" in out
+    assert "function endXml" in out
+    assert "endXml('headEnd'" in out and "endXml('tailEnd'" in out
     assert "SHAPE_GEOM" in out           # rect/ellipse/diamond/…
 
 

@@ -107,6 +107,109 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **The editing ribbon was rebuilt around groups.** It used to wrap, so a
+  group could break across rows: its label landed under whatever happened
+  to be beneath it, nothing marked where one group ended, and every
+  button was the same size, so a primary action looked exactly like a
+  toggle. It is now one row that scrolls sideways when it must — as
+  PowerPoint's does — with a divider and one centred label per group, and
+  a real size hierarchy: things you came here to *do* (Present, Cell,
+  Text, Shapes, Layouts, Check) are large icon-over-label buttons, while
+  toggles are small and stacked two-up. The height is now constant, so
+  selecting an item can no longer shift the canvas. Two bugs surfaced in
+  the rebuild: the empty-group hider only ran over the contextual half of
+  the ribbon, leaving *Notebooks* as a label over empty space, and
+  `renderPresNbs` sets its label with `textContent`, which silently
+  deleted any icon inside the button.
+- **Lines and arrows grew up.** Five line styles (solid, dashed, dotted,
+  dash-dot, long dash); seven head shapes in four sizes, chosen
+  **independently at each end**, so a double-headed arrow is simply a
+  head at both; and routes that are straight, curved either way, or
+  elbowed round a corner. An arrow's endpoint can be dropped **onto an
+  item** to attach it — from then on the arrow follows that item around,
+  its ends sliding along the borders as either one moves.
+- **Shapes can hold a gradient**, linear at an angle or radiating from the
+  centre, alongside plain solid fills.
+- **Text can follow a curve.** HTML cannot bow a baseline, so curved text
+  is drawn as SVG on a path; click into the box and it straightens while
+  you type, because a caret cannot live on a curve. The arch is bounded
+  by the box's own height, so it can never escape the page.
+- **All of it survives the trip to PowerPoint**, because every style
+  carries its canvas rendering and its OOXML mapping in the same table
+  and the two cannot be edited apart. Verified in Microsoft PowerPoint:
+  gradients arrive as gradient fills, dash presets as dash presets, each
+  arrow end with its own head shape, curves and elbows as real curved and
+  bent connectors, and curved text as an editable warp rather than a
+  picture. Two asymmetries are stated rather than hidden: PowerPoint's
+  *downward* arch wraps text round the bottom of a circle the way a badge
+  does (the poster and the PDF keep it upright), and its curved connector
+  draws its own S-curve rather than reproducing the exact bow.
+- **Fixed: a filled shape exported as a solid black box.** `fill` on a
+  shape is a *boolean* — "tint with my own line colour" — and the `.pptx`
+  writer was handing it to the colour parser, which fell back to black.
+- **Text is spell-checked while you edit it.** It was switched off
+  everywhere, which meant a typo could travel all the way onto a printed
+  A0 poster with nothing ever flagging it. Only *editable* text is
+  checked, so Present, print and every export stay squiggle-free.
+- **Copy, cut and paste — including from the system clipboard.** `Ctrl+D`
+  duplicates in place, which cannot carry an item to another poster and
+  cannot bring anything in. `Ctrl+C` / `Ctrl+X` / `Ctrl+V` now move whole
+  items between posters (a copied figure frame stays a *live* figure
+  frame, not a picture of one), and pasting an image from the clipboard
+  drops it on the page at a sensible size — which is how logos and
+  screenshots actually arrive.
+- **Align, and equal gaps.** Row and Grid re-arrange a selection into a
+  formation; what poster work needs constantly is the other thing —
+  leave items where they are and make one edge agree. **Align** does any
+  edge or centre, and distributes three or more with equal *gaps* rather
+  than equal centres, because with different-sized items it is the
+  whitespace the eye measures. Dragging now also snaps to a gap that
+  matches one you already have, marking both in amber.
+- **Guides you draw yourself.** Drag off a ruler to lay one down, drag it
+  back onto the ruler to remove it. They belong to the presentation, so
+  they are saved and re-open with it — the twelve-column grid covers the
+  common case, but a real poster usually has a line or two of its own.
+- **A pre-print check.** None of it is new information: the print-dpi
+  judgement, the margin, the page bounds and the page background were all
+  already known. What was missing was one place that asks them all at
+  once, before a poster goes to a shop that will print exactly what it is
+  given. **Check** reports soft figures, anything off the page or inside
+  the 20mm margin, text below 4.5:1 contrast, and empty frames; click a
+  finding to select the item.
+- **Crop marks**, for printers that ask for them. The *sheet* grows 5mm on
+  every side to hold the marks while the page keeps its exact size — an
+  A0 poster is 841×1189mm either way.
+- **Fonts beyond the generic five.** Arial, Helvetica, Calibri, Verdana,
+  Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
+  *Other…* for any family installed on your machine. One table feeds the
+  picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The poster editor got a frame of reference.** A poster is far bigger
+  than the window, so the judgements a 16:9 slide lets you make by eye —
+  is that aligned, is it too near the edge — could not be made at all, and
+  laying one out felt like arranging things in mid-air. A new **View**
+  group fixes that. **Rulers** (`R`) run down the top and left in real
+  millimetres of the page, marking where the pointer is and how far the
+  selected item reaches. **Grid** (`G`) draws a 20mm print margin and
+  twelve columns, and items snap to both. Snapping itself was never
+  missing — it has always caught the page's edges and centre and every
+  other item's edges and centres — but it reported itself with a 1.5px
+  dashed hairline that, on an A0 page zoomed to fit, was invisible. The
+  guides are now solid and lit, and a snap to the *page* is cyan where a
+  snap to its *contents* is coral, so the two facts read apart. The catch
+  window went from 6px to 9px, which on a fitted poster was a couple of
+  real millimetres. Guides are an editing aid and appear in no print,
+  export or playback.
+- **The toolbar can run down the right-hand edge**, and a portrait poster
+  starts that way. A0 portrait is 1.4× taller than it is wide, and the
+  horizontal ribbon spends ~122px of exactly the dimension the page needs
+  most; moved to the side it spends width instead, which a portrait page
+  has to spare. Landscape pages and ordinary slides keep the top ribbon,
+  and the **Side bar** button overrides either way for good.
+- **Full-screen editing**, which is not the same thing as presenting.
+  *Present* hides every tool and starts a build sequence — meaningless for
+  a poster, where there is no audience and nothing to step through.
+  **Full screen** takes the browser chrome away and gives the page the
+  whole display with the entire editor intact.
 - **Presentations and posters export to PowerPoint.** *File &rarr; Export
   PowerPoint* writes a real `.pptx` — and native shapes, not a picture of
   each slide, so **the text is still text in PowerPoint**: retype a title,

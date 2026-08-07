@@ -459,11 +459,31 @@
     deckEl.classList.toggle('poster-page',!!pg.poster);
     applyPageBg();
     var b=$('#page-btn');
+    /* the group is already called Page, so the button carries only the
+       size — "Poster A0 portrait" under a PAGE heading said "Poster" and
+       "Page" twice and was the widest control in the group */
     if(b) b.innerHTML='&#9645; '
-      +(pg.id==='16x9'?'Page':esc(pg.label))+' &#9662;';
+      +(pg.id==='16x9'?'Page':esc(pg.label.replace(/^Poster\s+/,'')))
+      +' &#9662;';
     $$('#page-menu .page-opt').forEach(function(o){
       o.setAttribute('aria-pressed',
         (o.dataset.page===pg.id).toString());});
+    /* a poster has no slides, so it is never told about them: the ribbon
+       group is "Page", and page numbering — which only means anything to
+       a deck you step through — goes away entirely */
+    var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
+    if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
+    var nums=$('#mi-nums');
+    if(nums) nums.hidden=!!pg.poster;
+    var add=$('#film-add');
+    if(add) add.hidden=!!pg.poster;
+    /* Auto-build makes ONE SLIDE PER FIGURE. On a deck that is the whole
+       point; on a poster it silently turns one page into seven, which is
+       how a poster ended up with slides at all. Place cells on the page
+       instead — the Insert group does that. */
+    ['#mi-auto-figs','#mi-auto-figdocs'].forEach(function(sel){
+      var el=$(sel); if(el) el.hidden=!!pg.poster;
+    });
     renderLayoutPicker();   /* poster pages list poster templates first */
   }
   function sizeSlideTo(slideEl,zoom){
@@ -489,15 +509,504 @@
     var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
     if(mode==='edit'){
       sizeSlideTo(slideEl,deckZoom||1);
+      /* Always a PERCENTAGE, never the word "Fit". Between a − and a +,
+         "Fit" read as a button named Fit rather than as the zoom level
+         (2026-08-07, user: "the fit button is confusing… I think you mean
+         zoom"). Auto-fit still shows its real percentage, measured off
+         the page, so the number always means the same thing. */
       var zl=$('#zoom-val');
-      if(zl) zl.textContent=deckZoom
-        ?Math.round(deckZoom*100)+'%':'Fit';
+      if(zl){
+        var pg2=pageOf();
+        var natural=pg2.mm[0]/25.4*96;      /* the page at 100% */
+        var shown=parseFloat(slideEl.style.width)||0;
+        var pct=(natural&&shown)?Math.round(shown/natural*100)
+          :Math.round((deckZoom||1)*100);
+        /* the word is carried on the control itself: a bare "4%" between a
+           minus and a plus is honest (an A0 page really is shown at about
+           4%) but says nothing about WHAT is 4% */
+        zl.textContent='Zoom '+pct+'%';
+        zl.title=deckZoom
+          ? 'Click to fit the whole page in the window'
+          : 'Fitted to the window — click to re-fit after scrolling';
+      }
     } else if(deckEl.classList.contains('custom-page')){
       /* playing a poster / portrait page letterboxes to the page */
       sizeSlideTo(slideEl,1);
     }
+    /* Text is sized as a PERCENTAGE of the page, worked out from the
+       layer's height when the annotations render. Zooming resized the
+       page but never re-rendered them, so every text kept the size it had
+       at the old zoom and burst out of its box (2026-08-07, user: "when
+       you zoom out the text fucks up"). Figure frames fit themselves the
+       same way, so they need it too. */
+    if(mode==='edit'){
+      var s0=pres.slides[cur],l0=stage.querySelector('.annot-layer');
+      if(s0&&l0){renderAnnots(l0,s0);paintSel(l0);}
+    }
+    syncGuides();   /* rulers and grid track whatever size the page ended up */
   }
   function setZoom(z){deckZoom=z;applyZoom();}
+
+  /* ---- page guides: rulers, a margin box and a layout grid ----------
+     A poster is far bigger than the window, so "is this aligned?" cannot
+     be answered by eye the way it can on a 16:9 slide. These give the
+     page a frame of reference: real millimetre rulers, a printer safe
+     margin, and a column grid that items snap to. All three are editing
+     aids — they are excluded from playback, print and every export. */
+  var GUIDE_KEY='junoview:deck:guides';
+  var guides={rulers:false,grid:false,side:false};
+  try{
+    var _g=JSON.parse(localStorage.getItem(GUIDE_KEY)||'{}');
+    if(_g&&typeof _g==='object'){
+      guides.rulers=!!_g.rulers;guides.grid=!!_g.grid;
+      guides.side=!!_g.side;guides.sideSet=!!_g.sideSet;}
+  }catch(e){}
+  function saveGuides(){
+    try{localStorage.setItem(GUIDE_KEY,JSON.stringify(guides));}catch(e){}
+  }
+  var MARGIN_MM=20;      /* a printer's safe area: nothing important outside */
+  var BLEED_MM=5;        /* where trim marks live, outside the page */
+  var GRID_COLS=12;
+  function marginPct(){
+    var pg=pageOf();
+    return {x:Math.min(20,MARGIN_MM/pg.mm[0]*100),
+            y:Math.min(20,MARGIN_MM/pg.mm[1]*100)};
+  }
+  /* the grid divides the area INSIDE the margins into 12 columns, and
+     rules horizontally at the same physical pitch so the cells are square
+     — a 12-column poster grid people already know how to lay out against */
+  function gridPct(){
+    var pg=pageOf(),m=marginPct();
+    var colW=(100-2*m.x)/GRID_COLS;
+    var rowH=colW*(pg.mm[0]/pg.mm[1])*(100/100);
+    /* colW is a % of WIDTH; convert that physical width to a % of HEIGHT */
+    rowH=colW/100*pg.mm[0]/pg.mm[1]*100;
+    var rows=Math.max(1,Math.floor((100-2*m.y)/rowH));
+    return {m:m,colW:colW,rowH:rowH,rows:rows};
+  }
+  /* extra snap lines contributed by the guides (only when shown) */
+  function guideTargets(){
+    if(!guides.grid) return {xs:[],ys:[]};
+    var g=gridPct(),xs=[],ys=[],i;
+    for(i=0;i<=GRID_COLS;i++) xs.push(g.m.x+i*g.colW);
+    for(i=0;i<=g.rows;i++) ys.push(g.m.y+i*g.rowH);
+    ys.push(100-g.m.y);
+    return {xs:xs,ys:ys};
+  }
+  function drawGrid(slideEl){
+    if(!slideEl) return;
+    var host=slideEl.querySelector('.pgrid');
+    if(!guides.grid||mode!=='edit'){ if(host) host.remove(); return; }
+    if(!host){
+      host=document.createElement('div');host.className='pgrid';
+      slideEl.insertBefore(host,slideEl.firstChild);
+    }
+    var g=gridPct(),parts=[],i;
+    parts.push('<div class="pgrid-margin" style="left:'+g.m.x+'%;top:'+g.m.y
+      +'%;right:'+g.m.x+'%;bottom:'+g.m.y+'%;"></div>');
+    for(i=0;i<GRID_COLS;i++){
+      if(i%2) continue;                 /* shade alternate columns only */
+      parts.push('<div class="pgrid-col" style="left:'+(g.m.x+i*g.colW)
+        +'%;width:'+g.colW+'%;top:'+g.m.y+'%;bottom:'+g.m.y+'%;"></div>');
+    }
+    host.innerHTML='<div class="pgrid-lines">'+parts.join('')+'</div>';
+  }
+  function rulerStep(pxPerMm){
+    var steps=[1,2,5,10,20,25,50,100,200,500,1000];
+    for(var i=0;i<steps.length;i++)
+      if(steps[i]*pxPerMm>=7) return steps[i];
+    return steps[steps.length-1];
+  }
+  function fillRuler(el,lenMm,pxPerMm,vertical){
+    var step=rulerStep(pxPerMm);
+    var labelEvery=(step*pxPerMm>=46)?1:(step*5*pxPerMm>=46?5:10);
+    var parts=[];
+    for(var mm=0;mm<=lenMm+0.5;mm+=step){
+      var pos=mm*pxPerMm;
+      var major=(Math.round(mm/step)%labelEvery===0);
+      parts.push('<i class="rtick'+(major?' major':'')+'" style="'
+        +(vertical?'top:':'left:')+pos+'px"></i>');
+      if(major&&mm>0)
+        parts.push('<span class="rlab" style="'+(vertical?'top:':'left:')
+          +pos+'px">'+Math.round(mm)+'</span>');
+    }
+    el.innerHTML=parts.join('');
+  }
+  var rulerCursor={x:null,y:null};
+  function drawRulers(slideEl,wrap){
+    var rh=$('#ruler-h'),rv=$('#ruler-v'),rc=$('#ruler-corner');
+    if(!rh||!rv||!rc) return;
+    var sr=slideEl.getBoundingClientRect(),wr=wrap.getBoundingClientRect();
+    var left=sr.left-wr.left,top=sr.top-wr.top;
+    var pg=pageOf();
+    var ppmX=sr.width/pg.mm[0],ppmY=sr.height/pg.mm[1];
+    rh.style.left=left+'px';rh.style.top=(top-20)+'px';
+    rh.style.width=sr.width+'px';
+    rv.style.top=top+'px';rv.style.left=(left-20)+'px';
+    rv.style.height=sr.height+'px';
+    rc.style.left=(left-20)+'px';rc.style.top=(top-20)+'px';
+    fillRuler(rh,pg.mm[0],ppmX,false);
+    fillRuler(rv,pg.mm[1],ppmY,true);
+    /* the selected item's extent, shaded on both rulers */
+    var s=pres.slides[cur],layer=slideEl.querySelector('.annot-layer');
+    if(s&&layer&&typeof selAnnot==='number'){
+      var r=annotRectPct(layer,s,selAnnot);
+      if(r){
+        rh.insertAdjacentHTML('beforeend','<i class="rspan" style="left:'
+          +(r.l/100*sr.width)+'px;width:'+((r.r-r.l)/100*sr.width)+'px"></i>');
+        rv.insertAdjacentHTML('beforeend','<i class="rspan" style="top:'
+          +(r.t/100*sr.height)+'px;height:'+((r.b-r.t)/100*sr.height)
+          +'px"></i>');
+      }
+    }
+    if(rulerCursor.x!=null)
+      rh.insertAdjacentHTML('beforeend','<i class="rcursor" style="left:'
+        +(rulerCursor.x*sr.width)+'px"></i>');
+    if(rulerCursor.y!=null)
+      rv.insertAdjacentHTML('beforeend','<i class="rcursor" style="top:'
+        +(rulerCursor.y*sr.height)+'px"></i>');
+  }
+  function syncGuides(){
+    var wrap=$('#deck-stagewrap'),rl=$('#rulers');
+    var slideEl=stage?stage.querySelector('.slide'):null;
+    if(rl&&wrap){
+      var on=(mode==='edit'&&guides.rulers&&!!slideEl&&!deckEl.hidden);
+      rl.hidden=!on;
+      if(on) drawRulers(slideEl,wrap);
+    }
+    drawGrid(slideEl);
+    drawCustomGuides(slideEl);
+  }
+  /* ---- custom guides, dragged off the rulers -------------------------
+     The 12-column grid covers the common case; a real poster usually has
+     one or two lines of its own (a banner depth, a column split that is
+     not twelfths). Drag from a ruler onto the page to lay one down, drag
+     it back onto the ruler to remove it. They belong to the PRESENTATION,
+     so they are saved and re-open with it. */
+  function customGuides(){
+    var g=(pres&&pres.guides)||{};
+    return {x:(g.x||[]).slice(),y:(g.y||[]).slice()};
+  }
+  function setCustomGuides(g){
+    if(!pres) return;
+    if(!g.x.length&&!g.y.length) delete pres.guides;
+    else pres.guides={x:g.x,y:g.y};
+    markDirty();
+  }
+  function drawCustomGuides(slideEl){
+    if(!slideEl) return;
+    var host=slideEl.querySelector('.cguides');
+    var cg=customGuides();
+    if(mode!=='edit'||(!cg.x.length&&!cg.y.length)){
+      if(host) host.remove(); return;
+    }
+    if(!host){
+      host=document.createElement('div');host.className='cguides';
+      slideEl.insertBefore(host,slideEl.firstChild);
+    }
+    host.innerHTML=
+      cg.x.map(function(v,i){
+        return '<i class="cguide cg-v" data-ax="x" data-i="'+i
+          +'" style="left:'+v+'%"></i>';}).join('')
+      +cg.y.map(function(v,i){
+        return '<i class="cguide cg-h" data-ax="y" data-i="'+i
+          +'" style="top:'+v+'%"></i>';}).join('');
+  }
+  /* drag a NEW guide out of a ruler, or an existing one to move/remove */
+  function startGuideDrag(ev,axis,existing){
+    ev.preventDefault();
+    var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+    var cg=customGuides();
+    var idx=(existing==null)
+      ?(cg[axis].push(axis==='x'?0:0)-1):existing;
+    function at(e){
+      var sr=slideEl.getBoundingClientRect();
+      if(!sr.width||!sr.height) return null;
+      return axis==='x'?(e.clientX-sr.left)/sr.width*100
+                       :(e.clientY-sr.top)/sr.height*100;
+    }
+    function mv(e){
+      var v=at(e); if(v==null) return;
+      cg[axis][idx]=Math.max(-4,Math.min(104,v));
+      setCustomGuides(cg);drawCustomGuides(slideEl);
+    }
+    function up(e){
+      document.removeEventListener('mousemove',mv);
+      document.removeEventListener('mouseup',up);
+      var v=cg[axis][idx];
+      /* dropped back outside the page: that is how you delete one */
+      if(v==null||v<0||v>100){cg[axis].splice(idx,1);}
+      else cg[axis][idx]=Math.round(v*100)/100;
+      setCustomGuides(cg);drawCustomGuides(slideEl);
+    }
+    document.addEventListener('mousemove',mv);
+    document.addEventListener('mouseup',up);
+    mv(ev);
+  }
+  (function(){
+    var rh=$('#ruler-h'),rv=$('#ruler-v');
+    /* the rulers are pointer-events:none so they never block the canvas;
+       they take pointer events only where a guide can be pulled from */
+    if(rh) rh.addEventListener('mousedown',function(e){
+      startGuideDrag(e,'y',null);});
+    if(rv) rv.addEventListener('mousedown',function(e){
+      startGuideDrag(e,'x',null);});
+    if(stage) stage.addEventListener('mousedown',function(e){
+      var g=e.target.closest?e.target.closest('.cguide'):null;
+      if(!g) return;
+      e.stopPropagation();
+      startGuideDrag(e,g.dataset.ax,+g.dataset.i);
+    },true);
+  })();
+  /* ---- pre-print check ------------------------------------------------
+     Nothing here is new information: the DPI judgement, the margin, the
+     page bounds and the page background were all already known. What was
+     missing was one place that asks them all at once, before you send a
+     poster to a shop that will print exactly what you gave it. */
+  function rgbOf(c){
+    var s=String(c||'').trim(),m;
+    if((m=s.match(/^#?([0-9a-f]{3})$/i)))
+      return m[1].split('').map(function(ch){
+        return parseInt(ch+ch,16);});
+    if((m=s.match(/^#?([0-9a-f]{6})/i)))
+      return [parseInt(m[1].slice(0,2),16),parseInt(m[1].slice(2,4),16),
+        parseInt(m[1].slice(4,6),16)];
+    if((m=s.match(/rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)/i)))
+      return [+m[1],+m[2],+m[3]];
+    return null;
+  }
+  function relLum(rgb){
+    var a=rgb.map(function(v){
+      v/=255;
+      return v<=0.03928?v/12.92:Math.pow((v+0.055)/1.055,2.4);});
+    return 0.2126*a[0]+0.7152*a[1]+0.0722*a[2];
+  }
+  function contrast(c1,c2){
+    var a=rgbOf(c1),b=rgbOf(c2);
+    if(!a||!b) return null;
+    var l1=relLum(a),l2=relLum(b);
+    var hi=Math.max(l1,l2),lo=Math.min(l1,l2);
+    return (hi+0.05)/(lo+0.05);
+  }
+  function preflight(){
+    var s=pres.slides[cur],out=[];
+    if(!s) return out;
+    var layer=stage.querySelector('.annot-layer');
+    var slideEl=stage.querySelector('.slide');
+    var pg=pageOf(),m=marginPct();
+    var bg=(pres&&pres.pageBg)||'#0b141d';
+    var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
+    function add(idx,sev,what,why){
+      out.push({idx:idx,sev:sev,what:what,why:why});
+    }
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||a.hide) return;
+      var label=annotLabel(a);
+      if(a.k==='cell'&&!a.ref){
+        add(i,'err','Empty frame',
+          'A placed frame with no notebook cell in it — it will print as '
+          +'a blank box.');
+        return;
+      }
+      var r=layer?annotRectPct(layer,s,i):null;
+      if(!r&&a.w!=null&&a.h!=null)
+        r={l:a.x,r:a.x+a.w,t:a.y,b:a.y+a.h};
+      if(r){
+        if(r.l<-0.5||r.t<-0.5||r.r>100.5||r.b>100.5)
+          add(i,'err',label+' runs off the page',
+            'Part of this is outside the page and will be cut off.');
+        else if(r.l<m.x-0.5||r.t<m.y-0.5||r.r>100-m.x+0.5
+                ||r.b>100-m.y+0.5)
+          add(i,'warn',label+' is inside the margin',
+            'It sits within '+MARGIN_MM+'mm of the edge. Trimming and '
+            +'frames eat that strip.');
+      }
+      if(a.k==='text'){
+        if(!String(a.text||'').trim())
+          add(i,'warn','Empty text box','Nothing typed in it.');
+        var fg=a.color||ink,against=(a.bg!==0&&a.bgc)?a.bgc:bg;
+        var cr=contrast(fg,against);
+        if(cr!=null&&cr<4.5)
+          add(i,cr<3?'err':'warn','Text is hard to read',
+            'Contrast against the page is '+cr.toFixed(1)+':1. Aim for '
+            +'4.5:1 — from a metre away on a poster floor, more.');
+      }
+    });
+    /* the DPI chips the editor already puts on soft figures */
+    if(slideEl) $$('.dpi-warn',slideEl).forEach(function(w){
+      var cell=w.closest('.an-item');
+      var idx=cell?+cell.getAttribute('data-idx'):null;
+      add(isNaN(idx)?null:idx,'err','Figure prints soft ('
+        +w.textContent.replace(/[^0-9]/g,'')+' dpi)',
+        'Re-save it from the notebook at a higher dpi, or as SVG, then '
+        +'refresh notebooks.');
+    });
+    return out;
+  }
+  function renderPreflight(){
+    var pane=$('#preflight'),list=$('#preflight-list');
+    if(!pane||!list) return;
+    var issues=preflight();
+    var errs=issues.filter(function(x){return x.sev==='err';}).length;
+    var head=$('#preflight-count');
+    if(head) head.textContent=issues.length
+      ?(issues.length+' to look at'+(errs?' · '+errs+' serious':''))
+      :'Nothing to fix';
+    list.innerHTML='';
+    if(!issues.length){
+      list.innerHTML='<div class="pf-ok">This page is ready to print. '
+        +'Figures are sharp enough, nothing runs off the page or into '
+        +'the margin, and the text has enough contrast.</div>';
+      return;
+    }
+    issues.forEach(function(x){
+      var row=document.createElement('button');
+      row.className='pf-row pf-'+x.sev;
+      row.innerHTML='<span class="pf-what">'+esc(x.what)+'</span>'
+        +'<span class="pf-why">'+esc(x.why)+'</span>';
+      if(x.idx!=null) row.addEventListener('click',function(){
+        var l=stage.querySelector('.annot-layer');
+        if(l) selectAnnot(l,x.idx);
+      });
+      list.appendChild(row);
+    });
+  }
+  (function(){
+    var btn=$('#vw-check'),pane=$('#preflight'),cl=$('#preflight-close');
+    if(btn) btn.addEventListener('click',function(){
+      if(!pane) return;
+      pane.hidden=!pane.hidden;
+      btn.setAttribute('aria-pressed',pane.hidden?'false':'true');
+      if(!pane.hidden) renderPreflight();
+    });
+    if(cl) cl.addEventListener('click',function(){
+      if(pane) pane.hidden=true;
+      if(btn) btn.setAttribute('aria-pressed','false');
+    });
+    var re=$('#preflight-rerun');
+    if(re) re.addEventListener('click',renderPreflight);
+  })();
+  window.SemDeckPreflight=preflight;                 /* test hook */
+  window.SemDeckGuides=function(){return guides;};   /* test hook */
+
+  /* ---- the View group: rulers, grid, side toolbar, full-screen ---- */
+  var editFull=false;      /* full screen while EDITING (not presenting) */
+  /* Until you say otherwise, a PORTRAIT poster gets the side toolbar and
+     everything else keeps the familiar top one: that is the shape where
+     the horizontal ribbon eats the dimension the page needs most. Once
+     you touch the button your choice sticks for every page. */
+  function wantSide(){
+    if(guides.sideSet) return !!guides.side;
+    var pg=pageOf();
+    return !!(pg.poster&&pg.mm[1]>pg.mm[0]);
+  }
+  function applySideRibbon(){
+    var on=wantSide();
+    deckEl.classList.toggle('rbn-side',on&&mode==='edit');
+    var b=$('#vw-side');
+    if(b) b.setAttribute('aria-pressed',on?'true':'false');
+    applyZoom();           /* the stage just changed width */
+  }
+  /* ---- fit the ribbon by DENSITY, never by wrapping, scrolling or
+     dropping a word.
+     It does NOT move the toolbar to the side on its own: that was tried
+     (2026-08-07) and it both overrode a choice the user had just made
+     with the Side button and left a half-built column behind. Where the
+     row is genuinely fuller than the width allows, the answer is fewer
+     things in it — hence the View menu — not a layout that teleports. ---- */
+  var ERC=['erc1','erc2','erc3'];
+  function fitEditRibbon(){
+    var bar=$('#edit-tools');
+    if(!bar||bar.hidden||mode!=='edit') return;
+    if(deckEl.classList.contains('rbn-side')) return;
+    var cl=deckEl.classList;
+    ERC.forEach(function(c){cl.remove(c);});
+    cl.remove('erc-nohint');cl.remove('erc-tight');
+    if(!bar.clientWidth) return;
+    /* the reminder text gives up its room before any control tightens */
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nohint');
+    for(var i=0;i<ERC.length;i++){
+      if(bar.scrollWidth<=bar.clientWidth+1) break;
+      cl.add(ERC[i]);
+    }
+    /* still over after every rung: drop the one group that is not about
+       the selection, rather than let the row clip */
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-tight');
+  }
+  function syncViewBtns(){
+    var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full');
+    if(r) r.setAttribute('aria-pressed',guides.rulers?'true':'false');
+    if(g) g.setAttribute('aria-pressed',guides.grid?'true':'false');
+    if(f) f.setAttribute('aria-pressed',editFull?'true':'false');
+  }
+  function toggleEditFull(){
+    try{
+      if(!document.fullscreenElement&&deckEl.requestFullscreen){
+        editFull=true;
+        deckEl.classList.add('editfull');
+        deckEl.requestFullscreen().catch(function(){
+          editFull=false;deckEl.classList.remove('editfull');syncViewBtns();});
+      } else if(document.fullscreenElement){
+        document.exitFullscreen().catch(function(){});
+      }
+    }catch(err){}
+    syncViewBtns();
+  }
+  (function(){
+    /* the View menu opens and closes like the other ribbon dropdowns; its
+       rows are built in markup because each is a stateful toggle, not a
+       one-shot pick */
+    var vwrap=$('#vw-menuwrap'),vbtn=$('#vw-menu'),vlist=$('#vw-menu-list');
+    if(vwrap&&vbtn&&vlist){
+      vbtn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var open=vlist.hidden;
+        vlist.hidden=!open;
+        vbtn.setAttribute('aria-expanded',open.toString());
+        if(open) floatMenu(vbtn,vlist);
+      });
+      document.addEventListener('click',function(e){
+        if(!vlist.hidden&&!vwrap.contains(e.target)){
+          vlist.hidden=true;vbtn.setAttribute('aria-expanded','false');}
+      });
+    }
+    var r=$('#vw-rulers'),g=$('#vw-grid'),sd=$('#vw-side'),f=$('#vw-full');
+    if(r) r.addEventListener('click',function(){
+      guides.rulers=!guides.rulers;saveGuides();syncViewBtns();syncGuides();});
+    if(g) g.addEventListener('click',function(){
+      guides.grid=!guides.grid;saveGuides();syncViewBtns();
+      renderSlide();});
+    if(sd) sd.addEventListener('click',function(){
+      guides.side=!wantSide();guides.sideSet=true;
+      saveGuides();applySideRibbon();});
+    if(f) f.addEventListener('click',toggleEditFull);
+    /* leaving full screen by any route (Esc, F11, the OS) must not leave
+       the editor stamped with a full-screen class it no longer has */
+    document.addEventListener('fullscreenchange',function(){
+      if(document.fullscreenElement) return;
+      if(!editFull) return;
+      editFull=false;
+      deckEl.classList.remove('editfull');
+      syncViewBtns();applyZoom();
+    });
+    /* the pointer's position, shown on both rulers */
+    if(stage) stage.addEventListener('mousemove',function(e){
+      if(!guides.rulers||mode!=='edit') return;
+      var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+      var sr=slideEl.getBoundingClientRect();
+      if(!sr.width||!sr.height) return;
+      rulerCursor.x=(e.clientX-sr.left)/sr.width;
+      rulerCursor.y=(e.clientY-sr.top)/sr.height;
+      if(rulerCursor.x<0||rulerCursor.x>1) rulerCursor.x=null;
+      if(rulerCursor.y<0||rulerCursor.y>1) rulerCursor.y=null;
+      syncGuides();
+    });
+    if(stage) stage.addEventListener('mouseleave',function(){
+      rulerCursor.x=rulerCursor.y=null;
+      if(guides.rulers&&mode==='edit') syncGuides();
+    });
+    if(stage) stage.addEventListener('scroll',function(){syncGuides();});
+  })();
   (function(){
     var zi=$('#zoom-in'),zo=$('#zoom-out'),zv=$('#zoom-val');
     if(zi) zi.addEventListener('click',function(){
@@ -506,16 +1015,49 @@
       setZoom(Math.max(0.25,(deckZoom||1)/1.25));});
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
-      if(!deckEl.hidden) applyZoom();});
+      if(!deckEl.hidden){fitEditRibbon();applyZoom();}});
     /* the ribbon's height CHANGES now (the contextual format groups
        leave the layout when hidden), and so does the page picker — any
        toolbar reflow resizes the stage, so the page re-fits itself
        rather than waiting for a window resize */
     if(window.ResizeObserver){
       var et=$('#edit-tools');
+      /* the ribbon's own box changing is the ONE signal that catches every
+         way it can get narrower — window resize, the docked panel opening,
+         the side rail collapsing, and the first real layout after load.
+         Without this the bar was measured at zero width on open, bailed
+         out, and never compacted again: the toolbar you saw was always
+         full size and simply ran off the right-hand edge (2026-08-07). */
       if(et) new ResizeObserver(function(){
-        if(!deckEl.hidden) applyZoom();}).observe(et);
+        if(deckEl.hidden) return;
+        requestAnimationFrame(function(){
+          if(deckEl.hidden) return;
+          fitEditRibbon();applyZoom();
+        });
+      }).observe(et);
     }
+    /* The rulers are drawn at the slide's CURRENT position, so anything
+       that moves the slide has to redraw them. The ribbon observer above
+       does not see the docked panel opening, closing or being dragged
+       wider — and that is exactly the slide case, where the panel appears
+       after the rulers are first placed and leaves them stranded to the
+       left of the page they are supposed to measure (2026-08-07, user:
+       "ruler in slides is bugged"). Watching the STAGE catches all of it. */
+    if(window.ResizeObserver&&stage){
+      new ResizeObserver(function(){
+        if(deckEl.hidden) return;
+        requestAnimationFrame(function(){
+          if(!deckEl.hidden) syncGuides();
+        });
+      }).observe(stage);
+    }
+    /* a fit measured against the fallback font sticks, because the bar's
+       box never changes when the real font finally arrives */
+    try{
+      if(document.fonts&&document.fonts.ready)
+        document.fonts.ready.then(function(){
+          if(!deckEl.hidden) fitEditRibbon();});
+    }catch(e){}
     /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:
        a Windows precision-trackpad pinch arrives as a wheel event with
        ctrlKey=true (macOS Chrome reports the same; meta accepted to
@@ -562,6 +1104,16 @@
         pm.hidden=true;pb.setAttribute('aria-expanded','false');
         deckZoom=0;
         markDirty();applyPage();refresh();
+        /* Changing the page can change WHERE the File controls belong: a
+           poster hides the panel they live in, so without re-homing them
+           they would disappear with it. Re-run the placement, then the
+           bar re-decides whether it has earned its row. */
+        fileToPanel();fileToRibbon();
+        var dt2=$('.deck-top',deckEl),slot2=$('#deck-topslot');
+        if(dt2) dt2.hidden=(mode==='edit')&&!(slot2&&slot2.children.length);
+        /* switching to a portrait poster moves the toolbar to the side
+           (unless you have already chosen otherwise) */
+        applySideRibbon();
       });
       pm.appendChild(o);
     });
@@ -889,6 +1441,11 @@
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
   }
   function status(){
+    /* the bar names what it belongs to; for a poster this is the only
+       place the name is shown, since the panel that normally carries it
+       is hidden */
+    var ti=$('#deck-title');
+    if(ti) ti.textContent=(mode==='edit'&&pres&&pres.name)?pres.name:'';
     var el=$('#deck-status');
     var auto=APP.mode==='app'
       &&(typeof autosaveOn==='undefined'||autosaveOn);
@@ -1298,6 +1855,120 @@
     lightning:'M58 4 L20 56 H46 L38 96 L82 40 H54 Z'
   };
   var SHAPE_GLYPH={exclaim:'!',question:'?'};
+
+  /* ---- line styles, arrow heads, gradients ---------------------------
+     One table per thing, each carrying BOTH how it draws on the canvas
+     (SVG) and what it becomes in PowerPoint (OOXML) — the two cannot
+     drift, which is the only way "the poster and the .pptx look the
+     same" stays true as this list grows. */
+  var LINE_STYLES=[
+    {id:'solid',label:'Solid',dash:'',ppt:'solid'},
+    {id:'dash',label:'Dashed',dash:'9 7',ppt:'dash'},
+    {id:'dot',label:'Dotted',dash:'1 6',ppt:'sysDot'},
+    {id:'dashdot',label:'Dash-dot',dash:'12 5 2 5',ppt:'dashDot'},
+    {id:'lgdash',label:'Long dash',dash:'20 8',ppt:'lgDash'}];
+  var LINE_DASH={},LINE_PPT={};
+  LINE_STYLES.forEach(function(s){
+    LINE_DASH[s.id]=s.dash;LINE_PPT[s.id]=s.ppt;});
+  /* an older poster stored a boolean `dash`; read it as the dashed style */
+  function lineStyle(a){
+    return a.style||(a.dash?'dash':'solid');
+  }
+  function dashFor(a){return LINE_DASH[lineStyle(a)]||'';}
+
+  /* Head shapes are drawn in a 10x10 marker box. `ppt` is the OOXML
+     head type; PowerPoint has no "bar", so it degrades to none there and
+     the shape says so in its tooltip. */
+  var HEADS=[
+    {id:'none',label:'None',ppt:'none'},
+    {id:'triangle',label:'Triangle',ppt:'triangle',
+     path:'M0 0 L10 5 L0 10 z'},
+    {id:'stealth',label:'Stealth',ppt:'stealth',
+     path:'M0 0 L10 5 L0 10 L3 5 z'},
+    {id:'open',label:'Open',ppt:'arrow',
+     path:'M0 0 L10 5 L0 10',open:1},
+    {id:'diamond',label:'Diamond',ppt:'diamond',
+     path:'M0 5 L5 0 L10 5 L5 10 z'},
+    {id:'oval',label:'Round',ppt:'oval',
+     path:'M5 0 A5 5 0 1 1 4.99 0 z'},
+    {id:'bar',label:'Bar',ppt:'none',
+     path:'M9 0 L9 10',open:1}];
+  var HEAD_BY={};HEADS.forEach(function(h){HEAD_BY[h.id]=h;});
+  var HEAD_SIZES=[
+    {id:'sm',label:'Small',mul:4.5,ppt:'sm'},
+    {id:'md',label:'Medium',mul:6.5,ppt:'med'},
+    {id:'lg',label:'Large',mul:9.5,ppt:'lg'},
+    {id:'xl',label:'Huge',mul:13,ppt:'lg'}];
+  var HEADSZ_BY={};HEAD_SIZES.forEach(function(s){HEADSZ_BY[s.id]=s;});
+  /* the end head: older posters used `nohead` to mean "this is a line" */
+  function headEnd(a){
+    if(a.head!=null) return a.head;
+    return a.nohead?'none':'triangle';
+  }
+  function headStart(a){return a.tail||'none';}
+  function headSize(a){return HEADSZ_BY[a.hsz]||HEADSZ_BY.md;}
+
+  /* ---- attached endpoints --------------------------------------------
+     An endpoint can be pinned to an item (`a.c1`/`a.c2` = {i:index}).
+     Its coordinates are then DERIVED at render time from where that item
+     currently is, which is what makes the arrow follow it around. The
+     stored x/y stay as a fallback for when the target goes away. */
+  function edgePoint(r,tox,toy){
+    /* where a line from the rect's centre towards (tox,toy) leaves it —
+       so the arrow stops at the border instead of burying its head in
+       the middle of the figure */
+    var cx=(r.l+r.r)/2,cy=(r.t+r.b)/2;
+    var dx=tox-cx,dy=toy-cy;
+    if(!dx&&!dy) return {x:cx,y:cy};
+    var hw=(r.r-r.l)/2,hh=(r.b-r.t)/2;
+    var sx=dx?hw/Math.abs(dx):Infinity,sy=dy?hh/Math.abs(dy):Infinity;
+    var t=Math.min(sx,sy);
+    return {x:cx+dx*t,y:cy+dy*t};
+  }
+  function tiedRect(layer,s,c){
+    if(!c||typeof c.i!=='number') return null;
+    var t=(s.annots||[])[c.i];
+    if(!t||t.hide||t.k==='arrow') return null;
+    return annotRectPct(layer,s,c.i);
+  }
+  function arrowEnds(layer,s,a,idx){
+    var e={x1:a.x1,y1:a.y1,x2:a.x2,y2:a.y2};
+    var r1=tiedRect(layer,s,a.c1),r2=tiedRect(layer,s,a.c2);
+    /* aim each attached end at the OTHER end, so both slide around their
+       item's border as either one moves */
+    var far1=r2?{x:(r2.l+r2.r)/2,y:(r2.t+r2.b)/2}:{x:a.x2,y:a.y2};
+    var far2=r1?{x:(r1.l+r1.r)/2,y:(r1.t+r1.b)/2}:{x:a.x1,y:a.y1};
+    if(r1){var p1=edgePoint(r1,far1.x,far1.y);e.x1=p1.x;e.y1=p1.y;}
+    if(r2){var p2=edgePoint(r2,far2.x,far2.y);e.x2=p2.x;e.y2=p2.y;}
+    return e;
+  }
+  /* straight, curved (quadratic through an offset midpoint) or elbowed.
+     Coordinates are PERCENTAGES of the page, and must be converted to
+     pixels here: <line> accepted x1="20%", but path data has no units —
+     "M20 50" means 20px,50px, so every line and arrow was drawn in a
+     60-pixel stub in the top-left corner (2026-08-07, user: "arrow just
+     appears in the top left"). Scaling here rather than with a viewBox
+     keeps stroke width and arrowheads circular instead of stretched. */
+  function arrowPath(e,a,W,H){
+    W=W||100;H=H||100;
+    var x1=e.x1/100*W,y1=e.y1/100*H,x2=e.x2/100*W,y2=e.y2/100*H;
+    var bend=a.bend||'none';
+    if(bend==='h')      /* out sideways first, then down/up */
+      return 'M'+x1+' '+y1+' L'+((x1+x2)/2)+' '+y1
+        +' L'+((x1+x2)/2)+' '+y2+' L'+x2+' '+y2;
+    if(bend==='v')
+      return 'M'+x1+' '+y1+' L'+x1+' '+((y1+y2)/2)
+        +' L'+x2+' '+((y1+y2)/2)+' L'+x2+' '+y2;
+    var cv=+a.curve||0;
+    if(!cv) return 'M'+x1+' '+y1+' L'+x2+' '+y2;
+    /* bow the line out perpendicular to itself; `curve` is a percentage of
+       the page, so it scales to pixels like the endpoints do */
+    var mx=(x1+x2)/2,my=(y1+y2)/2;
+    var dx=x2-x1,dy=y2-y1,len=Math.sqrt(dx*dx+dy*dy)||1;
+    var nx=-dy/len,ny=dx/len;
+    var bow=cv/100*Math.min(W,H);
+    return 'M'+x1+' '+y1+' Q'+(mx+nx*bow)+' '+(my+ny*bow)+' '+x2+' '+y2;
+  }
   /* menu order + short labels */
   var SHAPE_LIST=[
     ['rect','Rectangle'],['ellipse','Ellipse'],['triangle','Triangle'],
@@ -1305,7 +1976,23 @@
     ['star','Star'],['cross','Plus'],['arrow','Arrow'],['heart','Heart'],
     ['cloud','Cloud'],['bubble','Speech'],['lightning','Bolt'],
     ['exclaim','Exclaim'],['question','Question']];
-  function drawShapeSvg(shp,col,sw,dash,fill){
+  /* the fill a shape actually paints: none, a tint of its own line
+     colour (the original behaviour, kept for existing posters), a solid
+     colour, or a gradient — linear at an angle, or radiating from the
+     centre */
+  function cssFill(a,col){
+    if(!a.fill&&!a.grad) return 'transparent';
+    if(a.grad){
+      var g=a.grad,c1=g.a||col,c2=g.b||'transparent';
+      return g.type==='radial'
+        ?('radial-gradient(circle at 50% 50%, '+c1+', '+c2+')')
+        :('linear-gradient('+((+g.ang||0)+90)+'deg, '+c1+', '+c2+')');
+    }
+    if(a.fillc) return a.fillc;
+    return shapeFill(col,0x26/255);
+  }
+  function drawShapeSvg(shp,col,sw,a,idx){
+    var dash=dashFor(a);
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','an-shape-svg');
     svg.setAttribute('viewBox','0 0 100 100');
@@ -1323,15 +2010,94 @@
       svg.setAttribute('preserveAspectRatio','none');
       var p=document.createElementNS(SVGNS,'path');
       p.setAttribute('d',SHAPE_PATHS[shp]||'');
-      p.setAttribute('fill',fill?shapeFill(col,0x2b/255):'none');
+      var fillVal='none';
+      if(a.grad){
+        /* SVG cannot take a CSS gradient string, so the same gradient is
+           declared as a paint server and referenced */
+        var gid='an-grad-'+(idx==null?'x':idx);
+        var gd=document.createElementNS(SVGNS,'defs');
+        var g=a.grad;
+        var gel=document.createElementNS(SVGNS,
+          g.type==='radial'?'radialGradient':'linearGradient');
+        gel.setAttribute('id',gid);
+        if(g.type!=='radial'){
+          var rad=((+g.ang||0))*Math.PI/180;
+          gel.setAttribute('x1',(50-50*Math.cos(rad))+'%');
+          gel.setAttribute('y1',(50-50*Math.sin(rad))+'%');
+          gel.setAttribute('x2',(50+50*Math.cos(rad))+'%');
+          gel.setAttribute('y2',(50+50*Math.sin(rad))+'%');
+        }
+        [[0,g.a||col],[1,g.b||'transparent']].forEach(function(st){
+          var s2=document.createElementNS(SVGNS,'stop');
+          s2.setAttribute('offset',st[0]);
+          s2.setAttribute('stop-color',st[1]);
+          gel.appendChild(s2);
+        });
+        gd.appendChild(gel);svg.appendChild(gd);
+        fillVal='url(#'+gid+')';
+      } else if(a.fill){
+        fillVal=a.fillc||shapeFill(col,0x2b/255);
+      }
+      p.setAttribute('fill',fillVal);
       p.setAttribute('stroke',col);
       p.setAttribute('stroke-width',sw||3);
       p.setAttribute('vector-effect','non-scaling-stroke');
       p.setAttribute('stroke-linejoin','round');
-      if(dash) p.setAttribute('stroke-dasharray','7 6');
+      if(dash) p.setAttribute('stroke-dasharray',dash);
       svg.appendChild(p);
     }
     return svg;
+  }
+  /* ---- text on a curved baseline -------------------------------------
+     `a.arc` bows the baseline: positive arches up, negative sags down,
+     and the magnitude is how far in percent of the box's width. The flat
+     span stays in the DOM (hidden) because it is what carries selection,
+     editing and the stored text — the SVG is a rendering of it. */
+  function applyTextArc(box,span,a,idx){
+    var r=box.getBoundingClientRect();
+    var w=r.width,h=r.height;
+    if(!w||!h) return;
+    var txt=String(a.text||'');
+    if(!txt.trim()) return;
+    var cs=window.getComputedStyle(span);
+    var fs=parseFloat(cs.fontSize)||16;
+    var arc=Math.max(-95,Math.min(95,+a.arc||0));
+    /* The bow is bounded by the box's OWN height, not its width: scaled
+       off the width, an arch on a wide title peaked hundreds of px above
+       a one-line box and drew itself off the page. The box is given room
+       to hold the arch (see the min-height set before measuring), so a
+       deeper curve makes the box taller rather than escaping it. */
+    var pad=fs*0.3;
+    var avail=Math.max(0,h-fs-2*pad);
+    var bow=avail*Math.min(1,Math.abs(arc)/55)*(arc>=0?1:-1);
+    var baseY=(arc>=0)?(h-pad):(pad+fs*0.85);
+    var svg=document.createElementNS(SVGNS,'svg');
+    svg.setAttribute('class','an-arcsvg');
+    svg.setAttribute('viewBox','0 0 '+w+' '+h);
+    svg.setAttribute('width',w);svg.setAttribute('height',h);
+    var defs=document.createElementNS(SVGNS,'defs');
+    var pid='an-arcp-'+idx;
+    var p=document.createElementNS(SVGNS,'path');
+    p.setAttribute('id',pid);
+    p.setAttribute('fill','none');
+    p.setAttribute('d','M '+pad+' '+baseY+' Q '+(w/2)+' '+(baseY-2*bow)
+      +' '+(w-pad)+' '+baseY);
+    defs.appendChild(p);svg.appendChild(defs);
+    var t=document.createElementNS(SVGNS,'text');
+    t.setAttribute('font-size',fs);
+    t.setAttribute('font-family',cs.fontFamily);
+    t.setAttribute('font-weight',cs.fontWeight);
+    t.setAttribute('font-style',cs.fontStyle);
+    t.setAttribute('fill',cs.color);
+    var tp=document.createElementNS(SVGNS,'textPath');
+    tp.setAttribute('href','#'+pid);
+    tp.setAttributeNS('http://www.w3.org/1999/xlink','xlink:href','#'+pid);
+    tp.setAttribute('startOffset','50%');
+    tp.setAttribute('text-anchor','middle');
+    tp.textContent=txt.replace(/\n+/g,' ');
+    t.appendChild(tp);svg.appendChild(t);
+    box.classList.add('an-arced');
+    box.appendChild(svg);
   }
   function plotGraph(group,onNode){
     if(!group) return null;
@@ -1884,6 +2650,9 @@
       attachAnnots(slideEl,s);
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
+      /* the annot layer exists only now, and the rulers shade the
+         selection's extent from it */
+      if(mode==='edit') syncGuides();
       if(mode==='view'){
         /* click anywhere on the slide advances the build / next slide */
         slideEl.style.cursor='pointer';
@@ -1932,9 +2701,44 @@
      slides also carry movable title/sub text (s.tprops / s.sprops,
      addressed with the special indices 't' / 's'). */
   var AN_NS='http://www.w3.org/2000/svg';
-  var FONTMAP={sans:'var(--sans)',serif:'var(--serif)',
-    mono:'var(--mono)',system:'system-ui,sans-serif',
-    hand:"'Segoe Print','Comic Sans MS',cursive"};
+  /* One table, three consumers: the picker, the canvas CSS and the .pptx
+     writer (which needs a REAL family name, not a CSS variable). A poster
+     usually has to obey a departmental typeface, so the list goes beyond
+     the generic five — and `a.font` may also be any font name you type,
+     which falls through to the browser and to PowerPoint unchanged. */
+  var FONTS=[
+    {id:'sans',label:'Sans',css:'var(--sans)',ppt:'Calibri'},
+    {id:'serif',label:'Serif',css:'var(--serif)',ppt:'Georgia'},
+    {id:'mono',label:'Mono',css:'var(--mono)',ppt:'Consolas'},
+    {id:'system',label:'System',css:'system-ui,sans-serif',ppt:'Calibri'},
+    {id:'arial',label:'Arial',css:'Arial,Helvetica,sans-serif',ppt:'Arial'},
+    {id:'helvetica',label:'Helvetica',
+      css:'Helvetica,Arial,sans-serif',ppt:'Helvetica'},
+    {id:'calibri',label:'Calibri',css:'Calibri,sans-serif',ppt:'Calibri'},
+    {id:'verdana',label:'Verdana',css:'Verdana,Geneva,sans-serif',
+      ppt:'Verdana'},
+    {id:'tahoma',label:'Tahoma',css:'Tahoma,Geneva,sans-serif',ppt:'Tahoma'},
+    {id:'trebuchet',label:'Trebuchet',
+      css:'"Trebuchet MS",sans-serif',ppt:'Trebuchet MS'},
+    {id:'times',label:'Times',css:'"Times New Roman",Times,serif',
+      ppt:'Times New Roman'},
+    {id:'georgia',label:'Georgia',css:'Georgia,serif',ppt:'Georgia'},
+    {id:'cambria',label:'Cambria',css:'Cambria,Georgia,serif',ppt:'Cambria'},
+    {id:'garamond',label:'Garamond',
+      css:'Garamond,"EB Garamond",serif',ppt:'Garamond'},
+    {id:'hand',label:'Hand',css:"'Segoe Print','Comic Sans MS',cursive",
+      ppt:'Segoe Print'}];
+  var FONTMAP={},FONTPPT={};
+  FONTS.forEach(function(f){FONTMAP[f.id]=f.css;FONTPPT[f.id]=f.ppt;});
+  /* an unrecognised value is a typed family name: use it as-is */
+  function fontCss(v){
+    if(!v) return '';
+    return FONTMAP[v]||('"'+String(v).replace(/"/g,'')+'"');
+  }
+  function fontPpt(v){
+    if(!v) return '';
+    return FONTPPT[v]||String(v);
+  }
   var tool='select', selAnnot=null, picking=-1;
   /* selSet = every item in the current selection (a group, or a shift-click
      multi-select); selAnnot is the primary one that drives the format bar */
@@ -2021,7 +2825,14 @@
   }
   function fontPx(layer,size){
     var h=layer.getBoundingClientRect().height||600;
-    return Math.max(9,h*(size||2.6)/100)+'px';
+    /* NO legibility floor. Text is a percentage of the page height, and
+       everything around it — boxes, figures, spacing — scales with the
+       page. A 9px minimum stopped scaling while its box carried on
+       shrinking, so at 10% zoom every text broke out of its frame and the
+       whole poster turned to soup (2026-08-07, user). Tiny text on a
+       zoomed-out page is correct: that is what zoomed out MEANS. The
+       0.5px guard only stops a collapse to zero. */
+    return Math.max(0.5,h*(size||2.6)/100)+'px';
   }
   function applyCommon(el,a,extraTransform){
     if(a.op!=null&&a.op<1) el.style.opacity=a.op;
@@ -2144,11 +2955,9 @@
     }
     return true;
   }
-  function mkHandle(){
-    var h=document.createElement('span');h.className='an-handle';
-    h.title='Drag to move';h.textContent='⠿';
-    return h;
-  }
+  /* the ⠿ move handle is gone: everything drags from its own body now,
+     and the handle was both fiddly to hit and sat on top of the artwork
+     you were trying to judge (2026-08-07, user) */
   function mkResize(){
     /* all four corners resize (anchored on the opposite corner) */
     var frag=document.createDocumentFragment();
@@ -2177,10 +2986,43 @@
     if(window.SemActivate) window.SemActivate(layer,true);
   }
   function editableText(layer,el,getVal,setVal,idx,rich){
-    try{
-      el.contentEditable=(el.tagName==='UL'||rich)?'true':'plaintext-only';
-    }catch(e){el.contentEditable='true';}
-    el.spellcheck=false;
+    /* Text is NOT editable on contact. It used to be, which is why a text
+       box could only be moved by a little ⠿ handle: clicking the words
+       put a caret in them instead of picking the box up. So: click to
+       select and drag like anything else, DOUBLE-click to type — which is
+       what every other tool on the machine does (2026-08-07, user: "just
+       make it normal moving controls"). */
+    var editMode=(el.tagName==='UL'||rich)?'true':'plaintext-only';
+    function beginEdit(){
+      try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
+      el.focus();
+      var host=el.closest?el.closest('.an-item'):null;
+      if(host) host.classList.add('an-editing');
+    }
+    function endEdit(){
+      el.contentEditable='false';
+      var host=el.closest?el.closest('.an-item'):null;
+      if(host) host.classList.remove('an-editing');
+    }
+    el.contentEditable='false';
+    el.addEventListener('dblclick',function(e){
+      if(tool!=='select') return;
+      e.stopPropagation();
+      beginEdit();
+      /* put the caret where the words were double-clicked, not at the end */
+      try{
+        var r=document.caretRangeFromPoint
+          ? document.caretRangeFromPoint(e.clientX,e.clientY):null;
+        if(r){var sel=window.getSelection();sel.removeAllRanges();
+          sel.addRange(r);}
+      }catch(err){}
+    });
+    /* Spellcheck ON while editing. It used to be off everywhere, which
+       meant a typo could travel all the way onto a printed A0 poster with
+       nothing ever flagging it (2026-08-07). Only editable text is
+       checked, so Present, print and every export stay squiggle-free —
+       editableText is wired in edit mode alone. */
+    el.spellcheck=true;
     el.addEventListener('focus',function(){
       if(tool!=='select') el.blur();
     });
@@ -2192,6 +3034,7 @@
         .replace(/\n+$/,'');
       var r=rich?sanitizeRich(el.innerHTML):null;
       setVal(v,r);
+      endEdit();
       markDirty();
     });
     el.addEventListener('mousedown',function(e){
@@ -2286,11 +3129,10 @@
         var tdeco=(p.u?'underline ':'')+(p.strike?'line-through':'');
         if(tdeco.trim()) d.style.textDecoration=tdeco.trim();
         if(p.align) d.style.textAlign=p.align;
-        if(p.font&&FONTMAP[p.font])
-          d.style.fontFamily=FONTMAP[p.font];
+        if(p.font) d.style.fontFamily=fontCss(p.font);
         applyCommon(d,p,'translate(-50%,-50%)');
         d.setAttribute('data-idx',which);
-        if(editing){d.appendChild(mkHandle());
+        if(editing){
           d.appendChild(mkRotate());}
         var tx=document.createElement('span');tx.className='an-tx';
         var val=which==='t'?s.title:s.sub;
@@ -2316,50 +3158,79 @@
       if(a.hide&&editing) return;
       if(a.k==='arrow'){
         var col=a.color||'#ff6b57';
-        /* a LINE is an arrow with no head (a.nohead) — same endpoints,
-           colour, width, dash; only the marker is skipped (2026-08-04:
-           the poster section divider) */
-        if(!a.nohead){
+        var ends=arrowEnds(layer,s,a,i);
+        var hs=headSize(a),sw=a.sw||3;
+        /* a head is scaled by the LINE's width as well as its own size
+           setting, so a fat arrow does not end in a pinhead */
+        var mw=hs.mul*Math.max(0.55,Math.min(2.2,sw/3));
+        function mkHead(which,type){
+          var h=HEAD_BY[type];
+          if(!h||type==='none'||!h.path) return '';
+          var id='an-h'+which+'-'+i;
           var mk=document.createElementNS(AN_NS,'marker');
-          mk.setAttribute('id','an-head-'+i);
+          mk.setAttribute('id',id);
           mk.setAttribute('viewBox','0 0 10 10');
-          mk.setAttribute('refX','8');mk.setAttribute('refY','5');
-          mk.setAttribute('markerWidth','6.5');
-          mk.setAttribute('markerHeight','6.5');
+          mk.setAttribute('refX',h.open?'9':'8');
+          mk.setAttribute('refY','5');
+          mk.setAttribute('markerWidth',mw);
+          mk.setAttribute('markerHeight',mw);
+          /* auto-start-reverse points a START marker back down the line,
+             so one path definition serves both ends */
           mk.setAttribute('orient','auto-start-reverse');
           var mp=document.createElementNS(AN_NS,'path');
-          mp.setAttribute('d','M 0 0 L 10 5 L 0 10 z');
-          mp.setAttribute('fill',col);
+          mp.setAttribute('d',h.path);
+          if(h.open){
+            mp.setAttribute('fill','none');
+            mp.setAttribute('stroke',col);
+            mp.setAttribute('stroke-width','1.8');
+            mp.setAttribute('stroke-linecap','round');
+          } else mp.setAttribute('fill',col);
           mk.appendChild(mp);defs.appendChild(mk);
+          return 'url(#'+id+')';
         }
-        var ln=document.createElementNS(AN_NS,'line');
-        ln.setAttribute('x1',a.x1+'%');ln.setAttribute('y1',a.y1+'%');
-        ln.setAttribute('x2',a.x2+'%');ln.setAttribute('y2',a.y2+'%');
-        ln.setAttribute('class','an-arrow-line'
-          +(selAnnot===i?' sel':''));
+        var mEnd=mkHead('e',headEnd(a)),mStart=mkHead('s',headStart(a));
+        var lrA=layer.getBoundingClientRect();
+        var d=arrowPath(ends,a,lrA.width,lrA.height);
+        var ln=document.createElementNS(AN_NS,'path');
+        ln.setAttribute('d',d);
+        ln.setAttribute('class','an-arrow-line'+(selAnnot===i?' sel':''));
         ln.setAttribute('data-idx',i);
         ln.setAttribute('stroke',col);
-        ln.setAttribute('stroke-width',a.sw||3);
-        if(a.dash) ln.setAttribute('stroke-dasharray','9 7');
+        ln.setAttribute('fill','none');
+        ln.setAttribute('stroke-width',sw);
+        ln.setAttribute('stroke-linecap',
+          lineStyle(a)==='dot'?'round':'butt');
+        ln.setAttribute('stroke-linejoin','round');
+        var dsh=dashFor(a);
+        if(dsh) ln.setAttribute('stroke-dasharray',dsh);
         if(a.op!=null&&a.op<1) ln.style.opacity=a.op;
-        if(!a.nohead) ln.setAttribute('marker-end','url(#an-head-'+i+')');
+        if(mEnd) ln.setAttribute('marker-end',mEnd);
+        if(mStart) ln.setAttribute('marker-start',mStart);
         svgTop.appendChild(ln);
-        var hit=document.createElementNS(AN_NS,'line');
-        hit.setAttribute('x1',a.x1+'%');hit.setAttribute('y1',a.y1+'%');
-        hit.setAttribute('x2',a.x2+'%');hit.setAttribute('y2',a.y2+'%');
+        var hit=document.createElementNS(AN_NS,'path');
+        hit.setAttribute('d',d);
+        hit.setAttribute('fill','none');
         hit.setAttribute('class','an-arrow-hit an-item');
         hit.setAttribute('data-idx',i);
         svg.appendChild(hit);
         if(editing&&!a.lock){   /* a locked arrow gets no live endpoints */
           ['1','2'].forEach(function(which){
+            /* an endpoint PINNED to an item is not free to drag: it
+               reports the attachment instead, and moves when that item
+               moves */
+            var tied=(which==='1'?a.c1:a.c2);
             var ep=document.createElement('span');
             ep.className='an-endpt an-endpt-'+which
-              +(selAnnot===i?' sel':'');
-            ep.style.left=a['x'+which]+'%';
-            ep.style.top=a['y'+which]+'%';
+              +(tied?' tied':'')+(selAnnot===i?' sel':'');
+            ep.style.left=(which==='1'?ends.x1:ends.x2)+'%';
+            ep.style.top=(which==='1'?ends.y1:ends.y2)+'%';
             ep.setAttribute('data-idx',i);
             ep.setAttribute('data-ep',which);
-            ep.title='Drag to redirect the arrow';
+            ep.title=tied
+              ?'Attached — it follows that item. Drag to re-aim, or drop '
+                +'on empty page to detach'
+              :'Drag to redirect the arrow. Drop it on an item to attach, '
+                +'and it will follow that item from then on';
             layer.appendChild(ep);
           });
         }
@@ -2373,12 +3244,14 @@
         r.style.left=a.x+'%';r.style.top=a.y+'%';
         r.style.width=(a.w||10)+'%';r.style.height=(a.h||10)+'%';
         if(svgShape){
-          r.appendChild(drawShapeSvg(shp,col,a.sw||3,a.dash,a.fill));
+          r.appendChild(drawShapeSvg(shp,col,a.sw||3,a,i));
         } else {
           r.style.borderColor=col;
           r.style.borderWidth=(a.sw||3)+'px';
-          r.style.borderStyle=a.dash?'dashed':'solid';
-          r.style.background=a.fill?shapeFill(col,0x26/255):'transparent';
+          var lsD=dashFor(a);
+          r.style.borderStyle=lsD
+            ?(lineStyle(a)==='dot'?'dotted':'dashed'):'solid';
+          r.style.background=cssFill(a,col);
           if(shp==='ellipse') r.style.borderRadius='50%';
         }
         applyCommon(r,a);
@@ -2479,6 +3352,12 @@
         } else if(editing){
           var pb=document.createElement('button');
           pb.className='an-cellpick';
+          /* sized off the page like every other piece of text on it. Left
+             at a fixed 11px it was the only thing that did not shrink when
+             you zoomed out, so an empty frame's placeholder swelled to
+             fill the poster (2026-08-07, user: text "changes size when I
+             zoom in and out"). */
+          pb.style.fontSize=fontPx(layer,1.15);
           pb.textContent=a.ref?('missing: '+a.ref)
             :'Click to add from notebook';
           pb.addEventListener('mousedown',function(e){
@@ -2507,8 +3386,7 @@
         var deco=(a.u?'underline ':'')+(a.strike?'line-through':'');
         if(deco.trim()) d2.style.textDecoration=deco.trim();
         if(a.align) d2.style.textAlign=a.align;
-        if(a.font&&FONTMAP[a.font])
-          d2.style.fontFamily=FONTMAP[a.font];
+        if(a.font) d2.style.fontFamily=fontCss(a.font);
         if(a.bg!==0&&a.bgc){
           d2.style.background=a.bgc;
           d2.style.borderColor='transparent';
@@ -2516,7 +3394,7 @@
         if(a.w){d2.style.width=a.w+'%';d2.style.maxWidth='none';}
         applyCommon(d2,a);
         d2.setAttribute('data-idx',i);
-        if(editing) d2.appendChild(mkHandle());
+        
         if(editing){d2.appendChild(mkResize());
           d2.appendChild(mkRotate());}
         var tx2;
@@ -2543,6 +3421,21 @@
         }
         d2.appendChild(tx2);
         layer.appendChild(d2);
+        /* Curved text. Drawn as SVG on a bowed baseline, which HTML has no
+           way to do — but only when the box is NOT being typed into:
+           contenteditable does not work on an SVG <textPath>, so the flat
+           version is what you edit and the curve is what you see the rest
+           of the time. Measured in px after the box is in the DOM so the
+           glyphs are never stretched by a viewBox. */
+        if(a.arc&&!a.list&&d2!==document.activeElement
+           &&!d2.contains(document.activeElement)){
+          /* the box has to be tall enough to hold the arch before it is
+             measured — a one-line box has no room to curve in */
+          var afs=parseFloat(window.getComputedStyle(tx2).fontSize)||16;
+          d2.style.minHeight=
+            (afs*(1.25+Math.abs(+a.arc||0)/26))+'px';
+          applyTextArc(d2,tx2,a,i);
+        }
       } else if(a.k==='image'){
         var im=document.createElement('div');
         im.className='an-item an-image'+(selAnnot===i?' sel':'');
@@ -2555,7 +3448,7 @@
         img.draggable=false;
         applyCrop(img,a);
         im.appendChild(img);
-        if(editing){im.appendChild(mkHandle());im.appendChild(mkResize());
+        if(editing){im.appendChild(mkResize());
           im.appendChild(mkRotate());}
         layer.appendChild(im);
       }
@@ -2626,6 +3519,41 @@
   function defaultColor(kind){
     return kind==='text'?'#ffffff':'#ff6b57';
   }
+  /* ---- WHICH CONTROL BELONGS TO WHICH KIND OF ITEM ------------------
+     One table, checked for completeness at the bottom of showFmt.
+
+     The alternative — a hand-written show() line per control — is exactly
+     how "Ends" and "Route" (both arrow properties) came to be offered on a
+     triangle: four new dropdowns were added to the markup and none of them
+     got a line, so they showed for everything selected, forever, and
+     nothing complained (2026-08-07, user). A control that is not in this
+     table and not handled explicitly now throws in the console instead of
+     quietly appearing on every item.
+
+     '*' means every kind; the value is a space-separated list otherwise. */
+  var FMT_KINDS={
+    '#fmt-stylewrap':'arrow rect',    /* dashes apply to any stroke */
+    '#fmt-line':'arrow rect',         /* stroke weight, likewise */
+    '#fmt-headwrap':'arrow',          /* arrowheads: a shape has no ends */
+    '#fmt-bendwrap':'arrow',          /* straight/curved/elbow: ditto */
+    '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
+    '#fmt-shape':'rect',
+    '#fmt-cropwrap':'image cell'
+  };
+  /* controls whose visibility depends on more than the kind (how many are
+     selected, what a placed cell contains, whether the page is a poster).
+     Listed so the completeness check knows they are deliberate. */
+  var FMT_MANUAL=('#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
+    +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
+    +'#fmt-alignwrap #fmt-opwrap #fmt-animwrap #fmt-txcol-btn '
+    +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
+    +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
+    +'#fmt-list #fmt-align #fmt-parawrap #fmt-arcwrap #fmt-dash #fmt-fill '
+    +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
+    +'#fmt-crop #fmt-same #fmt-style #fmt-head #fmt-bend #fmt-fillstyle '
+    +'#fmt-align-btn #fmt-anim #fmt-arc #fmt-para #fmt-size #fmt-op '
+    +'#fmt-opval').split(' ');
+
   function showFmt(){
     var bar=$('#et-fmt'); if(!bar) return;
     var et=$('#edit-tools');
@@ -2673,13 +3601,25 @@
     var fontSel=$('#fmt-font');
     if(fontSel){
       fontSel.hidden=!isText;
-      if(isText) fontSel.value=a.font||'sans';
+      if(isText){
+        var fv=a.font||'sans';
+        /* a typed family is not one of the listed options — show it as
+           its own entry rather than silently reading back as "Sans" */
+        if(!FONTMAP[fv]){
+          var ex=fontSel.querySelector('option[data-typed]');
+          if(ex) ex.remove();
+          fontSel.insertAdjacentHTML('afterbegin',
+            '<option data-typed="1" value="'+esc(fv)+'">'+esc(fv)
+            +'</option>');
+        }
+        fontSel.value=fv;
+      }
     }
     show('#fmt-bold',isText,!!a.b);
     show('#fmt-ital',isText,!!a.i);
     show('#fmt-under',isText,!!a.u);
     show('#fmt-strike',isText,!!a.strike);
-    show('#fmt-align',isText);
+    show('#fmt-align',false);
     var alBtn=$('#fmt-align');
     if(alBtn&&isText){
       var al=a.align||'left';
@@ -2689,29 +3629,56 @@
     var szIn=$('#fmt-size');
     if(szIn&&isText&&document.activeElement!==szIn)
       szIn.value=Math.round((a.size||2.6)*5.4);
-    show('#fmt-list',isText&&isNum,!!a.list);
-    show('#fmt-line',kind==='arrow'||kind==='rect');
-    show('#fmt-dash',kind==='arrow'||kind==='rect',!!a.dash);
-    show('#fmt-fill',kind==='rect',!!a.fill);
-    show('#fmt-shape',kind==='rect',!!a.shape&&a.shape!=='rect');
+    /* alignment, list and curve are reached through the Layout menu; the
+       originals stay in the DOM because that menu drives them */
+    show('#fmt-list',false);
+    show('#fmt-arcwrap',false);
+    show('#fmt-parawrap',isText&&isNum,!!a.arc||!!a.list);
+    /* the kind-driven controls, all from one table */
+    Object.keys(FMT_KINDS).forEach(function(id){
+      var spec=FMT_KINDS[id];
+      show(id,isNum&&(spec==='*'||spec.split(' ').indexOf(kind)>=0));
+    });
+    /* superseded by the Style dropdown; kept in the DOM because the
+       dropdown drives them */
+    show('#fmt-dash',false);
+    /* superseded by the Fill dropdown, same as Dash */
+    show('#fmt-fill',false);
+    /* visibility comes from FMT_KINDS; only the pressed state here */
+    var shBtn=$('#fmt-shape');
+    if(shBtn&&!shBtn.hidden)
+      shBtn.setAttribute('aria-pressed',
+        (!!a.shape&&a.shape!=='rect').toString());
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
     if(opR) opR.value=opPct;
     if(opV) opV.textContent=opPct+'%';
-    show('#fmt-rotl',kind!=='arrow');
-    show('#fmt-rotr',kind!=='arrow');
     show('#fmt-dup',isNum);
     var nSel=selSet.filter(function(i){return typeof i==='number';}).length;
     show('#fmt-group',nSel>=2);
     show('#fmt-ungroup',isNum&&a.grp!=null);
-    show('#fmt-front',isNum&&kind!=='arrow');
-    show('#fmt-back',isNum&&kind!=='arrow');
-    show('#fmt-arline',nSel>=2);
-    show('#fmt-argrid',nSel>=2);
+    /* these six are reached through the Arrange menu now; they stay in the
+       DOM because the menu drives them by .click(), so each keeps exactly
+       one implementation */
+    show('#fmt-front',false);
+    show('#fmt-back',false);
+    show('#fmt-arline',false);
+    show('#fmt-argrid',false);
+    show('#fmt-rotl',false);
+    show('#fmt-rotr',false);
     show('#fmt-samewrap',nSel>=2);
+    /* the menu now covers single-item actions (order, rotate) too */
+    show('#fmt-alignwrap',isNum);
     var plainText=isText&&typeof selAnnot==='number';
-    var showBg=plainText||noteCell;
+    /* A SHAPE gets the fill swatches too. It did not, so a triangle's
+       body could not be given a colour by any control in the app: the
+       outline worked (Colour → a.color → stroke) but the fill popup was
+       gated to text, its handler had no shape branch, and "Solid colour…"
+       just copied the outline. A green triangle with a red outline was
+       not constructible (2026-08-07, user: "yet I can't change the
+       fucking colour"). */
+    var showBg=plainText||noteCell||kind==='rect';
     show('#fmt-txlab',(isText&&kind!=='cell')||noteCell);
     show('#fmt-bglab',showBg);
     /* the popup buttons mirror what their menus can act on; the label
@@ -2721,11 +3688,19 @@
     if(tcb) tcb.textContent=(isText||kind==='cell')
       ?'Text ▾':'Colour ▾';
     show('#fmt-fillcol-btn',showBg);
+    /* a shape now has two Fill buttons — this one picks the COLOUR, the
+       one in Line & shape picks none/solid/gradient. Say which is which. */
+    var fcb=$('#fmt-fillcol-btn');
+    if(fcb) fcb.textContent=(kind==='rect')?'Fill colour ▾':'Fill ▾';
     $$('.swbg',bar).forEach(function(sw){
       sw.hidden=!showBg;
-      var cur_=(kind==='cell')
-        ?(a.bgcol||'')
-        :((a.bg===0)?'none':(a.bgc||'#0e1926'));
+      /* read back from the field the item's renderer actually uses, or
+         the wrong swatch lights up */
+      var cur_;
+      if(kind==='cell') cur_=(a.bgcol||'');
+      else if(kind==='rect')
+        cur_=a.grad?'':(!a.fill?'none':(a.fillc||''));
+      else cur_=((a.bg===0)?'none':(a.bgc||'#0e1926'));
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
     show('#fmt-replace',kind==='cell');
@@ -2747,8 +3722,12 @@
       if(lvb) lvb.innerHTML=lockedV
         ?'&#128275; Unlock figure':'&#128274; Lock figure';
     }
-    show('#fmt-cropwrap',kind==='image'||kind==='cell');
-    show('#fmt-animwrap',isNum);
+    /* #fmt-cropwrap: visibility from FMT_KINDS.
+       Animation is a BUILD — an item appearing on click as you step
+       through a deck. A poster is one printed page: there is no click and
+       nothing to step through, so it is not offered (2026-08-07, user:
+       "why is there animate options in a poster"). */
+    show('#fmt-animwrap',isNum&&!pageOf().poster);
     /* the code/figure/output part-picker (+ split) — moved off the frame
        into the ribbon's Object group */
     var partsSlot=$('#fmt-parts');
@@ -2766,12 +3745,37 @@
         ||'Animate';
       animBtn.innerHTML='&#9654; '+lbl+' &#9662;';
     }
+    /* COMPLETENESS. Every #fmt-* control in the contextual bar must be
+       governed by FMT_KINDS or listed in FMT_MANUAL. Without this, a
+       control added to the markup and forgotten here shows for every kind
+       of item, silently and forever — precisely what happened with Ends
+       and Route on a shape. Console-only: it is a wiring mistake for
+       whoever adds the control, not a user-facing failure. */
+    if(!showFmt._checked){
+      showFmt._checked=true;
+      var governed={};
+      Object.keys(FMT_KINDS).forEach(function(k){governed[k]=1;});
+      FMT_MANUAL.forEach(function(k){governed[k]=1;});
+      var stray=[];
+      $$('[id^="fmt-"]',bar).forEach(function(el){
+        if(/-menu$/.test(el.id)) return;          /* menu bodies */
+        if(!governed['#'+el.id]) stray.push('#'+el.id);
+      });
+      if(stray.length&&window.console&&console.warn)
+        console.warn('deck: ribbon controls governed by nothing in '
+          +'showFmt, so they will show for every selection: '
+          +stray.join(', '));
+    }
     syncRibbonGroups();
   }
   /* hide a ribbon group whose controls are all hidden, and drop the divider
      before the first visible group — so the format ribbon stays tidy */
   function syncRibbonGroups(){
-    var bar=$('#et-fmt'); if(!bar) return;
+    /* the WHOLE ribbon, not just the contextual half: a static group can
+       empty out too (Notebooks has nothing to offer a poster with no
+       placed cells yet) and an empty group that still drew its label and
+       divider read as a missing feature */
+    var bar=$('#edit-tools'); if(!bar) return;
     var first=null;
     $$('.rbn-grp',bar).forEach(function(g){
       var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
@@ -2785,6 +3789,27 @@
       if(vis&&!first) first=g;
     });
     if(first) first.classList.add('rbn-first');
+    /* how many columns each group needs to fill two rows ACROSS: half its
+       visible controls, rounded up. Done here because this is the only
+       place that knows what is currently showing. */
+    $$('.rbn-grp',bar).forEach(function(g){
+      var row=g.querySelector('.rbn-row'); if(!row) return;
+      var n=0;
+      [].slice.call(row.children).forEach(function(c){
+        if(c.hidden) return;
+        /* a wrapper counts as the one cell it contributes */
+        if(c.classList.contains('sh-drop')||c.classList.contains('dc-menuwrap')){
+          var b=c.querySelector('.dbtn');
+          if(b&&!b.hidden) n++;
+          return;
+        }
+        n++;
+      });
+      row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));
+    });
+    /* groups appearing or leaving changes the width the row needs, so the
+       density has to be re-judged every time the selection does */
+    fitEditRibbon();
   }
   function fmtApply(fn,quiet){
     var s=pres.slides[cur]; if(!s) return;
@@ -2821,7 +3846,9 @@
   /* ---- snap-to-align: while dragging or resizing, edges and centers
      snap to the canvas (edges + middle) and to every other object's
      edges + centers, with dashed guide lines. Hold Alt to disable. ---- */
-  var SNAP_PX=6;
+  /* 6px was too tight to feel: on a poster zoomed to fit, a 6px window is
+     a couple of real millimetres and the snap kept slipping past you */
+  var SNAP_PX=9;
   function annotRectPct(layer,s,i){
     var a=(s.annots||[])[i]; if(!a) return null;
     if(a.k==='arrow')
@@ -2854,7 +3881,74 @@
       xs.push(r.l,(r.l+r.r)/2,r.r);
       ys.push(r.t,(r.t+r.b)/2,r.b);
     });
+    /* the margin box and grid columns are snap lines too — a visible
+       guide you cannot snap to would be worse than none */
+    var g=guideTargets();
+    xs=xs.concat(g.xs);ys=ys.concat(g.ys);
+    /* guides you dragged off the rulers yourself */
+    var cg=customGuides();
+    xs=xs.concat(cg.x);ys=ys.concat(cg.y);
     return {xs:xs,ys:ys};
+  }
+  /* ---- equal-gap detection -------------------------------------------
+     Alignment gets you edges that agree; what still reads as sloppy is
+     uneven whitespace. While dragging, look for a position where the gap
+     to a neighbour matches a gap that already exists between two other
+     items on the same band, and mark both. */
+  function gapCands(layer,s,skip,bb,horiz){
+    var boxes=[];
+    (s.annots||[]).forEach(function(a,i){
+      if(skip.indexOf(i)>=0||!a||a.hide||a.k==='arrow') return;
+      var r=annotRectPct(layer,s,i); if(!r) return;
+      /* only items on the same band count: a figure three columns over
+         is not "next to" anything */
+      var overlap=horiz?(r.b>bb.t&&r.t<bb.b):(r.r>bb.l&&r.l<bb.r);
+      if(overlap) boxes.push(r);
+    });
+    boxes.sort(function(p,q){return horiz?(p.l-q.l):(p.t-q.t);});
+    var gaps=[];
+    for(var i=1;i<boxes.length;i++){
+      var g=horiz?(boxes[i].l-boxes[i-1].r):(boxes[i].t-boxes[i-1].b);
+      if(g>0.2) gaps.push(g);
+    }
+    return {boxes:boxes,gaps:gaps};
+  }
+  /* returns a delta that makes one of the dragged item's gaps equal to an
+     existing gap, plus the pair of gaps to draw */
+  function bestGap(layer,s,skip,bb,horiz,thr){
+    var c=gapCands(layer,s,skip,bb,horiz);
+    if(!c.gaps.length||!c.boxes.length) return null;
+    var lo=horiz?bb.l:bb.t,hi=horiz?bb.r:bb.b;
+    var best=null;
+    c.boxes.forEach(function(r){
+      var before=horiz?r.r:r.b,after=horiz?r.l:r.t;
+      c.gaps.forEach(function(g){
+        /* place the dragged box a distance g AFTER this one... */
+        var d1=(before+g)-lo;
+        if(Math.abs(d1)<=thr&&(!best||Math.abs(d1)<Math.abs(best.d)))
+          best={d:d1,gap:g,from:r,side:'after'};
+        /* ...or a distance g BEFORE it */
+        var d2=(after-g)-hi;
+        if(Math.abs(d2)<=thr&&(!best||Math.abs(d2)<Math.abs(best.d)))
+          best={d:d2,gap:g,from:r,side:'before'};
+      });
+    });
+    return best;
+  }
+  function drawGapMarks(layer,marks){
+    $$('.snapgap',layer).forEach(function(n){n.remove();});
+    marks.forEach(function(m){
+      var el=document.createElement('div');
+      el.className='snapgap';
+      if(m.horiz){
+        el.style.left=m.a+'%';el.style.width=(m.b-m.a)+'%';
+        el.style.top=(m.at-0.35)+'%';el.style.height='0.7%';
+      } else {
+        el.style.top=m.a+'%';el.style.height=(m.b-m.a)+'%';
+        el.style.left=(m.at-0.35)+'%';el.style.width='0.7%';
+      }
+      layer.appendChild(el);
+    });
   }
   function bestSnap(cands,vals,thr){
     var best=null;
@@ -2870,21 +3964,29 @@
     return {x:r.width?SNAP_PX/r.width*100:1,
             y:r.height?SNAP_PX/r.height*100:1};
   }
+  /* a snap onto the PAGE's own edge or centre says something different
+     from a snap onto another item, so the two are coloured apart */
+  function isPageLine(v){
+    return v===0||v===50||v===100;
+  }
   function drawSnapGuides(layer,sx,sy){
     $$('.snapline',layer).forEach(function(n){n.remove();});
     if(sx!=null){
       var v=document.createElement('div');
-      v.className='snapline snap-v';v.style.left=sx+'%';
+      v.className='snapline snap-v'+(isPageLine(sx)?' snap-page':'');
+      v.style.left=sx+'%';
       layer.appendChild(v);
     }
     if(sy!=null){
       var h=document.createElement('div');
-      h.className='snapline snap-h';h.style.top=sy+'%';
+      h.className='snapline snap-h'+(isPageLine(sy)?' snap-page':'');
+      h.style.top=sy+'%';
       layer.appendChild(h);
     }
   }
   function clearSnapGuides(layer){
     $$('.snapline',layer).forEach(function(n){n.remove();});
+    $$('.snapgap',layer).forEach(function(n){n.remove();});
   }
   function startMove(layer,s,idx,ev0){
     ev0.preventDefault();
@@ -2912,6 +4014,7 @@
       origBB=origBB?{l:Math.min(origBB.l,r.l),r:Math.max(origBB.r,r.r),
         t:Math.min(origBB.t,r.t),b:Math.max(origBB.b,r.b)}:r;
     });
+    var gapMarks=[];
     function mm(ev){
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
@@ -2929,6 +4032,32 @@
           var by=bestSnap(targets.ys,[bb.t,(bb.t+bb.b)/2,bb.b],thr.y);
           if(bx){dx+=bx.d;sx=bx.at;}
           if(by){dy+=by.d;sy=by.at;}
+          /* an edge snap wins over an equal-gap snap on the same axis:
+             agreeing with a line is a stronger intention than matching a
+             distance */
+          gapMarks=[];
+          if(!bx){
+            var gx=bestGap(layer,s,movers,bb,true,thr.x);
+            if(gx){
+              dx+=gx.d;
+              var nb={l:bb.l+gx.d,r:bb.r+gx.d};
+              var mid=(bb.t+bb.b)/2;
+              gapMarks.push({horiz:true,at:mid,
+                a:gx.side==='after'?gx.from.r:nb.r,
+                b:gx.side==='after'?nb.l:gx.from.l});
+            }
+          }
+          if(!by){
+            var gy=bestGap(layer,s,movers,bb,false,thr.y);
+            if(gy){
+              dy+=gy.d;
+              var nby={t:bb.t+gy.d,b:bb.b+gy.d};
+              var midx=(bb.l+bb.r)/2;
+              gapMarks.push({horiz:false,at:midx,
+                a:gy.side==='after'?gy.from.b:nby.b,
+                b:gy.side==='after'?nby.t:gy.from.t});
+            }
+          }
         }
       }
       if(single){a.x=single.x+dx;a.y=single.y+dy;}
@@ -2941,6 +4070,7 @@
       });
       renderAnnots(layer,s);paintSel(layer);
       drawSnapGuides(layer,sx,sy);
+      drawGapMarks(layer,gapMarks);
     }
     function mu(){
       document.removeEventListener('mousemove',mm);
@@ -3170,13 +4300,9 @@
              drags the whole group */
           if(selSet.indexOf(idx)<0) selectAnnot(layer,idx,false);
           else {selAnnot=idx;paintSel(layer);showFmt();}
-          var handleOnly=item.classList.contains('an-text')
-            ||item.classList.contains('an-title');
-          /* a grouped/multi-selected item drags from its body too (its move
-             handle is hidden), so the whole group moves as one */
-          var grouped=(selSet.length>1&&selSet.indexOf(idx)>=0);
-          if(grouped||!handleOnly
-             ||(t.classList&&t.classList.contains('an-handle')))
+          /* every item drags from its body, text included. The only thing
+             that does not is a box you are actually typing in. */
+          if(!item.classList.contains('an-editing'))
             startMove(layer,s,idx,ev);
         } else selectAnnot(layer,null);
         return;
@@ -3362,10 +4488,123 @@
     a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);});
   onFmt('#fmt-dash',function(a){a.dash=a.dash?0:1;});
   onFmt('#fmt-fill',function(a){a.fill=a.fill?0:1;});
+  /* ---- line style / arrow ends / route / fill ---------------------- */
+  wireFloatDropdown('fmt-stylewrap','fmt-style','fmt-style-menu',
+    LINE_STYLES.map(function(s){return [s.id,s.label];}),'ls',
+    function(id){fmtApply(function(a){
+      a.style=id;delete a.dash;});});
+  /* both ends and the head size in one menu: "s:" starts, "e:" ends,
+     "z:" sizes — they are one decision about how an arrow reads */
+  wireFloatDropdown('fmt-headwrap','fmt-head','fmt-head-menu',
+    HEADS.map(function(h){return ['e:'+h.id,'End: '+h.label];})
+      .concat(HEADS.map(function(h){
+        return ['s:'+h.id,'Start: '+h.label];}))
+      .concat(HEAD_SIZES.map(function(z){
+        return ['z:'+z.id,'Size: '+z.label];})),'hd',
+    function(v){
+      var kind=v.slice(0,1),id=v.slice(2);
+      fmtApply(function(a){
+        if(kind==='e'){a.head=id;delete a.nohead;}
+        else if(kind==='s') a.tail=id;
+        else a.hsz=id;
+      });
+    });
+  wireFloatDropdown('fmt-bendwrap','fmt-bend','fmt-bend-menu',
+    [['straight','Straight'],['curve','Curved'],
+     ['curve-','Curved the other way'],['h','Elbow: across then down'],
+     ['v','Elbow: down then across']],'bd',
+    function(v){
+      fmtApply(function(a){
+        if(v==='straight'){delete a.bend;delete a.curve;}
+        else if(v==='curve'){delete a.bend;a.curve=14;}
+        else if(v==='curve-'){delete a.bend;a.curve=-14;}
+        else {a.bend=v;delete a.curve;}
+      });
+    });
+  wireFloatDropdown('fmt-fillwrap','fmt-fillstyle','fmt-fillstyle-menu',
+    [['none','No fill'],['tint','Tint of the line colour'],
+     ['solid','Solid colour…'],['lin','Gradient — linear'],
+     ['linv','Gradient — vertical'],
+     ['rad','Gradient — from the centre']],'fs',
+    function(v){
+      fmtApply(function(a){
+        delete a.grad;
+        if(v==='none'){a.fill=0;delete a.fillc;}
+        else if(v==='tint'){a.fill=1;delete a.fillc;}
+        else if(v==='solid'){a.fill=1;a.fillc=a.fillc||a.color||'#39a9c0';}
+        else {
+          a.fill=1;
+          var base=a.fillc||a.color||'#39a9c0';
+          a.grad={type:(v==='rad'?'radial':'linear'),
+            a:base,b:gradPartner(base),
+            ang:(v==='linv'?90:0)};
+        }
+      });
+    });
+  /* alignment, bullets and curve in one worded menu. The curve options
+     are listed inline rather than nested — a menu that opens a menu is
+     worse than a slightly longer list. */
+  wireFloatDropdown('fmt-parawrap','fmt-para','fmt-para-menu',
+    [['a:left','Align left'],['a:center','Align centre'],
+     ['a:right','Align right'],
+     ['list','Bullet list on / off'],
+     ['c:0','Curve: straight'],
+     ['c:12','Curve: gentle arch up'],['c:30','Curve: arch up'],
+     ['c:55','Curve: strong arch up'],
+     ['c:-12','Curve: gentle sag (round the bottom in PowerPoint)'],
+     ['c:-30','Curve: arch down (round the bottom in PowerPoint)']],'pa',
+    function(v){
+      if(v==='list'){var lb=$('#fmt-list'); if(lb) lb.click(); return;}
+      if(v.indexOf('a:')===0){
+        var al=v.slice(2);
+        fmtApply(function(a){a.align=al;});
+        return;
+      }
+      var n=+v.slice(2);
+      /* a bullet list has several baselines and no single curve to follow,
+         so curving one turns the list off rather than quietly doing
+         nothing — the two cannot both be true */
+      fmtApply(function(a){
+        if(!n){delete a.arc;return;}
+        a.arc=n;
+        if(a.list){delete a.list;delete a.html;}
+      });
+    });
+  wireFloatDropdown('fmt-arcwrap','fmt-arc','fmt-arc-menu',
+    [['0','Straight'],['12','Gentle arch up'],['30','Arch up'],
+     ['55','Strong arch up'],
+     ['-12','Gentle sag — PowerPoint reads it round the bottom'],
+     ['-30','Arch down — PowerPoint reads it round the bottom'],
+     ['-55','Strong arch down — PowerPoint reads it round the bottom']],
+    'arc',
+    function(v){
+      fmtApply(function(a){
+        var n=+v;
+        if(!n) delete a.arc; else a.arc=n;
+      });
+    });
+  /* the far end of a generated gradient: the same hue taken most of the
+     way to transparent, which reads as a wash rather than a second
+     colour you did not choose */
+  function gradPartner(col){
+    var c=parseColor(col);
+    if(!c) return '#00000000';
+    return 'rgba('+clamp255(c.r)+', '+clamp255(c.g)+', '+clamp255(c.b)
+      +', 0.06)';
+  }
   $$('#et-fmt .swbg:not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('click',function(){
       fmtApply(function(a){
         if(a.k==='cell'){a.bgcol=sw.dataset.c;}
+        else if(a.k==='rect'){
+          /* a shape's fill lives in a.fill/a.fillc — a.bg/a.bgc are the
+             TEXT-box background and no shape renderer reads them. The
+             gradient has to go, because cssFill and drawShapeSvg both
+             check a.grad first and would ignore the new colour. */
+          delete a.grad;
+          if(sw.dataset.c==='none'){a.fill=0;delete a.fillc;}
+          else {a.fill=1;a.fillc=sw.dataset.c;}
+        }
         else if(sw.dataset.c==='none'){a.bg=0;}
         else{a.bg=1;a.bgc=sw.dataset.c;}
       });
@@ -3459,8 +4698,13 @@
     var s=pres.slides[cur];
     var a=(s&&selAnnot!==null)?annotByIdx(s,selAnnot):null;
     if(!a) return null;
-    if(target==='fill')
-      return a.k==='cell'?(a.bgcol||null):(a.bg===0?null:(a.bgc||null));
+    if(target==='fill'){
+      if(a.k==='cell') return a.bgcol||null;
+      /* a shape prefills from its OWN fill, not the text-box background */
+      if(a.k==='rect') return (a.grad&&a.grad.a)
+        ||(a.fill?(a.fillc||a.color||null):null);
+      return a.bg===0?null:(a.bgc||null);
+    }
     return a.k==='cell'?(a.txcol||null):(a.color||null);
   }
   function openColorPop(target,anchor){
@@ -3502,7 +4746,9 @@
       if(!did) fmtApply(function(a){
         if(a.k==='cell') a.txcol=str; else a.color=str;});
     } else fmtApply(function(a){
-      if(a.k==='cell') a.bgcol=str; else {a.bg=1;a.bgc=str;}});
+      if(a.k==='cell') a.bgcol=str;
+      else if(a.k==='rect'){a.fill=1;a.fillc=str;delete a.grad;}
+      else {a.bg=1;a.bgc=str;}});
     cpSavedEl=null;cpSavedRange=null;
     cpPushRecent(str);
     if(cpEl) cpEl.hidden=true;
@@ -3540,12 +4786,30 @@
     },true);
   })();
   var fontSelEl=$('#fmt-font');
-  if(fontSelEl) fontSelEl.addEventListener('change',function(){
-    var v=this.value;
-    fmtApply(function(a){
-      if(v==='sans') delete a.font; else a.font=v;
+  if(fontSelEl){
+    /* the picker is built from FONTS so the list, the canvas and the
+       .pptx writer can never drift apart */
+    fontSelEl.innerHTML=FONTS.map(function(f){
+      return '<option value="'+f.id+'">'+esc(f.label)+'</option>';
+    }).join('')+'<option value="__custom">Other…</option>';
+    fontSelEl.addEventListener('change',function(){
+      var v=this.value;
+      if(v==='__custom'){
+        var typed=prompt('Font family — exactly as it is named on this '
+          +'computer (e.g. "Univers", "Source Sans Pro").\n\nIt has to be '
+          +'installed to show here, and installed on any machine that '
+          +'opens the PowerPoint. PDF export always embeds what you see.',
+          '');
+        typed=(typed||'').trim();
+        if(!typed){renderControls();return;}
+        fmtApply(function(a){a.font=typed;});
+        return;
+      }
+      fmtApply(function(a){
+        if(v==='sans') delete a.font; else a.font=v;
+      });
     });
-  });
+  }
   onFmt('#fmt-bold',function(a){a.b=a.b?0:1;});
   onFmt('#fmt-ital',function(a){a.i=a.i?0:1;});
   onFmt('#fmt-under',function(a){a.u=a.u?0:1;});
@@ -3561,11 +4825,21 @@
     var ni=(order.indexOf(a.shape||'rect')+1)%order.length;
     if(order[ni]==='rect') delete a.shape; else a.shape=order[ni];});
   var opRangeEl=$('#fmt-op');
-  if(opRangeEl) opRangeEl.addEventListener('input',function(){
-    var pct=Math.max(0,Math.min(100,+this.value));
-    fmtApply(function(a){
-      if(pct>=100) delete a.op; else a.op=pct/100;});
-  });
+  /* A range fires one `input` per step, so one drag across the opacity
+     slider used to push ~100 undo entries and flush every real edit out
+     of the 50-slot history. fmtApply's `quiet` flag exists for exactly
+     this and the crop steppers already use it; this control never did.
+     Live-preview on input, commit ONE entry on change. */
+  if(opRangeEl){
+    opRangeEl.addEventListener('input',function(){
+      var pct=Math.max(0,Math.min(100,+this.value));
+      fmtApply(function(a){
+        if(pct>=100) delete a.op; else a.op=pct/100;},true);
+    });
+    opRangeEl.addEventListener('change',function(){
+      fmtApply(function(){});   /* end of gesture: one undo entry */
+    });
+  }
   var szInEl=$('#fmt-size');
   if(szInEl) szInEl.addEventListener('change',function(){
     var pt=+this.value;
@@ -3595,6 +4869,110 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
   }
+  /* ---- copy / cut / paste ------------------------------------------
+     Ctrl+D duplicates in place, which is not the same thing: it cannot
+     carry an item to another poster, and it cannot bring anything IN. The
+     internal buffer keeps whole annotations (so a copied figure frame is
+     still a live figure frame, not a picture of one), and a system-
+     clipboard image pastes straight onto the page — which is how logos
+     and screenshots actually arrive. */
+  var clipBuf=[];
+  function selectedIdxs(){
+    var s=pres.slides[cur]; if(!s||!s.annots) return [];
+    var out=selSet.filter(function(i){
+      return typeof i==='number'&&s.annots[i];});
+    if(!out.length&&typeof selAnnot==='number'&&s.annots[selAnnot])
+      out=[selAnnot];
+    return out;
+  }
+  function copySel(){
+    var s=pres.slides[cur];
+    var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
+    clipBuf=idxs.map(function(i){
+      return JSON.parse(JSON.stringify(s.annots[i]));});
+    return clipBuf.length;
+  }
+  function cutSel(){
+    var n=copySel();
+    if(n) deleteSel();
+    return n;
+  }
+  function pasteBuf(){
+    var s=pres.slides[cur];
+    if(!s||!clipBuf.length) return 0;
+    s.annots=s.annots||[];
+    var first=s.annots.length;
+    clipBuf.forEach(function(src){
+      var cp=JSON.parse(JSON.stringify(src));
+      delete cp.grp;          /* a paste is its own item, never in the
+                                 source's group */
+      if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
+      if(cp.k==='arrow'){cp.x1+=3;cp.y1+=3;cp.x2+=3;cp.y2+=3;}
+      else {cp.x=(cp.x||0)+3;cp.y=(cp.y||0)+3;}
+      s.annots.push(cp);
+    });
+    /* paste again and the next copy lands clear of this one, rather than
+       stacking every paste on the same 3% offset */
+    clipBuf=clipBuf.map(function(cp){
+      var n=JSON.parse(JSON.stringify(cp));
+      if(n.k==='arrow'){n.x1+=3;n.y1+=3;n.x2+=3;n.y2+=3;}
+      else {n.x=(n.x||0)+3;n.y=(n.y||0)+3;}
+      return n;
+    });
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){
+      renderAnnots(l,s);
+      selectAnnot(l,first);
+      for(var i=first+1;i<s.annots.length;i++) selectAnnot(l,i,true);
+    }
+    return clipBuf.length;
+  }
+  /* an image on the system clipboard becomes an image item */
+  function pasteImageFile(file){
+    if(!file) return false;
+    var fr=new FileReader();
+    fr.onload=function(){
+      var s=pres.slides[cur]; if(!s) return;
+      var img=new Image();
+      img.onload=function(){
+        /* land it at a sane size: 30% of the page width, keeping the
+           image's own aspect so it is not squashed on arrival */
+        var pg=pageOf();
+        var w=30,h=w*(img.naturalHeight/img.naturalWidth)
+          *(pg.mm[0]/pg.mm[1]);
+        if(!isFinite(h)||h<=0) h=24;
+        if(h>80){h=80;w=h*(img.naturalWidth/img.naturalHeight)
+          *(pg.mm[1]/pg.mm[0]);}
+        s.annots=s.annots||[];
+        s.annots.push({k:'image',x:50-w/2,y:50-h/2,w:w,h:h,
+          src:fr.result});
+        markDirty();
+        var l=stage.querySelector('.annot-layer');
+        if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+        toast('Image pasted');
+      };
+      img.onerror=function(){toast('That image could not be read');};
+      img.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+    return true;
+  }
+  document.addEventListener('paste',function(e){
+    if(deckEl.hidden||mode!=='edit') return;
+    var tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||e.target.isContentEditable) return;
+    var items=(e.clipboardData||{}).items||[];
+    for(var i=0;i<items.length;i++){
+      if(items[i].type&&items[i].type.indexOf('image/')===0){
+        e.preventDefault();
+        pasteImageFile(items[i].getAsFile());
+        return;
+      }
+    }
+    if(clipBuf.length){e.preventDefault();pasteBuf();}
+  });
+
   /* nudge the selection with the arrow keys (Shift = bigger step) */
   function nudgeSel(dx,dy){
     var s=pres.slides[cur]; if(!s) return;
@@ -3730,6 +5108,73 @@
        :mode)+' item');
     rerenderSel();
   }
+  /* ---- align / distribute --------------------------------------------
+     Row and Grid RE-ARRANGE a selection into a formation. Aligning is the
+     other thing, and the one poster work needs constantly: leave items
+     where they are and make one edge agree. Everything is measured off
+     the VISUAL rect, so a letterboxed figure aligns by the plot you can
+     see rather than by its padded frame. */
+  function alignSel(edge){
+    var items=selRects(); if(items.length<2) return;
+    var bb=selBBox(items);
+    items.forEach(function(x){
+      if(edge==='left') placeAt(x,bb.l,x.r.t);
+      else if(edge==='right') placeAt(x,bb.r-x.w,x.r.t);
+      else if(edge==='hcenter') placeAt(x,(bb.l+bb.r)/2-x.w/2,x.r.t);
+      else if(edge==='top') placeAt(x,x.r.l,bb.t);
+      else if(edge==='bottom') placeAt(x,x.r.l,bb.b-x.h);
+      else if(edge==='vmiddle') placeAt(x,x.r.l,(bb.t+bb.b)/2-x.h/2);
+    });
+    rerenderSel();
+  }
+  /* equal GAPS, not equal centres: with items of different sizes, even
+     centres still look wrong — it is the whitespace between them the eye
+     measures. The outermost two stay put and define the span. */
+  function distributeSel(axis){
+    var items=selRects(); if(items.length<3) return;
+    var horiz=(axis==='h');
+    items.sort(function(p,q){
+      return horiz?(p.r.l-q.r.l):(p.r.t-q.r.t);});
+    var bb=selBBox(items),sum=0;
+    items.forEach(function(x){sum+=horiz?x.w:x.h;});
+    var span=horiz?(bb.r-bb.l):(bb.b-bb.t);
+    var gap=(span-sum)/(items.length-1);
+    var at=horiz?bb.l:bb.t;
+    items.forEach(function(x){
+      if(horiz) placeAt(x,at,x.r.t); else placeAt(x,x.r.l,at);
+      at+=(horiz?x.w:x.h)+gap;
+    });
+    rerenderSel();
+  }
+  /* one worded menu for everything that arranges: line up, space out,
+     stack order, rotate, tidy into a formation */
+  wireFloatDropdown('fmt-alignwrap','fmt-align-btn','fmt-align-menu',
+    [['left','Align left edges'],
+     ['hcenter','Align centres (side to side)'],
+     ['right','Align right edges'],
+     ['top','Align top edges'],
+     ['vmiddle','Align middles (top to bottom)'],
+     ['bottom','Align bottom edges'],
+     ['d:h','Equal gaps across (3+ items)'],
+     ['d:v','Equal gaps down (3+ items)'],
+     ['o:front','Bring to front'],
+     ['o:back','Send to back'],
+     ['o:rotl','Rotate left 15°'],
+     ['o:rotr','Rotate right 15°'],
+     ['o:row','Tidy into a row'],
+     ['o:grid','Tidy into a grid']],'al',
+    function(what){
+      if(what.indexOf('d:')===0){distributeSel(what.slice(2));return;}
+      if(what.indexOf('o:')===0){
+        /* drive the original buttons so each keeps its one implementation */
+        var b=$({front:'#fmt-front',back:'#fmt-back',rotl:'#fmt-rotl',
+          rotr:'#fmt-rotr',row:'#fmt-arline',grid:'#fmt-argrid'
+        }[what.slice(2)]);
+        if(b) b.click();
+        return;
+      }
+      alignSel(what);
+    });
   var arRowBtn=$('#fmt-arline');
   if(arRowBtn) arRowBtn.addEventListener('click',arrangeRow);
   var arGridBtn=$('#fmt-argrid');
@@ -4802,7 +6247,7 @@
     renderPresTabs();
   }
   function renderControls(){
-    updateNumsLabel();
+    updateNumsLabel();updateCropLabel();
     var s=pres.slides[cur];
     $$('#layout-row .lay,#layout-menu-grid .lay').forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
@@ -5080,6 +6525,9 @@
       btn.textContent=(anyOpen?'📚 Refresh notebooks'
         :'📚 Open notebooks');
     }
+    /* this button IS the Notebooks group; when it hides, the group must
+       go too, or the ribbon shows a label over empty space */
+    syncRibbonGroups();
   }
   /* ---- "notebooks in this presentation" popover: open all / refresh all ----
      stem -> path resolves from an open shell, else a recent path with the
@@ -5300,20 +6748,32 @@
      just the slide strip, and posters (one page, no slides) drop the
      panel entirely. ---- */
   var fileMoved=[];
+  /* Where the document controls live while editing.
+     They STAY in the panel head — directly above the slide thumbnails —
+     because that is where they belong and where they were asked for
+     ("put the file and save above the slide thumbnails"). They only move
+     to the top bar for a POSTER, which hides the panel entirely: a poster
+     is one page and has no thumbnails to sit above, but it still needs a
+     Save button (2026-08-07). */
   function fileToRibbon(){
-    var row=$('#rbn-file-row');
-    if(!row||fileMoved.length) return;
+    var top=$('#deck-topslot');
+    if(!top||fileMoved.length) return;
+    if(!pageOf().poster) return;          /* the panel head keeps them */
     var head=deckEl.querySelector('.dc-head');
     if(head) [].slice.call(head.children).forEach(function(el){
       if(el.classList.contains('dc-spring')) return;
       fileMoved.push({el:el,parent:head,next:el.nextSibling});
-      row.appendChild(el);
+      top.appendChild(el);
     });
-    var sw=$('#dc-edit');
-    if(sw){
-      fileMoved.push({el:sw,parent:sw.parentNode,next:sw.nextSibling});
-      row.appendChild(sw);
-    }
+    /* "Swap to notebooks" does NOT come up here. It is the same journey
+       the rail's Docs button already offers, and it was the widest thing
+       in the bar (2026-08-07, user). It stays in the panel, where a deck
+       can still reach it. */
+    /* the save READOUT belongs beside Save, not stranded past undo/redo:
+       "all the save stuff together" (2026-08-07) */
+    var st=$('#deck-status'),grp=deckEl.querySelector('.dc-savegrp');
+    if(st&&grp&&grp.parentNode===top&&st.parentNode===top)
+      top.insertBefore(st,grp.nextSibling);
   }
   function fileToPanel(){
     /* restore in reverse so each insertBefore anchor is still valid */
@@ -5334,7 +6794,14 @@
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
-    var dt=$('.deck-top',deckEl); if(dt) dt.hidden=editing;
+    /* The top bar earns its row or it does not appear. While editing it
+       is only needed by a POSTER, which has no panel and therefore keeps
+       File and Save up here; a presentation keeps them in the panel head,
+       leaving the bar with nothing but a redundant button and a whole row
+       of wasted height (2026-08-07). fileToRibbon has already run, so the
+       slot's contents are the honest test. */
+    var dt=$('.deck-top',deckEl),slot=$('#deck-topslot');
+    if(dt) dt.hidden=editing&&!(slot&&slot.children.length);
     document.body.classList.toggle('creating-docs',
       (creating||editing)&&!deckEl.hidden);
     document.body.classList.toggle('slide-editing',
@@ -5357,14 +6824,29 @@
       if(m==='view'&&!deckEl.hidden&&deckEl.requestFullscreen
          &&!document.fullscreenElement)
         deckEl.requestFullscreen().catch(function(){});
-      else if(m!=='view'&&document.fullscreenElement)
+      /* ...but full-screen EDITING is deliberate, not a leftover from
+         presenting: leaving it alone here is what lets a poster be edited
+         full screen at all (every mode re-apply would otherwise drop it) */
+      else if(m!=='view'&&document.fullscreenElement&&!editFull)
         document.exitFullscreen().catch(function(){});
     }catch(err){}
+    if(m!=='edit'&&editFull){
+      editFull=false;deckEl.classList.remove('editfull');
+      try{if(document.fullscreenElement)
+        document.exitFullscreen().catch(function(){});}catch(err2){}
+    }
+    applySideRibbon();
+    syncViewBtns();
+    /* entering edit mode is the first moment the ribbon has a real width */
+    if(m==='edit') requestAnimationFrame(fitEditRibbon);
     if(creating||editing){
       activePane=-1;
       renderCreate();
     }
     if(!creating) renderSlide();
+    /* the bar's title depends on the mode, and openDeck calls status()
+       BEFORE the mode is set — so it is refreshed once more here */
+    status();
   }
   function refresh(){
     if(mode==='create'){renderCreate();}
@@ -5421,7 +6903,8 @@
     return true;
   };
   /* wrap so the click Event isn't forwarded (closeDeck takes no args) */
-  $('#deck-docs').addEventListener('click',function(){closeDeck();});
+  var docsBtn=$('#deck-docs');   /* removed from the markup; the rail has it */
+  if(docsBtn) docsBtn.addEventListener('click',function(){closeDeck();});
   var prDocs=document.getElementById('pr-docs');
   if(prDocs) prDocs.addEventListener('click',function(){closeDeck();});
   var prNew=document.getElementById('pr-new');
@@ -5627,6 +7110,18 @@
       else if((e.ctrlKey||e.metaKey)&&(e.key==='d'||e.key==='D')){
         e.preventDefault();duplicateSel();
       }
+      /* copy and cut; PASTE rides the real paste event instead, so a
+         system-clipboard image can come in too */
+      else if((e.ctrlKey||e.metaKey)&&(e.key==='c'||e.key==='C')){
+        var nc=copySel();
+        if(nc){e.preventDefault();
+          toast(nc+' item'+(nc===1?'':'s')+' copied');}
+      }
+      else if((e.ctrlKey||e.metaKey)&&(e.key==='x'||e.key==='X')){
+        var nx=cutSel();
+        if(nx){e.preventDefault();
+          toast(nx+' item'+(nx===1?'':'s')+' cut');}
+      }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='g'||e.key==='G')){
         e.preventDefault();
         if(e.shiftKey) ungroupSel(); else groupSel();
@@ -5637,6 +7132,15 @@
         var st=e.shiftKey?2:0.4;
         nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
                  e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
+      }
+      /* R rulers, G grid — plain keys, so Ctrl+G still groups */
+      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='r'||e.key==='R')){
+        e.preventDefault();
+        var rb=$('#vw-rulers'); if(rb) rb.click();
+      }
+      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='g'||e.key==='G')){
+        e.preventDefault();
+        var gb=$('#vw-grid'); if(gb) gb.click();
       }
       /* page zoom from the keyboard, mirroring the -/Fit/+ buttons */
       else if(!e.ctrlKey&&!e.metaKey
@@ -5812,6 +7316,18 @@
     if(pres.showNums){delete pres.showNums;} else {pres.showNums=1;}
     updateNumsLabel();markDirty();refresh();
     toast('Slide numbers '+(pres.showNums?'on':'off'));
+  });
+  function updateCropLabel(){
+    var b=$('#mi-crop');
+    if(b) b.textContent='Crop marks: '+(pres.cropMarks?'on':'off');
+  }
+  menuAction('#mi-crop',function(){
+    if(pres.cropMarks){delete pres.cropMarks;} else {pres.cropMarks=1;}
+    updateCropLabel();markDirty();
+    toast(pres.cropMarks
+      ?'Crop marks on — the exported sheet grows '+BLEED_MM
+        +'mm on each side; the page keeps its exact size'
+      :'Crop marks off');
   });
   $('#pres-name').addEventListener('input',function(){
     var old=pres.name;
@@ -6009,8 +7525,13 @@
     /* the label is just the DESTINATION — "Saved to:" lives in the
        tooltip. The long form was the widest thing in the ribbon's File
        group and wrapped the whole toolbar to a third row (2026-08-05). */
-    b.innerHTML='&#8594; '+esc(targetLabel())+' &#9662;';
-    b.title='Where this presentation is saved — click to change';
+    /* the chevron of a split button: "Save" is its label. The destination
+       is named in the menu this opens, and in the tooltip — in the ribbon
+       it was a second, wordier control that looked like a rival Save. */
+    b.innerHTML='&#9662;';
+    b.title='Saving to '+targetLabel()+' — click to change where';
+    var th=$('#tg-head');
+    if(th) th.textContent='save to — now: '+targetLabel();
     b.classList.toggle('tg-file',saveTarget==='file');
     var pj=$('#tg-project'); if(pj) pj.hidden=(APP.mode!=='app');
     var pk=$('#tg-pick'); if(pk) pk.hidden=(saveTarget!=='file');
@@ -6243,12 +7764,19 @@
     document.body.appendChild(root);
     /* a custom page (4:3 / A-series poster) exports at ITS size, not 16:9 */
     var pg=pageOf();
-    if(pg.id!=='16x9'){
+    /* Crop marks: some print shops ask for them, and they need somewhere
+       to sit, so the SHEET grows by the bleed while the page inside keeps
+       its exact size — an A0 poster stays 841x1189mm either way. */
+    var bleed=(pres&&pres.cropMarks)?BLEED_MM:0;
+    if(pg.id!=='16x9'||bleed){
+      var sheetW=pg.mm[0]+2*bleed,sheetH=pg.mm[1]+2*bleed;
       var pw=Math.round(pg.mm[0]/25.4*96),ph=Math.round(pg.mm[1]/25.4*96);
+      var bpx=Math.round(bleed/25.4*96);
       var pst=document.createElement('style');
-      pst.textContent='#print-root{width:'+pw+'px;}'
-        +'.print-page{width:'+pw+'px;height:'+ph+'px;}'
-        +'@media print{@page{size:'+pg.mm[0]+'mm '+pg.mm[1]+'mm;'
+      pst.textContent='#print-root{width:'+(pw+2*bpx)+'px;}'
+        +'.print-page{width:'+pw+'px;height:'+ph+'px;'
+        +(bleed?'margin:'+bpx+'px;':'')+'}'
+        +'@media print{@page{size:'+sheetW+'mm '+sheetH+'mm;'
         +'margin:0;}}';
       root.appendChild(pst);
     }
@@ -6275,6 +7803,16 @@
         var pn=document.createElement('div');
         pn.className='slide-pageno';pn.textContent=(i+1);
         slideEl.appendChild(pn);
+      }
+      /* trim marks at the four corners, drawn OUTSIDE the page in the
+         bleed so they never touch the artwork */
+      if(bleed){
+        page.classList.add('has-crop');
+        ['tl','tr','bl','br'].forEach(function(c){
+          var cm=document.createElement('span');
+          cm.className='cropmark cm-'+c;
+          page.appendChild(cm);
+        });
       }
     });
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
@@ -6377,8 +7915,6 @@
      dropped — the toast says how many, and PDF export carries them
      perfectly. Crops are dropped for the same reason (a CSS clip-path is
      not a PowerPoint crop), so a cropped item is reported too. ---- */
-  var PPT_FONT={sans:'Calibri',serif:'Georgia',mono:'Consolas',
-    system:'Calibri',hand:'Segoe Print'};
   /* textContent welds block elements together ("…reanalysiswould contain"),
      so read innerText instead. It is layout-dependent, which means the node
      must genuinely be RENDERED: display:none returns textContent and
@@ -6420,7 +7956,7 @@
       text:a.text,sizePct:a.size,color:a.color||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
       bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?a.bgc:'',
-      font:PPT_FONT[a.font]||''};
+      arc:a.arc,font:fontPpt(a.font)};
   }
   /* one slide's annots -> spec items, plus a tally of what could not go */
   function pptxItems(s,note,ink){
@@ -6444,12 +7980,24 @@
           rot:a.rot,op:a.op,src:a.src});
         else note.skipped++;
       } else if(a.k==='rect'){
+        /* `a.fill` is a BOOLEAN — "tint with my own line colour" — so the
+           actual paint has to be resolved here. Passing the boolean
+           through made every filled shape export solid black. */
+        var fillCol='';
+        if(a.grad) fillCol='';
+        else if(a.fill) fillCol=a.fillc||shapeFill(a.color||'#ff6b57',
+          0x2b/255);
         items.push({t:'rect',x:a.x,y:a.y,w:a.w||20,h:a.h||14,rot:a.rot,
-          op:a.op,color:a.color,fill:a.fill,sw:a.sw,dash:a.dash,
-          shape:a.shape});
+          op:a.op,color:a.color,fill:fillCol,grad:a.grad,
+          sw:a.sw,dash:LINE_PPT[lineStyle(a)],shape:a.shape});
       } else if(a.k==='arrow'){
-        items.push({t:'line',x1:a.x1,y1:a.y1,x2:a.x2,y2:a.y2,
-          color:a.color,sw:a.sw,dash:a.dash,head:!a.nohead,op:a.op});
+        var ea=arrowEnds(layer,s,a,0);
+        var hz=headSize(a);
+        items.push({t:'line',x1:ea.x1,y1:ea.y1,x2:ea.x2,y2:ea.y2,
+          color:a.color,sw:a.sw,dash:LINE_PPT[lineStyle(a)],op:a.op,
+          head:(HEAD_BY[headEnd(a)]||{}).ppt||'none',
+          tail:(HEAD_BY[headStart(a)]||{}).ppt||'none',
+          hsz:hz.ppt,curve:a.curve,bend:a.bend});
       } else if(a.k==='cell'){
         var it=a.ref?resolveRef(a.ref):null;
         var node=it?framePart(it.ns,a.part):null;

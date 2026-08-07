@@ -72,7 +72,10 @@ def test_line_insert_and_toolbar_icons(out):
     assert 'id="dc-line"' in out
     assert ("s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1,"
             in out)
-    assert "if(!a.nohead) ln.setAttribute('marker-end'" in out
+    # heads became a choice of shapes (2026-08-07); `nohead` is still what
+    # makes a Line a line, now read through headEnd() rather than a
+    # marker-end test at the draw site
+    assert "return a.nohead?'none':'triangle';" in out
     assert "a.nohead?'Line':'Arrow'" in out
     # a line on a light page defaults dark, and vice versa
     assert "color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'" in out
@@ -81,15 +84,20 @@ def test_line_insert_and_toolbar_icons(out):
     assert ".dbtn .bic{display:inline-block;" in out
 
 
-def test_edit_mode_is_minimal_file_in_ribbon_colours_in_popups(out):
+def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     """2026-08-05, user: "focus more on usability". Editing borrows the
-    File controls into a ribbon group (the docked panel head read as a
+    File controls out of the docked panel head (which read as a
     permanently-open File menu); the panel keeps only the slide strip —
     and disappears entirely for posters, which are one page and need no
     slides. The fourteen always-visible colour swatches became two popup
     buttons.
+
+    2026-08-07: those controls now land in the TOP BAR rather than a
+    ribbon group. They are document actions, not editing tools, and
+    mixing the two made the toolbar unreadable. The borrow-and-restore
+    mechanism is unchanged.
     """
-    assert 'id="rbn-file"' in out and 'id="rbn-file-row"' in out
+    assert 'id="deck-topslot"' in out and 'id="deck-topright"' in out
     assert "function fileToRibbon" in out and "function fileToPanel" in out
     assert "if(editing) fileToRibbon(); else fileToPanel();" in out
     assert ".deck.editing.poster-page .deck-create{display:none!important;}" in out

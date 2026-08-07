@@ -228,21 +228,27 @@ def test_launch_polish_undo_pdf_nudge_and_tour_text(out):
     assert ".tour-text{font-size:15.5px" in out
 
 
-def test_ribbon_is_one_wrapping_flow_with_stable_group_order(out):
-    """ribbon declutter: ONE wrapping flow (static + format groups share
-    rows), no Select/Delete group (Esc deselects, Del removes), Animate
-    merged into an Effects group, and common groups (Arrange, Effects)
-    come FIRST so buttons don't jump between selection types.  The ribbon
+def test_ribbon_is_one_flow_with_stable_group_order(out):
+    """ribbon declutter: ONE flow (static + format groups share the row),
+    no Select/Delete group (Esc deselects, Del removes), Animate merged
+    into an Effects group, and common groups (Arrange, Effects) come
+    FIRST so buttons don't jump between selection types.  The ribbon
     part-picker pills dress like the other ribbon buttons.
+
+    It no longer WRAPS -- that was the 2026-08-07 rebuild, where groups
+    fragmenting across rows was the thing that read as "just all these
+    rows of things". The flow itself is unchanged.
     """
     assert ".rbn-static{display:contents;}" in out
     assert ".et-fmt{display:contents;}" in out
     # hidden format groups LEAVE the layout (2026-08-04): reserving their
-    # rows as visibility:hidden was a permanent dead band; the ribbon's
-    # min-height still holds two rows, and the stage re-fits via a
-    # ResizeObserver when the ribbon's height changes
+    # rows as visibility:hidden was a permanent dead band
     assert ".et-fmt[hidden]{display:none;}" in out
-    assert "new ResizeObserver(function(){\n        if(!deckEl.hidden) applyZoom();}).observe(et);" in out
+    # the stage still re-fits when the ribbon's box changes; that observer
+    # now also drives the density ladder, so it is asserted by behaviour
+    # rather than by its exact source text
+    assert "new ResizeObserver(function(){" in out
+    assert "fitEditRibbon();applyZoom();" in out
     assert 'id="et-del"' not in out and 'data-tool="select"' not in out
     assert ">Effects</span>" in out and 'id="fmt-animwrap"' in out
     assert out.index('id="fmt-dup"') < out.index('id="fmt-txlab"')

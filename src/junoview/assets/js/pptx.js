@@ -154,6 +154,51 @@ window.JunoPptx = (function () {
       + alpha(op) + '</a:srgbClr></a:solidFill>';
   }
 
+  /* An rgba() stop carries its own transparency, which OOXML expresses as
+     a separate alpha element rather than a fourth channel. */
+  function alphaOf(color) {
+    var m = String(color || '').match(/rgba\(\s*\d+\D+\d+\D+\d+\D+([\d.]+)/i);
+    return m ? parseFloat(m[1]) : 1;
+  }
+  function gradFill(g, op) {
+    if (!g) return '';
+    var c1 = g.a, c2 = g.b;
+    var stops = '<a:gsLst>'
+      + '<a:gs pos="0"><a:srgbClr val="' + hex(c1, '39A9C0') + '">'
+      + alpha(alphaOf(c1) * (op == null ? 1 : op)) + '</a:srgbClr></a:gs>'
+      + '<a:gs pos="100000"><a:srgbClr val="' + hex(c2, 'FFFFFF') + '">'
+      + alpha(alphaOf(c2) * (op == null ? 1 : op)) + '</a:srgbClr></a:gs>'
+      + '</a:gsLst>';
+    if (g.type === 'radial')
+      /* path="circle" with the focus in the middle is PowerPoint's
+         "radiate from the centre" */
+      return '<a:gradFill rotWithShape="1">' + stops
+        + '<a:path path="circle"><a:fillToRect l="50000" t="50000" '
+        + 'r="50000" b="50000"/></a:path></a:gradFill>';
+    return '<a:gradFill rotWithShape="1">' + stops + '<a:lin ang="'
+      + Math.round((((+g.ang || 0) % 360) + 360) % 360 * 60000)
+      + '" scaled="0"/></a:gradFill>';
+  }
+  /* the paint for a shape: gradient wins, then a solid colour, else none */
+  function shapeFillXml(item) {
+    if (item.grad) return gradFill(item.grad, item.op);
+    if (item.fill) return solidFill(item.fill, item.op);
+    return '<a:noFill/>';
+  }
+  var DASHES = { solid: '', dash: 'dash', sysDot: 'sysDot',
+    dashDot: 'dashDot', lgDash: 'lgDash' };
+  function dashXml(d) {
+    var v = DASHES[d];
+    return v ? '<a:prstDash val="' + v + '"/>' : '';
+  }
+  var HEAD_OK = { triangle: 1, stealth: 1, arrow: 1, diamond: 1, oval: 1 };
+  function endXml(tag, type, size) {
+    if (!type || type === 'none' || !HEAD_OK[type]) return '';
+    var s = (size === 'sm' || size === 'lg') ? size : 'med';
+    return '<a:' + tag + ' type="' + type + '" w="' + s + '" len="'
+      + s + '"/>';
+  }
+
   function dataUri(src) {
     var m = String(src || '').match(/^data:([^;,]+)(;base64)?,(.*)$/);
     if (!m) return null;
@@ -232,11 +277,33 @@ window.JunoPptx = (function () {
       geo.y = (item.y || 0) - geo.h / 2;
     }
     var fill = item.bgc ? solidFill(item.bgc, item.op) : '<a:noFill/>';
+    /* Curved text is a real PowerPoint effect, so it arrives warped and
+       still editable rather than as a picture. prstTxWarp must come
+       FIRST inside bodyPr, and it cannot share the box with autofit —
+       a warped run is sized by its path, not by the shape. */
+    var arc = +item.arc || 0;
+    /* Measured against real PowerPoint (2026-08-07): textArchUp is a true
+       symmetric arch and matches the canvas exactly. Its downward twin
+       wraps text around the BOTTOM of the circle, so it reads inverted
+       the way a badge does; textCurve* stays upright but is a ramp that
+       grows the letters, not a bow. textArch* is the closer shape, so it
+       wins — and the one asymmetry (a downward arch reads round the
+       bottom in PowerPoint, upright on the poster and in the PDF) is
+       stated in the Curve menu rather than left to be discovered.
+       The sweep must be given: an empty avLst renders all but flat. */
+    var sweep = Math.round(Math.min(180, Math.abs(arc) * 3.2) * 60000);
+    var warp = arc
+      ? '<a:prstTxWarp prst="' + (arc > 0 ? 'textArchUp' : 'textArchDown')
+        + '"><a:avLst><a:gd name="adj" fmla="val ' + sweep + '"/>'
+        + '</a:avLst></a:prstTxWarp>'
+      : '';
+    var bodyPr = '<a:bodyPr wrap="square" anchor="'
+      + (item.centred ? 'ctr' : 't') + '">' + warp
+      + (arc ? '<a:noAutofit/>' : '<a:spAutoFit/>') + '</a:bodyPr>';
     return '<p:sp>' + nvSp(id, item.name || ('Text ' + id), ' txBox="1"')
       + '<p:spPr>' + xfrm(geo, page)
       + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill + '</p:spPr>'
-      + '<p:txBody><a:bodyPr wrap="square" anchor="'
-      + (item.centred ? 'ctr' : 't') + '"><a:spAutoFit/></a:bodyPr>'
+      + '<p:txBody>' + bodyPr
       + '<a:lstStyle/>' + paragraphs(item, page) + '</p:txBody></p:sp>';
   }
 
@@ -258,11 +325,11 @@ window.JunoPptx = (function () {
   function rectShape(item, id, page) {
     var stroke = '<a:ln w="' + Math.round((item.sw || 2) * 12700) + '">'
       + solidFill(item.color, item.op, 'FF6B57')
-      + (item.dash ? '<a:prstDash val="dash"/>' : '') + '</a:ln>';
+      + dashXml(item.dash) + '</a:ln>';
     return '<p:sp>' + nvSp(id, item.name || ('Shape ' + id))
       + '<p:spPr>' + xfrm(item, page) + '<a:prstGeom prst="'
       + (SHAPE_GEOM[item.shape] || 'rect') + '"><a:avLst/></a:prstGeom>'
-      + (item.fill ? solidFill(item.fill, item.op) : '<a:noFill/>')
+      + shapeFillXml(item)
       + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
       + '</p:txBody></p:sp>';
   }
@@ -279,12 +346,20 @@ window.JunoPptx = (function () {
       + Math.max(1, Math.round(Math.abs(y2 - y1))) + '"/>';
     var ln = '<a:ln w="' + Math.round((item.sw || 3) * 12700) + '">'
       + solidFill(item.color, item.op, 'FF6B57')
-      + (item.dash ? '<a:prstDash val="dash"/>' : '')
-      + (item.head ? '<a:tailEnd type="triangle"/>' : '') + '</a:ln>';
+      + dashXml(item.dash)
+      /* headEnd is the START of the line in OOXML, tailEnd the finish */
+      + endXml('headEnd', item.tail, item.hsz)
+      + endXml('tailEnd', item.head, item.hsz) + '</a:ln>';
+    /* PowerPoint has real curved and elbowed connectors, so a curve or a
+       bend stays editable there rather than being flattened to a
+       straight line */
+    var geom = item.bend ? 'bentConnector3'
+      : (item.curve ? 'curvedConnector3' : 'line');
     return '<p:cxnSp><p:nvCxnSpPr><p:cNvPr id="' + id + '" name="Line '
       + id + '"/><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr><p:spPr><a:xfrm'
       + (flipH ? ' flipH="1"' : '') + (flipV ? ' flipV="1"' : '') + '>'
-      + off + '</a:xfrm><a:prstGeom prst="line"><a:avLst/></a:prstGeom>'
+      + off + '</a:xfrm><a:prstGeom prst="' + geom
+      + '"><a:avLst/></a:prstGeom>'
       + ln + '</p:spPr></p:cxnSp>';
   }
 

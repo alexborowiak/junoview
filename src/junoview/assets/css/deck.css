@@ -472,7 +472,11 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .dc-head{display:flex;align-items:center;gap:8px;padding:10px 14px;
   border-bottom:1px solid #ffffff14;background:#0b141d;flex-wrap:wrap;}
 /* every header button is the same chip as the top-bar toggles */
-.dc-head .dbtn,.dc-menuwrap .dbtn{height:30px;box-sizing:border-box;
+/* scoped to the docked panel ONLY: fileToRibbon moves these very nodes
+   into the ribbon, where a stray 30px height left them standing proud of
+   their 26px neighbours — the literal reason the File group never lined
+   up (2026-08-07) */
+.dc-head .dbtn,.dc-head .dc-menuwrap .dbtn{height:30px;box-sizing:border-box;
   padding:0 12px;display:inline-flex;align-items:center;gap:6px;
   line-height:1;letter-spacing:.04em;white-space:nowrap;}
 .dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
@@ -646,22 +650,180 @@ body.slide-editing .apptop{display:none;}
    display:contents, so every group flows into the same rows — no dedicated
    row per section, no wasted band. min-height reserves two rows so
    selecting/deselecting never grows the ribbon or shifts the canvas. */
-.edit-tools.ribbon{display:flex;flex-wrap:wrap;align-items:stretch;
-  align-content:flex-start;gap:2px;row-gap:4px;
-  padding:7px 16px 6px;border-bottom:1px solid #ffffff14;
-  background:#0e1926;flex:none;min-height:122px;}
+/* ONE row that scrolls sideways when it must, never a stack of rows.
+   Wrapping was what made this read as "rows of things": a group could
+   break across rows, so its label landed under whatever happened to be
+   beneath it and nothing marked where one group ended. PowerPoint never
+   wraps either. A constant height also means selecting an item can no
+   longer shift the canvas. */
+/* ONE row, and it neither wraps NOR scrolls. Wrapping fragmented groups
+   across rows ("just all these rows of things"); a sideways scrollbar was
+   rejected just as flatly. So width comes from DENSITY: fitEditRibbon()
+   walks the .erc1-.erc4 ladder below until it fits, and no stage ever
+   hides a word — that has been refused twice before. If even the tightest
+   stage cannot fit, the toolbar moves to the right-hand edge, where it
+   has a whole column to use. */
+.edit-tools.ribbon{display:flex;flex-wrap:nowrap;align-items:stretch;
+  gap:0;padding:0 10px;border-bottom:1px solid #ffffff14;
+  background:#0e1926;flex:none;height:98px;
+  /* Clip SIDEWAYS only. A plain overflow:hidden also clipped every
+     dropdown that opens downward — the Shape menu looked like it was
+     rendering behind the canvas when it was really being cut off at the
+     ribbon's edge (2026-08-07, user). Fixing this per-menu would mean
+     remembering floatMenu() at nine separate call sites; one rule here
+     covers every menu, including ones added later. */
+  overflow-x:clip;overflow-y:visible;}
 .rbn-static{display:contents;}
+/* A GROUP is the unit you scan: its controls sit together over one
+   centred label, with a rule between it and the next. Rebuilt 2026-08-07
+   (user: rows of identical buttons "just confusing", next to a
+   PowerPoint ribbon) — the old version had every group the same shape
+   and the same button size, so nothing told you where one ended, what
+   was a primary action, or what was a toggle. */
 .rbn-grp{display:flex;flex-direction:column;align-items:center;
-  justify-content:space-between;gap:6px;padding:2px 15px;position:relative;
-  min-width:0;}
+  justify-content:space-between;gap:5px;padding:8px 11px 5px;
+  position:relative;min-width:0;flex:none;
+  border-right:1px solid #ffffff1c;}
+.rbn-grp:last-child{border-right:none;}
+/* the hint sits after the last group and must not look like a group */
+/* The hint is a reminder, not a control, so it is the FIRST thing to go
+   when the row is tight — but it goes whole. An ellipsis ("Clic…") is
+   text truncation, which is the same sin as hiding a word; it is dropped
+   by measurement in fitEditRibbon, before any density rung. */
+.edit-tools.ribbon .et-hint{border-left:none;align-self:center;
+  margin-left:auto;padding:0 10px;flex:none;white-space:nowrap;}
+.deck.erc-nohint .edit-tools.ribbon .et-hint{display:none;}
 .rbn-grp[hidden]{display:none;}
-.rbn-grp+.rbn-grp::before{content:"";position:absolute;left:0;top:2px;
-  bottom:15px;width:1px;background:#ffffff1a;}
-.rbn-grp.rbn-first::before{display:none;}
-.rbn-row{display:flex;align-items:center;justify-content:center;gap:6px;
-  flex-wrap:wrap;flex:1;min-height:32px;}
-.rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
-  text-transform:uppercase;color:#66798a;line-height:1;white-space:nowrap;}
+/* the body holds big buttons and stacks of small ones side by side */
+/* A GRID of two fixed rows, filling column by column. Wrapping a flex row
+   was guesswork: the contextual groups are eleven bare buttons each, and
+   capping their width to force two rows actually produced four-plus rows
+   inside a clipped 58px box — controls you could not see or reach
+   (2026-08-07). Two 26px rows, flowed by column, cannot do that: a
+   control either has a cell or the group is visibly wider. */
+/* Two rows filled ACROSS, not down. grid-auto-flow:column filled the
+   first column top-to-bottom before moving right, so Insert read
+   "Notebook cell, Text box, Shape, Arrow…" down the columns while the eye
+   read it across the rows (2026-08-07, user: "rows not columns"). The
+   column COUNT is set per group by fitEditRibbon, which is the only place
+   that knows how many controls are currently visible. */
+.rbn-row{display:grid;grid-auto-flow:row;
+  grid-template-columns:repeat(var(--rbn-cols,4),auto);
+  grid-template-rows:26px 26px;row-gap:5px;column-gap:5px;
+  align-items:stretch;justify-items:stretch;height:57px;}
+/* the tall things span both rows rather than sitting in one */
+.rbn-row>.dbtn.rbn-big,.rbn-row>.rbn-stack,
+.rbn-row>.rbn-tall{grid-row:1/span 2;}
+/* a dropdown's WRAPPER is the cell; the button fills it */
+.rbn-row>.sh-drop,.rbn-row>.dc-menuwrap{display:flex;}
+.rbn-row>.sh-drop>.dbtn,.rbn-row>.dc-menuwrap>.dbtn{width:100%;height:100%;}
+/* two or three controls that are ONE decision and therefore ONE cell —
+   the zoom stepper, for instance, whose minus and plus must never end up
+   on different rows */
+.rbn-cell{display:flex;align-items:stretch;gap:3px;height:26px;}
+.rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#5d7183;line-height:1;white-space:nowrap;
+  padding-top:1px;}
+
+/* --- ONE button size, everywhere. Four sizes (big / small / icon /
+   whatever the moved File controls were) meant nothing shared a baseline
+   and no size carried meaning — "so many sizes, and they don't align, and
+   they are just kind of everywhere" (2026-08-07). Emphasis is a JOB FOR
+   COLOUR: Present is accented, everything else is identical, so the eye
+   has exactly one thing to land on instead of six competing ones.
+   .rbn-big survives for that single accented control. --- */
+.dbtn.rbn-big{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;min-width:66px;padding:7px 9px 6px;
+  font-size:10.5px;line-height:1.15;text-align:center;}
+/* every ribbon button is the same height and sits on the same baseline */
+.rbn-row>.dbtn:not(.rbn-big),.rbn-row .sh-drop>.dbtn,
+.rbn-row .dc-menuwrap>.dbtn{height:26px;box-sizing:border-box;}
+.dbtn.rbn-big i{display:block;width:22px;height:22px;}
+.dbtn.rbn-big svg{width:22px;height:22px;}
+/* two or three small buttons stacked in the height of one big one */
+.rbn-stack{display:flex;flex-direction:column;gap:3px;
+  justify-content:center;}
+.rbn-stack.rbn-cols{flex-direction:row;align-items:stretch;gap:3px;}
+.rbn-stack .rbn-col{display:flex;flex-direction:column;gap:3px;
+  justify-content:center;}
+.dbtn.rbn-sm{display:flex;align-items:center;gap:6px;padding:3px 8px;
+  font-size:10.5px;white-space:nowrap;min-height:0;line-height:1.5;}
+.dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:13px;height:13px;flex:none;}
+/* a row of icon-only squares, for things whose icon says it all */
+.dbtn.rbn-ico{display:flex;align-items:center;justify-content:center;
+  width:26px;height:26px;padding:0;font-size:12px;}
+.dbtn.rbn-ico i,.dbtn.rbn-ico svg{width:14px;height:14px;}
+/* Save + its destination chevron, welded into one split button so they
+   read as one decision rather than two rival save controls */
+.dc-savegrp{display:flex;align-items:stretch;}
+.dc-savegrp .dbtn{border-radius:0;}
+.dc-savegrp>.dbtn:first-child{border-radius:6px 0 0 6px;}
+.dc-savegrp .dc-menuwrap>.dbtn{border-radius:0 6px 6px 0;
+  border-left-color:#ffffff14;padding-left:6px;padding-right:6px;}
+.dc-savegrp .dc-menuwrap>.dbtn:hover{border-left-color:var(--cyan);}
+/* View last, hard right; the hint after it. Everything else keeps source
+   order, so the contextual groups still land between Slide and View. */
+/* View last and hard against the right edge. ONLY it may carry the auto
+   margin: with the hint carrying one too, the free space was split
+   between them and View stopped 300px short of the edge. */
+.rbn-view{order:90;margin-left:auto;border-left:1px solid #ffffff1c;}
+.edit-tools.ribbon .et-hint{order:85;margin-left:0;}
+.deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
+  margin-left:16px;padding-left:16px;border-left:1px solid #ffffff1a;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw;}
+.deck-title:empty{display:none;}
+.deck-topslot{display:flex;align-items:center;gap:8px;margin-left:2px;
+  flex-wrap:nowrap;}
+.deck-topslot:empty{display:none;}
+.deck-topright{display:flex;align-items:center;gap:8px;}
+.deck-topright:empty{display:none;}
+/* One line, one height, nothing wrapping. "File ▾" was breaking after the
+   word and pushing its own button taller than everything beside it, which
+   is what made the row look uneven (2026-08-07, user: "they are not
+   inline"). */
+.deck-topslot .dbtn,.deck-topright .dbtn{height:30px;box-sizing:border-box;
+  white-space:nowrap;display:inline-flex;align-items:center;
+  justify-content:center;line-height:1;}
+.deck-topslot .dc-menuwrap,.deck-topslot .dc-savegrp{display:flex;
+  align-items:center;}
+.deck-topslot .deck-status{height:30px;box-sizing:border-box;}
+
+/* --- the compaction ladder. Every stage trades SPACE, never words. --- */
+.deck.erc1 .rbn-grp{padding-left:7px;padding-right:7px;}
+.deck.erc1 .rbn-row{gap:4px;}
+.deck.erc1 .dbtn.rbn-big{min-width:60px;padding:6px 6px 5px;}
+.deck.erc2 .dbtn.rbn-big{min-width:52px;font-size:10px;gap:3px;}
+.deck.erc2 .dbtn.rbn-big i,.deck.erc2 .dbtn.rbn-big svg{
+  width:18px;height:18px;}
+.deck.erc2 .dbtn.rbn-sm{padding:2px 6px;font-size:10px;gap:4px;}
+.deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
+/* NO rung hides an icon. Stripping them buys width but costs the whole
+   big/small hierarchy — a label-only wall is the same flat wall that was
+   rejected, arrived at from the other side. Density only, to the end. */
+.deck.erc3 .rbn-grp{padding-left:5px;padding-right:5px;}
+.deck.erc3 .dbtn.rbn-big{min-width:50px;font-size:9.5px;}
+.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:9.5px;
+  padding-left:5px;padding-right:5px;}
+.deck.erc3 .rbn-lab{font-size:8px;letter-spacing:.1em;}
+.deck.erc3 .rbn-row .fmt-range{width:66px;}
+
+/* every cell-sized control has to actually BE cell-sized, or it pushes
+   its row past the group and over the label */
+.rbn-row .dbtn.etm,.rbn-row .fmt-num,.rbn-row select.etm,
+.rbn-row .fmt-opwrap,.rbn-row .fmt-szwrap,.rbn-row .rbn-partslot{
+  height:26px;box-sizing:border-box;padding-top:0;padding-bottom:0;}
+.rbn-row .dbtn.etm{display:inline-flex;align-items:center;
+  justify-content:center;font-size:10.5px;padding-left:8px;
+  padding-right:8px;}
+.rbn-row .fmt-range{width:96px;}
+/* File is assembled in JS from the docked panel, so it is compacted here
+   rather than in markup: capped width, so it wraps into two tidy rows of
+   small buttons instead of one very wide one that pushed everything else
+   off the ribbon */
+/* File is assembled in JS from the docked panel, so its buttons are
+   sized here rather than in markup */
+#rbn-file .dbtn{padding:3px 8px;font-size:10.5px;}
+#rbn-file .deck-status{font-size:10px;}
 /* the contextual format groups flow into the same rows as the static
    ones. Hidden means GONE (2026-08-04): keeping them in layout as
    visibility:hidden reserved every row they would wrap into — on a
@@ -677,7 +839,34 @@ body.slide-editing .apptop{display:none;}
    (PowerPoint's contextual-tab move): the toolbar keeps its two rows and
    the canvas keeps its size — it used to grow a third row and shrink
    the poster whenever you clicked anything (2026-08-05) */
-.edit-tools.fmt-open .rbn-insert{display:none;}
+/* Selecting something swaps the ribbon over to that item's tools, the way
+   PowerPoint swaps in a contextual tab — the contextual groups REPLACE
+   the standby ones instead of being appended to them. Appending them
+   needed 2135px of a 1409px window, which no amount of density was ever
+   going to close. File and Slide stay because you still save, zoom and
+   change page while an item is selected; Present, Notebooks, View and
+   Insert are all one click away again the moment you deselect. */
+.edit-tools.fmt-open .rbn-insert,
+.edit-tools.fmt-open .rbn-standby{display:none;}
+/* Last resort on a narrow window with something selected: Slide steps
+   aside too. It is the only remaining group that is not about the thing
+   you have selected, and every one of its controls has a keyboard route
+   (+ / - / 0 for zoom) or comes straight back when you deselect. Better
+   than the alternative, which was silently clipping whatever fell off
+   the right-hand end — buttons you could neither see nor reach. */
+.deck.erc-tight .edit-tools.fmt-open .rbn-slide{display:none;}
+/* with nothing selected there is no group to stand aside, so the big
+   buttons give up their last few pixels instead — smaller, never fewer
+   words */
+.deck.erc-tight .dbtn.rbn-big{min-width:42px;font-size:9px;
+  padding-left:5px;padding-right:5px;gap:2px;}
+.deck.erc-tight .dbtn.rbn-big i,.deck.erc-tight .dbtn.rbn-big svg{
+  width:15px;height:15px;}
+.deck.erc-tight .rbn-grp{padding-left:3px;padding-right:3px;}
+.deck.erc-tight .rbn-row{column-gap:3px;}
+.deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{
+  font-size:9px;padding-left:4px;padding-right:4px;gap:3px;}
+.deck.erc-tight .rbn-lab{font-size:7.5px;letter-spacing:.06em;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--amber);}
@@ -707,6 +896,18 @@ body.slide-editing .apptop{display:none;}
 .an-cell.an-cropped .figframe img{object-fit:cover;width:100%;height:100%;
   max-width:none;max-height:none;}
 /* the "Same size" picker: a plain single-column list of text options */
+/* the View menu: worded rows, each a toggle that shows its own state */
+.sh-menu.vw-menu{display:flex;flex-direction:column;width:236px;
+  padding:6px;gap:3px;}
+.vw-opt{display:flex;align-items:center;gap:8px;width:100%;
+  justify-content:flex-start;text-align:left;font-size:11.5px;
+  padding:6px 9px;}
+.vw-opt kbd{margin-left:auto;font-family:var(--mono);font-size:9px;
+  border:1px solid #ffffff26;border-radius:3px;padding:0 4px;
+  color:#8ba0b2;}
+.sh-menu.align-menu{display:block;width:214px;padding:6px;}
+.align-menu .sh-opt{flex-direction:row;justify-content:flex-start;
+  gap:8px;padding:6px 8px;}
 .sh-menu.same-menu{display:block;width:196px;padding:6px;}
 .same-menu .sh-opt{flex-direction:row;justify-content:flex-start;
   width:100%;padding:7px 9px;font-size:12px;text-align:left;}
@@ -873,6 +1074,13 @@ select#fmt-font[hidden]{display:none;}
    File controls ride in the ribbon while editing (2026-08-05, user:
    "the poster mode doesn't really need slides") */
 .deck.editing.poster-page .deck-create{display:none!important;}
+/* A POSTER IS ONE PAGE. It has no slides, so it gets none of the slide
+   machinery in ANY mode — the strip of thumbnails and "+ Add slide" were
+   still there in the builder, hidden only while editing (2026-08-07,
+   user). The layout catalogue stays: those are poster templates. */
+.deck.poster-page .dc-film{display:none!important;}
+.deck.poster-page .deck-count{display:none!important;}
+.deck.poster-page .deck-arrow{display:none!important;}
 /* the borrowed File controls sit inline in their ribbon group */
 #rbn-file-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
 #rbn-file-row .deck-status{margin-left:2px;}
@@ -976,10 +1184,181 @@ select#fmt-font[hidden]{display:none;}
   background:#f0a84822;border:1px solid #f0a84866;color:#f0c078;
   border-radius:5px;padding:2px 6px;pointer-events:none;}
 
-/* snap-to-align guide lines (drawn only mid-drag) */
+/* snap-to-align guide lines (drawn only mid-drag). Solid and glowing
+   rather than a 1.5px dash: on an A0 poster zoomed to fit, a hairline
+   dashed rule was there but read as nothing, which is what made careful
+   placement feel like guesswork (2026-08-07, user: "everything is
+   floating in space"). */
 .snapline{position:absolute;z-index:45;pointer-events:none;}
-.snapline.snap-v{top:0;bottom:0;width:0;border-left:1.5px dashed #ff6b57;}
-.snapline.snap-h{left:0;right:0;height:0;border-top:1.5px dashed #ff6b57;}
+.snapline.snap-v{top:0;bottom:0;width:0;border-left:2px solid #ff6b57;
+  box-shadow:0 0 0 1px #ff6b5733,0 0 7px #ff6b5788;}
+.snapline.snap-h{left:0;right:0;height:0;border-top:2px solid #ff6b57;
+  box-shadow:0 0 0 1px #ff6b5733,0 0 7px #ff6b5788;}
+/* a snap onto the PAGE's own centre/edge is a different fact from a snap
+   onto another item — cyan for the page, coral for its contents */
+.snapline.snap-page{border-color:var(--cyan);
+  box-shadow:0 0 0 1px #39a9c033,0 0 7px #39a9c088;}
+/* equal-gap markers: shown when the dragged item sits at the same
+   distance from its neighbours as they are from each other */
+.snapgap{position:absolute;z-index:45;pointer-events:none;
+  background:#f0a84855;border:1px solid #f0a848;border-radius:2px;}
+/* live position/size readout, pinned to the dragged item */
+.dragtag{position:absolute;z-index:46;pointer-events:none;
+  font-family:var(--mono);font-size:10px;line-height:1;white-space:nowrap;
+  background:#0b141dd9;border:1px solid #ffffff2b;border-radius:5px;
+  padding:3px 6px;color:#cfe0ec;}
+
+/* ---------- page guides: margin box + grid (never printed) ---------- */
+.pgrid{position:absolute;inset:0;z-index:4;pointer-events:none;
+  overflow:hidden;}
+.pgrid-lines{position:absolute;inset:0;}
+.pgrid-margin{position:absolute;border:1px dashed #39a9c07a;}
+.page-light .pgrid-margin{border-color:#1f6f8a8c;}
+.pgrid-col{position:absolute;top:0;bottom:0;background:#39a9c00f;}
+.page-light .pgrid-col{background:#39a9c014;}
+/* guides you drag off the rulers yourself; they belong to the poster and
+   are saved with it, but are still guides — never ink */
+.cguides{position:absolute;inset:0;z-index:5;pointer-events:none;}
+.cguide{position:absolute;pointer-events:auto;}
+.cguide.cg-v{top:0;bottom:0;width:0;border-left:1px solid #46a892cc;
+  cursor:col-resize;padding:0 3px;margin-left:-3px;}
+.cguide.cg-h{left:0;right:0;height:0;border-top:1px solid #46a892cc;
+  cursor:row-resize;padding:3px 0;margin-top:-3px;}
+.cguide:hover{border-color:#46a892;box-shadow:0 0 6px #46a89299;}
+/* guides are an editing aid: never in print, export or playback */
+.deck:not(.editing) .pgrid,.deck:not(.editing) .rulers,
+.deck:not(.editing) .cguides{display:none;}
+@media print{.pgrid,.rulers,.cguides{display:none!important;}}
+#print-root .pgrid,#print-root .rulers,
+#print-root .cguides{display:none!important;}
+
+/* ---------- rulers ---------- */
+.rulers{position:absolute;inset:0;z-index:7;pointer-events:none;
+  font-family:var(--mono);}
+/* the ruler bars themselves DO take clicks — that is where a guide is
+   pulled from — while the rest of the overlay stays transparent to them */
+.ruler{position:absolute;background:#0c1822f2;color:#7e93a4;
+  border:1px solid #ffffff1a;overflow:hidden;pointer-events:auto;}
+.ruler-h{cursor:row-resize;}
+.ruler-v{cursor:col-resize;}
+.ruler-h{height:19px;}
+.ruler-v{width:19px;}
+.ruler-corner{position:absolute;width:19px;height:19px;
+  background:#0c1822f2;border:1px solid #ffffff1a;font-size:7.5px;
+  display:flex;align-items:center;justify-content:center;color:#66798a;}
+.rtick{position:absolute;background:#ffffff40;}
+.ruler-h .rtick{top:auto;bottom:0;width:1px;height:4px;}
+.ruler-h .rtick.major{height:8px;background:#ffffff70;}
+.ruler-v .rtick{left:auto;right:0;height:1px;width:4px;}
+.ruler-v .rtick.major{width:8px;background:#ffffff70;}
+.rlab{position:absolute;font-size:8px;color:#8ba0b2;white-space:nowrap;}
+.ruler-h .rlab{top:1px;transform:translateX(2px);}
+.ruler-v .rlab{left:1px;transform:translateY(1px) rotate(-90deg);
+  transform-origin:left top;}
+/* where the pointer is, on both rulers */
+.rcursor{position:absolute;background:var(--cyan);}
+.ruler-h .rcursor{top:0;bottom:0;width:1px;}
+.ruler-v .rcursor{left:0;right:0;height:1px;}
+/* the selected item's extent, shaded on the rulers — the quickest way to
+   see how far a block reaches on a page too big to take in at once */
+.rspan{position:absolute;background:#39a9c038;}
+.ruler-h .rspan{top:0;bottom:0;}
+.ruler-v .rspan{left:0;right:0;}
+
+/* ---------- text on a curved baseline ---------- */
+/* the flat span still holds the text, the selection and the caret; it is
+   just not what you look at while the curve is showing */
+.an-text.an-arced>.an-tx{visibility:hidden;}
+.an-text.an-arced{background:none;border-color:transparent;}
+.an-arcsvg{position:absolute;left:0;top:0;width:100%;height:100%;
+  overflow:visible;pointer-events:none;}
+/* typing un-curves it, because a caret cannot live on a <textPath> */
+.an-text.an-arced:focus-within>.an-tx{visibility:visible;}
+.an-text.an-arced:focus-within .an-arcsvg{display:none;}
+
+/* ---------- crop / trim marks (export only) ---------- */
+/* hairlines in the bleed, clear of the artwork: a printer trims where
+   they point. Always black — they are instructions to a machine, not
+   part of the design, and they must survive a white page. */
+.print-page.has-crop{position:relative;overflow:visible;}
+.cropmark{position:absolute;pointer-events:none;}
+.cropmark::before,.cropmark::after{content:"";position:absolute;
+  background:#000;}
+.cropmark::before{width:1px;height:14px;}
+.cropmark::after{height:1px;width:14px;}
+.cm-tl{left:0;top:0;}
+.cm-tl::before{left:-1px;top:-19px;}
+.cm-tl::after{left:-19px;top:-1px;}
+.cm-tr{right:0;top:0;}
+.cm-tr::before{right:-1px;top:-19px;}
+.cm-tr::after{right:-19px;top:-1px;}
+.cm-bl{left:0;bottom:0;}
+.cm-bl::before{left:-1px;bottom:-19px;}
+.cm-bl::after{left:-19px;bottom:-1px;}
+.cm-br{right:0;bottom:0;}
+.cm-br::before{right:-1px;bottom:-19px;}
+.cm-br::after{right:-19px;bottom:-1px;}
+
+/* ---------- pre-print check ---------- */
+.pf-count{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:#8ba0b2;padding:2px 12px 8px;}
+.pf-row{display:flex;flex-direction:column;gap:3px;width:100%;
+  text-align:left;background:none;border:none;border-left:3px solid #f0a848;
+  border-radius:0;color:inherit;cursor:pointer;padding:8px 12px;
+  font:inherit;}
+.pf-row:hover{background:#ffffff0d;}
+.pf-row.pf-err{border-left-color:#ff6b57;}
+.pf-what{font-size:12.5px;color:#dbe7ef;font-weight:600;}
+.pf-why{font-size:11px;color:#8ba0b2;line-height:1.4;}
+.pf-ok{font-size:12px;color:#8ba0b2;line-height:1.5;padding:10px 12px;}
+body.light .pf-row:hover{background:#00000008;}
+body.light .pf-what{color:var(--ink);}
+body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
+
+/* ---------- toolbar down the right-hand edge (tall pages) ---------- */
+/* A0 portrait is 1.4x taller than wide: on a laptop the horizontal ribbon
+   costs ~122px of the scarce dimension. Moved to the side it costs width,
+   which a portrait poster has to spare. Absolute rather than a flex
+   sibling so the stage, its arrows and the Objects pane keep their
+   existing layout untouched. */
+/* The horizontal ribbon is a fixed-height row of two-row grids. NONE of
+   that survives being stood on its end, so side mode has to undo each
+   piece explicitly — the height, the row grid and the clipping. It did
+   not, so the toggle appeared to do nothing (2026-08-07, user: "the
+   ribbon stays fucking horizontal"). */
+.deck.rbn-side .edit-tools.ribbon{position:absolute;top:0;right:0;bottom:0;
+  width:214px;height:auto;flex-direction:column;flex-wrap:nowrap;
+  align-items:stretch;align-content:flex-start;min-height:0;
+  overflow-y:auto;overflow-x:hidden;
+  padding:10px 10px 16px;row-gap:2px;
+  border-bottom:none;border-left:1px solid #ffffff14;z-index:8;}
+.deck.rbn-side .rbn-grp{align-items:stretch;padding:8px 2px;flex:none;
+  border-right:none;border-bottom:1px solid #ffffff1c;width:100%;}
+/* one control per line down the column, not two rows across */
+.deck.rbn-side .rbn-row{display:flex;flex-direction:column;
+  align-items:stretch;height:auto;gap:3px;}
+.deck.rbn-side .dbtn.rbn-big{flex-direction:row;height:auto;
+  min-width:0;justify-content:flex-start;padding:5px 8px;}
+.deck.rbn-side .rbn-cell{height:auto;}
+/* View is pinned right in the horizontal bar; in a column that is wrong */
+.deck.rbn-side .rbn-view{order:0;margin-left:0;border-left:none;}
+.deck.rbn-side .et-hint{display:none;}
+/* the group divider turns from a vertical rule into a horizontal one */
+.deck.rbn-side .rbn-grp+.rbn-grp::before{left:2px;right:2px;top:0;
+  bottom:auto;width:auto;height:1px;}
+.deck.rbn-side .rbn-lab{text-align:left;padding-left:2px;}
+.deck.rbn-side .et-hint{display:none;}
+.deck.rbn-side .deck-stage{padding-right:226px;}
+.deck.rbn-side .rulers{right:214px;}
+.deck.rbn-side .deck-arrow.next{right:222px;}
+.deck.rbn-side .selpane{right:214px;}
+
+/* ---------- full-screen EDITING (not presenting) ---------- */
+/* Present hides every tool, which is wrong for a poster: there is no
+   audience and nothing to step through. This keeps the whole editor and
+   just takes the browser chrome away. */
+.deck.editfull .deck-top{display:none;}
+.deck.editfull .deck-stage{padding-top:6px;}
 
 /* annotation layer */
 .annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
@@ -1009,6 +1388,11 @@ select#fmt-font[hidden]{display:none;}
 .an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
 ul.an-ul{margin:0;padding-left:1.15em;list-style:disc;}
 ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
+/* text reads as draggable, and only turns into a text cursor once you are
+   actually typing in it */
+.deck.editing .an-text,.deck.editing .an-title{cursor:move;}
+.deck.editing .an-item.an-editing{cursor:auto;}
+.deck.editing .an-item.an-editing .an-tx{cursor:text;}
 .an-handle{cursor:move;color:#8ba0b2;font-size:.65em;flex:none;
   user-select:none;margin-top:.3em;}
 .an-handle:hover{color:#fff;}

@@ -1,9 +1,26 @@
 
 <div class="deck" id="deck" hidden>
   <div class="deck-top">
-    <button class="dbtn" id="deck-docs"
-      title="Back to the document view">Docs</button>
+    <!-- no "Docs" button: getting back to the document view is already a
+         button on the presentations rail, and one redundant control was
+         holding a whole row open (2026-08-07) -->
+    <!-- DOCUMENT-level chrome lives up here, not in the ribbon below:
+         File, Save, undo/redo and the save readout are about the
+         presentation as a whole, they never change with what you have
+         selected, and you touch them a handful of times a session. The
+         ribbon underneath is only for editing tools you use constantly.
+         Mixing the two is what made the toolbar hard to read
+         (2026-08-07). -->
+    <span class="deck-topslot" id="deck-topslot"></span>
+    <!-- what you are editing. Without it the bar was a handful of buttons
+         with a void beside them and read as floating chrome rather than
+         the document's own bar (2026-08-07, user). -->
+    <span class="deck-title" id="deck-title"></span>
     <span class="deck-spring"></span>
+    <!-- Present is a VIEW of the document, not an editing tool, so it
+         sits with the document controls — top right, out of the way of
+         the things you are actually clicking while you lay a page out -->
+    <span class="deck-topright" id="deck-topright"></span>
     <button class="dbtn" id="deck-exit"
       title="Stop presenting and go back to the slide builder (Esc).
  Nothing is closed or lost.">&#8617; Back</button>
@@ -24,6 +41,10 @@
             <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
             <div class="dc-msep"></div>
             <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <button class="dc-mi" id="mi-crop"
+              title="Add trim marks just outside the page for the print
+ shop to cut to. The page itself keeps its exact size &mdash; the sheet
+ grows by 5mm on every side to hold them">Crop marks: off</button>
             <div class="dc-mi dc-pagebg" id="mi-pagebg"
               title="The page's own background — pick white for a poster
  that goes to a print shop">Page background
@@ -57,22 +78,30 @@
             <button class="dc-mi" id="mi-del">Delete presentation</button>
           </div>
         </div>
-        <button class="dbtn" id="dc-save">Save</button>
-        <span class="dc-menuwrap">
-          <button class="dbtn dc-target" id="dc-target" aria-haspopup="true"
-            aria-expanded="false"
-            title="Where this presentation is saved">
-            &#8594; Browser &#9662;</button>
-          <div class="dc-menu" id="target-menu" hidden>
-            <div class="dc-mhead">where this presentation is saved</div>
+        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
+             two competing save buttons and nobody could tell what the
+             second one did (2026-08-07, user: "even I am confused"). It is
+             now a split button: press Save to save, press the chevron to
+             choose where. The destination lives in the menu, which is
+             where a destination belongs. -->
+        <span class="dc-savegrp">
+          <button class="dbtn" id="dc-save">Save</button>
+          <span class="dc-menuwrap">
+            <button class="dbtn dc-target" id="dc-target"
+              aria-haspopup="true" aria-expanded="false"
+              aria-label="Choose where this is saved"
+              title="Choose where this is saved">&#9662;</button>
+            <div class="dc-menu" id="target-menu" hidden>
+              <div class="dc-mhead" id="tg-head">save to</div>
             <button class="dc-mi" id="tg-project" hidden>This project</button>
             <button class="dc-mi" id="tg-browser">This browser</button>
             <button class="dc-mi" id="tg-file">A file on your
               computer&#8230;</button>
             <div class="dc-msep"></div>
-            <button class="dc-mi" id="tg-pick" hidden>Choose a different
-              file&#8230;</button>
-          </div>
+              <button class="dc-mi" id="tg-pick" hidden>Choose a different
+                file&#8230;</button>
+            </div>
+          </span>
         </span>
         <button class="dbtn dc-icon" id="dc-undo" disabled
           title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
@@ -105,94 +134,162 @@
     <div class="deck-stagewrap" id="deck-stagewrap">
       <div class="edit-tools ribbon" id="edit-tools" hidden>
         <div class="rbn-static">
-          <!-- filled by fileToRibbon() while editing: File / Save /
-               Saved-to / undo / redo / status / Swap-to-notebooks move
-               here from the docked panel, which then holds ONLY the
-               slide strip — and disappears entirely for posters -->
-          <span class="rbn-grp" id="rbn-file">
-            <span class="rbn-row" id="rbn-file-row"></span>
-            <span class="rbn-lab">File</span>
-          </span>
-          <span class="rbn-grp">
-            <span class="rbn-row">
-              <button class="dbtn primary" id="dc-play"
-                title="Play the presentation full screen (from this slide)">
-                <i data-ic="play"></i> Present</button>
-            </span>
-            <span class="rbn-lab">Show</span>
-          </span>
-          <span class="rbn-grp">
+          <!-- No File group here: File, Save, undo/redo and the save
+               readout are document actions and live in the top bar, where
+               they do not compete with the editing tools. Present stays
+               DOWN here though — it is a way of viewing the page, so it
+               belongs with the other view controls (2026-08-07, user:
+               "put the present with the view"). -->
+          <span class="rbn-grp rbn-standby">
             <span class="rbn-row">
               <div class="dc-menuwrap">
-                <button class="dbtn" id="dc-nbs-btn" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Notebooks that went into this presentation">&#128218;
-                  Open notebooks</button>
+                <!-- label is set by renderPresNbs (Open vs Refresh), so
+                     no icon element here: textContent would delete it -->
+                <button class="dbtn rbn-sm" id="dc-nbs-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Notebooks that went into this presentation"
+                  >Notebooks</button>
                 <div class="dc-menu dc-nbs-menu" id="dc-nbs-menu" hidden></div>
               </div>
             </span>
             <span class="rbn-lab">Notebooks</span>
           </span>
-          <span class="rbn-grp">
+          <span class="rbn-grp rbn-slide">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
-                <button class="dbtn" id="lay-btn" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Slide templates &mdash; apply a layout to this
- slide"><i data-ic="layouts"></i> Layouts &#9662;</button>
+                <button class="dbtn rbn-sm" id="lay-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Ready-made arrangements for this page &mdash;
+ columns, a hero figure, title layouts"><i data-ic="layouts"></i>
+ Layouts &#9662;</button>
                 <div class="sh-menu lay-menu" id="lay-menu" hidden>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>
                 </div>
               </span>
               <span class="sh-drop" id="page-drop">
-                <button class="dbtn" id="page-btn" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Page size &mdash; slides (16:9, 4:3) or a poster
- (A4&ndash;A0, portrait or landscape)"><i data-ic="pagep"></i> Page
- &#9662;</button>
+                <button class="dbtn rbn-sm" id="page-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="How big the page is &mdash; slides (16:9, 4:3)
+ or a poster (A4&ndash;A0, portrait or landscape)"><i data-ic="pagep"></i>
+ Page size &#9662;</button>
                 <div class="sh-menu page-menu" id="page-menu" hidden></div>
               </span>
-              <button class="dbtn etm" id="zoom-out"
-                title="Zoom out">&#8722;</button>
-              <button class="dbtn etm" id="zoom-val"
-                title="Zoom &mdash; click to fit the window">Fit</button>
-              <button class="dbtn etm" id="zoom-in"
-                title="Zoom in">+</button>
-              <button class="dbtn" id="objects-btn" aria-pressed="false"
-                title="Objects pane &mdash; list, hide and lock everything
- on this slide"><i data-ic="objects"></i> Objects</button>
+              <!-- the three zoom controls are ONE cell: they are one
+                   decision, and splitting them across the grid would put
+                   the minus and the plus on different rows -->
+              <span class="rbn-cell">
+                <button class="dbtn rbn-ico" id="zoom-out"
+                  title="Zoom out">&#8722;</button>
+                <button class="dbtn rbn-sm" id="zoom-val"
+                  title="Click to fit the whole page in the window"
+                  >Zoom 100%</button>
+                <button class="dbtn rbn-ico" id="zoom-in"
+                  title="Zoom in">+</button>
+              </span>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
+          <!-- View sits at the FAR RIGHT of the ribbon (2026-08-07, user:
+               "put the view box on the far right"), which CSS order does
+               without moving it out of the static block -->
+          <span class="rbn-grp rbn-standby rbn-view">
+            <span class="rbn-row">
+              <!-- "Check" alone said nothing (2026-08-07, user: "what are
+                   things like 'check', what does that even mean?"). The
+                   label has to name what is being checked. -->
+              <button class="dbtn rbn-sm" id="vw-check"
+                aria-pressed="false"
+                title="Check this page before it goes to print: soft
+ figures, anything off the page or inside the margin, unreadable text,
+ empty frames">&#9873; Print check</button>
+              <!-- four toggles behind one worded menu. Every option keeps
+                   its full name inside; what the row loses is width, not
+                   words. -->
+              <span class="sh-drop" id="vw-menuwrap">
+                <button class="dbtn rbn-sm" id="vw-menu"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Rulers, grid, where this toolbar sits, and
+ full-screen editing">&#9707; Guides &#9662;</button>
+                <div class="sh-menu vw-menu" id="vw-menu-list" hidden>
+                  <button class="dbtn vw-opt" id="vw-rulers"
+                    aria-pressed="false"
+                    title="Rulers down the top and left edge, in millimetres
+ of the real page. Drag off one to lay down your own guide"
+                    >&#128207; Rulers <kbd>R</kbd></button>
+                  <button class="dbtn vw-opt" id="vw-grid"
+                    aria-pressed="false"
+                    title="A margin box and a grid to lay out against
+ &mdash; items snap to both. Guides, not ink: never printed or
+ exported">&#9638; Margin &amp; grid <kbd>G</kbd></button>
+                  <button class="dbtn vw-opt" id="vw-side"
+                    aria-pressed="false"
+                    title="Stand the toolbar up on the right-hand edge, so
+ the page gets the full height of the window. A tall poster needs height
+ far more than width"
+                    >&#8942; Toolbar on the right</button>
+                  <button class="dbtn vw-opt" id="vw-full"
+                    title="Edit full screen &mdash; the browser chrome goes
+ away and the page gets the whole display (Esc to leave). Unlike Present,
+ you keep every editing tool">&#10530; Edit full screen</button>
+                </div>
+              </span>
+              <!-- Objects is a panel you show or hide — a way of LOOKING
+                   at the page, not a property of it — so it belongs here
+                   rather than in Page -->
+              <button class="dbtn rbn-sm" id="objects-btn"
+                aria-pressed="false"
+                title="List everything on this page, and hide or lock any
+ of it"><i data-ic="objects"></i> Objects</button>
+              <button class="dbtn primary rbn-sm" id="dc-play"
+                title="Play this full screen, from this page">
+                <i data-ic="play"></i> Present</button>
+            </span>
+            <span class="rbn-lab">View</span>
+          </span>
           <span class="rbn-grp rbn-insert">
             <span class="rbn-row">
-              <button class="dbtn et" data-tool="cell" aria-pressed="false"
-                title="Drop a notebook card onto the slide — you pick which
- one from your notebook"><i data-ic="cellcard"></i> Notebook cell</button>
-              <button class="dbtn et" data-tool="text" aria-pressed="false"
-                title="Add a text box"><i data-ic="text"></i> Text</button>
-              <button class="dbtn et" data-tool="arrow"
-                aria-pressed="false" title="Draw an arrow"
-                ><i data-ic="arrow"></i> Arrow</button>
-              <button class="dbtn" id="dc-line"
-                title="Add a horizontal line — a section divider for
- posters and slides. Drag its endpoints to reroute or angle it."
-                ><i data-ic="hline"></i> Line</button>
-              <span class="sh-drop" id="sh-drop">
-                <button class="dbtn" id="sh-btn" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Draw a shape (rectangle, ellipse, arrow, star, …)">
-                  <i data-ic="shapes"></i> Shapes &#9662;</button>
-                <div class="sh-menu" id="sh-menu" hidden></div>
-              </span>
-              <button class="dbtn" id="et-image"
-                title="Add an image from your computer"
+              <!-- All one size. Three big buttons here were the worst of
+                   the "so many sizes" problem (2026-08-07): nothing shared
+                   a baseline and no size meant anything. Emphasis is
+                   carried by COLOUR now — Present is the one accented
+                   control — so every other button can be identical. -->
+              <button class="dbtn et rbn-sm" data-tool="cell"
+                aria-pressed="false"
+                title="Place a figure, table or note from your notebook —
+ you pick which one"><i data-ic="cellcard"></i> Notebook cell</button>
+              <button class="dbtn et rbn-sm" data-tool="text"
+                aria-pressed="false"
+                title="Add a text box"><i data-ic="text"></i> Text box</button>
+              <button class="dbtn rbn-sm" id="et-image"
+                title="Add an image from your computer. You can also
+ paste one straight from the clipboard"
                 ><i data-ic="image"></i> Image</button>
-              <button class="dbtn et" id="dc-qr"
+              <button class="dbtn rbn-sm et" id="dc-qr"
                 title="Insert a QR code that links to your repo / paper /
  data — generated right here, prints crisp (vector)"
                 ><i data-ic="qr"></i> QR code</button>
+              <!-- Source order IS the layout: with two rows filled across,
+                   the first four land on the top row and the rest below.
+                   So things you PLACE sit together up top and things you
+                   DRAW sit together underneath — which is how Line and
+                   Arrow, the same tool with and without a head, finally
+                   end up beside each other (2026-08-07, user). -->
+              <span class="sh-drop" id="sh-drop">
+                <button class="dbtn rbn-sm" id="sh-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Draw a shape (rectangle, ellipse, star, …)">
+                  <i data-ic="shapes"></i> Shape &#9662;</button>
+                <div class="sh-menu" id="sh-menu" hidden></div>
+              </span>
+              <button class="dbtn rbn-sm" id="dc-line"
+                title="Draw a line — a section divider for posters and
+ slides. Drag its endpoints to reroute or angle it."
+                ><i data-ic="hline"></i> Line</button>
+              <button class="dbtn rbn-sm et" data-tool="arrow"
+                aria-pressed="false" title="Draw an arrow — a line with a
+ head. Drop an end on an item to attach it, and the arrow follows that
+ item around"><i data-ic="arrow"></i> Arrow</button>
               <input type="file" id="img-file" accept="image/*" hidden>
             </span>
             <span class="rbn-lab">Insert</span>
@@ -201,25 +298,40 @@
         <span class="et-fmt" id="et-fmt" hidden>
           <span class="rbn-grp">
             <span class="rbn-row">
+              <!-- Bring-to-front, send-to-back and the two rotates used to
+                   sit here as bare glyphs (&#8613; &#8615; &#10226;
+                   &#10227;) with their meaning only in a tooltip — the
+                   same wordless-button problem as everywhere else. They
+                   now live in this menu, fully worded, which removes four
+                   controls from the row AND adds four labels. -->
               <button class="dbtn etm" id="fmt-dup"
-                title="Duplicate (Ctrl+D)">&#10697;</button>
+                title="Duplicate (Ctrl+D)">&#10697; Copy</button>
               <button class="dbtn etm" id="fmt-group"
                 title="Group the selected items (Ctrl+G)">&#9783;
                 Group</button>
               <button class="dbtn etm" id="fmt-ungroup"
                 title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
-              <button class="dbtn etm" id="fmt-front"
+              <span class="sh-drop" id="fmt-alignwrap">
+                <button class="dbtn etm" id="fmt-align-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Line the selected items up, space them evenly,
+ change what sits in front, or rotate">
+                  &#8676; Arrange &#9662;</button>
+                <div class="sh-menu align-menu" id="fmt-align-menu"
+                  hidden></div>
+              </span>
+              <button class="dbtn etm" id="fmt-front" hidden
                 title="Bring to front">&#8613;</button>
-              <button class="dbtn etm" id="fmt-back"
+              <button class="dbtn etm" id="fmt-back" hidden
                 title="Send to back">&#8615;</button>
-              <button class="dbtn etm" id="fmt-rotl"
+              <button class="dbtn etm" id="fmt-rotl" hidden
                 title="Rotate left 15&#176;">&#10226;</button>
-              <button class="dbtn etm" id="fmt-rotr"
+              <button class="dbtn etm" id="fmt-rotr" hidden
                 title="Rotate right 15&#176;">&#10227;</button>
-              <button class="dbtn etm" id="fmt-arline"
+              <button class="dbtn etm" id="fmt-arline" hidden
                 title="Arrange the selected items in a row: middles aligned, equal gaps"
                 >&#8943; Row</button>
-              <button class="dbtn etm" id="fmt-argrid"
+              <button class="dbtn etm" id="fmt-argrid" hidden
                 title="Arrange the selected items in a grid">&#8862;
                 Grid</button>
               <span class="sh-drop" id="fmt-samewrap" hidden>
@@ -336,26 +448,83 @@
                 title="Underline"><u>U</u></button>
               <button class="dbtn etm" id="fmt-strike"
                 title="Strikethrough"><s>S</s></button>
-              <button class="dbtn etm" id="fmt-align"
+              <!-- alignment, bullets and curve are all "how this text is
+                   laid out"; one worded menu instead of three controls -->
+              <span class="sh-drop" id="fmt-parawrap">
+                <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="How the text sits: alignment, bullet list, and
+ bending it along a curve">&#9636; Layout &#9662;</button>
+                <div class="sh-menu para-menu" id="fmt-para-menu"
+                  hidden></div>
+              </span>
+              <button class="dbtn etm" id="fmt-align" hidden
                 title="Text alignment (click to cycle)">&#9636; Left</button>
-              <button class="dbtn etm" id="fmt-list"
+              <button class="dbtn etm" id="fmt-list" hidden
                 title="Bullet list (Enter adds a point)">&#8226; List</button>
+              <span class="sh-drop" id="fmt-arcwrap" hidden>
+                <button class="dbtn etm" id="fmt-arc" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Bend the text along a curve">&#8631; Curve
+                  &#9662;</button>
+                <div class="sh-menu arc-menu" id="fmt-arc-menu" hidden></div>
+              </span>
             </span>
             <span class="rbn-lab">Text</span>
           </span>
           <span class="rbn-grp">
             <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-line"
-                title="Cycle line thickness">Line</button>
-              <button class="dbtn etm" id="fmt-dash"
+              <span class="rbn-stack rbn-cols">
+                <span class="rbn-col">
+                  <span class="sh-drop" id="fmt-stylewrap">
+                    <button class="dbtn rbn-sm" id="fmt-style"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Line style — solid, dashed, dotted,
+ dash-dot">&#9473; Style &#9662;</button>
+                    <div class="sh-menu style-menu" id="fmt-style-menu"
+                      hidden></div>
+                  </span>
+                  <button class="dbtn rbn-sm etm" id="fmt-line"
+                    title="Cycle line thickness">&#9776; Weight</button>
+                </span>
+                <span class="rbn-col">
+                  <span class="sh-drop" id="fmt-headwrap">
+                    <button class="dbtn rbn-sm" id="fmt-head"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Arrow ends — head shape at each end, and how
+ big">&#10230; Ends &#9662;</button>
+                    <div class="sh-menu head-menu" id="fmt-head-menu"
+                      hidden></div>
+                  </span>
+                  <span class="sh-drop" id="fmt-bendwrap">
+                    <button class="dbtn rbn-sm" id="fmt-bend"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Route — straight, curved, or elbowed round a
+ corner">&#8631; Route &#9662;</button>
+                    <div class="sh-menu bend-menu" id="fmt-bend-menu"
+                      hidden></div>
+                  </span>
+                </span>
+                <span class="rbn-col">
+                  <span class="sh-drop" id="fmt-fillwrap">
+                    <button class="dbtn rbn-sm" id="fmt-fillstyle"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Fill — none, solid, or a gradient (linear or
+ radiating from the centre)">&#9724; Fill &#9662;</button>
+                    <div class="sh-menu fillstyle-menu"
+                      id="fmt-fillstyle-menu" hidden></div>
+                  </span>
+                  <button class="dbtn rbn-sm etm" id="fmt-shape"
+                    title="Cycle the shape (rectangle, ellipse, star, …)">
+                    &#9711; Shape</button>
+                </span>
+              </span>
+              <button class="dbtn etm" id="fmt-dash" hidden
                 title="Dashed on/off">Dash</button>
-              <button class="dbtn etm" id="fmt-fill"
+              <button class="dbtn etm" id="fmt-fill" hidden
                 title="Fill on/off">Fill</button>
-              <button class="dbtn etm" id="fmt-shape"
-                title="Cycle the shape (rectangle, ellipse, star, …)">
-                &#9711;</button>
             </span>
-            <span class="rbn-lab">Shape</span>
+            <span class="rbn-lab">Line &amp; shape</span>
           </span>
           <span class="rbn-grp">
             <span class="rbn-row">
@@ -387,6 +556,15 @@
         </span>
         <span class="et-hint" id="et-hint"></span>
       </div>
+      <aside class="selpane preflight" id="preflight" hidden>
+        <div class="selpane-h"><span>Before you print</span>
+          <button class="dbtn dc-icon" id="preflight-rerun"
+            title="Check again">&#8635;</button>
+          <button class="dbtn dc-icon" id="preflight-close"
+            title="Close">&#10005;</button></div>
+        <div class="pf-count" id="preflight-count"></div>
+        <div class="selpane-list" id="preflight-list"></div>
+      </aside>
       <aside class="selpane" id="selpane" hidden>
         <div class="selpane-h"><span>Objects</span>
           <button class="dbtn dc-icon" id="selpane-close"
@@ -396,6 +574,13 @@
       <button class="deck-arrow prev" id="deck-prev"
         title="Previous slide (&#8592;)"
         aria-label="Previous slide">&#8249;</button>
+      <!-- rulers overlay the stage rather than sitting in its flow: the
+           slide must not move or resize when they are switched on -->
+      <div class="rulers" id="rulers" hidden aria-hidden="true">
+        <div class="ruler ruler-h" id="ruler-h"></div>
+        <div class="ruler ruler-v" id="ruler-v"></div>
+        <div class="ruler-corner" id="ruler-corner">mm</div>
+      </div>
       <div class="deck-stage" id="deck-stage"></div>
       <button class="deck-arrow next" id="deck-next"
         title="Next slide (&#8594;)"

@@ -29,8 +29,11 @@ def test_demo_page_renders_and_embeds_its_presentation(doc, out):
     assert '"panes": ["clim", "cell:md1"]' in out
     assert 'class="nb-data"' in out and 'id="app-data"' in out
     assert 'id="presstrip"' in out and 'id="tv-markdown"' in out
+    # the rail's Docs button is the way back to the document view. The
+    # deck's own #deck-docs was a second one, and it was holding a whole
+    # toolbar row open on its own, so it went (2026-08-07).
     assert 'id="pr-docs"' in out and 'id="pr-new"' in out
-    assert 'id="deck-docs"' in out
+    assert 'id="deck-docs"' not in out
 
 
 def test_as_presentations_normalizes_new_layouts_and_title_slides():
