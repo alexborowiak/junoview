@@ -30,6 +30,7 @@ src/junoview/
 │   ├── outputs.py         what a stored output actually is (figure? repr? text?)
 │   ├── parser.py          the single pass that ties the above together
 │   ├── chains.py          provenance: which cell feeds which
+│   ├── variables.py       the variables index the sidebar's Variables view lists
 │   ├── presentations.py   reading saved decks off a notebook
 │   └── loader.py          getting notebooks from disk or a URL
 │

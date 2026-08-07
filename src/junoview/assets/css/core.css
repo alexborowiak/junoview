@@ -334,6 +334,89 @@ body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   background:var(--chrome-line);margin:0 -3px;}
 body.light .navkey-div{background:var(--line);}
 
+/* ---------- rail tabs: Sections | Variables ---------- */
+.railtabs{display:flex;gap:3px;margin:10px 12px 0;padding:3px;
+  border:1px solid var(--chrome-line);border-radius:8px;}
+.railtab{flex:1;background:none;border:none;border-radius:6px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:5px 0;
+  cursor:pointer;transition:background .15s,color .15s;}
+.railtab:hover{color:var(--chrome-ink);}
+.railtab.active{background:#39a9c014;color:var(--cyan);}
+body.light .railtabs{border-color:var(--line);}
+
+/* ---------- variables panel (the sidebar's other view) ---------- */
+.varpanel{padding:12px 12px 8px;flex:1 0 auto;}
+.var-controls{display:flex;gap:6px;margin-bottom:8px;}
+.var-filter{flex:1;min-width:0;background:#ffffff08;
+  border:1px solid var(--chrome-line);border-radius:6px;
+  color:var(--chrome-ink);font-family:var(--mono);font-size:11px;
+  padding:4px 8px;}
+.var-filter::placeholder{color:var(--chrome-ink-2);}
+.var-order{display:flex;gap:2px;border:1px solid var(--chrome-line);
+  border-radius:6px;padding:2px;flex:none;}
+.varord-btn{background:none;border:none;border-radius:4px;cursor:pointer;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:2px 7px;}
+.varord-btn:hover{color:var(--chrome-ink);}
+.varord-btn.active{background:#39a9c014;color:var(--cyan);}
+/* group headings the by-type view inserts (same voice as .navsub) */
+.vargroup-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:10px 8px 3px;}
+.var-line{display:flex;align-items:center;gap:6px;padding:3px 6px 3px 0;
+  border-radius:5px;}
+.var-line:hover{background:#ffffff08;}
+.var-chev{background:none;border:none;color:var(--chrome-ink-2);
+  cursor:pointer;font-size:12px;line-height:1;padding:2px 5px;flex:none;
+  border-radius:4px;transition:transform .15s,color .15s;}
+.var-chev:hover{color:var(--chrome-ink);}
+.varrow.open .var-chev{transform:rotate(90deg);}
+.var-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-family:var(--mono);font-size:12px;
+  color:var(--chrome-ink);text-decoration:none;}
+.var-name:hover{color:#eef4f8;text-decoration:underline;}
+.var-type{flex:none;font-family:var(--mono);font-size:9.5px;
+  color:var(--chrome-ink-2);background:#ffffff0a;border-radius:4px;
+  padding:1px 5px;max-width:92px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.var-count{font-family:var(--mono);font-size:10px;color:var(--cyan);
+  background:#39a9c016;border-radius:20px;padding:1px 7px;min-width:18px;
+  text-align:center;flex:none;}
+.var-count:empty{display:none;}
+/* the unfolded sites list: defined / redefined / used, one card each */
+.var-uses{margin:0 0 4px 16px;padding-left:8px;
+  border-left:1px solid var(--chrome-line);}
+.var-use{display:flex;align-items:center;gap:7px;padding:3px 8px;
+  border-radius:5px;text-decoration:none;color:var(--chrome-ink-2);
+  font-size:11.5px;}
+.var-use:hover{color:var(--chrome-ink);background:#ffffff08;}
+.vu-tag{flex:none;font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.08em;text-transform:uppercase;border-radius:4px;
+  padding:1px 5px;color:var(--chrome-ink-2);background:#ffffff0a;}
+.vu-tag.vu-defined{color:var(--cyan);background:#39a9c016;}
+.vu-tag.vu-redefined{color:var(--amber);background:#cf9a4e1a;}
+.vu-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+/* rows the filter box rules out (and group headings left empty by it) */
+.varrow.vf-out,.vargroup-h.vf-out{display:none;}
+.var-empty{font-size:11.5px;color:var(--chrome-ink-2);padding:8px 4px;}
+/* the type chip borrows the code-kind dot colours where kinds align */
+.var-type.vg-imports{color:#a3855c;}
+.var-type.vg-constants{color:#9a7cc0;}
+.var-type.vg-functions{color:#46a892;}
+.var-type.vg-classes{color:#b07cc0;}
+.var-type.vg-data{color:#4d90c0;}
+.var-type.vg-plotting{color:#39a9c0;}
+body.light .var-filter{background:#00000005;border-color:var(--line);
+  color:var(--ink);}
+body.light .var-order{border-color:var(--line);}
+body.light .var-line:hover,body.light .var-use:hover{background:#00000008;}
+body.light .var-name{color:var(--ink-2);}
+body.light .var-name:hover{color:var(--ink);}
+body.light .var-type{background:#00000008;}
+body.light .var-uses{border-color:var(--line);}
+body.light .vu-tag{background:#00000008;}
+
 /* ---------- rail graph (signature) ---------- */
 .railgraph{border-top:1px solid var(--chrome-line);padding:14px 14px 20px;
   margin-top:auto;background:#0c1822;}

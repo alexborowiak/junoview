@@ -3969,6 +3969,118 @@
       rgBtn.setAttribute('aria-expanded',(!c).toString());
       rgBtn.textContent=c?'+':'\u2013';
     });
+    /* ---- sidebar Variables view: the Sections | Variables tabs swap the
+       nav for the variables index. The rows are server-rendered once in
+       definition order; "type" regroups those same DOM rows under inserted
+       headings, "order" restores them by data-i. Absent on the Plot-trace
+       tab (its rail has no tabs), so all of this no-ops there. ---- */
+    var railtabs=$('.railtabs',shell),varpanel=$('.varpanel',shell),
+        navEl=$('.rail .nav',shell);
+    if(railtabs&&varpanel&&navEl){
+      var VKEY='junoview:railview';
+      function setRailView(v){
+        var vars=v==='variables';
+        $$('.railtab',railtabs).forEach(function(b){
+          var on=b.dataset.rview===v;
+          b.classList.toggle('active',on);
+          b.setAttribute('aria-selected',on?'true':'false');
+        });
+        navEl.hidden=vars;
+        varpanel.hidden=!vars;
+        try{localStorage.setItem(VKEY,v);}catch(e){}
+      }
+      $$('.railtab',railtabs).forEach(function(b){
+        b.addEventListener('click',function(){setRailView(b.dataset.rview);});
+      });
+      var savedView=null;
+      try{savedView=localStorage.getItem(VKEY);}catch(e){}
+      if(savedView==='variables') setRailView('variables');
+      /* chevron unfolds one variable's defined/redefined/used cells */
+      $$('.var-chev',varpanel).forEach(function(ch){
+        ch.addEventListener('click',function(){
+          var row=ch.closest('.varrow');if(!row)return;
+          var open=row.classList.toggle('open');
+          ch.setAttribute('aria-expanded',open?'true':'false');
+          var u=$('.var-uses',row);if(u)u.hidden=!open;
+        });
+      });
+      /* name + site links jump like nav links: resolve inside THIS shell
+         (card ids repeat across tabs), leave raw/tree view first */
+      $$('.var-name,.var-use',varpanel).forEach(function(a){
+        a.addEventListener('click',function(e){
+          e.preventDefault();
+          if(shell.classList.contains('raw')||shell.classList.contains('tree')){
+            shell.classList.remove('raw');shell.classList.remove('tree');
+            renderRawBtn();renderViewBtns();
+          }
+          var id=(a.getAttribute('href')||'').slice(1);
+          if(id.indexOf('card-')===0) gotoItem(id.slice(5));
+          if(window.innerWidth<=860) closeRail();
+        });
+      });
+      var varlist=$('.varlist',varpanel),vorder='order';
+      /* group heading order mirrors GROUP_ORDER in notebook/variables.py */
+      var VGROUPS=['imports','constants','data','functions','classes',
+        'plotting','values','objects','computed','other'];
+      function varRows(){return $$('.varrow',varlist);}
+      function applyVarFilter(){
+        var vfilter=$('.var-filter',varpanel);
+        var q=((vfilter&&vfilter.value)||'').trim().toLowerCase();
+        var any=false;
+        varRows().forEach(function(r){
+          var hit=!q||r.dataset.name.indexOf(q)>=0;
+          r.classList.toggle('vf-out',!hit);
+          if(hit)any=true;
+        });
+        /* a heading whose every row is filtered out goes too */
+        $$('.vargroup-h',varlist).forEach(function(h){
+          var n=h.nextElementSibling,vis=false;
+          while(n&&!n.classList.contains('vargroup-h')){
+            if(n.classList.contains('varrow')
+               &&!n.classList.contains('vf-out'))vis=true;
+            n=n.nextElementSibling;
+          }
+          h.classList.toggle('vf-out',!vis);
+        });
+        var empty=$('.var-empty',varpanel);
+        if(empty)empty.hidden=any||!q;
+      }
+      function arrangeVars(){
+        var rows=varRows();
+        $$('.vargroup-h',varlist).forEach(function(h){h.remove();});
+        if(vorder==='order'){
+          rows.sort(function(a,b){return (+a.dataset.i)-(+b.dataset.i);});
+          rows.forEach(function(r){varlist.appendChild(r);});
+        }else{
+          var groups={};
+          rows.forEach(function(r){
+            (groups[r.dataset.group]=groups[r.dataset.group]||[]).push(r);
+          });
+          VGROUPS.concat(Object.keys(groups).filter(function(g){
+            return VGROUPS.indexOf(g)<0;
+          })).forEach(function(g){
+            if(!groups[g])return;
+            var h=document.createElement('div');
+            h.className='vargroup-h';h.textContent=g;
+            varlist.appendChild(h);
+            groups[g].sort(function(a,b){
+              return (+a.dataset.i)-(+b.dataset.i);});
+            groups[g].forEach(function(r){varlist.appendChild(r);});
+          });
+        }
+        applyVarFilter();
+      }
+      $$('.varord-btn',varpanel).forEach(function(b){
+        b.addEventListener('click',function(){
+          vorder=b.dataset.vorder;
+          $$('.varord-btn',varpanel).forEach(function(x){
+            x.classList.toggle('active',x===b);});
+          arrangeVars();
+        });
+      });
+      var vfilterEl=$('.var-filter',varpanel);
+      if(vfilterEl)vfilterEl.addEventListener('input',applyVarFilter);
+    }
     /* ---- per-card + per-section behaviours (code toggle, eyes, collapse,
        fig-fold, section collapse/hide incl. the nav chevrons): shared with
        the Plot-trace tab so the trace is a true subset of the docs ---- */

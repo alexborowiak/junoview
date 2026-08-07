@@ -20,7 +20,9 @@ from .items import (
     doc_meta,
     render_graph_panel,
     render_nav,
+    render_railtabs,
     render_sections,
+    render_varpanel,
 )
 
 
@@ -37,7 +39,9 @@ def render_shell(doc: Document, path: str = "") -> str:
         path_attr=path_attr,
         title=html.escape(doc.title),
         meta=html.escape(doc_meta(doc)),
+        railtabs=render_railtabs(doc),
         nav=render_nav(doc),
+        varpanel=render_varpanel(doc),
         graph_panel=render_graph_panel(doc),
         sections=render_sections(doc),
         rawview=doc.raw_html or "",

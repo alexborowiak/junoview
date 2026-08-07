@@ -330,6 +330,75 @@ def render_nav(doc: Document) -> str:
     return "".join(parts)
 
 
+def render_railtabs(doc: Document) -> str:
+    """The Sections | Variables switch above the sidebar nav. Rendered only
+    when the notebook actually binds names -- a prose-only document keeps
+    its plain sections list."""
+    if not doc.variables:
+        return ""
+    return (
+        '<div class="railtabs" role="tablist" aria-label="Sidebar view">'
+        '<button class="railtab active" role="tab" aria-selected="true" '
+        'data-rview="sections" title="List the document\'s sections and '
+        'cells">Sections</button>'
+        '<button class="railtab" role="tab" aria-selected="false" '
+        'data-rview="variables" title="List every variable the notebook '
+        'defines — in order, or grouped by type">Variables</button></div>')
+
+
+def render_varpanel(doc: Document) -> str:
+    """The sidebar's Variables view: every top-level name the notebook
+    binds, in definition order. Each row jumps to the defining card and
+    unfolds into the full list of cards that define, redefine and read the
+    name. The order | type toggle and the filter box are wired in JS, which
+    regroups these same rows rather than re-rendering them."""
+    if not doc.variables:
+        return ""
+    rows: list[str] = []
+    for i, v in enumerate(doc.variables):
+        d = v.def_site
+        def_id = d.item_id if d else ""
+        sites = "".join(
+            f'<a class="var-use" href="#card-{html.escape(s.item_id)}" '
+            f'title="Jump to this cell">'
+            f'<span class="vu-tag vu-{s.role}">{s.role}</span>'
+            f'<span class="vu-t">{html.escape(s.title)}</span></a>'
+            for s in v.sites)
+        n = v.n_used
+        count_tip = (f"read in {n} later cell{'s' if n != 1 else ''}"
+                     if n else "never read after its definition")
+        rows.append(
+            f'<div class="varrow" data-i="{i}" '
+            f'data-group="{html.escape(v.group)}" '
+            f'data-name="{html.escape(v.name.lower())}">'
+            f'<div class="var-line">'
+            f'<button class="var-chev" aria-expanded="false" '
+            f'title="Show every cell that defines or uses this variable">'
+            f'›</button>'
+            f'<a class="var-name" href="#card-{html.escape(def_id)}" '
+            f'title="Jump to where {html.escape(v.name)} is defined">'
+            f'{html.escape(v.name)}</a>'
+            f'<span class="var-type vg-{html.escape(v.group)}" '
+            f'title="{html.escape(v.type_label)}">'
+            f'{html.escape(v.type_label)}</span>'
+            f'<span class="var-count" title="{count_tip}">{n or ""}</span>'
+            f'</div>'
+            f'<div class="var-uses" hidden>{sites}</div></div>')
+    return (
+        '<div class="varpanel" hidden>'
+        '<div class="var-controls">'
+        '<input class="var-filter" type="search" placeholder="filter" '
+        'aria-label="Filter variables by name">'
+        '<div class="var-order" role="group" aria-label="Arrange variables">'
+        '<button class="varord-btn active" data-vorder="order" '
+        'title="In the order they are first defined">order</button>'
+        '<button class="varord-btn" data-vorder="type" '
+        'title="Grouped by what they are">type</button>'
+        '</div></div>'
+        f'<div class="varlist">{"".join(rows)}</div>'
+        '<div class="var-empty" hidden>No variables match.</div></div>')
+
+
 def render_sections(doc: Document) -> str:
     """The stage content: every section with its cards. Reused by the widget."""
     sections_html: list[str] = []

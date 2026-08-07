@@ -107,6 +107,19 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **The sidebar can list variables, not just sections.** A
+  **Sections | Variables** switch at the top of the rail swaps the section
+  outline for an index of every variable the notebook defines, in the order
+  they are first bound. Each row carries a type read off the assigned
+  expression (`DataFrame`, `module`, `Axes`, `str`, …) and a count of how
+  many later cells read it; clicking the name jumps to the cell that
+  defines it, and its chevron unfolds every cell that defines, redefines or
+  reads it. **type** regroups the list into imports / constants / data /
+  functions / classes / plotting / values / objects / computed, and the
+  filter box narrows by name. It is static analysis like the rest of the
+  renderer — top-level bindings only, so a name assigned inside a `def`
+  stays a local and does not bury the notebook's real variables, and
+  nothing is executed to find out a type.
 - **The editor got out of the poster's way.** While editing, the File
   controls (File / Save / Saved-to / undo / redo / Swap to notebooks)
   ride in the toolbar as a normal group — the docked panel head had read

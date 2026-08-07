@@ -27,6 +27,7 @@ from .directives import (
 from .model import CodeStep, Document, Item, Section
 from .outputs import _as_text, render_outputs
 from .presentations import _as_presentations
+from .variables import collect_variables
 
 
 def _finalize_item(item: Item, used_slugs: set[str],
@@ -349,5 +350,8 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
         s.number = ".".join(str(counters[i]) for i in range(lv)
                             if (i + 1) in present)
     _build_chains(doc)
+    # while the cards still hold their member cells (`members` is
+    # build-only): the sidebar's Variables view needs the raw code
+    doc.variables = collect_variables(doc)
     doc.raw_html = render_raw(nb)
     return doc

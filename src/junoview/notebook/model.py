@@ -72,3 +72,4 @@ class Document:
     presentations: list = field(default_factory=list)  # named slide decks
     source_name: str = ""          # notebook stem, names deck downloads
     raw_html: str = ""             # linear "raw notebook" view of the cells
+    variables: list = field(default_factory=list)  # NotebookVariable index
