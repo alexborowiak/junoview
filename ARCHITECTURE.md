@@ -44,7 +44,7 @@ src/junoview/
 │
 ├── assets/            the frontend, as real files
 │   ├── css/               core.css · app.css · deck.css · widget.css
-│   ├── js/                app.js · deck.js · widget.js
+│   ├── js/                app.js · deck.js · pptx.js · widget.js
 │   └── html/              page.html · shell.html · deck.html · help.html · …
 │
 ├── server/            the local GUI app (the only part that writes to disk)

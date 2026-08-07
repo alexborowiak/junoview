@@ -38,8 +38,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # under "Fixed — interface" in CHANGELOG.md, each of which has its own test
 # pinning the specific rule. If this is the ONLY test that fails, you changed
 # the page's bytes without meaning to.
-EXPECTED_MD5 = "6b9a683db3dcfe2dda7160d822125bd3"
-EXPECTED_BYTES = 1776873
+EXPECTED_MD5 = "d40398dd8f2dda3215ecc74512839dc7"
+EXPECTED_BYTES = 1807789
 
 
 def _render_example() -> str:
@@ -85,7 +85,8 @@ def test_assets_load_from_the_installed_package():
     loaders = {
         "core.css": assets.core_css, "app.css": assets.app_css,
         "deck.css": assets.deck_css, "app.js": assets.app_js,
-        "deck.js": assets.deck_js, "page.html": assets.page_template,
+        "deck.js": assets.deck_js, "pptx.js": assets.pptx_js,
+        "page.html": assets.page_template,
         "shell.html": assets.shell_template, "deck.html": assets.deck_html,
         "help.html": assets.help_html, "mathjax.html": assets.mathjax_html,
         "web-loader.html": assets.web_loader,
@@ -107,8 +108,8 @@ def test_page_template_placeholders_match_what_render_page_supplies():
 
     supplied = {
         "title", "shells", "css", "app_css", "js", "mathjax", "deck_shell",
-        "app_data", "deck_css", "deck_js", "repo", "kofi", "help_html",
-        "logo", "favicon",
+        "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
+        "help_html", "logo", "favicon",
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

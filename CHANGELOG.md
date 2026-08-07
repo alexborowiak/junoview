@@ -107,6 +107,24 @@ introduced by the move.
   chrome on three icon buttons and leaving a wide empty band under the filters.
   They now sit at the right of the tab row, which is always rendered and always
   has room there, so the ribbon is a constant 149px at every width.
+- **Presentations and posters export to PowerPoint.** *File &rarr; Export
+  PowerPoint* writes a real `.pptx` — and native shapes, not a picture of
+  each slide, so **the text is still text in PowerPoint**: retype a title,
+  restyle a caption, nudge a figure. Images and figure frames become
+  pictures, boxes and arrows become PowerPoint shapes, and the page keeps
+  its true size, so an A0 poster opens as an A0 poster. A placed cell that
+  is prose or code comes across as a text box rather than an empty slide.
+  What genuinely cannot cross — a table frame, a crop (a CSS clip-path is
+  not a PowerPoint crop), a typeset equation (which arrives as plain text)
+  — is counted and named in the toast rather than silently dropped, with a
+  pointer to PDF, which carries all three perfectly. The writer is
+  dependency-free: `assets/js/pptx.js` builds the OOXML *and* the ZIP
+  around it by hand, so export works from a `file://` page with no network.
+  Verified by opening the output in Microsoft PowerPoint.
+- **Export PDF now says it prints at true page size.** The poster PDF path
+  was already correct — an A0 poster has always exported as a real
+  841×1189mm page — but nothing said so, so people assumed it was missing.
+  The menu entry now explains it.
 - **The sidebar can list variables, not just sections.** A
   **Sections | Variables** switch at the top of the rail swaps the section
   outline for an index of every variable the notebook defines, in the order

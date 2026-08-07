@@ -6365,6 +6365,157 @@
     });
   }
   menuAction('#mi-html',function(){exportDeckHtml();});
+  /* ---- PowerPoint (.pptx) export: native shapes, not pictures of slides.
+     Text becomes a real PowerPoint text box you can retype, figures and
+     images become pictures, boxes and arrows become shapes — so a poster
+     lands in PowerPoint editable rather than as one flat image.
+
+     What CANNOT come across: a placed notebook cell showing code, a table
+     or an xarray repr is arbitrary HTML with no PowerPoint equivalent, and
+     rasterising it in the browser would need a library we deliberately do
+     not ship. Those frames are counted and reported rather than silently
+     dropped — the toast says how many, and PDF export carries them
+     perfectly. Crops are dropped for the same reason (a CSS clip-path is
+     not a PowerPoint crop), so a cropped item is reported too. ---- */
+  var PPT_FONT={sans:'Calibri',serif:'Georgia',mono:'Consolas',
+    system:'Calibri',hand:'Segoe Print'};
+  /* textContent welds block elements together ("…reanalysiswould contain"),
+     so read innerText instead. It is layout-dependent, which means the node
+     must genuinely be RENDERED: display:none returns textContent and
+     visibility:hidden returns "" outright (measured, 2026-08-07). Hence a
+     real mount, merely parked off-screen. */
+  function blockText(node){
+    if(!node) return '';
+    var host=document.createElement('div');
+    host.style.cssText='position:absolute;left:-99999px;top:0;width:800px;';
+    host.appendChild(node);
+    document.body.appendChild(host);
+    /* MathJax lays every glyph out as its own box, so innerText would put
+       each character of an equation on its own line. Collapse each formula
+       to one inline string instead.
+       The characters come from the ASSISTIVE MathML, not the visible
+       output: MathJax v3's CHTML draws glyphs through CSS ::before rules,
+       so the container's own textContent is empty (measured, 2026-08-07). */
+    $$('mjx-container',host).forEach(function(n){
+      if(!n.parentNode) return;
+      var mml=n.querySelector('mjx-assistive-mml');
+      var t=String((mml&&mml.textContent)||n.textContent||'')
+        .replace(/\s+/g,' ').trim();
+      n.parentNode.replaceChild(
+        document.createTextNode(t?' '+t+' ':' '),n);
+    });
+    var out='';
+    try{out=String(host.innerText||host.textContent||'');}
+    catch(e){out=String(host.textContent||'');}
+    host.remove();
+    return out.replace(/\n{3,}/g,'\n\n').trim();
+  }
+  /* An unset colour means "whatever the page CSS says", which is dark ink on
+     a light poster and white on a dark one. PowerPoint has no such cascade,
+     so the default is resolved HERE — baking a plain '#ffffff' would put
+     white text on a white poster, the exact bug the live view already had. */
+  function pptxTextItem(a,centred,ink){
+    return {t:'text',x:a.x,y:a.y,w:a.w||(centred?80:34),h:a.h||8,
+      rot:a.rot,op:a.op,centred:!!centred,
+      text:a.text,sizePct:a.size,color:a.color||ink,
+      b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
+      bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?a.bgc:'',
+      font:PPT_FONT[a.font]||''};
+  }
+  /* one slide's annots -> spec items, plus a tally of what could not go */
+  function pptxItems(s,note,ink){
+    var items=[];
+    if(s.layout==='title'){
+      ['t','s'].forEach(function(which){
+        var p=titleProps(s,which),val=(which==='t')?s.title:s.sub;
+        if(!String(val||'').trim()) return;
+        var it=pptxTextItem(p,true,ink);
+        it.text=val;
+        items.push(it);
+      });
+    }
+    (s.annots||[]).forEach(function(a){
+      if(!a) return;
+      if(a.crop&&a.crop.shape) note.cropped++;
+      if(a.k==='text'){
+        items.push(pptxTextItem(a,false,ink));
+      } else if(a.k==='image'){
+        if(a.src) items.push({t:'image',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
+          rot:a.rot,op:a.op,src:a.src});
+        else note.skipped++;
+      } else if(a.k==='rect'){
+        items.push({t:'rect',x:a.x,y:a.y,w:a.w||20,h:a.h||14,rot:a.rot,
+          op:a.op,color:a.color,fill:a.fill,sw:a.sw,dash:a.dash,
+          shape:a.shape});
+      } else if(a.k==='arrow'){
+        items.push({t:'line',x1:a.x1,y1:a.y1,x2:a.x2,y2:a.y2,
+          color:a.color,sw:a.sw,dash:a.dash,head:!a.nohead,op:a.op});
+      } else if(a.k==='cell'){
+        var it=a.ref?resolveRef(a.ref):null;
+        var node=it?framePart(it.ns,a.part):null;
+        var img=node?node.querySelector('img'):null;
+        if(img&&img.src&&img.src.indexOf('data:')===0){
+          items.push({t:'image',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
+            rot:a.rot,op:a.op,src:img.src,name:(it&&it.title)||'Figure'});
+          return;
+        }
+        /* no figure to lift — but prose and code ARE just text, and a text
+           box beats an empty slide. A table or a rich repr is neither: its
+           meaning is in a layout PowerPoint cannot rebuild, so it is
+           reported instead of being flattened into gibberish. */
+        var isTable=!!(node&&node.querySelector('table'));
+        /* a <pre> means the frame IS code; a bare inline <code> is just
+           prose with a code span in it, and setting the whole note in
+           monospace for one `groupby(...)` reads as a bug */
+        var code=node&&node.querySelector('pre');
+        /* typeset maths survives only as its flattened characters — legible,
+           but no longer an equation. Counted so the toast can say so. */
+        if(node&&node.querySelector('mjx-container')) note.maths++;
+        var txt=(node&&!isTable)?blockText(node):'';
+        if(txt){
+          items.push({t:'text',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
+            rot:a.rot,op:a.op,text:txt,sizePct:code?1.3:1.8,
+            color:a.txcol||ink,font:code?'Consolas':'',
+            name:(it&&it.title)||'Text'});
+        } else note.skipped++;
+      }
+    });
+    return items;
+  }
+  function exportDeckPptx(){
+    if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
+    if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
+    var pg=pageOf(),note={skipped:0,cropped:0,maths:0};
+    var bg=(pres&&pres.pageBg)||'#0b141d';
+    var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
+    var out=JunoPptx.build({
+      title:pres.name||'presentation',
+      widthMm:pg.mm[0],heightMm:pg.mm[1],bg:bg,
+      slides:pres.slides.map(function(s){
+        return {bg:bg,items:pptxItems(s,note,ink)};
+      }),
+    });
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(out.blob);
+    a.download=(pres.name||'presentation')+'.pptx';
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
+    var msg='PowerPoint saved — text stays editable';
+    if(note.skipped) msg+='. '+note.skipped+' cell'
+      +(note.skipped===1?'':'s')+' could not convert (code or a table — '
+      +'use Export PDF for those)';
+    if(note.cropped) msg+='. '+note.cropped+' crop'
+      +(note.cropped===1?'':'s')+' not carried';
+    if(note.maths) msg+='. Equations came across as plain text';
+    toast(msg);
+    /* one honest tally for the caller: the builder counts items IT could not
+       write, this counts cells that never became items — reporting only one
+       of the two reads as "nothing was lost" when something was */
+    return {blob:out.blob,slides:out.slides,cropped:note.cropped,
+      skipped:note.skipped+out.skipped};
+  }
+  window.SemDeckPptx=exportDeckPptx;   /* test hook */
+  menuAction('#mi-pptx',function(){exportDeckPptx();});
   /* page background swatches (File menu) */
   $$('#mi-pagebg .pgbg-sw').forEach(function(sw){
     sw.addEventListener('click',function(e){

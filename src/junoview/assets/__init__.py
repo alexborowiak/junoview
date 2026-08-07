@@ -19,7 +19,7 @@ from importlib.resources import files
 __all__ = [
     "load",
     "core_css", "app_css", "deck_css",
-    "app_js", "deck_js",
+    "app_js", "deck_js", "pptx_js",
     "page_template", "shell_template",
     "deck_html", "help_html", "mathjax_html", "web_loader",
 ]
@@ -65,6 +65,11 @@ def app_js() -> str:
 def deck_js() -> str:
     """Presentation behaviour: slide editing, layout, export, playback."""
     return load("js/deck.js")
+
+
+def pptx_js() -> str:
+    """The .pptx writer: an OOXML ZIP built in the browser, no dependencies."""
+    return load("js/pptx.js")
 
 
 def page_template() -> str:
