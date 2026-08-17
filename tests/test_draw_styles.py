@@ -109,8 +109,13 @@ def test_curved_text_warps_in_powerpoint_too(out):
     assert 'a:gd name="adj" fmla="val ' in out
     # a warped run is sized by its path, so autofit has to go
     assert "(arc ? '<a:noAutofit/>' : '<a:spAutoFit/>')" in out
-    # and the one asymmetry is stated in the menu, not left to be found
-    assert "PowerPoint reads it round the bottom" in out
+    # and the one asymmetry is stated in the menu you can actually open,
+    # not left to be found. It used to be asserted against the #fmt-arc
+    # dropdown, which was permanently hidden and has been removed -- so
+    # this passed while pinning a string no user could ever read
+    # (2026-08-17 audit)
+    assert "'Curve: gentle sag (round the bottom in PowerPoint)'" in out
+    assert "'Curve: arch down (round the bottom in PowerPoint)'" in out
 
 
 def test_the_ribbon_is_groups_not_rows(out):
@@ -121,8 +126,12 @@ def test_the_ribbon_is_groups_not_rows(out):
     """
     assert ".edit-tools.ribbon{display:flex;flex-wrap:nowrap;" in out
     assert "border-right:1px solid #ffffff1c;}" in out
-    assert ".dbtn.rbn-big{" in out and ".dbtn.rbn-sm{" in out
-    assert ".dbtn.rbn-ico{" in out
+    # .rbn-big went with Present's promotion to an ordinary accented
+    # button: nothing has carried the class since, and thirteen rules --
+    # four of them density rungs -- were still shipping for it
+    # (2026-08-17 audit)
+    assert ".dbtn.rbn-big{" not in out
+    assert ".dbtn.rbn-sm{" in out and ".dbtn.rbn-ico{" in out
 
 
 def test_one_button_size_with_colour_carrying_emphasis(out):
@@ -132,8 +141,9 @@ def test_one_button_size_with_colour_carrying_emphasis(out):
     same height; the ONE accented control (Present) is the only thing the
     eye has to land on.
     """
-    # one shared height for everything that is not the single accent
-    assert ".rbn-row>.dbtn:not(.rbn-big),.rbn-row .sh-drop>.dbtn," in out
+    # one shared height for everything, with no exception carved out for
+    # a class nothing uses any more
+    assert ".rbn-row>.dbtn,.rbn-row .sh-drop>.dbtn," in out
     assert "height:26px;box-sizing:border-box;}" in out
     assert ".dbtn.rbn-ico{display:flex;align-items:center;" in out
     assert "width:26px;height:26px;" in out
@@ -349,7 +359,7 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     assert ".rbn-out{order:4;}" in out
     assert ".rbn-nbs{order:5;}" in out
     assert ".rbn-insert{order:6;}" in out
-    assert ".et-fmt .rbn-grp{order:7;}" in out
+    assert ".et-fmt .rbn-grp{order:7;flex:none;}" in out
     # the constant three are tagged, and the tag is what exempts them from
     # every density rung
     for grp in ("rbn-file", "rbn-slide", "rbn-view"):

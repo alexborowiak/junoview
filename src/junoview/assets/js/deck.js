@@ -905,7 +905,7 @@
        only place that speaks in real millimetres, so it is the only place
        that can judge this. */
     (s.annots||[]).forEach(function(a,i){
-      if(a.k!=='arrow'&&a.k!=='rect') return;
+      if(a.k!=='arrow'&&a.k!=='rect'&&a.k!=='draw') return;
       if(a.hide) return;
       var mmw=swMm(a,pg);
       if(mmw>=0.25) return;
@@ -1269,6 +1269,7 @@
       return 'Text — '+(String(a.text||'').trim().slice(0,26)||'(empty)');
     if(a.k==='image') return 'Image';
     if(a.k==='arrow') return a.nohead?'Line':'Arrow';
+    if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
   }
@@ -2177,6 +2178,49 @@
   }
   /* `sw` arrives already resolved to screen pixels by strokePx, and the
      dash has to be resolved against the same page so the two agree */
+  /* ---- FREEHAND ------------------------------------------------------
+     A drawn stroke is stored the way a shape is — a box in page
+     percentages — with its points normalised to 0..1 INSIDE that box. So
+     moving, resizing, rotating, opacity, lock, hide, the Objects pane and
+     the selection handles all work on it without knowing it exists: they
+     only ever touch x/y/w/h. Keeping raw page coordinates instead would
+     have meant a special case in every one of those.
+     Catmull-Rom through the points, converted to cubics: a hand-drawn
+     line has to read as a curve, not as the polygon the mouse reported. */
+  function drawPathD(pts){
+    if(!pts||!pts.length) return '';
+    var P=pts.map(function(q){return [q[0]*100,q[1]*100];});
+    var f=function(n){return (Math.round(n*100)/100);};
+    if(P.length===1) return 'M'+f(P[0][0])+' '+f(P[0][1])+'l0 0';
+    var d='M'+f(P[0][0])+' '+f(P[0][1]);
+    for(var i=0;i<P.length-1;i++){
+      var p0=P[i-1]||P[i],p1=P[i],p2=P[i+1],p3=P[i+2]||P[i+1];
+      d+='C'+f(p1[0]+(p2[0]-p0[0])/6)+' '+f(p1[1]+(p2[1]-p0[1])/6)
+        +','+f(p2[0]-(p3[0]-p1[0])/6)+' '+f(p2[1]-(p3[1]-p1[1])/6)
+        +','+f(p2[0])+' '+f(p2[1]);
+    }
+    return d;
+  }
+  function drawFreeSvg(a,layer){
+    var svg=document.createElementNS(SVGNS,'svg');
+    svg.setAttribute('class','an-shape-svg');
+    svg.setAttribute('viewBox','0 0 100 100');
+    /* stretched to the box like a shape, so the stroke needs the same
+       non-scaling-stroke or it would thicken as you widen the drawing */
+    svg.setAttribute('preserveAspectRatio','none');
+    var p=document.createElementNS(SVGNS,'path');
+    p.setAttribute('d',drawPathD(a.pts));
+    p.setAttribute('fill','none');
+    p.setAttribute('stroke',a.color||'#ff6b57');
+    p.setAttribute('stroke-width',strokePx(a,layer));
+    p.setAttribute('vector-effect','non-scaling-stroke');
+    p.setAttribute('stroke-linecap','round');
+    p.setAttribute('stroke-linejoin','round');
+    var dsh=dashPx(a,layer);
+    if(dsh) p.setAttribute('stroke-dasharray',dsh);
+    svg.appendChild(p);
+    return svg;
+  }
   function drawShapeSvg(shp,col,sw,a,idx,layer){
     var dash=dashPx(a,layer);
     var svg=document.createElementNS(SVGNS,'svg');
@@ -2995,6 +3039,7 @@
     if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
     if(a.k==='image') return 'Image';
     if(a.k==='arrow') return a.nohead?'Line':'Arrow';
+    if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
       return it&&it.title?it.title.slice(0,18):'Cell';}
@@ -3468,6 +3513,17 @@
         if(editing){r.appendChild(mkResize());
           r.appendChild(mkRotate());}
         layer.appendChild(r);
+      } else if(a.k==='draw'){
+        var dv=document.createElement('div');
+        dv.className='an-item an-rect an-svgshape an-draw'
+          +(selAnnot===i?' sel':'');
+        dv.style.left=a.x+'%';dv.style.top=a.y+'%';
+        dv.style.width=(a.w||10)+'%';dv.style.height=(a.h||10)+'%';
+        dv.appendChild(drawFreeSvg(a,layer));
+        applyCommon(dv,a);
+        dv.setAttribute('data-idx',i);
+        if(editing){dv.appendChild(mkResize());dv.appendChild(mkRotate());}
+        layer.appendChild(dv);
       } else if(a.k==='cell'){
         var c=document.createElement('div');
         var it=a.ref?resolveRef(a.ref):null;
@@ -3741,12 +3797,12 @@
 
      '*' means every kind; the value is a space-separated list otherwise. */
   var FMT_KINDS={
-    '#fmt-stylewrap':'arrow rect',    /* dashes apply to any stroke */
-    '#fmt-swwrap':'arrow rect',       /* stroke weight, likewise */
+    '#fmt-stylewrap':'arrow rect draw', /* dashes apply to any stroke */
+    '#fmt-swwrap':'arrow rect draw',    /* stroke weight, likewise */
     '#fmt-headwrap':'arrow',          /* arrowheads: a shape has no ends */
     '#fmt-bendwrap':'arrow',          /* straight/curved/elbow: ditto */
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
-    '#fmt-shape':'rect',
+    '#fmt-shapewrap':'rect',
     '#fmt-cropwrap':'image cell'
   };
   /* controls whose visibility depends on more than the kind (how many are
@@ -3757,11 +3813,11 @@
     +'#fmt-alignwrap #fmt-opwrap #fmt-animwrap #fmt-txcol-btn '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
-    +'#fmt-list #fmt-align #fmt-parawrap #fmt-arcwrap #fmt-dash #fmt-fill '
+    +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
-    +'#fmt-fillstyle '
-    +'#fmt-align-btn #fmt-anim #fmt-arc #fmt-para #fmt-size #fmt-op '
+    +'#fmt-fillstyle #fmt-shape '
+    +'#fmt-align-btn #fmt-anim #fmt-para #fmt-size #fmt-op '
     +'#fmt-opval').split(' ');
 
   function showFmt(){
@@ -3829,36 +3885,19 @@
     show('#fmt-ital',isText,!!a.i);
     show('#fmt-under',isText,!!a.u);
     show('#fmt-strike',isText,!!a.strike);
-    show('#fmt-align',false);
-    var alBtn=$('#fmt-align');
-    if(alBtn&&isText){
-      var al=a.align||'left';
-      alBtn.textContent=al.charAt(0).toUpperCase()+al.slice(1);
-    }
     show('#fmt-szwrap',isText);
     var szIn=$('#fmt-size');
     if(szIn&&isText&&document.activeElement!==szIn)
       szIn.value=Math.round((a.size||2.6)*5.4);
-    /* alignment, list and curve are reached through the Layout menu; the
-       originals stay in the DOM because that menu drives them */
-    show('#fmt-list',false);
-    show('#fmt-arcwrap',false);
+    /* alignment, list and curve are reached through the Layout menu, and
+       that menu now applies all three itself — the originals are gone
+       (2026-08-17 audit) */
     show('#fmt-parawrap',isText&&isNum,!!a.arc||!!a.list);
     /* the kind-driven controls, all from one table */
     Object.keys(FMT_KINDS).forEach(function(id){
       var spec=FMT_KINDS[id];
       show(id,isNum&&(spec==='*'||spec.split(' ').indexOf(kind)>=0));
     });
-    /* superseded by the Style dropdown; kept in the DOM because the
-       dropdown drives them */
-    show('#fmt-dash',false);
-    /* superseded by the Fill dropdown, same as Dash */
-    show('#fmt-fill',false);
-    /* visibility comes from FMT_KINDS; only the pressed state here */
-    var shBtn=$('#fmt-shape');
-    if(shBtn&&!shBtn.hidden)
-      shBtn.setAttribute('aria-pressed',
-        (!!a.shape&&a.shape!=='rect').toString());
     /* what this weight will actually PRINT. It goes in the tooltip, never
        the label: a label whose width changed with the selected item would
        make the ribbon's required width depend on what you clicked, and
@@ -4002,7 +4041,6 @@
        placed cells yet) and an empty group that still drew its label and
        divider read as a missing feature */
     var bar=$('#edit-tools'); if(!bar) return;
-    var first=null;
     $$('.rbn-grp',bar).forEach(function(g){
       var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
       for(var i=0;i<kids.length;i++){
@@ -4011,10 +4049,12 @@
         if(!blocked){vis=true;break;}
       }
       g.hidden=!vis;
-      g.classList.remove('rbn-first');
-      if(vis&&!first) first=g;
     });
-    if(first) first.classList.add('rbn-first');
+    /* `rbn-first` used to be stamped on the leading visible group so a
+       ::before divider could be suppressed on it. The dividers became a
+       border-right on the group itself and `:last-child` handles the end
+       of the row, so nothing has styled that class since — it was three
+       lines of bookkeeping maintained for no reader (2026-08-17 audit). */
     sizeRibbonGroups();
     /* groups appearing or leaving changes the width the row needs, so the
        density has to be re-judged every time the selection does */
@@ -4438,17 +4478,50 @@
     var a=(kind==='rect')
       ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:SW_DEFAULT,
         shape:(pendingShape!=='rect'?pendingShape:undefined)}
+      :(kind==='draw')
+      ?{k:'draw',x:p0.x,y:p0.y,w:0,h:0,pts:[[0,0]],sw:SW_DEFAULT,
+        color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
+      :(kind==='cell')
+      ?{k:'cell',x:p0.x,y:p0.y,w:0,h:0,ref:null}
+      :(kind==='text')
+      /* colour comes from the page theme */
+      ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'Text',size:2.6,bg:1}
       :(kind==='line')
       ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
         color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
       :{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,
         color:'#ff6b57',sw:SW_DEFAULT};
+    var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text');
     s.annots=s.annots||[];
     s.annots.push(a);
     var idx=s.annots.length-1;
+    /* the raw trail, in page percentages, for a freehand stroke */
+    var raw=(kind==='draw')?[[p0.x,p0.y]]:null;
+    /* Fold the trail into a box plus 0..1 points. A stroke drawn dead
+       straight has no extent on one axis, which would divide by zero and
+       leave a box too thin to grab, so each axis gets a floor and the
+       points centre themselves in it. */
+    function foldTrail(){
+      var xs=raw.map(function(q){return q[0];});
+      var ys=raw.map(function(q){return q[1];});
+      var x0=Math.min.apply(null,xs),x1=Math.max.apply(null,xs);
+      var y0=Math.min.apply(null,ys),y1=Math.max.apply(null,ys);
+      var w=x1-x0,h=y1-y0,MIN=1.5;
+      if(w<MIN){x0-=(MIN-w)/2;w=MIN;}
+      if(h<MIN){y0-=(MIN-h)/2;h=MIN;}
+      a.x=x0;a.y=y0;a.w=w;a.h=h;
+      a.pts=raw.map(function(q){
+        return [(q[0]-x0)/w,(q[1]-y0)/h];});
+    }
     function mm(ev){
       var p=pctPoint(layer,ev);
-      if(a.k==='rect'){
+      if(raw){
+        /* thin the trail: a mousemove every pixel would store thousands
+           of points into the document and the undo stack */
+        var last=raw[raw.length-1];
+        if(Math.abs(p.x-last[0])+Math.abs(p.y-last[1])>=0.35) raw.push([p.x,p.y]);
+        foldTrail();
+      } else if(boxed){
         a.x=Math.min(p0.x,p.x);a.y=Math.min(p0.y,p.y);
         a.w=Math.abs(p.x-p0.x);a.h=Math.abs(p.y-p0.y);
       } else {a.x2=p.x;a.y2=p.y;}
@@ -4457,15 +4530,45 @@
     function mu(){
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
-      var tiny=(a.k==='rect')?(a.w<1.5&&a.h<1.5)
+      var tiny=raw?(raw.length<3)
+        :boxed?(a.w<1.5&&a.h<1.5)
         :(Math.abs(a.x2-a.x1)<1.5&&Math.abs(a.y2-a.y1)<1.5);
-      if(tiny) s.annots.splice(idx,1);
+      /* A CLICK IS STILL A CLICK. Dragging says how big; clicking asks
+         for the usual one, which is the fast way when the size does not
+         matter yet — and it is what these two tools have always done, so
+         nobody's habit breaks. A shape, line or arrow with no drag is
+         still discarded: there is no sensible default size for those, and
+         dropping a canned one is what the line tool was told off for
+         (2026-08-10). */
+      if(tiny&&a.k==='draw'){
+        s.annots.splice(idx,1);      /* a stray click is not a drawing */
+      } else if(tiny&&a.k==='cell'){
+        a.x=Math.min(p0.x,64);a.y=Math.min(p0.y,64);a.w=34;a.h=30;
+      } else if(tiny&&a.k==='text'){
+        delete a.w;delete a.h;          /* auto-size to its own words */
+      } else if(tiny) s.annots.splice(idx,1);
       markDirty();setTool('select');
       renderAnnots(layer,s);
-      if(!tiny) selectAnnot(layer,idx);
+      if(!tiny||(boxed&&a.k!=='draw')){
+        selectAnnot(layer,idx);
+        if(a.k==='text') focusText(layer,idx);
+      }
     }
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
+  }
+  /* put the caret in a fresh text box with its placeholder selected, so
+     the first thing you type replaces "Text" */
+  function focusText(layer,idx){
+    var tx=layer.querySelector('.an-item[data-idx="'+idx+'"] .an-tx');
+    if(!tx) return;
+    tx.focus();
+    try{
+      var rng=document.createRange();
+      rng.selectNodeContents(tx);
+      var sl=window.getSelection();
+      sl.removeAllRanges();sl.addRange(rng);
+    }catch(e){}
   }
   function distToSeg(px,py,x1,y1,x2,y2){
     var dx=x2-x1,dy=y2-y1;
@@ -4566,39 +4669,17 @@
         return;
       }
       ev.preventDefault();
-      var p=pctPoint(layer,ev);
-      if(tool==='text'){
-        s.annots=s.annots||[];
-        s.annots.push({k:'text',x:p.x,y:p.y,text:'Text',
-          size:2.6,bg:1});   /* colour comes from the page theme */
-        var idx2=s.annots.length-1;
-        markDirty();setTool('select');
-        renderAnnots(layer,s);selectAnnot(layer,idx2);
-        var tx=layer.querySelector(
-          '.an-item[data-idx="'+idx2+'"] .an-tx');
-        if(tx){
-          tx.focus();
-          try{
-            var rng=document.createRange();
-            rng.selectNodeContents(tx);
-            var sl=window.getSelection();
-            sl.removeAllRanges();sl.addRange(rng);
-          }catch(e){}
-        }
-      } else if(tool==='cell'){
-        s.annots=s.annots||[];
-        s.annots.push({k:'cell',x:Math.min(p.x,64),
-          y:Math.min(p.y,64),w:34,h:30,ref:null});
-        markDirty();setTool('select');
-        renderAnnots(layer,s);
-        selectAnnot(layer,s.annots.length-1);
-      } else if(tool==='rect'||tool==='arrow'||tool==='line'){
-        startDraw(layer,s,tool,p);
-      }
+      /* EVERY insert tool draws the same way. Text and cell used to be
+         the two that did not: they dropped a canned box wherever you
+         clicked and left you to resize it by hand, every single time
+         (2026-08-17, user: "when you add them it would be good to draw
+         them out to the shape you like, they just kind of snap to the one
+         shape"). */
+      if(tool!=='select') startDraw(layer,s,tool,pctPoint(layer,ev));
     });
   }
   /* every tool that exists. Anything else is NO tool. */
-  var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1};
+  var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1};
   function setTool(t){
     /* An unknown tool used to be armed happily: #dc-qr carried the generic
        `et` class with no data-tool, so the shared wiring ran
@@ -4632,13 +4713,14 @@
        audit; cf. the Page/Slide label and the Versions button) */
     var pw=pageOf().poster?'the page':'the slide';
     if(hint) hint.textContent=
-      t==='text'?'Click on '+pw+' to place a text box'
+      t==='text'?'Drag on '+pw+' to draw a text box, or click for one that '
+        +'sizes itself'
       :t==='arrow'?'Drag on '+pw+' to draw an arrow'
       :t==='rect'?('Drag on '+pw+' to draw a '
         +(pendingShape==='rect'?'rectangle':pendingShape))
       :t==='line'?'Drag on '+pw+' to draw a line'
-      :t==='cell'?'Click on '+pw+' to drop a cell frame, then pick a card '
-        +'from your notebook to fill it'
+      :t==='cell'?'Drag on '+pw+' to draw a cell frame (or click for the '
+        +'usual size), then pick a card from your notebook to fill it'
       /* NOTHING in the resting state. A hint earns its place by telling
          you about a mode you have just entered and cannot see; describing
          the default state — click to select, drag to move — is a caption
@@ -4772,8 +4854,6 @@
     if(a.k==='cell') a.ts=Math.min(3,
       Math.round((a.ts||1)*1.15*100)/100);
     else a.size=Math.min(20,(a.size||2.6)*1.25);});
-  onFmt('#fmt-dash',function(a){a.dash=a.dash?0:1;});
-  onFmt('#fmt-fill',function(a){a.fill=a.fill?0:1;});
   /* ---- line style / weight / arrow ends / route -----------------------
      These four SHOW the option instead of naming it. They used to be
      worded lists — "Dash-dot", "Stealth", "Curved the other way", and a
@@ -4955,6 +5035,15 @@
           function(){fmtApply(function(a){a.hsz=z.id;});}));
       });
     }
+    /* CHANGE SHAPE: the same fifteen shapes the Insert menu offers,
+       drawn by the same shapeIcon, instead of a button that stepped
+       through them one click at a time with no way back (2026-08-17). */
+    var sp=wireMenuToggle('fmt-shapewrap','fmt-shape','fmt-shape-menu');
+    if(sp) SHAPE_LIST.forEach(function(pair){
+      drawnOpt(sp.menu,sp.btn,pair[1],shapeIcon(pair[0]),'sp:'+pair[0],
+        function(){fmtApply(function(a){
+          if(pair[0]==='rect') delete a.shape; else a.shape=pair[0];});});
+    });
     var bd=wireMenuToggle('fmt-bendwrap','fmt-bend','fmt-bend-menu');
     if(bd) ROUTES.forEach(function(r){
       drawnOpt(bd.menu,bd.btn,r.label,routeIcon(r.d),'bd:'+r.id,
@@ -4979,6 +5068,7 @@
     cur['z:'+headSize(a).id]=1;
     cur['bd:'+(a.bend?a.bend:(a.curve>0?'curve'
       :(a.curve<0?'curve-':'straight')))]=1;
+    cur['sp:'+(a.shape||'rect')]=1;
     /* the nearest rung of the ladder, since a stored weight need not be
        exactly one of them (an older poster, or a page that has changed
        size since) */
@@ -4987,7 +5077,8 @@
       if(Math.abs(p-pt)<Math.abs(best-pt)) best=p;});
     cur['sw:'+best]=1;
     $$('#fmt-style-menu .sh-opt,#fmt-sw-menu .sh-opt,'
-      +'#fmt-head-menu .sh-opt,#fmt-bend-menu .sh-opt').forEach(function(o){
+      +'#fmt-head-menu .sh-opt,#fmt-bend-menu .sh-opt,'
+      +'#fmt-shape-menu .sh-opt').forEach(function(o){
       o.setAttribute('aria-pressed',cur[o.dataset.optKey]?'true':'false');
     });
   }
@@ -5024,7 +5115,10 @@
      ['c:-12','Curve: gentle sag (round the bottom in PowerPoint)'],
      ['c:-30','Curve: arch down (round the bottom in PowerPoint)']],'pa',
     function(v){
-      if(v==='list'){var lb=$('#fmt-list'); if(lb) lb.click(); return;}
+      /* applied here rather than by clicking a hidden #fmt-list: a
+         control used as an internal API is a control nobody can see is
+         still wired, which is how three dead ones survived here */
+      if(v==='list'){fmtApply(function(a){a.list=a.list?0:1;});return;}
       if(v.indexOf('a:')===0){
         var al=v.slice(2);
         fmtApply(function(a){a.align=al;});
@@ -5040,19 +5134,6 @@
         if(a.list){delete a.list;delete a.html;}
       });
     });
-  wireFloatDropdown('fmt-arcwrap','fmt-arc','fmt-arc-menu',
-    [['0','Straight'],['12','Gentle arch up'],['30','Arch up'],
-     ['55','Strong arch up'],
-     ['-12','Gentle sag — PowerPoint reads it round the bottom'],
-     ['-30','Arch down — PowerPoint reads it round the bottom'],
-     ['-55','Strong arch down — PowerPoint reads it round the bottom']],
-    'arc',
-    function(v){
-      fmtApply(function(a){
-        var n=+v;
-        if(!n) delete a.arc; else a.arc=n;
-      });
-    });
   /* the far end of a generated gradient: the same hue taken most of the
      way to transparent, which reads as a wash rather than a second
      colour you did not choose */
@@ -5066,6 +5147,11 @@
     sw.addEventListener('click',function(){
       fmtApply(function(a){
         if(a.k==='cell'){a.bgcol=sw.dataset.c;}
+        else if(a.k==='draw'){
+          /* a drawn stroke has no fill to speak of — the swatch sets the
+             ink, which is the only colour it has */
+          if(sw.dataset.c!=='none') a.color=sw.dataset.c;
+        }
         else if(a.k==='rect'){
           /* a shape's fill lives in a.fill/a.fillc — a.bg/a.bgc are the
              TEXT-box background and no shape renderer reads them. The
@@ -5284,16 +5370,6 @@
   onFmt('#fmt-ital',function(a){a.i=a.i?0:1;});
   onFmt('#fmt-under',function(a){a.u=a.u?0:1;});
   onFmt('#fmt-strike',function(a){a.strike=a.strike?0:1;});
-  onFmt('#fmt-align',function(a){
-    var order=['left','center','right','justify'];
-    var ni=(order.indexOf(a.align||'left')+1)%order.length;
-    if(order[ni]==='left') delete a.align; else a.align=order[ni];});
-  onFmt('#fmt-list',function(a){a.list=a.list?0:1;});
-  onFmt('#fmt-shape',function(a){
-    /* cycle the selected shape through the whole set */
-    var order=SHAPE_LIST.map(function(p){return p[0];});
-    var ni=(order.indexOf(a.shape||'rect')+1)%order.length;
-    if(order[ni]==='rect') delete a.shape; else a.shape=order[ni];});
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out
@@ -7661,20 +7737,16 @@
   (function(){
     var shBtn=$('#sh-btn'),shMenu=$('#sh-menu'),shDrop=$('#sh-drop');
     if(!shBtn||!shMenu) return;
+    /* Built by the same drawnOpt as every other drawn menu, so the two
+       shape galleries — this one for INSERT and the Line & shape group's
+       for CHANGING one — cannot look like different features. It used to
+       write its own option element and add a caption under each icon,
+       which made this the only drawn menu in the editor that spelled its
+       pictures out (2026-08-17 audit). Names live in the tooltip, as
+       PowerPoint's shape gallery does. */
     SHAPE_LIST.forEach(function(pair){
-      var opt=document.createElement('button');
-      opt.className='sh-opt';opt.type='button';opt.title=pair[1];
-      opt.dataset.shape=pair[0];
-      opt.appendChild(shapeIcon(pair[0]));
-      var t=document.createElement('span');t.className='sh-opt-t';
-      t.textContent=pair[1];opt.appendChild(t);
-      opt.addEventListener('click',function(e){
-        e.stopPropagation();
-        pendingShape=pair[0];
-        shMenu.hidden=true;shBtn.setAttribute('aria-expanded','false');
-        setTool('rect');
-      });
-      shMenu.appendChild(opt);
+      drawnOpt(shMenu,shBtn,pair[1],shapeIcon(pair[0]),'ins:'+pair[0],
+        function(){pendingShape=pair[0];setTool('rect');});
     });
     shBtn.addEventListener('click',function(e){
       e.stopPropagation();
@@ -8671,6 +8743,10 @@
           op:a.op,color:a.color,fill:fillCol,grad:a.grad,
           swPct:swOf(a)/SW_REF_H*100,
           dash:LINE_PPT[lineStyle(a)],shape:a.shape});
+      } else if(a.k==='draw'){
+        items.push({t:'draw',x:a.x,y:a.y,w:a.w||10,h:a.h||10,rot:a.rot,
+          op:a.op,color:a.color,swPct:swOf(a)/SW_REF_H*100,
+          dash:LINE_PPT[lineStyle(a)],pts:a.pts||[]});
       } else if(a.k==='arrow'){
         var ea=arrowEnds(layer,s,a,0);
         var hz=headSize(a);

@@ -183,6 +183,58 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Free draw.** The last drawing tool that did not exist: hold the mouse
+  down and scribble. It is a first-class stroke, not a special case — it
+  takes a colour, a **weight** and a **line style** like any other, it is
+  judged by *Print check* like any other ink, the Objects pane calls it
+  *Drawing*, and it moves, resizes, rotates, locks and hides with
+  everything else. That falls out of how it is stored: a box in page
+  percentages with its points normalised inside it, exactly as a shape is,
+  so every one of those features works on it without knowing it exists.
+  The trail is thinned as you draw (or one stroke would push thousands of
+  points into the document and the undo stack) and smoothed through
+  Catmull-Rom cubics, because a hand-drawn line should read as a curve
+  rather than as the polygon the mouse reported. It exports to PowerPoint
+  as a real **freeform** — still vector, still editable there — not as a
+  picture. *Ends* and *Route* correctly do not offer themselves: a
+  scribble has no arrowheads and no route.
+- **Every insert tool is drawn out; none of them drop a canned box.**
+  Shapes, lines and arrows were dragged to size; **Notebook cell** and
+  **Text box** were not — they dropped one fixed rectangle wherever you
+  clicked and left you to resize it by hand, every time. Both are drawn
+  now, and a *click* still gives you the usual one, so the fast path is
+  intact. There is no longer a list of "the tools that are drawn" for a
+  new tool to be left off: anything armed goes through the same code.
+- **Fixed: Shape stepped through fifteen shapes one click at a time.**
+  The same complaint *Weight* got, in the same group, missed the first
+  time: reaching *Question* from *Rectangle* was fourteen clicks and
+  there was no way back. It is a drawn picker now — and it is literally
+  the gallery **Insert → Shape** already had, which was sitting there
+  unused by the control that needed it.
+- **The two shape galleries are one component.** Insert's wrote its own
+  option elements and captioned every icon; the new one did not. Both are
+  built by the same helper now, so they cannot drift into looking like
+  different features. Names are in the tooltip, as PowerPoint's gallery
+  does.
+- **Removed six controls that could never be seen or clicked.** *Dash*,
+  *Fill*, *Align*, and the whole *Curve* dropdown (wrapper, button and a
+  six-option menu rebuilt on every load) were superseded by the Style,
+  Fill and Layout menus but left in the DOM behind a permanent `hidden`,
+  each keeping its click handler, its visibility call and its entry in
+  the completeness table. One over-general comment — "the originals stay
+  because that menu drives them" — was true of exactly one of them and
+  covered for the rest. The Layout menu also used to *click a hidden
+  button* to toggle bullets; it applies the change itself now, because a
+  control used as an internal API is a control nobody can see is still
+  wired.
+- **Removed the dead half of the ribbon's stylesheet.** `.rbn-big` — the
+  big icon-over-label button — went when Present became an ordinary
+  accented control, but thirteen rules stayed behind, four of them rungs
+  of the density ladder, which made the ladder read as though it still
+  had a lever it had not had in ten days. With it: `.rbn-tall`,
+  `.et-div`, `.et-label`, a side-rail divider drawing a `::before` with
+  no content, three lines of JS maintaining an `rbn-first` class no CSS
+  reads, and four rules stated twice in two places.
 - **Fixed: QR code armed a tool that does not exist.** It does what it
   says — asks for a link and puts a QR code on the page — but it also
   carried the class that marks a *drawing* tool, without naming one. So

@@ -23,7 +23,7 @@ def test_every_contextual_control_is_governed(out):
     assert "'#fmt-bendwrap':'arrow'," in out
     # shape-only things really are shape-only
     assert "'#fmt-fillwrap':'rect'," in out
-    assert "'#fmt-shape':'rect'," in out
+    assert "'#fmt-shapewrap':'rect'," in out
     # and the table actually drives visibility
     assert "Object.keys(FMT_KINDS).forEach(function(id){" in out
     # a control governed by neither table now says so, loudly
@@ -284,8 +284,9 @@ def test_the_hint_does_not_call_a_poster_a_slide(out):
     Versions button already fixed elsewhere (2026-08-07 audit).
     """
     assert "var pw=pageOf().poster?'the page':'the slide';" in out
-    assert "'Click on '+pw+' to place a text box'" in out
+    assert "'Drag on '+pw+' to draw a text box, or click for one that '" in out
     assert "Click on the slide to place a text box" not in out
+    assert "Drag on the slide to draw a text box" not in out
 
 
 def test_no_control_truncates_its_own_label(out):
@@ -330,7 +331,8 @@ def test_line_weight_scales_with_the_page_like_text_does(out):
     # the default is named, so the three creation sites cannot drift from
     # it. Comma-anchored: swOf's own ternary ends `?a.sw:SW_DEFAULT` and
     # would otherwise be counted as a fourth.
-    assert out.count(",sw:SW_DEFAULT") == 3
+    # rect, line, arrow and now the freehand stroke (2026-08-17)
+    assert out.count(",sw:SW_DEFAULT") == 4
     assert "sw:3" not in out
 
 
@@ -370,7 +372,8 @@ def test_qr_code_inserts_rather_than_arming_a_tool_that_does_not_exist(out):
     assert qr.rstrip().endswith('<button class="dbtn rbn-sm"'), \
         "dc-qr must not carry the `et` (drawing tool) class"
     # ...and an unknown tool can never arm again, for anything
-    assert "var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1};" in out
+    assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,"
+            "draw:1};" in out)
     assert "if(!TOOLS[t]) t='select';" in out
     # the label says what it does and why you would want one
     assert "Ask for a link and put a QR code on the page" in out
@@ -397,7 +400,7 @@ def test_weight_is_a_menu_of_drawn_thicknesses_not_a_cycle(out):
     # the cycling button is gone, wrapper and all
     assert "a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);" not in out
     assert "'#fmt-line':'arrow rect'," not in out
-    assert "'#fmt-swwrap':'arrow rect'," in out
+    assert "'#fmt-swwrap':'arrow rect draw'," in out
     # the millimetre reading stays in the tooltip and in preflight, which
     # is the only part of the app that speaks in real millimetres
     assert "'mm on this page ('+swPt(a).toFixed(2)" in out
@@ -535,9 +538,10 @@ def test_the_toolbar_hint_says_nothing_in_the_resting_state(out):
     just clutter, so select mode says nothing.
     """
     assert "Click an item to select; drag to move; Del removes" not in out
-    # the armed-tool hints stay: they are the ones doing work
+    # the armed-tool hints stay: they are the ones doing work, and they
+    # say DRAG now, because every insert tool draws itself out
     assert "'Drag on '+pw+' to draw a line'" in out
-    assert "'Click on '+pw+' to place a text box'" in out
+    assert "'Drag on '+pw+' to draw a text box, or click for one that '" in out
 
 
 def test_an_armed_tool_has_a_visible_way_out(out):

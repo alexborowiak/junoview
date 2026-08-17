@@ -98,7 +98,7 @@ def test_shapes_and_rich_slide_object_formatting(out):
     assert 'id="fmt-op"' in out and 'id="fmt-rotl"' in out
     # rich slide editor: precise pt size, alignment, underline/strike, a
     # CONTINUOUS opacity slider (not fixed steps), and per-deck slide numbers
-    assert 'id="fmt-size"' in out and 'id="fmt-align"' in out
+    assert 'id="fmt-size"' in out and 'id="fmt-para"' in out
     assert 'id="fmt-under"' in out and 'id="fmt-strike"' in out
     assert 'id="fmt-op"' in out and 'type="range"' in out
     assert 'id="mi-nums"' in out and "slide-pageno" in out
@@ -286,7 +286,7 @@ def test_format_bar_carries_the_object_controls(out):
     """
     assert 'id="fmt-font"' in out and "body.light .apptop" in out
     assert "apptip" in out
-    assert 'id="fmt-list"' in out and 'id="fmt-shape"' in out
+    assert 'id="fmt-parawrap"' in out and 'id="fmt-shape"' in out
     assert 'id="fmt-dup"' in out and 'id="fmt-front"' in out
     assert 'id="pickbar"' in out and 'id="fmt-replace"' in out
 

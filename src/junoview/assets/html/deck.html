@@ -381,6 +381,15 @@
               <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
                 title="Stop drawing and go back to selecting (Esc)"
                 >&#10005; Cancel</button>
+              <!-- freehand. It sits with Line and Arrow because it is the
+                   same thing done by hand, and it is the last of the
+                   drawing tools to exist (2026-08-17, user asking whether
+                   the line options were complete: "like free draw"). -->
+              <button class="dbtn rbn-sm et" id="dc-draw" data-tool="draw"
+                aria-pressed="false"
+                title="Draw freehand — hold the mouse down and scribble.
+ It takes a colour, a weight and a line style like any other stroke, and
+ it prints and exports as vector"><i data-ic="pen"></i> Draw</button>
               <button class="dbtn rbn-sm et" data-tool="arrow"
                 aria-pressed="false" title="Draw an arrow — a line with a
  head. Drop an end on an item to attach it, and the arrow follows that
@@ -559,17 +568,14 @@
                 <div class="sh-menu para-menu" id="fmt-para-menu"
                   hidden></div>
               </span>
-              <button class="dbtn etm" id="fmt-align" hidden
-                title="Text alignment (click to cycle)">&#9636; Left</button>
-              <button class="dbtn etm" id="fmt-list" hidden
-                title="Bullet list (Enter adds a point)">&#8226; List</button>
-              <span class="sh-drop" id="fmt-arcwrap" hidden>
-                <button class="dbtn etm" id="fmt-arc" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Bend the text along a curve">&#8631; Curve
-                  &#9662;</button>
-                <div class="sh-menu arc-menu" id="fmt-arc-menu" hidden></div>
-              </span>
+              <!-- Align, List and Curve used to be controls here and are
+                   now rows of the Layout menu above. A comment said the
+                   originals stayed "because that menu drives them", which
+                   was true of List alone: Align was applied directly by
+                   the menu, and the whole Curve dropdown — wrapper,
+                   button and a menu of six options built on every load —
+                   sat behind a permanent hidden. Three dead controls kept
+                   alive by one over-general comment (2026-08-17 audit). -->
             </span>
             <span class="rbn-lab">Text</span>
           </span>
@@ -628,15 +634,28 @@
                     <div class="sh-menu fillstyle-menu"
                       id="fmt-fillstyle-menu" hidden></div>
                   </span>
-                  <button class="dbtn rbn-sm etm" id="fmt-shape"
-                    title="Cycle the shape (rectangle, ellipse, star, …)">
-                    &#9711; Shape</button>
+                  <!-- a PICKER, not a cycler. This stepped through
+                       fifteen shapes one click at a time and could not go
+                       back, so reaching Question from Rectangle was
+                       fourteen clicks — the same complaint Weight got
+                       (2026-08-17, user: "just have all the options like
+                       word does"). The drawn shape menu already existed
+                       for Insert; this simply uses it. -->
+                  <span class="sh-drop" id="fmt-shapewrap">
+                    <button class="dbtn rbn-sm" id="fmt-shape"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Change the shape">&#9711; Shape &#9662;</button>
+                    <div class="sh-menu shape-menu" id="fmt-shape-menu"
+                      hidden></div>
+                  </span>
                 </span>
               </span>
-              <button class="dbtn etm" id="fmt-dash" hidden
-                title="Dashed on/off">Dash</button>
-              <button class="dbtn etm" id="fmt-fill" hidden
-                title="Fill on/off">Fill</button>
+              <!-- Dash and Fill used to be toggle buttons here. The Style
+                   and Fill dropdowns replaced them, and they were left in
+                   the DOM under a comment claiming "the dropdown drives
+                   them" — nothing did. They were permanently hidden, so
+                   the click handlers on them could never fire: two dead
+                   controls carrying four live wirings (2026-08-17 audit). -->
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>

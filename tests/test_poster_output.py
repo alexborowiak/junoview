@@ -80,7 +80,11 @@ def test_line_is_drawn_like_a_shape(out):
     # in place it would fire alongside the generic .et wiring, so one click
     # would both arm the tool and drop a ready-made rule
     assert "s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1," not in out
-    assert "tool==='rect'||tool==='arrow'||tool==='line'" in out
+    # every insert tool goes through startDraw now, cells and text boxes
+    # included, so there is no list of "the ones that are drawn" to fall
+    # out of date (2026-08-17)
+    assert "if(tool!=='select') startDraw(layer,s,tool,pctPoint(layer,ev));" in out
+    assert "tool==='rect'||tool==='arrow'||tool==='line'" not in out
     assert "?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1," in out
     # heads became a choice of shapes (2026-08-07); `nohead` is still what
     # makes a Line a line, now read through headEnd() rather than a
@@ -119,6 +123,54 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     assert "show('#fmt-fillcol-btn',showBg);" in out
     # picking a swatch closes its popup; the custom swatch keeps its panel
     assert "if(sw&&!sw.classList.contains('sw-custom')){" in out
+
+
+def test_freehand_drawing_is_a_first_class_stroke(out):
+    """The last drawing tool that did not exist (2026-08-17, user asking
+    whether the line options were complete: "like free draw").
+
+    Stored the way a SHAPE is -- a box in page percentages, with the
+    points normalised to 0..1 inside it -- so move, resize, rotate,
+    opacity, lock, hide, the Objects pane and the selection handles all
+    work on it without knowing it exists: they only ever touch x/y/w/h.
+    Raw page coordinates would have meant a special case in every one.
+
+    Catmull-Rom through the points, as cubics, because a hand-drawn line
+    must read as a curve and not as the polygon the mouse reported; the
+    trail is thinned first, or a single stroke would push thousands of
+    points into the document and the undo stack.
+
+    Measured in a browser: a 60-sample scribble became a 50%x24% item with
+    40 cubic segments; weight and line style both applied to it; Ends and
+    Route correctly did NOT offer themselves; the Objects pane called it
+    "Drawing"; and it exported as a real PowerPoint freeform (custGeom, 40
+    lnTo points, no fill) in a file with no missing parts.
+    """
+    assert 'id="dc-draw" data-tool="draw"' in out
+    assert "var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1};" in out
+    assert "function drawPathD(pts){" in out
+    assert "function drawFreeSvg(a,layer){" in out
+    # normalised into its own box, with a floor on each axis so a dead
+    # straight stroke neither divides by zero nor becomes ungrabbable
+    assert "function foldTrail(){" in out
+    assert "if(w<MIN){x0-=(MIN-w)/2;w=MIN;}" in out
+    # the trail is thinned as it is collected
+    assert "if(Math.abs(p.x-last[0])+Math.abs(p.y-last[1])>=0.35)" in out
+    # a stroke takes stroke properties -- and only those. No arrowheads on
+    # a scribble, no route: those stay arrow-only in the same table
+    assert "'#fmt-stylewrap':'arrow rect draw'," in out
+    assert "'#fmt-swwrap':'arrow rect draw'," in out
+    assert "'#fmt-headwrap':'arrow'," in out
+    assert "'#fmt-bendwrap':'arrow'," in out
+    # ...and it is judged by the print check like any other ink
+    assert "if(a.k!=='arrow'&&a.k!=='rect'&&a.k!=='draw') return;" in out
+    # the Objects pane names it
+    assert "if(a.k==='draw') return 'Drawing';" in out
+    # it survives PowerPoint as an editable freeform, not a picture
+    assert "function drawShape(item, id, page) {" in out
+    assert "<a:custGeom>" in out
+    assert "'<a:lnTo>' + pt + '</a:lnTo>'" in out
+    assert "} else if (item.t === 'draw') {" in out
 
 
 def test_qr_generator_is_self_contained_and_vector(out):

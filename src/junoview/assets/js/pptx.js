@@ -344,6 +344,38 @@ window.JunoPptx = (function () {
       + '</p:txBody></p:sp>';
   }
 
+  /* A freehand stroke is a real PowerPoint FREEFORM, not a picture: it
+     stays vector, keeps its colour, weight and dash, and can be reshaped
+     in PowerPoint afterwards. custGeom wants its own coordinate space, so
+     the points (already 0..1 inside the item's box) are scaled into a
+     fixed 100000-unit grid rather than into EMU, which keeps the numbers
+     integral and independent of the page size. */
+  var FREE_N = 100000;
+  function drawShape(item, id, page) {
+    var pts = item.pts || [];
+    if (pts.length < 2) return '';
+    var path = '<a:path w="' + FREE_N + '" h="' + FREE_N + '">';
+    pts.forEach(function (q, i) {
+      var x = Math.round(Math.max(0, Math.min(1, q[0])) * FREE_N);
+      var y = Math.round(Math.max(0, Math.min(1, q[1])) * FREE_N);
+      var pt = '<a:pt x="' + x + '" y="' + y + '"/>';
+      path += i === 0 ? '<a:moveTo>' + pt + '</a:moveTo>'
+        : '<a:lnTo>' + pt + '</a:lnTo>';
+    });
+    path += '</a:path>';
+    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667)
+      + '" cap="rnd"><a:round/>'
+      + solidFill(item.color, item.op, '8AA0B0')
+      + dashXml(item.dash) + '</a:ln>';
+    return '<p:sp>' + nvSp(id, item.name || ('Drawing ' + id))
+      + '<p:spPr>' + xfrm(item, page)
+      + '<a:custGeom><a:avLst/><a:gdLst/><a:ahLst/><a:cxnLst/>'
+      + '<a:rect l="0" t="0" r="r" b="b"/><a:pathLst>' + path
+      + '</a:pathLst></a:custGeom><a:noFill/>'
+      + stroke + '</p:spPr><p:txBody><a:bodyPr/><a:lstStyle/><a:p/>'
+      + '</p:txBody></p:sp>';
+  }
+
   /* A line/arrow is a connector: its endpoints can run in any direction, so
      the bounding box is normalised and the shape flipped to match. */
   function lineShape(item, id, page) {
@@ -470,6 +502,9 @@ window.JunoPptx = (function () {
           body += rectShape(item, id, page);
         } else if (item.t === 'line') {
           body += lineShape(item, id, page);
+        } else if (item.t === 'draw') {
+          var free = drawShape(item, id, page);
+          if (free) body += free; else skipped++;
         } else {
           skipped++;
         }

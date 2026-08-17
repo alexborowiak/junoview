@@ -725,8 +725,7 @@ body.slide-editing .apptop{display:none;}
   grid-template-rows:26px 26px;row-gap:5px;column-gap:5px;
   align-items:stretch;justify-items:stretch;height:57px;}
 /* the tall things span both rows rather than sitting in one */
-.rbn-row>.dbtn.rbn-big,.rbn-row>.rbn-stack,
-.rbn-row>.rbn-tall{grid-row:1/span 2;}
+.rbn-row>.rbn-stack{grid-row:1/span 2;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
 .rbn-row>.sh-drop,.rbn-row>.dc-menuwrap{display:flex;}
 .rbn-row>.sh-drop>.dbtn,.rbn-row>.dc-menuwrap>.dbtn{width:100%;height:100%;}
@@ -751,15 +750,15 @@ body.slide-editing .apptop{display:none;}
    they are just kind of everywhere" (2026-08-07). Emphasis is a JOB FOR
    COLOUR: Present is accented, everything else is identical, so the eye
    has exactly one thing to land on instead of six competing ones.
-   .rbn-big survives for that single accented control. --- */
-.dbtn.rbn-big{display:flex;flex-direction:column;align-items:center;
-  justify-content:center;gap:5px;min-width:66px;padding:7px 9px 6px;
-  font-size:10.5px;line-height:1.15;text-align:center;}
+   `.rbn-big`, the icon-over-label button that survived for that one
+   accented control, went with it: Present became an ordinary button in
+   the Output group and nothing has carried the class since. Thirteen
+   rules were still being shipped for it, four of them rungs of the
+   density ladder, which made the ladder read as though it still had a
+   lever it had not had for ten days (2026-08-17 audit). --- */
 /* every ribbon button is the same height and sits on the same baseline */
-.rbn-row>.dbtn:not(.rbn-big),.rbn-row .sh-drop>.dbtn,
+.rbn-row>.dbtn,.rbn-row .sh-drop>.dbtn,
 .rbn-row .dc-menuwrap>.dbtn{height:26px;box-sizing:border-box;}
-.dbtn.rbn-big i{display:block;width:22px;height:22px;}
-.dbtn.rbn-big svg{width:22px;height:22px;}
 /* two or three small buttons stacked in the height of one big one */
 .rbn-stack{display:flex;flex-direction:column;gap:3px;
   justify-content:center;}
@@ -811,7 +810,7 @@ body.slide-editing .apptop{display:none;}
 .rbn-out{order:4;}
 .rbn-nbs{order:5;}
 .rbn-insert{order:6;}
-.et-fmt .rbn-grp{order:7;}
+.et-fmt .rbn-grp{order:7;flex:none;}
 .edit-tools.ribbon .et-hint{order:9;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
   margin-left:16px;padding-left:16px;border-left:1px solid #ffffff1a;
@@ -836,17 +835,12 @@ body.slide-editing .apptop{display:none;}
 /* --- the compaction ladder. Every stage trades SPACE, never words. --- */
 .deck.erc1 .rbn-grp{padding-left:7px;padding-right:7px;}
 .deck.erc1 .rbn-row{gap:4px;}
-.deck.erc1 .dbtn.rbn-big{min-width:60px;padding:6px 6px 5px;}
-.deck.erc2 .dbtn.rbn-big{min-width:52px;font-size:10px;gap:3px;}
-.deck.erc2 .dbtn.rbn-big i,.deck.erc2 .dbtn.rbn-big svg{
-  width:18px;height:18px;}
 .deck.erc2 .dbtn.rbn-sm{padding:2px 6px;font-size:10px;gap:4px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
 /* NO rung hides an icon. Stripping them buys width but costs the whole
    big/small hierarchy — a label-only wall is the same flat wall that was
    rejected, arrived at from the other side. Density only, to the end. */
 .deck.erc3 .rbn-grp{padding-left:5px;padding-right:5px;}
-.deck.erc3 .dbtn.rbn-big{min-width:50px;font-size:9.5px;}
 .deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:9.5px;
   padding-left:5px;padding-right:5px;}
 .deck.erc3 .rbn-lab{font-size:8px;letter-spacing:.1em;}
@@ -903,7 +897,6 @@ body.slide-editing .apptop{display:none;}
    permanent void. */
 .et-fmt{display:contents;}
 .et-fmt[hidden]{display:none;}
-.et-fmt .rbn-grp{flex:none;}
 /* a SELECTION swaps the Insert group for the contextual format groups
    (PowerPoint's contextual-tab move): the toolbar keeps its two rows and
    the canvas keeps its size — it used to grow a third row and shrink
@@ -930,10 +923,6 @@ body.slide-editing .apptop{display:none;}
 /* with nothing selected there is no group to stand aside, so the big
    buttons give up their last few pixels instead — smaller, never fewer
    words */
-.deck.erc-tight .dbtn.rbn-big{min-width:42px;font-size:9px;
-  padding-left:5px;padding-right:5px;gap:2px;}
-.deck.erc-tight .dbtn.rbn-big i,.deck.erc-tight .dbtn.rbn-big svg{
-  width:15px;height:15px;}
 /* The last rung spends SPACING, never type and never an icon: measured at
    a 909px ribbon, dropping the group padding, the column gap, the button
    padding and the icon gap by 1px each buys 40px, where taking the type
@@ -1016,11 +1005,8 @@ body.slide-editing .apptop{display:none;}
 .deck.erc-tight .et-fmt .fmt-szwrap,
 .deck.erc-tight .et-fmt .fmt-opwrap{gap:2px;}
 .fmt-lab{margin-left:2px;}
-.et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
-  text-transform:uppercase;color:var(--amber);}
 .et-hint{font-size:11px;color:#7e93a4;align-self:center;margin-left:auto;
   padding:0 4px 10px;}
-.et-div{width:1px;height:22px;background:#ffffff26;flex:none;margin:0 3px;}
 /* the "+ Shapes" dropdown */
 .sh-drop{position:relative;display:inline-block;}
 #sh-btn[aria-pressed="true"]{background:var(--cyan-deep);
@@ -1563,8 +1549,6 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 .deck.rbn-side .rbn-row{display:flex;flex-flow:row wrap;
   align-items:stretch;align-content:flex-start;height:auto;gap:3px;}
 .deck.rbn-side .rbn-row>*{flex:1 0 auto;}
-.deck.rbn-side .dbtn.rbn-big{flex-direction:row;height:auto;
-  min-width:0;justify-content:flex-start;padding:5px 8px;}
 /* a cell is ONE flex item and holds no wrap of its own, so the zoom
    stepper and the undo/redo pair each stay whole wherever they land —
    without claiming a whole line the way a `flex-basis:100%` would */
@@ -1583,12 +1567,8 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
    is how every sidebar reads. Below is right for the horizontal ribbon,
    where the label sits under the group like PowerPoint's
    (2026-08-07, user: "put the titles above the section not below"). */
-.deck.rbn-side .rbn-lab{order:-1;padding:0 2px 2px;}
+.deck.rbn-side .rbn-lab{order:-1;padding:0 2px 2px;text-align:left;}
 /* the group divider turns from a vertical rule into a horizontal one */
-.deck.rbn-side .rbn-grp+.rbn-grp::before{left:2px;right:2px;top:0;
-  bottom:auto;width:auto;height:1px;}
-.deck.rbn-side .rbn-lab{text-align:left;padding-left:2px;}
-.deck.rbn-side .et-hint{display:none;}
 .deck.rbn-side .deck-stage{padding-right:calc(var(--rbn-side-w) + 12px);}
 .deck.rbn-side .rulers{right:var(--rbn-side-w);}
 .deck.rbn-side .deck-arrow.next{right:calc(var(--rbn-side-w) + 8px);}

@@ -122,6 +122,10 @@ _ICON_PATHS = {
     "arrow": '<path d="M3.4 12.6 12.6 3.4"/><path d="M7.8 3.4h4.8v4.8"/>',
     "hline": '<path d="M2 8h12"/><path d="M2 5.8v4.4"/>'
              '<path d="M14 5.8v4.4"/>',
+    # a nib on a stroke: freehand drawing, in the same 16-grid stroke
+    # style as every other toolbar icon
+    "pen": '<path d="M2.4 13.6c2.6.4 4-1 4.6-2.4"/>'
+           '<path d="m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z"/>',
     "shapes": '<rect x="2.2" y="5.6" width="7" height="7" rx="1"/>'
               '<circle cx="10.6" cy="5.8" r="3.4"/>',
     "image": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
