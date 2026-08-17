@@ -183,6 +183,157 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The poster toolbar reads as clusters, not a list of rows.** Stood on
+  its end for a tall poster, the toolbar put ONE control on every line,
+  so *Insert* alone was seven rows deep — the list of rows the horizontal
+  ribbon had just stopped being. Controls now pair up two to a line
+  wherever both fit, and a long one takes the line to itself. Nothing is
+  measured, shrunk or truncated to do it: a button keeps its natural
+  width, so no word is ever squeezed. Measured on an A0 portrait: 21
+  lines before, 12 after (*File* 6→2, *Insert* 7→4, *View* 3→2, *Output*
+  2→1). The rail went from 214px to 226px, which is the width at which
+  *Print check* and *Present* stop stacking — and that width is now one
+  number, so the stage, the rulers, the page arrow and the Objects pane
+  cannot drift apart. Undo and redo travel as one cell, the way zoom's
+  minus and plus already do, so they can never land on separate lines.
+- **Fixed: the View group printed on top of its own label.** `--rbn-cols`
+  counts the controls a ribbon group is currently showing, and *Slides* /
+  *Versions* was revealed after the count — so *View* was sized for two
+  controls, the third fell into an implicit third row, and the row ran
+  over the VIEW caption underneath it. The count is owned by one function
+  that the fit calls first, so any reflow re-counts before it measures.
+  Sizing *View* honestly costs about 60px of ribbon width; the tightest
+  density rung gives 40px of it back in spacing alone, leaving the
+  narrowest window the resting toolbar fits in 30px wider than before
+  (measured floor: 929px → 959px of ribbon). Below that the remedy is
+  unchanged — *Guides ▸ Toolbar on the right*.
+- **Fixed: an empty save readout drew an empty pill.** `:empty` already
+  hid it and was quietly overruled by a later, more specific rule — the
+  author-`display`-beats-`[hidden]` trap. It keeps its cell in the
+  horizontal grid (so the group does not shift the moment it fills) and
+  simply stops painting.
+- **Fixed: PowerPoint export produced nothing for any page containing a
+  line or an arrow.** `pptxItems` called `arrowEnds(layer, …)` with no
+  `layer` parameter and none in scope; reading an undeclared name throws,
+  and the throw escaped before the toast — so *File → Export PowerPoint*
+  gave you no file and no error message. Every poster with a divider on
+  it was affected. The layer is a real parameter now, optional because
+  only the page on screen has one; the rest resolve attached arrow ends
+  from their stored coordinates, the same fallback an attachment already
+  uses when its target goes away.
+- **Line weight scales with the page, like everything else on it.**
+  Position, size and text are all page-relative; line weight was the one
+  exception, written straight out as screen pixels. Zooming 3.74× grew
+  the text 3.75× and the stroke 1.00×, so a line fell from 12.7% of the
+  text height to 3.4% — a hairline beside huge text zoomed in, and a
+  slab zoomed out. A stored weight now means *pixels on a page 720px
+  tall*, which is the height the 16:9 print page has always been built
+  at, so every existing deck keeps exactly the weight it had while an A0
+  finally gets ink in proportion to its own size. Measured after: the
+  text-to-line ratio is 7.4 at page heights of 393px, 768px and 2872px.
+  Dash patterns scale with the stroke they dash (a 9px gap on a stroke
+  shrunk to 0.5px read as dots), the invisible path you grab an arrow by
+  stays screen-measured but never narrower than the ink, and *Print
+  check* now warns about a line too thin to survive a press. Two export
+  bugs fell out with it: `.pptx` multiplied the weight by 12700 EMU —
+  which is one **point**, not one pixel — so every exported line was
+  1.33× too fat, and a rectangle and a line disagreed about the default.
+- **Line is drawn, not dropped.** Clicking it used to place a canned
+  horizontal rule that you then angled by dragging an endpoint. It is a
+  tool now, dragged out exactly like a shape. It is still an arrow with
+  no head underneath, so attachment, routing, dashes, colour, the
+  Objects pane and the PowerPoint connector export all still apply to it.
+- **An armed tool has a visible way out.** Escape always de-armed one,
+  but nothing said so, and an armed tool looks identical to no tool at
+  all apart from the cursor — so choosing Line or Shape and changing your
+  mind left you stuck. There is now a **Cancel** button beside the tools,
+  shown only while something is armed, and pressing a tool a second time
+  puts it away too. Cancel deliberately does *not* live in the toolbar
+  hint: the hint is the first thing dropped when the ribbon is tight, and
+  the way out must never be droppable.
+- **One toolbar, not two.** Back sat alone at the far right of a bar of
+  its own, so next to an armed drawing tool it read as the way out of
+  *that* — which it was not. Moving it in with File and Save fixed the
+  grouping and left the real problem: that bar was a second row of chrome
+  sitting on top of the editing tools, which is a second row taken off
+  the page. While editing there is now no bar at all — leaving, File,
+  Save, undo/redo and the save readout are the ribbon's first group.
+  Leaving reads **Close the editor**, or **Stop presenting** while
+  presenting, which still has a bar because it has no ribbon. Measured
+  after: one row, 98px tall, nothing wrapped or clipped, at ribbon widths
+  down to 950px. Below roughly 870px the row genuinely cannot hold
+  everything, and the answer there is the **Side bar** button — the
+  toolbar is never moved automatically, because a toolbar that teleports
+  over a choice you just made was tried and rejected.
+- **The toolbar hint says nothing in the resting state.** "Click an item
+  to select; drag to move; Del removes" sat in the middle of the toolbar
+  permanently, captioning the obvious. A hint earns its place by naming a
+  mode you have entered and cannot otherwise see — an armed drawing tool
+  looks identical to no tool at all apart from the cursor — so those
+  hints stay and the default-state one is gone.
+- **A ribbon heading no longer promises effects a poster cannot have.**
+  Animate is hidden on a printed page, which left the group labelled
+  "Effects" standing over nothing but an opacity slider. It reads
+  **Opacity** on a poster and **Effects** on a deck.
+- **Fixed: print decisions were being forgotten.** Both the JavaScript
+  and the Python rebuild a presentation from a fixed list of keys, so
+  anything unlisted is dropped. Crop marks never survived a reload at
+  all, and slide numbers and the page background never survived a project
+  save — each one a choice the editor offers and then quietly discarded.
+- **The page you are editing gets the window.** The strip of thumbnails
+  down the side was a permanent bite out of the only thing you were
+  looking at, and you edit one page at a time whether it is a poster or a
+  slide. It is now opened from a single button in the View group, named
+  for what it actually holds — *Versions* on a poster (drafts, variants
+  for another venue), *Slides* on a deck. *File* and *Save* moved to the
+  top bar for both kinds, since the panel that used to carry them is
+  closed by default and a deck would otherwise have had no Save button on
+  screen at all.
+
+  It now opens in the **same floating pane the Objects list uses** — same
+  shell, same corner, same close button — because both are lists you open
+  to look at the page from outside it. The strip is *moved* in rather
+  than rebuilt, so reordering, drag-and-drop, delete and the thumbnails
+  keep working with no second copy of any of them, and only one of
+  Objects, Versions and Print check can own that corner at a time.
+
+  **+ Create new version** copies the poster you are looking at — that is
+  what a variant is a variant *of* — and names it for you, because a pile
+  of near-identical unnamed A0 sheets is unusable. The page you were
+  already on is named at the same time, so the two read as a pair rather
+  than "empty slide" and "Version 2". The name is a starting point:
+  **Rename** changes it. Only posters are named this way; a deck's slides
+  are still titled by what is on them, which is more use than "Slide 3".
+  Because versions are now easy to accumulate, a poster exports **one
+  version at a time** — otherwise one A0 would quietly become three at
+  the print shop — and the toast says which one went.
+- **Fixed: "Margin & grid" drew no grid.** It worked out a row pitch from
+  the column width and the page's aspect, and then drew nothing with it —
+  so the overlay was a set of vertical stripes. You could line things up
+  across the page and had nothing to line them up against going down it.
+  Rows are now drawn at the pitch that was already being computed, which
+  makes the cells square, and both axes are ruled between cells (the
+  margin box already draws the outer edge).
+- **Fixed: inserting a line, a QR code or an image left the wrong tool
+  armed.** Those three are not tool buttons, so they never touched the
+  armed tool — they placed an item and handed it to you selected, which
+  looks exactly like select mode. Arm *Arrow*, click *Line*, and your
+  next click on the page dragged out an arrow instead of picking
+  something up.
+- **Fixed: controls that could not act on what you had selected.** "Same
+  size" counted the raw selection, but resizing skips arrows (no box to
+  resize), locked items and hidden ones — so two selected arrows were
+  offered the menu and then nothing happened when you chose from it. It
+  now counts what can actually be resized. *Arrange* shares its menu with
+  single-item actions, so it stays reachable and says why instead.
+- **Fixed: a poster was told to "click on the slide".** Five instructions
+  in the toolbar hint said *slide* to someone laying out a printed A0
+  sheet — the same leak the Page/Slide label and the Versions button had
+  already been fixed for.
+- **The save-destination button no longer truncates itself.** Its label is
+  a bare chevron now, so the `text-overflow: ellipsis` it carried had
+  nothing left to clip; an ellipsis on a live control hides a word the
+  same way hiding the button does.
 - **The poster editor got a frame of reference.** A poster is far bigger
   than the window, so the judgements a 16:9 slide lets you make by eye —
   is that aligned, is it too near the edge — could not be made at all, and

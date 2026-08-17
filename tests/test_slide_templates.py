@@ -52,7 +52,9 @@ def test_poster_and_slide_template_lists_are_never_mixed(out):
     sorts the page's own orientation first, previewing each template at
     its real aspect.
     """
-    assert "return !!l.poster===isPoster;" in out
+    # Blank is exempt from the split: it belongs to both families and
+    # leads each list (2026-08-07)
+    assert "return !!l.poster===isPoster&&l.id!=='blank';" in out
     assert "isPoster?'Poster layouts':'Slide layouts'" in out
     # ...and the poster family sorts the page's own orientation first,
     # previewing each template at its real aspect

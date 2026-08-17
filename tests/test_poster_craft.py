@@ -52,8 +52,13 @@ def test_text_scales_with_the_page_at_every_zoom(out):
     """
     assert "return Math.max(0.5,h*(size||2.6)/100)+'px';" in out
     assert "Math.max(9,h*(size||2.6)/100)" not in out
-    # resizing the page has to re-render what is sized from it
-    assert "if(s0&&l0){renderAnnots(l0,s0);paintSel(l0);}" in out
+    # resizing the page has to re-render what is sized from it -- and that
+    # now includes PLAYBACK, because line weight is page-relative too and a
+    # poster presented full screen kept whatever the layer last measured
+    # (2026-08-10)
+    assert ("if(s0&&l0&&(mode==='edit'"
+            "||deckEl.classList.contains('custom-page'))){" in out)
+    assert "if(mode==='edit') paintSel(l0);" in out
 
 
 def test_insert_groups_by_what_a_tool_does(out):
@@ -69,30 +74,41 @@ def test_insert_groups_by_what_a_tool_does(out):
     assert place == sorted(place), "the placing tools are out of order"
     assert draw == sorted(draw), "the drawing tools are out of order"
     assert max(place) < min(draw), "placing and drawing tools are interleaved"
-    # Objects is a way of LOOKING at the page, so it sits with View
-    assert out.index('id="objects-btn"') > out.index('id="vw-check"')
+    # Objects is a way of LOOKING at the page, so it lives in the View
+    # group -- asserted by CONTAINMENT, because View precedes Insert in
+    # the markup and is moved after it by CSS order, so source position
+    # says nothing about where it appears
+    view = out.split('class="rbn-grp rbn-standby rbn-view"')[1].split(
+        ">View</span>")[0]
+    assert 'id="objects-btn"' in view
 
 
-def test_a_poster_has_no_slides_anywhere(out):
-    """A poster is ONE PAGE. Every slide affordance was still reachable
-    from it: the thumbnail strip and "+ Add slide" were hidden only while
-    editing, so the builder still offered them; the ribbon group was
-    labelled "Slide"; the File menu offered slide numbers; and Auto-build
-    -- one slide per figure -- would turn a poster into seven of them.
-    (2026-08-07, user: "why does poster still have slides".)
+def test_a_poster_is_not_told_it_has_slides(out):
+    """A poster is ONE PAGE to work on, so none of the DECK machinery
+    applies: no permanent thumbnail strip, no slide counter, no step
+    arrows, no slide numbering, and no Auto-build (which makes one slide
+    per figure and would turn a poster into seven).
+
+    A poster may still have more than one page -- a draft, a variant --
+    but they are "versions", reached from a button rather than a panel
+    that dominates a page this big (2026-08-07, user: "having slides for
+    posters is ok, but the view doesn't need to be dominant").
     """
-    # the strip, the counter and the step arrows go in EVERY mode
+    # nothing deck-shaped is on screen by default
     assert ".deck.poster-page .dc-film{display:none!important;}" in out
     assert ".deck.poster-page .deck-count{display:none!important;}" in out
     assert ".deck.poster-page .deck-arrow{display:none!important;}" in out
     # the group is called Page, and only a deck is told about slides
     assert "slideLab.textContent=pg.poster?'Page':'Slide';" in out
     assert "if(nums) nums.hidden=!!pg.poster;" in out
-    assert "if(add) add.hidden=!!pg.poster;" in out
     # ...and a poster cannot GAIN pages through auto-build
     assert "['#mi-auto-figs','#mi-auto-figdocs'].forEach" in out
     # all of it keyed on the page, so switching back to 16:9 restores it
     assert "deckEl.classList.toggle('poster-page',!!pg.poster);" in out
+    # the versions strip is opt-in, and named for what it holds -- it now
+    # opens in the same floating pane the Objects list uses (2026-08-10)
+    assert 'class="selpane verpane" id="verpane"' in out
+    assert "add.textContent=pg.poster?'+ Create new version':'+ Add slide';" in out
 
 
 def test_spellcheck_is_on_for_editable_text(out):

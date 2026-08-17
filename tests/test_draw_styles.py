@@ -244,40 +244,53 @@ def test_document_actions_live_above_the_editing_tools(out):
     """
     assert 'id="deck-topslot"' in out
     assert "top.appendChild(el);" in out
-    # they STAY in the panel head, directly above the slide thumbnails;
-    # only a poster, which has no thumbnails to sit above, moves them up
-    assert "if(!pageOf().poster) return;" in out
+    # they move up for BOTH kinds now: the panel they used to sit in is
+    # closed by default while editing, so leaving them there would leave
+    # a deck with no Save button on screen (2026-08-07)
+    assert "if(!pageOf().poster) return;" not in out
     # ...and nothing in that row may wrap, or it stands taller than its
     # neighbours and the row stops looking inline
     assert "white-space:nowrap;display:inline-flex;" in out
-    # Present is in the ribbon's View group, between Guides and the
-    # group's own label (anchored on the label markup: a bare ">View<"
-    # also matches prose elsewhere in the page)
+    # Present is in the ribbon, not the top bar. It now sits in Output
+    # alongside Print check (2026-08-07) rather than in View, so it comes
+    # AFTER the View group's label. Anchored on the label markup: a bare
+    # ">View<" also matches prose elsewhere in the page.
     view_lab = out.index('<span class="rbn-lab">View</span>')
-    assert out.index('id="vw-menuwrap"') < out.index('id="dc-play"')
-    assert out.index('id="dc-play"') < view_lab
+    out_lab = out.index('<span class="rbn-lab">Output</span>')
+    assert view_lab < out.index('id="dc-play"') < out_lab
+    assert out.index('id="vw-check"') < out.index('id="dc-play"')
     # the save readout sits beside Save, not stranded past undo/redo
     assert "top.insertBefore(st,grp.nextSibling);" in out
-    # the top bar must survive edit mode WHENEVER it is carrying the File
-    # controls, or it would hide the only Save button in the app; see
-    # test_the_top_bar_earns_its_row_or_does_not_appear for the condition
-    assert "dt.hidden=editing&&!(slot&&slot.children.length);" in out
+    # the top bar must survive edit mode, or it would hide the only Save
+    # button in the app; see test_the_top_bar_always_earns_its_row
+    assert "function syncTopBar(){" in out
     # the panel's own 30px height must not follow the nodes into the bar
     assert ".dc-head .dbtn,.dc-head .dc-menuwrap .dbtn{height:30px;" in out
     assert ".dc-head .dbtn,.dc-menuwrap .dbtn{height:30px;" not in out
 
 
-def test_the_top_bar_earns_its_row_or_does_not_appear(out):
-    """A whole row was being held open by one redundant button: getting
+def test_the_top_bar_always_earns_its_row(out):
+    """A whole row was once held open by one redundant button: getting
     back to the document view is already on the presentations rail
-    (2026-08-07). The bar now shows only when it is carrying something —
-    which, while editing, means a poster, whose panel is hidden.
+    (2026-08-07), so the bar was made conditional on carrying something.
+
+    It is unconditional again, for a better reason: "Close the editor"
+    now lives there in every mode (2026-08-10), so the bar can never be
+    an empty strip -- and the way OUT of the editor can never vanish.
+
+    The decision is written once. It used to be written twice, at
+    deck.js:1184 and :7006, while both tests pinned a string that existed
+    at only one of them -- so the other could drift unseen.
     """
     assert 'id="deck-docs"' not in out
-    assert "dt.hidden=editing&&!(slot&&slot.children.length);" in out
+    assert "function syncTopBar(){" in out
+    assert "dt.hidden=editing&&!(slot&&slot.children.length);" not in out
+    assert "dt2.hidden=" not in out
+    # one call site per place the bar's contents can change
+    assert out.count("syncTopBar();") == 2
     # a page-size change can move where the File controls belong: a poster
     # hides the panel they live in, and they must not vanish with it
-    assert "fileToPanel();fileToRibbon();" in out
+    assert "fileToPanel();fileToRibbon();syncTopBar();" in out
 
 
 def test_view_sits_hard_right(out):

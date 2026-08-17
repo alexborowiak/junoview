@@ -73,8 +73,11 @@ def test_side_toolbar_defaults_on_for_portrait_posters_only(out):
     assert "guides.sideSet=true" in out
     assert "if(guides.sideSet) return !!guides.side;" in out
     assert ".deck.rbn-side .edit-tools.ribbon{position:absolute;" in out
-    # the stage, its arrows and the Objects pane make room
-    assert ".deck.rbn-side .deck-stage{padding-right:226px;}" in out
+    # the stage, its arrows and the Objects pane make room -- off ONE
+    # width, so the four of them cannot drift apart
+    assert ".deck.rbn-side{--rbn-side-w:226px;}" in out
+    assert (".deck.rbn-side .deck-stage{padding-right:"
+            "calc(var(--rbn-side-w) + 12px);}" in out)
     assert ".deck.rbn-side .deck-arrow.next{" in out
 
 

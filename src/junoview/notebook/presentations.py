@@ -83,6 +83,11 @@ def _as_presentations(obj: Any) -> list:
                     hid = [r for r in s["hidden"] if isinstance(r, str) and r]
                     if hid:
                         slide["hidden"] = hid
+                # the name given to a poster version. This rebuild drops
+                # every key it does not name, so an unlisted field does not
+                # survive a project save (2026-08-10).
+                if isinstance(s.get("label"), str) and s["label"].strip():
+                    slide["label"] = s["label"].strip()
                 slides.append(slide)
             elif s.get("kind") == "card" and s.get("anchor"):   # legacy
                 panes = [s["anchor"]] + [b for b in (s.get("beside") or [])
@@ -94,5 +99,15 @@ def _as_presentations(obj: Any) -> list:
             entry["folder"] = p["folder"].strip()
         if isinstance(p.get("page"), str) and p["page"].strip():
             entry["page"] = p["page"].strip()   # page-size preset id
+        # Print and display decisions that the editor writes and that this
+        # rebuild was silently discarding: crop marks never survived any
+        # reload, and slide numbers and the page background never survived
+        # a project save (2026-08-10).
+        if p.get("cropMarks"):
+            entry["cropMarks"] = 1
+        if p.get("showNums"):
+            entry["showNums"] = 1
+        if isinstance(p.get("pageBg"), str) and p["pageBg"].strip():
+            entry["pageBg"] = p["pageBg"].strip()
         out.append(entry)
     return out

@@ -11,6 +11,16 @@
          ribbon underneath is only for editing tools you use constantly.
          Mixing the two is what made the toolbar hard to read
          (2026-08-07). -->
+    <!-- Leaving is a document action, so it stands with the other
+         document actions rather than alone on the far right, where it
+         read as "undo whatever I just clicked" (2026-08-10, user: "the
+         back button is really confusing... move the back button with the
+         other options up the top"). It also has to SAY where it goes:
+         a bare "Back" beside an armed drawing tool looks like the way out
+         of that tool, and it is not — Cancel is. -->
+    <button class="dbtn" id="deck-exit"
+      title="Leave the editor. Nothing is closed or lost.">&#8617;
+      Close the editor</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -21,9 +31,6 @@
          sits with the document controls — top right, out of the way of
          the things you are actually clicking while you lay a page out -->
     <span class="deck-topright" id="deck-topright"></span>
-    <button class="dbtn" id="deck-exit"
-      title="Stop presenting and go back to the slide builder (Esc).
- Nothing is closed or lost.">&#8617; Back</button>
   </div>
   <div class="deck-main">
     <aside class="deck-create" id="deck-create" hidden>
@@ -103,10 +110,17 @@
             </div>
           </span>
         </span>
-        <button class="dbtn dc-icon" id="dc-undo" disabled
-          title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
-        <button class="dbtn dc-icon" id="dc-redo" disabled
-          title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        <!-- ONE cell, like the zoom stepper: undo and redo are the same
+             decision in two directions and must never end up on different
+             lines. In the side rail's wrapping flow they did exactly that
+             — undo closed one line and redo opened the next, alone and
+             stretched the full width of the rail (2026-08-16). -->
+        <span class="rbn-cell">
+          <button class="dbtn dc-icon" id="dc-undo" disabled
+            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+          <button class="dbtn dc-icon" id="dc-redo" disabled
+            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        </span>
         <span class="dc-spring"></span>
         <span class="deck-status" id="deck-status"></span>
       </div>
@@ -134,12 +148,23 @@
     <div class="deck-stagewrap" id="deck-stagewrap">
       <div class="edit-tools ribbon" id="edit-tools" hidden>
         <div class="rbn-static">
-          <!-- No File group here: File, Save, undo/redo and the save
-               readout are document actions and live in the top bar, where
-               they do not compete with the editing tools. Present stays
-               DOWN here though — it is a way of viewing the page, so it
-               belongs with the other view controls (2026-08-07, user:
-               "put the present with the view"). -->
+          <!-- The document actions live HERE while editing, not in a bar
+               of their own above the ribbon: a second row of chrome over
+               the editing tools is a second row stolen from the page
+               (2026-08-10, user: "I hate having the file, save, saved,
+               button above the customisation buttons"). They are moved in
+               at edit time and moved back out again, so the builder and
+               Present keep their own arrangement.
+               The label stays the fixed word "File" rather than the
+               document's name: a group label sizes its group, so a long
+               name would make the ribbon's width depend on what you
+               happened to call the file. Present is DOWN here too — it is
+               a way of viewing the page, so it belongs with the other
+               view controls (2026-08-07, user). -->
+          <span class="rbn-grp rbn-file">
+            <span class="rbn-row" id="rbn-file-row"></span>
+            <span class="rbn-lab">File</span>
+          </span>
           <span class="rbn-grp rbn-standby">
             <span class="rbn-row">
               <div class="dc-menuwrap">
@@ -190,19 +215,15 @@
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
-          <!-- View sits at the FAR RIGHT of the ribbon (2026-08-07, user:
-               "put the view box on the far right"), which CSS order does
-               without moving it out of the static block -->
+          <!-- TWO groups, not one. Guides and Objects change what YOU see
+               while working; Print check and Present are about the
+               finished thing, on paper or on a screen. They were lumped
+               together under "View", which described only half of them
+               (2026-08-07, user: "present and print check go together,
+               but objects and guides are different"). Both sit last —
+               right in the horizontal bar, bottom in the side one. -->
           <span class="rbn-grp rbn-standby rbn-view">
             <span class="rbn-row">
-              <!-- "Check" alone said nothing (2026-08-07, user: "what are
-                   things like 'check', what does that even mean?"). The
-                   label has to name what is being checked. -->
-              <button class="dbtn rbn-sm" id="vw-check"
-                aria-pressed="false"
-                title="Check this page before it goes to print: soft
- figures, anything off the page or inside the margin, unreadable text,
- empty frames">&#9873; Print check</button>
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
                    words. -->
@@ -235,17 +256,39 @@
                 </div>
               </span>
               <!-- Objects is a panel you show or hide — a way of LOOKING
-                   at the page, not a property of it — so it belongs here
-                   rather than in Page -->
+                   at the page, not a property of it -->
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><i data-ic="objects"></i> Objects</button>
+              <!-- A poster CAN have more than one page — a second draft, a
+                   variant for a different venue. That is worth having, but
+                   not worth a permanent strip down the side of a page this
+                   big, so it opens on demand and is called what it is
+                   (2026-08-07, user). -->
+              <button class="dbtn rbn-sm" id="vw-versions"
+                aria-pressed="false" hidden
+                title="Other versions of this poster — drafts and variants.
+ Opens the strip; close it again to give the page the whole window"
+                >&#9776; Versions</button>
+            </span>
+            <span class="rbn-lab">View</span>
+          </span>
+          <span class="rbn-grp rbn-standby rbn-out">
+            <span class="rbn-row">
+              <!-- "Check" alone said nothing (2026-08-07, user: "what are
+                   things like 'check', what does that even mean?"). The
+                   label has to name what is being checked. -->
+              <button class="dbtn rbn-sm" id="vw-check"
+                aria-pressed="false"
+                title="Check this page before it goes to print: soft
+ figures, anything off the page or inside the margin, unreadable text,
+ empty frames">&#9873; Print check</button>
               <button class="dbtn primary rbn-sm" id="dc-play"
                 title="Play this full screen, from this page">
                 <i data-ic="play"></i> Present</button>
             </span>
-            <span class="rbn-lab">View</span>
+            <span class="rbn-lab">Output</span>
           </span>
           <span class="rbn-grp rbn-insert">
             <span class="rbn-row">
@@ -282,10 +325,22 @@
                   <i data-ic="shapes"></i> Shape &#9662;</button>
                 <div class="sh-menu" id="sh-menu" hidden></div>
               </span>
-              <button class="dbtn rbn-sm" id="dc-line"
+              <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
+                aria-pressed="false"
                 title="Draw a line — a section divider for posters and
- slides. Drag its endpoints to reroute or angle it."
+ slides. Drag on the page to draw it, the same way you draw a shape; drop
+ an end on an item to attach it."
                 ><i data-ic="hline"></i> Line</button>
+              <!-- The way OUT of an armed tool. Escape has always done
+                   this, but nothing said so, so picking Line or Shape and
+                   changing your mind left you with no visible exit
+                   (2026-08-10, user: "there is no way to get out of the
+                   line create option if you don't want to create a line").
+                   It is hidden until a tool is armed, so it costs no
+                   width in the ribbon's resting state. -->
+              <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
+                title="Stop drawing and go back to selecting (Esc)"
+                >&#10005; Cancel</button>
               <button class="dbtn rbn-sm et" data-tool="arrow"
                 aria-pressed="false" title="Draw an arrow — a line with a
  head. Drop an end on an item to attach it, and the arrow follows that
@@ -345,7 +400,13 @@
             </span>
             <span class="rbn-lab">Arrange</span>
           </span>
-          <span class="rbn-grp">
+          <!-- Animate is the only "effect" in here, and a poster is a
+               printed page, so it is hidden there — leaving a heading
+               that promised effects over a lone opacity slider. The
+               heading now says what the group actually holds, which is
+               what read as "an animate option" on a poster (2026-08-10,
+               user). -->
+          <span class="rbn-grp rbn-fx">
             <span class="rbn-row">
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
@@ -570,6 +631,18 @@
           <button class="dbtn dc-icon" id="selpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="selpane-list"></div>
+      </aside>
+      <!-- The other pages, in the same shell as Objects: both are lists
+           you open to look at the page from outside it, so they should
+           look and behave the same (2026-08-10, user: "the bar for this
+           should appear like the objects bar"). The strip itself is MOVED
+           in here rather than rebuilt, so reordering, drag-and-drop,
+           delete and the thumbnails all keep working. -->
+      <aside class="selpane verpane" id="verpane" hidden>
+        <div class="selpane-h"><span id="verpane-title">Versions</span>
+          <button class="dbtn dc-icon" id="verpane-close"
+            title="Close">&#10005;</button></div>
+        <div class="selpane-list" id="verpane-body"></div>
       </aside>
       <button class="deck-arrow prev" id="deck-prev"
         title="Previous slide (&#8592;)"

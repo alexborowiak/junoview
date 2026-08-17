@@ -322,8 +322,18 @@ window.JunoPptx = (function () {
     circle: 'ellipse', round: 'roundRect', roundRect: 'roundRect',
     diamond: 'diamond', triangle: 'triangle', star: 'star5' };
 
+  /* Line weight arrives as a PERCENTAGE OF PAGE HEIGHT, the same currency
+     runProps already uses for text size. It used to arrive as canvas
+     pixels and was multiplied by 12700 EMU — which is one POINT, not one
+     pixel — so every exported line came out 1.33x too fat, and a rect and
+     a line disagreed on the default (2 vs 3) into the bargain. */
+  function lineWidthEmu(item, page, fallbackPct) {
+    var pct = item.swPct != null ? item.swPct : fallbackPct;
+    return Math.max(1, Math.round(pct / 100 * page.hPt * 12700));
+  }
+
   function rectShape(item, id, page) {
-    var stroke = '<a:ln w="' + Math.round((item.sw || 2) * 12700) + '">'
+    var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
     return '<p:sp>' + nvSp(id, item.name || ('Shape ' + id))
@@ -344,7 +354,7 @@ window.JunoPptx = (function () {
       + Math.round(Math.min(y1, y2)) + '"/><a:ext cx="'
       + Math.max(1, Math.round(Math.abs(x2 - x1))) + '" cy="'
       + Math.max(1, Math.round(Math.abs(y2 - y1))) + '"/>';
-    var ln = '<a:ln w="' + Math.round((item.sw || 3) * 12700) + '">'
+    var ln = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash)
       /* headEnd is the START of the line in OOXML, tailEnd the finish */

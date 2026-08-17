@@ -62,16 +62,26 @@ def test_crop_menu_gained_the_rectangular_trim_ui(out):
     assert ".crop-inset input{" in out
 
 
-def test_line_insert_and_toolbar_icons(out):
-    """+ Line inserts a horizontal rule — an arrow with no head
-    (a.nohead), so endpoint drags, colour, width, dash, lock and the
-    Objects pane come free — and the deck toolbar's insert buttons carry
-    real SVG icons in the app ribbon's 16-grid stroke style instead of
-    mismatched unicode glyphs.
+def test_line_is_drawn_like_a_shape(out):
+    """Line used to drop a canned 20%->80% horizontal rule the instant you
+    clicked it, and you angled it afterwards by dragging an endpoint. It
+    is a TOOL now, dragged out like a shape (2026-08-10, user: "I hate it
+    how when you click line, it just creates a line -- can it please be
+    drawn like it does with the shapes").
+
+    It is still an arrow with no head (a.nohead), so endpoint drags,
+    attachment, colour, width, dash, lock, the Objects pane and the
+    PowerPoint connector export all come free. The deck toolbar's insert
+    buttons carry real SVG icons in the app ribbon's 16-grid stroke style
+    instead of mismatched unicode glyphs.
     """
-    assert 'id="dc-line"' in out
-    assert ("s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1,"
-            in out)
+    assert 'id="dc-line" data-tool="line"' in out
+    # the old insert-immediately handler is GONE, not merely bypassed: left
+    # in place it would fire alongside the generic .et wiring, so one click
+    # would both arm the tool and drop a ready-made rule
+    assert "s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1," not in out
+    assert "tool==='rect'||tool==='arrow'||tool==='line'" in out
+    assert "?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1," in out
     # heads became a choice of shapes (2026-08-07); `nohead` is still what
     # makes a Line a line, now read through headEnd() rather than a
     # marker-end test at the draw site
@@ -100,7 +110,7 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     assert 'id="deck-topslot"' in out and 'id="deck-topright"' in out
     assert "function fileToRibbon" in out and "function fileToPanel" in out
     assert "if(editing) fileToRibbon(); else fileToPanel();" in out
-    assert ".deck.editing.poster-page .deck-create{display:none!important;}" in out
+    assert ".deck.editing .deck-create{display:none!important;}" in out
     assert 'id="fmt-txcol-btn"' in out and 'id="fmt-fillcol-btn"' in out
     assert 'id="fmt-txcol-menu"' in out and 'id="fmt-fillcol-menu"' in out
     assert "show('#fmt-fillcol-btn',showBg);" in out

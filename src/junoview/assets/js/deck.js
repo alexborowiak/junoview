@@ -376,9 +376,18 @@
     ['#layout-row','#layout-menu-grid'].forEach(function(sel){
       var row=$(sel); if(!row||row.dataset.built===variant) return;
       row.dataset.built=variant;row.innerHTML='';
-      var list=LAYOUTS.filter(function(l){return !!l.poster===isPoster;});
+      var list=LAYOUTS.filter(function(l){
+        return !!l.poster===isPoster&&l.id!=='blank';});
       if(isPoster) list=list.slice().sort(function(a,b){
         return (!!a.land===land?0:1)-(!!b.land===land?0:1);});
+      /* Blank goes FIRST, and to BOTH families. It carries no poster flag,
+         so the family filter used to drop it from posters altogether —
+         there was no way to ask for an empty page (2026-08-07, user).
+         Starting from nothing is the most basic choice there is, so it
+         leads. */
+      var blank=null;
+      LAYOUTS.forEach(function(l){if(l.id==='blank') blank=l;});
+      if(blank) list=[blank].concat(list);
       var h=document.createElement('div');h.className='lay-sec';
       h.textContent=isPoster?'Poster layouts':'Slide layouts';
       row.appendChild(h);
@@ -390,6 +399,14 @@
         var lb=document.createElement('span');lb.className='lay-lb';
         lb.textContent=layout.label;b.appendChild(lb);
         b.addEventListener('click',function(){
+          /* with no page yet, MAKE one rather than doing nothing — a
+             layout button that silently ignores the click reads as
+             broken (2026-08-07, user: "the layouts aren't selectable") */
+          if(!pres.slides||!pres.slides.length){
+            pres.slides=pres.slides||[];
+            pres.slides.push(emptySlide());
+            cur=0;
+          }
           var s=pres.slides[cur]; if(!s) return;
           applyLayout(s,layout);
           activePane=-1;markDirty();refresh();
@@ -471,12 +488,36 @@
     /* a poster has no slides, so it is never told about them: the ribbon
        group is "Page", and page numbering — which only means anything to
        a deck you step through — goes away entirely */
+    /* a heading must describe what is under it. On a poster Animate is
+       hidden, so "Effects" stood over nothing but an opacity slider */
+    var fxLab=deckEl.querySelector('.rbn-fx .rbn-lab');
+    if(fxLab) fxLab.textContent=pg.poster?'Opacity':'Effects';
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
     var nums=$('#mi-nums');
     if(nums) nums.hidden=!!pg.poster;
+    /* a poster keeps "+ Add" — its pages are versions, and you need a way
+       to make one; it just lives behind the Versions button now */
     var add=$('#film-add');
-    if(add) add.hidden=!!pg.poster;
+    if(add){
+      add.textContent=pg.poster?'+ Create new version':'+ Add slide';
+      add.title=pg.poster
+        ?'Copy this poster to a new version you can change independently. '
+          +'It is named for you; use Rename to change that.'
+        :'Add an empty slide after this one';
+    }
+    /* the same button for both, named for what it holds: a poster's other
+       pages are versions, a deck's are slides */
+    var vb=$('#vw-versions');
+    if(vb){
+      vb.hidden=false;
+      vb.innerHTML=pg.poster?'&#9776; Versions':'&#9776; Slides';
+      vb.title=pg.poster
+        ?'Other versions of this poster — drafts and variants. Opens the '
+          +'strip; close it again to give the page the whole window'
+        :'All the slides in this presentation. Opens the strip; close it '
+          +'again to give the slide the whole window';
+    }
     /* Auto-build makes ONE SLIDE PER FIGURE. On a deck that is the whole
        point; on a poster it silently turns one page into seven, which is
        how a poster ended up with slides at all. Place cells on the page
@@ -539,9 +580,15 @@
        at the old zoom and burst out of its box (2026-08-07, user: "when
        you zoom out the text fucks up"). Figure frames fit themselves the
        same way, so they need it too. */
-    if(mode==='edit'){
-      var s0=pres.slides[cur],l0=stage.querySelector('.annot-layer');
-      if(s0&&l0){renderAnnots(l0,s0);paintSel(l0);}
+    /* Line weight is page-relative for the same reason, so PLAYBACK needs
+       this too: a poster presented full screen, or a window resized
+       mid-talk, otherwise keeps whatever the layer measured before the
+       transition. The edit branch has always re-rendered; the letterboxed
+       playback branch never did (2026-08-10). */
+    var s0=pres.slides[cur],l0=stage.querySelector('.annot-layer');
+    if(s0&&l0&&(mode==='edit'||deckEl.classList.contains('custom-page'))){
+      renderAnnots(l0,s0);
+      if(mode==='edit') paintSel(l0);
     }
     syncGuides();   /* rulers and grid track whatever size the page ended up */
   }
@@ -608,6 +655,19 @@
       if(i%2) continue;                 /* shade alternate columns only */
       parts.push('<div class="pgrid-col" style="left:'+(g.m.x+i*g.colW)
         +'%;width:'+g.colW+'%;top:'+g.m.y+'%;bottom:'+g.m.y+'%;"></div>');
+    }
+    /* ROW lines. They were computed and then never drawn, so "Margin &
+       grid" put up vertical stripes and called them a grid — you could
+       line things up sideways and had nothing to line them up against
+       going down (2026-08-07, user: "the grid is broken"). Rows use the
+       same physical pitch as the columns, so the cells are square. */
+    for(i=1;i<g.rows;i++){
+      parts.push('<div class="pgrid-rule" style="top:'+(g.m.y+i*g.rowH)
+        +'%;left:'+g.m.x+'%;right:'+g.m.x+'%;"></div>');
+    }
+    for(i=1;i<GRID_COLS;i++){
+      parts.push('<div class="pgrid-vrule" style="left:'
+        +(g.m.x+i*g.colW)+'%;top:'+g.m.y+'%;bottom:'+g.m.y+'%;"></div>');
     }
     host.innerHTML='<div class="pgrid-lines">'+parts.join('')+'</div>';
   }
@@ -832,6 +892,19 @@
             +'4.5:1 — from a metre away on a poster floor, more.');
       }
     });
+    /* a line thin enough to break up or vanish on press. 0.25mm is the
+       usual print-shop floor for a reliable hairline; preflight is the
+       only place that speaks in real millimetres, so it is the only place
+       that can judge this. */
+    (s.annots||[]).forEach(function(a,i){
+      if(a.k!=='arrow'&&a.k!=='rect') return;
+      if(a.hide) return;
+      var mmw=swMm(a,pg);
+      if(mmw>=0.25) return;
+      add(i,'warn','Line may not print ('+mmw.toFixed(2)+'mm)',
+        'Thinner than about 0.25mm and a press can break it up or drop '
+        +'it. Select it and click Weight to thicken it.');
+    });
     /* the DPI chips the editor already puts on soft figures */
     if(slideEl) $$('.dpi-warn',slideEl).forEach(function(w){
       var cell=w.closest('.an-item');
@@ -918,6 +991,11 @@
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
+    /* BEFORE anything is measured: a stale column count is a wrong width,
+       so re-counting here is both the fix for a group that grew a control
+       since the last count and the only way the density rungs below are
+       judged against the row that is actually on screen */
+    sizeRibbonGroups();
     if(deckEl.classList.contains('rbn-side')) return;
     var cl=deckEl.classList;
     ERC.forEach(function(c){cl.remove(c);});
@@ -932,6 +1010,18 @@
     /* still over after every rung: drop the one group that is not about
        the selection, rather than let the row clip */
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-tight');
+    /* Below the floor the row genuinely does not fit even flattened, and
+       the only moves left — clip, scroll, wrap — are all forbidden.
+       Standing the toolbar on its end is the layout that has room, and
+       the Side button does exactly that; it is NOT done automatically,
+       because a toolbar that teleports over a choice you just made was
+       tried and rejected (2026-08-07).
+       Floor measured by squeezing the resting ribbon 10px at a time:
+       929px on 2026-08-10, 959px on 2026-08-16. The 30px is what View
+       costs once its three controls are honestly sized across two columns
+       instead of stacking into a third row and printing over their own
+       label; the tight rung's spacing gave 40px of the ~70px back. Below
+       it the remedy is Guides ▸ Toolbar on the right. */
   }
   function syncViewBtns(){
     var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full');
@@ -970,6 +1060,12 @@
           vlist.hidden=true;vbtn.setAttribute('aria-expanded','false');}
       });
     }
+    var vsb=$('#vw-versions');
+    if(vsb) vsb.addEventListener('click',function(){
+      showVerpane(!!$('#verpane').hidden);
+    });
+    var vpc=$('#verpane-close');
+    if(vpc) vpc.addEventListener('click',function(){showVerpane(false);});
     var r=$('#vw-rulers'),g=$('#vw-grid'),sd=$('#vw-side'),f=$('#vw-full');
     if(r) r.addEventListener('click',function(){
       guides.rulers=!guides.rulers;saveGuides();syncViewBtns();syncGuides();});
@@ -1108,9 +1204,7 @@
            poster hides the panel they live in, so without re-homing them
            they would disappear with it. Re-run the placement, then the
            bar re-decides whether it has earned its row. */
-        fileToPanel();fileToRibbon();
-        var dt2=$('.deck-top',deckEl),slot2=$('#deck-topslot');
-        if(dt2) dt2.hidden=(mode==='edit')&&!(slot2&&slot2.children.length);
+        fileToPanel();fileToRibbon();syncTopBar();
         /* switching to a portrait poster moves the toolbar to the side
            (unless you have already chosen otherwise) */
         applySideRibbon();
@@ -1223,6 +1317,10 @@
       if(willOpen) closePageMenu();
       lm.hidden=!willOpen;
       lb.setAttribute('aria-expanded',willOpen.toString());
+      /* this menu is 442px wide; opened from a toolbar standing on the
+         right-hand edge it ran straight off the screen (2026-08-07,
+         user). floatMenu clamps it into the viewport. */
+      if(willOpen) floatMenu(lb,lm);
     });
     document.addEventListener('click',function(e){
       if(!lm.hidden&&ld&&!ld.contains(e.target)) closeLayMenu();
@@ -1285,6 +1383,10 @@
       slides:(p.slides||[]).map(function(s){
         var o={layout:s.layout,
           panes:(s.panes||[]).map(ns)};
+        /* the name you gave a poster version. Not carrying it here meant
+           it survived until the next load and then silently became
+           "empty slide" again (2026-08-10) */
+        if(typeof s.label==='string'&&s.label) o.label=s.label;
         if(s.layout==='title'){
           o.title=String(s.title||'');o.sub=String(s.sub||'');
           if(s.tprops) o.tprops=JSON.parse(JSON.stringify(s.tprops));
@@ -1320,6 +1422,9 @@
     /* the page background survives every load path — normPres dropping
        it turned saved white posters navy again (2026-08-05 review) */
     if(typeof p.pageBg==='string'&&p.pageBg) out.pageBg=p.pageBg;
+    /* trim marks are a print decision and were being forgotten on every
+       reload, because nothing carried them across (2026-08-10) */
+    if(p.cropMarks) out.cropMarks=1;
     return out;
   }
   function registerShell(stem,data){
@@ -1876,6 +1981,49 @@
   }
   function dashFor(a){return LINE_DASH[lineStyle(a)]||'';}
 
+  /* ---- line weight, in the same currency as everything else ----------
+     Every dimension on a page is page-relative: x/y/w/h are percentages,
+     text is a percentage of page height resolved at render time (fontPx).
+     Line weight was the one exception — `a.sw` went straight out as CSS
+     px — so it was the only thing that did not move when the page did.
+     Measured: zooming 3.74x grew the text 3.75x and the stroke 1.00x, so
+     a line fell from 12.7% of the text height to 3.4% (2026-08-10, user:
+     "as you zoom in and out the line stays the same thick on the screen
+     whilst the presentation gets smaller").
+
+     `a.sw` now means "pixels on a page 720px tall". 720 is not arbitrary:
+     it is the height the 16:9 print page has always been built at, and it
+     is within 0.3% of a true 191mm at 96dpi. So every number already on
+     disk keeps exactly the weight it has today on a slide, and the same
+     number finally means something on a poster, where 3px of ink on a
+     1189mm sheet was a 0.8mm hairline beside 31mm text. */
+  var SW_REF_H=720;
+  var SW_DEFAULT=3;
+  function swOf(a){return (a&&a.sw!=null)?a.sw:SW_DEFAULT;}
+  function pageScale(layer){
+    var h=layer?(layer.getBoundingClientRect().height||0):0;
+    return (h||SW_REF_H)/SW_REF_H;
+  }
+  function strokePx(a,layer){
+    /* the same 0.5px guard fontPx uses: it only stops a collapse to zero,
+       it is not a legibility floor */
+    return Math.max(0.5,swOf(a)*pageScale(layer));
+  }
+  /* a dash pattern is measured in the same units as the stroke it dashes,
+     so it has to scale with it. Left unscaled, a 9px gap on a stroke that
+     had shrunk to 0.5px read as a row of dots, and a different pattern at
+     every zoom level. */
+  function dashPx(a,layer){
+    var d=dashFor(a); if(!d) return '';
+    var k=pageScale(layer);
+    return d.split(' ').map(function(n){
+      return (parseFloat(n)*k).toFixed(2);}).join(' ');
+  }
+  /* what this weight will actually print, for the controls and preflight */
+  function swMm(a,pg){
+    return swOf(a)/SW_REF_H*((pg||pageOf()).mm[1]||191);
+  }
+
   /* Head shapes are drawn in a 10x10 marker box. `ppt` is the OOXML
      head type; PowerPoint has no "bar", so it degrades to none there and
      the shape says so in its tooltip. */
@@ -1991,8 +2139,10 @@
     if(a.fillc) return a.fillc;
     return shapeFill(col,0x26/255);
   }
-  function drawShapeSvg(shp,col,sw,a,idx){
-    var dash=dashFor(a);
+  /* `sw` arrives already resolved to screen pixels by strokePx, and the
+     dash has to be resolved against the same page so the two agree */
+  function drawShapeSvg(shp,col,sw,a,idx,layer){
+    var dash=dashPx(a,layer);
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','an-shape-svg');
     svg.setAttribute('viewBox','0 0 100 100');
@@ -2040,7 +2190,9 @@
       }
       p.setAttribute('fill',fillVal);
       p.setAttribute('stroke',col);
-      p.setAttribute('stroke-width',sw||3);
+      p.setAttribute('stroke-width',sw);
+      /* the shape SVG is preserveAspectRatio="none", so without this the
+         outline would stretch with the box instead of staying round */
       p.setAttribute('vector-effect','non-scaling-stroke');
       p.setAttribute('stroke-linejoin','round');
       if(dash) p.setAttribute('stroke-dasharray',dash);
@@ -2626,6 +2778,18 @@
     vGroups=[];
     traceSel=0;   /* each slide starts on its first plot's trace */
     closeVFull();
+    if(!s&&mode==='edit'){
+      /* An editor opens on a blank PAGE, not on a notice explaining that
+         there is no page. "No slides yet" also silently disabled every
+         layout button, because applyLayout bails when there is nothing to
+         apply it to (2026-08-07, user). Making the page real fixes both. */
+      pres.slides=pres.slides||[];
+      pres.slides.push(emptySlide());
+      cur=pres.slides.length-1;
+      s=pres.slides[cur];
+      markDirty();
+      renderFilm();
+    }
     if(!s){
       stage.innerHTML='<div class="slide slide-empty"><p>No slides yet.'
         +'<br>Use <b>Create</b> to build some.</p></div>';
@@ -3159,9 +3323,13 @@
       if(a.k==='arrow'){
         var col=a.color||'#ff6b57';
         var ends=arrowEnds(layer,s,a,i);
-        var hs=headSize(a),sw=a.sw||3;
+        var hs=headSize(a),sw=a.sw||3,swPx=strokePx(a,layer);
         /* a head is scaled by the LINE's width as well as its own size
-           setting, so a fat arrow does not end in a pinhead */
+           setting, so a fat arrow does not end in a pinhead.
+           This reads the STORED weight, never the resolved pixels:
+           markerUnits defaults to strokeWidth, so the head already grows
+           with the page for free. Clamping on pixels instead would make
+           the head-to-line ratio change with the zoom. */
         var mw=hs.mul*Math.max(0.55,Math.min(2.2,sw/3));
         function mkHead(which,type){
           var h=HEAD_BY[type];
@@ -3197,11 +3365,11 @@
         ln.setAttribute('data-idx',i);
         ln.setAttribute('stroke',col);
         ln.setAttribute('fill','none');
-        ln.setAttribute('stroke-width',sw);
+        ln.setAttribute('stroke-width',swPx);
         ln.setAttribute('stroke-linecap',
           lineStyle(a)==='dot'?'round':'butt');
         ln.setAttribute('stroke-linejoin','round');
-        var dsh=dashFor(a);
+        var dsh=dashPx(a,layer);
         if(dsh) ln.setAttribute('stroke-dasharray',dsh);
         if(a.op!=null&&a.op<1) ln.style.opacity=a.op;
         if(mEnd) ln.setAttribute('marker-end',mEnd);
@@ -3210,6 +3378,11 @@
         var hit=document.createElementNS(AN_NS,'path');
         hit.setAttribute('d',d);
         hit.setAttribute('fill','none');
+        /* the grab path is CHROME, so its 16px stays screen-measured and
+           does not scale with the page — otherwise a zoomed-out poster
+           would leave a 2px target. But the ink can now be wider than 16px
+           on a big page, so take whichever is larger. */
+        hit.setAttribute('stroke-width',Math.max(16,swPx+10));
         hit.setAttribute('class','an-arrow-hit an-item');
         hit.setAttribute('data-idx',i);
         svg.appendChild(hit);
@@ -3244,10 +3417,10 @@
         r.style.left=a.x+'%';r.style.top=a.y+'%';
         r.style.width=(a.w||10)+'%';r.style.height=(a.h||10)+'%';
         if(svgShape){
-          r.appendChild(drawShapeSvg(shp,col,a.sw||3,a,i));
+          r.appendChild(drawShapeSvg(shp,col,strokePx(a,layer),a,i,layer));
         } else {
           r.style.borderColor=col;
-          r.style.borderWidth=(a.sw||3)+'px';
+          r.style.borderWidth=strokePx(a,layer)+'px';
           var lsD=dashFor(a);
           r.style.borderStyle=lsD
             ?(lineStyle(a)==='dot'?'dotted':'dashed'):'solid';
@@ -3649,6 +3822,16 @@
     if(shBtn&&!shBtn.hidden)
       shBtn.setAttribute('aria-pressed',
         (!!a.shape&&a.shape!=='rect').toString());
+    /* what this weight will actually PRINT. It goes in the tooltip, never
+       the label: a label whose width changed with the selected item would
+       make the ribbon's required width depend on what you clicked, and
+       the fit ladder has no rung left to absorb that. */
+    var lnBtn=$('#fmt-line');
+    if(lnBtn&&isNum&&!lnBtn.hidden){
+      var mmw=swMm(a);
+      lnBtn.title='Line thickness — '+(mmw<1?mmw.toFixed(2):mmw.toFixed(1))
+        +'mm on this page. Click to cycle thinner and thicker.';
+    }
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
@@ -3667,7 +3850,11 @@
     show('#fmt-argrid',false);
     show('#fmt-rotl',false);
     show('#fmt-rotr',false);
-    show('#fmt-samewrap',nSel>=2);
+    /* count what can actually be RESIZED, not what is selected. selRects
+       drops arrows (no box), locked and hidden items, so two selected
+       arrows offered "Same size" and then did nothing at all when you
+       picked from it (2026-08-07 audit). */
+    show('#fmt-samewrap',selRects().length>=2);
     /* the menu now covers single-item actions (order, rotate) too */
     show('#fmt-alignwrap',isNum);
     var plainText=isText&&typeof selAnnot==='number';
@@ -3789,9 +3976,23 @@
       if(vis&&!first) first=g;
     });
     if(first) first.classList.add('rbn-first');
-    /* how many columns each group needs to fill two rows ACROSS: half its
-       visible controls, rounded up. Done here because this is the only
-       place that knows what is currently showing. */
+    sizeRibbonGroups();
+    /* groups appearing or leaving changes the width the row needs, so the
+       density has to be re-judged every time the selection does */
+    fitEditRibbon();
+  }
+  /* How many columns each group needs to fill two rows ACROSS: half its
+     visible controls, rounded up.
+     This is a COUNT OF WHAT IS SHOWING RIGHT NOW, so it goes stale the
+     moment anything reveals a control without re-running it — and something
+     did. applyPage() un-hides #vw-versions ("Slides" / "Versions") after
+     the count, so View was sized for the two controls it had at count time,
+     the third landed in an implicit third grid row, and the row overran its
+     own VIEW label and printed on top of it (2026-08-16). Owning the count
+     in one function that fitEditRibbon also calls makes it self-healing:
+     any path that re-fits the ribbon re-counts it first. */
+  function sizeRibbonGroups(){
+    var bar=$('#edit-tools'); if(!bar) return;
     $$('.rbn-grp',bar).forEach(function(g){
       var row=g.querySelector('.rbn-row'); if(!row) return;
       var n=0;
@@ -3807,9 +4008,6 @@
       });
       row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));
     });
-    /* groups appearing or leaving changes the width the row needs, so the
-       density has to be re-judged every time the selection does */
-    fitEditRibbon();
   }
   function fmtApply(fn,quiet){
     var s=pres.slides[cur]; if(!s) return;
@@ -3854,7 +4052,11 @@
     if(a.k==='arrow')
       return {l:Math.min(a.x1,a.x2),r:Math.max(a.x1,a.x2),
               t:Math.min(a.y1,a.y2),b:Math.max(a.y1,a.y2)};
-    var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+    /* NO LAYER is a legitimate caller: the .pptx export walks every slide,
+       and only the one on screen has a rendered layer to measure. Without
+       one we fall through to the stored box, which is the same fallback
+       an attached endpoint already uses when its target goes away. */
+    var el=layer?layer.querySelector('.an-item[data-idx="'+i+'"]'):null;
     /* auto-sized items (text) AND aspect-fitted figure frames answer with
        their RENDERED rect — snapping must align to the visible plot, not
        a letterboxed stored box */
@@ -4180,11 +4382,23 @@
     document.addEventListener('mouseup',mu);
   }
   function startDraw(layer,s,kind,p0){
+    /* A LINE IS AN ARROW WITH NO HEAD, so it keeps k:'arrow' and inherits
+       endpoint dragging, attachment, routing, dashes, the Objects pane
+       and the PowerPoint connector export for nothing. `nohead` rather
+       than head:'none' because headEnd and both label functions read that
+       field to say "Line" instead of "Arrow". It is drawn rather than
+       dropped in ready-made (2026-08-10, user: "I hate it how when you
+       click line, it just creates a line — can it please be drawn like it
+       does with the shapes"), and it stays a theme-aware divider colour
+       instead of alarm-orange. */
     var a=(kind==='rect')
-      ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:3,
+      ?{k:'rect',x:p0.x,y:p0.y,w:0,h:0,color:'#ff6b57',sw:SW_DEFAULT,
         shape:(pendingShape!=='rect'?pendingShape:undefined)}
+      :(kind==='line')
+      ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
+        color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
       :{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,
-        color:'#ff6b57',sw:3};
+        color:'#ff6b57',sw:SW_DEFAULT};
     s.annots=s.annots||[];
     s.annots.push(a);
     var idx=s.annots.length-1;
@@ -4334,7 +4548,7 @@
         markDirty();setTool('select');
         renderAnnots(layer,s);
         selectAnnot(layer,s.annots.length-1);
-      } else if(tool==='rect'||tool==='arrow'){
+      } else if(tool==='rect'||tool==='arrow'||tool==='line'){
         startDraw(layer,s,tool,p);
       }
     });
@@ -4347,15 +4561,33 @@
     if(shb) shb.setAttribute('aria-pressed',(t==='rect').toString());
     var l=stage.querySelector('.annot-layer');
     if(l) l.className='annot-layer tool-'+t;
+    /* The way OUT, shown exactly when there is something to get out of.
+       Escape has always de-armed a tool, but nothing said so, and an
+       armed tool otherwise looks identical to no tool at all except for
+       the cursor (2026-08-10, user). It sits beside the tools rather than
+       in the hint, because the hint is the first thing the fit ladder
+       drops and the exit must never be droppable. */
+    var cx=$('#et-cancel');
+    if(cx) cx.hidden=(t==='select');
     var hint=$('#et-hint');
+    /* "the slide" is wrong on a poster, which is one printed page and has
+       no slides — the word leaked into every one of these (2026-08-07
+       audit; cf. the Page/Slide label and the Versions button) */
+    var pw=pageOf().poster?'the page':'the slide';
     if(hint) hint.textContent=
-      t==='text'?'Click on the slide to place a text box'
-      :t==='arrow'?'Drag on the slide to draw an arrow'
-      :t==='rect'?('Drag on the slide to draw a '
+      t==='text'?'Click on '+pw+' to place a text box'
+      :t==='arrow'?'Drag on '+pw+' to draw an arrow'
+      :t==='rect'?('Drag on '+pw+' to draw a '
         +(pendingShape==='rect'?'rectangle':pendingShape))
-      :t==='cell'?'Click on the slide to drop a cell frame, then pick a card '
+      :t==='line'?'Drag on '+pw+' to draw a line'
+      :t==='cell'?'Click on '+pw+' to drop a cell frame, then pick a card '
         +'from your notebook to fill it'
-      :'Click an item to select; drag to move; Del removes';
+      /* NOTHING in the resting state. A hint earns its place by telling
+         you about a mode you have just entered and cannot see; describing
+         the default state — click to select, drag to move — is a caption
+         on the obvious, sitting in the middle of the toolbar forever
+         (2026-08-10, user: "what is that even there?"). */
+      :'';
   }
   function deleteSel(){
     var s=pres.slides[cur];
@@ -5114,8 +5346,18 @@
      where they are and make one edge agree. Everything is measured off
      the VISUAL rect, so a letterboxed figure aligns by the plot you can
      see rather than by its padded frame. */
+  /* Arrange lives in a menu that also holds single-item actions, so it is
+     offered whenever anything is selected — which means these four CAN be
+     reached with nothing they are able to move. Say so rather than
+     appearing to be broken (2026-08-07 audit). */
+  function needTwo(items,what){
+    if(items.length>=2) return false;
+    toast('Select at least two items to '+what
+      +' — arrows, locked and hidden items don’t count');
+    return true;
+  }
   function alignSel(edge){
-    var items=selRects(); if(items.length<2) return;
+    var items=selRects(); if(needTwo(items,'line up')) return;
     var bb=selBBox(items);
     items.forEach(function(x){
       if(edge==='left') placeAt(x,bb.l,x.r.t);
@@ -5131,7 +5373,11 @@
      centres still look wrong — it is the whitespace between them the eye
      measures. The outermost two stay put and define the span. */
   function distributeSel(axis){
-    var items=selRects(); if(items.length<3) return;
+    var items=selRects();
+    if(items.length<3){
+      toast('Select at least three items to space them out evenly');
+      return;
+    }
     var horiz=(axis==='h');
     items.sort(function(p,q){
       return horiz?(p.r.l-q.r.l):(p.r.t-q.r.t);});
@@ -5521,23 +5767,11 @@
       +btoa(unescape(encodeURIComponent(svg)));
   }
   window.SemDeckQr=qrMatrix;   /* test hook */
-  /* ---- + Line: a horizontal rule, the poster section divider
-     (2026-08-04). It IS an arrow with no head (a.nohead), so endpoint
-     drags, colour, width, dash, lock and the Objects pane all come for
-     free. Inserted horizontal — that is what a divider wants to be —
-     and angled by dragging an endpoint. */
-  var lineBtn=$('#dc-line');
-  if(lineBtn) lineBtn.addEventListener('click',function(){
-    var s=pres.slides[cur];
-    if(!s){toast('Add a slide first');return;}
-    s.annots=s.annots||[];
-    s.annots.push({k:'arrow',x1:20,y1:50,x2:80,y2:50,nohead:1,sw:3,
-      color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'});
-    markDirty();
-    var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-    else renderSlide();
-  });
+  /* Line has NO handler here: it is a tool now (data-tool="line"), wired
+     generically with every other .et button, and drawn by dragging like a
+     shape. A listener here would fire ALONGSIDE that wiring, so clicking
+     Line would both arm the tool and drop a ready-made rule on the page
+     (2026-08-10). */
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){
     var s=pres.slides[cur];
@@ -5559,6 +5793,7 @@
     s.annots=s.annots||[];
     s.annots.push({k:'image',x:84,y:Math.max(2,94-h2),w:w2,h:h2,src:src});
     markDirty();
+    setTool('select');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
     else renderSlide();
   });
@@ -5575,6 +5810,7 @@
     s.annots.push({k:'image',x:Math.max(2,50-w/2),
       y:Math.max(2,50-h/2),w:w,h:h,src:src});
     markDirty();
+    setTool('select');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
   }
   var etImage=$('#et-image'),imgFile=$('#img-file');
@@ -5599,12 +5835,19 @@
   function floatMenu(btn,menu){
     menu.style.position='fixed';
     menu.style.zIndex='240';
+    menu.style.right='auto';menu.style.bottom='auto';
+    /* measure AFTER it is positionable, and clamp on BOTH axes: a tall
+       catalogue opened from low down, or a wide one opened from the
+       right-hand toolbar, would otherwise leave the screen */
     var r=btn.getBoundingClientRect();
-    menu.style.top=(r.bottom+4)+'px';
     var mw=menu.offsetWidth||170;
     menu.style.left=Math.max(8,
       Math.min(r.left,window.innerWidth-mw-8))+'px';
-    menu.style.right='auto';menu.style.bottom='auto';
+    var mh=menu.offsetHeight||0;
+    var top=r.bottom+4;
+    if(mh&&top+mh>window.innerHeight-8)
+      top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
+    menu.style.top=top+'px';
   }
   function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick,iconFn){
     var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
@@ -6267,8 +6510,13 @@
     }
     if(eb){
       eb.disabled=!s;
-      eb.innerHTML=(mode==='edit')
-        ?'&#9636; Swap to notebooks':'&#9998; Swap to edit view';
+      /* Only "get me into the editor" survives. Going the other way is
+         already the Notebooks button on the rail, and this duplicate was
+         badly named and awkwardly placed in the bargain (2026-08-07,
+         user: "the 'swap to notebooks' button is a stupid name and in a
+         stupid place"). */
+      eb.hidden=(mode==='edit');
+      eb.innerHTML='&#9998; Open the editor';
     }
   }
   /* the current slide's interactive frame editor — embedded inline as
@@ -6389,7 +6637,85 @@
     });
     return d;
   }
+  /* ---- the other pages, as a floating pane -----------------------------
+     The strip is MOVED into #verpane rather than rebuilt there, so
+     reordering, drag-and-drop, delete and the thumbnails keep working
+     with no second copy of any of it (2026-08-10, user: "the bar for this
+     should appear like the objects bar"). */
+  var filmHome=null;
+  function filmToPane(){
+    var body=$('#verpane-body'),list=$('#film-list'),add=$('#film-add');
+    if(!body||!list||filmHome) return;
+    filmHome={parent:list.parentNode,next:list.nextSibling};
+    body.appendChild(list);
+    if(add) body.appendChild(add);
+  }
+  function filmToPanel(){
+    if(!filmHome) return;
+    var list=$('#film-list'),add=$('#film-add');
+    if(list&&filmHome.parent){
+      if(filmHome.next&&filmHome.next.parentNode===filmHome.parent)
+        filmHome.parent.insertBefore(list,filmHome.next);
+      else filmHome.parent.appendChild(list);
+      if(add) filmHome.parent.appendChild(add);
+    }
+    filmHome=null;
+  }
+  function showVerpane(on){
+    var p=$('#verpane'); if(!p) return;
+    /* Objects and Versions are the same 232px shell in the same corner,
+       so only one of them can be the thing you are looking at */
+    if(on){
+      var sp=$('#selpane'); if(sp) sp.hidden=true;
+      var ob=$('#objects-btn');
+      if(ob) ob.setAttribute('aria-pressed','false');
+      var pf=$('#preflight'); if(pf) pf.hidden=true;
+      filmToPane();
+      renderFilm();
+    }
+    p.hidden=!on;
+    var t=$('#verpane-title');
+    if(t) t.textContent=pageOf().poster?'Versions':'Slides';
+    var vb=$('#vw-versions');
+    if(vb) vb.setAttribute('aria-pressed',on.toString());
+  }
+  /* ---- versions --------------------------------------------------------
+     A poster's other pages are drafts and variants, so a new one starts as
+     a COPY of what you are looking at — that is what a variant is a
+     variant OF — and it is named for you, because an unnamed pile of
+     near-identical A0 sheets is unusable. The name is a starting point:
+     Rename changes it. */
+  function nextVersionName(){
+    var n=0;
+    (pres.slides||[]).forEach(function(s){
+      var m=/^Version (\d+)$/.exec((s&&s.label)||'');
+      if(m) n=Math.max(n,+m[1]);
+    });
+    return 'Version '+(n+1);
+  }
+  function newVersion(){
+    var at=pres.slides.length?cur+1:0;
+    if(!pageOf().poster){
+      /* a DECK's slides are named by what is on them, which is more use
+         than "Slide 3" — so no label is stamped here */
+      pres.slides.splice(at,0,emptySlide());
+    } else {
+      var src=pres.slides[cur];
+      /* name the page you were already on first, so the two read as a
+         pair rather than "empty slide" and "Version 2" */
+      if(src&&!src.label) src.label=nextVersionName();
+      var cp=src?JSON.parse(JSON.stringify(src)):emptySlide();
+      cp.label=nextVersionName();
+      pres.slides.splice(at,0,cp);
+    }
+    cur=at;activePane=-1;selAnnot=null;selSet=[];
+    markDirty();refresh();
+    if(!$('#verpane').hidden) renderFilm();
+  }
   function slideTitle(s){
+    /* a version carries the name you were given or chose; only posters
+       get one, so a deck slide is still named by what is ON it */
+    if(s.label) return s.label;
     if(s.layout==='title') return s.title||'title slide';
     var cells=slideCells(s);
     for(var i=0;i<cells.length;i++){
@@ -6440,10 +6766,26 @@
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
       row.appendChild(lbl);
       var ctr=document.createElement('span');ctr.className='film-ctr';
-      [['↑',function(){moveSlide(i,-1);},'Move slide up'],
-       ['↓',function(){moveSlide(i,1);},'Move slide down'],
-       ['✕',function(){delSlide(i);},'Delete slide']]
-        .forEach(function(p){
+      var poster=pageOf().poster;
+      var acts=[['↑',function(){moveSlide(i,-1);},
+                 poster?'Move this version up':'Move slide up'],
+                ['↓',function(){moveSlide(i,1);},
+                 poster?'Move this version down':'Move slide down'],
+                ['✕',function(){delSlide(i);},
+                 poster?'Delete this version':'Delete slide']];
+      /* an autoname is a starting point, not a decision. This goes on a
+         BUTTON rather than a double-click on the row: the row's own click
+         re-renders the strip, so by the time a dblclick arrived the node
+         it was editing had already been replaced (2026-08-10). */
+      if(poster) acts.splice(2,0,['✎',function(){
+        var s2=pres.slides[i]; if(!s2) return;
+        var v=prompt('Name this version:',s2.label||slideTitle(s2));
+        if(v==null) return;
+        v=v.trim();
+        if(v) s2.label=v; else delete s2.label;
+        markDirty();renderFilm();
+      },'Rename this version']);
+      acts.forEach(function(p){
         var b=document.createElement('button');b.className='film-mini';
         b.textContent=p[0];
         b.title=p[2];
@@ -6748,17 +7090,26 @@
      just the slide strip, and posters (one page, no slides) drop the
      panel entirely. ---- */
   var fileMoved=[];
-  /* Where the document controls live while editing.
-     They STAY in the panel head — directly above the slide thumbnails —
-     because that is where they belong and where they were asked for
-     ("put the file and save above the slide thumbnails"). They only move
-     to the top bar for a POSTER, which hides the panel entirely: a poster
-     is one page and has no thumbnails to sit above, but it still needs a
-     Save button (2026-08-07). */
+  /* Where the document controls live while editing: the ribbon's own File
+     group. They were in the panel head, then in a bar of their own above
+     the ribbon — and that bar was a second row of chrome sitting on top
+     of the editing tools, which is a second row taken off the page
+     (2026-08-10, user: "I hate having the file, save, saved, button above
+     the customisation buttons... I think I have said this before"). One
+     bar now. */
   function fileToRibbon(){
-    var top=$('#deck-topslot');
+    var top=$('#rbn-file-row');
     if(!top||fileMoved.length) return;
-    if(!pageOf().poster) return;          /* the panel head keeps them */
+    /* Leaving comes with them, so the whole "what am I doing with this
+       document" set is one group (2026-08-10, user: "move the back button
+       with the other options"). It goes in FIRST so it leads the row. */
+    var xb=$('#deck-exit');
+    if(xb){
+      fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});
+      top.appendChild(xb);
+    }
+    /* The panel is hidden while editing, for a deck as well as a poster,
+       so its head cannot hold File and Save any more. */
     var head=deckEl.querySelector('.dc-head');
     if(head) [].slice.call(head.children).forEach(function(el){
       if(el.classList.contains('dc-spring')) return;
@@ -6767,13 +7118,41 @@
     });
     /* "Swap to notebooks" does NOT come up here. It is the same journey
        the rail's Docs button already offers, and it was the widest thing
-       in the bar (2026-08-07, user). It stays in the panel, where a deck
-       can still reach it. */
+       in the bar (2026-08-07, user: "a stupid name and in a stupid
+       place"). It stays in the panel, which is where it means something:
+       the builder, before you have opened the editor. */
     /* the save READOUT belongs beside Save, not stranded past undo/redo:
        "all the save stuff together" (2026-08-07) */
     var st=$('#deck-status'),grp=deckEl.querySelector('.dc-savegrp');
     if(st&&grp&&grp.parentNode===top&&st.parentNode===top)
       top.insertBefore(st,grp.nextSibling);
+  }
+  /* The top bar used to appear only when File and Save had been borrowed
+     into it, so it could vanish and take the only way out with it. Now
+     "Close the editor" lives in it in every mode, so it always earns its
+     row. Written ONCE: the old test was pinned twice and the string it
+     pinned existed in one place, so the other copy could drift unseen
+     (2026-08-10). */
+  function syncTopBar(){
+    var dt=$('.deck-top',deckEl);
+    /* While EDITING there is no bar at all: everything that was in it has
+       moved into the ribbon's File group, and an empty strip above the
+       tools is pure stolen height. Presenting still has one — there is no
+       ribbon then, and Back has to live somewhere. */
+    if(dt) dt.hidden=(mode==='edit');
+    var xb=$('#deck-exit');
+    if(xb){
+      /* say where it GOES. "Back" beside an armed drawing tool reads as
+         the way out of that tool, which is Cancel's job. */
+      var presenting=(mode==='view');
+      xb.innerHTML=presenting?'&#8617; Stop presenting'
+        :'&#8617; Close the editor';
+      xb.title=presenting
+        ?'Stop presenting and go back to the builder (Esc). Nothing is '
+          +'closed or lost.'
+        :'Leave the editor and go back to the builder. Nothing is closed '
+          +'or lost.';
+    }
   }
   function fileToPanel(){
     /* restore in reverse so each insertBefore anchor is still valid */
@@ -6800,8 +7179,7 @@
        leaving the bar with nothing but a redundant button and a whole row
        of wasted height (2026-08-07). fileToRibbon has already run, so the
        slot's contents are the honest test. */
-    var dt=$('.deck-top',deckEl),slot=$('#deck-topslot');
-    if(dt) dt.hidden=editing&&!(slot&&slot.children.length);
+    syncTopBar();
     document.body.classList.toggle('creating-docs',
       (creating||editing)&&!deckEl.hidden);
     document.body.classList.toggle('slide-editing',
@@ -6814,6 +7192,10 @@
       var sp=$('#selpane'); if(sp) sp.hidden=true;
       var ob=$('#objects-btn');
       if(ob) ob.setAttribute('aria-pressed','false');
+      /* ...and so is the Versions pane. Put the strip back where the
+         builder expects to find it before the builder renders. */
+      showVerpane(false);
+      filmToPanel();
     }
     var db=$('#et-del'); if(db) db.disabled=true;
     var fb=$('#et-fmt'); if(fb) fb.hidden=true;
@@ -6863,6 +7245,25 @@
     setUIMode(m||'view');
     routeSync();
   }
+  /* WHAT GOES OUT. A poster is one page: its other pages are drafts and
+     variants, and you send one to the print shop, not the pile. Since
+     "+ Create new version" makes those easy to accumulate, exporting all
+     of them would quietly turn one A0 into three (2026-08-10). A deck's
+     slides ARE the deck, so they all go. */
+  function outputSlides(){
+    var all=(pres.slides||[]).map(function(s,i){return {s:s,i:i};});
+    if(!pageOf().poster||all.length<2) return all;
+    var k=Math.min(Math.max(cur,0),all.length-1);
+    return all[k]?[all[k]]:all;
+  }
+  /* named for the toast, so it is never a silent choice */
+  function outputNote(){
+    var all=(pres.slides||[]).length;
+    if(!pageOf().poster||all<2) return '';
+    var s=pres.slides[Math.min(Math.max(cur,0),all-1)];
+    return ' Sent "'+((s&&s.label)||slideTitle(s||{}))+'" only — a poster '
+      +'goes out one version at a time; open Versions to switch.';
+  }
   function closeDeck(){
     try{
       if(document.fullscreenElement)
@@ -6870,6 +7271,7 @@
     }catch(err){}
     closeVFull();
     fileToPanel();          /* the panel gets its controls back */
+    showVerpane(false);filmToPanel();   /* ...and so does the strip */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
@@ -6941,13 +7343,23 @@
   /* ONE mode toggle: swaps between the slide editor and the notebook view */
   var editBtn=$('#dc-edit');
   if(editBtn) editBtn.addEventListener('click',function(){
-    if(mode==='edit') setUIMode('create');
+    /* "Swap to notebooks" now actually goes to the notebooks. It used to
+       run setUIMode('create'), landing you in the presentation BUILDER —
+       slide layouts, slide strip, the lot — which is not where the label
+       said you were going and is meaningless for a poster (2026-08-07,
+       user: "it takes you to the view for presentations"). */
+    if(mode==='edit') closeDeck();
     else if(pres.slides[cur]) setUIMode('edit');
   });
   var delBtn=$('#et-del');
   if(delBtn) delBtn.addEventListener('click',deleteSel);
+  var cxBtn=$('#et-cancel');
+  if(cxBtn) cxBtn.addEventListener('click',function(){setTool('select');});
   $$('#edit-tools .et').forEach(function(b){
-    b.addEventListener('click',function(){setTool(b.dataset.tool);});
+    /* pressing an armed tool again is the second way out, and the one
+       people try first */
+    b.addEventListener('click',function(){
+      setTool(tool===b.dataset.tool?'select':b.dataset.tool);});
   });
   /* ---- "+ Shapes" dropdown: choose a shape, then draw it ---- */
   function shapeIcon(shp){
@@ -7250,12 +7662,7 @@
   },true);
 
   /* ---------- create mode: slide + presentation operations ---------- */
-  $('#film-add').addEventListener('click',function(){
-    var at=pres.slides.length?cur+1:0;
-    pres.slides.splice(at,0,emptySlide());
-    cur=at;activePane=-1;
-    markDirty();refresh();
-  });
+  $('#film-add').addEventListener('click',newVersion);
   renderLayoutPicker();
   /* title-slide text fields (panel); the slide canvas mirrors them */
   [['#ts-title','title'],['#ts-sub','sub']].forEach(function(p){
@@ -7788,8 +8195,9 @@
     bst.textContent='.print-page,.print-page .slide{background:'+bg
       +'!important;}@media print{html,body{background:'+bg+'!important;}}';
     root.appendChild(bst);
-    pres.slides.forEach(function(s,i){
-      cur=i;
+    outputSlides().forEach(function(ent,i){
+      var s=ent.s;
+      cur=ent.i;
       var page=document.createElement('div');page.className='print-page';
       var slideEl=document.createElement('div');
       if(s&&s.layout==='title'){
@@ -7959,7 +8367,12 @@
       arc:a.arc,font:fontPpt(a.font)};
   }
   /* one slide's annots -> spec items, plus a tally of what could not go */
-  function pptxItems(s,note,ink){
+  /* `layer` is the rendered annotation layer for THIS slide, or null. It is
+     a real parameter because it used to be a bare undeclared identifier:
+     reading it threw ReferenceError, so exporting any deck or poster that
+     contained a single line or arrow produced no file and — because the
+     throw escaped before the toast — no message either (2026-08-10). */
+  function pptxItems(s,note,ink,layer){
     var items=[];
     if(s.layout==='title'){
       ['t','s'].forEach(function(which){
@@ -7989,12 +8402,14 @@
           0x2b/255);
         items.push({t:'rect',x:a.x,y:a.y,w:a.w||20,h:a.h||14,rot:a.rot,
           op:a.op,color:a.color,fill:fillCol,grad:a.grad,
-          sw:a.sw,dash:LINE_PPT[lineStyle(a)],shape:a.shape});
+          swPct:swOf(a)/SW_REF_H*100,
+          dash:LINE_PPT[lineStyle(a)],shape:a.shape});
       } else if(a.k==='arrow'){
         var ea=arrowEnds(layer,s,a,0);
         var hz=headSize(a);
         items.push({t:'line',x1:ea.x1,y1:ea.y1,x2:ea.x2,y2:ea.y2,
-          color:a.color,sw:a.sw,dash:LINE_PPT[lineStyle(a)],op:a.op,
+          color:a.color,swPct:swOf(a)/SW_REF_H*100,
+          dash:LINE_PPT[lineStyle(a)],op:a.op,
           head:(HEAD_BY[headEnd(a)]||{}).ppt||'none',
           tail:(HEAD_BY[headStart(a)]||{}).ppt||'none',
           hsz:hz.ppt,curve:a.curve,bend:a.bend});
@@ -8039,8 +8454,11 @@
     var out=JunoPptx.build({
       title:pres.name||'presentation',
       widthMm:pg.mm[0],heightMm:pg.mm[1],bg:bg,
-      slides:pres.slides.map(function(s){
-        return {bg:bg,items:pptxItems(s,note,ink)};
+      slides:outputSlides().map(function(ent){
+        /* only the slide on screen has a live layer; the rest resolve
+           attached arrow ends from their stored coordinates */
+        var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
+        return {bg:bg,items:pptxItems(ent.s,note,ink,lay)};
       }),
     });
     var a=document.createElement('a');
@@ -8048,7 +8466,7 @@
     a.download=(pres.name||'presentation')+'.pptx';
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
-    var msg='PowerPoint saved — text stays editable';
+    var msg='PowerPoint saved — text stays editable'+outputNote();
     if(note.skipped) msg+='. '+note.skipped+' cell'
       +(note.skipped===1?'':'s')+' could not convert (code or a table — '
       +'use Export PDF for those)';

@@ -21,6 +21,11 @@ body.deck-open{overflow:hidden;}
   background:#ffffff0a;color:#cdd9e3;padding:6px 11px;border-radius:6px;
   cursor:pointer;transition:all .15s;}
 .dbtn:hover{border-color:var(--cyan);color:#fff;}
+/* the way out of a modal state: coral so it reads as "stop", but an
+   outline rather than a fill, because it undoes rather than commits */
+.dbtn.dbtn-warn{border-color:#ff6b5766;color:#ff9d8c;}
+.dbtn.dbtn-warn:hover{border-color:#ff6b57;color:#ffbcaf;
+  background:#ff6b571a;}
 .dbtn.primary{background:var(--cyan);border-color:var(--cyan);color:#fff;
   font-weight:600;box-shadow:0 0 0 1px #39a9c066,0 2px 12px #39a9c066;}
 .dbtn.primary:hover{background:#4bbcd2;border-color:#4bbcd2;
@@ -480,6 +485,10 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
   padding:0 12px;display:inline-flex;align-items:center;gap:6px;
   line-height:1;letter-spacing:.04em;white-space:nowrap;}
 .dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
+/* the undo/redo pair travels between the panel head and the ribbon, so its
+   wrapper has to answer to both: 30px and the head's own spacing here,
+   26px and the grid's spacing once .rbn-cell's own rule takes over there */
+.dc-head .rbn-cell{height:30px;gap:6px;}
 .dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
 /* ---- POSTER MODE chrome: SAME density as slides (2026-08-04). The
    2026-07-29 "bigger chrome" upsizing inflated every ribbon chip —
@@ -508,9 +517,10 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
 .dc-mi[aria-pressed="true"]{color:#fff;}
 .dc-mi[aria-pressed="true"]::before{content:"\2713  ";color:var(--cyan);}
 .dc-mi[disabled]{opacity:.45;cursor:default;}
+/* the label is a bare chevron now, so there is nothing left to clip —
+   and an ellipsis on a live control is hiding a word by another name */
 .dbtn.dc-target{font-family:var(--mono);font-size:10.5px;
-  letter-spacing:.02em;max-width:230px;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;}
+  letter-spacing:.02em;white-space:nowrap;}
 .dbtn.dc-target.tg-file{border-color:#46a89266;color:#8fd8c4;}
 body.light .dc-mhead{color:var(--ink-3);}
 body.creating-docs .docs{margin-left:min(var(--dc-w),94vw);}
@@ -763,10 +773,13 @@ body.slide-editing .apptop{display:none;}
 .dc-savegrp .dc-menuwrap>.dbtn:hover{border-left-color:var(--cyan);}
 /* View last, hard right; the hint after it. Everything else keeps source
    order, so the contextual groups still land between Slide and View. */
-/* View last and hard against the right edge. ONLY it may carry the auto
-   margin: with the hint carrying one too, the free space was split
-   between them and View stopped 300px short of the edge. */
+/* View and Output last, hard against the right edge. ONLY the first of
+   them may carry the auto margin: with the hint carrying one too, the
+   free space was split between them and View stopped 300px short. The
+   same order puts them at the BOTTOM of the side toolbar, since "last"
+   means the same thing in a column. */
 .rbn-view{order:90;margin-left:auto;border-left:1px solid #ffffff1c;}
+.rbn-out{order:91;}
 .edit-tools.ribbon .et-hint{order:85;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
   margin-left:16px;padding-left:16px;border-left:1px solid #ffffff1a;
@@ -816,14 +829,25 @@ body.slide-editing .apptop{display:none;}
   justify-content:center;font-size:10.5px;padding-left:8px;
   padding-right:8px;}
 .rbn-row .fmt-range{width:96px;}
-/* File is assembled in JS from the docked panel, so it is compacted here
-   rather than in markup: capped width, so it wraps into two tidy rows of
-   small buttons instead of one very wide one that pushed everything else
-   off the ribbon */
-/* File is assembled in JS from the docked panel, so its buttons are
-   sized here rather than in markup */
-#rbn-file .dbtn{padding:3px 8px;font-size:10.5px;}
-#rbn-file .deck-status{font-size:10px;}
+/* The File group is assembled in JS out of nodes that were built for the
+   docked panel, so it is sized here rather than in markup. They arrive
+   carrying the panel's 30px height, which would burst the ribbon's 26px
+   grid rows and push the whole bar taller. */
+.rbn-file .dbtn{padding:3px 8px;font-size:10.5px;height:26px;
+  box-sizing:border-box;display:inline-flex;align-items:center;
+  justify-content:center;line-height:1;white-space:nowrap;}
+.rbn-file .deck-status{font-size:10px;height:26px;box-sizing:border-box;
+  display:inline-flex;align-items:center;white-space:nowrap;}
+/* An empty readout must not draw an empty pill in the middle of the group.
+   `.deck-status:empty{display:none}` further up loses to this rule's higher
+   specificity — the same author-display-beats-[hidden] trap noted in
+   app.css. It is hidden rather than removed because it still has to hold
+   its cell: dropping it out of the grid shuffles undo and redo into the
+   wide first column, and a 134px undo arrow is worse than a blank cell
+   (2026-08-16). */
+.rbn-file .deck-status:empty{visibility:hidden;}
+.rbn-file .dc-menuwrap,.rbn-file .dc-savegrp{display:inline-flex;
+  align-items:center;height:26px;}
 /* the contextual format groups flow into the same rows as the static
    ones. Hidden means GONE (2026-08-04): keeping them in layout as
    visibility:hidden reserved every row they would wrap into — on a
@@ -862,10 +886,21 @@ body.slide-editing .apptop{display:none;}
   padding-left:5px;padding-right:5px;gap:2px;}
 .deck.erc-tight .dbtn.rbn-big i,.deck.erc-tight .dbtn.rbn-big svg{
   width:15px;height:15px;}
-.deck.erc-tight .rbn-grp{padding-left:3px;padding-right:3px;}
-.deck.erc-tight .rbn-row{column-gap:3px;}
+/* The last rung spends SPACING, never type and never an icon: measured at
+   a 909px ribbon, dropping the group padding, the column gap, the button
+   padding and the icon gap by 1px each buys 40px, where taking the type
+   from 9px to 8px would buy 48px and be unreadable. Sizing View honestly
+   (two columns for its three controls, rather than a third row printed
+   over its own label) costs about 60px, so this is most of it back
+   (2026-08-16). */
+.deck.erc-tight .rbn-grp{padding-left:2px;padding-right:2px;}
+.deck.erc-tight .rbn-row{column-gap:2px;}
 .deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{
-  font-size:9px;padding-left:4px;padding-right:4px;gap:3px;}
+  font-size:9px;padding-left:3px;padding-right:3px;gap:2px;}
+/* Narrowing the square glyph buttons (zoom's minus and plus, undo and
+   redo) was tried here and measured at zero: none of them is the widest
+   control in its grid column, so the column keeps the width of the worded
+   button above it and the saving never reaches the row. */
 .deck.erc-tight .rbn-lab{font-size:7.5px;letter-spacing:.06em;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
@@ -1070,10 +1105,23 @@ select#fmt-font[hidden]{display:none;}
    a .dbtn they sit inline beside the label */
 .dbtn .bic{display:inline-block;vertical-align:-2px;width:13px;
   height:13px;margin-right:4px;}
-/* a POSTER is one page: no slide strip, no docked panel at all — the
-   File controls ride in the ribbon while editing (2026-08-05, user:
-   "the poster mode doesn't really need slides") */
-.deck.editing.poster-page .deck-create{display:none!important;}
+/* WHILE EDITING, the page gets the window. The strip of other pages is
+   opened from a button and closed again — for a deck as much as for a
+   poster, because a presentation being edited is still one page at a time
+   and the strip was taking a permanent bite out of it (2026-08-07, user:
+   "presentation mode still has the slides as a prominent feature"). */
+.deck.editing .deck-create{display:none!important;}
+/* ...and the other pages live in a floating pane instead, the same shell
+   the Objects list uses, so the two read as siblings (2026-08-10). */
+.verpane .selpane-list{display:flex;flex-direction:column;gap:6px;}
+#verpane .film-list{display:flex;flex-direction:column;gap:6px;
+  overflow:visible;flex:none;padding:0;}
+#verpane .film-row{width:100%;}
+/* a version carries a name you chose, so it must not be clipped — unlike
+   an Objects row, whose label is derived from what is on the page */
+#verpane .film-t{overflow:visible;text-overflow:clip;white-space:normal;
+  overflow-wrap:anywhere;}
+#verpane .addslide{width:100%;margin-top:2px;}
 /* A POSTER IS ONE PAGE. It has no slides, so it gets none of the slide
    machinery in ANY mode — the strip of thumbnails and "+ Add slide" were
    still there in the builder, hidden only while editing (2026-08-07,
@@ -1081,11 +1129,6 @@ select#fmt-font[hidden]{display:none;}
 .deck.poster-page .dc-film{display:none!important;}
 .deck.poster-page .deck-count{display:none!important;}
 .deck.poster-page .deck-arrow{display:none!important;}
-/* the borrowed File controls sit inline in their ribbon group */
-#rbn-file-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
-#rbn-file-row .deck-status{margin-left:2px;}
-/* panel styling gave Swap-to-notebooks width:100% — inline here */
-#rbn-file-row #dc-edit{width:auto;}
 /* the colour popups: one row of swatches, roomy hit targets */
 .sw-menu{display:flex;align-items:center;gap:7px;padding:9px 11px;}
 .sw-menu .fmt-lab{display:none;}
@@ -1216,6 +1259,12 @@ select#fmt-font[hidden]{display:none;}
 .page-light .pgrid-margin{border-color:#1f6f8a8c;}
 .pgrid-col{position:absolute;top:0;bottom:0;background:#39a9c00f;}
 .page-light .pgrid-col{background:#39a9c014;}
+/* the grid's own lines — faint, so they guide without competing with the
+   work sitting on top of them */
+.pgrid-rule{position:absolute;height:0;border-top:1px solid #39a9c024;}
+.pgrid-vrule{position:absolute;width:0;border-left:1px solid #39a9c024;}
+.page-light .pgrid-rule{border-top-color:#1f6f8a2e;}
+.page-light .pgrid-vrule{border-left-color:#1f6f8a2e;}
 /* guides you drag off the rulers yourself; they belong to the poster and
    are saved with it, but are still guides — never ink */
 .cguides{position:absolute;inset:0;z-index:5;pointer-events:none;}
@@ -1326,32 +1375,66 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
    piece explicitly — the height, the row grid and the clipping. It did
    not, so the toggle appeared to do nothing (2026-08-07, user: "the
    ribbon stays fucking horizontal"). */
+/* ONE width for the rail, so the stage's padding, the rulers, the next
+   arrow and the Objects pane cannot drift apart — they were four separate
+   numbers that all meant "however wide the rail is". 226px is the width at
+   which Print check and Present sit side by side instead of stacking: 12px
+   of a dimension a portrait poster has to spare, for a line back
+   (2026-08-16). */
+.deck.rbn-side{--rbn-side-w:226px;}
 .deck.rbn-side .edit-tools.ribbon{position:absolute;top:0;right:0;bottom:0;
-  width:214px;height:auto;flex-direction:column;flex-wrap:nowrap;
+  width:var(--rbn-side-w);height:auto;flex-direction:column;flex-wrap:nowrap;
   align-items:stretch;align-content:flex-start;min-height:0;
   overflow-y:auto;overflow-x:hidden;
   padding:10px 10px 16px;row-gap:2px;
   border-bottom:none;border-left:1px solid #ffffff14;z-index:8;}
 .deck.rbn-side .rbn-grp{align-items:stretch;padding:8px 2px;flex:none;
   border-right:none;border-bottom:1px solid #ffffff1c;width:100%;}
-/* one control per line down the column, not two rows across */
-.deck.rbn-side .rbn-row{display:flex;flex-direction:column;
-  align-items:stretch;height:auto;gap:3px;}
+/* The same little CLUSTERS the horizontal ribbon has, stood on end. One
+   control per line made Insert seven rows deep and turned the rail back
+   into the list of rows the ribbon had just stopped being (2026-08-16,
+   user: "I hate how everything is just in rows it makes it so uncompact
+   ... poster layout should be the same as well").
+   flex-wrap does the pairing with NO measuring: every control keeps its
+   natural width, two share a line when both fit, and a long one takes the
+   line to itself. flex-shrink stays 0 for the reason it always does here
+   — a squeezed button is a truncated word, and no rung of this toolbar
+   has ever been allowed to hide one. Grow fills the leftover so the rail
+   keeps a clean edge instead of a ragged one. */
+.deck.rbn-side .rbn-row{display:flex;flex-flow:row wrap;
+  align-items:stretch;align-content:flex-start;height:auto;gap:3px;}
+.deck.rbn-side .rbn-row>*{flex:1 0 auto;}
 .deck.rbn-side .dbtn.rbn-big{flex-direction:row;height:auto;
   min-width:0;justify-content:flex-start;padding:5px 8px;}
+/* a cell is ONE flex item and holds no wrap of its own, so the zoom
+   stepper and the undo/redo pair each stay whole wherever they land —
+   without claiming a whole line the way a `flex-basis:100%` would */
 .deck.rbn-side .rbn-cell{height:auto;}
-/* View is pinned right in the horizontal bar; in a column that is wrong */
-.deck.rbn-side .rbn-view{order:0;margin-left:0;border-left:none;}
+.deck.rbn-side .rbn-cell .dbtn.rbn-sm{flex:1 0 auto;justify-content:center;}
+/* In the horizontal grid the save readout keeps its cell even when empty,
+   so the group does not shift the moment it fills. The rail re-flows
+   anyway, so there is nothing to hold still — and an invisible item that
+   still takes 77px of a line is what pushed undo and redo off onto one of
+   their own. */
+.deck.rbn-side .rbn-file .deck-status:empty{display:none;}
+/* the right-edge pinning is horizontal-only; the ORDER still applies, so
+   View and Output fall to the bottom of the column */
+.deck.rbn-side .rbn-view{margin-left:0;border-left:none;}
 .deck.rbn-side .et-hint{display:none;}
+/* A section heading belongs ABOVE its section in a vertical list — that
+   is how every sidebar reads. Below is right for the horizontal ribbon,
+   where the label sits under the group like PowerPoint's
+   (2026-08-07, user: "put the titles above the section not below"). */
+.deck.rbn-side .rbn-lab{order:-1;padding:0 2px 2px;}
 /* the group divider turns from a vertical rule into a horizontal one */
 .deck.rbn-side .rbn-grp+.rbn-grp::before{left:2px;right:2px;top:0;
   bottom:auto;width:auto;height:1px;}
 .deck.rbn-side .rbn-lab{text-align:left;padding-left:2px;}
 .deck.rbn-side .et-hint{display:none;}
-.deck.rbn-side .deck-stage{padding-right:226px;}
-.deck.rbn-side .rulers{right:214px;}
-.deck.rbn-side .deck-arrow.next{right:222px;}
-.deck.rbn-side .selpane{right:214px;}
+.deck.rbn-side .deck-stage{padding-right:calc(var(--rbn-side-w) + 12px);}
+.deck.rbn-side .rulers{right:var(--rbn-side-w);}
+.deck.rbn-side .deck-arrow.next{right:calc(var(--rbn-side-w) + 8px);}
+.deck.rbn-side .selpane{right:var(--rbn-side-w);}
 
 /* ---------- full-screen EDITING (not presenting) ---------- */
 /* Present hides every tool, which is wrong for a poster: there is no
