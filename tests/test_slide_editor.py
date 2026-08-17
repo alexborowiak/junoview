@@ -250,7 +250,7 @@ def test_ribbon_is_one_flow_with_stable_group_order(out):
     assert "new ResizeObserver(function(){" in out
     assert "fitEditRibbon();applyZoom();" in out
     assert 'id="et-del"' not in out and 'data-tool="select"' not in out
-    assert ">Effects</span>" in out and 'id="fmt-animwrap"' in out
+    assert ">Effects</span>" in out and 'id="fmt-anim"' in out
     assert out.index('id="fmt-dup"') < out.index('id="fmt-txlab"')
     # the ribbon part-picker pills dress like the other ribbon buttons
     assert "#fmt-parts .cellpartbtn{" in out

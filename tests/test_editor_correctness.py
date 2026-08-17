@@ -35,7 +35,9 @@ def test_a_poster_is_not_offered_animation(out):
     a deck. A poster is one printed page -- there is no click and nothing
     to step through.
     """
-    assert "show('#fmt-animwrap',isNum&&!pageOf().poster);" in out
+    assert "show('#fmt-anim',isNum&&!pageOf().poster);" in out
+    # ...and the View group's door to the pane goes too
+    assert "if(vaB) vaB.hidden=!!pg.poster;" in out
 
 
 def test_lines_and_arrows_are_drawn_in_page_coordinates(out):
@@ -344,6 +346,74 @@ def test_chrome_does_not_scale_but_never_loses_the_ink(out):
     Measured: 16px at fit and at 0.5x, 22px once the ink reached 11.95px.
     """
     assert "hit.setAttribute('stroke-width',Math.max(16,swPx+10));" in out
+
+
+def test_opacity_is_a_colour_property_not_an_animation(out):
+    """Opacity sat in a group called "Effects" next to Animate, which put a
+    permanent property of the object beside a playback build -- and meant
+    a POSTER, which has no builds at all, carried a group called Effects
+    holding one slider, renamed to "Opacity" by hand to cover for it
+    (2026-08-17, user: "why is the opacity with the animations? That is a
+    terrible option").
+
+    It is in COLOUR now, which is what it is: how solid the ink is. The
+    poster rename goes with it -- with Animate hidden there and opacity
+    moved, the group simply empties and syncRibbonGroups hides it, which
+    is the mechanism that already existed for exactly this.
+    """
+    colour = out.split('<span class="rbn-lab">Colour</span>')[0]
+    assert colour.rsplit('class="rbn-grp"', 1)[-1].count('id="fmt-opwrap"') == 1
+    assert "fxLab.textContent=pg.poster?'Opacity':'Effects';" not in out
+    assert "show('#fmt-anim',isNum&&!pageOf().poster);" in out
+
+
+def test_the_animation_pane_does_not_need_a_selection(out):
+    """The build order for a slide was only reachable through a dropdown
+    on the Animate button -- and that button only exists while something
+    is selected. So to see what a slide animates you first had to find an
+    item that happened to be animated (2026-08-17, user: "why is there no
+    animation pane? Like you can only see all the animations when you find
+    one with an animation").
+
+    The pane is a real pane now, a sibling of Objects and Versions in the
+    same shell, opened from the View group with nothing selected at all.
+    Animate still opens it too -- one pane, two doors, because the build
+    order is a property of the SLIDE and the effect chooser is a property
+    of the selection.
+
+    Measured: opened with nothing selected it lists every build; three
+    animated items gave three numbered rows; reordering from the pane
+    reordered the build; deselecting left the pane open and the list
+    intact while the ribbon returned to its resting groups.
+    """
+    assert 'class="selpane animpane" id="animpane"' in out
+    assert 'id="animpane-body"' in out
+    assert 'id="vw-anim"' in out
+    # the dropdown is gone, wrapper and all
+    assert 'id="fmt-animwrap"' not in out
+    assert "var btn=$('#fmt-anim'),vbtn=$('#vw-anim'),pane=$('#animpane');" in out
+    # a button that opens a pane must not wear a dropdown chevron
+    assert "animBtn.innerHTML='&#9654; '+lbl;" in out
+    # the pane outlives the selection, so it is told when one goes away
+    assert "function animPaneSync" in out or "animPaneSync=function()" in out
+    assert out.count("animPaneSync();") == 2
+    # only a deck has builds
+    assert "if(vaB) vaB.hidden=!!pg.poster;" in out
+
+
+def test_no_pane_covers_the_toolbar(out):
+    """The panes live inside the stage WRAP, which also holds the ribbon,
+    so `top:8px` measured from above the toolbar. Objects, Versions and
+    Print check had all been sitting on top of View and Output since the
+    ribbon became a fixed 98px band; the Animations pane reached Insert
+    too, which is what made it visible (2026-08-17 audit).
+
+    Measured after, for all three: pane top 106px against a ribbon bottom
+    of 98px. In side mode the toolbar is a column on the right and the
+    pane already steps aside horizontally, so the top is left alone.
+    """
+    assert ".deck.editing:not(.rbn-side) .selpane{top:106px;}" in out
+    assert ".deck.rbn-side .selpane{right:var(--rbn-side-w);}" in out
 
 
 def test_qr_code_inserts_rather_than_arming_a_tool_that_does_not_exist(out):

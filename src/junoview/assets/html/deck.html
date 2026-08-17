@@ -282,6 +282,13 @@
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><i data-ic="objects"></i> Objects</button>
+              <!-- a deck only: a poster is one printed page and has no
+                   build to inspect -->
+              <button class="dbtn rbn-sm" id="vw-anim" hidden
+                aria-pressed="false"
+                title="Everything animated on this slide, in the order it
+ appears — and the effect on whatever is selected"
+                >&#9654; Animations</button>
               <!-- Zoom is how big the page LOOKS, not how big it IS — it
                    changes nothing about the document and nothing about
                    what prints, which is the same test Guides and Objects
@@ -457,18 +464,17 @@
                user). -->
           <span class="rbn-grp rbn-fx">
             <span class="rbn-row">
-              <span class="fmt-opwrap" id="fmt-opwrap"
-                title="Opacity (0&ndash;100%)">
-                <input class="fmt-range" id="fmt-op" type="range"
-                  min="0" max="100" step="1" aria-label="Opacity percent">
-                <span class="fmt-opval" id="fmt-opval">100%</span></span>
-              <span class="sh-drop" id="fmt-animwrap" hidden>
-                <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Animate this item so it appears on click">&#9654;
-                  Animate &#9662;</button>
-                <div class="sh-menu" id="fmt-anim-menu" hidden></div>
-              </span>
+              <!-- opens the Animations PANE. It used to be a dropdown,
+                   and the dropdown only existed while something was
+                   selected — so the build order for the whole slide was
+                   only reachable by first hunting down an item that
+                   happened to be animated (2026-08-17, user: "why is
+                   there no animation pane? you can only see all the
+                   animations when you find one with an animation"). -->
+              <button class="dbtn etm" id="fmt-anim" hidden
+                aria-pressed="false"
+                title="How this item appears, and the whole slide's build
+ order">&#9654; Animate</button>
             </span>
             <span class="rbn-lab">Effects</span>
           </span>
@@ -529,6 +535,19 @@
                 </div>
               </span>
             </span>
+              <!-- Opacity sits with COLOUR because that is what it is:
+                   how solid the ink is. It used to sit with Animate under
+                   "Effects", which put a permanent property of the object
+                   next to a playback build and meant a poster — which has
+                   no builds at all — carried a group called Effects
+                   holding one slider (2026-08-17, user: "why is the
+                   opacity with the animations? That is a terrible
+                   option"). -->
+              <span class="fmt-opwrap" id="fmt-opwrap"
+                title="Opacity (0&ndash;100%)">
+                <input class="fmt-range" id="fmt-op" type="range"
+                  min="0" max="100" step="1" aria-label="Opacity percent">
+                <span class="fmt-opval" id="fmt-opval">100%</span></span>
             <span class="rbn-lab">Colour</span>
           </span>
           <span class="rbn-grp">
@@ -710,6 +729,17 @@
            should appear like the objects bar"). The strip itself is MOVED
            in here rather than rebuilt, so reordering, drag-and-drop,
            delete and the thumbnails all keep working. -->
+      <!-- Animations, in the same shell as Objects and Versions: a list
+           you open to look at the slide from outside it. Reachable with
+           NOTHING selected, which is the whole point — the build order is
+           a property of the slide, not of whatever you happen to have
+           clicked. -->
+      <aside class="selpane animpane" id="animpane" hidden>
+        <div class="selpane-h"><span>Animations</span>
+          <button class="dbtn dc-icon" id="animpane-close"
+            title="Close">&#10005;</button></div>
+        <div class="selpane-list" id="animpane-body"></div>
+      </aside>
       <aside class="selpane verpane" id="verpane" hidden>
         <div class="selpane-h"><span id="verpane-title">Versions</span>
           <button class="dbtn dc-icon" id="verpane-close"

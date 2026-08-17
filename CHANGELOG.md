@@ -183,6 +183,32 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **An Animations pane you can open without hunting for something
+  animated.** The build order for a slide existed, with reordering and
+  all, but it lived in a dropdown on the **Animate** button — and that
+  button only exists while something is selected. So to see what a slide
+  animates you first had to find an item that happened to be animated.
+  It is a real pane now, a sibling of *Objects* and *Versions* in the same
+  shell, opened from **View → Animations** with nothing selected at all.
+  *Animate* still opens it too: one pane, two doors, because the build
+  order belongs to the **slide** and the effect chooser belongs to the
+  **selection**. Deselecting leaves the pane open and the list intact —
+  and it is told the selection went away, so its chooser stops offering
+  the last item's effect to nothing.
+- **Opacity moved from "Effects" to "Colour".** It is how solid the ink
+  is — a permanent property of the object, not a playback build, and it
+  had no business sitting next to Animate. It also meant a **poster**,
+  which has no builds at all, carried a group called *Effects* holding one
+  slider, renamed to "Opacity" by hand to cover for it. That rename is
+  gone: with Animate hidden on a poster and opacity in Colour, the group
+  empties and hides itself through the mechanism that already existed for
+  it.
+- **Fixed: every side pane was covering the toolbar.** The panes sit
+  inside the stage wrap, which also holds the ribbon, so `top:8px` was
+  measured from *above* the toolbar — *Objects*, *Versions* and *Print
+  check* have all been sitting on top of the View and Output groups since
+  the ribbon became a fixed 98px band. Measured after, for all three: pane
+  top 106px against a ribbon bottom of 98px.
 - **Free draw.** The last drawing tool that did not exist: hold the mouse
   down and scribble. It is a first-class stroke, not a special case — it
   takes a colour, a **weight** and a **line style** like any other, it is

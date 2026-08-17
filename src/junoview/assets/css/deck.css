@@ -66,6 +66,15 @@ body.deck-open{overflow:hidden;}
   border-radius:10px;display:flex;flex-direction:column;
   box-shadow:0 14px 44px #00000066;}
 .selpane[hidden]{display:none;}
+/* CLEAR THE TOOLBAR. The panes live inside the stage wrap, which also
+   holds the ribbon, so `top:8px` measured from above the toolbar and every
+   pane covered its right-hand end — Objects, Versions and Print check have
+   all been sitting on top of View and Output since the ribbon became a
+   fixed 98px band. The Animations pane made it obvious by reaching Insert
+   too (2026-08-17 audit). In SIDE mode the toolbar is a column on the
+   right and the pane already steps aside for it horizontally, so there is
+   nothing above to clear. */
+.deck.editing:not(.rbn-side) .selpane{top:106px;}
 .selpane-h{display:flex;align-items:center;justify-content:space-between;
   padding:8px 8px 7px 12px;font-family:var(--mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
@@ -1046,8 +1055,11 @@ body.slide-editing .apptop{display:none;}
 .same-menu .sh-opt{flex-direction:row;justify-content:flex-start;
   width:100%;padding:7px 9px;font-size:12px;text-align:left;}
 /* the animation pane: effect picker + build-order sequence */
-.sh-menu.anim-pane{display:block;grid-template-columns:none;width:340px;
-  padding:11px 12px;max-height:min(72vh,460px);overflow-y:auto;text-align:left;}
+/* the animation pane's body. It used to be a 340px dropdown; it is a
+   docked pane now, so it takes the pane's width and the pane's scroll
+   rather than carrying its own (2026-08-17). */
+.anim-pane{display:block;text-align:left;}
+.selpane.animpane .selpane-list{padding:10px 11px;}
 .anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;color:#7e93a4;margin:0 2px 6px;}
 .anim-eff+.anim-h,.anim-merge+.anim-h,.anim-empty+.anim-h{margin-top:13px;}

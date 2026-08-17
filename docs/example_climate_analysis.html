@@ -2631,6 +2631,15 @@ body.deck-open{overflow:hidden;}
   border-radius:10px;display:flex;flex-direction:column;
   box-shadow:0 14px 44px #00000066;}
 .selpane[hidden]{display:none;}
+/* CLEAR THE TOOLBAR. The panes live inside the stage wrap, which also
+   holds the ribbon, so `top:8px` measured from above the toolbar and every
+   pane covered its right-hand end — Objects, Versions and Print check have
+   all been sitting on top of View and Output since the ribbon became a
+   fixed 98px band. The Animations pane made it obvious by reaching Insert
+   too (2026-08-17 audit). In SIDE mode the toolbar is a column on the
+   right and the pane already steps aside for it horizontally, so there is
+   nothing above to clear. */
+.deck.editing:not(.rbn-side) .selpane{top:106px;}
 .selpane-h{display:flex;align-items:center;justify-content:space-between;
   padding:8px 8px 7px 12px;font-family:var(--mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
@@ -3611,8 +3620,11 @@ body.slide-editing .apptop{display:none;}
 .same-menu .sh-opt{flex-direction:row;justify-content:flex-start;
   width:100%;padding:7px 9px;font-size:12px;text-align:left;}
 /* the animation pane: effect picker + build-order sequence */
-.sh-menu.anim-pane{display:block;grid-template-columns:none;width:340px;
-  padding:11px 12px;max-height:min(72vh,460px);overflow-y:auto;text-align:left;}
+/* the animation pane's body. It used to be a 340px dropdown; it is a
+   docked pane now, so it takes the pane's width and the pane's scroll
+   rather than carrying its own (2026-08-17). */
+.anim-pane{display:block;text-align:left;}
+.selpane.animpane .selpane-list{padding:10px 11px;}
 .anim-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
   text-transform:uppercase;color:#7e93a4;margin:0 2px 6px;}
 .anim-eff+.anim-h,.anim-merge+.anim-h,.anim-empty+.anim-h{margin-top:13px;}
@@ -8512,6 +8524,13 @@ through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Objects</button>
+              <!-- a deck only: a poster is one printed page and has no
+                   build to inspect -->
+              <button class="dbtn rbn-sm" id="vw-anim" hidden
+                aria-pressed="false"
+                title="Everything animated on this slide, in the order it
+ appears — and the effect on whatever is selected"
+                >&#9654; Animations</button>
               <!-- Zoom is how big the page LOOKS, not how big it IS — it
                    changes nothing about the document and nothing about
                    what prints, which is the same test Guides and Objects
@@ -8687,18 +8706,17 @@ through Ko-fi. Thank you.</p>
                user). -->
           <span class="rbn-grp rbn-fx">
             <span class="rbn-row">
-              <span class="fmt-opwrap" id="fmt-opwrap"
-                title="Opacity (0&ndash;100%)">
-                <input class="fmt-range" id="fmt-op" type="range"
-                  min="0" max="100" step="1" aria-label="Opacity percent">
-                <span class="fmt-opval" id="fmt-opval">100%</span></span>
-              <span class="sh-drop" id="fmt-animwrap" hidden>
-                <button class="dbtn etm" id="fmt-anim" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Animate this item so it appears on click">&#9654;
-                  Animate &#9662;</button>
-                <div class="sh-menu" id="fmt-anim-menu" hidden></div>
-              </span>
+              <!-- opens the Animations PANE. It used to be a dropdown,
+                   and the dropdown only existed while something was
+                   selected — so the build order for the whole slide was
+                   only reachable by first hunting down an item that
+                   happened to be animated (2026-08-17, user: "why is
+                   there no animation pane? you can only see all the
+                   animations when you find one with an animation"). -->
+              <button class="dbtn etm" id="fmt-anim" hidden
+                aria-pressed="false"
+                title="How this item appears, and the whole slide's build
+ order">&#9654; Animate</button>
             </span>
             <span class="rbn-lab">Effects</span>
           </span>
@@ -8759,6 +8777,19 @@ through Ko-fi. Thank you.</p>
                 </div>
               </span>
             </span>
+              <!-- Opacity sits with COLOUR because that is what it is:
+                   how solid the ink is. It used to sit with Animate under
+                   "Effects", which put a permanent property of the object
+                   next to a playback build and meant a poster — which has
+                   no builds at all — carried a group called Effects
+                   holding one slider (2026-08-17, user: "why is the
+                   opacity with the animations? That is a terrible
+                   option"). -->
+              <span class="fmt-opwrap" id="fmt-opwrap"
+                title="Opacity (0&ndash;100%)">
+                <input class="fmt-range" id="fmt-op" type="range"
+                  min="0" max="100" step="1" aria-label="Opacity percent">
+                <span class="fmt-opval" id="fmt-opval">100%</span></span>
             <span class="rbn-lab">Colour</span>
           </span>
           <span class="rbn-grp">
@@ -8940,6 +8971,17 @@ through Ko-fi. Thank you.</p>
            should appear like the objects bar"). The strip itself is MOVED
            in here rather than rebuilt, so reordering, drag-and-drop,
            delete and the thumbnails all keep working. -->
+      <!-- Animations, in the same shell as Objects and Versions: a list
+           you open to look at the slide from outside it. Reachable with
+           NOTHING selected, which is the whole point — the build order is
+           a property of the slide, not of whatever you happen to have
+           clicked. -->
+      <aside class="selpane animpane" id="animpane" hidden>
+        <div class="selpane-h"><span>Animations</span>
+          <button class="dbtn dc-icon" id="animpane-close"
+            title="Close">&#10005;</button></div>
+        <div class="selpane-list" id="animpane-body"></div>
+      </aside>
       <aside class="selpane verpane" id="verpane" hidden>
         <div class="selpane-h"><span id="verpane-title">Versions</span>
           <button class="dbtn dc-icon" id="verpane-close"
@@ -15456,8 +15498,12 @@ window.JunoPptx = (function () {
        a deck you step through — goes away entirely */
     /* a heading must describe what is under it. On a poster Animate is
        hidden, so "Effects" stood over nothing but an opacity slider */
-    var fxLab=deckEl.querySelector('.rbn-fx .rbn-lab');
-    if(fxLab) fxLab.textContent=pg.poster?'Opacity':'Effects';
+    /* the Effects group used to be renamed "Opacity" on a poster,
+       because opacity lived in it and Animate did not apply. Opacity is
+       in Colour now and a poster has no builds, so the group simply
+       empties and syncRibbonGroups hides it (2026-08-17). */
+    var vaB=$('#vw-anim');
+    if(vaB) vaB.hidden=!!pg.poster;
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
     var nums=$('#mi-nums');
@@ -18776,7 +18822,7 @@ window.JunoPptx = (function () {
      Listed so the completeness check knows they are deliberate. */
   var FMT_MANUAL=('#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
-    +'#fmt-alignwrap #fmt-opwrap #fmt-animwrap #fmt-txcol-btn '
+    +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
@@ -18794,6 +18840,10 @@ window.JunoPptx = (function () {
     if(!a){
       bar.hidden=true;
       if(et) et.classList.remove('fmt-open');
+      /* the pane outlives the selection — it is the SLIDE's build order —
+         so it has to be told the selection went away, or its effect
+         chooser keeps offering the last item's effect to nothing */
+      animPaneSync();
       return;
     }
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
@@ -18876,6 +18926,7 @@ window.JunoPptx = (function () {
     }
     /* every drawn menu shows which option the selection is ON */
     if(isNum) syncLineMenus(a);
+    animPaneSync();
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
@@ -18958,7 +19009,7 @@ window.JunoPptx = (function () {
        through a deck. A poster is one printed page: there is no click and
        nothing to step through, so it is not offered (2026-08-07, user:
        "why is there animate options in a poster"). */
-    show('#fmt-animwrap',isNum&&!pageOf().poster);
+    show('#fmt-anim',isNum&&!pageOf().poster);
     /* the code/figure/output part-picker (+ split) — moved off the frame
        into the ribbon's Object group */
     var partsSlot=$('#fmt-parts');
@@ -18974,7 +19025,9 @@ window.JunoPptx = (function () {
       var an=a.anim&&a.anim.type;
       var lbl={appear:'Appear',fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]
         ||'Animate';
-      animBtn.innerHTML='&#9654; '+lbl+' &#9662;';
+      /* no chevron: it opens a PANE, not a dropdown, and a chevron on a
+         button that does not drop anything is a small lie */
+      animBtn.innerHTML='&#9654; '+lbl;
     }
     /* COMPLETENESS. Every #fmt-* control in the contextual bar must be
        governed by FMT_KINDS or listed in FMT_MANUAL. Without this, a
@@ -21236,11 +21289,13 @@ window.JunoPptx = (function () {
       });
     });
   })();
+  var animPaneSync=function(){},animPaneClose=function(){};
   /* ---- animation PANE: effect + build order. Items on the same build appear
      TOGETHER; each build is one click in playback. ---- */
   (function(){
-    var wrap=$('#fmt-animwrap'),btn=$('#fmt-anim'),menu=$('#fmt-anim-menu');
-    if(!wrap||!btn||!menu) return;
+    var btn=$('#fmt-anim'),vbtn=$('#vw-anim'),pane=$('#animpane');
+    var menu=$('#animpane-body'),cl=$('#animpane-close');
+    if(!btn||!pane||!menu) return;
     menu.classList.add('anim-pane');
     function rerender(){
       var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
@@ -21357,13 +21412,34 @@ window.JunoPptx = (function () {
         menu.appendChild(list);
       }
     }
-    btn.addEventListener('click',function(e){e.stopPropagation();
-      var willOpen=menu.hidden;menu.hidden=!willOpen;
-      btn.setAttribute('aria-expanded',willOpen.toString());
-      if(willOpen){render();floatMenu(btn,menu);}});
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}});
+    /* One pane, two doors: Animate (with something selected) and the
+       View group's Animations (any time). Both show the same thing,
+       because the build order is a property of the SLIDE — needing a
+       selection to see it was the bug. */
+    function set(open){
+      if(open){
+        /* the panes share one corner, so only one can be the thing you
+           are looking at — the same rule showVerpane already keeps */
+        var sp=$('#selpane'); if(sp) sp.hidden=true;
+        var ob=$('#objects-btn');
+        if(ob) ob.setAttribute('aria-pressed','false');
+        var pf=$('#preflight'); if(pf) pf.hidden=true;
+        showVerpane(false);
+        render();
+      }
+      pane.hidden=!open;
+      [btn,vbtn].forEach(function(b){
+        if(b) b.setAttribute('aria-pressed',open.toString());});
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    if(vbtn) vbtn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    /* the effect chooser at the top tracks the selection, so an open pane
+       has to follow it rather than showing whatever was picked last */
+    animPaneSync=function(){if(!pane.hidden) render();};
+    animPaneClose=function(){set(false);};
   })();
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
@@ -22504,6 +22580,7 @@ window.JunoPptx = (function () {
       /* ...and so is the Versions pane. Put the strip back where the
          builder expects to find it before the builder renders. */
       showVerpane(false);
+      animPaneClose();
       filmToPanel();
     }
     var db=$('#et-del'); if(db) db.disabled=true;

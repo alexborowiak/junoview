@@ -490,8 +490,12 @@
        a deck you step through — goes away entirely */
     /* a heading must describe what is under it. On a poster Animate is
        hidden, so "Effects" stood over nothing but an opacity slider */
-    var fxLab=deckEl.querySelector('.rbn-fx .rbn-lab');
-    if(fxLab) fxLab.textContent=pg.poster?'Opacity':'Effects';
+    /* the Effects group used to be renamed "Opacity" on a poster,
+       because opacity lived in it and Animate did not apply. Opacity is
+       in Colour now and a poster has no builds, so the group simply
+       empties and syncRibbonGroups hides it (2026-08-17). */
+    var vaB=$('#vw-anim');
+    if(vaB) vaB.hidden=!!pg.poster;
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
     var nums=$('#mi-nums');
@@ -3810,7 +3814,7 @@
      Listed so the completeness check knows they are deliberate. */
   var FMT_MANUAL=('#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
-    +'#fmt-alignwrap #fmt-opwrap #fmt-animwrap #fmt-txcol-btn '
+    +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
@@ -3828,6 +3832,10 @@
     if(!a){
       bar.hidden=true;
       if(et) et.classList.remove('fmt-open');
+      /* the pane outlives the selection — it is the SLIDE's build order —
+         so it has to be told the selection went away, or its effect
+         chooser keeps offering the last item's effect to nothing */
+      animPaneSync();
       return;
     }
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
@@ -3910,6 +3918,7 @@
     }
     /* every drawn menu shows which option the selection is ON */
     if(isNum) syncLineMenus(a);
+    animPaneSync();
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
@@ -3992,7 +4001,7 @@
        through a deck. A poster is one printed page: there is no click and
        nothing to step through, so it is not offered (2026-08-07, user:
        "why is there animate options in a poster"). */
-    show('#fmt-animwrap',isNum&&!pageOf().poster);
+    show('#fmt-anim',isNum&&!pageOf().poster);
     /* the code/figure/output part-picker (+ split) — moved off the frame
        into the ribbon's Object group */
     var partsSlot=$('#fmt-parts');
@@ -4008,7 +4017,9 @@
       var an=a.anim&&a.anim.type;
       var lbl={appear:'Appear',fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]
         ||'Animate';
-      animBtn.innerHTML='&#9654; '+lbl+' &#9662;';
+      /* no chevron: it opens a PANE, not a dropdown, and a chevron on a
+         button that does not drop anything is a small lie */
+      animBtn.innerHTML='&#9654; '+lbl;
     }
     /* COMPLETENESS. Every #fmt-* control in the contextual bar must be
        governed by FMT_KINDS or listed in FMT_MANUAL. Without this, a
@@ -6270,11 +6281,13 @@
       });
     });
   })();
+  var animPaneSync=function(){},animPaneClose=function(){};
   /* ---- animation PANE: effect + build order. Items on the same build appear
      TOGETHER; each build is one click in playback. ---- */
   (function(){
-    var wrap=$('#fmt-animwrap'),btn=$('#fmt-anim'),menu=$('#fmt-anim-menu');
-    if(!wrap||!btn||!menu) return;
+    var btn=$('#fmt-anim'),vbtn=$('#vw-anim'),pane=$('#animpane');
+    var menu=$('#animpane-body'),cl=$('#animpane-close');
+    if(!btn||!pane||!menu) return;
     menu.classList.add('anim-pane');
     function rerender(){
       var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
@@ -6391,13 +6404,34 @@
         menu.appendChild(list);
       }
     }
-    btn.addEventListener('click',function(e){e.stopPropagation();
-      var willOpen=menu.hidden;menu.hidden=!willOpen;
-      btn.setAttribute('aria-expanded',willOpen.toString());
-      if(willOpen){render();floatMenu(btn,menu);}});
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}});
+    /* One pane, two doors: Animate (with something selected) and the
+       View group's Animations (any time). Both show the same thing,
+       because the build order is a property of the SLIDE — needing a
+       selection to see it was the bug. */
+    function set(open){
+      if(open){
+        /* the panes share one corner, so only one can be the thing you
+           are looking at — the same rule showVerpane already keeps */
+        var sp=$('#selpane'); if(sp) sp.hidden=true;
+        var ob=$('#objects-btn');
+        if(ob) ob.setAttribute('aria-pressed','false');
+        var pf=$('#preflight'); if(pf) pf.hidden=true;
+        showVerpane(false);
+        render();
+      }
+      pane.hidden=!open;
+      [btn,vbtn].forEach(function(b){
+        if(b) b.setAttribute('aria-pressed',open.toString());});
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    if(vbtn) vbtn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    /* the effect chooser at the top tracks the selection, so an open pane
+       has to follow it rather than showing whatever was picked last */
+    animPaneSync=function(){if(!pane.hidden) render();};
+    animPaneClose=function(){set(false);};
   })();
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
@@ -7538,6 +7572,7 @@
       /* ...and so is the Versions pane. Put the strip back where the
          builder expects to find it before the builder renders. */
       showVerpane(false);
+      animPaneClose();
       filmToPanel();
     }
     var db=$('#et-del'); if(db) db.disabled=true;
