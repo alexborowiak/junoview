@@ -3054,6 +3054,9 @@ body.light .tab.tab-sub.current{background:#39a9c026;color:#0b3a44;}
    wrapper has to answer to both: 30px and the head's own spacing here,
    26px and the grid's spacing once .rbn-cell's own rule takes over there */
 .dc-head .rbn-cell{height:30px;gap:6px;}
+/* File-over-Save is a two-row stack in the ribbon's grid and nothing of
+   the sort in this one-line bar, where it is simply two buttons in a row */
+.dc-head .rbn-stack{flex-direction:row;align-items:center;gap:8px;}
 .dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
 /* ---- POSTER MODE chrome: SAME density as slides (2026-08-04). The
    2026-07-29 "bigger chrome" upsizing inflated every ribbon chip —
@@ -3296,6 +3299,13 @@ body.slide-editing .apptop{display:none;}
    the zoom stepper, for instance, whose minus and plus must never end up
    on different rows */
 .rbn-cell{display:flex;align-items:stretch;gap:3px;height:26px;}
+/* The readout renames itself from "Zoom 25%" to "Zoom 100%", and it is the
+   widest thing in the View group's first column — so without a floor the
+   whole group breathed as you zoomed and shoved Output sideways with it.
+   Held to the longest label it can hold, in CHARACTERS so it survives
+   every density rung, which is the same fix the app bar's view column
+   already uses for the Tree button that renames itself. */
+#zoom-val{min-width:calc(9ch + 18px);justify-content:center;}
 .rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
   text-transform:uppercase;color:#5d7183;line-height:1;white-space:nowrap;
   padding-top:1px;}
@@ -3336,14 +3346,16 @@ body.slide-editing .apptop{display:none;}
 .dc-savegrp .dc-menuwrap>.dbtn{border-radius:0 6px 6px 0;
   border-left-color:#ffffff14;padding-left:6px;padding-right:6px;}
 .dc-savegrp .dc-menuwrap>.dbtn:hover{border-left-color:var(--cyan);}
-/* View last, hard right; the hint after it. Everything else keeps source
-   order, so the contextual groups still land between Slide and View. */
-/* View and Output last, hard against the right edge. ONLY the first of
-   them may carry the auto margin: with the hint carrying one too, the
-   free space was split between them and View stopped 300px short. The
-   same order puts them at the BOTTOM of the side toolbar, since "last"
-   means the same thing in a column. */
-.rbn-view{order:90;margin-left:auto;border-left:1px solid #ffffff1c;}
+/* View and Output sort LAST, but they are no longer flung at the right
+   edge. An auto margin there (2026-08-07, "put the view box on the far
+   right") pushed them against the window and left the whole difference as
+   one void in the middle of the toolbar — ~560px of it once the File
+   group stopped carrying Close the editor (2026-08-17, user: "there is
+   lot's of weird space around"). Groups pack left now, the way every
+   real ribbon packs, so the space that is left over is at the end where
+   it reads as room rather than a gap. The ORDER is untouched, so these
+   two are still last — which is still the bottom of the side toolbar. */
+.rbn-view{order:90;border-left:1px solid #ffffff1c;}
 .rbn-out{order:91;}
 .edit-tools.ribbon .et-hint{order:85;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
@@ -3432,9 +3444,12 @@ body.slide-editing .apptop{display:none;}
    PowerPoint swaps in a contextual tab — the contextual groups REPLACE
    the standby ones instead of being appended to them. Appending them
    needed 2135px of a 1409px window, which no amount of density was ever
-   going to close. File and Slide stay because you still save, zoom and
-   change page while an item is selected; Present, Notebooks, View and
-   Insert are all one click away again the moment you deselect. */
+   going to close. File, Slide and View stay because you still save, zoom,
+   change page and consult the object list while an item is selected;
+   Present, Notebooks and Insert are all one click away again the moment
+   you deselect. View joined them on 2026-08-17, when zoom moved into it —
+   losing zoom the instant you select something would have been a plain
+   regression. */
 .edit-tools.fmt-open .rbn-insert,
 .edit-tools.fmt-open .rbn-standby{display:none;}
 /* Last resort on a narrow window with something selected: Slide steps
@@ -3670,14 +3685,25 @@ select#fmt-font[hidden]{display:none;}
    a .dbtn they sit inline beside the label */
 .dbtn .bic{display:inline-block;vertical-align:-2px;width:13px;
   height:13px;margin-right:4px;}
-/* WHILE EDITING, the page gets the window. The strip of other pages is
-   opened from a button and closed again — for a deck as much as for a
-   poster, because a presentation being edited is still one page at a time
-   and the strip was taking a permanent bite out of it (2026-08-07, user:
-   "presentation mode still has the slides as a prominent feature"). */
-.deck.editing .deck-create{display:none!important;}
-/* ...and the other pages live in a floating pane instead, the same shell
-   the Objects list uses, so the two read as siblings (2026-08-10). */
+/* WHILE EDITING, the page gets the window — and from 2026-08-07 that was
+   read as "hide the strip", for a deck as much as a poster ("presentation
+   mode still has the slides as a prominent feature"). Half right. A DECK
+   IS A SEQUENCE and you steer it by seeing the sequence, so its strip is
+   there by default again; a POSTER is one page, its other pages are rare
+   drafts, and there the strip stays optional and opens from Versions
+   (2026-08-17, user: "in the presentation maker, the thumbnail for the
+   slides should be there by default. It is just the poster where it
+   should be optional").
+   Only the strip: the panel's head has moved into the ribbon and would
+   otherwise draw an empty bar, and the layout catalogue lives in the
+   Layouts dropdown. */
+.deck.editing .dc-head,.deck.editing .dc-controls{display:none;}
+.deck.editing.poster-page .deck-create{display:none!important;}
+/* ...and putting it away is still one click, for a deck too: Slides
+   toggles the strip rather than opening a pane */
+.deck.editing.strip-off .deck-create{display:none!important;}
+/* ...and a poster's other pages live in a floating pane instead, the same
+   shell the Objects list uses, so the two read as siblings (2026-08-10). */
 .verpane .selpane-list{display:flex;flex-direction:column;gap:6px;}
 #verpane .film-list{display:flex;flex-direction:column;gap:6px;
   overflow:visible;flex:none;padding:0;}
@@ -3982,9 +4008,14 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
    still takes 77px of a line is what pushed undo and redo off onto one of
    their own. */
 .deck.rbn-side .rbn-file .deck-status:empty{display:none;}
-/* the right-edge pinning is horizontal-only; the ORDER still applies, so
-   View and Output fall to the bottom of the column */
-.deck.rbn-side .rbn-view{margin-left:0;border-left:none;}
+/* the group divider is a vertical rule in the horizontal ribbon and has no
+   business on a stacked one; the ORDER still applies, so View and Output
+   fall to the bottom of the column */
+.deck.rbn-side .rbn-view{border-left:none;}
+/* File over Save is a two-row stack only where there are two rows: in the
+   rail's wrapping flow it pairs across like every other control, rather
+   than standing one item twice as tall as its neighbours */
+.deck.rbn-side .rbn-stack{flex-direction:row;}
 .deck.rbn-side .et-hint{display:none;}
 /* A section heading belongs ABOVE its section in a vertical list — that
    is how every sidebar reads. Below is right for the horizontal ribbon,
@@ -8103,13 +8134,17 @@ through Ko-fi. Thank you.</p>
          ribbon underneath is only for editing tools you use constantly.
          Mixing the two is what made the toolbar hard to read
          (2026-08-07). -->
-    <!-- Leaving is a document action, so it stands with the other
-         document actions rather than alone on the far right, where it
-         read as "undo whatever I just clicked" (2026-08-10, user: "the
-         back button is really confusing... move the back button with the
-         other options up the top"). It also has to SAY where it goes:
-         a bare "Back" beside an armed drawing tool looks like the way out
-         of that tool, and it is not — Cancel is. -->
+    <!-- PRESENTING only. While editing, this bar is hidden and the way
+         back is the presentations rail's own Notebooks button, which is
+         on screen the whole time — so a second one in the ribbon was a
+         group's worth of width spent on a journey already offered
+         (2026-08-17, user: "remove the 'close the editor' button, that is
+         not needed, people just click on the back to notebooks").
+         It stays here because PRESENTING has no ribbon and no rail: full
+         screen, the way out has to be visible or it does not exist. It
+         also has to SAY where it goes — a bare "Back" beside an armed
+         drawing tool looks like the way out of that tool, and it is not:
+         Cancel is. -->
     <button class="dbtn" id="deck-exit"
       title="Leave the editor. Nothing is closed or lost.">&#8617;
       Close the editor</button>
@@ -8129,6 +8164,13 @@ through Ko-fi. Thank you.</p>
       <div class="dc-resize" id="dc-resize"
         title="Drag to resize the builder panel"></div>
       <div class="dc-head">
+        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
+             stacks the small controls beside Paste (2026-08-17, user: "the
+             save could go below the file"). Stacking them halves the
+             group's width, and they are the two halves of the same
+             errand. The wrapper stays a plain row inside the builder
+             panel's header, which is a one-line bar. -->
+        <span class="rbn-stack">
         <div class="dc-menuwrap">
           <button class="dbtn" id="dc-file" aria-haspopup="true"
             aria-expanded="false">File &#9662;</button>
@@ -8201,6 +8243,7 @@ through Ko-fi. Thank you.</p>
                 file&#8230;</button>
             </div>
           </span>
+        </span>
         </span>
         <!-- ONE cell, like the zoom stepper: undo and redo are the same
              decision in two directions and must never end up on different
@@ -8292,18 +8335,19 @@ through Ko-fi. Thank you.</p>
  Page size &#9662;</button>
                 <div class="sh-menu page-menu" id="page-menu" hidden></div>
               </span>
-              <!-- the three zoom controls are ONE cell: they are one
-                   decision, and splitting them across the grid would put
-                   the minus and the plus on different rows -->
-              <span class="rbn-cell">
-                <button class="dbtn rbn-ico" id="zoom-out"
-                  title="Zoom out">&#8722;</button>
-                <button class="dbtn rbn-sm" id="zoom-val"
-                  title="Click to fit the whole page in the window"
-                  >Zoom 100%</button>
-                <button class="dbtn rbn-ico" id="zoom-in"
-                  title="Zoom in">+</button>
-              </span>
+              <!-- The strip listing the OTHER pages belongs with the page
+                   controls, not under View: it is the set this page is one
+                   of, which is exactly what Layouts and Page size are
+                   about (2026-08-17, user: "the view and slide is very
+                   confused ... the 'Slides' is slide?"). A poster's other
+                   pages are versions, so the label follows the page kind,
+                   and the group heading follows it too — SLIDE for a deck,
+                   PAGE for a poster. -->
+              <button class="dbtn rbn-sm" id="vw-versions"
+                aria-pressed="false" hidden
+                title="Other versions of this poster — drafts and variants.
+ Opens the strip; close it again to give the page the whole window"
+                >&#9776; Versions</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -8314,7 +8358,12 @@ through Ko-fi. Thank you.</p>
                (2026-08-07, user: "present and print check go together,
                but objects and guides are different"). Both sit last —
                right in the horizontal bar, bottom in the side one. -->
-          <span class="rbn-grp rbn-standby rbn-view">
+          <!-- NOT a standby group. It holds zoom now, and you zoom
+               constantly with something selected — the same reason File
+               and Slide have always stayed through a selection. Guides
+               and Objects earn the seat too: an object list is at its most
+               useful when you have an object selected (2026-08-17). -->
+          <span class="rbn-grp rbn-view">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -8353,16 +8402,25 @@ through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Objects</button>
-              <!-- A poster CAN have more than one page — a second draft, a
-                   variant for a different venue. That is worth having, but
-                   not worth a permanent strip down the side of a page this
-                   big, so it opens on demand and is called what it is
-                   (2026-08-07, user). -->
-              <button class="dbtn rbn-sm" id="vw-versions"
-                aria-pressed="false" hidden
-                title="Other versions of this poster — drafts and variants.
- Opens the strip; close it again to give the page the whole window"
-                >&#9776; Versions</button>
+              <!-- Zoom is how big the page LOOKS, not how big it IS — it
+                   changes nothing about the document and nothing about
+                   what prints, which is the same test Guides and Objects
+                   pass and Page size fails. It sat under Slide, beside the
+                   control that sets the real page size, and the two read
+                   as the same kind of thing (2026-08-17, user: "I feel
+                   like the zoom is view").
+                   The three controls are ONE cell: they are one decision,
+                   and splitting them across the grid would put the minus
+                   and the plus on different rows. -->
+              <span class="rbn-cell">
+                <button class="dbtn rbn-ico" id="zoom-out"
+                  title="Zoom out">&#8722;</button>
+                <button class="dbtn rbn-sm" id="zoom-val"
+                  title="Click to fit the whole page in the window"
+                  >Zoom 100%</button>
+                <button class="dbtn rbn-ico" id="zoom-in"
+                  title="Zoom in">+</button>
+              </span>
             </span>
             <span class="rbn-lab">View</span>
           </span>
@@ -15236,9 +15294,17 @@ window.JunoPptx = (function () {
       vb.title=pg.poster
         ?'Other versions of this poster — drafts and variants. Opens the '
           +'strip; close it again to give the page the whole window'
-        :'All the slides in this presentation. Opens the strip; close it '
-          +'again to give the slide the whole window';
+        :'The strip of slides down the left. It is there by default — a '
+          +'deck is a sequence — but you can put it away to give one '
+          +'slide the whole window';
     }
+    /* A poster that BECOMES a deck takes its strip back. There is one
+       #film-list node and the two page kinds keep it in different places,
+       so changing Page size from A0 to 16:9 with Versions open would
+       otherwise leave the list floating in the pane while the panel that
+       just appeared showed an empty strip. */
+    if(!pg.poster&&mode==='edit'){showVerpane(false);filmToPanel();}
+    syncStripBtn();
     /* Auto-build makes ONE SLIDE PER FIGURE. On a deck that is the whole
        point; on a poster it silently turns one page into seven, which is
        how a poster ended up with slides at all. Place cells on the page
@@ -15781,9 +15847,17 @@ window.JunoPptx = (function () {
           vlist.hidden=true;vbtn.setAttribute('aria-expanded','false');}
       });
     }
+    /* ONE button, two mechanisms, because the two page kinds want opposite
+       defaults. A deck's strip is docked and on: toggling it is a class,
+       and the slide list never leaves the panel. A poster's versions are
+       rare enough to be worth no permanent width, so they stay in the
+       floating pane the Objects list uses (2026-08-17). */
     var vsb=$('#vw-versions');
     if(vsb) vsb.addEventListener('click',function(){
-      showVerpane(!!$('#verpane').hidden);
+      if(pageOf().poster){showVerpane(!!$('#verpane').hidden);return;}
+      deckEl.classList.toggle('strip-off');
+      syncStripBtn();
+      applyZoom();          /* the stage just changed width */
     });
     var vpc=$('#verpane-close');
     if(vpc) vpc.addEventListener('click',function(){showVerpane(false);});
@@ -21382,6 +21456,18 @@ window.JunoPptx = (function () {
     }
     filmHome=null;
   }
+  /* The button reports the state of whichever strip this page kind uses:
+     the docked one for a deck, the floating pane for a poster. Written
+     once, because two of these drifting apart is a toggle that lies about
+     what it will do. */
+  function syncStripBtn(){
+    var vb=$('#vw-versions'); if(!vb) return;
+    var p=$('#verpane');
+    var on=pageOf().poster
+      ? !!(p&&!p.hidden)
+      : !deckEl.classList.contains('strip-off');
+    vb.setAttribute('aria-pressed',on.toString());
+  }
   function showVerpane(on){
     var p=$('#verpane'); if(!p) return;
     /* Objects and Versions are the same 232px shell in the same corner,
@@ -21397,8 +21483,7 @@ window.JunoPptx = (function () {
     p.hidden=!on;
     var t=$('#verpane-title');
     if(t) t.textContent=pageOf().poster?'Versions':'Slides';
-    var vb=$('#vw-versions');
-    if(vb) vb.setAttribute('aria-pressed',on.toString());
+    syncStripBtn();
   }
   /* ---- versions --------------------------------------------------------
      A poster's other pages are drafts and variants, so a new one starts as
@@ -21821,14 +21906,13 @@ window.JunoPptx = (function () {
   function fileToRibbon(){
     var top=$('#rbn-file-row');
     if(!top||fileMoved.length) return;
-    /* Leaving comes with them, so the whole "what am I doing with this
-       document" set is one group (2026-08-10, user: "move the back button
-       with the other options"). It goes in FIRST so it leads the row. */
-    var xb=$('#deck-exit');
-    if(xb){
-      fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});
-      top.appendChild(xb);
-    }
+    /* Leaving does NOT come with them. It rode along from 2026-08-10 to
+       2026-08-17, and it was the widest control in the ribbon — a group's
+       worth of width for a journey the presentations rail's Notebooks
+       button already offers, on screen the whole time you are editing
+       (user: "that is not needed, people just click on the back to
+       notebooks"). It stays in the top bar, which PRESENTING still shows
+       and editing still hides. */
     /* The panel is hidden while editing, for a deck as well as a poster,
        so its head cannot hold File and Save any more. */
     var head=deckEl.querySelector('.dc-head');
@@ -21842,11 +21926,14 @@ window.JunoPptx = (function () {
        in the bar (2026-08-07, user: "a stupid name and in a stupid
        place"). It stays in the panel, which is where it means something:
        the builder, before you have opened the editor. */
-    /* the save READOUT belongs beside Save, not stranded past undo/redo:
-       "all the save stuff together" (2026-08-07) */
-    var st=$('#deck-status'),grp=deckEl.querySelector('.dc-savegrp');
-    if(st&&grp&&grp.parentNode===top&&st.parentNode===top)
-      top.insertBefore(st,grp.nextSibling);
+    /* The save READOUT belongs beside Save, not stranded past undo/redo
+       ("all the save stuff together", 2026-08-07). That used to be a
+       re-insert here; markup order does it now. File and Save are one
+       stacked cell in column one, so appending the readout last drops it
+       into column two's second row — level with Save, which is where it
+       was being moved to anyway. The old re-insert tested
+       `savegrp.parentNode === top`, and the stack means that is never true
+       again: it would have sat there doing nothing (2026-08-17). */
   }
   /* The top bar used to appear only when File and Save had been borrowed
      into it, so it could vanish and take the only way out with it. Now

@@ -259,8 +259,17 @@ def test_document_actions_live_above_the_editing_tools(out):
     out_lab = out.index('<span class="rbn-lab">Output</span>')
     assert view_lab < out.index('id="dc-play"') < out_lab
     assert out.index('id="vw-check"') < out.index('id="dc-play"')
-    # the save readout sits beside Save, not stranded past undo/redo
-    assert "top.insertBefore(st,grp.nextSibling);" in out
+    # The save readout still sits beside Save rather than stranded past
+    # undo/redo, but markup order does it now: File and Save are one
+    # stacked cell in column one, so appending the readout last drops it
+    # into column two's second row, level with Save. The old re-insert
+    # tested `savegrp.parentNode === top`, which the stack makes false
+    # forever -- it would have sat there doing nothing (2026-08-17).
+    assert "top.insertBefore(st,grp.nextSibling);" not in out
+    stack = out.split('<span class="rbn-stack">')[1].split("</span>\n        </span>")[0]
+    assert 'id="dc-file"' in stack and 'class="dc-savegrp"' in stack
+    assert out.index('id="dc-save"') < out.index('id="dc-undo"') \
+        < out.index('id="deck-status"')
     # the top bar must survive edit mode, or it would hide the only Save
     # button in the app; see test_the_top_bar_always_earns_its_row
     assert "function syncTopBar(){" in out
@@ -293,14 +302,23 @@ def test_the_top_bar_always_earns_its_row(out):
     assert "fileToPanel();fileToRibbon();syncTopBar();" in out
 
 
-def test_view_sits_hard_right(out):
-    """"Put the view box on the far right" (2026-08-07). Only View may
-    carry the auto margin -- when the hint carried one too the free space
-    was split between them and View stopped short of the edge.
+def test_the_groups_pack_left_with_view_still_last(out):
+    """View was flung at the right edge by an auto margin (2026-08-07,
+    "put the view box on the far right"). That leaves the whole difference
+    as ONE void in the middle of the toolbar -- about 560px of it once the
+    File group stopped carrying "Close the editor" (2026-08-17, user:
+    "there is lot's of weird space around").
+
+    Groups pack left now, the way every real ribbon packs, so the leftover
+    sits at the end where it reads as room rather than a gap. The ORDER is
+    untouched: View and Output still sort last, which is still the bottom
+    of the side toolbar.
     """
-    assert ".rbn-view{order:90;margin-left:auto;" in out
+    assert ".rbn-view{order:90;border-left:1px solid #ffffff1c;}" in out
+    assert "margin-left:auto" not in out.split(".rbn-view{")[1].split("}")[0]
+    assert ".rbn-out{order:91;}" in out
     assert ".edit-tools.ribbon .et-hint{order:85;margin-left:0;}" in out
-    assert 'class="rbn-grp rbn-standby rbn-view"' in out
+    assert 'class="rbn-grp rbn-view"' in out
 
 
 def test_groups_fill_across_the_rows_not_down_the_columns(out):

@@ -110,19 +110,46 @@ def test_swap_to_notebooks_goes_to_the_notebooks(out):
     assert "if(mode==='edit') setUIMode('create');" not in out
 
 
-def test_the_page_being_edited_gets_the_window(out):
+def test_a_deck_keeps_its_strip_and_a_poster_does_not(out):
     """A poster can have more than one page -- a second draft, a variant
     for another venue. Worth having; not worth a permanent strip down the
     side of a page that big.
 
-    The same is true of a DECK being edited: you work on one slide at a
-    time, and the strip took a permanent bite out of the only thing you
-    were looking at (2026-08-07, user: "presentation mode still has the
-    slides as a prominent feature"). So the strip is opened from a button
-    in both cases -- one button, named for what it actually holds.
+    In 2026-08-07 that was read as applying to a DECK too ("presentation
+    mode still has the slides as a prominent feature") and the strip went
+    behind a button for both. Half right: a deck IS a sequence and you
+    steer it by seeing the sequence, so its strip is there by default
+    again (2026-08-17, user: "in the presentation maker, the thumbnail for
+    the slides should be there by default. It is just the poster where it
+    should be optional").
+
+    One button, two mechanisms, because the defaults are opposite: a
+    deck's strip is docked and on, so Slides toggles a class and the list
+    never leaves the panel; a poster's versions are rare enough to be
+    worth no permanent width, so they stay in the floating pane.
+
+    Measured: deck opens with 7 thumbnails docked and the button pressed;
+    toggling it off takes the page from 973px to 1173px; a poster opens
+    with the panel gone and Versions opening the pane instead.
     """
     assert 'id="vw-versions"' in out
-    assert ".deck.editing .deck-create{display:none!important;}" in out
+    # the panel goes for a poster, and only for a poster...
+    assert ".deck.editing.poster-page .deck-create{display:none!important;}" in out
+    assert ".deck.editing .deck-create{display:none!important;}" not in out
+    # ...or when you put it away yourself
+    assert ".deck.editing.strip-off .deck-create{display:none!important;}" in out
+    # what is left of the panel while editing is ONLY the strip: the head
+    # has moved into the ribbon and would otherwise draw an empty bar
+    assert ".deck.editing .dc-head,.deck.editing .dc-controls{display:none;}" in out
+    # the button toggles the docked strip for a deck, the pane for a poster
+    assert "if(pageOf().poster){showVerpane(!!$('#verpane').hidden);return;}" in out
+    assert "deckEl.classList.toggle('strip-off');" in out
+    # ...and it reports whichever of the two this page kind uses, written
+    # once, because two of these drifting apart is a toggle that lies
+    assert "function syncStripBtn(){" in out
+    # one #film-list node, two homes: becoming a deck takes it back, or the
+    # panel that just appeared would show an empty strip
+    assert "if(!pg.poster&&mode==='edit'){showVerpane(false);filmToPanel();}" in out
     assert "add.textContent=pg.poster?'+ Create new version':'+ Add slide';" in out
     # never poster-only, and the word matches the page you are on
     assert "if(vb) vb.hidden=!pg.poster;" not in out
@@ -370,19 +397,32 @@ def test_the_document_actions_are_in_the_ribbon_not_a_bar_above_it(out):
     row taken off the page ("I hate having the file, save, saved, button
     above the customisation buttons... I think I have said this before").
 
-    So while editing there is no bar at all. The whole set -- leave, File,
-    Save, undo/redo and the save readout -- is the ribbon's first group.
-    Presenting still has a bar, because there is no ribbon then.
+    So while editing there is no bar at all. File, Save, undo/redo and the
+    save readout are the ribbon's first group. Presenting still has a bar,
+    because there is no ribbon then.
 
-    Measured after: one row, 98px tall, no wrap and nothing clipped, at
-    ribbon widths of 1379, 1100 and 950px.
+    Leaving does NOT ride along. It did from 2026-08-10 to 2026-08-17, and
+    it was the widest control in the ribbon -- a group's worth of width for
+    a journey the presentations rail's Notebooks button already offers, on
+    screen the whole time you are editing (user: "that is not needed,
+    people just click on the back to notebooks"). It stays in the top bar,
+    which presenting shows and editing hides, because presenting is full
+    screen with no rail: there the way out has to be visible or it does not
+    exist.
+
+    Measured after: File went from 286px wide to 147px, and clicking the
+    rail's Notebooks button while editing leaves cleanly (deck hidden,
+    `editing` and `body.slide-editing` both off).
     """
     assert 'id="rbn-file-row"' in out
     assert 'class="rbn-grp rbn-file"' in out
     assert "var top=$('#rbn-file-row');" in out
-    # leaving rides along, and goes in first so it leads the row
-    assert "var xb=$('#deck-exit');" in out
-    assert "fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});" in out
+    # leaving is NOT moved into the ribbon any more...
+    assert "fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});" \
+        not in out
+    # ...but the button itself survives, for presenting
+    assert 'id="deck-exit"' in out
+    assert "$('#deck-exit').addEventListener('click',function(){" in out
     # the bar is gone while editing, present while presenting
     assert "if(dt) dt.hidden=(mode==='edit');" in out
     # it says where it goes, and the word changes with the mode
@@ -444,15 +484,40 @@ def test_view_and_output_are_separate_groups(out):
     bar, bottom in the side one, because "last" means the same in a
     column.
     """
-    assert 'class="rbn-grp rbn-standby rbn-view"' in out
+    assert 'class="rbn-grp rbn-view"' in out
     assert 'class="rbn-grp rbn-standby rbn-out"' in out
     assert ">Output</span>" in out
     assert ".rbn-out{order:91;}" in out
     # Guides+Objects in one, Print check+Present in the other
-    view = out.split('class="rbn-grp rbn-standby rbn-view"')[1].split(
-        ">View</span>")[0]
+    view = out.split('class="rbn-grp rbn-view"')[1].split(">View</span>")[0]
     assert 'id="vw-menuwrap"' in view and 'id="objects-btn"' in view
     assert 'id="vw-check"' not in view and 'id="dc-play"' not in view
+
+
+def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
+    """Zoom sat under Slide, next to the control that sets the real page
+    size, and the two read as the same kind of thing; the strip listing the
+    other pages sat under View, which is not what it is (2026-08-17, user:
+    "the view and slide is very confused. I feel like the zoom is view,
+    and the 'Slides' is slide?").
+
+    The test that separates them: zoom changes how big the page LOOKS and
+    nothing about the document or what prints, which is exactly what Guides
+    and Objects do and exactly what Page size does not. The strip is the
+    SET this page belongs to, which is the same subject as Layouts and Page
+    size.
+    """
+    slide = out.split('class="rbn-grp rbn-slide"')[1].split(">Slide</span>")[0]
+    view = out.split('class="rbn-grp rbn-view"')[1].split(">View</span>")[0]
+    assert 'id="vw-versions"' in slide and 'id="vw-versions"' not in view
+    assert 'id="zoom-val"' in view and 'id="zoom-val"' not in slide
+    # View can no longer stand down for a selection: you zoom constantly
+    # with something selected, and an object list is at its most useful
+    # when there IS an object selected
+    assert 'class="rbn-grp rbn-standby rbn-view"' not in out
+    # the readout renames itself, so it is held to the longest label it can
+    # hold -- in characters, so it survives every density rung
+    assert "#zoom-val{min-width:calc(9ch + 18px);justify-content:center;}" in out
 
 
 def test_side_toolbar_headings_sit_above_their_section(out):
@@ -462,7 +527,7 @@ def test_side_toolbar_headings_sit_above_their_section(out):
     """
     assert ".deck.rbn-side .rbn-lab{order:-1;" in out
     # ...and the order is not reset in side mode, so View/Output fall last
-    assert ".deck.rbn-side .rbn-view{margin-left:0;border-left:none;}" in out
+    assert ".deck.rbn-side .rbn-view{border-left:none;}" in out
     assert ".deck.rbn-side .rbn-view{order:0" not in out
 
 
@@ -520,9 +585,11 @@ def test_the_side_toolbar_actually_stands_up(out):
     assert "height:auto" in side
     assert "overflow-y:auto" in side
     assert ".deck.rbn-side .rbn-row{display:flex;flex-flow:row wrap;" in out
-    # the right-edge pinning is undone, but NOT the order: View and Output
+    # the vertical group divider goes, but NOT the order: View and Output
     # still sort last, which is the bottom of a column
-    assert ".deck.rbn-side .rbn-view{margin-left:0;border-left:none;}" in out
+    assert ".deck.rbn-side .rbn-view{border-left:none;}" in out
+    # File-over-Save is a two-row stack only where there are two rows
+    assert ".deck.rbn-side .rbn-stack{flex-direction:row;}" in out
     # and it says what it does
     assert "Toolbar on the right" in out
     assert "Toolbar down the side" not in out

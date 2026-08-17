@@ -183,6 +183,56 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **A presentation gets its slide thumbnails back.** Hiding the strip
+  while editing was right for a poster and wrong for a deck: a deck **is**
+  a sequence, and you steer it by seeing the sequence. The strip is docked
+  down the left by default again for presentations, showing every slide,
+  with **+ Add slide** under it; a poster still opens its versions on
+  demand, into the floating pane, because a poster is one page and its
+  other pages are rare drafts. **Slides** now toggles the docked strip
+  rather than opening a pane — putting it away takes the slide from 973px
+  to 1173px — and the button reports whichever of the two strips your page
+  kind uses, written once so the two cannot drift apart and leave a toggle
+  that lies about what it will do. Changing *Page size* from A0 to 16:9
+  with Versions open now hands the slide list back to the panel; there is
+  only one of it, and it would otherwise have been left floating in the
+  pane while the panel that just appeared showed an empty strip.
+- **Zoom is a View control; the page strip is a page control.** Zoom sat
+  under *Slide*, right beside the control that sets the real page size, so
+  the two read as the same kind of thing — and the strip listing the
+  *other* pages sat under *View*, which is not what it is. The test that
+  separates them: zoom changes how big the page **looks** and nothing
+  about the document or what prints, exactly like *Guides* and *Objects*
+  and exactly unlike *Page size*; the strip is the **set** this page
+  belongs to, the same subject as *Layouts*. So **SLIDE** is now Layouts ·
+  Page size · Slides (*PAGE* · Layouts · A0 portrait · Versions on a
+  poster) and **VIEW** is Guides · Objects · Zoom. *View* no longer stands
+  down when you select something, because you zoom constantly with
+  something selected and an object list is at its most useful when there
+  *is* an object selected.
+- **The toolbar packs left; the 560px hole in the middle is gone.** *View*
+  was flung at the right edge by an auto margin, which leaves the whole
+  difference as one void between *Insert* and *View*. Groups pack left
+  now, the way every real ribbon packs, so the leftover sits at the end
+  where it reads as room rather than a gap. The order is untouched — View
+  and Output still sort last, still the bottom of the side toolbar.
+- **File over Save, and no more Close the editor.** *File* and *Save* are
+  the two halves of one errand, so they are one cell two rows deep, the
+  way PowerPoint stacks the small controls beside Paste; undo, redo and
+  the save readout fill the column beside them. *Close the editor* is
+  gone: it was the widest control in the ribbon, spending a group's worth
+  of width on a journey the presentations rail's **Notebooks** button
+  already offers, on screen the whole time you are editing. It survives
+  where it is genuinely the only way out — presenting, which is full
+  screen with no ribbon and no rail. Together the *File* group went from
+  286px to 147px, and the narrowest window the resting toolbar fits in
+  went from 929px of ribbon to **849px** — 80px better than before any of
+  this, and 110px better than yesterday.
+- **The toolbar no longer breathes as you zoom.** The readout renames
+  itself from *Zoom 25%* to *Zoom 100%* and is the widest thing in its
+  column, so *Output* shuffled sideways every time you zoomed. It is held
+  to the longest label it can hold, in characters, so it survives every
+  density rung.
 - **The poster toolbar reads as clusters, not a list of rows.** Stood on
   its end for a tall poster, the toolbar put ONE control on every line,
   so *Insert* alone was seven rows deep — the list of rows the horizontal
@@ -190,7 +240,7 @@ introduced by the move.
   wherever both fit, and a long one takes the line to itself. Nothing is
   measured, shrunk or truncated to do it: a button keeps its natural
   width, so no word is ever squeezed. Measured on an A0 portrait: 21
-  lines before, 12 after (*File* 6→2, *Insert* 7→4, *View* 3→2, *Output*
+  lines before, 11 after (*File* 6→1, *Insert* 7→4, *View* 3→2, *Output*
   2→1). The rail went from 214px to 226px, which is the width at which
   *Print check* and *Present* stop stacking — and that width is now one
   number, so the stage, the rulers, the page arrow and the Objects pane

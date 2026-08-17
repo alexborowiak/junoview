@@ -11,13 +11,17 @@
          ribbon underneath is only for editing tools you use constantly.
          Mixing the two is what made the toolbar hard to read
          (2026-08-07). -->
-    <!-- Leaving is a document action, so it stands with the other
-         document actions rather than alone on the far right, where it
-         read as "undo whatever I just clicked" (2026-08-10, user: "the
-         back button is really confusing... move the back button with the
-         other options up the top"). It also has to SAY where it goes:
-         a bare "Back" beside an armed drawing tool looks like the way out
-         of that tool, and it is not — Cancel is. -->
+    <!-- PRESENTING only. While editing, this bar is hidden and the way
+         back is the presentations rail's own Notebooks button, which is
+         on screen the whole time — so a second one in the ribbon was a
+         group's worth of width spent on a journey already offered
+         (2026-08-17, user: "remove the 'close the editor' button, that is
+         not needed, people just click on the back to notebooks").
+         It stays here because PRESENTING has no ribbon and no rail: full
+         screen, the way out has to be visible or it does not exist. It
+         also has to SAY where it goes — a bare "Back" beside an armed
+         drawing tool looks like the way out of that tool, and it is not:
+         Cancel is. -->
     <button class="dbtn" id="deck-exit"
       title="Leave the editor. Nothing is closed or lost.">&#8617;
       Close the editor</button>
@@ -37,6 +41,13 @@
       <div class="dc-resize" id="dc-resize"
         title="Drag to resize the builder panel"></div>
       <div class="dc-head">
+        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
+             stacks the small controls beside Paste (2026-08-17, user: "the
+             save could go below the file"). Stacking them halves the
+             group's width, and they are the two halves of the same
+             errand. The wrapper stays a plain row inside the builder
+             panel's header, which is a one-line bar. -->
+        <span class="rbn-stack">
         <div class="dc-menuwrap">
           <button class="dbtn" id="dc-file" aria-haspopup="true"
             aria-expanded="false">File &#9662;</button>
@@ -109,6 +120,7 @@
                 file&#8230;</button>
             </div>
           </span>
+        </span>
         </span>
         <!-- ONE cell, like the zoom stepper: undo and redo are the same
              decision in two directions and must never end up on different
@@ -200,18 +212,19 @@
  Page size &#9662;</button>
                 <div class="sh-menu page-menu" id="page-menu" hidden></div>
               </span>
-              <!-- the three zoom controls are ONE cell: they are one
-                   decision, and splitting them across the grid would put
-                   the minus and the plus on different rows -->
-              <span class="rbn-cell">
-                <button class="dbtn rbn-ico" id="zoom-out"
-                  title="Zoom out">&#8722;</button>
-                <button class="dbtn rbn-sm" id="zoom-val"
-                  title="Click to fit the whole page in the window"
-                  >Zoom 100%</button>
-                <button class="dbtn rbn-ico" id="zoom-in"
-                  title="Zoom in">+</button>
-              </span>
+              <!-- The strip listing the OTHER pages belongs with the page
+                   controls, not under View: it is the set this page is one
+                   of, which is exactly what Layouts and Page size are
+                   about (2026-08-17, user: "the view and slide is very
+                   confused ... the 'Slides' is slide?"). A poster's other
+                   pages are versions, so the label follows the page kind,
+                   and the group heading follows it too — SLIDE for a deck,
+                   PAGE for a poster. -->
+              <button class="dbtn rbn-sm" id="vw-versions"
+                aria-pressed="false" hidden
+                title="Other versions of this poster — drafts and variants.
+ Opens the strip; close it again to give the page the whole window"
+                >&#9776; Versions</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -222,7 +235,12 @@
                (2026-08-07, user: "present and print check go together,
                but objects and guides are different"). Both sit last —
                right in the horizontal bar, bottom in the side one. -->
-          <span class="rbn-grp rbn-standby rbn-view">
+          <!-- NOT a standby group. It holds zoom now, and you zoom
+               constantly with something selected — the same reason File
+               and Slide have always stayed through a selection. Guides
+               and Objects earn the seat too: an object list is at its most
+               useful when you have an object selected (2026-08-17). -->
+          <span class="rbn-grp rbn-view">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -261,16 +279,25 @@
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><i data-ic="objects"></i> Objects</button>
-              <!-- A poster CAN have more than one page — a second draft, a
-                   variant for a different venue. That is worth having, but
-                   not worth a permanent strip down the side of a page this
-                   big, so it opens on demand and is called what it is
-                   (2026-08-07, user). -->
-              <button class="dbtn rbn-sm" id="vw-versions"
-                aria-pressed="false" hidden
-                title="Other versions of this poster — drafts and variants.
- Opens the strip; close it again to give the page the whole window"
-                >&#9776; Versions</button>
+              <!-- Zoom is how big the page LOOKS, not how big it IS — it
+                   changes nothing about the document and nothing about
+                   what prints, which is the same test Guides and Objects
+                   pass and Page size fails. It sat under Slide, beside the
+                   control that sets the real page size, and the two read
+                   as the same kind of thing (2026-08-17, user: "I feel
+                   like the zoom is view").
+                   The three controls are ONE cell: they are one decision,
+                   and splitting them across the grid would put the minus
+                   and the plus on different rows. -->
+              <span class="rbn-cell">
+                <button class="dbtn rbn-ico" id="zoom-out"
+                  title="Zoom out">&#8722;</button>
+                <button class="dbtn rbn-sm" id="zoom-val"
+                  title="Click to fit the whole page in the window"
+                  >Zoom 100%</button>
+                <button class="dbtn rbn-ico" id="zoom-in"
+                  title="Zoom in">+</button>
+              </span>
             </span>
             <span class="rbn-lab">View</span>
           </span>

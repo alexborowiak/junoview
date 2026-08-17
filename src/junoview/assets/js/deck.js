@@ -515,9 +515,17 @@
       vb.title=pg.poster
         ?'Other versions of this poster — drafts and variants. Opens the '
           +'strip; close it again to give the page the whole window'
-        :'All the slides in this presentation. Opens the strip; close it '
-          +'again to give the slide the whole window';
+        :'The strip of slides down the left. It is there by default — a '
+          +'deck is a sequence — but you can put it away to give one '
+          +'slide the whole window';
     }
+    /* A poster that BECOMES a deck takes its strip back. There is one
+       #film-list node and the two page kinds keep it in different places,
+       so changing Page size from A0 to 16:9 with Versions open would
+       otherwise leave the list floating in the pane while the panel that
+       just appeared showed an empty strip. */
+    if(!pg.poster&&mode==='edit'){showVerpane(false);filmToPanel();}
+    syncStripBtn();
     /* Auto-build makes ONE SLIDE PER FIGURE. On a deck that is the whole
        point; on a poster it silently turns one page into seven, which is
        how a poster ended up with slides at all. Place cells on the page
@@ -1060,9 +1068,17 @@
           vlist.hidden=true;vbtn.setAttribute('aria-expanded','false');}
       });
     }
+    /* ONE button, two mechanisms, because the two page kinds want opposite
+       defaults. A deck's strip is docked and on: toggling it is a class,
+       and the slide list never leaves the panel. A poster's versions are
+       rare enough to be worth no permanent width, so they stay in the
+       floating pane the Objects list uses (2026-08-17). */
     var vsb=$('#vw-versions');
     if(vsb) vsb.addEventListener('click',function(){
-      showVerpane(!!$('#verpane').hidden);
+      if(pageOf().poster){showVerpane(!!$('#verpane').hidden);return;}
+      deckEl.classList.toggle('strip-off');
+      syncStripBtn();
+      applyZoom();          /* the stage just changed width */
     });
     var vpc=$('#verpane-close');
     if(vpc) vpc.addEventListener('click',function(){showVerpane(false);});
@@ -6661,6 +6677,18 @@
     }
     filmHome=null;
   }
+  /* The button reports the state of whichever strip this page kind uses:
+     the docked one for a deck, the floating pane for a poster. Written
+     once, because two of these drifting apart is a toggle that lies about
+     what it will do. */
+  function syncStripBtn(){
+    var vb=$('#vw-versions'); if(!vb) return;
+    var p=$('#verpane');
+    var on=pageOf().poster
+      ? !!(p&&!p.hidden)
+      : !deckEl.classList.contains('strip-off');
+    vb.setAttribute('aria-pressed',on.toString());
+  }
   function showVerpane(on){
     var p=$('#verpane'); if(!p) return;
     /* Objects and Versions are the same 232px shell in the same corner,
@@ -6676,8 +6704,7 @@
     p.hidden=!on;
     var t=$('#verpane-title');
     if(t) t.textContent=pageOf().poster?'Versions':'Slides';
-    var vb=$('#vw-versions');
-    if(vb) vb.setAttribute('aria-pressed',on.toString());
+    syncStripBtn();
   }
   /* ---- versions --------------------------------------------------------
      A poster's other pages are drafts and variants, so a new one starts as
@@ -7100,14 +7127,13 @@
   function fileToRibbon(){
     var top=$('#rbn-file-row');
     if(!top||fileMoved.length) return;
-    /* Leaving comes with them, so the whole "what am I doing with this
-       document" set is one group (2026-08-10, user: "move the back button
-       with the other options"). It goes in FIRST so it leads the row. */
-    var xb=$('#deck-exit');
-    if(xb){
-      fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});
-      top.appendChild(xb);
-    }
+    /* Leaving does NOT come with them. It rode along from 2026-08-10 to
+       2026-08-17, and it was the widest control in the ribbon — a group's
+       worth of width for a journey the presentations rail's Notebooks
+       button already offers, on screen the whole time you are editing
+       (user: "that is not needed, people just click on the back to
+       notebooks"). It stays in the top bar, which PRESENTING still shows
+       and editing still hides. */
     /* The panel is hidden while editing, for a deck as well as a poster,
        so its head cannot hold File and Save any more. */
     var head=deckEl.querySelector('.dc-head');
@@ -7121,11 +7147,14 @@
        in the bar (2026-08-07, user: "a stupid name and in a stupid
        place"). It stays in the panel, which is where it means something:
        the builder, before you have opened the editor. */
-    /* the save READOUT belongs beside Save, not stranded past undo/redo:
-       "all the save stuff together" (2026-08-07) */
-    var st=$('#deck-status'),grp=deckEl.querySelector('.dc-savegrp');
-    if(st&&grp&&grp.parentNode===top&&st.parentNode===top)
-      top.insertBefore(st,grp.nextSibling);
+    /* The save READOUT belongs beside Save, not stranded past undo/redo
+       ("all the save stuff together", 2026-08-07). That used to be a
+       re-insert here; markup order does it now. File and Save are one
+       stacked cell in column one, so appending the readout last drops it
+       into column two's second row — level with Save, which is where it
+       was being moved to anyway. The old re-insert tested
+       `savegrp.parentNode === top`, and the stack means that is never true
+       again: it would have sat there doing nothing (2026-08-17). */
   }
   /* The top bar used to appear only when File and Save had been borrowed
      into it, so it could vanish and take the only way out with it. Now
