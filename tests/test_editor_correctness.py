@@ -344,17 +344,104 @@ def test_chrome_does_not_scale_but_never_loses_the_ink(out):
     assert "hit.setAttribute('stroke-width',Math.max(16,swPx+10));" in out
 
 
-def test_the_weight_control_says_what_it_will_print(out):
-    """A number that means "pixels on a 720px-tall page" cannot be laid
-    against a ruler, so the millimetres go in the tooltip -- and in
-    preflight, which is the only part of the app that speaks in real
-    millimetres. NOT in the label: a label whose width changed with the
-    selected item would make the ribbon's required width depend on what
-    you clicked, and the fit ladder has no rung left to absorb that.
+def test_qr_code_inserts_rather_than_arming_a_tool_that_does_not_exist(out):
+    """QR code carried the generic `et` class -- the one that marks a
+    DRAWING tool -- but had no `data-tool`. So the shared arming wiring
+    ran `setTool(undefined)` and the button behaved like a tool nobody
+    wrote: it lit up as pressed, Cancel appeared, the layer was classed
+    `tool-undefined` and went to a crosshair, the hint was blank, and
+    clicking the page did nothing (2026-08-17, user: "whatever QR code is
+    is confusing. Sounds like adding a qr code" -- it does, and that was
+    the problem: it also armed a phantom).
+
+    Worse, the generic wiring is registered after the QR handler, so its
+    setTool(undefined) clobbered the handler's own setTool('select') and
+    the state survived a SUCCESSFUL insert too. Cancelling the prompt left
+    it as well, having inserted nothing.
+
+    Measured before: cancel -> `tool-undefined`, Cancel shown, QR pressed,
+    0 items added. After: cancel -> `tool-select`, no Cancel, nothing
+    added; accept -> the QR code lands and the editor stays in select.
+
+    It is an immediate insert, like Image beside it -- which is exactly
+    why Image never had the class.
+    """
+    qr = out.split('id="dc-qr"')[0]
+    assert qr.rstrip().endswith('<button class="dbtn rbn-sm"'), \
+        "dc-qr must not carry the `et` (drawing tool) class"
+    # ...and an unknown tool can never arm again, for anything
+    assert "var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1};" in out
+    assert "if(!TOOLS[t]) t='select';" in out
+    # the label says what it does and why you would want one
+    assert "Ask for a link and put a QR code on the page" in out
+
+
+def test_weight_is_a_menu_of_drawn_thicknesses_not_a_cycle(out):
+    """It was a button that cycled 2 -> 3.5 -> 5 and reported the result in
+    a tooltip afterwards: three weights, none of them visible until you
+    had picked one, and no way back except round again (2026-08-17, user:
+    "the weight just have all the options like word does with the
+    different thicknesses").
+
+    It is Word's own ladder now, each rung drawn at its thickness and
+    labelled in printed points. Points, not the stored number: `a.sw`
+    means "pixels on a 720px-tall page", which cannot be laid against a
+    ruler -- so the ladder is defined in points and converted against the
+    page you are on at pick time, because the same weight prints heavier
+    on an A0 than on a slide.
     """
     assert "function swMm(a,pg){" in out
-    assert "'mm on this page. Click to cycle thinner and thicker.'" in out
+    assert "var SW_PT=[0.25,0.5,0.75,1,1.5,2.25,3,4.5,6];" in out
+    assert "function ptToSw(pt,pg){" in out
+    assert "return pt/PT_MM*SW_REF_H/(pg.mm[1]||191);" in out
+    # the cycling button is gone, wrapper and all
+    assert "a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);" not in out
+    assert "'#fmt-line':'arrow rect'," not in out
+    assert "'#fmt-swwrap':'arrow rect'," in out
+    # the millimetre reading stays in the tooltip and in preflight, which
+    # is the only part of the app that speaks in real millimetres
+    assert "'mm on this page ('+swPt(a).toFixed(2)" in out
     assert "Line may not print ('+mmw.toFixed(2)+'mm)" in out
+
+
+def test_the_line_menus_draw_the_option_instead_of_naming_it(out):
+    """"Dash-dot" is a word you decode into a picture; "Curved the other
+    way" is a word you decode into a picture and then mirror. For a dash
+    pattern, an arrowhead or a route the picture IS the answer
+    (2026-08-17, user: "use symbols with text on hover not typing what
+    they are ... what the fuck are the curve options").
+
+    Every row draws the real thing -- the renderer's own dash array, the
+    renderer's own head path -- and keeps its full name in the tooltip.
+    This is not the wordless-glyph problem the ribbon buttons had: a glyph
+    stands for a thing and must be learned, a preview is the thing. The
+    buttons that OPEN these menus stay worded.
+
+    Measured in a browser: style 5 options, weight 9, ends 18 in three
+    labelled rows, route 5 -- every one drawn, every one with a title,
+    none showing a word on screen, and the selection's current value
+    marked in each.
+    """
+    for fn in ("function styleIcon(id){", "function weightIcon(pt){",
+               "function headIcon(id,atStart){",
+               "function headSizeIcon(z){", "function routeIcon(d){"):
+        assert fn in out, fn
+    # the previews are built from the SAME tables the renderer draws from
+    assert "strokeLine(3,8,107,8,2.4,LINE_DASH[id]||'')" in out
+    assert "p.setAttribute('d',h.path);" in out
+    # ends is three labelled rows, not eighteen lines starting with the
+    # same word
+    assert "menuHead(hd.menu,'Start');" in out
+    assert "menuHead(hd.menu,'End');" in out
+    assert "menuHead(hd.menu,'Size');" in out
+    assert "'End: '+h.label" not in out
+    assert "'Curved the other way'],['h','Elbow: across then down'" not in out
+    # ...and every option says which one you are on
+    assert "function syncLineMenus(a){" in out
+    assert '.sh-opt[aria-pressed="true"]{background:#39a9c033;' in out
+    # the open/close wiring is shared rather than copied
+    assert "function wireMenuToggle(wrapId,btnId,menuId){" in out
+    assert out.count("if(willOpen) floatMenu(btn,menu);") == 1
 
 
 def test_powerpoint_export_survives_a_line_on_the_page(out):
@@ -415,7 +502,7 @@ def test_the_document_actions_are_in_the_ribbon_not_a_bar_above_it(out):
     `editing` and `body.slide-editing` both off).
     """
     assert 'id="rbn-file-row"' in out
-    assert 'class="rbn-grp rbn-file"' in out
+    assert 'class="rbn-grp rbn-fixed rbn-file"' in out
     assert "var top=$('#rbn-file-row');" in out
     # leaving is NOT moved into the ribbon any more...
     assert "fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});" \
@@ -484,12 +571,15 @@ def test_view_and_output_are_separate_groups(out):
     bar, bottom in the side one, because "last" means the same in a
     column.
     """
-    assert 'class="rbn-grp rbn-view"' in out
+    assert 'class="rbn-grp rbn-fixed rbn-view"' in out
     assert 'class="rbn-grp rbn-standby rbn-out"' in out
     assert ">Output</span>" in out
-    assert ".rbn-out{order:91;}" in out
+    # both still sort after the constant three -- see
+    # test_the_bar_has_a_constant_half_and_a_changing_half for the ordering
+    assert ".rbn-out{order:4;}" in out
     # Guides+Objects in one, Print check+Present in the other
-    view = out.split('class="rbn-grp rbn-view"')[1].split(">View</span>")[0]
+    view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
+        ">View</span>")[0]
     assert 'id="vw-menuwrap"' in view and 'id="objects-btn"' in view
     assert 'id="vw-check"' not in view and 'id="dc-play"' not in view
 
@@ -507,14 +597,16 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     SET this page belongs to, which is the same subject as Layouts and Page
     size.
     """
-    slide = out.split('class="rbn-grp rbn-slide"')[1].split(">Slide</span>")[0]
-    view = out.split('class="rbn-grp rbn-view"')[1].split(">View</span>")[0]
+    slide = out.split('class="rbn-grp rbn-fixed rbn-slide"')[1].split(
+        ">Slide</span>")[0]
+    view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
+        ">View</span>")[0]
     assert 'id="vw-versions"' in slide and 'id="vw-versions"' not in view
     assert 'id="zoom-val"' in view and 'id="zoom-val"' not in slide
     # View can no longer stand down for a selection: you zoom constantly
     # with something selected, and an object list is at its most useful
     # when there IS an object selected
-    assert 'class="rbn-grp rbn-standby rbn-view"' not in out
+    assert 'rbn-standby rbn-view' not in out
     # the readout renames itself, so it is held to the longest label it can
     # hold -- in characters, so it survives every density rung
     assert "#zoom-val{min-width:calc(9ch + 18px);justify-content:center;}" in out
@@ -638,19 +730,46 @@ def test_undo_and_redo_are_one_cell(out):
     assert ".dc-head .rbn-cell{height:30px;gap:6px;}" in out
 
 
-def test_an_empty_save_readout_draws_nothing(out):
-    """`.deck-status:empty{display:none}` is stated up top and then lost to
-    `.rbn-file .deck-status`, which sets display again at higher
-    specificity -- the same author-display-beats-[hidden] trap app.css
-    warns about. The result was an empty pill sitting in the middle of the
-    File group whenever there was nothing to report (2026-08-16).
+def test_the_save_readout_cannot_move_a_control(out):
+    """It renames itself as you work -- "" -> "unsaved" -> "unsaved —
+    saving…" -> "autosaved · 14:32" -- and it used to sit inside the File
+    group, so its width swung the group between 147px and ~195px and every
+    group after it moved along. Sizing it to its longest string fixed the
+    position and cost ~110px of permanent width for a readout that is
+    blank most of the time.
 
-    It is hidden rather than removed in the horizontal grid because it
-    still has to hold its cell: drop it and undo/redo shuffle into the wide
-    first column. The rail re-flows anyway, so there it goes entirely.
+    It lives at the far END of the bar instead. Nothing is to its right, so
+    its width costs nothing, moves nothing, and needs no fixed-width hack:
+    it can say the whole string.
+
+    The STAGE it gives way at matters as much as the place. Left to survive
+    into the rung ladder it pushed the ladder itself -- going from "" to
+    "unsaved" the moment you drew something bought a rung, and that rung
+    compacted Insert by 56px. A readout that changes the size of the
+    buttons is the same bug as one that changes their position. So it goes
+    with the hint, before any control tightens, on the same grounds: it is
+    text, not a control (2026-08-17).
     """
-    assert ".rbn-file .deck-status:empty{visibility:hidden;}" in out
-    assert ".deck.rbn-side .rbn-file .deck-status:empty{display:none;}" in out
+    assert "var st=$('#deck-status'),bar=$('#edit-tools');" in out
+    assert "if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);" in out
+    assert ".edit-tools.ribbon>.deck-status{order:10;margin-left:auto;" in out
+    assert ".deck.erc-nohint .edit-tools.ribbon>.deck-status{display:none;}" in out
+    # the old in-group hacks are gone with it
+    assert ".rbn-file .deck-status:empty{visibility:hidden;}" not in out
+    assert "width:calc(17ch + 20px)" not in out
+
+
+def test_a_two_row_cell_is_counted_as_two(out):
+    """--rbn-cols is "half the visible controls, rounded up", which assumes
+    every control is one cell. A .rbn-stack spans BOTH rows, so File --
+    once its status readout left and it was down to the File/Save stack
+    plus undo/redo -- asked for one column to hold three cells and pushed
+    undo/redo into an implicit third row, over the group's own label. The
+    same trap the View group fell into on 2026-08-16, from the other side
+    (2026-08-17).
+    """
+    assert "n+=(c.classList.contains('rbn-stack')" in out
+    assert "||c.classList.contains('rbn-tall'))?2:1;" in out
 
 
 def test_ribbon_group_columns_are_counted_before_every_fit(out):

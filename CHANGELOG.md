@@ -183,6 +183,85 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Fixed: QR code armed a tool that does not exist.** It does what it
+  says — asks for a link and puts a QR code on the page — but it also
+  carried the class that marks a *drawing* tool, without naming one. So
+  the shared arming wiring called `setTool(undefined)`: the button lit up
+  as pressed, a **Cancel** button appeared, the page went to a crosshair
+  with a blank hint, and clicking it did nothing. Since that wiring runs
+  after the button's own handler, it clobbered the handler's cleanup, so
+  the phantom state survived a *successful* insert too — and cancelling
+  the prompt left you in it having inserted nothing. Measured before:
+  cancel → `tool-undefined`, Cancel shown, button pressed, nothing added.
+  After: cancel changes nothing at all; accept drops the QR code and
+  leaves you in select. `setTool` now treats any tool it does not know as
+  no tool, so the whole family of that bug is gone rather than the one
+  instance. The label also says what it is for: point a phone at it to
+  open your repo, paper or data.
+- **The line menus draw the option instead of naming it.** *Style*, *Ends*
+  and *Route* were lists of words — "Dash-dot", "Stealth", "Curved the
+  other way" — and *Weight* was not a menu at all: a button that cycled
+  2 → 3.5 → 5 and told you the result in a tooltip afterwards, so all
+  three weights were invisible until you had picked one and there was no
+  way back except round again.
+
+  A word is a thing you decode into a picture, and "Curved the other way"
+  is a word you decode into a picture and then mirror. For a dash pattern,
+  an arrowhead or a thickness the picture **is** the answer. Every row now
+  draws the real thing — the renderer's own dash array, the renderer's own
+  head path — and keeps its full name in the tooltip:
+
+  - **Style** — five rules drawn in their actual patterns.
+  - **Weight** — Word's own ladder, ¼pt to 6pt, each drawn at its
+    thickness and labelled in **printed points**. Points rather than the
+    stored number, because weight here is page-relative: the same line
+    prints heavier on an A0 than on a slide, so the point value is
+    converted against the page you are on when you pick it.
+  - **Ends** — three labelled rows, *Start* / *End* / *Size*, each head
+    drawn on a stub of line pointing the way that end points. It was
+    eighteen lines that all began with the same word.
+  - **Route** — the five paths drawn side by side, so "curved the other
+    way" is a picture next to "curved" instead of a sentence to mirror.
+
+  Every menu also marks which option the selection is **on** — the one
+  thing the worded lists were no better at, and the reason a cycling
+  *Weight* button felt like guessing. The buttons that open the menus stay
+  worded: a preview is the thing itself, but a glyph on a toolbar button
+  only stands for it, and those went back to words in 2026-08-07 for good
+  reason.
+- **The toolbar has a constant half and a changing half, and the constant
+  half does not move.** Selecting a line inserted four groups in the
+  *middle* of the bar: *View* slid 150px sideways, *Output* vanished, and
+  on a narrower window *Slide* stood down as well and took *View* another
+  168px. Three separate mechanisms, one symptom — buttons somewhere else
+  than where you left them.
+
+  **File · Slide · View** are now ordered first and are on screen, in that
+  order, at the same x and the same width whatever you have selected.
+  Everything that can change — *Output*, *Notebooks*, *Insert*, and the
+  selected item's own groups — is ordered after them, so the swap happens
+  at one boundary at the far end. A group that can disappear cannot be
+  part of the half that promises never to move, which is why *Output* is
+  in the changing half despite always being wanted.
+
+  Two subtler causes went with it. The density ladder used to re-fit
+  against the *content*, so gaining a group bought a rung and every button
+  in the bar shrank a few pixels; the constant half is now exempt from
+  that ladder and steps with the **window width** instead — identical
+  whether or not something is selected, so it can only move when you
+  resize, which is the one moment a control moving is not a surprise. And
+  the save readout, which renames itself from blank to "autosaved · 14:32"
+  as you work, has left the *File* group for the far end of the bar: with
+  nothing to its right its width costs nothing and moves nothing, and it
+  gives way with the toolbar hint when the row is tight, on the same
+  grounds — it is text, not a control.
+
+  Measured at 1280 / 1400 / 1600 / 1920px windows with the slide strip
+  docked: drawing a line, selecting it and deselecting it moves *File*,
+  *Slide* and *View* by exactly **0px** and changes their widths by
+  exactly **0px**, and nothing clips in any state. Below ~1250px the
+  remedies are unchanged and one click each: put the slide strip away, or
+  stand the toolbar on the right.
 - **A presentation gets its slide thumbnails back.** Hiding the strip
   while editing was right for a poster and wrong for a deck: a deck **is**
   a sequence, and you steer it by seeing the sequence. The strip is docked

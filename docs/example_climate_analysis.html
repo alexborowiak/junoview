@@ -3346,18 +3346,38 @@ body.slide-editing .apptop{display:none;}
 .dc-savegrp .dc-menuwrap>.dbtn{border-radius:0 6px 6px 0;
   border-left-color:#ffffff14;padding-left:6px;padding-right:6px;}
 .dc-savegrp .dc-menuwrap>.dbtn:hover{border-left-color:var(--cyan);}
-/* View and Output sort LAST, but they are no longer flung at the right
-   edge. An auto margin there (2026-08-07, "put the view box on the far
-   right") pushed them against the window and left the whole difference as
-   one void in the middle of the toolbar — ~560px of it once the File
-   group stopped carrying Close the editor (2026-08-17, user: "there is
-   lot's of weird space around"). Groups pack left now, the way every
-   real ribbon packs, so the space that is left over is at the end where
-   it reads as room rather than a gap. The ORDER is untouched, so these
-   two are still last — which is still the bottom of the side toolbar. */
-.rbn-view{order:90;border-left:1px solid #ffffff1c;}
-.rbn-out{order:91;}
-.edit-tools.ribbon .et-hint{order:85;margin-left:0;}
+/* ---- TWO REGIONS, and the rule the bar keeps above all others: NOTHING
+   THAT IS ALWAYS THERE MAY MOVE WHEN YOU SELECT SOMETHING (2026-08-17,
+   user, having asked before: "having buttons jump around sucks ... have
+   everything that stays constant always in the one space on the left, and
+   everything new always appears on the right").
+
+   LEFT is constant. File, Slide, View and Output are on screen in that
+   order whatever you have selected, and nothing further right can push
+   them, because flex lays out in order and they come first.
+
+   RIGHT is the region that changes: Notebooks and Insert while nothing is
+   selected, the selected item's own groups when something is. The swap
+   therefore happens at ONE boundary, at the far end, and the constant
+   half never feels it. Selecting a line used to insert four groups in the
+   MIDDLE — View slid 150px sideways and Output vanished (2026-08-17
+   screenshots).
+
+   Groups also pack left rather than being flung at the window edge by an
+   auto margin, which turned every spare pixel into one void in the middle
+   of the bar — ~560px of it once File stopped carrying Close the editor
+   ("there is lot's of weird space around"). ---- */
+.rbn-file{order:1;}
+.rbn-slide{order:2;}
+.rbn-view{order:3;}
+/* ---- everything below here is the CHANGING region. Output and Notebooks
+   belong to it because they stand down for a selection: a group that can
+   disappear cannot be part of the half that promises never to move. ---- */
+.rbn-out{order:4;}
+.rbn-nbs{order:5;}
+.rbn-insert{order:6;}
+.et-fmt .rbn-grp{order:7;}
+.edit-tools.ribbon .et-hint{order:9;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
   margin-left:16px;padding-left:16px;border-left:1px solid #ffffff1a;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:40vw;}
@@ -3413,16 +3433,29 @@ body.slide-editing .apptop{display:none;}
 .rbn-file .dbtn{padding:3px 8px;font-size:10.5px;height:26px;
   box-sizing:border-box;display:inline-flex;align-items:center;
   justify-content:center;line-height:1;white-space:nowrap;}
-.rbn-file .deck-status{font-size:10px;height:26px;box-sizing:border-box;
-  display:inline-flex;align-items:center;white-space:nowrap;}
-/* An empty readout must not draw an empty pill in the middle of the group.
-   `.deck-status:empty{display:none}` further up loses to this rule's higher
-   specificity — the same author-display-beats-[hidden] trap noted in
-   app.css. It is hidden rather than removed because it still has to hold
-   its cell: dropping it out of the grid shuffles undo and redo into the
-   wide first column, and a 134px undo arrow is worse than a blank cell
-   (2026-08-16). */
-.rbn-file .deck-status:empty{visibility:hidden;}
+/* The readout lives at the FAR END of the bar while editing, not in the
+   File group: it renames itself as you work, and a thing that changes
+   width in the constant half drags every group after it along. Pinned
+   right with nothing beyond it, its width costs nothing and moves
+   nothing, so it can say the whole string (2026-08-17). */
+.edit-tools.ribbon>.deck-status{order:10;margin-left:auto;
+  align-self:center;font-size:10px;height:22px;box-sizing:border-box;
+  display:inline-flex;align-items:center;white-space:nowrap;flex:none;}
+.edit-tools.ribbon>.deck-status:empty{display:none;}
+/* It goes at the SAME stage as the hint — before any control tightens —
+   and for the same reason: it is text, not a control, so dropping it
+   hides nothing you can click and no word you need in order to act. It is
+   worth ~110px, which is what a text selection on a 1280px window was
+   short of.
+   The stage matters as much as the rule. Left to survive into the rung
+   ladder it pushed the ladder itself: going from "" to "unsaved" the
+   moment you drew something was enough to buy a rung, and that rung
+   compacted Insert by 56px. A readout that changes the size of the
+   buttons is the same bug as a readout that changes their position
+   (2026-08-17). */
+.deck.erc-nohint .edit-tools.ribbon>.deck-status{display:none;}
+.deck.rbn-side .edit-tools.ribbon>.deck-status{margin-left:0;
+  align-self:stretch;justify-content:center;margin-top:6px;}
 .rbn-file .dc-menuwrap,.rbn-file .dc-savegrp{display:inline-flex;
   align-items:center;height:26px;}
 /* the contextual format groups flow into the same rows as the static
@@ -3452,13 +3485,13 @@ body.slide-editing .apptop{display:none;}
    regression. */
 .edit-tools.fmt-open .rbn-insert,
 .edit-tools.fmt-open .rbn-standby{display:none;}
-/* Last resort on a narrow window with something selected: Slide steps
-   aside too. It is the only remaining group that is not about the thing
-   you have selected, and every one of its controls has a keyboard route
-   (+ / - / 0 for zoom) or comes straight back when you deselect. Better
-   than the alternative, which was silently clipping whatever fell off
-   the right-hand end — buttons you could neither see nor reach. */
-.deck.erc-tight .edit-tools.fmt-open .rbn-slide{display:none;}
+/* Slide used to step aside as well, on a narrow window with something
+   selected. Measured cost of that: selecting a text box took View 168px
+   to the left. It was the single biggest jump in the bar and it fired on
+   an ordinary click at an ordinary window size — exactly the thing this
+   toolbar is not allowed to do. The width it bought comes from the extra
+   rung below instead, which the changing region can afford and the
+   constant half never pays (2026-08-17). */
 /* with nothing selected there is no group to stand aside, so the big
    buttons give up their last few pixels instead — smaller, never fewer
    words */
@@ -3482,6 +3515,71 @@ body.slide-editing .apptop{display:none;}
    control in its grid column, so the column keeps the width of the worded
    button above it and the saving never reaches the row. */
 .deck.erc-tight .rbn-lab{font-size:7.5px;letter-spacing:.06em;}
+
+/* ---- THE CONSTANT HALF OPTS OUT OF THE LADDER ------------------------
+   Every rung above trades type and padding for width, and any of them
+   applied to File, Slide or View MOVES those groups — which is the whole
+   complaint. So they are reset here, once, after the ladder, rather than
+   by excluding them rung by rung: a rung added later cannot forget a
+   reset it never had to write. Specificity is deliberately above every
+   rung (four and five classes against their three and four), so this
+   wins wherever it sits in the file rather than by being last.
+   Measured after: File, Slide and View sit at exactly 386/217, 603/197
+   and 800/246 with nothing selected, a line selected and a text box
+   selected, at 1500px and 1920px. Zero movement. ---- */
+.deck .edit-tools .rbn-grp.rbn-fixed{padding-left:11px;padding-right:11px;}
+.deck .edit-tools .rbn-fixed .rbn-row{column-gap:5px;row-gap:5px;}
+.deck .edit-tools .rbn-fixed .dbtn.rbn-sm,
+.deck .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
+  font-size:10.5px;padding-left:8px;padding-right:8px;gap:6px;}
+.deck .edit-tools .rbn-fixed .rbn-lab{font-size:8.5px;letter-spacing:.14em;}
+.deck .edit-tools .rbn-fixed .rbn-stack{gap:3px;}
+/* ...but it still has to answer to the WINDOW. These rungs are keyed on
+   the ribbon's width alone (fitEditRibbon's ERCW, set before it measures
+   anything), and the ribbon is exactly as wide with something selected as
+   without — so they can only fire on a resize, never on a click. The
+   status readout and the zoom readout are sized in ch, so they follow
+   these steps down on their own rather than needing a rung each. */
+.deck.ercw1 .edit-tools .rbn-grp.rbn-fixed{padding-left:8px;padding-right:8px;}
+.deck.ercw1 .edit-tools .rbn-fixed .rbn-row{column-gap:4px;row-gap:4px;}
+.deck.ercw1 .edit-tools .rbn-fixed .dbtn.rbn-sm,
+.deck.ercw1 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
+  font-size:10px;padding-left:6px;padding-right:6px;gap:4px;}
+.deck.ercw2 .edit-tools .rbn-grp.rbn-fixed{padding-left:6px;padding-right:6px;}
+.deck.ercw2 .edit-tools .rbn-fixed .rbn-row{column-gap:3px;row-gap:4px;}
+.deck.ercw2 .edit-tools .rbn-fixed .dbtn.rbn-sm,
+.deck.ercw2 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
+  font-size:9.5px;padding-left:5px;padding-right:5px;gap:3px;}
+.deck.ercw2 .edit-tools .rbn-fixed .rbn-lab{font-size:8px;letter-spacing:.1em;}
+.deck.ercw3 .edit-tools .rbn-grp.rbn-fixed{padding-left:4px;padding-right:4px;}
+.deck.ercw3 .edit-tools .rbn-fixed .rbn-row{column-gap:2px;row-gap:3px;}
+.deck.ercw3 .edit-tools .rbn-fixed .dbtn.rbn-sm,
+.deck.ercw3 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
+  font-size:9px;padding-left:4px;padding-right:4px;gap:2px;}
+.deck.ercw3 .edit-tools .rbn-fixed .rbn-lab{font-size:7.5px;letter-spacing:.06em;}
+.deck.ercw4 .edit-tools .rbn-grp.rbn-fixed{padding-left:3px;padding-right:3px;}
+.deck.ercw4 .edit-tools .rbn-fixed .dbtn.rbn-sm,
+.deck.ercw4 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
+  font-size:8.5px;padding-left:3px;padding-right:3px;}
+
+/* ---- ...and the changing region pays for it, with a rung of its own.
+   It is relaid out on every selection anyway, so extra density there
+   costs nobody a moved button — and it is where the width has to come
+   from now that no constant group is allowed to step aside. Worth 40px
+   on a text selection, which is the 35px that was over. ---- */
+.deck.erc-tight .et-fmt .rbn-grp{padding-left:2px;padding-right:2px;}
+.deck.erc-tight .et-fmt .rbn-row{column-gap:2px;}
+.deck.erc-tight .et-fmt .dbtn.rbn-sm,
+.deck.erc-tight .et-fmt .rbn-row .dbtn.etm{
+  font-size:8.5px;padding-left:3px;padding-right:3px;gap:2px;}
+.deck.erc-tight .et-fmt .rbn-row .fmt-range{width:56px;}
+/* the boxes you type into rather than read: a font name still shows, a
+   point size is at most three digits, and neither needs its resting width
+   when the row is at its last rung */
+.deck.erc-tight .et-fmt .rbn-row .fmt-num{width:32px;}
+.deck.erc-tight .et-fmt .rbn-row select.etm{max-width:62px;}
+.deck.erc-tight .et-fmt .fmt-szwrap,
+.deck.erc-tight .et-fmt .fmt-opwrap{gap:2px;}
 .fmt-lab{margin-left:2px;}
 .et-label{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--amber);}
@@ -3561,6 +3659,41 @@ body.slide-editing .apptop{display:none;}
 .anim-stepctr .anim-mini{padding:3px 6px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
 .sh-opt-t{font-size:9.5px;letter-spacing:.02em;}
+
+/* ---- the line menus DRAW the option instead of naming it -------------
+   A word is a thing you decode into a picture. For a dash pattern, an
+   arrowhead or a thickness the picture is the answer, and "Curved the
+   other way" made you mirror "Curved" in your head to get there
+   (2026-08-17, user: "use symbols with text on hover not typing what they
+   are"). Every row draws the real thing and keeps its name in the
+   tooltip. currentColor throughout, so the preview brightens with the row
+   it is in and the selected one reads as selected. ---- */
+.sh-menu.style-menu,.sh-menu.sw-menu{display:flex;flex-direction:column;
+  gap:2px;width:auto;}
+.style-menu .sh-opt,.sw-menu .sh-opt{flex-direction:row;align-items:center;
+  gap:8px;padding:4px 8px;}
+.ln-prev{display:block;flex:none;}
+.sw-val{font-family:var(--mono);font-size:9.5px;color:#8ba0b2;flex:none;
+  width:46px;text-align:right;white-space:nowrap;}
+.sh-opt:hover .sw-val,.sh-opt[aria-pressed="true"] .sw-val{color:#fff;}
+/* ENDS: three labelled rows, not eighteen lines all starting with the
+   same word. The headings are headings, not options — naming a section is
+   not the same as naming every row in it. */
+.sh-menu.head-menu{display:flex;flex-direction:column;gap:2px;width:auto;}
+.hd-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.hd-row.hd-sz{grid-template-columns:repeat(4,1fr);}
+.hd-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#5d7183;padding:4px 3px 1px;}
+.head-menu .sh-opt{padding:3px 1px;}
+.hd-ico{display:block;width:100%;height:16px;}
+.sh-menu.bend-menu{display:grid;grid-template-columns:repeat(5,1fr);
+  gap:3px;width:auto;}
+.bend-menu .sh-opt{padding:4px 2px;}
+.bd-ico{display:block;width:100%;height:28px;}
+/* which one you are ON. A set of pictures with no answer to "and which am
+   I?" is the one thing the worded lists were no better at. */
+.sh-opt[aria-pressed="true"]{background:#39a9c033;border-color:#39a9c0;
+  color:#fff;}
 .dbtn.viewtoggle{border-color:#39a9c05c;color:#8fd4e4;}
 .dbtn.viewtoggle:hover{border-color:var(--cyan);color:#fff;
   background:#39a9c01e;}
@@ -4002,12 +4135,6 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
    without claiming a whole line the way a `flex-basis:100%` would */
 .deck.rbn-side .rbn-cell{height:auto;}
 .deck.rbn-side .rbn-cell .dbtn.rbn-sm{flex:1 0 auto;justify-content:center;}
-/* In the horizontal grid the save readout keeps its cell even when empty,
-   so the group does not shift the moment it fills. The rail re-flows
-   anyway, so there is nothing to hold still — and an invisible item that
-   still takes 77px of a line is what pushed undo and redo off onto one of
-   their own. */
-.deck.rbn-side .rbn-file .deck-status:empty{display:none;}
 /* the group divider is a vertical rule in the horizontal ribbon and has no
    business on a stacked one; the ORDER still applies, so View and Output
    fall to the bottom of the column */
@@ -8296,11 +8423,14 @@ through Ko-fi. Thank you.</p>
                happened to call the file. Present is DOWN here too — it is
                a way of viewing the page, so it belongs with the other
                view controls (2026-08-07, user). -->
-          <span class="rbn-grp rbn-file">
+          <span class="rbn-grp rbn-fixed rbn-file">
             <span class="rbn-row" id="rbn-file-row"></span>
             <span class="rbn-lab">File</span>
           </span>
-          <span class="rbn-grp rbn-standby">
+          <!-- rbn-nbs so it can be ORDERED: it stands down for a
+               selection, so it belongs in the ribbon's changing region,
+               not among the groups that must never move -->
+          <span class="rbn-grp rbn-standby rbn-nbs">
             <span class="rbn-row">
               <div class="dc-menuwrap">
                 <!-- label is set by renderPresNbs (Open vs Refresh), so
@@ -8314,7 +8444,7 @@ through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Notebooks</span>
           </span>
-          <span class="rbn-grp rbn-slide">
+          <span class="rbn-grp rbn-fixed rbn-slide">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
                 <button class="dbtn rbn-sm" id="lay-btn"
@@ -8363,7 +8493,7 @@ through Ko-fi. Thank you.</p>
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-view">
+          <span class="rbn-grp rbn-fixed rbn-view">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -8458,9 +8588,19 @@ through Ko-fi. Thank you.</p>
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg> Image</button>
-              <button class="dbtn rbn-sm et" id="dc-qr"
-                title="Insert a QR code that links to your repo / paper /
- data — generated right here, prints crisp (vector)"
+              <!-- NOT an `et` tool. It carried that class without a
+                   data-tool, so the shared arming wiring called
+                   setTool(undefined): the button lit up as though a tool
+                   were live, Cancel appeared, the page went to a
+                   crosshair, and it stayed that way whether or not you
+                   had actually inserted anything (2026-08-17, user:
+                   "whatever QR code is is confusing"). It is an immediate
+                   insert, like Image beside it — which is why Image never
+                   had the class. -->
+              <button class="dbtn rbn-sm" id="dc-qr"
+                title="Ask for a link and put a QR code on the page —
+ point a phone at it to open your repo, paper or data. Generated here, so
+ it works offline and prints crisp at any size (vector)"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.2" width="4.4" height="4.4"/><rect x="9.4" y="2.2" width="4.4" height="4.4"/><rect x="2.2" y="9.4" width="4.4" height="4.4"/><path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/><path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/></svg> QR code</button>
               <!-- Source order IS the layout: with two rows filled across,
                    the first four land on the top row and the rest below.
@@ -8695,8 +8835,21 @@ through Ko-fi. Thank you.</p>
                     <div class="sh-menu style-menu" id="fmt-style-menu"
                       hidden></div>
                   </span>
-                  <button class="dbtn rbn-sm etm" id="fmt-line"
-                    title="Cycle line thickness">&#9776; Weight</button>
+                  <!-- a MENU of thicknesses, drawn, the way Word's is.
+                       This was a button that cycled 2 → 3.5 → 5 and told
+                       you the result in a tooltip afterwards: three
+                       weights, none of them visible until you had picked
+                       one, and no way to go back except round again
+                       (2026-08-17, user: "the weight just have all the
+                       options like word does with the different
+                       thicknesses"). -->
+                  <span class="sh-drop" id="fmt-swwrap">
+                    <button class="dbtn rbn-sm" id="fmt-sw"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Line thickness">&#9776; Weight &#9662;</button>
+                    <div class="sh-menu sw-menu" id="fmt-sw-menu"
+                      hidden></div>
+                  </span>
                 </span>
                 <span class="rbn-col">
                   <span class="sh-drop" id="fmt-headwrap">
@@ -15775,6 +15928,20 @@ window.JunoPptx = (function () {
      row is genuinely fuller than the width allows, the answer is fewer
      things in it — hence the View menu — not a layout that teleports. ---- */
   var ERC=['erc1','erc2','erc3'];
+  /* TWO ladders, because the ribbon has two halves with different rules.
+     ERCW sizes the CONSTANT half (File, Slide, View) and is a pure
+     function of the ribbon's WIDTH — never of what is in it. That is the
+     whole point: the width is identical whether or not you have something
+     selected, so no rung here can fire on a click. The constant half
+     therefore steps only when you resize the window, which is the one
+     moment a control moving is not a surprise.
+     ERC below sizes the CHANGING half against the content, as before. */
+  /* The thresholds are set from the WIDEST state the bar can be asked to
+     hold — a text selection, which needs ~90px more than the resting row
+     — not from the resting one. Sizing them to the resting row would fit
+     beautifully until you clicked a text box, which is the only case that
+     matters. */
+  var ERCW=[['ercw1',1260],['ercw2',1170],['ercw3',1080],['ercw4',990]];
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
@@ -15783,11 +15950,17 @@ window.JunoPptx = (function () {
        since the last count and the only way the density rungs below are
        judged against the row that is actually on screen */
     sizeRibbonGroups();
-    if(deckEl.classList.contains('rbn-side')) return;
     var cl=deckEl.classList;
+    if(cl.contains('rbn-side')){
+      /* a column is not short of width and has no rungs at all — leaving
+         one stamped on would shrink the rail's type for no reason */
+      ERCW.forEach(function(r){cl.remove(r[0]);});
+      return;
+    }
     ERC.forEach(function(c){cl.remove(c);});
     cl.remove('erc-nohint');cl.remove('erc-tight');
     if(!bar.clientWidth) return;
+    ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
     /* the reminder text gives up its room before any control tightens */
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nohint');
     for(var i=0;i<ERC.length;i++){
@@ -18501,7 +18674,7 @@ window.JunoPptx = (function () {
      '*' means every kind; the value is a space-separated list otherwise. */
   var FMT_KINDS={
     '#fmt-stylewrap':'arrow rect',    /* dashes apply to any stroke */
-    '#fmt-line':'arrow rect',         /* stroke weight, likewise */
+    '#fmt-swwrap':'arrow rect',       /* stroke weight, likewise */
     '#fmt-headwrap':'arrow',          /* arrowheads: a shape has no ends */
     '#fmt-bendwrap':'arrow',          /* straight/curved/elbow: ditto */
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
@@ -18518,7 +18691,8 @@ window.JunoPptx = (function () {
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-list #fmt-align #fmt-parawrap #fmt-arcwrap #fmt-dash #fmt-fill '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
-    +'#fmt-crop #fmt-same #fmt-style #fmt-head #fmt-bend #fmt-fillstyle '
+    +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
+    +'#fmt-fillstyle '
     +'#fmt-align-btn #fmt-anim #fmt-arc #fmt-para #fmt-size #fmt-op '
     +'#fmt-opval').split(' ');
 
@@ -18621,12 +18795,14 @@ window.JunoPptx = (function () {
        the label: a label whose width changed with the selected item would
        make the ribbon's required width depend on what you clicked, and
        the fit ladder has no rung left to absorb that. */
-    var lnBtn=$('#fmt-line');
+    var lnBtn=$('#fmt-sw');
     if(lnBtn&&isNum&&!lnBtn.hidden){
       var mmw=swMm(a);
       lnBtn.title='Line thickness — '+(mmw<1?mmw.toFixed(2):mmw.toFixed(1))
-        +'mm on this page. Click to cycle thinner and thicker.';
+        +'mm on this page ('+swPt(a).toFixed(2).replace(/\.?0+$/,'')+'pt)';
     }
+    /* every drawn menu shows which option the selection is ON */
+    if(isNum) syncLineMenus(a);
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
@@ -18799,7 +18975,12 @@ window.JunoPptx = (function () {
           if(b&&!b.hidden) n++;
           return;
         }
-        n++;
+        /* a control that spans BOTH rows is worth two cells, or a group
+           made of nothing but stacks asks for half the columns it needs
+           and pushes the overflow into an implicit third row */
+        n+=(c.classList.contains('rbn-stack')
+            ||c.classList.contains('rbn-big')
+            ||c.classList.contains('rbn-tall'))?2:1;
       });
       row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));
     });
@@ -19348,7 +19529,20 @@ window.JunoPptx = (function () {
       }
     });
   }
+  /* every tool that exists. Anything else is NO tool. */
+  var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1};
   function setTool(t){
+    /* An unknown tool used to be armed happily: #dc-qr carried the generic
+       `et` class with no data-tool, so the shared wiring ran
+       setTool(undefined) and left the editor in a state no code handles —
+       the button pressed, Cancel showing, the layer classed
+       `tool-undefined`, the hint empty, and clicks on the page doing
+       nothing. Worse, that wiring runs AFTER the QR handler's own
+       setTool('select'), so it clobbered the cleanup and the state
+       survived a successful insert (2026-08-17).
+       The stray class is gone; this makes the whole family of that bug
+       impossible rather than fixing the one instance of it. */
+    if(!TOOLS[t]) t='select';
     tool=t;
     $$('#edit-tools .et').forEach(function(b){
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
@@ -19510,44 +19704,225 @@ window.JunoPptx = (function () {
     if(a.k==='cell') a.ts=Math.min(3,
       Math.round((a.ts||1)*1.15*100)/100);
     else a.size=Math.min(20,(a.size||2.6)*1.25);});
-  onFmt('#fmt-line',function(a){
-    var cur_=a.sw||3;
-    a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);});
   onFmt('#fmt-dash',function(a){a.dash=a.dash?0:1;});
   onFmt('#fmt-fill',function(a){a.fill=a.fill?0:1;});
-  /* ---- line style / arrow ends / route / fill ---------------------- */
-  wireFloatDropdown('fmt-stylewrap','fmt-style','fmt-style-menu',
-    LINE_STYLES.map(function(s){return [s.id,s.label];}),'ls',
-    function(id){fmtApply(function(a){
-      a.style=id;delete a.dash;});});
-  /* both ends and the head size in one menu: "s:" starts, "e:" ends,
-     "z:" sizes — they are one decision about how an arrow reads */
-  wireFloatDropdown('fmt-headwrap','fmt-head','fmt-head-menu',
-    HEADS.map(function(h){return ['e:'+h.id,'End: '+h.label];})
-      .concat(HEADS.map(function(h){
-        return ['s:'+h.id,'Start: '+h.label];}))
-      .concat(HEAD_SIZES.map(function(z){
-        return ['z:'+z.id,'Size: '+z.label];})),'hd',
-    function(v){
-      var kind=v.slice(0,1),id=v.slice(2);
-      fmtApply(function(a){
-        if(kind==='e'){a.head=id;delete a.nohead;}
-        else if(kind==='s') a.tail=id;
-        else a.hsz=id;
-      });
+  /* ---- line style / weight / arrow ends / route -----------------------
+     These four SHOW the option instead of naming it. They used to be
+     worded lists — "Dash-dot", "Stealth", "Curved the other way", and a
+     Weight button that cycled through three values and told you the
+     result afterwards (2026-08-17, user: "use symbols with text on hover
+     not typing what they are ... what the fuck are the curve options ...
+     the weight just have all the options like word does").
+
+     A word is a thing you decode into a picture; for a dash pattern, an
+     arrowhead or a thickness the picture IS the answer, and mirroring
+     "curved" in your head to get "curved the other way" is work nobody
+     should be doing. Each row now draws the real thing — the same dash
+     array the renderer uses, the same head path, the same relative
+     weight — and keeps its name in the tooltip.
+
+     This is NOT the wordless-glyph problem the ribbon buttons had
+     (2026-08-07): a glyph STANDS FOR a thing and has to be learned; a
+     preview is the thing. The buttons that open these menus stay
+     worded. ---- */
+  var SVG_=function(t){return document.createElementNS(SVGNS,t);};
+  function svgBox(cls,vb,w,h){
+    var s=SVG_('svg');
+    s.setAttribute('class',cls);s.setAttribute('viewBox',vb);
+    s.setAttribute('width',w);s.setAttribute('height',h);
+    return s;
+  }
+  function strokeLine(x1,y1,x2,y2,w,dash){
+    var l=SVG_('line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);
+    l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('stroke','currentColor');
+    l.setAttribute('stroke-width',w);
+    l.setAttribute('stroke-linecap','round');
+    if(dash) l.setAttribute('stroke-dasharray',dash);
+    return l;
+  }
+  /* a 110x16 rule in the real dash array, so "dash-dot" is a dash and a
+     dot rather than a hyphenated word */
+  function styleIcon(id){
+    var s=svgBox('ln-prev','0 0 110 16',110,16);
+    s.appendChild(strokeLine(3,8,107,8,2.4,LINE_DASH[id]||''));
+    return s;
+  }
+  /* ---- WEIGHT, in printed points, the way Word lists it. The ladder is
+     Word's own; what a point costs in stored units depends on the page,
+     because weight here is page-relative like everything else, so the
+     conversion happens at pick time against the page you are on. ---- */
+  var SW_PT=[0.25,0.5,0.75,1,1.5,2.25,3,4.5,6];
+  var PT_MM=2.834645;
+  function ptToSw(pt,pg){
+    pg=pg||pageOf();
+    return pt/PT_MM*SW_REF_H/(pg.mm[1]||191);
+  }
+  function swPt(a,pg){return swMm(a,pg)*PT_MM;}
+  function ptLabel(pt){return String(pt).replace(/\.?0+$/,'')+' pt';}
+  function weightIcon(pt){
+    var s=svgBox('ln-prev','0 0 110 16',110,16);
+    s.appendChild(strokeLine(3,8,107,8,Math.max(0.8,pt*1.6),''));
+    return s;
+  }
+  /* a stub of line carrying the real head path, pointing the way that end
+     points, so Start and End are told apart by looking */
+  function headIcon(id,atStart){
+    var s=svgBox('hd-ico','0 0 32 16',32,16);
+    var h=HEAD_BY[id];
+    s.appendChild(strokeLine(atStart?11:2,8,atStart?30:21,8,1.8,''));
+    if(h&&h.path){
+      var g=SVG_('g');
+      g.setAttribute('transform',atStart
+        ?'translate(12,3) scale(-1,1)':'translate(20,3)');
+      var p=SVG_('path');
+      p.setAttribute('d',h.path);
+      if(h.open){
+        p.setAttribute('fill','none');
+        p.setAttribute('stroke','currentColor');
+        p.setAttribute('stroke-width','1.8');
+      } else p.setAttribute('fill','currentColor');
+      g.appendChild(p);s.appendChild(g);
+    }
+    return s;
+  }
+  /* the same triangle at each size, so "Small" and "Huge" are a
+     comparison rather than two adjectives */
+  function headSizeIcon(z){
+    var s=svgBox('hd-ico','0 0 32 16',32,16);
+    s.appendChild(strokeLine(2,8,20,8,1.8,''));
+    var k=(HEADSZ_BY[z]||HEADSZ_BY.md).mul/6.5;
+    var g=SVG_('g');
+    g.setAttribute('transform','translate(20,8) scale('+k+') translate(0,-5)');
+    var p=SVG_('path');
+    p.setAttribute('d',HEAD_BY.triangle.path);
+    p.setAttribute('fill','currentColor');
+    g.appendChild(p);s.appendChild(g);
+    return s;
+  }
+  /* the routes, drawn. "Curved the other way" was a sentence you had to
+     mirror in your head; this is two pictures side by side. */
+  var ROUTES=[
+    {id:'straight',label:'Straight',d:'M4 24 L28 8'},
+    {id:'curve',label:'Curved one way',d:'M4 24 Q4 8 28 8'},
+    {id:'curve-',label:'Curved the other way',d:'M4 24 Q28 24 28 8'},
+    {id:'h',label:'Elbow — across, then down',d:'M4 8 L28 8 L28 24'},
+    {id:'v',label:'Elbow — down, then across',d:'M4 8 L4 24 L28 24'}];
+  function routeIcon(d){
+    var s=svgBox('bd-ico','0 0 32 32',32,32);
+    var p=SVG_('path');
+    p.setAttribute('d',d);p.setAttribute('fill','none');
+    p.setAttribute('stroke','currentColor');
+    p.setAttribute('stroke-width','2');
+    p.setAttribute('stroke-linecap','round');
+    p.setAttribute('stroke-linejoin','round');
+    s.appendChild(p);
+    return s;
+  }
+  /* one drawn, wordless-on-screen, fully-named-in-the-tooltip option */
+  function drawnOpt(menu,btn,title,node,key,onPick){
+    var o=document.createElement('button');
+    o.className='sh-opt';o.title=title;
+    o.setAttribute('aria-label',title);
+    o.setAttribute('aria-pressed','false');
+    o.dataset.optKey=key;
+    o.appendChild(node);
+    o.addEventListener('click',function(e){
+      e.stopPropagation();onPick();
+      menu.hidden=true;btn.setAttribute('aria-expanded','false');
     });
-  wireFloatDropdown('fmt-bendwrap','fmt-bend','fmt-bend-menu',
-    [['straight','Straight'],['curve','Curved'],
-     ['curve-','Curved the other way'],['h','Elbow: across then down'],
-     ['v','Elbow: down then across']],'bd',
-    function(v){
-      fmtApply(function(a){
-        if(v==='straight'){delete a.bend;delete a.curve;}
-        else if(v==='curve'){delete a.bend;a.curve=14;}
-        else if(v==='curve-'){delete a.bend;a.curve=-14;}
-        else {a.bend=v;delete a.curve;}
-      });
+    menu.appendChild(o);
+    return o;
+  }
+  function menuHead(menu,text){
+    var h=document.createElement('div');
+    h.className='hd-lab';h.textContent=text;menu.appendChild(h);
+    return h;
+  }
+  function menuRow(menu,cls){
+    var r=document.createElement('div');
+    r.className='hd-row'+(cls?' '+cls:'');menu.appendChild(r);
+    return r;
+  }
+  (function buildLineMenus(){
+    var st=wireMenuToggle('fmt-stylewrap','fmt-style','fmt-style-menu');
+    if(st) LINE_STYLES.forEach(function(s){
+      drawnOpt(st.menu,st.btn,s.label,styleIcon(s.id),'ls:'+s.id,
+        function(){fmtApply(function(a){a.style=s.id;delete a.dash;});});
     });
+    var sw=wireMenuToggle('fmt-swwrap','fmt-sw','fmt-sw-menu');
+    if(sw) SW_PT.forEach(function(pt){
+      var o=drawnOpt(sw.menu,sw.btn,ptLabel(pt)+' — the printed thickness '
+        +'on this page',weightIcon(pt),'sw:'+pt,
+        function(){fmtApply(function(a){a.sw=ptToSw(pt);});});
+      var v=document.createElement('span');
+      v.className='sw-val';v.textContent=ptLabel(pt);
+      o.appendChild(v);
+    });
+    /* ENDS: three labelled rows rather than eighteen worded lines that
+       all began with the same word */
+    var hd=wireMenuToggle('fmt-headwrap','fmt-head','fmt-head-menu');
+    if(hd){
+      menuHead(hd.menu,'Start');
+      var r1=menuRow(hd.menu);
+      HEADS.forEach(function(h){
+        r1.appendChild(drawnOpt(hd.menu,hd.btn,h.label,
+          headIcon(h.id,true),'s:'+h.id,
+          function(){fmtApply(function(a){a.tail=h.id;});}));
+      });
+      menuHead(hd.menu,'End');
+      var r2=menuRow(hd.menu);
+      HEADS.forEach(function(h){
+        r2.appendChild(drawnOpt(hd.menu,hd.btn,h.label,
+          headIcon(h.id,false),'e:'+h.id,
+          function(){fmtApply(function(a){
+            a.head=h.id;delete a.nohead;});}));
+      });
+      menuHead(hd.menu,'Size');
+      var r3=menuRow(hd.menu,'hd-sz');
+      HEAD_SIZES.forEach(function(z){
+        r3.appendChild(drawnOpt(hd.menu,hd.btn,z.label,
+          headSizeIcon(z.id),'z:'+z.id,
+          function(){fmtApply(function(a){a.hsz=z.id;});}));
+      });
+    }
+    var bd=wireMenuToggle('fmt-bendwrap','fmt-bend','fmt-bend-menu');
+    if(bd) ROUTES.forEach(function(r){
+      drawnOpt(bd.menu,bd.btn,r.label,routeIcon(r.d),'bd:'+r.id,
+        function(){fmtApply(function(a){
+          if(r.id==='straight'){delete a.bend;delete a.curve;}
+          else if(r.id==='curve'){delete a.bend;a.curve=14;}
+          else if(r.id==='curve-'){delete a.bend;a.curve=-14;}
+          else {a.bend=r.id;delete a.curve;}
+        });});
+    });
+  })();
+  /* which option the selection is ON. Without it a drawn menu is a set of
+     pictures with no answer to "and which one am I?" — the one thing the
+     worded lists were no better at, and the reason a cycling Weight
+     button felt like guessing. */
+  function syncLineMenus(a){
+    if(!a) return;
+    var cur={};
+    cur['ls:'+lineStyle(a)]=1;
+    cur['s:'+headStart(a)]=1;
+    cur['e:'+headEnd(a)]=1;
+    cur['z:'+headSize(a).id]=1;
+    cur['bd:'+(a.bend?a.bend:(a.curve>0?'curve'
+      :(a.curve<0?'curve-':'straight')))]=1;
+    /* the nearest rung of the ladder, since a stored weight need not be
+       exactly one of them (an older poster, or a page that has changed
+       size since) */
+    var pt=swPt(a),best=SW_PT[0];
+    SW_PT.forEach(function(p){
+      if(Math.abs(p-pt)<Math.abs(best-pt)) best=p;});
+    cur['sw:'+best]=1;
+    $$('#fmt-style-menu .sh-opt,#fmt-sw-menu .sh-opt,'
+      +'#fmt-head-menu .sh-opt,#fmt-bend-menu .sh-opt').forEach(function(o){
+      o.setAttribute('aria-pressed',cur[o.dataset.optKey]?'true':'false');
+    });
+  }
   wireFloatDropdown('fmt-fillwrap','fmt-fillstyle','fmt-fillstyle-menu',
     [['none','No fill'],['tint','Tint of the line colour'],
      ['solid','Solid colour…'],['lin','Gradient — linear'],
@@ -20644,6 +21019,26 @@ window.JunoPptx = (function () {
       top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
     menu.style.top=top+'px';
   }
+  /* Open/close/close-on-outside-click, shared by the WORDED dropdowns
+     below and the DRAWN ones (line style, weight, ends, route). It was
+     inline in wireFloatDropdown, so a menu whose rows are pictures rather
+     than a list of strings had no way to reuse any of it (2026-08-17). */
+  function wireMenuToggle(wrapId,btnId,menuId){
+    var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
+    if(!wrap||!btn||!menu) return null;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=menu.hidden;
+      menu.hidden=!willOpen;
+      btn.setAttribute('aria-expanded',willOpen.toString());
+      if(willOpen) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+    return {wrap:wrap,btn:btn,menu:menu};
+  }
   function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick,iconFn){
     var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
     if(!wrap||!btn||!menu) return;
@@ -20661,17 +21056,7 @@ window.JunoPptx = (function () {
       });
       menu.appendChild(o);
     });
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      var willOpen=menu.hidden;
-      menu.hidden=!willOpen;
-      btn.setAttribute('aria-expanded',willOpen.toString());
-      if(willOpen) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
-    });
+    wireMenuToggle(wrapId,btnId,menuId);
   }
   /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
   wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
@@ -21926,14 +22311,20 @@ window.JunoPptx = (function () {
        in the bar (2026-08-07, user: "a stupid name and in a stupid
        place"). It stays in the panel, which is where it means something:
        the builder, before you have opened the editor. */
-    /* The save READOUT belongs beside Save, not stranded past undo/redo
-       ("all the save stuff together", 2026-08-07). That used to be a
-       re-insert here; markup order does it now. File and Save are one
-       stacked cell in column one, so appending the readout last drops it
-       into column two's second row — level with Save, which is where it
-       was being moved to anyway. The old re-insert tested
-       `savegrp.parentNode === top`, and the stack means that is never true
-       again: it would have sat there doing nothing (2026-08-17). */
+    /* The save READOUT leaves the File group entirely and pins to the far
+       END of the bar. It is the one thing in the constant half that
+       renames itself as you work — "" → "unsaved" → "unsaved — saving…" →
+       "autosaved · 14:32" — and anything that changes width in the
+       constant half drags every group after it along. Pinned right, with
+       nothing to its right, its width is free: it can say the whole
+       string, it needs no fixed-width hack, and it can never move a
+       control. It also hands the File group ~110px back, which is most of
+       what the narrow-window fit was short of (2026-08-17).
+       It is a READOUT, not a control — "all the save stuff together"
+       (2026-08-07) was about the Save button and its destination, and
+       those are still one split button. */
+    var st=$('#deck-status'),bar=$('#edit-tools');
+    if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);
   }
   /* The top bar used to appear only when File and Save had been borrowed
      into it, so it could vanish and take the only way out with it. Now

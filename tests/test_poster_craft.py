@@ -78,7 +78,8 @@ def test_insert_groups_by_what_a_tool_does(out):
     # group -- asserted by CONTAINMENT, because View precedes Insert in
     # the markup and is moved after it by CSS order, so source position
     # says nothing about where it appears
-    view = out.split('class="rbn-grp rbn-view"')[1].split(">View</span>")[0]
+    view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
+        ">View</span>")[0]
     assert 'id="objects-btn"' in view
 
 

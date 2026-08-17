@@ -996,6 +996,20 @@
      row is genuinely fuller than the width allows, the answer is fewer
      things in it — hence the View menu — not a layout that teleports. ---- */
   var ERC=['erc1','erc2','erc3'];
+  /* TWO ladders, because the ribbon has two halves with different rules.
+     ERCW sizes the CONSTANT half (File, Slide, View) and is a pure
+     function of the ribbon's WIDTH — never of what is in it. That is the
+     whole point: the width is identical whether or not you have something
+     selected, so no rung here can fire on a click. The constant half
+     therefore steps only when you resize the window, which is the one
+     moment a control moving is not a surprise.
+     ERC below sizes the CHANGING half against the content, as before. */
+  /* The thresholds are set from the WIDEST state the bar can be asked to
+     hold — a text selection, which needs ~90px more than the resting row
+     — not from the resting one. Sizing them to the resting row would fit
+     beautifully until you clicked a text box, which is the only case that
+     matters. */
+  var ERCW=[['ercw1',1260],['ercw2',1170],['ercw3',1080],['ercw4',990]];
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
@@ -1004,11 +1018,17 @@
        since the last count and the only way the density rungs below are
        judged against the row that is actually on screen */
     sizeRibbonGroups();
-    if(deckEl.classList.contains('rbn-side')) return;
     var cl=deckEl.classList;
+    if(cl.contains('rbn-side')){
+      /* a column is not short of width and has no rungs at all — leaving
+         one stamped on would shrink the rail's type for no reason */
+      ERCW.forEach(function(r){cl.remove(r[0]);});
+      return;
+    }
     ERC.forEach(function(c){cl.remove(c);});
     cl.remove('erc-nohint');cl.remove('erc-tight');
     if(!bar.clientWidth) return;
+    ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
     /* the reminder text gives up its room before any control tightens */
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nohint');
     for(var i=0;i<ERC.length;i++){
@@ -3722,7 +3742,7 @@
      '*' means every kind; the value is a space-separated list otherwise. */
   var FMT_KINDS={
     '#fmt-stylewrap':'arrow rect',    /* dashes apply to any stroke */
-    '#fmt-line':'arrow rect',         /* stroke weight, likewise */
+    '#fmt-swwrap':'arrow rect',       /* stroke weight, likewise */
     '#fmt-headwrap':'arrow',          /* arrowheads: a shape has no ends */
     '#fmt-bendwrap':'arrow',          /* straight/curved/elbow: ditto */
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
@@ -3739,7 +3759,8 @@
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-list #fmt-align #fmt-parawrap #fmt-arcwrap #fmt-dash #fmt-fill '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
-    +'#fmt-crop #fmt-same #fmt-style #fmt-head #fmt-bend #fmt-fillstyle '
+    +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
+    +'#fmt-fillstyle '
     +'#fmt-align-btn #fmt-anim #fmt-arc #fmt-para #fmt-size #fmt-op '
     +'#fmt-opval').split(' ');
 
@@ -3842,12 +3863,14 @@
        the label: a label whose width changed with the selected item would
        make the ribbon's required width depend on what you clicked, and
        the fit ladder has no rung left to absorb that. */
-    var lnBtn=$('#fmt-line');
+    var lnBtn=$('#fmt-sw');
     if(lnBtn&&isNum&&!lnBtn.hidden){
       var mmw=swMm(a);
       lnBtn.title='Line thickness — '+(mmw<1?mmw.toFixed(2):mmw.toFixed(1))
-        +'mm on this page. Click to cycle thinner and thicker.';
+        +'mm on this page ('+swPt(a).toFixed(2).replace(/\.?0+$/,'')+'pt)';
     }
+    /* every drawn menu shows which option the selection is ON */
+    if(isNum) syncLineMenus(a);
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
@@ -4020,7 +4043,12 @@
           if(b&&!b.hidden) n++;
           return;
         }
-        n++;
+        /* a control that spans BOTH rows is worth two cells, or a group
+           made of nothing but stacks asks for half the columns it needs
+           and pushes the overflow into an implicit third row */
+        n+=(c.classList.contains('rbn-stack')
+            ||c.classList.contains('rbn-big')
+            ||c.classList.contains('rbn-tall'))?2:1;
       });
       row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));
     });
@@ -4569,7 +4597,20 @@
       }
     });
   }
+  /* every tool that exists. Anything else is NO tool. */
+  var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1};
   function setTool(t){
+    /* An unknown tool used to be armed happily: #dc-qr carried the generic
+       `et` class with no data-tool, so the shared wiring ran
+       setTool(undefined) and left the editor in a state no code handles —
+       the button pressed, Cancel showing, the layer classed
+       `tool-undefined`, the hint empty, and clicks on the page doing
+       nothing. Worse, that wiring runs AFTER the QR handler's own
+       setTool('select'), so it clobbered the cleanup and the state
+       survived a successful insert (2026-08-17).
+       The stray class is gone; this makes the whole family of that bug
+       impossible rather than fixing the one instance of it. */
+    if(!TOOLS[t]) t='select';
     tool=t;
     $$('#edit-tools .et').forEach(function(b){
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
@@ -4731,44 +4772,225 @@
     if(a.k==='cell') a.ts=Math.min(3,
       Math.round((a.ts||1)*1.15*100)/100);
     else a.size=Math.min(20,(a.size||2.6)*1.25);});
-  onFmt('#fmt-line',function(a){
-    var cur_=a.sw||3;
-    a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);});
   onFmt('#fmt-dash',function(a){a.dash=a.dash?0:1;});
   onFmt('#fmt-fill',function(a){a.fill=a.fill?0:1;});
-  /* ---- line style / arrow ends / route / fill ---------------------- */
-  wireFloatDropdown('fmt-stylewrap','fmt-style','fmt-style-menu',
-    LINE_STYLES.map(function(s){return [s.id,s.label];}),'ls',
-    function(id){fmtApply(function(a){
-      a.style=id;delete a.dash;});});
-  /* both ends and the head size in one menu: "s:" starts, "e:" ends,
-     "z:" sizes — they are one decision about how an arrow reads */
-  wireFloatDropdown('fmt-headwrap','fmt-head','fmt-head-menu',
-    HEADS.map(function(h){return ['e:'+h.id,'End: '+h.label];})
-      .concat(HEADS.map(function(h){
-        return ['s:'+h.id,'Start: '+h.label];}))
-      .concat(HEAD_SIZES.map(function(z){
-        return ['z:'+z.id,'Size: '+z.label];})),'hd',
-    function(v){
-      var kind=v.slice(0,1),id=v.slice(2);
-      fmtApply(function(a){
-        if(kind==='e'){a.head=id;delete a.nohead;}
-        else if(kind==='s') a.tail=id;
-        else a.hsz=id;
-      });
+  /* ---- line style / weight / arrow ends / route -----------------------
+     These four SHOW the option instead of naming it. They used to be
+     worded lists — "Dash-dot", "Stealth", "Curved the other way", and a
+     Weight button that cycled through three values and told you the
+     result afterwards (2026-08-17, user: "use symbols with text on hover
+     not typing what they are ... what the fuck are the curve options ...
+     the weight just have all the options like word does").
+
+     A word is a thing you decode into a picture; for a dash pattern, an
+     arrowhead or a thickness the picture IS the answer, and mirroring
+     "curved" in your head to get "curved the other way" is work nobody
+     should be doing. Each row now draws the real thing — the same dash
+     array the renderer uses, the same head path, the same relative
+     weight — and keeps its name in the tooltip.
+
+     This is NOT the wordless-glyph problem the ribbon buttons had
+     (2026-08-07): a glyph STANDS FOR a thing and has to be learned; a
+     preview is the thing. The buttons that open these menus stay
+     worded. ---- */
+  var SVG_=function(t){return document.createElementNS(SVGNS,t);};
+  function svgBox(cls,vb,w,h){
+    var s=SVG_('svg');
+    s.setAttribute('class',cls);s.setAttribute('viewBox',vb);
+    s.setAttribute('width',w);s.setAttribute('height',h);
+    return s;
+  }
+  function strokeLine(x1,y1,x2,y2,w,dash){
+    var l=SVG_('line');
+    l.setAttribute('x1',x1);l.setAttribute('y1',y1);
+    l.setAttribute('x2',x2);l.setAttribute('y2',y2);
+    l.setAttribute('stroke','currentColor');
+    l.setAttribute('stroke-width',w);
+    l.setAttribute('stroke-linecap','round');
+    if(dash) l.setAttribute('stroke-dasharray',dash);
+    return l;
+  }
+  /* a 110x16 rule in the real dash array, so "dash-dot" is a dash and a
+     dot rather than a hyphenated word */
+  function styleIcon(id){
+    var s=svgBox('ln-prev','0 0 110 16',110,16);
+    s.appendChild(strokeLine(3,8,107,8,2.4,LINE_DASH[id]||''));
+    return s;
+  }
+  /* ---- WEIGHT, in printed points, the way Word lists it. The ladder is
+     Word's own; what a point costs in stored units depends on the page,
+     because weight here is page-relative like everything else, so the
+     conversion happens at pick time against the page you are on. ---- */
+  var SW_PT=[0.25,0.5,0.75,1,1.5,2.25,3,4.5,6];
+  var PT_MM=2.834645;
+  function ptToSw(pt,pg){
+    pg=pg||pageOf();
+    return pt/PT_MM*SW_REF_H/(pg.mm[1]||191);
+  }
+  function swPt(a,pg){return swMm(a,pg)*PT_MM;}
+  function ptLabel(pt){return String(pt).replace(/\.?0+$/,'')+' pt';}
+  function weightIcon(pt){
+    var s=svgBox('ln-prev','0 0 110 16',110,16);
+    s.appendChild(strokeLine(3,8,107,8,Math.max(0.8,pt*1.6),''));
+    return s;
+  }
+  /* a stub of line carrying the real head path, pointing the way that end
+     points, so Start and End are told apart by looking */
+  function headIcon(id,atStart){
+    var s=svgBox('hd-ico','0 0 32 16',32,16);
+    var h=HEAD_BY[id];
+    s.appendChild(strokeLine(atStart?11:2,8,atStart?30:21,8,1.8,''));
+    if(h&&h.path){
+      var g=SVG_('g');
+      g.setAttribute('transform',atStart
+        ?'translate(12,3) scale(-1,1)':'translate(20,3)');
+      var p=SVG_('path');
+      p.setAttribute('d',h.path);
+      if(h.open){
+        p.setAttribute('fill','none');
+        p.setAttribute('stroke','currentColor');
+        p.setAttribute('stroke-width','1.8');
+      } else p.setAttribute('fill','currentColor');
+      g.appendChild(p);s.appendChild(g);
+    }
+    return s;
+  }
+  /* the same triangle at each size, so "Small" and "Huge" are a
+     comparison rather than two adjectives */
+  function headSizeIcon(z){
+    var s=svgBox('hd-ico','0 0 32 16',32,16);
+    s.appendChild(strokeLine(2,8,20,8,1.8,''));
+    var k=(HEADSZ_BY[z]||HEADSZ_BY.md).mul/6.5;
+    var g=SVG_('g');
+    g.setAttribute('transform','translate(20,8) scale('+k+') translate(0,-5)');
+    var p=SVG_('path');
+    p.setAttribute('d',HEAD_BY.triangle.path);
+    p.setAttribute('fill','currentColor');
+    g.appendChild(p);s.appendChild(g);
+    return s;
+  }
+  /* the routes, drawn. "Curved the other way" was a sentence you had to
+     mirror in your head; this is two pictures side by side. */
+  var ROUTES=[
+    {id:'straight',label:'Straight',d:'M4 24 L28 8'},
+    {id:'curve',label:'Curved one way',d:'M4 24 Q4 8 28 8'},
+    {id:'curve-',label:'Curved the other way',d:'M4 24 Q28 24 28 8'},
+    {id:'h',label:'Elbow — across, then down',d:'M4 8 L28 8 L28 24'},
+    {id:'v',label:'Elbow — down, then across',d:'M4 8 L4 24 L28 24'}];
+  function routeIcon(d){
+    var s=svgBox('bd-ico','0 0 32 32',32,32);
+    var p=SVG_('path');
+    p.setAttribute('d',d);p.setAttribute('fill','none');
+    p.setAttribute('stroke','currentColor');
+    p.setAttribute('stroke-width','2');
+    p.setAttribute('stroke-linecap','round');
+    p.setAttribute('stroke-linejoin','round');
+    s.appendChild(p);
+    return s;
+  }
+  /* one drawn, wordless-on-screen, fully-named-in-the-tooltip option */
+  function drawnOpt(menu,btn,title,node,key,onPick){
+    var o=document.createElement('button');
+    o.className='sh-opt';o.title=title;
+    o.setAttribute('aria-label',title);
+    o.setAttribute('aria-pressed','false');
+    o.dataset.optKey=key;
+    o.appendChild(node);
+    o.addEventListener('click',function(e){
+      e.stopPropagation();onPick();
+      menu.hidden=true;btn.setAttribute('aria-expanded','false');
     });
-  wireFloatDropdown('fmt-bendwrap','fmt-bend','fmt-bend-menu',
-    [['straight','Straight'],['curve','Curved'],
-     ['curve-','Curved the other way'],['h','Elbow: across then down'],
-     ['v','Elbow: down then across']],'bd',
-    function(v){
-      fmtApply(function(a){
-        if(v==='straight'){delete a.bend;delete a.curve;}
-        else if(v==='curve'){delete a.bend;a.curve=14;}
-        else if(v==='curve-'){delete a.bend;a.curve=-14;}
-        else {a.bend=v;delete a.curve;}
-      });
+    menu.appendChild(o);
+    return o;
+  }
+  function menuHead(menu,text){
+    var h=document.createElement('div');
+    h.className='hd-lab';h.textContent=text;menu.appendChild(h);
+    return h;
+  }
+  function menuRow(menu,cls){
+    var r=document.createElement('div');
+    r.className='hd-row'+(cls?' '+cls:'');menu.appendChild(r);
+    return r;
+  }
+  (function buildLineMenus(){
+    var st=wireMenuToggle('fmt-stylewrap','fmt-style','fmt-style-menu');
+    if(st) LINE_STYLES.forEach(function(s){
+      drawnOpt(st.menu,st.btn,s.label,styleIcon(s.id),'ls:'+s.id,
+        function(){fmtApply(function(a){a.style=s.id;delete a.dash;});});
     });
+    var sw=wireMenuToggle('fmt-swwrap','fmt-sw','fmt-sw-menu');
+    if(sw) SW_PT.forEach(function(pt){
+      var o=drawnOpt(sw.menu,sw.btn,ptLabel(pt)+' — the printed thickness '
+        +'on this page',weightIcon(pt),'sw:'+pt,
+        function(){fmtApply(function(a){a.sw=ptToSw(pt);});});
+      var v=document.createElement('span');
+      v.className='sw-val';v.textContent=ptLabel(pt);
+      o.appendChild(v);
+    });
+    /* ENDS: three labelled rows rather than eighteen worded lines that
+       all began with the same word */
+    var hd=wireMenuToggle('fmt-headwrap','fmt-head','fmt-head-menu');
+    if(hd){
+      menuHead(hd.menu,'Start');
+      var r1=menuRow(hd.menu);
+      HEADS.forEach(function(h){
+        r1.appendChild(drawnOpt(hd.menu,hd.btn,h.label,
+          headIcon(h.id,true),'s:'+h.id,
+          function(){fmtApply(function(a){a.tail=h.id;});}));
+      });
+      menuHead(hd.menu,'End');
+      var r2=menuRow(hd.menu);
+      HEADS.forEach(function(h){
+        r2.appendChild(drawnOpt(hd.menu,hd.btn,h.label,
+          headIcon(h.id,false),'e:'+h.id,
+          function(){fmtApply(function(a){
+            a.head=h.id;delete a.nohead;});}));
+      });
+      menuHead(hd.menu,'Size');
+      var r3=menuRow(hd.menu,'hd-sz');
+      HEAD_SIZES.forEach(function(z){
+        r3.appendChild(drawnOpt(hd.menu,hd.btn,z.label,
+          headSizeIcon(z.id),'z:'+z.id,
+          function(){fmtApply(function(a){a.hsz=z.id;});}));
+      });
+    }
+    var bd=wireMenuToggle('fmt-bendwrap','fmt-bend','fmt-bend-menu');
+    if(bd) ROUTES.forEach(function(r){
+      drawnOpt(bd.menu,bd.btn,r.label,routeIcon(r.d),'bd:'+r.id,
+        function(){fmtApply(function(a){
+          if(r.id==='straight'){delete a.bend;delete a.curve;}
+          else if(r.id==='curve'){delete a.bend;a.curve=14;}
+          else if(r.id==='curve-'){delete a.bend;a.curve=-14;}
+          else {a.bend=r.id;delete a.curve;}
+        });});
+    });
+  })();
+  /* which option the selection is ON. Without it a drawn menu is a set of
+     pictures with no answer to "and which one am I?" — the one thing the
+     worded lists were no better at, and the reason a cycling Weight
+     button felt like guessing. */
+  function syncLineMenus(a){
+    if(!a) return;
+    var cur={};
+    cur['ls:'+lineStyle(a)]=1;
+    cur['s:'+headStart(a)]=1;
+    cur['e:'+headEnd(a)]=1;
+    cur['z:'+headSize(a).id]=1;
+    cur['bd:'+(a.bend?a.bend:(a.curve>0?'curve'
+      :(a.curve<0?'curve-':'straight')))]=1;
+    /* the nearest rung of the ladder, since a stored weight need not be
+       exactly one of them (an older poster, or a page that has changed
+       size since) */
+    var pt=swPt(a),best=SW_PT[0];
+    SW_PT.forEach(function(p){
+      if(Math.abs(p-pt)<Math.abs(best-pt)) best=p;});
+    cur['sw:'+best]=1;
+    $$('#fmt-style-menu .sh-opt,#fmt-sw-menu .sh-opt,'
+      +'#fmt-head-menu .sh-opt,#fmt-bend-menu .sh-opt').forEach(function(o){
+      o.setAttribute('aria-pressed',cur[o.dataset.optKey]?'true':'false');
+    });
+  }
   wireFloatDropdown('fmt-fillwrap','fmt-fillstyle','fmt-fillstyle-menu',
     [['none','No fill'],['tint','Tint of the line colour'],
      ['solid','Solid colour…'],['lin','Gradient — linear'],
@@ -5865,6 +6087,26 @@
       top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
     menu.style.top=top+'px';
   }
+  /* Open/close/close-on-outside-click, shared by the WORDED dropdowns
+     below and the DRAWN ones (line style, weight, ends, route). It was
+     inline in wireFloatDropdown, so a menu whose rows are pictures rather
+     than a list of strings had no way to reuse any of it (2026-08-17). */
+  function wireMenuToggle(wrapId,btnId,menuId){
+    var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
+    if(!wrap||!btn||!menu) return null;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=menu.hidden;
+      menu.hidden=!willOpen;
+      btn.setAttribute('aria-expanded',willOpen.toString());
+      if(willOpen) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+    return {wrap:wrap,btn:btn,menu:menu};
+  }
   function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick,iconFn){
     var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
     if(!wrap||!btn||!menu) return;
@@ -5882,17 +6124,7 @@
       });
       menu.appendChild(o);
     });
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      var willOpen=menu.hidden;
-      menu.hidden=!willOpen;
-      btn.setAttribute('aria-expanded',willOpen.toString());
-      if(willOpen) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
-    });
+    wireMenuToggle(wrapId,btnId,menuId);
   }
   /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
   wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
@@ -7147,14 +7379,20 @@
        in the bar (2026-08-07, user: "a stupid name and in a stupid
        place"). It stays in the panel, which is where it means something:
        the builder, before you have opened the editor. */
-    /* The save READOUT belongs beside Save, not stranded past undo/redo
-       ("all the save stuff together", 2026-08-07). That used to be a
-       re-insert here; markup order does it now. File and Save are one
-       stacked cell in column one, so appending the readout last drops it
-       into column two's second row — level with Save, which is where it
-       was being moved to anyway. The old re-insert tested
-       `savegrp.parentNode === top`, and the stack means that is never true
-       again: it would have sat there doing nothing (2026-08-17). */
+    /* The save READOUT leaves the File group entirely and pins to the far
+       END of the bar. It is the one thing in the constant half that
+       renames itself as you work — "" → "unsaved" → "unsaved — saving…" →
+       "autosaved · 14:32" — and anything that changes width in the
+       constant half drags every group after it along. Pinned right, with
+       nothing to its right, its width is free: it can say the whole
+       string, it needs no fixed-width hack, and it can never move a
+       control. It also hands the File group ~110px back, which is most of
+       what the narrow-window fit was short of (2026-08-17).
+       It is a READOUT, not a control — "all the save stuff together"
+       (2026-08-07) was about the Save button and its destination, and
+       those are still one split button. */
+    var st=$('#deck-status'),bar=$('#edit-tools');
+    if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);
   }
   /* The top bar used to appear only when File and Save had been borrowed
      into it, so it could vanish and take the only way out with it. Now

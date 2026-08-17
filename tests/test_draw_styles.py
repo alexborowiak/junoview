@@ -196,13 +196,30 @@ def test_the_fit_actually_runs_on_a_fresh_page(out):
 
 
 def test_nothing_is_ever_clipped_off_the_right(out):
-    """With something selected on a narrow window, the one group that is
-    not about the selection steps aside rather than letting the row clip
-    into buttons that cannot be seen or reached.
+    """The row must not clip into buttons that cannot be seen or reached.
+
+    It used to buy that width by standing the Slide group down whenever
+    something was selected on a narrow window. Measured cost: selecting a
+    text box took View 168px to the left -- the biggest jump in the bar,
+    fired by an ordinary click at an ordinary size (2026-08-17). The width
+    comes from three things that move nothing instead: a tighter rung for
+    the CHANGING half only, the save readout giving way at the same stage
+    as the hint, and the constant half stepping with the window width
+    rather than with the content.
+
+    Measured after, at 1280 / 1366 / 1400 / 1600 / 1920px windows with the
+    slide strip docked: nothing clipped in any state -- nothing selected,
+    a line selected, a text box selected. Below ~1250px the remedies are
+    unchanged and one click each: put the slide strip away, or stand the
+    toolbar on the right.
     """
-    assert ".deck.erc-tight .edit-tools.fmt-open .rbn-slide{display:none;}" in out
+    assert ".deck.erc-tight .edit-tools.fmt-open .rbn-slide{display:none;}" \
+        not in out
     assert "cl.add('erc-tight')" in out
-    assert 'class="rbn-grp rbn-slide"' in out
+    assert 'class="rbn-grp rbn-fixed rbn-slide"' in out
+    # the changing half gets a rung the constant half never pays
+    assert ".deck.erc-tight .et-fmt .rbn-grp{padding-left:2px;" in out
+    assert ".deck.erc-tight .et-fmt .rbn-row .fmt-num{width:32px;}" in out
 
 
 def test_save_is_one_control_not_two(out):
@@ -302,23 +319,46 @@ def test_the_top_bar_always_earns_its_row(out):
     assert "fileToPanel();fileToRibbon();syncTopBar();" in out
 
 
-def test_the_groups_pack_left_with_view_still_last(out):
-    """View was flung at the right edge by an auto margin (2026-08-07,
-    "put the view box on the far right"). That leaves the whole difference
-    as ONE void in the middle of the toolbar -- about 560px of it once the
-    File group stopped carrying "Close the editor" (2026-08-17, user:
-    "there is lot's of weird space around").
+def test_the_bar_has_a_constant_half_and_a_changing_half(out):
+    """THE rule this toolbar keeps: nothing that is always there may move
+    when you select something (2026-08-17, user, having asked before:
+    "having buttons jump around sucks ... have everything that stays
+    constant always in the one space on the left, and everything new
+    always appears on the right").
 
-    Groups pack left now, the way every real ribbon packs, so the leftover
-    sits at the end where it reads as room rather than a gap. The ORDER is
-    untouched: View and Output still sort last, which is still the bottom
-    of the side toolbar.
+    So: File, Slide and View are ordered first and are on screen in that
+    order whatever is selected -- nothing further right can push them,
+    because flex lays out in order. Output, Notebooks, Insert and the
+    contextual groups are ordered after them, so the swap happens at ONE
+    boundary at the far end. Output and Notebooks belong to the changing
+    half because they stand down for a selection, and a group that can
+    disappear cannot be part of the half that promises never to move.
+
+    Groups also pack left rather than being flung at the window edge by an
+    auto margin, which turned every spare pixel into one void in the
+    middle of the bar -- ~560px of it once File stopped carrying "Close
+    the editor" ("there is lot's of weird space around").
+
+    Measured at 1280 / 1400 / 1600 / 1920px windows: selecting a line and
+    then deselecting moves File, Slide and View by exactly 0px, and
+    changes their widths by exactly 0px.
     """
-    assert ".rbn-view{order:90;border-left:1px solid #ffffff1c;}" in out
+    assert ".rbn-file{order:1;}" in out
+    assert ".rbn-slide{order:2;}" in out
+    assert ".rbn-view{order:3;}" in out
+    assert ".rbn-out{order:4;}" in out
+    assert ".rbn-nbs{order:5;}" in out
+    assert ".rbn-insert{order:6;}" in out
+    assert ".et-fmt .rbn-grp{order:7;}" in out
+    # the constant three are tagged, and the tag is what exempts them from
+    # every density rung
+    for grp in ("rbn-file", "rbn-slide", "rbn-view"):
+        assert 'class="rbn-grp rbn-fixed %s"' % grp in out
+    assert 'class="rbn-grp rbn-standby rbn-out"' in out
+    assert 'class="rbn-grp rbn-standby rbn-nbs"' in out
+    # nothing is pinned to the right edge any more
     assert "margin-left:auto" not in out.split(".rbn-view{")[1].split("}")[0]
-    assert ".rbn-out{order:91;}" in out
-    assert ".edit-tools.ribbon .et-hint{order:85;margin-left:0;}" in out
-    assert 'class="rbn-grp rbn-view"' in out
+    assert ".edit-tools.ribbon .et-hint{order:9;margin-left:0;}" in out
 
 
 def test_groups_fill_across_the_rows_not_down_the_columns(out):

@@ -173,11 +173,14 @@
                happened to call the file. Present is DOWN here too — it is
                a way of viewing the page, so it belongs with the other
                view controls (2026-08-07, user). -->
-          <span class="rbn-grp rbn-file">
+          <span class="rbn-grp rbn-fixed rbn-file">
             <span class="rbn-row" id="rbn-file-row"></span>
             <span class="rbn-lab">File</span>
           </span>
-          <span class="rbn-grp rbn-standby">
+          <!-- rbn-nbs so it can be ORDERED: it stands down for a
+               selection, so it belongs in the ribbon's changing region,
+               not among the groups that must never move -->
+          <span class="rbn-grp rbn-standby rbn-nbs">
             <span class="rbn-row">
               <div class="dc-menuwrap">
                 <!-- label is set by renderPresNbs (Open vs Refresh), so
@@ -191,7 +194,7 @@
             </span>
             <span class="rbn-lab">Notebooks</span>
           </span>
-          <span class="rbn-grp rbn-slide">
+          <span class="rbn-grp rbn-fixed rbn-slide">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
                 <button class="dbtn rbn-sm" id="lay-btn"
@@ -240,7 +243,7 @@
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-view">
+          <span class="rbn-grp rbn-fixed rbn-view">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -335,9 +338,19 @@
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
                 ><i data-ic="image"></i> Image</button>
-              <button class="dbtn rbn-sm et" id="dc-qr"
-                title="Insert a QR code that links to your repo / paper /
- data — generated right here, prints crisp (vector)"
+              <!-- NOT an `et` tool. It carried that class without a
+                   data-tool, so the shared arming wiring called
+                   setTool(undefined): the button lit up as though a tool
+                   were live, Cancel appeared, the page went to a
+                   crosshair, and it stayed that way whether or not you
+                   had actually inserted anything (2026-08-17, user:
+                   "whatever QR code is is confusing"). It is an immediate
+                   insert, like Image beside it — which is why Image never
+                   had the class. -->
+              <button class="dbtn rbn-sm" id="dc-qr"
+                title="Ask for a link and put a QR code on the page —
+ point a phone at it to open your repo, paper or data. Generated here, so
+ it works offline and prints crisp at any size (vector)"
                 ><i data-ic="qr"></i> QR code</button>
               <!-- Source order IS the layout: with two rows filled across,
                    the first four land on the top row and the rest below.
@@ -572,8 +585,21 @@
                     <div class="sh-menu style-menu" id="fmt-style-menu"
                       hidden></div>
                   </span>
-                  <button class="dbtn rbn-sm etm" id="fmt-line"
-                    title="Cycle line thickness">&#9776; Weight</button>
+                  <!-- a MENU of thicknesses, drawn, the way Word's is.
+                       This was a button that cycled 2 → 3.5 → 5 and told
+                       you the result in a tooltip afterwards: three
+                       weights, none of them visible until you had picked
+                       one, and no way to go back except round again
+                       (2026-08-17, user: "the weight just have all the
+                       options like word does with the different
+                       thicknesses"). -->
+                  <span class="sh-drop" id="fmt-swwrap">
+                    <button class="dbtn rbn-sm" id="fmt-sw"
+                      aria-haspopup="true" aria-expanded="false"
+                      title="Line thickness">&#9776; Weight &#9662;</button>
+                    <div class="sh-menu sw-menu" id="fmt-sw-menu"
+                      hidden></div>
+                  </span>
                 </span>
                 <span class="rbn-col">
                   <span class="sh-drop" id="fmt-headwrap">
