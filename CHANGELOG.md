@@ -183,6 +183,18 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The save readout can never sit on other controls, and last
+  session's file no longer hijacks your saves.** The readout renames
+  itself between toolbar fits ("" → "autosaved to …"), and a wider
+  readout after the last fit could print across live controls. Any text
+  change now re-judges the bar; the readout has its **own drop rung** —
+  after the density ladder (which usually saves it), before anything
+  clips — and a hard 30-character cap with the full text in its tooltip.
+  Separately, a file picked in an earlier session stayed the silent
+  autosave target forever; now the remembered file only stays active
+  while the browser still grants write permission — otherwise saves fall
+  back to the browser and the readout says **browser**, with the file one
+  click away.
 - **Cell text no longer changes size when you zoom.** A placed notebook
   cell's body (markdown, tables) rendered at fixed screen sizes while
   everything else on the page was page-relative — so zooming changed its

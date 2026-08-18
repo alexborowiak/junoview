@@ -911,7 +911,13 @@ body.slide-editing .apptop{display:none;}
 .edit-tools.ribbon>.jv-appx .dbtn{text-decoration:none;}
 .edit-tools.ribbon>.deck-status{order:10;margin-left:auto;
   align-self:center;font-size:10px;height:22px;box-sizing:border-box;
-  display:inline-flex;align-items:center;white-space:nowrap;flex:none;}
+  display:inline-flex;align-items:center;white-space:nowrap;flex:none;
+  /* a hard cap, because a long filename must never reach other controls
+     even in the frame between growing and the next fit; the full text
+     lives in the tooltip. A readout may ellipsise — it is not a control
+     and no word of it is needed to act (2026-08-18). */
+  max-width:30ch;overflow:hidden;text-overflow:ellipsis;display:block;
+  line-height:22px;}
 .edit-tools.ribbon>.deck-status:empty{display:none;}
 /* It goes at the SAME stage as the hint — before any control tightens —
    and for the same reason: it is text, not a control, so dropping it
@@ -924,7 +930,7 @@ body.slide-editing .apptop{display:none;}
    compacted Insert by 56px. A readout that changes the size of the
    buttons is the same bug as a readout that changes their position
    (2026-08-17). */
-.deck.erc-nohint .edit-tools.ribbon>.deck-status{display:none;}
+.deck.erc-nostatus .edit-tools.ribbon>.deck-status{display:none;}
 .deck.rbn-side .edit-tools.ribbon>.deck-status{margin-left:0;
   align-self:stretch;justify-content:center;margin-top:6px;}
 .rbn-file .dc-menuwrap,.rbn-file .dc-savegrp{display:inline-flex;

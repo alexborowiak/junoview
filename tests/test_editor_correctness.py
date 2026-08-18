@@ -834,7 +834,12 @@ def test_the_save_readout_cannot_move_a_control(out):
     assert "var st=$('#deck-status'),bar=$('#edit-tools');" in out
     assert "if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);" in out
     assert ".edit-tools.ribbon>.deck-status{order:10;margin-left:auto;" in out
-    assert ".deck.erc-nohint .edit-tools.ribbon>.deck-status{display:none;}" in out
+    # its own rung, AFTER the density ladder: the readout is informative
+    # (where your work is) where the hint is decorative, so the rungs get
+    # to save it -- but it still goes before any control clips
+    assert (".deck.erc-nostatus .edit-tools.ribbon>.deck-status"
+            "{display:none;}" in out)
+    assert "cl.add('erc-nostatus');" in out
     # the old in-group hacks are gone with it
     assert ".rbn-file .deck-status:empty{visibility:hidden;}" not in out
     assert "width:calc(17ch + 20px)" not in out

@@ -3553,7 +3553,13 @@ body.slide-editing .apptop{display:none;}
 .edit-tools.ribbon>.jv-appx .dbtn{text-decoration:none;}
 .edit-tools.ribbon>.deck-status{order:10;margin-left:auto;
   align-self:center;font-size:10px;height:22px;box-sizing:border-box;
-  display:inline-flex;align-items:center;white-space:nowrap;flex:none;}
+  display:inline-flex;align-items:center;white-space:nowrap;flex:none;
+  /* a hard cap, because a long filename must never reach other controls
+     even in the frame between growing and the next fit; the full text
+     lives in the tooltip. A readout may ellipsise — it is not a control
+     and no word of it is needed to act (2026-08-18). */
+  max-width:30ch;overflow:hidden;text-overflow:ellipsis;display:block;
+  line-height:22px;}
 .edit-tools.ribbon>.deck-status:empty{display:none;}
 /* It goes at the SAME stage as the hint — before any control tightens —
    and for the same reason: it is text, not a control, so dropping it
@@ -3566,7 +3572,7 @@ body.slide-editing .apptop{display:none;}
    compacted Insert by 56px. A readout that changes the size of the
    buttons is the same bug as a readout that changes their position
    (2026-08-17). */
-.deck.erc-nohint .edit-tools.ribbon>.deck-status{display:none;}
+.deck.erc-nostatus .edit-tools.ribbon>.deck-status{display:none;}
 .deck.rbn-side .edit-tools.ribbon>.deck-status{margin-left:0;
   align-self:stretch;justify-content:center;margin-top:6px;}
 .rbn-file .dc-menuwrap,.rbn-file .dc-savegrp{display:inline-flex;
@@ -16263,7 +16269,7 @@ window.JunoPptx = (function () {
       return;
     }
     ERC.forEach(function(c){cl.remove(c);});
-    cl.remove('erc-nohint');cl.remove('erc-tight');
+    cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
     if(!bar.clientWidth) return;
     ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
     /* the reminder text gives up its room before any control tightens */
@@ -16272,6 +16278,11 @@ window.JunoPptx = (function () {
       if(bar.scrollWidth<=bar.clientWidth+1) break;
       cl.add(ERC[i]);
     }
+    /* the save readout goes AFTER the density rungs, not with the hint:
+       it is informative (where your work is) where the hint is
+       decorative — but it still goes before any control shrinks to its
+       last rung or the row clips (2026-08-18) */
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nostatus');
     /* still over after every rung: drop the one group that is not about
        the selection, rather than let the row clip */
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-tight');
@@ -17060,6 +17071,17 @@ window.JunoPptx = (function () {
     el.className='deck-status '+source;
     /* AFTER the className assignment, which would wipe the class */
     markSaveClickable(el);
+    /* the readout RENAMES ITSELF between fits ("" -> "autosaved to
+       presentation.junoview.html · 12:41"), and a wider readout after
+       the last fit is exactly how it ended up printed across other
+       controls (2026-08-18, user: "the autosave button hides the color
+       options"). Any text change re-judges the bar, which drops the
+       readout whole when the row is tight. */
+    if(el.textContent!==el._lastTxt){
+      el._lastTxt=el.textContent;
+      requestAnimationFrame(fitEditRibbon);
+    }
+    if(!el.classList.contains('clickable')) el.title=el.textContent;
   }
   (function(){
     var el=$('#deck-status');
@@ -24004,7 +24026,18 @@ window.JunoPptx = (function () {
     idbGet(HKEY).then(function(h){
       if(!h) return;
       fileHandle=h;fileName=h.name||'';
-      renderTargetBtn();renderSaveBtn();
+      /* remembered ≠ active. Only a still-granted write permission keeps
+         the file as the silent autosave target across sessions; without
+         it, saves go to the browser and the file stays one click away
+         (2026-08-18). */
+      return permOK(h).then(function(ok){
+        if(!ok&&saveTarget==='file'){
+          saveTarget='browser';
+          lsSet(TGKEY,'browser');
+          status();
+        }
+        renderTargetBtn();renderSaveBtn();
+      });
     }).catch(function(){});
     renderTargetBtn();
   })();

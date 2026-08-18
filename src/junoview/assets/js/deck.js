@@ -1042,7 +1042,7 @@
       return;
     }
     ERC.forEach(function(c){cl.remove(c);});
-    cl.remove('erc-nohint');cl.remove('erc-tight');
+    cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
     if(!bar.clientWidth) return;
     ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
     /* the reminder text gives up its room before any control tightens */
@@ -1051,6 +1051,11 @@
       if(bar.scrollWidth<=bar.clientWidth+1) break;
       cl.add(ERC[i]);
     }
+    /* the save readout goes AFTER the density rungs, not with the hint:
+       it is informative (where your work is) where the hint is
+       decorative — but it still goes before any control shrinks to its
+       last rung or the row clips (2026-08-18) */
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nostatus');
     /* still over after every rung: drop the one group that is not about
        the selection, rather than let the row clip */
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-tight');
@@ -1839,6 +1844,17 @@
     el.className='deck-status '+source;
     /* AFTER the className assignment, which would wipe the class */
     markSaveClickable(el);
+    /* the readout RENAMES ITSELF between fits ("" -> "autosaved to
+       presentation.junoview.html · 12:41"), and a wider readout after
+       the last fit is exactly how it ended up printed across other
+       controls (2026-08-18, user: "the autosave button hides the color
+       options"). Any text change re-judges the bar, which drops the
+       readout whole when the row is tight. */
+    if(el.textContent!==el._lastTxt){
+      el._lastTxt=el.textContent;
+      requestAnimationFrame(fitEditRibbon);
+    }
+    if(!el.classList.contains('clickable')) el.title=el.textContent;
   }
   (function(){
     var el=$('#deck-status');
@@ -8783,7 +8799,18 @@
     idbGet(HKEY).then(function(h){
       if(!h) return;
       fileHandle=h;fileName=h.name||'';
-      renderTargetBtn();renderSaveBtn();
+      /* remembered ≠ active. Only a still-granted write permission keeps
+         the file as the silent autosave target across sessions; without
+         it, saves go to the browser and the file stays one click away
+         (2026-08-18). */
+      return permOK(h).then(function(ok){
+        if(!ok&&saveTarget==='file'){
+          saveTarget='browser';
+          lsSet(TGKEY,'browser');
+          status();
+        }
+        renderTargetBtn();renderSaveBtn();
+      });
     }).catch(function(){});
     renderTargetBtn();
   })();
