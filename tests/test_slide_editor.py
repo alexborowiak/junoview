@@ -395,3 +395,61 @@ def test_notebooks_is_a_pane_and_panes_are_draggable_and_remembered(out):
                 "'nbspane'"):
         assert pid in out
     assert ".selpane{resize:both;overflow:hidden;" in out
+
+
+def test_cell_content_scales_with_the_page(out):
+    """A placed notebook cell's BODY rendered at fixed CSS sizes, so its
+    text was constant on screen while everything else was constant on the
+    page -- zooming changed a markdown table's size relative to the
+    poster (2026-08-18, user: "please please please make sure everything
+    doesn't change size relative to poster or slide when zooming").
+
+    The body's zoom is now a.ts x pageScale -- the same 720-reference
+    currency as text and line weight. Print/export layers measure ~720px
+    so exports are untouched. Measured in a browser on a markdown cell:
+    text/slide-width ratio 0.01009 -> 0.01012 across a 2-step zoom.
+    """
+    assert "var kz=pageScale(layer)||1;" in out
+    assert "b.style.zoom=(a.ts||1)*kz;" in out
+    assert "vb.style.zoom=(a.ts||1)*kz;" in out
+    assert "ch.style.zoom=kz;" in out
+    # exactly ONE unscaled site survives: the builder panel's slot
+    # preview, which is a thumbnail, not the zoomable canvas
+    assert out.count("if(a.ts) b.style.zoom=a.ts;") == 1
+
+
+def test_rail_has_one_new_button_and_per_row_delete(out):
+    """Four "+ New ..." buttons were most of the rail; they are one
+    "+ New..." menu now, and every rail row grew a hover-delete with a
+    confirm -- deleting no longer means three File-menu levels
+    (2026-08-18, user). The originals stay hidden so their handlers keep
+    working; the menu rows click them.
+    """
+    assert 'id="pr-newbtn"' in out and 'id="pr-newmenu"' in out
+    for f in ("pr-new", "pr-newpost", "pr-newview", "pr-newfold"):
+        assert '<button class="pr-btn" hidden id="' + f + '"' in out
+    assert "function deletePresByName(nm){" in out
+    assert "del.className='pr-del';" in out
+    assert "if(confirm(" in out
+    assert ".pr-item:hover .pr-del,.pr-item.current .pr-del" in out
+
+
+def test_notebooks_pane_survives_its_own_actions(out):
+    """Clicking a row or Open/Refresh used to close the pane -- the
+    dropdown's habit surviving into the pane. It re-renders and stays;
+    only the cross or the toolbar button closes it (2026-08-18, user).
+    """
+    assert "setTimeout(renderNbsMenu,600);" in out
+    assert "APP.openPath(n.path);hideNbsMenu();" not in out
+
+
+def test_browser_saves_offer_a_way_out(out):
+    """"autosaved to browser" is one power cut from gone, so the readout
+    itself is the door: clickable, titled, and it opens the save-to-file
+    picker. One helper, called from BOTH status branches -- the manual
+    web-save branch returns early and silently missed the first version
+    (2026-08-18). Measured: "saved to browser" readout clickable=true.
+    """
+    assert "function markSaveClickable(el){" in out
+    assert out.count("markSaveClickable(el);") == 2
+    assert "var tf=$('#tg-file'); if(tf) tf.click();" in out

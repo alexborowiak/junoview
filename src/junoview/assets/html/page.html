@@ -222,24 +222,42 @@
     <span class="pr-t">Notebooks</span></button>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
+  <!-- ONE way to make things. Four "+ New ..." buttons in a column were
+       most of the rail (2026-08-18, user: "I don't like down the right
+       hand side how there is all the new options. Just one new button,
+       that when clicked comes up with the option"). The originals stay,
+       hidden, so every existing handler keeps working; the menu rows
+       click them. -->
+  <div class="pr-newwrap">
+    <button class="pr-btn" id="pr-newbtn" aria-haspopup="true"
+      aria-expanded="false" title="Create something new">
+      <span class="pr-ico"><i data-ic="plus"></i></span>
+      <span class="pr-t">+ New&#8230;</span></button>
+    <div class="pr-newmenu" id="pr-newmenu" hidden>
+      <button class="pr-mi" data-for="pr-new">Presentation</button>
+      <button class="pr-mi" data-for="pr-newpost">Poster</button>
+      <button class="pr-mi" data-for="pr-newview">Custom view</button>
+      <button class="pr-mi" data-for="pr-newfold">Folder</button>
+    </div>
+  </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
        already looking at, so it belongs nearest the notebook list -->
-  <button class="pr-btn" id="pr-newview"
+  <button class="pr-btn" hidden id="pr-newview"
     title="New custom view &mdash; a saved, restyled, filtered view of the
  notebook itself (not slides). Style all markdown cells, one section or a
  single cell, and keep your filters and hidden cells with it.">
     <span class="pr-ico"><i data-ic="newview"></i></span>
     <span class="pr-t">+ New custom view</span></button>
-  <button class="pr-btn" id="pr-new"
+  <button class="pr-btn" hidden id="pr-new"
     title="Create a new presentation">
     <span class="pr-ico"><i data-ic="newdeck"></i></span>
     <span class="pr-t">+ New presentation</span></button>
-  <button class="pr-btn" id="pr-newpost"
+  <button class="pr-btn" hidden id="pr-newpost"
     title="Create a new poster &mdash; an A0 portrait page with a poster
  template applied (change size via Page, layout via Layouts)">
     <span class="pr-ico"><i data-ic="newposter"></i></span>
     <span class="pr-t">+ New poster</span></button>
-  <button class="pr-btn" id="pr-newfold"
+  <button class="pr-btn" hidden id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
       height="12" fill="currentColor"><path d="M1 3.2C1 2.5 1.5 2

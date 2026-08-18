@@ -1791,6 +1791,15 @@
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
   }
+  /* the readout is a DOOR when saves only live in this browser */
+  function markSaveClickable(el){
+    var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
+    el.classList.toggle('clickable',toBrowser);
+    el.title=toBrowser
+      ?'Saves stay in this browser. Click to save a .junoview.html file '
+        +'on your computer instead.'
+      :'';
+  }
   function whereSaved(){
     if(saveTarget==='project') return 'project';
     if(saveTarget==='file') return fileName||'file';
@@ -1811,6 +1820,8 @@
       if(APP.mode!=='app'&&saveKind==='manual'&&saveStamp){
         el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);
         el.className='deck-status saved';
+        markSaveClickable(el);   /* this branch returns before the shared
+                                    tail below would run */
         return;
       }
       el.textContent=auto?'unsaved — saving…':'unsaved';
@@ -1824,8 +1835,18 @@
           +' · '+fmtT(saveStamp))
         :'saved to '+whereSaved();
     } else el.textContent='';
+
     el.className='deck-status '+source;
+    /* AFTER the className assignment, which would wipe the class */
+    markSaveClickable(el);
   }
+  (function(){
+    var el=$('#deck-status');
+    if(el) el.addEventListener('click',function(){
+      if(!el.classList.contains('clickable')) return;
+      var tf=$('#tg-file'); if(tf) tf.click();
+    });
+  })();
   function markDirty(){
     source='draft';
     saveKind='';
@@ -3755,13 +3776,20 @@
         c.style.width=(a.w||34)+'%';c.style.height=(a.h||30)+'%';
         applyCommon(c,a);
         c.setAttribute('data-idx',i);
+        /* text INSIDE a cell is page-relative like everything else: the
+           body renders at its natural size and is zoomed by
+           a.ts x pageScale, so zooming the page cannot change a
+           markdown table's size relative to the poster (2026-08-18,
+           user: "make sure everything doesn't change size relative to
+           poster or slide when zooming"). */
+        var kz=pageScale(layer)||1;
         if(locked&&lkCard){
           /* pinned to a git commit: render THAT version's card — refresh
              never touches it, the notebook needn't even be open */
           c.title=(lkCard.title||'')+' @ '+a.lockver.commit;
           var vb=frameFromVerCard(lkCard,a.part);
           if(vb){
-            if(a.ts) vb.style.zoom=a.ts;
+            vb.style.zoom=(a.ts||1)*kz;
             applyCrop(vb,a);
             if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(vb);
@@ -3802,13 +3830,14 @@
               ch.appendChild(pl);
             }
             if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
+            ch.style.zoom=kz;
             c.appendChild(ch);
           }
           var fro=frozenFrames.get(a);
           var b=fro?framePartFromSnap(fro,a.part):framePart(it.ns,a.part);
           if(fro&&!b) b=framePart(it.ns,a.part);
           if(b){
-            if(a.ts) b.style.zoom=a.ts;
+            b.style.zoom=(a.ts||1)*kz;
             applyCrop(b,a);
             if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(b);
@@ -6834,6 +6863,18 @@
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
+      /* delete where the thing IS, not three menu levels away. Shown on
+         hover / while current; confirm() because there is no undo for a
+         deleted presentation. */
+      var del=document.createElement('span');
+      del.className='pr-del';del.title='Delete "'+nm+'"';
+      del.innerHTML='&#10005;';
+      del.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();
+        if(confirm('Delete "'+nm+'"? This cannot be undone.'))
+          deletePresByName(nm);
+      });
+      t.appendChild(del);
       t.draggable=true;
       t.addEventListener('dragstart',function(e){
         draggingPres=nm;
@@ -7506,7 +7547,7 @@
       toast(verb+acted+'; '+cannot+' unavailable');
     else
       toast(verb+acted+' notebook'+(acted===1?'':'s')+'…');
-    hideNbsMenu();
+    setTimeout(renderNbsMenu,600);   /* refresh statuses, stay open */
   }
   function hideNbsMenu(){
     var m=$('#nbspane'); if(m) m.hidden=true;
@@ -7608,7 +7649,11 @@
       if(n.openable&&!n.open){
         row.title=n.path;row.classList.add('clickable');
         row.addEventListener('click',function(){
-          APP.openPath(n.path);hideNbsMenu();});
+          /* the pane stays open: you asked to SEE the notebooks, and
+             acting on one row is not done looking (2026-08-18, user:
+             "keep open, only close when clicking cross") */
+          APP.openPath(n.path);
+          setTimeout(renderNbsMenu,600);});
       } else if(n.path){row.title=n.path;}
       m.appendChild(row);
     });
@@ -9272,6 +9317,49 @@
     status();
     refresh();
   });
+  /* one delete, callable for ANY presentation — the File menu and the
+     rail rows' bins both land here (2026-08-18, user: "an easier way to
+     delete presentation ... a delete option when something is selected") */
+  function deletePresByName(nm){
+    lsDel(PFX+nm);
+    projectPres=projectPres.filter(function(p){return p.name!==nm;});
+    nbPres=nbPres.filter(function(p){return p.name!==nm;});
+    if(APP.mode==='app')
+      APP.api('/api/save',{presentations:deep(projectPres)})
+        .catch(function(){});
+    if(nm===pres.name){
+      var names=allSaved().map(function(p){return p.name;})
+        .concat(draftNames());
+      names=names.filter(function(x){return x!==nm;});
+      if(names.length) loadPresentation(names[0]);
+      else {pres=defaultPres();source='auto';}
+      cur=0;activePane=-1;
+      status();refresh();
+    } else renderPresTabs();
+    toast('Deleted "'+nm+'"');
+  }
+  (function(){
+    var b=$('#pr-newbtn'),m=$('#pr-newmenu');
+    if(!b||!m) return;
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      m.hidden=!m.hidden;
+      b.setAttribute('aria-expanded',(!m.hidden).toString());
+    });
+    $$('.pr-mi',m).forEach(function(mi){
+      mi.addEventListener('click',function(e){
+        e.stopPropagation();
+        m.hidden=true;b.setAttribute('aria-expanded','false');
+        var real=$('#'+mi.dataset.for);
+        if(real) real.click();
+      });
+    });
+    document.addEventListener('click',function(e){
+      if(!m.hidden&&!m.contains(e.target)&&e.target!==b){
+        m.hidden=true;b.setAttribute('aria-expanded','false');}
+    });
+  })();
+  window.SemDeckDelete=deletePresByName;   /* rail rows + tests */
   menuAction('#mi-del',function(){
     var nm=pres.name;
     lsDel(PFX+nm);

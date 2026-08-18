@@ -183,6 +183,24 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Cell text no longer changes size when you zoom.** A placed notebook
+  cell's body (markdown, tables) rendered at fixed screen sizes while
+  everything else on the page was page-relative — so zooming changed its
+  size *relative to the poster*. The body now scales in the same
+  720-reference currency as text and line weight; exports render at that
+  reference so they are untouched. Measured: text/slide ratio steady to
+  0.3% across a two-step zoom.
+- **One "+ New…" button, and delete where the thing is.** The rail's four
+  "+ New" buttons collapsed into one menu (Presentation / Poster / Custom
+  view / Folder), and every rail row shows a ✕ on hover — delete with a
+  confirm, instead of a trip through File → Delete presentation.
+- **The Notebooks pane stays open through its own actions.** Clicking a
+  notebook row or *Open notebooks* / *Refresh all* used to close the pane
+  — the old dropdown's habit. It re-renders its statuses and stays; only
+  the cross or the toolbar button closes it.
+- **The save readout is a door.** *"autosaved to browser"* is one power
+  cut from gone, so when saves are browser-only the readout is clickable
+  — its tooltip says so, and clicking opens the save-to-file picker.
 - **Colour schemes, and the app buttons the editor was hiding.** The
   theme toggle and the support link live in the app bar — and editing
   hides the app bar, so from inside a poster there was no way to reach

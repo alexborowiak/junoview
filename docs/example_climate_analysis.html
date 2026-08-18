@@ -2617,6 +2617,28 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .rawmd h3{font-size:19px;}
 .rawmd h4{font-size:16px;}
 .rawempty{color:var(--ink-3);text-align:center;padding:40px;}
+
+/* ---- the rail's single + New menu, and per-row delete ---- */
+.pr-newwrap{position:relative;}
+.pr-newmenu{position:absolute;left:8px;right:8px;z-index:140;
+  background:var(--chrome-2,#16273a);border:1px solid #ffffff26;
+  border-radius:9px;padding:5px;display:flex;flex-direction:column;
+  gap:2px;box-shadow:0 12px 32px #0008;}
+.pr-newmenu[hidden]{display:none;}
+.pr-mi{background:none;border:1px solid transparent;border-radius:6px;
+  padding:6px 10px;text-align:left;cursor:pointer;color:#c9d6e2;
+  font-family:var(--sans);font-size:12px;}
+.pr-mi:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 40%,transparent);
+  color:#fff;}
+/* the bin: invisible until the row is hovered or current, so the rail
+   stays quiet; coral on hover because it destroys */
+.pr-del{display:none;margin-left:auto;flex:none;padding:1px 5px;
+  border-radius:5px;color:#8ba0b2;font-size:11px;}
+.pr-item:hover .pr-del,.pr-item.current .pr-del{display:inline-block;}
+.pr-del:hover{background:#ff6b5726;color:#ff9d8c;}
+.deck-status.clickable{cursor:pointer;}
+.deck-status.clickable:hover{outline:1px solid var(--accent);}
 </style>
 <style>
 .deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0,#0b141d);color:#dce6ee;
@@ -4803,24 +4825,42 @@ window.MathJax = {
     <span class="pr-t">Notebooks</span></button>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
+  <!-- ONE way to make things. Four "+ New ..." buttons in a column were
+       most of the rail (2026-08-18, user: "I don't like down the right
+       hand side how there is all the new options. Just one new button,
+       that when clicked comes up with the option"). The originals stay,
+       hidden, so every existing handler keeps working; the menu rows
+       click them. -->
+  <div class="pr-newwrap">
+    <button class="pr-btn" id="pr-newbtn" aria-haspopup="true"
+      aria-expanded="false" title="Create something new">
+      <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg></span>
+      <span class="pr-t">+ New&#8230;</span></button>
+    <div class="pr-newmenu" id="pr-newmenu" hidden>
+      <button class="pr-mi" data-for="pr-new">Presentation</button>
+      <button class="pr-mi" data-for="pr-newpost">Poster</button>
+      <button class="pr-mi" data-for="pr-newview">Custom view</button>
+      <button class="pr-mi" data-for="pr-newfold">Folder</button>
+    </div>
+  </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
        already looking at, so it belongs nearest the notebook list -->
-  <button class="pr-btn" id="pr-newview"
+  <button class="pr-btn" hidden id="pr-newview"
     title="New custom view &mdash; a saved, restyled, filtered view of the
  notebook itself (not slides). Style all markdown cells, one section or a
  single cell, and keep your filters and hidden cells with it.">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/><path d="M4.6 8.4h4M4.6 10.8h2.6"/><path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/></svg></span>
     <span class="pr-t">+ New custom view</span></button>
-  <button class="pr-btn" id="pr-new"
+  <button class="pr-btn" hidden id="pr-new"
     title="Create a new presentation">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/><path d="M3.6 12.8h5.6"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg></span>
     <span class="pr-t">+ New presentation</span></button>
-  <button class="pr-btn" id="pr-newpost"
+  <button class="pr-btn" hidden id="pr-newpost"
     title="Create a new poster &mdash; an A0 portrait page with a poster
  template applied (change size via Page, layout via Layouts)">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/><path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/><path d="M13.4 4.6v5.2"/><path d="M10.8 7.2h5.2"/></svg></span>
     <span class="pr-t">+ New poster</span></button>
-  <button class="pr-btn" id="pr-newfold"
+  <button class="pr-btn" hidden id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
     <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
       height="12" fill="currentColor"><path d="M1 3.2C1 2.5 1.5 2
@@ -16972,6 +17012,15 @@ window.JunoPptx = (function () {
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
   }
+  /* the readout is a DOOR when saves only live in this browser */
+  function markSaveClickable(el){
+    var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
+    el.classList.toggle('clickable',toBrowser);
+    el.title=toBrowser
+      ?'Saves stay in this browser. Click to save a .junoview.html file '
+        +'on your computer instead.'
+      :'';
+  }
   function whereSaved(){
     if(saveTarget==='project') return 'project';
     if(saveTarget==='file') return fileName||'file';
@@ -16992,6 +17041,8 @@ window.JunoPptx = (function () {
       if(APP.mode!=='app'&&saveKind==='manual'&&saveStamp){
         el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);
         el.className='deck-status saved';
+        markSaveClickable(el);   /* this branch returns before the shared
+                                    tail below would run */
         return;
       }
       el.textContent=auto?'unsaved — saving…':'unsaved';
@@ -17005,8 +17056,18 @@ window.JunoPptx = (function () {
           +' · '+fmtT(saveStamp))
         :'saved to '+whereSaved();
     } else el.textContent='';
+
     el.className='deck-status '+source;
+    /* AFTER the className assignment, which would wipe the class */
+    markSaveClickable(el);
   }
+  (function(){
+    var el=$('#deck-status');
+    if(el) el.addEventListener('click',function(){
+      if(!el.classList.contains('clickable')) return;
+      var tf=$('#tg-file'); if(tf) tf.click();
+    });
+  })();
   function markDirty(){
     source='draft';
     saveKind='';
@@ -18936,13 +18997,20 @@ window.JunoPptx = (function () {
         c.style.width=(a.w||34)+'%';c.style.height=(a.h||30)+'%';
         applyCommon(c,a);
         c.setAttribute('data-idx',i);
+        /* text INSIDE a cell is page-relative like everything else: the
+           body renders at its natural size and is zoomed by
+           a.ts x pageScale, so zooming the page cannot change a
+           markdown table's size relative to the poster (2026-08-18,
+           user: "make sure everything doesn't change size relative to
+           poster or slide when zooming"). */
+        var kz=pageScale(layer)||1;
         if(locked&&lkCard){
           /* pinned to a git commit: render THAT version's card — refresh
              never touches it, the notebook needn't even be open */
           c.title=(lkCard.title||'')+' @ '+a.lockver.commit;
           var vb=frameFromVerCard(lkCard,a.part);
           if(vb){
-            if(a.ts) vb.style.zoom=a.ts;
+            vb.style.zoom=(a.ts||1)*kz;
             applyCrop(vb,a);
             if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(vb);
@@ -18983,13 +19051,14 @@ window.JunoPptx = (function () {
               ch.appendChild(pl);
             }
             if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
+            ch.style.zoom=kz;
             c.appendChild(ch);
           }
           var fro=frozenFrames.get(a);
           var b=fro?framePartFromSnap(fro,a.part):framePart(it.ns,a.part);
           if(fro&&!b) b=framePart(it.ns,a.part);
           if(b){
-            if(a.ts) b.style.zoom=a.ts;
+            b.style.zoom=(a.ts||1)*kz;
             applyCrop(b,a);
             if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
             c.appendChild(b);
@@ -22015,6 +22084,18 @@ window.JunoPptx = (function () {
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
+      /* delete where the thing IS, not three menu levels away. Shown on
+         hover / while current; confirm() because there is no undo for a
+         deleted presentation. */
+      var del=document.createElement('span');
+      del.className='pr-del';del.title='Delete "'+nm+'"';
+      del.innerHTML='&#10005;';
+      del.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();
+        if(confirm('Delete "'+nm+'"? This cannot be undone.'))
+          deletePresByName(nm);
+      });
+      t.appendChild(del);
       t.draggable=true;
       t.addEventListener('dragstart',function(e){
         draggingPres=nm;
@@ -22687,7 +22768,7 @@ window.JunoPptx = (function () {
       toast(verb+acted+'; '+cannot+' unavailable');
     else
       toast(verb+acted+' notebook'+(acted===1?'':'s')+'…');
-    hideNbsMenu();
+    setTimeout(renderNbsMenu,600);   /* refresh statuses, stay open */
   }
   function hideNbsMenu(){
     var m=$('#nbspane'); if(m) m.hidden=true;
@@ -22789,7 +22870,11 @@ window.JunoPptx = (function () {
       if(n.openable&&!n.open){
         row.title=n.path;row.classList.add('clickable');
         row.addEventListener('click',function(){
-          APP.openPath(n.path);hideNbsMenu();});
+          /* the pane stays open: you asked to SEE the notebooks, and
+             acting on one row is not done looking (2026-08-18, user:
+             "keep open, only close when clicking cross") */
+          APP.openPath(n.path);
+          setTimeout(renderNbsMenu,600);});
       } else if(n.path){row.title=n.path;}
       m.appendChild(row);
     });
@@ -24453,6 +24538,49 @@ window.JunoPptx = (function () {
     status();
     refresh();
   });
+  /* one delete, callable for ANY presentation — the File menu and the
+     rail rows' bins both land here (2026-08-18, user: "an easier way to
+     delete presentation ... a delete option when something is selected") */
+  function deletePresByName(nm){
+    lsDel(PFX+nm);
+    projectPres=projectPres.filter(function(p){return p.name!==nm;});
+    nbPres=nbPres.filter(function(p){return p.name!==nm;});
+    if(APP.mode==='app')
+      APP.api('/api/save',{presentations:deep(projectPres)})
+        .catch(function(){});
+    if(nm===pres.name){
+      var names=allSaved().map(function(p){return p.name;})
+        .concat(draftNames());
+      names=names.filter(function(x){return x!==nm;});
+      if(names.length) loadPresentation(names[0]);
+      else {pres=defaultPres();source='auto';}
+      cur=0;activePane=-1;
+      status();refresh();
+    } else renderPresTabs();
+    toast('Deleted "'+nm+'"');
+  }
+  (function(){
+    var b=$('#pr-newbtn'),m=$('#pr-newmenu');
+    if(!b||!m) return;
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      m.hidden=!m.hidden;
+      b.setAttribute('aria-expanded',(!m.hidden).toString());
+    });
+    $$('.pr-mi',m).forEach(function(mi){
+      mi.addEventListener('click',function(e){
+        e.stopPropagation();
+        m.hidden=true;b.setAttribute('aria-expanded','false');
+        var real=$('#'+mi.dataset.for);
+        if(real) real.click();
+      });
+    });
+    document.addEventListener('click',function(e){
+      if(!m.hidden&&!m.contains(e.target)&&e.target!==b){
+        m.hidden=true;b.setAttribute('aria-expanded','false');}
+    });
+  })();
+  window.SemDeckDelete=deletePresByName;   /* rail rows + tests */
   menuAction('#mi-del',function(){
     var nm=pres.name;
     lsDel(PFX+nm);
