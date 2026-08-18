@@ -35,8 +35,6 @@ def test_a_poster_is_not_offered_animation(out):
     a deck. A poster is one printed page -- there is no click and nothing
     to step through.
     """
-    assert "show('#fmt-anim',isNum&&!pageOf().poster);" in out
-    # ...and the View group's door to the pane goes too
     assert "if(vaB) vaB.hidden=!!pg.poster;" in out
 
 
@@ -364,7 +362,9 @@ def test_opacity_is_a_colour_property_not_an_animation(out):
     colour = out.split('<span class="rbn-lab">Colour</span>')[0]
     assert colour.rsplit('class="rbn-grp"', 1)[-1].count('id="fmt-opwrap"') == 1
     assert "fxLab.textContent=pg.poster?'Opacity':'Effects';" not in out
-    assert "show('#fmt-anim',isNum&&!pageOf().poster);" in out
+    # ...and the whole Effects group went with it: its last resident was a
+    # SECOND door to the Animations pane (see the pane test)
+    assert ">Effects</span>" not in out
 
 
 def test_the_animation_pane_does_not_need_a_selection(out):
@@ -391,9 +391,14 @@ def test_the_animation_pane_does_not_need_a_selection(out):
     assert 'id="vw-anim"' in out
     # the dropdown is gone, wrapper and all
     assert 'id="fmt-animwrap"' not in out
-    assert "var btn=$('#fmt-anim'),vbtn=$('#vw-anim'),pane=$('#animpane');" in out
-    # a button that opens a pane must not wear a dropdown chevron
-    assert "animBtn.innerHTML='&#9654; '+lbl;" in out
+    # ONE door. There were briefly two -- View's Animations plus an
+    # "Animate" button in Effects that renamed itself to the selected
+    # item's effect. Same pane, different groups, different names, both
+    # pressed at once (2026-08-17, user: "WHY IS ANIMATIONS AND APPEAR NOT
+    # IN THE SAME PLACE"). The pane's effect chooser already tracks the
+    # selection, which is everything the second button ever added.
+    assert 'id="fmt-anim"' not in out
+    assert "var vbtn=$('#vw-anim'),pane=$('#animpane');" in out
     # the pane outlives the selection, so it is told when one goes away
     assert "function animPaneSync" in out or "animPaneSync=function()" in out
     assert out.count("animPaneSync();") == 2

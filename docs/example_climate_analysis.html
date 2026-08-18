@@ -3302,6 +3302,15 @@ body.slide-editing .apptop{display:none;}
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
 .rbn-row>.sh-drop,.rbn-row>.dc-menuwrap{display:flex;}
+/* ...and a wrapper whose button is hidden must not KEEP its cell. The
+   column count skips it ("a wrapper counts as the one cell it
+   contributes") but the grid did not, so the two disagreed by one cell
+   per hidden button and the overflow landed in an implicit third row —
+   which is how the opacity slider printed on top of the COLOUR caption
+   the moment it shared a group with the sometimes-hidden Fill button
+   (2026-08-17). One rule, every wrapper, including ones added later. */
+.rbn-row>.sh-drop:has(>.dbtn[hidden]),
+.rbn-row>.dc-menuwrap:has(>.dbtn[hidden]){display:none;}
 .rbn-row>.sh-drop>.dbtn,.rbn-row>.dc-menuwrap>.dbtn{width:100%;height:100%;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up
@@ -8698,28 +8707,15 @@ through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Arrange</span>
           </span>
-          <!-- Animate is the only "effect" in here, and a poster is a
-               printed page, so it is hidden there — leaving a heading
-               that promised effects over a lone opacity slider. The
-               heading now says what the group actually holds, which is
-               what read as "an animate option" on a poster (2026-08-10,
-               user). -->
-          <span class="rbn-grp rbn-fx">
-            <span class="rbn-row">
-              <!-- opens the Animations PANE. It used to be a dropdown,
-                   and the dropdown only existed while something was
-                   selected — so the build order for the whole slide was
-                   only reachable by first hunting down an item that
-                   happened to be animated (2026-08-17, user: "why is
-                   there no animation pane? you can only see all the
-                   animations when you find one with an animation"). -->
-              <button class="dbtn etm" id="fmt-anim" hidden
-                aria-pressed="false"
-                title="How this item appears, and the whole slide's build
- order">&#9654; Animate</button>
-            </span>
-            <span class="rbn-lab">Effects</span>
-          </span>
+          <!-- No Effects group. Its last resident was a SECOND button for
+               the Animations pane — "▶ Animate", renaming itself to the
+               selected item's effect — while View held the first. Two
+               buttons for one pane, in different groups, under different
+               names, both lit while it was open (2026-08-17, user: "WHY
+               IS ANIMATIONS AND APPEAR NOT IN THE SAME PLACE"). One
+               feature, one door: View → Animations, which works with and
+               without a selection. The pane itself shows the selected
+               item's effect, which is all the renaming label ever said. -->
           <!-- colour swatches live behind two POPUP buttons: fourteen
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
@@ -8776,20 +8772,18 @@ through Ko-fi. Thank you.</p>
                     title="Custom fill colour — hex, rgb or rgba"></button>
                 </div>
               </span>
-            </span>
               <!-- Opacity sits with COLOUR because that is what it is:
-                   how solid the ink is. It used to sit with Animate under
-                   "Effects", which put a permanent property of the object
-                   next to a playback build and meant a poster — which has
-                   no builds at all — carried a group called Effects
-                   holding one slider (2026-08-17, user: "why is the
-                   opacity with the animations? That is a terrible
-                   option"). -->
+                   how solid the ink is — a property of the object, not a
+                   playback build (2026-08-17, user). INSIDE the row: as a
+                   sibling of it the group stacked row + slider + label
+                   and overflowed the ribbon's fixed band, printing the
+                   slider over its own caption. -->
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
                 <input class="fmt-range" id="fmt-op" type="range"
                   min="0" max="100" step="1" aria-label="Opacity percent">
                 <span class="fmt-opval" id="fmt-opval">100%</span></span>
+            </span>
             <span class="rbn-lab">Colour</span>
           </span>
           <span class="rbn-grp">
@@ -18829,7 +18823,7 @@ window.JunoPptx = (function () {
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
-    +'#fmt-align-btn #fmt-anim #fmt-para #fmt-size #fmt-op '
+    +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
     +'#fmt-opval').split(' ');
 
   function showFmt(){
@@ -19009,7 +19003,6 @@ window.JunoPptx = (function () {
        through a deck. A poster is one printed page: there is no click and
        nothing to step through, so it is not offered (2026-08-07, user:
        "why is there animate options in a poster"). */
-    show('#fmt-anim',isNum&&!pageOf().poster);
     /* the code/figure/output part-picker (+ split) — moved off the frame
        into the ribbon's Object group */
     var partsSlot=$('#fmt-parts');
@@ -19019,15 +19012,6 @@ window.JunoPptx = (function () {
         ?buildPartChooser(s,selAnnot):null;
       if(pcr) partsSlot.appendChild(pcr);
       partsSlot.hidden=!pcr;
-    }
-    var animBtn=$('#fmt-anim');
-    if(animBtn&&isNum){
-      var an=a.anim&&a.anim.type;
-      var lbl={appear:'Appear',fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]
-        ||'Animate';
-      /* no chevron: it opens a PANE, not a dropdown, and a chevron on a
-         button that does not drop anything is a small lie */
-      animBtn.innerHTML='&#9654; '+lbl;
     }
     /* COMPLETENESS. Every #fmt-* control in the contextual bar must be
        governed by FMT_KINDS or listed in FMT_MANUAL. Without this, a
@@ -21293,9 +21277,9 @@ window.JunoPptx = (function () {
   /* ---- animation PANE: effect + build order. Items on the same build appear
      TOGETHER; each build is one click in playback. ---- */
   (function(){
-    var btn=$('#fmt-anim'),vbtn=$('#vw-anim'),pane=$('#animpane');
+    var vbtn=$('#vw-anim'),pane=$('#animpane');
     var menu=$('#animpane-body'),cl=$('#animpane-close');
-    if(!btn||!pane||!menu) return;
+    if(!vbtn||!pane||!menu) return;
     menu.classList.add('anim-pane');
     function rerender(){
       var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
@@ -21412,10 +21396,13 @@ window.JunoPptx = (function () {
         menu.appendChild(list);
       }
     }
-    /* One pane, two doors: Animate (with something selected) and the
-       View group's Animations (any time). Both show the same thing,
-       because the build order is a property of the SLIDE — needing a
-       selection to see it was the bug. */
+    /* ONE door. There were briefly two — View's Animations and an
+       "Animate" button in an Effects group that renamed itself to the
+       selected item's effect. Same pane, different groups, different
+       names, both pressed at once (2026-08-17, user: "WHY IS ANIMATIONS
+       AND APPEAR NOT IN THE SAME PLACE"). The pane's effect chooser
+       already tracks the selection, which is everything the second
+       button ever added. */
     function set(open){
       if(open){
         /* the panes share one corner, so only one can be the thing you
@@ -21428,12 +21415,9 @@ window.JunoPptx = (function () {
         render();
       }
       pane.hidden=!open;
-      [btn,vbtn].forEach(function(b){
-        if(b) b.setAttribute('aria-pressed',open.toString());});
+      vbtn.setAttribute('aria-pressed',open.toString());
     }
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();set(pane.hidden);});
-    if(vbtn) vbtn.addEventListener('click',function(e){
+    vbtn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
     if(cl) cl.addEventListener('click',function(){set(false);});
     /* the effect chooser at the top tracks the selection, so an open pane

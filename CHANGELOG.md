@@ -183,6 +183,22 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **One Animations button, not two.** Moving the pane behind View's
+  *Animations* left the old *Animate* button behind in Effects — same
+  pane, different group, different name, and it renamed itself to the
+  selected item's effect, so the two read "Animations" and "Appear" at
+  opposite ends of the bar, both lit while the pane was open. The
+  Effects button is gone; the pane's own effect chooser already shows
+  what the selection does, which is everything that label ever said. With
+  opacity in Colour that left Effects holding nothing, so the **group is
+  gone entirely** — one group fewer in the changing half.
+- **Fixed: a hidden dropdown button kept its grid cell.** Hiding a
+  dropdown hides the button but left its wrapper occupying a cell, so the
+  column count and the grid disagreed by one per hidden button and the
+  overflow landed in an implicit third row — which is how the opacity
+  slider printed on top of the COLOUR caption the moment it shared a
+  group with the sometimes-hidden *Fill* button. One rule now drops the
+  wrapper with its button, for every dropdown including future ones.
 - **An Animations pane you can open without hunting for something
   animated.** The build order for a slide existed, with reordering and
   all, but it lived in a dropdown on the **Animate** button — and that

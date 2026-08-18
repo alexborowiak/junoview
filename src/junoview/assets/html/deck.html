@@ -456,28 +456,15 @@
             </span>
             <span class="rbn-lab">Arrange</span>
           </span>
-          <!-- Animate is the only "effect" in here, and a poster is a
-               printed page, so it is hidden there — leaving a heading
-               that promised effects over a lone opacity slider. The
-               heading now says what the group actually holds, which is
-               what read as "an animate option" on a poster (2026-08-10,
-               user). -->
-          <span class="rbn-grp rbn-fx">
-            <span class="rbn-row">
-              <!-- opens the Animations PANE. It used to be a dropdown,
-                   and the dropdown only existed while something was
-                   selected — so the build order for the whole slide was
-                   only reachable by first hunting down an item that
-                   happened to be animated (2026-08-17, user: "why is
-                   there no animation pane? you can only see all the
-                   animations when you find one with an animation"). -->
-              <button class="dbtn etm" id="fmt-anim" hidden
-                aria-pressed="false"
-                title="How this item appears, and the whole slide's build
- order">&#9654; Animate</button>
-            </span>
-            <span class="rbn-lab">Effects</span>
-          </span>
+          <!-- No Effects group. Its last resident was a SECOND button for
+               the Animations pane — "▶ Animate", renaming itself to the
+               selected item's effect — while View held the first. Two
+               buttons for one pane, in different groups, under different
+               names, both lit while it was open (2026-08-17, user: "WHY
+               IS ANIMATIONS AND APPEAR NOT IN THE SAME PLACE"). One
+               feature, one door: View → Animations, which works with and
+               without a selection. The pane itself shows the selected
+               item's effect, which is all the renaming label ever said. -->
           <!-- colour swatches live behind two POPUP buttons: fourteen
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
@@ -534,20 +521,18 @@
                     title="Custom fill colour — hex, rgb or rgba"></button>
                 </div>
               </span>
-            </span>
               <!-- Opacity sits with COLOUR because that is what it is:
-                   how solid the ink is. It used to sit with Animate under
-                   "Effects", which put a permanent property of the object
-                   next to a playback build and meant a poster — which has
-                   no builds at all — carried a group called Effects
-                   holding one slider (2026-08-17, user: "why is the
-                   opacity with the animations? That is a terrible
-                   option"). -->
+                   how solid the ink is — a property of the object, not a
+                   playback build (2026-08-17, user). INSIDE the row: as a
+                   sibling of it the group stacked row + slider + label
+                   and overflowed the ribbon's fixed band, printing the
+                   slider over its own caption. -->
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
                 <input class="fmt-range" id="fmt-op" type="range"
                   min="0" max="100" step="1" aria-label="Opacity percent">
                 <span class="fmt-opval" id="fmt-opval">100%</span></span>
+            </span>
             <span class="rbn-lab">Colour</span>
           </span>
           <span class="rbn-grp">

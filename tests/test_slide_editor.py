@@ -118,7 +118,7 @@ def test_images_crop_grouping_rich_text_and_build_animations(out):
     # rich text: recolour just the highlighted run
     assert "function colorSelection" in out and "function sanitizeRich" in out
     # build animations (reveal on click)
-    assert 'id="fmt-anim"' in out and "function slideBuildIdx" in out
+    assert 'id="vw-anim"' in out and "function slideBuildIdx" in out
 
 
 def test_cell_colour_and_professional_colour_picker(out):
@@ -250,7 +250,10 @@ def test_ribbon_is_one_flow_with_stable_group_order(out):
     assert "new ResizeObserver(function(){" in out
     assert "fitEditRibbon();applyZoom();" in out
     assert 'id="et-del"' not in out and 'data-tool="select"' not in out
-    assert ">Effects</span>" in out and 'id="fmt-anim"' in out
+    # the Effects group itself is GONE (2026-08-17): opacity moved to
+    # Colour, and its last resident was a second door to the Animations
+    # pane -- the one door is View's
+    assert ">Effects</span>" not in out and 'id="vw-anim"' in out
     assert out.index('id="fmt-dup"') < out.index('id="fmt-txlab"')
     # the ribbon part-picker pills dress like the other ribbon buttons
     assert "#fmt-parts .cellpartbtn{" in out

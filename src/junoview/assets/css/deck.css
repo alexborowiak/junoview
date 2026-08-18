@@ -737,6 +737,15 @@ body.slide-editing .apptop{display:none;}
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
 .rbn-row>.sh-drop,.rbn-row>.dc-menuwrap{display:flex;}
+/* ...and a wrapper whose button is hidden must not KEEP its cell. The
+   column count skips it ("a wrapper counts as the one cell it
+   contributes") but the grid did not, so the two disagreed by one cell
+   per hidden button and the overflow landed in an implicit third row —
+   which is how the opacity slider printed on top of the COLOUR caption
+   the moment it shared a group with the sometimes-hidden Fill button
+   (2026-08-17). One rule, every wrapper, including ones added later. */
+.rbn-row>.sh-drop:has(>.dbtn[hidden]),
+.rbn-row>.dc-menuwrap:has(>.dbtn[hidden]){display:none;}
 .rbn-row>.sh-drop>.dbtn,.rbn-row>.dc-menuwrap>.dbtn{width:100%;height:100%;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up

@@ -3821,7 +3821,7 @@
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
-    +'#fmt-align-btn #fmt-anim #fmt-para #fmt-size #fmt-op '
+    +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
     +'#fmt-opval').split(' ');
 
   function showFmt(){
@@ -4001,7 +4001,6 @@
        through a deck. A poster is one printed page: there is no click and
        nothing to step through, so it is not offered (2026-08-07, user:
        "why is there animate options in a poster"). */
-    show('#fmt-anim',isNum&&!pageOf().poster);
     /* the code/figure/output part-picker (+ split) — moved off the frame
        into the ribbon's Object group */
     var partsSlot=$('#fmt-parts');
@@ -4011,15 +4010,6 @@
         ?buildPartChooser(s,selAnnot):null;
       if(pcr) partsSlot.appendChild(pcr);
       partsSlot.hidden=!pcr;
-    }
-    var animBtn=$('#fmt-anim');
-    if(animBtn&&isNum){
-      var an=a.anim&&a.anim.type;
-      var lbl={appear:'Appear',fade:'Fade',rise:'Rise',zoom:'Zoom'}[an]
-        ||'Animate';
-      /* no chevron: it opens a PANE, not a dropdown, and a chevron on a
-         button that does not drop anything is a small lie */
-      animBtn.innerHTML='&#9654; '+lbl;
     }
     /* COMPLETENESS. Every #fmt-* control in the contextual bar must be
        governed by FMT_KINDS or listed in FMT_MANUAL. Without this, a
@@ -6285,9 +6275,9 @@
   /* ---- animation PANE: effect + build order. Items on the same build appear
      TOGETHER; each build is one click in playback. ---- */
   (function(){
-    var btn=$('#fmt-anim'),vbtn=$('#vw-anim'),pane=$('#animpane');
+    var vbtn=$('#vw-anim'),pane=$('#animpane');
     var menu=$('#animpane-body'),cl=$('#animpane-close');
-    if(!btn||!pane||!menu) return;
+    if(!vbtn||!pane||!menu) return;
     menu.classList.add('anim-pane');
     function rerender(){
       var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
@@ -6404,10 +6394,13 @@
         menu.appendChild(list);
       }
     }
-    /* One pane, two doors: Animate (with something selected) and the
-       View group's Animations (any time). Both show the same thing,
-       because the build order is a property of the SLIDE — needing a
-       selection to see it was the bug. */
+    /* ONE door. There were briefly two — View's Animations and an
+       "Animate" button in an Effects group that renamed itself to the
+       selected item's effect. Same pane, different groups, different
+       names, both pressed at once (2026-08-17, user: "WHY IS ANIMATIONS
+       AND APPEAR NOT IN THE SAME PLACE"). The pane's effect chooser
+       already tracks the selection, which is everything the second
+       button ever added. */
     function set(open){
       if(open){
         /* the panes share one corner, so only one can be the thing you
@@ -6420,12 +6413,9 @@
         render();
       }
       pane.hidden=!open;
-      [btn,vbtn].forEach(function(b){
-        if(b) b.setAttribute('aria-pressed',open.toString());});
+      vbtn.setAttribute('aria-pressed',open.toString());
     }
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();set(pane.hidden);});
-    if(vbtn) vbtn.addEventListener('click',function(e){
+    vbtn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
     if(cl) cl.addEventListener('click',function(){set(false);});
     /* the effect chooser at the top tracks the selection, so an open pane
