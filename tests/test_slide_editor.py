@@ -329,3 +329,67 @@ def test_page_size_preset_and_zoom(out):
                                "slides": []}])[0]["page"] == "a0p"
     assert "page" not in _as_presentations([{"name": "s", "slides": []}])[0]
     assert ".deck.editing .deck-stage.zoomed{overflow:auto" in out
+
+
+def test_objects_pane_groups_are_folders_with_names_and_colours(out):
+    """The Objects pane grew the organising tools that were only on the
+    ribbon or nowhere (2026-08-18, user: "create folders and group
+    things, rename groups, change group color, duplicate").
+
+    Grouped items render under a folder row -- colour chip (click cycles
+    a fixed palette), a name (double-click or the pencil renames), and a
+    whole-group duplicate. Group metadata lives in s.grpmeta and is
+    copied by normPres, because a slide field not listed there silently
+    dies on the next load. Verified in a browser: group from the pane's
+    own toolbar via ctrl-click multi-select, rename to "My cluster",
+    colour cycled, duplicate produced "My cluster copy" with all members.
+    """
+    assert "function grpMeta(s,g){" in out
+    assert "function dupAnnots(idxs,newGrp,srcGrp){" in out
+    assert "var GRP_COLORS=" in out
+    assert "if(s.grpmeta) o.grpmeta=JSON.parse(JSON.stringify(s.grpmeta));" in out
+    assert "f.className='sp-folder';" in out
+    assert "if(m2.name) m2.name+=' copy';" in out
+    # pane rows multi-select so Group is reachable from the pane
+    assert "selectAnnot(l,i,ev.ctrlKey||ev.metaKey);" in out
+
+
+def test_slides_have_their_own_background_and_border(out):
+    """File > Page background stays presentation-wide; the new Background
+    menu in the Slide group sets THIS slide's colour and an inset border
+    (2026-08-18, user: "change slide background color, and borders and
+    things like that that powerpoint has").
+
+    The border is sized in the same 720-page currency as line weight so
+    it scales with the page, and both fields ride into the print root and
+    the .pptx (slide1 carried cream + a border rect; slide2 stayed
+    default with neither -- verified on a real export). Verified in a
+    browser that slide 2 keeps the default while slide 1 is cream, both
+    ways across a navigation.
+    """
+    assert 'id="bg-btn"' in out and 'id="bg-menu"' in out
+    assert "var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';" in out
+    assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
+    assert "if(s.border) o.border=JSON.parse(JSON.stringify(s.border));" in out
+    assert "(bd.w||4)/SW_REF_H*h" in out
+    assert "return {bg:(ent.s.bg||bg),items:its};" in out
+    # renderSlide re-applies, so walking the deck repaints each slide's own
+    assert "applyPageBg();          /* this slide may carry its own background */" in out
+
+
+def test_notebooks_is_a_pane_and_panes_are_draggable_and_remembered(out):
+    """Notebooks joined Objects / Animations / Versions as a pane in the
+    same shell, instead of a dropdown that died on the first outside
+    click. And every pane in that shell now drags by its header, resizes
+    by its native corner grip, and remembers where you put it (localStorage
+    jv-panes), restored on the next open (2026-08-18, user: "detach them
+    and drag them around and re-size -- this then gets remembered").
+    """
+    assert 'class="selpane nbspane" id="nbspane"' in out
+    assert 'id="dc-nbs-menu"' not in out
+    assert "function wirePane(pane){" in out
+    assert "var PANE_KEY='jv-panes';" in out
+    for pid in ("'selpane'", "'animpane'", "'verpane'", "'preflight'",
+                "'nbspane'"):
+        assert pid in out
+    assert ".selpane{resize:both;overflow:hidden;" in out

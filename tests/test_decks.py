@@ -157,8 +157,10 @@ def test_presentations_rail_auto_hide_is_off_by_default(out):
 
 
 def test_presentation_notebooks_popover(out):
-    """Presentation "Notebooks" popover: open-all / refresh-all."""
-    assert 'id="dc-nbs-btn"' in out and 'id="dc-nbs-menu"' in out
+    """The notebooks list is a PANE in the same shell as Objects
+    (2026-08-18), with open-all / refresh-all inside it."""
+    assert 'id="dc-nbs-btn"' in out and 'id="nbspane"' in out
+    assert 'id="dc-nbs-menu"' not in out
     assert "function renderNbsMenu" in out and "function openPresNbs" in out
     assert "Refresh all" in out and "Open notebooks" in out
 
@@ -169,5 +171,14 @@ def test_notebooks_button_replaces_inline_chip_strip(out):
     The old inline "notebooks" chip strip above the thumbnails is gone.
     """
     assert 'id="dc-nbs-btn"' in out and "renderPresNbs" in out
+    # The button is a pane toggle with a constant label now. It used to
+    # hide until the deck had a notebook cell -- undiscoverable on a
+    # fresh deck ("what happened to the open relevant notebooks button")
+    # -- and renamed itself Open/Refresh notebooks, promising an action
+    # it no longer performs: opening and refreshing live inside the
+    # pane, beside the list they act on (2026-08-18).
+    assert "btn.hidden=!(nbs.length||nbsCanOpen());" in out
+    assert "btn.textContent=(anyOpen" not in out
+    assert "Refresh notebooks" not in out
     assert 'class="dc-nbs"' not in out
     assert 'id="ck-filter-btn"' in out and 'id="ck-filter-menu"' in out

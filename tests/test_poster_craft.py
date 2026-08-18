@@ -70,10 +70,14 @@ def test_insert_groups_by_what_a_tool_does(out):
     place = [out.index('data-tool="cell"'), out.index('data-tool="text"'),
              out.index('id="et-image"'), out.index('id="dc-qr"')]
     draw = [out.index('id="sh-btn"'), out.index('id="dc-line"'),
-            out.index('data-tool="arrow"')]
+            out.index('data-tool="arrow"'), out.index('id="dc-draw"')]
     assert place == sorted(place), "the placing tools are out of order"
     assert draw == sorted(draw), "the drawing tools are out of order"
     assert max(place) < min(draw), "placing and drawing tools are interleaved"
+    # Draw comes AFTER Arrow, not between Line and Arrow: the side rail
+    # pairs from source order, and the newcomer briefly split the
+    # Line+Arrow pairing kept since 2026-08-07 -- Line+Draw shared a line
+    # and Arrow sat orphaned under them (2026-08-18)
     # Objects is a way of LOOKING at the page, so it lives in the View
     # group -- asserted by CONTAINMENT, because View precedes Insert in
     # the markup and is moved after it by CSS order, so source position

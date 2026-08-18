@@ -183,6 +183,68 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The Notebooks button is findable again, and honest.** It used to
+  hide until the deck had at least one notebook cell — so on a fresh deck
+  the "open the relevant notebooks" affordance simply did not exist and
+  looked removed. And its label renamed itself *Open notebooks* /
+  *Refresh notebooks* while actually opening a pane — promising an action
+  it no longer performed. It is now a constant **Notebooks** pane toggle
+  with its own icon, visible whenever the build knows about notebooks at
+  all; the **Notebooks used** pane lists every notebook that went into
+  the presentation with its status (open · closed · not found — click a
+  closed one to open it), and the *Open notebooks* / *Refresh all* /
+  figure-locking actions live inside the pane, beside the list they act
+  on.
+- **The Objects pane organises.** Grouped items now show as **folders**:
+  a colour chip (click cycles a palette), a name (double-click or the
+  pencil renames it), and a one-click **duplicate of the whole group** —
+  the copy lands as "*name* copy" with all its members. Every row also
+  gets its own duplicate, ctrl-click in the pane builds a multi-selection,
+  and the pane's own toolbar carries Group / Ungroup / Duplicate, so
+  organising happens where you are looking. Group names and colours are
+  saved with the slide.
+- **Slides have their own background and border.** A new **Background**
+  menu in the Slide group sets *this* slide's colour (File → Page
+  background stays the presentation-wide default) and an inset border in
+  four weights and six colours. The border is sized in the same
+  page-relative currency as line weight, so it scales with the page —
+  and both ride into print and the `.pptx` (verified: slide 1 exported
+  cream with a border rectangle, slide 2 stayed default with neither).
+- **Notebooks is a pane, and every pane is yours to place.** The
+  notebooks list joined Objects / Animations / Versions in the same
+  shell instead of a dropdown that died on the first outside click. And
+  all of those panes now **drag by the header, resize by the corner
+  grip, and remember where you put them** across sessions — restored the
+  next time they open.
+- **A saved file opens itself.** A bare-JSON `.junoview` was a dead end
+  on disk: double-clicking asked Windows to pick an app, and nothing said
+  what the file was. Saves and downloads are now **`name.junoview.html`**
+  — a real HTML page with the presentation JSON inside it, so the OS
+  opens a browser and the page identifies itself: the Junoview logo (as
+  the page and as its tab icon), the name, what it holds, and how to open
+  it for editing. Both loaders — the app's *File → Open* and the Python
+  sidecar reader — unwrap the HTML form and still accept bare-JSON files,
+  so nothing already saved is stranded; a `talk.junoview.html` next to
+  `talk.ipynb` auto-loads exactly as the old sidecar did. `<` is escaped
+  inside the embedded JSON, so no saved text — even a text box that
+  literally says `</script>` — can cut the data block short. Verified
+  round trip in a browser: the exact downloaded bytes re-imported through
+  File → Open, and parsed by the Python loader.
+- **The save readout says where.** "autosaved · 12:18" answered the
+  question nobody asked and skipped the one that matters — into the
+  browser? the project? which file? It now reads **saved to browser ·
+  12:18** (or the project, or the file's own name).
+- **A new poster opens blank.** It used to open pre-filled with the
+  3-column academic template — headings, placeholder frames, the lot —
+  which you had to clear before starting your own. Even the blank slide's
+  full-page ghost frame goes: on a deck it is the click-to-fill idiom,
+  but stretched over an A0 sheet it is one more thing you did not put
+  there. The templates are all still one click away in *Layouts*.
+- **Draw moved after Arrow.** The newcomer briefly sat between Line and
+  Arrow, which broke the pairing the side rail builds from source order:
+  Line+Draw shared a line and Arrow sat orphaned full-width under them.
+  Line and Arrow — the same tool with and without a head, adjacent since
+  2026-08-07 — pair again; Draw closes the group.
 - **One Animations button, not two.** Moving the pane behind View's
   *Animations* left the old *Animate* button behind in Effects — same
   pane, different group, different name, and it renamed itself to the

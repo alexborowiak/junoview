@@ -66,6 +66,27 @@ body.deck-open{overflow:hidden;}
   border-radius:10px;display:flex;flex-direction:column;
   box-shadow:0 14px 44px #00000066;}
 .selpane[hidden]{display:none;}
+/* panes resize by their native corner grip and drag by their header; the
+   position and size you choose are remembered (2026-08-18) */
+.selpane{resize:both;overflow:hidden;min-width:190px;min-height:120px;}
+/* the Background menu is rows, not the shape gallery's 3-column grid it
+   would otherwise inherit from .sh-menu */
+.sh-menu.bg-menu{display:block;width:230px;}
+.bg-menu .hd-row{display:flex;gap:4px;align-items:center;}
+.bg-chip{width:26px;height:20px;border-radius:5px;padding:0;
+  border:1px solid #ffffff33;}
+.bg-auto,.bg-w{font-size:10.5px;padding:3px 8px;flex-direction:row;}
+.sp-tools{display:flex;gap:5px;padding:2px 2px 8px;}
+.sp-tool{font-size:10px;padding:3px 8px;}
+.sp-tool[disabled]{opacity:.4;cursor:default;}
+.sp-folder{display:flex;align-items:center;gap:6px;padding:5px 6px;
+  border-radius:6px;background:#ffffff0a;margin-top:6px;cursor:pointer;}
+.sp-folder:hover{background:#ffffff14;}
+.sp-gcol{width:12px;height:12px;border-radius:3px;border:none;
+  cursor:pointer;flex:none;padding:0;}
+.sp-gname{font-weight:600;}
+.sp-row.sp-ing{margin-left:10px;border-left:2px solid transparent;
+  padding-left:6px;}
 /* CLEAR THE TOOLBAR. The panes live inside the stage wrap, which also
    holds the ribbon, so `top:8px` measured from above the toolbar and every
    pane covered its right-hand end — Objects, Versions and Print check have

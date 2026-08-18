@@ -173,6 +173,36 @@ def test_freehand_drawing_is_a_first_class_stroke(out):
     assert "} else if (item.t === 'draw') {" in out
 
 
+def test_a_new_poster_opens_blank(out):
+    """The 3-column academic template used to be applied at creation, so
+    a new poster opened already covered in headings and placeholder
+    frames you had to clear before starting your own (2026-08-18, user:
+    "opening a poster should open as blank not a default fill"). Even the
+    blank slide's full-page ghost frame goes: on a deck it is the
+    click-to-fill idiom, but stretched over an A0 sheet it is one more
+    thing you did not put there. The templates are all still one click
+    away in Layouts. Measured in a browser: a new poster renders with 0
+    items on the page.
+    """
+    body = out.split("function newPoster(){")[1].split("function ")[0]
+    assert "applyLayout" not in body
+    assert "s.annots=[];" in body
+
+
+def test_the_save_readout_says_where(out):
+    """"autosaved · 12:18" answered the question nobody asked and skipped
+    the one that matters -- into the browser? the project? which file?
+    (2026-08-18, user: "in the little autosave button, say where saved
+    to"). whereSaved() is short and lower-case because it sits
+    mid-sentence; targetLabel() stays as the menu heading it is.
+    Measured: "saved to browser · 12:36" after a manual save on the
+    static page.
+    """
+    assert "function whereSaved(){" in out
+    assert "?((saveKind==='auto'?'autosaved to ':'saved to ')+whereSaved()" in out
+    assert "el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);" in out
+
+
 def test_qr_generator_is_self_contained_and_vector(out):
     """A poster QR must not depend on a third-party service: the encoder
     (byte mode, ECC M, versions 1-10, spec mask scoring) lives in deck.js

@@ -183,13 +183,11 @@
           <span class="rbn-grp rbn-standby rbn-nbs">
             <span class="rbn-row">
               <div class="dc-menuwrap">
-                <!-- label is set by renderPresNbs (Open vs Refresh), so
-                     no icon element here: textContent would delete it -->
                 <button class="dbtn rbn-sm" id="dc-nbs-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Notebooks that went into this presentation"
-                  >Notebooks</button>
-                <div class="dc-menu dc-nbs-menu" id="dc-nbs-menu" hidden></div>
+                  aria-pressed="false"
+                  title="Every notebook that went into this presentation
+ — see which are open, open or refresh them all, and lock figures to a
+ git commit"><i data-ic="nb"></i> Notebooks</button>
               </div>
             </span>
             <span class="rbn-lab">Notebooks</span>
@@ -214,6 +212,14 @@
  or a poster (A4&ndash;A0, portrait or landscape)"><i data-ic="pagep"></i>
  Page size &#9662;</button>
                 <div class="sh-menu page-menu" id="page-menu" hidden></div>
+              </span>
+              <span class="sh-drop" id="bg-drop">
+                <button class="dbtn rbn-sm" id="bg-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="THIS slide's background colour and border. The
+ whole presentation's background lives under File"
+                  >&#9703; Background &#9662;</button>
+                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
               </span>
               <!-- The strip listing the OTHER pages belongs with the page
                    controls, not under View: it is the set this page is one
@@ -388,19 +394,23 @@
               <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
                 title="Stop drawing and go back to selecting (Esc)"
                 >&#10005; Cancel</button>
-              <!-- freehand. It sits with Line and Arrow because it is the
-                   same thing done by hand, and it is the last of the
-                   drawing tools to exist (2026-08-17, user asking whether
-                   the line options were complete: "like free draw"). -->
+              <button class="dbtn rbn-sm et" data-tool="arrow"
+                aria-pressed="false" title="Draw an arrow — a line with a
+ head. Drop an end on an item to attach it, and the arrow follows that
+ item around"><i data-ic="arrow"></i> Arrow</button>
+              <!-- freehand, LAST of the drawing tools. It briefly sat
+                   between Line and Arrow, which broke the pairing the
+                   side rail's wrap builds from source order: Line+Draw
+                   shared a line and Arrow was orphaned full-width under
+                   them (2026-08-18, user: "some of the buttons are a bit
+                   wonky"). Line and Arrow are the same tool with and
+                   without a head and have been kept adjacent since
+                   2026-08-07; the newcomer goes after, not between. -->
               <button class="dbtn rbn-sm et" id="dc-draw" data-tool="draw"
                 aria-pressed="false"
                 title="Draw freehand — hold the mouse down and scribble.
  It takes a colour, a weight and a line style like any other stroke, and
  it prints and exports as vector"><i data-ic="pen"></i> Draw</button>
-              <button class="dbtn rbn-sm et" data-tool="arrow"
-                aria-pressed="false" title="Draw an arrow — a line with a
- head. Drop an end on an item to attach it, and the arrow follows that
- item around"><i data-ic="arrow"></i> Arrow</button>
               <input type="file" id="img-file" accept="image/*" hidden>
             </span>
             <span class="rbn-lab">Insert</span>
@@ -724,6 +734,12 @@
           <button class="dbtn dc-icon" id="animpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="animpane-body"></div>
+      </aside>
+      <aside class="selpane nbspane" id="nbspane" hidden>
+        <div class="selpane-h"><span>Notebooks used</span>
+          <button class="dbtn dc-icon" id="nbspane-close"
+            title="Close">&#10005;</button></div>
+        <div class="selpane-list" id="nbspane-body"></div>
       </aside>
       <aside class="selpane verpane" id="verpane" hidden>
         <div class="selpane-h"><span id="verpane-title">Versions</span>

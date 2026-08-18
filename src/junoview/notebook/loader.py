@@ -32,18 +32,44 @@ def load_doc(path: Path, title: str | None = None,
     doc.source_name = path.stem
     if deck_path is None:
         # a deck saved from the browser lands next to the notebook as
-        # <stem>.junoview; the older <stem>.deck.json still works
-        for suffix in (".junoview", ".deck.json"):
+        # <stem>.junoview.html (an HTML page carrying the JSON, so
+        # double-clicking it opens a browser); bare <stem>.junoview and
+        # the older <stem>.deck.json still work
+        for suffix in (".junoview.html", ".junoview", ".deck.json"):
             sidecar = path.with_suffix(suffix)
             if sidecar.exists():
                 deck_path = sidecar
                 break
     if deck_path is not None:
         pres = _as_presentations(
-            json.loads(Path(deck_path).read_text(encoding="utf-8")))
+            _deck_json(Path(deck_path).read_text(encoding="utf-8")))
         if pres:
             doc.presentations = pres
     return doc
+
+
+_DECK_BLOCK_RE = re.compile(
+    r'<script type="application/json" id="junoview-data">(.*?)</script>',
+    re.S)
+
+
+def _deck_json(text: str):
+    """Parse a saved deck file in either form.
+
+    Since 2026-08-18 the browser saves ``name.junoview.html`` -- a real
+    HTML page (logo, name, how to open it) with the JSON in a
+    ``<script type="application/json">`` block, so double-clicking the
+    file opens a browser instead of Windows asking what a .junoview is.
+    Bare-JSON files from before that still parse unchanged.
+    """
+    t = text.lstrip()
+    if t.startswith("<"):
+        m = _DECK_BLOCK_RE.search(t)
+        if m is None:
+            raise SystemExit("error: no Junoview data block in that "
+                             "HTML file")
+        t = m.group(1)
+    return json.loads(t)
 
 
 def render_notebook_file(path: Path, title: str | None = None,
@@ -54,7 +80,7 @@ def render_notebook_file(path: Path, title: str | None = None,
 def embed_deck(nb_path: Path, deck_path: Path) -> None:
     """Write presentations JSON into metadata.semantic.presentations."""
     pres = _as_presentations(
-        json.loads(deck_path.read_text(encoding="utf-8")))
+        _deck_json(deck_path.read_text(encoding="utf-8")))
     if not pres:
         raise SystemExit(f"error: {deck_path} does not look like saved "
                          "presentations (expected {'presentations': [...]})")

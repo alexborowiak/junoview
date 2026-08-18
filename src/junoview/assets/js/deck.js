@@ -463,7 +463,11 @@
       +0.0722*(n&255))/255>0.55;
   }
   function applyPageBg(){
-    var bg=(pres&&pres.pageBg)||'#0b141d';
+    /* the slide's own colour wins; File > Page background stays the
+       presentation-wide default (2026-08-18, user asked for per-slide
+       backgrounds "like PowerPoint has") */
+    var s0=pres&&pres.slides&&pres.slides[cur];
+    var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
     $$('#mi-pagebg .pgbg-sw').forEach(function(sw){
@@ -555,6 +559,14 @@
     slideEl.style.maxWidth='none';
     slideEl.style.maxHeight='none';
     slideEl.style.margin='auto';
+    /* the slide's border: an inset shadow so it costs no layout, sized
+       in the same 720-page currency as line weight so it scales with the
+       page instead of staying a constant screen thickness */
+    var sB=pres.slides&&pres.slides[cur],bd=sB&&sB.border;
+    slideEl.style.boxShadow=bd
+      ?('inset 0 0 0 '+((bd.w||4)/SW_REF_H*h).toFixed(2)+'px '
+        +(bd.c||'#39a9c0'))
+      :'';
     stage.classList.toggle('zoomed',w>aw+1||h>ah+1);
   }
   function applyZoom(){
@@ -1303,7 +1315,7 @@
       if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
       renderSelPane();
     }
-    function row(a,i){
+    function rowEl(a,i){
       var r=document.createElement('div');
       r.className='sp-row'+(selSet.indexOf(i)>=0?' sel':'')
         +(a.hide?' offrow':'');
@@ -1328,16 +1340,203 @@
       lk.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'lock');});
       r.appendChild(lk);
-      r.addEventListener('click',function(){
+      var dp2=document.createElement('button');
+      dp2.className='sp-act';dp2.type='button';dp2.innerHTML='&#10697;';
+      dp2.title='Duplicate';
+      dp2.addEventListener('click',function(e){
+        e.stopPropagation();dupAnnots([i],false);});
+      r.appendChild(dp2);
+      r.addEventListener('click',function(ev){
         if(!liveAnnot(i)){renderSelPane();return;}
         var l=stage.querySelector('.annot-layer');
-        if(l) selectAnnot(l,i);
+        /* ctrl-click builds a multi-selection right in the pane, which
+           is what makes Group up in the toolbar reachable from here */
+        if(l) selectAnnot(l,i,ev.ctrlKey||ev.metaKey);
         renderSelPane();
       });
-      list.appendChild(r);
+      return r;
     }
-    for(var i=ann.length-1;i>=0;i--) row(ann[i],i);  /* front-most first */
+    /* pane header actions: group/ungroup/duplicate act on the pane's
+       selection, so organising happens where you are looking
+       (2026-08-18, user: "create folders and group things ...
+       duplicate") */
+    var bar2=document.createElement('div');bar2.className='sp-tools';
+    var selN=selSet.filter(function(i){return typeof i==='number';});
+    function tool(label,title,on,fn){
+      var b=document.createElement('button');
+      b.className='dbtn sp-tool';b.textContent=label;b.title=title;
+      b.disabled=!on;
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      bar2.appendChild(b);
+    }
+    tool('Group','Group the selected items (Ctrl+G)',selN.length>=2,
+      function(){groupSel();renderSelPane();});
+    var inGrp=typeof selAnnot==='number'&&ann[selAnnot]
+      &&ann[selAnnot].grp!=null;
+    tool('Ungroup','Ungroup (Ctrl+Shift+G)',inGrp,
+      function(){ungroupSel();renderSelPane();});
+    tool('\u29c9 Duplicate','Duplicate the selected items',selN.length>=1,
+      function(){dupAnnots(selN,false);});
+    list.appendChild(bar2);
+    /* GROUPS come first, as folders: a coloured chip, a name you can
+       change, and the members indented under it */
+    var seen={},orderG=[];
+    ann.forEach(function(a2){
+      if(a2&&a2.grp!=null&&!seen[a2.grp]){
+        seen[a2.grp]=1;orderG.push(a2.grp);}
+    });
+    orderG.forEach(function(g){
+      var meta=(s.grpmeta||{})[g]||{};
+      var f=document.createElement('div');f.className='sp-folder';
+      var chip=document.createElement('button');
+      chip.className='sp-gcol';chip.type='button';
+      chip.style.background=meta.color||GRP_COLORS[0];
+      chip.title='Group colour — click to change';
+      chip.addEventListener('click',function(e){
+        e.stopPropagation();
+        var cur2=GRP_COLORS.indexOf(meta.color||GRP_COLORS[0]);
+        grpMeta(s,g).color=GRP_COLORS[(cur2+1)%GRP_COLORS.length];
+        markDirty();renderSelPane();
+      });
+      f.appendChild(chip);
+      var nm=document.createElement('span');nm.className='sp-t sp-gname';
+      nm.textContent=meta.name||('Group '+g);
+      nm.title='Double-click to rename';
+      nm.addEventListener('dblclick',function(){
+        var v=prompt('Group name:',meta.name||('Group '+g));
+        if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+      });
+      f.appendChild(nm);
+      var rn=document.createElement('button');
+      rn.className='sp-act';rn.type='button';rn.innerHTML='&#9998;';
+      rn.title='Rename this group';
+      rn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var v=prompt('Group name:',meta.name||('Group '+g));
+        if(v!=null){grpMeta(s,g).name=v.trim();markDirty();renderSelPane();}
+      });
+      f.appendChild(rn);
+      var dp=document.createElement('button');
+      dp.className='sp-act';dp.type='button';dp.innerHTML='&#10697;';
+      dp.title='Duplicate the whole group';
+      dp.addEventListener('click',function(e){
+        e.stopPropagation();
+        var idxs=[];ann.forEach(function(a2,i2){
+          if(a2&&a2.grp===g) idxs.push(i2);});
+        dupAnnots(idxs,true,g);
+      });
+      f.appendChild(dp);
+      f.addEventListener('click',function(){
+        var l=stage.querySelector('.annot-layer');
+        var first=null;
+        ann.forEach(function(a2,i2){
+          if(first==null&&a2&&a2.grp===g) first=i2;});
+        if(l&&first!=null) selectAnnot(l,first);
+        renderSelPane();
+      });
+      list.appendChild(f);
+      for(var i2=ann.length-1;i2>=0;i2--)
+        if(ann[i2]&&ann[i2].grp===g){
+          var r2=rowEl(ann[i2],i2);
+          r2.classList.add('sp-ing');
+          r2.style.borderLeftColor=meta.color||GRP_COLORS[0];
+          list.appendChild(r2);
+        }
+    });
+    for(var i=ann.length-1;i>=0;i--)
+      if(!ann[i]||ann[i].grp==null) list.appendChild(rowEl(ann[i],i));
   }
+  var GRP_COLORS=['#39a9c0','#ff6b57','#f0a848','#46a892','#a07be0',
+    '#8ba0b2'];
+  function grpMeta(s,g){
+    s.grpmeta=s.grpmeta||{};
+    return s.grpmeta[g]=s.grpmeta[g]||{};
+  }
+  /* duplicate items; newGrp gives the copies a fresh group id and copies
+     the folder's name ("... copy") and colour with them */
+  function dupAnnots(idxs,newGrp,srcGrp){
+    var s=pres.slides[cur]; if(!s||!s.annots) return;
+    var gid=newGrp?nextGrp(s):null,added=[];
+    idxs.forEach(function(i){
+      var a=s.annots[i]; if(!a) return;
+      var cp=JSON.parse(JSON.stringify(a));
+      if(cp.k==='arrow'){cp.x1+=2;cp.y1+=2;cp.x2+=2;cp.y2+=2;
+        delete cp.c1;delete cp.c2;}
+      else {cp.x=Math.min(96,(cp.x||0)+2);cp.y=Math.min(96,(cp.y||0)+2);}
+      if(gid!=null) cp.grp=gid;
+      s.annots.push(cp);added.push(s.annots.length-1);
+    });
+    if(gid!=null&&srcGrp!=null&&s.grpmeta&&s.grpmeta[srcGrp]){
+      var m2=JSON.parse(JSON.stringify(s.grpmeta[srcGrp]));
+      if(m2.name) m2.name+=' copy';
+      s.grpmeta[gid]=m2;
+    }
+    if(!added.length) return;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,added[added.length-1]);}
+    renderSelPane();
+  }
+  /* ---- panes are yours to place: drag by the header, resize by the
+     corner, and both are remembered per pane across sessions
+     (2026-08-18, user: "detach them and drag them around and re-size —
+     this then gets remembered for when you re-open"). ---- */
+  var PANE_KEY='jv-panes';
+  function paneStore(){
+    try{return JSON.parse(lsGet(PANE_KEY)||'{}');}catch(e){return {};}
+  }
+  function paneSave(id,box){
+    var st=paneStore();st[id]=box;lsSet(PANE_KEY,JSON.stringify(st));
+  }
+  function wirePane(pane){
+    if(!pane||pane._wired) return;pane._wired=1;
+    var id=pane.id,h=pane.querySelector('.selpane-h');
+    function place(box){
+      /* moving detaches the pane from its docked right/bottom anchors */
+      pane.style.right='auto';pane.style.bottom='auto';
+      var host=pane.offsetParent;
+      var hw=host?host.clientWidth:innerWidth;
+      var hh=host?host.clientHeight:innerHeight;
+      pane.style.left=Math.max(0,Math.min(hw-80,box.x))+'px';
+      pane.style.top=Math.max(0,Math.min(hh-60,box.y))+'px';
+      if(box.w) pane.style.width=Math.min(hw,box.w)+'px';
+      if(box.h) pane.style.height=Math.min(hh,box.h)+'px';
+    }
+    var saved=paneStore()[id];
+    if(saved&&typeof saved.x==='number') place(saved);
+    if(h){
+      h.style.cursor='move';
+      h.addEventListener('pointerdown',function(ev){
+        if(ev.target.closest('button')) return;
+        ev.preventDefault();
+        var hostR=pane.offsetParent.getBoundingClientRect();
+        var r=pane.getBoundingClientRect();
+        var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
+        function mv(e2){
+          place({x:e2.clientX-hostR.left-dx,y:e2.clientY-hostR.top-dy});
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+          paneSave(id,{x:pane.offsetLeft,y:pane.offsetTop,
+            w:pane.offsetWidth,h:pane.offsetHeight});
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      });
+    }
+    /* the native resize grip changes width/height; remember those too */
+    if(window.ResizeObserver) new ResizeObserver(function(){
+      if(pane.hidden||!pane.offsetParent) return;
+      var st=paneStore()[id];
+      if(st&&Math.abs((st.w||0)-pane.offsetWidth)<3
+        &&Math.abs((st.h||0)-pane.offsetHeight)<3) return;
+      paneSave(id,{x:pane.offsetLeft,y:pane.offsetTop,
+        w:pane.offsetWidth,h:pane.offsetHeight});
+    }).observe(pane);
+  }
+  ['selpane','animpane','verpane','preflight','nbspane']
+    .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
     if(!ob||!pane) return;
@@ -1428,6 +1627,12 @@
            it survived until the next load and then silently became
            "empty slide" again (2026-08-10) */
         if(typeof s.label==='string'&&s.label) o.label=s.label;
+        /* per-slide look + pane organisation. A field not listed here
+           silently dies on the next load — exactly what happened to
+           `label` before it was added (2026-08-10) */
+        if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;
+        if(s.border) o.border=JSON.parse(JSON.stringify(s.border));
+        if(s.grpmeta) o.grpmeta=JSON.parse(JSON.stringify(s.grpmeta));
         if(s.layout==='title'){
           o.title=String(s.title||'');o.sub=String(s.sub||'');
           if(s.tprops) o.tprops=JSON.parse(JSON.stringify(s.tprops));
@@ -1586,6 +1791,11 @@
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
   }
+  function whereSaved(){
+    if(saveTarget==='project') return 'project';
+    if(saveTarget==='file') return fileName||'file';
+    return 'browser';
+  }
   function status(){
     /* the bar names what it belongs to; for a poster this is the only
        place the name is shown, since the panel that normally carries it
@@ -1599,15 +1809,20 @@
       /* web/static Save writes to the browser but keeps source='draft';
          show a plain 'saved' — the Save button tooltip explains where */
       if(APP.mode!=='app'&&saveKind==='manual'&&saveStamp){
-        el.textContent='saved · '+fmtT(saveStamp);
+        el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);
         el.className='deck-status saved';
         return;
       }
       el.textContent=auto?'unsaved — saving…':'unsaved';
     } else if(source==='saved'){
+      /* WHERE, not just when: "autosaved · 12:18" answered the question
+         nobody asked and skipped the one that matters — into the browser?
+         the project? which file? (2026-08-18, user: "in the little
+         autosave button, say where saved to") */
       el.textContent=saveStamp
-        ?((saveKind==='auto'?'autosaved · ':'saved · ')+fmtT(saveStamp))
-        :'saved';
+        ?((saveKind==='auto'?'autosaved to ':'saved to ')+whereSaved()
+          +' · '+fmtT(saveStamp))
+        :'saved to '+whereSaved();
     } else el.textContent='';
     el.className='deck-status '+source;
   }
@@ -2858,6 +3073,7 @@
   }
   function renderSlide(){
     var s=pres.slides[cur];
+    applyPageBg();          /* this slide may carry its own background */
     stage.innerHTML='';
     vGroups=[];
     traceSel=0;   /* each slide starts on its first plot's trace */
@@ -6822,8 +7038,17 @@
     /* like a new presentation, nothing persists until the first edit.
        Posters start WHITE: they exist to be printed (2026-08-04) */
     var s=emptySlide();
+    /* BLANK, not pre-filled: the 3-column academic template used to be
+       applied here, so a new poster opened already covered in headings
+       and placeholder frames you had to clear before starting your own
+       (2026-08-18, user: "opening a poster should open as blank not a
+       default fill"). The templates are all still one click away in
+       Layouts — which is where choosing one belongs. Even the blank
+       slide's full-page ghost frame goes: on a deck it is the "click to
+       fill" idiom, but stretched over an A0 sheet it is one more thing
+       you did not put there. */
+    s.annots=[];
     pres={name:name,slides:[s],page:'a0p',pageBg:'#ffffff'};
-    applyLayout(s,LAYOUTBYID['poster-3col']||LAYOUTS[0]);
     source='auto';
     cur=0;activePane=-1;
     openDeck('edit');
@@ -7216,15 +7441,16 @@
     var nbs=presNbs(pres);
     var btn=$('#dc-nbs-btn');
     if(btn){
-      /* only meaningful when the deck pulls from named notebooks (namespaced
-         refs) — a static single-file export has none */
-      btn.hidden=!nbs.length;
-      /* "Open notebooks" until at least one of the deck's notebooks is open,
-         then "Refresh notebooks" (reload the latest cells from disk / URL) */
-      var anyOpen=nbs.some(function(stem){
-        return APP.order.indexOf(stem)>=0;});
-      btn.textContent=(anyOpen?'📚 Refresh notebooks'
-        :'📚 Open notebooks');
+      /* Visible whenever this build can DO anything with notebooks.
+         Hiding it until the list was non-empty made the pane
+         undiscoverable on a fresh deck and read as "the open-notebooks
+         button disappeared" (2026-08-18, user). Only the bare static
+         export, which has no notebooks at all, drops it.
+         The label no longer renames itself either: "Open notebooks" on
+         a button that actually opens a PANE promised the wrong thing —
+         the opening and refreshing live inside the pane, beside the
+         list they act on. */
+      btn.hidden=!(nbs.length||nbsCanOpen());
     }
     /* this button IS the Notebooks group; when it hides, the group must
        go too, or the ribbon shows a label over empty space */
@@ -7283,8 +7509,8 @@
     hideNbsMenu();
   }
   function hideNbsMenu(){
-    var m=$('#dc-nbs-menu'); if(m) m.hidden=true;
-    var b=$('#dc-nbs-btn'); if(b) b.setAttribute('aria-expanded','false');
+    var m=$('#nbspane'); if(m) m.hidden=true;
+    var b=$('#dc-nbs-btn'); if(b) b.setAttribute('aria-pressed','false');
   }
   /* ---- Lock all / Unlock all / prefetch locked versions ---- */
   function allCellAnnots(){
@@ -7360,7 +7586,7 @@
         groups[k].anchors);});
   }
   function renderNbsMenu(){
-    var m=$('#dc-nbs-menu'); if(!m) return;
+    var m=$('#nbspane-body'); if(!m) return;
     m.innerHTML='';
     var info=nbInfo();
     if(!info.length){
@@ -7818,19 +8044,25 @@
         m.hidden=true;});
   });
   /* ---- "Notebooks" popover in the deck header ---- */
-  var nbsBtn=$('#dc-nbs-btn'),nbsMenu=$('#dc-nbs-menu');
+  /* the notebooks list is a PANE now, a sibling of Objects — a list you
+     open to look at the presentation from outside it, not a menu that
+     dies on the first outside click (2026-08-18, user: "like how we have
+     the objects, a notebooks used thing that pops up") */
+  var nbsBtn=$('#dc-nbs-btn'),nbsPane=$('#nbspane');
   if(nbsBtn) nbsBtn.addEventListener('click',function(e){
     e.stopPropagation();
-    if(!nbsMenu) return;
-    if(nbsMenu.hidden){
-      renderNbsMenu();nbsMenu.hidden=false;
-      nbsBtn.setAttribute('aria-expanded','true');
-    } else hideNbsMenu();
+    if(!nbsPane) return;
+    if(nbsPane.hidden){renderNbsMenu();nbsPane.hidden=false;
+      nbsBtn.setAttribute('aria-pressed','true');}
+    else {nbsPane.hidden=true;
+      nbsBtn.setAttribute('aria-pressed','false');}
   });
-  document.addEventListener('click',function(e){
-    if(nbsMenu&&!nbsMenu.hidden&&!nbsMenu.contains(e.target)
-       &&e.target!==nbsBtn) hideNbsMenu();
-  });
+  (function(){
+    var c=$('#nbspane-close');
+    if(c) c.addEventListener('click',function(){
+      nbsPane.hidden=true;
+      if(nbsBtn) nbsBtn.setAttribute('aria-pressed','false');});
+  })();
   document.addEventListener('fullscreenchange',function(){
     /* Esc always exits browser fullscreen (the page cannot prevent
        it), so Esc while presenting leaves the presentation entirely —
@@ -8241,9 +8473,12 @@
   function pickSaveFile(){
     if(!canPickFile) return Promise.resolve(null);
     return window.showSaveFilePicker({
-      suggestedName:(pres.name||'presentation')+'.junoview',
+      /* .junoview.html so double-clicking the file opens a browser; the
+         picker API only takes single-dot extensions, so the double suffix
+         goes in the suggested name */
+      suggestedName:(pres.name||'presentation')+'.junoview.html',
       types:[{description:'Junoview presentation',
-        accept:{'application/json':['.junoview','.json']}}]
+        accept:{'text/html':['.html']}}]
     }).then(function(h){
       fileHandle=h;fileName=h.name||'';
       /* REMEMBERING the file is best-effort: it must never delay or block
@@ -8255,6 +8490,58 @@
   function deckFileText(){
     return JSON.stringify({junoview:1,
       presentations:plainIfSingle(mergedPresentations())},null,2);
+  }
+  /* ---- the saved file is a real HTML page with the JSON inside it ----
+     A bare-JSON ".junoview" was a dead end on disk: double-clicking it
+     asked Windows to pick an app, and nothing said what it was
+     (2026-08-18, user: "when opening it doesn't really recognise that
+     this should be opened in a browser"). Saved as name.junoview.html the
+     OS opens a browser, and the page identifies itself — the Junoview
+     logo, the name, what it holds, and how to open it for editing. The
+     data rides in a <script type="application/json"> block; both loaders
+     (here and the Python sidecar reader) unwrap it, and plain old .junoview
+     files still parse, so nothing already saved is stranded. `<` is
+     escaped inside the JSON so no content can close the script block. */
+  function junoviewFileHtml(){
+    var json=deckFileText().replace(/</g,'\\u003c');
+    var list=plainIfSingle(mergedPresentations());
+    var n=Array.isArray(list)?list.length:1;
+    var slides=(Array.isArray(list)?list:[list]).reduce(function(k,p2){
+      return k+((p2&&p2.slides&&p2.slides.length)||0);},0);
+    var icon=(document.querySelector('link[rel="icon"]')||{}).href||'';
+    var name=esc(APP.order.length===1?APP.order[0]:(pres.name||'project'));
+    return '<!doctype html>\n<html lang="en"><head><meta charset="utf-8">'
+      +'<meta name="viewport" content="width=device-width,initial-scale=1">'
+      +'<title>'+name+' — Junoview presentation</title>'
+      +(icon?'<link rel="icon" href="'+icon+'">':'')
+      +'<style>body{margin:0;min-height:100vh;display:flex;align-items:center;'
+      +'justify-content:center;background:#0b141d;color:#dce6ee;'
+      +'font-family:system-ui,sans-serif}main{text-align:center;padding:40px;'
+      +'max-width:560px}img{width:96px;height:96px}h1{font-size:20px;'
+      +'margin:18px 0 4px}p{color:#8ba0b2;font-size:14px;line-height:1.6;'
+      +'margin:8px 0}code{background:#16273a;border-radius:4px;'
+      +'padding:1px 6px;font-size:13px}</style></head><body><main>'
+      +(icon?'<img src="'+icon+'" alt="Junoview">':'')
+      +'<h1>'+name+'</h1>'
+      +'<p>A saved <b>Junoview</b> presentation — '+n+' presentation'
+      +(n===1?'':'s')+', '+slides+' slide'+(slides===1?'':'s')+'.</p>'
+      +'<p>To edit it, open Junoview and use <code>File → Open a '
+      +'.junoview file…</code>, or keep it next to its notebook and '
+      +'it loads itself.</p>'
+      +'</main><script type="application/json" id="junoview-data">\n'
+      +json+'\n</'+'script></body></html>\n';
+  }
+  /* both file forms — the HTML wrapper and a bare-JSON .junoview from
+     before it existed — hand back the same object */
+  function parseDeckText(txt){
+    var t=String(txt||'').trim();
+    if(t.charAt(0)==='<'){
+      var m2=t.match(
+        /<script type="application\/json" id="junoview-data">([\s\S]*?)<\/script>/);
+      if(!m2) throw new Error('no Junoview data in that HTML file');
+      t=m2[1];
+    }
+    return JSON.parse(t);
   }
   /* write to the remembered file. `silent` = an autosave: never pops a
      permission prompt (there is no user gesture behind it) */
@@ -8270,7 +8557,7 @@
             return false;
           }
           return h.createWritable().then(function(w){
-            return Promise.resolve(w.write(deckFileText()))
+            return Promise.resolve(w.write(junoviewFileHtml()))
               .then(function(){return w.close();});
           }).then(function(){
             lsDel(PFX+(pres.name||'untitled'));
@@ -8504,10 +8791,11 @@
     writeBtn.hidden=true;
   }
   menuAction('#mi-dl',function(){
-    var blob=new Blob([deckFileText()],{type:'application/json'});
+    var blob=new Blob([junoviewFileHtml()],{type:'text/html'});
     var a=document.createElement('a');
     a.href=URL.createObjectURL(blob);
-    a.download=(APP.order.length===1?APP.order[0]:'project')+'.junoview';
+    a.download=(APP.order.length===1?APP.order[0]:'project')
+      +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
     toast(APP.order.length===1
@@ -8568,6 +8856,11 @@
         slideEl.className='slide slide-titlefree';
         slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
       } else slideEl.className='slide slide-blank';
+      if(s&&s.bg)
+        slideEl.style.setProperty('background',s.bg,'important');
+      if(s&&s.border) slideEl.style.boxShadow='inset 0 0 0 '
+        +((s.border.w||4)/SW_REF_H*Math.round(pg.mm[1]/25.4*96)).toFixed(2)
+        +'px '+(s.border.c||'#39a9c0');
       page.appendChild(slideEl);
       root.appendChild(page);            /* in the DOM before annots render */
       if(s) attachAnnots(slideEl,s);     /* view-style; fontPx reads 720px */
@@ -8826,7 +9119,11 @@
         /* only the slide on screen has a live layer; the rest resolve
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
-        return {bg:bg,items:pptxItems(ent.s,note,ink,lay)};
+        var its=pptxItems(ent.s,note,ink,lay);
+        if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
+          color:ent.s.border.c||'#39a9c0',
+          swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});
+        return {bg:(ent.s.bg||bg),items:its};
       }),
     });
     var a=document.createElement('a');
@@ -8848,6 +9145,71 @@
     return {blob:out.blob,slides:out.slides,cropped:note.cropped,
       skipped:note.skipped+out.skipped};
   }
+  /* ---- Background menu: THIS slide's colour and border. The whole
+     presentation's background stays under File, where it always was. */
+  (function(){
+    var wired=wireMenuToggle('bg-drop','bg-btn','bg-menu');
+    if(!wired) return;
+    var menu=wired.menu;
+    var BGS=[['#ffffff','White'],['#f6f2ea','Cream'],['#eef1f4','Light grey'],
+      ['#0b141d','Dark'],['#000000','Black']];
+    var BWS=[[0,'Off'],[2,'Thin'],[4,'Medium'],[9,'Thick']];
+    function apply(fn){
+      var s2=pres.slides[cur]; if(!s2) return;
+      fn(s2);markDirty();applyPageBg();applyZoom();renderSlide();
+      build();
+    }
+    function build(){
+      var s2=pres.slides[cur]||{};
+      menu.innerHTML='';
+      menuHead(menu,'This slide');
+      var r1=menuRow(menu,'bg-sw');
+      var auto=document.createElement('button');
+      auto.className='sh-opt bg-auto';auto.textContent='Auto';
+      auto.title='Match the presentation background (File menu)';
+      auto.setAttribute('aria-pressed',(!s2.bg).toString());
+      auto.addEventListener('click',function(e){e.stopPropagation();
+        apply(function(x){delete x.bg;});});
+      r1.appendChild(auto);
+      BGS.forEach(function(p){
+        var b=document.createElement('button');
+        b.className='sh-opt bg-chip';b.title=p[1];
+        b.style.background=p[0];
+        b.setAttribute('aria-pressed',(s2.bg===p[0]).toString());
+        b.addEventListener('click',function(e){e.stopPropagation();
+          apply(function(x){x.bg=p[0];});});
+        r1.appendChild(b);
+      });
+      menuHead(menu,'Border');
+      var r2=menuRow(menu,'bg-bw');
+      BWS.forEach(function(p){
+        var b=document.createElement('button');
+        b.className='sh-opt bg-w';b.textContent=p[1];
+        var on=p[0]===((s2.border&&s2.border.w)||0);
+        b.setAttribute('aria-pressed',on.toString());
+        b.addEventListener('click',function(e){e.stopPropagation();
+          apply(function(x){
+            if(!p[0]) delete x.border;
+            else x.border={w:p[0],c:(x.border&&x.border.c)||'#39a9c0'};
+          });});
+        r2.appendChild(b);
+      });
+      if(s2.border){
+        var r3=menuRow(menu,'bg-sw');
+        ['#39a9c0','#ff6b57','#f0a848','#46a892','#16202b','#ffffff']
+          .forEach(function(c){
+          var b=document.createElement('button');
+          b.className='sh-opt bg-chip';b.title='Border colour';
+          b.style.background=c;
+          b.setAttribute('aria-pressed',(s2.border.c===c).toString());
+          b.addEventListener('click',function(e){e.stopPropagation();
+            apply(function(x){x.border.c=c;});});
+          r3.appendChild(b);
+        });
+      }
+    }
+    wired.btn.addEventListener('click',function(){build();});
+  })();
   window.SemDeckPptx=exportDeckPptx;   /* test hook */
   menuAction('#mi-pptx',function(){exportDeckPptx();});
   /* page background swatches (File menu) */
@@ -8866,7 +9228,7 @@
       this.value='';
       if(!f) return;
       f.text().then(function(txt){
-        var obj=JSON.parse(txt);
+        var obj=parseDeckText(txt);
         var list=(obj&&Array.isArray(obj.presentations))
           ?obj.presentations
           :Array.isArray(obj)?obj
