@@ -57,7 +57,7 @@ def test_view_style_vars_are_honoured_in_dark_mode(out):
     assert "body:not(.light) .sectionhead h2{color:var(--hd-col,#e6edf3);}" \
         in out
     assert 'body:not(.light) .card[data-note="1"]{' \
-        'background:var(--md-bg,#101c28);' in out
+        'background:var(--md-bg,var(--chrome-3,#101c28));' in out
 
 
 def test_view_styles_its_own_notebook_with_override_buttons(out):

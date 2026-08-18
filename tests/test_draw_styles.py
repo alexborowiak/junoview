@@ -175,7 +175,7 @@ def test_the_ribbon_never_scrolls_wraps_or_clips(out):
     """
     # scoped to the EDIT ribbon: the main app bar keeps its own
     # overflow-x:auto and is not what was being complained about
-    ribbon = out.split(".edit-tools.ribbon{")[1].split("}")[0]
+    ribbon = out.split(".edit-tools.ribbon{display:flex")[1].split("}")[0]
     assert "flex-wrap:nowrap" in ribbon
     assert "overflow:hidden" in ribbon
     assert "overflow-x:auto" not in ribbon

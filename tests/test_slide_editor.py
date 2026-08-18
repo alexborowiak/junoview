@@ -187,7 +187,9 @@ def test_overflow_clipping_and_placeholder_chrome(out):
     assert "width:max-content" in out
     # the empty placeholder keeps its dashed box; the header is an overlay
     # (out of flow) so selecting a frame doesn't reflow the figure
-    assert ".deck.editing .an-cell.empty{background:#0e192699" in out
+    assert (".deck.editing .an-cell.empty{background:"
+            "color-mix(in srgb,var(--chrome-1,#0e1926) 60%,transparent)"
+            in out)
     assert ".deck.editing .an-cell.sel .an-cellhead" in out
     assert ".pane.filled .an-cellhead{position:absolute" in out
 

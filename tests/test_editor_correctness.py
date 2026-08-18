@@ -62,7 +62,7 @@ def test_dropdowns_are_not_clipped_by_the_ribbon(out):
     import re
 
     assert "overflow-x:clip;overflow-y:visible;}" in out
-    ribbon = out.split(".edit-tools.ribbon{")[1].split("}")[0]
+    ribbon = out.split(".edit-tools.ribbon{display:flex")[1].split("}")[0]
     # strip the comment that *explains* the old overflow:hidden before
     # asserting the declaration itself is gone
     ribbon = re.sub(r"/\*.*?\*/", "", ribbon, flags=re.S)
@@ -516,7 +516,9 @@ def test_the_line_menus_draw_the_option_instead_of_naming_it(out):
     assert "'Curved the other way'],['h','Elbow: across then down'" not in out
     # ...and every option says which one you are on
     assert "function syncLineMenus(a){" in out
-    assert '.sh-opt[aria-pressed="true"]{background:#39a9c033;' in out
+    assert ('.sh-opt[aria-pressed="true"]{'
+            'background:color-mix(in srgb,var(--accent) 20%,transparent);'
+            in out)
     # the open/close wiring is shared rather than copied
     assert "function wireMenuToggle(wrapId,btnId,menuId){" in out
     assert out.count("if(willOpen) floatMenu(btn,menu);") == 1

@@ -183,6 +183,22 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Colour schemes, and the app buttons the editor was hiding.** The
+  theme toggle and the support link live in the app bar — and editing
+  hides the app bar, so from inside a poster there was no way to reach
+  either. Both now also sit at the far end of the editor toolbar, along
+  with a new **palette button**: five colour schemes — *Classic cyan*,
+  *Dark colourful* (each ribbon group gets its own accent hue — amber
+  File, blue Slide, green View, pink Output, purple Insert), *High
+  contrast*, *Forest*, and *Forest with blue buttons*. Your choice is
+  remembered.
+
+  Under the hood every chrome accent and dark surface became a **token**
+  (`--accent`, `--chrome-0…4`), so a scheme is nothing but a
+  re-definition — and *content is deliberately not themed*: page
+  backgrounds, item colours, colour swatches and every export keep their
+  own literals, because a swatch that looked green but applied coral
+  would be a lying control.
 - **The Notebooks button is findable again, and honest.** It used to
   hide until the deck had at least one notebook cell — so on a fresh deck
   the "open the relevant notebooks" affordance simply did not exist and

@@ -2340,6 +2340,8 @@
   var themeBtn=$('#theme-btn');
   function applyTheme(light){
     document.body.classList.toggle('light',light);
+    var dt=document.getElementById('deck-theme');
+    if(dt) dt.innerHTML=light?'&#9789;':'&#9788;';
     if(themeBtn){
       themeBtn.innerHTML=light?'&#9789;':'&#9788;';
       themeBtn.setAttribute('data-tip',light
@@ -2355,6 +2357,72 @@
   if(themeBtn) themeBtn.addEventListener('click',function(){
     applyTheme(!document.body.classList.contains('light'));
   });
+  /* the editor's own copy of the toggle — the app bar is hidden there */
+  var deckTheme=$('#deck-theme');
+  if(deckTheme) deckTheme.addEventListener('click',function(){
+    applyTheme(!document.body.classList.contains('light'));
+  });
+  /* ---- colour SCHEMES: a body class re-defining the chrome tokens.
+     Chrome only — content and exports keep their own colours, or a
+     swatch would lie about what it applies (2026-08-18). ---- */
+  var SCHEMES=[
+    ['','Classic cyan',['#39a9c0','#0e1926']],
+    ['th-colorful','Dark colourful',['#f0a848','#5b8ff0','#3fbf8f',
+      '#e06a9a']],
+    ['th-contrast','High contrast',['#6fe3ff','#ffffff']],
+    ['th-forest','Forest',['#3fbf8f','#0d201a']],
+    ['th-forestblue','Forest, blue buttons',['#5b8ff0','#0d201a']]];
+  function applyScheme(id){
+    SCHEMES.forEach(function(sc){
+      if(sc[0]) document.body.classList.toggle(sc[0],sc[0]===id);});
+    try{localStorage.setItem('plotline-scheme',id);}catch(e){}
+  }
+  var schemePref='';
+  try{schemePref=localStorage.getItem('plotline-scheme')||'';}catch(e){}
+  if(schemePref) applyScheme(schemePref);
+  var schemeMenu=null;
+  function openSchemeMenu(btn){
+    if(schemeMenu){schemeMenu.remove();schemeMenu=null;return;}
+    var m=document.createElement('div');m.className='jv-scheme-menu';
+    var cur='';
+    SCHEMES.forEach(function(sc){
+      if(sc[0]&&document.body.classList.contains(sc[0])) cur=sc[0];});
+    SCHEMES.forEach(function(sc){
+      var o=document.createElement('button');o.className='jv-scheme-opt';
+      o.setAttribute('aria-pressed',(sc[0]===cur).toString());
+      var dots=document.createElement('span');dots.className='jv-scheme-dots';
+      sc[2].forEach(function(col){
+        var i2=document.createElement('i');i2.style.background=col;
+        dots.appendChild(i2);});
+      var t2=document.createElement('span');t2.textContent=sc[1];
+      o.appendChild(dots);o.appendChild(t2);
+      o.addEventListener('click',function(){
+        applyScheme(sc[0]);m.remove();schemeMenu=null;});
+      m.appendChild(o);
+    });
+    document.body.appendChild(m);
+    var r=btn.getBoundingClientRect();
+    m.style.top=(r.bottom+6)+'px';
+    m.style.left=Math.max(8,Math.min(innerWidth-m.offsetWidth-8,
+      r.right-m.offsetWidth))+'px';
+    schemeMenu=m;
+    setTimeout(function(){
+      document.addEventListener('click',function once(e){
+        if(!m.contains(e.target)){m.remove();schemeMenu=null;}
+        document.removeEventListener('click',once);
+      });
+    },0);
+  }
+  var deckScheme=$('#deck-scheme');
+  if(deckScheme) deckScheme.addEventListener('click',function(e){
+    e.stopPropagation();openSchemeMenu(deckScheme);});
+  /* support from inside the editor: same destination as the app-bar
+     heart, resolved from it so the URL lives in one place */
+  var dSup=$('#deck-support'),aSup=$('#support-btn');
+  if(dSup&&aSup&&aSup.href) dSup.href=aSup.href;
+  else if(dSup) dSup.hidden=true;
+  window.SemTheme={applyTheme:applyTheme,applyScheme:applyScheme,
+    schemes:SCHEMES};
 
   /* ---- builder panel width: draggable right edge, persisted ------- */
   var dcR=$('#dc-resize');

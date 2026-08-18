@@ -198,7 +198,7 @@ def test_tree_view_follows_dark_theme_and_unhide_all(out):
     arrangement, so people did not press it.
     """
     assert "body:not(.light) .tree-node{" in out
-    assert "color-mix(in srgb,var(--nc) 12%,#101c28)" in out
+    assert "color-mix(in srgb,var(--nc) 12%,var(--chrome-3,#101c28))" in out
     assert "body:not(.light) .tree-scroll{border-color" in out
     assert "'Unhide all'" in out and "toolBtn('Reset'" not in out
 

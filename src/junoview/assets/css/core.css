@@ -7,7 +7,16 @@
   --line:#d8e0e8;
   --chrome:#11202c; --chrome-2:#16273544; --chrome-line:#ffffff14;
   --chrome-ink:#cdd9e3; --chrome-ink-2:#7e93a4;
-  --cyan:#39a9c0; --cyan-deep:#1f7e93;
+  /* ---- the CHROME theme tokens. --accent drives every interactive
+     accent in the app and editor chrome; --chrome-N are the dark
+     surfaces. A colour scheme is nothing but a re-definition of these
+     (2026-08-18, user: "can there be different colour schemes ... dark
+     colourful, high contrast, greens, greens with blue buttons").
+     Content is deliberately NOT themed: page backgrounds, item colours
+     and exports keep their own literals, or a swatch would lie about
+     the colour it applies. */
+  --accent:#39a9c0; --accent-deep:#1f7e93; --accent-soft:#8fd8ea;
+  --cyan:var(--accent); --cyan-deep:var(--accent-deep);
   --amber:#cf9a4e; --amber-soft:#caa06a66;
   --sans:'IBM Plex Sans',system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
@@ -38,7 +47,7 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
   text-transform:uppercase;color:var(--cyan);margin:0 0 12px;display:flex;
   align-items:center;gap:8px;}
 .brand::before{content:"";width:7px;height:7px;border-radius:50%;
-  background:var(--cyan);box-shadow:0 0 0 3px #39a9c029;}
+  background:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);}
 .railtitle{font-size:18px;font-weight:600;line-height:1.25;margin:0;
   color:#eef4f8;letter-spacing:-.01em;}
 .railmeta{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink-2);
@@ -95,7 +104,7 @@ body.light .stylebar .toggle.primary{background:var(--cyan-deep);
 /* the panel floats at body level — a sticky/positioned ancestor would
    trap it behind the header (the File-info panel learned this already) */
 .stylepanel{position:fixed;z-index:210;width:302px;max-height:74vh;
-  overflow-y:auto;background:#16273a;border:1px solid #ffffff22;
+  overflow-y:auto;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   border-radius:9px;padding:11px 12px 13px;
   box-shadow:0 14px 44px #00000070;}
 .stylepanel[hidden]{display:none;}
@@ -152,7 +161,7 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 .rf-panel[hidden]{display:none;}
 /* the same panel, floated under the ribbon's File button */
 .rf-panel.rf-float{position:fixed;z-index:200;margin-top:0;width:372px;
-  background:#16273a;border-color:#ffffff22;
+  background:var(--chrome-2,#16273a);border-color:#ffffff22;
   box-shadow:0 12px 40px #00000066;}
 body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-row{display:flex;flex-direction:column;gap:1px;margin-bottom:8px;
@@ -173,12 +182,12 @@ body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-live{color:#7fd0b8;}
 .rf-old{color:var(--amber);}
 /* the commit hash IS a control, so it has to look like one */
-.rf-hashbtn{background:#39a9c018;border:1px solid #39a9c059;
+.rf-hashbtn{background:color-mix(in srgb,var(--accent) 9%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
   padding:4px 9px;cursor:pointer;border-radius:5px;
   text-align:left;font-family:var(--mono);font-size:10.5px;
   color:var(--cyan);display:inline-flex;align-items:center;gap:7px;
   align-self:flex-start;max-width:100%;}
-.rf-hashbtn:hover{background:#39a9c02e;border-color:var(--cyan);
+.rf-hashbtn:hover{background:color-mix(in srgb,var(--accent) 18%,transparent);border-color:var(--cyan);
   color:#eaf6fa;}
 .rf-caret{font-size:8px;transition:transform .13s;opacity:.85;}
 .rf-hashbtn.open .rf-caret{transform:rotate(180deg);}
@@ -219,7 +228,7 @@ body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
   text-decoration:none;color:var(--chrome-ink);font-weight:600;font-size:13.5px;
   letter-spacing:-.005em;transition:background .15s,color .15s;}
 .navsec:hover{background:#ffffff0c;}
-.navsec.active{background:#39a9c014;color:#eef4f8;}
+.navsec.active{background:color-mix(in srgb,var(--accent) 8%,transparent);color:#eef4f8;}
 /* a section row = a collapse chevron + the (clickable) section link */
 .navsec-row{display:flex;align-items:center;gap:1px;margin-top:6px;}
 .navsec-row .navsec{flex:1;margin-top:0;min-width:0;}
@@ -254,7 +263,7 @@ body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
   display:none;}
 .navsec-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .navsec-c{font-family:var(--mono);font-size:10px;color:var(--cyan);
-  background:#39a9c016;border-radius:20px;padding:1px 7px;min-width:18px;
+  background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:20px;padding:1px 7px;min-width:18px;
   text-align:center;}
 .navsec-c:empty{display:none;}
 .navitems{margin:2px 0 4px 4px;padding-left:8px;
@@ -299,7 +308,7 @@ body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
 .navitem.ckmain-data .dot,.nk.ckmain-data .dot{background:#4d90c0;}
 .navitem.ckmain-constant .dot,.nk.ckmain-constant .dot{background:#9a7cc0;}
 .navitem.ckmain-settings .dot,.nk.ckmain-settings .dot{background:#5b7589;}
-.navitem.ckmain-plotting .dot,.nk.ckmain-plotting .dot{background:#39a9c0;}
+.navitem.ckmain-plotting .dot,.nk.ckmain-plotting .dot{background:var(--accent);}
 .navitem.ckmain-print .dot,.nk.ckmain-print .dot{background:#cf9a4e;}
 .navitem.ckmain-comments .dot,.nk.ckmain-comments .dot{background:#5f7386;}
 /* light theme needs its own — a generic body.light .dot outranks these */
@@ -314,7 +323,7 @@ body.light .navitem.ckmain-constant .dot,body.light .nk.ckmain-constant .dot{
 body.light .navitem.ckmain-settings .dot,body.light .nk.ckmain-settings .dot{
   background:#5b7589;}
 body.light .navitem.ckmain-plotting .dot,body.light .nk.ckmain-plotting .dot{
-  background:#39a9c0;}
+  background:var(--accent);}
 body.light .navitem.ckmain-comments .dot,body.light .nk.ckmain-comments .dot{background:#5f7386;}
 body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
   background:#cf9a4e;}
@@ -342,7 +351,7 @@ body.light .navkey-div{background:var(--line);}
   text-transform:uppercase;color:var(--chrome-ink-2);padding:5px 0;
   cursor:pointer;transition:background .15s,color .15s;}
 .railtab:hover{color:var(--chrome-ink);}
-.railtab.active{background:#39a9c014;color:var(--cyan);}
+.railtab.active{background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--cyan);}
 body.light .railtabs{border-color:var(--line);}
 
 /* ---------- variables panel (the sidebar's other view) ---------- */
@@ -359,7 +368,7 @@ body.light .railtabs{border-color:var(--line);}
   font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--chrome-ink-2);padding:2px 7px;}
 .varord-btn:hover{color:var(--chrome-ink);}
-.varord-btn.active{background:#39a9c014;color:var(--cyan);}
+.varord-btn.active{background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--cyan);}
 /* group headings the by-type view inserts (same voice as .navsub) */
 .vargroup-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--chrome-ink-2);padding:10px 8px 3px;}
@@ -380,7 +389,7 @@ body.light .railtabs{border-color:var(--line);}
   padding:1px 5px;max-width:92px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
 .var-count{font-family:var(--mono);font-size:10px;color:var(--cyan);
-  background:#39a9c016;border-radius:20px;padding:1px 7px;min-width:18px;
+  background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:20px;padding:1px 7px;min-width:18px;
   text-align:center;flex:none;}
 .var-count:empty{display:none;}
 /* the unfolded sites list: defined / redefined / used, one card each */
@@ -393,7 +402,7 @@ body.light .railtabs{border-color:var(--line);}
 .vu-tag{flex:none;font-family:var(--mono);font-size:8.5px;
   letter-spacing:.08em;text-transform:uppercase;border-radius:4px;
   padding:1px 5px;color:var(--chrome-ink-2);background:#ffffff0a;}
-.vu-tag.vu-defined{color:var(--cyan);background:#39a9c016;}
+.vu-tag.vu-defined{color:var(--cyan);background:color-mix(in srgb,var(--accent) 9%,transparent);}
 .vu-tag.vu-redefined{color:var(--amber);background:#cf9a4e1a;}
 .vu-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
@@ -406,7 +415,7 @@ body.light .railtabs{border-color:var(--line);}
 .var-type.vg-functions{color:#46a892;}
 .var-type.vg-classes{color:#b07cc0;}
 .var-type.vg-data{color:#4d90c0;}
-.var-type.vg-plotting{color:#39a9c0;}
+.var-type.vg-plotting{color:var(--accent);}
 body.light .var-filter{background:#00000005;border-color:var(--line);
   color:var(--ink);}
 body.light .var-order{border-color:var(--line);}
@@ -438,7 +447,7 @@ body.light .vu-tag{background:#00000008;}
 .provnode rect{transition:filter .2s,stroke .2s;stroke:transparent;stroke-width:2;}
 .provnode:hover rect{filter:brightness(1.18);}
 .provnode.active rect{stroke:var(--cyan);filter:brightness(1.12)
-  drop-shadow(0 0 6px #39a9c077);}
+  drop-shadow(0 0 6px color-mix(in srgb,var(--accent) 47%,transparent));}
 .provnode:focus-visible rect{stroke:var(--cyan);outline:none;}
 
 /* ---------- document identity bar (filename + full path) ---------- */
@@ -645,7 +654,7 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .card.k-metric::before{background:#46a892;}
 .card.k-note::before{background:var(--amber);}
 .card.k-code::before{background:var(--paper-3);}
-.card.target-flash{border-color:var(--cyan);box-shadow:0 0 0 3px #39a9c033;}
+.card.target-flash{border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent);}
 
 /* a markdown note the Markdown filter has COLLAPSED: only the header shows;
    click the header to expand in place, click again to fold. The :not(.expanded)
@@ -731,7 +740,7 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
   text-transform:uppercase;padding:3px 8px;border-radius:4px;
   background:var(--paper-2);color:var(--ink-3);flex:none;}
-.k-figure .badge{background:#39a9c014;color:var(--cyan-deep);}
+.k-figure .badge{background:color-mix(in srgb,var(--accent) 8%,transparent);color:var(--cyan-deep);}
 .k-dataset .badge{background:#4d90c014;color:#2f6f9e;}
 .k-transform .badge{background:#5b758914;color:#41566a;}
 .k-metric .badge{background:#46a89214;color:#2c8c7d;}
@@ -746,7 +755,7 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .ckmain-data .badge{background:#4d90c018;color:#2f6f9e;}
 .ckmain-constant .badge{background:#9a7cc01f;color:#6d4f95;}
 .ckmain-settings .badge{background:#5b758918;color:#41566a;}
-.ckmain-plotting .badge{background:#39a9c018;color:var(--cyan-deep);}
+.ckmain-plotting .badge{background:color-mix(in srgb,var(--accent) 9%,transparent);color:var(--cyan-deep);}
 .ckmain-print .badge{background:#cf9a4e1f;color:#8a6326;}
 .ckmain-comments .badge{background:#5f73861f;color:#4c5b66;}
 /* dark theme (default) needs its own — a generic dark .badge otherwise
@@ -756,7 +765,7 @@ body:not(.light) .ckmain-function .badge{background:#46a8922b;color:#7fd0bd;}
 body:not(.light) .ckmain-data .badge{background:#4d90c02b;color:#8fbfe0;}
 body:not(.light) .ckmain-constant .badge{background:#9a7cc02b;color:#c3a9e0;}
 body:not(.light) .ckmain-settings .badge{background:#5b75892b;color:#a7bccd;}
-body:not(.light) .ckmain-plotting .badge{background:#39a9c02b;color:#5fc3d8;}
+body:not(.light) .ckmain-plotting .badge{background:color-mix(in srgb,var(--accent) 17%,transparent);color:#5fc3d8;}
 body:not(.light) .ckmain-print .badge{background:#cf9a4e2b;color:#dfb277;}
 body:not(.light) .ckmain-comments .badge{background:#5f738633;color:#93a5b1;}
 .cardtitle{font-size:16px;font-weight:600;margin:0;letter-spacing:-.01em;
@@ -1045,3 +1054,49 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
   *{transition:none!important;scroll-behavior:auto!important;}
   .card{opacity:1;transform:none;}
 }
+
+
+/* ---- colour schemes: token re-definitions, one class each ------------
+   th-colorful scopes a DIFFERENT accent to each ribbon group — custom
+   properties inherit, so every button in a group picks up its group's
+   hue with no per-button rules. */
+body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
+  --accent-soft:#c8f2ff;}
+body.th-contrast .dbtn,body.th-contrast .toggle{
+  border-color:#ffffff82;color:#fff;}
+body.th-contrast .rbn-lab,body.th-contrast .abgrp-lab{color:#d5e6f2;}
+body.th-contrast .edit-tools.ribbon{border-bottom-color:#ffffff59;}
+body.th-contrast .rbn-grp{border-right-color:#ffffff59;}
+body.th-forest{--accent:#3fbf8f;--accent-deep:#1e8f66;
+  --accent-soft:#a9e9cf;
+  --chrome-0:#0a1712;--chrome-1:#0d201a;--chrome-2:#15302a;
+  --chrome-3:#0f231d;--chrome-4:#11271f;}
+body.th-forestblue{--accent:#5b8ff0;--accent-deep:#3667c9;
+  --accent-soft:#b9cff9;
+  --chrome-0:#0a1712;--chrome-1:#0d201a;--chrome-2:#15302a;
+  --chrome-3:#0f231d;--chrome-4:#11271f;}
+body.th-colorful .rbn-file{--accent:#f0a848;--accent-deep:#c07f22;}
+body.th-colorful .rbn-slide{--accent:#5b8ff0;--accent-deep:#3667c9;}
+body.th-colorful .rbn-view{--accent:#3fbf8f;--accent-deep:#1e8f66;}
+body.th-colorful .rbn-out{--accent:#e06a9a;--accent-deep:#b34472;}
+body.th-colorful .rbn-nbs,body.th-colorful .rbn-insert{
+  --accent:#a07be0;--accent-deep:#7a52c0;}
+body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;
+  --accent-deep:#c07f22;}
+body.th-colorful .selpane{--accent:#3fbf8f;--accent-deep:#1e8f66;}
+/* the scheme picker itself */
+.jv-scheme-menu{position:fixed;z-index:300;background:var(--chrome-2,#16273a);
+  border:1px solid #ffffff26;border-radius:9px;padding:6px;
+  box-shadow:0 14px 38px #0009;display:flex;flex-direction:column;gap:2px;}
+.jv-scheme-menu[hidden]{display:none;}
+.jv-scheme-opt{display:flex;align-items:center;gap:8px;background:none;
+  border:1px solid transparent;border-radius:7px;padding:6px 10px;
+  cursor:pointer;color:#c9d6e2;font-family:var(--sans);font-size:12px;}
+.jv-scheme-opt:hover{background:color-mix(in srgb,var(--accent) 13%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 40%,
+  transparent);color:#fff;}
+.jv-scheme-opt[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--accent) 20%,transparent);
+  border-color:var(--accent);color:#fff;}
+.jv-scheme-dots{display:flex;gap:3px;flex:none;}
+.jv-scheme-dots i{width:10px;height:10px;border-radius:50%;display:block;}
