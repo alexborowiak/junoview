@@ -8654,9 +8654,14 @@ through Ko-fi. Thank you.</p>
              (2026-08-18, user). At the very END of the bar: nothing sits
              beyond them, so they can never move a control. -->
         <span class="jv-appx">
+          <!-- the theme-toggle removal (2026-08-19) also ate this
+               button's OPENING TAG, which stranded its attributes as
+               visible page text and left the editor with no palette
+               button at all — the "aria-haspopup= in the corner" bug -->
+          <button class="dbtn rbn-ico" id="deck-scheme"
             aria-haspopup="true"
-            title="Colour scheme — cyan, colourful, high contrast,
- forest, forest &amp; blue">&#9673;</button>
+            title="Theme — dark, light, forest, colourful, high
+ contrast">&#9673;</button>
           <a class="dbtn rbn-ico" id="deck-support" target="_blank"
             rel="noopener" title="Support Junoview on Ko-fi"
             >&#9825;</a>

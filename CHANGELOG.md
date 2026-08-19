@@ -183,6 +183,11 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Fixed: raw `aria-haspopup=` text in the editor's top-right corner.**
+  Removing the dark/light toggle also ate the *opening tag* of the
+  editor's palette button, which stranded its attributes as visible page
+  text and left the editor without a theme picker at all. Restored, with
+  the picker verified opening all seven themes.
 - **The last unthemed surfaces joined the themes.** The top bar, the
   presentations rail, the tab row and the sidebar nav each sat on their
   own hardcoded navy (`#0a141d`, `#0d1a26`, `--chrome`) that no theme
