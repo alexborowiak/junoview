@@ -679,7 +679,12 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
    the slide canvas takes the document area. The document chrome (tabs,
    filters) is hidden while editing — it acts on the hidden documents —
    and comes back for cell-picking / on Done. */
-.deck.editing{left:var(--presrail-w);top:0;}
+/* FULL width: the editor used to start right of the presentations rail,
+   so the rail's 176px came out of the ribbon on every screen — part of
+   why a laptop's ribbon ran out of room (2026-08-19, user: "the ribbon
+   needs to go all the way across the top"). The way back to the
+   notebooks now lives at the top of the slide column instead. */
+.deck.editing{left:0;top:0;}
 body.slide-editing .apptop{display:none;}
 /* while editing, the panel is just chrome + film strip (the template
    catalog lives in the ribbon's Layouts dropdown) — keep it slim so the
@@ -1305,6 +1310,14 @@ select#fmt-font[hidden]{display:none;}
    otherwise draw an empty bar, and the layout catalogue lives in the
    Layouts dropdown. */
 .deck.editing .dc-head,.deck.editing .dc-controls{display:none;}
+/* the way BACK, above the thumbnails: with the editor full-width the
+   presentations rail (and its Notebooks button) is covered, and the way
+   out has to be visible or it does not exist (2026-08-19, user: "the
+   notebooks button is really important — it needs to sit above the slide
+   thumbnail part") */
+.dc-back{display:none;}
+.deck.editing .dc-back{display:flex;align-items:center;gap:7px;
+  margin:8px 8px 2px;padding:7px 10px;}
 .deck.editing.poster-page .deck-create{display:none!important;}
 /* ...and putting it away is still one click, for a deck too: Slides
    toggles the strip rather than opening a pane */

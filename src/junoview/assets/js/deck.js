@@ -7987,6 +7987,10 @@
   if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
     setUIMode('create');});
+  (function(){
+    var b=$('#dc-back');
+    if(b) b.addEventListener('click',function(){closeDeck();});
+  })();
   $('#deck-prev').addEventListener('click',function(){backStep();});
   $('#deck-next').addEventListener('click',function(){advance();});
   /* click the letterbox AROUND the slide to clear the selection (clicks on

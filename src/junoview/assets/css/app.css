@@ -1563,3 +1563,11 @@ body.light .vars-menubtn{color:var(--ink-2);}
    varpanel must never render inside the rail again */
 .rail .varpanel{display:none;}
 #varspane-body .varpanel{display:block;}
+
+/* the house rule strikes again: .pr-btn sets display:flex, which beats
+   the UA's [hidden] rule — so the four original "+ New ..." buttons kept
+   rendering under the single "+ New…" for a full day, while the probe
+   that "verified" them hidden was reading the attribute, not the layout
+   (2026-08-19, user: "what happened to removing all the +new buttons").
+   Every base rule that sets display needs its own [hidden] override. */
+.pr-btn[hidden]{display:none!important;}

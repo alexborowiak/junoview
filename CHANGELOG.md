@@ -183,6 +183,19 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The editor is full-width, and Notebooks sits above the slides.** The
+  editor used to start right of the presentations rail, so the rail's
+  176px came out of the ribbon on every screen — part of why a laptop's
+  toolbar ran out of room. It now spans the whole window (161px more
+  ribbon at 1400px), and the way back — **↩ Notebooks** — sits at the top
+  of the slide-thumbnail column, where the covered rail's button used to
+  be.
+- **Fixed: the four old "+ New …" buttons never actually left.** The
+  single "+ New…" menu shipped a day ago, but `.pr-btn` sets
+  `display:flex`, which beats the UA's `[hidden]` rule — the house trap
+  this codebase documents in its own CSS — so the originals kept
+  rendering underneath it. One `[hidden]` override fixes it; the rail now
+  really is one button, with the four choices in its menu.
 - **Fixed: raw `aria-haspopup=` text in the editor's top-right corner.**
   Removing the dark/light toggle also ate the *opening tag* of the
   editor's palette button, which stranded its attributes as visible page

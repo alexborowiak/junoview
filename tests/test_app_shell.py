@@ -373,3 +373,15 @@ def test_icon_tokens_cannot_fail_silently():
             used |= set(_re.findall(r'data-ic="([^"]+)"',
                                     f.read_text(encoding="utf-8")))
     assert not used - set(_ICON_PATHS), sorted(used - set(_ICON_PATHS))
+
+
+def test_hidden_rail_buttons_actually_hide(out):
+    """.pr-btn sets display:flex, which beats the UA [hidden] rule -- so
+    the four original "+ New ..." buttons kept rendering under the single
+    "+ New..." for a full day. The probe that "verified" them hidden read
+    the attribute, not the layout; this pin is the house rule the file
+    itself documents: every base rule that sets display needs its own
+    [hidden] override (2026-08-19).
+    """
+    assert ".pr-btn[hidden]{display:none!important;}" in out
+    assert '<button class="pr-btn" hidden id="pr-new"' in out
