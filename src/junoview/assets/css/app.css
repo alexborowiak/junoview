@@ -8,7 +8,7 @@ body.presrail-min{--presrail-w:46px;}
    element (see measureChrome), so a bar that needs a second line pushes
    the page down instead of hiding controls off the right-hand edge */
 .apptop{position:fixed;top:0;left:0;right:0;min-height:var(--chrome-h);
-  z-index:90;display:flex;flex-direction:column;background:#0a141d;
+  z-index:90;display:flex;flex-direction:column;background:var(--chrome-0,#0a141d);
   border-bottom:1px solid #ffffff14;}
 /* top-aligned: every main button sits on one first row; the small
    "… types ▾" pickers hang underneath their parent filter. It NEVER
@@ -257,7 +257,7 @@ body.light .tabsrow .menubtn{border-color:var(--line);}
 body.light .tabsrow .menubtn span,body.light .tabsrow .menubtn span::before,
 body.light .tabsrow .menubtn span::after{background:var(--ink-2);}
 .tabsrow{display:flex;align-items:stretch;height:var(--tabsrow-h);
-  background:#0d1a26;}
+  background:var(--chrome-1,#0d1a26);}
 /* tabs line up with the DOCUMENT, not with the outline beneath them —
    the strip starts where the sidebar ends (and slides back when the
    sidebar is toggled off) */
@@ -295,7 +295,7 @@ body.light .tab-ver{color:var(--cyan-deep);}
    Exactly ONE item is active at a time: "Notebooks" (no builder) or a
    presentation (builder open) — so the way out is always visible. */
 .presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
-  z-index:95;background:#0a141d;border-right:1px solid #ffffff1f;
+  z-index:95;background:var(--chrome-0,#0a141d);border-right:1px solid #ffffff1f;
   display:flex;flex-direction:column;padding:8px 6px;gap:2px;}
 /* the Junoview wordmark now lives at the top of the left rail */
 .presrail-brand{font-family:var(--mono);font-size:13px;letter-spacing:.16em;
@@ -397,7 +397,7 @@ body.prrail-auto .presrail-show{display:none;}
    (z-index:100), or a hidden rail has no way back while editing */
 .presrail-show{position:fixed;left:0;bottom:20px;z-index:130;width:22px;
   height:46px;border:1px solid #ffffff22;border-left:none;
-  border-radius:0 8px 8px 0;background:#0a141d;color:#7fb6c6;
+  border-radius:0 8px 8px 0;background:var(--chrome-0,#0a141d);color:#7fb6c6;
   cursor:pointer;display:none;font-size:12px;padding:0;}
 body.presrail-hidden .presrail-show{display:block;}
 .presrail-show:hover{color:#fff;border-color:var(--cyan);}

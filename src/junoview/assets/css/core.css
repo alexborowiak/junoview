@@ -1079,14 +1079,16 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
    button faces, so the whole chrome moves together — not just the page.
    Content (page backgrounds, item colours, swatches, exports) is still
    never themed. */
-body.th-forest{--accent:#41c493;--accent-deep:#1e8f66;
+body.th-forest{--chrome:#0e241c;--chrome-2:#16352b44;
+  --accent:#41c493;--accent-deep:#1e8f66;
   --accent-soft:#a9e9cf;
   --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
   --chrome-3:#0e241c;--chrome-4:#10281f;
   --btn-bg:color-mix(in srgb,#41c493 10%,#ffffff06);
   --btn-border:color-mix(in srgb,#41c493 42%,#ffffff22);
   --btn-ink:#d7f2e6;}
-body.th-forestblue{--accent:#6b9bff;--accent-deep:#3d6fd9;
+body.th-forestblue{--chrome:#0e241c;--chrome-2:#16352b44;
+  --accent:#6b9bff;--accent-deep:#3d6fd9;
   --accent-soft:#c3d6ff;
   --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
   --chrome-3:#0e241c;--chrome-4:#10281f;

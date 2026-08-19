@@ -183,6 +183,12 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The last unthemed surfaces joined the themes.** The top bar, the
+  presentations rail, the tab row and the sidebar nav each sat on their
+  own hardcoded navy (`#0a141d`, `#0d1a26`, `--chrome`) that no theme
+  touched, so Forest left islands of the old blue behind. All four are
+  token-driven now — Dark keeps the exact original colours, Forest turns
+  the whole frame green.
 - **Variables live with the sections hamburger.** The x² button sits
   right beside the sidebar toggle — the two indexes of a document, its
   sections and its names, side by side — instead of up in the View group.
