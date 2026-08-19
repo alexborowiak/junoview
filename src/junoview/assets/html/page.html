@@ -141,6 +141,9 @@
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
     <!-- Raw over Tree in one column, Present beside them: two short
          buttons stacked cost the bar half the width of three in a line -->
+    <button class="toggle" id="vars-btn" aria-pressed="false"
+      title="Every variable in this notebook — filter by type, and click
+ a name or use-site to jump to it">Variables</button>
     <span class="vw-stack">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
@@ -167,6 +170,9 @@
     <span class="btn-grp">
       <button class="toggle" id="theme-btn"
         title="Switch between dark and light theme"><i data-ic="theme"></i></button>
+      <button class="toggle" id="scheme-btn"
+        title="Colour scheme — cyan, colourful, high contrast, forest,
+ forest &amp; blue"><i data-ic="palette"></i></button>
       <a class="toggle appbar-link" id="support-btn" href="{kofi}"
         target="_blank" rel="noopener"
         title="Support Junoview on Ko-fi — funds an online, hosted version
@@ -505,6 +511,12 @@
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
 <input type="file" id="fileinput" accept=".ipynb" multiple hidden>
+<aside class="selpane varspane" id="varspane" hidden>
+  <div class="selpane-h"><span>Variables</span>
+    <button class="dbtn dc-icon" id="varspane-close"
+      title="Close">&#10005;</button></div>
+  <div class="selpane-list" id="varspane-body"></div>
+</aside>
 <input type="file" id="deckfile" accept=".junoview,.json,.html" hidden>
 {deck_shell}
 <script type="application/json" id="app-data">{app_data}</script>

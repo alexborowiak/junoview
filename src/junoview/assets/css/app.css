@@ -124,7 +124,17 @@ body.presrail-min{--presrail-w:46px;}
    placed. The ribbon compacts instead of wrapping now, so it is back
    among the labelled sections (2026-08-03). When the bar overflows into
    its scroll fallback the auto margin collapses to 0 on its own. */
-#ab-app{margin-left:auto;padding-right:8px;}
+/* packed LEFT like every other group: pinned to the right edge, the
+   whole of a monitor's spare width became one void between View and App,
+   and the three icon squares marooned across it read as lost (2026-08-18,
+   user, on a monitor: "spacing up here is a little weird ... the app
+   buttons are way too small"). Same rule the editor ribbon adopted:
+   leftover space lives at the END, where it reads as room. */
+#ab-app{margin-left:14px;padding-right:8px;}
+/* monitor-sized: 28px squares beside worded buttons read as crumbs */
+#ab-app .toggle{width:34px;min-width:34px;height:34px;}
+#ab-app .bic{width:17px;height:17px;}
+#ab-file{margin-left:10px;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
@@ -1524,3 +1534,17 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .pr-del:hover{background:#ff6b5726;color:#ff9d8c;}
 .deck-status.clickable{cursor:pointer;}
 .deck-status.clickable:hover{outline:1px solid var(--accent);}
+
+/* the document view's Variables pane: same shell as the editor panes,
+   fixed to the window because the document scrolls under it */
+.selpane.varspane{position:fixed;top:170px;right:14px;bottom:auto;
+  height:min(62vh,560px);width:280px;z-index:220;}
+.varspane .varpanel{padding:8px 10px;}
+.var-chips{display:flex;flex-wrap:wrap;gap:4px;padding:6px 0 2px;}
+.var-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;
+  border:1px solid #ffffff2e;background:none;color:#7e93a4;
+  border-radius:9px;padding:2px 8px;cursor:pointer;}
+.var-chip.on{border-color:color-mix(in srgb,var(--accent) 60%,transparent);
+  color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,
+  transparent);}
+.varrow.vg-out{display:none;}

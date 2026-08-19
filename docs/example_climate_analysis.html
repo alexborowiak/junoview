@@ -1239,7 +1239,17 @@ body.presrail-min{--presrail-w:46px;}
    placed. The ribbon compacts instead of wrapping now, so it is back
    among the labelled sections (2026-08-03). When the bar overflows into
    its scroll fallback the auto margin collapses to 0 on its own. */
-#ab-app{margin-left:auto;padding-right:8px;}
+/* packed LEFT like every other group: pinned to the right edge, the
+   whole of a monitor's spare width became one void between View and App,
+   and the three icon squares marooned across it read as lost (2026-08-18,
+   user, on a monitor: "spacing up here is a little weird ... the app
+   buttons are way too small"). Same rule the editor ribbon adopted:
+   leftover space lives at the END, where it reads as room. */
+#ab-app{margin-left:14px;padding-right:8px;}
+/* monitor-sized: 28px squares beside worded buttons read as crumbs */
+#ab-app .toggle{width:34px;min-width:34px;height:34px;}
+#ab-app .bic{width:17px;height:17px;}
+#ab-file{margin-left:10px;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */
@@ -2639,6 +2649,20 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .pr-del:hover{background:#ff6b5726;color:#ff9d8c;}
 .deck-status.clickable{cursor:pointer;}
 .deck-status.clickable:hover{outline:1px solid var(--accent);}
+
+/* the document view's Variables pane: same shell as the editor panes,
+   fixed to the window because the document scrolls under it */
+.selpane.varspane{position:fixed;top:170px;right:14px;bottom:auto;
+  height:min(62vh,560px);width:280px;z-index:220;}
+.varspane .varpanel{padding:8px 10px;}
+.var-chips{display:flex;flex-wrap:wrap;gap:4px;padding:6px 0 2px;}
+.var-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.04em;
+  border:1px solid #ffffff2e;background:none;color:#7e93a4;
+  border-radius:9px;padding:2px 8px;cursor:pointer;}
+.var-chip.on{border-color:color-mix(in srgb,var(--accent) 60%,transparent);
+  color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,
+  transparent);}
+.varrow.vg-out{display:none;}
 </style>
 <style>
 .deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0,#0b141d);color:#dce6ee;
@@ -4750,6 +4774,9 @@ window.MathJax = {
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
     <!-- Raw over Tree in one column, Present beside them: two short
          buttons stacked cost the bar half the width of three in a line -->
+    <button class="toggle" id="vars-btn" aria-pressed="false"
+      title="Every variable in this notebook — filter by type, and click
+ a name or use-site to jump to it">Variables</button>
     <span class="vw-stack">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
@@ -4776,6 +4803,9 @@ window.MathJax = {
     <span class="btn-grp">
       <button class="toggle" id="theme-btn"
         title="Switch between dark and light theme"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg></button>
+      <button class="toggle" id="scheme-btn"
+        title="Colour scheme — cyan, colourful, high contrast, forest,
+ forest &amp; blue"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg></button>
       <a class="toggle appbar-link" id="support-btn" href="https://ko-fi.com/plotline"
         target="_blank" rel="noopener"
         title="Support Junoview on Ko-fi — funds an online, hosted version
@@ -8373,6 +8403,12 @@ through Ko-fi. Thank you.</p>
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
 <input type="file" id="fileinput" accept=".ipynb" multiple hidden>
+<aside class="selpane varspane" id="varspane" hidden>
+  <div class="selpane-h"><span>Variables</span>
+    <button class="dbtn dc-icon" id="varspane-close"
+      title="Close">&#10005;</button></div>
+  <div class="selpane-list" id="varspane-body"></div>
+</aside>
 <input type="file" id="deckfile" accept=".junoview,.json,.html" hidden>
 
 <div class="deck" id="deck" hidden>
@@ -11627,6 +11663,47 @@ through Ko-fi. Thank you.</p>
   var deckScheme=$('#deck-scheme');
   if(deckScheme) deckScheme.addEventListener('click',function(e){
     e.stopPropagation();openSchemeMenu(deckScheme);});
+  var abScheme=$('#scheme-btn');
+  if(abScheme) abScheme.addEventListener('click',function(e){
+    e.stopPropagation();openSchemeMenu(abScheme);});
+  /* ---- the Variables PANE: the sidebar tab, detached. The panel node
+     MOVES (never copies), so the filter, the ordering and every
+     jump-to-cell link keep their wiring; it moves home when the pane
+     closes or the tab changes (2026-08-18, user: "should be another
+     thing on rhs that can be opened"). ---- */
+  (function(){
+    var btn=$('#vars-btn'),pane=$('#varspane'),body=$('#varspane-body');
+    var cl=$('#varspane-close');
+    if(!btn||!pane||!body) return;
+    var home=null;
+    function currentPanel(){
+      var sh=document.querySelector('.shell:not([hidden]) .varpanel');
+      return sh||document.querySelector('.varpanel');
+    }
+    function giveBack(){
+      var vp=body.querySelector('.varpanel');
+      if(vp&&home){home.parent.insertBefore(vp,home.next);vp.hidden=true;}
+      home=null;
+    }
+    function set(open){
+      if(open){
+        giveBack();
+        var vp=currentPanel();
+        if(!vp){toast?toast('No notebook open'):0;return;}
+        home={parent:vp.parentNode,next:vp.nextSibling};
+        body.appendChild(vp);
+        vp.hidden=false;
+      } else giveBack();
+      pane.hidden=!open;
+      btn.setAttribute('aria-pressed',open.toString());
+    }
+    btn.addEventListener('click',function(){set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    /* a tab switch swaps which notebook's variables you are looking at */
+    document.addEventListener('sem:shell',function(){
+      if(!pane.hidden) set(true);
+    });
+  })();
   /* support from inside the editor: same destination as the app-bar
      heart, resolved from it so the URL lives in one place */
   var dSup=$('#deck-support'),aSup=$('#support-btn');
@@ -13316,7 +13393,8 @@ through Ko-fi. Thank you.</p>
           var n=h.nextElementSibling,vis=false;
           while(n&&!n.classList.contains('vargroup-h')){
             if(n.classList.contains('varrow')
-               &&!n.classList.contains('vf-out'))vis=true;
+               &&!n.classList.contains('vf-out')
+               &&!n.classList.contains('vg-out'))vis=true;
             n=n.nextElementSibling;
           }
           h.classList.toggle('vf-out',!vis);
@@ -13359,6 +13437,38 @@ through Ko-fi. Thank you.</p>
       });
       var vfilterEl=$('.var-filter',varpanel);
       if(vfilterEl)vfilterEl.addEventListener('input',applyVarFilter);
+      /* TYPE chips: hide whole kinds — "remove imports" is the first
+         thing anyone wants from a variables index (2026-08-18, user).
+         Built from the groups actually present, so nothing is offered
+         that does nothing. */
+      var hideG={};
+      var present={};
+      varRows().forEach(function(r){present[r.dataset.group]=1;});
+      var kinds=VGROUPS.filter(function(g){return present[g];});
+      if(kinds.length>1&&vfilterEl){
+        var chipRow=document.createElement('div');
+        chipRow.className='var-chips';
+        kinds.forEach(function(g){
+          var ch2=document.createElement('button');
+          ch2.className='var-chip on';ch2.textContent=g;
+          ch2.title='Click to hide '+g;
+          ch2.addEventListener('click',function(){
+            hideG[g]=!hideG[g];
+            ch2.classList.toggle('on',!hideG[g]);
+            ch2.title=(hideG[g]?'Click to show ':'Click to hide ')+g;
+            applyVarFilter();
+          });
+          chipRow.appendChild(ch2);
+        });
+        vfilterEl.parentNode.insertBefore(chipRow,
+          vfilterEl.nextSibling);
+      }
+      var applyBase=applyVarFilter;
+      applyVarFilter=function(){
+        varRows().forEach(function(r){
+          r.classList.toggle('vg-out',!!hideG[r.dataset.group]);});
+        applyBase();
+      };
     }
     /* ---- per-card + per-section behaviours (code toggle, eyes, collapse,
        fig-fold, section collapse/hide incl. the nav chevrons): shared with
@@ -16741,7 +16851,9 @@ window.JunoPptx = (function () {
       h.addEventListener('pointerdown',function(ev){
         if(ev.target.closest('button')) return;
         ev.preventDefault();
-        var hostR=pane.offsetParent.getBoundingClientRect();
+        var hostR=pane.offsetParent
+          ?pane.offsetParent.getBoundingClientRect()
+          :{left:0,top:0};   /* a fixed pane drags in viewport space */
         var r=pane.getBoundingClientRect();
         var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
         function mv(e2){
@@ -16767,7 +16879,7 @@ window.JunoPptx = (function () {
         w:pane.offsetWidth,h:pane.offsetHeight});
     }).observe(pane);
   }
-  ['selpane','animpane','verpane','preflight','nbspane']
+  ['selpane','animpane','verpane','preflight','nbspane','varspane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');

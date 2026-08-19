@@ -1514,7 +1514,9 @@
       h.addEventListener('pointerdown',function(ev){
         if(ev.target.closest('button')) return;
         ev.preventDefault();
-        var hostR=pane.offsetParent.getBoundingClientRect();
+        var hostR=pane.offsetParent
+          ?pane.offsetParent.getBoundingClientRect()
+          :{left:0,top:0};   /* a fixed pane drags in viewport space */
         var r=pane.getBoundingClientRect();
         var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
         function mv(e2){
@@ -1540,7 +1542,7 @@
         w:pane.offsetWidth,h:pane.offsetHeight});
     }).observe(pane);
   }
-  ['selpane','animpane','verpane','preflight','nbspane']
+  ['selpane','animpane','verpane','preflight','nbspane','varspane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');

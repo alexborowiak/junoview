@@ -183,6 +183,23 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The app bar behaves on a monitor.** The App group was pinned to the
+  right edge, so a wide screen's whole spare width became one void between
+  View and it, and its 28px icon squares read as lost crumbs. It packs
+  left now (same rule as the editor ribbon — leftover space lives at the
+  end), its buttons grew to 34px, the File group got its missing margin,
+  and the **colour-scheme picker joined it** — so schemes are choosable
+  from the document view too, not just the editor.
+- **Variables detach into a pane.** The sidebar's Variables tab can pop
+  out to a right-hand pane (View → Variables) — the same draggable,
+  resizable, remembered shell as the editor panes. The panel node *moves*
+  rather than copies, so the search filter, ordering, and every
+  jump-to-cell link keep working; switching notebook tabs swaps the pane's
+  contents. And it grew **per-type filter chips** — hide *imports*,
+  *plotting*, *values*, any kind — because "remove imports" is the first
+  thing anyone wants from a variables index. (Clicking a variable's name
+  or any of its use-sites already jumped to that cell in the notebook —
+  from the pane too.)
 - **The save readout can never sit on other controls, and last
   session's file no longer hijacks your saves.** The readout renames
   itself between toolbar fits ("" → "autosaved to …"), and a wider

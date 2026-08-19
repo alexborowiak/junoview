@@ -156,3 +156,17 @@ def test_page_embeds_the_panel_once_per_shell():
     page = render_page([doc])
     assert page.count('class="railtabs"') == 1
     assert page.count('class="varpanel"') == 1
+
+
+def test_variables_pane_chips_and_detach(out):
+    """The sidebar Variables tab detaches into a right-hand pane (the
+    panel node MOVES, so filter/order/jump links keep their wiring), and
+    grew per-type chips -- "remove imports" is the first thing anyone
+    wants from a variables index (2026-08-18). Measured: 50 rows, hiding
+    imports 50 -> 46 visible, name-click jumped with the pane open, drag
+    stored to jv-panes.
+    """
+    assert 'id="varspane"' in out and 'id="vars-btn"' in out
+    assert "var-chips" in out and "vg-out" in out
+    assert "document.addEventListener('sem:shell',function(){" in out
+    assert "'varspane']" in out or "'varspane'" in out

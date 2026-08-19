@@ -80,6 +80,11 @@ _ICON_PATHS = {
            '<path d="M8 8.4v5.7"/>',
     "exit": '<path d="M4 4l8 8"/><path d="M12 4l-8 8"/>',
     # app
+    # a palette: the colour-scheme picker
+    "palette": '<circle cx="8" cy="8" r="5.8"/>'
+              '<circle cx="6" cy="6" r="1" fill="currentColor"/>'
+              '<circle cx="10" cy="6" r="1" fill="currentColor"/>'
+              '<circle cx="10.5" cy="9.5" r="1" fill="currentColor"/>',
     "theme": '<circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/>'
              '<path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/>',
     "heart": '<path d="M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 '

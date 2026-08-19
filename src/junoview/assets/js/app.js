@@ -2416,6 +2416,47 @@
   var deckScheme=$('#deck-scheme');
   if(deckScheme) deckScheme.addEventListener('click',function(e){
     e.stopPropagation();openSchemeMenu(deckScheme);});
+  var abScheme=$('#scheme-btn');
+  if(abScheme) abScheme.addEventListener('click',function(e){
+    e.stopPropagation();openSchemeMenu(abScheme);});
+  /* ---- the Variables PANE: the sidebar tab, detached. The panel node
+     MOVES (never copies), so the filter, the ordering and every
+     jump-to-cell link keep their wiring; it moves home when the pane
+     closes or the tab changes (2026-08-18, user: "should be another
+     thing on rhs that can be opened"). ---- */
+  (function(){
+    var btn=$('#vars-btn'),pane=$('#varspane'),body=$('#varspane-body');
+    var cl=$('#varspane-close');
+    if(!btn||!pane||!body) return;
+    var home=null;
+    function currentPanel(){
+      var sh=document.querySelector('.shell:not([hidden]) .varpanel');
+      return sh||document.querySelector('.varpanel');
+    }
+    function giveBack(){
+      var vp=body.querySelector('.varpanel');
+      if(vp&&home){home.parent.insertBefore(vp,home.next);vp.hidden=true;}
+      home=null;
+    }
+    function set(open){
+      if(open){
+        giveBack();
+        var vp=currentPanel();
+        if(!vp){toast?toast('No notebook open'):0;return;}
+        home={parent:vp.parentNode,next:vp.nextSibling};
+        body.appendChild(vp);
+        vp.hidden=false;
+      } else giveBack();
+      pane.hidden=!open;
+      btn.setAttribute('aria-pressed',open.toString());
+    }
+    btn.addEventListener('click',function(){set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    /* a tab switch swaps which notebook's variables you are looking at */
+    document.addEventListener('sem:shell',function(){
+      if(!pane.hidden) set(true);
+    });
+  })();
   /* support from inside the editor: same destination as the app-bar
      heart, resolved from it so the URL lives in one place */
   var dSup=$('#deck-support'),aSup=$('#support-btn');
@@ -4105,7 +4146,8 @@
           var n=h.nextElementSibling,vis=false;
           while(n&&!n.classList.contains('vargroup-h')){
             if(n.classList.contains('varrow')
-               &&!n.classList.contains('vf-out'))vis=true;
+               &&!n.classList.contains('vf-out')
+               &&!n.classList.contains('vg-out'))vis=true;
             n=n.nextElementSibling;
           }
           h.classList.toggle('vf-out',!vis);
@@ -4148,6 +4190,38 @@
       });
       var vfilterEl=$('.var-filter',varpanel);
       if(vfilterEl)vfilterEl.addEventListener('input',applyVarFilter);
+      /* TYPE chips: hide whole kinds — "remove imports" is the first
+         thing anyone wants from a variables index (2026-08-18, user).
+         Built from the groups actually present, so nothing is offered
+         that does nothing. */
+      var hideG={};
+      var present={};
+      varRows().forEach(function(r){present[r.dataset.group]=1;});
+      var kinds=VGROUPS.filter(function(g){return present[g];});
+      if(kinds.length>1&&vfilterEl){
+        var chipRow=document.createElement('div');
+        chipRow.className='var-chips';
+        kinds.forEach(function(g){
+          var ch2=document.createElement('button');
+          ch2.className='var-chip on';ch2.textContent=g;
+          ch2.title='Click to hide '+g;
+          ch2.addEventListener('click',function(){
+            hideG[g]=!hideG[g];
+            ch2.classList.toggle('on',!hideG[g]);
+            ch2.title=(hideG[g]?'Click to show ':'Click to hide ')+g;
+            applyVarFilter();
+          });
+          chipRow.appendChild(ch2);
+        });
+        vfilterEl.parentNode.insertBefore(chipRow,
+          vfilterEl.nextSibling);
+      }
+      var applyBase=applyVarFilter;
+      applyVarFilter=function(){
+        varRows().forEach(function(r){
+          r.classList.toggle('vg-out',!!hideG[r.dataset.group]);});
+        applyBase();
+      };
     }
     /* ---- per-card + per-section behaviours (code toggle, eyes, collapse,
        fig-fold, section collapse/hide incl. the nav chevrons): shared with

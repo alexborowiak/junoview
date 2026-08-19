@@ -319,7 +319,13 @@ def test_app_buttons_sit_at_the_right_end_of_the_ribbon(out):
     # the group is the ribbon's last section, after View, before the tabs
     assert out.index('id="doc-present"') < out.index('id="ab-app"')
     assert out.index('id="ab-app"') < out.index('class="tabsrow"')
-    assert "#ab-app{margin-left:auto;padding-right:8px;}" in out
+    # packed LEFT since 2026-08-18: pinned right, a monitor's whole spare
+    # width became one void between View and App and the icon squares read
+    # as lost crumbs -- same rule as the editor ribbon, leftover space
+    # lives at the end
+    assert "#ab-app{margin-left:14px;padding-right:8px;}" in out
+    assert "#ab-app .toggle{width:34px;min-width:34px;height:34px;}" in out
+    assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
     # nothing still styles it for the tab row
     assert ".tabsrow #ab-app" not in out
     # all three buttons came with it
