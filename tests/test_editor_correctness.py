@@ -133,14 +133,12 @@ def test_a_deck_keeps_its_strip_and_a_poster_does_not(out):
     with the panel gone and Versions opening the pane instead.
     """
     assert 'id="vw-versions"' in out
-    # the panel goes for a poster, and only for a poster...
-    assert ".deck.editing.poster-page .deck-create{display:none!important;}" in out
-    assert ".deck.editing .deck-create{display:none!important;}" not in out
-    # ...or when you put it away yourself
-    assert ".deck.editing.strip-off .deck-create{display:none!important;}" in out
-    # what is left of the panel while editing is ONLY the strip: the head
-    # has moved into the ribbon and would otherwise draw an empty bar
-    assert ".deck.editing .dc-head,.deck.editing .dc-controls{display:none;}" in out
+    # 2026-08-19: the COLUMN survives everywhere -- it holds Notebooks,
+    # File and Save now. A poster hides only the film (deck-only), and
+    # putting the strip away hides only the thumbnails.
+    assert ".deck.editing.poster-page .deck-create{display:none" not in out
+    assert ".deck.editing.strip-off .dc-film{display:none!important;}" in out
+    assert ".deck.editing .dc-controls{display:none;}" in out
     # the button toggles the docked strip for a deck, the pane for a poster
     assert "if(pageOf().poster){showVerpane(!!$('#verpane').hidden);return;}" in out
     assert "deckEl.classList.toggle('strip-off');" in out
@@ -417,7 +415,10 @@ def test_no_pane_covers_the_toolbar(out):
     of 98px. In side mode the toolbar is a column on the right and the
     pane already steps aside horizontally, so the top is left alone.
     """
-    assert ".deck.editing:not(.rbn-side) .selpane{top:106px;}" in out
+    # the ribbon moved OUT of the stage wrap (2026-08-19), so the panes'
+    # own 8px is already clear of it -- the 106px clearance dated from
+    # both sharing one box
+    assert ".deck.editing:not(.rbn-side) .selpane{top:8px;}" in out
     assert ".deck.rbn-side .selpane{right:var(--rbn-side-w);}" in out
 
 
@@ -555,53 +556,24 @@ def test_exported_line_weight_is_a_real_physical_size(out):
     assert "swPct:swOf(a)/SW_REF_H*100" in out
 
 
-def test_the_document_actions_are_in_the_ribbon_not_a_bar_above_it(out):
-    """Back sat alone at the far right of a bar of its own, divorced from
-    File and Save -- so beside an armed drawing tool it read as the way
-    out of THAT (2026-08-10). Moving it in with them fixed the grouping
-    but left the real problem: that bar is a second row of chrome sitting
-    on top of the editing tools, and a second row of chrome is a second
-    row taken off the page ("I hate having the file, save, saved, button
-    above the customisation buttons... I think I have said this before").
-
-    So while editing there is no bar at all. File, Save, undo/redo and the
-    save readout are the ribbon's first group. Presenting still has a bar,
-    because there is no ribbon then.
-
-    Leaving does NOT ride along. It did from 2026-08-10 to 2026-08-17, and
-    it was the widest control in the ribbon -- a group's worth of width for
-    a journey the presentations rail's Notebooks button already offers, on
-    screen the whole time you are editing (user: "that is not needed,
-    people just click on the back to notebooks"). It stays in the top bar,
-    which presenting shows and editing hides, because presenting is full
-    screen with no rail: there the way out has to be visible or it does not
-    exist.
-
-    Measured after: File went from 286px wide to 147px, and clicking the
-    rail's Notebooks button while editing leaves cleanly (deck hidden,
-    `editing` and `body.slide-editing` both off).
+def test_the_document_actions_are_in_the_left_column(out):
+    """They were in a bar above the ribbon (rejected: stolen height),
+    then borrowed into the ribbon's File group (2026-08-10). Since
+    2026-08-19 they LIVE in the left column -- Notebooks first, then
+    File/Save/undo/redo and the save readout, then the thumbnails -- and
+    the ribbon spans the whole window with editing tools only (user:
+    "the notebooks button needs to sit above the slide thumbnail part.
+    Same with the file save etc").
     """
-    assert 'id="rbn-file-row"' in out
-    assert 'class="rbn-grp rbn-fixed rbn-file"' in out
-    assert "var top=$('#rbn-file-row');" in out
-    # leaving is NOT moved into the ribbon any more...
-    assert "fileMoved.push({el:xb,parent:xb.parentNode,next:xb.nextSibling});" \
-        not in out
-    # ...but the button itself survives, for presenting
-    assert 'id="deck-exit"' in out
-    assert "$('#deck-exit').addEventListener('click',function(){" in out
+    assert 'id="dc-back"' in out
+    assert "b.addEventListener('click',function(){closeDeck();});" in out
+    # the head markup order IS the column order
+    head = out.split('class="dc-head"')[1].split('dc-controls')[0]
+    for cid in ('id="dc-file"', 'id="dc-save"', 'id="dc-undo"',
+                'id="deck-status"'):
+        assert cid in head, cid
     # the bar is gone while editing, present while presenting
     assert "if(dt) dt.hidden=(mode==='edit');" in out
-    # it says where it goes, and the word changes with the mode
-    assert "Close the editor</button>" in out
-    assert "'&#8617; Stop presenting'" in out
-    assert "&#8617; Back</button>" not in out
-    # the panel's 30px buttons must not burst the ribbon's 26px grid rows
-    assert ".rbn-file .dbtn{padding:3px 8px;font-size:10.5px;height:26px;" in out
-    # the group's label is the fixed word "File", never the document name:
-    # a label sizes its group, so a long name would make the ribbon's
-    # width depend on what you called the file
-    assert '<span class="rbn-lab">File</span>' in out
 
 
 def test_the_toolbar_hint_says_nothing_in_the_resting_state(out):
@@ -811,38 +783,14 @@ def test_undo_and_redo_are_one_cell(out):
     assert ".dc-head .rbn-cell{height:30px;gap:6px;}" in out
 
 
-def test_the_save_readout_cannot_move_a_control(out):
-    """It renames itself as you work -- "" -> "unsaved" -> "unsaved —
-    saving…" -> "autosaved · 14:32" -- and it used to sit inside the File
-    group, so its width swung the group between 147px and ~195px and every
-    group after it moved along. Sizing it to its longest string fixed the
-    position and cost ~110px of permanent width for a readout that is
-    blank most of the time.
-
-    It lives at the far END of the bar instead. Nothing is to its right, so
-    its width costs nothing, moves nothing, and needs no fixed-width hack:
-    it can say the whole string.
-
-    The STAGE it gives way at matters as much as the place. Left to survive
-    into the rung ladder it pushed the ladder itself -- going from "" to
-    "unsaved" the moment you drew something bought a rung, and that rung
-    compacted Insert by 56px. A readout that changes the size of the
-    buttons is the same bug as one that changes their position. So it goes
-    with the hint, before any control tightens, on the same grounds: it is
-    text, not a control (2026-08-17).
+def test_the_save_readout_lives_under_save(out):
+    """It sat at the ribbon's far end while the File group was borrowed
+    into the bar. With the document actions living in the left column
+    (2026-08-19) it sits under Save on its own full-width line, where its
+    renames cannot move any ribbon control by construction.
     """
-    assert "var st=$('#deck-status'),bar=$('#edit-tools');" in out
-    assert "if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);" in out
-    assert ".edit-tools.ribbon>.deck-status{order:10;margin-left:auto;" in out
-    # its own rung, AFTER the density ladder: the readout is informative
-    # (where your work is) where the hint is decorative, so the rungs get
-    # to save it -- but it still goes before any control clips
-    assert (".deck.erc-nostatus .edit-tools.ribbon>.deck-status"
-            "{display:none;}" in out)
-    assert "cl.add('erc-nostatus');" in out
-    # the old in-group hacks are gone with it
-    assert ".rbn-file .deck-status:empty{visibility:hidden;}" not in out
-    assert "width:calc(17ch + 20px)" not in out
+    assert ".deck.editing .dc-head .deck-status{width:100%;" in out
+    assert "var st=$('#deck-status'),bar=$('#edit-tools');" not in out
 
 
 def test_a_two_row_cell_is_counted_as_two(out):

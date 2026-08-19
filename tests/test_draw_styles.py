@@ -259,50 +259,34 @@ def test_wordless_glyph_buttons_became_worded_menu_rows(out):
     assert "if(b) b.click();" in out
 
 
-def test_document_actions_live_above_the_editing_tools(out):
-    """File, Save, undo/redo and the save readout are about the DOCUMENT:
-    they never change with the selection and are touched a few times a
-    session, so they sit in the top bar and the ribbon below carries only
-    editing tools.
+def test_document_actions_live_in_the_left_column(out):
+    """2026-08-19 (user): "the notebooks button needs to sit above the
+    slide thumbnail part. Same with the file save etc. The ribbon needs
+    to go all the way across the top."
 
-    Present is NOT one of them -- it is a way of viewing the page, so it
-    belongs in the View group (2026-08-07, user: "put the present with the
-    view"; an earlier reading moved it to the top bar, which was wrong).
+    So: the ribbon is a direct child of .deck (full window width, like
+    the doc view's app bar), and the document actions -- File, Save,
+    undo/redo, the save readout -- live permanently in the left column:
+    Notebooks, then the head, then the thumbnails. The borrow-and-restore
+    machinery (fileToRibbon/fileToPanel) is gone with them, and the whole
+    class of moved-node bugs it carried.
+
+    Measured: ribbon at x=0 spanning the window; left column top-to-
+    bottom dc-back(106) dc-file(147) dc-save(147) dc-undo(183)
+    deck-status(219) film-list(256); File menu and Save verified working
+    from the column; posters keep the column with the film hidden.
     """
-    assert 'id="deck-topslot"' in out
-    assert "top.appendChild(el);" in out
-    # they move up for BOTH kinds now: the panel they used to sit in is
-    # closed by default while editing, so leaving them there would leave
-    # a deck with no Save button on screen (2026-08-07)
-    assert "if(!pageOf().poster) return;" not in out
-    # ...and nothing in that row may wrap, or it stands taller than its
-    # neighbours and the row stops looking inline
-    assert "white-space:nowrap;display:inline-flex;" in out
-    # Present is in the ribbon, not the top bar. It now sits in Output
-    # alongside Print check (2026-08-07) rather than in View, so it comes
-    # AFTER the View group's label. Anchored on the label markup: a bare
-    # ">View<" also matches prose elsewhere in the page.
-    view_lab = out.index('<span class="rbn-lab">View</span>')
-    out_lab = out.index('<span class="rbn-lab">Output</span>')
-    assert view_lab < out.index('id="dc-play"') < out_lab
-    assert out.index('id="vw-check"') < out.index('id="dc-play"')
-    # The save readout still sits beside Save rather than stranded past
-    # undo/redo, but markup order does it now: File and Save are one
-    # stacked cell in column one, so appending the readout last drops it
-    # into column two's second row, level with Save. The old re-insert
-    # tested `savegrp.parentNode === top`, which the stack makes false
-    # forever -- it would have sat there doing nothing (2026-08-17).
-    assert "top.insertBefore(st,grp.nextSibling);" not in out
-    stack = out.split('<span class="rbn-stack">')[1].split("</span>\n        </span>")[0]
-    assert 'id="dc-file"' in stack and 'class="dc-savegrp"' in stack
-    assert out.index('id="dc-save"') < out.index('id="dc-undo"') \
-        < out.index('id="deck-status"')
-    # the top bar must survive edit mode, or it would hide the only Save
-    # button in the app; see test_the_top_bar_always_earns_its_row
-    assert "function syncTopBar(){" in out
-    # the panel's own 30px height must not follow the nodes into the bar
-    assert ".dc-head .dbtn,.dc-head .dc-menuwrap .dbtn{height:30px;" in out
-    assert ".dc-head .dbtn,.dc-menuwrap .dbtn{height:30px;" not in out
+    assert "function fileToRibbon" not in out
+    assert "function fileToPanel" not in out
+    assert 'id="rbn-file-row"' not in out
+    # the ribbon precedes .deck-main in the markup (full-width row of the
+    # deck's flex column)
+    assert out.index('id="edit-tools"') < out.index('class="deck-main"')
+    # the head shows while editing; only the builder controls hide
+    assert ".deck.editing .dc-controls{display:none;}" in out
+    assert ".deck.editing .dc-head{flex-wrap:wrap;" in out
+    # Notebooks leads the column
+    assert 'id="dc-back"' in out
 
 
 def test_the_top_bar_always_earns_its_row(out):
@@ -326,7 +310,10 @@ def test_the_top_bar_always_earns_its_row(out):
     assert out.count("syncTopBar();") == 2
     # a page-size change can move where the File controls belong: a poster
     # hides the panel they live in, and they must not vanish with it
-    assert "fileToPanel();fileToRibbon();syncTopBar();" in out
+    # (the borrow/restore pair died with the 2026-08-19 layout; the
+    # page-size path now only re-syncs the bar. The FUNCTION is what must
+    # be gone -- a comment naming the deceased is allowed.)
+    assert "function fileToRibbon" not in out
 
 
 def test_the_bar_has_a_constant_half_and_a_changing_half(out):
@@ -353,7 +340,9 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     then deselecting moves File, Slide and View by exactly 0px, and
     changes their widths by exactly 0px.
     """
-    assert ".rbn-file{order:1;}" in out
+    # File left the bar for the left column (2026-08-19); Slide now
+    # leads the constant half
+    assert 'class="rbn-grp rbn-fixed rbn-file"' not in out
     assert ".rbn-slide{order:2;}" in out
     assert ".rbn-view{order:3;}" in out
     assert ".rbn-out{order:4;}" in out
@@ -362,7 +351,7 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     assert ".et-fmt .rbn-grp{order:7;flex:none;}" in out
     # the constant three are tagged, and the tag is what exempts them from
     # every density rung
-    for grp in ("rbn-file", "rbn-slide", "rbn-view"):
+    for grp in ("rbn-slide", "rbn-view"):
         assert 'class="rbn-grp rbn-fixed %s"' % grp in out
     assert 'class="rbn-grp rbn-standby rbn-out"' in out
     assert 'class="rbn-grp rbn-standby rbn-nbs"' in out

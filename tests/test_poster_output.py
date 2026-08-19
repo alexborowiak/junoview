@@ -112,12 +112,11 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     mechanism is unchanged.
     """
     assert 'id="deck-topslot"' in out and 'id="deck-topright"' in out
-    assert "function fileToRibbon" in out and "function fileToPanel" in out
-    assert "if(editing) fileToRibbon(); else fileToPanel();" in out
-    # the panel disappears entirely for POSTERS, which are one page and
-    # need no slides. A deck keeps its strip -- see
-    # test_a_deck_keeps_its_strip_and_a_poster_does_not (2026-08-17)
-    assert ".deck.editing.poster-page .deck-create{display:none!important;}" in out
+    # the borrow machinery is gone (2026-08-19): the document actions
+    # live in the left column, for posters too -- only the deck-only
+    # film hides there
+    assert "function fileToRibbon" not in out
+    assert ".deck.poster-page .dc-film{display:none!important;}" in out
     assert 'id="fmt-txcol-btn"' in out and 'id="fmt-fillcol-btn"' in out
     assert 'id="fmt-txcol-menu"' in out and 'id="fmt-fillcol-menu"' in out
     assert "show('#fmt-fillcol-btn',showBg);" in out

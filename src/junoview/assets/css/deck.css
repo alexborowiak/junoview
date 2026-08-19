@@ -97,7 +97,10 @@ body.deck-open{overflow:hidden;}
    too (2026-08-17 audit). In SIDE mode the toolbar is a column on the
    right and the pane already steps aside for it horizontally, so there is
    nothing above to clear. */
-.deck.editing:not(.rbn-side) .selpane{top:106px;}
+/* the ribbon sits ABOVE the stage wrap now, so the panes' own 8px is
+   already clear of it (the 106px clearance dated from the ribbon living
+   inside the same box) */
+.deck.editing:not(.rbn-side) .selpane{top:8px;}
 .selpane-h{display:flex;align-items:center;justify-content:space-between;
   padding:8px 8px 7px 12px;font-family:var(--mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
@@ -968,6 +971,20 @@ body.slide-editing .apptop{display:none;}
    regression. */
 .edit-tools.fmt-open .rbn-insert,
 .edit-tools.fmt-open .rbn-standby{display:none;}
+/* ...but Output is NOT standby any more: Present must survive a
+   selection (2026-08-19, user: "clicking on something should never hide
+   the previous options — Present should always be there") */
+.edit-tools.fmt-open .rbn-out{display:flex;}
+/* the seam between ALWAYS-THERE and BECAUSE-YOU-SELECTED, marked with a
+   double rule so the two regions read as regions (2026-08-19, user) */
+.rbn-nbs,.et-fmt>.rbn-grp:first-of-type{
+  border-left:4px double #ffffff38;margin-left:2px;}
+/* Present is accented but must not read as PRESSED: outline, not fill
+   (2026-08-19, user: "the present button is always highlighted") */
+#dc-play.primary{background:color-mix(in srgb,var(--accent) 14%,
+  transparent);color:var(--accent);box-shadow:none;
+  border-color:var(--accent);font-weight:600;}
+#dc-play.primary:hover{background:var(--accent);color:#04222b;}
 /* Slide used to step aside as well, on a narrow window with something
    selected. Measured cost of that: selecting a text box took View 168px
    to the left. It was the single biggest jump in the bar and it fired on
@@ -1309,7 +1326,13 @@ select#fmt-font[hidden]{display:none;}
    Only the strip: the panel's head has moved into the ribbon and would
    otherwise draw an empty bar, and the layout catalogue lives in the
    Layouts dropdown. */
-.deck.editing .dc-head,.deck.editing .dc-controls{display:none;}
+/* while editing the head STAYS: File, Save, undo/redo and the save
+   readout live here, under Notebooks, above the thumbnails (2026-08-19,
+   user). Only the builder-specific controls row hides. */
+.deck.editing .dc-controls{display:none;}
+.deck.editing .dc-head{flex-wrap:wrap;gap:6px;padding:8px 10px;}
+.deck.editing .dc-head .deck-status{width:100%;height:auto;
+  padding:2px 4px;background:none;font-size:9.5px;}
 /* the way BACK, above the thumbnails: with the editor full-width the
    presentations rail (and its Notebooks button) is covered, and the way
    out has to be visible or it does not exist (2026-08-19, user: "the
@@ -1318,10 +1341,14 @@ select#fmt-font[hidden]{display:none;}
 .dc-back{display:none;}
 .deck.editing .dc-back{display:flex;align-items:center;gap:7px;
   margin:8px 8px 2px;padding:7px 10px;}
-.deck.editing.poster-page .deck-create{display:none!important;}
+/* a POSTER keeps the column too now — it is where Notebooks, File and
+   Save live; only the slide film is deck-only (hidden for posters by the
+   .poster-page .dc-film rule) */
 /* ...and putting it away is still one click, for a deck too: Slides
    toggles the strip rather than opening a pane */
-.deck.editing.strip-off .deck-create{display:none!important;}
+/* putting the strip away hides the THUMBNAILS, not the column — the
+   way back and the document actions must survive the toggle */
+.deck.editing.strip-off .dc-film{display:none!important;}
 /* ...and a poster's other pages live in a floating pane instead, the same
    shell the Objects list uses, so the two read as siblings (2026-08-10). */
 .verpane .selpane-list{display:flex;flex-direction:column;gap:6px;}

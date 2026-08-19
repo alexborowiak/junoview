@@ -2842,7 +2842,10 @@ body.deck-open{overflow:hidden;}
    too (2026-08-17 audit). In SIDE mode the toolbar is a column on the
    right and the pane already steps aside for it horizontally, so there is
    nothing above to clear. */
-.deck.editing:not(.rbn-side) .selpane{top:106px;}
+/* the ribbon sits ABOVE the stage wrap now, so the panes' own 8px is
+   already clear of it (the 106px clearance dated from the ribbon living
+   inside the same box) */
+.deck.editing:not(.rbn-side) .selpane{top:8px;}
 .selpane-h{display:flex;align-items:center;justify-content:space-between;
   padding:8px 8px 7px 12px;font-family:var(--mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
@@ -3713,6 +3716,20 @@ body.slide-editing .apptop{display:none;}
    regression. */
 .edit-tools.fmt-open .rbn-insert,
 .edit-tools.fmt-open .rbn-standby{display:none;}
+/* ...but Output is NOT standby any more: Present must survive a
+   selection (2026-08-19, user: "clicking on something should never hide
+   the previous options — Present should always be there") */
+.edit-tools.fmt-open .rbn-out{display:flex;}
+/* the seam between ALWAYS-THERE and BECAUSE-YOU-SELECTED, marked with a
+   double rule so the two regions read as regions (2026-08-19, user) */
+.rbn-nbs,.et-fmt>.rbn-grp:first-of-type{
+  border-left:4px double #ffffff38;margin-left:2px;}
+/* Present is accented but must not read as PRESSED: outline, not fill
+   (2026-08-19, user: "the present button is always highlighted") */
+#dc-play.primary{background:color-mix(in srgb,var(--accent) 14%,
+  transparent);color:var(--accent);box-shadow:none;
+  border-color:var(--accent);font-weight:600;}
+#dc-play.primary:hover{background:var(--accent);color:#04222b;}
 /* Slide used to step aside as well, on a narrow window with something
    selected. Measured cost of that: selecting a text box took View 168px
    to the left. It was the single biggest jump in the bar and it fired on
@@ -4054,7 +4071,13 @@ select#fmt-font[hidden]{display:none;}
    Only the strip: the panel's head has moved into the ribbon and would
    otherwise draw an empty bar, and the layout catalogue lives in the
    Layouts dropdown. */
-.deck.editing .dc-head,.deck.editing .dc-controls{display:none;}
+/* while editing the head STAYS: File, Save, undo/redo and the save
+   readout live here, under Notebooks, above the thumbnails (2026-08-19,
+   user). Only the builder-specific controls row hides. */
+.deck.editing .dc-controls{display:none;}
+.deck.editing .dc-head{flex-wrap:wrap;gap:6px;padding:8px 10px;}
+.deck.editing .dc-head .deck-status{width:100%;height:auto;
+  padding:2px 4px;background:none;font-size:9.5px;}
 /* the way BACK, above the thumbnails: with the editor full-width the
    presentations rail (and its Notebooks button) is covered, and the way
    out has to be visible or it does not exist (2026-08-19, user: "the
@@ -4063,10 +4086,14 @@ select#fmt-font[hidden]{display:none;}
 .dc-back{display:none;}
 .deck.editing .dc-back{display:flex;align-items:center;gap:7px;
   margin:8px 8px 2px;padding:7px 10px;}
-.deck.editing.poster-page .deck-create{display:none!important;}
+/* a POSTER keeps the column too now — it is where Notebooks, File and
+   Save live; only the slide film is deck-only (hidden for posters by the
+   .poster-page .dc-film rule) */
 /* ...and putting it away is still one click, for a deck too: Slides
    toggles the strip rather than opening a pane */
-.deck.editing.strip-off .deck-create{display:none!important;}
+/* putting the strip away hides the THUMBNAILS, not the column — the
+   way back and the document actions must survive the toggle */
+.deck.editing.strip-off .dc-film{display:none!important;}
 /* ...and a poster's other pages live in a floating pane instead, the same
    shell the Objects list uses, so the two read as siblings (2026-08-10). */
 .verpane .selpane-list{display:flex;flex-direction:column;gap:6px;}
@@ -8546,132 +8573,12 @@ through Ko-fi. Thank you.</p>
          the things you are actually clicking while you lay a page out -->
     <span class="deck-topright" id="deck-topright"></span>
   </div>
-  <div class="deck-main">
-    <aside class="deck-create" id="deck-create" hidden>
-      <div class="dc-resize" id="dc-resize"
-        title="Drag to resize the builder panel"></div>
-      <button class="dbtn dc-back" id="dc-back"
-        title="Back to the notebooks. Nothing is closed or lost."
-        >&#8617; Notebooks</button>
-      <div class="dc-head">
-        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
-             stacks the small controls beside Paste (2026-08-17, user: "the
-             save could go below the file"). Stacking them halves the
-             group's width, and they are the two halves of the same
-             errand. The wrapper stays a plain row inside the builder
-             panel's header, which is a one-line bar. -->
-        <span class="rbn-stack">
-        <div class="dc-menuwrap">
-          <button class="dbtn" id="dc-file" aria-haspopup="true"
-            aria-expanded="false">File &#9662;</button>
-          <div class="dc-menu" id="dc-menu" hidden>
-            <button class="dc-mi" id="mi-new">New presentation</button>
-            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
-            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
-            <button class="dc-mi" id="mi-crop"
-              title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
-            <div class="dc-mi dc-pagebg" id="mi-pagebg"
-              title="The page's own background — pick white for a poster
- that goes to a print shop">Page background
-              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
-              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
-              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
-              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
-              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
-            </div>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
-            <button class="dc-mi" id="mi-autosave" hidden></button>
-            <button class="dc-mi" id="mi-pdf"
-              title="Save as PDF at the page's TRUE size — an A0 poster
- exports as a real 841&#215;1189mm page, ready for the print shop">Export
- PDF / print&#8230;</button>
-            <button class="dc-mi" id="mi-pptx"
-              title="Save as a PowerPoint .pptx. Text stays editable and
- figures come across as pictures; a placed cell showing code or a table
- cannot convert — use PDF for those">Export PowerPoint
- (.pptx)&#8230;</button>
-            <button class="dc-mi" id="mi-html"
-              title="A single .html file anyone can open — no Junoview
- needed. Arrow keys page through it; Ctrl+P prints at page size">Export
- standalone HTML</button>
-            <button class="dc-mi" id="mi-dl">Download a copy
-              (.junoview)</button>
-            <button class="dc-mi" id="mi-load">Open a .junoview
-              file&#8230;</button>
-            <button class="dc-mi" id="mi-discard">Discard changes</button>
-            <button class="dc-mi" id="mi-del">Delete presentation</button>
-          </div>
-        </div>
-        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
-             two competing save buttons and nobody could tell what the
-             second one did (2026-08-07, user: "even I am confused"). It is
-             now a split button: press Save to save, press the chevron to
-             choose where. The destination lives in the menu, which is
-             where a destination belongs. -->
-        <span class="dc-savegrp">
-          <button class="dbtn" id="dc-save">Save</button>
-          <span class="dc-menuwrap">
-            <button class="dbtn dc-target" id="dc-target"
-              aria-haspopup="true" aria-expanded="false"
-              aria-label="Choose where this is saved"
-              title="Choose where this is saved">&#9662;</button>
-            <div class="dc-menu" id="target-menu" hidden>
-              <div class="dc-mhead" id="tg-head">save to</div>
-            <button class="dc-mi" id="tg-project" hidden>This project</button>
-            <button class="dc-mi" id="tg-browser">This browser</button>
-            <button class="dc-mi" id="tg-file">A file on your
-              computer&#8230;</button>
-            <div class="dc-msep"></div>
-              <button class="dc-mi" id="tg-pick" hidden>Choose a different
-                file&#8230;</button>
-            </div>
-          </span>
-        </span>
-        </span>
-        <!-- ONE cell, like the zoom stepper: undo and redo are the same
-             decision in two directions and must never end up on different
-             lines. In the side rail's wrapping flow they did exactly that
-             — undo closed one line and redo opened the next, alone and
-             stretched the full width of the rail (2026-08-16). -->
-        <span class="rbn-cell">
-          <button class="dbtn dc-icon" id="dc-undo" disabled
-            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
-          <button class="dbtn dc-icon" id="dc-redo" disabled
-            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
-        </span>
-        <span class="dc-spring"></span>
-        <span class="deck-status" id="deck-status"></span>
-      </div>
-      <div class="dc-block dc-controls">
-        <div class="dc-presname" id="pres-current" hidden></div>
-        <input id="pres-name" type="text" placeholder="presentation name"
-          spellcheck="false" autocomplete="off" hidden>
-        <button class="dbtn" id="dc-edit"
-          title="Swap to the slide editor — add text, arrows and boxes">
-          &#9998; Swap to edit view</button>
-        <div class="lay-picker" id="layout-row"
-          aria-label="Slide layouts"></div>
-        <div class="title-editor" id="title-editor" hidden>
-          <input id="ts-title" type="text" placeholder="Slide title"
-            spellcheck="false" autocomplete="off">
-          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
-            spellcheck="false" autocomplete="off">
-        </div>
-      </div>
-      <div class="dc-block dc-film">
-        <div class="film-list" id="film-list"></div>
-        <button class="dbtn addslide" id="film-add">+ Add slide</button>
-      </div>
-    </aside>
-    <div class="deck-stagewrap" id="deck-stagewrap">
-      <div class="edit-tools ribbon" id="edit-tools" hidden>
+  <!-- The ribbon spans the WHOLE window, like the document view's app
+       bar — it used to live inside the stage column, so the slide strip
+       and rail came out of its width on every screen (2026-08-19, user:
+       "the ribbon needs to go all the way across the top ... then this
+       gives more space to the ribbon and all the options"). -->
+  <div class="edit-tools ribbon" id="edit-tools" hidden>
         <!-- the app buttons the editor was hiding: the theme toggle and
              support live in the app bar, and editing hides the app bar —
              so from inside a poster there was no way to reach either
@@ -8704,9 +8611,13 @@ through Ko-fi. Thank you.</p>
                happened to call the file. Present is DOWN here too — it is
                a way of viewing the page, so it belongs with the other
                view controls (2026-08-07, user). -->
-          <span class="rbn-grp rbn-fixed rbn-file">
-            <span class="rbn-row" id="rbn-file-row"></span>
-            <span class="rbn-lab">File</span>
+          <!-- no File group: File / Save / undo / redo / the save readout
+               live in the LEFT COLUMN under the Notebooks button,
+               above the slide thumbnails — with the whole set
+               together, the ribbon holds only editing tools
+               (2026-08-19, user: "the notebooks button needs to
+               sit above the slide thumbnail part. Same with the
+               file save etc"). -->
           </span>
           <!-- rbn-nbs so it can be ORDERED: it stands down for a
                selection, so it belongs in the ribbon's changing region,
@@ -9234,6 +9145,132 @@ through Ko-fi. Thank you.</p>
         </span>
         <span class="et-hint" id="et-hint"></span>
       </div>
+  <div class="deck-main">
+    <aside class="deck-create" id="deck-create" hidden>
+      <div class="dc-resize" id="dc-resize"
+        title="Drag to resize the builder panel"></div>
+      <button class="dbtn dc-back" id="dc-back"
+        title="Back to the notebooks. Nothing is closed or lost."
+        >&#8617; Notebooks</button>
+      <div class="dc-head">
+        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
+             stacks the small controls beside Paste (2026-08-17, user: "the
+             save could go below the file"). Stacking them halves the
+             group's width, and they are the two halves of the same
+             errand. The wrapper stays a plain row inside the builder
+             panel's header, which is a one-line bar. -->
+        <span class="rbn-stack">
+        <div class="dc-menuwrap">
+          <button class="dbtn" id="dc-file" aria-haspopup="true"
+            aria-expanded="false">File &#9662;</button>
+          <div class="dc-menu" id="dc-menu" hidden>
+            <button class="dc-mi" id="mi-new">New presentation</button>
+            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
+            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <button class="dc-mi" id="mi-crop"
+              title="Add trim marks just outside the page for the print
+ shop to cut to. The page itself keeps its exact size &mdash; the sheet
+ grows by 5mm on every side to hold them">Crop marks: off</button>
+            <div class="dc-mi dc-pagebg" id="mi-pagebg"
+              title="The page's own background — pick white for a poster
+ that goes to a print shop">Page background
+              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
+              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
+              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
+              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
+              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+            </div>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
+            <button class="dc-mi" id="mi-autosave" hidden></button>
+            <button class="dc-mi" id="mi-pdf"
+              title="Save as PDF at the page's TRUE size — an A0 poster
+ exports as a real 841&#215;1189mm page, ready for the print shop">Export
+ PDF / print&#8230;</button>
+            <button class="dc-mi" id="mi-pptx"
+              title="Save as a PowerPoint .pptx. Text stays editable and
+ figures come across as pictures; a placed cell showing code or a table
+ cannot convert — use PDF for those">Export PowerPoint
+ (.pptx)&#8230;</button>
+            <button class="dc-mi" id="mi-html"
+              title="A single .html file anyone can open — no Junoview
+ needed. Arrow keys page through it; Ctrl+P prints at page size">Export
+ standalone HTML</button>
+            <button class="dc-mi" id="mi-dl">Download a copy
+              (.junoview)</button>
+            <button class="dc-mi" id="mi-load">Open a .junoview
+              file&#8230;</button>
+            <button class="dc-mi" id="mi-discard">Discard changes</button>
+            <button class="dc-mi" id="mi-del">Delete presentation</button>
+          </div>
+        </div>
+        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
+             two competing save buttons and nobody could tell what the
+             second one did (2026-08-07, user: "even I am confused"). It is
+             now a split button: press Save to save, press the chevron to
+             choose where. The destination lives in the menu, which is
+             where a destination belongs. -->
+        <span class="dc-savegrp">
+          <button class="dbtn" id="dc-save">Save</button>
+          <span class="dc-menuwrap">
+            <button class="dbtn dc-target" id="dc-target"
+              aria-haspopup="true" aria-expanded="false"
+              aria-label="Choose where this is saved"
+              title="Choose where this is saved">&#9662;</button>
+            <div class="dc-menu" id="target-menu" hidden>
+              <div class="dc-mhead" id="tg-head">save to</div>
+            <button class="dc-mi" id="tg-project" hidden>This project</button>
+            <button class="dc-mi" id="tg-browser">This browser</button>
+            <button class="dc-mi" id="tg-file">A file on your
+              computer&#8230;</button>
+            <div class="dc-msep"></div>
+              <button class="dc-mi" id="tg-pick" hidden>Choose a different
+                file&#8230;</button>
+            </div>
+          </span>
+        </span>
+        </span>
+        <!-- ONE cell, like the zoom stepper: undo and redo are the same
+             decision in two directions and must never end up on different
+             lines. In the side rail's wrapping flow they did exactly that
+             — undo closed one line and redo opened the next, alone and
+             stretched the full width of the rail (2026-08-16). -->
+        <span class="rbn-cell">
+          <button class="dbtn dc-icon" id="dc-undo" disabled
+            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+          <button class="dbtn dc-icon" id="dc-redo" disabled
+            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        </span>
+        <span class="dc-spring"></span>
+        <span class="deck-status" id="deck-status"></span>
+      </div>
+      <div class="dc-block dc-controls">
+        <div class="dc-presname" id="pres-current" hidden></div>
+        <input id="pres-name" type="text" placeholder="presentation name"
+          spellcheck="false" autocomplete="off" hidden>
+        <button class="dbtn" id="dc-edit"
+          title="Swap to the slide editor — add text, arrows and boxes">
+          &#9998; Swap to edit view</button>
+        <div class="lay-picker" id="layout-row"
+          aria-label="Slide layouts"></div>
+        <div class="title-editor" id="title-editor" hidden>
+          <input id="ts-title" type="text" placeholder="Slide title"
+            spellcheck="false" autocomplete="off">
+          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
+            spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+      <div class="dc-block dc-film">
+        <div class="film-list" id="film-list"></div>
+        <button class="dbtn addslide" id="film-add">+ Add slide</button>
+      </div>
+    </aside>
+    <div class="deck-stagewrap" id="deck-stagewrap">
+      
       <aside class="selpane preflight" id="preflight" hidden>
         <div class="selpane-h"><span>Before you print</span>
           <button class="dbtn dc-icon" id="preflight-rerun"
@@ -16681,7 +16718,7 @@ window.JunoPptx = (function () {
            poster hides the panel they live in, so without re-homing them
            they would disappear with it. Re-run the placement, then the
            bar re-decides whether it has earned its row. */
-        fileToPanel();fileToRibbon();syncTopBar();
+        syncTopBar();
         /* switching to a portrait poster moves the toolbar to the side
            (unless you have already chosen otherwise) */
         applySideRibbon();
@@ -23157,58 +23194,13 @@ window.JunoPptx = (function () {
      create mode needs the panel again. With its head gone the panel is
      just the slide strip, and posters (one page, no slides) drop the
      panel entirely. ---- */
-  var fileMoved=[];
-  /* Where the document controls live while editing: the ribbon's own File
-     group. They were in the panel head, then in a bar of their own above
-     the ribbon — and that bar was a second row of chrome sitting on top
-     of the editing tools, which is a second row taken off the page
-     (2026-08-10, user: "I hate having the file, save, saved, button above
-     the customisation buttons... I think I have said this before"). One
-     bar now. */
-  function fileToRibbon(){
-    var top=$('#rbn-file-row');
-    if(!top||fileMoved.length) return;
-    /* Leaving does NOT come with them. It rode along from 2026-08-10 to
-       2026-08-17, and it was the widest control in the ribbon — a group's
-       worth of width for a journey the presentations rail's Notebooks
-       button already offers, on screen the whole time you are editing
-       (user: "that is not needed, people just click on the back to
-       notebooks"). It stays in the top bar, which PRESENTING still shows
-       and editing still hides. */
-    /* The panel is hidden while editing, for a deck as well as a poster,
-       so its head cannot hold File and Save any more. */
-    var head=deckEl.querySelector('.dc-head');
-    if(head) [].slice.call(head.children).forEach(function(el){
-      if(el.classList.contains('dc-spring')) return;
-      fileMoved.push({el:el,parent:head,next:el.nextSibling});
-      top.appendChild(el);
-    });
-    /* "Swap to notebooks" does NOT come up here. It is the same journey
-       the rail's Docs button already offers, and it was the widest thing
-       in the bar (2026-08-07, user: "a stupid name and in a stupid
-       place"). It stays in the panel, which is where it means something:
-       the builder, before you have opened the editor. */
-    /* The save READOUT leaves the File group entirely and pins to the far
-       END of the bar. It is the one thing in the constant half that
-       renames itself as you work — "" → "unsaved" → "unsaved — saving…" →
-       "autosaved · 14:32" — and anything that changes width in the
-       constant half drags every group after it along. Pinned right, with
-       nothing to its right, its width is free: it can say the whole
-       string, it needs no fixed-width hack, and it can never move a
-       control. It also hands the File group ~110px back, which is most of
-       what the narrow-window fit was short of (2026-08-17).
-       It is a READOUT, not a control — "all the save stuff together"
-       (2026-08-07) was about the Save button and its destination, and
-       those are still one split button. */
-    var st=$('#deck-status'),bar=$('#edit-tools');
-    if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);
-  }
-  /* The top bar used to appear only when File and Save had been borrowed
-     into it, so it could vanish and take the only way out with it. Now
-     "Close the editor" lives in it in every mode, so it always earns its
-     row. Written ONCE: the old test was pinned twice and the string it
-     pinned existed in one place, so the other copy could drift unseen
-     (2026-08-10). */
+  /* fileToRibbon / fileToPanel are GONE (2026-08-19): the document
+     actions used to be borrowed into the ribbon's File group while
+     editing and restored on leaving. They live permanently in the left
+     column now — Notebooks, then File/Save/undo/redo and the save
+     readout, then the thumbnails — so there is nothing to borrow and
+     nothing to restore, and the whole class of "moved node lost its
+     styling/anchor" bugs goes with the machinery. */
   function syncTopBar(){
     var dt=$('.deck-top',deckEl);
     /* While EDITING there is no bar at all: everything that was in it has
@@ -23230,22 +23222,13 @@ window.JunoPptx = (function () {
           +'or lost.';
     }
   }
-  function fileToPanel(){
-    /* restore in reverse so each insertBefore anchor is still valid */
-    fileMoved.slice().reverse().forEach(function(mv){
-      if(!mv.parent) return;
-      if(mv.next&&mv.next.parentNode===mv.parent)
-        mv.parent.insertBefore(mv.el,mv.next);
-      else mv.parent.appendChild(mv.el);
-    });
-    fileMoved=[];
-  }
   function setUIMode(m){
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
-    if(editing) fileToRibbon(); else fileToPanel();
+    /* nothing moves any more: the document actions LIVE in the left
+       column in every mode (2026-08-19) */
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
@@ -23347,8 +23330,7 @@ window.JunoPptx = (function () {
         document.exitFullscreen().catch(function(){});
     }catch(err){}
     closeVFull();
-    fileToPanel();          /* the panel gets its controls back */
-    showVerpane(false);filmToPanel();   /* ...and so does the strip */
+    showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
@@ -23400,13 +23382,15 @@ window.JunoPptx = (function () {
     inp.hidden=false;inp.value=pres.name;
     inp.focus();inp.select();
   });
-  $('#dc-play').addEventListener('click',function(){setUIMode('view');});
+  var presentFrom='create';
+  $('#dc-play').addEventListener('click',function(){
+    presentFrom=mode;setUIMode('view');});
   var undoBtn=$('#dc-undo');
   if(undoBtn) undoBtn.addEventListener('click',undo);
   var redoBtn=$('#dc-redo');
   if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
-    setUIMode('create');});
+    setUIMode(presentFrom==='edit'?'edit':'create');});
   (function(){
     var b=$('#dc-back');
     if(b) b.addEventListener('click',function(){closeDeck();});
@@ -23558,7 +23542,10 @@ window.JunoPptx = (function () {
     if(document.fullscreenElement) return;
     if(mode!=='view'||deckEl.hidden) return;
     closeVFull();
-    setUIMode('create');
+    /* BACK WHERE YOU WERE: presenting from the editor returned to the
+       builder, a view you then had to climb out of via "Open the editor"
+       (2026-08-19, user: "takes you to some cursed view") */
+    setUIMode(presentFrom==='edit'?'edit':'create');
   });
   document.addEventListener('keydown',function(e){
     if(picking>=0){

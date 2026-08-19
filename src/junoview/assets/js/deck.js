@@ -1261,7 +1261,7 @@
            poster hides the panel they live in, so without re-homing them
            they would disappear with it. Re-run the placement, then the
            bar re-decides whether it has earned its row. */
-        fileToPanel();fileToRibbon();syncTopBar();
+        syncTopBar();
         /* switching to a portrait poster moves the toolbar to the side
            (unless you have already chosen otherwise) */
         applySideRibbon();
@@ -7737,58 +7737,13 @@
      create mode needs the panel again. With its head gone the panel is
      just the slide strip, and posters (one page, no slides) drop the
      panel entirely. ---- */
-  var fileMoved=[];
-  /* Where the document controls live while editing: the ribbon's own File
-     group. They were in the panel head, then in a bar of their own above
-     the ribbon — and that bar was a second row of chrome sitting on top
-     of the editing tools, which is a second row taken off the page
-     (2026-08-10, user: "I hate having the file, save, saved, button above
-     the customisation buttons... I think I have said this before"). One
-     bar now. */
-  function fileToRibbon(){
-    var top=$('#rbn-file-row');
-    if(!top||fileMoved.length) return;
-    /* Leaving does NOT come with them. It rode along from 2026-08-10 to
-       2026-08-17, and it was the widest control in the ribbon — a group's
-       worth of width for a journey the presentations rail's Notebooks
-       button already offers, on screen the whole time you are editing
-       (user: "that is not needed, people just click on the back to
-       notebooks"). It stays in the top bar, which PRESENTING still shows
-       and editing still hides. */
-    /* The panel is hidden while editing, for a deck as well as a poster,
-       so its head cannot hold File and Save any more. */
-    var head=deckEl.querySelector('.dc-head');
-    if(head) [].slice.call(head.children).forEach(function(el){
-      if(el.classList.contains('dc-spring')) return;
-      fileMoved.push({el:el,parent:head,next:el.nextSibling});
-      top.appendChild(el);
-    });
-    /* "Swap to notebooks" does NOT come up here. It is the same journey
-       the rail's Docs button already offers, and it was the widest thing
-       in the bar (2026-08-07, user: "a stupid name and in a stupid
-       place"). It stays in the panel, which is where it means something:
-       the builder, before you have opened the editor. */
-    /* The save READOUT leaves the File group entirely and pins to the far
-       END of the bar. It is the one thing in the constant half that
-       renames itself as you work — "" → "unsaved" → "unsaved — saving…" →
-       "autosaved · 14:32" — and anything that changes width in the
-       constant half drags every group after it along. Pinned right, with
-       nothing to its right, its width is free: it can say the whole
-       string, it needs no fixed-width hack, and it can never move a
-       control. It also hands the File group ~110px back, which is most of
-       what the narrow-window fit was short of (2026-08-17).
-       It is a READOUT, not a control — "all the save stuff together"
-       (2026-08-07) was about the Save button and its destination, and
-       those are still one split button. */
-    var st=$('#deck-status'),bar=$('#edit-tools');
-    if(st&&bar&&st.parentNode!==bar) bar.appendChild(st);
-  }
-  /* The top bar used to appear only when File and Save had been borrowed
-     into it, so it could vanish and take the only way out with it. Now
-     "Close the editor" lives in it in every mode, so it always earns its
-     row. Written ONCE: the old test was pinned twice and the string it
-     pinned existed in one place, so the other copy could drift unseen
-     (2026-08-10). */
+  /* fileToRibbon / fileToPanel are GONE (2026-08-19): the document
+     actions used to be borrowed into the ribbon's File group while
+     editing and restored on leaving. They live permanently in the left
+     column now — Notebooks, then File/Save/undo/redo and the save
+     readout, then the thumbnails — so there is nothing to borrow and
+     nothing to restore, and the whole class of "moved node lost its
+     styling/anchor" bugs goes with the machinery. */
   function syncTopBar(){
     var dt=$('.deck-top',deckEl);
     /* While EDITING there is no bar at all: everything that was in it has
@@ -7810,22 +7765,13 @@
           +'or lost.';
     }
   }
-  function fileToPanel(){
-    /* restore in reverse so each insertBefore anchor is still valid */
-    fileMoved.slice().reverse().forEach(function(mv){
-      if(!mv.parent) return;
-      if(mv.next&&mv.next.parentNode===mv.parent)
-        mv.parent.insertBefore(mv.el,mv.next);
-      else mv.parent.appendChild(mv.el);
-    });
-    fileMoved=[];
-  }
   function setUIMode(m){
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
     deckEl.classList.toggle('editing',editing);
-    if(editing) fileToRibbon(); else fileToPanel();
+    /* nothing moves any more: the document actions LIVE in the left
+       column in every mode (2026-08-19) */
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
@@ -7927,8 +7873,7 @@
         document.exitFullscreen().catch(function(){});
     }catch(err){}
     closeVFull();
-    fileToPanel();          /* the panel gets its controls back */
-    showVerpane(false);filmToPanel();   /* ...and so does the strip */
+    showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
@@ -7980,13 +7925,15 @@
     inp.hidden=false;inp.value=pres.name;
     inp.focus();inp.select();
   });
-  $('#dc-play').addEventListener('click',function(){setUIMode('view');});
+  var presentFrom='create';
+  $('#dc-play').addEventListener('click',function(){
+    presentFrom=mode;setUIMode('view');});
   var undoBtn=$('#dc-undo');
   if(undoBtn) undoBtn.addEventListener('click',undo);
   var redoBtn=$('#dc-redo');
   if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
-    setUIMode('create');});
+    setUIMode(presentFrom==='edit'?'edit':'create');});
   (function(){
     var b=$('#dc-back');
     if(b) b.addEventListener('click',function(){closeDeck();});
@@ -8138,7 +8085,10 @@
     if(document.fullscreenElement) return;
     if(mode!=='view'||deckEl.hidden) return;
     closeVFull();
-    setUIMode('create');
+    /* BACK WHERE YOU WERE: presenting from the editor returned to the
+       builder, a view you then had to climb out of via "Open the editor"
+       (2026-08-19, user: "takes you to some cursed view") */
+    setUIMode(presentFrom==='edit'?'edit':'create');
   });
   document.addEventListener('keydown',function(e){
     if(picking>=0){

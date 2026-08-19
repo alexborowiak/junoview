@@ -183,6 +183,28 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **The editor layout the user designed: full-width ribbon, everything
+  document-level in the left column.** The ribbon is now a direct child
+  of the editor (spanning the whole window like the document view's app
+  bar) instead of living inside the stage column, and the document
+  actions — **↩ Notebooks**, then **File / Save / undo / redo / the save
+  readout**, then the slide thumbnails — live permanently in the left
+  column, for posters too. The ribbon holds only editing tools. The
+  whole borrow-and-restore machinery (fileToRibbon/fileToPanel) is
+  deleted with nothing to borrow, and the save readout sits under Save on
+  its own line, where its renames cannot move a ribbon control by
+  construction. Measured: ribbon at x=0 full width; column order
+  Notebooks → File/Save → undo → readout → thumbnails; File menu and
+  Save verified working from the column on deck and poster alike.
+- **Present never hides, the seam is marked, and leaving Present puts
+  you back.** Selecting an item used to stand the Output group down, so
+  Present vanished on an ordinary click; it is part of the constant half
+  now. A **double rule** marks the seam between the always-there controls
+  and the ones a selection brings, so the two regions read as regions.
+  Present's permanent accent fill also read as "stuck pressed" — it is an
+  accent outline now, filling only on hover. And exiting a presentation
+  started from the editor returns **to the editor**, not to the builder
+  you then had to climb out of.
 - **The editor is full-width, and Notebooks sits above the slides.** The
   editor used to start right of the presentations rail, so the rail's
   176px came out of the ribbon on every screen — part of why a laptop's
