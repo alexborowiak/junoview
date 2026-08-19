@@ -2337,56 +2337,52 @@
     exitPresent:exitDocPresent,buildTree:buildTree};
 
   /* ---- theme toggle (chrome only; the slide canvas stays dark) --- */
-  var themeBtn=$('#theme-btn');
   function applyTheme(light){
     document.body.classList.toggle('light',light);
-    var dt=document.getElementById('deck-theme');
-    if(dt) dt.innerHTML=light?'&#9789;':'&#9788;';
-    if(themeBtn){
-      themeBtn.innerHTML=light?'&#9789;':'&#9788;';
-      themeBtn.setAttribute('data-tip',light
-        ?'Switch to the dark theme':'Switch to the light theme');
-      themeBtn.removeAttribute('title');
-    }
+
     try{localStorage.setItem('plotline-theme',
       light?'light':'dark');}catch(e){}
   }
   var themePref=null;
   try{themePref=localStorage.getItem('plotline-theme');}catch(e){}
-  applyTheme(themePref==='light');
-  if(themeBtn) themeBtn.addEventListener('click',function(){
-    applyTheme(!document.body.classList.contains('light'));
-  });
-  /* the editor's own copy of the toggle — the app bar is hidden there */
-  var deckTheme=$('#deck-theme');
-  if(deckTheme) deckTheme.addEventListener('click',function(){
-    applyTheme(!document.body.classList.contains('light'));
-  });
+
+
   /* ---- colour SCHEMES: a body class re-defining the chrome tokens.
      Chrome only — content and exports keep their own colours, or a
      swatch would lie about what it applies (2026-08-18). ---- */
+  /* ONE list. Light and dark are themes, not a separate toggle — a
+     theme is "how the whole chrome looks", and dark-vs-light is exactly
+     that (2026-08-19, user). Each entry is [classes, name, preview]. */
   var SCHEMES=[
-    ['','Classic cyan',['#39a9c0','#0e1926']],
-    ['th-colorful','Dark colourful',['#f0a848','#5b8ff0','#3fbf8f',
+    ['','Dark',['#39a9c0','#0e1926']],
+    ['light','Light',['#1f7e93','#fbfcfd']],
+    ['th-forest','Dark forest',['#41c493','#0c211a']],
+    ['light th-lforest','Light forest',['#1e8f66','#f7fbf8']],
+    ['th-forestblue','Dark forest, blue buttons',['#6b9bff','#0c211a']],
+    ['th-colorful','Dark colourful',['#f0a848','#6b9bff','#41c493',
       '#e06a9a']],
-    ['th-contrast','High contrast',['#6fe3ff','#ffffff']],
-    ['th-forest','Forest',['#3fbf8f','#0d201a']],
-    ['th-forestblue','Forest, blue buttons',['#5b8ff0','#0d201a']]];
+    ['th-contrast','Dark high contrast',['#6fe3ff','#ffffff']]];
+  var ALL_TH=['light','th-forest','th-lforest','th-forestblue',
+    'th-colorful','th-contrast'];
   function applyScheme(id){
-    SCHEMES.forEach(function(sc){
-      if(sc[0]) document.body.classList.toggle(sc[0],sc[0]===id);});
+    var want=id?id.split(' '):[];
+    ALL_TH.forEach(function(cl){
+      document.body.classList.toggle(cl,want.indexOf(cl)>=0);});
+    /* the old standalone theme key follows along, so anything still
+       reading it (and older sessions) agrees about light vs dark */
+    applyTheme(want.indexOf('light')>=0);
     try{localStorage.setItem('plotline-scheme',id);}catch(e){}
   }
-  var schemePref='';
-  try{schemePref=localStorage.getItem('plotline-scheme')||'';}catch(e){}
-  if(schemePref) applyScheme(schemePref);
+  var schemePref=null;
+  try{schemePref=localStorage.getItem('plotline-scheme');}catch(e){}
+  if(schemePref!=null&&schemePref!=='') applyScheme(schemePref);
+  else if(themePref==='light') applyScheme('light');
   var schemeMenu=null;
   function openSchemeMenu(btn){
     if(schemeMenu){schemeMenu.remove();schemeMenu=null;return;}
     var m=document.createElement('div');m.className='jv-scheme-menu';
     var cur='';
-    SCHEMES.forEach(function(sc){
-      if(sc[0]&&document.body.classList.contains(sc[0])) cur=sc[0];});
+    try{cur=localStorage.getItem('plotline-scheme')||'';}catch(e){}
     SCHEMES.forEach(function(sc){
       var o=document.createElement('button');o.className='jv-scheme-opt';
       o.setAttribute('aria-pressed',(sc[0]===cur).toString());
@@ -4083,27 +4079,11 @@
        definition order; "type" regroups those same DOM rows under inserted
        headings, "order" restores them by data-i. Absent on the Plot-trace
        tab (its rail has no tabs), so all of this no-ops there. ---- */
-    var railtabs=$('.railtabs',shell),varpanel=$('.varpanel',shell),
-        navEl=$('.rail .nav',shell);
-    if(railtabs&&varpanel&&navEl){
-      var VKEY='junoview:railview';
-      function setRailView(v){
-        var vars=v==='variables';
-        $$('.railtab',railtabs).forEach(function(b){
-          var on=b.dataset.rview===v;
-          b.classList.toggle('active',on);
-          b.setAttribute('aria-selected',on?'true':'false');
-        });
-        navEl.hidden=vars;
-        varpanel.hidden=!vars;
-        try{localStorage.setItem(VKEY,v);}catch(e){}
-      }
-      $$('.railtab',railtabs).forEach(function(b){
-        b.addEventListener('click',function(){setRailView(b.dataset.rview);});
-      });
-      var savedView=null;
-      try{savedView=localStorage.getItem(VKEY);}catch(e){}
-      if(savedView==='variables') setRailView('variables');
+    /* the varpanel's only door is the pane now (the x² button beside the
+       sections hamburger); the sidebar itself is always the sections
+       list, so there is no view to switch (2026-08-19) */
+    var varpanel=$('.varpanel',shell),navEl=$('.rail .nav',shell);
+    if(varpanel&&navEl){
       /* chevron unfolds one variable's defined/redefined/used cells */
       $$('.var-chev',varpanel).forEach(function(ch){
         ch.addEventListener('click',function(){

@@ -141,9 +141,6 @@
     <span class="abgrp" id="ab-view"><span class="abgrp-row"><span class="btn-grp" id="view-grp">
     <!-- Raw over Tree in one column, Present beside them: two short
          buttons stacked cost the bar half the width of three in a line -->
-    <button class="toggle" id="vars-btn" aria-pressed="false"
-      title="Every variable in this notebook — filter by type, and click
- a name or use-site to jump to it">Variables</button>
     <span class="vw-stack">
     <button class="toggle" id="view-raw"
       title="Toggle between the semantic view and the raw notebook
@@ -168,8 +165,8 @@
          instead of floating over the tab strip (2026-08-03). -->
     <span class="abgrp" id="ab-app"><span class="abgrp-row">
     <span class="btn-grp">
-      <button class="toggle" id="theme-btn"
-        title="Switch between dark and light theme"><i data-ic="theme"></i></button>
+      <!-- no separate dark/light toggle: light and dark are THEMES in
+           the palette menu, beside forest and the rest (2026-08-19) -->
       <button class="toggle" id="scheme-btn"
         title="Colour scheme — cyan, colourful, high contrast, forest,
  forest &amp; blue"><i data-ic="palette"></i></button>
@@ -186,6 +183,13 @@
     <button class="menubtn" id="menubtn" aria-label="Toggle sections"
       title="Show or hide the section sidebar (table of contents)">
       <span></span></button>
+    <!-- beside the hamburger, because they are the same kind of thing:
+         two indexes of the document — its sections, its names
+         (2026-08-19, user). It replaced a Sections|Variables tab switch
+         inside the sidebar and a button up in the View group. -->
+    <button class="menubtn vars-menubtn" id="vars-btn" aria-pressed="false"
+      title="Every variable in this notebook — filter by type, and click
+ a name or use-site to jump to it">x&#178;</button>
     <div class="tabstrip" id="tabstrip" role="tablist"
       aria-label="Open notebooks"></div>
   </div>

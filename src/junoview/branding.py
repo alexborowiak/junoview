@@ -48,6 +48,12 @@ _ICON_PATHS = {
     "scope": '<path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/>'
              '<path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/>'
              '<path d="m2.2 8 .9.9L4.7 7.2"/>',
+    # an open eye: Unhide all. Its token shipped for weeks with NO entry
+    # here, and the substituter silently deleted it — the button had no
+    # icon and nothing complained (2026-08-19; the same silent path the
+    # completeness check below now closes).
+    "eye": '<path d="M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 '
+           '4.2S1.8 8 1.8 8Z"/><circle cx="8" cy="8" r="1.9"/>',
     "reset": '<path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/>'
              '<path d="M2.4 2.2v3.1h3.1"/>',
     "inherit": '<path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/>'
@@ -154,14 +160,37 @@ _ICON_PATHS = {
 
 
 def _icons(markup: str) -> str:
-    """Swap every ``<i data-ic="key"></i>`` token for its inline SVG."""
+    """Swap every ``<i data-ic="key"></i>`` token for its inline SVG.
+
+    Two silent failure modes lived here and both shipped real bugs
+    (2026-08-19):
+
+    * the pattern was ``[a-z]+``, so a key with a digit (``theme2``)
+      never matched and the raw token went to the page as an inert
+      element;
+    * an unknown-but-matching key returned ``""``, so a typo'd or
+      never-defined name (``eye``) deleted the icon and nothing
+      complained — the button simply had no icon, forever.
+
+    Rendering happens at build time, so both are now LOUD: any token this
+    function cannot resolve stops the build and names the key.
+    """
     def sub(m: re.Match) -> str:
         body = _ICON_PATHS.get(m.group(1))
         if body is None:
-            return ""
+            raise ValueError(
+                "unknown icon token <i data-ic=\"" + m.group(1)
+                + "\"></i> — add it to _ICON_PATHS in branding.py")
         return ('<svg class="bic" viewBox="0 0 16 16" aria-hidden="true" '
                 'focusable="false">' + body + '</svg>')
-    return re.sub(r'<i data-ic="([a-z]+)"></i>', sub, markup)
+    out = re.sub(r'<i data-ic="([a-z][a-z0-9-]*)"></i>', sub, markup)
+    leftover = re.search(r'<i data-ic="([^"]*)"></i>', out)
+    if leftover:
+        raise ValueError(
+            "icon token <i data-ic=\"" + leftover.group(1)
+            + "\"></i> did not match the substitution pattern "
+            "(keys are [a-z][a-z0-9-]*)")
+    return out
 
 
 _LOGO_SVG = (

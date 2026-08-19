@@ -223,7 +223,7 @@ body.tree-mode #copy-grp{display:none!important;}
   margin:1px 0 0;border-radius:1px;}
 body.light .appbar-div{background:#00000026;}
 /* dark variants of the show/hide toggles */
-.appbar .toggle,.present-bar .toggle{border-color:#ffffff40;background:#ffffff12;color:#d7e3ec;}
+.appbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
 .appbar-link{text-decoration:none;display:inline-flex;
   align-items:center;}
 .appbar .toggle:hover,.present-bar .toggle:hover{border-color:var(--cyan);color:#fff;}
@@ -336,9 +336,11 @@ body.light .pr-docs:hover{border-color:var(--cyan);}
   min-height:0;flex:0 1 auto;}
 /* real buttons for the create actions */
 .pr-btn{display:flex;align-items:center;justify-content:center;gap:7px;
-  width:100%;background:#ffffff08;border:1px solid #ffffff22;
+  width:100%;background:var(--btn-bg,#ffffff08);
+  border:1px solid var(--btn-border,#ffffff22);
   border-radius:7px;padding:8px 10px;font-family:var(--mono);
-  font-size:10.5px;letter-spacing:.03em;color:#9fb2c2;cursor:pointer;
+  font-size:10.5px;letter-spacing:.03em;
+  color:var(--btn-ink,#9fb2c2);cursor:pointer;
   margin-top:6px;transition:border-color .15s,color .15s,
   background .15s;}
 .pr-btn:hover{border-color:var(--cyan);color:#fff;
@@ -1548,3 +1550,16 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
   color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,
   transparent);}
 .varrow.vg-out{display:none;}
+
+/* the variables door, beside the sections hamburger: same square, its
+   own mark, and a pressed state while the pane is open */
+.vars-menubtn{font-family:var(--mono);font-size:12px;
+  color:var(--btn-ink,#cdd9e3);margin-left:2px;}
+.vars-menubtn[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--accent) 18%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 60%,transparent);}
+body.light .vars-menubtn{color:var(--ink-2);}
+/* the rail tabs are gone; any straggler CSS stays harmless, but the
+   varpanel must never render inside the rail again */
+.rail .varpanel{display:none;}
+#varspane-body .varpanel{display:block;}

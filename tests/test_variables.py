@@ -140,8 +140,10 @@ def test_varpanel_rows_carry_what_the_js_regroups_on():
     assert 'data-i="0"' in html and 'data-i="1"' in html
     assert 'vu-defined' in html and 'vu-used' in html
     assert 'data-vorder="type"' in html               # the group toggle
-    tabs = render_railtabs(doc)
-    assert 'data-rview="variables"' in tabs
+    # the rail tabs are GONE (2026-08-19): the sidebar is the sections
+    # list, and variables open as a pane from the x2 button beside the
+    # sections hamburger
+    assert render_railtabs(doc) == ""
 
 
 def test_prose_only_notebook_keeps_its_plain_sidebar():
@@ -154,7 +156,7 @@ def test_page_embeds_the_panel_once_per_shell():
     doc = parse_notebook(_nb("a = 1", "print(a)"))
     doc.source_name = "demo"
     page = render_page([doc])
-    assert page.count('class="railtabs"') == 1
+    assert page.count('class="railtabs"') == 0
     assert page.count('class="varpanel"') == 1
 
 

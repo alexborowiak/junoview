@@ -183,6 +183,35 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Variables live with the sections hamburger.** The x² button sits
+  right beside the sidebar toggle — the two indexes of a document, its
+  sections and its names, side by side — instead of up in the View group.
+  The sidebar's *Sections | Variables* tab switch is gone with it: the
+  sidebar is the sections list, full stop, and variables only ever open
+  as the floating pane (filters, type chips and jump-to-cell all intact).
+- **Themes v2: one picker, and the whole chrome actually changes.** The
+  dark/light toggle is gone — light and dark are **themes** now, in one
+  palette menu: *Dark*, *Light*, *Dark forest*, *Light forest*, *Dark
+  forest with blue buttons*, *Dark colourful*, *Dark high contrast*. Two
+  real bugs were why the first pass "only changed the central page":
+  every button's resting face was hardcoded white-alpha (now token-driven,
+  so themes re-ink borders, fills and text of every button, tab and rail
+  row); and the legacy `--cyan` alias was defined on `:root`, where CSS
+  resolves `var(--accent)` **once** and inherits the frozen result — so
+  the hundreds of rules using `var(--cyan)` ignored every theme. The
+  alias now resolves per element. *Dark colourful* is finally visible:
+  each zone's buttons carry their hue **at rest** — amber File, blue
+  Filters, green View, pink Sizes, purple rail and App.
+- **Icon tokens can no longer fail silently — and one had.** The icon
+  substituter had two quiet failure modes: a key containing a digit never
+  matched its pattern (the raw token shipped to the page as an inert
+  element), and an unknown key was replaced with nothing (the icon simply
+  vanished and nothing complained). Auditing for the second found a real
+  casualty: **Unhide all** had been shipping without its eye icon for
+  weeks. The icon is restored, keys may contain digits now, and both
+  failure modes are fatal at build time with the offending key named — a
+  test also cross-checks every token every template uses against the
+  defined set.
 - **The app bar behaves on a monitor.** The App group was pinned to the
   right edge, so a wide screen's whole spare width became one void between
   View and it, and its 28px icon squares read as lost crumbs. It packs

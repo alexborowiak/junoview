@@ -168,12 +168,15 @@ def test_view_group_stays_one_unit_and_present_bar_is_one_flow(out):
     wrapping flow (display:contents) instead of two flex items that each
     shrink and wrap inside themselves.
     """
-    assert 'id="theme-btn"' in out
+    # no separate dark/light toggle since 2026-08-19: light and dark are
+    # THEMES in the palette menu, beside forest and the rest
+    assert 'id="theme-btn"' not in out
+    assert 'id="scheme-btn"' in out
     # Raw / Tree / Present are one unit and never wrap apart; Help and
     # Support moved behind a "…" so the bar fits on one row
     assert 'class="btn-grp" id="view-grp"' in out
     assert (out.index('id="view-grp"') < out.index('id="view-raw"')
-            < out.index('id="doc-present"') < out.index('id="theme-btn"'))
+            < out.index('id="doc-present"') < out.index('id="scheme-btn"'))
     assert 'id="more-btn"' not in out   # nothing hidden behind a menu
     assert ".btn-grp{display:flex" in out
     # …and present mode carries the group, not the loose buttons
@@ -328,6 +331,45 @@ def test_app_buttons_sit_at_the_right_end_of_the_ribbon(out):
     assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
     # nothing still styles it for the tab row
     assert ".tabsrow #ab-app" not in out
-    # all three buttons came with it
-    for button in ('id="theme-btn"', 'id="support-btn"', 'id="help-btn"'):
+    # the group's buttons came with it (the dark/light toggle became a
+    # theme in the palette menu, 2026-08-19)
+    for button in ('id="scheme-btn"', 'id="support-btn"', 'id="help-btn"'):
         assert button in out, button
+    # every theme re-inks the BUTTON FACES, not just the accents: the
+    # faces read tokens, and the legacy --cyan alias resolves per element
+    # (on :root it froze at the default accent and themes "only changed
+    # the central page")
+    assert "--btn-bg:#ffffff12; --btn-border:#ffffff40;" in out
+    assert "*{--cyan:var(--accent); --cyan-deep:var(--accent-deep);" in out
+    assert "['light','Light',['#1f7e93','#fbfcfd']]," in out
+    assert "['light th-lforest','Light forest'" in out
+
+
+def test_icon_tokens_cannot_fail_silently():
+    """The icon substituter had two silent failure modes and both shipped
+    real bugs: keys with digits never matched the [a-z]+ pattern (the raw
+    token went to the page inert), and unknown keys returned "" (the
+    "eye" icon on Unhide all was deleted for weeks and nothing
+    complained). Rendering is build-time, so both now stop the build and
+    name the key (2026-08-19).
+    """
+    import pytest
+
+    from junoview.branding import _ICON_PATHS, _icons
+
+    assert "svg" in _icons('<i data-ic="eye"></i>')          # exists now
+    assert "svg" in _icons('<i data-ic="palette"></i>')
+    with pytest.raises(ValueError, match="no-such-icon"):
+        _icons('<i data-ic="no-such-icon"></i>')
+    with pytest.raises(ValueError, match="Bad_Key"):
+        _icons('<i data-ic="Bad_Key"></i>')
+    # ...and every token every template uses resolves
+    import pathlib as _pl
+    import re as _re
+    used = set()
+    root = _pl.Path(__file__).resolve().parent.parent         / "src/junoview/assets"
+    for f in root.rglob("*"):
+        if f.suffix in (".html", ".js"):
+            used |= set(_re.findall(r'data-ic="([^"]+)"',
+                                    f.read_text(encoding="utf-8")))
+    assert not used - set(_ICON_PATHS), sorted(used - set(_ICON_PATHS))

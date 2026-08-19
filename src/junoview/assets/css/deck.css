@@ -17,8 +17,10 @@ body.deck-open{overflow:hidden;}
 .deck-status.saved{background:#46a89226;color:#7fd0bd;}
 .deck-status:empty{display:none;}
 .deck-spring{flex:1;}
-.dbtn{font-family:var(--mono);font-size:11px;border:1px solid #ffffff22;
-  background:#ffffff0a;color:#cdd9e3;padding:6px 11px;border-radius:6px;
+.dbtn{font-family:var(--mono);font-size:11px;
+  border:1px solid var(--btn-border,#ffffff22);
+  background:var(--btn-bg,#ffffff0a);color:var(--btn-ink,#cdd9e3);
+  padding:6px 11px;border-radius:6px;
   cursor:pointer;transition:all .15s;}
 .dbtn:hover{border-color:var(--cyan);color:#fff;}
 /* the way out of a modal state: coral so it reads as "stop", but an

@@ -331,19 +331,14 @@ def render_nav(doc: Document) -> str:
 
 
 def render_railtabs(doc: Document) -> str:
-    """The Sections | Variables switch above the sidebar nav. Rendered only
-    when the notebook actually binds names -- a prose-only document keeps
-    its plain sections list."""
-    if not doc.variables:
-        return ""
-    return (
-        '<div class="railtabs" role="tablist" aria-label="Sidebar view">'
-        '<button class="railtab active" role="tab" aria-selected="true" '
-        'data-rview="sections" title="List the document\'s sections and '
-        'cells">Sections</button>'
-        '<button class="railtab" role="tab" aria-selected="false" '
-        'data-rview="variables" title="List every variable the notebook '
-        'defines — in order, or grouped by type">Variables</button></div>')
+    """Gone (2026-08-19): the sidebar is the SECTIONS list, full stop.
+    Variables open as a floating pane from the button beside the sections
+    hamburger, so a tab switch that hid one list to show the other had
+    nothing left to switch (user: "put it with the hamburger that has the
+    sections, and remove the variables button from the section thing").
+    Kept as an empty-string renderer so the shell template keeps one
+    placeholder shape across versions."""
+    return ""
 
 
 def render_varpanel(doc: Document) -> str:

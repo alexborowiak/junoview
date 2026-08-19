@@ -16,7 +16,22 @@
      and exports keep their own literals, or a swatch would lie about
      the colour it applies. */
   --accent:#39a9c0; --accent-deep:#1f7e93; --accent-soft:#8fd8ea;
-  --cyan:var(--accent); --cyan-deep:var(--accent-deep);
+  /* the resting FACE of every button. The first scheme pass only moved
+     the accents, so buttons kept their hardcoded white-alpha faces and a
+     theme looked like "just the central page" (2026-08-19, user). Now a
+     scheme re-inks these and every button follows. */
+  --btn-bg:#ffffff12; --btn-border:#ffffff40; --btn-ink:#d7e3ec;
+}
+/* The legacy --cyan alias must resolve PER ELEMENT, not once at :root:
+   a custom property defined on :root evaluates its var() there and
+   inherits the frozen result, so `--cyan:var(--accent)` on :root pinned
+   every var(--cyan) rule to the default accent and no theme could touch
+   them — which is why the first scheme pass "only changed the central
+   page" (2026-08-19). On * each element re-resolves against the accent
+   it actually inherits, so group-scoped accents reach every rule. */
+*{--cyan:var(--accent); --cyan-deep:var(--accent-deep);
+
+
   --amber:#cf9a4e; --amber-soft:#caa06a66;
   --sans:'IBM Plex Sans',system-ui,sans-serif;
   --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
@@ -1056,47 +1071,86 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
 }
 
 
-/* ---- colour schemes: token re-definitions, one class each ------------
-   th-colorful scopes a DIFFERENT accent to each ribbon group — custom
-   properties inherit, so every button in a group picks up its group's
-   hue with no per-button rules. */
-body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
-  --accent-soft:#c8f2ff;}
-body.th-contrast .dbtn,body.th-contrast .toggle{
-  border-color:#ffffff82;color:#fff;}
-body.th-contrast .rbn-lab,body.th-contrast .abgrp-lab{color:#d5e6f2;}
-body.th-contrast .edit-tools.ribbon{border-bottom-color:#ffffff59;}
-body.th-contrast .rbn-grp{border-right-color:#ffffff59;}
-body.th-forest{--accent:#3fbf8f;--accent-deep:#1e8f66;
+/* ---- THEMES -------------------------------------------------------
+   One list: light and dark are themes like any other, not a separate
+   toggle (2026-08-19, user: "remove the dark/light button, and have
+   that as just a theme e.g. light, dark, dark forest, light forest, and
+   take them further"). A theme re-inks the accent, the surfaces AND the
+   button faces, so the whole chrome moves together — not just the page.
+   Content (page backgrounds, item colours, swatches, exports) is still
+   never themed. */
+body.th-forest{--accent:#41c493;--accent-deep:#1e8f66;
   --accent-soft:#a9e9cf;
-  --chrome-0:#0a1712;--chrome-1:#0d201a;--chrome-2:#15302a;
-  --chrome-3:#0f231d;--chrome-4:#11271f;}
-body.th-forestblue{--accent:#5b8ff0;--accent-deep:#3667c9;
-  --accent-soft:#b9cff9;
-  --chrome-0:#0a1712;--chrome-1:#0d201a;--chrome-2:#15302a;
-  --chrome-3:#0f231d;--chrome-4:#11271f;}
-body.th-colorful .rbn-file{--accent:#f0a848;--accent-deep:#c07f22;}
-body.th-colorful .rbn-slide{--accent:#5b8ff0;--accent-deep:#3667c9;}
-body.th-colorful .rbn-view{--accent:#3fbf8f;--accent-deep:#1e8f66;}
-body.th-colorful .rbn-out{--accent:#e06a9a;--accent-deep:#b34472;}
-body.th-colorful .rbn-nbs,body.th-colorful .rbn-insert{
-  --accent:#a07be0;--accent-deep:#7a52c0;}
+  --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
+  --chrome-3:#0e241c;--chrome-4:#10281f;
+  --btn-bg:color-mix(in srgb,#41c493 10%,#ffffff06);
+  --btn-border:color-mix(in srgb,#41c493 42%,#ffffff22);
+  --btn-ink:#d7f2e6;}
+body.th-forestblue{--accent:#6b9bff;--accent-deep:#3d6fd9;
+  --accent-soft:#c3d6ff;
+  --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
+  --chrome-3:#0e241c;--chrome-4:#10281f;
+  --btn-bg:color-mix(in srgb,#6b9bff 12%,#ffffff06);
+  --btn-border:color-mix(in srgb,#6b9bff 48%,#ffffff22);
+  --btn-ink:#dbe6ff;}
+body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
+  --accent-soft:#c8f2ff;
+  --btn-bg:#ffffff1f;--btn-border:#ffffffb0;--btn-ink:#ffffff;}
+body.th-contrast .rbn-lab,body.th-contrast .abgrp-lab{color:#e6f2fa;}
+body.th-contrast .edit-tools.ribbon{border-bottom-color:#ffffff66;}
+body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
+/* DARK COLOURFUL: the buttons themselves carry their group's hue at
+   REST — border, ink and a wash of background — not only on hover,
+   which was invisible (2026-08-19, user: "dark colourful doesn't even
+   do anything I can't tell"). Custom properties inherit, so scoping
+   --accent to a group re-inks every button inside it. */
+body.th-colorful .rbn-file,body.th-colorful #ab-file{
+  --accent:#f0a848;--accent-deep:#c07f22;}
+body.th-colorful .rbn-slide,body.th-colorful #ab-filters,
+body.th-colorful #pt-grp,body.th-colorful #md-grp,
+body.th-colorful #ck-grp,body.th-colorful #ot-grp{
+  --accent:#6b9bff;--accent-deep:#3d6fd9;}
+body.th-colorful .rbn-view,body.th-colorful #ab-view,
+body.th-colorful #ab-tree{--accent:#41c493;--accent-deep:#1e8f66;}
+body.th-colorful .rbn-out,body.th-colorful #ab-size,
+body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
+body.th-colorful .rbn-nbs,body.th-colorful .rbn-insert,
+body.th-colorful #ab-app,body.th-colorful .presrail{
+  --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;
   --accent-deep:#c07f22;}
-body.th-colorful .selpane{--accent:#3fbf8f;--accent-deep:#1e8f66;}
-/* the scheme picker itself */
+body.th-colorful .selpane{--accent:#41c493;--accent-deep:#1e8f66;}
+/* DIRECT rules, not --btn-* tokens: a token defined on body resolves
+   its var(--accent) AT body — the same freeze the * alias exists for —
+   so the per-group hue never reached the faces. A declaration on the
+   button itself resolves against the accent that button inherits. */
+body.th-colorful .appbar .toggle:not(.primary),
+body.th-colorful .dbtn:not(.primary),
+body.th-colorful .pr-btn,body.th-colorful .pr-item{
+  border-color:color-mix(in srgb,var(--accent) 55%,#ffffff1a);
+  background:color-mix(in srgb,var(--accent) 13%,#ffffff05);
+  color:color-mix(in srgb,var(--accent) 55%,#f2f7fa);}
+/* LIGHT FOREST: the light theme with green ink and green-washed chrome */
+body.light.th-lforest{--accent:#1e8f66;--accent-deep:#136647;
+  --accent-soft:#5cc9a0;
+  --paper:#f7fbf8;--paper-2:#e9f3ec;--paper-3:#dbeae0;
+  --line:#c8dccf;}
+/* the theme picker's rows */
 .jv-scheme-menu{position:fixed;z-index:300;background:var(--chrome-2,#16273a);
   border:1px solid #ffffff26;border-radius:9px;padding:6px;
   box-shadow:0 14px 38px #0009;display:flex;flex-direction:column;gap:2px;}
+body.light .jv-scheme-menu{background:var(--paper);border-color:var(--line);}
 .jv-scheme-menu[hidden]{display:none;}
 .jv-scheme-opt{display:flex;align-items:center;gap:8px;background:none;
   border:1px solid transparent;border-radius:7px;padding:6px 10px;
   cursor:pointer;color:#c9d6e2;font-family:var(--sans);font-size:12px;}
+body.light .jv-scheme-opt{color:var(--ink-2);}
 .jv-scheme-opt:hover{background:color-mix(in srgb,var(--accent) 13%,
   transparent);border-color:color-mix(in srgb,var(--accent) 40%,
-  transparent);color:#fff;}
+  transparent);}
 .jv-scheme-opt[aria-pressed="true"]{
   background:color-mix(in srgb,var(--accent) 20%,transparent);
-  border-color:var(--accent);color:#fff;}
+  border-color:var(--accent);}
 .jv-scheme-dots{display:flex;gap:3px;flex:none;}
-.jv-scheme-dots i{width:10px;height:10px;border-radius:50%;display:block;}
+.jv-scheme-dots i{width:10px;height:10px;border-radius:50%;display:block;
+  border:1px solid #00000033;}
