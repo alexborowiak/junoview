@@ -2793,8 +2793,13 @@
   var helpDlg=$('#helpdlg');
   function showHelp(){if(helpDlg) helpDlg.hidden=false;}
   function hideHelp(){if(helpDlg) helpDlg.hidden=true;}
-  var helpBtn=$('#help-btn');
-  if(helpBtn) helpBtn.addEventListener('click',showHelp);
+  /* two doors: the app bar's Help, and the deck editor's — editing hides
+     the app bar entirely, so without the second one the help was
+     unreachable from inside a presentation (2026-08-20) */
+  ['#help-btn','#deck-help'].forEach(function(sel){
+    var hb=$(sel);
+    if(hb) hb.addEventListener('click',showHelp);
+  });
   var wHelp=$('#welcome-help');
   if(wHelp) wHelp.addEventListener('click',function(e){
     e.preventDefault();showHelp();});

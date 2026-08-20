@@ -568,3 +568,182 @@ def test_find_and_replace_searches_the_model(out):
     assert "if(cur!==h.f.si){cur=h.f.si;refresh();}" in out
     # an empty match must never loop forever
     assert "if(!m[0].length) re.lastIndex++;" in out
+
+
+def test_tables_are_a_real_item_kind(out):
+    """A table is rows of plain strings plus a handful of switches -- not
+    HTML, because a table you can only fill by typing HTML is a table
+    nobody will use, and rows-of-strings is the shape every export already
+    knows how to walk (2026-08-20, user asked for "Tables").
+
+    The header row is a FLAG rather than a separate field, so turning it on
+    or off moves no data. Column widths live in a.cols and are dragged, not
+    typed. The rules use a.sw -- the same page-relative stroke currency
+    every other item uses -- because a fixed 1px hairline vanishes on an A0
+    poster and is a fence at 10% zoom.
+
+    Verified in the browser 2026-08-20: drawn 3x3 with a header row, typed
+    into a cell, +row/+column to 4x4 with the typed cell intact, header
+    toggled off (3 th -> 0), and the thumbnail drew a miniature of it.
+    """
+    assert 'data-tool="table"' in out
+    assert "function drawTable(layer,s,a,i,editing){" in out
+    assert "function tableNormalise(a){" in out
+    assert "function tableGrow(a,what,by){" in out
+    assert "function startTableEdit(layer,s,a,idx,td,ri,ci){" in out
+    assert "function startColDrag(layer,s,a,idx,at,ev0){" in out
+    # Tab along, Enter down -- the two moves that make a table usable
+    # without reaching for the mouse between every cell
+    assert "if(e.key==='Tab'){e.preventDefault();" in out
+    # rules scale with the page like every other stroke
+    assert "host.style.setProperty('--tbl-sw',strokePx(a,layer)" in out
+    # it reaches every output: thumbnails, and a REAL pptx table
+    assert "var bt=miniBox(d,a,'is-tbl');" in out
+    assert "function tableShape(item, id, page) {" in out
+    assert "} else if (item.t === 'table') {" in out
+
+
+def test_page_furniture_is_deck_level_not_an_item(out):
+    """A watermark, a header and a footer are one piece of content
+    repeated on every page -- which is exactly what slide numbers already
+    were. So they live on `pres`, are painted after the annots, and are
+    therefore not items you can select, drag or delete by accident
+    (2026-08-20, user asked for "Watermarks" and "Header and footer").
+
+    ONE painter, called by renderSlide for the canvas and by buildPrintRoot
+    for PDF / standalone HTML -- a second copy is how an export and the
+    screen drift apart.
+    """
+    assert "function paintFurniture(slideEl,idx){" in out
+    assert out.count("paintFurniture(slideEl,") >= 2
+    assert "function furnText(txt,idx){" in out
+    # sized in percent of PAGE HEIGHT, resolved to px. Left as a CSS
+    # percentage it resolved against the parent's font size instead, so a
+    # 12% watermark came out under 2px and was invisible (found live)
+    assert "var ph=slideEl.getBoundingClientRect().height||720;" in out
+    assert "wm.style.fontSize=px(w.size,12);" in out
+    # behind the content, never over it
+    assert "slideEl.insertBefore(wm,slideEl.firstChild);" in out
+    # and it survives a save, the way pageBg had to learn to
+    assert "['wmark','head','foot','styles'].forEach(function(k){" in out
+
+
+def test_equations_reuse_the_text_box_and_mathjax(out):
+    """No new item kind: MathJax is on every page already and renderSlide
+    already typesets the finished slide, so a text box whose words happen
+    to be "$$ ... $$" is typeset for free -- and moves, colours, scales,
+    exports and animates like any other text box (2026-08-20, user asked
+    for "Maths inserts").
+
+    What it does add is RE-typesetting: the annot layer is rebuilt on every
+    change, so the rendered maths would otherwise be thrown away the moment
+    you touched anything. Gated on the slide actually carrying maths --
+    typesetting a whole layer on every mousemove of a drag would be a real
+    cost for nothing.
+    """
+    assert 'id="dc-maths"' in out
+    assert "text:'$$ E = mc^2 $$'" in out
+    assert "})) typeset(layer);" in out
+
+
+def test_named_text_styles_and_apply_to_all_headings(out):
+    """A named look a box WEARS rather than a pile of properties it
+    carries. The box records a.style; the numbers come from pres.styles,
+    which is what makes restyling every heading one edit to one object
+    instead of a hunt through forty slides (2026-08-20, user: "all the
+    different heading styles that you can have" and "some things like
+    'apply style to all headings'").
+
+    applyStyleTo WRITES the properties rather than resolving them at render
+    time, deliberately: every export, the pptx converter and the thumbnails
+    already read a.size / a.b / a.color, and teaching all five about styles
+    would be five places to get it wrong.
+    """
+    assert "var STYLE_DEFAULTS={" in out
+    assert "var HEADING_STYLES=['title','h1','h2','h3'];" in out
+    assert "function applyStyleTo(a,id){" in out
+    assert "function restyleDeck(ids){" in out
+    assert 'id="fmt-style-menu-tx"' in out
+    # the size scale is a real scale, ~1.3x a step
+    for key in ("title:", "h1:", "h2:", "h3:", "body:", "caption:"):
+        assert key in out, key
+    # size is what makes a heading level a level, so "apply to all
+    # headings" is the one thing that must not flatten it
+    assert "d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;" \
+        in out
+
+
+def test_marquee_and_group_entry(out):
+    """Mousedown on nothing used to deselect and stop there, so the only
+    way to select several items was to shift-click each one (2026-08-20,
+    user: "You can't drag and select multiple items. The shift and select
+    multiple is realyl hard to do").
+
+    TOUCH, not enclose: a band that has to swallow an item whole is
+    unusable on a poster where the figures are bigger than the gap you have
+    to drag in. Under the threshold it is still just a click, so "click
+    empty space to deselect" is unchanged.
+
+    And double-clicking a group steps INSIDE it, so its members can be
+    picked one at a time -- there was no way to touch a single item in a
+    group at all before ("You also can't select multiple items in a group
+    like you can in powerpoint to modify").
+    """
+    assert "function startMarquee(layer,s,ev0){" in out
+    assert "band.className='an-marquee';" in out
+    assert "if(dx<MARQUEE_PX&&dy<MARQUEE_PX) return;" in out
+    assert "} else startMarquee(layer,s,ev);" in out
+    # ctrl joins shift as an additive modifier -- half the world reaches
+    # for it first and it did nothing at all before
+    assert "if((ev.shiftKey||ev.ctrlKey||ev.metaKey)&&typeof idx==='number')" \
+        in out
+    # entering a group
+    assert "var inGroup=null;" in out
+    assert "if(inGroup!=null&&a.grp===inGroup) return [idx];" in out
+    assert "inGroup=a2.grp;" in out
+    # ...and Esc steps out before it drops the selection
+    assert "else if(mode==='edit'&&inGroup!=null){" in out
+
+
+def test_stacking_order_acts_on_the_whole_selection(out):
+    """There is no z property: order in s.annots IS order on the page, so
+    every one of these is an array move. It used to act on selAnnot alone,
+    so bringing a GROUP to the front brought one member and left the rest
+    behind (2026-08-20).
+
+    idxs[0] is the lowest selected index, so every item below it is in
+    `rest` -- which makes idxs[0] exactly the insertion point that leaves
+    the block where it is. One step is one either side of that.
+    """
+    assert "function zReorder(front,step){" in out
+    assert "var at0=idxs[0];" in out
+    assert "?(front?Math.min(rest.length,at0+1):Math.max(0,at0-1))" in out
+    # the selection is a set of INDICES, so it has to be rebuilt after
+    assert "selSet=moved;selAnnot=moved[moved.length-1];" in out
+
+
+def test_spotlight_zooms_one_item_during_playback(out):
+    """2026-08-20, user: "in power point when you present it is static ...
+    it would be cool if clicking on text or a figure made it full screen in
+    the presentation".
+
+    The hard part is not the zoom, it is that a click on the slide already
+    ADVANCES the build, and that gesture is what a talk runs on -- it
+    cannot be overloaded. So a plain click still advances; Alt+click
+    spotlights, and Z spotlights whatever the pointer is over, which is the
+    version you can use from a lectern with a clicker in one hand.
+
+    It is a FLIP: the item is cloned, placed exactly over the original, and
+    then transformed to the centre, so it grows out of where it was and the
+    original never moves.
+    """
+    assert "function spotlight(item){" in out
+    assert "function spotTarget(ev){" in out
+    assert "if(e.altKey){" in out
+    assert "&&mode==='view'){" in out
+    # never SHRINK something already big -- a spotlight that makes the
+    # figure smaller is a bug wearing a feature's clothes
+    assert "k=Math.max(1,k);" in out
+    # the clone is a picture, not a control
+    assert "clone.classList.remove('sel','grpsel','an-prebuild','an-ingrp');" \
+        in out

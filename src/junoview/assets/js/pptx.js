@@ -307,6 +307,74 @@ window.JunoPptx = (function () {
       + '<a:lstStyle/>' + paragraphs(item, page) + '</p:txBody></p:sp>';
   }
 
+  /* A REAL PowerPoint table, not a grid of rectangles with words on top.
+     OOXML's graphicFrame is the only shape that carries one, and its
+     column widths and row heights are absolute EMU rather than
+     percentages - so they are resolved here against the table's own box.
+     Flattening to rectangles would have been half the code and would have
+     produced a deck nobody could edit afterwards, which is the whole
+     reason this exporter emits shapes instead of pictures (2026-08-20). */
+  function tableShape(item, id, page) {
+    var rows = item.rows || [];
+    if (!rows.length) return '';
+    var nCols = (rows[0] || []).length || 1;
+    var cols = (item.cols && item.cols.length === nCols)
+      ? item.cols
+      : (function () { var o = [], i;
+          for (i = 0; i < nCols; i++) o.push(100 / nCols); return o; })();
+    var wEmu = Math.max(1, Math.round((item.w || 40) / 100 * page.wEmu));
+    var hEmu = Math.max(1, Math.round((item.h || 20) / 100 * page.hEmu));
+    var rowH = Math.max(1, Math.round(hEmu / rows.length));
+    var grid = cols.map(function (w) {
+      return '<a:gridCol w="' + Math.max(1, Math.round(w / 100 * wEmu))
+        + '"/>';
+    }).join('');
+    /* the cell rules use the same weight the canvas drew, converted from
+       "percent of page height" the way every other stroke here is */
+    var lnW = Math.max(1, Math.round(
+      (item.swPct != null ? item.swPct : 0.14) / 100 * page.hPt * 12700));
+    var border = item.grid
+      ? ['L', 'R', 'T', 'B'].map(function (side) {
+          return '<a:ln' + side + ' w="' + lnW + '">'
+            + solidFill(item.color, null, 'FFFFFF') + '</a:ln' + side + '>';
+        }).join('')
+      : '';
+    var body = rows.map(function (row, ri) {
+      var head = item.thead && ri === 0;
+      var cells = [];
+      var ci;
+      for (ci = 0; ci < nCols; ci++) {
+        var val = row[ci] == null ? '' : String(row[ci]);
+        var run = { sizePct: item.sizePct, color: item.color,
+          font: item.font, b: head };
+        var para = val
+          ? '<a:p><a:pPr algn="l"/><a:r>' + runProps(run, page, 'rPr')
+            + '<a:t>' + esc(val) + '</a:t></a:r></a:p>'
+          : '<a:p><a:pPr algn="l"/>' + runProps(run, page, 'endParaRPr')
+            + '</a:p>';
+        cells.push('<a:tc><a:txBody><a:bodyPr/><a:lstStyle/>' + para
+          + '</a:txBody><a:tcPr marL="45720" marR="45720" marT="27432" '
+          + 'marB="27432">' + border + '</a:tcPr></a:tc>');
+      }
+      return '<a:tr h="' + rowH + '">' + cells.join('') + '</a:tr>';
+    }).join('');
+    /* firstRow="1" is what makes PowerPoint's own table styles bold the
+       header; the run is bolded above as well so it looks right even with
+       the style stripped */
+    var tblPr = '<a:tblPr firstRow="' + (item.thead ? 1 : 0)
+      + '" bandRow="1"/>';
+    return '<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr id="' + id
+      + '" name="' + esc('Table ' + id) + '"/><p:cNvGraphicFramePr/>'
+      + '<p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="'
+      + Math.round((item.x || 0) / 100 * page.wEmu) + '" y="'
+      + Math.round((item.y || 0) / 100 * page.hEmu) + '"/><a:ext cx="'
+      + wEmu + '" cy="' + hEmu + '"/></p:xfrm>'
+      + '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org'
+      + '/drawingml/2006/table"><a:tbl>' + tblPr
+      + '<a:tblGrid>' + grid + '</a:tblGrid>' + body
+      + '</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
+  }
+
   function picShape(item, id, rid, page) {
     return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
       + esc(item.name || ('Picture ' + id)) + '"/><p:cNvPicPr/><p:nvPr/>'
@@ -498,6 +566,9 @@ window.JunoPptx = (function () {
           rels.push({ id: rid, type: DOC_NS + '/relationships/image',
             target: '../media/' + name });
           body += picShape(item, id, rid, page);
+        } else if (item.t === 'table') {
+          var tbl = tableShape(item, id, page);
+          if (tbl) body += tbl; else skipped++;
         } else if (item.t === 'rect') {
           body += rectShape(item, id, page);
         } else if (item.t === 'line') {

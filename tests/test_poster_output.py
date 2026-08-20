@@ -147,7 +147,8 @@ def test_freehand_drawing_is_a_first_class_stroke(out):
     lnTo points, no fill) in a file with no missing parts.
     """
     assert 'id="dc-draw" data-tool="draw"' in out
-    assert "var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1};" in out
+    assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,\n"
+            "    table:1};") in out
     assert "function drawPathD(pts){" in out
     assert "function drawFreeSvg(a,layer){" in out
     # normalised into its own box, with a floor on each axis so a dead
@@ -159,7 +160,9 @@ def test_freehand_drawing_is_a_first_class_stroke(out):
     # a stroke takes stroke properties -- and only those. No arrowheads on
     # a scribble, no route: those stay arrow-only in the same table
     assert "'#fmt-stylewrap':'arrow rect draw'," in out
-    assert "'#fmt-swwrap':'arrow rect draw'," in out
+    # tables joined the weight menu on 2026-08-20 (a table's rules are a
+    # stroke too); the style menu stayed shape-and-stroke only
+    assert "'#fmt-swwrap':'arrow rect draw table'," in out
     assert "'#fmt-headwrap':'arrow'," in out
     assert "'#fmt-bendwrap':'arrow'," in out
     # ...and it is judged by the print check like any other ink

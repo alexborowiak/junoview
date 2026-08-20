@@ -256,11 +256,26 @@ def test_save_is_one_control_not_two(out):
 def test_wordless_glyph_buttons_became_worded_menu_rows(out):
     """Bring-to-front, send-to-back and the rotates were bare glyphs whose
     meaning lived only in a tooltip. Folding them into the Arrange menu
-    removes four controls from the row AND adds four labels.
+    removed four controls from the row AND added four labels.
+
+    That went one step too far for two of them. Hidden behind a menu
+    called "Arrange", bring-to-front and send-to-back read as a MISSING
+    feature -- 2026-08-20, the user asked for "the bring to forewards send
+    to back" when both had been in the code for weeks. They are back in
+    the row as of that date, worded this time, which is the fix the
+    original complaint actually called for. The rotates and the one-STEP
+    pair stay in the menu: rarer, and the row has to stay honest about its
+    width.
     """
     assert "['o:front','Bring to front']" in out
+    assert "['o:forward','Bring forward one']" in out
     assert "['o:rotl','Rotate left 15°']" in out
-    assert "show('#fmt-front',false);" in out
+    # worded buttons in the row...
+    assert "&#8613; Front</button>" in out
+    assert "&#8615; Back</button>" in out
+    assert "show('#fmt-front',isNum);" in out
+    # ...and the one-step pair still menu-only
+    assert "show('#fmt-forward',false);" in out
     assert "&#8676; Arrange &#9662;" in out
     # the menu drives the originals, so each keeps one implementation
     assert "if(b) b.click();" in out

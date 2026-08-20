@@ -448,8 +448,8 @@ def test_qr_code_inserts_rather_than_arming_a_tool_that_does_not_exist(out):
     assert qr.rstrip().endswith('<button class="dbtn rbn-sm"'), \
         "dc-qr must not carry the `et` (drawing tool) class"
     # ...and an unknown tool can never arm again, for anything
-    assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,"
-            "draw:1};" in out)
+    assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,\n"
+            "    table:1};" in out)
     assert "if(!TOOLS[t]) t='select';" in out
     # the label says what it does and why you would want one
     assert "Ask for a link and put a QR code on the page" in out
@@ -476,7 +476,9 @@ def test_weight_is_a_menu_of_drawn_thicknesses_not_a_cycle(out):
     # the cycling button is gone, wrapper and all
     assert "a.sw=cur_>=5?2:(cur_>=3.5?5:3.5);" not in out
     assert "'#fmt-line':'arrow rect'," not in out
-    assert "'#fmt-swwrap':'arrow rect draw'," in out
+    # tables joined the weight menu on 2026-08-20: a table's rules are
+    # a stroke like any other and scale with the page the same way
+    assert "'#fmt-swwrap':'arrow rect draw table'," in out
     # the millimetre reading stays in the tooltip and in preflight, which
     # is the only part of the app that speaks in real millimetres
     assert "'mm on this page ('+swPt(a).toFixed(2)" in out

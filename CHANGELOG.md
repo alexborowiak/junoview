@@ -34,6 +34,68 @@ at the tight end of the fit ladder.
   PowerPoint's does, so the tab you land on is not one lonely button over an
   empty row when nothing is selected.
 
+### Added — the rest of the editor brief
+
+- **Tables.** A real item kind: rows of plain strings plus a handful of
+  switches, not HTML — a table you can only fill by typing HTML is a table
+  nobody will use, and rows-of-strings is the shape every export already knows
+  how to walk. Draw one like any other tool; double-click a cell to type, Tab
+  along, Enter down; drag the boundaries to set column widths. The header row is
+  a *flag*, so turning it on or off moves no data. The rules use the same
+  page-relative stroke currency everything else does, because a fixed 1px
+  hairline vanishes on an A0 poster and is a fence at 10% zoom. It exports as a
+  genuine PowerPoint table, not a grid of rectangles.
+- **Equations.** No new item kind: MathJax is on every page already and the
+  slide is typeset after every render, so a text box whose words happen to be
+  `$$ … $$` is typeset for free — and moves, colours, scales, exports and
+  animates like any other text box. Insert ▸ Equation just starts you off with
+  the delimiters and keeps the maths re-typeset as you edit around it.
+- **Watermarks, headers and footers.** All three are the same thing — one piece
+  of deck-level content repeated on every page, which is exactly what slide
+  numbers already were. They live on the presentation, are painted after the
+  annots, and so cannot be selected, dragged or deleted by accident. `{n}`,
+  `{N}`, `{name}` and `{date}` do what you would expect. One painter serves both
+  the canvas and the PDF/HTML export, because a second copy is how an export and
+  the screen drift apart.
+- **Named text styles** — Title, Headings 1–3, Body, Small, Caption, on a real
+  type scale rather than seven arbitrary sizes. A box *wears* a style instead of
+  carrying a pile of properties, which is what makes **“apply this look to all
+  headings”** one edit to one object rather than a hunt through forty slides.
+  **“Update the style from this box”** goes the other way: format one heading
+  the way you want it and push that look everywhere. Size is deliberately the
+  one thing “apply to all headings” does not flatten — size is what makes a
+  heading level a level.
+- **Marquee selection.** Drag a box on empty canvas to select what it *touches*
+  — not what it fully encloses, which is unusable on a poster where the figures
+  are bigger than the gap you have to drag in. Shift or Ctrl adds to the
+  selection. Under the threshold it is still just a click, so “click empty space
+  to deselect” is unchanged. **Ctrl/Cmd-click** now adds and removes too; half
+  the world reaches for it first and it did nothing at all before.
+- **Groups can be entered.** Double-click a group and you are inside it: clicks
+  pick one member at a time until you leave with Esc or by clicking away. There
+  was previously no way to touch a single item inside a group at all.
+- **Bring forward / send backward**, one place at a time, beside the existing
+  bring-to-front and send-to-back — which are **buttons in the row again**. They
+  had been folded into the Arrange menu, which is why they read as a missing
+  feature when they had been in the code for weeks.
+- **Spotlight while presenting.** Alt+click an item — or press `Z` over it —
+  and it grows out of where it sits to fill the screen, over a dimmed slide;
+  Esc or a click puts it back. A plain click still advances the build: that
+  gesture is what a talk runs on and cannot be overloaded.
+- **Theme, Help and the app controls moved into the top bar, with words.** They
+  were two bare glyphs at the end of the ribbon — the icon-only button this
+  project has rejected twice — so the theme picker might as well not have
+  existed. Help is new there entirely: editing hides the app bar, so from inside
+  a presentation there had been no way to reach it.
+
+### Fixed
+
+- **Stacking order acted on one item.** Bringing a *group* to the front brought
+  one member of it and left the rest behind. It moves the whole selection now.
+- **A watermark sized in CSS percent** resolved against its parent's font size
+  rather than the page, so a 12% watermark came out under 2px and was invisible.
+  Sizing is resolved to pixels against the real page height, like text is.
+
 ### Added
 
 - **Find and replace, across the whole presentation** (Ctrl+F, or Find in the

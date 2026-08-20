@@ -181,11 +181,26 @@
       <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
     </span>
     <span class="qat-sep"></span>
-    <button class="dbtn rbn-ico" id="deck-scheme" aria-haspopup="true"
-      title="Theme — dark, light, forest, colourful, high
- contrast">&#9673;</button>
-    <a class="dbtn rbn-ico" id="deck-support" target="_blank" rel="noopener"
-      title="Support Junoview on Ko-fi">&#9825;</a>
+    <!-- The APP controls, the same three the document view's App group
+         carries, and WORDED like everything else. They were two bare
+         glyphs (a ring and a heart) tucked at the end of the ribbon,
+         which is the icon-only button this project has rejected twice —
+         you could not tell what either one was, so the theme picker
+         might as well not have existed (2026-08-20, user: "the themes and
+         stuff need to go into this top bar as well"). Help is new here:
+         editing hides the app bar, so from inside a poster there was no
+         way to reach it at all. -->
+    <span class="dc-menuwrap">
+      <button class="dbtn qat-btn" id="deck-scheme" aria-haspopup="true"
+        title="Colour scheme — dark, light, forest, colourful, high
+ contrast"><i data-ic="palette"></i> Theme &#9662;</button>
+    </span>
+    <button class="dbtn qat-btn" id="deck-help"
+      title="How to use this, and everything it can do (?)"
+      aria-label="Help"><i data-ic="help"></i> Help</button>
+    <a class="dbtn qat-btn" id="deck-support" target="_blank" rel="noopener"
+      title="Support Junoview on Ko-fi — funds an online, hosted version
+ with accounts"><i data-ic="heart"></i></a>
     <button class="dbtn primary qat-play" id="dc-play"
       title="Play this full screen, from this page (F5)">
       <i data-ic="play"></i> Present</button>
@@ -339,6 +354,31 @@
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
+          <!-- PAGE FURNITURE. A watermark, a header and a footer are one
+               piece of content repeated on every page, which is exactly
+               what slide numbers already were - so they live together,
+               under Design, and not as items you could drag off the page
+               by accident (2026-08-20). -->
+          <span class="rbn-grp rbn-furn" data-tab="design">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="dc-wmark"
+                aria-pressed="false"
+                title="A word across every page - DRAFT, CONFIDENTIAL, your
+ name. Sits behind the content, never over it">&#9639; Watermark</button>
+              <button class="dbtn rbn-sm" id="dc-head"
+                aria-pressed="false"
+                title="A line along the top of every page">&#9776;
+ Header</button>
+              <button class="dbtn rbn-sm" id="dc-foot"
+                aria-pressed="false"
+                title="A line along the bottom of every page. Use {n} and
+ {N} for the page number and the total">&#9776; Footer</button>
+              <button class="dbtn rbn-sm" id="dc-nums"
+                aria-pressed="false"
+                title="Number every page">&#8470; Numbers</button>
+            </span>
+            <span class="rbn-lab">Page furniture</span>
+          </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
                finished thing, on paper or on a screen. They were lumped
@@ -459,6 +499,14 @@
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
                 ><i data-ic="image"></i> Image</button>
+              <!-- A real table, not a picture of one. It is DRAWN like
+                   everything else here rather than dropped in at a canned
+                   size, which is the rule the line tool was told off for
+                   breaking (2026-08-10). -->
+              <button class="dbtn et rbn-sm" data-tool="table"
+                aria-pressed="false"
+                title="Draw a table. Double-click a cell to type; Tab
+ moves along the row, Enter drops down">&#9638; Table</button>
               <!-- NOT an `et` tool. It carried that class without a
                    data-tool, so the shared arming wiring called
                    setTool(undefined): the button lit up as though a tool
@@ -468,6 +516,15 @@
                    "whatever QR code is is confusing"). It is an immediate
                    insert, like Image beside it — which is why Image never
                    had the class. -->
+              <!-- LaTeX, typeset by the MathJax the page already loads.
+                   It is an ordinary text box underneath, so it moves,
+                   colours, scales and exports like any other - the only
+                   new thing is that it starts with the delimiters in it
+                   and is typeset after every edit (2026-08-20, user asked
+                   for "Maths inserts"). -->
+              <button class="dbtn rbn-sm" id="dc-maths"
+                title="Add an equation, written in LaTeX between $$ and $$
+ - it is typeset as you type">&#8747; Equation</button>
               <button class="dbtn rbn-sm" id="dc-qr"
                 title="Ask for a link and put a QR code on the page —
  point a phone at it to open your repo, paper or data. Generated here, so
@@ -591,10 +648,24 @@
                 <div class="sh-menu align-menu" id="fmt-align-menu"
                   hidden></div>
               </span>
-              <button class="dbtn etm" id="fmt-front" hidden
-                title="Bring to front">&#8613;</button>
-              <button class="dbtn etm" id="fmt-back" hidden
-                title="Send to back">&#8615;</button>
+              <!-- WORDED, and back in the row. These two were bare
+                   glyphs with their meaning only in a tooltip, then were
+                   hidden entirely and left reachable only three clicks
+                   deep inside the Arrange menu - which is why they read
+                   as a missing feature (2026-08-20, user asked for "the
+                   bring to forewards send to back"). The one-STEP pair
+                   below stays in the menu: rarer, and the row has to stay
+                   honest about its width. -->
+              <button class="dbtn etm" id="fmt-front"
+                title="Bring to front - in front of everything else on
+ this page">&#8613; Front</button>
+              <button class="dbtn etm" id="fmt-back"
+                title="Send to back - behind everything else on this
+ page">&#8615; Back</button>
+              <button class="dbtn etm" id="fmt-forward" hidden
+                title="Bring forward one place">&#8613;</button>
+              <button class="dbtn etm" id="fmt-backward" hidden
+                title="Send backward one place">&#8615;</button>
               <button class="dbtn etm" id="fmt-rotl" hidden
                 title="Rotate left 15&#176;">&#10226;</button>
               <button class="dbtn etm" id="fmt-rotr" hidden
@@ -731,6 +802,20 @@
                 title="Underline"><u>U</u></button>
               <button class="dbtn etm" id="fmt-strike"
                 title="Strikethrough"><s>S</s></button>
+              <!-- NAMED STYLES: Title / Heading 1-3 / Body / Small /
+                   Caption. A box wears a style rather than carrying a
+                   pile of properties, which is what makes "apply this
+                   look to all headings" a single edit instead of a hunt
+                   through forty slides (2026-08-20). -->
+              <span class="sh-drop" id="fmt-stylewrap-tx">
+                <button class="dbtn etm" id="fmt-style-tx"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Named text styles — Title, Headings, Body,
+ Caption — and pushing this box's look to all of them">&#9776;
+                  Styles &#9662;</button>
+                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
+                  hidden></div>
+              </span>
               <!-- BULLETS and NUMBERING are buttons that show their own
                    state, not a line in a dropdown. The old toggle lived
                    inside a menu called "Layout", so you could not see
@@ -876,6 +961,30 @@
  notebook closed">&#128274; Lock figure</button>
             </span>
             <span class="rbn-lab">Object</span>
+          </span>
+          <!-- TABLE. Rows and columns are added at the END, which is what
+               you want almost every time and needs no cell selected
+               first; the header row is a switch rather than a separate
+               kind of row, so turning it off moves no data. -->
+          <span class="rbn-grp rbn-tbl" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-tbl-rowplus"
+                title="Add a row at the bottom">&#43; Row</button>
+              <button class="dbtn etm" id="fmt-tbl-rowminus"
+                title="Remove the last row">&#8722; Row</button>
+              <button class="dbtn etm" id="fmt-tbl-colplus"
+                title="Add a column on the right">&#43; Column</button>
+              <button class="dbtn etm" id="fmt-tbl-colminus"
+                title="Remove the last column">&#8722; Column</button>
+              <button class="dbtn etm" id="fmt-tbl-head"
+                aria-pressed="false"
+                title="Treat the first row as headings">&#9776;
+                Header row</button>
+              <button class="dbtn etm" id="fmt-tbl-grid"
+                aria-pressed="false"
+                title="Draw the rules between cells">&#9638; Gridlines</button>
+            </span>
+            <span class="rbn-lab">Table</span>
           </span>
         </span>
       </div>

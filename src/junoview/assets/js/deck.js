@@ -639,6 +639,9 @@
       renderAnnots(l0,s0);
       if(mode==='edit') paintSel(l0);
     }
+    /* the furniture is sized in page percentages too, so it has to be
+       re-measured whenever the page changes size */
+    if(s0) paintFurniture(slideEl,cur);
     syncGuides();   /* rulers and grid track whatever size the page ended up */
   }
   function setZoom(z){deckZoom=z;applyZoom();}
@@ -1386,6 +1389,9 @@
     if(a.k==='text')
       return 'Text — '+(String(a.text||'').trim().slice(0,26)||'(empty)');
     if(a.k==='image') return 'Image';
+    if(a.k==='table')
+      return 'Table '+((a.rows||[]).length)+'\u00d7'
+        +(((a.rows||[])[0]||[]).length);
     if(a.k==='arrow') return a.nohead?'Line':'Arrow';
     if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
@@ -1805,6 +1811,11 @@
     /* trim marks are a print decision and were being forgotten on every
        reload, because nothing carried them across (2026-08-10) */
     if(p.cropMarks) out.cropMarks=1;
+    /* deck-level furniture, same rule as the page background: forget it on
+       load and a saved deck quietly loses its footer (2026-08-20) */
+    ['wmark','head','foot','styles'].forEach(function(k){
+      if(p[k]&&typeof p[k]==='object') out[k]=JSON.parse(JSON.stringify(p[k]));
+    });
     return out;
   }
   function registerShell(stem,data){
@@ -2067,7 +2078,9 @@
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
   var undoStack=[],redoStack=[],histSnap=null;
   function histState(){
-    return JSON.stringify({slides:pres.slides||[],showNums:pres.showNums||0});
+    return JSON.stringify({slides:pres.slides||[],
+      showNums:pres.showNums||0,wmark:pres.wmark||null,
+      head:pres.head||null,foot:pres.foot||null});
   }
   function histReset(){
     histSnap=histState();undoStack=[];redoStack=[];updateUndoBtns();
@@ -2083,6 +2096,8 @@
     var d;try{d=JSON.parse(snap);}catch(e){return;}
     pres.slides=d.slides||[];
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
+    ['wmark','head','foot'].forEach(function(k){
+      if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;selAnnot=null;selSet=[];
     /* persist WITHOUT recording a new history entry */
@@ -2961,6 +2976,99 @@
   }
   function closeVFull(){
     var vf=$('#vfull'); if(vf) vf.hidden=true;
+    closeSpot();
+  }
+  /* ---- SPOTLIGHT: blow one item up, mid-talk ---------------------------
+     "In power point when you present it is static. But sometimes when
+     people are presenting things need to be changed. It would be cool if
+     clicking on text or a figure made it full screen in the presentation"
+     (2026-08-20, user).
+     The hard part is not the zoom, it is that a click on the slide
+     already ADVANCES the build - so a plain click cannot mean two things.
+     The rule: a normal click still advances, and ALT+click (or a click on
+     the little magnifier that appears when you hover an item) spotlights.
+     The keyboard has it too: Z zooms whatever the pointer is over, which
+     is the version you can actually use from a lectern.
+     It is a FLIP: the item is cloned, the clone is placed exactly over
+     the original, and then it is transformed to the centre - so it grows
+     out of where it was rather than appearing from nowhere, and the
+     original never moves. */
+  var spotEl=null,spotHover=null;
+  document.addEventListener('mousemove',function(e){
+    if(mode!=='view'||deckEl.hidden) return;
+    spotHover=spotTarget(e);
+  });
+  function closeSpot(){
+    if(!spotEl) return;
+    var el=spotEl;spotEl=null;
+    el.classList.remove('on');
+    setTimeout(function(){if(el.parentNode) el.remove();},220);
+    document.body.classList.remove('jv-spot');
+  }
+  function spotlight(item){
+    if(!item||mode!=='view') return;
+    closeSpot();
+    var r=item.getBoundingClientRect();
+    if(!r.width||!r.height) return;
+    var wrap=document.createElement('div');
+    wrap.className='jv-spot-wrap';
+    var inner=document.createElement('div');
+    inner.className='jv-spot-inner';
+    /* start EXACTLY over the original, in viewport coordinates */
+    inner.style.left=r.left+'px';
+    inner.style.top=r.top+'px';
+    inner.style.width=r.width+'px';
+    inner.style.height=r.height+'px';
+    var clone=item.cloneNode(true);
+    /* the clone is a picture, not a control: strip the editing chrome and
+       anything that could take a click */
+    /* the old drag handle is deliberately NOT in this list: nothing has
+       built one since items began dragging from their own body, and a
+       test pins that it never returns */
+    ['.an-resize','.an-rotate','.an-buildno','.an-endpt',
+     '.an-cellbtn','.cellparts','.an-marquee']
+      .forEach(function(sel){
+        Array.prototype.slice.call(clone.querySelectorAll(sel))
+          .forEach(function(n){n.remove();});
+      });
+    clone.classList.remove('sel','grpsel','an-prebuild','an-ingrp');
+    clone.style.position='absolute';
+    clone.style.left='0';clone.style.top='0';
+    clone.style.width='100%';clone.style.height='100%';
+    clone.style.margin='0';
+    inner.appendChild(clone);
+    wrap.appendChild(inner);
+    /* the way out has to be visible or it does not exist */
+    var x=document.createElement('button');
+    x.className='dbtn jv-spot-x';
+    x.innerHTML='&#10005; Close (Esc)';
+    x.addEventListener('click',function(e){
+      e.stopPropagation();closeSpot();});
+    wrap.appendChild(x);
+    wrap.addEventListener('click',function(e){
+      e.stopPropagation();closeSpot();});
+    document.body.appendChild(wrap);
+    document.body.classList.add('jv-spot');
+    spotEl=wrap;
+    /* now FLIP it to the middle, as big as it can be without distorting */
+    var pad=0.86;
+    var k=Math.min(innerWidth*pad/r.width,innerHeight*pad/r.height);
+    /* never SHRINK something that is already big; a spotlight that makes
+       the figure smaller is a bug wearing a feature's clothes */
+    k=Math.max(1,k);
+    var cx=innerWidth/2-(r.left+r.width/2);
+    var cy=innerHeight/2-(r.top+r.height/2);
+    requestAnimationFrame(function(){
+      inner.style.transform='translate('+cx+'px,'+cy+'px) scale('
+        +k.toFixed(3)+')';
+      wrap.classList.add('on');
+    });
+  }
+  /* what, under this pointer, is worth blowing up? */
+  function spotTarget(ev){
+    var t=ev.target;
+    if(!t||!t.closest) return null;
+    return t.closest('.an-item,.card,.figframe');
   }
   function traceStep(st,k,g,multi,isHidden,spec,doRebuild){
     var box=document.createElement('div');
@@ -3299,6 +3407,81 @@
       else img.addEventListener('load',judge,{once:true});
     });
   }
+  /* ---- REPEATED FURNITURE: watermark, header, footer -------------------
+     All three are the same thing - one piece of DECK-level content painted
+     onto every page. Slide numbers have worked this way since the start
+     and are the model: they live on `pres`, they are drawn after the
+     annots, and they are therefore not items you can select, drag or
+     delete by accident (2026-08-20, user asked for "Watermarks" and
+     "Header and footer").
+     ONE function, called by renderSlide for the canvas and by
+     buildPrintRoot for PDF / standalone HTML - a second copy is how the
+     export and the screen drift apart.
+     The placeholders are the ones every office suite uses, so a footer of
+     "{n} / {N}" says what you would expect it to. */
+  function furnText(txt,idx){
+    return String(txt||'')
+      .replace(/\{n\}/g,String(idx+1))
+      .replace(/\{N\}/g,String((pres.slides||[]).length))
+      .replace(/\{name\}/g,pres.name||'')
+      .replace(/\{date\}/g,new Date().toLocaleDateString());
+  }
+  function paintFurniture(slideEl,idx){
+    if(!slideEl) return;
+    /* idempotent: applyZoom calls this again on every resize so the
+       furniture rescales with the page, and appending a second copy every
+       time would stack watermarks (2026-08-20) */
+    $$('.slide-wmark,.slide-head,.slide-foot',slideEl)
+      .forEach(function(n){n.remove();});
+    /* PERCENT OF PAGE HEIGHT, resolved to px here - exactly the currency
+       fontPx uses for text items. Left as a CSS percentage it resolved
+       against the parent's FONT SIZE instead of the page, so a 12%
+       watermark came out under 2px and was invisible (found live,
+       2026-08-20). */
+    var ph=slideEl.getBoundingClientRect().height||720;
+    function px(pct,dflt){
+      return Math.max(1,ph*(pct==null?dflt:pct)/100).toFixed(2)+'px';
+    }
+    var w=pres.wmark;
+    if(w&&String(w.text||'').trim()){
+      var wm=document.createElement('div');
+      wm.className='slide-wmark';
+      wm.textContent=furnText(w.text,idx);
+      /* sized in the page's own currency (percent of page height), so a
+         watermark reads the same on a 16:9 slide and on an A0 poster */
+      wm.style.fontSize=px(w.size,12);
+      wm.style.opacity=(w.op==null?0.12:w.op);
+      wm.style.transform='translate(-50%,-50%) rotate('
+        +(w.rot==null?-28:w.rot)+'deg)';
+      if(w.color) wm.style.color=w.color;
+      /* BEHIND everything: a watermark that covers a figure is a mistake,
+         not a design */
+      slideEl.insertBefore(wm,slideEl.firstChild);
+      /* CONFIDENTIAL at 12%% of an A4 page is wider than the page. Rather
+         than wrap it (a two-line watermark reads as a paragraph) or clip
+         it, shrink it to fit with a margin - so any word works at any
+         page size without anyone having to tune the number. */
+      var wr=wm.getBoundingClientRect(),pw2=slideEl.clientWidth*0.92;
+      if(wr.width>pw2&&wr.width>0){
+        var k=pw2/wr.width;
+        wm.style.transform+=' scale('+k.toFixed(3)+')';
+      }
+    }
+    [['head','slide-head'],['foot','slide-foot']].forEach(function(f){
+      var v=pres[f[0]];
+      if(!v||!String(v.text||'').trim()) return;
+      /* the first slide is usually a title slide and usually wants
+         neither of them */
+      if(v.skipFirst&&idx===0) return;
+      var el=document.createElement('div');
+      el.className=f[1];
+      el.textContent=furnText(v.text,idx);
+      el.style.fontSize=px(v.size,2);
+      if(v.align) el.style.textAlign=v.align;
+      if(v.color) el.style.color=v.color;
+      slideEl.appendChild(el);
+    });
+  }
   function renderSlide(){
     var s=pres.slides[cur];
     applyPageBg();          /* this slide may carry its own background */
@@ -3350,9 +3533,19 @@
         slideEl.addEventListener('click',function(e){
           if(e.target.closest&&e.target.closest('button,a,input,select'))
             return;
+          /* Alt+click blows the thing under the pointer up instead of
+             advancing. A plain click MUST still advance - that is the
+             gesture a talk runs on and it cannot be overloaded
+             (2026-08-20). */
+          if(e.altKey){
+            var tg=spotTarget(e);
+            if(tg){e.stopPropagation();spotlight(tg);return;}
+          }
+          if(spotEl){closeSpot();return;}
           advance();
         });
       }
+      paintFurniture(slideEl,cur);
       if(pres.showNums){
         var pn=document.createElement('div');
         pn.className='slide-pageno';
@@ -3434,10 +3627,25 @@
   /* selSet = every item in the current selection (a group, or a shift-click
      multi-select); selAnnot is the primary one that drives the format bar */
   var selSet=[];
+  /* Which group you have STEPPED INTO, PowerPoint-style. Normally clicking
+     any member selects the whole group; double-click a group and you are
+     inside it, and clicks select one member at a time until you leave
+     (Esc, or clicking away). Without this there was no way to touch a
+     single item inside a group at all (2026-08-20, user: "You also can't
+     select multiple items in a group like you can in powerpoint to
+     modify"). */
+  var inGroup=null;
+  function leaveGroup(layer){
+    if(inGroup===null) return;
+    inGroup=null;
+    if(layer) paintSel(layer);
+  }
   function groupMembers(s,idx){
     if(!s||typeof idx!=='number') return [idx];
     var a=(s.annots||[])[idx];
     if(!a||a.grp==null) return [idx];
+    /* inside this group, an item is just an item */
+    if(inGroup!=null&&a.grp===inGroup) return [idx];
     var out=[];
     (s.annots||[]).forEach(function(x,i){if(x.grp===a.grp) out.push(i);});
     return out.length?out:[idx];
@@ -3485,6 +3693,9 @@
     var a=(s&&s.annots||[])[idx]; if(!a) return 'item';
     if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
     if(a.k==='image') return 'Image';
+    if(a.k==='table')
+      return 'Table '+((a.rows||[]).length)+'\u00d7'
+        +(((a.rows||[])[0]||[]).length);
     if(a.k==='arrow') return a.nohead?'Line':'Arrow';
     if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
@@ -3494,12 +3705,18 @@
   }
   function paintSel(layer){
     var multi=selSet.length>1;
+    var s0=pres.slides[cur];
     $$('[data-idx]',layer).forEach(function(el){
       var raw=el.getAttribute('data-idx');
       var key=(raw==='t'||raw==='s')?raw:+raw;
       var on=selSet.indexOf(key)>=0;
       el.classList.toggle('sel',on);
       el.classList.toggle('grpsel',on&&multi);
+      /* the group you have stepped into is outlined as a whole, so it is
+         obvious that clicks are landing on members and not on the group */
+      var ga=(typeof key==='number'&&s0)?(s0.annots||[])[key]:null;
+      el.classList.toggle('an-ingrp',
+        inGroup!=null&&!!ga&&ga.grp===inGroup);
     });
   }
   var pendingShape='rect';   /* which shape the "+ Shapes" tool draws */
@@ -3632,6 +3849,61 @@
          and the caller threw a.html away */
       rich:!!tpl.content.querySelector(
         'span[style],font,b,strong,i,em,u,s,ul,ol')};
+  }
+  /* ---- TEXT STYLES ----------------------------------------------------
+     A named look a text box can WEAR rather than a set of properties it
+     has to carry. A box records `a.style` and nothing else; the numbers
+     come from pres.styles, which means restyling every heading in a deck
+     is one edit to one object instead of a hunt through forty slides
+     (2026-08-20, user asked for "all the different heading styles that
+     you can have" and "some things like 'apply style to all headings'").
+     The defaults are a type SCALE, not seven arbitrary sizes: each step
+     is about 1.3x the one below, which is what makes a deck look like it
+     was designed rather than assembled. Sizes are percent of page height,
+     the same currency a.size already uses, so a style means the same
+     thing on a 16:9 slide and on an A0 poster.
+     An override still wins: colour a styled heading red and it stays red,
+     because a.color is read after the style is applied. That is the whole
+     contract - a style sets, it does not lock. */
+  var STYLE_DEFAULTS={
+    title:  {label:'Title',      size:7.2, b:1},
+    h1:     {label:'Heading 1',  size:5.0, b:1},
+    h2:     {label:'Heading 2',  size:3.8, b:1},
+    h3:     {label:'Heading 3',  size:3.0, b:1},
+    body:   {label:'Body',       size:2.6},
+    small:  {label:'Small',      size:2.0},
+    caption:{label:'Caption',    size:1.7, i:1, color:'#8aa0b0'}
+  };
+  var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];
+  /* the HEADING styles, for "apply to all headings" */
+  var HEADING_STYLES=['title','h1','h2','h3'];
+  function deckStyles(){
+    if(!pres.styles) pres.styles={};
+    return pres.styles;
+  }
+  function styleDef(id){
+    var d=STYLE_DEFAULTS[id];
+    if(!d) return null;
+    var over=deckStyles()[id]||{};
+    var out={};
+    Object.keys(d).forEach(function(k){out[k]=d[k];});
+    Object.keys(over).forEach(function(k){out[k]=over[k];});
+    return out;
+  }
+  /* stamp a style's properties onto an item. This WRITES them rather than
+     resolving at render time, deliberately: every export, the pptx
+     converter and the thumbnails already read a.size / a.b / a.color, and
+     teaching all five of them about styles would be five places to get it
+     wrong. a.style is kept so "apply to all headings" can find them. */
+  function applyStyleTo(a,id){
+    var d=styleDef(id); if(!a||!d) return;
+    a.style=id;
+    a.size=d.size;
+    if(d.b) a.b=1; else delete a.b;
+    if(d.i) a.i=1; else delete a.i;
+    if(d.font) a.font=d.font; else delete a.font;
+    if(d.color) a.color=d.color; else delete a.color;
+    if(d.align) a.align=d.align;
   }
   /* ---- LISTS ----------------------------------------------------------
      A text box is a list when a.list says so: 'bullet' or 'number'. The
@@ -3794,6 +4066,10 @@
     el._beginEdit=beginEdit;
     el.addEventListener('dblclick',function(e){
       if(tool!=='select') return;
+      /* inside a group, the FIRST double-click steps in and selects this
+         item; only once you are inside does it start typing */
+      var sg=pres.slides[cur],ag=sg&&annotByIdx(sg,idx);
+      if(ag&&ag.grp!=null&&inGroup!==ag.grp) return;
       e.stopPropagation();
       beginEdit();
       /* put the caret where the words were double-clicked, not at the end */
@@ -4044,6 +4320,199 @@
       var s=pres&&pres.slides&&pres.slides[cur];
       if(s&&layer&&layer.isConnected) redrawArrows(layer,s);
     },0);
+  }
+  /* ---- TABLES ---------------------------------------------------------
+     a.rows is an array of arrays of plain strings; a.thead marks the first
+     row as headings; a.grid draws the rules; a.sw and a.color are the same
+     stroke currency every other item uses, so the lines scale with the
+     page like everything else instead of being a fixed pixel hairline that
+     vanishes on an A0 poster.
+     Column widths are equal unless a.cols says otherwise (percentages that
+     sum to 100), which is what the column-drag handles write. */
+  function tableRows(a){
+    var r=a&&a.rows;
+    return (Array.isArray(r)&&r.length)?r:[['']];
+  }
+  function tableCols(a){
+    var n=(tableRows(a)[0]||[]).length||1;
+    var c=a&&a.cols;
+    if(Array.isArray(c)&&c.length===n) return c;
+    var out=[],i;
+    for(i=0;i<n;i++) out.push(100/n);
+    return out;
+  }
+  /* keep every row the same length: a ragged model would put the column
+     handles and the exports out of step with what is on screen */
+  function tableNormalise(a){
+    var rows=tableRows(a),n=0,i,j;
+    for(i=0;i<rows.length;i++) n=Math.max(n,rows[i].length);
+    n=Math.max(1,n);
+    for(i=0;i<rows.length;i++){
+      for(j=rows[i].length;j<n;j++) rows[i][j]='';
+      rows[i].length=n;
+    }
+    a.rows=rows;
+    if(Array.isArray(a.cols)&&a.cols.length!==n) delete a.cols;
+    return a;
+  }
+  function drawTable(layer,s,a,i,editing){
+    tableNormalise(a);
+    var rows=tableRows(a),cols=tableCols(a);
+    var host=document.createElement('div');
+    host.className='an-item an-table'+(selAnnot===i?' sel':'')
+      +(a.grid===0?' nogrid':'');
+    host.style.left=a.x+'%';host.style.top=a.y+'%';
+    host.style.width=(a.w||40)+'%';host.style.height=(a.h||20)+'%';
+    host.style.fontSize=fontPx(layer,a.size||2.2);
+    if(a.color) host.style.color=a.color;
+    if(a.bgc) host.style.background=a.bgc;
+    /* the rules are page-relative like every other stroke on the canvas */
+    host.style.setProperty('--tbl-sw',strokePx(a,layer).toFixed(2)+'px');
+    host.style.setProperty('--tbl-line',a.line||'currentColor');
+    applyCommon(host,a);
+    applyCrop(host,a);
+    host.setAttribute('data-idx',i);
+    var tbl=document.createElement('table');
+    tbl.className='an-tbl';
+    var cg=document.createElement('colgroup');
+    cols.forEach(function(w){
+      var c=document.createElement('col');
+      c.style.width=w+'%';cg.appendChild(c);});
+    tbl.appendChild(cg);
+    /* an even share each, as a HINT: a browser treats a row height as a
+       minimum, so short rows sit on the grid the box was drawn to and a
+       long one still grows rather than clipping its own words */
+    var rowPct=(100/rows.length).toFixed(4)+'%';
+    rows.forEach(function(row,ri){
+      var tr=document.createElement('tr');
+      tr.style.height=rowPct;
+      if(a.thead&&ri===0) tr.className='an-tbl-head';
+      row.forEach(function(val,ci){
+        var td=document.createElement(
+          (a.thead&&ri===0)?'th':'td');
+        td.textContent=val==null?'':String(val);
+        if(a.align) td.style.textAlign=a.align;
+        if(editing){
+          td.dataset.r=ri;td.dataset.c=ci;
+          /* the WHOLE table drags from any cell; only a double-click puts
+             a caret in one, the same contract text boxes keep */
+          td.addEventListener('dblclick',function(e){
+            e.stopPropagation();
+            startTableEdit(layer,s,a,i,td,ri,ci);
+          });
+        }
+        tr.appendChild(td);
+      });
+      tbl.appendChild(tr);
+    });
+    host.appendChild(tbl);
+    if(editing){
+      host.appendChild(mkResize());
+      host.appendChild(mkRotate());
+      /* a grip per column boundary, so widths are dragged rather than
+         typed into a dialog */
+      if(selAnnot===i&&!a.lock){
+        var acc=0;
+        cols.forEach(function(w,ci){
+          if(ci===cols.length-1) return;
+          acc+=w;
+          var g=document.createElement('span');
+          g.className='an-tblgrip';
+          g.style.left=acc+'%';
+          g.title='Drag to resize this column';
+          (function(at,pct){
+            g.addEventListener('mousedown',function(ev){
+              startColDrag(layer,s,a,i,at,ev);
+            });
+          })(ci,acc);
+          host.appendChild(g);
+        });
+      }
+    }
+    layer.appendChild(host);
+  }
+  /* type into ONE cell. contenteditable on the <td> itself, so the caret,
+     selection and spellcheck all behave the way they do in a text box. */
+  function startTableEdit(layer,s,a,idx,td,ri,ci){
+    if(a.lock) return;
+    td.contentEditable='plaintext-only';
+    td.spellcheck=true;
+    td.focus();
+    try{
+      var r=document.createRange();r.selectNodeContents(td);
+      var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
+    }catch(e){}
+    function commit(){
+      a.rows[ri][ci]=(td.innerText||'').replace(/\r/g,'')
+        .replace(/\n+$/,'');
+      td.contentEditable='false';
+      markDirty();
+    }
+    td.addEventListener('blur',commit,{once:true});
+    td.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      /* Tab along, Enter down - the two moves that make a table usable
+         without reaching for the mouse between every cell */
+      var nr=ri,nc=ci;
+      if(e.key==='Tab'){e.preventDefault();
+        nc=ci+(e.shiftKey?-1:1);
+        if(nc>=a.rows[ri].length){nc=0;nr=ri+1;}
+        else if(nc<0){nc=a.rows[ri].length-1;nr=ri-1;}
+      } else if(e.key==='Enter'){e.preventDefault();
+        nr=ri+(e.shiftKey?-1:1);
+      } else if(e.key==='Escape'){e.preventDefault();td.blur();return;}
+      else return;
+      commit();
+      if(nr<0||nr>=a.rows.length||nc<0||nc>=a.rows[0].length){
+        td.blur();return;
+      }
+      renderAnnots(layer,s);selectAnnot(layer,idx);
+      var nxt=layer.querySelector('.an-item[data-idx="'+idx+'"] '
+        +'[data-r="'+nr+'"][data-c="'+nc+'"]');
+      if(nxt) startTableEdit(layer,s,a,idx,nxt,nr,nc);
+    });
+  }
+  /* drag a column boundary. Only the two columns either side of the grip
+     change, so the table's own width never moves. */
+  function startColDrag(layer,s,a,idx,at,ev0){
+    ev0.preventDefault();ev0.stopPropagation();
+    var cols=tableCols(a).slice();
+    var lr=layer.getBoundingClientRect();
+    var tw=(a.w||40)/100*lr.width;
+    var x0=ev0.clientX,a0=cols[at],b0=cols[at+1];
+    function mm(ev){
+      var d=(ev.clientX-x0)/(tw||1)*100;
+      d=Math.max(-(a0-6),Math.min(b0-6,d));
+      cols[at]=a0+d;cols[at+1]=b0-d;
+      a.cols=cols.slice();
+      renderAnnots(layer,s);selectAnnot(layer,idx);
+    }
+    function mu(){
+      document.removeEventListener('mousemove',mm);
+      document.removeEventListener('mouseup',mu);
+      markDirty();
+    }
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
+  }
+  /* add / remove rows and columns, relative to nothing in particular -
+     the ribbon buttons act on the END, which is what you want 90% of the
+     time and needs no cell to be selected first */
+  function tableGrow(a,what,by){
+    tableNormalise(a);
+    var rows=a.rows,n=(rows[0]||[]).length;
+    if(what==='row'){
+      if(by>0){
+        var blank=[],j;
+        for(j=0;j<n;j++) blank.push('');
+        rows.push(blank);
+      } else if(rows.length>1) rows.pop();
+    } else {
+      if(by>0) rows.forEach(function(r){r.push('');});
+      else if(n>1) rows.forEach(function(r){r.pop();});
+      delete a.cols;   /* equal widths again rather than a stale set */
+    }
+    tableNormalise(a);
   }
   function renderAnnots(layer,s){
     var editing=(mode==='edit');
@@ -4359,6 +4828,8 @@
             (afs*(1.25+Math.abs(+a.arc||0)/26))+'px';
           applyTextArc(d2,tx2,a,i);
         }
+      } else if(a.k==='table'){
+        drawTable(layer,s,a,i,editing);
       } else if(a.k==='image'){
         var im=document.createElement('div');
         im.className='an-item an-image'+(selAnnot===i?' sel':'');
@@ -4384,6 +4855,13 @@
     _arrows.forEach(function(i){
       drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
     });
+    /* the layer is rebuilt on every change, which throws away whatever
+       MathJax had already typeset - so ask for it again, but ONLY when
+       the slide actually carries maths. Typesetting a whole layer on
+       every mousemove of a drag would be a real cost for nothing. */
+    if((s.annots||[]).some(function(a){
+      return a&&a.k==='text'&&(a.maths||/\$\$[\s\S]*\$\$/.test(a.text||''));
+    })) typeset(layer);
     /* build animations: number the builds in the editor; in playback, hide the
        ones not yet revealed and animate the one just revealed */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
@@ -4469,7 +4947,9 @@
      '*' means every kind; the value is a space-separated list otherwise. */
   var FMT_KINDS={
     '#fmt-stylewrap':'arrow rect draw', /* dashes apply to any stroke */
-    '#fmt-swwrap':'arrow rect draw',    /* stroke weight, likewise */
+    /* a table's rules are a stroke like any other, so the same weight
+       menu sets how heavy they are (2026-08-20) */
+    '#fmt-swwrap':'arrow rect draw table',
     '#fmt-headwrap':'arrow',          /* arrowheads: a shape has no ends */
     '#fmt-bendwrap':'arrow',          /* straight/curved/elbow: ditto */
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
@@ -4479,7 +4959,11 @@
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
+  var FMT_MANUAL=('#fmt-stylewrap-tx '
+    +'#fmt-tbl-rowplus #fmt-tbl-rowminus #fmt-tbl-colplus '
+    +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
+    +'#fmt-forward #fmt-backward '
+    +'#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
     +'#fmt-find '
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
@@ -4509,6 +4993,9 @@
       return;
     }
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
+    /* a table is not a text box, but its WORDS take the same size, font
+       and alignment controls a text box does (2026-08-20) */
+    var isTbl=(kind==='table');
     bar.hidden=false;
     /* the contextual groups REPLACE the Insert group instead of adding
        a third toolbar row — the canvas must not shrink when you select
@@ -4540,8 +5027,8 @@
       var cur_=(kind==='cell')?(a.txcol||''):(a.color||defaultColor(kind));
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
-    show('#fmt-smaller',isText||cellText);
-    show('#fmt-bigger',isText||cellText);
+    show('#fmt-smaller',isText||cellText||isTbl);
+    show('#fmt-bigger',isText||cellText||isTbl);
     var fontSel=$('#fmt-font');
     if(fontSel){
       fontSel.hidden=!isText;
@@ -4563,10 +5050,13 @@
     show('#fmt-ital',isText,!!a.i);
     show('#fmt-under',isText,!!a.u);
     show('#fmt-strike',isText,!!a.strike);
-    show('#fmt-szwrap',isText);
+    show('#fmt-szwrap',isText||isTbl);
+    /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
+       already the deck's title style by definition */
+    show('#fmt-stylewrap-tx',isText&&isNum);
     var szIn=$('#fmt-size');
-    if(szIn&&isText&&document.activeElement!==szIn)
-      szIn.value=Math.round((a.size||2.6)*5.4);
+    if(szIn&&(isText||isTbl)&&document.activeElement!==szIn)
+      szIn.value=Math.round((a.size||(isTbl?2.2:2.6))*5.4);
     /* alignment, list and curve are reached through the Layout menu, and
        that menu now applies all three itself — the originals are gone
        (2026-08-17 audit) */
@@ -4606,11 +5096,16 @@
     var nSel=selSet.filter(function(i){return typeof i==='number';}).length;
     show('#fmt-group',nSel>=2);
     show('#fmt-ungroup',isNum&&a.grp!=null);
-    /* these six are reached through the Arrange menu now; they stay in the
-       DOM because the menu drives them by .click(), so each keeps exactly
-       one implementation */
-    show('#fmt-front',false);
-    show('#fmt-back',false);
+    /* Bring to front and Send to back are BUTTONS again. They were
+       menu-only, which is why they read as missing (2026-08-20, user
+       asked for "the bring to forewards send to back" - both pairs were
+       in the code, three clicks deep inside Arrange). The one-STEP pair
+       stays in the menu: it is the rarer of the two and the row has to
+       stay honest about its width. */
+    show('#fmt-front',isNum);
+    show('#fmt-back',isNum);
+    show('#fmt-forward',false);
+    show('#fmt-backward',false);
     show('#fmt-arline',false);
     show('#fmt-argrid',false);
     show('#fmt-rotl',false);
@@ -4658,6 +5153,11 @@
       else cur_=((a.bg===0)?'none':(a.bgc||'#0e1926'));
       sw.setAttribute('aria-pressed',(cur_===sw.dataset.c).toString());
     });
+    /* the Table group, the only place row and column counts live */
+    ['#fmt-tbl-rowplus','#fmt-tbl-rowminus','#fmt-tbl-colplus',
+     '#fmt-tbl-colminus'].forEach(function(id){show(id,isTbl);});
+    show('#fmt-tbl-head',isTbl,isTbl&&!!a.thead);
+    show('#fmt-tbl-grid',isTbl,isTbl&&a.grid!==0);
     show('#fmt-replace',kind==='cell');
     show('#fmt-locate',kind==='cell'&&!!a.ref);
     var lockedV=(kind==='cell')&&!!(a.lockver&&a.lockver.commit);
@@ -5198,12 +5698,22 @@
          text and no background by default"). A box left empty deletes
          itself on blur, so nothing invisible is ever left behind. */
       ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:2.6,bg:0}
+      /* A TABLE is rows of plain strings plus a handful of switches. Not
+         HTML: a table you can only fill by typing HTML is a table nobody
+         will use, and rows-of-strings is the shape every export already
+         knows how to walk (2026-08-20, user asked for "Tables"). The
+         header row is a FLAG rather than a separate field, so turning it
+         on or off never moves a single cell of data. */
+      :(kind==='table')
+      ?{k:'table',x:p0.x,y:p0.y,w:0,h:0,size:2.2,thead:1,grid:1,
+        sw:1,rows:[['','',''],['','',''],['','','']]}
       :(kind==='line')
       ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
         color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
       :{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,
         color:'#ff6b57',sw:SW_DEFAULT};
-    var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text');
+    var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text'
+      ||a.k==='table');
     s.annots=s.annots||[];
     s.annots.push(a);
     var idx=s.annots.length-1;
@@ -5254,6 +5764,8 @@
          (2026-08-10). */
       if(tiny&&a.k==='draw'){
         s.annots.splice(idx,1);      /* a stray click is not a drawing */
+      } else if(tiny&&a.k==='table'){
+        a.x=Math.min(p0.x,54);a.y=Math.min(p0.y,72);a.w=44;a.h=24;
       } else if(tiny&&a.k==='cell'){
         a.x=Math.min(p0.x,64);a.y=Math.min(p0.y,64);a.w=34;a.h=30;
       } else if(tiny&&a.k==='text'){
@@ -5321,6 +5833,72 @@
     });
     return best;
   }
+  /* ---- MARQUEE: drag a box on empty canvas to select what it touches --
+     Mousedown on nothing used to deselect and stop there, so the only way
+     to select several items was to shift-click each one - and shift-click
+     on a text box was itself broken until 2026-08-20 (2026-08-20, user:
+     "You can't drag and select multiple items. The shift and select
+     multiple is realyl hard to do").
+     TOUCH, not enclose: a band that has to swallow an item whole is
+     unusable on a poster where the figures are bigger than the gap you
+     have to drag in. Hold Shift or Ctrl to add to what is already
+     selected. A drag under the threshold is still just a click, so
+     "click empty space to deselect" is unchanged. */
+  var MARQUEE_PX=4;
+  function startMarquee(layer,s,ev0){
+    var add=ev0.shiftKey||ev0.ctrlKey||ev0.metaKey;
+    if(!add) leaveGroup(null);
+    var base=add?selSet.filter(function(i){return typeof i==='number';}):[];
+    var p0=pctPoint(layer,ev0);
+    var band=null,moved=false;
+    function mm(ev){
+      var p=pctPoint(layer,ev);
+      if(!moved){
+        var dx=Math.abs(p.x-p0.x)*layer.clientWidth/100;
+        var dy=Math.abs(p.y-p0.y)*layer.clientHeight/100;
+        if(dx<MARQUEE_PX&&dy<MARQUEE_PX) return;
+        moved=true;
+        band=document.createElement('div');
+        band.className='an-marquee';
+        layer.appendChild(band);
+      }
+      var l=Math.min(p0.x,p.x),t=Math.min(p0.y,p.y);
+      var r=Math.max(p0.x,p.x),b=Math.max(p0.y,p.y);
+      band.style.left=l+'%';band.style.top=t+'%';
+      band.style.width=(r-l)+'%';band.style.height=(b-t)+'%';
+      var hit=base.slice();
+      (s.annots||[]).forEach(function(a,i){
+        /* a locked or hidden item is not on the table: locked items are
+           reachable through the Layers pane and nowhere else, by design */
+        if(!a||a.hide||a.lock) return;
+        var q=annotRectPct(layer,s,i); if(!q) return;
+        if(q.r<l||q.l>r||q.b<t||q.t>b) return;
+        groupMembers(s,i).forEach(function(j){
+          if(hit.indexOf(j)<0) hit.push(j);});
+      });
+      selSet=hit;
+      selAnnot=hit.length?hit[hit.length-1]:null;
+      paintSel(layer);
+    }
+    function mu(){
+      document.removeEventListener('mousemove',mm);
+      document.removeEventListener('mouseup',mu);
+      if(band) band.remove();
+      if(!moved){
+        /* a plain click on empty canvas: clear, unless you were adding */
+        if(!add) selectAnnot(layer,null);
+        return;
+      }
+      /* commit through the normal path so the ribbon, the delete button
+         and the Layers pane all follow */
+      var d=$('#et-del');
+      if(d) d.disabled=!selSet.length;
+      lastSelSig='';
+      showFmt();renderSelPane();
+    }
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
+  }
   function wireEditor(layer,s){
     layer.addEventListener('mousedown',function(ev){
       if(mode!=='edit') return;
@@ -5365,10 +5943,16 @@
         if(item){
           var raw=item.getAttribute('data-idx');
           var idx=(raw==='t'||raw==='s')?raw:+raw;
-          /* Shift+click adds/removes from the selection (for grouping);
-             it never starts a drag */
-          if(ev.shiftKey&&typeof idx==='number'){
+          /* Shift OR Ctrl/Cmd adds and removes; it never starts a drag.
+             Ctrl is here because half the world reaches for it first and
+             it did nothing at all before (2026-08-20). */
+          if((ev.shiftKey||ev.ctrlKey||ev.metaKey)&&typeof idx==='number'){
             selectAnnot(layer,idx,true);return;
+          }
+          /* clicking outside the group you are inside leaves it */
+          if(inGroup!=null&&typeof idx==='number'){
+            var ga=(s.annots||[])[idx];
+            if(!ga||ga.grp!==inGroup) leaveGroup(null);
           }
           /* clicking an item already in a multi-selection keeps the set and
              drags the whole group */
@@ -5378,7 +5962,7 @@
              that does not is a box you are actually typing in. */
           if(!item.classList.contains('an-editing'))
             startMove(layer,s,idx,ev);
-        } else selectAnnot(layer,null);
+        } else startMarquee(layer,s,ev);
         return;
       }
       ev.preventDefault();
@@ -5390,9 +5974,25 @@
          shape"). */
       if(tool!=='select') startDraw(layer,s,tool,pctPoint(layer,ev));
     });
+    /* double-click a GROUP to step inside it; the second double-click on
+       a text box inside then edits its words, as it always did */
+    layer.addEventListener('dblclick',function(ev){
+      if(mode!=='edit'||tool!=='select') return;
+      var it=ev.target.closest&&ev.target.closest('.an-item');
+      if(!it){leaveGroup(layer);return;}
+      var raw=it.getAttribute('data-idx');
+      if(raw==='t'||raw==='s') return;
+      var i2=+raw,a2=(s.annots||[])[i2];
+      if(!a2||a2.grp==null||inGroup===a2.grp) return;
+      ev.stopPropagation();
+      inGroup=a2.grp;
+      selectAnnot(layer,i2);
+      toast('Inside the group \u2014 clicks pick one item. Esc to step out');
+    });
   }
   /* every tool that exists. Anything else is NO tool. */
-  var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1};
+  var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,
+    table:1};
   function setTool(t){
     /* An unknown tool used to be armed happily: #dc-qr carried the generic
        `et` class with no data-tool, so the shared wiring ran
@@ -5435,6 +6035,8 @@
       :t==='line'?'Drag on '+pw+' to draw a line'
       :t==='cell'?'Drag on '+pw+' to draw a cell frame (or click for the '
         +'usual size), then pick a card from your notebook to fill it'
+      :t==='table'?'Drag on '+pw+' to draw a table (or click for a 3\u00d73). '
+        +'Double-click a cell to type; Tab moves along, Enter goes down'
       /* NOTHING in the resting state. A hint earns its place by telling
          you about a mode you have just entered and cannot see; describing
          the default state — click to select, drag to move — is a caption
@@ -5664,11 +6266,13 @@
   onFmt('#fmt-smaller',function(a){
     if(a.k==='cell') a.ts=Math.max(0.5,
       Math.round((a.ts||1)/1.15*100)/100);
-    else a.size=Math.max(1.2,(a.size||2.6)/1.25);});
+    else a.size=Math.max(1.2,
+      (a.size||(a.k==='table'?2.2:2.6))/1.25);});
   onFmt('#fmt-bigger',function(a){
     if(a.k==='cell') a.ts=Math.min(3,
       Math.round((a.ts||1)*1.15*100)/100);
-    else a.size=Math.min(20,(a.size||2.6)*1.25);});
+    else a.size=Math.min(20,
+      (a.size||(a.k==='table'?2.2:2.6))*1.25);});
   /* ---- line style / weight / arrow ends / route -----------------------
      These four SHOW the option instead of naming it. They used to be
      worded lists — "Dash-dot", "Stealth", "Curved the other way", and a
@@ -5971,6 +6575,142 @@
     var b=$(id);
     if(b) b.addEventListener('click',function(e){e.preventDefault();fn();});
   }
+  /* ---- table structure ---------------------------------------------
+     Rows and columns are added at the END. "Insert above the cell I am
+     in" needs a selected CELL, which would be a second kind of selection
+     living beside the item selection, and nothing else in this editor has
+     one - so the honest version is the one that always works. */
+  function tblApply(fn){
+    fmtApply(function(a){if(a.k==='table') fn(a);});
+  }
+  onBtn('#fmt-tbl-rowplus',function(){tblApply(function(a){
+    tableGrow(a,'row',1);});});
+  onBtn('#fmt-tbl-rowminus',function(){tblApply(function(a){
+    tableGrow(a,'row',-1);});});
+  onBtn('#fmt-tbl-colplus',function(){tblApply(function(a){
+    tableGrow(a,'col',1);});});
+  onBtn('#fmt-tbl-colminus',function(){tblApply(function(a){
+    tableGrow(a,'col',-1);});});
+  onBtn('#fmt-tbl-head',function(){tblApply(function(a){
+    if(a.thead) delete a.thead; else a.thead=1;});});
+  onBtn('#fmt-tbl-grid',function(){tblApply(function(a){
+    if(a.grid===0) a.grid=1; else a.grid=0;});});
+  /* ---- the Styles menu ------------------------------------------------
+     Picking a style stamps it. "Update from this one" is the other half
+     and the reason a style registry is worth having at all: format ONE
+     heading the way you want it, then push that look to every heading in
+     the deck without touching them one at a time. */
+  (function(){
+    var menu=$('#fmt-style-menu-tx');
+    if(!menu) return;
+    function build(){
+      menu.innerHTML='';
+      var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
+      var curId=a&&a.style;
+      menuHead(menu,'apply a style');
+      STYLE_ORDER.forEach(function(id){
+        var d=styleDef(id);
+        var b=document.createElement('button');
+        b.className='dbtn vw-opt jv-styleopt';
+        b.setAttribute('aria-pressed',(curId===id).toString());
+        var t=document.createElement('span');
+        t.className='jv-stylename';
+        t.textContent=d.label;
+        /* the row is a SPECIMEN: it is set in the style it names, so you
+           pick by looking rather than by reading a number */
+        t.style.fontWeight=d.b?'700':'400';
+        if(d.i) t.style.fontStyle='italic';
+        t.style.fontSize=Math.max(11,Math.min(21,d.size*3.1))+'px';
+        if(d.color) t.style.color=d.color;
+        b.appendChild(t);
+        var n=document.createElement('span');
+        n.className='jv-stylesz';
+        n.textContent=Math.round(d.size*5.4)+' pt';
+        b.appendChild(n);
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          fmtApply(function(x){
+            if(x.k==='text') applyStyleTo(x,id);});
+          menu.hidden=true;
+        });
+        menu.appendChild(b);
+      });
+      menuHead(menu,'this deck');
+      var upd=document.createElement('button');
+      upd.className='dbtn vw-opt';
+      upd.textContent='\u21bb Update the style from this box';
+      upd.title='Take this box\u2019s size, weight, font and colour and '
+        +'make them the style \u2014 every other box wearing it follows';
+      upd.disabled=!curId;
+      upd.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s3=pres.slides[cur],a3=annotByIdx(s3,selAnnot);
+        if(!a3||!a3.style) return;
+        var d3={size:a3.size,label:STYLE_DEFAULTS[a3.style].label};
+        if(a3.b) d3.b=1;
+        if(a3.i) d3.i=1;
+        if(a3.font) d3.font=a3.font;
+        if(a3.color) d3.color=a3.color;
+        deckStyles()[a3.style]=d3;
+        restyleDeck([a3.style]);
+        menu.hidden=true;
+        toast('\u201c'+d3.label+'\u201d updated everywhere');
+      });
+      menu.appendChild(upd);
+      var all=document.createElement('button');
+      all.className='dbtn vw-opt';
+      all.textContent='\u2261 Apply this look to ALL headings';
+      all.title='Push this box\u2019s weight, font and colour to Title '
+        +'and Headings 1\u20133, keeping each one\u2019s own size';
+      all.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
+        if(!a4){menu.hidden=true;return;}
+        HEADING_STYLES.forEach(function(id){
+          var d4=deckStyles()[id]||{};
+          /* SIZE is what makes a heading level a level, so it is the one
+             thing this does not flatten */
+          d4.size=(deckStyles()[id]||{}).size||STYLE_DEFAULTS[id].size;
+          d4.label=STYLE_DEFAULTS[id].label;
+          if(a4.b) d4.b=1; else delete d4.b;
+          if(a4.i) d4.i=1; else delete d4.i;
+          if(a4.font) d4.font=a4.font; else delete d4.font;
+          if(a4.color) d4.color=a4.color; else delete d4.color;
+          deckStyles()[id]=d4;
+        });
+        restyleDeck(HEADING_STYLES);
+        menu.hidden=true;
+        toast('Every heading in this presentation now matches');
+      });
+      menu.appendChild(all);
+    }
+    /* walk the whole deck and re-stamp anything wearing these styles */
+    function restyleDeck(ids){
+      var n=0;
+      (pres.slides||[]).forEach(function(sl){
+        (sl.annots||[]).forEach(function(a){
+          if(a&&a.k==='text'&&a.style&&ids.indexOf(a.style)>=0){
+            applyStyleTo(a,a.style);n++;
+          }
+        });
+      });
+      markDirty();refresh();
+      return n;
+    }
+    var btn=$('#fmt-style-tx');
+    if(btn) btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      if(open) build();
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)
+        menu.hidden=true;
+    });
+  })();
   onBtn('#fmt-bullets',function(){listApply('bullet');});
   onBtn('#fmt-numbers',function(){listApply('number');});
   /* indent/outdent only mean anything with the caret inside the box, so
@@ -6411,17 +7151,54 @@
   if(grpBtn) grpBtn.addEventListener('click',groupSel);
   var ungBtn=$('#fmt-ungroup');
   if(ungBtn) ungBtn.addEventListener('click',ungroupSel);
-  function zMove(front){
+  /* ---- STACKING ORDER -------------------------------------------------
+     There is no z property: order in s.annots IS the order on the page,
+     so every one of these is an array move. It used to act on selAnnot
+     alone, so bringing a GROUP to the front brought one member of it and
+     left the rest behind (2026-08-20).
+     `step` moves one place instead of all the way, which is what you
+     actually want when three things overlap - the user asked for "the
+     bring to forewards send to back" and Word/PowerPoint give you both
+     pairs. */
+  function zReorder(front,step){
     var s=pres.slides[cur];
-    if(!s||typeof selAnnot!=='number'||!s.annots) return;
-    var a=s.annots.splice(selAnnot,1)[0];
-    var idx;
-    if(front){s.annots.push(a);idx=s.annots.length-1;}
-    else{s.annots.unshift(a);idx=0;}
+    if(!s||!s.annots) return;
+    var idxs=selSet.filter(function(i){return typeof i==='number';});
+    if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+    if(!idxs.length) return;
+    idxs=idxs.slice().sort(function(a,b){return a-b;});
+    var n=s.annots.length;
+    /* already as far as it goes: say so rather than silently doing
+       nothing, which reads as a broken button */
+    var atEnd=front
+      ?idxs[0]===n-idxs.length
+      :idxs[idxs.length-1]===idxs.length-1;
+    if(atEnd&&!step) return;
+    var moving=idxs.map(function(i){return s.annots[i];});
+    var rest=s.annots.filter(function(a,i){return idxs.indexOf(i)<0;});
+    /* idxs[0] is the LOWEST selected index, so every item below it is in
+       `rest` — which makes idxs[0] exactly the insertion point that would
+       leave the block where it is. One step is one either side of that. */
+    var at0=idxs[0];
+    var at=step
+      ?(front?Math.min(rest.length,at0+1):Math.max(0,at0-1))
+      :(front?rest.length:0);
+    s.annots=rest.slice(0,at).concat(moving,rest.slice(at));
+    /* the selection is a set of INDICES, so it has to be rebuilt */
+    var moved=[];
+    for(var k=0;k<moving.length;k++) moved.push(at+k);
+    selSet=moved;selAnnot=moved[moved.length-1];
     markDirty();
     var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s);selectAnnot(l,idx);}
+    if(l){renderAnnots(l,s);paintSel(l);showFmt();renderSelPane();}
   }
+  function zMove(front){zReorder(front,false);}
+  var fwdBtn=$('#fmt-forward');
+  if(fwdBtn) fwdBtn.addEventListener('click',function(){
+    zReorder(true,true);});
+  var bwdBtn=$('#fmt-backward');
+  if(bwdBtn) bwdBtn.addEventListener('click',function(){
+    zReorder(false,true);});
   var frontBtn=$('#fmt-front');
   if(frontBtn) frontBtn.addEventListener('click',function(){
     zMove(true);});
@@ -6585,6 +7362,8 @@
      ['d:h','Equal gaps across (3+ items)'],
      ['d:v','Equal gaps down (3+ items)'],
      ['o:front','Bring to front'],
+     ['o:forward','Bring forward one'],
+     ['o:backward','Send backward one'],
      ['o:back','Send to back'],
      ['o:rotl','Rotate left 15°'],
      ['o:rotr','Rotate right 15°'],
@@ -6595,7 +7374,8 @@
       if(what.indexOf('o:')===0){
         /* drive the original buttons so each keeps its one implementation */
         var b=$({front:'#fmt-front',back:'#fmt-back',rotl:'#fmt-rotl',
-          rotr:'#fmt-rotr',row:'#fmt-arline',grid:'#fmt-argrid'
+          rotr:'#fmt-rotr',row:'#fmt-arline',grid:'#fmt-argrid',
+          forward:'#fmt-forward',backward:'#fmt-backward'
         }[what.slice(2)]);
         if(b) b.click();
         return;
@@ -6953,6 +7733,31 @@
      shape. A listener here would fire ALONGSIDE that wiring, so clicking
      Line would both arm the tool and drop a ready-made rule on the page
      (2026-08-10). */
+  /* ---- EQUATION -------------------------------------------------------
+     A text box that starts with the LaTeX delimiters already in it. There
+     is no new item kind and no new renderer: MathJax is loaded on every
+     page (render/page.py always splices it in) and renderSlide already
+     calls typeset() on the finished slide, so an ordinary text box whose
+     words happen to be "$$ ... $$" is typeset for free - and moves,
+     colours, scales, exports and animates like any other text box
+     (2026-08-20, user asked for "Maths inserts").
+     What it DOES add is re-typesetting after an edit: the annot layer is
+     rebuilt on every change, so the rendered maths would otherwise be
+     thrown away the moment you touched anything. */
+  var mathsBtn=$('#dc-maths');
+  if(mathsBtn) mathsBtn.addEventListener('click',function(){
+    var s2=pres.slides[cur];
+    if(!s2){toast('Add a slide first');return;}
+    s2.annots=s2.annots||[];
+    s2.annots.push({k:'text',x:30,y:42,w:40,text:'$$ E = mc^2 $$',
+      size:3.4,bg:0,align:'center',maths:1});
+    markDirty();
+    setTool('select');
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);selectAnnot(l,s2.annots.length-1);}
+    else renderSlide();
+    toast('Double-click it to edit the LaTeX between the $$ marks');
+  });
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){
     var s=pres.slides[cur];
@@ -8064,6 +8869,27 @@
         miniStroke(bd,a);
         return;
       }
+      if(a.k==='table'){
+        /* a real miniature table: at 116px the words are a smudge, but
+           the SHAPE of a table is unmistakable and that is what a
+           thumbnail is for */
+        var bt=miniBox(d,a,'is-tbl');
+        var trows=tableRows(a),tcols=tableCols(a);
+        var mt=document.createElement('table');
+        mt.className='mini-tbl'+(a.grid===0?' nogrid':'');
+        mt.style.fontSize=Math.max(1.5,
+          MINI_H*(a.size||2.2)/100).toFixed(2)+'px';
+        trows.forEach(function(row,ri){
+          var tr=document.createElement('tr');
+          row.forEach(function(v,ci){
+            var td=document.createElement((a.thead&&ri===0)?'th':'td');
+            td.style.width=tcols[ci]+'%';
+            td.textContent=v==null?'':String(v);
+            tr.appendChild(td);});
+          mt.appendChild(tr);});
+        bt.appendChild(mt);
+        return;
+      }
       if(a.k==='cell'){
         var w2=paneThumb(a.ref);
         w2.style.position='absolute';
@@ -8195,7 +9021,17 @@
     }
     var tx=(s.annots||[]).filter(function(a){
       return a.k==='text'&&a.text;})[0];
-    return tx?tx.text:'empty slide';
+    if(tx) return tx.text;
+    /* a slide that is one big table is named by its first heading, which
+       beats calling it "empty slide" (2026-08-20) */
+    var tb=(s.annots||[]).filter(function(a){return a.k==='table';})[0];
+    if(tb){
+      var r0=(tb.rows||[])[0]||[];
+      for(var j=0;j<r0.length;j++)
+        if(String(r0[j]||'').trim()) return String(r0[j]).trim();
+      return 'table';
+    }
+    return 'empty slide';
   }
   var draggingSlide=-1;
   function renderFilm(){
@@ -8571,6 +9407,7 @@
   })();
   function renderCreate(){
     renderPresRow();renderControls();renderPresNbs();renderFilm();
+    syncFurnBtns();   /* the furniture toggles show their own state */
   }
   function moveSlide(i,d){
     var j=i+d; if(j<0||j>=pres.slides.length) return;
@@ -8961,6 +9798,14 @@
       /* trim mode is the innermost state: the first Esc leaves IT,
          keeping the selection, before any tool/selection drops */
       else if(mode==='edit'&&cropMode){setCropMode(false);}
+      /* then the group you have stepped into — also inner, and also worth
+         keeping the selection through (2026-08-20) */
+      else if(mode==='edit'&&inGroup!=null){
+        leaveGroup(stage.querySelector('.annot-layer'));
+        var lg=stage.querySelector('.annot-layer');
+        if(lg&&typeof selAnnot==='number') selectAnnot(lg,selAnnot);
+      }
+      else if(spotEl){closeSpot();}
       else if(mode==='view'&&(stage.scrollTop||0)>50) scrollToSlide();
       else if(mode==='edit'
               &&(tool!=='select'||selAnnot!==null||selSet.length)){
@@ -9057,6 +9902,14 @@
           e.preventDefault();
           cur=nn;activePane=-1;selAnnot=null;selSet=[];refresh();
         }
+      }
+      /* Z spotlights whatever the pointer is over. Alt+click does the
+         same with the mouse alone; this is the version you can use from a
+         lectern with a clicker in one hand (2026-08-20). */
+      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='z'||e.key==='Z')
+              &&mode==='view'){
+        e.preventDefault();
+        if(spotEl) closeSpot(); else if(spotHover) spotlight(spotHover);
       }
       /* R rulers, G grid — plain keys, so Ctrl+G still groups */
       else if(!e.ctrlKey&&!e.metaKey&&(e.key==='r'||e.key==='R')){
@@ -9272,6 +10125,63 @@
     renderPresRow();
   });
 
+  /* ---- watermark / header / footer, edited in one small prompt each --
+     A dialog would be a whole modal for three fields nobody changes twice
+     a year; a prompt says exactly what it wants and leaves the ribbon
+     button showing whether the thing is on. Empty turns it off, which is
+     the same gesture as clearing any other field. */
+  function furnEdit(key,label,hint,dflt){
+    var cur_=pres[key]||{};
+    var v=prompt(label+'\n\n'+hint,cur_.text||dflt||'');
+    if(v===null) return;
+    v=v.trim();
+    if(!v) delete pres[key];
+    else {
+      pres[key]=pres[key]||{};
+      pres[key].text=v;
+      if(key==='wmark'){
+        if(pres[key].size==null) pres[key].size=12;
+        if(pres[key].op==null) pres[key].op=0.12;
+      } else if(pres[key].size==null) pres[key].size=2;
+    }
+    markDirty();refresh();syncFurnBtns();
+    toast(v?(label+' set'):(label+' removed'));
+  }
+  function syncFurnBtns(){
+    [['#dc-wmark','wmark'],['#dc-head','head'],['#dc-foot','foot']]
+      .forEach(function(p2){
+        var b=$(p2[0]); if(!b) return;
+        var on=!!(pres[p2[1]]&&String(pres[p2[1]].text||'').trim());
+        b.setAttribute('aria-pressed',on?'true':'false');
+      });
+    var nb=$('#dc-nums');
+    if(nb) nb.setAttribute('aria-pressed',pres.showNums?'true':'false');
+  }
+  var wmB=$('#dc-wmark');
+  if(wmB) wmB.addEventListener('click',function(){
+    furnEdit('wmark','Watermark',
+      'One word or phrase, printed faintly across every page and always '
+      +'BEHIND your content.\nLeave it empty to remove it.','DRAFT');
+  });
+  var hdB=$('#dc-head');
+  if(hdB) hdB.addEventListener('click',function(){
+    furnEdit('head','Header',
+      'A line along the top of every page.\n'
+      +'{name} the presentation, {date} today, {n} this page, {N} the '
+      +'total.\nLeave it empty to remove it.','{name}');
+  });
+  var ftB=$('#dc-foot');
+  if(ftB) ftB.addEventListener('click',function(){
+    furnEdit('foot','Footer',
+      'A line along the bottom of every page.\n'
+      +'{name} the presentation, {date} today, {n} this page, {N} the '
+      +'total.\nLeave it empty to remove it.','{n} / {N}');
+  });
+  var numB=$('#dc-nums');
+  if(numB) numB.addEventListener('click',function(){
+    var mi=$('#mi-nums'); if(mi) mi.click();
+    syncFurnBtns();
+  });
   /* ---------- persistence ---------- */
   var toastTimer;
   function toast(msg){
@@ -9850,6 +10760,7 @@
       page.appendChild(slideEl);
       root.appendChild(page);            /* in the DOM before annots render */
       if(s) attachAnnots(slideEl,s);     /* view-style; fontPx reads 720px */
+      paintFurniture(slideEl,i);
       if(pres.showNums){
         var pn=document.createElement('div');
         pn.className='slide-pageno';pn.textContent=(i+1);
@@ -10060,6 +10971,16 @@
           head:(HEAD_BY[headEnd(a)]||{}).ppt||'none',
           tail:(HEAD_BY[headStart(a)]||{}).ppt||'none',
           hsz:hz.ppt,curve:a.curve,bend:a.bend});
+      } else if(a.k==='table'){
+        /* PowerPoint has a real table shape, so pptx.js grew a builder
+           for it rather than flattening a table into a grid of
+           rectangles - which is not much of an export for anyone who
+           then wants to edit the deck (2026-08-20) */
+        items.push({t:'table',x:a.x,y:a.y,w:a.w||40,h:a.h||20,
+          rot:a.rot,op:a.op,rows:tableRows(a).map(function(r){
+            return r.map(function(v){return v==null?'':String(v);});}),
+          cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
+          sizePct:a.size||2.2,color:a.color||ink,font:fontPpt(a.font)});
       } else if(a.k==='cell'){
         var it=a.ref?resolveRef(a.ref):null;
         var node=it?framePart(it.ns,a.part):null;

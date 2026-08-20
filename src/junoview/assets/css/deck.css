@@ -1426,6 +1426,31 @@ select#fmt-font[hidden]{display:none;}
 .deck.editing .deck-arrow,.deck.editing .deck-foot{display:none;}
 .slide{position:relative;}
 /* image annotations */
+/* ---- tables ---------------------------------------------------------
+   The rules are drawn in --tbl-sw, which drawTable sets from strokePx —
+   the same page-relative currency every other stroke on the canvas uses.
+   A fixed 1px hairline would disappear on an A0 poster and be a fence at
+   10% zoom (2026-08-20). */
+.an-table{position:absolute;overflow:hidden;}
+.an-tbl{width:100%;height:100%;border-collapse:collapse;
+  table-layout:fixed;font-family:inherit;font-size:inherit;color:inherit;}
+.an-tbl td,.an-tbl th{border:var(--tbl-sw,1px) solid var(--tbl-line,
+  currentColor);padding:.28em .45em;vertical-align:top;
+  overflow-wrap:anywhere;text-align:left;font-weight:inherit;}
+.an-tbl th{font-weight:700;
+  background:color-mix(in srgb,currentColor 12%,transparent);}
+.an-table.nogrid .an-tbl td,.an-table.nogrid .an-tbl th{border-color:
+  transparent;}
+.an-tbl td[contenteditable="plaintext-only"],
+.an-tbl th[contenteditable="plaintext-only"]{outline:2px solid var(--cyan);
+  outline-offset:-2px;cursor:text;}
+.deck.editing .an-table{cursor:move;}
+.deck.editing .an-table.sel{outline:2px solid var(--cyan);outline-offset:1px;}
+/* a grip per column boundary: widths are dragged, never typed */
+.an-tblgrip{position:absolute;top:0;bottom:0;width:9px;margin-left:-4.5px;
+  cursor:col-resize;z-index:6;}
+.an-tblgrip:hover{background:color-mix(in srgb,var(--accent) 35%,
+  transparent);}
 .an-image{position:absolute;}
 /* CONTAIN by default: cover let any non-proportional resize silently
    clip the picture (2026-08-19, diagnosed+verified in-browser: a 2:1
@@ -1438,6 +1463,15 @@ select#fmt-font[hidden]{display:none;}
 .deck.editing .an-image{cursor:move;}
 .deck.editing .an-image.sel{outline:2px solid var(--cyan);outline-offset:1px;}
 /* multi-selection / group: a dashed outline, no per-item resize handles */
+/* the rubber band. Percent geometry like everything else on the layer,
+   so it is right at any zoom and on any page size (2026-08-20). */
+.an-marquee{position:absolute;pointer-events:none;z-index:40;
+  border:1px solid var(--cyan);
+  background:color-mix(in srgb,var(--accent) 12%,transparent);}
+/* the group you have stepped INTO: outlined as a whole, so it is obvious
+   that clicks are landing on its members and not on the group */
+.deck.editing .an-item.an-ingrp{outline:1px dashed
+  color-mix(in srgb,var(--accent) 55%,transparent);outline-offset:3px;}
 .deck.editing .an-item.grpsel{outline:1.5px dashed var(--cyan);
   outline-offset:1px;}
 .deck.editing .an-item.grpsel .an-resize,
@@ -2203,3 +2237,63 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
   color:var(--accent);border-radius:7px;padding:7px 10px;cursor:pointer;
   font-family:var(--sans);font-size:12px;margin-bottom:6px;}
 .ci-trim:hover{background:color-mix(in srgb,var(--accent) 14%,transparent);}
+
+/* a table in a thumbnail: the words are a smudge at 116px but the SHAPE
+   of a table is unmistakable, which is what a thumbnail is for */
+.mini-tbl{width:100%;height:100%;border-collapse:collapse;
+  table-layout:fixed;line-height:1.05;}
+.mini-tbl td,.mini-tbl th{border:.5px solid currentColor;padding:0 .2em;
+  overflow:hidden;white-space:nowrap;text-align:left;font-weight:inherit;}
+.mini-tbl th{font-weight:700;
+  background:color-mix(in srgb,currentColor 18%,transparent);}
+.mini-tbl.nogrid td,.mini-tbl.nogrid th{border-color:transparent;}
+.mini-it.is-tbl{color:#dbe6ee;}
+
+/* ---- repeated page furniture ---------------------------------------
+   Sized in PERCENT OF PAGE HEIGHT, like text items are, so a watermark
+   reads the same on a 16:9 slide and on an A0 poster (2026-08-20). */
+.slide-wmark{position:absolute;left:50%;top:50%;z-index:0;
+  pointer-events:none;user-select:none;white-space:nowrap;
+  font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  line-height:1;color:currentColor;}
+.slide-head,.slide-foot{position:absolute;left:4%;right:4%;
+  pointer-events:none;color:#8aa0b0;line-height:1.2;}
+.slide-head{top:2.4%;}
+.slide-foot{bottom:2.4%;}
+.page-light .slide-head,.page-light .slide-foot{color:#5b6b78;}
+/* the number sits at the corner, so a footer spanning the page must not
+   run underneath it */
+.slide-foot{padding-right:3.5%;}
+
+/* ---- the Styles menu: each row is a SPECIMEN of the style it names, so
+   you pick by looking rather than by reading a number (2026-08-20) */
+.sh-menu.style-tx-menu{display:block;width:250px;padding:5px;}
+.jv-styleopt{display:flex!important;align-items:baseline;
+  justify-content:space-between;gap:10px;width:100%;text-align:left;}
+.jv-stylename{line-height:1.15;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.jv-stylesz{font-family:var(--mono);font-size:9.5px;color:#7d93a6;
+  flex:none;}
+.style-tx-menu .vw-opt[disabled]{opacity:.4;pointer-events:none;}
+
+/* ---- SPOTLIGHT: one item, blown up mid-talk -------------------------
+   A FLIP, not a fade: the clone starts exactly over the original and is
+   transformed to the centre, so it grows out of where it was and the
+   original never moves (2026-08-20). */
+.jv-spot-wrap{position:fixed;inset:0;z-index:400;
+  background:#000000;opacity:0;transition:opacity .2s ease;
+  cursor:zoom-out;}
+.jv-spot-wrap.on{opacity:.93;}
+.jv-spot-inner{position:fixed;transform-origin:50% 50%;
+  transition:transform .26s cubic-bezier(.22,.8,.3,1);
+  will-change:transform;}
+/* the clone paints above the backdrop, which is the whole point */
+.jv-spot-wrap .jv-spot-inner{z-index:1;}
+.jv-spot-x{position:fixed;top:16px;right:18px;z-index:2;
+  background:#ffffff14;border-color:#ffffff3d;color:#eaf2f8;}
+.jv-spot-x:hover{background:#ffffff26;border-color:var(--cyan);}
+/* while a spotlight is up, the deck underneath must not react to
+   anything - the click that closes it is the only one that counts */
+body.jv-spot .deck-stage{pointer-events:none;}
+/* an item you can blow up says so on hover, and only while presenting */
+.deck:not(.editing) .an-item{transition:filter .12s;}
