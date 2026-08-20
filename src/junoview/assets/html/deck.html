@@ -164,17 +164,13 @@
          File-menu toggle you had to open the menu to read -->
     <button class="dbtn qat-btn" id="qat-auto" hidden
       aria-haspopup="true"></button>
-    <span class="qat-sep"></span>
-    <!-- Zoom is a property of the VIEW, not of the page, and you reach for
-         it constantly whatever tab you are on — so it sits up here where
-         no tab can take it away -->
-    <span class="rbn-cell qat-zoom">
-      <button class="dbtn rbn-ico" id="zoom-out"
-        title="Zoom out">&#8722;</button>
-      <button class="dbtn rbn-sm" id="zoom-val"
-        title="Click to fit the whole page in the window">Zoom 100%</button>
-      <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
-    </span>
+    <!-- Zoom is not here any more. It went to the ribbon, then to this
+         bar, and it was wrong in both: it is a property of the CANVAS, so
+         it belongs at the canvas, and the bottom-right corner is where
+         Word, PowerPoint, Figma and Illustrator all put it (2026-08-20,
+         user: "I find the location of the zoom still really annoying.
+         That is a prominent feature, and it needs to be somewhere
+         good"). See #deck-zoombar. -->
     <span class="qat-sep"></span>
     <!-- The APP controls, the same three the document view's App group
          carries, and WORDED like everything else. They were two bare
@@ -393,37 +389,36 @@
                useful when you have an object selected (2026-08-17). -->
           <span class="rbn-grp rbn-fixed rbn-view" data-tab="home">
             <span class="rbn-row">
-              <!-- four toggles behind one worded menu. Every option keeps
-                   its full name inside; what the row loses is width, not
-                   words. -->
-              <span class="sh-drop" id="vw-menuwrap">
-                <button class="dbtn rbn-sm" id="vw-menu"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Rulers, grid, where this toolbar sits, and
- full-screen editing">&#9707; Guides &#9662;</button>
-                <div class="sh-menu vw-menu" id="vw-menu-list" hidden>
-                  <button class="dbtn vw-opt" id="vw-rulers"
-                    aria-pressed="false"
-                    title="Rulers down the top and left edge, in millimetres
+              <!-- FOUR BUTTONS, not a menu of four. They were folded
+                   behind one dropdown called "Guides" when the row was
+                   short of width; the row is not short of width any more,
+                   and two of them were never guides in the first place -
+                   full-screen editing and where the toolbar sits are
+                   things you do to the WINDOW (2026-08-20, user: "the
+                   'edit full screen' being under guides a. does not make
+                   sense, and b. is unnecessary"). A toggle you can see
+                   the state of beats a toggle you have to open a menu to
+                   read. -->
+              <button class="dbtn rbn-sm" id="vw-rulers"
+                aria-pressed="false"
+                title="Rulers down the top and left edge, in millimetres
  of the real page. Drag off one to lay down your own guide"
-                    >&#128207; Rulers <kbd>R</kbd></button>
-                  <button class="dbtn vw-opt" id="vw-grid"
-                    aria-pressed="false"
-                    title="A margin box and a grid to lay out against
- &mdash; items snap to both. Guides, not ink: never printed or
- exported">&#9638; Margin &amp; grid <kbd>G</kbd></button>
-                  <button class="dbtn vw-opt" id="vw-side"
-                    aria-pressed="false"
-                    title="Stand the toolbar up on the right-hand edge, so
- the page gets the full height of the window. A tall poster needs height
- far more than width"
-                    >&#8942; Toolbar on the right</button>
-                  <button class="dbtn vw-opt" id="vw-full"
-                    title="Edit full screen &mdash; the browser chrome goes
+                >&#128207; Rulers <kbd>R</kbd></button>
+              <button class="dbtn rbn-sm" id="vw-grid"
+                aria-pressed="false"
+                title="A margin box and a grid to lay out against &mdash;
+ items snap to both. Guides, not ink: never printed or exported"
+                >&#9638; Grid <kbd>G</kbd></button>
+              <button class="dbtn rbn-sm" id="vw-full"
+                aria-pressed="false"
+                title="Edit full screen &mdash; the browser chrome goes
  away and the page gets the whole display (Esc to leave). Unlike Present,
- you keep every editing tool">&#10530; Edit full screen</button>
-                </div>
-              </span>
+ you keep every editing tool">&#10530; Full screen</button>
+              <button class="dbtn rbn-sm" id="vw-side"
+                aria-pressed="false"
+                title="Stand the toolbar up on the right-hand edge, so the
+ page gets the full height of the window. A tall poster needs height far
+ more than width">&#8942; Side toolbar</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
@@ -1046,6 +1041,17 @@
         aria-label="Show the code trace that made this slide">
         <span class="cp-arr">&#8595;</span> Show code</button>
       <span class="deck-count" id="deck-count"></span>
+      <!-- the zoom cluster, pinned to the corner of the canvas the way
+           every other page-based editor does it. It floats over the stage
+           rather than sitting in its flow, so it costs no height at all,
+           and it steps aside when a pane docks. -->
+      <span class="deck-zoombar" id="deck-zoombar">
+        <button class="dbtn rbn-ico" id="zoom-out"
+          title="Zoom out">&#8722;</button>
+        <button class="dbtn rbn-sm" id="zoom-val"
+          title="Click to fit the whole page in the window">Zoom 100%</button>
+        <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
+      </span>
     </div>
   </div>
   <div class="vfull" id="vfull" hidden>

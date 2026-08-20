@@ -166,7 +166,17 @@ def test_button_names_say_what_they_do(out):
     assert "Notebook cell</button>" in out
     assert "Text box</button>" in out
     assert "Page size &#9662;" in out or "Page size ▾" in out
-    assert "Guides &#9662;" in out or "Guides ▾" in out
+    # The Guides menu is gone (2026-08-20): Rulers, Grid, Full screen
+    # and Side toolbar are four buttons in the row, because a toggle you
+    # have to open a menu to read the state of is a toggle nobody trusts
+    # -- and two of them were never guides in the first place (user: "the
+    # 'edit full screen' being under guides a. does not make sense, and
+    # b. is unnecessary"). The naming rule still holds: each says what it
+    # does, in words.
+    assert "&#128207; Rulers" in out
+    assert "&#10530; Full screen" in out
+    assert "&#8942; Side toolbar" in out
+    assert 'id="vw-menuwrap"' not in out
     assert ">Show me &#9662;" not in out
     # a constant height means selecting an item cannot shift the canvas
     assert "height:98px;" in out

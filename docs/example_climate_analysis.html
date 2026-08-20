@@ -2849,7 +2849,24 @@ body.deck-open{overflow:hidden;}
   min-width:190px;outline:none;}
 .deck-qat .deck-status{height:22px;font-size:10px;flex:none;
   max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.qat-zoom{flex:none;}
+/* ---- the zoom cluster, in the corner of the canvas -------------------
+   It lived in the ribbon, then in the top bar, and was wrong in both: it
+   is a property of the CANVAS, so it belongs at the canvas. Bottom-right
+   is where Word, PowerPoint, Figma and Illustrator all put it, and this
+   floats over the stage rather than sitting in its flow, so it costs no
+   height at all (2026-08-20, user). */
+.deck-zoombar{position:absolute;right:18px;bottom:12px;z-index:8;
+  display:none;align-items:stretch;gap:3px;padding:4px;border-radius:9px;
+  background:color-mix(in srgb,var(--chrome-1,#0e1926) 88%,transparent);
+  border:1px solid #ffffff1f;box-shadow:0 6px 20px #00000055;}
+.deck.editing .deck-zoombar{display:flex;}
+/* it steps aside for a docked pane, driven by the SAME width variable so
+   the two can never disagree */
+.deck.pane-open .deck-zoombar{right:calc(var(--pane-w) + 18px);}
+.deck.rbn-side .deck-zoombar{right:calc(var(--rbn-side-w) + 18px);}
+.deck.pane-open.rbn-side .deck-zoombar{
+  right:calc(var(--pane-w) + var(--rbn-side-w) + 18px);}
+.deck-zoombar .dbtn{padding:3px 9px;}
 .qat-play{flex:none;white-space:nowrap;}
 
 /* ---------- the tab strip ---------------------------------------------
@@ -9014,17 +9031,13 @@ through Ko-fi. Thank you.</p>
          File-menu toggle you had to open the menu to read -->
     <button class="dbtn qat-btn" id="qat-auto" hidden
       aria-haspopup="true"></button>
-    <span class="qat-sep"></span>
-    <!-- Zoom is a property of the VIEW, not of the page, and you reach for
-         it constantly whatever tab you are on — so it sits up here where
-         no tab can take it away -->
-    <span class="rbn-cell qat-zoom">
-      <button class="dbtn rbn-ico" id="zoom-out"
-        title="Zoom out">&#8722;</button>
-      <button class="dbtn rbn-sm" id="zoom-val"
-        title="Click to fit the whole page in the window">Zoom 100%</button>
-      <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
-    </span>
+    <!-- Zoom is not here any more. It went to the ribbon, then to this
+         bar, and it was wrong in both: it is a property of the CANVAS, so
+         it belongs at the canvas, and the bottom-right corner is where
+         Word, PowerPoint, Figma and Illustrator all put it (2026-08-20,
+         user: "I find the location of the zoom still really annoying.
+         That is a prominent feature, and it needs to be somewhere
+         good"). See #deck-zoombar. -->
     <span class="qat-sep"></span>
     <!-- The APP controls, the same three the document view's App group
          carries, and WORDED like everything else. They were two bare
@@ -9243,37 +9256,36 @@ through Ko-fi. Thank you.</p>
                useful when you have an object selected (2026-08-17). -->
           <span class="rbn-grp rbn-fixed rbn-view" data-tab="home">
             <span class="rbn-row">
-              <!-- four toggles behind one worded menu. Every option keeps
-                   its full name inside; what the row loses is width, not
-                   words. -->
-              <span class="sh-drop" id="vw-menuwrap">
-                <button class="dbtn rbn-sm" id="vw-menu"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Rulers, grid, where this toolbar sits, and
- full-screen editing">&#9707; Guides &#9662;</button>
-                <div class="sh-menu vw-menu" id="vw-menu-list" hidden>
-                  <button class="dbtn vw-opt" id="vw-rulers"
-                    aria-pressed="false"
-                    title="Rulers down the top and left edge, in millimetres
+              <!-- FOUR BUTTONS, not a menu of four. They were folded
+                   behind one dropdown called "Guides" when the row was
+                   short of width; the row is not short of width any more,
+                   and two of them were never guides in the first place -
+                   full-screen editing and where the toolbar sits are
+                   things you do to the WINDOW (2026-08-20, user: "the
+                   'edit full screen' being under guides a. does not make
+                   sense, and b. is unnecessary"). A toggle you can see
+                   the state of beats a toggle you have to open a menu to
+                   read. -->
+              <button class="dbtn rbn-sm" id="vw-rulers"
+                aria-pressed="false"
+                title="Rulers down the top and left edge, in millimetres
  of the real page. Drag off one to lay down your own guide"
-                    >&#128207; Rulers <kbd>R</kbd></button>
-                  <button class="dbtn vw-opt" id="vw-grid"
-                    aria-pressed="false"
-                    title="A margin box and a grid to lay out against
- &mdash; items snap to both. Guides, not ink: never printed or
- exported">&#9638; Margin &amp; grid <kbd>G</kbd></button>
-                  <button class="dbtn vw-opt" id="vw-side"
-                    aria-pressed="false"
-                    title="Stand the toolbar up on the right-hand edge, so
- the page gets the full height of the window. A tall poster needs height
- far more than width"
-                    >&#8942; Toolbar on the right</button>
-                  <button class="dbtn vw-opt" id="vw-full"
-                    title="Edit full screen &mdash; the browser chrome goes
+                >&#128207; Rulers <kbd>R</kbd></button>
+              <button class="dbtn rbn-sm" id="vw-grid"
+                aria-pressed="false"
+                title="A margin box and a grid to lay out against &mdash;
+ items snap to both. Guides, not ink: never printed or exported"
+                >&#9638; Grid <kbd>G</kbd></button>
+              <button class="dbtn rbn-sm" id="vw-full"
+                aria-pressed="false"
+                title="Edit full screen &mdash; the browser chrome goes
  away and the page gets the whole display (Esc to leave). Unlike Present,
- you keep every editing tool">&#10530; Edit full screen</button>
-                </div>
-              </span>
+ you keep every editing tool">&#10530; Full screen</button>
+              <button class="dbtn rbn-sm" id="vw-side"
+                aria-pressed="false"
+                title="Stand the toolbar up on the right-hand edge, so the
+ page gets the full height of the window. A tall poster needs height far
+ more than width">&#8942; Side toolbar</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
@@ -9896,6 +9908,17 @@ through Ko-fi. Thank you.</p>
         aria-label="Show the code trace that made this slide">
         <span class="cp-arr">&#8595;</span> Show code</button>
       <span class="deck-count" id="deck-count"></span>
+      <!-- the zoom cluster, pinned to the corner of the canvas the way
+           every other page-based editor does it. It floats over the stage
+           rather than sitting in its flow, so it costs no height at all,
+           and it steps aside when a pane docks. -->
+      <span class="deck-zoombar" id="deck-zoombar">
+        <button class="dbtn rbn-ico" id="zoom-out"
+          title="Zoom out">&#8722;</button>
+        <button class="dbtn rbn-sm" id="zoom-val"
+          title="Click to fit the whole page in the window">Zoom 100%</button>
+        <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
+      </span>
     </div>
   </div>
   <div class="vfull" id="vfull" hidden>
@@ -17465,10 +17488,13 @@ window.JunoPptx = (function () {
        it the remedy is Guides ▸ Toolbar on the right. */
   }
   function syncViewBtns(){
-    var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full');
+    var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full'),sd=$('#vw-side');
     if(r) r.setAttribute('aria-pressed',guides.rulers?'true':'false');
     if(g) g.setAttribute('aria-pressed',guides.grid?'true':'false');
     if(f) f.setAttribute('aria-pressed',editFull?'true':'false');
+    /* out of the menu and into the row, so it shows its state too */
+    if(sd) sd.setAttribute('aria-pressed',
+      deckEl.classList.contains('rbn-side')?'true':'false');
   }
   function toggleEditFull(){
     try{
@@ -17484,23 +17510,10 @@ window.JunoPptx = (function () {
     syncViewBtns();
   }
   (function(){
-    /* the View menu opens and closes like the other ribbon dropdowns; its
-       rows are built in markup because each is a stateful toggle, not a
-       one-shot pick */
-    var vwrap=$('#vw-menuwrap'),vbtn=$('#vw-menu'),vlist=$('#vw-menu-list');
-    if(vwrap&&vbtn&&vlist){
-      vbtn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var open=vlist.hidden;
-        vlist.hidden=!open;
-        vbtn.setAttribute('aria-expanded',open.toString());
-        if(open) floatMenu(vbtn,vlist);
-      });
-      document.addEventListener('click',function(e){
-        if(!vlist.hidden&&!vwrap.contains(e.target)){
-          vlist.hidden=true;vbtn.setAttribute('aria-expanded','false');}
-      });
-    }
+    /* No View menu. Rulers, Grid, Full screen and Side toolbar are four
+       buttons in the row now: each is a stateful TOGGLE, and a toggle you
+       have to open a menu to read the state of is a toggle nobody trusts.
+       Two of them were never guides in the first place (2026-08-20). */
     /* ONE button, two mechanisms, because the two page kinds want opposite
        defaults. A deck's strip is docked and on: toggling it is a class,
        and the slide list never leaves the panel. A poster's versions are
@@ -17699,9 +17712,16 @@ window.JunoPptx = (function () {
        moved somewhere else is one you have chosen to float — reserving a
        strip on the right for it would leave a gap beside nothing
        (2026-08-20). Drag it back to the edge, or reopen it, to re-dock. */
-    var open=$$('.selpane',deckEl).some(function(p){
-      return !p.hidden&&p.style.right!=='auto';});
-    deckEl.classList.toggle('pane-open',open&&mode==='edit');
+    var docked=null;
+    $$('.selpane',deckEl).forEach(function(p){
+      if(!p.hidden&&p.style.right!=='auto') docked=p;});
+    /* reserve the width the pane ACTUALLY has: it is resizable, and a
+       strip sized to the default would leave a widened pane over the
+       page again */
+    if(docked)
+      deckEl.style.setProperty('--pane-w',
+        Math.round(docked.offsetWidth||232)+'px');
+    deckEl.classList.toggle('pane-open',!!docked&&mode==='edit');
     /* the page is fitted to the stage's width, so the stage changing size
        has to re-fit it — otherwise the slide keeps the size it had when
        the pane was closed and the pane lands on top of it after all */
@@ -17921,19 +17941,30 @@ window.JunoPptx = (function () {
   function wirePane(pane){
     if(!pane||pane._wired) return;pane._wired=1;
     var id=pane.id,h=pane.querySelector('.selpane-h');
+    /* MOVED and RESIZED are different states. A pane keeps its docked
+       right/bottom anchors until you actually DRAG it; resizing it by the
+       corner grip changes its size and nothing else.
+       They used to be the same thing, and the ResizeObserver below fires
+       the moment a pane is first shown - so every pane recorded an x/y,
+       came back "moved" on the next load, and could never dock again.
+       That is what stopped the docked layout working on the second visit
+       (2026-08-20, found live: selpane style.right was "auto" on a pane
+       nobody had touched). */
     function place(box){
-      /* moving detaches the pane from its docked right/bottom anchors */
-      pane.style.right='auto';pane.style.bottom='auto';
       var host=pane.offsetParent;
       var hw=host?host.clientWidth:innerWidth;
       var hh=host?host.clientHeight:innerHeight;
-      pane.style.left=Math.max(0,Math.min(hw-80,box.x))+'px';
-      pane.style.top=Math.max(0,Math.min(hh-60,box.y))+'px';
+      if(box.moved){
+        /* moving is what detaches it from the edge it was docked to */
+        pane.style.right='auto';pane.style.bottom='auto';
+        pane.style.left=Math.max(0,Math.min(hw-80,box.x))+'px';
+        pane.style.top=Math.max(0,Math.min(hh-60,box.y))+'px';
+      }
       if(box.w) pane.style.width=Math.min(hw,box.w)+'px';
       if(box.h) pane.style.height=Math.min(hh,box.h)+'px';
     }
     var saved=paneStore()[id];
-    if(saved&&typeof saved.x==='number') place(saved);
+    if(saved) place(saved);
     if(h){
       h.style.cursor='move';
       h.addEventListener('pointerdown',function(ev){
@@ -17945,26 +17976,33 @@ window.JunoPptx = (function () {
         var r=pane.getBoundingClientRect();
         var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
         function mv(e2){
-          place({x:e2.clientX-hostR.left-dx,y:e2.clientY-hostR.top-dy});
+          place({moved:1,x:e2.clientX-hostR.left-dx,
+            y:e2.clientY-hostR.top-dy});
         }
         function up(){
           document.removeEventListener('pointermove',mv);
           document.removeEventListener('pointerup',up);
-          paneSave(id,{x:pane.offsetLeft,y:pane.offsetTop,
+          /* `moved` is set HERE and only here: a drag is the one gesture
+             that means "I want this somewhere else" */
+          paneSave(id,{moved:1,x:pane.offsetLeft,y:pane.offsetTop,
             w:pane.offsetWidth,h:pane.offsetHeight});
+          syncPaneDock();
         }
         document.addEventListener('pointermove',mv);
         document.addEventListener('pointerup',up);
       });
     }
-    /* the native resize grip changes width/height; remember those too */
+    /* the native resize grip changes width/height; remember those too -
+       and ONLY those, so a resize never counts as a move */
     if(window.ResizeObserver) new ResizeObserver(function(){
       if(pane.hidden||!pane.offsetParent) return;
-      var st=paneStore()[id];
-      if(st&&Math.abs((st.w||0)-pane.offsetWidth)<3
+      var st=paneStore()[id]||{};
+      if(Math.abs((st.w||0)-pane.offsetWidth)<3
         &&Math.abs((st.h||0)-pane.offsetHeight)<3) return;
-      paneSave(id,{x:pane.offsetLeft,y:pane.offsetTop,
-        w:pane.offsetWidth,h:pane.offsetHeight});
+      st.w=pane.offsetWidth;st.h=pane.offsetHeight;
+      paneSave(id,st);
+      /* a widened pane needs a wider strip reserved for it */
+      if(!st.moved) syncPaneDock();
     }).observe(pane);
   }
   ['selpane','animpane','verpane','preflight','varspane']

@@ -581,8 +581,19 @@ def test_the_document_actions_are_in_one_thin_bar_across_the_top(out):
     qat = out.split('class="deck-qat"')[1].split('class="rbn-tabs"')[0]
     for cid in ('id="dc-file"', 'id="dc-save"', 'id="dc-undo"',
                 'id="dc-redo"', 'id="qat-find"', 'id="qat-name"',
-                'id="deck-status"', 'id="zoom-val"', 'id="dc-play"'):
+                'id="deck-status"', 'id="dc-play"'):
         assert cid in qat, cid
+    # ZOOM is NOT here. It went ribbon -> top bar -> the corner of the
+    # canvas, which is where Word, PowerPoint, Figma and Illustrator all
+    # put it: it is a property of the canvas, so it belongs at the canvas
+    # (2026-08-20, user: "I find the location of the zoom still really
+    # annoying. That is a prominent feature, and it needs to be somewhere
+    # good"). It floats over the stage, so it costs no height.
+    assert 'id="zoom-val"' not in qat
+    assert 'class="deck-zoombar" id="deck-zoombar"' in out
+    assert ".deck.editing .deck-zoombar{display:flex;}" in out
+    assert (".deck.pane-open .deck-zoombar{"
+            "right:calc(var(--pane-w) + 18px);}") in out
     # ...and .dc-head, which used to hold them in the column, is gone
     assert 'class="dc-head"' not in out
     # exactly one bar occupies row 1: .deck-qat while editing or building,
@@ -652,7 +663,8 @@ def test_view_and_output_are_separate_groups(out):
     # tab, and a tab could have taken it away.
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]
-    assert 'id="vw-menuwrap"' in view and 'id="objects-btn"' in view
+    assert 'id="vw-rulers"' in view and 'id="objects-btn"' in view
+    assert 'id="vw-full"' in view
     assert 'id="vw-check"' not in view and 'id="dc-play"' not in view
     # both groups are on the same TAB, which is what now keeps them
     # together in the row (2026-08-20)
@@ -685,7 +697,7 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     # away from you is a control you cannot rely on. It is still not a
     # page property, which is the distinction this test exists for.
     assert 'id="zoom-val"' not in view and 'id="zoom-val"' not in slide
-    assert 'id="zoom-val"' in out.split('class="deck-qat"')[1]
+    assert 'id="zoom-val"' in out.split('class="deck-zoombar"')[1]
     # View can no longer stand down for a selection: an object list is at
     # its most useful when there IS an object selected
     assert 'rbn-standby rbn-view' not in out

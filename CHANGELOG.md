@@ -34,6 +34,32 @@ at the tight end of the fit ladder.
   PowerPoint's does, so the tab you land on is not one lonely button over an
   empty row when nothing is selected.
 
+### Changed — things came out of menus, and zoom found a home
+
+Controls were folded behind dropdowns when the ribbon was short of width. It
+is not short of width any more, so the ones that never belonged there came
+back out.
+
+- **The Guides menu is gone.** Rulers, Grid, Full screen and Side toolbar are
+  four buttons in the View group. Each is a stateful *toggle*, and a toggle you
+  have to open a menu to read the state of is a toggle nobody trusts. Two of
+  them were never guides in the first place: full-screen editing and where the
+  toolbar sits are things you do to the *window*.
+- **Zoom moved to the bottom-right corner of the canvas.** It had been in the
+  ribbon, then in the top bar, and was wrong in both — it is a property of the
+  canvas, so it belongs at the canvas, which is where Word, PowerPoint, Figma
+  and Illustrator all put it. It floats over the stage rather than sitting in
+  its flow, so it costs no height, and it steps aside when a pane docks.
+
+### Fixed
+
+- **Panes stopped docking after the first session.** `moved` and `resized` were
+  the same state, and the pane's own ResizeObserver fires the moment a pane is
+  first shown — so every pane silently recorded a position, came back "moved" on
+  the next load, and never docked again. Only a *drag* counts as a move now. The
+  strip the stage reserves is also the width the pane actually has, since panes
+  are resizable.
+
 ### Changed — the tabs settled down
 
 Five tabs was one or two too many: Animate was a single group of six small

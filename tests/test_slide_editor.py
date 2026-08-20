@@ -416,10 +416,20 @@ def test_panes_dock_beside_the_page_and_are_draggable_and_remembered(out):
     assert (".deck.pane-open .deck-stage{"
             "padding-right:calc(var(--pane-w) + 22px);}") in out
     assert "function syncPaneDock(){" in out
-    # watched, not trusted to the call sites: five panes are opened from
-    # eight places and one forgetting to dock would put a pane back over
+    # watched, not trusted to the call sites: the panes are opened from
+    # several places and one forgetting to dock would put a pane back over
     # the page
     assert "attributeFilter:['hidden']" in out
+    # MOVED and RESIZED are different states. They used to be the same,
+    # and the ResizeObserver fires the moment a pane is first shown -- so
+    # every pane recorded an x/y, came back "moved" on the next load, and
+    # could never dock again. Only a DRAG sets `moved` (2026-08-20, found
+    # live: selpane style.right was "auto" on a pane nobody had touched).
+    assert "paneSave(id,{moved:1,x:pane.offsetLeft,y:pane.offsetTop," in out
+    assert "if(box.moved){" in out
+    # and the strip reserved is the width the pane actually has, since it
+    # is resizable
+    assert "Math.round(docked.offsetWidth||232)+'px');" in out
 
 
 def test_cell_content_scales_with_the_page(out):

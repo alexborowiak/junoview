@@ -85,7 +85,24 @@ body.deck-open{overflow:hidden;}
   min-width:190px;outline:none;}
 .deck-qat .deck-status{height:22px;font-size:10px;flex:none;
   max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.qat-zoom{flex:none;}
+/* ---- the zoom cluster, in the corner of the canvas -------------------
+   It lived in the ribbon, then in the top bar, and was wrong in both: it
+   is a property of the CANVAS, so it belongs at the canvas. Bottom-right
+   is where Word, PowerPoint, Figma and Illustrator all put it, and this
+   floats over the stage rather than sitting in its flow, so it costs no
+   height at all (2026-08-20, user). */
+.deck-zoombar{position:absolute;right:18px;bottom:12px;z-index:8;
+  display:none;align-items:stretch;gap:3px;padding:4px;border-radius:9px;
+  background:color-mix(in srgb,var(--chrome-1,#0e1926) 88%,transparent);
+  border:1px solid #ffffff1f;box-shadow:0 6px 20px #00000055;}
+.deck.editing .deck-zoombar{display:flex;}
+/* it steps aside for a docked pane, driven by the SAME width variable so
+   the two can never disagree */
+.deck.pane-open .deck-zoombar{right:calc(var(--pane-w) + 18px);}
+.deck.rbn-side .deck-zoombar{right:calc(var(--rbn-side-w) + 18px);}
+.deck.pane-open.rbn-side .deck-zoombar{
+  right:calc(var(--pane-w) + var(--rbn-side-w) + 18px);}
+.deck-zoombar .dbtn{padding:3px 9px;}
 .qat-play{flex:none;white-space:nowrap;}
 
 /* ---------- the tab strip ---------------------------------------------

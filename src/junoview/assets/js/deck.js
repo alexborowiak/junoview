@@ -1245,10 +1245,13 @@
        it the remedy is Guides ▸ Toolbar on the right. */
   }
   function syncViewBtns(){
-    var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full');
+    var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full'),sd=$('#vw-side');
     if(r) r.setAttribute('aria-pressed',guides.rulers?'true':'false');
     if(g) g.setAttribute('aria-pressed',guides.grid?'true':'false');
     if(f) f.setAttribute('aria-pressed',editFull?'true':'false');
+    /* out of the menu and into the row, so it shows its state too */
+    if(sd) sd.setAttribute('aria-pressed',
+      deckEl.classList.contains('rbn-side')?'true':'false');
   }
   function toggleEditFull(){
     try{
@@ -1264,23 +1267,10 @@
     syncViewBtns();
   }
   (function(){
-    /* the View menu opens and closes like the other ribbon dropdowns; its
-       rows are built in markup because each is a stateful toggle, not a
-       one-shot pick */
-    var vwrap=$('#vw-menuwrap'),vbtn=$('#vw-menu'),vlist=$('#vw-menu-list');
-    if(vwrap&&vbtn&&vlist){
-      vbtn.addEventListener('click',function(e){
-        e.stopPropagation();
-        var open=vlist.hidden;
-        vlist.hidden=!open;
-        vbtn.setAttribute('aria-expanded',open.toString());
-        if(open) floatMenu(vbtn,vlist);
-      });
-      document.addEventListener('click',function(e){
-        if(!vlist.hidden&&!vwrap.contains(e.target)){
-          vlist.hidden=true;vbtn.setAttribute('aria-expanded','false');}
-      });
-    }
+    /* No View menu. Rulers, Grid, Full screen and Side toolbar are four
+       buttons in the row now: each is a stateful TOGGLE, and a toggle you
+       have to open a menu to read the state of is a toggle nobody trusts.
+       Two of them were never guides in the first place (2026-08-20). */
     /* ONE button, two mechanisms, because the two page kinds want opposite
        defaults. A deck's strip is docked and on: toggling it is a class,
        and the slide list never leaves the panel. A poster's versions are
@@ -1479,9 +1469,16 @@
        moved somewhere else is one you have chosen to float — reserving a
        strip on the right for it would leave a gap beside nothing
        (2026-08-20). Drag it back to the edge, or reopen it, to re-dock. */
-    var open=$$('.selpane',deckEl).some(function(p){
-      return !p.hidden&&p.style.right!=='auto';});
-    deckEl.classList.toggle('pane-open',open&&mode==='edit');
+    var docked=null;
+    $$('.selpane',deckEl).forEach(function(p){
+      if(!p.hidden&&p.style.right!=='auto') docked=p;});
+    /* reserve the width the pane ACTUALLY has: it is resizable, and a
+       strip sized to the default would leave a widened pane over the
+       page again */
+    if(docked)
+      deckEl.style.setProperty('--pane-w',
+        Math.round(docked.offsetWidth||232)+'px');
+    deckEl.classList.toggle('pane-open',!!docked&&mode==='edit');
     /* the page is fitted to the stage's width, so the stage changing size
        has to re-fit it — otherwise the slide keeps the size it had when
        the pane was closed and the pane lands on top of it after all */
@@ -1701,19 +1698,30 @@
   function wirePane(pane){
     if(!pane||pane._wired) return;pane._wired=1;
     var id=pane.id,h=pane.querySelector('.selpane-h');
+    /* MOVED and RESIZED are different states. A pane keeps its docked
+       right/bottom anchors until you actually DRAG it; resizing it by the
+       corner grip changes its size and nothing else.
+       They used to be the same thing, and the ResizeObserver below fires
+       the moment a pane is first shown - so every pane recorded an x/y,
+       came back "moved" on the next load, and could never dock again.
+       That is what stopped the docked layout working on the second visit
+       (2026-08-20, found live: selpane style.right was "auto" on a pane
+       nobody had touched). */
     function place(box){
-      /* moving detaches the pane from its docked right/bottom anchors */
-      pane.style.right='auto';pane.style.bottom='auto';
       var host=pane.offsetParent;
       var hw=host?host.clientWidth:innerWidth;
       var hh=host?host.clientHeight:innerHeight;
-      pane.style.left=Math.max(0,Math.min(hw-80,box.x))+'px';
-      pane.style.top=Math.max(0,Math.min(hh-60,box.y))+'px';
+      if(box.moved){
+        /* moving is what detaches it from the edge it was docked to */
+        pane.style.right='auto';pane.style.bottom='auto';
+        pane.style.left=Math.max(0,Math.min(hw-80,box.x))+'px';
+        pane.style.top=Math.max(0,Math.min(hh-60,box.y))+'px';
+      }
       if(box.w) pane.style.width=Math.min(hw,box.w)+'px';
       if(box.h) pane.style.height=Math.min(hh,box.h)+'px';
     }
     var saved=paneStore()[id];
-    if(saved&&typeof saved.x==='number') place(saved);
+    if(saved) place(saved);
     if(h){
       h.style.cursor='move';
       h.addEventListener('pointerdown',function(ev){
@@ -1725,26 +1733,33 @@
         var r=pane.getBoundingClientRect();
         var dx=ev.clientX-r.left,dy=ev.clientY-r.top;
         function mv(e2){
-          place({x:e2.clientX-hostR.left-dx,y:e2.clientY-hostR.top-dy});
+          place({moved:1,x:e2.clientX-hostR.left-dx,
+            y:e2.clientY-hostR.top-dy});
         }
         function up(){
           document.removeEventListener('pointermove',mv);
           document.removeEventListener('pointerup',up);
-          paneSave(id,{x:pane.offsetLeft,y:pane.offsetTop,
+          /* `moved` is set HERE and only here: a drag is the one gesture
+             that means "I want this somewhere else" */
+          paneSave(id,{moved:1,x:pane.offsetLeft,y:pane.offsetTop,
             w:pane.offsetWidth,h:pane.offsetHeight});
+          syncPaneDock();
         }
         document.addEventListener('pointermove',mv);
         document.addEventListener('pointerup',up);
       });
     }
-    /* the native resize grip changes width/height; remember those too */
+    /* the native resize grip changes width/height; remember those too -
+       and ONLY those, so a resize never counts as a move */
     if(window.ResizeObserver) new ResizeObserver(function(){
       if(pane.hidden||!pane.offsetParent) return;
-      var st=paneStore()[id];
-      if(st&&Math.abs((st.w||0)-pane.offsetWidth)<3
+      var st=paneStore()[id]||{};
+      if(Math.abs((st.w||0)-pane.offsetWidth)<3
         &&Math.abs((st.h||0)-pane.offsetHeight)<3) return;
-      paneSave(id,{x:pane.offsetLeft,y:pane.offsetTop,
-        w:pane.offsetWidth,h:pane.offsetHeight});
+      st.w=pane.offsetWidth;st.h=pane.offsetHeight;
+      paneSave(id,st);
+      /* a widened pane needs a wider strip reserved for it */
+      if(!st.moved) syncPaneDock();
     }).observe(pane);
   }
   ['selpane','animpane','verpane','preflight','varspane']
