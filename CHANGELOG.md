@@ -1,5 +1,118 @@
 # Changelog
 
+## Unreleased
+
+### The deck editor grew a tabbed ribbon and a title bar
+
+One ribbon had stopped being able to hold the editor: every feature added a
+control, every control bought a density rung, and the row spent its whole life
+at the tight end of the fit ladder.
+
+- **The ribbon is tabbed** — Home, Insert, Design, Animate, View. A tab is a
+  filter and nothing more: each group declares `data-tab` and everything
+  off-tab leaves the row entirely (`display:none`, so it costs nothing in the
+  width `fitEditRibbon` measures). The density ladder underneath is unchanged;
+  with a third of the groups in the row it now almost never has to fire, so the
+  controls that *are* showing are full size. Home holds everything
+  selection-driven, deliberately: the tools for the thing you just clicked have
+  to be in one named place, not on a tab that appears and disappears under you.
+  Animate exists only for decks — a poster is one printed page and has no
+  build. The chosen tab is remembered per project.
+- **One thin bar across the top** holds what never changes with the selection:
+  File, Save, undo/redo, the presentation's name, Find, the save readout,
+  autosave, zoom, theme and Present. This is allowed to be a row above the tools
+  — the thing the ribbon itself may never be — because it *replaced* chrome
+  rather than adding it: a block in the left column plus two ribbon groups
+  became one line. It also settles two long-standing complaints, that undo and
+  redo were stranded under Save in a vertical column, and that zoom and Present
+  could be taken away by whatever else was in the row.
+- **The Notebooks button and its pane are gone.** The list of notebooks a
+  presentation is built from is the whole top of the left column and is on
+  screen the entire time you edit; a ribbon button that opened a second copy in
+  a floating pane spent a group's worth of width on something already showing.
+- **Home opens on a Slides group** — new, duplicate, layout, delete — the way
+  PowerPoint's does, so the tab you land on is not one lonely button over an
+  empty row when nothing is selected.
+
+### Added
+
+- **Find and replace, across the whole presentation** (Ctrl+F, or Find in the
+  top bar). It searches the *model* — every text box, list item, slide title
+  and subtitle on every slide — because the browser's own find can only see the
+  one slide that happens to be rendered, which for a deck is the wrong answer
+  almost every time. Landing on a hit goes to that slide and selects that item,
+  so you can see what you are about to change. Placed notebook cards are
+  deliberately not searchable: their words belong to the notebook, and
+  rewriting them here would put the slide and its source out of step with no
+  way to tell.
+- **Numbered lists, sub-levels, and bullets you can see the state of.** Tab and
+  Shift+Tab indent and outdent inside a list, the way every outliner does.
+- **Animations can be removed.** The effects are buttons on the Animate tab
+  showing which one is on, `None` reads as the removal it is, and *Clear slide*
+  strips a whole slide in one press instead of item by item.
+- **Autosave says what it is doing** in the top bar, instead of being a File
+  menu item you had to open the menu to read.
+
+### Fixed
+
+- **The bullet list was, in the user's word, cursed.** `a.list` drew a `<ul>`
+  from `a.text`'s newlines while `a.html` — the rich version of the same box —
+  sat untouched underneath it. Turning bullets off fell straight back to that
+  stale `a.html`, so everything typed as a list vanished and text from before it
+  came back. There is one content field now: `a.list` says `bullet` or `number`
+  and the items live in `a.html` as bare `<li>`s, so switching markers rewrites
+  no content at all. `ul`/`ol`/`li` joined `RICH_TAGS`, which is what lets bold
+  inside a bullet and a nested sub-level survive a round trip — they were
+  silently flattened to plain lines before.
+- **Images grew a bigger border instead of a bigger picture.** `.an-imgel` is
+  `object-fit:contain`, so a free-form box that no longer matched the picture's
+  shape just grew letterbox: drag a wide photo downwards and the selection
+  outline got taller while the photo stayed exactly the size it was. A picture
+  now behaves like a picture — the stored box is snapped onto the image and the
+  aspect held for the drag, with Shift to stretch it on purpose. A cropped image
+  keeps free-form resizing, because there the box *is* the crop window.
+- **Arrows and lines moved when you went to present.** An attached endpoint is
+  derived from where its target is on the layer, and `annotRectPct` measures the
+  rendered element for anything auto-sized or aspect-fitted. An arrow drawn in
+  the same pass as its target measured an element that was not in the DOM yet
+  whenever the target came later in the array, and fell back to its stored
+  coordinates. Arrows are drawn in a second pass now, which makes attachment
+  order-independent; and because a figure frame settles into its fitted box
+  asynchronously, a fit that actually moves a frame asks for the arrows alone to
+  be redrawn.
+- **An animated arrow was on the slide from the first frame.** Its visible
+  stroke carries no `.an-item` class — the invisible hit path under the items
+  does — so the build pass never reached it.
+- **Thumbnails showed the notebook cells and nothing else.** `miniDiagram`
+  walked `slideCells()` only, so a slide made of text, arrows, shapes or images
+  showed as an empty box and every such slide in the strip looked identical. It
+  draws every kind at its page percentage now. Type and stroke get a floor,
+  which is the opposite of the rule `fontPx` follows on the real page and
+  deliberately so: the page is the document and must stay true to itself, a
+  thumbnail is an index and has to be legible.
+- **Thumbnails never updated while you worked.** The strip was only rebuilt by
+  `refresh()` — a slide change, a layout, a reorder — so editing the slide you
+  were looking at never touched its picture. `markDirty` now refreshes that one
+  row, debounced.
+- **Panes covered the page they were about.** Layers, Animations, Versions and
+  Print check are all lists you consult *while* working on the thing underneath.
+  The stage gives up the width now and the page re-fits into what is left. A
+  pane you have deliberately dragged elsewhere still floats — that is a choice
+  you made.
+- **The page was sized to the stage's border box.** `clientWidth` includes
+  padding, so every rule that reserved room by padding the stage — the side
+  toolbar, and now a docked pane — reserved nothing at all as far as the fit was
+  concerned, and the page carried on sliding underneath whatever was meant to be
+  beside it.
+- **Renaming a presentation.** Three doors, no shared implementation.
+  `#pres-name` lives in a block that is `display:none` the whole time you are
+  editing, so File ▸ Rename… was focusing a 0×0 input and appeared to do nothing
+  in the primary flow; and the input renamed on every *keystroke*, deleting the
+  draft under each prefix on the way, so renaming "talk" to "talk2" left ghosts
+  at "tal", "ta" and "t". One `renamePresentation()` now, committed on Enter or
+  blur, with a collision guard, that moves the draft and the saved copies and
+  not just the label.
+
 ## 0.2.0
 
 ### The single file became a package

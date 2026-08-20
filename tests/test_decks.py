@@ -156,10 +156,20 @@ def test_presentations_rail_auto_hide_is_off_by_default(out):
     assert "'junoview:presrail:auto'" in out
 
 
-def test_presentation_notebooks_popover(out):
-    """The notebooks list is a PANE in the same shell as Objects
-    (2026-08-18), with open-all / refresh-all inside it."""
-    assert 'id="dc-nbs-btn"' in out and 'id="nbspane"' in out
+def test_presentation_notebooks_live_in_the_left_column_only(out):
+    """ONE notebooks list, at the top of the left column.
+
+    It was briefly two: the column's copy (2026-08-19) plus a floating
+    pane behind a ribbon button (2026-08-18). The column is on screen the
+    whole time you edit, so the ribbon button spent a group's worth of
+    width offering something already showing, and the pane it opened
+    covered the page (2026-08-20, user: "so the notebook button can be
+    removed now. Haven't we put all the functionality on the left hand
+    side?"). Button and pane are both gone; open-all / refresh-all live
+    in the column with the list they act on.
+    """
+    assert 'id="dc-nbs"' in out
+    assert 'id="dc-nbs-btn"' not in out and 'id="nbspane"' not in out
     assert 'id="dc-nbs-menu"' not in out
     assert "function renderNbsMenu" in out and "function openPresNbs" in out
     assert "Refresh all" in out and "Open notebooks" in out
@@ -170,14 +180,15 @@ def test_notebooks_button_replaces_inline_chip_strip(out):
 
     The old inline "notebooks" chip strip above the thumbnails is gone.
     """
-    assert 'id="dc-nbs-btn"' in out and "renderPresNbs" in out
-    # The button is a pane toggle with a constant label now. It used to
-    # hide until the deck had a notebook cell -- undiscoverable on a
-    # fresh deck ("what happened to the open relevant notebooks button")
-    # -- and renamed itself Open/Refresh notebooks, promising an action
-    # it no longer performs: opening and refreshing live inside the
-    # pane, beside the list they act on (2026-08-18).
-    assert "btn.hidden=!(nbs.length||nbsCanOpen());" in out
+    assert "renderPresNbs" in out
+    # The list itself stands down only where this build can do nothing
+    # with notebooks at all (the bare static export). It used to hide
+    # until the deck had a notebook cell -- undiscoverable on a fresh
+    # deck ("what happened to the open relevant notebooks button") -- and
+    # a button in front of it renamed itself Open/Refresh notebooks,
+    # promising an action it no longer performed (2026-08-18). Since
+    # 2026-08-20 there is no button: the column IS the list.
+    assert "col.hidden=!(nbs.length||nbsCanOpen());" in out
     assert "btn.textContent=(anyOpen" not in out
     assert "Refresh notebooks" not in out
     # 2026-08-19: a notebooks strip is BACK at the top of the left

@@ -382,22 +382,42 @@ def test_slides_have_their_own_background_and_border(out):
     assert "applyPageBg();          /* this slide may carry its own background */" in out
 
 
-def test_notebooks_is_a_pane_and_panes_are_draggable_and_remembered(out):
-    """Notebooks joined Objects / Animations / Versions as a pane in the
-    same shell, instead of a dropdown that died on the first outside
-    click. And every pane in that shell now drags by its header, resizes
-    by its native corner grip, and remembers where you put it (localStorage
-    jv-panes), restored on the next open (2026-08-18, user: "detach them
-    and drag them around and re-size -- this then gets remembered").
+def test_panes_dock_beside_the_page_and_are_draggable_and_remembered(out):
+    """Objects / Animations / Versions / Print check share one shell that
+    drags by its header, resizes by its native corner grip, and remembers
+    where you put it (localStorage jv-panes), restored on the next open
+    (2026-08-18, user: "detach them and drag them around and re-size --
+    this then gets remembered").
+
+    Notebooks was briefly a fifth (2026-08-18) and is not any more: the
+    list lives at the top of the left column, on screen the whole time,
+    so the pane was a second copy of something already showing.
+
+    And the shell now DOCKS rather than floating over the page. Every one
+    of these is a list you consult while working on the thing underneath,
+    so covering that thing is exactly backwards (2026-08-20, user: "I
+    don't like how the pop-up appears ofver the top of things, and not
+    down the side. Annoying to use"). The stage gives up the width and
+    sizeSlideTo re-fits the page into what is left, so the slide gets
+    smaller and stays wholly visible.
     """
-    assert 'class="selpane nbspane" id="nbspane"' in out
+    assert 'id="nbspane"' not in out
     assert 'id="dc-nbs-menu"' not in out
     assert "function wirePane(pane){" in out
     assert "var PANE_KEY='jv-panes';" in out
-    for pid in ("'selpane'", "'animpane'", "'verpane'", "'preflight'",
-                "'nbspane'"):
+    for pid in ("'selpane'", "'animpane'", "'verpane'", "'preflight'"):
         assert pid in out
     assert ".selpane{resize:both;overflow:hidden;" in out
+    # docking: one width variable drives the pane and the stage's padding,
+    # so they can never disagree
+    assert ".deck{--pane-w:232px;}" in out
+    assert (".deck.pane-open .deck-stage{"
+            "padding-right:calc(var(--pane-w) + 22px);}") in out
+    assert "function syncPaneDock(){" in out
+    # watched, not trusted to the call sites: five panes are opened from
+    # eight places and one forgetting to dock would put a pane back over
+    # the page
+    assert "attributeFilter:['hidden']" in out
 
 
 def test_cell_content_scales_with_the_page(out):
@@ -460,3 +480,91 @@ def test_browser_saves_offer_a_way_out(out):
     # (2026-08-19, user: "clicking the autosave button should save").
     # Measured 2026-08-20: a click produced "saved to browser · 00:27".
     assert "var sb=$('#dc-save'); if(sb) sb.click();" in out
+
+
+def test_the_ribbon_is_tabbed(out):
+    """One ribbon stopped being able to hold the editor: every feature
+    added a control and every control bought a density rung, so the row
+    spent its whole life at the tight end of the ladder (2026-08-20,
+    user: "there might not need to be tabs like power point and foxit pdf
+    has ... there might be starting to get too many feature to have on one
+    ribbon").
+
+    A tab is a filter, nothing more: each group declares its data-tab and
+    everything off-tab leaves the row entirely (display:none, so it costs
+    nothing in the width fitEditRibbon measures). The density ladder is
+    unchanged underneath -- with a third of the groups in the row it
+    simply almost never has to fire.
+
+    Home is where everything selection-driven lives, deliberately. The
+    tools for the thing you just clicked have to be in ONE named place you
+    can go back to, not on a tab that appears and disappears under you.
+    """
+    assert 'class="rbn-tabs" id="rbn-tabs"' in out
+    for t in ("home", "insert", "design", "animate", "view"):
+        assert 'id="rbn-tab-%s"' % t in out, t
+        assert "'%s'" % t in out
+    assert "var TABS=['home','insert','design','animate','view'];" in out
+    assert "function setTab(t){" in out
+    assert "function applyTab(){" in out
+    # the filter runs BEFORE anything measures the row
+    assert "    applyTab();\n    $$('.rbn-grp',bar)" in out
+    # Animate exists only where there is something to animate: a poster is
+    # one printed page and has no build
+    assert "if(t==='animate') b.hidden=!deck;" in out
+    # the chosen tab is remembered per project
+    assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
+
+
+def test_bullets_are_a_real_list_model(out):
+    """a.list drew a <ul> from a.text's newlines while a.html -- the rich
+    version of the same box -- sat untouched underneath it. Turning
+    bullets OFF fell straight back to that stale a.html, so everything
+    typed as a list vanished and text from before it came back
+    (2026-08-20, user: "the bullet list on/off is cursed. PLEASE DO
+    EVERYTHING PROPERLY").
+
+    Now there is ONE content field. a.list says 'bullet' or 'number' and
+    the ITEMS live in a.html as bare <li>s, so switching markers rewrites
+    no content at all; setListStyle converts on the way in and on the way
+    out. ul/ol/li joined RICH_TAGS, which is what lets bold inside a
+    bullet and a nested sub-level survive the round trip -- verified in
+    the browser 2026-08-20: "<li>EDITED <b>alpha</b></li>...<ul><li>sub
+    bullet</li></ul>" came back byte-identical, and turning bullets off
+    gave "EDITED <b>alpha</b><br>Beta<br>Gamma<br>sub bullet".
+    """
+    assert "function listOf(a){" in out
+    assert "function setListStyle(a,style){" in out
+    assert "function contentLines(a){" in out
+    assert "ul:1,ol:1,li:1};" in out
+    assert "'span[style],font,b,strong,i,em,u,s,ul,ol')};" in out
+    # a legacy deck stored a.list as the boolean 1
+    assert "return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;" \
+        in out
+    # the marker is on the ELEMENT, the items are the content
+    assert "tx2=document.createElement(lst==='number'?'ol':'ul');" in out
+    assert "ol.an-ul{list-style:decimal;}" in out
+    # Tab makes a sub-bullet, the way every outliner does -- and only
+    # inside a list, where it has something to mean
+    assert "if(e.key==='Tab'&&el.classList.contains('an-ul')){" in out
+
+
+def test_find_and_replace_searches_the_model(out):
+    """A browser find can only see the one slide that happens to be
+    rendered, which for a deck is the wrong answer almost every time. So
+    Ctrl+F searches the MODEL: every text box, list item, title and
+    subtitle on every slide (2026-08-20, user: "needs to be a search and
+    replace of text and stuff, that is pretty standard").
+
+    A placed notebook card is deliberately NOT searchable -- its words
+    belong to the notebook, and rewriting them here would put the slide
+    and its source out of step with no way to tell.
+    """
+    assert 'class="find-pop" id="find-pop"' in out
+    assert "function replaceAll(){" in out
+    assert "if(window.SemDeckFind) window.SemDeckFind();" in out
+    # landing on a hit goes to its slide AND selects the item, so you can
+    # see what you are about to change
+    assert "if(cur!==h.f.si){cur=h.f.si;refresh();}" in out
+    # an empty match must never loop forever
+    assert "if(!m[0].length) re.lastIndex++;" in out

@@ -997,8 +997,6 @@ body.light .pr-collapse:hover{color:var(--ink);
 body.light .presrail-show{background:#f4f7fa;
   border-color:var(--line);color:var(--ink-3);}
 body.light .deck-create{background:#f4f7fa;}
-body.light .dc-head{background:#eef2f6;
-  border-bottom-color:var(--line);}
 body.light .dc-block{border-bottom-color:var(--line);}
 body.light .dc-label{color:var(--ink-3);}
 body.light .deck-create .dbtn{border-color:var(--line);
@@ -1033,6 +1031,27 @@ body.light .deck.editing{background:#dfe6ec;}
 body.light .deck.creating{background:#f4f7fa;}
 body.light .edit-tools{background:#f4f7fa;
   border-bottom-color:var(--line);}
+/* the thin document bar and the tab strip flip with the ribbon they sit
+   above — they took over the old .dc-head's job (2026-08-20) */
+body.light .deck-qat,body.light .rbn-tabs{background:#f4f7fa;
+  border-bottom-color:var(--line);}
+body.light .deck-qat .dbtn{background:#fff;border-color:var(--line);
+  color:var(--ink-2);}
+body.light .deck-qat .dbtn:hover{border-color:var(--cyan);color:var(--ink);}
+body.light .qat-name{color:var(--ink-2);}
+body.light .qat-name:hover{border-color:var(--line);color:var(--ink);}
+body.light .qat-sep{background:var(--line);}
+body.light .rbn-tab{color:var(--ink-3);}
+body.light .rbn-tab:hover{color:var(--ink);}
+body.light .rbn-tab[aria-selected="true"]{color:var(--ink);}
+body.light .find-pop{background:#fffffff7;border-color:var(--line);}
+body.light .find-in{background:#fff;border-color:var(--line);
+  color:var(--ink);}
+body.light .find-t,body.light .find-count{color:var(--ink-3);}
+body.light .find-ck{color:var(--ink-2);}
+body.light .find-hit{color:var(--ink-2);}
+body.light .find-hit:hover{background:#00000009;color:var(--ink);}
+body.light .mini-tx{color:var(--ink);}
 body.light .edit-tools .dbtn{background:#fff;border-color:var(--line);
   color:var(--ink-2);}
 body.light .edit-tools .dbtn:hover{border-color:var(--cyan);

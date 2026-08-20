@@ -94,10 +94,17 @@ def test_text_can_follow_a_curve(out):
     assert "d2.style.minHeight=" in out
     # a bullet list has several baselines and no single curve to follow,
     # so choosing a curve for one turns the list off rather than being a
-    # menu entry that quietly does nothing
-    assert "if(a.list){delete a.list;delete a.html;}" in out
-    # alignment, bullets and curve now share one worded Layout menu
+    # menu entry that quietly does nothing. It CONVERTS the list back to
+    # lines; it used to `delete a.html`, which threw the words away
+    # (2026-08-20).
+    assert "if(listOf(a)) setListStyle(a,0);" in out
+    assert "delete a.list;delete a.html;" not in out
+    # alignment and curve share one worded Layout menu; bullets and
+    # numbering are buttons of their own, because a toggle you cannot see
+    # the state of is the toggle that behaved unpredictably
     assert "show('#fmt-parawrap',isText&&isNum" in out
+    assert "show('#fmt-bullets',isText&&isNum,lst==='bullet');" in out
+    assert "show('#fmt-numbers',isText&&isNum,lst==='number');" in out
 
 
 def test_curved_text_warps_in_powerpoint_too(out):
@@ -284,7 +291,12 @@ def test_document_actions_live_in_the_left_column(out):
     assert out.index('id="edit-tools"') < out.index('class="deck-main"')
     # the head shows while editing; only the builder controls hide
     assert ".deck.editing .dc-controls{display:none;}" in out
-    assert ".deck.editing .dc-head{flex-wrap:wrap;" in out
+    # ...and since 2026-08-20 they are not in the column either: File,
+    # Save, undo/redo and the readout are the thin bar across the top,
+    # which is where a document's own controls belong. The column is
+    # the notebook list and the thumbnails and nothing else.
+    assert 'class="dc-head"' not in out
+    assert 'class="deck-qat" id="deck-qat"' in out
     # Notebooks leads the column
     # dc-back became the notebooks CONTENT strip (2026-08-19, user: "not
     # a back button, the content that is currently in the notebooks
@@ -327,13 +339,15 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     constant always in the one space on the left, and everything new
     always appears on the right").
 
-    So: File, Slide and View are ordered first and are on screen in that
-    order whatever is selected -- nothing further right can push them,
-    because flex lays out in order. Output, Notebooks, Insert and the
-    contextual groups are ordered after them, so the swap happens at ONE
-    boundary at the far end. Output and Notebooks belong to the changing
-    half because they stand down for a selection, and a group that can
-    disappear cannot be part of the half that promises never to move.
+    TABS took over most of this job on 2026-08-20. A group belongs to one
+    tab and is display:none on every other, so Insert and the contextual
+    format groups are never in the row at the same time and cannot push
+    each other at all -- the swap the "standby" classes existed to manage
+    no longer happens. What survives is the rule itself: within a tab,
+    source order is layout order, and the things that must never move
+    (File, Save, undo/redo, the name, zoom, Present) left the ribbon
+    entirely for the thin bar above the tabs, where no selection and no
+    tab can reach them.
 
     Groups also pack left rather than being flung at the window edge by an
     auto margin, which turned every spare pixel into one void in the
@@ -344,24 +358,25 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     then deselecting moves File, Slide and View by exactly 0px, and
     changes their widths by exactly 0px.
     """
-    # File left the bar for the left column (2026-08-19); Slide now
-    # leads the constant half
+    # File left the bar for the left column (2026-08-19) and then for the
+    # top bar (2026-08-20)
     assert 'class="rbn-grp rbn-fixed rbn-file"' not in out
     assert ".rbn-slide{order:2;}" in out
     assert ".rbn-view{order:3;}" in out
     assert ".rbn-out{order:4;}" in out
-    assert ".rbn-nbs{order:5;}" in out
+    assert ".rbn-anim{order:5;}" in out
     assert ".rbn-insert{order:6;}" in out
     assert ".et-fmt .rbn-grp{order:7;flex:none;}" in out
-    # the constant three are tagged, and the tag is what exempts them from
-    # every density rung
+    assert ".rbn-edit{order:8;}" in out
+    # every group declares its tab, and a group off-tab is OUT of the row
+    # (display:none, never visibility) so it costs nothing to measure
     for grp in ("rbn-slide", "rbn-view"):
-        assert 'class="rbn-grp rbn-fixed %s"' % grp in out
-    assert 'class="rbn-grp rbn-standby rbn-out"' in out
-    assert 'class="rbn-grp rbn-standby rbn-nbs"' in out
+        assert 'class="rbn-grp rbn-fixed %s" data-tab=' % grp in out
+    assert ".rbn-grp[data-off]{display:none!important;}" in out
+    # ...so nothing needs to stand down for a selection any more
+    assert "rbn-standby" not in out
     # nothing is pinned to the right edge any more
     assert "margin-left:auto" not in out.split(".rbn-view{")[1].split("}")[0]
-    assert ".edit-tools.ribbon .et-hint{order:9;margin-left:0;}" in out
 
 
 def test_groups_fill_across_the_rows_not_down_the_columns(out):

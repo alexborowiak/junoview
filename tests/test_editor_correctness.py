@@ -556,27 +556,38 @@ def test_exported_line_weight_is_a_real_physical_size(out):
     assert "swPct:swOf(a)/SW_REF_H*100" in out
 
 
-def test_the_document_actions_are_in_the_left_column(out):
-    """They were in a bar above the ribbon (rejected: stolen height),
-    then borrowed into the ribbon's File group (2026-08-10). Since
-    2026-08-19 they LIVE in the left column -- Notebooks first, then
-    File/Save/undo/redo and the save readout, then the thumbnails -- and
-    the ribbon spans the whole window with editing tools only (user:
-    "the notebooks button needs to sit above the slide thumbnail part.
-    Same with the file save etc").
+def test_the_document_actions_are_in_one_thin_bar_across_the_top(out):
+    """The long road: a bar above the ribbon (rejected 2026-08-07/08-10 as
+    stolen height), borrowed into the ribbon's File group, then moved into
+    the left column (2026-08-19). None of those put undo and redo anywhere
+    you would look for them -- stranded under Save in a vertical column
+    (2026-08-20, user: "horrible spot for the back and forewards button").
+
+    They now live in ONE thin bar across the top, PowerPoint's shape:
+    File, Save, undo/redo, the presentation's name, Find, the save
+    readout, zoom and Present. This is allowed to be a row above the tools
+    -- the thing the ribbon itself may never be -- because it REPLACED
+    chrome rather than adding it: a block in the left column plus two
+    ribbon groups became one line, and nothing in it changes with the
+    selection, so no tab can take it away.
     """
-    # dc-back became the notebooks CONTENT strip (2026-08-19, user: "not
-    # a back button, the content that is currently in the notebooks
-    # button"); its header row is the way back
+    # the notebooks CONTENT strip still leads the left column, and its
+    # header row is still the way back
     assert 'id="dc-nbs"' in out
     assert "h.addEventListener('click',function(){closeDeck();});" in out
-    # the head markup order IS the column order
-    head = out.split('class="dc-head"')[1].split('dc-controls')[0]
+    # markup order IS the bar's order
+    qat = out.split('class="deck-qat"')[1].split('class="rbn-tabs"')[0]
     for cid in ('id="dc-file"', 'id="dc-save"', 'id="dc-undo"',
-                'id="deck-status"'):
-        assert cid in head, cid
-    # the bar is gone while editing, present while presenting
-    assert "if(dt) dt.hidden=(mode==='edit');" in out
+                'id="dc-redo"', 'id="qat-find"', 'id="qat-name"',
+                'id="deck-status"', 'id="zoom-val"', 'id="dc-play"'):
+        assert cid in qat, cid
+    # ...and .dc-head, which used to hold them in the column, is gone
+    assert 'class="dc-head"' not in out
+    # exactly one bar occupies row 1: .deck-qat while editing or building,
+    # .deck-top while presenting, never both
+    assert "if(dt) dt.hidden=editing;" in out
+    assert "if(qat) qat.hidden=!editing;" in out
+    assert ".deck-top,.deck-qat{grid-column:1/-1;grid-row:1;}" in out
 
 
 def test_the_toolbar_hint_says_nothing_in_the_resting_state(out):
@@ -627,17 +638,22 @@ def test_view_and_output_are_separate_groups(out):
     bar, bottom in the side one, because "last" means the same in a
     column.
     """
-    assert 'class="rbn-grp rbn-fixed rbn-view"' in out
-    assert 'class="rbn-grp rbn-standby rbn-out"' in out
+    assert 'class="rbn-grp rbn-fixed rbn-view" data-tab="view"' in out
+    assert 'class="rbn-grp rbn-out" data-tab="view"' in out
     assert ">Output</span>" in out
-    # both still sort after the constant three -- see
-    # test_the_bar_has_a_constant_half_and_a_changing_half for the ordering
     assert ".rbn-out{order:4;}" in out
-    # Guides+Objects in one, Print check+Present in the other
+    # Guides+Layers in one, Print check in the other. Present left Output
+    # for the bar across the top on 2026-08-20 -- it must survive every
+    # tab, and a tab could have taken it away.
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]
     assert 'id="vw-menuwrap"' in view and 'id="objects-btn"' in view
     assert 'id="vw-check"' not in view and 'id="dc-play"' not in view
+    # both groups are on the same TAB, which is what now keeps them
+    # together in the row (2026-08-20)
+    out_grp = out.split('class="rbn-grp rbn-out"')[1].split(
+        ">Output</span>")[0]
+    assert 'id="vw-check"' in out_grp
 
 
 def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
@@ -658,10 +674,15 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]
     assert 'id="vw-versions"' in slide and 'id="vw-versions"' not in view
-    assert 'id="zoom-val"' in view and 'id="zoom-val"' not in slide
-    # View can no longer stand down for a selection: you zoom constantly
-    # with something selected, and an object list is at its most useful
-    # when there IS an object selected
+    # ZOOM has since left View entirely, for the thin bar across the top
+    # (2026-08-20). Same reasoning, taken one step further: it is the one
+    # control you reach for on every tab, and a control a tab can take
+    # away from you is a control you cannot rely on. It is still not a
+    # page property, which is the distinction this test exists for.
+    assert 'id="zoom-val"' not in view and 'id="zoom-val"' not in slide
+    assert 'id="zoom-val"' in out.split('class="deck-qat"')[1]
+    # View can no longer stand down for a selection: an object list is at
+    # its most useful when there IS an object selected
     assert 'rbn-standby rbn-view' not in out
     # the readout renames itself, so it is held to the longest label it can
     # hold -- in characters, so it survives every density rung
@@ -785,7 +806,10 @@ def test_undo_and_redo_are_one_cell(out):
     row = out.split('<span class="rbn-cell">')
     assert any('id="dc-undo"' in part and 'id="dc-redo"' in part
                for part in row[1:]), "undo and redo are not in one cell"
-    assert ".dc-head .rbn-cell{height:30px;gap:6px;}" in out
+    # the pair now travels no further than the top bar, which sizes it
+    # once (2026-08-20) instead of the two-way .dc-head/.rbn-cell
+    # negotiation it needed while it lived in the column
+    assert ".deck-qat .rbn-cell{height:26px;gap:3px;}" in out
 
 
 def test_the_save_readout_lives_under_save(out):
@@ -794,7 +818,10 @@ def test_the_save_readout_lives_under_save(out):
     (2026-08-19) it sits under Save on its own full-width line, where its
     renames cannot move any ribbon control by construction.
     """
-    assert ".deck.editing .dc-head .deck-status{width:100%;" in out
+    # the readout sits inline in the top bar now, capped in characters
+    # so a long filename can never reach the controls beside it
+    assert (".deck-qat .deck-status{height:22px;font-size:10px;"
+            "flex:none;") in out
     assert "var st=$('#deck-status'),bar=$('#edit-tools');" not in out
 
 
@@ -830,3 +857,129 @@ def test_ribbon_group_columns_are_counted_before_every_fit(out):
     # ...and the fit re-counts BEFORE it measures anything
     fit = out.split("function fitEditRibbon(){")[1].split("function syncViewBtns")[0]
     assert fit.index("sizeRibbonGroups();") < fit.index("bar.scrollWidth")
+
+
+def test_an_image_resizes_the_picture_not_the_letterbox(out):
+    """.an-imgel is object-fit:contain, so a free-form box that no longer
+    matched the picture's shape just grew LETTERBOX: drag a wide photo
+    downwards and the selection outline got taller while the photo stayed
+    exactly the size it was. That is the bug nobody could name --
+    2026-08-20, user: "images don't get bigger when you drag them, just
+    get's a bigger border".
+
+    A picture now behaves like a picture: the stored box is first snapped
+    onto the image (killing any letterbox already banked) and then the
+    aspect is held for the drag, which is what figure frames have always
+    done. Shift releases it, live, mid-gesture. A CROPPED image keeps
+    free-form resizing, because there the box IS the crop window
+    (object-fit switches to cover) and reshaping it is the whole point.
+    """
+    assert "if(a.k==='image'&&!a.crop&&el){" in out
+    assert "var ie=el.querySelector('.an-imgel');" in out
+    assert "var ratio=(imgFree&&ev.shiftKey)?0:figRatio;" in out
+    # the snap ladder and the height derivation both follow the LIVE
+    # decision, not the one made at mousedown
+    assert "if(a.k!=='text'&&!ratio){" in out
+    assert "if(ratio&&lr.height){" in out
+    # and the handle says so
+    assert "'Drag to resize — the picture keeps its shape. '" in out
+
+
+def test_arrows_are_drawn_in_a_second_pass(out):
+    """An attached endpoint is DERIVED from where its target item is on
+    the layer, and annotRectPct measures the rendered element for anything
+    auto-sized (text) or aspect-fitted (a figure frame). An arrow drawn in
+    the same pass as its target therefore measured an element that was not
+    in the DOM yet whenever the target came later in the array, and fell
+    back to its stored coordinates -- so the arrow moved (2026-08-20,
+    user: "arrows and lines when going to present do not stay in the same
+    place").
+
+    Two passes make attachment order-independent. And because a figure
+    frame settles into its fitted box asynchronously -- fitFigFrame
+    retries until the <img> reports a natural size -- a fit that actually
+    MOVES the frame asks for the arrows alone to be redrawn. Arrows only:
+    redrawing the figures from there would fit them again and never
+    settle.
+    """
+    assert "function drawArrow(layer,s,a,i,svg,svgTop,defs,editing){" in out
+    assert "function redrawArrows(layer,s){" in out
+    assert "if(a.k==='arrow'){_arrows.push(i);return;}" in out
+    assert "if(moved) scheduleArrowRedraw(layer);" in out
+    # z-order is unchanged: the visible strokes have always gone into
+    # svgTop, which is appended last
+    assert "layer.appendChild(svgTop);" in out
+    # an arrow's visible stroke is not an .an-item, so the build pass
+    # never reached it and an ANIMATED arrow sat on the slide from the
+    # first frame
+    assert "$$('.an-item[data-idx],.an-arrow-line[data-idx]',layer)" in out
+
+
+def test_thumbnails_are_a_scale_model_of_the_slide(out):
+    """miniDiagram walked slideCells() and nothing else, so a slide made
+    of text, arrows, shapes or images showed as an empty box and every
+    such slide in the strip looked identical (2026-08-20, user:
+    "thumbnails do now show text, or anything else for that matter, just
+    the cells").
+
+    Two halves to that. miniDiagram now draws every kind at its page
+    percentage; and markDirty refreshes the current slide's thumbnail,
+    which nothing did before -- the strip was only rebuilt by refresh(),
+    so editing the slide you were looking at never touched its picture.
+
+    Type and stroke get a floor, which is the opposite of the rule fontPx
+    follows on the real page and deliberately so: the page is the document
+    and must stay true to itself, a thumbnail is an INDEX and has to be
+    legible.
+    """
+    assert "var MINI_H=66;      /* mirrors --mini-h in deck.css */" in out
+    assert ".mini-diagram{--mini-h:66px;" in out
+    assert "function miniText(d,a,txt,cls,centred){" in out
+    assert "function miniBox(d,a,cls){" in out
+    assert "function miniSw(a){" in out
+    # arrows share one overlay in the page's own 0..100 space, so nothing
+    # has to be measured in pixels
+    assert "sv.setAttribute('preserveAspectRatio','none');" in out
+    assert "function refreshThumb(i){" in out
+    assert "    refreshThumb(cur);\n  }" in out
+    # svg ids must be unique across the whole strip, not just one thumb
+    assert "'m'+(miniSeq++)" in out
+
+
+def test_animations_can_be_removed(out):
+    """The None effect existed, inside a pane you had to know to open,
+    with an item selected, looking like any other effect rather than like
+    a removal (2026-08-20, user: "there doesn't seem to be a way to remove
+    animations"). The effects are buttons on the Animate tab now, showing
+    which one is on, and Clear slide strips the whole slide in one press
+    instead of item by item.
+    """
+    for bid in ("anim-none", "anim-fade", "anim-rise", "anim-zoom",
+                "anim-clear"):
+        assert 'id="%s"' % bid in out, bid
+    assert 'class="rbn-grp rbn-anim" data-tab="animate"' in out
+    assert "animRibbonSync=function(){" in out
+    assert "revealCount=0;commit(s);" in out
+
+
+def test_renaming_is_one_committed_action(out):
+    """Three doors, no shared implementation: each poked pres.name and
+    #pres-name directly. #pres-name lives in .dc-controls, which is
+    display:none the whole time you are editing, so File > Rename... was
+    focusing a 0x0 input and appeared to do nothing in the primary flow.
+    And the input renamed on every KEYSTROKE, lsDel-ing the draft under
+    each prefix on the way -- renaming "talk" to "talk2" left ghosts at
+    "tal", "ta" and "t" (2026-08-20 diagnosis).
+
+    One renamePresentation(), committed on Enter or blur, that moves the
+    WORK and not just the label: the browser draft, the project entry and
+    the embedded copies, with a collision guard in front.
+    """
+    assert "function renamePresentation(nm){" in out
+    assert "if(taken.indexOf(nm)>=0){" in out
+    assert "if(draft!=null){lsSet(PFX+nm,draft);lsDel(PFX+old);}" in out
+    # the per-keystroke handler is gone, and BOTH doors call the one
+    # implementation
+    assert "if(old&&old!==pres.name) lsDel(PFX+old);" not in out
+    assert "menuAction('#mi-rename',startQatRename);" in out
+    assert "qatName.addEventListener('click',startQatRename);" in out

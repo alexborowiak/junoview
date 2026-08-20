@@ -373,7 +373,8 @@
     var isPoster=!!pg.poster;
     var land=pg.aw>pg.ah;
     var variant=(isPoster?'p':'s')+(land?'l':'p');
-    ['#layout-row','#layout-menu-grid'].forEach(function(sel){
+    ['#layout-row','#layout-menu-grid','#layout-home-grid']
+      .forEach(function(sel){
       var row=$(sel); if(!row||row.dataset.built===variant) return;
       row.dataset.built=variant;row.innerHTML='';
       var list=LAYOUTS.filter(function(l){
@@ -416,11 +417,16 @@
       });
     });
   }
-  /* the ribbon's Layouts / Page dropdowns: open one, the other closes */
+  /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
+     The catalog is offered from TWO places now — Design ▸ Layouts and
+     Home ▸ Layout — so picking from either has to shut both. */
   function closeLayMenu(){
-    var lm=$('#lay-menu'),lb=$('#lay-btn');
-    if(lm&&!lm.hidden){lm.hidden=true;
-      if(lb) lb.setAttribute('aria-expanded','false');}
+    [['#lay-menu','#lay-btn'],['#hm-lay-menu','#hm-lay']]
+      .forEach(function(p){
+        var lm=$(p[0]),lb=$(p[1]);
+        if(lm&&!lm.hidden){lm.hidden=true;
+          if(lb) lb.setAttribute('aria-expanded','false');}
+      });
   }
   function closePageMenu(){
     var pm=$('#page-menu'),pb=$('#page-btn');
@@ -545,8 +551,22 @@
   }
   function sizeSlideTo(slideEl,zoom){
     var pg=pageOf();
-    var pad=36;
-    var aw=stage.clientWidth-pad,ah=stage.clientHeight-pad;
+    /* Measure the stage's CONTENT box, not its border box. clientWidth
+       INCLUDES padding, so every rule that reserved room by padding the
+       stage — the side toolbar, and now a docked pane — reserved nothing
+       at all as far as the fit was concerned, and the page carried on
+       being sized to the full width and sliding underneath whatever was
+       supposed to be beside it (2026-08-20, found live: opening Layers
+       set .pane-open, added 254px of padding, and the slide stayed
+       1249px wide and overlapped the pane).
+       The flat 36px this replaced was a guess standing in for the same
+       padding: 52px of it horizontally and 28px vertically while
+       editing, so it was wrong in both directions already. `gap` is the
+       breathing room that guess was really providing. */
+    var cs=window.getComputedStyle(stage),gap=16;
+    var padX=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
+    var padY=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
+    var aw=stage.clientWidth-padX-gap,ah=stage.clientHeight-padY-gap;
     if(!slideEl||aw<=60||ah<=60) return;
     var fitW=Math.min(aw,ah*pg.aw/pg.ah);
     var w=fitW*(zoom||1),h=w*pg.ah/pg.aw;
@@ -1037,6 +1057,72 @@
      beautifully until you clicked a text box, which is the only case that
      matters. */
   var ERCW=[['ercw1',1260],['ercw2',1170],['ercw3',1080],['ercw4',990]];
+  /* ---- RIBBON TABS ----------------------------------------------------
+     One ribbon stopped being able to hold the editor: every feature added
+     a control, every control bought a density rung, and the row spent its
+     whole life at the tight end of the ladder (2026-08-20, user: "there
+     might not need to be tabs like power point and foxit pdf has ... there
+     might be starting to get too many feature to have on one ribbon").
+     A tab is just a filter: each .rbn-grp declares its data-tab, and
+     everything not on the showing tab is taken OUT of the row with
+     display:none — not visibility — so it costs nothing in the width the
+     fit ladder measures. The ladder itself is unchanged, and with a third
+     of the groups in the row it now almost never has to fire.
+     Home is where everything selection-driven lives, deliberately: the
+     tools for the thing you just clicked must be in ONE named place you
+     can go back to, not on a tab that appears and disappears. */
+  var TABS=['home','insert','design','animate','view'];
+  /* SCOPE is declared further down the file, so the remembered tab is read
+     on first use rather than here — `var` hoisting would otherwise key it
+     under the string "undefined" */
+  var curTab=null;
+  function tabKey(){return 'jv-deck-tab:'+SCOPE;}
+  function activeTab(){
+    if(curTab===null){
+      var t=lsGet(tabKey());
+      curTab=TABS.indexOf(t)>=0?t:'home';
+    }
+    return curTab;
+  }
+  function tabHasContent(t){
+    var bar=$('#edit-tools'); if(!bar) return false;
+    var gs=$$('.rbn-grp[data-tab="'+t+'"]',bar);
+    for(var i=0;i<gs.length;i++) if(!gs[i].hidden) return true;
+    return false;
+  }
+  function syncTabStrip(){
+    var strip=$('#rbn-tabs'); if(!strip) return;
+    /* a deck animates and a poster does not, so the Animate tab exists
+       only where there is something to animate — the same test #vw-anim
+       already passed on its own */
+    var deck=!pageOf().poster;
+    $$('.rbn-tab',strip).forEach(function(b){
+      var t=b.dataset.tab;
+      if(t==='animate') b.hidden=!deck;
+      b.setAttribute('aria-selected',(t===activeTab()).toString());
+    });
+    if(activeTab()==='animate'&&!deck) setTab('home');
+  }
+  function applyTab(){
+    var bar=$('#edit-tools'); if(!bar) return;
+    var t=activeTab();
+    $$('.rbn-grp[data-tab]',bar).forEach(function(g){
+      if(g.dataset.tab===t) g.removeAttribute('data-off');
+      else g.setAttribute('data-off','1');
+    });
+    syncTabStrip();
+  }
+  function setTab(t){
+    if(TABS.indexOf(t)<0||t===activeTab()) return;
+    curTab=t;lsSet(tabKey(),t);
+    applyTab();
+    /* the row's content just changed wholesale, so its column counts and
+       its density both have to be judged again */
+    syncRibbonGroups();
+  }
+  $$('#rbn-tabs .rbn-tab').forEach(function(b){
+    b.addEventListener('click',function(){setTab(b.dataset.tab);});
+  });
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
@@ -1305,6 +1391,36 @@
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
   }
+  /* ---- one pane open at a time, and the stage makes room for it -------
+     Every pane is an .selpane in the stage wrapper. Rather than have each
+     one remember to tell the stage, ask the DOM: if any is open, dock.
+     Called after anything that opens or closes one. */
+  function syncPaneDock(){
+    /* Only a pane still in its DEFAULT place is docked. wirePane sets
+       right:auto the moment you drag one, and a pane you have deliberately
+       moved somewhere else is one you have chosen to float — reserving a
+       strip on the right for it would leave a gap beside nothing
+       (2026-08-20). Drag it back to the edge, or reopen it, to re-dock. */
+    var open=$$('.selpane',deckEl).some(function(p){
+      return !p.hidden&&p.style.right!=='auto';});
+    deckEl.classList.toggle('pane-open',open&&mode==='edit');
+    /* the page is fitted to the stage's width, so the stage changing size
+       has to re-fit it — otherwise the slide keeps the size it had when
+       the pane was closed and the pane lands on top of it after all */
+    applyZoom();
+  }
+  /* Five panes are opened from eight places between them, and one of them
+     forgetting to dock would put us straight back to a pane covering the
+     page. So WATCH the attribute instead of trusting the call sites. */
+  (function(){
+    if(!window.MutationObserver) return;
+    var t=null;
+    var ob=new MutationObserver(function(){
+      clearTimeout(t);t=setTimeout(syncPaneDock,0);
+    });
+    $$('.selpane',deckEl).forEach(function(p){
+      ob.observe(p,{attributes:true,attributeFilter:['hidden']});});
+  })();
   function renderSelPane(){
     var pane=$('#selpane'),list=$('#selpane-list');
     if(!pane||pane.hidden||!list) return;
@@ -1553,7 +1669,7 @@
         w:pane.offsetWidth,h:pane.offsetHeight});
     }).observe(pane);
   }
-  ['selpane','animpane','verpane','preflight','nbspane','varspane']
+  ['selpane','animpane','verpane','preflight','varspane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -1826,7 +1942,41 @@
     if(saveTarget==='file') return fileName||'file';
     return 'browser';
   }
+  /* ---- the name, in the title bar ------------------------------------
+     Rename used to be a File-menu item that un-hid an input living inside
+     a display:none block, so in the ordinary editing flow it did nothing
+     visible at all. The name now sits in the middle of the top bar the
+     way a title bar shows a document's name, and you rename it by
+     clicking it. It commits on Enter or blur, never per keystroke. */
+  function syncQatName(){
+    var b=$('#qat-name');
+    if(!b) return;
+    var nm=(pres&&pres.name)||'';
+    if(b.textContent!==nm) b.textContent=nm;
+    b.title=nm?('“'+nm+'” — click to rename'):'Click to name this';
+  }
+  function startQatRename(){
+    var b=$('#qat-name'),inp=$('#qat-nameedit');
+    if(!b||!inp) return;
+    inp.value=(pres&&pres.name)||'';
+    b.hidden=true;inp.hidden=false;
+    inp.focus();inp.select();
+    var done=false;
+    function commit(ok){
+      if(done) return; done=true;
+      inp.hidden=true;b.hidden=false;
+      var v=inp.value.trim();
+      if(ok&&v&&v!==pres.name){renamePresentation(v);}
+      syncQatName();
+    }
+    inp.addEventListener('blur',function(){commit(true);},{once:true});
+    inp.addEventListener('keydown',function(e){
+      if(e.key==='Enter'){e.preventDefault();commit(true);}
+      else if(e.key==='Escape'){e.preventDefault();commit(false);}
+    });
+  }
   function status(){
+    syncQatName();
     /* the bar names what it belongs to; for a poster this is the only
        place the name is shown, since the panel that normally carries it
        is hidden */
@@ -1888,6 +2038,31 @@
     scheduleAutosave();
     histPush();
     renderSelPane();   /* keep the Objects pane in step (no-op if closed) */
+    refreshThumb(cur);
+  }
+  /* ---- keep the CURRENT slide's thumbnail live -------------------------
+     The strip was only rebuilt by refresh() — a slide change, a layout, a
+     reorder. Editing the slide you are looking at never touched it, so its
+     thumbnail showed the slide as it was when you arrived and every slide
+     you had worked on looked wrong. That is the other half of "thumbnails
+     do now show text, or anything else for that matter" (2026-08-20,
+     user): the first half was miniDiagram drawing only cells.
+     Just the one row, and debounced: renderFilm() rebuilds every row with
+     its drag wiring, which is far too much to do on each edit. */
+  var thumbT=null;
+  function refreshThumb(i){
+    clearTimeout(thumbT);
+    thumbT=setTimeout(function(){
+      var s=pres.slides[i]; if(!s) return;
+      var row=$('#film-list .film-row[data-idx="'+i+'"]');
+      if(!row) return;
+      var old=row.querySelector('.mini-diagram');
+      /* the CURRENT row in notebook view is the big inline pane editor,
+         not a thumbnail — leave that alone */
+      if(old&&old.parentNode) old.parentNode.replaceChild(miniDiagram(s),old);
+      var tt=row.querySelector('.film-t');
+      if(tt) tt.textContent=slideTitle(s);
+    },140);
   }
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
   var undoStack=[],redoStack=[],histSnap=null;
@@ -3412,7 +3587,13 @@
   /* rich text: a text box can carry per-character colour (highlight a run and
      recolour just it). Stored as sanitised HTML in a.html; a.text keeps the
      plain fallback. Only colour + basic inline styles survive the sanitiser. */
-  var RICH_TAGS={span:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1};
+  /* ul/ol/li are here because a BULLET LIST is rich text like any other
+     run, not a separate mode. While they were missing, every list was
+     flattened to its plain lines the moment it round-tripped through the
+     sanitiser: bold inside a bullet, or a sub-level, silently vanished
+     (2026-08-20, user: "the bullet list on/off is cursed"). */
+  var RICH_TAGS={span:1,b:1,strong:1,i:1,em:1,u:1,s:1,br:1,font:1,
+    ul:1,ol:1,li:1};
   function sanitizeRich(html){
     /* parse into an INERT template fragment — no image loads, no inline event
        handlers ever run (unlike a live-document div), so merely sanitising
@@ -3446,8 +3627,87 @@
       }
     })(tpl.content);
     return {html:tpl.innerHTML,
+      /* a list is structure worth keeping even with no inline styling in
+         it — without ul/ol here a plain bullet list reported rich:false
+         and the caller threw a.html away */
       rich:!!tpl.content.querySelector(
-        'span[style],font,b,strong,i,em,u,s')};
+        'span[style],font,b,strong,i,em,u,s,ul,ol')};
+  }
+  /* ---- LISTS ----------------------------------------------------------
+     A text box is a list when a.list says so: 'bullet' or 'number'. The
+     ITEMS live in a.html as plain <li>…</li> (no wrapper), so switching
+     bullets to numbering is a one-word model change that rewrites no
+     content, and a.text keeps the flat plain-text projection everything
+     else reads (pptx, export, search, the Layers pane).
+
+     What was here before had two states that each remembered the other's
+     content: a.list drew a <ul> from a.text's newlines, while a.html —
+     the rich version — was left untouched underneath it. Turning bullets
+     OFF fell straight back to that stale a.html, so whatever you had
+     typed as a list disappeared and text from before it came back
+     (2026-08-20, user: "the bullet list on/off is cursed. PLEASE DO
+     EVERYTHING PROPERLY"). One content field, converted on the way in and
+     on the way out, is the fix. */
+  function listOf(a){
+    /* an older deck stored a.list as the boolean 1 */
+    return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;
+  }
+  /* strip markup for the plain projection */
+  function plainOf(html){
+    var t=document.createElement('template');
+    t.innerHTML=String(html||'');
+    return t.content.textContent||'';
+  }
+  /* the box's content as ONE HTML CHUNK PER LINE, whichever form it is in */
+  function contentLines(a){
+    var out=[],t=document.createElement('template');
+    if(listOf(a)&&a.html){
+      t.innerHTML=a.html;
+      $$('li',t.content).forEach(function(li){
+        /* a nested list is a line of its own, at a deeper level; flattened
+           here because a plain run of text has no levels to keep */
+        var kid=li.querySelector('ul,ol');
+        if(kid) kid.remove();
+        out.push(li.innerHTML);
+      });
+      return out.length?out:[''];
+    }
+    if(a.html){
+      /* split on top-level <br>, keeping the inline markup around each */
+      t.innerHTML=a.html;
+      var cur=document.createElement('template');
+      var n=t.content.firstChild;
+      while(n){
+        var next=n.nextSibling;
+        if(n.nodeType===1&&(n.tagName||'').toLowerCase()==='br'){
+          out.push(cur.innerHTML);cur.innerHTML='';
+        } else cur.content.appendChild(n);
+        n=next;
+      }
+      out.push(cur.innerHTML);
+      return out;
+    }
+    return String(a.text||'').split('\n');
+  }
+  /* set (or clear) the list style, converting the content either way */
+  function setListStyle(a,style){
+    if(!a) return;
+    var was=listOf(a);
+    style=style||0;
+    if(was===style) return;
+    var lines=contentLines(a);
+    if(style){
+      /* an empty line still needs a bullet to stand on */
+      a.html=lines.map(function(h){
+        return '<li>'+(h||'<br>')+'</li>';}).join('');
+      a.list=style;
+      /* a list has several baselines and no single curve to follow */
+      delete a.arc;
+    } else {
+      a.html=lines.join('<br>');
+      delete a.list;
+    }
+    a.text=lines.map(plainOf).join('\n');
   }
   function activeTextEditable(){
     var ae=document.activeElement;
@@ -3480,14 +3740,14 @@
   /* the ⠿ move handle is gone: everything drags from its own body now,
      and the handle was both fiddly to hit and sat on top of the artwork
      you were trying to judge (2026-08-07, user) */
-  function mkResize(){
+  function mkResize(tip){
     /* all four corners resize (anchored on the opposite corner) */
     var frag=document.createDocumentFragment();
     ['nw','ne','sw','se'].forEach(function(cn){
       var r=document.createElement('span');
       r.className='an-resize an-rs-'+cn;
       r.dataset.corner=cn;
-      r.title='Drag to resize';
+      r.title=tip||'Drag to resize';
       frag.appendChild(r);
     });
     return frag;
@@ -3574,6 +3834,23 @@
       }
       markDirty();
     });
+    /* Tab makes a SUB-BULLET, the way it does in every outliner and in
+       PowerPoint — not a jump to the next control. Only inside a list:
+       in a plain text box Tab still has nothing useful to do and is left
+       alone. execCommand builds the nested <ul>/<ol>, which is exactly
+       the structure the model now keeps (RICH_TAGS allows ul/ol/li). */
+    el.addEventListener('keydown',function(e){
+      if(!el.isContentEditable) return;
+      if(e.key==='Tab'&&el.classList.contains('an-ul')){
+        e.preventDefault();e.stopPropagation();
+        try{document.execCommand(e.shiftKey?'outdent':'indent',
+          false,null);}catch(err){}
+        return;
+      }
+      /* while typing, the deck's own single-letter shortcuts (R, G, …)
+         must not fire — they would arm a tool mid-sentence */
+      e.stopPropagation();
+    });
     el.addEventListener('mousedown',function(e){
       if(tool!=='select') return;   /* placing mode: draw over me */
       /* the span owns the mouse only while TYPING (caret placement).
@@ -3618,8 +3895,20 @@
          both have real dimensions; a replaced render just stops */
       var f=c.isConnected?figFit(layer,a,img):null;
       if(!f){if(tries++<8) requestAnimationFrame(go);return;}
+      var moved=(c.style.left!==f.x+'%'||c.style.top!==f.y+'%'
+        ||c.style.width!==f.w+'%'||c.style.height!==f.h+'%');
       c.style.left=f.x+'%';c.style.top=f.y+'%';
       c.style.width=f.w+'%';c.style.height=f.h+'%';
+      /* the frame has just MOVED, and any arrow attached to it was routed
+         to where it used to be — annotRectPct measures the rendered
+         element for an aspect-fitted figure, and this fit lands a frame
+         or two after the arrows were drawn. Nothing told them, so an
+         attached arrow ended up off its figure, worst on the first render
+         of a slide in playback where nothing re-renders afterwards
+         (2026-08-20, user: "arrows and lines when going to present do not
+         stay in the same place"). Arrows only — redrawing the figures
+         from here would fit them again and never settle. */
+      if(moved) scheduleArrowRedraw(layer);
     }
     if(!img.naturalWidth){
       img.addEventListener('load',go,{once:true});
@@ -3628,6 +3917,134 @@
     go();
   }
   var dpiT=null;
+  /* ONE arrow, drawn. Lifted out of the render loop so it can run in a
+     SECOND pass, after every other item is in the DOM — see the two-pass
+     comment in renderAnnots — and so a figure that finishes fitting later
+     can ask for the arrows alone to be redrawn (redrawArrows). */
+  function drawArrow(layer,s,a,i,svg,svgTop,defs,editing){
+    var col=a.color||'#ff6b57';
+    var ends=arrowEnds(layer,s,a,i);
+    var hs=headSize(a),sw=a.sw||3,swPx=strokePx(a,layer);
+    /* a head is scaled by the LINE's width as well as its own size
+       setting, so a fat arrow does not end in a pinhead.
+       This reads the STORED weight, never the resolved pixels:
+       markerUnits defaults to strokeWidth, so the head already grows
+       with the page for free. Clamping on pixels instead would make
+       the head-to-line ratio change with the zoom. */
+    var mw=hs.mul*Math.max(0.55,Math.min(2.2,sw/3));
+    function mkHead(which,type){
+      var h=HEAD_BY[type];
+      if(!h||type==='none'||!h.path) return '';
+      var id='an-h'+which+'-'+i;
+      var mk=document.createElementNS(AN_NS,'marker');
+      mk.setAttribute('id',id);
+      mk.setAttribute('viewBox','0 0 10 10');
+      mk.setAttribute('refX',h.open?'9':'8');
+      mk.setAttribute('refY','5');
+      mk.setAttribute('markerWidth',mw);
+      mk.setAttribute('markerHeight',mw);
+      /* auto-start-reverse points a START marker back down the line,
+         so one path definition serves both ends */
+      mk.setAttribute('orient','auto-start-reverse');
+      var mp=document.createElementNS(AN_NS,'path');
+      mp.setAttribute('d',h.path);
+      if(h.open){
+        mp.setAttribute('fill','none');
+        mp.setAttribute('stroke',col);
+        mp.setAttribute('stroke-width','1.8');
+        mp.setAttribute('stroke-linecap','round');
+      } else mp.setAttribute('fill',col);
+      mk.appendChild(mp);defs.appendChild(mk);
+      return 'url(#'+id+')';
+    }
+    var mEnd=mkHead('e',headEnd(a)),mStart=mkHead('s',headStart(a));
+    var lrA=layer.getBoundingClientRect();
+    var d=arrowPath(ends,a,lrA.width,lrA.height);
+    var ln=document.createElementNS(AN_NS,'path');
+    ln.setAttribute('d',d);
+    ln.setAttribute('class','an-arrow-line'+(selAnnot===i?' sel':''));
+    ln.setAttribute('data-idx',i);
+    ln.setAttribute('stroke',col);
+    ln.setAttribute('fill','none');
+    ln.setAttribute('stroke-width',swPx);
+    ln.setAttribute('stroke-linecap',
+      lineStyle(a)==='dot'?'round':'butt');
+    ln.setAttribute('stroke-linejoin','round');
+    var dsh=dashPx(a,layer);
+    if(dsh) ln.setAttribute('stroke-dasharray',dsh);
+    if(a.op!=null&&a.op<1) ln.style.opacity=a.op;
+    if(mEnd) ln.setAttribute('marker-end',mEnd);
+    if(mStart) ln.setAttribute('marker-start',mStart);
+    svgTop.appendChild(ln);
+    var hit=document.createElementNS(AN_NS,'path');
+    hit.setAttribute('d',d);
+    hit.setAttribute('fill','none');
+    /* the grab path is CHROME, so its 16px stays screen-measured and
+       does not scale with the page — otherwise a zoomed-out poster
+       would leave a 2px target. But the ink can now be wider than 16px
+       on a big page, so take whichever is larger. */
+    hit.setAttribute('stroke-width',Math.max(16,swPx+10));
+    hit.setAttribute('class','an-arrow-hit an-item');
+    hit.setAttribute('data-idx',i);
+    svg.appendChild(hit);
+    if(editing&&!a.lock){   /* a locked arrow gets no live endpoints */
+      ['1','2'].forEach(function(which){
+        /* an endpoint PINNED to an item is not free to drag: it
+           reports the attachment instead, and moves when that item
+           moves */
+        var tied=(which==='1'?a.c1:a.c2);
+        var ep=document.createElement('span');
+        ep.className='an-endpt an-endpt-'+which
+          +(tied?' tied':'')+(selAnnot===i?' sel':'');
+        ep.style.left=(which==='1'?ends.x1:ends.x2)+'%';
+        ep.style.top=(which==='1'?ends.y1:ends.y2)+'%';
+        ep.setAttribute('data-idx',i);
+        ep.setAttribute('data-ep',which);
+        ep.title=tied
+          ?'Attached — it follows that item. Drag to re-aim, or drop '
+            +'on empty page to detach'
+          :'Drag to redirect the arrow. Drop it on an item to attach, '
+            +'and it will follow that item from then on';
+        layer.appendChild(ep);
+      });
+    }
+  }
+  /* Redraw JUST the arrows against the layer as it stands now. A figure
+     frame settles into its aspect-fitted box asynchronously (fitFigFrame
+     retries until the <img> reports a natural size), so an arrow attached
+     to one was routed to the pre-fit rect and then never told the figure
+     had moved — the arrow ended up somewhere else, most visibly on the
+     first render of a slide in playback (2026-08-20, user: "arrows and
+     lines when going to present do not stay in the same place"). */
+  function redrawArrows(layer,s){
+    if(!layer||!layer.isConnected||!s) return;
+    var svg=layer.querySelector('svg:not(.an-svgtop)');
+    var svgTop=layer.querySelector('svg.an-svgtop');
+    if(!svg||!svgTop) return;
+    var defs=svgTop.querySelector('defs');
+    if(!defs){defs=document.createElementNS(AN_NS,'defs');
+      svgTop.insertBefore(defs,svgTop.firstChild);}
+    $$('.an-arrow-line,.an-endpt',layer).forEach(function(n){n.remove();});
+    $$('.an-arrow-hit',svg).forEach(function(n){n.remove();});
+    $$('marker',defs).forEach(function(n){n.remove();});
+    var editing=(mode==='edit');
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||a.k!=='arrow') return;
+      if(a.hide&&editing) return;
+      drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
+    });
+    if(editing) paintSel(layer);
+  }
+  /* several figures on a slide all settle within a frame or two of each
+     other, so coalesce their redraw requests into one */
+  var arrowRedrawT=null;
+  function scheduleArrowRedraw(layer){
+    clearTimeout(arrowRedrawT);
+    arrowRedrawT=setTimeout(function(){
+      var s=pres&&pres.slides&&pres.slides[cur];
+      if(s&&layer&&layer.isConnected) redrawArrows(layer,s);
+    },0);
+  }
   function renderAnnots(layer,s){
     var editing=(mode==='edit');
     layer.innerHTML='';
@@ -3695,98 +4112,24 @@
       });
     }
 
+    /* TWO passes. An attached endpoint is DERIVED from where its target
+       item is on the layer, and annotRectPct measures the rendered
+       element for anything auto-sized (text) or aspect-fitted (a figure
+       frame). An arrow drawn during the same pass as its target therefore
+       measured an element that was not in the DOM yet whenever the target
+       came LATER in the array, and silently fell back to its stored
+       coordinates — so the arrow moved (2026-08-20, user: "arrows and
+       lines when going to present do not stay in the same place").
+       Deferring every arrow to a second pass makes attachment
+       order-independent. It changes nothing about z-order: the visible
+       strokes have always gone into svgTop, which is appended last. */
+    var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
       /* hidden via the Objects pane: skipped while editing, still
          rendered in playback / print */
       if(a.hide&&editing) return;
-      if(a.k==='arrow'){
-        var col=a.color||'#ff6b57';
-        var ends=arrowEnds(layer,s,a,i);
-        var hs=headSize(a),sw=a.sw||3,swPx=strokePx(a,layer);
-        /* a head is scaled by the LINE's width as well as its own size
-           setting, so a fat arrow does not end in a pinhead.
-           This reads the STORED weight, never the resolved pixels:
-           markerUnits defaults to strokeWidth, so the head already grows
-           with the page for free. Clamping on pixels instead would make
-           the head-to-line ratio change with the zoom. */
-        var mw=hs.mul*Math.max(0.55,Math.min(2.2,sw/3));
-        function mkHead(which,type){
-          var h=HEAD_BY[type];
-          if(!h||type==='none'||!h.path) return '';
-          var id='an-h'+which+'-'+i;
-          var mk=document.createElementNS(AN_NS,'marker');
-          mk.setAttribute('id',id);
-          mk.setAttribute('viewBox','0 0 10 10');
-          mk.setAttribute('refX',h.open?'9':'8');
-          mk.setAttribute('refY','5');
-          mk.setAttribute('markerWidth',mw);
-          mk.setAttribute('markerHeight',mw);
-          /* auto-start-reverse points a START marker back down the line,
-             so one path definition serves both ends */
-          mk.setAttribute('orient','auto-start-reverse');
-          var mp=document.createElementNS(AN_NS,'path');
-          mp.setAttribute('d',h.path);
-          if(h.open){
-            mp.setAttribute('fill','none');
-            mp.setAttribute('stroke',col);
-            mp.setAttribute('stroke-width','1.8');
-            mp.setAttribute('stroke-linecap','round');
-          } else mp.setAttribute('fill',col);
-          mk.appendChild(mp);defs.appendChild(mk);
-          return 'url(#'+id+')';
-        }
-        var mEnd=mkHead('e',headEnd(a)),mStart=mkHead('s',headStart(a));
-        var lrA=layer.getBoundingClientRect();
-        var d=arrowPath(ends,a,lrA.width,lrA.height);
-        var ln=document.createElementNS(AN_NS,'path');
-        ln.setAttribute('d',d);
-        ln.setAttribute('class','an-arrow-line'+(selAnnot===i?' sel':''));
-        ln.setAttribute('data-idx',i);
-        ln.setAttribute('stroke',col);
-        ln.setAttribute('fill','none');
-        ln.setAttribute('stroke-width',swPx);
-        ln.setAttribute('stroke-linecap',
-          lineStyle(a)==='dot'?'round':'butt');
-        ln.setAttribute('stroke-linejoin','round');
-        var dsh=dashPx(a,layer);
-        if(dsh) ln.setAttribute('stroke-dasharray',dsh);
-        if(a.op!=null&&a.op<1) ln.style.opacity=a.op;
-        if(mEnd) ln.setAttribute('marker-end',mEnd);
-        if(mStart) ln.setAttribute('marker-start',mStart);
-        svgTop.appendChild(ln);
-        var hit=document.createElementNS(AN_NS,'path');
-        hit.setAttribute('d',d);
-        hit.setAttribute('fill','none');
-        /* the grab path is CHROME, so its 16px stays screen-measured and
-           does not scale with the page — otherwise a zoomed-out poster
-           would leave a 2px target. But the ink can now be wider than 16px
-           on a big page, so take whichever is larger. */
-        hit.setAttribute('stroke-width',Math.max(16,swPx+10));
-        hit.setAttribute('class','an-arrow-hit an-item');
-        hit.setAttribute('data-idx',i);
-        svg.appendChild(hit);
-        if(editing&&!a.lock){   /* a locked arrow gets no live endpoints */
-          ['1','2'].forEach(function(which){
-            /* an endpoint PINNED to an item is not free to drag: it
-               reports the attachment instead, and moves when that item
-               moves */
-            var tied=(which==='1'?a.c1:a.c2);
-            var ep=document.createElement('span');
-            ep.className='an-endpt an-endpt-'+which
-              +(tied?' tied':'')+(selAnnot===i?' sel':'');
-            ep.style.left=(which==='1'?ends.x1:ends.x2)+'%';
-            ep.style.top=(which==='1'?ends.y1:ends.y2)+'%';
-            ep.setAttribute('data-idx',i);
-            ep.setAttribute('data-ep',which);
-            ep.title=tied
-              ?'Attached — it follows that item. Drag to re-aim, or drop '
-                +'on empty page to detach'
-              :'Drag to redirect the arrow. Drop it on an item to attach, '
-                +'and it will follow that item from then on';
-            layer.appendChild(ep);
-          });
-        }
-      } else if(a.k==='rect'){
+      if(a.k==='arrow'){_arrows.push(i);return;}
+      if(a.k==='rect'){
         var shp=a.shape||'rect';
         var col=a.color||'#ff6b57';
         var r=document.createElement('div');
@@ -3970,11 +4313,15 @@
         
         if(editing){d2.appendChild(mkResize());
           d2.appendChild(mkRotate());}
-        var tx2;
-        if(a.list){
-          tx2=document.createElement('ul');
-          tx2.className='an-tx an-ul';
-          String(a.text||'').split('\n').forEach(function(line){
+        var tx2,lst=listOf(a);
+        if(lst){
+          /* the ELEMENT carries the marker style and a.html carries only
+             the items, so switching bullets to numbering rewrites no
+             content at all */
+          tx2=document.createElement(lst==='number'?'ol':'ul');
+          tx2.className='an-tx an-ul an-ul-'+lst;
+          if(a.html) tx2.innerHTML=sanitizeRich(a.html).html;
+          else String(a.text||'').split('\n').forEach(function(line){
             var li=document.createElement('li');
             li.textContent=line;
             tx2.appendChild(li);
@@ -3988,9 +4335,12 @@
         if(editing){
           editableText(layer,tx2,
             function(){return a.text;},
+            /* rich BOTH ways now. A list used to be saved as plain lines
+               only, so bold inside a bullet — or a sub-level — was thrown
+               away the moment the box lost focus. */
             function(v,r){a.text=v;
-              if(r&&r.rich&&!a.list) a.html=r.html; else delete a.html;},
-            i,!a.list);
+              if(r&&r.rich) a.html=r.html; else delete a.html;},
+            i,true);
         }
         d2.appendChild(tx2);
         layer.appendChild(d2);
@@ -4000,7 +4350,7 @@
            version is what you edit and the curve is what you see the rest
            of the time. Measured in px after the box is in the DOM so the
            glyphs are never stretched by a viewBox. */
-        if(a.arc&&!a.list&&d2!==document.activeElement
+        if(a.arc&&!listOf(a)&&d2!==document.activeElement
            &&!d2.contains(document.activeElement)){
           /* the box has to be tall enough to hold the arch before it is
              measured — a one-line box has no room to curve in */
@@ -4023,15 +4373,26 @@
         applyCrop(img,a);
         im.appendChild(img);
         if(editing){if(cropMode&&selAnnot===i) mkCropHandles(im,layer,s,i);
-          else {im.appendChild(mkResize());im.appendChild(mkRotate());}}
+          else {im.appendChild(mkResize(a.crop
+              ?'Drag to resize the crop window'
+              :'Drag to resize — the picture keeps its shape. '
+                +'Hold Shift to stretch it'));
+            im.appendChild(mkRotate());}}
         layer.appendChild(im);
       }
+    });
+    _arrows.forEach(function(i){
+      drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
     });
     /* build animations: number the builds in the editor; in playback, hide the
        ones not yet revealed and animate the one just revealed */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
       var steps=slideBuildSteps(s);
-      $$('.an-item[data-idx]',layer).forEach(function(el){
+      /* .an-arrow-line is the visible stroke and carries no .an-item
+         class (the fat invisible hit path under the items does), so an
+         ANIMATED arrow was never hidden before its build and simply sat
+         on the slide from the first frame (2026-08-20 audit) */
+      $$('.an-item[data-idx],.an-arrow-line[data-idx]',layer).forEach(function(el){
         var raw=el.getAttribute('data-idx');
         if(raw==='t'||raw==='s') return;
         var bi=+raw,ba=(s.annots||[])[bi];
@@ -4118,7 +4479,9 @@
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
+  var FMT_MANUAL=('#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
+    +'#fmt-find '
+    +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
@@ -4141,7 +4504,8 @@
       /* the pane outlives the selection — it is the SLIDE's build order —
          so it has to be told the selection went away, or its effect
          chooser keeps offering the last item's effect to nothing */
-      animPaneSync();
+      animPaneSync();animRibbonSync();
+      syncRibbonGroups();
       return;
     }
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
@@ -4206,7 +4570,15 @@
     /* alignment, list and curve are reached through the Layout menu, and
        that menu now applies all three itself — the originals are gone
        (2026-08-17 audit) */
-    show('#fmt-parawrap',isText&&isNum,!!a.arc||!!a.list);
+    show('#fmt-parawrap',isText&&isNum,!!a.arc);
+    /* bullets / numbering / indent. The two list buttons show WHICH list
+       is on, which the old menu line could not; indent and outdent only
+       appear once there is a list to move a bullet inside. */
+    var lst=isText?listOf(a):0;
+    show('#fmt-bullets',isText&&isNum,lst==='bullet');
+    show('#fmt-numbers',isText&&isNum,lst==='number');
+    show('#fmt-indent',isText&&isNum&&!!lst);
+    show('#fmt-outdent',isText&&isNum&&!!lst);
     /* the kind-driven controls, all from one table */
     Object.keys(FMT_KINDS).forEach(function(id){
       var spec=FMT_KINDS[id];
@@ -4224,7 +4596,7 @@
     }
     /* every drawn menu shows which option the selection is ON */
     if(isNum) syncLineMenus(a);
-    animPaneSync();
+    animPaneSync();animRibbonSync();
     show('#fmt-opwrap',true);
     var opR=$('#fmt-op'),opV=$('#fmt-opval');
     var opPct=Math.round((a.op==null?1:a.op)*100);
@@ -4351,6 +4723,9 @@
        placed cells yet) and an empty group that still drew its label and
        divider read as a missing feature */
     var bar=$('#edit-tools'); if(!bar) return;
+    /* the TAB filter first: a group belonging to another tab must be out
+       of the row before anything measures the row's width */
+    applyTab();
     $$('.rbn-grp',bar).forEach(function(g){
       var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
       for(var i=0;i<kids.length;i++){
@@ -4694,6 +5069,26 @@
       var ff=figFit(layer,a,figImg(el));
       if(ff){a.x=ff.x;a.y=ff.y;a.w=ff.w;a.h=ff.h;figRatio=ff.ratio;}
     }
+    /* A PLACED IMAGE gets the same treatment, for the same reason. It did
+       not, and the result was the bug you could not put your finger on:
+       .an-imgel is object-fit:contain, so a free-form box that no longer
+       matches the picture's shape just grows LETTERBOX. Drag a wide photo
+       downwards and the selection outline gets taller while the photo
+       stays exactly the size it was — "images don't get bigger when you
+       drag them, just get's a bigger border" (2026-08-20, user).
+       So: snap the stored box onto the picture (killing any letterbox
+       already banked), then hold the picture's aspect for the drag, which
+       is what every other tool does with a photo. Hold SHIFT to stretch
+       it out of shape on purpose, and a CROPPED image keeps free-form
+       resizing because there the box IS the crop window (object-fit is
+       cover) and reshaping it is the whole point. */
+    var imgFree=false;
+    if(a.k==='image'&&!a.crop&&el){
+      var ie=el.querySelector('.an-imgel');
+      var fi=ie?figFit(layer,a,ie):null;
+      if(fi){a.x=fi.x;a.y=fi.y;a.w=fi.w;a.h=fi.h;figRatio=fi.ratio;
+        imgFree=true;}   /* ...unless Shift says otherwise, live, below */
+    }
     var er=el?el.getBoundingClientRect():null;
     var ox=a.x||0,oy=a.y||0;
     var ow=a.w||(er?er.width/lr.width*100:10);
@@ -4703,6 +5098,9 @@
     function mm(ev){
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
+      /* Shift releases a picture's aspect lock for this moment of the
+         drag, so you can decide mid-gesture rather than before it */
+      var ratio=(imgFree&&ev.shiftKey)?0:figRatio;
       /* the dragged corner moves; the opposite corner stays anchored */
       if(east) a.w=Math.max(4,ow+dx);
       if(west){var ww=Math.max(4,ow-dx);a.x=ox+(ow-ww);a.w=ww;}
@@ -4720,7 +5118,7 @@
           if(east){if(a.w+bx.d>=4){a.w=a.w+bx.d;sx=bx.at;}}
           else if(a.w-bx.d>=4){a.x=a.x+bx.d;a.w=a.w-bx.d;sx=bx.at;}
         }
-        if(a.k!=='text'&&!figRatio){
+        if(a.k!=='text'&&!ratio){
           var by=bestSnap(targets.ys,[south?a.y+a.h:a.y],thr.y);
           if(by){
             if(south){if(a.h+by.d>=4){a.h=a.h+by.d;sy=by.at;}}
@@ -4728,8 +5126,8 @@
           }
         }
       }
-      if(figRatio&&lr.height){
-        var fh=a.w*(lr.width/(lr.height*figRatio));
+      if(ratio&&lr.height){
+        var fh=a.w*(lr.width/(lr.height*ratio));
         if(north) a.y=oy+oh-fh;   /* keep the bottom edge anchored */
         a.h=fh;
       }
@@ -5525,17 +5923,16 @@
   wireFloatDropdown('fmt-parawrap','fmt-para','fmt-para-menu',
     [['a:left','Align left'],['a:center','Align centre'],
      ['a:right','Align right'],
-     ['list','Bullet list on / off'],
      ['c:0','Curve: straight'],
      ['c:12','Curve: gentle arch up'],['c:30','Curve: arch up'],
      ['c:55','Curve: strong arch up'],
      ['c:-12','Curve: gentle sag (round the bottom in PowerPoint)'],
      ['c:-30','Curve: arch down (round the bottom in PowerPoint)']],'pa',
     function(v){
-      /* applied here rather than by clicking a hidden #fmt-list: a
-         control used as an internal API is a control nobody can see is
-         still wired, which is how three dead ones survived here */
-      if(v==='list'){fmtApply(function(a){a.list=a.list?0:1;});return;}
+      /* Bullets and numbering are BUTTONS in the Text group now, not a
+         line of this menu. Burying a toggle whose state you cannot see
+         inside a dropdown called "Layout" is half of why it never behaved
+         the way anyone expected (2026-08-20, user). */
       if(v.indexOf('a:')===0){
         var al=v.slice(2);
         fmtApply(function(a){a.align=al;});
@@ -5547,10 +5944,48 @@
          nothing — the two cannot both be true */
       fmtApply(function(a){
         if(!n){delete a.arc;return;}
+        /* a list has several baselines and no single curve to follow, so
+           curving one turns the list off rather than quietly doing
+           nothing — the two cannot both be true. It converts the content
+           back to lines instead of DELETING it, which is what the old
+           `delete a.html` did (2026-08-20). */
+        if(listOf(a)) setListStyle(a,0);
         a.arc=n;
-        if(a.list){delete a.list;delete a.html;}
       });
     });
+  /* ---- bullets / numbering / indent ----------------------------------
+     Real buttons that show their own state, because a list is something
+     you can SEE is on. Indent and outdent drive the browser's own list
+     machinery, which is what builds the nested <ul> the model stores. */
+  function listApply(style){
+    fmtApply(function(a){
+      if(a.k!=='text') return;
+      setListStyle(a,listOf(a)===style?0:style);
+    });
+  }
+  /* plain listeners, not onFmt: onFmt wraps its callback in fmtApply and
+     hands it one annot, and both of these already drive fmtApply
+     themselves (the list ones) or act on the live caret (the indent
+     ones) */
+  function onBtn(id,fn){
+    var b=$(id);
+    if(b) b.addEventListener('click',function(e){e.preventDefault();fn();});
+  }
+  onBtn('#fmt-bullets',function(){listApply('bullet');});
+  onBtn('#fmt-numbers',function(){listApply('number');});
+  /* indent/outdent only mean anything with the caret inside the box, so
+     they act on the live contenteditable rather than the model, and the
+     blur handler writes the result back like any other typing */
+  function listIndent(out){
+    var el=activeTextEditable();
+    if(!el||!el.classList.contains('an-ul')){
+      toast('Click into the list first, then indent');return;
+    }
+    try{document.execCommand(out?'outdent':'indent',false,null);}catch(e){}
+    el.focus();
+  }
+  onBtn('#fmt-indent',function(){listIndent(false);});
+  onBtn('#fmt-outdent',function(){listIndent(true);});
   /* the far end of a generated gradient: the same hue taken most of the
      way to transparent, which reads as a wash rather than a second
      colour you did not choose */
@@ -6773,6 +7208,7 @@
     });
   })();
   var animPaneSync=function(){},animPaneClose=function(){};
+  var animRibbonSync=function(){};
   /* ---- animation PANE: effect + build order. Items on the same build appear
      TOGETHER; each build is one click in playback. ---- */
   (function(){
@@ -6923,6 +7359,42 @@
        has to follow it rather than showing whatever was picked last */
     animPaneSync=function(){if(!pane.hidden) render();};
     animPaneClose=function(){set(false);};
+    /* ---- the Animate TAB's own buttons --------------------------------
+       "There doesn't seem to be a way to remove animations" (2026-08-20,
+       user) — there was one, the None effect, but it was inside a pane
+       you had to know to open, with an item selected, and it looked like
+       any other effect rather than like a removal. The effects are now
+       buttons in the ribbon where you can see which one is on, None reads
+       as the undo it is, and Clear slide strips the whole slide in one
+       press without hunting item by item. */
+    [['anim-none','none'],['anim-fade','fade'],
+     ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+      var b=$('#'+p[0]);
+      if(b) b.addEventListener('click',function(){setType(p[1]);});
+    });
+    var clr=$('#anim-clear');
+    if(clr) clr.addEventListener('click',function(){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
+      if(!n){toast('Nothing on this slide is animated');return;}
+      revealCount=0;commit(s);
+      toast('Cleared '+n+(n===1?' animation':' animations')
+        +' — everything is on the slide from the start');
+    });
+    /* the effect buttons act on the SELECTION, so they show the selected
+       item's effect and stand down when there is nothing selected */
+    animRibbonSync=function(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var on=!!a&&typeof selAnnot==='number';
+      [['anim-none','none'],['anim-fade','fade'],
+       ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        b.hidden=!on;
+        b.setAttribute('aria-pressed',
+          (on&&(a.anim?a.anim.type:'none')===p[1]).toString());
+      });
+    };
   })();
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
@@ -7362,7 +7834,8 @@
   function renderControls(){
     updateNumsLabel();updateCropLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay,#layout-menu-grid .lay').forEach(function(b){
+    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-home-grid .lay')
+      .forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',
         (!!s&&s.lay===b.dataset.lay).toString());
@@ -7481,30 +7954,147 @@
     }
     return w;
   }
+  /* ---- slide thumbnails ------------------------------------------------
+     A thumbnail is a SCALE MODEL of the slide, not a picture of the
+     notebook cells on it. It used to walk slideCells() and nothing else,
+     so a slide made of text, arrows, shapes or images showed as an empty
+     box and every such slide in the strip looked identical (2026-08-20,
+     user: "thumbnails do now show text, or anything else for that matter,
+     just the cells").
+     Everything is placed in the same page percentages the canvas uses, so
+     positions are exactly right at any size. Two things cannot scale
+     linearly and get a floor instead — type and stroke width — because
+     0.3px of either is nothing at all. That is the opposite of the rule
+     fontPx follows on the real page, and deliberately: the page is the
+     document and must stay true to itself, a thumbnail is an INDEX and
+     has to be legible. */
+  var MINI_H=66;      /* mirrors --mini-h in deck.css */
+  /* svg ids (gradients) must be unique across every thumbnail in the
+     strip, not just within one — a repeated id would silently paint every
+     later slide's gradient with the first slide's */
+  var miniSeq=0;
+  function miniText(d,a,txt,cls,centred){
+    if(!String(txt||'').trim()) return;
+    var t=document.createElement('span');
+    t.className='mini-tx'+(cls?' '+cls:'');
+    t.style.left=(a.x||0)+'%';t.style.top=(a.y||0)+'%';
+    if(a.w!=null) t.style.width=a.w+'%';
+    t.style.fontSize=Math.max(2,MINI_H*(a.size||2.6)/100).toFixed(2)+'px';
+    if(a.color) t.style.color=a.color;
+    if(a.b) t.style.fontWeight='700';
+    if(a.i) t.style.fontStyle='italic';
+    if(a.align) t.style.textAlign=a.align;
+    if(a.font) t.style.fontFamily=fontCss(a.font);
+    if(a.bg!==0&&a.bgc) t.style.background=a.bgc;
+    /* a title is anchored on its CENTRE, the way the canvas anchors it */
+    var tr=centred?'translate(-50%,-50%)':'';
+    if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
+    if(tr) t.style.transform=tr;
+    if(a.op!=null&&a.op<1) t.style.opacity=a.op;
+    t.textContent=String(txt);
+    d.appendChild(t);
+  }
+  /* a box-shaped item (shape, image, cell frame) at its page rect */
+  function miniBox(d,a,cls){
+    var b=document.createElement('span');
+    b.className='mini-it'+(cls?' '+cls:'');
+    b.style.left=(a.x||0)+'%';b.style.top=(a.y||0)+'%';
+    b.style.width=(a.w||10)+'%';b.style.height=(a.h||10)+'%';
+    if(a.rot) b.style.transform='rotate('+a.rot+'deg)';
+    if(a.op!=null&&a.op<1) b.style.opacity=a.op;
+    d.appendChild(b);
+    return b;
+  }
+  /* the stroke a thumbnail draws: the page weight scaled down, floored so
+     a hairline is still a line */
+  function miniSw(a){
+    return Math.max(0.6,swOf(a)*MINI_H/SW_REF_H).toFixed(2);
+  }
+  /* re-weight a borrowed shape/freehand svg for thumbnail scale, and drop
+     its dash: dashes are measured in the stroke's own units, so a pattern
+     sized for an A0 poster is one long dash across a 116px thumbnail */
+  function miniStroke(host,a){
+    var p=host.querySelector('path'); if(!p) return;
+    p.setAttribute('stroke-width',miniSw(a));
+    p.removeAttribute('stroke-dasharray');
+  }
   function miniDiagram(s){
     var d=document.createElement('span');
     d.className='mini-diagram free';
-    if(s.layout==='title'){
-      var w=document.createElement('span');
-      w.className='mini-pane is-title';
-      d.appendChild(w);
-      return d;
-    }
-    var cells=slideCells(s);
-    if(!cells.length){
+    if(!s) return d;
+    /* the slide's own background, so a recoloured slide reads as one */
+    if(s.bg) d.style.background=s.bg;
+    var annots=s.annots||[];
+    if(s.layout!=='title'&&!annots.length){
       var e=document.createElement('span');
       e.className='mini-pane empty';
       d.appendChild(e);
       return d;
     }
-    cells.forEach(function(pair){
-      var a=pair.a;
-      var w2=paneThumb(a.ref);
-      w2.style.position='absolute';
-      w2.style.left=a.x+'%';w2.style.top=a.y+'%';
-      w2.style.width=(a.w||10)+'%';w2.style.height=(a.h||10)+'%';
-      d.appendChild(w2);
+    if(s.layout==='title'){
+      miniText(d,titleProps(s,'t'),s.title||'Title','is-t',true);
+      miniText(d,titleProps(s,'s'),s.sub||'','is-s',true);
+    }
+    /* arrows go last so they sit on top, exactly as on the canvas */
+    var arrows=[];
+    annots.forEach(function(a,i){
+      if(!a||a.hide) return;
+      if(a.k==='arrow'){arrows.push(a);return;}
+      if(a.k==='text'){miniText(d,a,a.text||'');return;}
+      if(a.k==='image'){
+        var bx=miniBox(d,a,'is-img');
+        if(a.src){
+          var im=document.createElement('img');
+          im.src=a.src;im.alt='';im.loading='lazy';im.draggable=false;
+          if(a.crop) bx.classList.add('is-crop');
+          bx.appendChild(im);
+        }
+        return;
+      }
+      if(a.k==='rect'){
+        var bs=miniBox(d,a,'is-shape');
+        bs.appendChild(drawShapeSvg(a.shape||'rect',a.color||'#ff6b57',
+          miniSw(a),a,'m'+(miniSeq++),null));
+        miniStroke(bs,a);
+        return;
+      }
+      if(a.k==='draw'){
+        var bd=miniBox(d,a,'is-shape');
+        bd.appendChild(drawFreeSvg(a,null));
+        miniStroke(bd,a);
+        return;
+      }
+      if(a.k==='cell'){
+        var w2=paneThumb(a.ref);
+        w2.style.position='absolute';
+        w2.style.left=(a.x||0)+'%';w2.style.top=(a.y||0)+'%';
+        w2.style.width=(a.w||10)+'%';w2.style.height=(a.h||10)+'%';
+        if(a.rot) w2.style.transform='rotate('+a.rot+'deg)';
+        d.appendChild(w2);
+      }
     });
+    if(arrows.length){
+      /* ONE svg for every arrow, in the page's own 0..100 percentage
+         space — preserveAspectRatio="none" makes that space the
+         thumbnail, so no pixel measurement is needed and nothing has to
+         be re-scaled when the strip is resized */
+      var sv=document.createElementNS(AN_NS,'svg');
+      sv.setAttribute('class','mini-svg');
+      sv.setAttribute('viewBox','0 0 100 100');
+      sv.setAttribute('preserveAspectRatio','none');
+      arrows.forEach(function(a){
+        var p=document.createElementNS(AN_NS,'path');
+        p.setAttribute('d',arrowPath(arrowEnds(null,s,a,0),a,100,100));
+        p.setAttribute('fill','none');
+        p.setAttribute('stroke',a.color||'#ff6b57');
+        p.setAttribute('stroke-width',miniSw(a));
+        p.setAttribute('vector-effect','non-scaling-stroke');
+        p.setAttribute('stroke-linecap','round');
+        if(a.op!=null&&a.op<1) p.setAttribute('opacity',a.op);
+        sv.appendChild(p);
+      });
+      d.appendChild(sv);
+    }
     return d;
   }
   /* ---- the other pages, as a floating pane -----------------------------
@@ -7741,23 +8331,11 @@
   }
   function renderPresNbs(){
     var nbs=presNbs(pres);
-    var btn=$('#dc-nbs-btn');
-    if(btn){
-      /* Visible whenever this build can DO anything with notebooks.
-         Hiding it until the list was non-empty made the pane
-         undiscoverable on a fresh deck and read as "the open-notebooks
-         button disappeared" (2026-08-18, user). Only the bare static
-         export, which has no notebooks at all, drops it.
-         The label no longer renames itself either: "Open notebooks" on
-         a button that actually opens a PANE promised the wrong thing —
-         the opening and refreshing live inside the pane, beside the
-         list they act on. */
-      btn.hidden=!(nbs.length||nbsCanOpen());
-    }
-    /* this button IS the Notebooks group; when it hides, the group must
-       go too, or the ribbon shows a label over empty space */
-    syncRibbonGroups();
-    buildNbsInto($('#dc-nbs'),true);
+    /* the column shows the list whenever this build can DO anything with
+       notebooks; the bare static export has none at all */
+    var col=$('#dc-nbs');
+    if(col) col.hidden=!(nbs.length||nbsCanOpen());
+    buildNbsInto(col,true);
   }
   /* ---- "notebooks in this presentation" popover: open all / refresh all ----
      stem -> path resolves from an open shell, else a recent path with the
@@ -7811,10 +8389,7 @@
       toast(verb+acted+' notebook'+(acted===1?'':'s')+'…');
     setTimeout(renderNbsMenu,600);   /* refresh statuses, stay open */
   }
-  function hideNbsMenu(){
-    var m=$('#nbspane'); if(m) m.hidden=true;
-    var b=$('#dc-nbs-btn'); if(b) b.setAttribute('aria-pressed','false');
-  }
+  function hideNbsMenu(){}   /* nothing floats any more; see renderNbsMenu */
   /* ---- Lock all / Unlock all / prefetch locked versions ---- */
   function allCellAnnots(){
     var out=[];
@@ -7888,8 +8463,13 @@
       fetchVerCards(groups[k].path,groups[k].commit,
         groups[k].anchors);});
   }
+  /* ONE place the notebook list lives: the top of the left column, on
+     screen the whole time you are editing. There used to be a second copy
+     in a floating pane behind a ribbon button, which is a group's worth of
+     ribbon width spent on something already showing (2026-08-20, user: "so
+     the notebook button can be removed now. Haven't we put all the
+     functionality on the left hand side?"). */
   function renderNbsMenu(){
-    buildNbsInto($('#nbspane-body'));
     buildNbsInto($('#dc-nbs'),true);
   }
   function buildNbsInto(m,column){
@@ -7973,6 +8553,22 @@
       m.appendChild(note);
     }
   }
+  /* ---- the Home tab's Slides group -----------------------------------
+     The same four actions the thumbnail strip offers on hover, in the
+     place you look for them when the strip is scrolled away from the
+     current slide. They call the strip's own implementations, so there is
+     one of each. */
+  (function(){
+    var b;
+    b=$('#hm-newslide');
+    if(b) b.addEventListener('click',function(){
+      var add=$('#film-add'); if(add) add.click();});
+    b=$('#hm-dupslide');
+    if(b) b.addEventListener('click',function(){dupSlide(cur);});
+    b=$('#hm-delslide');
+    if(b) b.addEventListener('click',function(){delSlide(cur);});
+    wireMenuToggle('hm-laywrap','hm-lay','hm-lay-menu');
+  })();
   function renderCreate(){
     renderPresRow();renderControls();renderPresNbs();renderFilm();
   }
@@ -8018,11 +8614,16 @@
      styling/anchor" bugs goes with the machinery. */
   function syncTopBar(){
     var dt=$('.deck-top',deckEl);
-    /* While EDITING there is no bar at all: everything that was in it has
-       moved into the ribbon's File group, and an empty strip above the
-       tools is pure stolen height. Presenting still has one — there is no
-       ribbon then, and Back has to live somewhere. */
-    if(dt) dt.hidden=(mode==='edit');
+    /* Row 1 of the deck holds exactly one bar. Presenting gets .deck-top,
+       which is only a way out; editing and building get .deck-qat, which
+       is the document's own controls — File, Save, undo/redo, the name,
+       Find, zoom, Present (2026-08-20). Never both. */
+    var qat=$('#deck-qat',deckEl);
+    var editing=(mode==='edit'||mode==='create');
+    if(dt) dt.hidden=editing;
+    if(qat) qat.hidden=!editing;
+    var tabs=$('#rbn-tabs',deckEl);
+    if(tabs) tabs.hidden=(mode!=='edit');
     var xb=$('#deck-exit');
     if(xb){
       /* say where it GOES. "Back" beside an armed drawing tool reads as
@@ -8047,6 +8648,7 @@
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
+    if(editing) applyTab();
     /* The top bar earns its row or it does not appear. While editing it
        is only needed by a POSTER, which has no panel and therefore keeps
        File and Save up here; a presentation keeps them in the panel head,
@@ -8327,25 +8929,6 @@
         m.hidden=true;});
   });
   /* ---- "Notebooks" popover in the deck header ---- */
-  /* the notebooks list is a PANE now, a sibling of Objects — a list you
-     open to look at the presentation from outside it, not a menu that
-     dies on the first outside click (2026-08-18, user: "like how we have
-     the objects, a notebooks used thing that pops up") */
-  var nbsBtn=$('#dc-nbs-btn'),nbsPane=$('#nbspane');
-  if(nbsBtn) nbsBtn.addEventListener('click',function(e){
-    e.stopPropagation();
-    if(!nbsPane) return;
-    if(nbsPane.hidden){renderNbsMenu();nbsPane.hidden=false;
-      nbsBtn.setAttribute('aria-pressed','true');}
-    else {nbsPane.hidden=true;
-      nbsBtn.setAttribute('aria-pressed','false');}
-  });
-  (function(){
-    var c=$('#nbspane-close');
-    if(c) c.addEventListener('click',function(){
-      nbsPane.hidden=true;
-      if(nbsBtn) nbsBtn.setAttribute('aria-pressed','false');});
-  })();
   document.addEventListener('fullscreenchange',function(){
     /* Esc always exits browser fullscreen (the page cannot prevent
        it), so Esc while presenting leaves the presentation entirely —
@@ -8412,6 +8995,14 @@
          swallows it so the browser's save dialog never covers a talk. */
       e.preventDefault();
       if(mode!=='view'){var sb2=$('#dc-save');if(sb2) sb2.click();}
+    }
+    else if((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F')
+            &&mode!=='view'){
+      /* the browser's own find can only see the ONE slide that is
+         rendered, which for a deck is almost always the wrong answer —
+         so Ctrl+F opens the deck's find instead (2026-08-20) */
+      e.preventDefault();
+      if(window.SemDeckFind) window.SemDeckFind();
     }
     else if(mode==='edit'){
       if(e.key==='Delete'||e.key==='Backspace'){
@@ -8622,12 +9213,14 @@
     if(b) b.addEventListener('click',function(){closeMenu();fn();});
   }
   menuAction('#mi-new',newPresentation);
-  menuAction('#mi-rename',function(){
-    var lbl=$('#pres-current'), inp=$('#pres-name');
-    if(lbl) lbl.hidden=true;
-    inp.hidden=false;inp.value=pres.name;
-    inp.focus();inp.select();
-  });
+  /* ONE rename, reached from the File menu and from the name in the top
+     bar. It used to un-hide #pres-name, which lives in .dc-controls — a
+     block that is display:none the whole time you are editing, so the
+     input was 0x0 and unfocusable and File ▸ Rename… appeared to do
+     nothing at all in the primary flow (2026-08-20 diagnosis). */
+  menuAction('#mi-rename',startQatRename);
+  var qatName=$('#qat-name');
+  if(qatName) qatName.addEventListener('click',startQatRename);
   menuAction('#mi-auto-figs',function(){
     pres.slides=autoSlides(false);cur=0;activePane=0;
     markDirty();refresh();
@@ -8660,10 +9253,12 @@
       :'Crop marks off');
   });
   $('#pres-name').addEventListener('input',function(){
-    var old=pres.name;
-    pres.name=this.value.trim();
-    if(old&&old!==pres.name) lsDel(PFX+old);
-    markDirty();
+    /* NOTHING happens per keystroke any more. This used to set pres.name
+       and lsDel the old draft on every letter typed, so renaming "talk"
+       to "talk2" walked through "tal", "ta", "t" — deleting the draft
+       under each prefix on the way and leaving four half-named ghosts in
+       the rail (2026-08-20 diagnosis). Renaming is a single committed
+       action; see renamePresentation. */
   });
   $('#pres-name').addEventListener('keydown',function(e){
     if(e.key==='Enter'||e.key==='Escape') this.blur();
@@ -8673,6 +9268,7 @@
     this.hidden=true;
     var lbl=$('#pres-current');
     if(lbl) lbl.hidden=false;
+    if(this.value.trim()) renamePresentation(this.value.trim());
     renderPresRow();
   });
 
@@ -8973,10 +9569,40 @@
     autoTimer=setTimeout(function(){saveToProject(true);},1200);
   }
   function renderAutosaveItem(){
-    var mi=$('#mi-autosave'); if(!mi) return;
-    mi.hidden=(APP.mode!=='app');
-    mi.textContent='Autosave: '+(autosaveOn?'on':'off');
+    /* Two doors, one state: the File menu (where it has always been) and
+       the top bar, where you can READ it without opening a menu. A save
+       setting you have to go looking for to check is a save setting you
+       do not trust (2026-08-20, user asked for "autosave frequency" in
+       the thin bar). */
+    var mi=$('#mi-autosave');
+    if(mi){
+      mi.hidden=(APP.mode!=='app');
+      mi.textContent='Autosave: '+(autosaveOn?'on':'off');
+    }
+    var qa=$('#qat-auto');
+    if(qa){
+      /* only the app build autosaves to the project; a file target
+         autosaves unconditionally and has nothing to toggle */
+      qa.hidden=(APP.mode!=='app');
+      qa.textContent=autosaveOn?'↻ Autosave on':'↻ Autosave off';
+      qa.setAttribute('aria-pressed',autosaveOn?'true':'false');
+      qa.title=autosaveOn
+        ?('Autosaving to '+whereSaved()+' about a second after you stop '
+          +'typing. Click to turn it off.')
+        :'Autosave is off — your work is only written when you press '
+          +'Save. Click to turn it on.';
+    }
   }
+  function toggleAutosave(){
+    autosaveOn=!autosaveOn;
+    lsSet(AUTOKEY,autosaveOn?'1':'0');
+    renderAutosaveItem();renderSaveBtn();status();
+    toast(autosaveOn
+      ?('Autosave on — saving to '+whereSaved()+' as you work')
+      :'Autosave off — press Save to write your changes');
+  }
+  var qatAuto=$('#qat-auto');
+  if(qatAuto) qatAuto.addEventListener('click',toggleAutosave);
   var miAuto=$('#mi-autosave');
   if(miAuto) miAuto.addEventListener('click',function(){
     closeMenu();
@@ -9691,6 +10317,43 @@
     });
   })();
   window.SemDeckDelete=deletePresByName;   /* rail rows + tests */
+  /* ---- ONE rename, for every door into it -----------------------------
+     There are three (the title bar, File ▸ Rename…, and the rail), and
+     before this there was no shared implementation at all: each one poked
+     pres.name and #pres-name directly. The result was renaming that
+     appeared to do nothing in the primary flow, drafts orphaned under
+     every prefix of the new name, no collision guard, and a project entry
+     that kept the old name (2026-08-20 diagnosis).
+     A rename moves the WORK, not just the label: the browser draft, the
+     project entry, and the folder the presentation was filed in. */
+  function renamePresentation(nm){
+    nm=String(nm||'').trim();
+    var old=pres&&pres.name;
+    if(!nm||!old||nm===old) return false;
+    var taken=allSaved().map(function(p){return p.name;})
+      .concat(draftNames());
+    if(taken.indexOf(nm)>=0){
+      toast('There is already something called “'+nm+'” — pick another '
+        +'name');
+      return false;
+    }
+    /* the draft moves with the name, rather than being deleted under the
+       old one and re-created under the new one on the next save */
+    var draft=lsGet(PFX+old);
+    if(draft!=null){lsSet(PFX+nm,draft);lsDel(PFX+old);}
+    /* the folder rides on the presentation object itself (p.folder), so
+       it needs no separate move — but the SAVED copies are matched by
+       name and do */
+    projectPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    nbPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    pres.name=nm;
+    if(APP.mode==='app')
+      APP.api('/api/save',{presentations:deep(projectPres)})
+        .catch(function(){});
+    markDirty();status();renderPresTabs();renderPresRow();
+    toast('Renamed to “'+nm+'”');
+    return true;
+  }
   menuAction('#mi-del',function(){
     var nm=pres.name;
     lsDel(PFX+nm);
@@ -9711,6 +10374,172 @@
         +'notebook’s metadata)')
       :('Deleted "'+nm+'"'));
   });
+
+  /* ---- FIND AND REPLACE ------------------------------------------------
+     Searches the MODEL, not the rendered page: every text box, list item,
+     slide title and subtitle on every slide, whether or not that slide is
+     the one on screen. A browser find can only ever see the one slide
+     that is rendered, which for a deck is the wrong answer almost all of
+     the time (2026-08-20, user: "needs to be a search and replace of text
+     and stuff, that is pretty standard").
+     A placed notebook card is deliberately NOT searchable: its words
+     belong to the notebook, and rewriting them here would put the slide
+     and its source out of step with no way to tell. */
+  (function(){
+    var pop=$('#find-pop');
+    if(!pop) return;
+    var qi=$('#find-q'),ri=$('#find-r'),listEl=$('#find-list');
+    var cntEl=$('#find-count'),ckCase=$('#find-case'),ckWord=$('#find-word');
+    var hits=[],at=-1;
+    /* every writable string in the deck, as {si, idx, get, set, label} */
+    function fields(){
+      var out=[];
+      (pres.slides||[]).forEach(function(s,si){
+        if(s.layout==='title'){
+          out.push({si:si,idx:'t',label:'Title',
+            get:function(){return s.title||'';},
+            set:function(v){s.title=v;}});
+          out.push({si:si,idx:'s',label:'Subtitle',
+            get:function(){return s.sub||'';},
+            set:function(v){s.sub=v;}});
+        }
+        (s.annots||[]).forEach(function(a,i){
+          if(!a||a.k!=='text') return;
+          out.push({si:si,idx:i,label:itemLabel(s,i),
+            get:function(){return a.text||'';},
+            set:function(v){
+              a.text=v;
+              /* rich markup cannot survive a plain-text substitution
+                 without a mapping from characters to runs, so a replaced
+                 box drops back to plain text — and says so in the toast
+                 rather than silently losing a colour */
+              if(a.html){delete a.html;
+                if(listOf(a)) setListStyle(a,listOf(a));}
+            }});
+        });
+      });
+      return out;
+    }
+    function rx(){
+      var q=qi.value;
+      if(!q) return null;
+      var esc2=q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+      if(ckWord.checked) esc2='\\b'+esc2+'\\b';
+      try{return new RegExp(esc2,ckCase.checked?'g':'gi');}
+      catch(e){return null;}
+    }
+    function scan(){
+      hits=[];
+      var re=rx();
+      if(re) fields().forEach(function(f){
+        var txt=f.get(),m;re.lastIndex=0;
+        while((m=re.exec(txt))){
+          hits.push({f:f,start:m.index,len:m[0].length});
+          if(!m[0].length) re.lastIndex++;   /* never loop on an empty match */
+        }
+      });
+      if(at>=hits.length) at=hits.length-1;
+      render();
+    }
+    function preview(h){
+      var t=h.f.get();
+      var a=Math.max(0,h.start-24),b=Math.min(t.length,h.start+h.len+24);
+      var frag=document.createDocumentFragment();
+      if(a>0) frag.appendChild(document.createTextNode('…'));
+      frag.appendChild(document.createTextNode(t.slice(a,h.start)));
+      var mk=document.createElement('mark');
+      mk.textContent=t.substr(h.start,h.len);
+      frag.appendChild(mk);
+      frag.appendChild(document.createTextNode(t.slice(h.start+h.len,b)));
+      if(b<t.length) frag.appendChild(document.createTextNode('…'));
+      return frag;
+    }
+    function render(){
+      cntEl.textContent=hits.length
+        ?((at>=0?at+1:1)+' of '+hits.length)
+        :(qi.value?'no matches':'');
+      listEl.innerHTML='';
+      hits.slice(0,120).forEach(function(h,k){
+        var b=document.createElement('button');
+        b.className='find-hit'+(k===at?' cur':'');
+        var n=document.createElement('span');n.className='fh-n';
+        n.textContent=(h.f.si+1)+' · '+h.f.label;
+        b.appendChild(n);b.appendChild(preview(h));
+        b.addEventListener('click',function(){at=k;goHit();});
+        listEl.appendChild(b);
+      });
+      if(hits.length>120){
+        var more=document.createElement('div');
+        more.className='selpane-empty';
+        more.textContent='…and '+(hits.length-120)+' more';
+        listEl.appendChild(more);
+      }
+    }
+    /* land on the hit: go to its slide and select the item, so you can SEE
+       what you are about to change */
+    function goHit(){
+      var h=hits[at]; if(!h) return;
+      if(cur!==h.f.si){cur=h.f.si;refresh();}
+      var l=stage.querySelector('.annot-layer');
+      if(l) selectAnnot(l,h.f.idx);
+      render();
+    }
+    function step(d){
+      if(!hits.length) return;
+      at=(at+d+hits.length)%hits.length;
+      goHit();
+    }
+    function replaceOne(){
+      var h=hits[at]||hits[0]; if(!h) return;
+      var t=h.f.get();
+      h.f.set(t.slice(0,h.start)+ri.value+t.slice(h.start+h.len));
+      markDirty();refresh();scan();
+      toast('Replaced 1');
+    }
+    function replaceAll(){
+      var re=rx(); if(!re) return;
+      var n=0;
+      fields().forEach(function(f){
+        var t=f.get();re.lastIndex=0;
+        if(!re.test(t)) return;
+        re.lastIndex=0;
+        f.set(t.replace(re,function(m){n++;return ri.value;}));
+      });
+      if(!n){toast('Nothing to replace');return;}
+      markDirty();refresh();scan();
+      toast('Replaced '+n+(n===1?' match':' matches'));
+    }
+    function open(){
+      pop.hidden=false;
+      /* seed from whatever text box you had selected — the thing you were
+         looking at is usually the thing you want to find */
+      qi.focus();qi.select();
+      scan();
+    }
+    function close(){pop.hidden=true;at=-1;}
+    [qi,ri].forEach(function(el){
+      el.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){e.preventDefault();
+          if(el===ri) replaceOne(); else step(e.shiftKey?-1:1);}
+        else if(e.key==='Escape'){e.preventDefault();close();}
+      });
+    });
+    qi.addEventListener('input',function(){at=-1;scan();});
+    [ckCase,ckWord].forEach(function(c){
+      c.addEventListener('change',function(){at=-1;scan();});});
+    $('#find-next').addEventListener('click',function(){step(1);});
+    $('#find-prev').addEventListener('click',function(){step(-1);});
+    $('#find-rep').addEventListener('click',replaceOne);
+    $('#find-repall').addEventListener('click',replaceAll);
+    $('#find-close').addEventListener('click',close);
+    ['#qat-find','#fmt-find'].forEach(function(sel){
+      var b=$(sel);
+      if(b) b.addEventListener('click',function(){
+        if(pop.hidden) open(); else close();});
+    });
+    window.SemDeckFind=open;   /* the Ctrl+F binding, below */
+  })();
 
   /* ---------- tabs opened / closed while the page lives ---------- */
   document.addEventListener('sem:shell',function(e){

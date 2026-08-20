@@ -36,11 +36,160 @@
          the things you are actually clicking while you lay a page out -->
     <span class="deck-topright" id="deck-topright"></span>
   </div>
-  <!-- the left COLUMN runs the full height of the window — nothing
-       above it — with the notebooks content at its top, then File/Save,
-       then the thumbnails (2026-08-19, user: "the notebooks thing ...
-       should extend to the top. So there is nothing above it ... the
-       content that is currently in the 'notebooks' button"). -->
+  <!-- the left COLUMN is the notebooks content and then the thumbnails,
+       and nothing else. File / Save / undo / redo used to sit between
+       them; they are document controls and now live in the thin bar
+       across the top, which is where a document's controls go
+       (2026-08-20, user: "horrible spot for the back and forewards
+       button"). The column keeps its 2026-08-19 shape otherwise: the
+       notebook content at the top, thumbnails filling the rest. -->
+  <!-- ONE THIN BAR ACROSS THE TOP, the way PowerPoint puts the document's
+       own controls above its tabs. Everything here is about the
+       PRESENTATION rather than about what you have selected: open it,
+       save it, step back through it, find something in it, see how big it
+       is, play it. None of it changes when you click a shape, so none of
+       it belongs in the ribbon underneath (2026-08-20, user: "there
+       should be a small thin ribbon across the top, like on powerpoint,
+       that has file, save, back forwards, zoom, presentation name,
+       autosave frequency, search etc. Then the main things below it").
+       It also settles two complaints in the same move: undo/redo were
+       stranded in the left column under Save ("horrible spot for the back
+       and forewards button"), and the column is now nothing but the
+       notebook content and the thumbnails. -->
+  <div class="deck-qat" id="deck-qat" hidden>
+    <!-- File OVER Save, one cell two rows deep, the way PowerPoint
+         stacks the small controls beside Paste (2026-08-17, user: "the
+         save could go below the file"). Stacking them halves the
+         group's width, and they are the two halves of the same
+         errand. The wrapper stays a plain row inside the builder
+         panel's header, which is a one-line bar. -->
+    <span class="rbn-stack">
+    <div class="dc-menuwrap">
+      <button class="dbtn" id="dc-file" aria-haspopup="true"
+        aria-expanded="false">File &#9662;</button>
+      <div class="dc-menu" id="dc-menu" hidden>
+        <button class="dc-mi" id="mi-new">New presentation</button>
+        <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
+        <div class="dc-msep"></div>
+        <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
+        <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+        <div class="dc-msep"></div>
+        <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+        <button class="dc-mi" id="mi-crop"
+          title="Add trim marks just outside the page for the print
+ shop to cut to. The page itself keeps its exact size &mdash; the sheet
+ grows by 5mm on every side to hold them">Crop marks: off</button>
+        <div class="dc-mi dc-pagebg" id="mi-pagebg"
+          title="The page's own background — pick white for a poster
+ that goes to a print shop">Page background
+          <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
+          <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
+          <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
+          <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
+          <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+        </div>
+        <div class="dc-msep"></div>
+        <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
+        <button class="dc-mi" id="mi-autosave" hidden></button>
+        <button class="dc-mi" id="mi-pdf"
+          title="Save as PDF at the page's TRUE size — an A0 poster
+ exports as a real 841&#215;1189mm page, ready for the print shop">Export
+ PDF / print&#8230;</button>
+        <button class="dc-mi" id="mi-pptx"
+          title="Save as a PowerPoint .pptx. Text stays editable and
+ figures come across as pictures; a placed cell showing code or a table
+ cannot convert — use PDF for those">Export PowerPoint
+ (.pptx)&#8230;</button>
+        <button class="dc-mi" id="mi-html"
+          title="A single .html file anyone can open — no Junoview
+ needed. Arrow keys page through it; Ctrl+P prints at page size">Export
+ standalone HTML</button>
+        <button class="dc-mi" id="mi-dl">Download a copy
+          (.junoview)</button>
+        <button class="dc-mi" id="mi-load">Open a .junoview
+          file&#8230;</button>
+        <button class="dc-mi" id="mi-discard">Discard changes</button>
+        <button class="dc-mi" id="mi-del">Delete presentation</button>
+      </div>
+    </div>
+    <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
+         two competing save buttons and nobody could tell what the
+         second one did (2026-08-07, user: "even I am confused"). It is
+         now a split button: press Save to save, press the chevron to
+         choose where. The destination lives in the menu, which is
+         where a destination belongs. -->
+    <span class="dc-savegrp">
+      <button class="dbtn" id="dc-save">Save</button>
+      <span class="dc-menuwrap">
+        <button class="dbtn dc-target" id="dc-target"
+          aria-haspopup="true" aria-expanded="false"
+          aria-label="Choose where this is saved"
+          title="Choose where this is saved">&#9662;</button>
+        <div class="dc-menu" id="target-menu" hidden>
+          <div class="dc-mhead" id="tg-head">save to</div>
+        <button class="dc-mi" id="tg-project" hidden>This project</button>
+        <button class="dc-mi" id="tg-browser">This browser</button>
+        <button class="dc-mi" id="tg-file">A file on your
+          computer&#8230;</button>
+        <div class="dc-msep"></div>
+          <button class="dc-mi" id="tg-pick" hidden>Choose a different
+            file&#8230;</button>
+        </div>
+      </span>
+    </span>
+    </span>
+    <!-- ONE cell, like the zoom stepper: undo and redo are the same
+         decision in two directions and must never end up on different
+         lines. In the side rail's wrapping flow they did exactly that
+         — undo closed one line and redo opened the next, alone and
+         stretched the full width of the rail (2026-08-16). -->
+    <span class="rbn-cell">
+      <button class="dbtn dc-icon" id="dc-undo" disabled
+        title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+      <button class="dbtn dc-icon" id="dc-redo" disabled
+        title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+    </span>
+    <span class="qat-sep"></span>
+    <!-- Find is a document-wide action, so it lives with the document
+         controls rather than in a formatting group -->
+    <button class="dbtn qat-btn" id="qat-find"
+      title="Find and replace text anywhere in this presentation
+ (Ctrl+F)">&#9906; Find</button>
+    <span class="deck-spring"></span>
+    <!-- the presentation's NAME, in the middle, where a title bar puts it.
+         Click it to rename — the old rename lived in a File-menu item that
+         un-hid an input inside a display:none block. -->
+    <button class="qat-name" id="qat-name"
+      title="Click to rename this presentation"></button>
+    <input class="qat-nameedit" id="qat-nameedit" type="text" hidden
+      spellcheck="false" autocomplete="off" aria-label="Presentation name">
+    <span class="deck-spring"></span>
+    <span class="deck-status" id="deck-status"></span>
+    <!-- how often it saves itself, said out loud rather than buried as a
+         File-menu toggle you had to open the menu to read -->
+    <button class="dbtn qat-btn" id="qat-auto" hidden
+      aria-haspopup="true"></button>
+    <span class="qat-sep"></span>
+    <!-- Zoom is a property of the VIEW, not of the page, and you reach for
+         it constantly whatever tab you are on — so it sits up here where
+         no tab can take it away -->
+    <span class="rbn-cell qat-zoom">
+      <button class="dbtn rbn-ico" id="zoom-out"
+        title="Zoom out">&#8722;</button>
+      <button class="dbtn rbn-sm" id="zoom-val"
+        title="Click to fit the whole page in the window">Zoom 100%</button>
+      <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
+    </span>
+    <span class="qat-sep"></span>
+    <button class="dbtn rbn-ico" id="deck-scheme" aria-haspopup="true"
+      title="Theme — dark, light, forest, colourful, high
+ contrast">&#9673;</button>
+    <a class="dbtn rbn-ico" id="deck-support" target="_blank" rel="noopener"
+      title="Support Junoview on Ko-fi">&#9825;</a>
+    <button class="dbtn primary qat-play" id="dc-play"
+      title="Play this full screen, from this page (F5)">
+      <i data-ic="play"></i> Present</button>
+  </div>
   <aside class="deck-create" id="deck-create" hidden>
       <div class="dc-resize" id="dc-resize"
         title="Drag to resize the builder panel"></div>
@@ -48,102 +197,6 @@
            notebook this presentation uses, with open/refresh — lives at
            the top of the column; the header row is the way back -->
       <div class="dc-nbs" id="dc-nbs"></div>
-      <div class="dc-head">
-        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
-             stacks the small controls beside Paste (2026-08-17, user: "the
-             save could go below the file"). Stacking them halves the
-             group's width, and they are the two halves of the same
-             errand. The wrapper stays a plain row inside the builder
-             panel's header, which is a one-line bar. -->
-        <span class="rbn-stack">
-        <div class="dc-menuwrap">
-          <button class="dbtn" id="dc-file" aria-haspopup="true"
-            aria-expanded="false">File &#9662;</button>
-          <div class="dc-menu" id="dc-menu" hidden>
-            <button class="dc-mi" id="mi-new">New presentation</button>
-            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
-            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
-            <button class="dc-mi" id="mi-crop"
-              title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
-            <div class="dc-mi dc-pagebg" id="mi-pagebg"
-              title="The page's own background — pick white for a poster
- that goes to a print shop">Page background
-              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
-              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
-              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
-              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
-              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
-            </div>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
-            <button class="dc-mi" id="mi-autosave" hidden></button>
-            <button class="dc-mi" id="mi-pdf"
-              title="Save as PDF at the page's TRUE size — an A0 poster
- exports as a real 841&#215;1189mm page, ready for the print shop">Export
- PDF / print&#8230;</button>
-            <button class="dc-mi" id="mi-pptx"
-              title="Save as a PowerPoint .pptx. Text stays editable and
- figures come across as pictures; a placed cell showing code or a table
- cannot convert — use PDF for those">Export PowerPoint
- (.pptx)&#8230;</button>
-            <button class="dc-mi" id="mi-html"
-              title="A single .html file anyone can open — no Junoview
- needed. Arrow keys page through it; Ctrl+P prints at page size">Export
- standalone HTML</button>
-            <button class="dc-mi" id="mi-dl">Download a copy
-              (.junoview)</button>
-            <button class="dc-mi" id="mi-load">Open a .junoview
-              file&#8230;</button>
-            <button class="dc-mi" id="mi-discard">Discard changes</button>
-            <button class="dc-mi" id="mi-del">Delete presentation</button>
-          </div>
-        </div>
-        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
-             two competing save buttons and nobody could tell what the
-             second one did (2026-08-07, user: "even I am confused"). It is
-             now a split button: press Save to save, press the chevron to
-             choose where. The destination lives in the menu, which is
-             where a destination belongs. -->
-        <span class="dc-savegrp">
-          <button class="dbtn" id="dc-save">Save</button>
-          <span class="dc-menuwrap">
-            <button class="dbtn dc-target" id="dc-target"
-              aria-haspopup="true" aria-expanded="false"
-              aria-label="Choose where this is saved"
-              title="Choose where this is saved">&#9662;</button>
-            <div class="dc-menu" id="target-menu" hidden>
-              <div class="dc-mhead" id="tg-head">save to</div>
-            <button class="dc-mi" id="tg-project" hidden>This project</button>
-            <button class="dc-mi" id="tg-browser">This browser</button>
-            <button class="dc-mi" id="tg-file">A file on your
-              computer&#8230;</button>
-            <div class="dc-msep"></div>
-              <button class="dc-mi" id="tg-pick" hidden>Choose a different
-                file&#8230;</button>
-            </div>
-          </span>
-        </span>
-        </span>
-        <!-- ONE cell, like the zoom stepper: undo and redo are the same
-             decision in two directions and must never end up on different
-             lines. In the side rail's wrapping flow they did exactly that
-             — undo closed one line and redo opened the next, alone and
-             stretched the full width of the rail (2026-08-16). -->
-        <span class="rbn-cell">
-          <button class="dbtn dc-icon" id="dc-undo" disabled
-            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
-          <button class="dbtn dc-icon" id="dc-redo" disabled
-            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
-        </span>
-        <span class="dc-spring"></span>
-        <span class="deck-status" id="deck-status"></span>
-      </div>
       <!-- the NAME lives outside .dc-controls: that block is display:none
            while editing, so File → Rename… un-hid an input inside a hidden
            ancestor — 0x0, unfocusable, "renaming doesn't work" in the
@@ -177,25 +230,46 @@
        and rail came out of its width on every screen (2026-08-19, user:
        "the ribbon needs to go all the way across the top ... then this
        gives more space to the ribbon and all the options"). -->
+  <!-- TABS. One ribbon could not hold what this editor now does — every
+       new feature made the row denser until the density ladder was doing
+       all the work and nothing had room to breathe (2026-08-20, user:
+       "there might not need to be tabs like power point and foxit pdf
+       has"). A tab shows one job's worth of groups at a time, so the
+       groups that ARE showing can be full size.
+       The strip is deliberately the same height as a button row and
+       carries no second copy of anything: it is a chooser, not chrome.
+       #rbn-tab-home is first and is where everything selection-driven
+       lives, so the tools for the thing you just clicked are always one
+       named place, never a tab that appears and vanishes under you. -->
+  <div class="rbn-tabs" id="rbn-tabs" role="tablist" hidden>
+    <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
+      aria-selected="true"
+      title="Everything that formats what you have selected — text,
+ colour, arrangement, shapes — plus find and replace">Home</button>
+    <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
+      aria-selected="false"
+      title="Put something new on the page">Insert</button>
+    <button class="rbn-tab" id="rbn-tab-design" role="tab" data-tab="design"
+      aria-selected="false"
+      title="How the page itself looks — its size, layout and
+ background">Design</button>
+    <button class="rbn-tab" id="rbn-tab-animate" role="tab" data-tab="animate"
+      aria-selected="false" hidden
+      title="How things appear during playback, and in what order">
+      Animate</button>
+    <button class="rbn-tab" id="rbn-tab-view" role="tab" data-tab="view"
+      aria-selected="false"
+      title="Guides, the object list, and checking the page before it
+ prints">View</button>
+    <span class="deck-spring"></span>
+    <span class="et-hint" id="et-hint"></span>
+  </div>
   <div class="edit-tools ribbon" id="edit-tools" hidden>
         <!-- the app buttons the editor was hiding: the theme toggle and
              support live in the app bar, and editing hides the app bar —
              so from inside a poster there was no way to reach either
              (2026-08-18, user). At the very END of the bar: nothing sits
              beyond them, so they can never move a control. -->
-        <span class="jv-appx">
-          <!-- the theme-toggle removal (2026-08-19) also ate this
-               button's OPENING TAG, which stranded its attributes as
-               visible page text and left the editor with no palette
-               button at all — the "aria-haspopup= in the corner" bug -->
-          <button class="dbtn rbn-ico" id="deck-scheme"
-            aria-haspopup="true"
-            title="Theme — dark, light, forest, colourful, high
- contrast">&#9673;</button>
-          <a class="dbtn rbn-ico" id="deck-support" target="_blank"
-            rel="noopener" title="Support Junoview on Ko-fi"
-            >&#9825;</a>
-        </span>
         <div class="rbn-static">
           <!-- The document actions live HERE while editing, not in a bar
                of their own above the ribbon: a second row of chrome over
@@ -210,30 +284,17 @@
                happened to call the file. Present is DOWN here too — it is
                a way of viewing the page, so it belongs with the other
                view controls (2026-08-07, user). -->
-          <!-- no File group: File / Save / undo / redo / the save readout
-               live in the LEFT COLUMN under the Notebooks button,
-               above the slide thumbnails — with the whole set
-               together, the ribbon holds only editing tools
-               (2026-08-19, user: "the notebooks button needs to
-               sit above the slide thumbnail part. Same with the
-               file save etc"). -->
-          </span>
-          <!-- rbn-nbs so it can be ORDERED: it stands down for a
-               selection, so it belongs in the ribbon's changing region,
-               not among the groups that must never move -->
-          <span class="rbn-grp rbn-standby rbn-nbs">
-            <span class="rbn-row">
-              <div class="dc-menuwrap">
-                <button class="dbtn rbn-sm" id="dc-nbs-btn"
-                  aria-pressed="false"
-                  title="Every notebook that went into this presentation
- — see which are open, open or refresh them all, and lock figures to a
- git commit"><i data-ic="nb"></i> Notebooks</button>
-              </div>
-            </span>
-            <span class="rbn-lab">Notebooks</span>
-          </span>
-          <span class="rbn-grp rbn-fixed rbn-slide">
+          <!-- no File group and no Notebooks group. File / Save / undo /
+               redo / the save readout are the document's own controls and
+               live in the thin bar above; the notebooks a presentation is
+               built from are the whole top of the left column, which is
+               on screen the entire time. A ribbon button that opened a
+               second copy of that list in a floating pane was a group's
+               worth of width spent on something already showing
+               (2026-08-20, user: "so the notebook button can be removed
+               now. Haven't we put all the functionality on the left hand
+               side?"). -->
+          <span class="rbn-grp rbn-fixed rbn-slide" data-tab="design">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
                 <button class="dbtn rbn-sm" id="lay-btn"
@@ -290,7 +351,7 @@
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -331,36 +392,16 @@
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><i data-ic="objects"></i> Layers</button>
-              <!-- a deck only: a poster is one printed page and has no
-                   build to inspect -->
-              <button class="dbtn rbn-sm" id="vw-anim" hidden
-                aria-pressed="false"
-                title="Everything animated on this slide, in the order it
- appears — and the effect on whatever is selected"
-                >&#9654; Animation pane</button>
-              <!-- Zoom is how big the page LOOKS, not how big it IS — it
-                   changes nothing about the document and nothing about
-                   what prints, which is the same test Guides and Objects
-                   pass and Page size fails. It sat under Slide, beside the
-                   control that sets the real page size, and the two read
-                   as the same kind of thing (2026-08-17, user: "I feel
-                   like the zoom is view").
-                   The three controls are ONE cell: they are one decision,
-                   and splitting them across the grid would put the minus
-                   and the plus on different rows. -->
-              <span class="rbn-cell">
-                <button class="dbtn rbn-ico" id="zoom-out"
-                  title="Zoom out">&#8722;</button>
-                <button class="dbtn rbn-sm" id="zoom-val"
-                  title="Click to fit the whole page in the window"
-                  >Zoom 100%</button>
-                <button class="dbtn rbn-ico" id="zoom-in"
-                  title="Zoom in">+</button>
-              </span>
+              <!-- Zoom has left this group for the thin bar at the top.
+                   It is the one control you reach for on EVERY tab, and a
+                   control that a tab can take away from you is a control
+                   you cannot rely on (2026-08-20). The animation pane has
+                   gone the other way, into its own tab, with the effects
+                   beside it. -->
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <span class="rbn-grp rbn-standby rbn-out">
+          <span class="rbn-grp rbn-out" data-tab="view">
             <span class="rbn-row">
               <!-- "Check" alone said nothing (2026-08-07, user: "what are
                    things like 'check', what does that even mean?"). The
@@ -370,13 +411,37 @@
                 title="Check this page before it goes to print: soft
  figures, anything off the page or inside the margin, unreadable text,
  empty frames">&#9873; Print check</button>
-              <button class="dbtn primary rbn-sm" id="dc-play"
-                title="Play this full screen, from this page">
-                <i data-ic="play"></i> Present</button>
             </span>
             <span class="rbn-lab">Output</span>
           </span>
-          <span class="rbn-grp rbn-insert">
+          <!-- ANIMATE. The pane and the effect chooser are the same job
+               and now sit in the same tab instead of the pane hiding
+               under View. The effect buttons act on the selection, so
+               they are hidden without one — the pane is not, because a
+               build order is a property of the SLIDE. -->
+          <span class="rbn-grp rbn-anim" data-tab="animate">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="vw-anim"
+                aria-pressed="false"
+                title="Everything animated on this slide, in the order it
+ appears — and the effect on whatever is selected"
+                >&#9654; Animation pane</button>
+              <button class="dbtn etm" id="anim-none" hidden
+                title="Remove the animation from the selected items — they
+ are simply on the slide from the start">&#8709; None</button>
+              <button class="dbtn etm" id="anim-fade" hidden
+                title="Fade the selected items in">Fade</button>
+              <button class="dbtn etm" id="anim-rise" hidden
+                title="Rise the selected items in from below">Rise</button>
+              <button class="dbtn etm" id="anim-zoom" hidden
+                title="Zoom the selected items in">Zoom</button>
+              <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
+                title="Remove EVERY animation on this slide — nothing is
+ held back during playback">&#10005; Clear slide</button>
+            </span>
+            <span class="rbn-lab">Animate</span>
+          </span>
+          <span class="rbn-grp rbn-insert" data-tab="insert">
             <span class="rbn-row">
               <!-- All one size. Three big buttons here were the worst of
                    the "so many sizes" problem (2026-08-07): nothing shared
@@ -458,9 +523,51 @@
             </span>
             <span class="rbn-lab">Insert</span>
           </span>
+          <!-- SLIDES, first on Home, the way PowerPoint opens its Home
+               tab. Home is where you land, and with nothing selected it
+               would otherwise hold one lonely Find button over an empty
+               row: the format groups only arrive once you click
+               something. These four are the page-level actions you take
+               constantly and they were previously only reachable from the
+               thumbnail strip's hover controls. -->
+          <span class="rbn-grp rbn-slides" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-newslide"
+                title="Add a slide after this one">&#43; New slide</button>
+              <button class="dbtn rbn-sm" id="hm-dupslide"
+                title="Duplicate this slide, in place">&#10697;
+                Duplicate</button>
+              <span class="sh-drop" id="hm-laywrap">
+                <button class="dbtn rbn-sm" id="hm-lay"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Ready-made arrangements for this page">
+                  <i data-ic="layouts"></i> Layout &#9662;</button>
+                <div class="sh-menu lay-menu" id="hm-lay-menu" hidden>
+                  <div class="lay-picker" id="layout-home-grid"
+                    aria-label="Slide layouts"></div>
+                </div>
+              </span>
+              <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
+                title="Delete this slide">&#10005; Delete</button>
+            </span>
+            <span class="rbn-lab">Slides</span>
+          </span>
+          <!-- EDITING. Always here, selection or not — find and replace
+               acts on the whole presentation, which is exactly why it
+               could never be a contextual control (2026-08-20, user:
+               "needs to be a search and replace of text and stuff, that
+               is pretty standard"). -->
+          <span class="rbn-grp rbn-edit" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="fmt-find"
+                title="Find and replace text on every slide (Ctrl+F)"
+                >&#9906; Find &amp; replace</button>
+            </span>
+            <span class="rbn-lab">Editing</span>
+          </span>
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
-          <span class="rbn-grp">
+          <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
               <!-- Bring-to-front, send-to-back and the two rotates used to
                    sit here as bare glyphs (&#8613; &#8615; &#10226;
@@ -522,7 +629,7 @@
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
                the colours all the time?") -->
-          <span class="rbn-grp">
+          <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
               <span class="sh-drop">
                 <button class="dbtn" id="fmt-txcol-btn" hidden
@@ -597,7 +704,7 @@
             </span>
             <span class="rbn-lab">Colour</span>
           </span>
-          <span class="rbn-grp">
+          <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-smaller"
                 title="Smaller text">A&#8722;</button>
@@ -624,13 +731,31 @@
                 title="Underline"><u>U</u></button>
               <button class="dbtn etm" id="fmt-strike"
                 title="Strikethrough"><s>S</s></button>
-              <!-- alignment, bullets and curve are all "how this text is
-                   laid out"; one worded menu instead of three controls -->
+              <!-- BULLETS and NUMBERING are buttons that show their own
+                   state, not a line in a dropdown. The old toggle lived
+                   inside a menu called "Layout", so you could not see
+                   whether a list was on, and turning it off fell back to
+                   a stale copy of the text from before you started
+                   (2026-08-20, user: "the bullet list on/off is cursed.
+                   PLEASE DO EVERYTHING PROPERLY"). -->
+              <button class="dbtn etm" id="fmt-bullets"
+                aria-pressed="false"
+                title="Bullet list on / off">&#8226; List</button>
+              <button class="dbtn etm" id="fmt-numbers"
+                aria-pressed="false"
+                title="Numbered list on / off">1. List</button>
+              <button class="dbtn etm" id="fmt-outdent" hidden
+                title="Move this bullet out one level (Shift+Tab)"
+                >&#8676;</button>
+              <button class="dbtn etm" id="fmt-indent" hidden
+                title="Move this bullet in one level (Tab)">&#8677;</button>
+              <!-- alignment and curve are both "how this text sits"; one
+                   worded menu instead of two controls -->
               <span class="sh-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="How the text sits: alignment, bullet list, and
- bending it along a curve">&#9636; Layout &#9662;</button>
+                  title="How the text sits: alignment, and bending it
+ along a curve">&#9636; Layout &#9662;</button>
                 <div class="sh-menu para-menu" id="fmt-para-menu"
                   hidden></div>
               </span>
@@ -645,7 +770,7 @@
             </span>
             <span class="rbn-lab">Text</span>
           </span>
-          <span class="rbn-grp">
+          <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
               <span class="rbn-stack rbn-cols">
                 <span class="rbn-col">
@@ -725,7 +850,7 @@
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>
-          <span class="rbn-grp">
+          <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
               <span class="sh-drop" id="fmt-cropwrap" hidden>
@@ -753,7 +878,6 @@
             <span class="rbn-lab">Object</span>
           </span>
         </span>
-        <span class="et-hint" id="et-hint"></span>
       </div>
   <div class="deck-main">
     
@@ -790,12 +914,6 @@
           <button class="dbtn dc-icon" id="animpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="animpane-body"></div>
-      </aside>
-      <aside class="selpane nbspane" id="nbspane" hidden>
-        <div class="selpane-h"><span>Notebooks used</span>
-          <button class="dbtn dc-icon" id="nbspane-close"
-            title="Close">&#10005;</button></div>
-        <div class="selpane-list" id="nbspane-body"></div>
       </aside>
       <aside class="selpane verpane" id="verpane" hidden>
         <div class="selpane-h"><span id="verpane-title">Versions</span>
@@ -843,6 +961,47 @@
   slide</span>
   <span class="deck-spring"></span>
   <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
+</div>
+<!-- FIND AND REPLACE across the whole presentation. A panel rather than a
+     browser find: what you are searching is the model (every text box,
+     every slide title, every list item on every slide), not the one slide
+     the browser happens to have rendered. Ctrl+F opens it, Enter walks the
+     hits, and picking one goes to that slide and selects that item so you
+     can see what you are about to change (2026-08-20, user: "needs to be a
+     search and replace of text and stuff, that is pretty standard"). -->
+<div class="find-pop" id="find-pop" hidden role="dialog"
+  aria-label="Find and replace">
+  <div class="find-head">
+    <span class="find-t">Find &amp; replace</span>
+    <button class="dbtn dc-icon" id="find-close"
+      title="Close (Esc)">&#10005;</button>
+  </div>
+  <div class="find-row">
+    <input type="text" id="find-q" class="find-in" spellcheck="false"
+      autocomplete="off" placeholder="Find" aria-label="Find what">
+    <button class="dbtn dc-icon" id="find-prev"
+      title="Previous match (Shift+Enter)">&#8593;</button>
+    <button class="dbtn dc-icon" id="find-next"
+      title="Next match (Enter)">&#8595;</button>
+  </div>
+  <div class="find-row">
+    <input type="text" id="find-r" class="find-in" spellcheck="false"
+      autocomplete="off" placeholder="Replace with"
+      aria-label="Replace with">
+  </div>
+  <div class="find-opts">
+    <label class="find-ck"><input type="checkbox" id="find-case">
+      Match case</label>
+    <label class="find-ck"><input type="checkbox" id="find-word">
+      Whole word</label>
+  </div>
+  <div class="find-foot">
+    <span class="find-count" id="find-count"></span>
+    <span class="deck-spring"></span>
+    <button class="dbtn" id="find-rep">Replace</button>
+    <button class="dbtn" id="find-repall">Replace all</button>
+  </div>
+  <div class="find-list" id="find-list"></div>
 </div>
 <div class="color-pop" id="color-pop" hidden>
   <div class="cp-head" id="cp-head">Custom colour</div>

@@ -5,11 +5,18 @@
    ribbon and the stage. */
 .deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0,#0b141d);color:#dce6ee;
   display:grid;grid-template-columns:auto minmax(0,1fr);
-  grid-template-rows:auto auto minmax(0,1fr);font-family:var(--sans);}
-.deck-top{grid-column:1/-1;grid-row:1;}
-.deck>.deck-create{grid-column:1;grid-row:2/4;min-height:0;}
-.deck>.edit-tools{grid-column:2;grid-row:2;}
-.deck-main{grid-column:2;grid-row:3;}
+  grid-template-rows:auto auto auto minmax(0,1fr);font-family:var(--sans);}
+/* Row 1 is the document's own bar, and only ever ONE of these two is in
+   it: .deck-qat while editing, .deck-top while presenting. Rows 2 and 3
+   are the tab strip and the ribbon, which belong to the stage column;
+   row 4 is the stage. The left column starts under row 1 and runs to the
+   bottom, so the notebook content and the thumbnails still have the whole
+   height with nothing but the title bar over them. */
+.deck-top,.deck-qat{grid-column:1/-1;grid-row:1;}
+.deck>.deck-create{grid-column:1;grid-row:2/5;min-height:0;}
+.deck>.rbn-tabs{grid-column:2;grid-row:2;}
+.deck>.edit-tools{grid-column:2;grid-row:3;}
+.deck-main{grid-column:2;grid-row:4;}
 .deck[hidden]{display:none!important;}
 .deck [hidden]{display:none!important;}
 body.deck-open{overflow:hidden;}
@@ -45,6 +52,98 @@ body.deck-open{overflow:hidden;}
   border-color:var(--cyan-deep);color:#fff;}
 .deck-save{display:flex;gap:7px;align-items:center;}
 
+
+/* ---------- the thin document bar (editing) --------------------------
+   28px of controls that never change with the selection. It is allowed
+   to be a row of chrome above the tools — which the ribbon itself is
+   emphatically not — because it REPLACED chrome rather than adding it:
+   File, Save, undo, redo and the save readout were a block in the left
+   column, zoom and Present were groups in the ribbon, and all of it is
+   now one line that no tab can take away (2026-08-20, user). */
+.deck-qat{display:flex;align-items:center;gap:6px;padding:4px 10px;
+  border-bottom:1px solid #ffffff14;background:var(--chrome-1,#0e1926);
+  flex:none;min-height:34px;flex-wrap:nowrap;overflow-x:clip;}
+.deck-qat[hidden]{display:none!important;}
+.deck-qat .dbtn{padding:4px 9px;}
+.deck-qat .rbn-stack{flex-direction:row;align-items:center;gap:6px;}
+.deck-qat .rbn-cell{height:26px;gap:3px;}
+.deck-qat .dc-menuwrap,.deck-qat .dc-savegrp{display:inline-flex;
+  align-items:center;height:26px;}
+.qat-sep{width:1px;align-self:stretch;margin:3px 3px;
+  background:#ffffff1c;flex:none;}
+.qat-btn{white-space:nowrap;flex:none;}
+/* the name reads as a title, not a button, until you go near it */
+.qat-name{font-family:var(--sans);font-size:12.5px;color:#c6d5e1;
+  background:none;border:1px solid transparent;border-radius:6px;
+  padding:3px 9px;cursor:text;max-width:34vw;white-space:nowrap;
+  overflow:hidden;text-overflow:ellipsis;}
+.qat-name:hover{border-color:#ffffff26;color:#fff;}
+.qat-name:empty::before{content:"untitled";color:#6e8394;}
+.qat-nameedit{font-family:var(--sans);font-size:12.5px;
+  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  border:1px solid var(--cyan);border-radius:6px;padding:3px 9px;
+  min-width:190px;outline:none;}
+.deck-qat .deck-status{height:22px;font-size:10px;flex:none;
+  max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.qat-zoom{flex:none;}
+.qat-play{flex:none;white-space:nowrap;}
+
+/* ---------- the tab strip ---------------------------------------------
+   One job's worth of groups at a time. The strip carries no controls of
+   its own beyond the tabs and the hint, so it stays one button high. */
+.rbn-tabs{display:flex;align-items:stretch;gap:2px;padding:0 10px;
+  background:var(--chrome-1,#0e1926);border-bottom:1px solid #ffffff14;
+  flex:none;height:28px;overflow-x:clip;}
+.rbn-tabs[hidden]{display:none!important;}
+.rbn-tab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:#93a8b9;padding:0 13px;cursor:pointer;white-space:nowrap;
+  transition:color .12s,border-color .12s;}
+.rbn-tab:hover{color:#e2edf5;}
+.rbn-tab[aria-selected="true"]{color:#fff;
+  border-bottom-color:var(--cyan);}
+.rbn-tab[hidden]{display:none;}
+/* a group belongs to exactly one tab and is out of the row entirely when
+   that tab is not the one showing — display:none, never visibility, so it
+   costs no width in the fit measurement */
+.rbn-grp[data-off]{display:none!important;}
+.rbn-tabs .et-hint{align-self:center;font-family:var(--mono);
+  font-size:10px;color:#7d93a6;white-space:nowrap;padding:0 8px;}
+.deck.erc-nohint .rbn-tabs .et-hint{display:none;}
+
+/* ---------- find & replace -------------------------------------------- */
+.find-pop{position:fixed;top:96px;right:22px;z-index:220;width:308px;
+  background:color-mix(in srgb,var(--chrome-3,#101c28) 97%,transparent);
+  border:1px solid #ffffff26;border-radius:10px;padding:10px;
+  box-shadow:0 18px 52px #00000077;display:flex;flex-direction:column;
+  gap:7px;font-family:var(--sans);}
+.find-pop[hidden]{display:none!important;}
+.find-head{display:flex;align-items:center;justify-content:space-between;}
+.find-t{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#8ea4b6;}
+.find-row{display:flex;gap:5px;align-items:center;}
+.find-in{flex:1;min-width:0;font-family:var(--sans);font-size:12px;
+  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  border:1px solid #ffffff26;border-radius:6px;padding:5px 8px;
+  outline:none;}
+.find-in:focus{border-color:var(--cyan);}
+.find-opts{display:flex;gap:12px;}
+.find-ck{font-size:11px;color:#9db1c1;display:flex;align-items:center;
+  gap:4px;cursor:pointer;}
+.find-foot{display:flex;align-items:center;gap:5px;}
+.find-count{font-family:var(--mono);font-size:10px;color:#8ea4b6;}
+.find-list{max-height:210px;overflow-y:auto;display:flex;
+  flex-direction:column;gap:2px;}
+.find-hit{text-align:left;font-size:11.5px;line-height:1.35;
+  background:none;border:1px solid transparent;border-radius:6px;
+  color:#b9cad8;padding:4px 7px;cursor:pointer;}
+.find-hit:hover{background:#ffffff0f;color:#fff;}
+.find-hit.cur{border-color:var(--cyan);color:#fff;background:#39a9c01f;}
+.find-hit .fh-n{font-family:var(--mono);font-size:9.5px;color:#7d93a6;
+  margin-right:6px;}
+.find-hit mark{background:var(--cyan);color:#04121b;border-radius:2px;
+  padding:0 1px;}
+
 .deck-main{flex:1;display:flex;min-height:0;}
 .deck-stagewrap{flex:1;display:flex;flex-direction:column;min-width:0;
   position:relative;}
@@ -71,8 +170,25 @@ body.deck-open{overflow:hidden;}
 .page-menu .page-opt{display:block;width:100%;text-align:left;}
 .page-menu .page-opt[aria-pressed="true"]{color:#fff;
   background:var(--cyan-deep);border-radius:6px;}
+/* ---- panes DOCK, they do not cover ----------------------------------
+   Layers, Animation, Versions, Notebooks and Print check all share one
+   shell, and that shell used to float over the top-right of the stage —
+   directly on top of the page you were editing. Every one of them is a
+   list you consult WHILE working on the thing underneath, so covering
+   that thing is exactly backwards (2026-08-20, user: "I don't like how
+   the pop-up appears ofver the top of things, and not down the side.
+   Annoying to use").
+   The stage now gives up the width instead: .deck.pane-open pads the
+   stage by the pane's width, and because sizeSlideTo fits the page to
+   stage.clientWidth the slide simply gets smaller and stays entirely
+   visible. One variable drives both, so they can never disagree. */
+.deck{--pane-w:232px;}
+.deck.pane-open .deck-stage{padding-right:calc(var(--pane-w) + 22px);}
+.deck.pane-open.rbn-side .deck-stage{
+  padding-right:calc(var(--pane-w) + var(--rbn-side-w) + 12px);}
 /* the Objects pane: everything on the slide — select, hide, lock */
-.selpane{position:absolute;top:8px;right:8px;bottom:8px;width:232px;
+.selpane{position:absolute;top:8px;right:8px;bottom:8px;
+  width:var(--pane-w);
   z-index:60;background:color-mix(in srgb,var(--chrome-3,#101c28) 95%,transparent);border:1px solid #ffffff22;
   border-radius:10px;display:flex;flex-direction:column;
   box-shadow:0 14px 44px #00000066;}
@@ -517,25 +633,11 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
 .deck.creating .deck-stagewrap{display:none;}
 .deck.creating .deck-top{display:none;}
 
-/* create panel header: File menu + status */
-.dc-head{display:flex;align-items:center;gap:8px;padding:10px 14px;
-  border-bottom:1px solid #ffffff14;background:var(--chrome-0,#0b141d);flex-wrap:wrap;}
-/* every header button is the same chip as the top-bar toggles */
-/* scoped to the docked panel ONLY: fileToRibbon moves these very nodes
-   into the ribbon, where a stray 30px height left them standing proud of
-   their 26px neighbours — the literal reason the File group never lined
-   up (2026-08-07) */
-.dc-head .dbtn,.dc-head .dc-menuwrap .dbtn{height:30px;box-sizing:border-box;
-  padding:0 12px;display:inline-flex;align-items:center;gap:6px;
-  line-height:1;letter-spacing:.04em;white-space:nowrap;}
-.dc-head .dbtn.dc-icon{padding:0 9px;font-size:15px;}
-/* the undo/redo pair travels between the panel head and the ribbon, so its
-   wrapper has to answer to both: 30px and the head's own spacing here,
-   26px and the grid's spacing once .rbn-cell's own rule takes over there */
-.dc-head .rbn-cell{height:30px;gap:6px;}
-/* File-over-Save is a two-row stack in the ribbon's grid and nothing of
-   the sort in this one-line bar, where it is simply two buttons in a row */
-.dc-head .rbn-stack{flex-direction:row;align-items:center;gap:8px;}
+/* .dc-head is GONE (2026-08-20): the create panel's header — File, Save,
+   undo/redo and the save readout — became the thin bar across the top of
+   the whole window (.deck-qat), which is where a document's own controls
+   belong. Its five rules went with it rather than lingering as CSS for
+   markup that no longer exists. */
 .dbtn[disabled]{opacity:.4;cursor:default;pointer-events:none;}
 /* ---- POSTER MODE chrome: SAME density as slides (2026-08-04). The
    2026-07-29 "bigger chrome" upsizing inflated every ribbon chip —
@@ -685,6 +787,21 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   -webkit-line-clamp:2;}
 .mini-diagram.free{display:block;position:relative;}
 .mini-diagram.free .mini-pane{position:absolute;}
+/* a thumbnail draws EVERY kind of item, not just placed cells. Each one
+   sits at its page percentage, so the strip is a true scale model of the
+   slide (2026-08-20). */
+.mini-tx{position:absolute;color:#dbe6ee;line-height:1.2;
+  white-space:pre-wrap;overflow:hidden;max-width:100%;
+  transform-origin:0 0;pointer-events:none;}
+.mini-tx.is-t,.mini-tx.is-s{text-align:center;transform-origin:50% 50%;}
+.mini-it{position:absolute;overflow:hidden;pointer-events:none;}
+.mini-it>svg{width:100%;height:100%;display:block;overflow:visible;}
+.mini-it.is-img img{width:100%;height:100%;object-fit:contain;
+  display:block;}
+.mini-it.is-img.is-crop img{object-fit:cover;}
+/* arrows share one overlay in the page's own 0..100 space */
+.mini-svg{position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;overflow:visible;}
 .mini-diagram.title{grid-template-columns:1fr;}
 .mini-pane.is-title{background:var(--chrome-4,#12202e);}
 .mini-pane.is-title::before{content:"";position:absolute;left:18%;
@@ -873,8 +990,9 @@ body.slide-editing .apptop{display:none;}
    belong to it because they stand down for a selection: a group that can
    disappear cannot be part of the half that promises never to move. ---- */
 .rbn-out{order:4;}
-.rbn-nbs{order:5;}
+.rbn-anim{order:5;}
 .rbn-insert{order:6;}
+.rbn-edit{order:8;}
 .et-fmt .rbn-grp{order:7;flex:none;}
 .edit-tools.ribbon .et-hint{order:9;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
@@ -943,19 +1061,10 @@ body.slide-editing .apptop{display:none;}
    width in the constant half drags every group after it along. Pinned
    right with nothing beyond it, its width costs nothing and moves
    nothing, so it can say the whole string (2026-08-17). */
-.edit-tools.ribbon>.jv-appx{order:11;display:flex;gap:4px;flex:none;
-  align-self:center;margin-left:8px;}
-.edit-tools.ribbon>.jv-appx .dbtn{text-decoration:none;}
-.edit-tools.ribbon>.deck-status{order:10;margin-left:auto;
-  align-self:center;font-size:10px;height:22px;box-sizing:border-box;
-  display:inline-flex;align-items:center;white-space:nowrap;flex:none;
-  /* a hard cap, because a long filename must never reach other controls
-     even in the frame between growing and the next fit; the full text
-     lives in the tooltip. A readout may ellipsise — it is not a control
-     and no word of it is needed to act (2026-08-18). */
-  max-width:30ch;overflow:hidden;text-overflow:ellipsis;display:block;
-  line-height:22px;}
-.edit-tools.ribbon>.deck-status:empty{display:none;}
+/* the theme/support pair and the save readout have both moved into the
+   thin bar at the top, where they sit beside the rest of the document's
+   own controls instead of hanging off the end of the editing tools
+   (2026-08-20). */
 /* It goes at the SAME stage as the hint — before any control tightens —
    and for the same reason: it is text, not a control, so dropping it
    hides nothing you can click and no word you need in order to act. It is
@@ -996,15 +1105,18 @@ body.slide-editing .apptop{display:none;}
    you deselect. View joined them on 2026-08-17, when zoom moved into it —
    losing zoom the instant you select something would have been a plain
    regression. */
-.edit-tools.fmt-open .rbn-insert,
-.edit-tools.fmt-open .rbn-standby{display:none;}
-/* ...but Output is NOT standby any more: Present must survive a
-   selection (2026-08-19, user: "clicking on something should never hide
-   the previous options — Present should always be there") */
-.edit-tools.fmt-open .rbn-out{display:flex;}
-/* the seam between ALWAYS-THERE and BECAUSE-YOU-SELECTED, marked with a
-   double rule so the two regions read as regions (2026-08-19, user) */
-.rbn-nbs,.et-fmt>.rbn-grp:first-of-type{
+/* Nothing stands down for a selection any more: the TAB decides what is
+   in the row, so Insert cannot collide with the format groups — they are
+   on different tabs and are never asked for at the same time
+   (2026-08-20). fmt-open is kept only as a styling hook. */
+/* Present survives everything now: it is in the bar at the top, above
+   the tabs, so no tab and no selection can take it away (2026-08-19,
+   user: "clicking on something should never hide the previous options —
+   Present should always be there"). */
+/* the seam between ALWAYS-THERE and BECAUSE-YOU-SELECTED. On Home that
+   is still a real boundary: Editing is always in the row, the format
+   groups only arrive with a selection. */
+.et-fmt>.rbn-grp:first-of-type{
   border-left:4px double #ffffff38;margin-left:2px;}
 /* Present is accented but must not read as PRESSED: outline, not fill
    (2026-08-19, user: "the present button is always highlighted") */
@@ -1372,9 +1484,6 @@ select#fmt-font[hidden]{display:none;}
    readout live here, under Notebooks, above the thumbnails (2026-08-19,
    user). Only the builder-specific controls row hides. */
 .deck.editing .dc-controls{display:none;}
-.deck.editing .dc-head{flex-wrap:wrap;gap:6px;padding:8px 10px;}
-.deck.editing .dc-head .deck-status{width:100%;height:auto;
-  padding:2px 4px;background:none;font-size:9.5px;}
 /* the way BACK, above the thumbnails: with the editor full-width the
    presentations rail (and its Notebooks button) is covered, and the way
    out has to be visible or it does not exist (2026-08-19, user: "the
@@ -1754,8 +1863,17 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 /* fill the box (minus the move handle) so text-align actually positions the
    text — a content-sized flex item can't be aligned */
 .an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
-ul.an-ul{margin:0;padding-left:1.15em;list-style:disc;}
-ul.an-ul li{margin:.18em 0;white-space:pre-wrap;}
+/* a list box is a real <ul> or <ol>, and nested levels are real nested
+   lists — which is what lets Tab/Shift+Tab (the browser's own indent)
+   build sub-bullets that survive a round trip through the model */
+.an-tx.an-ul{margin:0;padding-left:1.15em;}
+ul.an-ul{list-style:disc;}
+ol.an-ul{list-style:decimal;}
+.an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
+.an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.15em;}
+.an-tx.an-ul ul ul{list-style:square;}
+.an-tx.an-ul ol{list-style:lower-alpha;margin:0;padding-left:1.25em;}
+.an-tx.an-ul ol ol{list-style:lower-roman;}
 /* text reads as draggable, and only turns into a text cursor once you are
    actually typing in it */
 .deck.editing .an-text,.deck.editing .an-title{cursor:move;}
@@ -2024,7 +2142,11 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
   color:var(--cyan);}
 .film-view{width:100%;min-width:0;}
 .film-view .pane-editor{width:100%;margin:0;}
-.mini-diagram{width:116px;height:66px;flex:none;display:grid;gap:2px;
+/* --mini-h is read back in JS (MINI_H in deck.js) to size thumbnail type
+   and stroke: both are page percentages and have to become real pixels
+   somewhere. Change one, change the other. */
+.mini-diagram{--mini-h:66px;width:116px;height:var(--mini-h);flex:none;
+  display:grid;gap:2px;
   background:var(--chrome-0,#0b141d);border:1px solid #ffffff22;border-radius:4px;
   padding:2px;overflow:hidden;}
 .mini-diagram.full{grid-template-columns:1fr;}
