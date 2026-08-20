@@ -286,7 +286,11 @@ def test_document_actions_live_in_the_left_column(out):
     assert ".deck.editing .dc-controls{display:none;}" in out
     assert ".deck.editing .dc-head{flex-wrap:wrap;" in out
     # Notebooks leads the column
-    assert 'id="dc-back"' in out
+    # dc-back became the notebooks CONTENT strip (2026-08-19, user: "not
+    # a back button, the content that is currently in the notebooks
+    # button"); its header row is the way back
+    assert 'id="dc-nbs"' in out
+    assert "h.addEventListener('click',function(){closeDeck();});" in out
 
 
 def test_the_top_bar_always_earns_its_row(out):

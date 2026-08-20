@@ -248,6 +248,13 @@
       <button class="pr-mi" data-for="pr-newpost">Poster</button>
       <button class="pr-mi" data-for="pr-newview">Custom view</button>
       <button class="pr-mi" data-for="pr-newfold">Folder</button>
+      <!-- the way back IN for a presentation saved to disk — without it
+           a .junoview.html file could only be opened from the File menu
+           of an already-open presentation (2026-08-20, user locked out
+           of a file-saved presentation the night before a talk) -->
+      <button class="pr-mi" data-for="deckfile"
+        title="Open a .junoview.html presentation saved on your computer">
+        Open a .junoview file&#8230;</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -514,7 +521,8 @@
   </div>
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
-<input type="file" id="fileinput" accept=".ipynb" multiple hidden>
+<input type="file" id="fileinput" accept=".ipynb,.junoview,.html"
+  multiple hidden>
 <aside class="selpane varspane" id="varspane" hidden>
   <div class="selpane-h"><span>Variables</span>
     <button class="dbtn dc-icon" id="varspane-close"

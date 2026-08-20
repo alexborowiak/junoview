@@ -1,6 +1,15 @@
 
+/* GRID, not a column: the left column spans every row (full window
+   height, nothing above it), the ribbon and stage share the right track
+   (2026-08-19, user). Row 1 is the presenting top bar; rows 2-3 are the
+   ribbon and the stage. */
 .deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0,#0b141d);color:#dce6ee;
-  display:flex;flex-direction:column;font-family:var(--sans);}
+  display:grid;grid-template-columns:auto minmax(0,1fr);
+  grid-template-rows:auto auto minmax(0,1fr);font-family:var(--sans);}
+.deck-top{grid-column:1/-1;grid-row:1;}
+.deck>.deck-create{grid-column:1;grid-row:2/4;min-height:0;}
+.deck>.edit-tools{grid-column:2;grid-row:2;}
+.deck-main{grid-column:2;grid-row:3;}
 .deck[hidden]{display:none!important;}
 .deck [hidden]{display:none!important;}
 body.deck-open{overflow:hidden;}
@@ -590,6 +599,12 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 /* the presentation name lives on the left rail — no need to repeat it
    in the builder; keep the element for the File > Rename flow only */
 #pres-current{display:none;}
+/* the name block is a zero-height sliver until a rename is active — it
+   exists so the rename input is NOT inside .dc-controls, which is
+   display:none while editing (2026-08-20) */
+.dc-name{padding:0;border-bottom:none;}
+.dc-name:has(#pres-name:not([hidden])){padding:10px 14px 9px;
+  border-bottom:1px solid #ffffff14;}
 .dc-controls{display:flex;flex-direction:column;gap:9px;}
 /* the "Notebooks" popover: list + open-all / refresh-all */
 .dc-nbs-menu{min-width:252px;max-width:330px;gap:1px;}
@@ -694,8 +709,9 @@ body.slide-editing .apptop{display:none;}
    slide canvas gets the width */
 /* 200px: the panel is ONLY thumbnails now, and the width goes to the
    toolbar + canvas instead (2026-08-05) */
-.deck.editing .deck-create{flex:0 0 min(var(--dc-w),200px);
+.deck.editing .deck-create{width:min(var(--dc-w),200px);
   border-right:1px solid #ffffff22;}
+.deck.creating .deck-create{width:min(var(--dc-w),94vw);}
 .deck.editing #layout-row{display:none;}
 .deck.editing .dc-resize{display:none;}
 /* ---- PowerPoint-style ribbon: labelled groups, always the same height ----
@@ -886,14 +902,25 @@ body.slide-editing .apptop{display:none;}
 .deck.erc1 .rbn-row{gap:4px;}
 .deck.erc2 .dbtn.rbn-sm{padding:2px 6px;font-size:10px;gap:4px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
+/* spend BOX width before type size: on 1366-1440 laptops the ladder ran
+   all the way to erc3's small type while the font select sat at its full
+   94px and the size box at 44px — tiny mashed buttons beside roomy boxes
+   (2026-08-20 diagnosis, user: "really small and mashed together. This is
+   on a laptop"). Capping the boxes at erc2 stops erc3 firing at those
+   widths at all (measured: 1366/1400 now stop at erc2, 10.5px type). */
+.deck.erc2 .et-fmt .rbn-row .fmt-num{width:38px;}
+.deck.erc2 .et-fmt .rbn-row select.etm{max-width:76px;}
+.deck.erc2 .et-fmt .rbn-row .fmt-range{width:66px;}
 /* NO rung hides an icon. Stripping them buys width but costs the whole
    big/small hierarchy — a label-only wall is the same flat wall that was
    rejected, arrived at from the other side. Density only, to the end. */
 .deck.erc3 .rbn-grp{padding-left:5px;padding-right:5px;}
-.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:9.5px;
+.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:10px;
   padding-left:5px;padding-right:5px;}
 .deck.erc3 .rbn-lab{font-size:8px;letter-spacing:.1em;}
-.deck.erc3 .rbn-row .fmt-range{width:66px;}
+.deck.erc3 .rbn-row .fmt-range{width:56px;}
+.deck.erc3 .et-fmt .rbn-row select.etm{max-width:68px;}
+.deck.erc3 .et-fmt .rbn-row .fmt-num{width:34px;}
 
 /* every cell-sized control has to actually BE cell-sized, or it pushes
    its row past the group and over the label */
@@ -1085,7 +1112,7 @@ body.slide-editing .apptop{display:none;}
   border-color:var(--cyan-deep);color:#fff;}
 .sh-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:60;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff26;border-radius:9px;padding:6px;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
   box-shadow:0 14px 38px #0009;width:210px;}
 .sh-menu[hidden]{display:none;}
 .sh-opt{display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -1232,6 +1259,15 @@ select#fmt-font[hidden]{display:none;}
 .sw.trans::after{content:"";position:absolute;left:-2px;right:-2px;
   top:50%;height:2px;background:#ff6b57;
   transform:rotate(-45deg);}
+/* recent colours, newest first — filled from the custom picker's history
+   whenever a colour menu opens (2026-08-19, user: recents should be in
+   the colour menus, not buried in the picker) */
+.sw-recrow{display:flex;align-items:center;gap:7px;}
+.sw-recrow[hidden]{display:none!important;}
+.sw-reclab{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:#7e93a4;flex:none;}
+.sw-rc{width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
+  border:2px solid #ffffff30;flex:none;}
 /* custom-colour swatch: a rainbow chip that opens the full picker */
 .sw.sw-custom{background:conic-gradient(from 0deg,#ff6b57,#f0a848,#46a892,
   var(--accent),#7a6cff,#ff6b57);position:relative;overflow:hidden;}
@@ -1279,7 +1315,13 @@ select#fmt-font[hidden]{display:none;}
 .slide{position:relative;}
 /* image annotations */
 .an-image{position:absolute;}
-.an-imgel{width:100%;height:100%;object-fit:cover;display:block;
+/* CONTAIN by default: cover let any non-proportional resize silently
+   clip the picture (2026-08-19, diagnosed+verified in-browser: a 2:1
+   stripe resized to 0.4:1 showed ~21% of its width). A crop must still
+   FILL first or the mask would only bite letterbox — same rationale as
+   the cell rule below. */
+.an-image.an-cropped .an-imgel{object-fit:cover;}
+.an-imgel{width:100%;height:100%;object-fit:contain;display:block;
   pointer-events:none;border-radius:2px;}
 .deck.editing .an-image{cursor:move;}
 .deck.editing .an-image.sel{outline:2px solid var(--cyan);outline-offset:1px;}
@@ -1338,9 +1380,13 @@ select#fmt-font[hidden]{display:none;}
    out has to be visible or it does not exist (2026-08-19, user: "the
    notebooks button is really important — it needs to sit above the slide
    thumbnail part") */
-.dc-back{display:none;}
-.deck.editing .dc-back{display:flex;align-items:center;gap:7px;
-  margin:8px 8px 2px;padding:7px 10px;}
+/* the notebooks content at the column top: pane rows reused verbatim */
+.dc-nbs{display:none;}
+.deck.editing .dc-nbs{display:block;padding:8px 8px 6px;
+  border-bottom:1px solid #ffffff14;}
+.dc-nbs .dc-nbs-menuh{cursor:pointer;border-radius:6px;padding:4px 6px;}
+.dc-nbs .dc-nbs-menuh:hover{background:color-mix(in srgb,var(--accent)
+  14%,transparent);color:var(--accent);}
 /* a POSTER keeps the column too now — it is where Notebooks, File and
    Save live; only the slide film is deck-only (hidden for posters by the
    .poster-page .dc-film rule) */
@@ -1380,7 +1426,6 @@ select#fmt-font[hidden]{display:none;}
 .page-light .slide{color:#1b2733;}
 .page-light .an-text{color:#1b2733;background:#ffffffd9;
   border-color:#00000024;}
-.page-light .an-text.nobg{text-shadow:none;}
 .page-light .an-cell{background:#fff;border-color:#00000030;}
 .page-light .an-cell pre.result,.page-light .an-cell pre.stream{
   background:#fff;color:#1b2733;border-color:#00000018;}
@@ -1416,6 +1461,13 @@ select#fmt-font[hidden]{display:none;}
 .page-light .dpi-warn{background:#fff3e0ee;color:#9a6108;
   border-color:#9a610833;}
 /* ---- the crop menu's Trim row ---- */
+/* the row is a grid ITEM of the 3-column .sh-menu: unless it spans the
+   whole row its ~330px min-content width inflated the auto tracks and
+   pushed the shape options clean off the 210px panel — at laptop widths
+   off the VIEWPORT, which read as "the crop menu is broken" (2026-08-20
+   diagnosis, reproduced: Ellipse/Diamond/Star painted outside the panel) */
+#fmt-crop-menu .crop-inset,#fmt-crop-menu .ci-trim{
+  grid-column:1/-1;min-width:0;}
 .crop-inset{display:flex;align-items:center;gap:4px;margin-top:6px;
   padding-top:6px;border-top:1px solid #ffffff1a;}
 .crop-inset .ci-lab{font-family:var(--mono);font-size:9px;
@@ -1695,8 +1747,10 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
   line-height:1.35;color:#fff;background:color-mix(in srgb,var(--chrome-1,#0e1926) 85%,transparent);
   border:1px solid #ffffff2e;border-radius:8px;padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
-.an-text.nobg{background:none;border:none;
-  text-shadow:0 1px 4px #000d,0 0 10px #0009;}
+/* no text-shadow: it was meant to keep bare text legible on any page but
+   read as a smudge on every one (2026-08-19, user: "why is there a shadow
+   on the text — that's weird") */
+.an-text.nobg{background:none;border:none;}
 /* fill the box (minus the move handle) so text-align actually positions the
    text — a content-sized flex item can't be aligned */
 .an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
@@ -2014,3 +2068,16 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
     grid-template-rows:none;grid-auto-rows:1fr;}
 }
 @media (prefers-reduced-motion:reduce){.slide{animation:none;}}
+
+/* drag-to-trim: four accent edge handles; the live clip is the preview */
+.an-crop-h{position:absolute;background:var(--accent);border:1px solid
+  #00000055;border-radius:4px;z-index:8;}
+.an-crop-t,.an-crop-b{left:50%;margin-left:-16px;width:32px;height:9px;
+  cursor:ns-resize;}
+.an-crop-l,.an-crop-r{top:50%;margin-top:-16px;width:9px;height:32px;
+  cursor:ew-resize;}
+.ci-trim{display:block;width:100%;text-align:left;background:none;
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  color:var(--accent);border-radius:7px;padding:7px 10px;cursor:pointer;
+  font-family:var(--sans);font-size:12px;margin-bottom:6px;}
+.ci-trim:hover{background:color-mix(in srgb,var(--accent) 14%,transparent);}

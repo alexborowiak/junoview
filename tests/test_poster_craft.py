@@ -55,9 +55,10 @@ def test_text_scales_with_the_page_at_every_zoom(out):
     # resizing the page has to re-render what is sized from it -- and that
     # now includes PLAYBACK, because line weight is page-relative too and a
     # poster presented full screen kept whatever the layer last measured
-    # (2026-08-10)
-    assert ("if(s0&&l0&&(mode==='edit'"
-            "||deckEl.classList.contains('custom-page'))){" in out)
+    # (2026-08-10). Since 2026-08-20 the guard is unconditional: 16:9
+    # playback letterboxes too (text grew ~19% at 1400x900 because the
+    # presented canvas took the WINDOW's shape), so every mode re-renders.
+    assert "if(s0&&l0){" in out
     assert "if(mode==='edit') paintSel(l0);" in out
 
 

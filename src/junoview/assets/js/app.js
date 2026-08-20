@@ -5022,7 +5022,59 @@
     if(inp) inp.disabled=on;
     if(ld) ld.hidden=!on;
   }
+  /* a saved presentation, by name — the .junoview.html polyglot save or a
+     bare-JSON .junoview */
+  function isDeckPath(p){
+    return /\.junoview(\.html)?$/i
+      .test(String(p||'').split('?')[0].split('#')[0]);
+  }
+  /* hand text to the deck importer (deck.js) — the same importer behind
+     "+ New… → Open a .junoview file…", so every road in behaves alike */
+  function importDeckTextSafe(txt,label){
+    try{
+      if(window.SemDeckImport) window.SemDeckImport(txt,false);
+      else alert('The presentation editor has not loaded yet — '
+        +'try again in a moment.');
+    }catch(e){
+      alert('Could not open '+(label||'that file')+': '
+        +((e&&e.message)||e));
+    }
+    hideDlg();
+  }
+  function fetchDeckUrl(url){
+    url=normNbUrl(url);   /* GitHub blob links become raw, like notebooks */
+    setDlgBusy(true);
+    fetch(url,{cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.text();
+    }).then(function(txt){
+      setDlgBusy(false);
+      importDeckTextSafe(txt,decodeURIComponent(
+        url.split('?')[0].split('/').pop()||url));
+    }).catch(function(e){
+      setDlgBusy(false);
+      alert('Could not fetch '+url+'\n'+((e&&e.message)||e)
+        +'\nIf that host blocks cross-site requests, download the '
+        +'file and drop it here instead.');
+    });
+  }
   function openPath(path){
+    /* saved presentations open from the SAME places notebooks do — the
+       folder listing, a pasted path, a GitHub link (2026-08-20, user: on
+       disk they carry the browser's icon and there was no way in) */
+    if(isDeckPath(path)){
+      if(isUrl(path)){fetchDeckUrl(path);return;}
+      if(APP.mode!=='app') return;
+      if(OPENBUSY[path]) return;
+      OPENBUSY[path]=1;setDlgBusy(true);
+      api('/api/readdeck',{path:path}).then(function(j){
+        delete OPENBUSY[path];setDlgBusy(false);
+        importDeckTextSafe(j.text,j.name||path);
+      }).catch(function(e){
+        delete OPENBUSY[path];setDlgBusy(false);
+        alert('Open failed: '+e.message);});
+      return;
+    }
     if(APP.mode==='web'){
       if(isUrl(path)) webOpenUrl(path,false);
       return;
@@ -5099,13 +5151,20 @@
     }
   }
   function webOpenFiles(files){
-    Array.prototype.slice.call(files||[])
-      .filter(function(f){return /\.ipynb$/i.test(f.name);})
-      .forEach(function(f){
+    Array.prototype.slice.call(files||[]).forEach(function(f){
+      if(isDeckPath(f.name)){
+        f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      } else if(/\.ipynb$/i.test(f.name)){
         f.text().then(function(txt){webParseText(f.name,txt);});
-      });
+      } else if(/\.html?$/i.test(f.name)){
+        /* a renamed save is still worth a try — the importer says
+           plainly when an HTML file carries no Junoview data */
+        f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      }
+    });
   }
   function webOpenUrl(url,silent){
+    if(isDeckPath(url)){fetchDeckUrl(url);return;}
     url=normNbUrl(url);
     var pend=OPENBUSY[url];
     if(pend){
@@ -5243,7 +5302,7 @@
       var up=$('#odlg-up');
       up.disabled=!j.parent;up.dataset.parent=j.parent||'';
       dlgList.innerHTML='';
-      if(!j.dirs.length&&!j.notebooks.length)
+      if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length)
         dlgList.innerHTML='<div class="odlg-empty">'
           +'No folders or notebooks here.</div>';
       j.dirs.forEach(function(d){
@@ -5257,6 +5316,18 @@
       j.notebooks.forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i nb';
         b.innerHTML='<span class="ic">&#128209;</span>';
+        var nm=document.createElement('span');nm.className='nm';
+        nm.textContent=n.name;b.appendChild(nm);
+        var sz=document.createElement('span');sz.className='sz';
+        sz.textContent=n.size||'';b.appendChild(sz);
+        b.addEventListener('click',function(){openPath(n.path);});
+        dlgList.appendChild(b);
+      });
+      /* saved presentations, openable like notebooks (2026-08-20) */
+      (j.decks||[]).forEach(function(n){
+        var b=document.createElement('button');b.className='odlg-i deck';
+        b.innerHTML='<span class="ic">&#127902;</span>';
+        b.title='Open this saved Junoview presentation';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
@@ -5369,7 +5440,7 @@
           +'Choose files / drag-and-drop.');
         return;
       }
-      if(isUrl(v)||/\.ipynb$/i.test(v)) openPath(v);
+      if(isUrl(v)||/\.ipynb$/i.test(v)||isDeckPath(v)) openPath(v);
       else listDir(v);
     }
     if(inp) inp.addEventListener('keydown',function(e){
@@ -5384,9 +5455,20 @@
 
     /* ---- drag & drop .ipynb anywhere on the window ---- */
     var hint=$('#drophint'), dragDepth=0;
+    /* only a FILE drag earns the overlay: it used to appear for every
+       drag, so reordering slide thumbnails painted the full-window "Drop
+       .ipynb files" sheet (z-index 140) over the editor (100) for the
+       whole gesture and drowned the drop markers — "can't re-arrange by
+       dragging" (2026-08-20 diagnosis, reproduced) */
+    function dragHasFiles(e){
+      var t=e.dataTransfer&&e.dataTransfer.types;
+      return !!t&&Array.prototype.indexOf.call(t,'Files')>=0;
+    }
     window.addEventListener('dragover',function(e){e.preventDefault();});
     window.addEventListener('dragenter',function(e){
-      e.preventDefault();dragDepth++;
+      e.preventDefault();
+      if(!dragHasFiles(e)) return;
+      dragDepth++;
       if(hint) hint.hidden=false;
     });
     window.addEventListener('dragleave',function(){
@@ -5398,6 +5480,11 @@
       if(hint) hint.hidden=true;
       var files=Array.prototype.slice.call(
         (e.dataTransfer||{}).files||[]);
+      /* a dropped saved presentation imports, in either mode */
+      files.filter(function(f){return isDeckPath(f.name);})
+        .forEach(function(f){
+          f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+        });
       files.filter(function(f){return /\.ipynb$/i.test(f.name);})
         .forEach(function(f){
           if(isWeb){

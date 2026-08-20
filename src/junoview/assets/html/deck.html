@@ -36,6 +36,142 @@
          the things you are actually clicking while you lay a page out -->
     <span class="deck-topright" id="deck-topright"></span>
   </div>
+  <!-- the left COLUMN runs the full height of the window — nothing
+       above it — with the notebooks content at its top, then File/Save,
+       then the thumbnails (2026-08-19, user: "the notebooks thing ...
+       should extend to the top. So there is nothing above it ... the
+       content that is currently in the 'notebooks' button"). -->
+  <aside class="deck-create" id="deck-create" hidden>
+      <div class="dc-resize" id="dc-resize"
+        title="Drag to resize the builder panel"></div>
+      <!-- not a back button: the CONTENT of the notebooks pane — every
+           notebook this presentation uses, with open/refresh — lives at
+           the top of the column; the header row is the way back -->
+      <div class="dc-nbs" id="dc-nbs"></div>
+      <div class="dc-head">
+        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
+             stacks the small controls beside Paste (2026-08-17, user: "the
+             save could go below the file"). Stacking them halves the
+             group's width, and they are the two halves of the same
+             errand. The wrapper stays a plain row inside the builder
+             panel's header, which is a one-line bar. -->
+        <span class="rbn-stack">
+        <div class="dc-menuwrap">
+          <button class="dbtn" id="dc-file" aria-haspopup="true"
+            aria-expanded="false">File &#9662;</button>
+          <div class="dc-menu" id="dc-menu" hidden>
+            <button class="dc-mi" id="mi-new">New presentation</button>
+            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
+            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <button class="dc-mi" id="mi-crop"
+              title="Add trim marks just outside the page for the print
+ shop to cut to. The page itself keeps its exact size &mdash; the sheet
+ grows by 5mm on every side to hold them">Crop marks: off</button>
+            <div class="dc-mi dc-pagebg" id="mi-pagebg"
+              title="The page's own background — pick white for a poster
+ that goes to a print shop">Page background
+              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
+              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
+              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
+              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
+              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+            </div>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
+            <button class="dc-mi" id="mi-autosave" hidden></button>
+            <button class="dc-mi" id="mi-pdf"
+              title="Save as PDF at the page's TRUE size — an A0 poster
+ exports as a real 841&#215;1189mm page, ready for the print shop">Export
+ PDF / print&#8230;</button>
+            <button class="dc-mi" id="mi-pptx"
+              title="Save as a PowerPoint .pptx. Text stays editable and
+ figures come across as pictures; a placed cell showing code or a table
+ cannot convert — use PDF for those">Export PowerPoint
+ (.pptx)&#8230;</button>
+            <button class="dc-mi" id="mi-html"
+              title="A single .html file anyone can open — no Junoview
+ needed. Arrow keys page through it; Ctrl+P prints at page size">Export
+ standalone HTML</button>
+            <button class="dc-mi" id="mi-dl">Download a copy
+              (.junoview)</button>
+            <button class="dc-mi" id="mi-load">Open a .junoview
+              file&#8230;</button>
+            <button class="dc-mi" id="mi-discard">Discard changes</button>
+            <button class="dc-mi" id="mi-del">Delete presentation</button>
+          </div>
+        </div>
+        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
+             two competing save buttons and nobody could tell what the
+             second one did (2026-08-07, user: "even I am confused"). It is
+             now a split button: press Save to save, press the chevron to
+             choose where. The destination lives in the menu, which is
+             where a destination belongs. -->
+        <span class="dc-savegrp">
+          <button class="dbtn" id="dc-save">Save</button>
+          <span class="dc-menuwrap">
+            <button class="dbtn dc-target" id="dc-target"
+              aria-haspopup="true" aria-expanded="false"
+              aria-label="Choose where this is saved"
+              title="Choose where this is saved">&#9662;</button>
+            <div class="dc-menu" id="target-menu" hidden>
+              <div class="dc-mhead" id="tg-head">save to</div>
+            <button class="dc-mi" id="tg-project" hidden>This project</button>
+            <button class="dc-mi" id="tg-browser">This browser</button>
+            <button class="dc-mi" id="tg-file">A file on your
+              computer&#8230;</button>
+            <div class="dc-msep"></div>
+              <button class="dc-mi" id="tg-pick" hidden>Choose a different
+                file&#8230;</button>
+            </div>
+          </span>
+        </span>
+        </span>
+        <!-- ONE cell, like the zoom stepper: undo and redo are the same
+             decision in two directions and must never end up on different
+             lines. In the side rail's wrapping flow they did exactly that
+             — undo closed one line and redo opened the next, alone and
+             stretched the full width of the rail (2026-08-16). -->
+        <span class="rbn-cell">
+          <button class="dbtn dc-icon" id="dc-undo" disabled
+            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+          <button class="dbtn dc-icon" id="dc-redo" disabled
+            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        </span>
+        <span class="dc-spring"></span>
+        <span class="deck-status" id="deck-status"></span>
+      </div>
+      <!-- the NAME lives outside .dc-controls: that block is display:none
+           while editing, so File → Rename… un-hid an input inside a hidden
+           ancestor — 0x0, unfocusable, "renaming doesn't work" in the
+           primary flow (2026-08-20 diagnosis). Both children stay [hidden]
+           except during an active rename, so the row costs no height. -->
+      <div class="dc-block dc-name">
+        <div class="dc-presname" id="pres-current" hidden></div>
+        <input id="pres-name" type="text" placeholder="presentation name"
+          spellcheck="false" autocomplete="off" hidden>
+      </div>
+      <div class="dc-block dc-controls">
+        <button class="dbtn" id="dc-edit"
+          title="Swap to the slide editor — add text, arrows and boxes">
+          &#9998; Swap to edit view</button>
+        <div class="lay-picker" id="layout-row"
+          aria-label="Slide layouts"></div>
+        <div class="title-editor" id="title-editor" hidden>
+          <input id="ts-title" type="text" placeholder="Slide title"
+            spellcheck="false" autocomplete="off">
+          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
+            spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+      <div class="dc-block dc-film">
+        <div class="film-list" id="film-list"></div>
+        <button class="dbtn addslide" id="film-add">+ Add slide</button>
+      </div>
+    </aside>
   <!-- The ribbon spans the WHOLE window, like the document view's app
        bar — it used to live inside the stage column, so the slide strip
        and rail came out of its width on every screen (2026-08-19, user:
@@ -187,19 +323,21 @@
  you keep every editing tool">&#10530; Edit full screen</button>
                 </div>
               </span>
-              <!-- Objects is a panel you show or hide — a way of LOOKING
-                   at the page, not a property of it -->
+              <!-- Layers is a panel you show or hide — a way of LOOKING
+                   at the page, not a property of it. Called Layers, not
+                   Objects: the standard name for this list everywhere
+                   else (2026-08-19, user) -->
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
- of it"><i data-ic="objects"></i> Objects</button>
+ of it"><i data-ic="objects"></i> Layers</button>
               <!-- a deck only: a poster is one printed page and has no
                    build to inspect -->
               <button class="dbtn rbn-sm" id="vw-anim" hidden
                 aria-pressed="false"
                 title="Everything animated on this slide, in the order it
  appears — and the effect on whatever is selected"
-                >&#9654; Animations</button>
+                >&#9654; Animation pane</button>
               <!-- Zoom is how big the page LOOKS, not how big it IS — it
                    changes nothing about the document and nothing about
                    what prints, which is the same test Guides and Objects
@@ -394,6 +532,11 @@
                 <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
                   <span class="fmt-lab" id="fmt-txlab" hidden
                     title="Text colour">Text</span>
+                  <!-- a true red: Coral read as "close enough" until you
+                       needed an actual warning red (2026-08-19, user:
+                       "more defaults, no red currently!") -->
+                  <button class="sw" data-c="#e5484d"
+                    style="background:#e5484d" title="Red"></button>
                   <button class="sw" data-c="#ff6b57"
                     style="background:#ff6b57" title="Coral"></button>
                   <button class="sw" data-c="#f0a848"
@@ -409,6 +552,7 @@
                   <button class="sw sw-custom" id="sw-custom"
                     data-target="text"
                     title="Custom colour — hex, rgb or rgba"></button>
+                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <span class="sh-drop">
@@ -425,6 +569,8 @@
                     style="background:#0e1926" title="Dark box"></button>
                   <button class="sw swbg" data-c="#ffffff" hidden
                     style="background:#ffffff" title="White box"></button>
+                  <button class="sw swbg" data-c="#e5484d" hidden
+                    style="background:#e5484d" title="Red box"></button>
                   <button class="sw swbg" data-c="#ff6b57" hidden
                     style="background:#ff6b57" title="Coral box"></button>
                   <button class="sw swbg" data-c="#f0a848" hidden
@@ -434,6 +580,7 @@
                   <button class="sw swbg sw-custom" id="swbg-custom" hidden
                     data-target="fill"
                     title="Custom fill colour — hex, rgb or rgba"></button>
+                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <!-- Opacity sits with COLOUR because that is what it is:
@@ -609,129 +756,7 @@
         <span class="et-hint" id="et-hint"></span>
       </div>
   <div class="deck-main">
-    <aside class="deck-create" id="deck-create" hidden>
-      <div class="dc-resize" id="dc-resize"
-        title="Drag to resize the builder panel"></div>
-      <button class="dbtn dc-back" id="dc-back"
-        title="Back to the notebooks. Nothing is closed or lost."
-        >&#8617; Notebooks</button>
-      <div class="dc-head">
-        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
-             stacks the small controls beside Paste (2026-08-17, user: "the
-             save could go below the file"). Stacking them halves the
-             group's width, and they are the two halves of the same
-             errand. The wrapper stays a plain row inside the builder
-             panel's header, which is a one-line bar. -->
-        <span class="rbn-stack">
-        <div class="dc-menuwrap">
-          <button class="dbtn" id="dc-file" aria-haspopup="true"
-            aria-expanded="false">File &#9662;</button>
-          <div class="dc-menu" id="dc-menu" hidden>
-            <button class="dc-mi" id="mi-new">New presentation</button>
-            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
-            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
-            <button class="dc-mi" id="mi-crop"
-              title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
-            <div class="dc-mi dc-pagebg" id="mi-pagebg"
-              title="The page's own background — pick white for a poster
- that goes to a print shop">Page background
-              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
-              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
-              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
-              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
-              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
-            </div>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
-            <button class="dc-mi" id="mi-autosave" hidden></button>
-            <button class="dc-mi" id="mi-pdf"
-              title="Save as PDF at the page's TRUE size — an A0 poster
- exports as a real 841&#215;1189mm page, ready for the print shop">Export
- PDF / print&#8230;</button>
-            <button class="dc-mi" id="mi-pptx"
-              title="Save as a PowerPoint .pptx. Text stays editable and
- figures come across as pictures; a placed cell showing code or a table
- cannot convert — use PDF for those">Export PowerPoint
- (.pptx)&#8230;</button>
-            <button class="dc-mi" id="mi-html"
-              title="A single .html file anyone can open — no Junoview
- needed. Arrow keys page through it; Ctrl+P prints at page size">Export
- standalone HTML</button>
-            <button class="dc-mi" id="mi-dl">Download a copy
-              (.junoview)</button>
-            <button class="dc-mi" id="mi-load">Open a .junoview
-              file&#8230;</button>
-            <button class="dc-mi" id="mi-discard">Discard changes</button>
-            <button class="dc-mi" id="mi-del">Delete presentation</button>
-          </div>
-        </div>
-        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
-             two competing save buttons and nobody could tell what the
-             second one did (2026-08-07, user: "even I am confused"). It is
-             now a split button: press Save to save, press the chevron to
-             choose where. The destination lives in the menu, which is
-             where a destination belongs. -->
-        <span class="dc-savegrp">
-          <button class="dbtn" id="dc-save">Save</button>
-          <span class="dc-menuwrap">
-            <button class="dbtn dc-target" id="dc-target"
-              aria-haspopup="true" aria-expanded="false"
-              aria-label="Choose where this is saved"
-              title="Choose where this is saved">&#9662;</button>
-            <div class="dc-menu" id="target-menu" hidden>
-              <div class="dc-mhead" id="tg-head">save to</div>
-            <button class="dc-mi" id="tg-project" hidden>This project</button>
-            <button class="dc-mi" id="tg-browser">This browser</button>
-            <button class="dc-mi" id="tg-file">A file on your
-              computer&#8230;</button>
-            <div class="dc-msep"></div>
-              <button class="dc-mi" id="tg-pick" hidden>Choose a different
-                file&#8230;</button>
-            </div>
-          </span>
-        </span>
-        </span>
-        <!-- ONE cell, like the zoom stepper: undo and redo are the same
-             decision in two directions and must never end up on different
-             lines. In the side rail's wrapping flow they did exactly that
-             — undo closed one line and redo opened the next, alone and
-             stretched the full width of the rail (2026-08-16). -->
-        <span class="rbn-cell">
-          <button class="dbtn dc-icon" id="dc-undo" disabled
-            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
-          <button class="dbtn dc-icon" id="dc-redo" disabled
-            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
-        </span>
-        <span class="dc-spring"></span>
-        <span class="deck-status" id="deck-status"></span>
-      </div>
-      <div class="dc-block dc-controls">
-        <div class="dc-presname" id="pres-current" hidden></div>
-        <input id="pres-name" type="text" placeholder="presentation name"
-          spellcheck="false" autocomplete="off" hidden>
-        <button class="dbtn" id="dc-edit"
-          title="Swap to the slide editor — add text, arrows and boxes">
-          &#9998; Swap to edit view</button>
-        <div class="lay-picker" id="layout-row"
-          aria-label="Slide layouts"></div>
-        <div class="title-editor" id="title-editor" hidden>
-          <input id="ts-title" type="text" placeholder="Slide title"
-            spellcheck="false" autocomplete="off">
-          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
-            spellcheck="false" autocomplete="off">
-        </div>
-      </div>
-      <div class="dc-block dc-film">
-        <div class="film-list" id="film-list"></div>
-        <button class="dbtn addslide" id="film-add">+ Add slide</button>
-      </div>
-    </aside>
+    
     <div class="deck-stagewrap" id="deck-stagewrap">
       
       <aside class="selpane preflight" id="preflight" hidden>
@@ -744,7 +769,7 @@
         <div class="selpane-list" id="preflight-list"></div>
       </aside>
       <aside class="selpane" id="selpane" hidden>
-        <div class="selpane-h"><span>Objects</span>
+        <div class="selpane-h"><span>Layers</span>
           <button class="dbtn dc-icon" id="selpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="selpane-list"></div>
@@ -761,7 +786,7 @@
            a property of the slide, not of whatever you happen to have
            clicked. -->
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animations</span>
+        <div class="selpane-h"><span>Animation pane</span>
           <button class="dbtn dc-icon" id="animpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="animpane-body"></div>

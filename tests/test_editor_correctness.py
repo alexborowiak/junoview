@@ -565,8 +565,11 @@ def test_the_document_actions_are_in_the_left_column(out):
     "the notebooks button needs to sit above the slide thumbnail part.
     Same with the file save etc").
     """
-    assert 'id="dc-back"' in out
-    assert "b.addEventListener('click',function(){closeDeck();});" in out
+    # dc-back became the notebooks CONTENT strip (2026-08-19, user: "not
+    # a back button, the content that is currently in the notebooks
+    # button"); its header row is the way back
+    assert 'id="dc-nbs"' in out
+    assert "h.addEventListener('click',function(){closeDeck();});" in out
     # the head markup order IS the column order
     head = out.split('class="dc-head"')[1].split('dc-controls')[0]
     for cid in ('id="dc-file"', 'id="dc-save"', 'id="dc-undo"',
@@ -699,9 +702,11 @@ def test_a_shape_can_be_given_a_fill_colour(out):
     stroke=#ff6b57 on the same triangle.
     """
     assert "var showBg=plainText||noteCell||kind==='rect';" in out
-    # the handler writes the fields drawShapeSvg/cssFill actually read
-    assert "else if(a.k==='rect'){" in out
-    assert "else {a.fill=1;a.fillc=sw.dataset.c;}" in out
+    # the mutation writes the fields drawShapeSvg/cssFill actually read.
+    # It lives in fillMut() now (2026-08-20): presets, recent chips, the
+    # picker and the hover preview all share the one implementation
+    assert "function fillMut(c){return function(a){" in out
+    assert "else {a.fill=1;a.fillc=c;}" in out
     # the custom "+" chip too
     assert "else if(a.k==='rect'){a.fill=1;a.fillc=str;delete a.grad;}" in out
     # and the picker prefills from the shape's own fill

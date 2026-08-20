@@ -127,7 +127,10 @@ def test_cell_colour_and_professional_colour_picker(out):
     swatches.
     """
     assert "function applyCellColor" in out and "--nb-tx" in out
-    assert "a.txcol=sw.dataset.c" in out and "a.bgcol=sw.dataset.c" in out
+    # the swatch handlers funnel through textMut/fillMut since 2026-08-20
+    # (shared with the recent chips and the hover preview)
+    assert "if(a.k==='cell') a.txcol=c;" in out
+    assert "if(a.k==='cell'){a.bgcol=c;}" in out
     # professional colour picker: hex / rgb / rgba + alpha + custom swatches
     assert 'id="color-pop"' in out and 'id="sw-custom"' in out
     assert 'id="swbg-custom"' in out and 'id="cp-hex"' in out
@@ -452,4 +455,8 @@ def test_browser_saves_offer_a_way_out(out):
     """
     assert "function markSaveClickable(el){" in out
     assert out.count("markSaveClickable(el);") == 2
-    assert "var tf=$('#tg-file'); if(tf) tf.click();" in out
+    # clicking SAVES now — it used to open the save-to-file picker, but a
+    # thing that says "autosaved" invites saving, not a destination dialog
+    # (2026-08-19, user: "clicking the autosave button should save").
+    # Measured 2026-08-20: a click produced "saved to browser · 00:27".
+    assert "var sb=$('#dc-save'); if(sb) sb.click();" in out

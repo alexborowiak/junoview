@@ -121,7 +121,8 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     assert 'id="fmt-txcol-menu"' in out and 'id="fmt-fillcol-menu"' in out
     assert "show('#fmt-fillcol-btn',showBg);" in out
     # picking a swatch closes its popup; the custom swatch keeps its panel
-    assert "if(sw&&!sw.classList.contains('sw-custom')){" in out
+    # (rc = a recent-colour chip, which also closes it — 2026-08-20)
+    assert "if(rc||(sw&&!sw.classList.contains('sw-custom'))){" in out
 
 
 def test_freehand_drawing_is_a_first_class_stroke(out):

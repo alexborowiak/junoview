@@ -2744,8 +2744,17 @@ body.light .vars-menubtn{color:var(--ink-2);}
 .pr-btn[hidden]{display:none!important;}
 </style>
 <style>
+/* GRID, not a column: the left column spans every row (full window
+   height, nothing above it), the ribbon and stage share the right track
+   (2026-08-19, user). Row 1 is the presenting top bar; rows 2-3 are the
+   ribbon and the stage. */
 .deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0,#0b141d);color:#dce6ee;
-  display:flex;flex-direction:column;font-family:var(--sans);}
+  display:grid;grid-template-columns:auto minmax(0,1fr);
+  grid-template-rows:auto auto minmax(0,1fr);font-family:var(--sans);}
+.deck-top{grid-column:1/-1;grid-row:1;}
+.deck>.deck-create{grid-column:1;grid-row:2/4;min-height:0;}
+.deck>.edit-tools{grid-column:2;grid-row:2;}
+.deck-main{grid-column:2;grid-row:3;}
 .deck[hidden]{display:none!important;}
 .deck [hidden]{display:none!important;}
 body.deck-open{overflow:hidden;}
@@ -3335,6 +3344,12 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
 /* the presentation name lives on the left rail — no need to repeat it
    in the builder; keep the element for the File > Rename flow only */
 #pres-current{display:none;}
+/* the name block is a zero-height sliver until a rename is active — it
+   exists so the rename input is NOT inside .dc-controls, which is
+   display:none while editing (2026-08-20) */
+.dc-name{padding:0;border-bottom:none;}
+.dc-name:has(#pres-name:not([hidden])){padding:10px 14px 9px;
+  border-bottom:1px solid #ffffff14;}
 .dc-controls{display:flex;flex-direction:column;gap:9px;}
 /* the "Notebooks" popover: list + open-all / refresh-all */
 .dc-nbs-menu{min-width:252px;max-width:330px;gap:1px;}
@@ -3439,8 +3454,9 @@ body.slide-editing .apptop{display:none;}
    slide canvas gets the width */
 /* 200px: the panel is ONLY thumbnails now, and the width goes to the
    toolbar + canvas instead (2026-08-05) */
-.deck.editing .deck-create{flex:0 0 min(var(--dc-w),200px);
+.deck.editing .deck-create{width:min(var(--dc-w),200px);
   border-right:1px solid #ffffff22;}
+.deck.creating .deck-create{width:min(var(--dc-w),94vw);}
 .deck.editing #layout-row{display:none;}
 .deck.editing .dc-resize{display:none;}
 /* ---- PowerPoint-style ribbon: labelled groups, always the same height ----
@@ -3631,14 +3647,25 @@ body.slide-editing .apptop{display:none;}
 .deck.erc1 .rbn-row{gap:4px;}
 .deck.erc2 .dbtn.rbn-sm{padding:2px 6px;font-size:10px;gap:4px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
+/* spend BOX width before type size: on 1366-1440 laptops the ladder ran
+   all the way to erc3's small type while the font select sat at its full
+   94px and the size box at 44px — tiny mashed buttons beside roomy boxes
+   (2026-08-20 diagnosis, user: "really small and mashed together. This is
+   on a laptop"). Capping the boxes at erc2 stops erc3 firing at those
+   widths at all (measured: 1366/1400 now stop at erc2, 10.5px type). */
+.deck.erc2 .et-fmt .rbn-row .fmt-num{width:38px;}
+.deck.erc2 .et-fmt .rbn-row select.etm{max-width:76px;}
+.deck.erc2 .et-fmt .rbn-row .fmt-range{width:66px;}
 /* NO rung hides an icon. Stripping them buys width but costs the whole
    big/small hierarchy — a label-only wall is the same flat wall that was
    rejected, arrived at from the other side. Density only, to the end. */
 .deck.erc3 .rbn-grp{padding-left:5px;padding-right:5px;}
-.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:9.5px;
+.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:10px;
   padding-left:5px;padding-right:5px;}
 .deck.erc3 .rbn-lab{font-size:8px;letter-spacing:.1em;}
-.deck.erc3 .rbn-row .fmt-range{width:66px;}
+.deck.erc3 .rbn-row .fmt-range{width:56px;}
+.deck.erc3 .et-fmt .rbn-row select.etm{max-width:68px;}
+.deck.erc3 .et-fmt .rbn-row .fmt-num{width:34px;}
 
 /* every cell-sized control has to actually BE cell-sized, or it pushes
    its row past the group and over the label */
@@ -3830,7 +3857,7 @@ body.slide-editing .apptop{display:none;}
   border-color:var(--cyan-deep);color:#fff;}
 .sh-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:60;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff26;border-radius:9px;padding:6px;
-  display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
   box-shadow:0 14px 38px #0009;width:210px;}
 .sh-menu[hidden]{display:none;}
 .sh-opt{display:flex;flex-direction:column;align-items:center;gap:3px;
@@ -3977,6 +4004,15 @@ select#fmt-font[hidden]{display:none;}
 .sw.trans::after{content:"";position:absolute;left:-2px;right:-2px;
   top:50%;height:2px;background:#ff6b57;
   transform:rotate(-45deg);}
+/* recent colours, newest first — filled from the custom picker's history
+   whenever a colour menu opens (2026-08-19, user: recents should be in
+   the colour menus, not buried in the picker) */
+.sw-recrow{display:flex;align-items:center;gap:7px;}
+.sw-recrow[hidden]{display:none!important;}
+.sw-reclab{font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+  text-transform:uppercase;color:#7e93a4;flex:none;}
+.sw-rc{width:18px;height:18px;border-radius:50%;padding:0;cursor:pointer;
+  border:2px solid #ffffff30;flex:none;}
 /* custom-colour swatch: a rainbow chip that opens the full picker */
 .sw.sw-custom{background:conic-gradient(from 0deg,#ff6b57,#f0a848,#46a892,
   var(--accent),#7a6cff,#ff6b57);position:relative;overflow:hidden;}
@@ -4024,7 +4060,13 @@ select#fmt-font[hidden]{display:none;}
 .slide{position:relative;}
 /* image annotations */
 .an-image{position:absolute;}
-.an-imgel{width:100%;height:100%;object-fit:cover;display:block;
+/* CONTAIN by default: cover let any non-proportional resize silently
+   clip the picture (2026-08-19, diagnosed+verified in-browser: a 2:1
+   stripe resized to 0.4:1 showed ~21% of its width). A crop must still
+   FILL first or the mask would only bite letterbox — same rationale as
+   the cell rule below. */
+.an-image.an-cropped .an-imgel{object-fit:cover;}
+.an-imgel{width:100%;height:100%;object-fit:contain;display:block;
   pointer-events:none;border-radius:2px;}
 .deck.editing .an-image{cursor:move;}
 .deck.editing .an-image.sel{outline:2px solid var(--cyan);outline-offset:1px;}
@@ -4083,9 +4125,13 @@ select#fmt-font[hidden]{display:none;}
    out has to be visible or it does not exist (2026-08-19, user: "the
    notebooks button is really important — it needs to sit above the slide
    thumbnail part") */
-.dc-back{display:none;}
-.deck.editing .dc-back{display:flex;align-items:center;gap:7px;
-  margin:8px 8px 2px;padding:7px 10px;}
+/* the notebooks content at the column top: pane rows reused verbatim */
+.dc-nbs{display:none;}
+.deck.editing .dc-nbs{display:block;padding:8px 8px 6px;
+  border-bottom:1px solid #ffffff14;}
+.dc-nbs .dc-nbs-menuh{cursor:pointer;border-radius:6px;padding:4px 6px;}
+.dc-nbs .dc-nbs-menuh:hover{background:color-mix(in srgb,var(--accent)
+  14%,transparent);color:var(--accent);}
 /* a POSTER keeps the column too now — it is where Notebooks, File and
    Save live; only the slide film is deck-only (hidden for posters by the
    .poster-page .dc-film rule) */
@@ -4125,7 +4171,6 @@ select#fmt-font[hidden]{display:none;}
 .page-light .slide{color:#1b2733;}
 .page-light .an-text{color:#1b2733;background:#ffffffd9;
   border-color:#00000024;}
-.page-light .an-text.nobg{text-shadow:none;}
 .page-light .an-cell{background:#fff;border-color:#00000030;}
 .page-light .an-cell pre.result,.page-light .an-cell pre.stream{
   background:#fff;color:#1b2733;border-color:#00000018;}
@@ -4161,6 +4206,13 @@ select#fmt-font[hidden]{display:none;}
 .page-light .dpi-warn{background:#fff3e0ee;color:#9a6108;
   border-color:#9a610833;}
 /* ---- the crop menu's Trim row ---- */
+/* the row is a grid ITEM of the 3-column .sh-menu: unless it spans the
+   whole row its ~330px min-content width inflated the auto tracks and
+   pushed the shape options clean off the 210px panel — at laptop widths
+   off the VIEWPORT, which read as "the crop menu is broken" (2026-08-20
+   diagnosis, reproduced: Ellipse/Diamond/Star painted outside the panel) */
+#fmt-crop-menu .crop-inset,#fmt-crop-menu .ci-trim{
+  grid-column:1/-1;min-width:0;}
 .crop-inset{display:flex;align-items:center;gap:4px;margin-top:6px;
   padding-top:6px;border-top:1px solid #ffffff1a;}
 .crop-inset .ci-lab{font-family:var(--mono);font-size:9px;
@@ -4440,8 +4492,10 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
   line-height:1.35;color:#fff;background:color-mix(in srgb,var(--chrome-1,#0e1926) 85%,transparent);
   border:1px solid #ffffff2e;border-radius:8px;padding:.35em .55em;
   display:flex;align-items:flex-start;gap:.35em;}
-.an-text.nobg{background:none;border:none;
-  text-shadow:0 1px 4px #000d,0 0 10px #0009;}
+/* no text-shadow: it was meant to keep bare text legible on any page but
+   read as a smudge on every one (2026-08-19, user: "why is there a shadow
+   on the text — that's weird") */
+.an-text.nobg{background:none;border:none;}
 /* fill the box (minus the move handle) so text-align actually positions the
    text — a content-sized flex item can't be aligned */
 .an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
@@ -4759,6 +4813,19 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
     grid-template-rows:none;grid-auto-rows:1fr;}
 }
 @media (prefers-reduced-motion:reduce){.slide{animation:none;}}
+
+/* drag-to-trim: four accent edge handles; the live clip is the preview */
+.an-crop-h{position:absolute;background:var(--accent);border:1px solid
+  #00000055;border-radius:4px;z-index:8;}
+.an-crop-t,.an-crop-b{left:50%;margin-left:-16px;width:32px;height:9px;
+  cursor:ns-resize;}
+.an-crop-l,.an-crop-r{top:50%;margin-top:-16px;width:9px;height:32px;
+  cursor:ew-resize;}
+.ci-trim{display:block;width:100%;text-align:left;background:none;
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  color:var(--accent);border-radius:7px;padding:7px 10px;cursor:pointer;
+  font-family:var(--sans);font-size:12px;margin-bottom:6px;}
+.ci-trim:hover{background:color-mix(in srgb,var(--accent) 14%,transparent);}
 </style>
 <script>
 window.MathJax = {
@@ -5002,6 +5069,13 @@ window.MathJax = {
       <button class="pr-mi" data-for="pr-newpost">Poster</button>
       <button class="pr-mi" data-for="pr-newview">Custom view</button>
       <button class="pr-mi" data-for="pr-newfold">Folder</button>
+      <!-- the way back IN for a presentation saved to disk — without it
+           a .junoview.html file could only be opened from the File menu
+           of an already-open presentation (2026-08-20, user locked out
+           of a file-saved presentation the night before a talk) -->
+      <button class="pr-mi" data-for="deckfile"
+        title="Open a .junoview.html presentation saved on your computer">
+        Open a .junoview file&#8230;</button>
     </div>
   </div>
   <!-- custom view FIRST: it is the one that acts on the notebook you are
@@ -8527,7 +8601,8 @@ through Ko-fi. Thank you.</p>
   </div>
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
-<input type="file" id="fileinput" accept=".ipynb" multiple hidden>
+<input type="file" id="fileinput" accept=".ipynb,.junoview,.html"
+  multiple hidden>
 <aside class="selpane varspane" id="varspane" hidden>
   <div class="selpane-h"><span>Variables</span>
     <button class="dbtn dc-icon" id="varspane-close"
@@ -8573,6 +8648,142 @@ through Ko-fi. Thank you.</p>
          the things you are actually clicking while you lay a page out -->
     <span class="deck-topright" id="deck-topright"></span>
   </div>
+  <!-- the left COLUMN runs the full height of the window — nothing
+       above it — with the notebooks content at its top, then File/Save,
+       then the thumbnails (2026-08-19, user: "the notebooks thing ...
+       should extend to the top. So there is nothing above it ... the
+       content that is currently in the 'notebooks' button"). -->
+  <aside class="deck-create" id="deck-create" hidden>
+      <div class="dc-resize" id="dc-resize"
+        title="Drag to resize the builder panel"></div>
+      <!-- not a back button: the CONTENT of the notebooks pane — every
+           notebook this presentation uses, with open/refresh — lives at
+           the top of the column; the header row is the way back -->
+      <div class="dc-nbs" id="dc-nbs"></div>
+      <div class="dc-head">
+        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
+             stacks the small controls beside Paste (2026-08-17, user: "the
+             save could go below the file"). Stacking them halves the
+             group's width, and they are the two halves of the same
+             errand. The wrapper stays a plain row inside the builder
+             panel's header, which is a one-line bar. -->
+        <span class="rbn-stack">
+        <div class="dc-menuwrap">
+          <button class="dbtn" id="dc-file" aria-haspopup="true"
+            aria-expanded="false">File &#9662;</button>
+          <div class="dc-menu" id="dc-menu" hidden>
+            <button class="dc-mi" id="mi-new">New presentation</button>
+            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
+            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+            <button class="dc-mi" id="mi-crop"
+              title="Add trim marks just outside the page for the print
+ shop to cut to. The page itself keeps its exact size &mdash; the sheet
+ grows by 5mm on every side to hold them">Crop marks: off</button>
+            <div class="dc-mi dc-pagebg" id="mi-pagebg"
+              title="The page's own background — pick white for a poster
+ that goes to a print shop">Page background
+              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
+              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
+              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
+              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
+              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+            </div>
+            <div class="dc-msep"></div>
+            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
+            <button class="dc-mi" id="mi-autosave" hidden></button>
+            <button class="dc-mi" id="mi-pdf"
+              title="Save as PDF at the page's TRUE size — an A0 poster
+ exports as a real 841&#215;1189mm page, ready for the print shop">Export
+ PDF / print&#8230;</button>
+            <button class="dc-mi" id="mi-pptx"
+              title="Save as a PowerPoint .pptx. Text stays editable and
+ figures come across as pictures; a placed cell showing code or a table
+ cannot convert — use PDF for those">Export PowerPoint
+ (.pptx)&#8230;</button>
+            <button class="dc-mi" id="mi-html"
+              title="A single .html file anyone can open — no Junoview
+ needed. Arrow keys page through it; Ctrl+P prints at page size">Export
+ standalone HTML</button>
+            <button class="dc-mi" id="mi-dl">Download a copy
+              (.junoview)</button>
+            <button class="dc-mi" id="mi-load">Open a .junoview
+              file&#8230;</button>
+            <button class="dc-mi" id="mi-discard">Discard changes</button>
+            <button class="dc-mi" id="mi-del">Delete presentation</button>
+          </div>
+        </div>
+        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
+             two competing save buttons and nobody could tell what the
+             second one did (2026-08-07, user: "even I am confused"). It is
+             now a split button: press Save to save, press the chevron to
+             choose where. The destination lives in the menu, which is
+             where a destination belongs. -->
+        <span class="dc-savegrp">
+          <button class="dbtn" id="dc-save">Save</button>
+          <span class="dc-menuwrap">
+            <button class="dbtn dc-target" id="dc-target"
+              aria-haspopup="true" aria-expanded="false"
+              aria-label="Choose where this is saved"
+              title="Choose where this is saved">&#9662;</button>
+            <div class="dc-menu" id="target-menu" hidden>
+              <div class="dc-mhead" id="tg-head">save to</div>
+            <button class="dc-mi" id="tg-project" hidden>This project</button>
+            <button class="dc-mi" id="tg-browser">This browser</button>
+            <button class="dc-mi" id="tg-file">A file on your
+              computer&#8230;</button>
+            <div class="dc-msep"></div>
+              <button class="dc-mi" id="tg-pick" hidden>Choose a different
+                file&#8230;</button>
+            </div>
+          </span>
+        </span>
+        </span>
+        <!-- ONE cell, like the zoom stepper: undo and redo are the same
+             decision in two directions and must never end up on different
+             lines. In the side rail's wrapping flow they did exactly that
+             — undo closed one line and redo opened the next, alone and
+             stretched the full width of the rail (2026-08-16). -->
+        <span class="rbn-cell">
+          <button class="dbtn dc-icon" id="dc-undo" disabled
+            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+          <button class="dbtn dc-icon" id="dc-redo" disabled
+            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        </span>
+        <span class="dc-spring"></span>
+        <span class="deck-status" id="deck-status"></span>
+      </div>
+      <!-- the NAME lives outside .dc-controls: that block is display:none
+           while editing, so File → Rename… un-hid an input inside a hidden
+           ancestor — 0x0, unfocusable, "renaming doesn't work" in the
+           primary flow (2026-08-20 diagnosis). Both children stay [hidden]
+           except during an active rename, so the row costs no height. -->
+      <div class="dc-block dc-name">
+        <div class="dc-presname" id="pres-current" hidden></div>
+        <input id="pres-name" type="text" placeholder="presentation name"
+          spellcheck="false" autocomplete="off" hidden>
+      </div>
+      <div class="dc-block dc-controls">
+        <button class="dbtn" id="dc-edit"
+          title="Swap to the slide editor — add text, arrows and boxes">
+          &#9998; Swap to edit view</button>
+        <div class="lay-picker" id="layout-row"
+          aria-label="Slide layouts"></div>
+        <div class="title-editor" id="title-editor" hidden>
+          <input id="ts-title" type="text" placeholder="Slide title"
+            spellcheck="false" autocomplete="off">
+          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
+            spellcheck="false" autocomplete="off">
+        </div>
+      </div>
+      <div class="dc-block dc-film">
+        <div class="film-list" id="film-list"></div>
+        <button class="dbtn addslide" id="film-add">+ Add slide</button>
+      </div>
+    </aside>
   <!-- The ribbon spans the WHOLE window, like the document view's app
        bar — it used to live inside the stage column, so the slide strip
        and rail came out of its width on every screen (2026-08-19, user:
@@ -8724,19 +8935,21 @@ through Ko-fi. Thank you.</p>
  you keep every editing tool">&#10530; Edit full screen</button>
                 </div>
               </span>
-              <!-- Objects is a panel you show or hide — a way of LOOKING
-                   at the page, not a property of it -->
+              <!-- Layers is a panel you show or hide — a way of LOOKING
+                   at the page, not a property of it. Called Layers, not
+                   Objects: the standard name for this list everywhere
+                   else (2026-08-19, user) -->
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
- of it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Objects</button>
+ of it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
               <!-- a deck only: a poster is one printed page and has no
                    build to inspect -->
               <button class="dbtn rbn-sm" id="vw-anim" hidden
                 aria-pressed="false"
                 title="Everything animated on this slide, in the order it
  appears — and the effect on whatever is selected"
-                >&#9654; Animations</button>
+                >&#9654; Animation pane</button>
               <!-- Zoom is how big the page LOOKS, not how big it IS — it
                    changes nothing about the document and nothing about
                    what prints, which is the same test Guides and Objects
@@ -8931,6 +9144,11 @@ through Ko-fi. Thank you.</p>
                 <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
                   <span class="fmt-lab" id="fmt-txlab" hidden
                     title="Text colour">Text</span>
+                  <!-- a true red: Coral read as "close enough" until you
+                       needed an actual warning red (2026-08-19, user:
+                       "more defaults, no red currently!") -->
+                  <button class="sw" data-c="#e5484d"
+                    style="background:#e5484d" title="Red"></button>
                   <button class="sw" data-c="#ff6b57"
                     style="background:#ff6b57" title="Coral"></button>
                   <button class="sw" data-c="#f0a848"
@@ -8946,6 +9164,7 @@ through Ko-fi. Thank you.</p>
                   <button class="sw sw-custom" id="sw-custom"
                     data-target="text"
                     title="Custom colour — hex, rgb or rgba"></button>
+                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <span class="sh-drop">
@@ -8962,6 +9181,8 @@ through Ko-fi. Thank you.</p>
                     style="background:#0e1926" title="Dark box"></button>
                   <button class="sw swbg" data-c="#ffffff" hidden
                     style="background:#ffffff" title="White box"></button>
+                  <button class="sw swbg" data-c="#e5484d" hidden
+                    style="background:#e5484d" title="Red box"></button>
                   <button class="sw swbg" data-c="#ff6b57" hidden
                     style="background:#ff6b57" title="Coral box"></button>
                   <button class="sw swbg" data-c="#f0a848" hidden
@@ -8971,6 +9192,7 @@ through Ko-fi. Thank you.</p>
                   <button class="sw swbg sw-custom" id="swbg-custom" hidden
                     data-target="fill"
                     title="Custom fill colour — hex, rgb or rgba"></button>
+                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <!-- Opacity sits with COLOUR because that is what it is:
@@ -9146,129 +9368,7 @@ through Ko-fi. Thank you.</p>
         <span class="et-hint" id="et-hint"></span>
       </div>
   <div class="deck-main">
-    <aside class="deck-create" id="deck-create" hidden>
-      <div class="dc-resize" id="dc-resize"
-        title="Drag to resize the builder panel"></div>
-      <button class="dbtn dc-back" id="dc-back"
-        title="Back to the notebooks. Nothing is closed or lost."
-        >&#8617; Notebooks</button>
-      <div class="dc-head">
-        <!-- File OVER Save, one cell two rows deep, the way PowerPoint
-             stacks the small controls beside Paste (2026-08-17, user: "the
-             save could go below the file"). Stacking them halves the
-             group's width, and they are the two halves of the same
-             errand. The wrapper stays a plain row inside the builder
-             panel's header, which is a one-line bar. -->
-        <span class="rbn-stack">
-        <div class="dc-menuwrap">
-          <button class="dbtn" id="dc-file" aria-haspopup="true"
-            aria-expanded="false">File &#9662;</button>
-          <div class="dc-menu" id="dc-menu" hidden>
-            <button class="dc-mi" id="mi-new">New presentation</button>
-            <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
-            <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
-            <button class="dc-mi" id="mi-crop"
-              title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
-            <div class="dc-mi dc-pagebg" id="mi-pagebg"
-              title="The page's own background — pick white for a poster
- that goes to a print shop">Page background
-              <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
-              <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
-              <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
-              <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
-              <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
-            </div>
-            <div class="dc-msep"></div>
-            <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
-            <button class="dc-mi" id="mi-autosave" hidden></button>
-            <button class="dc-mi" id="mi-pdf"
-              title="Save as PDF at the page's TRUE size — an A0 poster
- exports as a real 841&#215;1189mm page, ready for the print shop">Export
- PDF / print&#8230;</button>
-            <button class="dc-mi" id="mi-pptx"
-              title="Save as a PowerPoint .pptx. Text stays editable and
- figures come across as pictures; a placed cell showing code or a table
- cannot convert — use PDF for those">Export PowerPoint
- (.pptx)&#8230;</button>
-            <button class="dc-mi" id="mi-html"
-              title="A single .html file anyone can open — no Junoview
- needed. Arrow keys page through it; Ctrl+P prints at page size">Export
- standalone HTML</button>
-            <button class="dc-mi" id="mi-dl">Download a copy
-              (.junoview)</button>
-            <button class="dc-mi" id="mi-load">Open a .junoview
-              file&#8230;</button>
-            <button class="dc-mi" id="mi-discard">Discard changes</button>
-            <button class="dc-mi" id="mi-del">Delete presentation</button>
-          </div>
-        </div>
-        <!-- ONE control, not two. "Save" beside "→ This project ▾" read as
-             two competing save buttons and nobody could tell what the
-             second one did (2026-08-07, user: "even I am confused"). It is
-             now a split button: press Save to save, press the chevron to
-             choose where. The destination lives in the menu, which is
-             where a destination belongs. -->
-        <span class="dc-savegrp">
-          <button class="dbtn" id="dc-save">Save</button>
-          <span class="dc-menuwrap">
-            <button class="dbtn dc-target" id="dc-target"
-              aria-haspopup="true" aria-expanded="false"
-              aria-label="Choose where this is saved"
-              title="Choose where this is saved">&#9662;</button>
-            <div class="dc-menu" id="target-menu" hidden>
-              <div class="dc-mhead" id="tg-head">save to</div>
-            <button class="dc-mi" id="tg-project" hidden>This project</button>
-            <button class="dc-mi" id="tg-browser">This browser</button>
-            <button class="dc-mi" id="tg-file">A file on your
-              computer&#8230;</button>
-            <div class="dc-msep"></div>
-              <button class="dc-mi" id="tg-pick" hidden>Choose a different
-                file&#8230;</button>
-            </div>
-          </span>
-        </span>
-        </span>
-        <!-- ONE cell, like the zoom stepper: undo and redo are the same
-             decision in two directions and must never end up on different
-             lines. In the side rail's wrapping flow they did exactly that
-             — undo closed one line and redo opened the next, alone and
-             stretched the full width of the rail (2026-08-16). -->
-        <span class="rbn-cell">
-          <button class="dbtn dc-icon" id="dc-undo" disabled
-            title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
-          <button class="dbtn dc-icon" id="dc-redo" disabled
-            title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
-        </span>
-        <span class="dc-spring"></span>
-        <span class="deck-status" id="deck-status"></span>
-      </div>
-      <div class="dc-block dc-controls">
-        <div class="dc-presname" id="pres-current" hidden></div>
-        <input id="pres-name" type="text" placeholder="presentation name"
-          spellcheck="false" autocomplete="off" hidden>
-        <button class="dbtn" id="dc-edit"
-          title="Swap to the slide editor — add text, arrows and boxes">
-          &#9998; Swap to edit view</button>
-        <div class="lay-picker" id="layout-row"
-          aria-label="Slide layouts"></div>
-        <div class="title-editor" id="title-editor" hidden>
-          <input id="ts-title" type="text" placeholder="Slide title"
-            spellcheck="false" autocomplete="off">
-          <input id="ts-sub" type="text" placeholder="Subtitle (optional)"
-            spellcheck="false" autocomplete="off">
-        </div>
-      </div>
-      <div class="dc-block dc-film">
-        <div class="film-list" id="film-list"></div>
-        <button class="dbtn addslide" id="film-add">+ Add slide</button>
-      </div>
-    </aside>
+    
     <div class="deck-stagewrap" id="deck-stagewrap">
       
       <aside class="selpane preflight" id="preflight" hidden>
@@ -9281,7 +9381,7 @@ through Ko-fi. Thank you.</p>
         <div class="selpane-list" id="preflight-list"></div>
       </aside>
       <aside class="selpane" id="selpane" hidden>
-        <div class="selpane-h"><span>Objects</span>
+        <div class="selpane-h"><span>Layers</span>
           <button class="dbtn dc-icon" id="selpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="selpane-list"></div>
@@ -9298,7 +9398,7 @@ through Ko-fi. Thank you.</p>
            a property of the slide, not of whatever you happen to have
            clicked. -->
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animations</span>
+        <div class="selpane-h"><span>Animation pane</span>
           <button class="dbtn dc-icon" id="animpane-close"
             title="Close">&#10005;</button></div>
         <div class="selpane-list" id="animpane-body"></div>
@@ -14409,7 +14509,59 @@ through Ko-fi. Thank you.</p>
     if(inp) inp.disabled=on;
     if(ld) ld.hidden=!on;
   }
+  /* a saved presentation, by name — the .junoview.html polyglot save or a
+     bare-JSON .junoview */
+  function isDeckPath(p){
+    return /\.junoview(\.html)?$/i
+      .test(String(p||'').split('?')[0].split('#')[0]);
+  }
+  /* hand text to the deck importer (deck.js) — the same importer behind
+     "+ New… → Open a .junoview file…", so every road in behaves alike */
+  function importDeckTextSafe(txt,label){
+    try{
+      if(window.SemDeckImport) window.SemDeckImport(txt,false);
+      else alert('The presentation editor has not loaded yet — '
+        +'try again in a moment.');
+    }catch(e){
+      alert('Could not open '+(label||'that file')+': '
+        +((e&&e.message)||e));
+    }
+    hideDlg();
+  }
+  function fetchDeckUrl(url){
+    url=normNbUrl(url);   /* GitHub blob links become raw, like notebooks */
+    setDlgBusy(true);
+    fetch(url,{cache:'no-store'}).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.text();
+    }).then(function(txt){
+      setDlgBusy(false);
+      importDeckTextSafe(txt,decodeURIComponent(
+        url.split('?')[0].split('/').pop()||url));
+    }).catch(function(e){
+      setDlgBusy(false);
+      alert('Could not fetch '+url+'\n'+((e&&e.message)||e)
+        +'\nIf that host blocks cross-site requests, download the '
+        +'file and drop it here instead.');
+    });
+  }
   function openPath(path){
+    /* saved presentations open from the SAME places notebooks do — the
+       folder listing, a pasted path, a GitHub link (2026-08-20, user: on
+       disk they carry the browser's icon and there was no way in) */
+    if(isDeckPath(path)){
+      if(isUrl(path)){fetchDeckUrl(path);return;}
+      if(APP.mode!=='app') return;
+      if(OPENBUSY[path]) return;
+      OPENBUSY[path]=1;setDlgBusy(true);
+      api('/api/readdeck',{path:path}).then(function(j){
+        delete OPENBUSY[path];setDlgBusy(false);
+        importDeckTextSafe(j.text,j.name||path);
+      }).catch(function(e){
+        delete OPENBUSY[path];setDlgBusy(false);
+        alert('Open failed: '+e.message);});
+      return;
+    }
     if(APP.mode==='web'){
       if(isUrl(path)) webOpenUrl(path,false);
       return;
@@ -14486,13 +14638,20 @@ through Ko-fi. Thank you.</p>
     }
   }
   function webOpenFiles(files){
-    Array.prototype.slice.call(files||[])
-      .filter(function(f){return /\.ipynb$/i.test(f.name);})
-      .forEach(function(f){
+    Array.prototype.slice.call(files||[]).forEach(function(f){
+      if(isDeckPath(f.name)){
+        f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      } else if(/\.ipynb$/i.test(f.name)){
         f.text().then(function(txt){webParseText(f.name,txt);});
-      });
+      } else if(/\.html?$/i.test(f.name)){
+        /* a renamed save is still worth a try — the importer says
+           plainly when an HTML file carries no Junoview data */
+        f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      }
+    });
   }
   function webOpenUrl(url,silent){
+    if(isDeckPath(url)){fetchDeckUrl(url);return;}
     url=normNbUrl(url);
     var pend=OPENBUSY[url];
     if(pend){
@@ -14630,7 +14789,7 @@ through Ko-fi. Thank you.</p>
       var up=$('#odlg-up');
       up.disabled=!j.parent;up.dataset.parent=j.parent||'';
       dlgList.innerHTML='';
-      if(!j.dirs.length&&!j.notebooks.length)
+      if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length)
         dlgList.innerHTML='<div class="odlg-empty">'
           +'No folders or notebooks here.</div>';
       j.dirs.forEach(function(d){
@@ -14644,6 +14803,18 @@ through Ko-fi. Thank you.</p>
       j.notebooks.forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i nb';
         b.innerHTML='<span class="ic">&#128209;</span>';
+        var nm=document.createElement('span');nm.className='nm';
+        nm.textContent=n.name;b.appendChild(nm);
+        var sz=document.createElement('span');sz.className='sz';
+        sz.textContent=n.size||'';b.appendChild(sz);
+        b.addEventListener('click',function(){openPath(n.path);});
+        dlgList.appendChild(b);
+      });
+      /* saved presentations, openable like notebooks (2026-08-20) */
+      (j.decks||[]).forEach(function(n){
+        var b=document.createElement('button');b.className='odlg-i deck';
+        b.innerHTML='<span class="ic">&#127902;</span>';
+        b.title='Open this saved Junoview presentation';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
@@ -14756,7 +14927,7 @@ through Ko-fi. Thank you.</p>
           +'Choose files / drag-and-drop.');
         return;
       }
-      if(isUrl(v)||/\.ipynb$/i.test(v)) openPath(v);
+      if(isUrl(v)||/\.ipynb$/i.test(v)||isDeckPath(v)) openPath(v);
       else listDir(v);
     }
     if(inp) inp.addEventListener('keydown',function(e){
@@ -14771,9 +14942,20 @@ through Ko-fi. Thank you.</p>
 
     /* ---- drag & drop .ipynb anywhere on the window ---- */
     var hint=$('#drophint'), dragDepth=0;
+    /* only a FILE drag earns the overlay: it used to appear for every
+       drag, so reordering slide thumbnails painted the full-window "Drop
+       .ipynb files" sheet (z-index 140) over the editor (100) for the
+       whole gesture and drowned the drop markers — "can't re-arrange by
+       dragging" (2026-08-20 diagnosis, reproduced) */
+    function dragHasFiles(e){
+      var t=e.dataTransfer&&e.dataTransfer.types;
+      return !!t&&Array.prototype.indexOf.call(t,'Files')>=0;
+    }
     window.addEventListener('dragover',function(e){e.preventDefault();});
     window.addEventListener('dragenter',function(e){
-      e.preventDefault();dragDepth++;
+      e.preventDefault();
+      if(!dragHasFiles(e)) return;
+      dragDepth++;
       if(hint) hint.hidden=false;
     });
     window.addEventListener('dragleave',function(){
@@ -14785,6 +14967,11 @@ through Ko-fi. Thank you.</p>
       if(hint) hint.hidden=true;
       var files=Array.prototype.slice.call(
         (e.dataTransfer||{}).files||[]);
+      /* a dropped saved presentation imports, in either mode */
+      files.filter(function(f){return isDeckPath(f.name);})
+        .forEach(function(f){
+          f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+        });
       files.filter(function(f){return /\.ipynb$/i.test(f.name);})
         .forEach(function(f){
           if(isWeb){
@@ -16051,8 +16238,13 @@ window.JunoPptx = (function () {
           ? 'Click to fit the whole page in the window'
           : 'Fitted to the window — click to re-fit after scrolling';
       }
-    } else if(deckEl.classList.contains('custom-page')){
-      /* playing a poster / portrait page letterboxes to the page */
+    } else {
+      /* playback letterboxes to the page — EVERY page, 16:9 included. It
+         used to be gated on custom-page, so a standard deck presented on
+         a canvas with the WINDOW's shape while text and cell zoom key on
+         layer HEIGHT: everything grew ~19% at 1400x900 and by a different
+         amount on every screen (2026-08-20 diagnosis, measured live —
+         "in present mode the size of things changes") */
       sizeSlideTo(slideEl,1);
     }
     /* Text is sized as a PERCENTAGE of the page, worked out from the
@@ -16067,7 +16259,7 @@ window.JunoPptx = (function () {
        transition. The edit branch has always re-rendered; the letterboxed
        playback branch never did (2026-08-10). */
     var s0=pres.slides[cur],l0=stage.querySelector('.annot-layer');
-    if(s0&&l0&&(mode==='edit'||deckEl.classList.contains('custom-page'))){
+    if(s0&&l0){
       renderAnnots(l0,s0);
       if(mode==='edit') paintSel(l0);
     }
@@ -16109,7 +16301,13 @@ window.JunoPptx = (function () {
     var rowH=colW*(pg.mm[0]/pg.mm[1])*(100/100);
     /* colW is a % of WIDTH; convert that physical width to a % of HEIGHT */
     rowH=colW/100*pg.mm[0]/pg.mm[1]*100;
-    var rows=Math.max(1,Math.floor((100-2*m.y)/rowH));
+    /* fit the rows EXACTLY into the margin box: flooring left a partial
+       band at the bottom with no lines in it, so the grid visibly stopped
+       partway down the page (2026-08-19, user screenshot). Rounding keeps
+       every cell within half a pitch of square and puts the last rule ON
+       the bottom margin. */
+    var rows=Math.max(1,Math.round((100-2*m.y)/rowH));
+    rowH=(100-2*m.y)/rows;
     return {m:m,colW:colW,rowH:rowH,rows:rows};
   }
   /* extra snap lines contributed by the guides (only when shown) */
@@ -16117,8 +16315,8 @@ window.JunoPptx = (function () {
     if(!guides.grid) return {xs:[],ys:[]};
     var g=gridPct(),xs=[],ys=[],i;
     for(i=0;i<=GRID_COLS;i++) xs.push(g.m.x+i*g.colW);
+    /* the last row now lands exactly on the bottom margin */
     for(i=0;i<=g.rows;i++) ys.push(g.m.y+i*g.rowH);
-    ys.push(100-g.m.y);
     return {xs:xs,ys:ys};
   }
   function drawGrid(slideEl){
@@ -17255,13 +17453,16 @@ window.JunoPptx = (function () {
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
   }
-  /* the readout is a DOOR when saves only live in this browser */
+  /* the readout is a SAVE BUTTON when saves only live in this browser —
+     it used to open the save-to-file picker, which is not what a thing
+     that says "autosaved" invites you to do (2026-08-19, user: "clicking
+     the autosave button should save") */
   function markSaveClickable(el){
     var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
     el.classList.toggle('clickable',toBrowser);
     el.title=toBrowser
-      ?'Saves stay in this browser. Click to save a .junoview.html file '
-        +'on your computer instead.'
+      ?'Saves stay in this browser. Click to save now — use the ▾ beside '
+        +'Save to keep a .junoview.html file on your computer instead.'
       :'';
   }
   function whereSaved(){
@@ -17319,7 +17520,7 @@ window.JunoPptx = (function () {
     var el=$('#deck-status');
     if(el) el.addEventListener('click',function(){
       if(!el.classList.contains('clickable')) return;
-      var tf=$('#tg-file'); if(tf) tf.click();
+      var sb=$('#dc-save'); if(sb) sb.click();
     });
   })();
   function markDirty(){
@@ -18605,8 +18806,7 @@ window.JunoPptx = (function () {
       /* size the page BEFORE annots render, so % geometry, fonts and
          figure fits all read the final canvas dimensions */
       applyPage();
-      if(mode==='edit'||deckEl.classList.contains('custom-page'))
-        applyZoom();
+      applyZoom();   /* every mode: playback letterboxes to the page too */
       attachAnnots(slideEl,s);
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
@@ -18813,7 +19013,7 @@ window.JunoPptx = (function () {
   /* crop masks: images AND notebook cells (figures, markdown, code) can be
      clipped to a shape, or trimmed with a rectangular inset. clip-path scales
      with the element, so it survives responsive slide sizing. */
-  var CROP_SHAPES=[['rect','Rectangle'],['round','Rounded'],
+  var CROP_SHAPES=[['rect','No crop'],['round','Rounded'],
     ['ellipse','Ellipse'],['circle','Circle'],['triangle','Triangle'],
     ['diamond','Diamond'],['pentagon','Pentagon'],['hexagon','Hexagon'],
     ['star','Star'],['arrow','Arrow']];
@@ -18840,6 +19040,11 @@ window.JunoPptx = (function () {
     if(!el) return;
     var cc=cropCss(a);
     if(cc){el.style.clipPath=cc;el.style.webkitClipPath=cc;}
+    /* a cleared crop must also clear a stale inline clip: masked in the
+       editor because renderAnnots rebuilds nodes, but the export path
+       reuses them (2026-08-20 diagnosis) */
+    else{el.style.removeProperty('clip-path');
+      el.style.removeProperty('-webkit-clip-path');}
   }
   /* a little filled preview of a crop shape (uses the very same clip-path) */
   function cropIcon(shape){
@@ -18966,6 +19171,11 @@ window.JunoPptx = (function () {
       if(host) host.classList.remove('an-editing');
     }
     el.contentEditable='false';
+    /* a JUST-DRAWN box must open ready to type without the double-click —
+       focus() on a non-editable span silently does nothing, so focusText
+       could never land the caret (found 2026-08-20, in-browser: the
+       active element stayed on <body> and typing went nowhere) */
+    el._beginEdit=beginEdit;
     el.addEventListener('dblclick',function(e){
       if(tool!=='select') return;
       e.stopPropagation();
@@ -18996,12 +19206,28 @@ window.JunoPptx = (function () {
       var r=rich?sanitizeRich(el.innerHTML):null;
       setVal(v,r);
       endEdit();
+      /* a text box with nothing in it is invisible once deselected (they
+         are born with no placeholder and no background) — so an empty one
+         removes itself rather than haunting the slide */
+      var s2=pres.slides[cur],a2=s2&&(s2.annots||[])[idx];
+      if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html){
+        s2.annots.splice(idx,1);
+        if(selAnnot===idx) selAnnot=null;
+        selSet=selSet.filter(function(i2){return i2!==idx;});
+        renderAnnots(layer,s2);
+      }
       markDirty();
     });
     el.addEventListener('mousedown',function(e){
       if(tool!=='select') return;   /* placing mode: draw over me */
-      e.stopPropagation();
-      selectAnnot(layer,idx);
+      /* the span owns the mouse only while TYPING (caret placement).
+         Otherwise the event must bubble to the layer handler — the only
+         place startMove is armed. Stopping it unconditionally was why a
+         text box showed a move cursor but could only ever be selected,
+         never dragged (2026-08-20 diagnosis, verified live: body-drags
+         moved 0.00% before, moved normally once bubbling). It also ate
+         shift-multi-select on text boxes. */
+      if(el.isContentEditable) e.stopPropagation();
     });
   }
   /* a figure frame hugs its plot: the frame ELEMENT is sized to the
@@ -19266,7 +19492,7 @@ window.JunoPptx = (function () {
           if(vb){
             vb.style.zoom=(a.ts||1)*kz;
             applyCrop(vb,a);
-            if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
+            if(a.crop) c.classList.add('an-cropped');
             c.appendChild(vb);
             if(!a.crop&&vb.querySelector(
                 '.figframe,.figpager,.plotframe')){
@@ -19314,7 +19540,7 @@ window.JunoPptx = (function () {
           if(b){
             b.style.zoom=(a.ts||1)*kz;
             applyCrop(b,a);
-            if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
+            if(a.crop) c.classList.add('an-cropped');
             c.appendChild(b);
           }
           if(fro){
@@ -19356,8 +19582,10 @@ window.JunoPptx = (function () {
             e.stopPropagation();startPick(i);});
           c.appendChild(pb);
         }
-        if(editing){c.appendChild(mkResize());
-          c.appendChild(mkRotate());}
+        if(editing){
+          if(cropMode&&selAnnot===i) mkCropHandles(c,layer,s,i);
+          else {c.appendChild(mkResize());c.appendChild(mkRotate());}
+        }
         layer.appendChild(c);
       } else if(a.k==='text'){
         var d2=document.createElement('div');
@@ -19435,10 +19663,11 @@ window.JunoPptx = (function () {
         var img=document.createElement('img');
         img.className='an-imgel';img.src=a.src||'';img.alt='';
         img.draggable=false;
+        if(a.crop) im.classList.add('an-cropped');
         applyCrop(img,a);
         im.appendChild(img);
-        if(editing){im.appendChild(mkResize());
-          im.appendChild(mkRotate());}
+        if(editing){if(cropMode&&selAnnot===i) mkCropHandles(im,layer,s,i);
+          else {im.appendChild(mkResize());im.appendChild(mkRotate());}}
         layer.appendChild(im);
       }
     });
@@ -19481,6 +19710,7 @@ window.JunoPptx = (function () {
     });
   }
   function selectAnnot(layer,idx,additive){
+    if(cropMode&&idx!==selAnnot) cropMode=false;
     var s=pres.slides[cur];
     if(idx===null){selAnnot=null;selSet=[];}
     else {
@@ -19675,12 +19905,15 @@ window.JunoPptx = (function () {
     var showBg=plainText||noteCell||kind==='rect';
     show('#fmt-txlab',(isText&&kind!=='cell')||noteCell);
     show('#fmt-bglab',showBg);
-    /* the popup buttons mirror what their menus can act on; the label
-       reads "Text" when it recolours words, "Colour" for lines/shapes */
+    /* the popup buttons mirror what their menus can act on, and the label
+       names the PART it recolours: "Colour" next to "Fill" left people
+       guessing which one was the outline (2026-08-19, user: "'colour' vs
+       'fill colour' is confusing — is that border?") */
     show('#fmt-txcol-btn',kind!=='image');
     var tcb=$('#fmt-txcol-btn');
-    if(tcb) tcb.textContent=(isText||kind==='cell')
-      ?'Text ▾':'Colour ▾';
+    if(tcb) tcb.textContent=(isText||kind==='cell')?'Text ▾'
+      :kind==='rect'?'Border ▾'
+      :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾';
     show('#fmt-fillcol-btn',showBg);
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
@@ -20205,8 +20438,12 @@ window.JunoPptx = (function () {
       :(kind==='cell')
       ?{k:'cell',x:p0.x,y:p0.y,w:0,h:0,ref:null}
       :(kind==='text')
-      /* colour comes from the page theme */
-      ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'Text',size:2.6,bg:1}
+      /* colour comes from the page theme. Born EMPTY and UNBOXED: the
+         "Text" placeholder and the default panel both had to be removed
+         by hand on every single box (2026-08-19, user: "no placeholder
+         text and no background by default"). A box left empty deletes
+         itself on blur, so nothing invisible is ever left behind. */
+      ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:2.6,bg:0}
       :(kind==='line')
       ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
         color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
@@ -20283,6 +20520,7 @@ window.JunoPptx = (function () {
   function focusText(layer,idx){
     var tx=layer.querySelector('.an-item[data-idx="'+idx+'"] .an-tx');
     if(!tx) return;
+    if(tx._beginEdit) tx._beginEdit();   /* make it editable FIRST */
     tx.focus();
     try{
       var rng=document.createRange();
@@ -20428,6 +20666,7 @@ window.JunoPptx = (function () {
        drops and the exit must never be droppable. */
     var cx=$('#et-cancel');
     if(cx) cx.hidden=(t==='select');
+    if(t!=='select') cropMode=false;
     var hint=$('#et-hint');
     /* "the slide" is wrong on a poster, which is one printed page and has
        no slides — the word leaked into every one of these (2026-08-07
@@ -20528,25 +20767,130 @@ window.JunoPptx = (function () {
   /* ---------- format bar wiring ---------- */
   /* the two colour POPUPS: open on their buttons, close on outside
      click or on picking a swatch (custom keeps its own panel flow) */
-  [['#fmt-txcol-btn','#fmt-txcol-menu'],
-   ['#fmt-fillcol-btn','#fmt-fillcol-menu']].forEach(function(pair){
-    var btn=$(pair[0]),menu=$(pair[1]);
+  /* the two colour mutations, shared by the preset swatches, the recent
+     chips, the custom picker and the hover preview — one implementation
+     of "what does this colour mean for this kind of item" each */
+  function textMut(c){return function(a){
+    if(a.k==='cell') a.txcol=c;
+    else a.color=c;};}
+  function fillMut(c){return function(a){
+    if(a.k==='cell'){a.bgcol=c;}
+    else if(a.k==='draw'){
+      /* a drawn stroke has no fill to speak of — the swatch sets the
+         ink, which is the only colour it has */
+      if(c!=='none') a.color=c;
+    }
+    else if(a.k==='rect'){
+      /* a shape's fill lives in a.fill/a.fillc — a.bg/a.bgc are the
+         TEXT-box background and no shape renderer reads them. The
+         gradient has to go, because cssFill and drawShapeSvg both
+         check a.grad first and would ignore the new colour. */
+      delete a.grad;
+      if(c==='none'){a.fill=0;delete a.fillc;}
+      else {a.fill=1;a.fillc=c;}
+    }
+    else if(c==='none'){a.bg=0;}
+    else{a.bg=1;a.bgc=c;}};}
+  function applyTextColor(c){
+    if(colorSelection(c)) return;
+    fmtApply(textMut(c));
+  }
+  function applyFillColor(c){fmtApply(fillMut(c));}
+  /* ---- live preview: hovering a swatch shows the colour ON the page,
+     leaving puts it back (2026-08-19, user: colours should preview live).
+     The selected item is snapshotted, mutated for the render only, and
+     restored — markDirty is never called, so autosave and undo never see
+     a hover. ---- */
+  var pvSnap=null;
+  function pvAnnot(){
+    var s=pres.slides[cur];
+    return (s&&typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+  }
+  function pvRender(){
+    var s=pres.slides[cur];
+    var l=stage.querySelector('.annot-layer');
+    if(l&&s){renderAnnots(l,s);selectAnnot(l,selAnnot);}
+  }
+  function pvShow(mut){
+    var a=pvAnnot();
+    /* a highlighted RUN inside a text box is recoloured through the
+       selection, which a hover must not disturb */
+    if(!a||activeTextEditable()) return;
+    if(pvSnap==null) pvSnap=JSON.stringify(a);
+    mut(a);
+    pvRender();
+  }
+  /* silent=true when a real apply follows immediately: it re-renders
+     anyway, so the restore only has to fix the MODEL */
+  function pvEnd(silent){
+    if(pvSnap==null) return;
+    var a=pvAnnot();
+    if(a){
+      var back=JSON.parse(pvSnap);
+      Object.keys(a).forEach(function(k){delete a[k];});
+      Object.keys(back).forEach(function(k){a[k]=back[k];});
+    }
+    pvSnap=null;
+    if(!silent) pvRender();
+  }
+  /* the recent-colour chips, rebuilt from the picker's history each time
+     a colour menu opens */
+  function renderSwRecents(menu){
+    var box=menu.querySelector('.sw-recrow');
+    if(!box) return;
+    var rec=cpRecent().slice(0,6);
+    box.innerHTML='';
+    box.hidden=!rec.length;
+    if(!rec.length) return;
+    var lab=document.createElement('span');
+    lab.className='sw-reclab';lab.textContent='recent';
+    box.appendChild(lab);
+    rec.forEach(function(str){
+      var b=document.createElement('button');
+      b.type='button';b.className='sw-rc';b.title=str;
+      b.style.background=str;
+      b.dataset.c=str;
+      box.appendChild(b);
+    });
+  }
+  [['#fmt-txcol-btn','#fmt-txcol-menu','text'],
+   ['#fmt-fillcol-btn','#fmt-fillcol-menu','fill']].forEach(function(pair){
+    var btn=$(pair[0]),menu=$(pair[1]),target=pair[2];
     if(!btn||!menu) return;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       var open=menu.hidden;
       menu.hidden=!open;
       btn.setAttribute('aria-expanded',open.toString());
-      if(open) floatMenu(btn,menu);
+      if(open){renderSwRecents(menu);floatMenu(btn,menu);}
+      else pvEnd(false);
     });
+    /* CAPTURE phase: any click inside the menu restores the hover preview
+       BEFORE a swatch's own apply handler runs, or the apply would land on
+       the previewed state and then be clobbered by the restore */
+    menu.addEventListener('click',function(){pvEnd(false);},true);
     menu.addEventListener('click',function(e){
+      var rc=e.target.closest&&e.target.closest('.sw-rc');
+      if(rc){
+        if(target==='text') applyTextColor(rc.dataset.c);
+        else applyFillColor(rc.dataset.c);
+      }
       var sw=e.target.closest&&e.target.closest('.sw');
-      if(sw&&!sw.classList.contains('sw-custom')){
+      if(rc||(sw&&!sw.classList.contains('sw-custom'))){
         menu.hidden=true;btn.setAttribute('aria-expanded','false');}
     });
+    menu.addEventListener('mouseover',function(e){
+      var sw=e.target.closest&&e.target.closest('.sw,.sw-rc');
+      if(!sw||sw.classList.contains('sw-custom')) return;
+      var c=sw.dataset.c; if(c==null) return;
+      pvEnd(true);                /* put back the previous hover first */
+      pvShow(target==='text'?textMut(c):fillMut(c));
+    });
+    menu.addEventListener('mouseleave',function(){pvEnd(false);});
     document.addEventListener('click',function(e){
       if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');
+        pvEnd(false);}
     });
   });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
@@ -20556,11 +20900,7 @@ window.JunoPptx = (function () {
       if(activeTextEditable()) e.preventDefault();
     });
     sw.addEventListener('click',function(){
-      if(colorSelection(sw.dataset.c)) return;
-      fmtApply(function(a){
-        if(a.k==='cell') a.txcol=sw.dataset.c;
-        else a.color=sw.dataset.c;
-      });
+      applyTextColor(sw.dataset.c);
     });
   });
   function onFmt(id,fn){
@@ -20866,25 +21206,7 @@ window.JunoPptx = (function () {
   }
   $$('#et-fmt .swbg:not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('click',function(){
-      fmtApply(function(a){
-        if(a.k==='cell'){a.bgcol=sw.dataset.c;}
-        else if(a.k==='draw'){
-          /* a drawn stroke has no fill to speak of — the swatch sets the
-             ink, which is the only colour it has */
-          if(sw.dataset.c!=='none') a.color=sw.dataset.c;
-        }
-        else if(a.k==='rect'){
-          /* a shape's fill lives in a.fill/a.fillc — a.bg/a.bgc are the
-             TEXT-box background and no shape renderer reads them. The
-             gradient has to go, because cssFill and drawShapeSvg both
-             check a.grad first and would ignore the new colour. */
-          delete a.grad;
-          if(sw.dataset.c==='none'){a.fill=0;delete a.fillc;}
-          else {a.fill=1;a.fillc=sw.dataset.c;}
-        }
-        else if(sw.dataset.c==='none'){a.bg=0;}
-        else{a.bg=1;a.bgc=sw.dataset.c;}
-      });
+      applyFillColor(sw.dataset.c);
     });
   });
 
@@ -20948,6 +21270,15 @@ window.JunoPptx = (function () {
     if(pv) pv.style.setProperty('--cpc',toStr(cpRGBA));
     if(hx) hx.classList.remove('bad');
     if(rg) rg.classList.remove('bad');
+    cpPreview();
+  }
+  /* the picker previews LIVE on the selected item as the colour changes;
+     Apply commits it, closing without applying puts it back. A saved text
+     RUN is the exception — its selection cannot survive a re-render. */
+  function cpPreview(){
+    if(!cpEl||cpEl.hidden||cpSavedRange) return;
+    pvEnd(true);
+    pvShow((cpTarget==='text'?textMut:fillMut)(toStr(cpRGBA)));
   }
   function cpRecent(){
     try{return JSON.parse(localStorage.getItem('plotline-colors')||'[]');}
@@ -21009,6 +21340,7 @@ window.JunoPptx = (function () {
     cpEl.style.left=left+'px';cpEl.style.top=top+'px';
   }
   function cpApply(){
+    pvEnd(true);          /* commit lands on the real state, not the preview */
     var str=toStr(cpRGBA);
     if(cpTarget==='text'){
       var did=false;
@@ -21055,11 +21387,12 @@ window.JunoPptx = (function () {
       openColorPop('fill',swbgc);});
     document.addEventListener('mousedown',function(e){
       if(cpEl&&!cpEl.hidden&&!cpEl.contains(e.target)
-         &&e.target!==swc&&e.target!==swbgc) cpEl.hidden=true;
+         &&e.target!==swc&&e.target!==swbgc){
+        cpEl.hidden=true;pvEnd(false);}   /* closed without applying */
     });
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&cpEl&&!cpEl.hidden){e.stopPropagation();
-        cpEl.hidden=true;}
+        cpEl.hidden=true;pvEnd(false);}
     },true);
   })();
   var fontSelEl=$('#fmt-font');
@@ -21143,7 +21476,7 @@ window.JunoPptx = (function () {
      still a live figure frame, not a picture of one), and a system-
      clipboard image pastes straight onto the page — which is how logos
      and screenshots actually arrive. */
-  var clipBuf=[];
+  var clipBuf=[],pendingPaste=null;
   function selectedIdxs(){
     var s=pres.slides[cur]; if(!s||!s.annots) return [];
     var out=selSet.filter(function(i){
@@ -21157,6 +21490,16 @@ window.JunoPptx = (function () {
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
     clipBuf=idxs.map(function(i){
       return JSON.parse(JSON.stringify(s.annots[i]));});
+    /* stamp the SYSTEM clipboard so this copy outranks whatever image was
+       on it: the paste listener checked the OS clipboard first, so one
+       stale screenshot shadowed every internal copy forever — Ctrl+C said
+       "1 item copied", Ctrl+V pasted the screenshot (2026-08-20 diagnosis,
+       reproduced live). Best-effort: inside the Ctrl+C gesture Chromium
+       allows it; anywhere it fails the old ordering simply remains. */
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)
+        navigator.clipboard.writeText('junoview/items').catch(function(){});
+    }catch(err){}
     return clipBuf.length;
   }
   function cutSel(){
@@ -21226,9 +21569,21 @@ window.JunoPptx = (function () {
     return true;
   }
   document.addEventListener('paste',function(e){
+    /* the Ctrl+V keydown armed a fallback in case this event never comes
+       (some engines fire no paste on a non-editable focus) — it did, so
+       disarm it before anything else or the item would paste twice */
+    if(pendingPaste){clearTimeout(pendingPaste);pendingPaste=null;}
     if(deckEl.hidden||mode!=='edit') return;
     var tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='textarea'||e.target.isContentEditable) return;
+    /* a fresh internal copy left its marker on the OS clipboard — prefer
+       the internal buffer over a stale clipboard image (see copySel) */
+    var mk='';
+    try{mk=e.clipboardData?e.clipboardData.getData('text/plain')||'':'';}
+    catch(err){}
+    if(clipBuf.length&&mk.indexOf('junoview/items')===0){
+      e.preventDefault();pasteBuf();return;
+    }
     var items=(e.clipboardData||{}).items||[];
     for(var i=0;i<items.length;i++){
       if(items[i].type&&items[i].type.indexOf('image/')===0){
@@ -21924,6 +22279,67 @@ window.JunoPptx = (function () {
     wireMenuToggle(wrapId,btnId,menuId);
   }
   /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
+  /* ---- DRAG-TO-TRIM: the crop the user reached for first. Picking
+     "Rectangle" (now honestly "No crop") did nothing, because rectangle
+     with no insets IS the uncropped state — the menu's most inviting
+     option was a no-op (2026-08-19, user, twice). Trim mode shows four
+     edge handles on the selected frame; dragging writes a.crop insets
+     live, Esc or reselecting leaves the mode. ---- */
+  var cropMode=false;
+  function setCropMode(on){
+    cropMode=!!on;
+    var l=stage.querySelector('.annot-layer');
+    if(l&&pres.slides[cur]){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+    if(on) toast('Drag the edge handles to trim. Esc to finish.');
+  }
+  function mkCropHandles(host,layer,s2,idx){
+    var a=s2.annots[idx]; if(!a) return;
+    ['t','r','b','l'].forEach(function(side){
+      var h=document.createElement('div');
+      h.className='an-crop-h an-crop-'+side;
+      var c2=a.crop||{};
+      if(side==='t') h.style.top=(c2.t||0)+'%';
+      if(side==='b') h.style.bottom=(c2.b||0)+'%';
+      if(side==='l') h.style.left=(c2.l||0)+'%';
+      if(side==='r') h.style.right=(c2.r||0)+'%';
+      h.title='Trim the '+side+' edge';
+      h.addEventListener('pointerdown',function(ev){
+        ev.stopPropagation();ev.preventDefault();
+        /* the rect FIRST: the shape-drop below re-renders and detaches
+           this host, and a detached rect is all zeros. clip-path does not
+           affect layout, so the captured rect stays valid for the drag. */
+        var r=host.getBoundingClientRect();
+        /* trimming is rectangular: cropCss ignores insets while a SHAPE
+           crop is set, so dragging a handle under an ellipse moved the
+           handle and changed nothing (2026-08-20 diagnosis). Starting a
+           trim honestly drops the shape. */
+        if(a.crop&&a.crop.shape){delete a.crop.shape;
+          renderAnnots(layer,s2);paintSel(layer);}
+        function mv(e2){
+          var v;
+          if(side==='t') v=(e2.clientY-r.top)/r.height*100;
+          else if(side==='b') v=(r.bottom-e2.clientY)/r.height*100;
+          else if(side==='l') v=(e2.clientX-r.left)/r.width*100;
+          else v=(r.right-e2.clientX)/r.width*100;
+          v=Math.max(0,Math.min(45,Math.round(v)));
+          a.crop=a.crop||{};
+          if(v) a.crop[side]=v; else delete a.crop[side];
+          renderAnnots(layer,s2);paintSel(layer);
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+          if(a.crop&&!a.crop.shape&&!a.crop.t&&!a.crop.r
+            &&!a.crop.b&&!a.crop.l) delete a.crop;
+          markDirty();
+          renderAnnots(layer,s2);paintSel(layer);
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      });
+      host.appendChild(h);
+    });
+  }
   wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
     CROP_SHAPES,'shape',function(shape){
       fmtApply(function(a){
@@ -21941,6 +22357,15 @@ window.JunoPptx = (function () {
   (function(){
     var menu=$('#fmt-crop-menu'),btn=$('#fmt-crop');
     if(!menu||!btn) return;
+    var tm=document.createElement('button');tm.type='button';
+    tm.className='ci-trim';
+    tm.innerHTML='&#9986; Trim by dragging the edges';
+    tm.addEventListener('click',function(e){
+      e.stopPropagation();
+      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      setCropMode(true);
+    });
+    menu.insertBefore(tm,menu.firstChild);
     var row=document.createElement('div');row.className='crop-inset';
     var lab=document.createElement('span');lab.className='ci-lab';
     lab.textContent='Trim edges %';row.appendChild(lab);
@@ -22840,6 +23265,9 @@ window.JunoPptx = (function () {
         row.classList.add('dragging');
         try{e.dataTransfer.setData('text/plain','slide-'+i);}
         catch(err){}
+        /* drag the ROW as the ghost — the browser otherwise picks up the
+           figure <img> inside the thumbnail as the drag image/payload */
+        try{e.dataTransfer.setDragImage(row,12,12);}catch(err){}
         e.dataTransfer.effectAllowed='move';
       });
       row.addEventListener('dragend',function(){
@@ -22871,6 +23299,8 @@ window.JunoPptx = (function () {
                  poster?'Move this version up':'Move slide up'],
                 ['↓',function(){moveSlide(i,1);},
                  poster?'Move this version down':'Move slide down'],
+                ['⧉',function(){dupSlide(i);},
+                 poster?'Duplicate this version':'Duplicate slide'],
                 ['✕',function(){delSlide(i);},
                  poster?'Delete this version':'Delete slide']];
       /* an autoname is a starting point, not a decision. This goes on a
@@ -22971,6 +23401,7 @@ window.JunoPptx = (function () {
     /* this button IS the Notebooks group; when it hides, the group must
        go too, or the ribbon shows a label over empty space */
     syncRibbonGroups();
+    buildNbsInto($('#dc-nbs'),true);
   }
   /* ---- "notebooks in this presentation" popover: open all / refresh all ----
      stem -> path resolves from an open shell, else a recent path with the
@@ -23102,14 +23533,23 @@ window.JunoPptx = (function () {
         groups[k].anchors);});
   }
   function renderNbsMenu(){
-    var m=$('#nbspane-body'); if(!m) return;
+    buildNbsInto($('#nbspane-body'));
+    buildNbsInto($('#dc-nbs'),true);
+  }
+  function buildNbsInto(m,column){
+    if(!m) return;
     m.innerHTML='';
     var info=nbInfo();
     if(!info.length){
       m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; add cells '
         +'from your notebooks to a slide.</div>';return;}
     var h=document.createElement('div');h.className='dc-nbs-menuh';
-    h.textContent='notebooks in this presentation';m.appendChild(h);
+    h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
+    if(column){
+      h.title='Back to all notebooks. Nothing is closed or lost.';
+      h.addEventListener('click',function(){closeDeck();});
+    }
+    m.appendChild(h);
     info.forEach(function(n){
       /* openable-but-closed = "avail"; can't be opened here = "gone" */
       var cls=n.open?'open':(n.openable?'avail':'gone');
@@ -23121,7 +23561,14 @@ window.JunoPptx = (function () {
       var st=document.createElement('span');st.className='dc-nbrow-st';
       st.textContent=n.open?'open':(n.openable?'closed':'not found');
       row.appendChild(dot);row.appendChild(nm);row.appendChild(st);
-      if(n.openable&&!n.open){
+      if(n.open){
+        row.classList.add('clickable');
+        row.title='View this notebook';
+        row.addEventListener('click',function(){
+          closeDeck();
+          if(APP.activate) APP.activate(n.stem);
+        });
+      } else if(n.openable){
         row.title=n.path;row.classList.add('clickable');
         row.addEventListener('click',function(){
           /* the pane stays open: you asked to SEE the notebooks, and
@@ -23183,6 +23630,18 @@ window.JunoPptx = (function () {
     pres.slides.splice(i,1);
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;
+    markDirty();refresh();
+  }
+  /* duplicate in place — decks never had this at all (2026-08-19, user:
+     "still no duplicate slide"); a poster's copy becomes a named version
+     like "+ Create new version" makes */
+  function dupSlide(i){
+    var s=pres.slides[i]; if(!s) return;
+    var cp=JSON.parse(JSON.stringify(s));
+    if(pageOf().poster) cp.label=nextVersionName();
+    else delete cp.label;
+    pres.slides.splice(i+1,0,cp);
+    cur=i+1;activePane=-1;selAnnot=null;selSet=[];
     markDirty();refresh();
   }
 
@@ -23391,10 +23850,7 @@ window.JunoPptx = (function () {
   if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
     setUIMode(presentFrom==='edit'?'edit':'create');});
-  (function(){
-    var b=$('#dc-back');
-    if(b) b.addEventListener('click',function(){closeDeck();});
-  })();
+
   $('#deck-prev').addEventListener('click',function(){backStep();});
   $('#deck-next').addEventListener('click',function(){advance();});
   /* click the letterbox AROUND the slide to clear the selection (clicks on
@@ -23563,6 +24019,9 @@ window.JunoPptx = (function () {
     if(e.key==='Escape'){
       var vf=$('#vfull');
       if(vf&&!vf.hidden) closeVFull();
+      /* trim mode is the innermost state: the first Esc leaves IT,
+         keeping the selection, before any tool/selection drops */
+      else if(mode==='edit'&&cropMode){setCropMode(false);}
       else if(mode==='view'&&(stage.scrollTop||0)>50) scrollToSlide();
       else if(mode==='edit'
               &&(tool!=='select'||selAnnot!==null||selSet.length)){
@@ -23573,7 +24032,13 @@ window.JunoPptx = (function () {
         if(l) selectAnnot(l,null);
         else {selAnnot=null;selSet=[];showFmt();}
       }
-      else if(mode==='view'||mode==='edit') setUIMode('create');
+      /* leaving a presentation goes back to WHERE IT STARTED — Esc is the
+         third exit route (exit button and fullscreen-change had this, the
+         Esc branch still dumped an edit-mode presenter into the builder:
+         the "cursed view", 2026-08-20 re-verify) */
+      else if(mode==='view')
+        setUIMode(presentFrom==='edit'?'edit':'create');
+      else if(mode==='edit'){setUIMode('create');}
       else closeDeck();
     }
     else if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')
@@ -23584,6 +24049,13 @@ window.JunoPptx = (function () {
     else if((e.ctrlKey||e.metaKey)&&(e.key==='y'||e.key==='Y')
             &&mode!=='view'){
       e.preventDefault();redo();
+    }
+    else if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')){
+      /* saves to wherever "Saved to" points, exactly like the Save button
+         (2026-08-19, user: "more shortcuts — ctrl+s"). Present mode still
+         swallows it so the browser's save dialog never covers a talk. */
+      e.preventDefault();
+      if(mode!=='view'){var sb2=$('#dc-save');if(sb2) sb2.click();}
     }
     else if(mode==='edit'){
       if(e.key==='Delete'||e.key==='Backspace'){
@@ -23604,6 +24076,17 @@ window.JunoPptx = (function () {
         if(nx){e.preventDefault();
           toast(nx+' item'+(nx===1?'':'s')+' cut');}
       }
+      /* NOT preventDefaulted: the native paste event stays the primary
+         path (it can carry a system-clipboard image). This one-shot timer
+         only fires where that event never arrives, so an internal copy
+         still pastes there (2026-08-20) */
+      else if((e.ctrlKey||e.metaKey)&&(e.key==='v'||e.key==='V')){
+        if(pendingPaste) clearTimeout(pendingPaste);
+        pendingPaste=setTimeout(function(){
+          pendingPaste=null;
+          if(clipBuf.length) pasteBuf();
+        },150);
+      }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='g'||e.key==='G')){
         e.preventDefault();
         if(e.shiftKey) ungroupSel(); else groupSel();
@@ -23614,6 +24097,19 @@ window.JunoPptx = (function () {
         var st=e.shiftKey?2:0.4;
         nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
                  e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
+      }
+      /* with NOTHING selected, up/down walk the deck like the thumbnail
+         strip (2026-08-19, user: "pressing the down key on the slide
+         thumbnails should move you through the slides") */
+      else if(!e.ctrlKey&&!e.metaKey
+              &&(e.key==='ArrowDown'||e.key==='ArrowUp'
+                 ||e.key==='PageDown'||e.key==='PageUp')){
+        var dd=(e.key==='ArrowDown'||e.key==='PageDown')?1:-1;
+        var nn=cur+dd;
+        if(nn>=0&&nn<pres.slides.length){
+          e.preventDefault();
+          cur=nn;activePane=-1;selAnnot=null;selSet=[];refresh();
+        }
       }
       /* R rulers, G grid — plain keys, so Ctrl+G still groups */
       else if(!e.ctrlKey&&!e.metaKey&&(e.key==='r'||e.key==='R')){
@@ -23661,6 +24157,7 @@ window.JunoPptx = (function () {
   /* every deck shortcut is advertised in its button's tooltip, exactly
      like the document ribbon's (the data-kbd chip in app.js) */
   [['#dc-play','F5'],['#dc-undo','Ctrl+Z'],['#dc-redo','Ctrl+Y'],
+   ['#dc-save','Ctrl+S'],['#fmt-dup','Ctrl+D'],
    ['#zoom-in','+'],['#zoom-out','-'],['#zoom-val','0']]
     .forEach(function(p){
       var el=$(p[0]); if(el) el.dataset.kbd=p[1];});
@@ -23935,6 +24432,14 @@ window.JunoPptx = (function () {
       .then(function(s){return s==='granted';}).catch(function(){
         return false;});
   }
+  /* reading needs less than writing — a handle whose write grant lapsed
+     can often still be read, which is enough to restore what it holds */
+  function permReadOK(h){
+    if(!h||!h.queryPermission) return Promise.resolve(!!h);
+    return h.queryPermission({mode:'read'})
+      .then(function(s){return s==='granted';}).catch(function(){
+        return false;});
+  }
   function permAsk(h){
     if(!h) return Promise.resolve(false);
     return permOK(h).then(function(ok){
@@ -23999,9 +24504,10 @@ window.JunoPptx = (function () {
       +'<h1>'+name+'</h1>'
       +'<p>A saved <b>Junoview</b> presentation — '+n+' presentation'
       +(n===1?'':'s')+', '+slides+' slide'+(slides===1?'':'s')+'.</p>'
-      +'<p>To edit it, open Junoview and use <code>File → Open a '
-      +'.junoview file…</code>, or keep it next to its notebook and '
-      +'it loads itself.</p>'
+      +'<p>To edit it, open Junoview and pick <code>+ New… → Open a '
+      +'.junoview file…</code> (or <code>File → Open</code> inside any '
+      +'presentation), or keep it next to its notebook and it loads '
+      +'itself.</p>'
       +'</main><script type="application/json" id="junoview-data">\n'
       +json+'\n</'+'script></body></html>\n';
   }
@@ -24034,7 +24540,11 @@ window.JunoPptx = (function () {
             return Promise.resolve(w.write(junoviewFileHtml()))
               .then(function(){return w.close();});
           }).then(function(){
-            lsDel(PFX+(pres.name||'untitled'));
+            /* the browser copy STAYS. Deleting it made the file the ONLY
+               copy, and nothing ever read the file back at startup — save
+               to file, close the browser, and the presentation was gone
+               from the app (2026-08-20, user: "I made a presentation for
+               tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
             source='saved';status();renderTargetBtn();renderPresRow();
             if(!silent) toast('Saved to '+(fileName||'your file'));
@@ -24223,6 +24733,15 @@ window.JunoPptx = (function () {
           status();
         }
         renderTargetBtn();renderSaveBtn();
+      }).then(function(){
+        /* the file is a SOURCE too, not just a target: if it can still be
+           read, restore any presentation the browser no longer lists
+           (2026-08-20, user locked out of a file-saved presentation) */
+        return permReadOK(h).then(function(ok){
+          if(!ok) return;
+          return h.getFile().then(function(f){return f.text();})
+            .then(function(txt){importDeckText(txt,true);});
+        });
       });
     }).catch(function(){});
     renderTargetBtn();
@@ -24527,7 +25046,7 @@ window.JunoPptx = (function () {
     }
     (s.annots||[]).forEach(function(a){
       if(!a) return;
-      if(a.crop&&a.crop.shape) note.cropped++;
+      if(a.crop) note.cropped++;   /* inset-only trims are dropped too */
       if(a.k==='text'){
         items.push(pptxTextItem(a,false,ink));
       } else if(a.k==='image'){
@@ -24705,6 +25224,53 @@ window.JunoPptx = (function () {
       markDirty();applyPageBg();renderSlide();
     });
   });
+  /* one importer for every way a saved file comes back in: the File-menu
+     picker, the launcher's "+ New… → Open a .junoview file…" row, and the
+     silent startup restore from a remembered file handle. `silent` never
+     renames, never toasts and never steals the view — it only fills in
+     presentations the browser does not already have. */
+  function importDeckText(txt,silent){
+    var obj=parseDeckText(txt);
+    var list=(obj&&Array.isArray(obj.presentations))
+      ?obj.presentations
+      :Array.isArray(obj)?obj
+      :(obj&&Array.isArray(obj.slides))?[obj]:null;
+    if(!list||!list.length){
+      if(!silent) toast('That file does not look like a saved deck');
+      return 0;
+    }
+    var imported=0,firstName=null;
+    list.forEach(function(pr){
+      if(!pr||!Array.isArray(pr.slides)) return;
+      var np=normPres(pr);
+      var base=np.name||'imported',nm=base,k=1;
+      if(silent&&(savedByName(nm)||lsGet(PFX+nm))) return;
+      while(savedByName(nm)||lsGet(PFX+nm)){
+        k++;nm=base+'-'+k;
+      }
+      np.name=nm;
+      lsSet(PFX+nm,JSON.stringify(np));
+      if(!firstName) firstName=nm;
+      imported++;
+    });
+    if(!imported){
+      if(!silent) toast('No presentations found in that file');
+      return 0;
+    }
+    if(silent){renderPresTabs();return imported;}
+    lsSet(PFX+'last',firstName);
+    loadPresentation(firstName);
+    cur=0;activePane=-1;
+    /* picked from the launcher: go straight into the editor — the whole
+       point of opening a file is to get back to the presentation in it */
+    if(deckEl.hidden) openDeck('edit');
+    status();refresh();
+    toast('Imported '+imported+' presentation'
+      +(imported>1?'s':'')+' (as drafts)');
+    return imported;
+  }
+  window.SemDeckImport=importDeckText;       /* browser-verification hook */
+  window.SemDeckFileHtml=function(){return junoviewFileHtml();};
   (function(){
     var fi=document.getElementById('deckfile');
     if(!fi) return;
@@ -24713,38 +25279,7 @@ window.JunoPptx = (function () {
       this.value='';
       if(!f) return;
       f.text().then(function(txt){
-        var obj=parseDeckText(txt);
-        var list=(obj&&Array.isArray(obj.presentations))
-          ?obj.presentations
-          :Array.isArray(obj)?obj
-          :(obj&&Array.isArray(obj.slides))?[obj]:null;
-        if(!list||!list.length){
-          toast('That file does not look like a saved deck');
-          return;
-        }
-        var imported=0,firstName=null;
-        list.forEach(function(pr){
-          if(!pr||!Array.isArray(pr.slides)) return;
-          var np=normPres(pr);
-          var base=np.name||'imported',nm=base,k=1;
-          while(savedByName(nm)||lsGet(PFX+nm)){
-            k++;nm=base+'-'+k;
-          }
-          np.name=nm;
-          lsSet(PFX+nm,JSON.stringify(np));
-          if(!firstName) firstName=nm;
-          imported++;
-        });
-        if(!imported){
-          toast('No presentations found in that file');
-          return;
-        }
-        lsSet(PFX+'last',firstName);
-        loadPresentation(firstName);
-        cur=0;activePane=-1;
-        status();refresh();
-        toast('Imported '+imported+' presentation'
-          +(imported>1?'s':'')+' (as drafts)');
+        importDeckText(txt,false);
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });

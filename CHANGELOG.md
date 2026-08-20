@@ -183,6 +183,91 @@ introduced by the move.
   Tahoma, Trebuchet, Times, Georgia, Cambria and Garamond, plus
   *Other…* for any family installed on your machine. One table feeds the
   picker, the canvas and the `.pptx` writer, so they cannot drift apart.
+- **Saved presentations open from everywhere notebooks do.** The Open
+  dialog's folder listing shows `.junoview` files with their own 🎞 row
+  (they used to be invisible there — on disk they just wear the default
+  browser's icon); clicking one opens it straight into the editor. A
+  pasted path, a pasted GitHub link (blob links normalise to raw, like
+  notebooks), the *Choose files…* picker and drag-and-drop onto the
+  window all route a `.junoview`/`.junoview.html` to the same importer.
+  Verified live against the local server for both the folder-listing
+  click and the GitHub-link paste.
+- **A file-saved presentation can always come back.** Saving to a
+  `.junoview.html` file used to *delete* the browser copy, and nothing
+  ever read the file back — save, close the browser, locked out. Now the
+  browser keeps its copy; a still-permitted remembered file is re-read at
+  startup and anything missing re-listed; **+ New… → Open a .junoview
+  file…** opens one from the launcher (no editor needed first); and the
+  saved file's own landing page says exactly that.
+- **Text boxes drag by their body again.** The text span swallowed every
+  mousedown for caret purposes even when not editing, so a text box
+  showed a move cursor but could only ever be *selected* — the drag never
+  started. It only owns the mouse while you are typing now; this also
+  restores shift-multi-select on text. A freshly drawn box also opens
+  ready to type — the caret never actually landed before (focus on a
+  non-editable span is a silent no-op).
+- **Present mode no longer resizes everything.** A 16:9 deck presented on
+  a canvas shaped like the *window*, while text and cell zoom key on
+  canvas height — everything grew ~19% at 1400×900 and by a different
+  amount on every screen. Playback letterboxes to the page now, exactly
+  as posters always did; and Esc from a presentation returns to wherever
+  you presented from (the third exit route that still dumped you in the
+  builder).
+- **Copy/paste works even with a screenshot on the clipboard.** Paste
+  checked the system clipboard before the internal buffer, so one stale
+  image shadowed every internal copy forever — Ctrl+C said "1 item
+  copied", Ctrl+V pasted the screenshot. A fresh copy now stamps the
+  clipboard and outranks it; Ctrl+V also works where the native paste
+  event never fires; Ctrl+D is advertised on Duplicate.
+- **Slides: drag-reorder visibly works, and ⧉ duplicates.** An internal
+  thumbnail drag lit the full-window "Drop .ipynb files" overlay over the
+  editor for the whole gesture, drowning the drop markers; the overlay
+  now only answers real file drags. Each slide row gains a duplicate
+  button — decks never had one.
+- **Rename works in the editor again.** The rename input lived inside the
+  builder-controls block, which is hidden while editing — *File →
+  Rename…* un-hid an input inside a `display:none` ancestor: 0×0,
+  unfocusable, nothing visible. It has its own home in the column now.
+- **Laptop ribbon density.** On 1366–1440px screens the fit ladder ran
+  all the way to its smallest type while the font picker and size box
+  kept their full widths — tiny mashed buttons beside roomy boxes. The
+  ladder now spends box width before type size; at those widths the
+  small-type rung no longer fires at all.
+- **New text boxes are clean.** No "Text" placeholder to delete, no
+  default panel behind them, no smudgy text-shadow; a box you type
+  nothing into removes itself when you click away. The colour button
+  names what it recolours — **Text**, **Border** or **Line** — instead of
+  a vague *Colour* beside *Fill*. A true **red** joins the swatches, the
+  custom picker's **recent colours** appear in both colour menus, and
+  hovering any swatch **previews the colour live** on the selected item
+  (leave restores it; nothing is saved or undoable until you click).
+- **Ctrl+S saves** to wherever "Saved to" points, and clicking the
+  "autosaved to browser" readout saves rather than opening a picker.
+  With nothing selected, ↑/↓ (and PgUp/PgDn) walk the slides. The margin
+  grid fills the page exactly instead of stopping partway. **Objects** is
+  now called **Layers** and **Animations** is the **Animation pane**. The
+  crop menu no longer scatters its options outside the panel, an edge
+  trim under a shape crop takes rectangular effect instead of silently
+  doing nothing, and PowerPoint export counts *every* crop it drops.
+- **Crop is usable: drag the edges.** The crop menu "worked" but its
+  most inviting option, *Rectangle*, was secretly the no-crop state — a
+  click that did nothing, twice reported. It is honestly labelled **No
+  crop** now, and the menu's first action is **✂ Trim by dragging the
+  edges**: four accent handles on the selected frame, live inset preview
+  as you drag, Esc (or reselecting) leaves the mode without touching the
+  selection.
+- **Resizing an image letterboxes instead of cropping.** `object-fit:
+  cover` was unconditional, so any non-proportional resize silently
+  clipped the picture (diagnosed and the fix verified in-browser by a
+  workflow agent: a 2:1 stripe resized tall showed only ~21% of its
+  width). Uncropped images now `contain` at any frame shape; any crop —
+  shape or edge trim — still fills first so the mask bites pixels, on
+  cells too.
+- **The left column corrected to the user's design.** It runs the full
+  window height — nothing above it — and its top holds the **notebooks
+  content** (every notebook the presentation uses, with open/refresh and
+  view-on-click), not a back button; the strip's ↩ header row is the way
+  back. The ribbon starts at the column's right edge.
 - **The editor layout the user designed: full-width ribbon, everything
   document-level in the left column.** The ribbon is now a direct child
   of the editor (spanning the whole window like the document view's app

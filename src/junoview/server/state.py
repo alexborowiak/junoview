@@ -96,12 +96,19 @@ class _AppState:
         return taken
 
 
+def _is_deck_file(name: str) -> bool:
+    """A saved presentation on disk: name.junoview.html (the polyglot HTML
+    save) or a bare-JSON .junoview from before the wrapper existed."""
+    low = name.lower()
+    return low.endswith(".junoview") or low.endswith(".junoview.html")
+
+
 def _list_dir(raw: str) -> dict:
     d = Path(raw).expanduser()
     if not d.is_dir():
         raise FileNotFoundError(f"{d} is not a folder")
     d = d.resolve()
-    dirs, nbs = [], []
+    dirs, nbs, decks = [], [], []
     try:
         entries = sorted(d.iterdir(), key=lambda p: p.name.lower())
     except OSError:
@@ -116,10 +123,19 @@ def _list_dir(raw: str) -> dict:
             elif p.suffix.lower() == ".ipynb":
                 kb = max(1, p.stat().st_size // 1024)
                 nbs.append({"name": name, "path": str(p), "size": f"{kb} KB"})
+            elif _is_deck_file(name):
+                # saved presentations open from the same dialog — on disk
+                # they carry the default browser's icon and no way back in
+                # (2026-08-20, user: "you can't click on them and open
+                # them, it just shows the firefox symbol")
+                kb = max(1, p.stat().st_size // 1024)
+                decks.append({"name": name, "path": str(p),
+                              "size": f"{kb} KB"})
         except OSError:
             continue
     parent = str(d.parent) if d.parent != d else ""
-    return {"dir": str(d), "parent": parent, "dirs": dirs, "notebooks": nbs}
+    return {"dir": str(d), "parent": parent, "dirs": dirs,
+            "notebooks": nbs, "decks": decks}
 
 
 def _app_page(state: _AppState) -> str:

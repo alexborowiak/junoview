@@ -180,5 +180,11 @@ def test_notebooks_button_replaces_inline_chip_strip(out):
     assert "btn.hidden=!(nbs.length||nbsCanOpen());" in out
     assert "btn.textContent=(anyOpen" not in out
     assert "Refresh notebooks" not in out
-    assert 'class="dc-nbs"' not in out
+    # 2026-08-19: a notebooks strip is BACK at the top of the left
+    # column, by explicit request ("the content that is currently in the
+    # 'notebooks' button") — the 2026-08-05 objection was to chips above
+    # the THUMBNAILS with no actions; this one is the pane's own content,
+    # header-as-way-back included
+    assert 'id="dc-nbs"' in out
+    assert "buildNbsInto($('#dc-nbs'),true);" in out
     assert 'id="ck-filter-btn"' in out and 'id="ck-filter-menu"' in out

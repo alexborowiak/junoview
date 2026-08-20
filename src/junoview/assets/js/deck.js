@@ -594,8 +594,13 @@
           ? 'Click to fit the whole page in the window'
           : 'Fitted to the window — click to re-fit after scrolling';
       }
-    } else if(deckEl.classList.contains('custom-page')){
-      /* playing a poster / portrait page letterboxes to the page */
+    } else {
+      /* playback letterboxes to the page — EVERY page, 16:9 included. It
+         used to be gated on custom-page, so a standard deck presented on
+         a canvas with the WINDOW's shape while text and cell zoom key on
+         layer HEIGHT: everything grew ~19% at 1400x900 and by a different
+         amount on every screen (2026-08-20 diagnosis, measured live —
+         "in present mode the size of things changes") */
       sizeSlideTo(slideEl,1);
     }
     /* Text is sized as a PERCENTAGE of the page, worked out from the
@@ -610,7 +615,7 @@
        transition. The edit branch has always re-rendered; the letterboxed
        playback branch never did (2026-08-10). */
     var s0=pres.slides[cur],l0=stage.querySelector('.annot-layer');
-    if(s0&&l0&&(mode==='edit'||deckEl.classList.contains('custom-page'))){
+    if(s0&&l0){
       renderAnnots(l0,s0);
       if(mode==='edit') paintSel(l0);
     }
@@ -652,7 +657,13 @@
     var rowH=colW*(pg.mm[0]/pg.mm[1])*(100/100);
     /* colW is a % of WIDTH; convert that physical width to a % of HEIGHT */
     rowH=colW/100*pg.mm[0]/pg.mm[1]*100;
-    var rows=Math.max(1,Math.floor((100-2*m.y)/rowH));
+    /* fit the rows EXACTLY into the margin box: flooring left a partial
+       band at the bottom with no lines in it, so the grid visibly stopped
+       partway down the page (2026-08-19, user screenshot). Rounding keeps
+       every cell within half a pitch of square and puts the last rule ON
+       the bottom margin. */
+    var rows=Math.max(1,Math.round((100-2*m.y)/rowH));
+    rowH=(100-2*m.y)/rows;
     return {m:m,colW:colW,rowH:rowH,rows:rows};
   }
   /* extra snap lines contributed by the guides (only when shown) */
@@ -660,8 +671,8 @@
     if(!guides.grid) return {xs:[],ys:[]};
     var g=gridPct(),xs=[],ys=[],i;
     for(i=0;i<=GRID_COLS;i++) xs.push(g.m.x+i*g.colW);
+    /* the last row now lands exactly on the bottom margin */
     for(i=0;i<=g.rows;i++) ys.push(g.m.y+i*g.rowH);
-    ys.push(100-g.m.y);
     return {xs:xs,ys:ys};
   }
   function drawGrid(slideEl){
@@ -1798,13 +1809,16 @@
     var h=d.getHours(),m=d.getMinutes();
     return (h<10?'0':'')+h+':'+(m<10?'0':'')+m;
   }
-  /* the readout is a DOOR when saves only live in this browser */
+  /* the readout is a SAVE BUTTON when saves only live in this browser —
+     it used to open the save-to-file picker, which is not what a thing
+     that says "autosaved" invites you to do (2026-08-19, user: "clicking
+     the autosave button should save") */
   function markSaveClickable(el){
     var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
     el.classList.toggle('clickable',toBrowser);
     el.title=toBrowser
-      ?'Saves stay in this browser. Click to save a .junoview.html file '
-        +'on your computer instead.'
+      ?'Saves stay in this browser. Click to save now — use the ▾ beside '
+        +'Save to keep a .junoview.html file on your computer instead.'
       :'';
   }
   function whereSaved(){
@@ -1862,7 +1876,7 @@
     var el=$('#deck-status');
     if(el) el.addEventListener('click',function(){
       if(!el.classList.contains('clickable')) return;
-      var tf=$('#tg-file'); if(tf) tf.click();
+      var sb=$('#dc-save'); if(sb) sb.click();
     });
   })();
   function markDirty(){
@@ -3148,8 +3162,7 @@
       /* size the page BEFORE annots render, so % geometry, fonts and
          figure fits all read the final canvas dimensions */
       applyPage();
-      if(mode==='edit'||deckEl.classList.contains('custom-page'))
-        applyZoom();
+      applyZoom();   /* every mode: playback letterboxes to the page too */
       attachAnnots(slideEl,s);
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
@@ -3356,7 +3369,7 @@
   /* crop masks: images AND notebook cells (figures, markdown, code) can be
      clipped to a shape, or trimmed with a rectangular inset. clip-path scales
      with the element, so it survives responsive slide sizing. */
-  var CROP_SHAPES=[['rect','Rectangle'],['round','Rounded'],
+  var CROP_SHAPES=[['rect','No crop'],['round','Rounded'],
     ['ellipse','Ellipse'],['circle','Circle'],['triangle','Triangle'],
     ['diamond','Diamond'],['pentagon','Pentagon'],['hexagon','Hexagon'],
     ['star','Star'],['arrow','Arrow']];
@@ -3383,6 +3396,11 @@
     if(!el) return;
     var cc=cropCss(a);
     if(cc){el.style.clipPath=cc;el.style.webkitClipPath=cc;}
+    /* a cleared crop must also clear a stale inline clip: masked in the
+       editor because renderAnnots rebuilds nodes, but the export path
+       reuses them (2026-08-20 diagnosis) */
+    else{el.style.removeProperty('clip-path');
+      el.style.removeProperty('-webkit-clip-path');}
   }
   /* a little filled preview of a crop shape (uses the very same clip-path) */
   function cropIcon(shape){
@@ -3509,6 +3527,11 @@
       if(host) host.classList.remove('an-editing');
     }
     el.contentEditable='false';
+    /* a JUST-DRAWN box must open ready to type without the double-click —
+       focus() on a non-editable span silently does nothing, so focusText
+       could never land the caret (found 2026-08-20, in-browser: the
+       active element stayed on <body> and typing went nowhere) */
+    el._beginEdit=beginEdit;
     el.addEventListener('dblclick',function(e){
       if(tool!=='select') return;
       e.stopPropagation();
@@ -3539,12 +3562,28 @@
       var r=rich?sanitizeRich(el.innerHTML):null;
       setVal(v,r);
       endEdit();
+      /* a text box with nothing in it is invisible once deselected (they
+         are born with no placeholder and no background) — so an empty one
+         removes itself rather than haunting the slide */
+      var s2=pres.slides[cur],a2=s2&&(s2.annots||[])[idx];
+      if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html){
+        s2.annots.splice(idx,1);
+        if(selAnnot===idx) selAnnot=null;
+        selSet=selSet.filter(function(i2){return i2!==idx;});
+        renderAnnots(layer,s2);
+      }
       markDirty();
     });
     el.addEventListener('mousedown',function(e){
       if(tool!=='select') return;   /* placing mode: draw over me */
-      e.stopPropagation();
-      selectAnnot(layer,idx);
+      /* the span owns the mouse only while TYPING (caret placement).
+         Otherwise the event must bubble to the layer handler — the only
+         place startMove is armed. Stopping it unconditionally was why a
+         text box showed a move cursor but could only ever be selected,
+         never dragged (2026-08-20 diagnosis, verified live: body-drags
+         moved 0.00% before, moved normally once bubbling). It also ate
+         shift-multi-select on text boxes. */
+      if(el.isContentEditable) e.stopPropagation();
     });
   }
   /* a figure frame hugs its plot: the frame ELEMENT is sized to the
@@ -3809,7 +3848,7 @@
           if(vb){
             vb.style.zoom=(a.ts||1)*kz;
             applyCrop(vb,a);
-            if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
+            if(a.crop) c.classList.add('an-cropped');
             c.appendChild(vb);
             if(!a.crop&&vb.querySelector(
                 '.figframe,.figpager,.plotframe')){
@@ -3857,7 +3896,7 @@
           if(b){
             b.style.zoom=(a.ts||1)*kz;
             applyCrop(b,a);
-            if(a.crop&&a.crop.shape) c.classList.add('an-cropped');
+            if(a.crop) c.classList.add('an-cropped');
             c.appendChild(b);
           }
           if(fro){
@@ -3899,8 +3938,10 @@
             e.stopPropagation();startPick(i);});
           c.appendChild(pb);
         }
-        if(editing){c.appendChild(mkResize());
-          c.appendChild(mkRotate());}
+        if(editing){
+          if(cropMode&&selAnnot===i) mkCropHandles(c,layer,s,i);
+          else {c.appendChild(mkResize());c.appendChild(mkRotate());}
+        }
         layer.appendChild(c);
       } else if(a.k==='text'){
         var d2=document.createElement('div');
@@ -3978,10 +4019,11 @@
         var img=document.createElement('img');
         img.className='an-imgel';img.src=a.src||'';img.alt='';
         img.draggable=false;
+        if(a.crop) im.classList.add('an-cropped');
         applyCrop(img,a);
         im.appendChild(img);
-        if(editing){im.appendChild(mkResize());
-          im.appendChild(mkRotate());}
+        if(editing){if(cropMode&&selAnnot===i) mkCropHandles(im,layer,s,i);
+          else {im.appendChild(mkResize());im.appendChild(mkRotate());}}
         layer.appendChild(im);
       }
     });
@@ -4024,6 +4066,7 @@
     });
   }
   function selectAnnot(layer,idx,additive){
+    if(cropMode&&idx!==selAnnot) cropMode=false;
     var s=pres.slides[cur];
     if(idx===null){selAnnot=null;selSet=[];}
     else {
@@ -4218,12 +4261,15 @@
     var showBg=plainText||noteCell||kind==='rect';
     show('#fmt-txlab',(isText&&kind!=='cell')||noteCell);
     show('#fmt-bglab',showBg);
-    /* the popup buttons mirror what their menus can act on; the label
-       reads "Text" when it recolours words, "Colour" for lines/shapes */
+    /* the popup buttons mirror what their menus can act on, and the label
+       names the PART it recolours: "Colour" next to "Fill" left people
+       guessing which one was the outline (2026-08-19, user: "'colour' vs
+       'fill colour' is confusing — is that border?") */
     show('#fmt-txcol-btn',kind!=='image');
     var tcb=$('#fmt-txcol-btn');
-    if(tcb) tcb.textContent=(isText||kind==='cell')
-      ?'Text ▾':'Colour ▾';
+    if(tcb) tcb.textContent=(isText||kind==='cell')?'Text ▾'
+      :kind==='rect'?'Border ▾'
+      :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾';
     show('#fmt-fillcol-btn',showBg);
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
@@ -4748,8 +4794,12 @@
       :(kind==='cell')
       ?{k:'cell',x:p0.x,y:p0.y,w:0,h:0,ref:null}
       :(kind==='text')
-      /* colour comes from the page theme */
-      ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'Text',size:2.6,bg:1}
+      /* colour comes from the page theme. Born EMPTY and UNBOXED: the
+         "Text" placeholder and the default panel both had to be removed
+         by hand on every single box (2026-08-19, user: "no placeholder
+         text and no background by default"). A box left empty deletes
+         itself on blur, so nothing invisible is ever left behind. */
+      ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:2.6,bg:0}
       :(kind==='line')
       ?{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,nohead:1,sw:SW_DEFAULT,
         color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
@@ -4826,6 +4876,7 @@
   function focusText(layer,idx){
     var tx=layer.querySelector('.an-item[data-idx="'+idx+'"] .an-tx');
     if(!tx) return;
+    if(tx._beginEdit) tx._beginEdit();   /* make it editable FIRST */
     tx.focus();
     try{
       var rng=document.createRange();
@@ -4971,6 +5022,7 @@
        drops and the exit must never be droppable. */
     var cx=$('#et-cancel');
     if(cx) cx.hidden=(t==='select');
+    if(t!=='select') cropMode=false;
     var hint=$('#et-hint');
     /* "the slide" is wrong on a poster, which is one printed page and has
        no slides — the word leaked into every one of these (2026-08-07
@@ -5071,25 +5123,130 @@
   /* ---------- format bar wiring ---------- */
   /* the two colour POPUPS: open on their buttons, close on outside
      click or on picking a swatch (custom keeps its own panel flow) */
-  [['#fmt-txcol-btn','#fmt-txcol-menu'],
-   ['#fmt-fillcol-btn','#fmt-fillcol-menu']].forEach(function(pair){
-    var btn=$(pair[0]),menu=$(pair[1]);
+  /* the two colour mutations, shared by the preset swatches, the recent
+     chips, the custom picker and the hover preview — one implementation
+     of "what does this colour mean for this kind of item" each */
+  function textMut(c){return function(a){
+    if(a.k==='cell') a.txcol=c;
+    else a.color=c;};}
+  function fillMut(c){return function(a){
+    if(a.k==='cell'){a.bgcol=c;}
+    else if(a.k==='draw'){
+      /* a drawn stroke has no fill to speak of — the swatch sets the
+         ink, which is the only colour it has */
+      if(c!=='none') a.color=c;
+    }
+    else if(a.k==='rect'){
+      /* a shape's fill lives in a.fill/a.fillc — a.bg/a.bgc are the
+         TEXT-box background and no shape renderer reads them. The
+         gradient has to go, because cssFill and drawShapeSvg both
+         check a.grad first and would ignore the new colour. */
+      delete a.grad;
+      if(c==='none'){a.fill=0;delete a.fillc;}
+      else {a.fill=1;a.fillc=c;}
+    }
+    else if(c==='none'){a.bg=0;}
+    else{a.bg=1;a.bgc=c;}};}
+  function applyTextColor(c){
+    if(colorSelection(c)) return;
+    fmtApply(textMut(c));
+  }
+  function applyFillColor(c){fmtApply(fillMut(c));}
+  /* ---- live preview: hovering a swatch shows the colour ON the page,
+     leaving puts it back (2026-08-19, user: colours should preview live).
+     The selected item is snapshotted, mutated for the render only, and
+     restored — markDirty is never called, so autosave and undo never see
+     a hover. ---- */
+  var pvSnap=null;
+  function pvAnnot(){
+    var s=pres.slides[cur];
+    return (s&&typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+  }
+  function pvRender(){
+    var s=pres.slides[cur];
+    var l=stage.querySelector('.annot-layer');
+    if(l&&s){renderAnnots(l,s);selectAnnot(l,selAnnot);}
+  }
+  function pvShow(mut){
+    var a=pvAnnot();
+    /* a highlighted RUN inside a text box is recoloured through the
+       selection, which a hover must not disturb */
+    if(!a||activeTextEditable()) return;
+    if(pvSnap==null) pvSnap=JSON.stringify(a);
+    mut(a);
+    pvRender();
+  }
+  /* silent=true when a real apply follows immediately: it re-renders
+     anyway, so the restore only has to fix the MODEL */
+  function pvEnd(silent){
+    if(pvSnap==null) return;
+    var a=pvAnnot();
+    if(a){
+      var back=JSON.parse(pvSnap);
+      Object.keys(a).forEach(function(k){delete a[k];});
+      Object.keys(back).forEach(function(k){a[k]=back[k];});
+    }
+    pvSnap=null;
+    if(!silent) pvRender();
+  }
+  /* the recent-colour chips, rebuilt from the picker's history each time
+     a colour menu opens */
+  function renderSwRecents(menu){
+    var box=menu.querySelector('.sw-recrow');
+    if(!box) return;
+    var rec=cpRecent().slice(0,6);
+    box.innerHTML='';
+    box.hidden=!rec.length;
+    if(!rec.length) return;
+    var lab=document.createElement('span');
+    lab.className='sw-reclab';lab.textContent='recent';
+    box.appendChild(lab);
+    rec.forEach(function(str){
+      var b=document.createElement('button');
+      b.type='button';b.className='sw-rc';b.title=str;
+      b.style.background=str;
+      b.dataset.c=str;
+      box.appendChild(b);
+    });
+  }
+  [['#fmt-txcol-btn','#fmt-txcol-menu','text'],
+   ['#fmt-fillcol-btn','#fmt-fillcol-menu','fill']].forEach(function(pair){
+    var btn=$(pair[0]),menu=$(pair[1]),target=pair[2];
     if(!btn||!menu) return;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       var open=menu.hidden;
       menu.hidden=!open;
       btn.setAttribute('aria-expanded',open.toString());
-      if(open) floatMenu(btn,menu);
+      if(open){renderSwRecents(menu);floatMenu(btn,menu);}
+      else pvEnd(false);
     });
+    /* CAPTURE phase: any click inside the menu restores the hover preview
+       BEFORE a swatch's own apply handler runs, or the apply would land on
+       the previewed state and then be clobbered by the restore */
+    menu.addEventListener('click',function(){pvEnd(false);},true);
     menu.addEventListener('click',function(e){
+      var rc=e.target.closest&&e.target.closest('.sw-rc');
+      if(rc){
+        if(target==='text') applyTextColor(rc.dataset.c);
+        else applyFillColor(rc.dataset.c);
+      }
       var sw=e.target.closest&&e.target.closest('.sw');
-      if(sw&&!sw.classList.contains('sw-custom')){
+      if(rc||(sw&&!sw.classList.contains('sw-custom'))){
         menu.hidden=true;btn.setAttribute('aria-expanded','false');}
     });
+    menu.addEventListener('mouseover',function(e){
+      var sw=e.target.closest&&e.target.closest('.sw,.sw-rc');
+      if(!sw||sw.classList.contains('sw-custom')) return;
+      var c=sw.dataset.c; if(c==null) return;
+      pvEnd(true);                /* put back the previous hover first */
+      pvShow(target==='text'?textMut(c):fillMut(c));
+    });
+    menu.addEventListener('mouseleave',function(){pvEnd(false);});
     document.addEventListener('click',function(e){
       if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');
+        pvEnd(false);}
     });
   });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
@@ -5099,11 +5256,7 @@
       if(activeTextEditable()) e.preventDefault();
     });
     sw.addEventListener('click',function(){
-      if(colorSelection(sw.dataset.c)) return;
-      fmtApply(function(a){
-        if(a.k==='cell') a.txcol=sw.dataset.c;
-        else a.color=sw.dataset.c;
-      });
+      applyTextColor(sw.dataset.c);
     });
   });
   function onFmt(id,fn){
@@ -5409,25 +5562,7 @@
   }
   $$('#et-fmt .swbg:not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('click',function(){
-      fmtApply(function(a){
-        if(a.k==='cell'){a.bgcol=sw.dataset.c;}
-        else if(a.k==='draw'){
-          /* a drawn stroke has no fill to speak of — the swatch sets the
-             ink, which is the only colour it has */
-          if(sw.dataset.c!=='none') a.color=sw.dataset.c;
-        }
-        else if(a.k==='rect'){
-          /* a shape's fill lives in a.fill/a.fillc — a.bg/a.bgc are the
-             TEXT-box background and no shape renderer reads them. The
-             gradient has to go, because cssFill and drawShapeSvg both
-             check a.grad first and would ignore the new colour. */
-          delete a.grad;
-          if(sw.dataset.c==='none'){a.fill=0;delete a.fillc;}
-          else {a.fill=1;a.fillc=sw.dataset.c;}
-        }
-        else if(sw.dataset.c==='none'){a.bg=0;}
-        else{a.bg=1;a.bgc=sw.dataset.c;}
-      });
+      applyFillColor(sw.dataset.c);
     });
   });
 
@@ -5491,6 +5626,15 @@
     if(pv) pv.style.setProperty('--cpc',toStr(cpRGBA));
     if(hx) hx.classList.remove('bad');
     if(rg) rg.classList.remove('bad');
+    cpPreview();
+  }
+  /* the picker previews LIVE on the selected item as the colour changes;
+     Apply commits it, closing without applying puts it back. A saved text
+     RUN is the exception — its selection cannot survive a re-render. */
+  function cpPreview(){
+    if(!cpEl||cpEl.hidden||cpSavedRange) return;
+    pvEnd(true);
+    pvShow((cpTarget==='text'?textMut:fillMut)(toStr(cpRGBA)));
   }
   function cpRecent(){
     try{return JSON.parse(localStorage.getItem('plotline-colors')||'[]');}
@@ -5552,6 +5696,7 @@
     cpEl.style.left=left+'px';cpEl.style.top=top+'px';
   }
   function cpApply(){
+    pvEnd(true);          /* commit lands on the real state, not the preview */
     var str=toStr(cpRGBA);
     if(cpTarget==='text'){
       var did=false;
@@ -5598,11 +5743,12 @@
       openColorPop('fill',swbgc);});
     document.addEventListener('mousedown',function(e){
       if(cpEl&&!cpEl.hidden&&!cpEl.contains(e.target)
-         &&e.target!==swc&&e.target!==swbgc) cpEl.hidden=true;
+         &&e.target!==swc&&e.target!==swbgc){
+        cpEl.hidden=true;pvEnd(false);}   /* closed without applying */
     });
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&cpEl&&!cpEl.hidden){e.stopPropagation();
-        cpEl.hidden=true;}
+        cpEl.hidden=true;pvEnd(false);}
     },true);
   })();
   var fontSelEl=$('#fmt-font');
@@ -5686,7 +5832,7 @@
      still a live figure frame, not a picture of one), and a system-
      clipboard image pastes straight onto the page — which is how logos
      and screenshots actually arrive. */
-  var clipBuf=[];
+  var clipBuf=[],pendingPaste=null;
   function selectedIdxs(){
     var s=pres.slides[cur]; if(!s||!s.annots) return [];
     var out=selSet.filter(function(i){
@@ -5700,6 +5846,16 @@
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
     clipBuf=idxs.map(function(i){
       return JSON.parse(JSON.stringify(s.annots[i]));});
+    /* stamp the SYSTEM clipboard so this copy outranks whatever image was
+       on it: the paste listener checked the OS clipboard first, so one
+       stale screenshot shadowed every internal copy forever — Ctrl+C said
+       "1 item copied", Ctrl+V pasted the screenshot (2026-08-20 diagnosis,
+       reproduced live). Best-effort: inside the Ctrl+C gesture Chromium
+       allows it; anywhere it fails the old ordering simply remains. */
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText)
+        navigator.clipboard.writeText('junoview/items').catch(function(){});
+    }catch(err){}
     return clipBuf.length;
   }
   function cutSel(){
@@ -5769,9 +5925,21 @@
     return true;
   }
   document.addEventListener('paste',function(e){
+    /* the Ctrl+V keydown armed a fallback in case this event never comes
+       (some engines fire no paste on a non-editable focus) — it did, so
+       disarm it before anything else or the item would paste twice */
+    if(pendingPaste){clearTimeout(pendingPaste);pendingPaste=null;}
     if(deckEl.hidden||mode!=='edit') return;
     var tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='textarea'||e.target.isContentEditable) return;
+    /* a fresh internal copy left its marker on the OS clipboard — prefer
+       the internal buffer over a stale clipboard image (see copySel) */
+    var mk='';
+    try{mk=e.clipboardData?e.clipboardData.getData('text/plain')||'':'';}
+    catch(err){}
+    if(clipBuf.length&&mk.indexOf('junoview/items')===0){
+      e.preventDefault();pasteBuf();return;
+    }
     var items=(e.clipboardData||{}).items||[];
     for(var i=0;i<items.length;i++){
       if(items[i].type&&items[i].type.indexOf('image/')===0){
@@ -6467,6 +6635,67 @@
     wireMenuToggle(wrapId,btnId,menuId);
   }
   /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
+  /* ---- DRAG-TO-TRIM: the crop the user reached for first. Picking
+     "Rectangle" (now honestly "No crop") did nothing, because rectangle
+     with no insets IS the uncropped state — the menu's most inviting
+     option was a no-op (2026-08-19, user, twice). Trim mode shows four
+     edge handles on the selected frame; dragging writes a.crop insets
+     live, Esc or reselecting leaves the mode. ---- */
+  var cropMode=false;
+  function setCropMode(on){
+    cropMode=!!on;
+    var l=stage.querySelector('.annot-layer');
+    if(l&&pres.slides[cur]){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+    if(on) toast('Drag the edge handles to trim. Esc to finish.');
+  }
+  function mkCropHandles(host,layer,s2,idx){
+    var a=s2.annots[idx]; if(!a) return;
+    ['t','r','b','l'].forEach(function(side){
+      var h=document.createElement('div');
+      h.className='an-crop-h an-crop-'+side;
+      var c2=a.crop||{};
+      if(side==='t') h.style.top=(c2.t||0)+'%';
+      if(side==='b') h.style.bottom=(c2.b||0)+'%';
+      if(side==='l') h.style.left=(c2.l||0)+'%';
+      if(side==='r') h.style.right=(c2.r||0)+'%';
+      h.title='Trim the '+side+' edge';
+      h.addEventListener('pointerdown',function(ev){
+        ev.stopPropagation();ev.preventDefault();
+        /* the rect FIRST: the shape-drop below re-renders and detaches
+           this host, and a detached rect is all zeros. clip-path does not
+           affect layout, so the captured rect stays valid for the drag. */
+        var r=host.getBoundingClientRect();
+        /* trimming is rectangular: cropCss ignores insets while a SHAPE
+           crop is set, so dragging a handle under an ellipse moved the
+           handle and changed nothing (2026-08-20 diagnosis). Starting a
+           trim honestly drops the shape. */
+        if(a.crop&&a.crop.shape){delete a.crop.shape;
+          renderAnnots(layer,s2);paintSel(layer);}
+        function mv(e2){
+          var v;
+          if(side==='t') v=(e2.clientY-r.top)/r.height*100;
+          else if(side==='b') v=(r.bottom-e2.clientY)/r.height*100;
+          else if(side==='l') v=(e2.clientX-r.left)/r.width*100;
+          else v=(r.right-e2.clientX)/r.width*100;
+          v=Math.max(0,Math.min(45,Math.round(v)));
+          a.crop=a.crop||{};
+          if(v) a.crop[side]=v; else delete a.crop[side];
+          renderAnnots(layer,s2);paintSel(layer);
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+          if(a.crop&&!a.crop.shape&&!a.crop.t&&!a.crop.r
+            &&!a.crop.b&&!a.crop.l) delete a.crop;
+          markDirty();
+          renderAnnots(layer,s2);paintSel(layer);
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      });
+      host.appendChild(h);
+    });
+  }
   wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
     CROP_SHAPES,'shape',function(shape){
       fmtApply(function(a){
@@ -6484,6 +6713,15 @@
   (function(){
     var menu=$('#fmt-crop-menu'),btn=$('#fmt-crop');
     if(!menu||!btn) return;
+    var tm=document.createElement('button');tm.type='button';
+    tm.className='ci-trim';
+    tm.innerHTML='&#9986; Trim by dragging the edges';
+    tm.addEventListener('click',function(e){
+      e.stopPropagation();
+      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      setCropMode(true);
+    });
+    menu.insertBefore(tm,menu.firstChild);
     var row=document.createElement('div');row.className='crop-inset';
     var lab=document.createElement('span');lab.className='ci-lab';
     lab.textContent='Trim edges %';row.appendChild(lab);
@@ -7383,6 +7621,9 @@
         row.classList.add('dragging');
         try{e.dataTransfer.setData('text/plain','slide-'+i);}
         catch(err){}
+        /* drag the ROW as the ghost — the browser otherwise picks up the
+           figure <img> inside the thumbnail as the drag image/payload */
+        try{e.dataTransfer.setDragImage(row,12,12);}catch(err){}
         e.dataTransfer.effectAllowed='move';
       });
       row.addEventListener('dragend',function(){
@@ -7414,6 +7655,8 @@
                  poster?'Move this version up':'Move slide up'],
                 ['↓',function(){moveSlide(i,1);},
                  poster?'Move this version down':'Move slide down'],
+                ['⧉',function(){dupSlide(i);},
+                 poster?'Duplicate this version':'Duplicate slide'],
                 ['✕',function(){delSlide(i);},
                  poster?'Delete this version':'Delete slide']];
       /* an autoname is a starting point, not a decision. This goes on a
@@ -7514,6 +7757,7 @@
     /* this button IS the Notebooks group; when it hides, the group must
        go too, or the ribbon shows a label over empty space */
     syncRibbonGroups();
+    buildNbsInto($('#dc-nbs'),true);
   }
   /* ---- "notebooks in this presentation" popover: open all / refresh all ----
      stem -> path resolves from an open shell, else a recent path with the
@@ -7645,14 +7889,23 @@
         groups[k].anchors);});
   }
   function renderNbsMenu(){
-    var m=$('#nbspane-body'); if(!m) return;
+    buildNbsInto($('#nbspane-body'));
+    buildNbsInto($('#dc-nbs'),true);
+  }
+  function buildNbsInto(m,column){
+    if(!m) return;
     m.innerHTML='';
     var info=nbInfo();
     if(!info.length){
       m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; add cells '
         +'from your notebooks to a slide.</div>';return;}
     var h=document.createElement('div');h.className='dc-nbs-menuh';
-    h.textContent='notebooks in this presentation';m.appendChild(h);
+    h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
+    if(column){
+      h.title='Back to all notebooks. Nothing is closed or lost.';
+      h.addEventListener('click',function(){closeDeck();});
+    }
+    m.appendChild(h);
     info.forEach(function(n){
       /* openable-but-closed = "avail"; can't be opened here = "gone" */
       var cls=n.open?'open':(n.openable?'avail':'gone');
@@ -7664,7 +7917,14 @@
       var st=document.createElement('span');st.className='dc-nbrow-st';
       st.textContent=n.open?'open':(n.openable?'closed':'not found');
       row.appendChild(dot);row.appendChild(nm);row.appendChild(st);
-      if(n.openable&&!n.open){
+      if(n.open){
+        row.classList.add('clickable');
+        row.title='View this notebook';
+        row.addEventListener('click',function(){
+          closeDeck();
+          if(APP.activate) APP.activate(n.stem);
+        });
+      } else if(n.openable){
         row.title=n.path;row.classList.add('clickable');
         row.addEventListener('click',function(){
           /* the pane stays open: you asked to SEE the notebooks, and
@@ -7726,6 +7986,18 @@
     pres.slides.splice(i,1);
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;
+    markDirty();refresh();
+  }
+  /* duplicate in place — decks never had this at all (2026-08-19, user:
+     "still no duplicate slide"); a poster's copy becomes a named version
+     like "+ Create new version" makes */
+  function dupSlide(i){
+    var s=pres.slides[i]; if(!s) return;
+    var cp=JSON.parse(JSON.stringify(s));
+    if(pageOf().poster) cp.label=nextVersionName();
+    else delete cp.label;
+    pres.slides.splice(i+1,0,cp);
+    cur=i+1;activePane=-1;selAnnot=null;selSet=[];
     markDirty();refresh();
   }
 
@@ -7934,10 +8206,7 @@
   if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
     setUIMode(presentFrom==='edit'?'edit':'create');});
-  (function(){
-    var b=$('#dc-back');
-    if(b) b.addEventListener('click',function(){closeDeck();});
-  })();
+
   $('#deck-prev').addEventListener('click',function(){backStep();});
   $('#deck-next').addEventListener('click',function(){advance();});
   /* click the letterbox AROUND the slide to clear the selection (clicks on
@@ -8106,6 +8375,9 @@
     if(e.key==='Escape'){
       var vf=$('#vfull');
       if(vf&&!vf.hidden) closeVFull();
+      /* trim mode is the innermost state: the first Esc leaves IT,
+         keeping the selection, before any tool/selection drops */
+      else if(mode==='edit'&&cropMode){setCropMode(false);}
       else if(mode==='view'&&(stage.scrollTop||0)>50) scrollToSlide();
       else if(mode==='edit'
               &&(tool!=='select'||selAnnot!==null||selSet.length)){
@@ -8116,7 +8388,13 @@
         if(l) selectAnnot(l,null);
         else {selAnnot=null;selSet=[];showFmt();}
       }
-      else if(mode==='view'||mode==='edit') setUIMode('create');
+      /* leaving a presentation goes back to WHERE IT STARTED — Esc is the
+         third exit route (exit button and fullscreen-change had this, the
+         Esc branch still dumped an edit-mode presenter into the builder:
+         the "cursed view", 2026-08-20 re-verify) */
+      else if(mode==='view')
+        setUIMode(presentFrom==='edit'?'edit':'create');
+      else if(mode==='edit'){setUIMode('create');}
       else closeDeck();
     }
     else if((e.ctrlKey||e.metaKey)&&(e.key==='z'||e.key==='Z')
@@ -8127,6 +8405,13 @@
     else if((e.ctrlKey||e.metaKey)&&(e.key==='y'||e.key==='Y')
             &&mode!=='view'){
       e.preventDefault();redo();
+    }
+    else if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')){
+      /* saves to wherever "Saved to" points, exactly like the Save button
+         (2026-08-19, user: "more shortcuts — ctrl+s"). Present mode still
+         swallows it so the browser's save dialog never covers a talk. */
+      e.preventDefault();
+      if(mode!=='view'){var sb2=$('#dc-save');if(sb2) sb2.click();}
     }
     else if(mode==='edit'){
       if(e.key==='Delete'||e.key==='Backspace'){
@@ -8147,6 +8432,17 @@
         if(nx){e.preventDefault();
           toast(nx+' item'+(nx===1?'':'s')+' cut');}
       }
+      /* NOT preventDefaulted: the native paste event stays the primary
+         path (it can carry a system-clipboard image). This one-shot timer
+         only fires where that event never arrives, so an internal copy
+         still pastes there (2026-08-20) */
+      else if((e.ctrlKey||e.metaKey)&&(e.key==='v'||e.key==='V')){
+        if(pendingPaste) clearTimeout(pendingPaste);
+        pendingPaste=setTimeout(function(){
+          pendingPaste=null;
+          if(clipBuf.length) pasteBuf();
+        },150);
+      }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='g'||e.key==='G')){
         e.preventDefault();
         if(e.shiftKey) ungroupSel(); else groupSel();
@@ -8157,6 +8453,19 @@
         var st=e.shiftKey?2:0.4;
         nudgeSel(e.key==='ArrowLeft'?-st:e.key==='ArrowRight'?st:0,
                  e.key==='ArrowUp'?-st:e.key==='ArrowDown'?st:0);
+      }
+      /* with NOTHING selected, up/down walk the deck like the thumbnail
+         strip (2026-08-19, user: "pressing the down key on the slide
+         thumbnails should move you through the slides") */
+      else if(!e.ctrlKey&&!e.metaKey
+              &&(e.key==='ArrowDown'||e.key==='ArrowUp'
+                 ||e.key==='PageDown'||e.key==='PageUp')){
+        var dd=(e.key==='ArrowDown'||e.key==='PageDown')?1:-1;
+        var nn=cur+dd;
+        if(nn>=0&&nn<pres.slides.length){
+          e.preventDefault();
+          cur=nn;activePane=-1;selAnnot=null;selSet=[];refresh();
+        }
       }
       /* R rulers, G grid — plain keys, so Ctrl+G still groups */
       else if(!e.ctrlKey&&!e.metaKey&&(e.key==='r'||e.key==='R')){
@@ -8204,6 +8513,7 @@
   /* every deck shortcut is advertised in its button's tooltip, exactly
      like the document ribbon's (the data-kbd chip in app.js) */
   [['#dc-play','F5'],['#dc-undo','Ctrl+Z'],['#dc-redo','Ctrl+Y'],
+   ['#dc-save','Ctrl+S'],['#fmt-dup','Ctrl+D'],
    ['#zoom-in','+'],['#zoom-out','-'],['#zoom-val','0']]
     .forEach(function(p){
       var el=$(p[0]); if(el) el.dataset.kbd=p[1];});
@@ -8478,6 +8788,14 @@
       .then(function(s){return s==='granted';}).catch(function(){
         return false;});
   }
+  /* reading needs less than writing — a handle whose write grant lapsed
+     can often still be read, which is enough to restore what it holds */
+  function permReadOK(h){
+    if(!h||!h.queryPermission) return Promise.resolve(!!h);
+    return h.queryPermission({mode:'read'})
+      .then(function(s){return s==='granted';}).catch(function(){
+        return false;});
+  }
   function permAsk(h){
     if(!h) return Promise.resolve(false);
     return permOK(h).then(function(ok){
@@ -8542,9 +8860,10 @@
       +'<h1>'+name+'</h1>'
       +'<p>A saved <b>Junoview</b> presentation — '+n+' presentation'
       +(n===1?'':'s')+', '+slides+' slide'+(slides===1?'':'s')+'.</p>'
-      +'<p>To edit it, open Junoview and use <code>File → Open a '
-      +'.junoview file…</code>, or keep it next to its notebook and '
-      +'it loads itself.</p>'
+      +'<p>To edit it, open Junoview and pick <code>+ New… → Open a '
+      +'.junoview file…</code> (or <code>File → Open</code> inside any '
+      +'presentation), or keep it next to its notebook and it loads '
+      +'itself.</p>'
       +'</main><script type="application/json" id="junoview-data">\n'
       +json+'\n</'+'script></body></html>\n';
   }
@@ -8577,7 +8896,11 @@
             return Promise.resolve(w.write(junoviewFileHtml()))
               .then(function(){return w.close();});
           }).then(function(){
-            lsDel(PFX+(pres.name||'untitled'));
+            /* the browser copy STAYS. Deleting it made the file the ONLY
+               copy, and nothing ever read the file back at startup — save
+               to file, close the browser, and the presentation was gone
+               from the app (2026-08-20, user: "I made a presentation for
+               tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
             source='saved';status();renderTargetBtn();renderPresRow();
             if(!silent) toast('Saved to '+(fileName||'your file'));
@@ -8766,6 +9089,15 @@
           status();
         }
         renderTargetBtn();renderSaveBtn();
+      }).then(function(){
+        /* the file is a SOURCE too, not just a target: if it can still be
+           read, restore any presentation the browser no longer lists
+           (2026-08-20, user locked out of a file-saved presentation) */
+        return permReadOK(h).then(function(ok){
+          if(!ok) return;
+          return h.getFile().then(function(f){return f.text();})
+            .then(function(txt){importDeckText(txt,true);});
+        });
       });
     }).catch(function(){});
     renderTargetBtn();
@@ -9070,7 +9402,7 @@
     }
     (s.annots||[]).forEach(function(a){
       if(!a) return;
-      if(a.crop&&a.crop.shape) note.cropped++;
+      if(a.crop) note.cropped++;   /* inset-only trims are dropped too */
       if(a.k==='text'){
         items.push(pptxTextItem(a,false,ink));
       } else if(a.k==='image'){
@@ -9248,6 +9580,53 @@
       markDirty();applyPageBg();renderSlide();
     });
   });
+  /* one importer for every way a saved file comes back in: the File-menu
+     picker, the launcher's "+ New… → Open a .junoview file…" row, and the
+     silent startup restore from a remembered file handle. `silent` never
+     renames, never toasts and never steals the view — it only fills in
+     presentations the browser does not already have. */
+  function importDeckText(txt,silent){
+    var obj=parseDeckText(txt);
+    var list=(obj&&Array.isArray(obj.presentations))
+      ?obj.presentations
+      :Array.isArray(obj)?obj
+      :(obj&&Array.isArray(obj.slides))?[obj]:null;
+    if(!list||!list.length){
+      if(!silent) toast('That file does not look like a saved deck');
+      return 0;
+    }
+    var imported=0,firstName=null;
+    list.forEach(function(pr){
+      if(!pr||!Array.isArray(pr.slides)) return;
+      var np=normPres(pr);
+      var base=np.name||'imported',nm=base,k=1;
+      if(silent&&(savedByName(nm)||lsGet(PFX+nm))) return;
+      while(savedByName(nm)||lsGet(PFX+nm)){
+        k++;nm=base+'-'+k;
+      }
+      np.name=nm;
+      lsSet(PFX+nm,JSON.stringify(np));
+      if(!firstName) firstName=nm;
+      imported++;
+    });
+    if(!imported){
+      if(!silent) toast('No presentations found in that file');
+      return 0;
+    }
+    if(silent){renderPresTabs();return imported;}
+    lsSet(PFX+'last',firstName);
+    loadPresentation(firstName);
+    cur=0;activePane=-1;
+    /* picked from the launcher: go straight into the editor — the whole
+       point of opening a file is to get back to the presentation in it */
+    if(deckEl.hidden) openDeck('edit');
+    status();refresh();
+    toast('Imported '+imported+' presentation'
+      +(imported>1?'s':'')+' (as drafts)');
+    return imported;
+  }
+  window.SemDeckImport=importDeckText;       /* browser-verification hook */
+  window.SemDeckFileHtml=function(){return junoviewFileHtml();};
   (function(){
     var fi=document.getElementById('deckfile');
     if(!fi) return;
@@ -9256,38 +9635,7 @@
       this.value='';
       if(!f) return;
       f.text().then(function(txt){
-        var obj=parseDeckText(txt);
-        var list=(obj&&Array.isArray(obj.presentations))
-          ?obj.presentations
-          :Array.isArray(obj)?obj
-          :(obj&&Array.isArray(obj.slides))?[obj]:null;
-        if(!list||!list.length){
-          toast('That file does not look like a saved deck');
-          return;
-        }
-        var imported=0,firstName=null;
-        list.forEach(function(pr){
-          if(!pr||!Array.isArray(pr.slides)) return;
-          var np=normPres(pr);
-          var base=np.name||'imported',nm=base,k=1;
-          while(savedByName(nm)||lsGet(PFX+nm)){
-            k++;nm=base+'-'+k;
-          }
-          np.name=nm;
-          lsSet(PFX+nm,JSON.stringify(np));
-          if(!firstName) firstName=nm;
-          imported++;
-        });
-        if(!imported){
-          toast('No presentations found in that file');
-          return;
-        }
-        lsSet(PFX+'last',firstName);
-        loadPresentation(firstName);
-        cur=0;activePane=-1;
-        status();refresh();
-        toast('Imported '+imported+' presentation'
-          +(imported>1?'s':'')+' (as drafts)');
+        importDeckText(txt,false);
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });

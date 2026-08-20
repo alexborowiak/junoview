@@ -28,7 +28,7 @@ from ..notebook.presentations import _as_presentations
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
-from .state import _app_page, _AppState, _list_dir
+from .state import _app_page, _AppState, _is_deck_file, _list_dir
 from .vcs import _git_commit_file, _git_file_log, _git_info, _git_show_notebook
 
 
@@ -101,6 +101,8 @@ def _make_handler(state: _AppState):
             try:
                 if url.path == "/api/open":
                     self._json(self._open_nb(body))
+                elif url.path == "/api/readdeck":
+                    self._json(self._read_deck(body))
                 elif url.path == "/api/parse":
                     self._json(self._parse_nb(body))
                 elif url.path == "/api/save":
@@ -126,6 +128,27 @@ def _make_handler(state: _AppState):
                 self._json({"error": str(e)}, 404)
             except Exception as e:          # noqa: BLE001 -- surfaced in UI
                 self._json({"error": f"{type(e).__name__}: {e}"}, 400)
+
+        def _read_deck(self, body: dict) -> dict:
+            """Hand back a saved .junoview presentation file's TEXT — the
+            client's importer (deck.js parseDeckText) already understands
+            both the polyglot HTML save and bare JSON, so the server stays
+            a reader, not a second parser."""
+            raw = str(body.get("path") or "").strip().strip('"')
+            if not raw:
+                raise ValueError("no path given")
+            f = Path(raw).expanduser()
+            if not f.is_absolute():
+                f = state.root / f
+            f = f.resolve()
+            if not _is_deck_file(f.name):
+                raise ValueError(f"{f.name} is not a .junoview file")
+            if not f.exists():
+                raise FileNotFoundError(f"{f} not found")
+            if f.stat().st_size > 64 * 1024 * 1024:
+                raise ValueError(f"{f.name} is too large to open")
+            return {"name": f.name,
+                    "text": f.read_text(encoding="utf-8", errors="replace")}
 
         def _open_nb(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')
