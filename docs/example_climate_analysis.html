@@ -3756,7 +3756,6 @@ body.slide-editing .apptop{display:none;}
 .rbn-out{order:4;}
 .rbn-anim{order:5;}
 .rbn-insert{order:6;}
-.rbn-edit{order:8;}
 .et-fmt .rbn-grp{order:7;flex:none;}
 .edit-tools.ribbon .et-hint{order:9;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
@@ -4351,15 +4350,19 @@ select#fmt-font[hidden]{display:none;}
 .page-light .slide-meta{color:#5a6b78;}
 /* the File-menu page background swatches */
 .dc-pagebg{display:flex;align-items:center;gap:6px;cursor:default;}
-.pgbg-sw{width:18px;height:18px;border-radius:5px;flex:none;
-  border:1px solid #ffffff38;cursor:pointer;display:inline-block;}
-.pgbg-sw[data-bg="#ffffff"]{background:#fff;}
-.pgbg-sw[data-bg="#f6f2ea"]{background:#f6f2ea;}
-.pgbg-sw[data-bg="#eef1f4"]{background:#eef1f4;}
-.pgbg-sw[data-bg="var(--chrome-0,#0b141d)"]{background:var(--chrome-0,#0b141d);}
-.pgbg-sw[data-bg="#000000"]{background:#000;}
-.pgbg-sw:hover{border-color:var(--cyan);}
-.pgbg-sw.on{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan);}
+/* the background chips are built from PAGE_BGS in deck.js, so their
+   colours live in ONE place instead of being restated here (2026-08-20) */
+.pgbg-row{display:flex;flex-wrap:wrap;gap:5px;margin-left:auto;
+  max-width:150px;justify-content:flex-end;}
+.sh-menu .bg-sw{flex-wrap:wrap;}
+.bg-chip{width:20px;height:20px;padding:0;border-radius:5px;flex:none;
+  border:1px solid #ffffff33;cursor:pointer;}
+/* a light chip needs a darker edge or it disappears into a light menu */
+.bg-chip.is-light{border-color:#00000033;}
+.bg-chip:hover{border-color:var(--cyan);}
+.bg-chip[aria-pressed="true"]{border-color:var(--cyan);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent);}
+.bg-auto{flex:none;}
 /* ---- print-resolution warning chip on poster figures ---- */
 .dpi-warn{position:absolute;top:6px;right:6px;z-index:5;
   font-family:var(--mono);font-size:10px;line-height:1;
@@ -8927,13 +8930,8 @@ through Ko-fi. Thank you.</p>
  shop to cut to. The page itself keeps its exact size &mdash; the sheet
  grows by 5mm on every side to hold them">Crop marks: off</button>
         <div class="dc-mi dc-pagebg" id="mi-pagebg"
-          title="The page's own background — pick white for a poster
- that goes to a print shop">Page background
-          <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
-          <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
-          <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
-          <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
-          <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+          title="The page's own background. A slide can override it from
+ Design &#9656; Background">Page background
         </div>
         <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
@@ -9104,25 +9102,30 @@ through Ko-fi. Thank you.</p>
        lives, so the tools for the thing you just clicked are always one
        named place, never a tab that appears and vanishes under you. -->
   <div class="rbn-tabs" id="rbn-tabs" role="tablist" hidden>
+    <!-- HOME also carries View and Output now. Guides, Layers, Print
+         check and the object list are things you reach for constantly and
+         WHILE something is selected, so a tab of their own meant leaving
+         the tools you were using to get to them (2026-08-20, user: "View
+         can just be back on home"). -->
     <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
       aria-selected="true"
-      title="Everything that formats what you have selected — text,
- colour, arrangement, shapes — plus find and replace">Home</button>
+      title="Everything that formats what you have selected, plus guides,
+ layers and the print check">Home</button>
+    <!-- Animate lives on this tab too. On its own it was one group of
+         six small buttons under a whole tab of its own, and Insert had
+         room to spare — two half-empty tabs read worse than one full one
+         (2026-08-20, user: "some of those tabs have nothing on them now.
+         Insert and animate can be one the one"). They also belong
+         together: both are about putting something on the page and
+         deciding how it arrives. -->
     <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
       aria-selected="false"
-      title="Put something new on the page">Insert</button>
+      title="Put something new on the page, and how it appears during
+ playback">Insert</button>
     <button class="rbn-tab" id="rbn-tab-design" role="tab" data-tab="design"
       aria-selected="false"
       title="How the page itself looks — its size, layout and
  background">Design</button>
-    <button class="rbn-tab" id="rbn-tab-animate" role="tab" data-tab="animate"
-      aria-selected="false" hidden
-      title="How things appear during playback, and in what order">
-      Animate</button>
-    <button class="rbn-tab" id="rbn-tab-view" role="tab" data-tab="view"
-      aria-selected="false"
-      title="Guides, the object list, and checking the page before it
- prints">View</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
   </div>
@@ -9238,7 +9241,7 @@ through Ko-fi. Thank you.</p>
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="home">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -9288,7 +9291,7 @@ through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <span class="rbn-grp rbn-out" data-tab="view">
+          <span class="rbn-grp rbn-out" data-tab="home">
             <span class="rbn-row">
               <!-- "Check" alone said nothing (2026-08-07, user: "what are
                    things like 'check', what does that even mean?"). The
@@ -9306,7 +9309,7 @@ through Ko-fi. Thank you.</p>
                under View. The effect buttons act on the selection, so
                they are hidden without one — the pane is not, because a
                build order is a property of the SLIDE. -->
-          <span class="rbn-grp rbn-anim" data-tab="animate">
+          <span class="rbn-grp rbn-anim" data-tab="insert">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="vw-anim"
                 aria-pressed="false"
@@ -9456,19 +9459,13 @@ through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Slides</span>
           </span>
-          <!-- EDITING. Always here, selection or not — find and replace
-               acts on the whole presentation, which is exactly why it
-               could never be a contextual control (2026-08-20, user:
-               "needs to be a search and replace of text and stuff, that
-               is pretty standard"). -->
-          <span class="rbn-grp rbn-edit" data-tab="home">
-            <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="fmt-find"
-                title="Find and replace text on every slide (Ctrl+F)"
-                >&#9906; Find &amp; replace</button>
-            </span>
-            <span class="rbn-lab">Editing</span>
-          </span>
+          <!-- No Editing group. Find and replace acts on the WHOLE
+               presentation, so it belongs with the document's own
+               controls in the bar across the top — where it already was.
+               A second copy of it, alone in a group at the far right of
+               Home, was both a duplicate and the worst seat in the row
+               (2026-08-20, user: "why is 'find and replace' in the worst
+               spot"). One feature, one door: the top bar, or Ctrl+F. -->
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
           <span class="rbn-grp" data-tab="home">
@@ -16684,12 +16681,78 @@ window.JunoPptx = (function () {
      the classic dark. A light page also flips .page-light, which
      recolours the DEFAULT text/frame chrome — a white A0 the print shop
      will actually take. Explicit per-item colours are never touched. */
+  /* ---- THE BACKGROUND PALETTE -----------------------------------------
+     There used to be five: white, cream, light grey, dark, black. Two of
+     those are the same idea, black is never the right answer on a
+     projector (it crushes every dark figure into the background and shows
+     every speck of dust on the lens), and none of them had been chosen so
+     much as listed (2026-08-20, user: "why are all the page background
+     defaults aweful").
+     These are picked as PRESENTATION grounds. The darks sit around 8-12%
+     lightness with a little colour in them, because a flat neutral reads
+     as "no background" while a tinted one reads as a decision. The lights
+     are off-white rather than white - except White itself, which stays
+     because a print shop wants exactly #ffffff. Two gradients, kept
+     subtle: a background you notice is a background competing with the
+     figure on top of it.
+     Each entry carries its own `light` flag rather than making
+     pageIsLight parse it: a gradient has no single colour to measure, and
+     guessing wrong flips every default text colour on the page. */
+  var PAGE_BGS=[
+    ['#0b141d','Ink',0],
+    ['#12171c','Charcoal',0],
+    ['#0c1a2e','Midnight',0],
+    ['#0f1c18','Pine',0],
+    ['#181423','Plum',0],
+    ['linear-gradient(165deg,#16243a 0%,#0a1017 100%)','Dusk',0],
+    ['#ffffff','White (print)',1],
+    ['#f8f6f1','Paper',1],
+    ['#f1f5f9','Mist',1],
+    ['#f4efe6','Sand',1],
+    ['linear-gradient(165deg,#ffffff 0%,#e7edf3 100%)','Dawn',1]
+  ];
+  var PAGE_BG_LIGHT={};
+  PAGE_BGS.forEach(function(q){PAGE_BG_LIGHT[q[0]]=!!q[2];});
   function pageIsLight(bg){
-    var m=/^#?([0-9a-f]{6})$/i.exec(String(bg||'').trim());
+    var v=String(bg||'').trim();
+    if(PAGE_BG_LIGHT.hasOwnProperty(v)) return PAGE_BG_LIGHT[v];
+    var m=/^#?([0-9a-f]{6})$/i.exec(v);
     if(!m) return false;
     var n=parseInt(m[1],16);
     return (0.2126*((n>>16)&255)+0.7152*((n>>8)&255)
       +0.0722*(n&255))/255>0.55;
+  }
+  /* a gradient has no single colour, and the .pptx and the PDF both want
+     one - take the first stop, which is the end the eye lands on */
+  function bgSolid(bg){
+    var v=String(bg||'').trim();
+    if(v.indexOf('gradient')<0) return v;
+    var m=/#([0-9a-f]{3,8})/i.exec(v);
+    return m?('#'+m[1]):'#0b141d';
+  }
+  /* ONE chip builder, used by the per-slide menu and by the deck-wide
+     default - so the two can never drift apart */
+  function bgChips(host,current,onPick,withAuto){
+    if(withAuto){
+      var auto=document.createElement('button');
+      auto.className='sh-opt bg-auto';auto.textContent='Auto';
+      auto.title='Match the presentation background';
+      auto.setAttribute('aria-pressed',(!current).toString());
+      auto.addEventListener('click',function(e){
+        e.stopPropagation();onPick('');});
+      host.appendChild(auto);
+    }
+    PAGE_BGS.forEach(function(q){
+      var b=document.createElement('button');
+      b.className='sh-opt bg-chip'+(q[2]?' is-light':'');
+      b.title=q[1];
+      b.style.background=q[0];
+      b.dataset.bgv=q[0];
+      b.setAttribute('aria-pressed',(current===q[0]).toString());
+      b.addEventListener('click',function(e){
+        e.stopPropagation();onPick(q[0]);});
+      host.appendChild(b);
+    });
   }
   function applyPageBg(){
     /* the slide's own colour wins; File > Page background stays the
@@ -16699,8 +16762,10 @@ window.JunoPptx = (function () {
     var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
-    $$('#mi-pagebg .pgbg-sw').forEach(function(sw){
-      sw.classList.toggle('on',sw.dataset.bg===bg);});
+    var deckBg=(pres&&pres.pageBg)||'#0b141d';
+    $$('#mi-pagebg .bg-chip').forEach(function(sw){
+      sw.setAttribute('aria-pressed',
+        (sw.dataset.bgv===deckBg).toString());});
   }
   function applyPage(){
     var pg=pageOf();
@@ -16727,8 +16792,13 @@ window.JunoPptx = (function () {
        because opacity lived in it and Animate did not apply. Opacity is
        in Colour now and a poster has no builds, so the group simply
        empties and syncRibbonGroups hides it (2026-08-17). */
+    /* a poster is one printed page and has no build, so the whole
+       Animate group stands down rather than just its first control —
+       syncRibbonGroups hides a group once nothing in it is showing */
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
+    var clrB=$('#anim-clear');
+    if(clrB) clrB.hidden=!!pg.poster;
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
     var nums=$('#mi-nums');
@@ -17297,7 +17367,7 @@ window.JunoPptx = (function () {
      Home is where everything selection-driven lives, deliberately: the
      tools for the thing you just clicked must be in ONE named place you
      can go back to, not on a tab that appears and disappears. */
-  var TABS=['home','insert','design','animate','view'];
+  var TABS=['home','insert','design'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -17306,6 +17376,11 @@ window.JunoPptx = (function () {
   function activeTab(){
     if(curTab===null){
       var t=lsGet(tabKey());
+      /* Animate and View were folded into Insert and Home on 2026-08-20;
+         a browser that remembers one of them lands on its new host rather
+         than on a tab that no longer exists */
+      if(t==='animate') t='insert';
+      else if(t==='view') t='home';
       curTab=TABS.indexOf(t)>=0?t:'home';
     }
     return curTab;
@@ -17318,16 +17393,10 @@ window.JunoPptx = (function () {
   }
   function syncTabStrip(){
     var strip=$('#rbn-tabs'); if(!strip) return;
-    /* a deck animates and a poster does not, so the Animate tab exists
-       only where there is something to animate — the same test #vw-anim
-       already passed on its own */
-    var deck=!pageOf().poster;
     $$('.rbn-tab',strip).forEach(function(b){
-      var t=b.dataset.tab;
-      if(t==='animate') b.hidden=!deck;
-      b.setAttribute('aria-selected',(t===activeTab()).toString());
+      b.setAttribute('aria-selected',
+        (b.dataset.tab===activeTab()).toString());
     });
-    if(activeTab()==='animate'&&!deck) setTab('home');
   }
   function applyTab(){
     var bar=$('#edit-tools'); if(!bar) return;
@@ -19847,6 +19916,8 @@ window.JunoPptx = (function () {
     return FONTPPT[v]||String(v);
   }
   var tool='select', selAnnot=null, picking=-1;
+  /* set for the one showFmt that follows a fresh draw — see startDraw */
+  var justDrew=false;
   /* selSet = every item in the current selection (a group, or a shift-click
      multi-select); selAnnot is the primary one that drives the format bar */
   var selSet=[];
@@ -21187,7 +21258,6 @@ window.JunoPptx = (function () {
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
     +'#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
-    +'#fmt-find '
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
@@ -21215,6 +21285,15 @@ window.JunoPptx = (function () {
       syncRibbonGroups();
       return;
     }
+    /* THE TAB FOLLOWS THE SELECTION. Every selection-driven group lives
+       on Home, so clicking a figure while you happened to be on Insert
+       or Design silently left its tools on a tab you were not looking at
+       — which is how "the ability to lock cells" appeared to vanish when
+       it had simply moved one tab away (2026-08-20, user).
+       Not while a drawing tool is armed: placing five shapes in a row
+       must not yank you off Insert after each one. */
+    if(activeTab()!=='home'&&tool==='select'&&!justDrew) setTab('home');
+    justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
        and alignment controls a text box does (2026-08-20) */
@@ -21975,6 +22054,10 @@ window.JunoPptx = (function () {
     function mu(){
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
+      /* the item about to be selected is one you JUST DREW, so the tab
+         must not follow the selection this time — otherwise placing five
+         shapes in a row throws you off Insert after every one */
+      justDrew=true;
       var tiny=raw?(raw.length<3)
         :boxed?(a.w<1.5&&a.h<1.5)
         :(Math.abs(a.x2-a.x1)<1.5&&Math.abs(a.y2-a.y1)<1.5);
@@ -27253,7 +27336,7 @@ window.JunoPptx = (function () {
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:ent.s.border.c||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});
-        return {bg:(ent.s.bg||bg),items:its};
+        return {bg:bgSolid(ent.s.bg||bg),items:its};
       }),
     });
     var a=document.createElement('a');
@@ -27281,8 +27364,6 @@ window.JunoPptx = (function () {
     var wired=wireMenuToggle('bg-drop','bg-btn','bg-menu');
     if(!wired) return;
     var menu=wired.menu;
-    var BGS=[['#ffffff','White'],['#f6f2ea','Cream'],['#eef1f4','Light grey'],
-      ['#0b141d','Dark'],['#000000','Black']];
     var BWS=[[0,'Off'],[2,'Thin'],[4,'Medium'],[9,'Thick']];
     function apply(fn){
       var s2=pres.slides[cur]; if(!s2) return;
@@ -27294,22 +27375,9 @@ window.JunoPptx = (function () {
       menu.innerHTML='';
       menuHead(menu,'This slide');
       var r1=menuRow(menu,'bg-sw');
-      var auto=document.createElement('button');
-      auto.className='sh-opt bg-auto';auto.textContent='Auto';
-      auto.title='Match the presentation background (File menu)';
-      auto.setAttribute('aria-pressed',(!s2.bg).toString());
-      auto.addEventListener('click',function(e){e.stopPropagation();
-        apply(function(x){delete x.bg;});});
-      r1.appendChild(auto);
-      BGS.forEach(function(p){
-        var b=document.createElement('button');
-        b.className='sh-opt bg-chip';b.title=p[1];
-        b.style.background=p[0];
-        b.setAttribute('aria-pressed',(s2.bg===p[0]).toString());
-        b.addEventListener('click',function(e){e.stopPropagation();
-          apply(function(x){x.bg=p[0];});});
-        r1.appendChild(b);
-      });
+      bgChips(r1,s2.bg||'',function(v){
+        apply(function(x){if(v) x.bg=v; else delete x.bg;});
+      },true);
       menuHead(menu,'Border');
       var r2=menuRow(menu,'bg-bw');
       BWS.forEach(function(p){
@@ -27343,13 +27411,19 @@ window.JunoPptx = (function () {
   window.SemDeckPptx=exportDeckPptx;   /* test hook */
   menuAction('#mi-pptx',function(){exportDeckPptx();});
   /* page background swatches (File menu) */
-  $$('#mi-pagebg .pgbg-sw').forEach(function(sw){
-    sw.addEventListener('click',function(e){
-      e.stopPropagation();          /* keep the File menu open to compare */
-      pres.pageBg=sw.dataset.bg;
-      markDirty();applyPageBg();renderSlide();
-    });
-  });
+  /* the deck-wide default, built from the same table as the per-slide
+     menu (2026-08-20) */
+  (function(){
+    var host=$('#mi-pagebg');
+    if(!host) return;
+    var row=document.createElement('span');
+    row.className='pgbg-row';
+    bgChips(row,(pres&&pres.pageBg)||'',function(v){
+      pres.pageBg=v;markDirty();applyPageBg();refresh();
+      toast('Page background set');
+    },false);
+    host.appendChild(row);
+  })();
   /* one importer for every way a saved file comes back in: the File-menu
      picker, the launcher's "+ New… → Open a .junoview file…" row, and the
      silent startup restore from a remembered file handle. `silent` never
@@ -27677,7 +27751,8 @@ window.JunoPptx = (function () {
     $('#find-rep').addEventListener('click',replaceOne);
     $('#find-repall').addEventListener('click',replaceAll);
     $('#find-close').addEventListener('click',close);
-    ['#qat-find','#fmt-find'].forEach(function(sel){
+    /* ONE door: the top bar (or Ctrl+F). The ribbon copy is gone */
+    ['#qat-find'].forEach(function(sel){
       var b=$(sel);
       if(b) b.addEventListener('click',function(){
         if(pop.hidden) open(); else close();});

@@ -640,8 +640,11 @@ def test_view_and_output_are_separate_groups(out):
     bar, bottom in the side one, because "last" means the same in a
     column.
     """
-    assert 'class="rbn-grp rbn-fixed rbn-view" data-tab="view"' in out
-    assert 'class="rbn-grp rbn-out" data-tab="view"' in out
+    # both moved to Home on 2026-08-20: guides, layers and the print
+    # check are things you reach for WHILE something is selected, so a tab
+    # of their own meant leaving the tools you were using to get to them
+    assert 'class="rbn-grp rbn-fixed rbn-view" data-tab="home"' in out
+    assert 'class="rbn-grp rbn-out" data-tab="home"' in out
     assert ">Output</span>" in out
     assert ".rbn-out{order:4;}" in out
     # Guides+Layers in one, Print check in the other. Present left Output
@@ -959,7 +962,9 @@ def test_animations_can_be_removed(out):
     for bid in ("anim-none", "anim-fade", "anim-rise", "anim-zoom",
                 "anim-clear"):
         assert 'id="%s"' % bid in out, bid
-    assert 'class="rbn-grp rbn-anim" data-tab="animate"' in out
+    # Animate shares the Insert tab: on its own it was one group of six
+    # small buttons under a whole tab, and Insert had room to spare
+    assert 'class="rbn-grp rbn-anim" data-tab="insert"' in out
     assert "animRibbonSync=function(){" in out
     assert "revealCount=0;commit(s);" in out
 

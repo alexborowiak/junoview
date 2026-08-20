@@ -34,6 +34,53 @@ at the tight end of the fit ladder.
   PowerPoint's does, so the tab you land on is not one lonely button over an
   empty row when nothing is selected.
 
+### Changed — the tabs settled down
+
+Five tabs was one or two too many: Animate was a single group of six small
+buttons under a whole tab of its own, and View held things you reach for
+*while* something is selected, so a tab of their own meant leaving the tools
+you were using to get to them.
+
+- **Three tabs now: Home, Insert, Design.** Animate shares Insert — both are
+  about putting something on the page and deciding how it arrives. View and
+  Output went back to Home. A browser remembering one of the retired tabs lands
+  on its new host rather than on a tab that no longer exists.
+- **The tab follows the selection.** Every selection-driven group lives on Home,
+  so clicking a figure while you happened to be on Insert or Design silently
+  left its tools on a tab you were not looking at — which is how the
+  lock-a-figure-to-a-commit control appeared to vanish when it had simply moved
+  one tab away. Selecting something now brings you to its tools. Drawing does
+  *not*: placing five shapes in a row must not throw you off Insert after each
+  one.
+- **The duplicate Find & replace is gone.** It acts on the whole presentation,
+  so it belongs with the document's own controls in the top bar — where it
+  already was. A second copy alone in a group at the far right of Home was both
+  a duplicate and the worst seat in the row. One feature, one door: the top bar,
+  or Ctrl+F.
+
+### Changed — the background palette
+
+The five backgrounds were white, cream, light grey, dark and black. Two of those
+are the same idea, black is never the right answer on a projector (it crushes
+every dark figure into the background and shows every speck of dust on the
+lens), and none of them had been *chosen* so much as listed.
+
+Eleven now, picked as presentation grounds: **Ink, Charcoal, Midnight, Pine,
+Plum** and a **Dusk** gradient; **White (print), Paper, Mist, Sand** and a
+**Dawn** gradient. The darks sit around 8–12% lightness with a little colour in
+them, because a flat neutral reads as “no background” while a tinted one reads
+as a decision. The lights are off-white rather than white — except White itself,
+which stays because a print shop wants exactly `#ffffff`. The gradients are kept
+subtle: a background you notice is a background competing with the figure on top
+of it.
+
+Both menus — the deck-wide default and the per-slide override — are now built
+from **one table**, so they cannot drift apart. Each entry declares whether it
+is light rather than making `pageIsLight` parse it, because a gradient has no
+single colour to measure and guessing wrong flips every default text colour on
+the page. The `.pptx` and PDF paths take a gradient's first stop, since OOXML
+wants one colour.
+
 ### Added — the rest of the editor brief
 
 - **Tables.** A real item kind: rows of plain strings plus a handful of

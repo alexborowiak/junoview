@@ -18,7 +18,17 @@ def test_page_background_and_light_pages(out):
     """
     assert "function applyPageBg" in out and "function pageIsLight" in out
     assert "pres={name:name,slides:[s],page:'a0p',pageBg:'#ffffff'};" in out
-    assert 'id="mi-pagebg"' in out and 'class="pgbg-sw"' in out
+    # the swatches are BUILT from PAGE_BGS now rather than hand-written
+    # into the markup, so the two background menus cannot drift apart and
+    # the colours live in one place (2026-08-20)
+    assert 'id="mi-pagebg"' in out
+    assert "var PAGE_BGS=[" in out
+    assert "function bgChips(host,current,onPick,withAuto){" in out
+    # a gradient has no single colour to measure, so each entry declares
+    # whether it is light instead of pageIsLight guessing
+    assert "if(PAGE_BG_LIGHT.hasOwnProperty(v)) return PAGE_BG_LIGHT[v];" \
+        in out
+    assert "function bgSolid(bg){" in out
     assert ".deck .deck-stage .slide{background:var(--page-bg,transparent);}" in out
     assert ".page-light .an-text{" in out
     assert ".page-light .an-cell{background:#fff;" in out

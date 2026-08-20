@@ -992,7 +992,6 @@ body.slide-editing .apptop{display:none;}
 .rbn-out{order:4;}
 .rbn-anim{order:5;}
 .rbn-insert{order:6;}
-.rbn-edit{order:8;}
 .et-fmt .rbn-grp{order:7;flex:none;}
 .edit-tools.ribbon .et-hint{order:9;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;
@@ -1587,15 +1586,19 @@ select#fmt-font[hidden]{display:none;}
 .page-light .slide-meta{color:#5a6b78;}
 /* the File-menu page background swatches */
 .dc-pagebg{display:flex;align-items:center;gap:6px;cursor:default;}
-.pgbg-sw{width:18px;height:18px;border-radius:5px;flex:none;
-  border:1px solid #ffffff38;cursor:pointer;display:inline-block;}
-.pgbg-sw[data-bg="#ffffff"]{background:#fff;}
-.pgbg-sw[data-bg="#f6f2ea"]{background:#f6f2ea;}
-.pgbg-sw[data-bg="#eef1f4"]{background:#eef1f4;}
-.pgbg-sw[data-bg="var(--chrome-0,#0b141d)"]{background:var(--chrome-0,#0b141d);}
-.pgbg-sw[data-bg="#000000"]{background:#000;}
-.pgbg-sw:hover{border-color:var(--cyan);}
-.pgbg-sw.on{border-color:var(--cyan);box-shadow:0 0 0 1px var(--cyan);}
+/* the background chips are built from PAGE_BGS in deck.js, so their
+   colours live in ONE place instead of being restated here (2026-08-20) */
+.pgbg-row{display:flex;flex-wrap:wrap;gap:5px;margin-left:auto;
+  max-width:150px;justify-content:flex-end;}
+.sh-menu .bg-sw{flex-wrap:wrap;}
+.bg-chip{width:20px;height:20px;padding:0;border-radius:5px;flex:none;
+  border:1px solid #ffffff33;cursor:pointer;}
+/* a light chip needs a darker edge or it disappears into a light menu */
+.bg-chip.is-light{border-color:#00000033;}
+.bg-chip:hover{border-color:var(--cyan);}
+.bg-chip[aria-pressed="true"]{border-color:var(--cyan);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent);}
+.bg-auto{flex:none;}
 /* ---- print-resolution warning chip on poster figures ---- */
 .dpi-warn{position:absolute;top:6px;right:6px;z-index:5;
   font-family:var(--mono);font-size:10px;line-height:1;

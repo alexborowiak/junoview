@@ -382,11 +382,14 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     assert ".rbn-anim{order:5;}" in out
     assert ".rbn-insert{order:6;}" in out
     assert ".et-fmt .rbn-grp{order:7;flex:none;}" in out
-    assert ".rbn-edit{order:8;}" in out
     # every group declares its tab, and a group off-tab is OUT of the row
     # (display:none, never visibility) so it costs nothing to measure
+    # ...and the tabs merged down to three on 2026-08-20 (user: "some
+    # of those tabs have nothing on them now"), so View and Output sit on
+    # Home and Animate sits with Insert
     for grp in ("rbn-slide", "rbn-view"):
         assert 'class="rbn-grp rbn-fixed %s" data-tab=' % grp in out
+    assert "var TABS=['home','insert','design'];" in out
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more
     assert "rbn-standby" not in out

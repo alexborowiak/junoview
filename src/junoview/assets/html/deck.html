@@ -80,13 +80,8 @@
  shop to cut to. The page itself keeps its exact size &mdash; the sheet
  grows by 5mm on every side to hold them">Crop marks: off</button>
         <div class="dc-mi dc-pagebg" id="mi-pagebg"
-          title="The page's own background — pick white for a poster
- that goes to a print shop">Page background
-          <span class="pgbg-sw" data-bg="#ffffff" title="White (print)"></span>
-          <span class="pgbg-sw" data-bg="#f6f2ea" title="Cream"></span>
-          <span class="pgbg-sw" data-bg="#eef1f4" title="Light grey"></span>
-          <span class="pgbg-sw" data-bg="#0b141d" title="Dark (classic)"></span>
-          <span class="pgbg-sw" data-bg="#000000" title="Black"></span>
+          title="The page's own background. A slide can override it from
+ Design &#9656; Background">Page background
         </div>
         <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
@@ -257,25 +252,30 @@
        lives, so the tools for the thing you just clicked are always one
        named place, never a tab that appears and vanishes under you. -->
   <div class="rbn-tabs" id="rbn-tabs" role="tablist" hidden>
+    <!-- HOME also carries View and Output now. Guides, Layers, Print
+         check and the object list are things you reach for constantly and
+         WHILE something is selected, so a tab of their own meant leaving
+         the tools you were using to get to them (2026-08-20, user: "View
+         can just be back on home"). -->
     <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
       aria-selected="true"
-      title="Everything that formats what you have selected — text,
- colour, arrangement, shapes — plus find and replace">Home</button>
+      title="Everything that formats what you have selected, plus guides,
+ layers and the print check">Home</button>
+    <!-- Animate lives on this tab too. On its own it was one group of
+         six small buttons under a whole tab of its own, and Insert had
+         room to spare — two half-empty tabs read worse than one full one
+         (2026-08-20, user: "some of those tabs have nothing on them now.
+         Insert and animate can be one the one"). They also belong
+         together: both are about putting something on the page and
+         deciding how it arrives. -->
     <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
       aria-selected="false"
-      title="Put something new on the page">Insert</button>
+      title="Put something new on the page, and how it appears during
+ playback">Insert</button>
     <button class="rbn-tab" id="rbn-tab-design" role="tab" data-tab="design"
       aria-selected="false"
       title="How the page itself looks — its size, layout and
  background">Design</button>
-    <button class="rbn-tab" id="rbn-tab-animate" role="tab" data-tab="animate"
-      aria-selected="false" hidden
-      title="How things appear during playback, and in what order">
-      Animate</button>
-    <button class="rbn-tab" id="rbn-tab-view" role="tab" data-tab="view"
-      aria-selected="false"
-      title="Guides, the object list, and checking the page before it
- prints">View</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
   </div>
@@ -391,7 +391,7 @@
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="home">
             <span class="rbn-row">
               <!-- four toggles behind one worded menu. Every option keeps
                    its full name inside; what the row loses is width, not
@@ -441,7 +441,7 @@
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <span class="rbn-grp rbn-out" data-tab="view">
+          <span class="rbn-grp rbn-out" data-tab="home">
             <span class="rbn-row">
               <!-- "Check" alone said nothing (2026-08-07, user: "what are
                    things like 'check', what does that even mean?"). The
@@ -459,7 +459,7 @@
                under View. The effect buttons act on the selection, so
                they are hidden without one — the pane is not, because a
                build order is a property of the SLIDE. -->
-          <span class="rbn-grp rbn-anim" data-tab="animate">
+          <span class="rbn-grp rbn-anim" data-tab="insert">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="vw-anim"
                 aria-pressed="false"
@@ -609,19 +609,13 @@
             </span>
             <span class="rbn-lab">Slides</span>
           </span>
-          <!-- EDITING. Always here, selection or not — find and replace
-               acts on the whole presentation, which is exactly why it
-               could never be a contextual control (2026-08-20, user:
-               "needs to be a search and replace of text and stuff, that
-               is pretty standard"). -->
-          <span class="rbn-grp rbn-edit" data-tab="home">
-            <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="fmt-find"
-                title="Find and replace text on every slide (Ctrl+F)"
-                >&#9906; Find &amp; replace</button>
-            </span>
-            <span class="rbn-lab">Editing</span>
-          </span>
+          <!-- No Editing group. Find and replace acts on the WHOLE
+               presentation, so it belongs with the document's own
+               controls in the bar across the top — where it already was.
+               A second copy of it, alone in a group at the far right of
+               Home, was both a duplicate and the worst seat in the row
+               (2026-08-20, user: "why is 'find and replace' in the worst
+               spot"). One feature, one door: the top bar, or Ctrl+F. -->
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
           <span class="rbn-grp" data-tab="home">

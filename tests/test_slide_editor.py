@@ -377,7 +377,9 @@ def test_slides_have_their_own_background_and_border(out):
     assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
     assert "if(s.border) o.border=JSON.parse(JSON.stringify(s.border));" in out
     assert "(bd.w||4)/SW_REF_H*h" in out
-    assert "return {bg:(ent.s.bg||bg),items:its};" in out
+    # .pptx wants ONE colour, and a gradient background has none - so the
+    # export takes its first stop (2026-08-20)
+    assert "return {bg:bgSolid(ent.s.bg||bg),items:its};" in out
     # renderSlide re-applies, so walking the deck repaints each slide's own
     assert "applyPageBg();          /* this slide may carry its own background */" in out
 
@@ -501,17 +503,24 @@ def test_the_ribbon_is_tabbed(out):
     can go back to, not on a tab that appears and disappears under you.
     """
     assert 'class="rbn-tabs" id="rbn-tabs"' in out
-    for t in ("home", "insert", "design", "animate", "view"):
+    # THREE tabs since 2026-08-20. Five left two of them nearly empty
+    # (user: "some of those tabs have nothing on them now. Insert and
+    # animate can be one the one" / "View can just be back on home"), and
+    # a tab with one small group in it is worse than no tab at all.
+    for t in ("home", "insert", "design"):
         assert 'id="rbn-tab-%s"' % t in out, t
         assert "'%s'" % t in out
-    assert "var TABS=['home','insert','design','animate','view'];" in out
+    assert "var TABS=['home','insert','design'];" in out
+    assert 'id="rbn-tab-animate"' not in out
+    assert 'id="rbn-tab-view"' not in out
+    # a browser remembering one of the retired tabs lands on its new host
+    assert "if(t==='animate') t='insert';" in out
     assert "function setTab(t){" in out
     assert "function applyTab(){" in out
     # the filter runs BEFORE anything measures the row
     assert "    applyTab();\n    $$('.rbn-grp',bar)" in out
-    # Animate exists only where there is something to animate: a poster is
-    # one printed page and has no build
-    assert "if(t==='animate') b.hidden=!deck;" in out
+    # a poster has no build, so the whole Animate GROUP stands down there
+    assert "var clrB=$('#anim-clear');" in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
 
