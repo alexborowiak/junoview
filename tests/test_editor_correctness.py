@@ -642,35 +642,32 @@ def test_an_armed_tool_has_a_visible_way_out(out):
     assert "Cancel</button>" in out
 
 
-def test_view_and_output_are_separate_groups(out):
+def test_view_and_output_became_one_group(out):
     """Guides and Objects change what YOU see while working; Print check
-    and Present are about the finished thing, on paper or on a screen.
-    One group called "View" described only half of them (2026-08-07,
-    user: "present and print check go together, but objects and guides
-    are different"). Both groups sort last -- right in the horizontal
-    bar, bottom in the side one, because "last" means the same in a
-    column.
+    and Present are about the finished thing (2026-08-07, user: "present
+    and print check go together, but objects and guides are different").
+
+    That split outlived its reason. Present moved to the bar across the
+    top on 2026-08-20 -- it must survive every tab, and a tab could have
+    taken it away -- which left Output as a heading over ONE button, and a
+    heading over one button is a heading doing no work (user: "some tabs
+    still now have two few buttons").
+
+    So the two collapsed back together. Checking the page before it goes
+    out IS a way of looking at it, which is what every other control in
+    View is for; the 2026-08-07 distinction was really about Present, and
+    Present is in neither of them now.
     """
-    # both moved to Home on 2026-08-20: guides, layers and the print
-    # check are things you reach for WHILE something is selected, so a tab
-    # of their own meant leaving the tools you were using to get to them
     assert 'class="rbn-grp rbn-fixed rbn-view" data-tab="home"' in out
-    assert 'class="rbn-grp rbn-out" data-tab="home"' in out
-    assert ">Output</span>" in out
-    assert ".rbn-out{order:4;}" in out
-    # Guides+Layers in one, Print check in the other. Present left Output
-    # for the bar across the top on 2026-08-20 -- it must survive every
-    # tab, and a tab could have taken it away.
+    assert 'class="rbn-grp rbn-out"' not in out
+    assert ">Output</span>" not in out
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]
+    assert 'id="vw-menuwrap"' not in view
     assert 'id="vw-rulers"' in view and 'id="objects-btn"' in view
     assert 'id="vw-full"' in view
-    assert 'id="vw-check"' not in view and 'id="dc-play"' not in view
-    # both groups are on the same TAB, which is what now keeps them
-    # together in the row (2026-08-20)
-    out_grp = out.split('class="rbn-grp rbn-out"')[1].split(
-        ">Output</span>")[0]
-    assert 'id="vw-check"' in out_grp
+    assert 'id="vw-check"' in view
+    assert 'id="dc-play"' not in view
 
 
 def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
@@ -1168,3 +1165,166 @@ def test_light_themes_re_ink_the_surfaces(out):
     # overlays, not for things you click
     assert "background:var(--chrome-3,#101c28);border:1px solid #ffffff22;" \
         in out
+
+
+def test_page_background_left_the_file_menu(out):
+    """File is where you open, save and export things; how the deck LOOKS
+    is Design. Page background sat in the File menu because somebody put
+    it there, not because it belonged (2026-08-20, user: "why the fuck is
+    page background in file"). It is in the Background dropdown now,
+    beside the per-slide override, so the two can be seen against each
+    other. Measured: 22 chips in that one menu, none in File.
+    """
+    assert 'id="mi-pagebg"' not in out
+    assert "menuHead(menu,'Every slide');" in out
+    assert "menuHead(menu,'This slide');" in out
+
+
+def test_the_save_destination_says_where_not_which_file(out):
+    """2026-08-20, user: "I don't want you to have 'save to <filename>'.
+    You are never getting this one. I want you to just say if it's save to
+    local or browser."
+
+    The filename is the widest thing that could ever land in that bar, it
+    changes under you when you pick a different file, and it answers a
+    question nobody asked -- what you ask of a Save button is "is this
+    going somewhere I will find it again?". The filename is in the
+    tooltip. Measured: "This browser" / "A file on your computer...".
+    """
+    assert "if(saveTarget==='file') return 'On this computer';" in out
+    assert "return 'In this browser';" in out
+    assert "return fileName||'a file (not chosen yet)';" not in out
+
+
+def test_opening_a_file_keeps_saving_to_it(out):
+    """Opening a .junoview used to import its contents and carry on saving
+    to the BROWSER, so the file you opened never changed again and your
+    work quietly went somewhere else (2026-08-20, user).
+
+    Where the File System Access API exists we take a real handle, so Save
+    writes straight back. Where it does not, an <input type=file> gives
+    contents but no handle -- nothing can write back to it -- so the
+    target still becomes "a file on your computer" and the first Save asks
+    once. Either way "where is this going?" stops being "somewhere else".
+    """
+    assert "function openDeckFile(){" in out
+    assert "if(window.showOpenFilePicker){" in out
+    assert "fileHandle=h;fileName=h.name||f.name||'';" in out
+    # the no-handle path still moves the destination off the browser
+    assert "fileName=nm;fileHandle=null;" in out
+    assert out.count("setTarget('file');") >= 3
+
+
+def test_paste_lands_in_the_same_place_on_another_slide(out):
+    """2026-08-20, user: "copying and pasting something from one slide to
+    another should be pasted into the same location on the other slide
+    that it was copied from". Pasting onto the SAME slide still nudges, or
+    the copy hides exactly under its original.
+    """
+    assert "var clipFrom=-1;" in out
+    assert "clipFrom=cur;" in out
+    assert "var d=(clipFrom===cur)?3:0;" in out
+
+
+def test_off_page_items_can_be_reached(out):
+    """An item dragged past the page edge used to be simply unreachable:
+    the stage clipped it and only ever scrolled when the PAGE was bigger
+    than the window (2026-08-20, user: "when objects are outside of the
+    view, there is no horizontal scroll to see them").
+
+    The layer stops clipping while editing, strays are outlined so it is
+    obvious they are off the page, and the stage grows scrollbars only
+    when something is actually out there.
+    """
+    assert ".annot-layer.an-spill{overflow:visible;}" in out
+    assert ".deck.editing .deck-stage.spill{overflow:auto;}" in out
+    assert "if(mode==='edit') layer.classList.add('an-spill');" in out
+    assert "stage.classList.toggle('spill',spill);" in out
+    assert "el.classList.toggle('an-offpage',out);" in out
+
+
+def test_line_and_paragraph_spacing(out):
+    """2026-08-20, user: "when I say I want all the power point options,
+    why do you not do all them. Like where is the line spacing options".
+
+    A MULTIPLE of the type size, the way every word processor states it,
+    so it means the same thing at every zoom and on every page size and
+    needs no re-measuring. Paragraph spacing is the half nobody asks for
+    until their bullets are touching.
+    """
+    assert "var LH_STEPS=[" in out
+    assert "var PS_STEPS=[" in out
+    assert 'id="fmt-lhwrap"' in out
+    assert "if(a.lh) d2.style.lineHeight=a.lh;" in out
+    # it travels with a named style and with Match slide
+    assert "'lh','pspace'];" in out
+    assert "if(d.lh) a.lh=d.lh; else delete a.lh;" in out
+
+
+def test_typing_a_dash_makes_a_bullet(out):
+    """The markdown habit everybody already has, and the reason nobody
+    could find the List button until they had given up (2026-08-20, user:
+    "need auto-dot points"). It fires only on the FIRST characters of a
+    box that is not already a list, so it can never eat a hyphen you meant
+    to keep. Measured: typing "- " produced a <ul> with one <li>.
+    """
+    assert "var m=/^\\s*([-*\\u2022]|1[.)])\\s$/.exec(t);" in out
+    assert "if(el.classList.contains('an-ul')) return;" in out
+    assert "var kind=/^1/.test(m[1])?'number':'bullet';" in out
+
+
+def test_the_scratchpad(out):
+    """Three kinds of note in one pane: this slide, the whole talk, and a
+    scratchpad belonging to neither (2026-08-20, user: "overall notes, and
+    then also notes per slide, and make little notes and folders of
+    notes"). The scratchpad is where a thought goes before you have
+    decided where it goes -- the reason people keep a text file open
+    beside their deck.
+    """
+    assert 'id="np-tabs"' in out
+    assert 'id="notespane-deck"' in out
+    assert 'id="notespane-pad"' in out
+    assert "function padList(){" in out
+    assert "function renderPad(){" in out
+    # notes and the pad travel with the file
+    assert "if(typeof p.notes==='string'&&p.notes) out.notes=p.notes;" in out
+    assert "if(Array.isArray(p.pad)&&p.pad.length)" in out
+
+
+def test_layer_folders_are_filing_not_grouping(out):
+    """Grouping WELDS items together -- they move and format as one, which
+    is exactly what you do not want from a filing system. Until now the
+    only folders in the Layers pane were groups, so tidying twelve items
+    into three folders also made three rigid blocks (2026-08-20, user:
+    "there needs to be folders in the objects thing").
+
+    A folder is just a name on the items in it (a.fold). Nothing about
+    selection, movement or formatting changes.
+    """
+    assert "function folderNames(s){" in out
+    assert "s.annots[i].fold=nm;" in out
+    assert "'\\u2b1a New folder'" in out
+    # an item filed in a folder must not also appear in the loose list
+    assert "if(!ann[i]||(ann[i].grp==null&&!ann[i].fold))" in out
+
+
+def test_lines_can_be_bent_through_corners(out):
+    """2026-08-20, user: "when adding arrows you can really edit all the
+    points and make it the exact shape you want". Attachment already
+    worked; what was missing was intermediate points -- the model had
+    exactly two endpoints plus a canned route.
+
+    Corners win over the canned routes: once you have dragged one in by
+    hand, "curved" and "elbowed" are no longer describing the line you
+    drew. Measured live: a freshly drawn arrow shows one add-handle per
+    segment, and dragging it turned "M242 407 L970 5" into a curve
+    through the new corner.
+    """
+    assert "function arrowMids(a){" in out
+    assert "function startMidPoint(layer,s,idx,mi,ev0){" in out
+    assert "ad.setAttribute('data-addat',sgi);" in out
+    assert "h.setAttribute('data-mid',mi);" in out
+    # the corners travel with the line
+    assert "if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){" in out
+    # selecting is not a re-render, so the handles need asking for
+    assert "})) redrawArrows(layer,s);" in out

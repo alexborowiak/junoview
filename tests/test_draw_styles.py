@@ -409,7 +409,12 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     assert 'class="rbn-grp rbn-fixed rbn-file"' not in out
     assert ".rbn-slide{order:2;}" in out
     assert ".rbn-view{order:3;}" in out
-    assert ".rbn-out{order:4;}" in out
+    # Output is GONE (2026-08-20): Print check was its only control, and
+    # one button under its own heading is a heading doing no work (user:
+    # "some tabs still now have two few buttons"). It sits with the other
+    # ways of LOOKING at the page; Type took its slot in the order.
+    assert ".rbn-out{order:4;}" not in out
+    assert ".rbn-type{order:4;}" in out
     assert ".rbn-anim{order:5;}" in out
     assert ".rbn-insert{order:6;}" in out
     assert ".et-fmt .rbn-grp{order:7;flex:none;}" in out

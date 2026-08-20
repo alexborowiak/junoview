@@ -79,10 +79,13 @@
           title="Add trim marks just outside the page for the print
  shop to cut to. The page itself keeps its exact size &mdash; the sheet
  grows by 5mm on every side to hold them">Crop marks: off</button>
-        <div class="dc-mi dc-pagebg" id="mi-pagebg"
-          title="The page's own background. A slide can override it from
- Design &#9656; Background">Page background
-        </div>
+        <!-- Page background is NOT here any more. It is a property of
+             how the deck LOOKS, and File is where you open, save and
+             export things — it was in this menu because that is where
+             somebody put it, not because it belongs (2026-08-20, user:
+             "why the fuck is page background in file"). It lives with
+             the per-slide background, under Design, where the two can be
+             seen against each other. -->
         <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
         <button class="dc-mi" id="mi-autosave" hidden></button>
@@ -192,9 +195,33 @@
     <a class="dbtn qat-btn" id="deck-support" target="_blank" rel="noopener"
       title="Support Junoview on Ko-fi — funds an online, hosted version
  with accounts"><i data-ic="heart"></i></a>
-    <button class="dbtn primary qat-play" id="dc-play"
-      title="Play this full screen, from this page (F5)">
-      <i data-ic="play"></i> Present</button>
+    <!-- Present is a SPLIT control: press it to play, press the chevron
+         for presenter view — the second screen with your notes, the next
+         slide and the clock (2026-08-20, user asked for "the different
+         screens one with the slides and the other with like notes and the
+         next slide"). -->
+    <span class="dc-savegrp qat-playgrp">
+      <button class="dbtn primary qat-play" id="dc-play"
+        title="Play this full screen, from this page (F5)">
+        <i data-ic="play"></i> Present</button>
+      <span class="dc-menuwrap">
+        <button class="dbtn primary dc-target" id="dc-playmore"
+          aria-haspopup="true" aria-expanded="false"
+          aria-label="Presenting options"
+          title="Presenting options">&#9662;</button>
+        <div class="dc-menu" id="play-menu" hidden>
+          <div class="dc-mhead">present</div>
+          <button class="dc-mi" id="pl-here">Play from this slide</button>
+          <button class="dc-mi" id="pl-start">Play from the start</button>
+          <div class="dc-msep"></div>
+          <button class="dc-mi" id="pl-presenter"
+            title="Opens a second window with your notes, the next slide
+ and a clock. Drag it to the other screen, then play.">Presenter
+            view&#8230;</button>
+          <button class="dc-mi" id="pl-notes">Notes &amp; timing&#8230;</button>
+        </div>
+      </span>
+    </span>
   </div>
   <aside class="deck-create" id="deck-create" hidden>
       <div class="dc-resize" id="dc-resize"
@@ -386,6 +413,34 @@
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
+          <!-- THE DECK'S TYPE, editable without selecting anything. Until
+               now a style could only be changed by formatting one box and
+               pushing its look outwards, which meant you had to have a box
+               of that style on the slide you happened to be on
+               (2026-08-20). -->
+          <span class="rbn-grp rbn-type" data-tab="design">
+            <span class="rbn-row">
+              <span class="sh-drop" id="dsg-stylewrap">
+                <button class="dbtn rbn-sm" id="dsg-styles"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Every named text style in this presentation, with
+ its size — change one and every box wearing it follows">&#9776; Text
+                  styles &#9662;</button>
+                <div class="sh-menu style-mgr" id="dsg-style-menu"
+                  hidden></div>
+              </span>
+              <button class="dbtn rbn-sm" id="dsg-scale-down"
+                title="Make every text style one step smaller — the whole
+ deck's type, in proportion">A&#8722;</button>
+              <button class="dbtn rbn-sm" id="dsg-scale-up"
+                title="Make every text style one step bigger — the whole
+ deck's type, in proportion">A&#43;</button>
+              <button class="dbtn rbn-sm" id="dsg-restyle"
+                title="Re-apply the styles to every box wearing one, on
+ every slide — use it after changing a style by hand">&#8635; Re-apply</button>
+            </span>
+            <span class="rbn-lab">Type</span>
+          </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
                finished thing, on paper or on a screen. They were lumped
@@ -430,6 +485,17 @@
                 title="Stand the toolbar up on the right-hand edge, so the
  page gets the full height of the window. A tall poster needs height far
  more than width">&#8942; Side toolbar</button>
+              <!-- Print check came from a group of its own. One button
+                   under its own heading is a heading doing no work, and
+                   checking the page before it goes out is a way of
+                   LOOKING at it — which is what everything else in this
+                   group is (2026-08-20, user: "some tabs still now have
+                   two few buttons"). -->
+              <button class="dbtn rbn-sm" id="vw-check"
+                aria-pressed="false"
+                title="Check this page before it goes to print: soft
+ figures, anything off the page or inside the margin, unreadable text,
+ empty frames">&#9873; Check</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
@@ -438,6 +504,10 @@
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><i data-ic="objects"></i> Layers</button>
+              <button class="dbtn rbn-sm" id="notes-btn"
+                aria-pressed="false"
+                title="Speaker notes for this slide, and how long you want
+ to spend on it. Only you ever see them">&#9998; Notes</button>
               <!-- Zoom has left this group for the thin bar at the top.
                    It is the one control you reach for on EVERY tab, and a
                    control that a tab can take away from you is a control
@@ -446,19 +516,6 @@
                    beside it. -->
             </span>
             <span class="rbn-lab">View</span>
-          </span>
-          <span class="rbn-grp rbn-out" data-tab="home">
-            <span class="rbn-row">
-              <!-- "Check" alone said nothing (2026-08-07, user: "what are
-                   things like 'check', what does that even mean?"). The
-                   label has to name what is being checked. -->
-              <button class="dbtn rbn-sm" id="vw-check"
-                aria-pressed="false"
-                title="Check this page before it goes to print: soft
- figures, anything off the page or inside the margin, unreadable text,
- empty frames">&#9873; Check</button>
-            </span>
-            <span class="rbn-lab">Output</span>
           </span>
           <!-- ANIMATE. The pane and the effect chooser are the same job
                and now sit in the same tab instead of the pane hiding
@@ -481,6 +538,16 @@
                 title="Rise the selected items in from below">Rise</button>
               <button class="dbtn etm" id="anim-zoom" hidden
                 title="Zoom the selected items in">Zoom</button>
+              <!-- the two builds people actually want, in one press
+                   each. Setting "one at a time" by hand means selecting
+                   every item and stepping its order, which is the kind of
+                   fiddling this editor exists to avoid (2026-08-20). -->
+              <button class="dbtn rbn-sm" id="anim-stagger"
+                title="Reveal everything on this slide ONE AT A TIME, in
+ reading order — a click per item">&#9776; One by one</button>
+              <button class="dbtn rbn-sm" id="anim-together"
+                title="Reveal everything on this slide on the SAME click —
+ one build, everything at once">&#9707; All at once</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
                 title="Remove EVERY animation on this slide — nothing is
  held back during playback">&#10005; Clear slide</button>
@@ -846,6 +913,19 @@
                 >&#8676;</button>
               <button class="dbtn etm" id="fmt-indent" hidden
                 title="Move this bullet in one level (Tab)">&#8677;</button>
+              <!-- LINE SPACING, which every word processor has had since
+                   the 1980s and this did not (2026-08-20, user: "when I
+                   say I want all the power point options, why do you not
+                   do all them. Like where is the line spacing options").
+                   Space BETWEEN paragraphs is the other half nobody
+                   thinks to ask for until their bullets are touching. -->
+              <span class="sh-drop" id="fmt-lhwrap">
+                <button class="dbtn etm" id="fmt-lh" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Line spacing, and the gap between paragraphs">
+                  &#8597; Spacing &#9662;</button>
+                <div class="sh-menu lh-menu" id="fmt-lh-menu" hidden></div>
+              </span>
               <!-- alignment and curve are both "how this text sits"; one
                    worded menu instead of two controls -->
               <span class="sh-drop" id="fmt-parawrap">
@@ -1030,6 +1110,65 @@
            NOTHING selected, which is the whole point — the build order is
            a property of the slide, not of whatever you happen to have
            clicked. -->
+      <!-- SPEAKER NOTES, per slide. In the same shell as Layers and the
+           timeline, because it is the same kind of thing: a panel you keep
+           open beside the page while you work on it. The notes are what
+           the presenter view reads (2026-08-20). -->
+      <aside class="selpane notespane" id="notespane" hidden>
+        <div class="selpane-h"><span>Notes &amp; timing</span>
+          <button class="dbtn dc-icon" id="notespane-close"
+            title="Close">&#10005;</button></div>
+        <div class="np-tabs" id="np-tabs">
+          <button class="np-tab on" data-np="slide">This slide</button>
+          <button class="np-tab" data-np="deck">Whole talk</button>
+          <button class="np-tab" data-np="pad">Scratchpad</button>
+        </div>
+        <div class="selpane-list" id="notespane-body">
+          <label class="np-lab" for="np-notes">Speaker notes for this
+            slide</label>
+          <textarea id="np-notes" class="np-notes" spellcheck="true"
+            placeholder="What you want to say here. Only you see this —
+ it never goes on the slide."></textarea>
+          <label class="np-lab" for="np-goal">How long you want to spend
+            here</label>
+          <div class="np-row">
+            <input id="np-goal" class="np-goal" type="number" min="0"
+              max="180" step="0.5" placeholder="—">
+            <span class="np-unit">minutes</span>
+            <button class="dbtn np-clear" id="np-goalclear"
+              title="No target for this slide">&#10005;</button>
+          </div>
+          <div class="np-tot" id="np-tot"></div>
+          <label class="np-lab" for="np-total">Whole talk</label>
+          <div class="np-row">
+            <input id="np-total" class="np-goal" type="number" min="0"
+              max="600" step="1" placeholder="—">
+            <span class="np-unit">minutes</span>
+          </div>
+        </div>
+        <!-- WHOLE-TALK notes: the things that are not about any one slide
+             — the argument, the questions you expect, what to cut if you
+             run late (2026-08-20). -->
+        <div class="selpane-list" id="notespane-deck" hidden>
+          <label class="np-lab" for="np-decknotes">Notes about the whole
+            talk</label>
+          <textarea id="np-decknotes" class="np-notes np-tall"
+            spellcheck="true"
+            placeholder="The argument. Questions you expect. What to cut
+ if you run late."></textarea>
+        </div>
+        <!-- THE SCRATCHPAD: loose notes, in folders, not attached to any
+             slide. A place to put a thought without first deciding where
+             it goes — which is the whole reason people keep a separate
+             text file beside the deck (2026-08-20). -->
+        <div class="selpane-list" id="notespane-pad" hidden>
+          <div class="np-padbar">
+            <button class="dbtn np-padb" id="np-addnote">&#43; Note</button>
+            <button class="dbtn np-padb" id="np-addfold">&#43; Folder</button>
+          </div>
+          <div class="np-padlist" id="np-padlist"></div>
+        </div>
+      </aside>
       <aside class="selpane animpane" id="animpane" hidden>
         <div class="selpane-h"><span>Animation pane</span>
           <button class="dbtn dc-icon" id="animpane-close"

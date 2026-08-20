@@ -34,6 +34,111 @@ at the tight end of the fit ladder.
   PowerPoint's does, so the tab you land on is not one lonely button over an
   empty row when nothing is selected.
 
+### Fixed — the placement complaints
+
+- **Page background left the File menu.** File is where you open, save and
+  export things; how the deck *looks* is Design. It sat there because somebody
+  put it there, not because it belonged. It is in the Background dropdown now,
+  beside the per-slide override, so the two can be seen against each other.
+- **The Save destination says where, not which file.** "This browser" / "On this
+  computer" / "This project". The filename is the widest thing that could land
+  in that bar, it changes under you when you pick a different file, and it
+  answers a question nobody asked — what you ask of a Save button is "will I
+  find this again?". The filename is in the tooltip.
+- **Opening a .junoview kept saving to the browser.** The file you opened never
+  changed again and your work quietly went somewhere else. Where the File System
+  Access API exists we now take a real handle so Save writes straight back;
+  where it does not, the destination still moves to "a file on your computer"
+  and the first Save asks once.
+- **Copy/paste across slides lands in the same place.** Pasting onto the *same*
+  slide still nudges, or the copy hides exactly under its original.
+- **Items dragged off the page can be reached.** The layer stops clipping while
+  editing, strays get a dashed outline so it is obvious they are off the page,
+  and the stage grows scrollbars only when something is actually out there.
+
+### Added
+
+- **Line spacing and paragraph spacing** — a multiple of the type size, the way
+  every word processor states it, so it means the same thing at every zoom and
+  on every page size. It travels with a named style and with Match slide.
+- **Auto-bullets.** Typing `- `, `* ` or `1. ` at the start of a text box turns
+  it into a list — the markdown habit everybody already has. It fires only on
+  the first characters of a box that is not already a list, so it can never eat
+  a hyphen you meant to keep.
+- **The scratchpad.** Three kinds of note in one pane: this slide, the whole
+  talk, and loose notes in folders belonging to neither. The scratchpad is where
+  a thought goes before you have decided where it goes — the reason people keep
+  a text file open beside their deck.
+- **Folders in Layers, which are filing and not grouping.** Grouping *welds*
+  items together; that is the last thing you want from a filing system. A folder
+  is just a name on the items in it — select-all-in-folder, rename, and nothing
+  about movement or formatting changes.
+- **Lines and arrows bend through corners.** Drag the faint handle halfway along
+  a segment and it becomes a corner you can place; Alt+click or right-click
+  takes one out again. Corners win over the canned routes — once you have
+  dragged one in by hand, "curved" and "elbowed" are no longer describing the
+  line you drew. They snap like every other drag and travel with the line.
+
+### Added — presenter view, speaker notes and timing
+
+A second window holding everything the audience must not see: your notes, the
+slide that is coming, and a clock. **Present ▾ ▸ Presenter view…** opens it;
+drag it to your other display, then press Present on the first screen.
+
+- **It does not start playback.** You want the window on the other screen
+  *before* anything goes full screen.
+- **The slides in it are real renders, not pictures.** `buildSlideNode` runs the
+  same `renderAnnots` every other output uses, and the nodes are imported into
+  the popup — so the presenter view cannot drift from what is on the screen
+  behind it. There is one renderer.
+- **A popup, not automatic screen placement.** The Window Management API that
+  can put a window on a named display is Chromium-only and needs a permission
+  prompt; a popup works in every browser and on every setup, including the
+  common one where the second screen is a projector the OS is mirroring.
+- Arrow keys, Back and Next work in *either* window — whichever your clicker
+  happens to be pointed at. Pause and Reset live on the clock.
+
+**Speaker notes** are per slide, in a pane beside Layers and the timeline. They
+are never drawn on the page and never exported: they exist for the presenter
+view and for you.
+
+**Time goals** are per slide, in minutes, and the pane adds them up — so a talk
+that cannot fit its slot says so *before* you give it. Set a whole-talk length
+and it tells you what is left or how far over you are; the presenter clock turns
+amber once you pass it.
+
+### Fixed
+
+- **"ResizeObserver loop completed with undelivered notifications."** The pane
+  observer re-fitted the page from inside its own callback, the page reflowed,
+  and the browser complained. One frame later is outside the loop and looks
+  identical.
+
+### Changed — the groups, reviewed
+
+Measured before: Home had View(5) **Output(1)** Slides(5); Insert had
+**Animate(2)** Insert(10); Design had Slide(4) Page furniture(4) — eight
+controls for a whole tab. A heading over one button is a heading doing no work.
+
+- **Output is gone.** Print check was all that was left in it once Present moved
+  to the top bar, and checking a page before it goes out *is* a way of looking at
+  it — which is what every other control in View is for. The 2026-08-07 split was
+  really about Present, and Present is in neither group now.
+- **Animate gained the two builds anyone actually wants**: *One by one* gives
+  every item on the slide its own click, in **reading order** — not array order,
+  which is the order you happened to draw things in and is nobody's idea of a
+  sequence — and *All at once* puts everything on a single build. Setting either
+  by hand meant selecting every item and stepping its order one at a time.
+- **Design gained a Type group**: a style manager that edits the deck's named
+  styles **without selecting anything**. Until now a style could only be changed
+  by formatting one box and pushing its look outwards, which meant you needed a
+  box of that style on the slide you happened to be on. It shows each style as a
+  specimen at its own size, with a −/+ pair per style, an all-styles scale for
+  when the room turns out bigger than you expected, a Re-apply, and a reset.
+
+After: Home View(6) Slides(5), Insert Animate(4) Insert(10), Design Slide(4)
+Page furniture(4) Type(4). Nothing under four, and every tab still fits.
+
 ### Changed — open notebooks moved to the rail
 
 The horizontal tab strip across the top of the document is gone. It was a row

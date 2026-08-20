@@ -101,3 +101,62 @@ def test_presenting_outline_rail_reaches_the_floor(out):
     assert "body.doc-presenting.present-rail .nbshell .rail{display:block;" in out
     assert "position:fixed;left:0;top:0;bottom:0;width:290px;z-index:84;" in out
     assert "height:auto;" in out
+
+
+def test_presenter_view_is_a_second_window(out):
+    """2026-08-20, user: "presentation mode where you can have like the
+    different screens one with the slides and the other with like notes
+    and the next slide and stuff when you have multiple screens".
+
+    A POPUP you drag to the other display, not an automatic placement.
+    The Window Management API that can put a window on a named screen is
+    Chromium-only and needs a permission prompt; a popup works in every
+    browser and on every setup, including the common one where the second
+    screen is a projector the OS is mirroring.
+
+    The slides in it are REAL renders, not pictures: buildSlideNode runs
+    the same renderAnnots every other output uses and the nodes are
+    imported into the popup, so the presenter view cannot drift from what
+    is on the screen behind it.
+
+    Verified live: clock ticking, "2 / 2", "target 2:30", "talk 3 min",
+    the notes text, one real .slide node, "end of the deck" for next --
+    and Back in the presenter moved the main window to 1 / 2.
+    """
+    assert "function openPresenter(){" in out
+    assert "function buildSlideNode(i){" in out
+    assert "function presenterPush(){" in out
+    assert "function presenterCommand(msg){" in out
+    assert 'id="pl-presenter"' in out
+    # every stylesheet rides along, or the imported nodes are unstyled
+    assert "$$('style').forEach(function(st){css+=st.textContent" in out
+    # presenter view does NOT start playback: you want to move the window
+    # to the other screen before anything goes full screen
+    assert "mi('#pl-presenter',openPresenter);" in out
+    # navigation in the main window tells the presenter
+    assert "function presenterSync(){" in out
+
+
+def test_speaker_notes_and_time_goals(out):
+    """Notes are per slide and never drawn on the page -- they exist for
+    the presenter view and for you. The per-slide goal is in minutes and
+    the pane adds them up, so a talk that cannot fit its slot says so
+    before you give it rather than during (2026-08-20, user: "you can set
+    time goals per slide and have a timer per slide and shows you time
+    remaining and/or total time and or time over").
+
+    Measured: "1 slide timed - 2:30 total, leaving 0:30 of your 3
+    minutes".
+    """
+    assert 'id="notespane"' in out
+    assert "function renderNotesPane(){" in out
+    assert "function slideGoal(sl){" in out
+    assert "function goalTotal(){" in out
+    # they survive a save, which is where per-slide fields usually die
+    assert "if(typeof s.notes==='string'&&s.notes) o.notes=s.notes;" in out
+    assert "if(typeof s.goal==='number'&&s.goal>0) o.goal=s.goal;" in out
+    assert "if(typeof p.talkMins==='number'&&p.talkMins>0)" in out
+    # ...and are in the undo snapshot
+    assert "talkMins:pres.talkMins||0," in out
+    # over your slot is the one thing worth alarming about
+    assert "tot.classList.toggle('over'," in out

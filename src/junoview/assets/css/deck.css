@@ -190,6 +190,22 @@ body.deck-open{overflow:hidden;}
    (margin:auto still centers it while it fits) */
 .deck.editing .deck-stage.zoomed{overflow:auto;
   align-items:flex-start;justify-content:flex-start;}
+/* An item dragged past the page edge used to be simply unreachable: the
+   stage clipped, and it only ever scrolled when the page itself was
+   bigger than the window (2026-08-20, user: "when objects are outside of
+   the view, there is no horizontal scroll to see them"). `.spill` is
+   stamped by renderAnnots when anything actually sits outside the page,
+   so the scrollbars appear because there IS something out there rather
+   than living permanently at the edge of the canvas. */
+.deck.editing .deck-stage.spill{overflow:auto;}
+/* the slide keeps its own size; the room the strays need is made by
+   padding the stage, so nothing on the page moves when one appears */
+.deck.editing .deck-stage.spill .slide{margin:auto;}
+.deck.editing .an-item{--spill-guard:0;}
+/* strays are shown, not hidden: dimmed and outlined so it is obvious
+   they are off the page rather than just badly placed */
+.deck.editing .an-item.an-offpage{outline:1px dashed #e5484d99;
+  outline-offset:2px;}
 /* a custom page (poster / portrait) letterboxes in playback too */
 .deck.custom-page .vpage{display:flex;}
 /* the Page dropdown menu */
@@ -1023,7 +1039,10 @@ body.slide-editing .apptop{display:none;}
 /* ---- everything below here is the CHANGING region. Output and Notebooks
    belong to it because they stand down for a selection: a group that can
    disappear cannot be part of the half that promises never to move. ---- */
-.rbn-out{order:4;}
+/* Output is gone: Print check was its only control, and one button
+   under its own heading is a heading doing no work. It sits with the
+   other ways of LOOKING at the page now (2026-08-20). */
+.rbn-type{order:4;}
 .rbn-anim{order:5;}
 .rbn-insert{order:6;}
 .et-fmt .rbn-grp{order:7;flex:none;}
@@ -1908,6 +1927,11 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 
 /* annotation layer */
 .annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
+/* the layer does not clip while EDITING, so an item nudged past the
+   page edge stays visible and draggable instead of disappearing; the
+   stage grows scrollbars to reach it (2026-08-20). Playback and every
+   export clip to the page, which is what a page is. */
+.annot-layer.an-spill{overflow:visible;}
 .deck.editing .annot-layer{pointer-events:auto;cursor:crosshair;}
 .deck.editing .annot-layer.tool-select{cursor:default;}
 .deck.editing .annot-layer:not(.tool-select) .an-item,
@@ -2412,3 +2436,102 @@ body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
 .eq-key-tex{font-size:12px;padding:2px 7px;min-height:24px;
   display:inline-flex;align-items:center;justify-content:center;}
 .eq-key-tex mjx-container{margin:0!important;}
+
+/* ---- the style manager: a specimen per style, sized by its own rule --- */
+.sh-menu.style-mgr{display:block;width:272px;padding:6px;}
+.stm-row{display:flex;align-items:center;gap:6px;padding:2px 3px;}
+.stm-spec{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;line-height:1.15;}
+.stm-sz{font-family:var(--mono);font-size:9.5px;color:#7d93a6;flex:none;}
+.stm-b{flex:none;padding:1px 7px;font-size:11px;line-height:1.4;}
+.style-mgr .vw-opt{width:100%;margin-top:5px;}
+
+/* ---- notes & timing pane -------------------------------------------- */
+.notespane .selpane-list{display:flex;flex-direction:column;gap:5px;
+  padding:9px 10px;}
+.np-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#7d93a6;margin-top:4px;}
+.np-notes{min-height:150px;resize:vertical;font-family:var(--sans);
+  font-size:12.5px;line-height:1.5;background:var(--chrome-0,#0b141d);
+  color:#eaf2f8;border:1px solid #ffffff26;border-radius:7px;
+  padding:7px 8px;outline:none;}
+.np-notes:focus{border-color:var(--cyan);}
+.np-row{display:flex;align-items:center;gap:6px;}
+.np-goal{width:74px;font-family:var(--mono);font-size:12px;
+  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  border:1px solid #ffffff26;border-radius:6px;padding:4px 6px;
+  outline:none;}
+.np-goal:focus{border-color:var(--cyan);}
+.np-unit{font-family:var(--mono);font-size:10.5px;color:#8ea4b6;}
+.np-clear{padding:2px 7px;font-size:10px;}
+.np-tot{font-family:var(--mono);font-size:10.5px;line-height:1.45;
+  color:#8ea4b6;background:#ffffff0a;border-radius:6px;padding:6px 8px;}
+.np-tot:empty{display:none;}
+/* over your slot is the one thing here worth alarming about */
+.np-tot.over{color:#e6b877;background:#cf9a4e1f;}
+body.light .np-notes,body.light .np-goal{background:var(--paper-2);
+  color:var(--ink);border-color:var(--line);}
+/* the Present split button */
+.qat-playgrp{display:inline-flex;align-items:stretch;flex:none;}
+.qat-playgrp #dc-playmore{padding:4px 7px;}
+
+/* line + paragraph spacing */
+.sh-menu.lh-menu{display:block;width:186px;padding:5px;}
+.lh-menu .vw-opt{width:100%;text-align:left;}
+/* paragraph spacing is the gap BETWEEN blocks, so it lands on every line
+   of a list and on every <br>-separated run except the first */
+.an-tx.an-ul li + li{margin-top:var(--an-pspace,.18em);}
+.an-tx br{content:"";display:block;margin-top:var(--an-pspace,0);}
+
+/* ---- the notes pane's three tabs + the scratchpad -------------------- */
+.np-tabs{display:flex;gap:2px;padding:5px 7px 0;flex:none;}
+.np-tab{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:#8ea4b6;padding:4px 2px;cursor:pointer;white-space:nowrap;}
+.np-tab:hover{color:#e2edf5;}
+.np-tab.on{color:#fff;border-bottom-color:var(--cyan);}
+.np-tall{min-height:230px;}
+.np-padbar{display:flex;gap:5px;}
+.np-padb{padding:3px 9px;font-size:10.5px;}
+.np-padlist{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.np-fold{border:1px solid #ffffff1f;border-radius:8px;padding:5px;
+  display:flex;flex-direction:column;gap:5px;
+  background:color-mix(in srgb,var(--accent) 5%,transparent);}
+.np-fhead,.np-nhead{display:flex;align-items:center;gap:4px;}
+.np-ftitle,.np-ntitle{flex:1;min-width:0;font-family:var(--sans);
+  background:none;border:1px solid transparent;border-radius:5px;
+  color:#eaf2f8;padding:2px 5px;outline:none;}
+.np-ftitle{font-weight:600;font-size:11.5px;}
+.np-ntitle{font-size:11.5px;}
+.np-ftitle:hover,.np-ntitle:hover,.np-ftitle:focus,.np-ntitle:focus{
+  border-color:#ffffff2b;}
+.np-nfold{font-family:var(--mono);font-size:9.5px;max-width:84px;
+  background:var(--chrome-0,#0b141d);color:#bcccd8;
+  border:1px solid #ffffff26;border-radius:5px;padding:1px 3px;}
+.np-nx{padding:0 6px;font-size:11px;opacity:.55;}
+.np-nx:hover{opacity:1;}
+.np-note{border:1px solid #ffffff14;border-radius:7px;padding:4px;
+  display:flex;flex-direction:column;gap:3px;}
+.np-nbody{min-height:52px;resize:vertical;font-family:var(--sans);
+  font-size:11.5px;line-height:1.45;background:var(--chrome-0,#0b141d);
+  color:#dbe6ee;border:1px solid #ffffff1f;border-radius:6px;
+  padding:4px 6px;outline:none;}
+.np-nbody:focus{border-color:var(--cyan);}
+body.light .np-nbody,body.light .np-nfold{background:var(--paper-2);
+  color:var(--ink);border-color:var(--line);}
+body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
+
+/* a named FOLDER in the Layers pane. Not a group: filing only, so it gets
+   a neutral outline rather than a group's colour bar (2026-08-20). */
+.sp-fold2{border-left:3px solid #ffffff33;}
+.sp-fico{flex:none;opacity:.65;font-size:11px;}
+.sp-row.sp-infold{padding-left:16px;border-left:3px solid #ffffff1f;}
+
+/* a dragged CORNER on a line, and the faint handle that makes one */
+.an-endpt.an-mid{background:var(--accent);border-color:#fff;
+  width:11px;height:11px;margin:-5.5px 0 0 -5.5px;}
+.an-endpt.an-addpt{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+  background:transparent;border:1.5px dashed
+  color-mix(in srgb,var(--accent) 70%,transparent);opacity:.5;}
+.an-endpt.an-addpt:hover{opacity:1;background:var(--accent);
+  border-style:solid;}

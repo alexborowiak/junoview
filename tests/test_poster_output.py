@@ -21,7 +21,14 @@ def test_page_background_and_light_pages(out):
     # the swatches are BUILT from PAGE_BGS now rather than hand-written
     # into the markup, so the two background menus cannot drift apart and
     # the colours live in one place (2026-08-20)
-    assert 'id="mi-pagebg"' in out
+    # Page background LEFT the File menu on 2026-08-20. File is where you
+    # open, save and export things; how the deck looks is Design. It was
+    # in that menu because somebody put it there, not because it belonged
+    # (user: "why the fuck is page background in file"). It now sits in
+    # the Background dropdown beside the per-slide override, so the two
+    # can be seen against each other.
+    assert 'id="mi-pagebg"' not in out
+    assert "menuHead(menu,'Every slide');" in out
     assert "var PAGE_BGS=[" in out
     assert "function bgChips(host,current,onPick,withAuto){" in out
     # a gradient has no single colour to measure, so each entry declares

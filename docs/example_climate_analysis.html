@@ -3030,6 +3030,22 @@ body.deck-open{overflow:hidden;}
    (margin:auto still centers it while it fits) */
 .deck.editing .deck-stage.zoomed{overflow:auto;
   align-items:flex-start;justify-content:flex-start;}
+/* An item dragged past the page edge used to be simply unreachable: the
+   stage clipped, and it only ever scrolled when the page itself was
+   bigger than the window (2026-08-20, user: "when objects are outside of
+   the view, there is no horizontal scroll to see them"). `.spill` is
+   stamped by renderAnnots when anything actually sits outside the page,
+   so the scrollbars appear because there IS something out there rather
+   than living permanently at the edge of the canvas. */
+.deck.editing .deck-stage.spill{overflow:auto;}
+/* the slide keeps its own size; the room the strays need is made by
+   padding the stage, so nothing on the page moves when one appears */
+.deck.editing .deck-stage.spill .slide{margin:auto;}
+.deck.editing .an-item{--spill-guard:0;}
+/* strays are shown, not hidden: dimmed and outlined so it is obvious
+   they are off the page rather than just badly placed */
+.deck.editing .an-item.an-offpage{outline:1px dashed #e5484d99;
+  outline-offset:2px;}
 /* a custom page (poster / portrait) letterboxes in playback too */
 .deck.custom-page .vpage{display:flex;}
 /* the Page dropdown menu */
@@ -3863,7 +3879,10 @@ body.slide-editing .apptop{display:none;}
 /* ---- everything below here is the CHANGING region. Output and Notebooks
    belong to it because they stand down for a selection: a group that can
    disappear cannot be part of the half that promises never to move. ---- */
-.rbn-out{order:4;}
+/* Output is gone: Print check was its only control, and one button
+   under its own heading is a heading doing no work. It sits with the
+   other ways of LOOKING at the page now (2026-08-20). */
+.rbn-type{order:4;}
 .rbn-anim{order:5;}
 .rbn-insert{order:6;}
 .et-fmt .rbn-grp{order:7;flex:none;}
@@ -4748,6 +4767,11 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 
 /* annotation layer */
 .annot-layer{position:absolute;inset:0;z-index:6;pointer-events:none;}
+/* the layer does not clip while EDITING, so an item nudged past the
+   page edge stays visible and draggable instead of disappearing; the
+   stage grows scrollbars to reach it (2026-08-20). Playback and every
+   export clip to the page, which is what a page is. */
+.annot-layer.an-spill{overflow:visible;}
 .deck.editing .annot-layer{pointer-events:auto;cursor:crosshair;}
 .deck.editing .annot-layer.tool-select{cursor:default;}
 .deck.editing .annot-layer:not(.tool-select) .an-item,
@@ -5252,6 +5276,105 @@ body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
 .eq-key-tex{font-size:12px;padding:2px 7px;min-height:24px;
   display:inline-flex;align-items:center;justify-content:center;}
 .eq-key-tex mjx-container{margin:0!important;}
+
+/* ---- the style manager: a specimen per style, sized by its own rule --- */
+.sh-menu.style-mgr{display:block;width:272px;padding:6px;}
+.stm-row{display:flex;align-items:center;gap:6px;padding:2px 3px;}
+.stm-spec{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;line-height:1.15;}
+.stm-sz{font-family:var(--mono);font-size:9.5px;color:#7d93a6;flex:none;}
+.stm-b{flex:none;padding:1px 7px;font-size:11px;line-height:1.4;}
+.style-mgr .vw-opt{width:100%;margin-top:5px;}
+
+/* ---- notes & timing pane -------------------------------------------- */
+.notespane .selpane-list{display:flex;flex-direction:column;gap:5px;
+  padding:9px 10px;}
+.np-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#7d93a6;margin-top:4px;}
+.np-notes{min-height:150px;resize:vertical;font-family:var(--sans);
+  font-size:12.5px;line-height:1.5;background:var(--chrome-0,#0b141d);
+  color:#eaf2f8;border:1px solid #ffffff26;border-radius:7px;
+  padding:7px 8px;outline:none;}
+.np-notes:focus{border-color:var(--cyan);}
+.np-row{display:flex;align-items:center;gap:6px;}
+.np-goal{width:74px;font-family:var(--mono);font-size:12px;
+  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  border:1px solid #ffffff26;border-radius:6px;padding:4px 6px;
+  outline:none;}
+.np-goal:focus{border-color:var(--cyan);}
+.np-unit{font-family:var(--mono);font-size:10.5px;color:#8ea4b6;}
+.np-clear{padding:2px 7px;font-size:10px;}
+.np-tot{font-family:var(--mono);font-size:10.5px;line-height:1.45;
+  color:#8ea4b6;background:#ffffff0a;border-radius:6px;padding:6px 8px;}
+.np-tot:empty{display:none;}
+/* over your slot is the one thing here worth alarming about */
+.np-tot.over{color:#e6b877;background:#cf9a4e1f;}
+body.light .np-notes,body.light .np-goal{background:var(--paper-2);
+  color:var(--ink);border-color:var(--line);}
+/* the Present split button */
+.qat-playgrp{display:inline-flex;align-items:stretch;flex:none;}
+.qat-playgrp #dc-playmore{padding:4px 7px;}
+
+/* line + paragraph spacing */
+.sh-menu.lh-menu{display:block;width:186px;padding:5px;}
+.lh-menu .vw-opt{width:100%;text-align:left;}
+/* paragraph spacing is the gap BETWEEN blocks, so it lands on every line
+   of a list and on every <br>-separated run except the first */
+.an-tx.an-ul li + li{margin-top:var(--an-pspace,.18em);}
+.an-tx br{content:"";display:block;margin-top:var(--an-pspace,0);}
+
+/* ---- the notes pane's three tabs + the scratchpad -------------------- */
+.np-tabs{display:flex;gap:2px;padding:5px 7px 0;flex:none;}
+.np-tab{flex:1;font-family:var(--mono);font-size:9.5px;letter-spacing:.05em;
+  background:none;border:none;border-bottom:2px solid transparent;
+  color:#8ea4b6;padding:4px 2px;cursor:pointer;white-space:nowrap;}
+.np-tab:hover{color:#e2edf5;}
+.np-tab.on{color:#fff;border-bottom-color:var(--cyan);}
+.np-tall{min-height:230px;}
+.np-padbar{display:flex;gap:5px;}
+.np-padb{padding:3px 9px;font-size:10.5px;}
+.np-padlist{display:flex;flex-direction:column;gap:6px;margin-top:6px;}
+.np-fold{border:1px solid #ffffff1f;border-radius:8px;padding:5px;
+  display:flex;flex-direction:column;gap:5px;
+  background:color-mix(in srgb,var(--accent) 5%,transparent);}
+.np-fhead,.np-nhead{display:flex;align-items:center;gap:4px;}
+.np-ftitle,.np-ntitle{flex:1;min-width:0;font-family:var(--sans);
+  background:none;border:1px solid transparent;border-radius:5px;
+  color:#eaf2f8;padding:2px 5px;outline:none;}
+.np-ftitle{font-weight:600;font-size:11.5px;}
+.np-ntitle{font-size:11.5px;}
+.np-ftitle:hover,.np-ntitle:hover,.np-ftitle:focus,.np-ntitle:focus{
+  border-color:#ffffff2b;}
+.np-nfold{font-family:var(--mono);font-size:9.5px;max-width:84px;
+  background:var(--chrome-0,#0b141d);color:#bcccd8;
+  border:1px solid #ffffff26;border-radius:5px;padding:1px 3px;}
+.np-nx{padding:0 6px;font-size:11px;opacity:.55;}
+.np-nx:hover{opacity:1;}
+.np-note{border:1px solid #ffffff14;border-radius:7px;padding:4px;
+  display:flex;flex-direction:column;gap:3px;}
+.np-nbody{min-height:52px;resize:vertical;font-family:var(--sans);
+  font-size:11.5px;line-height:1.45;background:var(--chrome-0,#0b141d);
+  color:#dbe6ee;border:1px solid #ffffff1f;border-radius:6px;
+  padding:4px 6px;outline:none;}
+.np-nbody:focus{border-color:var(--cyan);}
+body.light .np-nbody,body.light .np-nfold{background:var(--paper-2);
+  color:var(--ink);border-color:var(--line);}
+body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
+
+/* a named FOLDER in the Layers pane. Not a group: filing only, so it gets
+   a neutral outline rather than a group's colour bar (2026-08-20). */
+.sp-fold2{border-left:3px solid #ffffff33;}
+.sp-fico{flex:none;opacity:.65;font-size:11px;}
+.sp-row.sp-infold{padding-left:16px;border-left:3px solid #ffffff1f;}
+
+/* a dragged CORNER on a line, and the faint handle that makes one */
+.an-endpt.an-mid{background:var(--accent);border-color:#fff;
+  width:11px;height:11px;margin:-5.5px 0 0 -5.5px;}
+.an-endpt.an-addpt{width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+  background:transparent;border:1.5px dashed
+  color-mix(in srgb,var(--accent) 70%,transparent);opacity:.5;}
+.an-endpt.an-addpt:hover{opacity:1;background:var(--accent);
+  border-style:solid;}
 </style>
 <script>
 window.MathJax = {
@@ -9131,10 +9254,13 @@ through Ko-fi. Thank you.</p>
           title="Add trim marks just outside the page for the print
  shop to cut to. The page itself keeps its exact size &mdash; the sheet
  grows by 5mm on every side to hold them">Crop marks: off</button>
-        <div class="dc-mi dc-pagebg" id="mi-pagebg"
-          title="The page's own background. A slide can override it from
- Design &#9656; Background">Page background
-        </div>
+        <!-- Page background is NOT here any more. It is a property of
+             how the deck LOOKS, and File is where you open, save and
+             export things — it was in this menu because that is where
+             somebody put it, not because it belongs (2026-08-20, user:
+             "why the fuck is page background in file"). It lives with
+             the per-slide background, under Design, where the two can be
+             seen against each other. -->
         <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
         <button class="dc-mi" id="mi-autosave" hidden></button>
@@ -9244,9 +9370,33 @@ through Ko-fi. Thank you.</p>
     <a class="dbtn qat-btn" id="deck-support" target="_blank" rel="noopener"
       title="Support Junoview on Ko-fi — funds an online, hosted version
  with accounts"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z"/></svg></a>
-    <button class="dbtn primary qat-play" id="dc-play"
-      title="Play this full screen, from this page (F5)">
-      <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</button>
+    <!-- Present is a SPLIT control: press it to play, press the chevron
+         for presenter view — the second screen with your notes, the next
+         slide and the clock (2026-08-20, user asked for "the different
+         screens one with the slides and the other with like notes and the
+         next slide"). -->
+    <span class="dc-savegrp qat-playgrp">
+      <button class="dbtn primary qat-play" id="dc-play"
+        title="Play this full screen, from this page (F5)">
+        <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</button>
+      <span class="dc-menuwrap">
+        <button class="dbtn primary dc-target" id="dc-playmore"
+          aria-haspopup="true" aria-expanded="false"
+          aria-label="Presenting options"
+          title="Presenting options">&#9662;</button>
+        <div class="dc-menu" id="play-menu" hidden>
+          <div class="dc-mhead">present</div>
+          <button class="dc-mi" id="pl-here">Play from this slide</button>
+          <button class="dc-mi" id="pl-start">Play from the start</button>
+          <div class="dc-msep"></div>
+          <button class="dc-mi" id="pl-presenter"
+            title="Opens a second window with your notes, the next slide
+ and a clock. Drag it to the other screen, then play.">Presenter
+            view&#8230;</button>
+          <button class="dc-mi" id="pl-notes">Notes &amp; timing&#8230;</button>
+        </div>
+      </span>
+    </span>
   </div>
   <aside class="deck-create" id="deck-create" hidden>
       <div class="dc-resize" id="dc-resize"
@@ -9438,6 +9588,34 @@ through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
+          <!-- THE DECK'S TYPE, editable without selecting anything. Until
+               now a style could only be changed by formatting one box and
+               pushing its look outwards, which meant you had to have a box
+               of that style on the slide you happened to be on
+               (2026-08-20). -->
+          <span class="rbn-grp rbn-type" data-tab="design">
+            <span class="rbn-row">
+              <span class="sh-drop" id="dsg-stylewrap">
+                <button class="dbtn rbn-sm" id="dsg-styles"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Every named text style in this presentation, with
+ its size — change one and every box wearing it follows">&#9776; Text
+                  styles &#9662;</button>
+                <div class="sh-menu style-mgr" id="dsg-style-menu"
+                  hidden></div>
+              </span>
+              <button class="dbtn rbn-sm" id="dsg-scale-down"
+                title="Make every text style one step smaller — the whole
+ deck's type, in proportion">A&#8722;</button>
+              <button class="dbtn rbn-sm" id="dsg-scale-up"
+                title="Make every text style one step bigger — the whole
+ deck's type, in proportion">A&#43;</button>
+              <button class="dbtn rbn-sm" id="dsg-restyle"
+                title="Re-apply the styles to every box wearing one, on
+ every slide — use it after changing a style by hand">&#8635; Re-apply</button>
+            </span>
+            <span class="rbn-lab">Type</span>
+          </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
                finished thing, on paper or on a screen. They were lumped
@@ -9482,6 +9660,17 @@ through Ko-fi. Thank you.</p>
                 title="Stand the toolbar up on the right-hand edge, so the
  page gets the full height of the window. A tall poster needs height far
  more than width">&#8942; Side toolbar</button>
+              <!-- Print check came from a group of its own. One button
+                   under its own heading is a heading doing no work, and
+                   checking the page before it goes out is a way of
+                   LOOKING at it — which is what everything else in this
+                   group is (2026-08-20, user: "some tabs still now have
+                   two few buttons"). -->
+              <button class="dbtn rbn-sm" id="vw-check"
+                aria-pressed="false"
+                title="Check this page before it goes to print: soft
+ figures, anything off the page or inside the margin, unreadable text,
+ empty frames">&#9873; Check</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
@@ -9490,6 +9679,10 @@ through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
  of it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
+              <button class="dbtn rbn-sm" id="notes-btn"
+                aria-pressed="false"
+                title="Speaker notes for this slide, and how long you want
+ to spend on it. Only you ever see them">&#9998; Notes</button>
               <!-- Zoom has left this group for the thin bar at the top.
                    It is the one control you reach for on EVERY tab, and a
                    control that a tab can take away from you is a control
@@ -9498,19 +9691,6 @@ through Ko-fi. Thank you.</p>
                    beside it. -->
             </span>
             <span class="rbn-lab">View</span>
-          </span>
-          <span class="rbn-grp rbn-out" data-tab="home">
-            <span class="rbn-row">
-              <!-- "Check" alone said nothing (2026-08-07, user: "what are
-                   things like 'check', what does that even mean?"). The
-                   label has to name what is being checked. -->
-              <button class="dbtn rbn-sm" id="vw-check"
-                aria-pressed="false"
-                title="Check this page before it goes to print: soft
- figures, anything off the page or inside the margin, unreadable text,
- empty frames">&#9873; Check</button>
-            </span>
-            <span class="rbn-lab">Output</span>
           </span>
           <!-- ANIMATE. The pane and the effect chooser are the same job
                and now sit in the same tab instead of the pane hiding
@@ -9533,6 +9713,16 @@ through Ko-fi. Thank you.</p>
                 title="Rise the selected items in from below">Rise</button>
               <button class="dbtn etm" id="anim-zoom" hidden
                 title="Zoom the selected items in">Zoom</button>
+              <!-- the two builds people actually want, in one press
+                   each. Setting "one at a time" by hand means selecting
+                   every item and stepping its order, which is the kind of
+                   fiddling this editor exists to avoid (2026-08-20). -->
+              <button class="dbtn rbn-sm" id="anim-stagger"
+                title="Reveal everything on this slide ONE AT A TIME, in
+ reading order — a click per item">&#9776; One by one</button>
+              <button class="dbtn rbn-sm" id="anim-together"
+                title="Reveal everything on this slide on the SAME click —
+ one build, everything at once">&#9707; All at once</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
                 title="Remove EVERY animation on this slide — nothing is
  held back during playback">&#10005; Clear slide</button>
@@ -9898,6 +10088,19 @@ through Ko-fi. Thank you.</p>
                 >&#8676;</button>
               <button class="dbtn etm" id="fmt-indent" hidden
                 title="Move this bullet in one level (Tab)">&#8677;</button>
+              <!-- LINE SPACING, which every word processor has had since
+                   the 1980s and this did not (2026-08-20, user: "when I
+                   say I want all the power point options, why do you not
+                   do all them. Like where is the line spacing options").
+                   Space BETWEEN paragraphs is the other half nobody
+                   thinks to ask for until their bullets are touching. -->
+              <span class="sh-drop" id="fmt-lhwrap">
+                <button class="dbtn etm" id="fmt-lh" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Line spacing, and the gap between paragraphs">
+                  &#8597; Spacing &#9662;</button>
+                <div class="sh-menu lh-menu" id="fmt-lh-menu" hidden></div>
+              </span>
               <!-- alignment and curve are both "how this text sits"; one
                    worded menu instead of two controls -->
               <span class="sh-drop" id="fmt-parawrap">
@@ -10082,6 +10285,65 @@ through Ko-fi. Thank you.</p>
            NOTHING selected, which is the whole point — the build order is
            a property of the slide, not of whatever you happen to have
            clicked. -->
+      <!-- SPEAKER NOTES, per slide. In the same shell as Layers and the
+           timeline, because it is the same kind of thing: a panel you keep
+           open beside the page while you work on it. The notes are what
+           the presenter view reads (2026-08-20). -->
+      <aside class="selpane notespane" id="notespane" hidden>
+        <div class="selpane-h"><span>Notes &amp; timing</span>
+          <button class="dbtn dc-icon" id="notespane-close"
+            title="Close">&#10005;</button></div>
+        <div class="np-tabs" id="np-tabs">
+          <button class="np-tab on" data-np="slide">This slide</button>
+          <button class="np-tab" data-np="deck">Whole talk</button>
+          <button class="np-tab" data-np="pad">Scratchpad</button>
+        </div>
+        <div class="selpane-list" id="notespane-body">
+          <label class="np-lab" for="np-notes">Speaker notes for this
+            slide</label>
+          <textarea id="np-notes" class="np-notes" spellcheck="true"
+            placeholder="What you want to say here. Only you see this —
+ it never goes on the slide."></textarea>
+          <label class="np-lab" for="np-goal">How long you want to spend
+            here</label>
+          <div class="np-row">
+            <input id="np-goal" class="np-goal" type="number" min="0"
+              max="180" step="0.5" placeholder="—">
+            <span class="np-unit">minutes</span>
+            <button class="dbtn np-clear" id="np-goalclear"
+              title="No target for this slide">&#10005;</button>
+          </div>
+          <div class="np-tot" id="np-tot"></div>
+          <label class="np-lab" for="np-total">Whole talk</label>
+          <div class="np-row">
+            <input id="np-total" class="np-goal" type="number" min="0"
+              max="600" step="1" placeholder="—">
+            <span class="np-unit">minutes</span>
+          </div>
+        </div>
+        <!-- WHOLE-TALK notes: the things that are not about any one slide
+             — the argument, the questions you expect, what to cut if you
+             run late (2026-08-20). -->
+        <div class="selpane-list" id="notespane-deck" hidden>
+          <label class="np-lab" for="np-decknotes">Notes about the whole
+            talk</label>
+          <textarea id="np-decknotes" class="np-notes np-tall"
+            spellcheck="true"
+            placeholder="The argument. Questions you expect. What to cut
+ if you run late."></textarea>
+        </div>
+        <!-- THE SCRATCHPAD: loose notes, in folders, not attached to any
+             slide. A place to put a thought without first deciding where
+             it goes — which is the whole reason people keep a separate
+             text file beside the deck (2026-08-20). -->
+        <div class="selpane-list" id="notespane-pad" hidden>
+          <div class="np-padbar">
+            <button class="dbtn np-padb" id="np-addnote">&#43; Note</button>
+            <button class="dbtn np-padb" id="np-addfold">&#43; Folder</button>
+          </div>
+          <div class="np-padlist" id="np-padlist"></div>
+        </div>
+      </aside>
       <aside class="selpane animpane" id="animpane" hidden>
         <div class="selpane-h"><span>Animation pane</span>
           <button class="dbtn dc-icon" id="animpane-close"
@@ -17038,10 +17300,8 @@ window.JunoPptx = (function () {
     var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
-    var deckBg=(pres&&pres.pageBg)||'#0b141d';
-    $$('#mi-pagebg .bg-chip').forEach(function(sw){
-      sw.setAttribute('aria-pressed',
-        (sw.dataset.bgv===deckBg).toString());});
+    /* the chips live in the Background dropdown now, and it rebuilds
+       itself each time it opens - nothing to sync here */
   }
   function applyPage(){
     var pg=pageOf();
@@ -17073,8 +17333,8 @@ window.JunoPptx = (function () {
        syncRibbonGroups hides a group once nothing in it is showing */
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
-    var clrB=$('#anim-clear');
-    if(clrB) clrB.hidden=!!pg.poster;
+    ['#anim-clear','#anim-stagger','#anim-together'].forEach(function(id){
+      var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
     var nums=$('#mi-nums');
@@ -18052,6 +18312,13 @@ window.JunoPptx = (function () {
     $$('.selpane',deckEl).forEach(function(p){
       ob.observe(p,{attributes:true,attributeFilter:['hidden']});});
   })();
+  /* every folder name in use on this slide, in the order items appear */
+  function folderNames(s){
+    var seen={},out=[];
+    ((s&&s.annots)||[]).forEach(function(a){
+      if(a&&a.fold&&!seen[a.fold]){seen[a.fold]=1;out.push(a.fold);}});
+    return out;
+  }
   function renderSelPane(){
     var pane=$('#selpane'),list=$('#selpane-list');
     if(!pane||pane.hidden||!list) return;
@@ -18169,8 +18436,78 @@ window.JunoPptx = (function () {
       function(){ungroupSel();renderSelPane();});
     tool('\u29c9 Duplicate','Duplicate the selected items',selN.length>=1,
       function(){dupAnnots(selN,false);});
+    /* A FOLDER IS NOT A GROUP. Grouping welds items together — they move
+       and format as one, which is exactly what you do NOT want from a
+       filing system. Until now the only folders in this pane were groups,
+       so tidying twelve items into three folders also made three rigid
+       blocks (2026-08-20, user: "there needs to be folders in the objects
+       thing").
+       A folder is just a name on the items in it: a.fold. Nothing about
+       selection, movement or formatting changes. */
+    tool('\u2b1a New folder','Put the selected items in a named folder '
+      +'\u2014 filing only, they are NOT grouped',selN.length>=1,
+      function(){
+        var nm=prompt('Name this folder','Folder '
+          +(folderNames(s).length+1));
+        if(nm===null) return;
+        nm=nm.trim(); if(!nm) return;
+        selN.forEach(function(i){if(s.annots[i]) s.annots[i].fold=nm;});
+        markDirty();renderSelPane();
+        toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
+          +'\u201c'+nm+'\u201d');
+      });
+    tool('\u2715 Out of folder','Take the selected items out of their '
+      +'folder',selN.some(function(i){return s.annots[i]&&s.annots[i].fold;}),
+      function(){
+        selN.forEach(function(i){
+          if(s.annots[i]) delete s.annots[i].fold;});
+        markDirty();renderSelPane();
+      });
     list.appendChild(bar2);
-    /* GROUPS come first, as folders: a coloured chip, a name you can
+    /* NAMED FOLDERS first — filing, not grouping. Renaming one renames
+       it on every item in it, because the name IS the folder (there is no
+       folder object to rename). */
+    folderNames(s).forEach(function(fname){
+      var fw=document.createElement('div');fw.className='sp-folder sp-fold2';
+      var fi=document.createElement('span');fi.className='sp-fico';
+      fi.textContent='\u2b1a';fw.appendChild(fi);
+      var fn=document.createElement('span');
+      fn.className='sp-t sp-gname';fn.textContent=fname;
+      fn.title=fname+' \u2014 double-click to rename this folder';
+      fn.addEventListener('dblclick',function(e){
+        e.stopPropagation();
+        var nm=prompt('Rename this folder',fname);
+        if(nm===null) return;
+        nm=nm.trim();
+        (s.annots||[]).forEach(function(a){
+          if(a&&a.fold===fname){
+            if(nm) a.fold=nm; else delete a.fold;}});
+        markDirty();renderSelPane();
+      });
+      fw.appendChild(fn);
+      var fsel=document.createElement('button');
+      fsel.className='sp-act';fsel.type='button';fsel.innerHTML='\u25ce';
+      fsel.title='Select everything in this folder';
+      fsel.addEventListener('click',function(e){
+        e.stopPropagation();
+        var hit=[];
+        (s.annots||[]).forEach(function(a,i){
+          if(a&&a.fold===fname&&!a.lock) hit.push(i);});
+        if(!hit.length) return;
+        selSet=hit;selAnnot=hit[hit.length-1];
+        var l2=stage.querySelector('.annot-layer');
+        if(l2) paintSel(l2);
+        lastSelSig='';showFmt();renderSelPane();
+      });
+      fw.appendChild(fsel);
+      list.appendChild(fw);
+      (s.annots||[]).forEach(function(a,i){
+        if(!a||a.fold!==fname) return;
+        var r=rowEl(a,i);r.classList.add('sp-infold');
+        list.appendChild(r);
+      });
+    });
+    /* GROUPS come next, as folders: a coloured chip, a name you can
        change, and the members indented under it */
     var seen={},orderG=[];
     ann.forEach(function(a2){
@@ -18228,15 +18565,18 @@ window.JunoPptx = (function () {
       });
       list.appendChild(f);
       for(var i2=ann.length-1;i2>=0;i2--)
-        if(ann[i2]&&ann[i2].grp===g){
+        if(ann[i2]&&ann[i2].grp===g&&!ann[i2].fold){
           var r2=rowEl(ann[i2],i2);
           r2.classList.add('sp-ing');
           r2.style.borderLeftColor=meta.color||GRP_COLORS[0];
           list.appendChild(r2);
         }
     });
+    /* ...and finally everything filed nowhere. An item already listed
+       under a named FOLDER above must not appear twice (2026-08-20). */
     for(var i=ann.length-1;i>=0;i--)
-      if(!ann[i]||ann[i].grp==null) list.appendChild(rowEl(ann[i],i));
+      if(!ann[i]||(ann[i].grp==null&&!ann[i].fold))
+        list.appendChild(rowEl(ann[i],i));
   }
   var GRP_COLORS=['#39a9c0','#ff6b57','#f0a848','#46a892','#a07be0',
     '#8ba0b2'];
@@ -18343,11 +18683,15 @@ window.JunoPptx = (function () {
         &&Math.abs((st.h||0)-pane.offsetHeight)<3) return;
       st.w=pane.offsetWidth;st.h=pane.offsetHeight;
       paneSave(id,st);
-      /* a widened pane needs a wider strip reserved for it */
-      if(!st.moved) syncPaneDock();
+      /* a widened pane needs a wider strip reserved for it - but NOT from
+         inside the observer callback: syncPaneDock re-fits the page, the
+         page reflows, and the browser reports "ResizeObserver loop
+         completed with undelivered notifications" (seen live 2026-08-20).
+         One frame later is outside the loop and looks identical. */
+      if(!st.moved) requestAnimationFrame(syncPaneDock);
     }).observe(pane);
   }
-  ['selpane','animpane','verpane','preflight','varspane']
+  ['selpane','animpane','notespane','verpane','preflight','varspane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -18443,6 +18787,11 @@ window.JunoPptx = (function () {
            silently dies on the next load — exactly what happened to
            `label` before it was added (2026-08-10) */
         if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;
+        /* speaker notes and the per-slide time goal: yours, never drawn
+           on the page, and lost on every reload until they were
+           whitelisted here (2026-08-20) */
+        if(typeof s.notes==='string'&&s.notes) o.notes=s.notes;
+        if(typeof s.goal==='number'&&s.goal>0) o.goal=s.goal;
         if(s.border) o.border=JSON.parse(JSON.stringify(s.border));
         if(s.grpmeta) o.grpmeta=JSON.parse(JSON.stringify(s.grpmeta));
         if(s.layout==='title'){
@@ -18483,6 +18832,10 @@ window.JunoPptx = (function () {
     /* trim marks are a print decision and were being forgotten on every
        reload, because nothing carried them across (2026-08-10) */
     if(p.cropMarks) out.cropMarks=1;
+    if(typeof p.talkMins==='number'&&p.talkMins>0) out.talkMins=p.talkMins;
+    if(typeof p.notes==='string'&&p.notes) out.notes=p.notes;
+    if(Array.isArray(p.pad)&&p.pad.length)
+      out.pad=JSON.parse(JSON.stringify(p.pad));
     /* deck-level furniture, same rule as the page background: forget it on
        load and a saved deck quietly loses its footer (2026-08-20) */
     ['wmark','head','foot','styles'].forEach(function(k){
@@ -18750,7 +19103,7 @@ window.JunoPptx = (function () {
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
   var undoStack=[],redoStack=[],histSnap=null;
   function histState(){
-    return JSON.stringify({slides:pres.slides||[],
+    return JSON.stringify({slides:pres.slides||[],talkMins:pres.talkMins||0,
       showNums:pres.showNums||0,wmark:pres.wmark||null,
       head:pres.head||null,foot:pres.foot||null});
   }
@@ -18770,6 +19123,7 @@ window.JunoPptx = (function () {
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     ['wmark','head','foot'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
+    if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;selAnnot=null;selSet=[];
     /* persist WITHOUT recording a new history entry */
@@ -19268,9 +19622,39 @@ window.JunoPptx = (function () {
      60-pixel stub in the top-left corner (2026-08-07, user: "arrow just
      appears in the top left"). Scaling here rather than with a viewBox
      keeps stroke width and arrowheads circular instead of stretched. */
+  /* the corners a line is dragged through, if any. Percentages of the
+     page like everything else, in the order they are walked. An arrow
+     without them is exactly what it always was - two endpoints - so
+     nothing that never touches a corner notices they exist (2026-08-20,
+     user: "when adding arrows you can really edit all the points and make
+     it the exact shape you want"). */
+  function arrowMids(a){
+    return (a&&Array.isArray(a.mid))?a.mid:[];
+  }
   function arrowPath(e,a,W,H){
     W=W||100;H=H||100;
     var x1=e.x1/100*W,y1=e.y1/100*H,x2=e.x2/100*W,y2=e.y2/100*H;
+    /* CORNERS win over every canned route: once you have dragged one in by
+       hand, "curved" and "elbowed" are no longer describing the line you
+       drew. Smoothed with the same Catmull-Rom the freehand tool uses, so
+       a dragged corner reads as a bend rather than a kink - unless
+       a.sharp says the kink was the point. */
+    var mids=arrowMids(a);
+    if(mids.length){
+      var pts=[[x1,y1]].concat(mids.map(function(m){
+        return [m[0]/100*W,m[1]/100*H];}),[[x2,y2]]);
+      if(a.sharp)
+        return 'M'+pts.map(function(q){return q[0]+' '+q[1];}).join(' L');
+      var f=function(n){return Math.round(n*100)/100;};
+      var d2='M'+f(pts[0][0])+' '+f(pts[0][1]);
+      for(var k=0;k<pts.length-1;k++){
+        var q0=pts[k-1]||pts[k],q1=pts[k],q2=pts[k+1],q3=pts[k+2]||pts[k+1];
+        d2+='C'+f(q1[0]+(q2[0]-q0[0])/6)+' '+f(q1[1]+(q2[1]-q0[1])/6)
+          +','+f(q2[0]-(q3[0]-q1[0])/6)+' '+f(q2[1]-(q3[1]-q1[1])/6)
+          +','+f(q2[0])+' '+f(q2[1]);
+      }
+      return d2;
+    }
     var bend=a.bend||'none';
     if(bend==='h')      /* out sideways first, then down/up */
       return 'M'+x1+' '+y1+' L'+((x1+x2)/2)+' '+y1
@@ -20249,6 +20633,7 @@ window.JunoPptx = (function () {
       }
     }
     renderSelPane();   /* keep the Objects pane on the CURRENT slide */
+    renderNotesPane(); /* ...and the notes, which are per slide */
     /* playback: the code trace flows beneath the slide — scroll (or
        ArrowDown) between them; steps expand in place */
     stage.classList.remove('scrolly');
@@ -20605,7 +20990,374 @@ window.JunoPptx = (function () {
     if(d.font) a.font=d.font; else delete a.font;
     if(d.color) a.color=d.color; else delete a.color;
     if(d.align) a.align=d.align;
+    if(d.lh) a.lh=d.lh; else delete a.lh;
+    if(d.pspace) a.pspace=d.pspace; else delete a.pspace;
   }
+  /* ---- SPEAKER NOTES + TIMING ------------------------------------------
+     Notes are per slide and are never drawn on the page: they exist for
+     the presenter view and for you (2026-08-20, user asked for "the other
+     [screen] with like notes and the next slide"). The per-slide GOAL is
+     in minutes, and the pane adds them up so a talk that cannot fit in
+     its slot says so before you give it, not during. */
+  function slideGoal(sl){
+    return (sl&&typeof sl.goal==='number'&&sl.goal>0)?sl.goal:0;
+  }
+  function goalTotal(){
+    var t=0;
+    (pres.slides||[]).forEach(function(sl){t+=slideGoal(sl);});
+    return t;
+  }
+  function fmtMins(m){
+    var sec=Math.round(m*60);
+    var mm=Math.floor(sec/60),ss=sec%60;
+    return mm+':'+(ss<10?'0':'')+ss;
+  }
+  /* ---- THE SCRATCHPAD --------------------------------------------------
+     Loose notes, in folders, belonging to the presentation rather than to
+     any one slide (2026-08-20, user asked for "overall notes, and then
+     also notes per slide, and make little notes and folders of notes").
+     It is the place to put a thought without first deciding where it goes
+     - which is the entire reason people keep a text file open beside
+     their deck. Stored on pres.pad, so it travels with the file. */
+  function padList(){
+    if(!Array.isArray(pres.pad)) pres.pad=[];
+    return pres.pad;
+  }
+  function renderPad(){
+    var host=$('#np-padlist'); if(!host) return;
+    host.innerHTML='';
+    var items=padList();
+    if(!items.length){
+      host.innerHTML='<div class="selpane-empty">Nothing here yet. '
+        +'Notes you put here belong to the talk, not to a slide.</div>';
+      return;
+    }
+    /* folders first, each with the notes filed under it, then the loose
+       ones - the same shape the Layers pane uses for groups */
+    var folders=items.filter(function(n){return n.t==='f';});
+    function noteRow(n,i){
+      var row=document.createElement('div');row.className='np-note';
+      var head=document.createElement('div');head.className='np-nhead';
+      var ttl=document.createElement('input');
+      ttl.className='np-ntitle';ttl.type='text';
+      ttl.value=n.title||'';ttl.placeholder='untitled note';
+      ttl.addEventListener('keydown',function(e){e.stopPropagation();});
+      ttl.addEventListener('input',function(){
+        n.title=ttl.value;markDirty();});
+      head.appendChild(ttl);
+      if(folders.length){
+        var sel=document.createElement('select');
+        sel.className='np-nfold';
+        var o0=document.createElement('option');
+        o0.value='';o0.textContent='(loose)';sel.appendChild(o0);
+        folders.forEach(function(f){
+          var o=document.createElement('option');
+          o.value=f.id;o.textContent=f.title||'folder';
+          sel.appendChild(o);});
+        sel.value=n.folder||'';
+        sel.title='Which folder this note is filed under';
+        sel.addEventListener('change',function(){
+          if(sel.value) n.folder=sel.value; else delete n.folder;
+          markDirty();renderPad();});
+        head.appendChild(sel);
+      }
+      var x=document.createElement('button');
+      x.className='dbtn dc-icon np-nx';x.innerHTML='&#10005;';
+      x.title='Delete this note';
+      x.addEventListener('click',function(){
+        var at=padList().indexOf(n);
+        if(at>=0) padList().splice(at,1);
+        markDirty();renderPad();});
+      head.appendChild(x);
+      row.appendChild(head);
+      var body=document.createElement('textarea');
+      body.className='np-nbody';body.value=n.body||'';
+      body.placeholder='…';
+      body.addEventListener('keydown',function(e){e.stopPropagation();});
+      body.addEventListener('input',function(){
+        n.body=body.value;markDirty();});
+      row.appendChild(body);
+      return row;
+    }
+    folders.forEach(function(f){
+      var box=document.createElement('div');box.className='np-fold';
+      var fh=document.createElement('div');fh.className='np-fhead';
+      var ft=document.createElement('input');
+      ft.className='np-ftitle';ft.type='text';
+      ft.value=f.title||'';ft.placeholder='folder name';
+      ft.addEventListener('keydown',function(e){e.stopPropagation();});
+      ft.addEventListener('input',function(){
+        f.title=ft.value;markDirty();});
+      fh.appendChild(ft);
+      var fx=document.createElement('button');
+      fx.className='dbtn dc-icon np-nx';fx.innerHTML='&#10005;';
+      fx.title='Delete the folder — its notes become loose';
+      fx.addEventListener('click',function(){
+        padList().forEach(function(n){
+          if(n.folder===f.id) delete n.folder;});
+        var at=padList().indexOf(f);
+        if(at>=0) padList().splice(at,1);
+        markDirty();renderPad();});
+      fh.appendChild(fx);
+      box.appendChild(fh);
+      var any=false;
+      items.forEach(function(n,i){
+        if(n.t==='f'||n.folder!==f.id) return;
+        any=true;box.appendChild(noteRow(n,i));});
+      if(!any){
+        var e2=document.createElement('div');
+        e2.className='selpane-empty';e2.textContent='empty';
+        box.appendChild(e2);
+      }
+      host.appendChild(box);
+    });
+    items.forEach(function(n,i){
+      if(n.t==='f'||n.folder) return;
+      host.appendChild(noteRow(n,i));});
+  }
+  function renderNotesPane(){
+    var pane=$('#notespane');
+    if(!pane||pane.hidden) return;
+    var sl=pres.slides[cur];
+    var ta=$('#np-notes'),gi=$('#np-goal'),ti=$('#np-total'),
+        tot=$('#np-tot');
+    if(ta&&document.activeElement!==ta) ta.value=(sl&&sl.notes)||'';
+    if(gi&&document.activeElement!==gi)
+      gi.value=slideGoal(sl)||'';
+    if(ti&&document.activeElement!==ti)
+      ti.value=pres.talkMins||'';
+    var dn=$('#np-decknotes');
+    if(dn&&document.activeElement!==dn) dn.value=pres.notes||'';
+    renderPad();
+    if(tot){
+      var g=goalTotal(),want=pres.talkMins||0;
+      if(!g&&!want) tot.textContent='';
+      else {
+        var n=(pres.slides||[]).filter(function(x){
+          return slideGoal(x);}).length;
+        var txt=n+' slide'+(n===1?'':'s')+' timed \u2014 '
+          +fmtMins(g)+' total';
+        if(want){
+          var d=g-want;
+          txt+=d>0.008?(', which is '+fmtMins(d)+' OVER your '
+              +want+' minutes')
+            :d<-0.008?(', leaving '+fmtMins(-d)+' of your '
+              +want+' minutes')
+            :', exactly your slot';
+        }
+        tot.textContent=txt;
+        tot.classList.toggle('over',!!want&&g-want>0.008);
+      }
+    }
+  }
+  (function(){
+    var btn=$('#notes-btn'),pane=$('#notespane');
+    if(!btn||!pane) return;
+    function set(open){
+      if(open){
+        /* the panes share one corner: only one can be what you are
+           looking at, the rule showVerpane has always kept */
+        ['#selpane','#animpane','#preflight'].forEach(function(sel){
+          var o=$(sel); if(o) o.hidden=true;});
+        var ob=$('#objects-btn');
+        if(ob) ob.setAttribute('aria-pressed','false');
+        showVerpane(false);
+      }
+      pane.hidden=!open;
+      btn.setAttribute('aria-pressed',open.toString());
+      if(open) renderNotesPane();
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    var cl=$('#notespane-close');
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    var ta=$('#np-notes');
+    if(ta){
+      ta.addEventListener('keydown',function(e){e.stopPropagation();});
+      ta.addEventListener('input',function(){
+        var sl=pres.slides[cur]; if(!sl) return;
+        var v=ta.value;
+        if(v.trim()) sl.notes=v; else delete sl.notes;
+        markDirty();presenterPush();
+      });
+    }
+    var gi=$('#np-goal');
+    if(gi){
+      gi.addEventListener('keydown',function(e){e.stopPropagation();});
+      gi.addEventListener('input',function(){
+        var sl=pres.slides[cur]; if(!sl) return;
+        var v=parseFloat(gi.value);
+        if(v>0) sl.goal=v; else delete sl.goal;
+        markDirty();renderNotesPane();presenterPush();
+      });
+    }
+    var gc=$('#np-goalclear');
+    if(gc) gc.addEventListener('click',function(){
+      var sl=pres.slides[cur]; if(!sl) return;
+      delete sl.goal;markDirty();renderNotesPane();presenterPush();
+    });
+    var ti=$('#np-total');
+    if(ti){
+      ti.addEventListener('keydown',function(e){e.stopPropagation();});
+      ti.addEventListener('input',function(){
+        var v=parseFloat(ti.value);
+        if(v>0) pres.talkMins=v; else delete pres.talkMins;
+        markDirty();renderNotesPane();presenterPush();
+      });
+    }
+    /* three kinds of note, one pane: this slide, the whole talk, and a
+       scratchpad that belongs to neither (2026-08-20) */
+    $$('#np-tabs .np-tab').forEach(function(t){
+      t.addEventListener('click',function(){
+        $$('#np-tabs .np-tab').forEach(function(o){
+          o.classList.toggle('on',o===t);});
+        var which=t.dataset.np;
+        var b1=$('#notespane-body'),b2=$('#notespane-deck'),
+            b3=$('#notespane-pad');
+        if(b1) b1.hidden=(which!=='slide');
+        if(b2) b2.hidden=(which!=='deck');
+        if(b3) b3.hidden=(which!=='pad');
+        if(which==='pad') renderPad();
+      });
+    });
+    var dn=$('#np-decknotes');
+    if(dn){
+      dn.addEventListener('keydown',function(e){e.stopPropagation();});
+      dn.addEventListener('input',function(){
+        if(dn.value.trim()) pres.notes=dn.value; else delete pres.notes;
+        markDirty();
+      });
+    }
+    var an=$('#np-addnote');
+    if(an) an.addEventListener('click',function(){
+      padList().push({t:'n',id:'n'+padList().length+'-'+Math.floor(
+        performance.now()),title:'',body:''});
+      markDirty();renderPad();
+    });
+    var af=$('#np-addfold');
+    if(af) af.addEventListener('click',function(){
+      padList().push({t:'f',id:'f'+padList().length+'-'+Math.floor(
+        performance.now()),title:'New folder'});
+      markDirty();renderPad();
+    });
+    window.SemDeckNotes=function(){set(true);};
+  })();
+  /* ---- THE STYLE MANAGER ----------------------------------------------
+     The deck's type, editable without selecting anything. Until now a
+     style could only be changed by formatting one box and pushing its
+     look outwards, which meant you had to have a box of that style on the
+     slide you happened to be on (2026-08-20).
+     Re-stamping is explicit rather than automatic: applyStyleTo WRITES a
+     style's properties onto an item, so changing the registry does not
+     move anything until something walks the deck and says so. */
+  function restyleAll(ids){
+    var n=0;
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(a&&a.k==='text'&&a.style&&(!ids||ids.indexOf(a.style)>=0)){
+          applyStyleTo(a,a.style);n++;
+        }
+      });
+    });
+    markDirty();refresh();
+    return n;
+  }
+  /* every style one step up or down, in proportion - the whole deck's
+     type at once, which is the thing you actually want when a room turns
+     out to be bigger than you expected */
+  function scaleStyles(k){
+    STYLE_ORDER.forEach(function(id){
+      var d=styleDef(id);
+      var over=deckStyles()[id]||{};
+      over.label=STYLE_DEFAULTS[id].label;
+      over.size=Math.max(0.8,Math.min(24,
+        Math.round(d.size*k*100)/100));
+      ['b','i','font','color','align'].forEach(function(pr){
+        if(d[pr]!==undefined) over[pr]=d[pr];});
+      deckStyles()[id]=over;
+    });
+    var n=restyleAll(null);
+    toast('Every text style '+(k>1?'bigger':'smaller')
+      +' \u2014 '+n+' box'+(n===1?'':'es')+' followed');
+  }
+  (function(){
+    var wrap=$('#dsg-stylewrap'),btn=$('#dsg-styles'),
+        menu=$('#dsg-style-menu');
+    if(!wrap||!btn||!menu) return;
+    function build(){
+      menu.innerHTML='';
+      menuHead(menu,'this presentation\u2019s type');
+      STYLE_ORDER.forEach(function(id){
+        var d=styleDef(id);
+        var row=document.createElement('div');row.className='stm-row';
+        var spec=document.createElement('span');
+        spec.className='stm-spec';spec.textContent=d.label;
+        spec.style.fontWeight=d.b?'700':'400';
+        if(d.i) spec.style.fontStyle='italic';
+        spec.style.fontSize=Math.max(11,Math.min(22,d.size*3.1))+'px';
+        if(d.color) spec.style.color=d.color;
+        if(d.font) spec.style.fontFamily=fontCss(d.font);
+        row.appendChild(spec);
+        var sz=document.createElement('span');sz.className='stm-sz';
+        sz.textContent=Math.round(d.size*5.4)+' pt';
+        row.appendChild(sz);
+        [['\u2212',1/1.12],['+',1.12]].forEach(function(pr){
+          var b=document.createElement('button');
+          b.className='dbtn stm-b';b.textContent=pr[0];
+          b.title=(pr[1]>1?'Bigger':'Smaller')+' \u2014 '+d.label
+            +' everywhere in this presentation';
+          b.addEventListener('click',function(e){
+            e.stopPropagation();
+            var over=deckStyles()[id]||{};
+            over.label=STYLE_DEFAULTS[id].label;
+            over.size=Math.max(0.8,Math.min(24,
+              Math.round(d.size*pr[1]*100)/100));
+            ['b','i','font','color','align'].forEach(function(k2){
+              if(d[k2]!==undefined) over[k2]=d[k2];});
+            deckStyles()[id]=over;
+            restyleAll([id]);
+            build();
+          });
+          row.appendChild(b);
+        });
+        menu.appendChild(row);
+      });
+      var rst=document.createElement('button');
+      rst.className='dbtn vw-opt';
+      rst.textContent='\u21ba Back to the built-in sizes';
+      rst.addEventListener('click',function(e){
+        e.stopPropagation();
+        delete pres.styles;
+        var n=restyleAll(null);
+        build();
+        toast('Styles reset \u2014 '+n+' box'+(n===1?'':'es')+' followed');
+      });
+      menu.appendChild(rst);
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      if(open) build();
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
+    });
+  })();
+  (function(){
+    var d=$('#dsg-scale-down');
+    if(d) d.addEventListener('click',function(){scaleStyles(1/1.12);});
+    var u=$('#dsg-scale-up');
+    if(u) u.addEventListener('click',function(){scaleStyles(1.12);});
+    var r=$('#dsg-restyle');
+    if(r) r.addEventListener('click',function(){
+      var n=restyleAll(null);
+      toast(n?('Re-applied the styles to '+n+' box'+(n===1?'':'es'))
+        :'Nothing on this deck is wearing a named style yet');
+    });
+  })();
   /* ---- LISTS ----------------------------------------------------------
      A text box is a list when a.list says so: 'bullet' or 'number'. The
      ITEMS live in a.html as plain <li>…</li> (no wrapper), so switching
@@ -20733,6 +21485,10 @@ window.JunoPptx = (function () {
   function attachAnnots(slideEl,s){
     var layer=document.createElement('div');
     layer.className='annot-layer tool-'+tool;
+    /* while EDITING the layer does not clip: an item nudged past the edge
+       has to stay visible so you can drag it back (2026-08-20). Playback
+       and every export still clip to the page, which is what a page IS. */
+    if(mode==='edit') layer.classList.add('an-spill');
     slideEl.appendChild(layer);
     renderAnnots(layer,s);
     if(mode==='edit') wireEditor(layer,s);
@@ -20810,6 +21566,44 @@ window.JunoPptx = (function () {
         renderAnnots(layer,s2);
       }
       markDirty();
+    });
+    /* AUTO-BULLETS. Typing "- " or "* " at the start of a plain text box
+       turns it into a bullet list, and "1. " into a numbered one — the
+       markdown habit everybody already has, and the reason nobody could
+       find the List button until they had already given up (2026-08-20,
+       user: "need auto-dot points"). It only fires on the FIRST
+       characters of a box that is not already a list, so it can never
+       eat a hyphen you meant to keep. */
+    el.addEventListener('input',function(){
+      if(!el.isContentEditable) return;
+      if(el.classList.contains('an-ul')) return;
+      var t=el.textContent||'';
+      var m=/^\s*([-*\u2022]|1[.)])\s$/.exec(t);
+      if(!m) return;
+      var s3=pres.slides[cur],a3=s3&&annotByIdx(s3,idx);
+      if(!a3||a3.k!=='text') return;
+      var kind=/^1/.test(m[1])?'number':'bullet';
+      el.textContent='';
+      a3.text='';delete a3.html;
+      setListStyle(a3,kind);
+      markDirty();
+      var l3=stage.querySelector('.annot-layer');
+      if(!l3) return;
+      renderAnnots(l3,s3);selectAnnot(l3,idx);
+      /* put the caret back in the first bullet so typing carries on */
+      var ne=l3.querySelector('.an-item[data-idx="'+idx+'"] .an-tx');
+      if(ne&&ne._beginEdit){
+        ne._beginEdit();
+        try{
+          var li=ne.querySelector('li')||ne;
+          var r3=document.createRange();r3.selectNodeContents(li);
+          r3.collapse(true);
+          var sel3=window.getSelection();
+          sel3.removeAllRanges();sel3.addRange(r3);
+        }catch(err){}
+      }
+      toast(kind==='number'?'Numbered list \u2014 Tab indents'
+        :'Bullet list \u2014 Tab indents, Shift+Tab goes back');
     });
     /* Tab makes a SUB-BULLET, the way it does in every outliner and in
        PowerPoint — not a jump to the next control. Only inside a list:
@@ -20965,6 +21759,34 @@ window.JunoPptx = (function () {
     hit.setAttribute('data-idx',i);
     svg.appendChild(hit);
     if(editing&&!a.lock){   /* a locked arrow gets no live endpoints */
+      /* a handle per corner, plus a faint one halfway along each segment
+         that ADDS a corner there - the gesture every vector editor uses,
+         so nobody has to be told it exists (2026-08-20) */
+      arrowMids(a).forEach(function(m,mi){
+        var h=document.createElement('span');
+        h.className='an-endpt an-mid'+(selAnnot===i?' sel':'');
+        h.style.left=m[0]+'%';h.style.top=m[1]+'%';
+        h.setAttribute('data-idx',i);
+        h.setAttribute('data-mid',mi);
+        h.title='Drag to shape the line. Alt+click or right-click to '
+          +'take this corner out again';
+        layer.appendChild(h);
+      });
+      if(selAnnot===i){
+        var pts0=[[ends.x1,ends.y1]].concat(
+          arrowMids(a).map(function(m){return [m[0],m[1]];}),
+          [[ends.x2,ends.y2]]);
+        for(var sgi=0;sgi<pts0.length-1;sgi++){
+          var ad=document.createElement('span');
+          ad.className='an-endpt an-addpt';
+          ad.style.left=((pts0[sgi][0]+pts0[sgi+1][0])/2)+'%';
+          ad.style.top=((pts0[sgi][1]+pts0[sgi+1][1])/2)+'%';
+          ad.setAttribute('data-idx',i);
+          ad.setAttribute('data-addat',sgi);
+          ad.title='Drag to bend the line here';
+          layer.appendChild(ad);
+        }
+      }
       ['1','2'].forEach(function(which){
         /* an endpoint PINNED to an item is not free to drag: it
            reports the attachment instead, and moves when that item
@@ -21065,6 +21887,7 @@ window.JunoPptx = (function () {
     host.style.left=a.x+'%';host.style.top=a.y+'%';
     host.style.width=(a.w||40)+'%';host.style.height=(a.h||20)+'%';
     host.style.fontSize=fontPx(layer,a.size||2.2);
+    if(a.lh) host.style.lineHeight=a.lh;
     if(a.color) host.style.color=a.color;
     if(a.bgc) host.style.background=a.bgc;
     /* the rules are page-relative like every other stroke on the canvas */
@@ -21473,6 +22296,12 @@ window.JunoPptx = (function () {
         if(deco.trim()) d2.style.textDecoration=deco.trim();
         if(a.align) d2.style.textAlign=a.align;
         if(a.font) d2.style.fontFamily=fontCss(a.font);
+        /* a.lh is a MULTIPLE of the type size, the way every word
+           processor states it, so it survives every zoom and page size
+           for free; a.pspace is the gap between paragraphs in the same
+           currency (2026-08-20) */
+        if(a.lh) d2.style.lineHeight=a.lh;
+        if(a.pspace) d2.style.setProperty('--an-pspace',a.pspace+'em');
         if(a.bg!==0&&a.bgc){
           d2.style.background=a.bgc;
           d2.style.borderColor='transparent';
@@ -21597,6 +22426,26 @@ window.JunoPptx = (function () {
       });
     }
     layer.appendChild(svgTop);
+    /* ---- STRAYS ------------------------------------------------------
+       Anything sitting outside the page. They used to be clipped by the
+       stage and unreachable — you could not scroll to them and you could
+       not see they were there (2026-08-20, user). Marked here, and the
+       stage is told so it can grow scrollbars; the print check has always
+       flagged them, but flagging a thing you cannot get to is only half
+       an answer. */
+    if(editing){
+      var spill=false;
+      (s.annots||[]).forEach(function(a,i){
+        if(!a||a.hide) return;
+        var r=annotRectPct(layer,s,i);
+        if(!r) return;
+        var out=(r.l<-1||r.t<-1||r.r>101||r.b>101);
+        if(out) spill=true;
+        $$('.an-item[data-idx="'+i+'"]',layer).forEach(function(el){
+          el.classList.toggle('an-offpage',out);});
+      });
+      stage.classList.toggle('spill',spill);
+    }
     /* locked via the Objects pane: visible but untouchable on the canvas
        (select / unlock through the pane) */
     if(editing) (s.annots||[]).forEach(function(a,i){
@@ -21628,7 +22477,18 @@ window.JunoPptx = (function () {
     /* refresh the Objects pane only when the selection actually CHANGED
        (resize/endpoint drags re-select every mousemove) */
     var sig=String(selAnnot)+'|'+selSet.join(',');
-    if(sig!==lastSelSig){lastSelSig=sig;renderSelPane();}
+    if(sig!==lastSelSig){
+      lastSelSig=sig;renderSelPane();
+      /* a line's CORNER handles - and the faint ones that add a corner -
+         only exist for the selected line, and they are drawn by
+         renderAnnots. Selecting is not a re-render (paintSel only
+         toggles classes), so the handles never appeared on a line you
+         had just drawn or just clicked (2026-08-20, found live: 0 of
+         them on a freshly drawn arrow). Arrows only: cheap, and nothing
+         else on the layer cares about selection at render time. */
+      if(mode==='edit'&&layer&&(s&&s.annots||[]).some(function(a){
+        return a&&a.k==='arrow';})) redrawArrows(layer,s);
+    }
   }
   var lastSelSig='';
   function defaultColor(kind){
@@ -21660,7 +22520,8 @@ window.JunoPptx = (function () {
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-eqedit #fmt-stylewrap-tx '
+  var FMT_MANUAL=('#fmt-lhwrap #fmt-lh '
+    +'#fmt-eqedit #fmt-stylewrap-tx '
     +'#fmt-tbl-rowplus #fmt-tbl-rowminus #fmt-tbl-colplus '
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
@@ -21763,6 +22624,8 @@ window.JunoPptx = (function () {
     /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
        already the deck's title style by definition */
     show('#fmt-stylewrap-tx',isText&&isNum);
+    /* spacing applies to any run of words, including a table's */
+    show('#fmt-lhwrap',(isText||isTbl)&&isNum);
     show('#fmt-eqedit',isMaths(a)&&isNum);
     var szIn=$('#fmt-size');
     if(szIn&&(isText||isTbl)&&document.activeElement!==szIn)
@@ -22554,6 +23417,35 @@ window.JunoPptx = (function () {
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
   }
+  /* drag one corner. Deliberately the SAME snapping every other drag
+     gets, so a corner lines up with the things around it. */
+  function startMidPoint(layer,s,idx,mi,ev0){
+    ev0.preventDefault();ev0.stopPropagation();
+    var a=annotByIdx(s,idx);
+    if(!a||!Array.isArray(a.mid)||!a.mid[mi]) return;
+    var thr=snapThr(layer);
+    var targets=snapTargets(layer,s,[idx]);
+    function mm(ev){
+      var p=pctPoint(layer,ev);
+      var x=p.x,y=p.y,sx=null,sy=null;
+      if(!ev.altKey){
+        var bx=bestSnap(targets.xs,[x],thr.x);
+        if(bx){x+=bx.d;sx=bx.at;}
+        var by=bestSnap(targets.ys,[y],thr.y);
+        if(by){y+=by.d;sy=by.at;}
+      }
+      a.mid[mi]=[x,y];
+      renderAnnots(layer,s);selectAnnot(layer,idx);
+      drawSnapGuides(layer,sx,sy);
+    }
+    function mu(){
+      document.removeEventListener('mousemove',mm);
+      document.removeEventListener('mouseup',mu);
+      clearSnapGuides(layer);markDirty();
+    }
+    document.addEventListener('mousemove',mm);
+    document.addEventListener('mouseup',mu);
+  }
   function arrowAt(layer,s,ev){
     if(!s.annots) return -1;
     var r=layer.getBoundingClientRect();
@@ -22635,6 +23527,12 @@ window.JunoPptx = (function () {
     document.addEventListener('mouseup',mu);
   }
   function wireEditor(layer,s){
+    /* a right-click on a corner takes it out, so the browser's own menu
+       must not open over the top of the gesture */
+    layer.addEventListener('contextmenu',function(ev){
+      if(ev.target&&ev.target.classList
+         &&ev.target.classList.contains('an-mid')) ev.preventDefault();
+    });
     layer.addEventListener('mousedown',function(ev){
       if(mode!=='edit') return;
       var t=ev.target;
@@ -22648,6 +23546,37 @@ window.JunoPptx = (function () {
         if(t.classList&&t.classList.contains('an-endpt')){
           var idxE=+t.getAttribute('data-idx');
           selectAnnot(layer,idxE);
+          /* the faint handle halfway along a segment CREATES a corner and
+             then drags it, so adding and placing are one gesture */
+          if(t.hasAttribute('data-addat')){
+            var at=+t.getAttribute('data-addat');
+            var aA=annotByIdx(s,idxE);
+            if(aA){
+              var mids=arrowMids(aA).slice();
+              var pA=pctPoint(layer,ev);
+              mids.splice(at,0,[pA.x,pA.y]);
+              aA.mid=mids;
+              markDirty();renderAnnots(layer,s);selectAnnot(layer,idxE);
+              startMidPoint(layer,s,idxE,at,ev);
+            }
+            return;
+          }
+          if(t.hasAttribute('data-mid')){
+            var mi2=+t.getAttribute('data-mid');
+            /* Alt+click takes a corner out; so does a right-click, which
+               is what a vector editor has trained everyone to try */
+            if(ev.altKey||ev.button===2){
+              var aR=annotByIdx(s,idxE);
+              if(aR&&Array.isArray(aR.mid)){
+                aR.mid.splice(mi2,1);
+                if(!aR.mid.length) delete aR.mid;
+                markDirty();renderAnnots(layer,s);selectAnnot(layer,idxE);
+              }
+              return;
+            }
+            startMidPoint(layer,s,idxE,mi2,ev);
+            return;
+          }
           startEndpoint(layer,s,idxE,
             t.getAttribute('data-ep'),ev);
           return;
@@ -23480,6 +24409,62 @@ window.JunoPptx = (function () {
         a.arc=n;
       });
     });
+  /* ---- LINE SPACING ---------------------------------------------------
+     A MULTIPLE of the type size, the way every word processor states it -
+     so it means the same thing at every zoom and on every page size, and
+     needs no re-measuring. Paragraph spacing is the half nobody asks for
+     until their bullets are touching each other. */
+  var LH_STEPS=[[0,'Default'],[1,'Single'],[1.15,'1.15'],[1.5,'1\u00bd'],
+    [2,'Double'],[2.5,'2\u00bd'],[3,'Triple']];
+  var PS_STEPS=[[0,'None'],[0.25,'Small'],[0.5,'Medium'],[1,'Large'],
+    [1.5,'Very large']];
+  (function(){
+    var wrap=$('#fmt-lhwrap'),btn=$('#fmt-lh'),menu=$('#fmt-lh-menu');
+    if(!wrap||!btn||!menu) return;
+    function build(){
+      var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
+      menu.innerHTML='';
+      menuHead(menu,'between lines');
+      LH_STEPS.forEach(function(st){
+        var b=document.createElement('button');
+        b.className='dbtn vw-opt';b.textContent=st[1];
+        b.setAttribute('aria-pressed',
+          (((a&&a.lh)||0)===st[0]).toString());
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          fmtApply(function(x){
+            if(st[0]) x.lh=st[0]; else delete x.lh;});
+          menu.hidden=true;
+        });
+        menu.appendChild(b);
+      });
+      menuHead(menu,'between paragraphs');
+      PS_STEPS.forEach(function(st){
+        var b=document.createElement('button');
+        b.className='dbtn vw-opt';b.textContent=st[1];
+        b.setAttribute('aria-pressed',
+          (((a&&a.pspace)||0)===st[0]).toString());
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          fmtApply(function(x){
+            if(st[0]) x.pspace=st[0]; else delete x.pspace;});
+          menu.hidden=true;
+        });
+        menu.appendChild(b);
+      });
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      if(open) build();
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
+    });
+  })();
   /* ---- bullets / numbering / indent ----------------------------------
      Real buttons that show their own state, because a list is something
      you can SEE is on. Indent and outdent drive the browser's own list
@@ -23948,9 +24933,17 @@ window.JunoPptx = (function () {
       out=[selAnnot];
     return out;
   }
+  /* which slide the clipboard came from: pasting onto a DIFFERENT slide
+     should land in the same place, which is the whole point of copying
+     something across (2026-08-20, user: "copying and pasting something
+     from one slide to another should be pasted into the same location on
+     the other slide that it was copied from"). Pasting onto the SAME
+     slide still offsets, or the copy hides exactly under its original. */
+  var clipFrom=-1;
   function copySel(){
     var s=pres.slides[cur];
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
+    clipFrom=cur;              /* where it came from - see pasteBuf */
     clipBuf=idxs.map(function(i){
       return JSON.parse(JSON.stringify(s.annots[i]));});
     /* stamp the SYSTEM clipboard so this copy outranks whatever image was
@@ -23975,13 +24968,17 @@ window.JunoPptx = (function () {
     if(!s||!clipBuf.length) return 0;
     s.annots=s.annots||[];
     var first=s.annots.length;
+    /* same slide: nudge, or the copy hides exactly under its original.
+       Another slide: land in the SAME PLACE, which is what copying across
+       is for (2026-08-20). */
+    var d=(clipFrom===cur)?3:0;
     clipBuf.forEach(function(src){
       var cp=JSON.parse(JSON.stringify(src));
       delete cp.grp;          /* a paste is its own item, never in the
                                  source's group */
       if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
-      if(cp.k==='arrow'){cp.x1+=3;cp.y1+=3;cp.x2+=3;cp.y2+=3;}
-      else {cp.x=(cp.x||0)+3;cp.y=(cp.y||0)+3;}
+      if(cp.k==='arrow'){cp.x1+=d;cp.y1+=d;cp.x2+=d;cp.y2+=d;}
+      else {cp.x=(cp.x||0)+d;cp.y=(cp.y||0)+d;}
       s.annots.push(cp);
     });
     /* paste again and the next copy lands clear of this one, rather than
@@ -24069,7 +25066,10 @@ window.JunoPptx = (function () {
       if(!idxs.length||!s.annots) return;
       idxs.forEach(function(i){
         var a=s.annots[i]; if(!a||a.lock) return;  /* locked: no nudge */
-        if(a.k==='arrow'){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;}
+        if(a.k==='arrow'){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;
+          /* the corners travel with the line they belong to */
+          if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){
+            return [m[0]+dx,m[1]+dy];});}
         else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
       });
     }
@@ -24399,7 +25399,8 @@ window.JunoPptx = (function () {
   /* the geometry + look that travel; content never does */
   var MATCH_PROPS=['x','y','w','h','rot','size','b','i','u','strike',
     'align','font','color','bg','bgc','op','style','sw','fill','fillc',
-    'grad','ts','txcol','bgcol','arc','list','thead','grid','cols'];
+    'grad','ts','txcol','bgcol','arc','list','thead','grid','cols',
+    'lh','pspace'];
   function matchSlide(fromIdx,toIdx){
     var src=pres.slides[fromIdx],dst=pres.slides[toIdx];
     if(!src||!dst) return null;
@@ -25581,6 +26582,49 @@ window.JunoPptx = (function () {
       var b=$('#'+p[0]);
       if(b) b.addEventListener('click',function(){setType(p[1]);});
     });
+    /* ---- the two builds anyone actually wants ------------------------
+       Setting "one at a time" by hand means selecting every item on the
+       slide and stepping its build order one at a time, which is exactly
+       the fiddling this editor exists to remove (2026-08-20).
+       Reading order, not array order: the array is the order you happened
+       to draw things in, which is nobody's idea of a sequence. */
+    function orderedIdx(s2){
+      return (s2.annots||[])
+        .map(function(a,i){return {a:a,i:i};})
+        .filter(function(p2){return p2.a&&!p2.a.hide;})
+        .sort(function(p2,q2){
+          var ay=(p2.a.k==='arrow')?Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);
+          var by=(q2.a.k==='arrow')?Math.min(q2.a.y1,q2.a.y2):(q2.a.y||0);
+          var ax=(p2.a.k==='arrow')?Math.min(p2.a.x1,p2.a.x2):(p2.a.x||0);
+          var bx=(q2.a.k==='arrow')?Math.min(q2.a.x1,q2.a.x2):(q2.a.x||0);
+          return Math.abs(ay-by)>4?(ay-by):(ax-bx);
+        })
+        .map(function(p2){return p2.i;});
+    }
+    var stag=$('#anim-stagger');
+    if(stag) stag.addEventListener('click',function(){
+      var s2=pres.slides[cur]; if(!s2) return;
+      var order=orderedIdx(s2);
+      if(!order.length){toast('Nothing on this slide yet');return;}
+      order.forEach(function(i,n){
+        var a=s2.annots[i];
+        a.anim={type:(a.anim&&a.anim.type)||'fade',order:n};
+      });
+      revealCount=0;commit(s2);
+      toast(order.length+' items, one click each \u2014 in reading order');
+    });
+    var tog=$('#anim-together');
+    if(tog) tog.addEventListener('click',function(){
+      var s2=pres.slides[cur]; if(!s2) return;
+      var order=orderedIdx(s2);
+      if(!order.length){toast('Nothing on this slide yet');return;}
+      order.forEach(function(i){
+        var a=s2.annots[i];
+        a.anim={type:(a.anim&&a.anim.type)||'fade',order:0};
+      });
+      revealCount=0;commit(s2);
+      toast('Everything appears on one click');
+    });
     var clr=$('#anim-clear');
     if(clr) clr.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;
@@ -25611,6 +26655,260 @@ window.JunoPptx = (function () {
     var l=stage.querySelector('.annot-layer');
     if(s&&l) renderAnnots(l,s);
   });
+  /* ---- PRESENTER VIEW --------------------------------------------------
+     A second window holding the things the audience must not see: your
+     notes, the slide that is coming, and a clock (2026-08-20, user:
+     "presentation mode where you can have like the different screens one
+     with the slides and the other with like notes and the next slide and
+     stuff when you have multiple screens. Also would be cool if there was
+     a time, and you can set time goals per slide").
+
+     A POPUP you drag to the other display, not an automatic placement.
+     The Window Management API that can put a window on a named screen is
+     Chromium-only and needs a permission prompt; a popup works in every
+     browser and on every setup, including the one where the second screen
+     is a projector the OS is mirroring.
+
+     The slides in it are REAL renders, not pictures: buildSlideNode uses
+     the same renderAnnots every other output uses, and the nodes are
+     imported into the popup. So a presenter view can never drift from
+     what is on the screen behind it — there is only one renderer.
+
+     Sync is a BroadcastChannel where there is one and a storage event
+     where there is not; both are just "here is the state" one way and
+     "do this" the other. */
+  var presWin=null,presCh=null,presStart=0,presPaused=0,presPauseAt=0;
+  function presChannel(){
+    if(presCh) return presCh;
+    try{
+      presCh=new BroadcastChannel('junoview-presenter:'+SCOPE);
+      presCh.onmessage=function(e){presenterCommand(e.data);};
+    }catch(err){presCh=null;}
+    return presCh;
+  }
+  /* the other window asked for something */
+  function presenterCommand(msg){
+    if(!msg||msg.jv!=='cmd') return;
+    if(msg.do==='next') advance();
+    else if(msg.do==='prev') backStep();
+    else if(msg.do==='goto'&&typeof msg.n==='number') go(msg.n);
+    else if(msg.do==='timer'){
+      if(msg.act==='reset'){presStart=Date.now();presPaused=0;presPauseAt=0;}
+      else if(msg.act==='pause'&&!presPauseAt) presPauseAt=Date.now();
+      else if(msg.act==='resume'&&presPauseAt){
+        presPaused+=Date.now()-presPauseAt;presPauseAt=0;}
+    }
+    else if(msg.do==='closed'){presWin=null;return;}
+    presenterPush();
+  }
+  /* one slide, rendered the way every other output renders it */
+  function buildSlideNode(i){
+    var sl=(pres.slides||[])[i];
+    if(!sl) return null;
+    var savedMode=mode,savedReveal=revealCount,savedCur=cur;
+    mode='view';revealCount=99999;cur=i;
+    var host=document.createElement('div');
+    host.className='jvp-slidehost';
+    host.style.cssText='position:fixed;left:-99999px;top:0;'
+      +'width:960px;height:540px;';
+    document.body.appendChild(host);
+    var el=document.createElement('div');
+    el.className=(sl.layout==='title')?'slide slide-titlefree'
+      :'slide slide-blank';
+    el.style.cssText='width:960px;height:540px;position:relative;';
+    if(sl.layout==='title')
+      el.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
+    var bg=sl.bg||pres.pageBg||'#0b141d';
+    el.style.setProperty('background',bg,'important');
+    host.appendChild(el);
+    try{attachAnnots(el,sl);paintFurniture(el,i);}catch(err){}
+    mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    host.removeChild(el);
+    host.remove();
+    return el;
+  }
+  function presenterPush(){
+    if(!presWin||presWin.closed){presWin=null;return;}
+    var doc=presWin.document;
+    if(!doc||!doc.getElementById('jvp-now')) return;
+    var n=(pres.slides||[]).length;
+    var sl=pres.slides[cur]||{};
+    /* the two slide previews */
+    [['jvp-now',cur],['jvp-next',cur+1]].forEach(function(pr){
+      var box=doc.getElementById(pr[0]);
+      if(!box) return;
+      box.innerHTML='';
+      var node=(pr[1]<n)?buildSlideNode(pr[1]):null;
+      if(node){
+        var im=doc.importNode(node,true);
+        box.appendChild(im);
+        /* the node is built at a fixed 960x540 so its percentage geometry
+           has something real to measure against; it is scaled into
+           whatever box it lands in rather than re-rendered per size */
+        var bw=box.clientWidth||480,bh=box.clientHeight||270;
+        var k=Math.min(bw/960,bh/540);
+        im.style.transform='scale('+(k||0.5).toFixed(4)+')';
+        im.style.flex='none';
+      }
+      else box.innerHTML='<div class="jvp-end">end of the deck</div>';
+    });
+    var nt=doc.getElementById('jvp-notes');
+    if(nt) nt.textContent=(sl.notes||'').trim()
+      ||'No notes for this slide.';
+    var ct=doc.getElementById('jvp-count');
+    if(ct) ct.textContent=(cur+1)+' / '+n;
+    var gl=doc.getElementById('jvp-goal');
+    if(gl){
+      var g=slideGoal(sl);
+      gl.textContent=g?('target '+fmtMins(g)):'';
+    }
+    var tt=doc.getElementById('jvp-talk');
+    if(tt){
+      var want=pres.talkMins||0,tot=goalTotal();
+      tt.textContent=want?('talk '+want+' min')
+        :(tot?('planned '+fmtMins(tot)):'');
+    }
+    presWin.__jvState={start:presStart,paused:presPaused,
+      pauseAt:presPauseAt,goal:slideGoal(sl),
+      talk:pres.talkMins||0,slide:cur,count:n};
+  }
+  function presenterHtml(){
+    /* every stylesheet the deck uses, so the imported slide nodes look
+       exactly as they do on screen */
+    var css='';
+    $$('style').forEach(function(st){css+=st.textContent+'\n';});
+    return '<!doctype html><html><head><meta charset="utf-8">'
+      +'<title>Presenter view</title><style>'+css
+      +'\nhtml,body{margin:0;height:100%;background:#070d13;color:#dce6ee;'
+      +'font-family:var(--sans,system-ui);overflow:hidden;}'
+      +'.jvp{display:grid;grid-template-columns:1.35fr 1fr;'
+      +'grid-template-rows:auto 1fr auto;gap:12px;height:100%;'
+      +'box-sizing:border-box;padding:12px;}'
+      +'.jvp-bar{grid-column:1/-1;display:flex;align-items:center;gap:14px;}'
+      +'.jvp-clock{font-family:var(--mono,monospace);font-size:44px;'
+      +'font-weight:600;line-height:1;letter-spacing:.02em;}'
+      +'.jvp-clock.over{color:#ff8a7a;}'
+      +'.jvp-sub{font-family:var(--mono,monospace);font-size:12px;'
+      +'color:#8ea4b6;display:flex;flex-direction:column;gap:2px;}'
+      +'.jvp-sp{flex:1;}'
+      +'.jvp-b{font-family:var(--mono,monospace);font-size:12px;'
+      +'padding:7px 13px;border-radius:7px;cursor:pointer;'
+      +'background:#ffffff0f;border:1px solid #ffffff2b;color:#dce6ee;}'
+      +'.jvp-b:hover{border-color:#39a9c0;color:#fff;}'
+      +'.jvp-b.primary{background:#39a9c0;border-color:#39a9c0;color:#04222b;'
+      +'font-weight:600;}'
+      +'.jvp-stage{position:relative;background:#000;border-radius:10px;'
+      +'overflow:hidden;display:flex;align-items:center;'
+      +'justify-content:center;min-height:0;}'
+      +'.jvp-stage .slide{transform-origin:center center;}'
+      +'.jvp-side{display:flex;flex-direction:column;gap:10px;min-height:0;}'
+      +'.jvp-nextwrap{flex:0 0 34%;display:flex;flex-direction:column;'
+      +'gap:4px;min-height:0;}'
+      +'.jvp-lab{font-family:var(--mono,monospace);font-size:10px;'
+      +'letter-spacing:.14em;text-transform:uppercase;color:#7d93a6;}'
+      +'.jvp-notes{flex:1;min-height:0;overflow-y:auto;white-space:pre-wrap;'
+      +'font-size:19px;line-height:1.5;background:#0e1926;border-radius:10px;'
+      +'padding:14px 16px;border:1px solid #ffffff1a;}'
+      +'.jvp-end{color:#6e8394;font-family:var(--mono,monospace);'
+      +'font-size:13px;}'
+      +'.jvp-foot{grid-column:1/-1;display:flex;gap:8px;align-items:center;}'
+      +'</style></head><body><div class="jvp">'
+      +'<div class="jvp-bar">'
+      +'<span class="jvp-clock" id="jvp-clock">0:00</span>'
+      +'<span class="jvp-sub"><span id="jvp-count"></span>'
+      +'<span id="jvp-goal"></span><span id="jvp-talk"></span>'
+      +'<span id="jvp-slideclock"></span></span>'
+      +'<span class="jvp-sp"></span>'
+      +'<button class="jvp-b" id="jvp-pause">Pause</button>'
+      +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
+      +'</div>'
+      +'<div class="jvp-stage" id="jvp-now"></div>'
+      +'<div class="jvp-side">'
+      +'<div class="jvp-nextwrap"><span class="jvp-lab">next</span>'
+      +'<div class="jvp-stage" id="jvp-next"></div></div>'
+      +'<span class="jvp-lab">notes</span>'
+      +'<div class="jvp-notes" id="jvp-notes"></div></div>'
+      +'<div class="jvp-foot">'
+      +'<button class="jvp-b" id="jvp-prev">&#8592; Back</button>'
+      +'<button class="jvp-b primary" id="jvp-next-b">Next &#8594;</button>'
+      +'<span class="jvp-sp"></span>'
+      +'<span class="jvp-lab">drag this window to your other screen, then '
+      +'press Present on the first one</span>'
+      +'</div></div></body></html>';
+  }
+  function openPresenter(){
+    if(presWin&&!presWin.closed){presWin.focus();presenterPush();return;}
+    var w=null;
+    try{
+      w=window.open('','junoview-presenter',
+        'width=1100,height=720,menubar=no,toolbar=no');
+    }catch(err){w=null;}
+    if(!w){
+      toast('Your browser blocked the presenter window — allow pop-ups '
+        +'for this page and try again');
+      return;
+    }
+    presWin=w;
+    w.document.open();
+    w.document.write(presenterHtml());
+    w.document.close();
+    if(!presStart) presStart=Date.now();
+    var d=w.document;
+    function send(m){
+      /* same-window handle first: it always works, channel or not */
+      presenterCommand(m);
+    }
+    d.getElementById('jvp-prev').onclick=function(){
+      send({jv:'cmd',do:'prev'});};
+    d.getElementById('jvp-next-b').onclick=function(){
+      send({jv:'cmd',do:'next'});};
+    d.getElementById('jvp-reset').onclick=function(){
+      send({jv:'cmd',do:'timer',act:'reset'});};
+    var pb=d.getElementById('jvp-pause');
+    pb.onclick=function(){
+      var paused=!!(presWin.__jvState&&presWin.__jvState.pauseAt);
+      send({jv:'cmd',do:'timer',act:paused?'resume':'pause'});
+      pb.textContent=paused?'Pause':'Resume';
+    };
+    /* the arrow keys work in the presenter window too - you will have the
+       clicker pointed at whichever window has focus */
+    d.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){
+        e.preventDefault();send({jv:'cmd',do:'next'});}
+      else if(e.key==='ArrowLeft'||e.key==='PageUp'){
+        e.preventDefault();send({jv:'cmd',do:'prev'});}
+    });
+    w.addEventListener('beforeunload',function(){presWin=null;});
+    /* the clock ticks in the presenter window, off state the main window
+       owns - so pausing on either side agrees */
+    w.setInterval(function(){
+      var st=w.__jvState; if(!st) return;
+      var now=st.pauseAt||Date.now();
+      var ms=now-st.start-st.paused;
+      var sec=Math.max(0,Math.round(ms/1000));
+      var cl=d.getElementById('jvp-clock');
+      cl.textContent=Math.floor(sec/60)+':'+('0'+(sec%60)).slice(-2);
+      var over=st.talk&&sec>st.talk*60;
+      cl.classList.toggle('over',!!over);
+      var sc=d.getElementById('jvp-slideclock');
+      if(sc){
+        if(!st.talk) sc.textContent='';
+        else {
+          var left=Math.round(st.talk*60-sec);
+          sc.textContent=left>=0
+            ?(Math.floor(left/60)+':'+('0'+(left%60)).slice(-2)+' left')
+            :(Math.floor(-left/60)+':'+('0'+((-left)%60)).slice(-2)
+              +' OVER');
+        }
+      }
+    },250);
+    presenterPush();
+    toast('Presenter view opened — drag it to your other screen');
+  }
+  /* the main window tells the presenter whenever anything moves */
+  function presenterSync(){
+    if(presWin&&!presWin.closed) presenterPush();
+  }
   function buildsForSlide(i){
     var s=pres.slides[i];return s?slideBuildSteps(s).count:0;
   }
@@ -25622,6 +26920,7 @@ window.JunoPptx = (function () {
     revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
     selAnnot=null;selSet=[];   /* never carry a selection across slides */
     refresh();
+    presenterSync();
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
   /* advance: reveal the next build, else move to the next slide (no-op at the
@@ -25629,11 +26928,12 @@ window.JunoPptx = (function () {
   function advance(){
     var s=pres.slides[cur];
     if(mode==='view'&&s&&revealCount<slideBuildSteps(s).count){
-      revealCount++;renderSlide();
+      revealCount++;renderSlide();presenterSync();
     } else if(cur<pres.slides.length-1) go(cur+1);
   }
   function backStep(){
-    if(mode==='view'&&revealCount>0){revealCount--;renderSlide();}
+    if(mode==='view'&&revealCount>0){revealCount--;renderSlide();
+      presenterSync();}
     else go(cur-1);
   }
 
@@ -27060,6 +28360,35 @@ window.JunoPptx = (function () {
     inp.focus();inp.select();
   });
   var presentFrom='create';
+  /* ---- the Present menu ------------------------------------------------
+     Play from here, play from the start, or open the presenter view first
+     and then play. Presenter view deliberately does NOT start playback:
+     you want to drag the window to the other screen before anything goes
+     full screen (2026-08-20). */
+  (function(){
+    var wrap=$('#dc-playmore'),menu=$('#play-menu');
+    if(!wrap||!menu) return;
+    wrap.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      menu.hidden=!open;
+      wrap.setAttribute('aria-expanded',open?'true':'false');
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==wrap)
+        menu.hidden=true;
+    });
+    function mi(id,fn){
+      var b=$(id);
+      if(b) b.addEventListener('click',function(e){
+        e.stopPropagation();menu.hidden=true;fn();});
+    }
+    mi('#pl-here',function(){$('#dc-play').click();});
+    mi('#pl-start',function(){cur=0;refresh();$('#dc-play').click();});
+    mi('#pl-presenter',openPresenter);
+    mi('#pl-notes',function(){
+      if(window.SemDeckNotes) window.SemDeckNotes();});
+  })();
   $('#dc-play').addEventListener('click',function(){
     presentFrom=mode;setUIMode('view');});
   var undoBtn=$('#dc-undo');
@@ -27846,10 +29175,17 @@ window.JunoPptx = (function () {
         return false;
       });
   }
+  /* WHERE it goes, never WHICH file. The filename is the widest thing
+     that could ever land in this bar, it changes under you when you pick
+     a different file, and it answers a question nobody asked — the one
+     you ask of a Save button is "is this going somewhere I will find it
+     again?" (2026-08-20, user: "I don't want you to have 'save to
+     <filename>' ... I want you to just say if it's save to local or
+     browser"). The filename is in the tooltip. */
   function targetLabel(){
     if(saveTarget==='project') return 'This project';
-    if(saveTarget==='file') return fileName||'a file (not chosen yet)';
-    return 'Browser';
+    if(saveTarget==='file') return 'On this computer';
+    return 'In this browser';
   }
   function renderTargetBtn(){
     var b=$('#dc-target'); if(!b) return;
@@ -28125,10 +29461,8 @@ window.JunoPptx = (function () {
       ?'Downloaded. Keep it next to the .ipynb and it loads itself.'
       :'Downloaded. Load it with --deck, or save to the project instead.');
   });
-  menuAction('#mi-load',function(){
-    var fi=document.getElementById('deckfile');
-    if(fi) fi.click();
-  });
+  menuAction('#mi-load',openDeckFile);
+  window.SemDeckOpenFile=openDeckFile;   /* the rail's "+ New" row */
   /* ---- Export PDF / print: render every slide at a fixed size (so text,
      which is sized from the layer height, comes out right) into off-screen
      pages, then hand off to the browser's Print -> Save as PDF ---- */
@@ -28499,6 +29833,17 @@ window.JunoPptx = (function () {
       bgChips(r1,s2.bg||'',function(v){
         apply(function(x){if(v) x.bg=v; else delete x.bg;});
       },true);
+      /* the WHOLE deck's default, in the same menu as the one slide's
+         override, so you can see the two against each other. It used to
+         be a row in the File menu, which is where you open, save and
+         export things (2026-08-20, user). */
+      menuHead(menu,'Every slide');
+      var r0=menuRow(menu,'bg-sw');
+      bgChips(r0,(pres&&pres.pageBg)||'',function(v){
+        pres.pageBg=v;markDirty();applyPageBg();applyZoom();renderSlide();
+        build();
+        toast('Background for every slide set');
+      },false);
       menuHead(menu,'Border');
       var r2=menuRow(menu,'bg-bw');
       BWS.forEach(function(p){
@@ -28532,19 +29877,6 @@ window.JunoPptx = (function () {
   window.SemDeckPptx=exportDeckPptx;   /* test hook */
   menuAction('#mi-pptx',function(){exportDeckPptx();});
   /* page background swatches (File menu) */
-  /* the deck-wide default, built from the same table as the per-slide
-     menu (2026-08-20) */
-  (function(){
-    var host=$('#mi-pagebg');
-    if(!host) return;
-    var row=document.createElement('span');
-    row.className='pgbg-row';
-    bgChips(row,(pres&&pres.pageBg)||'',function(v){
-      pres.pageBg=v;markDirty();applyPageBg();refresh();
-      toast('Page background set');
-    },false);
-    host.appendChild(row);
-  })();
   /* one importer for every way a saved file comes back in: the File-menu
      picker, the launcher's "+ New… → Open a .junoview file…" row, and the
      silent startup restore from a remembered file handle. `silent` never
@@ -28592,6 +29924,43 @@ window.JunoPptx = (function () {
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
   window.SemDeckFileHtml=function(){return junoviewFileHtml();};
+  /* ---- OPENING A .junoview FILE ---------------------------------------
+     Opening a file used to import its contents and then carry on saving
+     to the BROWSER, so the file you opened never changed again and your
+     work quietly went somewhere else (2026-08-20, user: "when loading
+     presentation from computer, it then starts saving to browser, should
+     save to the same file").
+     Where the File System Access API exists we ask for a real handle, so
+     Save writes straight back to the file you opened. Where it does not
+     (Firefox, Safari) an <input type=file> gives contents but no handle —
+     nothing can write back to it — so the target is still set to "on this
+     computer" and the first Save asks once where to put it. Either way
+     the answer to "where is this going?" stops being "somewhere else". */
+  function openDeckFile(){
+    if(window.showOpenFilePicker){
+      window.showOpenFilePicker({
+        types:[{description:'Junoview presentation',
+          accept:{'text/html':['.html','.junoview'],
+            'application/json':['.json']}}],
+        multiple:false
+      }).then(function(hs){
+        var h=hs&&hs[0]; if(!h) return;
+        return h.getFile().then(function(f){
+          return f.text().then(function(txt){
+            importDeckText(txt,false);
+            /* the handle is what makes Save write back to this very file */
+            fileHandle=h;fileName=h.name||f.name||'';
+            idbPut('deckFile',h);
+            setTarget('file');
+            toast('Opened \u2014 Save now writes back to '+fileName);
+          });
+        });
+      }).catch(function(){});
+      return;
+    }
+    var fi=document.getElementById('deckfile');
+    if(fi) fi.click();
+  }
   (function(){
     var fi=document.getElementById('deckfile');
     if(!fi) return;
@@ -28599,8 +29968,15 @@ window.JunoPptx = (function () {
       var f=this.files&&this.files[0];
       this.value='';
       if(!f) return;
+      var nm=f.name||'';
       f.text().then(function(txt){
         importDeckText(txt,false);
+        /* no handle from an <input>, so we cannot write back to the file
+           itself - but the DESTINATION is still "a file on your
+           computer", and the first Save asks where once */
+        fileName=nm;fileHandle=null;
+        setTarget('file');
+        toast('Opened \u2014 Save keeps it as a file on your computer');
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });

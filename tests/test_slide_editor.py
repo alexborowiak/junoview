@@ -530,7 +530,8 @@ def test_the_ribbon_is_tabbed(out):
     # the filter runs BEFORE anything measures the row
     assert "    applyTab();\n    $$('.rbn-grp',bar)" in out
     # a poster has no build, so the whole Animate GROUP stands down there
-    assert "var clrB=$('#anim-clear');" in out
+    assert ("['#anim-clear','#anim-stagger','#anim-together']"
+            ".forEach(function(id){") in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
 
@@ -870,3 +871,42 @@ def test_layers_can_be_renamed(out):
     assert "if(a.name) return a.name;" in out
     assert 'inp.className=\'sp-rename\';' in out
     assert "if(v) a3.name=v; else delete a3.name;" in out
+
+
+def test_no_group_is_a_heading_over_one_button(out):
+    """2026-08-20, user: "some tabs still now have two few buttons. I
+    think review these and think about groups again".
+
+    Measured before: Home had View(5) Output(1) Slides(5); Insert had
+    Animate(2) Insert(10); Design had Slide(4) Page furniture(4) -- eight
+    controls for a whole tab. Measured after: Home View(6) Slides(5),
+    Insert Animate(4) Insert(10), Design Slide(4) Page furniture(4)
+    Type(4). Nothing under four, and every tab still fits.
+
+    Two of the three fixes added real features rather than shuffling
+    buttons, which is the only honest way to fill a thin group.
+    """
+    # Output folded into View
+    assert 'class="rbn-grp rbn-out"' not in out
+    # Animate gained the two builds anyone actually wants
+    assert 'id="anim-stagger"' in out and 'id="anim-together"' in out
+    assert "function orderedIdx(s2){" in out
+    # Design gained the deck-level type manager
+    assert 'class="rbn-grp rbn-type" data-tab="design"' in out
+    assert 'id="dsg-styles"' in out
+    assert "function scaleStyles(k){" in out
+    assert "function restyleAll(ids){" in out
+
+
+def test_builds_follow_reading_order_not_array_order(out):
+    """The array is the order you happened to DRAW things in, which is
+    nobody's idea of a sequence -- draw the bottom caption first and it
+    would animate first. Measured 2026-08-20 with three boxes drawn
+    bottom-up: builds came out first=2, second=3, third=4.
+    """
+    assert "function orderedIdx(s2){" in out
+    # arrows have no x/y of their own; they are ordered by their topmost
+    # endpoint like everything else
+    assert "var ay=(p2.a.k==='arrow')?Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);"         in out
+    # a 4% band counts as "the same line", so a row of items reads across
+    assert "return Math.abs(ay-by)>4?(ay-by):(ax-bx);" in out
