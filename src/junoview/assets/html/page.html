@@ -190,8 +190,16 @@
     <button class="menubtn vars-menubtn" id="vars-btn" aria-pressed="false"
       title="Every variable in this notebook — filter by type, and click
  a name or use-site to jump to it">x&#178;</button>
-    <div class="tabstrip" id="tabstrip" role="tablist"
-      aria-label="Open notebooks"></div>
+    <!-- the open-notebooks strip is NOT here any more. A row of
+         horizontal tabs is a row of chrome across the top of the document
+         whose width runs out at about five notebooks, and the rail beside
+         it was already the place this app lists the things you can switch
+         between (2026-08-20, user: "I don't want the horizontal tabs in
+         notebooks anymore, this should just be a thing down the right
+         hand side pop up thing, like presentations but just under the
+         buttons that says notebooks"). It MOVED, node for node, so every
+         handler, the close buttons, the trace sub-tabs and the version
+         marks all keep working — see #tabstrip in the rail. -->
   </div>
   <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
        insets the document by it automatically, and so the normal filter
@@ -230,6 +238,12 @@
     title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico"><i data-ic="doc"></i></span>
     <span class="pr-t">Notebooks</span></button>
+  <!-- OPEN notebooks, listed under the button that names them. Same shape
+       as the presentations list below: a label, then the things you can
+       switch to (2026-08-20). -->
+  <div class="pr-label pr-nblabel" id="pr-nblabel">open notebooks</div>
+  <div class="tabstrip" id="tabstrip" role="tablist"
+    aria-label="Open notebooks"></div>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
   <!-- ONE way to make things. Four "+ New ..." buttons in a column were

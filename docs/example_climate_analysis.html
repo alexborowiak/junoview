@@ -1121,6 +1121,22 @@ body.th-forestblue{--chrome:#0e241c;
    accent and the buttons, so it was the ordinary dark theme with brighter
    outlines — which is not what anyone turning on high contrast is asking
    for (2026-08-20, user: "some of the themes are not right"). */
+/* ---- LIGHT re-inks the surfaces too -------------------------------
+   It used to re-ink only the page and leave --chrome-0..4 at their dark
+   values, so every menu, panel and popup relied on a hand-written
+   `body.light .thing{background:#fff}` rule of its own. Anything added
+   without one — and by August that was most of the deck editor's menus —
+   came out dark-on-light or, where the override existed but carried an
+   alpha byte, washed out (2026-08-20, user: "some of the menu options in
+   different themes also are too transparent").
+   Setting the tokens fixes every menu at once, including the ones nobody
+   has written yet. */
+body.light{--chrome:#eef2f6;--chrome-0:#f4f7fa;--chrome-1:#eef2f6;
+  --chrome-2:#ffffff;--chrome-3:#f7f9fb;--chrome-4:#e8eef4;
+  --chrome-line:#00000014;}
+body.light.th-lforest{--chrome:#eaf4ef;--chrome-0:#f2f9f5;
+  --chrome-1:#eaf4ef;--chrome-2:#ffffff;--chrome-3:#f5fbf8;
+  --chrome-4:#e0efe7;}
 body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
   --accent-soft:#c8f2ff;
   --chrome:#000000;--chrome-0:#000000;--chrome-1:#080a0c;
@@ -1502,6 +1518,29 @@ body.light .tab-ver{color:var(--cyan-deep);}
 /* ---------- presentations rail: vertical stack on the left edge.
    Exactly ONE item is active at a time: "Notebooks" (no builder) or a
    presentation (builder open) — so the way out is always visible. */
+/* ---- the open-notebooks list, in the rail ---------------------------
+   It used to be a horizontal tab strip across the top of the document —
+   a row of chrome whose width ran out at about five notebooks. The nodes
+   MOVED rather than being rebuilt, so `.tab` still styles them; these
+   rules just stand the strip up (2026-08-20). */
+.presrail .tabstrip{display:flex;flex-direction:column;gap:2px;
+  overflow-y:auto;overflow-x:hidden;flex:0 1 auto;min-height:0;
+  max-height:38vh;margin-bottom:4px;}
+.presrail .tabstrip:empty{display:none;}
+.presrail .tabstrip:empty + .pr-label{margin-top:0;}
+.presrail .tab{width:100%;box-sizing:border-box;border-radius:7px;
+  border:1px solid transparent;background:none;justify-content:flex-start;
+  padding:5px 7px;min-width:0;max-width:none;height:auto;}
+.presrail .tab .tab-t{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;text-align:left;}
+.presrail .tab.current{background:color-mix(in srgb,var(--accent) 13%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 34%,
+  transparent);}
+.presrail .tab .tab-b{opacity:0;flex:none;}
+.presrail .tab:hover .tab-b,.presrail .tab.current .tab-b{opacity:.75;}
+/* a Plot-trace sub-tab still reads as a child of the notebook above it */
+.presrail .tab .tab-trace-ic{flex:none;margin-right:2px;opacity:.7;}
+.pr-nblabel[hidden]{display:none;}
 .presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
   z-index:95;background:var(--chrome-0,#0a141d);border-right:1px solid #ffffff1f;
   display:flex;flex-direction:column;padding:8px 6px;gap:2px;}
@@ -2252,7 +2291,7 @@ body.light .qat-sep{background:var(--line);}
 body.light .rbn-tab{color:var(--ink-3);}
 body.light .rbn-tab:hover{color:var(--ink);}
 body.light .rbn-tab[aria-selected="true"]{color:var(--ink);}
-body.light .find-pop{background:#fffffff7;border-color:var(--line);}
+body.light .find-pop{background:#fff;border-color:var(--line);}
 body.light .find-in{background:#fff;border-color:var(--line);
   color:var(--ink);}
 body.light .find-t,body.light .find-count{color:var(--ink-3);}
@@ -2894,7 +2933,7 @@ body.deck-open{overflow:hidden;}
    height at all (2026-08-20, user). */
 .deck-zoombar{position:absolute;right:18px;bottom:12px;z-index:8;
   display:none;align-items:stretch;gap:3px;padding:4px;border-radius:9px;
-  background:color-mix(in srgb,var(--chrome-1,#0e1926) 88%,transparent);
+  background:var(--chrome-1,#0e1926);
   border:1px solid #ffffff1f;box-shadow:0 6px 20px #00000055;}
 .deck.editing .deck-zoombar{display:flex;}
 /* it steps aside for a docked pane, driven by the SAME width variable so
@@ -2941,7 +2980,7 @@ body.deck-open{overflow:hidden;}
 
 /* ---------- find & replace -------------------------------------------- */
 .find-pop{position:fixed;top:96px;right:22px;z-index:220;width:308px;
-  background:color-mix(in srgb,var(--chrome-3,#101c28) 97%,transparent);
+  background:var(--chrome-3,#101c28);
   border:1px solid #ffffff26;border-radius:10px;padding:10px;
   box-shadow:0 18px 52px #00000077;display:flex;flex-direction:column;
   gap:7px;font-family:var(--sans);}
@@ -3017,7 +3056,7 @@ body.deck-open{overflow:hidden;}
 /* the Objects pane: everything on the slide — select, hide, lock */
 .selpane{position:absolute;top:8px;right:8px;bottom:8px;
   width:var(--pane-w);
-  z-index:60;background:color-mix(in srgb,var(--chrome-3,#101c28) 95%,transparent);border:1px solid #ffffff22;
+  z-index:60;background:var(--chrome-3,#101c28);border:1px solid #ffffff22;
   border-radius:10px;display:flex;flex-direction:column;
   box-shadow:0 14px 44px #00000066;}
 .selpane[hidden]{display:none;}
@@ -3079,7 +3118,9 @@ body.deck-open{overflow:hidden;}
   line-height:1;}
 .sp-act:hover{color:#fff;background:#ffffff14;}
 .sp-act.on{color:var(--cyan);}
-body.light .selpane{background:#fffffff5;border-color:var(--line);}
+/* opaque: a panel you read lists through must not have the page
+   showing through it (2026-08-20) */
+body.light .selpane{background:#fff;border-color:var(--line);}
 body.light .sp-row{color:var(--ink-2);}
 body.light .sp-row.sel{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--ink);}
 body.light .sp-act:hover{color:var(--ink);background:#00000010;}
@@ -3679,7 +3720,7 @@ body.slide-editing .apptop{display:none;}
    has a whole column to use. */
 .edit-tools.ribbon{display:flex;flex-wrap:nowrap;align-items:stretch;
   gap:0;padding:0 10px;border-bottom:1px solid #ffffff14;
-  background:var(--chrome-1,#0e1926);flex:none;height:98px;
+  background:var(--chrome-1,#0e1926);flex:none;height:106px;
   /* Clip SIDEWAYS only. A plain overflow:hidden also clipped every
      dropdown that opens downward — the Shape menu looked like it was
      rendering behind the canvas when it was really being cut off at the
@@ -3721,10 +3762,15 @@ body.slide-editing .apptop{display:none;}
    read it across the rows (2026-08-07, user: "rows not columns"). The
    column COUNT is set per group by fitEditRibbon, which is the only place
    that knows how many controls are currently visible. */
+/* 30px rows, not 26. The controls were sized when the ribbon was one row
+   trying to hold everything and every pixel of height was contested; tabs
+   took that pressure off, and a 26px target is small for a thing you hit
+   all day (2026-08-20, user: "buttons could also have more height"). The
+   two-row grid and its fixed band are unchanged in kind — just taller. */
 .rbn-row{display:grid;grid-auto-flow:row;
   grid-template-columns:repeat(var(--rbn-cols,4),auto);
-  grid-template-rows:26px 26px;row-gap:5px;column-gap:5px;
-  align-items:stretch;justify-items:stretch;height:57px;}
+  grid-template-rows:30px 30px;row-gap:5px;column-gap:5px;
+  align-items:stretch;justify-items:stretch;height:65px;}
 /* the tall things span both rows rather than sitting in one */
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
@@ -3742,7 +3788,7 @@ body.slide-editing .apptop{display:none;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up
    on different rows */
-.rbn-cell{display:flex;align-items:stretch;gap:3px;height:26px;}
+.rbn-cell{display:flex;align-items:stretch;gap:3px;height:30px;}
 /* The readout renames itself from "Zoom 25%" to "Zoom 100%", and it is the
    widest thing in the View group's first column — so without a floor the
    whole group breathed as you zoomed and shoved Output sideways with it.
@@ -5128,6 +5174,84 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
 body.jv-spot .deck-stage{pointer-events:none;}
 /* an item you can blow up says so on hover, and only while presenting */
 .deck:not(.editing) .an-item{transition:filter .12s;}
+
+/* ---- the FILL panel: pick by looking, not by reading -----------------
+   Every chip is drawn with the shape's own colours, so the preview is the
+   answer rather than an illustration of one (2026-08-20). */
+.sh-menu.fill-panel{display:block;width:268px;padding:6px 7px 8px;}
+.fill-row{display:flex;flex-wrap:wrap;gap:5px;margin:3px 0 7px;}
+.fill-chip{padding:0;background:none;border:1px solid transparent;
+  border-radius:5px;cursor:pointer;line-height:0;display:block;}
+.fill-chip:hover{border-color:var(--cyan);}
+.fill-chip.on{border-color:var(--cyan);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent);}
+.fill-chip svg{display:block;border-radius:4px;}
+.fill-dot{width:20px;height:20px;border-radius:5px;display:block;
+  border:1px solid #ffffff33;}
+/* the custom-colour dot is the spectrum, so it reads as "anything else" */
+.fill-custom{background:conic-gradient(#e5484d,#f0a848,#46a892,#39a9c0,
+  #6b9bff,#a586e8,#e5484d);}
+
+/* rename a layer in place, like the group folders above it */
+.sp-rename{flex:1;min-width:0;font-family:var(--sans);font-size:11.5px;
+  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  border:1px solid var(--cyan);border-radius:5px;padding:1px 5px;
+  outline:none;}
+
+/* the "match another slide" picker: one row per other slide, numbered */
+.sh-menu.match-menu{position:fixed;z-index:220;display:block;
+  width:236px;padding:5px;max-height:60vh;overflow-y:auto;}
+.match-menu .vw-opt{width:100%;text-align:left;}
+
+/* ---- the equation editor -------------------------------------------
+   Type on the left, see it set on the right. The palette is the half
+   that was missing: "insert equation" used to drop $$ E = mc^2 $$ and
+   leave you to remember every command yourself (2026-08-20). */
+.eq-dlg{position:fixed;inset:0;z-index:260;display:flex;
+  align-items:center;justify-content:center;background:#000000a8;}
+.eq-dlg[hidden]{display:none!important;}
+.eq-box{width:min(820px,94vw);max-height:88vh;display:flex;
+  flex-direction:column;gap:8px;padding:12px 13px 11px;
+  background:var(--chrome-2,#162735);border:1px solid #ffffff26;
+  border-radius:12px;box-shadow:0 24px 70px #00000088;
+  font-family:var(--sans);}
+.eq-head{display:flex;align-items:center;gap:8px;}
+.eq-t{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#8ea4b6;}
+.eq-main{display:flex;gap:10px;min-height:0;flex:1;}
+.eq-left{flex:1.15;min-width:0;display:flex;flex-direction:column;gap:7px;}
+.eq-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+.eq-src{height:92px;resize:vertical;font-family:var(--mono);
+  font-size:12.5px;line-height:1.5;background:var(--chrome-0,#0b141d);
+  color:#eaf2f8;border:1px solid #ffffff26;border-radius:7px;
+  padding:7px 9px;outline:none;}
+.eq-src:focus{border-color:var(--cyan);}
+.eq-pal{flex:1;min-height:0;overflow-y:auto;padding-right:2px;}
+.eq-palh{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#7d93a6;margin:7px 0 3px;}
+.eq-palrow{display:flex;flex-wrap:wrap;gap:3px;}
+.eq-key{font-family:var(--mono);font-size:11px;padding:3px 7px;
+  min-width:30px;background:var(--btn-bg,#ffffff0a);
+  border:1px solid var(--btn-border,#ffffff22);border-radius:5px;
+  color:var(--btn-ink,#cdd9e3);cursor:pointer;}
+.eq-key:hover{border-color:var(--cyan);color:#fff;}
+.eq-plab{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:#7d93a6;}
+.eq-prev{flex:1;min-height:120px;overflow:auto;display:flex;
+  align-items:center;justify-content:center;text-align:center;
+  background:var(--chrome-0,#0b141d);border:1px solid #ffffff1f;
+  border-radius:7px;padding:10px;color:#eaf2f8;font-size:17px;}
+.eq-warn{font-size:11px;line-height:1.4;color:#e6b877;
+  background:#cf9a4e1f;border:1px solid #cf9a4e4d;border-radius:6px;
+  padding:6px 8px;}
+.eq-foot{display:flex;align-items:center;gap:8px;}
+body.light .eq-box{background:#fff;border-color:var(--line);}
+body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
+  color:var(--ink);border-color:var(--line);}
+/* a typeset key needs room for a fraction without growing the whole row */
+.eq-key-tex{font-size:12px;padding:2px 7px;min-height:24px;
+  display:inline-flex;align-items:center;justify-content:center;}
+.eq-key-tex mjx-container{margin:0!important;}
 </style>
 <script>
 window.MathJax = {
@@ -5313,8 +5437,16 @@ window.MathJax = {
     <button class="menubtn vars-menubtn" id="vars-btn" aria-pressed="false"
       title="Every variable in this notebook — filter by type, and click
  a name or use-site to jump to it">x&#178;</button>
-    <div class="tabstrip" id="tabstrip" role="tablist"
-      aria-label="Open notebooks"></div>
+    <!-- the open-notebooks strip is NOT here any more. A row of
+         horizontal tabs is a row of chrome across the top of the document
+         whose width runs out at about five notebooks, and the rail beside
+         it was already the place this app lists the things you can switch
+         between (2026-08-20, user: "I don't want the horizontal tabs in
+         notebooks anymore, this should just be a thing down the right
+         hand side pop up thing, like presentations but just under the
+         buttons that says notebooks"). It MOVED, node for node, so every
+         handler, the close buttons, the trace sub-tabs and the version
+         marks all keep working — see #tabstrip in the rail. -->
   </div>
   <!-- CUSTOM VIEW styling bar: lives INSIDE the header so measureChrome()
        insets the document by it automatically, and so the normal filter
@@ -5353,6 +5485,12 @@ window.MathJax = {
     title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg></span>
     <span class="pr-t">Notebooks</span></button>
+  <!-- OPEN notebooks, listed under the button that names them. Same shape
+       as the presentations list below: a label, then the things you can
+       switch to (2026-08-20). -->
+  <div class="pr-label pr-nblabel" id="pr-nblabel">open notebooks</div>
+  <div class="tabstrip" id="tabstrip" role="tablist"
+    aria-label="Open notebooks"></div>
   <div class="pr-label">presentations</div>
   <div class="pr-list" id="presstrip" role="tablist"></div>
   <!-- ONE way to make things. Four "+ New ..." buttons in a column were
@@ -9370,7 +9508,7 @@ through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="Check this page before it goes to print: soft
  figures, anything off the page or inside the margin, unreadable text,
- empty frames">&#9873; Print check</button>
+ empty frames">&#9873; Check</button>
             </span>
             <span class="rbn-lab">Output</span>
           </span>
@@ -9385,7 +9523,7 @@ through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="Everything animated on this slide, in the order it
  appears — and the effect on whatever is selected"
-                >&#9654; Animation pane</button>
+                >&#9654; Timeline</button>
               <button class="dbtn etm" id="anim-none" hidden
                 title="Remove the animation from the selected items — they
  are simply on the slide from the start">&#8709; None</button>
@@ -9411,10 +9549,10 @@ through Ko-fi. Thank you.</p>
               <button class="dbtn et rbn-sm" data-tool="cell"
                 aria-pressed="false"
                 title="Place a figure, table or note from your notebook —
- you pick which one"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</button>
+ you pick which one"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Cell</button>
               <button class="dbtn et rbn-sm" data-tool="text"
                 aria-pressed="false"
-                title="Add a text box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Text box</button>
+                title="Add a text box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Text</button>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
@@ -9444,12 +9582,12 @@ through Ko-fi. Thank you.</p>
                    for "Maths inserts"). -->
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
- - it is typeset as you type">&#8747; Equation</button>
+ - it is typeset as you type">&#8747; Maths</button>
               <button class="dbtn rbn-sm" id="dc-qr"
                 title="Ask for a link and put a QR code on the page —
  point a phone at it to open your repo, paper or data. Generated here, so
  it works offline and prints crisp at any size (vector)"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.2" width="4.4" height="4.4"/><rect x="9.4" y="2.2" width="4.4" height="4.4"/><rect x="2.2" y="9.4" width="4.4" height="4.4"/><path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/><path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/></svg> QR code</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.2" width="4.4" height="4.4"/><rect x="9.4" y="2.2" width="4.4" height="4.4"/><rect x="2.2" y="9.4" width="4.4" height="4.4"/><path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/><path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/></svg> QR</button>
               <!-- Source order IS the layout: with two rows filled across,
                    the first four land on the top row and the rest below.
                    So things you PLACE sit together up top and things you
@@ -9524,6 +9662,13 @@ through Ko-fi. Thank you.</p>
                     aria-label="Slide layouts"></div>
                 </div>
               </span>
+              <!-- the least glamorous, most useful button in the app:
+                   make this slide sit like that one (2026-08-20) -->
+              <button class="dbtn rbn-sm" id="hm-match"
+                title="Take another slide's layout — the position, size and
+ styling of everything on it, matched up by kind. Your content stays
+ exactly where it is; only the arrangement travels">&#8646; Match slide
+                &#9662;</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
                 title="Delete this slide">&#10005; Delete</button>
             </span>
@@ -9721,6 +9866,11 @@ through Ko-fi. Thank you.</p>
                    pile of properties, which is what makes "apply this
                    look to all headings" a single edit instead of a hunt
                    through forty slides (2026-08-20). -->
+              <!-- an equation goes back to the editor it came from, rather
+                   than being typed as raw LaTeX inside a text box -->
+              <button class="dbtn etm" id="fmt-eqedit" hidden
+                title="Open this equation in the equation editor"
+                >&#8747; Edit equation</button>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
                   aria-haspopup="true" aria-expanded="false"
@@ -9995,6 +10145,46 @@ through Ko-fi. Thank you.</p>
   slide</span>
   <span class="deck-spring"></span>
   <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
+</div>
+<!-- THE EQUATION EDITOR. "Insert equation" used to drop a text box
+     containing "$$ E = mc^2 $$" and leave you to it — no preview, no
+     symbols, and no clue whether the LaTeX you typed was even valid
+     (2026-08-20, user: "what the hell does insert equation do? There is
+     no latex render and no symbols and stuff to add?").
+     It is a real editor now: type on the left, see it set on the right,
+     and click a symbol to drop it at the caret. It is honest about
+     MathJax too — that is loaded from a CDN, so on a locked-down network
+     or offline there is no renderer at all, and saying so beats showing
+     nothing and letting you think the feature is broken. -->
+<div class="eq-dlg" id="eq-dlg" hidden role="dialog"
+  aria-label="Equation editor">
+  <div class="eq-box">
+    <div class="eq-head">
+      <span class="eq-t">Equation</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="eq-close" title="Cancel (Esc)"
+        >&#10005;</button>
+    </div>
+    <div class="eq-main">
+      <div class="eq-left">
+        <textarea id="eq-src" class="eq-src" spellcheck="false"
+          autocomplete="off" aria-label="LaTeX source"></textarea>
+        <div class="eq-pal" id="eq-pal"></div>
+      </div>
+      <div class="eq-right">
+        <div class="eq-plab">preview</div>
+        <div class="eq-prev" id="eq-prev"></div>
+        <div class="eq-warn" id="eq-warn" hidden></div>
+      </div>
+    </div>
+    <div class="eq-foot">
+      <label class="find-ck"><input type="checkbox" id="eq-display" checked>
+        On its own line (display style)</label>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="eq-cancel">Cancel</button>
+      <button class="dbtn primary" id="eq-ok">Put it on the slide</button>
+    </div>
+  </div>
 </div>
 <!-- FIND AND REPLACE across the whole presentation. A panel rather than a
      browser find: what you are searching is the model (every text box,
@@ -10285,6 +10475,11 @@ through Ko-fi. Thank you.</p>
         var st=makeTab(k); if(st) tabstrip.appendChild(st);
       }
     });
+    /* the strip lives in the rail now, under a heading of its own — and a
+       heading over an empty list is a heading promising something that is
+       not there (2026-08-20) */
+    var nbl=$('#pr-nblabel');
+    if(nbl) nbl.hidden=!tabstrip.childNodes.length;
     refreshChrome();
   }
   function activate(stem){
@@ -17807,6 +18002,10 @@ window.JunoPptx = (function () {
     }
     if(a.k==='text')
       return 'Text — '+(String(a.text||'').trim().slice(0,26)||'(empty)');
+    /* a name you gave it wins over the kind we guessed. Twelve rows
+       saying "Shape - box" is a list you cannot navigate (2026-08-20,
+       user: "also be able to rename layers") */
+    if(a.name) return a.name;
     if(a.k==='image') return 'Image';
     if(a.k==='table')
       return 'Table '+((a.rows||[]).length)+'\u00d7'
@@ -17886,7 +18085,36 @@ window.JunoPptx = (function () {
       var k=document.createElement('span');
       k.className='sp-kind k-'+a.k;r.appendChild(k);
       var t=document.createElement('span');t.className='sp-t';
-      t.textContent=annotLabel(a);t.title=t.textContent;
+      t.textContent=annotLabel(a);
+      t.title=t.textContent+' \u2014 double-click to rename';
+      /* double-click to rename, the way the group folders above already
+         work. Clearing it puts the kind-derived name back rather than
+         leaving a blank row. */
+      t.addEventListener('dblclick',function(e){
+        e.stopPropagation();
+        var inp=document.createElement('input');
+        inp.className='sp-rename';inp.type='text';
+        inp.value=(liveAnnot(i)||{}).name||'';
+        inp.placeholder=annotLabel(a);
+        t.replaceWith(inp);inp.focus();inp.select();
+        var done=false;
+        function commit(ok){
+          if(done) return; done=true;
+          var a3=liveAnnot(i);
+          if(ok&&a3){
+            var v=inp.value.trim();
+            if(v) a3.name=v; else delete a3.name;
+            markDirty();
+          }
+          renderSelPane();
+        }
+        inp.addEventListener('blur',function(){commit(true);});
+        inp.addEventListener('keydown',function(e2){
+          e2.stopPropagation();
+          if(e2.key==='Enter'){e2.preventDefault();commit(true);}
+          else if(e2.key==='Escape'){e2.preventDefault();commit(false);}
+        });
+      });
       r.appendChild(t);
       var eye=document.createElement('button');
       eye.className='sp-act'+(a.hide?' on':'');eye.type='button';
@@ -19071,14 +19299,33 @@ window.JunoPptx = (function () {
      colour (the original behaviour, kept for existing posters), a solid
      colour, or a gradient — linear at an angle, or radiating from the
      centre */
+  /* ---- GRADIENTS -------------------------------------------------------
+     A gradient is a list of STOPS: [{o:0..1, c:'#rrggbb'}, ...]. It used to
+     be exactly two colours in `a` and `b`, which made a three-colour
+     gradient impossible to express at all (2026-08-20, user asked for
+     "gradients from different directions, multiple colours").
+     `a`/`b` are still read on the way IN so every deck saved before this
+     keeps its gradient, and still written on the way OUT so the .pptx
+     exporter — which speaks in two colours — needs no changes. */
+  function gradStops(g){
+    if(!g) return [];
+    if(Array.isArray(g.stops)&&g.stops.length>=2) return g.stops;
+    return [{o:0,c:g.a||'#39a9c0'},{o:1,c:g.b||'transparent'}];
+  }
+  function gradCss(g,col){
+    var st=gradStops(g).map(function(s2){
+      return (s2.c||col||'#39a9c0')+' '+Math.round((s2.o||0)*100)+'%';
+    }).join(', ');
+    if(g.type==='radial')
+      return 'radial-gradient(circle at '
+        +(g.cx==null?50:g.cx)+'% '+(g.cy==null?50:g.cy)+'%, '+st+')';
+    /* CSS measures its angle from "up" and clockwise; the model keeps the
+       maths convention the SVG paint server uses, so the two differ by 90 */
+    return 'linear-gradient('+((+g.ang||0)+90)+'deg, '+st+')';
+  }
   function cssFill(a,col){
     if(!a.fill&&!a.grad) return 'transparent';
-    if(a.grad){
-      var g=a.grad,c1=g.a||col,c2=g.b||'transparent';
-      return g.type==='radial'
-        ?('radial-gradient(circle at 50% 50%, '+c1+', '+c2+')')
-        :('linear-gradient('+((+g.ang||0)+90)+'deg, '+c1+', '+c2+')');
-    }
+    if(a.grad) return gradCss(a.grad,col);
     if(a.fillc) return a.fillc;
     return shapeFill(col,0x26/255);
   }
@@ -19162,11 +19409,15 @@ window.JunoPptx = (function () {
           gel.setAttribute('y1',(50-50*Math.sin(rad))+'%');
           gel.setAttribute('x2',(50+50*Math.cos(rad))+'%');
           gel.setAttribute('y2',(50+50*Math.sin(rad))+'%');
+        } else {
+          gel.setAttribute('cx',(g.cx==null?50:g.cx)+'%');
+          gel.setAttribute('cy',(g.cy==null?50:g.cy)+'%');
+          gel.setAttribute('r','62%');
         }
-        [[0,g.a||col],[1,g.b||'transparent']].forEach(function(st){
+        gradStops(g).forEach(function(st){
           var s2=document.createElementNS(SVGNS,'stop');
-          s2.setAttribute('offset',st[0]);
-          s2.setAttribute('stop-color',st[1]);
+          s2.setAttribute('offset',st.o==null?0:st.o);
+          s2.setAttribute('stop-color',st.c||col||'#39a9c0');
           gel.appendChild(s2);
         });
         gd.appendChild(gel);svg.appendChild(gd);
@@ -20138,6 +20389,10 @@ window.JunoPptx = (function () {
   function itemLabel(s,idx){
     var a=(s&&s.annots||[])[idx]; if(!a) return 'item';
     if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
+    /* a name you gave it wins over the kind we guessed. Twelve rows
+       saying "Shape - box" is a list you cannot navigate (2026-08-20,
+       user: "also be able to rename layers") */
+    if(a.name) return a.name;
     if(a.k==='image') return 'Image';
     if(a.k==='table')
       return 'Table '+((a.rows||[]).length)+'\u00d7'
@@ -21405,7 +21660,7 @@ window.JunoPptx = (function () {
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-stylewrap-tx '
+  var FMT_MANUAL=('#fmt-eqedit #fmt-stylewrap-tx '
     +'#fmt-tbl-rowplus #fmt-tbl-rowminus #fmt-tbl-colplus '
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
@@ -21508,6 +21763,7 @@ window.JunoPptx = (function () {
     /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
        already the deck's title style by definition */
     show('#fmt-stylewrap-tx',isText&&isNum);
+    show('#fmt-eqedit',isMaths(a)&&isNum);
     var szIn=$('#fmt-size');
     if(szIn&&(isText||isTbl)&&document.activeElement!==szIn)
       szIn.value=Math.round((a.size||(isTbl?2.2:2.6))*5.4);
@@ -21591,7 +21847,11 @@ window.JunoPptx = (function () {
     if(tcb) tcb.textContent=(isText||kind==='cell')?'Text ▾'
       :kind==='rect'?'Border ▾'
       :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾';
-    show('#fmt-fillcol-btn',showBg);
+    /* a SHAPE has one Fill control and it is the panel in Line & shape;
+       this button stays for text boxes and cell frames, which have a
+       background colour but no fill STYLE (2026-08-20, user: "confusing
+       there is a fill and fill colour") */
+    show('#fmt-fillcol-btn',showBg&&kind!=='rect');
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');
@@ -21624,12 +21884,29 @@ window.JunoPptx = (function () {
       if(rvb) rvb.innerHTML=frozen
         ?'&#8635; Live figure':'&#10226; Previous figure';
     }
-    var canLock=(kind==='cell')&&!!a.ref&&APP.mode==='app';
-    show('#fmt-lockver',canLock);
-    if(canLock){
-      var lvb=$('#fmt-lockver');
-      if(lvb) lvb.innerHTML=lockedV
+    /* Locking pins a figure to its notebook's git commit, which needs the
+       local server to talk to git - so it only WORKS in the app build.
+       It used to disappear entirely everywhere else, which reads as a
+       feature that was removed rather than one that is unavailable here
+       (2026-08-20, user: "what happened to locking all the images to a
+       git commit"). It is shown and disabled instead, and the tooltip
+       says what would make it work. */
+    var isCellRef=(kind==='cell')&&!!a.ref;
+    var canLock=isCellRef&&APP.mode==='app';
+    show('#fmt-lockver',isCellRef);
+    var lvb=$('#fmt-lockver');
+    if(lvb&&isCellRef){
+      lvb.disabled=!canLock;
+      lvb.innerHTML=lockedV
         ?'&#128275; Unlock figure':'&#128274; Lock figure';
+      lvb.title=canLock
+        ?('Pin this figure to its notebook\u2019s current git commit '
+          +'\u2014 refreshes stop changing it, and it renders even with '
+          +'the notebook closed')
+        :('Locking pins a figure to a git commit, which needs the '
+          +'Junoview app (it reads git through the local server). This '
+          +'page was exported as a standalone file, so there is no '
+          +'repository to pin to.');
     }
     /* #fmt-cropwrap: visibility from FMT_KINDS.
        Animation is a BUILD — an item appearing on click as you step
@@ -22959,26 +23236,214 @@ window.JunoPptx = (function () {
       o.setAttribute('aria-pressed',cur[o.dataset.optKey]?'true':'false');
     });
   }
-  wireFloatDropdown('fmt-fillwrap','fmt-fillstyle','fmt-fillstyle-menu',
-    [['none','No fill'],['tint','Tint of the line colour'],
-     ['solid','Solid colour…'],['lin','Gradient — linear'],
-     ['linv','Gradient — vertical'],
-     ['rad','Gradient — from the centre']],'fs',
-    function(v){
-      fmtApply(function(a){
-        delete a.grad;
-        if(v==='none'){a.fill=0;delete a.fillc;}
-        else if(v==='tint'){a.fill=1;delete a.fillc;}
-        else if(v==='solid'){a.fill=1;a.fillc=a.fillc||a.color||'#39a9c0';}
-        else {
-          a.fill=1;
-          var base=a.fillc||a.color||'#39a9c0';
-          a.grad={type:(v==='rad'?'radial':'linear'),
-            a:base,b:gradPartner(base),
-            ang:(v==='linv'?90:0)};
-        }
-      });
+  /* ---- THE FILL PANEL --------------------------------------------------
+     Six worded rows became a panel you pick from by LOOKING. "Gradient —
+     linear" told you nothing about which way it ran, and "gradient from
+     different directions, multiple colours" was not expressible at all
+     (2026-08-20, user: "all the gradient fills are just words. Put images
+     showing it. Also put heaps of options in this").
+     Every chip is drawn with the shape's OWN colours, so the preview is
+     the answer rather than an illustration of one.
+     It also absorbs the fill COLOUR swatches. There used to be a "Fill"
+     here and a "Fill colour" two groups away, and nobody could tell which
+     was which ("Also confusing there is a fill and fill colour"); a shape
+     now has exactly one Fill control with everything in it. */
+  var GRAD_DIRS=[
+    [0,'Left to right'],[45,'Bottom-left to top-right'],
+    [90,'Bottom to top'],[135,'Bottom-right to top-left'],
+    [180,'Right to left'],[225,'Top-right to bottom-left'],
+    [270,'Top to bottom'],[315,'Top-left to bottom-right']];
+  /* Ready-made ramps. Each is a list of stops, so three- and four-colour
+     gradients are as ordinary as two-colour ones. */
+  var GRAD_PRESETS=[
+    ['Fade out',      null, [0,1]],
+    ['Fade to dark',  ['#00000000','#000000cc'], null],
+    ['Fade to white', ['#ffffff00','#ffffffdd'], null],
+    ['Ocean',   ['#39a9c0','#1e6f9e','#123a63'], null],
+    ['Sunset',  ['#f0a848','#e5484d','#7a2b6b'], null],
+    ['Forest',  ['#8fd694','#41c493','#0f5c46'], null],
+    ['Ember',   ['#ffd08a','#ff6b57','#8c1d2f'], null],
+    ['Violet',  ['#c3a6ff','#7a52c0','#241a4d'], null],
+    ['Steel',   ['#dbe6ee','#8aa0b0','#33424f'], null],
+    ['Mono',    ['#ffffff','#9aa7b2','#1b2530'], null],
+    ['Warm/cool',['#f0a848','#39a9c0'], null],
+    ['Three-tone',['#39a9c0','#f0a848','#e5484d'], null]];
+  /* a drawn swatch of a fill, as an inline SVG so it is crisp at any dpi
+     and needs no image file */
+  function fillSwatch(kind,opt,base){
+    var w=34,h=22;
+    var sv=svgBox('fillsw','0 0 '+w+' '+h,w,h);
+    var uid='fsw'+(fillSwatch._n=(fillSwatch._n||0)+1);
+    var r=SVG_('rect');
+    r.setAttribute('x','0.5');r.setAttribute('y','0.5');
+    r.setAttribute('width',w-1);r.setAttribute('height',h-1);
+    r.setAttribute('rx','3');
+    r.setAttribute('stroke','#ffffff30');
+    if(kind==='none'){
+      r.setAttribute('fill','none');
+      sv.appendChild(r);
+      /* the universal "nothing here": a diagonal through an empty box */
+      var ln=SVG_('line');
+      ln.setAttribute('x1','2');ln.setAttribute('y1',h-2);
+      ln.setAttribute('x2',w-2);ln.setAttribute('y2','2');
+      ln.setAttribute('stroke','#e5484d');ln.setAttribute('stroke-width','1.6');
+      sv.appendChild(ln);
+      return sv;
+    }
+    if(kind==='solid'||kind==='tint'){
+      r.setAttribute('fill',kind==='tint'?shapeFill(base,0x2b/255):base);
+      sv.appendChild(r);return sv;
+    }
+    /* a gradient: build the paint server the same way drawShapeSvg does,
+       so what you pick is exactly what you get */
+    var defs=SVG_('defs');
+    var g=opt;
+    var gel=SVG_(g.type==='radial'?'radialGradient':'linearGradient');
+    gel.setAttribute('id',uid);
+    if(g.type==='radial'){
+      gel.setAttribute('cx','50%');gel.setAttribute('cy','50%');
+      gel.setAttribute('r','62%');
+    } else {
+      var rad=((+g.ang||0))*Math.PI/180;
+      gel.setAttribute('x1',(50-50*Math.cos(rad))+'%');
+      gel.setAttribute('y1',(50-50*Math.sin(rad))+'%');
+      gel.setAttribute('x2',(50+50*Math.cos(rad))+'%');
+      gel.setAttribute('y2',(50+50*Math.sin(rad))+'%');
+    }
+    gradStops(g).forEach(function(st){
+      var s2=SVG_('stop');
+      s2.setAttribute('offset',st.o==null?0:st.o);
+      s2.setAttribute('stop-color',st.c||base);
+      gel.appendChild(s2);
     });
+    defs.appendChild(gel);sv.appendChild(defs);
+    r.setAttribute('fill','url(#'+uid+')');
+    sv.appendChild(r);
+    return sv;
+  }
+  /* evenly spaced stops from a list of colours */
+  function stopsFrom(cols){
+    var n=cols.length;
+    return cols.map(function(c,i){
+      return {o:n<2?0:(i/(n-1)),c:c};});
+  }
+  (function(){
+    var wrap=$('#fmt-fillwrap'),btn=$('#fmt-fillstyle'),
+        menu=$('#fmt-fillstyle-menu');
+    if(!wrap||!btn||!menu) return;
+    menu.classList.add('fill-panel');
+    function curA(){
+      var s2=pres.slides[cur];return annotByIdx(s2,selAnnot);
+    }
+    function baseCol(){
+      var a=curA();
+      return (a&&(a.fillc||(a.grad&&gradStops(a.grad)[0].c)||a.color))
+        ||'#39a9c0';
+    }
+    function chip(node,label,on,fn){
+      var b=document.createElement('button');
+      b.className='fill-chip'+(on?' on':'');
+      b.type='button';b.title=label;
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.appendChild(node);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();fn();menu.hidden=true;
+        btn.setAttribute('aria-expanded','false');});
+      return b;
+    }
+    function build(){
+      var a=curA(); if(!a) return;
+      var base=baseCol();
+      menu.innerHTML='';
+      menuHead(menu,'fill');
+      var r1=document.createElement('div');r1.className='fill-row';
+      r1.appendChild(chip(fillSwatch('none',null,base),'No fill',
+        !a.fill&&!a.grad,function(){
+          fmtApply(function(x){x.fill=0;delete x.fillc;delete x.grad;});}));
+      r1.appendChild(chip(fillSwatch('tint',null,base),
+        'Tint of the outline colour',
+        !!a.fill&&!a.grad&&!a.fillc,function(){
+          fmtApply(function(x){x.fill=1;delete x.fillc;delete x.grad;});}));
+      r1.appendChild(chip(fillSwatch('solid',null,base),'Solid '+base,
+        !!a.fill&&!a.grad&&!!a.fillc,function(){
+          fmtApply(function(x){
+            x.fill=1;x.fillc=x.fillc||x.color||'#39a9c0';delete x.grad;});}));
+      menu.appendChild(r1);
+      /* the COLOUR, in the same panel — there is no second Fill control */
+      menuHead(menu,'fill colour');
+      var r2=document.createElement('div');r2.className='fill-row';
+      ['#e5484d','#ff6b57','#f0a848','#39a9c0','#46a892','#6b9bff',
+       '#a586e8','#ffffff','#8aa0b0','#16202b'].forEach(function(c){
+        var sw=document.createElement('span');
+        sw.className='fill-dot';sw.style.background=c;
+        r2.appendChild(chip(sw,c,a.fillc===c,function(){
+          fmtApply(function(x){
+            if(x.grad){
+              /* recolour the ramp's first stop rather than throwing the
+                 gradient away — changing a colour should not silently
+                 change the KIND of fill */
+              var st=gradStops(x.grad).slice();
+              st[0]={o:st[0].o,c:c};
+              gradSet(x,{type:x.grad.type,ang:x.grad.ang,stops:st});
+            } else {x.fill=1;x.fillc=c;}
+          });}));
+      });
+      var cus=document.createElement('span');
+      cus.className='fill-dot fill-custom';
+      r2.appendChild(chip(cus,'Custom colour…',false,function(){
+        openColorPop('fill',btn);}));
+      menu.appendChild(r2);
+      menuHead(menu,'gradient — direction');
+      var r3=document.createElement('div');r3.className='fill-row';
+      GRAD_DIRS.forEach(function(d){
+        var g={type:'linear',ang:d[0],
+          stops:[{o:0,c:base},{o:1,c:gradPartner(base)}]};
+        var on=!!(a.grad&&a.grad.type!=='radial'
+          &&(+a.grad.ang||0)===d[0]);
+        r3.appendChild(chip(fillSwatch('grad',g,base),d[1],on,function(){
+          fmtApply(function(x){
+            var b2=x.fillc||(x.grad&&gradStops(x.grad)[0].c)||x.color
+              ||'#39a9c0';
+            gradSet(x,{type:'linear',ang:d[0],
+              stops:[{o:0,c:b2},{o:1,c:gradPartner(b2)}]});});}));
+      });
+      var gr={type:'radial',stops:[{o:0,c:base},{o:1,c:gradPartner(base)}]};
+      r3.appendChild(chip(fillSwatch('grad',gr,base),'From the centre',
+        !!(a.grad&&a.grad.type==='radial'),function(){
+          fmtApply(function(x){
+            var b2=x.fillc||(x.grad&&gradStops(x.grad)[0].c)||x.color
+              ||'#39a9c0';
+            gradSet(x,{type:'radial',
+              stops:[{o:0,c:b2},{o:1,c:gradPartner(b2)}]});});}));
+      menu.appendChild(r3);
+      menuHead(menu,'gradient — ready-made');
+      var r4=document.createElement('div');r4.className='fill-row';
+      GRAD_PRESETS.forEach(function(pr){
+        var cols=pr[1]||[base,gradPartner(base)];
+        var g2={type:'linear',ang:270,stops:stopsFrom(cols)};
+        r4.appendChild(chip(fillSwatch('grad',g2,base),pr[0],false,
+          function(){
+            fmtApply(function(x){
+              var cs=pr[1]||[(x.fillc||x.color||'#39a9c0'),
+                gradPartner(x.fillc||x.color||'#39a9c0')];
+              gradSet(x,{type:'linear',
+                ang:(x.grad&&x.grad.ang!=null)?x.grad.ang:270,
+                stops:stopsFrom(cs)});});}));
+      });
+      menu.appendChild(r4);
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      if(open) build();
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
+    });
+  })();
   /* alignment, bullets and curve in one worded menu. The curve options
      are listed inline rather than nested — a menu that opens a menu is
      worse than a slightly longer list. */
@@ -23187,6 +23652,15 @@ window.JunoPptx = (function () {
   /* the far end of a generated gradient: the same hue taken most of the
      way to transparent, which reads as a wash rather than a second
      colour you did not choose */
+  /* the .pptx exporter speaks in two colours, so every gradient written
+     here also carries its first and last stop in the old a/b fields */
+  function gradSet(a,g){
+    var st=gradStops(g);
+    g.stops=st;
+    g.a=st[0].c;g.b=st[st.length-1].c;
+    a.fill=1;a.grad=g;
+    delete a.fillc;
+  }
   function gradPartner(col){
     var c=parseColor(col);
     if(!c) return '#00000000';
@@ -23744,17 +24218,103 @@ window.JunoPptx = (function () {
         if(!ref||(mode==='smallest'
           ?x.w*x.h<ref.w*ref.h:x.w*x.h>ref.w*ref.h)) ref=x;});
     }
+    /* w / h / both take the BIGGEST as the model: matching down to the
+       smallest usually crops something, matching up never does
+       (2026-08-20) */
+    if(mode==='w'||mode==='h'||mode==='both'){
+      ref=null;
+      items.forEach(function(x){
+        var v=(mode==='h')?x.h:(mode==='w'?x.w:x.w*x.h);
+        var rv=ref?((mode==='h')?ref.h:(mode==='w'?ref.w:ref.w*ref.h)):-1;
+        if(v>rv) ref=x;});
+    }
     if(!ref) ref=items[items.length-1];  /* the reference was an arrow */
     items.forEach(function(x){
       if(x===ref) return;
       if(x.a.k==='cell'){x.a.x=x.r.l;x.a.y=x.r.t;}
-      x.a.w=ref.w;
-      if(x.a.k!=='text') x.a.h=ref.h;
+      if(mode!=='h') x.a.w=ref.w;
+      if(x.a.k!=='text'&&mode!=='w') x.a.h=ref.h;
     });
-    toast('Same size: matched the '+
-      (mode==='first'?'first selected':mode==='last'?'last selected'
-       :mode)+' item');
+    toast(mode==='w'?'Matched widths to the widest'
+      :mode==='h'?'Matched heights to the tallest'
+      :mode==='both'?'Matched sizes to the biggest'
+      :('Same size: matched the '+
+        (mode==='first'?'first selected':mode==='last'?'last selected'
+         :mode)+' item'));
     rerenderSel();
+  }
+  /* ---- centre on the PAGE ---------------------------------------------
+     Aligning puts items in line with EACH OTHER; this puts them in line
+     with the page. With one item selected the two look the same, which is
+     why nobody notices the difference until they want a block of three
+     centred and discover that aligning centres them on their own average
+     (2026-08-20). The selection moves as one, so the arrangement inside
+     it is preserved. */
+  function centreOnPage(how){
+    var items=selRects();
+    if(!items.length){toast('Select something first');return;}
+    var bb=selBBox(items);
+    var dx=(how==='vmiddle')?0:(50-(bb.l+bb.r)/2);
+    var dy=(how==='hcenter')?0:(50-(bb.t+bb.b)/2);
+    items.forEach(function(x){placeAt(x,x.r.l+dx,x.r.t+dy);});
+    rerenderSel();
+    toast('Centred on the page');
+  }
+  /* ---- close the gaps -------------------------------------------------
+     The opposite of "space them evenly": push everything up against its
+     neighbour, in order, keeping the first one where it is. This is the
+     one you want after deleting something out of a row. */
+  function closeGaps(axis){
+    var items=selRects();
+    if(needTwo(items,'close the gaps between')) return;
+    var horiz=(axis==='h');
+    items.sort(function(a,b){
+      return horiz?(a.r.l-b.r.l):(a.r.t-b.r.t);});
+    var GAP=1.2;                 /* a hair of air, not a hard butt joint */
+    var at=horiz?items[0].r.l:items[0].r.t;
+    items.forEach(function(x){
+      if(horiz){placeAt(x,at,x.r.t);at+=x.w+GAP;}
+      else {placeAt(x,x.r.l,at);at+=x.h+GAP;}
+    });
+    rerenderSel();
+    toast('Closed the gaps');
+  }
+  /* ---- flip ------------------------------------------------------------
+     Mirror the selection within its own bounding box. With one item that
+     is a no-op on its position and only matters to arrows and freehand,
+     which carry real geometry to mirror; with several it reverses their
+     order, which is the useful case. */
+  function flipSel(axis){
+    var items=selRects();
+    if(!items.length){toast('Select something first');return;}
+    var bb=selBBox(items),horiz=(axis==='h');
+    items.forEach(function(x){
+      if(horiz) placeAt(x,bb.l+bb.r-x.r.l-x.w,x.r.t);
+      else placeAt(x,x.r.l,bb.t+bb.b-x.r.t-x.h);
+      var a=x.a;
+      /* an arrow's endpoints are its geometry, so they mirror too */
+      if(a.k==='arrow'){
+        if(horiz){var t1=a.x1;a.x1=bb.l+bb.r-a.x2;a.x2=bb.l+bb.r-t1;}
+        else {var t2=a.y1;a.y1=bb.t+bb.b-a.y2;a.y2=bb.t+bb.b-t2;}
+      } else if(a.k==='draw'&&Array.isArray(a.pts)){
+        a.pts=a.pts.map(function(q){
+          return horiz?[1-q[0],q[1]]:[q[0],1-q[1]];});
+      }
+    });
+    rerenderSel();
+    toast(horiz?'Flipped left to right':'Flipped top to bottom');
+  }
+  /* ---- quarter turns and straighten ----------------------------------- */
+  function turnSel(deg){
+    var n=0;
+    fmtApply(function(a){
+      n++;
+      if(!deg){delete a.rot;return;}
+      a.rot=(((+a.rot||0)+deg)%360+360)%360;
+      if(!a.rot) delete a.rot;
+    });
+    if(!n) return;
+    toast(!deg?'Straightened':(deg>0?'Turned right':'Turned left'));
   }
   /* ---- align / distribute --------------------------------------------
      Row and Grid RE-ARRANGE a selection into a formation. Aligning is the
@@ -23808,6 +24368,119 @@ window.JunoPptx = (function () {
     });
     rerenderSel();
   }
+  /* ---- MATCH ANOTHER SLIDE --------------------------------------------
+     The single most tedious thing about building a deck is making slide 7
+     sit exactly like slide 3 — the heading in the same place, the figure
+     the same size, the caption the same style. PowerPoint's answer is to
+     duplicate a slide and replace its contents, which loses the contents
+     you already had (2026-08-20, user: "would be cool if there was a
+     'match other slide' option ... the text style, locations and sizes of
+     everything become that same").
+     It works by KIND, in reading order: the first heading here takes the
+     first heading there's box and look, the first figure takes the first
+     figure's, and so on. That is enough to be right almost every time and
+     simple enough to explain in one sentence — which matters more than
+     cleverness for something that moves your work about.
+     What it deliberately does NOT do is move content between slides.
+     Nothing is added, nothing is deleted; only geometry and styling
+     travel. */
+  function matchKey(a){
+    /* what counts as "the same kind of thing". A text box's ROLE is its
+       named style when it has one, so a Heading 1 matches a Heading 1 and
+       not just any old text. */
+    if(!a) return '';
+    if(a.k==='text') return 'text:'+(a.style||'body');
+    if(a.k==='cell'){
+      /* a placed figure and a placed table are not interchangeable */
+      return 'cell:'+(a.part||'auto');
+    }
+    return a.k;
+  }
+  /* the geometry + look that travel; content never does */
+  var MATCH_PROPS=['x','y','w','h','rot','size','b','i','u','strike',
+    'align','font','color','bg','bgc','op','style','sw','fill','fillc',
+    'grad','ts','txcol','bgcol','arc','list','thead','grid','cols'];
+  function matchSlide(fromIdx,toIdx){
+    var src=pres.slides[fromIdx],dst=pres.slides[toIdx];
+    if(!src||!dst) return null;
+    /* buckets by kind, in reading order down the page then across */
+    function bucket(sl){
+      var m={};
+      (sl.annots||[]).map(function(a,i){return {a:a,i:i};})
+        .filter(function(p2){return p2.a&&!p2.a.hide;})
+        .sort(function(p2,q2){
+          var dy=(p2.a.y||0)-(q2.a.y||0);
+          return Math.abs(dy)>4?dy:((p2.a.x||0)-(q2.a.x||0));})
+        .forEach(function(p2){
+          var k=matchKey(p2.a);
+          (m[k]=m[k]||[]).push(p2);});
+      return m;
+    }
+    var sb=bucket(src),db=bucket(dst);
+    var moved=0,missing=[];
+    Object.keys(db).forEach(function(k){
+      var from=sb[k]||[],to=db[k];
+      if(!from.length){missing.push(k);return;}
+      to.forEach(function(p2,n){
+        /* run out of models? reuse the last one, so three bullets on this
+           slide all take the styling of the one bullet on that one */
+        var m=from[Math.min(n,from.length-1)].a;
+        MATCH_PROPS.forEach(function(prop){
+          if(m[prop]===undefined) delete p2.a[prop];
+          else p2.a[prop]=(typeof m[prop]==='object'&&m[prop])
+            ?JSON.parse(JSON.stringify(m[prop])):m[prop];
+        });
+        moved++;
+      });
+    });
+    return {moved:moved,missing:missing,
+      spare:Object.keys(sb).filter(function(k){return !db[k];})};
+  }
+  /* pick which slide to match, from a small list of the others */
+  function openMatchMenu(btn){
+    var old=$('#match-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu';m.id='match-menu';
+    menuHead(m,'take the layout of…');
+    var any=false;
+    (pres.slides||[]).forEach(function(sl,i){
+      if(i===cur) return;
+      any=true;
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      var n=document.createElement('span');n.className='fh-n';
+      n.textContent=(i+1);b.appendChild(n);
+      var t=document.createElement('span');
+      t.textContent=slideTitle(sl);b.appendChild(t);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.remove();
+        var r=matchSlide(i,cur);
+        if(!r) return;
+        if(!r.moved){
+          toast('Slide '+(i+1)+' and this one have no matching items — '
+            +'nothing to copy a layout from');
+          return;
+        }
+        markDirty();refresh();
+        var note='Matched '+r.moved+' item'+(r.moved===1?'':'s')
+          +' to slide '+(i+1);
+        if(r.missing.length)
+          note+=' — '+r.missing.length+' kind'
+            +(r.missing.length===1?'':'s')+' here had nothing to match';
+        toast(note);
+      });
+      m.appendChild(b);
+    });
+    if(!any) menuHead(m,'there is only one slide');
+    document.body.appendChild(m);
+    floatMenu(btn,m);
+    setTimeout(function(){
+      document.addEventListener('click',function once(e){
+        if(!m.contains(e.target)) m.remove();
+        document.removeEventListener('click',once);
+      });
+    },0);
+  }
   /* one worded menu for everything that arranges: line up, space out,
      stack order, rotate, tidy into a formation */
   wireFloatDropdown('fmt-alignwrap','fmt-align-btn','fmt-align-menu',
@@ -23817,18 +24490,42 @@ window.JunoPptx = (function () {
      ['top','Align top edges'],
      ['vmiddle','Align middles (top to bottom)'],
      ['bottom','Align bottom edges'],
+     /* align to the PAGE, not to each other. With one item selected the
+        two are indistinguishable, which is why the six above already do
+        the right thing on their own — these are for centring a whole
+        group on the page without first selecting something at its edge
+        (2026-08-20, user asked for arrange "like what there is in photo
+        shop editors ... really thorough") */
+     ['p:hcenter','Centre on the page, side to side'],
+     ['p:vmiddle','Centre on the page, top to bottom'],
+     ['p:both','Centre on the page, both ways'],
      ['d:h','Equal gaps across (3+ items)'],
      ['d:v','Equal gaps down (3+ items)'],
+     ['g:h','Close the gaps across'],
+     ['g:v','Close the gaps down'],
      ['o:front','Bring to front'],
      ['o:forward','Bring forward one'],
      ['o:backward','Send backward one'],
      ['o:back','Send to back'],
+     ['f:h','Flip left to right'],
+     ['f:v','Flip top to bottom'],
      ['o:rotl','Rotate left 15°'],
      ['o:rotr','Rotate right 15°'],
+     ['r:90','Turn a quarter turn right'],
+     ['r:-90','Turn a quarter turn left'],
+     ['r:0','Straighten (no rotation)'],
      ['o:row','Tidy into a row'],
-     ['o:grid','Tidy into a grid']],'al',
+     ['o:grid','Tidy into a grid'],
+     ['m:w','Match widths to the widest'],
+     ['m:h','Match heights to the tallest'],
+     ['m:both','Match both to the biggest']],'al',
     function(what){
       if(what.indexOf('d:')===0){distributeSel(what.slice(2));return;}
+      if(what.indexOf('p:')===0){centreOnPage(what.slice(2));return;}
+      if(what.indexOf('g:')===0){closeGaps(what.slice(2));return;}
+      if(what.indexOf('f:')===0){flipSel(what.slice(2));return;}
+      if(what.indexOf('r:')===0){turnSel(+what.slice(2));return;}
+      if(what.indexOf('m:')===0){sameSize(what.slice(2));return;}
       if(what.indexOf('o:')===0){
         /* drive the original buttons so each keeps its one implementation */
         var b=$({front:'#fmt-front',back:'#fmt-back',rotl:'#fmt-rotl',
@@ -24202,20 +24899,269 @@ window.JunoPptx = (function () {
      What it DOES add is re-typesetting after an edit: the annot layer is
      rebuilt on every change, so the rendered maths would otherwise be
      thrown away the moment you touched anything. */
-  var mathsBtn=$('#dc-maths');
-  if(mathsBtn) mathsBtn.addEventListener('click',function(){
-    var s2=pres.slides[cur];
-    if(!s2){toast('Add a slide first');return;}
-    s2.annots=s2.annots||[];
-    s2.annots.push({k:'text',x:30,y:42,w:40,text:'$$ E = mc^2 $$',
-      size:3.4,bg:0,align:'center',maths:1});
-    markDirty();
-    setTool('select');
-    var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s2);selectAnnot(l,s2.annots.length-1);}
-    else renderSlide();
-    toast('Double-click it to edit the LaTeX between the $$ marks');
-  });
+  /* ---- THE EQUATION EDITOR --------------------------------------------
+     The old "Insert equation" dropped a text box containing "$$ E = mc^2
+     $$" and walked away: no preview, no symbols, and no way to tell
+     whether what you typed was valid (2026-08-20, user: "what the hell
+     does insert equation do? There is no latex render and no symbols and
+     stuff to add?").
+     Type on the left, see it set on the right, click a symbol to drop it
+     at the caret. A template like \frac{}{} leaves the caret in the first
+     empty brace, because landing after the closing brace means deleting
+     your way back every single time. */
+  var EQ_PAL=[
+    ['Structures',[
+      ['\\frac{a}{b}','\\frac{}{}','fraction'],
+      ['a^{b}','^{}','superscript / power'],
+      ['a_{b}','_{}','subscript'],
+      ['\\sqrt{x}','\\sqrt{}','square root'],
+      ['\\sqrt[n]{x}','\\sqrt[]{}','nth root'],
+      ['\\sum','\\sum_{i=1}^{n} ','sum'],
+      ['\\prod','\\prod_{i=1}^{n} ','product'],
+      ['\\int','\\int_{a}^{b} ','integral'],
+      ['\\iint','\\iint ','double integral'],
+      ['\\oint','\\oint ','contour integral'],
+      ['\\lim','\\lim_{x \\to 0} ','limit'],
+      ['(\\;)','\\left( \\right)','auto-sized brackets'],
+      ['[\\;]','\\left[ \\right]','auto-sized square brackets'],
+      ['\\{\\;\\}','\\left\\{ \\right\\}','auto-sized braces'],
+      ['|\\;|','\\left| \\right|','absolute value'],
+      ['\\binom{n}{k}','\\binom{}{}','binomial coefficient'],
+      ['\\overline{x}','\\overline{}','overline / mean'],
+      ['\\hat{x}','\\hat{}','hat'],
+      ['\\vec{x}','\\vec{}','vector'],
+      ['\\dot{x}','\\dot{}','time derivative'],
+      ['\\text{if}','\\text{}','ordinary words inside maths'],
+      ['2\\times2','\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}',
+       'matrix'],
+      ['cases','\\begin{cases} a & x<0 \\\\ b & x\\ge 0 \\end{cases}',
+       'a case split'],
+      ['align','\\begin{aligned} a &= b \\\\ &= c \\end{aligned}',
+       'several lines, aligned on =']]],
+    ['Greek',[
+      ['\\alpha','\\alpha ',''],['\\beta','\\beta ',''],
+      ['\\gamma','\\gamma ',''],['\\delta','\\delta ',''],
+      ['\\epsilon','\\varepsilon ',''],['\\zeta','\\zeta ',''],
+      ['\\eta','\\eta ',''],['\\theta','\\theta ',''],
+      ['\\kappa','\\kappa ',''],['\\lambda','\\lambda ',''],
+      ['\\mu','\\mu ',''],['\\nu','\\nu ',''],['\\xi','\\xi ',''],
+      ['\\pi','\\pi ',''],['\\rho','\\rho ',''],['\\sigma','\\sigma ',''],
+      ['\\tau','\\tau ',''],['\\phi','\\varphi ',''],['\\chi','\\chi ',''],
+      ['\\psi','\\psi ',''],['\\omega','\\omega ',''],
+      ['\\Gamma','\\Gamma ',''],['\\Delta','\\Delta ',''],
+      ['\\Theta','\\Theta ',''],['\\Lambda','\\Lambda ',''],
+      ['\\Sigma','\\Sigma ',''],['\\Phi','\\Phi ',''],
+      ['\\Psi','\\Psi ',''],['\\Omega','\\Omega ','']]],
+    ['Operators & relations',[
+      ['\\times','\\times ',''],['\\div','\\div ',''],
+      ['\\pm','\\pm ',''],['\\mp','\\mp ',''],['\\cdot','\\cdot ',''],
+      ['\\ast','\\ast ',''],['\\circ','\\circ ',''],
+      ['\\leq','\\leq ',''],['\\geq','\\geq ',''],['\\neq','\\neq ',''],
+      ['\\approx','\\approx ',''],['\\equiv','\\equiv ',''],
+      ['\\sim','\\sim ',''],['\\propto','\\propto ',''],
+      ['\\ll','\\ll ',''],['\\gg','\\gg ',''],
+      ['\\in','\\in ',''],['\\notin','\\notin ',''],
+      ['\\subset','\\subset ',''],['\\cup','\\cup ',''],
+      ['\\cap','\\cap ',''],['\\forall','\\forall ',''],
+      ['\\exists','\\exists ',''],['\\nabla','\\nabla ',''],
+      ['\\partial','\\partial ',''],['\\infty','\\infty ',''],
+      ['30^\\circ','^\\circ ','degrees']]],
+    ['Arrows & accents',[
+      ['\\to','\\to ',''],['\\gets','\\gets ',''],
+      ['\\Rightarrow','\\Rightarrow ',''],
+      ['\\Leftarrow','\\Leftarrow ',''],
+      ['\\Leftrightarrow','\\Leftrightarrow ',''],
+      ['\\mapsto','\\mapsto ',''],['\\uparrow','\\uparrow ',''],
+      ['\\downarrow','\\downarrow ',''],
+      ['\\tilde{x}','\\tilde{}',''],['\\bar{x}','\\bar{}',''],
+      ['\\ddot{x}','\\ddot{}',''],['\\underline{x}','\\underline{}',''],
+      ['\\mathbb{R}','\\mathbb{R}','the reals'],
+      ['\\mathcal{L}','\\mathcal{}','script letter'],
+      ['\\mathbf{v}','\\mathbf{}','bold (a vector)'],
+      ['thin space','\\, ','a thin space'],
+      ['wide space','\\quad ','a wide space']]],
+    ['Ready-made',[
+      ['E=mc^2','E = mc^2',''],
+      ['quadratic','x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}',''],
+      ['Gaussian','f(x) = \\frac{1}{\\sigma\\sqrt{2\\pi}}'
+       +' e^{-\\frac{(x-\\mu)^2}{2\\sigma^2}}',''],
+      ['mean','\\bar{x} = \\frac{1}{n}\\sum_{i=1}^{n} x_i',''],
+      ['RMSE','\\mathrm{RMSE} = \\sqrt{\\frac{1}{n}'
+       +'\\sum_{i=1}^{n}(y_i-\\hat{y}_i)^2',''],
+      ['derivative','\\frac{\\partial u}{\\partial t}',''],
+      ['integral','\\int_{a}^{b} f(x)\\,dx','']]]
+  ];
+  (function(){
+    var dlg=$('#eq-dlg'); if(!dlg) return;
+    var src=$('#eq-src'),prev=$('#eq-prev'),warn=$('#eq-warn'),
+        pal=$('#eq-pal'),disp=$('#eq-display');
+    var editIdx=null,prevT=null;
+    function wrap(tex,display){
+      return display?('$$ '+tex+' $$'):('$ '+tex+' $');
+    }
+    /* pull the LaTeX back out of a stored text item */
+    function unwrap(t){
+      var m=/^\s*\$\$([\s\S]*)\$\$\s*$/.exec(t||'');
+      if(m) return {tex:m[1].trim(),display:true};
+      m=/^\s*\$([\s\S]*)\$\s*$/.exec(t||'');
+      if(m) return {tex:m[1].trim(),display:false};
+      return {tex:(t||'').trim(),display:true};
+    }
+    function render(){
+      clearTimeout(prevT);
+      prevT=setTimeout(function(){
+        var tex=src.value.trim();
+        prev.textContent=tex?wrap(tex,disp.checked):'';
+        if(!window.MathJax||!MathJax.typesetPromise){
+          /* MathJax comes from a CDN. Offline, or on a network that
+             blocks it, there is no renderer at all — and a blank preview
+             would read as "your LaTeX is wrong" rather than "nothing here
+             can draw it" (2026-08-20). */
+          warn.hidden=false;
+          warn.textContent='No maths renderer available — MathJax is '
+            +'loaded from the internet and could not be reached. The '
+            +'LaTeX is still saved with the slide and will typeset '
+            +'anywhere that can load it.';
+          return;
+        }
+        warn.hidden=true;
+        MathJax.typesetPromise([prev]).then(function(){
+          /* MathJax never REJECTS on bad input, and it fails in two
+             different ways depending on how bad it is: a command it does
+             not know gets a red "Math input error" box, while something
+             it cannot parse at all - an unclosed brace, say - is left as
+             raw "$$ ... $$" text with no container produced at all.
+             Neither throws, so the test is "did a container come out,
+             and is it clean", not "did anything reject" (2026-08-20,
+             both observed live in the browser). */
+          var bad=prev.querySelector('mjx-merror,.MathJax_Error');
+          var setOk=prev.querySelector('mjx-container');
+          if(setOk&&!bad) return;
+          warn.hidden=false;
+          warn.textContent=bad
+            ?('That is not valid LaTeX yet — '
+              +(bad.getAttribute('title')
+                ||'check the braces and backslashes')
+              +'. The red box shows where it gave up.')
+            :('That did not typeset — usually an unclosed { or a '
+              +'misspelt command. It is still saved exactly as you '
+              +'typed it.');
+        }).catch(function(e){
+          warn.hidden=false;
+          warn.textContent='That does not parse as LaTeX yet: '
+            +(e&&e.message?e.message:'check the braces');
+        });
+      },160);
+    }
+    function insert(txt){
+      var a=src.selectionStart||0,b=src.selectionEnd||0;
+      src.value=src.value.slice(0,a)+txt+src.value.slice(b);
+      /* land the caret in the FIRST empty pair of braces, not after the
+         template — otherwise every insert is followed by arrowing back */
+      var hole=txt.indexOf('{}');
+      var at=hole>=0?(a+hole+1):(a+txt.length);
+      src.focus();src.setSelectionRange(at,at);
+      render();
+    }
+    function buildPal(){
+      pal.innerHTML='';
+      EQ_PAL.forEach(function(grp){
+        var h=document.createElement('div');
+        h.className='eq-palh';h.textContent=grp[0];
+        pal.appendChild(h);
+        var row=document.createElement('div');row.className='eq-palrow';
+        grp[1].forEach(function(it){
+          var b=document.createElement('button');
+          b.type='button';b.className='eq-key';
+          /* the KEY is SET in maths, not spelled in LaTeX. A palette
+             reading "\alpha \beta \gamma" is the same words-where-a-
+             picture-belongs problem the fill menu had: you should be able
+             to find sigma by looking for a sigma (2026-08-20). Labels
+             that are ordinary words stay words. */
+          if(/[\\^_]/.test(it[0])){
+            b.className+=' eq-key-tex';
+            b.textContent='\\('+it[0]+'\\)';
+          } else b.textContent=it[0];
+          b.title=(it[2]||it[1].trim())+'  →  '+it[1].trim();
+          b.addEventListener('click',function(e){
+            e.preventDefault();insert(it[1]);});
+          row.appendChild(b);
+        });
+        pal.appendChild(row);
+      });
+      /* ONE typeset pass over the whole palette, once it is built */
+      if(window.MathJax&&MathJax.typesetPromise)
+        MathJax.typesetPromise([pal]).catch(function(){
+          /* no renderer reachable: fall back to the LaTeX, which is at
+             least readable and is what you would have typed anyway */
+          $$('.eq-key-tex',pal).forEach(function(b){
+            b.textContent=b.textContent.replace(/^\\\(|\\\)$/g,'');});
+        });
+    }
+    function open(idx){
+      editIdx=(typeof idx==='number')?idx:null;
+      var s2=pres.slides[cur];
+      var a=(editIdx!=null)?(s2.annots||[])[editIdx]:null;
+      var u=a?unwrap(a.text):{tex:'E = mc^2',display:true};
+      src.value=u.tex;disp.checked=u.display;
+      if(!pal.childNodes.length) buildPal();
+      dlg.hidden=false;
+      $('#eq-ok').textContent=(editIdx!=null)?'Update it'
+        :'Put it on the slide';
+      src.focus();src.select();
+      render();
+    }
+    function close(){dlg.hidden=true;editIdx=null;}
+    function commit(){
+      var tex=src.value.trim();
+      if(!tex){close();return;}
+      var s2=pres.slides[cur];
+      if(!s2){toast('Add a slide first');close();return;}
+      var txt=wrap(tex,disp.checked);
+      s2.annots=s2.annots||[];
+      var idx;
+      if(editIdx!=null&&s2.annots[editIdx]){
+        s2.annots[editIdx].text=txt;
+        delete s2.annots[editIdx].html;
+        idx=editIdx;
+      } else {
+        s2.annots.push({k:'text',x:28,y:40,w:44,text:txt,
+          size:disp.checked?3.6:2.6,bg:0,align:'center',maths:1});
+        idx=s2.annots.length-1;
+      }
+      markDirty();setTool('select');
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s2);selectAnnot(l,idx);}
+      else renderSlide();
+      close();
+    }
+    src.addEventListener('input',render);
+    src.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}
+      else if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
+        e.preventDefault();commit();}
+    });
+    disp.addEventListener('change',render);
+    $('#eq-ok').addEventListener('click',commit);
+    $('#eq-cancel').addEventListener('click',close);
+    $('#eq-close').addEventListener('click',close);
+    dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
+    var mb=$('#dc-maths');
+    if(mb) mb.addEventListener('click',function(){open(null);});
+    /* editing an existing one: the Text group grows an Edit button when
+       the selected box is maths */
+    var eb=$('#fmt-eqedit');
+    if(eb) eb.addEventListener('click',function(){
+      if(typeof selAnnot==='number') open(selAnnot);});
+    window.SemDeckEquation=open;
+  })();
+  /* is this text item an equation? either it was made as one or its words
+     are wrapped in $ … $ */
+  function isMaths(a){
+    return !!(a&&a.k==='text'
+      &&(a.maths||/^\s*\$[\s\S]*\$\s*$/.test(a.text||'')));
+  }
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){
     var s=pres.slides[cur];
@@ -25821,18 +26767,27 @@ window.JunoPptx = (function () {
       rb.title='Reload every notebook this presentation uses from disk / URL';
       rb.addEventListener('click',function(){openPresNbs(false);});
       acts.appendChild(ob);acts.appendChild(rb);m.appendChild(acts);
-      if(APP.mode==='app'){
+      /* shown everywhere, working only in the app - see the per-figure
+         Lock button for why (2026-08-20) */
+      if(true){
+        var appMode=(APP.mode==='app');
         var acts2=document.createElement('div');acts2.className='dc-nbacts';
         var la=document.createElement('button');la.className='dbtn';
+        la.disabled=!appMode;
         la.innerHTML='&#128274; Lock all figures';
-        la.title='Pin every frame to its notebook’s current git commit — '
-          +'refreshes stop changing them';
+        la.title=appMode
+          ?('Pin every frame to its notebook\u2019s current git commit '
+            +'\u2014 refreshes stop changing them')
+          :('Needs the Junoview app: locking reads git through the local '
+            +'server, and this page was exported as a standalone file.');
         la.addEventListener('click',function(){lockAllFrames();});
         var ua=document.createElement('button');ua.className='dbtn';
+        ua.disabled=!appMode;
         ua.innerHTML='&#128275; Unlock all';
         ua.title='Every frame follows notebook refreshes again';
         ua.addEventListener('click',function(){unlockAllFrames();});
         var lv=document.createElement('button');lv.className='dbtn';
+        lv.disabled=!appMode;
         lv.innerHTML='&#10227; Load locked versions';
         lv.title='Fetch every locked figure’s content from git — the '
           +'notebooks don’t need to be open';
@@ -25861,6 +26816,9 @@ window.JunoPptx = (function () {
     if(b) b.addEventListener('click',function(){dupSlide(cur);});
     b=$('#hm-delslide');
     if(b) b.addEventListener('click',function(){delSlide(cur);});
+    b=$('#hm-match');
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();openMatchMenu(this);});
     wireMenuToggle('hm-laywrap','hm-lay','hm-lay-menu');
   })();
   function renderCreate(){

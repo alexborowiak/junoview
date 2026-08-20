@@ -34,6 +34,95 @@ at the tight end of the fit ladder.
   PowerPoint's does, so the tab you land on is not one lonely button over an
   empty row when nothing is selected.
 
+### Changed — open notebooks moved to the rail
+
+The horizontal tab strip across the top of the document is gone. It was a row
+of chrome whose width ran out at about five notebooks, and the rail beside it
+was already where this app lists the things you can switch between. The open
+notebooks now sit under the **Notebooks** button in the rail, above the
+presentations. The strip *moved* node-for-node rather than being rebuilt, so the
+close buttons, the Plot-trace sub-tabs and the earlier-version marks all keep
+working untouched; the header row keeps only the two sidebar toggles.
+
+### Added — a real equation editor
+
+"Insert equation" used to drop a text box containing `$$ E = mc^2 $$` and walk
+away: no preview, no symbols, and no way to tell whether what you typed was
+valid. It is a proper editor now — type on the left, see it typeset on the
+right, click a symbol to drop it at the caret.
+
+- **104 keys in five groups** — structures (fractions, roots, sums, integrals,
+  limits, matrices, cases, aligned blocks), Greek, operators and relations,
+  arrows and accents, and ready-made formulae. **96 of them are typeset as real
+  symbols**, not spelled out in LaTeX: you should be able to find sigma by
+  looking for a sigma, which is the same complaint the fill menu answered.
+- A template lands the caret **in the first empty brace**, not after the closing
+  one, so an insert is not followed by arrowing back.
+- An existing equation reopens in the editor via **Edit equation**.
+- It is honest about failure, which took two mechanisms: MathJax is loaded from
+  a CDN, so on a locked-down network there is no renderer at all and it says so
+  rather than showing a blank preview you would read as "my LaTeX is wrong". And
+  MathJax never *rejects* on bad input — an unknown command gets a red error box
+  while an unclosed brace is silently left as raw text. Neither throws, so the
+  check is "did a container come out, and is it clean".
+
+### Fixed
+
+- **Locking a figure to a git commit looked like it had been removed.** It needs
+  the local server to reach git, so it only works in the app build — and it used
+  to vanish entirely everywhere else. It is shown and disabled now, with a
+  tooltip that says what would make it work. Same for Lock all / Unlock all in
+  the notebooks column.
+- **Light themes never re-inked the chrome surfaces.** `--chrome-0..4` kept
+  their dark values, so every menu and panel relied on a hand-written
+  `body.light .thing{background:#fff}` rule of its own; anything added without
+  one came out dark-on-light, and the two overrides that *did* exist carried an
+  alpha byte and came out washed. Light and light-forest set the tokens now, so
+  every menu is fixed at once — including the ones nobody has written yet.
+- **Panels that hold controls are fully opaque.** Translucency is for overlays,
+  not for things you click.
+- **Three stray control bytes** (a form feed and two others) had been left in
+  deck.js comments by shell escape-mangling. Harmless to run, but they shipped
+  in the bytes of every rendered page.
+
+### Changed — the fill panel, and arranging
+
+- **Gradients are drawn, not described.** "Gradient — linear" told you nothing
+  about which way it ran, and multi-colour gradients could not be expressed at
+  all — the model held exactly two colours. A gradient is a list of *stops* now,
+  and the Fill control is a panel of drawn previews: no-fill, tint and solid;
+  ten fill colours; **eight linear directions plus radial**, each drawn in the
+  shape's own colours so the preview *is* the answer; and **twelve ready-made
+  ramps**, most of them three- and four-colour. Decks saved before this keep
+  their gradients, and the `.pptx` exporter — which speaks in two colours —
+  needed no changes.
+- **One Fill control, not two.** There was a "Fill" in Line & shape and a "Fill
+  colour" two groups away, and nobody could tell which was which. A shape's fill
+  colour now lives inside its Fill panel; the separate swatch button stays for
+  text boxes and cell frames, which have a background colour but no fill *style*.
+- **Arrange got thorough**: centre on the *page* (not on the selection's own
+  average, which is what aligning does), close the gaps, flip left-to-right and
+  top-to-bottom, quarter turns, straighten, and match widths / heights / both to
+  the biggest. Flipping mirrors real geometry — an arrow's endpoints and a
+  freehand stroke's points, not just position.
+- **Buttons are 30px tall, not 26**, and the labels lost words they did not need
+  ("Text" not "Text box", "Cell", "QR", "Maths", "Check"). The 26px target was
+  sized when the ribbon was one row trying to hold everything; tabs took that
+  pressure off.
+
+### Added
+
+- **Match another slide.** The most tedious thing about building a deck is
+  making slide 7 sit exactly like slide 3. Pick a slide and this one takes its
+  layout — position, size and styling — matched up by *kind*, in reading order.
+  A text box's kind is its named style, so a Heading 1 matches a Heading 1 and
+  not just any old text. Nothing is added and nothing is deleted: only the
+  arrangement travels, and it says so when there was nothing to match.
+- **Layers can be renamed.** Double-click a row. Twelve rows saying
+  "Shape — box" is a list you cannot navigate. Clearing the name puts the
+  kind-derived one back. (Groups already worked as folders with names and
+  colours of their own.)
+
 ### Added
 
 - **The editing tools fold away.** The ribbon is about 100px of a 700px laptop

@@ -1109,6 +1109,22 @@ body.th-forestblue{--chrome:#0e241c;
    accent and the buttons, so it was the ordinary dark theme with brighter
    outlines — which is not what anyone turning on high contrast is asking
    for (2026-08-20, user: "some of the themes are not right"). */
+/* ---- LIGHT re-inks the surfaces too -------------------------------
+   It used to re-ink only the page and leave --chrome-0..4 at their dark
+   values, so every menu, panel and popup relied on a hand-written
+   `body.light .thing{background:#fff}` rule of its own. Anything added
+   without one — and by August that was most of the deck editor's menus —
+   came out dark-on-light or, where the override existed but carried an
+   alpha byte, washed out (2026-08-20, user: "some of the menu options in
+   different themes also are too transparent").
+   Setting the tokens fixes every menu at once, including the ones nobody
+   has written yet. */
+body.light{--chrome:#eef2f6;--chrome-0:#f4f7fa;--chrome-1:#eef2f6;
+  --chrome-2:#ffffff;--chrome-3:#f7f9fb;--chrome-4:#e8eef4;
+  --chrome-line:#00000014;}
+body.light.th-lforest{--chrome:#eaf4ef;--chrome-0:#f2f9f5;
+  --chrome-1:#eaf4ef;--chrome-2:#ffffff;--chrome-3:#f5fbf8;
+  --chrome-4:#e0efe7;}
 body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
   --accent-soft:#c8f2ff;
   --chrome:#000000;--chrome-0:#000000;--chrome-1:#080a0c;

@@ -456,7 +456,7 @@
                 aria-pressed="false"
                 title="Check this page before it goes to print: soft
  figures, anything off the page or inside the margin, unreadable text,
- empty frames">&#9873; Print check</button>
+ empty frames">&#9873; Check</button>
             </span>
             <span class="rbn-lab">Output</span>
           </span>
@@ -471,7 +471,7 @@
                 aria-pressed="false"
                 title="Everything animated on this slide, in the order it
  appears — and the effect on whatever is selected"
-                >&#9654; Animation pane</button>
+                >&#9654; Timeline</button>
               <button class="dbtn etm" id="anim-none" hidden
                 title="Remove the animation from the selected items — they
  are simply on the slide from the start">&#8709; None</button>
@@ -497,10 +497,10 @@
               <button class="dbtn et rbn-sm" data-tool="cell"
                 aria-pressed="false"
                 title="Place a figure, table or note from your notebook —
- you pick which one"><i data-ic="cellcard"></i> Notebook cell</button>
+ you pick which one"><i data-ic="cellcard"></i> Cell</button>
               <button class="dbtn et rbn-sm" data-tool="text"
                 aria-pressed="false"
-                title="Add a text box"><i data-ic="text"></i> Text box</button>
+                title="Add a text box"><i data-ic="text"></i> Text</button>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
@@ -530,12 +530,12 @@
                    for "Maths inserts"). -->
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
- - it is typeset as you type">&#8747; Equation</button>
+ - it is typeset as you type">&#8747; Maths</button>
               <button class="dbtn rbn-sm" id="dc-qr"
                 title="Ask for a link and put a QR code on the page —
  point a phone at it to open your repo, paper or data. Generated here, so
  it works offline and prints crisp at any size (vector)"
-                ><i data-ic="qr"></i> QR code</button>
+                ><i data-ic="qr"></i> QR</button>
               <!-- Source order IS the layout: with two rows filled across,
                    the first four land on the top row and the rest below.
                    So things you PLACE sit together up top and things you
@@ -610,6 +610,13 @@
                     aria-label="Slide layouts"></div>
                 </div>
               </span>
+              <!-- the least glamorous, most useful button in the app:
+                   make this slide sit like that one (2026-08-20) -->
+              <button class="dbtn rbn-sm" id="hm-match"
+                title="Take another slide's layout — the position, size and
+ styling of everything on it, matched up by kind. Your content stays
+ exactly where it is; only the arrangement travels">&#8646; Match slide
+                &#9662;</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
                 title="Delete this slide">&#10005; Delete</button>
             </span>
@@ -807,6 +814,11 @@
                    pile of properties, which is what makes "apply this
                    look to all headings" a single edit instead of a hunt
                    through forty slides (2026-08-20). -->
+              <!-- an equation goes back to the editor it came from, rather
+                   than being typed as raw LaTeX inside a text box -->
+              <button class="dbtn etm" id="fmt-eqedit" hidden
+                title="Open this equation in the equation editor"
+                >&#8747; Edit equation</button>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
                   aria-haspopup="true" aria-expanded="false"
@@ -1081,6 +1093,46 @@
   slide</span>
   <span class="deck-spring"></span>
   <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
+</div>
+<!-- THE EQUATION EDITOR. "Insert equation" used to drop a text box
+     containing "$$ E = mc^2 $$" and leave you to it — no preview, no
+     symbols, and no clue whether the LaTeX you typed was even valid
+     (2026-08-20, user: "what the hell does insert equation do? There is
+     no latex render and no symbols and stuff to add?").
+     It is a real editor now: type on the left, see it set on the right,
+     and click a symbol to drop it at the caret. It is honest about
+     MathJax too — that is loaded from a CDN, so on a locked-down network
+     or offline there is no renderer at all, and saying so beats showing
+     nothing and letting you think the feature is broken. -->
+<div class="eq-dlg" id="eq-dlg" hidden role="dialog"
+  aria-label="Equation editor">
+  <div class="eq-box">
+    <div class="eq-head">
+      <span class="eq-t">Equation</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="eq-close" title="Cancel (Esc)"
+        >&#10005;</button>
+    </div>
+    <div class="eq-main">
+      <div class="eq-left">
+        <textarea id="eq-src" class="eq-src" spellcheck="false"
+          autocomplete="off" aria-label="LaTeX source"></textarea>
+        <div class="eq-pal" id="eq-pal"></div>
+      </div>
+      <div class="eq-right">
+        <div class="eq-plab">preview</div>
+        <div class="eq-prev" id="eq-prev"></div>
+        <div class="eq-warn" id="eq-warn" hidden></div>
+      </div>
+    </div>
+    <div class="eq-foot">
+      <label class="find-ck"><input type="checkbox" id="eq-display" checked>
+        On its own line (display style)</label>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="eq-cancel">Cancel</button>
+      <button class="dbtn primary" id="eq-ok">Put it on the slide</button>
+    </div>
+  </div>
 </div>
 <!-- FIND AND REPLACE across the whole presentation. A panel rather than a
      browser find: what you are searching is the model (every text box,

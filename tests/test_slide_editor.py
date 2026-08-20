@@ -661,8 +661,27 @@ def test_equations_reuse_the_text_box_and_mathjax(out):
     cost for nothing.
     """
     assert 'id="dc-maths"' in out
-    assert "text:'$$ E = mc^2 $$'" in out
     assert "})) typeset(layer);" in out
+    # ...and since 2026-08-20 there is a real EDITOR in front of it. The
+    # button used to drop "$$ E = mc^2 $$" on the slide and walk away --
+    # no preview, no symbols, no way to tell whether what you typed was
+    # valid (user: "what the hell does insert equation do? There is no
+    # latex render and no symbols and stuff to add?").
+    assert 'id="eq-dlg"' in out
+    assert "var EQ_PAL=[" in out
+    for grp in ("'Structures'", "'Greek'", "'Operators & relations'",
+                "'Arrows & accents'", "'Ready-made'"):
+        assert grp in out, grp
+    # a template lands the caret in the first empty brace, or every insert
+    # is followed by arrowing back through the closing one
+    assert "var hole=txt.indexOf('{}');" in out
+    # MathJax comes from a CDN, so on a locked-down network there is no
+    # renderer at all -- a blank preview would read as "your LaTeX is
+    # wrong" rather than "nothing here can draw it"
+    assert "No maths renderer available" in out
+    # and an existing equation goes back to the editor it came from
+    assert 'id="fmt-eqedit"' in out
+    assert "function isMaths(a){" in out
 
 
 def test_named_text_styles_and_apply_to_all_headings(out):
@@ -766,3 +785,88 @@ def test_spotlight_zooms_one_item_during_playback(out):
     # the clone is a picture, not a control
     assert "clone.classList.remove('sel','grpsel','an-prebuild','an-ingrp');" \
         in out
+
+
+def test_the_fill_panel_is_drawn_not_worded(out):
+    """Six worded rows became a panel you pick from by LOOKING.
+    "Gradient -- linear" told you nothing about which way it ran, and
+    "gradients from different directions, multiple colours" was not
+    expressible at all (2026-08-20, user: "all the gradient fills are just
+    words. Put images showing it. Also put heaps of options in this").
+
+    Every chip is drawn with the shape's OWN colours, so the preview is the
+    answer rather than an illustration of one. Measured in the browser:
+    35 chips, 24 inline-SVG previews, and a three-stop preset came out as
+    linear-gradient(360deg, #f0a848 0%, #e5484d 50%, #7a2b6b 100%).
+
+    It also absorbs the fill COLOUR swatches: there used to be a "Fill"
+    here and a "Fill colour" two groups away and nobody could tell which
+    was which ("Also confusing there is a fill and fill colour").
+    """
+    assert "function fillSwatch(kind,opt,base){" in out
+    assert "var GRAD_DIRS=[" in out
+    assert "var GRAD_PRESETS=[" in out
+    assert "function stopsFrom(cols){" in out
+    # eight linear directions plus a radial
+    for ang in ("[0,'Left to right']", "[90,'Bottom to top']",
+                "[270,'Top to bottom']"):
+        assert ang in out, ang
+    assert "'From the centre'" in out
+    # multi-stop ramps
+    assert "['Ocean',   ['#39a9c0','#1e6f9e','#123a63'], null]" in out
+    # changing a colour must not silently change the KIND of fill
+    assert "st[0]={o:st[0].o,c:c};" in out
+
+
+def test_match_another_slides_layout(out):
+    """The most tedious thing about building a deck is making slide 7 sit
+    exactly like slide 3. PowerPoint's answer is to duplicate a slide and
+    replace its contents, which loses the contents you already had
+    (2026-08-20, user: "would be cool if there was a 'match other slide'
+    option ... the text style, locations and sizes of everything become
+    that same").
+
+    It matches by KIND in reading order, and a text box's kind is its
+    named STYLE when it has one -- so a Heading 1 matches a Heading 1 and
+    not just any old text. Nothing is added and nothing is deleted; only
+    geometry and styling travel. Measured: "Matched 1 item to slide 1".
+    """
+    assert "function matchSlide(fromIdx,toIdx){" in out
+    assert "function matchKey(a){" in out
+    assert "if(a.k==='text') return 'text:'+(a.style||'body');" in out
+    assert "var MATCH_PROPS=[" in out
+    assert 'id="hm-match"' in out
+    # run out of models? reuse the last, so three bullets here all take
+    # the styling of the one bullet there
+    assert "var m=from[Math.min(n,from.length-1)].a;" in out
+    # and it says so when there was nothing to match
+    assert "have no matching items" in out
+
+
+def test_arrange_is_thorough(out):
+    """2026-08-20, user: "the arrange options could be better. Like what
+    there is in photo shop editors, like I want this to be really
+    thorough". Aligning to the PAGE is the one people reach for and could
+    not previously express: aligning centres a block on its own average,
+    not on the page.
+    """
+    assert "function centreOnPage(how){" in out
+    assert "function closeGaps(axis){" in out
+    assert "function flipSel(axis){" in out
+    assert "function turnSel(deg){" in out
+    # flipping mirrors real geometry, not just position
+    assert "a.pts=a.pts.map(function(q){" in out
+    # match sizes takes the BIGGEST: matching down usually crops something
+    assert "if(mode==='w'||mode==='h'||mode==='both'){" in out
+
+
+def test_layers_can_be_renamed(out):
+    """Twelve rows saying "Shape - box" is a list you cannot navigate
+    (2026-08-20, user: "also be able to rename layers"). Groups already
+    worked as folders with names of their own; individual items did not.
+    Clearing the name puts the kind-derived one back rather than leaving a
+    blank row. Measured: "Shape - box" -> "Hero box".
+    """
+    assert "if(a.name) return a.name;" in out
+    assert 'inp.className=\'sp-rename\';' in out
+    assert "if(v) a3.name=v; else delete a3.name;" in out

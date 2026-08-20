@@ -294,6 +294,29 @@ body.light .tab-ver{color:var(--cyan-deep);}
 /* ---------- presentations rail: vertical stack on the left edge.
    Exactly ONE item is active at a time: "Notebooks" (no builder) or a
    presentation (builder open) — so the way out is always visible. */
+/* ---- the open-notebooks list, in the rail ---------------------------
+   It used to be a horizontal tab strip across the top of the document —
+   a row of chrome whose width ran out at about five notebooks. The nodes
+   MOVED rather than being rebuilt, so `.tab` still styles them; these
+   rules just stand the strip up (2026-08-20). */
+.presrail .tabstrip{display:flex;flex-direction:column;gap:2px;
+  overflow-y:auto;overflow-x:hidden;flex:0 1 auto;min-height:0;
+  max-height:38vh;margin-bottom:4px;}
+.presrail .tabstrip:empty{display:none;}
+.presrail .tabstrip:empty + .pr-label{margin-top:0;}
+.presrail .tab{width:100%;box-sizing:border-box;border-radius:7px;
+  border:1px solid transparent;background:none;justify-content:flex-start;
+  padding:5px 7px;min-width:0;max-width:none;height:auto;}
+.presrail .tab .tab-t{flex:1;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;text-align:left;}
+.presrail .tab.current{background:color-mix(in srgb,var(--accent) 13%,
+  transparent);border-color:color-mix(in srgb,var(--accent) 34%,
+  transparent);}
+.presrail .tab .tab-b{opacity:0;flex:none;}
+.presrail .tab:hover .tab-b,.presrail .tab.current .tab-b{opacity:.75;}
+/* a Plot-trace sub-tab still reads as a child of the notebook above it */
+.presrail .tab .tab-trace-ic{flex:none;margin-right:2px;opacity:.7;}
+.pr-nblabel[hidden]{display:none;}
 .presrail{position:fixed;left:0;top:0;bottom:0;width:var(--presrail-w);
   z-index:95;background:var(--chrome-0,#0a141d);border-right:1px solid #ffffff1f;
   display:flex;flex-direction:column;padding:8px 6px;gap:2px;}
@@ -1044,7 +1067,7 @@ body.light .qat-sep{background:var(--line);}
 body.light .rbn-tab{color:var(--ink-3);}
 body.light .rbn-tab:hover{color:var(--ink);}
 body.light .rbn-tab[aria-selected="true"]{color:var(--ink);}
-body.light .find-pop{background:#fffffff7;border-color:var(--line);}
+body.light .find-pop{background:#fff;border-color:var(--line);}
 body.light .find-in{background:#fff;border-color:var(--line);
   color:var(--ink);}
 body.light .find-t,body.light .find-count{color:var(--ink-3);}

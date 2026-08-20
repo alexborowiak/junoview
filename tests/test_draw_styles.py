@@ -60,8 +60,19 @@ def test_arrows_can_be_attached_to_items(out):
 
 
 def test_gradients_linear_and_from_the_centre(out):
+    """A gradient is a list of STOPS since 2026-08-20 -- it used to be
+    exactly two colours in `a` and `b`, which made a three-colour gradient
+    impossible to express at all (user asked for "gradients from different
+    directions, multiple colours"). a/b are still read on the way in, so
+    every deck saved before this keeps its gradient, and still written on
+    the way out, so the .pptx exporter needs no changes.
+    """
     assert "function cssFill" in out
-    assert "radial-gradient(circle at 50% 50%" in out
+    assert "function gradStops(g){" in out
+    assert "function gradSet(a,g){" in out
+    assert "radial-gradient(circle at '" in out
+    # the radial form can be off-centre now
+    assert "gel.setAttribute('cx',(g.cx==null?50:g.cx)+'%');" in out
     assert "function gradFill" in out
     assert '<a:path path="circle">' in out       # PowerPoint's radial
     assert "'<a:lin ang=\"'" in out
@@ -163,8 +174,13 @@ def test_one_button_size_with_colour_carrying_emphasis(out):
 
 def test_button_names_say_what_they_do(out):
     """"Cell", "Page", "Show me" were guesses at what they meant."""
-    assert "Notebook cell</button>" in out
-    assert "Text box</button>" in out
+    # shortened 2026-08-20 (user: "some of the button issues could be
+    # fixed with 'text' instead of text box"). The rule is unchanged --
+    # every button still says what it does IN WORDS; they just say it in
+    # the shortest true word, which buys the row its width back.
+    assert "Cell</button>" in out
+    assert "Text</button>" in out
+    assert "Text box</button>" not in out
     assert "Page size &#9662;" in out or "Page size ▾" in out
     # The Guides menu is gone (2026-08-20): Rulers, Grid, Full screen
     # and Side toolbar are four buttons in the row, because a toggle you
@@ -179,7 +195,8 @@ def test_button_names_say_what_they_do(out):
     assert 'id="vw-menuwrap"' not in out
     assert ">Show me &#9662;" not in out
     # a constant height means selecting an item cannot shift the canvas
-    assert "height:98px;" in out
+    # (106px since the rows went to 30, 2026-08-20)
+    assert "height:106px;" in out
     # an empty group must not leave a label hanging over nothing
     assert "var bar=$('#edit-tools'); if(!bar) return;" in out
 
@@ -197,7 +214,11 @@ def test_the_ribbon_never_scrolls_wraps_or_clips(out):
     assert "overflow:hidden" in ribbon
     assert "overflow-x:auto" not in ribbon
     assert "grid-auto-flow:column" in out
-    assert "grid-template-rows:26px 26px" in out
+    # 30px rows since 2026-08-20: the 26px target was sized when the
+    # ribbon was one row trying to hold everything and every pixel of
+    # height was contested. Tabs took that pressure off (user: "buttons
+    # could also have more height").
+    assert "grid-template-rows:30px 30px" in out
     assert "grid-row:1/span 2" in out
     # the ladder is density only; no rung may strip an icon or a word
     assert "var ERC=['erc1','erc2','erc3'];" in out
@@ -419,7 +440,7 @@ def test_groups_fill_across_the_rows_not_down_the_columns(out):
     assert "row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));" in out
     # controls that are one decision stay one cell, so a stepper's minus
     # and plus can never land on different rows
-    assert ".rbn-cell{display:flex;align-items:stretch;gap:3px;height:26px;}" in out
+    assert ".rbn-cell{display:flex;align-items:stretch;gap:3px;height:30px;}" in out
 
 
 def test_zoom_reads_as_zoom(out):

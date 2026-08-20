@@ -1084,3 +1084,87 @@ def test_the_tools_fold_away(out):
     # deck's own state class, so folding put padding on a fixed;inset:0
     # element and the stage came out smaller than before
     assert ".rbn-tabs .rbn-fold{align-self:center;" in out
+
+
+def test_open_notebooks_live_in_the_rail(out):
+    """A row of horizontal tabs is a row of chrome across the top of the
+    document whose width runs out at about five notebooks, and the rail
+    beside it was already the place this app lists the things you can
+    switch between (2026-08-20, user: "I don't want the horizontal tabs in
+    notebooks anymore, this should just be a thing down the right hand
+    side pop up thing, like presentations but just under the buttons that
+    says notebooks").
+
+    The strip MOVED node-for-node rather than being rebuilt, so makeTab,
+    the close buttons, the Plot-trace sub-tabs and the version marks all
+    keep working untouched.
+    """
+    rail = out.split('class="presrail"')[1].split("</nav>")[0]
+    assert 'id="tabstrip"' in rail
+    assert 'id="pr-nblabel"' in rail
+    # the header row keeps only the two sidebar toggles
+    row = out.split('class="tabsrow"')[1].split("</div>")[0]
+    assert 'id="tabstrip"' not in row
+    assert ".presrail .tabstrip{display:flex;flex-direction:column;" in out
+    # a heading over an empty list promises something that is not there
+    assert "if(nbl) nbl.hidden=!tabstrip.childNodes.length;" in out
+
+
+def test_the_equation_editor_is_real(out):
+    """"Insert equation" used to drop a text box containing "$$ E = mc^2
+    $$" and walk away -- no preview, no symbols, no way to tell whether
+    what you typed was valid (2026-08-20, user: "what the hell does insert
+    equation do? There is no latex render and no symbols and stuff to
+    add?").
+
+    Measured in the browser: 104 keys in 5 groups, 96 of them typeset as
+    real symbols; clicking the fraction key inserts \\frac{}{} and leaves
+    the caret at offset 6, inside the first brace.
+    """
+    assert 'id="eq-dlg"' in out
+    assert "var EQ_PAL=[" in out
+    # the KEYS are set in maths, not spelled in LaTeX -- the same
+    # words-where-a-picture-belongs problem the fill menu had
+    assert "b.className+=' eq-key-tex';" in out
+    assert "MathJax.typesetPromise([pal])" in out
+    # MathJax fails two different ways and neither of them throws
+    assert "var setOk=prev.querySelector('mjx-container');" in out
+    assert "if(setOk&&!bad) return;" in out
+    assert "That did not typeset" in out
+    assert "No maths renderer available" in out
+
+
+def test_locking_says_why_it_cannot(out):
+    """Locking pins a figure to its notebook's git commit, which needs the
+    local server to reach git -- so it only works in the app build. It used
+    to VANISH everywhere else, which reads as a feature that was removed
+    rather than one that is unavailable here (2026-08-20, user: "what
+    happened to locking all the images to a git commit"). Shown and
+    disabled, with a tooltip that says what would make it work.
+    """
+    assert "var isCellRef=(kind==='cell')&&!!a.ref;" in out
+    assert "show('#fmt-lockver',isCellRef);" in out
+    assert "lvb.disabled=!canLock;" in out
+    assert "Locking pins a figure to a git commit" in out
+    # ...and the same for Lock all / Unlock all in the notebooks column
+    assert "la.disabled=!appMode;" in out
+    assert "ua.disabled=!appMode;" in out
+
+
+def test_light_themes_re_ink_the_surfaces(out):
+    """Light used to re-ink the page and leave --chrome-0..4 at their dark
+    values, so every menu and panel relied on a hand-written
+    `body.light .thing{background:#fff}` rule of its own. Anything added
+    without one came out dark-on-light, and where the override existed but
+    carried an alpha byte it came out washed (2026-08-20, user: "some of
+    the menu options in different themes also are too transparent").
+    """
+    assert "body.light{--chrome:#eef2f6;--chrome-0:#f4f7fa;" in out
+    assert "body.light.th-lforest{" in out
+    # the two overrides that carried alpha
+    assert "#fffffff5" not in out
+    assert "#fffffff7" not in out
+    # panels that hold CONTROLS are fully opaque; translucency is for
+    # overlays, not for things you click
+    assert "background:var(--chrome-3,#101c28);border:1px solid #ffffff22;" \
+        in out

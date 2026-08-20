@@ -129,7 +129,13 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     assert ".deck.poster-page .dc-film{display:none!important;}" in out
     assert 'id="fmt-txcol-btn"' in out and 'id="fmt-fillcol-btn"' in out
     assert 'id="fmt-txcol-menu"' in out and 'id="fmt-fillcol-menu"' in out
-    assert "show('#fmt-fillcol-btn',showBg);" in out
+    # ...and a SHAPE's fill colour moved INTO its Fill panel on
+    # 2026-08-20: there used to be a "Fill" in Line & shape and a "Fill
+    # colour" two groups away and nobody could tell which was which
+    # (user: "confusing there is a fill and fill colour"). This button
+    # stays for text boxes and cell frames, which have a background
+    # colour but no fill STYLE.
+    assert "show('#fmt-fillcol-btn',showBg&&kind!=='rect');" in out
     # picking a swatch closes its popup; the custom swatch keeps its panel
     # (rc = a recent-colour chip, which also closes it — 2026-08-20)
     assert "if(rc||(sw&&!sw.classList.contains('sw-custom'))){" in out

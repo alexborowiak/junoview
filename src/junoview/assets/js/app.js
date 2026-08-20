@@ -217,6 +217,11 @@
         var st=makeTab(k); if(st) tabstrip.appendChild(st);
       }
     });
+    /* the strip lives in the rail now, under a heading of its own — and a
+       heading over an empty list is a heading promising something that is
+       not there (2026-08-20) */
+    var nbl=$('#pr-nblabel');
+    if(nbl) nbl.hidden=!tabstrip.childNodes.length;
     refreshChrome();
   }
   function activate(stem){
