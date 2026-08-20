@@ -17,7 +17,16 @@
   --ink:#16202b; --ink-2:#33414f; --ink-3:#69788a;
   --paper:#fbfcfd; --paper-2:#eef2f6; --paper-3:#e2e8ee;
   --line:#d8e0e8;
-  --chrome:#11202c; --chrome-2:#16273544; --chrome-line:#ffffff14;
+  /* --chrome-2 is the SURFACE every menu, dialog, popup and input in
+     the app sits on. It carried an alpha byte - the value ended in 44,
+     i.e. 27% opaque - so every one of them was see-through and unreadable
+     against whatever happened to be behind it — worst on the theme
+     picker, which opens over the ribbon (2026-08-20, user: "some of
+     the pop up menus like changing the theme still have weird
+     transparent background"). Every consumer that wants
+     translucency mixes its own with color-mix; none of them wanted
+     this. The opaque value is the one every fallback already used. */
+  --chrome:#11202c; --chrome-2:#162735; --chrome-line:#ffffff14;
   --chrome-ink:#cdd9e3; --chrome-ink-2:#7e93a4;
   /* ---- the CHROME theme tokens. --accent drives every interactive
      accent in the app and editor chrome; --chrome-N are the dark
@@ -1091,7 +1100,7 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
    button faces, so the whole chrome moves together — not just the page.
    Content (page backgrounds, item colours, swatches, exports) is still
    never themed. */
-body.th-forest{--chrome:#0e241c;--chrome-2:#16352b44;
+body.th-forest{--chrome:#0e241c;
   --accent:#41c493;--accent-deep:#1e8f66;
   --accent-soft:#a9e9cf;
   --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
@@ -1099,7 +1108,7 @@ body.th-forest{--chrome:#0e241c;--chrome-2:#16352b44;
   --btn-bg:color-mix(in srgb,#41c493 10%,#ffffff06);
   --btn-border:color-mix(in srgb,#41c493 42%,#ffffff22);
   --btn-ink:#d7f2e6;}
-body.th-forestblue{--chrome:#0e241c;--chrome-2:#16352b44;
+body.th-forestblue{--chrome:#0e241c;
   --accent:#6b9bff;--accent-deep:#3d6fd9;
   --accent-soft:#c3d6ff;
   --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
@@ -1107,10 +1116,29 @@ body.th-forestblue{--chrome:#0e241c;--chrome-2:#16352b44;
   --btn-bg:color-mix(in srgb,#6b9bff 12%,#ffffff06);
   --btn-border:color-mix(in srgb,#6b9bff 48%,#ffffff22);
   --btn-ink:#dbe6ff;}
+/* High contrast means the SURFACES go too, not just the accent: near
+   black behind near white, with real edges. It used to re-ink only the
+   accent and the buttons, so it was the ordinary dark theme with brighter
+   outlines — which is not what anyone turning on high contrast is asking
+   for (2026-08-20, user: "some of the themes are not right"). */
 body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
   --accent-soft:#c8f2ff;
+  --chrome:#000000;--chrome-0:#000000;--chrome-1:#080a0c;
+  --chrome-2:#101418;--chrome-3:#0a0d10;--chrome-4:#141a1f;
+  --chrome-line:#ffffff5c;
   --btn-bg:#ffffff1f;--btn-border:#ffffffb0;--btn-ink:#ffffff;}
 body.th-contrast .rbn-lab,body.th-contrast .abgrp-lab{color:#e6f2fa;}
+/* the bar, the tabs and the zoom cluster added on 2026-08-20 need the
+   same treatment as the ribbon: real edges, near-white ink */
+body.th-contrast .deck-qat,body.th-contrast .rbn-tabs{
+  border-bottom-color:#ffffff66;}
+body.th-contrast .rbn-tab{color:#c8dae6;}
+body.th-contrast .rbn-tab[aria-selected="true"]{color:#fff;}
+body.th-contrast .qat-name{color:#fff;}
+body.th-contrast .qat-sep{background:#ffffff66;}
+body.th-contrast .deck-zoombar{border-color:#ffffff66;}
+body.th-contrast .find-pop{border-color:#ffffff8a;}
+body.th-contrast .jv-scheme-menu{border-color:#ffffff8a;}
 body.th-contrast .edit-tools.ribbon{border-bottom-color:#ffffff66;}
 body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
 /* DARK COLOURFUL: the buttons themselves carry their group's hue at
@@ -1118,8 +1146,17 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    which was invisible (2026-08-19, user: "dark colourful doesn't even
    do anything I can't tell"). Custom properties inherit, so scoping
    --accent to a group re-inks every button inside it. */
-body.th-colorful .rbn-file,body.th-colorful #ab-file{
+/* The group list is kept in step with the ribbon by hand, so a group
+   added without a line here quietly falls back to the default accent and
+   the theme looks half-applied — which is what had happened to Slides,
+   Table, Animate and Page furniture (2026-08-20, user: "some of the
+   themes are not right"). .rbn-file and .rbn-nbs are gone from the
+   markup and gone from here with them. */
+body.th-colorful .rbn-slides,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
+body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
+body.th-colorful .rbn-anim{--accent:#6fd8c2;--accent-deep:#2f9c85;}
+body.th-colorful .rbn-tbl{--accent:#8fc7ff;--accent-deep:#4d8fd6;}
 body.th-colorful .rbn-slide,body.th-colorful #ab-filters,
 body.th-colorful #pt-grp,body.th-colorful #md-grp,
 body.th-colorful #ck-grp,body.th-colorful #ot-grp{
@@ -1128,7 +1165,7 @@ body.th-colorful .rbn-view,body.th-colorful #ab-view,
 body.th-colorful #ab-tree{--accent:#41c493;--accent-deep:#1e8f66;}
 body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
-body.th-colorful .rbn-nbs,body.th-colorful .rbn-insert,
+body.th-colorful .rbn-insert,
 body.th-colorful #ab-app,body.th-colorful .presrail{
   --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;
@@ -2888,6 +2925,16 @@ body.deck-open{overflow:hidden;}
    that tab is not the one showing — display:none, never visibility, so it
    costs no width in the fit measurement */
 .rbn-grp[data-off]{display:none!important;}
+/* FOLDED: the group row goes, the tab strip stays. A bar that vanishes
+   completely leaves you no way to ask for it back (2026-08-20). */
+.deck.rbn-fold>.edit-tools{display:none;}
+/* SCOPED to the strip. Unscoped, `.rbn-fold` also matched the deck's own
+   `.rbn-fold` state class — so folding the tools put 1px 9px of padding on
+   a position:fixed;inset:0 element and the stage came out SMALLER than
+   before, which is the exact opposite of the point (2026-08-20, caught by
+   measuring the stage either side of the toggle). */
+.rbn-tabs .rbn-fold{align-self:center;padding:1px 9px;line-height:1;
+  flex:none;font-size:10px;}
 .rbn-tabs .et-hint{align-self:center;font-family:var(--mono);
   font-size:10px;color:#7d93a6;white-space:nowrap;padding:0 8px;}
 .deck.erc-nohint .rbn-tabs .et-hint{display:none;}
@@ -9141,6 +9188,17 @@ through Ko-fi. Thank you.</p>
  background">Design</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
+    <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
+         window, and there are long stretches — reading, rehearsing,
+         nudging one thing into place — where you want the page and not
+         the tools (2026-08-20, user: "would be good if the editing tools
+         can be made to pop up and down"). Double-clicking a tab does the
+         same thing, and so does Ctrl+F1, both of which are what
+         PowerPoint trains people to reach for. Clicking a tab while it is
+         folded brings it back. -->
+    <button class="dbtn rbn-fold" id="rbn-fold" aria-pressed="false"
+      title="Hide the tools and give the page the room (Ctrl+F1). Click a
+ tab, or this, to bring them back">&#9652;</button>
   </div>
   <div class="edit-tools ribbon" id="edit-tools" hidden>
         <!-- the app buttons the editor was hiding: the theme toggle and
@@ -17438,12 +17496,57 @@ window.JunoPptx = (function () {
        its density both have to be judged again */
     syncRibbonGroups();
   }
+  /* ---- FOLDING THE TOOLS AWAY ------------------------------------------
+     The ribbon is about 100px of a 700px laptop window, and there are long
+     stretches - reading it back, rehearsing, nudging one thing into place
+     - where the page matters and the tools do not (2026-08-20, user:
+     "would be good if the editing tools can be made to pop up and down").
+     The TAB STRIP always stays: it is one button high, it is how you get
+     the tools back, and a bar that vanishes completely leaves you with no
+     way to say "I want them again". */
+  var FOLDKEY2='jv-deck-fold:';
+  function ribbonFolded(){
+    return deckEl.classList.contains('rbn-fold');
+  }
+  function setRibbonFold(on){
+    deckEl.classList.toggle('rbn-fold',!!on);
+    var b=$('#rbn-fold');
+    if(b){
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.innerHTML=on?'&#9662;':'&#9652;';
+      b.title=on
+        ?'Show the tools again (Ctrl+F1)'
+        :'Hide the tools and give the page the room (Ctrl+F1). Click a '
+          +'tab, or this, to bring them back';
+    }
+    lsSet(FOLDKEY2+SCOPE,on?'1':'0');
+    /* the stage just changed height, so the page has to be re-fitted */
+    applyZoom();
+    if(!on) fitEditRibbon();
+  }
   $$('#rbn-tabs .rbn-tab').forEach(function(b){
-    b.addEventListener('click',function(){setTab(b.dataset.tab);});
+    b.addEventListener('click',function(){
+      /* a click on the tab you are already on, while folded, is a request
+         for the tools back - not a no-op */
+      if(ribbonFolded()){setRibbonFold(false);setTab(b.dataset.tab);return;}
+      setTab(b.dataset.tab);
+    });
+    /* double-click toggles, the way PowerPoint has trained everyone */
+    b.addEventListener('dblclick',function(e){
+      e.preventDefault();setRibbonFold(!ribbonFolded());
+    });
   });
+  (function(){
+    var f=$('#rbn-fold');
+    if(f) f.addEventListener('click',function(){
+      setRibbonFold(!ribbonFolded());});
+  })();
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
+    /* a folded bar has no width to measure: scrollWidth would read 0 and
+       the ladder would climb every rung for nothing */
+    if(deckEl.classList.contains('rbn-fold')) return;
     /* BEFORE anything is measured: a stale column count is a wrong width,
        so re-counting here is both the fix for a group that grew a control
        since the last count and the only way the density rungs below are
@@ -17496,12 +17599,23 @@ window.JunoPptx = (function () {
     if(sd) sd.setAttribute('aria-pressed',
       deckEl.classList.contains('rbn-side')?'true':'false');
   }
+  /* THE ROOT ELEMENT, not the deck. A fullscreen element paints its own
+     subtree and nothing else, and half this app's overlays are siblings of
+     .deck rather than children of it — the theme picker, the colour
+     picker, find & replace, tooltips, the playback spotlight. Fullscreening
+     .deck made every one of them invisible while it was on, which is why
+     the theme could not be changed while editing full screen (2026-08-20,
+     user). .deck is position:fixed;inset:0 either way, so this looks
+     identical and simply stops swallowing the overlays. */
+  function fullTarget(){
+    return document.documentElement;
+  }
   function toggleEditFull(){
     try{
-      if(!document.fullscreenElement&&deckEl.requestFullscreen){
+      if(!document.fullscreenElement&&fullTarget().requestFullscreen){
         editFull=true;
         deckEl.classList.add('editfull');
-        deckEl.requestFullscreen().catch(function(){
+        fullTarget().requestFullscreen().catch(function(){
           editFull=false;deckEl.classList.remove('editfull');syncViewBtns();});
       } else if(document.fullscreenElement){
         document.exitFullscreen().catch(function(){});
@@ -25829,7 +25943,14 @@ window.JunoPptx = (function () {
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
-    if(editing) applyTab();
+    if(editing){
+      applyTab();
+      /* the folded state is remembered per project, like the tab */
+      if(!deckEl._foldInit){
+        deckEl._foldInit=1;
+        setRibbonFold(lsGet(FOLDKEY2+SCOPE)==='1');
+      }
+    }
     /* The top bar earns its row or it does not appear. While editing it
        is only needed by a POSTER, which has no panel and therefore keeps
        File and Save up here; a presentation keeps them in the panel head,
@@ -25861,9 +25982,9 @@ window.JunoPptx = (function () {
     if(editing) setTool('select');
     /* real full screen while presenting (browser chrome gone) */
     try{
-      if(m==='view'&&!deckEl.hidden&&deckEl.requestFullscreen
+      if(m==='view'&&!deckEl.hidden&&fullTarget().requestFullscreen
          &&!document.fullscreenElement)
-        deckEl.requestFullscreen().catch(function(){});
+        fullTarget().requestFullscreen().catch(function(){});
       /* ...but full-screen EDITING is deliberate, not a leftover from
          presenting: leaving it alone here is what lets a poster be edited
          full screen at all (every mode re-apply would otherwise drop it) */
@@ -26184,6 +26305,10 @@ window.JunoPptx = (function () {
          swallows it so the browser's save dialog never covers a talk. */
       e.preventDefault();
       if(mode!=='view'){var sb2=$('#dc-save');if(sb2) sb2.click();}
+    }
+    else if((e.ctrlKey||e.metaKey)&&e.key==='F1'&&mode==='edit'){
+      /* PowerPoint's own shortcut for the same thing (2026-08-20) */
+      e.preventDefault();setRibbonFold(!ribbonFolded());
     }
     else if((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F')
             &&mode!=='view'){

@@ -124,6 +124,16 @@ body.deck-open{overflow:hidden;}
    that tab is not the one showing — display:none, never visibility, so it
    costs no width in the fit measurement */
 .rbn-grp[data-off]{display:none!important;}
+/* FOLDED: the group row goes, the tab strip stays. A bar that vanishes
+   completely leaves you no way to ask for it back (2026-08-20). */
+.deck.rbn-fold>.edit-tools{display:none;}
+/* SCOPED to the strip. Unscoped, `.rbn-fold` also matched the deck's own
+   `.rbn-fold` state class — so folding the tools put 1px 9px of padding on
+   a position:fixed;inset:0 element and the stage came out SMALLER than
+   before, which is the exact opposite of the point (2026-08-20, caught by
+   measuring the stage either side of the toggle). */
+.rbn-tabs .rbn-fold{align-self:center;padding:1px 9px;line-height:1;
+  flex:none;font-size:10px;}
 .rbn-tabs .et-hint{align-self:center;font-family:var(--mono);
   font-size:10px;color:#7d93a6;white-space:nowrap;padding:0 8px;}
 .deck.erc-nohint .rbn-tabs .et-hint{display:none;}

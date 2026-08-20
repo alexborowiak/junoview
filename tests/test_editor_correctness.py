@@ -1002,3 +1002,85 @@ def test_renaming_is_one_committed_action(out):
     assert "if(old&&old!==pres.name) lsDel(PFX+old);" not in out
     assert "menuAction('#mi-rename',startQatRename);" in out
     assert "qatName.addEventListener('click',startQatRename);" in out
+
+
+def test_menu_surfaces_are_opaque(out):
+    """--chrome-2 is the surface every menu, dialog, popup and input in the
+    app sits on, and it carried an alpha byte -- the value ended in 44,
+    i.e. 27% opaque. So every one of them was see-through against whatever
+    happened to be behind it -- worst on the theme picker, which opens over
+    the ribbon (2026-08-20, user: "some of the pop up menus like changing
+    the theme still have weird transparent background").
+
+    Every consumer that wants translucency mixes its own with color-mix;
+    none of them wanted this one. The opaque value is what every fallback
+    in the file was already using. Measured after the fix: the theme menu
+    computes to rgb(22, 39, 53) on dark and rgb(16, 20, 24) on high
+    contrast.
+    """
+    assert "--chrome-2:#162735;" in out
+    assert "#16273544" not in out
+    assert "#16352b44" not in out
+
+
+def test_high_contrast_re_inks_the_surfaces(out):
+    """It used to set only the accent and the button faces, so "Dark high
+    contrast" was the ordinary dark theme with brighter outlines -- not
+    what anyone turning on high contrast is asking for (2026-08-20, user:
+    "some of the themes are not right").
+    """
+    assert "body.th-contrast{--accent:#6fe3ff;" in out
+    assert "--chrome:#000000;--chrome-0:#000000;" in out
+    assert "body.th-contrast .rbn-tab{color:#c8dae6;}" in out
+    # the colourful theme's per-group hues are a hand-kept list, so a group
+    # added without a line here falls back to the default accent and the
+    # theme looks half-applied -- which had happened to all four groups
+    # added in August
+    for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-tbl"):
+        assert "body.th-colorful .%s" % grp in out, grp
+    # ...and the two groups that no longer exist are gone from it
+    assert "body.th-colorful .rbn-file" not in out
+    assert "body.th-colorful .rbn-nbs" not in out
+
+
+def test_fullscreen_takes_the_root_not_the_deck(out):
+    """A fullscreen element paints its own subtree and nothing else, and
+    half this app's overlays are SIBLINGS of .deck rather than children of
+    it. Measured 2026-08-20: #color-pop, #find-pop, .jv-scheme-menu and
+    #pickbar are all outside #deck. Fullscreening .deck therefore made the
+    theme picker, the colour picker, find & replace, the cell-pick bar and
+    the playback spotlight invisible for as long as it was on -- which is
+    why the theme could not be changed while editing full screen (user).
+
+    .deck is position:fixed;inset:0 either way, so taking the root instead
+    looks identical and simply stops swallowing the overlays.
+    """
+    assert "function fullTarget(){" in out
+    assert "return document.documentElement;" in out
+    assert "fullTarget().requestFullscreen()" in out
+    assert "deckEl.requestFullscreen()" not in out
+
+
+def test_the_tools_fold_away(out):
+    """The ribbon is about 100px of a 700px laptop window, and there are
+    long stretches -- reading it back, rehearsing, nudging one thing into
+    place -- where the page matters and the tools do not (2026-08-20, user:
+    "would be good if the editing tools can be made to pop up and down").
+
+    The TAB STRIP always stays: it is one button high, it is how you get
+    the tools back, and a bar that vanishes completely leaves you with no
+    way to say you want it again. Double-click a tab or Ctrl+F1 toggles,
+    both of which are what PowerPoint trains people to reach for.
+    Measured: stage height 789 -> 887 on fold.
+    """
+    assert 'id="rbn-fold"' in out
+    assert "function setRibbonFold(on){" in out
+    assert ".deck.rbn-fold>.edit-tools{display:none;}" in out
+    # the strip survives
+    assert ".deck.rbn-fold>.rbn-tabs" not in out
+    # a folded bar has no width to measure, so the density ladder stops
+    assert "if(deckEl.classList.contains('rbn-fold')) return;" in out
+    # the button rule is SCOPED: unscoped, `.rbn-fold` also matched the
+    # deck's own state class, so folding put padding on a fixed;inset:0
+    # element and the stage came out smaller than before
+    assert ".rbn-tabs .rbn-fold{align-self:center;" in out

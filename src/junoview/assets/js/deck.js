@@ -1195,12 +1195,57 @@
        its density both have to be judged again */
     syncRibbonGroups();
   }
+  /* ---- FOLDING THE TOOLS AWAY ------------------------------------------
+     The ribbon is about 100px of a 700px laptop window, and there are long
+     stretches - reading it back, rehearsing, nudging one thing into place
+     - where the page matters and the tools do not (2026-08-20, user:
+     "would be good if the editing tools can be made to pop up and down").
+     The TAB STRIP always stays: it is one button high, it is how you get
+     the tools back, and a bar that vanishes completely leaves you with no
+     way to say "I want them again". */
+  var FOLDKEY2='jv-deck-fold:';
+  function ribbonFolded(){
+    return deckEl.classList.contains('rbn-fold');
+  }
+  function setRibbonFold(on){
+    deckEl.classList.toggle('rbn-fold',!!on);
+    var b=$('#rbn-fold');
+    if(b){
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.innerHTML=on?'&#9662;':'&#9652;';
+      b.title=on
+        ?'Show the tools again (Ctrl+F1)'
+        :'Hide the tools and give the page the room (Ctrl+F1). Click a '
+          +'tab, or this, to bring them back';
+    }
+    lsSet(FOLDKEY2+SCOPE,on?'1':'0');
+    /* the stage just changed height, so the page has to be re-fitted */
+    applyZoom();
+    if(!on) fitEditRibbon();
+  }
   $$('#rbn-tabs .rbn-tab').forEach(function(b){
-    b.addEventListener('click',function(){setTab(b.dataset.tab);});
+    b.addEventListener('click',function(){
+      /* a click on the tab you are already on, while folded, is a request
+         for the tools back - not a no-op */
+      if(ribbonFolded()){setRibbonFold(false);setTab(b.dataset.tab);return;}
+      setTab(b.dataset.tab);
+    });
+    /* double-click toggles, the way PowerPoint has trained everyone */
+    b.addEventListener('dblclick',function(e){
+      e.preventDefault();setRibbonFold(!ribbonFolded());
+    });
   });
+  (function(){
+    var f=$('#rbn-fold');
+    if(f) f.addEventListener('click',function(){
+      setRibbonFold(!ribbonFolded());});
+  })();
   function fitEditRibbon(){
     var bar=$('#edit-tools');
     if(!bar||bar.hidden||mode!=='edit') return;
+    /* a folded bar has no width to measure: scrollWidth would read 0 and
+       the ladder would climb every rung for nothing */
+    if(deckEl.classList.contains('rbn-fold')) return;
     /* BEFORE anything is measured: a stale column count is a wrong width,
        so re-counting here is both the fix for a group that grew a control
        since the last count and the only way the density rungs below are
@@ -1253,12 +1298,23 @@
     if(sd) sd.setAttribute('aria-pressed',
       deckEl.classList.contains('rbn-side')?'true':'false');
   }
+  /* THE ROOT ELEMENT, not the deck. A fullscreen element paints its own
+     subtree and nothing else, and half this app's overlays are siblings of
+     .deck rather than children of it — the theme picker, the colour
+     picker, find & replace, tooltips, the playback spotlight. Fullscreening
+     .deck made every one of them invisible while it was on, which is why
+     the theme could not be changed while editing full screen (2026-08-20,
+     user). .deck is position:fixed;inset:0 either way, so this looks
+     identical and simply stops swallowing the overlays. */
+  function fullTarget(){
+    return document.documentElement;
+  }
   function toggleEditFull(){
     try{
-      if(!document.fullscreenElement&&deckEl.requestFullscreen){
+      if(!document.fullscreenElement&&fullTarget().requestFullscreen){
         editFull=true;
         deckEl.classList.add('editfull');
-        deckEl.requestFullscreen().catch(function(){
+        fullTarget().requestFullscreen().catch(function(){
           editFull=false;deckEl.classList.remove('editfull');syncViewBtns();});
       } else if(document.fullscreenElement){
         document.exitFullscreen().catch(function(){});
@@ -9586,7 +9642,14 @@
     /* the builder panel stays visible while editing a slide */
     $('#deck-create').hidden=!(creating||editing);
     var et=$('#edit-tools'); if(et) et.hidden=!editing;
-    if(editing) applyTab();
+    if(editing){
+      applyTab();
+      /* the folded state is remembered per project, like the tab */
+      if(!deckEl._foldInit){
+        deckEl._foldInit=1;
+        setRibbonFold(lsGet(FOLDKEY2+SCOPE)==='1');
+      }
+    }
     /* The top bar earns its row or it does not appear. While editing it
        is only needed by a POSTER, which has no panel and therefore keeps
        File and Save up here; a presentation keeps them in the panel head,
@@ -9618,9 +9681,9 @@
     if(editing) setTool('select');
     /* real full screen while presenting (browser chrome gone) */
     try{
-      if(m==='view'&&!deckEl.hidden&&deckEl.requestFullscreen
+      if(m==='view'&&!deckEl.hidden&&fullTarget().requestFullscreen
          &&!document.fullscreenElement)
-        deckEl.requestFullscreen().catch(function(){});
+        fullTarget().requestFullscreen().catch(function(){});
       /* ...but full-screen EDITING is deliberate, not a leftover from
          presenting: leaving it alone here is what lets a poster be edited
          full screen at all (every mode re-apply would otherwise drop it) */
@@ -9941,6 +10004,10 @@
          swallows it so the browser's save dialog never covers a talk. */
       e.preventDefault();
       if(mode!=='view'){var sb2=$('#dc-save');if(sb2) sb2.click();}
+    }
+    else if((e.ctrlKey||e.metaKey)&&e.key==='F1'&&mode==='edit'){
+      /* PowerPoint's own shortcut for the same thing (2026-08-20) */
+      e.preventDefault();setRibbonFold(!ribbonFolded());
     }
     else if((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F')
             &&mode!=='view'){

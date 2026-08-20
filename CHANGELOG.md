@@ -34,6 +34,44 @@ at the tight end of the fit ladder.
   PowerPoint's does, so the tab you land on is not one lonely button over an
   empty row when nothing is selected.
 
+### Added
+
+- **The editing tools fold away.** The ribbon is about 100px of a 700px laptop
+  window, and there are long stretches — reading it back, rehearsing, nudging
+  one thing into place — where the page matters and the tools do not. The
+  chevron at the end of the tab strip folds them; so does double-clicking a tab,
+  or Ctrl+F1. The tab strip itself always stays: it is one button high, it is
+  how you get the tools back, and a bar that vanishes completely leaves you no
+  way to say you want it again. Remembered per project. Measured: 98px back to
+  the page.
+
+### Fixed — themes
+
+- **Every menu, dialog and popup in the app was see-through.** `--chrome-2` is
+  the surface all of them sit on, and its value carried an alpha byte — 27%
+  opaque. It was worst on the theme picker, which opens over the ribbon. Every
+  consumer that actually wanted translucency mixes its own with `color-mix`;
+  none of them wanted this. The opaque value is the one every fallback in the
+  file was already using. Two of the forest themes carried the same mistake in a
+  declaration that was already dead.
+- **“Dark high contrast” was the ordinary dark theme with brighter outlines.**
+  It re-inked only the accent and the button faces and left every surface alone
+  — not what anyone turning on high contrast is asking for. The surfaces go to
+  near-black with real edges now, and the chrome added this month (the top bar,
+  the tab strip, the zoom cluster, find & replace) has rules of its own.
+- **“Dark colourful” had stopped colouring half the ribbon.** Its per-group hues
+  are a hand-kept list, so the four groups added this month — Slides, Table,
+  Animate, Page furniture — fell back to the default accent and the theme looked
+  half-applied. Two groups that no longer exist have gone from the list with
+  them.
+- **The theme could not be changed while editing full screen.** A fullscreen
+  element paints its own subtree and nothing else, and half this app's overlays
+  are *siblings* of `.deck` rather than children of it — the theme picker, the
+  colour picker, find & replace, the cell-pick bar, the playback spotlight.
+  Fullscreening `.deck` made every one of them invisible for as long as it was
+  on. It takes the root element now; `.deck` is `position:fixed;inset:0` either
+  way, so it looks identical and simply stops swallowing the overlays.
+
 ### Changed — things came out of menus, and zoom found a home
 
 Controls were folded behind dropdowns when the ribbon was short of width. It

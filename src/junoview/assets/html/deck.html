@@ -274,6 +274,17 @@
  background">Design</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
+    <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
+         window, and there are long stretches — reading, rehearsing,
+         nudging one thing into place — where you want the page and not
+         the tools (2026-08-20, user: "would be good if the editing tools
+         can be made to pop up and down"). Double-clicking a tab does the
+         same thing, and so does Ctrl+F1, both of which are what
+         PowerPoint trains people to reach for. Clicking a tab while it is
+         folded brings it back. -->
+    <button class="dbtn rbn-fold" id="rbn-fold" aria-pressed="false"
+      title="Hide the tools and give the page the room (Ctrl+F1). Click a
+ tab, or this, to bring them back">&#9652;</button>
   </div>
   <div class="edit-tools ribbon" id="edit-tools" hidden>
         <!-- the app buttons the editor was hiding: the theme toggle and
