@@ -110,6 +110,13 @@ The archive is written deterministically — members sorted, timestamps fixed �
 an unchanged package produces byte-identical output and the committed `docs/`
 build doesn't churn.
 
+The build is also an installable, offline-capable PWA: `build_web()` writes
+`sw.js` (a service worker that precaches the page, `junoview.zip`, the Pyodide
+runtime and MathJax on first visit — version-stamped with the package hash so
+it follows the same determinism rule), `manifest.webmanifest` and `icon.svg`.
+The Pyodide version is pinned in two places — the loader's script tag and the
+worker's precache list — bump them together.
+
 ## Testing
 
 ```bash

@@ -192,6 +192,22 @@ it is deliberately single-user: it binds to `127.0.0.1` and browses the
 host's filesystem. The web build above is the safe public face; the app
 server is for your own machine.
 
+### Use it offline — install it as an app
+
+The web build is a **PWA**: the first visit caches the page, the Python
+runtime and the maths fonts, and every visit after that works **with no
+internet at all** — on a plane, on conference Wi-Fi, wherever. The
+browser will also offer to **install it as an app** (menu → *Apps →
+Install Junoview*, or the *Install as an app* link on the welcome
+screen): you get a Start-menu/dock icon and its own window, and it keeps
+working offline. Nothing to install by hand, nothing uploaded — it is
+the same fully client-side app.
+
+Presentations survive offline too: saved decks embed their own copies of
+every placed card, so a `.junoview.html` file presents with its figures
+even when the notebook it came from isn't there — see
+[PRESENTATIONS.md](PRESENTATIONS.md).
+
 ### Install as a command
 
 ```bash

@@ -88,6 +88,20 @@ def _as_presentations(obj: Any) -> list:
                 # survive a project save (2026-08-10).
                 if isinstance(s.get("label"), str) and s["label"].strip():
                     slide["label"] = s["label"].strip()
+                # per-slide look, speaker notes and the time goal: the JS
+                # normaliser (normPres) has carried these for a while; this
+                # rebuild silently shed them on every round-trip through
+                # Python — a project save cost you your speaker notes
+                # (2026-08-20).
+                if isinstance(s.get("bg"), str) and s["bg"].strip():
+                    slide["bg"] = s["bg"].strip()
+                if isinstance(s.get("notes"), str) and s["notes"]:
+                    slide["notes"] = s["notes"]
+                if isinstance(s.get("goal"), (int, float)) and s["goal"] > 0:
+                    slide["goal"] = s["goal"]
+                for k in ("border", "grpmeta"):
+                    if isinstance(s.get(k), dict):
+                        slide[k] = s[k]
                 slides.append(slide)
             elif s.get("kind") == "card" and s.get("anchor"):   # legacy
                 panes = [s["anchor"]] + [b for b in (s.get("beside") or [])
@@ -109,5 +123,28 @@ def _as_presentations(obj: Any) -> list:
             entry["showNums"] = 1
         if isinstance(p.get("pageBg"), str) and p["pageBg"].strip():
             entry["pageBg"] = p["pageBg"].strip()
+        # deck-level furniture, the whole-talk notes/pad and named styles:
+        # same story as the slide keys above — normPres kept them, this
+        # rebuild lost them (2026-08-20).
+        if isinstance(p.get("talkMins"), (int, float)) and p["talkMins"] > 0:
+            entry["talkMins"] = p["talkMins"]
+        if isinstance(p.get("notes"), str) and p["notes"]:
+            entry["notes"] = p["notes"]
+        if isinstance(p.get("pad"), list) and p["pad"]:
+            entry["pad"] = p["pad"]
+        for key in ("wmark", "head", "foot", "styles"):
+            if isinstance(p.get(key), dict):
+                entry[key] = p[key]
+        # embedded card snapshots — the deck's own copy of every placed
+        # card, so a saved deck shows its figures with no notebook and no
+        # network. Written by the editor at save time; only shape-checked
+        # here (values are {title, kind, html[, code]} strings).
+        if isinstance(p.get("emb"), dict):
+            emb = {k: v for k, v in p["emb"].items()
+                   if isinstance(k, str)
+                   and isinstance(v, dict)
+                   and isinstance(v.get("html"), str) and v["html"]}
+            if emb:
+                entry["emb"] = emb
         out.append(entry)
     return out

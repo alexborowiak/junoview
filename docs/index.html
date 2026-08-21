@@ -17,6 +17,8 @@
  slides, jupyter presentation, figure-first, ipynb viewer, xarray,
  matplotlib, anywidget, reproducible research">
 <link rel="canonical" href="https://junoview.dev/">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0a141d">
 <meta property="og:title" content="Junoview &mdash; figure-first Jupyter
  notebook viewer and presentation builder">
 <meta property="og:description" content="Read executed Jupyter notebooks
@@ -98,7 +100,9 @@
     'Opened from a GitHub URL? <b>File info</b> shows the commit, and you '
       +'can open any earlier version of the notebook.',
     'The <b>Text</b> and <b>Figures</b> steppers scale prose and plots '
-      +'separately &mdash; handy on a projector.'
+      +'separately &mdash; handy on a projector.',
+    'After this first visit Junoview also works <b>offline</b> &mdash; and '
+      +'installs as an app from the browser menu.'
   ];
   var el=document.getElementById('tip-t'),box=document.getElementById('tip');
   if(el&&box){
@@ -106,6 +110,21 @@
     box.hidden=false;
   }
 })();
+</script>
+<script>
+/* the offline app: sw.js caches this page, the renderer and the Python
+   runtime on first visit, so later visits — and the installed app — need
+   no internet. Registered before Pyodide starts, so the very first visit
+   precaches in parallel with the first boot. Fails soft everywhere a
+   worker cannot run (file://, plain http). */
+if('serviceWorker' in navigator)
+  navigator.serviceWorker.register('sw.js').catch(function(){});
+/* the browser's install offer arrives as an event, and this document is
+   about to be REPLACED by document.write — the window (and its globals)
+   survives that, so the app page can still show a button for it */
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();window.__jvInstall=e;
+});
 </script>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
 <script>

@@ -97,6 +97,11 @@ def mathjax_html() -> str:
     return load("html/mathjax.html")
 
 
+def sw_js() -> str:
+    """The web build's service worker: offline caching + installability."""
+    return load("js/sw.js")
+
+
 def web_loader() -> str:
     """Boot page for the Pyodide build; see :mod:`junoview.web`."""
     return load("html/web-loader.html")

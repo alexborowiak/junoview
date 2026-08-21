@@ -16,6 +16,7 @@ one HTTP request, as the single file was.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 import zipfile
@@ -23,7 +24,7 @@ from pathlib import Path
 
 from . import assets
 from ._write import write_text
-from .branding import _FAVICON
+from .branding import _FAVICON, _LOGO_SVG
 from .notebook.parser import parse_notebook
 from .render.page import render_page, render_shell
 
@@ -110,8 +111,36 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     loader = assets.web_loader().replace(
         "<title>", f'<link rel="icon" href="{_FAVICON}">\n<title>', 1)
     write_text(outdir / "index.html", loader)
-    bundle_package(outdir / "junoview.zip")
+    zip_path = bundle_package(outdir / "junoview.zip")
     write_text(outdir / ".nojekyll", "")
+
+    # The offline, installable app: a service worker plus a manifest turn
+    # the page into a PWA -- one visit caches the app, the Pyodide runtime
+    # and MathJax, after which it loads with no internet and the browser
+    # offers "Install app". The worker is version-stamped with the package
+    # hash (token replace, NOT str.format -- the JS is full of braces) so a
+    # new build retires the old cache while an unchanged package produces
+    # byte-identical output, same as the zip itself.
+    version = hashlib.md5(zip_path.read_bytes()).hexdigest()[:12]
+    write_text(outdir / "sw.js",
+               assets.sw_js().replace("__JV_VERSION__", version))
+    manifest = {
+        "name": "Junoview",
+        "short_name": "Junoview",
+        "description": "Figure-first Jupyter notebook viewer and "
+                       "presentation builder — runs entirely in your "
+                       "browser, notebooks never leave your machine.",
+        "start_url": "./",
+        "scope": "./",
+        "display": "standalone",
+        "background_color": "#0a141d",
+        "theme_color": "#0a141d",
+        "icons": [{"src": "icon.svg", "sizes": "any",
+                   "type": "image/svg+xml", "purpose": "any"}],
+    }
+    write_text(outdir / "manifest.webmanifest",
+               json.dumps(manifest, indent=2, sort_keys=True) + "\n")
+    write_text(outdir / "icon.svg", _LOGO_SVG + "\n")
 
     # The help overlay and welcome tour link to gifs/ relative to the page, so
     # a build into a fresh directory needs them copied across; without this the

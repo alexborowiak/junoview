@@ -125,6 +125,17 @@ position. Reordering, editing or adding cells does not break the deck;
 deleting a referenced cell just skips that slide with a note. Prefer
 `#| id:` anchors: they also survive copy-pasting cells between notebooks.
 
+**Saved decks are self-contained.** Every deliberate save (*Save* to a
+file or the project, *Download a copy*) also writes each placed card's
+rendered content — figures included — into the deck itself. Open the
+file on another machine, with the notebook missing, or with no internet
+to re-fetch a URL notebook, and every frame still shows. The notebook
+remains the source of truth: whenever it is open, frames render live and
+the next save refreshes the stored copies; when it isn't, the frame
+shows the copy and (in the editor) carries a small *saved copy* chip.
+**Check** on the ribbon lists any frame presenting from its copy — or
+one that has no copy at all and would present blank.
+
 `--deck other.json` renders with a specific deck file (overrides the
 sidecar and the embedded metadata).
 

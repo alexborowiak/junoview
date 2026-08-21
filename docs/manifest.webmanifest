@@ -1,0 +1,18 @@
+{
+  "background_color": "#0a141d",
+  "description": "Figure-first Jupyter notebook viewer and presentation builder \u2014 runs entirely in your browser, notebooks never leave your machine.",
+  "display": "standalone",
+  "icons": [
+    {
+      "purpose": "any",
+      "sizes": "any",
+      "src": "icon.svg",
+      "type": "image/svg+xml"
+    }
+  ],
+  "name": "Junoview",
+  "scope": "./",
+  "short_name": "Junoview",
+  "start_url": "./",
+  "theme_color": "#0a141d"
+}

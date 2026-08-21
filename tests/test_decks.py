@@ -199,3 +199,70 @@ def test_notebooks_button_replaces_inline_chip_strip(out):
     assert 'id="dc-nbs"' in out
     assert "buildNbsInto($('#dc-nbs'),true);" in out
     assert 'id="ck-filter-btn"' in out and 'id="ck-filter-menu"' in out
+
+
+def test_self_contained_decks_keep_embedded_snapshots():
+    """A saved deck may carry its own copy of every placed card.
+
+    Decks used to be refs only, so opening one without its notebook (or
+    without the internet to re-fetch a URL notebook) showed empty frames
+    (2026-08-20, user: "save all the images to it and stuff, so you don't
+    need web-access to notebook"). The editor now writes each placed
+    card's rendered body into ``p.emb`` at save time; this rebuild must
+    pass it through -- shape-checked, junk dropped -- or a project save
+    would strip the deck back to refs.
+    """
+    good = {"title": "Climatology", "kind": "figure",
+            "html": "<div class=\"cardbody\"><img src=\"data:,\"></div>"}
+    pres = _as_presentations([{"name": "n", "slides": [], "emb": {
+        "demo::clim": good,
+        "demo::junk": {"title": "no html"},
+        "demo::worse": "not even a dict",
+    }}])
+    assert pres[0]["emb"] == {"demo::clim": good}
+    # an all-junk emb vanishes rather than surviving as {}
+    pres2 = _as_presentations([{"name": "n", "slides": [],
+                                "emb": {"x": {"title": "no html"}}}])
+    assert "emb" not in pres2[0]
+
+
+def test_python_normalizer_keeps_what_the_editor_keeps():
+    """The two whitelists (normPres in deck.js, this one) must agree.
+
+    Speaker notes, per-slide looks, the talk clock, watermarks and named
+    styles were all whitelisted in the editor on 2026-08-20 -- and were
+    then silently shed by every round-trip through Python (a project save,
+    a sidecar load), so "Save to project" cost you your speaker notes.
+    """
+    pres = _as_presentations([{
+        "name": "n", "talkMins": 12, "notes": "whole-talk notes",
+        "wmark": {"text": "DRAFT"}, "head": {"text": "h"},
+        "foot": {"text": "f"}, "styles": {"heading": {"size": 5}},
+        "pad": [{"name": "pad", "text": "scratch"}],
+        "slides": [{"layout": "blank", "bg": "#fff",
+                    "notes": "say this slowly", "goal": 2.5,
+                    "border": {"w": 1}, "grpmeta": {"g1": {"name": "x"}}}],
+    }])
+    p = pres[0]
+    assert p["talkMins"] == 12 and p["notes"] == "whole-talk notes"
+    assert p["wmark"]["text"] == "DRAFT" and p["styles"]["heading"]["size"] == 5
+    assert p["pad"][0]["text"] == "scratch"
+    s = p["slides"][0]
+    assert s["bg"] == "#fff" and s["notes"] == "say this slowly"
+    assert s["goal"] == 2.5 and s["border"]["w"] == 1
+    assert s["grpmeta"]["g1"]["name"] == "x"
+
+
+def test_deck_editor_ships_the_embedded_snapshot_machinery(out):
+    """The page carries the self-contained-deck plumbing end to end.
+
+    Capture at save (embedAssets), the understudy lookup (resolveRef falls
+    back to embItem), and the edit-time chip that says a frame is showing
+    the deck's own copy rather than a live notebook card.
+    """
+    assert "function embedAssets" in out and "function embItem" in out
+    assert "return embItem(ref);" in out
+    assert "an-embchip" in out and "saved copy" in out
+    # preflight names both failure modes: no copy at all, and copy-only
+    assert "holds no saved copy" in out
+    assert "shows its saved copy" in out

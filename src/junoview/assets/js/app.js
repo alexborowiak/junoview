@@ -5192,7 +5192,11 @@
     if(/^https?:\/\/[^\/]*githubusercontent\.com\//i.test(url))
       fu=url+(url.indexOf('?')<0?'?':'&')+'jvr='+Date.now();
     fetch(fu,{cache:'no-store'}).then(function(r){
-      if(!r.ok) throw new Error('HTTP '+r.status);
+      if(!r.ok){
+        /* carry the status: the restore path below has to tell "the
+           server says this is gone" apart from "there is no network" */
+        var he=new Error('HTTP '+r.status);he.status=r.status;throw he;
+      }
       return r.text();
     }).then(function(txt){
       if(!webReady()) throw new Error('Python is still loading');
@@ -5212,13 +5216,35 @@
       var wasSilent=pend.s;
       done();
       if(wasSilent){
-        webUnnote(url);
+        /* A FAILED RESTORE MUST NOT FORGET THE NOTEBOOK. This used to
+           call webUnnote() on any failure, so opening the app once with
+           no connection erased the whole session — and the notebooks
+           were still gone when the network came back (2026-08-21). A
+           fetch that never reached a server rejects with no status;
+           only the server saying the file is not there retires a URL. */
+        if(e&&(e.status===404||e.status===410)) webUnnote(url);
+        else noteRestoreMiss();
         return;
       }
       alert('Could not fetch '+url+'\n'+((e&&e.message)||e)
         +'\nIf that host blocks cross-site requests, download the '
         +'file and drop it here instead.');
     });
+  }
+  /* Notebooks kept in the session but not reachable this launch (almost
+     always: no network). Silence here reads as "my notebooks are gone",
+     which is exactly the panic the forgetting bug used to cause for
+     real — so say it once, and say that they are coming back. */
+  var restoreMissed=0,restoreMissT=null;
+  function noteRestoreMiss(){
+    restoreMissed++;
+    clearTimeout(restoreMissT);
+    restoreMissT=setTimeout(function(){
+      var n=restoreMissed;restoreMissed=0;
+      docToast(n+' notebook'+(n===1?'':'s')+' could not be reloaded'
+        +(navigator.onLine?'':' — you are offline')
+        +'. Still remembered; they return when you reconnect.');
+    },600);
   }
   function webNote(url){
     try{
@@ -5514,17 +5540,62 @@
     if(demoBtn) demoBtn.addEventListener('click',function(){
       webOpenUrl('example_climate_analysis.ipynb',false);
     });
+    /* ---- the installable, offline-capable app (PWA) ----
+       The install offer (`beforeinstallprompt`) usually fires on the BOOT
+       document and is stashed on the window — which document.write keeps —
+       by web-loader.html; it can also fire later, on this page. Either
+       way the welcome screen grows an "Install as an app" link. */
+    var wInst=$('#welcome-install'),wInstSep=$('#welcome-install-sep');
+    function paintInstall(){
+      var on=!!window.__jvInstall;
+      if(wInst) wInst.hidden=!on;
+      if(wInstSep) wInstSep.hidden=!on;
+    }
+    if(wInst) wInst.addEventListener('click',function(e){
+      e.preventDefault();
+      var ev=window.__jvInstall; if(!ev) return;
+      window.__jvInstall=null;paintInstall();
+      ev.prompt();
+    });
+    window.addEventListener('beforeinstallprompt',function(e){
+      e.preventDefault();window.__jvInstall=e;paintInstall();
+    });
+    paintInstall();
+    /* say ONCE when offline is actually ready — `ready` resolves after
+       the worker's install precached the app and runtime, so the promise
+       is the honest signal, not the registration */
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.ready.then(function(){
+        var K=WEBKEY+':offline-ready';
+        try{if(localStorage.getItem(K)) return;
+          localStorage.setItem(K,'1');}catch(e){}
+        docToast('Saved for offline — Junoview now opens here even '
+          +'without internet');
+      }).catch(function(){});
+    }
     try{
       APP.project.recent=JSON.parse(
         localStorage.getItem(WEBKEY+':recent')||'[]');
     }catch(e){}
-    /* reopen last session's URL notebooks once Python is up */
-    document.addEventListener('sem:pyready',function(){
+    /* reopen last session's URL notebooks once Python is up.
+       WAITING FOR THE EVENT IS NOT ENOUGH. The loader writes this whole
+       page with document.write() and fires sem:pyready immediately
+       afterwards; whether this script has run by then is a race, and
+       document.write() wipes the document (listeners included), so an
+       early dispatch is simply lost and the session never comes back.
+       The service worker made that race much easier to lose, because a
+       cached boot writes the page faster (2026-08-21: reproduced — the
+       first visit restored, every later one silently did not).
+       window.semPy is set before the dispatch, so it is the reliable
+       "already up" flag; the listener only covers the other ordering. */
+    function restoreWebSession(){
       var open=[];
       try{open=JSON.parse(
         localStorage.getItem(WEBKEY+':open')||'[]');}catch(e){}
       open.forEach(function(u){webOpenUrl(u,true);});
-    });
+    }
+    if(window.semPy) restoreWebSession();
+    else document.addEventListener('sem:pyready',restoreWebSession);
   }
 
   /* ================= boot: mount shells already on the page ============ */

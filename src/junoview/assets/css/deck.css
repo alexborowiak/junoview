@@ -1716,6 +1716,14 @@ select#fmt-font[hidden]{display:none;}
   background:#f0a84822;border:1px solid #f0a84866;color:#f0c078;
   border-radius:5px;padding:2px 6px;pointer-events:none;}
 
+/* a frame showing the copy saved inside the deck (notebook not open) —
+   quiet slate, not amber: nothing is wrong, the deck is self-reliant */
+.an-embchip{position:absolute;top:5px;left:5px;z-index:3;
+  font-family:var(--mono);font-size:9px;letter-spacing:.06em;
+  background:#5d748822;border:1px solid #5d748866;color:#9fb2c2;
+  border-radius:5px;padding:2px 6px;pointer-events:auto;cursor:help;}
+.deck:not(.editing) .an-embchip{display:none;}
+
 /* snap-to-align guide lines (drawn only mid-drag). Solid and glowing
    rather than a 1.5px dash: on an A0 poster zoomed to fit, a hairline
    dashed rule was there but read as nothing, which is what made careful

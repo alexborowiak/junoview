@@ -2,6 +2,84 @@
 
 ## Unreleased
 
+### Presentations travel whole: saved decks carry their own pictures
+
+A saved deck used to be a list of *references* into notebooks — open it
+without those notebooks (or without the internet to re-fetch one opened by
+URL) and every frame was blank. Now every deliberate save writes each
+placed card's rendered body into the file itself (figures are already
+`data:` URIs, so the file travels whole):
+
+- **Save to file / Download a copy** always embed; a manual **Save to
+  project** does too. The every-second autosave stays refs-only so editing
+  never rewrites megabytes to disk per keystroke.
+- On load the copies are absorbed into a session store (and IndexedDB, so
+  they survive the browser closing) rather than riding the presentation
+  object — drafts written to localStorage on every edit stay small.
+- The live notebook always wins: an open tab drives its frames exactly as
+  before, and the embedded copy is the understudy. When only the copy is
+  showing, the frame carries a quiet **saved copy** chip (edit mode only)
+  and **Check** says so; a ref with no copy at all is now flagged as the
+  blank space it would print as, instead of failing silently.
+- Deleting a referenced cell, or closing its tab, no longer blanks the
+  slide — the last saved copy stands in.
+- The Python normaliser now keeps everything the editor keeps: speaker
+  notes, per-slide looks, the talk clock, watermark/header/footer, named
+  styles and the embedded copies all survive a round-trip through a
+  project save or a sidecar load (they used to be silently dropped).
+
+### Fixed — opening the app offline erased your session
+
+Three bugs on the same path, all found while verifying the offline build:
+
+- **A failed restore forgot the notebook.** The web app reopens last
+  session's URL notebooks silently at boot, and *any* failure called
+  `webUnnote()` — so launching it once with no connection dropped every
+  notebook from the remembered list, and they were still gone after
+  reconnecting. A fetch that never reached a server rejects with no
+  status; only the server saying the file is not there (404/410) retires
+  a URL now. Unreachable notebooks are kept, and a notice says so rather
+  than leaving you staring at an empty window.
+- **The restore depended on winning a race.** The loader writes the whole
+  page with `document.write()` — which wipes the document and its
+  listeners — then fires `sem:pyready` immediately. If the app script had
+  not run yet the event was simply lost. The service worker made that
+  race much easier to lose, because a cached boot writes the page faster:
+  the first visit restored and every later one silently did not.
+  `window.semPy` is set before the dispatch, so it is now the flag, with
+  the listener covering only the other ordering.
+- **The worker could serve a stale notebook.** A notebook on our own
+  origin is same-origin and was being cached like a stylesheet — re-run
+  it, reopen it, and you would get yesterday's figures. Notebooks and
+  saved decks are data: never stored, and served from cache only as an
+  offline fallback (which is what keeps the bundled example openable on
+  a plane).
+
+### Saving with images is no longer invisible
+
+Embedding is automatic, so nothing ever said it happened. Every save now
+reports what travelled with it — *"…with 6 cards embedded, so it opens
+without the notebook"*.
+
+### The web app is now an offline, installable app
+
+`junoview --build-web` output is a PWA. One visit to the site caches the
+page, the packaged renderer, the Pyodide runtime, MathJax (fonts included)
+and Plotly; after that it loads with **no internet at all**, and the
+browser offers **Install app** — a Start-menu / dock icon in its own
+window, which is the downloadable app people keep asking for, with nothing
+to install by hand.
+
+- `build_web` writes `sw.js` (version-stamped with the package hash, so a
+  new build retires the old cache and an unchanged build produces no
+  diff), `manifest.webmanifest` and `icon.svg` beside `index.html`.
+- The worker serves cache-first and refreshes same-origin files behind
+  the response, so updates arrive on the next visit without ever costing
+  offline. GitHub-URL notebooks are deliberately never cached — stale
+  science is worse than no cache.
+- The welcome screen grows **Install as an app** when the browser has an
+  install offer pending, and says once when offline is actually ready.
+
 ### The deck editor grew a tabbed ribbon and a title bar
 
 One ribbon had stopped being able to hold the editor: every feature added a

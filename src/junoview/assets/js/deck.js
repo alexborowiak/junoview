@@ -997,6 +997,19 @@
           +'a blank box.');
         return;
       }
+      if(a.k==='cell'&&a.ref){
+        var itc=resolveRef(a.ref);
+        /* an unresolvable ref renders as NOTHING outside the editor —
+           that silent blank was only ever discovered on the projector */
+        if(!itc)
+          add(i,'err',label+' cannot be shown',
+            'Its notebook is not open and the deck holds no saved copy '
+            +'of it — it will present and print as blank space.');
+        else if(itc.emb)
+          add(i,'warn',label+' shows its saved copy',
+            'Its notebook is not open, so the frame shows the copy saved '
+            +'with the deck. Open the notebook to pick up any changes.');
+      }
       var r=layer?annotRectPct(layer,s,i):null;
       if(!r&&a.w!=null&&a.h!=null)
         r={l:a.x,r:a.x+a.w,t:a.y,b:a.y+a.h};
@@ -1980,15 +1993,76 @@
     var i=String(ref).indexOf('::');
     return i<0?[null,String(ref)]:[String(ref).slice(0,i),String(ref).slice(i+2)];
   }
+  /* ---------- embedded snapshots: the deck's own copy of its cards ----
+     A saved deck used to be refs only, so opening it without the source
+     notebook (or without the internet to re-fetch one) showed empty
+     frames. Saving now writes each placed card's rendered body into the
+     file (`p.emb`, figures already data: URIs), and this store carries
+     those copies at runtime. The live notebook ALWAYS wins — resolveRef
+     tries ITEMS first — so an open tab still drives its frames, and the
+     embedded copy is the understudy, not a fork. Kept OUT of the pres
+     object on purpose: drafts are written to localStorage on every edit,
+     and megabytes of figures there would hit the quota and silently kill
+     autosave. IndexedDB holds them between sessions instead. */
+  var EMBED={};          /* ns -> {title,kind,html,code} */
+  var embItems={};       /* ns -> the virtual item resolveRef hands out */
+  var embSaveT=null;
+  function embKey(ref){
+    if(!ref) return null;
+    if(EMBED[ref]) return ref;
+    /* plain legacy anchor: find it under any namespace, like resolveRef */
+    if(String(ref).indexOf('::')>=0) return null;
+    var suf='::'+ref,ks=Object.keys(EMBED);
+    for(var i=0;i<ks.length;i++)
+      if(ks[i].slice(-suf.length)===suf) return ks[i];
+    return null;
+  }
+  function embFor(ref){var k=embKey(ref);return k?EMBED[k]:null;}
+  function embItem(ref){
+    var k=embKey(ref); if(!k) return null;
+    if(!embItems[k]){
+      var e=EMBED[k],pr=splitRef(k);
+      embItems[k]={title:e.title||'',kind:e.kind||'note',
+        hasCode:!!e.code,nb:pr[0]||'',anchor:pr[1],ns:k,emb:true};
+    }
+    return embItems[k];
+  }
+  /* the parsed body node, cached — cellFacets asks often */
+  function embBody(ref){
+    var e=embFor(ref); if(!e||!e.html) return null;
+    if(!e._node){
+      var t=document.createElement('template');t.innerHTML=e.html;
+      e._node=t.content.firstElementChild||null;
+    }
+    return e._node;
+  }
+  function embStore(key,e){
+    EMBED[key]={title:String(e.title||''),kind:String(e.kind||''),
+      html:String(e.html||''),code:typeof e.code==='string'?e.code:''};
+    delete embItems[key];
+  }
+  function embSaveSoon(){
+    clearTimeout(embSaveT);
+    embSaveT=setTimeout(function(){
+      /* plain copies only — the cached _node is a DOM element and would
+         make the structured clone throw */
+      var plain={};
+      Object.keys(EMBED).forEach(function(k){
+        var e=EMBED[k];
+        plain[k]={title:e.title,kind:e.kind,html:e.html,code:e.code||''};
+      });
+      idbPut('emb:'+SCOPE,plain).catch(function(){});
+    },1000);
+  }
   function resolveRef(ref){
     if(!ref) return null;
     if(ITEMS[ref]) return ITEMS[ref];
-    if(String(ref).indexOf('::')>=0) return null;
+    if(String(ref).indexOf('::')>=0) return embItem(ref);
     for(var s=0;s<APP.order.length;s++){
       var k=nsKey(APP.order[s],ref);
       if(ITEMS[k]) return ITEMS[k];
     }
-    return null;
+    return embItem(ref);
   }
   function normRef(ref){
     if(!ref) return null;
@@ -2083,6 +2157,17 @@
     ['wmark','head','foot','styles'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=JSON.parse(JSON.stringify(p[k]));
     });
+    /* embedded card snapshots ride the FILE, not the object: they are
+       absorbed into the session store (and IndexedDB) here, so frames
+       still render when the notebook never opens — while drafts written
+       on every edit stay ref-sized. Keys are namespaced like refs are. */
+    if(p.emb&&typeof p.emb==='object'){
+      Object.keys(p.emb).forEach(function(k){
+        var e=p.emb[k];
+        if(e&&typeof e.html==='string'&&e.html) embStore(ns(k)||k,e);
+      });
+      embSaveSoon();
+    }
     return out;
   }
   function registerShell(stem,data){
@@ -2410,7 +2495,13 @@
   var frameSnaps={},frameSnapsPrev={};
   var frozenFrames=new WeakMap();   /* annot -> snapshot html it shows */
   function cloneBody(ref){
-    var c=cardEl(ref); if(!c) return null;
+    var c=cardEl(ref);
+    if(!c){
+      /* notebook not open: fall back to the copy embedded in the deck
+         (already filter-stripped at capture time) */
+      var eb=embBody(ref);
+      return eb?stripIds(eb.cloneNode(true)):null;
+    }
     var b=$('.cardbody',c); if(!b) return null;
     b=stripIds(b.cloneNode(true));
     /* the DOCUMENT's filter state (hidden plot types, folded/hidden parts)
@@ -2429,7 +2520,14 @@
     return b;
   }
   function cloneCode(ref){
-    var c=cardEl(ref); if(!c) return null;
+    var c=cardEl(ref);
+    if(!c){
+      var e=embFor(ref);
+      if(!e||!e.code) return null;
+      var t=document.createElement('template');t.innerHTML=e.code;
+      var n=t.content.firstElementChild;
+      return n?stripIds(n.cloneNode(true)):null;
+    }
     var inner=$('.codeinner',c); if(!inner) return null;
     return stripIds(inner.cloneNode(true));
   }
@@ -2439,16 +2537,19 @@
     var card=cardEl(ref);
     var it=resolveRef(ref);
     var f={code:!!(it&&it.hasCode),figure:false,output:false};
+    var body=null;
     if(card){
       if(!f.code&&card.querySelector('.codeinner')) f.code=true;
-      var body=$('.cardbody',card);
-      if(body){
-        /* live embeds (plotly/bokeh/vega/folium) are figures too */
-        f.figure=!!body.querySelector('.figframe,.figpager,.plotframe');
-        f.output=!!body.querySelector(
-          'pre.result,pre.stream,.rich:not(.plotframe),.jv-xr,.note')
-          ||(!f.figure&&!!(body.textContent||'').trim());
-      }
+      body=$('.cardbody',card);
+    } else {
+      body=embBody(ref);   /* the deck's own copy is a cardbody too */
+    }
+    if(body){
+      /* live embeds (plotly/bokeh/vega/folium) are figures too */
+      f.figure=!!body.querySelector('.figframe,.figpager,.plotframe');
+      f.output=!!body.querySelector(
+        'pre.result,pre.stream,.rich:not(.plotframe),.jv-xr,.note')
+        ||(!f.figure&&!!(body.textContent||'').trim());
     }
     return f;
   }
@@ -5494,6 +5595,18 @@
             fitFigFrame(layer,a,c);
           }
           applyCellColor(c,a);
+          if(it.emb&&editing){
+            /* the notebook isn't open: the frame shows the copy saved
+               inside the deck. Edit-time only, like the lock chip — an
+               audience never needs to know. */
+            var ez=document.createElement('span');
+            ez.className='an-embchip';
+            ez.textContent='saved copy';
+            ez.title='This frame shows the copy saved with the deck — '
+              +'its notebook is not open. Open the notebook to show the '
+              +'live card again.';
+            c.appendChild(ez);
+          }
           /* No on-frame Replace / part-picker / caption: those controls now
              live in the top ribbon's Object group (cleaner), and a placed
              figure is JUST the figure — so the selection outline hugs the
@@ -10682,7 +10795,7 @@
     return ed;
   }
   function paneImgSrc(ref){
-    var card=ref?cardEl(ref):null;
+    var card=ref?(cardEl(ref)||embBody(ref)):null;
     var img=card?$('.figframe img',card):null;
     return img?img.getAttribute('src'):null;
   }
@@ -12222,14 +12335,20 @@
   /* ---------- app mode: save to project + autosave ---------- */
   function saveToProject(silent){
     var merged=mergedPresentations();
-    return APP.api('/api/save',{presentations:merged})
+    /* a deliberate Save writes the self-contained form (figures inside)
+       into junoview_project.json; the every-second autosave stays refs-
+       only so editing does not rewrite megabytes to a synced disk each
+       keystroke. `projectPres` keeps the lean copy either way. */
+    var body=silent?merged:embedAssets(deep(merged));
+    return APP.api('/api/save',{presentations:body})
       .then(function(){
         projectPres=merged;
         lsDel(PFX+(pres.name||'untitled'));
         saveStamp=new Date();saveKind=silent?'auto':'manual';
         source='saved';status();renderPresRow();
         if(!silent)
-          toast('Saved "'+pres.name+'" to junoview_project.json');
+          toast('Saved "'+pres.name+'" to junoview_project.json'
+            +embNote());
       }).catch(function(e){
         if(!silent)
           toast('Save failed: '+(e&&e.message?e.message:e));
@@ -12326,9 +12445,63 @@
       return h;
     });
   }
+  /* ---- make the saved deck carry its own pictures ---------------------
+     Every placed card's rendered body (figures are data: URIs already) is
+     written into the presentation as `p.emb`, keyed by the ref exactly as
+     it is saved — so a deck opened with no notebook, and no internet to
+     re-fetch one, still shows every frame. Open notebooks are captured
+     fresh at save time (the deck tracks the notebook, as ever); a card
+     whose notebook is closed keeps its last saved copy instead of losing
+     it. normPres absorbs `emb` back into the session store on load. */
+  function embedAssets(list){
+    list.forEach(function(p){
+      if(p.kind==='view') return;
+      var emb={};
+      (p.slides||[]).forEach(function(s){
+        (s.annots||[]).forEach(function(a){
+          if(a.k!=='cell'||!a.ref||emb[a.ref]) return;
+          var it=resolveRef(a.ref);
+          if(it&&!it.emb){
+            var b=cloneBody(a.ref);
+            if(!b) return;
+            var e={title:it.title||'',kind:it.kind||'',html:b.outerHTML};
+            var cc=it.hasCode?cloneCode(a.ref):null;
+            if(cc) e.code=cc.outerHTML;
+            emb[a.ref]=e;
+            embStore(normRef(a.ref),e);   /* keep the session copy fresh */
+          } else {
+            var e2=embFor(a.ref);
+            if(e2){
+              var cp={title:e2.title,kind:e2.kind,html:e2.html};
+              if(e2.code) cp.code=e2.code;
+              emb[a.ref]=cp;
+            }
+          }
+        });
+      });
+      if(Object.keys(emb).length) p.emb=emb;
+    });
+    /* how much rode along, for the save messages: embedding is automatic
+       and was therefore INVISIBLE — with nothing ever saying the figures
+       travelled, "save with images" read as a feature that did not exist
+       (2026-08-21, user: "so there is no way to like 'save with
+       images'"). Every save now says what it carried. */
+    lastEmbCount=list.reduce(function(n,p){
+      return n+(p.emb?Object.keys(p.emb).length:0);},0);
+    embSaveSoon();
+    return list;
+  }
+  var lastEmbCount=0;
+  function embNote(){
+    return lastEmbCount
+      ?' — with '+lastEmbCount+' card'+(lastEmbCount===1?'':'s')
+        +' embedded, so it opens without the notebook'
+      :'';
+  }
   function deckFileText(){
     return JSON.stringify({junoview:1,
-      presentations:plainIfSingle(mergedPresentations())},null,2);
+      presentations:embedAssets(plainIfSingle(mergedPresentations()))},
+      null,2);
   }
   /* ---- the saved file is a real HTML page with the JSON inside it ----
      A bare-JSON ".junoview" was a dead end on disk: double-clicking it
@@ -12407,7 +12580,7 @@
                tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
             source='saved';status();renderTargetBtn();renderPresRow();
-            if(!silent) toast('Saved to '+(fileName||'your file'));
+            if(!silent) toast('Saved to '+(fileName||'your file')+embNote());
             return true;
           });
         });
@@ -12699,9 +12872,10 @@
       +'.junoview.html';
     a.click();
     setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
-    toast(APP.order.length===1
+    toast((APP.order.length===1
       ?'Downloaded. Keep it next to the .ipynb and it loads itself.'
-      :'Downloaded. Load it with --deck, or save to the project instead.');
+      :'Downloaded. Load it with --deck, or save to the project instead.')
+      +embNote());
   });
   menuAction('#mi-load',openDeckFile);
   window.SemDeckOpenFile=openDeckFile;   /* the rail's "+ New" row */
@@ -13521,6 +13695,23 @@
     if(!deckEl.hidden) refresh();
     else renderPresTabs();
   });
+
+  /* embedded card snapshots from earlier sessions (IndexedDB, per scope):
+     without this, a deck imported from a self-contained file kept its
+     figures only until the tab closed — the drafts it left behind are
+     refs-only by design, so the next session opened to empty frames. A
+     copy absorbed THIS session is fresher and is never overwritten. */
+  idbGet('emb:'+SCOPE).then(function(m){
+    if(!m||typeof m!=='object') return;
+    var added=0;
+    Object.keys(m).forEach(function(k){
+      var e=m[k];
+      if(EMBED[k]||!e||typeof e.html!=='string'||!e.html) return;
+      embStore(k,e);added++;
+    });
+    if(!added) return;
+    if(!deckEl.hidden) refresh(); else renderPresTabs();
+  }).catch(function(){});
 
   status();
   renderPresTabs();

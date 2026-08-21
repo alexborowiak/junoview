@@ -38,8 +38,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # under "Fixed — interface" in CHANGELOG.md, each of which has its own test
 # pinning the specific rule. If this is the ONLY test that fails, you changed
 # the page's bytes without meaning to.
-EXPECTED_MD5 = "9322ade66feca99ddd76120b95f9e911"
-EXPECTED_BYTES = 2299535
+EXPECTED_MD5 = "37da66a755ac96d35d4e5a15dca70b73"
+EXPECTED_BYTES = 2309869
 
 
 def _render_example() -> str:
@@ -89,7 +89,7 @@ def test_assets_load_from_the_installed_package():
         "page.html": assets.page_template,
         "shell.html": assets.shell_template, "deck.html": assets.deck_html,
         "help.html": assets.help_html, "mathjax.html": assets.mathjax_html,
-        "web-loader.html": assets.web_loader,
+        "web-loader.html": assets.web_loader, "sw.js": assets.sw_js,
     }
     for name, load in loaders.items():
         assert load().strip(), f"asset {name} is empty or missing"
