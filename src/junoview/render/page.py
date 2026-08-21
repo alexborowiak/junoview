@@ -76,8 +76,19 @@ def render_page(docs: list[Document], mode: str = "static",
         title = f"{docs[0].title} (+{len(docs) - 1})"
     else:
         title = "Junoview"
+    # The PWA bits belong to the WEB build only. They have to be here, in
+    # the app page, and not merely in the boot loader: that loader hands
+    # over with document.write(), which replaces the document and takes
+    # its <link rel="manifest"> with it -- leaving the running app with no
+    # manifest at all ("no-manifest" from Chrome's installability check,
+    # 2026-08-21) and therefore not installable. A static export or the
+    # local app server would only 404 on these, so they stay out of both.
+    head_extra = ('<link rel="manifest" href="manifest.webmanifest">\n'
+                  '<meta name="theme-color" content="#0a141d">'
+                  if mode == "web" else "")
     return _icons(assets.page_template().format(
         title=html.escape(title),
+        head_extra=head_extra,
         shells=shells,
         css=assets.core_css(),
         app_css=assets.app_css(),

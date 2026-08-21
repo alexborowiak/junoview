@@ -38,8 +38,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # under "Fixed — interface" in CHANGELOG.md, each of which has its own test
 # pinning the specific rule. If this is the ONLY test that fails, you changed
 # the page's bytes without meaning to.
-EXPECTED_MD5 = "37da66a755ac96d35d4e5a15dca70b73"
-EXPECTED_BYTES = 2309869
+EXPECTED_MD5 = "eee1f8f9b56a306065980a5f8ac3aca0"
+EXPECTED_BYTES = 2309870
 
 
 def _render_example() -> str:
@@ -109,7 +109,7 @@ def test_page_template_placeholders_match_what_render_page_supplies():
     supplied = {
         "title", "shells", "css", "app_css", "js", "mathjax", "deck_shell",
         "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
-        "help_html", "logo", "favicon",
+        "help_html", "logo", "favicon", "head_extra",
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

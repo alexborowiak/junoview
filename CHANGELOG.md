@@ -48,6 +48,12 @@ Three bugs on the same path, all found while verifying the offline build:
   the first visit restored and every later one silently did not.
   `window.semPy` is set before the dispatch, so it is now the flag, with
   the listener covering only the other ordering.
+- **The manifest never reached the running app.** It was declared only in
+  the boot loader, and that loader hands over with `document.write()` —
+  which replaces the document and takes the `<link rel="manifest">` with
+  it. The live app therefore declared no manifest at all. It is now
+  emitted into the app page too, for the web build only (a static export
+  or the local server ships no manifest file and would just 404).
 - **The worker could serve a stale notebook.** A notebook on our own
   origin is same-origin and was being cached like a stylesheet — re-run
   it, reopen it, and you would get yesterday's figures. Notebooks and

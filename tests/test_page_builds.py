@@ -174,3 +174,22 @@ def test_the_worker_never_serves_a_stale_notebook():
     sw = assets.sw_js()
     assert "DATA_RE" in sw and r"\.(ipynb|junoview)(\.html)?$" in sw
     assert "return fetch(req).catch(function(){" in sw
+
+
+def test_the_manifest_reaches_the_APP_page_not_just_the_loader():
+    """The running app must declare the manifest, or it is not installable.
+
+    The loader hands over with ``document.write()``, which replaces the
+    document and takes its ``<link rel="manifest">`` with it. Declaring the
+    manifest only in the loader left the live app with none -- Chrome's
+    installability check reported ``no-manifest`` and the browser had
+    nothing to install (2026-08-21).
+
+    Static exports and the local app server ship no manifest file, so they
+    must NOT reference one and 404.
+    """
+    web = render_page([], mode="web")
+    assert '<link rel="manifest" href="manifest.webmanifest">' in web
+    assert '<meta name="theme-color" content="#0a141d">' in web
+    for other in (render_page([], mode="static"), render_page([], mode="app")):
+        assert "manifest.webmanifest" not in other
