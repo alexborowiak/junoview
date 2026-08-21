@@ -11426,7 +11426,8 @@
          Lock button for why (2026-08-20) */
       if(true){
         var appMode=(APP.mode==='app');
-        var acts2=document.createElement('div');acts2.className='dc-nbacts';
+        var acts2=document.createElement('div');
+        acts2.className='dc-nbacts dc-nbacts-stack';
         var la=document.createElement('button');la.className='dbtn';
         la.disabled=!appMode;
         la.innerHTML='&#128274; Lock all figures';
@@ -11636,6 +11637,10 @@
     status();
     setUIMode(m||'view');
     routeSync();
+    /* the welcome screen can now be showing WITH the deck opening over
+       it (its presentations column, or Home with nothing else open), so
+       the chrome has to be told a deck exists (2026-08-21) */
+    if(APP.refreshChrome) APP.refreshChrome();
   }
   /* WHAT GOES OUT. A poster is one page: its other pages are drafts and
      variants, and you send one to the print shop, not the pile. Since
@@ -11671,12 +11676,45 @@
     deckEl.classList.remove('editing');
     renderPresTabs();
     routeSync();
+    /* ...and told when it stops existing: closing the last deck with no
+       notebook open has to land back on the welcome, not a blank page */
+    if(APP.refreshChrome) APP.refreshChrome();
   }
   /* ---- URL routing hooks used by the SemApp router (docs side) ---- */
   window.SemApp.deckState=function(){
     return deckEl.hidden?null:{name:pres.name,slide:cur};
   };
   window.SemApp.deckClose=function(){closeDeck();};
+  /* ---- what the welcome screen lists ---------------------------------
+     The presentations rail is not the only door any more: it collapses,
+     and once it was away the front door had no route to a deck at all
+     (2026-08-21, user: "you can't get to the presentations from here
+     either"). Same source of truth as the rail's own rows. */
+  window.SemApp.deckNames=function(){
+    var out=[],seen={},saved=allSaved(),savedNames={};
+    saved.forEach(function(p){savedNames[p.name]=1;});
+    function push(nm,p,draft){
+      if(!nm||seen[nm]) return;
+      seen[nm]=1;
+      out.push({name:nm,
+        slides:(((p||{}).slides)||[]).length,
+        poster:/^a\d/.test(String((p||{}).page||'')),
+        view:isViewPres(p||{}),
+        folder:(p||{}).folder||'',
+        draft:!!draft});
+    }
+    saved.forEach(function(p){push(p.name,p,false);});
+    draftNames().forEach(function(nm){
+      push(nm,loadDraft(nm)||{},!savedNames[nm]);});
+    return out;
+  };
+  /* opening one is the rail's own action, so a deck, a poster and a
+     custom view each land where they belong */
+  window.SemApp.deckChoose=function(nm){choosePresentation(nm);};
+  /* ...and redraw the chrome now the hooks exist. app.js runs first and
+     paints the welcome before this file has loaded, so its presentations
+     column asked a question nobody could answer yet and came up empty. */
+  if(APP.refreshChrome) APP.refreshChrome();
   window.SemApp.deckGo=function(slide){   /* move slide, keep the current mode */
     if(deckEl.hidden) return;
     go(Math.max(0,Math.min(((pres.slides||[]).length||1)-1,slide||0)));

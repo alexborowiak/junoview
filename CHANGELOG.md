@@ -2,6 +2,65 @@
 
 ## Unreleased
 
+### The front door, and the sidebar that names your notebook
+
+Nine things reported off one screenshot set, all on the surfaces you meet
+before you have read a single cell:
+
+- **The welcome screen tells you what you were doing.** Recent notebooks
+  and your presentations now sit side by side under the buttons, each
+  column hiding itself when it has nothing in it. Presentations were
+  previously reachable only from the left rail, so with that rail
+  collapsed the front door was a dead end for anyone who wanted a deck.
+- **A remembered notebook is a file name**, with its path on hover. The
+  list used to print the whole `https://raw.githubusercontent.com/...`
+  URL, ellipsised from the left, so six notebooks read as six copies of
+  the same string.
+- **Opening one says that it is opening**: a bar across the top of the
+  welcome and a shimmer under the row you clicked, driven by the same
+  busy counter as the open dialog's.
+- **The Junoview wordmark is a home button.** It shows the welcome with
+  your notebooks still loaded and nothing closed; a "Back to your
+  notebooks" chip undoes it.
+- **The sidebar names the notebook, not its first heading.** It showed
+  `doc.title`, which is the file's first `# ` line -- so a notebook
+  opening with "# Preamble" was labelled *Preamble*. The heading did not
+  lose its place; it moved one line down, under the file name.
+- **The open dialog follows the theme.** Every surface in it was a
+  `--paper` / `#fff` literal, so the file browser opened as a white sheet
+  in the middle of a dark app. Its remembered files are cards with an
+  icon now, rather than two lines of bare text that gave no sign they
+  could be clicked.
+- **The demo reel plays by default.** It defaulted to off whenever the
+  browser reported `prefers-reduced-motion` -- which any Windows box with
+  animation effects switched off does -- so the "See it work" section
+  rendered as captions beside a button and read as broken. The bandwidth
+  reason for that default is answered properly instead: each clip now
+  loads only when it is scrolled into view.
+
+### Fixed --- interface
+
+- **The rail's open-notebooks list was pushed off the rail.** `.tabstrip`
+  still carried `margin-left: calc(var(--rail-w) - 52px)` from the days it
+  ran across the top of the document; standing it up in a 175px rail left
+  that 248px offset in place, so the whole list was crushed to a 16px
+  sliver over the page and the "open notebooks" heading stood above
+  nothing. Each notebook's own sidebar also carries the list now, but only
+  while the rail is collapsed, hidden or auto-hiding -- one list at a time.
+- **A remembered notebook that was not an absolute URL could not be
+  reopened in the browser build.** The bundled example is remembered as
+  `example_climate_analysis.ipynb`, a path relative to the page, and the
+  reopen path gated on `isUrl()`: clicking it did nothing whatsoever --
+  no fetch, no error, no sign the click had landed.
+- **The presentation editor's lock buttons could not all be seen.** "Lock
+  all figures", "Unlock all" and "Load locked versions" shared one row in
+  a ~280px column: each was squeezed to three wrapped lines and the third
+  still fell off the right edge. They stack, full width.
+- **The welcome screen's demo-reel CSS was duplicated** into the dark-theme
+  block behind a dangling `body:not(.light)` selector, which glued itself
+  to the next rule and left the numbered-steps colour unscoped -- so the
+  light theme drew its steps in dark-theme grey.
+
 ### Presentations travel whole: saved decks carry their own pictures
 
 A saved deck used to be a list of *references* into notebooks — open it

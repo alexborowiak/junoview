@@ -34,10 +34,20 @@ def render_shell(doc: Document, path: str = "") -> str:
     """
     stem = doc.source_name or "notebook"
     path_attr = f' data-path="{html.escape(path)}"' if path else ""
+    # The document's own title is the notebook's first ``# `` heading, which
+    # is a section name -- useful, but not this file's name. It rides one
+    # line under the file name, and only when it says something the file
+    # name does not (see the comment in shell.html).
+    doctitle = ""
+    if doc.title and doc.title.strip().lower() not in (
+            "untitled analysis", stem.strip().lower()):
+        doctitle = (f'<div class="raildoct" title="The notebook’s '
+                    f'first heading">{html.escape(doc.title)}</div>')
     return assets.shell_template().format(
         stem=html.escape(stem),
         path_attr=path_attr,
         title=html.escape(doc.title),
+        doctitle=doctitle,
         meta=html.escape(doc_meta(doc)),
         railtabs=render_railtabs(doc),
         nav=render_nav(doc),

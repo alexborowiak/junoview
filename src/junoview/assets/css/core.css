@@ -72,10 +72,59 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
   align-items:center;gap:8px;}
 .brand::before{content:"";width:7px;height:7px;border-radius:50%;
   background:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);}
-.railtitle{font-size:18px;font-weight:600;line-height:1.25;margin:0;
-  color:#eef4f8;letter-spacing:-.01em;}
+/* a file name, in the face file names are written in. Smaller than the
+   heading it replaced because a name has no spaces to wrap at and the
+   rail is 256px wide. */
+.railtitle{font-size:16px;font-weight:600;line-height:1.3;margin:0;
+  color:#eef4f8;letter-spacing:-.01em;font-family:var(--mono);
+  overflow-wrap:anywhere;}
+/* the notebook's first heading, under the notebook's name */
+.raildoct{font-size:12.5px;line-height:1.4;color:var(--chrome-ink-2);
+  margin-top:5px;}
 .railmeta{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink-2);
   margin-top:8px;letter-spacing:.02em;}
+/* ---- open notebooks, listed in the notebook's own sidebar ----------
+   A switcher, not a second tab strip: the notebook you are reading is
+   marked and inert, the others are one click away, and ✕ closes.
+
+   ONE LIST AT A TIME, though. The presentations rail carries this same
+   list, so this copy earns its place only when that one cannot be read:
+   collapsed to icons, hidden altogether, or set to auto-hide -- which is
+   exactly the state the report came from. With the rail open in full,
+   two identical "open notebooks" headings 200px apart read as a mistake.
+   renderRailNbs() adds [hidden] on top of that when the list has nothing
+   to say: one notebook, and no way to open a second. */
+.railnbs{display:none;flex-direction:column;gap:2px;margin:0 0 15px;}
+body.presrail-min .railnbs,body.presrail-hidden .railnbs,
+body.prrail-auto .railnbs{display:flex;}
+.railnbs[hidden]{display:none!important;}
+.railnbs-h{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:0 2px 5px;}
+.rnb{display:flex;align-items:center;gap:7px;width:100%;text-align:left;
+  font-family:var(--mono);font-size:11.5px;color:var(--chrome-ink);
+  background:none;border:1px solid transparent;border-radius:6px;
+  padding:5px 7px;cursor:pointer;}
+.rnb:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 32%,transparent);}
+.rnb.on{background:color-mix(in srgb,var(--accent) 17%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  color:#fff;cursor:default;}
+.rnb-dot{width:6px;height:6px;border-radius:50%;flex:none;
+  background:var(--chrome-ink-2);}
+.rnb.on .rnb-dot{background:var(--cyan);}
+.rnb.trace .rnb-dot{background:var(--amber);}
+.rnb-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.rnb-x{flex:none;background:none;border:none;color:var(--chrome-ink-2);
+  font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;
+  cursor:pointer;}
+.rnb-x:hover{color:#fff;background:#ffffff1e;}
+.railnbs-add{font-family:var(--mono);font-size:10.5px;color:var(--cyan);
+  background:none;border:1px dashed color-mix(in srgb,var(--accent) 40%,
+  transparent);border-radius:6px;padding:5px 7px;cursor:pointer;
+  text-align:left;margin-top:3px;}
+.railnbs-add:hover{background:color-mix(in srgb,var(--accent) 12%,
+  transparent);}
 /* where this notebook came from: path + git commit + earlier versions,
    with the reload button beside it (it used to hide on the tab) */
 .railfile{display:flex;gap:4px;margin-top:11px;}

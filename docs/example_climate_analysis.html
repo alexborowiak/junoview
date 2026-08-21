@@ -85,10 +85,59 @@ body{margin:0;font-family:var(--sans);color:var(--ink);
   align-items:center;gap:8px;}
 .brand::before{content:"";width:7px;height:7px;border-radius:50%;
   background:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 16%,transparent);}
-.railtitle{font-size:18px;font-weight:600;line-height:1.25;margin:0;
-  color:#eef4f8;letter-spacing:-.01em;}
+/* a file name, in the face file names are written in. Smaller than the
+   heading it replaced because a name has no spaces to wrap at and the
+   rail is 256px wide. */
+.railtitle{font-size:16px;font-weight:600;line-height:1.3;margin:0;
+  color:#eef4f8;letter-spacing:-.01em;font-family:var(--mono);
+  overflow-wrap:anywhere;}
+/* the notebook's first heading, under the notebook's name */
+.raildoct{font-size:12.5px;line-height:1.4;color:var(--chrome-ink-2);
+  margin-top:5px;}
 .railmeta{font-family:var(--mono);font-size:10.5px;color:var(--chrome-ink-2);
   margin-top:8px;letter-spacing:.02em;}
+/* ---- open notebooks, listed in the notebook's own sidebar ----------
+   A switcher, not a second tab strip: the notebook you are reading is
+   marked and inert, the others are one click away, and ✕ closes.
+
+   ONE LIST AT A TIME, though. The presentations rail carries this same
+   list, so this copy earns its place only when that one cannot be read:
+   collapsed to icons, hidden altogether, or set to auto-hide -- which is
+   exactly the state the report came from. With the rail open in full,
+   two identical "open notebooks" headings 200px apart read as a mistake.
+   renderRailNbs() adds [hidden] on top of that when the list has nothing
+   to say: one notebook, and no way to open a second. */
+.railnbs{display:none;flex-direction:column;gap:2px;margin:0 0 15px;}
+body.presrail-min .railnbs,body.presrail-hidden .railnbs,
+body.prrail-auto .railnbs{display:flex;}
+.railnbs[hidden]{display:none!important;}
+.railnbs-h{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-2);padding:0 2px 5px;}
+.rnb{display:flex;align-items:center;gap:7px;width:100%;text-align:left;
+  font-family:var(--mono);font-size:11.5px;color:var(--chrome-ink);
+  background:none;border:1px solid transparent;border-radius:6px;
+  padding:5px 7px;cursor:pointer;}
+.rnb:hover{background:color-mix(in srgb,var(--accent) 13%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 32%,transparent);}
+.rnb.on{background:color-mix(in srgb,var(--accent) 17%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 45%,transparent);
+  color:#fff;cursor:default;}
+.rnb-dot{width:6px;height:6px;border-radius:50%;flex:none;
+  background:var(--chrome-ink-2);}
+.rnb.on .rnb-dot{background:var(--cyan);}
+.rnb.trace .rnb-dot{background:var(--amber);}
+.rnb-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.rnb-x{flex:none;background:none;border:none;color:var(--chrome-ink-2);
+  font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;
+  cursor:pointer;}
+.rnb-x:hover{color:#fff;background:#ffffff1e;}
+.railnbs-add{font-family:var(--mono);font-size:10.5px;color:var(--cyan);
+  background:none;border:1px dashed color-mix(in srgb,var(--accent) 40%,
+  transparent);border-radius:6px;padding:5px 7px;cursor:pointer;
+  text-align:left;margin-top:3px;}
+.railnbs-add:hover{background:color-mix(in srgb,var(--accent) 12%,
+  transparent);}
 /* where this notebook came from: path + git commit + earlier versions,
    with the reload button beside it (it used to hide on the tab) */
 .railfile{display:flex;gap:4px;margin-top:11px;}
@@ -1524,9 +1573,17 @@ body.light .tab-ver{color:var(--cyan-deep);}
    a row of chrome whose width ran out at about five notebooks. The nodes
    MOVED rather than being rebuilt, so `.tab` still styles them; these
    rules just stand the strip up (2026-08-20). */
+/* ...INCLUDING undoing the horizontal strip's offset. `.tabstrip` still
+   carries `margin-left:calc(var(--rail-w) - 52px)` from the days it ran
+   across the top of the document, lined up with the document's own left
+   edge. Standing it up in a 175px rail left that 248px offset in place:
+   the whole list was pushed clean off the rail and crushed to a 16px
+   sliver over the page, so the "open notebooks" heading stood above
+   nothing at all (2026-08-21, user: "the sidebar doesn't show notebooks
+   that are open"). */
 .presrail .tabstrip{display:flex;flex-direction:column;gap:2px;
   overflow-y:auto;overflow-x:hidden;flex:0 1 auto;min-height:0;
-  max-height:38vh;margin-bottom:4px;}
+  max-height:38vh;margin-left:0;margin-bottom:4px;padding:0;}
 .presrail .tabstrip:empty{display:none;}
 .presrail .tabstrip:empty + .pr-label{margin-top:0;}
 .presrail .tab{width:100%;box-sizing:border-box;border-radius:7px;
@@ -1548,7 +1605,11 @@ body.light .tab-ver{color:var(--cyan-deep);}
 /* the Junoview wordmark now lives at the top of the left rail */
 .presrail-brand{font-family:var(--mono);font-size:13px;letter-spacing:.16em;
   text-transform:uppercase;color:var(--cyan);font-weight:600;gap:9px;
-  padding:9px 10px 13px;display:flex;align-items:center;flex:none;}
+  padding:9px 10px 13px;display:flex;align-items:center;flex:none;
+  background:none;border:none;width:100%;cursor:pointer;text-align:left;
+  border-radius:8px;}
+.presrail-brand:hover{background:color-mix(in srgb,var(--accent) 12%,
+  transparent);}
 .presrail-brand .jv-logo{width:24px;height:auto;}
 body.presrail-min .presrail-brand .jv-logo{width:26px;}
 .prb-min{display:none;}
@@ -1714,8 +1775,30 @@ body.creating-docs .apptop{
    than leaving its reserved band as an empty strip above the hero */
 body.welcoming .welcome{top:0;}
 body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
-.welcome-box{text-align:center;max-width:680px;margin:0 auto;
+.welcome-box{text-align:center;max-width:760px;margin:0 auto;
   padding:0 30px 60px;}
+/* an indeterminate bar across the very top of the welcome: the one place
+   every way in can report from (recent rows, the big buttons, a dropped
+   file), because until it existed a click on a remembered notebook
+   changed nothing on screen for as long as the fetch took */
+.welcome-load{position:sticky;top:0;height:3px;overflow:hidden;
+  background:color-mix(in srgb,var(--accent) 16%,transparent);z-index:2;}
+.welcome-load[hidden]{display:none;}
+.welcome-load span{position:absolute;left:-38%;top:0;width:38%;height:100%;
+  background:var(--cyan);animation:odlg-slide 1.05s ease-in-out infinite;}
+/* the way out of Home when notebooks are still open. TOP RIGHT, not
+   left: the welcome spans the full window and the presentations rail is
+   drawn over its left edge, so a left-anchored control sits underneath
+   the rail and is half-hidden. */
+.welcome-back{position:absolute;top:14px;right:18px;z-index:3;
+  font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+  border:1px solid color-mix(in srgb,var(--accent) 45%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);
+  color:var(--cyan-deep);padding:7px 12px;border-radius:7px;
+  cursor:pointer;}
+.welcome-back:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 18%,transparent);}
+.welcome-back[hidden]{display:none;}
 /* the hero fills the first screen; the numbered steps sit below it, seen on
    scroll (with a small "How it works" cue) */
 .welcome-top{min-height:calc(100vh - var(--chrome-h) - 30px);display:flex;
@@ -1809,15 +1892,45 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
   display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
 .welcome-drop{font-size:14.5px;color:var(--ink-3);margin:18px 0 0;}
 .welcome-drop b{color:var(--ink-2);}
-.recent{margin-top:30px;display:flex;flex-direction:column;gap:6px;
-  text-align:left;max-width:560px;margin-left:auto;margin-right:auto;}
+/* ---- "jump back in": the two things you might be coming back to ----
+   Recent notebooks and the presentations built from them, side by side.
+   Both columns hide themselves when empty, and the band with them --
+   an empty list still holding 30px of margin was most of the dead space
+   under the buttons (2026-08-21, user: "the default screen could have
+   better layout"). */
+.welcome-jump{display:grid;grid-template-columns:repeat(auto-fit,
+  minmax(240px,1fr));gap:14px 26px;margin:34px auto 0;text-align:left;
+  width:100%;max-width:660px;}
+.welcome-jump[hidden]{display:none;}
+.recent,.wpres{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.recent[hidden],.wpres[hidden]{display:none;}
 .recent-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--ink-3);margin-bottom:2px;}
-.recent-i{font-family:var(--mono);font-size:12.5px;color:var(--cyan-deep);
+/* A ROW IS A BUTTON. Icon, name, nothing else: the path lives in the
+   tooltip, because a column of ellipsised URLs is a column of the same
+   string six times over. */
+.recent-i{display:flex;align-items:center;gap:9px;position:relative;
+  font-family:var(--mono);font-size:12.5px;color:var(--cyan-deep);
   background:#fff;border:1px solid var(--line);padding:9px 12px;
-  border-radius:6px;cursor:pointer;text-align:left;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;direction:rtl;}
-.recent-i:hover{border-color:var(--cyan);}
+  border-radius:6px;cursor:pointer;text-align:left;min-width:0;
+  transition:border-color .13s,background .13s;}
+.recent-i:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 7%,#fff);}
+.recent-ic{flex:none;font-size:12px;line-height:1;opacity:.85;}
+.recent-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.recent-tag{flex:none;font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--amber);
+  border:1px solid var(--amber-soft);border-radius:4px;padding:1px 5px;}
+/* the row you just clicked, while its notebook loads */
+.recent-i.busy{cursor:progress;border-color:var(--cyan);}
+.recent-i.busy::after{content:"";position:absolute;left:0;right:0;
+  bottom:-1px;height:2px;border-radius:0 0 6px 6px;overflow:hidden;
+  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+  background-size:44% 100%;background-repeat:no-repeat;
+  animation:recent-slide 1.05s ease-in-out infinite;}
+@keyframes recent-slide{from{background-position:-44% 0;}
+  to{background-position:144% 0;}}
 .welcome-btns{display:flex;gap:12px;justify-content:center;
   flex-wrap:wrap;margin-top:4px;}
 .welcome-btns .dbtn{font-size:16px;font-weight:600;padding:14px 26px;
@@ -1934,16 +2047,25 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,va
 .odlg-recent[hidden]{display:none;}
 .odlg-recent-h{font-family:var(--mono);font-size:9px;letter-spacing:.18em;
   text-transform:uppercase;color:var(--ink-3);padding:2px 6px 6px;}
-.odlg-r{display:flex;flex-direction:column;gap:1px;width:100%;
-  background:none;border:none;padding:6px 10px;border-radius:6px;
-  cursor:pointer;text-align:left;}
-.odlg-r:hover{background:var(--paper-2);}
+/* A REMEMBERED FILE IS A BUTTON, and has to look like one. These rows
+   were two lines of bare text on the dialog's own background — nothing
+   said they could be clicked (2026-08-21, user: "the recents look just
+   like text, not a button or something"). Now: a card, an icon, and the
+   name over its path. */
+.odlg-r{display:grid;grid-template-columns:auto 1fr;
+  grid-template-rows:auto auto;column-gap:9px;row-gap:1px;width:100%;
+  background:var(--paper);border:1px solid var(--line);
+  padding:7px 10px;border-radius:7px;cursor:pointer;text-align:left;
+  margin-bottom:5px;transition:border-color .13s,background .13s;}
+.odlg-r:hover{background:var(--paper-2);border-color:var(--cyan);}
+.odlg-r-ic{grid-row:1/3;align-self:center;font-size:13px;line-height:1;
+  opacity:.85;}
 .odlg-r-nm{font-size:12.5px;color:var(--cyan-deep);font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  max-width:100%;}
+  max-width:100%;min-width:0;}
 .odlg-r-p{font-family:var(--mono);font-size:10px;color:var(--ink-3);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  max-width:100%;direction:rtl;text-align:left;}
+  max-width:100%;min-width:0;direction:rtl;text-align:left;}
 .odlg-foot{border-top:1px solid var(--line);padding:10px 12px;}
 #odlg-input{width:100%;box-sizing:border-box;font-family:var(--mono);
   font-size:11.5px;border:1px solid var(--line);border-radius:6px;
@@ -1962,6 +2084,43 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,va
   background:var(--cyan);border-radius:2px;
   animation:odlg-slide 1.1s ease-in-out infinite;}
 @keyframes odlg-slide{to{left:100%;}}
+/* ---- ...AND IT FOLLOWS THE THEME ----------------------------------
+   Every surface above is a --paper / #fff literal, which is right for
+   the document but wrong for chrome: the file browser opened as a white
+   sheet in the middle of a dark app (2026-08-21, user: "the open thing
+   does not go by themes, and also is weird to look at"). Dialogs are
+   chrome, so they take the chrome tokens the same way every menu and
+   popup in the app already does, and body.light puts the paper back. */
+body:not(.light) .odlg-box{background:var(--chrome-2,#16273a);
+  color:var(--chrome-ink);
+  border:1px solid var(--chrome-line);}
+body:not(.light) .odlg-head{border-bottom-color:var(--chrome-line);}
+body:not(.light) .odlg-head .dbtn{background:var(--btn-bg,#ffffff12);
+  border-color:var(--btn-border,#ffffff40);color:var(--chrome-ink);}
+body:not(.light) .odlg-head .dbtn:hover{border-color:var(--cyan);
+  color:#fff;}
+body:not(.light) .odlg-path{color:var(--chrome-ink-2);}
+body:not(.light) .odlg-i{color:var(--chrome-ink);}
+body:not(.light) .odlg-i:hover{color:#fff;
+  background:color-mix(in srgb,var(--accent) 15%,transparent);}
+body:not(.light) .odlg-i .sz{color:var(--chrome-ink-2);}
+body:not(.light) .odlg-empty{color:var(--chrome-ink-2);}
+body:not(.light) .odlg-recent{border-bottom-color:var(--chrome-line);}
+body:not(.light) .odlg-recent-h{color:var(--chrome-ink-2);}
+body:not(.light) .odlg-r{background:var(--chrome-3,#101c28);
+  border-color:var(--chrome-line);}
+body:not(.light) .odlg-r:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 14%,var(--chrome-3,#101c28));}
+body:not(.light) .odlg-r-nm{color:#7fd8ea;}
+body:not(.light) .odlg-r-p{color:var(--chrome-ink-2);}
+body:not(.light) .odlg-foot{border-top-color:var(--chrome-line);}
+body:not(.light) #odlg-input{background:var(--chrome-3,#101c28);
+  border-color:var(--btn-border,#ffffff40);color:var(--chrome-ink);}
+body:not(.light) #odlg-input::placeholder{color:var(--chrome-ink-2);}
+body:not(.light) #odlg-go{background:var(--btn-bg,#ffffff12);
+  color:#7fd8ea;border-color:var(--cyan-deep);}
+body:not(.light) #odlg-go:hover:not(:disabled){background:var(--cyan);
+  color:#fff;}
 
 /* ---------- section sidebar (TOC): hidden until ☰ toggles it ------- */
 @media(min-width:861px){
@@ -2317,7 +2476,14 @@ body.light .rail{background:#f2f5f8;color:var(--ink-2);
   border-right-color:var(--line);}
 body.light .railhead{border-bottom-color:var(--line);}
 body.light .railtitle{color:var(--ink);}
+body.light .raildoct{color:var(--ink-3);}
 body.light .railmeta{color:var(--ink-3);}
+body.light .railnbs-h{color:var(--ink-3);}
+body.light .rnb{color:var(--ink-2);}
+body.light .rnb.on{color:var(--ink);}
+body.light .rnb-dot{background:var(--ink-3);}
+body.light .rnb-x{color:var(--ink-3);}
+body.light .rnb-x:hover{color:var(--ink);background:#00000010;}
 body.light .brand{color:var(--cyan-deep);}
 body.light .navsec{color:var(--ink-2);}
 body.light .navsec:hover{background:#00000008;}
@@ -2418,56 +2584,21 @@ body:not(.light) .welcome-lead b{color:#d3dee7;}
 body:not(.light) .welcome-note{background:color-mix(in srgb,var(--accent) 9%,transparent);border-color:color-mix(in srgb,var(--accent) 20%,transparent);
   border-left-color:var(--cyan);color:#c2d0da;}
 body:not(.light) .welcome-note b{color:#8fe0f0;}
-body:not(.light) /* the welcome-screen demo reel */
-/* the demos are the point of this section, so they get the width: the
-   welcome box is narrow, the reel breaks out of it */
-.wtour{margin-top:30px;display:grid;gap:40px;text-align:left;
-  width:100%;max-width:880px;margin-left:auto;margin-right:auto;}
-.wtour[hidden]{display:none!important;}
-.wtour-head{display:flex;align-items:center;gap:12px;}
-.wtour-t{font-family:var(--mono);font-size:10px;letter-spacing:.2em;
-  text-transform:uppercase;color:var(--cyan-deep);}
-/* the caption goes ABOVE its demo: read what you are about to watch,
-   then watch it. Below, a caption is ambiguous — it could belong to the
-   clip above or the one coming next. */
-.wtour figure{margin:0;display:flex;flex-direction:column;}
-.wtour figcaption{order:-1;}
-.wtour img{width:100%;height:auto;display:block;border-radius:10px;
-  border:1px solid var(--line);background:var(--paper-2);}
-.wtour.lite img{display:none;}
-.wtour.lite figure{border-left:2px solid var(--line);padding-left:13px;}
-/* the text-only card: it has no image to carry it, so it gets the rule */
-.wtour-said{border-left:2px solid var(--cyan-deep);padding-left:15px;}
-/* one real quote, from a real person, with what they actually said */
-.wquote{margin:44px auto 0;max-width:560px;text-align:center;
-  padding:24px 22px;border:1px solid var(--line);border-radius:12px;
-  background:var(--paper-2);}
-.wq-stars{color:#e0a33a;font-size:15px;letter-spacing:3px;}
-.wquote blockquote{margin:11px 0 14px;font-family:var(--serif);
-  font-size:18px;line-height:1.5;color:var(--ink);}
-.wquote figcaption{font-family:var(--mono);font-size:11px;
-  color:var(--ink-3);display:flex;flex-direction:column;gap:3px;}
-.wquote figcaption span{font-size:10px;opacity:.8;}
-.wtour-said figcaption{padding-top:0;}
-.wtour figcaption{font-size:15.5px;line-height:1.7;color:var(--ink-2);
-  padding:0 2px 13px;}
-/* dark mode sets text colour explicitly, so the reel needs its own pair
-   or the captions fall back to a washed-out grey that is hard to read */
-/* white, explicitly, not through a variable: every var-based colour here
-   landed too close to the welcome panel's own background to read */
-body:not(.light) .wtour figcaption{color:#dbe6ef;}
-body:not(.light) .wtour figcaption b{color:#fff;}
-body.light .wtour figcaption{color:#33414f;}
-body.light .wtour figcaption b{color:#0f1b28;}
-body:not(.light) .wquote blockquote{color:#eef4f8;}
-.wtour figcaption b{display:block;color:var(--ink);font-weight:700;
-  font-size:19px;line-height:1.35;margin-bottom:7px;}
-.welcome-steps li{color:#b3c2ce;}
+/* the numbered steps, in the dark default. This whole demo-reel
+   block was duplicated here behind a dangling `body:not(.light)`
+   selector, which glued itself to the next rule and left THIS one
+   unscoped -- so the light theme drew its steps in dark-theme grey.
+   The reel's own rules live once, above. */
+body:not(.light) .welcome-steps li{color:#b3c2ce;}
 body:not(.light) .ws-n{background:color-mix(in srgb,var(--accent) 15%,transparent);color:#8fe0f0;}
 body:not(.light) .welcome-drop{color:#7e93a4;}
 body:not(.light) .welcome-drop b{color:#c9d6e2;}
 body:not(.light) .recent-i{background:var(--chrome-3,#101c28);
   border-color:#ffffff22;color:#5fc3d8;}
+body:not(.light) .recent-i:hover{background:color-mix(in srgb,
+  var(--accent) 15%,var(--chrome-3,#101c28));border-color:var(--cyan);}
+body:not(.light) .recent-h{color:#8ba0b2;}
+body:not(.light) .welcome-back{color:#8fe0f0;}
 body:not(.light) .welcome-btns .dbtn{background:var(--chrome-3,#101c28);
   border-color:#ffffff22;color:#c9d6e2;}
 body:not(.light) .welcome-btns .dbtn:hover{border-color:var(--cyan);
@@ -3612,10 +3743,19 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   text-overflow:ellipsis;white-space:nowrap;}
 .dc-nbrow.gone .dc-nbrow-nm{color:#98a7b5;}
 .dc-nbrow-st{font-family:var(--mono);font-size:9.5px;color:#7e93a4;flex:none;}
-.dc-nbacts{display:flex;gap:6px;padding:8px 6px 3px;margin-top:4px;
-  border-top:1px solid #ffffff14;}
-.dc-nbacts .dbtn{flex:1;text-align:center;justify-content:center;
-  font-size:11.5px;}
+.dc-nbacts{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 3px;
+  margin-top:4px;border-top:1px solid #ffffff14;}
+.dc-nbacts .dbtn{flex:1 1 92px;min-width:0;text-align:center;
+  justify-content:center;font-size:11.5px;}
+/* THE LOCK ROW STACKS. Its three labels are phrases, not words ("Lock all
+   figures", "Load locked versions"), and side by side in a ~280px column
+   each was squeezed to three wrapped lines while the third still fell off
+   the right edge, unreadable and half unclickable (2026-08-21, user: "the
+   lock things can't all be seen"). One per row, full width, left-aligned
+   so the icon column lines up. */
+.dc-nbacts-stack{flex-direction:column;}
+.dc-nbacts-stack .dbtn{flex:none;width:100%;text-align:left;
+  justify-content:flex-start;white-space:normal;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
   border-radius:6px;box-sizing:border-box;}
@@ -5612,7 +5752,13 @@ window.MathJax = {
      position:sticky, so a panel inside it would paint behind the page -->
 <div class="stylepanel" id="stylepanel" hidden></div>
 <nav class="presrail" id="presrail" aria-label="Presentations">
-  <div class="presrail-brand"><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg><span class="prb-full">Junoview</span></div>
+  <!-- the wordmark is the HOME button, the thing everyone tries first
+       (2026-08-21, user: "clicking the Junoview logo should take you
+       back to that screen"). It shows the welcome without closing
+       anything; #welcome-back undoes it. -->
+  <button class="presrail-brand" id="presrail-home" type="button"
+    title="Home — the Junoview welcome screen. Nothing is closed."
+    ><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg><span class="prb-full">Junoview</span></button>
   <button class="pr-item pr-docs current" id="pr-docs"
     title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg></span>
@@ -5723,7 +5869,21 @@ window.MathJax = {
 <div class="shell nbshell" data-nb="example_climate_analysis">
   <aside class="rail">
     <div class="railhead">
-      <h1 class="railtitle">Southern Hemisphere blocking &amp; ENSO diagnostics</h1>
+      <!-- WHICH NOTEBOOKS ARE OPEN, at the top of the sidebar you are
+           already reading. The presentations rail lists them too, but it
+           collapses and auto-hides, and with it away nothing on screen
+           said a second notebook existed (2026-08-21, user: "the sidebar
+           doesn't show notebooks that are open"). Filled by renderTabs();
+           it stays hidden when there is only one and nothing to open. -->
+      <div class="railnbs" hidden></div>
+      <!-- THE NOTEBOOK'S NAME, not its first heading. This line used to
+           be doc.title, which is whatever the file's first `# ` says --
+           so a notebook opening with "# Preamble" was labelled Preamble,
+           a section name standing in for a file name (2026-08-21, user:
+           "Preamble is not the name of the notebook, that is a section").
+           The heading did not lose its place; it moved one line down. -->
+      <h1 class="railtitle" title="example_climate_analysis">example_climate_analysis</h1>
+      <div class="raildoct" title="The notebook’s first heading">Southern Hemisphere blocking &amp; ENSO diagnostics</div>
       <div class="railmeta">7 figures · 1 datasets · 10 sections</div>
       <div class="railfile">
         <button class="rf-btn rf-info" type="button"
@@ -8667,6 +8827,18 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
 
 </div>
 <div class="welcome" id="welcome" hidden>
+  <!-- one bar for every way in. Opening a notebook is a fetch and a parse
+       that can take seconds on a slow link, and clicking a remembered file
+       used to give no sign at all that anything had happened (2026-08-21,
+       user: "clicking on a recent loads, but you can't tell it's
+       loading"). Driven by the same busy counter as the dialog's. -->
+  <div class="welcome-load" id="welcome-load" hidden><span></span></div>
+  <!-- the way BACK. The logo is a home button now, so the welcome can be
+       reached with notebooks still open; without this you would be
+       looking at a screen with no exit (2026-08-21). -->
+  <button class="welcome-back" id="welcome-back" hidden type="button"
+    title="Back to the notebook you were reading. Nothing was closed.">
+    &#8592; Back to your notebooks</button>
   <div class="welcome-box">
     <div class="welcome-top">
       <div class="welcome-hero"><svg class="jv-logo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview"><g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" opacity="0.8"><line x1="169.55" y1="118.64" x2="186.93" y2="123.29"/><line x1="150.91" y1="150.91" x2="163.64" y2="163.64"/><line x1="118.64" y1="169.55" x2="123.29" y2="186.93"/><line x1="81.36" y1="169.55" x2="76.71" y2="186.93"/><line x1="49.09" y1="150.91" x2="36.36" y2="163.64"/><line x1="30.45" y1="118.64" x2="13.07" y2="123.29"/><line x1="30.45" y1="81.36" x2="13.07" y2="76.71"/><line x1="49.09" y1="49.09" x2="36.36" y2="36.36"/><line x1="81.36" y1="30.45" x2="76.71" y2="13.07"/><line x1="118.64" y1="30.45" x2="123.29" y2="13.07"/><line x1="150.91" y1="49.09" x2="163.64" y2="36.36"/><line x1="169.55" y1="81.36" x2="186.93" y2="76.71"/></g><circle cx="100" cy="100" r="66" fill="#0F6E56"/><circle cx="100" cy="100" r="66" fill="none" stroke="#EF9F27" stroke-width="3.5"/><circle cx="100" cy="100" r="42" fill="#185FA5"/><circle cx="100" cy="100" r="18" fill="#04342C"/><circle cx="100" cy="12" r="7.5" fill="#EF9F27"/><circle cx="176.21" cy="144" r="7.5" fill="#EF9F27"/><circle cx="23.79" cy="144" r="7.5" fill="#EF9F27"/></svg></div>
@@ -8694,7 +8866,16 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
         <span class="wl-sep" id="welcome-install-sep" hidden>&middot;</span>
         <a href="#" id="welcome-install" hidden>Install as an app</a>
       </div>
-      <div class="recent" id="welcome-recent"></div>
+      <!-- WHAT YOU WERE DOING, in the two shapes it comes in: the files
+           you had open, and the presentations built out of them. The
+           presentations column is here because the rail that lists them
+           collapses, and once it is away this screen was a dead end for
+           anyone who wanted a deck rather than a notebook (2026-08-21,
+           user: "you can't get to the presentations from here either"). -->
+      <div class="welcome-jump" id="welcome-jump" hidden>
+        <div class="recent" id="welcome-recent" hidden></div>
+        <div class="wpres" id="welcome-pres" hidden></div>
+      </div>
       <div class="welcome-scrollcue" aria-hidden="true">How it works
         &#8595;</div>
     </div>
@@ -10569,20 +10750,48 @@ through Ko-fi. Thank you.</p>
 
   /* ================= tab strip ================= */
   var tabstrip=$('#tabstrip'), openBtn=$('#tab-open');
+  /* HOME IS A PLACE, not just the state of having nothing open. The
+     wordmark is a home button now (2026-08-21, user: "clicking the
+     Junoview logo should take you back to that screen"), so the welcome
+     has to be reachable with notebooks still loaded — and once it can be,
+     it needs a way out, which is #welcome-back. Nothing is closed either
+     way: this only decides what is on top. */
+  var atHome=false;
+  function goHome(on){
+    atHome=!!on&&(APP.mode==='app'||APP.mode==='web');
+    /* a presentation is drawn over everything, so Home means leaving it */
+    if(atHome&&APP.deckState&&APP.deckState()&&APP.deckClose) APP.deckClose();
+    refreshChrome();
+    if(atHome) window.scrollTo(0,0);
+  }
+  APP.goHome=goHome;
   function refreshChrome(){
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
     var wel=$('#welcome');
-    var welcoming=canOpen&&!APP.order.length;
+    /* an open presentation owns the window even with no notebook behind
+       it — a self-contained deck is a document in its own right */
+    var deckOn=!!(APP.deckState&&APP.deckState());
+    var welcoming=canOpen&&!deckOn&&(!APP.order.length||atHome);
     if(wel) wel.hidden=!welcoming;
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
        welcome screen itself. Hiding it lets the welcome own the window. */
     document.body.classList.toggle('welcoming',welcoming);
+    var back=$('#welcome-back');
+    if(back) back.hidden=!(welcoming&&APP.order.length);
     var demo=$('#welcome-demo');
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
+    renderWelcomePres();
   }
+  APP.refreshChrome=refreshChrome;
+  (function(){
+    var home=$('#presrail-home');
+    if(home) home.addEventListener('click',function(){goHome(true);});
+    var back=$('#welcome-back');
+    if(back) back.addEventListener('click',function(){goHome(false);});
+  })();
   /* ---- the tab's ⌚ Versions menu: automatic snapshots per open/reload */
   var versMenu=null;
   function closeVersMenu(){if(versMenu){versMenu.remove();versMenu=null;}}
@@ -10755,10 +10964,69 @@ through Ko-fi. Thank you.</p>
        not there (2026-08-20) */
     var nbl=$('#pr-nblabel');
     if(nbl) nbl.hidden=!tabstrip.childNodes.length;
+    renderRailNbs();
     refreshChrome();
+  }
+  /* ---- the same list, inside each notebook's own sidebar -------------
+     The presentations rail already lists open notebooks, but it
+     collapses and auto-hides, and with it away nothing on screen said a
+     second notebook was open (2026-08-21, user: "the sidebar doesn't
+     show notebooks that are open"). Every shell carries its own copy
+     because the rail is part of the shell; only the active one is
+     visible, so the cost is a handful of rows. */
+  function renderRailNbs(){
+    var list=tabList();
+    /* nothing to switch to and nothing to open: a list of one, with no
+       way to make it two, is a heading over a fact you already know */
+    var useful=list.length>1||APP.mode==='app'||APP.mode==='web';
+    $$('.railnbs').forEach(function(host){
+      host.innerHTML='';
+      host.hidden=!useful;
+      if(!useful) return;
+      var h=document.createElement('div');h.className='railnbs-h';
+      h.textContent='open notebooks';host.appendChild(h);
+      list.forEach(function(stem){
+        var sh=APP.shells[stem]; if(!sh) return;
+        var on=(stem===APP.active);
+        var b=document.createElement('button');
+        b.type='button';
+        b.className='rnb'+(on?' on':'')+(sh.trace?' trace':'');
+        b.title=sh.trace
+          ?('Plot trace — a sub-tab of '+(sh.source||''))
+          :(sh.path||stem);
+        var d=document.createElement('span');d.className='rnb-dot';
+        b.appendChild(d);
+        var nm=document.createElement('span');nm.className='rnb-nm';
+        nm.textContent=sh.trace?('↳ '+(sh.title||'Plot trace'))
+          :(sh.label||stem);
+        b.appendChild(nm);
+        if(!on) b.addEventListener('click',function(){activate(stem);});
+        if(sh.trace||APP.mode==='app'||APP.mode==='web'){
+          var x=document.createElement('span');x.className='rnb-x';
+          x.setAttribute('role','button');
+          x.innerHTML='&#10005;';
+          x.title=sh.trace?'Close this trace':'Close this notebook';
+          x.addEventListener('click',function(e){
+            e.stopPropagation();closeNotebook(stem);});
+          b.appendChild(x);
+        }
+        host.appendChild(b);
+      });
+      if(APP.mode==='app'||APP.mode==='web'){
+        var add=document.createElement('button');
+        add.type='button';add.className='railnbs-add';
+        add.textContent='+ Open another notebook…';
+        add.addEventListener('click',function(){
+          var ob=$('#tab-open'); if(ob) ob.click();});
+        host.appendChild(add);
+      }
+    });
   }
   function activate(stem){
     if(!APP.shells[stem]) return;
+    /* looking at a notebook is not being at Home; opening one from the
+       welcome has to take you off it */
+    atHome=false;
     APP.active=stem;
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
     renderTabs();
@@ -14514,6 +14782,14 @@ through Ko-fi. Thank you.</p>
         if(nmEl&&base) nmEl.textContent=base;
         if(pEl){pEl.textContent=p;pEl.dir='ltr';
           pEl.title=p;}
+        /* the sidebar already names the notebook by its stem; give
+           that name the full path as its tooltip, the way the tab
+           and the docbar do. The stem, not the file name: a rail
+           is 256px wide and "example_climate_analysis.ipynb" in
+           mono wraps mid-word there, which reads worse than the
+           extension reads useful. */
+        var rt=$('.railtitle',shell);
+        if(rt) rt.title=p;
       } else if(pEl){pEl.textContent='';}
       db.hidden=false;
     }
@@ -15564,6 +15840,13 @@ through Ko-fi. Thank you.</p>
     if(go){go.disabled=on;go.textContent=on?'Opening…':'Open';}
     if(inp) inp.disabled=on;
     if(ld) ld.hidden=!on;
+    /* the same signal on the WELCOME screen, which has its own ways in
+       (the recent list, the big buttons) and used to show nothing at all
+       while a notebook loaded (2026-08-21, user) */
+    var wl=$('#welcome-load');
+    if(wl) wl.hidden=!on;
+    if(!on) $$('.recent-i.busy').forEach(function(b){
+      b.classList.remove('busy');});
   }
   /* a saved presentation, by name — the .junoview.html polyglot save or a
      bare-JSON .junoview */
@@ -15606,7 +15889,9 @@ through Ko-fi. Thank you.</p>
        folder listing, a pasted path, a GitHub link (2026-08-20, user: on
        disk they carry the browser's icon and there was no way in) */
     if(isDeckPath(path)){
-      if(isUrl(path)){fetchDeckUrl(path);return;}
+      /* in the browser build a deck beside the page is as openable as
+         one on a host -- its URL is simply relative */
+      if(isUrl(path)||APP.mode==='web'){fetchDeckUrl(path);return;}
       if(APP.mode!=='app') return;
       if(OPENBUSY[path]) return;
       OPENBUSY[path]=1;setDlgBusy(true);
@@ -15619,7 +15904,14 @@ through Ko-fi. Thank you.</p>
       return;
     }
     if(APP.mode==='web'){
-      if(isUrl(path)) webOpenUrl(path,false);
+      /* NOT only absolute URLs. The bundled example is remembered as
+         "example_climate_analysis.ipynb" -- a path relative to the page
+         -- so gating on isUrl() meant clicking it in the recent list did
+         nothing whatsoever: no fetch, no error, no sign that the click
+         had landed (2026-08-21). fetch() resolves a relative path
+         against the page, and anything that genuinely cannot be fetched
+         reports itself through webOpenUrl's own catch. */
+      webOpenUrl(path,false);
       return;
     }
     if(OPENBUSY[path]) return;
@@ -15824,7 +16116,12 @@ through Ko-fi. Thank you.</p>
     rec.slice(0,12).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='odlg-r';
+      b.type='button';
       b.title='Reopen '+sp.path;
+      /* an icon makes the row read as a thing you act on rather than a
+         caption above a path (2026-08-21) */
+      var ic=document.createElement('span');ic.className='odlg-r-ic';
+      ic.innerHTML=isUrl(p)?'&#128279;':'&#128196;';b.appendChild(ic);
       var nm=document.createElement('span');nm.className='odlg-r-nm';
       nm.textContent=sp.name;b.appendChild(nm);
       var pt=document.createElement('span');pt.className='odlg-r-p';
@@ -15911,17 +16208,88 @@ through Ko-fi. Thank you.</p>
       dlgList.appendChild(d);
     });
   }
+  /* the two "jump back in" columns share a wrapper, which is only worth
+     any vertical space when at least one of them has something in it */
+  function syncJump(){
+    var w=$('#welcome-jump'); if(!w) return;
+    var r=$('#welcome-recent'), pz=$('#welcome-pres');
+    w.hidden=!((r&&!r.hidden)||(pz&&!pz.hidden));
+  }
   function renderRecent(){
     var host=$('#welcome-recent'); if(!host) return;
     host.innerHTML='';
     var rec=(APP.project&&APP.project.recent)||[];
+    host.hidden=!rec.length;
+    syncJump();
     if(!rec.length) return;
     var h=document.createElement('div');h.className='recent-h';
-    h.textContent='recent';host.appendChild(h);
+    h.textContent='recent notebooks';host.appendChild(h);
     rec.slice(0,6).forEach(function(p){
+      var sp=splitPath(p);
       var b=document.createElement('button');b.className='recent-i';
-      b.textContent=p;b.title=p;
-      b.addEventListener('click',function(){openPath(p);});
+      b.type='button';
+      /* THE NAME, and the path on hover. These rows were the whole path
+         — an https://raw.githubusercontent.com/... URL ellipsised from
+         the left — so six remembered notebooks read as six near-identical
+         strings (2026-08-21, user: "the recent should just be a file name
+         with a path on hover"). */
+      b.title=sp.path;
+      var ic=document.createElement('span');ic.className='recent-ic';
+      ic.innerHTML=isUrl(p)?'&#128279;':'&#128196;';
+      var nm=document.createElement('span');nm.className='recent-nm';
+      nm.textContent=sp.name;
+      b.appendChild(ic);b.appendChild(nm);
+      b.addEventListener('click',function(){
+        if(b.classList.contains('busy')) return;
+        /* SAY THAT SOMETHING IS HAPPENING. A remembered notebook is a
+           fetch and a parse — seconds on a slow link — and the click
+           used to change nothing on screen at all (2026-08-21, user:
+           "you can't tell it's loading. You need a loading bar"). */
+        b.classList.add('busy');
+        openPath(p);
+        /* openPath raises the busy counter synchronously when it starts
+           work; if it did not start any, the row must not sit there
+           pretending to load forever */
+        if(!dlgBusyN) b.classList.remove('busy');
+      });
+      host.appendChild(b);
+    });
+  }
+  /* presentations, on the front door. Populated from the deck's own list
+     so a draft, a poster and a custom view all show up exactly as the
+     rail shows them; absent entirely in a static export, where deck.js
+     never registers the hook. */
+  function renderWelcomePres(){
+    var host=$('#welcome-pres'); if(!host) return;
+    host.innerHTML='';
+    var list=[];
+    try{list=(APP.deckNames&&APP.deckNames())||[];}catch(e){list=[];}
+    host.hidden=!list.length;
+    syncJump();
+    if(!list.length) return;
+    var h=document.createElement('div');h.className='recent-h';
+    h.textContent='presentations';host.appendChild(h);
+    list.slice(0,6).forEach(function(p){
+      var kind=p.view?'custom view':p.poster?'poster':'presentation';
+      var b=document.createElement('button');b.className='recent-i';
+      b.type='button';
+      b.title='Open the '+kind+' “'+p.name+'”'
+        +(p.draft?' (unsaved draft)':'')
+        +(p.slides?(String.fromCharCode(10)+p.slides+' slide'
+          +(p.slides===1?'':'s')):'');
+      var ic=document.createElement('span');ic.className='recent-ic';
+      ic.innerHTML=p.view?'&#128065;':p.poster?'&#128444;':'&#128421;';
+      var nm=document.createElement('span');nm.className='recent-nm';
+      nm.textContent=p.name;
+      b.appendChild(ic);b.appendChild(nm);
+      if(p.draft){
+        var d=document.createElement('span');d.className='recent-tag';
+        d.textContent='draft';b.appendChild(d);
+      }
+      b.addEventListener('click',function(){
+        if(APP.deckChoose) APP.deckChoose(p.name);
+        goHome(false);
+      });
       host.appendChild(b);
     });
   }
@@ -15932,8 +16300,18 @@ through Ko-fi. Thank you.</p>
      probed, a figure that 404s removes itself, and if none load the whole
      block stays hidden. Their URLs wait in data-src, so with the demos
      off the page downloads none of them (~22 MB) rather than fetching
-     and hiding them. Off by default on a metered or slow connection, or
-     when reduced motion is asked for; your own choice wins and sticks. */
+     and hiding them.
+
+     ON BY DEFAULT. This used to default to off whenever the browser
+     reported prefers-reduced-motion — which headless Edge and any
+     Windows box with animation effects switched off both do — so the
+     section rendered as captions beside a "Show the demos" button and
+     read as broken (2026-08-21, user: "the gifs aren't showing up?").
+     The bandwidth argument that justified the default is answered
+     properly now: each clip loads only when it is actually scrolled
+     into view, so an unseen reel still costs nothing. A metered or
+     genuinely slow connection still starts off, and your own choice
+     wins and sticks either way. */
   (function(){
     var KEY='junoview:demos';
     var t=$('#wtour'),btn=$('#wtour-toggle');
@@ -15942,26 +16320,36 @@ through Ko-fi. Thank you.</p>
     var slow=!!conn.saveData
       ||/2g$/.test(String(conn.effectiveType||''))
       ||String(conn.effectiveType||'')==='3g';
-    var reduce=window.matchMedia
-      &&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var saved=null;
     try{saved=localStorage.getItem(KEY);}catch(e){}
-    var on=saved===null?!(slow||reduce):saved==='1';
-    var probed=false;
+    var on=saved===null?!slow:saved==='1';
+    var armed=false,io=null;
+    /* one clip's worth of fetching, at the moment it is worth fetching */
+    function load(im){
+      var src=im.getAttribute('data-src'); if(!src) return;
+      im.addEventListener('error',function(){
+        var fig=im.closest('figure'); if(fig) fig.remove();
+        if(!t.querySelector('img')) t.hidden=true;
+      });
+      im.src=src;
+      im.removeAttribute('data-src');
+    }
     function paint(){
       t.classList.toggle('lite',!on);
       btn.setAttribute('aria-pressed',on?'true':'false');
-      btn.textContent=on?'Hide the demos':'Show the demos';
-      if(!on||probed) return;
-      probed=true;
-      $$('img[data-src]',t).forEach(function(im){
-        im.addEventListener('error',function(){
-          var fig=im.closest('figure'); if(fig) fig.remove();
-          if(!t.querySelector('img')) t.hidden=true;
+      btn.textContent=on?'Hide the demos':'Play the demos';
+      if(!on||armed) return;
+      armed=true;
+      var imgs=$$('img[data-src]',t);
+      if(!('IntersectionObserver' in window)){
+        imgs.forEach(load);return;}
+      io=new IntersectionObserver(function(es){
+        es.forEach(function(e){
+          if(!e.isIntersecting) return;
+          io.unobserve(e.target);load(e.target);
         });
-        im.src=im.getAttribute('data-src');
-        im.removeAttribute('data-src');
-      });
+      },{rootMargin:'400px 0px'});
+      imgs.forEach(function(im){io.observe(im);});
     }
     /* does the folder exist at all? one HEAD-ish probe decides whether the
        section is offered, so a local render never shows broken frames */
@@ -28268,7 +28656,8 @@ window.JunoPptx = (function () {
          Lock button for why (2026-08-20) */
       if(true){
         var appMode=(APP.mode==='app');
-        var acts2=document.createElement('div');acts2.className='dc-nbacts';
+        var acts2=document.createElement('div');
+        acts2.className='dc-nbacts dc-nbacts-stack';
         var la=document.createElement('button');la.className='dbtn';
         la.disabled=!appMode;
         la.innerHTML='&#128274; Lock all figures';
@@ -28478,6 +28867,10 @@ window.JunoPptx = (function () {
     status();
     setUIMode(m||'view');
     routeSync();
+    /* the welcome screen can now be showing WITH the deck opening over
+       it (its presentations column, or Home with nothing else open), so
+       the chrome has to be told a deck exists (2026-08-21) */
+    if(APP.refreshChrome) APP.refreshChrome();
   }
   /* WHAT GOES OUT. A poster is one page: its other pages are drafts and
      variants, and you send one to the print shop, not the pile. Since
@@ -28513,12 +28906,45 @@ window.JunoPptx = (function () {
     deckEl.classList.remove('editing');
     renderPresTabs();
     routeSync();
+    /* ...and told when it stops existing: closing the last deck with no
+       notebook open has to land back on the welcome, not a blank page */
+    if(APP.refreshChrome) APP.refreshChrome();
   }
   /* ---- URL routing hooks used by the SemApp router (docs side) ---- */
   window.SemApp.deckState=function(){
     return deckEl.hidden?null:{name:pres.name,slide:cur};
   };
   window.SemApp.deckClose=function(){closeDeck();};
+  /* ---- what the welcome screen lists ---------------------------------
+     The presentations rail is not the only door any more: it collapses,
+     and once it was away the front door had no route to a deck at all
+     (2026-08-21, user: "you can't get to the presentations from here
+     either"). Same source of truth as the rail's own rows. */
+  window.SemApp.deckNames=function(){
+    var out=[],seen={},saved=allSaved(),savedNames={};
+    saved.forEach(function(p){savedNames[p.name]=1;});
+    function push(nm,p,draft){
+      if(!nm||seen[nm]) return;
+      seen[nm]=1;
+      out.push({name:nm,
+        slides:(((p||{}).slides)||[]).length,
+        poster:/^a\d/.test(String((p||{}).page||'')),
+        view:isViewPres(p||{}),
+        folder:(p||{}).folder||'',
+        draft:!!draft});
+    }
+    saved.forEach(function(p){push(p.name,p,false);});
+    draftNames().forEach(function(nm){
+      push(nm,loadDraft(nm)||{},!savedNames[nm]);});
+    return out;
+  };
+  /* opening one is the rail's own action, so a deck, a poster and a
+     custom view each land where they belong */
+  window.SemApp.deckChoose=function(nm){choosePresentation(nm);};
+  /* ...and redraw the chrome now the hooks exist. app.js runs first and
+     paints the welcome before this file has loaded, so its presentations
+     column asked a question nobody could answer yet and came up empty. */
+  if(APP.refreshChrome) APP.refreshChrome();
   window.SemApp.deckGo=function(slide){   /* move slide, keep the current mode */
     if(deckEl.hidden) return;
     go(Math.max(0,Math.min(((pres.slides||[]).length||1)-1,slide||0)));

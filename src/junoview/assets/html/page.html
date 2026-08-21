@@ -234,7 +234,13 @@
      position:sticky, so a panel inside it would paint behind the page -->
 <div class="stylepanel" id="stylepanel" hidden></div>
 <nav class="presrail" id="presrail" aria-label="Presentations">
-  <div class="presrail-brand">{logo}<span class="prb-full">Junoview</span></div>
+  <!-- the wordmark is the HOME button, the thing everyone tries first
+       (2026-08-21, user: "clicking the Junoview logo should take you
+       back to that screen"). It shows the welcome without closing
+       anything; #welcome-back undoes it. -->
+  <button class="presrail-brand" id="presrail-home" type="button"
+    title="Home — the Junoview welcome screen. Nothing is closed."
+    >{logo}<span class="prb-full">Junoview</span></button>
   <button class="pr-item pr-docs current" id="pr-docs"
     title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico"><i data-ic="doc"></i></span>
@@ -345,6 +351,18 @@
 {shells}
 </div>
 <div class="welcome" id="welcome" hidden>
+  <!-- one bar for every way in. Opening a notebook is a fetch and a parse
+       that can take seconds on a slow link, and clicking a remembered file
+       used to give no sign at all that anything had happened (2026-08-21,
+       user: "clicking on a recent loads, but you can't tell it's
+       loading"). Driven by the same busy counter as the dialog's. -->
+  <div class="welcome-load" id="welcome-load" hidden><span></span></div>
+  <!-- the way BACK. The logo is a home button now, so the welcome can be
+       reached with notebooks still open; without this you would be
+       looking at a screen with no exit (2026-08-21). -->
+  <button class="welcome-back" id="welcome-back" hidden type="button"
+    title="Back to the notebook you were reading. Nothing was closed.">
+    &#8592; Back to your notebooks</button>
   <div class="welcome-box">
     <div class="welcome-top">
       <div class="welcome-hero">{logo}</div>
@@ -372,7 +390,16 @@
         <span class="wl-sep" id="welcome-install-sep" hidden>&middot;</span>
         <a href="#" id="welcome-install" hidden>Install as an app</a>
       </div>
-      <div class="recent" id="welcome-recent"></div>
+      <!-- WHAT YOU WERE DOING, in the two shapes it comes in: the files
+           you had open, and the presentations built out of them. The
+           presentations column is here because the rail that lists them
+           collapses, and once it is away this screen was a dead end for
+           anyone who wanted a deck rather than a notebook (2026-08-21,
+           user: "you can't get to the presentations from here either"). -->
+      <div class="welcome-jump" id="welcome-jump" hidden>
+        <div class="recent" id="welcome-recent" hidden></div>
+        <div class="wpres" id="welcome-pres" hidden></div>
+      </div>
       <div class="welcome-scrollcue" aria-hidden="true">How it works
         &#8595;</div>
     </div>

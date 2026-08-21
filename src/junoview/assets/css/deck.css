@@ -771,10 +771,19 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   text-overflow:ellipsis;white-space:nowrap;}
 .dc-nbrow.gone .dc-nbrow-nm{color:#98a7b5;}
 .dc-nbrow-st{font-family:var(--mono);font-size:9.5px;color:#7e93a4;flex:none;}
-.dc-nbacts{display:flex;gap:6px;padding:8px 6px 3px;margin-top:4px;
-  border-top:1px solid #ffffff14;}
-.dc-nbacts .dbtn{flex:1;text-align:center;justify-content:center;
-  font-size:11.5px;}
+.dc-nbacts{display:flex;flex-wrap:wrap;gap:6px;padding:8px 6px 3px;
+  margin-top:4px;border-top:1px solid #ffffff14;}
+.dc-nbacts .dbtn{flex:1 1 92px;min-width:0;text-align:center;
+  justify-content:center;font-size:11.5px;}
+/* THE LOCK ROW STACKS. Its three labels are phrases, not words ("Lock all
+   figures", "Load locked versions"), and side by side in a ~280px column
+   each was squeezed to three wrapped lines while the third still fell off
+   the right edge, unreadable and half unclickable (2026-08-21, user: "the
+   lock things can't all be seen"). One per row, full width, left-aligned
+   so the icon column lines up. */
+.dc-nbacts-stack{flex-direction:column;}
+.dc-nbacts-stack .dbtn{flex:none;width:100%;text-align:left;
+  justify-content:flex-start;white-space:normal;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
   border-radius:6px;box-sizing:border-box;}

@@ -1,7 +1,21 @@
 <div class="shell nbshell" data-nb="{stem}"{path_attr}>
   <aside class="rail">
     <div class="railhead">
-      <h1 class="railtitle">{title}</h1>
+      <!-- WHICH NOTEBOOKS ARE OPEN, at the top of the sidebar you are
+           already reading. The presentations rail lists them too, but it
+           collapses and auto-hides, and with it away nothing on screen
+           said a second notebook existed (2026-08-21, user: "the sidebar
+           doesn't show notebooks that are open"). Filled by renderTabs();
+           it stays hidden when there is only one and nothing to open. -->
+      <div class="railnbs" hidden></div>
+      <!-- THE NOTEBOOK'S NAME, not its first heading. This line used to
+           be doc.title, which is whatever the file's first `# ` says --
+           so a notebook opening with "# Preamble" was labelled Preamble,
+           a section name standing in for a file name (2026-08-21, user:
+           "Preamble is not the name of the notebook, that is a section").
+           The heading did not lose its place; it moved one line down. -->
+      <h1 class="railtitle" title="{stem}">{stem}</h1>
+      {doctitle}
       <div class="railmeta">{meta}</div>
       <div class="railfile">
         <button class="rf-btn rf-info" type="button"

@@ -36,20 +36,48 @@
 
   /* ================= tab strip ================= */
   var tabstrip=$('#tabstrip'), openBtn=$('#tab-open');
+  /* HOME IS A PLACE, not just the state of having nothing open. The
+     wordmark is a home button now (2026-08-21, user: "clicking the
+     Junoview logo should take you back to that screen"), so the welcome
+     has to be reachable with notebooks still loaded — and once it can be,
+     it needs a way out, which is #welcome-back. Nothing is closed either
+     way: this only decides what is on top. */
+  var atHome=false;
+  function goHome(on){
+    atHome=!!on&&(APP.mode==='app'||APP.mode==='web');
+    /* a presentation is drawn over everything, so Home means leaving it */
+    if(atHome&&APP.deckState&&APP.deckState()&&APP.deckClose) APP.deckClose();
+    refreshChrome();
+    if(atHome) window.scrollTo(0,0);
+  }
+  APP.goHome=goHome;
   function refreshChrome(){
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
     var wel=$('#welcome');
-    var welcoming=canOpen&&!APP.order.length;
+    /* an open presentation owns the window even with no notebook behind
+       it — a self-contained deck is a document in its own right */
+    var deckOn=!!(APP.deckState&&APP.deckState());
+    var welcoming=canOpen&&!deckOn&&(!APP.order.length||atHome);
     if(wel) wel.hidden=!welcoming;
     /* With nothing open there is nothing for the ribbon to act on: every
        filter, size and view control is inert, and Open is already on the
        welcome screen itself. Hiding it lets the welcome own the window. */
     document.body.classList.toggle('welcoming',welcoming);
+    var back=$('#welcome-back');
+    if(back) back.hidden=!(welcoming&&APP.order.length);
     var demo=$('#welcome-demo');
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
+    renderWelcomePres();
   }
+  APP.refreshChrome=refreshChrome;
+  (function(){
+    var home=$('#presrail-home');
+    if(home) home.addEventListener('click',function(){goHome(true);});
+    var back=$('#welcome-back');
+    if(back) back.addEventListener('click',function(){goHome(false);});
+  })();
   /* ---- the tab's ⌚ Versions menu: automatic snapshots per open/reload */
   var versMenu=null;
   function closeVersMenu(){if(versMenu){versMenu.remove();versMenu=null;}}
@@ -222,10 +250,69 @@
        not there (2026-08-20) */
     var nbl=$('#pr-nblabel');
     if(nbl) nbl.hidden=!tabstrip.childNodes.length;
+    renderRailNbs();
     refreshChrome();
+  }
+  /* ---- the same list, inside each notebook's own sidebar -------------
+     The presentations rail already lists open notebooks, but it
+     collapses and auto-hides, and with it away nothing on screen said a
+     second notebook was open (2026-08-21, user: "the sidebar doesn't
+     show notebooks that are open"). Every shell carries its own copy
+     because the rail is part of the shell; only the active one is
+     visible, so the cost is a handful of rows. */
+  function renderRailNbs(){
+    var list=tabList();
+    /* nothing to switch to and nothing to open: a list of one, with no
+       way to make it two, is a heading over a fact you already know */
+    var useful=list.length>1||APP.mode==='app'||APP.mode==='web';
+    $$('.railnbs').forEach(function(host){
+      host.innerHTML='';
+      host.hidden=!useful;
+      if(!useful) return;
+      var h=document.createElement('div');h.className='railnbs-h';
+      h.textContent='open notebooks';host.appendChild(h);
+      list.forEach(function(stem){
+        var sh=APP.shells[stem]; if(!sh) return;
+        var on=(stem===APP.active);
+        var b=document.createElement('button');
+        b.type='button';
+        b.className='rnb'+(on?' on':'')+(sh.trace?' trace':'');
+        b.title=sh.trace
+          ?('Plot trace — a sub-tab of '+(sh.source||''))
+          :(sh.path||stem);
+        var d=document.createElement('span');d.className='rnb-dot';
+        b.appendChild(d);
+        var nm=document.createElement('span');nm.className='rnb-nm';
+        nm.textContent=sh.trace?('↳ '+(sh.title||'Plot trace'))
+          :(sh.label||stem);
+        b.appendChild(nm);
+        if(!on) b.addEventListener('click',function(){activate(stem);});
+        if(sh.trace||APP.mode==='app'||APP.mode==='web'){
+          var x=document.createElement('span');x.className='rnb-x';
+          x.setAttribute('role','button');
+          x.innerHTML='&#10005;';
+          x.title=sh.trace?'Close this trace':'Close this notebook';
+          x.addEventListener('click',function(e){
+            e.stopPropagation();closeNotebook(stem);});
+          b.appendChild(x);
+        }
+        host.appendChild(b);
+      });
+      if(APP.mode==='app'||APP.mode==='web'){
+        var add=document.createElement('button');
+        add.type='button';add.className='railnbs-add';
+        add.textContent='+ Open another notebook…';
+        add.addEventListener('click',function(){
+          var ob=$('#tab-open'); if(ob) ob.click();});
+        host.appendChild(add);
+      }
+    });
   }
   function activate(stem){
     if(!APP.shells[stem]) return;
+    /* looking at a notebook is not being at Home; opening one from the
+       welcome has to take you off it */
+    atHome=false;
     APP.active=stem;
     tabList().forEach(function(s){APP.shells[s].el.hidden=(s!==stem);});
     renderTabs();
@@ -3981,6 +4068,14 @@
         if(nmEl&&base) nmEl.textContent=base;
         if(pEl){pEl.textContent=p;pEl.dir='ltr';
           pEl.title=p;}
+        /* the sidebar already names the notebook by its stem; give
+           that name the full path as its tooltip, the way the tab
+           and the docbar do. The stem, not the file name: a rail
+           is 256px wide and "example_climate_analysis.ipynb" in
+           mono wraps mid-word there, which reads worse than the
+           extension reads useful. */
+        var rt=$('.railtitle',shell);
+        if(rt) rt.title=p;
       } else if(pEl){pEl.textContent='';}
       db.hidden=false;
     }
@@ -5031,6 +5126,13 @@
     if(go){go.disabled=on;go.textContent=on?'Opening…':'Open';}
     if(inp) inp.disabled=on;
     if(ld) ld.hidden=!on;
+    /* the same signal on the WELCOME screen, which has its own ways in
+       (the recent list, the big buttons) and used to show nothing at all
+       while a notebook loaded (2026-08-21, user) */
+    var wl=$('#welcome-load');
+    if(wl) wl.hidden=!on;
+    if(!on) $$('.recent-i.busy').forEach(function(b){
+      b.classList.remove('busy');});
   }
   /* a saved presentation, by name — the .junoview.html polyglot save or a
      bare-JSON .junoview */
@@ -5073,7 +5175,9 @@
        folder listing, a pasted path, a GitHub link (2026-08-20, user: on
        disk they carry the browser's icon and there was no way in) */
     if(isDeckPath(path)){
-      if(isUrl(path)){fetchDeckUrl(path);return;}
+      /* in the browser build a deck beside the page is as openable as
+         one on a host -- its URL is simply relative */
+      if(isUrl(path)||APP.mode==='web'){fetchDeckUrl(path);return;}
       if(APP.mode!=='app') return;
       if(OPENBUSY[path]) return;
       OPENBUSY[path]=1;setDlgBusy(true);
@@ -5086,7 +5190,14 @@
       return;
     }
     if(APP.mode==='web'){
-      if(isUrl(path)) webOpenUrl(path,false);
+      /* NOT only absolute URLs. The bundled example is remembered as
+         "example_climate_analysis.ipynb" -- a path relative to the page
+         -- so gating on isUrl() meant clicking it in the recent list did
+         nothing whatsoever: no fetch, no error, no sign that the click
+         had landed (2026-08-21). fetch() resolves a relative path
+         against the page, and anything that genuinely cannot be fetched
+         reports itself through webOpenUrl's own catch. */
+      webOpenUrl(path,false);
       return;
     }
     if(OPENBUSY[path]) return;
@@ -5291,7 +5402,12 @@
     rec.slice(0,12).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='odlg-r';
+      b.type='button';
       b.title='Reopen '+sp.path;
+      /* an icon makes the row read as a thing you act on rather than a
+         caption above a path (2026-08-21) */
+      var ic=document.createElement('span');ic.className='odlg-r-ic';
+      ic.innerHTML=isUrl(p)?'&#128279;':'&#128196;';b.appendChild(ic);
       var nm=document.createElement('span');nm.className='odlg-r-nm';
       nm.textContent=sp.name;b.appendChild(nm);
       var pt=document.createElement('span');pt.className='odlg-r-p';
@@ -5378,17 +5494,88 @@
       dlgList.appendChild(d);
     });
   }
+  /* the two "jump back in" columns share a wrapper, which is only worth
+     any vertical space when at least one of them has something in it */
+  function syncJump(){
+    var w=$('#welcome-jump'); if(!w) return;
+    var r=$('#welcome-recent'), pz=$('#welcome-pres');
+    w.hidden=!((r&&!r.hidden)||(pz&&!pz.hidden));
+  }
   function renderRecent(){
     var host=$('#welcome-recent'); if(!host) return;
     host.innerHTML='';
     var rec=(APP.project&&APP.project.recent)||[];
+    host.hidden=!rec.length;
+    syncJump();
     if(!rec.length) return;
     var h=document.createElement('div');h.className='recent-h';
-    h.textContent='recent';host.appendChild(h);
+    h.textContent='recent notebooks';host.appendChild(h);
     rec.slice(0,6).forEach(function(p){
+      var sp=splitPath(p);
       var b=document.createElement('button');b.className='recent-i';
-      b.textContent=p;b.title=p;
-      b.addEventListener('click',function(){openPath(p);});
+      b.type='button';
+      /* THE NAME, and the path on hover. These rows were the whole path
+         — an https://raw.githubusercontent.com/... URL ellipsised from
+         the left — so six remembered notebooks read as six near-identical
+         strings (2026-08-21, user: "the recent should just be a file name
+         with a path on hover"). */
+      b.title=sp.path;
+      var ic=document.createElement('span');ic.className='recent-ic';
+      ic.innerHTML=isUrl(p)?'&#128279;':'&#128196;';
+      var nm=document.createElement('span');nm.className='recent-nm';
+      nm.textContent=sp.name;
+      b.appendChild(ic);b.appendChild(nm);
+      b.addEventListener('click',function(){
+        if(b.classList.contains('busy')) return;
+        /* SAY THAT SOMETHING IS HAPPENING. A remembered notebook is a
+           fetch and a parse — seconds on a slow link — and the click
+           used to change nothing on screen at all (2026-08-21, user:
+           "you can't tell it's loading. You need a loading bar"). */
+        b.classList.add('busy');
+        openPath(p);
+        /* openPath raises the busy counter synchronously when it starts
+           work; if it did not start any, the row must not sit there
+           pretending to load forever */
+        if(!dlgBusyN) b.classList.remove('busy');
+      });
+      host.appendChild(b);
+    });
+  }
+  /* presentations, on the front door. Populated from the deck's own list
+     so a draft, a poster and a custom view all show up exactly as the
+     rail shows them; absent entirely in a static export, where deck.js
+     never registers the hook. */
+  function renderWelcomePres(){
+    var host=$('#welcome-pres'); if(!host) return;
+    host.innerHTML='';
+    var list=[];
+    try{list=(APP.deckNames&&APP.deckNames())||[];}catch(e){list=[];}
+    host.hidden=!list.length;
+    syncJump();
+    if(!list.length) return;
+    var h=document.createElement('div');h.className='recent-h';
+    h.textContent='presentations';host.appendChild(h);
+    list.slice(0,6).forEach(function(p){
+      var kind=p.view?'custom view':p.poster?'poster':'presentation';
+      var b=document.createElement('button');b.className='recent-i';
+      b.type='button';
+      b.title='Open the '+kind+' “'+p.name+'”'
+        +(p.draft?' (unsaved draft)':'')
+        +(p.slides?(String.fromCharCode(10)+p.slides+' slide'
+          +(p.slides===1?'':'s')):'');
+      var ic=document.createElement('span');ic.className='recent-ic';
+      ic.innerHTML=p.view?'&#128065;':p.poster?'&#128444;':'&#128421;';
+      var nm=document.createElement('span');nm.className='recent-nm';
+      nm.textContent=p.name;
+      b.appendChild(ic);b.appendChild(nm);
+      if(p.draft){
+        var d=document.createElement('span');d.className='recent-tag';
+        d.textContent='draft';b.appendChild(d);
+      }
+      b.addEventListener('click',function(){
+        if(APP.deckChoose) APP.deckChoose(p.name);
+        goHome(false);
+      });
       host.appendChild(b);
     });
   }
@@ -5399,8 +5586,18 @@
      probed, a figure that 404s removes itself, and if none load the whole
      block stays hidden. Their URLs wait in data-src, so with the demos
      off the page downloads none of them (~22 MB) rather than fetching
-     and hiding them. Off by default on a metered or slow connection, or
-     when reduced motion is asked for; your own choice wins and sticks. */
+     and hiding them.
+
+     ON BY DEFAULT. This used to default to off whenever the browser
+     reported prefers-reduced-motion — which headless Edge and any
+     Windows box with animation effects switched off both do — so the
+     section rendered as captions beside a "Show the demos" button and
+     read as broken (2026-08-21, user: "the gifs aren't showing up?").
+     The bandwidth argument that justified the default is answered
+     properly now: each clip loads only when it is actually scrolled
+     into view, so an unseen reel still costs nothing. A metered or
+     genuinely slow connection still starts off, and your own choice
+     wins and sticks either way. */
   (function(){
     var KEY='junoview:demos';
     var t=$('#wtour'),btn=$('#wtour-toggle');
@@ -5409,26 +5606,36 @@
     var slow=!!conn.saveData
       ||/2g$/.test(String(conn.effectiveType||''))
       ||String(conn.effectiveType||'')==='3g';
-    var reduce=window.matchMedia
-      &&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var saved=null;
     try{saved=localStorage.getItem(KEY);}catch(e){}
-    var on=saved===null?!(slow||reduce):saved==='1';
-    var probed=false;
+    var on=saved===null?!slow:saved==='1';
+    var armed=false,io=null;
+    /* one clip's worth of fetching, at the moment it is worth fetching */
+    function load(im){
+      var src=im.getAttribute('data-src'); if(!src) return;
+      im.addEventListener('error',function(){
+        var fig=im.closest('figure'); if(fig) fig.remove();
+        if(!t.querySelector('img')) t.hidden=true;
+      });
+      im.src=src;
+      im.removeAttribute('data-src');
+    }
     function paint(){
       t.classList.toggle('lite',!on);
       btn.setAttribute('aria-pressed',on?'true':'false');
-      btn.textContent=on?'Hide the demos':'Show the demos';
-      if(!on||probed) return;
-      probed=true;
-      $$('img[data-src]',t).forEach(function(im){
-        im.addEventListener('error',function(){
-          var fig=im.closest('figure'); if(fig) fig.remove();
-          if(!t.querySelector('img')) t.hidden=true;
+      btn.textContent=on?'Hide the demos':'Play the demos';
+      if(!on||armed) return;
+      armed=true;
+      var imgs=$$('img[data-src]',t);
+      if(!('IntersectionObserver' in window)){
+        imgs.forEach(load);return;}
+      io=new IntersectionObserver(function(es){
+        es.forEach(function(e){
+          if(!e.isIntersecting) return;
+          io.unobserve(e.target);load(e.target);
         });
-        im.src=im.getAttribute('data-src');
-        im.removeAttribute('data-src');
-      });
+      },{rootMargin:'400px 0px'});
+      imgs.forEach(function(im){io.observe(im);});
     }
     /* does the folder exist at all? one HEAD-ish probe decides whether the
        section is offered, so a local render never shows broken frames */
