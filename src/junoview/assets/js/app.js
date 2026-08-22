@@ -26,8 +26,15 @@
     return fetch(url,opt).then(function(r){
       return r.json().catch(function(){throw new Error('HTTP '+r.status);})
         .then(function(j){
-          if(!r.ok||(j&&j.error))
-            throw new Error((j&&j.error)||('HTTP '+r.status));
+          if(!r.ok||(j&&j.error)){
+            var err=new Error((j&&j.error)||('HTTP '+r.status));
+            /* carry the STATUS and the BODY. A 409 from /api/save hands
+               back the revision and presentations actually on disk so the
+               caller can merge rather than guess, and that was being
+               thrown away with everything but the message (2026-08-22). */
+            err.status=r.status;err.data=j;
+            throw err;
+          }
           return j;
         });
     });

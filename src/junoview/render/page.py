@@ -77,6 +77,10 @@ def render_page(docs: list[Document], mode: str = "static",
         "root": cfg.get("root", ""),
         "project": {
             "presentations": cfg.get("presentations", []),
+            # the project revision this page was built from. deck.js sends
+            # it back on every save so the server can refuse a write from a
+            # window that has not seen another window's changes.
+            "rev": cfg.get("rev", 0),
             "recent": cfg.get("recent", []),
         },
     }

@@ -2403,6 +2403,17 @@ body.jv-spot .deck-stage{pointer-events:none;}
 .sh-menu.match-menu{position:fixed;z-index:220;display:block;
   width:236px;padding:5px;max-height:60vh;overflow-y:auto;}
 .match-menu .vw-opt{width:100%;text-align:left;}
+/* the folded View group's menu. A row stands in for a toggle button, so
+   it has to show the toggle's state — otherwise folding the group would
+   lose the one thing a visible toggle was chosen for (2026-08-22). */
+.vw-more-menu{min-width:186px;}
+.vw-more-menu .vw-opt{width:100%;text-align:left;}
+.vw-more-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);border-color:var(--accent);color:#fff;}
+.vw-more-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase;opacity:.85;}
+body.light .vw-more-menu .vw-opt.on{color:var(--ink);}
 
 /* ---- the equation editor -------------------------------------------
    Type on the left, see it set on the right. The palette is the half

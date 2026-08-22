@@ -514,6 +514,28 @@
                    you cannot rely on (2026-08-20). The animation pane has
                    gone the other way, into its own tab, with the effects
                    beside it. -->
+              <!-- ...AND THE WAY OUT WHEN THE WINDOW IS TOO NARROW. The
+                   density ladder ends in a rung whose comment promised to
+                   "drop the one group that is not about the selection
+                   rather than let the row clip" — but nothing ever
+                   dropped, so on a 1366px laptop with a text box selected
+                   the row ran 66px over and Bold, Italic, Underline and
+                   Layout were clipped away with no scrollbar and no way
+                   to reach them (2026-08-22). Dropping the seven buttons
+                   outright would only move the problem, so at that rung
+                   they fold into this one, which opens them as a menu.
+                   Filled by openViewMenu(). -->
+              <span class="sh-drop" id="vw-morewrap" hidden>
+                <button class="dbtn rbn-sm" id="vw-more"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Rulers, grid, full screen, the side toolbar, the
+ print check, layers and notes. They are in here rather than on the bar
+ because the window is too narrow to show them and the text controls at
+ the same time — widen it, or put the toolbar on the right, and they come
+ back out">&#9776; View &#9662;</button>
+                <div class="sh-menu vw-more-menu" id="vw-more-menu"
+                  hidden></div>
+              </span>
             </span>
             <span class="rbn-lab">View</span>
           </span>

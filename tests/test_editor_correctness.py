@@ -1256,8 +1256,12 @@ def test_line_and_paragraph_spacing(out):
     assert "var PS_STEPS=[" in out
     assert 'id="fmt-lhwrap"' in out
     assert "if(a.lh) d2.style.lineHeight=a.lh;" in out
-    # it travels with a named style and with Match slide
-    assert "'lh','pspace'];" in out
+    # it travels with a named style and with Match slide. Pinned by
+    # MEMBERSHIP, not by sitting at the end of the array: MATCH_PROPS
+    # grew a line-and-arrow section on 2026-08-22, and an assertion that
+    # depends on which property happens to be last breaks every time the
+    # list is extended without saying anything true about line spacing.
+    assert "'lh','pspace'," in out
     assert "if(d.lh) a.lh=d.lh; else delete a.lh;" in out
 
 
@@ -1328,3 +1332,170 @@ def test_lines_can_be_bent_through_corners(out):
     assert "if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){" in out
     # selecting is not a re-render, so the handles need asking for
     assert "})) redrawArrows(layer,s);" in out
+
+
+def test_undo_can_see_the_whole_presentation_not_just_its_slides(out):
+    """Undo used to snapshot the slides and nothing else, which did not
+    merely miss a step -- it corrupted the document.
+
+    ``scaleStyles()`` rewrites ``pres.styles`` and then writes the new
+    sizes into every text box. Only the boxes were in the snapshot, so
+    Ctrl+Z put the boxes back and left the definitions scaled; the next
+    ``applyStyleTo`` -- editing a box, Re-apply, Match slide -- silently
+    brought the scaling back, and because scaleStyles multiplies the
+    CURRENT definition, scale/undo/scale drifted the type further every
+    time (2026-08-22).
+
+    Page size and page background failed the other way round: annots are
+    stored in percentages, so changing either left the snapshot identical,
+    histPush's "nothing actually changed" guard fired, and no undo entry
+    was created at all.
+    """
+    assert "function histState(){" in out
+    # the three that were missing
+    assert "page:pres.page||null,pageBg:pres.pageBg||null," in out
+    assert "cropMarks:pres.cropMarks||0});" in out
+    assert "?pres.styles:null," in out
+    # ...and restored, not merely recorded
+    assert "['wmark','head','foot','styles','page','pageBg'," in out
+    assert "'cropMarks'].forEach(function(k){" in out
+    # an empty styles object and no styles object are the same deck, or
+    # merely READING a style records a phantom undo step
+    assert "(pres.styles&&Object.keys(pres.styles).length)" in out
+    # a restored page size is not repainted by refresh()
+    assert "if(pageChanged) applyPage();" in out
+    # the styles come back as DEFINITIONS: restyling here would overwrite
+    # the restored boxes with the restored definitions
+    assert "restyleAll" not in out.split("function histRestore(")[1][:1200]
+    # written on every keystroke, so deliberately NOT snapshotted
+    assert "notes:pres.notes" not in out
+    assert "pad:pres.pad" not in out
+
+
+def test_match_slide_moves_a_line_which_has_no_x_y_w_h(out):
+    """A line is stored as its two endpoints, not as a box.
+
+    MATCH_PROPS named only x/y/w/h, which an arrow does not use, so Match
+    slide copied nothing an arrow is made of: it counted the arrow as
+    moved and left it exactly where it was (2026-08-22).
+    """
+    assert "'x1','y1','x2','y2','mid','curve','bend'" in out
+    # the heads and the line style travel too
+    assert "'head','tail','nohead'," in out
+    # ...but the TIES do not: c1/c2 name items on the other slide, and an
+    # attached end is placed from its tie, so copying one drags the arrow
+    # onto a stranger
+    assert "'c1'" not in out.split("var MATCH_PROPS=[")[1][:400]
+    assert "'c2'" not in out.split("var MATCH_PROPS=[")[1][:400]
+    # a freehand stroke's points ARE its content, never its layout
+    assert "'pts'" not in out.split("var MATCH_PROPS=[")[1][:400]
+
+
+def test_the_view_group_folds_rather_than_letting_the_row_clip(out):
+    """The density ladder's last rung promised to drop a group "rather
+    than let the row clip". It never dropped anything -- erc-tight only
+    tightened padding -- so at 1366px with a text box selected the row ran
+    66px over and Bold, Italic, Underline and Layout were clipped away.
+
+    The bar is ``overflow-x:clip`` and must stay that way (a scroll
+    container cuts off every downward dropdown at the ribbon's edge), so
+    the fix is to fold, not to scroll and not to drop: seven buttons
+    become one that opens them as a menu.
+    """
+    assert 'id="vw-morewrap"' in out and 'id="vw-more-menu"' in out
+    assert "function foldViewGroup(on){" in out
+    # folded exactly at the rung whose comment promised it
+    assert "cl.add('erc-tight');\n      foldViewGroup(true);" in out
+    # ...and the count of showing controls re-run, since seven just left
+    assert "foldViewGroup(true);\n      sizeRibbonGroups();" in out
+    # every rung is judged against the FULL row, or a bar folded at 1280px
+    # would stay folded after the window is maximised
+    assert "foldViewGroup(false);\n    sizeRibbonGroups();" in out
+    # the rows drive the real buttons, so each keeps its implementation
+    assert "closeViewMenu();real.click();" in out
+    # a row stands in for a toggle, so it has to show the toggle's state
+    assert ".vw-more-menu .vw-opt.on{" in out
+    # unfolding must not reveal a control this page never had
+    assert "viewWasHidden[p[0]]=b.hidden;b.hidden=true;" in out
+
+
+def test_typed_text_reaches_the_model_without_a_blur(out):
+    """The only thing that committed on-canvas text was `blur`.
+
+    So Ctrl+S while typing opened the browser's own Save-page dialog and
+    saved nothing; renderAnnots' ``layer.innerHTML=''`` removed the focused
+    node, which fires no blur in Chrome or Firefox, and every slide change
+    or notebook refresh ate the paragraph; closing the tab lost it; and
+    markDirty never ran, so the 1.2s autosave was not running during the
+    one activity that produces unrecoverable text -- while the readout said
+    "autosaved" (2026-08-22).
+    """
+    assert "function flushTextEdits(){" in out
+    # a debounced commit while you type, so a crash costs a phrase
+    assert "typeT=setTimeout(function(){commitNow(true);},900);" in out
+    # ...which persists WITHOUT an undo step, or a paragraph would evict
+    # real slide edits from the 50-deep stack
+    assert "function markDirty(quiet){" in out
+    assert "if(!quiet) histPush();" in out
+    # every path that persists, re-renders or tears down flushes first
+    assert "flushTextEdits();\n    layer.innerHTML='';" in out
+    assert "flushTextEdits();   /* the words still in the DOM are part" in out
+    assert "if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S'))" in out
+    # a tab can close or be backgrounded without ever firing blur
+    assert "window.addEventListener('pagehide',lastChance);" in out
+    # table cells had the identical blur-only shape
+    assert "td.__jvFlush=function(){writeCell();markDirty(true);};" in out
+
+
+def test_a_failed_browser_save_is_not_reported_as_a_save(out):
+    """lsSet swallowed QuotaExceededError and returned nothing, and all
+    seventeen callers ignored it -- so once a draft outgrew the ~5MB budget
+    every later write was discarded while Save toasted "Kept in this
+    browser" and the readout said "saved". In the browser and static builds
+    that store IS the presentation (2026-08-22)."""
+    assert "function lsIsFull(){return lsFull;}" in out
+    # the Save button must not stamp a save that did not happen
+    assert "toast('NOT saved — this browser is full." in out
+    # ...and the readout outranks every other reading while it is true
+    assert "el.textContent='NOT saved — browser full';" in out
+    # an image is the thing that fills it, so cap what can arrive
+    assert "var IMG_MAX_EDGE=2400;" in out
+    assert "function shrinkImage(img,dataUrl){" in out
+
+
+def test_the_project_file_is_not_clobbered_by_a_second_window(out):
+    """Every tab autosaves its ENTIRE view of every presentation 1.2s after
+    each keystroke, and the server did a whole-array replace with no
+    version -- so a second window continuously overwrote the first
+    (2026-08-22). The client now echoes the revision it last saw."""
+    assert "{presentations:body,rev:projectRev}" in out
+    assert "if(e&&e.status===409&&e.data" in out
+    # the merge keeps THIS window's deck and takes everyone else's
+    assert "return !p||p.name!==pres.name;});" in out
+    # api() has to carry the status and body, or there is nothing to merge
+    assert "err.status=r.status;err.data=j;" in out
+
+
+def test_a_rename_or_delete_does_not_strip_the_embedded_figures(out):
+    """`projectPres` can never carry `emb` (normPres absorbs it into the
+    session store), so posting it raw made a rename or a delete quietly
+    strip every embedded figure out of junoview_project.json -- and the
+    1.2s refs-only autosave, being the LAST writer, undid every manual
+    embed a second after the next keystroke (2026-08-22)."""
+    assert out.count(
+        "APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})"
+    ) == 3
+    # the idle consolidation that puts the figures back
+    assert "function saveToProject(silent,embed){" in out
+    assert "var body=(silent&&!embed)?merged:embedAssets(deep(merged));" in out
+
+
+def test_pdf_export_prints_the_ink(out):
+    """Chrome and Edge default "Background graphics" to OFF, and every
+    colour in a deck is a CSS background -- so Export PDF on the default
+    dark deck produced white pages with white text (2026-08-22)."""
+    assert "print-color-adjust:exact!important;" in out
+    assert "-webkit-print-color-adjust:exact!important;" in out
+    # the generated documents name their language
+    assert "<!doctype html><html lang=\\\"en\\\"><head>" in out \
+        or '<html lang="en"><head><meta charset="utf-8">' in out

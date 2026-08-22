@@ -149,25 +149,44 @@ window.JunoPptx = (function () {
     return '<a:alpha val="' + Math.round(Math.max(0, op) * 100000) + '"/>';
   }
 
-  function solidFill(color, op, fallback) {
-    return '<a:solidFill><a:srgbClr val="' + hex(color, fallback) + '">'
-      + alpha(op) + '</a:srgbClr></a:solidFill>';
+  /* A COLOUR CARRIES ITS OWN TRANSPARENCY, and OOXML has no fourth
+     channel, so it has to become a separate <a:alpha>. This read rgba()
+     only, and hex() truncates an 8-digit #rrggbbaa to its first six
+     digits — so every translucent colour in the editor exported opaque.
+     Three things that made visible: the Fill chip "Tint of the outline
+     colour" resolves to rgba(...,0.169) and became a solid block over the
+     figure it was tinting; both fade gradients ('#00000000' to
+     '#000000cc') became opaque-to-opaque slabs; and the colour picker's
+     whole 0-100 alpha slider was decorative as far as export went.
+     'transparent' is here because gradStops' legacy fallback emits it,
+     and hex() would otherwise fall through to opaque white — an old
+     deck's gradient exported as a white rectangle over the figure
+     (2026-08-22). */
+  function alphaOf(color) {
+    var c = String(color || '').trim();
+    if (/^transparent$/i.test(c)) return 0;
+    var m = c.match(/^#?[0-9a-f]{6}([0-9a-f]{2})$/i);
+    if (m) return parseInt(m[1], 16) / 255;
+    m = c.match(/rgba\(\s*\d+\D+\d+\D+\d+\D+([\d.]+)/i);
+    return m ? parseFloat(m[1]) : 1;
+  }
+  /* the colour's own alpha times the item's opacity slider */
+  function combinedAlpha(color, op) {
+    return alphaOf(color) * (op == null ? 1 : op);
   }
 
-  /* An rgba() stop carries its own transparency, which OOXML expresses as
-     a separate alpha element rather than a fourth channel. */
-  function alphaOf(color) {
-    var m = String(color || '').match(/rgba\(\s*\d+\D+\d+\D+\d+\D+([\d.]+)/i);
-    return m ? parseFloat(m[1]) : 1;
+  function solidFill(color, op, fallback) {
+    return '<a:solidFill><a:srgbClr val="' + hex(color, fallback) + '">'
+      + alpha(combinedAlpha(color, op)) + '</a:srgbClr></a:solidFill>';
   }
   function gradFill(g, op) {
     if (!g) return '';
     var c1 = g.a, c2 = g.b;
     var stops = '<a:gsLst>'
       + '<a:gs pos="0"><a:srgbClr val="' + hex(c1, '39A9C0') + '">'
-      + alpha(alphaOf(c1) * (op == null ? 1 : op)) + '</a:srgbClr></a:gs>'
+      + alpha(combinedAlpha(c1, op)) + '</a:srgbClr></a:gs>'
       + '<a:gs pos="100000"><a:srgbClr val="' + hex(c2, 'FFFFFF') + '">'
-      + alpha(alphaOf(c2) * (op == null ? 1 : op)) + '</a:srgbClr></a:gs>'
+      + alpha(combinedAlpha(c2, op)) + '</a:srgbClr></a:gs>'
       + '</a:gsLst>';
     if (g.type === 'radial')
       /* path="circle" with the focus in the middle is PowerPoint's

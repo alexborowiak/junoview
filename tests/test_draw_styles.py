@@ -368,8 +368,11 @@ def test_the_top_bar_always_earns_its_row(out):
     assert "function syncTopBar(){" in out
     assert "dt.hidden=editing&&!(slot&&slot.children.length);" not in out
     assert "dt2.hidden=" not in out
-    # one call site per place the bar's contents can change
-    assert out.count("syncTopBar();") == 2
+    # one call site per place the bar's contents can change. Three now:
+    # picking a page size, and -- since 2026-08-22 -- UNDOING one, which
+    # is the same move in reverse and was silently skipping the re-sync
+    # because histState could not see pres.page at all.
+    assert out.count("syncTopBar();") == 3
     # a page-size change can move where the File controls belong: a poster
     # hides the panel they live in, and they must not vanish with it
     # (the borrow/restore pair died with the 2026-08-19 layout; the

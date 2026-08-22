@@ -28,7 +28,8 @@ from ..notebook.presentations import _as_presentations
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
-from .state import _app_page, _AppState, _is_deck_file, _list_dir
+from .state import (_app_page, _AppState, _is_deck_file, _list_dir,
+                    StaleWrite)
 from .vcs import _git_commit_file, _git_file_log, _git_info, _git_show_notebook
 
 
@@ -106,9 +107,24 @@ def _make_handler(state: _AppState):
                 elif url.path == "/api/parse":
                     self._json(self._parse_nb(body))
                 elif url.path == "/api/save":
-                    state.save_presentations(
-                        _as_presentations(body.get("presentations")))
-                    self._json({"ok": True})
+                    # `rev` is the revision the client last saw. Absent (an
+                    # older page still in a tab) means "do not check", which
+                    # keeps the previous behaviour rather than breaking a
+                    # window that has not reloaded.
+                    rev = body.get("rev")
+                    try:
+                        new_rev = state.save_presentations(
+                            _as_presentations(body.get("presentations")),
+                            rev if isinstance(rev, int) else None)
+                    except StaleWrite as stale:
+                        # 409, not a silent overwrite: another window has
+                        # written since this one last read. Hand back what
+                        # is actually stored so the client can merge.
+                        self._json({"error": "stale", "rev": stale.revision,
+                                    "presentations": stale.presentations},
+                                   409)
+                        return
+                    self._json({"ok": True, "rev": new_rev})
                 elif url.path == "/api/close":
                     state.note_close(str(body.get("path") or ""))
                     self._json({"ok": True})

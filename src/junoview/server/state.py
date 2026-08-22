@@ -19,6 +19,19 @@ from ..render.page import render_page
 _PROJECT_FILE = "junoview_project.json"
 
 
+class StaleWrite(Exception):
+    """A save carried a revision older than the one held here.
+
+    Carries the current revision and presentations so the caller can
+    hand them straight back for the client to merge against.
+    """
+
+    def __init__(self, revision: int, presentations: list):
+        super().__init__(f"stale write; current revision {revision}")
+        self.revision = revision
+        self.presentations = presentations
+
+
 class _AppState:
     """Project file + open-tab session, shared across requests."""
 
@@ -27,6 +40,10 @@ class _AppState:
         self.token = secrets.token_hex(8)
         self.lock = threading.Lock()
         self.presentations: list = []
+        # bumped on every accepted write; a client sends back the one it
+        # last saw so a stale whole-array save can be refused rather than
+        # silently clobbering another window's work
+        self.revision: int = 0
         self.open: list[str] = []
         self.recent: list[str] = []
         self._load()
@@ -78,10 +95,28 @@ class _AppState:
             self.open = [p for p in self.open if p != path]
             self._write()
 
-    def save_presentations(self, pres: list) -> None:
+    def save_presentations(self, pres: list, rev: int | None = None) -> int:
+        """Replace the saved presentations. Returns the new revision.
+
+        ``rev`` is the revision the caller last saw. If it does not match,
+        this raises :class:`StaleWrite` rather than writing.
+
+        Why: this used to be ``self.presentations = pres`` -- a whole-array
+        replace with no version at all. Every tab autosaves its ENTIRE view
+        of every presentation 1.2s after each keystroke, so a second window
+        left open on the same project continuously overwrote the first: a
+        deck created or renamed in tab A vanished the moment tab B typed a
+        character, and a delete in one tab was resurrected by the other
+        depending on typing order. ``self.lock`` guarded the file write but
+        never the lost update (2026-08-22).
+        """
         with self.lock:
+            if rev is not None and rev != self.revision:
+                raise StaleWrite(self.revision, self.presentations)
             self.presentations = pres
+            self.revision += 1
             self._write()
+            return self.revision
 
     def stems_taken(self, skip: Path | None = None,
                     skip_str: str | None = None) -> set[str]:
@@ -172,6 +207,9 @@ def _app_page(state: _AppState) -> str:
         "token": state.token,
         "root": str(state.root),
         "presentations": state.presentations,
+        # the client echoes this back on every save so a second
+        # window's stale whole-array write is refused, not applied
+        "rev": state.revision,
         "recent": state.recent,
         "paths": paths,
     })

@@ -1260,7 +1260,11 @@
     /* BEFORE anything is measured: a stale column count is a wrong width,
        so re-counting here is both the fix for a group that grew a control
        since the last count and the only way the density rungs below are
-       judged against the row that is actually on screen */
+       judged against the row that is actually on screen.
+       Unfolding View first is part of that — every rung has to be judged
+       against the full row, or a bar that folded once at 1280px would
+       stay folded after you maximised the window. */
+    foldViewGroup(false);
     sizeRibbonGroups();
     var cl=deckEl.classList;
     if(cl.contains('rbn-side')){
@@ -1284,9 +1288,15 @@
        decorative — but it still goes before any control shrinks to its
        last rung or the row clips (2026-08-18) */
     if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-nostatus');
-    /* still over after every rung: drop the one group that is not about
-       the selection, rather than let the row clip */
-    if(bar.scrollWidth>bar.clientWidth+1) cl.add('erc-tight');
+    /* still over after every rung: fold the one group that is not about
+       the selection, rather than let the row clip. sizeRibbonGroups has
+       to run again — it counts the controls that are showing, and seven
+       of them just stopped */
+    if(bar.scrollWidth>bar.clientWidth+1){
+      cl.add('erc-tight');
+      foldViewGroup(true);
+      sizeRibbonGroups();
+    }
     /* Below the floor the row genuinely does not fit even flattened, and
        the only moves left — clip, scroll, wrap — are all forbidden.
        Standing the toolbar on its end is the layout that has room, and
@@ -1309,6 +1319,86 @@
     if(sd) sd.setAttribute('aria-pressed',
       deckEl.classList.contains('rbn-side')?'true':'false');
   }
+  /* ---- the View group folds when the row runs out of width ------------
+     The density ladder's last rung says it drops "the one group that is
+     not about the selection rather than let the row clip". It never did:
+     erc-tight only tightened padding, so a 1366px window with a text box
+     selected clipped Bold, Italic, Underline and Layout off the right-hand
+     edge — unreachable, because the bar is overflow-x:clip and cannot be
+     scrolled (and must stay that way, or every downward dropdown gets cut
+     off at the ribbon's edge again; see the comment on .edit-tools).
+     So the group folds instead of vanishing: seven buttons become one that
+     opens them as a menu, which is ~300px back — far more than the 66px
+     the row was over (2026-08-22). */
+  var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
+    ['vw-full','Full screen'],['vw-side','Side toolbar'],
+    ['vw-check','Check'],['objects-btn','Layers'],['notes-btn','Notes']];
+  var viewFolded=false,viewWasHidden=null;
+  function foldViewGroup(on){
+    on=!!on;
+    if(on===viewFolded) return;
+    var w=$('#vw-morewrap');
+    if(on){
+      /* remember what was ALREADY hidden for its own reasons, so
+         unfolding does not reveal a control this page never had */
+      viewWasHidden={};
+      VIEW_FOLD.forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        viewWasHidden[p[0]]=b.hidden;b.hidden=true;});
+      if(w) w.hidden=false;
+    } else {
+      VIEW_FOLD.forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        b.hidden=viewWasHidden?!!viewWasHidden[p[0]]:false;});
+      if(w) w.hidden=true;
+      closeViewMenu();
+      viewWasHidden=null;
+    }
+    viewFolded=on;
+  }
+  function closeViewMenu(){
+    var m=$('#vw-more-menu'),b=$('#vw-more');
+    if(m&&!m.hidden){m.hidden=true;
+      if(b) b.setAttribute('aria-expanded','false');}
+  }
+  /* the rows DRIVE the real buttons, so each control keeps its one
+     implementation and its own state — the same trick the Arrange menu
+     uses for front/back/rotate */
+  function openViewMenu(){
+    var m=$('#vw-more-menu'),btn=$('#vw-more');
+    if(!m||!btn) return;
+    if(!m.hidden){closeViewMenu();return;}
+    m.innerHTML='';
+    menuHead(m,'view');
+    VIEW_FOLD.forEach(function(p){
+      var real=$('#'+p[0]);
+      if(!real||(viewWasHidden&&viewWasHidden[p[0]])) return;
+      var o=document.createElement('button');
+      o.className='dbtn vw-opt';o.type='button';
+      o.textContent=p[1];
+      if(real.getAttribute('aria-pressed')==='true'){
+        o.setAttribute('aria-pressed','true');
+        o.classList.add('on');
+      }
+      if(real.disabled) o.disabled=true;
+      o.title=real.title||'';
+      o.addEventListener('click',function(e){
+        e.stopPropagation();closeViewMenu();real.click();});
+      m.appendChild(o);
+    });
+    m.hidden=false;
+    btn.setAttribute('aria-expanded','true');
+    floatMenu(btn,m);
+  }
+  (function(){
+    var b=$('#vw-more');
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();openViewMenu();});
+    document.addEventListener('click',function(e){
+      var w=$('#vw-morewrap');
+      if(w&&!w.contains(e.target)) closeViewMenu();
+    });
+  })();
   /* THE ROOT ELEMENT, not the deck. A fullscreen element paints its own
      subtree and nothing else, and half this app's overlays are siblings of
      .deck rather than children of it — the theme picker, the colour
@@ -2200,6 +2290,11 @@
     registerShell(stem,APP.shells[stem].data||{});});
 
   /* ---------- saved presentations: project file + notebook-embedded --- */
+  /* the project revision this page was built from; echoed back on every
+     save so the server can refuse a write that has not seen another
+     window's changes (see the 409 branch in saveToProject) */
+  var projectRev=(APP.project&&typeof APP.project.rev==='number')
+    ?APP.project.rev:0;
   var projectPres=(APP.project&&Array.isArray(APP.project.presentations))
     ?deep(APP.project.presentations).map(function(p){return normPres(p);})
     :[];
@@ -2226,7 +2321,37 @@
       :(APP.order[0]||document.title));
   var PFX='sempres:'+SCOPE+':';
   function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
-  function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+  /* A SILENT PERSISTENCE LAYER IS WORSE THAN NONE. This swallowed
+     QuotaExceededError and returned nothing, and all seventeen callers
+     ignored it — so once a draft outgrew the ~5MB budget every later
+     write was discarded while the Save button went on toasting "Kept in
+     this browser" and the readout went on saying "saved". In the browser
+     and static builds that store IS the presentation, so what was lost
+     was the only copy (2026-08-22).
+     It reports now, and lsFull records that it happened so the readout
+     and the Save button can stop lying. */
+  var lsFull=false;
+  function lsSet(k,v){
+    try{
+      localStorage.setItem(k,v);
+      if(lsFull){lsFull=false;if(typeof status==='function') status();}
+      return true;
+    }catch(e){
+      /* Firefox reports NS_ERROR_DOM_QUOTA_REACHED, Safari a bare
+         QuotaExceededError with code 22, Chrome code 22 with a name.
+         Anything that threw here failed to store, whatever it is called. */
+      if(!lsFull){
+        lsFull=true;
+        if(typeof status==='function') status();
+        if(typeof toast==='function')
+          toast('This browser is full — that edit was NOT kept. Use '
+            +'File › Download a copy, or Saved to › a file on '
+            +'your computer.',9000);
+      }
+      return false;
+    }
+  }
+  function lsIsFull(){return lsFull;}
   function lsDel(k){try{localStorage.removeItem(k);}catch(e){}}
   function loadDraft(name){
     var raw=lsGet(PFX+name); if(!raw) return null;
@@ -2348,6 +2473,16 @@
     var el=$('#deck-status');
     var auto=APP.mode==='app'
       &&(typeof autosaveOn==='undefined'||autosaveOn);
+    /* A FULL BROWSER OUTRANKS EVERY OTHER READING. Once localStorage has
+       refused a write, "saved" is a lie about the only copy there is, so
+       it says so and keeps saying so until a write succeeds. */
+    if(lsIsFull()&&saveTarget==='browser'){
+      el.textContent='NOT saved — browser full';
+      el.className='deck-status unsaved lsfull';
+      el.title='localStorage is full, so edits are no longer being kept. '
+        +'Use File › Download a copy, or switch "Saved to" to a file.';
+      return;
+    }
     if(source==='draft'){
       /* web/static Save writes to the browser but keeps source='draft';
          show a plain 'saved' — the Save button tooltip explains where */
@@ -2392,14 +2527,18 @@
       var sb=$('#dc-save'); if(sb) sb.click();
     });
   })();
-  function markDirty(){
+  /* `quiet` persists WITHOUT recording an undo step. The debounced commit
+     that now runs while you type uses it, so a paragraph still costs one
+     undo entry (taken on blur, as before) instead of one per phrase —
+     which would evict real slide edits from the 50-deep stack. */
+  function markDirty(quiet){
     source='draft';
     saveKind='';
     lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
     lsSet(PFX+'last',pres.name||'untitled');
     status();
     scheduleAutosave();
-    histPush();
+    if(!quiet) histPush();
     renderSelPane();   /* keep the Objects pane in step (no-op if closed) */
     refreshThumb(cur);
   }
@@ -2429,10 +2568,39 @@
   }
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
   var undoStack=[],redoStack=[],histSnap=null;
+  /* WHAT UNDO CAN SEE. Anything left out of this object is not merely
+     un-undoable — it goes INCONSISTENT, because the things that are in it
+     are derived from the things that are not.
+
+     The type scale was the bad case. `scaleStyles()` rewrites pres.styles
+     and then writes the new sizes into every text box; only the boxes were
+     snapshotted, so Ctrl+Z put the boxes back and left the style
+     definitions scaled. The deck looked restored until anything called
+     applyStyleTo — editing a box, Re-apply, Match slide — at which point
+     the scaling silently returned. And because scaleStyles multiplies the
+     CURRENT definition, scale/undo/scale drifted the type a little further
+     every time, with no way back short of resetting each style by hand
+     (2026-08-22).
+     Page size and page background were the quiet case: annots are stored
+     in percentages, so changing either leaves this object identical,
+     histPush's "nothing actually changed" guard fires, and no undo entry
+     is created at all.
+
+     pres.notes and pres.pad stay OUT, deliberately: they are written on
+     every keystroke, so snapshotting them would fill the 50-entry stack
+     with single characters and evict the slide edits undo is for. Per
+     SLIDE notes live on the slide and are covered. */
   function histState(){
     return JSON.stringify({slides:pres.slides||[],talkMins:pres.talkMins||0,
       showNums:pres.showNums||0,wmark:pres.wmark||null,
-      head:pres.head||null,foot:pres.foot||null});
+      head:pres.head||null,foot:pres.foot||null,
+      /* an empty styles object and no styles object are the same deck —
+         serialise them the same way or merely READING a style (which
+         lazily creates {}) would record a phantom undo step */
+      styles:(pres.styles&&Object.keys(pres.styles).length)
+        ?pres.styles:null,
+      page:pres.page||null,pageBg:pres.pageBg||null,
+      cropMarks:pres.cropMarks||0});
   }
   function histReset(){
     histSnap=histState();undoStack=[];redoStack=[];updateUndoBtns();
@@ -2448,15 +2616,34 @@
     var d;try{d=JSON.parse(snap);}catch(e){return;}
     pres.slides=d.slides||[];
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
-    ['wmark','head','foot'].forEach(function(k){
+    var pageWas=pres.page||null,bgWas=pres.pageBg||null;
+    ['wmark','head','foot','styles','page','pageBg',
+     'cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;selAnnot=null;selSet=[];
+    /* the styles come back as DEFINITIONS only. Every text box already
+       carries the sizes it had in this snapshot (applyStyleTo writes them
+       in), so restyling here would overwrite the restored boxes with the
+       restored definitions — the same round trip we are undoing. */
+    /* a page size or background is not repainted by refresh(): they are
+       applied to the stage, so an undo across one has to re-run the same
+       two calls the picker does, and re-fit a ribbon whose column may
+       have just changed shape */
+    var pageChanged=(pres.page||null)!==pageWas;
+    if(pageChanged||(pres.pageBg||null)!==bgWas) deckZoom=0;
     /* persist WITHOUT recording a new history entry */
     source='draft';
     lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
-    status();scheduleAutosave();refresh();
+    status();scheduleAutosave();
+    if(pageChanged) applyPage();
+    if(typeof applyPageBg==='function') applyPageBg();
+    refresh();
+    if(pageChanged){
+      if(typeof syncTopBar==='function') syncTopBar();
+      if(typeof applySideRibbon==='function') applySideRibbon();
+    }
     /* nothing is selected after a restore — clear the format bar + Delete */
     var db=$('#et-del'); if(db) db.disabled=true;
     if(typeof showFmt==='function') showFmt();
@@ -4839,6 +5026,32 @@
        cloned scripts would clash on duplicate ids) */
     if(window.SemActivate) window.SemActivate(layer,true);
   }
+  /* Commit every live on-canvas edit into the model, right now. Anything
+     that is about to persist, re-render or tear down the page calls this
+     first; see the long note in editableText for what each of those used
+     to lose. Safe to call when nothing is being edited. */
+  function flushTextEdits(){
+    var live=document.querySelectorAll(
+      '[contenteditable="true"],[contenteditable="plaintext-only"]');
+    for(var i=0;i<live.length;i++){
+      var f=live[i].__jvFlush;
+      if(typeof f==='function'){try{f();}catch(e){}}
+    }
+  }
+  window.SemDeckFlush=flushTextEdits;   /* test hook */
+  /* THE LAST CHANCE. A tab can be closed, crashed or backgrounded without
+     ever firing blur, and the editor had no unload handler of any kind —
+     the only grep hit in the file was the presenter popup clearing its own
+     handle. pagehide and visibilitychange are the pair that actually fire
+     (beforeunload is skipped on mobile and unreliable on a crash); both
+     are cheap, because the flush's own markDirty writes the draft. */
+  (function(){
+    function lastChance(){try{flushTextEdits();}catch(e){}}
+    window.addEventListener('pagehide',lastChance);
+    document.addEventListener('visibilitychange',function(){
+      if(document.visibilityState==='hidden') lastChance();
+    });
+  })();
   function editableText(layer,el,getVal,setVal,idx,rich){
     /* Text is NOT editable on contact. It used to be, which is why a text
        box could only be moved by a little ⠿ handle: clicking the words
@@ -4892,7 +5105,33 @@
     el.addEventListener('focus',function(){
       if(!getVal()) el.textContent='';
     });
+    /* WHAT YOU HAVE TYPED IS NOT IN THE DECK UNTIL THIS RUNS, and until
+       2026-08-22 the only thing that ran it was `blur`. So: Ctrl+S while
+       typing opened the browser's own Save-page dialog and saved nothing;
+       renderAnnots' `layer.innerHTML=''` removes the focused node, which
+       fires no blur in Chrome or Firefox, so every notebook refresh and
+       every slide change silently ate the paragraph; closing the tab lost
+       it; and because markDirty never ran, the 1.2s autosave was not
+       running during the one activity that produces unrecoverable text —
+       while the readout said "autosaved". Hence a named flush the other
+       paths can call, plus a debounced one while you type, so a crash
+       costs a phrase rather than a slide. */
+    function commitNow(quiet){
+      if(!el.isContentEditable) return;
+      var v0=(el.innerText||'').replace(/\r/g,'').replace(/\n+$/,'');
+      var r0=rich?sanitizeRich(el.innerHTML):null;
+      setVal(v0,r0);
+      markDirty(quiet);
+    }
+    el.__jvFlush=function(){commitNow(true);};
+    var typeT=null;
+    el.addEventListener('input',function(){
+      clearTimeout(typeT);
+      typeT=setTimeout(function(){commitNow(true);},900);
+    });
     el.addEventListener('blur',function(){
+      clearTimeout(typeT);
+      delete el.__jvFlush;
       var v=(el.innerText||'').replace(/\r/g,'')
         .replace(/\n+$/,'');
       var r=rich?sanitizeRich(el.innerHTML):null;
@@ -5309,9 +5548,21 @@
       var r=document.createRange();r.selectNodeContents(td);
       var sel=window.getSelection();sel.removeAllRanges();sel.addRange(r);
     }catch(e){}
-    function commit(){
+    function writeCell(){
       a.rows[ri][ci]=(td.innerText||'').replace(/\r/g,'')
         .replace(/\n+$/,'');
+    }
+    /* a table cell is a text edit too, and had the same blur-only commit */
+    td.__jvFlush=function(){writeCell();markDirty(true);};
+    var cellT=null;
+    td.addEventListener('input',function(){
+      clearTimeout(cellT);
+      cellT=setTimeout(function(){writeCell();markDirty(true);},900);
+    });
+    function commit(){
+      clearTimeout(cellT);
+      delete td.__jvFlush;
+      writeCell();
       td.contentEditable='false';
       markDirty();
     }
@@ -5383,6 +5634,11 @@
   }
   function renderAnnots(layer,s){
     var editing=(mode==='edit');
+    /* removing a focused node fires no blur in Chrome or Firefox, so
+       without this every rebuild — a slide change, a notebook refresh,
+       the async embedded-cards arrival — silently threw away whatever
+       was being typed (2026-08-22) */
+    flushTextEdits();
     layer.innerHTML='';
     /* every layer rebuild destroys the dpi chips — re-judge (debounced)
        once the edit settles, so resizing a figure ONTO a poster column
@@ -8354,6 +8610,40 @@
     return clipBuf.length;
   }
   /* an image on the system clipboard becomes an image item */
+  /* KEEP THE PICTURE OUT OF THE QUOTA. An image annot carries its whole
+     payload as a base64 data URI inside `pres`, and markDirty stringifies
+     `pres` into localStorage on EVERY edit — so two full-resolution
+     screenshots on a poster exhausted the ~5MB budget, after which every
+     later edit was discarded while the UI went on saying "saved". This
+     codebase already made exactly that argument for embedded card
+     snapshots and moved them to IndexedDB (see the note by EMBED); the
+     `image` kind was simply left behind.
+     Moving image payloads out of `pres` is the real fix and is still to
+     do. This caps what can arrive in the meantime: nothing on a slide or
+     an A0 poster needs more than ~2400px on its long edge, and the
+     re-encode is typically a 5-10x saving with nothing visible lost.
+     PNG stays PNG so a logo keeps its transparency, and a re-encode that
+     comes out bigger is thrown away (2026-08-22). */
+  var IMG_MAX_EDGE=2400;
+  function shrinkImage(img,dataUrl){
+    try{
+      var w=img&&img.naturalWidth||0,h=img&&img.naturalHeight||0;
+      if(!w||!h) return dataUrl;
+      var big=Math.max(w,h);
+      if(big<=IMG_MAX_EDGE) return dataUrl;
+      var k=IMG_MAX_EDGE/big;
+      var cv=document.createElement('canvas');
+      cv.width=Math.max(1,Math.round(w*k));
+      cv.height=Math.max(1,Math.round(h*k));
+      var cx=cv.getContext('2d');
+      if(!cx) return dataUrl;
+      cx.drawImage(img,0,0,cv.width,cv.height);
+      var isPng=/^data:image\/png/i.test(String(dataUrl||''));
+      var out=isPng?cv.toDataURL('image/png')
+        :cv.toDataURL('image/jpeg',0.9);
+      return (out&&out.length<String(dataUrl||'').length)?out:dataUrl;
+    }catch(e){return dataUrl;}
+  }
   function pasteImageFile(file){
     if(!file) return false;
     var fr=new FileReader();
@@ -8370,12 +8660,15 @@
         if(h>80){h=80;w=h*(img.naturalWidth/img.naturalHeight)
           *(pg.mm[1]/pg.mm[0]);}
         s.annots=s.annots||[];
+        var payload=shrinkImage(img,fr.result);
         s.annots.push({k:'image',x:50-w/2,y:50-h/2,w:w,h:h,
-          src:fr.result});
+          src:payload});
         markDirty();
         var l=stage.querySelector('.annot-layer');
         if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-        toast('Image pasted');
+        toast(payload===fr.result?'Image pasted'
+          :'Image pasted — resized to '+IMG_MAX_EDGE+'px so it fits in '
+            +'the saved deck');
       };
       img.onerror=function(){toast('That image could not be read');};
       img.src=fr.result;
@@ -8751,11 +9044,27 @@
     }
     return a.k;
   }
-  /* the geometry + look that travel; content never does */
+  /* the geometry + look that travel; content never does.
+
+     A LINE IS NOT AN x/y/w/h BOX. It is stored as its two endpoints
+     (x1,y1,x2,y2) plus any corners dragged into it, so a list that named
+     only the box properties copied nothing an arrow actually uses: Match
+     slide reported the arrow as moved and left it exactly where it was
+     (2026-08-22). The endpoints, the corner route, the curve and the
+     heads all travel now.
+     NOT here on purpose: `c1`/`c2` (which item each end is tied to —
+     they name items on the OTHER slide, and an attached end is placed by
+     arrowEnds from the tie, so copying the tie would drag the arrow onto
+     a stranger); `pts` (a freehand stroke's points ARE its content);
+     `shape` and `crop` (what a thing IS, not how it is laid out); and
+     `anim`, which is behaviour rather than layout. */
   var MATCH_PROPS=['x','y','w','h','rot','size','b','i','u','strike',
     'align','font','color','bg','bgc','op','style','sw','fill','fillc',
     'grad','ts','txcol','bgcol','arc','list','thead','grid','cols',
-    'lh','pspace'];
+    'lh','pspace',
+    /* lines and arrows */
+    'x1','y1','x2','y2','mid','curve','bend','head','tail','nohead',
+    'hsz','dash'];
   function matchSlide(fromIdx,toIdx){
     var src=pres.slides[fromIdx],dst=pres.slides[toIdx];
     if(!src||!dst) return null;
@@ -9569,7 +9878,8 @@
       var src=rd.result;
       var probe=new Image();
       probe.onload=function(){
-        placeImage(src,(probe.naturalHeight||3)/(probe.naturalWidth||4));};
+        placeImage(shrinkImage(probe,src),
+          (probe.naturalHeight||3)/(probe.naturalWidth||4));};
       probe.onerror=function(){placeImage(src,0);};
       probe.src=src;
     };
@@ -10132,7 +10442,7 @@
        exactly as they do on screen */
     var css='';
     $$('style').forEach(function(st){css+=st.textContent+'\n';});
-    return '<!doctype html><html><head><meta charset="utf-8">'
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
       +'<title>Presenter view</title><style>'+css
       +'\nhtml,body{margin:0;height:100%;background:#070d13;color:#dce6ee;'
       +'font-family:var(--sans,system-ui);overflow:hidden;}'
@@ -11936,7 +12246,14 @@
     if(document.body.classList.contains('doc-presenting')) return;
     var tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='select'||tag==='textarea') return;
-    if(e.target.isContentEditable) return;
+    /* BEFORE the early return: Ctrl+S while a caret is in a text box was
+       not handled here at all, so it was not preventDefault'ed either and
+       the browser's own "Save page as..." dialog opened over the editor,
+       saving nothing. Flush first, then let the save branch below run. */
+    if(e.target.isContentEditable){
+      if((e.ctrlKey||e.metaKey)&&(e.key==='s'||e.key==='S')) flushTextEdits();
+      else return;
+    }
     if(e.key==='Escape'){
       var vf=$('#vfull');
       if(vf&&!vf.hidden) closeVFull();
@@ -12333,10 +12650,12 @@
   });
   /* ---------- persistence ---------- */
   var toastTimer;
-  function toast(msg){
+  function toast(msg,ms){
     var t=$('#deck-toast');t.textContent=msg;t.hidden=false;
     clearTimeout(toastTimer);
-    toastTimer=setTimeout(function(){t.hidden=true;},3600);
+    /* a warning about lost work has to outlast a confirmation of saved
+       work, so the duration is a parameter now (2026-08-22) */
+    toastTimer=setTimeout(function(){t.hidden=true;},ms||3600);
   }
   function mergedPresentations(){
     var out=allSaved().filter(function(p){return p.name!==pres.name;})
@@ -12371,15 +12690,20 @@
     return false;
   }
   /* ---------- app mode: save to project + autosave ---------- */
-  function saveToProject(silent){
+  function saveToProject(silent,embed){
+    flushTextEdits();   /* the words still in the DOM are part of the save */
     var merged=mergedPresentations();
     /* a deliberate Save writes the self-contained form (figures inside)
        into junoview_project.json; the every-second autosave stays refs-
        only so editing does not rewrite megabytes to a synced disk each
-       keystroke. `projectPres` keeps the lean copy either way. */
-    var body=silent?merged:embedAssets(deep(merged));
-    return APP.api('/api/save',{presentations:body})
-      .then(function(){
+       keystroke. `projectPres` keeps the lean copy either way.
+       `embed` is the idle consolidation from scheduleAutosave: silent,
+       but self-contained, so the file does not sit refs-only between a
+       manual Save and the next one. */
+    var body=(silent&&!embed)?merged:embedAssets(deep(merged));
+    return APP.api('/api/save',{presentations:body,rev:projectRev})
+      .then(function(j){
+        if(j&&typeof j.rev==='number') projectRev=j.rev;
         projectPres=merged;
         lsDel(PFX+(pres.name||'untitled'));
         saveStamp=new Date();saveKind=silent?'auto':'manual';
@@ -12388,9 +12712,45 @@
           toast('Saved "'+pres.name+'" to junoview_project.json'
             +embNote());
       }).catch(function(e){
+        /* ANOTHER WINDOW GOT THERE FIRST. This whole payload is every
+           presentation the tab knows about, so before the server grew a
+           revision the loser of the race simply erased the winner's work
+           — a deck created in one window vanished the moment the other
+           typed a character (2026-08-22). Now: take their list, keep the
+           one deck this window is actually editing, and write that. */
+        if(e&&e.status===409&&e.data&&Array.isArray(e.data.presentations)){
+          var theirs=e.data.presentations.filter(function(p){
+            return !p||p.name!==pres.name;});
+          var mine=merged.filter(function(p){
+            return p&&p.name===pres.name;});
+          projectRev=e.data.rev;
+          var reconciled=theirs.concat(mine);
+          return APP.api('/api/save',
+            {presentations:reconciled,rev:projectRev})
+            .then(function(j2){
+              if(j2&&typeof j2.rev==='number') projectRev=j2.rev;
+              projectPres=reconciled;
+              saveStamp=new Date();saveKind=silent?'auto':'manual';
+              source='saved';status();renderPresTabs();renderPresRow();
+              docToastOnce('Another window changed this project — merged '
+                +'its changes in. Your "'+pres.name+'" is intact.');
+            }).catch(function(e2){
+              toast('Save failed after a conflict: '
+                +((e2&&e2.message)||e2)+' — use File › Download a copy.',
+                9000);
+            });
+        }
         if(!silent)
           toast('Save failed: '+(e&&e.message?e.message:e));
       });
+  }
+  /* one conflict notice per settling period: the autosave retries every
+     1.2s, and a notice per retry would be a strobe */
+  var conflictT=null;
+  function docToastOnce(msg){
+    if(conflictT) return;
+    toast(msg,7000);
+    conflictT=setTimeout(function(){conflictT=null;},8000);
   }
   /* ---------- WHERE this presentation is saved -----------------------
      'project' (app mode: junoview_project.json), 'browser' (this browser,
@@ -12597,6 +12957,7 @@
   /* write to the remembered file. `silent` = an autosave: never pops a
      permission prompt (there is no user gesture behind it) */
   function saveToFile(silent){
+    flushTextEdits();
     if(!fileHandle&&silent) return Promise.resolve(false);
     return (fileHandle?Promise.resolve(fileHandle):pickSaveFile())
       .then(function(h){
@@ -12693,7 +13054,22 @@
     if(!autosaveOn||APP.mode!=='app'||saveTarget!=='project') return;
     clearTimeout(autoTimer);
     autoTimer=setTimeout(function(){saveToProject(true);},1200);
+    /* ...AND PUT THE FIGURES BACK. The 1.2s autosave is deliberately
+       refs-only, because embedding rewrites megabytes to a synced disk on
+       every keystroke. But it is also the LAST writer: you would click
+       Save, get "with 37 cards embedded, so it opens without the
+       notebook", nudge one text box, and 1.2 seconds later the project
+       file held refs only again — self-contained until you touched it
+       (2026-08-22). So a second, much lazier timer consolidates once you
+       have actually stopped typing. The window in which the file is
+       refs-only is now ~20s of idle rather than forever. */
+    clearTimeout(embedTimer);
+    embedTimer=setTimeout(function(){
+      if(saveTarget==='project'&&APP.mode==='app'&&autosaveOn)
+        saveToProject(true,true);
+    },20000);
   }
+  var embedTimer=null;
   function renderAutosaveItem(){
     /* Two doors, one state: the File menu (where it has always been) and
        the top bar, where you can READ it without opening a menu. A save
@@ -12766,8 +13142,21 @@
     if(!requireName()) return;
     if(saveTarget==='project'&&APP.mode==='app'){saveToProject(false);return;}
     if(saveTarget==='file'){saveToFile(false);return;}
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
+    /* the typed word first: a paragraph still in the DOM is not in the
+       deck, and Save must not report a state it did not save */
+    flushTextEdits();
+    var ok=lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
     lsSet(PFX+'last',pres.name||'untitled');
+    if(!ok){
+      /* DO NOT stamp a save that did not happen. This branch used to set
+         saveStamp/saveKind and toast success unconditionally, so a write
+         that threw on quota still rendered "saved to browser · 14:32"
+         (2026-08-22). */
+      status();
+      toast('NOT saved — this browser is full. Use File › Download a '
+        +'copy, or switch "Saved to" to a file on your computer.',9000);
+      return;
+    }
     saveStamp=new Date();saveKind='manual';
     status();
     toast('Kept in this browser — it also autosaves as you edit. '
@@ -12955,8 +13344,23 @@
     var bg=(pres&&pres.pageBg)||'#0b141d';
     root.classList.toggle('page-light',pageIsLight(bg));
     var bst=document.createElement('style');
+    /* PRINT THE INK. Chrome and Edge default the print dialog's
+       "Background graphics" box to OFF, and everything that carries this
+       deck's colour is a CSS background: the page, the slide, every shape
+       fill, every gradient, every text panel. Without this declaration
+       File > Export PDF on the default dark deck produced white pages
+       with white text on them — only <img> figures survived, because a
+       picture is content rather than decoration. The A0 poster path
+       escaped by luck alone (newPoster seeds a white page).
+       Both spellings: the unprefixed property is the standard, the
+       -webkit- one is what Chrome and Edge actually still honour
+       (2026-08-22). */
     bst.textContent='.print-page,.print-page .slide{background:'+bg
-      +'!important;}@media print{html,body{background:'+bg+'!important;}}';
+      +'!important;}@media print{html,body{background:'+bg+'!important;}}'
+      +'.print-page,.print-page *{-webkit-print-color-adjust:exact!important;'
+      +'print-color-adjust:exact!important;}'
+      +'@media print{html,body{-webkit-print-color-adjust:exact!important;'
+      +'print-color-adjust:exact!important;}}';
     root.appendChild(bst);
     outputSlides().forEach(function(ent,i){
       var s=ent.s;
@@ -13053,7 +13457,9 @@
         +'if(e.key==="ArrowLeft"||e.key==="PageUp"){'
         +'e.preventDefault();if(p[i-1])p[i-1].scrollIntoView();}'
         +'});</scr'+'ipt>';
-      var doc='<!doctype html><html><head><meta charset="utf-8">'
+      /* lang, because a screen reader has to pick a voice and this
+         file is the artefact a colleague actually receives */
+      var doc='<!doctype html><html lang="en"><head><meta charset="utf-8">'
         +'<meta name="viewport" content="width=device-width">'
         +'<title>'+esc(pres.name||'presentation')+'</title>'
         +'<style>'+css+'</style>'
@@ -13451,7 +13857,12 @@
     projectPres=projectPres.filter(function(p){return p.name!==nm;});
     nbPres=nbPres.filter(function(p){return p.name!==nm;});
     if(APP.mode==='app')
-      APP.api('/api/save',{presentations:deep(projectPres)})
+      /* embedAssets, not the lean list: `projectPres` can never carry
+         `emb` (normPres absorbs it into the session store), so posting
+         it raw made a rename or a delete quietly strip every embedded
+         figure out of junoview_project.json — the file stopped being
+         self-contained without anything being said (2026-08-22). */
+      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
         .catch(function(){});
     if(nm===pres.name){
       var names=allSaved().map(function(p){return p.name;})
@@ -13517,7 +13928,12 @@
     nbPres.forEach(function(p){if(p.name===old) p.name=nm;});
     pres.name=nm;
     if(APP.mode==='app')
-      APP.api('/api/save',{presentations:deep(projectPres)})
+      /* embedAssets, not the lean list: `projectPres` can never carry
+         `emb` (normPres absorbs it into the session store), so posting
+         it raw made a rename or a delete quietly strip every embedded
+         figure out of junoview_project.json — the file stopped being
+         self-contained without anything being said (2026-08-22). */
+      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
         .catch(function(){});
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');
@@ -13530,7 +13946,12 @@
     projectPres=projectPres.filter(function(p){return p.name!==nm;});
     nbPres=nbPres.filter(function(p){return p.name!==nm;});
     if(APP.mode==='app')
-      APP.api('/api/save',{presentations:deep(projectPres)})
+      /* embedAssets, not the lean list: `projectPres` can never carry
+         `emb` (normPres absorbs it into the session store), so posting
+         it raw made a rename or a delete quietly strip every embedded
+         figure out of junoview_project.json — the file stopped being
+         self-contained without anything being said (2026-08-22). */
+      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
         .catch(function(){});
     var names=allSaved().map(function(p){return p.name;})
       .concat(draftNames());
