@@ -2,6 +2,47 @@
 
 ## Unreleased
 
+### The flip book
+
+A figure built up in steps — plot, then plot with a fit, then plot with a
+fit and residuals — used to cost you either a stack of overlaid images with
+appear-animations, or a pile of duplicated slides whose surrounding text you
+then had to keep in step by hand. Neither is a good answer, and the second
+is the one people actually do (2026-08-22, user).
+
+- **One box, many figures, arrows to step through them.** Insert ▸ Flip
+  book draws it; the figures come from your notebook (pick as many cards as
+  you like in one go) or from your computer (several picture files at
+  once). The arrows work while editing and while presenting, and the frame
+  is letterboxed into a box that never changes size — frames differ in
+  shape, and a box that hugged each one would move every caption tied to it
+  on every click, which is exactly the jitter people duplicate slides to
+  avoid.
+- **Text and objects tie to a figure.** Select a caption, pick a figure in
+  the Figures pane, and choose whether it shows *just on that figure*, *on
+  that one and every one after* (so the text stacks up as you go), or *on
+  that one and every one before*. It applies to the whole selection, so six
+  labels can be tied to one figure in one go. While editing, items
+  belonging to another figure are dimmed rather than hidden — you have to
+  be able to see the caption you are about to tie.
+- **A frame is a stop in the talk.** The space bar, the arrow keys, a click
+  on the slide and the arrows on the box all walk the same sequence: the
+  slide's builds first, then its figures, then the next slide. Stepping
+  back into a slide lands it fully built and on its last figure, as you
+  left it.
+- **And the export builds the pile of slides for you.** A flip book of six
+  figures becomes six real slides in the .pptx and six pages in the PDF,
+  each carrying the items tied to that figure and nothing else. That is the
+  point: the flip book is the authoring form, the pile of slides is only
+  ever the delivery form. Printed pages keep the "2 / 3" counter and drop
+  the arrows, which cannot be pressed on paper.
+
+Reordering a figure carries its bindings with it, and deleting one drops
+the binding rather than re-pointing it at whatever slid into that slot. A
+binding whose flip book or frame has gone shows the item rather than hiding
+it — an item that silently becomes invisible forever is the worst thing
+this feature could do.
+
 ### Naming the type, and grouping the slides
 
 The deck editor could push one box's look outwards, but only ever to "all

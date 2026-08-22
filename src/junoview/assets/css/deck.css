@@ -1887,6 +1887,86 @@ body.light .pf-row:hover{background:#00000008;}
 body.light .pf-what{color:var(--ink);}
 body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 
+/* ---------- the flip book ----------
+   One box, many figures, one showing. The stage LETTERBOXES each frame
+   into a box that never changes size: frames differ in shape (a plot,
+   then the same plot with a legend), and a box that hugged each one would
+   move every caption tied to it on every click -- which is exactly the
+   jitter people duplicate slides to avoid (2026-08-22). */
+.an-flip{position:absolute;display:flex;flex-direction:column;
+  align-items:stretch;justify-content:center;}
+.deck.editing .an-flip{cursor:move;}
+.an-flipstage{flex:1;min-height:0;display:flex;align-items:center;
+  justify-content:center;overflow:hidden;}
+.an-flipstage>*{max-width:100%;max-height:100%;}
+.an-flipimg{max-width:100%;max-height:100%;object-fit:contain;
+  display:block;}
+.an-flipempty{font-size:11.5px;line-height:1.5;color:#7e93a4;
+  text-align:center;padding:10px 14px;}
+.deck.editing .an-flip.empty{outline:1px dashed #ffffff33;
+  outline-offset:-1px;}
+/* the arrows are real buttons, which is what makes them safe in playback:
+   the click-to-advance handler already skips button/a/input/select, so
+   stepping a figure cannot also advance the slide */
+.an-flipbar{flex:none;display:flex;align-items:center;justify-content:center;
+  gap:8px;padding:3px 0 1px;}
+.an-flipnav{background:#00000059;border:1px solid #ffffff2e;color:#e6eef4;
+  border-radius:50%;width:22px;height:22px;line-height:1;cursor:pointer;
+  font-size:13px;padding:0;display:flex;align-items:center;
+  justify-content:center;}
+.an-flipnav:hover:not([disabled]){border-color:var(--cyan);
+  background:#0000008c;}
+.an-flipnav[disabled]{opacity:.3;cursor:default;}
+.an-flipn{font-family:var(--mono);font-size:10px;color:#9db1c1;
+  letter-spacing:.06em;}
+.page-light .an-flipnav{background:#ffffffb3;border-color:#00000026;
+  color:#16202b;}
+.page-light .an-flipn{color:#44525c;}
+/* an item belonging to another figure. Dimmed rather than hidden while
+   editing: you have to be able to see and click the caption you are about
+   to tie to figure 4 while you are standing on figure 1. In playback it
+   is removed outright. */
+.deck.editing .an-item.an-fbother{opacity:.24;}
+.deck.editing .an-item.an-fbother.sel{opacity:.65;}
+
+/* the frames pane: the slide strip's shape, because a flip book is a
+   little deck inside a slide */
+.fp-adds{display:flex;gap:5px;padding:0 12px 8px;}
+.fp-adds .dbtn{flex:1;white-space:nowrap;font-size:11px;padding:5px 6px;}
+.fp-row{display:flex;align-items:center;gap:5px;padding:3px 12px;
+  border-radius:7px;cursor:pointer;}
+.fp-row:hover{background:#ffffff0d;}
+.fp-row.current{background:color-mix(in srgb,var(--accent) 11%,transparent);
+  outline:1px solid color-mix(in srgb,var(--accent) 33%,transparent);
+  outline-offset:-1px;}
+.fp-n{font-family:var(--mono);font-size:9.5px;color:#6c8093;width:14px;
+  flex:none;text-align:right;}
+.fp-t{flex:1;min-width:0;background:none;border:1px solid transparent;
+  color:#c3d2df;font-size:11.5px;font-family:var(--sans);border-radius:5px;
+  padding:2px 5px;outline:none;}
+.fp-t:hover{border-color:#ffffff1f;}
+.fp-t:focus{border-color:var(--cyan);background:var(--chrome-0,#0b141d);}
+.fp-ctr{display:none;gap:1px;flex:none;}
+.fp-row:hover .fp-ctr,.fp-row.current .fp-ctr{display:flex;}
+/* tying an item to a figure lives in this pane rather than the ribbon,
+   because it needs the frame LIST visible to mean anything */
+.fp-tie{border-top:1px solid #ffffff14;padding:9px 12px;
+  display:flex;flex-direction:column;gap:5px;}
+.fp-tielab{font-size:11px;color:#8ba0b2;line-height:1.4;}
+.fp-tiesel{width:100%;box-sizing:border-box;font-size:11.5px;
+  padding:4px 6px;border-radius:6px;background:var(--chrome-1,#0e1926);
+  border:1px solid #ffffff26;color:#dce6ee;font-family:var(--sans);}
+.fp-tiesel:disabled{opacity:.45;}
+body.light .fp-t{color:var(--ink);}
+body.light .fp-t:focus{background:#fff;}
+body.light .fp-tiesel{background:#fff;border-color:var(--line);
+  color:var(--ink);}
+body.light .fp-row:hover{background:#00000008;}
+body.light .fp-tielab{color:var(--ink-3);}
+/* the film-strip thumbnail's chip for a flip book */
+.mini-pane.is-flip{background:#243b52;}
+.sp-kind.k-flip{background:#2a4761;}
+
 /* ---------- standardise text ----------
    Not a .pf-row: a preflight row is one big button that takes you to the
    thing, and a finding here carries several boxes AND an action, so the

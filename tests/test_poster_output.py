@@ -171,7 +171,7 @@ def test_freehand_drawing_is_a_first_class_stroke(out):
     """
     assert 'id="dc-draw" data-tool="draw"' in out
     assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,\n"
-            "    table:1};") in out
+            "    table:1,flip:1};") in out
     assert "function drawPathD(pts){" in out
     assert "function drawFreeSvg(a,layer){" in out
     # normalised into its own box, with a floor on each axis so a dead

@@ -1578,7 +1578,7 @@
       if(open){
         /* the panes share one corner — the rule showVerpane has kept
            since they were first docked */
-        ['#selpane','#animpane','#preflight','#notespane']
+        ['#selpane','#animpane','#preflight','#notespane','#flippane']
           .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
         var ob=$('#objects-btn');
         if(ob) ob.setAttribute('aria-pressed','false');
@@ -2130,6 +2130,10 @@
        user: "also be able to rename layers") */
     if(a.name) return a.name;
     if(a.k==='image') return 'Image';
+    if(a.k==='flip'){
+      var nf=flipFrames(a).length;
+      return 'Flip book \u2014 '+(nf?(nf+' figure'+(nf===1?'':'s')):'empty');
+    }
     if(a.k==='table')
       return 'Table '+((a.rows||[]).length)+'\u00d7'
         +(((a.rows||[])[0]||[]).length);
@@ -2555,7 +2559,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'stdpane']
+   'stdpane','flippane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -2733,6 +2737,12 @@
           o.annots=JSON.parse(JSON.stringify(s.annots));
         (o.annots||[]).forEach(function(a){
           if(a.k==='cell'&&a.ref) a.ref=ns(a.ref);
+          /* a flip book's frames hold the same kind of ref, one per
+             frame. Missing this line is not a subtle bug: the deck
+             reloads with every frame blank. */
+          if(a.k==='flip'&&Array.isArray(a.frames))
+            a.frames.forEach(function(f){
+              if(f&&f.ref) f.ref=ns(f.ref);});
         });
         /* steps hidden in the code trace (namespaced refs) */
         if(Array.isArray(s.hidden)&&s.hidden.length)
@@ -4797,7 +4807,7 @@
     updateVNav();
     /* Next stays live while builds remain on the last slide; Prev while any
        build can be stepped back on the first slide */
-    var moreBuilds=(mode==='view'&&s&&revealCount<slideBuildSteps(s).count);
+    var moreBuilds=(mode==='view'&&s&&revealCount<slideStops(s));
     var fewerBuilds=(mode==='view'&&revealCount>0);
     $('#deck-prev').disabled=(cur<=0&&!fewerBuilds);
     $('#deck-next').disabled=(cur>=pres.slides.length-1&&!moreBuilds);
@@ -4884,6 +4894,143 @@
   /* build animations: items carrying a.anim reveal one step at a time during
      playback (click / arrow / space); revealCount is how many are shown */
   var revealCount=0;
+  /* ---- THE FLIP BOOK ---------------------------------------------------
+     (2026-08-22, user: "people create figures with small additions and then
+     need to create layers of figures or heaps of new slides each with a new
+     figure ... something like a flip book or photo deck where you can add
+     heaps of figures to and then click arrows to scroll through".)
+
+     One item holding an ordered list of FRAMES — each a notebook card or an
+     image — of which exactly one shows at a time. That is the whole idea:
+     a figure built up in six steps is ONE box on ONE slide, not six
+     overlaid pictures with appear-animations, and not six duplicated
+     slides whose surrounding text you then have to keep in step by hand.
+
+     Other items on the slide TIE themselves to a frame (a.fb / a.fbf /
+     a.fbm), so a caption can belong to figure 3 and either vanish with it
+     or stay up once it has appeared. And because the deck knows which
+     items belong to which frame, the exporter can do the duplication for
+     you: one flip book of six frames becomes six real slides in .pptx and
+     six pages in the PDF. The flip book is the authoring form; the pile of
+     slides is only ever the delivery form.
+
+     THE FRAME IS DERIVED, NEVER STORED, during playback. A slide already
+     has exactly one playback cursor (revealCount) and a second piece of
+     state beside it would be a second thing to keep in step — which is the
+     bug this whole feature exists to stop people hand-doing. `a.at` is the
+     editor's cursor only. */
+  var flipSeq=0,flipForce=null;
+  function flipId(){
+    /* opaque and stable, like a.grp: a binding cannot be keyed on an array
+       index, because every reorder, delete, duplicate and paste in this
+       file splices s.annots and would silently re-point it at a stranger */
+    flipSeq++;
+    return 'k'+Date.now().toString(36)+flipSeq.toString(36);
+  }
+  function flipFrames(a){
+    return (a&&Array.isArray(a.frames))?a.frames:[];
+  }
+  function flipsOn(s){
+    var out=[];
+    ((s&&s.annots)||[]).forEach(function(a,i){
+      if(a&&a.k==='flip') out.push({a:a,i:i});});
+    return out;
+  }
+  function flipById(s,id){
+    var hit=null;
+    flipsOn(s).forEach(function(p){if(!hit&&p.a.fid===id) hit=p.a;});
+    return hit;
+  }
+  /* the extra playback stops this slide's flip books contribute: one per
+     frame AFTER the first, because the first is what the slide opens on */
+  function flipStops(s){
+    var n=0;
+    flipsOn(s).forEach(function(p){
+      n+=Math.max(0,flipFrames(p.a).length-1);});
+    return n;
+  }
+  /* every stop on a slide: the builds first, then the frames.
+     Builds first because a build is usually the heading or the frame
+     itself arriving, and the figure walking through its steps is what you
+     then talk over — putting the frames first would make a title animate
+     in after the picture had already finished. */
+  function slideStops(s){
+    return slideBuildSteps(s).count+flipStops(s);
+  }
+  /* which frame this flip book is showing right now. In the editor that is
+     wherever you left its arrows; in playback it is read off revealCount,
+     with each flip book on the slide consuming its own frames in reading
+     order. */
+  function flipAtNow(s,a){
+    var fr=flipFrames(a),last=Math.max(0,fr.length-1);
+    /* an exporting page is FOR one frame, and says so. It wins over both
+       the editor cursor and the playback one, because printing sets
+       mode='view' and revealCount=99999 to mean "fully built" and would
+       otherwise put every page on the last frame. */
+    if(flipForce!=null){
+      var first=flipsOn(s)[0];
+      if(first&&first.a===a)
+        return Math.max(0,Math.min(last,flipForce));
+      return Math.max(0,Math.min(last,a.at||0));
+    }
+    if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
+    var left=Math.max(0,revealCount-slideBuildSteps(s).count),hit=0;
+    flipsOn(s).forEach(function(p){
+      var span=Math.max(0,flipFrames(p.a).length-1);
+      var take=Math.min(span,left);
+      if(p.a===a) hit=take;
+      left-=take;
+    });
+    return hit;
+  }
+  /* is this item's frame the one showing? An item with no binding always
+     shows, and — deliberately — so does one whose flip book has been
+     deleted or whose frame no longer exists. An item that silently becomes
+     invisible forever is the worst thing this feature could do, so every
+     unresolvable binding fails OPEN. */
+  function flipShowsFrame(s,a,at){
+    if(!a||!a.fb) return true;
+    var fb=flipById(s,a.fb); if(!fb) return true;
+    var fr=flipFrames(fb); if(!fr.length) return true;
+    var f=a.fbf||0; if(f>=fr.length) return true;
+    var m=a.fbm||'only';
+    if(m==='from') return at>=f;      /* appears here and stays up */
+    if(m==='until') return at<=f;     /* here and everything before it */
+    return at===f;                    /* just this one */
+  }
+  /* the same question against the frame showing NOW. Split from the above
+     because the exporter has to ask it about a frame that is not the one
+     on screen — that is what lets one flip book become several pages. */
+  function flipShows(s,a){
+    if(!a||!a.fb) return true;
+    var fb=flipById(s,a.fb); if(!fb) return true;
+    return flipShowsFrame(s,a,flipAtNow(s,fb));
+  }
+  var FLIP_MODES=[['only','Just this figure'],
+    ['from','This figure and every one after'],
+    ['until','This figure and every one before']];
+  /* step a flip book's arrows. In playback the frames ARE stops in the one
+     playback sequence, so an arrow moves the talk — otherwise the arrow
+     and the space bar would disagree about where you are. */
+  function flipStep(idx,d){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='flip') return;
+    var fr=flipFrames(a);
+    if(fr.length<2) return;
+    if(mode==='view'){
+      var before=0;
+      flipsOn(s).forEach(function(p){
+        if(p.i<idx) before+=Math.max(0,flipFrames(p.a).length-1);});
+      var lo=slideBuildSteps(s).count+before,hi=lo+fr.length-1;
+      revealCount=Math.max(lo,Math.min(hi,revealCount+d));
+      renderSlide();presenterSync();
+      return;
+    }
+    a.at=Math.max(0,Math.min(fr.length-1,(a.at||0)+d));
+    /* markDirty(true): flipping through your own figures to look at them
+       is not an edit and must not fill the undo stack */
+    markDirty(true);renderSlide();renderFlipPane();
+  }
   function slideBuildIdx(s){
     var arr=[];
     (s&&s.annots||[]).forEach(function(a,i){if(a&&a.anim) arr.push(i);});
@@ -4923,6 +5070,10 @@
        user: "also be able to rename layers") */
     if(a.name) return a.name;
     if(a.k==='image') return 'Image';
+    if(a.k==='flip'){
+      var nf=flipFrames(a).length;
+      return 'Flip book \u2014 '+(nf?(nf+' figure'+(nf===1?'':'s')):'empty');
+    }
     if(a.k==='table')
       return 'Table '+((a.rows||[]).length)+'\u00d7'
         +(((a.rows||[])[0]||[]).length);
@@ -6885,7 +7036,107 @@
                 +'Hold Shift to stretch it'));
             im.appendChild(mkRotate());}}
         layer.appendChild(im);
+      } else if(a.k==='flip'){
+        var fr=flipFrames(a),at=flipAtNow(s,a),fdef=fr[at]||null;
+        var fl=document.createElement('div');
+        fl.className='an-item an-flip'+(selAnnot===i?' sel':'')
+          +(fr.length?'':' empty');
+        fl.style.left=a.x+'%';fl.style.top=a.y+'%';
+        fl.style.width=(a.w||40)+'%';fl.style.height=(a.h||32)+'%';
+        applyCommon(fl,a);
+        fl.setAttribute('data-idx',i);
+        /* the frame is LETTERBOXED into a box that never changes size.
+           Frames differ in shape — a wide plot, then the same plot with a
+           legend — and a box that hugged each one would move every caption
+           tied to it on every click, which is precisely the jitter people
+           duplicate slides to avoid. */
+        var fst=document.createElement('div');
+        fst.className='an-flipstage';
+        if(!fr.length){
+          var fph=document.createElement('div');
+          fph.className='an-flipempty';
+          fph.textContent=editing
+            ?'Empty flip book — use Figures ▾ to add frames'
+            :'';
+          fst.appendChild(fph);
+        } else if(fdef&&fdef.src){
+          var fim=document.createElement('img');
+          fim.className='an-flipimg';fim.src=fdef.src;fim.alt='';
+          fim.draggable=false;
+          fst.appendChild(fim);
+        } else if(fdef&&fdef.ref){
+          var fnode=framePart(fdef.ref,fdef.part);
+          if(fnode){
+            /* the same currency a placed cell uses: natural size, zoomed
+               by a.ts x pageScale, so the page's zoom cannot change how
+               big the figure is relative to the slide */
+            fnode.style.zoom=(a.ts||1)*(pageScale(layer)||1);
+            fst.appendChild(fnode);
+          } else {
+            var fmiss=document.createElement('div');
+            fmiss.className='an-flipempty';
+            fmiss.textContent=editing
+              ?'That notebook is not open, and the deck holds no copy of '
+                +'this frame'
+              :'';
+            fst.appendChild(fmiss);
+          }
+        }
+        fl.appendChild(fst);
+        if(fr.length>1){
+          var fbar=document.createElement('div');
+          fbar.className='an-flipbar';
+          /* real <button>s, which is what makes them safe in playback:
+             the click-to-advance handler already skips
+             button,a,input,select, so stepping a frame cannot also
+             advance the slide.
+             On an EXPORTED page there is nothing to click — each page IS
+             one frame — so the arrows are left off and only the counter
+             goes on, which is what tells a reader on paper that they are
+             looking at step 2 of 3 (2026-08-22). */
+          function flipNav(d,tip){
+            if(flipForce!=null) return;
+            var nb=document.createElement('button');
+            nb.className='an-flipnav';nb.type='button';
+            nb.textContent=d<0?'‹':'›';nb.title=tip;
+            nb.disabled=d<0?(at<=0):(at>=fr.length-1);
+            nb.addEventListener('click',function(ev){
+              ev.stopPropagation();ev.preventDefault();flipStep(i,d);});
+            /* the layer's own mousedown starts a MOVE on whatever is
+               under the pointer; without this, dragging off an arrow
+               drags the whole flip book across the slide */
+            nb.addEventListener('mousedown',function(ev){
+              ev.stopPropagation();});
+            fbar.appendChild(nb);
+          }
+          flipNav(-1,'Previous figure');
+          var fn=document.createElement('span');
+          fn.className='an-flipn';
+          fn.textContent=(at+1)+' / '+fr.length;
+          if(fdef&&fdef.label) fn.title=fdef.label;
+          fbar.appendChild(fn);
+          flipNav(1,'Next figure');
+          fl.appendChild(fbar);
+        }
+        if(editing){fl.appendChild(mkResize());fl.appendChild(mkRotate());}
+        layer.appendChild(fl);
       }
+    });
+    /* ---- WHAT BELONGS TO ANOTHER FRAME --------------------------------
+       Done as a pass over the rendered layer rather than inside the loop
+       above, the way the build animations are: every kind builds its own
+       element, and one predicate applied afterwards cannot be forgotten by
+       a branch added later.
+       In PLAYBACK an item of another frame is removed. In the EDITOR it is
+       dimmed instead and left where it is — you have to be able to see and
+       click the caption you are about to tie to frame 4 while you are
+       standing on frame 1. */
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||!a.fb||flipShows(s,a)) return;
+      var fel=layer.querySelector('[data-idx="'+i+'"]');
+      if(!fel) return;
+      if(editing) fel.classList.add('an-fbother');
+      else if(fel.parentNode) fel.parentNode.removeChild(fel);
     });
     _arrows.forEach(function(i){
       drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
@@ -7020,7 +7271,8 @@
     '#fmt-bendwrap':'arrow',          /* straight/curved/elbow: ditto */
     '#fmt-fillwrap':'rect',           /* fill + gradients: shapes only */
     '#fmt-shapewrap':'rect',
-    '#fmt-cropwrap':'image cell'
+    '#fmt-cropwrap':'image cell',
+    '#fmt-figures':'flip'
   };
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
@@ -7290,6 +7542,19 @@
         ?buildPartChooser(s,selAnnot):null;
       if(pcr) partsSlot.appendChild(pcr);
       partsSlot.hidden=!pcr;
+    }
+    /* the frames pane FOLLOWS the selection: select a flip book and it
+       shows that one's figures; select a caption instead and its "tie to"
+       row wakes up for whatever is selected. Only when the pane is
+       actually open — this runs on every click on the canvas. */
+    if(typeof renderFlipPane==='function'){
+      var fpEl=$('#flippane');
+      if(fpEl&&!fpEl.hidden){
+        selIdxs().forEach(function(i){
+          var xf=(s&&s.annots||[])[i];
+          if(xf&&xf.k==='flip') flipSel=i;});
+        renderFlipPane();
+      }
     }
     /* COMPLETENESS. Every #fmt-* control in the contextual bar must be
        governed by FMT_KINDS or listed in FMT_MANUAL. Without this, a
@@ -7790,6 +8055,11 @@
         color:pageIsLight(pres.pageBg)?'#44525c':'#8aa0b0'}
       :(kind==='cell')
       ?{k:'cell',x:p0.x,y:p0.y,w:0,h:0,ref:null}
+      /* born EMPTY and already carrying its own id: the id is what every
+         binding on the slide points at, so it has to exist from the
+         first moment the box does */
+      :(kind==='flip')
+      ?{k:'flip',x:p0.x,y:p0.y,w:0,h:0,fid:flipId(),frames:[],at:0}
       :(kind==='text')
       /* colour comes from the page theme. Born EMPTY and UNBOXED: the
          "Text" placeholder and the default panel both had to be removed
@@ -7812,7 +8082,7 @@
       :{k:'arrow',x1:p0.x,y1:p0.y,x2:p0.x,y2:p0.y,
         color:'#ff6b57',sw:SW_DEFAULT};
     var boxed=(a.k==='rect'||a.k==='cell'||a.k==='text'
-      ||a.k==='table');
+      ||a.k==='table'||a.k==='flip');
     s.annots=s.annots||[];
     s.annots.push(a);
     var idx=s.annots.length-1;
@@ -8161,7 +8431,7 @@
   }
   /* every tool that exists. Anything else is NO tool. */
   var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,
-    table:1};
+    table:1,flip:1};
   function setTool(t){
     /* An unknown tool used to be armed happily: #dc-qr carried the generic
        `et` class with no data-tool, so the shared wiring ran
@@ -8206,6 +8476,8 @@
       :t==='line'?'Drag on '+pw+' to draw a line'
       :t==='cell'?'Drag on '+pw+' to draw a cell frame (or click for the '
         +'usual size), then pick a card from your notebook to fill it'
+      :t==='flip'?('Drag on '+pw+' to draw a flip book, then add the '
+        +'figures you want to step through')
       :t==='table'?'Drag on '+pw+' to draw a table (or click for a 3\u00d73). '
         +'Double-click a cell to type; Tab moves along, Enter goes down'
       /* NOTHING in the resting state. A hint earns its place by telling
@@ -8251,29 +8523,71 @@
     if(l){renderAnnots(l,s);selectAnnot(l,selAnnot);}
   }
 
-  /* ---------- picking: click a notebook card into a cell frame ------- */
-  function startPick(idx){
+  /* ---------- picking: click a notebook card into a cell frame -------
+     A flip book is filled by picking SEVERAL cards, so the mode stays
+     open and counts them until you say Done. The single-pick flow is
+     unchanged: the first click is still the answer (2026-08-22). */
+  var pickMulti=false,pickAdded=0;
+  function syncPickbar(){
+    var w=$('#pick-what'),d=$('#pick-done');
+    if(d) d.hidden=!pickMulti;
+    if(!w) return;
+    if(!pickMulti){
+      w.innerHTML='&#128204; Click a card in the notebook to place it '
+        +'in the slide';
+      return;
+    }
+    w.innerHTML='&#128204; Click each figure you want in the flip book, '
+      +'in order'+(pickAdded?(' &mdash; <b>'+pickAdded+' added</b>'):'');
+    if(d) d.textContent=pickAdded
+      ?('Done — '+pickAdded+' figure'+(pickAdded===1?'':'s'))
+      :'Done';
+  }
+  function startPick(idx,multi){
     if(typeof idx!=='number') return;
-    picking=idx;
+    picking=idx;pickMulti=!!multi;pickAdded=0;
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');
     document.body.classList.remove('slide-editing');
     document.body.classList.add('picking');
     var pb=$('#pickbar'); if(pb) pb.hidden=false;
+    syncPickbar();
+  }
+  /* one card added to the flip book being filled; the mode stays open */
+  function pickAdd(ref){
+    var s=pres.slides[cur],a=s&&(s.annots||[])[picking];
+    if(!a||a.k!=='flip') return;
+    a.frames=flipFrames(a).slice();
+    a.frames.push({ref:ref});
+    /* land on the frame just added, so Done leaves you looking at it */
+    a.at=a.frames.length-1;
+    pickAdded++;markDirty(true);syncPickbar();
   }
   function endPick(ref){
     var idx=picking; picking=-1;
+    var wasMulti=pickMulti; pickMulti=false;
     document.body.classList.remove('picking');
     var pb=$('#pickbar'); if(pb) pb.hidden=true;
     if(ref!==undefined&&idx>=0){
       var s=pres.slides[cur];
       var a=s&&(s.annots||[])[idx];
       if(a&&a.k==='cell'){a.ref=ref;markDirty();}
+      else if(a&&a.k==='flip'){
+        a.frames=flipFrames(a).slice();
+        a.frames.push({ref:ref});
+        a.at=a.frames.length-1;markDirty();
+      }
     }
+    /* a multi-pick has been writing frames as it went with markDirty(true)
+       — one history entry for the whole batch is recorded here, so Ctrl+Z
+       undoes "I added six figures" rather than six separate steps */
+    if(wasMulti&&pickAdded) markDirty();
+    pickAdded=0;
     openDeck('edit');
     var l=stage.querySelector('.annot-layer');
     if(l&&idx>=0) selectAnnot(l,idx);
+    if(wasMulti) renderFlipPane();
   }
   document.addEventListener('click',function(e){
     if(picking<0) return;
@@ -8287,8 +8601,9 @@
     if(t.closest('.codetoggle,.depchip,a')) return;
     e.preventDefault();e.stopPropagation();
     /* a Plot-trace tab's cards are clones — resolve to the real notebook */
-    endPick(nsKey(shellEl.dataset.src||shellEl.dataset.nb,
-      card.dataset.anchor));
+    var pref=nsKey(shellEl.dataset.src||shellEl.dataset.nb,
+      card.dataset.anchor);
+    if(pickMulti) pickAdd(pref); else endPick(pref);
   },true);
 
   /* ---------- format bar wiring ---------- */
@@ -11363,6 +11678,269 @@
     setTool('select');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
   }
+  /* ---- THE FRAMES PANE -------------------------------------------------
+     A flip book is a little deck inside a slide, so its frames are listed
+     and reordered in the same shape the slide strip uses: one row each,
+     ↑ ↓ ⧉ ✕, click to go to it. Anything else would have been a second
+     idiom for the same job (2026-08-22). */
+  var flipSel=-1;         /* which annot index the pane is showing */
+  /* the selected items as indexes, the same rule fmtApply follows: the
+     whole multi-selection when there is one, else the primary. Tying six
+     labels to one figure has to be one gesture, not six. */
+  function selIdxs(){
+    var m=selSet.filter(function(i){return typeof i==='number';});
+    if(m.length) return m;
+    return (typeof selAnnot==='number')?[selAnnot]:[];
+  }
+  function flipPaneItem(){
+    var s=pres.slides[cur];
+    var a=s&&(s.annots||[])[flipSel];
+    return (a&&a.k==='flip')?a:null;
+  }
+  /* the name a frame goes by: yours, else the card's own title, else its
+     number. A bound caption has to be able to say WHICH figure it belongs
+     to, and "Frame 3" is no help when there are nine of them. */
+  function frameLabel(f,i){
+    if(!f) return 'Frame '+(i+1);
+    if(f.label) return f.label;
+    if(f.ref){
+      var it=resolveRef(f.ref);
+      if(it&&it.title) return it.title;
+      return 'Figure '+(i+1)+' (notebook closed)';
+    }
+    return 'Picture '+(i+1);
+  }
+  function showFlipPane(on,idx){
+    var p=$('#flippane'); if(!p) return;
+    if(on){
+      if(typeof idx==='number') flipSel=idx;
+      /* one pane in the corner at a time — the rule showVerpane keeps */
+      ['#selpane','#animpane','#preflight','#notespane','#stdpane']
+        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
+      var ob=$('#objects-btn');
+      if(ob) ob.setAttribute('aria-pressed','false');
+      if(typeof showVerpane==='function') showVerpane(false);
+    }
+    /* un-hide BEFORE rendering: renderFlipPane bails on a hidden pane (it
+       is called from showFmt on every canvas click and must not rebuild a
+       list nobody is looking at), so rendering first drew nothing and the
+       pane opened empty */
+    p.hidden=!on;
+    if(on) renderFlipPane();
+  }
+  function renderFlipPane(){
+    var p=$('#flippane'); if(!p||p.hidden) return;
+    var list=$('#flippane-list'),ttl=$('#flippane-t');
+    var a=flipPaneItem();
+    if(!a){
+      if(ttl) ttl.textContent='Flip book';
+      if(list) list.innerHTML='<div class="selpane-empty">Select a flip '
+        +'book on the slide to see its figures.</div>';
+      var tie0=$('#fp-tie'); if(tie0) tie0.hidden=true;
+      return;
+    }
+    var fr=flipFrames(a);
+    if(ttl) ttl.textContent='Flip book — '+fr.length+' figure'
+      +(fr.length===1?'':'s');
+    list.innerHTML='';
+    if(!fr.length){
+      list.innerHTML='<div class="selpane-empty">No figures yet. '
+        +'“+ Figures…” lets you click several notebook cards in a row.'
+        +'</div>';
+    }
+    fr.forEach(function(f,i){
+      var row=document.createElement('div');
+      row.className='fp-row'+(i===(a.at||0)?' current':'');
+      var n=document.createElement('span');
+      n.className='fp-n';n.textContent=(i+1);
+      row.appendChild(n);
+      var t=document.createElement('input');
+      t.className='fp-t';t.type='text';
+      t.value=f.label||'';
+      t.placeholder=frameLabel(f,i);
+      t.title='What to call this figure — bound captions name it';
+      t.addEventListener('keydown',function(e){e.stopPropagation();});
+      /* committed on blur, not per keystroke: renaming rebuilds this list,
+         and rebuilding it under the caret is the bug the poster-version
+         rename already taught us (2026-08-10) */
+      t.addEventListener('blur',function(){
+        var v=t.value.trim();
+        if(v) f.label=v; else delete f.label;
+        markDirty();renderFlipPane();});
+      row.appendChild(t);
+      var ctr=document.createElement('span');ctr.className='fp-ctr';
+      [['↑',function(){flipMove(i,-1);},'Move this figure earlier'],
+       ['↓',function(){flipMove(i,1);},'Move this figure later'],
+       ['✕',function(){flipDrop(i);},'Remove this figure']]
+        .forEach(function(pr){
+          var b=document.createElement('button');
+          b.className='film-mini';b.textContent=pr[0];b.title=pr[2];
+          b.addEventListener('click',function(ev){
+            ev.stopPropagation();pr[1]();});
+          ctr.appendChild(b);
+        });
+      row.appendChild(ctr);
+      row.addEventListener('click',function(){
+        a.at=i;markDirty(true);renderSlide();renderFlipPane();});
+      list.appendChild(row);
+    });
+    renderTiePanel(a);
+  }
+  /* moving a frame must carry its BINDINGS with it, or captions tied to
+     figure 4 silently start belonging to whatever slid into slot 4 */
+  function flipRemap(a,map){
+    var s=pres.slides[cur];
+    (s.annots||[]).forEach(function(x){
+      if(!x||x.fb!==a.fid) return;
+      var to=map[x.fbf||0];
+      if(to==null) delete x.fb, delete x.fbf, delete x.fbm;
+      else x.fbf=to;
+    });
+  }
+  function flipMove(i,d){
+    var a=flipPaneItem(); if(!a) return;
+    var fr=flipFrames(a).slice(),j=i+d;
+    if(j<0||j>=fr.length) return;
+    var t=fr[i];fr[i]=fr[j];fr[j]=t;
+    a.frames=fr;
+    var map={};fr.forEach(function(_,k){map[k]=k;});
+    map[i]=j;map[j]=i;
+    flipRemap(a,map);
+    if((a.at||0)===i) a.at=j; else if((a.at||0)===j) a.at=i;
+    markDirty();renderSlide();renderFlipPane();
+  }
+  function flipDrop(i){
+    var a=flipPaneItem(); if(!a) return;
+    var fr=flipFrames(a).slice();
+    if(i<0||i>=fr.length) return;
+    fr.splice(i,1);
+    a.frames=fr;
+    /* a caption tied to the frame that just went loses its binding rather
+       than pointing at a stranger — and it stays VISIBLE, because an item
+       that silently disappears forever is the worst thing here */
+    var map={};
+    for(var k=0;k<=fr.length;k++) map[k]=(k<i)?k:(k===i?null:k-1);
+    flipRemap(a,map);
+    a.at=Math.max(0,Math.min(fr.length-1,a.at||0));
+    markDirty();renderSlide();renderFlipPane();
+  }
+  /* ---- TYING AN ITEM TO A FIGURE ---------------------------------------
+     "you can tie text to an image in it ... and tie objects and things to
+     a specific image in the flip book" (2026-08-22). It lives in the
+     frames pane rather than the ribbon because it needs the frame LIST to
+     be visible to make any sense, and because the ribbon had nothing to
+     give. It acts on the whole selection, so half a dozen labels can be
+     tied to one figure in one go. */
+  function tieSel(a,frame,mode){
+    var s=pres.slides[cur],hits=selIdxs();
+    var n=0;
+    hits.forEach(function(i){
+      var x=(s.annots||[])[i];
+      if(!x||x.k==='flip') return;    /* a flip book cannot bind to itself */
+      if(frame==null){delete x.fb;delete x.fbf;delete x.fbm;}
+      else {x.fb=a.fid;x.fbf=frame;x.fbm=mode||'only';}
+      n++;
+    });
+    if(n){markDirty();renderSlide();renderFlipPane();}
+    return n;
+  }
+  function renderTiePanel(a){
+    var host=$('#fp-tie'); if(!host) return;
+    var s=pres.slides[cur],hits=selIdxs().filter(function(i){
+      var x=(s.annots||[])[i];return x&&x.k!=='flip';});
+    host.innerHTML='';
+    if(!hits.length||!flipFrames(a).length){
+      host.hidden=true;
+      return;
+    }
+    host.hidden=false;
+    var lab=document.createElement('div');
+    lab.className='fp-tielab';
+    lab.textContent=hits.length===1
+      ?('Tie “'+annotLabel((s.annots||[])[hits[0]]).slice(0,28)+'” to')
+      :('Tie these '+hits.length+' items to');
+    host.appendChild(lab);
+    var cur0=(s.annots||[])[hits[0]]||{};
+    var sel=document.createElement('select');
+    sel.className='fp-tiesel';
+    var o0=document.createElement('option');
+    o0.value='';o0.textContent='(not tied — always shown)';
+    sel.appendChild(o0);
+    flipFrames(a).forEach(function(f,i){
+      var o=document.createElement('option');
+      o.value=String(i);o.textContent=(i+1)+'. '+frameLabel(f,i);
+      sel.appendChild(o);
+    });
+    sel.value=(cur0.fb===a.fid&&cur0.fbf!=null)?String(cur0.fbf):'';
+    host.appendChild(sel);
+    var mode=document.createElement('select');
+    mode.className='fp-tiesel';
+    FLIP_MODES.forEach(function(m){
+      var o=document.createElement('option');
+      o.value=m[0];o.textContent=m[1];
+      mode.appendChild(o);
+    });
+    mode.value=cur0.fbm||'only';
+    mode.disabled=sel.value==='';
+    host.appendChild(mode);
+    function commit(){
+      mode.disabled=sel.value==='';
+      tieSel(a,sel.value===''?null:+sel.value,mode.value);
+    }
+    sel.addEventListener('change',commit);
+    mode.addEventListener('change',commit);
+  }
+  (function(){
+    var fg=$('#fmt-figures');
+    if(fg) fg.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s=pres.slides[cur],idx=null;
+      selIdxs().forEach(function(i){
+        var x=(s&&s.annots||[])[i];
+        if(idx===null&&x&&x.k==='flip') idx=i;});
+      if(idx===null) return;
+      var p=$('#flippane');
+      showFlipPane(!!(p&&p.hidden),idx);
+    });
+    var cl=$('#flippane-close');
+    if(cl) cl.addEventListener('click',function(){showFlipPane(false);});
+    var ac=$('#fp-add-cells');
+    if(ac) ac.addEventListener('click',function(){
+      if(flipPaneItem()) startPick(flipSel,true);});
+    var ai=$('#fp-add-img'),fi=$('#fp-img-file');
+    if(ai&&fi) ai.addEventListener('click',function(){
+      if(!flipPaneItem()) return;
+      fi.value='';fi.click();});
+    /* several pictures at once, in the order the browser hands them over —
+       adding twelve frames one file dialog at a time is how a feature
+       goes unused */
+    if(fi) fi.addEventListener('change',function(){
+      var a=flipPaneItem(),files=this.files;
+      if(!a||!files||!files.length) return;
+      var list=Array.prototype.slice.call(files);
+      var got=[],done=0;
+      list.forEach(function(f,i){
+        var rd=new FileReader();
+        rd.onload=function(){
+          var probe=new Image();
+          probe.onload=function(){
+            got[i]={src:shrinkImage(probe,rd.result)};fin();};
+          probe.onerror=function(){got[i]={src:rd.result};fin();};
+          probe.src=rd.result;
+        };
+        rd.onerror=function(){got[i]=null;fin();};
+        rd.readAsDataURL(f);
+      });
+      function fin(){
+        if(++done<list.length) return;
+        a.frames=flipFrames(a).slice();
+        got.forEach(function(g){if(g) a.frames.push(g);});
+        a.at=a.frames.length-1;
+        /* ONE history entry for the whole batch */
+        markDirty();renderSlide();renderFlipPane();
+      }
+    });
+  })();
   var etImage=$('#et-image'),imgFile=$('#img-file');
   if(etImage&&imgFile) etImage.addEventListener('click',function(){
     imgFile.value='';imgFile.click();});
@@ -11717,6 +12295,7 @@
         if(ob) ob.setAttribute('aria-pressed','false');
         var pf=$('#preflight'); if(pf) pf.hidden=true;
         var sp2=$('#stdpane'); if(sp2) sp2.hidden=true;
+        var fp2=$('#flippane'); if(fp2) fp2.hidden=true;
         showVerpane(false);
         render();
       }
@@ -12071,7 +12650,9 @@
     if(presWin&&!presWin.closed) presenterPush();
   }
   function buildsForSlide(i){
-    var s=pres.slides[i];return s?slideBuildSteps(s).count:0;
+    /* stepping BACKWARDS into a slide shows it as you left it: fully
+       built, and every flip book on its last frame */
+    var s=pres.slides[i];return s?slideStops(s):0;
   }
   function go(n){
     var prev=cur;
@@ -12088,7 +12669,10 @@
      very end, so the final slide never collapses back to its pre-build state) */
   function advance(){
     var s=pres.slides[cur];
-    if(mode==='view'&&s&&revealCount<slideBuildSteps(s).count){
+    /* a flip book's frames are stops in this same sequence, so the space
+       bar walks the figure through its steps exactly as it walks a build
+       — one gesture for the whole talk (2026-08-22) */
+    if(mode==='view'&&s&&revealCount<slideStops(s)){
       revealCount++;renderSlide();presenterSync();
     } else if(cur<pres.slides.length-1) go(cur+1);
   }
@@ -12737,6 +13321,29 @@
         }
         return;
       }
+      if(a.k==='flip'){
+        /* the thumbnail shows the frame the slide RESTS on, which is the
+           one the strip is an index to. Without a branch here a flip book
+           is invisible in the film strip and every slide holding one
+           looks empty (the lesson miniDiagram was rewritten for). */
+        var bf=miniBox(d,a,'is-flip');
+        var ff=flipFrames(a)[a.at||0];
+        if(ff&&ff.src){
+          var fim2=document.createElement('img');
+          fim2.src=ff.src;fim2.alt='';fim2.loading='lazy';
+          fim2.draggable=false;
+          bf.appendChild(fim2);
+        } else if(ff&&ff.ref){
+          var fnode2=framePart(ff.ref,ff.part);
+          var fimg2=fnode2?fnode2.querySelector('img'):null;
+          if(fimg2&&fimg2.src){
+            var fc=document.createElement('img');
+            fc.src=fimg2.src;fc.alt='';fc.loading='lazy';fc.draggable=false;
+            bf.appendChild(fc);
+          }
+        }
+        return;
+      }
       if(a.k==='rect'){
         var bs=miniBox(d,a,'is-shape');
         bs.appendChild(drawShapeSvg(a.shape||'rect',a.color||'#ff6b57',
@@ -12859,6 +13466,7 @@
       if(ob) ob.setAttribute('aria-pressed','false');
       var pf=$('#preflight'); if(pf) pf.hidden=true;
       var sp3=$('#stdpane'); if(sp3) sp3.hidden=true;
+      var fp3=$('#flippane'); if(fp3) fp3.hidden=true;
       filmToPane();
       renderFilm();
     }
@@ -13874,9 +14482,28 @@
      of them would quietly turn one A0 into three (2026-08-10). A deck's
      slides ARE the deck, so they all go. */
   function outputSlides(){
-    var all=(pres.slides||[]).map(function(s,i){return {s:s,i:i};});
+    var all=[];
+    (pres.slides||[]).forEach(function(s,i){
+      /* A FLIP BOOK EXPLODES ON THE WAY OUT. This is the whole payoff:
+         the complaint was "heaps of new slides each with a new figure",
+         so the editor keeps ONE slide with the figures stacked inside it
+         and the exporter builds the pile — six frames become six real
+         PowerPoint slides, each with the items tied to that frame and
+         nothing else (2026-08-22).
+         The FIRST flip book on the slide is the one that explodes it.
+         Two of them multiplying into a grid of pages is nobody's
+         intention, and the second simply rests on its own frame. */
+      var fl=flipsOn(s)[0];
+      var n=fl?flipFrames(fl.a).length:0;
+      if(n>1){
+        for(var f=0;f<n;f++) all.push({s:s,i:i,f:f});
+        return;
+      }
+      all.push({s:s,i:i,f:null});
+    });
     if(!pageOf().poster||all.length<2) return all;
-    var k=Math.min(Math.max(cur,0),all.length-1);
+    var k=0;
+    all.forEach(function(e,j){if(e.i===cur&&!k) k=j;});
     return all[k]?[all[k]]:all;
   }
   /* named for the toast, so it is never a silent choice */
@@ -14941,23 +15568,36 @@
       if(p.kind==='view') return;
       var emb={};
       (p.slides||[]).forEach(function(s){
+        /* every notebook card this slide places, from BOTH the kinds that
+           can hold one. A flip book's frames are refs exactly like a
+           placed cell's, and leaving them out meant a self-contained deck
+           opened with every frame blank — the one failure the embedded
+           snapshots exist to prevent (2026-08-22). They dedupe by ref, so
+           a flip book costs the same as placing its figures one by one. */
+        var refs=[];
         (s.annots||[]).forEach(function(a){
-          if(a.k!=='cell'||!a.ref||emb[a.ref]) return;
-          var it=resolveRef(a.ref);
+          if(!a) return;
+          if(a.k==='cell'&&a.ref) refs.push(a.ref);
+          else if(a.k==='flip') flipFrames(a).forEach(function(f){
+            if(f&&f.ref) refs.push(f.ref);});
+        });
+        refs.forEach(function(ref){
+          if(emb[ref]) return;
+          var it=resolveRef(ref);
           if(it&&!it.emb){
-            var b=cloneBody(a.ref);
+            var b=cloneBody(ref);
             if(!b) return;
             var e={title:it.title||'',kind:it.kind||'',html:b.outerHTML};
-            var cc=it.hasCode?cloneCode(a.ref):null;
+            var cc=it.hasCode?cloneCode(ref):null;
             if(cc) e.code=cc.outerHTML;
-            emb[a.ref]=e;
-            embStore(normRef(a.ref),e);   /* keep the session copy fresh */
+            emb[ref]=e;
+            embStore(normRef(ref),e);   /* keep the session copy fresh */
           } else {
-            var e2=embFor(a.ref);
+            var e2=embFor(ref);
             if(e2){
               var cp={title:e2.title,kind:e2.kind,html:e2.html};
               if(e2.code) cp.code=e2.code;
-              emb[a.ref]=cp;
+              emb[ref]=cp;
             }
           }
         });
@@ -15450,6 +16090,8 @@
     outputSlides().forEach(function(ent,i){
       var s=ent.s;
       cur=ent.i;
+      /* the page renders for ITS frame, and the bindings follow */
+      flipForce=ent.f;
       var page=document.createElement('div');page.className='print-page';
       var slideEl=document.createElement('div');
       if(s&&s.layout==='title'){
@@ -15482,6 +16124,9 @@
       }
     });
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    /* put the editor back on its own frame, or every flip book on screen
+       would be left showing whatever the last exported page wanted */
+    flipForce=null;
     if(typeset) typeset(root);
     return root;
   }
@@ -15518,6 +16163,12 @@
     return root;   /* returned for headless testing */
   }
   window.SemDeckPrint=printDeck;   /* test hook */
+  /* the pages an export will actually write, flip books already exploded.
+     A hook rather than a guess: "one flip book of six figures becomes six
+     slides" is the claim the whole feature rests on, and it is only
+     checkable from outside (2026-08-22). */
+  window.SemDeckPages=outputSlides;
+  window.SemDeckPrintRoot=buildPrintRoot;
   menuAction('#mi-pdf',function(){printDeck();});
   /* ---- standalone HTML export (2026-08-04): ONE self-contained .html
      anyone can open without Junoview. The page styles are already inline
@@ -15645,6 +16296,14 @@
     }
     (s.annots||[]).forEach(function(a){
       if(!a) return;
+      /* an item tied to a figure other than this page's does not belong
+         on this page. note.frame is set by the exploding enumerator; with
+         no flip book on the slide it is null and nothing is filtered. */
+      if(a.fb){
+        var fbk=flipById(s,a.fb);
+        var atk=(note.frame!=null)?note.frame:(fbk?(fbk.at||0):0);
+        if(!flipShowsFrame(s,a,atk)) return;
+      }
       if(a.crop) note.cropped++;   /* inset-only trims are dropped too */
       if(a.k==='text'){
         items.push(pptxTextItem(a,false,ink));
@@ -15687,6 +16346,26 @@
             return r.map(function(v){return v==null?'':String(v);});}),
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
           sizePct:a.size||2.2,color:a.color||ink,font:fontPpt(a.font)});
+      } else if(a.k==='flip'){
+        /* the frame this exported page is FOR. pptxItems is handed the
+           slide plus, for an exploded page, which frame it represents —
+           so one flip book of six figures becomes six real PowerPoint
+           slides, which is the pile of slides the user was building by
+           hand (2026-08-22). A placed notebook figure already exports as
+           a picture, so this reuses that path rather than inventing one. */
+        var fsel=flipFrames(a)[(note.frame!=null)?note.frame:(a.at||0)];
+        var fsrc=null;
+        if(fsel&&fsel.src) fsrc=fsel.src;
+        else if(fsel&&fsel.ref){
+          var fit=resolveRef(fsel.ref);
+          var fnd=fit?framePart(fit.ns,fsel.part):null;
+          var fig=fnd?fnd.querySelector('img'):null;
+          if(fig&&fig.src&&fig.src.indexOf('data:')===0) fsrc=fig.src;
+        }
+        if(fsrc) items.push({t:'image',x:a.x,y:a.y,w:a.w||40,h:a.h||32,
+          rot:a.rot,op:a.op,src:fsrc,
+          name:(fsel&&fsel.label)||'Figure'});
+        else note.skipped++;
       } else if(a.k==='cell'){
         var it=a.ref?resolveRef(a.ref):null;
         var node=it?framePart(it.ns,a.part):null;
@@ -15732,7 +16411,9 @@
         /* only the slide on screen has a live layer; the rest resolve
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
+        note.frame=ent.f;
         var its=pptxItems(ent.s,note,ink,lay);
+        note.frame=null;
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:ent.s.border.c||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});

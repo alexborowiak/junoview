@@ -44,8 +44,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # strip's resize handle and three display modes. All of it is editor
 # chrome -- the document half of the page is unchanged -- and each
 # piece is pinned by its own test in tests/test_slide_sections.py.
-EXPECTED_MD5 = "93510917b73857bea5dfbd33d03c185f"
-EXPECTED_BYTES = 2477461
+# ...and again for the flip book: a new item kind (k:'flip') holding
+# many figures with arrows to step through them, the bindings that tie
+# other items to a figure, the frames pane, and the export that
+# explodes one flip book into one slide per figure. Editor chrome plus
+# one render branch; the document half of the page is unchanged. Each
+# piece is pinned by its own test in tests/test_flip_book.py.
+EXPECTED_MD5 = "55c17aa1473c3204c976ca0999b6a8de"
+EXPECTED_BYTES = 2514809
 
 
 def _render_example() -> str:

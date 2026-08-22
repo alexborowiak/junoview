@@ -660,6 +660,18 @@
                    everything else here rather than dropped in at a canned
                    size, which is the rule the line tool was told off for
                    breaking (2026-08-10). -->
+              <!-- A FLIP BOOK sits with the PLACE-things rather than the
+                   draw-things: what you are really doing is putting
+                   several notebook figures down at once. It answers the
+                   complaint that a figure built up in steps costs either a
+                   stack of overlaid images or a pile of duplicated slides
+                   (2026-08-22, user). -->
+              <button class="dbtn et rbn-sm" data-tool="flip"
+                aria-pressed="false"
+                title="Draw a flip book: one box holding many figures, with
+ arrows to step through them &mdash; in the editor and while presenting.
+ Text and objects can be tied to a particular figure"
+                >&#9707; Flip book</button>
               <button class="dbtn et rbn-sm" data-tool="table"
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
@@ -734,6 +746,11 @@
  It takes a colour, a weight and a line style like any other stroke, and
  it prints and exports as vector"><i data-ic="pen"></i> Draw</button>
               <input type="file" id="img-file" accept="image/*" hidden>
+              <!-- MULTIPLE, unlike the single-image one above it: filling a
+                   flip book twelve frames deep one file dialog at a time
+                   is how a feature goes unused (2026-08-22) -->
+              <input type="file" id="fp-img-file" accept="image/*" multiple
+                hidden>
             </span>
             <span class="rbn-lab">Insert</span>
           </span>
@@ -1114,6 +1131,15 @@
           <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
+              <!-- The only ribbon control the flip book gets. Everything
+                   else it needs — adding, reordering, naming and tying
+                   items to a figure — is in the pane this opens, because
+                   all of it needs the frame LIST visible to make sense
+                   (2026-08-22). It shows only when a flip book is
+                   selected, so it costs the resting ribbon nothing. -->
+              <button class="dbtn etm" id="fmt-figures" hidden
+                title="Add, reorder and name the figures in this flip
+ book, and tie text or objects to one of them">&#9707; Figures&#8230;</button>
               <span class="sh-drop" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
                   aria-expanded="false"
@@ -1192,6 +1218,26 @@
             title="Close">&#10005;</button></div>
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
+      </aside>
+      <!-- THE FLIP BOOK'S FRAMES, in the same shell as Layers and the
+           slide strip — a list you open to look at one item from outside
+           it. It is the slide film strip's shape deliberately: a flip
+           book is a deck inside a slide, so reordering its frames should
+           feel like reordering slides (2026-08-22). -->
+      <aside class="selpane" id="flippane" hidden>
+        <div class="selpane-h"><span id="flippane-t">Flip book</span>
+          <button class="dbtn dc-icon" id="flippane-close"
+            title="Close">&#10005;</button></div>
+        <div class="fp-adds">
+          <button class="dbtn" id="fp-add-cells"
+            title="Pick figures from your notebook — click as many as you
+ want, in order">&#43; Figures&#8230;</button>
+          <button class="dbtn" id="fp-add-img"
+            title="Add pictures from your computer. You can pick several
+ at once">&#43; Pictures&#8230;</button>
+        </div>
+        <div class="selpane-list" id="flippane-list"></div>
+        <div class="fp-tie" id="fp-tie" hidden></div>
       </aside>
       <aside class="selpane" id="selpane" hidden>
         <div class="selpane-h"><span>Layers</span>
@@ -1328,9 +1374,13 @@
   <div class="deck-toast" id="deck-toast" hidden></div>
 </div>
 <div class="pickbar" id="pickbar" hidden>
-  <span>&#128204; Click a card in the notebook to place it in the
-  slide</span>
+  <span id="pick-what">&#128204; Click a card in the notebook to place it
+  in the slide</span>
   <span class="deck-spring"></span>
+  <!-- filling a flip book means clicking SEVERAL cards, so that mode
+       stays open until you say it is finished. Hidden for the single-pick
+       flow, where the first click IS the answer (2026-08-22). -->
+  <button class="dbtn primary" id="pick-done" hidden>Done</button>
   <button class="dbtn" id="pick-cancel">Cancel (Esc)</button>
 </div>
 <!-- THE EQUATION EDITOR. "Insert equation" used to drop a text box
