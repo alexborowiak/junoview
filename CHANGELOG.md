@@ -2,6 +2,50 @@
 
 ## Unreleased
 
+### Matching, in both directions and down to one object
+
+Match slide already worked, and how it pairs things up is worth stating: it
+buckets every item by kind — and for text, kind means its **named style**,
+so a Heading 2 never pairs with a caption — then sorts each bucket down the
+page and across, and pairs them off in that order. Two paragraphs match
+upper-to-upper and lower-to-lower. Where a slide has more of something than
+the model does, the extras all take the last one. Content never travels;
+neither does what a thing *is* (`shape`, `crop`, a freehand stroke's
+points), only how it is laid out.
+
+That is a good guess, but it was the only thing on offer, and it only ever
+pulled.
+
+- **One slide's layout, given to many.** "⇉ Give this slide's layout to…"
+  is now the first row of the Match slide menu and opens a slide picker —
+  grouped by section, tri-state per section, the model itself greyed out.
+  Making six slides agree used to mean standing on each of them in turn
+  (2026-08-22, user: "make sure you can match multiple slides to one slide
+  at a time"). The whole sweep is one undo step.
+- **Match one object to another by pointing at them.** In Arrange ▾:
+  *Copy this look to objects I click…* and *Take the look of an object I
+  click…*. Arming turns the canvas into a picker — copy cursor, the object
+  under the pointer outlined — and a bar across the top says which object
+  on which slide is the model, with a Cancel and Esc. You can change slides
+  while armed. The forward direction **stays armed**, so one look can be
+  pushed to a dozen objects one click at a time, counting as it goes; the
+  reverse finishes on the first click, because there is only one model to
+  find. The reverse also takes a multi-selection, so several objects can
+  all take one model at once.
+- **And you choose what travels.** "What travels ▾" on the bar is the same
+  twenty-five properties in the same six groups the Apply dialog uses —
+  size, spacing, position, colour, background — with its own tick state,
+  because what you want carried between two objects you are pointing at is
+  not what you want pushed across a whole deck. Narrowed to what the
+  *receiving* kind can actually carry, so pushing a text size onto a shape
+  is never a control that silently does nothing.
+
+The Match slide button stays where it is, in the Slides group: it is a
+slide-level verb and that is the slide-level group. Object matching cost
+the ribbon nothing — both verbs are rows in the Arrange menu, which is
+already shown for every kind of item and already carries "Match widths to
+the widest".
+
 ### The flip book
 
 A figure built up in steps — plot, then plot with a fit, then plot with a

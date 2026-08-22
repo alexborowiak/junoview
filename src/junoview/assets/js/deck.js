@@ -8311,6 +8311,20 @@
     layer.addEventListener('mousedown',function(ev){
       if(mode!=='edit') return;
       var t=ev.target;
+      /* WHILE A MATCH IS ARMED the canvas is a picker, not an editor: the
+         next thing you press is the object you meant, and selecting or
+         dragging it instead would be the wrong answer to a gesture you
+         have already committed to. Handled at the top of the one handler
+         that owns canvas mousedown, so there is no second code path
+         deciding what a click means (2026-08-22). */
+      if(matchArm){
+        var mt=(t.closest&&t.closest('.an-item[data-idx]'));
+        if(mt){
+          ev.preventDefault();ev.stopPropagation();
+          matchHit(+mt.getAttribute('data-idx'));
+        }
+        return;
+      }
       var item=(t.closest&&t.closest('.an-item'))
         ||(t.getAttribute&&t.classList
            &&t.classList.contains('an-item')?t:null);
@@ -10635,11 +10649,312 @@
     return {moved:moved,missing:missing,
       spare:Object.keys(sb).filter(function(k){return !db[k];})};
   }
+  /* ---- MATCHING ONE OBJECT TO ANOTHER ----------------------------------
+     (2026-08-22, user: "click on an object, and be like 'match object to
+     this', then if you click on something else it matches it to it ...
+     then if you click on another slide it says in the ribbon something
+     like 'matching to object on slide xx' with a cancel button as well.
+     Would be good if there was the reverse as well".)
+
+     Match slide answers "make this whole slide look like that one" and
+     pairs items up by guessing. This answers the question that needs no
+     guessing at all: you point at the two things yourself. It is the
+     escape hatch for every case the bucket heuristic cannot get right —
+     two paragraphs that belong the other way round, an item whose
+     counterpart is a different kind, a look you want from three slides
+     away.
+
+     TWO DIRECTIONS, because which end you have selected depends on which
+     one you noticed first:
+       'to'   — the selection is the MODEL; click things to change them.
+                Stays armed, so one look can be pushed to a dozen objects.
+       'from' — the selection is what CHANGES; click the model once.
+     Armed state lives here and nowhere else; the canvas reads it at the
+     top of its mousedown handler. */
+  var matchArm=null;
+  var matchPick=applyPickAll();
+  function matchLabelOf(sl,i){
+    var a=(sl&&sl.annots||[])[i];
+    return a?annotLabel(a):'object';
+  }
+  function armMatch(dir){
+    var s=pres.slides[cur],idxs=selIdxs().filter(function(i){
+      return (s&&s.annots||[])[i];});
+    if(!idxs.length){
+      toast('Select the object you want to match first');
+      return;
+    }
+    /* 'to' pushes ONE look outwards, so it takes the primary selection —
+       three models and one target is a question with no answer. 'from'
+       genuinely wants the lot: several objects can all take one model. */
+    if(dir==='to') idxs=[(typeof selAnnot==='number')?selAnnot:idxs[0]];
+    matchArm={dir:dir,slide:cur,idxs:idxs,n:0};
+    deckEl.classList.add('matching');
+    syncMatchBar();
+  }
+  function cancelMatch(){
+    if(!matchArm) return;
+    var n=matchArm.n;
+    matchArm=null;
+    deckEl.classList.remove('matching');
+    syncMatchBar();
+    if(n) toast(n+' object'+(n===1?'':'s')+' matched. Ctrl+Z undoes it.');
+  }
+  /* the copy loop, once. Same rule MATCH_PROPS has always followed —
+     undefined on the model means DELETE on the target — and the same deep
+     copy for the object-valued properties. */
+  function matchCopy(from,to,want){
+    if(!from||!to||from===to) return false;
+    MATCH_PROPS.forEach(function(p){
+      if(!want[p]) return;
+      if(from[p]===undefined) delete to[p];
+      else to[p]=(typeof from[p]==='object'&&from[p])
+        ?JSON.parse(JSON.stringify(from[p])):from[p];
+    });
+    return true;
+  }
+  function matchHit(idx){
+    if(!matchArm) return;
+    var s=pres.slides[cur];
+    var hit=(s&&s.annots||[])[idx];
+    var src=pres.slides[matchArm.slide];
+    if(!hit||!src) return;
+    var n=0;
+    if(matchArm.dir==='to'){
+      var model=(src.annots||[])[matchArm.idxs[0]];
+      /* the KIND of the thing being changed decides which properties are
+         meaningful — pushing a text size onto a shape is a control that
+         does nothing, and applyFieldsFor already knows that */
+      if(matchCopy(model,hit,applyFieldsFor(matchPick,hit.k))) n++;
+    } else {
+      matchArm.idxs.forEach(function(i){
+        var to=(src.annots||[])[i];
+        if(matchCopy(hit,to,applyFieldsFor(matchPick,to.k))) n++;
+      });
+    }
+    if(!n) return;
+    matchArm.n+=n;
+    markDirty();refresh();
+    /* 'from' has exactly one model to find, so finding it finishes the
+       job; 'to' stays armed so a look can be pushed to a dozen things
+       without re-arming between each */
+    if(matchArm.dir==='from') cancelMatch();
+    else {syncMatchBar();
+      toast(matchArm.n+' matched — keep clicking, or press Esc');}
+  }
+  function syncMatchBar(){
+    var bar=$('#matchbar'); if(!bar) return;
+    bar.hidden=!matchArm;
+    if(!matchArm) return;
+    var w=$('#match-what');
+    var src=pres.slides[matchArm.slide];
+    var name=matchLabelOf(src,matchArm.idxs[0]);
+    if(matchArm.idxs.length>1) name=matchArm.idxs.length+' objects';
+    if(w) w.innerHTML=(matchArm.dir==='to')
+      ? ('&#8646; Copying the look of <b>'+esc(name)+'</b> on slide '
+        +(matchArm.slide+1)+' &mdash; click an object to change it'
+        +(matchArm.n?(' &middot; '+matchArm.n+' done'):''))
+      : ('&#8646; <b>'+esc(name)+'</b> on slide '+(matchArm.slide+1)
+        +' will take the look of the object you click');
+  }
+  (function(){
+    var mc=$('#match-cancel');
+    if(mc) mc.addEventListener('click',function(e){
+      e.stopPropagation();cancelMatch();});
+    var mb=$('#match-props'),mm=$('#match-props-menu');
+    if(!mb||!mm) return;
+    /* the same vocabulary the Apply dialog uses — "size, position, shape,
+       colour" is exactly what APPLY_PROPS already groups, so this is that
+       list rather than a second one that could disagree with it. Its own
+       tick state, though: what you want carried between two objects you
+       are pointing at is not the same question as what you want pushed
+       across a whole deck. */
+    function build(){
+      mm.innerHTML='';
+      var head=document.createElement('div');
+      head.className='mp-head';
+      [['All',function(){matchPick=applyPickAll();}],
+       ['None',function(){matchPick={};}]].forEach(function(pr){
+        var b=document.createElement('button');
+        b.className='dbtn mp-b';b.textContent=pr[0];
+        b.addEventListener('click',function(e){
+          e.stopPropagation();pr[1]();build();});
+        head.appendChild(b);
+      });
+      mm.appendChild(head);
+      APPLY_GROUPS.forEach(function(g){
+        var rows=APPLY_PROPS.filter(function(r){return r[2]===g;});
+        if(!rows.length) return;
+        menuHead(mm,g.toLowerCase());
+        rows.forEach(function(r){
+          var lab=document.createElement('label');
+          lab.className='find-ck';
+          var ck=document.createElement('input');
+          ck.type='checkbox';ck.checked=!!matchPick[r[0]];
+          ck.addEventListener('click',function(e){e.stopPropagation();});
+          ck.addEventListener('change',function(){
+            if(ck.checked) matchPick[r[0]]=1; else delete matchPick[r[0]];
+          });
+          lab.appendChild(ck);
+          lab.appendChild(document.createTextNode(' '+r[1]));
+          mm.appendChild(lab);
+        });
+      });
+    }
+    mb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=mm.hidden;
+      if(open) build();
+      mm.hidden=!open;
+      mb.setAttribute('aria-expanded',open?'true':'false');
+    });
+    document.addEventListener('click',function(e){
+      if(!mm.hidden&&!mm.contains(e.target)&&e.target!==mb)
+        mm.hidden=true;
+    });
+  })();
+  /* ---- ONE SLIDE'S LAYOUT, GIVEN TO SEVERAL ----------------------------
+     The Match slide menu only ever PULLED — pick another slide and this
+     one takes its arrangement — so making six slides agree meant doing it
+     six times, standing on a different slide each time (2026-08-22).
+     The model is the slide you are ON, which is the one you have just got
+     looking right. */
+  (function(){
+    var dlg=$('#ms-dlg'); if(!dlg) return;
+    var msOff=new WeakMap();       /* excluded, keyed on the slide OBJECT */
+    function has(s){return !!s&&!msOff.has(s)&&s!==pres.slides[cur];}
+    function idxs(){
+      var out=[];
+      (pres.slides||[]).forEach(function(s,i){if(has(s)) out.push(i);});
+      return out;
+    }
+    function words(){
+      var n=idxs().length;
+      return n?(n+' slide'+(n===1?'':'s')+' will be re-laid out')
+        :'No slides chosen';
+    }
+    function sync(){
+      var c=$('#ms-count'); if(c) c.textContent=words();
+      var ok=$('#ms-ok'),n=idxs().length;
+      if(ok){ok.disabled=!n;
+        ok.textContent=n?('Match '+n+' slide'+(n===1?'':'s')):'Match';}
+    }
+    function build(){
+      var w=$('#ms-what');
+      if(w) w.innerHTML='Every one of them takes the layout of '
+        +'<span class="aa-chip">slide '+(cur+1)+'</span> — the position, '
+        +'size and styling of what is on it, matched up by kind. '
+        +'Content never moves.';
+      var host=$('#ms-scope'); if(!host) return;
+      host.innerHTML='';
+      sectionRuns().forEach(function(r){
+        if(r.id){
+          var h=document.createElement('div');h.className='aa-sech';
+          var hck=document.createElement('input');hck.type='checkbox';
+          var on=0,tot=0,i;
+          for(i=r.at;i<r.at+r.n;i++){
+            if(i===cur) continue;
+            tot++; if(has(pres.slides[i])) on++;
+          }
+          hck.checked=on>0;
+          hck.indeterminate=on>0&&on<tot;
+          hck.disabled=!tot;
+          hck.addEventListener('change',function(){
+            for(var j=r.at;j<r.at+r.n;j++){
+              if(j===cur) continue;
+              if(hck.checked) msOff['delete'](pres.slides[j]);
+              else msOff.set(pres.slides[j],1);
+            }
+            build();sync();
+          });
+          h.appendChild(hck);
+          var ht=document.createElement('span');
+          ht.textContent=r.name;h.appendChild(ht);
+          host.appendChild(h);
+        }
+        var grid=document.createElement('div');grid.className='aa-grid';
+        for(var k=r.at;k<r.at+r.n;k++)(function(i2){
+          var sl=pres.slides[i2]; if(!sl) return;
+          var lab=document.createElement('label');
+          lab.className='find-ck'+(i2===cur?' aa-no':'');
+          var ck=document.createElement('input');ck.type='checkbox';
+          ck.checked=has(sl);
+          /* the model cannot also be a destination */
+          ck.disabled=(i2===cur);
+          ck.addEventListener('change',function(){
+            if(ck.checked) msOff['delete'](sl); else msOff.set(sl,1);
+            sync();});
+          lab.appendChild(ck);
+          var n2=document.createElement('span');
+          n2.className='aa-slide-n';n2.textContent=(i2+1);
+          lab.appendChild(n2);
+          var t=document.createElement('span');
+          t.className='aa-slide-t';
+          t.textContent=(i2===cur)?(slideTitle(sl)+' (the model)')
+            :slideTitle(sl);
+          lab.appendChild(t);
+          lab.title=t.textContent;
+          grid.appendChild(lab);
+        })(k);
+        host.appendChild(grid);
+      });
+    }
+    function open(){
+      if((pres.slides||[]).length<2){
+        toast('There is only one slide to match');return;}
+      build();sync();dlg.hidden=false;
+    }
+    function close(){dlg.hidden=true;}
+    $('#ms-ok').addEventListener('click',function(){
+      var list=idxs(),moved=0,none=0;
+      list.forEach(function(i){
+        var r=matchSlide(cur,i);
+        if(!r) return;
+        if(r.moved) moved+=r.moved; else none++;
+      });
+      close();
+      if(!moved){toast('Nothing on those slides matched what is on this '
+        +'one — only items of the same kind travel');return;}
+      var msg=moved+' item'+(moved===1?'':'s')+' re-laid out across '
+        +list.length+' slide'+(list.length===1?'':'s');
+      if(none) msg+=' — '+none+' had nothing in common with this one';
+      markDirty();refresh();
+      toast(msg+'. Ctrl+Z undoes the lot.');
+    });
+    $('#ms-cancel').addEventListener('click',close);
+    $('#ms-close').addEventListener('click',close);
+    dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
+    dlg.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}
+    });
+    $('#ms-all').addEventListener('click',function(){
+      (pres.slides||[]).forEach(function(s){msOff['delete'](s);});
+      build();sync();});
+    $('#ms-none').addEventListener('click',function(){
+      (pres.slides||[]).forEach(function(s){msOff.set(s,1);});
+      build();sync();});
+    window.SemDeckMatchMany=open;
+  })();
   /* pick which slide to match, from a small list of the others */
   function openMatchMenu(btn){
     var old=$('#match-menu'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu match-menu';m.id='match-menu';
+    /* the OTHER direction, first, because it is the one that scales: you
+       have just got this slide looking right and want the rest to follow
+       (2026-08-22). Pulling one slide's layout onto this one is still
+       below it, unchanged. */
+    var push=document.createElement('button');
+    push.className='dbtn vw-opt';
+    push.textContent='⇉ Give this slide’s layout to…';
+    push.title='Choose which slides take the arrangement of this one';
+    push.addEventListener('click',function(e){
+      e.stopPropagation();m.remove();
+      if(typeof window.SemDeckMatchMany==='function')
+        window.SemDeckMatchMany();
+    });
+    m.appendChild(push);
     menuHead(m,'take the layout of…');
     var any=false;
     (pres.slides||[]).forEach(function(sl,i){
@@ -10723,13 +11038,18 @@
         where "make these things match" is kept, and it is shown for
         every kind of item, which the Styles menu beside it is not
         (2026-08-22) */
-     ['a:type','Apply this look to every one of its type…']],'al',
+     ['a:type','Apply this look to every one of its type…'],
+     /* the two POINT-AT-IT verbs. They live here, with the other
+        make-things-match rows, and cost the ribbon nothing (2026-08-22) */
+     ['x:to','Copy this look to objects I click…'],
+     ['x:from','Take the look of an object I click…']],'al',
     function(what){
       if(what.indexOf('a:')===0){
         if(typeof window.SemDeckApplyDlg==='function')
           window.SemDeckApplyDlg();
         return;
       }
+      if(what.indexOf('x:')===0){armMatch(what.slice(2));return;}
       if(what.indexOf('d:')===0){distributeSel(what.slice(2));return;}
       if(what.indexOf('p:')===0){centreOnPage(what.slice(2));return;}
       if(what.indexOf('g:')===0){closeGaps(what.slice(2));return;}
@@ -14879,6 +15199,10 @@
     }
     if(e.key==='Escape'){
       var vf=$('#vfull');
+      /* an armed match is the OUTERMOST mode you can be standing in — you
+         cannot be trimming or inside a group while the canvas is a
+         picker — so it goes first and swallows the key */
+      if(matchArm){e.preventDefault();cancelMatch();return;}
       if(vf&&!vf.hidden) closeVFull();
       /* trim mode is the innermost state: the first Esc leaves IT,
          keeping the selection, before any tool/selection drops */

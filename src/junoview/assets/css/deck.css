@@ -2320,6 +2320,27 @@ ol.an-ul{list-style:decimal;}
 .pickbar .dbtn{border-color:#ffffff55;color:#fff;}
 body.picking .card{cursor:copy;}
 body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
+/* the armed-match bar is a SIBLING of .deck, like the pickbar and every
+   other overlay here — and .deck is fixed at z-index 100, so this has to
+   be fixed and above it or it renders underneath the editor it is
+   describing. It covers the thin top bar for the duration, which is
+   honest: you are standing in a mode. */
+.matchbar{position:fixed;top:0;left:0;right:0;z-index:150;}
+.matchbar .dc-menu{max-height:min(64vh,460px);overflow-y:auto;
+  min-width:230px;right:0;left:auto;}
+.mp-head{display:flex;gap:5px;padding:2px 4px 6px;}
+.mp-b{padding:2px 8px;font-size:10.5px;}
+.mp-menu .find-ck{padding:2px 5px;border-radius:5px;color:#c3d2df;}
+.mp-menu .find-ck:hover{background:#ffffff0d;}
+/* while a match is armed the canvas is a PICKER: say so with the cursor,
+   and light up whatever is under the pointer so it is obvious what the
+   next click will take */
+.deck.matching .annot-layer{cursor:copy;}
+.deck.matching .an-item:hover{outline:2px solid var(--cyan);
+  outline-offset:2px;}
+.ms-box{width:min(560px,94vw);}
+body.light .mp-menu .find-ck{color:var(--ink);}
+body.light .mp-menu .find-ck:hover{background:#00000008;}
 
 /* pane editor: the current slide as clickable regions */
 /* the current slide's interactive editor — the single big view in the

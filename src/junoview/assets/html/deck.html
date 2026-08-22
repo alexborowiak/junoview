@@ -1373,6 +1373,23 @@
   </div>
   <div class="deck-toast" id="deck-toast" hidden></div>
 </div>
+<!-- WHILE A MATCH IS ARMED. The user asked for this "in the ribbon", and
+     it very nearly went there — but the ribbon may never grow a row and
+     may never hide a word, and this line has to say which object on which
+     slide. A bar is what the editor already uses for a mode you are
+     standing in (see .pickbar below, for choosing a notebook card), so
+     this is that same idiom rather than a new one (2026-08-22). -->
+<div class="pickbar matchbar" id="matchbar" hidden>
+  <span id="match-what"></span>
+  <span class="deck-spring"></span>
+  <span class="dc-menuwrap">
+    <button class="dbtn" id="match-props" aria-haspopup="true"
+      aria-expanded="false"
+      title="Which properties travel">What travels &#9662;</button>
+    <div class="dc-menu mp-menu" id="match-props-menu" hidden></div>
+  </span>
+  <button class="dbtn" id="match-cancel">Cancel (Esc)</button>
+</div>
 <div class="pickbar" id="pickbar" hidden>
   <span id="pick-what">&#128204; Click a card in the notebook to place it
   in the slide</span>
@@ -1479,6 +1496,39 @@
            number of slides you are about to change is not something to
            find out afterwards -->
       <button class="dbtn primary" id="aa-ok">Apply</button>
+    </div>
+  </div>
+</div>
+<!-- MATCH ONE SLIDE'S LAYOUT TO SEVERAL. The Match slide menu only ever
+     pulled: pick another slide, and THIS one takes its arrangement. Going
+     the other way meant repeating that on every slide you wanted it on
+     (2026-08-22, user: "make sure you can match multiple slides to one
+     slide at a time"). It borrows the Apply dialog's shell and its slide
+     picker outright rather than growing a second one. -->
+<div class="aa-dlg" id="ms-dlg" hidden role="dialog"
+  aria-label="Match slides">
+  <div class="aa-box ms-box">
+    <div class="aa-head">
+      <span class="eq-t">Match slides</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="ms-close" title="Cancel (Esc)"
+        >&#10005;</button>
+    </div>
+    <div class="aa-what" id="ms-what"></div>
+    <div class="aa-col">
+      <div class="aa-colh">
+        <span class="eq-t">Give it to</span>
+        <span class="deck-spring"></span>
+        <button class="dbtn aa-b" id="ms-all">Use all</button>
+        <button class="dbtn aa-b" id="ms-none">None</button>
+      </div>
+      <div class="aa-scope" id="ms-scope"></div>
+    </div>
+    <div class="aa-foot">
+      <span class="aa-count" id="ms-count"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="ms-cancel">Cancel</button>
+      <button class="dbtn primary" id="ms-ok">Match</button>
     </div>
   </div>
 </div>
