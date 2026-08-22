@@ -2765,6 +2765,7 @@
       })};
     if(typeof p.folder==='string'&&p.folder) out.folder=p.folder;
     if(p.showNums) out.showNums=1;   /* keep the slide-numbers preference */
+    if(p.tapzoom) out.tapzoom=1;     /* tap-to-enlarge, same rule */
     if(typeof p.page==='string'&&p.page) out.page=p.page;  /* page preset */
     /* the page background survives every load path — normPres dropping
        it turned saved white posters navy again (2026-08-05 review) */
@@ -3178,7 +3179,7 @@
      SLIDE notes live on the slide and are covered. */
   function histState(){
     return JSON.stringify({slides:pres.slides||[],talkMins:pres.talkMins||0,
-      showNums:pres.showNums||0,wmark:pres.wmark||null,
+      showNums:pres.showNums||0,tapzoom:pres.tapzoom||0,wmark:pres.wmark||null,
       head:pres.head||null,foot:pres.foot||null,
       /* an empty styles object and no styles object are the same deck —
          serialise them the same way or merely READING a style (which
@@ -3219,6 +3220,7 @@
     var d;try{d=JSON.parse(snap);}catch(e){return;}
     pres.slides=d.slides||[];
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
+    if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     ['wmark','head','foot','styles','page','pageBg',
      'cropMarks'].forEach(function(k){
@@ -4775,6 +4777,19 @@
             if(tg){e.stopPropagation();spotlight(tg);return;}
           }
           if(spotEl){closeSpot();return;}
+          /* TAP AN ITEM TO ENLARGE IT (2026-08-22, user: "clicking
+             figures/text makes full screen"). This is in tension with a
+             standing instruction — "a plain click MUST still advance,
+             that is the gesture a talk runs on" (2026-08-20) — so it is
+             a per-deck SETTING, and the two are reconciled by only
+             claiming the item itself: the rest of the slide, which is
+             most of it, still advances on a plain click. Off puts the
+             old behaviour back exactly. */
+          if(pres.tapzoom){
+            var tz=e.target.closest&&e.target.closest('.an-item');
+            if(tz&&!tz.classList.contains('an-prebuild')){
+              e.stopPropagation();spotlight(tz);return;}
+          }
           advance();
         });
       }
@@ -5277,6 +5292,148 @@
   var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];
   /* the HEADING styles, for "apply to all headings" */
   var HEADING_STYLES=['title','h1','h2','h3'];
+  /* ---- STYLE SETS ------------------------------------------------------
+     (2026-08-22, user: "it would be good if you could auto-style a
+     presentation ... you could have set-defaults of what paragraphs,
+     headings etc. look like, instead of having to go through and do
+     everything yourself ... styles that are already in existence that
+     people would like, and you can create your own".)
+
+     A style set is the whole type registry in one named object — every
+     style's size, weight, face and colour together. `pres.styles` already
+     IS that object, so applying a set is one assignment and one
+     re-stamp, and saving one is a copy. There is no new model here at
+     all, which is the point: the registry was built for this and just had
+     no way to be named or shared.
+
+     Called a STYLE SET and not a theme deliberately: "Theme" in this app
+     is already the chrome's colour scheme (app.js SCHEMES), and two
+     things called the same word one bar apart is how a menu stops being
+     readable. Word uses "style set" for exactly this and means exactly
+     this.
+
+     Sizes are percentages of page height, the same currency a.size uses,
+     so a set means the same thing on a 16:9 slide and on an A0 poster. */
+  var STYLE_SETS=[
+    {id:'clean',label:'Clean',
+     note:'Sans throughout, the built-in scale. A safe default.',
+     styles:{
+       title:{size:7.2,b:1},h1:{size:5.0,b:1},h2:{size:3.8,b:1},
+       h3:{size:3.0,b:1},body:{size:2.6},small:{size:2.0},
+       caption:{size:1.7,i:1,color:'#8aa0b0'}}},
+    {id:'editorial',label:'Editorial',
+     note:'Serif headings over a sans body, and room to breathe.',
+     styles:{
+       title:{size:7.6,b:1,font:'serif'},
+       h1:{size:5.2,b:1,font:'serif'},
+       h2:{size:3.9,b:1,font:'serif'},
+       h3:{size:3.0,b:0,i:1,font:'serif'},
+       body:{size:2.5,lh:1.5},small:{size:1.95,lh:1.4},
+       caption:{size:1.6,i:1,font:'serif',color:'#9aa8b4'}}},
+    {id:'bold',label:'Bold',
+     note:'Heavy sans and big titles — for a room at the back.',
+     styles:{
+       title:{size:9.0,b:1},h1:{size:6.2,b:1},h2:{size:4.4,b:1},
+       h3:{size:3.3,b:1},body:{size:3.0,b:0},small:{size:2.3},
+       caption:{size:1.9,b:1,color:'#7f93a4'}}},
+    {id:'academic',label:'Academic',
+     note:'Serif everywhere, modest sizes, generous leading.',
+     styles:{
+       title:{size:6.4,b:1,font:'serif'},
+       h1:{size:4.4,b:1,font:'serif'},
+       h2:{size:3.4,b:1,font:'serif'},
+       h3:{size:2.8,b:0,i:1,font:'serif'},
+       body:{size:2.4,font:'serif',lh:1.5,pspace:0.5},
+       small:{size:1.9,font:'serif',lh:1.4},
+       caption:{size:1.6,i:1,font:'serif',color:'#93a3b0'}}},
+    {id:'minimal',label:'Minimal',
+     note:'Light weights and small headings. Lets the figures talk.',
+     styles:{
+       title:{size:5.6},h1:{size:4.0},h2:{size:3.1},h3:{size:2.6},
+       body:{size:2.4,lh:1.55},small:{size:1.9,lh:1.45},
+       caption:{size:1.55,color:'#8aa0b0'}}},
+    {id:'poster',label:'Poster',
+     note:'Sized for a printed sheet read from a metre away.',
+     styles:{
+       title:{size:4.6,b:1},h1:{size:3.2,b:1},h2:{size:2.5,b:1},
+       h3:{size:2.1,b:1},body:{size:1.7},small:{size:1.45},
+       caption:{size:1.25,i:1,color:'#8aa0b0'}}}
+  ];
+  /* sets you saved yourself live in localStorage rather than on the deck:
+     the whole point of naming a look is using it on the NEXT presentation
+     too, and anything on `pres` travels with one file only. */
+  var SETKEY='jv-deck-sets:';
+  function myStyleSets(){
+    try{
+      var l=JSON.parse(lsGet(SETKEY+SCOPE)||'[]');
+      return Array.isArray(l)?l:[];
+    }catch(e){return [];}
+  }
+  function saveMyStyleSets(list){
+    lsSet(SETKEY+SCOPE,JSON.stringify(list));
+  }
+  function allStyleSets(){
+    return STYLE_SETS.concat(myStyleSets());
+  }
+  function styleSetById(id){
+    var hit=null;
+    allStyleSets().forEach(function(t){if(t&&t.id===id) hit=t;});
+    return hit;
+  }
+  /* apply a set: replace the registry and re-stamp every box wearing a
+     name. Custom TYPES are kept — they are your vocabulary, not the
+     look — and a set that says nothing about one keeps whatever it had. */
+  function applyStyleSet(id){
+    var t=styleSetById(id); if(!t) return 0;
+    var next={};
+    Object.keys(t.styles||{}).forEach(function(k){
+      var o=JSON.parse(JSON.stringify(t.styles[k]));
+      if(STYLE_DEFAULTS[k]) o.label=STYLE_DEFAULTS[k].label;
+      /* SPELL OUT the properties the set does NOT want. styleDef merges an
+         override OVER the built-in, so a key the set simply omits keeps
+         whatever the built-in said — which meant "Bold", whose caption is
+         upright, still produced italic captions, because the built-in
+         Caption is italic (2026-08-22, caught in the browser). Writing a
+         falsy value makes applyStyleTo's `if(d.i) … else delete` clear it,
+         so a set means exactly what it says and nothing more. */
+      ['b','i','font','color','lh','pspace'].forEach(function(p){
+        if(o[p]===undefined) o[p]=0;});
+      next[k]=o;
+    });
+    /* a custom type keeps the size it had unless the set names it, so
+       applying a set does not silently flatten types you invented */
+    (pres.types||[]).forEach(function(ct){
+      if(ct&&ct.id&&!next[ct.id]&&pres.styles&&pres.styles[ct.id])
+        next[ct.id]=pres.styles[ct.id];
+    });
+    pres.styles=next;
+    return restyleAll(null);
+  }
+  /* ---- AUTO-STYLE ------------------------------------------------------
+     The half that matters. Most decks have never used a named style, so
+     applying a set to one changes NOTHING — there is nothing wearing a
+     name to re-stamp. So the boxes are named first, by what they already
+     look like, using the bands the standardise check already computes.
+
+     This is the opposite of stdAdopt, deliberately. Adopting a band keeps
+     the band's own numbers so nothing moves; auto-styling REPLACES them,
+     because moving is the entire request ("instead of having to go
+     through and do everything yourself"). */
+  function autoStyleDeck(id){
+    var t=styleSetById(id); if(!t) return null;
+    var boxes=stdBoxes().filter(function(p){
+      return !(p.a.style&&STYLE_DEFAULTS[p.a.style]);});
+    var named=0;
+    if(boxes.length){
+      var bands=stdName(stdBands(boxes));
+      bands.forEach(function(b){
+        b.boxes.forEach(function(p){
+          p.a.style=b.suggest;named++;});
+      });
+    }
+    var n=applyStyleSet(id);
+    return {named:named,styled:n,set:t};
+  }
   /* ---- TYPES OF YOUR OWN ----------------------------------------------
      The seven built-ins are a type SCALE, not a vocabulary. A deck that
      wants a "Quote" or a "Source note" had nowhere to put one, so those
@@ -5812,6 +5969,20 @@
     }
     function build(){
       menu.innerHTML='';
+      /* FIRST, above the individual styles: picking a whole look is the
+         thing you do once at the start, and tuning one style is what you
+         do afterwards. The old menu offered only the second (2026-08-22). */
+      var sets=document.createElement('button');
+      sets.className='dbtn vw-opt';
+      sets.textContent='\u25f1 Style sets \u2014 restyle the whole deck\u2026';
+      sets.title='Ready-made looks, and any you have saved. Works even '
+        +'on a deck that has never used a named style.';
+      sets.addEventListener('click',function(e){
+        e.stopPropagation();menu.hidden=true;
+        if(typeof window.SemDeckStyleSets==='function')
+          window.SemDeckStyleSets();
+      });
+      menu.appendChild(sets);
       menuHead(menu,'this presentation\u2019s type');
       styleOrder().forEach(function(id){
         var d=styleDef(id);
@@ -7293,7 +7464,7 @@
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
-    +'#fmt-opval').split(' ');
+    +'#fmt-opval #fmt-imgrefresh').split(' ');
 
   function showFmt(){
     var bar=$('#et-fmt'); if(!bar) return;
@@ -7535,6 +7706,16 @@
        "why is there animate options in a poster"). */
     /* the code/figure/output part-picker (+ split) — moved off the frame
        into the ribbon's Object group */
+    /* only for a picture that actually knows where it came from —
+       otherwise it is a button that can only ever fail */
+    var ir=$('#fmt-imgrefresh');
+    if(ir){
+      var anyLinked=false;
+      selIdxs().forEach(function(i){
+        var xa=(s&&s.annots||[])[i];
+        if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;});
+      ir.hidden=!anyLinked;
+    }
     var partsSlot=$('#fmt-parts');
     if(partsSlot){
       partsSlot.innerHTML='';
@@ -10613,19 +10794,68 @@
     markDirty();refresh();
     return n;
   }
+  /* ---- WHAT AN UNSTYLED TEXT BOX IS FOR --------------------------------
+     matchKey answers "what kind of thing is this", and for text it
+     answers with the NAMED STYLE — which is right, and useless on the
+     many decks that have never used one. There, every text box came back
+     'text:body', so a heading and a caption were the same kind and got
+     paired by position alone: the higher one won the higher slot and a
+     heading could land where a caption belonged.
+
+     The fix is to read the role the box is actually PLAYING, and the
+     signal is RANK WITHIN ITS OWN SLIDE rather than absolute size. The
+     biggest text on a slide is its heading whatever the number happens to
+     be, the next is its body, the next its caption. Rank survives exactly
+     the case that breaks a size threshold — a deck whose slides were
+     formatted by hand and disagree about how big a heading is — which is
+     precisely the deck that needed arranging in the first place
+     (2026-08-22, user: "is there not a way for it to figure this out?").
+
+     Sizes within ROLE_TOL of each other share a rank, so two paragraphs
+     set the same size stay one bucket and pair between themselves in
+     reading order, which is the right answer for them. */
+  var ROLE_TOL=1.06;
+  function inferRoles(sl){
+    var list=[],out={};
+    ((sl&&sl.annots)||[]).forEach(function(a,i){
+      if(a&&a.k==='text'&&!a.hide
+        &&!(a.style&&STYLE_DEFAULTS[a.style]))
+        list.push({i:i,size:(a.size||2.6)});
+    });
+    if(!list.length) return out;
+    list.sort(function(x,y){return y.size-x.size;});
+    var rank=0,prev=null;
+    list.forEach(function(e){
+      if(prev!==null&&prev/e.size>ROLE_TOL) rank++;
+      prev=e.size;
+      out[e.i]=rank;
+    });
+    return out;
+  }
+  /* the bucket key one slide's items pair on. A box wearing a real style
+     keeps it — a name you chose beats a rank we inferred — and everything
+     that is not text is unchanged. */
+  function slideRoleKey(sl){
+    var roles=inferRoles(sl);
+    return function(a,i){
+      if(a&&a.k==='text'&&!a.style&&roles[i]!=null)
+        return 'text:~'+roles[i];
+      return matchKey(a);
+    };
+  }
   function matchSlide(fromIdx,toIdx){
     var src=pres.slides[fromIdx],dst=pres.slides[toIdx];
     if(!src||!dst) return null;
     /* buckets by kind, in reading order down the page then across */
     function bucket(sl){
-      var m={};
+      var m={},keyOf=slideRoleKey(sl);
       (sl.annots||[]).map(function(a,i){return {a:a,i:i};})
         .filter(function(p2){return p2.a&&!p2.a.hide;})
         .sort(function(p2,q2){
           var dy=(p2.a.y||0)-(q2.a.y||0);
           return Math.abs(dy)>4?dy:((p2.a.x||0)-(q2.a.x||0));})
         .forEach(function(p2){
-          var k=matchKey(p2.a);
+          var k=keyOf(p2.a,p2.i);
           (m[k]=m[k]||[]).push(p2);});
       return m;
     }
@@ -10648,6 +10878,360 @@
     });
     return {moved:moved,missing:missing,
       spare:Object.keys(sb).filter(function(k){return !db[k];})};
+  }
+  /* ---- ARRANGE THIS SLIDE ----------------------------------------------
+     (2026-08-22, user: "there could be like an 'arrange slide button',
+     which based upon what is there (the main big things and text boxes,
+     and then anything little like shapes stay where they are in reference
+     to if they are on top of something, and arrows point to the same xy
+     in one image to the same xy in another image). Then there can be
+     presets based upon both the size of something, as well as the
+     difference between things can be configured.")
+
+     This is the arrangement library's twin: it needs no saved layout at
+     all, because it reads the slide and works one out. Three kinds of
+     thing, and the whole design is in how they are treated differently:
+
+       MAJOR   figures, images, tables, flip books — and any shape big
+               enough to be scenery rather than a mark. These are placed.
+       TEXT    placed too, by the ROLE inferRoles gives it: the biggest
+               text on the slide is its heading, the smallest under a
+               figure is that figure's caption.
+       MINOR   a circle round part of a plot, a tick, a small label. These
+               are NOT placed. They are recorded as a FRACTION of whatever
+               they sit on and put back on top of it afterwards, so the
+               annotation still annotates the same pixel of the same plot.
+
+     Arrow endpoints get the same treatment, one end at a time and by
+     fraction rather than by the a.c1/a.c2 tie — that tie aims at an
+     item's centre and lands on its border, which is right for "this
+     points AT that figure" and wrong for "this points at the peak in the
+     top-left of that figure", which is what is being preserved here. */
+  var ARRANGE_PRESETS=[
+    ['tight','Tight',{gap:1.6,big:7,textShare:0.30}],
+    ['normal','Normal',{gap:3.0,big:9,textShare:0.34}],
+    ['airy','Airy',{gap:5.0,big:12,textShare:0.38}]
+  ];
+  function arrangeOpts(id){
+    var o=ARRANGE_PRESETS[1][2];
+    ARRANGE_PRESETS.forEach(function(p){if(p[0]===id) o=p[2];});
+    return o;
+  }
+  function rectOf(a){
+    if(!a) return null;
+    if(a.k==='arrow')
+      return {l:Math.min(a.x1,a.x2),r:Math.max(a.x1,a.x2),
+              t:Math.min(a.y1,a.y2),b:Math.max(a.y1,a.y2)};
+    if(a.w==null||a.h==null) return null;
+    return {l:a.x,r:a.x+a.w,t:a.y,b:a.y+a.h};
+  }
+  function rectArea(r){
+    return r?Math.max(0,r.r-r.l)*Math.max(0,r.b-r.t):0;
+  }
+  function overlapArea(p,q){
+    if(!p||!q) return 0;
+    var w=Math.min(p.r,q.r)-Math.max(p.l,q.l);
+    var h=Math.min(p.b,q.b)-Math.max(p.t,q.t);
+    return (w>0&&h>0)?w*h:0;
+  }
+  /* is this item scenery or a mark? Size is the signal the user named,
+     and it is configurable per preset because "big" on an A0 poster and
+     "big" on a 16:9 slide are not the same number of percent. */
+  function isMajorKind(a){
+    return a&&(a.k==='cell'||a.k==='image'||a.k==='flip'||a.k==='table');
+  }
+  function arrangeSlide(sl,layer,opt){
+    if(!sl) return 0;
+    opt=opt||arrangeOpts('normal');
+    var m=marginPct(),gap=opt.gap;
+    var annots=sl.annots||[];
+    /* EVERY rect is measured BEFORE anything moves. Text auto-heights and
+       a figure frame hugs its plot, so the live layer is the only honest
+       source for those — and it goes stale the moment we write. */
+    var rects=annots.map(function(a,i){
+      var r=(layer?annotRectPct(layer,sl,i):null)||rectOf(a);
+      return r;
+    });
+    var majors=[],texts=[],minors=[],arrows=[];
+    annots.forEach(function(a,i){
+      if(!a||a.hide) return;
+      if(a.k==='arrow'){arrows.push(i);return;}
+      var r=rects[i]; if(!r) return;
+      if(a.k==='text'){texts.push(i);return;}
+      if(isMajorKind(a)||rectArea(r)>=opt.big*opt.big) majors.push(i);
+      else minors.push(i);
+    });
+    if(!majors.length&&!texts.length) return 0;
+    /* ---- record what rides on what, before anything moves ---- */
+    function hostOf(r){
+      var best=-1,bo=0;
+      majors.forEach(function(j){
+        var o=overlapArea(r,rects[j]);
+        if(o>bo){bo=o;best=j;}
+      });
+      /* half of it has to be over the host, or a shape merely NEAR a
+         figure would be dragged across the slide with it */
+      return (best>=0&&bo>=rectArea(r)*0.5)?best:-1;
+    }
+    function frac(r,h){
+      var hw=(h.r-h.l)||1,hh=(h.b-h.t)||1;
+      return {x:(r.l-h.l)/hw,y:(r.t-h.t)/hh,
+              w:(r.r-r.l)/hw,h:(r.b-r.t)/hh};
+    }
+    var ride=[];
+    minors.forEach(function(i){
+      var h=hostOf(rects[i]);
+      if(h>=0) ride.push({i:i,host:h,f:frac(rects[i],rects[h])});
+    });
+    function pointHost(x,y){
+      var best=-1;
+      majors.forEach(function(j){
+        var r=rects[j];
+        if(x>=r.l&&x<=r.r&&y>=r.t&&y<=r.b) best=j;
+      });
+      return best;
+    }
+    var tips=[];
+    arrows.forEach(function(i){
+      var a=annots[i];
+      [['1',a.x1,a.y1],['2',a.x2,a.y2]].forEach(function(e){
+        var h=pointHost(e[1],e[2]);
+        if(h<0) return;
+        var r=rects[h];
+        tips.push({i:i,end:e[0],host:h,
+          fx:(e[1]-r.l)/((r.r-r.l)||1),
+          fy:(e[2]-r.t)/((r.b-r.t)||1)});
+      });
+    });
+    /* ---- who is a heading, who is a caption ---- */
+    var roles=inferRoles(sl);
+    var maxRank=0;
+    texts.forEach(function(i){
+      if(roles[i]!=null&&roles[i]>maxRank) maxRank=roles[i];});
+    var head=-1,caps={},bodies=[];
+    texts.forEach(function(i){
+      var rk=roles[i];
+      if(rk===0&&head<0&&maxRank>0){head=i;return;}
+      /* a caption is the smallest text that sits UNDER a figure and
+         overlaps it across — the same signal the standardise check uses */
+      if(rk===maxRank&&maxRank>0){
+        var r=rects[i],hit=-1;
+        majors.forEach(function(j){
+          var q=rects[j];
+          if(r.t>=q.b-2&&r.t<=q.b+14&&r.r>q.l&&r.l<q.r) hit=j;});
+        if(hit>=0&&caps[hit]==null){caps[hit]=i;return;}
+      }
+      bodies.push(i);
+    });
+    /* ---- the regions ---- */
+    var L=m.x,T=m.y,R=100-m.x,B=100-m.y;
+    var put={};
+    function setBox(i,x,y,w,h){put[i]={x:x,y:y,w:w,h:h};}
+    if(head>=0){
+      var hh=Math.max(6,(rects[head].b-rects[head].t));
+      setBox(head,L,T,R-L,null);
+      T+=hh+gap;
+    }
+    var capH=Math.max(4,(maxRank>0?5:0));
+    var nb=bodies.length,nm=majors.length;
+    if(!nm){
+      /* text only: one column, stacked, sharing the height */
+      var each=(B-T-gap*Math.max(0,nb-1))/Math.max(1,nb);
+      bodies.forEach(function(i,k){
+        setBox(i,L,T+k*(each+gap),R-L,null);});
+    } else {
+      var fx=L,fw=R-L;
+      if(nb&&nm<=2){
+        /* a short slide reads best as text beside the figure. With three
+           or more figures the text goes underneath instead — a 30% column
+           beside a 2x2 grid is a gutter, not a paragraph. */
+        var tw=(R-L)*opt.textShare;
+        fx=L+tw+gap;fw=(R-L)-tw-gap;
+        var eachT=(B-T-gap*Math.max(0,nb-1))/Math.max(1,nb);
+        bodies.forEach(function(i,k){
+          setBox(i,L,T+k*(eachT+gap),tw,null);});
+      }
+      var fb=B;
+      if(nb&&nm>2){
+        var bandH=Math.max(8,(B-T)*0.24);
+        fb=B-bandH-gap;
+        var eachB=(R-L-gap*Math.max(0,nb-1))/Math.max(1,nb);
+        bodies.forEach(function(i,k){
+          setBox(i,L+k*(eachB+gap),fb+gap,eachB,null);});
+      }
+      var cols=nm<=1?1:(nm<=4?2:Math.ceil(Math.sqrt(nm)));
+      var rows=Math.ceil(nm/cols);
+      var cw=(fw-gap*(cols-1))/cols;
+      var ch=(fb-T-gap*(rows-1))/rows;
+      /* the caption strip is reserved for the whole ROW, not the one cell
+         that has a caption. Charging it to that cell alone left two
+         figures side by side at different heights, which reads as a
+         mistake rather than as a caption (2026-08-22). */
+      var rowCap={};
+      majors.forEach(function(i,k){
+        if(caps[i]!=null) rowCap[Math.floor(k/cols)]=1;});
+      majors.forEach(function(i,k){
+        var c=k%cols,r2=Math.floor(k/cols);
+        var x=fx+c*(cw+gap),y=T+r2*(ch+gap);
+        var mh=ch-(rowCap[r2]?(capH+gap*0.5):0);
+        setBox(i,x,y,cw,mh);
+        if(caps[i]!=null) setBox(caps[i],x,y+mh+gap*0.5,cw,null);
+      });
+    }
+    /* ---- write it ---- */
+    var moved=0;
+    Object.keys(put).forEach(function(k){
+      var i=+k,a=annots[i],b=put[i];
+      if(!a) return;
+      a.x=Math.round(b.x*10)/10;
+      a.y=Math.round(b.y*10)/10;
+      a.w=Math.round(b.w*10)/10;
+      /* a text box auto-heights: writing a height on one would fix it at
+         a size its words do not need (the rule MATCH_PROPS keeps too) */
+      if(b.h!=null&&a.k!=='text') a.h=Math.round(b.h*10)/10;
+      moved++;
+    });
+    /* ---- and put the marks back where they were, relative ---- */
+    function newRect(i){
+      var b=put[i];
+      if(b) return {l:b.x,t:b.y,r:b.x+b.w,
+        b:b.y+(b.h!=null?b.h:(rects[i].b-rects[i].t))};
+      return rects[i];
+    }
+    ride.forEach(function(e){
+      var h=newRect(e.host),a=annots[e.i];
+      var hw=(h.r-h.l),hh=(h.b-h.t);
+      a.x=Math.round((h.l+e.f.x*hw)*10)/10;
+      a.y=Math.round((h.t+e.f.y*hh)*10)/10;
+      a.w=Math.round(e.f.w*hw*10)/10;
+      a.h=Math.round(e.f.h*hh*10)/10;
+      moved++;
+    });
+    tips.forEach(function(e){
+      var h=newRect(e.host),a=annots[e.i];
+      var x=Math.round((h.l+e.fx*(h.r-h.l))*10)/10;
+      var y=Math.round((h.t+e.fy*(h.b-h.t))*10)/10;
+      if(e.end==='1'){a.x1=x;a.y1=y;} else {a.x2=x;a.y2=y;}
+      /* a fractional tip is a POINT inside the figure, which is a
+         different promise from a.c1/a.c2's "aim at this item and stop at
+         its border" — so the tie is dropped for the end we just placed,
+         or the render would immediately overrule us */
+      if(e.end==='1') delete a.c1; else delete a.c2;
+      moved++;
+    });
+    return moved;
+  }
+  /* ---- ARRANGEMENTS ----------------------------------------------------
+     (2026-08-22, user: "there could be arrangements one has, that are
+     like if the slide has heading, small paragraph, and large image ...
+     I know there can be infinite numbers of these, but it would be cool
+     if there was like a way to create ones of these, and like there was a
+     view that had a list of what is being arranged, then like a little
+     thumbnail of what it would be arranged to".)
+
+     AN ARRANGEMENT IS JUST A SAVED SLIDE. That is the whole design, and
+     it is why there is no new matching language here: matchSlide already
+     buckets items by kind and pairs them in reading order, so applying an
+     arrangement is matchSlide from a stored slide instead of from another
+     slide in the deck. Creating one is therefore "make a slide look right
+     and save it", which is the only authoring model that scales — and it
+     dissolves the "infinite numbers of these" worry, because nobody
+     enumerates them: you keep the five you actually use.
+
+     They live in localStorage, not on the deck: an arrangement you only
+     ever get to use on one presentation is not worth naming.
+
+     WHAT IS DELIBERATELY NOT HERE is automatic application. Whether a
+     paragraph is "small" is a consequence of the layout you have not
+     applied yet, not a property of the content, so a rule keyed on it is
+     circular and would rearrange slides you were happy with. The pane
+     SUGGESTS: every slide, its best match, a thumbnail, and a tick you
+     can clear. */
+  var ARRKEY='jv-deck-arr:';
+  function arrList(){
+    try{
+      var l=JSON.parse(lsGet(ARRKEY+SCOPE)||'[]');
+      return Array.isArray(l)?l:[];
+    }catch(e){return [];}
+  }
+  function arrSave(list){lsSet(ARRKEY+SCOPE,JSON.stringify(list));}
+  function arrById(id){
+    var hit=null;
+    arrList().forEach(function(a){if(a&&a.id===id) hit=a;});
+    return hit;
+  }
+  /* the shape of a slide, with the CONTENT stripped out. Only what
+     matchSlide would ever copy is kept, so an arrangement cannot smuggle
+     someone else's words or someone else's figure onto your slide. */
+  function arrFromSlide(sl,name){
+    var keep=[];
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.hide) return;
+      var o={k:a.k};
+      if(a.k==='text'&&a.style) o.style=a.style;
+      if(a.k==='cell') o.part=a.part;
+      MATCH_PROPS.forEach(function(p){
+        if(a[p]===undefined) return;
+        o[p]=(typeof a[p]==='object'&&a[p])
+          ?JSON.parse(JSON.stringify(a[p])):a[p];
+      });
+      /* a placeholder word, so the saved slide can be DRAWN as a
+         thumbnail without carrying the real text anywhere */
+      if(a.k==='text') o.text=annotLabel(a).replace(/^Text — /,'')
+        .slice(0,18)||'Text';
+      keep.push(o);
+    });
+    return {id:'ar'+Date.now().toString(36),
+      label:name||'Arrangement',
+      page:pageOf().poster?'poster':'slide',
+      annots:keep};
+  }
+  /* how well an arrangement fits a slide: the fraction of the slide's
+     items it has somewhere to put. Reported, never acted on by itself. */
+  function arrScore(arr,sl){
+    /* the SAME key the pairing uses, or the percentage describes a
+       different match from the one that would happen */
+    function counts(sl){
+      var m={},keyOf=slideRoleKey(sl);
+      ((sl&&sl.annots)||[]).forEach(function(a,i){
+        if(!a||a.hide) return;
+        var k=keyOf(a,i);m[k]=(m[k]||0)+1;});
+      return m;
+    }
+    var want=counts(sl),have=counts({annots:arr.annots});
+    var nw=0,nh=0,hit=0;
+    Object.keys(want).forEach(function(k){
+      nw+=want[k];
+      hit+=Math.min(want[k],have[k]||0);
+    });
+    Object.keys(have).forEach(function(k){nh+=have[k];});
+    /* divided by the BIGGER of the two, so it is punished in both
+       directions. Dividing by the slide's own count alone said a slide
+       holding one text box fitted a three-item arrangement perfectly —
+       every item it had could be placed, which is true and useless
+       (2026-08-22, caught in the browser). */
+    var tot=Math.max(nw,nh);
+    return tot?(hit/tot):0;
+  }
+  function arrBest(sl){
+    var best=null,bs=0;
+    arrList().forEach(function(a){
+      var s=arrScore(a,sl);
+      if(s>bs){bs=s;best=a;}
+    });
+    return best?{arr:best,score:bs}:null;
+  }
+  /* applying one is matchSlide from the stored slide. It is spliced in as
+     a temporary slide rather than matchSlide being re-signed, because
+     matchSlide's pairing is characterised by tests and is the one thing
+     here that must not change. */
+  function arrApply(arr,idx){
+    var sl=pres.slides[idx]; if(!sl||!arr) return 0;
+    pres.slides.push({layout:'blank',panes:[],
+      annots:JSON.parse(JSON.stringify(arr.annots||[]))});
+    var r=matchSlide(pres.slides.length-1,idx);
+    pres.slides.pop();
+    return r?r.moved:0;
   }
   /* ---- MATCHING ONE OBJECT TO ANOTHER ----------------------------------
      (2026-08-22, user: "click on an object, and be like 'match object to
@@ -10813,6 +11397,332 @@
         mm.hidden=true;
     });
   })();
+  (function(){
+    var host=$('#lay-tidy'); if(!host) return;
+    $$('[data-tidy]',host).forEach(function(b){
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s=pres.slides[cur]; if(!s) return;
+        var lm=$('#lay-menu'); if(lm) lm.hidden=true;
+        var n=arrangeSlide(s,stage.querySelector('.annot-layer'),
+          arrangeOpts(b.getAttribute('data-tidy')));
+        if(!n){toast('There is nothing on this slide to arrange');return;}
+        markDirty();refresh();
+        toast(n+' item'+(n===1?'':'s')+' arranged. Ctrl+Z undoes it.');
+      });
+    });
+  })();
+  /* ---- THE ARRANGEMENTS DIALOG -----------------------------------------
+     The library on the left, drawn; the per-slide suggestions on the
+     right, ticked but overridable. Nothing is applied until you say so. */
+  (function(){
+    var dlg=$('#ar-dlg'); if(!dlg) return;
+    var pickFor={};      /* slide index -> arrangement id, '' = leave it */
+    function chosen(){
+      var out=[];
+      (pres.slides||[]).forEach(function(sl,i){
+        var id=pickFor[i];
+        if(id) out.push({i:i,arr:arrById(id)});
+      });
+      return out.filter(function(e){return e.arr;});
+    }
+    function sync(){
+      var n=chosen().length,c=$('#ar-count');
+      if(c) c.textContent=n?(n+' slide'+(n===1?'':'s')+' will be re-laid '
+        +'out'):'Nothing chosen';
+      var ok=$('#ar-ok');
+      if(ok){ok.disabled=!n;
+        ok.textContent=n?('Arrange '+n+' slide'+(n===1?'':'s')):'Arrange';}
+    }
+    /* the thumbnail of what it would arrange TO. miniDiagram draws any
+       slide-shaped thing, and an arrangement IS a slide, so this is free
+       and cannot drift from what the canvas would render. */
+    function arrThumb(arr){
+      return miniDiagram({layout:'blank',panes:[],annots:arr.annots||[]});
+    }
+    function buildLib(){
+      var host=$('#ar-lib'); if(!host) return;
+      host.innerHTML='';
+      var list=arrList();
+      if(!list.length){
+        host.innerHTML='<div class="selpane-empty">None yet. Lay a slide '
+          +'out the way you like it, then “Save this slide” — the words '
+          +'and figures are not kept, only the arrangement.</div>';
+        return;
+      }
+      list.forEach(function(a){
+        var row=document.createElement('div');row.className='ar-row';
+        var th=document.createElement('div');th.className='ar-th';
+        th.appendChild(arrThumb(a));
+        row.appendChild(th);
+        var mid=document.createElement('div');mid.className='ar-mid';
+        var nm=document.createElement('input');
+        nm.className='ar-name';nm.type='text';nm.value=a.label||'';
+        nm.title='What to call this arrangement';
+        nm.addEventListener('keydown',function(e){e.stopPropagation();});
+        nm.addEventListener('blur',function(){
+          var v=nm.value.trim(); if(!v||v===a.label) return;
+          var l=arrList();
+          l.forEach(function(x){if(x.id===a.id) x.label=v;});
+          arrSave(l);buildLib();buildSug();
+        });
+        mid.appendChild(nm);
+        var sub=document.createElement('div');
+        sub.className='ar-sub';
+        sub.textContent=(a.annots||[]).length+' item'
+          +((a.annots||[]).length===1?'':'s')
+          +(a.page==='poster'?' · poster':'');
+        mid.appendChild(sub);
+        row.appendChild(mid);
+        var ctr=document.createElement('span');ctr.className='fp-ctr';
+        [['⤓',function(){
+            /* apply it to the slide you are on, right now — the shortest
+               path from "that one" to "do it" */
+            var n=arrApply(a,cur);
+            if(!n){toast('Nothing on this slide matches that '
+              +'arrangement');return;}
+            markDirty();refresh();buildSug();
+            toast(n+' item'+(n===1?'':'s')+' re-laid out on this slide');
+          },'Use it on this slide now'],
+         ['✕',function(){
+            arrSave(arrList().filter(function(x){return x.id!==a.id;}));
+            Object.keys(pickFor).forEach(function(k){
+              if(pickFor[k]===a.id) delete pickFor[k];});
+            buildLib();buildSug();sync();
+          },'Forget this arrangement']]
+          .forEach(function(pr){
+            var b=document.createElement('button');
+            b.className='film-mini';b.textContent=pr[0];b.title=pr[2];
+            b.addEventListener('click',function(ev){
+              ev.stopPropagation();pr[1]();});
+            ctr.appendChild(b);
+          });
+        row.appendChild(ctr);
+        host.appendChild(row);
+      });
+    }
+    function buildSug(){
+      var host=$('#ar-sug'); if(!host) return;
+      host.innerHTML='';
+      var list=arrList();
+      if(!list.length){
+        host.innerHTML='<div class="selpane-empty">Save an arrangement '
+          +'first and every slide will be checked against it here.</div>';
+        return;
+      }
+      (pres.slides||[]).forEach(function(sl,i){
+        var row=document.createElement('label');
+        row.className='find-ck ar-srow';
+        var ck=document.createElement('input');ck.type='checkbox';
+        ck.checked=!!pickFor[i];
+        /* NOT disabled when empty: clearing a suggestion and taking one
+           up are the same control, and a checkbox you cannot tick is a
+           checkbox that looks broken */
+        ck.addEventListener('change',function(){
+          if(!ck.checked) pickFor[i]=''; else {
+            var b=arrBest(sl); pickFor[i]=b?b.arr.id:'';
+          }
+          buildSug();sync();});
+        row.appendChild(ck);
+        var n=document.createElement('span');
+        n.className='aa-slide-n';n.textContent=(i+1);
+        row.appendChild(n);
+        var t=document.createElement('span');
+        t.className='ar-st';t.textContent=slideTitle(sl);
+        row.appendChild(t);
+        /* WHICH arrangement, changeable per slide: the suggestion is a
+           starting point, not a verdict */
+        var sel=document.createElement('select');
+        sel.className='ar-ssel';
+        var o0=document.createElement('option');
+        o0.value='';o0.textContent='leave it';
+        sel.appendChild(o0);
+        list.forEach(function(a){
+          var o=document.createElement('option');
+          o.value=a.id;
+          o.textContent=a.label+' · '
+            +Math.round(arrScore(a,sl)*100)+'%';
+          sel.appendChild(o);
+        });
+        sel.value=pickFor[i]||'';
+        sel.addEventListener('click',function(e){e.stopPropagation();});
+        sel.addEventListener('change',function(){
+          pickFor[i]=sel.value;buildSug();sync();});
+        row.appendChild(sel);
+        host.appendChild(row);
+      });
+    }
+    function seed(){
+      pickFor={};
+      (pres.slides||[]).forEach(function(sl,i){
+        var b=arrBest(sl);
+        /* only a CONFIDENT match is ticked for you. A half-fitting
+           arrangement offered as a default is how an automatic tool
+           earns its reputation for wrecking things. */
+        pickFor[i]=(b&&b.score>=0.75)?b.arr.id:'';
+      });
+    }
+    function open(){seed();buildLib();buildSug();sync();dlg.hidden=false;}
+    function close(){dlg.hidden=true;}
+    $('#ar-close').addEventListener('click',close);
+    $('#ar-cancel').addEventListener('click',close);
+    dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
+    dlg.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}
+    });
+    $('#ar-save').addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=pres.slides[cur];
+      if(!sl||!(sl.annots||[]).length){
+        toast('Lay something out on this slide first');return;}
+      var nm=prompt('Call this arrangement:',
+        slideTitle(sl).slice(0,30)||'Arrangement');
+      if(nm==null) return;
+      nm=nm.trim(); if(!nm) return;
+      var l=arrList();
+      l.push(arrFromSlide(sl,nm));
+      arrSave(l);
+      /* re-seed: the suggestions were computed against a library that did
+         not contain this yet — and on the first save that library was
+         empty, so nothing was suggested at all */
+      seed();buildLib();buildSug();sync();
+      toast('“'+nm+'” saved — offered on every deck you open here');
+    });
+    $('#ar-all').addEventListener('click',function(){
+      (pres.slides||[]).forEach(function(sl,i){
+        var b=arrBest(sl);
+        if(b&&b.score>0) pickFor[i]=b.arr.id;});
+      buildSug();sync();});
+    $('#ar-none').addEventListener('click',function(){
+      pickFor={};buildSug();sync();});
+    $('#ar-ok').addEventListener('click',function(){
+      var list=chosen(),moved=0;
+      list.forEach(function(e){moved+=arrApply(e.arr,e.i);});
+      close();
+      if(!moved){toast('Nothing on those slides matched');return;}
+      markDirty();refresh();
+      toast(moved+' item'+(moved===1?'':'s')+' re-laid out across '
+        +list.length+' slide'+(list.length===1?'':'s')
+        +'. Ctrl+Z undoes the lot.');
+    });
+    window.SemDeckArrange=open;
+  })();
+  /* ---- THE STYLE-SET GALLERY -------------------------------------------
+     Every card is SET IN the type it is offering, because a look is
+     chosen by looking. The same reason the Styles menu's rows are
+     specimens rather than a list of point sizes. */
+  (function(){
+    var dlg=$('#ss-dlg'); if(!dlg) return;
+    function unstyledCount(){
+      return stdBoxes().filter(function(p){
+        return !(p.a.style&&STYLE_DEFAULTS[p.a.style]);}).length;
+    }
+    function card(t){
+      var c=document.createElement('button');
+      c.className='ss-card';c.type='button';
+      var h=document.createElement('div');h.className='ss-name';
+      h.textContent=t.label;
+      if(t.mine){
+        var chip=document.createElement('span');
+        chip.className='ss-mine';chip.textContent='yours';
+        h.appendChild(chip);
+      }
+      c.appendChild(h);
+      /* the specimen: three real lines at the set's own relative sizes,
+         scaled to fit the card rather than to the page */
+      var spec=document.createElement('div');spec.className='ss-spec';
+      [['title','Title'],['h2','A heading'],
+       ['body','Body text that runs on a little.'],
+       ['caption','A caption']].forEach(function(pr){
+        var d=(t.styles||{})[pr[0]]; if(!d) return;
+        var ln=document.createElement('div');
+        ln.className='ss-line';ln.textContent=pr[1];
+        ln.style.fontSize=Math.max(8,Math.min(23,d.size*2.5))+'px';
+        ln.style.fontWeight=d.b?'700':'400';
+        if(d.i) ln.style.fontStyle='italic';
+        if(d.font) ln.style.fontFamily=fontCss(d.font);
+        if(d.color) ln.style.color=d.color;
+        if(d.lh) ln.style.lineHeight=d.lh;
+        spec.appendChild(ln);
+      });
+      c.appendChild(spec);
+      var note=document.createElement('div');
+      note.className='ss-note';note.textContent=t.note||'';
+      c.appendChild(note);
+      if(t.mine){
+        var x=document.createElement('span');
+        x.className='ss-del';x.innerHTML='&#10005;';
+        x.title='Forget this set';
+        x.addEventListener('click',function(e){
+          e.stopPropagation();
+          saveMyStyleSets(myStyleSets().filter(function(m){
+            return m.id!==t.id;}));
+          build();
+        });
+        c.appendChild(x);
+      }
+      c.addEventListener('click',function(){
+        var auto=$('#ss-auto');
+        var r=(auto&&auto.checked)?autoStyleDeck(t.id)
+          :{named:0,styled:applyStyleSet(t.id),set:t};
+        markDirty();refresh();build();
+        var msg='“'+t.label+'” applied';
+        if(r&&r.named) msg+=' — '+r.named+' box'+(r.named===1?'':'es')
+          +' were named from their size first';
+        else if(r&&!r.styled) msg+=' — but nothing here wears a named '
+          +'style, so nothing moved. Tick the box below to name them.';
+        toast(msg+(r&&r.styled?'. Ctrl+Z undoes it.':''));
+      });
+      return c;
+    }
+    function build(){
+      var g=$('#ss-grid'); if(!g) return;
+      g.innerHTML='';
+      STYLE_SETS.forEach(function(t){g.appendChild(card(t));});
+      myStyleSets().forEach(function(t){
+        var m=JSON.parse(JSON.stringify(t));m.mine=1;
+        g.appendChild(card(m));});
+      var w=$('#ss-what'),n=unstyledCount();
+      if(w) w.textContent=n
+        ? (n+' text box'+(n===1?'':'es')+' on this deck wear no named '
+          +'style. Picking a set below will name them from their size and '
+          +'then style them.')
+        : 'Everything here already wears a named style, so a set restyles '
+          +'it straight away.';
+      var aw=$('#ss-autowrap'); if(aw) aw.hidden=!n;
+    }
+    function open(){build();dlg.hidden=false;}
+    function close(){dlg.hidden=true;}
+    $('#ss-close').addEventListener('click',close);
+    $('#ss-cancel').addEventListener('click',close);
+    dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
+    dlg.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}
+    });
+    $('#ss-save').addEventListener('click',function(e){
+      e.stopPropagation();
+      var nm=prompt('Call this style set:','My set');
+      if(nm==null) return;
+      nm=nm.trim(); if(!nm) return;
+      var st={};
+      styleOrder().forEach(function(id){
+        var d=styleDef(id); if(!d) return;
+        var o={size:d.size};
+        ['b','i','font','color','align','lh','pspace'].forEach(function(k){
+          if(d[k]!==undefined) o[k]=d[k];});
+        st[id]=o;
+      });
+      var list=myStyleSets();
+      list.push({id:'ss'+Date.now().toString(36),label:nm,
+        note:'Saved from “'+(pres.name||'a deck')+'”.',styles:st});
+      saveMyStyleSets(list);
+      build();
+      toast('“'+nm+'” saved — it is offered on every deck you open here');
+    });
+    window.SemDeckStyleSets=open;
+  })();
   /* ---- ONE SLIDE'S LAYOUT, GIVEN TO SEVERAL ----------------------------
      The Match slide menu only ever PULLED — pick another slide and this
      one takes its arrangement — so making six slides agree meant doing it
@@ -10955,6 +11865,19 @@
         window.SemDeckMatchMany();
     });
     m.appendChild(push);
+    /* the saved-arrangements library, in the same menu: matching to
+       another slide and matching to a saved layout are the same verb with
+       a different model, so they belong one click apart (2026-08-22) */
+    var arr=document.createElement('button');
+    arr.className='dbtn vw-opt';
+    arr.textContent='◫ Arrangements…';
+    arr.title='Layouts you have saved, with a thumbnail of each — and '
+      +'which slides they would fit';
+    arr.addEventListener('click',function(e){
+      e.stopPropagation();m.remove();
+      if(typeof window.SemDeckArrange==='function') window.SemDeckArrange();
+    });
+    m.appendChild(arr);
     menuHead(m,'take the layout of…');
     var any=false;
     (pres.slides||[]).forEach(function(sl,i){
@@ -11984,7 +12907,131 @@
   });
 
   /* ---- add an image: read the file as a data URI, embed + place it ---- */
-  function placeImage(src,ar){
+  /* ---- IMAGES THAT REMEMBER WHERE THEY CAME FROM -----------------------
+     (2026-08-22, user: "would be cool if there was a refresh images with
+     local object. Like it has the image saved, but also knows the local
+     path, and clicking refresh on the image/presentation refreshes them
+     from the local path. If local path is gone though, give a list of
+     ones that couldn't be refreshed but just leave them as they were".)
+
+     The picture itself stays embedded — a deck has to survive being sent
+     to somebody, and a path on your machine means nothing on theirs. What
+     is kept BESIDE it is a file HANDLE, which is the browser's own idea
+     of "this exact file on disk": it survives a reload, it can be
+     re-read on demand, and it asks permission rather than granting the
+     page a filesystem.
+
+     Handles cannot be JSON, so they live in IndexedDB — the same store
+     the project handle and the embedded cards already use — keyed by an
+     id on the annot. `a.fname` is kept on the annot too, purely so the
+     "could not refresh" list can NAME the files that went missing. */
+  var FHKEY='imgfile:';
+  var fhSeq=0;
+  function newFileKey(){
+    fhSeq++;
+    return FHKEY+Date.now().toString(36)+fhSeq.toString(36);
+  }
+  function readAsDataURL(file){
+    return new Promise(function(res,rej){
+      var rd=new FileReader();
+      rd.onload=function(){res(rd.result);};
+      rd.onerror=function(){rej(rd.error);};
+      rd.readAsDataURL(file);
+    });
+  }
+  /* shrink on the way in, exactly as the insert path does, so a refreshed
+     picture is the same weight as the one it replaces */
+  function shrinkDataUrl(src){
+    return new Promise(function(res){
+      var probe=new Image();
+      probe.onload=function(){res(shrinkImage(probe,src));};
+      probe.onerror=function(){res(src);};
+      probe.src=src;
+    });
+  }
+  /* every image on the deck that was put there from a local file */
+  function linkedImages(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,ai){
+        if(a&&a.k==='image'&&a.fkey) out.push({si:si,ai:ai,a:a});});
+    });
+    return out;
+  }
+  /* re-read every linked picture from disk. NOTHING is changed unless its
+     file actually reads: a picture whose file has moved keeps the copy it
+     already had, and is named in the report instead — losing a figure
+     because a folder was renamed would be much worse than a stale one. */
+  function refreshLinkedImages(list){
+    var items=list||linkedImages();
+    if(!items.length) return Promise.resolve({ok:0,lost:[]});
+    var ok=0,lost=[];
+    return items.reduce(function(chain,e){
+      return chain.then(function(){
+        return idbGet(e.a.fkey).then(function(h){
+          if(!h) throw 0;
+          return permAsk(h).then(function(granted){
+            if(!granted) throw 0;
+            return h.getFile();
+          });
+        }).then(function(f){
+          return readAsDataURL(f);
+        }).then(function(src){
+          return shrinkDataUrl(src);
+        }).then(function(src){
+          if(!src||src===e.a.src) {ok++;return;}
+          e.a.src=src;ok++;
+        }).catch(function(){
+          lost.push({si:e.si,name:e.a.fname||'a picture'});
+        });
+      });
+    },Promise.resolve()).then(function(){
+      if(ok){markDirty();refresh();}
+      return {ok:ok,lost:lost};
+    });
+  }
+  /* the user-facing verb: refresh, then SAY what happened — including,
+     by name, anything that could not be found */
+  function refreshImagesReport(list){
+    var n=(list||linkedImages()).length;
+    if(!n){
+      toast('No pictures on this deck are linked to a file on this '
+        +'computer. Insert one with Image and it will remember where it '
+        +'came from.');
+      return;
+    }
+    toast('Re-reading '+n+' picture'+(n===1?'':'s')+'…');
+    refreshLinkedImages(list).then(function(r){
+      if(!r.lost.length){
+        toast(r.ok+' picture'+(r.ok===1?'':'s')+' refreshed from disk');
+        return;
+      }
+      var names=r.lost.slice(0,4).map(function(l){
+        return l.name+' (slide '+(l.si+1)+')';}).join(', ');
+      if(r.lost.length>4) names+=' and '+(r.lost.length-4)+' more';
+      toast((r.ok?(r.ok+' refreshed. '):'')
+        +r.lost.length+' could not be read and '
+        +(r.lost.length===1?'was':'were')+' left exactly as before: '
+        +names,9000);
+    });
+  }
+  (function(){
+    var mi=$('#mi-refresh-img');
+    if(mi) mi.addEventListener('click',function(){
+      var dm=$('#dc-menu'); if(dm) dm.hidden=true;
+      refreshImagesReport();
+    });
+    var one=$('#fmt-imgrefresh');
+    if(one) one.addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=pres.slides[cur],hits=[];
+      selIdxs().forEach(function(i){
+        var a=(sl&&sl.annots||[])[i];
+        if(a&&a.k==='image'&&a.fkey) hits.push({si:cur,ai:i,a:a});});
+      refreshImagesReport(hits);
+    });
+  })();
+  function placeImage(src,ar,link){
     var s=pres.slides[cur]; if(!s) return;
     var l=stage.querySelector('.annot-layer');
     var lr=l?l.getBoundingClientRect():null;
@@ -11992,8 +13039,11 @@
     if(ar&&lr&&lr.height){h=w*(lr.width/lr.height)*ar;}
     h=Math.max(8,Math.min(86,h));
     s.annots=s.annots||[];
-    s.annots.push({k:'image',x:Math.max(2,50-w/2),
-      y:Math.max(2,50-h/2),w:w,h:h,src:src});
+    var img={k:'image',x:Math.max(2,50-w/2),
+      y:Math.max(2,50-h/2),w:w,h:h,src:src};
+    /* the link, when the browser gave us a real handle to keep */
+    if(link&&link.key){img.fkey=link.key;img.fname=link.name||'';}
+    s.annots.push(img);
     markDirty();
     setTool('select');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
@@ -12263,7 +13313,34 @@
   })();
   var etImage=$('#et-image'),imgFile=$('#img-file');
   if(etImage&&imgFile) etImage.addEventListener('click',function(){
-    imgFile.value='';imgFile.click();});
+    /* showOpenFilePicker hands back a HANDLE, which is what lets the
+       picture be re-read from disk later; the <input> can only ever hand
+       back the bytes. So it is tried first and the input is the fallback
+       for browsers without it (2026-08-22). */
+    if(!window.showOpenFilePicker){imgFile.value='';imgFile.click();return;}
+    window.showOpenFilePicker({multiple:false,types:[{
+      description:'Images',
+      accept:{'image/*':['.png','.jpg','.jpeg','.gif','.webp','.svg',
+        '.bmp','.avif']}}]})
+      .then(function(picks){
+        var h=picks&&picks[0]; if(!h) return;
+        var key=newFileKey();
+        return idbPut(key,h).catch(function(){return null;})
+          .then(function(){return h.getFile();})
+          .then(function(f){
+            return readAsDataURL(f).then(function(src){
+              var probe=new Image();
+              probe.onload=function(){
+                placeImage(shrinkImage(probe,src),
+                  (probe.naturalHeight||3)/(probe.naturalWidth||4),
+                  {key:key,name:h.name||f.name||''});};
+              probe.onerror=function(){
+                placeImage(src,0,{key:key,name:h.name||''});};
+              probe.src=src;
+            });
+          });
+      }).catch(function(){});
+  });
   if(imgFile) imgFile.addEventListener('change',function(){
     var f=this.files&&this.files[0]; if(!f) return;
     var rd=new FileReader();
@@ -14884,6 +15961,12 @@
   /* opening one is the rail's own action, so a deck, a poster and a
      custom view each land where they belong */
   window.SemApp.deckChoose=function(nm){choosePresentation(nm);};
+  /* a presentation needs no notebook: every tool except the cell frame
+     works on an empty deck, so the front door can offer this as a way
+     IN rather than as something you reach after opening a notebook
+     (2026-08-22, user: "you can really only create a presentation once
+     you have a notebook open"). */
+  window.SemApp.deckNew=function(){newPresentation();};
   /* ...and redraw the chrome now the hooks exist. app.js runs first and
      paints the welcome before this file has loaded, so its presentations
      column asked a question nobody could answer yet and came up empty. */
@@ -14954,6 +16037,26 @@
     mi('#pl-presenter',openPresenter);
     mi('#pl-notes',function(){
       if(window.SemDeckNotes) window.SemDeckNotes();});
+    function syncTap(){
+      var b=$('#pl-tap'); if(!b) return;
+      b.textContent='Click a figure to enlarge it: '
+        +(pres&&pres.tapzoom?'on':'off');
+      b.title=pres&&pres.tapzoom
+        ?'Clicking an item during the talk blows it up. Clicking anywhere '
+          +'else still moves you on.'
+        :'Off: a click anywhere moves the talk on, and Alt+click (or Z) '
+          +'blows up whatever is under the pointer.';
+    }
+    mi('#pl-tap',function(){
+      if(pres.tapzoom) delete pres.tapzoom; else pres.tapzoom=1;
+      markDirty();syncTap();
+      toast(pres.tapzoom
+        ?'Clicking a figure or a text box now enlarges it while presenting'
+        :'Back to a plain click moving the talk on');
+    });
+    var plBtn=$('#dc-playmore');
+    if(plBtn) plBtn.addEventListener('click',syncTap);
+    syncTap();
   })();
   $('#dc-play').addEventListener('click',function(){
     presentFrom=mode;setUIMode('view');});
@@ -16491,6 +17594,8 @@
      A hook rather than a guess: "one flip book of six figures becomes six
      slides" is the claim the whole feature rests on, and it is only
      checkable from outside (2026-08-22). */
+  window.SemDeckRefreshImages=refreshImagesReport;   /* test hook */
+  window.SemDeckLinkedImages=linkedImages;          /* test hook */
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
   menuAction('#mi-pdf',function(){printDeck();});

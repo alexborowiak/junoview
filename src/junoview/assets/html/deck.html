@@ -71,6 +71,13 @@
         <button class="dc-mi" id="mi-new">New presentation</button>
         <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
         <div class="dc-msep"></div>
+        <!-- pictures inserted from this computer keep a handle to the
+             file they came from, so they can be re-read on demand.
+             Anything whose file has moved is LEFT as it was and
+             named in the report (2026-08-22). -->
+        <button class="dc-mi" id="mi-refresh-img">&#8635; Refresh
+          pictures from their files</button>
+        <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
         <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
         <div class="dc-msep"></div>
@@ -219,6 +226,12 @@
  and a clock. Drag it to the other screen, then play.">Presenter
             view&#8230;</button>
           <button class="dc-mi" id="pl-notes">Notes &amp; timing&#8230;</button>
+          <!-- A SETTING and not the new default, because a plain click
+               advancing the talk is a standing instruction from
+               2026-08-07 and this would overload it. Only the item itself
+               is claimed; the rest of the slide still advances. -->
+          <button class="dc-mi" id="pl-tap">Click a figure to enlarge it:
+            off</button>
         </div>
       </span>
     </span>
@@ -385,6 +398,26 @@
  columns, a hero figure, title layouts"><i data-ic="layouts"></i>
  Layouts &#9662;</button>
                 <div class="sh-menu lay-menu" id="lay-menu" hidden>
+                  <!-- ARRANGE WHAT IS ALREADY HERE, above the ready-made
+                       layouts. Both answer "lay this page out", so they
+                       belong in the same menu — but this one needs no
+                       template at all: it reads the slide and works one
+                       out (2026-08-22, user asked for "an arrange slide
+                       button ... based upon what is there"). The three
+                       buttons are the spacing preset, which is the
+                       "difference between things" the user wanted
+                       configurable. -->
+                  <div class="hd-lab">arrange what is on this slide</div>
+                  <div class="lay-tidy" id="lay-tidy">
+                    <button class="dbtn" data-tidy="tight"
+                      title="Arrange this slide, packed close">Tight</button>
+                    <button class="dbtn" data-tidy="normal"
+                      title="Arrange this slide">Normal</button>
+                    <button class="dbtn" data-tidy="airy"
+                      title="Arrange this slide, with room around
+ everything">Airy</button>
+                  </div>
+                  <div class="hd-lab">or start from a ready-made one</div>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>
                 </div>
@@ -1140,6 +1173,10 @@
               <button class="dbtn etm" id="fmt-figures" hidden
                 title="Add, reorder and name the figures in this flip
  book, and tie text or objects to one of them">&#9707; Figures&#8230;</button>
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came
+ from. If that file has moved, the picture is left exactly as it
+ is">&#8635; Refresh</button>
               <span class="sh-drop" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
                   aria-expanded="false"
@@ -1496,6 +1533,81 @@
            number of slides you are about to change is not something to
            find out afterwards -->
       <button class="dbtn primary" id="aa-ok">Apply</button>
+    </div>
+  </div>
+</div>
+<!-- ARRANGEMENTS. Two halves in one dialog: the library you have saved,
+     each drawn as a thumbnail of what it would arrange TO, and the
+     per-slide suggestions -- every slide, its best match, and a tick you
+     can clear. It suggests rather than applies, because whether a
+     paragraph is "small" is a consequence of the layout you have not
+     applied yet, so a rule keyed on it would rearrange slides you were
+     happy with (2026-08-22). -->
+<div class="aa-dlg" id="ar-dlg" hidden role="dialog"
+  aria-label="Arrangements">
+  <div class="aa-box ar-box">
+    <div class="aa-head">
+      <span class="eq-t">Arrangements</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="ar-close" title="Cancel (Esc)"
+        >&#10005;</button>
+    </div>
+    <div class="aa-main">
+      <div class="aa-col">
+        <div class="aa-colh">
+          <span class="eq-t">Your arrangements</span>
+          <span class="deck-spring"></span>
+          <button class="dbtn aa-b" id="ar-save">&#43; Save this
+            slide</button>
+        </div>
+        <div class="ar-lib" id="ar-lib"></div>
+      </div>
+      <div class="aa-col">
+        <div class="aa-colh">
+          <span class="eq-t">What would be arranged</span>
+          <span class="deck-spring"></span>
+          <button class="dbtn aa-b" id="ar-all">All</button>
+          <button class="dbtn aa-b" id="ar-none">None</button>
+        </div>
+        <div class="ar-sug" id="ar-sug"></div>
+      </div>
+    </div>
+    <div class="aa-foot">
+      <span class="aa-count" id="ar-count"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="ar-cancel">Close</button>
+      <button class="dbtn primary" id="ar-ok">Arrange</button>
+    </div>
+  </div>
+</div>
+<!-- STYLE SETS: the whole type registry as one named look. A gallery
+     rather than a menu, because you pick a look by LOOKING at it -- every
+     card is set in the type it is offering (2026-08-22, user: "you could
+     have set-defaults of what paragraphs, headings etc. look like ...
+     styles that are already in existence that people would like, and you
+     can create your own"). -->
+<div class="aa-dlg" id="ss-dlg" hidden role="dialog"
+  aria-label="Style sets">
+  <div class="aa-box ss-box">
+    <div class="aa-head">
+      <span class="eq-t">Style sets</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="ss-close" title="Cancel (Esc)"
+        >&#10005;</button>
+    </div>
+    <div class="aa-what" id="ss-what"></div>
+    <div class="ss-grid" id="ss-grid"></div>
+    <div class="aa-foot">
+      <!-- the switch that makes this work on a deck that has never used a
+           named style: name the boxes by what they already look like
+           first, then stamp the set over them -->
+      <label class="find-ck" id="ss-autowrap">
+        <input type="checkbox" id="ss-auto" checked>
+        Name the text that has no style yet, from its size</label>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="ss-save">Save this deck&#8217;s type as a
+        set&#8230;</button>
+      <button class="dbtn" id="ss-cancel">Close</button>
     </div>
   </div>
 </div>

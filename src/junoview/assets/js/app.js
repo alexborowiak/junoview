@@ -5661,6 +5661,17 @@
     if(openBtn) openBtn.addEventListener('click',showDlg);
     var wOpen=$('#welcome-open');
     if(wOpen) wOpen.addEventListener('click',showDlg);
+    /* a presentation with no notebook behind it. Every tool except the
+       cell frame works on an empty deck, so this is a real way IN and not
+       a shortcut to a dead end — and it is the primary button, because
+       the front door offering only ways to open a NOTEBOOK is what made
+       the app read as notebook-first (2026-08-22, user). */
+    var wNew=$('#welcome-new');
+    if(wNew) wNew.addEventListener('click',function(){
+      if(!APP.deckNew) return;
+      APP.deckNew();
+      goHome(false);
+    });
     /* same dialog, but landed on the URL path: paste a GitHub link */
     var wUrl=$('#welcome-url');
     if(wUrl) wUrl.addEventListener('click',function(){

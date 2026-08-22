@@ -50,11 +50,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # explodes one flip book into one slide per figure. Editor chrome plus
 # one render branch; the document half of the page is unchanged. Each
 # piece is pinned by its own test in tests/test_flip_book.py.
-# ...and again for matching: one slide's layout given to many, and
+# ...and again for style sets (auto-style) and arrangements
+# (auto-arrange), then for matching: one slide's layout given to many, and
 # object-to-object matching in both directions with its own property
 # picker. Pinned per-piece in tests/test_matching.py.
-EXPECTED_MD5 = "4b76143c6cac3310c3d47382bf50c79c"
-EXPECTED_BYTES = 2532075
+EXPECTED_MD5 = "97c78592c864d6254acd27f11b9c86d0"
+EXPECTED_BYTES = 2589444
 
 
 def _render_example() -> str:

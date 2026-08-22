@@ -20,18 +20,22 @@ from __future__ import annotations
 
 # ------------------------------------------------- the existing heuristic
 
-def test_matching_pairs_items_by_kind_then_reading_order(out):
+def test_matching_pairs_items_by_role_then_reading_order(out):
     """This is the answer to "can it identify which ones are supposed to
     match" when a slide has two paragraphs.
 
-    Items are bucketed by matchKey -- for text that is its NAMED STYLE, so
-    a Heading 2 never pairs with a caption -- and within a bucket they are
-    sorted down the page and then across, and paired off in that order. So
-    the upper paragraph takes the upper paragraph's place and the lower one
-    the lower. It is a guess, but it is a stated one.
+    Items are bucketed by ROLE, then sorted down the page and across, and
+    paired off in that order -- so the upper paragraph takes the upper
+    paragraph's place and the lower one the lower.
+
+    A box wearing a named style keeps it, so a Heading 2 never pairs with
+    a caption. A box wearing nothing is ranked (see inferRoles below),
+    which is what stopped a heading landing in a caption's slot on the
+    many decks that have never used a style.
     """
     body = out.split("function matchSlide(fromIdx,toIdx){")[1].split("\n  }")[0]
-    assert "var k=matchKey(p2.a);" in body
+    assert "var m={},keyOf=slideRoleKey(sl);" in body
+    assert "var k=keyOf(p2.a,p2.i);" in body
     # reading order: down the page, then across, with a 4% tolerance band
     # so two things on the same line are ordered left to right
     assert "return Math.abs(dy)>4?dy:((p2.a.x||0)-(q2.a.x||0));" in body

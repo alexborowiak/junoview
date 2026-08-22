@@ -2,6 +2,142 @@
 
 ## Unreleased
 
+### Style sets, and arrangements
+
+Two libraries, both answering "stop making me do this by hand" (2026-08-22,
+user). Neither invents a model: a style set *is* the type registry under a
+name, and an arrangement *is* a saved slide.
+
+- **Style sets.** Six built-in looks — Clean, Editorial, Bold, Academic,
+  Minimal, Poster — in a gallery where every card is set in the type it is
+  offering, because a look is chosen by looking. Pick one and the whole
+  deck follows. "Save this deck's type as a set" keeps your own, in the
+  browser rather than on the deck, because the point of naming a look is
+  using it on the *next* presentation too. Called a style set and not a
+  theme because "Theme" in this app is already the chrome's colour scheme.
+- **Auto-style is the half that matters.** Most decks have never used a
+  named style, so applying a set to one would change nothing — there is
+  nothing wearing a name to re-stamp. So the text is *named first*, from
+  its own measured size, using the same bands the Standardise check
+  computes. A deck formatted entirely by hand goes from fifteen unstyled
+  boxes to a properly typed deck in one click, and stays restylable
+  afterwards.
+- **Arrangements.** Lay a slide out the way you like it and save it. The
+  library shows each one as a real thumbnail of what it would arrange
+  *to*, drawn by the same code as the film strip. Applying one is Match
+  slide from the stored layout, so there is no second matching language —
+  and no enumerating "infinite numbers of these", because you keep the
+  five you actually use. The words and figures are never stored; only the
+  arrangement.
+- **It suggests; it does not decide.** Every slide is listed with its
+  best-matching arrangement, the fit as a percentage, and a tick — and
+  only a confident match is ticked for you. Whether a paragraph is "small"
+  is a consequence of the layout you have not applied yet, so a rule keyed
+  on it would be circular and would rearrange slides you were happy with.
+- **It works out which is the heading.** `matchKey` answers "what kind of
+  thing is this" with the box's *named style*, which is right and useless
+  on the many decks that have never used one: every text box came back the
+  same kind, so a heading and a caption were paired by position alone and
+  a heading could land where a caption belonged.
+
+  The role is inferred instead, and the signal is **rank within its own
+  slide** rather than absolute size — the biggest text on a slide is its
+  heading whatever the number happens to be. That survives exactly the
+  case a size threshold breaks on: a deck whose slides were formatted by
+  hand and disagree about how big a heading is, which is precisely the
+  deck that needed arranging. Sizes within 6% share a rank, so two
+  paragraphs set the same size stay one bucket and pair between themselves
+  in reading order, which is the right answer for them. A box wearing a
+  real style still keeps it — a name you chose beats a rank we inferred.
+
+  So on a deck with the heading at the bottom of one slide, the top of
+  another, and sizes of 5.0, 2.0 and 1.9 between them, every item now
+  lands in the right slot. The fit percentage uses the same key as the
+  pairing, so the number describes the match that will actually happen.
+
+### A front door that is not about notebooks
+
+The welcome screen offered only ways of opening a **notebook**, so a
+presentation was something you could reach after loading one. The editor
+stands up perfectly well on its own now, so it says so:
+
+- **"＋ New presentation"** is the primary button, ahead of both open
+  paths, and it opens a working deck with no notebook behind it at all.
+  The old primary is still there, demoted.
+- The tagline leads with what you are doing rather than what you are
+  reading: *"Build a presentation, or open a notebook and pull the figures
+  straight out of your analysis."*
+- "Jump back in" already listed your recent notebooks **and** your
+  presentations side by side, so "open previous" needed nothing new.
+
+### Pictures that remember which file they came from
+
+- **File ▸ Refresh pictures from their files** re-reads every picture you
+  inserted from this computer, and there is a Refresh on the format bar
+  for one at a time. The picture itself stays embedded — a deck has to
+  survive being sent to somebody, and a path on your machine means nothing
+  on theirs — but a file *handle* is kept beside it, which survives a
+  reload, can be re-read on demand, and asks permission rather than
+  granting the page a filesystem.
+- **Nothing is touched unless its file actually reads.** A picture whose
+  folder was renamed keeps the copy it already had and is named in the
+  report instead: *"2 could not be read and were left exactly as before:
+  fig_alpha.png (slide 1), fig_beta.png (slide 1)"*. Losing a figure
+  because a folder moved would be much worse than a stale one.
+- The per-picture button only appears on a picture that actually knows
+  where it came from, so it can never be a control that only fails.
+
+### Clicking a figure while presenting
+
+Clicking an item during a talk can now blow it up full screen, reusing the
+same spotlight Alt+click and Z already open.
+
+It is a **setting** (Present ▾ → "Click a figure to enlarge it"), off until
+asked for, because it is in tension with a standing instruction from
+2026-08-07 — *a plain click must still advance; that is the gesture a talk
+runs on.* The two are reconciled by only claiming the item itself: the rest
+of the slide, which is most of it, still advances on a plain click, and
+turning the setting off restores the old behaviour exactly.
+
+### Arrange this slide
+
+The arrangement library's twin, and it needs no saved layout at all: it
+reads what is on the slide and works one out. Three buttons — Tight,
+Normal, Airy — at the top of the Layouts menu, which is already where
+"lay this page out" lives.
+
+It sorts the slide into three kinds of thing, and the whole design is that
+they are treated differently:
+
+- **Majors** — figures, images, tables, flip books, and any shape big
+  enough to be scenery rather than a mark — are gridded.
+- **Text** is placed by the role `inferRoles` gives it: the biggest text
+  on the slide becomes its heading and goes full width at the top; the
+  smallest one sitting under a figure stays that figure's caption and is
+  placed under it. Body text goes beside one or two figures and underneath
+  three or more, because a 30% column beside a 2×2 grid is a gutter, not a
+  paragraph.
+- **Marks** — a circle round part of a plot, a tick, a small label — are
+  not laid out at all. Each is recorded as a *fraction* of whatever it is
+  sitting on and put back on top of it afterwards, so the annotation still
+  annotates the same pixel of the same plot. It has to be at least half
+  over its host to count, or a shape merely *near* a figure would be
+  dragged across the slide with it.
+
+**Arrow tips keep pointing at the same spot.** An endpoint that lands
+inside a figure is recorded as a fraction of that figure and restored
+against its new rect. Deliberately not via the existing `a.c1`/`a.c2` tie:
+that one aims at an item's centre and stops at its border, which is right
+for "this points *at* that figure" and wrong for "this points at the peak
+in its top-left" — which is what is being preserved here. On a test slide
+with a circle at (0.250, 0.300) of one figure and an arrow tip at (0.300,
+0.250) of another, both came through the rearrangement at (0.249, 0.299)
+and (0.299, 0.250).
+
+Both of the things you asked to be configurable are: the spacing between
+things, and the size at which something stops being a mark and becomes
+scenery. The three presets set both together.
+
 ### Matching, in both directions and down to one object
 
 Match slide already worked, and how it pairs things up is worth stating: it

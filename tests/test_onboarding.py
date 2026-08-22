@@ -30,9 +30,15 @@ def test_web_mode_page_chrome_and_welcome_hero(out):
     assert 'id="welcome-demo"' in web_page
     assert 'class="welcome-hero"' in web_page \
         and 'class="welcome-wordmark"' in web_page
-    assert "Filter, view and present your Jupyter notebooks" in web_page
+    # the tagline LEADS with presenting (2026-08-22): the front door used
+    # to offer only ways of opening a notebook, so a presentation was
+    # something you reached only after loading one
+    assert "Build a presentation, or open a notebook" in web_page
     assert 'class="welcome-btns"' in web_page \
         and 'id="welcome-open"' in web_page
+    # ...and "New presentation" is the PRIMARY button, ahead of both
+    assert 'id="welcome-new"' in web_page and "'#welcome-new'" in out
+    assert "APP.deckNew()" in out
     # BOTH open paths are explicit on the welcome: local files and a
     # GitHub/URL button that opens the dialog focused on the URL input
     assert 'id="welcome-url"' in web_page and "'#welcome-url'" in out
