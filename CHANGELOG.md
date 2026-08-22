@@ -2,6 +2,89 @@
 
 ## Unreleased
 
+### Naming the type, and grouping the slides
+
+The deck editor could push one box's look outwards, but only ever to "all
+headings" -- a hard-coded list of four, text only, whole deck, every
+property at once. All three of those open up here, and the slide strip
+grows the two things a long deck needs.
+
+- **"Apply to all headings" is now "apply to every one of its type", and
+  it says which type.** The type is named in the accent colour at the top
+  of the dialog, hovering it outlines the matching items on the slide
+  behind, and it is a *chooser*: a menu of every type in the deck with a
+  count against each. That last part is not decoration. An unstyled box is
+  grouped by its size, so the moment you make one heading bigger it is
+  alone in its band -- which is exactly the flow the action exists for.
+  Being able to say "no, *that* type" is what makes it work.
+  Opened from Arrange ▾ (shown for every kind of object) and from the
+  Styles menu, where the one-click version has always lived. Both of those
+  survive unchanged.
+- **Which properties travel is yours to choose.** Twenty-five rows in six
+  groups -- type, spacing, size, position, colour, background -- every one
+  ticked to start with, including all seven the brief named. Rows that
+  mean nothing for the selected kind are greyed and explained rather than
+  hidden, so the list never reshuffles under you when you click something
+  else. Box background is in there, and so is a new **indentation** on
+  text boxes (`a.ind`, in em of the box's own type size, stepped from the
+  Layout menu so the ribbon gains nothing).
+- **And which slides.** All of them by default; untick slides
+  individually or a whole section at a time. The exclusion is keyed on the
+  slide *object*, not its index, so reordering or deleting a slide cannot
+  silently re-point it at a neighbour. A sweep across sixty slides is one
+  undo step.
+- **A text box can be born as a heading.** A caret beside Insert ▸ Text
+  arms the next box's type; the tool hint says which. It costs the ribbon
+  about eighteen pixels inside a wrapper that already existed, so no group
+  gained a column.
+- **You can invent types of your own.** "＋ New style of my own" in the
+  Design ▸ Styles menu, and a little arrow beside every style -- built-in
+  or yours -- opening bold, italic, "counts as a heading", rename, and
+  either delete or revert. Deleting a type moves nothing on any slide:
+  the boxes keep the look they have and simply stop being a group.
+  Types live on `pres.types` and survive a save, a reload and an undo.
+- **Standardise text**, on the Design tab: does every heading, paragraph
+  and caption across the deck actually match? The hard half is the deck
+  that has never used a named style, which is most of them -- a check that
+  only read `a.style` would find nothing to disagree and report "all
+  fine", which is false rather than merely weak. So the unstyled boxes are
+  bucketed by what they *look* like, the bands are named against the type
+  scale, and each one is offered its name. Adopting a band builds the
+  style from the band's own commonest values first, so the majority does
+  not move a pixel and only the strays snap into line.
+- **Slide sections in the strip.** "§ Section" beside "+ Add slide" starts
+  one at the slide you are on; dividers rename, collapse (saying how many
+  they hide), drag as a block, and right-click for the lot. A section is a
+  tag on the slide plus a name -- the order is read back off the slide
+  list, so no reorder can desynchronise it. Slide numbers stay global
+  through every section, and collapsing one is a way of looking at the
+  strip rather than an edit, so Ctrl+Z never opens or closes it.
+- **The slide column can be dragged wider, and lists three ways.**
+  Thumbnails, headings, or both. Headings mode is a real outline: each
+  slide named by the box wearing a heading style, indented by level, under
+  its section. Thumbnails grow with the column instead of staying 116px
+  wide in a 460px strip.
+
+### Fixed
+
+- **The slide column could not be resized in the flow you use it in.**
+  There was a working drag handle and a persisted width, but `.deck.editing`
+  capped the column at `min(var(--dc-w), 200px)` and hid the handle -- so
+  while *editing*, which is the primary flow, the thumbnails were stuck at
+  200px. The old expression is now the default inside a clamp, so a session
+  that never touches the handle is unchanged.
+- **"Background for every slide" did nothing on any slide that had its
+  own.** The deck default only shows through where a slide has no
+  override, so you could set the background for every slide and watch the
+  one in front of you not change. There is a verb for it now, and it names
+  the destructive half: "Use this on every slide (clears per-slide ones)".
+- **A table set to "no fill" kept its fill.** `drawTable` painted `a.bgc`
+  and never checked `a.bg`, so the format bar's swatch and the renderer
+  had disagreed since tables were added.
+- **`restyleDeck` was a byte-for-byte copy of `restyleAll`** with one
+  branch removed. It is a one-line delegate now; `restyleAll` gained the
+  optional slide scope both of them needed.
+
 ### The front door, and the sidebar that names your notebook
 
 Nine things reported off one screenshot set, all on the surfaces you meet

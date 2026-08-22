@@ -254,9 +254,42 @@
         </div>
       </div>
       <div class="dc-block dc-film">
+        <!-- one line above the strip: how the slides are listed. It is a
+             chooser for the list underneath it rather than chrome of its
+             own, and it MOVES with the list into the Versions pane the
+             same way #film-list does (2026-08-22, user: "there should
+             also be the option have thumbnails (default), headings, or
+             thumbnails and headings"). -->
+        <div class="film-head" id="film-head">
+          <div class="dc-menuwrap">
+            <button class="dbtn film-view-btn" id="film-view-btn"
+              aria-haspopup="true" aria-expanded="false"
+              title="How the slides are listed down this column"
+              >&#9636; Thumbnails &#9662;</button>
+            <div class="dc-menu" id="film-view-menu" hidden></div>
+          </div>
+        </div>
         <div class="film-list" id="film-list"></div>
-        <button class="dbtn addslide" id="film-add">+ Add slide</button>
+        <!-- Add slide and Section sit on one row: a section IS a slide
+             boundary, so the verb that makes one belongs beside the verb
+             that makes the other, not up in a ribbon where the thing
+             being divided is out of sight (2026-08-22, user: "there
+             should be the ability to create slide sections in the
+             thumbnails part"). -->
+        <div class="film-adds" id="film-adds">
+          <button class="dbtn addslide" id="film-add">+ Add slide</button>
+          <button class="dbtn addsec" id="film-sec"
+            title="Start a section at the slide you are on. Everything
+ from there down to the next divider goes in it">&#167; Section</button>
+        </div>
       </div>
+      <!-- the strip's own resize handle. #dc-resize next to it drives the
+           BUILDER panel and is hidden while editing; this one drives the
+           slide column, which is the thing anyone actually wants wider
+           (2026-08-22, user: "the thumbnail part should be dragable to
+           make bigger or smaller"). -->
+      <div class="film-resize" id="film-resize"
+        title="Drag to make the slide thumbnails bigger or smaller"></div>
     </aside>
   <!-- The ribbon spans the WHOLE window, like the document view's app
        bar — it used to live inside the stage column, so the slide strip
@@ -438,6 +471,16 @@
               <button class="dbtn rbn-sm" id="dsg-restyle"
                 title="Re-apply the styles to every box wearing one, on
  every slide — use it after changing a style by hand">&#8635; Re-apply</button>
+              <!-- Both words in full, never abbreviated. This is the one
+                   control in the editor that looks at the deck's type as
+                   a whole rather than at one box, which is what earns it
+                   a button rather than a menu row (2026-08-22, user: "it
+                   would be cool if there was a button that was called
+                   'standardise text', and checked if all headings
+                   paragraphs, captions, are looking the same"). -->
+              <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
+                title="Check whether the headings, paragraphs and captions
+ across the whole deck look the same as each other">&#8801; Standardise text</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -587,9 +630,28 @@
                 aria-pressed="false"
                 title="Place a figure, table or note from your notebook —
  you pick which one"><i data-ic="cellcard"></i> Cell</button>
+              <!-- Text, plus a caret that says WHICH KIND of text
+                   (2026-08-22, user: "when creating text boxes or such
+                   you can click an option thing and create it as heading,
+                   paragraph etc. on create"). One wrapper, so
+                   sizeRibbonGroups still counts one cell and the Insert
+                   group keeps its column count; a sibling button would
+                   have taken it from five columns to six.
+                   The caret carries NEITHER `et` NOR data-tool: that
+                   exact pairing is what made #dc-qr call setTool(undefined)
+                   and leave the page armed with a tool that did not
+                   exist (2026-08-17). -->
+              <span class="sh-drop tx-split" id="tx-drop">
               <button class="dbtn et rbn-sm" data-tool="text"
                 aria-pressed="false"
                 title="Add a text box"><i data-ic="text"></i> Text</button>
+              <button class="dbtn rbn-sm tx-caret" id="tx-type-btn"
+                aria-haspopup="true" aria-expanded="false"
+                title="Make the next text box a heading, a caption or any
+ other named type, instead of a plain one">&#9662;</button>
+              <div class="sh-menu tx-type-menu" id="tx-type-menu"
+                hidden></div>
+              </span>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
@@ -1115,6 +1177,22 @@
         <div class="pf-count" id="preflight-count"></div>
         <div class="selpane-list" id="preflight-list"></div>
       </aside>
+      <!-- STANDARDISE TEXT, in the same shell as Print check and for the
+           opposite question. Print check asks whether THIS page will
+           survive a printer; this asks whether the DECK agrees with
+           itself. It is a second pane rather than a section of the first
+           because preflight is current-slide by contract, its rows are
+           whole buttons (so they cannot carry chips plus an action), and
+           its strings are pinned by the poster tests. -->
+      <aside class="selpane preflight" id="stdpane" hidden>
+        <div class="selpane-h"><span>Standardise text</span>
+          <button class="dbtn dc-icon" id="stdpane-rerun"
+            title="Check again">&#8635;</button>
+          <button class="dbtn dc-icon" id="stdpane-close"
+            title="Close">&#10005;</button></div>
+        <div class="pf-count" id="stdpane-count"></div>
+        <div class="selpane-list" id="stdpane-list"></div>
+      </aside>
       <aside class="selpane" id="selpane" hidden>
         <div class="selpane-h"><span>Layers</span>
           <button class="dbtn dc-icon" id="selpane-close"
@@ -1292,6 +1370,65 @@
       <span class="deck-spring"></span>
       <button class="dbtn" id="eq-cancel">Cancel</button>
       <button class="dbtn primary" id="eq-ok">Put it on the slide</button>
+    </div>
+  </div>
+</div>
+<!-- APPLY THIS LOOK TO EVERY ONE OF ITS TYPE.
+     The old action was one line at the bottom of the Styles menu and it
+     said "apply to ALL HEADINGS" — a fixed list of four, text only, whole
+     deck, every property. The user asked for all three of those to open
+     up: name the type you are actually acting on and highlight it, let
+     the properties be unticked one by one, and let slides and sections be
+     left out (2026-08-22).
+
+     A DIALOG rather than a dropdown, and not by preference: floatMenu
+     clamps a menu's top edge to the viewport and never scrolls it, so a
+     .sh-menu physically cannot hold twenty-five property rows beside a
+     sixty-slide grid. Two columns at 640px is a dialog, so it borrows the
+     equation editor's shell wholesale rather than inventing a second
+     kind of modal. -->
+<div class="aa-dlg" id="aa-dlg" hidden role="dialog"
+  aria-label="Apply this look">
+  <div class="aa-box">
+    <div class="aa-head">
+      <span class="eq-t">Apply this look</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="aa-close" title="Cancel (Esc)"
+        >&#10005;</button>
+    </div>
+    <!-- WHICH TYPE, said out loud and in the accent colour. The old
+         wording made you work out for yourself what "all headings" was
+         going to touch; hovering this outlines the matching items on the
+         slide behind, so you can see it too. -->
+    <div class="aa-what" id="aa-what"></div>
+    <div class="aa-main">
+      <div class="aa-col">
+        <div class="aa-colh">
+          <span class="eq-t">What travels</span>
+          <span class="deck-spring"></span>
+          <button class="dbtn aa-b" id="aa-all-props">All</button>
+          <button class="dbtn aa-b" id="aa-no-props">None</button>
+        </div>
+        <div class="aa-props" id="aa-props"></div>
+      </div>
+      <div class="aa-col" id="aa-scopecol">
+        <div class="aa-colh">
+          <span class="eq-t">Which slides</span>
+          <span class="deck-spring"></span>
+          <button class="dbtn aa-b" id="aa-all-slides">Use all</button>
+        </div>
+        <div class="aa-scope" id="aa-scope"></div>
+      </div>
+    </div>
+    <div class="aa-foot">
+      <span class="aa-count" id="aa-count"></span>
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="aa-cancel">Cancel</button>
+      <!-- the count is in the BUTTON as well as the header: the header
+           can scroll out of sight behind a long property list, and the
+           number of slides you are about to change is not something to
+           find out afterwards -->
+      <button class="dbtn primary" id="aa-ok">Apply</button>
     </div>
   </div>
 </div>

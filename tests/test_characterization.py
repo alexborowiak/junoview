@@ -38,8 +38,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # under "Fixed — interface" in CHANGELOG.md, each of which has its own test
 # pinning the specific rule. If this is the ONLY test that fails, you changed
 # the page's bytes without meaning to.
-EXPECTED_MD5 = "078f52dd8599862bc304bade4488fbb8"
-EXPECTED_BYTES = 2357335
+# Moved 2026-08-22 for the deck editor's typing and sections work: the
+# Apply dialog and its property/scope pickers, user-defined text types,
+# the Standardise text pane, slide sections in the strip, and the
+# strip's resize handle and three display modes. All of it is editor
+# chrome -- the document half of the page is unchanged -- and each
+# piece is pinned by its own test in tests/test_slide_sections.py.
+EXPECTED_MD5 = "93510917b73857bea5dfbd33d03c185f"
+EXPECTED_BYTES = 2477461
 
 
 def _render_example() -> str:

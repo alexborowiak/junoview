@@ -583,6 +583,12 @@
     if(nums) nums.hidden=!!pg.poster;
     /* a poster keeps "+ Add" — its pages are versions, and you need a way
        to make one; it just lives behind the Versions button now */
+    /* a poster's pages are VERSIONS — deliberately different drafts of
+       one sheet — so grouping them into sections means nothing */
+    var secb=$('#film-sec');
+    if(secb) secb.hidden=!!pg.poster;
+    /* the chooser's own words follow the page kind the same way */
+    if(typeof window.SemDeckFilmBtn==='function') window.SemDeckFilmBtn();
     var add=$('#film-add');
     if(add){
       add.textContent=pg.poster?'+ Create new version':'+ Add slide';
@@ -1101,7 +1107,500 @@
     var re=$('#preflight-rerun');
     if(re) re.addEventListener('click',renderPreflight);
   })();
+  /* ---- STANDARDISE TEXT -------------------------------------------------
+     (2026-08-22, user: "it would be cool if there was a button that was
+     called 'standardise text', and checked if all headings paragraphs,
+     captions, are looking the same".)
+
+     preflight() above asks whether THIS page is safe to print. This asks
+     a different question — whether the DECK agrees with itself — and it
+     has to answer it for the deck nobody has styled, because a check
+     that only read a.style would look at forty slides of hand-set text,
+     find no styles to disagree, and report "all fine". That is not a
+     weak answer, it is a false one, and it is the half of this worth
+     building carefully.
+
+     So there are two passes. Boxes that WEAR a style are measured
+     against the style they claim. Boxes wearing nothing are bucketed by
+     what they LOOK like, and the bucket is then offered a name — which
+     is the part that pays for itself, because once a band is named,
+     restyleAll, "apply this look to all headings" and the Apply dialog's
+     bucketing all start working on a deck that was invisible to them. */
+
+  /* WHY THESE NUMBERS. Every one is anchored to a step the editor itself
+     can take, so a threshold never fires on a difference nobody could
+     have made deliberately, and never misses one they did.
+       SIZE 1.03 — the pt readout is size*5.4, so 3% of a 2.6 body is
+     0.4pt: below it nothing is visible, above it two headings side by
+     side read as different sizes. It sits well inside the A+/A− stepper's
+     1.12, so one deliberate press always registers as a real difference.
+       BAND 1.06 — half a stepper press. Two sizes closer than this were
+     nudged apart by hand and meant to be one size; 12% apart is one press
+     and is meant.
+       LUM 0.05 — about the gap between the Caption grey (#8aa0b0) and the
+     subtitle grey (#7e93a4). Those two ARE two hand-picked greys doing
+     the same job, which is exactly the thing to report.
+       CHAN 0.10 — a different HUE at the same tone is invisible to a
+     luminance test, so it needs its own number.
+       POS 1.0 / W 2.0 — 1% of a 16:9 page is under half a character at
+     body size; more than that and a heading visibly jumps as you page
+     through, which is the drift nothing else in this file can see.
+     Module-local: a threshold is a judgement about type, not a property
+     of one deck. */
+  var STD_SIZE_TOL=1.03, STD_BAND_TOL=1.06;
+  var STD_LUM_TOL=0.05,  STD_CHAN_TOL=0.10;
+  var STD_POS_TOL=1.0,   STD_W_TOL=2.0;
+  /* an ABSENT a.color is not "unknown", it is the page ink — resolve it
+     before comparing or a deck where half the boxes say #ffffff and half
+     say nothing reports a drift that is not on the screen. The same ink
+     preflight computes. */
+  function stdInk(){
+    return pageIsLight((pres&&pres.pageBg)||'#0b141d')?'#0b141d':'#ffffff';
+  }
+  function stdSize(a){return (a&&a.size)||2.6;}
+  function stdCol(a){return (a&&a.color)||stdInk();}
+  /* two numbers, because "a different colour" is true in two ways and one
+     distance hides one behind the other */
+  function colDrift(c1,c2){
+    var a=rgbOf(c1),b=rgbOf(c2);
+    if(!a||!b) return String(c1||'')===String(c2||'')?0:1;
+    var dl=Math.abs(relLum(a)-relLum(b));
+    var dh=Math.max(Math.abs(a[0]-b[0]),Math.abs(a[1]-b[1]),
+      Math.abs(a[2]-b[2]))/255;
+    if(dl>STD_LUM_TOL) return dl;
+    if(dh>STD_CHAN_TOL) return dh;
+    return 0;
+  }
+  /* EVERY text-bearing thing in the deck, in reading order per slide.
+     Title slides are in here on purpose: their title and subtitle are
+     text the user thinks of as headings and they honour the same
+     properties applyStyleTo writes, so a check that skipped them would
+     call a deck consistent while its title slides disagreed. They carry
+     no width and are centred, so the geometry checks skip them — that is
+     what `fixed` marks. */
+  function stdBoxes(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      if(sl.layout==='title'){
+        out.push({si:si,ai:'t',a:titleProps(sl,'t'),fixed:1});
+        out.push({si:si,ai:'s',a:titleProps(sl,'s'),fixed:1});
+      }
+      (sl.annots||[]).map(function(a,ai){return {si:si,ai:ai,a:a};})
+        .filter(function(p){return p.a&&p.a.k==='text'&&!p.a.hide;})
+        /* the same reading-order sort matchSlide's bucket() uses, so
+           "the first heading on the slide" means one thing in this file */
+        .sort(function(p,q){
+          var dy=(p.a.y||0)-(q.a.y||0);
+          return Math.abs(dy)>4?dy:((p.a.x||0)-(q.a.x||0));})
+        .forEach(function(p){out.push(p);});
+    });
+    return out;
+  }
+  /* the commonest value in a list. `n` against `of` is what decides
+     whether there is a majority to fix TOWARDS or merely a disagreement
+     to report. */
+  function stdMode(list,key){
+    var seen={},best=null;
+    list.forEach(function(p){
+      var v=String(key(p));
+      if(!seen[v]) seen[v]={v:v,n:0};
+      seen[v].n++;
+      if(!best||seen[v].n>best.n) best=seen[v];
+    });
+    return best?{v:best.v,n:best.n,of:list.length}:null;
+  }
+  /* ---- bucketing the UNSTYLED half -------------------------------------
+     RANKS, not absolute sizes. A poster's body is 2.6% of an A0 and a
+     slide's body is 2.6% of a 16:9, but a deck built by hand may have
+     settled on 4.0 for its body and 6.5 for its headings and be perfectly
+     consistent. What matters is how many distinct sizes the deck uses and
+     which of them is worn by the most boxes, so the bands are found first
+     and named afterwards. */
+  function stdBands(boxes){
+    var sizes=[],bands=[],cur=null;
+    boxes.forEach(function(p){sizes.push(stdSize(p.a));});
+    sizes.sort(function(x,y){return x-y;});
+    sizes.forEach(function(v){
+      /* merge greedily against the band's SMALLEST member, so a long
+         string of 3%-apart sizes cannot creep into one band that spans
+         two real levels */
+      if(cur&&v/cur.lo<=STD_BAND_TOL){cur.hi=v;return;}
+      cur={lo:v,hi:v,boxes:[]};bands.push(cur);
+    });
+    boxes.forEach(function(p){
+      var v=stdSize(p.a);
+      for(var i=0;i<bands.length;i++)
+        if(v>=bands[i].lo/1.0001&&v<=bands[i].hi*1.0001){
+          bands[i].boxes.push(p);return;}
+    });
+    bands=bands.filter(function(b){return b.boxes.length;});
+    /* the band's INTENDED size is the one worn by the most boxes, not the
+       mean: drift is the minority, and averaging lets two stray large
+       headings pull the whole band up */
+    bands.forEach(function(b){
+      var m=stdMode(b.boxes,function(p){return stdSize(p.a).toFixed(2);});
+      b.size=parseFloat(m.v);b.agree=m.n;
+    });
+    bands.sort(function(x,y){return y.size-x.size;});
+    return bands;
+  }
+  /* does this box sit directly beneath a placed figure? The cheapest
+     reliable caption signal in the file, and the one thing size alone
+     cannot find. */
+  function stdUnderFigure(p){
+    var sl=pres.slides[p.si]; if(!sl||p.fixed) return false;
+    var y=p.a.y||0,x1=p.a.x||0,x2=x1+(p.a.w||0);
+    return (sl.annots||[]).some(function(c){
+      if(!c||c.k!=='cell'||c.hide) return false;
+      var cb=(c.y||0)+(c.h||0),cx1=c.x||0,cx2=cx1+(c.w||0);
+      return y>=cb-1&&y<=cb+6&&x2>cx1&&x1<cx2;
+    });
+  }
+  /* Name a band: nearest style in LOG space, because the ladder is
+     multiplicative (~1.3x a step) and a linear "closest" would drag every
+     large band towards Title. Styles are consumed as they are used and
+     the bands are walked biggest-first, which keeps the naming MONOTONE —
+     a bigger band never gets a smaller style. That property is what makes
+     the answer legible ("your three sizes are Heading 1, Body, Caption")
+     and it matters more than the theoretically closest name for any one
+     band. styleOrder(), so a type you invented can be suggested too. */
+  function stdName(bands){
+    var left=styleOrder();
+    bands.forEach(function(b){
+      var best=null,bestD=1e9;
+      left.forEach(function(id){
+        var d=Math.abs(Math.log(b.size/styleDef(id).size));
+        if(d<bestD){bestD=d;best=id;}
+      });
+      b.suggest=best||'body';
+      b.close=bestD<Math.log(1.35);
+      left=left.filter(function(id){return id!==b.suggest;});
+    });
+    /* two cheap signals that beat size alone. A CAPTION is the one the
+       user named and the one size cannot find. */
+    bands.forEach(function(b){
+      var capt=0,bold=0;
+      b.boxes.forEach(function(p){
+        if(p.a.b) bold++;
+        if(stdUnderFigure(p)) capt++;
+      });
+      if(capt*2>b.boxes.length&&b===bands[bands.length-1]
+        &&STYLE_DEFAULTS.caption) b.suggest='caption';
+      /* the biggest band, mostly bold, is a heading however near Body its
+         size happens to land */
+      if(b===bands[0]&&bold*2>b.boxes.length&&b.suggest==='body')
+        b.suggest='h1';
+    });
+    return bands;
+  }
+  var STD_PROPS=[
+    {k:'size', label:'size',
+     get:function(a){return stdSize(a).toFixed(2);},
+     same:function(x,y){var l=Math.min(+x,+y),h=Math.max(+x,+y);
+       return h/l<=STD_SIZE_TOL;}},
+    {k:'b',      label:'weight',           get:function(a){return a.b?1:0;}},
+    {k:'i',      label:'italics',          get:function(a){return a.i?1:0;}},
+    {k:'u',      label:'underlining',      get:function(a){return a.u?1:0;}},
+    {k:'strike', label:'strike-through',   get:function(a){return a.strike?1:0;}},
+    {k:'font',   label:'typeface',         get:function(a){return a.font||'';}},
+    {k:'align',  label:'alignment',        get:function(a){return a.align||'';}},
+    {k:'color',  label:'colour', get:stdCol,
+     same:function(x,y){return colDrift(x,y)===0;}},
+    {k:'lh',     label:'line spacing',     get:function(a){return a.lh||0;},
+     same:function(x,y){return Math.abs(x-y)<=0.02;}},
+    {k:'pspace', label:'paragraph spacing',get:function(a){return a.pspace||0;},
+     same:function(x,y){return Math.abs(x-y)<=0.02;}}
+  ];
+  /* boxes that disagree with the commonest value. A finding needs a
+     MAJORITY to fix towards — two boxes disagreeing one-all is a choice,
+     not a drift — so anything under two thirds is reported without an
+     automatic answer. */
+  function stdDrift(list,pr){
+    var m=stdMode(list,function(p){return pr.get(p.a);});
+    if(!m) return null;
+    var same=pr.same||function(x,y){return String(x)===String(y);};
+    var odd=list.filter(function(p){return !same(pr.get(p.a),m.v);});
+    if(!odd.length) return null;
+    return {prop:pr,mode:m.v,odd:odd,
+      sev:(m.n*3>=list.length*2)?'warn':'info'};
+  }
+  /* GEOMETRY is compared ACROSS slides only, one box per slide. Two
+     captions side by side on one slide legitimately sit at different x;
+     the same heading landing somewhere else on slide 4 does not. Fewer
+     than three slides is a layout, not a pattern — say nothing. */
+  function stdGeom(list,k,tol){
+    var perSlide=[],seenSlide={};
+    list.forEach(function(p){
+      if(p.fixed||seenSlide[p.si]) return;
+      seenSlide[p.si]=1;perSlide.push(p);
+    });
+    if(perSlide.length<3) return null;
+    var m=stdMode(perSlide,function(p){return (p.a[k]||0).toFixed(1);});
+    var odd=perSlide.filter(function(p){
+      return Math.abs((p.a[k]||0)-parseFloat(m.v))>tol;});
+    if(!odd.length||m.n*3<perSlide.length*2) return null;
+    return {geom:k,mode:parseFloat(m.v),odd:odd,sev:'warn',all:perSlide};
+  }
+  /* every property applyStyleTo would have written, still as written.
+     Derived from ONE list shared with applyStyleTo rather than repeated,
+     or a ninth style property would silently stop being noticed. */
+  var STYLE_FIELDS=['size','b','i','font','color','align','lh','pspace'];
+  function stdMatchesStyle(a,d){
+    if(Math.max(stdSize(a),d.size)/Math.min(stdSize(a),d.size)
+      >STD_SIZE_TOL) return false;
+    if(!!a.b!==!!d.b||!!a.i!==!!d.i) return false;
+    if((a.font||'')!==(d.font||'')) return false;
+    if(colDrift(stdCol(a),d.color||stdInk())) return false;
+    if((a.align||'')!==(d.align||'')) return false;
+    if(Math.abs((a.lh||0)-(d.lh||0))>0.02) return false;
+    if(Math.abs((a.pspace||0)-(d.pspace||0))>0.02) return false;
+    return true;
+  }
+  function stdBandWhy(b,d,inner){
+    if(inner.length)
+      return inner.length===1
+        ?('Their '+inner[0].prop.label+' does not agree: '
+          +inner[0].odd.length+' of '+b.boxes.length+' differ.')
+        :('Their '+inner[0].prop.label+' and '+(inner.length-1)+' other '
+          +'thing'+(inner.length===2?'':'s')+' do not agree.');
+    return 'They already match each other. Calling them '+d.label
+      +' means changing them all later is one edit instead of '
+      +b.boxes.length+'.';
+  }
+  function standardise(){
+    var boxes=stdBoxes(),out=[],named={},loose=[];
+    boxes.forEach(function(p){
+      if(p.a.style&&STYLE_DEFAULTS[p.a.style])
+        (named[p.a.style]=named[p.a.style]||[]).push(p);
+      else loose.push(p);
+    });
+    /* PASS ONE — boxes measured against the style they claim to wear.
+       This one is easy and is not the point; it is here because a deck
+       that HAS been styled and then hand-edited is the other half of the
+       same question. */
+    styleOrder().forEach(function(id){
+      var list=named[id]; if(!list||list.length<2) return;
+      var d=styleDef(id),odd=list.filter(function(p){
+        return !stdMatchesStyle(p.a,d);});
+      if(!odd.length) return;
+      out.push({kind:'named',style:id,list:list,odd:odd,sev:'warn',
+        head:odd.length+' of '+list.length+' '+d.label+' boxes have '
+          +'drifted',
+        why:'They wear the '+d.label+' style but have been changed by '
+          +'hand since. Re-applying the style puts them back.'});
+    });
+    /* PASS TWO — the boxes wearing nothing, which on most decks is all of
+       them. Bands first, names second, drift within a band third. */
+    var bands=stdName(stdBands(loose));
+    bands.forEach(function(b){
+      if(b.boxes.length<2) return;
+      var d=styleDef(b.suggest),inner=[];
+      STD_PROPS.forEach(function(pr){
+        var r=stdDrift(b.boxes,pr); if(r) inner.push(r);
+      });
+      out.push({kind:'band',band:b,list:b.boxes,inner:inner,
+        sev:inner.length?'warn':'info',
+        head:b.boxes.length+' boxes at about '+Math.round(b.size*5.4)
+          +' pt'+(inner.length?(' — '+inner[0].odd.length
+            +' do not match'):' wear no style'),
+        why:stdBandWhy(b,d,inner)});
+      ['x','w'].forEach(function(k){
+        var g=stdGeom(b.boxes,k,k==='x'?STD_POS_TOL:STD_W_TOL);
+        if(g) out.push({kind:'geom',band:b,g:g,sev:'warn',
+          head:(k==='x'?'These move sideways between slides'
+                       :'These are different widths between slides'),
+          why:g.odd.length+' of '+g.all.length+' sit at a different '
+            +(k==='x'?'left edge':'width')+' from the other '
+            +(g.all.length-g.odd.length)+'. Paging through, they jump.'});
+      });
+    });
+    return {findings:out,boxes:boxes.length,bands:bands,
+      styled:Object.keys(named).length};
+  }
+  /* ---- THE FIX ---------------------------------------------------------
+     ONE undo entry, always. Every writer mutates the model directly and
+     hands the sweep to stdFix, which calls markDirty exactly once — the
+     same contract restyleAll has kept since it was written. Going through
+     fmtApply instead would push one entry per box AND touch only the
+     current slide, which is both halves of wrong. */
+  function stdFix(list,fn,note){
+    list.forEach(function(p){fn(p.a,p);});
+    markDirty();      /* the single histPush for the whole sweep */
+    refresh();        /* markDirty repaints ONE thumbnail; this does the rest */
+    renderStdPane();  /* the finding disappears: that is the feedback */
+    toast(note+' — Ctrl+Z puts them back');
+  }
+  /* adopting a band does NOT stamp STYLE_DEFAULTS' values onto it. That
+     would resize and recolour the MAJORITY of the band to punish the user
+     for tidying up — the opposite of standardising. The definition is
+     built from the band's own commonest values first, so the majority
+     does not move a pixel, only the strays snap into line, and the deck
+     ends up with a style whose numbers are what the deck already looked
+     like (2026-08-22). */
+  function stdAdopt(band){
+    var id=band.suggest,d=styleDef(id),o={label:d.label,size:band.size};
+    if(isHeadingStyle(id)&&BUILTIN_STYLE_IDS.indexOf(id)<0) o.head=1;
+    [['b',1],['i',1],['font',''],['color',''],['align',''],
+     ['lh',0],['pspace',0]].forEach(function(pr){
+      var m=stdMode(band.boxes,function(p){
+        return pr[0]==='color'?stdCol(p.a):(p.a[pr[0]]||pr[1]&&0||'');});
+      if(!m) return;
+      var v=m.v;
+      if(pr[0]==='b'||pr[0]==='i'){if(v==='1') o[pr[0]]=1;}
+      else if(pr[0]==='lh'||pr[0]==='pspace'){
+        if(parseFloat(v)>0) o[pr[0]]=parseFloat(v);}
+      else if(v&&v!=='0'&&!(pr[0]==='color'&&v===stdInk())) o[pr[0]]=v;
+    });
+    deckStyles()[id]=o;
+    /* EVERY box in the band, not only the odd ones: naming the band is
+       the point, and half a band wearing a name is not a group */
+    stdFix(band.boxes,function(a){applyStyleTo(a,id);},
+      band.boxes.length+' box'+(band.boxes.length===1?'':'es')
+        +' are now '+o.label);
+  }
+  /* the quieter half, for someone who does not want the style system:
+     make them agree with each other and set no a.style at all */
+  function stdFlatten(inner){
+    stdFix(inner.odd,function(a){
+      var pr=inner.prop;
+      if(pr.k==='size') a.size=parseFloat(inner.mode);
+      else if(pr.k==='color') a.color=inner.mode;
+      else if(inner.mode==='0'||inner.mode===''||inner.mode==='NaN')
+        delete a[pr.k];
+      else a[pr.k]=(pr.k==='lh'||pr.k==='pspace')
+        ?parseFloat(inner.mode):inner.mode;
+    },'Their '+inner.prop.label+' now matches');
+  }
+  /* a style has no opinion about WHERE a box sits, so this is the one fix
+     applyStyleTo cannot do */
+  function stdAlign(g){
+    stdFix(g.odd,function(a){a[g.geom]=g.mode;},
+      g.odd.length+' box'+(g.odd.length===1?'':'es')+' lined up');
+  }
+  function stdRow(f){
+    var box=document.createElement('div');
+    box.className='std-find std-'+f.sev;
+    var h=document.createElement('div');
+    h.className='std-h';h.textContent=f.head;box.appendChild(h);
+    var w=document.createElement('div');
+    w.className='std-why';w.textContent=f.why;box.appendChild(w);
+    var who=document.createElement('div');who.className='std-who';
+    (f.g?f.g.odd:(f.odd||f.list)).slice(0,12).forEach(function(p){
+      var c=document.createElement('button');
+      c.className='std-chip';
+      c.textContent=(p.si+1)+' · '
+        +(p.fixed?(p.ai==='t'?'title':'subtitle'):annotLabel(p.a));
+      c.title='Go to it';
+      c.addEventListener('click',function(){
+        /* go() clears the selection and re-renders, so the layer this box
+           lives on does not exist until after it returns */
+        go(p.si);
+        if(typeof p.ai==='number'){
+          var l=stage.querySelector('.annot-layer');
+          if(l) selectAnnot(l,p.ai);
+        }
+      });
+      who.appendChild(c);
+    });
+    box.appendChild(who);
+    var act=document.createElement('button');
+    act.className='dbtn std-do';
+    if(f.kind==='geom'){
+      act.textContent='Line all '+f.g.all.length+' up';
+      act.addEventListener('click',function(){stdAlign(f.g);});
+    } else if(f.kind==='named'){
+      act.textContent='Put these '+f.odd.length+' back to '
+        +styleDef(f.style).label;
+      act.addEventListener('click',function(){
+        stdFix(f.odd,function(a){applyStyleTo(a,f.style);},
+          f.odd.length+' box'+(f.odd.length===1?'':'es')+' put back');
+      });
+    } else {
+      act.textContent='Make all '+f.band.boxes.length+' '
+        +styleDef(f.band.suggest).label;
+      act.title='Names this size, and pulls the odd ones into line with '
+        +'the rest. The majority do not move.';
+      act.addEventListener('click',function(){stdAdopt(f.band);});
+    }
+    box.appendChild(act);
+    if(f.kind==='band'&&f.inner&&f.inner.length){
+      var alt=document.createElement('button');
+      alt.className='dbtn std-do std-do2';
+      alt.textContent='Just make them match each other';
+      alt.title='Fix the '+f.inner[0].prop.label+' without giving them a '
+        +'named style';
+      alt.addEventListener('click',function(){stdFlatten(f.inner[0]);});
+      box.appendChild(alt);
+    }
+    return box;
+  }
+  function renderStdPane(){
+    var list=$('#stdpane-list'),head=$('#stdpane-count');
+    if(!list) return;
+    var r=standardise();
+    if(head) head.textContent=r.findings.length
+      ?(r.findings.length+' to look at · '+r.boxes+' text boxes')
+      :('nothing drifting · '+r.boxes+' text boxes');
+    list.innerHTML='';
+    if(!r.findings.length){
+      /* TWO empty states. Saying "all fine" to a deck that has never used
+         a style would be true about drift and false about the question
+         that was asked, so the unstyled case says what is actually so and
+         offers the names, phrased as an offer rather than a fault. And no
+         'err' severity anywhere: nothing this finds is broken, and a
+         consistency check that shouts is one people stop opening. */
+      var msg=document.createElement('div');
+      msg.className='pf-ok';
+      msg.textContent=r.styled
+        ?('Your type is consistent. Every heading, paragraph and caption '
+          +'across these '+(pres.slides||[]).length+' slides matches the '
+          +'style it wears.')
+        :('Nothing is drifting — but nothing here wears a named style '
+          +'either. Your text falls into '+r.bands.length+' size'
+          +(r.bands.length===1?'':'s')+'; naming them means changing '
+          +'every heading later is one edit instead of '+r.boxes+'.');
+      list.appendChild(msg);
+      if(!r.styled) r.bands.forEach(function(b){
+        if(b.boxes.length<2) return;
+        list.appendChild(stdRow({kind:'band',band:b,list:b.boxes,
+          inner:[],sev:'info',
+          head:b.boxes.length+' boxes at '+Math.round(b.size*5.4)+' pt',
+          why:'These look like your '+styleDef(b.suggest).label+'.'}));
+      });
+      return;
+    }
+    r.findings.forEach(function(f){list.appendChild(stdRow(f));});
+  }
+  (function(){
+    var btn=$('#dsg-std'),pane=$('#stdpane');
+    if(!btn||!pane) return;
+    function set(open){
+      if(open){
+        /* the panes share one corner — the rule showVerpane has kept
+           since they were first docked */
+        ['#selpane','#animpane','#preflight','#notespane']
+          .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
+        var ob=$('#objects-btn');
+        if(ob) ob.setAttribute('aria-pressed','false');
+        var nb=$('#notes-btn');
+        if(nb) nb.setAttribute('aria-pressed','false');
+        if(typeof showVerpane==='function') showVerpane(false);
+      }
+      pane.hidden=!open;
+      btn.setAttribute('aria-pressed',open.toString());
+      /* rendered on open, on ↻ and after a fix — never from markDirty or
+         refresh, or every keystroke would re-survey the whole deck */
+      if(open) renderStdPane();
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    var cl=$('#stdpane-close');
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    var rr=$('#stdpane-rerun');
+    if(rr) rr.addEventListener('click',renderStdPane);
+  })();
   window.SemDeckPreflight=preflight;                 /* test hook */
+  window.SemDeckStandardise=standardise;             /* test hook */
   window.SemDeckGuides=function(){return guides;};   /* test hook */
 
   /* ---- the View group: rulers, grid, side toolbar, full-screen ---- */
@@ -1215,6 +1714,25 @@
      the tools back, and a bar that vanishes completely leaves you with no
      way to say "I want them again". */
   var FOLDKEY2='jv-deck-fold:';
+  /* how the slide column lists its slides, and how wide it is. Both are
+     preferences about the TOOL, not properties of the deck — sending
+     someone a presentation must not send them your column width — so
+     they live in localStorage beside the ribbon fold rather than on
+     `pres` (2026-08-22). Keyed on SCOPE, which is declared further down
+     this file: read it at var-declaration time and every preference in
+     the app files itself under the literal string "undefined". */
+  var FILMKEY='jv-deck-film:',FILMWKEY='jv-deck-filmw:';
+  var FILM_VIEWS=[['thumb','Thumbnails','Pictures'],
+    ['head','Headings','Names'],
+    ['both','Thumbnails and headings','Both']];
+  var filmView=null;
+  function filmMode(){
+    if(filmView===null){
+      var v=lsGet(FILMKEY+SCOPE);
+      filmView=(v==='head'||v==='both')?v:'thumb';
+    }
+    return filmView;
+  }
   function ribbonFolded(){
     return deckEl.classList.contains('rbn-fold');
   }
@@ -2036,7 +2554,8 @@
       if(!st.moved) requestAnimationFrame(syncPaneDock);
     }).observe(pane);
   }
-  ['selpane','animpane','notespane','verpane','preflight','varspane']
+  ['selpane','animpane','notespane','verpane','preflight','varspane',
+   'stdpane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -2189,6 +2708,11 @@
            it survived until the next load and then silently became
            "empty slide" again (2026-08-10) */
         if(typeof s.label==='string'&&s.label) o.label=s.label;
+        /* which section this slide sits in. The ORDER of the sections is
+           not stored anywhere — it is read back off the slide list, which
+           is why reordering slides can never desynchronise it
+           (2026-08-22) */
+        if(typeof s.sec==='string'&&s.sec) o.sec=s.sec;
         /* per-slide look + pane organisation. A field not listed here
            silently dies on the next load — exactly what happened to
            `label` before it was added (2026-08-10) */
@@ -2242,6 +2766,38 @@
     if(typeof p.notes==='string'&&p.notes) out.notes=p.notes;
     if(Array.isArray(p.pad)&&p.pad.length)
       out.pad=JSON.parse(JSON.stringify(p.pad));
+    /* the text types this deck invented. Filtered on the way IN: an entry
+       with no id is unusable, and one claiming a built-in id would
+       silently redefine Heading 1 for everybody who opened the file.
+       It cannot ride the ['wmark','head','foot','styles'] loop below —
+       that loop takes objects and this is a list. */
+    if(Array.isArray(p.types)&&p.types.length){
+      var tps=[];
+      p.types.forEach(function(t){
+        if(!t||typeof t!=='object'||!t.id) return;
+        if(BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
+        tps.push(JSON.parse(JSON.stringify(t)));
+      });
+      if(tps.length) out.types=tps;
+    }
+    /* the section NAMES, filtered to ids a slide actually uses. A blind
+       deep copy — the shape the wmark/head/foot/styles line uses — would
+       hoard entries for sections that no longer have a single slide in
+       them, and the key would never empty again. Dropping it entirely
+       when it does empty is what keeps a deck that never used sections
+       serialising exactly as it did before the feature existed. */
+    if(p.sections&&typeof p.sections==='object'){
+      var used={},keep={},anySec=false;
+      out.slides.forEach(function(s2){if(s2.sec) used[s2.sec]=1;});
+      Object.keys(p.sections).forEach(function(k){
+        if(!used[k]) return;
+        var d=p.sections[k]; if(!d) return;
+        keep[k]={name:String(d.name||'Untitled section')};
+        if(d.fold) keep[k].fold=1;
+        anySec=true;
+      });
+      if(anySec) out.sections=keep;
+    }
     /* deck-level furniture, same rule as the page background: forget it on
        load and a saved deck quietly loses its footer (2026-08-20) */
     ['wmark','head','foot','styles'].forEach(function(k){
@@ -2560,14 +3116,34 @@
       if(!row) return;
       var old=row.querySelector('.mini-diagram');
       /* the CURRENT row in notebook view is the big inline pane editor,
-         not a thumbnail — leave that alone */
-      if(old&&old.parentNode) old.parentNode.replaceChild(miniDiagram(s),old);
+         not a thumbnail — leave that alone. In headings mode there is no
+         thumbnail at all, and this correctly does nothing. */
+      if(old&&old.parentNode){
+        miniHNow=miniH();
+        old.parentNode.replaceChild(miniDiagram(s),old);
+      }
       var tt=row.querySelector('.film-t');
-      if(tt) tt.textContent=slideTitle(s);
+      /* filmText, not slideTitle: in headings mode the row is named by
+         the slide's heading, and refreshing it with the other function
+         would rename it back on the first edit */
+      if(tt) tt.textContent=filmText(s);
+      row.dataset.lvl=headLevel(s);
     },140);
   }
   /* ---------- undo / redo (snapshots of the slide content) ---------- */
   var undoStack=[],redoStack=[],histSnap=null;
+  /* the section names alone, or null when there are none — the same
+     empty-is-null trick pres.styles uses, so a deck with no sections
+     serialises into the snapshot exactly as it did before they existed */
+  function secNames(){
+    var m=pres&&pres.sections,out=null;
+    if(m) Object.keys(m).forEach(function(k){
+      if(!m[k]) return;
+      out=out||{};
+      out[k]=(m[k].name)||'Untitled section';
+    });
+    return out;
+  }
   /* WHAT UNDO CAN SEE. Anything left out of this object is not merely
      un-undoable — it goes INCONSISTENT, because the things that are in it
      are derived from the things that are not.
@@ -2599,10 +3175,27 @@
          lazily creates {}) would record a phantom undo step */
       styles:(pres.styles&&Object.keys(pres.styles).length)
         ?pres.styles:null,
+      /* the types you invented are as undoable as the boxes wearing
+         them, and for the same reason the styles are: delete a type and
+         Ctrl+Z must bring back both the type AND the a.style tags that
+         deleteCustomType stripped. Empty serialises as null on the same
+         argument as styles - merely READING the list lazily creates it,
+         and a phantom undo step for reading is worse than none. */
+      types:(pres.types&&pres.types.length)?pres.types:null,
+      /* section NAMES are content and are undoable; whether a section is
+         COLLAPSED is a way of looking at the strip, so it is stripped out
+         here — Ctrl+Z must never open or close one (2026-08-22). The
+         tags themselves ride inside `slides`. */
+      sections:secNames(),
       page:pres.page||null,pageBg:pres.pageBg||null,
       cropMarks:pres.cropMarks||0});
   }
   function histReset(){
+    /* the one funnel every newly installed `pres` passes through, which
+       makes it the only safe place to graft this deck's own text types
+       into the shared STYLE_DEFAULTS registry. Miss it and deck A's
+       "Quote" is still on the menu after you open deck B. */
+    syncCustomTypes();
     histSnap=histState();undoStack=[];redoStack=[];updateUndoBtns();
   }
   function histPush(){
@@ -2621,6 +3214,27 @@
      'cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
+    /* types are restored with their own statement rather than by joining
+       the list above, because the registry has to be re-grafted the
+       moment the list changes - every menu, every specimen row and
+       applyStyleTo read STYLE_DEFAULTS, not pres.types, so an undo that
+       restored the list without syncing would leave the deck offering a
+       type that no longer resolves. */
+    if(d.types) pres.types=d.types; else delete pres.types;
+    syncCustomTypes();
+    /* sections get their own merge rather than joining the list above:
+       that loop deletes what the snapshot lacks, and the snapshot
+       deliberately lacks the fold flags — so it would collapse-or-expand
+       every section on every undo. Names come from the snapshot; whether
+       a section is open stays exactly as you left it. */
+    if(d.sections){
+      var was=pres.sections||{};
+      pres.sections={};
+      Object.keys(d.sections).forEach(function(k){
+        pres.sections[k]={name:d.sections[k]};
+        if(was[k]&&was[k].fold) pres.sections[k].fold=1;
+      });
+    } else delete pres.sections;
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;selAnnot=null;selSet=[];
     /* the styles come back as DEFINITIONS only. Every text box already
@@ -4336,6 +4950,25 @@
     });
   }
   var pendingShape='rect';   /* which shape the "+ Shapes" tool draws */
+  /* which named type the next text box is born wearing, '' for a plain
+     one. Module-local like pendingShape and for the same reason: a type
+     that stuck across reloads would have you making headings by accident
+     because of something you clicked last week (2026-08-22). */
+  var pendingStyle='';
+  /* every text box drawn on the canvas is born here. Factored out of
+     startDraw so the armed type has ONE place to be honoured: a user who
+     never opens the caret gets a byte-identical annot, because
+     applyStyleTo is not called at all unless a type is armed and
+     resolves.
+     Deliberately NOT honoured elsewhere: the equation commit (an equation
+     is maths, not a heading), applyLayout and the slide templates (a
+     template already says what its boxes are), and paste (a pasted box
+     keeps what it was copied as). */
+  function textBorn(p0){
+    var a={k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:2.6,bg:0};
+    if(pendingStyle&&styleDef(pendingStyle)) applyStyleTo(a,pendingStyle);
+    return a;
+  }
   function titleProps(s,which){
     var key=which==='t'?'tprops':'sprops';
     if(!s[key]) s[key]=(which==='t')
@@ -4493,6 +5126,122 @@
   var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];
   /* the HEADING styles, for "apply to all headings" */
   var HEADING_STYLES=['title','h1','h2','h3'];
+  /* ---- TYPES OF YOUR OWN ----------------------------------------------
+     The seven built-ins are a type SCALE, not a vocabulary. A deck that
+     wants a "Quote" or a "Source note" had nowhere to put one, so those
+     boxes got formatted by hand and then drifted apart across forty
+     slides - which is the exact problem named styles exist to stop
+     (2026-08-22, user: "it would be cool if people could create their own
+     types and change the defaults of these").
+
+     A custom type is a full definition living on pres.types, and
+     syncCustomTypes() GRAFTS it into STYLE_DEFAULTS at load. That is
+     deliberate rather than lazy: four places index STYLE_DEFAULTS[id]
+     directly, and every menu, every specimen row, applyStyleTo and the
+     exporters all read the registry without ever asking whether an id is
+     built in. One live registry fixes all of them at once and changes
+     none of them.
+
+     It is an ARRAY, not a map, because the ORDER is the feature - a type
+     scale reads top to bottom. And it is a SEPARATE key from pres.styles
+     because the style manager's reset does `delete pres.styles`: "back to
+     the built-in sizes" must never mean "throw away the types I made". */
+  var BUILTIN_STYLE_IDS=STYLE_ORDER.slice();
+  function customTypes(){
+    if(!Array.isArray(pres.types)) pres.types=[];
+    return pres.types;
+  }
+  /* rebuild STYLE_DEFAULTS from the built-ins plus THIS deck's types.
+     It has to run on every path that installs a new `pres`, or deck A's
+     types leak into deck B - which is why it is the first thing
+     histReset() does, that being the one funnel every new presentation
+     passes through. */
+  function syncCustomTypes(){
+    /* histReset runs during boot, from loadPresentation, and this file's
+       first presentation is loaded ABOVE the line that assigns
+       STYLE_DEFAULTS — function declarations hoist, `var` initialisers do
+       not, so the registry is genuinely still undefined on that one call.
+       Bailing out is correct rather than merely safe: the boot sequence
+       at the bottom of this file calls syncCustomTypes() again once
+       everything is declared, which is the call that does the work
+       (2026-08-22). */
+    if(!STYLE_DEFAULTS) return;
+    Object.keys(STYLE_DEFAULTS).forEach(function(id){
+      if(BUILTIN_STYLE_IDS.indexOf(id)<0) delete STYLE_DEFAULTS[id];
+    });
+    (Array.isArray(pres&&pres.types)?pres.types:[]).forEach(function(t){
+      if(!t||!t.id||BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
+      var d={label:String(t.label||'Style'),
+        size:(typeof t.size==='number'&&t.size>0)?t.size:2.6};
+      ['b','i','font','color','align','lh','pspace','head']
+        .forEach(function(k){if(t[k]!==undefined) d[k]=t[k];});
+      STYLE_DEFAULTS[t.id]=d;
+    });
+  }
+  /* the order the menus walk: the built-in scale first, then yours, in
+     the order you made them. STYLE_ORDER itself stays exactly as it was -
+     it is the built-in list, and BUILTIN_STYLE_IDS is taken from it. */
+  function styleOrder(){
+    var out=STYLE_ORDER.slice();
+    (Array.isArray(pres&&pres.types)?pres.types:[]).forEach(function(t){
+      if(t&&t.id&&out.indexOf(t.id)<0&&STYLE_DEFAULTS[t.id]) out.push(t.id);
+    });
+    return out;
+  }
+  /* "is this a heading" stopped being a fixed list of four the moment you
+     could invent a type: your "Section label" probably is one and your
+     "Pull quote" is not, and only you can say. The built-ins keep their
+     answer, so nothing that worked yesterday changes. */
+  function isHeadingStyle(id){
+    if(HEADING_STYLES.indexOf(id)>=0) return true;
+    var d=STYLE_DEFAULTS[id];
+    return !!(d&&d.head);
+  }
+  function headingStyles(){
+    return styleOrder().filter(isHeadingStyle);
+  }
+  /* an id must never collide with a built-in: a deck file naming its own
+     type "h1" would silently redefine Heading 1 for everyone who opened
+     it. Minted from a counter rather than from the label, so RENAMING a
+     type does not orphan every box wearing it. */
+  function mintTypeId(){
+    var n=1,ids={};
+    customTypes().forEach(function(t){if(t&&t.id) ids[t.id]=1;});
+    while(ids['t'+n]||BUILTIN_STYLE_IDS.indexOf('t'+n)>=0) n++;
+    return 't'+n;
+  }
+  function addCustomType(label,base){
+    var b=styleDef(base)||STYLE_DEFAULTS.body;
+    var t={id:mintTypeId(),label:String(label||'My style'),size:b.size};
+    ['b','i','font','color','align','lh','pspace']
+      .forEach(function(k){if(b[k]!==undefined) t[k]=b[k];});
+    customTypes().push(t);
+    syncCustomTypes();
+    return t;
+  }
+  /* deleting a type must not MOVE anything. applyStyleTo has already
+     written every one of its properties onto each box, so dropping the
+     NAME leaves the slides looking exactly as they did - the boxes just
+     stop being a group. Re-stamping them to Body instead would resize
+     half the deck as a punishment for tidying up.
+     Guarded on a.k==='text' because a.style on a line or an arrow is the
+     DASH style (lineStyle, above) and shares nothing with this but the
+     word. */
+  function deleteCustomType(id){
+    if(BUILTIN_STYLE_IDS.indexOf(id)>=0) return 0;
+    var n=0;
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(a&&a.k==='text'&&a.style===id){delete a.style;n++;}
+      });
+    });
+    var list=customTypes();
+    for(var i=list.length-1;i>=0;i--)
+      if(list[i]&&list[i].id===id) list.splice(i,1);
+    if(pres.styles) delete pres.styles[id];
+    syncCustomTypes();
+    return n;
+  }
   function deckStyles(){
     if(!pres.styles) pres.styles={};
     return pres.styles;
@@ -4780,9 +5529,14 @@
      Re-stamping is explicit rather than automatic: applyStyleTo WRITES a
      style's properties onto an item, so changing the registry does not
      move anything until something walks the deck and says so. */
-  function restyleAll(ids){
+  /* `scope` is an array of slide indexes, or null/omitted for the whole
+     deck. It exists so the Apply dialog can restyle a chosen run of
+     slides; the four callers that came first pass one argument and get
+     exactly the behaviour they always had. */
+  function restyleAll(ids,scope){
     var n=0;
-    (pres.slides||[]).forEach(function(sl){
+    (pres.slides||[]).forEach(function(sl,si){
+      if(scope&&scope.indexOf(si)<0) return;
       (sl.annots||[]).forEach(function(a){
         if(a&&a.k==='text'&&a.style&&(!ids||ids.indexOf(a.style)>=0)){
           applyStyleTo(a,a.style);n++;
@@ -4796,7 +5550,7 @@
      type at once, which is the thing you actually want when a room turns
      out to be bigger than you expected */
   function scaleStyles(k){
-    STYLE_ORDER.forEach(function(id){
+    styleOrder().forEach(function(id){
       var d=styleDef(id);
       var over=deckStyles()[id]||{};
       over.label=STYLE_DEFAULTS[id].label;
@@ -4814,10 +5568,101 @@
     var wrap=$('#dsg-stylewrap'),btn=$('#dsg-styles'),
         menu=$('#dsg-style-menu');
     if(!wrap||!btn||!menu) return;
+    var openEdit='';   /* which row's arrow is open; one at a time */
+    /* the expander behind one style's arrow. Everything here writes an
+       OVERRIDE into pres.styles (or, for a rename, into the custom type
+       itself) and then re-stamps the boxes wearing it — the registry
+       never moves anything on its own, which is the contract
+       applyStyleTo's comment sets out. */
+    function styleEditor(id,d,build){
+      var box=document.createElement('div');box.className='stm-edit';
+      var custom=BUILTIN_STYLE_IDS.indexOf(id)<0;
+      function over(){
+        var o=deckStyles()[id]||{};
+        /* carry the whole resolved definition, not just the one field
+           being changed: styleDef merges the override OVER the base, so
+           a partial override plus a later base change reads as a style
+           that half-followed */
+        o.label=d.label;o.size=d.size;
+        ['b','i','font','color','align','lh','pspace','head']
+          .forEach(function(k){
+            if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
+        deckStyles()[id]=o;
+        return o;
+      }
+      function toggle(label,key,title){
+        var b=document.createElement('button');
+        b.className='dbtn stm-tg';b.textContent=label;
+        b.setAttribute('aria-pressed',(!!d[key]).toString());
+        b.title=title;
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          var o=over();
+          if(d[key]) delete o[key]; else o[key]=1;
+          restyleAll([id]);build();
+        });
+        return b;
+      }
+      var row=document.createElement('div');row.className='stm-erow';
+      row.appendChild(toggle('B','b','Bold — everywhere in this deck'));
+      row.appendChild(toggle('I','i','Italic — everywhere in this deck'));
+      /* "counts as a heading" stopped being a fixed list of four the
+         moment types could be invented: only you know whether your
+         "Section label" is one */
+      row.appendChild(toggle('¶ Heading','head',
+        'Counts as a heading — for "apply to all headings", the outline '
+        +'view and the standardise check'));
+      box.appendChild(row);
+      var ren=document.createElement('input');
+      ren.className='stm-ren';ren.type='text';ren.value=d.label;
+      ren.placeholder='name for this style';
+      ren.title='What this style is called';
+      ren.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter') ren.blur();
+      });
+      /* committed on blur, not per keystroke: a rename that fired on
+         every letter would push a dozen undo steps and rebuild the menu
+         under the caret (2026-08-20, the presentation-rename lesson) */
+      ren.addEventListener('blur',function(){
+        var v=ren.value.trim(); if(!v||v===d.label) return;
+        if(custom) customTypes().forEach(function(t){
+          if(t&&t.id===id) t.label=v;});
+        var o=over();o.label=v;
+        syncCustomTypes();markDirty();build();
+      });
+      box.appendChild(ren);
+      var act=document.createElement('button');
+      act.className='dbtn vw-opt stm-del';
+      if(custom){
+        act.textContent='✕ Delete this style';
+        act.title='The boxes wearing it keep exactly the look they have '
+          +'— they just stop being a group';
+        act.addEventListener('click',function(e){
+          e.stopPropagation();
+          var n=deleteCustomType(id);
+          openEdit='';markDirty();build();
+          toast('"'+d.label+'" removed — '+n+' box'+(n===1?'':'es')
+            +' kept the look they had');
+        });
+      } else {
+        act.textContent='↺ Back to the built-in "'+STYLE_DEFAULTS[id].label
+          +'"';
+        act.title='Undo the changes made to this one style';
+        act.disabled=!(pres.styles&&pres.styles[id]);
+        act.addEventListener('click',function(e){
+          e.stopPropagation();
+          if(pres.styles) delete pres.styles[id];
+          restyleAll([id]);build();
+        });
+      }
+      box.appendChild(act);
+      return box;
+    }
     function build(){
       menu.innerHTML='';
       menuHead(menu,'this presentation\u2019s type');
-      STYLE_ORDER.forEach(function(id){
+      styleOrder().forEach(function(id){
         var d=styleDef(id);
         var row=document.createElement('div');row.className='stm-row';
         var spec=document.createElement('span');
@@ -4850,11 +5695,48 @@
           });
           row.appendChild(b);
         });
+        /* "a little arrow option to the right of each" (2026-08-22). It
+           opens ONE inline expander rather than a second floating menu:
+           floatMenu positions fixed and clamps without scrolling, so a
+           menu hanging off a menu would need its own dismissal, its own
+           clamping and somewhere to go when the first one is already at
+           the bottom of the screen. */
+        var arw=document.createElement('button');
+        arw.className='dbtn stm-b stm-arrow';
+        arw.innerHTML=(openEdit===id)?'&#9662;':'&#9656;';
+        arw.title='Change what "'+d.label+'" is';
+        arw.addEventListener('click',function(e){
+          e.stopPropagation();
+          openEdit=(openEdit===id)?'':id;
+          build();
+        });
+        row.appendChild(arw);
         menu.appendChild(row);
+        if(openEdit===id) menu.appendChild(styleEditor(id,d,build));
       });
+      /* "people could create their own types" \u2014 the seven built-ins are a
+         scale, not a vocabulary, and a deck that needs a Quote had
+         nowhere to put one */
+      var add=document.createElement('button');
+      add.className='dbtn vw-opt';
+      add.textContent='\uff0b New style of my own';
+      add.title='Add a type of your own \u2014 a Quote, a Source note, '
+        +'whatever this deck needs';
+      add.addEventListener('click',function(e){
+        e.stopPropagation();
+        var t=addCustomType('My style','body');
+        openEdit=t.id;
+        markDirty();build();
+      });
+      menu.appendChild(add);
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
       rst.textContent='\u21ba Back to the built-in sizes';
+      /* it clears the OVERRIDES, and it must never touch pres.types:
+         "back to the built-in sizes" is not "throw away the types I
+         invented" */
+      rst.title='Clears the size and weight changes. The types you made '
+        +'yourself are kept.';
       rst.addEventListener('click',function(e){
         e.stopPropagation();
         delete pres.styles;
@@ -5471,7 +6353,12 @@
     host.style.fontSize=fontPx(layer,a.size||2.2);
     if(a.lh) host.style.lineHeight=a.lh;
     if(a.color) host.style.color=a.color;
-    if(a.bgc) host.style.background=a.bgc;
+    /* a.bg===0 is "no fill", and the format bar's swatch has always read
+       it that way — but this renderer only ever looked at a.bgc, so
+       setting a table to no fill left the colour on the page and the
+       swatch and the slide disagreed (2026-08-22, found while giving the
+       Apply dialog a Box background row that covers tables). */
+    if(a.bg!==0&&a.bgc) host.style.background=a.bgc;
     /* the rules are page-relative like every other stroke on the canvas */
     host.style.setProperty('--tbl-sw',strokePx(a,layer).toFixed(2)+'px');
     host.style.setProperty('--tbl-line',a.line||'currentColor');
@@ -5913,6 +6800,13 @@
            currency (2026-08-20) */
         if(a.lh) d2.style.lineHeight=a.lh;
         if(a.pspace) d2.style.setProperty('--an-pspace',a.pspace+'em');
+        /* indentation, in em of the box's own type size — so it means the
+           same thing on a 16:9 slide and on an A0 poster, exactly as a.lh
+           and a.pspace already do. It is one of the properties the user
+           named for the Apply dialog and the only one that did not exist
+           yet (2026-08-22). */
+        if(a.ind) d2.style.setProperty('--an-ind',a.ind+'em');
+        else d2.style.removeProperty('--an-ind');
         if(a.bg!==0&&a.bgc){
           d2.style.background=a.bgc;
           d2.style.borderColor='transparent';
@@ -6902,7 +7796,7 @@
          by hand on every single box (2026-08-19, user: "no placeholder
          text and no background by default"). A box left empty deletes
          itself on blur, so nothing invisible is ever left behind. */
-      ?{k:'text',x:p0.x,y:p0.y,w:0,h:0,text:'',size:2.6,bg:0}
+      ?textBorn(p0)
       /* A TABLE is rows of plain strings plus a handful of switches. Not
          HTML: a table you can only fill by typing HTML is a table nobody
          will use, and rows-of-strings is the shape every export already
@@ -7302,8 +8196,10 @@
        audit; cf. the Page/Slide label and the Versions button) */
     var pw=pageOf().poster?'the page':'the slide';
     if(hint) hint.textContent=
-      t==='text'?'Drag on '+pw+' to draw a text box, or click for one that '
-        +'sizes itself'
+      t==='text'?('Drag on '+pw+' to draw a'
+        +(pendingStyle&&styleDef(pendingStyle)
+          ?' '+styleDef(pendingStyle).label:' text')
+        +' box, or click for one that sizes itself')
       :t==='arrow'?'Drag on '+pw+' to draw an arrow'
       :t==='rect'?('Drag on '+pw+' to draw a '
         +(pendingShape==='rect'?'rectangle':pendingShape))
@@ -7990,6 +8886,12 @@
   wireFloatDropdown('fmt-parawrap','fmt-para','fmt-para-menu',
     [['a:left','Align left'],['a:center','Align centre'],
      ['a:right','Align right'],
+     /* indent lives HERE and not on two ribbon buttons of its own:
+        #fmt-indent / #fmt-outdent are the list controls and only make
+        sense with the caret inside a list, whereas this indents the whole
+        box. Two more always-on buttons would have cost the widest ribbon
+        case about 56px it does not have (2026-08-22). */
+     ['i:+','Indent this box'],['i:-','Outdent this box'],
      ['c:0','Curve: straight'],
      ['c:12','Curve: gentle arch up'],['c:30','Curve: arch up'],
      ['c:55','Curve: strong arch up'],
@@ -8003,6 +8905,11 @@
       if(v.indexOf('a:')===0){
         var al=v.slice(2);
         fmtApply(function(a){a.align=al;});
+        return;
+      }
+      if(v.indexOf('i:')===0){
+        var out=v.slice(2)==='-';
+        fmtApply(function(a){boxIndent(a,out);});
         return;
       }
       var n=+v.slice(2);
@@ -8025,6 +8932,17 @@
      so it means the same thing at every zoom and on every page size, and
      needs no re-measuring. Paragraph spacing is the half nobody asks for
      until their bullets are touching each other. */
+  /* ---- INDENTATION ----------------------------------------------------
+     Whole-box indent, in em of the box's own type size, stepped rather
+     than typed \u2014 the same currency and the same shape as line and
+     paragraph spacing beside it. Capped at four steps because a fifth
+     leaves nothing to indent INTO on a slide. */
+  var IND_STEP=2;
+  function boxIndent(a,out){
+    var v=(a.ind||0)+(out?-IND_STEP:IND_STEP);
+    v=Math.max(0,Math.min(IND_STEP*4,v));
+    if(v) a.ind=v; else delete a.ind;
+  }
   var LH_STEPS=[[0,'Default'],[1,'Single'],[1.15,'1.15'],[1.5,'1\u00bd'],
     [2,'Double'],[2.5,'2\u00bd'],[3,'Triple']];
   var PS_STEPS=[[0,'None'],[0.25,'Small'],[0.5,'Medium'],[1,'Large'],
@@ -8127,7 +9045,7 @@
       var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
       var curId=a&&a.style;
       menuHead(menu,'apply a style');
-      STYLE_ORDER.forEach(function(id){
+      styleOrder().forEach(function(id){
         var d=styleDef(id);
         var b=document.createElement('button');
         b.className='dbtn vw-opt jv-styleopt';
@@ -8166,6 +9084,11 @@
         var s3=pres.slides[cur],a3=annotByIdx(s3,selAnnot);
         if(!a3||!a3.style) return;
         var d3={size:a3.size,label:STYLE_DEFAULTS[a3.style].label};
+        /* whether a type counts as a heading is a property of the TYPE,
+           not of the box you happened to select — carry it forward or a
+           custom heading silently stops being one the first time anyone
+           updates it from a box (2026-08-22) */
+        if(STYLE_DEFAULTS[a3.style].head) d3.head=1;
         if(a3.b) d3.b=1;
         if(a3.i) d3.i=1;
         if(a3.font) d3.font=a3.font;
@@ -8185,7 +9108,7 @@
         e.stopPropagation();
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
         if(!a4){menu.hidden=true;return;}
-        HEADING_STYLES.forEach(function(id){
+        headingStyles().forEach(function(id){
           var d4=deckStyles()[id]||{};
           /* SIZE is what makes a heading level a level, so it is the one
              thing this does not flatten */
@@ -8197,24 +9120,37 @@
           if(a4.color) d4.color=a4.color; else delete d4.color;
           deckStyles()[id]=d4;
         });
-        restyleDeck(HEADING_STYLES);
+        restyleDeck(headingStyles());
         menu.hidden=true;
         toast('Every heading in this presentation now matches');
       });
       menu.appendChild(all);
-    }
-    /* walk the whole deck and re-stamp anything wearing these styles */
-    function restyleDeck(ids){
-      var n=0;
-      (pres.slides||[]).forEach(function(sl){
-        (sl.annots||[]).forEach(function(a){
-          if(a&&a.k==='text'&&a.style&&ids.indexOf(a.style)>=0){
-            applyStyleTo(a,a.style);n++;
-          }
-        });
+      /* the same idea as the row above it, opened out: any type rather
+         than the four headings, any property set rather than all of
+         them, any slides rather than the whole deck. It is repeated here
+         as well as in Arrange because this is where the one-click
+         version has always lived, and that is where people will look for
+         the fuller one (2026-08-22). */
+      var more=document.createElement('button');
+      more.className='dbtn vw-opt';
+      more.textContent='≡ Apply this look to…';
+      more.title='Choose which properties travel and which slides they '
+        +'travel to';
+      more.addEventListener('click',function(e){
+        e.stopPropagation();
+        menu.hidden=true;
+        if(typeof window.SemDeckApplyDlg==='function')
+          window.SemDeckApplyDlg();
       });
-      markDirty();refresh();
-      return n;
+      menu.appendChild(more);
+    }
+    /* walk the whole deck and re-stamp anything wearing these styles.
+       This was a byte-for-byte copy of restyleAll with the "no ids means
+       everything" branch removed; now that restyleAll takes a slide scope
+       there is a real reason not to keep two of them drifting apart, so
+       this is a name kept for its callers and nothing more. */
+    function restyleDeck(ids){
+      return restyleAll(ids,null);
     }
     var btn=$('#fmt-style-tx');
     if(btn) btn.addEventListener('click',function(e){
@@ -9044,6 +9980,130 @@
     }
     return a.k;
   }
+  /* ---- WHAT COUNTS AS "ONE OF THESE" ----------------------------------
+     matchKey answers a narrow question for Match slide: which item on
+     THIS slide pairs with which item on THAT one. typeKeyOf answers the
+     wider one the user asks out loud — "apply to all objects of this
+     type" (2026-08-22) — and the two differ in exactly two places, which
+     is why this is a sibling and matchKey is not touched.
+
+     A placed frame is keyed by the part it ACTUALLY shows (partOf), not
+     by the raw a.part: a figure left on 'auto' and a figure explicitly
+     set to 'figure' are the same thing on the page, so a button that says
+     "every figure in this deck" must not put them in two buckets. Match
+     slide is right to keep the raw value — it is pairing, not counting.
+
+     And an UNSTYLED text box is grouped by its SIZE rather than falling
+     into Body. matchKey's 'body' default exists so a plain box still
+     pairs with something on another slide; here it would take one
+     hand-formatted heading and push its look onto every caption in the
+     deck. That is not a corner case — most decks have never used a named
+     style, which is the whole reason the standardise check exists — and
+     it is exactly what happened the first time this was driven in a
+     browser (2026-08-22).
+     Quantised in LOG space at the same ~6% the standardise bands use,
+     because a type scale is multiplicative: two sizes within 6% were
+     nudged apart by hand and meant to be one size, and 12% apart is one
+     press of A+ and is meant. */
+  function textBand(a){
+    return Math.round(Math.log((a&&a.size)||2.6)/Math.log(1.06));
+  }
+  function typeKeyOf(a){
+    if(!a) return '';
+    if(a.k==='text')
+      return a.style?('text:'+a.style):('text:~'+textBand(a));
+    if(a.k==='cell') return 'cell:'+partOf(a);
+    return matchKey(a);
+  }
+  var TYPE_LABELS={
+    'cell:figure':['figure','figures'],
+    'cell:output':['output frame','output frames'],
+    'cell:code':['code frame','code frames'],
+    'cell:body':['placed note','placed notes'],
+    table:['table','tables'],rect:['shape','shapes'],
+    arrow:['arrow','arrows'],draw:['drawing','drawings'],
+    image:['picture','pictures']
+  };
+  /* the words the dialog puts on its chip. A styled text box is named by
+     its STYLE, read live out of the registry, so a type you invented
+     yourself gets a correct chip for free and can never disagree with
+     what the Styles list calls the same thing. */
+  function typeLabel(key,plural,src){
+    if(key&&key.indexOf('text:~')===0){
+      /* an unstyled box has no name, so it is named by what it IS: its
+         size, in the same pt the Styles menu prints. Read off the source
+         item when there is one — reconstructing it from the quantised
+         band would print a number a point or two off the box in front of
+         you, which is worse than useless on a label. */
+      var pt=src&&src.size
+        ?Math.round(src.size*5.4)
+        :Math.round(Math.pow(1.06,+key.slice(6))*5.4);
+      return 'text box'+(plural?'es':'')+' at about '+pt+' pt';
+    }
+    if(key&&key.indexOf('text:')===0){
+      var d=styleDef(key.slice(5));
+      if(d) return d.label+(plural?' boxes':' box');
+    }
+    var p=TYPE_LABELS[key];
+    if(p) return plural?p[1]:p[0];
+    return plural?'objects':'object';
+  }
+  /* does this key name a STYLE, as against a size band or another kind?
+     Only a styled bucket can drift away from a style definition, so only
+     it needs the Re-apply warning. */
+  function isStyleKey(key){
+    return !!(key&&key.indexOf('text:')===0&&key.indexOf('text:~')!==0);
+  }
+  /* how many WOULD CHANGE over the slides in scope — which means the
+     source item does not count, because applying a look to itself is not
+     a change. Counting it made the button promise "Apply to 1" and then
+     do nothing at all (2026-08-22, caught in the browser). */
+  function typeCount(key,idxs,src){
+    var n=0;
+    (idxs||[]).forEach(function(i){
+      var sl=(pres.slides||[])[i]; if(!sl) return;
+      (sl.annots||[]).forEach(function(a){
+        if(a&&a!==src&&!a.hide&&typeKeyOf(a)===key) n++;
+      });
+    });
+    return n;
+  }
+  /* every distinct type present over these slides, in an order that
+     reads: named styles in the deck's own style order first, then the
+     unnamed size bands biggest first, then everything else.
+
+     This is what makes the type CHOOSABLE rather than merely reported,
+     and it is not a luxury. An unstyled box is grouped by its size, so
+     the moment you make one heading bigger it is alone in its band and
+     "apply to all of this type" has nothing left to apply to — which is
+     precisely the flow the feature is for. Being able to say "no, THAT
+     type" fixes it, and it answers the other half of the ask directly:
+     "maybe should be highlighted which object type this is"
+     (2026-08-22). */
+  function deckTypeKeys(idxs,src){
+    var seen={},list=[];
+    (idxs||[]).forEach(function(i){
+      var sl=(pres.slides||[])[i]; if(!sl) return;
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.hide) return;
+        var k=typeKeyOf(a);
+        if(!seen[k]){seen[k]={key:k,n:0,sample:a};list.push(seen[k]);}
+        if(a!==src) seen[k].n++;
+      });
+    });
+    var ord=styleOrder();
+    function rank(e){
+      if(e.key.indexOf('text:~')===0)
+        return 1000-(e.sample.size||2.6);       /* biggest type first */
+      if(e.key.indexOf('text:')===0){
+        var at=ord.indexOf(e.key.slice(5));
+        return at<0?900:at;
+      }
+      return 2000;
+    }
+    list.sort(function(x,y){return rank(x)-rank(y);});
+    return list;
+  }
   /* the geometry + look that travel; content never does.
 
      A LINE IS NOT AN x/y/w/h BOX. It is stored as its two endpoints
@@ -9061,10 +10121,169 @@
   var MATCH_PROPS=['x','y','w','h','rot','size','b','i','u','strike',
     'align','font','color','bg','bgc','op','style','sw','fill','fillc',
     'grad','ts','txcol','bgcol','arc','list','thead','grid','cols',
-    'lh','pspace',
+    'lh','pspace','ind',
     /* lines and arrows */
     'x1','y1','x2','y2','mid','curve','bend','head','tail','nohead',
     'hsz','dash'];
+  /* ---- WHICH PROPERTIES TRAVEL ----------------------------------------
+     "It should do everything by default (text size, spacing, indentation,
+     width, height, x and y position), but then you can unselect ones you
+     don't want" (2026-08-22). So: every row starts ticked, and the list
+     is the vocabulary the dialog speaks in.
+
+     A row is a USER-FACING idea, not a model field — "Bold, italic,
+     underline" is one decision and three fields, and nobody wants three
+     checkboxes for it. `kinds` is what the row means anything for; rows
+     that do not fit the selected item are greyed and explained rather
+     than hidden, so the list does not reshuffle under you when you pick a
+     different object.
+
+     EVERY field named here must also appear in MATCH_PROPS, because that
+     is the list the copy loop walks. A field named here and missing there
+     is a checkbox that silently does nothing — which is why `ind` was
+     added to MATCH_PROPS in the same edit that invented it. */
+  var APPLY_PROPS=[
+    /* key      label                        group        kinds                              fields */
+    ['size',   'Text size',                 'Type',      'text table',                      ['size']],
+    ['font',   'Typeface',                  'Type',      'text',                            ['font']],
+    ['emph',   'Bold, italic, underline',   'Type',      'text',                            ['b','i','u','strike']],
+    ['style',  'Named style',               'Type',      'text',                            ['style']],
+    ['tbl',    'Table rules and header row','Type',      'table',                           ['thead','grid','cols']],
+    ['lh',     'Line spacing',              'Spacing',   'text table',                      ['lh']],
+    ['pspace', 'Space between paragraphs',  'Spacing',   'text table',                      ['pspace']],
+    ['ind',    'Indentation',               'Spacing',   'text',                            ['ind']],
+    ['align',  'Alignment',                 'Spacing',   'text',                            ['align']],
+    ['list',   'Bullets and numbering',     'Spacing',   'text',                            ['list']],
+    ['arc',    'Curve',                     'Spacing',   'text',                            ['arc']],
+    ['w',      'Width',                     'Size',      'text cell rect image table draw', ['w']],
+    /* HEIGHT IS NOT A TEXT PROPERTY. A text box auto-heights — the
+       renderer reads a.w and never a.h for one — and sameSize has
+       excluded text from height since it was written. A ticked Height on
+       a heading would be a control that does nothing, which is worse
+       than a control that is not offered. */
+    ['h',      'Height',                    'Size',      'cell rect image table draw',      ['h']],
+    ['rot',    'Rotation',                  'Size',      '*',                               ['rot']],
+    ['ts',     'Content zoom',              'Size',      'cell',                            ['ts']],
+    ['x',      'Left / right position',     'Position',  'text cell rect image table draw', ['x']],
+    ['y',      'Up / down position',        'Position',  'text cell rect image table draw', ['y']],
+    /* an arrow is its two ends, not a box: the same row of the picker, a
+       completely different set of fields — the bug where Match slide
+       reported an arrow moved and left it exactly where it was */
+    ['ends',   'Where the line runs',       'Position',  'arrow',                           ['x1','y1','x2','y2','mid','curve','bend']],
+    ['color',  'Text colour',               'Colour',    'text arrow rect',                 ['color']],
+    ['txcol',  'Note text colour',          'Colour',    'cell',                            ['txcol']],
+    ['stroke', 'Line style and thickness',  'Colour',    'arrow rect draw table',           ['sw','style','dash','head','tail','nohead','hsz']],
+    ['fill',   'Shape fill',                'Background','rect',                            ['fill','fillc','grad']],
+    ['bg',     'Box background',            'Background','text table',                      ['bg','bgc']],
+    ['bgcol',  'Note background',           'Background','cell',                            ['bgcol']],
+    ['op',     'See-through',               'Background','*',                               ['op']]
+  ];
+  var APPLY_GROUPS=['Type','Spacing','Size','Position','Colour','Background'];
+  /* why a row is greyed, said in words rather than in kind names */
+  var APPLY_WHYNOT={text:'a text box',cell:'a placed frame',rect:'a shape',
+    image:'a picture',arrow:'an arrow',draw:'a drawing',table:'a table'};
+  /* everything ticked EXCEPT "Named style". Ticking that one re-tags the
+     target boxes, which is a bigger claim than "make these look alike" —
+     it changes what they ARE, and the next Re-apply would then move them.
+     Everything the user actually listed is on by default. */
+  function applyPickAll(){
+    var o={};
+    APPLY_PROPS.forEach(function(r){if(r[0]!=='style') o[r[0]]=1;});
+    return o;
+  }
+  /* SESSION-LOCAL, deliberately. This is a preference about the TOOL, not
+     a property of the deck: sending someone a presentation must not send
+     them my checkbox state, and everything on `pres` has to be argued
+     into normPres and then into or out of the undo snapshot. Ticking a
+     box is not an edit and must never become an undo step — but it MUST
+     survive until the tab closes, because the complaint this answers is
+     repetition, and re-ticking six boxes every time is that same tax in a
+     new coat. deckZoom is session-local for the same reason. */
+  var applyPick=applyPickAll();
+  function applyRowFits(row,kind){
+    return row[3]==='*'||row[3].split(' ').indexOf(kind)>=0;
+  }
+  /* the object handed to the action: keyed by MODEL FIELD, not by row, so
+     the copy loop is the one matchSlide already uses with one guard
+     added. Narrowed to what this kind can carry, so a ticked row that
+     does not apply cannot smuggle a field through. */
+  function applyFieldsFor(pick,kind){
+    var out={};
+    APPLY_PROPS.forEach(function(r){
+      if(!pick[r[0]]||!applyRowFits(r,kind)) return;
+      r[4].forEach(function(f){out[f]=1;});
+    });
+    return out;
+  }
+  /* ---- WHICH SLIDES ---------------------------------------------------
+     "The default should be 'all slides', but you can unselect slides and
+     sections" (2026-08-22). So this is an EXCLUSION set: absent from
+     scopeOff means in scope, and a deck you have never touched the picker
+     on is entirely in scope with no state at all.
+
+     Keyed on the slide OBJECT, not its index. pres.slides is spliced by
+     move, delete, duplicate and the strip's drop handler, and histRestore
+     replaces the array wholesale — an index-keyed exclusion would
+     silently re-point at whatever slid into the slot, so unticking slide
+     4 and then dragging it would leave slide 4's neighbour excluded.
+     Object identity survives all of them, and a WeakMap empties itself
+     for free on undo and on switching decks. */
+  var scopeOff=new WeakMap();
+  function scopeHas(s){return !!s&&!scopeOff.has(s);}
+  function scopeSet(s,on){
+    if(!s) return;
+    if(on) scopeOff['delete'](s); else scopeOff.set(s,1);
+  }
+  function scopeAll(){
+    (pres.slides||[]).forEach(function(s){scopeOff['delete'](s);});
+  }
+  /* ALWAYS an array, never null. A bug that produced null would have to
+     mean "the whole deck", which is the most destructive reading
+     available — so the interface simply has no way to say it. */
+  function scopeIdxs(){
+    var out=[];
+    (pres.slides||[]).forEach(function(s,i){if(scopeHas(s)) out.push(i);});
+    return out;
+  }
+  function scopeNoun(n){
+    var w=pageOf().poster?'page':'slide';
+    return n===1?w:w+'s';
+  }
+  function scopeWords(){
+    var all=(pres.slides||[]).length,idxs=scopeIdxs(),n=idxs.length;
+    if(!n) return 'No '+scopeNoun(0)+' chosen';
+    if(n===all) return 'All '+all+' '+scopeNoun(all);
+    if(n===1&&idxs[0]===cur) return 'This '+scopeNoun(1)+' only';
+    return n+' of '+all+' '+scopeNoun(all);
+  }
+  /* ---- THE ACTION -----------------------------------------------------
+     One source item, one type key, one property set, one list of slides.
+     The loop walks MATCH_PROPS rather than the caller's own keys so that
+     undefined-means-delete and the deep copy of a.grad / a.cols are
+     handled in exactly one place, the same place Match slide handles
+     them.
+     ONE markDirty() and ONE refresh() at the end, never per item: a sweep
+     over forty slides has to be a single undo step, and markDirty only
+     repaints the CURRENT slide's thumbnail, so the other thirty-nine need
+     the refresh to catch up. */
+  function applyToType(key,src,want,idxs){
+    var n=0;
+    (idxs||[]).forEach(function(i){
+      var sl=(pres.slides||[])[i]; if(!sl) return;
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a===src||typeKeyOf(a)!==key) return;
+        MATCH_PROPS.forEach(function(p){
+          if(!want[p]) return;
+          if(src[p]===undefined) delete a[p];
+          else a[p]=(typeof src[p]==='object'&&src[p])
+            ?JSON.parse(JSON.stringify(src[p])):src[p];
+        });
+        n++;
+      });
+    });
+    markDirty();refresh();
+    return n;
+  }
   function matchSlide(fromIdx,toIdx){
     var src=pres.slides[fromIdx],dst=pres.slides[toIdx];
     if(!src||!dst) return null;
@@ -9183,8 +10402,19 @@
      ['o:grid','Tidy into a grid'],
      ['m:w','Match widths to the widest'],
      ['m:h','Match heights to the tallest'],
-     ['m:both','Match both to the biggest']],'al',
+     ['m:both','Match both to the biggest'],
+     /* the deck-wide version of the three rows above it, which is why it
+        lives here and not in a group of its own: this menu is already
+        where "make these things match" is kept, and it is shown for
+        every kind of item, which the Styles menu beside it is not
+        (2026-08-22) */
+     ['a:type','Apply this look to every one of its type…']],'al',
     function(what){
+      if(what.indexOf('a:')===0){
+        if(typeof window.SemDeckApplyDlg==='function')
+          window.SemDeckApplyDlg();
+        return;
+      }
       if(what.indexOf('d:')===0){distributeSel(what.slice(2));return;}
       if(what.indexOf('p:')===0){centreOnPage(what.slice(2));return;}
       if(what.indexOf('g:')===0){closeGaps(what.slice(2));return;}
@@ -9821,6 +11051,271 @@
       if(typeof selAnnot==='number') open(selAnnot);});
     window.SemDeckEquation=open;
   })();
+  /* ---- THE APPLY DIALOG ------------------------------------------------
+     One surface answering the three questions the old "apply to all
+     headings" answered for you: WHAT type, WHICH properties, WHICH
+     slides (2026-08-22).
+
+     It always DIRECT-WRITES the fields onto the matching items; it never
+     edits the style registry. A registry entry carries only the eight
+     properties applyStyleTo writes, so it cannot express width, height,
+     x, y, indentation or see-through, and it is one object for the whole
+     deck, so it cannot express a slide subset either. A path that quietly
+     switched between the two depending on which boxes you happened to
+     tick would be untestable. The price is real and the toast says it:
+     the boxes stop matching their named style, so Re-apply would put them
+     back. The two one-click registry actions in the Styles menu are
+     untouched and are still the right tool when a style is what you
+     mean. */
+  (function(){
+    var dlg=$('#aa-dlg'); if(!dlg) return;
+    var srcA=null,srcKey='',srcKind='text';
+    function selNow(){
+      var s=pres.slides[cur]; if(!s) return null;
+      if(typeof selAnnot==='number') return annotByIdx(s,selAnnot);
+      return null;
+    }
+    /* an item of the CHOSEN type, for the wording. Once the type is
+       choosable it is no longer necessarily the source's own type, and
+       "text boxes at about 42 pt" read off the source would be naming the
+       size of the box you copied FROM rather than the ones about to
+       change. Falls back to the source when nothing else matches. */
+    function keySample(){
+      if(srcA&&typeKeyOf(srcA)===srcKey) return srcA;
+      var found=null;
+      (pres.slides||[]).forEach(function(sl){
+        (sl.annots||[]).forEach(function(a){
+          if(!found&&a&&!a.hide&&typeKeyOf(a)===srcKey) found=a;});
+      });
+      return found||srcA;
+    }
+    function close(){
+      dlg.hidden=true;
+      unmark();
+      srcA=null;
+    }
+    function unmark(){
+      $$('.an-typematch').forEach(function(n){
+        n.classList.remove('an-typematch');});
+    }
+    /* outline the matching items on the slide behind the dialog. A class
+       toggle over nodes that are already on the page — never a re-render,
+       and never markDirty: looking at something is not an edit. */
+    function mark(on){
+      unmark();
+      if(!on) return;
+      var layer=stage&&stage.querySelector('.annot-layer');
+      if(!layer) return;
+      var s=pres.slides[cur]; if(!s) return;
+      $$('[data-idx]',layer).forEach(function(n){
+        var a=annotByIdx(s,+n.getAttribute('data-idx'));
+        if(a&&typeKeyOf(a)===srcKey) n.classList.add('an-typematch');
+      });
+    }
+    function buildWhat(){
+      var host=$('#aa-what'); if(!host) return;
+      host.innerHTML='';
+      var lead=document.createElement('span');
+      lead.textContent='Make every';
+      host.appendChild(lead);
+      /* the chip is a BUTTON, not a label. It names the type in the
+         accent colour — which is what was asked for — and it opens the
+         list of every other type in the deck, which is what makes the
+         action usable after you have already changed the box you are
+         copying from. */
+      var chip=document.createElement('button');
+      chip.className='aa-chip aa-chipbtn';
+      chip.type='button';
+      chip.textContent=typeLabel(srcKey,false,keySample())+' ▾';
+      chip.title='Which kind of object to change. Hover to outline them '
+        +'on this slide.';
+      chip.setAttribute('aria-haspopup','true');
+      host.appendChild(chip);
+      var tail=document.createElement('span');
+      tail.textContent='look like this one.';
+      host.appendChild(tail);
+      var n=document.createElement('span');
+      n.className='aa-n';n.id='aa-n';
+      host.appendChild(n);
+      var pick=document.createElement('div');
+      pick.className='sh-menu aa-typemenu';pick.id='aa-typemenu';
+      pick.hidden=true;
+      host.appendChild(pick);
+      chip.addEventListener('click',function(e){
+        e.stopPropagation();
+        var open=pick.hidden;
+        if(open){
+          pick.innerHTML='';
+          menuHead(pick,'change every…');
+          var idxs=pageOf().poster?[cur]:scopeIdxs();
+          deckTypeKeys(idxs,srcA).forEach(function(t){
+            var b=document.createElement('button');
+            b.className='dbtn vw-opt';
+            b.setAttribute('aria-pressed',(t.key===srcKey).toString());
+            b.textContent=typeLabel(t.key,t.n!==1,t.sample)
+              +'  ('+t.n+')';
+            b.disabled=!t.n;
+            b.addEventListener('click',function(ev){
+              ev.stopPropagation();
+              srcKey=t.key;pick.hidden=true;
+              buildWhat();syncWords();
+            });
+            pick.appendChild(b);
+          });
+        }
+        pick.hidden=!open;
+      });
+      document.addEventListener('click',function(e){
+        if(!pick.hidden&&!pick.contains(e.target)&&e.target!==chip)
+          pick.hidden=true;
+      });
+      chip.addEventListener('mouseenter',function(){mark(true);});
+      chip.addEventListener('mouseleave',function(){mark(false);});
+    }
+    function buildProps(){
+      var host=$('#aa-props'); if(!host) return;
+      host.innerHTML='';
+      APPLY_GROUPS.forEach(function(g){
+        var rows=APPLY_PROPS.filter(function(r){return r[2]===g;});
+        if(!rows.length) return;
+        menuHead(host,g.toLowerCase());
+        rows.forEach(function(r){
+          var fits=applyRowFits(r,srcKind);
+          var lab=document.createElement('label');
+          lab.className='find-ck'+(fits?'':' aa-no');
+          var ck=document.createElement('input');
+          ck.type='checkbox';
+          ck.checked=!!applyPick[r[0]];
+          ck.disabled=!fits;
+          ck.addEventListener('change',function(){
+            if(ck.checked) applyPick[r[0]]=1; else delete applyPick[r[0]];
+          });
+          lab.appendChild(ck);
+          lab.appendChild(document.createTextNode(' '+r[1]));
+          if(!fits) lab.title=r[1]+' is not something '
+            +(APPLY_WHYNOT[srcKind]||'this')+' has.';
+          host.appendChild(lab);
+        });
+      });
+    }
+    /* the scope column, grouped by section when there are any. Numbered
+       titles rather than thumbnails: sixty pictures is a second filmstrip
+       inside a dialog, and the thing you are picking here is a NAME. */
+    function buildScope(){
+      var host=$('#aa-scope'),col=$('#aa-scopecol');
+      if(!host||!col) return;
+      /* a poster's other pages are deliberately different drafts of one
+         sheet, and its export only ever writes the page you are on — so
+         there is no scope to pick */
+      col.hidden=!!pageOf().poster;
+      if(col.hidden) return;
+      host.innerHTML='';
+      sectionRuns().forEach(function(r){
+        var grid;
+        if(r.id){
+          var h=document.createElement('div');h.className='aa-sech';
+          var hck=document.createElement('input');hck.type='checkbox';
+          var on=0,i;
+          for(i=r.at;i<r.at+r.n;i++) if(scopeHas(pres.slides[i])) on++;
+          hck.checked=on>0;
+          /* a section that is half in and half out says so rather than
+             lying in either direction */
+          hck.indeterminate=on>0&&on<r.n;
+          hck.addEventListener('change',function(){
+            for(var j=r.at;j<r.at+r.n;j++)
+              scopeSet(pres.slides[j],hck.checked);
+            buildScope();syncWords();
+          });
+          h.appendChild(hck);
+          var ht=document.createElement('span');
+          ht.textContent=r.name;h.appendChild(ht);
+          host.appendChild(h);
+        }
+        grid=document.createElement('div');grid.className='aa-grid';
+        for(var k=r.at;k<r.at+r.n;k++)(function(i2){
+          var sl=pres.slides[i2]; if(!sl) return;
+          var lab=document.createElement('label');lab.className='find-ck';
+          var ck=document.createElement('input');ck.type='checkbox';
+          ck.checked=scopeHas(sl);
+          ck.addEventListener('change',function(){
+            scopeSet(sl,ck.checked);buildScope();syncWords();});
+          lab.appendChild(ck);
+          var n=document.createElement('span');
+          n.className='aa-slide-n';n.textContent=(i2+1);
+          lab.appendChild(n);
+          var t=document.createElement('span');
+          t.className='aa-slide-t';t.textContent=slideTitle(sl);
+          lab.appendChild(t);
+          lab.title=slideTitle(sl);
+          grid.appendChild(lab);
+        })(k);
+        host.appendChild(grid);
+      });
+    }
+    function syncWords(){
+      var idxs=pageOf().poster?[cur]:scopeIdxs();
+      var c=$('#aa-count');
+      if(c) c.textContent=pageOf().poster?'This page':scopeWords();
+      var n=$('#aa-n');
+      var hits=typeCount(srcKey,idxs,srcA);
+      if(n) n.textContent=hits+' to change';
+      var ok=$('#aa-ok');
+      if(ok){
+        ok.disabled=!idxs.length||!hits;
+        ok.textContent=hits
+          ?('Apply to '+hits+' '+typeLabel(srcKey,hits!==1,keySample()))
+          :'Nothing to change';
+      }
+    }
+    function open(){
+      var a=selNow();
+      if(!a){toast('Select the object you want the others to match');
+        return;}
+      srcA=a;srcKey=typeKeyOf(a);
+      srcKind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
+      buildWhat();buildProps();buildScope();syncWords();
+      dlg.hidden=false;
+    }
+    function commit(){
+      if(!srcA) return;
+      var idxs=pageOf().poster?[cur]:scopeIdxs();
+      var want=applyFieldsFor(applyPick,srcKind);
+      /* the words are read off a MATCHING item, not off the source: once
+         the type is choosable the two are different things, and "5 text
+         boxes at about 42 pt" would be naming the size of the box you
+         copied FROM rather than the ones that changed */
+      var samp=keySample();
+      var n=applyToType(srcKey,srcA,want,idxs);
+      close();
+      if(!n){toast('Nothing else on those slides is a '
+        +typeLabel(srcKey,false,samp));return;}
+      var msg=n+' '+typeLabel(srcKey,n!==1,samp)+' now match this one';
+      /* the one real cost of writing the fields rather than the style,
+         said plainly rather than discovered later */
+      if(isStyleKey(srcKey))
+        msg+=' — they no longer match the '
+          +typeLabel(srcKey,false,samp)+' style, so Re-apply would put '
+          +'them back';
+      toast(msg+'. Ctrl+Z undoes the lot.');
+    }
+    $('#aa-ok').addEventListener('click',commit);
+    $('#aa-cancel').addEventListener('click',close);
+    $('#aa-close').addEventListener('click',close);
+    dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
+    dlg.addEventListener('keydown',function(e){
+      /* stopPropagation because the canvas listens for Escape and for
+         plain letters, and a dialog on top of it must not nudge a shape */
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}
+    });
+    $('#aa-all-props').addEventListener('click',function(){
+      applyPick=applyPickAll();buildProps();});
+    $('#aa-no-props').addEventListener('click',function(){
+      applyPick={};buildProps();});
+    $('#aa-all-slides').addEventListener('click',function(){
+      scopeAll();buildScope();syncWords();});
+    window.SemDeckApplyDlg=open;
+  })();
   /* is this text item an equation? either it was made as one or its words
      are wrapped in $ … $ */
   function isMaths(a){
@@ -10221,6 +11716,7 @@
         var ob=$('#objects-btn');
         if(ob) ob.setAttribute('aria-pressed','false');
         var pf=$('#preflight'); if(pf) pf.hidden=true;
+        var sp2=$('#stdpane'); if(sp2) sp2.hidden=true;
         showVerpane(false);
         render();
       }
@@ -11143,6 +12639,22 @@
      document and must stay true to itself, a thumbnail is an INDEX and
      has to be legible. */
   var MINI_H=66;      /* mirrors --mini-h in deck.css */
+  /* MINI_H is the FLOOR now, not the height: the column is draggable, so
+     a thumbnail grows with the room it is given and its type and strokes
+     have to grow with it or a 460px strip draws 3px lettering
+     (2026-08-22). Measured off the LIST rather than off a thumbnail —
+     renderFilm sizes type before the node is in the document, and an
+     unattached node has no height to read. Computed once per render, not
+     once per item. */
+  var MINI_AR=116/66,miniHNow=MINI_H;
+  function miniH(){
+    var l=$('#film-list');
+    var w=l?l.clientWidth:0;
+    if(!w) return MINI_H;
+    /* the padding and the row's own gutters the CSS spends before the
+       thumbnail gets the rest */
+    return Math.max(MINI_H,Math.round((w-46)/MINI_AR));
+  }
   /* svg ids (gradients) must be unique across every thumbnail in the
      strip, not just within one — a repeated id would silently paint every
      later slide's gradient with the first slide's */
@@ -11153,7 +12665,7 @@
     t.className='mini-tx'+(cls?' '+cls:'');
     t.style.left=(a.x||0)+'%';t.style.top=(a.y||0)+'%';
     if(a.w!=null) t.style.width=a.w+'%';
-    t.style.fontSize=Math.max(2,MINI_H*(a.size||2.6)/100).toFixed(2)+'px';
+    t.style.fontSize=Math.max(2,miniHNow*(a.size||2.6)/100).toFixed(2)+'px';
     if(a.color) t.style.color=a.color;
     if(a.b) t.style.fontWeight='700';
     if(a.i) t.style.fontStyle='italic';
@@ -11182,7 +12694,7 @@
   /* the stroke a thumbnail draws: the page weight scaled down, floored so
      a hairline is still a line */
   function miniSw(a){
-    return Math.max(0.6,swOf(a)*MINI_H/SW_REF_H).toFixed(2);
+    return Math.max(0.6,swOf(a)*miniHNow/SW_REF_H).toFixed(2);
   }
   /* re-weight a borrowed shape/freehand svg for thumbnail scale, and drop
      its dash: dashes are measured in the stroke's own units, so a pattern
@@ -11247,7 +12759,7 @@
         var mt=document.createElement('table');
         mt.className='mini-tbl'+(a.grid===0?' nogrid':'');
         mt.style.fontSize=Math.max(1.5,
-          MINI_H*(a.size||2.2)/100).toFixed(2)+'px';
+          miniHNow*(a.size||2.2)/100).toFixed(2)+'px';
         trows.forEach(function(row,ri){
           var tr=document.createElement('tr');
           row.forEach(function(v,ci){
@@ -11299,20 +12811,29 @@
      should appear like the objects bar"). */
   var filmHome=null;
   function filmToPane(){
-    var body=$('#verpane-body'),list=$('#film-list'),add=$('#film-add');
+    var body=$('#verpane-body'),list=$('#film-list'),add=$('#film-adds'),
+        head=$('#film-head');
     if(!body||!list||filmHome) return;
     filmHome={parent:list.parentNode,next:list.nextSibling};
+    /* the chooser rides along as a THIRD node, above the list it chooses
+       for. Building a second copy of it in the pane is how two controls
+       that claim to do the same thing start disagreeing (2026-08-22). */
+    if(head) body.appendChild(head);
     body.appendChild(list);
     if(add) body.appendChild(add);
   }
   function filmToPanel(){
     if(!filmHome) return;
-    var list=$('#film-list'),add=$('#film-add');
+    var list=$('#film-list'),add=$('#film-adds'),head=$('#film-head');
     if(list&&filmHome.parent){
-      if(filmHome.next&&filmHome.next.parentNode===filmHome.parent)
-        filmHome.parent.insertBefore(list,filmHome.next);
-      else filmHome.parent.appendChild(list);
-      if(add) filmHome.parent.appendChild(add);
+      var at=(filmHome.next&&filmHome.next.parentNode===filmHome.parent)
+        ?filmHome.next:null;
+      /* head, list, adds — in that order and all before whatever followed
+         the list when it left, so the column comes back exactly as it was
+         rather than with its chooser stranded at the bottom */
+      if(head) filmHome.parent.insertBefore(head,at);
+      filmHome.parent.insertBefore(list,at);
+      if(add) filmHome.parent.insertBefore(add,at);
     }
     filmHome=null;
   }
@@ -11337,6 +12858,7 @@
       var ob=$('#objects-btn');
       if(ob) ob.setAttribute('aria-pressed','false');
       var pf=$('#preflight'); if(pf) pf.hidden=true;
+      var sp3=$('#stdpane'); if(sp3) sp3.hidden=true;
       filmToPane();
       renderFilm();
     }
@@ -11374,9 +12896,48 @@
       cp.label=nextVersionName();
       pres.slides.splice(at,0,cp);
     }
+    /* a new slide joins the section it was inserted into. Without this an
+       insert splits the run in two and grows a divider out of nowhere. */
+    var prev=pres.slides[at-1];
+    if(prev&&prev.sec) pres.slides[at].sec=prev.sec;
     cur=at;activePane=-1;selAnnot=null;selSet=[];
-    markDirty();refresh();
+    normSections();markDirty();refresh();
     if(!$('#verpane').hidden) renderFilm();
+  }
+  /* ---- THE OUTLINE ----------------------------------------------------
+     In headings mode the strip stops being a contact sheet and becomes a
+     table of contents, so it must name a slide by its HEADING and not by
+     whatever text happens to sit highest on it. A box wearing a heading
+     style says outright that it is the slide's title; slideTitle's
+     guesswork is the fallback for slides that never used one. */
+  function slideHeading(s){
+    var best=null,bestAt=99;
+    (s.annots||[]).forEach(function(a){
+      if(!a||a.k!=='text'||a.hide||!String(a.text||'').trim()) return;
+      if(!a.style||!isHeadingStyle(a.style)) return;
+      var at=headingStyles().indexOf(a.style);
+      if(at>=0&&at<bestAt){bestAt=at;best=a;}
+    });
+    return best?String(best.text).trim().split('\n')[0]:'';
+  }
+  /* how far the row indents in the outline. A title slide and a section
+     divider are always level 0 — they are the top of something, whatever
+     style their text happens to wear. */
+  function headLevel(s){
+    if(!s||s.layout==='title'||s.layout==='section') return 0;
+    var lv=0;
+    (s.annots||[]).forEach(function(a){
+      if(!a||a.k!=='text'||a.hide||!a.style) return;
+      var at=headingStyles().indexOf(a.style);
+      if(at>=0&&(!lv||at<lv)) lv=at;
+    });
+    return Math.min(3,lv);
+  }
+  /* ONE source for the words on a row, so the strip and refreshThumb can
+     never disagree about what a slide is called */
+  function filmText(s){
+    if(filmMode()==='thumb') return slideTitle(s);
+    return slideHeading(s)||slideTitle(s);
   }
   function slideTitle(s){
     /* a version carries the name you were given or chose; only posters
@@ -11402,15 +12963,252 @@
     }
     return 'empty slide';
   }
-  var draggingSlide=-1;
+  /* ---- SLIDE SECTIONS -------------------------------------------------
+     "There should be the ability to create slide sections in the
+     thumbnails part" (2026-08-22).
+
+     THE SHAPE, and why it is this one. A section is a TAG on the slide
+     (s.sec) plus a name in a keyed map (pres.sections). The ORDER is
+     never stored: it is read back off pres.slides. Every slide mutation
+     in this file is a raw splice — moveSlide, delSlide, dupSlide,
+     newVersion, the strip's drop handler — and histRestore replaces the
+     array outright; a tag rides through all six for free, while a stored
+     start-INDEX would have to be shifted correctly in every one of them
+     and would be silently wrong the first time one was missed.
+
+     The one price of tags is that they permit a section to go
+     discontiguous. normSections() below is what pays it, and every verb
+     here ends by calling it. */
+  var secSeq=0;
+  function secId(){
+    /* an id has to survive a save, a reload and an undo, so it cannot be
+       a plain counter reset on load — two sections would collide the
+       moment you reopened a deck and made another one */
+    secSeq++;
+    return 's'+Date.now().toString(36)+secSeq.toString(36);
+  }
+  function secMap(){
+    if(!pres.sections||typeof pres.sections!=='object') pres.sections={};
+    return pres.sections;
+  }
+  function secName(id){
+    var d=(pres.sections||{})[id];
+    return (d&&d.name)||'Untitled section';
+  }
+  /* THE ONE SHARED API. The strip, the Apply dialog's scope picker and
+     the outline view must all agree on what a section IS, so all three
+     read it from here rather than each grouping the slides their own
+     way. Untagged spans come back too, with id '' — a caller that wants
+     only real sections filters on run.id. */
+  function sectionRuns(){
+    var out=[],sl=pres.slides||[],i,id,last=null;
+    for(i=0;i<sl.length;i++){
+      id=(sl[i]&&sl[i].sec)||'';
+      if(!last||last.id!==id){
+        last={id:id,name:id?secName(id):'',at:i,n:0,
+          fold:!!(id&&(pres.sections||{})[id]&&pres.sections[id].fold)};
+        out.push(last);
+      }
+      last.n++;
+    }
+    return out;
+  }
+  /* THE INVARIANT. A section is a CONTIGUOUS run — that is what a divider
+     in a strip means, and nothing in the UI can express anything else. A
+     tag can still end up out of place (drag a slide past a boundary, or
+     swap one across it with the arrows), so every mutation ends here: a
+     tag that reappears after its run has closed is re-tagged to the run
+     it now sits in, and any section no slide uses is thrown away.
+     Dropping the map entirely when it empties is what keeps a deck that
+     never used sections serialising exactly as it did before. */
+  function normSections(){
+    var sl=pres.slides||[],seen={},closed={},prev='',i,id;
+    for(i=0;i<sl.length;i++){
+      if(!sl[i]) continue;
+      id=sl[i].sec||'';
+      if(id&&id!==prev&&(closed[id]||seen[id])) id=prev;
+      if(id) seen[id]=1;
+      if(prev&&prev!==id) closed[prev]=1;
+      if(id) sl[i].sec=id; else delete sl[i].sec;
+      prev=id;
+    }
+    var m=pres.sections;
+    if(m){
+      Object.keys(m).forEach(function(k){if(!seen[k]) delete m[k];});
+      if(!Object.keys(m).length) delete pres.sections;
+    }
+  }
+  /* the five verbs. Everything that touches sections goes through one of
+     these, so normSections() is guaranteed to have run before markDirty
+     writes the deck out. */
+  function newSection(at,name){
+    var id=secId(),i;
+    secMap()[id]={name:name||'New section'};
+    /* a new section OWNS everything from `at` down to the next divider —
+       that is what "start a section here" means in PowerPoint, and it is
+       the only reading that leaves no orphan slides behind */
+    var was=(pres.slides[at]&&pres.slides[at].sec)||'';
+    for(i=at;i<pres.slides.length;i++){
+      if(((pres.slides[i].sec)||'')!==was) break;
+      pres.slides[i].sec=id;
+    }
+    normSections();markDirty();renderFilm();
+  }
+  function renameSection(id){
+    /* prompt(), not an inline edit on the row. The row's own click
+       re-renders the strip, so by the time a dblclick handler arrived the
+       node it was editing had already been replaced — the same reason the
+       poster version rename is a button and a prompt (2026-08-10) */
+    var v=prompt('Name this section:',secName(id));
+    if(v==null) return;
+    v=v.trim(); if(!v) return;
+    secMap()[id]={name:v,fold:(pres.sections[id]||{}).fold};
+    if(!pres.sections[id].fold) delete pres.sections[id].fold;
+    markDirty();renderFilm();
+  }
+  function foldSection(id,on){
+    var d=secMap()[id]; if(!d) return;
+    if(on) d.fold=1; else delete d.fold;
+    /* markDirty(true): folding is a way of LOOKING at the deck, not an
+       edit to it, so it persists in the file but never lands on the undo
+       stack — Ctrl+Z must never open or close a section */
+    markDirty(true);renderFilm();
+  }
+  function removeSection(id,withSlides){
+    var runs=sectionRuns(),r=null,i;
+    for(i=0;i<runs.length;i++) if(runs[i].id===id) r=runs[i];
+    if(!r) return;
+    if(withSlides) pres.slides.splice(r.at,r.n);
+    /* the slides MERGE UPWARDS into whatever section is above — removing
+       a divider must never delete work, which is why the destructive form
+       is a separate and differently-worded verb */
+    else for(i=r.at;i<r.at+r.n;i++){
+      if(r.at>0&&pres.slides[r.at-1].sec)
+        pres.slides[i].sec=pres.slides[r.at-1].sec;
+      else delete pres.slides[i].sec;
+    }
+    if(pres.sections) delete pres.sections[id];
+    if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
+    normSections();markDirty();refresh();
+  }
+  function moveSlideToSection(i,id){
+    var runs=sectionRuns(),r=null,j,to;
+    for(j=0;j<runs.length;j++) if(runs[j].id===id) r=runs[j];
+    /* a tag on its own would break contiguity, so the slide MOVES to the
+       end of that section's run — re-tagging without moving is the bug
+       normSections would then immediately have to undo */
+    to=r?(r.at+r.n):pres.slides.length;
+    var moved=pres.slides.splice(i,1)[0]; if(!moved) return;
+    if(to>i) to--;
+    if(id) moved.sec=id; else delete moved.sec;
+    pres.slides.splice(to,0,moved);
+    cur=to;normSections();markDirty();refresh();
+  }
+  /* a WHOLE-SECTION drop is a different move: lift the run out and put it
+     back at a divider boundary. `cur` is refound by IDENTITY afterwards —
+     the single-slide path's four-branch arithmetic does not generalise to
+     moving n slides at once, and getting it wrong strands you on somebody
+     else's slide. */
+  function moveSection(id,beforeAt){
+    var runs=sectionRuns(),r=null,i;
+    for(i=0;i<runs.length;i++) if(runs[i].id===id) r=runs[i];
+    if(!r||(beforeAt>=r.at&&beforeAt<=r.at+r.n)) return;
+    var keep=pres.slides[cur];
+    var block=pres.slides.splice(r.at,r.n);
+    var to=beforeAt>r.at?beforeAt-r.n:beforeAt;
+    for(i=0;i<block.length;i++) pres.slides.splice(to+i,0,block[i]);
+    var k=pres.slides.indexOf(keep);
+    cur=k<0?0:k;
+    normSections();markDirty();refresh();
+  }
+  var draggingSlide=-1,draggingSec=null;
+  /* ONE divider row. Deliberately NOT class `film-row` and deliberately
+     without a data-idx: refreshThumb looks up
+     '.film-row[data-idx="N"]' and takes the first match, so a divider
+     wearing either would quietly collect a slide's thumbnail. */
+  function secRow(r){
+    var el=document.createElement('div');
+    el.className='film-sec'+(r.fold?' folded':'');
+    el.dataset.sec=r.id;el.dataset.at=r.at;
+    el.draggable=true;
+    el.title='Drag to move the whole section';
+    var f=document.createElement('button');
+    f.className='film-sec-fold';
+    f.innerHTML=r.fold?'&#9656;':'&#9662;';
+    f.title=r.fold?'Show these slides':'Hide these slides';
+    f.addEventListener('click',function(e){
+      e.stopPropagation();foldSection(r.id,!r.fold);});
+    el.appendChild(f);
+    var t=document.createElement('span');
+    t.className='film-sec-t';t.textContent=r.name;el.appendChild(t);
+    var n=document.createElement('span');
+    n.className='film-sec-n';
+    /* the count is the whole point of a collapsed section — a divider
+       that hides four slides and does not say four is just a deck with
+       slides missing */
+    n.textContent=r.fold?(r.n+' hidden'):String(r.n);
+    el.appendChild(n);
+    var ctr=document.createElement('span');ctr.className='film-ctr';
+    [['✎',function(){renameSection(r.id);},'Rename this section'],
+     ['✕',function(){removeSection(r.id,false);},
+      'Remove this divider — the slides stay, and join the section '
+      +'above']]
+      .forEach(function(p){
+        var b=document.createElement('button');b.className='film-mini';
+        b.textContent=p[0];b.title=p[2];
+        b.addEventListener('click',function(ev){
+          ev.stopPropagation();p[1]();});
+        ctr.appendChild(b);
+      });
+    el.appendChild(ctr);
+    el.addEventListener('dragstart',function(e){
+      draggingSec=r.id;el.classList.add('dragging');
+      try{e.dataTransfer.setData('text/plain','sec-'+r.id);}catch(err){}
+      try{e.dataTransfer.setDragImage(el,12,12);}catch(err){}
+      e.dataTransfer.effectAllowed='move';
+    });
+    el.addEventListener('dragend',function(){
+      draggingSec=null;el.classList.remove('dragging');clearFilmMarks();});
+    el.addEventListener('contextmenu',function(ev){
+      ev.preventDefault();openFilmMenu(r.at,ev,r);});
+    return el;
+  }
   function renderFilm(){
     var list=$('#film-list');list.innerHTML='';
+    /* the strip rebuilds every row, so a context menu left open is
+       holding an index into nodes that no longer exist */
+    var om=$('#film-menu'); if(om) om.remove();
+    /* Headers are INSERTED into the flat loop rather than the loop being
+       rewritten sections-outer / slides-inner. `i` stays the ARRAY index,
+       which is what keeps the numbers global (1..n straight through every
+       section) and keeps row.dataset.idx equal to the array index —
+       refreshThumb and the drop maths both read it back. */
+    var runs=sectionRuns(),head={},fold={};
+    runs.forEach(function(r){
+      if(r.id) head[r.at]=r;
+      if(r.fold) for(var k=r.at;k<r.at+r.n;k++) fold[k]=1;
+    });
+    /* the mode is stamped ONCE on the list and the CSS branches off it,
+       the way applyTab() stamps data-off — not a style per row, and not
+       on the body or the deck, because filmToPane MOVES this list into
+       the Versions pane and an ancestor class would be left behind */
+    var fv=filmMode();
+    list.setAttribute('data-fv',fv);
+    miniHNow=miniH();
     pres.slides.forEach(function(s,i){
+      if(head[i]) list.appendChild(secRow(head[i]));
+      /* the CURRENT slide is drawn even inside a folded section: it is
+         where you are standing, and it is also the row refreshThumb goes
+         looking for on every edit — hide it and the live thumbnail dies */
+      if(fold[i]&&i!==cur) return;
       var row=document.createElement('div');
-      row.className='film-row'+(i===cur?' current':'');
+      row.className='film-row'+(i===cur?' current':'')
+        +(fold[i]?' peek':'')+(s.sec?' in-sec':'');
       row.dataset.idx=i;
       row.draggable=true;
       row.title='Drag to reorder';
+      row.addEventListener('contextmenu',function(ev){
+        ev.preventDefault();openFilmMenu(i,ev,null);});
       row.addEventListener('dragstart',function(e){
         draggingSlide=i;
         row.classList.add('dragging');
@@ -11426,6 +13224,7 @@
         row.classList.remove('dragging');
         clearFilmMarks();
       });
+      row.dataset.lvl=headLevel(s);
       var lbl=document.createElement('div');lbl.className='film-label';
       var num=document.createElement('span');num.className='film-n';
       num.textContent=(i+1);lbl.appendChild(num);
@@ -11436,11 +13235,15 @@
         var view=document.createElement('div');view.className='film-view';
         view.appendChild(buildSlideEditor(s));
         lbl.appendChild(view);
-      } else {
+      } else if(fv!=='head'){
+        /* in headings mode no thumbnail is BUILT, rather than one being
+           built and hidden: miniDiagram emits an <img> per figure, a real
+           <table> per table and an <svg> per slide, and a sixty-slide
+           deck should not pay for all of that to draw a list of names */
         lbl.appendChild(miniDiagram(s));
       }
       var tt=document.createElement('span');tt.className='film-t';
-      tt.textContent=slideTitle(s);lbl.appendChild(tt);
+      tt.textContent=filmText(s);lbl.appendChild(tt);
       if(i!==cur) lbl.addEventListener('click',function(){
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
       row.appendChild(lbl);
@@ -11479,20 +13282,49 @@
     });
   }
   function clearFilmMarks(){
-    $$('#film-list .film-row.drop-above,#film-list .film-row.drop-below')
+    $$('#film-list .film-row.drop-above,#film-list .film-row.drop-below,'
+      +'#film-list .film-sec.drop-above,#film-list .film-sec.drop-below')
       .forEach(function(r){
         r.classList.remove('drop-above');
         r.classList.remove('drop-below');
       });
   }
+  /* ---- WHERE A DROP LANDS ----------------------------------------------
+     Before sections a drop was one number: the row's dataset.idx, plus
+     one if you were past its midpoint. With dividers interleaved a drop
+     is TWO answers — where in the array, and which section the slide now
+     belongs to — and on a divider they are decided by the SAME midpoint
+     from opposite sides: above the divider is the last slide of the run
+     before it, below it is the first slide of the run after. Same index,
+     different owner. That is the whole change. */
+  function filmDropTarget(row,clientY){
+    var r=row.getBoundingClientRect(),below=clientY>r.top+r.height/2;
+    if(row.classList.contains('film-sec')){
+      var at=+row.dataset.at,id=row.dataset.sec;
+      if(!below){
+        var prev=pres.slides[at-1];
+        return {to:at,sec:(prev&&prev.sec)||''};
+      }
+      if(row.classList.contains('folded')){
+        /* a folded section shows no rows to aim between, so a drop onto
+           it can only mean "put this one in there", at the end */
+        var runs=sectionRuns(),k,n=0;
+        for(k=0;k<runs.length;k++) if(runs[k].id===id) n=runs[k].n;
+        return {to:at+n,sec:id};
+      }
+      return {to:at,sec:id};
+    }
+    var idx=+row.dataset.idx,s=pres.slides[idx];
+    return {to:below?idx+1:idx,sec:(s&&s.sec)||''};
+  }
   (function(){
     var list=$('#film-list'); if(!list) return;
     list.addEventListener('dragover',function(e){
-      if(draggingSlide<0) return;
+      if(draggingSlide<0&&!draggingSec) return;
       e.preventDefault();
       e.dataTransfer.dropEffect='move';
       clearFilmMarks();
-      var row=e.target.closest&&e.target.closest('.film-row');
+      var row=e.target.closest&&e.target.closest('.film-row,.film-sec');
       if(!row) return;
       var r=row.getBoundingClientRect();
       row.classList.add(
@@ -11502,26 +13334,98 @@
       if(e.target===list) clearFilmMarks();
     });
     list.addEventListener('drop',function(e){
-      if(draggingSlide<0) return;
+      if(draggingSlide<0&&!draggingSec) return;
       e.preventDefault();
-      var from=draggingSlide;
-      draggingSlide=-1;
+      var from=draggingSlide,sec=draggingSec;
+      draggingSlide=-1;draggingSec=null;
       clearFilmMarks();
-      var row=e.target.closest&&e.target.closest('.film-row');
+      var row=e.target.closest&&e.target.closest('.film-row,.film-sec');
       if(!row) return;
-      var to=+row.dataset.idx;
-      var r=row.getBoundingClientRect();
-      if(e.clientY>r.top+r.height/2) to++;
+      var tgt=filmDropTarget(row,e.clientY);
+      /* a whole section moves as a block and refinds `cur` by identity */
+      if(sec){moveSection(sec,tgt.to);return;}
+      var to=tgt.to;
       if(to>from) to--;
-      if(to===from) return;
       var moved=pres.slides.splice(from,1)[0];
+      /* the slide joins whatever section it landed in — a slide dragged
+         under a divider that kept its old tag would make the section
+         discontiguous, and normSections would drag it straight back */
+      if(tgt.sec) moved.sec=tgt.sec; else delete moved.sec;
       pres.slides.splice(to,0,moved);
       if(cur===from) cur=to;
       else if(from<cur&&to>=cur) cur--;
       else if(from>cur&&to<=cur) cur++;
-      markDirty();refresh();
+      normSections();markDirty();refresh();
     });
   })();
+  /* ---- the strip's right-click menu ------------------------------------
+     The section verbs live HERE rather than on a ribbon button because
+     this is where the thing being sectioned is visible, and because Home
+     has no room to give (2026-08-22). Mounted on the body like
+     openMatchMenu, and closed at the top of renderFilm — the strip
+     rebuilds every row, so a menu left open holds a dead index. */
+  function openFilmMenu(i,ev,run){
+    var old=$('#film-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu film-menu';m.id='film-menu';
+    var poster=pageOf().poster;
+    function row(label,fn,title){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';b.textContent=label;
+      if(title) b.title=title;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.remove();fn();});
+      m.appendChild(b);
+    }
+    if(run){
+      menuHead(m,'this section');
+      row('✎ Rename…',function(){renameSection(run.id);});
+      row(run.fold?'▾ Show these slides':'▸ Hide these slides',
+        function(){foldSection(run.id,!run.fold);});
+      row('✕ Remove the divider',function(){removeSection(run.id,false);},
+        'The slides stay — they join the section above');
+      row('🗑 Delete the section AND its '+run.n+' slide'
+        +(run.n===1?'':'s'),function(){
+          if(confirm('Delete '+run.n+' slide'+(run.n===1?'':'s')
+            +' along with the section "'+run.name+'"?'))
+            removeSection(run.id,true);
+        });
+      floatAt(m,ev);
+      return;
+    }
+    menuHead(m,poster?'this page':'slide '+(i+1));
+    row('§ Start a section here',function(){newSection(i,'New section');},
+      'Everything from here down to the next divider goes in it');
+    var runs=sectionRuns().filter(function(r){return r.id;});
+    if(runs.length){
+      menuHead(m,'move this one into');
+      runs.forEach(function(r){
+        if(pres.slides[i]&&pres.slides[i].sec===r.id) return;
+        row('→ '+r.name,function(){moveSlideToSection(i,r.id);});
+      });
+      if(pres.slides[i]&&pres.slides[i].sec)
+        row('→ (no section)',function(){moveSlideToSection(i,'');});
+    }
+    menuHead(m,poster?'this page':'this slide');
+    row('⧉ Duplicate',function(){dupSlide(i);});
+    row('✕ Delete',function(){delSlide(i);});
+    floatAt(m,ev);
+  }
+  /* floatMenu positions against an element's rect; a context menu has
+     only a point, so it is handed a zero-size one at the cursor */
+  function floatAt(m,ev){
+    document.body.appendChild(m);
+    floatMenu({getBoundingClientRect:function(){
+      return {left:ev.clientX,right:ev.clientX,
+        top:ev.clientY,bottom:ev.clientY,width:0,height:0};
+    }},m);
+    setTimeout(function(){
+      document.addEventListener('click',function off(e){
+        if(m.contains(e.target)) return;
+        m.remove();document.removeEventListener('click',off);
+      });
+    },0);
+  }
   function presNbs(p){
     var set={},order=[];
     (p&&p.slides||[]).forEach(function(s){
@@ -11795,13 +13699,25 @@
     var j=i+d; if(j<0||j>=pres.slides.length) return;
     var t=pres.slides[i];pres.slides[i]=pres.slides[j];pres.slides[j]=t;
     if(cur===i)cur=j; else if(cur===j)cur=i;
-    markDirty();refresh();
+    /* BOTH swapped slides take their section from the neighbour on their
+       far side — the one OUTSIDE the pair. Without this, stepping a slide
+       across a divider left its old tag behind, normSections dragged it
+       back on the next pass, and the arrow button looked like it had done
+       nothing at all (2026-08-22). */
+    var far=function(at,dir){
+      var nb=pres.slides[at+dir];
+      return nb?((nb.sec)||''):null;
+    };
+    var sj=far(j,d),si=far(i,-d);
+    if(sj!==null){if(sj) pres.slides[j].sec=sj; else delete pres.slides[j].sec;}
+    if(si!==null){if(si) pres.slides[i].sec=si; else delete pres.slides[i].sec;}
+    normSections();markDirty();refresh();
   }
   function delSlide(i){
     pres.slides.splice(i,1);
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     activePane=-1;
-    markDirty();refresh();
+    normSections();markDirty();refresh();
   }
   /* duplicate in place — decks never had this at all (2026-08-19, user:
      "still no duplicate slide"); a poster's copy becomes a named version
@@ -12187,6 +14103,86 @@
         shMenu.hidden=true;shBtn.setAttribute('aria-expanded','false');}
     });
   })();
+  /* ---- WHAT KIND OF TEXT BOX ------------------------------------------
+     The caret beside Insert > Text, built like the Shapes gallery beside
+     it: pick, and the tool arms. Naming a box as you make it is the half
+     of named styles that was missing — until now the only way to get a
+     Heading 2 was to draw a plain box and then go and find the Styles
+     menu (2026-08-22).
+     The armed type is NOT written into the button's label. deck.js
+     records the rule where the format bar is built: a label whose width
+     changes with what you clicked makes the ribbon's required width
+     depend on the selection, and the fit ladder has no rung left to
+     absorb that. It shows in the caret's tooltip, in the pressed state
+     of the menu row, and in the tool hint — exactly where pendingShape
+     shows. */
+  (function(){
+    var btn=$('#tx-type-btn'),menu=$('#tx-type-menu'),drop=$('#tx-drop');
+    if(!btn||!menu) return;
+    function syncCaret(){
+      var d=pendingStyle&&styleDef(pendingStyle);
+      btn.title=d
+        ?('The next text box will be a '+d.label
+          +'. Click to change it or go back to plain text')
+        :'Make the next text box a heading, a caption or any other named '
+          +'type, instead of a plain one';
+    }
+    function build(){
+      menu.innerHTML='';
+      menuHead(menu,'make the next text box a');
+      var rows=[['','Plain text box',null]];
+      styleOrder().forEach(function(id){
+        rows.push([id,styleDef(id).label,styleDef(id)]);});
+      rows.forEach(function(r){
+        var b=document.createElement('button');
+        b.className='dbtn vw-opt jv-styleopt';
+        b.setAttribute('aria-pressed',(pendingStyle===r[0]).toString());
+        var t=document.createElement('span');
+        t.className='jv-stylename';t.textContent=r[1];
+        /* the row is a SPECIMEN, the same way the Styles menu's rows are:
+           you pick by looking rather than by reading a number */
+        if(r[2]){
+          t.style.fontWeight=r[2].b?'700':'400';
+          if(r[2].i) t.style.fontStyle='italic';
+          t.style.fontSize=Math.max(11,Math.min(21,r[2].size*3.1))+'px';
+          if(r[2].color) t.style.color=r[2].color;
+          if(r[2].font) t.style.fontFamily=fontCss(r[2].font);
+        }
+        b.appendChild(t);
+        if(r[2]){
+          var n=document.createElement('span');
+          n.className='jv-stylesz';
+          n.textContent=Math.round(r[2].size*5.4)+' pt';
+          b.appendChild(n);
+        }
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          pendingStyle=r[0];
+          menu.hidden=true;
+          btn.setAttribute('aria-expanded','false');
+          syncCaret();
+          setTool('text');
+        });
+        menu.appendChild(b);
+      });
+    }
+    btn.addEventListener('click',function(e){
+      /* stopPropagation, and no `et` class and no data-tool on this
+         button: the shared tool wiring would otherwise arm setTool(
+         undefined) off it */
+      e.stopPropagation();
+      var open=menu.hidden;
+      if(open) build();
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open?'true':'false');
+      if(open) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&drop&&!drop.contains(e.target)){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+    syncCaret();
+  })();
   var downBtn=$('#deck-down');
   if(downBtn) downBtn.addEventListener('click',scrollToTrace);
   var upBtn=$('#deck-up');
@@ -12496,6 +14492,95 @@
 
   /* ---------- create mode: slide + presentation operations ---------- */
   $('#film-add').addEventListener('click',newVersion);
+  /* ---- the slide column's own three controls ---------------------------
+     Section, the display-mode chooser and the drag handle. All three are
+     about the STRIP, so all three live on it rather than in a ribbon that
+     has no room and cannot see what it is acting on (2026-08-22). */
+  (function(){
+    var sec=$('#film-sec');
+    if(sec) sec.addEventListener('click',function(){
+      newSection(cur,'New section');
+      /* the name is the point of a section, so ask for it straight away
+         rather than leaving "New section" sitting there */
+      var runs=sectionRuns(),i;
+      for(i=0;i<runs.length;i++)
+        if(runs[i].at<=cur&&cur<runs[i].at+runs[i].n&&runs[i].id)
+          {renameSection(runs[i].id);break;}
+    });
+    var btn=$('#film-view-btn'),menu=$('#film-view-menu');
+    function label(){
+      var pg=pageOf().poster?2:1,m=filmMode(),i;
+      for(i=0;i<FILM_VIEWS.length;i++)
+        if(FILM_VIEWS[i][0]===m) return FILM_VIEWS[i][pg];
+      return FILM_VIEWS[0][pg];
+    }
+    function syncFilmBtn(){
+      if(btn) btn.innerHTML='&#9636; '+label()+' &#9662;';
+    }
+    function setFilmMode(m){
+      filmView=m;
+      lsSet(FILMKEY+SCOPE,m);
+      syncFilmBtn();renderFilm();
+    }
+    if(btn&&menu){
+      btn.addEventListener('click',function(e){
+        e.stopPropagation();
+        var open=menu.hidden;
+        if(open){
+          menu.innerHTML='';
+          var pg=pageOf().poster?2:1;
+          FILM_VIEWS.forEach(function(v){
+            var b=document.createElement('button');
+            b.className='dc-mi';
+            b.textContent=v[pg];
+            b.setAttribute('aria-pressed',(filmMode()===v[0]).toString());
+            b.addEventListener('click',function(ev){
+              ev.stopPropagation();menu.hidden=true;setFilmMode(v[0]);});
+            menu.appendChild(b);
+          });
+        }
+        menu.hidden=!open;
+        btn.setAttribute('aria-expanded',open?'true':'false');
+      });
+      document.addEventListener('click',function(e){
+        if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)
+          menu.hidden=true;
+      });
+      syncFilmBtn();
+      window.SemDeckFilmBtn=syncFilmBtn;
+    }
+    /* the drag. --film-w is set on the DECK and never on --dc-w, which
+       the document view's own margin also reads — overloading that one
+       makes dragging the slide column shove the notebook sideways. */
+    var h=$('#film-resize');
+    var wPref=parseInt(lsGet(FILMWKEY+SCOPE),10);
+    if(wPref>=150&&wPref<=900)
+      deckEl.style.setProperty('--film-w',wPref+'px');
+    if(h) h.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      h.classList.add('on');
+      try{h.setPointerCapture(e.pointerId);}catch(err){}
+      var w=0;
+      function mv(ev){
+        w=Math.max(150,Math.min(900,ev.clientX));
+        deckEl.style.setProperty('--film-w',w+'px');
+        /* the stage just lost or gained that width, so the page has to
+           re-fit as you drag or the slide sits wrong until you let go */
+        applyZoom();
+      }
+      function up(){
+        h.classList.remove('on');
+        document.removeEventListener('pointermove',mv);
+        document.removeEventListener('pointerup',up);
+        /* ONE re-render at the end: the thumbnails re-measure their type
+           off the new width, and doing that on every pointermove would
+           rebuild sixty <svg>s a second */
+        if(w){lsSet(FILMWKEY+SCOPE,String(w));renderFilm();}
+      }
+      document.addEventListener('pointermove',mv);
+      document.addEventListener('pointerup',up);
+    });
+  })();
   renderLayoutPicker();
   /* title-slide text fields (panel); the slide canvas mirrors them */
   [['#ts-title','title'],['#ts-sub','sub']].forEach(function(p){
@@ -13704,6 +15789,29 @@
         build();
         toast('Background for every slide set');
       },false);
+      /* the deck default only shows through on slides that have no
+         override of their own, so on any slide that HAS one the row
+         above silently did nothing at all — you set the background for
+         every slide and watched the one in front of you not change
+         (2026-08-22). This is the verb that clears them. */
+      var push=document.createElement('button');
+      push.className='dbtn vw-opt';
+      push.textContent='Use this on every slide (clears per-slide ones)';
+      push.title='Slides with a background of their own keep showing it '
+        +'until this clears them';
+      var over=(pres.slides||[]).filter(function(x){return x&&x.bg;});
+      push.disabled=!over.length;
+      if(over.length) push.title='Clears the background '+over.length
+        +' slide'+(over.length===1?'':'s')+' set individually';
+      push.addEventListener('click',function(e){
+        e.stopPropagation();
+        var use=s2.bg||pres.pageBg||'';
+        if(use) pres.pageBg=use;
+        (pres.slides||[]).forEach(function(x){if(x) delete x.bg;});
+        markDirty();applyPageBg();applyZoom();renderSlide();build();
+        toast('Every slide now uses the one background');
+      });
+      menu.appendChild(push);
       menuHead(menu,'Border');
       var r2=menuRow(menu,'bg-bw');
       BWS.forEach(function(p){
@@ -14172,6 +16280,11 @@
     if(!deckEl.hidden) refresh(); else renderPresTabs();
   }).catch(function(){});
 
+  /* the deck loaded at boot did its histReset before STYLE_DEFAULTS
+     existed, so its own text types were not grafted into the registry
+     then. This is that call, and it has to be here — after every
+     declaration in the file (2026-08-22). */
+  syncCustomTypes();
   status();
   renderPresTabs();
   /* both IIFEs + their route hooks are now wired — restore the URL's view */

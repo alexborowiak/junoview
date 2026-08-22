@@ -88,6 +88,12 @@ def _as_presentations(obj: Any) -> list:
                 # survive a project save (2026-08-10).
                 if isinstance(s.get("label"), str) and s["label"].strip():
                     slide["label"] = s["label"].strip()
+                # which section this slide belongs to. The tag is the whole
+                # model -- section order is read back off the slide list --
+                # so losing it here loses the sections entirely, names and
+                # all (2026-08-22).
+                if isinstance(s.get("sec"), str) and s["sec"].strip():
+                    slide["sec"] = s["sec"].strip()
                 # per-slide look, speaker notes and the time goal: the JS
                 # normaliser (normPres) has carried these for a while; this
                 # rebuild silently shed them on every round-trip through
@@ -132,7 +138,22 @@ def _as_presentations(obj: Any) -> list:
             entry["notes"] = p["notes"]
         if isinstance(p.get("pad"), list) and p["pad"]:
             entry["pad"] = p["pad"]
-        for key in ("wmark", "head", "foot", "styles"):
+        # the text types a deck invented ("Quote", "Source note"). A LIST,
+        # not a dict, so it cannot join the loop below -- and losing it
+        # here is the quiet failure: custom types work perfectly in the
+        # browser and vanish the moment the deck is saved to the project
+        # and reopened (2026-08-22).
+        if isinstance(p.get("types"), list) and p["types"]:
+            types = [t for t in p["types"]
+                     if isinstance(t, dict) and isinstance(t.get("id"), str)
+                     and t["id"]]
+            if types:
+                entry["types"] = types
+        # "sections" joins them: a keyed {id: {name, fold}} map, and the
+        # per-slide s.sec tag that points into it is carried by the slide
+        # builder above. The ORDER is never stored -- it is read back off
+        # the slide list (2026-08-22).
+        for key in ("wmark", "head", "foot", "styles", "sections"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

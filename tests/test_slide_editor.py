@@ -895,7 +895,11 @@ def test_no_group_is_a_heading_over_one_button(out):
     assert 'class="rbn-grp rbn-type" data-tab="design"' in out
     assert 'id="dsg-styles"' in out
     assert "function scaleStyles(k){" in out
-    assert "function restyleAll(ids){" in out
+    # `scope` (2026-08-22) is an array of slide indexes, or null/omitted
+    # for the whole deck -- the Apply dialog restyles a chosen run of
+    # slides through the same walker rather than growing a second one.
+    # The four callers that came first still pass one argument.
+    assert "function restyleAll(ids,scope){" in out
 
 
 def test_builds_follow_reading_order_not_array_order(out):

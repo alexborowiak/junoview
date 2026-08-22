@@ -282,7 +282,10 @@ def test_the_hint_does_not_call_a_poster_a_slide(out):
     Versions button already fixed elsewhere (2026-08-07 audit).
     """
     assert "var pw=pageOf().poster?'the page':'the slide';" in out
-    assert "'Drag on '+pw+' to draw a text box, or click for one that '" in out
+    # the text hint now names the armed TYPE ("draw a Heading 1 box") --
+    # the pw half, which is what this test is about, is unchanged
+    assert "'Drag on '+pw+' to draw a'" in out
+    assert "' box, or click for one that sizes itself')" in out
     assert "Click on the slide to place a text box" not in out
     assert "Drag on the slide to draw a text box" not in out
 
@@ -617,7 +620,10 @@ def test_the_toolbar_hint_says_nothing_in_the_resting_state(out):
     # the armed-tool hints stay: they are the ones doing work, and they
     # say DRAG now, because every insert tool draws itself out
     assert "'Drag on '+pw+' to draw a line'" in out
-    assert "'Drag on '+pw+' to draw a text box, or click for one that '" in out
+    # the text hint gained the armed type's name (2026-08-22) but still
+    # says DRAG and still goes through pw
+    assert "'Drag on '+pw+' to draw a'" in out
+    assert "' box, or click for one that sizes itself')" in out
 
 
 def test_an_armed_tool_has_a_visible_way_out(out):

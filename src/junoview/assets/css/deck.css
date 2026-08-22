@@ -880,7 +880,14 @@ body.slide-editing .apptop{display:none;}
    slide canvas gets the width */
 /* 200px: the panel is ONLY thumbnails now, and the width goes to the
    toolbar + canvas instead (2026-08-05) */
-.deck.editing .deck-create{width:min(var(--dc-w),200px);
+/* 200px was the RESTING width, not a ceiling — but it was written as a
+   hard cap with the resize handle hidden beside it, so the slide column
+   was the one part of the editor nobody could make bigger (2026-08-22,
+   user: "the thumbnail part should be dragable to make bigger or
+   smaller"). The old expression stays as the clamp's default, so a
+   session that has never touched the handle is unchanged. */
+.deck.editing .deck-create{
+  width:clamp(150px,var(--film-w,min(var(--dc-w),200px)),46vw);
   border-right:1px solid #ffffff22;}
 .deck.creating .deck-create{width:min(var(--dc-w),94vw);}
 .deck.editing #layout-row{display:none;}
@@ -970,6 +977,16 @@ body.slide-editing .apptop{display:none;}
 .rbn-row>.sh-drop:has(>.dbtn[hidden]),
 .rbn-row>.dc-menuwrap:has(>.dbtn[hidden]){display:none;}
 .rbn-row>.sh-drop>.dbtn,.rbn-row>.dc-menuwrap>.dbtn{width:100%;height:100%;}
+/* the ONE wrapper that holds two real buttons rather than one. Scoped to
+   .tx-split so the rule above still governs every other wrapper: Text
+   takes the cell and the caret takes what it needs, which is about 18px.
+   The caret is never hidden — the :has(>.dbtn[hidden]) rule above would
+   take the whole control down with it (2026-08-22). */
+.rbn-row>.sh-drop.tx-split>.dbtn{width:auto;}
+.rbn-row>.sh-drop.tx-split>.dbtn[data-tool]{flex:1;min-width:0;}
+.rbn-row>.sh-drop.tx-split>.tx-caret{flex:none;padding-left:4px;
+  padding-right:4px;}
+.tx-type-menu{min-width:210px;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up
    on different rows */
@@ -1870,6 +1887,30 @@ body.light .pf-row:hover{background:#00000008;}
 body.light .pf-what{color:var(--ink);}
 body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 
+/* ---------- standardise text ----------
+   Not a .pf-row: a preflight row is one big button that takes you to the
+   thing, and a finding here carries several boxes AND an action, so the
+   row is a block with buttons inside it. Amber for a drift with a
+   majority to fix towards, quiet blue for an offer — and never the red
+   preflight uses, because nothing this finds is broken. */
+.std-find{display:flex;flex-direction:column;gap:5px;padding:9px 12px;
+  border-left:3px solid #f0a848;}
+.std-find.std-info{border-left-color:#39a9c0;}
+.std-h{font-size:12.5px;color:#dbe7ef;font-weight:600;}
+.std-why{font-size:11px;color:#8ba0b2;line-height:1.45;}
+.std-who{display:flex;flex-wrap:wrap;gap:3px;}
+.std-chip{background:#ffffff10;border:1px solid #ffffff1f;color:#9db1c1;
+  border-radius:10px;font-family:var(--mono);font-size:9.5px;
+  padding:1px 7px;cursor:pointer;max-width:100%;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+.std-chip:hover{border-color:var(--cyan);color:#fff;}
+.std-do{align-self:flex-start;font-size:11px;padding:3px 9px;}
+.std-do2{opacity:.8;}
+body.light .std-h{color:var(--ink);}
+body.light .std-why{color:var(--ink-3);}
+body.light .std-chip{background:#00000008;border-color:var(--line);
+  color:var(--ink-3);}
+
 /* ---------- toolbar down the right-hand edge (tall pages) ---------- */
 /* A0 portrait is 1.4x taller than wide: on a laptop the horizontal ribbon
    costs ~122px of the scarce dimension. Moved to the side it costs width,
@@ -1974,11 +2015,15 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 .an-text.nobg{background:none;border:none;}
 /* fill the box (minus the move handle) so text-align actually positions the
    text — a content-sized flex item can't be aligned */
-.an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;}
+.an-tx{white-space:pre-wrap;min-width:14px;outline:none;flex:1;
+  padding-left:var(--an-ind,0);}
 /* a list box is a real <ul> or <ol>, and nested levels are real nested
    lists — which is what lets Tab/Shift+Tab (the browser's own indent)
    build sub-bullets that survive a round trip through the model */
-.an-tx.an-ul{margin:0;padding-left:1.15em;}
+/* the box indent COMPOSES with the bullet gutter rather than replacing
+   it: 1.15em is what keeps a marker outside its text, so an indented list
+   that simply overwrote it would lose its bullets off the left edge */
+.an-tx.an-ul{margin:0;padding-left:calc(1.15em + var(--an-ind,0));}
 ul.an-ul{list-style:disc;}
 ol.an-ul{list-style:decimal;}
 .an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
@@ -2289,6 +2334,92 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
   font-size:11px;padding:2px 4px;border-radius:4px;}
 .film-mini:hover{background:#ffffff14;color:#fff;}
 .addslide{margin-top:8px;}
+/* Add slide takes the room; Section is the narrower, rarer verb beside
+   it. One row, so the strip loses no height to gaining a second button. */
+.film-adds{display:flex;gap:4px;margin-top:8px;}
+.film-adds .addslide{flex:1;margin-top:0;}
+.film-adds .addsec{flex:none;}
+/* both labels on one line at the column's resting 200px. Letting them
+   wrap inside the button is the same sin as an ellipsis: the words are
+   all still there but the control stops reading as one thing. */
+.film-adds .dbtn{white-space:nowrap;padding:5px 7px;font-size:11px;}
+
+/* ---- section dividers in the strip -----------------------------------
+   A divider reads as a LABEL over the slides beneath it rather than as
+   another row in the list: no thumbnail, no number, and a rule under it
+   so the eye can see where one run stops and the next starts. */
+.film-sec{display:flex;align-items:center;gap:5px;cursor:grab;
+  padding:6px 4px 4px;margin:6px 0 3px;border-radius:6px;
+  border-bottom:1px solid color-mix(in srgb,var(--accent) 30%,transparent);}
+.film-sec:first-child{margin-top:0;}
+.film-sec.dragging{opacity:.45;}
+.film-sec.drop-above{box-shadow:0 -2px 0 var(--cyan);}
+.film-sec.drop-below{box-shadow:0 2px 0 var(--cyan);}
+.film-sec-fold{background:none;border:none;color:#8ba0b2;cursor:pointer;
+  font-size:10px;padding:1px 3px;border-radius:4px;flex:none;line-height:1;}
+.film-sec-fold:hover{background:#ffffff14;color:#fff;}
+.film-sec-t{flex:1;min-width:0;font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--accent);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.film-sec-n{flex:none;font-family:var(--mono);font-size:9px;color:#6c8093;}
+.film-sec:hover .film-ctr{display:flex;}
+/* slides inside a section step in, so the run is visible without having
+   to read the divider each time */
+.film-row.in-sec{margin-left:7px;}
+/* the current slide is drawn even inside a COLLAPSED section — it is
+   where you are standing, and refreshThumb goes looking for its row on
+   every edit. Dimmed so it reads as a peek out of a closed drawer. */
+.film-row.peek{opacity:.72;}
+.film-menu{min-width:210px;}
+
+/* ---- the strip's own resize handle ------------------------------------
+   position:fixed, not absolute: .deck-create scrolls, and an absolutely
+   positioned child would scroll away from the edge it is supposed to be
+   sitting on. No --presrail-w term because .deck.editing sits at left:0,
+   which is exactly why app.js's #dc-resize cannot be reused here. */
+.film-resize{display:none;position:fixed;top:0;bottom:0;width:6px;
+  z-index:130;cursor:col-resize;
+  left:calc(clamp(150px,var(--film-w,min(var(--dc-w),200px)),46vw) - 3px);}
+.deck.editing .film-resize{display:block;}
+.deck.editing.strip-off .film-resize,
+.deck.editing.poster-page .film-resize{display:none;}
+.film-resize:hover,.film-resize.on{
+  background:color-mix(in srgb,var(--accent) 40%,transparent);}
+@media(max-width:860px){.film-resize{display:none!important;}}
+
+/* ---- how the slides are listed ---------------------------------------
+   The chooser is one line and carries no second copy of anything. It is
+   stamped on the LIST rather than on the body or the deck, because
+   filmToPane MOVES #film-list into the Versions pane and a body class
+   would then be styling a list that is somewhere else. */
+.film-head{display:flex;margin-bottom:6px;}
+.film-head .dc-menuwrap{flex:1;min-width:0;}
+.film-view-btn{width:100%;text-align:left;font-size:11px;padding:4px 8px;}
+/* headings mode: no picture at all, so the row is one line of text and
+   forty slides fit on a laptop screen */
+#film-list[data-fv="head"] .film-t{white-space:normal;
+  text-overflow:clip;overflow:visible;}
+#film-list[data-fv="head"] .film-row.current .film-label{
+  flex-direction:row;align-items:center;}
+#film-list[data-fv="head"] .film-label{padding:3px 6px;}
+/* the outline steps in by heading level, so a deck with sections and
+   headings reads as a real table of contents */
+#film-list[data-fv="head"] .film-row[data-lvl="1"] .film-t{
+  padding-left:9px;}
+#film-list[data-fv="head"] .film-row[data-lvl="2"] .film-t{
+  padding-left:18px;}
+#film-list[data-fv="head"] .film-row[data-lvl="3"] .film-t{
+  padding-left:27px;}
+/* both: the caption sits UNDER the thumbnail and is allowed to wrap,
+   because the point of asking for both is being able to read it */
+#film-list[data-fv="both"] .film-label{flex-wrap:wrap;}
+#film-list[data-fv="both"] .film-t{white-space:normal;
+  text-overflow:clip;overflow:visible;flex-basis:100%;
+  line-height:1.35;}
+/* the thumbnail follows the column: it is a scale model of the slide, so
+   it has the slide's shape and grows with the room it is given */
+.film-list .mini-diagram{width:100%;height:auto;aspect-ratio:116/66;
+  min-height:var(--mini-h);}
 
 .deck-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   background:var(--chrome-2,#16273a);border:1px solid var(--cyan);color:#e6eef4;
@@ -2458,6 +2589,68 @@ body.light .vw-more-menu .vw-opt.on{color:var(--ink);}
   padding:6px 8px;}
 .eq-foot{display:flex;align-items:center;gap:8px;}
 body.light .eq-box{background:#fff;border-color:var(--line);}
+
+/* ---- the Apply dialog -------------------------------------------------
+   Same shell as the equation editor, two columns wide instead of one. */
+.aa-dlg{position:fixed;inset:0;z-index:260;display:flex;
+  align-items:center;justify-content:center;background:#000000a8;}
+.aa-dlg[hidden]{display:none!important;}
+.aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
+  flex-direction:column;gap:9px;padding:12px 13px 11px;
+  background:var(--chrome-2,#162735);border:1px solid #ffffff26;
+  border-radius:12px;box-shadow:0 24px 70px #00000088;
+  font-family:var(--sans);}
+.aa-head{display:flex;align-items:center;gap:8px;}
+.aa-what{font-size:12.5px;color:#c3d2df;line-height:1.5;
+  background:var(--chrome-0,#0b141d);border:1px solid #ffffff1a;
+  border-radius:8px;padding:8px 10px;display:flex;align-items:center;
+  gap:7px;flex-wrap:wrap;}
+/* the type chip borrows the treatment a pressed option already has, so a
+   highlight the app has never used before does not have to be invented */
+.aa-chip{font-family:var(--mono);font-size:11px;letter-spacing:.05em;
+  padding:2px 8px;border-radius:11px;
+  background:color-mix(in srgb,var(--accent) 20%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 55%,transparent);
+  color:var(--accent);}
+.aa-chipbtn{cursor:pointer;font-family:var(--mono);}
+.aa-chipbtn:hover{border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 32%,transparent);}
+.aa-typemenu{min-width:250px;}
+.aa-n{margin-left:auto;font-family:var(--mono);font-size:11px;
+  color:#8ea4b6;}
+.aa-main{display:flex;gap:11px;min-height:0;flex:1;}
+.aa-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
+.aa-colh{display:flex;align-items:center;gap:5px;}
+.aa-b{padding:2px 8px;font-size:10.5px;}
+.aa-props{max-height:52vh;overflow-y:auto;padding-right:3px;}
+.aa-scope{max-height:52vh;overflow-y:auto;padding-right:3px;}
+.aa-props .find-ck,.aa-scope .find-ck{padding:2px 3px;border-radius:5px;}
+.aa-props .find-ck:hover,.aa-scope .find-ck:hover{background:#ffffff0d;}
+/* a row that does not fit the selected item is GREYED and explained, not
+   hidden: a list that reshuffles itself when you click a different object
+   is a list you have to re-read every time */
+.aa-props .find-ck.aa-no{opacity:.42;}
+.aa-props .find-ck.aa-no input{cursor:not-allowed;}
+.aa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));
+  gap:0 9px;}
+.aa-sech{display:flex;align-items:center;gap:5px;margin:5px 0 2px;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--accent);}
+.aa-slide-n{font-family:var(--mono);font-size:9.5px;color:#6c8093;
+  width:16px;flex:none;text-align:right;}
+.aa-slide-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  min-width:0;}
+.aa-foot{display:flex;align-items:center;gap:8px;}
+.aa-count{font-family:var(--mono);font-size:11px;color:#8ea4b6;}
+/* the matching items on the slide behind, outlined while you hover the
+   headline — a pure class toggle over nodes that are already rendered */
+.an-typematch{outline:2px dashed var(--accent)!important;
+  outline-offset:2px;}
+body.light .aa-box{background:#fff;border-color:var(--line);}
+body.light .aa-what{background:var(--chrome-1,#f4f7fa);
+  border-color:var(--line);color:#243444;}
+body.light .aa-props .find-ck:hover,
+body.light .aa-scope .find-ck:hover{background:#00000008;}
 body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
   color:var(--ink);border-color:var(--line);}
 /* a typeset key needs room for a fraction without growing the whole row */
@@ -2466,7 +2659,30 @@ body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
 .eq-key-tex mjx-container{margin:0!important;}
 
 /* ---- the style manager: a specimen per style, sized by its own rule --- */
-.sh-menu.style-mgr{display:block;width:272px;padding:6px;}
+/* seven rows fitted; seven plus a dozen types of your own plus an open
+   editor will not, and floatMenu clamps a menu's top edge without ever
+   scrolling it (2026-08-22) */
+.sh-menu.style-mgr{display:block;width:292px;padding:6px;
+  max-height:min(70vh,520px);overflow-y:auto;}
+.stm-arrow{font-size:9px;padding:1px 5px;}
+/* the arrow's expander: one at a time, inline, indented under its row so
+   it reads as belonging to it rather than as another style */
+.stm-edit{margin:2px 3px 7px 10px;padding:7px 8px;border-radius:7px;
+  background:var(--chrome-0,#0b141d);border:1px solid #ffffff14;
+  display:flex;flex-direction:column;gap:6px;}
+.stm-erow{display:flex;gap:4px;flex-wrap:wrap;}
+.stm-tg{flex:none;padding:2px 8px;font-size:11px;line-height:1.4;}
+.stm-tg[aria-pressed="true"]{border-color:var(--cyan);color:#fff;
+  background:color-mix(in srgb,var(--accent) 22%,transparent);}
+.stm-ren{width:100%;box-sizing:border-box;font-size:11.5px;
+  padding:4px 7px;border-radius:6px;background:var(--chrome-1,#0e1926);
+  border:1px solid #ffffff26;color:#eaf2f8;outline:none;
+  font-family:var(--sans);}
+.stm-ren:focus{border-color:var(--cyan);}
+.style-mgr .stm-edit .vw-opt{margin-top:0;}
+body.light .stm-edit{background:var(--chrome-1,#f4f7fa);
+  border-color:var(--line);}
+body.light .stm-ren{background:#fff;border-color:var(--line);color:#243444;}
 .stm-row{display:flex;align-items:center;gap:6px;padding:2px 3px;}
 .stm-spec{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;line-height:1.15;}
