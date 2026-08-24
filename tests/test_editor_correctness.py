@@ -453,7 +453,7 @@ def test_qr_code_inserts_rather_than_arming_a_tool_that_does_not_exist(out):
         "dc-qr must not carry the `et` (drawing tool) class"
     # ...and an unknown tool can never arm again, for anything
     assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,\n"
-            "    table:1,flip:1};" in out)
+            "    table:1,flip:1,guide:1};") in out
     assert "if(!TOOLS[t]) t='select';" in out
     # the label says what it does and why you would want one
     assert "Ask for a link and put a QR code on the page" in out

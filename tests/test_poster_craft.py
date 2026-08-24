@@ -170,7 +170,12 @@ def test_custom_guides_belong_to_the_presentation(out):
     the poster -- a guide you had to redraw every session is a chore.
     """
     assert "function customGuides" in out and "function startGuideDrag" in out
-    assert "pres.guides={x:g.x,y:g.y}" in out
+    # written through ONE builder, because a guide DRAG rewrites
+    # pres.guides live on every mousemove -- a drag that forgot a
+    # field would quietly delete every guide of the kind it forgot
+    # (T4's guide boxes nearly were born that way)
+    assert "function liveGuides(g){" in out
+    assert "if(pres) pres.guides=liveGuides(cg);" in out
     assert "if(v==null||v<0||v>100){cg[axis].splice(idx,1);}" in out
     # the ruler bars take clicks; the rest of the overlay stays transparent
     assert ".ruler{position:absolute;" in out and "pointer-events:auto;}" in out
@@ -218,3 +223,63 @@ def test_crop_marks_grow_the_sheet_not_the_page(out):
     assert "cropmark cm-" in out
     # always black: an instruction to a machine, not part of the design
     assert ".cropmark::before,.cropmark::after{content:\"\";" in out
+
+
+def test_a_guide_box_is_never_an_annotation(out):
+    """TASKS T4. A guide LINE answers "is this edge where I said"; a guide
+    BOX answers "does this belong in this area at all" -- a title band, a
+    figure well, the column a poster's text must stay inside.
+
+    The load-bearing part is that a guide is not an annotation. It forks
+    off BEFORE startDraw, whose whole job is building s.annots entries,
+    so there is nothing in the document model to remember to exclude: a
+    guide cannot reach a render, a PDF, a .pptx or a saved standalone
+    page through somebody forgetting a filter. The CSS says the rest.
+    """
+    assert "function startGuideBox(layer,p0){" in out
+    assert "if(tool==='guide'){\n        startGuideBox(layer," in out
+    assert "table:1,flip:1,guide:1};" in out
+    # nothing about a guide is an annot kind
+    assert "k:'guide'" not in out
+    # ...and the exclusions it inherits by living in .cguides
+    assert ".deck:not(.editing) .cguides{display:none;}" in out
+    assert "@media print{.pgrid,.rulers,.cguides{display:none!important;}}" \
+        in out
+    assert "#print-root .cguides{display:none!important;}" in out
+
+
+def test_a_guide_box_is_click_through_except_at_its_edges(out):
+    """A guide box is mostly empty middle. One clickable rectangle would
+    swallow every click on the canvas underneath it -- which, for a box
+    drawn round the figure well, is most of the page. Four edge strips
+    listen; nothing else does.
+    """
+    assert ".cg-box{position:absolute;pointer-events:none;" in out
+    assert ".cg-edge{position:absolute;pointer-events:auto;cursor:move;}" \
+        in out
+    assert "'<i class=\"cg-edge cg-e-t\"></i><i class=\"cg-edge cg-e-r\">" \
+        in out
+    assert "startGuideBoxMove(e,+gb.parentNode.dataset.i);" in out
+
+
+def test_a_guide_box_snaps_and_puts_the_tool_back(out):
+    """Lining things up with a guide is the entire reason for drawing one,
+    so its edges AND its middles join the snap targets.
+
+    The tool disarms itself after one box: a guide is furniture you put
+    down, not a mode to live in, and a tool that stays armed is a tool
+    that gets left armed.
+    """
+    assert "xs.push(v[0],v[0]+v[2]/2,v[0]+v[2]);" in out
+    assert "ys.push(v[1],v[1]+v[3]/2,v[1]+v[3]);" in out
+    assert "setCustomGuides(cg);drawCustomGuides(slideEl);\n      " \
+        "/* one box, then back to selecting." in out
+    # a drag under the threshold was a click, and leaves nothing behind
+    assert "if(box[2]<GBOX_MIN||box[3]<GBOX_MIN) cg.b.splice(idx,1);" in out
+    # dropped with its middle off the page: the line guides' delete
+    # gesture, not a second one to learn
+    assert "if(cx<0||cx>100||cy<0||cy>100) cg.b.splice(i,1);" in out
+    # three doors: the ruler corner, the right-click menu, and the tool
+    assert "if(mode==='edit') setTool('guide');});" in out
+    assert "row('Draw a guide box','',function(){setTool('guide');}," in out
+    assert "function clearGuides(boxesOnly){" in out

@@ -968,13 +968,23 @@
      so they are saved and re-open with it. */
   function customGuides(){
     var g=(pres&&pres.guides)||{};
-    return {x:(g.x||[]).slice(),y:(g.y||[]).slice()};
+    return {x:(g.x||[]).slice(),y:(g.y||[]).slice(),
+            b:(g.b||[]).map(function(v){return v.slice();})};
   }
   function setCustomGuides(g){
     if(!pres) return;
-    if(!g.x.length&&!g.y.length) delete pres.guides;
-    else pres.guides={x:g.x,y:g.y};
+    if(!g.x.length&&!g.y.length&&!g.b.length) delete pres.guides;
+    else pres.guides=liveGuides(g);
     markDirty();
+  }
+  /* the shape written into `pres` — ONE place, because a guide drag
+     writes it live on every mousemove, and a drag that forgot a field
+     would quietly delete every guide of the kind it forgot (the box
+     array was nearly born with exactly that bug) */
+  function liveGuides(g){
+    var o={x:g.x,y:g.y};
+    if(g.b.length) o.b=g.b;
+    return o;
   }
   function drawCustomGuides(slideEl){
     if(!slideEl) return;
@@ -990,7 +1000,8 @@
     /* guides are percentages of the slide too — rebuild only when a value
        actually changed (a guide drag repaints live; a plain mousemove or
        scroll through syncGuides skips) */
-    var csig=cg.x.join(',')+'|'+cg.y.join(',');
+    var csig=cg.x.join(',')+'|'+cg.y.join(',')+'|'
+      +cg.b.map(function(v){return v.join(' ');}).join(',');
     if(host._csig===csig) return;
     host._csig=csig;
     host.innerHTML=
@@ -999,7 +1010,97 @@
           +'" style="left:'+v+'%"></i>';}).join('')
       +cg.y.map(function(v,i){
         return '<i class="cguide cg-h" data-ax="y" data-i="'+i
-          +'" style="top:'+v+'%"></i>';}).join('');
+          +'" style="top:'+v+'%"></i>';}).join('')
+      /* FOUR EDGE STRIPS, not one clickable rectangle. A guide box is
+         mostly empty middle, and an element taking pointer events across
+         its whole area would swallow every click on the canvas beneath
+         it — which, for a box drawn round the figure well, is most of
+         the page. The strips are the only part that listens. */
+      +cg.b.map(function(v,i){
+        return '<i class="cg-box" data-i="'+i+'" style="left:'+v[0]
+          +'%;top:'+v[1]+'%;width:'+v[2]+'%;height:'+v[3]+'%">'
+          +'<i class="cg-edge cg-e-t"></i><i class="cg-edge cg-e-r"></i>'
+          +'<i class="cg-edge cg-e-b"></i><i class="cg-edge cg-e-l"></i>'
+          +'</i>';}).join('');
+  }
+  /* ---- guide BOXES: a region to lay out inside ------------------------
+     A guide LINE answers "is this edge where I said"; a guide BOX answers
+     "does this belong in this area at all" — the title band, the figure
+     well, the column a poster's text has to stay inside (TASKS T4).
+
+     Same contract as the lines, and the load-bearing half of it is that a
+     guide is NOT an annotation. Nothing in s.annots means nothing to
+     exclude: it cannot reach a render, a PDF, a .pptx or a saved
+     standalone page by way of somebody forgetting a filter, which is the
+     failure mode this feature would otherwise have. The CSS says the
+     rest (.deck:not(.editing) .cguides, @media print, #print-root).
+
+     Stored as [x,y,w,h] in page percentages, beside the lines. */
+  var GBOX_MIN=1.5;      /* under this it was a click, not a drag */
+  function startGuideBox(layer,p0){
+    var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+    var cg=customGuides();
+    var box=[p0.x,p0.y,0,0];
+    var idx=cg.b.push(box)-1;
+    function mv(e){
+      var p=pctPoint(layer,e);
+      box[0]=Math.min(p0.x,p.x);box[1]=Math.min(p0.y,p.y);
+      box[2]=Math.abs(p.x-p0.x);box[3]=Math.abs(p.y-p0.y);
+      /* live geometry only; the commit waits for mouseup — the same
+         one-commit-per-gesture contract the line guides follow */
+      if(pres) pres.guides=liveGuides(cg);
+      drawCustomGuides(slideEl);
+    }
+    function up(){
+      document.removeEventListener('mousemove',mv);
+      document.removeEventListener('mouseup',up);
+      if(box[2]<GBOX_MIN||box[3]<GBOX_MIN) cg.b.splice(idx,1);
+      else cg.b[idx]=box.map(function(v){return Math.round(v*100)/100;});
+      setCustomGuides(cg);drawCustomGuides(slideEl);
+      /* one box, then back to selecting. A guide is furniture you put
+         down, not a mode to live in — and a tool that stays armed is a
+         tool that gets left armed (cf. #et-cancel's whole reason). */
+      setTool('select');
+    }
+    document.addEventListener('mousemove',mv);
+    document.addEventListener('mouseup',up);
+  }
+  function startGuideBoxMove(ev,i){
+    ev.preventDefault();
+    var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+    var cg=customGuides(),o=cg.b[i];
+    if(!o) return;
+    o=o.slice();
+    var sr=slideEl.getBoundingClientRect();
+    var sx=ev.clientX,sy=ev.clientY;
+    function mv(e){
+      if(!sr.width||!sr.height) return;
+      cg.b[i]=[o[0]+(e.clientX-sx)/sr.width*100,
+               o[1]+(e.clientY-sy)/sr.height*100,o[2],o[3]];
+      if(pres) pres.guides=liveGuides(cg);
+      drawCustomGuides(slideEl);
+    }
+    function up(){
+      document.removeEventListener('mousemove',mv);
+      document.removeEventListener('mouseup',up);
+      var b=cg.b[i];
+      /* dropped with its middle off the page: that is how a line guide is
+         deleted, and a box has no business needing a new gesture */
+      var cx=b[0]+b[2]/2,cy=b[1]+b[3]/2;
+      if(cx<0||cx>100||cy<0||cy>100) cg.b.splice(i,1);
+      else cg.b[i]=b.map(function(v){return Math.round(v*100)/100;});
+      setCustomGuides(cg);drawCustomGuides(slideEl);
+    }
+    document.addEventListener('mousemove',mv);
+    document.addEventListener('mouseup',up);
+  }
+  function clearGuides(boxesOnly){
+    var cg=customGuides();
+    cg.b=[];
+    if(!boxesOnly){cg.x=[];cg.y=[];}
+    setCustomGuides(cg);
+    drawCustomGuides(stage.querySelector('.slide'));
+    toast(boxesOnly?'Guide boxes cleared':'Guides cleared');
   }
   /* drag a NEW guide out of a ruler, or an existing one to move/remove */
   function startGuideDrag(ev,axis,existing){
@@ -1023,7 +1124,7 @@
          guides being outside the undo snapshot) waits for mouseup — the
          same one-commit-per-gesture contract item drags follow. It used
          to run per mousemove, ~60 stringify+write/s (2026-08-23 perf). */
-      if(pres) pres.guides={x:cg.x,y:cg.y};
+      if(pres) pres.guides=liveGuides(cg);
       drawCustomGuides(slideEl);
     }
     function up(e){
@@ -1047,7 +1148,19 @@
       startGuideDrag(e,'y',null);});
     if(rv) rv.addEventListener('mousedown',function(e){
       startGuideDrag(e,'x',null);});
+    /* the square where the two rulers meet arms the guide BOX, which is
+       the same idea one dimension up: each ruler lays down a guide line,
+       so their corner lays down a guide area (2026-08-25) */
+    var rc=$('#ruler-corner');
+    if(rc) rc.addEventListener('click',function(){
+      if(mode==='edit') setTool('guide');});
     if(stage) stage.addEventListener('mousedown',function(e){
+      var gb=e.target.closest?e.target.closest('.cg-edge'):null;
+      if(gb&&gb.parentNode){
+        e.stopPropagation();
+        startGuideBoxMove(e,+gb.parentNode.dataset.i);
+        return;
+      }
       var g=e.target.closest?e.target.closest('.cguide'):null;
       if(!g) return;
       e.stopPropagation();
@@ -8268,6 +8381,12 @@
     /* guides you dragged off the rulers yourself */
     var cg=customGuides();
     xs=xs.concat(cg.x);ys=ys.concat(cg.y);
+    /* a guide box contributes its edges AND its middles: lining things up
+       with one is the entire reason for drawing it */
+    cg.b.forEach(function(v){
+      xs.push(v[0],v[0]+v[2]/2,v[0]+v[2]);
+      ys.push(v[1],v[1]+v[3]/2,v[1]+v[3]);
+    });
     return {xs:xs,ys:ys};
   }
   /* ---- equal-gap detection -------------------------------------------
@@ -8999,6 +9118,17 @@
           if(lmNow===o[0]) b.classList.add('on');
         });
     }
+    var cgm=customGuides();
+    menuHead(m,'guides');
+    row('Draw a guide box','',function(){setTool('guide');},
+        'An editing aid to lay out inside \u2014 it snaps, and it is '
+        +'never printed, exported or shown while presenting','frame');
+    if(cgm.b.length)
+      row('Clear the '+cgm.b.length+' guide box'
+        +(cgm.b.length===1?'':'es'),'',function(){clearGuides(true);});
+    if(cgm.x.length||cgm.y.length)
+      row('Clear every guide','',function(){clearGuides(false);},
+        'The boxes and the lines dragged off the rulers');
     menuHead(m,'paste');
     if(!clipBuf.length){
       row('Nothing copied yet','',function(){}).disabled=true;
@@ -9168,6 +9298,14 @@
         return;
       }
       ev.preventDefault();
+      /* A GUIDE IS NOT AN ANNOTATION, so it forks off here rather than
+         inside startDraw: startDraw's whole job is building s.annots
+         entries, and a guide that never becomes one cannot leak into a
+         render or an export later (see the guide-boxes section). */
+      if(tool==='guide'){
+        startGuideBox(layer,pctPoint(layer,ev));
+        return;
+      }
       /* EVERY insert tool draws the same way. Text and cell used to be
          the two that did not: they dropped a canned box wherever you
          clicked and left you to resize it by hand, every single time
@@ -9194,7 +9332,7 @@
   }
   /* every tool that exists. Anything else is NO tool. */
   var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,
-    table:1,flip:1};
+    table:1,flip:1,guide:1};
   function setTool(t){
     /* An unknown tool used to be armed happily: #dc-qr carried the generic
        `et` class with no data-tool, so the shared wiring ran
@@ -9243,6 +9381,9 @@
         +'figures you want to step through')
       :t==='table'?'Drag on '+pw+' to draw a table (or click for a 3\u00d73). '
         +'Double-click a cell to type; Tab moves along, Enter goes down'
+      :t==='guide'?'Drag on '+pw+' to draw a guide box \u2014 an editing '
+        +'aid to lay out inside. It snaps, and it is never printed, '
+        +'exported or shown while presenting'
       /* NOTHING in the resting state. A hint earns its place by telling
          you about a mode you have just entered and cannot see; describing
          the default state — click to select, drag to move — is a caption

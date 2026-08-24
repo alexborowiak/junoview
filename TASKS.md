@@ -61,8 +61,15 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   marquee modifier is Alt — Shift and Ctrl already mean "add to the
   selection". Set it from the right-click menu (worded) or the Objects
   pane's lock button, which now cycles the three states.
-- [ ] **T4 · S — Temporary design guides.** Draw guide lines/boxes that
+- [x] **T4 · S — Temporary design guides.** Draw guide lines/boxes that
   exist only in edit mode — never rendered in present mode or any export.
+  *2026-08-25:* guide LINES already existed (dragged off a ruler, edit-mode
+  only). This adds guide BOXES on the same model — `pres.guides.b`, drawn
+  in the `.cguides` host, so they inherit every existing exclusion
+  (`.deck:not(.editing)`, `@media print`, `#print-root`) for free. The
+  real guarantee is that a guide is NOT an annotation: it forks off
+  before `startDraw`, so there is nothing in `s.annots` for a render or
+  an export to have to filter out.
 - [ ] **T5 · M — Select by type / appearance.** "Select all caption text
   boxes", "select everything using this font/size/colour". Foundation for
   T6.

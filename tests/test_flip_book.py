@@ -24,7 +24,7 @@ from junoview.notebook.presentations import _as_presentations
 def test_a_flip_book_is_a_real_item_kind(out):
     """It is drawn out like every other insert tool, not dropped in at a
     canned size -- the rule the line tool was told off for breaking."""
-    assert "table:1,flip:1};" in out
+    assert "table:1,flip:1,guide:1};" in out
     assert 'data-tool="flip"' in out
     assert "?{k:'flip',x:p0.x,y:p0.y,w:0,h:0,fid:flipId(),frames:[],at:0}" in out
     # it resizes like a box, not like a line

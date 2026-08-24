@@ -106,6 +106,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T4, temporary design guides: deck.js
+# grew guide BOXES beside the ruler-dragged guide lines (a tool, a
+# right-click entry and the ruler corner to draw one; edges and
+# middles join the snap targets), deck.css the .cg-box rules,
+# help.html the paragraph. Editing aids only -- a guide is not an
+# annotation, so nothing about it can reach an export. Pinned by
+# tests/test_poster_craft.py's three guide-box tests.
 # Moved 2026-08-25 for TASKS T3, granular object locking: deck.js
 # grew the LOCKS section (a position-only lock beside the full one,
 # a three-state pane button and the menu rows that name them),
@@ -121,8 +128,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "726ec1cf25f4a3733e7365e525775d95"
-EXPECTED_BYTES = 2313344
+EXPECTED_MD5 = "626444681993c2f508d64ae1f82d0eb1"
+EXPECTED_BYTES = 2321682
 
 
 def _render_example() -> str:

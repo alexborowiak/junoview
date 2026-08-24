@@ -1384,7 +1384,12 @@
       <div class="rulers" id="rulers" hidden aria-hidden="true">
         <div class="ruler ruler-h" id="ruler-h"></div>
         <div class="ruler ruler-v" id="ruler-v"></div>
-        <div class="ruler-corner" id="ruler-corner">mm</div>
+        <!-- the corner is the third door to a guide box: the two rulers
+     beside it each lay down a guide LINE, so the square where they
+     meet laying down a guide AREA is the same idea one dimension
+     up (2026-08-25). -->
+        <div class="ruler-corner" id="ruler-corner"
+          title="Click, then drag on the page to draw a guide box &mdash; an area to lay out inside. Guides snap, and are never printed, exported or shown while presenting">mm</div>
       </div>
       <div class="deck-stage" id="deck-stage"></div>
       <button class="deck-arrow next" id="deck-next"

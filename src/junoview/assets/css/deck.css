@@ -1830,6 +1830,19 @@ select#fmt-font[hidden]{display:none;}
 .cguide.cg-h{left:0;right:0;height:0;border-top:1px solid #46a892cc;
   cursor:row-resize;padding:3px 0;margin-top:-3px;}
 .cguide:hover{border-color:#46a892;box-shadow:0 0 6px #46a89299;}
+/* a guide BOX: an area to lay out inside. Dashed, so it never reads as a
+   drawn rectangle, and click-through except on its four edge strips —
+   the middle of one covers most of the page and must not take clicks
+   away from the canvas underneath. */
+.cg-box{position:absolute;pointer-events:none;
+  border:1px dashed #46a892aa;
+  background:color-mix(in srgb,#46a892 4%,transparent);}
+.cg-edge{position:absolute;pointer-events:auto;cursor:move;}
+.cg-e-t{left:0;right:0;top:-4px;height:8px;}
+.cg-e-b{left:0;right:0;bottom:-4px;height:8px;}
+.cg-e-l{top:0;bottom:0;left:-4px;width:8px;}
+.cg-e-r{top:0;bottom:0;right:-4px;width:8px;}
+.cg-box:hover{border-color:#46a892;}
 /* guides are an editing aid: never in print, export or playback */
 .deck:not(.editing) .pgrid,.deck:not(.editing) .rulers,
 .deck:not(.editing) .cguides{display:none;}
@@ -1848,9 +1861,13 @@ select#fmt-font[hidden]{display:none;}
 .ruler-v{cursor:col-resize;}
 .ruler-h{height:19px;}
 .ruler-v{width:19px;}
+/* the corner takes clicks too: it arms the guide BOX, the way the two
+   ruler bars beside it lay down guide lines */
 .ruler-corner{position:absolute;width:19px;height:19px;
   background:#0c1822f2;border:1px solid #ffffff1a;font-size:7.5px;
-  display:flex;align-items:center;justify-content:center;color:#66798a;}
+  display:flex;align-items:center;justify-content:center;color:#66798a;
+  pointer-events:auto;cursor:crosshair;}
+.ruler-corner:hover{color:var(--accent);}
 .rtick{position:absolute;background:#ffffff40;}
 .ruler-h .rtick{top:auto;bottom:0;width:1px;height:4px;}
 .ruler-h .rtick.major{height:8px;background:#ffffff70;}
