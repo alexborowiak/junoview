@@ -319,15 +319,23 @@ body.deck-open{overflow:hidden;}
   line-height:1;}
 .sp-act:hover{color:#fff;background:#ffffff14;}
 .sp-act.on{color:var(--cyan);}
+/* the middle state of the three-state lock: on, but not all the way.
+   Amber rather than a dimmer cyan, so "position only" is a different
+   thing at a glance and not a half-rendered version of the full one. */
+.sp-act.on.half{color:var(--amber);}
 /* opaque: a panel you read lists through must not have the page
    showing through it (2026-08-20) */
 body.light .selpane{background:#fff;border-color:var(--line);}
 body.light .sp-row{color:var(--ink-2);}
 body.light .sp-row.sel{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--ink);}
 body.light .sp-act:hover{color:var(--ink);background:#00000010;}
-/* locked objects: visible but untouchable on the canvas */
+/* FULLY locked objects: visible but untouchable on the canvas */
 .deck.editing .an-locked,.deck.editing .an-locked *{
   pointer-events:none!important;cursor:default!important;}
+/* POSITION locked: everything still works except moving it, so the only
+   thing to say is "this will not drag" — said with the cursor on the
+   body, and left alone on the handles, which do still resize. */
+.deck.editing .an-pinned{cursor:default;}
 
 /* vertical "code trail": each slide can descend into the cells that
    made it (down arrow / ArrowDown), one step per screen */
@@ -2572,6 +2580,13 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
 .canvas-menu{min-width:215px;}
 .canvas-menu .vw-opt{width:100%;text-align:left;}
 .canvas-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
+/* which lock the selection is in now. Same treatment the View menu's
+   toggles use, so "on" reads the same way everywhere. */
+.canvas-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,
+  transparent);color:#fff;}
+.canvas-menu .vw-opt.on::after{content:"on";margin-left:auto;
+  font-family:var(--mono);font-size:9px;opacity:.75;}
+body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 
 /* ---- the strip's own resize handle ------------------------------------
    position:fixed, not absolute: .deck-create scrolls, and an absolutely

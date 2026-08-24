@@ -991,15 +991,16 @@ def test_duplicating_clones_the_whole_selection(out):
     A clone is an INDEPENDENT copy -- linked instances are T13, and the
     two verbs are kept apart deliberately. Groups survive as NEW groups:
     clone two members of a group of five and the pair still moves as one.
-    Locked items are skipped, because an unlocked twin dropped on top of
-    an undraggable original is a puzzle, not a duplicate.
+    Fully locked items are skipped, because an unlocked twin dropped on
+    top of an unclickable original is a puzzle, not a duplicate. A
+    POSITION-locked one (T3) clones happily -- the copy is a free item.
     """
     assert "function cloneAnnots(idxs,dx,dy){" in out
     assert "var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);" in out
     # one new group id per source group, allocated before any push --
     # nextGrp reads the max off s.annots and would repeat itself
     assert "if(gmap[cp.grp]==null) gmap[cp.grp]=gnext++;" in out
-    assert "var a=s.annots[i];return a&&!a.lock;" in out
+    assert "var a=s.annots[i];return a&&!lockedAll(a);" in out
     # a stray stays a stray; a duplicate does not sail off the corner
     assert "function cloneShift(v,d){" in out
     assert "return (d>0&&n>96&&(v||0)<=96)?96:n;" in out
@@ -1026,3 +1027,70 @@ def test_alt_drag_drags_a_clone(out):
     # TOGGLES, so members sharing a group come straight back out
     assert "function selectMany(layer,idxs){" in out
     assert "selectMany(layer,clones);" in out
+
+
+def test_locking_comes_in_two_strengths(out):
+    """TASKS T3. One boolean meant one lock, and it was the heavy one:
+    off the canvas entirely. A figure frame usually wants the other one
+    -- the plot must not wander, and you still need to resize it.
+
+    ``lockMode`` is the only reader of the raw flag, so a third mode
+    would be a change in one place. Everything else asks ``pinned`` (the
+    movement question) or ``lockedAll`` (the reachability one); getting
+    those two the wrong way round is the bug the split exists to make
+    hard. Saved decks carry ``lock:1``, which reads as the full lock.
+    """
+    assert "function lockMode(a){" in out
+    assert "return a.lock==='pos'?'pos':'all';" in out
+    assert "function lockedAll(a){return lockMode(a)==='all';}" in out
+    assert "function pinned(a){return !!lockMode(a);}" in out
+    # movement: both locks pin
+    assert "var m=(s.annots||[])[i];return m&&!pinned(m);" in out
+    assert "var a=s.annots[i]; if(!a||pinned(a)) return;   /* no nudge */" \
+        in out
+    assert "if(!a||a.k!=='arrow'||pinned(a)) return;" in out
+    # reachability: only the full lock takes it away, and only the full
+    # lock gets pointer-events:none
+    assert "if(lockedAll(a)) return;" in out
+    assert "el.classList.add(lm==='all'?'an-locked':'an-pinned');" in out
+    assert ".deck.editing .an-pinned{cursor:default;}" in out
+    # nothing READS the raw flag any more. The three writers (the
+    # pane's cycle, the menu's setLockSel, and lockMode itself) are
+    # the only places `.lock` appears -- these were the reader forms.
+    for reader in ("a.lock||", "a.lock?", "if(a.lock)",
+                   "&&!m.lock", "a.hide||a.lock"):
+        assert reader not in out, reader
+    # lockMode's own guard is the one surviving read of the flag
+    # (`!a.lockver` is a different flag -- figure version locks)
+    assert out.count("!a.lock)") == 1
+
+
+def test_a_locked_object_is_not_lost_to_the_marquee(out):
+    """TASKS T3. A lock means "not by accident", not "never again" -- but
+    a fully locked item was reachable through the Objects pane and
+    nowhere else, which is a long way round to a background frame you
+    locked months ago. Alt sweeps them up; Shift and Ctrl are taken (they
+    add to the selection) and Alt means nothing else on empty canvas.
+    """
+    assert "var takeLocked=ev0.altKey;" in out
+    assert "if(lockedAll(a)&&!takeLocked) return;" in out
+
+
+def test_the_lock_is_set_in_words_as_well_as_by_icon(out):
+    """The pane's button cycles three states in a quarter of the row's
+    width, which is the only way it fits; nobody discovers the
+    position-only lock that way. The right-click menu names all three and
+    marks the one the selection is in -- or none of them, when a mixed
+    selection is in more than one.
+    """
+    assert "function setLockSel(mode){" in out
+    assert "var lmNow=lms.every(function(x){return x===lms[0];})" in out
+    assert "if(lmNow===o[0]) b.classList.add('on');" in out
+    # the pane button: three states, and a tooltip naming the state it is
+    # IN as well as what the click does next
+    assert "function cycleLock(i){" in out
+    assert "if(m==='') a2.lock='pos';" in out
+    assert "lk.innerHTML=bic(lm==='pos'?'pin':'lock');" in out
+    assert "'Fully locked. Click to unlock';" in out
+    # the middle state reads as a different thing, not a dimmer full lock
+    assert ".sp-act.on.half{color:var(--amber);}" in out

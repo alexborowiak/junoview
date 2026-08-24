@@ -52,9 +52,15 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   survive as new groups. Alt was already the "ignore snapping" modifier
   mid-drag; a clone drag exempts itself, since you have to keep Alt held
   for the whole gesture.
-- [ ] **T3 · S — Object locking, granular.** Lock flag per object with
+- [x] **T3 · S — Object locking, granular.** Lock flag per object with
   modes: fully locked, or "position locked but resizable". Locked objects
   are skipped by marquee-select unless a modifier is held.
+  *2026-08-25:* `a.lock` is now `1` (full, the value every saved deck
+  already carries) or `'pos'`. `lockMode` is the only reader; every call
+  site asks `pinned` (movement) or `lockedAll` (reachability). The
+  marquee modifier is Alt — Shift and Ctrl already mean "add to the
+  selection". Set it from the right-click menu (worded) or the Objects
+  pane's lock button, which now cycles the three states.
 - [ ] **T4 · S — Temporary design guides.** Draw guide lines/boxes that
   exist only in edit mode — never rendered in present mode or any export.
 - [ ] **T5 · M — Select by type / appearance.** "Select all caption text

@@ -2355,6 +2355,24 @@
       var s2=pres.slides[cur];
       return (s2&&s2.annots||[])[i]||null;
     }
+    /* THREE STATES, ONE BUTTON: not locked -> position -> fully -> not
+       locked. Two locks are what people mean (see the LOCKS section), and
+       a second button for the rarer one would cost this narrow row a
+       quarter of its width. The tooltip names the state it is IN and
+       what the click does next, because a cycling button that only says
+       one of the two is a guessing game. */
+    function cycleLock(i){
+      var a2=liveAnnot(i);
+      if(!a2){renderSelPane();return;}
+      var m=lockMode(a2);
+      if(m==='') a2.lock='pos';
+      else if(m==='pos') a2.lock=1;
+      else delete a2.lock;
+      markDirty();
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+      renderSelPane();
+    }
     function toggleFlag(i,flag){
       var a2=liveAnnot(i);
       if(!a2){renderSelPane();return;}
@@ -2412,14 +2430,22 @@
       eye.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'hide');});
       r.appendChild(eye);
+      var lm=lockMode(a);
       var lk=document.createElement('button');
-      lk.className='sp-act'+(a.lock?' on':'');lk.type='button';
-      lk.innerHTML=bic('lock');
-      lk.title=a.lock?'Unlock':'Lock (can’t be clicked or '
-        +'dragged on the canvas)';
-      lk.setAttribute('aria-label',a.lock?'Unlock':'Lock');
+      lk.className='sp-act'+(lm?' on':'')+(lm==='pos'?' half':'');
+      lk.type='button';
+      lk.innerHTML=bic(lm==='pos'?'pin':'lock');
+      lk.title=lm===''
+        ? 'Not locked. Click to pin its position — still yours to '
+          +'select, resize and restyle'
+        : lm==='pos'
+        ? 'Position locked. Click to lock it fully — no clicking or '
+          +'dragging on the canvas'
+        : 'Fully locked. Click to unlock';
+      lk.setAttribute('aria-label',
+        lm===''?'Lock position':lm==='pos'?'Lock fully':'Unlock');
       lk.addEventListener('click',function(e){
-        e.stopPropagation();toggleFlag(i,'lock');});
+        e.stopPropagation();cycleLock(i);});
       r.appendChild(lk);
       var dp2=document.createElement('button');
       dp2.className='sp-act';dp2.type='button';dp2.innerHTML=bic('copy');
@@ -2521,7 +2547,7 @@
         e.stopPropagation();
         var hit=[];
         (s.annots||[]).forEach(function(a,i){
-          if(a&&a.fold===fname&&!a.lock) hit.push(i);});
+          if(a&&a.fold===fname&&!lockedAll(a)) hit.push(i);});
         if(!hit.length) return;
         selSet=hit;selAnnot=hit[hit.length-1];
         var l2=stage.querySelector('.annot-layer');
@@ -6838,7 +6864,7 @@
     hit.setAttribute('class','an-arrow-hit an-item');
     hit.setAttribute('data-idx',i);
     svg.appendChild(hit);
-    if(editing&&!a.lock){   /* a locked arrow gets no live endpoints */
+    if(editing&&!pinned(a)){  /* a pinned arrow gets no live endpoints */
       /* a handle per corner, plus a faint one halfway along each segment
          that ADDS a corner there - the gesture every vector editor uses,
          so nobody has to be told it exists (2026-08-20) */
@@ -7020,7 +7046,7 @@
       host.appendChild(mkRotate());
       /* a grip per column boundary, so widths are dragged rather than
          typed into a dialog */
-      if(selAnnot===i&&!a.lock){
+      if(selAnnot===i&&!lockedAll(a)){
         var acc=0;
         cols.forEach(function(w,ci){
           if(ci===cols.length-1) return;
@@ -7043,7 +7069,7 @@
   /* type into ONE cell. contenteditable on the <td> itself, so the caret,
      selection and spellcheck all behave the way they do in a text box. */
   function startTableEdit(layer,s,a,idx,td,ri,ci){
-    if(a.lock) return;
+    if(lockedAll(a)) return;
     td.contentEditable='plaintext-only';
     td.spellcheck=true;
     td.focus();
@@ -7669,12 +7695,13 @@
       });
       stage.classList.toggle('spill',spill);
     }
-    /* locked via the Objects pane: visible but untouchable on the canvas
-       (select / unlock through the pane) */
+    /* FULLY locked: visible but untouchable on the canvas (an-locked is
+       pointer-events:none). Position locked is a different animal — it
+       stays clickable and resizable, and only says so with a cursor. */
     if(editing) (s.annots||[]).forEach(function(a,i){
-      if(!a.lock) return;
+      var lm=lockMode(a); if(!lm) return;
       $$('.an-item[data-idx="'+i+'"]',layer).forEach(function(el){
-        el.classList.add('an-locked');});
+        el.classList.add(lm==='all'?'an-locked':'an-pinned');});
     });
   }
   function selectAnnot(layer,idx,additive){
@@ -8163,6 +8190,33 @@
     return {x:Math.max(0,Math.min(100,(ev.clientX-r.left)/r.width*100)),
             y:Math.max(0,Math.min(100,(ev.clientY-r.top)/r.height*100))};
   }
+  /* ---- LOCKS -----------------------------------------------------------
+     TWO locks, because there are two different things people mean by the
+     word (TASKS T3):
+
+       'all'  fully locked. The item cannot be clicked, dragged, resized,
+              typed into or nudged on the canvas at all -- the Objects
+              pane, and an Alt-marquee, are its remaining doors. This is
+              the lock that already existed, and every saved deck carries
+              it as `lock:1`.
+       'pos'  position locked. Pinned where it is, and otherwise entirely
+              yours: select it, resize it, restyle it, type in it. This
+              is what a figure frame usually wants -- the plot must not
+              wander, and you still need to make it bigger.
+
+     `lockMode` is the ONLY reader of the raw flag; everything else asks
+     one of the two questions below, so a third mode would be a change in
+     one place. `pinned` is the movement question and `lockedAll` the
+     reachability one -- getting those two the wrong way round is exactly
+     the bug this section exists to make hard. */
+  function lockMode(a){
+    if(!a||!a.lock) return '';
+    return a.lock==='pos'?'pos':'all';
+  }
+  function lockedAll(a){return lockMode(a)==='all';}
+  function pinned(a){return !!lockMode(a);}
+  var LOCK_LABEL={'':'Not locked','pos':'Position locked',
+    all:'Fully locked'};
   /* ---- snap-to-align: while dragging or resizing, edges and centers
      snap to the canvas (edges + middle) and to every other object's
      edges + centers, with dashed guide lines. Hold Alt to disable --
@@ -8327,7 +8381,7 @@
       var pick=selIdxs();
       if(pick.indexOf(idx)<0) pick=[idx];
       pick=pick.filter(function(i){
-        var m=(s.annots||[])[i];return m&&!m.lock;});
+        var m=(s.annots||[])[i];return m&&!lockedAll(m);});
       var clones=cloneAnnots(pick,0,0);
       if(clones.length){
         cloning=true;
@@ -8344,11 +8398,11 @@
     var a=annotByIdx(s,idx); if(!a) return;
     var start=pctPoint(layer,ev0);
     /* drag the whole current selection (group / multi-select) together —
-       locked members stay put (lock = can't be dragged) */
+       pinned members stay put, under EITHER lock */
     var movers=selSet.filter(function(i){return typeof i==='number';});
     if(typeof idx==='number'&&movers.indexOf(idx)<0) movers=[idx];
     movers=movers.filter(function(i){
-      var m=(s.annots||[])[i];return m&&!m.lock;});
+      var m=(s.annots||[])[i];return m&&!pinned(m);});
     var origs={};
     movers.forEach(function(i){
       origs[i]=deep((s.annots||[])[i]);});
@@ -8751,7 +8805,7 @@
   function startEndpoint(layer,s,idx,ep,ev0){
     ev0.preventDefault();
     var a=(s.annots||[])[idx];
-    if(!a||a.k!=='arrow'||a.lock) return;
+    if(!a||a.k!=='arrow'||pinned(a)) return;
     function mm(ev){
       var p=pctPoint(layer,ev);
       a['x'+ep]=p.x;a['y'+ep]=p.y;
@@ -8800,7 +8854,7 @@
     var px=ev.clientX-r.left,py=ev.clientY-r.top;
     var best=-1,bestD=12;
     s.annots.forEach(function(a,i){
-      if(a.k!=='arrow'||a.lock||a.hide) return;
+      if(a.k!=='arrow'||lockedAll(a)||a.hide) return;
       var d=distToSeg(px,py,
         a.x1/100*r.width,a.y1/100*r.height,
         a.x2/100*r.width,a.y2/100*r.height);
@@ -8822,6 +8876,14 @@
   var MARQUEE_PX=4;
   function startMarquee(layer,s,ev0){
     var add=ev0.shiftKey||ev0.ctrlKey||ev0.metaKey;
+    /* HOLD ALT TO SWEEP UP FULLY LOCKED ITEMS TOO. A lock means "not by
+       accident", not "never again", and the Objects pane being the only
+       way back to a background frame you locked months ago is a long way
+       round (TASKS T3). Shift and Ctrl are taken — they add to the
+       selection — so Alt it is, and on empty canvas it means nothing
+       else. Position-locked items were never excluded here: they select
+       and restyle like anything else, they just do not move. */
+    var takeLocked=ev0.altKey;
     if(!add) leaveGroup(null);
     var base=add?selSet.filter(function(i){return typeof i==='number';}):[];
     var p0=pctPoint(layer,ev0);
@@ -8843,9 +8905,10 @@
       band.style.width=(r-l)+'%';band.style.height=(b-t)+'%';
       var hit=base.slice();
       (s.annots||[]).forEach(function(a,i){
-        /* a locked or hidden item is not on the table: locked items are
-           reachable through the Layers pane and nowhere else, by design */
-        if(!a||a.hide||a.lock) return;
+        /* hidden items are never on the table; fully locked ones are on
+           it only when Alt asked for them */
+        if(!a||a.hide) return;
+        if(lockedAll(a)&&!takeLocked) return;
         var q=annotRectPct(layer,s,i); if(!q) return;
         if(q.r<l||q.l>r||q.b<t||q.t>b) return;
         groupMembers(s,i).forEach(function(j){
@@ -8917,6 +8980,24 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* the lock, in words. The pane's button cycles the same three
+         states in a quarter of the space; here they are named, which is
+         how anyone finds out the position-only one exists at all. */
+      var lms=selIdxs().map(function(i){
+        return lockMode((pres.slides[cur].annots||[])[i]);});
+      var lmNow=lms.every(function(x){return x===lms[0];})?lms[0]:null;
+      menuHead(m,'lock');
+      [['','Not locked',null,null],
+       ['pos','Lock position',
+        'Pinned where it is — still yours to select, resize and '
+        +'restyle','pin'],
+       ['all','Lock fully',
+        'No clicking or dragging on the canvas. The Objects pane, and '
+        +'an Alt-marquee, are the way back','lock']]
+        .forEach(function(o){
+          var b=row(o[1],'',function(){setLockSel(o[0]);},o[2],o[3]);
+          if(lmNow===o[0]) b.classList.add('on');
+        });
     }
     menuHead(m,'paste');
     if(!clipBuf.length){
@@ -8932,6 +9013,22 @@
         'Centred on the point you right-clicked');
     }
     floatAt(m,ev);
+  }
+  function setLockSel(mode){
+    var s=pres.slides[cur]; if(!s||!s.annots) return;
+    var idxs=selIdxs();
+    if(!idxs.length) return;
+    idxs.forEach(function(i){
+      var a=s.annots[i]; if(!a) return;
+      if(mode==='pos') a.lock='pos';
+      else if(mode==='all') a.lock=1;
+      else delete a.lock;
+    });
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);paintSel(l);}
+    toast(LOCK_LABEL[mode]+(idxs.length===1?''
+      :' — '+idxs.length+' items'));
   }
   function wireEditor(layer,s){
     /* a right-click on a corner takes it out, so the browser's own menu
@@ -10510,10 +10607,11 @@
   }
   function duplicateSel(){
     var s=pres.slides[cur]; if(!s||!s.annots) return;
-    /* a locked item is not draggable, so an unlocked twin dropped on top
-       of it would be a puzzle rather than a duplicate */
+    /* a fully locked item cannot even be clicked, so an unlocked twin
+       dropped on top of it would be a puzzle rather than a duplicate. A
+       PINNED one clones happily: the copy is a free item. */
     var idxs=selIdxs().filter(function(i){
-      var a=s.annots[i];return a&&!a.lock;});
+      var a=s.annots[i];return a&&!lockedAll(a);});
     if(!idxs.length) return;
     var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);
     if(!made.length) return;
@@ -10820,7 +10918,7 @@
       var idxs=selIdxs();
       if(!idxs.length||!s.annots) return;
       idxs.forEach(function(i){
-        var a=s.annots[i]; if(!a||a.lock) return;  /* locked: no nudge */
+        var a=s.annots[i]; if(!a||pinned(a)) return;   /* no nudge */
         if(a.k==='arrow'){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;
           /* the corners travel with the line they belong to */
           if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){
@@ -10900,7 +10998,7 @@
     return selSet.filter(function(i){return typeof i==='number';})
       .map(function(i){
         var a=(s.annots||[])[i];
-        if(!a||a.k==='arrow'||a.lock||a.hide) return null;
+        if(!a||a.k==='arrow'||pinned(a)||a.hide) return null;
         var r=annotRectPct(l,s,i);
         return r?{i:i,a:a,r:r,w:r.r-r.l,h:r.b-r.t}:null;
       }).filter(Boolean);
