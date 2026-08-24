@@ -982,8 +982,8 @@
      and whether to keep the layer that draws them. They did not agree —
      drawCustomGuides asked only about the LINES, so a page with guide
      boxes and no lines tore its own guide layer down and drew nothing.
-     Found in the browser, 2026-08-25; no test here could see it, every
-     one of them being a substring of the source. */
+     Found in the browser, 2026-08-25; the tests could not see it,
+     because every one of them is a substring of the source. */
   function guidesEmpty(g){
     return !g.x.length&&!g.y.length&&!g.b.length;
   }
@@ -5308,8 +5308,16 @@
       css:'Garamond,"EB Garamond",serif',ppt:'Garamond'},
     {id:'hand',label:'Hand',css:"'Segoe Print','Comic Sans MS',cursive",
       ppt:'Segoe Print'}];
-  var FONTMAP={},FONTPPT={};
-  FONTS.forEach(function(f){FONTMAP[f.id]=f.css;FONTPPT[f.id]=f.ppt;});
+  var FONTMAP={},FONTPPT={},FONTLAB={};
+  FONTS.forEach(function(f){FONTMAP[f.id]=f.css;FONTPPT[f.id]=f.ppt;
+    FONTLAB[f.id]=f.label;});
+  /* the third thing a font id turns into: WORDS. A custom family is
+     typed in by hand and is not in the table, so it answers with itself
+     — which is exactly what the picker shows for it too. */
+  function fontLabel(v){
+    if(!v) return 'the default typeface';
+    return FONTLAB[v]||String(v);
+  }
   /* an unrecognised value is a typed family name: use it as-is */
   function fontCss(v){
     if(!v) return '';
@@ -9109,6 +9117,17 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* SELECT BY WHAT THINGS ARE. Inline rather than behind a
+         submenu: this is already a menu, and the counts are the point —
+         a row that says how many it will take is a row you can trust
+         before you click it. */
+      var sby=selectByRows();
+      if(sby.length){
+        menuHead(m,'select on this slide');
+        sby.forEach(function(r){
+          row(r.label,String(r.n),function(){selectBy(r.key,r.val);});
+        });
+      }
       /* the lock, in words. The pane's button cycles the same three
          states in a quarter of the space; here they are named, which is
          how anyone finds out the position-only one exists at all. */
@@ -11523,6 +11542,129 @@
     list.sort(function(x,y){return rank(x)-rank(y);});
     return list;
   }
+  /* ---- SELECTING BY WHAT THINGS ARE ------------------------------------
+     "Select all caption text boxes"; "select everything using this font,
+     size or colour" (TASKS T5).
+
+     A CRITERION is one named question about an object, answered off a
+     REFERENCE object: key 'font', value 'georgia'. Keeping it a VALUE
+     rather than a closure is the whole design: find & replace (T6) runs
+     the identical question over every slide in the deck while the
+     selection below runs it over one, and neither owns the question.
+
+     `type` is not re-invented here. typeKeyOf / typeLabel already answer
+     "what kind of thing is this" for the Apply dialog, in the deck's own
+     vocabulary — including the styles you invented yourself, read live
+     out of the registry. Everything else in the table is an APPEARANCE:
+     one field, read raw, with the default folded in so two boxes nobody
+     ever touched count as the same. */
+  var SELECT_CRIT=[
+    /* key,   read(a) -> value, or null when the question does not apply
+                to this kind of object
+              say(v,a) -> the whole menu row, minus its count */
+    ['type',function(a){return typeKeyOf(a)||null;},
+      function(v,a){return 'Every '+typeLabel(v,false,a);}],
+    ['font',function(a){return a.k==='text'?(a.font||''):null;},
+      function(v){return 'Everything in '+fontLabel(v);}],
+    ['size',function(a){
+        return (a.k==='text'||a.k==='table')?(a.size||2.6):null;},
+      function(v){return 'Everything at '+Math.round(v*5.4)+' pt';}],
+    ['color',function(a){
+        return (a.k==='text'||a.k==='arrow'||a.k==='rect'||a.k==='draw')
+          ?(a.color||''):null;},
+      function(){return 'Everything in this colour';}],
+    ['fillc',function(a){return a.k==='rect'?(a.fillc||''):null;},
+      function(){return 'Every shape with this fill';}],
+    ['sw',function(a){
+        return (a.k==='arrow'||a.k==='rect'||a.k==='draw')
+          ?(a.sw||SW_DEFAULT):null;},
+      function(){return 'Every stroke at this thickness';}]
+  ];
+  function critRead(key,a){
+    if(!a) return null;
+    for(var i=0;i<SELECT_CRIT.length;i++)
+      if(SELECT_CRIT[i][0]===key) return SELECT_CRIT[i][1](a);
+    return null;
+  }
+  /* every index on ONE slide that answers a criterion the same way.
+
+     Hidden items are out: they are not on the page you are looking at.
+     FULLY LOCKED ones are out too — the same rule the marquee follows
+     (T3), and the count in the menu is taken from this same function, so
+     "Every Caption (4)" always selects exactly four. Position-locked
+     items are ordinary here, as they are everywhere else. */
+  function annotsBy(sl,key,val){
+    var out=[];
+    (sl&&sl.annots||[]).forEach(function(a,i){
+      if(!a||a.hide||lockedAll(a)) return;
+      if(critRead(key,a)===val) out.push(i);
+    });
+    return out;
+  }
+  /* the rows worth offering for the current selection: every criterion
+     the reference object can answer, that more than one object on this
+     slide answers the same way. A row that would select the one thing
+     you already have selected is a row that does nothing. */
+  function selectByRows(){
+    var s2=pres.slides[cur];
+    var idxs=selIdxs();
+    var ref=s2&&(s2.annots||[])[idxs[idxs.length-1]];
+    if(!ref) return [];
+    var out=[];
+    SELECT_CRIT.forEach(function(c){
+      var v=c[1](ref);
+      if(v==null) return;
+      var hit=annotsBy(s2,c[0],v);
+      if(hit.length<2) return;
+      out.push({key:c[0],val:v,n:hit.length,idxs:hit,
+        label:c[2](v,ref)});
+    });
+    return out;
+  }
+  function selectBy(key,val){
+    var s2=pres.slides[cur]; if(!s2) return;
+    var hit=annotsBy(s2,key,val);
+    if(!hit.length) return;
+    selectMany(stage.querySelector('.annot-layer'),hit);
+    toast(hit.length+' selected');
+  }
+  /* the standalone menu, for the Arrange row. The canvas menu lists the
+     same rows inline instead — it is already a menu, and burying them one
+     level deeper there would cost a click for nothing. */
+  function openSelectByMenu(anchor,ev){
+    var old=$('#selby-menu'); if(old) old.remove();
+    var rows=selectByRows();
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu';m.id='selby-menu';
+    menuHead(m,'select on this slide');
+    if(!rows.length){
+      var b0=document.createElement('button');
+      b0.className='dbtn vw-opt';b0.disabled=true;
+      b0.textContent='Nothing else on this slide is like it';
+      m.appendChild(b0);
+    }
+    rows.forEach(function(r){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      b.appendChild(document.createTextNode(r.label));
+      var k=document.createElement('kbd');
+      k.textContent=String(r.n);b.appendChild(k);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.remove();selectBy(r.key,r.val);});
+      m.appendChild(b);
+    });
+    if(ev) floatAt(m,ev);
+    else {
+      document.body.appendChild(m);
+      floatMenu(anchor,m);
+      setTimeout(function(){
+        document.addEventListener('click',function off(e){
+          if(m.contains(e.target)) return;
+          m.remove();document.removeEventListener('click',off);
+        });
+      },0);
+    }
+  }
   /* the geometry + look that travel; content never does.
 
      A LINE IS NOT AN x/y/w/h BOX. It is stored as its two endpoints
@@ -12875,8 +13017,14 @@
      /* the two POINT-AT-IT verbs. They live here, with the other
         make-things-match rows, and cost the ribbon nothing (2026-08-22) */
      ['x:to','Copy this look to objects I click…'],
-     ['x:from','Take the look of an object I click…']],'al',
+     ['x:from','Take the look of an object I click…'],
+     /* SELECTING is not arranging, but this is the menu that is shown
+        for every kind of item and already keeps the "everything like
+        this one" verbs — and the ribbon has no width to spare for a
+        button of its own (TASKS T5) */
+     ['s:by','Select everything on this slide like this…']],'al',
     function(what){
+      if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}
       if(what.indexOf('a:')===0){
         if(typeof window.SemDeckApplyDlg==='function')
           window.SemDeckApplyDlg();

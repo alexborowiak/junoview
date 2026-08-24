@@ -70,9 +70,16 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   real guarantee is that a guide is NOT an annotation: it forks off
   before `startDraw`, so there is nothing in `s.annots` for a render or
   an export to have to filter out.
-- [ ] **T5 · M — Select by type / appearance.** "Select all caption text
+- [x] **T5 · M — Select by type / appearance.** "Select all caption text
   boxes", "select everything using this font/size/colour". Foundation for
   T6.
+  *2026-08-25:* `SELECT_CRIT` is the criteria table; a criterion is a
+  (key, value) pair read off a reference object, deliberately a VALUE so
+  T6 can run the same question deck-wide. The `type` criterion reuses the
+  existing `typeKeyOf`/`typeLabel` vocabulary from the Apply dialog
+  rather than inventing a second one. Two doors, neither costing ribbon
+  width: the canvas right-click menu (inline, with counts) and one
+  Arrange row.
 - [ ] **T6 · M — Find & replace: text and formatting.** Deck-wide text
   replace, plus a formatting variant (every 18px font-A → 20px font-B).
   Builds on T5's matcher.

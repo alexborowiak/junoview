@@ -1096,3 +1096,64 @@ def test_the_lock_is_set_in_words_as_well_as_by_icon(out):
     assert "'Fully locked. Click to unlock';" in out
     # the middle state reads as a different thing, not a dimmer full lock
     assert ".sp-act.on.half{color:var(--amber);}" in out
+
+
+def test_selecting_by_what_things_are(out):
+    """TASKS T5. A CRITERION is one named question about an object,
+    answered off a reference object -- key 'font', value 'georgia'.
+    Keeping it a value rather than a closure is the design: find &
+    replace (T6) runs the identical question over every slide while the
+    selection here runs it over one, and neither owns the question.
+
+    `type` is not re-invented. typeKeyOf / typeLabel already answer "what
+    kind of thing is this" for the Apply dialog, in the deck's own
+    vocabulary -- including styles you invented yourself, read live out
+    of the registry.
+    """
+    assert "var SELECT_CRIT=[" in out
+    assert "function critRead(key,a){" in out
+    assert "function annotsBy(sl,key,val){" in out
+    # the type row rides on the existing vocabulary rather than a second
+    # copy of it
+    assert "['type',function(a){return typeKeyOf(a)||null;}," in out
+    assert "return 'Every '+typeLabel(v,false,a);}]," in out
+    # a typeface now turns into WORDS as well as css and pptx
+    assert "function fontLabel(v){" in out
+    assert "FONTLAB[f.id]=f.label;});" in out
+    # sizes read in the pt the Styles menu prints
+    assert "return 'Everything at '+Math.round(v*5.4)+' pt';}]," in out
+
+
+def test_select_by_counts_what_it_will_actually_take(out):
+    """The count in a row and the set the row selects come from the same
+    function, so "Every Caption (4)" always selects exactly four.
+
+    Hidden objects are out -- they are not on the page you are looking
+    at. Fully locked ones are out too, the same rule the marquee follows
+    (T3); position-locked ones are ordinary, as everywhere else. And a
+    row that would select only the object you already have is not
+    offered at all.
+    """
+    assert "if(!a||a.hide||lockedAll(a)) return;" in out
+    assert "var hit=annotsBy(s2,c[0],v);\n      if(hit.length<2) return;" \
+        in out
+    assert "out.push({key:c[0],val:v,n:hit.length,idxs:hit," in out
+    # selecting a batch reuses T2's selectMany, which does not toggle
+    assert "selectMany(stage.querySelector('.annot-layer'),hit);" in out
+
+
+def test_select_by_has_two_doors_and_neither_costs_ribbon_width(out):
+    """The canvas menu lists the rows inline -- it is already a menu, and
+    burying them a level deeper would cost a click for nothing. The
+    Arrange menu gets one row that opens the same list: that menu is
+    shown for every kind of item and already keeps the "everything like
+    this one" verbs, and the ribbon has no width for a button of its own.
+    """
+    assert "function openSelectByMenu(anchor,ev){" in out
+    assert "['s:by','Select everything on this slide like this…']]" in out
+    assert "if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}" \
+        in out
+    assert "menuHead(m,'select on this slide');" in out
+    # a menu five sections deep scrolls rather than running off-screen
+    assert ".canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}" \
+        in out

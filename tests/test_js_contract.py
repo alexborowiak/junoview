@@ -63,8 +63,10 @@ RUNTIME_IDS = {
     # ~line 11853 (the matching bar's property menu).
     "film-menu", "match-menu",
     # The canvas right-click menu, built per click and removed on the
-    # next one: deck.js, THE CANVAS RIGHT-CLICK MENU banner.
-    "canvas-menu",
+    # next one: deck.js, THE CANVAS RIGHT-CLICK MENU banner. "selby-menu"
+    # is the Arrange row's standalone copy of its select-by rows, built
+    # by openSelectByMenu in SELECTING BY WHAT THINGS ARE.
+    "canvas-menu", "selby-menu",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

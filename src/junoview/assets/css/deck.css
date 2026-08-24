@@ -2594,7 +2594,9 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
    context menu in the app, so it gets the same width and the same
    left-aligned rows. The one addition is a dead row -- "Nothing copied
    yet" -- which has to read as unavailable rather than broken. */
-.canvas-menu{min-width:215px;}
+/* five sections deep with a rich selection, so it scrolls rather than
+   running off the bottom of the window */
+.canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}
 .canvas-menu .vw-opt{width:100%;text-align:left;}
 .canvas-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 /* which lock the selection is in now. Same treatment the View menu's
