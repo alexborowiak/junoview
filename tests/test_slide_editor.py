@@ -381,7 +381,8 @@ def test_slides_have_their_own_background_and_border(out):
     # export takes its first stop (2026-08-20)
     assert "return {bg:bgSolid(ent.s.bg||bg),items:its};" in out
     # renderSlide re-applies, so walking the deck repaints each slide's own
-    assert "applyPageBg();          /* this slide may carry its own background */" in out
+    assert ("applyPageBg();          "
+            "/* this slide may carry its own background */") in out
 
 
 def test_panes_dock_beside_the_page_and_are_draggable_and_remembered(out):
@@ -518,8 +519,8 @@ def test_the_ribbon_is_tabbed(out):
     # animate can be one the one" / "View can just be back on home"), and
     # a tab with one small group in it is worse than no tab at all.
     for t in ("home", "insert", "design"):
-        assert 'id="rbn-tab-%s"' % t in out, t
-        assert "'%s'" % t in out
+        assert f'id="rbn-tab-{t}"' in out, t
+        assert f"'{t}'" in out
     assert "var TABS=['home','insert','design'];" in out
     assert 'id="rbn-tab-animate"' not in out
     assert 'id="rbn-tab-view"' not in out
@@ -911,7 +912,8 @@ def test_builds_follow_reading_order_not_array_order(out):
     assert "function orderedIdx(s2){" in out
     # arrows have no x/y of their own; they are ordered by their topmost
     # endpoint like everything else
-    assert "var ay=(p2.a.k==='arrow')?Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);"         in out
+    assert ("var ay=(p2.a.k==='arrow')?"
+            "Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);") in out
     # a 4% band counts as "the same line", so a row of items reads across
     assert "return Math.abs(ay-by)>4?(ay-by):(ax-bx);" in out
 

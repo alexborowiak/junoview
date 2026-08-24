@@ -20,7 +20,6 @@ from __future__ import annotations
 
 from junoview.notebook.presentations import _as_presentations
 
-
 # --------------------------------------------------------------- sections
 
 def test_a_section_is_a_tag_plus_a_name_and_the_order_is_derived(out):
@@ -38,7 +37,7 @@ def test_a_section_is_a_tag_plus_a_name_and_the_order_is_derived(out):
     # the five verbs, each of which ends by restoring the invariant
     for verb in ("newSection", "renameSection", "foldSection",
                  "removeSection", "moveSlideToSection"):
-        assert "function %s(" % verb in out
+        assert f"function {verb}(" in out
     # a whole section moves as a block and refinds `cur` by IDENTITY --
     # the single-slide four-branch arithmetic does not generalise to
     # moving n slides at once
@@ -167,7 +166,7 @@ def test_a_deck_can_invent_its_own_text_types(out):
     assert "function styleOrder(){" in out
     for fn in ("customTypes", "mintTypeId", "addCustomType",
                "deleteCustomType", "isHeadingStyle", "headingStyles"):
-        assert "function %s(" % fn in out
+        assert f"function {fn}(" in out
     # STYLE_ORDER itself is untouched: BUILTIN_STYLE_IDS is taken from it
     assert "var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];" in out
 
@@ -217,7 +216,8 @@ def test_a_text_box_can_be_born_wearing_a_type(out):
     """
     assert "var pendingStyle='';" in out
     assert "function textBorn(p0){" in out
-    assert "if(pendingStyle&&styleDef(pendingStyle)) applyStyleTo(a,pendingStyle);" in out
+    assert ("if(pendingStyle&&styleDef(pendingStyle)) "
+            "applyStyleTo(a,pendingStyle);") in out
     assert 'id="tx-type-btn"' in out and 'id="tx-type-menu"' in out
     # the caret carries NEITHER `et` NOR data-tool: that exact pairing is
     # what armed setTool(undefined) off #dc-qr
@@ -313,6 +313,7 @@ def test_every_applied_field_is_a_field_match_props_actually_copies():
     picker row and a control that silently lies.
     """
     import re
+
     from junoview import assets
     js = assets.deck_js()
     match = set(re.findall(r"'([a-z0-9]+)'",
@@ -323,8 +324,8 @@ def test_every_applied_field_is_a_field_match_props_actually_copies():
         applied |= set(re.findall(r"'([a-z0-9]+)'", row.split(",[")[-1]))
     missing = applied - match
     assert not missing, (
-        "APPLY_PROPS names %s, which MATCH_PROPS does not copy -- ticking "
-        "those rows would do nothing" % sorted(missing))
+        f"APPLY_PROPS names {sorted(missing)}, which MATCH_PROPS does "
+        "not copy -- ticking those rows would do nothing")
 
 
 def test_a_sweep_over_forty_slides_is_one_undo_step(out):

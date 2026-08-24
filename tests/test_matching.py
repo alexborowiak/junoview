@@ -17,7 +17,6 @@ guess was wrong -- and 2026-08-22 the user asked for both:
 
 from __future__ import annotations
 
-
 # ------------------------------------------------- the existing heuristic
 
 def test_matching_pairs_items_by_role_then_reading_order(out):

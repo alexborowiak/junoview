@@ -18,7 +18,6 @@ an arrangement automatically.
 
 from __future__ import annotations
 
-
 # ------------------------------------------------------------ style sets
 
 def test_a_style_set_is_the_registry_under_a_name(out):

@@ -9,14 +9,30 @@ configuring -- which is what drives the code-type filters in the viewer.
 from __future__ import annotations
 
 import ast
+import enum
 import re
 
 from .directives import is_directive_line
 from .outputs import RenderedOutput
 
-# "no pre-parsed tree supplied — parse it yourself". Distinct from None,
-# which a caller passes to mean "parsed already, and it FAILED".
-_UNPARSED = object()
+
+class _Unparsed(enum.Enum):
+    """The "no pre-parsed tree supplied — parse it yourself" sentinel.
+
+    Distinct from None, which a caller passes to mean "parsed already,
+    and it FAILED". A one-member Enum rather than ``object()`` because
+    the sentinel needs a TYPE: with ``object()`` every signature taking
+    one had to annotate ``ast.Module | None`` and then default to a
+    value outside it, which is a lie a type checker is right to
+    complain about, and which stopped it narrowing after the ``is``
+    test (2026-08-25, found by mypy 2.x; this is the pattern its own
+    docs prescribe).
+    """
+
+    token = 0
+
+
+_UNPARSED = _Unparsed.token
 
 
 def _parse_or_none(source: str) -> ast.Module | None:
@@ -82,7 +98,8 @@ def _infer_kind(item_outputs: list[RenderedOutput]) -> str:
 
 
 def _title_from_code(code: str,
-                     tree: ast.Module | None = _UNPARSED) -> tuple[str, bool]:
+                     tree: ast.Module | None | _Unparsed = _UNPARSED,
+                     ) -> tuple[str, bool]:
     """Best-effort title. Returns (title, echo): echo=True when the title
     merely repeats a line of the cell's code — such titles still label the
     item in the nav but are not repeated as a heading on the card.
@@ -123,7 +140,8 @@ def _title_from_code(code: str,
 
 
 def _plot_title_from_code(code: str,
-                          tree: ast.Module | None = _UNPARSED) -> str:
+                          tree: ast.Module | None | _Unparsed = _UNPARSED,
+                          ) -> str:
     """The title the PLOT gives itself in code.
 
     ``fig.suptitle("…")``, ``ax.set_title("…")``, ``plt.title("…")`` or a
@@ -168,8 +186,11 @@ def _plot_title_from_code(code: str,
             if kw.arg in ("title", "title_text"):
                 t = lit(kw.value)
                 if not t and isinstance(kw.value, ast.Dict):
-                    # plotly's title=dict(text="…")
-                    for k2, v2 in zip(kw.value.keys, kw.value.values):
+                    # plotly's title=dict(text="…"). keys and values
+                    # are the same length by construction in the AST, so
+                    # strict= is a statement of that, not a new check.
+                    for k2, v2 in zip(kw.value.keys, kw.value.values,
+                                      strict=True):
                         if isinstance(k2, ast.Constant) and k2.value == "text":
                             t = lit(v2)
                 if t:
@@ -245,7 +266,8 @@ def _is_const_value(node: ast.AST) -> bool:
 
 
 def _classify_code(code: str,
-                   tree: ast.Module | None = _UNPARSED) -> list[str]:
+                   tree: ast.Module | None | _Unparsed = _UNPARSED,
+                   ) -> list[str]:
     """The kinds of things a code cell does, in display order. Usually one
     (imports / function / data / settings / plotting / print / constant /
     code); a mixed cell lists several.

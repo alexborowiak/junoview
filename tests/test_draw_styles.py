@@ -429,7 +429,7 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # of those tabs have nothing on them now"), so View and Output sit on
     # Home and Animate sits with Insert
     for grp in ("rbn-slide", "rbn-view"):
-        assert 'class="rbn-grp rbn-fixed %s" data-tab=' % grp in out
+        assert f'class="rbn-grp rbn-fixed {grp}" data-tab=' in out
     assert "var TABS=['home','insert','design'];" in out
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more

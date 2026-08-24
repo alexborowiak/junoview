@@ -183,7 +183,8 @@ def _assign_defs(targets: list, value: ast.AST) -> list[tuple[str, str]]:
                     and len(target.elts) == len(value.elts)
                     and not any(isinstance(e, ast.Starred)
                                 for e in target.elts)):
-                for el, v in zip(target.elts, value.elts):
+                # the lengths were just compared in the guard above
+                for el, v in zip(target.elts, value.elts, strict=True):
                     out.extend((n, _value_label(v))
                                for n in _target_names(el))
             else:

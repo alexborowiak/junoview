@@ -30,8 +30,7 @@ from ..notebook.presentations import _as_presentations
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
-from .state import (_app_page, _AppState, _is_deck_file, _list_dir,
-                    StaleWrite)
+from .state import StaleWrite, _app_page, _AppState, _is_deck_file, _list_dir
 from .vcs import _git_commit_file, _git_file_log, _git_info, _git_show_notebook
 
 

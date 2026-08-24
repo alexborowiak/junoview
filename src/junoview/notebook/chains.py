@@ -12,11 +12,12 @@ from __future__ import annotations
 import ast
 import re
 
-from .classify import _UNPARSED, _parse_or_none, _strip_magics
+from .classify import _UNPARSED, _parse_or_none, _strip_magics, _Unparsed
 from .model import Document, Item
 
 
-def _cell_names(code: str, tree: ast.Module | None = _UNPARSED
+def _cell_names(code: str,
+                tree: ast.Module | None | _Unparsed = _UNPARSED
                 ) -> tuple[set[str], set[str]]:
     """Best-effort (defined, externally-read) names for one cell's code.
 

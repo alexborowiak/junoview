@@ -10,6 +10,19 @@ is only what's specific to this machine.
   Bare `python` on this machine is a real Python 3.13, not the Store stub.
   pyproject.toml sets `pythonpath = ["src", "tests"]`, so no `pip install -e`
   or PYTHONPATH is needed to run the suite.
+- Lint and types: `python -m ruff check .` works from the machine Python.
+  `mypy` does NOT — the machine Python has numpy installed, and numpy's
+  stubs use 3.12+ syntax that mypy cannot parse under the
+  `python_version = "3.10"` target pyproject pins, so it dies before it
+  checks anything of ours. Use the dev venv, which holds only `.[dev]`:
+
+      $env:LOCALAPPDATA\junoview-dev\Scripts\python.exe -m mypy
+
+  Recreate it with `python -m venv <path>` then `pip install -e ".[dev]"`
+  if it goes missing. CI's lint job is Python 3.13 + `.[dev]`, so that
+  venv is what CI actually runs — and note both tools are pinned `>=`,
+  so a fresh install can surface rules that did not exist when the code
+  was written (that is what the 2026-08-25 lint pass was).
 - There is NO Node on this machine. To syntax-check a JS file, use VS Code's
   Electron as node (PowerShell — the `Out-Null` forces the shell to wait so
   `$LASTEXITCODE` is real):

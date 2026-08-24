@@ -977,7 +977,7 @@ def test_animations_can_be_removed(out):
     """
     for bid in ("anim-none", "anim-fade", "anim-rise", "anim-zoom",
                 "anim-clear"):
-        assert 'id="%s"' % bid in out, bid
+        assert f'id="{bid}"' in out, bid
     # Animate shares the Insert tab: on its own it was one group of six
     # small buttons under a whole tab, and Insert had room to spare
     assert 'class="rbn-grp rbn-anim" data-tab="insert"' in out
@@ -1041,7 +1041,7 @@ def test_high_contrast_re_inks_the_surfaces(out):
     # theme looks half-applied -- which had happened to all four groups
     # added in August
     for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-tbl"):
-        assert "body.th-colorful .%s" % grp in out, grp
+        assert f"body.th-colorful .{grp}" in out, grp
     # ...and the two groups that no longer exist are gone from it
     assert "body.th-colorful .rbn-file" not in out
     assert "body.th-colorful .rbn-nbs" not in out

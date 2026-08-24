@@ -13,7 +13,6 @@ from __future__ import annotations
 
 from junoview.render.page import render_page
 
-
 # ------------------------------------------------- tap to enlarge
 
 def test_tapping_an_item_in_playback_can_enlarge_it(out):
@@ -65,7 +64,8 @@ def test_a_picture_can_be_re_read_from_the_file_it_came_from(out):
     assert "if(a&&a.k==='image'&&a.fkey) out.push" in out
     # inserted through showOpenFilePicker, because the <input type=file>
     # can only ever hand back the bytes
-    assert "if(!window.showOpenFilePicker){imgFile.value='';imgFile.click();return;}" in out
+    assert ("if(!window.showOpenFilePicker){imgFile.value='';"
+            "imgFile.click();return;}") in out
     assert "img.fkey=link.key;img.fname=link.name||'';" in out
 
 
