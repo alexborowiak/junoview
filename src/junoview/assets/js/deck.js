@@ -8423,10 +8423,20 @@
       if(overlap) boxes.push(r);
     });
     boxes.sort(function(p,q){return horiz?(p.l-q.l):(p.t-q.t);});
+    /* a gap is not just a NUMBER. It was measured between two particular
+       neighbours, and to show you what a match matched — which is the
+       whole point of the badge — the pair has to travel with the value
+       (2026-08-25, T7). The old code kept only the number, which is why
+       the comment above promised to "mark both" and only one was ever
+       drawn. */
     var gaps=[];
     for(var i=1;i<boxes.length;i++){
-      var g=horiz?(boxes[i].l-boxes[i-1].r):(boxes[i].t-boxes[i-1].b);
-      if(g>0.2) gaps.push(g);
+      var p=boxes[i-1],q=boxes[i];
+      var g=horiz?(q.l-p.r):(q.t-p.b);
+      if(g>0.2) gaps.push({g:g,
+        a:horiz?p.r:p.b, b:horiz?q.l:q.t,
+        at:horiz?(Math.max(p.t,q.t)+Math.min(p.b,q.b))/2
+                :(Math.max(p.l,q.l)+Math.min(p.r,q.r))/2});
     }
     return {boxes:boxes,gaps:gaps};
   }
@@ -8439,32 +8449,60 @@
     var best=null;
     c.boxes.forEach(function(r){
       var before=horiz?r.r:r.b,after=horiz?r.l:r.t;
-      c.gaps.forEach(function(g){
+      c.gaps.forEach(function(gp){
+        var g=gp.g;
         /* place the dragged box a distance g AFTER this one... */
         var d1=(before+g)-lo;
         if(Math.abs(d1)<=thr&&(!best||Math.abs(d1)<Math.abs(best.d)))
-          best={d:d1,gap:g,from:r,side:'after'};
+          best={d:d1,gap:g,from:r,side:'after',src:gp};
         /* ...or a distance g BEFORE it */
         var d2=(after-g)-hi;
         if(Math.abs(d2)<=thr&&(!best||Math.abs(d2)<Math.abs(best.d)))
-          best={d:d2,gap:g,from:r,side:'before'};
+          best={d:d2,gap:g,from:r,side:'before',src:gp};
       });
     });
     return best;
   }
+  /* a distance across the page, in the millimetres the rulers speak.
+     A percentage means nothing to anyone laying out an A0 poster, and
+     the badge exists precisely so the number can be read (T7). */
+  function gapMm(v,horiz){
+    var pg=pageOf();
+    var mm=Math.abs(v)/100*(horiz?pg.mm[0]:pg.mm[1]);
+    return (mm<10?Math.round(mm*10)/10:Math.round(mm))+' mm';
+  }
   function drawGapMarks(layer,marks){
-    $$('.snapgap',layer).forEach(function(n){n.remove();});
+    $$('.snapgap,.snapgap-lab',layer).forEach(function(n){n.remove();});
     marks.forEach(function(m){
+      var lo=Math.min(m.a,m.b),hi=Math.max(m.a,m.b);
       var el=document.createElement('div');
-      el.className='snapgap';
+      /* the gap you are MAKING is solid; the one it matched is drawn
+         faint, because it is evidence rather than an instruction */
+      el.className='snapgap'+(m.ref?' snapgap-ref':'');
       if(m.horiz){
-        el.style.left=m.a+'%';el.style.width=(m.b-m.a)+'%';
+        el.style.left=lo+'%';el.style.width=(hi-lo)+'%';
         el.style.top=(m.at-0.35)+'%';el.style.height='0.7%';
       } else {
-        el.style.top=m.a+'%';el.style.height=(m.b-m.a)+'%';
+        el.style.top=lo+'%';el.style.height=(hi-lo)+'%';
         el.style.left=(m.at-0.35)+'%';el.style.width='0.7%';
       }
       layer.appendChild(el);
+      /* THE BADGE. A bar says "these two distances agree"; the number
+         says what the distance IS, which is the question you were
+         actually asking when you started dragging (T7). It reuses
+         .dragtag, which was styled for exactly this kind of readout and
+         then never wired to anything. */
+      var lab=document.createElement('div');
+      lab.className='dragtag snapgap-lab'+(m.ref?' snapgap-lab-ref':'');
+      lab.textContent=gapMm(hi-lo,m.horiz);
+      if(m.horiz){
+        lab.style.left=((lo+hi)/2)+'%';
+        lab.style.top=m.at+'%';
+      } else {
+        lab.style.left=m.at+'%';
+        lab.style.top=((lo+hi)/2)+'%';
+      }
+      layer.appendChild(lab);
     });
   }
   function bestSnap(cands,vals,thr){
@@ -8613,6 +8651,11 @@
               gapMarks.push({horiz:true,at:mid,
                 a:gx.side==='after'?gx.from.r:nb.r,
                 b:gx.side==='after'?nb.l:gx.from.l});
+              /* ...and the gap it MATCHED. Two bars carrying the same
+                 number is the whole message; one bar on its own only
+                 ever said "something snapped" (T7) */
+              if(gx.src) gapMarks.push({horiz:true,at:gx.src.at,
+                a:gx.src.a,b:gx.src.b,ref:1});
             }
           }
           if(!by){
@@ -8621,6 +8664,8 @@
               dy+=gy.d;
               var nby={t:bb.t+gy.d,b:bb.b+gy.d};
               var midx=(bb.l+bb.r)/2;
+              if(gy.src) gapMarks.push({horiz:false,at:gy.src.at,
+                a:gy.src.a,b:gy.src.b,ref:1});
               gapMarks.push({horiz:false,at:midx,
                 a:gy.side==='after'?gy.from.b:nby.b,
                 b:gy.side==='after'?nby.t:gy.from.t});

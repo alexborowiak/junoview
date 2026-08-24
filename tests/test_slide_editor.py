@@ -1211,3 +1211,41 @@ def test_a_formatting_sweep_says_what_it_will_do_first(out):
     # one markDirty for the whole sweep, so one undo takes it back
     assert "markDirty();refresh();\n        toast('Changed '+n+' object'" \
         in out
+
+
+def test_an_equal_gap_snap_shows_both_gaps_and_the_measurement(out):
+    """TASKS T7. Snapping to neighbouring edges and centres was already
+    here, and so was equal-gap detection -- but only half of it showed.
+    The comment over gapCands promised to "mark both" and the code kept
+    a gap as a bare NUMBER, so the pair it was measured between was
+    already lost by the time anything got drawn. One amber bar on its
+    own only ever said "something snapped".
+
+    A gap now travels with the two neighbours it was measured between,
+    both gaps are marked -- the one being made solid, the one it matched
+    faint, because that one is evidence rather than an instruction --
+    and each carries the distance in the millimetres the rulers speak.
+    A percentage means nothing to anyone laying out an A0 poster.
+    """
+    assert "if(g>0.2) gaps.push({g:g," in out
+    assert "best={d:d1,gap:g,from:r,side:'after',src:gp};" in out
+    assert "function gapMm(v,horiz){" in out
+    assert "return (mm<10?Math.round(mm*10)/10:Math.round(mm))+' mm';" in out
+    # both marks are pushed, and the reference one is flagged
+    assert "if(gx.src) gapMarks.push({horiz:true,at:gx.src.at," in out
+    assert "if(gy.src) gapMarks.push({horiz:false,at:gy.src.at," in out
+    assert "el.className='snapgap'+(m.ref?' snapgap-ref':'');" in out
+    assert ".snapgap.snapgap-ref{background:#f0a84826;border-style:dashed;" \
+        in out
+
+
+def test_the_gap_badge_reuses_the_readout_style_that_was_never_wired(out):
+    """.dragtag was styled for exactly this kind of live readout --
+    mono, small, dark pill -- and then nothing in deck.js ever used it.
+    The badge is that style, finally connected to something, rather than
+    a second one that would drift away from it.
+    """
+    assert "lab.className='dragtag snapgap-lab'" in out
+    assert ".snapgap-lab{transform:translate(-50%,-50%);" in out
+    # cleared with the bars at the end of the gesture, not left behind
+    assert "$$('.snapgap,.snapgap-lab',layer).forEach(function(n){" in out

@@ -92,9 +92,17 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   `hide`den objects, because `hide` means "hidden while editing, still
   shown when presenting" and skipping them would leave the talk in the
   old face.
-- [ ] **T7 · M — Snap to nearby objects + spacing guides.** Snapping
+- [x] **T7 · M — Snap to nearby objects + spacing guides.** Snapping
   candidates from neighbouring objects' edges/centres, and equal-spacing
   distribution hints while dragging (Figma-style badges).
+  *2026-08-25:* snapping to neighbours' edges/centres (`snapTargets`) and
+  equal-gap detection (`bestGap`) already existed. What was missing was
+  the half the code's own comment promised: a gap was kept as a bare
+  number, so the pair it was measured between was lost and only ONE bar
+  was ever drawn. Gaps now carry their pair, both are marked (solid for
+  the one being made, faint for the one it matched), and each carries the
+  distance in millimetres — reusing `.dragtag`, a readout style that had
+  been sitting in the CSS unwired.
 - [ ] **T8 · M — "Match layout" command.** Select objects plus a reference
   group; apply the reference's alignment/spacing pattern ("make these three
   look like the four above"). Reuses T7's geometry helpers.

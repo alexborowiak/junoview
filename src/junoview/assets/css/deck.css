@@ -1825,6 +1825,15 @@ select#fmt-font[hidden]{display:none;}
    distance from its neighbours as they are from each other */
 .snapgap{position:absolute;z-index:45;pointer-events:none;
   background:#f0a84855;border:1px solid #f0a848;border-radius:2px;}
+/* the gap being MADE is solid; the gap it matched is evidence, so it is
+   drawn faint — two equally loud bars read as two instructions */
+.snapgap.snapgap-ref{background:#f0a84826;border-style:dashed;
+  border-color:#f0a84899;}
+/* the number, centred on its bar. translate rather than margins so the
+   percentage positions above stay the anchor point. */
+.snapgap-lab{transform:translate(-50%,-50%);
+  border-color:#f0a84899;color:#f4d9ae;}
+.snapgap-lab.snapgap-lab-ref{opacity:.72;}
 /* live position/size readout, pinned to the dragged item */
 .dragtag{position:absolute;z-index:46;pointer-events:none;
   font-family:var(--mono);font-size:10px;line-height:1;white-space:nowrap;
