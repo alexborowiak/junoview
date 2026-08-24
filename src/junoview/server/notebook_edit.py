@@ -28,7 +28,9 @@ def insert_note_cell(nb: dict, after_anchor: str,
     cells = nb.setdefault("cells", [])
     idx = len(cells)                       # default: append at the end
     if after_anchor:
-        doc = parse_notebook(nb)
+        # structural parse only — the caller re-parses via load_doc for
+        # the fresh shell anyway, so don't render the raw view twice
+        doc = parse_notebook(nb, render_raw=False)
         target = None
         for sec in doc.sections:
             for it in sec.items:

@@ -1,5 +1,37 @@
+/* ======================================================================
+   deck.js — the presentation builder. ONE ~18,000-line IIFE.
 
+   Boot order: ALL load-time execution runs from THE BOOT SEQUENCE at
+   the very end of this file, after every declaration and every `var`
+   initialiser. Never add mid-file boot calls or sub-IIFEs that execute
+   logic at load — function declarations hoist but `var` initialisers do
+   not, and a throw at load time silently kills everything below it (the
+   deck just stops existing). Sub-IIFEs that only wire listeners or
+   build static menu DOM from values declared above them are fine where
+   they are; anything that CALLS into app state belongs in the boot.
+
+   Navigate by the section banners: grep "/* ----" deck.js. The major
+   regions, in file order:
+     page setup            POSTER templates · page size · BACKGROUND PALETTE
+     ribbon                RIBBON TABS · FOLDING THE TOOLS AWAY
+     panes                 Objects pane · one pane open at a time
+     data                  registry · embedded snapshots · saved presentations
+     editing               undo/redo · view mode rendering · GRADIENTS ·
+                           FREEHAND · SPOTLIGHT · REPEATED FURNITURE ·
+                           free annotations · THE FLIP BOOK
+     styles                TEXT STYLES · STYLE SETS · THE STYLE MANAGER
+     content               LISTS · TABLES · format bar wiring · FILL PANEL
+     arranging             copy/cut/paste · STACKING ORDER · MATCH ANOTHER
+                           SLIDE · ARRANGE THIS SLIDE · ARRANGEMENTS
+     extras                QR generator · EQUATION EDITOR · images ·
+                           FRAMES PANE · animation PANE · PRESENTER VIEW
+     shell                 presentations rail · CUSTOM VIEW · thumbnails ·
+                           THE OUTLINE · SLIDE SECTIONS · mode switching
+     files                 File menu · persistence · exports (PDF · HTML ·
+                           PowerPoint) · rename · FIND AND REPLACE
+   ====================================================================== */
 (function(){
+  'use strict';
   var deckEl=document.getElementById('deck');
   if(!deckEl) return;
   var APP=window.SemApp||{mode:'static',shells:{},order:[],
@@ -9,6 +41,12 @@
   var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
   function esc(t){var d=document.createElement('div');d.textContent=(t==null?'':String(t));return d.innerHTML;}
   function deep(o){return JSON.parse(JSON.stringify(o));}
+  /* the chrome icon set. window.SemIcons is stamped into the page by
+     branding.py (key -> the same <svg class="bic"> markup the template
+     tokens expand to), so DOM built here wears the artwork the page
+     already wears — no path data lives in this file. Soft on absence:
+     a page without the map gets ''-icons, never a dead script. */
+  function bic(k){return (window.SemIcons||{})[k]||'';}
 
   var stage=$('#deck-stage');
   /* layouts are just preset ARRANGEMENTS of cell frames (percent rects);
@@ -602,7 +640,8 @@
     var vb=$('#vw-versions');
     if(vb){
       vb.hidden=false;
-      vb.innerHTML=pg.poster?'&#9776; Versions':'&#9776; Slides';
+      vb.innerHTML=pg.poster?bic('versions')+' Versions'
+        :bic('versions')+' Slides';
       vb.title=pg.poster
         ?'Other versions of this poster — drafts and variants. Opens the '
           +'strip; close it again to give the page the whole window'
@@ -784,6 +823,12 @@
       slideEl.insertBefore(host,slideEl.firstChild);
     }
     var g=gridPct(),parts=[],i;
+    /* everything below is a percentage of the slide, so only a page-size/
+       margin change alters it — skip the innerHTML when nothing did
+       (drawGrid used to re-render per stage mousemove via syncGuides) */
+    var gsig=g.m.x+','+g.m.y+','+g.colW+','+g.rowH+','+g.rows;
+    if(host._gsig===gsig) return;
+    host._gsig=gsig;
     parts.push('<div class="pgrid-margin" style="left:'+g.m.x+'%;top:'+g.m.y
       +'%;right:'+g.m.x+'%;bottom:'+g.m.y+'%;"></div>');
     for(i=0;i<GRID_COLS;i++){
@@ -813,6 +858,14 @@
     return steps[steps.length-1];
   }
   function fillRuler(el,lenMm,pxPerMm,vertical){
+    /* the ticks depend only on the page length and the px-per-mm scale,
+       so they rebuild ONLY when those change (zoom, page size, a stage
+       resize). Every mousemove used to regenerate thousands of <i>/<span>
+       nodes through innerHTML just so the 1px cursor could move
+       (2026-08-23 perf). */
+    var sig=lenMm+'|'+pxPerMm+(vertical?'v':'h');
+    if(el._rsig===sig) return;
+    el._rsig=sig;
     var step=rulerStep(pxPerMm);
     var labelEvery=(step*pxPerMm>=46)?1:(step*5*pxPerMm>=46?5:10);
     var parts=[];
@@ -828,6 +881,56 @@
     el.innerHTML=parts.join('');
   }
   var rulerCursor={x:null,y:null};
+  /* the slide's px size at the last full ruler placement — the light
+     cursor/selection updates reuse it instead of re-reading layout */
+  var rulerPx={w:0,h:0};
+  /* a persistent overlay child of a ruler (the cursor line, the selection
+     span): created once and repositioned forever. A tick rebuild's
+     innerHTML orphans it, and then it is simply made again. */
+  function rulerMark(el,cls){
+    var m=el._marks&&el._marks[cls];
+    if(!m||m.parentNode!==el){
+      m=document.createElement('i');
+      m.className=cls;
+      m.style.left='0';m.style.top='0';
+      el.appendChild(m);
+      (el._marks=el._marks||{})[cls]=m;
+    }
+    return m;
+  }
+  /* the selected item's extent, shaded on both rulers */
+  function drawRulerSel(){
+    var rh=$('#ruler-h'),rv=$('#ruler-v');
+    if(!rh||!rv) return;
+    var hs=rulerMark(rh,'rspan'),vs=rulerMark(rv,'rspan');
+    var s=pres&&pres.slides?pres.slides[cur]:null;
+    var slideEl=stage?stage.querySelector('.slide'):null;
+    var layer=slideEl?slideEl.querySelector('.annot-layer'):null;
+    var r=(s&&layer&&typeof selAnnot==='number')
+      ?annotRectPct(layer,s,selAnnot):null;
+    if(r){
+      hs.style.display='';
+      hs.style.left=(r.l/100*rulerPx.w)+'px';
+      hs.style.width=((r.r-r.l)/100*rulerPx.w)+'px';
+      vs.style.display='';
+      vs.style.top=(r.t/100*rulerPx.h)+'px';
+      vs.style.height=((r.b-r.t)/100*rulerPx.h)+'px';
+    } else {hs.style.display='none';vs.style.display='none';}
+  }
+  /* the pointer's position on both rulers — a transform, never a rebuild */
+  function drawRulerCursor(){
+    var rh=$('#ruler-h'),rv=$('#ruler-v');
+    if(!rh||!rv) return;
+    var hc=rulerMark(rh,'rcursor'),vc=rulerMark(rv,'rcursor');
+    if(rulerCursor.x!=null){
+      hc.style.display='';
+      hc.style.transform='translateX('+(rulerCursor.x*rulerPx.w)+'px)';
+    } else hc.style.display='none';
+    if(rulerCursor.y!=null){
+      vc.style.display='';
+      vc.style.transform='translateY('+(rulerCursor.y*rulerPx.h)+'px)';
+    } else vc.style.display='none';
+  }
   function drawRulers(slideEl,wrap){
     var rh=$('#ruler-h'),rv=$('#ruler-v'),rc=$('#ruler-corner');
     if(!rh||!rv||!rc) return;
@@ -842,24 +945,9 @@
     rc.style.left=(left-20)+'px';rc.style.top=(top-20)+'px';
     fillRuler(rh,pg.mm[0],ppmX,false);
     fillRuler(rv,pg.mm[1],ppmY,true);
-    /* the selected item's extent, shaded on both rulers */
-    var s=pres.slides[cur],layer=slideEl.querySelector('.annot-layer');
-    if(s&&layer&&typeof selAnnot==='number'){
-      var r=annotRectPct(layer,s,selAnnot);
-      if(r){
-        rh.insertAdjacentHTML('beforeend','<i class="rspan" style="left:'
-          +(r.l/100*sr.width)+'px;width:'+((r.r-r.l)/100*sr.width)+'px"></i>');
-        rv.insertAdjacentHTML('beforeend','<i class="rspan" style="top:'
-          +(r.t/100*sr.height)+'px;height:'+((r.b-r.t)/100*sr.height)
-          +'px"></i>');
-      }
-    }
-    if(rulerCursor.x!=null)
-      rh.insertAdjacentHTML('beforeend','<i class="rcursor" style="left:'
-        +(rulerCursor.x*sr.width)+'px"></i>');
-    if(rulerCursor.y!=null)
-      rv.insertAdjacentHTML('beforeend','<i class="rcursor" style="top:'
-        +(rulerCursor.y*sr.height)+'px"></i>');
+    rulerPx.w=sr.width;rulerPx.h=sr.height;
+    drawRulerSel();
+    drawRulerCursor();
   }
   function syncGuides(){
     var wrap=$('#deck-stagewrap'),rl=$('#rulers');
@@ -899,6 +987,12 @@
       host=document.createElement('div');host.className='cguides';
       slideEl.insertBefore(host,slideEl.firstChild);
     }
+    /* guides are percentages of the slide too — rebuild only when a value
+       actually changed (a guide drag repaints live; a plain mousemove or
+       scroll through syncGuides skips) */
+    var csig=cg.x.join(',')+'|'+cg.y.join(',');
+    if(host._csig===csig) return;
+    host._csig=csig;
     host.innerHTML=
       cg.x.map(function(v,i){
         return '<i class="cguide cg-v" data-ax="x" data-i="'+i
@@ -923,7 +1017,14 @@
     function mv(e){
       var v=at(e); if(v==null) return;
       cg[axis][idx]=Math.max(-4,Math.min(104,v));
-      setCustomGuides(cg);drawCustomGuides(slideEl);
+      /* live geometry only while the mouse is down: the model updates in
+         place and the guide layer repaints, but the commit (markDirty:
+         full-deck stringify + localStorage write + a no-op histPush,
+         guides being outside the undo snapshot) waits for mouseup — the
+         same one-commit-per-gesture contract item drags follow. It used
+         to run per mousemove, ~60 stringify+write/s (2026-08-23 perf). */
+      if(pres) pres.guides={x:cg.x,y:cg.y};
+      drawCustomGuides(slideEl);
     }
     function up(e){
       document.removeEventListener('mousemove',mv);
@@ -1828,6 +1929,34 @@
        label; the tight rung's spacing gave 40px of the ~70px back. Below
        it the remedy is Guides ▸ Toolbar on the right. */
   }
+  /* ---- the thin top bar must never clip --------------------------------
+     #deck-qat is ~14 fixed-width controls on flex-wrap:nowrap, and no
+     fitter covered it: below ~750-800px the RIGHT end — Present, the
+     primary action, and Help — clipped away unreachable, which the
+     ladder forbids ("clip, scroll, wrap — all forbidden", fitEditRibbon).
+     Same shape as fitRibbon / fitEditRibbon: reset, measure, escalate.
+       rung 1 (.qat-c1)     the save readout gives up its text — its
+                            words also live in the Save button's tooltip
+       rung 2 (.qat-c2)     spacing tightens and the long label shortens
+                            ("Autosave" → "Auto"); words are shortened,
+                            NEVER hidden (the twice-rejected icon-only)
+       floor  (.qat-scroll) the bar scrolls sideways (overflow-x:auto,
+                            thin scrollbar) so nothing is ever
+                            unreachable. Safe for the bar's own menus:
+                            File / Saved-to / Present all float
+                            (floatMenu, position:fixed), so the scroll
+                            box cannot cut them off. */
+  function fitQat(){
+    var bar=$('#deck-qat');
+    if(!bar||bar.hidden) return;
+    var cl=bar.classList;
+    cl.remove('qat-c1');cl.remove('qat-c2');cl.remove('qat-scroll');
+    /* a hidden or zero-width bar is not a real fit — leave it relaxed */
+    if(!bar.clientWidth) return;
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-c1');
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-c2');
+    if(bar.scrollWidth>bar.clientWidth+1) cl.add('qat-scroll');
+  }
   function syncViewBtns(){
     var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full'),sd=$('#vw-side');
     if(r) r.setAttribute('aria-pressed',guides.rulers?'true':'false');
@@ -1989,11 +2118,17 @@
       rulerCursor.y=(e.clientY-sr.top)/sr.height;
       if(rulerCursor.x<0||rulerCursor.x>1) rulerCursor.x=null;
       if(rulerCursor.y<0||rulerCursor.y>1) rulerCursor.y=null;
-      syncGuides();
+      /* the LIGHT path: shade the selection's extent (it follows a drag
+         live) and move the 1px cursor — never rebuild the ticks, the
+         grid or the custom guides from a mousemove (2026-08-23 perf:
+         syncGuides() regenerated every tick node per event) */
+      rulerPx.w=sr.width;rulerPx.h=sr.height;
+      drawRulerSel();
+      drawRulerCursor();
     });
     if(stage) stage.addEventListener('mouseleave',function(){
       rulerCursor.x=rulerCursor.y=null;
-      if(guides.rulers&&mode==='edit') syncGuides();
+      if(guides.rulers&&mode==='edit') drawRulerCursor();
     });
     if(stage) stage.addEventListener('scroll',function(){syncGuides();});
   })();
@@ -2005,7 +2140,7 @@
       setZoom(Math.max(0.25,(deckZoom||1)/1.25));});
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
-      if(!deckEl.hidden){fitEditRibbon();applyZoom();}});
+      if(!deckEl.hidden){fitEditRibbon();fitQat();applyZoom();}});
     /* the ribbon's height CHANGES now (the contextual format groups
        leave the layout when hidden), and so does the page picker — any
        toolbar reflow resizes the stage, so the page re-fits itself
@@ -2025,6 +2160,16 @@
           fitEditRibbon();applyZoom();
         });
       }).observe(et);
+      /* the thin top bar gets the same treatment for the same reason:
+         its box changing (window resize, first real layout on open) is
+         the one signal that catches every way it can get narrower */
+      var qb=$('#deck-qat');
+      if(qb) new ResizeObserver(function(){
+        if(deckEl.hidden) return;
+        requestAnimationFrame(function(){
+          if(!deckEl.hidden) fitQat();
+        });
+      }).observe(qb);
     }
     /* The rulers are drawn at the slide's CURRENT position, so anything
        that moves the slide has to redraw them. The ribbon observer above
@@ -2046,7 +2191,7 @@
     try{
       if(document.fonts&&document.fonts.ready)
         document.fonts.ready.then(function(){
-          if(!deckEl.hidden) fitEditRibbon();});
+          if(!deckEl.hidden){fitEditRibbon();fitQat();}});
     }catch(e){}
     /* trackpad pinch (and ctrl+scroll) zooms the PAGE, not the browser:
        a Windows precision-trackpad pinch arrives as a wheel event with
@@ -2252,23 +2397,27 @@
       r.appendChild(t);
       var eye=document.createElement('button');
       eye.className='sp-act'+(a.hide?' on':'');eye.type='button';
-      eye.innerHTML='&#128065;';
+      eye.innerHTML=bic('eye');
       eye.title=a.hide?'Show while editing'
         :'Hide while editing (still shows when presenting)';
+      eye.setAttribute('aria-label',
+        a.hide?'Show while editing':'Hide while editing');
       eye.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'hide');});
       r.appendChild(eye);
       var lk=document.createElement('button');
       lk.className='sp-act'+(a.lock?' on':'');lk.type='button';
-      lk.innerHTML='&#128274;';
+      lk.innerHTML=bic('lock');
       lk.title=a.lock?'Unlock':'Lock (can’t be clicked or '
         +'dragged on the canvas)';
+      lk.setAttribute('aria-label',a.lock?'Unlock':'Lock');
       lk.addEventListener('click',function(e){
         e.stopPropagation();toggleFlag(i,'lock');});
       r.appendChild(lk);
       var dp2=document.createElement('button');
-      dp2.className='sp-act';dp2.type='button';dp2.innerHTML='&#10697;';
+      dp2.className='sp-act';dp2.type='button';dp2.innerHTML=bic('copy');
       dp2.title='Duplicate';
+      dp2.setAttribute('aria-label','Duplicate');
       dp2.addEventListener('click',function(e){
         e.stopPropagation();dupAnnots([i],false);});
       r.appendChild(dp2);
@@ -2290,7 +2439,9 @@
     var selN=selSet.filter(function(i){return typeof i==='number';});
     function tool(label,title,on,fn){
       var b=document.createElement('button');
-      b.className='dbtn sp-tool';b.textContent=label;b.title=title;
+      /* innerHTML: the labels are fixed strings written just below,
+         now carrying bic() icons before their words */
+      b.className='dbtn sp-tool';b.innerHTML=label;b.title=title;
       b.disabled=!on;
       b.addEventListener('click',function(e){e.stopPropagation();fn();});
       bar2.appendChild(b);
@@ -2301,7 +2452,8 @@
       &&ann[selAnnot].grp!=null;
     tool('Ungroup','Ungroup (Ctrl+Shift+G)',inGrp,
       function(){ungroupSel();renderSelPane();});
-    tool('\u29c9 Duplicate','Duplicate the selected items',selN.length>=1,
+    tool(bic('copy')+' Duplicate','Duplicate the selected items',
+      selN.length>=1,
       function(){dupAnnots(selN,false);});
     /* A FOLDER IS NOT A GROUP. Grouping welds items together — they move
        and format as one, which is exactly what you do NOT want from a
@@ -2311,8 +2463,8 @@
        thing").
        A folder is just a name on the items in it: a.fold. Nothing about
        selection, movement or formatting changes. */
-    tool('\u2b1a New folder','Put the selected items in a named folder '
-      +'\u2014 filing only, they are NOT grouped',selN.length>=1,
+    tool(bic('frame')+' New folder','Put the selected items in a named '
+      +'folder \u2014 filing only, they are NOT grouped',selN.length>=1,
       function(){
         var nm=prompt('Name this folder','Folder '
           +(folderNames(s).length+1));
@@ -2323,8 +2475,9 @@
         toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
           +'\u201c'+nm+'\u201d');
       });
-    tool('\u2715 Out of folder','Take the selected items out of their '
-      +'folder',selN.some(function(i){return s.annots[i]&&s.annots[i].fold;}),
+    tool(bic('exit')+' Out of folder','Take the selected items out of '
+      +'their folder',
+      selN.some(function(i){return s.annots[i]&&s.annots[i].fold;}),
       function(){
         selN.forEach(function(i){
           if(s.annots[i]) delete s.annots[i].fold;});
@@ -2337,7 +2490,7 @@
     folderNames(s).forEach(function(fname){
       var fw=document.createElement('div');fw.className='sp-folder sp-fold2';
       var fi=document.createElement('span');fi.className='sp-fico';
-      fi.textContent='\u2b1a';fw.appendChild(fi);
+      fi.innerHTML=bic('frame');fw.appendChild(fi);
       var fn=document.createElement('span');
       fn.className='sp-t sp-gname';fn.textContent=fname;
       fn.title=fname+' \u2014 double-click to rename this folder';
@@ -2353,8 +2506,10 @@
       });
       fw.appendChild(fn);
       var fsel=document.createElement('button');
-      fsel.className='sp-act';fsel.type='button';fsel.innerHTML='\u25ce';
+      fsel.className='sp-act';fsel.type='button';
+      fsel.innerHTML=bic('locate');
       fsel.title='Select everything in this folder';
+      fsel.setAttribute('aria-label','Select everything in this folder');
       fsel.addEventListener('click',function(e){
         e.stopPropagation();
         var hit=[];
@@ -2388,6 +2543,7 @@
       chip.className='sp-gcol';chip.type='button';
       chip.style.background=meta.color||GRP_COLORS[0];
       chip.title='Group colour — click to change';
+      chip.setAttribute('aria-label','Group colour');
       chip.addEventListener('click',function(e){
         e.stopPropagation();
         var cur2=GRP_COLORS.indexOf(meta.color||GRP_COLORS[0]);
@@ -2404,8 +2560,9 @@
       });
       f.appendChild(nm);
       var rn=document.createElement('button');
-      rn.className='sp-act';rn.type='button';rn.innerHTML='&#9998;';
+      rn.className='sp-act';rn.type='button';rn.innerHTML=bic('pen');
       rn.title='Rename this group';
+      rn.setAttribute('aria-label','Rename this group');
       rn.addEventListener('click',function(e){
         e.stopPropagation();
         var v=prompt('Group name:',meta.name||('Group '+g));
@@ -2413,8 +2570,9 @@
       });
       f.appendChild(rn);
       var dp=document.createElement('button');
-      dp.className='sp-act';dp.type='button';dp.innerHTML='&#10697;';
+      dp.className='sp-act';dp.type='button';dp.innerHTML=bic('copy');
       dp.title='Duplicate the whole group';
+      dp.setAttribute('aria-label','Duplicate the whole group');
       dp.addEventListener('click',function(e){
         e.stopPropagation();
         var idxs=[];ann.forEach(function(a2,i2){
@@ -2458,7 +2616,7 @@
     var gid=newGrp?nextGrp(s):null,added=[];
     idxs.forEach(function(i){
       var a=s.annots[i]; if(!a) return;
-      var cp=JSON.parse(JSON.stringify(a));
+      var cp=deep(a);
       if(cp.k==='arrow'){cp.x1+=2;cp.y1+=2;cp.x2+=2;cp.y2+=2;
         delete cp.c1;delete cp.c2;}
       else {cp.x=Math.min(96,(cp.x||0)+2);cp.y=Math.min(96,(cp.y||0)+2);}
@@ -2466,7 +2624,7 @@
       s.annots.push(cp);added.push(s.annots.length-1);
     });
     if(gid!=null&&srcGrp!=null&&s.grpmeta&&s.grpmeta[srcGrp]){
-      var m2=JSON.parse(JSON.stringify(s.grpmeta[srcGrp]));
+      var m2=deep(s.grpmeta[srcGrp]);
       if(m2.name) m2.name+=' copy';
       s.grpmeta[gid]=m2;
     }
@@ -2653,6 +2811,9 @@
     EMBED[key]={title:String(e.title||''),kind:String(e.kind||''),
       html:String(e.html||''),code:typeof e.code==='string'?e.code:''};
     delete embItems[key];
+    /* invalidation point 3 (see frameNodeCache): a frame rendered from
+       the OLD embedded copy of this ref must rebuild from the new one */
+    dropFrameCache(key);
   }
   function embSaveSoon(){
     clearTimeout(embSaveT);
@@ -2694,8 +2855,8 @@
     if(p&&p.kind==='view'){
       var v={name:String(p.name||'view'),kind:'view',slides:[],
         nb:typeof p.nb==='string'?p.nb:'',
-        style:p.style?JSON.parse(JSON.stringify(p.style)):{},
-        view:p.view?JSON.parse(JSON.stringify(p.view)):{}};
+        style:p.style?deep(p.style):{},
+        view:p.view?deep(p.view):{}};
       if(typeof p.folder==='string'&&p.folder) v.folder=p.folder;
       return v;
     }
@@ -2726,15 +2887,15 @@
            whitelisted here (2026-08-20) */
         if(typeof s.notes==='string'&&s.notes) o.notes=s.notes;
         if(typeof s.goal==='number'&&s.goal>0) o.goal=s.goal;
-        if(s.border) o.border=JSON.parse(JSON.stringify(s.border));
-        if(s.grpmeta) o.grpmeta=JSON.parse(JSON.stringify(s.grpmeta));
+        if(s.border) o.border=deep(s.border);
+        if(s.grpmeta) o.grpmeta=deep(s.grpmeta);
         if(s.layout==='title'){
           o.title=String(s.title||'');o.sub=String(s.sub||'');
-          if(s.tprops) o.tprops=JSON.parse(JSON.stringify(s.tprops));
-          if(s.sprops) o.sprops=JSON.parse(JSON.stringify(s.sprops));
+          if(s.tprops) o.tprops=deep(s.tprops);
+          if(s.sprops) o.sprops=deep(s.sprops);
         }
         if(Array.isArray(s.annots)&&s.annots.length)
-          o.annots=JSON.parse(JSON.stringify(s.annots));
+          o.annots=deep(s.annots);
         (o.annots||[]).forEach(function(a){
           if(a.k==='cell'&&a.ref) a.ref=ns(a.ref);
           /* a flip book's frames hold the same kind of ref, one per
@@ -2776,7 +2937,7 @@
     if(typeof p.talkMins==='number'&&p.talkMins>0) out.talkMins=p.talkMins;
     if(typeof p.notes==='string'&&p.notes) out.notes=p.notes;
     if(Array.isArray(p.pad)&&p.pad.length)
-      out.pad=JSON.parse(JSON.stringify(p.pad));
+      out.pad=deep(p.pad);
     /* the text types this deck invented. Filtered on the way IN: an entry
        with no id is unusable, and one claiming a built-in id would
        silently redefine Heading 1 for everybody who opened the file.
@@ -2787,7 +2948,7 @@
       p.types.forEach(function(t){
         if(!t||typeof t!=='object'||!t.id) return;
         if(BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
-        tps.push(JSON.parse(JSON.stringify(t)));
+        tps.push(deep(t));
       });
       if(tps.length) out.types=tps;
     }
@@ -2812,7 +2973,7 @@
     /* deck-level furniture, same rule as the page background: forget it on
        load and a saved deck quietly loses its footer (2026-08-20) */
     ['wmark','head','foot','styles'].forEach(function(k){
-      if(p[k]&&typeof p[k]==='object') out[k]=JSON.parse(JSON.stringify(p[k]));
+      if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
        absorbed into the session store (and IndexedDB) here, so frames
@@ -2853,8 +3014,12 @@
     delete SHELLITEMS[stem];
     nbPres=nbPres.filter(function(p){return p.origin!==stem;});
   }
-  APP.order.forEach(function(stem){
-    registerShell(stem,APP.shells[stem].data||{});});
+  /* ingest every notebook the page carries. Called from THE BOOT
+     SEQUENCE at the end of the file — nothing executes here at load. */
+  function initShellRegistry(){
+    APP.order.forEach(function(stem){
+      registerShell(stem,APP.shells[stem].data||{});});
+  }
 
   /* ---------- saved presentations: project file + notebook-embedded --- */
   /* the project revision this page was built from; echoed back on every
@@ -2926,6 +3091,38 @@
       return (d&&Array.isArray(d.slides))?normPres(d):null;
     }catch(e){return null;}
   }
+  /* THE DRAFT WRITE IS DEBOUNCED (2026-08-23 perf). markDirty runs on
+     every keystroke and every gesture commit, and JSON.stringify(pres)
+     plus a synchronous localStorage write per call was the single
+     biggest fixed cost of an edit. Only the serialisation waits (~300ms
+     trailing, stringifying the CURRENT pres when it fires) — status(),
+     scheduleAutosave and histPush stay immediate, so the readout and
+     undo behave exactly as before.
+     flushDraftWrite() runs a pending write NOW — called wherever a fresh
+     draft matters: pagehide/visibilitychange (after the text flush),
+     entering Present, loading another presentation, and a rename (which
+     migrates the draft by key).
+     cancelDraftWrite() drops a pending write instead — called where the
+     draft was just deleted on purpose (project/notebook save success,
+     Discard, Delete), matching the old order in which the write always
+     preceded the lsDel. */
+  var draftT=null;
+  function writeDraftNow(){
+    draftT=null;
+    if(!pres) return;
+    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
+    lsSet(PFX+'last',pres.name||'untitled');
+  }
+  function scheduleDraftWrite(){
+    if(draftT) clearTimeout(draftT);
+    draftT=setTimeout(writeDraftNow,300);
+  }
+  function flushDraftWrite(){
+    if(draftT){clearTimeout(draftT);writeDraftNow();}
+  }
+  function cancelDraftWrite(){
+    if(draftT){clearTimeout(draftT);draftT=null;}
+  }
   function draftNames(){
     var out=[];
     try{
@@ -2963,6 +3160,7 @@
 
   var pres=null, source='auto', mode='view', cur=0, activePane=0;
   function loadPresentation(name){
+    flushDraftWrite();   /* the outgoing deck's last edits reach its draft */
     deckZoom=0;   /* zoom is per-session, reset per presentation */
     var d=loadDraft(name);
     if(d){pres=d;source='draft';histReset();return;}
@@ -2970,10 +3168,19 @@
     if(s){pres=normPres(deep(s));source='saved';histReset();return;}
     pres=defaultPres();source='auto';histReset();
   }
-  var last=lsGet(PFX+'last');
-  if(last&&(loadDraft(last)||savedByName(last))) loadPresentation(last);
-  else if(allSaved().length) loadPresentation(allSaved()[0].name);
-  else {pres=defaultPres();source='auto';}
+  /* which presentation the page opens with. Called from THE BOOT
+     SEQUENCE at the end of the file — never from here: loadPresentation
+     → histReset() → syncCustomTypes() reaches STYLE_DEFAULTS, which is
+     assigned thousands of lines below this point (see the 2026-08-22
+     incident record at the boot sequence). */
+  function initFirstPresentation(){
+    var last=lsGet(PFX+'last');
+    if(last&&(loadDraft(last)||savedByName(last))) loadPresentation(last);
+    else if(allSaved().length) loadPresentation(allSaved()[0].name);
+    /* the other two branches sync via histReset; this one must too —
+       "every path that installs a new pres", as syncCustomTypes says */
+    else {pres=defaultPres();source='auto';syncCustomTypes();}
+  }
 
   var saveStamp=null,saveKind='';
   function fmtT(d){
@@ -3084,6 +3291,9 @@
     if(el.textContent!==el._lastTxt){
       el._lastTxt=el.textContent;
       requestAnimationFrame(fitEditRibbon);
+      /* the readout lives in the thin bar now, so a wider text has to
+         re-judge THAT row too — fitQat drops it whole when tight */
+      requestAnimationFrame(fitQat);
     }
     if(!el.classList.contains('clickable')) el.title=el.textContent;
   }
@@ -3101,8 +3311,7 @@
   function markDirty(quiet){
     source='draft';
     saveKind='';
-    lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
-    lsSet(PFX+'last',pres.name||'untitled');
+    scheduleDraftWrite();   /* the stringify+localStorage cost, debounced */
     status();
     scheduleAutosave();
     if(!quiet) histPush();
@@ -3270,8 +3479,7 @@
       if(typeof syncTopBar==='function') syncTopBar();
       if(typeof applySideRibbon==='function') applySideRibbon();
     }
-    /* nothing is selected after a restore — clear the format bar + Delete */
-    var db=$('#et-del'); if(db) db.disabled=true;
+    /* nothing is selected after a restore — clear the format bar */
     if(typeof showFmt==='function') showFmt();
   }
   function undo(){
@@ -3307,6 +3515,49 @@
      revert to (session-only — snapshots never enter the saved deck) */
   var frameSnaps={},frameSnapsPrev={};
   var frozenFrames=new WeakMap();   /* annot -> snapshot html it shows */
+  /* ---- FRAME RENDER CACHES (2026-08-23 perf) --------------------------
+     renderAnnots used to re-run cloneBody per cell frame per layer
+     rebuild: a full cloneNode(true) of a card body carrying multi-MB
+     base64 figures, four querySelectorAll stripping passes, and an
+     outerHTML serialisation into frameSnaps — per frame, per call. The
+     prepared node is now cached and re-cloned on use (the embBody
+     e._node precedent).
+     frameNodeCache: normRef+'::'+requestedPart -> ready-to-insert node.
+     INVALIDATION — a stale frame is a wrong frame, so every event that
+     can change a card's rendered body drops the affected entries via
+     dropFrameCache():
+       1. the 'sem:shell' handler (a notebook opened OR reloaded — the
+          refresh-pictures path), per stem;
+       2. the 'sem:shellclosed' handler, per stem — frames fall back to
+          the deck's embedded copy;
+       3. embStore(), per ref — a new/updated embedded copy must show
+          (it matters when the notebook is not open).
+     NOT invalidation points, deliberately:
+       - document filter changes (the Plots/Code/Outputs menus): they
+         only toggle classes/stubs on the live cards, and cloneBody
+         normalises all of that away (strips the pt-, ot-, part- and
+         code-off classes, removes .ot-stub, restores .figpager-nav),
+         so the clone is filter-invariant;
+       - the notebook-side figpager's CURRENT page: view state, not
+         content — the placed frame's own pager stays interactive;
+       - freeze/unfreeze ("Previous figure"): it switches BUILDERS
+         (framePartFromSnap vs framePart), no shared entries;
+       - version locks: verNodeCache is keyed by the immutable
+         per-commit card object (fetchVerCards never refetches a defined
+         key), and locking/unlocking picks a different code path.
+     snapNodeCache is content-addressed (keyed by the snapshot HTML
+     string itself), so it cannot go stale by construction. */
+  var frameNodeCache={};
+  var snapNodeCache=new Map();      /* snapshot html -> {part: node} */
+  var verNodeCache=new WeakMap();   /* version card -> {part: node} */
+  /* drop cached frame nodes for one notebook stem, one full ref, or all
+     (both key shapes are prefixes of 'stem::anchor::part') */
+  function dropFrameCache(stemOrRef){
+    if(stemOrRef==null){frameNodeCache={};return;}
+    var pfx=stemOrRef+'::';
+    Object.keys(frameNodeCache).forEach(function(k){
+      if(k.indexOf(pfx)===0) delete frameNodeCache[k];});
+  }
   function cloneBody(ref){
     var c=cardEl(ref);
     if(!c){
@@ -3395,12 +3646,23 @@
     return b;
   }
   function framePart(ref,part){
+    /* cached per (ref, requested part): cloneBody — and its frameSnaps
+       outerHTML snapshot — now runs only when the cache was dropped,
+       i.e. on first sight or after the source card actually changed.
+       See the invalidation list on frameNodeCache above. */
+    var key=(normRef(ref)||String(ref||''))+'::'+(part||'auto');
+    var hit=frameNodeCache[key];
+    if(hit) return hit.cloneNode(true);
     var f=cellFacets(ref);
     if(!part||part==='auto'||!hasFacet(f,part)) part=autoPart(f);
-    if(part==='code') return cloneCode(ref)||cloneBody(ref);
-    var b=cloneBody(ref);
-    if(!b) return cloneCode(ref);
-    return applyPartFilter(b,part);
+    var b;
+    if(part==='code') b=cloneCode(ref)||cloneBody(ref);
+    else {
+      b=cloneBody(ref);
+      b=b?applyPartFilter(b,part):cloneCode(ref);
+    }
+    if(b) frameNodeCache[key]=b.cloneNode(true);
+    return b;
   }
   /* ---- figure LOCKS: a frame pinned to a git commit renders that
      commit's card (fetched once, cached) — refresh never touches it, and
@@ -3448,12 +3710,29 @@
     fetchVerCards(lp.path,a.lockver.commit,[lp.anchor]);
     return undefined;
   }
+  /* resolve the part and filter a snapshot BODY node (snapshots hold no
+     code part) — shared by the string and version-card paths */
+  function snapPart(b,part){
+    var hasFig=!!b.querySelector('.figframe,.figpager,.plotframe');
+    if(!part||part==='auto'||part==='code')
+      part=hasFig?'figure':'output';
+    return applyPartFilter(b,part);
+  }
   function frameFromVerCard(card,part){
+    /* was: template-parse card.html, clone, re-serialise to outerHTML,
+       then framePartFromSnap parsed the string AGAIN — per frame, per
+       render. Now parsed once per card object (verCards entries are
+       immutable) and cached per part (2026-08-23 perf). */
+    var byPart=verNodeCache.get(card);
+    if(!byPart){byPart={};verNodeCache.set(card,byPart);}
+    var pk=part||'auto';
+    if(pk in byPart)
+      return byPart[pk]?byPart[pk].cloneNode(true):null;
     var t=document.createElement('template');t.innerHTML=card.html||'';
     var b=t.content.querySelector('.cardbody');
-    if(!b) return null;
-    b=stripIds(b.cloneNode(true));
-    return framePartFromSnap(b.outerHTML,part);
+    var out=b?snapPart(stripIds(b.cloneNode(true)),part):null;
+    byPart[pk]=out?out.cloneNode(true):null;
+    return out;
   }
   function lockChip(c,a,ok){
     c.classList.add('an-locked-ver');
@@ -3463,24 +3742,30 @@
     var date=a.lockver.date||meta.date||'';
     var fz=document.createElement('span');
     fz.className='an-lockchip'+(ok?'':' warn');
-    fz.textContent='🔒 '+a.lockver.commit;
+    fz.innerHTML=bic('lock')+' '+esc(a.lockver.commit);
     fz.title=(ok?'Locked to commit ':'Locked to commit (content '
       +'unavailable — showing live) ')+a.lockver.commit
       +(msg?' — “'+msg+'”':'')+(date?' · '+date:'')
       +'\nRefresh never changes this frame. Unlock via the ribbon.';
     c.appendChild(fz);
   }
-  /* render a frame from a REMEMBERED body (the pre-refresh figure) */
+  /* render a frame from a REMEMBERED body (the pre-refresh figure).
+     The string used to be re-parsed through template.innerHTML on every
+     call — multi-MB of HTML, per frame, per rebuild. Now parsed once per
+     (html, part) and re-cloned; keyed by the string itself, so the cache
+     is content-addressed and cannot go stale (2026-08-23 perf). */
   function framePartFromSnap(html,part){
+    var byPart=snapNodeCache.get(html);
+    if(!byPart){byPart={};snapNodeCache.set(html,byPart);}
+    var pk=part||'auto';
+    if(pk in byPart)
+      return byPart[pk]?byPart[pk].cloneNode(true):null;
     var t=document.createElement('template');
     t.innerHTML=html;
     var b=t.content.firstElementChild;
-    if(!b) return null;
-    b=b.cloneNode(true);
-    var hasFig=!!b.querySelector('.figframe,.figpager,.plotframe');
-    if(!part||part==='auto'||part==='code')
-      part=hasFig?'figure':'output';   /* snapshots hold no code part */
-    return applyPartFilter(b,part);
+    b=b?snapPart(b.cloneNode(true),part):null;
+    byPart[pk]=b?b.cloneNode(true):null;
+    return b;
   }
   function facetList(ref){
     var f=cellFacets(ref),out=[];
@@ -3538,7 +3823,7 @@
       box.appendChild(b);
     });
     var sp=document.createElement('button');
-    sp.className='cellpartbtn split';sp.innerHTML='&#9707; split';
+    sp.className='cellpartbtn split';sp.innerHTML=bic('outline')+' split';
     sp.title='Split into two frames — one for each part';
     sp.addEventListener('mousedown',guardDown);
     sp.addEventListener('click',function(e){
@@ -3612,7 +3897,11 @@
     return {it:it,steps:steps,color:TRACE_COLORS[0]};
   }
   /* ---- per-plot dependency graph (the docs popup) ---- */
-  var NODE_FILL={figure:'#39a9c0',diagnostic:'#39a9c0',dataset:'#4d90c0',
+  /* the code-kind palette: app.js owns the table (window.SemView.kindFill
+     — app.js is spliced before this file in page.html). The literal here
+     is only the fallback for a page carrying the deck without app.js. */
+  var NODE_FILL=(window.SemView&&window.SemView.kindFill)
+    ||{figure:'#39a9c0',diagnostic:'#39a9c0',dataset:'#4d90c0',
     transform:'#5b7589',metric:'#46a892',note:'#cf9a4e',text:'#8ba0b2',
     imports:'#a3855c','function':'#46a892',data:'#4d90c0',constant:'#9a7cc0',
     settings:'#5b7589',plotting:'#39a9c0',print:'#cf9a4e',code:'#8ba0b2'};
@@ -4276,7 +4565,7 @@
     /* the way out has to be visible or it does not exist */
     var x=document.createElement('button');
     x.className='dbtn jv-spot-x';
-    x.innerHTML='&#10005; Close (Esc)';
+    x.innerHTML=bic('exit')+' Close (Esc)';
     x.addEventListener('click',function(e){
       e.stopPropagation();closeSpot();});
     wrap.appendChild(x);
@@ -4330,7 +4619,7 @@
     /* eyeball: hide this step while presenting (persists per slide) */
     var eye=document.createElement('span');
     eye.className='vo-eye'+(isHidden?' off':'');
-    eye.innerHTML='&#128065;';
+    eye.innerHTML=bic('eye');
     eye.title=isHidden
       ?'Hidden — click to show it again'
       :'Hide this step';
@@ -4338,7 +4627,7 @@
       e.stopPropagation();spec.toggle(st.ns);doRebuild();});
     h.appendChild(eye);
     var fb=document.createElement('span');fb.className='vo-full';
-    fb.innerHTML='&#x26F6;';fb.title='View this cell full screen';
+    fb.innerHTML=bic('expand');fb.title='View this cell full screen';
     fb.addEventListener('click',function(e){
       e.stopPropagation();openVFull(st);});
     h.appendChild(fb);
@@ -4434,8 +4723,9 @@
     /* the same lineage two ways: a readable list of Cells, or the
        expandable dependency Tree (the docs tree, reused) */
     var isTree=(traceView==='tree');
-    [['&#9776; Cells','cells','The lineage as a readable list of steps'],
-     ['&#9633; Tree','tree','The lineage as an expandable dependency '
+    [[bic('menu')+' Cells','cells',
+      'The lineage as a readable list of steps'],
+     [bic('tree')+' Tree','tree','The lineage as an expandable dependency '
       +'tree — columns by step']].forEach(function(bv){
       var b=document.createElement('button');
       b.className='vo-xall'+((traceView===bv[1])?' on':'');
@@ -4543,7 +4833,7 @@
             lab.textContent=(st.secnum?st.secnum+' · ':'')
               +(st.sectitle||sec);
             var eye=document.createElement('span');
-            eye.className='vo-sec-eye';eye.innerHTML='&#128065;';
+            eye.className='vo-sec-eye';eye.innerHTML=bic('eye');
             eye.title='Hide or show this whole section';
             sd.appendChild(chev);sd.appendChild(lab);sd.appendChild(eye);
             col.appendChild(sd);
@@ -5079,24 +5369,17 @@
   }
   function itemLabel(s,idx){
     var a=(s&&s.annots||[])[idx]; if(!a) return 'item';
+    /* annotLabel's ladder in miniature: these rows are narrower than the
+       Objects pane's, so text and cell titles truncate shorter and the
+       wording is terser (and, unlike there, a name wins for cells too).
+       The why-a-name-wins comment lives on annotLabel. */
     if(a.k==='text') return (a.text||'').trim().slice(0,16)||'Text';
-    /* a name you gave it wins over the kind we guessed. Twelve rows
-       saying "Shape - box" is a list you cannot navigate (2026-08-20,
-       user: "also be able to rename layers") */
     if(a.name) return a.name;
-    if(a.k==='image') return 'Image';
-    if(a.k==='flip'){
-      var nf=flipFrames(a).length;
-      return 'Flip book \u2014 '+(nf?(nf+' figure'+(nf===1?'':'s')):'empty');
-    }
-    if(a.k==='table')
-      return 'Table '+((a.rows||[]).length)+'\u00d7'
-        +(((a.rows||[])[0]||[]).length);
-    if(a.k==='arrow') return a.nohead?'Line':'Arrow';
-    if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
       return it&&it.title?it.title.slice(0,18):'Cell';}
+    if(a.k==='image'||a.k==='flip'||a.k==='table'
+       ||a.k==='arrow'||a.k==='draw') return annotLabel(a);
     return 'item';
   }
   function paintSel(layer){
@@ -5387,7 +5670,7 @@
     var t=styleSetById(id); if(!t) return 0;
     var next={};
     Object.keys(t.styles||{}).forEach(function(k){
-      var o=JSON.parse(JSON.stringify(t.styles[k]));
+      var o=deep(t.styles[k]);
       if(STYLE_DEFAULTS[k]) o.label=STYLE_DEFAULTS[k].label;
       /* SPELL OUT the properties the set does NOT want. styleDef merges an
          override OVER the built-in, so a key the set simply omits keeps
@@ -5465,14 +5748,11 @@
      histReset() does, that being the one funnel every new presentation
      passes through. */
   function syncCustomTypes(){
-    /* histReset runs during boot, from loadPresentation, and this file's
-       first presentation is loaded ABOVE the line that assigns
-       STYLE_DEFAULTS — function declarations hoist, `var` initialisers do
-       not, so the registry is genuinely still undefined on that one call.
-       Bailing out is correct rather than merely safe: the boot sequence
-       at the bottom of this file calls syncCustomTypes() again once
-       everything is declared, which is the call that does the work
-       (2026-08-22). */
+    /* Impossible by construction since 2026-08-23: the first
+       presentation loads from THE BOOT SEQUENCE at the end of the file,
+       after STYLE_DEFAULTS is assigned, so this guard never fires. It
+       stays as a pure bail-out in case a future caller runs earlier —
+       the incident record at the boot sequence says why it existed. */
     if(!STYLE_DEFAULTS) return;
     Object.keys(STYLE_DEFAULTS).forEach(function(id){
       if(BUILTIN_STYLE_IDS.indexOf(id)<0) delete STYLE_DEFAULTS[id];
@@ -5649,7 +5929,7 @@
         head.appendChild(sel);
       }
       var x=document.createElement('button');
-      x.className='dbtn dc-icon np-nx';x.innerHTML='&#10005;';
+      x.className='dbtn dc-icon np-nx';x.innerHTML=bic('exit');
       x.title='Delete this note';
       x.addEventListener('click',function(){
         var at=padList().indexOf(n);
@@ -5677,7 +5957,7 @@
         f.title=ft.value;markDirty();});
       fh.appendChild(ft);
       var fx=document.createElement('button');
-      fx.className='dbtn dc-icon np-nx';fx.innerHTML='&#10005;';
+      fx.className='dbtn dc-icon np-nx';fx.innerHTML=bic('exit');
       fx.title='Delete the folder — its notes become loose';
       fx.addEventListener('click',function(){
         padList().forEach(function(n){
@@ -5943,7 +6223,7 @@
       var act=document.createElement('button');
       act.className='dbtn vw-opt stm-del';
       if(custom){
-        act.textContent='✕ Delete this style';
+        act.innerHTML=bic('exit')+' Delete this style';
         act.title='The boxes wearing it keep exactly the look they have '
           +'— they just stop being a group';
         act.addEventListener('click',function(e){
@@ -5954,8 +6234,8 @@
             +' kept the look they had');
         });
       } else {
-        act.textContent='↺ Back to the built-in "'+STYLE_DEFAULTS[id].label
-          +'"';
+        act.innerHTML=bic('reset')+' Back to the built-in "'
+          +esc(STYLE_DEFAULTS[id].label)+'"';
         act.title='Undo the changes made to this one style';
         act.disabled=!(pres.styles&&pres.styles[id]);
         act.addEventListener('click',function(e){
@@ -6053,7 +6333,7 @@
       menu.appendChild(add);
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
-      rst.textContent='\u21ba Back to the built-in sizes';
+      rst.innerHTML=bic('reset')+' Back to the built-in sizes';
       /* it clears the OVERRIDES, and it must never touch pres.types:
          "back to the built-in sizes" is not "throw away the types I
          invented" */
@@ -6068,6 +6348,8 @@
       });
       menu.appendChild(rst);
     }
+    /* not wireFloatDropdown: this menu REBUILDS itself on every open
+       (build()), so the static options list the helper wants never fits */
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       var open=menu.hidden;
@@ -6250,7 +6532,11 @@
      (beforeunload is skipped on mobile and unreliable on a crash); both
      are cheap, because the flush's own markDirty writes the draft. */
   (function(){
-    function lastChance(){try{flushTextEdits();}catch(e){}}
+    function lastChance(){
+      try{flushTextEdits();}catch(e){}
+      /* the draft write is debounced now — a closing tab cannot wait */
+      try{flushDraftWrite();}catch(e){}
+    }
     window.addEventListener('pagehide',lastChance);
     document.addEventListener('visibilitychange',function(){
       if(document.visibilityState==='hidden') lastChance();
@@ -7004,11 +7290,13 @@
           applyCellColor(c,a);
         } else if(locked&&lkCard===undefined){
           var w8=document.createElement('div');w8.className='an-verwait';
-          w8.textContent='🔒 '+a.lockver.commit+' — loading…';
+          w8.innerHTML=bic('lock')+' '+esc(a.lockver.commit)
+            +' — loading…';
           c.appendChild(w8);
         } else if(locked&&!it){
           var w9=document.createElement('div');w9.className='an-verwait';
-          w9.textContent='🔒 '+a.lockver.commit+' — not available';
+          w9.innerHTML=bic('lock')+' '+esc(a.lockver.commit)
+            +' — not available';
           c.appendChild(w9);
           lockChip(c,a,false);
         } else if(it){
@@ -7048,7 +7336,7 @@
             if(editing){
               var fz=document.createElement('span');
               fz.className='an-frozenchip';
-              fz.textContent='⟲ previous';
+              fz.innerHTML=bic('reset')+' previous';
               fz.title='This frame shows the figure from BEFORE the last '
                 +'notebook refresh — select it and press “Live figure” '
                 +'to catch up';
@@ -7398,8 +7686,6 @@
       } else {selAnnot=idx;selSet=mem.slice();}
     }
     paintSel(layer);
-    var d=$('#et-del');
-    if(d) d.disabled=!selSet.some(function(i){return typeof i==='number';});
     showFmt();
     /* refresh the Objects pane only when the selection actually CHANGED
        (resize/endpoint drags re-select every mousemove) */
@@ -7449,7 +7735,10 @@
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
   var FMT_MANUAL=('#fmt-lhwrap #fmt-lh '
-    +'#fmt-eqedit #fmt-stylewrap-tx '
+    /* the two children of the governed #fmt-stylewrap-tx wrapper: their
+       visibility IS the wrapper's, listed so the completeness audit
+       below stops flagging them on every first selection (2026-08-24) */
+    +'#fmt-eqedit #fmt-stylewrap-tx #fmt-style-tx #fmt-style-menu-tx '
     +'#fmt-tbl-rowplus #fmt-tbl-rowminus #fmt-tbl-colplus '
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
@@ -7673,7 +7962,8 @@
     if((frozen||hasPrev)&&!lockedV){
       var rvb=$('#fmt-revert');
       if(rvb) rvb.innerHTML=frozen
-        ?'&#8635; Live figure':'&#10226; Previous figure';
+        ?(bic('reload')+' Live figure')
+        :(bic('reset')+' Previous figure');
     }
     /* Locking pins a figure to its notebook's git commit, which needs the
        local server to talk to git - so it only WORKS in the app build.
@@ -7689,7 +7979,8 @@
     if(lvb&&isCellRef){
       lvb.disabled=!canLock;
       lvb.innerHTML=lockedV
-        ?'&#128275; Unlock figure':'&#128274; Lock figure';
+        ?(bic('unlock')+' Unlock figure')
+        :(bic('lock')+' Lock figure');
       lvb.title=canLock
         ?('Pin this figure to its notebook\u2019s current git commit '
           +'\u2014 refreshes stop changing it, and it renders even with '
@@ -7846,7 +8137,6 @@
     renderAnnots(l,s);
     if(targets.length>1){        /* keep the multi-selection alive */
       selSet=targets.slice();paintSel(l);
-      var d=$('#et-del'); if(d) d.disabled=false;
       showFmt();
     } else selectAnnot(l,selAnnot);
   }
@@ -8016,8 +8306,8 @@
       var m=(s.annots||[])[i];return m&&!m.lock;});
     var origs={};
     movers.forEach(function(i){
-      origs[i]=JSON.parse(JSON.stringify((s.annots||[])[i]));});
-    var single=(typeof idx!=='number')?JSON.parse(JSON.stringify(a)):null;
+      origs[i]=deep((s.annots||[])[i]);});
+    var single=(typeof idx!=='number')?deep(a):null;
     var thr=snapThr(layer);
     var targets=snapTargets(layer,s,movers);
     /* snap by the union bounding box of everything being dragged
@@ -8031,7 +8321,33 @@
         t:Math.min(origBB.t,r.t),b:Math.max(origBB.b,r.b)}:r;
     });
     var gapMarks=[];
+    /* THE GESTURE PATH (2026-08-23 perf). A drag no longer rebuilds the
+       whole annotation layer per mousemove: renderAnnots re-clones every
+       placed card (multi-MB figure bodies) on each rebuild. Instead the
+       EXISTING nodes' inline left/top move — children (text, captions,
+       handles, the selection outline, a frame's aspect-fitted geometry)
+       ride along for free — and only the arrows are redrawn, because an
+       attached endpoint is DERIVED from where its target item sits. The
+       one real renderAnnots runs on mouseup. */
+    var movedEls={};
+    movers.forEach(function(i){
+      var m=(s.annots||[])[i];
+      if(!m||m.k==='arrow') return;   /* arrows redraw as strokes below */
+      var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
+      if(el) movedEls[i]={el:el,l:parseFloat(el.style.left)||0,
+                          t:parseFloat(el.style.top)||0};
+    });
+    var singleEl=null;
+    if(single){
+      var tEl=layer.querySelector('div.an-item[data-idx="'+idx+'"]');
+      if(tEl) singleEl={el:tEl,l:parseFloat(tEl.style.left)||0,
+                        t:parseFloat(tEl.style.top)||0};
+    }
+    var anyArrow=(s.annots||[]).some(function(m){
+      return m&&m.k==='arrow';});
+    var movedAny=false;
     function mm(ev){
+      movedAny=true;
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
       var sx=null,sy=null;
@@ -8076,15 +8392,24 @@
           }
         }
       }
-      if(single){a.x=single.x+dx;a.y=single.y+dy;}
+      if(single){
+        a.x=single.x+dx;a.y=single.y+dy;
+        if(singleEl){
+          singleEl.el.style.left=(singleEl.l+dx)+'%';
+          singleEl.el.style.top=(singleEl.t+dy)+'%';
+        }
+      }
       else movers.forEach(function(i){
         var m=(s.annots||[])[i],o=origs[i];
         if(!m||!o) return;
         if(m.k==='arrow'){
           m.x1=o.x1+dx;m.y1=o.y1+dy;m.x2=o.x2+dx;m.y2=o.y2+dy;
         } else {m.x=o.x+dx;m.y=o.y+dy;}
+        var me=movedEls[i];
+        if(me){me.el.style.left=(me.l+dx)+'%';
+               me.el.style.top=(me.t+dy)+'%';}
       });
-      renderAnnots(layer,s);paintSel(layer);
+      if(anyArrow) redrawArrows(layer,s);
       drawSnapGuides(layer,sx,sy);
       drawGapMarks(layer,gapMarks);
     }
@@ -8092,6 +8417,9 @@
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
       clearSnapGuides(layer);
+      /* the ONE rebuild per gesture (a moveless click keeps the old
+         no-render path, so double-click-to-type is undisturbed) */
+      if(movedAny){renderAnnots(layer,s);paintSel(layer);}
       markDirty();
     }
     document.addEventListener('mousemove',mm);
@@ -8140,7 +8468,17 @@
     var oh=a.h||(er?er.height/lr.height*100:10);
     var thr=snapThr(layer);
     var targets=snapTargets(layer,s,[idx]);
+    /* the same gesture path startMove uses (2026-08-23 perf): sync the
+       existing element's inline box from the model instead of rebuilding
+       the layer per mousemove; shapes/freehand scale via their viewBox,
+       a fitted figure via its 100%-sized <img>, and attached arrows are
+       redrawn because their endpoints derive from this box. The one real
+       renderAnnots runs on mouseup. */
+    var anyArrow=(s.annots||[]).some(function(m){
+      return m&&m.k==='arrow';});
+    var movedAny=false;
     function mm(ev){
+      movedAny=true;
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
       /* Shift releases a picture's aspect lock for this moment of the
@@ -8176,13 +8514,22 @@
         if(north) a.y=oy+oh-fh;   /* keep the bottom edge anchored */
         a.h=fh;
       }
-      renderAnnots(layer,s);selectAnnot(layer,idx);
+      if(el){
+        el.style.left=(a.x||0)+'%';el.style.top=(a.y||0)+'%';
+        if(a.w!=null){el.style.width=a.w+'%';
+          if(a.k==='text') el.style.maxWidth='none';}
+        if(a.h!=null&&a.k!=='text') el.style.height=a.h+'%';
+      }
+      if(anyArrow) redrawArrows(layer,s);
       drawSnapGuides(layer,sx,sy);
     }
     function mu(){
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
       clearSnapGuides(layer);
+      /* the ONE rebuild per gesture; a moveless mousedown keeps the old
+         no-render path */
+      if(movedAny){renderAnnots(layer,s);selectAnnot(layer,idx);}
       markDirty();
     }
     document.addEventListener('mousemove',mm);
@@ -8472,10 +8819,8 @@
         if(!add) selectAnnot(layer,null);
         return;
       }
-      /* commit through the normal path so the ribbon, the delete button
-         and the Layers pane all follow */
-      var d=$('#et-del');
-      if(d) d.disabled=!selSet.length;
+      /* commit through the normal path so the ribbon and the Layers
+         pane follow */
       lastSelSig='';
       showFmt();renderSelPane();
     }
@@ -8685,8 +9030,7 @@
   function deleteSel(){
     var s=pres.slides[cur];
     if(!s||!s.annots) return;
-    var idxs=selSet.filter(function(i){return typeof i==='number';});
-    if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+    var idxs=selIdxs();
     if(!idxs.length) return;
     idxs.sort(function(x,y){return y-x;}).forEach(function(i){
       if(i>=0&&i<s.annots.length) s.annots.splice(i,1);});
@@ -8694,7 +9038,6 @@
     selAnnot=null;selSet=[];markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,s);
-    var d=$('#et-del'); if(d) d.disabled=true;
     showFmt();
   }
   function groupSel(){
@@ -8728,12 +9071,13 @@
     if(d) d.hidden=!pickMulti;
     if(!w) return;
     if(!pickMulti){
-      w.innerHTML='&#128204; Click a card in the notebook to place it '
+      w.innerHTML=bic('pin')+' Click a card in the notebook to place it '
         +'in the slide';
       return;
     }
-    w.innerHTML='&#128204; Click each figure you want in the flip book, '
-      +'in order'+(pickAdded?(' &mdash; <b>'+pickAdded+' added</b>'):'');
+    w.innerHTML=bic('pin')+' Click each figure you want in the flip '
+      +'book, in order'
+      +(pickAdded?(' &mdash; <b>'+pickAdded+' added</b>'):'');
     if(d) d.textContent=pickAdded
       ?('Done — '+pickAdded+' figure'+(pickAdded===1?'':'s'))
       :'Done';
@@ -9378,6 +9722,8 @@
       });
       menu.appendChild(r4);
     }
+    /* not wireFloatDropdown: the fill panel REBUILDS on every open to
+       reflect the selection, so the helper's static options never fit */
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       var open=menu.hidden;
@@ -9492,6 +9838,8 @@
         menu.appendChild(b);
       });
     }
+    /* not wireFloatDropdown: rebuilt on every open so the aria-pressed
+       marks track the selection — no static options list to hand over */
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       var open=menu.hidden;
@@ -9585,7 +9933,7 @@
       menuHead(menu,'this deck');
       var upd=document.createElement('button');
       upd.className='dbtn vw-opt';
-      upd.textContent='\u21bb Update the style from this box';
+      upd.innerHTML=bic('reload')+' Update the style from this box';
       upd.title='Take this box\u2019s size, weight, font and colour and '
         +'make them the style \u2014 every other box wearing it follows';
       upd.disabled=!curId;
@@ -9611,7 +9959,7 @@
       menu.appendChild(upd);
       var all=document.createElement('button');
       all.className='dbtn vw-opt';
-      all.textContent='\u2261 Apply this look to ALL headings';
+      all.innerHTML=bic('inherit')+' Apply this look to ALL headings';
       all.title='Push this box\u2019s weight, font and colour to Title '
         +'and Headings 1\u20133, keeping each one\u2019s own size';
       all.addEventListener('click',function(e){
@@ -9643,7 +9991,7 @@
          the fuller one (2026-08-22). */
       var more=document.createElement('button');
       more.className='dbtn vw-opt';
-      more.textContent='≡ Apply this look to…';
+      more.innerHTML=bic('inherit')+' Apply this look to…';
       more.title='Choose which properties travel and which slides they '
         +'travel to';
       more.addEventListener('click',function(e){
@@ -9961,7 +10309,7 @@
   function duplicateSel(){
     var s=pres.slides[cur];
     if(!s||typeof selAnnot!=='number'||!s.annots) return;
-    var cp=JSON.parse(JSON.stringify(s.annots[selAnnot]));
+    var cp=deep(s.annots[selAnnot]);
     /* a copy is its own item: never silently join the source's group, and
        give it its own build step rather than sharing the source's */
     delete cp.grp;
@@ -10002,7 +10350,7 @@
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
     clipFrom=cur;              /* where it came from - see pasteBuf */
     clipBuf=idxs.map(function(i){
-      return JSON.parse(JSON.stringify(s.annots[i]));});
+      return deep(s.annots[i]);});
     /* stamp the SYSTEM clipboard so this copy outranks whatever image was
        on it: the paste listener checked the OS clipboard first, so one
        stale screenshot shadowed every internal copy forever — Ctrl+C said
@@ -10030,7 +10378,7 @@
        is for (2026-08-20). */
     var d=(clipFrom===cur)?3:0;
     clipBuf.forEach(function(src){
-      var cp=JSON.parse(JSON.stringify(src));
+      var cp=deep(src);
       delete cp.grp;          /* a paste is its own item, never in the
                                  source's group */
       if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
@@ -10041,7 +10389,7 @@
     /* paste again and the next copy lands clear of this one, rather than
        stacking every paste on the same 3% offset */
     clipBuf=clipBuf.map(function(cp){
-      var n=JSON.parse(JSON.stringify(cp));
+      var n=deep(cp);
       if(n.k==='arrow'){n.x1+=3;n.y1+=3;n.x2+=3;n.y2+=3;}
       else {n.x=(n.x||0)+3;n.y=(n.y||0)+3;}
       return n;
@@ -10155,8 +10503,7 @@
     if(selAnnot==='t'||selAnnot==='s'){
       var tp=titleProps(s,selAnnot);tp.x+=dx;tp.y+=dy;
     } else {
-      var idxs=selSet.filter(function(i){return typeof i==='number';});
-      if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+      var idxs=selIdxs();
       if(!idxs.length||!s.annots) return;
       idxs.forEach(function(i){
         var a=s.annots[i]; if(!a||a.lock) return;  /* locked: no nudge */
@@ -10189,8 +10536,7 @@
   function zReorder(front,step){
     var s=pres.slides[cur];
     if(!s||!s.annots) return;
-    var idxs=selSet.filter(function(i){return typeof i==='number';});
-    if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+    var idxs=selIdxs();
     if(!idxs.length) return;
     idxs=idxs.slice().sort(function(a,b){return a-b;});
     var n=s.annots.length;
@@ -10786,7 +11132,7 @@
           if(!want[p]) return;
           if(src[p]===undefined) delete a[p];
           else a[p]=(typeof src[p]==='object'&&src[p])
-            ?JSON.parse(JSON.stringify(src[p])):src[p];
+            ?deep(src[p]):src[p];
         });
         n++;
       });
@@ -10871,7 +11217,7 @@
         MATCH_PROPS.forEach(function(prop){
           if(m[prop]===undefined) delete p2.a[prop];
           else p2.a[prop]=(typeof m[prop]==='object'&&m[prop])
-            ?JSON.parse(JSON.stringify(m[prop])):m[prop];
+            ?deep(m[prop]):m[prop];
         });
         moved++;
       });
@@ -11173,7 +11519,7 @@
       MATCH_PROPS.forEach(function(p){
         if(a[p]===undefined) return;
         o[p]=(typeof a[p]==='object'&&a[p])
-          ?JSON.parse(JSON.stringify(a[p])):a[p];
+          ?deep(a[p]):a[p];
       });
       /* a placeholder word, so the saved slide can be DRAWN as a
          thumbnail without carrying the real text anywhere */
@@ -11228,7 +11574,7 @@
   function arrApply(arr,idx){
     var sl=pres.slides[idx]; if(!sl||!arr) return 0;
     pres.slides.push({layout:'blank',panes:[],
-      annots:JSON.parse(JSON.stringify(arr.annots||[]))});
+      annots:deep(arr.annots||[])});
     var r=matchSlide(pres.slides.length-1,idx);
     pres.slides.pop();
     return r?r.moved:0;
@@ -11293,7 +11639,7 @@
       if(!want[p]) return;
       if(from[p]===undefined) delete to[p];
       else to[p]=(typeof from[p]==='object'&&from[p])
-        ?JSON.parse(JSON.stringify(from[p])):from[p];
+        ?deep(from[p]):from[p];
     });
     return true;
   }
@@ -11335,10 +11681,10 @@
     var name=matchLabelOf(src,matchArm.idxs[0]);
     if(matchArm.idxs.length>1) name=matchArm.idxs.length+' objects';
     if(w) w.innerHTML=(matchArm.dir==='to')
-      ? ('&#8646; Copying the look of <b>'+esc(name)+'</b> on slide '
+      ? (bic('swap')+' Copying the look of <b>'+esc(name)+'</b> on slide '
         +(matchArm.slide+1)+' &mdash; click an object to change it'
         +(matchArm.n?(' &middot; '+matchArm.n+' done'):''))
-      : ('&#8646; <b>'+esc(name)+'</b> on slide '+(matchArm.slide+1)
+      : (bic('swap')+' <b>'+esc(name)+'</b> on slide '+(matchArm.slide+1)
         +' will take the look of the object you click');
   }
   (function(){
@@ -11484,7 +11830,7 @@
             markDirty();refresh();buildSug();
             toast(n+' item'+(n===1?'':'s')+' re-laid out on this slide');
           },'Use it on this slide now'],
-         ['✕',function(){
+         [bic('exit'),function(){
             arrSave(arrList().filter(function(x){return x.id!==a.id;}));
             Object.keys(pickFor).forEach(function(k){
               if(pickFor[k]===a.id) delete pickFor[k];});
@@ -11492,7 +11838,8 @@
           },'Forget this arrangement']]
           .forEach(function(pr){
             var b=document.createElement('button');
-            b.className='film-mini';b.textContent=pr[0];b.title=pr[2];
+            b.className='film-mini';b.innerHTML=pr[0];b.title=pr[2];
+            b.setAttribute('aria-label',pr[2]);
             b.addEventListener('click',function(ev){
               ev.stopPropagation();pr[1]();});
             ctr.appendChild(b);
@@ -11652,7 +11999,7 @@
       c.appendChild(note);
       if(t.mine){
         var x=document.createElement('span');
-        x.className='ss-del';x.innerHTML='&#10005;';
+        x.className='ss-del';x.innerHTML=bic('exit');
         x.title='Forget this set';
         x.addEventListener('click',function(e){
           e.stopPropagation();
@@ -11681,7 +12028,7 @@
       g.innerHTML='';
       STYLE_SETS.forEach(function(t){g.appendChild(card(t));});
       myStyleSets().forEach(function(t){
-        var m=JSON.parse(JSON.stringify(t));m.mine=1;
+        var m=deep(t);m.mine=1;
         g.appendChild(card(m));});
       var w=$('#ss-what'),n=unstyledCount();
       if(w) w.textContent=n
@@ -11857,7 +12204,7 @@
        below it, unchanged. */
     var push=document.createElement('button');
     push.className='dbtn vw-opt';
-    push.textContent='⇉ Give this slide’s layout to…';
+    push.innerHTML=bic('inherit')+' Give this slide’s layout to…';
     push.title='Choose which slides take the arrangement of this one';
     push.addEventListener('click',function(e){
       e.stopPropagation();m.remove();
@@ -11870,7 +12217,7 @@
        a different model, so they belong one click apart (2026-08-22) */
     var arr=document.createElement('button');
     arr.className='dbtn vw-opt';
-    arr.textContent='◫ Arrangements…';
+    arr.innerHTML=bic('layouts')+' Arrangements…';
     arr.title='Layouts you have saved, with a thumbnail of each — and '
       +'which slides they would fit';
     arr.addEventListener('click',function(e){
@@ -13051,7 +13398,8 @@
   /* ---- THE FRAMES PANE -------------------------------------------------
      A flip book is a little deck inside a slide, so its frames are listed
      and reordered in the same shape the slide strip uses: one row each,
-     ↑ ↓ ⧉ ✕, click to go to it. Anything else would have been a second
+     move/duplicate/remove minis, click to go to it. Anything else would
+     have been a second
      idiom for the same job (2026-08-22). */
   var flipSel=-1;         /* which annot index the pane is showing */
   /* the selected items as indexes, the same rule fmtApply follows: the
@@ -13141,10 +13489,11 @@
       var ctr=document.createElement('span');ctr.className='fp-ctr';
       [['↑',function(){flipMove(i,-1);},'Move this figure earlier'],
        ['↓',function(){flipMove(i,1);},'Move this figure later'],
-       ['✕',function(){flipDrop(i);},'Remove this figure']]
+       [bic('exit'),function(){flipDrop(i);},'Remove this figure']]
         .forEach(function(pr){
           var b=document.createElement('button');
-          b.className='film-mini';b.textContent=pr[0];b.title=pr[2];
+          b.className='film-mini';b.innerHTML=pr[0];b.title=pr[2];
+          b.setAttribute('aria-label',pr[2]);
           b.addEventListener('click',function(ev){
             ev.stopPropagation();pr[1]();});
           ctr.appendChild(b);
@@ -13495,7 +13844,7 @@
     if(!menu||!btn) return;
     var tm=document.createElement('button');tm.type='button';
     tm.className='ci-trim';
-    tm.innerHTML='&#9986; Trim by dragging the edges';
+    tm.innerHTML=bic('crop')+' Trim by dragging the edges';
     tm.addEventListener('click',function(e){
       e.stopPropagation();
       menu.hidden=true;btn.setAttribute('aria-expanded','false');
@@ -13572,8 +13921,7 @@
     function commit(s){markDirty();rerender();render();}
     function setType(type){
       var s=pres.slides[cur]; if(!s) return;
-      var idxs=selSet.filter(function(i){return typeof i==='number';});
-      if(!idxs.length&&typeof selAnnot==='number') idxs=[selAnnot];
+      var idxs=selIdxs();
       var no=nextAnimOrder(s);            /* new anims share one build step */
       idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
         if(type==='none') delete a.anim;
@@ -13667,6 +14015,8 @@
           [['↑',-1],['↓',1]].forEach(function(m){
             var b=document.createElement('button');b.className='anim-mini';
             b.textContent=m[0];
+            b.title=m[1]<0?'Move this build earlier':'Move this build later';
+            b.setAttribute('aria-label',b.title);
             b.disabled=(m[1]<0?si===0:si===seq.length-1);
             b.addEventListener('click',function(e){e.stopPropagation();
               moveStep(si,m[1]);});
@@ -14234,20 +14584,25 @@
           +(isView?' — restyles the notebook itself':' in the builder')))
         +'\nDrag onto a folder to file it';
       /* the same drawn icons as the "+ New ..." buttons, so a row and the
-         button that made it read as the same kind of thing */
+         button that made it read as the same kind of thing — straight
+         from SemIcons, where the "+ New" template tokens also resolve */
       t.innerHTML='<span class="pr-ico">'
-        +'<svg class="bic" viewBox="0 0 16 16" aria-hidden="true">'
-        +(isView?RAIL_ICO.view:isPoster?RAIL_ICO.poster:RAIL_ICO.deck)
-        +'</svg></span>';
+        +bic(isView?'newview':isPoster?'newposter':'newdeck')
+        +'</span>';
       var lbl=document.createElement('span');lbl.className='pr-t';
       lbl.textContent=nm||'(unnamed)';
       t.appendChild(lbl);
       /* delete where the thing IS, not three menu levels away. Shown on
          hover / while current; confirm() because there is no undo for a
          deleted presentation. */
-      var del=document.createElement('span');
+      /* a real <button>, not a click-wired span: focusable, and named
+         for screen readers — the icon is its only visible content
+         (2026-08-24). .pr-del's CSS resets the button chrome. */
+      var del=document.createElement('button');
+      del.type='button';
       del.className='pr-del';del.title='Delete "'+nm+'"';
-      del.innerHTML='&#10005;';
+      del.setAttribute('aria-label','Delete "'+nm+'"');
+      del.innerHTML=bic('exit')||'&#10005;';
       del.addEventListener('click',function(e){
         e.stopPropagation();e.preventDefault();
         if(confirm('Delete "'+nm+'"? This cannot be undone.'))
@@ -14299,20 +14654,17 @@
         +'; drag presentations onto it';
       h.innerHTML='<span class="pr-fchev">'
         +(collapsed?'&#9656;':'&#9662;')+'</span>'
-        +'<span class="pr-fico"><svg viewBox="0 0 16 14" width="13" '
-        +'height="12" fill="currentColor"><path d="M1 3.2C1 2.5 1.5 2 '
-        +'2.2 2h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v6c0 .7-.5 1.2-1.2 '
-        +'1.2H2.2C1.5 12 1 11.5 1 10.8z"/></svg></span>';
+        +'<span class="pr-fico">'+bic('open')+'</span>';
       var ft=document.createElement('span');ft.className='pr-t';
       ft.textContent=f;h.appendChild(ft);
       var fc=document.createElement('span');fc.className='pr-fcount';
       fc.textContent=folders[f].length;h.appendChild(fc);
       var ctr=document.createElement('span');ctr.className='pr-fctrl';
-      [['✎','Rename folder',function(){startFolderRename(h,f);}],
-       ['✕','Delete folder (contents move out)',
+      [[bic('pen'),'Rename folder',function(){startFolderRename(h,f);}],
+       [bic('exit'),'Delete folder (contents move out)',
         function(){deleteFolder(f);}]].forEach(function(b){
         var btn=document.createElement('button');
-        btn.textContent=b[0];btn.title=b[1];
+        btn.innerHTML=b[0];btn.title=b[1];
         btn.addEventListener('click',function(e){
           e.stopPropagation();b[2]();});
         ctr.appendChild(btn);
@@ -14407,15 +14759,9 @@
      hidden-cell / figure-size state. It opens in the document, not on the
      slide stage, so the styling bar edits what you are looking at. ---- */
   function isViewPres(p){return !!(p&&p.kind==='view');}
-  /* rail row icons — the same artwork the "+ New ..." buttons carry */
-  var RAIL_ICO={
-    deck:'<rect x="1.6" y="3.2" width="9.6" height="7.2" rx="1"/>'
-      +'<path d="M3.6 12.8h5.6"/>',
-    poster:'<rect x="2.4" y="1.8" width="7.6" height="12.4" rx="1"/>'
-      +'<path d="M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4"/>',
-    view:'<path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/>'
-      +'<path d="M4.6 8.4h4M4.6 10.8h2.6"/>'
-      +'<path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/>'};
+  /* rail row icons come from SemIcons (newdeck/newposter/newview) in
+     presItem — the RAIL_ICO copy of that path data was deleted
+     2026-08-23 so branding.py stays the only place artwork lives */
   function newCustomView(){
     var A=window.SemApp||{};
     var stem=A.active;
@@ -14510,7 +14856,7 @@
          user: "the 'swap to notebooks' button is a stupid name and in a
          stupid place"). */
       eb.hidden=(mode==='edit');
-      eb.innerHTML='&#9998; Open the editor';
+      eb.innerHTML=bic('pen')+' Open the editor';
     }
   }
   /* the current slide's interactive frame editor — embedded inline as
@@ -14570,7 +14916,7 @@
       }
       if(a.ref){
         var x=document.createElement('button');x.className='pane-x';
-        x.textContent='✕';x.title='Clear this frame';
+        x.innerHTML=bic('exit')||'&#10005;';x.title='Clear this frame';
         x.addEventListener('click',function(e){e.stopPropagation();
           a.ref=null;activePane=ai;markDirty();refresh();});
         p.appendChild(x);
@@ -14897,7 +15243,7 @@
       /* name the page you were already on first, so the two read as a
          pair rather than "empty slide" and "Version 2" */
       if(src&&!src.label) src.label=nextVersionName();
-      var cp=src?JSON.parse(JSON.stringify(src)):emptySlide();
+      var cp=src?deep(src):emptySlide();
       cp.label=nextVersionName();
       pres.slides.splice(at,0,cp);
     }
@@ -15154,13 +15500,13 @@
     n.textContent=r.fold?(r.n+' hidden'):String(r.n);
     el.appendChild(n);
     var ctr=document.createElement('span');ctr.className='film-ctr';
-    [['✎',function(){renameSection(r.id);},'Rename this section'],
-     ['✕',function(){removeSection(r.id,false);},
+    [[bic('pen'),function(){renameSection(r.id);},'Rename this section'],
+     [bic('exit'),function(){removeSection(r.id,false);},
       'Remove this divider — the slides stay, and join the section '
       +'above']]
       .forEach(function(p){
         var b=document.createElement('button');b.className='film-mini';
-        b.textContent=p[0];b.title=p[2];
+        b.innerHTML=p[0];b.title=p[2];
         b.addEventListener('click',function(ev){
           ev.stopPropagation();p[1]();});
         ctr.appendChild(b);
@@ -15258,15 +15604,15 @@
                  poster?'Move this version up':'Move slide up'],
                 ['↓',function(){moveSlide(i,1);},
                  poster?'Move this version down':'Move slide down'],
-                ['⧉',function(){dupSlide(i);},
+                [bic('copy'),function(){dupSlide(i);},
                  poster?'Duplicate this version':'Duplicate slide'],
-                ['✕',function(){delSlide(i);},
+                [bic('exit'),function(){delSlide(i);},
                  poster?'Delete this version':'Delete slide']];
       /* an autoname is a starting point, not a decision. This goes on a
          BUTTON rather than a double-click on the row: the row's own click
          re-renders the strip, so by the time a dblclick arrived the node
          it was editing had already been replaced (2026-08-10). */
-      if(poster) acts.splice(2,0,['✎',function(){
+      if(poster) acts.splice(2,0,[bic('pen'),function(){
         var s2=pres.slides[i]; if(!s2) return;
         var v=prompt('Name this version:',s2.label||slideTitle(s2));
         if(v==null) return;
@@ -15276,8 +15622,9 @@
       },'Rename this version']);
       acts.forEach(function(p){
         var b=document.createElement('button');b.className='film-mini';
-        b.textContent=p[0];
+        b.innerHTML=p[0];   /* fixed strings / bic() markup from above */
         b.title=p[2];
+        b.setAttribute('aria-label',p[2]);
         b.addEventListener('click',function(ev){
           ev.stopPropagation();p[1]();});
         ctr.appendChild(b);
@@ -15374,9 +15721,13 @@
     var m=document.createElement('div');
     m.className='sh-menu film-menu';m.id='film-menu';
     var poster=pageOf().poster;
-    function row(label,fn,title){
+    function row(label,fn,title,icon){
       var b=document.createElement('button');
-      b.className='dbtn vw-opt';b.textContent=label;
+      b.className='dbtn vw-opt';
+      /* the icon arrives as trusted bic() markup; the LABEL stays a
+         text node — section names are user data */
+      if(icon) b.innerHTML=bic(icon)+' ';
+      b.appendChild(document.createTextNode(label));
       if(title) b.title=title;
       b.addEventListener('click',function(e){
         e.stopPropagation();m.remove();fn();});
@@ -15384,17 +15735,17 @@
     }
     if(run){
       menuHead(m,'this section');
-      row('✎ Rename…',function(){renameSection(run.id);});
+      row('Rename…',function(){renameSection(run.id);},null,'pen');
       row(run.fold?'▾ Show these slides':'▸ Hide these slides',
         function(){foldSection(run.id,!run.fold);});
-      row('✕ Remove the divider',function(){removeSection(run.id,false);},
-        'The slides stay — they join the section above');
-      row('🗑 Delete the section AND its '+run.n+' slide'
+      row('Remove the divider',function(){removeSection(run.id,false);},
+        'The slides stay — they join the section above','exit');
+      row('Delete the section AND its '+run.n+' slide'
         +(run.n===1?'':'s'),function(){
           if(confirm('Delete '+run.n+' slide'+(run.n===1?'':'s')
             +' along with the section "'+run.name+'"?'))
             removeSection(run.id,true);
-        });
+        },null,'exit');
       floatAt(m,ev);
       return;
     }
@@ -15412,8 +15763,8 @@
         row('→ (no section)',function(){moveSlideToSection(i,'');});
     }
     menuHead(m,poster?'this page':'this slide');
-    row('⧉ Duplicate',function(){dupSlide(i);});
-    row('✕ Delete',function(){delSlide(i);});
+    row('Duplicate',function(){dupSlide(i);},null,'copy');
+    row('Delete',function(){delSlide(i);},null,'exit');
     floatAt(m,ev);
   }
   /* floatMenu positions against an element's rect; a context menu has
@@ -15649,7 +16000,7 @@
         acts2.className='dc-nbacts dc-nbacts-stack';
         var la=document.createElement('button');la.className='dbtn';
         la.disabled=!appMode;
-        la.innerHTML='&#128274; Lock all figures';
+        la.innerHTML=bic('lock')+' Lock all figures';
         la.title=appMode
           ?('Pin every frame to its notebook\u2019s current git commit '
             +'\u2014 refreshes stop changing them')
@@ -15658,12 +16009,12 @@
         la.addEventListener('click',function(){lockAllFrames();});
         var ua=document.createElement('button');ua.className='dbtn';
         ua.disabled=!appMode;
-        ua.innerHTML='&#128275; Unlock all';
+        ua.innerHTML=bic('unlock')+' Unlock all';
         ua.title='Every frame follows notebook refreshes again';
         ua.addEventListener('click',function(){unlockAllFrames();});
         var lv=document.createElement('button');lv.className='dbtn';
         lv.disabled=!appMode;
-        lv.innerHTML='&#10227; Load locked versions';
+        lv.innerHTML=bic('reload')+' Load locked versions';
         lv.title='Fetch every locked figure’s content from git — the '
           +'notebooks don’t need to be open';
         lv.addEventListener('click',function(){loadLockedVersions();});
@@ -15729,7 +16080,7 @@
      like "+ Create new version" makes */
   function dupSlide(i){
     var s=pres.slides[i]; if(!s) return;
-    var cp=JSON.parse(JSON.stringify(s));
+    var cp=deep(s);
     if(pageOf().poster) cp.label=nextVersionName();
     else delete cp.label;
     pres.slides.splice(i+1,0,cp);
@@ -15762,6 +16113,8 @@
     var editing=(mode==='edit'||mode==='create');
     if(dt) dt.hidden=editing;
     if(qat) qat.hidden=!editing;
+    /* the first moment the bar has a real width to be judged against */
+    if(editing) requestAnimationFrame(fitQat);
     var tabs=$('#rbn-tabs',deckEl);
     if(tabs) tabs.hidden=(mode!=='edit');
     var xb=$('#deck-exit');
@@ -15769,8 +16122,8 @@
       /* say where it GOES. "Back" beside an armed drawing tool reads as
          the way out of that tool, which is Cancel's job. */
       var presenting=(mode==='view');
-      xb.innerHTML=presenting?'&#8617; Stop presenting'
-        :'&#8617; Close the editor';
+      xb.innerHTML=presenting?bic('return')+' Stop presenting'
+        :bic('return')+' Close the editor';
       xb.title=presenting
         ?'Stop presenting and go back to the builder (Esc). Nothing is '
           +'closed or lost.'
@@ -15779,6 +16132,9 @@
     }
   }
   function setUIMode(m){
+    /* entering Present must not leave a fresher deck in memory than in
+       the draft — the debounced write lands before the talk starts */
+    if(m==='view') flushDraftWrite();
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
@@ -15821,7 +16177,6 @@
       animPaneClose();
       filmToPanel();
     }
-    var db=$('#et-del'); if(db) db.disabled=true;
     var fb=$('#et-fmt'); if(fb) fb.hidden=true;
     var etb=$('#edit-tools'); if(etb) etb.classList.remove('fmt-open');
     if(editing) setTool('select');
@@ -15967,10 +16322,7 @@
      (2026-08-22, user: "you can really only create a presentation once
      you have a notebook open"). */
   window.SemApp.deckNew=function(){newPresentation();};
-  /* ...and redraw the chrome now the hooks exist. app.js runs first and
-     paints the welcome before this file has loaded, so its presentations
-     column asked a question nobody could answer yet and came up empty. */
-  if(APP.refreshChrome) APP.refreshChrome();
+  /* (the chrome redraw for these hooks runs from THE BOOT SEQUENCE) */
   window.SemApp.deckGo=function(slide){   /* move slide, keep the current mode */
     if(deckEl.hidden) return;
     go(Math.max(0,Math.min(((pres.slides||[]).length||1)-1,slide||0)));
@@ -15990,8 +16342,6 @@
     return true;
   };
   /* wrap so the click Event isn't forwarded (closeDeck takes no args) */
-  var docsBtn=$('#deck-docs');   /* removed from the markup; the rail has it */
-  if(docsBtn) docsBtn.addEventListener('click',function(){closeDeck();});
   var prDocs=document.getElementById('pr-docs');
   if(prDocs) prDocs.addEventListener('click',function(){closeDeck();});
   var prNew=document.getElementById('pr-new');
@@ -16022,6 +16372,9 @@
       var open=menu.hidden;
       menu.hidden=!open;
       wrap.setAttribute('aria-expanded',open?'true':'false');
+      /* floated for the same reason as the File menu: the qat's scroll
+         floor must not clip it */
+      if(open) floatMenu(wrap,menu);
     });
     document.addEventListener('click',function(e){
       if(!menu.hidden&&!menu.contains(e.target)&&e.target!==wrap)
@@ -16088,8 +16441,6 @@
     if(mode==='edit') closeDeck();
     else if(pres.slides[cur]) setUIMode('edit');
   });
-  var delBtn=$('#et-del');
-  if(delBtn) delBtn.addEventListener('click',deleteSel);
   var cxBtn=$('#et-cancel');
   if(cxBtn) cxBtn.addEventListener('click',function(){setTool('select');});
   $$('#edit-tools .et').forEach(function(b){
@@ -16569,7 +16920,7 @@
       return FILM_VIEWS[0][pg];
     }
     function syncFilmBtn(){
-      if(btn) btn.innerHTML='&#9636; '+label()+' &#9662;';
+      if(btn) btn.innerHTML=bic('layouts')+' '+label()+' &#9662;';
     }
     function setFilmMode(m){
       filmView=m;
@@ -16635,7 +16986,7 @@
       document.addEventListener('pointerup',up);
     });
   })();
-  renderLayoutPicker();
+  /* (the picker's first render runs from THE BOOT SEQUENCE) */
   /* title-slide text fields (panel); the slide canvas mirrors them */
   [['#ts-title','title'],['#ts-sub','sub']].forEach(function(p){
     var inp=$(p[0]); if(!inp) return;
@@ -16661,6 +17012,9 @@
       var open=!fileMenu.hidden;
       fileMenu.hidden=open;
       fileBtn.setAttribute('aria-expanded',(!open).toString());
+      /* floated (position:fixed) so fitQat's scroll floor can never
+         cut the menu off at the bar's edge */
+      if(!open) floatMenu(fileBtn,fileMenu);
     });
     document.addEventListener('click',function(e){
       if(!fileMenu.hidden&&!fileMenu.contains(e.target)) closeMenu();
@@ -16844,6 +17198,7 @@
       .then(function(j){
         if(j&&typeof j.rev==='number') projectRev=j.rev;
         projectPres=merged;
+        cancelDraftWrite();   /* or the pending write resurrects the draft */
         lsDel(PFX+(pres.name||'untitled'));
         saveStamp=new Date();saveKind=silent?'auto':'manual';
         source='saved';status();renderPresRow();
@@ -17238,13 +17593,20 @@
       /* only the app build autosaves to the project; a file target
          autosaves unconditionally and has nothing to toggle */
       qa.hidden=(APP.mode!=='app');
-      qa.textContent=autosaveOn?'↻ Autosave on':'↻ Autosave off';
+      /* the reload icon plus a two-width label: fitQat's compaction rung
+         swaps "Autosave" for "Auto" — shortened, never hidden */
+      qa.innerHTML=bic('reload')
+        +' <span class="qat-long">Autosave</span>'
+        +'<span class="qat-short">Auto</span> '
+        +(autosaveOn?'on':'off');
       qa.setAttribute('aria-pressed',autosaveOn?'true':'false');
       qa.title=autosaveOn
         ?('Autosaving to '+whereSaved()+' about a second after you stop '
           +'typing. Click to turn it off.')
         :'Autosave is off — your work is only written when you press '
           +'Save. Click to turn it on.';
+      /* the label just changed width — re-judge the thin bar */
+      requestAnimationFrame(fitQat);
     }
   }
   function toggleAutosave(){
@@ -17266,7 +17628,6 @@
     if(autosaveOn){scheduleAutosave();toast('Autosave on');}
     else toast('Autosave off — use the Save button');
   });
-  renderAutosaveItem();
 
   /* always-visible Save button; the File menu keeps the rest */
   var saveBtn=$('#dc-save');
@@ -17314,7 +17675,6 @@
     toast('Kept in this browser — it also autosaves as you edit. '
       +'Switch "Saved to" to a file to keep it on your computer.');
   });
-  renderSaveBtn();
   /* ---- the "Saved to" picker ---- */
   (function(){
     var wrap=$('#dc-target')&&$('#dc-target').parentNode;
@@ -17326,6 +17686,8 @@
       var open=menu.hidden;
       menu.hidden=!open;
       btn.setAttribute('aria-expanded',open.toString());
+      /* floated so the qat's scroll floor can never clip it */
+      if(open) floatMenu(btn,menu);
     });
     document.addEventListener('click',function(e){
       if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
@@ -17430,6 +17792,7 @@
           var stem0=APP.order[0];
           nbPres=mergedPresentations().map(function(p){
             var c=normPres(p,null);c.origin=stem0;return c;});
+          cancelDraftWrite();   /* the save just made the draft obsolete */
           lsDel(PFX+(pres.name||'untitled'));
           saveStamp=new Date();saveKind='manual';
           source='saved';status();renderPresRow();
@@ -18061,27 +18424,36 @@
     });
   })();
   menuAction('#mi-discard',function(){
+    cancelDraftWrite();   /* a pending write would resurrect the discard */
     lsDel(PFX+(pres.name||'untitled'));
     loadPresentation(pres.name);
     cur=0;activePane=-1;
     status();
     refresh();
   });
+  /* ONE project save, shared by rename and delete. embedAssets, not the
+     lean list: `projectPres` can never carry `emb` (normPres absorbs it
+     into the session store), so posting it raw made a rename or a delete
+     quietly strip every embedded figure out of junoview_project.json —
+     the file stopped being self-contained without anything being said
+     (2026-08-22). */
+  function saveProject(){
+    if(APP.mode==='app')
+      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
+        .catch(function(){});
+  }
   /* one delete, callable for ANY presentation — the File menu and the
      rail rows' bins both land here (2026-08-18, user: "an easier way to
      delete presentation ... a delete option when something is selected") */
   function deletePresByName(nm){
+    if(pres&&nm===pres.name) cancelDraftWrite();
     lsDel(PFX+nm);
+    /* embedded-in-a-notebook presentations come back on reload — say so,
+       whichever door the delete came through */
+    var wasEmbedded=nbPres.some(function(p){return p.name===nm;});
     projectPres=projectPres.filter(function(p){return p.name!==nm;});
     nbPres=nbPres.filter(function(p){return p.name!==nm;});
-    if(APP.mode==='app')
-      /* embedAssets, not the lean list: `projectPres` can never carry
-         `emb` (normPres absorbs it into the session store), so posting
-         it raw made a rename or a delete quietly strip every embedded
-         figure out of junoview_project.json — the file stopped being
-         self-contained without anything being said (2026-08-22). */
-      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
-        .catch(function(){});
+    saveProject();
     if(nm===pres.name){
       var names=allSaved().map(function(p){return p.name;})
         .concat(draftNames());
@@ -18091,7 +18463,10 @@
       cur=0;activePane=-1;
       status();refresh();
     } else renderPresTabs();
-    toast('Deleted "'+nm+'"');
+    toast(wasEmbedded
+      ?('Deleted "'+nm+'" (it will return if it is embedded in a '
+        +'notebook’s metadata)')
+      :('Deleted "'+nm+'"'));
   }
   (function(){
     var b=$('#pr-newbtn'),m=$('#pr-newmenu');
@@ -18137,6 +18512,7 @@
     }
     /* the draft moves with the name, rather than being deleted under the
        old one and re-created under the new one on the next save */
+    flushDraftWrite();   /* migrate the CURRENT state, not a stale draft */
     var draft=lsGet(PFX+old);
     if(draft!=null){lsSet(PFX+nm,draft);lsDel(PFX+old);}
     /* the folder rides on the presentation object itself (p.folder), so
@@ -18145,42 +18521,13 @@
     projectPres.forEach(function(p){if(p.name===old) p.name=nm;});
     nbPres.forEach(function(p){if(p.name===old) p.name=nm;});
     pres.name=nm;
-    if(APP.mode==='app')
-      /* embedAssets, not the lean list: `projectPres` can never carry
-         `emb` (normPres absorbs it into the session store), so posting
-         it raw made a rename or a delete quietly strip every embedded
-         figure out of junoview_project.json — the file stopped being
-         self-contained without anything being said (2026-08-22). */
-      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
-        .catch(function(){});
+    saveProject();
     markDirty();status();renderPresTabs();renderPresRow();
     toast('Renamed to “'+nm+'”');
     return true;
   }
   menuAction('#mi-del',function(){
-    var nm=pres.name;
-    lsDel(PFX+nm);
-    var wasEmbedded=nbPres.some(function(p){return p.name===nm;});
-    projectPres=projectPres.filter(function(p){return p.name!==nm;});
-    nbPres=nbPres.filter(function(p){return p.name!==nm;});
-    if(APP.mode==='app')
-      /* embedAssets, not the lean list: `projectPres` can never carry
-         `emb` (normPres absorbs it into the session store), so posting
-         it raw made a rename or a delete quietly strip every embedded
-         figure out of junoview_project.json — the file stopped being
-         self-contained without anything being said (2026-08-22). */
-      APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})
-        .catch(function(){});
-    var names=allSaved().map(function(p){return p.name;})
-      .concat(draftNames());
-    if(names.length) loadPresentation(names[0]);
-    else {pres=defaultPres();source='auto';}
-    cur=0;activePane=-1;
-    status();refresh();
-    toast(wasEmbedded
-      ?('Deleted "'+nm+'" (it will return if it is embedded in a '
-        +'notebook’s metadata)')
-      :('Deleted "'+nm+'"'));
+    deletePresByName(pres.name);
   });
 
   /* ---- FIND AND REPLACE ------------------------------------------------
@@ -18361,6 +18708,11 @@
           frameSnapsPrev[k]=frameSnaps[k];delete frameSnaps[k];}
       });
     }
+    /* invalidation point 1 (see frameNodeCache): the notebook's cards
+       changed (reload) or just became the live source (fresh open) —
+       cached frame nodes for this stem must rebuild, which also refills
+       frameSnaps for the next revert */
+    dropFrameCache(e.detail.stem);
     registerShell(e.detail.stem,e.detail.data||{});
     if(source==='auto'&&(!pres.slides||!pres.slides.length))
       pres=defaultPres();
@@ -18368,6 +18720,8 @@
     else renderPresTabs();
   });
   document.addEventListener('sem:shellclosed',function(e){
+    /* invalidation point 2: frames fall back to the embedded copy */
+    dropFrameCache(e.detail.stem);
     unregisterShell(e.detail.stem);
     if(!deckEl.hidden) refresh();
     else renderPresTabs();
@@ -18390,10 +18744,32 @@
     if(!deckEl.hidden) refresh(); else renderPresTabs();
   }).catch(function(){});
 
-  /* the deck loaded at boot did its histReset before STYLE_DEFAULTS
-     existed, so its own text types were not grafted into the registry
-     then. This is that call, and it has to be here — after every
-     declaration in the file (2026-08-22). */
+  /* ================= THE BOOT SEQUENCE =================
+     ALL of this file's load-time work runs from here, after every
+     declaration and every `var` initialiser above. Never call any of it
+     mid-file, and never add a sub-IIFE that executes logic at load:
+     function declarations hoist but `var` initialisers do not, and a
+     throw during load silently kills the rest of this IIFE — no
+     handlers, no exports, no deck, and no test notices. Not
+     hypothetical: on 2026-08-22 a mid-file loadPresentation(last) ran
+     histReset() → syncCustomTypes() → Object.keys(STYLE_DEFAULTS)
+     thousands of lines before STYLE_DEFAULTS was assigned, and the
+     TypeError killed everything below it — the editor quietly stopped
+     existing. These calls keep the relative order they ran in when they
+     were scattered mid-file. */
+  initShellRegistry();        /* every notebook the page carries */
+  initFirstPresentation();    /* the presentation the page opens with */
+  /* app.js paints the welcome before this file loads; redraw it now the
+     SemApp.deck* hooks and the registry can answer its questions */
+  if(APP.refreshChrome) APP.refreshChrome();
+  renderLayoutPicker();
+  renderAutosaveItem();
+  renderSaveBtn();
+  /* belt-and-braces: initFirstPresentation already synced the custom
+     types (via histReset, or explicitly on its default branch), so this
+     second pass is an idempotent no-op — it re-pins the invariant the
+     2026-08-22 incident was about: the registry must be synced by the
+     time boot finishes, whatever path loaded the presentation. */
   syncCustomTypes();
   status();
   renderPresTabs();

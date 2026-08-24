@@ -13,12 +13,14 @@ processed <i>in your browser</i> and never uploaded anywhere.</p>
 <ul>
 <li><b>Drag &amp; drop</b> one or more <code>.ipynb</code> files
 anywhere onto the window.</li>
-<li><b>+ Open</b> (top left) &mdash; a file picker, or paste a
+<li><b><i data-ic="open"></i> Open</b> (top left) &mdash; a file picker, or paste a
 <b>URL</b> to a notebook (GitHub links are converted automatically).</li>
 <li>Notebooks must be <b>executed</b> (run once in Jupyter so outputs
 are saved) &mdash; nothing is re-run here.</li>
-<li>Every notebook is a <b>tab</b>: click to switch, <b>&#8635;</b>
-re-reads it after you re-run it in Jupyter, <b>&#10005;</b> closes.</li>
+<li>Every open notebook is listed in the sidebar and the left rail:
+click to switch, <b><i data-ic="reload"></i></b> (beside <b>File
+info</b>) re-reads it after you re-run it in Jupyter,
+<b><i data-ic="exit"></i></b> closes.</li>
 </ul>
 
 <h3>Filtering what you see</h3>
@@ -40,7 +42,7 @@ plotting, a bare expression &mdash; not just standalone code cells. So
 result at once, and a cell that is <i>only</i> code disappears entirely
 when Code is Hidden.</li>
 <li><b>Code types</b> and <b>Output types</b> (the two
-<b>&#9662;</b> menus) are finer control: untick <i>imports</i>,
+<b><i data-ic="types"></i></b> funnel buttons) are finer control: untick <i>imports</i>,
 <i>plotting</i>&hellip; on the code side, or <i>print</i>,
 <i>dataset</i>, <i>numeric</i>, <i>string</i>, <i>list</i>,
 <i>dict</i>, <i>error</i>&hellip; on the output side, to hide just
@@ -50,21 +52,23 @@ Untick every code type and it is the same as hiding code.</li>
 on. Tick a few headings, set the filters, then pick a different set and
 filter those differently &mdash; every section remembers its own
 filters, and a section that differs says <i>&middot; filtered</i> next
-to its heading. <b>&#8649; All notebooks</b> copies these filters to
-every other open notebook; <b>&#8635; Reset</b> clears them for this
-one.</li>
+to its heading. <b><i data-ic="reset"></i> Reset</b> puts every
+filter &mdash; and every per-section change &mdash; in this notebook
+back to the defaults.</li>
 </ul>
 
 <h3>Figure size</h3>
 <ul>
-<li><b>Figures 100%</b> in the top bar (with <b>&minus;</b> and
-<b>&#43;</b> either side) resizes <i>every</i> figure in the feed &mdash;
+<li><b>Figures 100%</b> in the top bar (with
+<b><i data-ic="minus"></i></b> and <b><i data-ic="plus"></i></b>
+either side) resizes <i>every</i> figure in the feed &mdash;
 click the percentage to snap back to 100%. Figures grow past the text
 column, so a wide plot really does get wider.</li>
 <li><b>Point at any figure</b> and its own <b>&minus; &#43;</b> appear at
 the top left: those resize just that one, on top of the feed-wide
 setting.</li>
-<li>The <b>&#10530;</b> button next to them opens that figure
+<li>The <b><i data-ic="expand"></i></b> button next to them opens
+that figure
 <b>full screen</b> &mdash; Esc or a click outside closes it.</li>
 </ul>
 
@@ -81,20 +85,21 @@ itself &mdash; hides just that one cell; a cell hidden this way stays in
 the sidebar (dimmed) so its eye can bring it back.</li>
 <li>The <b>analysis graph</b> at the sidebar's foot jumps to any node
 that declared an <code>#| id:</code>.</li>
-<li>The <b>Sections | Variables</b> tabs swap the section list for an
-index of every variable the notebook defines &mdash; in definition
+<li>The <b>x&#178;</b> button beside the sections toggle (on the tab
+row, top left) opens an index of every variable the notebook defines &mdash; in definition
 order or grouped by type. Click a name to jump to the cell that defines
 it; its <b>&rsaquo;</b> chevron unfolds every cell that defines,
 redefines or reads it.</li>
 </ul>
 
 <h3>Plot trace</h3>
-<p>Every figure has a <b>&#9903; Plot trace</b> button. It opens a new
+<p>Every figure has a <b><i data-ic="tree"></i> Plot trace</b>
+button. It opens a new
 tab holding just the cells that build that plot &mdash; its whole
 lineage, load &rarr; transform &rarr; plot &mdash; with a dependency
 graph at the top. The tab is the same document view, just subset to
 those cells, so every filter and button still works exactly as it does
-in the full document. Close the tab (its <b>&times;</b>) when you are
+in the full document. Close the tab (its <b><i data-ic="exit"></i></b>) when you are
 done; the original document is untouched.</p>
 
 <h3>Raw notebook</h3>
@@ -159,8 +164,8 @@ several cells under one figure (see the README for details)</td></tr>
 
 <h3>Custom views &mdash; a styled, filtered copy of the notebook</h3>
 <ul>
-<li><b>+ New custom view</b> in the left rail (under + New presentation
-and + New poster) saves <i>how the notebook itself looks</i>. It is not
+<li><b>New&#8230;</b> &rarr; <b>Custom view</b> in the left rail
+saves <i>how the notebook itself looks</i>. It is not
 slides: it opens in the document, with a styling bar under the
 ribbon.</li>
 <li>Style <b>All markdown</b>, <b>All headings</b> or the <b>Document</b>
@@ -182,32 +187,42 @@ document to its normal styling.</li>
 <ul>
 <li>The <b>left rail</b> lists presentations under a <b>Notebooks</b>
 button &mdash; exactly one is active, so that button is always the way
-back. <b>New</b> starts one; <b>&#171;</b> shrinks or hides the
-rail.</li>
+back. <b>New&#8230;</b> starts one; the
+<b><i data-ic="autohide"></i></b> buttons at its foot collapse or
+auto-hide the rail.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
-content with <b>+ Notebook cell</b> &mdash; a draggable, resizable frame
+content with <b><i data-ic="cellcard"></i> Cell</b> (Insert tab)
+&mdash; a draggable, resizable frame
 that holds any notebook card: drop it on the slide, then click a card in
 your notebook (from <i>any</i> open tab, so one deck can mix several
-notebooks) to fill it; swap later with &#8644; Replace. Pick a slide
+notebooks) to fill it; swap later with <b><i data-ic="swap"></i>
+Replace</b>. Pick a slide
 layout from the diagrams (full, halves, rows, quarters, a
 <b>title slide</b>, or a <b>blank canvas</b>).</li>
-<li>The editor is a full slide editor: <b>+ Text</b>, <b>+ Arrow</b>,
-<b>+ Shapes</b> (rectangle, ellipse, star, arrow, cloud, and more) and
-<b>&#128443; Image</b>. Select anything for colours, precise point size,
+<li>The editor is a full slide editor:
+<b><i data-ic="text"></i> Text</b>,
+<b><i data-ic="arrow"></i> Arrow</b>,
+<b><i data-ic="shapes"></i> Shape</b> (rectangle, ellipse, star,
+arrow, cloud, and more) and <b><i data-ic="image"></i> Image</b>. Select anything for colours, precise point size,
 alignment, bold / italic / underline, line thickness, dash, fill and a
 smooth opacity slider. <b>Highlight</b> part of a text box to recolour just
 that run.</li>
 <li><b>Crop</b> an image <i>or</i> a notebook cell (figure, markdown or code)
 to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
-one; <b>&#9654; Animate</b> an item so it appears on click; and switch on
+one; animate an item so it appears on click
+(<b><i data-ic="play"></i> Timeline</b>, on the Insert tab); and
+switch on
 <b>slide numbers</b> from the File menu.</li>
 <li>The <b>View</b> group is for laying a poster out, where the page is
-far bigger than the window: <b>&#128207; Rulers</b> (<kbd>R</kbd>) down the
+far bigger than the window: <b><i data-ic="rulers"></i> Rulers</b>
+(<kbd>R</kbd>) down the
 top and left in real millimetres, marking where the pointer is and how far
-the selected item reaches; <b>&#9638; Grid</b> (<kbd>G</kbd>) a 20mm print
-margin plus twelve columns that items <b>snap</b> to; <b>&#8942; Side
-bar</b> to move this toolbar to the right edge, which a tall poster wants
-(portrait posters start that way); and <b>&#10530; Full screen</b> to edit
+the selected item reaches; <b><i data-ic="grid"></i> Grid</b>
+(<kbd>G</kbd>) a 20mm print
+margin plus twelve columns that items <b>snap</b> to;
+<b><i data-ic="dockright"></i> Side toolbar</b> to move this toolbar
+to the right edge, which a tall poster wants (portrait posters start
+that way); and <b><i data-ic="expand"></i> Full screen</b> to edit
 with the browser chrome gone &mdash; unlike Present, every tool stays.
 Guides never print or export.</li>
 <li>Dragging <b>snaps</b> to the page's edges and centre (cyan guides), to
@@ -228,16 +243,19 @@ either end moves.</li>
 <li><b>Shape fills.</b> <i>Fill</i> offers none, a tint of the shape's own
 line colour, a solid colour, or a <b>gradient</b> &mdash; linear across,
 linear down, or radiating from the centre.</li>
-<li><b>Curved text.</b> <i>Curve</i> bends a text box along an arc. Click
+<li><b>Curved text.</b> <i>Layout &#9662; &rarr; Curve</i> bends a
+text box along an arc. Click
 into the box and it straightens while you type, then curves again when
 you click away &mdash; a caret cannot sit on a curve. A deeper curve needs
 a taller box, so the arch always stays inside it.</li>
-<li>Select two or more items for <b>&#8676; Align</b> &mdash; agree on any
+<li>Select two or more items for <b><i data-ic="align"></i>
+Arrange</b> &mdash; agree on any
 edge or centre, or space three or more out with <b>equal gaps</b>.
 <kbd>Ctrl+C</kbd> / <kbd>Ctrl+X</kbd> / <kbd>Ctrl+V</kbd> copy, cut and
 paste, including <b>between posters</b>; pasting an image straight from
 your clipboard drops it on the page.</li>
-<li><b>&#9873; Check</b> reads the page the way a print shop will: figures
+<li><b><i data-ic="flag"></i> Check</b> reads the page the way a
+print shop will: figures
 that will print soft, anything off the page or inside the 20mm margin,
 text without enough contrast to read, and empty frames. Click any finding
 to select the item it is about. <i>File &rarr; Crop marks</i> adds trim
@@ -259,7 +277,7 @@ as pictures, and boxes and arrows become real shapes. A placed cell
 showing a <b>table</b> cannot convert (it is reported, not silently
 dropped), crops are not carried, and equations arrive as plain text
 &mdash; use Export PDF when any of those matter.</li>
-<li><b>&#9654; Present</b> plays full screen. Arrow keys / click
+<li><b><i data-ic="play"></i> Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one
 per screen, in execution order &mdash; and &uarr; climbs back out.</li>
@@ -267,8 +285,9 @@ per screen, in execution order &mdash; and &uarr; climbs back out.</li>
 
 <h3>Saving</h3>
 <ul>
-<li>The <b>Saved to:</b> button beside <b>Save</b> says where this
-presentation lives, and lets you change it:
+<li>The <b>&#9662;</b> chevron beside <b>Save</b> (top bar) opens
+the save-to menu &mdash; it says where this presentation lives, and
+lets you change it:
 <ul>
 <li><b>Browser</b> &mdash; kept in this browser, autosaving as you edit.
 Fine for a quick deck, but it is tied to this browser on this machine.</li>
@@ -311,5 +330,5 @@ with collaborators &mdash; instead of juggling JSON files.</li>
 <li>Keeping the local + in-browser versions <b>free forever</b>, with
 regular improvements.</li>
 </ul>
-<p>Use the <b>Support &#9829;</b> button (top bar) &mdash; it goes
-through Ko-fi. Thank you.</p>
+<p>Use the <b><i data-ic="heart"></i></b> button (top bar,
+far right) &mdash; it goes through Ko-fi. Thank you.</p>

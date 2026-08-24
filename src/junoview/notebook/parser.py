@@ -8,12 +8,16 @@ graph. Nothing downstream re-reads the raw notebook.
 
 from __future__ import annotations
 
-from ..render.items import render_raw
+# aliased: parse_notebook grew a `render_raw` keyword of the same name
+from ..render.items import _card_output_keys
+from ..render.items import render_raw as _render_raw
 from .chains import _build_chains
 from .classify import (
+    _UNPARSED,
     _classify_code,
     _csv,
     _infer_kind,
+    _parse_cell,
     _plot_title_from_code,
     _slug,
     _title_from_code,
@@ -110,17 +114,18 @@ def _finalize_item(item: Item, used_slugs: set[str],
     # neither a `#| title:` nor a leading `#` comment heading: the plot's
     # own name beats a function name or an echoed code line
     plot_title = ""
+    ptree = primary.get("tree", _UNPARSED)   # raw ast, cached at parse time
     if item.kind == "figure" or any(
             o.has_image or o.has_interactive
             for m in members for o in m["outputs"]):
-        plot_title = _plot_title_from_code(primary["code"])
+        plot_title = _plot_title_from_code(primary["code"], ptree)
     if explicit:
         item.title = explicit
     elif plot_title and not lead_comment:
         item.title = plot_title
     else:
-        item.title, item.title_echo = _title_from_code(primary["code"])
-    item.code_kinds = _classify_code(primary["code"])
+        item.title, item.title_echo = _title_from_code(primary["code"], ptree)
+    item.code_kinds = _classify_code(primary["code"], ptree)
     item.code_kind = item.code_kinds[0]
     item.caption = (primary["d"].get("caption")
                     or next((m["d"]["caption"] for m in members
@@ -159,7 +164,15 @@ def _finalize_item(item: Item, used_slugs: set[str],
         item.anchor = f"cell:p{primary.get('idx', 0)}"
 
 
-def parse_notebook(nb: dict, title: str | None = None) -> Document:
+def parse_notebook(nb: dict, title: str | None = None,
+                   render_raw: bool = True) -> Document:
+    """Parse one executed notebook (its JSON dict) into a Document.
+
+    ``render_raw=False`` skips building ``doc.raw_html`` (the linear
+    "raw notebook" view) — for structural parses that only need the
+    card/section model, like resolving a note-insertion target, where
+    the raw view is rendered again by the real parse moments later.
+    """
     used_slugs: set[str] = set()
     nb_title = title or nb.get("metadata", {}).get("title")
     # an explicit --title OR a notebook metadata title wins over an H1
@@ -279,7 +292,10 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
             if "subsection" in directives:
                 cur_subsection = directives["subsection"]
 
-        outputs = render_outputs(cell.get("outputs", []))
+        # keyed by cell position: the SAME rendered fragments serve the cards
+        # AND the raw view (see the render_raw call below), and the data-jvout
+        # stamp is how a raw-view placeholder finds its card's copy
+        outputs = render_outputs(cell.get("outputs", []), key=f"c{idx}")
         try:
             order_val = float(directives.get("order", idx))
         except ValueError:
@@ -287,6 +303,10 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
         member = {"d": directives, "code": code, "outputs": outputs,
                   "order": order_val, "idx": idx,
                   "cell_id": str(cell.get("id") or "")}
+        # parse the cell's code ONCE, here; classify (title / plot title /
+        # code kinds), chains and the variables index all reuse these two
+        # trees instead of each running ast.parse again
+        member["tree"], member["tree_nomagic"] = _parse_cell(code)
         all_members.append(member)
         cell_id = directives.get("id", "").strip()
         if cell_id:
@@ -353,5 +373,13 @@ def parse_notebook(nb: dict, title: str | None = None) -> Document:
     # while the cards still hold their member cells (`members` is
     # build-only): the sidebar's Variables view needs the raw code
     doc.variables = collect_variables(doc)
-    doc.raw_html = render_raw(nb)
+    if render_raw:
+        # the raw view REUSES this parse's rendered outputs (no second
+        # render_outputs pass over multi-MB figures), and any output whose
+        # payload a card already embeds becomes a lightweight placeholder
+        # that app.js fills by cloning the card's node on first open
+        doc.raw_html = _render_raw(
+            nb,
+            outputs_by_idx={m["idx"]: m["outputs"] for m in all_members},
+            card_keys=_card_output_keys(doc))
     return doc

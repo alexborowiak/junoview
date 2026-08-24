@@ -7,6 +7,7 @@ a page it did not serve.
 
 from __future__ import annotations
 
+import html
 import http.server
 import json
 import re
@@ -16,6 +17,7 @@ import urllib.parse
 from pathlib import Path
 from typing import Any
 
+from .._write import write_text
 from ..notebook.loader import (
     _is_url,
     _normalize_nb_url,
@@ -69,7 +71,17 @@ def _make_handler(state: _AppState):
                                "terminal (it carries a session token).</p>",
                                403)
                     return
-                self._html(_app_page(state))
+                # the page build sat OUTSIDE any try/except, so one bad
+                # notebook in the session turned "open the app" into a
+                # connection that never answered (2026-08-23)
+                try:
+                    page = _app_page(state)
+                except Exception as e:  # noqa: BLE001 -- surfaced in UI
+                    self._html("<h1>Junoview</h1><p>Failed to build the "
+                               f"page: {html.escape(f'{type(e).__name__}: {e}')}"
+                               "</p>", 500)
+                    return
+                self._html(page)
                 return
             if not self._authed(query):
                 self._json({"error": "bad token"}, 403)
@@ -153,10 +165,7 @@ def _make_handler(state: _AppState):
             raw = str(body.get("path") or "").strip().strip('"')
             if not raw:
                 raise ValueError("no path given")
-            f = Path(raw).expanduser()
-            if not f.is_absolute():
-                f = state.root / f
-            f = f.resolve()
+            f = self._resolve_path(raw)
             if not _is_deck_file(f.name):
                 raise ValueError(f"{f.name} is not a .junoview file")
             if not f.exists():
@@ -185,14 +194,7 @@ def _make_handler(state: _AppState):
                     state.note_open(url)
                 return {"stem": doc.source_name, "path": url,
                         "shell": render_shell(doc, path=url)}
-            f = Path(raw).expanduser()
-            if not f.is_absolute():
-                f = state.root / f
-            f = f.resolve()
-            if not f.exists():
-                raise FileNotFoundError(f"{f} not found")
-            if f.suffix.lower() != ".ipynb":
-                raise ValueError(f"{f.name} is not a .ipynb file")
+            f = self._resolve_nb_path(raw)
             _store_version(f)   # every open/reload keeps a snapshot
             doc = load_doc(f)
             if into:
@@ -203,11 +205,17 @@ def _make_handler(state: _AppState):
             return {"stem": doc.source_name, "path": str(f),
                     "shell": render_shell(doc, path=str(f))}
 
-        def _resolve_nb_path(self, raw: str) -> Path:
+        def _resolve_path(self, raw: str) -> Path:
+            """Relative paths resolve against the app root — shared by the
+            notebook and deck-file routes (which differ in what they then
+            demand of the file, so only the prefix is common)."""
             f = Path(raw).expanduser()
             if not f.is_absolute():
                 f = state.root / f
-            f = f.resolve()
+            return f.resolve()
+
+        def _resolve_nb_path(self, raw: str) -> Path:
+            f = self._resolve_path(raw)
             if not f.exists():
                 raise FileNotFoundError(f"{f} not found")
             if f.suffix.lower() != ".ipynb":
@@ -232,8 +240,7 @@ def _make_handler(state: _AppState):
             nb = json.loads(f.read_text(encoding="utf-8"))
             nb, idx, cell_id = insert_note_cell(
                 nb, str(body.get("after") or ""), src)
-            f.write_text(json.dumps(nb, ensure_ascii=False, indent=1) + "\n",
-                         encoding="utf-8")
+            write_text(f, json.dumps(nb, ensure_ascii=False, indent=1) + "\n")
             git = _git_info(f)
             if body.get("commit") and git.get("repo"):
                 first = src.splitlines()[0][:60]

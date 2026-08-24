@@ -15,11 +15,20 @@ sensible layout from each cell's outputs.
 
 ## Directives
 
-| Directive       | What it does                                                         |
-|-----------------|----------------------------------------------------------------------|
-| `#| section:`   | Start a top-level section (also doable with a Markdown `##` heading). |
-| `#| subsection:`| Nested group inside the current section.                             |
-| `#| title:`     | Human title for the card. Otherwise inferred from the code: a leading `# comment` heading, then the plot's own title (`fig.suptitle`, `ax.set_title`, `plt.title`, or a literal `title=` keyword), then function names. |
+| Directive        | What it does                                                         |
+|------------------|----------------------------------------------------------------------|
+| `#\| section:`   | Start a top-level section (also doable with a Markdown `##` heading). |
+| `#\| subsection:`| Nested group inside the current section.                             |
+| `#\| title:`     | Human title for the card. Otherwise inferred from the code: a leading `# comment` heading, then the plot's own title (`fig.suptitle`, `ax.set_title`, `plt.title`, or a literal `title=` keyword), then function names. |
+| `#\| display:`   | Card type: `figure` `dataset` `transform` `diagnostic` `metric` `text` `code` `hidden`. |
+| `#\| code:`      | Default code visibility: `hidden` (default) or `show`.              |
+| `#\| id:`        | Stable slug for this cell — makes it a node in the provenance graph. |
+| `#\| depends:`   | Comma-separated `id`s this cell derives from — draws the graph edges.|
+| `#\| caption:`   | Interpretation text / what to look for, shown under the output.     |
+| `#\| group:`     | Merge several cells into **one** card (alias: `tag:`).              |
+| `#\| order:`     | Sort this cell within its group (integer; defaults to appearance).  |
+| `#\| step:`      | Label this cell's chunk in the folded code.                         |
+| `#\| stack:`     | Fold the code of cells with these `id`s under this card; reusable.  |
 
 **Shorthand.** Every directive also has a bracket spelling — a short key in
 brackets, no colon: `#(t)` title, `#(c)` caption, `#(s)` section, `#(ss)`
@@ -37,15 +46,6 @@ line:
 #(c) Shading: anomaly (m). Contours: climatology.
 plot()
 ```
-| `#| display:`   | Card type: `figure` `dataset` `transform` `diagnostic` `metric` `text` `code` `hidden`. |
-| `#| code:`      | Default code visibility: `hidden` (default) or `show`.              |
-| `#| id:`        | Stable slug for this cell — makes it a node in the provenance graph. |
-| `#| depends:`   | Comma-separated `id`s this cell derives from — draws the graph edges.|
-| `#| caption:`   | Interpretation text / what to look for, shown under the output.     |
-| `#| group:`     | Merge several cells into **one** card (alias: `tag:`).              |
-| `#| order:`     | Sort this cell within its group (integer; defaults to appearance).  |
-| `#| step:`      | Label this cell's chunk in the folded code.                         |
-| `#| stack:`     | Fold the code of cells with these `id`s under this card; reusable.  |
 
 ## A figure cell
 

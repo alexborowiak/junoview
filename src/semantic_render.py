@@ -21,7 +21,7 @@ import warnings
 from junoview import __version__
 from junoview.assets import help_html as _help_html
 from junoview.assets import web_loader as _web_loader
-from junoview.branding import _ICON_PATHS, _REPO_URL
+from junoview.branding import _ICON_PATHS
 from junoview.cli import main
 from junoview.notebook.classify import (
     _classify_code,

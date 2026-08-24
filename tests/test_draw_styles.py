@@ -189,9 +189,11 @@ def test_button_names_say_what_they_do(out):
     # 'edit full screen' being under guides a. does not make sense, and
     # b. is unnecessary"). The naming rule still holds: each says what it
     # does, in words.
-    assert "&#128207; Rulers" in out
-    assert "&#10530; Full screen" in out
-    assert "&#8942; Side toolbar" in out
+    # 2026-08-24: the unicode glyph prefixes became icon-family SVGs
+    # (data-ic rulers / expand / dockright), so the pins hold the WORDS
+    assert "Rulers <kbd>R</kbd></button>" in out
+    assert "Full screen</button>" in out
+    assert "Side toolbar</button>" in out
     assert 'id="vw-menuwrap"' not in out
     assert ">Show me &#9662;" not in out
     # a constant height means selecting an item cannot shift the canvas
@@ -301,13 +303,13 @@ def test_wordless_glyph_buttons_became_worded_menu_rows(out):
     assert "['o:front','Bring to front']" in out
     assert "['o:forward','Bring forward one']" in out
     assert "['o:rotl','Rotate left 15°']" in out
-    # worded buttons in the row...
-    assert "&#8613; Front</button>" in out
-    assert "&#8615; Back</button>" in out
+    # worded buttons in the row... (icons since 2026-08-24, words intact)
+    assert " Front</button>" in out
+    assert " Back</button>" in out
     assert "show('#fmt-front',isNum);" in out
     # ...and the one-step pair still menu-only
     assert "show('#fmt-forward',false);" in out
-    assert "&#8676; Arrange &#9662;" in out
+    assert "Arrange &#9662;" in out
     # the menu drives the originals, so each keeps one implementation
     assert "if(b) b.click();" in out
 

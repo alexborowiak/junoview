@@ -14,6 +14,47 @@ import re
 from .directives import is_directive_line
 from .outputs import RenderedOutput
 
+# "no pre-parsed tree supplied — parse it yourself". Distinct from None,
+# which a caller passes to mean "parsed already, and it FAILED".
+_UNPARSED = object()
+
+
+def _parse_or_none(source: str) -> ast.Module | None:
+    try:
+        return ast.parse(source)
+    except SyntaxError:
+        return None
+
+
+def _strip_magics(code: str) -> str:
+    """Drop IPython magic/shell lines (``%…`` / ``!…``) — not Python, so
+    they must go before a dataflow parse (and only there: the raw-source
+    readers below keep the cell exactly as written)."""
+    return "\n".join(ln for ln in code.splitlines()
+                     if not ln.lstrip().startswith(("%", "!")))
+
+
+def _parse_cell(code: str) -> tuple[ast.Module | None, ast.Module | None]:
+    """Parse one code cell's source ONCE, in the two forms readers need.
+
+    Returns ``(tree, tree_nomagic)``: the AST of the raw source (what
+    :func:`_title_from_code`, :func:`_plot_title_from_code` and
+    :func:`_classify_code` look at) and of the magic-stripped source (what
+    the dataflow readers look at — ``_cell_names`` in chains, the variables
+    index). Either is None where that form has a SyntaxError. When
+    stripping changes nothing the one tree serves both — the ASTs are read,
+    never mutated — so a magic-free cell costs a single parse.
+
+    ``parse_notebook`` stashes the pair on each member dict (``"tree"`` /
+    ``"tree_nomagic"``) so classify, chains and variables stop re-parsing
+    the same cell: previously up to six parses per cell per render.
+    """
+    tree = _parse_or_none(code)
+    stripped = _strip_magics(code)
+    if stripped == code:
+        return tree, tree
+    return tree, _parse_or_none(stripped)
+
 
 def _slug(text: str, used: set[str]) -> str:
     base = re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-") or "item"
@@ -40,26 +81,30 @@ def _infer_kind(item_outputs: list[RenderedOutput]) -> str:
     return "code"
 
 
-def _title_from_code(code: str) -> tuple[str, bool]:
+def _title_from_code(code: str,
+                     tree: ast.Module | None = _UNPARSED) -> tuple[str, bool]:
     """Best-effort title. Returns (title, echo): echo=True when the title
     merely repeats a line of the cell's code — such titles still label the
-    item in the nav but are not repeated as a heading on the card."""
+    item in the nav but are not repeated as a heading on the card.
+
+    ``tree`` is the cell's pre-parsed RAW ast (or None if that parse
+    failed); omit it and the code is parsed here."""
     lines = [ln.strip() for ln in code.splitlines() if ln.strip()]
     lines = [ln for ln in lines if not is_directive_line(ln)]
     if lines and lines[0].startswith("#"):
         return (lines[0].lstrip("#").strip() or "Code"), False
+    if tree is _UNPARSED:
+        tree = _parse_or_none(code)
     funcs: list[tuple[str, bool]] = []      # (name, is_function)
     other = False
-    try:
-        for node in ast.parse(code).body:
+    if tree is not None:
+        for node in tree.body:
             if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 funcs.append((node.name, True))
             elif isinstance(node, ast.ClassDef):
                 funcs.append((node.name, False))
             else:
                 other = True
-    except SyntaxError:
-        pass
     if funcs:
         if len(funcs) == 1:
             name, is_fn = funcs[0]
@@ -77,7 +122,8 @@ def _title_from_code(code: str) -> tuple[str, bool]:
     return "Code", False
 
 
-def _plot_title_from_code(code: str) -> str:
+def _plot_title_from_code(code: str,
+                          tree: ast.Module | None = _UNPARSED) -> str:
     """The title the PLOT gives itself in code.
 
     ``fig.suptitle("…")``, ``ax.set_title("…")``, ``plt.title("…")`` or a
@@ -88,10 +134,12 @@ def _plot_title_from_code(code: str) -> str:
     running the cell, so guessing is worse than declining. Figure-level
     ``suptitle`` wins; otherwise a SINGLE distinct axes-level title —
     four subplots with four different titles name no one card.
+
+    ``tree`` as in :func:`_title_from_code` (the RAW ast, None on failure).
     """
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
+    if tree is _UNPARSED:
+        tree = _parse_or_none(code)
+    if tree is None:
         return ""
 
     def lit(node) -> str:
@@ -196,13 +244,17 @@ def _is_const_value(node: ast.AST) -> bool:
     return False
 
 
-def _classify_code(code: str) -> list[str]:
+def _classify_code(code: str,
+                   tree: ast.Module | None = _UNPARSED) -> list[str]:
     """The kinds of things a code cell does, in display order. Usually one
     (imports / function / data / settings / plotting / print / constant /
-    code); a mixed cell lists several."""
-    try:
-        tree = ast.parse(code)
-    except SyntaxError:
+    code); a mixed cell lists several.
+
+    ``tree`` as in :func:`_title_from_code` (the RAW ast, None on failure).
+    """
+    if tree is _UNPARSED:
+        tree = _parse_or_none(code)
+    if tree is None:
         return ["code"]
     body = tree.body
     if not body:

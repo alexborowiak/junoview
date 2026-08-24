@@ -15,9 +15,23 @@ are `anywidget` and `ipywidgets`, and only for the in-Jupyter widget.
 ```
 
 `Document` is the seam. Everything to its left is about *understanding* a
-notebook; everything to its right is about *drawing* one. Neither half imports
-the other's internals, so you can change how a figure is rendered without
-touching how it is recognised.
+notebook; everything to its right is about *drawing* one — and every
+*frontend* honours it: the server, the widget and the web build all consume a
+`Document` plus the `render_*` entry points, never the parser's internals.
+
+Between the two halves themselves, though, the split is a division of labour,
+not a wall. The crossings are few and named, and worth knowing before you
+move code: `notebook/parser.py` imports `render_raw` to fill `doc.raw_html`
+(handing it the parse's already-rendered outputs, so each multi-MB figure is
+embedded in the page once — the raw view holds keyed placeholders that app.js
+fills by cloning the card's copy, and embeds in full only what the cards
+dropped);
+`notebook/loader.py` imports `render_html` to offer the one-call
+`render_notebook_file`; `notebook/outputs.py` emits the HTML fragments for
+stored rich outputs (a figure, an xarray repr) rather than describing them
+abstractly; and `render/` reaches back for `_as_text` and `_HEADING_RE`. So
+you can usually change how a figure is *rendered* without touching how it is
+*recognised* — unless you are near one of those crossings.
 
 ## Where things live
 
@@ -44,7 +58,9 @@ src/junoview/
 │
 ├── assets/            the frontend, as real files
 │   ├── css/               core.css · app.css · deck.css · widget.css
+│   │                      · widget-media.css  (the widget's responsive rules)
 │   ├── js/                app.js · deck.js · pptx.js · widget.js
+│   │                      · sw.js  (the web build's offline service worker)
 │   └── html/              page.html · shell.html · deck.html · help.html · …
 │
 ├── server/            the local GUI app (the only part that writes to disk)

@@ -12,8 +12,13 @@ import re
 
 from helpers import _web_page
 from junoview import assets
-from junoview.branding import _REPO_URL
 from junoview.render.page import render_page
+
+# was branding._REPO_URL until that constant was deleted as dead code
+# (2026-08-23) — nothing in src reads it. The literal stays pinned here
+# because the assertion below is about the LINK not leaking into the UI,
+# whether or not a constant for it exists.
+_REPO_URL = "https://github.com/alexborowiak/junoview"
 
 
 def test_web_mode_page_chrome_and_welcome_hero(out):

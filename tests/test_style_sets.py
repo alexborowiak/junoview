@@ -268,7 +268,8 @@ def test_both_libraries_are_reachable_from_the_match_menu(out):
     """Matching to another slide and matching to a saved layout are the
     same verb with a different model, so they belong one click apart --
     and neither costs the ribbon anything."""
-    assert "arr.textContent='◫ Arrangements…';" in out
+    # the menu entry's pictograph comes from SemIcons now (2026-08-23)
+    assert "arr.innerHTML=bic('layouts')+' Arrangements…';" in out
     assert "window.SemDeckArrange=open;" in out
     # the glyphs in this one are written as \\u escapes in the source, so
     # match the ASCII the label is actually made of

@@ -12,22 +12,26 @@ from __future__ import annotations
 import ast
 import re
 
+from .classify import _UNPARSED, _parse_or_none, _strip_magics
 from .model import Document, Item
 
 
-def _cell_names(code: str) -> tuple[set[str], set[str]]:
+def _cell_names(code: str, tree: ast.Module | None = _UNPARSED
+                ) -> tuple[set[str], set[str]]:
     """Best-effort (defined, externally-read) names for one cell's code.
 
     A name counts as externally read when the cell uses it at or before its
     own first assignment (so `z = z + 1` reads the earlier z, but
     `x = 1; print(x)` does not read an external x). Function parameters are
     excluded; IPython magic/shell lines are stripped before parsing.
+
+    ``tree`` is the cell's pre-parsed MAGIC-STRIPPED ast (a member dict's
+    ``"tree_nomagic"``; None if that parse failed); omit it and the code is
+    stripped and parsed here.
     """
-    src = "\n".join(ln for ln in code.splitlines()
-                    if not ln.lstrip().startswith(("%", "!")))
-    try:
-        tree = ast.parse(src)
-    except SyntaxError:
+    if tree is _UNPARSED:
+        tree = _parse_or_none(_strip_magics(code))
+    if tree is None:
         return set(), set()
     first_def: dict[str, int] = {}
     first_use: dict[str, int] = {}
@@ -54,6 +58,24 @@ def _cell_names(code: str) -> tuple[set[str], set[str]]:
             if n not in params
             and (n not in first_def or ln <= first_def[n])}
     return set(first_def), uses
+
+
+def _code_cards(doc: Document) -> list[tuple[int, Item]]:
+    """Every code-backed card with its first cell index, notebook order.
+
+    Shared by chain building and the variables index -- the same seven
+    lines lived in both until they were folded here (2026-08-23). Only
+    valid at parse time, while cards still carry their build-only
+    `members`.
+    """
+    cards: list[tuple[int, Item]] = []
+    for sec in doc.sections:
+        for it in sec.items:
+            if it.is_note or not it.members:
+                continue
+            cards.append((min(m["idx"] for m in it.members), it))
+    cards.sort(key=lambda t: t[0])
+    return cards
 
 
 def _mentioned_names(note: Item, all_defs: set[str]) -> set[str]:
@@ -135,13 +157,7 @@ def _build_chains(doc: Document) -> None:
     under a figure's Show code. A final pass also links markdown notes that
     name a variable into the chains that define it.
     """
-    cards: list[tuple[int, Item]] = []
-    for sec in doc.sections:
-        for it in sec.items:
-            if it.is_note or not it.members:
-                continue
-            cards.append((min(m["idx"] for m in it.members), it))
-    cards.sort(key=lambda t: t[0])
+    cards = _code_cards(doc)
     order = {id(it): i for i, (_, it) in enumerate(cards)}
     by_node = {it.node_id: it for _, it in cards if it.node_id}
     items_by_id = {id(it): it for _, it in cards}
@@ -151,7 +167,11 @@ def _build_chains(doc: Document) -> None:
     last: dict[str, Item] = {}          # name -> card that last assigned it
     for _, it in cards:
         for m in sorted(it.members, key=lambda m: m["idx"]):
-            defs, uses = _cell_names(m["code"])
+            defs, uses = _cell_names(m["code"],
+                                     m.get("tree_nomagic", _UNPARSED))
+            # stashed for collect_variables, which runs right after this
+            # and needs the same per-cell uses — no third parse
+            m["names"] = (defs, uses)
             for n in uses:
                 src = last.get(n)
                 if src is not None and src is not it:

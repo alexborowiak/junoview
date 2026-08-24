@@ -14,12 +14,18 @@ body.presrail-min{--presrail-w:46px;}
    "… types ▾" pickers hang underneath their parent filter. It NEVER
    WRAPS (2026-08-03, user, on a narrower laptop: groups spilling onto a
    second line cost a whole extra band of chrome and "make it soooo hard
-   to read the notebook"). Instead fitRibbon() compacts the bar in stages
-   — body.rbc1 drops the state words, .rbc2 the labels (icon-only,
-   tooltips carry the names), .rbc3 the captions and dividers — and only
-   a bar too narrow even for icon-only buttons scrolls sideways. A thin
-   scrollbar at the very edge of usable widths beats a second row that
-   appears at ordinary ones. */
+   to read the notebook"). Instead fitRibbon() applies ONE compaction
+   stage — body.rbc1, spacing only: tighter gap and padding, every word
+   intact — and past that the bar scrolls sideways (overflow-x:auto
+   above). The old rbc2 (icon-only) and rbc3 rungs were REJECTED and no
+   longer exist as rules; see fitRibbon's comment in app.js and the
+   compaction note above body.rbc1 below, which are the authority. A
+   thin scrollbar at the very edge of usable widths beats a second row
+   that appears at ordinary ones.
+   The ONE documented exception to never-wrap is the presenting bar:
+   .present-bar may wrap, because measurePb re-insets the slide under
+   the bar's REAL height after every wrap — its second row is paid for,
+   not stolen from the page. */
 /* align-items:stretch so every SECTION is as tall as the bar and a
    single-button group (+ Open) can fill both rows rather than floating at
    the top of an empty column */
@@ -53,12 +59,9 @@ body.presrail-min{--presrail-w:46px;}
 .appbar .toggle,.appbar .appbar-link,.present-bar .toggle{
   flex:none;white-space:nowrap;height:28px;box-sizing:border-box;
   padding:0 7px;line-height:1;font-size:11.5px;gap:5px;}
-/* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
-   font). One 16-grid, stroke-only, currentColor — so an icon is always
-   the same weight as the label beside it and follows the theme. ---- */
-.bic{width:14px;height:14px;flex:none;display:block;
-  stroke:currentColor;stroke-width:1.5;fill:none;
-  stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
+/* ---- button icons: the .bic BASE rule moved to core.css (2026-08-23)
+   so the widget's scoped bundle gets it too; only app-chrome overrides
+   live here. ---- */
 .toggle:hover .bic,.toggle[aria-pressed="true"] .bic{opacity:1;}
 /* An icon-only button is SQUARE and never shrinks. `padding:0` alone gave
    it no floor, so the moment the bar ran short of room these were being
@@ -147,11 +150,6 @@ body.light .abgrp-lab{color:var(--ink-3);}
 .btn-grp{display:flex;gap:4px;flex:none;align-items:flex-start;
   position:relative;}
 .btn-grp[hidden]{display:none!important;}
-/* the "…" overflow: rarely-used items, out of the way but one click deep */
-.more-menu{min-width:210px;padding:6px;}
-.more-menu .ckf-all{margin-bottom:4px;}
-.more-link{display:flex;align-items:center;gap:7px;text-decoration:none;
-  text-transform:none;font-family:var(--sans);font-size:12px;}
 .fgrp-row{display:flex;gap:3px;align-items:stretch;}
 /* size to CONTENT. `.fgrp .toggle{width:100%}` + `flex:1` was squeezing
    these below their natural width, so the label sat on the border. */
@@ -866,14 +864,15 @@ body:not(.light) #odlg-go:hover:not(:disabled){background:var(--cyan);
   border-radius:5px;text-transform:capitalize;}
 .ckf-row:hover{background:#ffffff0c;}
 .ckf-row input{cursor:pointer;}
-.ckf-dot{width:8px;height:8px;border-radius:3px;flex:none;background:#8ba0b2;}
-.ckf-dot.ckmain-imports{background:#a3855c;}
-.ckf-dot.ckmain-function{background:#46a892;}
-.ckf-dot.ckmain-data{background:#4d90c0;}
-.ckf-dot.ckmain-constant{background:#9a7cc0;}
-.ckf-dot.ckmain-settings{background:#5b7589;}
+.ckf-dot{width:8px;height:8px;border-radius:3px;flex:none;
+  background:var(--ck-code);}
+.ckf-dot.ckmain-imports{background:var(--ck-imports);}
+.ckf-dot.ckmain-function{background:var(--ck-function);}
+.ckf-dot.ckmain-data{background:var(--ck-data);}
+.ckf-dot.ckmain-constant{background:var(--ck-constant);}
+.ckf-dot.ckmain-settings{background:var(--ck-settings);}
 .ckf-dot.ckmain-plotting{background:var(--accent);}
-.ckf-dot.ckmain-print{background:#cf9a4e;}
+.ckf-dot.ckmain-print{background:var(--ck-print);}
 .ckf-dot.ckmain-comments{background:#5f7386;}
 .ckf-dot.ot-sw-print{background:#5f7d8c;}
 .ckf-dot.ot-sw-dataset{background:#4d90c0;}
@@ -1638,6 +1637,10 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
 .rawmd h3{font-size:19px;}
 .rawmd h4{font-size:16px;}
 .rawempty{color:var(--ink-3);text-align:center;padding:40px;}
+/* a .rawph placeholder is filled from its card's DOM on first open; when
+   the card copy cannot be found it says so instead of showing nothing */
+.rawph-missing{color:var(--ink-3);font-style:italic;font-size:13px;
+  border:1px dashed var(--line);border-radius:8px;padding:10px 12px;}
 
 /* ---- the rail's single + New menu, and per-row delete ---- */
 .pr-newwrap{position:relative;}
@@ -1653,9 +1656,13 @@ body.pbpos-right.pb-folded .present-bar{transform:translateX(101%)!important;}
   border-color:color-mix(in srgb,var(--accent) 40%,transparent);
   color:#fff;}
 /* the bin: invisible until the row is hovered or current, so the rail
-   stays quiet; coral on hover because it destroys */
+   stays quiet; coral on hover because it destroys. A real <button> since
+   2026-08-24 (it was a click-wired span), so the UA button chrome is
+   reset here to keep the row rendering exactly as before. */
 .pr-del{display:none;margin-left:auto;flex:none;padding:1px 5px;
-  border-radius:5px;color:#8ba0b2;font-size:11px;}
+  border-radius:5px;color:#8ba0b2;font-size:11px;
+  background:none;border:0;cursor:pointer;line-height:1;
+  font-family:inherit;}
 .pr-item:hover .pr-del,.pr-item.current .pr-del{display:inline-block;}
 .pr-del:hover{background:#ff6b5726;color:#ff9d8c;}
 .deck-status.clickable{cursor:pointer;}
@@ -1695,3 +1702,20 @@ body.light .vars-menubtn{color:var(--ink-2);}
    (2026-08-19, user: "what happened to removing all the +new buttons").
    Every base rule that sets display needs its own [hidden] override. */
 .pr-btn[hidden]{display:none!important;}
+/* ---- icon sizing where JS-built chrome swapped an emoji for a .bic
+   svg (2026-08-23). An emoji was sized by its button's font-size; the
+   svg needs its own, and only the tight little buttons are clamped
+   below the 14px default. ---- */
+.tab-b .bic,.rnb-x .bic{width:10px;height:10px;vertical-align:-1px;}
+.tab-vermark .bic{width:12px;height:12px;vertical-align:-2px;}
+.recent-ic .bic,.odlg-r-ic .bic{width:13px;height:13px;
+  vertical-align:-3px;}
+.odlg-i .ic .bic{vertical-align:-3px;}
+.card-addnote .bic{width:13px;height:13px;}
+.pr-fctrl button .bic,.pr-del .bic{width:9px;height:9px;
+  vertical-align:-1px;}
+.tn-btn .bic{width:12px;height:12px;}
+.rf-btn .bic{width:12px;height:12px;}
+/* the rail's reveal tab points back INTO the page: the same
+   panel-and-arrow icon as #pr-collapse, mirrored */
+.presrail-show .bic{transform:scaleX(-1);}

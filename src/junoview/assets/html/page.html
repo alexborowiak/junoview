@@ -34,7 +34,7 @@
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
  Visible -> Collapsed -> Hidden"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
-      <button class="toggle sub" id="pt-filter-btn"
+      <button class="toggle sub" id="pt-filter-btn" aria-label="Plot types"
         title="Advanced: hide specific PLOT types (matplotlib, plotly,
  bokeh, vega, folium, …)"><i data-ic="types"></i></button>
     </span>
@@ -47,7 +47,7 @@
       <button class="toggle tv" id="tv-code"
         title="Code — the source in every cell (imports, prints, plotting, …).
  Click to cycle: Visible -> Collapsed -> Hidden"><i data-ic="code"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
-      <button class="toggle sub" id="ck-filter-btn"
+      <button class="toggle sub" id="ck-filter-btn" aria-label="Code cell types"
         title="Advanced: hide specific CODE cell types (imports, plotting,
  …)"><i data-ic="types"></i></button>
     </span>
@@ -56,7 +56,7 @@
         title="Printed output — the tables, values and text a cell prints.
  Everything a notebook produces is 'output'; plots are just the one kind
  pulled out into their own filter (on the left). Click to show / hide"><i data-ic="output"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
-      <button class="toggle sub" id="ot-filter-btn"
+      <button class="toggle sub" id="ot-filter-btn" aria-label="Output types"
         title="Advanced: hide specific OUTPUT types (print, dataset, result,
  error)"><i data-ic="types"></i></button>
     </span></span><span class="abgrp-lab">Filters</span></span>
@@ -111,12 +111,12 @@
     </span><span class="abgrp-lab">Tree</span></span>
     <span class="abgrp" id="ab-size"><span class="abgrp-row abgrp-stack"><span class="fgrp fgrp-h" id="fig-size-grp">
       <span class="fgrp-row">
-        <button class="toggle fz-step" id="fig-smaller"
+        <button class="toggle fz-step" id="fig-smaller" aria-label="Smaller figures"
           title="Make every figure in the feed smaller"><i data-ic="minus"></i></button>
         <button class="toggle fz-val" id="fig-size-val"
           title="Figure size across the whole feed — click to reset to 100%"
           >100%</button>
-        <button class="toggle fz-step" id="fig-bigger"
+        <button class="toggle fz-step" id="fig-bigger" aria-label="Bigger figures"
           title="Make every figure in the feed bigger (each figure also has
  its own +/- and an expand button on hover)"><i data-ic="plus"></i></button>
       </span>
@@ -124,12 +124,12 @@
     </span>
     <span class="fgrp fgrp-h" id="md-size-grp">
       <span class="fgrp-row">
-        <button class="toggle fz-step" id="md-smaller"
+        <button class="toggle fz-step" id="md-smaller" aria-label="Smaller text"
           title="Smaller markdown / prose text"><i data-ic="minus"></i></button>
         <button class="toggle fz-val" id="md-size-val"
           title="Markdown text size — click to reset to 100%"
           >100%</button>
-        <button class="toggle fz-step" id="md-bigger"
+        <button class="toggle fz-step" id="md-bigger" aria-label="Bigger text"
           title="Larger markdown / prose text"><i data-ic="plus"></i></button>
       </span>
       <span class="fgrp-cap">Text</span>
@@ -168,10 +168,10 @@
     <span class="btn-grp">
       <!-- no separate dark/light toggle: light and dark are THEMES in
            the palette menu, beside forest and the rest (2026-08-19) -->
-      <button class="toggle" id="scheme-btn"
+      <button class="toggle" id="scheme-btn" aria-label="Colour scheme"
         title="Colour scheme — cyan, colourful, high contrast, forest,
  forest &amp; blue"><i data-ic="palette"></i></button>
-      <a class="toggle appbar-link" id="support-btn" href="{kofi}"
+      <a class="toggle appbar-link" id="support-btn" aria-label="Support Junoview on Ko-fi" href="{kofi}"
         target="_blank" rel="noopener"
         title="Support Junoview on Ko-fi — funds an online, hosted version
  with accounts (save + share your docs and talks, like Overleaf)"
@@ -188,7 +188,7 @@
          two indexes of the document — its sections, its names
          (2026-08-19, user). It replaced a Sections|Variables tab switch
          inside the sidebar and a button up in the View group. -->
-    <button class="menubtn vars-menubtn" id="vars-btn" aria-pressed="false"
+    <button class="menubtn vars-menubtn" id="vars-btn" aria-label="Variables" aria-pressed="false"
       title="Every variable in this notebook — filter by type, and click
  a name or use-site to jump to it">x&#178;</button>
     <!-- the open-notebooks strip is NOT here any more. A row of
@@ -262,8 +262,10 @@
   <div class="pr-newwrap">
     <button class="pr-btn" id="pr-newbtn" aria-haspopup="true"
       aria-expanded="false" title="Create something new">
+      <!-- no literal "+ " in the label: the icon beside it IS a plus,
+           and "+ + New…" is what it read as (2026-08-24) -->
       <span class="pr-ico"><i data-ic="plus"></i></span>
-      <span class="pr-t">+ New&#8230;</span></button>
+      <span class="pr-t">New&#8230;</span></button>
     <div class="pr-newmenu" id="pr-newmenu" hidden>
       <button class="pr-mi" data-for="pr-new">Presentation</button>
       <button class="pr-mi" data-for="pr-newpost">Poster</button>
@@ -289,32 +291,31 @@
   <button class="pr-btn" hidden id="pr-new"
     title="Create a new presentation">
     <span class="pr-ico"><i data-ic="newdeck"></i></span>
-    <span class="pr-t">+ New presentation</span></button>
+    <span class="pr-t">New presentation</span></button>
   <button class="pr-btn" hidden id="pr-newpost"
     title="Create a new poster &mdash; an A0 portrait page with a poster
  template applied (change size via Page, layout via Layouts)">
     <span class="pr-ico"><i data-ic="newposter"></i></span>
-    <span class="pr-t">+ New poster</span></button>
+    <span class="pr-t">New poster</span></button>
   <button class="pr-btn" hidden id="pr-newfold"
     title="New folder &#8212; drag presentations into it">
-    <span class="pr-ico"><svg viewBox="0 0 16 14" width="13"
-      height="12" fill="currentColor"><path d="M1 3.2C1 2.5 1.5 2
-      2.2 2h3.4l1.5 1.6h6.7c.7 0 1.2.5 1.2 1.2v6c0 .7-.5 1.2-1.2
-      1.2H2.2C1.5 12 1 11.5 1 10.8z"/></svg></span>
+    <span class="pr-ico"><i data-ic="open"></i></span>
     <span class="pr-t">+ New folder</span></button>
   <!-- the two panel controls as a pair: collapse it, or let it hide
        itself. Neither is "pin" — nothing is being pinned. -->
   <div class="pr-foot">
-    <button class="pr-collapse" id="pr-collapse"
-      title="Collapse this panel">&#171;</button>
-    <button class="pr-collapse" id="pr-auto" aria-pressed="false"
+    <button class="pr-collapse" id="pr-collapse" aria-label="Collapse the presentations panel"
+      title="Collapse this panel"><i data-ic="autohide"></i></button>
+    <button class="pr-collapse" id="pr-auto" aria-label="Auto-hide the presentations panel" aria-pressed="false"
       title="Auto-hide: the panel slides out of the way and comes back
  when you move the pointer to the left edge. Off by default."
       ><i data-ic="autohide"></i></button>
   </div>
 </nav>
-<button class="presrail-show" id="presrail-show"
-  title="Show presentations">&#187;</button>
+<!-- the same panel-and-arrow icon as the collapse button, mirrored in
+     CSS (.presrail-show .bic) so it points back INTO the page -->
+<button class="presrail-show" id="presrail-show" aria-label="Show presentations"
+  title="Show presentations"><i data-ic="autohide"></i></button>
 <!-- Presenting controls: a DOCKED bar (across the top, or down the right),
      never a panel floating over the slide. The real app-bar groups are
      MOVED into #pb-tools on enter and put back on exit, so the top bar is
@@ -330,7 +331,7 @@
       title="Show or hide the outline (the list of sections) down the left"
       ><i data-ic="outline"></i><span class="btxt">Outline</span></button>
     <!-- the dock button names the DESTINATION, never where the bar is now -->
-    <button class="toggle" id="pb-move"
+    <button class="toggle" id="pb-move" aria-label="Move these controls to the other edge"
       title="Move these controls to the other edge"
       ><i data-ic="dockright"></i></button>
     <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself -->
@@ -345,8 +346,13 @@
 </div>
 <!-- ONE button does both fold and unfold, and it never moves: it is
      pinned to the same spot whether the bar is in or out -->
-<button class="pb-toggle" id="present-bar-show"
-  title="Hide or show the presenting controls" hidden>&#9776;</button>
+<!-- a chevron, deliberately NOT the menu icon: syncToggleBtn (app.js)
+     repaints this with a chevron pointing the way the bar will travel,
+     and ☰ is the Outline button's glyph — two controls wearing the same
+     symbol is what made this one look broken. This is only the state
+     before the first sync (hidden bar, top dock). -->
+<button class="pb-toggle" id="present-bar-show" aria-label="Hide or show the presenting controls"
+  title="Hide or show the presenting controls" hidden>&#9660;</button>
 <div class="docs" id="docs">
 {shells}
 </div>
@@ -377,14 +383,14 @@
            now ... the default screen had something more standard, like
            'create new', or open previous"). -->
       <div class="welcome-btns">
-        <button class="dbtn primary" id="welcome-new">&#43; New
-          presentation</button>
-        <button class="dbtn ghost" id="welcome-open">&#128193; Open
-          local files&#8230;</button>
-        <button class="dbtn ghost" id="welcome-url">&#128279; From
-          GitHub / URL&#8230;</button>
-        <button class="dbtn ghost" id="welcome-demo" hidden>&#9654; Try the
-          example notebook</button>
+        <button class="dbtn primary" id="welcome-new"><i data-ic="plus"></i>
+          New presentation</button>
+        <button class="dbtn ghost" id="welcome-open"><i data-ic="open"></i>
+          Open local files&#8230;</button>
+        <button class="dbtn ghost" id="welcome-url"><i data-ic="link"></i>
+          From GitHub / URL&#8230;</button>
+        <button class="dbtn ghost" id="welcome-demo"
+          hidden><i data-ic="play"></i> Try the example notebook</button>
       </div>
       <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
         this window.</p>
@@ -499,9 +505,10 @@
     <div class="help-head">
       <span class="help-title">How to use</span>
       <span class="deck-spring"></span>
-      <button class="dbtn" id="help-tour" title="Take the guided tour">&#9654;
-        Take a tour</button>
-      <button class="dbtn" id="help-close" title="Close">&#10005;</button>
+      <button class="dbtn" id="help-tour" title="Take the guided
+ tour"><i data-ic="play"></i> Take a tour</button>
+      <button class="dbtn" id="help-close" aria-label="Close"
+        title="Close"><i data-ic="exit"></i></button>
     </div>
     <div class="help-body">
       {help_html}
@@ -531,7 +538,8 @@
       <span class="odlg-path" id="odlg-path"></span>
       <button class="dbtn" id="odlg-files" hidden>Choose
         files&#8230;</button>
-      <button class="dbtn" id="odlg-close" title="Close">&#10005;</button>
+      <button class="dbtn" id="odlg-close" aria-label="Close"
+        title="Close"><i data-ic="exit"></i></button>
     </div>
     <div class="odlg-recent" id="odlg-recent" hidden></div>
     <div class="odlg-list" id="odlg-list"></div>
@@ -550,7 +558,7 @@
 <div class="drophint" id="drophint" hidden>Drop .ipynb files to open</div>
 <div class="figmax" id="figmax" hidden>
   <button class="figmax-close" id="figmax-close"
-    title="Close (Esc)">&#10005; Close</button>
+    title="Close (Esc)"><i data-ic="exit"></i> Close</button>
   <div class="figmax-box" id="figmax-box"></div>
 </div>
 <div class="ckfilter-menu" id="ck-filter-menu" hidden></div>
@@ -581,13 +589,17 @@
   multiple hidden>
 <aside class="selpane varspane" id="varspane" hidden>
   <div class="selpane-h"><span>Variables</span>
-    <button class="dbtn dc-icon" id="varspane-close"
-      title="Close">&#10005;</button></div>
+    <button class="dbtn dc-icon" id="varspane-close" aria-label="Close"
+      title="Close"><i data-ic="exit"></i></button></div>
   <div class="selpane-list" id="varspane-body"></div>
 </aside>
 <input type="file" id="deckfile" accept=".junoview,.json,.html" hidden>
 {deck_shell}
 <script type="application/json" id="app-data">{app_data}</script>
+<!-- window.SemIcons — the branding.py icon table for DOM built at
+     runtime. MUST come before app.js/deck.js so their bic() helpers
+     see it at load (see the icon-set comment in branding.py). -->
+<script>{icons_js}</script>
 <script>{js}</script>
 <script>{pptx_js}</script>
 <script>{deck_js}</script>

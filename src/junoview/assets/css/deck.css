@@ -64,7 +64,11 @@ body.deck-open{overflow:hidden;}
   border-bottom:1px solid #ffffff14;background:var(--chrome-1,#0e1926);
   flex:none;min-height:34px;flex-wrap:nowrap;overflow-x:clip;}
 .deck-qat[hidden]{display:none!important;}
-.deck-qat .dbtn{padding:4px 9px;}
+/* nowrap + flex:none: a squeezed flex item shrinks to min-content and
+   its label wraps INSIDE the button ("File" over its caret) — a second
+   line by another name. The bar's width pressure goes to fitQat's
+   rungs instead (2026-08-24). */
+.deck-qat .dbtn{padding:4px 9px;white-space:nowrap;flex:none;}
 .deck-qat .rbn-stack{flex-direction:row;align-items:center;gap:6px;}
 .deck-qat .rbn-cell{height:26px;gap:3px;}
 .deck-qat .dc-menuwrap,.deck-qat .dc-savegrp{display:inline-flex;
@@ -85,6 +89,23 @@ body.deck-open{overflow:hidden;}
   min-width:190px;outline:none;}
 .deck-qat .deck-status{height:22px;font-size:10px;flex:none;
   max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ---- fitQat's rungs (see fitQat in deck.js): this bar never clips.
+   Rung 1 drops the save readout (informative, not a control; the Save
+   button's tooltip carries the same words). Rung 2 tightens spacing and
+   swaps the .qat-long/.qat-short label pair ("Autosave"→"Auto") — words
+   are SHORTENED, never hidden (icon-only was rejected twice). The floor
+   scrolls the bar sideways so Present and Help are always reachable;
+   its menus float via floatMenu (position:fixed), so the scroll box
+   cannot cut them off. */
+.deck-qat .qat-short{display:none;}
+.deck-qat.qat-c1 .deck-status{display:none;}
+.deck-qat.qat-c2{gap:3px;}
+.deck-qat.qat-c2 .dbtn{padding:4px 6px;}
+.deck-qat.qat-c2 .qat-name{max-width:16vw;}
+.deck-qat.qat-c2 .qat-long{display:none;}
+.deck-qat.qat-c2 .qat-short{display:inline;}
+.deck-qat.qat-scroll{overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:thin;}
 /* ---- the zoom cluster, in the corner of the canvas -------------------
    It lived in the ribbon, then in the top bar, and was wrong in both: it
    is a property of the CANVAS, so it belongs at the canvas. Bottom-right
@@ -246,8 +267,12 @@ body.deck-open{overflow:hidden;}
 .bg-chip{width:26px;height:20px;border-radius:5px;padding:0;
   border:1px solid #ffffff33;}
 .bg-auto,.bg-w{font-size:10.5px;padding:3px 8px;flex-direction:row;}
-.sp-tools{display:flex;gap:5px;padding:2px 2px 8px;}
-.sp-tool{font-size:10px;padding:3px 8px;}
+/* wrap, don't clip: five tools never fit the pane's default width on
+   one line, and a clipped "New folder" is a tool that does not exist
+   (2026-08-23, seen when the tool labels took their bic() icons) */
+.sp-tools{display:flex;flex-wrap:wrap;gap:5px;padding:2px 2px 8px;}
+.sp-tool{font-size:10px;padding:3px 8px;white-space:nowrap;}
+.sp-tool .bic{width:11px;height:11px;vertical-align:-2px;}
 .sp-tool[disabled]{opacity:.4;cursor:default;}
 .sp-folder{display:flex;align-items:center;gap:6px;padding:5px 6px;
   border-radius:6px;background:#ffffff0a;margin-top:6px;cursor:pointer;}
@@ -2948,3 +2973,16 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   color-mix(in srgb,var(--accent) 70%,transparent);opacity:.5;}
 .an-endpt.an-addpt:hover{opacity:1;background:var(--accent);
   border-style:solid;}
+/* ---- icon sizing where JS-built editor chrome swapped an emoji or a
+   raw glyph for a .bic svg (2026-08-23). Same rule as app.css: only
+   the tight little buttons are clamped below the 14px default. ---- */
+.sp-act .bic,.sp-fico .bic{width:12px;height:12px;vertical-align:-2px;}
+.vo-eye .bic,.vo-full .bic{width:12px;height:12px;vertical-align:-2px;}
+.vo-xall .bic{width:11px;height:11px;vertical-align:-2px;}
+.film-mini .bic{width:10px;height:10px;vertical-align:-1px;}
+.pane-x .bic,.ss-del .bic{width:10px;height:10px;vertical-align:-1px;}
+.an-lockchip .bic{width:10px;height:10px;vertical-align:-2px;}
+.an-verwait .bic{width:12px;height:12px;vertical-align:-2px;}
+.pickbar .bic{width:13px;height:13px;vertical-align:-2px;}
+.dc-mi .bic{width:12px;height:12px;vertical-align:-2px;}
+.cellpartbtn .bic{width:10px;height:10px;vertical-align:-1px;}

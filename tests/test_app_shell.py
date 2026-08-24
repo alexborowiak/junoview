@@ -10,7 +10,11 @@ sidebar's nav key legend and the raw notebook view live here too.
 
 from __future__ import annotations
 
-from junoview.render.items import render_nav
+import re
+
+from junoview.notebook.parser import parse_notebook
+from junoview.render.items import render_nav, render_raw
+from junoview.render.page import render_html
 
 
 def test_ribbon_group_counts(out):
@@ -237,6 +241,102 @@ def test_raw_notebook_view_shows_cells_as_authored(out):
     assert 'id="view-raw"' in out and 'class="rawview"' in out
     assert 'class="rawcell code"' in out and "#| display: metric" in out
     assert 'class="rawcell md"' in out
+
+
+# ---- the raw view embeds ONE copy of what the cards already carry ------
+
+_FIG_B64 = "QmlnRmlnUGF5bG9hZA" * 40    # distinctive, base64-alphabet only
+
+
+def _fig_nb() -> dict:
+    return {"cells": [
+        {"cell_type": "markdown", "source": "# One figure"},
+        {"cell_type": "code", "id": "f1",
+         "source": "#| display: figure\n#| title: Map\nplot()",
+         "outputs": [{"output_type": "display_data",
+                      "data": {"image/png": _FIG_B64}}]},
+    ]}
+
+
+def test_raw_view_does_not_duplicate_card_payloads():
+    """Each figure's base64 payload is embedded ONCE per page.
+
+    The raw view used to re-render and re-embed every output the cards
+    already carry, so every figure crossed the wire, the parser and the
+    browser's memory twice (a notebook with ~28MB of figures rendered a
+    57.9MB page). Card outputs now carry a data-jvout key and the raw
+    view holds an empty .rawph placeholder that app.js fills by cloning
+    the card's already-parsed node when the raw view is first opened.
+    """
+    page = render_html(parse_notebook(_fig_nb()), source_name="fig")
+    assert page.count(_FIG_B64) == 1
+    # the placeholder points at the card copy by the stamped key
+    # (cell 1, output 0), and the card copy carries that key
+    assert '<div class="rawph" data-jvout="c1o0"></div>' in page
+    assert page.count('data-jvout="c1o0"') == 2   # card copy + placeholder
+    # the client-side filler and its fallback note shipped with the page
+    assert "function populateRawView" in page and "rawph-missing" in page
+    # called bare (no card accounting), render_raw stays self-contained:
+    # the full payload, no placeholders
+    raw_alone = render_raw(_fig_nb())
+    assert _FIG_B64 in raw_alone and "rawph" not in raw_alone
+
+
+def test_raw_view_keeps_outputs_the_cards_drop():
+    """Outputs absent from the cards stay FULLY embedded in the raw view.
+
+    The raw view's contract is "the whole notebook, faithfully". Two rows
+    of the decision table in _card_output_keys(): a `display: hidden`
+    cell's figure has no card at all, and a directive-only group member's
+    stream output is filtered out of the card's code fold (empty code is
+    not a step, and a single-step fold shows no step output) — both must
+    arrive in the raw markup itself, never as placeholders.
+    """
+    hidden_b64 = "SGlkZGVuRmlndXJl" * 30
+    face_b64 = "R3JvdXBGYWNl" * 30
+    nb = {"cells": [
+        {"cell_type": "code", "id": "h1",
+         "source": "#| display: hidden\nsecret_plot()",
+         "outputs": [{"output_type": "display_data",
+                      "data": {"image/png": hidden_b64}}]},
+        {"cell_type": "code", "id": "g1",
+         "source": "#| group: g\n",
+         "outputs": [{"output_type": "stream", "name": "stdout",
+                      "text": "dropped from the card\n"}]},
+        {"cell_type": "code", "id": "g2",
+         "source": "#| group: g\n#| display: figure\nplot()",
+         "outputs": [{"output_type": "display_data",
+                      "data": {"image/png": face_b64}}]},
+    ]}
+    doc = parse_notebook(nb)
+    page = render_html(doc, source_name="drop")
+    # the hidden figure: no card, so its ONE copy is the raw view's —
+    # embedded in full (it is in raw_html), never a placeholder
+    assert page.count(hidden_b64) == 1
+    assert hidden_b64 in doc.raw_html
+    assert 'class="rawph" data-jvout="c0o0"' not in page
+    # the directive-only member's stream output: same deal
+    assert page.count("dropped from the card") == 1
+    assert "dropped from the card" in doc.raw_html
+    assert 'class="rawph" data-jvout="c1o0"' not in page
+    # while the group's face figure IS on its card: one copy + placeholder
+    assert page.count(face_b64) == 1
+    assert '<div class="rawph" data-jvout="c2o0"></div>' in page
+
+
+def test_every_raw_placeholder_has_a_card_copy(out):
+    """KEEP-IN-SYNC guard: every .rawph key exists in the cards half.
+
+    _card_output_keys() predicts what render_item embeds. If the
+    prediction drifts, a placeholder points at nothing and the client
+    shows the missing-mirror note instead of the output — so each
+    placeholder key must appear exactly twice in the page: the card's
+    stamped copy and the placeholder referencing it.
+    """
+    ph_keys = re.findall(r'class="rawph" data-jvout="([^"]+)"', out)
+    assert ph_keys           # the demo notebook has card-embedded outputs
+    for k in ph_keys:
+        assert out.count(f'data-jvout="{k}"') == 2, k
 
 
 def test_focus_mode_gone_and_toolbar_filter_order(out):

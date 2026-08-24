@@ -15,7 +15,8 @@ from __future__ import annotations
 import ast
 from dataclasses import dataclass, field
 
-from .chains import _cell_names
+from .chains import _cell_names, _code_cards
+from .classify import _UNPARSED, _parse_or_none, _strip_magics
 from .model import Document
 
 
@@ -300,27 +301,27 @@ def collect_variables(doc: Document) -> list[NotebookVariable]:
     """Every top-level name the document's code binds, in definition order,
     with the cards that define, redefine and read it. Runs at parse time,
     while the cards still carry their member cells."""
-    cards = []
-    for sec in doc.sections:
-        for it in sec.items:
-            if it.is_note or not it.members:
-                continue
-            cards.append((min(m["idx"] for m in it.members), it))
-    cards.sort(key=lambda t: t[0])
+    cards = _code_cards(doc)
 
     index: dict[str, NotebookVariable] = {}
     for _, it in cards:
         card_defs: list[tuple[str, str]] = []
         card_uses: set[str] = set()
         for m in sorted(it.members, key=lambda m: m["idx"]):
-            src = "\n".join(ln for ln in m["code"].splitlines()
-                            if not ln.lstrip().startswith(("%", "!")))
-            try:
-                tree = ast.parse(src)
-            except SyntaxError:
+            # the magic-stripped ast, parsed once in parse_notebook's main
+            # pass; parse here only when called on a hand-built doc
+            tree = m.get("tree_nomagic", _UNPARSED)
+            if tree is _UNPARSED:
+                tree = _parse_or_none(_strip_magics(m["code"]))
+            if tree is None:
                 continue
             card_defs.extend(_top_level_defs(tree))
-            card_uses |= _cell_names(m["code"])[1]
+            # _build_chains already derived this cell's (defs, uses) from
+            # the same tree — reuse them rather than walking it again
+            names = m.get("names")
+            if names is None:
+                names = _cell_names(m["code"], tree)
+            card_uses |= names[1]
 
         defined_here: set[str] = set()
         for name, label in card_defs:

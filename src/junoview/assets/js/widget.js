@@ -2,6 +2,14 @@
 function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,
   c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
 
+/* the chrome icon set. There is no page build here, so widget.py ships
+   branding.py's icons_map() inside the synced `data` dict (key -> the
+   same <svg class="bic"> markup the app's templates expand to); mount()
+   refreshes the module map from the model. Soft on absence: an older
+   model without the map gets the callers' text fallbacks. */
+let _icnMap={};
+function bic(k){return _icnMap[k]||'';}
+
 function ensureFonts(){
   if(document.getElementById('snb-fonts'))return;
   const l=document.createElement('link');
@@ -50,6 +58,7 @@ function shell(model){
 
 function mount(model, el){
   ensureFonts();
+  _icnMap=(model.get('data')||{}).icons||{};
   el.innerHTML='';
   const root=document.createElement('div');
   root.className='snb-root';
@@ -84,7 +93,10 @@ function mount(model, el){
     const head=$('.cardhead',card);
     if(head && !$('.hidebtn',head)){
       const b=document.createElement('button');
-      b.className='hidebtn'; b.title='Hide card'; b.innerHTML='&#x2715;';
+      /* the eye, not a ✕ — ✕ means CLOSE everywhere else in this app;
+         hiding is the eye, same as the static page's card chrome */
+      b.className='hidebtn'; b.title='Hide card';
+      b.innerHTML=bic('eye')||'&#x2715;';
       b.addEventListener('click',()=>{card.classList.add('is-hidden');
         const h=new Set(vs().hidden); h.add(card.id.slice(5));
         saveVs({hidden:[...h]}); refreshHidden();});

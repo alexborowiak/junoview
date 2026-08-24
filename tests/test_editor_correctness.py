@@ -151,7 +151,8 @@ def test_a_deck_keeps_its_strip_and_a_poster_does_not(out):
     assert "add.textContent=pg.poster?'+ Create new version':'+ Add slide';" in out
     # never poster-only, and the word matches the page you are on
     assert "if(vb) vb.hidden=!pg.poster;" not in out
-    assert "vb.innerHTML=pg.poster?'&#9776; Versions':'&#9776; Slides';" in out
+    # icon + word since 2026-08-24 (was two '&#9776; …' glyph strings)
+    assert "vb.innerHTML=pg.poster?bic('versions')+' Versions'" in out
     # File and Save ride the top bar for BOTH kinds while editing
     assert "if(!pageOf().poster) return;" not in out
 
@@ -1313,7 +1314,8 @@ def test_layer_folders_are_filing_not_grouping(out):
     """
     assert "function folderNames(s){" in out
     assert "s.annots[i].fold=nm;" in out
-    assert "'\\u2b1a New folder'" in out
+    # the tool's dashed-frame icon comes from SemIcons now (2026-08-23)
+    assert "bic('frame')+' New folder'" in out
     # an item filed in a folder must not also appear in the loose list
     assert "if(!ann[i]||(ann[i].grp==null&&!ann[i].fold))" in out
 
@@ -1488,9 +1490,13 @@ def test_a_rename_or_delete_does_not_strip_the_embedded_figures(out):
     strip every embedded figure out of junoview_project.json -- and the
     1.2s refs-only autosave, being the LAST writer, undid every manual
     embed a second after the next keystroke (2026-08-22)."""
+    # ONE saveProject() helper owns the embedAssets save; rename and
+    # delete (File menu and rail bins alike) route through it (2026-08-23)
     assert out.count(
         "APP.api('/api/save',{presentations:embedAssets(deep(projectPres))})"
-    ) == 3
+    ) == 1
+    assert "function saveProject(){" in out
+    assert out.count("saveProject();") == 2
     # the idle consolidation that puts the figures back
     assert "function saveToProject(silent,embed){" in out
     assert "var body=(silent&&!embed)?merged:embedAssets(deep(merged));" in out

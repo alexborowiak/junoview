@@ -352,7 +352,7 @@ def test_objects_pane_groups_are_folders_with_names_and_colours(out):
     assert "function grpMeta(s,g){" in out
     assert "function dupAnnots(idxs,newGrp,srcGrp){" in out
     assert "var GRP_COLORS=" in out
-    assert "if(s.grpmeta) o.grpmeta=JSON.parse(JSON.stringify(s.grpmeta));" in out
+    assert "if(s.grpmeta) o.grpmeta=deep(s.grpmeta);" in out
     assert "f.className='sp-folder';" in out
     assert "if(m2.name) m2.name+=' copy';" in out
     # pane rows multi-select so Group is reachable from the pane
@@ -375,7 +375,7 @@ def test_slides_have_their_own_background_and_border(out):
     assert 'id="bg-btn"' in out and 'id="bg-menu"' in out
     assert "var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';" in out
     assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
-    assert "if(s.border) o.border=JSON.parse(JSON.stringify(s.border));" in out
+    assert "if(s.border) o.border=deep(s.border);" in out
     assert "(bd.w||4)/SW_REF_H*h" in out
     # .pptx wants ONE colour, and a gradient background has none - so the
     # export takes its first stop (2026-08-20)

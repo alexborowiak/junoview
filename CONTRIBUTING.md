@@ -47,7 +47,7 @@ stylesheet a template.
 
 ```bash
 pytest                    # everything
-pytest tests/test_directives.py -v
+pytest tests/test_directive_shorthand.py -v
 ```
 
 ### What the suite actually is

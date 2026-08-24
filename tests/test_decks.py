@@ -11,6 +11,7 @@ presentation is current at a time, and Notebooks is always the way back.
 from __future__ import annotations
 
 import copy
+import re
 
 from junoview.branding import _ICON_PATHS
 from junoview.notebook.parser import parse_notebook
@@ -143,7 +144,10 @@ def test_presentation_rail_is_a_radio_model(out):
 
 def test_presentations_rail_auto_hide_is_off_by_default(out):
     """The presentations rail can auto-hide, OFF by default."""
-    assert 'id="pr-auto" aria-pressed="false"' in out
+    # pr-auto grew an aria-label between the two attributes (2026-08-24
+    # icon-only convention pass), so the pin holds them separately
+    assert 'id="pr-auto" aria-label=' in out
+    assert re.search(r'id="pr-auto"[^>]*aria-pressed="false"', out)
     assert "body.prrail-auto.prrail-peek .presrail{transform:none;}" in out
     # the panel keeps a real width while auto-hidden, or translateX(-100%)
     # is 100% of nothing and its contents overflow a 0px box as artefacts

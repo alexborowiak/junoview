@@ -7,12 +7,12 @@ static page. See ``junoview --help``.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
 from ._write import write_text
 from .notebook.loader import (
+    _deck_json,
     _is_url,
     _stem_for,
     doc_from_url,
@@ -84,7 +84,14 @@ def main(argv: list[str] | None = None) -> int:
         if not local[0].exists():
             print(f"error: {local[0]} not found", file=sys.stderr)
             return 1
-        embed_deck(local[0], Path(args.embed_deck))
+        # a bad deck file used to raise SystemExit from inside the loader;
+        # it is a ValueError now (the server needs it catchable), so the
+        # CLI prints the same one-line error itself (2026-08-23)
+        try:
+            embed_deck(local[0], Path(args.embed_deck))
+        except ValueError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return 1
         print(f"embedded {args.embed_deck} into {local[0]} "
               "(metadata.semantic.presentations)")
         return 0
@@ -111,29 +118,39 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
     docs = []
     taken: set[str] = set()
-    for n in items:
-        if _is_url(n):
-            doc = doc_from_url(n)
-            if single and args.title:
-                doc.title = args.title
-            if single and deck is not None:
-                pres = _as_presentations(
-                    json.loads(deck.read_text(encoding="utf-8")))
-                if pres:
-                    doc.presentations = pres
-            doc.source_name = _stem_for(
-                Path(doc.source_name + ".ipynb"), taken)
-        else:
-            doc = load_doc(Path(n),
-                           title=args.title if single else None,
-                           deck_path=deck if single else None)
-            doc.source_name = _stem_for(Path(n), taken)
-        taken.add(doc.source_name)
-        docs.append(doc)
-    cfg = {}
-    if not single and deck is not None:
-        cfg["presentations"] = _as_presentations(
-            json.loads(deck.read_text(encoding="utf-8")))
+    # every --deck read goes through _deck_json, so the polyglot
+    # name.junoview.html save works on all three branches, not just the
+    # sidecar path inside load_doc (it parsed with raw json.loads on two
+    # of them until 2026-08-23). And since the loader now raises
+    # ValueError instead of SystemExit, the CLI prints the same one-line
+    # "error: ..." itself and exits 1.
+    try:
+        for n in items:
+            if _is_url(n):
+                doc = doc_from_url(n)
+                if single and args.title:
+                    doc.title = args.title
+                if single and deck is not None:
+                    pres = _as_presentations(
+                        _deck_json(deck.read_text(encoding="utf-8")))
+                    if pres:
+                        doc.presentations = pres
+                doc.source_name = _stem_for(
+                    Path(doc.source_name + ".ipynb"), taken)
+            else:
+                doc = load_doc(Path(n),
+                               title=args.title if single else None,
+                               deck_path=deck if single else None)
+                doc.source_name = _stem_for(Path(n), taken)
+            taken.add(doc.source_name)
+            docs.append(doc)
+        cfg = {}
+        if not single and deck is not None:
+            cfg["presentations"] = _as_presentations(
+                _deck_json(deck.read_text(encoding="utf-8")))
+    except ValueError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
     html_out = render_page(docs, app_cfg=cfg)
     if args.output:
         out_path = Path(args.output)

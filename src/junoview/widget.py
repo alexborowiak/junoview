@@ -49,7 +49,9 @@ from pathlib import Path
 import anywidget
 import traitlets
 
+from ._write import write_text
 from .assets import core_css, load
+from .branding import icons_map
 from .notebook.parser import parse_notebook
 from .render.items import (
     doc_meta,
@@ -304,6 +306,10 @@ class SemanticNotebook(anywidget.AnyWidget):
             "graph_panel": render_graph_panel(self._doc),
             "stage_html": render_sections(self._doc),
             "recompute": rc,
+            # the branding.py icon set, for DOM widget.js builds itself
+            # (there is no page build to inject window.SemIcons here) —
+            # same single-source artwork as every other runtime
+            "icons": icons_map(),
         }
 
     # ---- live recompute --------------------------------------------------
@@ -362,5 +368,8 @@ class SemanticNotebook(anywidget.AnyWidget):
         for s in doc.sections:
             s.items = [it for it in s.items if it.item_id not in hidden]
         doc.sections = [s for s in doc.sections if s.items]
-        Path(path).write_text(render_html(doc), encoding="utf-8")
+        # through _write.write_text like every other writer: a bare
+        # Path.write_text let Windows turn every \n into \r\n, so the
+        # "same" export hashed differently per platform (2026-08-23)
+        write_text(Path(path), render_html(doc))
         return str(path)

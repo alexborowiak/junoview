@@ -13,7 +13,7 @@ import html
 import json
 
 from .. import assets
-from ..branding import _FAVICON, _KOFI_URL, _LOGO_SVG, _icons
+from ..branding import _FAVICON, _KOFI_URL, _LOGO_SVG, _icons, icons_js
 from ..notebook.model import Document
 from .items import (
     deck_payload,
@@ -43,7 +43,12 @@ def render_shell(doc: Document, path: str = "") -> str:
             "untitled analysis", stem.strip().lower()):
         doctitle = (f'<div class="raildoct" title="The notebook’s '
                     f'first heading">{html.escape(doc.title)}</div>')
-    return assets.shell_template().format(
+    # _icons() runs HERE as well as over the whole page: a shell is also
+    # served on its own (server routes, the Pyodide bridge's web_parse)
+    # and mounted into an already-built page, where no later expansion
+    # pass exists. The pass is idempotent — expanded SVG carries no
+    # tokens — so shells inside render_page() are unaffected.
+    return _icons(assets.shell_template().format(
         stem=html.escape(stem),
         path_attr=path_attr,
         title=html.escape(doc.title),
@@ -56,7 +61,7 @@ def render_shell(doc: Document, path: str = "") -> str:
         sections=render_sections(doc),
         rawview=doc.raw_html or "",
         nb_data=deck_payload(doc),
-    )
+    ))
 
 
 def render_page(docs: list[Document], mode: str = "static",
@@ -110,6 +115,9 @@ def render_page(docs: list[Document], mode: str = "static",
         mathjax=assets.mathjax_html(),
         deck_shell=assets.deck_html(),
         app_data=json.dumps(app_data, ensure_ascii=False).replace("</", "<\\/"),
+        # window.SemIcons: the icon table for DOM the scripts build at
+        # runtime — same artwork, single source (see branding.py header)
+        icons_js=icons_js(),
         deck_css=assets.deck_css(),
         deck_js=assets.deck_js(),
         pptx_js=assets.pptx_js(),

@@ -43,6 +43,9 @@ class RenderedOutput:
     has_interactive: bool = False   # embeds live JS (plotly/bokeh/vega/…)
     ot: str = "print"  # output-type slug for the Output-types filter
     pt: str = ""       # plot-type slug (matplotlib/plotly/bokeh/…) — set on
+    key: str = ""      # stable per-page id ("c<cell>o<n>") stamped into the
+    #                    payload as data-jvout — the raw view's placeholders
+    #                    point at the card copy by this key (items.render_raw)
 
 
 _B64_STRIP_RE = re.compile(r"[^A-Za-z0-9+/=]")
@@ -190,8 +193,16 @@ def _repr_kind(text: str) -> str:
     return "value"
 
 
-def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
-    """Convert nbformat output dicts into ready-to-embed HTML fragments."""
+def render_outputs(outputs: list[dict],
+                   key: str = "") -> list[RenderedOutput]:
+    """Convert nbformat output dicts into ready-to-embed HTML fragments.
+
+    ``key`` (e.g. ``"c12"`` for cell 12) stamps each fragment with a stable
+    ``data-jvout="c12o0"`` attribute and sets ``RenderedOutput.key``. The raw
+    view uses these to point at a card's copy of the same output instead of
+    embedding a second multi-MB payload (see :func:`~junoview.render.items
+    .render_raw`). Without ``key`` the fragments are unstamped, as before.
+    """
     rendered: list[RenderedOutput] = []
     for out in outputs or []:
         otype = out.get("output_type")
@@ -311,4 +322,14 @@ def render_outputs(outputs: list[dict]) -> list[RenderedOutput]:
                 "error",
                 f'<pre class="error ot-error">{html.escape(tb)}</pre>',
                 ot="error"))
+    if key:
+        # Every payload above opens with a tag this module builds itself, and
+        # nothing before that tag's closing ">" can contain a raw ">" (base64
+        # is alphabet-restricted, the plotly spec is html.escaped) — so the
+        # first ">" is the safe place to stamp the key attribute.
+        for i, r in enumerate(rendered):
+            r.key = f"{key}o{i}"
+            gt = r.payload.index(">")
+            r.payload = (f'{r.payload[:gt]} data-jvout="{r.key}"'
+                         f'{r.payload[gt:]}')
     return rendered

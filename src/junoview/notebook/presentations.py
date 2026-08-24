@@ -46,6 +46,10 @@ def _as_presentations(obj: Any) -> list:
                      "slides": []}
             if isinstance(p.get("nb"), str) and p["nb"].strip():
                 entry["nb"] = p["nb"].strip()
+            # `filters` is one-sided ON PURPOSE: deck.js normPres never
+            # writes it back for a view, so keeping it here is dead-
+            # defensive tolerance for hand-edited files, not schema drift.
+            # The parity test excludes it for that reason (2026-08-23).
             for key in ("style", "view", "filters"):
                 if isinstance(p.get(key), dict):
                     entry[key] = p[key]
@@ -127,6 +131,12 @@ def _as_presentations(obj: Any) -> list:
             entry["cropMarks"] = 1
         if p.get("showNums"):
             entry["showNums"] = 1
+        # tap-to-enlarge, same truthy->1 rule as showNums: the FIFTH key
+        # this rebuild silently shed while normPres kept it. The parity
+        # test (tests/test_deck_schema_parity.py) now diffs this function
+        # against normPres so the sixth never happens (2026-08-23).
+        if p.get("tapzoom"):
+            entry["tapzoom"] = 1
         if isinstance(p.get("pageBg"), str) and p["pageBg"].strip():
             entry["pageBg"] = p["pageBg"].strip()
         # deck-level furniture, the whole-talk notes/pad and named styles:

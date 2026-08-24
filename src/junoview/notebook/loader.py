@@ -14,6 +14,7 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from .._write import write_text
 from ..render.page import render_html
 from .model import Document
 from .parser import parse_notebook
@@ -66,8 +67,11 @@ def _deck_json(text: str):
     if t.startswith("<"):
         m = _DECK_BLOCK_RE.search(t)
         if m is None:
-            raise SystemExit("error: no Junoview data block in that "
-                             "HTML file")
+            # ValueError, not SystemExit: this also runs inside the local
+            # server, where SystemExit (a BaseException) sailed past every
+            # `except Exception` and killed the request thread. The CLI
+            # catches it and prints "error: ..." as before (2026-08-23).
+            raise ValueError("no Junoview data block in that HTML file")
         t = m.group(1)
     return json.loads(t)
 
@@ -82,14 +86,14 @@ def embed_deck(nb_path: Path, deck_path: Path) -> None:
     pres = _as_presentations(
         _deck_json(deck_path.read_text(encoding="utf-8")))
     if not pres:
-        raise SystemExit(f"error: {deck_path} does not look like saved "
+        # ValueError for the same reason as _deck_json above (2026-08-23)
+        raise ValueError(f"{deck_path} does not look like saved "
                          "presentations (expected {'presentations': [...]})")
     nb = json.loads(nb_path.read_text(encoding="utf-8"))
     sem = nb.setdefault("metadata", {}).setdefault("semantic", {})
     sem["presentations"] = pres
     sem.pop("deck", None)
-    nb_path.write_text(json.dumps(nb, indent=1, ensure_ascii=False) + "\n",
-                       encoding="utf-8")
+    write_text(nb_path, json.dumps(nb, indent=1, ensure_ascii=False) + "\n")
 
 
 _GH_BLOB_RE = re.compile(

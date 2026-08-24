@@ -30,6 +30,15 @@
      theme looked like "just the central page" (2026-08-19, user). Now a
      scheme re-inks these and every button follows. */
   --btn-bg:#ffffff12; --btn-border:#ffffff40; --btn-ink:#d7e3ec;
+  /* ---- the CODE-KIND palette: the single CSS source. The JS twin is
+     TREE_FILL in app.js (exported as window.SemView.kindFill, which
+     deck.js's NODE_FILL reads). One colour serves two kind names where
+     they align: function/metric, data/dataset, settings/transform,
+     print/note. Plotting/figure stay on var(--accent) — they follow the
+     theme, deliberately not part of this fixed set. */
+  --ck-imports:#a3855c; --ck-function:#46a892; --ck-data:#4d90c0;
+  --ck-constant:#9a7cc0; --ck-settings:#5b7589; --ck-print:#cf9a4e;
+  --ck-code:#8ba0b2;
 }
 /* The legacy --cyan alias must resolve PER ELEMENT, not once at :root:
    a custom property defined on :root evaluates its var() there and
@@ -48,6 +57,17 @@
   --rad:6px; --rail-w:300px;
 }
 *{box-sizing:border-box}
+/* ---- button icons: inline SVG, never emoji (emoji are tofu in the mono
+   font). One 16-grid, stroke-only, currentColor — so an icon is always
+   the same weight as the label beside it and follows the theme. The
+   base rule lives HERE (not app.css) because every bundle that shows a
+   .bic needs it: the app page, the widget's scoped core.css, and card
+   chrome cloned into decks. inline-block, not block: icons sit inside
+   flex buttons (where display is blockified anyway) AND inline in text
+   labels, where block would break the line. ---- */
+.bic{width:14px;height:14px;flex:none;display:inline-block;
+  vertical-align:-2px;stroke:currentColor;stroke-width:1.5;fill:none;
+  stroke-linecap:round;stroke-linejoin:round;opacity:.9;}
 /* reserve the scrollbar's width at all times: without it, switching to a
    view that does not scroll the page (the tree) widens the viewport and
    the CENTRED ribbon slides sideways — every button moving a few px is
@@ -142,9 +162,17 @@ body.light .rf-btn{border-color:var(--line);background:#fff;
    A custom view is edited IN the document (you see exactly what you get),
    so its chrome is a second bar under the filter ribbon rather than a
    separate stage. */
-.stylebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+/* NOWRAP like every other toolbar (2026-08-24 — it used to wrap and
+   become a second band of chrome on narrow windows). fitRibbon measures
+   this bar too: under pressure it shares rbc1's spacing stage, and the
+   floor is the same sideways scroll the appbar uses — nothing is ever
+   clipped unreachable, nothing wraps. */
+.stylebar{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;
+  overflow-x:auto;scrollbar-width:thin;
   padding:7px 16px 8px;border-top:1px solid var(--chrome-line);
   background:#0f1b28;}
+body.rbc1 .stylebar{gap:4px;}
+body.rbc1 .stylebar .toggle{padding:0 9px;}
 body.light .stylebar{background:#eef3f7;}
 .stylebar[hidden]{display:none;}
 .sb-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.16em;
@@ -156,7 +184,7 @@ body.light .sb-lab{color:var(--ink-3);}
 body.light .sb-name{color:var(--ink);}
 .sb-spring{flex:1;}
 .sb-hint{font-family:var(--mono);font-size:9px;letter-spacing:.05em;
-  color:var(--chrome-ink-2);opacity:.75;}
+  color:var(--chrome-ink-2);opacity:.75;white-space:nowrap;}
 body.light .sb-hint{color:var(--ink-3);}
 .stylebar .toggle{height:30px;box-sizing:border-box;padding:0 13px;
   font-size:11.5px;flex:none;white-space:nowrap;
@@ -232,11 +260,6 @@ body.styling .sectionhead.sty-sel{outline:2px solid var(--cyan);
 .rf-panel{margin-top:8px;border:1px solid var(--chrome-line);
   border-radius:7px;padding:9px 10px;background:#ffffff08;}
 .rf-panel[hidden]{display:none;}
-/* the same panel, floated under the ribbon's File button */
-.rf-panel.rf-float{position:fixed;z-index:200;margin-top:0;width:372px;
-  background:var(--chrome-2,#16273a);border-color:#ffffff22;
-  box-shadow:0 12px 40px #00000066;}
-body.light .rf-panel.rf-float{background:#fff;border-color:var(--line);}
 .rf-row{display:flex;flex-direction:column;gap:1px;margin-bottom:8px;
   min-width:0;}
 .rf-row:last-child{margin-bottom:0;}
@@ -363,43 +386,49 @@ body.light .rf-k,body.light .rf-sub{color:var(--ink-3);}
 .navitem-eye:hover{opacity:1;background:#ffffff14;}
 .navitem.cell-off{opacity:.5;}
 .navitem.cell-off .navitem-eye{opacity:.9;}
-.navitem.cell-off .navitem-eye::after{content:"";position:absolute;
+/* ONE slash for every crossed-out eye: the item eye, the section-heading
+   eyes, and the hide-all control (deck.css draws its own, larger one) */
+.navitem.cell-off .navitem-eye::after,
+.section.sec-headoff .sec-eye::after,
+.navsec-row.head-off .navsec-eye::after,
+.navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
   left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
   transform:rotate(-18deg);border-radius:2px;}
 .navitem .dot{width:9px;height:9px;border-radius:3px;flex:none;
   background:var(--chrome-ink-2);}
 .navitem.k-figure .dot,.nk.k-figure .dot{background:var(--cyan);}
-.navitem.k-dataset .dot,.nk.k-dataset .dot{background:#4d90c0;}
-.navitem.k-transform .dot,.nk.k-transform .dot{background:#5b7589;}
-.navitem.k-metric .dot,.nk.k-metric .dot{background:#46a892;}
-.navitem.k-note .dot,.nk.k-note .dot{background:var(--amber);
+.navitem.k-dataset .dot,.nk.k-dataset .dot{background:var(--ck-data);}
+.navitem.k-transform .dot,.nk.k-transform .dot{background:var(--ck-settings);}
+.navitem.k-metric .dot,.nk.k-metric .dot{background:var(--ck-function);}
+.navitem.k-note .dot,.nk.k-note .dot{background:var(--ck-print);
   border-radius:50%;}
 .navitem.k-code .dot,.nk.k-code .dot{background:#56627033;
   border:1px solid #ffffff22;}
-.navitem.ckmain-imports .dot,.nk.ckmain-imports .dot{background:#a3855c;}
-.navitem.ckmain-function .dot,.nk.ckmain-function .dot{background:#46a892;}
-.navitem.ckmain-data .dot,.nk.ckmain-data .dot{background:#4d90c0;}
-.navitem.ckmain-constant .dot,.nk.ckmain-constant .dot{background:#9a7cc0;}
-.navitem.ckmain-settings .dot,.nk.ckmain-settings .dot{background:#5b7589;}
+.navitem.ckmain-imports .dot,.nk.ckmain-imports .dot{background:var(--ck-imports);}
+.navitem.ckmain-function .dot,.nk.ckmain-function .dot{background:var(--ck-function);}
+.navitem.ckmain-data .dot,.nk.ckmain-data .dot{background:var(--ck-data);}
+.navitem.ckmain-constant .dot,.nk.ckmain-constant .dot{background:var(--ck-constant);}
+.navitem.ckmain-settings .dot,.nk.ckmain-settings .dot{background:var(--ck-settings);}
 .navitem.ckmain-plotting .dot,.nk.ckmain-plotting .dot{background:var(--accent);}
-.navitem.ckmain-print .dot,.nk.ckmain-print .dot{background:#cf9a4e;}
+.navitem.ckmain-print .dot,.nk.ckmain-print .dot{background:var(--ck-print);}
 .navitem.ckmain-comments .dot,.nk.ckmain-comments .dot{background:#5f7386;}
-/* light theme needs its own — a generic body.light .dot outranks these */
+/* light theme needs its own — a generic body.light .dot outranks these
+   (same values as above: these rules exist for SPECIFICITY, not colour) */
 body.light .navitem.ckmain-imports .dot,body.light .nk.ckmain-imports .dot{
-  background:#a3855c;}
+  background:var(--ck-imports);}
 body.light .navitem.ckmain-function .dot,body.light .nk.ckmain-function .dot{
-  background:#46a892;}
+  background:var(--ck-function);}
 body.light .navitem.ckmain-data .dot,body.light .nk.ckmain-data .dot{
-  background:#4d90c0;}
+  background:var(--ck-data);}
 body.light .navitem.ckmain-constant .dot,body.light .nk.ckmain-constant .dot{
-  background:#9a7cc0;}
+  background:var(--ck-constant);}
 body.light .navitem.ckmain-settings .dot,body.light .nk.ckmain-settings .dot{
-  background:#5b7589;}
+  background:var(--ck-settings);}
 body.light .navitem.ckmain-plotting .dot,body.light .nk.ckmain-plotting .dot{
   background:var(--accent);}
 body.light .navitem.ckmain-comments .dot,body.light .nk.ckmain-comments .dot{background:#5f7386;}
 body.light .navitem.ckmain-print .dot,body.light .nk.ckmain-print .dot{
-  background:#cf9a4e;}
+  background:var(--ck-print);}
 
 /* ---------- nav key (what the dot colours mean) ---------- */
 .navkey{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;
@@ -483,11 +512,11 @@ body.light .railtabs{border-color:var(--line);}
 .varrow.vf-out,.vargroup-h.vf-out{display:none;}
 .var-empty{font-size:11.5px;color:var(--chrome-ink-2);padding:8px 4px;}
 /* the type chip borrows the code-kind dot colours where kinds align */
-.var-type.vg-imports{color:#a3855c;}
-.var-type.vg-constants{color:#9a7cc0;}
-.var-type.vg-functions{color:#46a892;}
+.var-type.vg-imports{color:var(--ck-imports);}
+.var-type.vg-constants{color:var(--ck-constant);}
+.var-type.vg-functions{color:var(--ck-function);}
 .var-type.vg-classes{color:#b07cc0;}
-.var-type.vg-data{color:#4d90c0;}
+.var-type.vg-data{color:var(--ck-data);}
 .var-type.vg-plotting{color:var(--accent);}
 body.light .var-filter{background:#00000005;border-color:var(--line);
   color:var(--ink);}
@@ -673,12 +702,8 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .rf-unhide[aria-pressed="true"]{border-color:var(--amber);
   color:var(--amber);}
 .section.sec-headoff .sec-eye{opacity:.5;position:relative;}
-/* a struck-through eye = "hidden, click to bring it back" (the sidebar
-   already uses exactly this mark for a hidden section) */
-.section.sec-headoff .sec-eye::after,
-.navsec-row.head-off .navsec-eye::after{content:"";position:absolute;
-  left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
-  transform:rotate(-18deg);border-radius:2px;}
+/* the struck-through eye = "hidden, click to bring it back" mark is the
+   shared slash rule beside .navitem-eye above */
 .navsec-row.head-off .navsec-t{opacity:.55;text-decoration:line-through;
   text-decoration-thickness:1px;}
 .navsec-row.head-off .navsec-eye{opacity:.9;position:relative;}
@@ -702,10 +727,7 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .navsec-eye:hover,.navsec-hideall:hover{opacity:1;background:#ffffff14;}
 .navsec-row.sec-off .navsec-hideall{opacity:.9;}
 /* the strike belongs on whichever control did the hiding: ≡ for the whole
-   section, the eye for the heading alone */
-.navsec-row.sec-off .navsec-hideall::after{content:"";position:absolute;
-  left:3px;right:3px;top:calc(50% - 1px);height:1.5px;background:currentColor;
-  transform:rotate(-18deg);border-radius:2px;}
+   section, the eye for the heading alone — drawn by the shared slash rule */
 
 /* ---------- cards ---------- */
 .card{background:var(--paper);border:1px solid var(--line);
@@ -722,10 +744,10 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
   width:3px;border-radius:3px;background:var(--line);
   transition:background .2s;}
 .card.k-figure::before{background:var(--cyan);}
-.card.k-dataset::before{background:#4d90c0;}
-.card.k-transform::before{background:#5b7589;}
-.card.k-metric::before{background:#46a892;}
-.card.k-note::before{background:var(--amber);}
+.card.k-dataset::before{background:var(--ck-data);}
+.card.k-transform::before{background:var(--ck-settings);}
+.card.k-metric::before{background:var(--ck-function);}
+.card.k-note::before{background:var(--ck-print);}
 .card.k-code::before{background:var(--paper-3);}
 .card.target-flash{border-color:var(--cyan);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent);}
 
@@ -1258,3 +1280,14 @@ body.light .jv-scheme-opt{color:var(--ink-2);}
 .jv-scheme-dots{display:flex;gap:3px;flex:none;}
 .jv-scheme-dots i{width:10px;height:10px;border-radius:50%;display:block;
   border:1px solid #00000033;}
+/* ---- icon sizing where card/nav chrome swapped an emoji for a .bic
+   svg (2026-08-23). These live in core.css because the widget's scoped
+   bundle renders the same card chrome. ---- */
+.navitem-eye .bic,.navsec-eye .bic{width:11px;height:11px;
+  vertical-align:-2px;}
+.navsec-hideall .bic{width:12px;height:12px;vertical-align:-2px;}
+.fz-btn .bic{width:13px;height:13px;display:block;margin:0 auto;}
+.htmltoggle .bic{width:10px;height:10px;vertical-align:-1px;}
+.docbar-ic .bic{width:13px;height:13px;vertical-align:-3px;}
+.plot-trace-btn .bic{width:11px;height:11px;vertical-align:-2px;}
+.cell-eye .bic,.sec-eye .bic{display:block;}

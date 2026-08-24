@@ -167,7 +167,7 @@ def test_the_object_copy_follows_the_same_rule_as_every_other(out):
     properties are deep-copied -- the rule MATCH_PROPS has always had."""
     body = out.split("function matchCopy(from,to,want){")[1].split("\n  }")[0]
     assert "if(from[p]===undefined) delete to[p];" in body
-    assert "JSON.parse(JSON.stringify(from[p]))" in body
+    assert "deep(from[p])" in body
     assert "if(!from||!to||from===to) return false;" in body
 
 

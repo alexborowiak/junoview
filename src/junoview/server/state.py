@@ -9,10 +9,13 @@ from __future__ import annotations
 
 import json
 import secrets
+import sys
 import threading
 from pathlib import Path
 
+from .._write import write_text
 from ..notebook.loader import _is_url, _stem_for, doc_from_url, load_doc
+from ..notebook.parser import parse_notebook
 from ..notebook.presentations import _as_presentations
 from ..render.page import render_page
 
@@ -76,11 +79,11 @@ class _AppState:
                     if isinstance(v, list) else [])
 
     def _write(self) -> None:
-        self.project_path.write_text(
+        write_text(
+            self.project_path,
             json.dumps({"presentations": self.presentations,
                         "open": self.open, "recent": self.recent},
-                       indent=1, ensure_ascii=False) + "\n",
-            encoding="utf-8")
+                       indent=1, ensure_ascii=False) + "\n")
 
     def note_open(self, path: Path | str) -> None:
         with self.lock:
@@ -193,8 +196,21 @@ def _app_page(state: _AppState) -> str:
         try:
             doc = load_doc(f)
         except (OSError, ValueError):
-            pruned.append(p)
-            continue
+            # A corrupt DECK SIDECAR lands here too (JSONDecodeError is a
+            # ValueError), and it used to be treated exactly like a deleted
+            # notebook: the healthy tab was pruned and the project file
+            # rewritten without it. Retry on just the .ipynb — if the
+            # notebook itself parses, keep the tab and open it deckless;
+            # prune only when the notebook is really gone/bad (2026-08-23).
+            try:
+                doc = parse_notebook(json.loads(
+                    f.read_text(encoding="utf-8")))
+                doc.source_name = f.stem
+            except (OSError, ValueError):
+                pruned.append(p)
+                continue
+            print(f"warning: could not read the deck sidecar for {f.name};"
+                  " opened without its presentations", file=sys.stderr)
         doc.source_name = _stem_for(f, taken)
         taken.add(doc.source_name)
         paths[doc.source_name] = str(f)

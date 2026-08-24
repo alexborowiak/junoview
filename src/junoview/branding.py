@@ -7,11 +7,9 @@ button reads as the same family.
 
 from __future__ import annotations
 
+import json
 import re
 import urllib.parse
-
-_REPO_URL = "https://github.com/alexborowiak/junoview"
-
 
 _KOFI_URL = "https://ko-fi.com/plotline"
 
@@ -25,6 +23,21 @@ _KOFI_URL = "https://ko-fi.com/plotline"
 # style (stroke, currentColor), so every button reads as the same family.
 # Markup uses <i data-ic="key"></i> tokens which _icons() expands, so the
 # templates stay readable and the artwork lives in exactly one place.
+#
+# THE SAME TABLE FEEDS EVERY RUNTIME (2026-08-23). Three consumers, one
+# source, no copied path data anywhere:
+#   * templates + items.py -- build-time. Templates carry tokens that
+#     _icons() expands; items.py calls _icon_svg() directly so its card
+#     chrome is final markup on every path (page, server routes, widget).
+#   * app.js / deck.js -- runtime-built DOM. page.py injects a
+#     <script> from icons_js() defining window.SemIcons (key -> the SAME
+#     finished <svg class="bic"> markup _icons() stamps). Each script has
+#     a two-line bic(key) accessor that returns '' when the map is
+#     absent, so a page without the block degrades to missing icons, not
+#     a dead script.
+#   * widget.js -- anywidget has no page.py, so widget.py ships
+#     icons_map() inside the synced `data` dict and widget.js reads it
+#     from there (with the same soft fallback).
 _ICON_PATHS = {
     # files / app
     "open": '<path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 '
@@ -156,7 +169,170 @@ _ICON_PATHS = {
     "pagep": '<rect x="4" y="1.8" width="8" height="12.4" rx="1"/>',
     "objects": '<path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/>'
                '<path d="m2 9.2 6 3.2 6-3.2"/>',
+    # ------------------------------------------------------------------
+    # 2026-08-23: the ribbon fill-in batch. A verified review found the
+    # deck ribbon and the second-tier chrome (layers pane, welcome list,
+    # open dialog, tab strip) still wearing raw unicode glyphs and emoji
+    # because these were never drawn. Artwork only: nothing below is
+    # referenced yet — a follow-up step swaps the glyph sites over to
+    # <i data-ic="..."> tokens.
+    # insert tab
+    "flipbook": '<rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/>'
+                '<path d="m6.4 6.1-1.9 1.9 1.9 1.9"/>'
+                '<path d="m9.6 6.1 1.9 1.9-1.9 1.9"/>',
+    "table": '<rect x="2.2" y="3" width="11.6" height="10" rx="1"/>'
+             '<path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/>'
+             '<path d="M2.2 9.6h11.6"/>',
+    # an integral sign: the LaTeX equation tools
+    "maths": '<path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 '
+             '2"/>',
+    # view group: a ruler on the diagonal, and a plain grid
+    "rulers": '<path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/>'
+              '<path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 '
+              '1.2"/>',
+    "grid": '<path d="M5.4 2.4v11.2M10.6 2.4v11.2"/>'
+            '<path d="M2.4 5.4h11.2M2.4 10.6h11.2"/>',
+    # a flag on a pole: the print check
+    "flag": '<path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/>',
+    # document furniture (Design tab). Header reuses "docktop" above.
+    "footer": '<rect x="1.8" y="2.4" width="12.4" height="11.2" '
+              'rx="1.2"/><path d="M1.8 9.8h12.4"/>'
+              '<path d="M4.4 11.7h5.4"/>',
+    "wmark": '<rect x="3" y="2.2" width="10" height="11.6" rx="1"/>'
+             '<path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/>',
+    # a slide with a page number on it
+    "numbers": '<rect x="2.4" y="2.8" width="11.2" height="10.4" '
+               'rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/>'
+               '<path d="M6.4 10.5h4"/>',
+    # "Aa": the named text styles
+    "styles": '<path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/>'
+              '<circle cx="11.8" cy="9.9" r="2.1"/>'
+              '<path d="M13.9 7.8V12"/>',
+    # three plain lines: the generic list / overflow menu (never the
+    # markdown filter, whose third line is short)
+    "menu": '<path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/>',
+    # a card with the edges of the stack behind it: poster versions
+    "versions": '<rect x="2.2" y="8.2" width="11.6" height="5.2" '
+                'rx="1"/><path d="M3.6 5.8h8.8"/><path d="M5 3.4h6"/>',
+    # slide actions
+    "copy": '<rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/>'
+            '<path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/>',
+    "swap": '<path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 '
+            '2.4"/><path d="M13.6 10.7H4"/>'
+            '<path d="m6.4 8.3-2.4 2.4 2.4 2.4"/>',
+    # arrange: to the front bar / to the back bar, align to an edge,
+    # a marquee round two shapes = group
+    "front": '<path d="M2.8 2.8h10.4"/><path d="M8 13.6V5.8"/>'
+             '<path d="m4.9 8.9 3.1-3.1 3.1 3.1"/>',
+    "back": '<path d="M2.8 13.2h10.4"/><path d="M8 2.4v7.8"/>'
+            '<path d="m4.9 7.1 3.1 3.1 3.1-3.1"/>',
+    "align": '<path d="M2.6 2v12"/>'
+             '<rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/>'
+             '<rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/>',
+    "group": '<rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" '
+             'stroke-dasharray="2.6 2.3"/>'
+             '<rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/>'
+             '<circle cx="10.2" cy="10.2" r="2.1"/>',
+    # text block controls
+    "outdent": '<path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/>'
+               '<path d="M5.4 5.6 3 8l2.4 2.4"/>',
+    "indent": '<path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/>'
+              '<path d="m3 5.6 2.4 2.4L3 10.4"/>',
+    "spacing": '<path d="M2.6 2.6h10.8M2.6 13.4h10.8"/>'
+               '<path d="M8 4.9v6.2"/>'
+               '<path d="M6.1 6.6 8 4.7l1.9 1.9"/>'
+               '<path d="M6.1 9.4 8 11.3l1.9-1.9"/>',
+    # line & shape: weight steps, dash styles, an elbowed route, a
+    # half-filled square
+    "weight": '<path d="M2.6 3.4h10.8" stroke-width="1"/>'
+              '<path d="M2.6 7.7h10.8" stroke-width="2"/>'
+              '<path d="M2.6 12.2h10.8" stroke-width="3.2"/>',
+    "dashes": '<path d="M2.6 3.8h10.8"/>'
+              '<path d="M2.6 8h10.8" stroke-dasharray="3 2.4"/>'
+              '<path d="M2.6 12.2h10.8" stroke-dasharray="0 2.8"/>',
+    "route": '<path d="M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6"/>'
+             '<path d="m9.8 2.8 2.4 2.4-2.4 2.4"/>',
+    "fill": '<rect x="2.6" y="2.6" width="10.8" height="10.8" '
+            'rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" '
+            'fill="currentColor"/>',
+    # animation builds: one by one (steps) / all at once (one bracket)
+    "stagger": '<path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/>'
+               '<path d="M9 12.2h4.6"/>',
+    "together": '<path d="M4.6 2.6H2.8v10.8h1.8"/>'
+                '<path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/>',
+    # a circle with a bar through it: no animation
+    "none": '<circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/>',
+    # figure/image tools
+    "crop": '<path d="M4.6 1.8v9.6h9.6"/><path d="M1.8 4.6h9.6v9.6"/>',
+    "locate": '<circle cx="8" cy="8" r="4.2"/>'
+              '<path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/>',
+    "lock": '<rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/>'
+            '<path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/>'
+            '<path d="M8 9.7v1.6"/>',
+    "unlock": '<rect x="3.2" y="7.2" width="9.6" height="6.6" '
+              'rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6"/>'
+              '<path d="M8 9.7v1.6"/>',
+    # an empty flip-book frame (dashed = nothing in it yet)
+    "frame": '<rect x="2.4" y="3.2" width="11.2" height="9.6" rx="1" '
+             'stroke-dasharray="2.7 2.3"/>',
+    # document-wide actions in the thin top bar
+    "find": '<circle cx="7" cy="7" r="4.3"/>'
+            '<path d="m10.2 10.2 3.6 3.6"/>',
+    "undo": '<path d="M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6"/>'
+            '<path d="M5.8 3.4 3 6.2 5.8 9"/>',
+    "redo": '<path d="M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6"/>'
+            '<path d="M10.2 3.4 13 6.2 10.2 9"/>',
+    # a hooked back-arrow: leave the editor / stop presenting
+    "return": '<path d="M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4"/>'
+              '<path d="M6.2 6.3 3.3 9.2l2.9 2.9"/>',
+    # the reset arc wearing clock hands: automatic version history
+    "history": '<path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/>'
+               '<path d="M2.4 2.2v3.1h3.1"/>'
+               '<path d="M8 5.2V8l2.2 1.3"/>',
+    # a chain: open from a URL
+    "link": '<path d="M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 '
+            '1 4.1 4.1l-.9.9"/>'
+            '<path d="M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 '
+            '0 1-4.1-4.1l.9-.9"/>',
 }
+
+
+def _icon_svg(key: str) -> str:
+    """One icon's finished markup — the ONE wrapper every consumer gets.
+
+    ``_icons()`` (template tokens), :mod:`junoview.render.items` (card
+    chrome built in Python) and :func:`icons_map` (the runtime-JS map)
+    all come through here, so the ``.bic`` class, the viewBox and the
+    aria attributes cannot drift apart between build-time and runtime
+    icons. Unknown keys are LOUD for the same reason they are in
+    ``_icons()``.
+    """
+    body = _ICON_PATHS.get(key)
+    if body is None:
+        raise ValueError(
+            "unknown icon token <i data-ic=\"" + key
+            + "\"></i> — add it to _ICON_PATHS in branding.py")
+    return ('<svg class="bic" viewBox="0 0 16 16" aria-hidden="true" '
+            'focusable="false">' + body + '</svg>')
+
+
+def icons_map() -> dict[str, str]:
+    """Every icon's finished markup, keyed by name — for runtime DOM."""
+    return {k: _icon_svg(k) for k in _ICON_PATHS}
+
+
+def icons_js() -> str:
+    """A script-block body defining ``window.SemIcons``.
+
+    page.py injects this before app.js/deck.js run, so DOM built at
+    runtime stamps the SAME artwork the templates got at build time —
+    no path data is ever copied into a .js file. ``</`` is escaped so no
+    icon could ever close the inline <script> early.
+    """
+    return ("window.SemIcons="
+            + json.dumps(icons_map(), ensure_ascii=False,
+                         sort_keys=True).replace("</", "<\\/")
+            + ";")
 
 
 def _icons(markup: str) -> str:
@@ -176,13 +352,7 @@ def _icons(markup: str) -> str:
     function cannot resolve stops the build and names the key.
     """
     def sub(m: re.Match) -> str:
-        body = _ICON_PATHS.get(m.group(1))
-        if body is None:
-            raise ValueError(
-                "unknown icon token <i data-ic=\"" + m.group(1)
-                + "\"></i> — add it to _ICON_PATHS in branding.py")
-        return ('<svg class="bic" viewBox="0 0 16 16" aria-hidden="true" '
-                'focusable="false">' + body + '</svg>')
+        return _icon_svg(m.group(1))
     out = re.sub(r'<i data-ic="([a-z][a-z0-9-]*)"></i>', sub, markup)
     leftover = re.search(r'<i data-ic="([^"]*)"></i>', out)
     if leftover:

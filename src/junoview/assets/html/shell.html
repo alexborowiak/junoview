@@ -20,10 +20,12 @@
       <div class="railfile">
         <button class="rf-btn rf-info" type="button"
           title="Where this notebook came from — its path, its git commit,
- and every earlier version you can open">File info
+ and every earlier version you can open"><i data-ic="info"></i>File info
           &#9662;</button>
         <button class="rf-btn rf-reload" type="button"
-          title="Reload this notebook from disk">&#8635;</button>
+          aria-label="Reload this notebook"
+          title="Reload this notebook from
+ disk"><i data-ic="reload"></i></button>
         <!-- shown only while something IS hidden: a permanent button for a
              state you are usually not in is clutter -->
         <button class="rf-btn rf-unhide" type="button" hidden
@@ -40,7 +42,7 @@
   <main class="stage">
     <div class="content">
       <div class="docbar" hidden>
-        <span class="docbar-ic">&#128196;</span>
+        <span class="docbar-ic"><i data-ic="doc"></i></span>
         <span class="docbar-nm">{stem}</span>
         <span class="docbar-p"></span>
       </div>

@@ -54,8 +54,60 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (auto-arrange), then for matching: one slide's layout given to many, and
 # object-to-object matching in both directions with its own property
 # picker. Pinned per-piece in tests/test_matching.py.
-EXPECTED_MD5 = "97c78592c864d6254acd27f11b9c86d0"
-EXPECTED_BYTES = 2589444
+# Moved 2026-08-23 for the code-review cleanups: dead code deleted (the
+# shadowed docToast, seven lookups of elements no template carries and
+# their wiring), 'use strict' in both IIFEs, shared helpers (webFetchParse,
+# selIdxs, deep(), saveProject, itemLabel via annotLabel), the code-kind
+# palette stated once (--ck-* tokens + window.SemView.kindFill), the
+# comma-joined eye-slash rule, and deck.js's orientation header. No
+# behaviour change intended; the id-contract and per-feature tests pin
+# the pieces.
+# ...and again 2026-08-23 for the boot-order fix: deck.js's load-time
+# work (shell registry ingest, first-presentation load, chrome redraw,
+# layout picker / autosave / save-button first paints) now runs from THE
+# BOOT SEQUENCE at the IIFE's tail instead of mid-file, and app.js's
+# rail auto-hide sub-IIFE became initRailAuto() called from its boot
+# tail. Comment-and-position changes in the two embedded scripts only;
+# no behaviour change intended.
+# ...and again 2026-08-23 for the editor performance pass: item drags/
+# resizes move the existing DOM nodes and run renderAnnots once on
+# mouseup (deck.js startMove/startResize); the placed-frame builders
+# (framePart / framePartFromSnap / frameFromVerCard) cache their
+# prepared nodes with enumerated invalidation; ruler ticks, the grid
+# and custom guides rebuild only when their inputs change, with a
+# persistent transform-moved cursor; markDirty's localStorage draft
+# write is debounced (~300ms, flushed on pagehide/present/load/rename);
+# and app.js's mdClampScan batches its scrollHeight reads before its
+# writes. Editor-script changes only; the document half of the page is
+# unchanged.
+# ...and again 2026-08-23 for the single-source icon delivery: the page
+# now carries a window.SemIcons <script> (branding.py icons_js()); the
+# emoji and one-off glyphs in card chrome, nav eyes, welcome/open-dialog
+# rows, panes and dialog closes were replaced with <i data-ic> tokens /
+# _icon_svg() markup / bic() lookups; PB_ICO (app.js) and RAIL_ICO
+# (deck.js) — copied icon path data — were deleted in favour of the
+# map. Pinned by tests/test_icon_contract.py.
+# ...and again 2026-08-24 for the ribbon finish: every remaining deck
+# ribbon / thin-bar glyph prefix became an <i data-ic> token or a bic()
+# write (PENDING_RIBBON emptied and deleted); fitQat now compacts the
+# thin top bar (deck.js + .qat-* rungs in deck.css) and its File /
+# Saved-to / Present menus float; the custom-view stylebar stopped
+# wrapping (core.css + fitRibbon measuring it); icon-only controls grew
+# aria-labels (templates + JS-built sites, and the rail row delete is a
+# real <button>); help.html was walked against the current chrome; the
+# rail's "+ New" labels dropped their doubled plus. Chrome-only; pinned
+# by tests/test_icon_contract.py and the per-feature tests.
+# Moved 2026-08-24 for single-copy figure payloads: the raw view used to
+# embed a SECOND full copy of every output the cards already carry (a
+# 100-cell notebook with ~28MB of figures rendered a 57.9MB page; that
+# same page is now 29.9MB, and this example page shrank 2,671,747 ->
+# 2,289,797 bytes, -14%). Card outputs now carry a data-jvout key and
+# the raw view holds .rawph placeholders that app.js fills by cloning
+# the card's node on first open; outputs the cards drop (hidden cells,
+# single-step folds) stay fully embedded in the raw view. Pinned by
+# tests/test_app_shell.py's raw-view single-copy tests.
+EXPECTED_MD5 = "11ea661257490f6537fde4d3b5324d1c"
+EXPECTED_BYTES = 2289797
 
 
 def _render_example() -> str:
@@ -125,7 +177,7 @@ def test_page_template_placeholders_match_what_render_page_supplies():
     supplied = {
         "title", "shells", "css", "app_css", "js", "mathjax", "deck_shell",
         "app_data", "deck_css", "deck_js", "pptx_js", "repo", "kofi",
-        "help_html", "logo", "favicon", "head_extra",
+        "help_html", "logo", "favicon", "head_extra", "icons_js",
     }
     required = {name for _, name, _, _
                 in string.Formatter().parse(assets.page_template())

@@ -26,7 +26,6 @@ class CodeStep:
 class Item:
     kind: str                      # card display type
     title: str
-    code: str = ""                 # kept for notes / simple use
     code_visible: bool = False
     outputs: list[RenderedOutput] = field(default_factory=list)  # face outputs
     caption: str = ""
@@ -45,14 +44,6 @@ class Item:
     code_kinds: list = field(default_factory=lambda: ["code"])
     steps: list[CodeStep] = field(default_factory=list)  # folded code chunks
     members: list = field(default_factory=list)          # transient, build-only
-
-    @property
-    def has_image(self) -> bool:
-        return any(o.has_image for o in self.outputs)
-
-    @property
-    def has_xarray(self) -> bool:
-        return any(o.has_xarray for o in self.outputs)
 
 
 @dataclass

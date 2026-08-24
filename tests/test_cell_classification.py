@@ -13,6 +13,8 @@ the client, so that round trip lives here too.
 
 from __future__ import annotations
 
+import ast
+
 from helpers import (
     _make_gif,
     _make_int,
@@ -241,3 +243,36 @@ def test_classifier_honesty_about_imports_and_comments(out):
     assert _classify_code("") == ["code"]
     assert "'comments','constant','code']" in out
     assert ".ckf-dot.ckmain-comments" in out
+
+
+def test_a_code_cell_is_parsed_once_per_render(monkeypatch):
+    """parse_notebook runs ast.parse ONCE per code cell (twice when a magic
+    line makes the dataflow form a different string) and every consumer --
+    title, plot title, code kinds, chains, the variables index -- reuses
+    that tree. Each of those used to parse for itself: up to six parses of
+    the same source per cell, on every server refresh and Pyodide render.
+    """
+    calls: list[str] = []
+    real_parse = ast.parse
+
+    def counting_parse(source, *args, **kwargs):
+        calls.append(source)
+        return real_parse(source, *args, **kwargs)
+
+    monkeypatch.setattr(ast, "parse", counting_parse)
+    doc = parse_notebook({"cells": [
+        {"cell_type": "code", "source": "x = load()\nprint(x)",
+         "outputs": []},
+        {"cell_type": "code", "source": "%matplotlib inline\nplt.plot(x)",
+         "outputs": []},
+    ]})
+    # cell 1: one parse serves everyone. cell 2: the raw parse (which the
+    # magic line makes a SyntaxError, still one call) plus the stripped
+    # dataflow parse. Never 6 per cell.
+    assert len(calls) == 3
+    # and the shared trees really fed each consumer: code kinds from the
+    # raw tree, the chain and the variable use from the stripped one
+    items = [it for s in doc.sections for it in s.items]
+    assert items[0].code_kinds == ["print"]
+    assert items[1].chain == [items[0].anchor]
+    assert any(v.name == "x" and v.n_used == 1 for v in doc.variables)

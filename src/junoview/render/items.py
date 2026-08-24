@@ -10,6 +10,12 @@ from __future__ import annotations
 import html
 import json
 
+# card chrome calls the icon helper DIRECTLY (rather than emitting
+# <i data-ic> tokens) so these fragments are finished markup on every
+# path that serves them — the full page, the server's shell JSON, the
+# Pyodide bridge and the widget — with branding.py still the single
+# source of the artwork (see the icon-set comment there)
+from ..branding import _icon_svg as _ic
 from ..notebook.model import Document, Item
 from ..notebook.outputs import _as_text, render_outputs
 from .graph import build_graph_svg
@@ -76,6 +82,9 @@ def render_item(item: Item, sec_id: str = "") -> str:
     # live embeds like plotly/bokeh/vega/folium) and an OUTPUT part (printed
     # results) so the Plots and Output filters can act on them independently
     # of each other and of the cell's Code
+    # NOTE which outputs this function embeds (the face below, plus multi-
+    # step extra_out further down) is mirrored by _card_output_keys() for
+    # the raw view's placeholders — change one, change both
     imgs = [o for o in item.outputs if o.has_image or o.has_interactive]
     others = [o for o in item.outputs
               if not (o.has_image or o.has_interactive)]
@@ -99,7 +108,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
             f'<button class="fz-btn fz-in" title="Bigger (this figure)"'
             f'>&#43;</button>'
             f'<button class="fz-btn fz-max" '
-            f'title="Expand this figure full screen">&#10530;</button>'
+            f'title="Expand this figure full screen">{_ic("expand")}</button>'
             f'</div>{fig_html}</div>')
     if others:
         ot_types: list[str] = []
@@ -177,7 +186,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
             f'<button class="plot-trace-btn" type="button" '
             f'data-trace="{html.escape(item.anchor or item.item_id)}" '
             f'title="See every cell that builds this plot — as a code trace '
-            f'and a dependency graph">&#9903; Plot trace</button>')
+            f'and a dependency graph">{_ic("tree")} Plot trace</button>')
 
     body = out_html
     htmlsrc = ""
@@ -196,7 +205,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
                 '<button class="htmltoggle" '
                 'title="Toggle this note between rendered and raw HTML">'
                 '<span class="ht-show">&lt;/&gt;</span>'
-                '<span class="ht-hide">&#10005; raw</span></button>')
+                f'<span class="ht-hide">{_ic("exit")} raw</span></button>')
         caption = ""
 
     # the card carries its OWN section id: per-section filters must survive
@@ -221,7 +230,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
         f'{id_tag}{trace_btn}'
         f'<button class="cell-eye" type="button" '
         f'title="Hide this cell (it stays in the sidebar so you can bring '
-        f'it back)" aria-label="Hide this cell">&#128065;</button>'
+        f'it back)" aria-label="Hide this cell">{_ic("eye")}</button>'
         f'</header>'
         f'<div class="cardbody">{body}</div>'
         f'{htmlsrc}{caption}{prov}{code_block}</article>')
@@ -300,10 +309,10 @@ def render_nav(doc: Document) -> str:
             f'<span class="navsec-c">{figs or ""}</span></a>'
             f'<span class="navsec-eye" role="button" tabindex="0" '
             f'title="Hide or show just this heading" '
-            f'aria-label="Hide or show just this heading">&#128065;</span>'
+            f'aria-label="Hide or show just this heading">{_ic("eye")}</span>'
             f'<span class="navsec-hideall" role="button" tabindex="0" '
             f'title="Hide or show this whole section" '
-            f'aria-label="Hide or show this whole section">&#8801;</span>'
+            f'aria-label="Hide or show this whole section">{_ic("menu")}</span>'
             f'</div>')
         parts.append(f'<div class="navitems navitems-l{s.level}" '
                      f'data-sec="{s.section_id}">')
@@ -324,7 +333,7 @@ def render_nav(doc: Document) -> str:
                 f'<span class="navitem-t">{html.escape(it.title)}</span>'
                 f'<span class="navitem-eye" role="button" tabindex="0" '
                 f'title="Hide or show this cell" '
-                f'aria-label="Hide or show this cell">&#128065;</span></a>')
+                f'aria-label="Hide or show this cell">{_ic("eye")}</span></a>')
         parts.append('</div>')
     parts.append('</nav>')
     return "".join(parts)
@@ -412,7 +421,7 @@ def render_sections(doc: Document) -> str:
             f'<h2>{html.escape(s.title)}</h2></div>'
             f'<button class="sec-eye" data-sec="{sid}" '
             f'title="Hide just this heading (the cards below stay)" '
-            f'aria-label="Hide just this heading">&#128065;</button>'
+            f'aria-label="Hide just this heading">{_ic("eye")}</button>'
             f'<button class="sec-hideall" data-sec="{sid}" '
             f'title="Hide this whole section — the heading and every card '
             f'in it (restore it from the sidebar)" '
@@ -477,15 +486,77 @@ def render_graph_panel(doc: Document) -> str:
         f'<div class="railgraph-b">{graph_svg}</div></div>')
 
 
-def render_raw(nb: dict) -> str:
+def _card_output_keys(doc: Document) -> set[str]:
+    """The ``RenderedOutput.key``s whose payloads the cards page embeds.
+
+    KEEP IN SYNC with :func:`render_item` — this predicts, from the final
+    Document, exactly which outputs that function will emit, so the raw view
+    can replace their second copy with a placeholder (and MUST embed
+    everything else in full: the raw view's contract is "the whole notebook,
+    faithfully"). The decision table:
+
+    EMITTED by the cards (raw view may placeholder):
+      - every output of a surviving card's face (``item.outputs`` — the
+        primary member's outputs: figures, printed results, stream and
+        error output alike);
+      - outputs of a NON-primary step (a grouped member, or a cell folded
+        in by ``stack:``) when the card shows a multi-step code fold —
+        i.e. at least TWO steps with non-empty code.
+
+    DROPPED by the cards (raw view keeps the full payload):
+      - every output of a ``display: hidden`` cell (its card is dropped);
+      - outputs of a non-primary step whose code is empty after directive
+        stripping (the code fold filters on ``s.code.strip()``);
+      - outputs of the only non-empty step's siblings when the fold ends up
+        single-step (``extra_out`` requires ``multi``);
+      - outputs of a ``stack:``-consumed cell whose consuming card falls
+        under any rule above.
+
+    Markdown cells have no rendered outputs; the raw view renders its own
+    markdown (headings kept as headings) either way.
+    """
+    keys: set[str] = set()
+    for sec in doc.sections:
+        for it in sec.items:
+            if it.is_note:
+                continue
+            for o in it.outputs:
+                if o.key:
+                    keys.add(o.key)
+            steps = [s for s in it.steps if s.code.strip()]
+            if len(steps) > 1:
+                for s in steps:
+                    if not s.is_primary:
+                        for o in s.outputs:
+                            if o.key:
+                                keys.add(o.key)
+    return keys
+
+
+def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
+               card_keys: set[str] | None = None) -> str:
     """Linear rendering of the notebook exactly as authored: every cell in
     order, code with its `#|` directives visible, outputs underneath.
 
     This is the transparency view -- it shows where the semantic page's
     titles, captions and sections come from.
+
+    ``outputs_by_idx`` (cell index -> the parse's already-rendered outputs)
+    lets :func:`~junoview.notebook.parser.parse_notebook` share ONE
+    render_outputs pass between the cards and this view. ``card_keys`` (from
+    :func:`_card_output_keys`) marks the outputs whose full payload a card
+    already embeds: those become empty ``.rawph`` placeholders here — one
+    copy of each multi-MB figure per page, not two — which app.js fills by
+    cloning the card's node when the raw view is first opened. Every output
+    NOT in ``card_keys`` is still embedded in full. Called bare
+    (``render_raw(nb)``) it renders everything itself, self-contained.
+
+    The code is re-highlighted here on purpose: the cards highlight the
+    source with its ``#|`` directive lines stripped, and this view's whole
+    point is showing them.
     """
     parts: list[str] = []
-    for cell in nb.get("cells", []):
+    for idx, cell in enumerate(nb.get("cells", [])):
         ctype = cell.get("cell_type")
         source = _as_text(cell.get("source", ""))
         if ctype == "markdown":
@@ -495,8 +566,15 @@ def render_raw(nb: dict) -> str:
         elif ctype == "code":
             n = cell.get("execution_count")
             label = f"In [{n if n is not None else ' '}]"
-            outs = "".join(o.payload for o in
-                           render_outputs(cell.get("outputs", [])))
+            if outputs_by_idx is not None and idx in outputs_by_idx:
+                rendered = outputs_by_idx[idx]
+            else:
+                rendered = render_outputs(cell.get("outputs", []))
+            outs = "".join(
+                f'<div class="rawph" data-jvout="{o.key}"></div>'
+                if card_keys and o.key and o.key in card_keys
+                else o.payload
+                for o in rendered)
             out_html = f'<div class="rawout">{outs}</div>' if outs else ""
             parts.append(
                 f'<div class="rawcell code"><span class="rawtag">{label}'

@@ -33,6 +33,13 @@ jobs:
       - run: ruff check .
       - run: mypy
 
+      # The frontend is plain .js files with no build step, so nothing else
+      # parses them before a browser does. The runners ship node; contributors
+      # still need no toolchain of their own.
+      - name: JS syntax check
+        run: |
+          for f in src/junoview/assets/js/*.js; do node --check "$f"; done
+
   build:
     name: package builds and the CLI runs
     runs-on: ubuntu-latest

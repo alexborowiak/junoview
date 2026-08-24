@@ -23,8 +23,8 @@
          drawing tool looks like the way out of that tool, and it is not:
          Cancel is. -->
     <button class="dbtn" id="deck-exit"
-      title="Leave the editor. Nothing is closed or lost.">&#8617;
-      Close the editor</button>
+      title="Leave the editor. Nothing is closed or lost."><i
+      data-ic="return"></i> Close the editor</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -75,8 +75,8 @@
              file they came from, so they can be re-read on demand.
              Anything whose file has moved is LEFT as it was and
              named in the report (2026-08-22). -->
-        <button class="dc-mi" id="mi-refresh-img">&#8635; Refresh
-          pictures from their files</button>
+        <button class="dc-mi" id="mi-refresh-img"><i data-ic="reload"></i>
+          Refresh pictures from their files</button>
         <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
         <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
@@ -150,16 +150,16 @@
          stretched the full width of the rail (2026-08-16). -->
     <span class="rbn-cell">
       <button class="dbtn dc-icon" id="dc-undo" disabled
-        title="Undo (Ctrl+Z)" aria-label="Undo">&#8630;</button>
+        title="Undo (Ctrl+Z)" aria-label="Undo"><i data-ic="undo"></i></button>
       <button class="dbtn dc-icon" id="dc-redo" disabled
-        title="Redo (Ctrl+Shift+Z)" aria-label="Redo">&#8631;</button>
+        title="Redo (Ctrl+Shift+Z)" aria-label="Redo"><i data-ic="redo"></i></button>
     </span>
     <span class="qat-sep"></span>
     <!-- Find is a document-wide action, so it lives with the document
          controls rather than in a formatting group -->
     <button class="dbtn qat-btn" id="qat-find"
       title="Find and replace text anywhere in this presentation
- (Ctrl+F)">&#9906; Find</button>
+ (Ctrl+F)"><i data-ic="find"></i> Find</button>
     <span class="deck-spring"></span>
     <!-- the presentation's NAME, in the middle, where a title bar puts it.
          Click it to rename — the old rename lived in a File-menu item that
@@ -194,12 +194,12 @@
     <span class="dc-menuwrap">
       <button class="dbtn qat-btn" id="deck-scheme" aria-haspopup="true"
         title="Colour scheme — dark, light, forest, colourful, high
- contrast"><i data-ic="palette"></i> Theme &#9662;</button>
+ contrast"><i data-ic="theme"></i> Theme &#9662;</button>
     </span>
     <button class="dbtn qat-btn" id="deck-help"
       title="How to use this, and everything it can do (?)"
       aria-label="Help"><i data-ic="help"></i> Help</button>
-    <a class="dbtn qat-btn" id="deck-support" target="_blank" rel="noopener"
+    <a class="dbtn qat-btn" id="deck-support" aria-label="Support Junoview on Ko-fi" target="_blank" rel="noopener"
       title="Support Junoview on Ko-fi — funds an online, hosted version
  with accounts"><i data-ic="heart"></i></a>
     <!-- Present is a SPLIT control: press it to play, press the chevron
@@ -256,7 +256,7 @@
       <div class="dc-block dc-controls">
         <button class="dbtn" id="dc-edit"
           title="Swap to the slide editor — add text, arrows and boxes">
-          &#9998; Swap to edit view</button>
+          <i data-ic="pen"></i> Swap to edit view</button>
         <div class="lay-picker" id="layout-row"
           aria-label="Slide layouts"></div>
         <div class="title-editor" id="title-editor" hidden>
@@ -278,7 +278,7 @@
             <button class="dbtn film-view-btn" id="film-view-btn"
               aria-haspopup="true" aria-expanded="false"
               title="How the slides are listed down this column"
-              >&#9636; Thumbnails &#9662;</button>
+              ><i data-ic="layouts"></i> Thumbnails &#9662;</button>
             <div class="dc-menu" id="film-view-menu" hidden></div>
           </div>
         </div>
@@ -355,7 +355,7 @@
          same thing, and so does Ctrl+F1, both of which are what
          PowerPoint trains people to reach for. Clicking a tab while it is
          folded brings it back. -->
-    <button class="dbtn rbn-fold" id="rbn-fold" aria-pressed="false"
+    <button class="dbtn rbn-fold" id="rbn-fold" aria-label="Hide or show the editing tools" aria-pressed="false"
       title="Hide the tools and give the page the room (Ctrl+F1). Click a
  tab, or this, to bring them back">&#9652;</button>
   </div>
@@ -435,7 +435,7 @@
                   aria-haspopup="true" aria-expanded="false"
                   title="THIS slide's background colour and border. The
  whole presentation's background lives under File"
-                  >&#9703; Background &#9662;</button>
+                  ><i data-ic="fill"></i> Background &#9662;</button>
                 <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
               </span>
               <!-- The strip listing the OTHER pages belongs with the page
@@ -450,7 +450,7 @@
                 aria-pressed="false" hidden
                 title="Other versions of this poster — drafts and variants.
  Opens the strip; close it again to give the page the whole window"
-                >&#9776; Versions</button>
+                ><i data-ic="versions"></i> Versions</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -464,18 +464,18 @@
               <button class="dbtn rbn-sm" id="dc-wmark"
                 aria-pressed="false"
                 title="A word across every page - DRAFT, CONFIDENTIAL, your
- name. Sits behind the content, never over it">&#9639; Watermark</button>
+ name. Sits behind the content, never over it"><i data-ic="wmark"></i> Watermark</button>
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
-                title="A line along the top of every page">&#9776;
+                title="A line along the top of every page"><i data-ic="docktop"></i>
  Header</button>
               <button class="dbtn rbn-sm" id="dc-foot"
                 aria-pressed="false"
                 title="A line along the bottom of every page. Use {n} and
- {N} for the page number and the total">&#9776; Footer</button>
+ {N} for the page number and the total"><i data-ic="footer"></i> Footer</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
-                title="Number every page">&#8470; Numbers</button>
+                title="Number every page"><i data-ic="numbers"></i> Numbers</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
@@ -490,7 +490,7 @@
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
                   title="Every named text style in this presentation, with
- its size — change one and every box wearing it follows">&#9776; Text
+ its size — change one and every box wearing it follows"><i data-ic="styles"></i> Text
                   styles &#9662;</button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
                   hidden></div>
@@ -503,7 +503,7 @@
  deck's type, in proportion">A&#43;</button>
               <button class="dbtn rbn-sm" id="dsg-restyle"
                 title="Re-apply the styles to every box wearing one, on
- every slide — use it after changing a style by hand">&#8635; Re-apply</button>
+ every slide — use it after changing a style by hand"><i data-ic="reload"></i> Re-apply</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -513,7 +513,7 @@
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
                 title="Check whether the headings, paragraphs and captions
- across the whole deck look the same as each other">&#8801; Standardise text</button>
+ across the whole deck look the same as each other"><i data-ic="scope"></i> Standardise text</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -545,22 +545,22 @@
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres
  of the real page. Drag off one to lay down your own guide"
-                >&#128207; Rulers <kbd>R</kbd></button>
+                ><i data-ic="rulers"></i> Rulers <kbd>R</kbd></button>
               <button class="dbtn rbn-sm" id="vw-grid"
                 aria-pressed="false"
                 title="A margin box and a grid to lay out against &mdash;
  items snap to both. Guides, not ink: never printed or exported"
-                >&#9638; Grid <kbd>G</kbd></button>
+                ><i data-ic="grid"></i> Grid <kbd>G</kbd></button>
               <button class="dbtn rbn-sm" id="vw-full"
                 aria-pressed="false"
                 title="Edit full screen &mdash; the browser chrome goes
  away and the page gets the whole display (Esc to leave). Unlike Present,
- you keep every editing tool">&#10530; Full screen</button>
+ you keep every editing tool"><i data-ic="expand"></i> Full screen</button>
               <button class="dbtn rbn-sm" id="vw-side"
                 aria-pressed="false"
                 title="Stand the toolbar up on the right-hand edge, so the
  page gets the full height of the window. A tall poster needs height far
- more than width">&#8942; Side toolbar</button>
+ more than width"><i data-ic="dockright"></i> Side toolbar</button>
               <!-- Print check came from a group of its own. One button
                    under its own heading is a heading doing no work, and
                    checking the page before it goes out is a way of
@@ -571,7 +571,7 @@
                 aria-pressed="false"
                 title="Check this page before it goes to print: soft
  figures, anything off the page or inside the margin, unreadable text,
- empty frames">&#9873; Check</button>
+ empty frames"><i data-ic="flag"></i> Check</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
@@ -583,7 +583,8 @@
               <button class="dbtn rbn-sm" id="notes-btn"
                 aria-pressed="false"
                 title="Speaker notes for this slide, and how long you want
- to spend on it. Only you ever see them">&#9998; Notes</button>
+ to spend on it. Only you ever see them"><i data-ic="style"></i>
+                Notes</button>
               <!-- Zoom has left this group for the thin bar at the top.
                    It is the one control you reach for on EVERY tab, and a
                    control that a tab can take away from you is a control
@@ -608,7 +609,7 @@
  print check, layers and notes. They are in here rather than on the bar
  because the window is too narrow to show them and the text controls at
  the same time — widen it, or put the toolbar on the right, and they come
- back out">&#9776; View &#9662;</button>
+ back out"><i data-ic="menu"></i> View &#9662;</button>
                 <div class="sh-menu vw-more-menu" id="vw-more-menu"
                   hidden></div>
               </span>
@@ -626,10 +627,10 @@
                 aria-pressed="false"
                 title="Everything animated on this slide, in the order it
  appears — and the effect on whatever is selected"
-                >&#9654; Timeline</button>
+                ><i data-ic="play"></i> Timeline</button>
               <button class="dbtn etm" id="anim-none" hidden
                 title="Remove the animation from the selected items — they
- are simply on the slide from the start">&#8709; None</button>
+ are simply on the slide from the start"><i data-ic="none"></i> None</button>
               <button class="dbtn etm" id="anim-fade" hidden
                 title="Fade the selected items in">Fade</button>
               <button class="dbtn etm" id="anim-rise" hidden
@@ -642,13 +643,13 @@
                    fiddling this editor exists to avoid (2026-08-20). -->
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Reveal everything on this slide ONE AT A TIME, in
- reading order — a click per item">&#9776; One by one</button>
+ reading order — a click per item"><i data-ic="stagger"></i> One by one</button>
               <button class="dbtn rbn-sm" id="anim-together"
                 title="Reveal everything on this slide on the SAME click —
- one build, everything at once">&#9707; All at once</button>
+ one build, everything at once"><i data-ic="together"></i> All at once</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
                 title="Remove EVERY animation on this slide — nothing is
- held back during playback">&#10005; Clear slide</button>
+ held back during playback"><i data-ic="exit"></i> Clear slide</button>
             </span>
             <span class="rbn-lab">Animate</span>
           </span>
@@ -678,7 +679,7 @@
               <button class="dbtn et rbn-sm" data-tool="text"
                 aria-pressed="false"
                 title="Add a text box"><i data-ic="text"></i> Text</button>
-              <button class="dbtn rbn-sm tx-caret" id="tx-type-btn"
+              <button class="dbtn rbn-sm tx-caret" id="tx-type-btn" aria-label="Text box type"
                 aria-haspopup="true" aria-expanded="false"
                 title="Make the next text box a heading, a caption or any
  other named type, instead of a plain one">&#9662;</button>
@@ -704,11 +705,11 @@
                 title="Draw a flip book: one box holding many figures, with
  arrows to step through them &mdash; in the editor and while presenting.
  Text and objects can be tied to a particular figure"
-                >&#9707; Flip book</button>
+                ><i data-ic="flipbook"></i> Flip book</button>
               <button class="dbtn et rbn-sm" data-tool="table"
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
- moves along the row, Enter drops down">&#9638; Table</button>
+ moves along the row, Enter drops down"><i data-ic="table"></i> Table</button>
               <!-- NOT an `et` tool. It carried that class without a
                    data-tool, so the shared arming wiring called
                    setTool(undefined): the button lit up as though a tool
@@ -726,7 +727,7 @@
                    for "Maths inserts"). -->
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
- - it is typeset as you type">&#8747; Maths</button>
+ - it is typeset as you type"><i data-ic="maths"></i> Maths</button>
               <button class="dbtn rbn-sm" id="dc-qr"
                 title="Ask for a link and put a QR code on the page —
  point a phone at it to open your repo, paper or data. Generated here, so
@@ -760,7 +761,7 @@
                    width in the ribbon's resting state. -->
               <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
                 title="Stop drawing and go back to selecting (Esc)"
-                >&#10005; Cancel</button>
+                ><i data-ic="exit"></i> Cancel</button>
               <button class="dbtn rbn-sm et" data-tool="arrow"
                 aria-pressed="false" title="Draw an arrow — a line with a
  head. Drop an end on an item to attach it, and the arrow follows that
@@ -799,7 +800,7 @@
               <button class="dbtn rbn-sm" id="hm-newslide"
                 title="Add a slide after this one">&#43; New slide</button>
               <button class="dbtn rbn-sm" id="hm-dupslide"
-                title="Duplicate this slide, in place">&#10697;
+                title="Duplicate this slide, in place"><i data-ic="copy"></i>
                 Duplicate</button>
               <span class="sh-drop" id="hm-laywrap">
                 <button class="dbtn rbn-sm" id="hm-lay"
@@ -816,10 +817,10 @@
               <button class="dbtn rbn-sm" id="hm-match"
                 title="Take another slide's layout — the position, size and
  styling of everything on it, matched up by kind. Your content stays
- exactly where it is; only the arrangement travels">&#8646; Match slide
+ exactly where it is; only the arrangement travels"><i data-ic="swap"></i> Match slide
                 &#9662;</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
-                title="Delete this slide">&#10005; Delete</button>
+                title="Delete this slide"><i data-ic="exit"></i> Delete</button>
             </span>
             <span class="rbn-lab">Slides</span>
           </span>
@@ -841,9 +842,9 @@
                    now live in this menu, fully worded, which removes four
                    controls from the row AND adds four labels. -->
               <button class="dbtn etm" id="fmt-dup"
-                title="Duplicate (Ctrl+D)">&#10697; Copy</button>
+                title="Duplicate (Ctrl+D)"><i data-ic="copy"></i> Copy</button>
               <button class="dbtn etm" id="fmt-group"
-                title="Group the selected items (Ctrl+G)">&#9783;
+                title="Group the selected items (Ctrl+G)"><i data-ic="group"></i>
                 Group</button>
               <button class="dbtn etm" id="fmt-ungroup"
                 title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
@@ -852,7 +853,7 @@
                   aria-haspopup="true" aria-expanded="false"
                   title="Line the selected items up, space them evenly,
  change what sits in front, or rotate">
-                  &#8676; Arrange &#9662;</button>
+                  <i data-ic="align"></i> Arrange &#9662;</button>
                 <div class="sh-menu align-menu" id="fmt-align-menu"
                   hidden></div>
               </span>
@@ -866,28 +867,32 @@
                    honest about its width. -->
               <button class="dbtn etm" id="fmt-front"
                 title="Bring to front - in front of everything else on
- this page">&#8613; Front</button>
+ this page"><i data-ic="front"></i> Front</button>
               <button class="dbtn etm" id="fmt-back"
                 title="Send to back - behind everything else on this
- page">&#8615; Back</button>
+ page"><i data-ic="back"></i> Back</button>
               <button class="dbtn etm" id="fmt-forward" hidden
-                title="Bring forward one place">&#8613;</button>
+                title="Bring forward one place"
+                aria-label="Bring forward one place"><i data-ic="front"></i></button>
               <button class="dbtn etm" id="fmt-backward" hidden
-                title="Send backward one place">&#8615;</button>
+                title="Send backward one place"
+                aria-label="Send backward one place"><i data-ic="back"></i></button>
               <button class="dbtn etm" id="fmt-rotl" hidden
-                title="Rotate left 15&#176;">&#10226;</button>
+                title="Rotate left 15&#176;"
+                aria-label="Rotate left"><i data-ic="reset"></i></button>
               <button class="dbtn etm" id="fmt-rotr" hidden
-                title="Rotate right 15&#176;">&#10227;</button>
+                title="Rotate right 15&#176;"
+                aria-label="Rotate right"><i data-ic="reload"></i></button>
               <button class="dbtn etm" id="fmt-arline" hidden
                 title="Arrange the selected items in a row: middles aligned, equal gaps"
-                >&#8943; Row</button>
+                ><i data-ic="hline"></i> Row</button>
               <button class="dbtn etm" id="fmt-argrid" hidden
-                title="Arrange the selected items in a grid">&#8862;
+                title="Arrange the selected items in a grid"><i data-ic="grid"></i>
                 Grid</button>
               <span class="sh-drop" id="fmt-samewrap" hidden>
                 <button class="dbtn etm" id="fmt-same" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Make the selected items the same size">&#9713;
+                  title="Make the selected items the same size"><i data-ic="copy"></i>
                   Same size &#9662;</button>
                 <div class="sh-menu same-menu" id="fmt-same-menu"
                   hidden></div>
@@ -922,22 +927,23 @@
                        needed an actual warning red (2026-08-19, user:
                        "more defaults, no red currently!") -->
                   <button class="sw" data-c="#e5484d"
-                    style="background:#e5484d" title="Red"></button>
+                    style="background:#e5484d" title="Red" aria-label="Red"></button>
                   <button class="sw" data-c="#ff6b57"
-                    style="background:#ff6b57" title="Coral"></button>
+                    style="background:#ff6b57" title="Coral" aria-label="Coral"></button>
                   <button class="sw" data-c="#f0a848"
-                    style="background:#f0a848" title="Amber"></button>
+                    style="background:#f0a848" title="Amber" aria-label="Amber"></button>
                   <button class="sw" data-c="#39a9c0"
-                    style="background:#39a9c0" title="Cyan"></button>
+                    style="background:#39a9c0" title="Cyan" aria-label="Cyan"></button>
                   <button class="sw" data-c="#46a892"
-                    style="background:#46a892" title="Green"></button>
+                    style="background:#46a892" title="Green" aria-label="Green"></button>
                   <button class="sw" data-c="#ffffff"
-                    style="background:#ffffff" title="White"></button>
+                    style="background:#ffffff" title="White" aria-label="White"></button>
                   <button class="sw" data-c="#16202b"
-                    style="background:#16202b" title="Ink"></button>
+                    style="background:#16202b" title="Ink" aria-label="Ink"></button>
                   <button class="sw sw-custom" id="sw-custom"
                     data-target="text"
-                    title="Custom colour — hex, rgb or rgba"></button>
+                    title="Custom colour — hex, rgb or rgba"
+                    aria-label="Custom colour"></button>
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
@@ -950,22 +956,23 @@
                   <span class="fmt-lab" id="fmt-bglab" hidden
                     title="Fill / background colour">Fill</span>
                   <button class="sw swbg trans" data-c="none" hidden
-                    title="Transparent box"></button>
+                    title="Transparent box" aria-label="Transparent box"></button>
                   <button class="sw swbg" data-c="#0e1926" hidden
-                    style="background:#0e1926" title="Dark box"></button>
+                    style="background:#0e1926" title="Dark box" aria-label="Dark box"></button>
                   <button class="sw swbg" data-c="#ffffff" hidden
-                    style="background:#ffffff" title="White box"></button>
+                    style="background:#ffffff" title="White box" aria-label="White box"></button>
                   <button class="sw swbg" data-c="#e5484d" hidden
-                    style="background:#e5484d" title="Red box"></button>
+                    style="background:#e5484d" title="Red box" aria-label="Red box"></button>
                   <button class="sw swbg" data-c="#ff6b57" hidden
-                    style="background:#ff6b57" title="Coral box"></button>
+                    style="background:#ff6b57" title="Coral box" aria-label="Coral box"></button>
                   <button class="sw swbg" data-c="#f0a848" hidden
-                    style="background:#f0a848" title="Amber box"></button>
+                    style="background:#f0a848" title="Amber box" aria-label="Amber box"></button>
                   <button class="sw swbg" data-c="#39a9c0" hidden
-                    style="background:#39a9c0" title="Cyan box"></button>
+                    style="background:#39a9c0" title="Cyan box" aria-label="Cyan box"></button>
                   <button class="sw swbg sw-custom" id="swbg-custom" hidden
                     data-target="fill"
-                    title="Custom fill colour — hex, rgb or rgba"></button>
+                    title="Custom fill colour — hex, rgb or rgba"
+                    aria-label="Custom fill colour"></button>
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
@@ -1019,12 +1026,12 @@
                    than being typed as raw LaTeX inside a text box -->
               <button class="dbtn etm" id="fmt-eqedit" hidden
                 title="Open this equation in the equation editor"
-                >&#8747; Edit equation</button>
+                ><i data-ic="maths"></i> Edit equation</button>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
                   aria-haspopup="true" aria-expanded="false"
                   title="Named text styles — Title, Headings, Body,
- Caption — and pushing this box's look to all of them">&#9776;
+ Caption — and pushing this box's look to all of them"><i data-ic="styles"></i>
                   Styles &#9662;</button>
                 <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
                   hidden></div>
@@ -1044,9 +1051,10 @@
                 title="Numbered list on / off">1. List</button>
               <button class="dbtn etm" id="fmt-outdent" hidden
                 title="Move this bullet out one level (Shift+Tab)"
-                >&#8676;</button>
+                aria-label="Outdent"><i data-ic="outdent"></i></button>
               <button class="dbtn etm" id="fmt-indent" hidden
-                title="Move this bullet in one level (Tab)">&#8677;</button>
+                title="Move this bullet in one level (Tab)"
+                aria-label="Indent"><i data-ic="indent"></i></button>
               <!-- LINE SPACING, which every word processor has had since
                    the 1980s and this did not (2026-08-20, user: "when I
                    say I want all the power point options, why do you not
@@ -1057,7 +1065,7 @@
                 <button class="dbtn etm" id="fmt-lh" aria-haspopup="true"
                   aria-expanded="false"
                   title="Line spacing, and the gap between paragraphs">
-                  &#8597; Spacing &#9662;</button>
+                  <i data-ic="spacing"></i> Spacing &#9662;</button>
                 <div class="sh-menu lh-menu" id="fmt-lh-menu" hidden></div>
               </span>
               <!-- alignment and curve are both "how this text sits"; one
@@ -1066,7 +1074,7 @@
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
                   title="How the text sits: alignment, and bending it
- along a curve">&#9636; Layout &#9662;</button>
+ along a curve"><i data-ic="layouts"></i> Layout &#9662;</button>
                 <div class="sh-menu para-menu" id="fmt-para-menu"
                   hidden></div>
               </span>
@@ -1089,7 +1097,7 @@
                     <button class="dbtn rbn-sm" id="fmt-style"
                       aria-haspopup="true" aria-expanded="false"
                       title="Line style — solid, dashed, dotted,
- dash-dot">&#9473; Style &#9662;</button>
+ dash-dot"><i data-ic="dashes"></i> Style &#9662;</button>
                     <div class="sh-menu style-menu" id="fmt-style-menu"
                       hidden></div>
                   </span>
@@ -1104,7 +1112,7 @@
                   <span class="sh-drop" id="fmt-swwrap">
                     <button class="dbtn rbn-sm" id="fmt-sw"
                       aria-haspopup="true" aria-expanded="false"
-                      title="Line thickness">&#9776; Weight &#9662;</button>
+                      title="Line thickness"><i data-ic="weight"></i> Weight &#9662;</button>
                     <div class="sh-menu sw-menu" id="fmt-sw-menu"
                       hidden></div>
                   </span>
@@ -1114,7 +1122,7 @@
                     <button class="dbtn rbn-sm" id="fmt-head"
                       aria-haspopup="true" aria-expanded="false"
                       title="Arrow ends — head shape at each end, and how
- big">&#10230; Ends &#9662;</button>
+ big"><i data-ic="arrow"></i> Ends &#9662;</button>
                     <div class="sh-menu head-menu" id="fmt-head-menu"
                       hidden></div>
                   </span>
@@ -1122,7 +1130,7 @@
                     <button class="dbtn rbn-sm" id="fmt-bend"
                       aria-haspopup="true" aria-expanded="false"
                       title="Route — straight, curved, or elbowed round a
- corner">&#8631; Route &#9662;</button>
+ corner"><i data-ic="route"></i> Route &#9662;</button>
                     <div class="sh-menu bend-menu" id="fmt-bend-menu"
                       hidden></div>
                   </span>
@@ -1132,7 +1140,7 @@
                     <button class="dbtn rbn-sm" id="fmt-fillstyle"
                       aria-haspopup="true" aria-expanded="false"
                       title="Fill — none, solid, or a gradient (linear or
- radiating from the centre)">&#9724; Fill &#9662;</button>
+ radiating from the centre)"><i data-ic="fill"></i> Fill &#9662;</button>
                     <div class="sh-menu fillstyle-menu"
                       id="fmt-fillstyle-menu" hidden></div>
                   </span>
@@ -1146,7 +1154,7 @@
                   <span class="sh-drop" id="fmt-shapewrap">
                     <button class="dbtn rbn-sm" id="fmt-shape"
                       aria-haspopup="true" aria-expanded="false"
-                      title="Change the shape">&#9711; Shape &#9662;</button>
+                      title="Change the shape"><i data-ic="shapes"></i> Shape &#9662;</button>
                     <div class="sh-menu shape-menu" id="fmt-shape-menu"
                       hidden></div>
                   </span>
@@ -1172,32 +1180,33 @@
                    selected, so it costs the resting ribbon nothing. -->
               <button class="dbtn etm" id="fmt-figures" hidden
                 title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them">&#9707; Figures&#8230;</button>
+ book, and tie text or objects to one of them"><i data-ic="flipbook"></i> Figures&#8230;</button>
               <button class="dbtn etm" id="fmt-imgrefresh" hidden
                 title="Re-read this picture from the file it came
  from. If that file has moved, the picture is left exactly as it
- is">&#8635; Refresh</button>
+ is"><i data-ic="reload"></i> Refresh</button>
               <span class="sh-drop" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
                   aria-expanded="false"
                   title="Crop to a shape (rectangle, ellipse, star, …)">
-                  &#9986; Crop &#9662;</button>
+                  <i data-ic="crop"></i> Crop &#9662;</button>
                 <div class="sh-menu" id="fmt-crop-menu" hidden></div>
               </span>
               <button class="dbtn etm" id="fmt-replace"
-                title="Swap in a different notebook card">&#8644;
+                title="Swap in a different notebook card"><i data-ic="swap"></i>
                 Replace</button>
               <button class="dbtn etm" id="fmt-locate"
                 title="Jump to this card in its notebook &mdash; see where
- the plot came from">&#8982; Locate in notebook</button>
+ the plot came from"><i data-ic="locate"></i> Locate in notebook</button>
               <button class="dbtn etm" id="fmt-revert"
                 title="Swap this frame between the LIVE figure and the one
  from before the last notebook refresh (rescue a figure a re-run
- broke without giving up the others)">&#10226; Previous figure</button>
+ broke without giving up the others)"><i data-ic="reset"></i>
+                Previous figure</button>
               <button class="dbtn etm" id="fmt-lockver"
                 title="Pin this figure to its notebook&rsquo;s current git
  commit &mdash; refreshes stop changing it, and it renders even with the
- notebook closed">&#128274; Lock figure</button>
+ notebook closed"><i data-ic="lock"></i> Lock figure</button>
             </span>
             <span class="rbn-lab">Object</span>
           </span>
@@ -1217,11 +1226,11 @@
                 title="Remove the last column">&#8722; Column</button>
               <button class="dbtn etm" id="fmt-tbl-head"
                 aria-pressed="false"
-                title="Treat the first row as headings">&#9776;
+                title="Treat the first row as headings"><i data-ic="table"></i>
                 Header row</button>
               <button class="dbtn etm" id="fmt-tbl-grid"
                 aria-pressed="false"
-                title="Draw the rules between cells">&#9638; Gridlines</button>
+                title="Draw the rules between cells"><i data-ic="grid"></i> Gridlines</button>
             </span>
             <span class="rbn-lab">Table</span>
           </span>
@@ -1233,10 +1242,10 @@
       
       <aside class="selpane preflight" id="preflight" hidden>
         <div class="selpane-h"><span>Before you print</span>
-          <button class="dbtn dc-icon" id="preflight-rerun"
-            title="Check again">&#8635;</button>
-          <button class="dbtn dc-icon" id="preflight-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="preflight-rerun" aria-label="Check again"
+            title="Check again"><i data-ic="reload"></i></button>
+          <button class="dbtn dc-icon" id="preflight-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="pf-count" id="preflight-count"></div>
         <div class="selpane-list" id="preflight-list"></div>
       </aside>
@@ -1249,10 +1258,10 @@
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
         <div class="selpane-h"><span>Standardise text</span>
-          <button class="dbtn dc-icon" id="stdpane-rerun"
-            title="Check again">&#8635;</button>
-          <button class="dbtn dc-icon" id="stdpane-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
+            title="Check again"><i data-ic="reload"></i></button>
+          <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
@@ -1263,8 +1272,8 @@
            feel like reordering slides (2026-08-22). -->
       <aside class="selpane" id="flippane" hidden>
         <div class="selpane-h"><span id="flippane-t">Flip book</span>
-          <button class="dbtn dc-icon" id="flippane-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="flippane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="fp-adds">
           <button class="dbtn" id="fp-add-cells"
             title="Pick figures from your notebook — click as many as you
@@ -1278,8 +1287,8 @@
       </aside>
       <aside class="selpane" id="selpane" hidden>
         <div class="selpane-h"><span>Layers</span>
-          <button class="dbtn dc-icon" id="selpane-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="selpane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="selpane-list" id="selpane-list"></div>
       </aside>
       <!-- The other pages, in the same shell as Objects: both are lists
@@ -1299,8 +1308,8 @@
            the presenter view reads (2026-08-20). -->
       <aside class="selpane notespane" id="notespane" hidden>
         <div class="selpane-h"><span>Notes &amp; timing</span>
-          <button class="dbtn dc-icon" id="notespane-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="notespane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="np-tabs" id="np-tabs">
           <button class="np-tab on" data-np="slide">This slide</button>
           <button class="np-tab" data-np="deck">Whole talk</button>
@@ -1318,8 +1327,9 @@
             <input id="np-goal" class="np-goal" type="number" min="0"
               max="180" step="0.5" placeholder="—">
             <span class="np-unit">minutes</span>
-            <button class="dbtn np-clear" id="np-goalclear"
-              title="No target for this slide">&#10005;</button>
+            <button class="dbtn np-clear" id="np-goalclear" aria-label="No target for this slide"
+              title="No target for this slide"><i data-ic="exit"></i>
+              </button>
           </div>
           <div class="np-tot" id="np-tot"></div>
           <label class="np-lab" for="np-total">Whole talk</label>
@@ -1354,14 +1364,14 @@
       </aside>
       <aside class="selpane animpane" id="animpane" hidden>
         <div class="selpane-h"><span>Animation pane</span>
-          <button class="dbtn dc-icon" id="animpane-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="selpane-list" id="animpane-body"></div>
       </aside>
       <aside class="selpane verpane" id="verpane" hidden>
         <div class="selpane-h"><span id="verpane-title">Versions</span>
-          <button class="dbtn dc-icon" id="verpane-close"
-            title="Close">&#10005;</button></div>
+          <button class="dbtn dc-icon" id="verpane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
         <div class="selpane-list" id="verpane-body"></div>
       </aside>
       <button class="deck-arrow prev" id="deck-prev"
@@ -1391,11 +1401,11 @@
            rather than sitting in its flow, so it costs no height at all,
            and it steps aside when a pane docks. -->
       <span class="deck-zoombar" id="deck-zoombar">
-        <button class="dbtn rbn-ico" id="zoom-out"
+        <button class="dbtn rbn-ico" id="zoom-out" aria-label="Zoom out"
           title="Zoom out">&#8722;</button>
         <button class="dbtn rbn-sm" id="zoom-val"
           title="Click to fit the whole page in the window">Zoom 100%</button>
-        <button class="dbtn rbn-ico" id="zoom-in" title="Zoom in">+</button>
+        <button class="dbtn rbn-ico" id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
       </span>
     </div>
   </div>
@@ -1404,7 +1414,7 @@
       <span class="chain-badge" id="vfull-badge"></span>
       <span class="vfull-t" id="vfull-t"></span>
       <button class="dbtn" id="vfull-close"
-        title="Close (Esc)">&#10005; Close</button>
+        title="Close (Esc)"><i data-ic="exit"></i> Close</button>
     </div>
     <div class="vfull-body" id="vfull-body"></div>
   </div>
@@ -1428,8 +1438,8 @@
   <button class="dbtn" id="match-cancel">Cancel (Esc)</button>
 </div>
 <div class="pickbar" id="pickbar" hidden>
-  <span id="pick-what">&#128204; Click a card in the notebook to place it
-  in the slide</span>
+  <span id="pick-what"><i data-ic="pin"></i> Click a card in the notebook
+  to place it in the slide</span>
   <span class="deck-spring"></span>
   <!-- filling a flip book means clicking SEVERAL cards, so that mode
        stays open until you say it is finished. Hidden for the single-pick
@@ -1453,8 +1463,8 @@
     <div class="eq-head">
       <span class="eq-t">Equation</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="eq-close" title="Cancel (Esc)"
-        >&#10005;</button>
+      <button class="dbtn dc-icon" id="eq-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
     </div>
     <div class="eq-main">
       <div class="eq-left">
@@ -1497,8 +1507,8 @@
     <div class="aa-head">
       <span class="eq-t">Apply this look</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="aa-close" title="Cancel (Esc)"
-        >&#10005;</button>
+      <button class="dbtn dc-icon" id="aa-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
     </div>
     <!-- WHICH TYPE, said out loud and in the accent colour. The old
          wording made you work out for yourself what "all headings" was
@@ -1549,8 +1559,8 @@
     <div class="aa-head">
       <span class="eq-t">Arrangements</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="ar-close" title="Cancel (Esc)"
-        >&#10005;</button>
+      <button class="dbtn dc-icon" id="ar-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
     </div>
     <div class="aa-main">
       <div class="aa-col">
@@ -1592,8 +1602,8 @@
     <div class="aa-head">
       <span class="eq-t">Style sets</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="ss-close" title="Cancel (Esc)"
-        >&#10005;</button>
+      <button class="dbtn dc-icon" id="ss-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
     </div>
     <div class="aa-what" id="ss-what"></div>
     <div class="ss-grid" id="ss-grid"></div>
@@ -1623,8 +1633,8 @@
     <div class="aa-head">
       <span class="eq-t">Match slides</span>
       <span class="deck-spring"></span>
-      <button class="dbtn dc-icon" id="ms-close" title="Cancel (Esc)"
-        >&#10005;</button>
+      <button class="dbtn dc-icon" id="ms-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
     </div>
     <div class="aa-what" id="ms-what"></div>
     <div class="aa-col">
@@ -1655,15 +1665,15 @@
   aria-label="Find and replace">
   <div class="find-head">
     <span class="find-t">Find &amp; replace</span>
-    <button class="dbtn dc-icon" id="find-close"
-      title="Close (Esc)">&#10005;</button>
+    <button class="dbtn dc-icon" id="find-close" aria-label="Close"
+      title="Close (Esc)"><i data-ic="exit"></i></button>
   </div>
   <div class="find-row">
     <input type="text" id="find-q" class="find-in" spellcheck="false"
       autocomplete="off" placeholder="Find" aria-label="Find what">
-    <button class="dbtn dc-icon" id="find-prev"
+    <button class="dbtn dc-icon" id="find-prev" aria-label="Previous match"
       title="Previous match (Shift+Enter)">&#8593;</button>
-    <button class="dbtn dc-icon" id="find-next"
+    <button class="dbtn dc-icon" id="find-next" aria-label="Next match"
       title="Next match (Enter)">&#8595;</button>
   </div>
   <div class="find-row">

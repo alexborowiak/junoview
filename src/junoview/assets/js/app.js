@@ -1,7 +1,14 @@
 
 (function(){
+  'use strict';
   var $=function(s,r){return (r||document).querySelector(s);};
   var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s));};
+  /* the chrome icon set. window.SemIcons is stamped into the page by
+     branding.py (key -> the same <svg class="bic"> markup the template
+     tokens expand to), so DOM built here wears the artwork the page
+     already wears — no path data lives in this file. Soft on absence:
+     a page without the map gets ''-icons, never a dead script. */
+  var bic=function(k){return (window.SemIcons||{})[k]||'';};
 
   /* ================= app state ================= */
   var APP={mode:'static',token:'',root:'',project:{presentations:[],recent:[]}};
@@ -85,13 +92,14 @@
     var back=$('#welcome-back');
     if(back) back.addEventListener('click',function(){goHome(false);});
   })();
-  /* ---- the tab's ⌚ Versions menu: automatic snapshots per open/reload */
+  /* ---- the tab's Version-history menu: automatic snapshots per
+     open/reload */
   var versMenu=null;
   function closeVersMenu(){if(versMenu){versMenu.remove();versMenu=null;}}
   document.addEventListener('click',function(e){
     if(versMenu&&!versMenu.contains(e.target)) closeVersMenu();});
   function showVersMenu(btn,stem){
-    /* the ⌚ button TOGGLES its own menu (no reopen flicker) */
+    /* the history button TOGGLES its own menu (no reopen flicker) */
     if(versMenu&&versMenu.dataset.stem===stem){closeVersMenu();return;}
     closeVersMenu();
     var sh=APP.shells[stem]; if(!sh||!sh.path) return;
@@ -133,7 +141,11 @@
             $$('.card-addnote',s2.el).forEach(function(n){n.remove();});
             renderTabs();
           }
-          docToast(toastMsg+' — ↻ or the ⌚ menu returns to live');
+          /* prose stays WORDS — reload / Version history are button
+             names, and glyphs inline in a sentence are what the icon
+             sweep removed (2026-08-23) */
+          docToast(toastMsg+' — reload, or the Version history menu, '
+            +'returns to live');
         }).catch(function(err){
           alert('Open failed: '+err.message);});
       }
@@ -209,22 +221,24 @@
        reload+close only in the modes that can reopen them */
     if(sh.trace){
       var xc=document.createElement('button');xc.className='tab-b';
-      xc.innerHTML='&#10005;';xc.title='Close trace';
+      xc.innerHTML=bic('exit')||'&#10005;';xc.title='Close trace';
+      xc.setAttribute('aria-label','Close trace');
       xc.addEventListener('click',function(e){e.stopPropagation();
         closeNotebook(stem);});
       t.appendChild(xc);
     } else if(APP.mode==='app'||APP.mode==='web'){
       if(sh.version){
         var vm=document.createElement('span');vm.className='tab-vermark';
-        vm.textContent='⌚';
-        vm.title='Viewing an earlier version — ↻ or the ⌚ menu '
-          +'returns to live';
+        vm.innerHTML=bic('history');
+        vm.title='Viewing an earlier version — reload, or the Version '
+          +'history menu, returns to live';
         t.insertBefore(vm,lbl);
       }
       /* reload + versions used to hide on the tab, where nobody found
          them; they live in the sidebar's File info block now */
       var x=document.createElement('button');x.className='tab-b';
-      x.innerHTML='&#10005;';x.title='Close tab';
+      x.innerHTML=bic('exit')||'&#10005;';x.title='Close tab';
+      x.setAttribute('aria-label','Close tab');
       x.addEventListener('click',function(e){e.stopPropagation();
         closeNotebook(stem);});
       t.appendChild(x);
@@ -297,8 +311,9 @@
         if(sh.trace||APP.mode==='app'||APP.mode==='web'){
           var x=document.createElement('span');x.className='rnb-x';
           x.setAttribute('role','button');
-          x.innerHTML='&#10005;';
+          x.innerHTML=bic('exit')||'&#10005;';
           x.title=sh.trace?'Close this trace':'Close this notebook';
+          x.setAttribute('aria-label',x.title);
           x.addEventListener('click',function(e){
             e.stopPropagation();closeNotebook(stem);});
           b.appendChild(x);
@@ -445,20 +460,6 @@
      the user has filtered differently gets its own state in `secF` (keyed
      stem::section so two notebooks never share one). Everything reads
      stateFor(); the appbar edits whichever sections "Apply to" selects. */
-  /* a brief message for filter actions (the deck's toast lives inside the
-     deck, which is hidden while you are reading the document) */
-  var docToastEl=null,docToastT=null;
-  function docToast(msg){
-    if(!docToastEl){
-      docToastEl=document.createElement('div');
-      docToastEl.className='deck-toast';
-    }
-    docToastEl.textContent=msg;
-    docToastEl.hidden=false;
-    (document.fullscreenElement||document.body).appendChild(docToastEl);
-    clearTimeout(docToastT);
-    docToastT=setTimeout(function(){docToastEl.hidden=true;},3400);
-  }
   /* a Plot-trace tab opens UNFILTERED — it is a fresh reading of the cells
      behind one figure, so the document's hidden code must not follow it
      (and its code shows, since the code is the point of a trace) */
@@ -842,29 +843,6 @@
     b.classList.toggle('mixed',state==='mixed');
     b.setAttribute('data-cs',state);
   }
-  /* the "…" overflow (Help + Support): one click deep, so the bar fits */
-  (function(){
-    var wrap=$('#more-btn')&&$('#more-btn').parentNode;
-    var btn=$('#more-btn'),menu=$('#more-menu');
-    if(!btn||!menu) return;
-    function close(){menu.hidden=true;
-      btn.setAttribute('aria-expanded','false');}
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      if(open){
-        var r=btn.getBoundingClientRect();
-        menu.style.top=(r.bottom+6)+'px';
-        menu.style.left=Math.max(8,
-          Math.min(r.left,window.innerWidth-224))+'px';
-      }
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
-    menu.addEventListener('click',function(){close();});
-  })();
   /* which cross-notebook filter buttons make sense for the active tab */
   function renderFilterExtras(){
     var sh=APP.active&&APP.shells[APP.active];
@@ -880,16 +858,6 @@
     /* a trace has no real sections, so "Apply to" has nothing to pick */
     var sc=$('#sec-scope-btn');
     if(sc) sc.hidden=isTrace;
-    var fa=$('#filters-all');
-    if(fa){
-      fa.hidden=isTrace;
-      var n=(APP.order||[]).length;
-      fa.disabled=n<2;
-      fa.classList.toggle('notarget',n<2);
-      fa.title=n<2
-        ?'Open a second notebook to copy these filters across'
-        :'Give every other open notebook the filters this one is using';
-    }
   }
   function renderTypeButtons(){
     setTvBtn('tv-markdown','Markdown',readF('md'));
@@ -1644,11 +1612,43 @@
     setBtnText(rawBtn,on?'Formatted':'Raw');
     rawBtn.disabled=!sh;
   }
+  /* The raw view ships lightweight .rawph placeholders for every output
+     whose full payload a card already embeds (data-jvout keys, stamped
+     server-side) — one copy of each multi-MB figure per page, not two.
+     Fill them on FIRST OPEN by cloning the card's already-parsed node —
+     the same clone trick the deck uses for slides. Outputs the cards
+     dropped (hidden cells, single-step folds — see _card_output_keys in
+     render/items.py) arrive fully embedded and need no filling. */
+  function populateRawView(shell){
+    if(!shell) return;
+    var phs=shell.querySelectorAll('.rawview .rawph:not([data-filled])');
+    if(!phs.length) return;
+    var content=$('.content',shell);
+    [].forEach.call(phs,function(ph){
+      ph.dataset.filled='1';
+      var key=ph.dataset.jvout||'';
+      /* scope to .content: tree-view/trace clones also carry the key */
+      var src=(key&&content)
+        ?content.querySelector('[data-jvout="'+key+'"]'):null;
+      if(src) ph.appendChild(src.cloneNode(true));
+      else{
+        /* never silently nothing: say the mirror is missing */
+        ph.classList.add('rawph-missing');
+        ph.textContent='This output could not be mirrored from the '
+          +'formatted view. Reload the notebook to rebuild the page.';
+      }
+    });
+    var rv=$('.rawview',shell);
+    /* clones of not-yet-drawn plotly embeds carry their data-plotly spec:
+       draw them now (drawn ones carry .js-plotly-plot and are skipped) */
+    if(rv) activateOutputs(rv,true);
+  }
   if(rawBtn) rawBtn.addEventListener('click',function(){
     var sh=APP.active&&APP.shells[APP.active];
     if(!sh) return;
     var on=sh.el.classList.toggle('raw');
     if(on) sh.el.classList.remove('tree');   /* raw + tree are exclusive */
+    if(on) populateRawView(sh.el);
     if(on&&!sh.el.dataset.rawTypeset){
       sh.el.dataset.rawTypeset='1';
       var rv=$('.rawview',sh.el);
@@ -1819,6 +1819,9 @@
   }
   if(treeBtn) treeBtn.addEventListener('click',toggleTree);
 
+  /* the code-kind palette — the single JS statement of it. Exported as
+     window.SemView.kindFill so deck.js's NODE_FILL shares this table;
+     the CSS twin is the --ck-* set on :root in core.css. */
   var TREE_FILL={figure:'#39a9c0',diagnostic:'#39a9c0',dataset:'#4d90c0',
     transform:'#5b7589',metric:'#46a892',note:'#cf9a4e',text:'#8ba0b2',
     imports:'#a3855c','function':'#46a892',data:'#4d90c0',constant:'#9a7cc0',
@@ -2057,11 +2060,13 @@
         kd.textContent=nd.it.kind||'cell';tw.appendChild(kd);
         head.appendChild(tw);
         var eye=document.createElement('button');eye.className='tn-btn tn-eye';
-        eye.type='button';eye.innerHTML='&#128065;';eye.title='Hide this cell';
+        eye.type='button';eye.innerHTML=bic('eye');eye.title='Hide this cell';
+        eye.setAttribute('aria-label','Hide this cell');
         head.appendChild(eye);
         var chev=document.createElement('button');chev.className='tn-btn tn-chev';
         chev.type='button';chev.innerHTML='&#8250;';
         chev.title='Expand to see the cell';
+        chev.setAttribute('aria-label','Expand to see the cell');
         head.appendChild(chev);
         var body=document.createElement('div');body.className='tree-node-body';
         el.appendChild(head);el.appendChild(body);
@@ -2267,13 +2272,10 @@
         relayoutActiveTree();
       });
     }
-    /* the two dock icons, swapped in place so the glyph always shows the
-       edge the button would move the bar TO */
-    var PB_ICO={
-      right:'<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
-        +'<path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/>',
-      top:'<rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/>'
-        +'<path d="M1.8 6.2h12.4"/><path d="M4.4 4.3h5.4"/>'};
+    /* the two dock icons (SemIcons dockright / docktop), swapped in
+       place so the glyph always shows the edge the button would move
+       the bar TO. The path data used to be copied here as PB_ICO;
+       branding.py is the only place it lives now (2026-08-23). */
     /* dock across the top (where it IS the app bar) or down the right
        (where the groups become rows) — remembered between talks */
     var PKEY='junoview:presentbar:dock';
@@ -2314,7 +2316,9 @@
            still says it in words. The present bar is the tightest bar we
            have — these words cost it the Exit button's place on line 1. */
         var mi=mv.querySelector('.bic');
-        if(mi) mi.innerHTML=(pbDock==='top')?PB_ICO.right:PB_ICO.top;
+        var mh=(pbDock==='top')?bic('dockright'):bic('docktop');
+        if(mi&&mh) mi.outerHTML=mh;   /* whole-node swap: bic() is the
+                                         full <svg>, not inner paths */
         mv.title=(pbDock==='top')
           ?'Move these controls down the right-hand side'
           :'Move these controls back across the top';
@@ -2433,7 +2437,7 @@
     treeRelayoutTimer=setTimeout(relayoutActiveTree,120);
   });
   window.SemView={tree:toggleTree,present:enterDocPresent,
-    exitPresent:exitDocPresent,buildTree:buildTree};
+    exitPresent:exitDocPresent,buildTree:buildTree,kindFill:TREE_FILL};
 
   /* ---- theme toggle (chrome only; the slide canvas stays dark) --- */
   function applyTheme(light){
@@ -2835,8 +2839,11 @@
   /* ---- presentations rail: full -> icons -> hidden (edge handle
      brings it back) ---- */
   /* ---- rail auto-hide: opt-in, remembered, and it never fights the
-     collapse states (turning it on leaves them alone) ---- */
-  (function(){
+     collapse states (turning it on leaves them alone). Wired + applied
+     from the boot tail, not at this point in the file — it used to be a
+     sub-IIFE running its apply() at load (same trap deck.js's boot
+     sequence exists to end). ---- */
+  function initRailAuto(){
     var AK='junoview:presrail:auto';
     var btn=$('#pr-auto'),on=false;
     try{on=localStorage.getItem(AK)==='1';}catch(e){}
@@ -2859,7 +2866,7 @@
         document.body.classList.remove('prrail-peek');
     });
     apply();
-  })();
+  }
   var prCollapse=$('#pr-collapse'), prShow=$('#presrail-show');
   function railState(){
     return document.body.classList.contains('presrail-hidden')?'hidden'
@@ -2932,7 +2939,17 @@
     if(!bar||!bar.clientWidth) return;
     var cl=document.body.classList;
     cl.remove('rbc1');cl.remove('rbc2');cl.remove('rbc3');
-    if(bar.scrollWidth>bar.clientWidth+1) cl.add('rbc1');
+    /* the custom-view styling bar rides the same pass: it sits in
+       #apptop under this bar and used to WRAP into a second band of
+       chrome (2026-08-24). It now shares rbc1's spacing stage, and past
+       that it scrolls sideways (its own overflow-x:auto floor) — the
+       same ladder as the appbar, nothing clipped unreachable. */
+    var sb=document.getElementById('stylebar');
+    function over(el){
+      return !!(el&&!el.hidden&&el.clientWidth
+        &&el.scrollWidth>el.clientWidth+1);
+    }
+    if(over(bar)||over(sb)) cl.add('rbc1');
   }
   /* the header can still be more than one row TALL (the sub-pickers hang
      under their filters), so the page offset has to follow its REAL
@@ -3011,12 +3028,20 @@
     applyToc(!document.body.classList.contains('tocshow'));
   });
 
-  /* huge markdown notes: clamp with a Show more toggle */
+  /* huge markdown notes: clamp with a Show more toggle.
+     Two passes on purpose: reading scrollHeight right after the previous
+     note's classList/insertBefore writes forces a full reflow PER long
+     note. All the measuring happens first, then all the mutating
+     (2026-08-23 perf) — same callers, same result. */
   function mdClampScan(shell){
+    var longOnes=[];
     $$('.card[data-note="1"] .cardbody',shell).forEach(function(bd){
       if(bd.dataset.mdclamp) return;
       var nt=$('.note',bd); if(!nt) return;
-      if(nt.scrollHeight<=460) return;
+      if(nt.scrollHeight<=460) return;        /* read phase only */
+      longOnes.push(bd);
+    });
+    longOnes.forEach(function(bd){            /* write phase */
       bd.dataset.mdclamp='1';
       bd.classList.add('mdclamp');
       var btn=document.createElement('button');
@@ -3135,7 +3160,7 @@
       if(head.querySelector('.card-addnote')) return;
       var b=document.createElement('button');
       b.className='card-addnote';b.type='button';
-      b.innerHTML='&#9998;';
+      b.innerHTML=bic('pen')||'&#9998;';
       b.title='Add a markdown note after this cell (saved into the '
         +'.ipynb; optionally committed to git)';
       b.addEventListener('click',function(ev){
@@ -3688,24 +3713,32 @@
       if(label) sh.label=label;
       renderTabs();
     }
+    /* web mode: fetch the raw notebook and parse it in the page —
+       shared by both branches; `taken` is the stems the parser must
+       avoid, and done(shellHtml) runs after the mount */
+    function webFetchParse(taken,done){
+      fetch(url,{cache:'no-store'}).then(function(r){
+        if(!r.ok) throw new Error('HTTP '+r.status);
+        return r.text();
+      }).then(function(txt){
+        if(!webReady()) throw new Error('Python is still loading');
+        var name=decodeURIComponent(
+          url.split('?')[0].split('/').pop()||'notebook.ipynb');
+        var shell=window.semPy.parse(name,txt,taken);
+        mountShellHTML(shell,url,true);
+        done(shell);
+      }).catch(function(e){
+        alert('Could not open that version: '+((e&&e.message)||e));});
+    }
     if(!intoStem){
       /* its OWN tab, but still named for the notebook with the commit
          underneath — not "draft_01-2" */
       if(APP.mode==='web'){
-        fetch(url,{cache:'no-store'}).then(function(r){
-          if(!r.ok) throw new Error('HTTP '+r.status);
-          return r.text();
-        }).then(function(txt){
-          if(!webReady()) throw new Error('Python is still loading');
-          var name=decodeURIComponent(
-            url.split('?')[0].split('/').pop()||'notebook.ipynb');
-          var shell=window.semPy.parse(name,txt,APP.order.slice());
-          mountShellHTML(shell,url,true);
+        webFetchParse(APP.order.slice(),function(shell){
           var tmp=document.createElement('div');tmp.innerHTML=shell;
           var el=tmp.querySelector('.nbshell');
           tag(el?el.dataset.nb:'');
-        }).catch(function(e){
-          alert('Could not open that version: '+((e&&e.message)||e));});
+        });
         return;
       }
       api('/api/open',{path:url}).then(function(j){
@@ -3715,28 +3748,16 @@
         alert('Could not open that version: '+((e&&e.message)||e));});
       return;
     }
-    function land(shellHtml){
-      mountShellHTML(shellHtml,url,true);
-      tag(intoStem);
-    }
     if(APP.mode==='web'){
-      fetch(url,{cache:'no-store'}).then(function(r){
-        if(!r.ok) throw new Error('HTTP '+r.status);
-        return r.text();
-      }).then(function(txt){
-        if(!webReady()) throw new Error('Python is still loading');
-        var name=decodeURIComponent(
-          url.split('?')[0].split('/').pop()||'notebook.ipynb');
-        /* exclude the tab we are replacing from the taken names, so the
-           parser reproduces ITS stem instead of minting a second one */
-        var taken=APP.order.filter(function(s){return s!==intoStem;});
-        land(window.semPy.parse(name,txt,taken));
-      }).catch(function(e){
-        alert('Could not open that version: '+((e&&e.message)||e));});
+      /* exclude the tab we are replacing from the taken names, so the
+         parser reproduces ITS stem instead of minting a second one */
+      webFetchParse(APP.order.filter(function(s){return s!==intoStem;}),
+        function(){tag(intoStem);});
       return;
     }
     api('/api/open',{path:url,stem:intoStem}).then(function(j){
-      land(j.shell);
+      mountShellHTML(j.shell,url,true);
+      tag(intoStem);
     }).catch(function(e){
       alert('Could not open that version: '+((e&&e.message)||e));});
   }
@@ -3801,7 +3822,9 @@
     function act(label,title,fn){
       var b=document.createElement('button');
       b.className='rf-btn';b.type='button';
-      b.textContent=label;b.title=title;
+      /* innerHTML: the labels are fixed strings from this file, now
+         carrying a bic() icon before their words */
+      b.innerHTML=label;b.title=title;
       b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
       return b;
     }
@@ -3830,13 +3853,13 @@
       var acts=document.createElement('div');acts.className='rf-acts';
       panel.appendChild(acts);
       if(APP.mode==='app'&&path&&!isUrlPath){
-        acts.appendChild(act('⌚ Version history…',
+        acts.appendChild(act(bic('history')+' Version history…',
           'Every saved snapshot and git commit of this notebook — '
           +'open any of them',
           function(b){showVersMenu(b,stem);}));
       }
       if(ver){
-        acts.appendChild(act('↻ Back to current',
+        acts.appendChild(act(bic('reload')+' Back to current',
           'Leave this old version and reload the file as it is now',
           function(){openPath(path);}));
       }
@@ -3862,8 +3885,9 @@
           /* …or side by side, when you actually want to compare */
           var nt=document.createElement('button');
           nt.className='rf-newtab';nt.type='button';
-          nt.textContent='⧉';
+          nt.innerHTML=bic('copy')||'&#10697;';
           nt.title='Open this version in a new tab, to compare';
+          nt.setAttribute('aria-label','Open this version in a new tab');
           nt.addEventListener('click',function(e){
             e.stopPropagation();closePanel();openAt(c,true);});
           row.appendChild(b);row.appendChild(nt);
@@ -3915,7 +3939,8 @@
             function(c,newTab){
               /* every commit is the SAME file at a different moment — it
                  belongs in this tab, not a new one, and it is not a new
-                 entry in Recent. "⧉" is the explicit opt-in to compare. */
+                 entry in Recent. The new-tab (duplicate-icon) button is
+                 the explicit opt-in to compare. */
               openUrlVersion(ghRawAt(gh,c.full||c.id),
                 newTab?null:stem,'git:'+c.id,
                 (APP.shells[stem]||{}).label||stem);
@@ -3982,78 +4007,23 @@
         if(v) v.textContent='could not read git';
       });
     }
-    function toggle(anchor){
+    function toggle(){
       var open=panel.hidden;
       panel.hidden=!open;
       if(info) info.setAttribute('aria-expanded',open.toString());
       if(open) fill();
-      /* opened from the ribbon: float it under that button. It has to be
-         re-parented to <body> — .rail is position:sticky, which makes its
-         own stacking context, so any z-index inside it still loses to the
-         fixed header and the panel opens BEHIND the ribbon. */
-      if(anchor&&open){
-        panel.classList.add('rf-float');
-        document.body.appendChild(panel);
-        var r=anchor.getBoundingClientRect();
-        panel.style.top=(r.bottom+6)+'px';
-        panel.style.left=Math.max(8,
-          Math.min(r.left,window.innerWidth-320))+'px';
-      } else if(!anchor){
-        panel.classList.remove('rf-float');
-        panel.style.top='';panel.style.left='';
-        var head=$('.railhead',shell);
-        if(head&&panel.parentNode!==head) head.appendChild(panel);
-      }
     }
     if(info) info.addEventListener('click',function(e){
-      e.stopPropagation();toggle(null);});
-    /* clicking anywhere else closes it — wherever it is anchored */
+      e.stopPropagation();toggle();});
+    /* clicking anywhere else closes it */
     document.addEventListener('click',function(e){
       if(panel.hidden||panel.contains(e.target)) return;
       if(info&&info.contains(e.target)) return;
-      var fb=$('#file-info-btn');
-      if(fb&&fb.contains(e.target)) return;
       closePanel();
     });
     document.addEventListener('keydown',function(e){
       if(e.key==='Escape'&&!panel.hidden) closePanel();});
-    /* the ribbon's File button drives whichever notebook is active */
-    APP.fileInfoToggle=APP.fileInfoToggle||{};
-    APP.fileInfoToggle[stem]=toggle;
   }
-  (function(){
-    var fb=$('#file-info-btn'),rb=$('#file-reload');
-    function activeSh(){return APP.active&&APP.shells[APP.active];}
-    /* these are DISABLED, never hidden: a button that appears once the
-       notebook finishes loading shoves the whole bar sideways */
-    function sync(){
-      var sh=activeSh();
-      var has=!!(sh&&sh.path&&!sh.trace);
-      if(fb) fb.disabled=!has;
-      if(rb){
-        rb.disabled=!has;
-        rb.title=(sh&&/^https?:/i.test(sh.path||''))
-          ?'Reload from the URL':'Reload from disk';
-      }
-      measureChrome();
-    }
-    if(fb) fb.addEventListener('click',function(e){
-      e.stopPropagation();
-      var t=APP.fileInfoToggle&&APP.fileInfoToggle[APP.active];
-      if(t) t(fb);
-    });
-    if(rb) rb.addEventListener('click',function(){
-      var sh=activeSh(); if(sh&&sh.path) openPath(sh.path);});
-    document.addEventListener('click',function(e){
-      /* the floated panel now lives on <body>, so find it there */
-      var p=document.querySelector('body > .rf-panel.rf-float');
-      if(p&&!p.hidden&&e.target!==fb&&!p.contains(e.target)) p.hidden=true;
-    });
-    document.addEventListener('sem:activate',sync);
-    document.addEventListener('sem:shell',sync);
-    APP.syncFileBtns=sync;
-    sync();
-  })();
   function initShell(shell){
     var data={};
     var de=$('.nb-data',shell);
@@ -4385,7 +4355,10 @@
       if(items) items.classList.add('nav-collapsed');
     });
     recalcSecCascade(shell);   /* re-fold the tiers under restored state */
-    if(keep.raw&&!keep.tree) shell.classList.add('raw');
+    if(keep.raw&&!keep.tree){
+      shell.classList.add('raw');
+      populateRawView(shell);  /* a reload/restore skips the Raw button */
+    }
     if(keep.tree){
       shell.classList.add('tree');
       var sh=APP.shells[stem];
@@ -5065,11 +5038,11 @@
     var vsw=document.createElement('div');vsw.className='trace-viewsw';
     var bList=document.createElement('button');
     bList.className='dbtn tvw';bList.type='button';
-    bList.innerHTML='&#9776; Cells';
+    bList.innerHTML=bic('menu')+' Cells';
     bList.title='The lineage as a readable list of cells';
     var bTree=document.createElement('button');
     bTree.className='dbtn tvw';bTree.type='button';
-    bTree.innerHTML='&#9633; Tree';
+    bTree.innerHTML=bic('tree')+' Tree';
     bTree.title='The lineage as an expandable dependency tree — columns '
       +'by step, click a node to open the cell';
     function syncVsw(){
@@ -5414,7 +5387,7 @@
       /* an icon makes the row read as a thing you act on rather than a
          caption above a path (2026-08-21) */
       var ic=document.createElement('span');ic.className='odlg-r-ic';
-      ic.innerHTML=isUrl(p)?'&#128279;':'&#128196;';b.appendChild(ic);
+      ic.innerHTML=isUrl(p)?bic('link'):bic('doc');b.appendChild(ic);
       var nm=document.createElement('span');nm.className='odlg-r-nm';
       nm.textContent=sp.name;b.appendChild(nm);
       var pt=document.createElement('span');pt.className='odlg-r-p';
@@ -5466,7 +5439,7 @@
           +'No folders or notebooks here.</div>';
       j.dirs.forEach(function(d){
         var b=document.createElement('button');b.className='odlg-i';
-        b.innerHTML='<span class="ic">&#128193;</span>';
+        b.innerHTML='<span class="ic">'+bic('open')+'</span>';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=d.name;b.appendChild(nm);
         b.addEventListener('click',function(){listDir(d.path);});
@@ -5474,7 +5447,7 @@
       });
       j.notebooks.forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i nb';
-        b.innerHTML='<span class="ic">&#128209;</span>';
+        b.innerHTML='<span class="ic">'+bic('nb')+'</span>';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
@@ -5485,7 +5458,7 @@
       /* saved presentations, openable like notebooks (2026-08-20) */
       (j.decks||[]).forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i deck';
-        b.innerHTML='<span class="ic">&#127902;</span>';
+        b.innerHTML='<span class="ic">'+bic('present')+'</span>';
         b.title='Open this saved Junoview presentation';
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
@@ -5528,7 +5501,7 @@
          with a path on hover"). */
       b.title=sp.path;
       var ic=document.createElement('span');ic.className='recent-ic';
-      ic.innerHTML=isUrl(p)?'&#128279;':'&#128196;';
+      ic.innerHTML=isUrl(p)?bic('link'):bic('doc');
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=sp.name;
       b.appendChild(ic);b.appendChild(nm);
@@ -5570,8 +5543,10 @@
         +(p.draft?' (unsaved draft)':'')
         +(p.slides?(String.fromCharCode(10)+p.slides+' slide'
           +(p.slides===1?'':'s')):'');
+      /* NOT the newdeck/newposter/newview icons: those carry the "make a
+         new one" affordance; these rows OPEN something that exists */
       var ic=document.createElement('span');ic.className='recent-ic';
-      ic.innerHTML=p.view?'&#128065;':p.poster?'&#128444;':'&#128421;';
+      ic.innerHTML=p.view?bic('eye'):p.poster?bic('pagep'):bic('present');
       var nm=document.createElement('span');nm.className='recent-nm';
       nm.textContent=p.name;
       b.appendChild(ic);b.appendChild(nm);
@@ -5823,7 +5798,12 @@
     else document.addEventListener('sem:pyready',restoreWebSession);
   }
 
-  /* ================= boot: mount shells already on the page ============ */
+  /* ================= boot: mount shells already on the page ============
+     New load-time work belongs HERE, after every declaration. The other
+     load-time restores above (theme/scheme, rail collapse state, chrome
+     measure, TOC, tooltip host) are order-safe where they are — each
+     only touches what is declared above it — but do not add more. */
+  initRailAuto();
   $$('.nbshell').forEach(function(sh){initShell(sh);});
   if(APP.order.length) activate(APP.order[0]);
   else renderTabs();

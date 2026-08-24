@@ -25,6 +25,7 @@ from pathlib import Path
 from . import assets
 from ._write import write_text
 from .branding import _FAVICON, _LOGO_SVG
+from .notebook.loader import _stem_for
 from .notebook.parser import parse_notebook
 from .render.page import render_page, render_shell
 
@@ -39,12 +40,8 @@ def web_parse(name: str, text: str, taken_json: str = "[]") -> str:
     nb = json.loads(text)
     doc = parse_notebook(nb)
     base = re.sub(r"\.ipynb$", "", str(name), flags=re.I) or "notebook"
-    taken = set(json.loads(taken_json))
-    stem, n = base, 1
-    while stem in taken:
-        n += 1
-        stem = f"{base}-{n}"
-    doc.source_name = stem
+    doc.source_name = _stem_for(Path(base + ".ipynb"),
+                                set(json.loads(taken_json)))
     return render_shell(doc)
 
 
