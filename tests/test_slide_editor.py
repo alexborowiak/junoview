@@ -1157,3 +1157,57 @@ def test_select_by_has_two_doors_and_neither_costs_ribbon_width(out):
     # a menu five sections deep scrolls rather than running off-screen
     assert ".canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}" \
         in out
+
+
+def test_find_and_replace_has_a_formatting_half(out):
+    """TASKS T6. Text replace answers "every 'SST' becomes 'sea surface
+    temperature'"; this answers "every 18pt Georgia heading becomes 20pt
+    Inter". Same verb, different material, so they share one popover
+    rather than growing a second door somewhere else.
+
+    FIND reuses T5's criteria table rather than duplicating it, and is
+    seeded BY EXAMPLE off the selected object -- describing a look in
+    the abstract is a form nobody fills in correctly.
+    """
+    assert 'id="find-m-text"' in out and 'id="find-m-fmt"' in out
+    assert 'id="find-fmt"' in out
+    # the text half hides by attribute, so no CSS had to be restructured
+    assert '<div class="find-row" data-fmode="text">' in out
+    assert "$$('#find-pop [data-fmode]').forEach(function(el){" in out
+    # the criteria come from T5's table, not a second copy
+    assert "SELECT_CRIT.forEach(function(c,n){" in out
+    assert "function critsMatch(a,crit){" in out
+    # ...and an empty criteria set matches nothing on purpose
+    assert "if(!a||!crit||!crit.length) return false;" in out
+
+
+def test_a_formatting_sweep_is_not_the_selection_rule(out):
+    """The two look alike and must not be merged. annotsBy answers "what
+    can I select", so it leaves hidden objects out -- you cannot select
+    what is not on the page. A sweep is a different question: ``hide``
+    means "hidden while EDITING, still shown when presenting", so an
+    object skipped by the sweep would keep the old typeface through the
+    whole talk. Fully locked objects stay out of both: a lock is an
+    explicit "not this one".
+    """
+    assert "function sweep(crit,scope){" in out
+    assert "if(!a||lockedAll(a)) return;\n          if(critsMatch(a,crit))" \
+        in out
+    # the selection rule still drops hidden items
+    assert "if(!a||a.hide||lockedAll(a)) return;" in out
+
+
+def test_a_formatting_sweep_says_what_it_will_do_first(out):
+    """A deck-wide rewrite that just happens is a deck-wide rewrite you
+    cannot check. The count is live, the button will not fire without
+    both something to match and something to change, and a field that
+    means nothing for what was matched is not written at all -- a `size`
+    on a shape would be a junk key every export then has to ignore.
+    """
+    assert "+' on '+ns+' slide'+(ns===1?'':'s')" in out
+    assert "go.disabled=!hitn.length||!edits().length;" in out
+    assert "if(c.kinds.indexOf(h.a.k)<0) return;" in out
+    assert "var FMT_CHANGES=[" in out
+    # one markDirty for the whole sweep, so one undo takes it back
+    assert "markDirty();refresh();\n        toast('Changed '+n+' object'" \
+        in out

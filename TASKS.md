@@ -80,9 +80,18 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   rather than inventing a second one. Two doors, neither costing ribbon
   width: the canvas right-click menu (inline, with counts) and one
   Arrange row.
-- [ ] **T6 · M — Find & replace: text and formatting.** Deck-wide text
+- [x] **T6 · M — Find & replace: text and formatting.** Deck-wide text
   replace, plus a formatting variant (every 18px font-A → 20px font-B).
   Builds on T5's matcher.
+  *2026-08-25:* deck-wide TEXT replace already existed; this adds the
+  formatting half as a second mode in the same popover. Find is T5's
+  `SELECT_CRIT`, seeded by example off the selected object; change is a
+  short field list (typeface, size, colour) — copying a whole look onto
+  a type is the Apply dialog's job and it already does it. The sweep
+  rule deliberately differs from the selection rule: it includes
+  `hide`den objects, because `hide` means "hidden while editing, still
+  shown when presenting" and skipping them would leave the talk in the
+  old face.
 - [ ] **T7 · M — Snap to nearby objects + spacing guides.** Snapping
   candidates from neighbouring objects' edges/centres, and equal-spacing
   distribution hints while dragging (Figma-style badges).

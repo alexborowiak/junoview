@@ -11580,6 +11580,15 @@
           ?(a.sw||SW_DEFAULT):null;},
       function(){return 'Every stroke at this thickness';}]
   ];
+  /* does an object answer EVERY criterion in the set? The set is an
+     AND, and an empty set matches nothing — "change everything" is a
+     thing you should have to say another way. */
+  function critsMatch(a,crit){
+    if(!a||!crit||!crit.length) return false;
+    for(var i=0;i<crit.length;i++)
+      if(critRead(crit[i].key,a)!==crit[i].val) return false;
+    return true;
+  }
   function critRead(key,a){
     if(!a) return null;
     for(var i=0;i<SELECT_CRIT.length;i++)
@@ -19395,8 +19404,218 @@
       markDirty();refresh();scan();
       toast('Replaced '+n+(n===1?' match':' matches'));
     }
+    /* ---- FIND & REPLACE: FORMATTING ------------------------------
+       Text replace above answers "every 'SST' becomes 'sea surface
+       temperature'". This answers "every 18pt Georgia heading becomes
+       20pt Inter" — the sweep you need when a deck has to change face,
+       and the one that otherwise costs an afternoon of clicking
+       (TASKS T6).
+
+       FIND is T5's criteria table, used and not duplicated: the ticked
+       rows AND together, and every one of them is read off the object
+       you have SELECTED. Describing a look in the abstract is a form
+       nobody fills in correctly — picking an example of it is one
+       click, and it is the same gesture T5 already taught.
+
+       CHANGE is a short list of fields, not a whole look. Copying a
+       whole look onto everything of a type is the Apply dialog's job
+       and it already does it well; this is the surgical one — change
+       exactly these fields, on exactly the things that answer this
+       description, and leave the rest alone. Nothing here writes
+       a.style, for the reason the Apply dialog gives: re-tagging a box
+       changes what it IS, not how it looks. */
+    var FMT_CHANGES=[
+      /* key, label, kinds it means anything for, write(a,v) */
+      ['font','Typeface','text',function(a,v){
+        if(v) a.font=v; else delete a.font;}],
+      ['size','Text size','text table',function(a,v){a.size=v/5.4;}],
+      ['color','Colour','text arrow rect draw',function(a,v){
+        a.color=v;}]
+    ];
+    var fmtPanel=$('#find-fmt'),mode='text';
+    function fmtRef(){
+      var s2=pres.slides[cur];
+      var ids=selIdxs();
+      return (s2&&(s2.annots||[])[ids[ids.length-1]])||null;
+    }
+    /* WHICH OBJECTS A SWEEP TOUCHES — and it is NOT annotsBy's rule.
+       annotsBy answers "what can I select", so it leaves out hidden
+       items: you cannot select what is not on the page. A sweep is a
+       different question. `hide` means "hidden while EDITING, still
+       shown when presenting", so an item skipped here would keep the
+       old face through the whole talk — the exact failure the sweep
+       exists to prevent. Fully locked items are still out: a lock is an
+       explicit "not this one". */
+    function sweep(crit,scope){
+      var out=[];
+      var ids=(scope==='deck')
+        ?(pres.slides||[]).map(function(_,i){return i;}):[cur];
+      ids.forEach(function(i){
+        var sl=(pres.slides||[])[i]; if(!sl) return;
+        (sl.annots||[]).forEach(function(a,j){
+          if(!a||lockedAll(a)) return;
+          if(critsMatch(a,crit)) out.push({si:i,i:j,a:a});
+        });
+      });
+      return out;
+    }
+    function fmtBuild(){
+      if(!fmtPanel) return;
+      fmtPanel.innerHTML='';
+      var ref=fmtRef();
+      if(!ref){
+        var p0=document.createElement('div');
+        p0.className='ff-none';
+        p0.textContent='Select an object on the page first \u2014 this '
+          +'half describes what to find BY EXAMPLE, the same way '
+          +'"select everything like this" does.';
+        fmtPanel.appendChild(p0);
+        return;
+      }
+      function head(t){menuHead(fmtPanel,t);}
+      function ck(label,on){
+        var l=document.createElement('label');
+        l.className='find-ck';
+        var b=document.createElement('input');
+        b.type='checkbox';b.checked=!!on;
+        l.appendChild(b);
+        l.appendChild(document.createTextNode(' '+label));
+        return {el:l,box:b};
+      }
+      /* ---- what to find ---- */
+      head('find objects that are');
+      var crits=[];
+      SELECT_CRIT.forEach(function(c,n){
+        var v=c[1](ref);
+        if(v==null) return;
+        /* the FIRST row (the type) starts ticked: on its own it is
+           already a useful sweep, and a dialog that starts matching
+           nothing reads as broken */
+        var r=ck(c[2](v,ref),crits.length===0);
+        crits.push({key:c[0],val:v,box:r.box});
+        fmtPanel.appendChild(r.el);
+        r.box.addEventListener('change',recount);
+      });
+      /* ---- what to change ---- */
+      head('and change');
+      var chs=[];
+      FMT_CHANGES.forEach(function(c){
+        var row=document.createElement('div');row.className='ff-row';
+        var r=ck(c[1],false);
+        row.appendChild(r.el);
+        var inp;
+        if(c[0]==='font'){
+          inp=document.createElement('select');
+          var o0=document.createElement('option');
+          o0.value='';o0.textContent='(default)';inp.appendChild(o0);
+          FONTS.forEach(function(fo){
+            var o=document.createElement('option');
+            o.value=fo.id;o.textContent=fo.label;inp.appendChild(o);});
+          inp.value=ref.font||'';
+        } else if(c[0]==='size'){
+          inp=document.createElement('input');
+          inp.type='number';inp.min='6';inp.max='240';
+          inp.value=String(Math.round((ref.size||2.6)*5.4));
+        } else {
+          inp=document.createElement('input');
+          inp.type='color';
+          inp.value=/^#[0-9a-f]{6}$/i.test(ref.color||'')
+            ?ref.color:'#ffffff';
+        }
+        inp.className='ff-in';
+        row.appendChild(inp);
+        fmtPanel.appendChild(row);
+        chs.push({key:c[0],kinds:c[2],write:c[3],box:r.box,inp:inp});
+        r.box.addEventListener('change',recount);
+      });
+      /* ---- over what ---- */
+      head('over');
+      var scope=document.createElement('select');
+      scope.className='ff-in';scope.style.width='100%';
+      [['deck','The whole deck'],['slide','This slide only']]
+        .forEach(function(o){
+          var e=document.createElement('option');
+          e.value=o[0];e.textContent=o[1];scope.appendChild(e);});
+      scope.addEventListener('change',recount);
+      fmtPanel.appendChild(scope);
+      /* ---- the count, and the button ---- */
+      var foot=document.createElement('div');foot.className='find-foot';
+      var cnt=document.createElement('span');cnt.className='find-count';
+      foot.appendChild(cnt);
+      var spring=document.createElement('span');
+      spring.className='deck-spring';foot.appendChild(spring);
+      var go=document.createElement('button');
+      go.className='dbtn';go.textContent='Change them';
+      foot.appendChild(go);
+      fmtPanel.appendChild(foot);
+      function picked(){
+        return crits.filter(function(c){return c.box.checked;})
+          .map(function(c){return {key:c.key,val:c.val};});
+      }
+      function edits(){
+        return chs.filter(function(c){return c.box.checked;});
+      }
+      function recount(){
+        var crit=picked();
+        var hitn=crit.length?sweep(crit,scope.value):[];
+        var sl={};hitn.forEach(function(h){sl[h.si]=1;});
+        var ns=Object.keys(sl).length;
+        cnt.textContent=!crit.length
+          ?'tick what to find'
+          :hitn.length
+            ?(hitn.length+' object'+(hitn.length===1?'':'s')
+              +' on '+ns+' slide'+(ns===1?'':'s'))
+            :'nothing matches';
+        go.disabled=!hitn.length||!edits().length;
+      }
+      go.addEventListener('click',function(){
+        var crit=picked(),ed=edits();
+        if(!crit.length||!ed.length) return;
+        var hitn=sweep(crit,scope.value);
+        var n=0;
+        hitn.forEach(function(h){
+          var did=false;
+          ed.forEach(function(c){
+            /* a field that means nothing for this kind is not written:
+               a `size` on a shape would be a junk key that every export
+               then has to ignore */
+            if(c.kinds.indexOf(h.a.k)<0) return;
+            var v=(c.key==='size')?(+c.inp.value||0):c.inp.value;
+            if(c.key==='size'&&!(v>0)) return;
+            c.write(h.a,v);did=true;
+          });
+          if(did) n++;
+        });
+        if(!n){toast('Nothing to change \u2014 those fields mean '
+          +'nothing for what you matched');return;}
+        markDirty();refresh();
+        toast('Changed '+n+' object'+(n===1?'':'s'));
+        fmtBuild();
+      });
+      recount();
+    }
+    function setMode(m){
+      mode=m;
+      $$('#find-pop [data-fmode]').forEach(function(el){
+        el.hidden=(el.getAttribute('data-fmode')!==m);});
+      if(fmtPanel) fmtPanel.hidden=(m!=='fmt');
+      var bt=$('#find-m-text'),bf=$('#find-m-fmt');
+      if(bt){bt.classList.toggle('on',m==='text');
+        bt.setAttribute('aria-selected',String(m==='text'));}
+      if(bf){bf.classList.toggle('on',m==='fmt');
+        bf.setAttribute('aria-selected',String(m==='fmt'));}
+      if(m==='fmt') fmtBuild();
+    }
+    (function(){
+      var bt=$('#find-m-text'),bf=$('#find-m-fmt');
+      if(bt) bt.addEventListener('click',function(){setMode('text');});
+      if(bf) bf.addEventListener('click',function(){setMode('fmt');});
+    })();
     function open(){
       pop.hidden=false;
+      /* a re-open re-reads the selection: the whole find half is
+         seeded by example, and a stale example is worse than none */
+      if(mode==='fmt') fmtBuild();
       /* seed from whatever text box you had selected — the thing you were
          looking at is usually the thing you want to find */
       qi.focus();qi.select();

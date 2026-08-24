@@ -1675,7 +1675,18 @@
     <button class="dbtn dc-icon" id="find-close" aria-label="Close"
       title="Close (Esc)"><i data-ic="exit"></i></button>
   </div>
-  <div class="find-row">
+  <!-- TWO KINDS OF FIND AND REPLACE, one door. Text answers "every
+       'SST' becomes 'sea surface temperature'"; Formatting answers
+       "every 18pt Georgia heading becomes 20pt Inter" (TASKS T6). They
+       are the same verb on different material, so they share a popover
+       rather than growing a second one somewhere else. -->
+  <div class="find-modes" role="tablist" aria-label="What to replace">
+    <button class="dbtn find-mode on" id="find-m-text" role="tab"
+      aria-selected="true">Text</button>
+    <button class="dbtn find-mode" id="find-m-fmt" role="tab"
+      aria-selected="false">Formatting</button>
+  </div>
+  <div class="find-row" data-fmode="text">
     <input type="text" id="find-q" class="find-in" spellcheck="false"
       autocomplete="off" placeholder="Find" aria-label="Find what">
     <button class="dbtn dc-icon" id="find-prev" aria-label="Previous match"
@@ -1683,24 +1694,27 @@
     <button class="dbtn dc-icon" id="find-next" aria-label="Next match"
       title="Next match (Enter)">&#8595;</button>
   </div>
-  <div class="find-row">
+  <div class="find-row" data-fmode="text">
     <input type="text" id="find-r" class="find-in" spellcheck="false"
       autocomplete="off" placeholder="Replace with"
       aria-label="Replace with">
   </div>
-  <div class="find-opts">
+  <div class="find-opts" data-fmode="text">
     <label class="find-ck"><input type="checkbox" id="find-case">
       Match case</label>
     <label class="find-ck"><input type="checkbox" id="find-word">
       Whole word</label>
   </div>
-  <div class="find-foot">
+  <div class="find-foot" data-fmode="text">
     <span class="find-count" id="find-count"></span>
     <span class="deck-spring"></span>
     <button class="dbtn" id="find-rep">Replace</button>
     <button class="dbtn" id="find-repall">Replace all</button>
   </div>
-  <div class="find-list" id="find-list"></div>
+  <div class="find-list" id="find-list" data-fmode="text"></div>
+  <!-- built by the FORMATTING half in deck.js: its rows depend on the
+       object you have selected, so there is nothing static to write -->
+  <div class="find-fmt" id="find-fmt" hidden></div>
 </div>
 <div class="color-pop" id="color-pop" hidden>
   <div class="cp-head" id="cp-head">Custom colour</div>
