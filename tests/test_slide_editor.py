@@ -1249,3 +1249,68 @@ def test_the_gap_badge_reuses_the_readout_style_that_was_never_wired(out):
     assert ".snapgap-lab{transform:translate(-50%,-50%);" in out
     # cleared with the bars at the end of the gesture, not left behind
     assert "$$('.snapgap,.snapgap-lab',layer).forEach(function(n){" in out
+
+
+def test_matching_a_layout_copies_the_pattern_not_the_look(out):
+    """TASKS T8. A third question, which none of its three neighbours
+    answers: Match slide copies a whole slide's arrangement item for
+    item, Match object copies one object's PROPERTIES, Arrangements
+    apply a saved slide's shape.
+
+    This copies the pattern -- the axis a group runs along, the edge or
+    centre its members agree on, the median of its gaps, and where the
+    run starts. Nothing about size or colour travels, and the counts
+    need not match, which is what lets "these three" be laid out like
+    "those four".
+    """
+    assert "function readPattern(layer,s,idxs){" in out
+    assert "function applyPattern(layer,s,idxs,pat){" in out
+    # the axis is whichever way the reference actually runs
+    assert "var horiz=patSpread(cx)>=patSpread(cy);" in out
+    # the alignment rule is whichever edge they disagree about least
+    assert "var align=(sn<=sm&&sn<=sf)?'near':((sf<=sm)?'far':'mid');" in out
+    # the median gap: one odd gap in a row of five is a mistake being
+    # copied, not a rhythm
+    assert "var gap=gaps[Math.floor(gaps.length/2)];" in out
+    # the cross-axis position is NOT copied -- it is recomputed from
+    # where the targets already are, by the reference's rule
+    assert "function patCross(rs,pat){" in out
+
+
+def test_a_layout_match_moves_by_deltas_and_respects_pins(out):
+    """An auto-sized text box and an aspect-fitted figure frame both
+    answer annotRectPct with their RENDERED rect, which is not a.x/a.y.
+    Moving by the difference is the only arithmetic that is right for
+    every kind -- the same reason snapping works on the bounding box.
+
+    shiftAnnot is that move, factored out of nudgeSel: a line has no
+    x/y, it is two endpoints plus any corners dragged into it, and every
+    caller that wrote the box version by hand had to remember that.
+    """
+    assert "function shiftAnnot(a,dx,dy){" in out
+    assert "shiftAnnot(x.a,pat.horiz?da:dc,pat.horiz?dc:da);" in out
+    # nudgeSel now goes through the same one
+    assert "var a=s.annots[i]; if(!a||pinned(a)) return;   /* no nudge */\n" \
+        "        shiftAnnot(a,dx,dy);" in out
+    # a pinned object is not moved by this either
+    assert "      if(!a||pinned(a)) return;\n      var r=annotRectPct(" in out
+
+
+def test_a_slide_wide_object_is_not_part_of_every_row(out):
+    """Caught in the browser, 2026-08-25. The reference group is the run
+    the object you clicked belongs to -- but "shares its band" alone let
+    the empty cell frame a new slide starts with, which spans most of
+    the page, join every row on the slide. It dragged the run's start
+    92px left of where the row visibly began.
+
+    A member has to overlap generously ACROSS the run, and sit BESIDE it
+    rather than over it ALONG the run. A background rectangle fails the
+    second test, which is the one that matters.
+    """
+    assert "function bandMates(layer,s,idx,horiz){" in out
+    assert "if(!(ext>0&&ov>=ext*0.5)) return;" in out
+    assert "if(al>alen*0.5) return;" in out
+    assert "var row=bandMates(layer,s,idx,true);" in out
+    # armed and reported through the existing match bar, not a new one
+    assert "if(dir==='layout'&&idxs.length<2){" in out
+    assert "['x:layout','Lay these out like a group I click…']," in out

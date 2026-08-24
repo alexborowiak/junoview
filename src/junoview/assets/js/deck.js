@@ -11125,6 +11125,19 @@
   });
 
   /* nudge the selection with the arrow keys (Shift = bigger step) */
+  /* MOVE ONE ITEM BY A DELTA. A line has no x/y — it is two endpoints
+     and any corners dragged into it — so "move" is a different sentence
+     for it, and every caller that has ever written the box version by
+     hand has had to remember that. One function, so the next one does
+     not (2026-08-25, factored out for T8's layout matching). */
+  function shiftAnnot(a,dx,dy){
+    if(!a||(!dx&&!dy)) return;
+    if(a.k==='arrow'){
+      a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;
+      if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){
+        return [m[0]+dx,m[1]+dy];});
+    } else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
+  }
   function nudgeSel(dx,dy){
     var s=pres.slides[cur]; if(!s) return;
     if(selAnnot==='t'||selAnnot==='s'){
@@ -11134,11 +11147,7 @@
       if(!idxs.length||!s.annots) return;
       idxs.forEach(function(i){
         var a=s.annots[i]; if(!a||pinned(a)) return;   /* no nudge */
-        if(a.k==='arrow'){a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;
-          /* the corners travel with the line they belong to */
-          if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){
-            return [m[0]+dx,m[1]+dy];});}
-        else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
+        shiftAnnot(a,dx,dy);
       });
     }
     markDirty();
@@ -12377,6 +12386,10 @@
        three models and one target is a question with no answer. 'from'
        genuinely wants the lot: several objects can all take one model. */
     if(dir==='to') idxs=[(typeof selAnnot==='number')?selAnnot:idxs[0]];
+    if(dir==='layout'&&idxs.length<2){
+      toast('Select the objects you want laid out \u2014 two or more');
+      return;
+    }
     matchArm={dir:dir,slide:cur,idxs:idxs,n:0};
     deckEl.classList.add('matching');
     syncMatchBar();
@@ -12409,6 +12422,30 @@
     var src=pres.slides[matchArm.slide];
     if(!hit||!src) return;
     var n=0;
+    if(matchArm.dir==='layout'){
+      /* the reference is the group (or the run) the clicked object is
+         part of, and the selection is what gets tidied to match it */
+      var layer2=stage.querySelector('.annot-layer');
+      var ref=refGroupAt(layer2,s,idx);
+      var pat=readPattern(layer2,s,ref);
+      if(!pat){
+        toast('That object is not part of a row or a group \u2014 click '
+          +'one that is');
+        return;
+      }
+      n=applyPattern(layer2,s,matchArm.idxs,pat);
+      if(!n){toast('Nothing to lay out');return;}
+      matchArm.n+=n;
+      markDirty();refresh();
+      toast(n+' laid out like the '+pat.n+' you clicked \u2014 '
+        +(pat.horiz?'across':'down')+', '
+        +(pat.align==='mid'?'centres':pat.align==='near'
+          ?(pat.horiz?'top edges':'left edges')
+          :(pat.horiz?'bottom edges':'right edges'))
+        +' agreeing, '+gapMm(pat.gap,pat.horiz)+' apart');
+      cancelMatch();
+      return;
+    }
     if(matchArm.dir==='to'){
       var model=(src.annots||[])[matchArm.idxs[0]];
       /* the KIND of the thing being changed decides which properties are
@@ -12431,6 +12468,145 @@
     else {syncMatchBar();
       toast(matchArm.n+' matched — keep clicking, or press Esc');}
   }
+  /* ---- MATCHING A LAYOUT, NOT A LOOK -----------------------------------
+     "Make these three look like the four above" (TASKS T8). Which is a
+     third question, and none of the three neighbours above answers it:
+
+       Match slide     copies a whole slide's arrangement, item for item.
+       Match object    copies one object's PROPERTIES onto another.
+       Arrangements    apply a saved slide's shape.
+
+     This one copies neither properties nor positions. It copies the
+     PATTERN — the axis a group runs along, the edge or centre its
+     members agree on, the rhythm of the gaps between them, and where the
+     run starts. Nothing about size or colour travels: two rows can look
+     alike in the only sense that matters here while holding completely
+     different things, and the counts need not even match, which is why
+     "these three" can be laid out like "those four".
+
+     The cross-axis position is NOT copied. Adopting it would drop the
+     selection on top of the reference; what is adopted is the RULE (tops
+     agree / centres agree / bottoms agree), applied to where the
+     selection already is, so it tidies into its own band.
+
+     Gaps are taken as the MEDIAN of the reference's gaps. One odd gap in
+     a row of five is a mistake being copied, not a rhythm. */
+  function patSpread(v){
+    return Math.max.apply(null,v)-Math.min.apply(null,v);
+  }
+  function readPattern(layer,s,idxs){
+    var rs=[];
+    idxs.forEach(function(i){
+      var r=annotRectPct(layer,s,i);
+      if(r) rs.push(r);
+    });
+    if(rs.length<2) return null;
+    /* the axis is whichever way the group actually runs */
+    var cx=rs.map(function(r){return (r.l+r.r)/2;});
+    var cy=rs.map(function(r){return (r.t+r.b)/2;});
+    var horiz=patSpread(cx)>=patSpread(cy);
+    rs.sort(function(p,q){return horiz?(p.l-q.l):(p.t-q.t);});
+    var gaps=[];
+    for(var k=1;k<rs.length;k++)
+      gaps.push(horiz?(rs[k].l-rs[k-1].r):(rs[k].t-rs[k-1].b));
+    gaps.sort(function(a,b){return a-b;});
+    var gap=gaps[Math.floor(gaps.length/2)];
+    /* which edge they agree on: the one they disagree about least */
+    var near=rs.map(function(r){return horiz?r.t:r.l;});
+    var mid=rs.map(function(r){
+      return horiz?(r.t+r.b)/2:(r.l+r.r)/2;});
+    var far=rs.map(function(r){return horiz?r.b:r.r;});
+    var sn=patSpread(near),sm=patSpread(mid),sf=patSpread(far);
+    var align=(sn<=sm&&sn<=sf)?'near':((sf<=sm)?'far':'mid');
+    return {horiz:horiz,gap:gap,align:align,n:rs.length,
+      start:horiz?rs[0].l:rs[0].t};
+  }
+  /* the value the TARGETS should agree on, read off where they are now
+     by the reference's own rule — so they line up with each other, in
+     their own band, rather than jumping onto the reference */
+  function patCross(rs,pat){
+    var v=rs.map(function(r){
+      return pat.align==='near'?(pat.horiz?r.t:r.l)
+        :pat.align==='far'?(pat.horiz?r.b:r.r)
+        :(pat.horiz?(r.t+r.b)/2:(r.l+r.r)/2);});
+    if(pat.align==='near') return Math.min.apply(null,v);
+    if(pat.align==='far') return Math.max.apply(null,v);
+    return v.reduce(function(a,b){return a+b;},0)/v.length;
+  }
+  function applyPattern(layer,s,idxs,pat){
+    var rs=[];
+    idxs.forEach(function(i){
+      var a=(s.annots||[])[i];
+      /* a pinned object is not moved by anything else on the canvas and
+         is not moved by this either (T3) */
+      if(!a||pinned(a)) return;
+      var r=annotRectPct(layer,s,i);
+      if(r) rs.push({i:i,a:a,r:r});
+    });
+    if(!rs.length) return 0;
+    rs.sort(function(p,q){
+      return pat.horiz?(p.r.l-q.r.l):(p.r.t-q.r.t);});
+    var cross=patCross(rs.map(function(x){return x.r;}),pat);
+    var pos=pat.start,n=0;
+    rs.forEach(function(x){
+      var len=pat.horiz?(x.r.r-x.r.l):(x.r.b-x.r.t);
+      var da=pos-(pat.horiz?x.r.l:x.r.t);
+      var now=pat.align==='near'?(pat.horiz?x.r.t:x.r.l)
+        :pat.align==='far'?(pat.horiz?x.r.b:x.r.r)
+        :(pat.horiz?(x.r.t+x.r.b)/2:(x.r.l+x.r.r)/2);
+      var dc=cross-now;
+      /* DELTAS, never absolute coordinates. An auto-sized text box and
+         an aspect-fitted figure frame both answer annotRectPct with
+         their RENDERED rect, which is not a.x/a.y — so moving by the
+         difference is the only arithmetic that is right for every kind
+         (the same reason snapping works on the bounding box). */
+      shiftAnnot(x.a,pat.horiz?da:dc,pat.horiz?dc:da);
+      pos+=len+pat.gap;
+      n++;
+    });
+    return n;
+  }
+  /* WHAT COUNTS AS THE REFERENCE GROUP when you click one object. A real
+     group is unambiguous and wins. Otherwise it is the run the object is
+     part of: the items sharing its band, which is the same "is this next
+     to that" test the equal-gap snapping uses (T7) — so the thing you
+     see as a row is the thing that gets read as one. */
+  function bandMates(layer,s,idx,horiz){
+    var r0=annotRectPct(layer,s,idx); if(!r0) return [];
+    var out=[];
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||a.hide||a.k==='arrow') return;
+      var r=annotRectPct(layer,s,i); if(!r) return;
+      if(i===idx){out.push(i);return;}
+      /* ACROSS the run, they must overlap generously — enough that a
+         person would call them the same row */
+      var ov=horiz?(Math.min(r.b,r0.b)-Math.max(r.t,r0.t))
+                  :(Math.min(r.r,r0.r)-Math.max(r.l,r0.l));
+      var ext=horiz?Math.min(r.b-r.t,r0.b-r0.t)
+                   :Math.min(r.r-r.l,r0.r-r0.l);
+      if(!(ext>0&&ov>=ext*0.5)) return;
+      /* ALONG the run, they must sit BESIDE it rather than over it. A
+         slide-wide background, or the empty cell frame a new slide
+         starts with, overlaps every row's band and would otherwise be
+         read as a member of all of them — caught in the browser
+         2026-08-25, where the placeholder joined the reference row and
+         dragged the run's start 92px to the left of where it looked. */
+      var al=horiz?(Math.min(r.r,r0.r)-Math.max(r.l,r0.l))
+                  :(Math.min(r.b,r0.b)-Math.max(r.t,r0.t));
+      var alen=horiz?Math.min(r.r-r.l,r0.r-r0.l)
+                    :Math.min(r.b-r.t,r0.b-r0.t);
+      if(al>alen*0.5) return;
+      out.push(i);
+    });
+    return out;
+  }
+  function refGroupAt(layer,s,idx){
+    var mem=groupMembers(s,idx);
+    if(mem.length>1) return mem;
+    var row=bandMates(layer,s,idx,true);
+    var col=bandMates(layer,s,idx,false);
+    return (row.length>=col.length?row:col);
+  }
   function syncMatchBar(){
     var bar=$('#matchbar'); if(!bar) return;
     bar.hidden=!matchArm;
@@ -12439,6 +12615,12 @@
     var src=pres.slides[matchArm.slide];
     var name=matchLabelOf(src,matchArm.idxs[0]);
     if(matchArm.idxs.length>1) name=matchArm.idxs.length+' objects';
+    if(w&&matchArm.dir==='layout'){
+      w.innerHTML=bic('align')+' <b>'+esc(name)
+        +'</b> will be laid out like the group or row you click '
+        +'&mdash; the axis, the alignment and the spacing, not the look';
+      return;
+    }
     if(w) w.innerHTML=(matchArm.dir==='to')
       ? (bic('swap')+' Copying the look of <b>'+esc(name)+'</b> on slide '
         +(matchArm.slide+1)+' &mdash; click an object to change it'
@@ -13072,6 +13254,9 @@
         make-things-match rows, and cost the ribbon nothing (2026-08-22) */
      ['x:to','Copy this look to objects I click…'],
      ['x:from','Take the look of an object I click…'],
+     /* the LAYOUT sibling of the two rows above: same gesture, but what
+        travels is the arrangement rather than the look (TASKS T8) */
+     ['x:layout','Lay these out like a group I click…'],
      /* SELECTING is not arranging, but this is the menu that is shown
         for every kind of item and already keeps the "everything like
         this one" verbs — and the ribbon has no width to spare for a

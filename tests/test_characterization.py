@@ -106,6 +106,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T8, match layout: deck.js gained
+# readPattern/applyPattern/bandMates and a third match-bar
+# direction, help.html a paragraph. Editor-only; pinned by
+# tests/test_slide_editor.py's three layout-match tests.
 # Moved 2026-08-25 for TASKS T7, spacing guides: an equal-gap snap
 # now marks BOTH gaps and measures them in mm (deck.js gapCands /
 # bestGap / drawGapMarks, deck.css .snapgap-ref + .snapgap-lab,
@@ -146,8 +150,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "f524cc9d30c6ec3149019a27b98ab83d"
-EXPECTED_BYTES = 2344444
+EXPECTED_MD5 = "123d118b5aee632c529ec44eb79d9c4c"
+EXPECTED_BYTES = 2353332
 
 
 def _render_example() -> str:

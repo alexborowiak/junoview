@@ -103,9 +103,17 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   the one being made, faint for the one it matched), and each carries the
   distance in millimetres — reusing `.dragtag`, a readout style that had
   been sitting in the CSS unwired.
-- [ ] **T8 · M — "Match layout" command.** Select objects plus a reference
+- [x] **T8 · M — "Match layout" command.** Select objects plus a reference
   group; apply the reference's alignment/spacing pattern ("make these three
   look like the four above"). Reuses T7's geometry helpers.
+  *2026-08-25:* a third kind of matching, armed through the existing match
+  bar as `dir:'layout'`. `readPattern` extracts axis / alignment rule /
+  median gap / start; `applyPattern` writes it by DELTAS (rendered rects
+  are not `a.x`). The cross-axis position is deliberately not copied, so
+  the objects tidy into their own band. Browser verification caught the
+  reference group swallowing the slide-wide empty frame — `bandMates` now
+  requires members to sit BESIDE each other along the run, not just share
+  a band.
 - [ ] **T9 · M — Slide cleanup.** One command that *reports* near-
   misalignments, uneven gaps, and near-duplicate objects, then applies
   fixes selectively (report-first, never silently rearrange).
