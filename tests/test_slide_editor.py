@@ -982,3 +982,47 @@ def test_a_pasted_arrow_brings_its_corners_and_drops_dead_ties(out):
     assert "clipIdx.forEach(function(src,n){remap[src]=first+n;});" in out
     assert "return (clipFrom===cur)?c:null;" in out
     assert "if(t1) cp.c1=t1; else delete cp.c1;" in out
+
+
+def test_duplicating_clones_the_whole_selection(out):
+    """TASKS T2. ``duplicateSel`` acted on ``selAnnot`` alone, so Ctrl+D
+    on a five-item selection gave you one item.
+
+    A clone is an INDEPENDENT copy -- linked instances are T13, and the
+    two verbs are kept apart deliberately. Groups survive as NEW groups:
+    clone two members of a group of five and the pair still moves as one.
+    Locked items are skipped, because an unlocked twin dropped on top of
+    an undraggable original is a puzzle, not a duplicate.
+    """
+    assert "function cloneAnnots(idxs,dx,dy){" in out
+    assert "var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);" in out
+    # one new group id per source group, allocated before any push --
+    # nextGrp reads the max off s.annots and would repeat itself
+    assert "if(gmap[cp.grp]==null) gmap[cp.grp]=gnext++;" in out
+    assert "var a=s.annots[i];return a&&!a.lock;" in out
+    # a stray stays a stray; a duplicate does not sail off the corner
+    assert "function cloneShift(v,d){" in out
+    assert "return (d>0&&n>96&&(v||0)<=96)?96:n;" in out
+    # the pane's Duplicate rides the same clone rather than its own copy
+    assert "var added=cloneAnnots(idxs,2,2);" in out
+
+
+def test_alt_drag_drags_a_clone(out):
+    """TASKS T2. Alt-drag makes the copies in place and drags THOSE, so
+    the originals stay put and the rest of startMove needs to know
+    nothing about it.
+
+    Alt already meant "ignore snapping" mid-drag. In a clone drag it does
+    not: Alt was pressed to say "copy", and it has to be held all the way
+    -- so a clone drag would otherwise be the one drag with no guides.
+    """
+    assert "var clones=cloneAnnots(pick,0,0);" in out
+    assert "idx=clones[k>=0?k:0];" in out
+    assert "if(cloning||!ev.altKey){" in out
+    # quiet: the mouseup at the end of the gesture takes the one undo
+    # entry, so undo puts back the state before the clone AND its move
+    assert "markDirty(true);\n        renderAnnots(layer,s);" in out
+    # selecting a batch cannot be a loop of selectAnnot(...,true): that
+    # TOGGLES, so members sharing a group come straight back out
+    assert "function selectMany(layer,idxs){" in out
+    assert "selectMany(layer,clones);" in out

@@ -129,7 +129,12 @@ sidebar</span>
 <span><kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd></span>
 <span>Undo / redo</span>
 <span><kbd>Ctrl</kbd>+<kbd>D</kbd></span><span>Duplicate the
-selection</span>
+selection (or <kbd>Alt</kbd>-drag it to drag a clone)</span>
+<span><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd></span>
+<span>Paste <b>in place</b> &mdash; the coordinates it was copied
+from</span>
+<span><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>V</kbd></span>
+<span>Paste <b>here</b> &mdash; centred on the pointer</span>
 <span><kbd>Ctrl</kbd>+<kbd>G</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>G</kbd></span>
 <span>Group / ungroup</span>
 <span><kbd>Del</kbd></span><span>Remove the selection</span>
@@ -229,7 +234,11 @@ Guides never print or export.</li>
 every other item's edges and centres (coral), to the grid, and to a gap
 that <b>matches a gap you already have</b> (amber bars) &mdash; even
 whitespace is what makes a layout look deliberate. Hold <kbd>Alt</kbd>
-while dragging to ignore snapping. Drag off a ruler to lay down your own
+while dragging to ignore snapping &mdash; but start the drag with
+<kbd>Alt</kbd> already down and you drag a <b>clone</b> instead, leaving
+the original where it was (snapping stays on there, since you pressed
+<kbd>Alt</kbd> to copy, not to ignore the guides).
+Drag off a ruler to lay down your own
 guide; drag it back onto the ruler to remove it. Your guides are saved
 with the poster.</li>
 <li><b>Lines and arrows.</b> <i>Style</i> sets solid, dashed, dotted,
@@ -253,7 +262,14 @@ Arrange</b> &mdash; agree on any
 edge or centre, or space three or more out with <b>equal gaps</b>.
 <kbd>Ctrl+C</kbd> / <kbd>Ctrl+X</kbd> / <kbd>Ctrl+V</kbd> copy, cut and
 paste, including <b>between posters</b>; pasting an image straight from
-your clipboard drops it on the page.</li>
+your clipboard drops it on the page. Paste knows three places to land:
+<kbd>Ctrl+V</kbd> nudges the copy clear of its original (or lands in the
+same place on another slide), <kbd>Ctrl+Shift+V</kbd> pastes <b>in
+place</b> &mdash; the exact coordinates it was copied from, which is how
+one caption ends up in the identical spot on twenty slides &mdash; and
+<kbd>Ctrl+Alt+V</kbd> pastes <b>here</b>, centred on the pointer.
+<b>Right-click the page</b> for all three, and for cut / copy / delete /
+duplicate of whatever is selected.</li>
 <li><b><i data-ic="flag"></i> Check</b> reads the page the way a
 print shop will: figures
 that will print soft, anything off the page or inside the 20mm margin,
@@ -266,7 +282,8 @@ shows in Present or in an export). The font list covers the usual print
 families, and <i>Other&hellip;</i> takes any font installed on your
 computer.</li>
 <li>Editor shortcuts: <kbd>Ctrl+Z</kbd> / <kbd>Ctrl+Shift+Z</kbd> undo &amp;
-redo, <kbd>Ctrl+D</kbd> duplicate, <kbd>Ctrl+G</kbd> group, <kbd>Del</kbd>
+redo, <kbd>Ctrl+D</kbd> duplicate (<kbd>Alt</kbd>-drag clones as you
+drag), <kbd>Ctrl+G</kbd> group, <kbd>Del</kbd>
 remove, <b>arrow keys</b> nudge (hold <kbd>Shift</kbd> for bigger steps).
 <i>File &rarr; Export PDF</i> saves the whole deck as a PDF (or prints
 it) at the page's <b>true size</b> &mdash; an A0 poster comes out as a

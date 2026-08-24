@@ -2618,24 +2618,25 @@
   }
   /* duplicate items; newGrp gives the copies a fresh group id and copies
      the folder's name ("... copy") and colour with them */
+  /* the pane's own Duplicate. Same clone (see the CLONES section), a
+     tighter offset because these rows are read side by side with the
+     canvas, and one extra move: `newGrp` puts the whole batch into ONE
+     group, which is the pane's "duplicate this group" verb. A locked
+     item IS cloned here -- the pane is the one door to locked items, and
+     refusing from inside it would leave no door at all. */
   function dupAnnots(idxs,newGrp,srcGrp){
     var s=pres.slides[cur]; if(!s||!s.annots) return;
-    var gid=newGrp?nextGrp(s):null,added=[];
-    idxs.forEach(function(i){
-      var a=s.annots[i]; if(!a) return;
-      var cp=deep(a);
-      if(cp.k==='arrow'){cp.x1+=2;cp.y1+=2;cp.x2+=2;cp.y2+=2;
-        delete cp.c1;delete cp.c2;}
-      else {cp.x=Math.min(96,(cp.x||0)+2);cp.y=Math.min(96,(cp.y||0)+2);}
-      if(gid!=null) cp.grp=gid;
-      s.annots.push(cp);added.push(s.annots.length-1);
-    });
-    if(gid!=null&&srcGrp!=null&&s.grpmeta&&s.grpmeta[srcGrp]){
-      var m2=deep(s.grpmeta[srcGrp]);
-      if(m2.name) m2.name+=' copy';
-      s.grpmeta[gid]=m2;
-    }
+    var added=cloneAnnots(idxs,2,2);
     if(!added.length) return;
+    if(newGrp){
+      var gid=nextGrp(s);
+      added.forEach(function(j){s.annots[j].grp=gid;});
+      if(srcGrp!=null&&s.grpmeta&&s.grpmeta[srcGrp]){
+        var m2=deep(s.grpmeta[srcGrp]);
+        if(m2.name) m2.name+=' copy';
+        s.grpmeta[gid]=m2;
+      }
+    }
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,added[added.length-1]);}
@@ -7711,6 +7712,16 @@
     }
   }
   var lastSelSig='';
+  /* select a whole BATCH at once. selectAnnot(...,true) toggles, so
+     looping it over a set whose members share a group takes them back
+     out again -- which is why the marquee sets selSet directly too. */
+  function selectMany(layer,idxs){
+    selSet=idxs.slice();
+    selAnnot=idxs.length?idxs[idxs.length-1]:null;
+    lastSelSig='';
+    if(layer) paintSel(layer);
+    showFmt();renderSelPane();
+  }
   function defaultColor(kind){
     return kind==='text'?'#ffffff':'#ff6b57';
   }
@@ -8154,7 +8165,9 @@
   }
   /* ---- snap-to-align: while dragging or resizing, edges and centers
      snap to the canvas (edges + middle) and to every other object's
-     edges + centers, with dashed guide lines. Hold Alt to disable. ---- */
+     edges + centers, with dashed guide lines. Hold Alt to disable --
+     EXCEPT in an Alt-drag clone, where Alt already means "copy" and you
+     have to keep holding it (see startMove's `cloning`). ---- */
   /* 6px was too tight to feel: on a poster zoomed to fit, a 6px window is
      a couple of real millimetres and the snap kept slipping past you */
   var SNAP_PX=9;
@@ -8303,6 +8316,31 @@
   }
   function startMove(layer,s,idx,ev0){
     ev0.preventDefault();
+    /* ALT-DRAG CLONES. The copies are made in place and it is THEY that
+       travel, so the originals are left exactly where they were and the
+       rest of this function needs to know nothing about it.
+       Alt also turns snapping off mid-drag (see `mm`) -- but not during
+       a clone drag, where Alt was pressed to say "copy", not "ignore the
+       guides", and where you have to keep holding it the whole way. */
+    var cloning=false;
+    if(ev0.altKey&&typeof idx==='number'){
+      var pick=selIdxs();
+      if(pick.indexOf(idx)<0) pick=[idx];
+      pick=pick.filter(function(i){
+        var m=(s.annots||[])[i];return m&&!m.lock;});
+      var clones=cloneAnnots(pick,0,0);
+      if(clones.length){
+        cloning=true;
+        /* quiet: the mouseup at the end of this gesture takes the one
+           undo entry, and it should undo the clone and its move together
+           -- they are one gesture */
+        markDirty(true);
+        renderAnnots(layer,s);
+        var k=pick.indexOf(idx);
+        idx=clones[k>=0?k:0];
+        selectMany(layer,clones);
+      }
+    }
     var a=annotByIdx(s,idx); if(!a) return;
     var start=pctPoint(layer,ev0);
     /* drag the whole current selection (group / multi-select) together —
@@ -8358,7 +8396,7 @@
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
       var sx=null,sy=null;
-      if(!ev.altKey){
+      if(cloning||!ev.altKey){
         if(single){       /* a title item positions by its CENTER */
           var bx0=bestSnap(targets.xs,[single.x+dx],thr.x);
           var by0=bestSnap(targets.ys,[single.y+dy],thr.y);
@@ -8869,12 +8907,15 @@
     var n=selIdxs().length;
     if(n){
       menuHead(m,n===1?'this object':n+' objects');
+      row('Duplicate','Ctrl+D',duplicateSel,
+        'An independent copy, just clear of this one — or Alt-drag '
+        +'on the page to place it as you go','copy');
       row('Cut','Ctrl+X',function(){
         var c=cutSel();
         if(c) toast(c+' item'+(c===1?'':'s')+' cut');});
       row('Copy','Ctrl+C',function(){
         var c=copySel();
-        if(c) toast(c+' item'+(c===1?'':'s')+' copied');},null,'copy');
+        if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
     }
     menuHead(m,'paste');
@@ -10391,21 +10432,94 @@
   onFmt('#fmt-rotr',function(a){
     a.rot=(((a.rot||0)+15)%360+360)%360;
     if(!a.rot) delete a.rot;});
-  function duplicateSel(){
+  /* ---- CLONES ----------------------------------------------------------
+     A clone is an INDEPENDENT copy: it shares nothing with its source,
+     and editing either one never touches the other. Copies that DO stay
+     linked to a definition are a different feature (TASKS T13), and
+     keeping the two verbs apart from the first line of this section is
+     the point of saying so here.
+
+     Two gestures, one function:
+       Ctrl+D / the Copy button -- clone the whole selection with a small
+         offset, so the copies are visible instead of hidden exactly
+         under their originals;
+       Alt-drag -- clone in place and drag the COPIES, leaving the
+         originals where they were. Every vector editor does this, and it
+         is how a row of five of something actually gets laid out.
+
+     Groups survive: clone two members of a group of five and you get a
+     pair that still moves as one, in a NEW group -- not two loose items,
+     and not all five. Duplicating used to act on selAnnot alone, so
+     "duplicate" on a five-item selection gave you one item.  */
+  var CLONE_OFF=3;      /* enough to see; small enough to still read as
+                           "this, and its copy" */
+  /* a duplicate that lands off the bottom-right corner is a duplicate you
+     have to go looking for -- but an item ALREADY out there stays where
+     its owner put it, strays being a supported state (an-offpage) */
+  function cloneShift(v,d){
+    var n=(v||0)+d;
+    return (d>0&&n>96&&(v||0)<=96)?96:n;
+  }
+  function cloneAnnots(idxs,dx,dy){
     var s=pres.slides[cur];
-    if(!s||typeof selAnnot!=='number'||!s.annots) return;
-    var cp=deep(s.annots[selAnnot]);
-    /* a copy is its own item: never silently join the source's group, and
-       give it its own build step rather than sharing the source's */
-    delete cp.grp;
-    if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
-    if(cp.k==='arrow'){
-      cp.x1+=3;cp.y1+=3;cp.x2+=3;cp.y2+=3;
-    } else {cp.x=(cp.x||0)+3;cp.y=(cp.y||0)+3;}
-    s.annots.push(cp);
+    if(!s||!s.annots) return [];
+    var live=idxs.filter(function(i){
+      return typeof i==='number'&&s.annots[i];});
+    if(!live.length) return [];
+    var first=s.annots.length,gnext=nextGrp(s),gmap={},made=[];
+    live.forEach(function(i){
+      var cp=deep(s.annots[i]);
+      /* one new group id per source group, allocated up front: nextGrp
+         reads the max off s.annots, so asking it twice before pushing
+         would hand out the same number twice */
+      if(cp.grp!=null){
+        if(gmap[cp.grp]==null) gmap[cp.grp]=gnext++;
+        cp.grp=gmap[cp.grp];
+      }
+      /* its own build step, rather than sharing the source's */
+      if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
+      if(cp.k==='arrow'){
+        cp.x1+=dx;cp.y1+=dy;cp.x2+=dx;cp.y2+=dy;
+        if(Array.isArray(cp.mid)) cp.mid=cp.mid.map(function(m){
+          return [m[0]+dx,m[1]+dy];});
+      } else {
+        cp.x=cloneShift(cp.x,dx);cp.y=cloneShift(cp.y,dy);
+      }
+      s.annots.push(cp);made.push(s.annots.length-1);
+    });
+    /* an attached arrow endpoint holds an INDEX. Clone the arrow AND its
+       target together and the copy should point at the copy; clone the
+       arrow alone and the original target is still on this slide, so its
+       index is still good and the tie is left alone. */
+    var remap={};
+    live.forEach(function(src,n){remap[src]=first+n;});
+    made.forEach(function(j){
+      var cp=s.annots[j];
+      if(!cp||cp.k!=='arrow') return;
+      if(cp.c1&&remap[cp.c1.i]!=null) cp.c1={i:remap[cp.c1.i]};
+      if(cp.c2&&remap[cp.c2.i]!=null) cp.c2={i:remap[cp.c2.i]};
+    });
+    /* a named group keeps its name on the copy, said to be one */
+    if(s.grpmeta) Object.keys(gmap).forEach(function(g){
+      var m=s.grpmeta[g]; if(!m) return;
+      var m2=deep(m);
+      if(m2.name) m2.name+=' copy';
+      s.grpmeta[gmap[g]]=m2;
+    });
+    return made;
+  }
+  function duplicateSel(){
+    var s=pres.slides[cur]; if(!s||!s.annots) return;
+    /* a locked item is not draggable, so an unlocked twin dropped on top
+       of it would be a puzzle rather than a duplicate */
+    var idxs=selIdxs().filter(function(i){
+      var a=s.annots[i];return a&&!a.lock;});
+    if(!idxs.length) return;
+    var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);
+    if(!made.length) return;
     markDirty();
     var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    if(l){renderAnnots(l,s);selectMany(l,made);}
   }
   /* ---- copy / cut / paste ------------------------------------------
      Ctrl+D duplicates in place, which is not the same thing: it cannot

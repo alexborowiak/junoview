@@ -43,9 +43,15 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   arrow's bend corners stayed behind, and its attached endpoints
   (`c1`/`c2`, indexes into the SOURCE slide) followed the paste onto
   other slides and tied themselves to whatever sat at that number.
-- [ ] **T2 · S — Clone objects.** Duplicate-in-place with a small offset;
+- [x] **T2 · S — Clone objects.** Duplicate-in-place with a small offset;
   Alt-drag to clone. Clones are independent copies (linked instances are
   T13).
+  *2026-08-24:* one `cloneAnnots`, used by Ctrl+D, the Objects pane's
+  Duplicate and the new Alt-drag. Ctrl+D acted on `selAnnot` alone
+  before, so it duplicated ONE item of a five-item selection. Groups
+  survive as new groups. Alt was already the "ignore snapping" modifier
+  mid-drag; a clone drag exempts itself, since you have to keep Alt held
+  for the whole gesture.
 - [ ] **T3 · S — Object locking, granular.** Lock flag per object with
   modes: fully locked, or "position locked but resizable". Locked objects
   are skipped by marquee-select unless a modifier is held.
