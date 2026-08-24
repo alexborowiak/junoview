@@ -973,9 +973,19 @@
   }
   function setCustomGuides(g){
     if(!pres) return;
-    if(!g.x.length&&!g.y.length&&!g.b.length) delete pres.guides;
+    if(guidesEmpty(g)) delete pres.guides;
     else pres.guides=liveGuides(g);
     markDirty();
+  }
+  /* "are there any guides at all". ONE function, because the answer is
+     asked in two places that must agree: whether to keep pres.guides,
+     and whether to keep the layer that draws them. They did not agree —
+     drawCustomGuides asked only about the LINES, so a page with guide
+     boxes and no lines tore its own guide layer down and drew nothing.
+     Found in the browser, 2026-08-25; no test here could see it, every
+     one of them being a substring of the source. */
+  function guidesEmpty(g){
+    return !g.x.length&&!g.y.length&&!g.b.length;
   }
   /* the shape written into `pres` — ONE place, because a guide drag
      writes it live on every mousemove, and a drag that forgot a field
@@ -990,7 +1000,7 @@
     if(!slideEl) return;
     var host=slideEl.querySelector('.cguides');
     var cg=customGuides();
-    if(mode!=='edit'||(!cg.x.length&&!cg.y.length)){
+    if(mode!=='edit'||guidesEmpty(cg)){
       if(host) host.remove(); return;
     }
     if(!host){

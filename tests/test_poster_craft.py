@@ -283,3 +283,22 @@ def test_a_guide_box_snaps_and_puts_the_tool_back(out):
     assert "if(mode==='edit') setTool('guide');});" in out
     assert "row('Draw a guide box','',function(){setTool('guide');}," in out
     assert "function clearGuides(boxesOnly){" in out
+
+
+def test_a_guide_box_alone_still_gets_a_layer_to_draw_in(out):
+    """Found in the browser, 2026-08-25, and invisible to every test
+    here: "are there any guides at all" was asked in two places that did
+    not agree. setCustomGuides counted boxes; drawCustomGuides counted
+    only the LINES, so a page with guide boxes and no lines tore its own
+    .cguides layer down and drew nothing at all.
+
+    That is the common case -- draw a box, never touch a ruler -- so T4
+    shipped broken. One function answers it now, which is the only shape
+    of fix that cannot drift apart again.
+    """
+    assert "function guidesEmpty(g){" in out
+    assert "return !g.x.length&&!g.y.length&&!g.b.length;" in out
+    assert "if(guidesEmpty(g)) delete pres.guides;" in out
+    assert "if(mode!=='edit'||guidesEmpty(cg)){" in out
+    # the old one-sided test is gone
+    assert "(!cg.x.length&&!cg.y.length)" not in out

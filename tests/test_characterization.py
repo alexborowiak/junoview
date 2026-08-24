@@ -106,6 +106,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 fixing the T4 guide layer: guidesEmpty replaces
+# two disagreeing emptiness tests in deck.js. See the test in
+# tests/test_poster_craft.py.
 # Moved 2026-08-25 for TASKS T4, temporary design guides: deck.js
 # grew guide BOXES beside the ruler-dragged guide lines (a tool, a
 # right-click entry and the ruler corner to draw one; edges and
@@ -128,8 +131,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "626444681993c2f508d64ae1f82d0eb1"
-EXPECTED_BYTES = 2321682
+EXPECTED_MD5 = "35d823a39c010d8fe4f123edfcf2f17b"
+EXPECTED_BYTES = 2322211
 
 
 def _render_example() -> str:
