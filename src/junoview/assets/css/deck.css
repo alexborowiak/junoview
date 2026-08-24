@@ -2565,6 +2565,13 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
    every edit. Dimmed so it reads as a peek out of a closed drawer. */
 .film-row.peek{opacity:.72;}
 .film-menu{min-width:210px;}
+/* the canvas right-click menu: the film strip's menu is the other
+   context menu in the app, so it gets the same width and the same
+   left-aligned rows. The one addition is a dead row -- "Nothing copied
+   yet" -- which has to read as unavailable rather than broken. */
+.canvas-menu{min-width:215px;}
+.canvas-menu .vw-opt{width:100%;text-align:left;}
+.canvas-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 
 /* ---- the strip's own resize handle ------------------------------------
    position:fixed, not absolute: .deck-create scrolls, and an absolutely

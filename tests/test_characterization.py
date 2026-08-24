@@ -106,8 +106,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
-EXPECTED_MD5 = "11ea661257490f6537fde4d3b5324d1c"
-EXPECTED_BYTES = 2289797
+# Moved 2026-08-24 for TASKS T1, paste in place / paste at cursor:
+# deck.js grew pasteBuf's three placement modes, a canvas right-click
+# menu to reach them from a point, and the pointer capture they read;
+# deck.css grew the .canvas-menu rules. Editor-only; pinned by
+# tests/test_slide_editor.py's three paste tests.
+EXPECTED_MD5 = "9e405d5382a9f3cefaf16755faa4d035"
+EXPECTED_BYTES = 2300550
 
 
 def _render_example() -> str:

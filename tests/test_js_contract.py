@@ -62,6 +62,9 @@ RUNTIME_IDS = {
     # in the markup: deck.js ~line 15375 (film strip's view menu) and
     # ~line 11853 (the matching bar's property menu).
     "film-menu", "match-menu",
+    # The canvas right-click menu, built per click and removed on the
+    # next one: deck.js, THE CANVAS RIGHT-CLICK MENU banner.
+    "canvas-menu",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

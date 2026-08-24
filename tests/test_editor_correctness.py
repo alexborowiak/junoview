@@ -1230,7 +1230,9 @@ def test_paste_lands_in_the_same_place_on_another_slide(out):
     """
     assert "var clipFrom=-1;" in out
     assert "clipFrom=cur;" in out
-    assert "var d=(clipFrom===cur)?3:0;" in out
+    # still the rule Ctrl+V follows, now as one of pasteBuf's three
+    # placement modes (see the paste-modes test in test_slide_editor)
+    assert "dx=dy=(clipFrom===cur)?3:0;" in out
 
 
 def test_off_page_items_can_be_reached(out):

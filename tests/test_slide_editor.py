@@ -914,3 +914,71 @@ def test_builds_follow_reading_order_not_array_order(out):
     assert "var ay=(p2.a.k==='arrow')?Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);"         in out
     # a 4% band counts as "the same line", so a row of items reads across
     assert "return Math.abs(ay-by)>4?(ay-by):(ax-bx);" in out
+
+
+def test_paste_has_three_placement_modes(out):
+    """TASKS T1. One buffer, three questions about where it lands:
+
+    ``auto`` (Ctrl+V) keeps the rule that was already there -- nudge on
+    the same slide, same place on another. ``place`` (Ctrl+Shift+V) uses
+    the source's coordinates exactly, same slide included, and never
+    cascades, so pasting into ten slides gives ten identical positions.
+    ``here`` (Ctrl+Alt+V, or the right-click menu) centres the whole set
+    on a point, keeping its internal arrangement.
+    """
+    assert "function pasteBuf(how,at){" in out
+    # 'place' takes neither the nudge nor the cascade
+    assert "} else if(how!=='place'){" in out
+    assert "if(how!=='place'&&how!=='here') clipBuf=clipBuf.map(" in out
+    # 'here' moves the SET, not each item, and stays on the page
+    assert "function clipBox(buf){" in out
+    assert "dx=pt.x-(box.l+box.r)/2;dy=pt.y-(box.t+box.b)/2;" in out
+    assert "if(box.l+dx<0) dx=-box.l;" in out
+    # the pointer is recorded in CLIENT coordinates on the mousemove that
+    # already runs there, and converted only when a paste asks
+    assert "lastCanvasXY={x:e.clientX,y:e.clientY};" in out
+    assert "function pointerPct(){" in out
+    # both shortcuts sit BEFORE the plain-paste branch, which matches
+    # 'v' and 'V' alike and would otherwise swallow them
+    vkey = "\n              &&(e.key==='v'||e.key==='V')){"
+    place = out.index("&&e.shiftKey" + vkey)
+    here = out.index("&&e.altKey" + vkey)
+    plain = out.index("/* NOT preventDefaulted: the native paste event")
+    assert place < plain and here < plain
+
+
+def test_paste_here_is_reachable_from_where_you_clicked(out):
+    """"Paste here" needs a point, and a right-click is the only door
+    that has one -- so the canvas grew a context menu, built from the
+    film strip's helpers so there is one menu idiom in the file.
+
+    The click point is frozen when the menu opens: by the time the row
+    is clicked the pointer is over the menu, not the page.
+    """
+    assert "function openCanvasMenu(layer,s,ev){" in out
+    assert "var at=pctPoint(layer,ev);" in out
+    assert "row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);}," in out
+    assert "openCanvasMenu(layer,s,ev);" in out
+    # a right-click picks but never drags -- the menu used to open on top
+    # of a move gesture this handler had already started
+    assert ('if(ev.button===2\n           '
+            "&&!(t.classList&&t.classList.contains('an-endpt'))){") in out
+    # ... except on a bend corner, where right-click removes it
+    assert "if(ev.altKey||ev.button===2){" in out
+
+
+def test_a_pasted_arrow_brings_its_corners_and_drops_dead_ties(out):
+    """An arrow's bend corners and its attached endpoints are both stored
+    apart from x1/y1/x2/y2, and paste moved neither.
+
+    The corners simply stayed behind at the original's coordinates. The
+    ties are worse: ``c1``/``c2`` hold an INDEX into the slide they came
+    from, so pasting onto another slide tied the arrow to whatever
+    happened to sit at that number. They are re-pointed at the pasted
+    copy when it is in the same set, kept when the original is still on
+    this slide, and dropped otherwise.
+    """
+    assert "if(Array.isArray(cp.mid)) cp.mid=cp.mid.map(function(m){" in out
+    assert "clipIdx.forEach(function(src,n){remap[src]=first+n;});" in out
+    assert "return (clipFrom===cur)?c:null;" in out
+    assert "if(t1) cp.c1=t1; else delete cp.c1;" in out

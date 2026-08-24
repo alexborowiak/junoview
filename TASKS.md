@@ -31,10 +31,18 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 1. Editor quick wins — [deck.js], strictly sequential
 
-- [ ] **T1 · S — Paste in place / paste at cursor.** Two paste modes:
+- [x] **T1 · S — Paste in place / paste at cursor.** Two paste modes:
   "paste at same location" (source slide coordinates, for cross-slide
   consistency) and "paste at current location" (pointer/viewport). Menu
   entries + shortcuts.
+  *2026-08-24:* `pasteBuf` now takes a mode — `auto` (Ctrl+V, the old
+  rule), `place` (Ctrl+Shift+V) and `here` (Ctrl+Alt+V). The menu is a
+  new CANVAS RIGHT-CLICK MENU, because a right-click is the only door
+  that knows where you clicked; it reuses the film strip's `menuHead`/
+  `floatAt` helpers. Two latent paste bugs fell out on the way: an
+  arrow's bend corners stayed behind, and its attached endpoints
+  (`c1`/`c2`, indexes into the SOURCE slide) followed the paste onto
+  other slides and tied themselves to whatever sat at that number.
 - [ ] **T2 · S — Clone objects.** Duplicate-in-place with a small offset;
   Alt-drag to clone. Clones are independent copies (linked instances are
   T13).

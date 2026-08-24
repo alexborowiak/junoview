@@ -2110,6 +2110,12 @@
     });
     /* the pointer's position, shown on both rulers */
     if(stage) stage.addEventListener('mousemove',function(e){
+      /* WHERE THE POINTER IS, which is the whole question "Paste here"
+         asks. CLIENT coordinates only: turning them into slide
+         percentages needs a rect, and a getBoundingClientRect on every
+         mousemove is exactly the cost the 2026-08-23 pass took out of
+         this handler. The conversion happens once, at the paste. */
+      lastCanvasXY={x:e.clientX,y:e.clientY};
       if(!guides.rulers||mode!=='edit') return;
       var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
       var sr=slideEl.getBoundingClientRect();
@@ -2127,6 +2133,7 @@
       drawRulerCursor();
     });
     if(stage) stage.addEventListener('mouseleave',function(){
+      lastCanvasXY=null;
       rulerCursor.x=rulerCursor.y=null;
       if(guides.rulers&&mode==='edit') drawRulerCursor();
     });
@@ -8827,12 +8834,74 @@
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
   }
+  /* ---- THE CANVAS RIGHT-CLICK MENU -------------------------------------
+     Paste has three answers now (the plain one, in place, here) and a
+     ribbon cannot grow three buttons for one verb without becoming the
+     thing fitEditRibbon spends its life fighting. A right-click is also
+     the only door that knows WHERE you clicked, which is precisely the
+     question "Paste here" asks -- so the click point is captured when
+     the menu opens and handed to pasteBuf, rather than read back from
+     the live pointer, which by then is over the menu.
+     Built from the film strip's helpers (menuHead / floatAt) so this
+     file has one context-menu idiom, not two. */
+  function openCanvasMenu(layer,s,ev){
+    var old=$('#canvas-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu';m.id='canvas-menu';
+    /* the click, in page percentages, frozen at open time */
+    var at=pctPoint(layer,ev);
+    function row(label,keys,fn,title,icon){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      /* the icon is trusted bic() markup; the LABEL stays a text node */
+      if(icon) b.innerHTML=bic(icon)+' ';
+      b.appendChild(document.createTextNode(label));
+      if(keys){
+        var k=document.createElement('kbd');
+        k.textContent=keys;b.appendChild(k);
+      }
+      if(title) b.title=title;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.remove();fn();});
+      m.appendChild(b);
+      return b;
+    }
+    var n=selIdxs().length;
+    if(n){
+      menuHead(m,n===1?'this object':n+' objects');
+      row('Cut','Ctrl+X',function(){
+        var c=cutSel();
+        if(c) toast(c+' item'+(c===1?'':'s')+' cut');});
+      row('Copy','Ctrl+C',function(){
+        var c=copySel();
+        if(c) toast(c+' item'+(c===1?'':'s')+' copied');},null,'copy');
+      row('Delete','Del',deleteSel,null,'exit');
+    }
+    menuHead(m,'paste');
+    if(!clipBuf.length){
+      row('Nothing copied yet','',function(){}).disabled=true;
+    } else {
+      row('Paste','Ctrl+V',function(){pasteBuf('auto');},
+        'Nudged clear of the original on this slide; in the same place '
+        +'on any other');
+      row('Paste in place','Ctrl+Shift+V',function(){pasteBuf('place');},
+        'Exactly where it was copied from — the way you put one '
+        +'caption in the identical spot on twenty slides');
+      row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);},
+        'Centred on the point you right-clicked');
+    }
+    floatAt(m,ev);
+  }
   function wireEditor(layer,s){
     /* a right-click on a corner takes it out, so the browser's own menu
-       must not open over the top of the gesture */
+       must not open over the top of the gesture; anywhere else on the
+       canvas it opens OUR menu instead (2026-08-24) */
     layer.addEventListener('contextmenu',function(ev){
       if(ev.target&&ev.target.classList
-         &&ev.target.classList.contains('an-mid')) ev.preventDefault();
+         &&ev.target.classList.contains('an-mid')){ev.preventDefault();return;}
+      if(mode!=='edit'||tool!=='select') return;
+      ev.preventDefault();
+      openCanvasMenu(layer,s,ev);
     });
     layer.addEventListener('mousedown',function(ev){
       if(mode!=='edit') return;
@@ -8855,6 +8924,22 @@
         ||(t.getAttribute&&t.classList
            &&t.classList.contains('an-item')?t:null);
       if(tool==='select'){
+        /* A RIGHT-CLICK PICKS, AND NEVER DRAGS. The menu that follows
+           acts on the selection, so the click has to be able to change
+           it -- but this handler used to run its full select/move/
+           marquee ladder on button 2 as well, which meant the menu
+           opened on top of a drag already in progress. The one
+           exception is a bend corner, where right-click REMOVES it and
+           the endpoint branch below owns the gesture. */
+        if(ev.button===2
+           &&!(t.classList&&t.classList.contains('an-endpt'))){
+          var rraw=item&&item.getAttribute('data-idx');
+          if(rraw!=null){
+            var ridx=(rraw==='t'||rraw==='s')?rraw:+rraw;
+            if(selIdxs().indexOf(ridx)<0) selectAnnot(layer,ridx,false);
+          }
+          return;
+        }
         /* endpoint handles first, then resize handles, then arrows
            (they render on top, so they win the click even over a
            frame), then the item */
@@ -10345,10 +10430,52 @@
      the other slide that it was copied from"). Pasting onto the SAME
      slide still offsets, or the copy hides exactly under its original. */
   var clipFrom=-1;
+  /* which annots the buffer came from, index-aligned with clipBuf: an
+     attached arrow endpoint stores an INDEX, so a paste has to be able
+     to say "that one is in this set too" (see retie in pasteBuf) */
+  var clipIdx=[];
+  /* the pointer's last position over the stage, in CLIENT coordinates
+     (recorded by the ruler-cursor handler, which costs nothing to do
+     there). Null once it leaves, or before it has ever been there. */
+  var lastCanvasXY=null;
+  /* the pointer as a percentage of the page. Null when it is off the
+     page, which is the case "Paste here" has to have an answer for. */
+  function pointerPct(){
+    var slideEl=stage&&stage.querySelector('.slide');
+    if(!slideEl||!lastCanvasXY) return null;
+    var r=slideEl.getBoundingClientRect();
+    if(!r.width||!r.height) return null;
+    var x=(lastCanvasXY.x-r.left)/r.width*100;
+    var y=(lastCanvasXY.y-r.top)/r.height*100;
+    if(x<0||x>100||y<0||y>100) return null;
+    return {x:x,y:y};
+  }
+  /* the clipboard set's own bounding box, from its STORED geometry --
+     the items are not on the page, so there is nothing to measure with
+     annotRectPct. A text box that sizes itself has no w/h and counts as
+     its top-left corner, which is the point being placed anyway. */
+  function clipBox(buf){
+    var l=1e9,t=1e9,r=-1e9,b=-1e9;
+    buf.forEach(function(a){
+      var x1,y1,x2,y2;
+      if(a.k==='arrow'){
+        x1=Math.min(a.x1,a.x2);x2=Math.max(a.x1,a.x2);
+        y1=Math.min(a.y1,a.y2);y2=Math.max(a.y1,a.y2);
+      } else {
+        x1=a.x||0;y1=a.y||0;x2=x1+(a.w||0);y2=y1+(a.h||0);
+      }
+      if(x1<l) l=x1;
+      if(y1<t) t=y1;
+      if(x2>r) r=x2;
+      if(y2>b) b=y2;
+    });
+    return (l>r||t>b)?null:{l:l,t:t,r:r,b:b};
+  }
   function copySel(){
     var s=pres.slides[cur];
     var idxs=selectedIdxs(); if(!s||!idxs.length) return 0;
     clipFrom=cur;              /* where it came from - see pasteBuf */
+    clipIdx=idxs.slice();
     clipBuf=idxs.map(function(i){
       return deep(s.annots[i]);});
     /* stamp the SYSTEM clipboard so this copy outranks whatever image was
@@ -10368,29 +10495,88 @@
     if(n) deleteSel();
     return n;
   }
-  function pasteBuf(){
+  /* WHERE A PASTE LANDS. Three answers, because three different
+     questions get asked of the same buffer (2026-08-24, TASKS T1):
+
+       'auto'   Ctrl+V, and the rule that was already here. Onto the SAME
+                slide it nudges, or the copy hides exactly under its
+                original; onto ANOTHER slide it lands in the same place,
+                which is the whole point of copying across (2026-08-20).
+       'place'  Ctrl+Shift+V. The source's coordinates exactly, same
+                slide included -- how a caption or a logo ends up in the
+                identical spot on twenty slides. It never cascades, so
+                pasting it into ten slides really does give ten items in
+                ten identical positions.
+       'here'   Ctrl+Alt+V, or the right-click menu, which is the only
+                door that knows where you clicked. A multi-item copy
+                keeps its own internal arrangement -- the SET moves, not
+                each item on its own -- and falls back to the middle of
+                the page when the pointer is not over it.
+
+     `at` is a point in page percentages; 'here' from the menu passes the
+     click, the shortcut passes nothing and the live pointer is used. */
+  function pasteBuf(how,at){
     var s=pres.slides[cur];
     if(!s||!clipBuf.length) return 0;
     s.annots=s.annots||[];
     var first=s.annots.length;
-    /* same slide: nudge, or the copy hides exactly under its original.
-       Another slide: land in the SAME PLACE, which is what copying across
-       is for (2026-08-20). */
-    var d=(clipFrom===cur)?3:0;
+    var dx=0,dy=0;
+    if(how==='here'){
+      var box=clipBox(clipBuf),pt=at||pointerPct()||{x:50,y:50};
+      if(box){
+        dx=pt.x-(box.l+box.r)/2;dy=pt.y-(box.t+box.b)/2;
+        /* keep the set ON the page: a paste you cannot see is a paste
+           you will not find */
+        if(box.l+dx<0) dx=-box.l;
+        else if(box.r+dx>100) dx=100-box.r;
+        if(box.t+dy<0) dy=-box.t;
+        else if(box.b+dy>100) dy=100-box.b;
+      }
+    } else if(how!=='place'){
+      dx=dy=(clipFrom===cur)?3:0;
+    }
+    /* an attached arrow endpoint (`c1`/`c2` = {i:index}) points into the
+       annots of the slide it was copied from. Re-point it at the pasted
+       COPY where that copy is in this same set; leave it alone when the
+       original is still on this slide; drop it otherwise -- an index
+       carried across slides silently ties the arrow to whatever happens
+       to sit at that number over there. */
+    var remap={};
+    clipIdx.forEach(function(src,n){remap[src]=first+n;});
+    function retie(c){
+      if(!c||typeof c.i!=='number') return null;
+      if(remap[c.i]!=null) return {i:remap[c.i]};
+      return (clipFrom===cur)?c:null;
+    }
     clipBuf.forEach(function(src){
       var cp=deep(src);
       delete cp.grp;          /* a paste is its own item, never in the
                                  source's group */
       if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
-      if(cp.k==='arrow'){cp.x1+=d;cp.y1+=d;cp.x2+=d;cp.y2+=d;}
-      else {cp.x=(cp.x||0)+d;cp.y=(cp.y||0)+d;}
+      if(cp.k==='arrow'){
+        cp.x1+=dx;cp.y1+=dy;cp.x2+=dx;cp.y2+=dy;
+        /* the bend corners travel with the line they belong to. They did
+           not, so a pasted elbow arrow came out with its middle left
+           behind at the original's coordinates (found while giving paste
+           three modes; nudgeSel already moved them) */
+        if(Array.isArray(cp.mid)) cp.mid=cp.mid.map(function(m){
+          return [m[0]+dx,m[1]+dy];});
+        var t1=retie(cp.c1),t2=retie(cp.c2);
+        if(t1) cp.c1=t1; else delete cp.c1;
+        if(t2) cp.c2=t2; else delete cp.c2;
+      }
+      else {cp.x=(cp.x||0)+dx;cp.y=(cp.y||0)+dy;}
       s.annots.push(cp);
     });
     /* paste again and the next copy lands clear of this one, rather than
-       stacking every paste on the same 3% offset */
-    clipBuf=clipBuf.map(function(cp){
+       stacking every paste on the same 3% offset. Ctrl+V ONLY: a "paste
+       in place" that crept 3% each time would not be paste in place, and
+       "paste here" is told where to go every single time. */
+    if(how!=='place'&&how!=='here') clipBuf=clipBuf.map(function(cp){
       var n=deep(cp);
-      if(n.k==='arrow'){n.x1+=3;n.y1+=3;n.x2+=3;n.y2+=3;}
+      if(n.k==='arrow'){n.x1+=3;n.y1+=3;n.x2+=3;n.y2+=3;
+        if(Array.isArray(n.mid)) n.mid=n.mid.map(function(m){
+          return [m[0]+3,m[1]+3];});}
       else {n.x=(n.x||0)+3;n.y=(n.y||0)+3;}
       return n;
     });
@@ -10470,11 +10656,25 @@
     fr.readAsDataURL(file);
     return true;
   }
+  /* Ctrl+Shift+V / Ctrl+Alt+V are preventDefaulted on keydown, but not
+     every engine agrees that this stops the paste event — and one that
+     still fires would run the plain paste on top of the placed one. The
+     explicit modes raise this for a beat; the timer clears it in case
+     the event never comes at all. */
+  var pasteHandled=null;
+  function tookPaste(){
+    if(pasteHandled) clearTimeout(pasteHandled);
+    pasteHandled=setTimeout(function(){pasteHandled=null;},300);
+  }
   document.addEventListener('paste',function(e){
     /* the Ctrl+V keydown armed a fallback in case this event never comes
        (some engines fire no paste on a non-editable focus) — it did, so
        disarm it before anything else or the item would paste twice */
     if(pendingPaste){clearTimeout(pendingPaste);pendingPaste=null;}
+    if(pasteHandled){
+      clearTimeout(pasteHandled);pasteHandled=null;
+      e.preventDefault();return;
+    }
     if(deckEl.hidden||mode!=='edit') return;
     var tag=(e.target.tagName||'').toLowerCase();
     if(tag==='input'||tag==='textarea'||e.target.isContentEditable) return;
@@ -16734,6 +16934,26 @@
         var nx=cutSel();
         if(nx){e.preventDefault();
           toast(nx+' item'+(nx===1?'':'s')+' cut');}
+      }
+      /* the two PLACED pastes. They come first because the plain-paste
+         branch below matches 'v' and 'V' alike and would swallow them,
+         and they preventDefault because there is nothing the native
+         paste event could add: the buffer is ours. */
+      else if((e.ctrlKey||e.metaKey)&&e.shiftKey
+              &&(e.key==='v'||e.key==='V')){
+        e.preventDefault();tookPaste();
+        if(!clipBuf.length) toast('Nothing copied yet');
+        else {pasteBuf('place');
+          toast('Pasted in place — the coordinates it was copied '
+            +'from');}
+      }
+      else if((e.ctrlKey||e.metaKey)&&e.altKey
+              &&(e.key==='v'||e.key==='V')){
+        e.preventDefault();tookPaste();
+        if(!clipBuf.length) toast('Nothing copied yet');
+        else {pasteBuf('here');
+          toast(pointerPct()?'Pasted at the pointer'
+            :'Pasted in the middle — the pointer was off the page');}
       }
       /* NOT preventDefaulted: the native paste event stays the primary
          path (it can carry a system-clipboard image). This one-shot timer
