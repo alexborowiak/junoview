@@ -51,7 +51,7 @@ RUNTIME_IDS = {
     # these lookups run against that popup's document, not the app's.
     "jvp-clock", "jvp-count", "jvp-goal", "jvp-next-b", "jvp-notes",
     "jvp-now", "jvp-pause", "jvp-prev", "jvp-reset", "jvp-slideclock",
-    "jvp-talk",
+    "jvp-talk", "jvp-find", "jvp-hits",
     # The PDF/print export builds a throwaway container:
     # deck.js ~line 17471, root.id='print-root'.
     "print-root",
@@ -71,8 +71,9 @@ RUNTIME_IDS = {
     # removed on the next click: deck.js, A RIBBON OF YOUR OWN.
     "rbn-cust",
     # The overview map, an overlay built per open and removed on close:
-    # deck.js, THE OVERVIEW.
-    "deck-overview",
+    # deck.js, THE OVERVIEW. Its search box is built with it:
+    # deck.js, FINDING A SLIDE WHILE YOU ARE TALKING.
+    "deck-overview", "ovw-find",
     # The deck-token editor, built on demand: deck.js, DESIGN TOKENS.
     "tok-pop",
     # The roomy notes editor, an overlay built per open and removed on

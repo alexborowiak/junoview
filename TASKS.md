@@ -450,8 +450,28 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   thirty-seven-second run over two slides recording 19s and 18s against
   two different sids.
   Local only — no audio, no speech analysis.
-- [ ] **T30 · S — Presenter slide search / jump.** Type-to-search titles
+- [x] **T30 · S — Presenter slide search / jump.** Type-to-search titles
   and content while presenting; jump straight to a slide.
+  *2026-08-25.* Design note at `FINDING A SLIDE WHILE YOU ARE TALKING`.
+  **One matcher, two windows.** "Where is the slide about the residuals?"
+  is the same question in the presenter view and on the only screen you
+  have, so `slideHits` is written once; a second matcher would be a
+  second answer and they would disagree the first time either grew a
+  field.
+  **The map IS the search results.** T26's overview already draws every
+  slide in its sections with click-to-go, so a filter on top of it is
+  exactly "type-to-search and jump" — the door is a search box in the
+  map, not a second piece of navigation furniture, and `/` opens it
+  mid-talk. The jump goes through `go()`, so the transition plays, the
+  rehearsal clock attributes the time and the presenter view follows.
+  **A hit that is only in your notes says so.** Notes are searched
+  because "where did I say that" is the question being asked at the
+  lectern — but jumping to a slide expecting a word on the screen and
+  not finding it is worse than not finding the slide.
+  16/16 in a browser: a word on the slides found both copies unlabelled,
+  a word only in the notes found exactly that slide and said so, a word
+  nobody said found nothing and said that too, and Enter jumped the talk
+  without leaving present mode.
 - [ ] **T31 · S — Private presenter annotations.** On-slide annotations
   visible only in presenter view, never to the audience or in exports.
 

@@ -2195,6 +2195,19 @@ body.light .jvn-md code,body.light .nse-help code{background:#eef2f6;
 .ovw-tile.opt::after{content:"optional";position:absolute;top:5px;
   right:6px;font-family:var(--mono);font-size:8px;color:#f0a848;}
 .ovw-tile.cut{opacity:.42;}
+/* a search hit: the tile is already the answer, so the only thing added
+   is WHY it matched -- and where, when the word is only in the notes */
+.ovw-tile.hit{border-color:var(--cyan);}
+.ovw-why{font-size:9.5px;line-height:1.35;color:#8fa6b8;
+  border-top:1px solid #ffffff17;padding-top:4px;margin-top:1px;}
+.ovw-find{font-family:var(--sans);font-size:12px;padding:5px 9px;
+  border-radius:6px;background:#ffffff0d;color:#dbe7ef;
+  border:1px solid #ffffff2b;width:210px;}
+.ovw-find:focus{outline:none;border-color:var(--cyan);}
+.ovw-fn{font-family:var(--mono);font-size:9.5px;color:#7d93a6;
+  min-width:62px;}
+body.light .ovw-find{background:#fff;color:var(--ink);
+  border-color:var(--rule);}
 .ovw-n{font-family:var(--mono);font-size:9px;color:#7d93a6;}
 .ovw-tile .mini-diagram{width:100%;height:76px;}
 .ovw-lab{font-size:10.5px;color:#b9cad8;line-height:1.25;

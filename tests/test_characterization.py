@@ -110,6 +110,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T30, finding a slide mid-talk:
+# deck.js gained FINDING A SLIDE WHILE YOU ARE TALKING (one
+# slideHits matcher), a search box in T26's overview map with '/'
+# as its door while presenting, and the presenter window's own
+# box wired from this side; deck.css their styles, help.html a
+# paragraph. Pinned by test_present_mode.py's six T30 tests and
+# verified in a browser, 16/16.
 # Moved 2026-08-25 for TASKS T29, rehearsal timing: deck.js gained
 # WHAT A REHEARSAL LEAVES BEHIND (the lazily minted slide `sid`,
 # the run recorder hung off setUIMode and go(), and the stats) plus
@@ -246,8 +253,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "4eabddc666c8dcc0f33b690d0c196932"
-EXPECTED_BYTES = 2540936
+EXPECTED_MD5 = "21f2cc6d696ef76d6486f94fa1ee8899"
+EXPECTED_BYTES = 2551334
 
 
 def _render_example() -> str:

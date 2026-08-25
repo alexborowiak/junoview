@@ -18274,6 +18274,21 @@
       +'.jvp-nonotes{color:#6e8394;}'
       +'.jvp-end{color:#6e8394;font-family:var(--mono,monospace);'
       +'font-size:13px;}'
+      +'.jvp-find{flex:0 0 auto;font-family:var(--sans,system-ui);'
+      +'font-size:14px;padding:8px 11px;border-radius:8px;'
+      +'background:#0e1926;color:#dce6ee;border:1px solid #ffffff2b;}'
+      +'.jvp-find:focus{outline:none;border-color:#39a9c0;}'
+      +'.jvp-hits{flex:0 0 auto;max-height:24%;overflow-y:auto;'
+      +'display:none;flex-direction:column;gap:2px;}'
+      +'.jvp-hits.on{display:flex;}'
+      +'.jvp-hit{text-align:left;background:#ffffff08;color:#dce6ee;'
+      +'border:1px solid #ffffff17;border-radius:7px;padding:6px 9px;'
+      +'cursor:pointer;font-size:12.5px;line-height:1.35;}'
+      +'.jvp-hit:hover{border-color:#39a9c0;}'
+      +'.jvp-hit b{font-family:var(--mono,monospace);font-size:10px;'
+      +'color:#8ea4b6;font-weight:400;margin-right:6px;}'
+      +'.jvp-hit i{color:#8ea4b6;font-style:normal;}'
+      +'.jvp-nohit{color:#6e8394;font-size:12px;padding:6px 2px;}'
       +'.jvp-foot{grid-column:1/-1;display:flex;gap:8px;align-items:center;}'
       +'</style></head><body><div class="jvp">'
       +'<div class="jvp-bar">'
@@ -18290,7 +18305,12 @@
       +'<div class="jvp-nextwrap"><span class="jvp-lab">next</span>'
       +'<div class="jvp-stage" id="jvp-next"></div></div>'
       +'<span class="jvp-lab">notes</span>'
-      +'<div class="jvp-notes" id="jvp-notes"></div></div>'
+      +'<div class="jvp-notes" id="jvp-notes"></div>'
+      /* SEARCH, in the window you are actually looking at (T30). The
+         same slideHits the map filters with -- one matcher, two doors. */
+      +'<input class="jvp-find" id="jvp-find" type="search" '
+      +'placeholder="Find a slide\u2026" aria-label="Find a slide">'
+      +'<div class="jvp-hits" id="jvp-hits"></div></div>'
       +'<div class="jvp-foot">'
       +'<button class="jvp-b" id="jvp-prev">&#8592; Back</button>'
       +'<button class="jvp-b primary" id="jvp-next-b">Next &#8594;</button>'
@@ -18333,6 +18353,50 @@
       send({jv:'cmd',do:'timer',act:paused?'resume':'pause'});
       pb.textContent=paused?'Pause':'Resume';
     };
+    /* TYPE TO FIND ONE, in the window you are looking at (T30). Built
+       here rather than in the popup's own script because the popup has
+       no script: everything it does is wired from this side, which is
+       what keeps the two windows from drifting. */
+    var fi=d.getElementById('jvp-find'),hits=d.getElementById('jvp-hits');
+    function drawHits(){
+      var q=fi.value.trim();
+      hits.innerHTML='';
+      hits.classList.toggle('on',!!q);
+      if(!q) return;
+      var found=slideHits(q);
+      if(!found.length){
+        var no=d.createElement('div');
+        no.className='jvp-nohit';no.textContent='No slide says that.';
+        hits.appendChild(no);return;
+      }
+      found.forEach(function(h){
+        var b=d.createElement('button');
+        b.className='jvp-hit';
+        var num=d.createElement('b');
+        num.textContent=(h.i+1);
+        b.appendChild(num);
+        if(h.where){
+          var wh=d.createElement('i');
+          wh.textContent=h.where+' \u2014 ';
+          b.appendChild(wh);
+        }
+        b.appendChild(d.createTextNode(h.snip));
+        b.onclick=function(){
+          send({jv:'cmd',do:'goto',n:h.i});
+          fi.value='';drawHits();
+        };
+        hits.appendChild(b);
+      });
+    }
+    fi.addEventListener('input',drawHits);
+    fi.addEventListener('keydown',function(e){
+      e.stopPropagation();      /* the arrow keys below drive the TALK */
+      if(e.key==='Escape'){fi.value='';drawHits();}
+      else if(e.key==='Enter'){
+        var first=hits.querySelector('.jvp-hit');
+        if(first) first.click();
+      }
+    });
     /* [the method](#7) in a note jumps the talk there. `goto` was
        already a command the strip used, so a reference is a use of the
        machinery rather than a new one (T28). */
@@ -18584,6 +18648,82 @@
     TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
     toast('Every slide in this section arrives: '+lab.toLowerCase());
   }
+  /* ---- FINDING A SLIDE WHILE YOU ARE TALKING --------------------------
+     (TASKS T30.) "Type-to-search titles and content while presenting;
+     jump straight to a slide."
+
+     ONE MATCHER, TWO WINDOWS. The question — where is the slide about
+     the residuals? — is the same whether you are looking at the
+     presenter view or driving from the only screen you have, so
+     `slideHits` is written once and both doors call it. A second
+     matcher would be a second answer, and they would disagree the first
+     time either grew a field.
+
+     WHAT COUNTS AS THE SLIDE'S WORDS: its name, every piece of text on
+     it (text boxes, table cells, captions, a title slide's title and
+     subtitle) and its speaker notes. Notes are in because "where did I
+     say that" is exactly the question being asked at the lectern — but
+     a hit that is ONLY in the notes says so, because jumping to a slide
+     expecting to see a word on the screen and not finding it is worse
+     than not finding the slide.
+
+     AND THE MAP IS THE SEARCH RESULTS. T26 already built the overview:
+     every slide, in its sections, click to go. A filter on top of that
+     IS "type-to-search and jump", so the door is a search box in the map
+     rather than a second piece of navigation furniture — and the map
+     becomes reachable while presenting, which is the only reason it was
+     not already the answer. */
+  function slideWords(sl){
+    if(!sl) return {on:'',notes:''};
+    var on=[];
+    if(sl.label) on.push(sl.label);
+    if(sl.layout==='title'){on.push(sl.title||'');on.push(sl.sub||'');}
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.hide) return;
+      if(a.k==='text'&&a.text) on.push(a.text);
+      if(a.k==='table'&&Array.isArray(a.rows))
+        a.rows.forEach(function(r){
+          (r||[]).forEach(function(c){
+            if(typeof c==='string'&&c) on.push(c);
+            else if(c&&typeof c.t==='string'&&c.t) on.push(c.t);
+          });
+        });
+      if(a.cap&&typeof a.cap==='string') on.push(a.cap);
+    });
+    var t=slideTitle(sl);
+    if(t) on.push(t);
+    /* slideTitle usually RETURNS one of the pieces already collected --
+       a slide whose only text is its heading is named by that heading --
+       so the snippet would otherwise read "the word · the word" */
+    var seen={},uniq=[];
+    on.forEach(function(p){
+      var k=String(p).trim(); if(!k||seen[k]) return;
+      seen[k]=1;uniq.push(k);
+    });
+    return {on:uniq.join(' · '),notes:(sl.notes||'')};
+  }
+  /* every slide whose words contain the query, in deck order, each with
+     enough context to tell one hit from another */
+  function slideHits(q){
+    q=String(q||'').trim().toLowerCase();
+    if(!q) return [];
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,i){
+      var w=slideWords(sl);
+      var inOn=w.on.toLowerCase().indexOf(q)>=0;
+      var inNotes=w.notes.toLowerCase().indexOf(q)>=0;
+      if(!inOn&&!inNotes) return;
+      /* the snippet comes from wherever the hit actually was */
+      var src=inOn?w.on:w.notes;
+      var at=src.toLowerCase().indexOf(q);
+      var from=Math.max(0,at-28);
+      out.push({i:i,onSlide:inOn,
+        where:inOn?'':'in the notes',
+        snip:(from?'…':'')+src.slice(from,at+q.length+34).trim()
+          +((at+q.length+34)<src.length?'…':'')});
+    });
+    return out;
+  }
   /* ---- THE OVERVIEW: THE WHOLE TALK AT ONCE ---------------------------
      (TASKS T26.) TASKS.md is careful about what this is: "the realistic
      scope of the infinite-canvas wish — an overview/navigation layer,
@@ -18633,6 +18773,15 @@
     head.appendChild(t);
     var sp=document.createElement('span');
     sp.className='deck-spring';head.appendChild(sp);
+    /* THE SEARCH BOX IS THE MAP'S (T30). Filtering a map you can already
+       see beats a separate results list you cannot. */
+    var find=document.createElement('input');
+    find.className='ovw-find';find.id='ovw-find';find.type='search';
+    find.placeholder='Find a slide\u2026';
+    find.setAttribute('aria-label','Find a slide by its words or notes');
+    head.appendChild(find);
+    var cnt=document.createElement('span');
+    cnt.className='ovw-fn';head.appendChild(cnt);
     var cl=document.createElement('button');
     cl.className='dbtn';cl.innerHTML=bic('exit')+' Close';
     cl.title='Esc';
@@ -18666,10 +18815,15 @@
           lab.className='ovw-lab';
           lab.textContent=filmText(sl)||'';
           tile.appendChild(lab);
+          tile.dataset.i=String(i);
           tile.title=(sl&&sl.opt?'Optional \u2014 ':'')
             +'Go to slide '+(i+1);
           tile.addEventListener('click',function(){
             overviewClose();
+            /* PRESENTING, go() -- so the transition plays, the rehearsal
+               clock attributes the time and the presenter view follows.
+               Setting cur by hand would skip all three (T30). */
+            if(mode==='view'){go(i);return;}
             cur=i;activePane=-1;selAnnot=null;selSet=[];
             refresh();
           });
@@ -18680,6 +18834,55 @@
       body.appendChild(grp);
     });
     ov.appendChild(body);
+    /* TYPE TO NARROW. The tiles are already drawn; a hit hides the ones
+       that do not match rather than rebuilding the map, so the slides
+       do not jump about under the pointer as you type. */
+    function applyFind(){
+      var q=find.value.trim();
+      if(!q){
+        $$('.ovw-tile',ov).forEach(function(t){t.hidden=false;
+          t.classList.remove('hit');
+          var w=t.querySelector('.ovw-why'); if(w) w.remove();});
+        $$('.ovw-grp',ov).forEach(function(g){g.hidden=false;});
+        cnt.textContent='';
+        return;
+      }
+      var hits={},n=0;
+      slideHits(q).forEach(function(h){hits[h.i]=h;n++;});
+      $$('.ovw-tile',ov).forEach(function(t){
+        var i=+t.dataset.i;
+        var h=hits[i];
+        t.hidden=!h;
+        t.classList.toggle('hit',!!h);
+        var w=t.querySelector('.ovw-why');
+        if(w) w.remove();
+        if(h){
+          var e=document.createElement('span');
+          e.className='ovw-why';
+          e.textContent=(h.where?(h.where+': '):'')+h.snip;
+          t.appendChild(e);
+        }
+      });
+      /* a section with nothing left in it stops taking up a heading */
+      $$('.ovw-grp',ov).forEach(function(g){
+        g.hidden=!$$('.ovw-tile',g).some(function(t){return !t.hidden;});
+      });
+      cnt.textContent=n?(n+' slide'+(n===1?'':'s')):'nothing';
+    }
+    find.addEventListener('input',applyFind);
+    find.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){
+        if(find.value){find.value='';applyFind();e.preventDefault();}
+        return;
+      }
+      /* Enter goes to the first one, which is what you meant */
+      if(e.key==='Enter'){
+        var first=$$('.ovw-tile',ov).filter(function(t){
+          return !t.hidden;})[0];
+        if(first){e.preventDefault();first.click();}
+      }
+    });
     document.body.appendChild(ov);
     /* CAPTURE, so Esc closes the map before the editor's own Esc ladder
        reads it as "drop the tool" — the innermost state wins, which is
@@ -21454,6 +21657,16 @@
       }
     }
     else if(mode==='view'){
+      /* FIND A SLIDE, MID-TALK. "/" is the type-to-search key everywhere
+         else on a keyboard, and the map it opens is the one T26 already
+         built -- so this is a door, not a second piece of navigation
+         (T30). */
+      if(e.key==='/'||((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F'))){
+        e.preventDefault();
+        openOverview();
+        var fi=$('#ovw-find'); if(fi) fi.focus();
+        return;
+      }
       if(e.key==='ArrowRight'||e.key==='PageDown'
          ||(e.key===' '&&tag!=='button')){e.preventDefault();advance();}
       else if(e.key==='ArrowLeft'||e.key==='PageUp'){

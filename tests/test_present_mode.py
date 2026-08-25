@@ -263,3 +263,87 @@ def test_the_stats_are_shown_where_you_would_act_on_them(out):
     assert "if(st) bits.push('usually '+fmtMins(st.mean/60));" in out
     assert "sectionRuns().forEach(function(run){" in out
     assert 'data-np="reh"' in out
+
+
+def test_one_matcher_answers_the_same_question_in_both_windows(out):
+    """TASKS T30. "Where is the slide about the residuals?" is the same
+    question whether you are looking at the presenter view or driving
+    from the only screen you have, so slideHits is written once and both
+    doors call it. A second matcher would be a second answer, and they
+    would disagree the first time either grew a field.
+    """
+    assert "function slideWords(sl){" in out
+    assert "function slideHits(q){" in out
+    # the map's filter and the presenter window's list, same function
+    assert "slideHits(q).forEach(function(h){hits[h.i]=h;n++;});" in out
+    assert "var found=slideHits(q);" in out
+
+
+def test_a_slides_words_are_everything_written_on_it(out):
+    """Its name, every piece of text (text boxes, table cells, captions,
+    a title slide's title and subtitle) and its speaker notes.
+
+    slideTitle usually returns one of the pieces already collected -- a
+    slide whose only text is its heading is NAMED by that heading -- so
+    the parts are de-duplicated or the snippet reads "the word · the
+    word", which is what the browser check showed before this went in.
+    """
+    assert "if(a.k==='text'&&a.text) on.push(a.text);" in out
+    assert "if(a.k==='table'&&Array.isArray(a.rows))" in out
+    assert "if(a.cap&&typeof a.cap==='string') on.push(a.cap);" in out
+    assert "var seen={},uniq=[];" in out
+    assert "uniq.join(" in out and "notes:(sl.notes||'')};" in out
+
+
+def test_a_hit_that_is_only_in_the_notes_says_so(out):
+    """Notes are searched because "where did I say that" is exactly the
+    question being asked at the lectern. But jumping to a slide expecting
+    to see a word on the screen and not finding it is worse than not
+    finding the slide, so the hit carries where it came from.
+    """
+    assert "where:inOn?'':'in the notes'," in out
+    assert "var src=inOn?w.on:w.notes;" in out
+
+
+def test_the_map_is_the_search_results(out):
+    """T26 already built the overview: every slide, in its sections,
+    click to go. A filter on top of that IS "type-to-search and jump",
+    so the door is a search box in the map rather than a second piece of
+    navigation furniture.
+
+    Typing hides the tiles that do not match rather than rebuilding the
+    map, so the slides do not jump about under the pointer; a section
+    left with nothing in it stops taking up a heading.
+    """
+    assert "find.className='ovw-find'" in out
+    assert "function applyFind(){" in out
+    assert "t.classList.toggle('hit',!!h);" in out
+    assert "g.hidden=!$$('.ovw-tile',g).some(function(t){return !t.hidden;});" \
+        in out
+
+
+def test_finding_a_slide_mid_talk_is_one_key(out):
+    """"/" is the type-to-search key everywhere else on a keyboard, and
+    the map it opens is the one T26 already built -- so this is a door,
+    not a second piece of navigation.
+
+    And the jump goes through go(), so the transition plays, the
+    rehearsal clock attributes the time and the presenter view follows.
+    Setting cur by hand would skip all three.
+    """
+    assert "if(e.key==='/'||((e.ctrlKey||e.metaKey)&&(e.key==='f'" in out
+    assert "var fi=$('#ovw-find'); if(fi) fi.focus();" in out
+    assert "if(mode==='view'){go(i);return;}" in out
+
+
+def test_the_presenter_window_searches_from_this_side(out):
+    """The popup has no script of its own: everything it does is wired
+    from the opener, which is what keeps the two windows from drifting.
+    Enter takes the first hit; Escape clears; and the box stops the
+    arrow keys, which drive the TALK.
+    """
+    assert "id=\"jvp-find\"" in out and "id=\"jvp-hits\"" in out
+    assert "function drawHits(){" in out
+    assert "send({jv:'cmd',do:'goto',n:h.i});" in out
+    assert "e.stopPropagation();      /* the arrow keys below drive the TALK */" \
+        in out
