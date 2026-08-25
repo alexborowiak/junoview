@@ -23,6 +23,12 @@ and audience Q&A, speech analytics, generative-media AI).
   (group 3 — the scientific core is the differentiator), then structure,
   styling, presenting. Group 8 refactors run alone, with nothing else in
   flight.
+- **Groups 1–8 are all ticked and are now the design record: what was
+  built and why. GROUP 9 IS THE LIVE QUEUE** (2026-08-26) — what the
+  audit of that shipped work found. Each entry is a theme, and the
+  entries run roughly worst-first, so take them from the top — and read
+  the two caveats at the head of the group before believing any single
+  finding in it.
 
 Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 [CLAUDE.md](CLAUDE.md).
@@ -677,6 +683,255 @@ Deferred earlier as too churny for one pass; unchanged status.
   The rule is in AGENTS.md and `test_front_door.py` walks every import in
   `src/` to keep it true, so the next boundary-crossing underscore fails
   a test instead of waiting for another naming pass.
+
+## 9. Audit findings — the 2026-08-26 quality pass
+
+Groups 1–8 are all ticked, and the ticks were honest about what was
+BUILT. This section is what a reading of the shipped code against those
+same specs turned up: places where a first pass stopped before the cases
+that matter, a control ended up where nobody would look for it, or a
+button never got its icon. The ask, in the user's words (2026-08-26):
+*"a minimal first pass has been done, and it is not a full proper
+photoshop/power point worthy feature that has been added, or there are
+words instead of icons, or it has not been put in the right place."*
+
+**How it was found.** Seven readers, one per group of tasks, each given
+the task's own spec above and told to read the code that implements it;
+then a second reader per group whose only job was to REFUTE each finding
+by opening the file and proving the machinery was already there. 24 of
+84 claims died at that step and are not recorded here.
+
+**Two caveats, so this list is not read as gospel.**
+
+1. The figures group's refuter hit an API error, so T17–T22's findings
+   were never double-checked. They are gathered in T58 and marked as
+   leads rather than conclusions.
+2. Everything here is a claim about code until somebody drives it. Of
+   the ones opened by hand during the pass, three of three held up —
+   which is why the rest are worth the time — but this repo's suite is
+   substring greps and cannot settle any of them. **Drive the editor
+   for each**, per the CDP recipe in CLAUDE.md.
+
+- [x] **T39 · S — The ribbon's icons.** Every one of the hundred ribbon
+  controls asked whether it has words and whether it has an icon, then
+  the same question put to the live DOM.
+  *2026-08-26.* Twelve buttons were wrong, in all three directions at
+  once: four had words and no icon beside siblings that had one
+  (`anim-fade`, `anim-rise`, `anim-zoom`, `fmt-ungroup`); six were
+  icon-ONLY, which the house rule rejects twice over; two of those six
+  wore a NEIGHBOUR'S icon (`fmt-forward` drew `front`, `fmt-backward`
+  drew `back`) and two borrowed a wrong one (rotate left/right drew
+  `reset` and `reload`, which read as undo and refresh). Eight new icons
+  in `branding.py`. The two colour buttons are renamed per selection
+  with `textContent`, which deleted any icon along with the old word —
+  they take `innerHTML`+`bic()` now.
+  **`#deck-exit` had never had an icon at all.** Its token was wrapped
+  across two lines; `icons()` substitutes the single-line shape and its
+  leftover guard looked for that SAME shape, so a wrapped token passed
+  through both and shipped as an inert element. The guard now catches
+  any surviving `data-ic`, and `test_icon_contract.py` reads the
+  templates directly as a second line.
+  The resting ribbon does not change width (all six are contextual);
+  measured before and after at 1600px and 1100px.
+
+- [x] **T40 · S — `moveSection` was declared twice.** `deck/` is ONE
+  scope in fifteen files, so the later body won and T23's two headline
+  verbs were passing a direction into a function expecting an index.
+  *2026-08-26.* "Move the section up" spliced the whole run in before
+  the LAST slide; "down" was a no-op for a section already at the front;
+  neither toasted, because the surviving body returns nothing. The drop
+  body is now `moveSectionTo`. A guard in `test_js_contract.py` scans
+  every fragment for a name declared twice at the IIFE's own level —
+  818 top-level functions, and this was the only collision. Verified in
+  a browser: `s0 s1 s2 s3 [Section A] s4` became
+  `[Section A] s0 s1 s2 s3 s4`, with the toast "1 slide moved as one".
+
+- [x] **T41 · S — Delete respects a full lock.** `deleteSel` was the one
+  bulk verb that never asked `lockedAll`.
+  *2026-08-26.* `duplicateSel`, the arrange verbs, the align sweep and
+  the PowerPoint export all filter on it. Both documented ways to hold a
+  fully locked item in a selection lead straight into Delete —
+  Alt+marquee "sweeps up fully locked items too", and the Objects pane
+  is "the way back" for something you cannot click. Delete now keeps
+  them and SAYS so, because one that silently half-works reads as
+  broken. Verified in a browser both ways.
+
+- [ ] **T42 · M — A copy must not share an identity with its source.**
+  The worst cluster. `cloneAnnots` re-issues `grp` and `anim.order` and
+  nothing else; `pasteBuf` does `delete cp.grp` without ever issuing a
+  new one.
+  - a cloned or pasted figure keeps `cap`/`capOf`, and `capOfFig` keeps
+    the LAST match — so after Ctrl+D the ORIGINAL figure resolves to the
+    COPY's caption, and dragging or resizing the original moves the
+    copy's words (`startMove`'s `capOrig`, `startResize`'s `capA`).
+  - `cinst` is copied verbatim, so a duplicated component instance
+    merges into its source's instance group; `cmpDetach` then detaches
+    both and `cmpPush` buckets them together.
+  - paste loses grouping altogether, and `grpmeta` name/colour with it,
+    where clone keeps both.
+  T2 promises "Clones are independent copies". They are not.
+
+- [ ] **T43 · M — Anchoring survives a resize and an export.**
+  `startResize` treats `a.x`/`a.y` as page coordinates, so resizing any
+  anchored item jumps it; and the PowerPoint export ignores anchors
+  entirely, so a footer pinned bottom-left at 4/4 lands 4% from the
+  TOP-left. T14 built the model and two consumers never learned to read
+  it.
+
+- [ ] **T44 · M — A design token resolves everywhere it is used.** T12's
+  tokens work on the stage and nowhere else:
+  - a deck-colour token on a TEXT box renders as nothing — the text
+    renderer assigns `a.color` raw instead of resolving it;
+  - the PowerPoint export never resolves token references at all, so
+    token-coloured text, shapes, lines and drawings export wrong;
+  - the corner-radius token reaches the live stage but not the
+    print/export pages;
+  - the token editor's only door is the format bar's Arrange dropdown,
+    hidden whenever nothing is selected — a DECK-wide setting reachable
+    only by first selecting an object.
+
+- [ ] **T45 · S — Find & replace covers the text that is on the slide.**
+  `fields()` skips table cells, so a deck-wide replace never touches
+  table text — and the count it shows you first is wrong for the same
+  reason. Also: the formatting half's `fmtBuild()` is never rebuilt when
+  the canvas selection changes underneath the non-modal popover.
+
+- [ ] **T46 · S — Match layout applies to the slide it captured.** The
+  `layout` branch applies `matchArm.idxs` to the CURRENT slide rather
+  than the one those indexes were captured on, so it rearranges whatever
+  happens to sit at those numbers now.
+
+- [ ] **T47 · M — Version history records and restores the whole deck.**
+  - in app mode the explicit Save never takes a snapshot, so the history
+    only ever holds the "opened" entry — the feature is empty in the
+    mode it is mostly used in;
+  - "Go back to this whole version" restores the slides and ten deck
+    keys and silently leaves `wmark`, `head`, `foot`, `styles`, `types`,
+    `cropMarks` and `tapzoom` at their CURRENT values;
+  - renaming a deck orphans its entire history — the keys are on
+    `pres.name` and nothing migrates them;
+  - the promised "real render on demand" in the diff does not exist: a
+    row is two 74px mini diagrams and nothing opens.
+
+- [ ] **T48 · M — The presenter's controls exist while presenting.**
+  - T25's Running-late button lives in `#play-menu` inside `#deck-qat`,
+    which `syncTopBar` HIDES whenever mode is not edit/create — the one
+    control the whole task is about is unreachable exactly when it is
+    wanted;
+  - starting a presentation does not close the Notes pane, so it stays
+    drawn over the presented slide;
+  - `presenterPush` draws the "next" preview from `cur+1` and the
+    counter from `(cur+1)+' / '+n`, ignoring cuts and optional slides —
+    the presenter is told about a slide the audience will never see;
+  - finishing a rehearsal never re-renders the Rehearsals tab, so it
+    still reads "No rehearsals yet"; and a rehearsal ended by closing
+    the tab records nothing, because the unload path never stops the run.
+
+- [ ] **T49 · S — The review export must not carry private text.** T31's
+  privacy and T35's export disagree:
+  - a private caption attached to a public figure is exported verbatim
+    in the figure line — in the export that is meant to travel;
+  - the "figure nobody mentions" lint counts private text as a mention,
+    so it stays silent about a figure whose only mention is private;
+  - a private arrow or line is drawn with no "only me" marking at all;
+  - the density lint's two numbers count two different populations, so
+    the sentence it prints contradicts itself.
+
+- [ ] **T50 · M — Cuts are a lifecycle, not one verb.** `newCut` is the
+  only cut verb there is: no rename, no delete, and nothing is ever
+  removed from `pres.cuts`. And `renderFilm` builds each row's class
+  from current/peek/in-sec only — there is no `opt` or `cut` class — so
+  T24's marks are invisible in the strip they are about.
+
+- [ ] **T51 · M — The Python deck API is finished and reachable.**
+  - there is no way to delete a slide, and the obvious attempts silently
+    no-op;
+  - `save()` picks the output format from the SOURCE file rather than
+    the target path, so saving an html-opened deck to `.json` writes
+    html;
+  - `deck_schema.SLIDE_KEYS` does not cover `lay`, a slide key the
+    editor writes into every deck it saves;
+  - the API is not reachable from junoview's public API and is
+    documented nowhere outside this file.
+
+- [ ] **T52 · S — Guides are editable, undoable and hideable.** T4
+  shipped draw-and-delete: a guide box can be moved but never resized
+  (all four edge strips run `startGuideBoxMove`), guides are outside
+  undo, "Clear every guide" is one unconfirmed click, there is no
+  show/hide toggle short of permanent deletion, and the tool has no
+  ribbon button — its only doors are a right-click row and the ruler
+  corner.
+
+- [ ] **T53 · S — Maths survives the title slide and the export.** The
+  re-typeset gate asks only about `s.annots`, so LaTeX in a title
+  slide's title or subtitle is thrown away; and a deck text box built by
+  the Maths button exports to PowerPoint as literal `$$ … $$`.
+
+- [ ] **T54 · S — Menu and pane icons say the right thing.** T39 swept
+  the RIBBON; the menus were not in it.
+  - "Save as .md" carries `bic('front')`, the z-order icon;
+  - "Remove the divider" and "Delete the section AND its N slides" both
+    render `bic('exit')` — the same glyph for very different
+    consequences;
+  - T31's "Only me" row uses `bic('pin')`, the same icon as the "Lock
+    position" row two rows above it in the same menu;
+  - the notes editor's Previous/Next borrow `bic('back')`
+    (send-to-back) and `bic('arrow')` (the arrow drawing tool);
+  - `#fmt-dup` is labelled **Copy** while `#hm-dupslide` is labelled
+    **Duplicate**, and both wear `data-ic="copy"`. The only toolbar
+    button that says "Copy" is the one that is not a clipboard copy,
+    and its own tooltip, Ctrl+D and every other door all say Duplicate.
+
+- [ ] **T55 · S — A pane re-renders when the thing it is about
+  changes.** The `#objhist` pane has no rerun control and is never
+  re-rendered when the object is edited or the selection moves; the
+  provenance pane reads the selection once, at render time, and never
+  again.
+
+- [ ] **T56 · S — Ribbon gallery housekeeping.** Nothing removes
+  `#rbn-gallery` when the editor is left, so it stays pinned over
+  Present mode; and a few catalogue entries put more controls in one row
+  than fit at narrow widths, which the never-wrap ladder can only answer
+  by scrolling sideways.
+
+- [ ] **T57 · S — The smaller ones, gathered.** Each is a line or two.
+  - Alt-drag clones on mousedown at zero offset and commits on mouseup
+    even if the gesture never moved — an invisible exact-overlap copy
+    with no toast, where Ctrl+D offsets by `CLONE_OFF` precisely so a
+    copy is never invisible;
+  - the Objects pane's Duplicate selects only the last copy, where
+    Ctrl+D leaves the whole batch selected;
+  - `selRects` filters on `pinned()`, so position-locked items are
+    skipped by the SIZE-only Arrange verbs too;
+  - "Put the ribbon back to normal" cannot restore button ORDER and
+    tells the user to reload, though `rbnRestoreHome` exists;
+  - every keystroke in the notes editor pushes a full undo snapshot of
+    every slide;
+  - `slideWords` never looks inside notebook cells, so presenter search
+    misses a word that is visibly on the slide;
+  - `setTrans` conflates "Cut" with "clear the override" (`TRANS[0][0]`
+    is `''`), so choosing Cut inside a section clears the override
+    instead of setting one;
+  - `playFlip` compares only the `.an-item` bounding rect, so T27's
+    move/scale is really move-and-scale-the-box;
+  - the Header/Footer prompts list `{name} {date} {n} {N}` and never
+    mention `{sn}`, `{sN}` or `{sec}`.
+
+- [ ] **T58 · L — Verify, then act on, the figures group (T17–T22).**
+  24 findings whose refuter never ran, so **re-check each one before
+  believing it.** The strongest-looking leads: `printDeck` never calls
+  `afterTypeset`, so the PDF/print export never swaps the hi-res
+  originals in — which is T21's whole point; `refreshLinkedImages`
+  replaces `a.src` but leaves `a.okey` pointing at the old original; the
+  PowerPoint export embeds the display copy rather than the retained
+  original; `provOf` returns null for anything that is not `k==='cell'`,
+  so a flip book built from six notebook figures has no provenance;
+  `refCaption` and `numberCaption` unconditionally `delete a.html`,
+  discarding rich caption text; the reference picker is hard-capped at
+  the first eight figures with no scroll; there is no "add a caption"
+  command anywhere, only a tie between two objects that already exist;
+  and `figFonts` collects each SVG figure's font sizes that nothing
+  ever reads.
 
 ---
 
