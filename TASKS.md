@@ -294,9 +294,18 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   path already shares. Verified: a 5.4MB picture shows as 1.1MB on the
   page, sits at 5.4MB in IndexedDB, and leaves the localStorage draft at
   one byte.
-- [ ] **T22 · S — Figure consistency lint.** Flag mismatched fonts/sizes/
+- [x] **T22 · S — Figure consistency lint.** Flag mismatched fonts/sizes/
   margins across a deck's figures where metadata allows. Can land inside
-  T32's lint framework.
+  T32's lint framework. *(The entry says T32; the lint framework task is
+  T35 — noted 2026-08-25.)*
+  *2026-08-25:* renders into the `standardise()` pane, which already asks
+  "does the deck agree with itself" — same question, different material.
+  "Where metadata allows" is narrow and the code says so: a PNG carries
+  no font name and cannot be asked; an SVG's text nodes can; and the size
+  a figure is shown AT is a fact about the deck rather than the figure,
+  which is why it is both the most useful finding and the only one that
+  applies to everything. The typeface finding deliberately has no fix
+  button — that fix is in the notebook.
 
 ## 4. Deck structure & navigation
 

@@ -1861,6 +1861,209 @@
     var rr=$('#tidypane-rerun');
     if(rr) rr.addEventListener('click',renderTidyPane);
   })();
+  /* ---- DO THE FIGURES AGREE WITH EACH OTHER ---------------------------
+     (TASKS T22.) The same question standardise() asks of the type, asked
+     of the figures — which is why it renders into the same pane rather
+     than growing a sixth one.
+
+     "WHERE METADATA ALLOWS" is the whole scope of this task and it is
+     worth being blunt about what that means, because the honest answer
+     is narrow:
+
+       A RASTER FIGURE IS A WALL. A PNG of a matplotlib plot carries no
+       font name, no point size and no margin — there is nothing to read
+       and no amount of cleverness will produce it. Anything claiming
+       otherwise would be measuring pixels and calling them typography.
+
+       AN SVG FIGURE CAN BE READ. Its text nodes carry font-family and
+       font-size as attributes, so a deck whose figures are SVG really
+       can be told that three of them are set in DejaVu Sans and one in
+       Helvetica.
+
+       AND THE ONE THING TRUE OF EVERY FIGURE is how big it is ON THE
+       PAGE. That is not metadata about the figure, it is a fact about
+       the deck — and it is the thing that actually makes a deck look
+       careless, because a plot shown at 45% and another at 22% have
+       type at half the size of each other whatever the notebook did.
+
+     So: scale first, because it applies to everything and is fixable
+     here; then content zoom; then fonts, for the SVG figures that can
+     answer. The font finding has NO fix button, deliberately — the fix
+     is in the notebook, and a button here would be a lie. */
+  function figBoxes(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,ai){
+        if(!isFigure(a)||a.hide) return;
+        out.push({si:si,ai:ai,a:a});
+      });
+    });
+    return out;
+  }
+  /* the font faces and sizes an SVG figure actually uses. Read off the
+     ATTRIBUTES, not computed style: these nodes are detached clones and
+     a detached node has no computed font. */
+  function figFonts(a){
+    var body=null;
+    try{
+      var el=cardEl(a.ref);
+      body=el?el.querySelector('.cardbody'):embBody(a.ref);
+    }catch(e){body=null;}
+    if(!body) return null;
+    var svg=body.querySelector&&body.querySelector('svg');
+    if(!svg) return null;
+    var fams={},sizes={},n=0;
+    var texts=svg.querySelectorAll('text,tspan');
+    for(var i=0;i<texts.length&&i<400;i++){
+      var t=texts[i];
+      var fam=t.getAttribute('font-family')
+        ||(t.style&&t.style.fontFamily)||'';
+      var sz=t.getAttribute('font-size')
+        ||(t.style&&t.style.fontSize)||'';
+      if(fam){fams[String(fam).split(',')[0].replace(/['"]/g,'').trim()]=1;}
+      if(sz){sizes[String(sz).trim()]=1;}
+      if(fam||sz) n++;
+    }
+    if(!n) return null;
+    return {fams:Object.keys(fams),sizes:Object.keys(sizes)};
+  }
+  function figMedian(v){
+    var a=v.slice().sort(function(p,q){return p-q;});
+    return a[Math.floor(a.length/2)];
+  }
+  /* how far from the median a figure has to sit before it reads as a
+     different size rather than a deliberate one. A quarter: two figures
+     within 25% of each other look like a pair, and 40% apart looks like
+     nobody checked. */
+  var FIG_SCALE_TOL=0.25;
+  function figLint(){
+    var out=[],boxes=figBoxes();
+    if(boxes.length<2) return out;
+
+    /* ---- 1. shown at very different sizes ---- */
+    var widths=boxes.map(function(p){return p.a.w||0;})
+      .filter(function(w){return w>0;});
+    if(widths.length>=2){
+      var med=figMedian(widths);
+      var odd=boxes.filter(function(p){
+        var w=p.a.w||0;
+        return w>0&&Math.abs(w-med)/med>FIG_SCALE_TOL;});
+      if(odd.length&&odd.length<boxes.length){
+        out.push({kind:'figscale',sev:'warn',
+          head:odd.length+' figure'+(odd.length===1?' is':'s are')
+            +' shown at a different size',
+          why:'Most of this deck\u2019s figures are about '
+            +med.toFixed(0)+'% of the page wide; '
+            +(odd.length===1?'this one is':'these are')+' '
+            +odd.map(function(p){
+              return (p.a.w||0).toFixed(0)+'%';}).join(', ')
+            +'. Type inside a figure scales with the figure, so this is '
+            +'what makes the labels come out different sizes.',
+          list:odd,
+          act:'Make '+(odd.length===1?'it':'them')+' '
+            +med.toFixed(0)+'% too',
+          fix:(function(o,m){return function(){
+            o.forEach(function(p){
+              var w0=p.a.w||0;
+              if(!(w0>0)) return;
+              var k=m/w0;
+              p.a.w=m;
+              if(p.a.h) p.a.h=p.a.h*k;
+            });
+            return o.length;
+          };})(odd,med)});
+      }
+    }
+
+    /* ---- 2. content zoom set on some frames and not others ---- */
+    var zs={};
+    boxes.forEach(function(p){
+      if(p.a.k!=='cell') return;
+      var z=(p.a.ts||1);
+      (zs[z]=zs[z]||[]).push(p);});
+    var zk=Object.keys(zs);
+    if(zk.length>1){
+      zk.sort(function(x,y){return zs[y].length-zs[x].length;});
+      var most=zk[0],rest=[];
+      zk.slice(1).forEach(function(k){
+        rest=rest.concat(zs[k]);});
+      out.push({kind:'figzoom',sev:'warn',
+        head:rest.length+' frame'+(rest.length===1?'':'s')
+          +' zoom their contents differently',
+        why:'Most are at '+(+most*100).toFixed(0)+'%. A frame\u2019s '
+          +'content zoom multiplies everything inside it, so two frames '
+          +'at different zooms cannot have matching labels.',
+        list:rest,
+        act:'Put '+(rest.length===1?'it':'them')+' at '
+          +(+most*100).toFixed(0)+'%',
+        fix:(function(r,z){return function(){
+          r.forEach(function(p){
+            if(+z===1) delete p.a.ts; else p.a.ts=+z;});
+          return r.length;
+        };})(rest,most)});
+    }
+
+    /* ---- 3. the SVG figures that can answer about their type ---- */
+    var fams={},read=0;
+    boxes.forEach(function(p){
+      var f=figFonts(p.a);
+      if(!f) return;
+      read++;
+      f.fams.forEach(function(nm){(fams[nm]=fams[nm]||[]).push(p);});
+    });
+    var fk=Object.keys(fams);
+    if(read>=2&&fk.length>1){
+      fk.sort(function(x,y){return fams[y].length-fams[x].length;});
+      out.push({kind:'figfont',sev:'info',
+        head:'Your figures are set in '+fk.length+' different typefaces',
+        why:fk.map(function(nm){
+          return nm+' ('+fams[nm].length+')';}).join(', ')
+          +'. Read from the SVG itself, so only the '+read+' vector '
+          +'figure'+(read===1?'':'s')+' could be asked \u2014 a PNG '
+          +'carries no font name at all. Fixing this means re-running '
+          +'the notebook with one rcParams, which is why there is no '
+          +'button here.',
+        list:fams[fk[fk.length-1]],
+        act:null});
+    }
+    return out;
+  }
+  function figRow(f){
+    var box=document.createElement('div');
+    box.className='std-find std-'+f.sev;
+    var h=document.createElement('div');
+    h.className='std-h';h.textContent=f.head;box.appendChild(h);
+    var w=document.createElement('div');
+    w.className='std-why';w.textContent=f.why;box.appendChild(w);
+    var who=document.createElement('div');who.className='std-who';
+    (f.list||[]).slice(0,12).forEach(function(p){
+      var c=document.createElement('button');
+      c.className='std-chip';
+      c.textContent=(p.si+1)+' \u00b7 '+annotLabel(p.a);
+      c.title='Go to it';
+      c.addEventListener('click',function(){
+        go(p.si);
+        var l=stage.querySelector('.annot-layer');
+        if(l&&typeof p.ai==='number') selectAnnot(l,p.ai);
+      });
+      who.appendChild(c);
+    });
+    box.appendChild(who);
+    if(f.act&&f.fix){
+      var act=document.createElement('button');
+      act.className='dbtn std-do';
+      act.textContent=f.act;
+      act.addEventListener('click',function(){
+        var n=f.fix()||0;
+        markDirty();refresh();
+        toast(n+' figure'+(n===1?'':'s')+' matched \u2014 Ctrl+Z '
+          +'undoes it');
+        renderStdPane();
+      });
+      box.appendChild(act);
+    }
+    return box;
+  }
   /* ---- STANDARDISE TEXT -------------------------------------------------
      (2026-08-22, user: "it would be cool if there was a button that was
      called 'standardise text', and checked if all headings paragraphs,
@@ -2321,9 +2524,22 @@
           head:b.boxes.length+' boxes at '+Math.round(b.size*5.4)+' pt',
           why:'These look like your '+styleDef(b.suggest).label+'.'}));
       });
+      appendFigLint(list);
       return;
     }
     r.findings.forEach(function(f){list.appendChild(stdRow(f));});
+    appendFigLint(list);
+  }
+  /* the figure half (T22), in the same pane and under its own heading:
+     the same question — does the deck agree with itself — asked of a
+     different material. It is appended after the text findings in both
+     the empty and the non-empty case, because "your type is consistent"
+     is not an answer about the figures. */
+  function appendFigLint(list){
+    var fl=figLint();
+    if(!fl.length) return;
+    menuHead(list,'figures across the deck');
+    fl.forEach(function(f){list.appendChild(figRow(f));});
   }
   (function(){
     var btn=$('#dsg-std'),pane=$('#stdpane');

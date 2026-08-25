@@ -2029,3 +2029,49 @@ def test_the_export_gets_the_original_and_the_canvas_does_not(out):
     # it just has no original to fall back on -- which is what happened
     # to every image before this existed
     assert "}).catch(function(){return a.src||null;});" in out
+
+
+def test_the_figure_lint_is_honest_about_what_it_can_read(out):
+    """TASKS T22, whose whole scope is the phrase "where metadata
+    allows" -- and the honest answer is narrow.
+
+    A raster figure is a wall: a PNG of a matplotlib plot carries no
+    font name, no point size and no margin. An SVG figure can be read,
+    because its text nodes carry font-family and font-size as
+    attributes. And the one thing true of EVERY figure is how big it is
+    on the page -- which is not metadata about the figure at all, it is
+    a fact about the deck, and it is the thing that actually makes a
+    deck look careless.
+    """
+    assert "function figLint(){" in out
+    assert "function figBoxes(){" in out
+    assert "function figFonts(a){" in out
+    # attributes, not computed style: these are detached clones and a
+    # detached node has no computed font
+    assert "var fam=t.getAttribute('font-family')" in out
+    assert "var svg=body.querySelector&&body.querySelector('svg');" in out
+    # the deck-wide question, in the pane that already asks it
+    assert "function appendFigLint(list){" in out
+    assert "menuHead(list,'figures across the deck');" in out
+
+
+def test_the_typeface_finding_has_no_fix_button(out):
+    """Fixing it means re-running the notebook with one rcParams. A
+    button here would be a lie, so the finding carries none and says
+    why -- and figRow simply does not draw one when there is no action.
+    """
+    assert "list:fams[fk[fk.length-1]],\n        act:null});" in out
+    assert "if(f.act&&f.fix){" in out
+    assert "'button here.'," in out
+    # ...and it says how many figures could even be asked
+    assert "+read+' vector '" in out
+
+
+def test_size_and_zoom_findings_do_carry_fixes(out):
+    """Both are facts about the DECK rather than about the notebook, so
+    both are fixable from here. Scale keeps each figure's aspect by
+    scaling h with w; zoom moves the odd ones onto the majority value.
+    """
+    assert "var FIG_SCALE_TOL=0.25;" in out
+    assert "if(p.a.h) p.a.h=p.a.h*k;" in out
+    assert "if(+z===1) delete p.a.ts; else p.a.ts=+z;});" in out
