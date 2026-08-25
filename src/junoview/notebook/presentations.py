@@ -5,11 +5,11 @@ A deck is a list of slides, each naming cards by stable anchor. Decks travel in
 in the app's project file. This module normalises all three into one shape and
 tolerates older layouts, so a deck saved months ago still opens.
 
-``_deck_json`` and :func:`embed_deck` live here rather than in
+``deck_json`` and :func:`embed_deck` live here rather than in
 :mod:`~junoview.notebook.loader`, whose job is stated in its own first line:
 *getting notebooks from where they live*. Reading a DECK file is not that, and
 writing one INTO a notebook is the opposite of it — a module that says "getting"
-had a function that puts. They sit here beside ``_as_presentations``, which
+had a function that puts. They sit here beside ``as_presentations``, which
 ``embed_deck`` has always called and which is the reason its output is a shape
 the editor can open at all (2026-08-25, TASKS T37).
 """
@@ -27,7 +27,7 @@ _LAYOUT_PANES = {"full": 1, "halves": 2, "rows": 2, "quarters": 4,
                  "title": 0, "blank": 0}
 
 
-def _as_presentations(obj: Any) -> list:
+def as_presentations(obj: Any) -> list:
     """Normalize saved presentation data to [{name, slides}, ...].
 
     Accepts the current schema (a list, or {"presentations": [...]}) plus
@@ -231,7 +231,7 @@ _DECK_BLOCK_RE = re.compile(
     re.S)
 
 
-def _deck_json(text: str):
+def deck_json(text: str):
     """Parse a saved deck file in either form.
 
     Since 2026-08-18 the browser saves ``name.junoview.html`` -- a real
@@ -255,10 +255,10 @@ def _deck_json(text: str):
 
 def embed_deck(nb_path: Path, deck_path: Path) -> None:
     """Write presentations JSON into metadata.semantic.presentations."""
-    pres = _as_presentations(
-        _deck_json(deck_path.read_text(encoding="utf-8")))
+    pres = as_presentations(
+        deck_json(deck_path.read_text(encoding="utf-8")))
     if not pres:
-        # ValueError for the same reason as _deck_json above (2026-08-23)
+        # ValueError for the same reason as deck_json above (2026-08-23)
         raise ValueError(f"{deck_path} does not look like saved "
                          "presentations (expected {'presentations': [...]})")
     nb = json.loads(nb_path.read_text(encoding="utf-8"))

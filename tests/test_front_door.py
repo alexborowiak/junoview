@@ -127,3 +127,82 @@ def test_a_deck_can_exist_with_no_notebook_behind_it(out):
     assert "APP.deckNew()" in out
     # refreshChrome already knew a deck owns the window on its own
     assert "var deckOn=!!(APP.deckState&&APP.deckState());" in out
+
+
+# ---------------------------------------------------------------------------
+# public/private naming (TASKS T38)
+# ---------------------------------------------------------------------------
+
+def test_no_name_crosses_a_subpackage_boundary_wearing_an_underscore():
+    """TASKS T38's rule, kept honest by a check rather than by memory.
+
+    A leading underscore means private to its own subpackage. Inside
+    `notebook/`, `classify._parse_or_none` used by `parser` is exactly
+    that and keeps it. A name imported from ANOTHER subpackage is not
+    private by any definition -- `_as_presentations` was imported by the
+    CLI, two server modules and the shim, telling four callers something
+    untrue.
+
+    `semantic_render.py` is exempt and says so in its own comment: it
+    mirrors the old flat module's namespace, so it aliases rather than
+    renames.
+    """
+    import ast
+    from pathlib import Path
+
+    src = Path(__file__).resolve().parent.parent / "src"
+    offenders = []
+    for f in sorted(src.rglob("*.py")):
+        if "__pycache__" in f.parts or f.name == "semantic_render.py":
+            continue
+        parts = f.relative_to(src).parts          # junoview/notebook/x.py
+        here = parts[1] if len(parts) > 2 else ""   # "" for top-level
+        tree = ast.parse(f.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom):
+                continue
+            # where the name is coming FROM, as a subpackage or ""
+            mod = (node.module or "")
+            if node.level >= 2:                     # "from ..x import"
+                there = mod.split(".")[0] if mod else ""
+                if there not in ("notebook", "render", "server"):
+                    there = ""
+            else:                                   # "from .x import"
+                there = here
+            if there == here:
+                continue
+            for alias in node.names:
+                n = alias.name
+                if n.startswith("_") and not n.startswith("__"):
+                    offenders.append(
+                        f"{f.relative_to(src)} imports {n} from "
+                        f"{'.' * node.level}{mod}")
+    assert not offenders, (
+        "these names cross a subpackage boundary with an underscore, "
+        "which claims a privacy they do not have -- drop it, or keep "
+        "the caller inside the subpackage:\n  "
+        + "\n  ".join(offenders))
+
+
+def test_the_shim_still_answers_to_every_old_name():
+    """A rename that broke the compatibility shim would be a break
+    dressed up as tidying. The old spellings are aliases now, so they
+    are the same objects.
+    """
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        import semantic_render as sr
+
+    from junoview.notebook.loader import (
+        is_url,
+        normalize_nb_url,
+        stem_for,
+    )
+    from junoview.notebook.presentations import as_presentations
+
+    assert sr._is_url is is_url
+    assert sr._stem_for is stem_for
+    assert sr._normalize_nb_url is normalize_nb_url
+    assert sr._as_presentations is as_presentations

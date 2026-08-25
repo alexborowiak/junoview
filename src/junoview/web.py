@@ -24,8 +24,8 @@ from pathlib import Path
 
 from . import assets
 from ._write import write_text
-from .branding import _FAVICON, _LOGO_SVG
-from .notebook.loader import _stem_for
+from .branding import FAVICON, LOGO_SVG
+from .notebook.loader import stem_for
 from .notebook.parser import parse_notebook
 from .render.page import render_page, render_shell
 
@@ -40,7 +40,7 @@ def web_parse(name: str, text: str, taken_json: str = "[]") -> str:
     nb = json.loads(text)
     doc = parse_notebook(nb)
     base = re.sub(r"\.ipynb$", "", str(name), flags=re.I) or "notebook"
-    doc.source_name = _stem_for(Path(base + ".ipynb"),
+    doc.source_name = stem_for(Path(base + ".ipynb"),
                                 set(json.loads(taken_json)))
     return render_shell(doc)
 
@@ -106,7 +106,7 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     """Write a deployable static web app (index.html + the packaged renderer)."""
     outdir.mkdir(parents=True, exist_ok=True)
     loader = assets.web_loader().replace(
-        "<title>", f'<link rel="icon" href="{_FAVICON}">\n<title>', 1)
+        "<title>", f'<link rel="icon" href="{FAVICON}">\n<title>', 1)
     write_text(outdir / "index.html", loader)
     zip_path = bundle_package(outdir / "junoview.zip")
     write_text(outdir / ".nojekyll", "")
@@ -137,7 +137,7 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     }
     write_text(outdir / "manifest.webmanifest",
                json.dumps(manifest, indent=2, sort_keys=True) + "\n")
-    write_text(outdir / "icon.svg", _LOGO_SVG + "\n")
+    write_text(outdir / "icon.svg", LOGO_SVG + "\n")
 
     # The help overlay and welcome tour link to gifs/ relative to the page, so
     # a build into a fresh directory needs them copied across; without this the

@@ -19,14 +19,14 @@ from typing import Any
 
 from .._write import write_text
 from ..notebook.loader import (
-    _is_url,
-    _normalize_nb_url,
-    _stem_for,
     doc_from_url,
+    is_url,
     load_doc,
+    normalize_nb_url,
+    stem_for,
 )
 from ..notebook.parser import parse_notebook
-from ..notebook.presentations import _as_presentations
+from ..notebook.presentations import as_presentations
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
@@ -125,7 +125,7 @@ def _make_handler(state: _AppState):
                     rev = body.get("rev")
                     try:
                         new_rev = state.save_presentations(
-                            _as_presentations(body.get("presentations")),
+                            as_presentations(body.get("presentations")),
                             rev if isinstance(rev, int) else None)
                     except StaleWrite as stale:
                         # 409, not a silent overwrite: another window has
@@ -181,13 +181,13 @@ def _make_handler(state: _AppState):
             # "stem" = load this INTO an open tab (another version of the
             # same notebook): keep its name and leave the recent list alone
             into = str(body.get("stem") or "").strip()
-            if _is_url(raw):
-                url = _normalize_nb_url(raw)
+            if is_url(raw):
+                url = normalize_nb_url(raw)
                 doc = doc_from_url(url)
                 if into:
                     doc.source_name = into
                 else:
-                    doc.source_name = _stem_for(
+                    doc.source_name = stem_for(
                         Path(doc.source_name + ".ipynb"),
                         state.stems_taken(skip_str=url))
                     state.note_open(url)
@@ -199,7 +199,7 @@ def _make_handler(state: _AppState):
             if into:
                 doc.source_name = into
             else:
-                doc.source_name = _stem_for(f, state.stems_taken(skip=f))
+                doc.source_name = stem_for(f, state.stems_taken(skip=f))
                 state.note_open(f)
             return {"stem": doc.source_name, "path": str(f),
                     "shell": render_shell(doc, path=str(f))}
@@ -228,7 +228,7 @@ def _make_handler(state: _AppState):
             raw = str(body.get("path") or "").strip().strip('"')
             if not raw:
                 raise ValueError("no path given")
-            if _is_url(raw):
+            if is_url(raw):
                 raise ValueError("this notebook was opened from a URL — "
                                  "notes can only be saved to a local file")
             src = str(body.get("source") or "").strip()
@@ -246,14 +246,14 @@ def _make_handler(state: _AppState):
                 git["commit"] = _git_commit_file(
                     f, str(body.get("message") or "") or f"Note: {first}")
             doc = load_doc(f)
-            doc.source_name = _stem_for(f, state.stems_taken(skip=f))
+            doc.source_name = stem_for(f, state.stems_taken(skip=f))
             return {"stem": doc.source_name, "path": str(f),
                     "cell": cell_id, "index": idx, "git": git,
                     "shell": render_shell(doc, path=str(f))}
 
         def _git_state(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')
-            if not raw or _is_url(raw):
+            if not raw or is_url(raw):
                 return {"repo": False}
             f = self._resolve_nb_path(raw)
             info = _git_info(f)
@@ -294,7 +294,7 @@ def _make_handler(state: _AppState):
 
         def _versions(self, body: dict) -> dict:
             raw = str(body.get("path") or "").strip().strip('"')
-            if not raw or _is_url(raw):
+            if not raw or is_url(raw):
                 return {"versions": []}
             f = self._resolve_nb_path(raw)
             out = []
@@ -325,7 +325,7 @@ def _make_handler(state: _AppState):
                 fc = self._resolve_nb_path(raw)
                 nbc = _git_show_notebook(fc, commit)
                 doc = parse_notebook(nbc)
-                doc.source_name = _stem_for(
+                doc.source_name = stem_for(
                     fc, state.stems_taken(skip=fc))
                 return {"stem": doc.source_name, "path": str(fc),
                         "version": "git:" + commit,
@@ -338,7 +338,7 @@ def _make_handler(state: _AppState):
             if vf.parent != vd or not vf.exists():
                 raise FileNotFoundError("version not found")
             doc = load_doc(vf)
-            doc.source_name = _stem_for(f, state.stems_taken(skip=f))
+            doc.source_name = stem_for(f, state.stems_taken(skip=f))
             return {"stem": doc.source_name, "path": str(f),
                     "version": vid,
                     "shell": render_shell(doc, path=str(f))}
@@ -352,7 +352,7 @@ def _make_handler(state: _AppState):
             name = str(body.get("name") or "notebook.ipynb")
             base = re.sub(r"\.ipynb$", "", name, flags=re.I) or "notebook"
             doc = parse_notebook(nb)
-            doc.source_name = _stem_for(Path(base + ".ipynb"),
+            doc.source_name = stem_for(Path(base + ".ipynb"),
                                         state.stems_taken())
             return {"stem": doc.source_name, "path": "",
                     "shell": render_shell(doc)}

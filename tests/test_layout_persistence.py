@@ -118,10 +118,10 @@ def test_saved_file_is_a_browser_openable_html_wrapper(out, tmp_path):
     logo, the name, what it holds, how to open it.
 
     Verified against the browser's actual output: the captured download
-    parsed through _deck_json, and a talk.junoview.html sidecar
+    parsed through deck_json, and a talk.junoview.html sidecar
     auto-loaded next to talk.ipynb.
     """
-    from junoview.notebook.loader import _deck_json
+    from junoview.notebook.loader import deck_json
 
     assert "function junoviewFileHtml(){" in out
     assert "function parseDeckText(txt){" in out
@@ -139,7 +139,7 @@ def test_saved_file_is_a_browser_openable_html_wrapper(out, tmp_path):
     assert "var obj=parseDeckText(txt);" in out
     # ...and the Python loader does the same, probing the new sidecar
     # name first
-    assert _deck_json(json.dumps({"junoview": 1, "presentations": []}))
+    assert deck_json(json.dumps({"junoview": 1, "presentations": []}))
     _nb = tmp_path / "talk.ipynb"
     _nb.write_text(json.dumps({"cells": [
         {"cell_type": "code", "source": "x=1", "outputs": []}]}),

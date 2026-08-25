@@ -627,8 +627,27 @@ Deferred earlier as too churny for one pass; unchanged status.
   altogether, which is the tell that the split was real. The public name
   did not move: `junoview.embed_deck` and the `semantic_render` shim
   re-export it unchanged, and there is a test saying so.
-- [ ] **T38 · M — Underscore-API renames.** The public/private naming
+- [x] **T38 · M — Underscore-API renames.** The public/private naming
   pass; keep the `semantic_render` shim working.
+  *2026-08-25, on its own as the entry asks.*
+  **The rule is one sentence: a leading underscore means private to its
+  own subpackage, and nothing weaker.** Inside `notebook/`,
+  `classify._parse_or_none` used by `parser` is exactly what that means
+  and keeps its underscore — about forty names did. A name imported from
+  ANOTHER subpackage has no business wearing one: `_as_presentations` was
+  imported by the CLI, two server modules and the shim, telling four
+  callers something untrue. Thirteen names crossed a boundary and lost
+  it: `as_presentations`, `deck_json`, `is_url`, `stem_for`,
+  `normalize_nb_url`, `card_output_keys`, `as_text`, `HEADING_RE`,
+  `icon_svg`, `icons`, `FAVICON`, `LOGO_SVG`, `KOFI_URL`.
+  Names imported ONLY by the shim were left alone — that module is not a
+  caller so much as a museum.
+  **The shim aliases rather than renames** (`new as _old`), so every name
+  it ever exposed answers to its old spelling, and a test asserts the
+  aliases are the same objects.
+  The rule is in AGENTS.md and `test_front_door.py` walks every import in
+  `src/` to keep it true, so the next boundary-crossing underscore fails
+  a test instead of waiting for another naming pass.
 
 ---
 

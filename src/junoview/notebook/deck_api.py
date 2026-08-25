@@ -26,12 +26,12 @@ The three other rules:
   ``{"presentations": [...]}``, a bare single deck, an ``.ipynb`` with
   the deck in ``metadata.semantic``, or the ``.junoview.html`` the
   browser writes — the same shapes :mod:`~junoview.notebook.loader` and
-  ``_as_presentations`` already accept, because having to know which one
+  ``as_presentations`` already accept, because having to know which one
   you have before you can open it defeats the purpose.
 
 * **Saving reports; it does not coerce.** ``save()`` runs
   :func:`~junoview.notebook.deck_schema.validate_deck` and hands back
-  what it found. That is T33's split kept: ``_as_presentations``
+  what it found. That is T33's split kept: ``as_presentations``
   coerces and never complains, ``validate_deck`` complains and never
   changes anything, and this writes and tells you. ``strict=True`` for
   a script that would rather stop.
@@ -553,7 +553,7 @@ def _pick(decks: list, name: str | None) -> int:
 
 
 def _parse_deck_text(text: str) -> tuple[Any, str]:
-    """The two file forms, the same way ``loader._deck_json`` reads them.
+    """The two file forms, the same way ``loader.deck_json`` reads them.
 
     Duplicated rather than imported on purpose: loader pulls in the whole
     renderer, and a script that only wants to move a figure should not

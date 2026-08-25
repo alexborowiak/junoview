@@ -28,15 +28,28 @@ from junoview.notebook.classify import (
     _infer_kind,
     _title_from_code,
 )
+
+# ALIASED, not renamed. TASKS T38 took the underscore off the names that
+# cross a subpackage boundary, because an underscore on a name four other
+# modules import is telling four callers something untrue. This file is
+# the opposite case: it exists to mirror the namespace the old flat
+# module had, so every name it ever exposed keeps working under exactly
+# the spelling it had then (2026-08-25).
 from junoview.notebook.directives import _lead_heading, split_directives
 from junoview.notebook.loader import (
     _cache_bust,
-    _is_url,
-    _normalize_nb_url,
-    _stem_for,
     doc_from_url,
     load_doc,
     render_notebook_file,
+)
+from junoview.notebook.loader import (
+    is_url as _is_url,
+)
+from junoview.notebook.loader import (
+    normalize_nb_url as _normalize_nb_url,
+)
+from junoview.notebook.loader import (
+    stem_for as _stem_for,
 )
 from junoview.notebook.model import CodeStep, Document, Item, Section
 from junoview.notebook.outputs import (
@@ -47,7 +60,12 @@ from junoview.notebook.outputs import (
     render_outputs,
 )
 from junoview.notebook.parser import parse_notebook
-from junoview.notebook.presentations import _as_presentations, embed_deck
+from junoview.notebook.presentations import (
+    as_presentations as _as_presentations,
+)
+from junoview.notebook.presentations import (
+    embed_deck,
+)
 from junoview.render.graph import build_graph_svg
 from junoview.render.highlight import highlight_python
 from junoview.render.items import _BADGE, render_item, render_nav, render_raw

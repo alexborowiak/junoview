@@ -10,7 +10,7 @@ the notebook's saved presentations.
 from __future__ import annotations
 
 from junoview.branding import _ICON_PATHS
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 
 def test_custom_view_entry_points_and_style_panel(out):
@@ -73,7 +73,7 @@ def test_view_styles_its_own_notebook_with_override_buttons(out):
 
 def test_custom_view_round_trips_through_saved_presentations():
     """a view round-trips through the notebook's saved presentations"""
-    _v = _as_presentations([{"name": "v", "kind": "view", "nb": "nb1",
+    _v = as_presentations([{"name": "v", "kind": "view", "nb": "nb1",
                              "style": {"all": {"size": 1.4}},
                              "view": {"def": {"code": 0}, "v": 1},
                              "filters": {}, "folder": "f"}])
@@ -82,4 +82,4 @@ def test_custom_view_round_trips_through_saved_presentations():
     assert _v[0]["view"]["def"] == {"code": 0} and _v[0]["slides"] == []
     assert _v[0]["folder"] == "f"
     # a view entry has no slides, and must not be dropped for that
-    assert _as_presentations([{"name": "x", "kind": "view"}])[0]["name"] == "x"
+    assert as_presentations([{"name": "x", "kind": "view"}])[0]["name"] == "x"

@@ -13,7 +13,7 @@ import html
 import json
 
 from .. import assets
-from ..branding import _FAVICON, _KOFI_URL, _LOGO_SVG, _icons, icons_js
+from ..branding import FAVICON, KOFI_URL, LOGO_SVG, icons, icons_js
 from ..notebook.model import Document
 from .items import (
     deck_payload,
@@ -43,12 +43,12 @@ def render_shell(doc: Document, path: str = "") -> str:
             "untitled analysis", stem.strip().lower()):
         doctitle = (f'<div class="raildoct" title="The notebook’s '
                     f'first heading">{html.escape(doc.title)}</div>')
-    # _icons() runs HERE as well as over the whole page: a shell is also
+    # icons() runs HERE as well as over the whole page: a shell is also
     # served on its own (server routes, the Pyodide bridge's web_parse)
     # and mounted into an already-built page, where no later expansion
     # pass exists. The pass is idempotent — expanded SVG carries no
     # tokens — so shells inside render_page() are unaffected.
-    return _icons(assets.shell_template().format(
+    return icons(assets.shell_template().format(
         stem=html.escape(stem),
         path_attr=path_attr,
         title=html.escape(doc.title),
@@ -105,7 +105,7 @@ def render_page(docs: list[Document], mode: str = "static",
     head_extra = ('<link rel="manifest" href="manifest.webmanifest">\n'
                   '<meta name="theme-color" content="#0a141d">'
                   if mode == "web" else "")
-    return _icons(assets.page_template().format(
+    return icons(assets.page_template().format(
         title=html.escape(title),
         head_extra=head_extra,
         shells=shells,
@@ -121,10 +121,10 @@ def render_page(docs: list[Document], mode: str = "static",
         deck_css=assets.deck_css(),
         deck_js=assets.deck_js(),
         pptx_js=assets.pptx_js(),
-        kofi=_KOFI_URL,
+        kofi=KOFI_URL,
         help_html=assets.help_html(),
-        logo=_LOGO_SVG,
-        favicon=_FAVICON,
+        logo=LOGO_SVG,
+        favicon=FAVICON,
     ))
 
 

@@ -10,7 +10,7 @@ from __future__ import annotations
 import html
 import re
 
-from ..notebook.directives import _HEADING_RE
+from ..notebook.directives import HEADING_RE
 from .sanitize import _sanitize_html
 
 _MD_CODE_RE = re.compile(r"`([^`]+)`")
@@ -36,7 +36,7 @@ def _md_with_headings(text: str) -> str:
             plain.clear()
 
     for line in text.splitlines():
-        m = _HEADING_RE.match(line.strip())
+        m = HEADING_RE.match(line.strip())
         if m:
             flush()
             level = min(len(m.group(1)) + 1, 6)

@@ -14,9 +14,9 @@ import threading
 from pathlib import Path
 
 from .._write import write_text
-from ..notebook.loader import _is_url, _stem_for, doc_from_url, load_doc
+from ..notebook.loader import doc_from_url, is_url, load_doc, stem_for
 from ..notebook.parser import parse_notebook
-from ..notebook.presentations import _as_presentations
+from ..notebook.presentations import as_presentations
 from ..render.page import render_page
 
 _PROJECT_FILE = "junoview_project.json"
@@ -71,7 +71,7 @@ class _AppState:
             return
         if not isinstance(d, dict):
             return
-        self.presentations = _as_presentations(d.get("presentations"))
+        self.presentations = as_presentations(d.get("presentations"))
         for name in ("open", "recent"):
             v = d.get(name)
             setattr(self, name,
@@ -126,11 +126,11 @@ class _AppState:
         """Deduped stems of the open tabs (mirrors the page-build order)."""
         taken: set[str] = set()
         for p in self.open:
-            if skip is not None and not _is_url(p) and Path(p) == skip:
+            if skip is not None and not is_url(p) and Path(p) == skip:
                 continue
             if skip_str is not None and p == skip_str:
                 continue
-            taken.add(_stem_for(Path(p), taken))
+            taken.add(stem_for(Path(p), taken))
         return taken
 
 
@@ -181,12 +181,12 @@ def _app_page(state: _AppState) -> str:
     docs, paths, pruned = [], {}, []
     taken: set[str] = set()
     for p in list(state.open):
-        if _is_url(p):
+        if is_url(p):
             try:
                 doc = doc_from_url(p)
             except Exception:       # noqa: BLE001 -- likely transient
                 continue            # keep the URL in the session
-            doc.source_name = _stem_for(
+            doc.source_name = stem_for(
                 Path(doc.source_name + ".ipynb"), taken)
             taken.add(doc.source_name)
             paths[doc.source_name] = p
@@ -211,7 +211,7 @@ def _app_page(state: _AppState) -> str:
                 continue
             print(f"warning: could not read the deck sidecar for {f.name};"
                   " opened without its presentations", file=sys.stderr)
-        doc.source_name = _stem_for(f, taken)
+        doc.source_name = stem_for(f, taken)
         taken.add(doc.source_name)
         paths[doc.source_name] = str(f)
         docs.append(doc)

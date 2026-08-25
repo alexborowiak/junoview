@@ -11,7 +11,7 @@ what is actually in a file.
 So this module is the other half, and the two are deliberately different
 in kind:
 
-* ``_as_presentations`` **coerces and never complains**. Loading.
+* ``as_presentations`` **coerces and never complains**. Loading.
 * ``validate_deck`` **complains and never changes anything**. Checking.
 
 Neither raises. A validator that threw on the first problem would tell
@@ -256,7 +256,7 @@ def _check_slide(s: Any, path: str, out: list[Problem]) -> None:
         want = LAYOUTS[lay]
         got = len(s["panes"])
         if got != want:
-            # a WARNING: _as_presentations pads and truncates on load, so
+            # a WARNING: as_presentations pads and truncates on load, so
             # this file will open -- it just will not open as written
             out.append(Problem(f"{path}.panes", "warn",
                                f"{lay} has {want} panes, this has {got}; "
@@ -268,7 +268,7 @@ def _check_slide(s: Any, path: str, out: list[Problem]) -> None:
 def validate_deck(obj: Any) -> list[Problem]:
     """Report everything wrong with one deck, or with a list of them.
 
-    Accepts the same shapes :func:`_as_presentations` does — a list of
+    Accepts the same shapes :func:`as_presentations` does — a list of
     decks, ``{"presentations": [...]}``, or a single deck — because the
     thing you have in your hand is whichever of those a file happened to
     hold, and having to know which before you can check it would defeat

@@ -21,7 +21,7 @@ def _strip_ansi(text: str) -> str:
     return _ANSI_RE.sub("", text)
 
 
-def _as_text(value: Any) -> str:
+def as_text(value: Any) -> str:
     return "".join(value) if isinstance(value, list) else (value or "")
 
 
@@ -207,7 +207,7 @@ def render_outputs(outputs: list[dict],
     for out in outputs or []:
         otype = out.get("output_type")
         if otype == "stream":
-            text = _strip_ansi(_as_text(out.get("text", "")))
+            text = _strip_ansi(as_text(out.get("text", "")))
             if text.strip():
                 rendered.append(RenderedOutput(
                     "text",
@@ -265,13 +265,13 @@ def render_outputs(outputs: list[dict],
                     f'</div>',
                     has_image=True, pt="matplotlib"))
             elif "image/svg+xml" in data:
-                svg = _as_text(data["image/svg+xml"])
+                svg = as_text(data["image/svg+xml"])
                 rendered.append(RenderedOutput(
                     "image",
                     f'<div class="figframe" data-pt="matplotlib">{svg}</div>',
                     has_image=True, pt="matplotlib"))
             elif "text/html" in data:
-                htmltext = _as_text(data["text/html"])
+                htmltext = as_text(data["text/html"])
                 if _looks_like_xarray(htmltext):
                     # jv-xr, NOT xr-wrap: xarray's repr ships its own
                     # <style> declaring `.xr-wrap{display:block !important}`
@@ -307,7 +307,7 @@ def render_outputs(outputs: list[dict],
                             f'<div class="rich ot-result">{safe}</div>',
                             ot="result"))
             elif "text/plain" in data:
-                text = _as_text(data["text/plain"])
+                text = as_text(data["text/plain"])
                 if text.strip():
                     # classify the repr so the Output-types filter can offer
                     # numeric / string / list / dict / … not just "print"

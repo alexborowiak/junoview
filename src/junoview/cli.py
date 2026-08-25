@@ -12,14 +12,14 @@ from pathlib import Path
 
 from ._write import write_text
 from .notebook.loader import (
-    _is_url,
-    _stem_for,
     doc_from_url,
+    is_url,
     load_doc,
+    stem_for,
 )
 from .notebook.presentations import (
-    _as_presentations,
-    _deck_json,
+    as_presentations,
+    deck_json,
     embed_deck,
 )
 from .render.page import render_page
@@ -78,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     items = list(args.notebooks)
-    local = [Path(n) for n in items if not _is_url(n)]
+    local = [Path(n) for n in items if not is_url(n)]
 
     if args.embed_deck:
         if len(items) != 1 or not local:
@@ -103,7 +103,7 @@ def main(argv: list[str] | None = None) -> int:
             (local[0].parent if local else Path.cwd())
         if not root.is_dir():
             p.error(f"--root {root} is not a folder")
-        preload = [n if _is_url(n) else Path(n) for n in items]
+        preload = [n if is_url(n) else Path(n) for n in items]
         return run_app(root, preload, port=args.port,
                        open_browser=not args.no_browser)
 
@@ -120,7 +120,7 @@ def main(argv: list[str] | None = None) -> int:
               file=sys.stderr)
     docs = []
     taken: set[str] = set()
-    # every --deck read goes through _deck_json, so the polyglot
+    # every --deck read goes through deck_json, so the polyglot
     # name.junoview.html save works on all three branches, not just the
     # sidecar path inside load_doc (it parsed with raw json.loads on two
     # of them until 2026-08-23). And since the loader now raises
@@ -128,35 +128,35 @@ def main(argv: list[str] | None = None) -> int:
     # "error: ..." itself and exits 1.
     try:
         for n in items:
-            if _is_url(n):
+            if is_url(n):
                 doc = doc_from_url(n)
                 if single and args.title:
                     doc.title = args.title
                 if single and deck is not None:
-                    pres = _as_presentations(
-                        _deck_json(deck.read_text(encoding="utf-8")))
+                    pres = as_presentations(
+                        deck_json(deck.read_text(encoding="utf-8")))
                     if pres:
                         doc.presentations = pres
-                doc.source_name = _stem_for(
+                doc.source_name = stem_for(
                     Path(doc.source_name + ".ipynb"), taken)
             else:
                 doc = load_doc(Path(n),
                                title=args.title if single else None,
                                deck_path=deck if single else None)
-                doc.source_name = _stem_for(Path(n), taken)
+                doc.source_name = stem_for(Path(n), taken)
             taken.add(doc.source_name)
             docs.append(doc)
         cfg = {}
         if not single and deck is not None:
-            cfg["presentations"] = _as_presentations(
-                _deck_json(deck.read_text(encoding="utf-8")))
+            cfg["presentations"] = as_presentations(
+                deck_json(deck.read_text(encoding="utf-8")))
     except ValueError as e:
         print(f"error: {e}", file=sys.stderr)
         return 1
     html_out = render_page(docs, app_cfg=cfg)
     if args.output:
         out_path = Path(args.output)
-    elif single and not _is_url(items[0]):
+    elif single and not is_url(items[0]):
         out_path = Path(items[0]).with_suffix(".html")
     elif single:
         out_path = Path(docs[0].source_name + ".html")

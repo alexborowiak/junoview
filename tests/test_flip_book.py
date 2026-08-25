@@ -18,7 +18,7 @@ pile is only ever the delivery form.
 
 from __future__ import annotations
 
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 
 def test_a_flip_book_is_a_real_item_kind(out):
@@ -229,7 +229,7 @@ def test_python_rebuild_keeps_a_flip_book_whole():
     browser and vanished on reopening" is this codebase's recurring
     failure.
     """
-    pres = _as_presentations([{
+    pres = as_presentations([{
         "name": "n",
         "slides": [{"layout": "blank", "annots": [
             {"k": "flip", "x": 5, "y": 5, "w": 40, "h": 30, "fid": "k1",

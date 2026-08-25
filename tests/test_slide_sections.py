@@ -18,7 +18,7 @@ this file exists to catch early.
 
 from __future__ import annotations
 
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 # --------------------------------------------------------------- sections
 
@@ -120,7 +120,7 @@ def test_python_rebuild_keeps_sections_and_custom_types():
     the browser and vanish the moment the deck is saved to the project and
     reopened.
     """
-    pres = _as_presentations([{
+    pres = as_presentations([{
         "name": "n",
         "types": [{"id": "t1", "label": "Pull quote", "size": 3.1,
                    "i": 1, "head": 1},

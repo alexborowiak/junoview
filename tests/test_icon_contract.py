@@ -5,8 +5,8 @@ reaches every surface through exactly three doors (see the icon-set
 comment in branding.py):
 
 * templates carry ``<i data-ic="key"></i>`` tokens, expanded at build
-  time by ``_icons()``;
-* render/items.py stamps finished markup through ``_icon_svg`` (its
+  time by ``icons()``;
+* render/items.py stamps finished markup through ``icon_svg`` (its
   local alias ``_ic``);
 * the scripts read ``window.SemIcons`` / the widget's ``data.icons``
   through a per-file ``bic('key')`` accessor.

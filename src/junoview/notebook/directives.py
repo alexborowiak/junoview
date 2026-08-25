@@ -30,7 +30,7 @@ def is_directive_line(line: str) -> bool:
     return bool(_DIRECTIVE_RE.match(line) or _SHORT_RE.match(line))
 
 
-_HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*$")
+HEADING_RE = re.compile(r"^(#{1,6})\s+(.*?)\s*#*$")
 
 
 # a raw HTML heading that OPENS a markdown cell, e.g.
@@ -53,7 +53,7 @@ def _lead_heading(source: str) -> tuple[int, str, str] | None:
     if not stripped:
         return None
     first = stripped.splitlines()[0]
-    m = _HEADING_RE.match(first)
+    m = HEADING_RE.match(first)
     if m:
         rest = "\n".join(stripped.splitlines()[1:]).strip()
         return len(m.group(1)), m.group(2).strip(), rest

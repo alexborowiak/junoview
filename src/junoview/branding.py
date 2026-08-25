@@ -11,7 +11,7 @@ import json
 import re
 import urllib.parse
 
-_KOFI_URL = "https://ko-fi.com/plotline"
+KOFI_URL = "https://ko-fi.com/plotline"
 
 
 # The Junoview mark: a peacock-feather "ocellus" (eye) — concentric teal /
@@ -21,17 +21,17 @@ _KOFI_URL = "https://ko-fi.com/plotline"
 # Inline SVG, never emoji: emoji render as tofu boxes in this app's mono
 # font (that cost several rounds once already). One grid (16x16), one
 # style (stroke, currentColor), so every button reads as the same family.
-# Markup uses <i data-ic="key"></i> tokens which _icons() expands, so the
+# Markup uses <i data-ic="key"></i> tokens which icons() expands, so the
 # templates stay readable and the artwork lives in exactly one place.
 #
 # THE SAME TABLE FEEDS EVERY RUNTIME (2026-08-23). Three consumers, one
 # source, no copied path data anywhere:
 #   * templates + items.py -- build-time. Templates carry tokens that
-#     _icons() expands; items.py calls _icon_svg() directly so its card
+#     icons() expands; items.py calls icon_svg() directly so its card
 #     chrome is final markup on every path (page, server routes, widget).
 #   * app.js / deck.js -- runtime-built DOM. page.py injects a
 #     <script> from icons_js() defining window.SemIcons (key -> the SAME
-#     finished <svg class="bic"> markup _icons() stamps). Each script has
+#     finished <svg class="bic"> markup icons() stamps). Each script has
 #     a two-line bic(key) accessor that returns '' when the map is
 #     absent, so a page without the block degrades to missing icons, not
 #     a dead script.
@@ -297,15 +297,15 @@ _ICON_PATHS = {
 }
 
 
-def _icon_svg(key: str) -> str:
+def icon_svg(key: str) -> str:
     """One icon's finished markup — the ONE wrapper every consumer gets.
 
-    ``_icons()`` (template tokens), :mod:`junoview.render.items` (card
+    ``icons()`` (template tokens), :mod:`junoview.render.items` (card
     chrome built in Python) and :func:`icons_map` (the runtime-JS map)
     all come through here, so the ``.bic`` class, the viewBox and the
     aria attributes cannot drift apart between build-time and runtime
     icons. Unknown keys are LOUD for the same reason they are in
-    ``_icons()``.
+    ``icons()``.
     """
     body = _ICON_PATHS.get(key)
     if body is None:
@@ -318,7 +318,7 @@ def _icon_svg(key: str) -> str:
 
 def icons_map() -> dict[str, str]:
     """Every icon's finished markup, keyed by name — for runtime DOM."""
-    return {k: _icon_svg(k) for k in _ICON_PATHS}
+    return {k: icon_svg(k) for k in _ICON_PATHS}
 
 
 def icons_js() -> str:
@@ -335,7 +335,7 @@ def icons_js() -> str:
             + ";")
 
 
-def _icons(markup: str) -> str:
+def icons(markup: str) -> str:
     """Swap every ``<i data-ic="key"></i>`` token for its inline SVG.
 
     Two silent failure modes lived here and both shipped real bugs
@@ -352,7 +352,7 @@ def _icons(markup: str) -> str:
     function cannot resolve stops the build and names the key.
     """
     def sub(m: re.Match) -> str:
-        return _icon_svg(m.group(1))
+        return icon_svg(m.group(1))
     out = re.sub(r'<i data-ic="([a-z][a-z0-9-]*)"></i>', sub, markup)
     leftover = re.search(r'<i data-ic="([^"]*)"></i>', out)
     if leftover:
@@ -363,7 +363,7 @@ def _icons(markup: str) -> str:
     return out
 
 
-_LOGO_SVG = (
+LOGO_SVG = (
     '<svg class="jv-logo" viewBox="0 0 200 200" '
     'xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Junoview">'
     '<g stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" '
@@ -393,4 +393,4 @@ _LOGO_SVG = (
 )
 
 
-_FAVICON = "data:image/svg+xml," + urllib.parse.quote(_LOGO_SVG)
+FAVICON = "data:image/svg+xml," + urllib.parse.quote(LOGO_SVG)

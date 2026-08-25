@@ -286,7 +286,7 @@ def test_raw_view_keeps_outputs_the_cards_drop():
     """Outputs absent from the cards stay FULLY embedded in the raw view.
 
     The raw view's contract is "the whole notebook, faithfully". Two rows
-    of the decision table in _card_output_keys(): a `display: hidden`
+    of the decision table in card_output_keys(): a `display: hidden`
     cell's figure has no card at all, and a directive-only group member's
     stream output is filtered out of the card's code fold (empty code is
     not a step, and a single-step fold shows no step output) — both must
@@ -327,7 +327,7 @@ def test_raw_view_keeps_outputs_the_cards_drop():
 def test_every_raw_placeholder_has_a_card_copy(out):
     """KEEP-IN-SYNC guard: every .rawph key exists in the cards half.
 
-    _card_output_keys() predicts what render_item embeds. If the
+    card_output_keys() predicts what render_item embeds. If the
     prediction drifts, a placeholder points at nothing and the client
     shows the missing-mirror note instead of the output — so each
     placeholder key must appear exactly twice in the page: the card's
@@ -455,14 +455,14 @@ def test_icon_tokens_cannot_fail_silently():
     """
     import pytest
 
-    from junoview.branding import _ICON_PATHS, _icons
+    from junoview.branding import _ICON_PATHS, icons
 
-    assert "svg" in _icons('<i data-ic="eye"></i>')          # exists now
-    assert "svg" in _icons('<i data-ic="palette"></i>')
+    assert "svg" in icons('<i data-ic="eye"></i>')          # exists now
+    assert "svg" in icons('<i data-ic="palette"></i>')
     with pytest.raises(ValueError, match="no-such-icon"):
-        _icons('<i data-ic="no-such-icon"></i>')
+        icons('<i data-ic="no-such-icon"></i>')
     with pytest.raises(ValueError, match="Bad_Key"):
-        _icons('<i data-ic="Bad_Key"></i>')
+        icons('<i data-ic="Bad_Key"></i>')
     # ...and every token every template uses resolves
     import pathlib as _pl
     import re as _re

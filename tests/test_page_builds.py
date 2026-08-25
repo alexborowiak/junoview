@@ -13,7 +13,7 @@ from pathlib import Path
 
 from helpers import _demo_and_other
 from junoview import assets
-from junoview.notebook.loader import _is_url, _normalize_nb_url, _stem_for
+from junoview.notebook.loader import is_url, normalize_nb_url, stem_for
 from junoview.render.page import render_page
 from junoview.server.state import _list_dir
 from junoview.server.vcs import _github_web_url
@@ -48,7 +48,7 @@ def test_server_dir_listing_shape_and_stem_dedupe():
     """server helpers: directory listing shape + stem dedupe"""
     listing = _list_dir(str(Path(__file__).parent))
     assert {"dir", "parent", "dirs", "notebooks"} <= set(listing)
-    assert _stem_for(Path("a/nb.ipynb"), {"nb"}) == "nb-2"
+    assert stem_for(Path("a/nb.ipynb"), {"nb"}) == "nb-2"
 
 
 def test_github_web_url_only_normalises_github_remotes():
@@ -61,10 +61,10 @@ def test_github_web_url_only_normalises_github_remotes():
 
 def test_github_urls_normalize_and_web_build_dedupes_stems(nb):
     """URLs: GitHub normalization + the client-side web build"""
-    assert _normalize_nb_url(
+    assert normalize_nb_url(
         "https://github.com/u/r/blob/main/d/nb.ipynb") \
         == "https://raw.githubusercontent.com/u/r/main/d/nb.ipynb"
-    assert _is_url("https://x/y.ipynb") and not _is_url("C:/y.ipynb")
+    assert is_url("https://x/y.ipynb") and not is_url("C:/y.ipynb")
     shell = web_parse("demo.ipynb", json.dumps(nb), '["demo"]')
     assert 'data-nb="demo-2"' in shell
 

@@ -84,7 +84,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # now carries a window.SemIcons <script> (branding.py icons_js()); the
 # emoji and one-off glyphs in card chrome, nav eyes, welcome/open-dialog
 # rows, panes and dialog closes were replaced with <i data-ic> tokens /
-# _icon_svg() markup / bic() lookups; PB_ICO (app.js) and RAIL_ICO
+# icon_svg() markup / bic() lookups; PB_ICO (app.js) and RAIL_ICO
 # (deck.js) — copied icon path data — were deleted in favour of the
 # map. Pinned by tests/test_icon_contract.py.
 # ...and again 2026-08-24 for the ribbon finish: every remaining deck

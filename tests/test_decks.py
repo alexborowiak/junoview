@@ -1,7 +1,7 @@
 """Everything about a deck except the canvas you edit it on: the normalized
 stored shape, the anchors that bind slides to cells, and the rail you pick
 one from. Decks travel in the notebook's own metadata, in a sidecar, or in
-the project file, and _as_presentations flattens all three -- including
+the project file, and as_presentations flattens all three -- including
 older layouts -- into one form, so a deck saved months ago still opens.
 Anchors are ids rather than positions, which is what lets a deck survive the
 notebook being reordered and re-run. The rail is a radio: exactly one
@@ -15,7 +15,7 @@ import re
 
 from junoview.branding import _ICON_PATHS
 from junoview.notebook.parser import parse_notebook
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 
 def test_demo_page_renders_and_embeds_its_presentation(doc, out):
@@ -24,7 +24,7 @@ def test_demo_page_renders_and_embeds_its_presentation(doc, out):
     # presentation plumbing, incl. legacy single-deck conversion
     assert doc.presentations and doc.presentations[0]["name"] == "demo"
     assert doc.presentations[0]["slides"][0]["panes"] == ["clim", "cell:md1"]
-    legacy = _as_presentations({"slides": [
+    legacy = as_presentations({"slides": [
         {"kind": "card", "anchor": "a", "beside": ["b"]}]})
     assert legacy[0]["slides"][0] == {"layout": "halves", "panes": ["a", "b"]}
     assert '"panes": ["clim", "cell:md1"]' in out
@@ -39,7 +39,7 @@ def test_demo_page_renders_and_embeds_its_presentation(doc, out):
 
 def test_as_presentations_normalizes_new_layouts_and_title_slides():
     """new slide layouts, title slides and annotations survive normalizing"""
-    pres2 = _as_presentations([{"name": "n", "slides": [
+    pres2 = as_presentations([{"name": "n", "slides": [
         {"layout": "rows", "panes": ["a"]},
         {"layout": "title", "title": "Hi", "sub": "there",
          "annots": [{"k": "text", "x": 5, "y": 5, "text": "note"}]},
@@ -53,7 +53,7 @@ def test_as_presentations_normalizes_new_layouts_and_title_slides():
 def test_slide_builder_keeps_slide_props_and_annotation_refs(out):
     """Normalising a deck preserves per-slide title props and the free
     annotations, and a blank layout stays blank (no implied panes)."""
-    pres3 = _as_presentations([{"name": "x", "slides": [
+    pres3 = as_presentations([{"name": "x", "slides": [
         {"layout": "title", "title": "T",
          "tprops": {"x": 30, "y": 20, "size": 5}},
         {"layout": "blank",
@@ -72,18 +72,18 @@ def test_slide_builder_keeps_slide_props_and_annotation_refs(out):
 
 
 def test_presentation_normalization_keeps_folder_and_hidden_steps(out):
-    """``_as_presentations`` must not drop per-deck / per-slide state.
+    """``as_presentations`` must not drop per-deck / per-slide state.
 
     A deck's folder survives normalization (and the UI can create new
     ones), and the code-trace hidden-step list survives normalization per
     slide -- empty entries are dropped.
     """
-    pres_f = _as_presentations([{"name": "a", "folder": "paper 1",
+    pres_f = as_presentations([{"name": "a", "folder": "paper 1",
                                  "slides": []}])
     assert pres_f[0]["folder"] == "paper 1"
     assert 'id="pr-newfold"' in out
     # code-trace hidden-step list survives normalization (per slide)
-    pres_h = _as_presentations([{"name": "h", "slides": [
+    pres_h = as_presentations([{"name": "h", "slides": [
         {"layout": "blank", "panes": [],
          "annots": [{"k": "cell", "x": 5, "y": 5, "w": 40, "h": 40,
                      "ref": "clim"}],
@@ -218,14 +218,14 @@ def test_self_contained_decks_keep_embedded_snapshots():
     """
     good = {"title": "Climatology", "kind": "figure",
             "html": "<div class=\"cardbody\"><img src=\"data:,\"></div>"}
-    pres = _as_presentations([{"name": "n", "slides": [], "emb": {
+    pres = as_presentations([{"name": "n", "slides": [], "emb": {
         "demo::clim": good,
         "demo::junk": {"title": "no html"},
         "demo::worse": "not even a dict",
     }}])
     assert pres[0]["emb"] == {"demo::clim": good}
     # an all-junk emb vanishes rather than surviving as {}
-    pres2 = _as_presentations([{"name": "n", "slides": [],
+    pres2 = as_presentations([{"name": "n", "slides": [],
                                 "emb": {"x": {"title": "no html"}}}])
     assert "emb" not in pres2[0]
 
@@ -238,7 +238,7 @@ def test_python_normalizer_keeps_what_the_editor_keeps():
     then silently shed by every round-trip through Python (a project save,
     a sidecar load), so "Save to project" cost you your speaker notes.
     """
-    pres = _as_presentations([{
+    pres = as_presentations([{
         "name": "n", "talkMins": 12, "notes": "whole-talk notes",
         "wmark": {"text": "DRAFT"}, "head": {"text": "h"},
         "foot": {"text": "f"}, "styles": {"heading": {"size": 5}},
@@ -280,9 +280,9 @@ def test_the_module_that_says_getting_no_longer_puts():
     """TASKS T37. `loader.py`'s first line is "Getting notebooks from
     where they live: disk, or a URL". `embed_deck` WRITES a deck into
     somebody's notebook, which is the opposite of getting one, and
-    `_deck_json` parses a DECK file, which is not a notebook at all.
+    `deck_json` parses a DECK file, which is not a notebook at all.
 
-    Both now live beside `_as_presentations` -- which `embed_deck` has
+    Both now live beside `as_presentations` -- which `embed_deck` has
     always called, and which is the reason its output is a shape the
     editor can open.
     """
@@ -291,10 +291,10 @@ def test_the_module_that_says_getting_no_longer_puts():
     from junoview.notebook import loader, presentations
 
     assert "def embed_deck" in inspect.getsource(presentations)
-    assert "def _deck_json" in inspect.getsource(presentations)
+    assert "def deck_json" in inspect.getsource(presentations)
     src = inspect.getsource(loader)
     assert "def embed_deck" not in src
-    assert "def _deck_json" not in src
+    assert "def deck_json" not in src
     # ...and loader stopped needing a writer at all
     assert "write_text" not in src
 
@@ -325,7 +325,7 @@ def test_embedding_still_writes_what_the_editor_reads(tmp_path):
     import json
 
     from junoview.notebook.presentations import (
-        _as_presentations,
+        as_presentations,
         embed_deck,
     )
 
@@ -342,7 +342,7 @@ def test_embedding_still_writes_what_the_editor_reads(tmp_path):
     got = json.loads(nbp.read_text(encoding="utf-8"))
     sem = got["metadata"]["semantic"]
     assert "deck" not in sem
-    assert sem["presentations"] == _as_presentations(deck)
+    assert sem["presentations"] == as_presentations(deck)
     assert sem["presentations"][0]["name"] == "T"
 
 
@@ -353,14 +353,14 @@ def test_a_deck_file_in_either_form_still_parses(tmp_path):
     """
     import json
 
-    from junoview.notebook.presentations import _deck_json
+    from junoview.notebook.presentations import deck_json
 
     body = json.dumps({"presentations": [{"name": "T", "slides": []}]})
-    assert _deck_json(body)["presentations"][0]["name"] == "T"
+    assert deck_json(body)["presentations"][0]["name"] == "T"
     page = ('<!doctype html><html><body>'
             '<script type="application/json" id="junoview-data">\n'
             + body + '\n</script></body></html>')
-    assert _deck_json(page)["presentations"][0]["name"] == "T"
+    assert deck_json(page)["presentations"][0]["name"] == "T"
     import pytest
     with pytest.raises(ValueError):
-        _deck_json("<html><body>nothing here</body></html>")
+        deck_json("<html><body>nothing here</body></html>")

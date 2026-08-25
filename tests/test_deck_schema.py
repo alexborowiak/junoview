@@ -1,6 +1,6 @@
 """The written schema, and the validator that reports against it.
 
-`presentations._as_presentations` coerces and never complains, which is
+`presentations.as_presentations` coerces and never complains, which is
 what makes a deck saved months ago still open. `deck_schema.validate_deck`
 is the other half: it complains and never changes anything. This module
 pins both halves of that split, and pins DECK-FORMAT.md against the
@@ -20,7 +20,7 @@ from junoview.notebook.deck_schema import (
     SLIDE_KEYS,
     validate_deck,
 )
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 DOC = Path(__file__).resolve().parent.parent / "DECK-FORMAT.md"
 
@@ -104,7 +104,7 @@ def test_off_the_page_is_legal_and_is_not_reported():
 
 
 def test_a_pane_count_mismatch_is_a_warning_because_it_still_loads():
-    """_as_presentations pads and truncates, so the file WILL open -- it
+    """as_presentations pads and truncates, so the file WILL open -- it
     just will not open as written. That is the definition of a warning.
     """
     got = validate_deck({"name": "d", "slides": [
@@ -112,7 +112,7 @@ def test_a_pane_count_mismatch_is_a_warning_because_it_still_loads():
     assert [p.level for p in got] == ["warn"]
     assert "padded or truncated" in got[0].message
     # ...and the claim is true: the loader really does fix it up
-    loaded = _as_presentations([{"name": "d", "slides": [
+    loaded = as_presentations([{"name": "d", "slides": [
         {"layout": "halves", "panes": ["a", "b", "c", "d"]}]}])
     assert len(loaded[0]["slides"][0]["panes"]) == LAYOUTS["halves"]
 
@@ -173,7 +173,7 @@ def test_the_document_invents_no_keys_of_its_own():
 
 
 def test_the_schema_covers_what_the_loader_actually_keeps():
-    """The tables must not fall behind _as_presentations. Every key that
+    """The tables must not fall behind as_presentations. Every key that
     survives a real round trip has to be one the schema names, or the
     document is describing a format the code does not produce.
     """
@@ -195,7 +195,7 @@ def test_the_schema_covers_what_the_loader_actually_keeps():
             "border": {"w": 2}, "grpmeta": {"g": [1, 2]},
         }],
     }
-    out = _as_presentations([deck])[0]
+    out = as_presentations([deck])[0]
     unknown = sorted(set(out) - set(DECK_KEYS))
     assert not unknown, f"loader keeps deck keys the schema omits: {unknown}"
     unknown_s = sorted(set(out["slides"][0]) - set(SLIDE_KEYS))

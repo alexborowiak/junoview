@@ -12,7 +12,7 @@ hardening fixes from the adversarial review.
 
 from __future__ import annotations
 
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 
 def test_deck_builder_controls_and_frame_parts(out):
@@ -330,9 +330,9 @@ def test_page_size_preset_and_zoom(out):
     assert "--page-ar" in out and "function applyZoom" in out
     assert 'id="zoom-in"' in out and 'id="zoom-out"' in out
     assert "out.page=p.page" in out
-    assert _as_presentations([{"name": "po", "page": "a0p",
+    assert as_presentations([{"name": "po", "page": "a0p",
                                "slides": []}])[0]["page"] == "a0p"
-    assert "page" not in _as_presentations([{"name": "s", "slides": []}])[0]
+    assert "page" not in as_presentations([{"name": "s", "slides": []}])[0]
     assert ".deck.editing .deck-stage.zoomed{overflow:auto" in out
 
 

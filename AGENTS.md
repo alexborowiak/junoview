@@ -40,7 +40,15 @@ parser's internals.
 - `docs/` is a **generated** GitHub Pages build. Never edit it by hand;
   regenerate with `junoview --build-web docs`.
 - `src/semantic_render.py` is a compatibility shim — keep it re-exporting,
-  don't grow it.
+  don't grow it. It mirrors the old flat module's namespace, so a name it
+  exposes keeps its old spelling there even after a rename: alias
+  (`new as _old`), never rewrite.
+- **A leading underscore means private to its own subpackage**, and
+  nothing weaker. Inside `notebook/`, `classify._parse_or_none` used by
+  `parser` is exactly what that means. A name imported from ANOTHER
+  subpackage — `notebook/` ↔ `render/` ↔ `server/`, or the CLI — has no
+  business wearing one: it is telling every caller something untrue.
+  Cross the boundary and the underscore comes off (2026-08-25, T38).
 
 ## Keeping the repo legible (for AI and humans alike)
 

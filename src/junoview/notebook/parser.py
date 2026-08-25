@@ -9,7 +9,7 @@ graph. Nothing downstream re-reads the raw notebook.
 from __future__ import annotations
 
 # aliased: parse_notebook grew a `render_raw` keyword of the same name
-from ..render.items import _card_output_keys
+from ..render.items import card_output_keys
 from ..render.items import render_raw as _render_raw
 from .chains import _build_chains
 from .classify import (
@@ -29,8 +29,8 @@ from .directives import (
     split_directives,
 )
 from .model import CodeStep, Document, Item, Section
-from .outputs import _as_text, render_outputs
-from .presentations import _as_presentations
+from .outputs import as_text, render_outputs
+from .presentations import as_presentations
 from .variables import collect_variables
 
 
@@ -181,7 +181,7 @@ def parse_notebook(nb: dict, title: str | None = None,
     doc = Document(title=nb_title or "Untitled analysis")
     sem_meta = nb.get("metadata", {}).get("semantic", {})
     if isinstance(sem_meta, dict):
-        doc.presentations = _as_presentations(
+        doc.presentations = as_presentations(
             sem_meta.get("presentations") or sem_meta.get("deck"))
     cur_section: Section | None = None
     cur_subsection = ""
@@ -205,7 +205,7 @@ def parse_notebook(nb: dict, title: str | None = None,
 
     for idx, cell in enumerate(nb.get("cells", [])):
         ctype = cell.get("cell_type")
-        source = _as_text(cell.get("source", ""))
+        source = as_text(cell.get("source", ""))
 
         if ctype == "markdown":
             handled_heading = False
@@ -381,5 +381,5 @@ def parse_notebook(nb: dict, title: str | None = None,
         doc.raw_html = _render_raw(
             nb,
             outputs_by_idx={m["idx"]: m["outputs"] for m in all_members},
-            card_keys=_card_output_keys(doc))
+            card_keys=card_output_keys(doc))
     return doc

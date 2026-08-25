@@ -14,7 +14,7 @@ import json
 import pytest
 
 from junoview.notebook.deck_api import Deck, Item, open_deck
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import as_presentations
 
 
 def _deck() -> dict:
@@ -218,7 +218,7 @@ def test_moving_a_slide_uses_the_numbers_on_the_screen():
 
 def test_it_opens_the_three_shapes_a_file_actually_holds(tmp_path):
     """A list, a {"presentations": [...]}, or a bare deck -- the same
-    shapes _as_presentations accepts, because having to know which one
+    shapes as_presentations accepts, because having to know which one
     you have before you can open it defeats the purpose.
     """
     one = _deck()
@@ -308,7 +308,7 @@ def test_asking_for_a_deck_that_is_not_there_says_what_is(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_saving_reports_and_does_not_coerce(tmp_path):
-    """T33's split, kept. _as_presentations coerces and never complains;
+    """T33's split, kept. as_presentations coerces and never complains;
     validate_deck complains and never changes anything; this writes and
     tells you. A deck with a warning in it is still a deck.
     """
@@ -333,7 +333,7 @@ def test_strict_is_for_the_script_that_would_rather_stop(tmp_path):
 
 def test_what_it_writes_is_what_the_loader_reads_back(tmp_path):
     """The round trip that matters: everything this API changes has to
-    survive _as_presentations, which is the function the rendered page
+    survive as_presentations, which is the function the rendered page
     and the editor both go through. A key kept here and dropped there
     would look saved and not be.
     """
@@ -346,7 +346,7 @@ def test_what_it_writes_is_what_the_loader_reads_back(tmp_path):
     d.slide(2).figures["toe_map"].place(x=8, y=9, w=50, h=40)
     p = tmp_path / "d.junoview"
     d.save(p)
-    got = _as_presentations(json.loads(p.read_text(encoding="utf-8")))[0]
+    got = as_presentations(json.loads(p.read_text(encoding="utf-8")))[0]
     sl = got["slides"][1]
     assert sl["notes"] == "markdown **notes**"
     assert sl["goal"] == 4.5

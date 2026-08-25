@@ -15,9 +15,9 @@ import json
 # path that serves them — the full page, the server's shell JSON, the
 # Pyodide bridge and the widget — with branding.py still the single
 # source of the artwork (see the icon-set comment there)
-from ..branding import _icon_svg as _ic
+from ..branding import icon_svg as _ic
 from ..notebook.model import Document, Item
-from ..notebook.outputs import _as_text, render_outputs
+from ..notebook.outputs import as_text, render_outputs
 from .graph import build_graph_svg
 from .highlight import highlight_python
 from .markdown import _MD_HTMLBLOCK_RE, _md_with_headings, md_to_html
@@ -83,7 +83,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
     # results) so the Plots and Output filters can act on them independently
     # of each other and of the cell's Code
     # NOTE which outputs this function embeds (the face below, plus multi-
-    # step extra_out further down) is mirrored by _card_output_keys() for
+    # step extra_out further down) is mirrored by card_output_keys() for
     # the raw view's placeholders — change one, change both
     imgs = [o for o in item.outputs if o.has_image or o.has_interactive]
     others = [o for o in item.outputs
@@ -486,7 +486,7 @@ def render_graph_panel(doc: Document) -> str:
         f'<div class="railgraph-b">{graph_svg}</div></div>')
 
 
-def _card_output_keys(doc: Document) -> set[str]:
+def card_output_keys(doc: Document) -> set[str]:
     """The ``RenderedOutput.key``s whose payloads the cards page embeds.
 
     KEEP IN SYNC with :func:`render_item` — this predicts, from the final
@@ -544,7 +544,7 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
     ``outputs_by_idx`` (cell index -> the parse's already-rendered outputs)
     lets :func:`~junoview.notebook.parser.parse_notebook` share ONE
     render_outputs pass between the cards and this view. ``card_keys`` (from
-    :func:`_card_output_keys`) marks the outputs whose full payload a card
+    :func:`card_output_keys`) marks the outputs whose full payload a card
     already embeds: those become empty ``.rawph`` placeholders here — one
     copy of each multi-MB figure per page, not two — which app.js fills by
     cloning the card's node when the raw view is first opened. Every output
@@ -558,7 +558,7 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
     parts: list[str] = []
     for idx, cell in enumerate(nb.get("cells", [])):
         ctype = cell.get("cell_type")
-        source = _as_text(cell.get("source", ""))
+        source = as_text(cell.get("source", ""))
         if ctype == "markdown":
             parts.append(
                 '<div class="rawcell md"><span class="rawtag">markdown</span>'

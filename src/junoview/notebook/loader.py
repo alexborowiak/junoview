@@ -17,7 +17,7 @@ from pathlib import Path
 from ..render.page import render_html
 from .model import Document
 from .parser import parse_notebook
-from .presentations import _as_presentations, _deck_json
+from .presentations import as_presentations, deck_json
 
 
 def load_doc(path: Path, title: str | None = None,
@@ -41,8 +41,8 @@ def load_doc(path: Path, title: str | None = None,
                 deck_path = sidecar
                 break
     if deck_path is not None:
-        pres = _as_presentations(
-            _deck_json(Path(deck_path).read_text(encoding="utf-8")))
+        pres = as_presentations(
+            deck_json(Path(deck_path).read_text(encoding="utf-8")))
         if pres:
             doc.presentations = pres
     return doc
@@ -57,11 +57,11 @@ _GH_BLOB_RE = re.compile(
     r"^https?://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/(.+)$")
 
 
-def _is_url(s: str) -> bool:
+def is_url(s: str) -> bool:
     return s.startswith("http://") or s.startswith("https://")
 
 
-def _normalize_nb_url(url: str) -> str:
+def normalize_nb_url(url: str) -> str:
     url = url.strip()
     m = _GH_BLOB_RE.match(url)
     if m:
@@ -82,7 +82,7 @@ def _cache_bust(url: str) -> str:
 
 def _fetch_notebook_url(url: str) -> tuple[str, dict]:
     """Download a notebook from a URL; returns (filename, nb dict)."""
-    url = _normalize_nb_url(url)
+    url = normalize_nb_url(url)
     req = urllib.request.Request(
         _cache_bust(url), headers={"User-Agent": "semantic-render",
                                    "Cache-Control": "no-cache",
@@ -106,7 +106,7 @@ def doc_from_url(url: str) -> Document:
     return doc
 
 
-def _stem_for(path: Path, taken: set[str]) -> str:
+def stem_for(path: Path, taken: set[str]) -> str:
     base = path.stem or "notebook"
     stem, n = base, 1
     while stem in taken:
