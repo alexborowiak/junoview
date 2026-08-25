@@ -106,6 +106,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T14, anchoring: deck.js gained the
+# ANCHORING section (anchorPos/anchorSet/anchorFix) and its menu
+# rows; DECK-FORMAT.md documents a.anch; help.html a paragraph.
+# Editor-only; pinned by tests/test_slide_editor.py's three
+# anchoring tests.
 # Moved 2026-08-25 for TASKS T13, components: deck.js gained the
 # COMPONENTS section and its menu rows; presentations.py and
 # deck_schema.py carry the new deck key; help.html a paragraph.
@@ -185,8 +190,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "0f14a21926cc9c99f6af1b520ad50a97"
-EXPECTED_BYTES = 2427818
+EXPECTED_MD5 = "8e5b9e4019097cafe566ab14ef65d3d8"
+EXPECTED_BYTES = 2437622
 
 
 def _render_example() -> str:

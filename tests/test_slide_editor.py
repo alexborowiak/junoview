@@ -1744,3 +1744,67 @@ def test_the_component_library_is_deck_level_and_survives(out):
             "     'components'].forEach(function(k){") in out
     assert "components:(pres.components&&Object.keys(pres.components).length)" \
         in out
+
+
+def test_anchoring_is_resolved_at_render_and_never_baked(out):
+    """TASKS T14, and the design note starts with what is already true:
+    relative SIZING is the whole coordinate system here -- everything is
+    percent of the page, which is why one deck renders at 16:9 and on an
+    A0 poster with no stored number changing.
+
+    What was missing is that the two percentages are of DIFFERENT
+    things, so the RELATIONSHIP between items does not survive a change
+    of page SHAPE. One anchor per item fixes the cases people hit, and
+    one anchor is deliberate: an anchor per axis is what a constraint
+    solver grows out of, and the task rules that out.
+
+    The stored numbers keep meaning "this far from my anchor"; the
+    anchor is resolved at RENDER. Rewriting x/y would bake the current
+    page into the model, which is exactly what a reflow must not do.
+    """
+    assert "var ANCHORS={" in out
+    assert "function anchorPos(a,w,h){" in out
+    assert "function anchorSet(a,x,y,w,h){" in out
+    # an identity for an item with no anchor -- which is every item in
+    # every deck to date
+    assert "if(!an||!ANCHORS[an]) return {x:a.x||0,y:a.y||0};" in out
+    assert "if(!an||!ANCHORS[an]){a.x=x;a.y=y;return;}" in out
+    # setting one must not MOVE the item
+    assert "function setAnchor(i,an){" in out
+    assert "anchorSet(a,absX,absY,w,h);" in out
+
+
+def test_an_anchored_item_is_placed_from_what_it_measured(out):
+    """The items that most want anchoring are exactly the ones whose
+    size is not stored: an auto-height text box, an aspect-fitted figure
+    frame, a box shrink-to-fit has just scaled. With a.h undefined the
+    naive maths put their TOP at the bottom edge and pushed them off the
+    page -- worse than not anchoring at all.
+
+    So anchored items are placed twice: once from the stored numbers,
+    and again from what they actually measured. Only the ELEMENT is
+    corrected; the model keeps saying "this far from my corner".
+    """
+    assert "function anchorFix(layer,s){" in out
+    assert "var p=anchorPos(a,er.width/lr.width*100,er.height/lr.height*100);" \
+        in out
+    assert "el.style.left=p.x+'%';el.style.top=p.y+'%';" in out
+    # before the arrows (an attached endpoint is derived from where its
+    # target sits) and after the fit pass (which changes heights)
+    assert "if(_anchorFixWanted) anchorFix(layer,s);\n    _arrows.forEach(" \
+        in out
+    assert "fitTexts(layer,s,editing);\n    /* ...and AFTER the fit pass" in out
+
+
+def test_everything_that_moves_an_item_goes_through_one_inverse(out):
+    """A drag, a nudge, an arrange and a snap all think in PAGE
+    coordinates and must not have to know about anchors -- and a
+    page-space delta is not a delta on the stored number, because moving
+    right DECREASES "distance from the right edge". Going out to page
+    coordinates and back is the only version that cannot get a sign
+    wrong.
+    """
+    assert "      var ap=anchorPos(a,a.w,a.h);\n      anchorSet(a,ap.x+dx," \
+        in out
+    assert "anchorSet(m,op.x+dx,op.y+dy,o.w,o.h);" in out
+    assert "    anchorSet(x.a,l2,t2,x.w,x.h);" in out

@@ -196,10 +196,24 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
      linked. `Detach` is the escape hatch.
   5. **Schema:** `pres.components`, deck-level, carried in `normPres`,
      `_as_presentations`, the undo snapshot and DECK-FORMAT.md.
-- [ ] **T14 · L — Relative layout & anchoring (design first).** Opt-in
+- [x] **T14 · L — Relative layout & anchoring (design first).** Opt-in
   per object: size as % of slide, edge anchoring, centring — so a slide-
   size change or a longer title reflows instead of exploding. Explicitly
   NOT a full constraint solver; scope the minimal useful subset.
+  *2026-08-25 — the design note, carried under the ANCHORING banner:*
+  **Half of this was already true.** Size and position are ALREADY
+  percentages of the page — that is the whole coordinate system, and
+  there is nothing to opt into. What was missing is that the two
+  percentages are of different things, so the *relationship* between
+  items does not survive a change of page SHAPE.
+  **The subset:** one anchor per item, `a.anch`, naming a corner or edge
+  midpoint. One and not two, because an anchor per axis is what a
+  constraint solver grows out of.
+  **Resolved at render, never baked** — rewriting x/y would put the
+  current page into the model. `anchorFix` then re-places anchored items
+  from what they MEASURED, because the items that most want anchoring
+  (auto-height text, aspect-fitted frames, shrink-to-fit boxes) are
+  exactly the ones whose size is not stored.
 - [x] **T15 · M — Text auto-fit and overflow.** Predictable shrink-to-fit
   toggle and a visible overflow indicator in the editor. NOT multi-box
   text flow (descoped).

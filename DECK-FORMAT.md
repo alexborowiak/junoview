@@ -112,6 +112,18 @@ optional and defaulted.
 | `table` | `x`, `y` | Rows of plain strings, not HTML. |
 | `text` | `x`, `y` | A text box. Auto-heights from its words, so it has no required h. |
 
+### Anchoring
+
+An item may name one **anchor** in `anch` — `tl` `tc` `tr` `cl` `c` `cr`
+`bl` `bc` `br` — and then its `x`/`y` are measured from that corner or
+edge rather than from the top left. A footer pinned `bl` stays the same
+distance off the bottom whatever shape the page becomes; a page number
+pinned `br` stays in its corner. Absent, `x`/`y` mean exactly what they
+always did.
+
+One anchor per item, deliberately: an anchor per axis is what a
+constraint solver grows out of, and this is not one.
+
 ### Colours and tokens
 
 A colour field (`color`, `fillc`, `bgc`, `txcol`, `bgcol`) holds a CSS

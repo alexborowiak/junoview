@@ -8106,7 +8106,8 @@
     var host=document.createElement('div');
     host.className='an-item an-table'+(selAnnot===i?' sel':'')
       +(a.grid===0?' nogrid':'');
-    host.style.left=a.x+'%';host.style.top=a.y+'%';
+    var ap0=anchorPos(a,a.w,a.h);
+    host.style.left=ap0.x+'%';host.style.top=ap0.y+'%';
     host.style.width=(a.w||40)+'%';host.style.height=(a.h||20)+'%';
     host.style.fontSize=fontPx(layer,a.size||2.2);
     if(a.lh) host.style.lineHeight=a.lh;
@@ -8404,6 +8405,13 @@
        Deferring every arrow to a second pass makes attachment
        order-independent. It changes nothing about z-order: the visible
        strokes have always gone into svgTop, which is appended last. */
+    /* anchored items are placed from measurement BEFORE the arrows go
+       down, because an attached endpoint is derived from where its
+       target sits — and again after fitTexts below, which can change a
+       box's height. Both calls are cheap: they touch anchored items
+       only, and a deck has none unless someone asked for them. */
+    var _anchorFixWanted=(s.annots||[]).some(function(a){
+      return a&&a.anch;});
     var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
       /* hidden via the Objects pane: skipped while editing, still
@@ -8417,7 +8425,8 @@
         var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]);
         r.className='an-item an-rect'+(svgShape?' an-svgshape':'')
           +(selAnnot===i?' sel':'');
-        r.style.left=a.x+'%';r.style.top=a.y+'%';
+        var ap1=anchorPos(a,a.w,a.h);
+        r.style.left=ap1.x+'%';r.style.top=ap1.y+'%';
         r.style.width=(a.w||10)+'%';r.style.height=(a.h||10)+'%';
         if(svgShape){
           r.appendChild(drawShapeSvg(shp,col,strokePx(a,layer),a,i,layer));
@@ -8439,7 +8448,8 @@
         var dv=document.createElement('div');
         dv.className='an-item an-rect an-svgshape an-draw'
           +(selAnnot===i?' sel':'');
-        dv.style.left=a.x+'%';dv.style.top=a.y+'%';
+        var ap2=anchorPos(a,a.w,a.h);
+        dv.style.left=ap2.x+'%';dv.style.top=ap2.y+'%';
         dv.style.width=(a.w||10)+'%';dv.style.height=(a.h||10)+'%';
         dv.appendChild(drawFreeSvg(a,layer));
         applyCommon(dv,a);
@@ -8453,7 +8463,8 @@
         var lkCard=locked?verCardFor(a):null;
         c.className='an-item an-cell'+((it||locked)?'':' empty')
           +(selAnnot===i?' sel':'');
-        c.style.left=a.x+'%';c.style.top=a.y+'%';
+        var ap3=anchorPos(a,a.w,a.h);
+        c.style.left=ap3.x+'%';c.style.top=ap3.y+'%';
         c.style.width=(a.w||34)+'%';c.style.height=(a.h||30)+'%';
         applyCommon(c,a);
         c.setAttribute('data-idx',i);
@@ -8585,7 +8596,8 @@
         var d2=document.createElement('div');
         d2.className='an-item an-text'+(a.bg===0?' nobg':'')
           +(selAnnot===i?' sel':'');
-        d2.style.left=a.x+'%';d2.style.top=a.y+'%';
+        var ap4=anchorPos(a,a.w,a.h);
+        d2.style.left=ap4.x+'%';d2.style.top=ap4.y+'%';
         /* the fit multiplier rides on the element as a variable, so
            shrink-to-fit never rewrites a.size (T15) */
         d2.style.fontSize='calc('+fontPx(layer,a.size)
@@ -8675,7 +8687,8 @@
       } else if(a.k==='image'){
         var im=document.createElement('div');
         im.className='an-item an-image'+(selAnnot===i?' sel':'');
-        im.style.left=a.x+'%';im.style.top=a.y+'%';
+        var ap5=anchorPos(a,a.w,a.h);
+        im.style.left=ap5.x+'%';im.style.top=ap5.y+'%';
         im.style.width=(a.w||30)+'%';im.style.height=(a.h||24)+'%';
         applyCommon(im,a);
         im.setAttribute('data-idx',i);
@@ -8697,7 +8710,8 @@
         var fl=document.createElement('div');
         fl.className='an-item an-flip'+(selAnnot===i?' sel':'')
           +(fr.length?'':' empty');
-        fl.style.left=a.x+'%';fl.style.top=a.y+'%';
+        var ap6=anchorPos(a,a.w,a.h);
+        fl.style.left=ap6.x+'%';fl.style.top=ap6.y+'%';
         fl.style.width=(a.w||40)+'%';fl.style.height=(a.h||32)+'%';
         applyCommon(fl,a);
         fl.setAttribute('data-idx',i);
@@ -8794,6 +8808,10 @@
       if(editing) fel.classList.add('an-fbother');
       else if(fel.parentNode) fel.parentNode.removeChild(fel);
     });
+    /* BEFORE the arrows: an attached endpoint is derived from where its
+       target sits, and an anchored target has not finished moving until
+       anchorFix has measured it */
+    if(_anchorFixWanted) anchorFix(layer,s);
     _arrows.forEach(function(i){
       drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
     });
@@ -8869,6 +8887,8 @@
        past its fit height was measured before the words arrived
        (2026-08-25, found in the browser). */
     fitTexts(layer,s,editing);
+    /* ...and AFTER the fit pass, which can change a box's height */
+    if(_anchorFixWanted) anchorFix(layer,s);
     /* ---- STRAYS ------------------------------------------------------
        Anything sitting outside the page. They used to be clipped by the
        stage and unreachable — you could not scroll to them and you could
@@ -9759,6 +9779,9 @@
         if(!m||!o) return;
         if(m.k==='arrow'){
           m.x1=o.x1+dx;m.y1=o.y1+dy;m.x2=o.x2+dx;m.y2=o.y2+dy;
+        } else if(m.anch){
+          var op=anchorPos(o,o.w,o.h);
+          anchorSet(m,op.x+dx,op.y+dy,o.w,o.h);
         } else {m.x=o.x+dx;m.y=o.y+dy;}
         var me=movedEls[i];
         if(me){me.el.style.left=(me.l+dx)+'%';
@@ -10236,6 +10259,29 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* PINNED TO WHICH CORNER (T14). Offered for one object at a
+         time: an anchor is a fact about that item, and a menu that
+         set nine of them at once would be a menu nobody could undo in
+         their head. */
+      if(selIdxs().length===1){
+        var anI=selIdxs()[0];
+        var anA=(pres.slides[cur].annots||[])[anI];
+        if(anA&&anA.k!=='arrow'){
+          menuHead(m,'pinned to');
+          var nowAn=anA.anch||'';
+          row('Nothing — measured from the top left','',
+            function(){setAnchor(anI,'');},
+            'The default, and what every object in every deck did '
+            +'before this existed').classList.toggle('on',!nowAn);
+          ['tl','tc','tr','cl','c','cr','bl','bc','br']
+            .forEach(function(k){
+              if(k==='tl') return;   /* same as no anchor */
+              row(ANCHORS[k][0],'',function(){setAnchor(anI,k);},
+                'Stays this far from there when the page changes shape')
+                .classList.toggle('on',nowAn===k);
+            });
+        }
+      }
       /* COMPONENTS. The rows differ by what you are pointing at: a
          plain selection can BECOME one; an instance can push its look
          to the definition or leave it. */
@@ -12275,6 +12321,14 @@
       a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;
       if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){
         return [m[0]+dx,m[1]+dy];});
+    } else if(a.anch){
+      /* an anchored item is stored as a distance from its corner, so a
+         page-space delta is not a delta on the stored number — moving
+         right DECREASES "distance from the right edge". Going out to
+         page coordinates and back is the only version of this that
+         cannot get a sign wrong (T14). */
+      var ap=anchorPos(a,a.w,a.h);
+      anchorSet(a,ap.x+dx,ap.y+dy,a.w,a.h);
     } else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
   }
   function nudgeSel(dx,dy){
@@ -12374,7 +12428,7 @@
     return bb;
   }
   function placeAt(x,l2,t2){
-    x.a.x=l2;x.a.y=t2;
+    anchorSet(x.a,l2,t2,x.w,x.h);
     /* figure frames: pin the model to the visual box so the aspect fit
        re-renders the plot exactly in the slot we computed */
     if(x.a.k==='cell'){x.a.w=x.w;x.a.h=x.h;}
@@ -13844,6 +13898,137 @@
       });
     });
   })();
+  /* ---- ANCHORING: WHAT HAPPENS WHEN THE PAGE CHANGES SHAPE ------------
+     (TASKS T14.) The design note, and the first thing it has to say is
+     what is ALREADY true, because half this task is done and saying so
+     is the difference between building the right thing and rebuilding
+     the wrong one.
+
+     RELATIVE SIZING ALREADY IS THE WHOLE COORDINATE SYSTEM. Every item
+     is stored in percent of the page — x and w of its width, y and h of
+     its height, text size as a percent of height — which is why one deck
+     renders at 16:9, on A4 and on an A0 poster with no stored number
+     changing. There is nothing to add there and nothing to opt into.
+
+     WHAT IS ACTUALLY MISSING is that the two percentages are of
+     DIFFERENT things. Go from 16:9 to a portrait poster and a box 30%
+     wide by 30% tall stops being square; a caption 2% below its figure
+     is suddenly 5% below it; a footer 4% from the bottom drifts. Every
+     item is relative, and the RELATIONSHIP between them is not.
+
+     THE MINIMAL USEFUL SUBSET, and it is deliberately not a constraint
+     solver: an item may name ONE anchor — which corner or edge of the
+     page it is measured from — and that is all. `a.anch`:
+
+       (absent)  today's behaviour exactly: x/y are the top-left corner.
+       'tr' 'bl' 'br'   measured from that corner instead, so a footer
+                 pinned 'bl' stays 4% off the bottom whatever the page
+                 does, and a page-number 'br' stays in its corner.
+       'tc' 'bc' 'cl' 'cr'   an edge midpoint: centred across, pinned to
+                 that edge.
+       'c'       the page's middle, both ways.
+
+     WHY ONE ANCHOR AND NOT TWO. An anchor per axis (left+bottom,
+     right+top) is what a constraint solver grows out of, and the task
+     explicitly rules that out. One anchor per item answers the cases
+     people actually hit — furniture in a corner, a title centred across
+     the top, a logo bottom-right — and stays a single lookup with no
+     solving, no ordering, and no cycles.
+
+     HOW IT IS APPLIED. Not by rewriting x/y — that would bake the
+     current page into the model, which is exactly what a poster reflow
+     must not do. The stored numbers keep meaning "this far from my
+     anchor", and the anchor is resolved at RENDER time into the
+     left/top the layer wants. anchorPos is the one function that does
+     it, and it is an identity for an item with no anchor, which is
+     every item in every deck to date. */
+  var ANCHORS={
+    tl:['Top left',0,0],      tc:['Top, centred',50,0],
+    tr:['Top right',100,0],
+    cl:['Left, middle',0,50], c:['Centre of the page',50,50],
+    cr:['Right, middle',100,50],
+    bl:['Bottom left',0,100], bc:['Bottom, centred',50,100],
+    br:['Bottom right',100,100]
+  };
+  /* the left/top an item should render at, given its anchor. `w`/`h` are
+     the item's own size in page percent, needed because an item anchored
+     to the right edge is measured from ITS right edge — otherwise
+     "10% from the right" would put its left edge there and hang the item
+     off the page. */
+  function anchorPos(a,w,h){
+    var an=a&&a.anch;
+    if(!an||!ANCHORS[an]) return {x:a.x||0,y:a.y||0};
+    var A=ANCHORS[an];
+    var dx=a.x||0,dy=a.y||0;
+    var x,y;
+    if(A[1]===0) x=dx;
+    else if(A[1]===100) x=100-dx-(w||0);
+    else x=50-(w||0)/2+dx;
+    if(A[2]===0) y=dy;
+    else if(A[2]===100) y=100-dy-(h||0);
+    else y=50-(h||0)/2+dy;
+    return {x:x,y:y};
+  }
+  /* THE INVERSE. Everything that positions an item thinks in PAGE
+     coordinates — a drag, an arrange, a snap — and must not have to know
+     about anchors. This is the one place that converts, and it is the
+     identity for an unanchored item. */
+  /* THE MEASURED PASS, and the reason the naive one is not enough.
+     anchorPos needs the item's SIZE to measure from a right or bottom
+     edge — and the items that most want anchoring are exactly the ones
+     whose size is not stored: an auto-height text box, an aspect-fitted
+     figure frame, a box that shrink-to-fit has just scaled. With a.h
+     undefined the maths put their TOP at the bottom edge and pushed
+     them off the page, which is worse than not anchoring at all.
+
+     So anchored items are placed twice: once from the stored numbers,
+     as everything else is, and again here from what they actually
+     measured. Only the ELEMENT is corrected — the model keeps saying
+     "this far from my corner", which is the whole point (2026-08-25,
+     found by A/B-ing a pinned and an unpinned text box across a page
+     shape change: both drifted identically, so the feature was inert
+     for the case it exists for). */
+  function anchorFix(layer,s){
+    if(!layer||!s) return;
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||!a.anch||a.k==='arrow') return;
+      var A=ANCHORS[a.anch];
+      if(!A||(A[1]===0&&A[2]===0)) return;   /* top-left: nothing to do */
+      var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      var lr=layer.getBoundingClientRect();
+      if(!lr.width||!lr.height) return;
+      var er=el.getBoundingClientRect();
+      var p=anchorPos(a,er.width/lr.width*100,er.height/lr.height*100);
+      el.style.left=p.x+'%';el.style.top=p.y+'%';
+    });
+  }
+  function anchorSet(a,x,y,w,h){
+    var an=a&&a.anch;
+    if(!an||!ANCHORS[an]){a.x=x;a.y=y;return;}
+    var A=ANCHORS[an];
+    a.x=(A[1]===0)?x:(A[1]===100)?(100-x-(w||0)):(x-(50-(w||0)/2));
+    a.y=(A[2]===0)?y:(A[2]===100)?(100-y-(h||0)):(y-(50-(h||0)/2));
+  }
+  /* setting an anchor must not MOVE the item: the stored offset is
+     re-expressed against the new corner so the thing stays exactly where
+     it is and only its future behaviour changes. Anything else would
+     make the control feel like it did something random. */
+  function setAnchor(i,an){
+    var s2=pres.slides[cur];
+    var a=s2&&(s2.annots||[])[i];
+    if(!a||a.k==='arrow') return;
+    var layer=stage.querySelector('.annot-layer');
+    var r=layer?annotRectPct(layer,s2,i):null;
+    var w=r?(r.r-r.l):(a.w||0),h=r?(r.b-r.t):(a.h||0);
+    var absX=r?r.l:(a.x||0),absY=r?r.t:(a.y||0);
+    if(!an||!ANCHORS[an]) delete a.anch; else a.anch=an;
+    anchorSet(a,absX,absY,w,h);
+    markDirty();
+    if(layer){renderAnnots(layer,s2);paintSel(layer);}
+    toast(an&&ANCHORS[an]?('Pinned to '+ANCHORS[an][0].toLowerCase())
+      :'No longer pinned \u2014 measured from the top left again');
+  }
   /* ---- COMPONENTS: ONE DEFINITION, MANY LINKED INSTANCES ---------------
      (TASKS T13.) A named group you can place again and again, where
      editing the definition updates every instance — and where each
@@ -17310,7 +17495,8 @@
       var p=document.createElement('div');
       p.className='pane slot'+(it?' filled':' empty')
         +(ai===activePane?' active':'');
-      p.style.left=a.x+'%';p.style.top=a.y+'%';
+      var ap7=anchorPos(a,a.w,a.h);
+      p.style.left=ap7.x+'%';p.style.top=ap7.y+'%';
       p.style.width=(a.w||10)+'%';p.style.height=(a.h||10)+'%';
       if(it){
         /* render the frame EXACTLY as it appears on the slide: the real
