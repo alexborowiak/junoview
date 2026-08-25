@@ -1346,7 +1346,7 @@ def test_tidy_up_reports_before_it_rearranges(out):
     assert "act.addEventListener('click',function(){\n      var n=f.fix()" \
         in out
     # it joins the panes that share the corner and the remembered geometry
-    assert "'stdpane','tidypane','flippane']" in out
+    assert "'stdpane','tidypane','objhist','flippane']" in out
 
 
 def test_the_tidy_tolerances_are_named_and_argued(out):
@@ -1386,3 +1386,65 @@ def test_tidy_finds_three_kinds_of_sloppy(out):
     assert "var g=(hi-lo-span)/(inner.length+1);" in out
     # a negative gap means they overlap -- that is not a spacing problem
     assert "if(gaps.some(function(g){return g<0;})) return;" in out
+
+
+def test_per_object_history_is_derived_from_the_undo_stack(out):
+    """TASKS T10, and the design note the task asked for.
+
+    THE HISTORY IS DERIVED, NOT RECORDED. undoStack already holds a full
+    snapshot of the deck at every step, so an object's past is those
+    snapshots read through the object's identity. There is no second log
+    to keep in step, nothing to forget to record, and no way for the
+    timeline to claim something Ctrl+Z would disagree with. It costs
+    nothing until the pane is opened.
+    """
+    assert "function objHistory(oid){" in out
+    assert "var snaps=undoStack.slice(-OH_DEPTH).concat([histState()]);" \
+        in out
+    # consecutive identical states collapse: an edit elsewhere on the
+    # slide is not a state of THIS object
+    assert "if(out.length&&out[out.length-1].sig===sig) return;" in out
+    # and the walk is bounded, because each entry is a whole deck
+    assert "var OH_DEPTH=24;" in out
+
+
+def test_restoring_a_past_state_is_an_edit_not_a_rewind(out):
+    """The second half of the design note, and the half the task asked
+    to have settled: how per-object undo interacts with the global undo
+    stack. It does not interact with it at all.
+
+    Restoring writes the old state onto the object as it stands now and
+    takes one ordinary undo entry. Nothing is popped off the global
+    stack, so the conflict the task worried about cannot arise -- the
+    two mechanisms never touch the same data. Ctrl+Z afterwards undoes
+    the restore itself.
+    """
+    assert "function ohRestore(past){" in out
+    assert "s.annots[at]=deep(past);" in out
+    assert "markDirty();" in out
+    # identity and stacking order both survive the restore: the array
+    # position IS the z-order, so a restore must not send it to the front
+    assert "var keep=s.annots[at].oid;" in out
+    assert "s.annots[at].oid=keep;" in out
+
+
+def test_object_identity_is_lazy_and_self_healing(out):
+    """An index is not identity: an insert or a delete shifts everything
+    after it. Objects carry an oid, minted by ensureOids on first sight
+    rather than at the dozen places an annot can be born -- one funnel,
+    idempotent, called from renderAnnots which every slide render passes
+    through.
+
+    It re-mints a DUPLICATE, which is what a copied annot arrives with,
+    instead of asking every copy site to remember to strip one.
+    """
+    assert "function ensureOids(s){" in out
+    assert "if(!a.oid||seen[a.oid]) a.oid=mintOid();" in out
+    assert "function renderAnnots(layer,s){" in out
+    assert ("       no copy site has to remember to strip one. */\n"
+            "    ensureOids(s);") in out
+    # a schematic, not a render: rendering a historical state would mean
+    # running renderAnnots against a slide that does not exist
+    assert "function ohThumb(a){" in out
+    assert "function ohChanges(prev,now){" in out
+    assert "if(!prev) return 'created';" in out

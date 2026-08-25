@@ -123,10 +123,28 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   preflight row cannot hold. The tolerances (`TIDY_NEAR`, `TIDY_APART`,
   `TIDY_GAP_REL`) are the design: below one it is already aligned, above
   the other it is a decision. Reached from the Arrange menu.
-- [ ] **T10 · L — Per-object history (design first).** Per-object action
+- [x] **T10 · L — Per-object history (design first).** Per-object action
   log plus a small thumbnail timeline viewer ("what has this object looked
   like"); "undo just this object" where the ops don't conflict. Design
   note must settle interaction with the global undo stack.
+  *2026-08-25 — the design note, which the code carries in full under the
+  WHAT HAS THIS OBJECT LOOKED LIKE banner:*
+  1. **Derived, not recorded.** `undoStack` already holds a whole-deck
+     snapshot per step. An object's past is those snapshots read through
+     its identity, so there is no second log to keep in step and the
+     timeline cannot contradict Ctrl+Z. Cost is zero until you look.
+  2. **Restoring is an EDIT, not a rewind** — this settles the
+     interaction the task asked about. It writes the old state onto the
+     object as it stands and takes one ordinary undo entry; nothing is
+     popped off the global stack, so the two mechanisms never touch the
+     same data and cannot conflict. Ctrl+Z then undoes the restore.
+  3. **Schema:** one new key, `a.oid`, minted lazily by `ensureOids` from
+     `renderAnnots` (the one funnel) and re-minted on duplicates, so no
+     copy site has to strip it. **Migration:** none — decks without oids
+     get them on first render, and Python copies annots wholesale so the
+     key survives a save.
+  Scope is one slide, deliberately: the question is asked about a thing
+  you are pointing at.
 - [ ] **T11 · L — Customisable ribbon (design first).** Reorder/hide
   ribbon buttons, persisted per user. HARD INVARIANTS: the ribbon never
   wraps to a second row (custom layouts still pass through

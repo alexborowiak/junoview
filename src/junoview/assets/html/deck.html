@@ -1267,6 +1267,19 @@
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
+      <!-- THIS OBJECT'S HISTORY. A fourth pane in the shell, and the
+           only one that looks BACKWARDS. Its list is derived from the
+           undo stack rather than recorded separately (see the section in
+           deck.js), so it can never disagree with what Ctrl+Z would
+           do. -->
+      <aside class="selpane preflight" id="objhist" hidden>
+        <div class="selpane-h"><span id="objhist-t">This object</span>
+          <button class="dbtn dc-icon" id="objhist-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="pf-count" id="objhist-count"></div>
+        <div class="selpane-list" id="objhist-list"></div>
+      </aside>
       <!-- TIDY UP, the third pane in this shell and for a third
            question. Print check asks whether THIS page survives a
            printer; Standardise text asks whether the DECK agrees with

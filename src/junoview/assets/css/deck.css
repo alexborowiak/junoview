@@ -2050,6 +2050,30 @@ body.light .fp-tielab{color:var(--ink-3);}
 .mini-pane.is-flip{background:#243b52;}
 .sp-kind.k-flip{background:#2a4761;}
 
+/* ---------- one object's history ----------
+   A row is a schematic of a past state, a sentence about what changed,
+   and (for anything but the current state) a button. Not a .pf-row for
+   the reason .std-find is not one: a preflight row is one big button. */
+.oh-row{display:flex;align-items:center;gap:9px;padding:7px 12px;
+  border-left:3px solid transparent;}
+.oh-row.oh-now{border-left-color:var(--cyan);}
+.oh-body{flex:1;min-width:0;}
+.oh-h{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:#7d93a6;}
+.oh-what{font-size:11.5px;color:#c3d2df;line-height:1.35;
+  overflow:hidden;text-overflow:ellipsis;}
+.oh-do{font-size:10.5px;padding:3px 8px;flex:none;}
+.oh-thumb{flex:none;width:38px;max-height:34px;border-radius:3px;
+  border:1px solid #ffffff2b;background:#ffffff08;overflow:hidden;
+  font-size:7px;line-height:1.15;padding:2px;color:#9db1c1;
+  display:flex;align-items:center;justify-content:center;
+  text-align:center;word-break:break-word;}
+.oh-thumb.oh-line{max-height:0;height:0;border-width:0 0 2px 0;
+  border-radius:0;align-self:center;}
+.oh-thumb.oh-block{font-family:var(--mono);font-size:6.5px;}
+body.light .oh-what{color:var(--ink-2);}
+body.light .oh-h{color:var(--ink-3);}
+
 /* ---------- standardise text ----------
    Not a .pf-row: a preflight row is one big button that takes you to the
    thing, and a finding here carries several boxes AND an action, so the

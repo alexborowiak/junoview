@@ -1331,6 +1331,232 @@
     var re=$('#preflight-rerun');
     if(re) re.addEventListener('click',renderPreflight);
   })();
+  /* ---- WHAT HAS THIS OBJECT LOOKED LIKE --------------------------------
+     Per-object history (TASKS T10). Three decisions carry the whole
+     design, and each of them is the reason there is no second machine
+     here fighting the first:
+
+     1. THE HISTORY IS DERIVED, NOT RECORDED. undoStack already holds a
+        full snapshot of the deck at every step; an object's past is
+        those snapshots, read through the object's own identity. So
+        there is no second log to keep in step, nothing to forget to
+        record, and no way for the timeline to claim something Ctrl+Z
+        would disagree with. It costs nothing at all until you look.
+
+     2. RESTORING A PAST STATE IS AN EDIT, NOT A REWIND. It writes that
+        state onto the object as it stands now and takes one ordinary
+        undo entry. Nothing is popped off the global stack, so "undo
+        just this object" cannot conflict with it — the conflict the
+        task worried about does not arise, because the two mechanisms
+        never touch the same data. Ctrl+Z afterwards undoes the restore
+        itself, which is exactly what anyone would expect.
+
+     3. IDENTITY IS LAZY AND SELF-HEALING. An index is not identity: an
+        insert or a delete shifts every object after it. Objects carry
+        an `oid`, minted on first sight by ensureOids rather than at the
+        dozen places an annot can be born — one funnel, idempotent, and
+        it re-mints a duplicate (which is what a copied annot arrives
+        with) instead of asking every copy site to remember to strip
+        one.
+
+     Scope is ONE SLIDE, deliberately: "what has this object looked
+     like" is asked about a thing you are pointing at on the page in
+     front of you, and cross-slide identity would buy nothing for it. */
+  var oidSeq=0;
+  function mintOid(){
+    return 'o'+(oidSeq++).toString(36)
+      +Math.random().toString(36).slice(2,6);
+  }
+  function ensureOids(s){
+    if(!s||!s.annots) return;
+    var seen={};
+    s.annots.forEach(function(a){
+      if(!a) return;
+      if(!a.oid||seen[a.oid]) a.oid=mintOid();
+      seen[a.oid]=1;
+    });
+  }
+  /* the things worth naming when they change. A caption saying "x, y, w"
+     is a diff; one saying "moved, resized" is a sentence. */
+  var OH_WORDS={x:'moved',y:'moved',w:'resized',h:'resized',
+    x1:'moved',y1:'moved',x2:'moved',y2:'moved',mid:'re-routed',
+    size:'text size',color:'colour',bg:'background',bgc:'background',
+    txcol:'colour',bgcol:'background',
+    font:'typeface',style:'named type',text:'text',rot:'rotation',
+    fill:'fill',fillc:'fill',grad:'fill',sw:'line weight',
+    align:'alignment',lh:'line spacing',pspace:'paragraph spacing',
+    ref:'the card it shows',crop:'crop',op:'see-through',
+    lock:'lock',hide:'hidden',grp:'grouping',anim:'build',
+    b:'bold',i:'italic',u:'underline',strike:'strike'};
+  function ohChanges(prev,now){
+    if(!prev) return 'created';
+    var words=[],seen={};
+    var keys={};
+    Object.keys(prev).forEach(function(k){keys[k]=1;});
+    Object.keys(now).forEach(function(k){keys[k]=1;});
+    Object.keys(keys).forEach(function(k){
+      if(k==='oid') return;
+      if(JSON.stringify(prev[k])===JSON.stringify(now[k])) return;
+      var w=OH_WORDS[k]||k;
+      if(!seen[w]){seen[w]=1;words.push(w);}
+    });
+    if(!words.length) return 'no visible change';
+    return words.slice(0,4).join(', ')
+      +(words.length>4?' and more':'');
+  }
+  /* HOW FAR BACK. The undo stack is 50 deep and each entry is the whole
+     deck as a string, so reading them all means parsing 50 decks —
+     which for a deck carrying a couple of pasted screenshots is real
+     work. This is an on-demand inspector, so it does that work only
+     when the pane is open, and only over the recent end of the stack:
+     "what has this object looked like" is a question about the last
+     little while, and a timeline nobody scrolls to the bottom of does
+     not earn a two-second pause. */
+  var OH_DEPTH=24;
+  function objHistory(oid){
+    if(!oid) return [];
+    var snaps=undoStack.slice(-OH_DEPTH).concat([histState()]);
+    var out=[];
+    snaps.forEach(function(js){
+      var d;try{d=JSON.parse(js);}catch(e){return;}
+      var sl=(d.slides||[])[cur];
+      if(!sl||!sl.annots) return;
+      var hit=null;
+      sl.annots.forEach(function(a){if(a&&a.oid===oid) hit=a;});
+      if(!hit) return;
+      var sig=JSON.stringify(hit);
+      if(out.length&&out[out.length-1].sig===sig) return;
+      out.push({a:hit,sig:sig});
+    });
+    /* newest first: the state you are looking at is the one you are
+       asking about, and the interesting rows are the ones near it */
+    out.reverse();
+    out.forEach(function(e,k){
+      e.what=ohChanges(out[k+1]?out[k+1].a:null,e.a);
+      e.now=(k===0);
+    });
+    return out;
+  }
+  /* a schematic of a past state, not a render of it. Rendering an
+     arbitrary historical annot would mean running renderAnnots against a
+     slide that does not exist; the thing a person actually needs off a
+     timeline row is "which one was this" — the shape, the colour, and
+     the words if it had any. */
+  function ohThumb(a){
+    var d=document.createElement('div');
+    d.className='oh-thumb';
+    var w=Math.max(6,Math.min(100,a.w||18));
+    var h=Math.max(6,Math.min(100,a.h||12));
+    d.style.aspectRatio=(w/h).toFixed(3);
+    if(a.k==='text'){
+      d.classList.add('oh-text');
+      d.textContent=String(a.text||'').trim().slice(0,40)||'(empty)';
+      if(a.color) d.style.color=a.color;
+      if(a.bg!==0&&a.bgc) d.style.background=a.bgc;
+    } else if(a.k==='rect'){
+      d.style.borderColor=a.color||'#ff6b57';
+      if(a.fill&&a.fillc) d.style.background=a.fillc;
+    } else if(a.k==='arrow'){
+      d.classList.add('oh-line');
+      d.style.borderColor=a.color||'#ff6b57';
+    } else {
+      d.classList.add('oh-block');
+      d.textContent=annotLabel(a);
+    }
+    return d;
+  }
+  var ohOid=null;
+  function renderObjHist(){
+    var list=$('#objhist-list'),head=$('#objhist-count');
+    var ttl=$('#objhist-t');
+    if(!list) return;
+    var s=pres.slides[cur];
+    var live=null;
+    (s&&s.annots||[]).forEach(function(a,i){
+      if(a&&a.oid===ohOid) live={a:a,i:i};});
+    if(ttl) ttl.textContent=live?annotLabel(live.a):'This object';
+    var hist=objHistory(ohOid);
+    if(head) head.textContent=!live
+      ?'this object is gone'
+      :(hist.length===1?'one state — nothing has changed yet'
+        :hist.length+' states');
+    list.innerHTML='';
+    if(!live){
+      var g=document.createElement('div');
+      g.className='pf-ok';
+      g.textContent='This object is no longer on the page. Ctrl+Z brings '
+        +'back a deletion; this pane only shows what is still here.';
+      list.appendChild(g);
+      return;
+    }
+    hist.forEach(function(e,k){
+      var row=document.createElement('div');
+      row.className='oh-row'+(e.now?' oh-now':'');
+      row.appendChild(ohThumb(e.a));
+      var body=document.createElement('div');
+      body.className='oh-body';
+      var h=document.createElement('div');
+      h.className='oh-h';
+      h.textContent=e.now?'now':(k===hist.length-1?'earliest kept'
+        :(k+' step'+(k===1?'':'s')+' ago'));
+      body.appendChild(h);
+      var w=document.createElement('div');
+      w.className='oh-what';w.textContent=e.what;
+      body.appendChild(w);
+      row.appendChild(body);
+      if(!e.now){
+        var b=document.createElement('button');
+        b.className='dbtn oh-do';b.textContent='Put it back to this';
+        b.title='Writes this state onto the object as it stands now. It '
+          +'is an ordinary edit \u2014 Ctrl+Z undoes it, and nothing '
+          +'else on the page moves.';
+        b.addEventListener('click',function(){
+          ohRestore(e.a);});
+        row.appendChild(b);
+      }
+      list.appendChild(row);
+    });
+  }
+  function ohRestore(past){
+    var s=pres.slides[cur];
+    var at=-1;
+    (s&&s.annots||[]).forEach(function(a,i){
+      if(a&&a.oid===ohOid) at=i;});
+    if(at<0){renderObjHist();return;}
+    /* replace the object's fields wholesale, keeping its identity and
+       its place in the array — the array position IS the stacking order,
+       and restoring a look must not send it to the front */
+    var keep=s.annots[at].oid;
+    s.annots[at]=deep(past);
+    s.annots[at].oid=keep;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,at);}
+    toast('Put back \u2014 one edit, so Ctrl+Z undoes it');
+    renderObjHist();
+  }
+  function showObjHist(){
+    var s=pres.slides[cur];
+    var idxs=selIdxs();
+    var a=s&&(s.annots||[])[idxs[idxs.length-1]];
+    if(!a){toast('Select an object first');return;}
+    ensureOids(s);
+    ohOid=a.oid;
+    var pane=$('#objhist'); if(!pane) return;
+    ['#selpane','#animpane','#preflight','#notespane','#stdpane',
+     '#tidypane'].forEach(function(sel){
+      var o=$(sel); if(o) o.hidden=true;});
+    pane.hidden=false;
+    renderObjHist();
+    syncPaneDock();
+  }
+  (function(){
+    var cl=$('#objhist-close');
+    if(cl) cl.addEventListener('click',function(){
+      var p=$('#objhist'); if(p) p.hidden=true;
+      syncPaneDock();
+    });
+  })();
   /* ---- TIDY UP THIS PAGE -----------------------------------------------
      A third question in the same shell as the other two. preflight() asks
      whether this page survives a printer. standardise() asks whether the
@@ -3146,7 +3372,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'stdpane','tidypane','flippane']
+   'stdpane','tidypane','objhist','flippane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -7565,6 +7791,11 @@
     tableNormalise(a);
   }
   function renderAnnots(layer,s){
+    /* the one funnel every slide render passes through, which makes it
+       the only place identity has to be minted — see WHAT HAS THIS
+       OBJECT LOOKED LIKE. Idempotent, and it re-mints a duplicate, so
+       no copy site has to remember to strip one. */
+    ensureOids(s);
     var editing=(mode==='edit');
     /* removing a focused node fires no blur in Chrome or Firefox, so
        without this every rebuild — a slide change, a notebook refresh,
@@ -9445,6 +9676,9 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      row('History of this object…','',showObjHist,
+        'Every state it has been through that the undo stack still '
+        +'remembers, and a button to put any of them back','history');
       /* SELECT BY WHAT THINGS ARE. Inline rather than behind a
          submenu: this is already a menu, and the counts are the point —
          a row that says how many it will take is a row you can trust
@@ -14672,7 +14906,7 @@
       if(typeof idx==='number') flipSel=idx;
       /* one pane in the corner at a time — the rule showVerpane keeps */
       ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-       '#tidypane']
+       '#tidypane','#objhist']
         .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
       var ob=$('#objects-btn');
       if(ob) ob.setAttribute('aria-pressed','false');
