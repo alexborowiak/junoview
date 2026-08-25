@@ -186,9 +186,16 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   per object: size as % of slide, edge anchoring, centring — so a slide-
   size change or a longer title reflows instead of exploding. Explicitly
   NOT a full constraint solver; scope the minimal useful subset.
-- [ ] **T15 · M — Text auto-fit and overflow.** Predictable shrink-to-fit
+- [x] **T15 · M — Text auto-fit and overflow.** Predictable shrink-to-fit
   toggle and a visible overflow indicator in the editor. NOT multi-box
   text flow (descoped).
+  *2026-08-25:* the design decision first — text has no height to
+  overflow (`a.h` is not a text property, and three places say so), so
+  the fit target is a separate opt-in `a.fh`: the height you ask the
+  WORDS to live within, not the box's. The box still grows, which is
+  what keeps an overrun visible rather than clipped. Shrinking is a
+  render-time `--an-fit` multiplier, never a rewrite of `a.size`, with a
+  `FIT_MIN` floor — past it, it stops and marks the box instead.
 - [x] **T16 · M — Math in deck text.** LaTeX in deck text boxes via the
   already-pinned MathJax. Must work in exports and offline (the sw.js
   precache pins must keep matching loaders — `tests/test_js_contract.py`).

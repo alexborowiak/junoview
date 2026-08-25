@@ -106,6 +106,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T15, text auto-fit: deck.js gained
+# fitTexts and the fit toggle, deck.css the .an-overflowing mark,
+# help.html a paragraph. Editor-only; pinned by
+# tests/test_slide_editor.py's three fit tests.
 # Moved 2026-08-25 for TASKS T12, design tokens: deck.js gained
 # the DESIGN TOKENS registry and its resolver, the token swatches
 # and editor; deck.css the --tk-rad corner and the chip rules;
@@ -177,8 +181,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "a11b32559a762c29a1bdd32f8419455d"
-EXPECTED_BYTES = 2405415
+EXPECTED_MD5 = "cf7d734f4041419cfb9a07b89cdf8c4d"
+EXPECTED_BYTES = 2413027
 
 
 def _render_example() -> str:

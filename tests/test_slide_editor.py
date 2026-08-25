@@ -1622,3 +1622,59 @@ def test_the_token_swatches_are_wired_where_they_are_built(out):
     assert "if(isFill) applyFillColor('@'+k); else applyTextColor('@'+k);" \
         in out
     assert "b.setAttribute('data-c','@'+k);" in out
+
+
+def test_shrink_to_fit_never_rewrites_the_size_you_chose(out):
+    """TASKS T15, and the design decision it needed first: what box does
+    a text box overflow? It has none. `a.h` is not a text property --
+    the renderer has never read it for one, sameSize excludes text from
+    height, and APPLY_PROPS says a ticked Height on a heading would be a
+    control that does nothing. Text auto-heights from its words, and
+    that is not being changed.
+
+    So the fit target is a separate, opt-in field: `a.fh`, the height
+    you are asking the WORDS to live within. It is not the box's height
+    -- the box still grows, which is what keeps the overflow visible
+    instead of clipped.
+
+    Shrinking is a render-time multiplier, never a rewrite of a.size:
+    writing the size would bake it, fight the style system on the next
+    Re-apply, and lose the original the moment the words got shorter.
+    """
+    assert "function fitTexts(layer,s,editing){" in out
+    assert "if(!a||a.k!=='text'||!a.fh) return;" in out
+    assert "el.style.setProperty('--an-fit',k.toFixed(3));" in out
+    assert "* var(--an-fit,1))';" in out
+    # two passes, not a loop: wrapping is not linear in font size
+    assert "var got2=el.scrollHeight||0;" in out
+    # and a floor, because text shrunk past legibility is a different
+    # problem being hidden rather than a fit
+    assert "var FIT_MIN=0.62;" in out
+    assert "var k=Math.max(FIT_MIN,want/got);" in out
+
+
+def test_a_box_that_cannot_fit_says_so(out):
+    """Past the floor it stops and marks the box, and with fit off an
+    overrun is marked the same way. The mark is an editing aid, gated on
+    .deck.editing and killed in print and #print-root, by the same rule
+    the guides follow: a note to the author, never ink.
+    """
+    assert "el.classList.add('an-overflowing');" in out
+    assert ".deck.editing .an-text.an-overflowing{" in out
+    assert 'content:"does not fit"' in out
+    assert "#print-root .an-overflowing{outline:none!important;}" in out
+    # the toggle takes the height from what the box IS now, which is the
+    # only version of this anybody can predict
+    assert "function toggleFit(i){" in out
+    assert "a.fh=r?Math.round((r.b-r.t)*100)/100:12;" in out
+
+
+def test_the_fit_pass_runs_at_the_text_commit_too(out):
+    """Committing a text box writes into the element in place and never
+    rebuilds the layer, so a box that had just been filled past its fit
+    height was measured before the words arrived -- the same shape of
+    bug T16's typeset hit, found the same way.
+    """
+    assert ("      if(hasMaths(a2)) typeset(layer);\n"
+            "      /* and re-fit, for the same reason") in out
+    assert "fitTexts(layer,s2,true);" in out

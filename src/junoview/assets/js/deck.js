@@ -1518,6 +1518,37 @@
       list.appendChild(row);
     });
   }
+  /* the fit height is taken from what the box is NOW: you set it by
+     making the box the size you want and saying "stay this big", which
+     is the only version of this anybody can predict. */
+  function toggleFit(i){
+    var s2=pres.slides[cur];
+    var a=s2&&(s2.annots||[])[i];
+    if(!a||a.k!=='text') return;
+    var l=stage.querySelector('.annot-layer');
+    if(a.fit==='shrink'){delete a.fit;}
+    else{
+      if(!a.fh){
+        var r=l?annotRectPct(l,s2,i):null;
+        a.fh=r?Math.round((r.b-r.t)*100)/100:12;
+      }
+      a.fit='shrink';
+    }
+    markDirty();
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    toast(a.fit?('Shrinking to fit '+a.fh.toFixed(1)+'% of the page')
+      :'Fit off — the box grows with its words again');
+  }
+  function clearFit(i){
+    var s2=pres.slides[cur];
+    var a=s2&&(s2.annots||[])[i];
+    if(!a) return;
+    delete a.fh;delete a.fit;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    toast('Fit height forgotten');
+  }
   function ohRestore(past){
     var s=pres.slides[cur];
     var at=-1;
@@ -6321,6 +6352,11 @@
     if(typeof idx==='number') return (s.annots||[])[idx];
     return null;
   }
+  /* how far shrink-to-fit is allowed to go. Below about two thirds the
+     text stops being the size you chose and starts being a different
+     size that happens to fit, which is the behaviour every "autofit"
+     everybody hates actually is. Past the floor it stops and says so. */
+  var FIT_MIN=0.62;
   function fontPx(layer,size){
     var h=layer.getBoundingClientRect().height||600;
     /* NO legibility floor. Text is a percentage of the page height, and
@@ -7741,6 +7777,9 @@
          very strange thing to have to discover (2026-08-25, found in
          the browser while closing TASKS T16). */
       if(hasMaths(a2)) typeset(layer);
+      /* and re-fit, for the same reason: the words that just arrived are
+         the ones the fit height is about (T15) */
+      fitTexts(layer,s2,true);
       markDirty();
     });
     /* AUTO-BULLETS. Typing "- " or "* " at the start of a plain text box
@@ -8231,6 +8270,45 @@
     }
     tableNormalise(a);
   }
+  /* the fit pass itself. Called from renderAnnots and from the text
+     commit -- see the note at its call site. */
+  function fitTexts(layer,s,editing){
+    if(!layer||!s) return;
+      (s.annots||[]).forEach(function(a,i){
+        if(!a||a.k!=='text'||!a.fh) return;
+        if(a.hide&&editing) return;
+        var el=layer.querySelector('div.an-item[data-idx="'+i+'"]');
+        if(!el) return;
+        var lr=layer.getBoundingClientRect();
+        var want=a.fh/100*(lr.height||600);
+        if(!(want>0)) return;
+        el.style.removeProperty('--an-fit');
+        el.classList.remove('an-overflowing');
+        var got=el.scrollHeight||el.getBoundingClientRect().height||0;
+        if(!(got>0)) return;
+        if(a.fit==='shrink'&&got>want){
+          /* ONE ratio, then one refinement. Line wrapping is not linear
+             in font size — shrinking can pull a word up onto the line
+             above and free a whole line — so a single division
+             overshoots. Two passes lands within a line; a loop would
+             cost a layout per step for a difference nobody can see. */
+          var k=Math.max(FIT_MIN,want/got);
+          el.style.setProperty('--an-fit',k.toFixed(3));
+          var got2=el.scrollHeight||0;
+          if(got2>want&&got2>0){
+            k=Math.max(FIT_MIN,k*(want/got2));
+            el.style.setProperty('--an-fit',k.toFixed(3));
+          }
+          /* it can still fail: FIT_MIN is a floor, because text shrunk
+             past legibility is not a fit, it is a different problem
+             being hidden */
+          if((el.scrollHeight||0)>want+1&&editing)
+            el.classList.add('an-overflowing');
+        } else if(got>want+1&&editing){
+          el.classList.add('an-overflowing');
+        }
+      });
+  }
   function renderAnnots(layer,s){
     /* the one funnel every slide render passes through, which makes it
        the only place identity has to be minted — see WHAT HAS THIS
@@ -8501,7 +8579,10 @@
         d2.className='an-item an-text'+(a.bg===0?' nobg':'')
           +(selAnnot===i?' sel':'');
         d2.style.left=a.x+'%';d2.style.top=a.y+'%';
-        d2.style.fontSize=fontPx(layer,a.size);
+        /* the fit multiplier rides on the element as a variable, so
+           shrink-to-fit never rewrites a.size (T15) */
+        d2.style.fontSize='calc('+fontPx(layer,a.size)
+          +' * var(--an-fit,1))';
         /* only an EXPLICIT colour goes inline: the default comes from
            CSS so .page-light can flip it — a baked '#ffffff' default
            made every template text white-on-white on a light poster
@@ -8748,6 +8829,39 @@
       });
     }
     layer.appendChild(svgTop);
+    /* ---- SHRINK TO FIT, AND SAY SO WHEN IT CANNOT ---------------------
+       (TASKS T15.) Two halves of one question: does this text fit in the
+       space you meant it to have, and what should happen when it does
+       not.
+
+       THE DESIGN DECISION, which had to come first: what box does a text
+       box overflow? It has none. `a.h` is not a text property — the
+       renderer has never read it for one, sameSize excludes text from
+       height, and APPLY_PROPS says so in a comment ("a ticked Height on
+       a heading would be a control that does nothing"). Text auto-heights
+       from its words, which is right and is not being changed.
+
+       So the fit target is a SEPARATE, OPT-IN field: `a.fh`, the height
+       you are asking the words to live within, in % of the page. It is
+       not the box's height — the box still grows with its content, which
+       is what makes the overflow visible instead of clipped. It is the
+       line you have drawn and asked the text to respect. Absent, and
+       nothing here does anything at all, which is every text box in
+       every deck to date.
+
+       SHRINKING IS A RENDER-TIME SCALE, never a rewrite of a.size.
+       Writing the size would bake it (the T12 argument), fight the style
+       system on the next Re-apply, and lose the original the moment you
+       shortened the words again. A multiplier on the element leaves the
+       model saying what you asked for and the screen showing what fits.
+
+       fitTexts runs HERE, with the strays pass, because both need the
+       same thing: a DOM that has been laid out — and again at the text
+       COMMIT, because committing a box writes into the element in place
+       and never rebuilds the layer, so a box that had just been filled
+       past its fit height was measured before the words arrived
+       (2026-08-25, found in the browser). */
+    fitTexts(layer,s,editing);
     /* ---- STRAYS ------------------------------------------------------
        Anything sitting outside the page. They used to be clipped by the
        stage and unreachable — you could not scroll to them and you could
@@ -10115,6 +10229,22 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      if(selIdxs().length===1){
+        var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        if(fa&&fa.k==='text'){
+          menuHead(m,'fit');
+          var onFit=(fa.fit==='shrink');
+          row(onFit?'Shrink to fit: on':'Shrink to fit: off','',
+            function(){toggleFit(selIdxs()[0]);},
+            'Asks the words to live inside the height they have now. '
+            +'The size you chose is never rewritten — only what is '
+            +'drawn shrinks, and it stops before the text stops being '
+            +'readable.').classList.toggle('on',onFit);
+          if(fa.fh) row('Forget the fit height','',
+            function(){clearFit(selIdxs()[0]);},
+            'Back to a box that simply grows with its words');
+        }
+      }
       row('History of this object…','',showObjHist,
         'Every state it has been through that the undo stack still '
         +'remembers, and a button to put any of them back','history');
