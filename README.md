@@ -45,6 +45,8 @@ dependency is the Python standard library.
 | [Architecture](ARCHITECTURE.md) | how the code is laid out |
 | [Contributing](CONTRIBUTING.md) | how to get set up and send a change |
 | [Changelog](CHANGELOG.md) | what changed, and what moved |
+| [Backlog](TASKS.md) | what is left to do, and the design record of what was built |
+| [Audit](AUDIT-2026-08-26.md) | the evidence behind the open items |
 
 ## See it work
 

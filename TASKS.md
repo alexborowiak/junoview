@@ -7,6 +7,25 @@ needing live multi-user infrastructure, audio capture, or a hosted backend
 was cut (real-time co-editing, shared comments/change-tracking, live polls
 and audience Q&A, speech analytics, generative-media AI).
 
+## Where the work lives
+
+Everything about what is left to do is in two files, both in this repo:
+
+| | |
+|---|---|
+| **TASKS.md** (this file), **group 9** | **The queue.** 18 open items, T42–T59, each a theme with sub-bullets. Start here to pick something up. |
+| [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
+
+Groups 1–8 above are all ticked and are now the design record — what was
+built and, more usefully, what was rejected and why.
+
+**One caveat that governs the lot:** every finding is a *claim about
+code* until somebody drives it. Only the three ticked items in group 9
+were verified in a browser. 24 of the 84 (the figures group, gathered in
+T58) were never even double-checked and are leads, not conclusions.
+
+---
+
 ## How to work this file
 
 - Work 2–4 related tasks per session. One commit per task; tick the box in
