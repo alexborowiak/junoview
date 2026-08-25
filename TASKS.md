@@ -277,9 +277,15 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 7. Deck-as-code & programmability
 
-- [ ] **T33 · M — Deck JSON schema doc + validator.** Formalise the deck
+- [x] **T33 · M — Deck JSON schema doc + validator.** Formalise the deck
   format that `tests/test_deck_schema_parity.py` implies: a written schema
   and a `validate()` function. Foundation for T13, T32, T34.
+  *2026-08-25:* `notebook/deck_schema.py` holds the tables (`DECK_KEYS`,
+  `SLIDE_KEYS`, `ANNOT_KINDS`, `LAYOUTS`) and `validate_deck`, which
+  REPORTS and never coerces — the exact opposite of `_as_presentations`,
+  which coerces and never complains. Neither raises. `DECK-FORMAT.md` is
+  prose over the same tables and `tests/test_deck_schema.py` checks the
+  two agree in both directions, so the document cannot drift.
 - [ ] **T34 · L — Python deck API.** Load/edit/save decks from Python —
   `deck.slides[7].figures["toe_map"].update(...)` — living alongside
   `notebook/presentations.py`, round-tripping cleanly with the editor.

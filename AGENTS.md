@@ -8,6 +8,10 @@ Machine-specific notes (Windows paths, no Node, test invocation) live in
 
 ## Orient first
 
+The deck's own file format is written down in
+[DECK-FORMAT.md](DECK-FORMAT.md), with a `validate()` beside it in
+`notebook/deck_schema.py`.
+
 Read [ARCHITECTURE.md](ARCHITECTURE.md) before your first change — it has a
 twenty-minute reading order. The one sentence that matters:
 

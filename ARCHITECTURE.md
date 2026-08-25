@@ -46,6 +46,8 @@ src/junoview/
 │   ├── chains.py          provenance: which cell feeds which
 │   ├── variables.py       the variables index the sidebar's Variables view lists
 │   ├── presentations.py   reading saved decks off a notebook
+│   ├── deck_schema.py     the deck format written down, and a
+│   │                      validate() that reports against it
 │   └── loader.py          getting notebooks from disk or a URL
 │
 ├── render/            turning a Document into HTML
