@@ -6082,7 +6082,15 @@
      The placeholders are the ones every office suite uses, so a footer of
      "{n} / {N}" says what you would expect it to. */
   function furnText(txt,idx){
+    /* {n}/{N} are the DECK's numbers and keep meaning exactly what they
+       always did; {sn}/{sN} are the same question asked of the section,
+       for a talk that runs in parts (T23). Both resolved here, in the
+       one place furniture text is resolved. */
+    var sp=sectionPos(idx);
     return String(txt||'')
+      .replace(/\{sn\}/g,String(sp.n))
+      .replace(/\{sN\}/g,String(sp.of))
+      .replace(/\{sec\}/g,sp.name||'')
       .replace(/\{n\}/g,String(idx+1))
       .replace(/\{N\}/g,String((pres.slides||[]).length))
       .replace(/\{name\}/g,pres.name||'')
@@ -18880,6 +18888,83 @@
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     normSections();markDirty();refresh();
   }
+  /* ---- A SECTION AS A UNIT (TASKS T23) ---------------------------------
+     Sections already existed as a model and half a UI: a `sec` tag on
+     the slide, a names map, a contiguous-run invariant that normSections
+     restores after every mutation, dividers in the strip, fold, rename,
+     remove, and move-a-slide-into-one. Three things were missing, and
+     each of them is "the section behaves like one thing" rather than a
+     new model.
+
+     MOVE AS A UNIT. Dragging the divider moved nothing; the arrows moved
+     one slide at a time. `moveSection` lifts the whole run out and puts
+     it back somewhere else, and because membership is the tag ON each
+     slide, the tags travel with the slides and normSections has nothing
+     to repair.
+
+     DUPLICATE AS A UNIT. dupSlide clones one. A section's copy needs a
+     NEW id — two runs sharing one id is exactly the state the
+     contiguity invariant exists to forbid — and its own name, because
+     "Methods" appearing twice in a strip is not a section, it is a
+     puzzle.
+
+     SECTION-SCOPED NUMBERING. Slide numbers are global by deliberate
+     decision (renderFilm's comment says so, and the furniture resolves
+     {n} to the deck index). That decision is right for the strip and
+     wrong for a talk in parts, so it becomes a CHOICE rather than a
+     reversal: {sn} and {sN} are the number within the section and the
+     size of the section, alongside the {n} and {N} that already mean
+     the whole deck. Nothing that exists changes meaning. */
+  function moveSection(id,dir){
+    var runs=sectionRuns(),at=-1,i;
+    for(i=0;i<runs.length;i++) if(runs[i].id===id) at=i;
+    if(at<0) return 0;
+    var to=at+dir;
+    if(to<0||to>=runs.length) return 0;
+    var me=runs[at],other=runs[to];
+    var block=pres.slides.splice(me.at,me.n);
+    /* removing the block shifts anything after it, so the destination is
+       computed from where the OTHER run sits once the hole is closed */
+    var dest=(dir<0)?other.at:(other.at+other.n-me.n);
+    for(i=0;i<block.length;i++) pres.slides.splice(dest+i,0,block[i]);
+    normSections();
+    cur=dest;activePane=-1;selAnnot=null;selSet=[];
+    markDirty();refresh();
+    return block.length;
+  }
+  function dupSection(id){
+    var runs=sectionRuns(),run=null;
+    runs.forEach(function(r){if(r.id===id) run=r;});
+    if(!run) return 0;
+    var nid=secId();
+    var name=(secName(id)||'Section')+' copy';
+    secMap()[nid]={name:name};
+    var copies=[];
+    for(var i=0;i<run.n;i++){
+      var cp=deep(pres.slides[run.at+i]);
+      cp.sec=nid;          /* a NEW id: two runs cannot share one */
+      delete cp.label;
+      copies.push(cp);
+    }
+    for(var j=0;j<copies.length;j++)
+      pres.slides.splice(run.at+run.n+j,0,copies[j]);
+    normSections();
+    cur=run.at+run.n;activePane=-1;selAnnot=null;selSet=[];
+    markDirty();refresh();
+    return copies.length;
+  }
+  /* which section a slide is in, and where in it — the numbers {sn}/{sN}
+     resolve to. Derived from the slide list like everything else about
+     sections; nothing is stored. */
+  function sectionPos(i){
+    var runs=sectionRuns();
+    for(var k=0;k<runs.length;k++){
+      var r=runs[k];
+      if(i>=r.at&&i<r.at+r.n)
+        return {n:i-r.at+1,of:r.n,id:r.id,name:r.name};
+    }
+    return {n:i+1,of:(pres.slides||[]).length,id:'',name:''};
+  }
   function moveSlideToSection(i,id){
     var runs=sectionRuns(),r=null,j,to;
     for(j=0;j<runs.length;j++) if(runs[j].id===id) r=runs[j];
@@ -19176,6 +19261,23 @@
       row('Rename…',function(){renameSection(run.id);},null,'pen');
       row(run.fold?'▾ Show these slides':'▸ Hide these slides',
         function(){foldSection(run.id,!run.fold);});
+      /* THE UNIT VERBS (T23): the whole run moves and copies as one
+         thing, which is what makes a section an object rather than a
+         label on a slide */
+      row('↑ Move the section up',function(){
+        var n=moveSection(run.id,-1);
+        if(n) toast(n+' slide'+(n===1?'':'s')+' moved as one');},
+        'The whole run, in order, above the section before it');
+      row('↓ Move the section down',function(){
+        var n=moveSection(run.id,1);
+        if(n) toast(n+' slide'+(n===1?'':'s')+' moved as one');},
+        'The whole run, in order, below the section after it');
+      row('Duplicate the whole section',function(){
+        var n=dupSection(run.id);
+        if(n) toast(n+' slide'+(n===1?'':'s')+' copied into a new '
+          +'section');},
+        'A copy of every slide in it, under a new name — two runs '
+        +'cannot share one section','copy');
       row('Remove the divider',function(){removeSection(run.id,false);},
         'The slides stay — they join the section above','exit');
       row('Delete the section AND its '+run.n+' slide'

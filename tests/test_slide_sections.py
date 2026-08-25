@@ -489,3 +489,40 @@ def test_the_mode_and_the_width_are_preferences_not_document_state(out):
     assert "var filmView=null;" in out
     assert "if(filmView===null){" in out
     assert "lsSet(FILMKEY+SCOPE,m);" in out
+
+
+def test_a_section_moves_and_copies_as_one_thing(out):
+    """TASKS T23. Sections already existed as a model and half a UI --
+    a `sec` tag on the slide, a names map, the contiguous-run invariant
+    normSections restores after every mutation, dividers, fold, rename,
+    remove. What was missing is that the section did not behave like ONE
+    thing.
+
+    Because membership is the tag ON each slide, the tags travel with
+    the slides when the run moves and normSections has nothing to
+    repair. A duplicated run needs a NEW id, because two runs sharing
+    one id is exactly the state the contiguity invariant forbids.
+    """
+    assert "function moveSection(id,dir){" in out
+    assert "function dupSection(id){" in out
+    assert "var dest=(dir<0)?other.at:(other.at+other.n-me.n);" in out
+    assert "cp.sec=nid;          /* a NEW id: two runs cannot share one */" \
+        in out
+    assert "var name=(secName(id)||'Section')+' copy';" in out
+    # and both end in normSections, like every other section verb
+    assert "    normSections();\n    cur=dest;" in out
+
+
+def test_section_numbering_is_a_choice_not_a_reversal(out):
+    """Slide numbers are global by deliberate decision -- renderFilm's
+    comment says so and the furniture resolves {n} to the deck index.
+    That is right for the strip and wrong for a talk in parts, so the
+    section's numbers are ADDED beside them rather than replacing them.
+    Nothing that already existed changes meaning.
+    """
+    assert "function sectionPos(i){" in out
+    assert ".replace(/\\{sn\\}/g,String(sp.n))" in out
+    assert ".replace(/\\{sN\\}/g,String(sp.of))" in out
+    assert ".replace(/\\{sec\\}/g,sp.name||'')" in out
+    # the deck-wide ones are untouched, and still resolved after
+    assert ".replace(/\\{n\\}/g,String(idx+1))" in out

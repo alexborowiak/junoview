@@ -106,6 +106,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T23, sections as units: deck.js
+# gained moveSection/dupSection/sectionPos and the {sn} tokens;
+# help.html a paragraph. Editor-only; pinned by
+# tests/test_slide_sections.py's two section-unit tests.
 # Moved 2026-08-25 for TASKS T22, figure lint: deck.js gained
 # figLint and its rows in the standardise pane; help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_editor.py's
@@ -211,8 +215,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "02ca0169dce9bf4af744350047603dac"
-EXPECTED_BYTES = 2478352
+EXPECTED_MD5 = "56c1081e900af89e4c581e1c3141d5ba"
+EXPECTED_BYTES = 2483563
 
 
 def _render_example() -> str:

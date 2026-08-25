@@ -309,9 +309,19 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 4. Deck structure & navigation
 
-- [ ] **T23 · M — Sections as first-class objects.** Group slides into
+- [x] **T23 · M — Sections as first-class objects.** Group slides into
   sections that move/duplicate as a unit, with section-scoped numbering,
   template and transitions, and section navigation in present mode.
+  *2026-08-25:* most of the model already shipped. Added `moveSection`
+  and `dupSection` (the run as one thing; the copy gets a new id and a
+  new name) and `{sn}`/`{sN}`/`{sec}` beside the existing `{n}`/`{N}`,
+  so section numbering is a choice rather than a reversal of the
+  deliberate global-numbering decision.
+  **Not done here, and honestly: section TRANSITIONS.** There is no
+  slide-transition model anywhere in this codebase — no `s.trans`, no
+  cross-fade, nowhere to hang one — and inventing that substrate is T27's
+  job, which needs it for Magic Move. Section navigation in present mode
+  is T26's overview map. Both are tracked; neither is quietly skipped.
 - [ ] **T24 · M — Optional slides + named cuts.** Mark slides optional;
   define named cuts ("45-min", "20-min", "5-min") as subsets of one deck —
   no more three diverging files. Easier after T23.
