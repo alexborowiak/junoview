@@ -7423,7 +7423,7 @@
     var box=ov.querySelector('#nse-slide');
     if(box){
       box.innerHTML='';
-      var node=buildSlideNode(notesEdIdx);
+      var node=buildSlideNode(notesEdIdx,true);
       if(node){
         box.appendChild(node);
         var k=Math.min((box.clientWidth||420)/960,
@@ -8781,6 +8781,7 @@
     (s.annots||[]).forEach(function(a,i){
       if(!a||a.k!=='arrow') return;
       if(a.hide&&editing) return;
+      if(a.priv&&!privShown()) return;      /* T31 */
       drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
     });
     if(editing) paintSel(layer);
@@ -9046,6 +9047,33 @@
         }
       });
   }
+  /* ---- THINGS ONLY YOU CAN SEE ----------------------------------------
+     (TASKS T31.) "On-slide annotations visible only in presenter view,
+     never to the audience or in exports."
+
+     ONE PREDICATE, AT THE ONE FUNNEL. renderAnnots already calls itself
+     the funnel every slide render passes through, and it is right: the
+     stage, the presenter view, the notes editor's preview and the PDF
+     pages all arrive here. So "should this be drawn" is asked once, in
+     the same breath as the `hide` flag it sits beside, rather than in
+     each of the four callers — which is how three of them would agree
+     and the fourth would leak.
+
+     WHAT MAKES A RENDER PRIVATE. Editing is private by definition: you
+     have to see the thing to write it, and it is marked so you know the
+     audience will not. Everything else has to SAY it is private, and
+     the default is therefore safe — a render path added next year shows
+     nothing private unless it asks, rather than leaking until someone
+     notices.
+
+     WHAT THIS DOES NOT CLAIM. A private annotation is not drawn for the
+     audience and never reaches a PDF or a .pptx. It IS stored in the
+     deck, exactly as your speaker notes are, so a deck FILE you hand to
+     somebody contains it. Pretending otherwise would mean dropping it
+     from the save, and a private note that does not survive a reload is
+     not a feature. The menu says which of the two it is. */
+  var privCtx=false;
+  function privShown(){return privCtx||mode==='edit';}
   function renderAnnots(layer,s){
     /* the one funnel every slide render passes through, which makes it
        the only place identity has to be minted — see WHAT HAS THIS
@@ -9152,6 +9180,9 @@
       /* hidden via the Objects pane: skipped while editing, still
          rendered in playback / print */
       if(a.hide&&editing) return;
+      /* ...and the other way round: yours, so NOT rendered in playback,
+         print or PowerPoint (T31) */
+      if(a.priv&&!privShown()) return;
       if(a.k==='arrow'){_arrows.push(i);return;}
       if(a.k==='rect'){
         var shp=a.shape||'rect';
@@ -9557,6 +9588,14 @@
     if(_anchorFixWanted) anchorFix(layer,s);
     _arrows.forEach(function(i){
       drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
+    });
+    /* ONE marking pass rather than a class in each of the nine branches
+       that build an item. A private thing has to LOOK private in both
+       places it is drawn -- the editor and the presenter view -- or you
+       cannot tell what the audience is seeing (T31). */
+    if(privShown()) $$('.an-item',layer).forEach(function(el){
+      var a=(s.annots||[])[+el.getAttribute('data-idx')];
+      if(a&&a.priv) el.classList.add('an-priv');
     });
     /* the layer is rebuilt on every change, which throws away whatever
        MathJax had already typeset - so ask for it again, but ONLY when
@@ -11015,6 +11054,23 @@
      the live pointer, which by then is over the menu.
      Built from the film strip's helpers (menuHead / floatAt) so this
      file has one context-menu idiom, not two. */
+  /* T31. One flag, set on every selected item, the way setLockSel
+     does -- a selection is a selection. */
+  function setPrivSel(on){
+    var s2=pres.slides[cur]; if(!s2) return;
+    var n=0;
+    selIdxs().forEach(function(i){
+      var a=(s2.annots||[])[i]; if(!a) return;
+      if(on) a.priv=1; else delete a.priv;
+      n++;
+    });
+    if(!n) return;
+    markDirty();renderSlide();presenterSync&&presenterSync();
+    toast(on?(n===1?'Yours \u2014 the audience will not see it'
+        :(n+' items are yours \u2014 the audience will not see them'))
+      :(n===1?'Back on the slide for everyone'
+        :(n+' items are back on the slide for everyone')));
+  }
   function openCanvasMenu(layer,s,ev){
     var old=$('#canvas-menu'); if(old) old.remove();
     var m=document.createElement('div');
@@ -11229,6 +11285,21 @@
           var b=row(o[1],'',function(){setLockSel(o[0]);},o[2],o[3]);
           if(lmNow===o[0]) b.classList.add('on');
         });
+    }
+    /* WHO SEES THIS. Beside `lock`, because both answer "what can be
+       done to this object" rather than "what does it look like" (T31). */
+    if(selIdxs().length){
+      var pvs=selIdxs().map(function(i){
+        return !!((pres.slides[cur].annots||[])[i]||{}).priv;});
+      var allPriv=pvs.every(function(x){return x;});
+      menuHead(m,'who sees it');
+      var pb=row(allPriv?'\u2713 Only me':'Only me','',function(){
+        setPrivSel(!allPriv);},
+        'Drawn on your screen and in the presenter view, marked so you '
+        +'know it is yours. Never drawn for the audience, and never in '
+        +'a PDF or PowerPoint. Like your speaker notes, it is stored in '
+        +'the deck file.','pin');
+      if(allPriv) pb.classList.add('on');
     }
     var cgm=customGuides();
     menuHead(m,'guides');
@@ -18141,10 +18212,14 @@
     presenterPush();
   }
   /* one slide, rendered the way every other output renders it */
-  function buildSlideNode(i){
+  /* `priv` is OPT-IN, so the default is the safe one: a render path
+     added later shows nothing private unless it asks for it (T31). */
+  function buildSlideNode(i,priv){
     var sl=(pres.slides||[])[i];
     if(!sl) return null;
     var savedMode=mode,savedReveal=revealCount,savedCur=cur;
+    var savedPriv=privCtx;
+    privCtx=!!priv;
     mode='view';revealCount=99999;cur=i;
     var host=document.createElement('div');
     host.className='jvp-slidehost';
@@ -18162,6 +18237,7 @@
     host.appendChild(el);
     try{attachAnnots(el,sl);paintFurniture(el,i);}catch(err){}
     mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    privCtx=savedPriv;
     host.removeChild(el);
     host.remove();
     return el;
@@ -18177,7 +18253,10 @@
       var box=doc.getElementById(pr[0]);
       if(!box) return;
       box.innerHTML='';
-      var node=(pr[1]<n)?buildSlideNode(pr[1]):null;
+      /* THE PRESENTER VIEW IS THE PRIVATE ONE. This is the whole
+         point of T31: the same slide, drawn twice, and only this copy
+         carries what you wrote for yourself. */
+      var node=(pr[1]<n)?buildSlideNode(pr[1],true):null;
       if(node){
         var im=doc.importNode(node,true);
         box.appendChild(im);
@@ -22992,6 +23071,11 @@
     }
     (s.annots||[]).forEach(function(a){
       if(!a) return;
+      /* PowerPoint does not go through renderAnnots, so it asks the same
+         question here rather than inheriting the answer -- and a private
+         note reaching a .pptx is the exact failure T31 exists to
+         prevent. */
+      if(a.priv) return;
       /* an item tied to a figure other than this page's does not belong
          on this page. note.frame is set by the exploding enumerator; with
          no flip book on the slide it is null and nothing is filtered. */

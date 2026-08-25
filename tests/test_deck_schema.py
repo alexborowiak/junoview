@@ -13,6 +13,7 @@ import re
 from pathlib import Path
 
 from junoview.notebook.deck_schema import (
+    ANNOT_COMMON,
     ANNOT_KINDS,
     DECK_KEYS,
     LAYOUTS,
@@ -148,6 +149,8 @@ def test_every_key_the_validator_knows_is_written_down():
         assert f"`{key}`" in doc, f"slide key {key} is not in DECK-FORMAT.md"
     for kind in ANNOT_KINDS:
         assert f"`{kind}`" in doc, f"item kind {kind} is not documented"
+    for key in ANNOT_COMMON:
+        assert f"`{key}`" in doc, f"item key {key} is not in DECK-FORMAT.md"
     for lay in LAYOUTS:
         assert f"`{lay}`" in doc, f"layout {lay} is not documented"
 
@@ -157,7 +160,8 @@ def test_the_document_invents_no_keys_of_its_own():
     the code is worse than one missing, because it reads as true.
     """
     doc = DOC.read_text(encoding="utf-8")
-    known = set(DECK_KEYS) | set(SLIDE_KEYS) | set(ANNOT_KINDS) | set(LAYOUTS)
+    known = (set(DECK_KEYS) | set(SLIDE_KEYS) | set(ANNOT_KINDS)
+             | set(ANNOT_COMMON) | set(LAYOUTS))
     # `k` is the annot table's own header -- the kind field itself, which
     # is a real key of the format and not a claim about a named one
     known.add("k")

@@ -443,3 +443,86 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     # the width comes from the column, so there is nothing to keep in sync
     assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
            "align-items:stretch;" in out
+
+
+def test_one_predicate_decides_who_sees_an_item(out):
+    """TASKS T31. renderAnnots already calls itself the funnel every
+    slide render passes through, and it is right: the stage, the
+    presenter view, the notes editor's preview and the PDF pages all
+    arrive there. So "should this be drawn" is asked once, beside the
+    `hide` flag it sits next to -- rather than in each of the four
+    callers, which is how three of them would agree and the fourth
+    would leak.
+    """
+    assert "function privShown(){return privCtx||mode==='edit';}" in out
+    assert "if(a.priv&&!privShown()) return;" in out
+    # arrows are drawn in a second pass and get the same question
+    assert "if(a.priv&&!privShown()) return;      /* T31 */" in out
+
+
+def test_hide_and_priv_are_deliberate_opposites(out):
+    """`hide` is hidden from YOU while you work and drawn for everyone
+    afterwards; `priv` is drawn for you and never for anyone else. They
+    sit on adjacent lines because reading them together is the only way
+    either name makes sense.
+    """
+    assert "if(a.hide&&editing) return;" in out
+    i = out.index("if(a.hide&&editing) return;")
+    assert "if(a.priv&&!privShown()) return;" in out[i:i + 400]
+
+
+def test_a_private_render_has_to_ask_for_it(out):
+    """`priv` is opt-in on buildSlideNode, so the default is the safe
+    one: a render path added next year shows nothing private unless it
+    asks, rather than leaking until somebody notices. And the flag is
+    restored rather than cleared, so a private render cannot bleed into
+    the next one.
+
+    Verified in a browser: presenting drew one of two shapes, the notes
+    editor's preview (the other buildSlideNode(i,true) caller) drew both
+    with one marked, and presenting again straight afterwards drew one.
+    """
+    assert "function buildSlideNode(i,priv){" in out
+    assert "var savedPriv=privCtx;" in out
+    assert "privCtx=!!priv;" in out
+    assert "privCtx=savedPriv;" in out
+    assert "buildSlideNode(pr[1],true)" in out
+
+
+def test_powerpoint_asks_the_question_itself(out):
+    """The .pptx writer walks the annots directly rather than going
+    through renderAnnots, so it cannot inherit the answer -- and a
+    private note reaching a .pptx is the exact failure this exists to
+    prevent. The PDF path needs no guard of its own because it renders
+    through attachAnnots like everything else.
+    """
+    i = out.index("function pptxItems(s,note,ink,layer){")
+    assert "if(a.priv) return;" in out[i:i + 1200]
+
+
+def test_a_private_item_looks_private_in_both_places_it_is_drawn(out):
+    """One marking pass rather than a class in each of the nine branches
+    that build an item -- and in the presenter view as well as the
+    editor, because the question it answers is "can the audience see
+    this", and an unmarked one looks exactly like a slide that is about
+    to embarrass you.
+    """
+    assert "if(privShown()) $$('.an-item',layer).forEach(function(el){" in out
+    assert "if(a&&a.priv) el.classList.add('an-priv');" in out
+    assert ".an-item.an-priv{outline:1.5px dashed" in out
+    assert '.an-item.an-priv::after{content:"only me"' in out
+
+
+def test_the_menu_says_what_the_promise_actually_is(out):
+    """A private item is not drawn for the audience and never reaches a
+    PDF or a .pptx. It IS stored in the deck, exactly as speaker notes
+    are, so a deck FILE handed to somebody contains it -- because a
+    private note that does not survive a reload is not a feature. The
+    tooltip says which of the two it is rather than implying the
+    stronger one.
+    """
+    assert "function setPrivSel(on){" in out
+    assert "if(on) a.priv=1; else delete a.priv;" in out
+    assert "menuHead(m,'who sees it');" in out
+    assert "a PDF or PowerPoint. Like your speaker notes" in out
+    assert "it is stored in " in out

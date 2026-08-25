@@ -2085,6 +2085,18 @@ body.light .fp-tielab{color:var(--ink-3);}
 .mini-pane.is-flip{background:#243b52;}
 .sp-kind.k-flip{background:#2a4761;}
 
+/* ---------- things only you can see ----------
+   Marked in BOTH places a private item is drawn -- the editor and the
+   presenter view -- because the whole question it answers is "can the
+   audience see this", and an unmarked one looks exactly like a slide
+   that is about to embarrass you. A dashed amber edge and a corner tag:
+   loud enough to read at a glance, quiet enough to work under. */
+.an-item.an-priv{outline:1.5px dashed #f0a848;outline-offset:2px;}
+.an-item.an-priv::after{content:"only me";position:absolute;top:-9px;
+  right:0;font-family:var(--mono);font-size:8px;letter-spacing:.06em;
+  color:#0b141d;background:#f0a848;border-radius:3px;padding:0 3px;
+  pointer-events:none;z-index:3;}
+
 /* ---------- what a rehearsal left behind ----------
    Per slide and per section. The section rows are the ones you act on,
    so they carry the weight; a row that ran over its target is the only

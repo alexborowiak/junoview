@@ -124,7 +124,9 @@ def test_presenter_view_is_a_second_window(out):
     and Back in the presenter moved the main window to 1 / 2.
     """
     assert "function openPresenter(){" in out
-    assert "function buildSlideNode(i){" in out
+    # `priv` is opt-in, so the default render is the safe one (T31)
+    assert "function buildSlideNode(i,priv){" in out
+    assert "buildSlideNode(pr[1],true)" in out
     assert "function presenterPush(){" in out
     assert "function presenterCommand(msg){" in out
     assert 'id="pl-presenter"' in out

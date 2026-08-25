@@ -117,6 +117,20 @@ optional and defaulted.
 | `table` | `x`, `y` | Rows of plain strings, not HTML. |
 | `text` | `x`, `y` | A text box. Auto-heights from its words, so it has no required h. |
 
+### Fields any item may carry
+
+Whatever its kind, an item may also carry these.
+
+| key | type | what it means |
+| --- | --- | --- |
+| `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
+| `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
+| `oid` | str | This object's durable name, used to follow it through its own history and to match it across slides for a "move" transition. |
+
+`hide` and `priv` are deliberate opposites: one is hidden from **you**
+while you work and shown to everyone afterwards, the other is shown to
+you and hidden from everyone else.
+
 ### Anchoring
 
 An item may name one **anchor** in `anch` — `tl` `tc` `tr` `cl` `c` `cr`

@@ -472,8 +472,32 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   a word only in the notes found exactly that slide and said so, a word
   nobody said found nothing and said that too, and Enter jumped the talk
   without leaving present mode.
-- [ ] **T31 · S — Private presenter annotations.** On-slide annotations
+- [x] **T31 · S — Private presenter annotations.** On-slide annotations
   visible only in presenter view, never to the audience or in exports.
+  *2026-08-25.* Design note at `THINGS ONLY YOU CAN SEE`.
+  **One predicate, at the one funnel.** `renderAnnots` already calls
+  itself the funnel every slide render passes through — the stage, the
+  presenter view, the notes editor's preview and the PDF pages all arrive
+  there — so the question is asked once, beside the `hide` flag it sits
+  next to. Four callers each answering it is how three agree and the
+  fourth leaks. `hide` and `priv` are deliberate opposites, on adjacent
+  lines: hidden from *you* while you work, versus shown to you and nobody
+  else.
+  **The default is safe.** `priv` is opt-in on `buildSlideNode`, so a
+  render path added next year shows nothing private unless it asks —
+  rather than leaking until someone notices. PowerPoint walks the annots
+  itself and so asks the question itself; the PDF path inherits the
+  answer through `attachAnnots`.
+  **And it does not overclaim.** A private item is never drawn for the
+  audience and never reaches a PDF or a `.pptx`. It *is* stored in the
+  deck, exactly as speaker notes are, so a deck FILE you hand over
+  contains it — dropping it from the save would mean a private note that
+  does not survive a reload, which is not a feature. The menu says which
+  of the two it is.
+  14/14 in a browser: presenting drew one of the two shapes, the editor
+  drew both with the private one carrying a readable "only me" tag, a
+  private render drew both, and presenting again straight afterwards drew
+  one — the context is restored, not left on.
 
 ## 6. Versioning & recovery
 

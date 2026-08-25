@@ -110,6 +110,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T31, private presenter annotations:
+# deck.js gained THINGS ONLY YOU CAN SEE (the privShown predicate
+# beside the existing hide guard, the opt-in private render on
+# buildSlideNode, the .pptx writer's own guard and the canvas-menu
+# door); deck.css the marking, help.html a paragraph; deck_schema
+# and DECK-FORMAT gained the ANNOT_COMMON table. Pinned by
+# test_visibility.py's six T31 tests and verified in a browser,
+# 14/14.
 # Moved 2026-08-25 for TASKS T30, finding a slide mid-talk:
 # deck.js gained FINDING A SLIDE WHILE YOU ARE TALKING (one
 # slideHits matcher), a search box in T26's overview map with '/'
@@ -253,8 +261,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "21f2cc6d696ef76d6486f94fa1ee8899"
-EXPECTED_BYTES = 2551334
+EXPECTED_MD5 = "58ff4c3a3155815737cd7e0ef92df2ae"
+EXPECTED_BYTES = 2556747
 
 
 def _render_example() -> str:

@@ -31,7 +31,7 @@ from __future__ import annotations
 from typing import Any, NamedTuple
 
 __all__ = ["Problem", "validate_deck", "DECK_KEYS", "SLIDE_KEYS",
-           "ANNOT_KINDS", "LAYOUTS"]
+           "ANNOT_KINDS", "ANNOT_COMMON", "LAYOUTS"]
 
 
 class Problem(NamedTuple):
@@ -127,6 +127,21 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
 #: How many panes each layout has. Mirrors ``_LAYOUT_PANES``.
 LAYOUTS: dict[str, int] = {"full": 1, "halves": 2, "rows": 2,
                            "quarters": 4, "title": 0, "blank": 0}
+
+#: Fields any annot may carry, whatever its kind.
+ANNOT_COMMON: dict[str, tuple[type, str]] = {
+    "hide": (int, "1 to leave this out WHILE EDITING — scaffolding you "
+                  "do not want in the way. It is still drawn in "
+                  "playback and print."),
+    "priv": (int, "1 when only you may see it: drawn on your own screen "
+                  "and in the presenter view, never for the audience and "
+                  "never in a PDF or a .pptx. Like speaker notes it is "
+                  "stored in the deck, so a deck file you hand over "
+                  "contains it."),
+    "oid": (str, "This object's durable name, used to follow it through "
+                 "its own history and to match it across slides for a "
+                 "\"move\" transition."),
+}
 
 #: The kinds of thing that can sit on a slide, and what each one needs to
 #: be renderable at all. Geometry is in PERCENT of the page — x and w of

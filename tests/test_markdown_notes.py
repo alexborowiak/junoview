@@ -198,7 +198,9 @@ def test_there_is_room_to_write_a_note_in(out):
     """
     assert "function openNotesEditor(i){" in out
     assert "ov.className='deck-notesed'" in out
-    assert "var node=buildSlideNode(notesEdIdx);" in out
+    # `true`: your own editor is a private render, so an "only me"
+    # item is visible while you write the note about it (T31)
+    assert "var node=buildSlideNode(notesEdIdx,true);" in out
     assert "if(ta.value.trim()) sl.notes=ta.value; else delete sl.notes;" \
         in out
     # Esc closes it, on the capture phase, like the overview map
