@@ -110,6 +110,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for RIBBON LAYOUTS: eighteen arrangements of the
+# one ribbon. deck/07-ribbon-layouts.js is new (the engine, the
+# gallery and the catalogue); 05 gained the generated tab strip and
+# the gallery's doors, 25 the container-independent hiding of
+# contextual controls and the contextual-tab fallback; deck.html
+# gained ids on the four tool buttons and the two colour wrappers,
+# deck.css the gallery, help.html a paragraph. Pinned by
+# tests/test_ribbon_layouts.py and verified in a browser by applying
+# all eighteen in turn.
 # Moved 2026-08-25 for TASKS T36, the deck.js split: assets/js/
 # deck.js became assets/js/deck/, fourteen fragments of the one
 # IIFE joined by assets.deck_js(). The JAVASCRIPT IS UNCHANGED --
@@ -282,8 +291,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "59b513a6af5a4f79dae6538de50a5e00"
-EXPECTED_BYTES = 2601279
+EXPECTED_MD5 = "f4bc6db6c59456b9f6dc1c0fe0816341"
+EXPECTED_BYTES = 2679585
 
 
 def _render_example() -> str:

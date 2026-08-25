@@ -529,7 +529,15 @@ def test_the_ribbon_is_tabbed(out):
     assert "function setTab(t){" in out
     assert "function applyTab(){" in out
     # the filter runs BEFORE anything measures the row
-    assert "    applyTab();\n    $$('.rbn-grp',bar)" in out
+    # the filter runs BEFORE anything MEASURES the row, which is the
+    # invariant -- not its old position in the function. Ribbon layouts
+    # moved the emptiness pass ahead of it, because whether a group is
+    # empty does not depend on which tab is showing, and the tab
+    # decisions need that answer first (2026-08-25).
+    i = out.index("function syncRibbonGroups(){")
+    block = out[i:i + 2600]
+    assert "applyTab();" in block
+    assert block.index("applyTab();") < block.index("sizeRibbonGroups();")
     # a poster has no build, so the whole Animate GROUP stands down there
     assert ("['#anim-clear','#anim-stagger','#anim-together']"
             ".forEach(function(id){") in out
@@ -1511,8 +1519,12 @@ def test_each_ribbon_group_is_keyed_by_its_own_name(out):
     and groups with no distinguishing class of their own fall back to
     their visible label, which is unique across the row.
     """
-    assert ("var RBN_GENERIC={'rbn-grp':1,'rbn-fixed':1,'rbn-row':1,"
-            "'rbn-lab':1};") in out
+    # `rbn-lay` joined the list when ribbon layouts arrived: it is
+    # worn by EVERY group a layout generates, so leaving it out
+    # would make all of them answer to one id -- which is this very
+    # bug, one layer up (2026-08-25).
+    assert "var RBN_GENERIC={'rbn-grp':1,'rbn-fixed':1," in out
+    assert "'rbn-lab':1," in out and "'rbn-lay':1};" in out
     assert "if(!hit&&c.indexOf('rbn-')===0&&!RBN_GENERIC[c]) hit=c;});" in out
     # an unknown id in a saved list is skipped, so a control added by a
     # later version keeps its place instead of vanishing

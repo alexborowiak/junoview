@@ -70,6 +70,7 @@ def app_js() -> str:
 DECK_PARTS = (
     "00-page",
     "05-figures-and-ribbon",
+    "07-ribbon-layouts",
     "10-decks",
     "15-annotations",
     "20-notes-and-tables",

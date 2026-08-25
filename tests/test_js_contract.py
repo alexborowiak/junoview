@@ -85,6 +85,9 @@ RUNTIME_IDS = {
     "deck-history",
     # The review panel, likewise: deck.js, WHAT THE DECK SAYS, IN WORDS.
     "deck-review",
+    # The ribbon-layout gallery, built per open and removed on close:
+    # deck/07-ribbon-layouts.js, THE GALLERY.
+    "rbn-gallery",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

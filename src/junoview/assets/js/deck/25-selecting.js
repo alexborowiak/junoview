@@ -41,6 +41,11 @@
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
+    /* the wrappers around the two colour dropdowns. They got ids so a
+       ribbon layout could move a button and its swatch menu as ONE
+       thing; that made them controls, and a control on this bar has to
+       be governed or it shows for everything, forever (2026-08-25). */
+    +'#fmt-txcolwrap #fmt-fillcolwrap '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
@@ -50,6 +55,11 @@
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
     +'#fmt-opval #fmt-imgrefresh').split(' ');
 
+  /* EVERY CONTEXTUAL CONTROL, in one list: the two tables that already
+     govern them. */
+  function fmtAllIds(){
+    return Object.keys(FMT_KINDS).concat(FMT_MANUAL);
+  }
   function showFmt(){
     var bar=$('#et-fmt'); if(!bar) return;
     var et=$('#edit-tools');
@@ -57,6 +67,17 @@
     var a=(s&&selAnnot!==null)?annotByIdx(s,selAnnot):null;
     if(!a){
       bar.hidden=true;
+      /* ...AND EVERY CONTEXTUAL CONTROL, one at a time. Hiding the bar
+         used to be enough because every one of them lived inside it. A
+         ribbon layout may put any of them in a group of its own, and a
+         control that relied on an ancestor for its hiding would then sit
+         there visible with nothing selected — and keep its whole group
+         on screen with it, which is how a tab that should have been
+         empty stayed in the strip (2026-08-25, found in a browser).
+         Hiding them individually makes the rule a fact about the
+         CONTROL rather than about where it happens to sit. */
+      fmtAllIds().forEach(function(id){
+        var el=$(id); if(el) el.hidden=true;});
       if(et) et.classList.remove('fmt-open');
       /* the pane outlives the selection — it is the SLIDE's build order —
          so it has to be told the selection went away, or its effect
@@ -72,7 +93,19 @@
        it had simply moved one tab away (2026-08-20, user).
        Not while a drawing tool is armed: placing five shapes in a row
        must not yank you off Insert after each one. */
-    if(activeTab()!=='home'&&tool==='select'&&!justDrew) setTab('home');
+    /* ...and WHICH tab that is belongs to the layout: `home` is the
+       markup's answer, and a layout that calls its format tab "Object"
+       would otherwise send you to a tab that does not exist
+       (2026-08-25, ribbon layouts). */
+    var selT=(typeof ribbonSelTab==='function')?ribbonSelTab():'home';
+    /* DECIDED HERE, DONE AT THE END. The switch used to happen on this
+       line, before a single control had been revealed — and once a
+       layout may give the format groups a tab of their own, that tab is
+       still EMPTY at this point, so the empty-tab fallback in
+       syncRibbonGroups bounced straight back off it and the selection
+       appeared to do nothing (2026-08-25, found in a browser). Deciding
+       now and switching after the controls exist keeps both rules. */
+    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew)?selT:'';
     justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
@@ -158,6 +191,13 @@
     Object.keys(FMT_KINDS).forEach(function(id){
       var spec=FMT_KINDS[id];
       show(id,isNum&&(spec==='*'||spec.split(' ').indexOf(kind)>=0));
+    });
+    /* the wrapper around each colour dropdown shows exactly when its
+       button does. Read from the button rather than restated, so the
+       rule for when Colour appears stays in one place (2026-08-25). */
+    ['txcol','fillcol'].forEach(function(k){
+      var cb=$('#fmt-'+k+'-btn'),cw=$('#fmt-'+k+'wrap');
+      if(cb&&cw) cw.hidden=cb.hidden;
     });
     /* what this weight will actually PRINT. It goes in the tooltip, never
        the label: a label whose width changed with the selected item would
@@ -344,7 +384,10 @@
           +'showFmt, so they will show for every selection: '
           +stray.join(', '));
     }
-    syncRibbonGroups();
+    /* ...and NOW the tab, with the controls that justify it in place.
+       setTab re-runs syncRibbonGroups itself, so this is one call or the
+       other, never both. */
+    if(wantTab) setTab(wantTab); else syncRibbonGroups();
   }
   /* hide a ribbon group whose controls are all hidden, and drop the divider
      before the first visible group — so the format ribbon stays tidy */
@@ -354,9 +397,12 @@
        placed cells yet) and an empty group that still drew its label and
        divider read as a missing feature */
     var bar=$('#edit-tools'); if(!bar) return;
-    /* the TAB filter first: a group belonging to another tab must be out
-       of the row before anything measures the row's width */
-    applyTab();
+    /* WHAT IS VISIBLE FIRST, and the tab filter after it. A group's
+       emptiness is a fact about its controls, not about which tab is
+       showing, so this pass does not care — and the answer is what the
+       tab decisions below need. `data-off` still goes on before anything
+       MEASURES the row, which is what the old ordering was protecting
+       (2026-08-25, ribbon layouts). */
     $$('.rbn-grp',bar).forEach(function(g){
       var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
       for(var i=0;i<kids.length;i++){
@@ -366,6 +412,20 @@
       }
       g.hidden=!vis;
     });
+    /* A CONTEXTUAL TAB, and what happens when its reason goes away. A
+       ribbon layout may put every object control on a tab of its own —
+       PowerPoint's "Picture Format" is the same idea — and such a tab is
+       empty until something is selected. An empty tab you can still
+       click reads as broken, so the strip drops it; and being left
+       STANDING on one when you deselect would show you a blank row, so
+       the ribbon falls back to the first tab that has anything, which is
+       what every application with contextual tabs does. */
+    if(!tabHasContent(activeTab())){
+      var to='';
+      TABS.forEach(function(t){if(!to&&tabHasContent(t)) to=t;});
+      if(to&&to!==activeTab()){curTab=to;lsSet(tabKey(),to);}
+    }
+    applyTab();
     /* `rbn-first` used to be stamped on the leading visible group so a
        ::before divider could be suppressed on it. The dividers became a
        border-right on the group itself and `:last-child` handles the end

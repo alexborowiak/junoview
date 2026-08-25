@@ -809,7 +809,13 @@
      (2026-08-25, caught by reading the stored key in a browser). The
      groups with no distinguishing class of their own fall back to their
      visible label, which is stable and unique across the row. */
-  var RBN_GENERIC={'rbn-grp':1,'rbn-fixed':1,'rbn-row':1,'rbn-lab':1};
+  /* `rbn-lay` joins the generic list for exactly the reason the note
+     above gives: it is worn by EVERY group a layout generates, so
+     without it here all of them would answer to the same id and one
+     group's saved order would be applied to the lot (T36's ribbon
+     layouts, 2026-08-25). */
+  var RBN_GENERIC={'rbn-grp':1,'rbn-fixed':1,'rbn-row':1,'rbn-lab':1,
+    'rbn-lay':1};
   function ribbonGroupId(g){
     var hit='';
     String(g.className||'').split(/\s+/).forEach(function(c){
@@ -878,6 +884,18 @@
     head.className='hd-lab';
     head.textContent='your ribbon';
     m.appendChild(head);
+    /* THE LAYOUT COMES FIRST, because it is the bigger question: this
+       menu tunes an arrangement, and the gallery chooses which
+       arrangement you are tuning (2026-08-25). */
+    var lay=document.createElement('button');
+    lay.className='dbtn vw-opt';lay.type='button';
+    lay.innerHTML=bic('layouts')+' Ribbon layouts\u2026';
+    lay.title='Try a different arrangement of the whole ribbon — '
+      +'currently "'+((rbnLayoutById(rbnCurrentId())||{}).name||'Default')
+      +'"';
+    lay.addEventListener('click',function(e){
+      e.stopPropagation();m.remove();openRibbonGallery();});
+    m.appendChild(lay);
     var note=document.createElement('div');
     note.className='ff-none';
     note.textContent='The '+activeTab()+' tab. Untick to put a button '
@@ -1000,7 +1018,10 @@
          than on a tab that no longer exists */
       if(t==='animate') t='insert';
       else if(t==='view') t='home';
-      curTab=TABS.indexOf(t)>=0?t:'home';
+      /* TABS is the ACTIVE LAYOUT's tabs, which need not include
+         `home` at all — so the fallback is "the first tab there is"
+         rather than a name that may not exist (2026-08-25) */
+      curTab=TABS.indexOf(t)>=0?t:TABS[0];
     }
     return curTab;
   }
@@ -1013,8 +1034,13 @@
   function syncTabStrip(){
     var strip=$('#rbn-tabs'); if(!strip) return;
     $$('.rbn-tab',strip).forEach(function(b){
-      b.setAttribute('aria-selected',
-        (b.dataset.tab===activeTab()).toString());
+      var on=(b.dataset.tab===activeTab());
+      b.setAttribute('aria-selected',on.toString());
+      /* a tab with nothing on it is taken out of the strip rather than
+         left there to be clicked for no result — but never the one you
+         are standing on, which would make the strip jump under the
+         pointer (2026-08-25, ribbon layouts) */
+      b.classList.toggle('rbn-tab-off',!on&&!tabHasContent(b.dataset.tab));
     });
   }
   function applyTab(){
@@ -1084,18 +1110,29 @@
     applyZoom();
     if(!on) fitEditRibbon();
   }
-  $$('#rbn-tabs .rbn-tab').forEach(function(b){
-    b.addEventListener('click',function(){
+  /* DELEGATED, not wired per button. A ribbon layout rebuilds this
+     strip — a one-tab layout has one button, a four-tab layout has four
+     — and per-button listeners would work only on the buttons that
+     happened to be in the markup at boot (2026-08-25). */
+  (function(){
+    var strip=$('#rbn-tabs'); if(!strip) return;
+    function tabOf(e){
+      var t=e.target;
+      return (t&&t.closest)?t.closest('.rbn-tab'):null;
+    }
+    strip.addEventListener('click',function(e){
+      var b=tabOf(e); if(!b||!strip.contains(b)) return;
       /* a click on the tab you are already on, while folded, is a request
          for the tools back - not a no-op */
       if(ribbonFolded()){setRibbonFold(false);setTab(b.dataset.tab);return;}
       setTab(b.dataset.tab);
     });
     /* double-click toggles, the way PowerPoint has trained everyone */
-    b.addEventListener('dblclick',function(e){
+    strip.addEventListener('dblclick',function(e){
+      var b=tabOf(e); if(!b||!strip.contains(b)) return;
       e.preventDefault();setRibbonFold(!ribbonFolded());
     });
-  });
+  })();
   (function(){
     var f=$('#rbn-fold');
     if(f) f.addEventListener('click',function(){
@@ -1264,6 +1301,17 @@
         e.stopPropagation();closeViewMenu();real.click();});
       m.appendChild(o);
     });
+    /* THE OTHER DOOR. Right-clicking the ribbon is where this shape of
+       thing lives in every other application, and it is also invisible
+       to anyone who does not already know to try it (2026-08-25). */
+    menuHead(m,'the ribbon itself');
+    var gal=document.createElement('button');
+    gal.className='dbtn vw-opt';gal.type='button';
+    gal.textContent='Ribbon layouts\u2026';
+    gal.title='Try a different arrangement of the whole ribbon';
+    gal.addEventListener('click',function(e){
+      e.stopPropagation();closeViewMenu();openRibbonGallery();});
+    m.appendChild(gal);
     m.hidden=false;
     btn.setAttribute('aria-expanded','true');
     floatMenu(btn,m);

@@ -675,7 +675,15 @@
                    a baseline and no size meant anything. Emphasis is
                    carried by COLOUR now — Present is the one accented
                    control — so every other button can be identical. -->
-              <button class="dbtn et rbn-sm" data-tool="cell"
+              <!-- IDS ON THE FOUR TOOL BUTTONS. They were the only
+                   controls on the ribbon without one, which meant the
+                   per-button customiser could not reach them and a
+                   ribbon layout could not place them — including the
+                   Cell button, which is the notebook figure button and
+                   exactly the one somebody wants beside Lock figure
+                   (2026-08-25). A group emptied by a layout also stayed
+                   visible because these four never moved out of it. -->
+              <button class="dbtn et rbn-sm" id="et-cell" data-tool="cell"
                 aria-pressed="false"
                 title="Place a figure, table or note from your notebook —
  you pick which one"><i data-ic="cellcard"></i> Cell</button>
@@ -715,13 +723,13 @@
                    complaint that a figure built up in steps costs either a
                    stack of overlaid images or a pile of duplicated slides
                    (2026-08-22, user). -->
-              <button class="dbtn et rbn-sm" data-tool="flip"
+              <button class="dbtn et rbn-sm" id="et-flip" data-tool="flip"
                 aria-pressed="false"
                 title="Draw a flip book: one box holding many figures, with
  arrows to step through them &mdash; in the editor and while presenting.
  Text and objects can be tied to a particular figure"
                 ><i data-ic="flipbook"></i> Flip book</button>
-              <button class="dbtn et rbn-sm" data-tool="table"
+              <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
  moves along the row, Enter drops down"><i data-ic="table"></i> Table</button>
@@ -777,7 +785,7 @@
               <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
                 title="Stop drawing and go back to selecting (Esc)"
                 ><i data-ic="exit"></i> Cancel</button>
-              <button class="dbtn rbn-sm et" data-tool="arrow"
+              <button class="dbtn rbn-sm et" id="et-arrow" data-tool="arrow"
                 aria-pressed="false" title="Draw an arrow — a line with a
  head. Drop an end on an item to attach it, and the arrow follows that
  item around"><i data-ic="arrow"></i> Arrow</button>
@@ -932,7 +940,12 @@
                the colours all the time?") -->
           <span class="rbn-grp" data-tab="home">
             <span class="rbn-row">
-              <span class="sh-drop">
+              <!-- ids on the wrappers, so the button and its swatch menu
+                   are ONE thing to move: a ribbon layout that took the
+                   button and left the menu behind would leave the popup
+                   positioned against nothing (2026-08-25). It also lets
+                   the per-button customiser reach these two at last. -->
+              <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
                   title="Colour of the selected text / line / shape">
@@ -964,7 +977,7 @@
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
-              <span class="sh-drop">
+              <span class="sh-drop" id="fmt-fillcolwrap">
                 <button class="dbtn" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
                   title="Fill / background colour of the selected box">

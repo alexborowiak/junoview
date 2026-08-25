@@ -33,7 +33,15 @@
   renderPresTabs();
   /* the ribbon you kept: applied once here, at the tail, after every
      declaration and every group's markup is real. It must not run
-     mid-file — it walks #edit-tools and calls fitEditRibbon (T11). */
+     mid-file — it walks #edit-tools and calls fitEditRibbon (T11).
+     The LAYOUT goes first and the per-button preferences follow, because
+     a layout decides which group a control is in and the preferences
+     order and hide it WITHIN that group — the other way round would sort
+     a group the control is about to leave. applyRibbonLayout ends by
+     calling applyRibbonPrefs itself, so the ordinary path is one call;
+     the second is the belt-and-braces for the default layout, which
+     moves nothing (2026-08-25). */
+  applyRibbonLayout(rbnCurrentId(),true);
   applyRibbonPrefs();
   /* both IIFEs + their route hooks are now wired — restore the URL's view */
   if(window.SemApp&&window.SemApp.applyInitialRoute)
