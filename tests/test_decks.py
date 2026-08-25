@@ -270,3 +270,97 @@ def test_deck_editor_ships_the_embedded_snapshot_machinery(out):
     # preflight names both failure modes: no copy at all, and copy-only
     assert "holds no saved copy" in out
     assert "shows its saved copy" in out
+
+
+# ---------------------------------------------------------------------------
+# where the deck-file functions live (TASKS T37)
+# ---------------------------------------------------------------------------
+
+def test_the_module_that_says_getting_no_longer_puts():
+    """TASKS T37. `loader.py`'s first line is "Getting notebooks from
+    where they live: disk, or a URL". `embed_deck` WRITES a deck into
+    somebody's notebook, which is the opposite of getting one, and
+    `_deck_json` parses a DECK file, which is not a notebook at all.
+
+    Both now live beside `_as_presentations` -- which `embed_deck` has
+    always called, and which is the reason its output is a shape the
+    editor can open.
+    """
+    import inspect
+
+    from junoview.notebook import loader, presentations
+
+    assert "def embed_deck" in inspect.getsource(presentations)
+    assert "def _deck_json" in inspect.getsource(presentations)
+    src = inspect.getsource(loader)
+    assert "def embed_deck" not in src
+    assert "def _deck_json" not in src
+    # ...and loader stopped needing a writer at all
+    assert "write_text" not in src
+
+
+def test_the_public_name_did_not_move():
+    """`junoview.embed_deck` is a documented name and the
+    `semantic_render` shim re-exports it. A relocation that renamed
+    either would be a break dressed up as tidying.
+    """
+    import junoview
+    from junoview.notebook.presentations import embed_deck
+
+    assert junoview.embed_deck is embed_deck
+    assert "embed_deck" in junoview.__all__
+    # the shim warns on import by design, which is not this test's news
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        import semantic_render
+    assert semantic_render.embed_deck is embed_deck
+
+
+def test_embedding_still_writes_what_the_editor_reads(tmp_path):
+    """The behaviour, not the address: a deck file goes into
+    metadata.semantic.presentations, normalised, and the old `deck` key
+    is cleared out.
+    """
+    import json
+
+    from junoview.notebook.presentations import (
+        _as_presentations,
+        embed_deck,
+    )
+
+    nb = {"cells": [], "metadata": {"semantic": {"deck": {"old": 1}}},
+          "nbformat": 4, "nbformat_minor": 5}
+    nbp = tmp_path / "n.ipynb"
+    nbp.write_text(json.dumps(nb), encoding="utf-8")
+    deck = {"presentations": [{"name": "T", "slides": [
+        {"layout": "blank", "annots": [{"k": "text", "x": 1, "y": 2,
+                                        "text": "hi"}]}]}]}
+    dp = tmp_path / "d.junoview"
+    dp.write_text(json.dumps(deck), encoding="utf-8")
+    embed_deck(nbp, dp)
+    got = json.loads(nbp.read_text(encoding="utf-8"))
+    sem = got["metadata"]["semantic"]
+    assert "deck" not in sem
+    assert sem["presentations"] == _as_presentations(deck)
+    assert sem["presentations"][0]["name"] == "T"
+
+
+def test_a_deck_file_in_either_form_still_parses(tmp_path):
+    """The browser saves `name.junoview.html` -- a real page with the
+    JSON in a script block -- and bare JSON from before that still
+    works. Both are read by the same function, wherever it lives.
+    """
+    import json
+
+    from junoview.notebook.presentations import _deck_json
+
+    body = json.dumps({"presentations": [{"name": "T", "slides": []}]})
+    assert _deck_json(body)["presentations"][0]["name"] == "T"
+    page = ('<!doctype html><html><body>'
+            '<script type="application/json" id="junoview-data">\n'
+            + body + '\n</script></body></html>')
+    assert _deck_json(page)["presentations"][0]["name"] == "T"
+    import pytest
+    with pytest.raises(ValueError):
+        _deck_json("<html><body>nothing here</body></html>")

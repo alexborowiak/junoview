@@ -35,7 +35,6 @@ from junoview.notebook.loader import (
     _normalize_nb_url,
     _stem_for,
     doc_from_url,
-    embed_deck,
     load_doc,
     render_notebook_file,
 )
@@ -48,7 +47,7 @@ from junoview.notebook.outputs import (
     render_outputs,
 )
 from junoview.notebook.parser import parse_notebook
-from junoview.notebook.presentations import _as_presentations
+from junoview.notebook.presentations import _as_presentations, embed_deck
 from junoview.render.graph import build_graph_svg
 from junoview.render.highlight import highlight_python
 from junoview.render.items import _BADGE, render_item, render_nav, render_raw

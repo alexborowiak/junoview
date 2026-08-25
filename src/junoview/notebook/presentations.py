@@ -1,14 +1,27 @@
-"""Reading saved presentation decks off a notebook.
+"""Saved presentation decks: reading them, and putting one into a notebook.
 
 A deck is a list of slides, each naming cards by stable anchor. Decks travel in
 ``metadata.semantic.presentations``, in a ``<notebook>.deck.json`` sidecar, or
 in the app's project file. This module normalises all three into one shape and
 tolerates older layouts, so a deck saved months ago still opens.
+
+``_deck_json`` and :func:`embed_deck` live here rather than in
+:mod:`~junoview.notebook.loader`, whose job is stated in its own first line:
+*getting notebooks from where they live*. Reading a DECK file is not that, and
+writing one INTO a notebook is the opposite of it — a module that says "getting"
+had a function that puts. They sit here beside ``_as_presentations``, which
+``embed_deck`` has always called and which is the reason its output is a shape
+the editor can open at all (2026-08-25, TASKS T37).
 """
 
 from __future__ import annotations
 
+import json
+import re
+from pathlib import Path
 from typing import Any
+
+from .._write import write_text
 
 _LAYOUT_PANES = {"full": 1, "halves": 2, "rows": 2, "quarters": 4,
                  "title": 0, "blank": 0}
@@ -211,3 +224,45 @@ def _as_presentations(obj: Any) -> list:
                 entry["emb"] = emb
         out.append(entry)
     return out
+
+
+_DECK_BLOCK_RE = re.compile(
+    r'<script type="application/json" id="junoview-data">(.*?)</script>',
+    re.S)
+
+
+def _deck_json(text: str):
+    """Parse a saved deck file in either form.
+
+    Since 2026-08-18 the browser saves ``name.junoview.html`` -- a real
+    HTML page (logo, name, how to open it) with the JSON in a
+    ``<script type="application/json">`` block, so double-clicking the
+    file opens a browser instead of Windows asking what a .junoview is.
+    Bare-JSON files from before that still parse unchanged.
+    """
+    t = text.lstrip()
+    if t.startswith("<"):
+        m = _DECK_BLOCK_RE.search(t)
+        if m is None:
+            # ValueError, not SystemExit: this also runs inside the local
+            # server, where SystemExit (a BaseException) sailed past every
+            # `except Exception` and killed the request thread. The CLI
+            # catches it and prints "error: ..." as before (2026-08-23).
+            raise ValueError("no Junoview data block in that HTML file")
+        t = m.group(1)
+    return json.loads(t)
+
+
+def embed_deck(nb_path: Path, deck_path: Path) -> None:
+    """Write presentations JSON into metadata.semantic.presentations."""
+    pres = _as_presentations(
+        _deck_json(deck_path.read_text(encoding="utf-8")))
+    if not pres:
+        # ValueError for the same reason as _deck_json above (2026-08-23)
+        raise ValueError(f"{deck_path} does not look like saved "
+                         "presentations (expected {'presentations': [...]})")
+    nb = json.loads(nb_path.read_text(encoding="utf-8"))
+    sem = nb.setdefault("metadata", {}).setdefault("semantic", {})
+    sem["presentations"] = pres
+    sem.pop("deck", None)
+    write_text(nb_path, json.dumps(nb, indent=1, ensure_ascii=False) + "\n")

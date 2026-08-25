@@ -36,13 +36,13 @@ __version__ = "0.2.0"
 from .notebook.directives import split_directives
 from .notebook.loader import (
     doc_from_url,
-    embed_deck,
     load_doc,
     render_notebook_file,
 )
 from .notebook.model import CodeStep, Document, Item, Section
 from .notebook.outputs import RenderedOutput, render_outputs
 from .notebook.parser import parse_notebook
+from .notebook.presentations import embed_deck
 from .render.graph import build_graph_svg
 from .render.highlight import highlight_python
 from .render.markdown import md_to_html

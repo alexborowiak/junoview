@@ -12,14 +12,16 @@ from pathlib import Path
 
 from ._write import write_text
 from .notebook.loader import (
-    _deck_json,
     _is_url,
     _stem_for,
     doc_from_url,
-    embed_deck,
     load_doc,
 )
-from .notebook.presentations import _as_presentations
+from .notebook.presentations import (
+    _as_presentations,
+    _deck_json,
+    embed_deck,
+)
 from .render.page import render_page
 from .server.app import run_app
 from .web import build_web

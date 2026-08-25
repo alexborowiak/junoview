@@ -616,7 +616,17 @@ Deferred earlier as too churny for one pass; unchanged status.
   multi-file split. Must preserve: no build step, boot-sequence-at-tail
   discipline, section-banner navigability. Update AGENTS.md/CLAUDE.md
   when done.
-- [ ] **T37 · S — Relocate `embed_deck`.**
+- [x] **T37 · S — Relocate `embed_deck`.**
+  *2026-08-25, on its own as the entry asks.* `loader.py`'s first line is
+  "Getting notebooks from where they live: disk, or a URL" — and it held
+  `embed_deck`, which **writes** a deck into somebody's notebook, and
+  `_deck_json`, which parses a DECK file rather than a notebook. Both
+  moved to `presentations.py`, beside the `_as_presentations` that
+  `embed_deck` has always called and that is the reason its output is a
+  shape the editor can open. `loader` stopped needing `write_text`
+  altogether, which is the tell that the split was real. The public name
+  did not move: `junoview.embed_deck` and the `semantic_render` shim
+  re-export it unchanged, and there is a test saying so.
 - [ ] **T38 · M — Underscore-API renames.** The public/private naming
   pass; keep the `semantic_render` shim working.
 
