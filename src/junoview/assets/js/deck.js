@@ -8812,8 +8812,12 @@
     }
   }
   function clearSnapGuides(layer){
-    $$('.snapline',layer).forEach(function(n){n.remove();});
-    $$('.snapgap',layer).forEach(function(n){n.remove();});
+    /* .snapgap-lab is named here explicitly: the badge carries `dragtag`
+       and `snapgap-lab`, neither of which is `.snapgap`, so it was only
+       ever cleaned up incidentally — by the renderAnnots at the end of a
+       drag, which is itself guarded by `if(movedAny)` (2026-08-25). */
+    $$('.snapline,.snapgap,.snapgap-lab',layer)
+      .forEach(function(n){n.remove();});
   }
   function startMove(layer,s,idx,ev0){
     ev0.preventDefault();
@@ -8897,6 +8901,14 @@
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
       var sx=null,sy=null;
+      /* CLEARED EVERY MOVE, like sx/sy beside it. It used to be reset
+         inside the branch that fills it, which is skipped entirely when
+         Alt suppresses snapping — so pressing Alt part-way through a drag
+         froze the last marks on the page and drawGapMarks below happily
+         redrew them, at their stale coordinates, for the rest of the
+         gesture. help.html promises Alt "ignores snapping"; it has to
+         ignore the evidence of it too (2026-08-25). */
+      gapMarks=[];
       if(cloning||!ev.altKey){
         if(single){       /* a title item positions by its CENTER */
           var bx0=bestSnap(targets.xs,[single.x+dx],thr.x);
@@ -8913,7 +8925,6 @@
           /* an edge snap wins over an equal-gap snap on the same axis:
              agreeing with a line is a stronger intention than matching a
              distance */
-          gapMarks=[];
           if(!bx){
             var gx=bestGap(layer,s,movers,bb,true,thr.x);
             if(gx){

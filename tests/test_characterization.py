@@ -106,6 +106,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 fixing two T7 defects: the gap marks are now
+# dropped on every mousemove (Alt mid-drag used to freeze them) and
+# clearSnapGuides names .snapgap-lab. Pinned by the two
+# spacing-guide tests in tests/test_slide_editor.py.
 # Moved 2026-08-25 for TASKS T9, tidy up this page: a third
 # report pane (deck.html #tidypane, deck.js tidyFindings and the
 # rows it builds, help.html a paragraph). Editor-only; pinned by
@@ -154,8 +158,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "4f99cc9808b6bbe52f20eb9463953a38"
-EXPECTED_BYTES = 2366930
+EXPECTED_MD5 = "1d5a798cedbf5f3b1ba8f81263fe9467"
+EXPECTED_BYTES = 2367677
 
 
 def _render_example() -> str:

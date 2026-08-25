@@ -1247,8 +1247,18 @@ def test_the_gap_badge_reuses_the_readout_style_that_was_never_wired(out):
     """
     assert "lab.className='dragtag snapgap-lab'" in out
     assert ".snapgap-lab{transform:translate(-50%,-50%);" in out
-    # cleared with the bars at the end of the gesture, not left behind
-    assert "$$('.snapgap,.snapgap-lab',layer).forEach(function(n){" in out
+    # cleared with the bars at the end of the gesture, not left behind.
+    # This asserts clearSnapGuides, the END-OF-GESTURE cleanup -- the
+    # first version of it pinned drawGapMarks's own top-of-redraw wipe
+    # instead, which is a different function and could not have failed
+    # if the real cleanup regressed.
+    assert ("$$('.snapline,.snapgap,.snapgap-lab',layer)\n"
+            "      .forEach(function(n){n.remove();});") in out
+    # ...and the marks are dropped on EVERY mousemove, beside sx/sy,
+    # rather than only on the branch that fills them: Alt suppresses
+    # snapping by skipping that branch, and a frozen bar would be
+    # redrawn at stale coordinates for the rest of the drag
+    assert ("var sx=null,sy=null;\n      /* CLEARED EVERY MOVE") in out
 
 
 def test_matching_a_layout_copies_the_pattern_not_the_look(out):
