@@ -701,6 +701,13 @@ then a second reader per group whose only job was to REFUTE each finding
 by opening the file and proving the machinery was already there. 24 of
 84 claims died at that step and are not recorded here.
 
+**The entries below are summaries. The evidence is
+[AUDIT-2026-08-26.md](AUDIT-2026-08-26.md)** — all 84 findings, filed
+under the T-number they belong to, each with the code it is about, what
+the refuting reader actually read before letting it stand, and the fix
+it suggested. Read the entry here to decide what to pick up; read that
+file before touching anything.
+
 **Two caveats, so this list is not read as gospel.**
 
 1. The figures group's refuter hit an API error, so T17–T22's findings
@@ -769,6 +776,9 @@ by opening the file and proving the machinery was already there. 24 of
     both and `cmpPush` buckets them together.
   - paste loses grouping altogether, and `grpmeta` name/colour with it,
     where clone keeps both.
+  - and from the other end of the same story: `cmpSyncAll` splices
+    annots out of a slide while later instance groups on the SAME slide
+    still hold their pre-splice indexes.
   T2 promises "Clones are independent copies". They are not.
 
 - [ ] **T43 · M — Anchoring survives a resize and an export.**
@@ -785,10 +795,8 @@ by opening the file and proving the machinery was already there. 24 of
   - the PowerPoint export never resolves token references at all, so
     token-coloured text, shapes, lines and drawings export wrong;
   - the corner-radius token reaches the live stage but not the
-    print/export pages;
-  - the token editor's only door is the format bar's Arrange dropdown,
-    hidden whenever nothing is selected — a DECK-wide setting reachable
-    only by first selecting an object.
+    print/export pages.
+  (Its editor is also hard to reach at all — that half is T59.)
 
 - [ ] **T45 · S — Find & replace covers the text that is on the slide.**
   `fields()` skips table cells, so a deck-wide replace never touches
@@ -916,6 +924,17 @@ by opening the file and proving the machinery was already there. 24 of
     move/scale is really move-and-scale-the-box;
   - the Header/Footer prompts list `{name} {date} {n} {N}` and never
     mention `{sn}`, `{sN}` or `{sec}`.
+
+- [ ] **T59 · S — A deck-wide command must not hide behind a
+  selection.** Two of them sit in the format bar's Arrange dropdown,
+  which is hidden whenever nothing is selected — so the way to reach a
+  setting about the WHOLE DECK is to first select an object that has
+  nothing to do with it.
+  - the design-token editor (T12);
+  - the page-wide tidy report (T9).
+  Compare T52's guide tool, which has the same shape of problem from a
+  different direction: no ribbon button, only a right-click row and the
+  ruler corner.
 
 - [ ] **T58 · L — Verify, then act on, the figures group (T17–T22).**
   24 findings whose refuter never ran, so **re-check each one before
