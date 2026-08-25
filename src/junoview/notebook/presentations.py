@@ -169,8 +169,12 @@ def _as_presentations(obj: Any) -> list:
         # item renders the built-in fallback instead, which is exactly
         # the quiet save-and-reopen failure this loop exists to stop
         # (2026-08-25).
+        # "components" is the deck's own library of named, linked
+        # groups. Losing it here would leave every instance in the deck
+        # carrying a cmp id that points at nothing -- they would still
+        # draw, and would silently stop being linked (2026-08-25).
         for key in ("wmark", "head", "foot", "styles", "sections",
-                    "tokens"):
+                    "tokens", "components"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

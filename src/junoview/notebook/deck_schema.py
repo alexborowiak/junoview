@@ -85,6 +85,9 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "styles": (dict, "This deck's overrides of the named text types."),
     "tokens": (dict, "The deck's design tokens: {c:{name:colour}, rad, "
                      "gap}. An item referencing one stores '@name'."),
+    "components": (dict, "{id: {name, w, h, items}}. Named groups that "
+                         "can be placed repeatedly; every instance stays "
+                         "linked to the definition."),
     "emb": (dict, "The deck's own copy of every placed card, so it shows "
                   "its figures with no notebook and no network."),
 }

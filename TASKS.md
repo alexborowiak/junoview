@@ -176,12 +176,26 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   and read by the arrange verbs. A style set may carry a `tokens`
   sibling. Both `normPres` and `_as_presentations` keep the key, with a
   sentinel in the schema-parity test.
-- [ ] **T13 · L — Reusable components (design first).** Define a named
+- [x] **T13 · L — Reusable components (design first).** Define a named
   component from a selected group (e.g. `FigureCaption`); instances stay
   linked; editing the definition updates every instance; per-instance
   content overrides (text, image). Builds on the slide-presets work.
   junoview owns its deck JSON, so unlike pptx this *is* serialisable —
-  schema work lands in T30 first.
+  schema work lands in T33 first. *(The entry said T30; the schema task
+  is T33 — corrected 2026-08-25.)*
+  *2026-08-25 — the design note, carried in full under the COMPONENTS
+  banner:*
+  1. **What travels** is `MATCH_PROPS`, already argued and already used
+     by three features: geometry + look, never content. The per-instance
+     overrides the task asks for are exactly the fields it refuses.
+  2. **Geometry is relative** to the component's own box, so an instance
+     places anywhere. A component therefore has one intrinsic size and
+     instances are not resized as a unit — a real limit, stated.
+  3. **Three fields** identify an instance: `cmp`, `ci`, `cinst`.
+  4. **Updating is a re-stamp**, and losing local edits IS staying
+     linked. `Detach` is the escape hatch.
+  5. **Schema:** `pres.components`, deck-level, carried in `normPres`,
+     `_as_presentations`, the undo snapshot and DECK-FORMAT.md.
 - [ ] **T14 · L — Relative layout & anchoring (design first).** Opt-in
   per object: size as % of slide, edge anchoring, centring — so a slide-
   size change or a longer title reflows instead of exploding. Explicitly

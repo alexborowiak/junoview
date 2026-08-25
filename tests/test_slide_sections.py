@@ -205,7 +205,8 @@ def test_custom_types_are_whitelisted_everywhere(out):
     assert "if(BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;" in out
     # the undo array literal is NOT touched -- types are restored by their
     # own statement after it, so the registry can be re-grafted
-    assert "['wmark','head','foot','styles','tokens','page','pageBg'," in out
+    assert ("['wmark','head','foot','styles','tokens','components',"
+            "'page','pageBg',") in out
 
 
 def test_a_text_box_can_be_born_wearing_a_type(out):

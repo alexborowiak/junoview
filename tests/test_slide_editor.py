@@ -648,8 +648,8 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # and it survives a save, the way pageBg had to learn to
     # `tokens` joined them for the same reason (T12): a deck that has
     # forgotten what "@accent" means renders the fallback instead
-    assert ("['wmark','head','foot','styles','tokens']"
-            ".forEach(function(k){") in out
+    assert ("['wmark','head','foot','styles','tokens',\n"
+            "     'components'].forEach(function(k){") in out
 
 
 def test_equations_reuse_the_text_box_and_mathjax(out):
@@ -1592,11 +1592,13 @@ def test_the_deck_registry_survives_a_save(out):
     six times. Both sides carry it, and the schema-parity test has a
     sentinel for it.
     """
-    assert "['wmark','head','foot','styles','tokens'].forEach(" in out
+    assert ("['wmark','head','foot','styles','tokens',\n"
+            "     'components'].forEach(function(k){") in out
     # undo reaches it too: a token change repaints every item that
     # references it, so it is an edit like any other
     assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
-    assert "['wmark','head','foot','styles','tokens','page','pageBg'," in out
+    assert ("['wmark','head','foot','styles','tokens','components',"
+            "'page','pageBg',") in out
 
 
 def test_corner_and_gap_need_no_per_item_reference(out):
@@ -1678,3 +1680,67 @@ def test_the_fit_pass_runs_at_the_text_commit_too(out):
     assert ("      if(hasMaths(a2)) typeset(layer);\n"
             "      /* and re-fit, for the same reason") in out
     assert "fitTexts(layer,s2,true);" in out
+
+
+def test_a_component_stores_the_look_and_never_the_content(out):
+    """TASKS T13, and the first question its design note had to answer:
+    which properties are the component and which are the instance?
+
+    That question is already answered in this file, argued at length,
+    and used by three features. MATCH_PROPS is "the geometry + look that
+    travel; content never does" -- which IS a component's contract. So
+    the definition stores exactly MATCH_PROPS, and the per-instance
+    overrides the task asks for (text, image, which card a frame shows)
+    are simply the fields MATCH_PROPS has always refused to copy.
+    """
+    assert "function cmpDefine(name,idxs){" in out
+    assert "var CMP_SKIP={x:1,y:1,w:1,h:1,x1:1,y1:1,x2:1,y2:1,mid:1};" in out
+    assert "      MATCH_PROPS.forEach(function(p){\n        if(CMP_SKIP[p]) return;" \
+        in out
+    # geometry is relative to the component's own box, so an instance can
+    # be placed anywhere
+    assert "it.rel={x:(x.r.l-bb.l)/W,y:(x.r.t-bb.t)/H," in out
+    assert "function cmpPlaceOne(a,it,ox,oy,W,H){" in out
+
+
+def test_an_instance_is_identified_by_three_fields(out):
+    """cmp (which component), ci (which member) and cinst (which
+    instance) -- three rather than one because all three questions get
+    asked: is this a component, what should this member look like, and
+    which copies move together.
+    """
+    assert "a.cmp=id;a.ci=n;a.cinst=inst;" in out
+    assert "function cmpInstances(id){" in out
+    assert "if(!a||a.cmp!==id||!a.cinst) return;" in out
+
+
+def test_pushing_updates_every_other_instance_in_the_deck(out):
+    """Updating is a re-stamp, and it is deliberate that local edits to
+    an instance are lost by it. That IS staying linked; a component
+    whose instances quietly diverge is a component in name only. The
+    escape hatch is Detach, one menu row away.
+
+    The origin is the instance's own top-left corner, so an instance you
+    dragged somewhere stays where you dragged it.
+    """
+    assert "function cmpPush(id,si,inst){" in out
+    assert "function cmpSyncAll(id,skipSi,skipInst){" in out
+    assert "function cmpDetach(si,inst){" in out
+    assert "ox=Math.min(ox,a.k==='arrow'?Math.min(a.x1,a.x2):(a.x||0));" in out
+    # a definition that gained or lost members takes its instances with
+    # it: an instance quietly keeping an old member is not an instance
+    assert "sl.annots.push(na);" in out
+    assert "if(at>=0) sl.annots.splice(at,1);" in out
+
+
+def test_the_component_library_is_deck_level_and_survives(out):
+    """Losing it would leave every instance carrying a cmp id pointing
+    at nothing -- they would still draw, and would silently stop being
+    linked. So it rides in normPres, the undo snapshot, the Python
+    rebuild and DECK-FORMAT.md, which is the list T33 exists to make
+    obvious.
+    """
+    assert ("['wmark','head','foot','styles','tokens',\n"
+            "     'components'].forEach(function(k){") in out
+    assert "components:(pres.components&&Object.keys(pres.components).length)" \
+        in out

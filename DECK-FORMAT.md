@@ -32,6 +32,7 @@ supported state, and the editor marks it rather than forbidding it.
 
 | key | type | what it is |
 | --- | --- | --- |
+| `components` | dict | {id: {name, w, h, items}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. |
 | `cropMarks` | int | 1 when trim marks are printed outside the page. |
 | `emb` | dict | The deck's own copy of every placed card, so it shows its figures with no notebook and no network. |
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |

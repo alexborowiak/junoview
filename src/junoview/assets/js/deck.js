@@ -3880,7 +3880,8 @@
        `tokens` joins them: an item that references '@accent' and a deck
        that has forgotten what accent means renders the fallback, which
        is the quiet failure this list exists to prevent (T12). */
-    ['wmark','head','foot','styles','tokens'].forEach(function(k){
+    ['wmark','head','foot','styles','tokens',
+     'components'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
@@ -4316,6 +4317,12 @@
          READING the registry must not record a phantom step. */
       tokens:(pres.tokens&&Object.keys(pres.tokens).length)
         ?pres.tokens:null,
+      /* the definitions are as undoable as the instances wearing them:
+         Ctrl+Z after a push has to put BOTH back, or the deck is left
+         with instances stamped from a definition that no longer says
+         that (the same argument styles and types make above) */
+      components:(pres.components&&Object.keys(pres.components).length)
+        ?pres.components:null,
       /* section NAMES are content and are undoable; whether a section is
          COLLAPSED is a way of looking at the strip, so it is stripped out
          here — Ctrl+Z must never open or close one (2026-08-22). The
@@ -4345,7 +4352,7 @@
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
-    ['wmark','head','foot','styles','tokens','page','pageBg',
+    ['wmark','head','foot','styles','tokens','components','page','pageBg',
      'cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
@@ -10229,6 +10236,52 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* COMPONENTS. The rows differ by what you are pointing at: a
+         plain selection can BECOME one; an instance can push its look
+         to the definition or leave it. */
+      var cSel=selIdxs();
+      var cA=(pres.slides[cur].annots||[])[cSel[cSel.length-1]];
+      var cInst=(cA&&cA.cmp&&cA.cinst)?cA:null;
+      menuHead(m,'component');
+      if(cInst){
+        var cDef=cmpStore()[cInst.cmp];
+        var cN=cmpInstances(cInst.cmp).length;
+        row('Push this look to \u201c'
+          +((cDef&&cDef.name)||'the component')+'\u201d','',
+          function(){
+            var k=cmpPush(cInst.cmp,cur,cInst.cinst);
+            toast(k?(k+' other instance'+(k===1?'':'s')+' updated')
+              :'Saved \u2014 no other instances yet');},
+          'The other '+(cN-1)+' instance'+(cN===2?'':'s')
+          +' take this arrangement and look. Their own words and '
+          +'figures are untouched.');
+        row('Detach this one','',function(){
+          var k=cmpDetach(cur,cInst.cinst);
+          if(k) toast(k+' object'+(k===1?'':'s')
+            +' \u2014 no longer linked');},
+          'Turns this instance into ordinary objects. The component and '
+          +'its other instances are unaffected.');
+      } else if(cSel.length){
+        row('Make a component from '
+          +(cSel.length===1?'this':('these '+cSel.length)),'',
+          function(){
+            var nm=prompt('Name for the component:','FigureCaption');
+            if(!nm) return;
+            var id=cmpDefine(nm.trim(),cSel);
+            if(id) toast('\u201c'+nm.trim()+'\u201d saved \u2014 place '
+              +'it again from this menu');},
+          'Saves the arrangement and look as a named thing you can place '
+          +'again. Each copy keeps its own words and figures.');
+      }
+      var cAll=cmpList();
+      if(cAll.length){
+        cAll.forEach(function(c){
+          row('Place \u201c'+c.name+'\u201d',String(c.n),function(){
+            var k=cmpPlace(c.id,at);
+            if(k) toast('Placed \u201c'+c.name+'\u201d');},
+            'Drops a linked copy here');
+        });
+      }
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];
         if(fa&&fa.k==='text'){
@@ -13791,6 +13844,297 @@
       });
     });
   })();
+  /* ---- COMPONENTS: ONE DEFINITION, MANY LINKED INSTANCES ---------------
+     (TASKS T13.) A named group you can place again and again, where
+     editing the definition updates every instance — and where each
+     instance keeps its own words and its own figure.
+
+     THE DESIGN NOTE.
+
+     1. WHICH PROPERTIES ARE THE COMPONENT, AND WHICH ARE THE INSTANCE.
+        This question is already answered in this file, argued at length,
+        and used by three features: MATCH_PROPS is "the geometry + look
+        that travel; content never does". That is exactly a component's
+        contract, so it is exactly what a definition stores. Nothing new
+        is invented, and the per-instance overrides the task asks for —
+        text, image, which card a frame shows — are simply the fields
+        MATCH_PROPS has always refused to copy.
+
+     2. GEOMETRY IS RELATIVE, SO AN INSTANCE CAN LIVE ANYWHERE. Each
+        member is stored as a fraction of the component's own box
+        (0..1), not as a page position. Placing one multiplies back out
+        at the origin you dropped it. A component therefore has an
+        intrinsic SIZE, and an instance is not resized as a unit —
+        stated here because it is a real limit, not an oversight: making
+        instances scalable means deciding what happens to type size, and
+        that is a different feature.
+
+     3. AN INSTANCE IS IDENTIFIED BY THREE FIELDS, all on the item:
+        `cmp` (which component), `ci` (which member of it) and `cinst`
+        (which instance). Three rather than one because all three
+        questions get asked: "is this a component", "what should this
+        member look like", and "which copies move together".
+
+     4. UPDATING IS A RE-STAMP, and it is deliberate that local edits to
+        an instance are lost by it. That IS staying linked; a component
+        whose instances quietly diverge is a component in name only. The
+        escape hatch is Detach, which is one menu row away and turns the
+        instance into ordinary objects.
+
+     5. SCHEMA. `pres.components = {id:{name, w, h, items:[…]}}`. It is
+        deck-level, so it rides in normPres, _as_presentations, the undo
+        snapshot and DECK-FORMAT.md — the five places T33 exists to make
+        it obvious you have to touch. */
+  function cmpStore(){
+    if(!pres.components) pres.components={};
+    return pres.components;
+  }
+  function cmpList(){
+    var st=cmpStore();
+    return Object.keys(st).map(function(id){
+      return {id:id,name:(st[id]&&st[id].name)||'Component',
+        n:((st[id]&&st[id].items)||[]).length};
+    }).sort(function(a,b){
+      return a.name.localeCompare(b.name);});
+  }
+  function nextCmpId(){
+    var st=cmpStore(),n=1;
+    while(st['c'+n]) n++;
+    return 'c'+n;
+  }
+  /* the props a definition keeps: MATCH_PROPS minus the geometry, which
+     is stored relatively instead. Content is not in MATCH_PROPS at all,
+     which is the whole point (see the note above). */
+  var CMP_SKIP={x:1,y:1,w:1,h:1,x1:1,y1:1,x2:1,y2:1,mid:1};
+  function cmpDefine(name,idxs){
+    var s2=pres.slides[cur];
+    if(!s2||!idxs.length) return null;
+    var layer=stage.querySelector('.annot-layer');
+    var boxes=[];
+    idxs.forEach(function(i){
+      var r=annotRectPct(layer,s2,i);
+      if(r) boxes.push({i:i,r:r});
+    });
+    if(!boxes.length) return null;
+    var bb={l:1e9,t:1e9,r:-1e9,b:-1e9};
+    boxes.forEach(function(x){
+      bb.l=Math.min(bb.l,x.r.l);bb.t=Math.min(bb.t,x.r.t);
+      bb.r=Math.max(bb.r,x.r.r);bb.b=Math.max(bb.b,x.r.b);});
+    var W=Math.max(0.01,bb.r-bb.l),H=Math.max(0.01,bb.b-bb.t);
+    var items=boxes.map(function(x){
+      var a=s2.annots[x.i];
+      var it={k:a.k,props:{}};
+      MATCH_PROPS.forEach(function(p){
+        if(CMP_SKIP[p]) return;
+        if(a[p]!==undefined)
+          it.props[p]=(typeof a[p]==='object'&&a[p])?deep(a[p]):a[p];
+      });
+      if(a.k==='arrow'){
+        it.rel={x1:(a.x1-bb.l)/W,y1:(a.y1-bb.t)/H,
+                x2:(a.x2-bb.l)/W,y2:(a.y2-bb.t)/H};
+        if(Array.isArray(a.mid)) it.rel.mid=a.mid.map(function(m){
+          return [(m[0]-bb.l)/W,(m[1]-bb.t)/H];});
+      } else {
+        it.rel={x:(x.r.l-bb.l)/W,y:(x.r.t-bb.t)/H,
+                w:(x.r.r-x.r.l)/W,h:(x.r.b-x.r.t)/H};
+      }
+      /* the SHAPE of a shape is what it is, not how it is laid out, and
+         MATCH_PROPS excludes it for that reason — but a component that
+         forgot its members were stars would be useless */
+      if(a.shape) it.shape=a.shape;
+      if(a.nohead) it.nohead=a.nohead;
+      return it;
+    });
+    var id=nextCmpId();
+    cmpStore()[id]={name:name||'Component',w:W,h:H,items:items};
+    /* the objects you defined it FROM become its first instance, so the
+       thing you were looking at is a component now rather than a copy of
+       one sitting beside it */
+    var inst=nextCinst();
+    boxes.forEach(function(x,n){
+      var a=s2.annots[x.i];
+      a.cmp=id;a.ci=n;a.cinst=inst;
+    });
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    return id;
+  }
+  var cinstSeq=0;
+  function nextCinst(){
+    cinstSeq++;
+    return 'i'+cinstSeq+Math.random().toString(36).slice(2,5);
+  }
+  function cmpPlace(id,at){
+    var def=cmpStore()[id]; if(!def) return 0;
+    var s2=pres.slides[cur]; if(!s2) return 0;
+    s2.annots=s2.annots||[];
+    var W=def.w||20,H=def.h||20;
+    var ox=(at?at.x:50)-W/2,oy=(at?at.y:50)-H/2;
+    ox=Math.max(0,Math.min(100-W,ox));
+    oy=Math.max(0,Math.min(100-H,oy));
+    var inst=nextCinst(),made=[];
+    (def.items||[]).forEach(function(it,n){
+      var a={k:it.k,cmp:id,ci:n,cinst:inst};
+      Object.keys(it.props||{}).forEach(function(p){
+        a[p]=(typeof it.props[p]==='object'&&it.props[p])
+          ?deep(it.props[p]):it.props[p];});
+      if(it.shape) a.shape=it.shape;
+      if(it.nohead) a.nohead=it.nohead;
+      cmpPlaceOne(a,it,ox,oy,W,H);
+      s2.annots.push(a);made.push(s2.annots.length-1);
+    });
+    if(!made.length) return 0;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);selectMany(l,made);}
+    return made.length;
+  }
+  function cmpPlaceOne(a,it,ox,oy,W,H){
+    var r=it.rel||{};
+    if(a.k==='arrow'){
+      a.x1=ox+(r.x1||0)*W;a.y1=oy+(r.y1||0)*H;
+      a.x2=ox+(r.x2||0)*W;a.y2=oy+(r.y2||0)*H;
+      if(Array.isArray(r.mid)) a.mid=r.mid.map(function(m){
+        return [ox+m[0]*W,oy+m[1]*H];});
+    } else {
+      a.x=ox+(r.x||0)*W;a.y=oy+(r.y||0)*H;
+      if(r.w) a.w=r.w*W;
+      if(r.h) a.h=r.h*H;
+    }
+  }
+  /* every instance of a component, across the whole deck, as
+     {si, idxs:[…]} — the unit an update walks */
+  function cmpInstances(id){
+    var seen={},out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.cmp!==id||!a.cinst) return;
+        var key=si+'|'+a.cinst;
+        if(!seen[key]){seen[key]={si:si,inst:a.cinst,idxs:[]};
+          out.push(seen[key]);}
+        seen[key].idxs.push(i);
+      });
+    });
+    return out;
+  }
+  /* PUSH: this instance becomes the definition, and every other instance
+     follows. Content never travels — each instance keeps its own words
+     and its own figure, which is the per-instance override the task
+     asked for and which MATCH_PROPS gives for free. */
+  function cmpPush(id,si,inst){
+    var def=cmpStore()[id]; if(!def) return 0;
+    var sl=(pres.slides||[])[si]; if(!sl) return 0;
+    var layer=(si===cur)?stage.querySelector('.annot-layer'):null;
+    var mine=[];
+    (sl.annots||[]).forEach(function(a,i){
+      if(a&&a.cmp===id&&a.cinst===inst) mine.push({i:i,a:a});});
+    if(!mine.length) return 0;
+    mine.sort(function(p,q){return (p.a.ci||0)-(q.a.ci||0);});
+    var bb={l:1e9,t:1e9,r:-1e9,b:-1e9};
+    mine.forEach(function(x){
+      var r=layer?annotRectPct(layer,sl,x.i):null;
+      if(!r&&x.a.w!=null) r={l:x.a.x,t:x.a.y,
+        r:x.a.x+x.a.w,b:x.a.y+x.a.h};
+      if(!r&&x.a.k==='arrow') r={l:Math.min(x.a.x1,x.a.x2),
+        r:Math.max(x.a.x1,x.a.x2),t:Math.min(x.a.y1,x.a.y2),
+        b:Math.max(x.a.y1,x.a.y2)};
+      if(!r) return;
+      x.r=r;
+      bb.l=Math.min(bb.l,r.l);bb.t=Math.min(bb.t,r.t);
+      bb.r=Math.max(bb.r,r.r);bb.b=Math.max(bb.b,r.b);});
+    var W=Math.max(0.01,bb.r-bb.l),H=Math.max(0.01,bb.b-bb.t);
+    def.w=W;def.h=H;
+    def.items=mine.map(function(x){
+      var a=x.a,it={k:a.k,props:{}};
+      MATCH_PROPS.forEach(function(p){
+        if(CMP_SKIP[p]) return;
+        if(a[p]!==undefined)
+          it.props[p]=(typeof a[p]==='object'&&a[p])?deep(a[p]):a[p];
+      });
+      if(a.k==='arrow'){
+        it.rel={x1:(a.x1-bb.l)/W,y1:(a.y1-bb.t)/H,
+                x2:(a.x2-bb.l)/W,y2:(a.y2-bb.t)/H};
+        if(Array.isArray(a.mid)) it.rel.mid=a.mid.map(function(m){
+          return [(m[0]-bb.l)/W,(m[1]-bb.t)/H];});
+      } else if(x.r){
+        it.rel={x:(x.r.l-bb.l)/W,y:(x.r.t-bb.t)/H,
+                w:(x.r.r-x.r.l)/W,h:(x.r.b-x.r.t)/H};
+      } else it.rel={x:0,y:0,w:1,h:1};
+      if(a.shape) it.shape=a.shape;
+      if(a.nohead) it.nohead=a.nohead;
+      return it;
+    });
+    return cmpSyncAll(id,si,inst);
+  }
+  /* re-stamp every OTHER instance from the definition. The origin is the
+     instance's own top-left corner, so an instance you dragged somewhere
+     stays where you dragged it. */
+  function cmpSyncAll(id,skipSi,skipInst){
+    var def=cmpStore()[id]; if(!def) return 0;
+    var n=0;
+    cmpInstances(id).forEach(function(g){
+      if(g.si===skipSi&&g.inst===skipInst) return;
+      var sl=pres.slides[g.si];
+      var mine=g.idxs.map(function(i){return {i:i,a:sl.annots[i]};})
+        .filter(function(x){return !!x.a;});
+      if(!mine.length) return;
+      var ox=1e9,oy=1e9;
+      mine.forEach(function(x){
+        var a=x.a;
+        ox=Math.min(ox,a.k==='arrow'?Math.min(a.x1,a.x2):(a.x||0));
+        oy=Math.min(oy,a.k==='arrow'?Math.min(a.y1,a.y2):(a.y||0));
+      });
+      var W=def.w||20,H=def.h||20;
+      /* the definition may have gained or lost members. Extra instance
+         items are removed, missing ones are added — an instance that
+         silently kept an old member would not be an instance. */
+      var byCi={};
+      mine.forEach(function(x){byCi[x.a.ci]=x;});
+      (def.items||[]).forEach(function(it,k){
+        var hit=byCi[k];
+        if(hit){
+          var a=hit.a;
+          /* CONTENT IS NEVER TOUCHED: only the fields the definition
+             carries are written, and content is not among them */
+          Object.keys(it.props||{}).forEach(function(p){
+            a[p]=(typeof it.props[p]==='object'&&it.props[p])
+              ?deep(it.props[p]):it.props[p];});
+          if(it.shape) a.shape=it.shape;
+          cmpPlaceOne(a,it,ox,oy,W,H);
+          delete byCi[k];
+        } else {
+          var na={k:it.k,cmp:id,ci:k,cinst:g.inst};
+          Object.keys(it.props||{}).forEach(function(p){
+            na[p]=(typeof it.props[p]==='object'&&it.props[p])
+              ?deep(it.props[p]):it.props[p];});
+          if(it.shape) na.shape=it.shape;
+          if(it.nohead) na.nohead=it.nohead;
+          cmpPlaceOne(na,it,ox,oy,W,H);
+          sl.annots.push(na);
+        }
+      });
+      Object.keys(byCi).forEach(function(k){
+        var at=sl.annots.indexOf(byCi[k].a);
+        if(at>=0) sl.annots.splice(at,1);
+      });
+      n++;
+    });
+    markDirty();refresh();
+    return n;
+  }
+  function cmpDetach(si,inst){
+    var sl=(pres.slides||[])[si]; if(!sl) return 0;
+    var n=0;
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.cinst!==inst) return;
+      delete a.cmp;delete a.ci;delete a.cinst;n++;});
+    if(!n) return 0;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,sl);paintSel(l);}
+    return n;
+  }
   /* ---- THE ARRANGEMENTS DIALOG -----------------------------------------
      The library on the left, drawn; the per-slide suggestions on the
      right, ticked but overridable. Nothing is applied until you say so. */
