@@ -1808,3 +1808,71 @@ def test_everything_that_moves_an_item_goes_through_one_inverse(out):
         in out
     assert "anchorSet(m,op.x+dx,op.y+dy,o.w,o.h);" in out
     assert "    anchorSet(x.a,l2,t2,x.w,x.h);" in out
+
+
+def test_a_caption_is_tied_to_its_figure_not_grouped_with_it(out):
+    """TASKS T17. Grouping already makes several things move together
+    and would have been the cheap answer. It is the wrong one:
+
+    * a group is SYMMETRIC and this relationship is not -- the caption
+      belongs to the figure, not the other way round;
+    * matchKey / typeKeyOf bucket by KIND for Match slide and the Apply
+      dialog, and a caption must stay a caption there;
+    * T18 has to number figures, so "the caption of figure N" has to be
+      a question with an answer.
+
+    So it is a tie: `capOf` on the caption, `cap` on the figure. Two
+    fields because both directions get asked, and neither should mean
+    walking the slide.
+    """
+    assert "function figId(){" in out
+    assert "function capOfFig(s,a){" in out
+    assert "function figOfCap(s,a){" in out
+    assert "function tieCaption(figIdx,capIdx){" in out
+    assert "function untieCaption(i){" in out
+    # one definition of what a figure IS, so T18 cannot number three
+    # different ways
+    assert "function isFigure(a){" in out
+    assert "return a.k==='cell'&&partOf(a)==='figure';" in out
+
+
+def test_the_caption_follows_through_the_one_mover(out):
+    """The hook is in shiftAnnot, the single translate helper T8
+    factored out, so every mover gets it for nothing: nudge, layout
+    match, tidy-up, arrange. The drag path assigns absolutely from a
+    snapshot rather than going through it, so it carries the same hook
+    with its own snapshot -- or the caption would creep on every
+    mousemove.
+    """
+    assert "if(a.cap&&!_capMoving){" in out
+    assert "try{shiftAnnot(s2.annots[ci],dx,dy);}finally{_capMoving=0;}" in out
+    assert "if(m.cap&&capOrig[i]){" in out
+    assert "capOrig[i]={a:s.annots[ci],o:deep(s.annots[ci])};" in out
+
+
+def test_a_caption_is_never_moved_twice(out):
+    """Found in the browser: nudging a figure and its caption together
+    moved the caption 53px for a 26px figure -- once as a member of the
+    selection, and again by its figure's tie. startMove already guarded
+    this by skipping captions already in `movers`; anything else that
+    moves a SET has to do the same, and doing it in one named place is
+    what stops the next mover getting it wrong.
+    """
+    assert "function dropTiedCaptions(s,idxs){" in out
+    assert "var idxs=dropTiedCaptions(s,selIdxs());" in out
+    assert "dropTiedCaptions(s,idxs).forEach(function(i){" in out
+    assert "if(ci>=0&&movers.indexOf(ci)<0)" in out
+
+
+def test_the_caption_takes_the_figures_width_and_only_that(out):
+    """Width is the one dimension a caption shares with its figure -- a
+    caption wider or narrower than the thing it describes is the
+    commonest way a figure block stops looking deliberate. Height is
+    not: a caption's height is its words.
+
+    Taken at the END of the gesture, so one commit and no reflowing the
+    words sixty times a second.
+    """
+    assert "function capFollowResize(capA,capO,figO,fig){" in out
+    assert "if(capO.w) capA.w=capO.w*(w1/w0);" in out
+    assert "if(movedAny) capFollowResize(capA,capO,figO,a);" in out

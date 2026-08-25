@@ -239,8 +239,17 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 3. Figures — the scientific core
 
-- [ ] **T17 · M — Figure + caption as one object.** An attached caption
+- [x] **T17 · M — Figure + caption as one object.** An attached caption
   that moves/scales with its figure and survives layout operations.
+  *2026-08-25:* a TIE, not a group — `cap` on the figure, `capOf` on the
+  caption. Not a group because the relationship is asymmetric, because
+  `matchKey`/`typeKeyOf` must still see a caption as a caption, and
+  because T18 needs "the caption of figure N" to have an answer. The
+  follow-hook lives in `shiftAnnot`, so every mover gets it free; the
+  drag path repeats it with its own snapshot. `dropTiedCaptions` stops a
+  caption moving twice when it is selected alongside its figure — found
+  in the browser, not by the suite. `isFigure` is the one definition of
+  what counts, so T18 cannot number a different set.
 - [ ] **T18 · M — Auto figure numbering + cross-references.** "Figure N"
   numbered by deck order; inline references ("see Figure 7") renumber when
   slides move. Depends on T17.

@@ -9668,6 +9668,17 @@
     var origs={};
     movers.forEach(function(i){
       origs[i]=deep((s.annots||[])[i]);});
+    /* a snapshot of each mover's tied caption, for the same reason the
+       movers themselves are snapshotted: the drag is computed from the
+       ORIGINAL position every mousemove, never incrementally */
+    var capOrig={};
+    movers.forEach(function(i){
+      var m=(s.annots||[])[i];
+      if(!m||!m.cap) return;
+      var ci=capOfFig(s,m);
+      if(ci>=0&&movers.indexOf(ci)<0)
+        capOrig[i]={a:s.annots[ci],o:deep(s.annots[ci])};
+    });
     var single=(typeof idx!=='number')?deep(a):null;
     var thr=snapThr(layer);
     var targets=snapTargets(layer,s,movers);
@@ -9783,6 +9794,17 @@
           var op=anchorPos(o,o.w,o.h);
           anchorSet(m,op.x+dx,op.y+dy,o.w,o.h);
         } else {m.x=o.x+dx;m.y=o.y+dy;}
+        /* the drag writes absolute positions from a snapshot rather
+           than going through shiftAnnot, so the caption hook has to be
+           repeated here — and it moves by the same delta from ITS own
+           snapshot, or a caption would creep on every mousemove */
+        if(m.cap&&capOrig[i]){
+          var cc=capOrig[i];
+          if(cc.a.anch){
+            var cp=anchorPos(cc.o,cc.o.w,cc.o.h);
+            anchorSet(cc.a,cp.x+dx,cp.y+dy,cc.o.w,cc.o.h);
+          } else {cc.a.x=cc.o.x+dx;cc.a.y=cc.o.y+dy;}
+        }
         var me=movedEls[i];
         if(me){me.el.style.left=(me.l+dx)+'%';
                me.el.style.top=(me.t+dy)+'%';}
@@ -9807,6 +9829,16 @@
     ev0.preventDefault();ev0.stopPropagation();
     var a=annotByIdx(s,idx);
     if(!a||typeof idx!=='number') return;
+    /* A TIED CAPTION KEEPS THE FIGURE'S WIDTH. It is the one dimension a
+       caption shares with its figure — a caption wider or narrower than
+       the thing it describes is the single most common way a figure
+       block stops looking deliberate — and it is the only one, because
+       a caption's HEIGHT is its words (T17). */
+    var capA=null,capO=null,figO=null;
+    if(a.cap){
+      var ci0=capOfFig(s,a);
+      if(ci0>=0){capA=s.annots[ci0];capO=deep(capA);figO=deep(a);}
+    }
     corner=corner||'se';
     var east=corner.indexOf('e')>=0,west=corner.indexOf('w')>=0;
     var south=corner.indexOf('s')>=0,north=corner.indexOf('n')>=0;
@@ -9905,6 +9937,10 @@
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
       clearSnapGuides(layer);
+      /* the caption takes the figure's new width at the END of the
+         gesture, not per mousemove: one commit, and a caption that does
+         not reflow its words sixty times a second (T17) */
+      if(movedAny) capFollowResize(capA,capO,figO,a);
       /* the ONE rebuild per gesture; a moveless mousedown keeps the old
          no-render path */
       if(movedAny){renderAnnots(layer,s);selectAnnot(layer,idx);}
@@ -9912,6 +9948,18 @@
     }
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
+  }
+  /* called from the resize gesture's own commit */
+  function capFollowResize(capA,capO,figO,fig){
+    if(!capA||!capO||!figO||!fig) return;
+    var w0=figO.w,w1=fig.w;
+    if(!(w0>0)||!(w1>0)) return;
+    /* the caption's LEFT tracks the figure's left, and its width the
+       figure's width. Its own y is left alone: a caption sits under its
+       figure, and where "under" is depends on how tall the caption is,
+       which is its words' business. */
+    capA.x=(capO.x||0)+((fig.x||0)-(figO.x||0));
+    if(capO.w) capA.w=capO.w*(w1/w0);
   }
   function startRotate(layer,s,idx,ev0){
     ev0.preventDefault();ev0.stopPropagation();
@@ -10259,6 +10307,36 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* A FIGURE AND ITS CAPTION (T17). Two objects selected, one of
+         them a figure and one a text box, is an unambiguous "tie
+         these" — so the row appears exactly then and asks nothing. */
+      var capSel=selIdxs();
+      var capAn=(pres.slides[cur].annots||[]);
+      if(capSel.length===2){
+        var f0=capAn[capSel[0]],f1=capAn[capSel[1]];
+        var figI=isFigure(f0)?capSel[0]:(isFigure(f1)?capSel[1]:-1);
+        var txI=(f0&&f0.k==='text')?capSel[0]
+          :((f1&&f1.k==='text')?capSel[1]:-1);
+        if(figI>=0&&txI>=0&&figI!==txI){
+          menuHead(m,'figure');
+          row('Make this the figure’s caption','',function(){
+            if(tieCaption(figI,txI))
+              toast('Tied — the caption follows its figure now');},
+            'It moves with the figure and takes its width when the '
+            +'figure is resized. It is still an ordinary text box you '
+            +'can select and restyle on its own.');
+        }
+      } else if(capSel.length===1){
+        var one=capAn[capSel[0]];
+        if(one&&(one.cap||one.capOf)){
+          menuHead(m,'figure');
+          row(one.capOf?'Untie this caption'
+            :'Untie this figure’s caption','',
+            function(){
+              if(untieCaption(capSel[0]))
+                toast('Untied — they are two ordinary objects');});
+        }
+      }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
          time: an anchor is a fact about that item, and a menu that
          set nine of them at once would be a menu nobody could undo in
@@ -12317,6 +12395,18 @@
      not (2026-08-25, factored out for T8's layout matching). */
   function shiftAnnot(a,dx,dy){
     if(!a||(!dx&&!dy)) return;
+    /* A TIED CAPTION TRAVELS WITH ITS FIGURE. Here, in the one translate
+       helper, so every mover gets it for nothing: nudge, layout match,
+       tidy-up, arrange. `_capMoving` stops the two of them ping-ponging
+       when a caller happens to move both (T17). */
+    if(a.cap&&!_capMoving){
+      var s2=pres.slides[cur];
+      var ci=capOfFig(s2,a);
+      if(ci>=0){
+        _capMoving=1;
+        try{shiftAnnot(s2.annots[ci],dx,dy);}finally{_capMoving=0;}
+      }
+    }
     if(a.k==='arrow'){
       a.x1+=dx;a.y1+=dy;a.x2+=dx;a.y2+=dy;
       if(Array.isArray(a.mid)) a.mid=a.mid.map(function(m){
@@ -12331,12 +12421,30 @@
       anchorSet(a,ap.x+dx,ap.y+dy,a.w,a.h);
     } else {a.x=(a.x||0)+dx;a.y=(a.y||0)+dy;}
   }
+  var _capMoving=0;
+  /* A CAPTION WHOSE FIGURE IS ALSO IN THE SET must not be moved twice —
+     once as a member, and again by its figure's tie. startMove already
+     guards this by skipping captions already in `movers`; anything else
+     that moves a SET has to do the same, and doing it in one named
+     place is what stops the next mover getting it wrong (2026-08-25,
+     found in the browser: a nudge moved the caption 53px for a 26px
+     figure). */
+  function dropTiedCaptions(s,idxs){
+    if(!s||!s.annots) return idxs;
+    var figs={};
+    idxs.forEach(function(i){
+      var a=s.annots[i];
+      if(a&&a.cap) figs[a.cap]=1;});
+    return idxs.filter(function(i){
+      var a=s.annots[i];
+      return !(a&&a.capOf&&figs[a.capOf]);});
+  }
   function nudgeSel(dx,dy){
     var s=pres.slides[cur]; if(!s) return;
     if(selAnnot==='t'||selAnnot==='s'){
       var tp=titleProps(s,selAnnot);tp.x+=dx;tp.y+=dy;
     } else {
-      var idxs=selIdxs();
+      var idxs=dropTiedCaptions(s,selIdxs());
       if(!idxs.length||!s.annots) return;
       idxs.forEach(function(i){
         var a=s.annots[i]; if(!a||pinned(a)) return;   /* no nudge */
@@ -13734,7 +13842,7 @@
   }
   function applyPattern(layer,s,idxs,pat){
     var rs=[];
-    idxs.forEach(function(i){
+    dropTiedCaptions(s,idxs).forEach(function(i){
       var a=(s.annots||[])[i];
       /* a pinned object is not moved by anything else on the canvas and
          is not moved by this either (T3) */
@@ -13898,6 +14006,87 @@
       });
     });
   })();
+  /* ---- A FIGURE AND ITS CAPTION ARE ONE THING -------------------------
+     (TASKS T17.) A caption that moves with its figure, scales with it,
+     and survives every layout operation.
+
+     WHY NOT A GROUP. Grouping already makes several things move
+     together, and it would have been the cheap answer. It is the wrong
+     one, for three reasons this file already knows:
+       - a group is symmetric, and this relationship is not. The caption
+         belongs TO the figure; the figure does not belong to the
+         caption. Delete the figure and the caption is orphaned rubbish;
+         delete the caption and the figure is fine.
+       - `matchKey`/`typeKeyOf` bucket items by KIND for Match slide and
+         the Apply dialog. A caption must stay a caption there, and a
+         group tells them nothing.
+       - T18 has to number figures and re-number them when slides move.
+         "The caption of figure N" has to be a question with an answer.
+
+     SO IT IS A TIE, not a bag: the caption carries `capOf`, the opaque
+     id of its figure, and the figure carries `cap` — its own id. Two
+     fields rather than one because both directions get asked: "what is
+     this caption for" on the caption, and "does this figure have one"
+     on the figure, and neither should mean walking the slide.
+
+     WHAT THE TIE DOES. The caption follows the figure when the figure
+     moves (any mover, because it goes through shiftAnnot), keeps its
+     width when the figure is resized, and rides along in a component or
+     a clone. It is NOT a group: you can still select, restyle and edit
+     the caption on its own, which is the entire point of a caption. */
+  function figId(){
+    return 'f'+Math.random().toString(36).slice(2,8);
+  }
+  function capOfFig(s,a){
+    if(!a||!a.cap) return -1;
+    var hit=-1;
+    (s&&s.annots||[]).forEach(function(x,i){
+      if(x&&x.capOf===a.cap) hit=i;});
+    return hit;
+  }
+  function figOfCap(s,a){
+    if(!a||!a.capOf) return -1;
+    var hit=-1;
+    (s&&s.annots||[]).forEach(function(x,i){
+      if(x&&x.cap===a.capOf) hit=i;});
+    return hit;
+  }
+  /* WHAT COUNTS AS A FIGURE for a caption to belong to. A placed frame
+     showing a figure is the obvious one; a picture and a flip book are
+     the same thing to a reader, and saying so here is what stops T18
+     numbering three different ways. */
+  function isFigure(a){
+    if(!a) return false;
+    if(a.k==='image'||a.k==='flip') return true;
+    return a.k==='cell'&&partOf(a)==='figure';
+  }
+  function tieCaption(figIdx,capIdx){
+    var s2=pres.slides[cur];
+    var f=s2&&(s2.annots||[])[figIdx];
+    var c=s2&&(s2.annots||[])[capIdx];
+    if(!f||!c) return false;
+    if(!f.cap) f.cap=figId();
+    c.capOf=f.cap;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    return true;
+  }
+  function untieCaption(i){
+    var s2=pres.slides[cur];
+    var a=s2&&(s2.annots||[])[i];
+    if(!a) return false;
+    if(a.capOf){delete a.capOf;}
+    else if(a.cap){
+      var ci=capOfFig(s2,a);
+      if(ci>=0) delete s2.annots[ci].capOf;
+      delete a.cap;
+    } else return false;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    return true;
+  }
   /* ---- ANCHORING: WHAT HAPPENS WHEN THE PAGE CHANGES SHAPE ------------
      (TASKS T14.) The design note, and the first thing it has to say is
      what is ALREADY true, because half this task is done and saying so
