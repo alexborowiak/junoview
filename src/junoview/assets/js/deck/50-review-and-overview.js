@@ -1,0 +1,1743 @@
+/* 50-review-and-overview.js — the deck as words, the overview map, cuts, and the builder's sidebar.
+   ONE FRAGMENT of deck.js's single IIFE, concatenated with its
+   siblings in filename order by assets.deck_js(). It does not
+   parse alone and is not meant to: see 00-page.js. */
+  /* ---- WHAT THE DECK SAYS, IN WORDS -----------------------------------
+     (TASKS T35.) Two halves of one idea: write the deck out as text a
+     person or a language model can read, and say what looks wrong with
+     it while you are in there.
+
+     WHY THIS IS NOT PREFLIGHT. `preflight` asks "will this print" — per
+     slide, physical, millimetres and dpi and contrast. This asks "does
+     this hold together" — deck-wide, editorial, about words and figures
+     and whether the same thing is called two things. They share no
+     question and no unit, and folding one into the other would give you
+     a list where "0.2mm line" sits next to "slide 12 has 90 words on
+     it" as if those were the same kind of problem.
+
+     THE EXPORT IS TEXT, AND MARKDOWN. junoview is offline and stays
+     offline; what travels is the words. Markdown because it pastes into
+     anything, because a model reads structure out of it without being
+     told the format, and because a colleague can read it as it stands —
+     which is the difference between an export and a dump.
+
+     IT SAYS WHERE A FIGURE CAME FROM, and that is the part no other
+     export can do: a deck knows its figures by notebook anchor, so the
+     review can say "the toe map, from demo::toe_map" rather than
+     "[image]". Reviewing a talk without knowing which figure is which
+     is reviewing a talk with the pictures cut out.
+
+     THE FOUR LINTS ARE THE FOUR TASKS.md NAMES, and each one reports
+     what it counted rather than a verdict, because a heuristic that
+     will not show its working is one you cannot argue with:
+       - a figure nobody mentions: on the slide, no caption, and no text
+         or note on that slide that names it.
+       - a caption with no figure: `capOf` pointing at nothing, or text
+         that reads like a caption and is tied to nothing. T17 made the
+         tie explicit, which is what makes this answerable at all.
+       - two spellings of one thing: terms that are the same once
+         hyphens, spaces and case are taken out. Grouped that way,
+         "sea-level"/"sea level" and "Toe Map"/"toe map" fall out
+         together, and "The"/"the" — which differ only in the first
+         letter, i.e. a sentence beginning — deliberately do not.
+       - a slide with a lot on it: words and items, both counted. */
+  var DENSE_WORDS=55, DENSE_ITEMS=12;
+  function revText(a){
+    if(!a) return '';
+    if(a.k==='text') return String(a.text||'');
+    if(a.k==='table'&&Array.isArray(a.rows))
+      return a.rows.map(function(r){
+        return (r||[]).map(function(c){
+          return typeof c==='string'?c:((c&&c.t)||'');}).join(' | ');
+      }).join('\n');
+    return '';
+  }
+  function slideWordCount(sl){
+    var n=0;
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.hide||a.priv) return;
+      var t=revText(a).trim();
+      if(t) n+=t.split(/\s+/).length;
+    });
+    if(sl.layout==='title')
+      n+=String((sl.title||'')+' '+(sl.sub||'')).trim()
+        .split(/\s+/).filter(Boolean).length;
+    return n;
+  }
+  /* WHERE A FIGURE CAME FROM, in one line. The deck knows this and no
+     other export of it does. */
+  function revFigLine(sl,a,map){
+    var bits=[];
+    var nm=a.ref?String(a.ref).split('::').pop():'';
+    bits.push(nm||(a.k==='image'?'a placed picture'
+      :a.k==='flip'?'a flip book':'a frame'));
+    var num=(a.cap&&map[a.cap])?map[a.cap].n:0;
+    if(num) bits[0]='Figure '+num+' — '+bits[0];
+    var ci=capOfFig(sl,a);
+    var cap=ci>=0?revText((sl.annots||[])[ci]).trim():'';
+    if(cap) bits.push('“'+figSubst(cap,(sl.annots||[])[ci],map)+'”');
+    if(a.ref) bits.push('from '+a.ref);
+    else if(a.k==='image') bits.push('pasted in, not from a notebook');
+    if(a.k==='flip'&&Array.isArray(a.frames))
+      bits.push(a.frames.length+' frames');
+    return bits.join(' · ');
+  }
+  /* WHAT TO CALL A SLIDE IN AN EXPORT THAT TRAVELS. `filmText` names a
+     slide by the first thing written on it, which is right in the strip
+     — you are looking at the slide, private items and all. Here it is
+     wrong: a slide whose only text is an "only me" note would be
+     HEADED with that note, and the whole promise of T31 is that those
+     words do not leave. So the heading is taken from the same reading
+     order with the private items already dropped. */
+  function revHeading(sl){
+    if(!sl) return '';
+    if(sl.label) return String(sl.label);
+    if(sl.layout==='title'&&sl.title) return String(sl.title);
+    var out='';
+    orderedIdx(sl).forEach(function(j){
+      if(out) return;
+      var a=(sl.annots||[])[j];
+      if(!a||a.hide||a.priv||a.capOf) return;
+      var t=revText(a).trim();
+      if(t) out=t.split(/[\r\n]/)[0];
+    });
+    return out;
+  }
+  function deckReview(){
+    var L=[],map=figNumbers();
+    var runs=sectionRuns();
+    var n=(pres.slides||[]).length;
+    var mins=goalTotal();
+    L.push('# '+(pres.name||'Untitled deck'));
+    L.push('');
+    L.push(n+' slide'+(n===1?'':'s')
+      +(runs.filter(function(r){return r.id;}).length
+        ?(' in '+runs.filter(function(r){return r.id;}).length
+          +' sections'):'')
+      +(mins?(' · '+fmtMins(mins)+' planned'):'')
+      +(pres.talkMins?(' · '+pres.talkMins+' minute slot'):''));
+    if(pres.notes){
+      L.push('');
+      L.push('## About the whole talk');
+      L.push('');
+      L.push(String(pres.notes).trim());
+    }
+    runs.forEach(function(run){
+      L.push('');
+      L.push('## '+(run.id?(run.name||'Section')
+        :(runs.length>1?'(no section)':'The slides')));
+      for(var k=0;k<run.n;k++){
+        (function(i){
+          var sl=pres.slides[i];
+          if(!sl) return;
+          L.push('');
+          L.push('### '+(i+1)+'. '+(revHeading(sl)||'(untitled)'));
+          var tags=[];
+          if(sl.opt) tags.push('optional');
+          if(sl.cuts&&sl.cuts.length)
+            tags.push('only in: '+sl.cuts.map(function(c){
+              return (cutMap()[c]||{}).name||c;}).join(', '));
+          if(slideGoal(sl)) tags.push(fmtMins(slideGoal(sl))+' planned');
+          if(tags.length) L.push('*'+tags.join(' · ')+'*');
+          if(sl.layout==='title'){
+            if(sl.title) L.push('');
+            if(sl.title) L.push('**'+sl.title+'**');
+            if(sl.sub) L.push(sl.sub);
+          }
+          /* IN READING ORDER, not storage order: the review has to say
+             the slide in the order somebody looking at it would */
+          var words=[],figs=[];
+          orderedIdx(sl).forEach(function(j){
+            var a=(sl.annots||[])[j];
+            /* a private note is not part of the talk, and this export
+               travels (T31) */
+            if(!a||a.hide||a.priv) return;
+            if(isFigure(a)){figs.push(revFigLine(sl,a,map));return;}
+            if(a.capOf) return;         /* said with its figure */
+            var t=figSubst(revText(a),a,map).trim();
+            if(t) words.push(t);
+          });
+          if(words.length){
+            L.push('');
+            words.forEach(function(t){
+              L.push(t.split('\n').map(function(ln,li){
+                return (li?'  ':'- ')+ln;}).join('\n'));
+            });
+          }
+          if(figs.length){
+            L.push('');
+            L.push('Figures:');
+            figs.forEach(function(f){L.push('- '+f);});
+          }
+          if(sl.notes){
+            L.push('');
+            L.push('Speaker notes:');
+            String(sl.notes).trim().split('\n').forEach(function(ln){
+              L.push('> '+ln);});
+          }
+        })(run.at+k);
+      }
+    });
+    L.push('');
+    return L.join('\n');
+  }
+  /* the terms, normalised: hyphens, spaces and case out, so the
+     variants of one thing land in one bucket */
+  function termKey(w){
+    return String(w||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  }
+  function reviewLints(){
+    var out=[],map=figNumbers();
+    var surfaces={};
+    (pres.slides||[]).forEach(function(sl,si){
+      var texts=[];
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.hide) return;
+        var t=revText(a); if(t) texts.push(t);
+      });
+      if(sl.notes) texts.push(String(sl.notes));
+      if(sl.layout==='title') texts.push((sl.title||'')+' '+(sl.sub||''));
+      var all=texts.join(' ');
+      /* --- 1. a figure nobody mentions --- */
+      (sl.annots||[]).forEach(function(a,i){
+        if(!isFigure(a)||a.hide) return;
+        if(capOfFig(sl,a)>=0) return;         /* it has a caption */
+        var num=(a.cap&&map[a.cap])?map[a.cap].n:0;
+        var nm=a.ref?String(a.ref).split('::').pop():'';
+        var named=(num&&new RegExp('\\bfig(?:ure)?\\.?\\s*'+num+'\\b','i')
+          .test(all))
+          ||(nm&&all.toLowerCase().indexOf(nm.toLowerCase().replace(
+            /[_-]+/g,' '))>=0)
+          ||(nm&&all.toLowerCase().indexOf(nm.toLowerCase())>=0);
+        if(named) return;
+        out.push({sev:'warn',si:si,i:i,
+          head:'Slide '+(si+1)+': a figure nothing mentions',
+          why:(num?('Figure '+num):'This figure')+' has no caption, and '
+            +'no text or note on the slide names it. An audience does '
+            +'not know what they are looking at.'});
+      });
+      /* --- 2. a caption with no figure --- */
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.hide||a.k!=='text') return;
+        var t=revText(a).trim();
+        var looks=/^\s*(fig(ure)?\.?\s*\d|table\s*\d)/i.test(t);
+        if(a.capOf){
+          if(figOfCap(sl,a)>=0) return;
+          out.push({sev:'err',si:si,i:i,
+            head:'Slide '+(si+1)+': a caption whose figure is gone',
+            why:'“'+t.slice(0,60)+'” is tied to a figure that is no '
+              +'longer on this slide. It will number as [missing '
+              +'figure] and read as a caption for nothing.'});
+        } else if(looks){
+          out.push({sev:'warn',si:si,i:i,
+            head:'Slide '+(si+1)+': a caption that is not tied to '
+              +'anything',
+            why:'“'+t.slice(0,60)+'” reads like a caption but belongs '
+              +'to no figure, so it will not follow one, and its '
+              +'number will not update when the slides move.'});
+        }
+      });
+      /* --- 4. a slide with a lot on it --- */
+      var wc=slideWordCount(sl);
+      var ic=(sl.annots||[]).filter(function(a){
+        return a&&!a.hide&&!a.capOf;}).length;
+      if(wc>DENSE_WORDS||ic>DENSE_ITEMS)
+        out.push({sev:'warn',si:si,i:null,
+          head:'Slide '+(si+1)+': a lot on one slide',
+          why:wc+' words and '+ic+' things on it. Above about '
+            +DENSE_WORDS+' words an audience reads instead of '
+            +'listening.'});
+      /* COLLECT THE SURFACES for lint 3. Single words AND adjacent
+         pairs, because the whole point is that "sea-level" and "sea
+         level" are the same term written two ways -- and one of those
+         is one token while the other is two. A first pass that only
+         looked at single tokens found the hyphenated form and never
+         the spaced one, so the two could never meet in a bucket. */
+      var toks=all.match(/[A-Za-z][A-Za-z0-9'-]*/g)||[];
+      function surf(w){
+        var k=termKey(w);
+        if(k.length<4) return;
+        (surfaces[k]=surfaces[k]||{})[w]=(surfaces[k][w]||0)+1;
+      }
+      toks.forEach(function(w,i){
+        if(w.length>=4) surf(w);
+        if(i+1<toks.length){
+          var pair=w+' '+toks[i+1];
+          if(termKey(pair).length>=6) surf(pair);
+        }
+      });
+    });
+    /* --- 3. two spellings of one thing --- */
+    Object.keys(surfaces).forEach(function(k){
+      var forms=Object.keys(surfaces[k]);
+      if(forms.length<2) return;
+      /* forms differing ONLY in the first letter's case are a sentence
+         beginning, not an inconsistency */
+      var real=forms.some(function(a){
+        return forms.some(function(b){
+          return a!==b&&a.slice(1)!==b.slice(1);});});
+      if(!real) return;
+      /* NO MINIMUM COUNT. A first pass wanted three occurrences before
+         reporting, which silently hid the commonest real case -- the
+         term said once each way, which is exactly the inconsistency
+         worth catching. Two surfaces that normalise to the same string
+         and differ by more than a capital is already a strong enough
+         signal; the count is shown so you can judge it yourself. */
+      var total=forms.reduce(function(t,f){return t+surfaces[k][f];},0);
+      out.push({sev:'warn',si:null,i:null,
+        head:'Two spellings of one thing',
+        why:forms.map(function(f){
+          return '“'+f+'” ×'+surfaces[k][f];}).join(', ')
+          +'. Pick one — an audience reads the difference as a '
+          +'distinction.'});
+    });
+    return out;
+  }
+  /* THE PANEL. The lints first, because they are the reason to open it
+     twice; the text below them, because it is the reason to open it at
+     all. Both at once rather than two doors: what a lint says and what
+     the reviewer will read are the same deck, and having to switch
+     between them to check one against the other is the whole problem
+     with a separate report. */
+  function reviewClose(){
+    var ov=$('#deck-review');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',reviewKey,true);
+  }
+  function reviewKey(e){
+    if(!$('#deck-review')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();reviewClose();}
+  }
+  function openReview(){
+    reviewClose();
+    var text=deckReview(),lints=reviewLints();
+    var ov=document.createElement('div');
+    ov.className='deck-review';ov.id='deck-review';
+    ov.innerHTML='<div class="rv-head">'
+      +'<span class="rv-t">Send this deck out to be read</span>'
+      +'<span class="deck-spring"></span>'
+      +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
+      +'<button class="dbtn" id="rv-dl">'+bic('front')
+      +' Save as .md</button>'
+      +'<button class="dbtn" id="rv-close">'+bic('exit')
+      +' Close</button></div>'
+      +'<div class="rv-main">'
+      +'<div class="rv-lints" id="rv-lints"></div>'
+      +'<div class="rv-textwrap"><span class="rv-lab">'
+      +'what a reader gets — markdown, so it pastes anywhere</span>'
+      +'<textarea class="rv-text" id="rv-text" readonly '
+      +'spellcheck="false"></textarea></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#rv-text').value=text;
+    var host=ov.querySelector('#rv-lints');
+    var hd=document.createElement('div');
+    hd.className='rv-lhead';
+    var errs=lints.filter(function(l){return l.sev==='err';}).length;
+    hd.textContent=lints.length
+      ?(lints.length+' thing'+(lints.length===1?'':'s')+' to look at'
+        +(errs?(' · '+errs+' serious'):''))
+      :'Nothing looks wrong with the content';
+    host.appendChild(hd);
+    var note=document.createElement('div');
+    note.className='rv-note';
+    note.textContent='These are heuristics about the CONTENT, and each '
+      +'says what it counted so you can disagree with it. “Before you '
+      +'print” is the other list — that one is about ink and '
+      +'millimetres.';
+    host.appendChild(note);
+    lints.forEach(function(l){
+      var b=document.createElement('button');
+      b.className='rv-lint sev-'+l.sev;
+      var h=document.createElement('span');
+      h.className='rv-lh';h.textContent=l.head;
+      var w=document.createElement('span');
+      w.className='rv-lw';w.textContent=l.why;
+      b.appendChild(h);b.appendChild(w);
+      if(l.si!=null){
+        b.title='Go to slide '+(l.si+1);
+        b.addEventListener('click',function(){
+          reviewClose();
+          cur=l.si;selAnnot=(l.i==null?null:l.i);
+          selSet=(l.i==null?[]:[l.i]);
+          refresh();
+        });
+      } else b.classList.add('nogo');
+      host.appendChild(b);
+    });
+    ov.querySelector('#rv-close').addEventListener('click',reviewClose);
+    ov.querySelector('#rv-copy').addEventListener('click',function(){
+      var ta=ov.querySelector('#rv-text');
+      ta.select();
+      var done=false;
+      try{done=document.execCommand('copy');}catch(e){}
+      if(!done&&navigator.clipboard)
+        navigator.clipboard.writeText(text).then(function(){
+          toast('Copied — paste it wherever it is being read');});
+      else toast(done?'Copied — paste it wherever it is being read'
+        :'Select the text and copy it');
+    });
+    ov.querySelector('#rv-dl').addEventListener('click',function(){
+      var blob=new Blob([text],{type:'text/markdown'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=(pres.name||'deck')+'.review.md';
+      a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+      toast('Saved — it travels; junoview stays here');
+    });
+    document.addEventListener('keydown',reviewKey,true);
+  }
+  /* ---- THE OVERVIEW: THE WHOLE TALK AT ONCE ---------------------------
+     (TASKS T26.) TASKS.md is careful about what this is: "the realistic
+     scope of the infinite-canvas wish — an overview/navigation layer,
+     not canvas-based authoring". So it navigates and it does not author,
+     and that boundary is the reason it can be an overlay over the
+     existing model rather than a second editor.
+
+     WHY AN OVERLAY AND NOT A PANE. Every pane in this app docks beside
+     the stage and takes width from the page; this needs the opposite —
+     all the room there is, for as long as you are looking, and none
+     afterwards. It is the same shape as the spotlight and the presenter
+     view, which are the other two things here that take the screen and
+     give it straight back.
+
+     WHAT IT DRAWS is what already exists: sectionRuns() for the
+     clusters, miniDiagram() for the tiles, and the same reading of
+     optional/cut membership the playback filter uses. Nothing here
+     computes a fact of its own, which is why it cannot disagree with
+     the strip it is a zoom-out of. */
+  function overviewClose(){
+    var ov=$('#deck-overview');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',overviewKey,true);
+  }
+  function overviewKey(e){
+    if(!$('#deck-overview')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();overviewClose();
+    }
+  }
+  function openOverview(){
+    overviewClose();
+    var ov=document.createElement('div');
+    ov.className='deck-overview';ov.id='deck-overview';
+    var head=document.createElement('div');
+    head.className='ovw-head';
+    var t=document.createElement('span');
+    t.className='ovw-t';
+    var runs=sectionRuns();
+    var n=(pres.slides||[]).length;
+    t.textContent=(pres.name||'This deck')+' \u2014 '+n+' slide'
+      +(n===1?'':'s')
+      +(function(){
+        var ns=runs.filter(function(r){return r.id;}).length;
+        return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
+      })();
+    head.appendChild(t);
+    var sp=document.createElement('span');
+    sp.className='deck-spring';head.appendChild(sp);
+    /* THE SEARCH BOX IS THE MAP'S (T30). Filtering a map you can already
+       see beats a separate results list you cannot. */
+    var find=document.createElement('input');
+    find.className='ovw-find';find.id='ovw-find';find.type='search';
+    find.placeholder='Find a slide\u2026';
+    find.setAttribute('aria-label','Find a slide by its words or notes');
+    head.appendChild(find);
+    var cnt=document.createElement('span');
+    cnt.className='ovw-fn';head.appendChild(cnt);
+    var cl=document.createElement('button');
+    cl.className='dbtn';cl.innerHTML=bic('exit')+' Close';
+    cl.title='Esc';
+    cl.addEventListener('click',overviewClose);
+    head.appendChild(cl);
+    ov.appendChild(head);
+    var body=document.createElement('div');
+    body.className='ovw-body';
+    runs.forEach(function(r){
+      var grp=document.createElement('div');
+      grp.className='ovw-grp';
+      var gh=document.createElement('div');
+      gh.className='ovw-gh';
+      gh.textContent=r.id?(r.name||'Section')
+        :(runs.length>1?'(no section)':'');
+      if(gh.textContent) grp.appendChild(gh);
+      var tiles=document.createElement('div');
+      tiles.className='ovw-tiles';
+      for(var k=0;k<r.n;k++){
+        (function(i){
+          var sl=pres.slides[i];
+          var tile=document.createElement('button');
+          tile.className='ovw-tile'+(i===cur?' cur':'')
+            +(sl&&sl.opt?' opt':'')
+            +(slideSkipped(i)?' cut':'');
+          var num=document.createElement('span');
+          num.className='ovw-n';num.textContent=String(i+1);
+          tile.appendChild(num);
+          tile.appendChild(miniDiagram(sl));
+          var lab=document.createElement('span');
+          lab.className='ovw-lab';
+          lab.textContent=filmText(sl)||'';
+          tile.appendChild(lab);
+          tile.dataset.i=String(i);
+          tile.title=(sl&&sl.opt?'Optional \u2014 ':'')
+            +'Go to slide '+(i+1);
+          tile.addEventListener('click',function(){
+            overviewClose();
+            /* PRESENTING, go() -- so the transition plays, the rehearsal
+               clock attributes the time and the presenter view follows.
+               Setting cur by hand would skip all three (T30). */
+            if(mode==='view'){go(i);return;}
+            cur=i;activePane=-1;selAnnot=null;selSet=[];
+            refresh();
+          });
+          tiles.appendChild(tile);
+        })(r.at+k);
+      }
+      grp.appendChild(tiles);
+      body.appendChild(grp);
+    });
+    ov.appendChild(body);
+    /* TYPE TO NARROW. The tiles are already drawn; a hit hides the ones
+       that do not match rather than rebuilding the map, so the slides
+       do not jump about under the pointer as you type. */
+    function applyFind(){
+      var q=find.value.trim();
+      if(!q){
+        $$('.ovw-tile',ov).forEach(function(t){t.hidden=false;
+          t.classList.remove('hit');
+          var w=t.querySelector('.ovw-why'); if(w) w.remove();});
+        $$('.ovw-grp',ov).forEach(function(g){g.hidden=false;});
+        cnt.textContent='';
+        return;
+      }
+      var hits={},n=0;
+      slideHits(q).forEach(function(h){hits[h.i]=h;n++;});
+      $$('.ovw-tile',ov).forEach(function(t){
+        var i=+t.dataset.i;
+        var h=hits[i];
+        t.hidden=!h;
+        t.classList.toggle('hit',!!h);
+        var w=t.querySelector('.ovw-why');
+        if(w) w.remove();
+        if(h){
+          var e=document.createElement('span');
+          e.className='ovw-why';
+          e.textContent=(h.where?(h.where+': '):'')+h.snip;
+          t.appendChild(e);
+        }
+      });
+      /* a section with nothing left in it stops taking up a heading */
+      $$('.ovw-grp',ov).forEach(function(g){
+        g.hidden=!$$('.ovw-tile',g).some(function(t){return !t.hidden;});
+      });
+      cnt.textContent=n?(n+' slide'+(n===1?'':'s')):'nothing';
+    }
+    find.addEventListener('input',applyFind);
+    find.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Escape'){
+        if(find.value){find.value='';applyFind();e.preventDefault();}
+        return;
+      }
+      /* Enter goes to the first one, which is what you meant */
+      if(e.key==='Enter'){
+        var first=$$('.ovw-tile',ov).filter(function(t){
+          return !t.hidden;})[0];
+        if(first){e.preventDefault();first.click();}
+      }
+    });
+    document.body.appendChild(ov);
+    /* CAPTURE, so Esc closes the map before the editor's own Esc ladder
+       reads it as "drop the tool" — the innermost state wins, which is
+       the rule that ladder already follows */
+    document.addEventListener('keydown',overviewKey,true);
+  }
+  /* ---- OPTIONAL SLIDES, NAMED CUTS, AND RUNNING LATE ------------------
+     (TASKS T24 and T25 — one model, and T25 is three lines once T24
+     exists, so they are built together.)
+
+     THE PROBLEM: three files called talk-45.deck, talk-20.deck and
+     talk-5.deck, diverging from the day they were copied.
+
+     THE MODEL. A slide carries `opt:1` when it is optional, and a set of
+     cut names in `cuts` — a slide IS IN a cut when it names it. Both
+     live ON THE SLIDE, for the reason sections chose the same shape and
+     recorded it: membership stored on the slide travels through every
+     splice, every drag, every duplicate and every undo for free, while a
+     stored list of indexes has to be repaired after each of them and
+     will eventually not be.
+
+     `pres.cuts` holds only the NAMES, exactly as `pres.sections` holds
+     only section names, and for the same reason: the order and the
+     membership are read back off the slide list.
+
+     WHAT A CUT MEANS. A slide with no `cuts` is in EVERY cut — that is
+     what makes the feature adoptable, because an existing deck is
+     already a complete "everything" cut and turning one on excludes
+     nothing until you say so. Naming cuts on a slide narrows it.
+
+     RUNNING LATE (T25) is then not a fourth concept: it is a live
+     filter that also drops anything marked optional, from wherever you
+     have got to. It is deliberately NOT a cut — you do not choose it
+     before the talk, you reach for it at minute 34 — and it applies
+     from the CURRENT slide onward, because the ones you have already
+     shown are not the problem. */
+  function cutMap(){
+    if(!pres.cuts) pres.cuts={};
+    return pres.cuts;
+  }
+  function cutList(){
+    var m=cutMap();
+    return Object.keys(m).map(function(id){
+      return {id:id,name:(m[id]&&m[id].name)||id};
+    }).sort(function(a,b){return a.name.localeCompare(b.name);});
+  }
+  function cutId(){
+    var m=cutMap(),n=1;
+    while(m['k'+n]) n++;
+    return 'k'+n;
+  }
+  function newCut(name){
+    var id=cutId();
+    cutMap()[id]={name:name||'Short version'};
+    markDirty();
+    return id;
+  }
+  /* the cut currently being SHOWN, or '' for the whole deck. Session
+     state, not deck state: which version you are rehearsing today is
+     not a property of the document, and sending someone a deck must not
+     send them your rehearsal. Same argument matchPick makes. */
+  var showCut='',lateFrom=-1;
+  /* a slide is in a cut when it names it — and a slide that names no
+     cuts is in all of them, which is what makes an existing deck a
+     complete "everything" version on the day this ships. */
+  function inCut(sl,cut){
+    if(!cut) return true;
+    var c=sl&&sl.cuts;
+    if(!c||!c.length) return true;
+    return c.indexOf(cut)>=0;
+  }
+  /* SKIPPED, for playback only. Never for the editor: a slide you have
+     cut is still a slide you are editing, and hiding it from the strip
+     would be how you lose it. */
+  function slideSkipped(i){
+    var sl=(pres.slides||[])[i];
+    if(!sl) return false;
+    if(!inCut(sl,showCut)) return true;
+    if(lateFrom>=0&&i>lateFrom&&sl.opt) return true;
+    return false;
+  }
+  /* the next slide playback should land on, in a direction. Returns -1
+     when there is nothing left that way. */
+  function nextShown(from,dir){
+    var n=(pres.slides||[]).length;
+    for(var i=from+dir;i>=0&&i<n;i+=dir)
+      if(!slideSkipped(i)) return i;
+    return -1;
+  }
+  function setCut(id){
+    showCut=id||'';
+    /* landing on a slide the cut excludes would be a talk that starts
+       on a slide it is not showing */
+    if(mode==='view'&&slideSkipped(cur)){
+      var to=nextShown(cur,1);
+      if(to<0) to=nextShown(cur,-1);
+      if(to>=0) go(to);
+    }
+    presenterSync&&presenterSync();
+    renderFilm();
+    toast(id?('Showing the \u201c'+(cutMap()[id]||{}).name
+      +'\u201d version'):'Showing every slide');
+  }
+  /* T25. One control, mid-talk, that drops the rest of the optional
+     slides. From HERE onward: what you have already shown is not the
+     problem, and un-showing it is not on offer. */
+  function runLate(on){
+    lateFrom=on?cur:-1;
+    renderFilm();
+    presenterSync&&presenterSync();
+    if(!on){toast('Back to the full run');return 0;}
+    var n=0;
+    (pres.slides||[]).forEach(function(sl,i){
+      if(i>cur&&sl&&sl.opt&&inCut(sl,showCut)) n++;});
+    toast(n?(n+' optional slide'+(n===1?'':'s')
+      +' will be skipped from here'):'No optional slides left to skip');
+    return n;
+  }
+  function toggleOptional(i){
+    var sl=(pres.slides||[])[i]; if(!sl) return;
+    if(sl.opt) delete sl.opt; else sl.opt=1;
+    markDirty();renderFilm();
+    toast(sl.opt?'Optional \u2014 "Running late" will skip it'
+      :'No longer optional');
+  }
+  function toggleSlideCut(i,id){
+    var sl=(pres.slides||[])[i]; if(!sl||!id) return;
+    var c=(sl.cuts||[]).slice();
+    var at=c.indexOf(id);
+    if(at>=0) c.splice(at,1); else c.push(id);
+    /* an empty list means "every cut", so it is dropped rather than
+       stored — the same empty-is-absent rule sections and styles use */
+    if(c.length) sl.cuts=c; else delete sl.cuts;
+    markDirty();renderFilm();
+  }
+  function go(n){
+    var prev=cur;
+    cur=Math.max(0,Math.min(pres.slides.length-1,n));
+    if(cur===prev) return;   /* clamped no-op: keep build + selection state */
+    /* stepping back into a slide shows it fully built; forward starts fresh */
+    revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
+    selAnnot=null;selSet=[];   /* never carry a selection across slides */
+    /* MEASURE BEFORE THE REBUILD. renderSlide empties the stage, so the
+       outgoing geometry has to be taken here or it is gone (T27). */
+    captureFlip(prev);
+    /* ...and the time so far belongs to the slide you are LEAVING, which
+       is why this is here rather than after the render (T29) */
+    rehSlideChanged();
+    refresh();
+    playFlip();
+    presenterSync();
+    if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
+  }
+  /* advance: reveal the next build, else move to the next slide (no-op at the
+     very end, so the final slide never collapses back to its pre-build state) */
+  function advance(){
+    var s=pres.slides[cur];
+    /* a flip book's frames are stops in this same sequence, so the space
+       bar walks the figure through its steps exactly as it walks a build
+       — one gesture for the whole talk (2026-08-22) */
+    if(mode==='view'&&s&&revealCount<slideStops(s)){
+      revealCount++;renderSlide();presenterSync();
+    } else {
+      /* THE FILTER LIVES HERE, in the two verbs the whole talk runs on,
+         rather than in twenty callers. A cut or a running-late skip is
+         a fact about what to show NEXT, which is exactly what advance
+         asks (T24/T25). */
+      var nx=nextShown(cur,1);
+      if(nx>=0) go(nx);
+    }
+  }
+  function backStep(){
+    if(mode==='view'&&revealCount>0){revealCount--;renderSlide();
+      presenterSync();}
+    else {
+      var pv=nextShown(cur,-1);
+      go(pv>=0?pv:cur-1);
+    }
+  }
+
+  /* ---------- create mode: sidebar UI ---------- */
+  /* ---------- presentations rail (vertical, left edge) ----------
+     One item is active at any time: the "Notebooks" button (builder
+     closed) or a presentation (builder open editing it). */
+  var presstrip=document.getElementById('presstrip');
+  var FOLDKEY='sempresfold:'+SCOPE;
+  var FOLDERSKEY='sempresfolders:'+SCOPE;
+  function foldState(){
+    try{return JSON.parse(lsGet(FOLDKEY)||'{}');}catch(e){return {};}
+  }
+  function toggleFold(f){
+    var s=foldState();
+    if(s[f]) delete s[f]; else s[f]=1;
+    lsSet(FOLDKEY,JSON.stringify(s));
+    renderPresTabs();
+  }
+  /* folders exist on their own (created empty, dragged into) */
+  function explicitFolders(){
+    try{
+      var l=JSON.parse(lsGet(FOLDERSKEY)||'[]');
+      return Array.isArray(l)?l:[];
+    }catch(e){return [];}
+  }
+  function saveFolders(list){lsSet(FOLDERSKEY,JSON.stringify(list));}
+  /* move ANY presentation (current, saved, draft, embedded) */
+  function setPresFolder(nm,folder){
+    var f=(folder||'').trim();
+    function apply(p){
+      if(f) p.folder=f; else delete p.folder;
+    }
+    if(nm===pres.name){apply(pres);markDirty();renderPresRow();return;}
+    var hit=false;
+    projectPres.forEach(function(p){
+      if(p.name===nm){apply(p);hit=true;}});
+    nbPres.forEach(function(p){
+      if(p.name===nm){apply(p);hit=true;}});
+    var raw=lsGet(PFX+nm);
+    if(raw){
+      try{
+        var d=JSON.parse(raw);apply(d);
+        lsSet(PFX+nm,JSON.stringify(d));hit=true;
+      }catch(e){}
+    }
+    if(hit&&APP.mode==='app') scheduleAutosave();
+    renderPresTabs();
+  }
+  function newFolder(){
+    var list=explicitFolders();
+    var n=1,name='folder';
+    function taken(x){
+      return list.indexOf(x)>=0
+        ||allSaved().some(function(p){return p.folder===x;});
+    }
+    while(taken(name)){n++;name='folder-'+n;}
+    list.push(name);saveFolders(list);
+    renderPresTabs();
+    var h=presstrip.querySelector(
+      '.pr-folder[data-folder="'+name+'"]');
+    if(h) startFolderRename(h,name);
+  }
+  function renameFolder(oldName,newName){
+    newName=(newName||'').trim();
+    if(!newName||newName===oldName) return;
+    var list=explicitFolders().map(function(x){
+      return x===oldName?newName:x;});
+    if(list.indexOf(newName)<0) list.push(newName);
+    saveFolders(list.filter(function(x,i){
+      return list.indexOf(x)===i;}));
+    var st=foldState();
+    if(st[oldName]){delete st[oldName];st[newName]=1;
+      lsSet(FOLDKEY,JSON.stringify(st));}
+    allSaved().concat([pres]).forEach(function(p){
+      if(p.folder===oldName) setPresFolder(p.name,newName);
+    });
+    draftNames().forEach(function(nm){
+      var d=loadDraft(nm);
+      if(d&&d.folder===oldName) setPresFolder(nm,newName);
+    });
+    renderPresTabs();
+  }
+  function deleteFolder(f){
+    saveFolders(explicitFolders().filter(function(x){return x!==f;}));
+    allSaved().concat([pres]).forEach(function(p){
+      if(p.folder===f) setPresFolder(p.name,'');
+    });
+    draftNames().forEach(function(nm){
+      var d=loadDraft(nm);
+      if(d&&d.folder===f) setPresFolder(nm,'');
+    });
+    renderPresTabs();
+  }
+  function startFolderRename(header,f){
+    var t=header.querySelector('.pr-t');
+    if(!t) return;
+    var inp=document.createElement('input');
+    inp.className='pr-frename';
+    inp.value=f;inp.spellcheck=false;
+    t.replaceWith(inp);
+    inp.focus();inp.select();
+    function commit(){
+      var v=inp.value.trim();
+      if(v&&v!==f) renameFolder(f,v);
+      else renderPresTabs();
+    }
+    inp.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter') this.blur();
+      if(e.key==='Escape'){this.value=f;this.blur();}
+    });
+    inp.addEventListener('blur',commit);
+    inp.addEventListener('click',function(e){e.stopPropagation();});
+  }
+  function renderPresTabs(){
+    if(!presstrip) return;
+    presstrip.innerHTML='';
+    var savedList=allSaved();
+    var savedNames=savedList.map(function(p){return p.name;});
+    var byName={};
+    savedList.forEach(function(p){byName[p.name]=p;});
+    var names=savedNames.slice();
+    /* drafts stay listed even while another presentation is open */
+    draftNames().forEach(function(n){
+      if(names.indexOf(n)<0){
+        names.push(n);
+        byName[n]=loadDraft(n)||{name:n};
+      }
+    });
+    if(names.indexOf(pres.name)<0) names.unshift(pres.name);
+    byName[pres.name]=pres;   /* in-memory version wins (live folder) */
+    var editing=!deckEl.hidden;
+
+    function presItem(nm,folder){
+      var isCur=nm===pres.name;
+      var t=document.createElement('button');
+      /* radio model: a row lights up ONLY while its deck is open — back on
+         the notebook view, no presentation stays highlighted */
+      t.className='pr-item ptab'+(isCur&&editing?' current editing':'')
+        +(savedNames.indexOf(nm)<0?' draftonly':'');
+      t.setAttribute('role','tab');
+      t.dataset.pres=nm;
+      t.dataset.folder=folder||'';
+      var isPoster=/^a\d/.test(String((byName[nm]&&byName[nm].page)||''));
+      var isView=isViewPres(byName[nm]);
+      /* a custom view lights up while ITS styling bar is open, not while
+         the slide stage is (it never opens the slide stage) */
+      var vwOpen=isView&&isCur
+        &&document.body.classList.contains('styling');
+      if(vwOpen) t.className+=' current editing';
+      var kindWord=isView?'custom view':isPoster?'poster':'presentation';
+      t.title=((isCur&&(editing||vwOpen))
+        ?('Editing "'+nm+'" — click Notebooks (top left) to go back')
+        :('Open '+kindWord+' "'+nm+'"'
+          +(isView?' — restyles the notebook itself':' in the builder')))
+        +'\nDrag onto a folder to file it';
+      /* the same drawn icons as the "+ New ..." buttons, so a row and the
+         button that made it read as the same kind of thing — straight
+         from SemIcons, where the "+ New" template tokens also resolve */
+      t.innerHTML='<span class="pr-ico">'
+        +bic(isView?'newview':isPoster?'newposter':'newdeck')
+        +'</span>';
+      var lbl=document.createElement('span');lbl.className='pr-t';
+      lbl.textContent=nm||'(unnamed)';
+      t.appendChild(lbl);
+      /* delete where the thing IS, not three menu levels away. Shown on
+         hover / while current; confirm() because there is no undo for a
+         deleted presentation. */
+      /* a real <button>, not a click-wired span: focusable, and named
+         for screen readers — the icon is its only visible content
+         (2026-08-24). .pr-del's CSS resets the button chrome. */
+      var del=document.createElement('button');
+      del.type='button';
+      del.className='pr-del';del.title='Delete "'+nm+'"';
+      del.setAttribute('aria-label','Delete "'+nm+'"');
+      del.innerHTML=bic('exit')||'&#10005;';
+      del.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();
+        if(confirm('Delete "'+nm+'"? This cannot be undone.'))
+          deletePresByName(nm);
+      });
+      t.appendChild(del);
+      t.draggable=true;
+      t.addEventListener('dragstart',function(e){
+        draggingPres=nm;
+        t.classList.add('dragging');
+        try{e.dataTransfer.setData('text/plain',nm);}catch(err){}
+        e.dataTransfer.effectAllowed='move';
+      });
+      t.addEventListener('dragend',function(){
+        draggingPres=null;
+        t.classList.remove('dragging');
+        clearDropMarks();
+      });
+      t.addEventListener('click',function(){
+        if(isCur&&!deckEl.hidden) return;
+        if(vwOpen) return;            /* already the open custom view */
+        choosePresentation(nm);
+      });
+      return t;
+    }
+
+    /* group by folder; loose items first, then collapsible folders
+       (explicitly created folders show even while empty) */
+    var rootNames=[],folders={},folderOrder=[];
+    explicitFolders().forEach(function(f){
+      folders[f]=[];folderOrder.push(f);
+    });
+    names.forEach(function(nm){
+      var f=(byName[nm]&&byName[nm].folder)||'';
+      if(!f){rootNames.push(nm);return;}
+      if(!folders[f]){folders[f]=[];folderOrder.push(f);}
+      folders[f].push(nm);
+    });
+    rootNames.forEach(function(nm){
+      presstrip.appendChild(presItem(nm,''));});
+    folderOrder.sort().forEach(function(f){
+      var collapsed=!!foldState()[f]
+        &&!(editing&&folders[f].indexOf(pres.name)>=0);
+      var h=document.createElement('div');
+      h.className='pr-folder';
+      h.dataset.folder=f;
+      h.title='Folder "'+f+'" — click to '
+        +(collapsed?'expand':'collapse')
+        +'; drag presentations onto it';
+      h.innerHTML='<span class="pr-fchev">'
+        +(collapsed?'&#9656;':'&#9662;')+'</span>'
+        +'<span class="pr-fico">'+bic('open')+'</span>';
+      var ft=document.createElement('span');ft.className='pr-t';
+      ft.textContent=f;h.appendChild(ft);
+      var fc=document.createElement('span');fc.className='pr-fcount';
+      fc.textContent=folders[f].length;h.appendChild(fc);
+      var ctr=document.createElement('span');ctr.className='pr-fctrl';
+      [[bic('pen'),'Rename folder',function(){startFolderRename(h,f);}],
+       [bic('exit'),'Delete folder (contents move out)',
+        function(){deleteFolder(f);}]].forEach(function(b){
+        var btn=document.createElement('button');
+        btn.innerHTML=b[0];btn.title=b[1];
+        btn.addEventListener('click',function(e){
+          e.stopPropagation();b[2]();});
+        ctr.appendChild(btn);
+      });
+      h.appendChild(ctr);
+      h.addEventListener('click',function(){toggleFold(f);});
+      presstrip.appendChild(h);
+      if(!collapsed) folders[f].forEach(function(nm){
+        var it=presItem(nm,f);
+        it.classList.add('infolder');
+        presstrip.appendChild(it);
+      });
+    });
+    var docsBtn=document.getElementById('pr-docs');
+    if(docsBtn) docsBtn.classList.toggle('current',!editing);
+  }
+  /* drag & drop filing: onto a folder header (or an item inside one)
+     files it; onto empty rail space moves it back to the top level */
+  var draggingPres=null;
+  function clearDropMarks(){
+    $$('.pr-folder.dropping',presstrip).forEach(function(el){
+      el.classList.remove('dropping');});
+    var rail=document.getElementById('presrail');
+    if(rail) rail.classList.remove('dropping-root');
+  }
+  (function(){
+    var rail=document.getElementById('presrail');
+    if(!rail) return;
+    rail.addEventListener('dragover',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect='move';
+      clearDropMarks();
+      var h=e.target.closest&&e.target.closest('.pr-folder');
+      if(!h){
+        var it=e.target.closest&&e.target.closest('.pr-item.ptab');
+        if(it&&it.dataset.folder)
+          h=presstrip.querySelector(
+            '.pr-folder[data-folder="'+it.dataset.folder+'"]');
+      }
+      if(h) h.classList.add('dropping');
+      else rail.classList.add('dropping-root');
+    });
+    rail.addEventListener('dragleave',function(e){
+      if(e.target===rail) clearDropMarks();
+    });
+    rail.addEventListener('drop',function(e){
+      if(!draggingPres) return;
+      e.preventDefault();
+      var f='';
+      var h=e.target.closest&&e.target.closest('.pr-folder');
+      if(h) f=h.dataset.folder;
+      else{
+        var it=e.target.closest&&e.target.closest('.pr-item.ptab');
+        if(it) f=it.dataset.folder||'';
+      }
+      var nm=draggingPres;
+      draggingPres=null;
+      clearDropMarks();
+      setPresFolder(nm,f);
+    });
+  })();
+  var newFoldBtn=document.getElementById('pr-newfold');
+  if(newFoldBtn) newFoldBtn.addEventListener('click',newFolder);
+  function choosePresentation(nm){
+    var A=window.SemApp||{};
+    if(nm!==pres.name){
+      if(A.exitStyling) A.exitStyling();   /* leave any open custom view */
+      lsSet(PFX+'last',nm);
+      loadPresentation(nm);
+      cur=0;activePane=-1;
+    }
+    /* a custom view is edited in the document; a deck on the slide stage */
+    if(isViewPres(pres)){openCustomView();return;}
+    openDeck('edit');   /* land straight in the slide editor */
+  }
+  function newPresentation(){
+    var n2=1,name='presentation';
+    while(savedByName(name)||loadDraft(name)){
+      n2++;name='presentation-'+n2;}
+    /* deliberately NOT persisted yet: a new presentation only starts
+       saving (draft + autosave) once you actually edit it, so clicking
+       "New" never litters the project with empty decks */
+    pres={name:name,slides:[emptySlide()]};
+    source='auto';
+    cur=0;activePane=0;
+    openDeck('edit');   /* land straight in the slide editor */
+  }
+  /* ---- CUSTOM VIEW: a third kind of saved thing (2026-07-29) ---------
+     Not slides. A custom view remembers how the NOTEBOOK looks: the
+     styling of its markdown cells and headings, plus the whole filter /
+     hidden-cell / figure-size state. It opens in the document, not on the
+     slide stage, so the styling bar edits what you are looking at. ---- */
+  function isViewPres(p){return !!(p&&p.kind==='view');}
+  /* rail row icons come from SemIcons (newdeck/newposter/newview) in
+     presItem — the RAIL_ICO copy of that path data was deleted
+     2026-08-23 so branding.py stays the only place artwork lives */
+  function newCustomView(){
+    var A=window.SemApp||{};
+    var stem=A.active;
+    if(!stem||!A.enterStyling){
+      toast('Open a notebook first — a custom view restyles a notebook');
+      return;
+    }
+    var n2=1,name='custom view';
+    while(savedByName(name)||loadDraft(name)){
+      n2++;name='custom view '+n2;}
+    /* seeded from what you are looking at right now, so a new view never
+       throws away the filters you already set up */
+    pres={name:name,kind:'view',nb:stem,style:{},
+          view:(A.layoutSnapshot&&A.layoutSnapshot(stem))||{}};
+    source='auto';
+    cur=0;activePane=-1;
+    openCustomView();
+  }
+  function openCustomView(){
+    var A=window.SemApp||{};
+    closeDeck();                     /* the document, not the slide stage */
+    if(pres.nb&&A.shells&&A.shells[pres.nb]&&A.activate)
+      A.activate(pres.nb);
+    if(pres.view&&A.applySnapshot)
+      A.applySnapshot(pres.nb||A.active,pres.view);
+    A.enterStyling(pres,function(){markDirty();});
+    renderPresTabs();
+    status();
+  }
+  function closeCustomView(){
+    var A=window.SemApp||{};
+    if(A.exitStyling) A.exitStyling();
+    renderPresTabs();
+  }
+  window.SemApp.viewClose=closeCustomView;
+  function newPoster(){
+    var n2=1,name='poster';
+    while(savedByName(name)||loadDraft(name)){
+      n2++;name='poster-'+n2;}
+    /* like a new presentation, nothing persists until the first edit.
+       Posters start WHITE: they exist to be printed (2026-08-04) */
+    var s=emptySlide();
+    /* BLANK, not pre-filled: the 3-column academic template used to be
+       applied here, so a new poster opened already covered in headings
+       and placeholder frames you had to clear before starting your own
+       (2026-08-18, user: "opening a poster should open as blank not a
+       default fill"). The templates are all still one click away in
+       Layouts — which is where choosing one belongs. Even the blank
+       slide's full-page ghost frame goes: on a deck it is the "click to
+       fill" idiom, but stretched over an A0 sheet it is one more thing
+       you did not put there. */
+    s.annots=[];
+    pres={name:name,slides:[s],page:'a0p',pageBg:'#ffffff'};
+    source='auto';
+    cur=0;activePane=-1;
+    openDeck('edit');
+  }
+
+  function renderPresRow(){
+    var lbl=$('#pres-current');
+    if(lbl) lbl.textContent=pres.name||'(unnamed)';
+    var inp=$('#pres-name');
+    if(document.activeElement!==inp&&inp.value!==pres.name)
+      inp.value=pres.name;
+    renderPresTabs();
+  }
+  function renderControls(){
+    updateNumsLabel();updateCropLabel();
+    var s=pres.slides[cur];
+    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-home-grid .lay')
+      .forEach(function(b){
+      /* highlight the template last applied to this slide (if any) */
+      b.setAttribute('aria-pressed',
+        (!!s&&s.lay===b.dataset.lay).toString());
+      b.disabled=!s;
+    });
+    var te=$('#title-editor'), eb=$('#dc-edit');
+    var isTitle=!!s&&s.layout==='title';
+    if(te){
+      te.hidden=!isTitle;
+      if(isTitle){
+        var ti=$('#ts-title'),su=$('#ts-sub');
+        if(ti&&document.activeElement!==ti) ti.value=s.title||'';
+        if(su&&document.activeElement!==su) su.value=s.sub||'';
+      }
+    }
+    if(eb){
+      eb.disabled=!s;
+      /* Only "get me into the editor" survives. Going the other way is
+         already the Notebooks button on the rail, and this duplicate was
+         badly named and awkwardly placed in the bargain (2026-08-07,
+         user: "the 'swap to notebooks' button is a stupid name and in a
+         stupid place"). */
+      eb.hidden=(mode==='edit');
+      eb.innerHTML=bic('pen')+' Open the editor';
+    }
+  }
+  /* the current slide's interactive frame editor — embedded inline as
+     the big view in the merged slides list (one view, not two) */
+  function buildSlideEditor(s){
+    var ed=document.createElement('div');
+    ed.className='pane-editor freeform';ed.id='pane-editor';
+    if(!s){
+      ed.innerHTML='<div class="pane empty">'
+        +'<span class="pane-t">no slide</span></div>';
+      return ed;
+    }
+    var cells=slideCells(s);
+    if(!cells.length){
+      ed.innerHTML='<div class="pane empty"><span class="pane-t">'
+        +'pick a layout above, or click a card in the document'
+        +'</span></div>';
+      return ed;
+    }
+    cells.forEach(function(pair){
+      var a=pair.a, ai=pair.i;
+      var it=a.ref?resolveRef(a.ref):null;
+      var p=document.createElement('div');
+      p.className='pane slot'+(it?' filled':' empty')
+        +(ai===activePane?' active':'');
+      var ap7=anchorPos(a,a.w,a.h);
+      p.style.left=ap7.x+'%';p.style.top=ap7.y+'%';
+      p.style.width=(a.w||10)+'%';p.style.height=(a.h||10)+'%';
+      if(it){
+        /* render the frame EXACTLY as it appears on the slide: the real
+           card content for the chosen part (code / figure / output) */
+        var frame=document.createElement('div');frame.className='an-cell';
+        var ch=document.createElement('div');ch.className='an-cellhead';
+        var chT=document.createElement('span');
+        chT.className='an-cellhead-t';chT.textContent=it.title;
+        ch.appendChild(chT);
+        var pt0=partOf(a),facs0=facetList(it.ns);
+        if(facs0.length>1||pt0==='code'){
+          var pl=document.createElement('span');
+          pl.className='an-cellpart';pl.textContent=pt0;
+          ch.appendChild(pl);
+        }
+        if(multiNb()) ch.appendChild(nbChip('spane-nb',it.nb));
+        frame.appendChild(ch);
+        var b=framePart(it.ns,a.part);
+        if(b){if(a.ts) b.style.zoom=a.ts;applyCrop(b,a);frame.appendChild(b);}
+        applyCellColor(frame,a);
+        p.title=it.nb+' — '+it.title;
+        p.appendChild(frame);
+        var pc=buildPartChooser(s,ai);
+        if(pc) p.appendChild(pc);
+      } else {
+        var t=document.createElement('span');t.className='pane-t';
+        t.textContent=a.ref?('missing: '+a.ref)
+          :(ai===activePane?'▸ now click a card in the notebook'
+            :'empty — click to select this frame');
+        p.appendChild(t);
+      }
+      if(a.ref){
+        var x=document.createElement('button');x.className='pane-x';
+        x.innerHTML=bic('exit')||'&#10005;';x.title='Clear this frame';
+        x.addEventListener('click',function(e){e.stopPropagation();
+          a.ref=null;activePane=ai;markDirty();refresh();});
+        p.appendChild(x);
+      }
+      p.addEventListener('click',function(e){
+        e.stopPropagation();activePane=ai;refresh();});
+      ed.appendChild(p);
+    });
+    return ed;
+  }
+  function paneImgSrc(ref){
+    var card=ref?(cardEl(ref)||embBody(ref)):null;
+    var img=card?$('.figframe img',card):null;
+    return img?img.getAttribute('src'):null;
+  }
+  function paneThumb(ref){
+    var w=document.createElement('span');w.className='mini-pane';
+    var it=ref?resolveRef(ref):null;
+    if(!it){w.className+=' empty';return w;}
+    var src=paneImgSrc(ref);
+    if(src){
+      var m=document.createElement('img');
+      m.src=src;m.alt='';m.loading='lazy';
+      w.appendChild(m);
+    } else if(it.kind==='note'){
+      w.className+=' is-note';
+    } else if(it.kind==='figure'||it.kind==='diagnostic'){
+      w.className+=' is-fig';
+    } else {
+      w.className+=' is-code';
+      w.textContent='</>';
+    }
+    return w;
+  }
+  /* ---- slide thumbnails ------------------------------------------------
+     A thumbnail is a SCALE MODEL of the slide, not a picture of the
+     notebook cells on it. It used to walk slideCells() and nothing else,
+     so a slide made of text, arrows, shapes or images showed as an empty
+     box and every such slide in the strip looked identical (2026-08-20,
+     user: "thumbnails do now show text, or anything else for that matter,
+     just the cells").
+     Everything is placed in the same page percentages the canvas uses, so
+     positions are exactly right at any size. Two things cannot scale
+     linearly and get a floor instead — type and stroke width — because
+     0.3px of either is nothing at all. That is the opposite of the rule
+     fontPx follows on the real page, and deliberately: the page is the
+     document and must stay true to itself, a thumbnail is an INDEX and
+     has to be legible. */
+  var MINI_H=66;      /* mirrors --mini-h in deck.css */
+  /* MINI_H is the FLOOR now, not the height: the column is draggable, so
+     a thumbnail grows with the room it is given and its type and strokes
+     have to grow with it or a 460px strip draws 3px lettering
+     (2026-08-22). Measured off the LIST rather than off a thumbnail —
+     renderFilm sizes type before the node is in the document, and an
+     unattached node has no height to read. Computed once per render, not
+     once per item. */
+  var MINI_AR=116/66,miniHNow=MINI_H;
+  function miniH(){
+    var l=$('#film-list');
+    var w=l?l.clientWidth:0;
+    if(!w) return MINI_H;
+    /* the padding and the row's own gutters the CSS spends before the
+       thumbnail gets the rest */
+    return Math.max(MINI_H,Math.round((w-46)/MINI_AR));
+  }
+  /* svg ids (gradients) must be unique across every thumbnail in the
+     strip, not just within one — a repeated id would silently paint every
+     later slide's gradient with the first slide's */
+  var miniSeq=0;
+  function miniText(d,a,txt,cls,centred){
+    if(!String(txt||'').trim()) return;
+    var t=document.createElement('span');
+    t.className='mini-tx'+(cls?' '+cls:'');
+    t.style.left=(a.x||0)+'%';t.style.top=(a.y||0)+'%';
+    if(a.w!=null) t.style.width=a.w+'%';
+    t.style.fontSize=Math.max(2,miniHNow*(a.size||2.6)/100).toFixed(2)+'px';
+    if(a.color) t.style.color=a.color;
+    if(a.b) t.style.fontWeight='700';
+    if(a.i) t.style.fontStyle='italic';
+    if(a.align) t.style.textAlign=a.align;
+    if(a.font) t.style.fontFamily=fontCss(a.font);
+    if(a.bg!==0&&a.bgc) t.style.background=a.bgc;
+    /* a title is anchored on its CENTRE, the way the canvas anchors it */
+    var tr=centred?'translate(-50%,-50%)':'';
+    if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
+    if(tr) t.style.transform=tr;
+    if(a.op!=null&&a.op<1) t.style.opacity=a.op;
+    t.textContent=String(txt);
+    d.appendChild(t);
+  }
+  /* a box-shaped item (shape, image, cell frame) at its page rect */
+  function miniBox(d,a,cls){
+    var b=document.createElement('span');
+    b.className='mini-it'+(cls?' '+cls:'');
+    b.style.left=(a.x||0)+'%';b.style.top=(a.y||0)+'%';
+    b.style.width=(a.w||10)+'%';b.style.height=(a.h||10)+'%';
+    if(a.rot) b.style.transform='rotate('+a.rot+'deg)';
+    if(a.op!=null&&a.op<1) b.style.opacity=a.op;
+    d.appendChild(b);
+    return b;
+  }
+  /* the stroke a thumbnail draws: the page weight scaled down, floored so
+     a hairline is still a line */
+  function miniSw(a){
+    return Math.max(0.6,swOf(a)*miniHNow/SW_REF_H).toFixed(2);
+  }
+  /* re-weight a borrowed shape/freehand svg for thumbnail scale, and drop
+     its dash: dashes are measured in the stroke's own units, so a pattern
+     sized for an A0 poster is one long dash across a 116px thumbnail */
+  function miniStroke(host,a){
+    var p=host.querySelector('path'); if(!p) return;
+    p.setAttribute('stroke-width',miniSw(a));
+    p.removeAttribute('stroke-dasharray');
+  }
+  function miniDiagram(s){
+    var d=document.createElement('span');
+    d.className='mini-diagram free';
+    if(!s) return d;
+    /* the slide's own background, so a recoloured slide reads as one */
+    if(s.bg) d.style.background=s.bg;
+    var annots=s.annots||[];
+    if(s.layout!=='title'&&!annots.length){
+      var e=document.createElement('span');
+      e.className='mini-pane empty';
+      d.appendChild(e);
+      return d;
+    }
+    if(s.layout==='title'){
+      miniText(d,titleProps(s,'t'),s.title||'Title','is-t',true);
+      miniText(d,titleProps(s,'s'),s.sub||'','is-s',true);
+    }
+    /* arrows go last so they sit on top, exactly as on the canvas */
+    var arrows=[];
+    annots.forEach(function(a,i){
+      if(!a||a.hide) return;
+      if(a.k==='arrow'){arrows.push(a);return;}
+      if(a.k==='text'){miniText(d,a,a.text||'');return;}
+      if(a.k==='image'){
+        var bx=miniBox(d,a,'is-img');
+        if(a.src){
+          var im=document.createElement('img');
+          im.src=a.src;im.alt='';im.loading='lazy';im.draggable=false;
+          if(a.crop) bx.classList.add('is-crop');
+          bx.appendChild(im);
+        }
+        return;
+      }
+      if(a.k==='flip'){
+        /* the thumbnail shows the frame the slide RESTS on, which is the
+           one the strip is an index to. Without a branch here a flip book
+           is invisible in the film strip and every slide holding one
+           looks empty (the lesson miniDiagram was rewritten for). */
+        var bf=miniBox(d,a,'is-flip');
+        var ff=flipFrames(a)[a.at||0];
+        if(ff&&ff.src){
+          var fim2=document.createElement('img');
+          fim2.src=ff.src;fim2.alt='';fim2.loading='lazy';
+          fim2.draggable=false;
+          bf.appendChild(fim2);
+        } else if(ff&&ff.ref){
+          var fnode2=framePart(ff.ref,ff.part);
+          var fimg2=fnode2?fnode2.querySelector('img'):null;
+          if(fimg2&&fimg2.src){
+            var fc=document.createElement('img');
+            fc.src=fimg2.src;fc.alt='';fc.loading='lazy';fc.draggable=false;
+            bf.appendChild(fc);
+          }
+        }
+        return;
+      }
+      if(a.k==='rect'){
+        var bs=miniBox(d,a,'is-shape');
+        bs.appendChild(drawShapeSvg(a.shape||'rect',a.color||'#ff6b57',
+          miniSw(a),a,'m'+(miniSeq++),null));
+        miniStroke(bs,a);
+        return;
+      }
+      if(a.k==='draw'){
+        var bd=miniBox(d,a,'is-shape');
+        bd.appendChild(drawFreeSvg(a,null));
+        miniStroke(bd,a);
+        return;
+      }
+      if(a.k==='table'){
+        /* a real miniature table: at 116px the words are a smudge, but
+           the SHAPE of a table is unmistakable and that is what a
+           thumbnail is for */
+        var bt=miniBox(d,a,'is-tbl');
+        var trows=tableRows(a),tcols=tableCols(a);
+        var mt=document.createElement('table');
+        mt.className='mini-tbl'+(a.grid===0?' nogrid':'');
+        mt.style.fontSize=Math.max(1.5,
+          miniHNow*(a.size||2.2)/100).toFixed(2)+'px';
+        trows.forEach(function(row,ri){
+          var tr=document.createElement('tr');
+          row.forEach(function(v,ci){
+            var td=document.createElement((a.thead&&ri===0)?'th':'td');
+            td.style.width=tcols[ci]+'%';
+            td.textContent=v==null?'':String(v);
+            tr.appendChild(td);});
+          mt.appendChild(tr);});
+        bt.appendChild(mt);
+        return;
+      }
+      if(a.k==='cell'){
+        var w2=paneThumb(a.ref);
+        w2.style.position='absolute';
+        w2.style.left=(a.x||0)+'%';w2.style.top=(a.y||0)+'%';
+        w2.style.width=(a.w||10)+'%';w2.style.height=(a.h||10)+'%';
+        if(a.rot) w2.style.transform='rotate('+a.rot+'deg)';
+        d.appendChild(w2);
+      }
+    });
+    if(arrows.length){
+      /* ONE svg for every arrow, in the page's own 0..100 percentage
+         space — preserveAspectRatio="none" makes that space the
+         thumbnail, so no pixel measurement is needed and nothing has to
+         be re-scaled when the strip is resized */
+      var sv=document.createElementNS(AN_NS,'svg');
+      sv.setAttribute('class','mini-svg');
+      sv.setAttribute('viewBox','0 0 100 100');
+      sv.setAttribute('preserveAspectRatio','none');
+      arrows.forEach(function(a){
+        var p=document.createElementNS(AN_NS,'path');
+        p.setAttribute('d',arrowPath(arrowEnds(null,s,a,0),a,100,100));
+        p.setAttribute('fill','none');
+        p.setAttribute('stroke',a.color||'#ff6b57');
+        p.setAttribute('stroke-width',miniSw(a));
+        p.setAttribute('vector-effect','non-scaling-stroke');
+        p.setAttribute('stroke-linecap','round');
+        if(a.op!=null&&a.op<1) p.setAttribute('opacity',a.op);
+        sv.appendChild(p);
+      });
+      d.appendChild(sv);
+    }
+    return d;
+  }
+  /* ---- the other pages, as a floating pane -----------------------------
+     The strip is MOVED into #verpane rather than rebuilt there, so
+     reordering, drag-and-drop, delete and the thumbnails keep working
+     with no second copy of any of it (2026-08-10, user: "the bar for this
+     should appear like the objects bar"). */
+  var filmHome=null;
+  function filmToPane(){
+    var body=$('#verpane-body'),list=$('#film-list'),add=$('#film-adds'),
+        head=$('#film-head');
+    if(!body||!list||filmHome) return;
+    filmHome={parent:list.parentNode,next:list.nextSibling};
+    /* the chooser rides along as a THIRD node, above the list it chooses
+       for. Building a second copy of it in the pane is how two controls
+       that claim to do the same thing start disagreeing (2026-08-22). */
+    if(head) body.appendChild(head);
+    body.appendChild(list);
+    if(add) body.appendChild(add);
+  }
+  function filmToPanel(){
+    if(!filmHome) return;
+    var list=$('#film-list'),add=$('#film-adds'),head=$('#film-head');
+    if(list&&filmHome.parent){
+      var at=(filmHome.next&&filmHome.next.parentNode===filmHome.parent)
+        ?filmHome.next:null;
+      /* head, list, adds — in that order and all before whatever followed
+         the list when it left, so the column comes back exactly as it was
+         rather than with its chooser stranded at the bottom */
+      if(head) filmHome.parent.insertBefore(head,at);
+      filmHome.parent.insertBefore(list,at);
+      if(add) filmHome.parent.insertBefore(add,at);
+    }
+    filmHome=null;
+  }
+  /* The button reports the state of whichever strip this page kind uses:
+     the docked one for a deck, the floating pane for a poster. Written
+     once, because two of these drifting apart is a toggle that lies about
+     what it will do. */
+  function syncStripBtn(){
+    var vb=$('#vw-versions'); if(!vb) return;
+    var p=$('#verpane');
+    var on=pageOf().poster
+      ? !!(p&&!p.hidden)
+      : !deckEl.classList.contains('strip-off');
+    vb.setAttribute('aria-pressed',on.toString());
+  }
+  function showVerpane(on){
+    var p=$('#verpane'); if(!p) return;
+    /* Objects and Versions are the same 232px shell in the same corner,
+       so only one of them can be the thing you are looking at */
+    if(on){
+      var sp=$('#selpane'); if(sp) sp.hidden=true;
+      var ob=$('#objects-btn');
+      if(ob) ob.setAttribute('aria-pressed','false');
+      var pf=$('#preflight'); if(pf) pf.hidden=true;
+      var sp3=$('#stdpane'); if(sp3) sp3.hidden=true;
+      var fp3=$('#flippane'); if(fp3) fp3.hidden=true;
+      filmToPane();
+      renderFilm();
+    }
+    p.hidden=!on;
+    var t=$('#verpane-title');
+    if(t) t.textContent=pageOf().poster?'Versions':'Slides';
+    syncStripBtn();
+  }
+  /* ---- versions --------------------------------------------------------
+     A poster's other pages are drafts and variants, so a new one starts as
+     a COPY of what you are looking at — that is what a variant is a
+     variant OF — and it is named for you, because an unnamed pile of
+     near-identical A0 sheets is unusable. The name is a starting point:
+     Rename changes it. */
+  function nextVersionName(){
+    var n=0;
+    (pres.slides||[]).forEach(function(s){
+      var m=/^Version (\d+)$/.exec((s&&s.label)||'');
+      if(m) n=Math.max(n,+m[1]);
+    });
+    return 'Version '+(n+1);
+  }
+  function newVersion(){
+    var at=pres.slides.length?cur+1:0;
+    if(!pageOf().poster){
+      /* a DECK's slides are named by what is on them, which is more use
+         than "Slide 3" — so no label is stamped here */
+      pres.slides.splice(at,0,emptySlide());
+    } else {
+      var src=pres.slides[cur];
+      /* name the page you were already on first, so the two read as a
+         pair rather than "empty slide" and "Version 2" */
+      if(src&&!src.label) src.label=nextVersionName();
+      var cp=src?deep(src):emptySlide();
+      cp.label=nextVersionName();
+      pres.slides.splice(at,0,cp);
+    }
+    /* a new slide joins the section it was inserted into. Without this an
+       insert splits the run in two and grows a divider out of nowhere. */
+    var prev=pres.slides[at-1];
+    if(prev&&prev.sec) pres.slides[at].sec=prev.sec;
+    cur=at;activePane=-1;selAnnot=null;selSet=[];
+    normSections();markDirty();refresh();
+    if(!$('#verpane').hidden) renderFilm();
+  }
+  /* ---- THE OUTLINE ----------------------------------------------------
+     In headings mode the strip stops being a contact sheet and becomes a
+     table of contents, so it must name a slide by its HEADING and not by
+     whatever text happens to sit highest on it. A box wearing a heading
+     style says outright that it is the slide's title; slideTitle's
+     guesswork is the fallback for slides that never used one. */
+  function slideHeading(s){
+    var best=null,bestAt=99;
+    (s.annots||[]).forEach(function(a){
+      if(!a||a.k!=='text'||a.hide||!String(a.text||'').trim()) return;
+      if(!a.style||!isHeadingStyle(a.style)) return;
+      var at=headingStyles().indexOf(a.style);
+      if(at>=0&&at<bestAt){bestAt=at;best=a;}
+    });
+    return best?String(best.text).trim().split('\n')[0]:'';
+  }
+  /* how far the row indents in the outline. A title slide and a section
+     divider are always level 0 — they are the top of something, whatever
+     style their text happens to wear. */
+  function headLevel(s){
+    if(!s||s.layout==='title'||s.layout==='section') return 0;
+    var lv=0;
+    (s.annots||[]).forEach(function(a){
+      if(!a||a.k!=='text'||a.hide||!a.style) return;
+      var at=headingStyles().indexOf(a.style);
+      if(at>=0&&(!lv||at<lv)) lv=at;
+    });
+    return Math.min(3,lv);
+  }
+  /* ONE source for the words on a row, so the strip and refreshThumb can
+     never disagree about what a slide is called */
+  function filmText(s){
+    if(filmMode()==='thumb') return slideTitle(s);
+    return slideHeading(s)||slideTitle(s);
+  }
+  function slideTitle(s){
+    /* a version carries the name you were given or chose; only posters
+       get one, so a deck slide is still named by what is ON it */
+    if(s.label) return s.label;
+    if(s.layout==='title') return s.title||'title slide';
+    var cells=slideCells(s);
+    for(var i=0;i<cells.length;i++){
+      var it=cells[i].a.ref&&resolveRef(cells[i].a.ref);
+      if(it) return it.title;
+    }
+    var tx=(s.annots||[]).filter(function(a){
+      return a.k==='text'&&a.text;})[0];
+    if(tx) return tx.text;
+    /* a slide that is one big table is named by its first heading, which
+       beats calling it "empty slide" (2026-08-20) */
+    var tb=(s.annots||[]).filter(function(a){return a.k==='table';})[0];
+    if(tb){
+      var r0=(tb.rows||[])[0]||[];
+      for(var j=0;j<r0.length;j++)
+        if(String(r0[j]||'').trim()) return String(r0[j]).trim();
+      return 'table';
+    }
+    return 'empty slide';
+  }
+  /* ---- SLIDE SECTIONS -------------------------------------------------
+     "There should be the ability to create slide sections in the
+     thumbnails part" (2026-08-22).
+
+     THE SHAPE, and why it is this one. A section is a TAG on the slide
+     (s.sec) plus a name in a keyed map (pres.sections). The ORDER is
+     never stored: it is read back off pres.slides. Every slide mutation
+     in this file is a raw splice — moveSlide, delSlide, dupSlide,
+     newVersion, the strip's drop handler — and histRestore replaces the
+     array outright; a tag rides through all six for free, while a stored
+     start-INDEX would have to be shifted correctly in every one of them
+     and would be silently wrong the first time one was missed.
+
+     The one price of tags is that they permit a section to go
+     discontiguous. normSections() below is what pays it, and every verb
+     here ends by calling it. */
+  var secSeq=0;
+  function secId(){
+    /* an id has to survive a save, a reload and an undo, so it cannot be
+       a plain counter reset on load — two sections would collide the
+       moment you reopened a deck and made another one */
+    secSeq++;
+    return 's'+Date.now().toString(36)+secSeq.toString(36);
+  }
+  function secMap(){
+    if(!pres.sections||typeof pres.sections!=='object') pres.sections={};
+    return pres.sections;
+  }
+  function secName(id){
+    var d=(pres.sections||{})[id];
+    return (d&&d.name)||'Untitled section';
+  }
+  /* THE ONE SHARED API. The strip, the Apply dialog's scope picker and
+     the outline view must all agree on what a section IS, so all three
+     read it from here rather than each grouping the slides their own
+     way. Untagged spans come back too, with id '' — a caller that wants
+     only real sections filters on run.id. */
+  function sectionRuns(){
+    var out=[],sl=pres.slides||[],i,id,last=null;
+    for(i=0;i<sl.length;i++){
+      id=(sl[i]&&sl[i].sec)||'';
+      if(!last||last.id!==id){
+        last={id:id,name:id?secName(id):'',at:i,n:0,
+          fold:!!(id&&(pres.sections||{})[id]&&pres.sections[id].fold)};
+        out.push(last);
+      }
+      last.n++;
+    }
+    return out;
+  }
+  /* THE INVARIANT. A section is a CONTIGUOUS run — that is what a divider
+     in a strip means, and nothing in the UI can express anything else. A
+     tag can still end up out of place (drag a slide past a boundary, or
+     swap one across it with the arrows), so every mutation ends here: a
+     tag that reappears after its run has closed is re-tagged to the run
+     it now sits in, and any section no slide uses is thrown away.
+     Dropping the map entirely when it empties is what keeps a deck that
+     never used sections serialising exactly as it did before. */
+  function normSections(){
+    var sl=pres.slides||[],seen={},closed={},prev='',i,id;
+    for(i=0;i<sl.length;i++){
+      if(!sl[i]) continue;
+      id=sl[i].sec||'';
+      if(id&&id!==prev&&(closed[id]||seen[id])) id=prev;
+      if(id) seen[id]=1;
+      if(prev&&prev!==id) closed[prev]=1;
+      if(id) sl[i].sec=id; else delete sl[i].sec;
+      prev=id;
+    }
+    var m=pres.sections;
+    if(m){
+      Object.keys(m).forEach(function(k){if(!seen[k]) delete m[k];});
+      if(!Object.keys(m).length) delete pres.sections;
+    }
+  }
+  /* the five verbs. Everything that touches sections goes through one of
+     these, so normSections() is guaranteed to have run before markDirty
+     writes the deck out. */
+  function newSection(at,name){
+    var id=secId(),i;
+    secMap()[id]={name:name||'New section'};
+    /* a new section OWNS everything from `at` down to the next divider —
+       that is what "start a section here" means in PowerPoint, and it is
+       the only reading that leaves no orphan slides behind */
+    var was=(pres.slides[at]&&pres.slides[at].sec)||'';
+    for(i=at;i<pres.slides.length;i++){
+      if(((pres.slides[i].sec)||'')!==was) break;
+      pres.slides[i].sec=id;
+    }
+    normSections();markDirty();renderFilm();
+  }
+  function renameSection(id){
+    /* prompt(), not an inline edit on the row. The row's own click
+       re-renders the strip, so by the time a dblclick handler arrived the
+       node it was editing had already been replaced — the same reason the
+       poster version rename is a button and a prompt (2026-08-10) */
+    var v=prompt('Name this section:',secName(id));
+    if(v==null) return;
+    v=v.trim(); if(!v) return;
+    secMap()[id]={name:v,fold:(pres.sections[id]||{}).fold};
+    if(!pres.sections[id].fold) delete pres.sections[id].fold;
+    markDirty();renderFilm();
+  }
+  function foldSection(id,on){
+    var d=secMap()[id]; if(!d) return;
+    if(on) d.fold=1; else delete d.fold;
+    /* markDirty(true): folding is a way of LOOKING at the deck, not an
+       edit to it, so it persists in the file but never lands on the undo
+       stack — Ctrl+Z must never open or close a section */
+    markDirty(true);renderFilm();
+  }
+  function removeSection(id,withSlides){
+    var runs=sectionRuns(),r=null,i;
+    for(i=0;i<runs.length;i++) if(runs[i].id===id) r=runs[i];
+    if(!r) return;
+    if(withSlides) pres.slides.splice(r.at,r.n);
+    /* the slides MERGE UPWARDS into whatever section is above — removing
+       a divider must never delete work, which is why the destructive form
+       is a separate and differently-worded verb */
+    else for(i=r.at;i<r.at+r.n;i++){
+      if(r.at>0&&pres.slides[r.at-1].sec)
+        pres.slides[i].sec=pres.slides[r.at-1].sec;
+      else delete pres.slides[i].sec;
+    }
+    if(pres.sections) delete pres.sections[id];
+    if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
+    normSections();markDirty();refresh();
+  }

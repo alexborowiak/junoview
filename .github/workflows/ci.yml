@@ -39,6 +39,10 @@ jobs:
       - name: JS syntax check
         run: |
           for f in src/junoview/assets/js/*.js; do node --check "$f"; done
+          # js/deck/ holds fragments of one IIFE (T36) -- checking one
+          # means nothing, so check what actually ships.
+          python -c "import sys; sys.path.insert(0, 'src'); from junoview import assets; open('deck.assembled.js','w',encoding='utf-8',newline='\n').write(assets.deck_js())"
+          node --check deck.assembled.js && rm deck.assembled.js
 
   build:
     name: package builds and the CLI runs

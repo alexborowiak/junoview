@@ -61,7 +61,8 @@ src/junoview/
 ├── assets/            the frontend, as real files
 │   ├── css/               core.css · app.css · deck.css · widget.css
 │   │                      · widget-media.css  (the widget's responsive rules)
-│   ├── js/                app.js · deck.js · pptx.js · widget.js
+│   ├── js/                app.js · deck/ · pptx.js · widget.js
+│   │   └── deck/          the slide editor: ONE IIFE, fourteen files
 │   │                      · sw.js  (the web build's offline service worker)
 │   └── html/              page.html · shell.html · deck.html · help.html · …
 │

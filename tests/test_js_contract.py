@@ -105,9 +105,18 @@ _LOOKUP = re.compile(
 
 
 def _looked_up_ids() -> set[str]:
+    """Every id the frontend asks the DOM for.
+
+    deck.js is now js/deck/ -- fourteen fragments of one IIFE (T36) --
+    so the scan reads what assets.deck_js() assembles rather than a file
+    that no longer exists. Same text, one source of truth about which
+    parts are in it.
+    """
+    from junoview import assets
+
     ids: set[str] = set()
-    for name in ("app.js", "deck.js"):
-        text = (JS / name).read_text(encoding="utf-8")
+    for text in ((JS / "app.js").read_text(encoding="utf-8"),
+                 assets.deck_js()):
         for m in _LOOKUP.finditer(text):
             ids.add(m.group(1) or m.group(2))
     return ids
@@ -242,3 +251,74 @@ def test_every_asset_js_file_parses():
         assert proc.returncode == 0, (
             f"{path.name} does not parse:\n{proc.stderr}"
         )
+
+
+def test_the_assembled_deck_parses():
+    """js/deck/ holds FRAGMENTS of one IIFE (TASKS T36), so checking one
+    of them means nothing -- half of them do not balance alone, by
+    construction. The gate is on what actually ships: assemble the parts
+    exactly as assets.deck_js() does, and parse that.
+
+    This is stricter than the per-file check it replaces, because it also
+    catches a part that parses on its own and breaks the join.
+    """
+    import tempfile
+
+    from junoview import assets
+
+    engine = _js_engine()
+    if engine is None:
+        pytest.skip("no JS engine found")
+    cmd, env = engine
+    with tempfile.TemporaryDirectory() as tmp:
+        f = Path(tmp) / "deck.assembled.js"
+        f.write_text(assets.deck_js(), encoding="utf-8", newline="\n")
+        proc = subprocess.run(
+            cmd + ["--check", str(f)],
+            capture_output=True, text=True, env=env, timeout=180,
+        )
+    assert proc.returncode == 0, (
+        f"the assembled deck.js does not parse:\n{proc.stderr}")
+
+
+def test_the_boot_sequence_is_last_by_filename_not_by_habit():
+    """All of deck's load-time work runs from THE BOOT SEQUENCE, after
+    every declaration above it. That used to be a comment and a
+    convention; it is now a fact about the directory listing, which is
+    the whole reason the boot got a file of its own.
+    """
+    from junoview import assets
+
+    assert assets.DECK_PARTS[-1] == "99-boot"
+    assert assets.DECK_PARTS == tuple(sorted(assets.DECK_PARTS)), (
+        "the parts are concatenated in the order listed, and that order "
+        "has to match what a directory listing shows, or reading them "
+        "in order means reading them in a different order")
+    boot = (JS / "deck" / "99-boot.js").read_text(encoding="utf-8")
+    assert "THE BOOT SEQUENCE" in boot
+    assert boot.rstrip().endswith("})();")
+
+
+def test_every_deck_part_is_listed_and_every_listing_is_a_part():
+    """A part on disk that nothing concatenates is dead code that still
+    looks alive; a listed part that is missing is a page that will not
+    load. Both are silent, so both are checked.
+    """
+    from junoview import assets
+
+    on_disk = {p.stem for p in (JS / "deck").glob("*.js")}
+    assert on_disk == set(assets.DECK_PARTS), (
+        f"only on disk: {sorted(on_disk - set(assets.DECK_PARTS))}; "
+        f"only listed: {sorted(set(assets.DECK_PARTS) - on_disk)}")
+
+
+def test_a_deck_part_says_what_it_is():
+    """A fragment whose braces do not balance has to explain itself in
+    its first line, or the next person to open one assumes it is broken.
+    """
+    for name in ("05-figures-and-ribbon", "99-boot"):
+        head = (JS / "deck" / f"{name}.js").read_text(
+            encoding="utf-8")[:400]
+        assert "ONE FRAGMENT of deck.js's single IIFE" in head
+        flat = " ".join(head.split())
+        assert "It does not parse alone" in flat

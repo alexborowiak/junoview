@@ -110,6 +110,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T36, the deck.js split: assets/js/
+# deck.js became assets/js/deck/, fourteen fragments of the one
+# IIFE joined by assets.deck_js(). The JAVASCRIPT IS UNCHANGED --
+# the parts were verified to reassemble into the old file byte for
+# byte -- so the whole of this move is the fourteen four-line
+# headers that say each file is a fragment: 5,249 bytes, which is
+# exactly the size change here. Pinned by test_js_contract.py,
+# which now assembles and parses what ships.
 # Moved 2026-08-25 for TASKS T35, the review export and its four
 # content lints: deck.js gained WHAT THE DECK SAYS, IN WORDS (the
 # markdown writer, revHeading, the lints and the panel);
@@ -274,8 +282,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "50f6c22e39c867975115a51ccfca46bb"
-EXPECTED_BYTES = 2596030
+EXPECTED_MD5 = "59b513a6af5a4f79dae6538de50a5e00"
+EXPECTED_BYTES = 2601279
 
 
 def _render_example() -> str:

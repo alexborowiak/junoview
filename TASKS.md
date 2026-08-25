@@ -612,10 +612,39 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 Deferred earlier as too churny for one pass; unchanged status.
 
-- [ ] **T36 · L — Split deck.js into modules (design first).** The
+- [x] **T36 · L — Split deck.js into modules (design first).** The
   multi-file split. Must preserve: no build step, boot-sequence-at-tail
   discipline, section-banner navigability. Update AGENTS.md/CLAUDE.md
   when done.
+  *2026-08-25, on its own and last, as the entry asks.* 24,733 lines →
+  fourteen files of ~1,900 under `assets/js/deck/`. Design note at the
+  top of `00-page.js`.
+  **They are fragments of one IIFE, not modules.** Everything shares one
+  closure — `pres`, `cur`, `mode` and several hundred functions that
+  reach for them — and ES modules are not available regardless: a
+  rendered page is opened from `file://` at least as often as from a
+  server, where `type="module"` is blocked outright. So
+  `assets.deck_js()` concatenates them in the order `DECK_PARTS` names,
+  which is the same inlining every other asset already gets — not a build
+  step.
+  **What it costs, said plainly:** a part does not parse alone, so an
+  editor underlines its last brace and `node --check` on one part is
+  meaningless. The replacement gate is *stricter*: the test and CI both
+  assemble the parts and parse that — the thing that actually ships — so
+  a part that parses alone but breaks the join is caught too.
+  **The three constraints, kept.** No build step (above). Boot at the
+  tail: `99-boot.js` is now its own file, last by filename as well as by
+  convention, which turns a comment into a fact about the directory.
+  Banner navigability: `grep -r "/* ----" assets/js/deck/` still works,
+  and the filenames are a coarser index above it.
+  **The split is provably a re-arrangement.** Cuts were made only at
+  section banners *proved* safe — each candidate part was wrapped alone
+  in a function and parsed, so a cut inside a function could not survive
+  — and the parts were then concatenated and compared against the
+  original byte for byte. The only difference in the shipped page is the
+  fourteen four-line headers (5,249 bytes), which is the whole of the
+  md5 move. Three full browser suites (T27, T32, T35: 11/11, 18/18,
+  18/18) pass unchanged against the assembled build.
 - [x] **T37 · S — Relocate `embed_deck`.**
   *2026-08-25, on its own as the entry asks.* `loader.py`'s first line is
   "Getting notebooks from where they live: disk, or a URL" — and it held

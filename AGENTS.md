@@ -34,6 +34,13 @@ parser's internals.
   if you must cross the seam, do it in one named, commented place.
 - **Frontend** → real files under `src/junoview/assets/` (css/js/html). No
   build step, no framework, no minification — keep it that way.
+- The deck editor is `assets/js/deck/`: **one IIFE across fourteen files**,
+  joined by `assets.deck_js()` in the order `DECK_PARTS` names. They share
+  one closure, so they are fragments rather than modules — ES modules are
+  not an option anyway, since a rendered page is opened from `file://` as
+  often as from a server. A part therefore does not parse alone; the gate
+  is on the assembled file. `99-boot.js` is last by name because everything
+  above it only declares (T36).
 - **Anything that writes to disk** → `src/junoview/server/` only.
 - **Core stays stdlib-only.** No new runtime dependencies — that is why the
   Pyodide browser build works at all.

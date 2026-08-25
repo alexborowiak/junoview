@@ -1,0 +1,41 @@
+/* 99-boot.js — THE BOOT SEQUENCE. Last on purpose, and last by filename: everything above only declares.
+   ONE FRAGMENT of deck.js's single IIFE, concatenated with its
+   siblings in filename order by assets.deck_js(). It does not
+   parse alone and is not meant to: see 00-page.js. */
+  /* ================= THE BOOT SEQUENCE =================
+     ALL of this file's load-time work runs from here, after every
+     declaration and every `var` initialiser above. Never call any of it
+     mid-file, and never add a sub-IIFE that executes logic at load:
+     function declarations hoist but `var` initialisers do not, and a
+     throw during load silently kills the rest of this IIFE — no
+     handlers, no exports, no deck, and no test notices. Not
+     hypothetical: on 2026-08-22 a mid-file loadPresentation(last) ran
+     histReset() → syncCustomTypes() → Object.keys(STYLE_DEFAULTS)
+     thousands of lines before STYLE_DEFAULTS was assigned, and the
+     TypeError killed everything below it — the editor quietly stopped
+     existing. These calls keep the relative order they ran in when they
+     were scattered mid-file. */
+  initShellRegistry();        /* every notebook the page carries */
+  initFirstPresentation();    /* the presentation the page opens with */
+  /* app.js paints the welcome before this file loads; redraw it now the
+     SemApp.deck* hooks and the registry can answer its questions */
+  if(APP.refreshChrome) APP.refreshChrome();
+  renderLayoutPicker();
+  renderAutosaveItem();
+  renderSaveBtn();
+  /* belt-and-braces: initFirstPresentation already synced the custom
+     types (via histReset, or explicitly on its default branch), so this
+     second pass is an idempotent no-op — it re-pins the invariant the
+     2026-08-22 incident was about: the registry must be synced by the
+     time boot finishes, whatever path loaded the presentation. */
+  syncCustomTypes();
+  status();
+  renderPresTabs();
+  /* the ribbon you kept: applied once here, at the tail, after every
+     declaration and every group's markup is real. It must not run
+     mid-file — it walks #edit-tools and calls fitEditRibbon (T11). */
+  applyRibbonPrefs();
+  /* both IIFEs + their route hooks are now wired — restore the URL's view */
+  if(window.SemApp&&window.SemApp.applyInitialRoute)
+    window.SemApp.applyInitialRoute();
+})();

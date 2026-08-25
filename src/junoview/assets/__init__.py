@@ -19,7 +19,7 @@ from importlib.resources import files
 __all__ = [
     "load",
     "core_css", "app_css", "deck_css",
-    "app_js", "deck_js", "pptx_js",
+    "app_js", "deck_js", "pptx_js", "DECK_PARTS",
     "page_template", "shell_template",
     "deck_html", "help_html", "mathjax_html", "web_loader",
 ]
@@ -62,9 +62,42 @@ def app_js() -> str:
     return load("js/app.js")
 
 
+#: The parts of ``js/deck/``, in the order they are concatenated. THE
+#: ORDER IS THE SEMANTICS, which is why it is a list here rather than a
+#: glob: ``99-boot`` runs every load-time call in the file and must come
+#: after every declaration above it. A glob would happen to sort the same
+#: way and would not say why.
+DECK_PARTS = (
+    "00-page",
+    "05-figures-and-ribbon",
+    "10-decks",
+    "15-annotations",
+    "20-notes-and-tables",
+    "25-selecting",
+    "30-format-bar",
+    "35-arranging",
+    "40-captions-and-components",
+    "45-images",
+    "50-review-and-overview",
+    "55-sections-and-strip",
+    "60-saving-and-export",
+    "99-boot",
+)
+
+
 def deck_js() -> str:
-    """Presentation behaviour: slide editing, layout, export, playback."""
-    return load("js/deck.js")
+    """Presentation behaviour: slide editing, layout, export, playback.
+
+    Concatenated from ``js/deck/``. The parts are FRAGMENTS of one IIFE,
+    not modules: the editor's state lives in that one closure, and ES
+    modules are not an option because a rendered page is opened from
+    ``file://`` as often as from a server, where ``type="module"`` is
+    blocked outright. Joining files is not a build step — it is the same
+    inlining every other asset already gets — and the split buys the
+    thing a 24,000-line file costs most: being able to open the part you
+    need. See ``js/deck/00-page.js`` for the rest of the argument.
+    """
+    return "".join(load(f"js/deck/{name}.js") for name in DECK_PARTS)
 
 
 def pptx_js() -> str:

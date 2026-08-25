@@ -1,0 +1,1873 @@
+/* 45-images.js — placing images, where they came from, and cropping them.
+   ONE FRAGMENT of deck.js's single IIFE, concatenated with its
+   siblings in filename order by assets.deck_js(). It does not
+   parse alone and is not meant to: see 00-page.js. */
+  /* ---- add an image: read the file as a data URI, embed + place it ---- */
+  /* ---- IMAGES THAT REMEMBER WHERE THEY CAME FROM -----------------------
+     (2026-08-22, user: "would be cool if there was a refresh images with
+     local object. Like it has the image saved, but also knows the local
+     path, and clicking refresh on the image/presentation refreshes them
+     from the local path. If local path is gone though, give a list of
+     ones that couldn't be refreshed but just leave them as they were".)
+
+     The picture itself stays embedded — a deck has to survive being sent
+     to somebody, and a path on your machine means nothing on theirs. What
+     is kept BESIDE it is a file HANDLE, which is the browser's own idea
+     of "this exact file on disk": it survives a reload, it can be
+     re-read on demand, and it asks permission rather than granting the
+     page a filesystem.
+
+     Handles cannot be JSON, so they live in IndexedDB — the same store
+     the project handle and the embedded cards already use — keyed by an
+     id on the annot. `a.fname` is kept on the annot too, purely so the
+     "could not refresh" list can NAME the files that went missing. */
+  var FHKEY='imgfile:';
+  var fhSeq=0;
+  function newFileKey(){
+    fhSeq++;
+    return FHKEY+Date.now().toString(36)+fhSeq.toString(36);
+  }
+  function readAsDataURL(file){
+    return new Promise(function(res,rej){
+      var rd=new FileReader();
+      rd.onload=function(){res(rd.result);};
+      rd.onerror=function(){rej(rd.error);};
+      rd.readAsDataURL(file);
+    });
+  }
+  /* shrink on the way in, exactly as the insert path does, so a refreshed
+     picture is the same weight as the one it replaces */
+  function shrinkDataUrl(src){
+    return new Promise(function(res){
+      var probe=new Image();
+      probe.onload=function(){res(shrinkImage(probe,src));};
+      probe.onerror=function(){res(src);};
+      probe.src=src;
+    });
+  }
+  /* every image on the deck that was put there from a local file */
+  function linkedImages(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,ai){
+        if(a&&a.k==='image'&&a.fkey) out.push({si:si,ai:ai,a:a});});
+    });
+    return out;
+  }
+  /* re-read every linked picture from disk. NOTHING is changed unless its
+     file actually reads: a picture whose file has moved keeps the copy it
+     already had, and is named in the report instead — losing a figure
+     because a folder was renamed would be much worse than a stale one. */
+  function refreshLinkedImages(list){
+    var items=list||linkedImages();
+    if(!items.length) return Promise.resolve({ok:0,lost:[]});
+    var ok=0,lost=[];
+    return items.reduce(function(chain,e){
+      return chain.then(function(){
+        return idbGet(e.a.fkey).then(function(h){
+          if(!h) throw 0;
+          return permAsk(h).then(function(granted){
+            if(!granted) throw 0;
+            return h.getFile();
+          });
+        }).then(function(f){
+          return readAsDataURL(f);
+        }).then(function(src){
+          return shrinkDataUrl(src);
+        }).then(function(src){
+          if(!src||src===e.a.src) {ok++;return;}
+          e.a.src=src;ok++;
+        }).catch(function(){
+          lost.push({si:e.si,name:e.a.fname||'a picture'});
+        });
+      });
+    },Promise.resolve()).then(function(){
+      if(ok){markDirty();refresh();}
+      return {ok:ok,lost:lost};
+    });
+  }
+  /* the user-facing verb: refresh, then SAY what happened — including,
+     by name, anything that could not be found */
+  function refreshImagesReport(list){
+    var n=(list||linkedImages()).length;
+    if(!n){
+      toast('No pictures on this deck are linked to a file on this '
+        +'computer. Insert one with Image and it will remember where it '
+        +'came from.');
+      return;
+    }
+    toast('Re-reading '+n+' picture'+(n===1?'':'s')+'…');
+    refreshLinkedImages(list).then(function(r){
+      if(!r.lost.length){
+        toast(r.ok+' picture'+(r.ok===1?'':'s')+' refreshed from disk');
+        return;
+      }
+      var names=r.lost.slice(0,4).map(function(l){
+        return l.name+' (slide '+(l.si+1)+')';}).join(', ');
+      if(r.lost.length>4) names+=' and '+(r.lost.length-4)+' more';
+      toast((r.ok?(r.ok+' refreshed. '):'')
+        +r.lost.length+' could not be read and '
+        +(r.lost.length===1?'was':'were')+' left exactly as before: '
+        +names,9000);
+    });
+  }
+  (function(){
+    var mi=$('#mi-refresh-img');
+    if(mi) mi.addEventListener('click',function(){
+      var dm=$('#dc-menu'); if(dm) dm.hidden=true;
+      refreshImagesReport();
+    });
+    var one=$('#fmt-imgrefresh');
+    if(one) one.addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=pres.slides[cur],hits=[];
+      selIdxs().forEach(function(i){
+        var a=(sl&&sl.annots||[])[i];
+        if(a&&a.k==='image'&&a.fkey) hits.push({si:cur,ai:i,a:a});});
+      refreshImagesReport(hits);
+    });
+  })();
+  /* `full` is the ORIGINAL bytes when `src` is a shrunken copy of them.
+     One funnel: three different doors insert a picture (the file picker,
+     the <input> fallback and the paste), and putting the original aside
+     in each of them is three chances to forget (T21). */
+  function placeImage(src,ar,link,full){
+    var s=pres.slides[cur]; if(!s) return;
+    var l=stage.querySelector('.annot-layer');
+    var lr=l?l.getBoundingClientRect():null;
+    var w=40,h=32;
+    if(ar&&lr&&lr.height){h=w*(lr.width/lr.height)*ar;}
+    h=Math.max(8,Math.min(86,h));
+    s.annots=s.annots||[];
+    var img={k:'image',x:Math.max(2,50-w/2),
+      y:Math.max(2,50-h/2),w:w,h:h,src:src};
+    /* the link, when the browser gave us a real handle to keep */
+    if(link&&link.key){img.fkey=link.key;img.fname=link.name||'';}
+    s.annots.push(img);
+    /* only when it really IS bigger: otherwise the display copy is the
+       original and a second copy of it would be pure waste */
+    if(full&&full!==src) keepOriginal(img,full);
+    markDirty();
+    setTool('select');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+  }
+  /* ---- THE FRAMES PANE -------------------------------------------------
+     A flip book is a little deck inside a slide, so its frames are listed
+     and reordered in the same shape the slide strip uses: one row each,
+     move/duplicate/remove minis, click to go to it. Anything else would
+     have been a second
+     idiom for the same job (2026-08-22). */
+  var flipSel=-1;         /* which annot index the pane is showing */
+  /* the selected items as indexes, the same rule fmtApply follows: the
+     whole multi-selection when there is one, else the primary. Tying six
+     labels to one figure has to be one gesture, not six. */
+  function selIdxs(){
+    var m=selSet.filter(function(i){return typeof i==='number';});
+    if(m.length) return m;
+    return (typeof selAnnot==='number')?[selAnnot]:[];
+  }
+  function flipPaneItem(){
+    var s=pres.slides[cur];
+    var a=s&&(s.annots||[])[flipSel];
+    return (a&&a.k==='flip')?a:null;
+  }
+  /* the name a frame goes by: yours, else the card's own title, else its
+     number. A bound caption has to be able to say WHICH figure it belongs
+     to, and "Frame 3" is no help when there are nine of them. */
+  function frameLabel(f,i){
+    if(!f) return 'Frame '+(i+1);
+    if(f.label) return f.label;
+    if(f.ref){
+      var it=resolveRef(f.ref);
+      if(it&&it.title) return it.title;
+      return 'Figure '+(i+1)+' (notebook closed)';
+    }
+    return 'Picture '+(i+1);
+  }
+  function showFlipPane(on,idx){
+    var p=$('#flippane'); if(!p) return;
+    if(on){
+      if(typeof idx==='number') flipSel=idx;
+      /* one pane in the corner at a time — the rule showVerpane keeps */
+      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
+       '#tidypane','#objhist','#provpane']
+        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
+      var ob=$('#objects-btn');
+      if(ob) ob.setAttribute('aria-pressed','false');
+      if(typeof showVerpane==='function') showVerpane(false);
+    }
+    /* un-hide BEFORE rendering: renderFlipPane bails on a hidden pane (it
+       is called from showFmt on every canvas click and must not rebuild a
+       list nobody is looking at), so rendering first drew nothing and the
+       pane opened empty */
+    p.hidden=!on;
+    if(on) renderFlipPane();
+  }
+  function renderFlipPane(){
+    var p=$('#flippane'); if(!p||p.hidden) return;
+    var list=$('#flippane-list'),ttl=$('#flippane-t');
+    var a=flipPaneItem();
+    if(!a){
+      if(ttl) ttl.textContent='Flip book';
+      if(list) list.innerHTML='<div class="selpane-empty">Select a flip '
+        +'book on the slide to see its figures.</div>';
+      var tie0=$('#fp-tie'); if(tie0) tie0.hidden=true;
+      return;
+    }
+    var fr=flipFrames(a);
+    if(ttl) ttl.textContent='Flip book — '+fr.length+' figure'
+      +(fr.length===1?'':'s');
+    list.innerHTML='';
+    if(!fr.length){
+      list.innerHTML='<div class="selpane-empty">No figures yet. '
+        +'“+ Figures…” lets you click several notebook cards in a row.'
+        +'</div>';
+    }
+    fr.forEach(function(f,i){
+      var row=document.createElement('div');
+      row.className='fp-row'+(i===(a.at||0)?' current':'');
+      var n=document.createElement('span');
+      n.className='fp-n';n.textContent=(i+1);
+      row.appendChild(n);
+      var t=document.createElement('input');
+      t.className='fp-t';t.type='text';
+      t.value=f.label||'';
+      t.placeholder=frameLabel(f,i);
+      t.title='What to call this figure — bound captions name it';
+      t.addEventListener('keydown',function(e){e.stopPropagation();});
+      /* committed on blur, not per keystroke: renaming rebuilds this list,
+         and rebuilding it under the caret is the bug the poster-version
+         rename already taught us (2026-08-10) */
+      t.addEventListener('blur',function(){
+        var v=t.value.trim();
+        if(v) f.label=v; else delete f.label;
+        markDirty();renderFlipPane();});
+      row.appendChild(t);
+      var ctr=document.createElement('span');ctr.className='fp-ctr';
+      [['↑',function(){flipMove(i,-1);},'Move this figure earlier'],
+       ['↓',function(){flipMove(i,1);},'Move this figure later'],
+       [bic('exit'),function(){flipDrop(i);},'Remove this figure']]
+        .forEach(function(pr){
+          var b=document.createElement('button');
+          b.className='film-mini';b.innerHTML=pr[0];b.title=pr[2];
+          b.setAttribute('aria-label',pr[2]);
+          b.addEventListener('click',function(ev){
+            ev.stopPropagation();pr[1]();});
+          ctr.appendChild(b);
+        });
+      row.appendChild(ctr);
+      row.addEventListener('click',function(){
+        a.at=i;markDirty(true);renderSlide();renderFlipPane();});
+      list.appendChild(row);
+    });
+    renderTiePanel(a);
+  }
+  /* moving a frame must carry its BINDINGS with it, or captions tied to
+     figure 4 silently start belonging to whatever slid into slot 4 */
+  function flipRemap(a,map){
+    var s=pres.slides[cur];
+    (s.annots||[]).forEach(function(x){
+      if(!x||x.fb!==a.fid) return;
+      var to=map[x.fbf||0];
+      if(to==null) delete x.fb, delete x.fbf, delete x.fbm;
+      else x.fbf=to;
+    });
+  }
+  function flipMove(i,d){
+    var a=flipPaneItem(); if(!a) return;
+    var fr=flipFrames(a).slice(),j=i+d;
+    if(j<0||j>=fr.length) return;
+    var t=fr[i];fr[i]=fr[j];fr[j]=t;
+    a.frames=fr;
+    var map={};fr.forEach(function(_,k){map[k]=k;});
+    map[i]=j;map[j]=i;
+    flipRemap(a,map);
+    if((a.at||0)===i) a.at=j; else if((a.at||0)===j) a.at=i;
+    markDirty();renderSlide();renderFlipPane();
+  }
+  function flipDrop(i){
+    var a=flipPaneItem(); if(!a) return;
+    var fr=flipFrames(a).slice();
+    if(i<0||i>=fr.length) return;
+    fr.splice(i,1);
+    a.frames=fr;
+    /* a caption tied to the frame that just went loses its binding rather
+       than pointing at a stranger — and it stays VISIBLE, because an item
+       that silently disappears forever is the worst thing here */
+    var map={};
+    for(var k=0;k<=fr.length;k++) map[k]=(k<i)?k:(k===i?null:k-1);
+    flipRemap(a,map);
+    a.at=Math.max(0,Math.min(fr.length-1,a.at||0));
+    markDirty();renderSlide();renderFlipPane();
+  }
+  /* ---- TYING AN ITEM TO A FIGURE ---------------------------------------
+     "you can tie text to an image in it ... and tie objects and things to
+     a specific image in the flip book" (2026-08-22). It lives in the
+     frames pane rather than the ribbon because it needs the frame LIST to
+     be visible to make any sense, and because the ribbon had nothing to
+     give. It acts on the whole selection, so half a dozen labels can be
+     tied to one figure in one go. */
+  function tieSel(a,frame,mode){
+    var s=pres.slides[cur],hits=selIdxs();
+    var n=0;
+    hits.forEach(function(i){
+      var x=(s.annots||[])[i];
+      if(!x||x.k==='flip') return;    /* a flip book cannot bind to itself */
+      if(frame==null){delete x.fb;delete x.fbf;delete x.fbm;}
+      else {x.fb=a.fid;x.fbf=frame;x.fbm=mode||'only';}
+      n++;
+    });
+    if(n){markDirty();renderSlide();renderFlipPane();}
+    return n;
+  }
+  function renderTiePanel(a){
+    var host=$('#fp-tie'); if(!host) return;
+    var s=pres.slides[cur],hits=selIdxs().filter(function(i){
+      var x=(s.annots||[])[i];return x&&x.k!=='flip';});
+    host.innerHTML='';
+    if(!hits.length||!flipFrames(a).length){
+      host.hidden=true;
+      return;
+    }
+    host.hidden=false;
+    var lab=document.createElement('div');
+    lab.className='fp-tielab';
+    lab.textContent=hits.length===1
+      ?('Tie “'+annotLabel((s.annots||[])[hits[0]]).slice(0,28)+'” to')
+      :('Tie these '+hits.length+' items to');
+    host.appendChild(lab);
+    var cur0=(s.annots||[])[hits[0]]||{};
+    var sel=document.createElement('select');
+    sel.className='fp-tiesel';
+    var o0=document.createElement('option');
+    o0.value='';o0.textContent='(not tied — always shown)';
+    sel.appendChild(o0);
+    flipFrames(a).forEach(function(f,i){
+      var o=document.createElement('option');
+      o.value=String(i);o.textContent=(i+1)+'. '+frameLabel(f,i);
+      sel.appendChild(o);
+    });
+    sel.value=(cur0.fb===a.fid&&cur0.fbf!=null)?String(cur0.fbf):'';
+    host.appendChild(sel);
+    var mode=document.createElement('select');
+    mode.className='fp-tiesel';
+    FLIP_MODES.forEach(function(m){
+      var o=document.createElement('option');
+      o.value=m[0];o.textContent=m[1];
+      mode.appendChild(o);
+    });
+    mode.value=cur0.fbm||'only';
+    mode.disabled=sel.value==='';
+    host.appendChild(mode);
+    function commit(){
+      mode.disabled=sel.value==='';
+      tieSel(a,sel.value===''?null:+sel.value,mode.value);
+    }
+    sel.addEventListener('change',commit);
+    mode.addEventListener('change',commit);
+  }
+  (function(){
+    var fg=$('#fmt-figures');
+    if(fg) fg.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s=pres.slides[cur],idx=null;
+      selIdxs().forEach(function(i){
+        var x=(s&&s.annots||[])[i];
+        if(idx===null&&x&&x.k==='flip') idx=i;});
+      if(idx===null) return;
+      var p=$('#flippane');
+      showFlipPane(!!(p&&p.hidden),idx);
+    });
+    var cl=$('#flippane-close');
+    if(cl) cl.addEventListener('click',function(){showFlipPane(false);});
+    var ac=$('#fp-add-cells');
+    if(ac) ac.addEventListener('click',function(){
+      if(flipPaneItem()) startPick(flipSel,true);});
+    var ai=$('#fp-add-img'),fi=$('#fp-img-file');
+    if(ai&&fi) ai.addEventListener('click',function(){
+      if(!flipPaneItem()) return;
+      fi.value='';fi.click();});
+    /* several pictures at once, in the order the browser hands them over —
+       adding twelve frames one file dialog at a time is how a feature
+       goes unused */
+    if(fi) fi.addEventListener('change',function(){
+      var a=flipPaneItem(),files=this.files;
+      if(!a||!files||!files.length) return;
+      var list=Array.prototype.slice.call(files);
+      var got=[],done=0;
+      list.forEach(function(f,i){
+        var rd=new FileReader();
+        rd.onload=function(){
+          var probe=new Image();
+          probe.onload=function(){
+            got[i]={src:shrinkImage(probe,rd.result)};fin();};
+          probe.onerror=function(){got[i]={src:rd.result};fin();};
+          probe.src=rd.result;
+        };
+        rd.onerror=function(){got[i]=null;fin();};
+        rd.readAsDataURL(f);
+      });
+      function fin(){
+        if(++done<list.length) return;
+        a.frames=flipFrames(a).slice();
+        got.forEach(function(g){if(g) a.frames.push(g);});
+        a.at=a.frames.length-1;
+        /* ONE history entry for the whole batch */
+        markDirty();renderSlide();renderFlipPane();
+      }
+    });
+  })();
+  var etImage=$('#et-image'),imgFile=$('#img-file');
+  if(etImage&&imgFile) etImage.addEventListener('click',function(){
+    /* showOpenFilePicker hands back a HANDLE, which is what lets the
+       picture be re-read from disk later; the <input> can only ever hand
+       back the bytes. So it is tried first and the input is the fallback
+       for browsers without it (2026-08-22). */
+    if(!window.showOpenFilePicker){imgFile.value='';imgFile.click();return;}
+    window.showOpenFilePicker({multiple:false,types:[{
+      description:'Images',
+      accept:{'image/*':['.png','.jpg','.jpeg','.gif','.webp','.svg',
+        '.bmp','.avif']}}]})
+      .then(function(picks){
+        var h=picks&&picks[0]; if(!h) return;
+        var key=newFileKey();
+        return idbPut(key,h).catch(function(){return null;})
+          .then(function(){return h.getFile();})
+          .then(function(f){
+            return readAsDataURL(f).then(function(src){
+              var probe=new Image();
+              probe.onload=function(){
+                placeImage(shrinkImage(probe,src,IMG_VIEW_EDGE),
+                  (probe.naturalHeight||3)/(probe.naturalWidth||4),
+                  {key:key,name:h.name||f.name||''},src);};
+              probe.onerror=function(){
+                placeImage(src,0,{key:key,name:h.name||''});};
+              probe.src=src;
+            });
+          });
+      }).catch(function(){});
+  });
+  if(imgFile) imgFile.addEventListener('change',function(){
+    var f=this.files&&this.files[0]; if(!f) return;
+    var rd=new FileReader();
+    rd.onload=function(){
+      var src=rd.result;
+      var probe=new Image();
+      probe.onload=function(){
+        placeImage(shrinkImage(probe,src,IMG_VIEW_EDGE),
+          (probe.naturalHeight||3)/(probe.naturalWidth||4),null,src);};
+      probe.onerror=function(){placeImage(src,0);};
+      probe.src=src;
+    };
+    rd.readAsDataURL(f);
+  });
+  /* the format bar scrolls horizontally (overflow), which would CLIP a normal
+     absolute dropdown — so the Crop / Animate menus float with position:fixed,
+     positioned under their button each time they open */
+  function floatMenu(btn,menu){
+    menu.style.position='fixed';
+    menu.style.zIndex='240';
+    menu.style.right='auto';menu.style.bottom='auto';
+    /* measure AFTER it is positionable, and clamp on BOTH axes: a tall
+       catalogue opened from low down, or a wide one opened from the
+       right-hand toolbar, would otherwise leave the screen */
+    var r=btn.getBoundingClientRect();
+    var mw=menu.offsetWidth||170;
+    menu.style.left=Math.max(8,
+      Math.min(r.left,window.innerWidth-mw-8))+'px';
+    var mh=menu.offsetHeight||0;
+    var top=r.bottom+4;
+    if(mh&&top+mh>window.innerHeight-8)
+      top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
+    menu.style.top=top+'px';
+  }
+  /* Open/close/close-on-outside-click, shared by the WORDED dropdowns
+     below and the DRAWN ones (line style, weight, ends, route). It was
+     inline in wireFloatDropdown, so a menu whose rows are pictures rather
+     than a list of strings had no way to reuse any of it (2026-08-17). */
+  function wireMenuToggle(wrapId,btnId,menuId){
+    var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
+    if(!wrap||!btn||!menu) return null;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var willOpen=menu.hidden;
+      menu.hidden=!willOpen;
+      btn.setAttribute('aria-expanded',willOpen.toString());
+      if(willOpen) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&!wrap.contains(e.target)){
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    });
+    return {wrap:wrap,btn:btn,menu:menu};
+  }
+  function wireFloatDropdown(wrapId,btnId,menuId,opts,attr,onPick,iconFn){
+    var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
+    if(!wrap||!btn||!menu) return;
+    opts.forEach(function(p){
+      var o=document.createElement('button');
+      o.className='sh-opt';o.setAttribute('data-'+attr,p[0]);o.title=p[1];
+      if(iconFn){
+        var ic=iconFn(p[0]); if(ic) o.appendChild(ic);
+        var lbl=document.createElement('span');
+        lbl.className='sh-opt-t';lbl.textContent=p[1];o.appendChild(lbl);
+      } else o.textContent=p[1];
+      o.addEventListener('click',function(e){
+        e.stopPropagation();onPick(p[0]);
+        menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      });
+      menu.appendChild(o);
+    });
+    wireMenuToggle(wrapId,btnId,menuId);
+  }
+  /* ---- crop-to-shape dropdown (images + notebook cells) ---- */
+  /* ---- DRAG-TO-TRIM: the crop the user reached for first. Picking
+     "Rectangle" (now honestly "No crop") did nothing, because rectangle
+     with no insets IS the uncropped state — the menu's most inviting
+     option was a no-op (2026-08-19, user, twice). Trim mode shows four
+     edge handles on the selected frame; dragging writes a.crop insets
+     live, Esc or reselecting leaves the mode. ---- */
+  var cropMode=false;
+  function setCropMode(on){
+    cropMode=!!on;
+    var l=stage.querySelector('.annot-layer');
+    if(l&&pres.slides[cur]){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+    if(on) toast('Drag the edge handles to trim. Esc to finish.');
+  }
+  function mkCropHandles(host,layer,s2,idx){
+    var a=s2.annots[idx]; if(!a) return;
+    ['t','r','b','l'].forEach(function(side){
+      var h=document.createElement('div');
+      h.className='an-crop-h an-crop-'+side;
+      var c2=a.crop||{};
+      if(side==='t') h.style.top=(c2.t||0)+'%';
+      if(side==='b') h.style.bottom=(c2.b||0)+'%';
+      if(side==='l') h.style.left=(c2.l||0)+'%';
+      if(side==='r') h.style.right=(c2.r||0)+'%';
+      h.title='Trim the '+side+' edge';
+      h.addEventListener('pointerdown',function(ev){
+        ev.stopPropagation();ev.preventDefault();
+        /* the rect FIRST: the shape-drop below re-renders and detaches
+           this host, and a detached rect is all zeros. clip-path does not
+           affect layout, so the captured rect stays valid for the drag. */
+        var r=host.getBoundingClientRect();
+        /* trimming is rectangular: cropCss ignores insets while a SHAPE
+           crop is set, so dragging a handle under an ellipse moved the
+           handle and changed nothing (2026-08-20 diagnosis). Starting a
+           trim honestly drops the shape. */
+        if(a.crop&&a.crop.shape){delete a.crop.shape;
+          renderAnnots(layer,s2);paintSel(layer);}
+        function mv(e2){
+          var v;
+          if(side==='t') v=(e2.clientY-r.top)/r.height*100;
+          else if(side==='b') v=(r.bottom-e2.clientY)/r.height*100;
+          else if(side==='l') v=(e2.clientX-r.left)/r.width*100;
+          else v=(r.right-e2.clientX)/r.width*100;
+          v=Math.max(0,Math.min(45,Math.round(v)));
+          a.crop=a.crop||{};
+          if(v) a.crop[side]=v; else delete a.crop[side];
+          renderAnnots(layer,s2);paintSel(layer);
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+          if(a.crop&&!a.crop.shape&&!a.crop.t&&!a.crop.r
+            &&!a.crop.b&&!a.crop.l) delete a.crop;
+          markDirty();
+          renderAnnots(layer,s2);paintSel(layer);
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      });
+      host.appendChild(h);
+    });
+  }
+  wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
+    CROP_SHAPES,'shape',function(shape){
+      fmtApply(function(a){
+        a.crop=a.crop||{};
+        if(shape==='rect'){
+          delete a.crop.shape;
+          if(!(a.crop.t||a.crop.r||a.crop.b||a.crop.l)) delete a.crop;
+        } else a.crop.shape=shape;
+      });
+    },cropIcon);
+  /* ---- rectangular TRIM (2026-08-04): the model always carried t/r/b/l
+     inset percentages — this is the UI it never had. Four steppers in
+     the crop menu, live on the selection: trimming whitespace off a
+     figure is the single most common poster edit. ---- */
+  (function(){
+    var menu=$('#fmt-crop-menu'),btn=$('#fmt-crop');
+    if(!menu||!btn) return;
+    var tm=document.createElement('button');tm.type='button';
+    tm.className='ci-trim';
+    tm.innerHTML=bic('crop')+' Trim by dragging the edges';
+    tm.addEventListener('click',function(e){
+      e.stopPropagation();
+      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      setCropMode(true);
+    });
+    menu.insertBefore(tm,menu.firstChild);
+    var row=document.createElement('div');row.className='crop-inset';
+    var lab=document.createElement('span');lab.className='ci-lab';
+    lab.textContent='Trim edges %';row.appendChild(lab);
+    var SIDES=[['t','top'],['r','right'],['b','bottom'],['l','left']];
+    var inputs={};
+    SIDES.forEach(function(p){
+      var inp=document.createElement('input');
+      inp.type='number';inp.min='0';inp.max='45';inp.step='1';
+      inp.placeholder=p[1];
+      inp.title='Trim the '+p[1]+' edge (% of the frame)';
+      inp.addEventListener('click',function(e){e.stopPropagation();});
+      inp.addEventListener('input',function(){
+        var v=Math.max(0,Math.min(45,parseFloat(inp.value)||0));
+        fmtApply(function(a){
+          a.crop=a.crop||{};
+          if(v) a.crop[p[0]]=v; else delete a.crop[p[0]];
+          if(!a.crop.shape&&!a.crop.t&&!a.crop.r&&!a.crop.b&&!a.crop.l)
+            delete a.crop;
+        },true);              /* live preview, no history */
+      });
+      /* the gesture's END (blur / spinner release) commits ONE entry */
+      inp.addEventListener('change',function(){
+        fmtApply(function(){});
+      });
+      inputs[p[0]]=inp;row.appendChild(inp);
+    });
+    var rs=document.createElement('button');rs.type='button';
+    rs.className='ci-reset';rs.textContent='Reset';
+    rs.title='Clear the trim';
+    rs.addEventListener('click',function(e){
+      e.stopPropagation();
+      SIDES.forEach(function(p){inputs[p[0]].value='';});
+      fmtApply(function(a){
+        if(!a.crop) return;
+        delete a.crop.t;delete a.crop.r;delete a.crop.b;delete a.crop.l;
+        if(!a.crop.shape) delete a.crop;
+      });
+    });
+    row.appendChild(rs);
+    menu.appendChild(row);
+    /* opening the menu shows the SELECTION's current trim */
+    btn.addEventListener('click',function(){
+      var s=pres.slides[cur]; if(!s) return;
+      var a=annotByIdx(s,selAnnot)
+        ||(selSet.length?s.annots[selSet[0]]:null);
+      SIDES.forEach(function(p){
+        inputs[p[0]].value=(a&&a.crop&&a.crop[p[0]])||'';
+      });
+    });
+  })();
+  var animPaneSync=function(){},animPaneClose=function(){};
+  var animRibbonSync=function(){};
+  /* ---- animation PANE: effect + build order. Items on the same build appear
+     TOGETHER; each build is one click in playback. ---- */
+  (function(){
+    var vbtn=$('#vw-anim'),pane=$('#animpane');
+    var menu=$('#animpane-body'),cl=$('#animpane-close');
+    if(!vbtn||!pane||!menu) return;
+    menu.classList.add('anim-pane');
+    function rerender(){
+      var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s);paintSel(l);}
+    }
+    function renumber(s){animSeq(s).forEach(function(st,i){
+      st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
+    function stepOf(s,idx){var r=-1;animSeq(s).forEach(function(st,i){
+      if(st.items.indexOf(idx)>=0) r=i;});return r;}
+    function commit(s){markDirty();rerender();render();}
+    function setType(type){
+      var s=pres.slides[cur]; if(!s) return;
+      var idxs=selIdxs();
+      var no=nextAnimOrder(s);            /* new anims share one build step */
+      idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
+        if(type==='none') delete a.anim;
+        else if(a.anim) a.anim.type=type;
+        else a.anim={type:type,order:no};});
+      commit(s);
+    }
+    function mergeUp(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a||!a.anim) return;var q=animSeq(s),si=stepOf(s,selAnnot);
+      if(si>0){a.anim.order=q[si-1].order;renumber(s);commit(s);}
+    }
+    function splitOwn(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a||!a.anim) return;
+      a.anim.order=(a.anim.order||0)+0.5;renumber(s);commit(s);
+    }
+    function moveStep(si,dir){
+      var s=pres.slides[cur],q=animSeq(s),tj=si+dir;
+      if(tj<0||tj>=q.length) return;
+      var oa=q[si].order,ob=q[tj].order;
+      q[si].items.forEach(function(i){s.annots[i].anim.order=ob;});
+      q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
+      renumber(s);commit(s);
+    }
+    function render(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      menu.innerHTML='';
+      var h1=document.createElement('div');h1.className='anim-h';
+      h1.textContent='How it appears';menu.appendChild(h1);
+      if(!a||typeof selAnnot!=='number'){
+        var em=document.createElement('div');em.className='anim-empty';
+        em.textContent='Select an item first, then pick an effect.';
+        menu.appendChild(em);
+      } else {
+        var eff=document.createElement('div');eff.className='anim-eff';
+        [['none','None'],['appear','Appear'],['fade','Fade'],
+         ['rise','Rise'],['zoom','Zoom']].forEach(function(p){
+          var b=document.createElement('button');b.className='anim-effb';
+          b.textContent=p[1];
+          if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
+          b.addEventListener('click',function(e){e.stopPropagation();
+            setType(p[0]);});
+          eff.appendChild(b);});
+        menu.appendChild(eff);
+        if(a.anim){
+          var si0=stepOf(s,selAnnot),q0=animSeq(s);
+          var mrow=document.createElement('div');mrow.className='anim-merge';
+          var mb=document.createElement('button');mb.className='anim-mini wide';
+          mb.textContent='↑ Appear with previous';mb.disabled=(si0<=0);
+          mb.title='Reveal this on the same click as the build above';
+          mb.addEventListener('click',function(e){e.stopPropagation();
+            mergeUp();});
+          mrow.appendChild(mb);
+          if(q0[si0]&&q0[si0].items.length>1){
+            var sb=document.createElement('button');sb.className='anim-mini wide';
+            sb.textContent='↓ Own click';
+            sb.addEventListener('click',function(e){e.stopPropagation();
+              splitOwn();});
+            mrow.appendChild(sb);
+          }
+          menu.appendChild(mrow);
+        }
+      }
+      var h2=document.createElement('div');h2.className='anim-h';
+      h2.textContent='Build order — each row is one click';
+      menu.appendChild(h2);
+      var seq=animSeq(s);
+      if(!seq.length){
+        var e2=document.createElement('div');e2.className='anim-empty';
+        e2.textContent='Nothing animated on this slide yet.';
+        menu.appendChild(e2);
+      } else {
+        var list=document.createElement('div');list.className='anim-seq';
+        seq.forEach(function(st,si){
+          var row=document.createElement('div');row.className='anim-step';
+          var n=document.createElement('span');n.className='anim-num';
+          n.textContent=(si+1);row.appendChild(n);
+          var chips=document.createElement('span');chips.className='anim-chips';
+          st.items.forEach(function(idx){
+            var c=document.createElement('span');
+            c.className='anim-chip'+(idx===selAnnot?' cur':'');
+            c.textContent=itemLabel(s,idx)+' · '
+              +((s.annots[idx].anim.type)||'fade');
+            c.addEventListener('click',function(e){e.stopPropagation();
+              var l=stage.querySelector('.annot-layer');
+              if(l) selectAnnot(l,idx); render();});
+            chips.appendChild(c);});
+          row.appendChild(chips);
+          var ctr=document.createElement('span');ctr.className='anim-stepctr';
+          [['↑',-1],['↓',1]].forEach(function(m){
+            var b=document.createElement('button');b.className='anim-mini';
+            b.textContent=m[0];
+            b.title=m[1]<0?'Move this build earlier':'Move this build later';
+            b.setAttribute('aria-label',b.title);
+            b.disabled=(m[1]<0?si===0:si===seq.length-1);
+            b.addEventListener('click',function(e){e.stopPropagation();
+              moveStep(si,m[1]);});
+            ctr.appendChild(b);});
+          row.appendChild(ctr);
+          list.appendChild(row);});
+        menu.appendChild(list);
+      }
+    }
+    /* ONE door. There were briefly two — View's Animations and an
+       "Animate" button in an Effects group that renamed itself to the
+       selected item's effect. Same pane, different groups, different
+       names, both pressed at once (2026-08-17, user: "WHY IS ANIMATIONS
+       AND APPEAR NOT IN THE SAME PLACE"). The pane's effect chooser
+       already tracks the selection, which is everything the second
+       button ever added. */
+    function set(open){
+      if(open){
+        /* the panes share one corner, so only one can be the thing you
+           are looking at — the same rule showVerpane already keeps */
+        var sp=$('#selpane'); if(sp) sp.hidden=true;
+        var ob=$('#objects-btn');
+        if(ob) ob.setAttribute('aria-pressed','false');
+        var pf=$('#preflight'); if(pf) pf.hidden=true;
+        var sp2=$('#stdpane'); if(sp2) sp2.hidden=true;
+        var fp2=$('#flippane'); if(fp2) fp2.hidden=true;
+        showVerpane(false);
+        render();
+      }
+      pane.hidden=!open;
+      vbtn.setAttribute('aria-pressed',open.toString());
+    }
+    vbtn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    /* the effect chooser at the top tracks the selection, so an open pane
+       has to follow it rather than showing whatever was picked last */
+    animPaneSync=function(){if(!pane.hidden) render();};
+    animPaneClose=function(){set(false);};
+    /* ---- the Animate TAB's own buttons --------------------------------
+       "There doesn't seem to be a way to remove animations" (2026-08-20,
+       user) — there was one, the None effect, but it was inside a pane
+       you had to know to open, with an item selected, and it looked like
+       any other effect rather than like a removal. The effects are now
+       buttons in the ribbon where you can see which one is on, None reads
+       as the undo it is, and Clear slide strips the whole slide in one
+       press without hunting item by item. */
+    [['anim-none','none'],['anim-fade','fade'],
+     ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+      var b=$('#'+p[0]);
+      if(b) b.addEventListener('click',function(){setType(p[1]);});
+    });
+    /* ---- the two builds anyone actually wants ------------------------
+       Setting "one at a time" by hand means selecting every item on the
+       slide and stepping its build order one at a time, which is exactly
+       the fiddling this editor exists to remove (2026-08-20).
+       Reading order, not array order: the array is the order you happened
+       to draw things in, which is nobody's idea of a sequence. */
+    /* orderedIdx is at the top of the file now: figure NUMBERS read the
+       same order (T18), and a figure numbered differently from the way
+       it builds would be two answers to one question. */
+    var stag=$('#anim-stagger');
+    if(stag) stag.addEventListener('click',function(){
+      var s2=pres.slides[cur]; if(!s2) return;
+      var order=orderedIdx(s2);
+      if(!order.length){toast('Nothing on this slide yet');return;}
+      order.forEach(function(i,n){
+        var a=s2.annots[i];
+        a.anim={type:(a.anim&&a.anim.type)||'fade',order:n};
+      });
+      revealCount=0;commit(s2);
+      toast(order.length+' items, one click each \u2014 in reading order');
+    });
+    var tog=$('#anim-together');
+    if(tog) tog.addEventListener('click',function(){
+      var s2=pres.slides[cur]; if(!s2) return;
+      var order=orderedIdx(s2);
+      if(!order.length){toast('Nothing on this slide yet');return;}
+      order.forEach(function(i){
+        var a=s2.annots[i];
+        a.anim={type:(a.anim&&a.anim.type)||'fade',order:0};
+      });
+      revealCount=0;commit(s2);
+      toast('Everything appears on one click');
+    });
+    var clr=$('#anim-clear');
+    if(clr) clr.addEventListener('click',function(){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
+      if(!n){toast('Nothing on this slide is animated');return;}
+      revealCount=0;commit(s);
+      toast('Cleared '+n+(n===1?' animation':' animations')
+        +' — everything is on the slide from the start');
+    });
+    /* the effect buttons act on the SELECTION, so they show the selected
+       item's effect and stand down when there is nothing selected */
+    animRibbonSync=function(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var on=!!a&&typeof selAnnot==='number';
+      [['anim-none','none'],['anim-fade','fade'],
+       ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        b.hidden=!on;
+        b.setAttribute('aria-pressed',
+          (on&&(a.anim?a.anim.type:'none')===p[1]).toString());
+      });
+    };
+  })();
+  window.addEventListener('resize',function(){
+    if(deckEl.hidden) return;
+    var s=pres.slides[cur];
+    var l=stage.querySelector('.annot-layer');
+    if(s&&l) renderAnnots(l,s);
+  });
+  /* ---- PRESENTER VIEW --------------------------------------------------
+     A second window holding the things the audience must not see: your
+     notes, the slide that is coming, and a clock (2026-08-20, user:
+     "presentation mode where you can have like the different screens one
+     with the slides and the other with like notes and the next slide and
+     stuff when you have multiple screens. Also would be cool if there was
+     a time, and you can set time goals per slide").
+
+     A POPUP you drag to the other display, not an automatic placement.
+     The Window Management API that can put a window on a named screen is
+     Chromium-only and needs a permission prompt; a popup works in every
+     browser and on every setup, including the one where the second screen
+     is a projector the OS is mirroring.
+
+     The slides in it are REAL renders, not pictures: buildSlideNode uses
+     the same renderAnnots every other output uses, and the nodes are
+     imported into the popup. So a presenter view can never drift from
+     what is on the screen behind it — there is only one renderer.
+
+     Sync is a BroadcastChannel where there is one and a storage event
+     where there is not; both are just "here is the state" one way and
+     "do this" the other. */
+  var presWin=null,presCh=null,presStart=0,presPaused=0,presPauseAt=0;
+  function presChannel(){
+    if(presCh) return presCh;
+    try{
+      presCh=new BroadcastChannel('junoview-presenter:'+SCOPE);
+      presCh.onmessage=function(e){presenterCommand(e.data);};
+    }catch(err){presCh=null;}
+    return presCh;
+  }
+  /* the other window asked for something */
+  function presenterCommand(msg){
+    if(!msg||msg.jv!=='cmd') return;
+    if(msg.do==='next') advance();
+    else if(msg.do==='prev') backStep();
+    else if(msg.do==='goto'&&typeof msg.n==='number') go(msg.n);
+    else if(msg.do==='timer'){
+      if(msg.act==='reset'){presStart=Date.now();presPaused=0;presPauseAt=0;
+        rehResume();}
+      else if(msg.act==='pause'&&!presPauseAt){
+        presPauseAt=Date.now();rehPause();}
+      else if(msg.act==='resume'&&presPauseAt){
+        presPaused+=Date.now()-presPauseAt;presPauseAt=0;rehResume();}
+    }
+    else if(msg.do==='closed'){presWin=null;return;}
+    presenterPush();
+  }
+  /* one slide, rendered the way every other output renders it */
+  /* `priv` is OPT-IN, so the default is the safe one: a render path
+     added later shows nothing private unless it asks for it (T31). */
+  function buildSlideNode(i,priv){
+    var sl=(pres.slides||[])[i];
+    if(!sl) return null;
+    var savedMode=mode,savedReveal=revealCount,savedCur=cur;
+    var savedPriv=privCtx;
+    privCtx=!!priv;
+    mode='view';revealCount=99999;cur=i;
+    var host=document.createElement('div');
+    host.className='jvp-slidehost';
+    host.style.cssText='position:fixed;left:-99999px;top:0;'
+      +'width:960px;height:540px;';
+    document.body.appendChild(host);
+    var el=document.createElement('div');
+    el.className=(sl.layout==='title')?'slide slide-titlefree'
+      :'slide slide-blank';
+    el.style.cssText='width:960px;height:540px;position:relative;';
+    if(sl.layout==='title')
+      el.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
+    var bg=sl.bg||pres.pageBg||'#0b141d';
+    el.style.setProperty('background',bg,'important');
+    host.appendChild(el);
+    try{attachAnnots(el,sl);paintFurniture(el,i);}catch(err){}
+    mode=savedMode;revealCount=savedReveal;cur=savedCur;
+    privCtx=savedPriv;
+    host.removeChild(el);
+    host.remove();
+    return el;
+  }
+  function presenterPush(){
+    if(!presWin||presWin.closed){presWin=null;return;}
+    var doc=presWin.document;
+    if(!doc||!doc.getElementById('jvp-now')) return;
+    var n=(pres.slides||[]).length;
+    var sl=pres.slides[cur]||{};
+    /* the two slide previews */
+    [['jvp-now',cur],['jvp-next',cur+1]].forEach(function(pr){
+      var box=doc.getElementById(pr[0]);
+      if(!box) return;
+      box.innerHTML='';
+      /* THE PRESENTER VIEW IS THE PRIVATE ONE. This is the whole
+         point of T31: the same slide, drawn twice, and only this copy
+         carries what you wrote for yourself. */
+      var node=(pr[1]<n)?buildSlideNode(pr[1],true):null;
+      if(node){
+        var im=doc.importNode(node,true);
+        box.appendChild(im);
+        /* the node is built at a fixed 960x540 so its percentage geometry
+           has something real to measure against; it is scaled into
+           whatever box it lands in rather than re-rendered per size */
+        var bw=box.clientWidth||480,bh=box.clientHeight||270;
+        var k=Math.min(bw/960,bh/540);
+        im.style.transform='scale('+(k||0.5).toFixed(4)+')';
+        im.style.flex='none';
+      }
+      else box.innerHTML='<div class="jvp-end">end of the deck</div>';
+    });
+    var nt=doc.getElementById('jvp-notes');
+    /* MARKDOWN, through the same notesHtml the editor previews (T28).
+       It is escape-first and scheme-whitelisted, which is what lets a
+       deck that arrived from someone else be read here at all. */
+    if(nt) nt.innerHTML=(sl.notes||'').trim()
+      ?notesHtml(sl.notes)
+      :'<p class="jvp-nonotes">No notes for this slide.</p>';
+    var ct=doc.getElementById('jvp-count');
+    if(ct) ct.textContent=(cur+1)+' / '+n;
+    var gl=doc.getElementById('jvp-goal');
+    if(gl){
+      var g=slideGoal(sl),st=rehFor(sl),bits=[];
+      if(g) bits.push('target '+fmtMins(g));
+      /* what you ACTUALLY take here, which is the number that changes
+         what you do next (T29) */
+      if(st) bits.push('usually '+fmtMins(st.mean/60));
+      gl.textContent=bits.join(' \u00b7 ');
+    }
+    var tt=doc.getElementById('jvp-talk');
+    if(tt){
+      var want=pres.talkMins||0,tot=goalTotal();
+      tt.textContent=want?('talk '+want+' min')
+        :(tot?('planned '+fmtMins(tot)):'');
+    }
+    presWin.__jvState={start:presStart,paused:presPaused,
+      pauseAt:presPauseAt,goal:slideGoal(sl),
+      talk:pres.talkMins||0,slide:cur,count:n};
+  }
+  function presenterHtml(){
+    /* every stylesheet the deck uses, so the imported slide nodes look
+       exactly as they do on screen */
+    var css='';
+    $$('style').forEach(function(st){css+=st.textContent+'\n';});
+    return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+      +'<title>Presenter view</title><style>'+css
+      +'\nhtml,body{margin:0;height:100%;background:#070d13;color:#dce6ee;'
+      +'font-family:var(--sans,system-ui);overflow:hidden;}'
+      +'.jvp{display:grid;grid-template-columns:1.35fr 1fr;'
+      +'grid-template-rows:auto 1fr auto;gap:12px;height:100%;'
+      +'box-sizing:border-box;padding:12px;}'
+      +'.jvp-bar{grid-column:1/-1;display:flex;align-items:center;gap:14px;}'
+      +'.jvp-clock{font-family:var(--mono,monospace);font-size:44px;'
+      +'font-weight:600;line-height:1;letter-spacing:.02em;}'
+      +'.jvp-clock.over{color:#ff8a7a;}'
+      +'.jvp-sub{font-family:var(--mono,monospace);font-size:12px;'
+      +'color:#8ea4b6;display:flex;flex-direction:column;gap:2px;}'
+      +'.jvp-sp{flex:1;}'
+      +'.jvp-b{font-family:var(--mono,monospace);font-size:12px;'
+      +'padding:7px 13px;border-radius:7px;cursor:pointer;'
+      +'background:#ffffff0f;border:1px solid #ffffff2b;color:#dce6ee;}'
+      +'.jvp-b:hover{border-color:#39a9c0;color:#fff;}'
+      +'.jvp-b.primary{background:#39a9c0;border-color:#39a9c0;color:#04222b;'
+      +'font-weight:600;}'
+      +'.jvp-stage{position:relative;background:#000;border-radius:10px;'
+      +'overflow:hidden;display:flex;align-items:center;'
+      +'justify-content:center;min-height:0;}'
+      +'.jvp-stage .slide{transform-origin:center center;}'
+      +'.jvp-side{display:flex;flex-direction:column;gap:10px;min-height:0;}'
+      +'.jvp-nextwrap{flex:0 0 34%;display:flex;flex-direction:column;'
+      +'gap:4px;min-height:0;}'
+      +'.jvp-lab{font-family:var(--mono,monospace);font-size:10px;'
+      +'letter-spacing:.14em;text-transform:uppercase;color:#7d93a6;}'
+      +'.jvp-notes{flex:1;min-height:0;overflow-y:auto;'
+      +'font-size:19px;line-height:1.5;background:#0e1926;border-radius:10px;'
+      +'padding:14px 16px;border:1px solid #ffffff1a;}'
+      /* the small markdown, at reading-from-a-lectern size */
+      +'.jvp-notes p{margin:0 0 .6em;}'
+      +'.jvp-notes h3,.jvp-notes h4,.jvp-notes h5{margin:.2em 0 .4em;'
+      +'font-size:1.05em;color:#fff;}'
+      +'.jvp-notes ul,.jvp-notes ol{margin:.2em 0 .6em;padding-left:1.3em;}'
+      +'.jvp-notes li{margin:.15em 0;}'
+      +'.jvp-notes code{font-family:var(--mono,monospace);font-size:.85em;'
+      +'background:#ffffff14;padding:.1em .35em;border-radius:4px;}'
+      +'.jvp-notes blockquote{margin:.3em 0 .6em;padding-left:.8em;'
+      +'border-left:3px solid #ffffff2b;color:#a9bccc;}'
+      +'.jvp-notes hr{border:0;border-top:1px solid #ffffff26;'
+      +'margin:.7em 0;}'
+      +'.jvp-notes a{color:#6fd0e4;}'
+      +'.jvp-notes .jvn-goto{cursor:pointer;text-decoration:underline '
+      +'dotted;}'
+      +'.jvp-nonotes{color:#6e8394;}'
+      +'.jvp-end{color:#6e8394;font-family:var(--mono,monospace);'
+      +'font-size:13px;}'
+      +'.jvp-find{flex:0 0 auto;font-family:var(--sans,system-ui);'
+      +'font-size:14px;padding:8px 11px;border-radius:8px;'
+      +'background:#0e1926;color:#dce6ee;border:1px solid #ffffff2b;}'
+      +'.jvp-find:focus{outline:none;border-color:#39a9c0;}'
+      +'.jvp-hits{flex:0 0 auto;max-height:24%;overflow-y:auto;'
+      +'display:none;flex-direction:column;gap:2px;}'
+      +'.jvp-hits.on{display:flex;}'
+      +'.jvp-hit{text-align:left;background:#ffffff08;color:#dce6ee;'
+      +'border:1px solid #ffffff17;border-radius:7px;padding:6px 9px;'
+      +'cursor:pointer;font-size:12.5px;line-height:1.35;}'
+      +'.jvp-hit:hover{border-color:#39a9c0;}'
+      +'.jvp-hit b{font-family:var(--mono,monospace);font-size:10px;'
+      +'color:#8ea4b6;font-weight:400;margin-right:6px;}'
+      +'.jvp-hit i{color:#8ea4b6;font-style:normal;}'
+      +'.jvp-nohit{color:#6e8394;font-size:12px;padding:6px 2px;}'
+      +'.jvp-foot{grid-column:1/-1;display:flex;gap:8px;align-items:center;}'
+      +'</style></head><body><div class="jvp">'
+      +'<div class="jvp-bar">'
+      +'<span class="jvp-clock" id="jvp-clock">0:00</span>'
+      +'<span class="jvp-sub"><span id="jvp-count"></span>'
+      +'<span id="jvp-goal"></span><span id="jvp-talk"></span>'
+      +'<span id="jvp-slideclock"></span></span>'
+      +'<span class="jvp-sp"></span>'
+      +'<button class="jvp-b" id="jvp-pause">Pause</button>'
+      +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
+      +'</div>'
+      +'<div class="jvp-stage" id="jvp-now"></div>'
+      +'<div class="jvp-side">'
+      +'<div class="jvp-nextwrap"><span class="jvp-lab">next</span>'
+      +'<div class="jvp-stage" id="jvp-next"></div></div>'
+      +'<span class="jvp-lab">notes</span>'
+      +'<div class="jvp-notes" id="jvp-notes"></div>'
+      /* SEARCH, in the window you are actually looking at (T30). The
+         same slideHits the map filters with -- one matcher, two doors. */
+      +'<input class="jvp-find" id="jvp-find" type="search" '
+      +'placeholder="Find a slide\u2026" aria-label="Find a slide">'
+      +'<div class="jvp-hits" id="jvp-hits"></div></div>'
+      +'<div class="jvp-foot">'
+      +'<button class="jvp-b" id="jvp-prev">&#8592; Back</button>'
+      +'<button class="jvp-b primary" id="jvp-next-b">Next &#8594;</button>'
+      +'<span class="jvp-sp"></span>'
+      +'<span class="jvp-lab">drag this window to your other screen, then '
+      +'press Present on the first one</span>'
+      +'</div></div></body></html>';
+  }
+  function openPresenter(){
+    if(presWin&&!presWin.closed){presWin.focus();presenterPush();return;}
+    var w=null;
+    try{
+      w=window.open('','junoview-presenter',
+        'width=1100,height=720,menubar=no,toolbar=no');
+    }catch(err){w=null;}
+    if(!w){
+      toast('Your browser blocked the presenter window — allow pop-ups '
+        +'for this page and try again');
+      return;
+    }
+    presWin=w;
+    w.document.open();
+    w.document.write(presenterHtml());
+    w.document.close();
+    if(!presStart) presStart=Date.now();
+    var d=w.document;
+    function send(m){
+      /* same-window handle first: it always works, channel or not */
+      presenterCommand(m);
+    }
+    d.getElementById('jvp-prev').onclick=function(){
+      send({jv:'cmd',do:'prev'});};
+    d.getElementById('jvp-next-b').onclick=function(){
+      send({jv:'cmd',do:'next'});};
+    d.getElementById('jvp-reset').onclick=function(){
+      send({jv:'cmd',do:'timer',act:'reset'});};
+    var pb=d.getElementById('jvp-pause');
+    pb.onclick=function(){
+      var paused=!!(presWin.__jvState&&presWin.__jvState.pauseAt);
+      send({jv:'cmd',do:'timer',act:paused?'resume':'pause'});
+      pb.textContent=paused?'Pause':'Resume';
+    };
+    /* TYPE TO FIND ONE, in the window you are looking at (T30). Built
+       here rather than in the popup's own script because the popup has
+       no script: everything it does is wired from this side, which is
+       what keeps the two windows from drifting. */
+    var fi=d.getElementById('jvp-find'),hits=d.getElementById('jvp-hits');
+    function drawHits(){
+      var q=fi.value.trim();
+      hits.innerHTML='';
+      hits.classList.toggle('on',!!q);
+      if(!q) return;
+      var found=slideHits(q);
+      if(!found.length){
+        var no=d.createElement('div');
+        no.className='jvp-nohit';no.textContent='No slide says that.';
+        hits.appendChild(no);return;
+      }
+      found.forEach(function(h){
+        var b=d.createElement('button');
+        b.className='jvp-hit';
+        var num=d.createElement('b');
+        num.textContent=(h.i+1);
+        b.appendChild(num);
+        if(h.where){
+          var wh=d.createElement('i');
+          wh.textContent=h.where+' \u2014 ';
+          b.appendChild(wh);
+        }
+        b.appendChild(d.createTextNode(h.snip));
+        b.onclick=function(){
+          send({jv:'cmd',do:'goto',n:h.i});
+          fi.value='';drawHits();
+        };
+        hits.appendChild(b);
+      });
+    }
+    fi.addEventListener('input',drawHits);
+    fi.addEventListener('keydown',function(e){
+      e.stopPropagation();      /* the arrow keys below drive the TALK */
+      if(e.key==='Escape'){fi.value='';drawHits();}
+      else if(e.key==='Enter'){
+        var first=hits.querySelector('.jvp-hit');
+        if(first) first.click();
+      }
+    });
+    /* [the method](#7) in a note jumps the talk there. `goto` was
+       already a command the strip used, so a reference is a use of the
+       machinery rather than a new one (T28). */
+    d.getElementById('jvp-notes').addEventListener('click',function(e){
+      var a=e.target.closest&&e.target.closest('.jvn-goto');
+      if(!a) return;
+      e.preventDefault();
+      send({jv:'cmd',do:'goto',n:(+a.dataset.slide||1)-1});
+    });
+    /* the arrow keys work in the presenter window too - you will have the
+       clicker pointed at whichever window has focus */
+    d.addEventListener('keydown',function(e){
+      if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){
+        e.preventDefault();send({jv:'cmd',do:'next'});}
+      else if(e.key==='ArrowLeft'||e.key==='PageUp'){
+        e.preventDefault();send({jv:'cmd',do:'prev'});}
+    });
+    w.addEventListener('beforeunload',function(){presWin=null;});
+    /* the clock ticks in the presenter window, off state the main window
+       owns - so pausing on either side agrees */
+    w.setInterval(function(){
+      var st=w.__jvState; if(!st) return;
+      var now=st.pauseAt||Date.now();
+      var ms=now-st.start-st.paused;
+      var sec=Math.max(0,Math.round(ms/1000));
+      var cl=d.getElementById('jvp-clock');
+      cl.textContent=Math.floor(sec/60)+':'+('0'+(sec%60)).slice(-2);
+      var over=st.talk&&sec>st.talk*60;
+      cl.classList.toggle('over',!!over);
+      var sc=d.getElementById('jvp-slideclock');
+      if(sc){
+        if(!st.talk) sc.textContent='';
+        else {
+          var left=Math.round(st.talk*60-sec);
+          sc.textContent=left>=0
+            ?(Math.floor(left/60)+':'+('0'+(left%60)).slice(-2)+' left')
+            :(Math.floor(-left/60)+':'+('0'+((-left)%60)).slice(-2)
+              +' OVER');
+        }
+      }
+    },250);
+    presenterPush();
+    toast('Presenter view opened — drag it to your other screen');
+  }
+  /* the main window tells the presenter whenever anything moves */
+  function presenterSync(){
+    if(presWin&&!presWin.closed) presenterPush();
+  }
+  function buildsForSlide(i){
+    /* stepping BACKWARDS into a slide shows it as you left it: fully
+       built, and every flip book on its last frame */
+    var s=pres.slides[i];return s?slideStops(s):0;
+  }
+  /* ---- HOW A SLIDE ARRIVES, AND WHAT TRAVELS WITH IT ------------------
+     (TASKS T27, and the substrate T23's "section transitions" needed and
+     did not have.)
+
+     THE DESIGN NOTE.
+
+     1. THERE WAS NO TRANSITION MODEL AT ALL. Not a missing feature — a
+        missing FIELD. renderSlide() emptied the stage and rebuilt it, and
+        nothing anywhere said how a slide should arrive. So the first
+        thing here is `s.trans`, and it is per-slide because that is how
+        anybody thinks about it ("this one flies in from the last") and
+        because a deck-wide setting cannot express the one case the whole
+        feature is for. A SECTION may set a default, which is what makes
+        T23's section transitions real rather than a note.
+
+     2. IDENTITY ACROSS SLIDES WAS THE HARD PART, AND IT WAS ALREADY
+        SOLVED. T10 gave every object an `oid` so its history could be
+        read; `ensureOids` de-duplicates WITHIN a slide but never across
+        them — which means a DUPLICATED SLIDE keeps its source's oids.
+        That is not a coincidence to exploit, it is the exact shape of
+        how anyone builds a Magic Move: duplicate the slide, move the
+        thing. So continuity comes free for the way people actually work,
+        and matchKey (the slide-matching machinery TASKS.md points at) is
+        the fallback for the pair of slides that were built separately.
+
+     3. THE ANIMATION IS FLIP, and that is what lets it exist without a
+        second renderer. Measure the outgoing slide's items, let
+        renderSlide rebuild the page exactly as it always does, then put
+        each surviving item BACK where it was with a transform and take
+        the transform away. The browser animates the difference. No item
+        is drawn twice, no state is duplicated, and if anything goes
+        wrong the page is already correct — the transform is a lie told
+        for 420ms over a page that is right underneath it.
+
+     4. IT COMPOSES WITH ROTATION. applyCommon writes `transform` for
+        a.rot, so the FLIP transform is PREFIXED onto whatever is there
+        and removed by restoring the original string, never by clearing
+        it. Getting that wrong un-rotates every rotated object mid-talk. */
+  var TRANS=[
+    ['','Cut','Nothing — the next slide is simply there.'],
+    ['fade','Fade','A short cross-fade.'],
+    ['move','Move matching objects',
+     'Anything on both slides slides, grows or shrinks from where it '
+     +'was to where it is. Duplicate a slide and move something, and '
+     +'this is what you get.']
+  ];
+  var TRANS_MS=420;
+  /* the transition to use ARRIVING at slide i: the slide's own, else its
+     section's, else none. */
+  function transFor(i){
+    var sl=(pres.slides||[])[i];
+    if(!sl) return '';
+    if(typeof sl.trans==='string') return sl.trans;
+    var sec=sl.sec&&(pres.sections||{})[sl.sec];
+    if(sec&&typeof sec.trans==='string') return sec.trans;
+    return '';
+  }
+  /* WHAT AN OBJECT IS CALLED, for the purpose of matching it across two
+     slides. The oid when there is one — which a duplicated slide gives
+     for free — and matchKey plus its position in reading order
+     otherwise, which is the same pairing Match slide has always used. */
+  function flipKeys(sl){
+    var out={},seen={};
+    var ord=orderedIdx(sl||{});
+    ord.forEach(function(i){
+      var a=(sl.annots||[])[i];
+      if(!a||a.hide) return;
+      var k=a.oid?('o:'+a.oid):null;
+      if(!k){
+        var mk=matchKey(a);
+        seen[mk]=(seen[mk]||0)+1;
+        k='m:'+mk+':'+seen[mk];
+      }
+      out[i]=k;
+    });
+    return out;
+  }
+  /* WHOSE DECISION THIS IS. core.css already turns every transition off
+     under prefers-reduced-motion, so an animation would not have played
+     anyway — it would have gone through the motions of moving twelve
+     elements and produced a cut. Asking the question here means the
+     preference is honoured deliberately rather than by accident, and it
+     is why the menu can say so instead of offering a control that
+     quietly does nothing. (Windows with animation effects switched off
+     reports this, and so does headless Edge — app.js has been round
+     this once already.) */
+  function motionOK(){
+    try{
+      return !window.matchMedia
+        ||!matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }catch(e){return true;}
+  }
+  var _flipFrom=null;
+  /* measure the OUTGOING slide, before renderSlide empties the stage */
+  function captureFlip(fromIdx){
+    _flipFrom=null;
+    if(mode!=='view') return;
+    var sl=(pres.slides||[])[fromIdx];
+    var layer=stage?stage.querySelector('.annot-layer'):null;
+    if(!sl||!layer) return;
+    var lr=layer.getBoundingClientRect();
+    if(!lr.width||!lr.height) return;
+    var keys=flipKeys(sl),map={};
+    Object.keys(keys).forEach(function(i){
+      var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      var r=el.getBoundingClientRect();
+      if(!r.width||!r.height) return;
+      map[keys[i]]={x:r.left-lr.left,y:r.top-lr.top,
+        w:r.width,h:r.height};
+    });
+    _flipFrom={map:map,lr:{w:lr.width,h:lr.height}};
+  }
+  /* put the survivors back where they were, then let them travel */
+  function playFlip(){
+    var from=_flipFrom;
+    _flipFrom=null;
+    if(!from||mode!=='view'||!motionOK()) return;
+    var kind=transFor(cur);
+    var sl=pres.slides[cur];
+    var layer=stage?stage.querySelector('.annot-layer'):null;
+    if(!sl||!layer) return;
+    if(kind==='fade'){
+      var sEl=stage.querySelector('.slide');
+      if(sEl){
+        sEl.style.transition='none';
+        sEl.style.opacity='0';
+        void sEl.offsetWidth;
+        sEl.style.transition='opacity '+TRANS_MS+'ms ease';
+        sEl.style.opacity='';
+        setTimeout(function(){
+          sEl.style.transition='';},TRANS_MS+60);
+      }
+      return;
+    }
+    if(kind!=='move') return;
+    var lr=layer.getBoundingClientRect();
+    if(!lr.width||!lr.height) return;
+    var keys=flipKeys(sl),moved=[];
+    Object.keys(keys).forEach(function(i){
+      var was=from.map[keys[i]];
+      if(!was) return;
+      var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      var r=el.getBoundingClientRect();
+      if(!r.width||!r.height) return;
+      var now={x:r.left-lr.left,y:r.top-lr.top,w:r.width,h:r.height};
+      var dx=was.x-now.x,dy=was.y-now.y;
+      var sx=was.w/now.w,sy=was.h/now.h;
+      /* a pixel here and there is not a move; animating it would only
+         add a shimmer to a slide that did not change */
+      if(Math.abs(dx)<1&&Math.abs(dy)<1
+         &&Math.abs(sx-1)<0.01&&Math.abs(sy-1)<0.01) return;
+      /* PREFIXED, and restored by putting the original string back:
+         applyCommon owns this property for a.rot, and clearing it would
+         un-rotate every rotated object mid-talk */
+      var base=el.style.transform||'';
+      el.dataset.jvFlip=base;
+      el.style.transformOrigin='0 0';
+      el.style.transition='none';
+      el.style.transform='translate('+dx+'px,'+dy+'px) scale('
+        +sx.toFixed(4)+','+sy.toFixed(4)+') '+base;
+      moved.push(el);
+    });
+    if(!moved.length) return;
+    void layer.offsetWidth;         /* one reflow for the whole set */
+    moved.forEach(function(el){
+      el.style.transition='transform '+TRANS_MS+'ms cubic-bezier('
+        +'.4,0,.2,1)';
+      el.style.transform=el.dataset.jvFlip||'';
+    });
+    setTimeout(function(){
+      moved.forEach(function(el){
+        el.style.transition='';
+        el.style.transformOrigin='';
+        /* restore, never clear: the base string is what applyCommon
+           wrote and may carry a rotation */
+        el.style.transform=el.dataset.jvFlip||'';
+        delete el.dataset.jvFlip;
+      });
+    },TRANS_MS+80);
+  }
+  function setTrans(i,kind){
+    var sl=(pres.slides||[])[i]; if(!sl) return;
+    if(kind) sl.trans=kind; else delete sl.trans;
+    markDirty();renderFilm();
+    var lab='';
+    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
+    toast('This slide arrives: '+lab.toLowerCase());
+  }
+  function setSectionTrans(id,kind){
+    var m=(pres.sections||{})[id]; if(!m) return;
+    if(kind) m.trans=kind; else delete m.trans;
+    markDirty();renderFilm();
+    var lab='';
+    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
+    toast('Every slide in this section arrives: '+lab.toLowerCase());
+  }
+  /* ---- FINDING A SLIDE WHILE YOU ARE TALKING --------------------------
+     (TASKS T30.) "Type-to-search titles and content while presenting;
+     jump straight to a slide."
+
+     ONE MATCHER, TWO WINDOWS. The question — where is the slide about
+     the residuals? — is the same whether you are looking at the
+     presenter view or driving from the only screen you have, so
+     `slideHits` is written once and both doors call it. A second
+     matcher would be a second answer, and they would disagree the first
+     time either grew a field.
+
+     WHAT COUNTS AS THE SLIDE'S WORDS: its name, every piece of text on
+     it (text boxes, table cells, captions, a title slide's title and
+     subtitle) and its speaker notes. Notes are in because "where did I
+     say that" is exactly the question being asked at the lectern — but
+     a hit that is ONLY in the notes says so, because jumping to a slide
+     expecting to see a word on the screen and not finding it is worse
+     than not finding the slide.
+
+     AND THE MAP IS THE SEARCH RESULTS. T26 already built the overview:
+     every slide, in its sections, click to go. A filter on top of that
+     IS "type-to-search and jump", so the door is a search box in the map
+     rather than a second piece of navigation furniture — and the map
+     becomes reachable while presenting, which is the only reason it was
+     not already the answer. */
+  function slideWords(sl){
+    if(!sl) return {on:'',notes:''};
+    var on=[];
+    if(sl.label) on.push(sl.label);
+    if(sl.layout==='title'){on.push(sl.title||'');on.push(sl.sub||'');}
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.hide) return;
+      if(a.k==='text'&&a.text) on.push(a.text);
+      if(a.k==='table'&&Array.isArray(a.rows))
+        a.rows.forEach(function(r){
+          (r||[]).forEach(function(c){
+            if(typeof c==='string'&&c) on.push(c);
+            else if(c&&typeof c.t==='string'&&c.t) on.push(c.t);
+          });
+        });
+      if(a.cap&&typeof a.cap==='string') on.push(a.cap);
+    });
+    var t=slideTitle(sl);
+    if(t) on.push(t);
+    /* slideTitle usually RETURNS one of the pieces already collected --
+       a slide whose only text is its heading is named by that heading --
+       so the snippet would otherwise read "the word · the word" */
+    var seen={},uniq=[];
+    on.forEach(function(p){
+      var k=String(p).trim(); if(!k||seen[k]) return;
+      seen[k]=1;uniq.push(k);
+    });
+    return {on:uniq.join(' · '),notes:(sl.notes||'')};
+  }
+  /* every slide whose words contain the query, in deck order, each with
+     enough context to tell one hit from another */
+  function slideHits(q){
+    q=String(q||'').trim().toLowerCase();
+    if(!q) return [];
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,i){
+      var w=slideWords(sl);
+      var inOn=w.on.toLowerCase().indexOf(q)>=0;
+      var inNotes=w.notes.toLowerCase().indexOf(q)>=0;
+      if(!inOn&&!inNotes) return;
+      /* the snippet comes from wherever the hit actually was */
+      var src=inOn?w.on:w.notes;
+      var at=src.toLowerCase().indexOf(q);
+      var from=Math.max(0,at-28);
+      out.push({i:i,onSlide:inOn,
+        where:inOn?'':'in the notes',
+        snip:(from?'…':'')+src.slice(from,at+q.length+34).trim()
+          +((at+q.length+34)<src.length?'…':'')});
+    });
+    return out;
+  }
+  /* ---- WHAT THIS DECK USED TO BE --------------------------------------
+     (TASKS T32.) Snapshots on save, a slide-by-slide comparison of two
+     versions, and getting a destroyed slide back.
+
+     1. INDEXEDDB, NOT localStorage. A snapshot is the whole deck, and a
+        deck carries placed images as data URIs. localStorage's quota has
+        already bitten this project once — it is why self-contained decks
+        keep figures out of the pres object — and twenty copies of a deck
+        is exactly the shape of that problem. IndexedDB is already open
+        here for file handles, so this is a second use of a store that
+        exists rather than a new dependency.
+
+        ONE RECORD PER SNAPSHOT, plus a small index. Keeping the list in
+        one record would mean rewriting every snapshot on every save,
+        which for a deck full of images is megabytes per keystroke-worth
+        of work. The index holds only what the list needs to draw itself
+        — the same reason `pres.cuts` holds only names.
+
+     2. THE SAME RULE THE NOTEBOOK USES: one when you open it, one on
+        every explicit save, deduped when nothing changed, capped. A
+        history that records the same deck nine times is a history you
+        cannot read, and the dedupe is what makes "open, look, close"
+        cost nothing.
+
+     3. THE COMPARISON PAIRS SLIDES BY `sid`, WHICH IS WHY T29 MATTERED
+        MORE THAN IT LOOKED. Pairing by index reports "everything from
+        slide 4 down has changed" the moment you insert one, which is not
+        a diff, it is noise. With a durable name per slide the answer is
+        the true one: this slide changed, that one moved, this one is
+        new, that one is gone. So the mint point widens — T29 minted a
+        sid on first rehearsal; a deck is now named whenever it is
+        RECORDED, which is the first moment identity has to exist.
+        Snapshots taken before that fall back to positional pairing and
+        the panel says so, rather than pretending.
+
+     4. THE MINI DIAGRAM FIRST, THE REAL RENDER ON DEMAND. Drawing forty
+        slides twice, fully, to answer "what changed" would take seconds
+        and most rows are identical. The strip's own thumbnail shows a
+        moved box or a lost figure at a glance; opening a row renders
+        both sides properly. Same renderer either way — there is no
+        second drawing of a slide anywhere in this file, and this does
+        not become the first. */
+  var HIST_KEEP=20;
+  function histKey(){return 'dhist:'+SCOPE+':'+(pres.name||'untitled');}
+  function histVKey(id){return histKey()+':'+id;}
+  function histIndex(){
+    return idbGet(histKey()).then(function(v){
+      return Array.isArray(v)?v:[];
+    }).catch(function(){return [];});
+  }
+  /* the whole deck as it stands, in the form a save would write */
+  function histText(){
+    ensureSids();
+    return JSON.stringify(normPres(pres));
+  }
+  function snapTake(why){
+    if(!pres||!pres.slides) return Promise.resolve(false);
+    var txt;
+    try{txt=histText();}catch(e){return Promise.resolve(false);}
+    return histIndex().then(function(ix){
+      /* DEDUPED. Open, look, close should cost nothing, and a history
+         with the same deck in it nine times cannot be read. */
+      if(ix.length&&ix[ix.length-1].len===txt.length
+         &&ix[ix.length-1].n===pres.slides.length)
+        return idbGet(histVKey(ix[ix.length-1].id)).then(function(prev){
+          if(prev===txt) return false;
+          return snapWrite(ix,txt,why);
+        }).catch(function(){return snapWrite(ix,txt,why);});
+      return snapWrite(ix,txt,why);
+    }).catch(function(){return false;});
+  }
+  function snapWrite(ix,txt,why){
+    var id='v'+(Date.now().toString(36))
+      +Math.random().toString(36).slice(2,5);
+    var ent={id:id,at:Date.now(),why:why||'saved',
+      n:(pres.slides||[]).length,len:txt.length};
+    var next=ix.concat([ent]);
+    var drop=next.length>HIST_KEEP?next.splice(0,next.length-HIST_KEEP):[];
+    return idbPut(histVKey(id),txt).then(function(){
+      return idbPut(histKey(),next);
+    }).then(function(){
+      /* the record goes only after the index no longer names it, so a
+         crash between the two leaves an orphan rather than a listed
+         snapshot that cannot be opened */
+      return Promise.all(drop.map(function(d){
+        return idbDel(histVKey(d.id)).catch(function(){});
+      }));
+    }).then(function(){return true;}).catch(function(){return false;});
+  }
+  function snapRead(id){
+    return idbGet(histVKey(id)).then(function(t){
+      if(typeof t!=='string') return null;
+      try{return JSON.parse(t);}catch(e){return null;}
+    }).catch(function(){return null;});
+  }
+  /* run something with a DIFFERENT deck in place. buildSlideNode and
+     miniDiagram both read the live `pres`, and giving either a "which
+     deck" parameter would mean threading it through everything they
+     call; swapping the one global for the length of a synchronous call
+     is the same trick buildSlideNode already plays with `mode`. */
+  function withDeck(obj,fn){
+    var saved=pres;
+    pres=obj;
+    try{return fn();}finally{pres=saved;}
+  }
+  function slideSig(sl){
+    if(!sl) return '';
+    var c={};
+    Object.keys(sl).forEach(function(k){
+      if(k!=='sid') c[k]=sl[k];});
+    try{return JSON.stringify(c);}catch(e){return '';}
+  }
+  /* WHAT CHANGED, as rows in reading order: every slide that is in
+     either version, paired by name where both versions have names. */
+  function deckDiff(then,now){
+    var A=(then&&then.slides)||[],B=(now&&now.slides)||[];
+    var byName=A.every(function(s2){return s2&&s2.sid;})
+      &&B.every(function(s2){return s2&&s2.sid;})
+      &&A.length&&B.length;
+    var rows=[];
+    if(!byName){
+      /* POSITIONAL, and said out loud: a snapshot from before slides
+         were named cannot be paired any other way */
+      var n=Math.max(A.length,B.length);
+      for(var i=0;i<n;i++)
+        rows.push({a:A[i]||null,b:B[i]||null,ai:i,bi:i,
+          st:!A[i]?'added':!B[i]?'removed'
+            :(slideSig(A[i])===slideSig(B[i])?'same':'changed')});
+      return {rows:rows,byName:false};
+    }
+    var posB={};
+    B.forEach(function(s2,i){posB[s2.sid]=i;});
+    var seen={};
+    B.forEach(function(b,i){
+      var ai=-1;
+      A.forEach(function(a,j){if(a.sid===b.sid) ai=j;});
+      var a=ai>=0?A[ai]:null;
+      if(a) seen[a.sid]=1;
+      rows.push({a:a,b:b,ai:ai,bi:i,
+        st:!a?'added'
+          :slideSig(a)!==slideSig(b)?'changed'
+          :ai!==i?'moved':'same'});
+    });
+    /* the ones that are GONE, put back where they used to be so the
+       list still reads like the old deck at the point they vanished */
+    A.forEach(function(a,j){
+      if(seen[a.sid]) return;
+      var at=rows.length;
+      for(var k=0;k<rows.length;k++)
+        if(rows[k].ai>j){at=k;break;}
+      rows.splice(at,0,{a:a,b:null,ai:j,bi:-1,st:'removed'});
+    });
+    return {rows:rows,byName:true};
+  }
+  function histWhen(ms){
+    var d=Math.round((Date.now()-ms)/1000);
+    if(d<90) return 'just now';
+    if(d<5400) return Math.round(d/60)+' min ago';
+    if(d<86400*2) return Math.round(d/3600)+' h ago';
+    return new Date(ms).toLocaleDateString();
+  }
+  /* THE PANEL. An overlay, like the overview map and the notes editor:
+     it wants the screen while you are comparing and none of it after. */
+  var histSel='';
+  function histPanelClose(){
+    var ov=$('#deck-history');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',histPanelKey,true);
+  }
+  function histPanelKey(e){
+    if(!$('#deck-history')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();histPanelClose();}
+  }
+  function histRows(ov,ix){
+    var rail=ov.querySelector('#dh-list');
+    rail.innerHTML='';
+    if(!ix.length){
+      rail.innerHTML='<div class="selpane-empty">Nothing yet. A '
+        +'snapshot is kept when you open this deck and every time you '
+        +'save it, so the history starts filling from now.</div>';
+      return;
+    }
+    ix.slice().reverse().forEach(function(e){
+      var b=document.createElement('button');
+      b.className='dh-snap'+(e.id===histSel?' on':'');
+      var l1=document.createElement('span');
+      l1.className='dh-when';l1.textContent=histWhen(e.at);
+      var l2=document.createElement('span');
+      l2.className='dh-why';
+      l2.textContent=e.why+' · '+e.n+' slide'+(e.n===1?'':'s');
+      b.appendChild(l1);b.appendChild(l2);
+      b.title=new Date(e.at).toLocaleString();
+      b.addEventListener('click',function(){
+        histSel=e.id;histRows(ov,ix);histCompare(ov,e);});
+      rail.appendChild(b);
+    });
+  }
+  function histCompare(ov,ent){
+    var body=ov.querySelector('#dh-body');
+    body.innerHTML='<div class="selpane-empty">Reading…</div>';
+    snapRead(ent.id).then(function(then){
+      body.innerHTML='';
+      if(!then){
+        body.innerHTML='<div class="selpane-empty">That snapshot '
+          +'could not be read.</div>';
+        return;
+      }
+      var d=deckDiff(then,pres);
+      var head=document.createElement('div');
+      head.className='dh-head2';
+      var counts={added:0,removed:0,changed:0,moved:0,same:0};
+      d.rows.forEach(function(r){counts[r.st]++;});
+      head.textContent=histWhen(ent.at)+' → now: '
+        +[['changed','changed'],['added','new'],['removed','gone'],
+          ['moved','moved']].filter(function(p){return counts[p[0]];})
+          .map(function(p){return counts[p[0]]+' '+p[1];}).join(', ')
+        +(Object.keys(counts).every(function(k){
+            return k==='same'||!counts[k];})?'no difference':'')
+        +(d.byName?'':' — compared by position: this snapshot is '
+          +'older than slide names, so an inserted slide shifts '
+          +'everything below it');
+      body.appendChild(head);
+      var restoreAll=document.createElement('button');
+      restoreAll.className='dbtn dh-all';
+      restoreAll.innerHTML=bic('reload')+' Go back to this whole version';
+      restoreAll.addEventListener('click',function(){
+        if(!confirm('Replace all '+(pres.slides||[]).length
+          +' slides with the '+d.rows.filter(function(r){
+            return r.a;}).length+' from '+histWhen(ent.at)+'?')) return;
+        snapTake('before going back').then(function(){
+          histRestoreDeck(then);histPanelClose();});
+      });
+      body.appendChild(restoreAll);
+      d.rows.forEach(function(r){
+        var row=document.createElement('div');
+        row.className='dh-row st-'+r.st;
+        var lab=document.createElement('span');
+        lab.className='dh-st';
+        lab.textContent=r.st==='same'?'unchanged':r.st;
+        row.appendChild(lab);
+        [['then',r.a,then],['now',r.b,pres]].forEach(function(side){
+          var cell=document.createElement('div');
+          cell.className='dh-cell';
+          var cap=document.createElement('span');
+          cap.className='dh-cap';
+          cap.textContent=side[1]
+            ?(side[0]+' · '+((side[0]==='then'?r.ai:r.bi)+1))
+            :(side[0]+' — not there');
+          cell.appendChild(cap);
+          if(side[1])
+            cell.appendChild(withDeck(side[2],function(){
+              return miniDiagram(side[1]);}));
+          row.appendChild(cell);
+        });
+        var acts=document.createElement('div');
+        acts.className='dh-acts';
+        if(r.a&&(r.st==='removed'||r.st==='changed')){
+          var rb=document.createElement('button');
+          rb.className='dbtn dh-one';
+          rb.innerHTML=bic('reload')
+            +(r.st==='removed'?' Put it back':' Use the old one');
+          rb.addEventListener('click',function(){
+            snapTake('before putting a slide back').then(function(){
+              histRestoreSlide(r,then);
+              histPanelClose();
+            });
+          });
+          acts.appendChild(rb);
+        }
+        row.appendChild(acts);
+        body.appendChild(row);
+      });
+    });
+  }
+  /* ONE SLIDE BACK. In place when the deck still has it, and otherwise
+     at the index it used to hold -- which is where you will look for it. */
+  function histRestoreSlide(r,then){
+    var copy=JSON.parse(JSON.stringify(r.a));
+    var at;
+    if(r.bi>=0){pres.slides[r.bi]=copy;at=r.bi;}
+    else {
+      at=Math.min(Math.max(r.ai,0),(pres.slides||[]).length);
+      pres.slides.splice(at,0,copy);
+    }
+    cur=at;selAnnot=null;selSet=[];
+    markDirty();refresh();
+    toast(r.bi>=0?'Slide '+(at+1)+' is the older one again'
+      :'Slide '+(at+1)+' is back');
+  }
+  function histRestoreDeck(then){
+    var copy=JSON.parse(JSON.stringify(then));
+    copy.name=pres.name;      /* the NAME is where you are, not where it was */
+    pres.slides=copy.slides||[];
+    ['sections','cuts','tokens','components','notes','pad','talkMins',
+     'pageBg','page','showNums'].forEach(function(k){
+      if(copy[k]===undefined) delete pres[k]; else pres[k]=copy[k];
+    });
+    cur=0;selAnnot=null;selSet=[];
+    markDirty();refresh();renderFilm();
+    toast('Back to the older version — the deck as it was is in the '
+      +'history too, so this is undoable');
+  }
+  function openHistory(){
+    histPanelClose();
+    var ov=document.createElement('div');
+    ov.className='deck-history';ov.id='deck-history';
+    ov.innerHTML='<div class="dh-head">'
+      +'<span class="dh-t">History of “'+esc(pres.name||'this deck')
+      +'”</span><span class="deck-spring"></span>'
+      +'<button class="dbtn" id="dh-close">'+bic('exit')+' Close</button>'
+      +'</div><div class="dh-main">'
+      +'<div class="dh-rail" id="dh-list"></div>'
+      +'<div class="dh-body" id="dh-body">'
+      +'<div class="selpane-empty">Pick a version on the left to see '
+      +'what is different about it.</div></div></div>';
+    /* WHERE GIT IS. A deck is not a file on disk -- it lives inside the
+       notebook or the project file -- so the deck's own history is this
+       local store, and the repository's history of the file it is saved
+       INTO is the notebook's, which server/vcs.py already lists and
+       opens. Naming that rather than duplicating it is the honest hook:
+       two histories that answer different questions, and neither
+       pretending to be the other. */
+    if(APP.mode==='app'){
+      var git=document.createElement('div');
+      git.className='dh-git';
+      git.textContent='This is the deck\u2019s own history — the moments '
+        +'between commits. The repository\u2019s history of the file it '
+        +'is saved into is the notebook\u2019s: its Version history menu '
+        +'lists the git commits and opens them.';
+      ov.querySelector('.dh-main').appendChild(git);
+    }
+    document.body.appendChild(ov);
+    ov.querySelector('#dh-close').addEventListener('click',histPanelClose);
+    document.addEventListener('keydown',histPanelKey,true);
+    histIndex().then(function(ix){
+      histRows(ov,ix);
+      /* the most recent one is the one you meant */
+      if(ix.length){histSel=ix[ix.length-1].id;histRows(ov,ix);
+        histCompare(ov,ix[ix.length-1]);}
+    });
+  }

@@ -57,10 +57,20 @@ is only what's specific to this machine.
   fetches are the pinned CDN URLs precached in `assets/js/sw.js` (Pyodide,
   MathJax, Plotly); those pins must match their loaders — see
   `tests/test_js_contract.py`.
-- `assets/js/deck.js` is ONE ~18,000-line IIFE. All load-time execution runs
-  from THE BOOT SEQUENCE at the file's tail — never add mid-file boot calls or
-  executing sub-IIFEs (a throw during boot silently kills the whole IIFE).
-  Navigate by its section banners: `grep "/* ----" deck.js`.
+- `assets/js/deck/` is ONE IIFE in fourteen files. They are FRAGMENTS,
+  concatenated in the order `assets.DECK_PARTS` names — so a part does not
+  parse on its own and your editor will underline its last brace. Check the
+  ASSEMBLED file, never a part; `tests/test_js_contract.py` does that for
+  you, and so does CI.
+  All load-time execution runs from THE BOOT SEQUENCE, which is now its own
+  file (`99-boot.js` — last by name as well as by convention). Never add
+  mid-file boot calls or executing sub-IIFEs (a throw during boot silently
+  kills the whole IIFE). Navigate by filename first, then by the section
+  banners inside: `grep -r "/* ----" assets/js/deck/`.
+- Editing a part changes nothing else. ADDING one means creating the file
+  AND listing it in `DECK_PARTS` (`assets/__init__.py`) — a test fails if
+  either half is missing, because a part nothing concatenates is dead code
+  that still looks alive.
 
 ## UI invariants (user-confirmed, do not regress)
 
