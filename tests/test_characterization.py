@@ -110,6 +110,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 un-shadowing moveSection: deck/ is one scope in
+# fifteen files and the name was declared twice, so T23's "Move the
+# section up/down" reached the drag-drop body instead of the nudge
+# one. The drop body is now moveSectionTo. Pinned by
+# tests/test_slide_sections.py and by a new duplicate-declaration
+# guard in tests/test_js_contract.py; verified in a browser (the run
+# moves and the toast fires, neither of which happened before).
 # Moved 2026-08-25 for the RIBBON ICON SWEEP: eight new icons in
 # branding.py (ungroup, forward, backward, rotl, rotr, fade, rise,
 # zoom) and the buttons that needed them. Four ribbon buttons had
@@ -321,8 +328,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "323818e518bd14148fca83afd6285599"
-EXPECTED_BYTES = 2957972
+EXPECTED_MD5 = "6154be0e8c711d012010354964e0bff9"
+EXPECTED_BYTES = 2958452
 
 
 def _render_example() -> str:

@@ -96,8 +96,16 @@
      back at a divider boundary. `cur` is refound by IDENTITY afterwards —
      the single-slide path's four-branch arithmetic does not generalise to
      moving n slides at once, and getting it wrong strands you on somebody
-     else's slide. */
-  function moveSection(id,beforeAt){
+     else's slide.
+
+     NAMED moveSectionTo, and it matters. This was `moveSection` too, and
+     deck/ is ONE scope in fifteen files: two declarations of a name are
+     not two functions, they are the later one. "Move the section up"
+     called it with dir=-1, which this body read as beforeAt=-1 and
+     spliced the run in before the LAST slide; "down" with 1 was a no-op
+     for any section already at the front. Neither toasted either, since
+     this one returns nothing (2026-08-25). */
+  function moveSectionTo(id,beforeAt){
     var runs=sectionRuns(),r=null,i;
     for(i=0;i<runs.length;i++) if(runs[i].id===id) r=runs[i];
     if(!r||(beforeAt>=r.at&&beforeAt<=r.at+r.n)) return;
@@ -332,7 +340,7 @@
       if(!row) return;
       var tgt=filmDropTarget(row,e.clientY);
       /* a whole section moves as a block and refinds `cur` by identity */
-      if(sec){moveSection(sec,tgt.to);return;}
+      if(sec){moveSectionTo(sec,tgt.to);return;}
       var to=tgt.to;
       if(to>from) to--;
       var moved=pres.slides.splice(from,1)[0];

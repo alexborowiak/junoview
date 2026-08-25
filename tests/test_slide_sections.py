@@ -41,7 +41,15 @@ def test_a_section_is_a_tag_plus_a_name_and_the_order_is_derived(out):
     # a whole section moves as a block and refinds `cur` by IDENTITY --
     # the single-slide four-branch arithmetic does not generalise to
     # moving n slides at once
-    assert "function moveSection(id,beforeAt){" in out
+    assert "function moveSectionTo(id,beforeAt){" in out
+    # ...and it is NOT called moveSection, because that name already
+    # belonged to the menu's nudge-one-place verb. deck/ is one scope in
+    # fifteen files, so the two declarations were one function: the drop
+    # body won, "Move the section up" passed it dir=-1 which it read as
+    # beforeAt=-1 and spliced the run in before the LAST slide, and no
+    # toast ever fired because that body returns nothing (2026-08-25).
+    assert "function moveSection(id,dir){" in out
+    assert "var n=moveSection(run.id,-1);" in out
     assert "pres.slides.indexOf(keep)" in out
 
 

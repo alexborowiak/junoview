@@ -327,3 +327,41 @@ def test_a_deck_part_says_what_it_is():
         assert "ONE FRAGMENT of deck.js's single IIFE" in head
         flat = " ".join(head.split())
         assert "It does not parse alone" in flat
+
+
+def test_no_name_is_declared_twice_at_the_top_of_the_one_iife():
+    """deck/ is ONE scope in fifteen files, so a name declared in two of
+    them is not two functions -- it is the later one, and every call
+    written against the earlier body silently gets the wrong one.
+
+    This shipped: `moveSection(id,dir)` (nudge the run one place, return
+    how many slides moved) and `moveSection(id,beforeAt)` (drop the run
+    at a divider) both existed. The second won, so T23's "Move the
+    section up" read dir=-1 as beforeAt=-1 and spliced the whole run in
+    before the LAST slide, "down" was a no-op for a section at the
+    front, and neither toasted, because the surviving body returns
+    nothing (2026-08-25).
+
+    Nothing else could catch it. The language does not complain, and a
+    substring test finds BOTH spellings present in the page and is
+    satisfied.
+    """
+    import collections
+    import re
+
+    top = re.compile(r"^  function ([A-Za-z_$][\w$]*)\s*\(")
+    seen = collections.defaultdict(list)
+    for path in sorted((ASSETS / "js" / "deck").glob("*.js")):
+        for i, line in enumerate(
+                path.read_text(encoding="utf-8").splitlines(), 1):
+            m = top.match(line)
+            if m:
+                seen[m.group(1)].append(f"{path.name}:{i}")
+
+    assert len(seen) > 400, (
+        f"only {len(seen)} top-level functions found — the fragments no "
+        "longer indent the IIFE's own level by two spaces")
+    dupes = {k: v for k, v in seen.items() if len(v) > 1}
+    assert not dupes, (
+        "declared twice at the top level of the one IIFE (the later one "
+        f"silently wins): { {k: v for k, v in sorted(dupes.items())} }")
