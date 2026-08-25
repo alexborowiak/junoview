@@ -2085,6 +2085,44 @@ body.light .fp-tielab{color:var(--ink-3);}
 .mini-pane.is-flip{background:#243b52;}
 .sp-kind.k-flip{background:#2a4761;}
 
+/* ---------- what the deck says, in words ----------
+   The lints on the left, the text on the right, both at once: having to
+   switch between them to check one against the other is the whole
+   problem with a separate report. */
+.deck-review{position:fixed;inset:0;z-index:400;display:flex;
+  flex-direction:column;background:var(--chrome-0,#0b141d);
+  font-family:var(--sans);}
+.rv-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid #ffffff1a;}
+.rv-t{font-size:13px;color:#dbe7ef;}
+.rv-main{flex:1;min-height:0;display:grid;
+  grid-template-columns:minmax(280px,1fr) 1.2fr;gap:14px;
+  padding:12px 16px 18px;}
+.rv-lints{overflow-y:auto;display:flex;flex-direction:column;gap:6px;}
+.rv-lhead{font-size:12px;color:#dbe7ef;}
+.rv-note{font-size:10.5px;line-height:1.5;color:#7d93a6;
+  margin-bottom:4px;}
+.rv-lint{text-align:left;background:#ffffff08;border:1px solid #ffffff17;
+  border-left-width:3px;border-radius:7px;padding:7px 10px;
+  cursor:pointer;display:flex;flex-direction:column;gap:3px;}
+.rv-lint:hover{border-color:var(--cyan);}
+.rv-lint.nogo{cursor:default;}
+.rv-lint.sev-warn{border-left-color:#f0a848;}
+.rv-lint.sev-err{border-left-color:#ff8a7a;}
+.rv-lh{font-size:12px;color:#dbe7ef;}
+.rv-lw{font-size:10.5px;line-height:1.5;color:#9fb3c4;}
+.rv-textwrap{display:flex;flex-direction:column;gap:6px;min-height:0;}
+.rv-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7d93a6;}
+.rv-text{flex:1;min-height:0;resize:none;font-family:var(--mono);
+  font-size:11.5px;line-height:1.6;padding:12px 14px;border-radius:8px;
+  background:#0e1926;color:#dce6ee;border:1px solid #ffffff1f;
+  white-space:pre;overflow:auto;}
+body.light .deck-review{background:#fff;}
+body.light .rv-t,body.light .rv-lh,body.light .rv-lhead{color:var(--ink);}
+body.light .rv-text{background:#f7f9fb;color:var(--ink);
+  border-color:var(--rule);}
+
 /* ---------- what this deck used to be ----------
    The snapshots on the left, what is different on the right. Only the
    rows that DIFFER are coloured: an unchanged row still has to be

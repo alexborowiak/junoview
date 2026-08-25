@@ -578,12 +578,35 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   wants to move a figure should not have to load an HTML renderer.
   22 tests, including a round trip back through `_as_presentations` —
   a key kept here and dropped there would look saved and not be.
-- [ ] **T35 · M — Deck lint + AI-readable export.** Export a deck as
+- [x] **T35 · M — Deck lint + AI-readable export.** Export a deck as
   structured text (titles, arguments, figures, captions, notes) so an LLM
   or a colleague can review the *content*; plus heuristic lints:
   unreferenced figures, orphan captions, inconsistent terminology,
   overly dense slides. This is the honest bridge to the "AI review my
   deck" wishes — junoview stays offline; the export travels.
+  *2026-08-25.* Design note at `WHAT THE DECK SAYS, IN WORDS`.
+  **Not preflight.** `preflight` asks "will this print" — per slide,
+  physical, millimetres and dpi. This asks "does it hold together" —
+  deck-wide and editorial. Folding them together would put "0.2mm line"
+  beside "slide 12 has 90 words on it" as if those were the same kind of
+  problem, so they are two lists and each says which it is.
+  **It says where every figure came from**, which no other export of a
+  deck can: figures are known by notebook anchor, so the review reads
+  "Figure 2 — toe_map · “…” · from demo::toe_map" rather than "[image]".
+  **Each lint shows what it counted**, because a heuristic that will not
+  show its working is one you cannot argue with.
+  **Private items do not travel** — T31's promise kept in the one place
+  that would have broken it twice: the body drops them, and so does the
+  heading, since `filmText` names a slide by the first thing written on
+  it.
+  Three defects found in the browser and not by reading the code: the
+  terminology lint only collected single tokens, so "sea-level" and "sea
+  level" could never meet; it also required three occurrences, which hid
+  the commonest case (said once each way); and the slide heading leaked a
+  private note. 18/18 after.
+  **The Python half is T34**, deliberately: `deck_api` reads the same
+  deck, so a script that wants this as data has the data. A second text
+  generator in Python would be a second answer to one question.
 
 ## 8. Code structure — deferred refactors (each runs ALONE)
 

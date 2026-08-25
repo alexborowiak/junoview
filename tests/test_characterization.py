@@ -110,6 +110,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T35, the review export and its four
+# content lints: deck.js gained WHAT THE DECK SAYS, IN WORDS (the
+# markdown writer, revHeading, the lints and the panel);
+# deck.html the File menu entry, deck.css the panel, help.html a
+# paragraph. Pinned by test_editor_correctness.py's six T35 tests
+# and verified in a browser, 18/18.
 # Moved 2026-08-25 for TASKS T32, deck version history: deck.js
 # gained WHAT THIS DECK USED TO BE (the IndexedDB snapshot store,
 # the sid-paired deckDiff, withDeck, the History overlay and both
@@ -268,8 +274,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "57df70ab862004b25b0bd3feb0b61c7f"
-EXPECTED_BYTES = 2576006
+EXPECTED_MD5 = "50f6c22e39c867975115a51ccfca46bb"
+EXPECTED_BYTES = 2596030
 
 
 def _render_example() -> str:

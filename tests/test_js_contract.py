@@ -83,6 +83,8 @@ RUNTIME_IDS = {
     # BE. Its rail and body are reached through the overlay rather than
     # by id, so only the overlay itself is looked up globally.
     "deck-history",
+    # The review panel, likewise: deck.js, WHAT THE DECK SAYS, IN WORDS.
+    "deck-review",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

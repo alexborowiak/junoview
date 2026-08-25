@@ -1517,3 +1517,92 @@ def test_pdf_export_prints_the_ink(out):
     # the generated documents name their language
     assert "<!doctype html><html lang=\\\"en\\\"><head>" in out \
         or '<html lang="en"><head><meta charset="utf-8">' in out
+
+
+def test_the_review_is_not_preflight(out):
+    """TASKS T35. `preflight` asks "will this print" -- per slide,
+    physical, millimetres and dpi and contrast. This asks "does it hold
+    together" -- deck-wide, editorial, about words and figures. Folding
+    one into the other would give you a list where "0.2mm line" sits
+    beside "slide 12 has 90 words on it" as if those were the same kind
+    of problem.
+    """
+    assert "function deckReview(){" in out
+    assert "function reviewLints(){" in out
+    assert "function openReview(){" in out
+    assert 'id="mi-review"' in out
+    # and the panel says which list is which
+    assert "is the other list" in out
+
+
+def test_the_export_is_markdown_because_it_has_to_travel(out):
+    """junoview is offline and stays offline; what travels is the words.
+    Markdown because it pastes into anything, because a model reads
+    structure out of it untold, and because a colleague can read it as
+    it stands -- which is the difference between an export and a dump.
+    """
+    assert "L.push('# '+(pres.name||'Untitled deck'));" in out
+    assert "L.push('### '+(i+1)+'. '+(revHeading(sl)||'(untitled)'));" in out
+    assert "a.download=(pres.name||'deck')+'.review.md';" in out
+    # in READING order, not storage order
+    assert "orderedIdx(sl).forEach(function(j){" in out
+
+
+def test_it_says_where_each_figure_came_from(out):
+    """The part no other export of a deck can do: a deck knows its
+    figures by notebook anchor, so the review says "the toe map, from
+    demo::toe_map" rather than "[image]". Reviewing a talk without
+    knowing which figure is which is reviewing it with the pictures cut
+    out.
+    """
+    assert "function revFigLine(sl,a,map){" in out
+    assert "bits.push('from '+a.ref);" in out
+    assert "bits.push('pasted in, not from a notebook');" in out
+    assert "bits[0]='Figure '+num+' \\u2014 '+bits[0];" in out \
+        or "bits[0]='Figure '+num+' — '+bits[0];" in out
+
+
+def test_a_private_item_does_not_travel_in_the_export(out):
+    """T31's promise, kept in the one place that would have broken it
+    twice: the body drops private items, and so does the HEADING --
+    `filmText` names a slide by the first thing written on it, so a
+    slide whose only text was an "only me" note would have been headed
+    with that note. Caught in a browser, not by reading the code.
+    """
+    assert "if(!a||a.hide||a.priv) return;" in out
+    assert "function revHeading(sl){" in out
+    i = out.index("function revHeading(sl){")
+    assert "if(!a||a.hide||a.priv||a.capOf) return;" in out[i:i + 600]
+
+
+def test_two_spellings_of_one_thing_looks_at_words_and_at_pairs(out):
+    """"sea-level" is one token and "sea level" is two, so a pass that
+    only looked at single tokens found the hyphenated form and never the
+    spaced one -- the two could never meet in a bucket. Both are
+    collected, normalised by dropping hyphens, spaces and case.
+
+    Forms differing only in the first letter's case are a sentence
+    beginning, not an inconsistency, and are excluded -- which is why
+    "The"/"the" is not reported.
+
+    And there is NO minimum count: a first pass wanted three
+    occurrences, which silently hid the commonest real case, the term
+    said once each way. Both slips were found in a browser.
+    """
+    assert "function termKey(w){" in out
+    assert "if(i+1<toks.length){" in out
+    assert "if(termKey(pair).length>=6) surf(pair);" in out
+    assert "return a!==b&&a.slice(1)!==b.slice(1);" in out
+    assert "NO MINIMUM COUNT" in out
+
+
+def test_each_lint_shows_what_it_counted(out):
+    """A heuristic that will not show its working is one you cannot
+    argue with. Every lint reports the numbers behind it: how many words
+    and how many things on a dense slide, and how many times each
+    spelling appeared.
+    """
+    assert "var DENSE_WORDS=55, DENSE_ITEMS=12;" in out
+    assert "why:wc+' words and '+ic+' things on it." in out
+    assert "return '\\u201c'+f+'\\u201d \\u00d7'+surfaces[k][f];" in out \
+        or "'” ×'+surfaces[k][f]" in out

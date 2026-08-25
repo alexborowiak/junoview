@@ -19145,6 +19145,392 @@
         histCompare(ov,ix[ix.length-1]);}
     });
   }
+  /* ---- WHAT THE DECK SAYS, IN WORDS -----------------------------------
+     (TASKS T35.) Two halves of one idea: write the deck out as text a
+     person or a language model can read, and say what looks wrong with
+     it while you are in there.
+
+     WHY THIS IS NOT PREFLIGHT. `preflight` asks "will this print" — per
+     slide, physical, millimetres and dpi and contrast. This asks "does
+     this hold together" — deck-wide, editorial, about words and figures
+     and whether the same thing is called two things. They share no
+     question and no unit, and folding one into the other would give you
+     a list where "0.2mm line" sits next to "slide 12 has 90 words on
+     it" as if those were the same kind of problem.
+
+     THE EXPORT IS TEXT, AND MARKDOWN. junoview is offline and stays
+     offline; what travels is the words. Markdown because it pastes into
+     anything, because a model reads structure out of it without being
+     told the format, and because a colleague can read it as it stands —
+     which is the difference between an export and a dump.
+
+     IT SAYS WHERE A FIGURE CAME FROM, and that is the part no other
+     export can do: a deck knows its figures by notebook anchor, so the
+     review can say "the toe map, from demo::toe_map" rather than
+     "[image]". Reviewing a talk without knowing which figure is which
+     is reviewing a talk with the pictures cut out.
+
+     THE FOUR LINTS ARE THE FOUR TASKS.md NAMES, and each one reports
+     what it counted rather than a verdict, because a heuristic that
+     will not show its working is one you cannot argue with:
+       - a figure nobody mentions: on the slide, no caption, and no text
+         or note on that slide that names it.
+       - a caption with no figure: `capOf` pointing at nothing, or text
+         that reads like a caption and is tied to nothing. T17 made the
+         tie explicit, which is what makes this answerable at all.
+       - two spellings of one thing: terms that are the same once
+         hyphens, spaces and case are taken out. Grouped that way,
+         "sea-level"/"sea level" and "Toe Map"/"toe map" fall out
+         together, and "The"/"the" — which differ only in the first
+         letter, i.e. a sentence beginning — deliberately do not.
+       - a slide with a lot on it: words and items, both counted. */
+  var DENSE_WORDS=55, DENSE_ITEMS=12;
+  function revText(a){
+    if(!a) return '';
+    if(a.k==='text') return String(a.text||'');
+    if(a.k==='table'&&Array.isArray(a.rows))
+      return a.rows.map(function(r){
+        return (r||[]).map(function(c){
+          return typeof c==='string'?c:((c&&c.t)||'');}).join(' | ');
+      }).join('\n');
+    return '';
+  }
+  function slideWordCount(sl){
+    var n=0;
+    (sl.annots||[]).forEach(function(a){
+      if(!a||a.hide||a.priv) return;
+      var t=revText(a).trim();
+      if(t) n+=t.split(/\s+/).length;
+    });
+    if(sl.layout==='title')
+      n+=String((sl.title||'')+' '+(sl.sub||'')).trim()
+        .split(/\s+/).filter(Boolean).length;
+    return n;
+  }
+  /* WHERE A FIGURE CAME FROM, in one line. The deck knows this and no
+     other export of it does. */
+  function revFigLine(sl,a,map){
+    var bits=[];
+    var nm=a.ref?String(a.ref).split('::').pop():'';
+    bits.push(nm||(a.k==='image'?'a placed picture'
+      :a.k==='flip'?'a flip book':'a frame'));
+    var num=(a.cap&&map[a.cap])?map[a.cap].n:0;
+    if(num) bits[0]='Figure '+num+' — '+bits[0];
+    var ci=capOfFig(sl,a);
+    var cap=ci>=0?revText((sl.annots||[])[ci]).trim():'';
+    if(cap) bits.push('“'+figSubst(cap,(sl.annots||[])[ci],map)+'”');
+    if(a.ref) bits.push('from '+a.ref);
+    else if(a.k==='image') bits.push('pasted in, not from a notebook');
+    if(a.k==='flip'&&Array.isArray(a.frames))
+      bits.push(a.frames.length+' frames');
+    return bits.join(' · ');
+  }
+  /* WHAT TO CALL A SLIDE IN AN EXPORT THAT TRAVELS. `filmText` names a
+     slide by the first thing written on it, which is right in the strip
+     — you are looking at the slide, private items and all. Here it is
+     wrong: a slide whose only text is an "only me" note would be
+     HEADED with that note, and the whole promise of T31 is that those
+     words do not leave. So the heading is taken from the same reading
+     order with the private items already dropped. */
+  function revHeading(sl){
+    if(!sl) return '';
+    if(sl.label) return String(sl.label);
+    if(sl.layout==='title'&&sl.title) return String(sl.title);
+    var out='';
+    orderedIdx(sl).forEach(function(j){
+      if(out) return;
+      var a=(sl.annots||[])[j];
+      if(!a||a.hide||a.priv||a.capOf) return;
+      var t=revText(a).trim();
+      if(t) out=t.split(/[\r\n]/)[0];
+    });
+    return out;
+  }
+  function deckReview(){
+    var L=[],map=figNumbers();
+    var runs=sectionRuns();
+    var n=(pres.slides||[]).length;
+    var mins=goalTotal();
+    L.push('# '+(pres.name||'Untitled deck'));
+    L.push('');
+    L.push(n+' slide'+(n===1?'':'s')
+      +(runs.filter(function(r){return r.id;}).length
+        ?(' in '+runs.filter(function(r){return r.id;}).length
+          +' sections'):'')
+      +(mins?(' · '+fmtMins(mins)+' planned'):'')
+      +(pres.talkMins?(' · '+pres.talkMins+' minute slot'):''));
+    if(pres.notes){
+      L.push('');
+      L.push('## About the whole talk');
+      L.push('');
+      L.push(String(pres.notes).trim());
+    }
+    runs.forEach(function(run){
+      L.push('');
+      L.push('## '+(run.id?(run.name||'Section')
+        :(runs.length>1?'(no section)':'The slides')));
+      for(var k=0;k<run.n;k++){
+        (function(i){
+          var sl=pres.slides[i];
+          if(!sl) return;
+          L.push('');
+          L.push('### '+(i+1)+'. '+(revHeading(sl)||'(untitled)'));
+          var tags=[];
+          if(sl.opt) tags.push('optional');
+          if(sl.cuts&&sl.cuts.length)
+            tags.push('only in: '+sl.cuts.map(function(c){
+              return (cutMap()[c]||{}).name||c;}).join(', '));
+          if(slideGoal(sl)) tags.push(fmtMins(slideGoal(sl))+' planned');
+          if(tags.length) L.push('*'+tags.join(' · ')+'*');
+          if(sl.layout==='title'){
+            if(sl.title) L.push('');
+            if(sl.title) L.push('**'+sl.title+'**');
+            if(sl.sub) L.push(sl.sub);
+          }
+          /* IN READING ORDER, not storage order: the review has to say
+             the slide in the order somebody looking at it would */
+          var words=[],figs=[];
+          orderedIdx(sl).forEach(function(j){
+            var a=(sl.annots||[])[j];
+            /* a private note is not part of the talk, and this export
+               travels (T31) */
+            if(!a||a.hide||a.priv) return;
+            if(isFigure(a)){figs.push(revFigLine(sl,a,map));return;}
+            if(a.capOf) return;         /* said with its figure */
+            var t=figSubst(revText(a),a,map).trim();
+            if(t) words.push(t);
+          });
+          if(words.length){
+            L.push('');
+            words.forEach(function(t){
+              L.push(t.split('\n').map(function(ln,li){
+                return (li?'  ':'- ')+ln;}).join('\n'));
+            });
+          }
+          if(figs.length){
+            L.push('');
+            L.push('Figures:');
+            figs.forEach(function(f){L.push('- '+f);});
+          }
+          if(sl.notes){
+            L.push('');
+            L.push('Speaker notes:');
+            String(sl.notes).trim().split('\n').forEach(function(ln){
+              L.push('> '+ln);});
+          }
+        })(run.at+k);
+      }
+    });
+    L.push('');
+    return L.join('\n');
+  }
+  /* the terms, normalised: hyphens, spaces and case out, so the
+     variants of one thing land in one bucket */
+  function termKey(w){
+    return String(w||'').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  }
+  function reviewLints(){
+    var out=[],map=figNumbers();
+    var surfaces={};
+    (pres.slides||[]).forEach(function(sl,si){
+      var texts=[];
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.hide) return;
+        var t=revText(a); if(t) texts.push(t);
+      });
+      if(sl.notes) texts.push(String(sl.notes));
+      if(sl.layout==='title') texts.push((sl.title||'')+' '+(sl.sub||''));
+      var all=texts.join(' ');
+      /* --- 1. a figure nobody mentions --- */
+      (sl.annots||[]).forEach(function(a,i){
+        if(!isFigure(a)||a.hide) return;
+        if(capOfFig(sl,a)>=0) return;         /* it has a caption */
+        var num=(a.cap&&map[a.cap])?map[a.cap].n:0;
+        var nm=a.ref?String(a.ref).split('::').pop():'';
+        var named=(num&&new RegExp('\\bfig(?:ure)?\\.?\\s*'+num+'\\b','i')
+          .test(all))
+          ||(nm&&all.toLowerCase().indexOf(nm.toLowerCase().replace(
+            /[_-]+/g,' '))>=0)
+          ||(nm&&all.toLowerCase().indexOf(nm.toLowerCase())>=0);
+        if(named) return;
+        out.push({sev:'warn',si:si,i:i,
+          head:'Slide '+(si+1)+': a figure nothing mentions',
+          why:(num?('Figure '+num):'This figure')+' has no caption, and '
+            +'no text or note on the slide names it. An audience does '
+            +'not know what they are looking at.'});
+      });
+      /* --- 2. a caption with no figure --- */
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.hide||a.k!=='text') return;
+        var t=revText(a).trim();
+        var looks=/^\s*(fig(ure)?\.?\s*\d|table\s*\d)/i.test(t);
+        if(a.capOf){
+          if(figOfCap(sl,a)>=0) return;
+          out.push({sev:'err',si:si,i:i,
+            head:'Slide '+(si+1)+': a caption whose figure is gone',
+            why:'“'+t.slice(0,60)+'” is tied to a figure that is no '
+              +'longer on this slide. It will number as [missing '
+              +'figure] and read as a caption for nothing.'});
+        } else if(looks){
+          out.push({sev:'warn',si:si,i:i,
+            head:'Slide '+(si+1)+': a caption that is not tied to '
+              +'anything',
+            why:'“'+t.slice(0,60)+'” reads like a caption but belongs '
+              +'to no figure, so it will not follow one, and its '
+              +'number will not update when the slides move.'});
+        }
+      });
+      /* --- 4. a slide with a lot on it --- */
+      var wc=slideWordCount(sl);
+      var ic=(sl.annots||[]).filter(function(a){
+        return a&&!a.hide&&!a.capOf;}).length;
+      if(wc>DENSE_WORDS||ic>DENSE_ITEMS)
+        out.push({sev:'warn',si:si,i:null,
+          head:'Slide '+(si+1)+': a lot on one slide',
+          why:wc+' words and '+ic+' things on it. Above about '
+            +DENSE_WORDS+' words an audience reads instead of '
+            +'listening.'});
+      /* COLLECT THE SURFACES for lint 3. Single words AND adjacent
+         pairs, because the whole point is that "sea-level" and "sea
+         level" are the same term written two ways -- and one of those
+         is one token while the other is two. A first pass that only
+         looked at single tokens found the hyphenated form and never
+         the spaced one, so the two could never meet in a bucket. */
+      var toks=all.match(/[A-Za-z][A-Za-z0-9'-]*/g)||[];
+      function surf(w){
+        var k=termKey(w);
+        if(k.length<4) return;
+        (surfaces[k]=surfaces[k]||{})[w]=(surfaces[k][w]||0)+1;
+      }
+      toks.forEach(function(w,i){
+        if(w.length>=4) surf(w);
+        if(i+1<toks.length){
+          var pair=w+' '+toks[i+1];
+          if(termKey(pair).length>=6) surf(pair);
+        }
+      });
+    });
+    /* --- 3. two spellings of one thing --- */
+    Object.keys(surfaces).forEach(function(k){
+      var forms=Object.keys(surfaces[k]);
+      if(forms.length<2) return;
+      /* forms differing ONLY in the first letter's case are a sentence
+         beginning, not an inconsistency */
+      var real=forms.some(function(a){
+        return forms.some(function(b){
+          return a!==b&&a.slice(1)!==b.slice(1);});});
+      if(!real) return;
+      /* NO MINIMUM COUNT. A first pass wanted three occurrences before
+         reporting, which silently hid the commonest real case -- the
+         term said once each way, which is exactly the inconsistency
+         worth catching. Two surfaces that normalise to the same string
+         and differ by more than a capital is already a strong enough
+         signal; the count is shown so you can judge it yourself. */
+      var total=forms.reduce(function(t,f){return t+surfaces[k][f];},0);
+      out.push({sev:'warn',si:null,i:null,
+        head:'Two spellings of one thing',
+        why:forms.map(function(f){
+          return '“'+f+'” ×'+surfaces[k][f];}).join(', ')
+          +'. Pick one — an audience reads the difference as a '
+          +'distinction.'});
+    });
+    return out;
+  }
+  /* THE PANEL. The lints first, because they are the reason to open it
+     twice; the text below them, because it is the reason to open it at
+     all. Both at once rather than two doors: what a lint says and what
+     the reviewer will read are the same deck, and having to switch
+     between them to check one against the other is the whole problem
+     with a separate report. */
+  function reviewClose(){
+    var ov=$('#deck-review');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',reviewKey,true);
+  }
+  function reviewKey(e){
+    if(!$('#deck-review')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();reviewClose();}
+  }
+  function openReview(){
+    reviewClose();
+    var text=deckReview(),lints=reviewLints();
+    var ov=document.createElement('div');
+    ov.className='deck-review';ov.id='deck-review';
+    ov.innerHTML='<div class="rv-head">'
+      +'<span class="rv-t">Send this deck out to be read</span>'
+      +'<span class="deck-spring"></span>'
+      +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
+      +'<button class="dbtn" id="rv-dl">'+bic('front')
+      +' Save as .md</button>'
+      +'<button class="dbtn" id="rv-close">'+bic('exit')
+      +' Close</button></div>'
+      +'<div class="rv-main">'
+      +'<div class="rv-lints" id="rv-lints"></div>'
+      +'<div class="rv-textwrap"><span class="rv-lab">'
+      +'what a reader gets — markdown, so it pastes anywhere</span>'
+      +'<textarea class="rv-text" id="rv-text" readonly '
+      +'spellcheck="false"></textarea></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#rv-text').value=text;
+    var host=ov.querySelector('#rv-lints');
+    var hd=document.createElement('div');
+    hd.className='rv-lhead';
+    var errs=lints.filter(function(l){return l.sev==='err';}).length;
+    hd.textContent=lints.length
+      ?(lints.length+' thing'+(lints.length===1?'':'s')+' to look at'
+        +(errs?(' · '+errs+' serious'):''))
+      :'Nothing looks wrong with the content';
+    host.appendChild(hd);
+    var note=document.createElement('div');
+    note.className='rv-note';
+    note.textContent='These are heuristics about the CONTENT, and each '
+      +'says what it counted so you can disagree with it. “Before you '
+      +'print” is the other list — that one is about ink and '
+      +'millimetres.';
+    host.appendChild(note);
+    lints.forEach(function(l){
+      var b=document.createElement('button');
+      b.className='rv-lint sev-'+l.sev;
+      var h=document.createElement('span');
+      h.className='rv-lh';h.textContent=l.head;
+      var w=document.createElement('span');
+      w.className='rv-lw';w.textContent=l.why;
+      b.appendChild(h);b.appendChild(w);
+      if(l.si!=null){
+        b.title='Go to slide '+(l.si+1);
+        b.addEventListener('click',function(){
+          reviewClose();
+          cur=l.si;selAnnot=(l.i==null?null:l.i);
+          selSet=(l.i==null?[]:[l.i]);
+          refresh();
+        });
+      } else b.classList.add('nogo');
+      host.appendChild(b);
+    });
+    ov.querySelector('#rv-close').addEventListener('click',reviewClose);
+    ov.querySelector('#rv-copy').addEventListener('click',function(){
+      var ta=ov.querySelector('#rv-text');
+      ta.select();
+      var done=false;
+      try{done=document.execCommand('copy');}catch(e){}
+      if(!done&&navigator.clipboard)
+        navigator.clipboard.writeText(text).then(function(){
+          toast('Copied — paste it wherever it is being read');});
+      else toast(done?'Copied — paste it wherever it is being read'
+        :'Select the text and copy it');
+    });
+    ov.querySelector('#rv-dl').addEventListener('click',function(){
+      var blob=new Blob([text],{type:'text/markdown'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=(pres.name||'deck')+'.review.md';
+      a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+      toast('Saved — it travels; junoview stays here');
+    });
+    document.addEventListener('keydown',reviewKey,true);
+  }
   /* ---- THE OVERVIEW: THE WHOLE TALK AT ONCE ---------------------------
      (TASKS T26.) TASKS.md is careful about what this is: "the realistic
      scope of the infinite-canvas wish — an overview/navigation layer,
@@ -23309,6 +23695,7 @@
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
   menuAction('#mi-hist',openHistory);
+  menuAction('#mi-review',openReview);
   menuAction('#mi-pdf',function(){printDeck();});
   /* ---- standalone HTML export (2026-08-04): ONE self-contained .html
      anyone can open without Junoview. The page styles are already inline
