@@ -283,9 +283,17 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   act. Position, crop and size survive by CONSTRUCTION — they live on the
   annotation, which `resyncFigure` does not touch — rather than by being
   copied back.
-- [ ] **T21 · M — Non-destructive crop/resize + hi-res originals.** Crop
+- [x] **T21 · M — Non-destructive crop/resize + hi-res originals.** Crop
   as a view transform over retained original bytes; exports choose an
   appropriate resolution. Watch localStorage quota (same note as T20).
+  *2026-08-25:* crop was already a view transform; the SHRINK was the
+  destructive part. The original now goes to IndexedDB under `a.okey`
+  and `a.src` keeps a display-sized copy, which is both the quota fix
+  the `IMG_MAX_EDGE` note asked for and the resolution fix. Exports swap
+  the originals in through `afterTypeset`, the one place every export
+  path already shares. Verified: a 5.4MB picture shows as 1.1MB on the
+  page, sits at 5.4MB in IndexedDB, and leaves the localStorage draft at
+  one byte.
 - [ ] **T22 · S — Figure consistency lint.** Flag mismatched fonts/sizes/
   margins across a deck's figures where metadata allows. Can land inside
   T32's lint framework.

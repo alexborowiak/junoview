@@ -106,6 +106,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T21, hi-res originals: deck.js keeps
+# a picture's full bytes in IndexedDB and shows a display copy,
+# swapping the originals in at export; help.html a paragraph.
+# Editor-only; pinned by tests/test_slide_editor.py's two
+# original-retention tests.
 # Moved 2026-08-25 for TASKS T19+T20, figure provenance and
 # re-sync: deck.html gained #provpane, deck.js the pane and
 # resyncFigure, help.html a paragraph. Editor-only; pinned by
@@ -202,8 +207,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "087cc800d96f008497eb33542c4e99b3"
-EXPECTED_BYTES = 2463633
+EXPECTED_MD5 = "52dc11b6dc45bb5fdf0252d74eb54889"
+EXPECTED_BYTES = 2469199
 
 
 def _render_example() -> str:

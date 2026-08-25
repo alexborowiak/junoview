@@ -1984,3 +1984,48 @@ def test_updating_one_figure_leaves_its_geometry_alone(out):
     # the same record shape the save path writes -- one snapshot format
     assert "var cc=p.live.hasCode?cloneCode(p.ref):null;" in out
     assert "if(cc) e.code=cc.outerHTML;" in out
+
+
+def test_a_picture_keeps_its_original_out_of_the_draft(out):
+    """TASKS T21. Crop was ALREADY non-destructive -- a.crop is a view
+    transform in inset percentages over the whole picture. What was
+    destructive was the SHRINK: a pasted screenshot was re-encoded down
+    and the original thrown away on the spot, so a crop into one corner
+    exported at the resolution of the shrunken copy.
+
+    The note left on IMG_MAX_EDGE said why it had to be that way and
+    what the real fix was: image payloads live inside `pres`, and
+    markDirty stringifies `pres` into localStorage on EVERY edit. The
+    same argument had already moved embedded card snapshots to
+    IndexedDB; the image kind was left behind.
+    """
+    assert "var IMG_VIEW_EDGE=1600;" in out
+    assert "function keepOriginal(a,dataUrl){" in out
+    assert "function originalOf(a){" in out
+    assert "function okeyNew(){" in out
+    # one funnel: three doors insert a picture, and putting the original
+    # aside in each of them is three chances to forget
+    assert "function placeImage(src,ar,link,full){" in out
+    assert "if(full&&full!==src) keepOriginal(img,full);" in out
+    # only when it really IS bigger
+    assert "if(payload!==fr.result) keepOriginal(na,fr.result);" in out
+
+
+def test_the_export_gets_the_original_and_the_canvas_does_not(out):
+    """A 6000px PNG drawn at 30% of a slide costs real time on every
+    repaint for detail no screen can show. The export is the only
+    consumer that wants the full bytes -- and it is already asynchronous
+    for MathJax, so waiting on IndexedDB costs it nothing it was not
+    already paying.
+
+    Every path that turns a print root into a file goes through
+    afterTypeset, so that is the one place all of them share: the PDF,
+    the standalone HTML, and anything added later.
+    """
+    assert "function useOriginals(root){" in out
+    assert "if(im.getAttribute('src')===a.src) im.src=full;});" in out
+    assert "try{return useOriginals(root).then(go);}catch(e){}" in out
+    # best-effort throughout: with no IndexedDB the picture still works,
+    # it just has no original to fall back on -- which is what happened
+    # to every image before this existed
+    assert "}).catch(function(){return a.src||null;});" in out

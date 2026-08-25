@@ -1471,7 +1471,10 @@ def test_a_failed_browser_save_is_not_reported_as_a_save(out):
     assert "el.textContent='NOT saved — browser full';" in out
     # an image is the thing that fills it, so cap what can arrive
     assert "var IMG_MAX_EDGE=2400;" in out
-    assert "function shrinkImage(img,dataUrl){" in out
+    # the cap is still there; T21 gave it a second, smaller edge for the
+    # copy that goes ON THE PAGE, keeping the original in IndexedDB
+    assert "function shrinkImage(img,dataUrl,edge){" in out
+    assert "var IMG_VIEW_EDGE=1600;" in out
 
 
 def test_the_project_file_is_not_clobbered_by_a_second_window(out):

@@ -12340,14 +12340,70 @@
      re-encode is typically a 5-10x saving with nothing visible lost.
      PNG stays PNG so a logo keeps its transparency, and a re-encode that
      comes out bigger is thrown away (2026-08-22). */
+  /* ---- THE ORIGINAL, AND THE COPY THAT GOES ON THE PAGE ---------------
+     (TASKS T21.) Crop was ALREADY non-destructive — a.crop is a view
+     transform in inset percentages over the whole picture, and cropCss
+     renders it — so nothing about cropping needed changing. What was
+     destructive was the SHRINK: a pasted screenshot was re-encoded down
+     to 2400px and the original bytes were thrown away on the spot, so a
+     crop into one corner exported at the resolution of the shrunk copy
+     and there was no way back.
+
+     The note left on IMG_MAX_EDGE said why it had to be that way, and
+     said what the real fix was: image payloads live inside `pres`, and
+     markDirty stringifies `pres` into localStorage on EVERY edit, so two
+     full-resolution screenshots exhausted the ~5MB budget and every
+     later edit was silently discarded while the UI went on saying
+     "saved". The same argument had already moved embedded card
+     snapshots to IndexedDB; the `image` kind was simply left behind.
+
+     So: the ORIGINAL goes to IndexedDB, under an opaque key on the
+     annotation (`a.okey`), and `a.src` keeps a display-sized copy. The
+     draft that gets stringified sixty times an hour therefore carries
+     the small one, which is the quota fix; the original is one async
+     read away when an export wants it, which is the resolution fix.
+
+     A deck that has never seen this is unaffected: no okey, no lookup,
+     and a.src is exactly what it always was. */
   var IMG_MAX_EDGE=2400;
-  function shrinkImage(img,dataUrl){
+  /* what actually goes on the page. A 6000px PNG drawn at 30% of a
+     slide costs real time on every repaint for detail no screen can
+     show; the original is kept for the export, not for the canvas. */
+  var IMG_VIEW_EDGE=1600;
+  function okeyNew(){
+    return 'img:'+Date.now().toString(36)
+      +Math.random().toString(36).slice(2,8);
+  }
+  /* keep the full-resolution bytes out of `pres`, and remember where.
+     Best-effort by design: with no IndexedDB the picture still works,
+     it just has no original to fall back on — which is exactly what
+     happened to every image before this existed. */
+  function keepOriginal(a,dataUrl){
+    if(!a||!dataUrl) return;
+    var k=okeyNew();
+    idbPut(k,dataUrl).then(function(){
+      a.okey=k;
+      markDirty(true);
+    }).catch(function(){});
+  }
+  /* the original if there is one, else what is on the page. Async
+     because IndexedDB is; every caller is an export, which is already
+     asynchronous for MathJax. */
+  function originalOf(a){
+    if(!a) return Promise.resolve(null);
+    if(!a.okey) return Promise.resolve(a.src||null);
+    return idbGet(a.okey).then(function(v){
+      return v||a.src||null;
+    }).catch(function(){return a.src||null;});
+  }
+  function shrinkImage(img,dataUrl,edge){
     try{
+      var lim=edge||IMG_MAX_EDGE;
       var w=img&&img.naturalWidth||0,h=img&&img.naturalHeight||0;
       if(!w||!h) return dataUrl;
       var big=Math.max(w,h);
-      if(big<=IMG_MAX_EDGE) return dataUrl;
-      var k=IMG_MAX_EDGE/big;
+      if(big<=lim) return dataUrl;
+      var k=lim/big;
       var cv=document.createElement('canvas');
       cv.width=Math.max(1,Math.round(w*k));
       cv.height=Math.max(1,Math.round(h*k));
@@ -12376,15 +12432,23 @@
         if(h>80){h=80;w=h*(img.naturalWidth/img.naturalHeight)
           *(pg.mm[1]/pg.mm[0]);}
         s.annots=s.annots||[];
-        var payload=shrinkImage(img,fr.result);
-        s.annots.push({k:'image',x:50-w/2,y:50-h/2,w:w,h:h,
-          src:payload});
+        /* the DISPLAY copy goes on the page; the full-resolution bytes
+           go to IndexedDB so a crop can be exported at the resolution
+           it was actually cropped from (T21) */
+        var payload=shrinkImage(img,fr.result,IMG_VIEW_EDGE);
+        var na={k:'image',x:50-w/2,y:50-h/2,w:w,h:h,src:payload};
+        s.annots.push(na);
+        /* the ORIGINAL, kept aside. Only worth keeping when it is
+           actually bigger than what went on the page — otherwise the
+           display copy IS the original and a second copy of it would be
+           pure waste. */
+        if(payload!==fr.result) keepOriginal(na,fr.result);
         markDirty();
         var l=stage.querySelector('.annot-layer');
         if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
         toast(payload===fr.result?'Image pasted'
-          :'Image pasted — resized to '+IMG_MAX_EDGE+'px so it fits in '
-            +'the saved deck');
+          :'Image pasted — shown at '+IMG_VIEW_EDGE+'px, and the '
+            +'full-size original is kept for exports');
       };
       img.onerror=function(){toast('That image could not be read');};
       img.src=fr.result;
@@ -16537,7 +16601,11 @@
       refreshImagesReport(hits);
     });
   })();
-  function placeImage(src,ar,link){
+  /* `full` is the ORIGINAL bytes when `src` is a shrunken copy of them.
+     One funnel: three different doors insert a picture (the file picker,
+     the <input> fallback and the paste), and putting the original aside
+     in each of them is three chances to forget (T21). */
+  function placeImage(src,ar,link,full){
     var s=pres.slides[cur]; if(!s) return;
     var l=stage.querySelector('.annot-layer');
     var lr=l?l.getBoundingClientRect():null;
@@ -16550,6 +16618,9 @@
     /* the link, when the browser gave us a real handle to keep */
     if(link&&link.key){img.fkey=link.key;img.fname=link.name||'';}
     s.annots.push(img);
+    /* only when it really IS bigger: otherwise the display copy is the
+       original and a second copy of it would be pure waste */
+    if(full&&full!==src) keepOriginal(img,full);
     markDirty();
     setTool('select');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
@@ -16840,9 +16911,9 @@
             return readAsDataURL(f).then(function(src){
               var probe=new Image();
               probe.onload=function(){
-                placeImage(shrinkImage(probe,src),
+                placeImage(shrinkImage(probe,src,IMG_VIEW_EDGE),
                   (probe.naturalHeight||3)/(probe.naturalWidth||4),
-                  {key:key,name:h.name||f.name||''});};
+                  {key:key,name:h.name||f.name||''},src);};
               probe.onerror=function(){
                 placeImage(src,0,{key:key,name:h.name||''});};
               probe.src=src;
@@ -16857,8 +16928,8 @@
       var src=rd.result;
       var probe=new Image();
       probe.onload=function(){
-        placeImage(shrinkImage(probe,src),
-          (probe.naturalHeight||3)/(probe.naturalWidth||4));};
+        placeImage(shrinkImage(probe,src,IMG_VIEW_EDGE),
+          (probe.naturalHeight||3)/(probe.naturalWidth||4),null,src);};
       probe.onerror=function(){placeImage(src,0);};
       probe.src=src;
     };
@@ -21096,13 +21167,43 @@
      keeps working underneath it) but a serialised export is a hard
      cutoff: whatever maths was unfinished ships as raw TeX forever
      (2026-08-05 review) */
+  /* SWAP IN THE ORIGINALS before an export takes the page. Every path
+     that turns a print root into a file goes through afterTypeset, so
+     this is the one place all of them share — the PDF, the standalone
+     HTML and anything added later get it without asking (T21).
+
+     The canvas keeps the display copy: a 6000px PNG drawn at 30% of a
+     slide costs real time on every repaint for detail no screen can
+     show. The export is the only consumer that wants the full bytes,
+     and it is already asynchronous for MathJax, so waiting on
+     IndexedDB costs it nothing it was not already paying. */
+  function useOriginals(root){
+    var jobs=[];
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.k!=='image'||!a.okey||!a.src) return;
+        jobs.push(originalOf(a).then(function(full){
+          if(!full||full===a.src) return;
+          $$('.an-imgel',root).forEach(function(im){
+            if(im.getAttribute('src')===a.src) im.src=full;});
+        }));
+      });
+    });
+    if(!jobs.length) return Promise.resolve();
+    return Promise.all(jobs).catch(function(){});
+  }
   function afterTypeset(root,fn){
-    try{
-      if(window.MathJax&&MathJax.typesetPromise)
-        return MathJax.typesetPromise([root])
-          .catch(function(){}).then(fn);
-    }catch(e){}
-    setTimeout(fn,200);
+    var go=function(){
+      try{
+        if(window.MathJax&&MathJax.typesetPromise)
+          return MathJax.typesetPromise([root])
+            .catch(function(){}).then(fn);
+      }catch(e){}
+      setTimeout(fn,200);
+    };
+    try{return useOriginals(root).then(go);}catch(e){}
+    go();
+    return undefined;
   }
   function printDeck(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
