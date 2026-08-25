@@ -106,6 +106,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T12, design tokens: deck.js gained
+# the DESIGN TOKENS registry and its resolver, the token swatches
+# and editor; deck.css the --tk-rad corner and the chip rules;
+# presentations.py carries the new deck key. Pinned by
+# tests/test_slide_editor.py's four token tests and the sentinel
+# in tests/test_deck_schema_parity.py.
 # Moved 2026-08-25 for TASKS T16, maths in deck text: deck.js
 # split isMaths/hasMaths and typesets at the text commit;
 # help.html gained a paragraph. Editor-only; pinned by
@@ -171,8 +177,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "f45c46cabd5045c01d29be8ef7f7acc6"
-EXPECTED_BYTES = 2393289
+EXPECTED_MD5 = "a11b32559a762c29a1bdd32f8419455d"
+EXPECTED_BYTES = 2405415
 
 
 def _render_example() -> str:

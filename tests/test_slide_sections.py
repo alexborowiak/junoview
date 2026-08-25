@@ -205,7 +205,7 @@ def test_custom_types_are_whitelisted_everywhere(out):
     assert "if(BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;" in out
     # the undo array literal is NOT touched -- types are restored by their
     # own statement after it, so the registry can be re-grafted
-    assert "['wmark','head','foot','styles','page','pageBg'," in out
+    assert "['wmark','head','foot','styles','tokens','page','pageBg'," in out
 
 
 def test_a_text_box_can_be_born_wearing_a_type(out):
@@ -358,7 +358,10 @@ def test_a_table_that_says_no_fill_has_no_fill(out):
     """drawTable painted ``a.bgc`` and never checked ``a.bg``, so the
     format bar's swatch and the renderer disagreed and setting a table to
     "no fill" did nothing."""
-    assert "if(a.bg!==0&&a.bgc) host.style.background=a.bgc;" in out
+    # through tokVal since T12 -- an identity for every colour that
+    # is not a "@token" reference, so this rule is unchanged for a hex
+    assert ("if(a.bg!==0&&a.bgc) host.style.background=tokVal(a.bgc);"
+            ) in out
 
 
 # ------------------------------------------------------- standardise text

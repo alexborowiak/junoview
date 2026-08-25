@@ -959,6 +959,7 @@
     }
     drawGrid(slideEl);
     drawCustomGuides(slideEl);
+    applyTokens(slideEl);
   }
   /* ---- custom guides, dragged off the rulers -------------------------
      The 12-column grid covers the common case; a real poster usually has
@@ -3844,8 +3845,11 @@
       if(anySec) out.sections=keep;
     }
     /* deck-level furniture, same rule as the page background: forget it on
-       load and a saved deck quietly loses its footer (2026-08-20) */
-    ['wmark','head','foot','styles'].forEach(function(k){
+       load and a saved deck quietly loses its footer (2026-08-20).
+       `tokens` joins them: an item that references '@accent' and a deck
+       that has forgotten what accent means renders the fallback, which
+       is the quiet failure this list exists to prevent (T12). */
+    ['wmark','head','foot','styles','tokens'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
@@ -4275,6 +4279,12 @@
          argument as styles - merely READING the list lazily creates it,
          and a phantom undo step for reading is worse than none. */
       types:(pres.types&&pres.types.length)?pres.types:null,
+      /* a token change repaints every item referencing it, so it is an
+         edit like any other and Ctrl+Z has to reach it. Empty
+         serialises as null on the same argument styles makes: merely
+         READING the registry must not record a phantom step. */
+      tokens:(pres.tokens&&Object.keys(pres.tokens).length)
+        ?pres.tokens:null,
       /* section NAMES are content and are undoable; whether a section is
          COLLAPSED is a way of looking at the strip, so it is stripped out
          here — Ctrl+Z must never open or close one (2026-08-22). The
@@ -4304,7 +4314,7 @@
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
-    ['wmark','head','foot','styles','page','pageBg',
+    ['wmark','head','foot','styles','tokens','page','pageBg',
      'cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
@@ -5028,7 +5038,7 @@
   function cssFill(a,col){
     if(!a.fill&&!a.grad) return 'transparent';
     if(a.grad) return gradCss(a.grad,col);
-    if(a.fillc) return a.fillc;
+    if(a.fillc) return tokVal(a.fillc);
     return shapeFill(col,0x26/255);
   }
   /* `sw` arrives already resolved to screen pixels by strokePx, and the
@@ -5066,7 +5076,7 @@
     var p=document.createElementNS(SVGNS,'path');
     p.setAttribute('d',drawPathD(a.pts));
     p.setAttribute('fill','none');
-    p.setAttribute('stroke',a.color||'#ff6b57');
+    p.setAttribute('stroke',tokVal(a.color)||'#ff6b57');
     p.setAttribute('stroke-width',strokePx(a,layer));
     p.setAttribute('vector-effect','non-scaling-stroke');
     p.setAttribute('stroke-linecap','round');
@@ -6331,10 +6341,10 @@
   /* a markdown cell frame can carry its own text + background colour, so the
      note is readable on any slide (the default light-box grey is not) */
   function applyCellColor(el,a){
-    if(a.txcol) el.style.setProperty('--nb-tx',a.txcol);
+    if(a.txcol) el.style.setProperty('--nb-tx',tokVal(a.txcol));
     else el.style.removeProperty('--nb-tx');
     if(a.bgcol) el.style.setProperty('--nb-bg',
-      a.bgcol==='none'?'transparent':a.bgcol);
+      a.bgcol==='none'?'transparent':tokVal(a.bgcol));
     else el.style.removeProperty('--nb-bg');
   }
   /* crop masks: images AND notebook cells (figures, markdown, code) can be
@@ -6456,6 +6466,205 @@
   var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];
   /* the HEADING styles, for "apply to all headings" */
   var HEADING_STYLES=['title','h1','h2','h3'];
+  /* ---- DESIGN TOKENS ---------------------------------------------------
+     A style set says what a HEADING looks like. Tokens say what the DECK
+     is made of — its accent colours, its corner radius, the gap it
+     spaces things at — and they differ from a style in one specific way
+     that is the whole point of TASKS T12.
+
+     applyStyleTo BAKES: it writes size, weight and colour onto every box
+     wearing a style, and its comment argues that case well (every
+     export, the pptx writer and the thumbnails all read a.size, and
+     teaching five of them about styles would be five places to get it
+     wrong). The cost of baking is that changing a definition later means
+     re-stamping, and anything that drifted since is silently overwritten
+     or silently left behind.
+
+     A TOKEN IS A REFERENCE, NOT A COPY. An item stores the string
+     '@accent' in its colour field; the value lives in one place; change
+     it and every item referencing it changes, because none of them ever
+     held a copy to go stale. Nothing is re-stamped and nothing drifts.
+
+     THE RESOLVER IS AN IDENTITY FOR EVERYTHING ELSE. tokVal('#ff6b57')
+     is '#ff6b57'. That is what makes this safe to thread through a
+     renderer this size: every call site is a no-op for every deck that
+     has never used a token, which is all of them so far. A reference is
+     only ever a string beginning with '@'.
+
+     Corner radius and the spacing scale need no per-item reference at
+     all: there is one radius and one gap for the whole deck, so they go
+     onto the slide as CSS custom properties and every shape picks them
+     up without storing anything. */
+  var TOKENS_DEFAULT={
+    c:{accent:'#39a9c0',warm:'#ff6b57',lift:'#f0a848',
+       calm:'#46a892',ink:'#ffffff',quiet:'#8aa0b0'},
+    rad:4,      /* px, the corner of a drawn box */
+    gap:3       /* % of the page, the rhythm the arrange verbs use */
+  };
+  var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
+    calm:'Calm',ink:'Ink',quiet:'Quiet'};
+  function tokens(){
+    var t=(pres&&pres.tokens)||{};
+    var out={c:{},rad:TOKENS_DEFAULT.rad,gap:TOKENS_DEFAULT.gap};
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+      out.c[k]=TOKENS_DEFAULT.c[k];});
+    if(t.c) Object.keys(t.c).forEach(function(k){
+      if(t.c[k]) out.c[k]=t.c[k];});
+    if(t.rad!=null&&isFinite(t.rad)) out.rad=+t.rad;
+    if(t.gap!=null&&isFinite(t.gap)&&+t.gap>0) out.gap=+t.gap;
+    return out;
+  }
+  function tokRef(v){
+    return (typeof v==='string'&&v.charAt(0)==='@')?v.slice(1):'';
+  }
+  /* THE one resolver. Identity for anything that is not a reference. */
+  function tokVal(v){
+    var k=tokRef(v);
+    if(!k) return v;
+    var c=tokens().c;
+    return c[k]||TOKENS_DEFAULT.c[k]||'#39a9c0';
+  }
+  /* the deck's tokens, written where CSS can see them. One place, so a
+     shape's corner and the page agree without any item storing one. */
+  function applyTokens(slideEl){
+    renderTokenSwatches();
+    renderTokenSwatches();
+    if(!slideEl) return;
+    var t=tokens();
+    Object.keys(t.c).forEach(function(k){
+      slideEl.style.setProperty('--tk-'+k,t.c[k]);});
+    slideEl.style.setProperty('--tk-rad',t.rad+'px');
+  }
+  /* changing a token is an ordinary edit: one markDirty, one undo step,
+     and a refresh — which is the cascade, since nothing held a copy */
+  /* THE TOKEN SWATCHES, injected at the head of both colour menus.
+     They are ordinary .sw chips carrying data-c="@accent", so the
+     delegated handler that already drives every preset swatch drives
+     these too and stores the REFERENCE rather than the colour. That is
+     the whole trick: one line of new wiring, and the difference between
+     a copy and a reference is a single character in the stored value. */
+  function renderTokenSwatches(){
+    ['#fmt-txcol-menu','#fmt-fillcol-menu'].forEach(function(sel){
+      var menu=$(sel); if(!menu) return;
+      var row=menu.querySelector('.sw-tokrow');
+      if(!row){
+        row=document.createElement('span');
+        row.className='sw-tokrow';
+        menu.insertBefore(row,menu.firstChild);
+      }
+      row.innerHTML='';
+      var isFill=(sel==='#fmt-fillcol-menu');
+      var lab=document.createElement('span');
+      lab.className='fmt-lab';
+      lab.textContent='Deck';
+      lab.title='This deck\u2019s own colours. An item given one of '
+        +'these follows it: change the colour once and everything '
+        +'wearing it changes.';
+      row.appendChild(lab);
+      var t=tokens();
+      Object.keys(t.c).forEach(function(k){
+        var b=document.createElement('button');
+        b.className='sw sw-tok';
+        b.setAttribute('data-c','@'+k);
+        b.style.background=t.c[k];
+        var nm=TOKEN_LABELS[k]||k;
+        b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
+          +'Design \u2192 Deck colours and everything using it follows.';
+        b.setAttribute('aria-label',nm+' (deck colour)');
+        /* WIRED HERE, not by the boot-time sweep. That sweep takes one
+           snapshot of $$('#et-fmt .sw...') at load, so a chip built
+           afterwards is a swatch that looks right and does nothing —
+           which is exactly what these did until a browser said so
+           (2026-08-25). */
+        b.addEventListener('mousedown',function(e){
+          if(activeTextEditable()) e.preventDefault();});
+        b.addEventListener('click',function(){
+          if(isFill) applyFillColor('@'+k); else applyTextColor('@'+k);});
+        row.appendChild(b);
+      });
+    });
+  }
+  /* the editor for the registry itself */
+  function openTokenPicker(anchor){
+    var old=$('#tok-pop'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
+    menuHead(m,'this deck\u2019s colours');
+    var note=document.createElement('div');
+    note.className='ff-none';
+    note.textContent='Change one and every object wearing it changes '
+      +'with it \u2014 nothing holds a copy. Give an object one from '
+      +'the Deck row of the Colour or Fill menu.';
+    m.appendChild(note);
+    var t=tokens();
+    Object.keys(t.c).forEach(function(k){
+      var row=document.createElement('div');row.className='ff-row';
+      var sw=document.createElement('span');
+      sw.className='sw sw-tok';sw.style.background=t.c[k];
+      row.appendChild(sw);
+      var nm=document.createElement('span');
+      nm.className='tok-nm';nm.textContent=TOKEN_LABELS[k]||k;
+      row.appendChild(nm);
+      var inp=document.createElement('input');
+      inp.type='color';inp.className='ff-in';
+      inp.value=/^#[0-9a-f]{6}$/i.test(t.c[k])?t.c[k]:'#39a9c0';
+      inp.setAttribute('aria-label',(TOKEN_LABELS[k]||k)+' colour');
+      inp.addEventListener('change',function(){
+        setToken('c',k,inp.value);
+        sw.style.background=inp.value;
+        renderTokenSwatches();
+      });
+      row.appendChild(inp);
+      m.appendChild(row);
+    });
+    menuHead(m,'shape corner');
+    var rr=document.createElement('div');rr.className='ff-row';
+    var rl=document.createElement('span');
+    rl.className='tok-nm';rl.textContent='Corner radius';
+    rr.appendChild(rl);
+    var ri=document.createElement('input');
+    ri.type='number';ri.min='0';ri.max='40';ri.className='ff-in';
+    ri.value=String(t.rad);
+    ri.setAttribute('aria-label','Corner radius in pixels');
+    ri.addEventListener('change',function(){
+      var v=Math.max(0,Math.min(40,+ri.value||0));
+      setToken('rad',null,v);
+    });
+    rr.appendChild(ri);
+    m.appendChild(rr);
+    menuHead(m,'spacing');
+    var gr=document.createElement('div');gr.className='ff-row';
+    var gl=document.createElement('span');
+    gl.className='tok-nm';gl.textContent='Gap the arrange verbs use';
+    gr.appendChild(gl);
+    var gi=document.createElement('input');
+    gi.type='number';gi.min='0.5';gi.max='20';gi.step='0.5';
+    gi.className='ff-in';gi.value=String(t.gap);
+    gi.setAttribute('aria-label','Spacing gap, in percent of the page');
+    gi.addEventListener('change',function(){
+      var v=Math.max(0.5,Math.min(20,+gi.value||3));
+      setToken('gap',null,v);
+    });
+    gr.appendChild(gi);
+    m.appendChild(gr);
+    document.body.appendChild(m);
+    floatMenu(anchor||$('#dsg-styles')||$('#edit-tools'),m);
+    setTimeout(function(){
+      document.addEventListener('click',function off(e){
+        if(m.contains(e.target)) return;
+        m.remove();document.removeEventListener('click',off);
+      });
+    },0);
+  }
+  function setToken(kind,key,val){
+    pres.tokens=pres.tokens||{};
+    if(kind==='c'){
+      pres.tokens.c=pres.tokens.c||{};
+      pres.tokens.c[key]=val;
+    } else pres.tokens[kind]=val;
+    markDirty();
+    refresh();
+  }
   /* ---- STYLE SETS ------------------------------------------------------
      (2026-08-22, user: "it would be good if you could auto-style a
      presentation ... you could have set-defaults of what paragraphs,
@@ -6571,6 +6780,12 @@
         next[ct.id]=pres.styles[ct.id];
     });
     pres.styles=next;
+    /* a set may bring its own tokens. It REPLACES rather than merges,
+       for the reason applyStyleSet spells out about styles: a set means
+       exactly what it says, and a colour it does not name should be the
+       built-in one rather than whatever the last set happened to leave
+       behind. */
+    if(t.tokens) pres.tokens=deep(t.tokens);
     return restyleAll(null);
   }
   /* ---- AUTO-STYLE ------------------------------------------------------
@@ -7654,7 +7869,7 @@
      comment in renderAnnots — and so a figure that finishes fitting later
      can ask for the arrows alone to be redrawn (redrawArrows). */
   function drawArrow(layer,s,a,i,svg,svgTop,defs,editing){
-    var col=a.color||'#ff6b57';
+    var col=tokVal(a.color)||'#ff6b57';
     var ends=arrowEnds(layer,s,a,i);
     var hs=headSize(a),sw=a.sw||3,swPx=strokePx(a,layer);
     /* a head is scaled by the LINE's width as well as its own size
@@ -7849,13 +8064,13 @@
     host.style.width=(a.w||40)+'%';host.style.height=(a.h||20)+'%';
     host.style.fontSize=fontPx(layer,a.size||2.2);
     if(a.lh) host.style.lineHeight=a.lh;
-    if(a.color) host.style.color=a.color;
+    if(a.color) host.style.color=tokVal(a.color);
     /* a.bg===0 is "no fill", and the format bar's swatch has always read
        it that way — but this renderer only ever looked at a.bgc, so
        setting a table to no fill left the colour on the page and the
        swatch and the slide disagreed (2026-08-22, found while giving the
        Apply dialog a Box background row that covers tables). */
-    if(a.bg!==0&&a.bgc) host.style.background=a.bgc;
+    if(a.bg!==0&&a.bgc) host.style.background=tokVal(a.bgc);
     /* the rules are page-relative like every other stroke on the canvas */
     host.style.setProperty('--tbl-sw',strokePx(a,layer).toFixed(2)+'px');
     host.style.setProperty('--tbl-line',a.line||'currentColor');
@@ -8112,7 +8327,7 @@
       if(a.k==='arrow'){_arrows.push(i);return;}
       if(a.k==='rect'){
         var shp=a.shape||'rect';
-        var col=a.color||'#ff6b57';
+        var col=tokVal(a.color)||'#ff6b57';
         var r=document.createElement('div');
         var svgShape=!!(SHAPE_PATHS[shp]||SHAPE_GLYPH[shp]);
         r.className='an-item an-rect'+(svgShape?' an-svgshape':'')
@@ -8312,7 +8527,7 @@
         if(a.ind) d2.style.setProperty('--an-ind',a.ind+'em');
         else d2.style.removeProperty('--an-ind');
         if(a.bg!==0&&a.bgc){
-          d2.style.background=a.bgc;
+          d2.style.background=tokVal(a.bgc);
           d2.style.borderColor='transparent';
         }
         if(a.w){d2.style.width=a.w+'%';d2.style.maxWidth='none';}
@@ -11993,9 +12208,11 @@
     items.sort(function(p,q){return p.r.l-q.r.l;});
     var sum=0;items.forEach(function(x){sum+=x.w;});
     /* keep the selection's horizontal span; if the items cannot fit in
-       it side by side, fall back to a small fixed gap */
+       it side by side, fall back to the DECK'S OWN gap — the spacing
+       token, so one deck's rhythm is one number rather than a constant
+       repeated in three arrange verbs (T12) */
     var gap=(bb.r-bb.l>=sum)
-      ?((bb.r-bb.l-sum)/(items.length-1)):1.5;
+      ?((bb.r-bb.l-sum)/(items.length-1)):tokens().gap;
     var cy=(bb.t+bb.b)/2,x0=bb.l;
     items.forEach(function(x){
       placeAt(x,x0,cy-x.h/2);x0+=x.w+gap;});
@@ -12012,8 +12229,9 @@
     items.forEach(function(x){mw=Math.max(mw,x.w);mh=Math.max(mh,x.h);});
     /* grid cells at least as big as the largest item, growing past the
        current bounding box when the items started stacked */
-    var cw=Math.max((bb.r-bb.l)/cols,mw+2);
-    var ch=Math.max((bb.b-bb.t)/rows,mh+2);
+    var tg=tokens().gap;
+    var cw=Math.max((bb.r-bb.l)/cols,mw+tg);
+    var ch=Math.max((bb.b-bb.t)/rows,mh+tg);
     var ox=Math.max(0,Math.min(bb.l,100-cw*cols));
     var oy=Math.max(0,Math.min(bb.t,100-ch*rows));
     items.forEach(function(x,k){
@@ -12087,7 +12305,10 @@
     var horiz=(axis==='h');
     items.sort(function(a,b){
       return horiz?(a.r.l-b.r.l):(a.r.t-b.r.t);});
-    var GAP=1.2;                 /* a hair of air, not a hard butt joint */
+    /* a hair of air, not a hard butt joint — and it is the deck's own
+       spacing token halved, so "close the gaps" is tighter than "space
+       them out" by construction rather than by coincidence (T12) */
+    var GAP=tokens().gap/2;
     var at=horiz?items[0].r.l:items[0].r.t;
     items.forEach(function(x){
       if(horiz){placeAt(x,at,x.r.t);at+=x.w+GAP;}
@@ -14002,6 +14223,10 @@
         rearranges what you selected, this one looks at the whole page
         and asks first (TASKS T9) */
      ['o:tidyup','Tidy up this page…'],
+     /* the deck's own colours, reached from the menu that is shown for
+        every kind of item — the Design tab's own row is the other door
+        (TASKS T12) */
+     ['k:tokens','This deck\u2019s colours and corner…'],
      /* SELECTING is not arranging, but this is the menu that is shown
         for every kind of item and already keeps the "everything like
         this one" verbs — and the ribbon has no width to spare for a
@@ -14010,6 +14235,7 @@
     function(what){
       if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}
       if(what==='o:tidyup'){showTidyPane();return;}
+      if(what==='k:tokens'){openTokenPicker($('#fmt-align-btn'));return;}
       if(what.indexOf('a:')===0){
         if(typeof window.SemDeckApplyDlg==='function')
           window.SemDeckApplyDlg();
@@ -19931,7 +20157,7 @@
         if(txt){
           items.push({t:'text',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
             rot:a.rot,op:a.op,text:txt,sizePct:code?1.3:1.8,
-            color:a.txcol||ink,font:code?'Consolas':'',
+            color:tokVal(a.txcol)||ink,font:code?'Consolas':'',
             name:(it&&it.title)||'Text'});
         } else note.skipped++;
       }

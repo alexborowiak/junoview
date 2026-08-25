@@ -193,6 +193,24 @@ body.light .find-mode.on{color:var(--ink);}
 .find-fmt select.ff-in{width:110px;}
 .find-fmt input[type=color].ff-in{width:34px;padding:1px;height:22px;}
 .find-fmt .ff-none{font-size:11.5px;color:#9db1c1;line-height:1.4;}
+/* ---------- deck tokens ---------- */
+.canvas-menu .ff-none{font-size:11.5px;color:#9db1c1;line-height:1.4;
+  padding:2px 4px 4px;}
+.canvas-menu .ff-row{display:flex;align-items:center;gap:6px;}
+.canvas-menu .ff-in{width:74px;font-family:var(--sans);font-size:11.5px;
+  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  border:1px solid #ffffff26;border-radius:6px;padding:3px 5px;
+  outline:none;}
+.canvas-menu input[type=color].ff-in{width:34px;padding:1px;height:22px;}
+.tok-pop{min-width:250px;}
+.tok-nm{flex:1;min-width:0;font-size:11.5px;color:#c3d2df;}
+body.light .tok-nm{color:var(--ink-2);}
+/* a deck colour reads as a chip you can point at, not a preset: the
+   ring says "this one has a name" */
+.sw.sw-tok{box-shadow:0 0 0 1px #ffffff40 inset,0 0 0 2px #ffffff1a;}
+.sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px;
+  width:100%;padding-bottom:3px;margin-bottom:2px;
+  border-bottom:1px solid #ffffff14;}
 body.light .find-fmt .find-ck:hover{background:#00000008;}
 .find-in{flex:1;min-width:0;font-family:var(--sans);font-size:12px;
   background:var(--chrome-0,#0b141d);color:#eaf2f8;
@@ -2188,7 +2206,12 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
 .annot-layer>svg.an-svgtop{pointer-events:none!important;z-index:5;}
 .an-item{pointer-events:none;}
 .deck.editing .an-item{pointer-events:auto;}
-.an-rect{position:absolute;border:3px solid #ff6b57;border-radius:4px;}
+/* the corner is a DECK TOKEN (T12): one value, written onto the slide
+   as --tk-rad, so every drawn box follows it and none of them stores a
+   radius of its own. The literal is the fallback for anything rendered
+   outside a slide (a thumbnail, a menu chip). */
+.an-rect{position:absolute;border:3px solid #ff6b57;
+  border-radius:var(--tk-rad,4px);}
 .deck.editing .an-rect{cursor:move;}
 .an-rect.sel,.an-text.sel,.an-title.sel,.an-cell.sel{
   outline:2px dashed var(--cyan);outline-offset:3px;}

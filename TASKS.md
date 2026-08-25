@@ -164,10 +164,18 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 2. Styling, layout, text
 
-- [ ] **T12 · M — Design tokens in style sets.** Extend style sets with
+- [x] **T12 · M — Design tokens in style sets.** Extend style sets with
   named tokens (spacing scale, corner radius, accent colours) that
   *cascade*: changing a token updates every element referencing it, rather
   than elements holding baked-in copies.
+  *2026-08-25:* `pres.tokens` = `{c:{…}, rad, gap}`. An item references a
+  colour by storing `'@accent'`; `tokVal` is the one resolver and is an
+  IDENTITY for every non-reference, which is what made it safe to thread
+  through a renderer this size. Radius and gap need no per-item
+  reference — one value per deck, written onto the slide as `--tk-rad`
+  and read by the arrange verbs. A style set may carry a `tokens`
+  sibling. Both `normPres` and `_as_presentations` keep the key, with a
+  sentinel in the schema-parity test.
 - [ ] **T13 · L — Reusable components (design first).** Define a named
   component from a selected group (e.g. `FigureCaption`); instances stay
   linked; editing the definition updates every instance; per-instance

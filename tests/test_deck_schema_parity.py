@@ -91,6 +91,7 @@ DECK_SENTINELS = {
     "head": {"text": "left header"},
     "foot": {"text": "right footer"},
     "styles": {"h1": {"size": 44}},
+    "tokens": {"c": {"accent": "#39a9c0"}, "rad": 8},
 }
 
 SLIDE_SENTINELS = {

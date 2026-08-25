@@ -646,7 +646,10 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # behind the content, never over it
     assert "slideEl.insertBefore(wm,slideEl.firstChild);" in out
     # and it survives a save, the way pageBg had to learn to
-    assert "['wmark','head','foot','styles'].forEach(function(k){" in out
+    # `tokens` joined them for the same reason (T12): a deck that has
+    # forgotten what "@accent" means renders the fallback instead
+    assert ("['wmark','head','foot','styles','tokens']"
+            ".forEach(function(k){") in out
 
 
 def test_equations_reuse_the_text_box_and_mathjax(out):
@@ -1554,3 +1557,68 @@ def test_maths_typesets_the_moment_you_click_away(out):
     under the caret; the typeset belongs at the commit.
     """
     assert "if(hasMaths(a2)) typeset(layer);" in out
+
+
+def test_a_token_is_a_reference_not_a_copy(out):
+    """TASKS T12. A style set says what a HEADING looks like; tokens say
+    what the DECK is made of. They differ in one specific way.
+
+    applyStyleTo BAKES -- it writes size, weight and colour onto every
+    box wearing a style, and argues that case well (five renderers read
+    a.size). The cost is that changing a definition later means
+    re-stamping, and anything that drifted is overwritten or left
+    behind. A token is a REFERENCE: the item stores '@accent', the value
+    lives in one place, and changing it changes everything wearing it
+    because none of them held a copy to go stale.
+    """
+    assert "var TOKENS_DEFAULT={" in out
+    assert "function tokVal(v){" in out
+    assert "function tokRef(v){" in out
+    assert "return (typeof v==='string'&&v.charAt(0)==='@')?v.slice(1):'';" \
+        in out
+    # the resolver is an IDENTITY for anything that is not a reference,
+    # which is what makes it safe to thread through a renderer this size
+    assert "    var k=tokRef(v);\n    if(!k) return v;" in out
+    # threaded at the points where a stored colour BECOMES a rendered one
+    assert "var col=tokVal(a.color)||'#ff6b57';" in out
+    assert "if(a.fillc) return tokVal(a.fillc);" in out
+    assert "if(a.color) host.style.color=tokVal(a.color);" in out
+
+
+def test_the_deck_registry_survives_a_save(out):
+    """A deck that has forgotten what "@accent" means renders the
+    built-in fallback instead -- the quiet save-and-reopen failure the
+    normPres keep-list exists to prevent, and which has bitten this repo
+    six times. Both sides carry it, and the schema-parity test has a
+    sentinel for it.
+    """
+    assert "['wmark','head','foot','styles','tokens'].forEach(" in out
+    # undo reaches it too: a token change repaints every item that
+    # references it, so it is an edit like any other
+    assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
+    assert "['wmark','head','foot','styles','tokens','page','pageBg'," in out
+
+
+def test_corner_and_gap_need_no_per_item_reference(out):
+    """There is one radius and one gap for the deck, so they go onto the
+    slide as CSS custom properties and every shape picks them up without
+    storing anything. The literal in the stylesheet is the fallback for
+    anything drawn outside a slide -- a thumbnail, a menu chip.
+    """
+    assert "slideEl.style.setProperty('--tk-rad',t.rad+'px');" in out
+    assert "border-radius:var(--tk-rad,4px);" in out
+    # the spacing token is the deck's rhythm, not a constant repeated in
+    # three arrange verbs
+    assert "?((bb.r-bb.l-sum)/(items.length-1)):tokens().gap;" in out
+    assert "var GAP=tokens().gap/2;" in out
+
+
+def test_the_token_swatches_are_wired_where_they_are_built(out):
+    """The boot-time sweep takes ONE snapshot of $$('#et-fmt .sw...'),
+    so a chip built afterwards is a swatch that looks right and does
+    nothing. That is exactly what these did until a browser said so.
+    """
+    assert "function renderTokenSwatches(){" in out
+    assert "if(isFill) applyFillColor('@'+k); else applyTextColor('@'+k);" \
+        in out
+    assert "b.setAttribute('data-c','@'+k);" in out

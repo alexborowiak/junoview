@@ -163,7 +163,14 @@ def _as_presentations(obj: Any) -> list:
         # per-slide s.sec tag that points into it is carried by the slide
         # builder above. The ORDER is never stored -- it is read back off
         # the slide list (2026-08-22).
-        for key in ("wmark", "head", "foot", "styles", "sections"):
+        # "tokens" is the deck's design registry -- its accent colours,
+        # corner radius and spacing gap. An item that references one
+        # stores the string "@accent"; lose the registry here and the
+        # item renders the built-in fallback instead, which is exactly
+        # the quiet save-and-reopen failure this loop exists to stop
+        # (2026-08-25).
+        for key in ("wmark", "head", "foot", "styles", "sections",
+                    "tokens"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed
