@@ -181,9 +181,18 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 - [ ] **T15 · M — Text auto-fit and overflow.** Predictable shrink-to-fit
   toggle and a visible overflow indicator in the editor. NOT multi-box
   text flow (descoped).
-- [ ] **T16 · M — Math in deck text.** LaTeX in deck text boxes via the
+- [x] **T16 · M — Math in deck text.** LaTeX in deck text boxes via the
   already-pinned MathJax. Must work in exports and offline (the sw.js
   precache pins must keep matching loaders — `tests/test_js_contract.py`).
+  *2026-08-25:* almost all of this already shipped — the equation editor,
+  the palette, MathJax on every page, `inlineMath ['$','$']` configured,
+  and exports that bake in the RENDERED formula (`afterTypeset` before
+  `outerHTML`), so offline export was never at risk. What was broken was
+  one gate: the re-typeset check asked whether a box IS an equation
+  rather than whether it CONTAINS one, so inline `$x$` inside a sentence
+  was thrown away by every layer rebuild. Split into `isMaths` (the
+  editor button) and `hasMaths` (the typeset gate), plus a typeset at
+  the text commit, which never rebuilt the layer at all.
 
 ## 3. Figures — the scientific core
 

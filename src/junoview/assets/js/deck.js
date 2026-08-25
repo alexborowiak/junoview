@@ -7518,6 +7518,14 @@
         selSet=selSet.filter(function(i2){return i2!==idx;});
         renderAnnots(layer,s2);
       }
+      /* MATHS YOU JUST TYPED. Committing a text box writes into the
+         element in place — that is the whole point of the edit path,
+         and it means renderAnnots (which carries the re-typeset gate)
+         never runs. So maths typed into a box rendered as raw "$x$"
+         until something else happened to rebuild the layer, which is a
+         very strange thing to have to discover (2026-08-25, found in
+         the browser while closing TASKS T16). */
+      if(hasMaths(a2)) typeset(layer);
       markDirty();
     });
     /* AUTO-BULLETS. Typing "- " or "* " at the start of a plain text box
@@ -8490,9 +8498,7 @@
        MathJax had already typeset - so ask for it again, but ONLY when
        the slide actually carries maths. Typesetting a whole layer on
        every mousemove of a drag would be a real cost for nothing. */
-    if((s.annots||[]).some(function(a){
-      return a&&a.k==='text'&&(a.maths||/\$\$[\s\S]*\$\$/.test(a.text||''));
-    })) typeset(layer);
+    if((s.annots||[]).some(hasMaths)) typeset(layer);
     /* build animations: number the builds in the editor; in playback, hide the
        ones not yet revealed and animate the one just revealed */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
@@ -14913,9 +14919,40 @@
   })();
   /* is this text item an equation? either it was made as one or its words
      are wrapped in $ … $ */
+  /* TWO DIFFERENT QUESTIONS, and answering them with one predicate is
+     what broke inline maths.
+
+     isMaths — "this box IS an equation". It gates the equation editor
+     button, which opens the whole box as one formula, so it is right
+     that it demands the text be nothing but maths.
+
+     hasMaths — "this box CONTAINS maths ANYWHERE". That is what the
+     re-typeset gate in renderAnnots needs, and it used to ask isMaths's
+     question instead (in an inlined copy): a hand-typed $lpha$ inside
+     an ordinary sentence typeset once, on the first renderSlide, and
+     was then thrown away by every rebuild of the annot layer — which is
+     every drag, every edit, every selection change. inlineMath ['$','$']
+     has been configured in mathjax.html all along; nothing was ever
+     wrong but this gate (2026-08-25, TASKS T16).
+
+     Kept CHEAP on purpose: renderAnnots runs on every mousemove of a
+     drag, so the overwhelmingly common no-maths case must cost one
+     indexOf and no regex at all. */
   function isMaths(a){
     return !!(a&&a.k==='text'
       &&(a.maths||/^\s*\$[\s\S]*\$\s*$/.test(a.text||'')));
+  }
+  function hasMaths(a){
+    if(!a||a.k!=='text') return false;
+    if(a.maths) return true;
+    var t=a.text||'',h=a.html||'';
+    var src=(t.indexOf('$')>=0)?t:((h.indexOf('$')>=0)?h:'');
+    if(!src) return false;
+    /* display $$…$$, or an inline $…$ pair that does not span a line —
+       a lone $ in prose ("$5") must not drag the whole layer through
+       MathJax on every frame */
+    return /\$\$[\s\S]*\$\$/.test(src)
+      ||/\$[^$\n]+\$/.test(src);
   }
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){

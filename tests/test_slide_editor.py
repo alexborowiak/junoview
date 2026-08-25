@@ -663,7 +663,9 @@ def test_equations_reuse_the_text_box_and_mathjax(out):
     cost for nothing.
     """
     assert 'id="dc-maths"' in out
-    assert "})) typeset(layer);" in out
+    # the gate is one named predicate now (hasMaths), so the question it
+    # asks can be widened without hunting for an inlined copy of it
+    assert "if((s.annots||[]).some(hasMaths)) typeset(layer);" in out
     # ...and since 2026-08-20 there is a real EDITOR in front of it. The
     # button used to drop "$$ E = mc^2 $$" on the slide and walk away --
     # no preview, no symbols, no way to tell whether what you typed was
@@ -1512,3 +1514,43 @@ def test_each_ribbon_group_is_keyed_by_its_own_name(out):
     # an unknown id in a saved list is skipped, so a control added by a
     # later version keeps its place instead of vanishing
     assert "if(byId[id]) row.appendChild(byId[id]);});" in out
+
+
+def test_inline_maths_survives_a_rebuild_of_the_layer(out):
+    """TASKS T16. LaTeX in deck text boxes already shipped -- an equation
+    editor, a palette, MathJax spliced into every page, and inlineMath
+    ['$','$'] configured in mathjax.html all along. One gate was wrong.
+
+    The re-typeset gate in renderAnnots asked whether the box IS an
+    equation, not whether it CONTAINS one, so a hand-typed $\\alpha$
+    inside an ordinary sentence typeset once and was thrown away by
+    every rebuild of the annot layer -- which is every drag, every edit,
+    every selection change.
+
+    Two predicates now, because they are two questions: isMaths gates
+    the equation editor (the whole box is one formula); hasMaths gates
+    the typeset (there is maths in here somewhere).
+    """
+    assert "function hasMaths(a){" in out
+    assert "if((s.annots||[]).some(hasMaths)) typeset(layer);" in out
+    # kept cheap: renderAnnots runs on every mousemove of a drag, so the
+    # no-maths case must cost one indexOf and no regex
+    assert "var src=(t.indexOf('$')>=0)?t:((h.indexOf('$')>=0)?h:'');" in out
+    assert "if(!src) return false;" in out
+    # a lone $ in prose must not drag the layer through MathJax
+    assert "||/\\$[^$\\n]+\\$/.test(src);" in out
+    # ...and isMaths keeps its own, stricter question
+    assert "show('#fmt-eqedit',isMaths(a)&&isNum);" in out
+
+
+def test_maths_typesets_the_moment_you_click_away(out):
+    """The other half of the same bug, found in the browser. Committing
+    a text box writes into the element in place -- that is the point of
+    the edit path -- so renderAnnots, which carries the gate, never
+    runs. Maths typed into a box stayed raw "$x$" until something else
+    happened to rebuild the layer.
+
+    While the box is BEING edited the maths is deliberately left raw
+    under the caret; the typeset belongs at the commit.
+    """
+    assert "if(hasMaths(a2)) typeset(layer);" in out
