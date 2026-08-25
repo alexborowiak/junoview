@@ -110,6 +110,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T27, object continuity ("Magic Move"):
+# deck.js gained the HOW A SLIDE ARRIVES section -- the s.trans
+# field, the section-level default T23 said it lacked, the FLIP
+# capture/play pair around go()'s refresh, and the picker rows on
+# both film menus; presentations.py and deck_schema.py keep the new
+# key. Pinned by tests/test_slide_sections.py's five T27 tests and
+# verified in a browser as an A/B against Cut.
 # Moved 2026-08-25 for TASKS T24+T25, optional slides and named
 # cuts: deck.js gained the cut model and the playback filter,
 # presentations.py and deck_schema.py the two new slide keys and
@@ -224,8 +231,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "d956a0d09f5e8285e2a1cd8a7e59ade8"
-EXPECTED_BYTES = 2500544
+EXPECTED_MD5 = "b6c6568baa99b526914d6895ed8c58b6"
+EXPECTED_BYTES = 2511271
 
 
 def _render_example() -> str:

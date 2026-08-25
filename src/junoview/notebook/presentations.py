@@ -104,6 +104,11 @@ def _as_presentations(obj: Any) -> list:
                 # deck's "20-minute version" back into the full one.
                 if s.get("opt"):
                     slide["opt"] = 1
+                # how this slide ARRIVES -- "", "fade" or "move".
+                # Per-slide because that is how anyone thinks about it
+                # (2026-08-25).
+                if isinstance(s.get("trans"), str) and s["trans"].strip():
+                    slide["trans"] = s["trans"].strip()
                 if isinstance(s.get("cuts"), list) and s["cuts"]:
                     cuts = [c for c in s["cuts"]
                             if isinstance(c, str) and c]

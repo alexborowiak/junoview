@@ -112,6 +112,9 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "goal": ((int, float), "Minutes this slide should take."),
     "border": (dict, "This slide's own border."),
     "grpmeta": (dict, "Names for the groups on this slide."),
+    "trans": (str, "How this slide arrives: \"\" (cut), \"fade\" or "
+                   "\"move\" (matching objects travel). A section may "
+                   "set a default for the slides in it."),
     "opt": (int, "1 when this slide is optional — \"Running late\" in "
                  "present mode skips it."),
     "cuts": (list, "Which named cuts this slide is in. A slide naming "

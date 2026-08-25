@@ -322,6 +322,10 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   cross-fade, nowhere to hang one — and inventing that substrate is T27's
   job, which needs it for Magic Move. Section navigation in present mode
   is T26's overview map. Both are tracked; neither is quietly skipped.
+  *Both landed: T26 shipped the overview map, and T27 built the
+  transition model with a section-level default — "how its slides
+  arrive" is on the section's own menu, so this paragraph is now
+  answered rather than outstanding.*
 - [x] **T24 · M — Optional slides + named cuts.** Mark slides optional;
   define named cuts ("45-min", "20-min", "5-min") as subsets of one deck —
   no more three diverging files. Easier after T23.
@@ -348,10 +352,40 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   with the strip it zooms out of. Reached from the strip's own view
   menu, which is already where "how do I want to look at this deck" is
   asked.
-- [ ] **T27 · L — Object continuity transitions (design first).** The same
+- [x] **T27 · L — Object continuity transitions (design first).** The same
   object appearing on consecutive slides animates between its two states
   (move/scale/zoom-into-region) — Keynote "Magic Move". The existing
   frames + slide-matching machinery is the starting point.
+  *2026-08-25.* Design note at `HOW A SLIDE ARRIVES` in deck.js. Four
+  decisions worth naming:
+  **(a) There was no transition model at all** — not a missing feature, a
+  missing FIELD. So `s.trans` comes first, per-slide because that is how
+  anyone thinks about it, with a SECTION default, which is the substrate
+  T23 said it lacked.
+  **(b) Identity across slides was the hard part and was already solved.**
+  T10's `oid` is de-duplicated within a slide but never across them, so a
+  DUPLICATED slide keeps its source's oids — which is exactly how anyone
+  builds a Magic Move. `matchKey` + reading order is the fallback for two
+  slides built separately.
+  **(c) FLIP, so no second renderer exists.** Measure the outgoing items,
+  let `renderSlide` rebuild the page as it always does, put the survivors
+  back with a transform and take it away. Nothing is drawn twice, and if
+  anything goes wrong the page underneath is already correct.
+  **(d) It composes with rotation.** `applyCommon` owns `transform` for
+  `a.rot`, so the FLIP transform is PREFIXED and removed by restoring the
+  original string — clearing it would un-rotate every rotated object
+  mid-talk. Verified in a browser: mid-flight the matrix keeps the 30°
+  components while translating, and lands rotation-only.
+  Verified over CDP as an A/B on one deck: with Cut the object is at its
+  new place the instant it arrives (38.9%); with Move it starts beside
+  where it was (12.2% against 10.0%) and lands on 38.9%.
+  **Reduced motion is honoured deliberately.** `core.css` already kills
+  every transition under `prefers-reduced-motion`, so the animation could
+  not have played anyway — it would have gone through the motions and
+  produced a cut. `playFlip` now asks first, and the menu says "not on
+  this machine" rather than offering a control that quietly does nothing.
+  (This is also why the CDP harness needs `JV_MOTION=1`: headless Edge
+  reports `reduce`.)
 
 ## 5. Presenting
 

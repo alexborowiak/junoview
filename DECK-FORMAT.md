@@ -80,6 +80,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `sub` | str | Title-slide subheading. |
 | `title` | str | Title-slide heading. |
 | `tprops` | dict | Geometry and look of the title text. |
+| `trans` | str | How this slide arrives: "" (cut), "fade" or "move" (matching objects travel). A section may set a default for the slides in it. |
 
 ### Layouts
 

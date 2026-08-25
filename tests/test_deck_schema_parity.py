@@ -107,6 +107,7 @@ SLIDE_SENTINELS = {
     "grpmeta": {"g": [1, 2]},
     "opt": 1,
     "cuts": ["k1"],
+    "trans": "move",
     "annots": [{"k": "text", "x": 1, "y": 1}],
     "hidden": ["demo::clim"],
     "title": "The headline",

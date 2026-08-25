@@ -4006,6 +4006,10 @@
            lives on the SLIDE so it survives every splice and drag for
            free — the same argument s.sec makes above (T24). */
         if(s.opt) o.opt=1;
+        /* how this slide ARRIVES. Per slide because that is how anyone
+           thinks about it, and because a deck-wide setting cannot say
+           "this one flies in from the last" (T27). */
+        if(typeof s.trans==='string'&&s.trans) o.trans=s.trans;
         if(Array.isArray(s.cuts)&&s.cuts.length)
           o.cuts=s.cuts.filter(function(c){
             return typeof c==='string'&&c;});
@@ -4097,6 +4101,9 @@
         var d=p.sections[k]; if(!d) return;
         keep[k]={name:String(d.name||'Untitled section')};
         if(d.fold) keep[k].fold=1;
+        /* a section's default arrival, which is what makes T23's
+           "section transitions" a real thing rather than a note */
+        if(typeof d.trans==='string'&&d.trans) keep[k].trans=d.trans;
         anySec=true;
       });
       if(anySec) out.sections=keep;
@@ -4495,7 +4502,11 @@
     if(m) Object.keys(m).forEach(function(k){
       if(!m[k]) return;
       out=out||{};
-      out[k]=(m[k].name)||'Untitled section';
+      /* the NAME and the arrival are content; whether a section is
+         folded is a way of looking at the strip and stays out (T23) */
+      out[k]=(m[k].trans)
+        ?{name:(m[k].name)||'Untitled section',trans:m[k].trans}
+        :((m[k].name)||'Untitled section');
     });
     return out;
   }
@@ -4602,7 +4613,11 @@
       var was=pres.sections||{};
       pres.sections={};
       Object.keys(d.sections).forEach(function(k){
-        pres.sections[k]={name:d.sections[k]};
+        var v=d.sections[k];
+        pres.sections[k]=(v&&typeof v==='object')
+          ?{name:v.name||'Untitled section',trans:v.trans}
+          :{name:v};
+        if(!pres.sections[k].trans) delete pres.sections[k].trans;
         if(was[k]&&was[k].fold) pres.sections[k].fold=1;
       });
     } else delete pres.sections;
@@ -17859,6 +17874,204 @@
        built, and every flip book on its last frame */
     var s=pres.slides[i];return s?slideStops(s):0;
   }
+  /* ---- HOW A SLIDE ARRIVES, AND WHAT TRAVELS WITH IT ------------------
+     (TASKS T27, and the substrate T23's "section transitions" needed and
+     did not have.)
+
+     THE DESIGN NOTE.
+
+     1. THERE WAS NO TRANSITION MODEL AT ALL. Not a missing feature — a
+        missing FIELD. renderSlide() emptied the stage and rebuilt it, and
+        nothing anywhere said how a slide should arrive. So the first
+        thing here is `s.trans`, and it is per-slide because that is how
+        anybody thinks about it ("this one flies in from the last") and
+        because a deck-wide setting cannot express the one case the whole
+        feature is for. A SECTION may set a default, which is what makes
+        T23's section transitions real rather than a note.
+
+     2. IDENTITY ACROSS SLIDES WAS THE HARD PART, AND IT WAS ALREADY
+        SOLVED. T10 gave every object an `oid` so its history could be
+        read; `ensureOids` de-duplicates WITHIN a slide but never across
+        them — which means a DUPLICATED SLIDE keeps its source's oids.
+        That is not a coincidence to exploit, it is the exact shape of
+        how anyone builds a Magic Move: duplicate the slide, move the
+        thing. So continuity comes free for the way people actually work,
+        and matchKey (the slide-matching machinery TASKS.md points at) is
+        the fallback for the pair of slides that were built separately.
+
+     3. THE ANIMATION IS FLIP, and that is what lets it exist without a
+        second renderer. Measure the outgoing slide's items, let
+        renderSlide rebuild the page exactly as it always does, then put
+        each surviving item BACK where it was with a transform and take
+        the transform away. The browser animates the difference. No item
+        is drawn twice, no state is duplicated, and if anything goes
+        wrong the page is already correct — the transform is a lie told
+        for 420ms over a page that is right underneath it.
+
+     4. IT COMPOSES WITH ROTATION. applyCommon writes `transform` for
+        a.rot, so the FLIP transform is PREFIXED onto whatever is there
+        and removed by restoring the original string, never by clearing
+        it. Getting that wrong un-rotates every rotated object mid-talk. */
+  var TRANS=[
+    ['','Cut','Nothing — the next slide is simply there.'],
+    ['fade','Fade','A short cross-fade.'],
+    ['move','Move matching objects',
+     'Anything on both slides slides, grows or shrinks from where it '
+     +'was to where it is. Duplicate a slide and move something, and '
+     +'this is what you get.']
+  ];
+  var TRANS_MS=420;
+  /* the transition to use ARRIVING at slide i: the slide's own, else its
+     section's, else none. */
+  function transFor(i){
+    var sl=(pres.slides||[])[i];
+    if(!sl) return '';
+    if(typeof sl.trans==='string') return sl.trans;
+    var sec=sl.sec&&(pres.sections||{})[sl.sec];
+    if(sec&&typeof sec.trans==='string') return sec.trans;
+    return '';
+  }
+  /* WHAT AN OBJECT IS CALLED, for the purpose of matching it across two
+     slides. The oid when there is one — which a duplicated slide gives
+     for free — and matchKey plus its position in reading order
+     otherwise, which is the same pairing Match slide has always used. */
+  function flipKeys(sl){
+    var out={},seen={};
+    var ord=orderedIdx(sl||{});
+    ord.forEach(function(i){
+      var a=(sl.annots||[])[i];
+      if(!a||a.hide) return;
+      var k=a.oid?('o:'+a.oid):null;
+      if(!k){
+        var mk=matchKey(a);
+        seen[mk]=(seen[mk]||0)+1;
+        k='m:'+mk+':'+seen[mk];
+      }
+      out[i]=k;
+    });
+    return out;
+  }
+  /* WHOSE DECISION THIS IS. core.css already turns every transition off
+     under prefers-reduced-motion, so an animation would not have played
+     anyway — it would have gone through the motions of moving twelve
+     elements and produced a cut. Asking the question here means the
+     preference is honoured deliberately rather than by accident, and it
+     is why the menu can say so instead of offering a control that
+     quietly does nothing. (Windows with animation effects switched off
+     reports this, and so does headless Edge — app.js has been round
+     this once already.) */
+  function motionOK(){
+    try{
+      return !window.matchMedia
+        ||!matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }catch(e){return true;}
+  }
+  var _flipFrom=null;
+  /* measure the OUTGOING slide, before renderSlide empties the stage */
+  function captureFlip(fromIdx){
+    _flipFrom=null;
+    if(mode!=='view') return;
+    var sl=(pres.slides||[])[fromIdx];
+    var layer=stage?stage.querySelector('.annot-layer'):null;
+    if(!sl||!layer) return;
+    var lr=layer.getBoundingClientRect();
+    if(!lr.width||!lr.height) return;
+    var keys=flipKeys(sl),map={};
+    Object.keys(keys).forEach(function(i){
+      var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      var r=el.getBoundingClientRect();
+      if(!r.width||!r.height) return;
+      map[keys[i]]={x:r.left-lr.left,y:r.top-lr.top,
+        w:r.width,h:r.height};
+    });
+    _flipFrom={map:map,lr:{w:lr.width,h:lr.height}};
+  }
+  /* put the survivors back where they were, then let them travel */
+  function playFlip(){
+    var from=_flipFrom;
+    _flipFrom=null;
+    if(!from||mode!=='view'||!motionOK()) return;
+    var kind=transFor(cur);
+    var sl=pres.slides[cur];
+    var layer=stage?stage.querySelector('.annot-layer'):null;
+    if(!sl||!layer) return;
+    if(kind==='fade'){
+      var sEl=stage.querySelector('.slide');
+      if(sEl){
+        sEl.style.transition='none';
+        sEl.style.opacity='0';
+        void sEl.offsetWidth;
+        sEl.style.transition='opacity '+TRANS_MS+'ms ease';
+        sEl.style.opacity='';
+        setTimeout(function(){
+          sEl.style.transition='';},TRANS_MS+60);
+      }
+      return;
+    }
+    if(kind!=='move') return;
+    var lr=layer.getBoundingClientRect();
+    if(!lr.width||!lr.height) return;
+    var keys=flipKeys(sl),moved=[];
+    Object.keys(keys).forEach(function(i){
+      var was=from.map[keys[i]];
+      if(!was) return;
+      var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      var r=el.getBoundingClientRect();
+      if(!r.width||!r.height) return;
+      var now={x:r.left-lr.left,y:r.top-lr.top,w:r.width,h:r.height};
+      var dx=was.x-now.x,dy=was.y-now.y;
+      var sx=was.w/now.w,sy=was.h/now.h;
+      /* a pixel here and there is not a move; animating it would only
+         add a shimmer to a slide that did not change */
+      if(Math.abs(dx)<1&&Math.abs(dy)<1
+         &&Math.abs(sx-1)<0.01&&Math.abs(sy-1)<0.01) return;
+      /* PREFIXED, and restored by putting the original string back:
+         applyCommon owns this property for a.rot, and clearing it would
+         un-rotate every rotated object mid-talk */
+      var base=el.style.transform||'';
+      el.dataset.jvFlip=base;
+      el.style.transformOrigin='0 0';
+      el.style.transition='none';
+      el.style.transform='translate('+dx+'px,'+dy+'px) scale('
+        +sx.toFixed(4)+','+sy.toFixed(4)+') '+base;
+      moved.push(el);
+    });
+    if(!moved.length) return;
+    void layer.offsetWidth;         /* one reflow for the whole set */
+    moved.forEach(function(el){
+      el.style.transition='transform '+TRANS_MS+'ms cubic-bezier('
+        +'.4,0,.2,1)';
+      el.style.transform=el.dataset.jvFlip||'';
+    });
+    setTimeout(function(){
+      moved.forEach(function(el){
+        el.style.transition='';
+        el.style.transformOrigin='';
+        /* restore, never clear: the base string is what applyCommon
+           wrote and may carry a rotation */
+        el.style.transform=el.dataset.jvFlip||'';
+        delete el.dataset.jvFlip;
+      });
+    },TRANS_MS+80);
+  }
+  function setTrans(i,kind){
+    var sl=(pres.slides||[])[i]; if(!sl) return;
+    if(kind) sl.trans=kind; else delete sl.trans;
+    markDirty();renderFilm();
+    var lab='';
+    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
+    toast('This slide arrives: '+lab.toLowerCase());
+  }
+  function setSectionTrans(id,kind){
+    var m=(pres.sections||{})[id]; if(!m) return;
+    if(kind) m.trans=kind; else delete m.trans;
+    markDirty();renderFilm();
+    var lab='';
+    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
+    toast('Every slide in this section arrives: '+lab.toLowerCase());
+  }
   /* ---- THE OVERVIEW: THE WHOLE TALK AT ONCE ---------------------------
      (TASKS T26.) TASKS.md is careful about what this is: "the realistic
      scope of the infinite-canvas wish — an overview/navigation layer,
@@ -18097,7 +18310,11 @@
     /* stepping back into a slide shows it fully built; forward starts fresh */
     revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
     selAnnot=null;selSet=[];   /* never carry a selection across slides */
+    /* MEASURE BEFORE THE REBUILD. renderSlide empties the stage, so the
+       outgoing geometry has to be taken here or it is gone (T27). */
+    captureFlip(prev);
     refresh();
+    playFlip();
     presenterSync();
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
@@ -19509,6 +19726,10 @@
       b.addEventListener('click',function(e){
         e.stopPropagation();m.remove();fn();});
       m.appendChild(b);
+      /* RETURNED, so a caller can mark the row the deck is currently in
+         — the canvas menu's row() has always done this, and the two are
+         otherwise the same idiom (2026-08-25, T27) */
+      return b;
     }
     if(run){
       menuHead(m,'this section');
@@ -19532,6 +19753,16 @@
           +'section');},
         'A copy of every slide in it, under a new name — two runs '
         +'cannot share one section','copy');
+      /* a SECTION default, which is what T23's "section transitions"
+         asked for and had no substrate for until now */
+      menuHead(m,'how its slides arrive'
+        +(motionOK()?'':' — not on this machine'));
+      TRANS.forEach(function(t){
+        var m2=(pres.sections||{})[run.id]||{};
+        var b=row(t[1],function(){setSectionTrans(run.id,t[0]);},t[2]);
+        if((m2.trans||'')===t[0]) b.classList.add('on');
+      });
+      menuHead(m,'this section');
       row('Remove the divider',function(){removeSection(run.id,false);},
         'The slides stay — they join the section above','exit');
       row('Delete the section AND its '+run.n+' slide'
@@ -19561,6 +19792,18 @@
        menu because that is where you are looking when you decide a
        slide is a nice-to-have. */
     var oSl=pres.slides[i];
+    /* HOW IT ARRIVES (T27). On the slide menu: a transition is a fact
+       about one slide, and this is where you are looking at it. */
+    menuHead(m,'how it arrives'
+      +(motionOK()?'':' — not on this machine'));
+    TRANS.forEach(function(t){
+      var now=(oSl&&typeof oSl.trans==='string')?oSl.trans:null;
+      var eff=transFor(i);
+      var b=row(t[1]+((now===null&&t[0]===eff&&eff)
+        ?' (from the section)':''),function(){setTrans(i,t[0]);},t[2]);
+      if((now===null?eff:now)===t[0]) b.classList.add('on');
+    });
+    menuHead(m,poster?'this page':'this slide');
     row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
       toggleOptional(i);},
       'Running late in present mode skips the optional slides from '

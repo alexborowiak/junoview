@@ -619,3 +619,81 @@ def test_the_overview_closes_before_the_editors_esc_ladder(out):
     # look at this deck"
     assert "['overview','Overview map\u2026','Overview map\u2026']];" in out
     assert "if(m==='overview'){openOverview();return;}" in out
+
+
+def test_a_slide_says_how_it_arrives(out):
+    """TASKS T27, and the substrate T23 said it lacked.
+
+    There was no transition model in this codebase at all -- not a
+    missing feature, a missing FIELD. `s.trans` is per-slide because
+    that is how anyone thinks about it ("this one flies in from the
+    last"), with a SECTION default underneath it, which is what makes
+    T23's section transitions real rather than a note.
+    """
+    assert "function transFor(i){" in out
+    # the slide's own, else its section's, else none -- in that order
+    assert "if(typeof sl.trans==='string') return sl.trans;" in out
+    assert "if(sec&&typeof sec.trans==='string') return sec.trans;" in out
+    assert "function setTrans(i,kind){" in out
+    assert "function setSectionTrans(id,kind){" in out
+
+
+def test_continuity_reuses_the_identity_T10_already_minted(out):
+    """The hard part -- knowing that THIS square is THAT square on the
+    next slide -- was already solved. `ensureOids` de-duplicates within
+    a slide but never across them, so a DUPLICATED slide keeps its
+    source's oids, which is exactly how a Magic Move gets built.
+
+    matchKey plus reading order is the fallback for the pair of slides
+    that were authored separately -- the same pairing Match slide has
+    always used, rather than a second idea about sameness.
+    """
+    assert "function flipKeys(sl){" in out
+    assert "var k=a.oid?('o:'+a.oid):null;" in out
+    assert "k='m:'+mk+':'+seen[mk];" in out
+
+
+def test_the_animation_is_flip_so_there_is_no_second_renderer(out):
+    """Measure the outgoing slide, let renderSlide rebuild the page
+    exactly as it always does, then put the survivors back with a
+    transform and take it away. No item is drawn twice and no state is
+    duplicated -- and if anything goes wrong the page underneath is
+    already correct.
+
+    The measurement has to happen BEFORE the rebuild, because
+    renderSlide empties the stage.
+    """
+    assert "function captureFlip(fromIdx){" in out
+    assert "function playFlip(){" in out
+    assert "captureFlip(prev);" in out
+    assert out.index("captureFlip(prev);") < out.index("playFlip();")
+
+
+def test_the_flip_composes_with_rotation_rather_than_erasing_it(out):
+    """applyCommon owns `transform` for a.rot. A flip that CLEARED the
+    property would un-rotate every rotated object mid-talk, so the FLIP
+    transform is PREFIXED onto whatever is there and removed by putting
+    the original string back.
+
+    Verified in a browser rather than only here: mid-flight the matrix
+    keeps the 30-degree components while translating, and the object
+    lands rotation-only.
+    """
+    assert "el.dataset.jvFlip=base;" in out
+    assert "+sx.toFixed(4)+','+sy.toFixed(4)+') '+base;" in out
+    # restored, never cleared
+    assert "el.style.transform=el.dataset.jvFlip||'';" in out
+
+
+def test_reduced_motion_is_answered_rather_than_ignored(out):
+    """core.css already turns every transition off under
+    prefers-reduced-motion, so the animation could not have played
+    anyway -- playFlip would have moved twelve elements to produce a
+    cut. Asking first means the preference is honoured deliberately,
+    and it is why the menu can say so instead of offering a control
+    that quietly does nothing.
+    """
+    assert "function motionOK(){" in out
+    assert "matchMedia('(prefers-reduced-motion: reduce)').matches" in out
+    assert "if(!from||mode!=='view'||!motionOK()) return;" in out
+    assert "not on this machine" in out
