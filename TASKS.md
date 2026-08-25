@@ -322,11 +322,20 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   cross-fade, nowhere to hang one — and inventing that substrate is T27's
   job, which needs it for Magic Move. Section navigation in present mode
   is T26's overview map. Both are tracked; neither is quietly skipped.
-- [ ] **T24 · M — Optional slides + named cuts.** Mark slides optional;
+- [x] **T24 · M — Optional slides + named cuts.** Mark slides optional;
   define named cuts ("45-min", "20-min", "5-min") as subsets of one deck —
   no more three diverging files. Easier after T23.
-- [ ] **T25 · S — "Running late" mode.** One control in present mode that
+  *2026-08-25, with T25 in the same commit — one model, and T25 is three
+  lines once this exists.* Membership is `opt`/`cuts` ON the slide (the
+  argument `s.sec` already made); `pres.cuts` holds only names. A slide
+  naming no cuts is in EVERY cut, so an existing deck is already a
+  complete "everything" version. The filter lives in `advance`/`backStep`
+  — the two verbs a talk runs on — and never in the editor.
+- [x] **T25 · S — "Running late" mode.** One control in present mode that
   skips the remaining optional slides. Depends on T24.
+  *2026-08-25, committed with T24.* From the CURRENT slide onward, and
+  deliberately not a cut: you do not choose it before the talk, you reach
+  for it at minute 34.
 - [ ] **T26 · M — Deck overview map.** A zoom-out overview: sections →
   slides as a navigable map. This is the realistic scope of the "infinite
   canvas" wish — an overview/navigation layer, not canvas-based authoring.

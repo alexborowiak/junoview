@@ -94,6 +94,7 @@ DECK_SENTINELS = {
     "tokens": {"c": {"accent": "#39a9c0"}, "rad": 8},
     "components": {"c1": {"name": "FigureCaption", "w": 30, "h": 10,
                           "items": []}},
+    "cuts": {"k1": {"name": "20-min"}},
 }
 
 SLIDE_SENTINELS = {
@@ -104,6 +105,8 @@ SLIDE_SENTINELS = {
     "goal": 3,
     "border": {"w": 2},
     "grpmeta": {"g": [1, 2]},
+    "opt": 1,
+    "cuts": ["k1"],
     "annots": [{"k": "text", "x": 1, "y": 1}],
     "hidden": ["demo::clim"],
     "title": "The headline",

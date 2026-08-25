@@ -205,8 +205,8 @@ def test_custom_types_are_whitelisted_everywhere(out):
     assert "if(BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;" in out
     # the undo array literal is NOT touched -- types are restored by their
     # own statement after it, so the registry can be re-grafted
-    assert ("['wmark','head','foot','styles','tokens','components',"
-            "'page','pageBg',") in out
+    assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
+            "     'page','pageBg',") in out
 
 
 def test_a_text_box_can_be_born_wearing_a_type(out):
@@ -526,3 +526,59 @@ def test_section_numbering_is_a_choice_not_a_reversal(out):
     assert ".replace(/\\{sec\\}/g,sp.name||'')" in out
     # the deck-wide ones are untouched, and still resolved after
     assert ".replace(/\\{n\\}/g,String(idx+1))" in out
+
+
+def test_a_cut_is_membership_on_the_slide(out):
+    """TASKS T24. The problem is three files called talk-45, talk-20 and
+    talk-5, diverging from the day they were copied.
+
+    Membership lives ON THE SLIDE -- `opt` and `cuts` -- for the reason
+    sections chose the same shape and recorded it: membership stored on
+    the slide travels through every splice, drag, duplicate and undo for
+    free, while a stored list of indexes has to be repaired after each
+    of them and eventually will not be. pres.cuts holds only the NAMES,
+    exactly as pres.sections does.
+
+    A slide naming no cuts is in EVERY cut, which is what makes the
+    feature adoptable: an existing deck is already a complete
+    "everything" version.
+    """
+    assert "function inCut(sl,cut){" in out
+    assert "if(!c||!c.length) return true;" in out
+    assert "function slideSkipped(i){" in out
+    assert "function nextShown(from,dir){" in out
+    # which cut you are rehearsing is session state, not deck state
+    assert "var showCut='',lateFrom=-1;" in out
+    # both keys survive a save, on both sides
+    assert "if(s.opt) o.opt=1;" in out
+    assert "cuts:(pres.cuts&&Object.keys(pres.cuts).length)?pres.cuts:null," \
+        in out
+
+
+def test_the_filter_lives_in_the_two_verbs_the_talk_runs_on(out):
+    """A cut or a running-late skip is a fact about what to show NEXT,
+    which is exactly what advance() asks -- so the filter goes there and
+    in backStep, rather than in twenty callers.
+
+    And it is playback only. A slide you have cut is still a slide you
+    are editing, and hiding it from the strip is how you would lose it.
+    """
+    assert "var nx=nextShown(cur,1);" in out
+    assert "var pv=nextShown(cur,-1);" in out
+    assert "if(lateFrom>=0&&i>cur&&sl.opt)" in out or \
+           "if(lateFrom>=0&&i>lateFrom&&sl.opt) return true;" in out
+
+
+def test_running_late_starts_from_here(out):
+    """TASKS T25, and three lines once T24 exists. From the CURRENT
+    slide onward: what you have already shown is not the problem, and
+    un-showing it is not on offer. Deliberately not a cut -- you do not
+    choose it before the talk.
+    """
+    assert "function runLate(on){" in out
+    assert "lateFrom=on?cur:-1;" in out
+    assert "function toggleOptional(i){" in out
+    assert "function toggleSlideCut(i,id){" in out
+    # an empty cut list is dropped rather than stored, the same
+    # empty-is-absent rule sections and styles follow
+    assert "if(c.length) sl.cuts=c; else delete sl.cuts;" in out

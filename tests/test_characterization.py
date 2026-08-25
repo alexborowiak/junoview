@@ -106,6 +106,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T24+T25, optional slides and named
+# cuts: deck.js gained the cut model and the playback filter,
+# presentations.py and deck_schema.py the two new slide keys and
+# the deck key; help.html two paragraphs. Pinned by
+# tests/test_slide_sections.py's three cut tests.
 # Moved 2026-08-25 for TASKS T23, sections as units: deck.js
 # gained moveSection/dupSection/sectionPos and the {sn} tokens;
 # help.html a paragraph. Editor-only; pinned by
@@ -215,8 +220,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "56c1081e900af89e4c581e1c3141d5ba"
-EXPECTED_BYTES = 2483563
+EXPECTED_MD5 = "a50f6cc06789dbee1a9246f1d1dda821"
+EXPECTED_BYTES = 2493808
 
 
 def _render_example() -> str:

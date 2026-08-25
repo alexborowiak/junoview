@@ -98,6 +98,17 @@ def _as_presentations(obj: Any) -> list:
                 # all (2026-08-22).
                 if isinstance(s.get("sec"), str) and s["sec"].strip():
                     slide["sec"] = s["sec"].strip()
+                # optional slides and named cuts (2026-08-25). Both are
+                # membership stored ON the slide, so they ride through
+                # every reorder; losing them here would silently turn a
+                # deck's "20-minute version" back into the full one.
+                if s.get("opt"):
+                    slide["opt"] = 1
+                if isinstance(s.get("cuts"), list) and s["cuts"]:
+                    cuts = [c for c in s["cuts"]
+                            if isinstance(c, str) and c]
+                    if cuts:
+                        slide["cuts"] = cuts
                 # per-slide look, speaker notes and the time goal: the JS
                 # normaliser (normPres) has carried these for a while; this
                 # rebuild silently shed them on every round-trip through
@@ -174,7 +185,7 @@ def _as_presentations(obj: Any) -> list:
         # carrying a cmp id that points at nothing -- they would still
         # draw, and would silently stop being linked (2026-08-25).
         for key in ("wmark", "head", "foot", "styles", "sections",
-                    "tokens", "components"):
+                    "tokens", "components", "cuts"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

@@ -34,6 +34,7 @@ supported state, and the editor marks it rather than forbidding it.
 | --- | --- | --- |
 | `components` | dict | {id: {name, w, h, items}}. Named groups that can be placed repeatedly; every instance stays linked to the definition. |
 | `cropMarks` | int | 1 when trim marks are printed outside the page. |
+| `cuts` | dict | {id: {name}}. Named subsets of one deck — a 45-minute version and a 5-minute one in the same file. Membership is the slide's `cuts` list. |
 | `emb` | dict | The deck's own copy of every placed card, so it shows its figures with no notebook and no network. |
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |
 | `folder` | str | The folder the deck is filed under in the rail. |
@@ -65,12 +66,14 @@ supported state, and the editor marks it rather than forbidding it.
 | `annots` | list | Everything placed freely on the slide. |
 | `bg` | str | This slide's own background colour. |
 | `border` | dict | This slide's own border. |
+| `cuts` | list | Which named cuts this slide is in. A slide naming none is in every cut. |
 | `goal` | int or float | Minutes this slide should take. |
 | `grpmeta` | dict | Names for the groups on this slide. |
 | `hidden` | list | Card refs kept out of this slide's code trail. |
 | `label` | str | A name for this version of a poster. |
 | `layout` | str | Which pane arrangement this slide uses. |
 | `notes` | str | Speaker notes for this slide. |
+| `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
 | `panes` | list | One card anchor per pane, or null for an empty one. |
 | `sec` | str | Which section this slide belongs to. |
 | `sprops` | dict | Geometry and look of the subtitle text. |

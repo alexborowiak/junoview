@@ -3999,6 +3999,13 @@
            is why reordering slides can never desynchronise it
            (2026-08-22) */
         if(typeof s.sec==='string'&&s.sec) o.sec=s.sec;
+        /* optional, and which named cuts this slide is in. Membership
+           lives on the SLIDE so it survives every splice and drag for
+           free — the same argument s.sec makes above (T24). */
+        if(s.opt) o.opt=1;
+        if(Array.isArray(s.cuts)&&s.cuts.length)
+          o.cuts=s.cuts.filter(function(c){
+            return typeof c==='string'&&c;});
         /* per-slide look + pane organisation. A field not listed here
            silently dies on the next load — exactly what happened to
            `label` before it was added (2026-08-10) */
@@ -4097,7 +4104,7 @@
        that has forgotten what accent means renders the fallback, which
        is the quiet failure this list exists to prevent (T12). */
     ['wmark','head','foot','styles','tokens',
-     'components'].forEach(function(k){
+     'components','cuts'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
@@ -4539,6 +4546,9 @@
          that (the same argument styles and types make above) */
       components:(pres.components&&Object.keys(pres.components).length)
         ?pres.components:null,
+      /* the cut NAMES are content; which cut you happen to be
+         rehearsing is not, and lives in a session variable (T24) */
+      cuts:(pres.cuts&&Object.keys(pres.cuts).length)?pres.cuts:null,
       /* section NAMES are content and are undoable; whether a section is
          COLLAPSED is a way of looking at the strip, so it is stripped out
          here — Ctrl+Z must never open or close one (2026-08-22). The
@@ -4568,8 +4578,8 @@
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
-    ['wmark','head','foot','styles','tokens','components','page','pageBg',
-     'cropMarks'].forEach(function(k){
+    ['wmark','head','foot','styles','tokens','components','cuts',
+     'page','pageBg','cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     /* types are restored with their own statement rather than by joining
@@ -17846,6 +17856,135 @@
        built, and every flip book on its last frame */
     var s=pres.slides[i];return s?slideStops(s):0;
   }
+  /* ---- OPTIONAL SLIDES, NAMED CUTS, AND RUNNING LATE ------------------
+     (TASKS T24 and T25 — one model, and T25 is three lines once T24
+     exists, so they are built together.)
+
+     THE PROBLEM: three files called talk-45.deck, talk-20.deck and
+     talk-5.deck, diverging from the day they were copied.
+
+     THE MODEL. A slide carries `opt:1` when it is optional, and a set of
+     cut names in `cuts` — a slide IS IN a cut when it names it. Both
+     live ON THE SLIDE, for the reason sections chose the same shape and
+     recorded it: membership stored on the slide travels through every
+     splice, every drag, every duplicate and every undo for free, while a
+     stored list of indexes has to be repaired after each of them and
+     will eventually not be.
+
+     `pres.cuts` holds only the NAMES, exactly as `pres.sections` holds
+     only section names, and for the same reason: the order and the
+     membership are read back off the slide list.
+
+     WHAT A CUT MEANS. A slide with no `cuts` is in EVERY cut — that is
+     what makes the feature adoptable, because an existing deck is
+     already a complete "everything" cut and turning one on excludes
+     nothing until you say so. Naming cuts on a slide narrows it.
+
+     RUNNING LATE (T25) is then not a fourth concept: it is a live
+     filter that also drops anything marked optional, from wherever you
+     have got to. It is deliberately NOT a cut — you do not choose it
+     before the talk, you reach for it at minute 34 — and it applies
+     from the CURRENT slide onward, because the ones you have already
+     shown are not the problem. */
+  function cutMap(){
+    if(!pres.cuts) pres.cuts={};
+    return pres.cuts;
+  }
+  function cutList(){
+    var m=cutMap();
+    return Object.keys(m).map(function(id){
+      return {id:id,name:(m[id]&&m[id].name)||id};
+    }).sort(function(a,b){return a.name.localeCompare(b.name);});
+  }
+  function cutId(){
+    var m=cutMap(),n=1;
+    while(m['k'+n]) n++;
+    return 'k'+n;
+  }
+  function newCut(name){
+    var id=cutId();
+    cutMap()[id]={name:name||'Short version'};
+    markDirty();
+    return id;
+  }
+  /* the cut currently being SHOWN, or '' for the whole deck. Session
+     state, not deck state: which version you are rehearsing today is
+     not a property of the document, and sending someone a deck must not
+     send them your rehearsal. Same argument matchPick makes. */
+  var showCut='',lateFrom=-1;
+  /* a slide is in a cut when it names it — and a slide that names no
+     cuts is in all of them, which is what makes an existing deck a
+     complete "everything" version on the day this ships. */
+  function inCut(sl,cut){
+    if(!cut) return true;
+    var c=sl&&sl.cuts;
+    if(!c||!c.length) return true;
+    return c.indexOf(cut)>=0;
+  }
+  /* SKIPPED, for playback only. Never for the editor: a slide you have
+     cut is still a slide you are editing, and hiding it from the strip
+     would be how you lose it. */
+  function slideSkipped(i){
+    var sl=(pres.slides||[])[i];
+    if(!sl) return false;
+    if(!inCut(sl,showCut)) return true;
+    if(lateFrom>=0&&i>lateFrom&&sl.opt) return true;
+    return false;
+  }
+  /* the next slide playback should land on, in a direction. Returns -1
+     when there is nothing left that way. */
+  function nextShown(from,dir){
+    var n=(pres.slides||[]).length;
+    for(var i=from+dir;i>=0&&i<n;i+=dir)
+      if(!slideSkipped(i)) return i;
+    return -1;
+  }
+  function setCut(id){
+    showCut=id||'';
+    /* landing on a slide the cut excludes would be a talk that starts
+       on a slide it is not showing */
+    if(mode==='view'&&slideSkipped(cur)){
+      var to=nextShown(cur,1);
+      if(to<0) to=nextShown(cur,-1);
+      if(to>=0) go(to);
+    }
+    presenterSync&&presenterSync();
+    renderFilm();
+    toast(id?('Showing the \u201c'+(cutMap()[id]||{}).name
+      +'\u201d version'):'Showing every slide');
+  }
+  /* T25. One control, mid-talk, that drops the rest of the optional
+     slides. From HERE onward: what you have already shown is not the
+     problem, and un-showing it is not on offer. */
+  function runLate(on){
+    lateFrom=on?cur:-1;
+    renderFilm();
+    presenterSync&&presenterSync();
+    if(!on){toast('Back to the full run');return 0;}
+    var n=0;
+    (pres.slides||[]).forEach(function(sl,i){
+      if(i>cur&&sl&&sl.opt&&inCut(sl,showCut)) n++;});
+    toast(n?(n+' optional slide'+(n===1?'':'s')
+      +' will be skipped from here'):'No optional slides left to skip');
+    return n;
+  }
+  function toggleOptional(i){
+    var sl=(pres.slides||[])[i]; if(!sl) return;
+    if(sl.opt) delete sl.opt; else sl.opt=1;
+    markDirty();renderFilm();
+    toast(sl.opt?'Optional \u2014 "Running late" will skip it'
+      :'No longer optional');
+  }
+  function toggleSlideCut(i,id){
+    var sl=(pres.slides||[])[i]; if(!sl||!id) return;
+    var c=(sl.cuts||[]).slice();
+    var at=c.indexOf(id);
+    if(at>=0) c.splice(at,1); else c.push(id);
+    /* an empty list means "every cut", so it is dropped rather than
+       stored — the same empty-is-absent rule sections and styles use */
+    if(c.length) sl.cuts=c; else delete sl.cuts;
+    markDirty();renderFilm();
+  }
   function go(n){
     var prev=cur;
     cur=Math.max(0,Math.min(pres.slides.length-1,n));
@@ -17866,12 +18005,22 @@
        — one gesture for the whole talk (2026-08-22) */
     if(mode==='view'&&s&&revealCount<slideStops(s)){
       revealCount++;renderSlide();presenterSync();
-    } else if(cur<pres.slides.length-1) go(cur+1);
+    } else {
+      /* THE FILTER LIVES HERE, in the two verbs the whole talk runs on,
+         rather than in twenty callers. A cut or a running-late skip is
+         a fact about what to show NEXT, which is exactly what advance
+         asks (T24/T25). */
+      var nx=nextShown(cur,1);
+      if(nx>=0) go(nx);
+    }
   }
   function backStep(){
     if(mode==='view'&&revealCount>0){revealCount--;renderSlide();
       presenterSync();}
-    else go(cur-1);
+    else {
+      var pv=nextShown(cur,-1);
+      go(pv>=0?pv:cur-1);
+    }
   }
 
   /* ---------- create mode: sidebar UI ---------- */
@@ -19303,6 +19452,28 @@
         row('→ (no section)',function(){moveSlideToSection(i,'');});
     }
     menuHead(m,poster?'this page':'this slide');
+    /* OPTIONAL, and which versions this slide is in (T24). On the SLIDE
+       menu because that is where you are looking when you decide a
+       slide is a nice-to-have. */
+    var oSl=pres.slides[i];
+    row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
+      toggleOptional(i);},
+      'Running late in present mode skips the optional slides from '
+      +'wherever you have got to');
+    var cuts=cutList();
+    if(cuts.length){
+      menuHead(m,'in these versions');
+      cuts.forEach(function(c){
+        var inIt=!!(oSl&&oSl.cuts&&oSl.cuts.indexOf(c.id)>=0);
+        var none=!(oSl&&oSl.cuts&&oSl.cuts.length);
+        row((inIt||none?'✓ ':'')+c.name,function(){
+          toggleSlideCut(i,c.id);},
+          none?'In every version, because it names none'
+            :(inIt?'Remove it from this version'
+              :'Add it to this version'));
+      });
+    }
+    menuHead(m,poster?'this page':'this slide');
     row('Duplicate',function(){dupSlide(i);},null,'copy');
     row('Delete',function(){delSlide(i);},null,'exit');
     floatAt(m,ev);
@@ -19925,6 +20096,66 @@
       if(b) b.addEventListener('click',function(e){
         e.stopPropagation();menu.hidden=true;fn();});
     }
+    /* WHICH VERSION, and the late escape (T24/T25). Built rather than
+       written into the markup because both lists are the deck's, and a
+       deck with no cuts must show nothing at all here. */
+    function syncCuts(){
+      $$('.pl-cut',menu).forEach(function(n){n.remove();});
+      var list=cutList();
+      var anchor=$('#pl-here');
+      if(!anchor||!anchor.parentNode) return;
+      function add(el){
+        el.classList.add('pl-cut');
+        menu.insertBefore(el,anchor);
+      }
+      var hd=document.createElement('div');
+      hd.className='hd-lab';hd.textContent='which version';
+      add(hd);
+      function opt(id,label,why){
+        var b=document.createElement('button');
+        b.className='dbtn dc-mi';
+        b.textContent=label;
+        if(why) b.title=why;
+        if((showCut||'')===id) b.classList.add('on');
+        b.addEventListener('click',function(e){
+          e.stopPropagation();menu.hidden=true;setCut(id);syncCuts();});
+        add(b);
+      }
+      opt('','Every slide','The whole deck, which is what a deck with '
+        +'no cuts always shows');
+      list.forEach(function(c){
+        opt(c.id,c.name,'Only the slides that name this version');});
+      var nb=document.createElement('button');
+      nb.className='dbtn dc-mi';
+      nb.textContent='New version…';
+      nb.title='Name a shorter cut of this same deck — no second '
+        +'file, no diverging copies';
+      nb.addEventListener('click',function(e){
+        e.stopPropagation();menu.hidden=true;
+        var nm=prompt('Name for this version:','20-min');
+        if(!nm) return;
+        var id=newCut(nm.trim());
+        toast('“'+nm.trim()+'” created — right-click a '
+          +'slide to put it in');
+        setCut(id);syncCuts();
+      });
+      add(nb);
+      var lb=document.createElement('button');
+      lb.className='dbtn dc-mi';
+      if(lateFrom>=0) lb.classList.add('on');
+      lb.textContent=(lateFrom>=0)?'Running late: on'
+        :'Running late — skip the optional ones';
+      lb.title='From where you are now, skip every slide marked '
+        +'optional. What you have already shown is not the problem.';
+      lb.addEventListener('click',function(e){
+        e.stopPropagation();menu.hidden=true;
+        runLate(lateFrom<0);syncCuts();});
+      add(lb);
+      var sep=document.createElement('div');
+      sep.className='hd-lab';sep.textContent='play';
+      add(sep);
+    }
+    wrap.addEventListener('click',syncCuts);
     mi('#pl-here',function(){$('#dc-play').click();});
     mi('#pl-start',function(){cur=0;refresh();$('#dc-play').click();});
     mi('#pl-presenter',openPresenter);

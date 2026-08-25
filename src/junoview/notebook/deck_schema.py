@@ -88,6 +88,9 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "components": (dict, "{id: {name, w, h, items}}. Named groups that "
                          "can be placed repeatedly; every instance stays "
                          "linked to the definition."),
+    "cuts": (dict, "{id: {name}}. Named subsets of one deck — a "
+                   "45-minute version and a 5-minute one in the same "
+                   "file. Membership is the slide's `cuts` list."),
     "emb": (dict, "The deck's own copy of every placed card, so it shows "
                   "its figures with no notebook and no network."),
 }
@@ -109,6 +112,10 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "goal": ((int, float), "Minutes this slide should take."),
     "border": (dict, "This slide's own border."),
     "grpmeta": (dict, "Names for the groups on this slide."),
+    "opt": (int, "1 when this slide is optional — \"Running late\" in "
+                 "present mode skips it."),
+    "cuts": (list, "Which named cuts this slide is in. A slide naming "
+                   "none is in every cut."),
 }
 
 #: How many panes each layout has. Mirrors ``_LAYOUT_PANES``.

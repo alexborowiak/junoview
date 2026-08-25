@@ -649,7 +649,7 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # `tokens` joined them for the same reason (T12): a deck that has
     # forgotten what "@accent" means renders the fallback instead
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components'].forEach(function(k){") in out
+            "     'components','cuts'].forEach(function(k){") in out
 
 
 def test_equations_reuse_the_text_box_and_mathjax(out):
@@ -1593,12 +1593,12 @@ def test_the_deck_registry_survives_a_save(out):
     sentinel for it.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components'].forEach(function(k){") in out
+            "     'components','cuts'].forEach(function(k){") in out
     # undo reaches it too: a token change repaints every item that
     # references it, so it is an edit like any other
     assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
-    assert ("['wmark','head','foot','styles','tokens','components',"
-            "'page','pageBg',") in out
+    assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
+            "     'page','pageBg',") in out
 
 
 def test_corner_and_gap_need_no_per_item_reference(out):
@@ -1741,7 +1741,7 @@ def test_the_component_library_is_deck_level_and_survives(out):
     obvious.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components'].forEach(function(k){") in out
+            "     'components','cuts'].forEach(function(k){") in out
     assert "components:(pres.components&&Object.keys(pres.components).length)" \
         in out
 
