@@ -233,6 +233,26 @@ _ICON_PATHS = {
              'stroke-dasharray="2.6 2.3"/>'
              '<rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/>'
              '<circle cx="10.2" cy="10.2" r="2.1"/>',
+    # ungroup: the same two shapes with the marquee let go -- only the
+    # opposite corners of it are left
+    "ungroup": '<path d="M1.6 5.2V1.6h3.6"/><path d="M14.4 10.8v3.6h-3.6"/>'
+               '<rect x="3" y="3" width="4.6" height="4.6" rx=".8"/>'
+               '<circle cx="11" cy="11" r="2.3"/>',
+    # ONE PLACE, not all the way: front/back's arrow against a short
+    # step instead of the full bar. Reusing front/back here put the
+    # SAME icon on two neighbouring buttons that do different things.
+    "forward": '<path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/>'
+               '<path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/>',
+    "backward": '<path d="M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z"/>'
+                '<path d="M8 10.8v3.6"/><path d="m6.1 12.5 1.9 1.9 1.9-1.9"/>',
+    # rotate: an OBJECT under a turning arc. The circular-arrow icons
+    # this borrowed before (reset, reload) read as undo and refresh.
+    "rotl": '<rect x="3.8" y="7.4" width="8.4" height="6.4" rx="1"/>'
+            '<path d="M12.4 5.4A5 5 0 0 0 3.8 4.9"/>'
+            '<path d="M3.4 2.2v2.9h2.9"/>',
+    "rotr": '<rect x="3.8" y="7.4" width="8.4" height="6.4" rx="1"/>'
+            '<path d="M3.6 5.4A5 5 0 0 1 12.2 4.9"/>'
+            '<path d="M12.6 2.2v2.9H9.7"/>',
     # text block controls
     "outdent": '<path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/>'
                '<path d="M5.4 5.6 3 8l2.4 2.4"/>',
@@ -262,6 +282,17 @@ _ICON_PATHS = {
                 '<path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/>',
     # a circle with a bar through it: no animation
     "none": '<circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/>',
+    # the three builds, each drawn as what it DOES to the thing:
+    # solid giving way to dashed, an arrow coming up into it, and a
+    # small one pushing its corners out
+    "fade": '<path d="M2.8 3.2v9.6"/>'
+            '<path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/>'
+            '<path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/>'
+            '<path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/>',
+    "rise": '<rect x="3.4" y="2.4" width="9.2" height="6" rx="1"/>'
+            '<path d="M8 14.4v-3.6"/><path d="m6.1 12.6 1.9-1.8 1.9 1.8"/>',
+    "zoom": '<rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/>'
+            '<path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/>',
     # figure/image tools
     "crop": '<path d="M4.6 1.8v9.6h9.6"/><path d="M1.8 4.6h9.6v9.6"/>',
     "locate": '<circle cx="8" cy="8" r="4.2"/>'
@@ -348,18 +379,29 @@ def icons(markup: str) -> str:
       never-defined name (``eye``) deleted the icon and nothing
       complained — the button simply had no icon, forever.
 
-    Rendering happens at build time, so both are now LOUD: any token this
-    function cannot resolve stops the build and names the key.
+    A third one shipped too (found 2026-08-25): a token WRAPPED ACROSS
+    TWO LINES — ``<i
+  data-ic="return"></i>`` — matched neither the
+    substitution nor the old leftover guard, which looked for the same
+    single-line shape it had just failed to substitute. It reached the
+    page as an inert ``<i>`` and #deck-exit had no icon for as long as
+    it existed. The guard below now asks the only question that matters:
+    is there ANY element left carrying a data-ic, however it is spelt.
+
+    Rendering happens at build time, so all three are LOUD: any token
+    this function cannot resolve stops the build and names the key.
     """
     def sub(m: re.Match) -> str:
         return icon_svg(m.group(1))
     out = re.sub(r'<i data-ic="([a-z][a-z0-9-]*)"></i>', sub, markup)
-    leftover = re.search(r'<i data-ic="([^"]*)"></i>', out)
+    leftover = re.search(r'<i\b[^>]*?\bdata-ic\s*=\s*"([^"]*)"', out)
     if leftover:
         raise ValueError(
-            "icon token <i data-ic=\"" + leftover.group(1)
-            + "\"></i> did not match the substitution pattern "
-            "(keys are [a-z][a-z0-9-]*)")
+            "icon token for key \"" + leftover.group(1) + "\" survived "
+            "substitution — it must be written EXACTLY "
+            "'<i data-ic=\"key\"></i>' on ONE line, with keys "
+            "[a-z][a-z0-9-]*. A token split across lines renders as an "
+            "inert <i> and the button silently has no icon.")
     return out
 
 

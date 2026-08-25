@@ -23,8 +23,8 @@
          drawing tool looks like the way out of that tool, and it is not:
          Cancel is. -->
     <button class="dbtn" id="deck-exit"
-      title="Leave the editor. Nothing is closed or lost."><i
-      data-ic="return"></i> Close the editor</button>
+      title="Leave the editor. Nothing is closed or lost."><i data-ic="return"></i>
+        Close the editor</button>
     <span class="deck-topslot" id="deck-topslot"></span>
     <!-- what you are editing. Without it the bar was a handful of buttons
          with a void beside them and read as floating chrome rather than
@@ -479,7 +479,8 @@
               <button class="dbtn rbn-sm" id="dc-wmark"
                 aria-pressed="false"
                 title="A word across every page - DRAFT, CONFIDENTIAL, your
- name. Sits behind the content, never over it"><i data-ic="wmark"></i> Watermark</button>
+ name. Sits behind the content, never over it"><i data-ic="wmark"></i>
+   Watermark</button>
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
                 title="A line along the top of every page"><i data-ic="docktop"></i>
@@ -518,7 +519,8 @@
  deck's type, in proportion">A&#43;</button>
               <button class="dbtn rbn-sm" id="dsg-restyle"
                 title="Re-apply the styles to every box wearing one, on
- every slide — use it after changing a style by hand"><i data-ic="reload"></i> Re-apply</button>
+ every slide — use it after changing a style by hand"><i data-ic="reload"></i>
+   Re-apply</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -528,7 +530,8 @@
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
                 title="Check whether the headings, paragraphs and captions
- across the whole deck look the same as each other"><i data-ic="scope"></i> Standardise text</button>
+ across the whole deck look the same as each other"><i data-ic="scope"></i>
+   Standardise text</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -647,11 +650,12 @@
                 title="Remove the animation from the selected items — they
  are simply on the slide from the start"><i data-ic="none"></i> None</button>
               <button class="dbtn etm" id="anim-fade" hidden
-                title="Fade the selected items in">Fade</button>
+                title="Fade the selected items in"><i data-ic="fade"></i> Fade</button>
               <button class="dbtn etm" id="anim-rise" hidden
-                title="Rise the selected items in from below">Rise</button>
+                title="Rise the selected items in from below"><i data-ic="rise"></i>
+ Rise</button>
               <button class="dbtn etm" id="anim-zoom" hidden
-                title="Zoom the selected items in">Zoom</button>
+                title="Zoom the selected items in"><i data-ic="zoom"></i> Zoom</button>
               <!-- the two builds people actually want, in one press
                    each. Setting "one at a time" by hand means selecting
                    every item and stepping its order, which is the kind of
@@ -872,7 +876,8 @@
                 title="Group the selected items (Ctrl+G)"><i data-ic="group"></i>
                 Group</button>
               <button class="dbtn etm" id="fmt-ungroup"
-                title="Ungroup (Ctrl+Shift+G)">Ungroup</button>
+                title="Ungroup (Ctrl+Shift+G)"><i data-ic="ungroup"></i>
+                Ungroup</button>
               <span class="sh-drop" id="fmt-alignwrap">
                 <button class="dbtn etm" id="fmt-align-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -897,17 +902,17 @@
                 title="Send to back - behind everything else on this
  page"><i data-ic="back"></i> Back</button>
               <button class="dbtn etm" id="fmt-forward" hidden
-                title="Bring forward one place"
-                aria-label="Bring forward one place"><i data-ic="front"></i></button>
+                title="Bring forward one place (Ctrl+])"><i data-ic="forward"></i>
+                  Forward</button>
               <button class="dbtn etm" id="fmt-backward" hidden
-                title="Send backward one place"
-                aria-label="Send backward one place"><i data-ic="back"></i></button>
+                title="Send backward one place (Ctrl+[)"><i data-ic="backward"></i>
+                  Backward</button>
               <button class="dbtn etm" id="fmt-rotl" hidden
-                title="Rotate left 15&#176;"
-                aria-label="Rotate left"><i data-ic="reset"></i></button>
+                title="Rotate left 15&#176;"><i data-ic="rotl"></i>
+                Left</button>
               <button class="dbtn etm" id="fmt-rotr" hidden
-                title="Rotate right 15&#176;"
-                aria-label="Rotate right"><i data-ic="reload"></i></button>
+                title="Rotate right 15&#176;"><i data-ic="rotr"></i>
+                Right</button>
               <button class="dbtn etm" id="fmt-arline" hidden
                 title="Arrange the selected items in a row: middles aligned, equal gaps"
                 ><i data-ic="hline"></i> Row</button>
@@ -948,8 +953,8 @@
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
-                  title="Colour of the selected text / line / shape">
-                  Colour &#9662;</button>
+                  title="Colour of the selected text / line / shape"><i data-ic="palette"></i>
+                    Colour &#9662;</button>
                 <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
                   <span class="fmt-lab" id="fmt-txlab" hidden
                     title="Text colour">Text</span>
@@ -980,8 +985,8 @@
               <span class="sh-drop" id="fmt-fillcolwrap">
                 <button class="dbtn" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
-                  title="Fill / background colour of the selected box">
-                  Fill &#9662;</button>
+                  title="Fill / background colour of the selected box"><i data-ic="fill"></i>
+                    Fill &#9662;</button>
                 <div class="sh-menu sw-menu" id="fmt-fillcol-menu" hidden>
                   <span class="fmt-lab" id="fmt-bglab" hidden
                     title="Fill / background colour">Fill</span>
@@ -1080,11 +1085,11 @@
                 aria-pressed="false"
                 title="Numbered list on / off">1. List</button>
               <button class="dbtn etm" id="fmt-outdent" hidden
-                title="Move this bullet out one level (Shift+Tab)"
-                aria-label="Outdent"><i data-ic="outdent"></i></button>
+                title="Move this bullet out one level (Shift+Tab)"><i data-ic="outdent"></i>
+                  Outdent</button>
               <button class="dbtn etm" id="fmt-indent" hidden
-                title="Move this bullet in one level (Tab)"
-                aria-label="Indent"><i data-ic="indent"></i></button>
+                title="Move this bullet in one level (Tab)"><i data-ic="indent"></i>
+                  Indent</button>
               <!-- LINE SPACING, which every word processor has had since
                    the 1980s and this did not (2026-08-20, user: "when I
                    say I want all the power point options, why do you not
@@ -1142,7 +1147,8 @@
                   <span class="sh-drop" id="fmt-swwrap">
                     <button class="dbtn rbn-sm" id="fmt-sw"
                       aria-haspopup="true" aria-expanded="false"
-                      title="Line thickness"><i data-ic="weight"></i> Weight &#9662;</button>
+                      title="Line thickness"><i data-ic="weight"></i>
+                        Weight &#9662;</button>
                     <div class="sh-menu sw-menu" id="fmt-sw-menu"
                       hidden></div>
                   </span>
@@ -1184,7 +1190,8 @@
                   <span class="sh-drop" id="fmt-shapewrap">
                     <button class="dbtn rbn-sm" id="fmt-shape"
                       aria-haspopup="true" aria-expanded="false"
-                      title="Change the shape"><i data-ic="shapes"></i> Shape &#9662;</button>
+                      title="Change the shape"><i data-ic="shapes"></i>
+                        Shape &#9662;</button>
                     <div class="sh-menu shape-menu" id="fmt-shape-menu"
                       hidden></div>
                   </span>
@@ -1210,7 +1217,8 @@
                    selected, so it costs the resting ribbon nothing. -->
               <button class="dbtn etm" id="fmt-figures" hidden
                 title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them"><i data-ic="flipbook"></i> Figures&#8230;</button>
+ book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
+   Figures&#8230;</button>
               <button class="dbtn etm" id="fmt-imgrefresh" hidden
                 title="Re-read this picture from the file it came
  from. If that file has moved, the picture is left exactly as it
@@ -1260,7 +1268,8 @@
                 Header row</button>
               <button class="dbtn etm" id="fmt-tbl-grid"
                 aria-pressed="false"
-                title="Draw the rules between cells"><i data-ic="grid"></i> Gridlines</button>
+                title="Draw the rules between cells"><i data-ic="grid"></i>
+                  Gridlines</button>
             </span>
             <span class="rbn-lab">Table</span>
           </span>

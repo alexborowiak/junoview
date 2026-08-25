@@ -110,6 +110,20 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for the RIBBON ICON SWEEP: eight new icons in
+# branding.py (ungroup, forward, backward, rotl, rotr, fade, rise,
+# zoom) and the buttons that needed them. Four ribbon buttons had
+# words and no icon beside siblings that had one; six were icon-ONLY,
+# which the house rule rejects twice over; two of those wore a
+# NEIGHBOUR'S icon (fmt-forward drew `front`, fmt-backward `back`)
+# and two borrowed a wrong one (rotate left/right drew `reset` and
+# `reload`, which read as undo and refresh). The two colour buttons
+# are renamed per selection and did it with textContent, which
+# deleted any icon with the old word -- they take innerHTML + bic()
+# now. And #deck-exit wrapped its token across two lines, so it had
+# shipped with NO icon at all: icons() only ever caught the
+# single-line shape it had failed to substitute, and now catches any
+# surviving data-ic. Pinned by tests/test_icon_contract.py.
 # Moved 2026-08-25 filling out the RIBBON LAYOUT CATALOGUE: the
 # eighteen arrangements become a hundred and nine. Recreations of
 # the applications people already use -- PowerPoint 2003 through
@@ -307,8 +321,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "49e6a4809363bdf180b8f9b8bd711330"
-EXPECTED_BYTES = 2954140
+EXPECTED_MD5 = "323818e518bd14148fca83afd6285599"
+EXPECTED_BYTES = 2957972
 
 
 def _render_example() -> str:

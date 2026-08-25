@@ -259,9 +259,14 @@
        'fill colour' is confusing — is that border?") */
     show('#fmt-txcol-btn',kind!=='image');
     var tcb=$('#fmt-txcol-btn');
-    if(tcb) tcb.textContent=(isText||kind==='cell')?'Text ▾'
+    /* innerHTML, not textContent: this button is RENAMED for whatever is
+       selected, and textContent would delete the icon with the old word
+       every time -- which is why it was the one ribbon button that could
+       never keep one (2026-08-25). */
+    if(tcb) tcb.innerHTML=bic('palette')+' '
+      +((isText||kind==='cell')?'Text ▾'
       :kind==='rect'?'Border ▾'
-      :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾';
+      :(kind==='arrow'||kind==='draw')?'Line ▾':'Colour ▾');
     /* a SHAPE has one Fill control and it is the panel in Line & shape;
        this button stays for text boxes and cell frames, which have a
        background colour but no fill STYLE (2026-08-20, user: "confusing
@@ -270,7 +275,8 @@
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');
-    if(fcb) fcb.textContent=(kind==='rect')?'Fill colour ▾':'Fill ▾';
+    if(fcb) fcb.innerHTML=bic('fill')+' '
+      +((kind==='rect')?'Fill colour ▾':'Fill ▾');
     $$('.swbg',bar).forEach(function(sw){
       sw.hidden=!showBg;
       /* read back from the field the item's renderer actually uses, or

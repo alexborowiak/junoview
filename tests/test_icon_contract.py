@@ -236,3 +236,50 @@ def test_wordless_controls_carry_aria_labels():
         f"with its labelling site): {sorted(wordless - _JS_LABELED)}\n"
         "  allowlisted but now worded/labelled (remove from _JS_LABELED): "
         f"{sorted(_JS_LABELED - wordless)}")
+
+
+def test_a_token_split_across_lines_stops_the_build():
+    """The third silent failure this file exists to prevent.
+
+    ``icons()`` substitutes ``<i data-ic="key"></i>`` written on ONE
+    line. A token wrapped by an editor --
+
+        <i
+        data-ic="return"></i>
+
+    -- matched neither the substitution nor the old leftover guard,
+    which looked for the very shape it had just failed to substitute.
+    It reached the page as an inert ``<i>``: #deck-exit ("Close the
+    editor") had no icon for as long as that markup existed, and every
+    test passed, because the key was consumed by another surface so it
+    was not dead either (found 2026-08-25 by asking the DOM whether the
+    button had an svg).
+
+    So the guard now asks the only question that matters: is there any
+    element left carrying a data-ic at all.
+    """
+    from junoview import branding
+
+    good = '<i data-ic="return"></i>'
+    assert branding.icons(good).startswith("<svg")
+
+    for broken in ('<i\n        data-ic="return"></i>',
+                   '<i  data-ic="return"></i>',
+                   '<i\tdata-ic="return"></i>'):
+        try:
+            branding.icons(broken)
+        except ValueError as exc:
+            assert "return" in str(exc)
+        else:
+            raise AssertionError(f"silently passed: {broken!r}")
+
+
+def test_no_template_writes_a_token_across_two_lines():
+    """And the templates themselves are checked, so the guard above is
+    a backstop rather than the only line of defence."""
+    split = re.compile(r'<i\b[^>]*?\n[^>]*?data-ic')
+    for path in sorted((ASSETS / "html").glob("*.html")):
+        hits = split.findall(path.read_text(encoding="utf-8"))
+        assert not hits, (
+            f"{path.name} wraps an icon token across two lines "
+            f"({len(hits)}) — it renders as an inert <i> with no icon")
