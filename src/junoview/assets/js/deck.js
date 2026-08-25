@@ -4022,6 +4022,12 @@
            whitelisted here (2026-08-20) */
         if(typeof s.notes==='string'&&s.notes) o.notes=s.notes;
         if(typeof s.goal==='number'&&s.goal>0) o.goal=s.goal;
+        /* the slide's durable name. Minted on first rehearsal, and the
+           only reason a run made on Tuesday can be compared with one
+           made on Friday after you reordered the deck (T29, 2026-08-25).
+           The TIMES are not here on purpose -- they live beside the deck,
+           because your rehearsal is not a property of the document. */
+        if(typeof s.sid==='string'&&s.sid) o.sid=s.sid;
         if(s.border) o.border=deep(s.border);
         if(s.grpmeta) o.grpmeta=deep(s.grpmeta);
         if(s.layout==='title'){
@@ -7501,6 +7507,140 @@
     ta.focus();
     document.addEventListener('keydown',notesEdKey,true);
   }
+  /* ---- WHAT A REHEARSAL LEAVES BEHIND ---------------------------------
+     (TASKS T29.) "Record per-slide and per-section times across
+     rehearsal runs; show stats (slide 17 averages 3:42)."
+
+     1. A SLIDE HAD NO NAME. Every annot has had an `oid` since T10, but
+        a SLIDE has only ever been an index — and an index is worthless
+        here, because the entire value of the feature is comparing runs
+        made days apart, across which you will have inserted, deleted
+        and reordered slides. So slides get `sid`, minted lazily the
+        first time you rehearse, exactly as oids are minted on first
+        sight rather than at creation.
+
+        AND IT IS THE OPPOSITE RULE TO oid, deliberately. `ensureOids`
+        de-duplicates within a slide but not across them, so a duplicated
+        SLIDE keeps its oids and T27 can match the objects. `ensureSids`
+        de-duplicates across the whole deck, so a duplicated slide gets a
+        FRESH sid — because a copy is a different slide that you will
+        spend a different amount of time on. Same mechanism, opposite
+        scope, because the two questions are opposite.
+
+     2. THE HISTORY IS NOT IN THE DECK FILE. Three reasons, in order of
+        how much they matter: sending someone your deck must not send
+        them the fact that you spent 4:12 stuck on slide 3; the history
+        grows every run while a deck in localStorage has a quota that
+        has bitten this project before (see the embedded-snapshot note);
+        and it is the argument `showCut` and `matchPick` already made —
+        what you are doing with the deck today is not a property of the
+        document. It lives beside the deck under the same key, so
+        renaming a deck starts its history over, which is honest: the
+        store is keyed the way everything else here is keyed.
+
+     3. NOT EVERY RUN IS A REHEARSAL. Opening present mode to check a
+        colour and pressing Escape is not a data point, and averaging it
+        in would quietly halve every number on this page. A run is kept
+        when it reached a second slide AND lasted half a minute; anything
+        shorter is dropped, and the pane says so rather than silently
+        recording nothing.
+
+     4. THE CAP IS SAID OUT LOUD. The last REH_KEEP runs are kept and the
+        pane names that number, because a stat over "your runs" that
+        silently means "your last twelve runs" is a stat that lies. */
+  var REH_KEEP=12, REH_MIN_SEC=30;
+  function rehKey(){return 'jvreh:'+SCOPE+':'+(pres.name||'untitled');}
+  function rehRuns(){
+    try{
+      var v=JSON.parse(lsGet(rehKey())||'[]');
+      return Array.isArray(v)?v:[];
+    }catch(e){return [];}
+  }
+  function rehSave(runs){
+    try{lsSet(rehKey(),JSON.stringify(runs.slice(-REH_KEEP)));}
+    catch(e){}
+  }
+  /* deck-wide de-duplication, which is what makes a duplicated slide a
+     new slide here while T27's oids make a duplicated object the same
+     object there */
+  function ensureSids(){
+    var seen={},minted=0;
+    (pres.slides||[]).forEach(function(sl){
+      if(!sl) return;
+      if(!sl.sid||seen[sl.sid]){
+        sl.sid='s'+Math.random().toString(36).slice(2,8);minted++;
+      }
+      seen[sl.sid]=1;
+    });
+    /* MINTING IS A CHANGE TO THE DECK, and saying so is the whole point:
+       a name that is not written down is minted again next session, and
+       then every run recorded against the old one is orphaned. */
+    if(minted) markDirty();
+  }
+  var rehOn=false,rehAt=0,rehSpent=null,rehSid='',rehSeen=0;
+  function rehMark(){
+    if(!rehOn||!rehAt) return;
+    var dt=Math.max(0,Math.round((Date.now()-rehAt)/1000));
+    if(rehSid) rehSpent[rehSid]=(rehSpent[rehSid]||0)+dt;
+    rehAt=Date.now();
+  }
+  /* the slide changed: the time so far belongs to the one you are
+     leaving. Called from go(), which is the one place a slide changes. */
+  function rehSlideChanged(){
+    if(!rehOn) return;
+    rehMark();
+    var sl=(pres.slides||[])[cur];
+    rehSid=(sl&&sl.sid)||'';
+    if(rehSid&&!rehSpent[rehSid]) rehSeen++;
+  }
+  function rehStart(){
+    if(rehOn) return;
+    ensureSids();          /* lazily, so a deck that never rehearses
+                              never grows the field */
+    rehOn=true;rehSpent={};rehSeen=1;rehAt=Date.now();
+    var sl=(pres.slides||[])[cur];
+    rehSid=(sl&&sl.sid)||'';
+  }
+  function rehPause(){rehMark();rehAt=0;}
+  function rehResume(){if(rehOn) rehAt=Date.now();}
+  function rehStop(){
+    if(!rehOn) return;
+    rehMark();
+    rehOn=false;
+    var spent=rehSpent||{};rehSpent=null;rehAt=0;
+    var total=0;
+    Object.keys(spent).forEach(function(k){total+=spent[k];});
+    /* a run that never left the first slide, or lasted under half a
+       minute, is someone checking a colour -- not a rehearsal */
+    if(rehSeen<2||total<REH_MIN_SEC){
+      if(total>2) toast('Too short to record as a rehearsal');
+      return;
+    }
+    var runs=rehRuns();
+    runs.push({at:Date.now(),total:total,s:spent});
+    rehSave(runs);
+    toast('Rehearsal recorded — '+fmtMins(total/60)+' over '
+      +rehSeen+' slide'+(rehSeen===1?'':'s'));
+    renderNotesPane();
+  }
+  /* mean seconds per slide, by sid, across every kept run */
+  function rehStats(){
+    var acc={},runs=rehRuns();
+    runs.forEach(function(r){
+      Object.keys(r.s||{}).forEach(function(sid){
+        var a=acc[sid]||(acc[sid]={n:0,sum:0,last:0});
+        a.n++;a.sum+=r.s[sid];a.last=r.s[sid];
+      });
+    });
+    Object.keys(acc).forEach(function(k){
+      acc[k].mean=acc[k].sum/acc[k].n;});
+    return {runs:runs,by:acc};
+  }
+  function rehFor(sl){
+    if(!sl||!sl.sid) return null;
+    var a=rehStats().by[sl.sid];
+    return (a&&a.n)?a:null;
+  }
   /* ---- THE SCRATCHPAD --------------------------------------------------
      Loose notes, in folders, belonging to the presentation rather than to
      any one slide (2026-08-20, user asked for "overall notes, and then
@@ -7604,6 +7744,91 @@
       if(n.t==='f'||n.folder) return;
       host.appendChild(noteRow(n,i));});
   }
+  /* THE REHEARSALS TAB. Per slide and per SECTION, because a section is
+     the unit you actually cut ("the methods run long"), and sectionRuns()
+     already knows the grouping -- so this reads the same clusters the
+     strip and the overview map draw rather than inventing a third. */
+  function renderReh(){
+    var host=$('#np-rehlist'); if(!host) return;
+    host.innerHTML='';
+    var st=rehStats();
+    if(!st.runs.length){
+      host.innerHTML='<div class="selpane-empty">No rehearsals yet. '
+        +'Present the deck and this fills in — a run counts once it '
+        +'reaches a second slide and lasts half a minute.</div>';
+      return;
+    }
+    function line(cls,label,secs,extra){
+      var r=document.createElement('div');
+      r.className='np-rehrow'+(cls?(' '+cls):'');
+      var a=document.createElement('span');
+      a.className='np-rehlab';a.textContent=label;
+      var b=document.createElement('span');
+      b.className='np-rehnum';b.textContent=fmtMins(secs/60);
+      r.appendChild(a);r.appendChild(b);
+      if(extra){
+        var c=document.createElement('span');
+        c.className='np-rehex';c.textContent=extra;
+        r.appendChild(c);
+      }
+      host.appendChild(r);
+      return r;
+    }
+    var head=document.createElement('div');
+    head.className='np-rehhead';
+    var tot=0;
+    st.runs.forEach(function(r){tot+=r.total||0;});
+    head.textContent=st.runs.length+' rehearsal'
+      +(st.runs.length===1?'':'s')+' — '
+      +fmtMins(tot/st.runs.length/60)+' on average'
+      +(st.runs.length>=REH_KEEP
+        ?(' (the last '+REH_KEEP+' are kept)'):'');
+    host.appendChild(head);
+    /* whole talk against the slot, which is the number you act on */
+    if(pres.talkMins){
+      var avg=tot/st.runs.length, want=pres.talkMins*60;
+      line(avg>want?'over':'', 'against your '+pres.talkMins+'-minute slot',
+        Math.abs(avg-want),
+        avg>want?'over':'to spare');
+    }
+    sectionRuns().forEach(function(run){
+      var secTot=0,secN=0;
+      for(var k=0;k<run.n;k++){
+        var sl=pres.slides[run.at+k];
+        var a=sl&&sl.sid&&st.by[sl.sid];
+        if(a){secTot+=a.mean;secN++;}
+      }
+      if(run.id||sectionRuns().length>1)
+        line('sec',run.id?(run.name||'Section')
+          :'(no section)',secTot,
+          secN?(secN+' timed'):'none timed');
+      for(var j=0;j<run.n;j++){
+        (function(i){
+          var sl=pres.slides[i];
+          var a=sl&&sl.sid&&st.by[sl.sid];
+          var g=slideGoal(sl);
+          var row=line('slide',(i+1)+'. '+(filmText(sl)||'—'),
+            a?a.mean:0,
+            !a?'not timed'
+              :g?((a.mean>g*60?'over ':'under ')+'target '+fmtMins(g))
+              :(a.n+' run'+(a.n===1?'':'s')));
+          if(a&&g&&a.mean>g*60) row.classList.add('over');
+          row.addEventListener('click',function(){
+            cur=i;selAnnot=null;selSet=[];refresh();});
+        })(run.at+j);
+      }
+    });
+    var clr=document.createElement('button');
+    clr.className='dbtn np-padb';
+    clr.innerHTML=bic('exit')+' Forget these rehearsals';
+    clr.addEventListener('click',function(){
+      if(!confirm('Delete the timing from '+st.runs.length
+        +' rehearsal'+(st.runs.length===1?'':'s')+'?')) return;
+      try{lsSet(rehKey(),'[]');}catch(e){}
+      renderReh();renderNotesPane();
+    });
+    host.appendChild(clr);
+  }
   function renderNotesPane(){
     var pane=$('#notespane');
     if(!pane||pane.hidden) return;
@@ -7617,6 +7842,22 @@
       ti.value=pres.talkMins||'';
     var dn=$('#np-decknotes');
     if(dn&&document.activeElement!==dn) dn.value=pres.notes||'';
+    /* what you ACTUALLY take here, beside the target you set -- the two
+       numbers are only useful next to each other (T29) */
+    var rh=$('#np-reh');
+    if(rh){
+      var st=rehFor(sl);
+      if(!st) rh.textContent='';
+      else {
+        var g=slideGoal(sl);
+        rh.textContent='You average '+fmtMins(st.mean/60)+' here over '
+          +st.n+' rehearsal'+(st.n===1?'':'s')
+          +(g?(st.mean>g*60
+              ?(' \u2014 '+fmtMins(st.mean/60-g)+' over target')
+              :(' \u2014 inside your target')):'');
+        rh.classList.toggle('over',!!g&&st.mean>g*60);
+      }
+    }
     renderPad();
     if(tot){
       var g=goalTotal(),want=pres.talkMins||0;
@@ -7708,7 +7949,10 @@
         if(b1) b1.hidden=(which!=='slide');
         if(b2) b2.hidden=(which!=='deck');
         if(b3) b3.hidden=(which!=='pad');
+        var b4=$('#notespane-reh');
+        if(b4) b4.hidden=(which!=='reh');
         if(which==='pad') renderPad();
+        if(which==='reh') renderReh();
       });
     });
     var dn=$('#np-decknotes');
@@ -17886,10 +18130,12 @@
     else if(msg.do==='prev') backStep();
     else if(msg.do==='goto'&&typeof msg.n==='number') go(msg.n);
     else if(msg.do==='timer'){
-      if(msg.act==='reset'){presStart=Date.now();presPaused=0;presPauseAt=0;}
-      else if(msg.act==='pause'&&!presPauseAt) presPauseAt=Date.now();
+      if(msg.act==='reset'){presStart=Date.now();presPaused=0;presPauseAt=0;
+        rehResume();}
+      else if(msg.act==='pause'&&!presPauseAt){
+        presPauseAt=Date.now();rehPause();}
       else if(msg.act==='resume'&&presPauseAt){
-        presPaused+=Date.now()-presPauseAt;presPauseAt=0;}
+        presPaused+=Date.now()-presPauseAt;presPauseAt=0;rehResume();}
     }
     else if(msg.do==='closed'){presWin=null;return;}
     presenterPush();
@@ -17956,8 +18202,12 @@
     if(ct) ct.textContent=(cur+1)+' / '+n;
     var gl=doc.getElementById('jvp-goal');
     if(gl){
-      var g=slideGoal(sl);
-      gl.textContent=g?('target '+fmtMins(g)):'';
+      var g=slideGoal(sl),st=rehFor(sl),bits=[];
+      if(g) bits.push('target '+fmtMins(g));
+      /* what you ACTUALLY take here, which is the number that changes
+         what you do next (T29) */
+      if(st) bits.push('usually '+fmtMins(st.mean/60));
+      gl.textContent=bits.join(' \u00b7 ');
     }
     var tt=doc.getElementById('jvp-talk');
     if(tt){
@@ -18575,6 +18825,9 @@
     /* MEASURE BEFORE THE REBUILD. renderSlide empties the stage, so the
        outgoing geometry has to be taken here or it is gone (T27). */
     captureFlip(prev);
+    /* ...and the time so far belongs to the slide you are LEAVING, which
+       is why this is here rather than after the render (T29) */
+    rehSlideChanged();
     refresh();
     playFlip();
     presenterSync();
@@ -20456,6 +20709,10 @@
     /* entering Present must not leave a fresher deck in memory than in
        the draft — the debounced write lands before the talk starts */
     if(m==='view') flushDraftWrite();
+    /* a rehearsal is exactly "present mode, from when it starts to when
+       it ends" -- so it begins and ends where the mode does (T29) */
+    if(m==='view'&&mode!=='view') rehStart();
+    else if(m!=='view'&&mode==='view') rehStop();
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);

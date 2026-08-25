@@ -112,6 +112,9 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "goal": ((int, float), "Minutes this slide should take."),
     "border": (dict, "This slide's own border."),
     "grpmeta": (dict, "Names for the groups on this slide."),
+    "sid": (str, "This slide's durable name, minted the first time the "
+            "deck is rehearsed. Rehearsal times are keyed by it and live "
+            "beside the deck, never inside it."),
     "trans": (str, "How this slide arrives: \"\" (cut), \"fade\" or "
                    "\"move\" (matching objects travel). A section may "
                    "set a default for the slides in it."),

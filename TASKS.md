@@ -419,8 +419,36 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   presenter view and overview map already have — with the slide, the
   text and the rendered result side by side, writing to the same
   `sl.notes` on the same input event as the pane. 22/22 in a browser.
-- [ ] **T29 · M — Rehearsal timing.** Record per-slide and per-section
+- [x] **T29 · M — Rehearsal timing.** Record per-slide and per-section
   times across rehearsal runs; show stats ("slide 17 averages 3:42").
+  *2026-08-25.* Design note at `WHAT A REHEARSAL LEAVES BEHIND`.
+  **A slide had no name.** Annots have had `oid` since T10; a slide was
+  only ever an index, and an index is worthless when the entire value is
+  comparing runs made days apart across insertions and reorders. So
+  `sid`, minted lazily on first rehearsal — and de-duplicated at the
+  OPPOSITE scope to `oid`: deck-wide, so a duplicated slide gets a fresh
+  name, where a duplicated slide keeps its oids so T27 can match the
+  objects. Same mechanism, opposite scope, because the two questions are
+  opposite.
+  **The history is not in the deck file.** Sending someone your deck must
+  not send them the fact that you spent 4:12 on slide 3; the history grows
+  every run while localStorage has a quota that has bitten this project
+  before; and it is the argument `showCut` and `matchPick` already made.
+  It lives beside the deck under the same key, so renaming a deck starts
+  its history over — honest, and consistent with how everything here is
+  keyed.
+  **Not every run is a rehearsal.** Opening Present to check a colour
+  would quietly halve every average. A run counts once it reaches a
+  second slide and lasts half a minute; shorter ones are dropped and say
+  so. The twelve-run cap is named in the UI, because a stat over "your
+  runs" that silently means "your last twelve" is a stat that lies.
+  Shown in three places and no fourth: beside the per-slide target, in
+  the presenter view under the clock ("usually 3:42"), and a Rehearsals
+  tab grouped by section — the unit you actually cut — reading the same
+  `sectionRuns()` the strip and the overview map draw.
+  16/16 in a browser, including a five-second run recording nothing and a
+  thirty-seven-second run over two slides recording 19s and 18s against
+  two different sids.
   Local only — no audio, no speech analysis.
 - [ ] **T30 · S — Presenter slide search / jump.** Type-to-search titles
   and content while presenting; jump straight to a slide.

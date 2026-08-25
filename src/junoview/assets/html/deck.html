@@ -1361,6 +1361,7 @@
           <button class="np-tab on" data-np="slide">This slide</button>
           <button class="np-tab" data-np="deck">Whole talk</button>
           <button class="np-tab" data-np="pad">Scratchpad</button>
+          <button class="np-tab" data-np="reh">Rehearsals</button>
         </div>
         <div class="selpane-list" id="notespane-body">
           <label class="np-lab" for="np-notes">Speaker notes for this
@@ -1384,6 +1385,9 @@
               title="No target for this slide"><i data-ic="exit"></i>
               </button>
           </div>
+          <!-- what you ACTUALLY take here. It belongs beside the
+               target, because neither number means much alone (T29). -->
+          <div class="np-reh" id="np-reh"></div>
           <div class="np-tot" id="np-tot"></div>
           <label class="np-lab" for="np-total">Whole talk</label>
           <div class="np-row">
@@ -1413,6 +1417,14 @@
             <button class="dbtn np-padb" id="np-addfold">&#43; Folder</button>
           </div>
           <div class="np-padlist" id="np-padlist"></div>
+        </div>
+        <!-- REHEARSALS: per slide and per section, because a section is
+             the unit you actually cut ("the methods run long"). The
+             history lives beside the deck rather than in it -- sending
+             someone your deck must not send them the fact that you got
+             stuck on slide 3 (T29). -->
+        <div class="selpane-list" id="notespane-reh" hidden>
+          <div class="np-rehlist" id="np-rehlist"></div>
         </div>
       </aside>
       <aside class="selpane animpane" id="animpane" hidden>

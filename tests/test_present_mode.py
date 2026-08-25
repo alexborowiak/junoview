@@ -160,3 +160,106 @@ def test_speaker_notes_and_time_goals(out):
     assert "talkMins:pres.talkMins||0," in out
     # over your slot is the one thing worth alarming about
     assert "tot.classList.toggle('over'," in out
+
+
+def test_a_slide_gets_a_durable_name_before_it_can_be_timed(out):
+    """TASKS T29. Every annot has had an `oid` since T10, but a SLIDE
+    was only ever an index -- and an index is worthless here, because
+    the whole value is comparing runs made days apart, across which you
+    will have inserted, deleted and reordered slides.
+
+    `sid` is minted lazily on first rehearsal, the way oids are minted
+    on first sight rather than at creation, so a deck that is never
+    rehearsed never grows the field.
+    """
+    assert "function ensureSids(){" in out
+    assert "sl.sid='s'+Math.random().toString(36).slice(2,8)" in out
+    assert "ensureSids();" in out
+    # minting is a change to the deck: a name that is not written down
+    # is minted again next session, orphaning every run against it
+    assert "if(minted) markDirty();" in out
+    assert "if(typeof s.sid==='string'&&s.sid) o.sid=s.sid;" in out
+
+
+def test_sids_and_oids_de_duplicate_at_opposite_scopes(out):
+    """The same mechanism, deliberately opposite. `ensureOids`
+    de-duplicates WITHIN a slide but not across them, so a duplicated
+    slide keeps its oids and T27 can match the objects. `ensureSids`
+    de-duplicates across the WHOLE deck, so a duplicated slide gets a
+    fresh sid -- a copy is a different slide you will spend a different
+    amount of time on.
+
+    Verified in a browser: duplicating a slide produced two different
+    sids, and the run recorded 19s against one and 18s against the
+    other.
+    """
+    js = out
+    a = js.index("function ensureOids(s){")
+    b = js.index("function ensureSids(){")
+    # oid: the seen-set is per slide, built inside the function that
+    # takes ONE slide
+    assert "function ensureOids(s){" in js
+    assert "s.annots.forEach(function(a){" in js[a:a + 400]
+    # sid: the seen-set spans pres.slides
+    assert "(pres.slides||[]).forEach(function(sl){" in js[b:b + 400]
+
+
+def test_the_rehearsal_history_is_not_in_the_deck_file(out):
+    """Three reasons, in order: sending someone your deck must not send
+    them the fact that you spent 4:12 stuck on slide 3; the history
+    grows every run while a deck in localStorage has a quota that has
+    bitten this project before; and it is the argument showCut and
+    matchPick already made -- what you are doing with the deck today is
+    not a property of the document.
+    """
+    assert "function rehKey(){return 'jvreh:'+SCOPE+':'" in out
+    assert "var REH_KEEP=12, REH_MIN_SEC=30;" in out
+    # and the cap is said out loud rather than silently truncating
+    assert "' (the last '+REH_KEEP+' are kept)'" in out
+
+
+def test_not_every_run_counts_as_a_rehearsal(out):
+    """Opening present mode to check a colour and pressing Escape is not
+    a data point, and averaging it in would quietly halve every number
+    on the page. A run is kept once it reached a second slide AND lasted
+    half a minute; anything shorter is dropped and says so.
+
+    Verified in a browser: a five-second run recorded nothing and raised
+    "Too short to record as a rehearsal"; a thirty-seven-second run over
+    two slides was kept.
+    """
+    assert "if(rehSeen<2||total<REH_MIN_SEC){" in out
+    assert "toast('Too short to record as a rehearsal')" in out
+
+
+def test_the_clock_starts_and_stops_where_present_mode_does(out):
+    """A rehearsal is exactly "present mode, from when it starts to when
+    it ends", so it begins and ends where the mode does -- and the time
+    so far belongs to the slide you are LEAVING, which is why the mark
+    is taken in go() before the render rather than after it.
+    """
+    assert "if(m==='view'&&mode!=='view') rehStart();" in out
+    assert "else if(m!=='view'&&mode==='view') rehStop();" in out
+    assert "rehSlideChanged();" in out
+    assert out.index("rehSlideChanged();") < out.index("    refresh();\n"
+                                                      "    playFlip();")
+    # pausing the presenter clock pauses the rehearsal with it
+    assert "presPauseAt=Date.now();rehPause();" in out
+
+
+def test_the_stats_are_shown_where_you_would_act_on_them(out):
+    """Three places, and no fourth: beside the per-slide target (the two
+    numbers are only useful next to each other), in the presenter view
+    ("usually 3:42" is the number that changes what you do next), and a
+    Rehearsals tab that groups by SECTION -- because a section is the
+    unit you actually cut.
+
+    The tab reads sectionRuns(), the same clusters the strip and the
+    overview map draw, so it cannot disagree with them.
+    """
+    assert "function renderReh(){" in out
+    assert "rh.textContent='You average '+fmtMins(st.mean/60)+' here over '" \
+        in out
+    assert "if(st) bits.push('usually '+fmtMins(st.mean/60));" in out
+    assert "sectionRuns().forEach(function(run){" in out
+    assert 'data-np="reh"' in out

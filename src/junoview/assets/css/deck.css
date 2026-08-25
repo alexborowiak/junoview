@@ -2085,6 +2085,30 @@ body.light .fp-tielab{color:var(--ink-3);}
 .mini-pane.is-flip{background:#243b52;}
 .sp-kind.k-flip{background:#2a4761;}
 
+/* ---------- what a rehearsal left behind ----------
+   Per slide and per section. The section rows are the ones you act on,
+   so they carry the weight; a row that ran over its target is the only
+   thing coloured, because colouring everything says nothing. */
+.np-reh{font-size:11px;line-height:1.45;color:#8fa6b8;margin:2px 0 4px;}
+.np-reh.over{color:#f0a848;}
+.np-rehhead{font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  color:#7d93a6;margin:2px 0 8px;}
+.np-rehrow{display:flex;align-items:baseline;gap:8px;padding:4px 6px;
+  border-radius:5px;font-size:11.5px;color:#b9cad8;cursor:pointer;}
+.np-rehrow:hover{background:#ffffff0d;}
+.np-rehrow.sec{margin-top:7px;color:#dbe7ef;cursor:default;
+  border-top:1px solid #ffffff14;padding-top:7px;}
+.np-rehrow.sec .np-rehlab{font-family:var(--mono);font-size:9.5px;
+  letter-spacing:.12em;text-transform:uppercase;}
+.np-rehlab{flex:1;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.np-rehnum{font-family:var(--mono);font-size:11px;}
+.np-rehex{font-family:var(--mono);font-size:9px;color:#7d93a6;
+  min-width:62px;text-align:right;}
+.np-rehrow.over .np-rehnum,.np-rehrow.over .np-rehex{color:#f0a848;}
+body.light .np-rehrow{color:var(--ink-2);}
+body.light .np-rehrow.sec{color:var(--ink);border-top-color:var(--rule);}
+
 /* ---------- the roomy notes editor ----------
    An OVERLAY, like the spotlight, the presenter view and the overview
    map: it wants the whole screen while you are writing and none of it

@@ -110,6 +110,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T29, rehearsal timing: deck.js gained
+# WHAT A REHEARSAL LEAVES BEHIND (the lazily minted slide `sid`,
+# the run recorder hung off setUIMode and go(), and the stats) plus
+# the Rehearsals tab; deck.html the tab and the per-slide line,
+# deck.css their styles, help.html a paragraph; presentations.py
+# and deck_schema.py carry `sid`. Pinned by test_present_mode.py's
+# six T29 tests and verified in a browser, 16/16.
 # Moved 2026-08-25 for TASKS T28, rich speaker notes: deck.js
 # gained WHAT A NOTE IS ALLOWED TO BE (a small escape-first
 # markdown with scheme-whitelisted links) and THE ROOM TO WRITE
@@ -239,8 +246,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "523a4380cf0edf1d3af3c9b365ee090a"
-EXPECTED_BYTES = 2527505
+EXPECTED_MD5 = "4eabddc666c8dcc0f33b690d0c196932"
+EXPECTED_BYTES = 2540936
 
 
 def _render_example() -> str:
