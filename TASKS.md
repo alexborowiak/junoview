@@ -501,12 +501,44 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 6. Versioning & recovery
 
-- [ ] **T32 · L — Deck version history + visual diff (design first).**
+- [x] **T32 · L — Deck version history + visual diff (design first).**
   Snapshots on save (the server already snapshots notebook edits — same
   pattern), a slide-by-slide visual comparison of two versions, and
   restore-a-destroyed-slide recovery. Hook `server/vcs.py` git awareness
   where a repo is present. Deck JSON + deterministic output make this
   tractable in a way pptx structurally isn't.
+  *2026-08-25.* Design note at `WHAT THIS DECK USED TO BE`.
+  **IndexedDB, not localStorage.** A snapshot is the whole deck and a
+  deck carries images as data URIs; the quota has bitten this project
+  once already. One record per snapshot plus a small index — keeping the
+  list in one record would rewrite every snapshot on every save.
+  **The notebook's own rule:** one on open, one on every explicit save,
+  deduped when nothing changed, capped at 20. The dedupe is what makes
+  "open, look, close" cost nothing.
+  **The diff pairs slides by `sid`, which is why T29 mattered more than
+  it looked.** Pairing by index reports "everything from slide 4 down has
+  changed" the moment you insert one — that is not a diff, it is noise.
+  So the mint point widened: a deck is named whenever it is RECORDED,
+  the first moment identity has to exist. Snapshots older than slide
+  names fall back to positional pairing and the panel says so.
+  **One renderer.** `withDeck` swaps the single `pres` global for the
+  length of a synchronous call — the trick `buildSlideNode` already plays
+  with `mode` — rather than threading a "which deck" parameter through
+  everything. Mini diagram per row, real render on demand.
+  **Going back is undoable**, because a snapshot is taken before either
+  restore.
+  **The git half, honestly.** A deck is not a file on disk — it lives
+  inside the notebook or the project file — so the deck's own history is
+  this local store (the moments *between* commits) and the repository's
+  history of the file it is saved into is the notebook's, which
+  `server/vcs.py` already lists and opens. The panel names that rather
+  than duplicating it. Pulling a deck OUT of an old commit would need a
+  new endpoint that extracts the embedded deck from a historical
+  notebook; not built, and not pretended.
+  18/18 in a browser: after editing slide 1 and deleting slide 2 the
+  panel read "1 changed, 1 gone, 1 moved" — the third slide correctly
+  *moved* rather than changed, which is the whole point of naming
+  slides.
 
 ## 7. Deck-as-code & programmability
 

@@ -79,6 +79,10 @@ RUNTIME_IDS = {
     # The roomy notes editor, an overlay built per open and removed on
     # close: deck.js, THE ROOM TO WRITE THEM IN.
     "deck-notesed",
+    # The history panel, the same shape: deck.js, WHAT THIS DECK USED TO
+    # BE. Its rail and body are reached through the overlay rather than
+    # by id, so only the overlay itself is looked up globally.
+    "deck-history",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

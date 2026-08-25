@@ -18803,6 +18803,348 @@
     });
     return out;
   }
+  /* ---- WHAT THIS DECK USED TO BE --------------------------------------
+     (TASKS T32.) Snapshots on save, a slide-by-slide comparison of two
+     versions, and getting a destroyed slide back.
+
+     1. INDEXEDDB, NOT localStorage. A snapshot is the whole deck, and a
+        deck carries placed images as data URIs. localStorage's quota has
+        already bitten this project once — it is why self-contained decks
+        keep figures out of the pres object — and twenty copies of a deck
+        is exactly the shape of that problem. IndexedDB is already open
+        here for file handles, so this is a second use of a store that
+        exists rather than a new dependency.
+
+        ONE RECORD PER SNAPSHOT, plus a small index. Keeping the list in
+        one record would mean rewriting every snapshot on every save,
+        which for a deck full of images is megabytes per keystroke-worth
+        of work. The index holds only what the list needs to draw itself
+        — the same reason `pres.cuts` holds only names.
+
+     2. THE SAME RULE THE NOTEBOOK USES: one when you open it, one on
+        every explicit save, deduped when nothing changed, capped. A
+        history that records the same deck nine times is a history you
+        cannot read, and the dedupe is what makes "open, look, close"
+        cost nothing.
+
+     3. THE COMPARISON PAIRS SLIDES BY `sid`, WHICH IS WHY T29 MATTERED
+        MORE THAN IT LOOKED. Pairing by index reports "everything from
+        slide 4 down has changed" the moment you insert one, which is not
+        a diff, it is noise. With a durable name per slide the answer is
+        the true one: this slide changed, that one moved, this one is
+        new, that one is gone. So the mint point widens — T29 minted a
+        sid on first rehearsal; a deck is now named whenever it is
+        RECORDED, which is the first moment identity has to exist.
+        Snapshots taken before that fall back to positional pairing and
+        the panel says so, rather than pretending.
+
+     4. THE MINI DIAGRAM FIRST, THE REAL RENDER ON DEMAND. Drawing forty
+        slides twice, fully, to answer "what changed" would take seconds
+        and most rows are identical. The strip's own thumbnail shows a
+        moved box or a lost figure at a glance; opening a row renders
+        both sides properly. Same renderer either way — there is no
+        second drawing of a slide anywhere in this file, and this does
+        not become the first. */
+  var HIST_KEEP=20;
+  function histKey(){return 'dhist:'+SCOPE+':'+(pres.name||'untitled');}
+  function histVKey(id){return histKey()+':'+id;}
+  function histIndex(){
+    return idbGet(histKey()).then(function(v){
+      return Array.isArray(v)?v:[];
+    }).catch(function(){return [];});
+  }
+  /* the whole deck as it stands, in the form a save would write */
+  function histText(){
+    ensureSids();
+    return JSON.stringify(normPres(pres));
+  }
+  function snapTake(why){
+    if(!pres||!pres.slides) return Promise.resolve(false);
+    var txt;
+    try{txt=histText();}catch(e){return Promise.resolve(false);}
+    return histIndex().then(function(ix){
+      /* DEDUPED. Open, look, close should cost nothing, and a history
+         with the same deck in it nine times cannot be read. */
+      if(ix.length&&ix[ix.length-1].len===txt.length
+         &&ix[ix.length-1].n===pres.slides.length)
+        return idbGet(histVKey(ix[ix.length-1].id)).then(function(prev){
+          if(prev===txt) return false;
+          return snapWrite(ix,txt,why);
+        }).catch(function(){return snapWrite(ix,txt,why);});
+      return snapWrite(ix,txt,why);
+    }).catch(function(){return false;});
+  }
+  function snapWrite(ix,txt,why){
+    var id='v'+(Date.now().toString(36))
+      +Math.random().toString(36).slice(2,5);
+    var ent={id:id,at:Date.now(),why:why||'saved',
+      n:(pres.slides||[]).length,len:txt.length};
+    var next=ix.concat([ent]);
+    var drop=next.length>HIST_KEEP?next.splice(0,next.length-HIST_KEEP):[];
+    return idbPut(histVKey(id),txt).then(function(){
+      return idbPut(histKey(),next);
+    }).then(function(){
+      /* the record goes only after the index no longer names it, so a
+         crash between the two leaves an orphan rather than a listed
+         snapshot that cannot be opened */
+      return Promise.all(drop.map(function(d){
+        return idbDel(histVKey(d.id)).catch(function(){});
+      }));
+    }).then(function(){return true;}).catch(function(){return false;});
+  }
+  function snapRead(id){
+    return idbGet(histVKey(id)).then(function(t){
+      if(typeof t!=='string') return null;
+      try{return JSON.parse(t);}catch(e){return null;}
+    }).catch(function(){return null;});
+  }
+  /* run something with a DIFFERENT deck in place. buildSlideNode and
+     miniDiagram both read the live `pres`, and giving either a "which
+     deck" parameter would mean threading it through everything they
+     call; swapping the one global for the length of a synchronous call
+     is the same trick buildSlideNode already plays with `mode`. */
+  function withDeck(obj,fn){
+    var saved=pres;
+    pres=obj;
+    try{return fn();}finally{pres=saved;}
+  }
+  function slideSig(sl){
+    if(!sl) return '';
+    var c={};
+    Object.keys(sl).forEach(function(k){
+      if(k!=='sid') c[k]=sl[k];});
+    try{return JSON.stringify(c);}catch(e){return '';}
+  }
+  /* WHAT CHANGED, as rows in reading order: every slide that is in
+     either version, paired by name where both versions have names. */
+  function deckDiff(then,now){
+    var A=(then&&then.slides)||[],B=(now&&now.slides)||[];
+    var byName=A.every(function(s2){return s2&&s2.sid;})
+      &&B.every(function(s2){return s2&&s2.sid;})
+      &&A.length&&B.length;
+    var rows=[];
+    if(!byName){
+      /* POSITIONAL, and said out loud: a snapshot from before slides
+         were named cannot be paired any other way */
+      var n=Math.max(A.length,B.length);
+      for(var i=0;i<n;i++)
+        rows.push({a:A[i]||null,b:B[i]||null,ai:i,bi:i,
+          st:!A[i]?'added':!B[i]?'removed'
+            :(slideSig(A[i])===slideSig(B[i])?'same':'changed')});
+      return {rows:rows,byName:false};
+    }
+    var posB={};
+    B.forEach(function(s2,i){posB[s2.sid]=i;});
+    var seen={};
+    B.forEach(function(b,i){
+      var ai=-1;
+      A.forEach(function(a,j){if(a.sid===b.sid) ai=j;});
+      var a=ai>=0?A[ai]:null;
+      if(a) seen[a.sid]=1;
+      rows.push({a:a,b:b,ai:ai,bi:i,
+        st:!a?'added'
+          :slideSig(a)!==slideSig(b)?'changed'
+          :ai!==i?'moved':'same'});
+    });
+    /* the ones that are GONE, put back where they used to be so the
+       list still reads like the old deck at the point they vanished */
+    A.forEach(function(a,j){
+      if(seen[a.sid]) return;
+      var at=rows.length;
+      for(var k=0;k<rows.length;k++)
+        if(rows[k].ai>j){at=k;break;}
+      rows.splice(at,0,{a:a,b:null,ai:j,bi:-1,st:'removed'});
+    });
+    return {rows:rows,byName:true};
+  }
+  function histWhen(ms){
+    var d=Math.round((Date.now()-ms)/1000);
+    if(d<90) return 'just now';
+    if(d<5400) return Math.round(d/60)+' min ago';
+    if(d<86400*2) return Math.round(d/3600)+' h ago';
+    return new Date(ms).toLocaleDateString();
+  }
+  /* THE PANEL. An overlay, like the overview map and the notes editor:
+     it wants the screen while you are comparing and none of it after. */
+  var histSel='';
+  function histPanelClose(){
+    var ov=$('#deck-history');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',histPanelKey,true);
+  }
+  function histPanelKey(e){
+    if(!$('#deck-history')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();histPanelClose();}
+  }
+  function histRows(ov,ix){
+    var rail=ov.querySelector('#dh-list');
+    rail.innerHTML='';
+    if(!ix.length){
+      rail.innerHTML='<div class="selpane-empty">Nothing yet. A '
+        +'snapshot is kept when you open this deck and every time you '
+        +'save it, so the history starts filling from now.</div>';
+      return;
+    }
+    ix.slice().reverse().forEach(function(e){
+      var b=document.createElement('button');
+      b.className='dh-snap'+(e.id===histSel?' on':'');
+      var l1=document.createElement('span');
+      l1.className='dh-when';l1.textContent=histWhen(e.at);
+      var l2=document.createElement('span');
+      l2.className='dh-why';
+      l2.textContent=e.why+' · '+e.n+' slide'+(e.n===1?'':'s');
+      b.appendChild(l1);b.appendChild(l2);
+      b.title=new Date(e.at).toLocaleString();
+      b.addEventListener('click',function(){
+        histSel=e.id;histRows(ov,ix);histCompare(ov,e);});
+      rail.appendChild(b);
+    });
+  }
+  function histCompare(ov,ent){
+    var body=ov.querySelector('#dh-body');
+    body.innerHTML='<div class="selpane-empty">Reading…</div>';
+    snapRead(ent.id).then(function(then){
+      body.innerHTML='';
+      if(!then){
+        body.innerHTML='<div class="selpane-empty">That snapshot '
+          +'could not be read.</div>';
+        return;
+      }
+      var d=deckDiff(then,pres);
+      var head=document.createElement('div');
+      head.className='dh-head2';
+      var counts={added:0,removed:0,changed:0,moved:0,same:0};
+      d.rows.forEach(function(r){counts[r.st]++;});
+      head.textContent=histWhen(ent.at)+' → now: '
+        +[['changed','changed'],['added','new'],['removed','gone'],
+          ['moved','moved']].filter(function(p){return counts[p[0]];})
+          .map(function(p){return counts[p[0]]+' '+p[1];}).join(', ')
+        +(Object.keys(counts).every(function(k){
+            return k==='same'||!counts[k];})?'no difference':'')
+        +(d.byName?'':' — compared by position: this snapshot is '
+          +'older than slide names, so an inserted slide shifts '
+          +'everything below it');
+      body.appendChild(head);
+      var restoreAll=document.createElement('button');
+      restoreAll.className='dbtn dh-all';
+      restoreAll.innerHTML=bic('reload')+' Go back to this whole version';
+      restoreAll.addEventListener('click',function(){
+        if(!confirm('Replace all '+(pres.slides||[]).length
+          +' slides with the '+d.rows.filter(function(r){
+            return r.a;}).length+' from '+histWhen(ent.at)+'?')) return;
+        snapTake('before going back').then(function(){
+          histRestoreDeck(then);histPanelClose();});
+      });
+      body.appendChild(restoreAll);
+      d.rows.forEach(function(r){
+        var row=document.createElement('div');
+        row.className='dh-row st-'+r.st;
+        var lab=document.createElement('span');
+        lab.className='dh-st';
+        lab.textContent=r.st==='same'?'unchanged':r.st;
+        row.appendChild(lab);
+        [['then',r.a,then],['now',r.b,pres]].forEach(function(side){
+          var cell=document.createElement('div');
+          cell.className='dh-cell';
+          var cap=document.createElement('span');
+          cap.className='dh-cap';
+          cap.textContent=side[1]
+            ?(side[0]+' · '+((side[0]==='then'?r.ai:r.bi)+1))
+            :(side[0]+' — not there');
+          cell.appendChild(cap);
+          if(side[1])
+            cell.appendChild(withDeck(side[2],function(){
+              return miniDiagram(side[1]);}));
+          row.appendChild(cell);
+        });
+        var acts=document.createElement('div');
+        acts.className='dh-acts';
+        if(r.a&&(r.st==='removed'||r.st==='changed')){
+          var rb=document.createElement('button');
+          rb.className='dbtn dh-one';
+          rb.innerHTML=bic('reload')
+            +(r.st==='removed'?' Put it back':' Use the old one');
+          rb.addEventListener('click',function(){
+            snapTake('before putting a slide back').then(function(){
+              histRestoreSlide(r,then);
+              histPanelClose();
+            });
+          });
+          acts.appendChild(rb);
+        }
+        row.appendChild(acts);
+        body.appendChild(row);
+      });
+    });
+  }
+  /* ONE SLIDE BACK. In place when the deck still has it, and otherwise
+     at the index it used to hold -- which is where you will look for it. */
+  function histRestoreSlide(r,then){
+    var copy=JSON.parse(JSON.stringify(r.a));
+    var at;
+    if(r.bi>=0){pres.slides[r.bi]=copy;at=r.bi;}
+    else {
+      at=Math.min(Math.max(r.ai,0),(pres.slides||[]).length);
+      pres.slides.splice(at,0,copy);
+    }
+    cur=at;selAnnot=null;selSet=[];
+    markDirty();refresh();
+    toast(r.bi>=0?'Slide '+(at+1)+' is the older one again'
+      :'Slide '+(at+1)+' is back');
+  }
+  function histRestoreDeck(then){
+    var copy=JSON.parse(JSON.stringify(then));
+    copy.name=pres.name;      /* the NAME is where you are, not where it was */
+    pres.slides=copy.slides||[];
+    ['sections','cuts','tokens','components','notes','pad','talkMins',
+     'pageBg','page','showNums'].forEach(function(k){
+      if(copy[k]===undefined) delete pres[k]; else pres[k]=copy[k];
+    });
+    cur=0;selAnnot=null;selSet=[];
+    markDirty();refresh();renderFilm();
+    toast('Back to the older version — the deck as it was is in the '
+      +'history too, so this is undoable');
+  }
+  function openHistory(){
+    histPanelClose();
+    var ov=document.createElement('div');
+    ov.className='deck-history';ov.id='deck-history';
+    ov.innerHTML='<div class="dh-head">'
+      +'<span class="dh-t">History of “'+esc(pres.name||'this deck')
+      +'”</span><span class="deck-spring"></span>'
+      +'<button class="dbtn" id="dh-close">'+bic('exit')+' Close</button>'
+      +'</div><div class="dh-main">'
+      +'<div class="dh-rail" id="dh-list"></div>'
+      +'<div class="dh-body" id="dh-body">'
+      +'<div class="selpane-empty">Pick a version on the left to see '
+      +'what is different about it.</div></div></div>';
+    /* WHERE GIT IS. A deck is not a file on disk -- it lives inside the
+       notebook or the project file -- so the deck's own history is this
+       local store, and the repository's history of the file it is saved
+       INTO is the notebook's, which server/vcs.py already lists and
+       opens. Naming that rather than duplicating it is the honest hook:
+       two histories that answer different questions, and neither
+       pretending to be the other. */
+    if(APP.mode==='app'){
+      var git=document.createElement('div');
+      git.className='dh-git';
+      git.textContent='This is the deck\u2019s own history — the moments '
+        +'between commits. The repository\u2019s history of the file it '
+        +'is saved into is the notebook\u2019s: its Version history menu '
+        +'lists the git commits and opens them.';
+      ov.querySelector('.dh-main').appendChild(git);
+    }
+    document.body.appendChild(ov);
+    ov.querySelector('#dh-close').addEventListener('click',histPanelClose);
+    document.addEventListener('keydown',histPanelKey,true);
+    histIndex().then(function(ix){
+      histRows(ov,ix);
+      /* the most recent one is the one you meant */
+      if(ix.length){histSel=ix[ix.length-1].id;histRows(ov,ix);
+        histCompare(ov,ix[ix.length-1]);}
+    });
+  }
   /* ---- THE OVERVIEW: THE WHOLE TALK AT ONCE ---------------------------
      (TASKS T26.) TASKS.md is careful about what this is: "the realistic
      scope of the infinite-canvas wish — an overview/navigation layer,
@@ -21080,6 +21422,11 @@
   function openDeck(m){
     deckEl.hidden=false;
     histReset();   /* undo history starts fresh per editing session */
+    /* ONE ON ARRIVAL, so "how it was when I sat down" is always
+       reachable -- the same rule the notebook's own snapshots follow,
+       and deduped, so opening and closing without touching anything
+       costs nothing (T32) */
+    snapTake('opened');
     status();
     setUIMode(m||'view');
     routeSync();
@@ -22240,6 +22587,17 @@
       });
     });
   }
+  function idbDel(k){
+    return idb().then(function(db){
+      return new Promise(function(res,rej){
+        var t=db.transaction('handles','readwrite');
+        try{t.objectStore('handles').delete(k);}catch(e){rej(e);return;}
+        t.oncomplete=function(){res();};
+        t.onerror=function(){rej(t.error);};
+        t.onabort=function(){rej(t.error);};
+      });
+    });
+  }
   function idbGet(k){
     return idb().then(function(db){
       return new Promise(function(res,rej){
@@ -22623,6 +22981,9 @@
         +'copy, or switch "Saved to" to a file on your computer.',9000);
       return;
     }
+    /* EVERY EXPLICIT SAVE is a point you might want back -- the
+       same rule the notebook's snapshots follow (T32) */
+    snapTake('saved');
     saveStamp=new Date();saveKind='manual';
     status();
     toast('Kept in this browser — it also autosaves as you edit. '
@@ -22747,7 +23108,10 @@
             var c=normPres(p,null);c.origin=stem0;return c;});
           cancelDraftWrite();   /* the save just made the draft obsolete */
           lsDel(PFX+(pres.name||'untitled'));
-          saveStamp=new Date();saveKind='manual';
+          /* EVERY EXPLICIT SAVE is a point you might want back -- the
+       same rule the notebook's snapshots follow (T32) */
+    snapTake('saved');
+    saveStamp=new Date();saveKind='manual';
           source='saved';status();renderPresRow();
           toast('Saved "'+pres.name+'" into '+f.name);
         }catch(e){
@@ -22944,6 +23308,7 @@
   window.SemDeckLinkedImages=linkedImages;          /* test hook */
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
+  menuAction('#mi-hist',openHistory);
   menuAction('#mi-pdf',function(){printDeck();});
   /* ---- standalone HTML export (2026-08-04): ONE self-contained .html
      anyone can open without Junoview. The page styles are already inline

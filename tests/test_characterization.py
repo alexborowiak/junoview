@@ -110,6 +110,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T32, deck version history: deck.js
+# gained WHAT THIS DECK USED TO BE (the IndexedDB snapshot store,
+# the sid-paired deckDiff, withDeck, the History overlay and both
+# restores) plus idbDel and the snapTake hooks on open and on both
+# manual saves; deck.html the File menu entry, deck.css the panel,
+# help.html a paragraph. Pinned by test_version_history.py's six
+# T32 tests and verified in a browser, 18/18.
 # Moved 2026-08-25 for TASKS T31, private presenter annotations:
 # deck.js gained THINGS ONLY YOU CAN SEE (the privShown predicate
 # beside the existing hide guard, the opt-in private render on
@@ -261,8 +268,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "58ff4c3a3155815737cd7e0ef92df2ae"
-EXPECTED_BYTES = 2556747
+EXPECTED_MD5 = "57df70ab862004b25b0bd3feb0b61c7f"
+EXPECTED_BYTES = 2576006
 
 
 def _render_example() -> str:
