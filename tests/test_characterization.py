@@ -110,6 +110,22 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 filling out the RIBBON LAYOUT CATALOGUE: the
+# eighteen arrangements become a hundred and nine. Recreations of
+# the applications people already use -- PowerPoint 2003 through
+# 365, Word, Excel, Publisher, OneNote; Photoshop, Illustrator,
+# InDesign, Premiere, After Effects, XD; Keynote, Google Slides,
+# Canva, Figma, Sketch, Framer; LibreOffice Impress, Inkscape,
+# Scribus, Blender; Notion, Miro, the reduced web ribbons -- plus
+# eight experiments and the forty-nine one-tweak permutations, all
+# in deck/07-ribbon-layouts.js. The gallery gained family headings,
+# a filter over names, blurbs, families and group labels, and a
+# count; deck.css their rules, help.html the paragraph. Escape in
+# the filter now empties it
+# before it closes the panel. Editor-only; pinned by
+# tests/test_ribbon_layouts.py and verified in a browser by applying
+# all 109 in turn -- no duplicates, no control lost, no ribbon taller
+# than it ships, and Default restoring the markup exactly afterwards.
 # Moved 2026-08-25 for RIBBON LAYOUTS: eighteen arrangements of the
 # one ribbon. deck/07-ribbon-layouts.js is new (the engine, the
 # gallery and the catalogue); 05 gained the generated tab strip and
@@ -291,8 +307,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "f4bc6db6c59456b9f6dc1c0fe0816341"
-EXPECTED_BYTES = 2679585
+EXPECTED_MD5 = "49e6a4809363bdf180b8f9b8bd711330"
+EXPECTED_BYTES = 2954140
 
 
 def _render_example() -> str:

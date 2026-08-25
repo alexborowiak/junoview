@@ -1,4 +1,4 @@
-"""Ribbon layouts: eighteen arrangements of the one ribbon.
+"""Ribbon layouts: many arrangements of the one ribbon.
 
 There is no one right grouping of a hundred controls -- the argument has
 always had the same shape, somebody sure the slide controls belong
@@ -8,8 +8,9 @@ LAYOUT is a complete re-assignment of every control into tabs and
 groups, there are many, and you switch between them from a gallery.
 
 These pin the decisions. What the layouts DO is verified in a browser --
-all eighteen applied in turn, every control accounted for after each --
-because a string in the page cannot tell you whether a button moved.
+every one of them applied in turn, every control accounted for after
+each -- because a string in the page cannot tell you whether a button
+moved.
 """
 
 from __future__ import annotations
@@ -59,8 +60,8 @@ def test_every_layout_places_exactly_the_same_controls(out):
     other one places, and the emitter refuses to write a catalogue where
     it is not.
 
-    Checked here across the catalogue, and in a browser by applying all
-    eighteen and comparing the ribbon's contents after each.
+    Checked here across the catalogue, and in a browser by applying
+    every one and comparing the ribbon's contents after each.
     """
     lays = _layouts(out)
     sets = {lid: set(ids) for lid, ids in lays}
@@ -178,7 +179,7 @@ def test_a_tab_with_nothing_on_it_leaves_the_strip(out):
 
 
 def test_the_gallery_shows_arrangements_and_stays_out_of_the_way(out):
-    """Eighteen names in a menu tells you nothing: the thing being
+    """A list of names tells you nothing: the thing being
     chosen IS an arrangement, so each card draws the tabs and the groups
     on them. Picking one applies it and leaves the gallery open, because
     the ask was to flick through a pile.
@@ -227,3 +228,77 @@ def test_it_composes_with_the_per_button_customiser(out):
     i = out.index("applyRibbonLayout(rbnCurrentId(),true);")
     assert "applyRibbonPrefs();" in out[i:i + 400]
     assert "Ribbon layouts\\u2026" in out or "Ribbon layouts" in out
+
+
+def test_every_family_the_gallery_declares_has_layouts_in_it(out):
+    """A family is a heading the gallery draws, and RBN_FAMILIES is the
+    order it draws them in. One declared with nothing under it is a
+    heading that never appears -- which is exactly how this sat
+    half-finished for a while: the taxonomy was written ahead of the
+    catalogue and six of its ten families stayed empty. Declaring a
+    family is a promise to fill it.
+    """
+    i = out.index("var RBN_FAMILIES=[")
+    block = out[i:out.index("\n  ];", i)]
+    declared = re.findall(r"\['([a-z]+)',", block)
+    assert len(declared) >= 8, declared
+    # font-family: would match a bare `family:'...'`, hence the [^-]
+    used = set(re.findall(r"[^-]family:'([a-z]+)'", out))
+    assert set(declared) == used, (
+        f"declared but empty: {sorted(set(declared) - used)}; "
+        f"used but undeclared: {sorted(used - set(declared))}")
+
+
+def test_the_catalogue_recreates_the_applications_people_already_use(out):
+    """"Think about what photoshop and power point and others have and
+    recreate those" (2026-08-25). Somebody who uses one of these every
+    day should find the shape of it here -- the tab names, what shares a
+    group, what is up front -- which is a harder promise than "there are
+    a lot of layouts", and the one that was actually asked for.
+    """
+    ids = " ".join(i for i, _ in _layouts(out))
+    for app in ("microsoft-powerpoint-2003", "microsoft-word",
+                "adobe-raster-options-bar", "adobe-layout-indesign-frames",
+                "consumer-pres-keynote", "consumer-design-figma-panel",
+                "opensource-inkscape", "opensource-blender",
+                "web-slash-bar", "radical-a-to-z"):
+        assert app in ids, f"no {app} in the catalogue"
+
+
+def test_the_gallery_is_filtered_by_what_a_layout_would_give_you(out):
+    """A hundred cards is a wall. The question somebody scrolling one is
+    actually asking is "which of these puts Crop somewhere sensible", so
+    the filter reads the tab and group LABELS a layout would give you as
+    well as its name, its blurb and its family.
+    """
+    i = out.index("function rbnCardWords(lay){")
+    body = out[i:out.index("function rbnGalleryFill(){", i)]
+    assert "lay.name" in body and "lay.blurb" in body
+    assert "rbnFamilyLabel(lay.family" in body
+    assert "(lay.tabs||[]).forEach" in body
+    assert "(lay.groups||[]).forEach" in body
+    assert "return w.join(' ').toLowerCase();" in body
+    # and the count says how much of the pile you are looking at
+    assert "shown.length+' of '+all.length" in out
+
+
+def test_escape_empties_the_filter_before_it_closes_the_gallery(out):
+    """A filter with a word still in it is a state you can be stuck in --
+    the card you want is not on screen -- and Escape is the key everyone
+    reaches for. Saying so on the INPUT is dead code: the gallery's own
+    keydown listener is on document in the CAPTURE phase, so it sees the
+    key first and stops it. It was written there once and never ran once:
+    Escape closed the gallery and left the word in the box (found in a
+    browser; no string in the page could have shown it).
+    """
+    assert "document.addEventListener('keydown',rbnGalleryKey,true);" in out
+    i = out.index("function rbnGalleryKey(e){")
+    body = out[i:out.index("\n  }", i)]
+    assert "if(e.key!=='Escape') return;" in body
+    assert "if(fi&&fi.value){fi.value='';rbnGalleryFill();" in body
+    assert "rbnGalleryClose();" in body
+    # the input keeps only the job it can actually do: not letting the
+    # deck's own shortcuts fire while you type
+    j = out.index("gfind.addEventListener('keydown'")
+    assert "e.stopPropagation();" in out[j:j + 80]
+    assert "Escape" not in out[j:j + 80]

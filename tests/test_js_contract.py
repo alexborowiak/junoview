@@ -87,6 +87,8 @@ RUNTIME_IDS = {
     "deck-review",
     # The ribbon-layout gallery, built per open and removed on close:
     # deck/07-ribbon-layouts.js, THE GALLERY.
+    # (its filter, count and list are reached through the overlay
+    # rather than by id, so only the overlay itself is listed)
     "rbn-gallery",
 }
 
