@@ -250,9 +250,16 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   caption moving twice when it is selected alongside its figure — found
   in the browser, not by the suite. `isFigure` is the one definition of
   what counts, so T18 cannot number a different set.
-- [ ] **T18 · M — Auto figure numbering + cross-references.** "Figure N"
+- [x] **T18 · M — Auto figure numbering + cross-references.** "Figure N"
   numbered by deck order; inline references ("see Figure 7") renumber when
   slides move. Depends on T17.
+  *2026-08-25:* the number is NEVER stored. `{fig}` in a caption and
+  `{fig:id}` anywhere else resolve at render, the same way `furnText`
+  already resolves `{n}`/`{N}` for the header and footer. Numbering is by
+  `orderedIdx` — hoisted out of the animation pane so a figure's number
+  and its build order cannot disagree — over `isFigure`, T17's single
+  definition of what counts. A reference to a deleted figure says so in
+  words instead of showing a wrong number.
 - [ ] **T19 · M — Figure provenance panel.** Show which notebook/cell
   produced a deck figure (`chains.py` already knows lineage), a jump-to-
   source affordance, and a staleness flag when the notebook output is

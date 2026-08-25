@@ -8412,6 +8412,12 @@
        only, and a deck has none unless someone asked for them. */
     var _anchorFixWanted=(s.annots||[]).some(function(a){
       return a&&a.anch;});
+    /* ONE walk of the deck per render, not one per text box: figNumbers
+       walks every slide and a poster can hold thirty captions (T18) */
+    var _figMap=(s.annots||[]).some(function(a){
+      return a&&a.k==='text'
+        &&String(a.text||a.html||'').indexOf('{fig')>=0;
+    })?figNumbers():null;
     var _arrows=[];
     (s.annots||[]).forEach(function(a,i){
       /* hidden via the Objects pane: skipped while editing, still
@@ -8636,6 +8642,14 @@
         
         if(editing){d2.appendChild(mkResize());
           d2.appendChild(mkRotate());}
+        /* {fig} RESOLVES AT RENDER, never in the stored words (T18).
+           Not while the box is being edited: what you type is what is
+           stored, and a caret sitting inside a substituted number would
+           be a caret in text that does not exist. */
+        var showTx=(editing&&document.activeElement
+                    &&d2.contains(document.activeElement))
+          ?(a.text||''):figSubst(a.text,a,_figMap);
+        var showHtml=a.html?figSubst(a.html,a,_figMap):null;
         var tx2,lst=listOf(a);
         if(lst){
           /* the ELEMENT carries the marker style and a.html carries only
@@ -8643,7 +8657,7 @@
              content at all */
           tx2=document.createElement(lst==='number'?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
-          if(a.html) tx2.innerHTML=sanitizeRich(a.html).html;
+          if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
           else String(a.text||'').split('\n').forEach(function(line){
             var li=document.createElement('li');
             li.textContent=line;
@@ -8652,8 +8666,8 @@
         } else {
           tx2=document.createElement('span');
           tx2.className='an-tx';
-          if(a.html) tx2.innerHTML=sanitizeRich(a.html).html;
-          else tx2.textContent=a.text||'';
+          if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
+          else tx2.textContent=showTx||'';
         }
         if(editing){
           editableText(layer,tx2,
@@ -10321,7 +10335,8 @@
           menuHead(m,'figure');
           row('Make this the figure’s caption','',function(){
             if(tieCaption(figI,txI))
-              toast('Tied — the caption follows its figure now');},
+              toast('Tied — the caption follows its figure now. '
+                +'Type {fig} in it for its number');},
             'It moves with the figure and takes its width when the '
             +'figure is resized. It is still an ordinary text box you '
             +'can select and restyle on its own.');
@@ -10330,11 +10345,33 @@
         var one=capAn[capSel[0]];
         if(one&&(one.cap||one.capOf)){
           menuHead(m,'figure');
+          if(one.capOf) row('Number it — put “Figure N” in front','',
+            function(){numberCaption(capSel[0]);},
+            'Writes {fig} into the caption, which renders as the '
+            +'figure’s number and renumbers itself when slides move');
           row(one.capOf?'Untie this caption'
             :'Untie this figure’s caption','',
             function(){
               if(untieCaption(capSel[0]))
                 toast('Untied — they are two ordinary objects');});
+        }
+        /* a reference from ANY text box to a figure */
+        if(one&&one.k==='text'&&!one.capOf){
+          var figs=[];
+          (pres.slides||[]).forEach(function(sl){
+            (sl.annots||[]).forEach(function(x){
+              if(isFigure(x)&&x.cap) figs.push(x);});});
+          if(figs.length){
+            menuHead(m,'refer to a figure');
+            var fmap=figNumbers();
+            figs.slice(0,8).forEach(function(x){
+              var num=fmap[x.cap]?fmap[x.cap].n:'?';
+              row('Insert a reference to Figure '+num,'',function(){
+                refCaption(capSel[0],x.cap);},
+                'Writes {fig:'+x.cap+'}, which follows that figure’s '
+                +'number wherever it ends up');
+            });
+          }
         }
       }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
@@ -14006,6 +14043,85 @@
       });
     });
   })();
+  /* READING ORDER, once, for everyone who needs it. The array is the
+     order you happened to draw things in, which is nobody's idea of a
+     sequence: draw the bottom caption first and it would animate first,
+     and be Figure 1. A 4% band counts as "the same line", so a row of
+     items reads across before the next row down.
+
+     Hoisted here from the animation pane it was written in, because
+     figure numbering needs the same order and two sweeps that agreed
+     today would not agree forever (2026-08-25, T18). */
+  function orderedIdx(s2){
+    return (s2.annots||[])
+      .map(function(a,i){return {a:a,i:i};})
+      .filter(function(p2){return p2.a&&!p2.a.hide;})
+      .sort(function(p2,q2){
+        var ay=(p2.a.k==='arrow')?Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);
+        var by=(q2.a.k==='arrow')?Math.min(q2.a.y1,q2.a.y2):(q2.a.y||0);
+        var ax=(p2.a.k==='arrow')?Math.min(p2.a.x1,p2.a.x2):(p2.a.x||0);
+        var bx=(q2.a.k==='arrow')?Math.min(q2.a.x1,q2.a.x2):(q2.a.x||0);
+        return Math.abs(ay-by)>4?(ay-by):(ax-bx);
+      })
+      .map(function(p2){return p2.i;});
+  }
+  /* ---- FIGURE NUMBERS, AND REFERENCES TO THEM -------------------------
+     (TASKS T18.) "Figure 7" numbered by deck order, and "see Figure 7"
+     in a sentence renumbering itself when the slides move.
+
+     THE ONE DECISION THAT MATTERS: A NUMBER IS NEVER STORED. It is
+     derived, every render, from where the figure sits in the deck. The
+     alternative — stamping "Figure 7" into the caption's words — is the
+     thing this task exists to abolish: it is right until somebody drags
+     slide 9 above slide 4, and then it is wrong everywhere and silently.
+     Nothing here writes a number into any text.
+
+     So a caption says `{fig}` and a sentence says `{fig:id}`, and both
+     are resolved at render exactly the way the header and footer already
+     resolve `{n}` and `{N}` — furnText has done this since the page
+     furniture landed, and this is the same idea one level down. Deleting
+     a figure renumbers the rest on the next repaint, for free, because
+     there was never a number to go and update.
+
+     READING ORDER, not array order. The array is the order things were
+     DRAWN in, which is nobody's idea of a sequence; orderedIdx already
+     solved this for build steps, using a row-band then left-to-right
+     sweep, and figure numbers use the same one so a figure's number and
+     its build order can never disagree.
+
+     A reference names a figure by its `cap` id — the same opaque id T17
+     mints to tie a caption on — so a reference survives the figure being
+     moved, restyled, or given a different caption. It only breaks if the
+     figure is deleted, and then it says so in words rather than
+     rendering a wrong number. */
+  function figNumbers(){
+    var map={},n=0;
+    (pres.slides||[]).forEach(function(sl,si){
+      var ord=orderedIdx(sl);
+      ord.forEach(function(i){
+        var a=(sl.annots||[])[i];
+        if(!isFigure(a)||a.hide) return;
+        n++;
+        if(!a.cap) a.cap=figId();
+        map[a.cap]={n:n,si:si};
+      });
+    });
+    return map;
+  }
+  /* the words a figure token resolves to. `{fig}` in a caption means
+     "the number of the figure I am tied to"; `{fig:id}` anywhere means
+     "the number of that one". A reference to a figure that has gone
+     says so — a silently wrong number is the failure this replaces. */
+  function figSubst(txt,a,map){
+    var t=String(txt||'');
+    if(t.indexOf('{fig')<0) return t;
+    map=map||figNumbers();
+    return t.replace(/\{fig(?::([A-Za-z0-9_]+))?\}/g,function(_,id){
+      var key=id||(a&&a.capOf)||(a&&a.cap);
+      var hit=key?map[key]:null;
+      return hit?String(hit.n):(id?'[missing figure]':'[not a caption]');
+    });
+  }
   /* ---- A FIGURE AND ITS CAPTION ARE ONE THING -------------------------
      (TASKS T17.) A caption that moves with its figure, scales with it,
      and survives every layout operation.
@@ -14071,6 +14187,33 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s2);paintSel(l);}
     return true;
+  }
+  /* the tokens are typed OR inserted. Inserted, because nobody guesses
+     a syntax, and typed, because anyone who has learned it should not
+     have to hunt for a menu (T18). */
+  function numberCaption(i){
+    var s2=pres.slides[cur];
+    var a=s2&&(s2.annots||[])[i];
+    if(!a||a.k!=='text') return;
+    var t=String(a.text||'');
+    if(t.indexOf('{fig}')>=0){toast('It already has its number');return;}
+    a.text='Figure {fig}. '+t;
+    delete a.html;      /* a plain-text edit cannot keep rich runs */
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    toast('Numbered — it renumbers itself when slides move');
+  }
+  function refCaption(i,figKey){
+    var s2=pres.slides[cur];
+    var a=s2&&(s2.annots||[])[i];
+    if(!a||a.k!=='text') return;
+    a.text=String(a.text||'')+(a.text?' ':'')+'Figure {fig:'+figKey+'}';
+    delete a.html;
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s2);paintSel(l);}
+    toast('Reference added — it follows that figure');
   }
   function untieCaption(i){
     var s2=pres.slides[cur];
@@ -16877,19 +17020,9 @@
        the fiddling this editor exists to remove (2026-08-20).
        Reading order, not array order: the array is the order you happened
        to draw things in, which is nobody's idea of a sequence. */
-    function orderedIdx(s2){
-      return (s2.annots||[])
-        .map(function(a,i){return {a:a,i:i};})
-        .filter(function(p2){return p2.a&&!p2.a.hide;})
-        .sort(function(p2,q2){
-          var ay=(p2.a.k==='arrow')?Math.min(p2.a.y1,p2.a.y2):(p2.a.y||0);
-          var by=(q2.a.k==='arrow')?Math.min(q2.a.y1,q2.a.y2):(q2.a.y||0);
-          var ax=(p2.a.k==='arrow')?Math.min(p2.a.x1,p2.a.x2):(p2.a.x||0);
-          var bx=(q2.a.k==='arrow')?Math.min(q2.a.x1,q2.a.x2):(q2.a.x||0);
-          return Math.abs(ay-by)>4?(ay-by):(ax-bx);
-        })
-        .map(function(p2){return p2.i;});
-    }
+    /* orderedIdx is at the top of the file now: figure NUMBERS read the
+       same order (T18), and a figure numbered differently from the way
+       it builds would be two answers to one question. */
     var stag=$('#anim-stagger');
     if(stag) stag.addEventListener('click',function(){
       var s2=pres.slides[cur]; if(!s2) return;

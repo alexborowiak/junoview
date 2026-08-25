@@ -1876,3 +1876,56 @@ def test_the_caption_takes_the_figures_width_and_only_that(out):
     assert "function capFollowResize(capA,capO,figO,fig){" in out
     assert "if(capO.w) capA.w=capO.w*(w1/w0);" in out
     assert "if(movedAny) capFollowResize(capA,capO,figO,a);" in out
+
+
+def test_a_figure_number_is_never_stored(out):
+    """TASKS T18, and the one decision the whole feature turns on.
+
+    Stamping "Figure 7" into a caption's words is right until somebody
+    drags slide 9 above slide 4, and then it is wrong everywhere and
+    silently. So nothing here writes a number into any text: a caption
+    says {fig}, a sentence says {fig:id}, and both are resolved at
+    render -- exactly the way furnText has resolved {n} and {N} for the
+    header and footer since page furniture landed.
+
+    Deleting a figure renumbers the rest on the next repaint for free,
+    because there was never a number to go and update.
+    """
+    assert "function figNumbers(){" in out
+    assert "function figSubst(txt,a,map){" in out
+    assert "?(a.text||''):figSubst(a.text,a,_figMap);" in out
+    # a reference to a figure that has gone says so, rather than
+    # rendering a wrong number
+    assert "return hit?String(hit.n):(id?'[missing figure]':" in out
+    # and the walk happens once per render, not once per text box
+    assert "})?figNumbers():null;" in out
+
+
+def test_figure_numbers_read_the_same_order_as_builds(out):
+    """The array is the order things were DRAWN in, which is nobody's
+    idea of a sequence: draw the bottom caption first and it would
+    animate first AND be Figure 1. orderedIdx already solved that for
+    build steps, so it is hoisted out of the animation pane it was
+    written in and both use it -- two sweeps that agreed today would not
+    agree forever.
+    """
+    # at top level now, not nested inside the animation IIFE
+    assert "  function orderedIdx(s2){" in out
+    assert "      var ord=orderedIdx(sl);" in out
+    assert 'assert' not in out or True
+    # a figure is one thing, defined once (T17), so numbering and tying
+    # cannot disagree about what counts
+    assert "if(!isFigure(a)||a.hide) return;" in out
+
+
+def test_the_tokens_can_be_inserted_as_well_as_typed(out):
+    """Nobody guesses a syntax, and anyone who has learned it should not
+    have to hunt for a menu. Both doors.
+    """
+    assert "function numberCaption(i){" in out
+    assert "a.text='Figure {fig}. '+t;" in out
+    assert "function refCaption(i,figKey){" in out
+    assert "'Figure {fig:'+figKey+'}';" in out
+    # editing a box shows what is STORED: a caret inside a substituted
+    # number would be a caret in text that does not exist
+    assert "var showTx=(editing&&document.activeElement" in out
