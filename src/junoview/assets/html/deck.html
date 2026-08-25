@@ -1267,6 +1267,19 @@
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
+      <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
+           frame names a card by anchor, chains.py computed the lineage
+           at parse time, and the trace view draws it. What was missing
+           was a door from a frame ON A SLIDE to any of that. -->
+      <aside class="selpane preflight" id="provpane" hidden>
+        <div class="selpane-h"><span id="provpane-t">Where this came
+          from</span>
+          <button class="dbtn dc-icon" id="provpane-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="pf-count" id="provpane-count"></div>
+        <div class="selpane-list" id="provpane-list"></div>
+      </aside>
       <!-- THIS OBJECT'S HISTORY. A fourth pane in the shell, and the
            only one that looks BACKWARDS. Its list is derived from the
            undo stack rather than recorded separately (see the section in

@@ -1351,7 +1351,7 @@ def test_tidy_up_reports_before_it_rearranges(out):
     assert "act.addEventListener('click',function(){\n      var n=f.fix()" \
         in out
     # it joins the panes that share the corner and the remembered geometry
-    assert "'stdpane','tidypane','objhist','flippane']" in out
+    assert "'stdpane','tidypane','objhist','provpane','flippane']" in out
 
 
 def test_the_tidy_tolerances_are_named_and_argued(out):
@@ -1929,3 +1929,58 @@ def test_the_tokens_can_be_inserted_as_well_as_typed(out):
     # editing a box shows what is STORED: a caret inside a substituted
     # number would be a caret in text that does not exist
     assert "var showTx=(editing&&document.activeElement" in out
+
+
+def test_a_frame_can_say_where_it_came_from(out):
+    """TASKS T19. The deck already knew all of this and had no way to
+    say it: the frame names a card by anchor, chains.py computed the
+    lineage at parse time, the trace view already draws it, and the deck
+    already keeps a saved copy of every placed card. What was missing
+    was a door from a frame ON A SLIDE to any of it.
+    """
+    assert 'id="provpane"' in out and 'id="provpane-list"' in out
+    assert "function provOf(a){" in out
+    assert "function renderProvPane(){" in out
+    assert "function showProvPane(){" in out
+    # the lineage comes from the chains the parser already computed
+    assert "var group=p.it?lineageForItem(p.it.ns):null;" in out
+    # and the trace door is the existing one, not a second drawing
+    assert "if(window.SemTrace&&pr[0]) window.SemTrace.open(pr[0],pr[1]);" \
+        in out
+    assert "'stdpane','tidypane','objhist','provpane','flippane']" in out
+
+
+def test_staleness_is_answered_honestly_or_not_at_all(out):
+    """There is no timestamp anywhere in this format -- not on a card,
+    not on an embedded snapshot -- so "the notebook output is newer"
+    cannot be answered by comparing dates, and inventing a date at save
+    time would only record when the DECK was saved.
+
+    What can be answered exactly is whether the live card and the deck's
+    saved copy still say the same thing, which is the question that
+    actually matters. Where the notebook is not open there is nothing to
+    compare against, and it says so rather than guessing.
+    """
+    assert "function provState(p){" in out
+    assert "if(!p.live) return 'nolive';" in out
+    assert "return (a===b)?'same':'stale';" in out
+    # compared in the shape the SAVE path captures, not one rendering
+    # against another -- and cloneBody falls back to the deck's own copy
+    # when the notebook is shut, which would make everything look in step
+    assert "function liveCardHtml(ref){" in out
+    assert "if(!cardEl(ref)) return '';" in out
+
+
+def test_updating_one_figure_leaves_its_geometry_alone(out):
+    """TASKS T20. Position, crop and size live on the ANNOTATION, and
+    the annotation is not touched at all -- so they survive by
+    construction rather than by being carefully copied back and forth.
+
+    The renderer still never executes notebook code: the notebook is
+    re-run by the user, and this takes what it wrote.
+    """
+    assert "function resyncFigure(a){" in out
+    assert "embStore(normRef(p.ref)||p.ref,e);" in out
+    # the same record shape the save path writes -- one snapshot format
+    assert "var cc=p.live.hasCode?cloneCode(p.ref):null;" in out
+    assert "if(cc) e.code=cc.outerHTML;" in out

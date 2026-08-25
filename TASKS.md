@@ -260,17 +260,29 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   and its build order cannot disagree — over `isFigure`, T17's single
   definition of what counts. A reference to a deleted figure says so in
   words instead of showing a wrong number.
-- [ ] **T19 · M — Figure provenance panel.** Show which notebook/cell
+- [x] **T19 · M — Figure provenance panel.** Show which notebook/cell
   produced a deck figure (`chains.py` already knows lineage), a jump-to-
   source affordance, and a staleness flag when the notebook output is
   newer than the deck's snapshot.
-- [ ] **T20 · M — Update figures from source.** Re-sync deck figure
+  *2026-08-25, with T20 in the same commit — they are one pane and one
+  piece of machinery.* Staleness is answered honestly: this format has
+  no timestamp anywhere, so "newer" is unanswerable, but "does the live
+  card still say what the deck saved" is exact and is the question that
+  matters. With the notebook shut it says there is nothing to compare
+  against rather than guessing.
+- [x] **T20 · M — Update figures from source.** Re-sync deck figure
   snapshots from a re-executed notebook while preserving position, crop
   and size — regenerate 30 figures, deck updates itself. Respects the
   "renderer never executes notebook code" invariant: the notebook is
   re-run by the user; junoview re-reads stored outputs. Note the embedded-
   snapshot design (figures live outside the pres object for localStorage
   quota reasons).
+  *2026-08-25, committed with T19.* Most of this was already true: a
+  frame resolves by ref at render, so a re-run notebook shows through the
+  moment it is reopened. What was missing was the deliberate per-figure
+  act. Position, crop and size survive by CONSTRUCTION — they live on the
+  annotation, which `resyncFigure` does not touch — rather than by being
+  copied back.
 - [ ] **T21 · M — Non-destructive crop/resize + hi-res originals.** Crop
   as a view transform over retained original bytes; exports choose an
   appropriate resolution. Watch localStorage quota (same note as T20).

@@ -3622,7 +3622,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'stdpane','tidypane','objhist','flippane']
+   'stdpane','tidypane','objhist','provpane','flippane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -10459,6 +10459,15 @@
             'Back to a box that simply grows with its words');
         }
       }
+      if(selIdxs().length===1){
+        var pvA=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        if(pvA&&pvA.k==='cell'&&pvA.ref){
+          row('Where this came from…','',showProvPane,
+            'The notebook and cell that made it, every cell in its '
+            +'lineage, and whether the notebook has moved on since',
+            'locate');
+        }
+      }
       row('History of this object…','',showObjHist,
         'Every state it has been through that the undo stack still '
         +'remembers, and a button to put any of them back','history');
@@ -14065,6 +14074,212 @@
       })
       .map(function(p2){return p2.i;});
   }
+  /* ---- WHERE THIS FIGURE CAME FROM ------------------------------------
+     (TASKS T19 and T20.) The deck already knows all of this and had no
+     way to say it: a frame names a card by anchor, chains.py computed
+     the lineage at parse time, the trace view already draws it, and the
+     deck already keeps a saved copy of every placed card. What was
+     missing was a door from a frame ON A SLIDE to any of it.
+
+     STALENESS, and the honest version of it. There is no timestamp
+     anywhere in this format — not on a card, not on an embedded
+     snapshot — so "the notebook output is newer than the deck's
+     snapshot" cannot be answered by comparing dates, and inventing a
+     date at save time would only tell you when the deck was saved.
+     What CAN be answered, exactly, is whether the live card and the
+     deck's saved copy still say the same thing. That is the question
+     that actually matters — a stale snapshot is one that DIFFERS — and
+     it is answered by comparing the two bodies. Where the notebook is
+     not open there is nothing to compare against, and it says that
+     rather than guessing.
+
+     RE-SYNC (T20) is the other half and is almost free once the first
+     half exists: a frame resolves its content by ref at render time, so
+     a re-executed notebook already shows through the moment it is
+     reopened. What was missing was the deliberate act — "take the live
+     version for THIS figure" — which replaces the deck's saved copy and
+     leaves position, crop and size alone, because those live on the
+     annotation and were never part of the snapshot. The renderer still
+     never executes anything: the notebook is re-run by the user. */
+  function provOf(a){
+    if(!a||a.k!=='cell'||!a.ref) return null;
+    var live=ITEMS[a.ref]||null;
+    if(!live&&String(a.ref).indexOf('::')<0){
+      for(var i=0;i<APP.order.length;i++){
+        var k=nsKey(APP.order[i],a.ref);
+        if(ITEMS[k]){live=ITEMS[k];break;}
+      }
+    }
+    var saved=embFor(a.ref)||null;
+    var it=resolveRef(a.ref);
+    return {live:live,saved:saved,it:it,ref:a.ref};
+  }
+  /* the only staleness question this format can answer honestly: does
+     the deck's saved copy still say what the notebook says? */
+  function provState(p){
+    if(!p) return 'none';
+    if(!p.live&&!p.saved) return 'missing';
+    if(!p.live) return 'nolive';
+    if(!p.saved) return 'nosaved';
+    var a=liveCardHtml(p.ref),b=(p.saved&&p.saved.html)||'';
+    if(!a) return 'nolive';
+    return (a===b)?'same':'stale';
+  }
+  /* the LIVE card's body, in exactly the shape the save path captures
+     it (cloneBody(...).outerHTML) — so "has the notebook moved on" is a
+     comparison of like with like, not of one rendering against another.
+
+     cloneBody falls back to the deck's OWN copy when the notebook is
+     shut, which would make every figure look permanently in step. So
+     the presence of a real card is checked first, and no card means no
+     answer rather than a wrong one. */
+  function liveCardHtml(ref){
+    try{
+      if(!cardEl(ref)) return '';
+      var b=cloneBody(ref);
+      return b?b.outerHTML:'';
+    }catch(e){return '';}
+  }
+  function renderProvPane(){
+    var list=$('#provpane-list'),head=$('#provpane-count');
+    var ttl=$('#provpane-t');
+    if(!list) return;
+    var s2=pres.slides[cur];
+    var idxs=selIdxs();
+    var a=s2&&(s2.annots||[])[idxs[idxs.length-1]];
+    list.innerHTML='';
+    var p=provOf(a);
+    if(!p){
+      if(head) head.textContent='';
+      if(ttl) ttl.textContent='Where this came from';
+      var g=document.createElement('div');
+      g.className='pf-ok';
+      g.textContent='Select a frame that shows a notebook card. A drawn '
+        +'shape or a text box has no source to point at.';
+      list.appendChild(g);
+      return;
+    }
+    var st=provState(p);
+    if(ttl) ttl.textContent=(p.it&&p.it.title)||'This figure';
+    var pr=splitRef(p.ref);
+    if(head) head.textContent=(pr[0]||'?')+' \u00b7 '+(pr[1]||'?');
+
+    function line(cls,h,w){
+      var d=document.createElement('div');
+      d.className='std-find std-'+cls;
+      var t1=document.createElement('div');
+      t1.className='std-h';t1.textContent=h;d.appendChild(t1);
+      if(w){var t2=document.createElement('div');
+        t2.className='std-why';t2.textContent=w;d.appendChild(t2);}
+      list.appendChild(d);
+      return d;
+    }
+    var msg={
+      same:['In step with its notebook',
+        'The card in the notebook and the copy saved with this deck say '
+        +'the same thing.'],
+      stale:['The notebook has moved on',
+        'The card in the notebook no longer matches the copy saved with '
+        +'this deck \u2014 re-run it, or take the live version below.'],
+      nolive:['Showing the deck\u2019s saved copy',
+        'That notebook is not open, so there is nothing to compare '
+        +'against. This is the copy saved with the deck.'],
+      nosaved:['Live from the notebook',
+        'No copy is saved with the deck yet; it will be written the '
+        +'next time you save.'],
+      missing:['Nothing to show',
+        'Neither the notebook nor a saved copy can be found for this '
+        +'reference.']
+    }[st]||['Unknown',''];
+    line(st==='stale'?'warn':(st==='missing'?'warn':'info'),
+      msg[0],msg[1]);
+
+    /* THE LINEAGE, from the chains the parser already computed */
+    var group=p.it?lineageForItem(p.it.ns):null;
+    var steps=(group&&group.steps)||[];
+    if(steps.length){
+      var lh=document.createElement('div');
+      lh.className='hd-lab';lh.textContent='made by';
+      list.appendChild(lh);
+      steps.forEach(function(stp){
+        var b=document.createElement('button');
+        b.className='dbtn vw-opt';
+        b.textContent=stp.title||stp.card||'a cell';
+        b.title='Open this cell in its notebook';
+        b.addEventListener('click',function(){
+          if(window.SemApp&&window.SemApp.traceGoto)
+            window.SemApp.traceGoto(stp.card);
+        });
+        list.appendChild(b);
+      });
+    }
+    var ah=document.createElement('div');
+    ah.className='hd-lab';ah.textContent='go to';
+    list.appendChild(ah);
+    var jump=document.createElement('button');
+    jump.className='dbtn vw-opt';
+    jump.textContent='Open the plot trace';
+    jump.title='Every cell that built this figure, in execution order';
+    jump.addEventListener('click',function(){
+      if(window.SemTrace&&pr[0]) window.SemTrace.open(pr[0],pr[1]);
+    });
+    list.appendChild(jump);
+
+    /* T20: take the live version for THIS figure */
+    if(st==='stale'||st==='nosaved'){
+      var uh=document.createElement('div');
+      uh.className='hd-lab';uh.textContent='update';
+      list.appendChild(uh);
+      var up=document.createElement('button');
+      up.className='dbtn vw-opt';
+      up.textContent='Take the notebook\u2019s version of this figure';
+      up.title='Replaces the copy saved with the deck. Where it sits, '
+        +'its size and its crop are on the frame, not the snapshot, so '
+        +'none of them change.';
+      up.addEventListener('click',function(){
+        var n=resyncFigure(a);
+        toast(n?'Updated from the notebook \u2014 position, size and '
+          +'crop unchanged':'Could not read the live card');
+        renderProvPane();
+      });
+      list.appendChild(up);
+    }
+  }
+  /* T20. The snapshot is replaced; the ANNOTATION is not touched at all,
+     which is why position, crop and size survive by construction rather
+     than by being carefully copied back. */
+  function resyncFigure(a){
+    var p=provOf(a);
+    if(!p||!p.live) return 0;
+    var html=liveCardHtml(p.ref);
+    if(!html) return 0;
+    /* the same record shape the save path writes, keyed the same way —
+       one snapshot format, not two */
+    var e={title:p.live.title||'',kind:p.live.kind||'',html:html};
+    var cc=p.live.hasCode?cloneCode(p.ref):null;
+    if(cc) e.code=cc.outerHTML;
+    embStore(normRef(p.ref)||p.ref,e);
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l) renderAnnots(l,pres.slides[cur]);
+    return 1;
+  }
+  function showProvPane(){
+    var pane=$('#provpane'); if(!pane) return;
+    ['#selpane','#animpane','#preflight','#notespane','#stdpane',
+     '#tidypane','#objhist'].forEach(function(sel){
+      var o=$(sel); if(o) o.hidden=true;});
+    pane.hidden=false;
+    renderProvPane();
+    syncPaneDock();
+  }
+  (function(){
+    var cl=$('#provpane-close');
+    if(cl) cl.addEventListener('click',function(){
+      var pn=$('#provpane'); if(pn) pn.hidden=true;
+      syncPaneDock();
+    });
+  })();
   /* ---- FIGURE NUMBERS, AND REFERENCES TO THEM -------------------------
      (TASKS T18.) "Figure 7" numbered by deck order, and "see Figure 7"
      in a sentence renumbering itself when the slides move.
@@ -16378,7 +16593,7 @@
       if(typeof idx==='number') flipSel=idx;
       /* one pane in the corner at a time — the rule showVerpane keeps */
       ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-       '#tidypane','#objhist']
+       '#tidypane','#objhist','#provpane']
         .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
       var ob=$('#objects-btn');
       if(ob) ob.setAttribute('aria-pressed','false');
