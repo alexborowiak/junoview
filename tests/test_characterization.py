@@ -110,6 +110,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 making Delete respect a full lock: deleteSel was
+# the one bulk verb that never asked lockedAll, so an item the help
+# calls "off the canvas altogether" was deleted by Delete/Ctrl+X.
+# It now keeps them and says so. Editor-only; pinned by
+# tests/test_slide_editor.py's fourth lock test and verified in a
+# browser both ways (locked alone refuses; locked + loose deletes the
+# loose one and toasts what it kept).
 # Moved 2026-08-25 un-shadowing moveSection: deck/ is one scope in
 # fifteen files and the name was declared twice, so T23's "Move the
 # section up/down" reached the drag-drop body instead of the nudge
@@ -328,8 +335,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "6154be0e8c711d012010354964e0bff9"
-EXPECTED_BYTES = 2958452
+EXPECTED_MD5 = "c384a4c0bf418c2e8e2930975dbcf75e"
+EXPECTED_BYTES = 2959629
 
 
 def _render_example() -> str:

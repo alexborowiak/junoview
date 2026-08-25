@@ -1899,13 +1899,34 @@
     if(!s||!s.annots) return;
     var idxs=selIdxs();
     if(!idxs.length) return;
-    idxs.sort(function(x,y){return y-x;}).forEach(function(i){
+    /* A FULLY LOCKED ITEM IS NOT DELETABLE. "Lock fully takes it off the
+       canvas altogether: no clicking, no dragging, no typing" (help),
+       and every other bulk verb already asks lockedAll — duplicate,
+       arrange, align, the PowerPoint export. Delete was the one that did
+       not, and it is the one you cannot take back by looking at it.
+       Both documented ways to hold a locked item in a selection end at
+       this function: Alt+marquee "sweeps up fully locked items too", and
+       the Objects pane is "the way back" for something you cannot click.
+       Select one there to unlock it, press Delete meaning the other
+       three, and it was gone (2026-08-25). */
+    var kept=idxs.filter(function(i){
+      return !lockedAll((s.annots||[])[i]);});
+    var held=idxs.length-kept.length;
+    if(!kept.length){
+      toast(held===1?'That item is fully locked — unlock it first'
+        :'Those '+held+' items are fully locked — unlock them first');
+      return;
+    }
+    kept.sort(function(x,y){return y-x;}).forEach(function(i){
       if(i>=0&&i<s.annots.length) s.annots.splice(i,1);});
     if(!s.annots.length) delete s.annots;
     selAnnot=null;selSet=[];markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,s);
     showFmt();
+    /* say what was NOT deleted, or a mixed selection looks like Delete
+       half-worked for no reason */
+    if(held) toast(held+' fully locked item'+(held===1?'':'s')+' kept');
   }
   function groupSel(){
     var s=pres.slides[cur]; if(!s||!s.annots) return;

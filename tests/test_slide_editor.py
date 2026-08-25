@@ -2087,3 +2087,31 @@ def test_size_and_zoom_findings_do_carry_fixes(out):
     assert "var FIG_SCALE_TOL=0.25;" in out
     assert "if(p.a.h) p.a.h=p.a.h*k;" in out
     assert "if(+z===1) delete p.a.ts; else p.a.ts=+z;});" in out
+
+
+def test_a_fully_locked_object_cannot_be_deleted(out):
+    """"Lock fully takes it off the canvas altogether: no clicking, no
+    dragging, no typing" (help). Delete was the one bulk verb that never
+    asked -- duplicateSel, the arrange verbs, the align sweep and the
+    PowerPoint export all filter on lockedAll, and deleteSel spliced
+    every selected index.
+
+    That is not a theoretical hole: BOTH documented ways to hold a fully
+    locked item in a selection lead straight to it. Alt+marquee "sweeps
+    up fully locked items too", and the Objects pane is "the way back"
+    for an item you cannot click -- so you select one there to unlock
+    it, press Delete meaning the other three, and the locked one goes
+    with them (2026-08-25).
+
+    Verified in a browser both ways: one locked item alone refuses and
+    says why; one locked plus one loose deletes the loose one and toasts
+    "1 fully locked item kept".
+    """
+    assert "var kept=idxs.filter(function(i){" in out
+    assert "return !lockedAll((s.annots||[])[i]);});" in out
+    assert "var held=idxs.length-kept.length;" in out
+    # refusing silently would read as "Delete is broken"
+    assert "toast(held===1?'That item is fully locked" in out
+    assert "if(held) toast(held+' fully locked item'" in out
+    # and it is the KEPT list that gets spliced, not the original
+    assert "kept.sort(function(x,y){return y-x;}).forEach(function(i){" in out
