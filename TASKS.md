@@ -551,9 +551,33 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   which coerces and never complains. Neither raises. `DECK-FORMAT.md` is
   prose over the same tables and `tests/test_deck_schema.py` checks the
   two agree in both directions, so the document cannot drift.
-- [ ] **T34 · L — Python deck API.** Load/edit/save decks from Python —
+- [x] **T34 · L — Python deck API.** Load/edit/save decks from Python —
   `deck.slides[7].figures["toe_map"].update(...)` — living alongside
   `notebook/presentations.py`, round-tripping cleanly with the editor.
+  *2026-08-25:* `notebook/deck_api.py`.
+  **The one decision everything else follows from: it is a VIEW over the
+  JSON, never a parallel model of it.** Every wrapper holds the dict that
+  was loaded and mutates it in place; nothing is rebuilt on save. The
+  obvious design — a dataclass with a field per key — silently destroys
+  every key it has not heard of, and the browser is always ahead of
+  Python: `sid` arrived with T29, `trans` with T27, `priv` with T31, and
+  each would have been deleted by the first round-trip made before
+  somebody remembered to add a field. `test_deck_schema_parity` exists
+  precisely because that has happened six times. A view cannot lose a key
+  it never touches, and the first test in `test_deck_api.py` is that.
+  **It reads what a file happens to hold** — a list, a
+  `{"presentations": […]}`, a bare deck, an `.ipynb` carrying its deck in
+  `metadata.semantic`, or the `.junoview.html` the browser downloads
+  (whose wrapper is kept: only the JSON block inside it moves).
+  **Saving reports and does not coerce**, which is T33's split kept —
+  `_as_presentations` coerces and never complains, `validate_deck`
+  complains and never changes anything, and `save()` writes and tells
+  you. `strict=True` for a script that would rather stop.
+  **It does not drag the renderer in behind it:** the two file forms are
+  read here rather than imported from `loader`, because a script that
+  wants to move a figure should not have to load an HTML renderer.
+  22 tests, including a round trip back through `_as_presentations` —
+  a key kept here and dropped there would look saved and not be.
 - [ ] **T35 · M — Deck lint + AI-readable export.** Export a deck as
   structured text (titles, arguments, figures, captions, notes) so an LLM
   or a colleague can review the *content*; plus heuristic lints:
