@@ -2085,6 +2085,40 @@ body.light .fp-tielab{color:var(--ink-3);}
 .mini-pane.is-flip{background:#243b52;}
 .sp-kind.k-flip{background:#2a4761;}
 
+/* ---------- the overview map ----------
+   An OVERLAY, not a pane: it wants all the room there is for as long as
+   you are looking and none afterwards, which is the shape the spotlight
+   and the presenter view already have. */
+.deck-overview{position:fixed;inset:0;z-index:400;display:flex;
+  flex-direction:column;background:var(--chrome-0,#0b141d);
+  font-family:var(--sans);}
+.ovw-head{display:flex;align-items:center;gap:10px;
+  padding:10px 16px;border-bottom:1px solid #ffffff1a;}
+.ovw-t{font-size:13px;color:#dbe7ef;}
+.ovw-body{flex:1;overflow:auto;padding:14px 16px 26px;}
+.ovw-grp{margin-bottom:18px;}
+.ovw-gh{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7d93a6;margin:0 0 7px 2px;}
+.ovw-tiles{display:flex;flex-wrap:wrap;gap:10px;}
+.ovw-tile{width:150px;background:#ffffff08;border:1px solid #ffffff1f;
+  border-radius:7px;padding:6px;cursor:pointer;text-align:left;
+  display:flex;flex-direction:column;gap:4px;position:relative;}
+.ovw-tile:hover{border-color:var(--cyan);background:#ffffff12;}
+.ovw-tile.cur{border-color:var(--cyan);
+  box-shadow:0 0 0 1px var(--cyan) inset;}
+/* an optional slide, and one the current version leaves out: the map is
+   a zoom-out of the strip, so it says the same things the strip does */
+.ovw-tile.opt::after{content:"optional";position:absolute;top:5px;
+  right:6px;font-family:var(--mono);font-size:8px;color:#f0a848;}
+.ovw-tile.cut{opacity:.42;}
+.ovw-n{font-family:var(--mono);font-size:9px;color:#7d93a6;}
+.ovw-tile .mini-diagram{width:100%;height:76px;}
+.ovw-lab{font-size:10.5px;color:#b9cad8;line-height:1.25;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.light .deck-overview{background:#fff;}
+body.light .ovw-t{color:var(--ink);}
+body.light .ovw-lab{color:var(--ink-2);}
+
 /* ---------- one object's history ----------
    A row is a schematic of a past state, a sentence about what changed,
    and (for anything but the current state) a button. Not a .pf-row for

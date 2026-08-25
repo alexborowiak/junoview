@@ -2912,7 +2912,10 @@
   var FILMKEY='jv-deck-film:',FILMWKEY='jv-deck-filmw:';
   var FILM_VIEWS=[['thumb','Thumbnails','Pictures'],
     ['head','Headings','Names'],
-    ['both','Thumbnails and headings','Both']];
+    ['both','Thumbnails and headings','Both'],
+    /* not a strip mode at all, but the same question — how do I want to
+       look at this deck — so it is the same menu (T26) */
+    ['overview','Overview map…','Overview map…']];
   var filmView=null;
   function filmMode(){
     if(filmView===null){
@@ -17856,6 +17859,108 @@
        built, and every flip book on its last frame */
     var s=pres.slides[i];return s?slideStops(s):0;
   }
+  /* ---- THE OVERVIEW: THE WHOLE TALK AT ONCE ---------------------------
+     (TASKS T26.) TASKS.md is careful about what this is: "the realistic
+     scope of the infinite-canvas wish — an overview/navigation layer,
+     not canvas-based authoring". So it navigates and it does not author,
+     and that boundary is the reason it can be an overlay over the
+     existing model rather than a second editor.
+
+     WHY AN OVERLAY AND NOT A PANE. Every pane in this app docks beside
+     the stage and takes width from the page; this needs the opposite —
+     all the room there is, for as long as you are looking, and none
+     afterwards. It is the same shape as the spotlight and the presenter
+     view, which are the other two things here that take the screen and
+     give it straight back.
+
+     WHAT IT DRAWS is what already exists: sectionRuns() for the
+     clusters, miniDiagram() for the tiles, and the same reading of
+     optional/cut membership the playback filter uses. Nothing here
+     computes a fact of its own, which is why it cannot disagree with
+     the strip it is a zoom-out of. */
+  function overviewClose(){
+    var ov=$('#deck-overview');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',overviewKey,true);
+  }
+  function overviewKey(e){
+    if(!$('#deck-overview')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();overviewClose();
+    }
+  }
+  function openOverview(){
+    overviewClose();
+    var ov=document.createElement('div');
+    ov.className='deck-overview';ov.id='deck-overview';
+    var head=document.createElement('div');
+    head.className='ovw-head';
+    var t=document.createElement('span');
+    t.className='ovw-t';
+    var runs=sectionRuns();
+    var n=(pres.slides||[]).length;
+    t.textContent=(pres.name||'This deck')+' \u2014 '+n+' slide'
+      +(n===1?'':'s')
+      +(function(){
+        var ns=runs.filter(function(r){return r.id;}).length;
+        return ns?(' in '+ns+' section'+(ns===1?'':'s')):'';
+      })();
+    head.appendChild(t);
+    var sp=document.createElement('span');
+    sp.className='deck-spring';head.appendChild(sp);
+    var cl=document.createElement('button');
+    cl.className='dbtn';cl.innerHTML=bic('exit')+' Close';
+    cl.title='Esc';
+    cl.addEventListener('click',overviewClose);
+    head.appendChild(cl);
+    ov.appendChild(head);
+    var body=document.createElement('div');
+    body.className='ovw-body';
+    runs.forEach(function(r){
+      var grp=document.createElement('div');
+      grp.className='ovw-grp';
+      var gh=document.createElement('div');
+      gh.className='ovw-gh';
+      gh.textContent=r.id?(r.name||'Section')
+        :(runs.length>1?'(no section)':'');
+      if(gh.textContent) grp.appendChild(gh);
+      var tiles=document.createElement('div');
+      tiles.className='ovw-tiles';
+      for(var k=0;k<r.n;k++){
+        (function(i){
+          var sl=pres.slides[i];
+          var tile=document.createElement('button');
+          tile.className='ovw-tile'+(i===cur?' cur':'')
+            +(sl&&sl.opt?' opt':'')
+            +(slideSkipped(i)?' cut':'');
+          var num=document.createElement('span');
+          num.className='ovw-n';num.textContent=String(i+1);
+          tile.appendChild(num);
+          tile.appendChild(miniDiagram(sl));
+          var lab=document.createElement('span');
+          lab.className='ovw-lab';
+          lab.textContent=filmText(sl)||'';
+          tile.appendChild(lab);
+          tile.title=(sl&&sl.opt?'Optional \u2014 ':'')
+            +'Go to slide '+(i+1);
+          tile.addEventListener('click',function(){
+            overviewClose();
+            cur=i;activePane=-1;selAnnot=null;selSet=[];
+            refresh();
+          });
+          tiles.appendChild(tile);
+        })(r.at+k);
+      }
+      grp.appendChild(tiles);
+      body.appendChild(grp);
+    });
+    ov.appendChild(body);
+    document.body.appendChild(ov);
+    /* CAPTURE, so Esc closes the map before the editor's own Esc ladder
+       reads it as "drop the tool" — the innermost state wins, which is
+       the rule that ladder already follows */
+    document.addEventListener('keydown',overviewKey,true);
+  }
   /* ---- OPTIONAL SLIDES, NAMED CUTS, AND RUNNING LATE ------------------
      (TASKS T24 and T25 — one model, and T25 is three lines once T24
      exists, so they are built together.)
@@ -20714,6 +20819,9 @@
       if(btn) btn.innerHTML=bic('layouts')+' '+label()+' &#9662;';
     }
     function setFilmMode(m){
+      /* the overview is a VIEW of the deck, not a mode of the strip: it
+         opens and the strip keeps whatever it was showing */
+      if(m==='overview'){openOverview();return;}
       filmView=m;
       lsSet(FILMKEY+SCOPE,m);
       syncFilmBtn();renderFilm();

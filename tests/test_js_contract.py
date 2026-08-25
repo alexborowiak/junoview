@@ -70,6 +70,9 @@ RUNTIME_IDS = {
     # The ribbon customiser, built on right-clicking the ribbon and
     # removed on the next click: deck.js, A RIBBON OF YOUR OWN.
     "rbn-cust",
+    # The overview map, an overlay built per open and removed on close:
+    # deck.js, THE OVERVIEW.
+    "deck-overview",
     # The deck-token editor, built on demand: deck.js, DESIGN TOKENS.
     "tok-pop",
 }

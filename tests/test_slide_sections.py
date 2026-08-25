@@ -582,3 +582,40 @@ def test_running_late_starts_from_here(out):
     # an empty cut list is dropped rather than stored, the same
     # empty-is-absent rule sections and styles follow
     assert "if(c.length) sl.cuts=c; else delete sl.cuts;" in out
+
+
+def test_the_overview_is_a_navigation_layer_not_a_canvas(out):
+    """TASKS T26, and TASKS.md is careful about what it is: "the
+    realistic scope of the infinite-canvas wish -- an overview /
+    navigation layer, not canvas-based authoring". That boundary is why
+    it can be an overlay over the existing model rather than a second
+    editor.
+
+    An OVERLAY and not a pane: every pane docks beside the stage and
+    takes width from the page, and this wants the opposite -- all the
+    room there is while you look, and none afterwards. Same shape as the
+    spotlight and the presenter view.
+    """
+    assert "function openOverview(){" in out
+    assert "function overviewClose(){" in out
+    assert ".deck-overview{position:fixed;inset:0;" in out
+    # it draws what already exists and computes no fact of its own,
+    # which is why it cannot disagree with the strip it zooms out of
+    assert "var runs=sectionRuns();" in out
+    assert "tile.appendChild(miniDiagram(sl));" in out
+    assert "+(slideSkipped(i)?' cut':'');" in out
+
+
+def test_the_overview_closes_before_the_editors_esc_ladder(out):
+    """Esc has a ladder in this editor -- trim mode, then the group you
+    stepped into, then the tool, then the selection, then the mode. The
+    map is inner to all of it, so it listens in CAPTURE and stops the
+    event: the innermost state wins, which is the rule that ladder
+    already follows.
+    """
+    assert "document.addEventListener('keydown',overviewKey,true);" in out
+    assert "e.preventDefault();e.stopPropagation();overviewClose();" in out
+    # and it is reached from the menu that already asks "how do I want to
+    # look at this deck"
+    assert "['overview','Overview map\u2026','Overview map\u2026']];" in out
+    assert "if(m==='overview'){openOverview();return;}" in out

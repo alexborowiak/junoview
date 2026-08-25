@@ -336,10 +336,18 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   *2026-08-25, committed with T24.* From the CURRENT slide onward, and
   deliberately not a cut: you do not choose it before the talk, you reach
   for it at minute 34.
-- [ ] **T26 · M — Deck overview map.** A zoom-out overview: sections →
+- [x] **T26 · M — Deck overview map.** A zoom-out overview: sections →
   slides as a navigable map. This is the realistic scope of the "infinite
   canvas" wish — an overview/navigation layer, not canvas-based authoring.
   Depends on T23.
+  *2026-08-25:* an overlay, not a pane — it wants all the room there is
+  while you look and none afterwards, which is the shape the spotlight
+  and presenter view already have. It draws `sectionRuns()` clusters of
+  `miniDiagram()` tiles and reads optional/cut membership through the
+  same `slideSkipped` the playback filter uses, so it cannot disagree
+  with the strip it zooms out of. Reached from the strip's own view
+  menu, which is already where "how do I want to look at this deck" is
+  asked.
 - [ ] **T27 · L — Object continuity transitions (design first).** The same
   object appearing on consecutive slides animates between its two states
   (move/scale/zoom-into-region) — Keynote "Magic Move". The existing
