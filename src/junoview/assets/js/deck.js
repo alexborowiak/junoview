@@ -1331,6 +1331,278 @@
     var re=$('#preflight-rerun');
     if(re) re.addEventListener('click',renderPreflight);
   })();
+  /* ---- TIDY UP THIS PAGE -----------------------------------------------
+     A third question in the same shell as the other two. preflight() asks
+     whether this page survives a printer. standardise() asks whether the
+     deck agrees with itself. This asks whether the page is SLOPPY, which
+     is a different thing again: everything here is individually fine and
+     collectively looks like nobody was paying attention.
+
+     Three kinds of sloppiness, and one rule over all of them: REPORT
+     FIRST. Nothing moves until a button is pressed, and every button
+     moves one finding's worth of things. A cleanup that rearranged the
+     page the moment you asked it to look would be a cleanup nobody dares
+     run twice (TASKS T9).
+
+     The tolerances are the whole design, so they are named and argued:
+
+       NEAR    an edge that is out by less than this is ALREADY aligned as
+               far as anyone can see, and "fixing" it is noise.
+       APART   out by more than this and it is a decision, not a slip.
+               Reporting it would be second-guessing the layout.
+
+     Between the two is the band where someone meant to line things up and
+     missed — which is exactly the population this feature is for. */
+  var TIDY_NEAR=0.12, TIDY_APART=1.6;
+  /* gaps: uneven by more than this fraction of the mean is deliberate
+     (a wide gutter between two blocks), under it is a wobble */
+  var TIDY_GAP_REL=0.28;
+  function tidyRects(layer,s){
+    var out=[];
+    (s.annots||[]).forEach(function(a,i){
+      if(!a||a.hide||a.k==='arrow') return;
+      /* a pinned object is not moved by anything else on the canvas, so
+         offering to move it here would be a button that lies (T3) */
+      if(pinned(a)) return;
+      var r=annotRectPct(layer,s,i);
+      if(r) out.push({i:i,a:a,r:r});
+    });
+    return out;
+  }
+  /* group values that are nearly-but-not-exactly equal. Returns only the
+     clusters worth reporting: two or more members, and a spread inside
+     the "meant to line up and missed" band. */
+  function tidyClusters(items,read){
+    var v=items.map(function(x){return {x:x,v:read(x.r)};});
+    v.sort(function(p,q){return p.v-q.v;});
+    var out=[],run=[v[0]];
+    for(var k=1;k<v.length;k++){
+      if(v[k].v-run[run.length-1].v<=TIDY_APART) run.push(v[k]);
+      else {out.push(run);run=[v[k]];}
+    }
+    out.push(run);
+    return out.filter(function(r){
+      if(r.length<2) return false;
+      var sp=r[r.length-1].v-r[0].v;
+      return sp>TIDY_NEAR&&sp<=TIDY_APART;
+    });
+  }
+  function tidyMedian(v){
+    var a=v.slice().sort(function(p,q){return p-q;});
+    return a[Math.floor(a.length/2)];
+  }
+  /* what makes two objects the SAME thing rather than two like things.
+     Geometry alone is not enough — two equal-sized swatches side by side
+     are a design, not a mistake — so content has to agree too. */
+  function tidySig(a){
+    if(a.k==='text') return 'text:'+String(a.text||'').trim().slice(0,80);
+    if(a.k==='cell') return 'cell:'+(a.ref||'');
+    if(a.k==='image') return 'image:'+String(a.src||'').slice(0,64);
+    if(a.k==='rect')
+      return 'rect:'+(a.shape||'box')+':'+(a.color||'')+':'+(a.fillc||'');
+    if(a.k==='table') return 'table:'+JSON.stringify(a.rows||[]).slice(0,80);
+    return a.k;
+  }
+  var TIDY_EDGES=[
+    ['l','left edges',function(r){return r.l;},true],
+    ['cx','centres, side to side',function(r){return (r.l+r.r)/2;},true],
+    ['r','right edges',function(r){return r.r;},true],
+    ['t','top edges',function(r){return r.t;},false],
+    ['cy','middles, top to bottom',function(r){return (r.t+r.b)/2;},false],
+    ['b','bottom edges',function(r){return r.b;},false]
+  ];
+  function tidyFindings(){
+    var s=pres.slides[cur];
+    var layer=stage?stage.querySelector('.annot-layer'):null;
+    if(!s||!layer) return [];
+    var items=tidyRects(layer,s);
+    var out=[];
+    if(items.length<2) return out;
+
+    /* ---- 1. nearly aligned ---- */
+    var seen={};
+    TIDY_EDGES.forEach(function(e){
+      tidyClusters(items,e[2]).forEach(function(cl){
+        /* one physical near-miss shows up on l, cx and r at once when the
+           widths match. Report it once, on whichever edge it is tightest
+           — that is the one the eye is reading. */
+        var sig=e[3]+'|'+cl.map(function(m){return m.x.i;}).sort().join(',');
+        var sp=cl[cl.length-1].v-cl[0].v;
+        if(seen[sig]&&seen[sig].sp<=sp) return;
+        var target=tidyMedian(cl.map(function(m){return m.v;}));
+        var f={kind:'align',sev:'warn',sp:sp,
+          list:cl.map(function(m){return {si:cur,ai:m.x.i,a:m.x.a};}),
+          head:cl.length+' objects nearly share their '+e[1],
+          why:'They are '+gapMm(sp,e[3])+' apart across '+e[1]
+            +'. Close enough to look like a mistake, far enough to see.',
+          act:'Line up their '+e[1],
+          fix:(function(cl2,rd,horiz,tgt){return function(){
+            cl2.forEach(function(m){
+              var d=tgt-rd(m.x.r);
+              shiftAnnot(m.x.a,horiz?d:0,horiz?0:d);
+            });
+            return cl2.length;
+          };})(cl,e[2],e[3],target)};
+        seen[sig]=f;
+      });
+    });
+    Object.keys(seen).forEach(function(k){out.push(seen[k]);});
+
+    /* ---- 2. gaps that wobble ---- */
+    [true,false].forEach(function(horiz){
+      var done={};
+      items.forEach(function(x){
+        var run=bandMates(layer,s,x.i,horiz)
+          .filter(function(i){
+            return items.some(function(y){return y.i===i;});});
+        if(run.length<3) return;
+        var key=run.slice().sort().join(',');
+        if(done[key]) return;
+        done[key]=1;
+        var rs=run.map(function(i){
+          return items.filter(function(y){return y.i===i;})[0];})
+          .filter(Boolean);
+        rs.sort(function(p,q){
+          return horiz?(p.r.l-q.r.l):(p.r.t-q.r.t);});
+        var gaps=[];
+        for(var k=1;k<rs.length;k++)
+          gaps.push(horiz?(rs[k].r.l-rs[k-1].r.r)
+                         :(rs[k].r.t-rs[k-1].r.b));
+        if(gaps.some(function(g){return g<0;})) return;
+        var mean=gaps.reduce(function(a,b){return a+b;},0)/gaps.length;
+        var sp=Math.max.apply(null,gaps)-Math.min.apply(null,gaps);
+        if(!(mean>0)||sp<=TIDY_NEAR||sp>mean*TIDY_GAP_REL) return;
+        out.push({kind:'gaps',sev:'warn',sp:sp,
+          list:rs.map(function(y){return {si:cur,ai:y.i,a:y.a};}),
+          head:rs.length+' objects '+(horiz?'across':'down')
+            +' with uneven gaps',
+          why:'The gaps run '+gaps.map(function(g){
+            return gapMm(g,horiz);}).join(', ')
+            +'. Uneven whitespace is what reads as sloppy even when '
+            +'everything is aligned.',
+          act:'Space them evenly',
+          fix:(function(rs2,horiz2){return function(){
+            /* the OUTER two do not move: distributing between them is
+               what "even" means, and moving the ends would slide the
+               whole run somewhere nobody asked for */
+            var first=rs2[0],last=rs2[rs2.length-1];
+            var lo=horiz2?first.r.r:first.r.b;
+            var hi=horiz2?last.r.l:last.r.t;
+            var inner=rs2.slice(1,-1);
+            var span=inner.reduce(function(t,y){
+              return t+(horiz2?(y.r.r-y.r.l):(y.r.b-y.r.t));},0);
+            var g=(hi-lo-span)/(inner.length+1);
+            var pos=lo+g;
+            inner.forEach(function(y){
+              var d=pos-(horiz2?y.r.l:y.r.t);
+              shiftAnnot(y.a,horiz2?d:0,horiz2?0:d);
+              pos+=(horiz2?(y.r.r-y.r.l):(y.r.b-y.r.t))+g;
+            });
+            return inner.length;
+          };})(rs,horiz)});
+      });
+    });
+
+    /* ---- 3. the same thing, twice ---- */
+    for(var i=0;i<items.length;i++) for(var j=i+1;j<items.length;j++){
+      var A=items[i],B=items[j];
+      if(A.a.k!==B.a.k) continue;
+      if(tidySig(A.a)!==tidySig(B.a)) continue;
+      var aw=A.r.r-A.r.l,ah=A.r.b-A.r.t;
+      var bw=B.r.r-B.r.l,bh=B.r.b-B.r.t;
+      if(!(aw>0&&ah>0)) continue;
+      if(Math.abs(aw-bw)>aw*0.05||Math.abs(ah-bh)>ah*0.05) continue;
+      var dx=Math.abs((A.r.l+A.r.r)/2-(B.r.l+B.r.r)/2);
+      var dy=Math.abs((A.r.t+A.r.b)/2-(B.r.t+B.r.b)/2);
+      if(dx>4||dy>4) continue;
+      out.push({kind:'dup',sev:'warn',sp:Math.max(dx,dy),
+        list:[{si:cur,ai:A.i,a:A.a},{si:cur,ai:B.i,a:B.a}],
+        head:'Two copies of '+annotLabel(A.a),
+        why:'Same content, same size, almost the same place — the shape '
+          +'a paste that happened twice leaves behind. Only the one '
+          +'underneath is doing anything.',
+        act:'Delete the copy on top',
+        fix:(function(k){return function(){
+          var sl=pres.slides[cur];
+          if(sl&&sl.annots&&sl.annots[k]) sl.annots.splice(k,1);
+          selAnnot=null;selSet=[];
+          return 1;
+        };})(Math.max(A.i,B.i))});
+    }
+    /* worst first: the further out of true, the more it shows */
+    out.sort(function(p,q){return q.sp-p.sp;});
+    return out;
+  }
+  function tidyRow(f){
+    var box=document.createElement('div');
+    box.className='std-find std-'+f.sev;
+    var h=document.createElement('div');
+    h.className='std-h';h.textContent=f.head;box.appendChild(h);
+    var w=document.createElement('div');
+    w.className='std-why';w.textContent=f.why;box.appendChild(w);
+    var who=document.createElement('div');who.className='std-who';
+    f.list.slice(0,12).forEach(function(p){
+      var c=document.createElement('button');
+      c.className='std-chip';
+      c.textContent=annotLabel(p.a);
+      c.title='Select it';
+      c.addEventListener('click',function(){
+        var l=stage.querySelector('.annot-layer');
+        if(l) selectAnnot(l,p.ai);
+      });
+      who.appendChild(c);
+    });
+    box.appendChild(who);
+    var act=document.createElement('button');
+    act.className='dbtn std-do';
+    act.textContent=f.act;
+    act.addEventListener('click',function(){
+      var n=f.fix()||0;
+      markDirty();
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+      toast(n+' object'+(n===1?'':'s')+' tidied \u2014 Ctrl+Z undoes it');
+      renderTidyPane();
+    });
+    box.appendChild(act);
+    return box;
+  }
+  function renderTidyPane(){
+    var list=$('#tidypane-list'),head=$('#tidypane-count');
+    if(!list) return;
+    var f=tidyFindings();
+    if(head) head.textContent=f.length
+      ?(f.length+' to look at')
+      :'nothing out of true';
+    list.innerHTML='';
+    if(!f.length){
+      var msg=document.createElement('div');
+      msg.className='pf-ok';
+      msg.textContent='This page is tidy. Nothing is nearly-but-not-'
+        +'quite lined up, the gaps are even, and nothing has been '
+        +'pasted twice on top of itself.';
+      list.appendChild(msg);
+      return;
+    }
+    f.forEach(function(x){list.appendChild(tidyRow(x));});
+  }
+  function showTidyPane(){
+    var pane=$('#tidypane'); if(!pane) return;
+    ['#selpane','#animpane','#preflight','#notespane','#stdpane']
+      .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
+    pane.hidden=false;
+    renderTidyPane();
+    syncPaneDock();
+  }
+  (function(){
+    var cl=$('#tidypane-close');
+    if(cl) cl.addEventListener('click',function(){
+      var p=$('#tidypane'); if(p) p.hidden=true;
+      syncPaneDock();
+    });
+    var rr=$('#tidypane-rerun');
+    if(rr) rr.addEventListener('click',renderTidyPane);
+  })();
   /* ---- STANDARDISE TEXT -------------------------------------------------
      (2026-08-22, user: "it would be cool if there was a button that was
      called 'standardise text', and checked if all headings paragraphs,
@@ -2874,7 +3146,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'stdpane','flippane']
+   'stdpane','tidypane','flippane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
@@ -13257,6 +13529,10 @@
      /* the LAYOUT sibling of the two rows above: same gesture, but what
         travels is the arrangement rather than the look (TASKS T8) */
      ['x:layout','Lay these out like a group I click…'],
+     /* the REPORT-first sibling of "Tidy into a row" above: that one
+        rearranges what you selected, this one looks at the whole page
+        and asks first (TASKS T9) */
+     ['o:tidyup','Tidy up this page…'],
      /* SELECTING is not arranging, but this is the menu that is shown
         for every kind of item and already keeps the "everything like
         this one" verbs — and the ribbon has no width to spare for a
@@ -13264,6 +13540,7 @@
      ['s:by','Select everything on this slide like this…']],'al',
     function(what){
       if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}
+      if(what==='o:tidyup'){showTidyPane();return;}
       if(what.indexOf('a:')===0){
         if(typeof window.SemDeckApplyDlg==='function')
           window.SemDeckApplyDlg();
@@ -14383,7 +14660,8 @@
     if(on){
       if(typeof idx==='number') flipSel=idx;
       /* one pane in the corner at a time — the rule showVerpane keeps */
-      ['#selpane','#animpane','#preflight','#notespane','#stdpane']
+      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
+       '#tidypane']
         .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
       var ob=$('#objects-btn');
       if(ob) ob.setAttribute('aria-pressed','false');

@@ -114,9 +114,15 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
   reference group swallowing the slide-wide empty frame — `bandMates` now
   requires members to sit BESIDE each other along the run, not just share
   a band.
-- [ ] **T9 · M — Slide cleanup.** One command that *reports* near-
+- [x] **T9 · M — Slide cleanup.** One command that *reports* near-
   misalignments, uneven gaps, and near-duplicate objects, then applies
   fixes selectively (report-first, never silently rearrange).
+  *2026-08-25:* `#tidypane`, a third pane in the shell `#preflight` and
+  `#stdpane` share — and for the same reason `#stdpane` is separate: a
+  finding here carries chips AND an action, which a whole-button
+  preflight row cannot hold. The tolerances (`TIDY_NEAR`, `TIDY_APART`,
+  `TIDY_GAP_REL`) are the design: below one it is already aligned, above
+  the other it is a decision. Reached from the Arrange menu.
 - [ ] **T10 · L — Per-object history (design first).** Per-object action
   log plus a small thumbnail timeline viewer ("what has this object looked
   like"); "undo just this object" where the ops don't conflict. Design

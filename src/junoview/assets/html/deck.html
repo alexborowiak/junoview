@@ -1267,6 +1267,25 @@
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
+      <!-- TIDY UP, the third pane in this shell and for a third
+           question. Print check asks whether THIS page survives a
+           printer; Standardise text asks whether the DECK agrees with
+           itself; this asks whether this page is SLOPPY — things nearly
+           but not quite lined up, gaps nearly but not quite even, an
+           object pasted twice on top of itself. It reports and never
+           rearranges on its own: every fix is a button you press, which
+           is the whole point of the feature (TASKS T9). -->
+      <aside class="selpane preflight" id="tidypane" hidden>
+        <div class="selpane-h"><span>Tidy up this page</span>
+          <button class="dbtn dc-icon" id="tidypane-rerun"
+            aria-label="Look again"
+            title="Look again"><i data-ic="reload"></i></button>
+          <button class="dbtn dc-icon" id="tidypane-close"
+            aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="pf-count" id="tidypane-count"></div>
+        <div class="selpane-list" id="tidypane-list"></div>
+      </aside>
       <!-- THE FLIP BOOK'S FRAMES, in the same shell as Layers and the
            slide strip — a list you open to look at one item from outside
            it. It is the slide film strip's shape deliberately: a flip

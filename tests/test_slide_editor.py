@@ -1314,3 +1314,65 @@ def test_a_slide_wide_object_is_not_part_of_every_row(out):
     # armed and reported through the existing match bar, not a new one
     assert "if(dir==='layout'&&idxs.length<2){" in out
     assert "['x:layout','Lay these out like a group I click…']," in out
+
+
+def test_tidy_up_reports_before_it_rearranges(out):
+    """TASKS T9. A third question in the same pane shell: preflight asks
+    whether this page survives a printer, standardise asks whether the
+    deck agrees with itself, this asks whether the page is SLOPPY --
+    everything individually fine and collectively looking like nobody
+    was paying attention.
+
+    Report first is the whole feature. Nothing moves until a button is
+    pressed, and each button moves one finding's worth of things. A
+    cleanup that rearranged the page the moment you asked it to look is
+    a cleanup nobody dares run twice.
+    """
+    assert 'id="tidypane"' in out and 'id="tidypane-list"' in out
+    assert "function tidyFindings(){" in out
+    assert "function showTidyPane(){" in out
+    assert "['o:tidyup','Tidy up this page…']," in out
+    # every fix is attached to its own row's button
+    assert "act.addEventListener('click',function(){\n      var n=f.fix()" \
+        in out
+    # it joins the panes that share the corner and the remembered geometry
+    assert "'stdpane','tidypane','flippane']" in out
+
+
+def test_the_tidy_tolerances_are_named_and_argued(out):
+    """The tolerances ARE the design. Below NEAR an edge is already
+    aligned as far as anyone can see and "fixing" it is noise; above
+    APART it is a decision rather than a slip, and reporting it would be
+    second-guessing the layout. Between them is the band where someone
+    meant to line things up and missed, which is the whole population
+    this feature is for.
+    """
+    assert "var TIDY_NEAR=0.12, TIDY_APART=1.6;" in out
+    assert "var TIDY_GAP_REL=0.28;" in out
+    assert "return sp>TIDY_NEAR&&sp<=TIDY_APART;" in out
+    # one physical near-miss shows up on left/centre/right at once when
+    # the widths match -- report it once, on the tightest edge
+    assert "if(seen[sig]&&seen[sig].sp<=sp) return;" in out
+    # a pinned object is not moved by anything else, so it is not
+    # offered here either -- that would be a button that lies
+    assert "      if(pinned(a)) return;\n      var r=annotRectPct(layer,s,i);" \
+        in out
+
+
+def test_tidy_finds_three_kinds_of_sloppy(out):
+    """Near-misalignment, gaps that wobble, and the same object pasted
+    twice. Geometry alone cannot identify a duplicate -- two equal-sized
+    swatches side by side are a design, not a mistake -- so the content
+    has to agree too.
+
+    Spacing evenly keeps the OUTER two where they are: distributing
+    between them is what "even" means, and moving the ends would slide
+    the whole run somewhere nobody asked for.
+    """
+    assert "function tidySig(a){" in out
+    assert "if(tidySig(A.a)!==tidySig(B.a)) continue;" in out
+    assert "head:'Two copies of '+annotLabel(A.a)," in out
+    assert "var inner=rs2.slice(1,-1);" in out
+    assert "var g=(hi-lo-span)/(inner.length+1);" in out
+    # a negative gap means they overlap -- that is not a spacing problem
+    assert "if(gaps.some(function(g){return g<0;})) return;" in out
