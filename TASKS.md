@@ -145,10 +145,22 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
      key survives a save.
   Scope is one slide, deliberately: the question is asked about a thing
   you are pointing at.
-- [ ] **T11 · L — Customisable ribbon (design first).** Reorder/hide
+- [x] **T11 · L — Customisable ribbon (design first).** Reorder/hide
   ribbon buttons, persisted per user. HARD INVARIANTS: the ribbon never
   wraps to a second row (custom layouts still pass through
   `fitEditRibbon`), and buttons stay words + icons, never icon-only.
+  *2026-08-25 — the design note, carried in full under the A RIBBON OF
+  YOUR OWN banner:*
+  1. **Scope:** individual controls, within their existing group. Never
+     between tabs — a tab is a promise about where things are.
+  2. **Storage:** `jv-ribbon`, deliberately UNSCOPED (every other pref is
+     `+SCOPE`). A ribbon layout is a fact about the person, not the deck.
+  3. **Hiding:** a `.rbn-hid` class, never `hidden` — `hidden` is owned
+     by `showFmt`/`FMT_KINDS` and the two would fight. `display:none`
+     also costs the fit ladder nothing, so hiding really buys room.
+  Both invariants hold by construction: no label is ever changed, and
+  `fitEditRibbon` re-runs after every change. Reached by right-clicking
+  the ribbon, which costs the row no width.
 
 ## 2. Styling, layout, text
 

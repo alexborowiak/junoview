@@ -2656,6 +2656,16 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
 .canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}
 .canvas-menu .vw-opt{width:100%;text-align:left;}
 .canvas-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
+/* A BUTTON YOU HAVE PUT AWAY. display:none, not [hidden]: showFmt owns
+   the attribute and turns controls on and off by kind, so a customiser
+   writing the same one would fight it on every click. This composes
+   with it instead — and costs the fit ladder nothing, because
+   display:none takes no width. */
+#edit-tools .rbn-hid{display:none!important;}
+.rbn-cust{max-height:74vh;}
+.rbn-cust .rbn-crow{gap:3px;}
+.rbn-cust .rbn-move{font-size:11px;line-height:1;padding:2px 6px;
+  flex:none;}
 /* which lock the selection is in now. Same treatment the View menu's
    toggles use, so "on" reads the same way everywhere. */
 .canvas-menu .vw-opt.on{background:color-mix(in srgb,var(--accent) 22%,

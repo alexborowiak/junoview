@@ -106,6 +106,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the card's node on first open; outputs the cards drop (hidden cells,
 # single-step folds) stay fully embedded in the raw view. Pinned by
 # tests/test_app_shell.py's raw-view single-copy tests.
+# Moved 2026-08-25 for TASKS T11, a ribbon of your own: deck.js
+# gained the customiser (right-click the ribbon), deck.css the
+# .rbn-hid / .rbn-cust rules, help.html a paragraph. Editor-only;
+# pinned by tests/test_slide_editor.py's three ribbon tests.
 # Moved 2026-08-25 for TASKS T10, per-object history: a fourth
 # report pane (deck.html #objhist, deck.js objHistory/ohRestore/
 # ensureOids, deck.css .oh-* rows, help.html a paragraph).
@@ -163,8 +167,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "a64f4ad697dfc0cbdca43b15e39732cd"
-EXPECTED_BYTES = 2379810
+EXPECTED_MD5 = "8ceb1ffb304f1f0d162ec8be54b99473"
+EXPECTED_BYTES = 2390856
 
 
 def _render_example() -> str:

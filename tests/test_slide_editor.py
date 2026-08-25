@@ -1448,3 +1448,67 @@ def test_object_identity_is_lazy_and_self_healing(out):
     assert "function ohThumb(a){" in out
     assert "function ohChanges(prev,now){" in out
     assert "if(!prev) return 'created';" in out
+
+
+def test_a_ribbon_of_your_own(out):
+    """TASKS T11, and the design note it asked for.
+
+    WHAT IS CUSTOMISABLE: individual controls, within the group they
+    already live in -- never between tabs. A tab is a promise about
+    where things are ("the tools for the thing you just clicked are in
+    ONE named place you can go back to"), and a layout that could break
+    that promise would make every other piece of guidance wrong.
+
+    WHERE IT IS REMEMBERED: an UNSCOPED key. Every other preference here
+    is +SCOPE -- per project, per notebook bundle -- but a ribbon layout
+    is a fact about the person, and it would be absurd for one deck to
+    know where you keep Bold. Same argument matchPick makes for being
+    session-local.
+    """
+    assert "var RIBBON_KEY='jv-ribbon';        /* NOT +SCOPE — see above */" \
+        in out
+    assert "function applyRibbonPrefs(){" in out
+    assert "function openRibbonCustomise(){" in out
+    # right-click the ribbon: where every application of this shape puts
+    # it, and it costs the row no width -- which matters most here
+    assert "bar.addEventListener('contextmenu',function(e){" in out
+    # the picker shows the tab you are looking at; the applier walks all
+    assert "function ribbonGroupsHere(){" in out
+    assert "ribbonGroupsHere().forEach(function(g){" in out
+    assert "ribbonGroups().forEach(function(g){" in out
+
+
+def test_hiding_a_ribbon_button_composes_with_showFmt(out):
+    """`hidden` is owned by showFmt and FMT_KINDS, which turn controls on
+    and off by KIND. A customiser writing the same attribute would fight
+    it on every click and whoever wrote last would win.
+
+    .rbn-hid is display:none, so the two compose -- a control appears
+    when its kind allows it AND you have not put it away -- and it costs
+    the fit ladder nothing, because display:none takes no width. Hiding
+    genuinely buys room rather than only looking like it.
+    """
+    assert "#edit-tools .rbn-hid{display:none!important;}" in out
+    assert "el.classList.toggle('rbn-hid',hid.indexOf(el.id)>=0);" in out
+    # the invariants hold by construction: nothing changes a label, and
+    # the row is re-fitted after every change
+    assert "if(typeof fitEditRibbon==='function') fitEditRibbon();" in out
+    # applied once, from the tail, never mid-file
+    assert ("  renderPresTabs();\n"
+            "  /* the ribbon you kept: applied once here, at the tail") in out
+
+
+def test_each_ribbon_group_is_keyed_by_its_own_name(out):
+    """Caught in the browser, 2026-08-25, by reading the stored key.
+    Matching the first `rbn-*` class found `rbn-grp` on every group, so
+    all of them answered to one id and a single group's saved order was
+    applied to the whole ribbon. The generic classes are excluded now,
+    and groups with no distinguishing class of their own fall back to
+    their visible label, which is unique across the row.
+    """
+    assert ("var RBN_GENERIC={'rbn-grp':1,'rbn-fixed':1,'rbn-row':1,"
+            "'rbn-lab':1};") in out
+    assert "if(!hit&&c.indexOf('rbn-')===0&&!RBN_GENERIC[c]) hit=c;});" in out
+    # an unknown id in a saved list is skipped, so a control added by a
+    # later version keeps its place instead of vanishing
+    assert "if(byId[id]) row.appendChild(byId[id]);});" in out

@@ -67,6 +67,9 @@ RUNTIME_IDS = {
     # is the Arrange row's standalone copy of its select-by rows, built
     # by openSelectByMenu in SELECTING BY WHAT THINGS ARE.
     "canvas-menu", "selby-menu",
+    # The ribbon customiser, built on right-clicking the ribbon and
+    # removed on the next click: deck.js, A RIBBON OF YOUR OWN.
+    "rbn-cust",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose

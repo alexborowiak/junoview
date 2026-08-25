@@ -2365,6 +2365,224 @@
      beautifully until you clicked a text box, which is the only case that
      matters. */
   var ERCW=[['ercw1',1260],['ercw2',1170],['ercw3',1080],['ercw4',990]];
+  /* ---- A RIBBON OF YOUR OWN --------------------------------------------
+     Reorder and hide ribbon buttons, remembered per user (TASKS T11).
+     The design note, and the three answers it had to give:
+
+     WHAT IS CUSTOMISABLE: individual controls, within the group they
+     already live in. Not whole groups, and NOT moving a control to
+     another tab — a tab is a promise about where things are ("the tools
+     for the thing you just clicked are in ONE named place you can go
+     back to", showFmt), and letting a layout break that promise would
+     make every other piece of guidance in this app wrong.
+
+     WHERE IT IS REMEMBERED: an UNSCOPED localStorage key. Every other
+     preference here is `+SCOPE` — per project, per notebook bundle — but
+     a ribbon layout is a fact about the person, not about the deck, and
+     it would be absurd for one deck to know where you keep Bold. That is
+     the same argument matchPick makes for being session-local and
+     arrangements make for being localStorage rather than deck data, so
+     the departure is deliberate and consistent rather than an exception.
+
+     HOW HIDING IS EXPRESSED: a class, never `hidden`. `hidden` is owned
+     by showFmt and FMT_KINDS, which turn controls on and off by KIND —
+     a customiser writing the same attribute would fight it on every
+     click, and whoever wrote last would win. `.rbn-hid` is
+     display:none, so the two compose: a control appears when its kind
+     allows it AND you have not put it away. It also costs the fit
+     ladder nothing, because display:none takes no width — hiding
+     genuinely buys room rather than only looking like it.
+
+     THE INVARIANTS HOLD BY CONSTRUCTION. Nothing here changes a label,
+     so buttons stay words plus icons. Nothing here bypasses
+     fitEditRibbon: the row is re-fitted after every change, so a custom
+     layout compacts down the same ladder and still never wraps. */
+  var RIBBON_KEY='jv-ribbon';        /* NOT +SCOPE — see above */
+  function ribbonPrefs(){
+    try{
+      var o=JSON.parse(localStorage.getItem(RIBBON_KEY)||'{}');
+      return (o&&typeof o==='object')?o:{};
+    }catch(e){return {};}
+  }
+  function ribbonSave(o){
+    try{
+      if(!o||!Object.keys(o).length) localStorage.removeItem(RIBBON_KEY);
+      else localStorage.setItem(RIBBON_KEY,JSON.stringify(o));
+    }catch(e){}
+  }
+  /* a control is addressed by its id. Anything without one cannot be
+     customised and is left exactly where it is — which is the right
+     answer for the separators and the wrappers, and means the picker
+     never offers you a row you cannot act on. */
+  /* the GENERIC classes every group wears. Matching the first `rbn-*`
+     token found `rbn-grp` on all of them, so every group answered to the
+     same id and one group's saved order was applied to all of them
+     (2026-08-25, caught by reading the stored key in a browser). The
+     groups with no distinguishing class of their own fall back to their
+     visible label, which is stable and unique across the row. */
+  var RBN_GENERIC={'rbn-grp':1,'rbn-fixed':1,'rbn-row':1,'rbn-lab':1};
+  function ribbonGroupId(g){
+    var hit='';
+    String(g.className||'').split(/\s+/).forEach(function(c){
+      if(!hit&&c.indexOf('rbn-')===0&&!RBN_GENERIC[c]) hit=c;});
+    if(hit) return hit;
+    var lab=g.querySelector('.rbn-lab');
+    return 'grp-'+((((lab&&lab.textContent)||'').trim().toLowerCase()
+      .replace(/[^a-z0-9]+/g,'-'))||'x');
+  }
+  function ribbonControls(g){
+    var row=g.querySelector('.rbn-row')||g;
+    return [].slice.call(row.children).filter(function(el){
+      return el.id&&!el.classList.contains('rbn-lab');
+    });
+  }
+  function ribbonGroups(){
+    return $$('#edit-tools .rbn-grp').filter(function(g){
+      return ribbonControls(g).length>1;});
+  }
+  /* the picker shows the TAB YOU ARE LOOKING AT. All three tabs together
+     is 87 controls in a floating menu, which is a wall rather than a
+     list — and you customise a ribbon while looking at the thing you
+     want moved, not by scrolling for it. applyRibbonPrefs still walks
+     every group, so what you set on one tab keeps working while you are
+     on another (2026-08-25, found by counting the rows in a browser). */
+  function ribbonGroupsHere(){
+    return ribbonGroups().filter(function(g){
+      return g.offsetParent!==null;});
+  }
+  /* apply what is remembered: order first, then hiding. Order is written
+     by re-appending, which is stable for anything the list does not
+     name — a control added by a later version of the app keeps its place
+     at the end rather than disappearing because an old saved list has
+     never heard of it. */
+  function applyRibbonPrefs(){
+    var p=ribbonPrefs();
+    ribbonGroups().forEach(function(g){
+      var gid=ribbonGroupId(g),pref=p[gid];
+      var row=g.querySelector('.rbn-row')||g;
+      var ctl=ribbonControls(g);
+      var byId={};ctl.forEach(function(el){byId[el.id]=el;});
+      if(pref&&pref.order) pref.order.forEach(function(id){
+        if(byId[id]) row.appendChild(byId[id]);});
+      var hid=(pref&&pref.hide)||[];
+      ctl.forEach(function(el){
+        el.classList.toggle('rbn-hid',hid.indexOf(el.id)>=0);});
+    });
+    if(typeof fitEditRibbon==='function') fitEditRibbon();
+  }
+  /* the words a row goes by. A control's own label is the honest name —
+     it is what you are looking for when you go hunting for it — and the
+     tooltip is the fallback for the handful that are a caret or a
+     glyph. */
+  function ribbonCtlLabel(el){
+    var t=(el.textContent||'').replace(/\s+/g,' ').trim();
+    if(t&&t.length<=28) return t;
+    if(t) return t.slice(0,26)+'\u2026';
+    return (el.getAttribute('aria-label')||el.title||el.id)
+      .split('\n')[0].slice(0,28);
+  }
+  function openRibbonCustomise(){
+    var old=$('#rbn-cust'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu rbn-cust';m.id='rbn-cust';
+    var head=document.createElement('div');
+    head.className='hd-lab';
+    head.textContent='your ribbon';
+    m.appendChild(head);
+    var note=document.createElement('div');
+    note.className='ff-none';
+    note.textContent='The '+activeTab()+' tab. Untick to put a button '
+      +'away; the arrows move it within its group. Buttons never move '
+      +'between tabs, and the row still never wraps.';
+    m.appendChild(note);
+    ribbonGroupsHere().forEach(function(g){
+      var gid=ribbonGroupId(g);
+      var lab=g.querySelector('.rbn-lab');
+      menuHead(m,((lab&&lab.textContent)||gid).trim().toLowerCase());
+      ribbonControls(g).forEach(function(el){
+        var row=document.createElement('div');
+        row.className='ff-row rbn-crow';
+        var l=document.createElement('label');
+        l.className='find-ck';
+        var b=document.createElement('input');
+        b.type='checkbox';
+        b.checked=!el.classList.contains('rbn-hid');
+        l.appendChild(b);
+        l.appendChild(document.createTextNode(' '+ribbonCtlLabel(el)));
+        row.appendChild(l);
+        b.addEventListener('change',function(){
+          var pr=ribbonPrefs();
+          pr[gid]=pr[gid]||{};
+          var h=(pr[gid].hide||[]).filter(function(x){return x!==el.id;});
+          if(!b.checked) h.push(el.id);
+          if(h.length) pr[gid].hide=h; else delete pr[gid].hide;
+          if(!pr[gid].hide&&!pr[gid].order) delete pr[gid];
+          ribbonSave(pr);applyRibbonPrefs();
+        });
+        [['\u2191',-1],['\u2193',1]].forEach(function(dir){
+          var mb=document.createElement('button');
+          mb.className='dbtn rbn-move';mb.textContent=dir[0];
+          mb.title=(dir[1]<0?'Move it earlier':'Move it later')
+            +' in this group';
+          mb.setAttribute('aria-label',
+            (dir[1]<0?'Move earlier':'Move later')+': '
+            +ribbonCtlLabel(el));
+          mb.addEventListener('click',function(e){
+            e.stopPropagation();
+            var ids=ribbonControls(g).map(function(x){return x.id;});
+            var at=ids.indexOf(el.id),to=at+dir[1];
+            if(at<0||to<0||to>=ids.length) return;
+            ids.splice(to,0,ids.splice(at,1)[0]);
+            var pr=ribbonPrefs();
+            pr[gid]=pr[gid]||{};pr[gid].order=ids;
+            ribbonSave(pr);applyRibbonPrefs();
+            openRibbonCustomise();
+          });
+          row.appendChild(mb);
+        });
+        m.appendChild(row);
+      });
+    });
+    menuHead(m,'all of it');
+    var rb=document.createElement('button');
+    rb.className='dbtn vw-opt';
+    rb.textContent='Put the ribbon back to normal';
+    rb.addEventListener('click',function(e){
+      e.stopPropagation();
+      ribbonSave(null);
+      $$('#edit-tools .rbn-hid').forEach(function(el){
+        el.classList.remove('rbn-hid');});
+      m.remove();
+      /* order cannot be un-appended, so the honest thing is to say a
+         reload restores it rather than to pretend otherwise */
+      toast('Buttons are all back. The original ORDER returns when the '
+        +'page is reloaded.');
+      applyRibbonPrefs();
+    });
+    m.appendChild(rb);
+    var bar=$('#edit-tools');
+    document.body.appendChild(m);
+    floatMenu(bar,m);
+    setTimeout(function(){
+      document.addEventListener('click',function off(e){
+        if(m.contains(e.target)) return;
+        m.remove();document.removeEventListener('click',off);
+      });
+    },0);
+  }
+  (function(){
+    var bar=$('#edit-tools');
+    if(!bar) return;
+    /* RIGHT-CLICK THE RIBBON. Where every other application of this
+       shape puts it, and it costs the row no width at all — which
+       matters more here than anywhere, the width being the thing the
+       whole fit ladder exists to fight over. */
+    bar.addEventListener('contextmenu',function(e){
+      if(mode!=='edit') return;
+      e.preventDefault();
+      openRibbonCustomise();
+    });
+  })();
   /* ---- RIBBON TABS ----------------------------------------------------
      One ribbon stopped being able to hold the editor: every feature added
      a control, every control bought a density rung, and the row spent its
@@ -20476,6 +20694,10 @@
   syncCustomTypes();
   status();
   renderPresTabs();
+  /* the ribbon you kept: applied once here, at the tail, after every
+     declaration and every group's markup is real. It must not run
+     mid-file — it walks #edit-tools and calls fitEditRibbon (T11). */
+  applyRibbonPrefs();
   /* both IIFEs + their route hooks are now wired — restore the URL's view */
   if(window.SemApp&&window.SemApp.applyInitialRoute)
     window.SemApp.applyInitialRoute();
