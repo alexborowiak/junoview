@@ -389,9 +389,36 @@ Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 
 ## 5. Presenting
 
-- [ ] **T28 · M — Rich speaker notes + presenter view.** Markdown notes
+- [x] **T28 · M — Rich speaker notes + presenter view.** Markdown notes
   with links/references, per-slide timing targets, a roomy notes editor,
   and a presenter view that shows the audience slide alongside full notes.
+  *2026-08-25.* Two of the four already shipped in 2026-08-20: per-slide
+  time goals (`s.goal`, totalled so a talk that cannot fit says so before
+  you give it) and the presenter view (a popup with real renders, the
+  next slide and a clock). What was missing was markdown and somewhere
+  to write it.
+  **A subset, not a library.** No build step and no bundler here, so a
+  markdown library would be the first vendored dependency in the whole
+  frontend, carried on every page for the sake of the notes pane. Notes
+  contain emphasis, a bullet, a number, a bit of code and a link; that is
+  fifty lines, and fifty lines that only do those things cannot be
+  surprised by the rest of CommonMark. A line break is meaningful here —
+  two lines make two paragraphs, because a note is a script you read at
+  speed, not prose someone else will typeset.
+  **Escape first, then mark up; links whitelisted by scheme.** A deck
+  file arrives from other people, so this is the one place the frontend
+  builds HTML from typed text and it follows `render/sanitize.py`'s rule.
+  Verified in a browser: `[click me](javascript:…)`, a `<script>` tag and
+  an `<img onerror=…>` produced no link, no script element and no image —
+  all three came out as text.
+  **References reuse what the deck already knows.** `{fig:id}` is T21's
+  figure numbering, so a note citing a figure stays right when they are
+  renumbered; `[the method](#7)` is a jump, live in the presenter view,
+  where `goto` already existed as a command the strip used.
+  **The room to write them in** is an overlay — the shape the spotlight,
+  presenter view and overview map already have — with the slide, the
+  text and the rendered result side by side, writing to the same
+  `sl.notes` on the same input event as the pane. 22/22 in a browser.
 - [ ] **T29 · M — Rehearsal timing.** Record per-slide and per-section
   times across rehearsal runs; show stats ("slide 17 averages 3:42").
   Local only — no audio, no speech analysis.

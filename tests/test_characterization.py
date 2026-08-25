@@ -110,6 +110,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # openOverview, deck.css the .deck-overview overlay, help.html a
 # paragraph. Editor-only; pinned by tests/test_slide_sections.py's
 # two overview tests.
+# Moved 2026-08-25 for TASKS T28, rich speaker notes: deck.js
+# gained WHAT A NOTE IS ALLOWED TO BE (a small escape-first
+# markdown with scheme-whitelisted links) and THE ROOM TO WRITE
+# THEM IN (the overlay editor); the presenter view now reads notes
+# through the same renderer; deck.html gained the Bigger editor
+# button, deck.css the overlay and the markdown, help.html a
+# paragraph. Pinned by tests/test_markdown_notes.py's six T28
+# tests and verified in a browser, safety cases included.
 # Moved 2026-08-25 for TASKS T27, object continuity ("Magic Move"):
 # deck.js gained the HOW A SLIDE ARRIVES section -- the s.trans
 # field, the section-level default T23 said it lacked, the FLIP
@@ -231,8 +239,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "b6c6568baa99b526914d6895ed8c58b6"
-EXPECTED_BYTES = 2511271
+EXPECTED_MD5 = "523a4380cf0edf1d3af3c9b365ee090a"
+EXPECTED_BYTES = 2527505
 
 
 def _render_example() -> str:

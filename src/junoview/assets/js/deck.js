@@ -7270,6 +7270,237 @@
     var mm=Math.floor(sec/60),ss=sec%60;
     return mm+':'+(ss<10?'0':'')+ss;
   }
+  /* ---- WHAT A NOTE IS ALLOWED TO BE -----------------------------------
+     (TASKS T28.) Notes were plain text in a pre-wrap box. The ask is
+     "markdown notes with links/references", and the interesting part is
+     what to leave out.
+
+     A SUBSET, NOT A LIBRARY. There is no build step here and no bundler,
+     so a markdown library would be the first vendored dependency in the
+     whole frontend — carried on every page, for the sake of the notes
+     pane. What speaker notes actually contain is a short list: emphasis,
+     a bullet, a number, a bit of code, a link. That fits in fifty lines,
+     and fifty lines that only do those things cannot be surprised by the
+     rest of CommonMark.
+
+     ESCAPE FIRST, THEN MARK UP. Every character goes through esc()
+     before a single tag is added, so a note containing <script> becomes
+     text and never markup. That is the same rule render/sanitize.py
+     enforces on the Python side, applied at the one place the frontend
+     builds HTML out of something a person typed — and it matters here
+     because a deck file arrives from other people.
+
+     LINKS ARE WHITELISTED BY SCHEME, which is the other half of that.
+     [text](url) accepts http, https, mailto and a bare #N, and nothing
+     else; anything else renders as its own label, so a javascript: URL
+     in someone else's deck is text on your screen rather than a handler
+     on your click.
+
+     REFERENCES REUSE WHAT THE DECK ALREADY KNOWS. `{fig:id}` is T21's
+     figure-numbering syntax, so a note saying "as {fig:trend} shows"
+     stays right when the figures are renumbered, and there is no second
+     idea about what a reference is. `[the method](#7)` is a jump to
+     slide 7 — live in the presenter view, where `goto` already existed
+     for the strip.
+
+     A LINE BREAK IS MEANINGFUL. Two plain lines make two paragraphs
+     rather than one, because in speaker notes you put a thought on its
+     own line on purpose. Markdown's "wrap freely" rule is for prose
+     someone else will typeset; this is a script you read at speed. */
+  var MD_URL=/^(?:https?:\/\/|mailto:)[^\s<>"']+$/i;
+  function mdHref(u){
+    u=String(u||'').trim();
+    if(/^#\d+$/.test(u)) return u;          /* a slide in this deck */
+    return MD_URL.test(u)?u:'';
+  }
+  /* the inline pass runs over ALREADY-ESCAPED text. Anything that turns
+     into a tag is stashed behind a sentinel first, so a later rule can
+     never reach inside markup an earlier rule produced. */
+  function mdInline(t){
+    var keep=[];
+    function stash(html){
+      keep.push(html);return '\u0000'+(keep.length-1)+'\u0000';
+    }
+    t=t.replace(/`([^`]+)`/g,function(_,c){
+      return stash('<code>'+c+'</code>');});
+    t=t.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,function(m,lab,u){
+      var h=mdHref(u);
+      if(!h) return lab;      /* not a scheme we allow: it is just words */
+      if(h.charAt(0)==='#')
+        return stash('<a href="'+h+'" class="jvn-goto" data-slide="'
+          +h.slice(1)+'">'+lab+'</a>');
+      return stash('<a href="'+h+'" target="_blank" '
+        +'rel="noopener noreferrer">'+lab+'</a>');
+    });
+    /* a pasted URL is a link too — people paste them */
+    t=t.replace(/(^|[\s(])(https?:\/\/[^\s<)]+)/g,function(m,pre,u){
+      var h=mdHref(u);
+      return h?(pre+stash('<a href="'+h+'" target="_blank" '
+        +'rel="noopener noreferrer">'+u+'</a>')):m;});
+    t=t.replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>');
+    t=t.replace(/\*([^*\n]+)\*/g,'<i>$1</i>');
+    return t.replace(/\u0000(\d+)\u0000/g,function(_,i){return keep[+i];});
+  }
+  function notesHtml(txt){
+    var src=figSubst(String(txt==null?'':txt).replace(/[\0\u0000]/g,''),
+      null);
+    var lines=esc(src).split('\n'),out=[],list=null;
+    function closeList(){if(list){out.push('</'+list+'>');list=null;}}
+    lines.forEach(function(ln){
+      var m;
+      if(/^\s*$/.test(ln)){closeList();return;}
+      if((m=/^(#{1,3})\s+(.*)$/.exec(ln))){
+        closeList();
+        /* # is an h3: a note never outranks the page it sits beside */
+        out.push('<h'+(m[1].length+2)+'>'+mdInline(m[2])
+          +'</h'+(m[1].length+2)+'>');return;}
+      if(/^\s*(?:---+|\*\*\*+)\s*$/.test(ln)){
+        closeList();out.push('<hr>');return;}
+      /* > was turned into &gt; by esc, which runs first on purpose */
+      if((m=/^\s*&gt;\s?(.*)$/.exec(ln))){
+        closeList();
+        out.push('<blockquote>'+mdInline(m[1])+'</blockquote>');return;}
+      if((m=/^\s*[-*]\s+(.*)$/.exec(ln))){
+        if(list!=='ul'){closeList();out.push('<ul>');list='ul';}
+        out.push('<li>'+mdInline(m[1])+'</li>');return;}
+      if((m=/^\s*\d+[.)]\s+(.*)$/.exec(ln))){
+        if(list!=='ol'){closeList();out.push('<ol>');list='ol';}
+        out.push('<li>'+mdInline(m[1])+'</li>');return;}
+      closeList();
+      out.push('<p>'+mdInline(ln)+'</p>');
+    });
+    closeList();
+    return out.join('');
+  }
+  /* ---- THE ROOM TO WRITE THEM IN --------------------------------------
+     (TASKS T28's "a roomy notes editor".) The pane is a column beside
+     the stage, which is right for checking a note and wrong for writing
+     one — you are typing a paragraph into a box four lines tall.
+
+     So: an overlay, the same shape the spotlight, the presenter view and
+     the overview map already have, because it wants all the room there
+     is while you are using it and none afterwards. The slide is beside
+     the text, because a note is about THAT slide and writing it blind is
+     how you end up describing the previous one. The preview is live and
+     beside the source rather than behind a toggle — the whole point of
+     allowing markdown is that you can see whether you got it right.
+
+     It writes to the same `sl.notes` on the same input event as the
+     pane, so there is one field, one autosave and nothing to reconcile. */
+  var notesEdIdx=-1;
+  function notesEdClose(){
+    var ov=$('#deck-notesed');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',notesEdKey,true);
+    notesEdIdx=-1;
+    renderNotesPane();
+  }
+  function notesEdKey(e){
+    if(!$('#deck-notesed')) return;
+    if(e.key==='Escape'){
+      /* let a textarea keep Escape for its own IME/autocomplete first */
+      e.preventDefault();e.stopPropagation();notesEdClose();
+    }
+  }
+  function notesEdFill(){
+    var ov=$('#deck-notesed'); if(!ov) return;
+    var sl=(pres.slides||[])[notesEdIdx];
+    var n=(pres.slides||[]).length;
+    var ttl=ov.querySelector('.nse-t');
+    if(ttl) ttl.textContent='Slide '+(notesEdIdx+1)+' of '+n
+      +(filmText(sl)?(' — '+filmText(sl)):'');
+    var ta=ov.querySelector('#nse-ta');
+    if(ta&&document.activeElement!==ta) ta.value=(sl&&sl.notes)||'';
+    var pv=ov.querySelector('#nse-prev');
+    if(pv) pv.innerHTML=notesHtml((sl&&sl.notes)||'')
+      ||'<p class="nse-none">Nothing yet.</p>';
+    var box=ov.querySelector('#nse-slide');
+    if(box){
+      box.innerHTML='';
+      var node=buildSlideNode(notesEdIdx);
+      if(node){
+        box.appendChild(node);
+        var k=Math.min((box.clientWidth||420)/960,
+          (box.clientHeight||240)/540);
+        node.style.transform='scale('+(k||0.4).toFixed(4)+')';
+        node.style.flex='none';
+      }
+    }
+  }
+  function notesEdGo(d){
+    var n=(pres.slides||[]).length;
+    var to=Math.max(0,Math.min(n-1,notesEdIdx+d));
+    if(to===notesEdIdx) return;
+    notesEdIdx=to;
+    /* the deck follows the editor: you are looking at this slide now */
+    if(cur!==to){cur=to;selAnnot=null;selSet=[];refresh();}
+    notesEdFill();
+  }
+  function openNotesEditor(i){
+    notesEdClose();
+    notesEdIdx=(typeof i==='number')?i:cur;
+    if(!(pres.slides||[])[notesEdIdx]) return;
+    var ov=document.createElement('div');
+    ov.className='deck-notesed';ov.id='deck-notesed';
+    ov.innerHTML='<div class="nse-head">'
+      +'<span class="nse-t"></span><span class="deck-spring"></span>'
+      +'<button class="dbtn" id="nse-prevs">'+bic('back')
+      +' Previous</button>'
+      +'<button class="dbtn" id="nse-nexts">'+bic('arrow')
+      +' Next</button>'
+      +'<button class="dbtn" id="nse-done">'+bic('exit')+' Done</button>'
+      +'</div>'
+      +'<div class="nse-body">'
+      +'<div class="nse-left">'
+      +'<span class="nse-lab">this slide</span>'
+      +'<div class="nse-slide" id="nse-slide"></div>'
+      +'<span class="nse-lab">what markdown does here</span>'
+      +'<div class="nse-help">'
+      +'<code>**bold**</code> <code>*italic*</code> <code>`code`</code>'
+      +' <code># heading</code> <code>- bullet</code> <code>1. step</code>'
+      +' <code>&gt; quote</code><br>'
+      +'<code>[the paper](https://…)</code> links out, '
+      +'<code>[the method](#7)</code> jumps to slide 7 in the presenter '
+      +'view, and <code>{fig:id}</code> prints that figure’s number '
+      +'so it stays right when they are renumbered.'
+      +'</div></div>'
+      +'<div class="nse-write">'
+      +'<span class="nse-lab">notes — only you ever see these</span>'
+      +'<textarea id="nse-ta" class="nse-ta" spellcheck="true"'
+      +' placeholder="What you want to say here."></textarea></div>'
+      +'<div class="nse-read">'
+      +'<span class="nse-lab">how it will read</span>'
+      +'<div class="nse-prev jvn-md" id="nse-prev"></div></div>'
+      +'</div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#nse-done').addEventListener('click',notesEdClose);
+    ov.querySelector('#nse-prevs').addEventListener('click',function(){
+      notesEdGo(-1);});
+    ov.querySelector('#nse-nexts').addEventListener('click',function(){
+      notesEdGo(1);});
+    var ta=ov.querySelector('#nse-ta');
+    ta.addEventListener('input',function(){
+      var sl=(pres.slides||[])[notesEdIdx]; if(!sl) return;
+      if(ta.value.trim()) sl.notes=ta.value; else delete sl.notes;
+      markDirty();
+      var pv=ov.querySelector('#nse-prev');
+      if(pv) pv.innerHTML=notesHtml(sl.notes||'')
+        ||'<p class="nse-none">Nothing yet.</p>';
+      presenterSync&&presenterSync();
+    });
+    /* a slide reference works in the preview too, so you can check it */
+    ov.querySelector('#nse-prev').addEventListener('click',function(e){
+      var a=e.target.closest&&e.target.closest('.jvn-goto');
+      if(!a) return;
+      e.preventDefault();
+      var to=(+a.dataset.slide||1)-1;
+      if((pres.slides||[])[to]){notesEdIdx=to;cur=to;refresh();
+        notesEdFill();}
+    });
+    notesEdFill();
+    ta.focus();
+    document.addEventListener('keydown',notesEdKey,true);
+  }
   /* ---- THE SCRATCHPAD --------------------------------------------------
      Loose notes, in folders, belonging to the presentation rather than to
      any one slide (2026-08-20, user asked for "overall notes, and then
@@ -7427,6 +7658,8 @@
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
+    var big=$('#np-big');
+    if(big) big.addEventListener('click',function(){openNotesEditor(cur);});
     var cl=$('#notespane-close');
     if(cl) cl.addEventListener('click',function(){set(false);});
     var ta=$('#np-notes');
@@ -17713,8 +17946,12 @@
       else box.innerHTML='<div class="jvp-end">end of the deck</div>';
     });
     var nt=doc.getElementById('jvp-notes');
-    if(nt) nt.textContent=(sl.notes||'').trim()
-      ||'No notes for this slide.';
+    /* MARKDOWN, through the same notesHtml the editor previews (T28).
+       It is escape-first and scheme-whitelisted, which is what lets a
+       deck that arrived from someone else be read here at all. */
+    if(nt) nt.innerHTML=(sl.notes||'').trim()
+      ?notesHtml(sl.notes)
+      :'<p class="jvp-nonotes">No notes for this slide.</p>';
     var ct=doc.getElementById('jvp-count');
     if(ct) ct.textContent=(cur+1)+' / '+n;
     var gl=doc.getElementById('jvp-goal');
@@ -17766,9 +18003,25 @@
       +'gap:4px;min-height:0;}'
       +'.jvp-lab{font-family:var(--mono,monospace);font-size:10px;'
       +'letter-spacing:.14em;text-transform:uppercase;color:#7d93a6;}'
-      +'.jvp-notes{flex:1;min-height:0;overflow-y:auto;white-space:pre-wrap;'
+      +'.jvp-notes{flex:1;min-height:0;overflow-y:auto;'
       +'font-size:19px;line-height:1.5;background:#0e1926;border-radius:10px;'
       +'padding:14px 16px;border:1px solid #ffffff1a;}'
+      /* the small markdown, at reading-from-a-lectern size */
+      +'.jvp-notes p{margin:0 0 .6em;}'
+      +'.jvp-notes h3,.jvp-notes h4,.jvp-notes h5{margin:.2em 0 .4em;'
+      +'font-size:1.05em;color:#fff;}'
+      +'.jvp-notes ul,.jvp-notes ol{margin:.2em 0 .6em;padding-left:1.3em;}'
+      +'.jvp-notes li{margin:.15em 0;}'
+      +'.jvp-notes code{font-family:var(--mono,monospace);font-size:.85em;'
+      +'background:#ffffff14;padding:.1em .35em;border-radius:4px;}'
+      +'.jvp-notes blockquote{margin:.3em 0 .6em;padding-left:.8em;'
+      +'border-left:3px solid #ffffff2b;color:#a9bccc;}'
+      +'.jvp-notes hr{border:0;border-top:1px solid #ffffff26;'
+      +'margin:.7em 0;}'
+      +'.jvp-notes a{color:#6fd0e4;}'
+      +'.jvp-notes .jvn-goto{cursor:pointer;text-decoration:underline '
+      +'dotted;}'
+      +'.jvp-nonotes{color:#6e8394;}'
       +'.jvp-end{color:#6e8394;font-family:var(--mono,monospace);'
       +'font-size:13px;}'
       +'.jvp-foot{grid-column:1/-1;display:flex;gap:8px;align-items:center;}'
@@ -17830,6 +18083,15 @@
       send({jv:'cmd',do:'timer',act:paused?'resume':'pause'});
       pb.textContent=paused?'Pause':'Resume';
     };
+    /* [the method](#7) in a note jumps the talk there. `goto` was
+       already a command the strip used, so a reference is a use of the
+       machinery rather than a new one (T28). */
+    d.getElementById('jvp-notes').addEventListener('click',function(e){
+      var a=e.target.closest&&e.target.closest('.jvn-goto');
+      if(!a) return;
+      e.preventDefault();
+      send({jv:'cmd',do:'goto',n:(+a.dataset.slide||1)-1});
+    });
     /* the arrow keys work in the presenter window too - you will have the
        clicker pointed at whichever window has focus */
     d.addEventListener('keydown',function(e){

@@ -2085,6 +2085,66 @@ body.light .fp-tielab{color:var(--ink-3);}
 .mini-pane.is-flip{background:#243b52;}
 .sp-kind.k-flip{background:#2a4761;}
 
+/* ---------- the roomy notes editor ----------
+   An OVERLAY, like the spotlight, the presenter view and the overview
+   map: it wants the whole screen while you are writing and none of it
+   afterwards. Three columns, because a note is about a slide (left),
+   is typed (middle) and is read back (right). */
+.deck-notesed{position:fixed;inset:0;z-index:400;display:flex;
+  flex-direction:column;background:var(--chrome-0,#0b141d);
+  font-family:var(--sans);}
+.nse-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
+  border-bottom:1px solid #ffffff1a;}
+.nse-t{font-size:13px;color:#dbe7ef;}
+.nse-body{flex:1;min-height:0;display:grid;
+  grid-template-columns:minmax(240px,1fr) 1.25fr 1.25fr;gap:14px;
+  padding:14px 16px 18px;}
+.nse-left,.nse-write,.nse-read{display:flex;flex-direction:column;gap:6px;
+  min-height:0;}
+.nse-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:#7d93a6;}
+.nse-slide{background:#000;border-radius:8px;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  flex:0 0 auto;height:min(30vh,260px);}
+.nse-slide .slide{transform-origin:center center;}
+.nse-help{font-size:11.5px;line-height:1.65;color:#9fb3c4;
+  background:#ffffff08;border:1px solid #ffffff17;border-radius:8px;
+  padding:9px 11px;overflow:auto;}
+.nse-help code{font-family:var(--mono);font-size:10.5px;
+  background:#ffffff14;padding:.1em .35em;border-radius:4px;
+  color:#cfe0ec;}
+.nse-ta{flex:1;min-height:0;resize:none;font-family:var(--sans);
+  font-size:15px;line-height:1.55;padding:12px 14px;border-radius:8px;
+  background:#0e1926;color:#e4eef6;border:1px solid #ffffff1f;}
+.nse-ta:focus{outline:none;border-color:var(--cyan);}
+.nse-prev{flex:1;min-height:0;overflow:auto;font-size:15px;
+  line-height:1.55;padding:12px 14px;border-radius:8px;
+  background:#ffffff08;border:1px solid #ffffff17;color:#dce6ee;}
+.nse-none{color:#6e8394;}
+/* the small markdown, wherever it is read back */
+.jvn-md p{margin:0 0 .6em;}
+.jvn-md h3,.jvn-md h4,.jvn-md h5{margin:.2em 0 .4em;font-size:1.05em;}
+.jvn-md ul,.jvn-md ol{margin:.2em 0 .6em;padding-left:1.3em;}
+.jvn-md li{margin:.15em 0;}
+.jvn-md code{font-family:var(--mono);font-size:.85em;background:#ffffff14;
+  padding:.1em .35em;border-radius:4px;}
+.jvn-md blockquote{margin:.3em 0 .6em;padding-left:.8em;
+  border-left:3px solid #ffffff2b;color:#a9bccc;}
+.jvn-md hr{border:0;border-top:1px solid #ffffff26;margin:.7em 0;}
+.jvn-md a{color:var(--cyan);}
+.jvn-md .jvn-goto{cursor:pointer;text-decoration:underline dotted;}
+.np-bigbtn{align-self:flex-start;margin:2px 0 6px;}
+body.light .deck-notesed{background:#fff;}
+body.light .nse-t{color:var(--ink);}
+body.light .nse-ta{background:#fff;color:var(--ink);
+  border-color:var(--rule);}
+body.light .nse-prev{background:#f7f9fb;color:var(--ink);
+  border-color:var(--rule);}
+body.light .nse-help{background:#f7f9fb;color:var(--ink-2);
+  border-color:var(--rule);}
+body.light .jvn-md code,body.light .nse-help code{background:#eef2f6;
+  color:var(--ink);}
+
 /* ---------- the overview map ----------
    An OVERLAY, not a pane: it wants all the room there is for as long as
    you are looking and none afterwards, which is the shape the spotlight

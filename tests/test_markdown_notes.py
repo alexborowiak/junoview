@@ -104,3 +104,103 @@ def test_insert_note_cell_lands_after_the_cards_cells():
     assert _i4 == 3
     _r5, _i5, _ = insert_note_cell(_note_notebook(), "nope", "x")
     assert _i5 == 3
+
+
+def test_notes_are_a_deliberately_small_markdown(out):
+    """TASKS T28. There is no build step and no bundler here, so a
+    markdown library would be the first vendored dependency in the whole
+    frontend -- carried on every page for the sake of the notes pane.
+    What speaker notes contain is a short list, and a renderer that only
+    does those things cannot be surprised by the rest of CommonMark.
+    """
+    assert "function notesHtml(txt){" in out
+    assert "function mdInline(t){" in out
+    # emphasis, code, headings, both lists, a quote and a rule
+    assert "'<b>$1</b>'" in out and "'<i>$1</i>'" in out
+    assert "stash('<code>'+c+'</code>')" in out
+    assert "out.push('<ul>');list='ul';" in out
+    assert "out.push('<ol>');list='ol';" in out
+    assert "out.push('<blockquote>'+mdInline(m[1])+'</blockquote>')" in out
+
+
+def test_a_note_is_escaped_before_it_is_marked_up(out):
+    """Every character goes through esc() before a single tag is added,
+    so a note containing <script> is text and never markup. It is the
+    same rule render/sanitize.py enforces on the Python side, applied at
+    the one place the frontend builds HTML from something a person
+    typed -- and it matters because a deck file arrives from other
+    people.
+
+    Because esc() runs FIRST, the blockquote rule has to match &gt;
+    rather than >, which is the tell that the order is real.
+    """
+    assert "var lines=esc(src).split('\\n')" in out
+    assert "/^\\s*&gt;\\s?(.*)$/" in out
+    # the inline pass stashes finished markup behind a sentinel, so a
+    # later rule can never reach inside what an earlier one produced
+    assert "function stash(html){" in out
+    assert "'\\u0000'+(keep.length-1)+'\\u0000'" in out
+
+
+def test_links_are_whitelisted_by_scheme(out):
+    """[text](url) accepts http, https, mailto and a bare #N and nothing
+    else. Anything else renders as its own label, so a javascript: URL
+    in someone else's deck is words on your screen rather than a handler
+    on your click.
+
+    Verified in a browser: a note carrying [click me](javascript:...),
+    a <script> tag and an <img onerror=...> produced no link, no script
+    element and no image -- all three came out as text.
+    """
+    assert "var MD_URL=/^(?:https?:\\/\\/|mailto:)[^\\s<>\"']+$/i;" in out
+    assert "function mdHref(u){" in out
+    assert "if(/^#\\d+$/.test(u)) return u;" in out
+    assert "return MD_URL.test(u)?u:'';" in out
+    # not a scheme we allow -> the label, with no anchor around it
+    assert "if(!h) return lab;" in out
+    assert "rel=\"noopener noreferrer\"" in out
+
+
+def test_a_reference_reuses_what_the_deck_already_knows(out):
+    """{fig:id} is T21's figure-numbering syntax, so a note citing a
+    figure stays right when the figures are renumbered -- there is no
+    second idea about what a reference is. [the method](#7) is a jump to
+    slide 7, live in the presenter view, where `goto` already existed as
+    a command the strip used.
+    """
+    assert "var src=figSubst(" in out
+    assert "class=\"jvn-goto\" data-slide=" in out
+    assert "send({jv:'cmd',do:'goto',n:(+a.dataset.slide||1)-1});" in out
+
+
+def test_the_presenter_view_reads_the_notes_as_markdown(out):
+    """The presenter view had them as textContent in a pre-wrap box.
+    Same notesHtml as the editor previews, so the two cannot disagree
+    about what a note says.
+    """
+    assert "if(nt) nt.innerHTML=(sl.notes||'').trim()" in out
+    assert "?notesHtml(sl.notes)" in out
+    assert "'.jvp-notes ul,.jvp-notes ol{" in out
+
+
+def test_there_is_room_to_write_a_note_in(out):
+    """T28's "roomy notes editor". The pane is a column beside the
+    stage, which is right for checking a note and wrong for writing one.
+
+    An overlay, the shape the spotlight, presenter view and overview map
+    already have. The slide is beside the text because a note is about
+    THAT slide, and the preview is live beside the source rather than
+    behind a toggle -- the point of allowing markdown is seeing whether
+    you got it right.
+
+    It writes to the same sl.notes on the same input event as the pane,
+    so there is one field and nothing to reconcile.
+    """
+    assert "function openNotesEditor(i){" in out
+    assert "ov.className='deck-notesed'" in out
+    assert "var node=buildSlideNode(notesEdIdx);" in out
+    assert "if(ta.value.trim()) sl.notes=ta.value; else delete sl.notes;" \
+        in out
+    # Esc closes it, on the capture phase, like the overview map
+    assert "document.addEventListener('keydown',notesEdKey,true);" in out
+    assert 'id="np-big"' in out

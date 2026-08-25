@@ -75,6 +75,9 @@ RUNTIME_IDS = {
     "deck-overview",
     # The deck-token editor, built on demand: deck.js, DESIGN TOKENS.
     "tok-pop",
+    # The roomy notes editor, an overlay built per open and removed on
+    # close: deck.js, THE ROOM TO WRITE THEM IN.
+    "deck-notesed",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose
