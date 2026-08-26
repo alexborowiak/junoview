@@ -1742,7 +1742,7 @@
       dp2.title='Duplicate';
       dp2.setAttribute('aria-label','Duplicate');
       dp2.addEventListener('click',function(e){
-        e.stopPropagation();dupAnnots([i],false);});
+        e.stopPropagation();dupAnnots([i]);});
       r.appendChild(dp2);
       r.addEventListener('click',function(ev){
         if(!liveAnnot(i)){renderSelPane();return;}
@@ -1777,7 +1777,7 @@
       function(){ungroupSel();renderSelPane();});
     tool(bic('copy')+' Duplicate','Duplicate the selected items',
       selN.length>=1,
-      function(){dupAnnots(selN,false);});
+      function(){dupAnnots(selN);});
     /* A FOLDER IS NOT A GROUP. Grouping welds items together — they move
        and format as one, which is exactly what you do NOT want from a
        filing system. Until now the only folders in this pane were groups,
@@ -1900,7 +1900,7 @@
         e.stopPropagation();
         var idxs=[];ann.forEach(function(a2,i2){
           if(a2&&a2.grp===g) idxs.push(i2);});
-        dupAnnots(idxs,true,g);
+        dupAnnots(idxs);
       });
       f.appendChild(dp);
       f.addEventListener('click',function(){
@@ -1932,27 +1932,17 @@
     s.grpmeta=s.grpmeta||{};
     return s.grpmeta[g]=s.grpmeta[g]||{};
   }
-  /* duplicate items; newGrp gives the copies a fresh group id and copies
-     the folder's name ("... copy") and colour with them */
   /* the pane's own Duplicate. Same clone (see the CLONES section), a
      tighter offset because these rows are read side by side with the
-     canvas, and one extra move: `newGrp` puts the whole batch into ONE
-     group, which is the pane's "duplicate this group" verb. A locked
-     item IS cloned here -- the pane is the one door to locked items, and
-     refusing from inside it would leave no door at all. */
-  function dupAnnots(idxs,newGrp,srcGrp){
+     canvas. cloneAnnots itself gives a copied group one fresh id and
+     copies its name/colour; doing that again here used to leave orphaned
+     grpmeta behind. A locked item IS cloned here -- the pane is the one
+     door to locked items, and refusing from inside it would leave no
+     door at all. */
+  function dupAnnots(idxs){
     var s=pres.slides[cur]; if(!s||!s.annots) return;
     var added=cloneAnnots(idxs,2,2);
     if(!added.length) return;
-    if(newGrp){
-      var gid=nextGrp(s);
-      added.forEach(function(j){s.annots[j].grp=gid;});
-      if(srcGrp!=null&&s.grpmeta&&s.grpmeta[srcGrp]){
-        var m2=deep(s.grpmeta[srcGrp]);
-        if(m2.name) m2.name+=' copy';
-        s.grpmeta[gid]=m2;
-      }
-    }
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,added[added.length-1]);}

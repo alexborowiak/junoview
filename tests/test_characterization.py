@@ -355,8 +355,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # their subject. Pinned by tests/test_slide_editor.py.
 # Moved 2026-08-26 for TASKS T46: Match Layout now refuses cross-slide
 # geometry before applying captured indexes. Pinned by tests/test_matching.py.
-EXPECTED_MD5 = "78557f54e9a8f6f43f3dab93ab33c55d"
-EXPECTED_BYTES = 2973445
+# Moved 2026-08-26 for TASKS T42: clone and paste now re-issue figure,
+# component-instance and group identities; component sync reads live indexes.
+# Pinned by tests/test_slide_editor.py and tests/test_poster_craft.py.
+EXPECTED_MD5 = "3b9b07aa7cca02a30ccaa6bdef1ebcf6"
+EXPECTED_BYTES = 2974707
 
 
 def _render_example() -> str:

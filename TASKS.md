@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 13 open items, T42–T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 12 open items, T43–T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -782,7 +782,7 @@ file before touching anything.
   them and SAYS so, because one that silently half-works reads as
   broken. Verified in a browser both ways.
 
-- [ ] **T42 · M — A copy must not share an identity with its source.**
+- [x] **T42 · M — A copy must not share an identity with its source.**
   The worst cluster. `cloneAnnots` re-issues `grp` and `anim.order` and
   nothing else; `pasteBuf` does `delete cp.grp` without ever issuing a
   new one.
@@ -799,6 +799,17 @@ file before touching anything.
     annots out of a slide while later instance groups on the SAME slide
     still hold their pre-splice indexes.
   T2 promises "Clones are independent copies". They are not.
+  *2026-08-26.* Clone and paste now share one two-pass identity remapper:
+  every copied figure receives a new `cap`, its copied caption follows
+  that id (or becomes ordinary text when copied alone), and each copied
+  component instance receives one new `cinst`. Paste snapshots
+  `grpmeta` with the clipboard and rebuilds fresh groups on every paste,
+  including across slides; the Objects pane no longer remaps a copied
+  group twice. `oid` remains deliberately slide-scoped so Magic Move can
+  recognise an object across duplicated slides. Component sync now
+  resolves every instance from the live annotation array before it may
+  splice. Browser-verified with tied duplicate, repeated and cross-slide
+  paste, caption-only duplicate, and four same-slide component instances.
 
 - [ ] **T43 · M — Anchoring survives a resize and an export.**
   `startResize` treats `a.x`/`a.y` as page coordinates, so resizing any

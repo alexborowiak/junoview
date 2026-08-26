@@ -350,7 +350,7 @@ def test_objects_pane_groups_are_folders_with_names_and_colours(out):
     colour cycled, duplicate produced "My cluster copy" with all members.
     """
     assert "function grpMeta(s,g){" in out
-    assert "function dupAnnots(idxs,newGrp,srcGrp){" in out
+    assert "function dupAnnots(idxs){" in out
     assert "var GRP_COLORS=" in out
     assert "if(s.grpmeta) o.grpmeta=deep(s.grpmeta);" in out
     assert "f.className='sp-folder';" in out
@@ -1002,6 +1002,61 @@ def test_a_pasted_arrow_brings_its_corners_and_drops_dead_ties(out):
     assert "if(t1) cp.c1=t1; else delete cp.c1;" in out
 
 
+def test_every_object_copy_gets_independent_relationship_identities(out):
+    """T42. Deep-copying the object is not enough: several stored ids
+    mean that two objects are the SAME figure, caption pair or component
+    instance. Keeping any of them made editing the original reach into
+    its apparent copy.
+
+    One two-pass helper owns those rules for clone and paste. Every
+    figure receives a fresh deck-wide id; a copied caption follows that
+    new figure only when both were copied, and otherwise becomes ordinary
+    text. Component members retain cmp/ci but share one fresh cinst per
+    copied source instance. The second pass is what makes caption-before-
+    figure array order safe.
+    """
+    assert "function independentCopies(srcs,s,sourceMeta){" in out
+    clone = out[out.index("function cloneAnnots(idxs,dx,dy){"):
+                out.index("function duplicateSel(){")]
+    paste = out[out.index("function pasteBuf(how,at){"):
+                out.index("/* an image on the system clipboard")]
+    assert "independentCopies(srcs,s,s.grpmeta)" in clone
+    assert "independentCopies(clipBuf,s,clipGrpMeta)" in paste
+    assert "cp.cap=figId();" in out
+    assert "capMap['f'+oldCap]=cp.cap;" in out
+    assert "if(freshCap) cp.capOf=freshCap;" in out
+    assert "else delete cp.capOf; /* its figure was not copied */" in out
+    assert "var ik='i'+(cp.cmp||'')+'|'+cp.cinst;" in out
+    assert "if(instMap[ik]==null) instMap[ik]=nextCinst();" in out
+    assert "cp.cinst=instMap['i'+(cp.cmp||'')+'|'+cp.cinst];" in out
+
+
+def test_paste_preserves_a_group_without_reusing_it(out):
+    """T42. Copy remembers group metadata at copy time -- not by looking
+    through clipFrom later, after slides may have moved or disappeared.
+    Each paste rebuilds the mapping, so repeated and cross-slide pastes
+    keep their internal grouping and folder name/colour without joining
+    either the source or one another.
+
+    The Objects pane used to remap a whole-group clone a second time after
+    cloneAnnots had already done it, leaving an orphan grpmeta entry. Its
+    Duplicate now rides the same single mapping as every other clone.
+    """
+    assert "var clipBuf=[],clipGrpMeta={},pendingPaste=null;" in out
+    assert "clipGrpMeta={};" in out
+    assert "clipGrpMeta[a.grp]=deep(s.grpmeta[a.grp]);" in out
+    assert "var gk='g'+cp.grp;" in out
+    assert "if(gmap[gk]==null) gmap[gk]=gnext++;" in out
+    assert "if(cp.grp!=null) cp.grp=gmap['g'+cp.grp];" in out
+    assert "var old=gk.slice(1),m=sourceMeta&&sourceMeta[old];" in out
+    assert "s.grpmeta[gmap[gk]]=m2;" in out
+    assert "delete cp.grp;" not in out
+    pane_dup = out[out.index("function dupAnnots(idxs){"):
+                   out.index("/* ---- panes are yours to place")]
+    assert "cloneAnnots(idxs,2,2)" in pane_dup
+    assert "nextGrp(" not in pane_dup
+
+
 def test_duplicating_clones_the_whole_selection(out):
     """TASKS T2. ``duplicateSel`` acted on ``selAnnot`` alone, so Ctrl+D
     on a five-item selection gave you one item.
@@ -1017,7 +1072,7 @@ def test_duplicating_clones_the_whole_selection(out):
     assert "var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);" in out
     # one new group id per source group, allocated before any push --
     # nextGrp reads the max off s.annots and would repeat itself
-    assert "if(gmap[cp.grp]==null) gmap[cp.grp]=gnext++;" in out
+    assert "if(gmap[gk]==null) gmap[gk]=gnext++;" in out
     assert "var a=s.annots[i];return a&&!lockedAll(a);" in out
     # a stray stays a stray; a duplicate does not sail off the corner
     assert "function cloneShift(v,d){" in out
@@ -1795,6 +1850,14 @@ def test_pushing_updates_every_other_instance_in_the_deck(out):
     # it: an instance quietly keeping an old member is not an instance
     assert "sl.annots.push(na);" in out
     assert "if(at>=0) sl.annots.splice(at,1);" in out
+    # An earlier instance can splice a removed member and shift every
+    # later index on the same slide. Each turn therefore resolves its
+    # instance from the live array instead of cmpInstances' old idxs.
+    sync = out[out.index("function cmpSyncAll(id,skipSi,skipInst){"):
+               out.index("function cmpDetach(si,inst){")]
+    assert "g.idxs.map" not in sync
+    assert "(sl.annots||[]).forEach(function(a,i){" in sync
+    assert "if(a&&a.cmp===id&&a.cinst===g.inst)" in sync
 
 
 def test_the_component_library_is_deck_level_and_survives(out):

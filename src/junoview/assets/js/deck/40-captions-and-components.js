@@ -473,8 +473,13 @@
     cmpInstances(id).forEach(function(g){
       if(g.si===skipSi&&g.inst===skipInst) return;
       var sl=pres.slides[g.si];
-      var mine=g.idxs.map(function(i){return {i:i,a:sl.annots[i]};})
-        .filter(function(x){return !!x.a;});
+      /* An earlier instance on this slide may have spliced obsolete
+         members, so the indexes cmpInstances captured before the loop
+         are already stale. Resolve this instance from the live array. */
+      var mine=[];
+      (sl.annots||[]).forEach(function(a,i){
+        if(a&&a.cmp===id&&a.cinst===g.inst) mine.push({i:i,a:a});
+      });
       if(!mine.length) return;
       var ox=1e9,oy=1e9;
       mine.forEach(function(x){

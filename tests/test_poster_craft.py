@@ -134,8 +134,10 @@ def test_copy_cut_paste_including_images_from_the_clipboard(out):
     assert "function pasteBuf" in out and "function pasteImageFile" in out
     assert "document.addEventListener('paste'" in out
     assert "items[i].type.indexOf('image/')===0" in out
-    # a paste is its own item, never silently joining the source's group
-    assert "delete cp.grp;" in out
+    # a pasted group is its own NEW group, rather than joining the source
+    # or falling apart into unrelated items
+    assert "var copies=independentCopies(clipBuf,s,clipGrpMeta);" in out
+    assert "delete cp.grp;" not in out
     # typing into a text box must still paste text, not an annotation
     assert "e.target.isContentEditable) return;" in out
 

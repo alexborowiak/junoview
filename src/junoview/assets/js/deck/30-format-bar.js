@@ -1276,22 +1276,65 @@
     var n=(v||0)+d;
     return (d>0&&n>96&&(v||0)<=96)?96:n;
   }
+  /* Deep-copy a batch and re-issue every identity that means "these
+     objects belong together". A two-pass rewrite matters: the caption
+     may precede its figure in the array, while its new capOf cannot be
+     known until every copied figure has a fresh cap.
+
+     `sourceMeta` is deliberately a snapshot for paste. Looking it up by
+     clipFrom later would be wrong after the source slide was moved,
+     deleted or its group renamed while the clipboard was still live. */
+  function independentCopies(srcs,s,sourceMeta){
+    var copies=srcs.map(function(a){return deep(a);});
+    var gnext=nextGrp(s),gmap={},capMap={},instMap={};
+    copies.forEach(function(cp){
+      if(cp.grp!=null){
+        var gk='g'+cp.grp;
+        if(gmap[gk]==null) gmap[gk]=gnext++;
+      }
+      if(cp.cap){
+        var oldCap=cp.cap;
+        cp.cap=figId();
+        /* Existing corrupt decks may already have duplicate cap ids.
+           The last figure owns the caption today (capOfFig), so keep
+           that deterministic rule while making every copy independent. */
+        capMap['f'+oldCap]=cp.cap;
+      }
+      if(cp.cinst){
+        var ik='i'+(cp.cmp||'')+'|'+cp.cinst;
+        if(instMap[ik]==null) instMap[ik]=nextCinst();
+      }
+    });
+    copies.forEach(function(cp){
+      if(cp.grp!=null) cp.grp=gmap['g'+cp.grp];
+      if(cp.capOf){
+        var freshCap=capMap['f'+cp.capOf];
+        if(freshCap) cp.capOf=freshCap;
+        else delete cp.capOf; /* its figure was not copied */
+      }
+      if(cp.cinst)
+        cp.cinst=instMap['i'+(cp.cmp||'')+'|'+cp.cinst];
+    });
+    Object.keys(gmap).forEach(function(gk){
+      var old=gk.slice(1),m=sourceMeta&&sourceMeta[old];
+      if(!m) return;
+      s.grpmeta=s.grpmeta||{};
+      var m2=deep(m);
+      if(m2.name) m2.name+=' copy';
+      s.grpmeta[gmap[gk]]=m2;
+    });
+    return copies;
+  }
   function cloneAnnots(idxs,dx,dy){
     var s=pres.slides[cur];
     if(!s||!s.annots) return [];
     var live=idxs.filter(function(i){
       return typeof i==='number'&&s.annots[i];});
     if(!live.length) return [];
-    var first=s.annots.length,gnext=nextGrp(s),gmap={},made=[];
-    live.forEach(function(i){
-      var cp=deep(s.annots[i]);
-      /* one new group id per source group, allocated up front: nextGrp
-         reads the max off s.annots, so asking it twice before pushing
-         would hand out the same number twice */
-      if(cp.grp!=null){
-        if(gmap[cp.grp]==null) gmap[cp.grp]=gnext++;
-        cp.grp=gmap[cp.grp];
-      }
+    var first=s.annots.length,made=[];
+    var srcs=live.map(function(i){return s.annots[i];});
+    var copies=independentCopies(srcs,s,s.grpmeta);
+    copies.forEach(function(cp){
       /* its own build step, rather than sharing the source's */
       if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
       if(cp.k==='arrow'){
@@ -1314,13 +1357,6 @@
       if(!cp||cp.k!=='arrow') return;
       if(cp.c1&&remap[cp.c1.i]!=null) cp.c1={i:remap[cp.c1.i]};
       if(cp.c2&&remap[cp.c2.i]!=null) cp.c2={i:remap[cp.c2.i]};
-    });
-    /* a named group keeps its name on the copy, said to be one */
-    if(s.grpmeta) Object.keys(gmap).forEach(function(g){
-      var m=s.grpmeta[g]; if(!m) return;
-      var m2=deep(m);
-      if(m2.name) m2.name+=' copy';
-      s.grpmeta[gmap[g]]=m2;
     });
     return made;
   }
@@ -1345,7 +1381,7 @@
      still a live figure frame, not a picture of one), and a system-
      clipboard image pastes straight onto the page — which is how logos
      and screenshots actually arrive. */
-  var clipBuf=[],pendingPaste=null;
+  var clipBuf=[],clipGrpMeta={},pendingPaste=null;
   function selectedIdxs(){
     var s=pres.slides[cur]; if(!s||!s.annots) return [];
     var out=selSet.filter(function(i){
@@ -1409,6 +1445,11 @@
     clipIdx=idxs.slice();
     clipBuf=idxs.map(function(i){
       return deep(s.annots[i]);});
+    clipGrpMeta={};
+    clipBuf.forEach(function(a){
+      if(a.grp!=null&&s.grpmeta&&s.grpmeta[a.grp])
+        clipGrpMeta[a.grp]=deep(s.grpmeta[a.grp]);
+    });
     /* stamp the SYSTEM clipboard so this copy outranks whatever image was
        on it: the paste listener checked the OS clipboard first, so one
        stale screenshot shadowed every internal copy forever — Ctrl+C said
@@ -1479,10 +1520,8 @@
       if(remap[c.i]!=null) return {i:remap[c.i]};
       return (clipFrom===cur)?c:null;
     }
-    clipBuf.forEach(function(src){
-      var cp=deep(src);
-      delete cp.grp;          /* a paste is its own item, never in the
-                                 source's group */
+    var copies=independentCopies(clipBuf,s,clipGrpMeta);
+    copies.forEach(function(cp){
       if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
       if(cp.k==='arrow'){
         cp.x1+=dx;cp.y1+=dy;cp.x2+=dx;cp.y2+=dy;
