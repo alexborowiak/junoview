@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 15 open items, T42–T53, T55 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 14 open items, T42–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -914,11 +914,17 @@ file before touching anything.
   divider removal uses minus while section deletion keeps the X. The
   strip's icon-only mini actions also carry accessible names.
 
-- [ ] **T55 · S — A pane re-renders when the thing it is about
+- [x] **T55 · S — A pane re-renders when the thing it is about
   changes.** The `#objhist` pane has no rerun control and is never
   re-rendered when the object is edited or the selection moves; the
   provenance pane reads the selection once, at render time, and never
   again.
+  *2026-08-26.* History now follows the primary selection, refreshes after
+  committed edits and slide changes, and has an explicit refresh button.
+  Provenance follows that same primary selection. Both show an honest
+  empty-selection state; selection refreshes are signature-gated so an
+  open history pane does not parse the undo stack during every slider
+  preview.
 
 - [x] **T56 · S — Ribbon gallery housekeeping.** Nothing removes
   `#rbn-gallery` when the editor is left, so it stays pinned over

@@ -60,11 +60,40 @@
   function fmtAllIds(){
     return Object.keys(FMT_KINDS).concat(FMT_MANUAL);
   }
+  /* Inspectors are about the CURRENT primary selection, not the object
+     that happened to be selected when their door was opened. Keep this
+     beside showFmt because every canvas selection path already converges
+     here, including deselection and title/subtitle pseudo-items. */
+  var inspectorSig='';
+  function syncInspectorPanes(force){
+    var hp=$('#objhist');
+    var pp=$('#provpane');
+    var histOpen=!!hp&&!hp.hidden,provOpen=!!pp&&!pp.hidden;
+    if(!histOpen&&!provOpen){inspectorSig='';return;}
+    var s=pres.slides[cur];
+    /* Both panes describe the primary item, just like the ribbon. Group
+       expansion belongs to bulk verbs, not to an inspector's subject. */
+    var a=s&&typeof selAnnot==='number'&&(s.annots||[])[selAnnot];
+    if(histOpen&&a) ensureOids(s);
+    var sig=(histOpen?'h':'')+(provOpen?'p':'')+'|'+cur+'|'
+      +(a?(histOpen?a.oid:(a.ref||a.k)):'none');
+    /* showFmt also runs during continuous previews. Walking 24 whole-deck
+       history snapshots for every slider input would make an open pane
+       turn a smooth gesture into a crawl; markDirty owns edit refreshes. */
+    if(!force&&sig===inspectorSig) return;
+    inspectorSig=sig;
+    if(histOpen){
+      ohOid=a?a.oid:null;
+      renderObjHist();
+    }
+    if(provOpen) renderProvPane();
+  }
   function showFmt(){
     var bar=$('#et-fmt'); if(!bar) return;
     var et=$('#edit-tools');
     var s=pres.slides[cur];
     var a=(s&&selAnnot!==null)?annotByIdx(s,selAnnot):null;
+    syncInspectorPanes();
     if(!a){
       bar.hidden=true;
       /* ...AND EVERY CONTEXTUAL CONTROL, one at a time. Hiding the bar

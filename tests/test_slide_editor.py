@@ -1471,6 +1471,34 @@ def test_object_identity_is_lazy_and_self_healing(out):
     assert "if(!prev) return 'created';" in out
 
 
+def test_object_inspectors_follow_the_live_selection(out):
+    """T55. An open inspector is a live view, not a snapshot taken when
+    its door was clicked. History follows selection and edits; provenance
+    follows selection. Closed panes keep the potentially expensive work
+    demand-driven.
+    """
+    assert 'id="objhist-rerun"' in out
+    assert "syncInspectorPanes(true);" in out
+    assert "function syncInspectorPanes(force){" in out
+    assert "if(histOpen&&a) ensureOids(s);" in out
+    assert "if(provOpen) renderProvPane();" in out
+    assert "if(!force&&sig===inspectorSig) return;" in out
+    # Deselecting is not deletion, and must not inherit the last subject.
+    assert "ohOid=a?a.oid:null;" in out
+    assert "Select an object to see its recent history." in out
+    # Both inspectors use the primary selection, including for groups;
+    # neither guesses that the last expanded group member was clicked.
+    assert out.count("typeof selAnnot==='number'&&(s") >= 2
+    # Slide changes bypass showFmt, so renderSlide owns that invalidation.
+    assert "renderNotesPane(); /* ...and the notes, which are per slide */\n" \
+        "    /* Slide navigation clears the selection" in out
+    # An edit changes the history's live 'now' state without a selection
+    # event, so markDirty has its own open-pane refresh.
+    assert "if(!quiet&&ohp&&!ohp.hidden) renderObjHist();" in out
+    # Opening one subject inspector closes the other.
+    assert "'#tidypane','#provpane'].forEach(function(sel){" in out
+
+
 def test_a_ribbon_of_your_own(out):
     """TASKS T11, and the design note it asked for.
 

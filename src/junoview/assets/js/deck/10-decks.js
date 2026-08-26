@@ -589,6 +589,12 @@
     scheduleAutosave();
     if(!quiet) histPush();
     renderSelPane();   /* keep the Objects pane in step (no-op if closed) */
+    /* Object history is derived on demand from undo plus the live model.
+       When its pane is open, a COMMITTED edit must redraw that final
+       "now" row; quiet slider/typing previews would otherwise parse 24
+       whole-deck snapshots per input event. */
+    var ohp=$('#objhist');
+    if(!quiet&&ohp&&!ohp.hidden) renderObjHist();
     refreshThumb(cur);
   }
   /* ---- keep the CURRENT slide's thumbnail live -------------------------

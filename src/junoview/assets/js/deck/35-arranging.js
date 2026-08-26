@@ -1640,8 +1640,9 @@
     var ttl=$('#provpane-t');
     if(!list) return;
     var s2=pres.slides[cur];
-    var idxs=selIdxs();
-    var a=s2&&(s2.annots||[])[idxs[idxs.length-1]];
+    /* The clicked item is the inspector's subject. A group's last member
+       can be a different annotation with different provenance. */
+    var a=s2&&typeof selAnnot==='number'&&(s2.annots||[])[selAnnot];
     list.innerHTML='';
     var p=provOf(a);
     if(!p){
@@ -1765,7 +1766,7 @@
      '#tidypane','#objhist'].forEach(function(sel){
       var o=$(sel); if(o) o.hidden=true;});
     pane.hidden=false;
-    renderProvPane();
+    syncInspectorPanes(true);
     syncPaneDock();
   }
   (function(){

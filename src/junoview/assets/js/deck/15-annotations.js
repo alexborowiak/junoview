@@ -601,6 +601,10 @@
     }
     renderSelPane();   /* keep the Objects pane on the CURRENT slide */
     renderNotesPane(); /* ...and the notes, which are per slide */
+    /* Slide navigation clears the selection and reaches renderSlide
+       without passing through showFmt. Open selection inspectors still
+       have to drop the previous slide's subject. */
+    syncInspectorPanes();
     /* playback: the code trace flows beneath the slide — scroll (or
        ArrowDown) between them; steps expand in place */
     stage.classList.remove('scrolly');

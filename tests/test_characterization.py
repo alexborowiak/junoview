@@ -350,8 +350,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-26 for TASKS T54: menu and pane actions now use coherent,
 # action-specific artwork, and the object action says Duplicate rather than Copy.
 # tests/test_icon_contract.py pins the individual icon and label decisions.
-EXPECTED_MD5 = "a257f63235f460cd33c6c69d5e8a8f68"
-EXPECTED_BYTES = 2969765
+# Moved 2026-08-26 for TASKS T55: the object-history and provenance panes
+# now follow the primary selection and refresh on the events that change
+# their subject. Pinned by tests/test_slide_editor.py.
+EXPECTED_MD5 = "edb4d267a054b45f19d53c232ad2d507"
+EXPECTED_BYTES = 2972923
 
 
 def _render_example() -> str:

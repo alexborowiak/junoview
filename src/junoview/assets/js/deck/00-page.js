@@ -1501,6 +1501,19 @@
     var list=$('#objhist-list'),head=$('#objhist-count');
     var ttl=$('#objhist-t');
     if(!list) return;
+    list.innerHTML='';
+    /* Deselecting or moving to a title is not deletion. The pane follows
+       the current selection now, so give that state its own honest empty
+       message instead of claiming the last object disappeared. */
+    if(!ohOid){
+      if(ttl) ttl.textContent='This object';
+      if(head) head.textContent='';
+      var empty=document.createElement('div');
+      empty.className='pf-ok';
+      empty.textContent='Select an object to see its recent history.';
+      list.appendChild(empty);
+      return;
+    }
     var s=pres.slides[cur];
     var live=null;
     (s&&s.annots||[]).forEach(function(a,i){
@@ -1511,7 +1524,6 @@
       ?'this object is gone'
       :(hist.length===1?'one state — nothing has changed yet'
         :hist.length+' states');
-    list.innerHTML='';
     if(!live){
       var g=document.createElement('div');
       g.className='pf-ok';
@@ -1599,21 +1611,24 @@
   }
   function showObjHist(){
     var s=pres.slides[cur];
-    var idxs=selIdxs();
-    var a=s&&(s.annots||[])[idxs[idxs.length-1]];
+    /* selAnnot is the primary (clicked) item. A group's last array member
+       is not necessarily that item, so using selIdxs().at(-1) made the
+       pane jump to a different group member on its next refresh. */
+    var a=s&&typeof selAnnot==='number'&&(s.annots||[])[selAnnot];
     if(!a){toast('Select an object first');return;}
-    ensureOids(s);
-    ohOid=a.oid;
     var pane=$('#objhist'); if(!pane) return;
     ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-     '#tidypane'].forEach(function(sel){
+     '#tidypane','#provpane'].forEach(function(sel){
       var o=$(sel); if(o) o.hidden=true;});
     pane.hidden=false;
-    renderObjHist();
+    syncInspectorPanes(true);
     syncPaneDock();
   }
   (function(){
-    var cl=$('#objhist-close');
+    var cl=$('#objhist-close'),rr=$('#objhist-rerun');
+    if(rr) rr.addEventListener('click',function(){
+      syncInspectorPanes(true);
+    });
     if(cl) cl.addEventListener('click',function(){
       var p=$('#objhist'); if(p) p.hidden=true;
       syncPaneDock();
