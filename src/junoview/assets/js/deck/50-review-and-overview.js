@@ -318,7 +318,7 @@
       +'<span class="rv-t">Send this deck out to be read</span>'
       +'<span class="deck-spring"></span>'
       +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
-      +'<button class="dbtn" id="rv-dl">'+bic('front')
+      +'<button class="dbtn" id="rv-dl">'+bic('markdown')
       +' Save as .md</button>'
       +'<button class="dbtn" id="rv-close">'+bic('exit')
       +' Close</button></div>'

@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 16 open items, T42–T55 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 15 open items, T42–T53, T55 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -894,7 +894,7 @@ file before touching anything.
   slide's title or subtitle is thrown away; and a deck text box built by
   the Maths button exports to PowerPoint as literal `$$ … $$`.
 
-- [ ] **T54 · S — Menu and pane icons say the right thing.** T39 swept
+- [x] **T54 · S — Menu and pane icons say the right thing.** T39 swept
   the RIBBON; the menus were not in it.
   - "Save as .md" carries `bic('front')`, the z-order icon;
   - "Remove the divider" and "Delete the section AND its N slides" both
@@ -908,6 +908,11 @@ file before touching anything.
     **Duplicate**, and both wear `data-ic="copy"`. The only toolbar
     button that says "Copy" is the one that is not a clipboard copy,
     and its own tooltip, Ctrl+D and every other door all say Duplicate.
+  *2026-08-26.* The object action now says **Duplicate**. Notes has a
+  dedicated previous/next chevron pair; **Only me** uses the visibility
+  eye; Markdown export uses the Markdown glyph; and the non-destructive
+  divider removal uses minus while section deletion keeps the X. The
+  strip's icon-only mini actions also carry accessible names.
 
 - [ ] **T55 · S — A pane re-renders when the thing it is about
   changes.** The `#objhist` pane has no rerun control and is never

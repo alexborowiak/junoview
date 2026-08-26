@@ -1783,9 +1783,9 @@
     ov.className='deck-notesed';ov.id='deck-notesed';
     ov.innerHTML='<div class="nse-head">'
       +'<span class="nse-t"></span><span class="deck-spring"></span>'
-      +'<button class="dbtn" id="nse-prevs">'+bic('back')
+      +'<button class="dbtn" id="nse-prevs">'+bic('prev')
       +' Previous</button>'
-      +'<button class="dbtn" id="nse-nexts">'+bic('arrow')
+      +'<button class="dbtn" id="nse-nexts">'+bic('next')
       +' Next</button>'
       +'<button class="dbtn" id="nse-done">'+bic('exit')+' Done</button>'
       +'</div>'

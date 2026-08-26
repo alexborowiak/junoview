@@ -146,12 +146,13 @@
     el.appendChild(n);
     var ctr=document.createElement('span');ctr.className='film-ctr';
     [[bic('pen'),function(){renameSection(r.id);},'Rename this section'],
-     [bic('exit'),function(){removeSection(r.id,false);},
+     [bic('minus'),function(){removeSection(r.id,false);},
       'Remove this divider — the slides stay, and join the section '
       +'above']]
       .forEach(function(p){
         var b=document.createElement('button');b.className='film-mini';
         b.innerHTML=p[0];b.title=p[2];
+        b.setAttribute('aria-label',p[2]);
         b.addEventListener('click',function(ev){
           ev.stopPropagation();p[1]();});
         ctr.appendChild(b);
@@ -415,7 +416,7 @@
       });
       menuHead(m,'this section');
       row('Remove the divider',function(){removeSection(run.id,false);},
-        'The slides stay — they join the section above','exit');
+        'The slides stay — they join the section above','minus');
       row('Delete the section AND its '+run.n+' slide'
         +(run.n===1?'':'s'),function(){
           if(confirm('Delete '+run.n+' slide'+(run.n===1?'':'s')

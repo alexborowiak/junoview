@@ -347,8 +347,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # deck's token editor and the page tidy report without a selection; every
 # ribbon layout places them explicitly. Editor/help changes, pinned by
 # tests/test_slide_editor.py and tests/test_ribbon_layouts.py.
-EXPECTED_MD5 = "e30055b1877fc553fd2aeb20378d0a8f"
-EXPECTED_BYTES = 2969434
+# Moved 2026-08-26 for TASKS T54: menu and pane actions now use coherent,
+# action-specific artwork, and the object action says Duplicate rather than Copy.
+# tests/test_icon_contract.py pins the individual icon and label decisions.
+EXPECTED_MD5 = "a257f63235f460cd33c6c69d5e8a8f68"
+EXPECTED_BYTES = 2969765
 
 
 def _render_example() -> str:

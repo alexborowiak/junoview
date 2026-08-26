@@ -104,6 +104,39 @@ def test_every_icon_key_is_used_or_declared_pending():
             f"{rel} no longer reads window.SemIcons — bic() went stale")
 
 
+def test_menu_and_pane_icons_keep_one_meaning():
+    """T54: nearby actions must not borrow unrelated artwork merely
+    because it points in roughly the right direction. The label on the
+    duplicate action is part of that same visual vocabulary.
+    """
+    html = _read("html/deck.html")
+    deck = _read("js/deck.js")
+
+    dup = html[html.index('id="fmt-dup"'):]
+    dup = dup[:dup.index("</button>")]
+    assert 'data-ic="copy"' in dup and "Duplicate" in dup
+    assert "> Copy" not in dup
+
+    assert 'id="nse-prevs">\'+bic(\'prev\')' in deck
+    assert 'id="nse-nexts">\'+bic(\'next\')' in deck
+    assert 'id="rv-dl">\'+bic(\'markdown\')' in deck
+
+    menu_i = deck.index("function openCanvasMenu(layer,s,ev){")
+    menu = deck[menu_i:deck.index("\n  function ", menu_i + 20)]
+    assert "'Lock position'," in menu and "+'restyle','pin']" in menu
+    assert "+'the deck file.','eye');" in menu
+
+    sec_i = deck.index("function secRow(r){")
+    sec = deck[sec_i:deck.index("\n  function ", sec_i + 20)]
+    assert "[bic('minus'),function(){removeSection(r.id,false);}" in sec
+    assert "b.setAttribute('aria-label',p[2]);" in sec
+
+    film_i = deck.index("function openFilmMenu(i,ev,run){")
+    film = deck[film_i:deck.index("\n  function ", film_i + 20)]
+    assert "'The slides stay — they join the section above','minus'" in film
+    assert "},null,'exit');" in film
+
+
 # The codepoints the 2026-08-23 sweep removed from button-generating
 # sources: the whole emoji block, the ⌚/⌛ pair and ⚙ (all render as
 # tofu in the mono font), plus the two one-off glyph offenders that the

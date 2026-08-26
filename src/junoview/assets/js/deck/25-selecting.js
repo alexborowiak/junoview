@@ -1619,7 +1619,7 @@
         'Drawn on your screen and in the presenter view, marked so you '
         +'know it is yours. Never drawn for the audience, and never in '
         +'a PDF or PowerPoint. Like your speaker notes, it is stored in '
-        +'the deck file.','pin');
+        +'the deck file.','eye');
       if(allPriv) pb.classList.add('on');
     }
     var cgm=customGuides();

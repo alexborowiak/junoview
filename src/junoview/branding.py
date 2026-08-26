@@ -74,6 +74,9 @@ _ICON_PATHS = {
     # sizes
     "minus": '<path d="M3.6 8h8.8"/>',
     "plus": '<path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/>',
+    # navigation: plain chevrons, distinct from z-order and drawing arrows
+    "prev": '<path d="m10.4 3.2-4.8 4.8 4.8 4.8"/>',
+    "next": '<path d="m5.6 3.2 4.8 4.8-4.8 4.8"/>',
     # views
     "raw": '<path d="M6.2 3.2 4 12.8"/><path d="M9.8 3.2 12 12.8"/>'
            '<path d="M2.6 6.4h10.8"/><path d="M2.6 9.6h10.8"/>',
