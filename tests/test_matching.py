@@ -123,6 +123,25 @@ def test_the_armed_canvas_is_a_picker_not_an_editor(out):
     assert ".deck.matching .annot-layer{cursor:copy;}" in out
 
 
+def test_layout_match_refuses_a_different_slide_without_disarming(out):
+    """T46. The captured indexes belong to the slide that was armed,
+    while rendered rectangles only exist for the slide on stage. A click
+    elsewhere must mutate neither collection and must leave the mode ready
+    to finish after the user goes back.
+    """
+    branch = out.split("if(matchArm.dir==='layout'){")[1]
+    branch = branch.split("if(matchArm.dir==='to'){")[0]
+    guard = "if(matchArm.slide!==cur){"
+    assert guard in branch
+    assert "back to slide '+(matchArm.slide+1)" in branch
+    # Refuse before reading current-slide geometry or applying captured
+    # indexes, and do not cancel from the guard.
+    assert branch.index(guard) < branch.index("var layer2=")
+    guarded = branch[branch.index(guard):branch.index("var layer2=")]
+    assert "return;" in guarded
+    assert "cancelMatch" not in guarded
+
+
 def test_the_bar_says_which_object_on_which_slide(out):
     """The user asked for this "in the ribbon" -- but the ribbon may never
     grow a row and never hide a word, and this line has to name an object

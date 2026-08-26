@@ -353,8 +353,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-26 for TASKS T55: the object-history and provenance panes
 # now follow the primary selection and refresh on the events that change
 # their subject. Pinned by tests/test_slide_editor.py.
-EXPECTED_MD5 = "edb4d267a054b45f19d53c232ad2d507"
-EXPECTED_BYTES = 2972923
+# Moved 2026-08-26 for TASKS T46: Match Layout now refuses cross-slide
+# geometry before applying captured indexes. Pinned by tests/test_matching.py.
+EXPECTED_MD5 = "78557f54e9a8f6f43f3dab93ab33c55d"
+EXPECTED_BYTES = 2973445
 
 
 def _render_example() -> str:

@@ -1271,6 +1271,16 @@
     if(!hit||!src) return;
     var n=0;
     if(matchArm.dir==='layout'){
+      /* A layout pattern needs the ARMED objects' rendered rectangles.
+         The stage only contains the current slide, so matching elsewhere
+         would apply their old array indexes to unrelated live objects.
+         Keep the mode armed: going back to the named slide is the safe,
+         predictable way to finish the gesture. */
+      if(matchArm.slide!==cur){
+        toast('Match layout works on the slide you armed it on \u2014 go '
+          +'back to slide '+(matchArm.slide+1));
+        return;
+      }
       /* the reference is the group (or the run) the clicked object is
          part of, and the selection is what gets tidied to match it */
       var layer2=stage.querySelector('.annot-layer');

@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 14 open items, T42–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 13 open items, T42–T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -823,10 +823,14 @@ file before touching anything.
   reason. Also: the formatting half's `fmtBuild()` is never rebuilt when
   the canvas selection changes underneath the non-modal popover.
 
-- [ ] **T46 · S — Match layout applies to the slide it captured.** The
+- [x] **T46 · S — Match layout applies to the slide it captured.** The
   `layout` branch applies `matchArm.idxs` to the CURRENT slide rather
   than the one those indexes were captured on, so it rearranges whatever
   happens to sit at those numbers now.
+  *2026-08-26.* A cross-slide click now refuses before reading live
+  geometry or applying the captured indexes, names the slide to return to,
+  and deliberately leaves Match Layout armed. Back on that slide, the
+  same gesture completes normally.
 
 - [ ] **T47 · M — Version history records and restores the whole deck.**
   - in app mode the explicit Save never takes a snapshot, so the history
