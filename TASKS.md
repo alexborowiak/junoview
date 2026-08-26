@@ -921,6 +921,22 @@ file before touching anything.
   than fit at narrow widths, which the never-wrap ladder can only answer
   by scrolling sideways.
 
+- [x] **T60 · S — Ribbon layouts are visible; selected objects own a
+  tab.** The gallery had more than a hundred arrangements and no ordinary
+  door: right-clicking the ribbon was the main route, while the documented
+  View menu exists only after the width ladder has already folded that
+  group. The shipped layout also sent every canvas click to Home and
+  injected six changing groups there.
+  *2026-08-26.* A permanent word-and-icon **Ribbon layouts** button now
+  sits beside the tabs, outside the ribbon it rearranges. Default has a
+  contextual **Object** tab; selecting something opens it only after its
+  applicable controls are ready, and deselecting removes the empty tab
+  and returns to the page-level tabs. The gallery still owns alternative
+  interaction models deliberately. Restoring Default now removes a
+  generated layout's tabs first, so switching back cannot duplicate tab
+  labels or ids. Help and README distinguish a ribbon arrangement from a
+  slide layout.
+
 - [ ] **T57 · S — The smaller ones, gathered.** Each is a line or two.
   - Alt-drag clones on mousedown at zero offset and commits on mouseup
     even if the gesture never moved — an invisible exact-overlap copy

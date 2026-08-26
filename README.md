@@ -272,9 +272,11 @@ grouping vs stacking, section tiers, and what happens with no directives at all.
 
 ## Presentations
 
-Drop cards onto slides, pick a layout, and present full screen — or lay out an
-A0 conference poster from the same cells. Decks live in the notebook's own
-metadata, so re-running the notebook updates the slides.
+Drop cards onto slides, pick a **slide layout**, and present full screen — or
+lay out an A0 conference poster from the same cells. Formatting for the thing
+you click lives on its contextual **Object** tab; the permanent **Ribbon
+layouts** button switches the arrangement of the editor itself. Decks live in
+the notebook's own metadata, so re-running the notebook updates the slides.
 
 **→ [PRESENTATIONS.md](PRESENTATIONS.md)** covers the builder, decks that mix
 several notebooks, and where presentations are saved.

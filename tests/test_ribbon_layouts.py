@@ -151,18 +151,46 @@ def test_hiding_a_contextual_control_is_about_the_control(out):
 
 
 def test_the_selection_opens_the_layouts_own_format_tab(out):
-    """`home` was the markup's answer to "where do the tools for the
-    thing you just clicked live". A layout that calls that tab "Object"
-    would send you to a tab that does not exist.
+    """Default answers "where do selected-object tools live?" with Object.
+
+    Other layouts may call that tab something else, so the selection still
+    asks the active layout rather than hard-coding either name.
 
     And the switch happens AFTER the controls are revealed: done first,
     the tab was still empty and the empty-tab fallback bounced straight
     back off it, so selecting appeared to do nothing. Also found in a
     browser.
     """
+    assert "selTab:'object',fromMarkup:true" in out
+    assert "{id:'object',label:'Object'}" in out
     assert "function ribbonSelTab(){" in out
     assert "var wantTab=(activeTab()!==selT" in out
     assert "if(wantTab) setTab(wantTab); else syncRibbonGroups();" in out
+
+
+def test_ribbon_layouts_have_a_persistent_worded_door(out):
+    """The gallery existed behind a ribbon right-click and an overflow-only
+    View menu. A feature for choosing the whole UI needs a normal visible
+    door, outside the UI it rearranges (2026-08-26, user).
+    """
+    i = out.index('id="rbn-layouts"')
+    door = out[i:i + 700]
+    assert 'class="bic"' in door and "Ribbon layouts" in door
+    assert "function initRibbonLayoutDoor(){" in out
+    assert "initRibbonLayoutDoor();" in out
+    assert "ribbonFolded())" in out and "setRibbonFold(false);" in out
+    assert ".rbn-tabs .rbn-layouts{" in out
+
+
+def test_returning_to_default_removes_generated_tabs_first(out):
+    """A custom layout builds new tab nodes. Restoring the saved markup
+    without removing those nodes duplicated labels and ids in the strip.
+    """
+    i = out.index("function rbnRestoreHome(){")
+    block = out[i:i + 1400]
+    assert "$$('.rbn-tab',h.strip.el).forEach(function(b){b.remove();});" \
+        in block
+    assert block.index("b.remove();") < block.index("h.strip.kids.forEach")
 
 
 def test_a_tab_with_nothing_on_it_leaves_the_strip(out):

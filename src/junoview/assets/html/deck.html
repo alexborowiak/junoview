@@ -332,9 +332,11 @@
        groups that ARE showing can be full size.
        The strip is deliberately the same height as a button row and
        carries no second copy of anything: it is a chooser, not chrome.
-       #rbn-tab-home is first and is where everything selection-driven
-       lives, so the tools for the thing you just clicked are always one
-       named place, never a tab that appears and vanishes under you. -->
+       #rbn-tab-object is contextual: it appears when something is selected
+       and is the one named place for controls that change that object. The
+       page-level Home tools no longer reshape themselves after an ordinary
+       canvas click (2026-08-26, user: "just have an own tab for the
+       selected object"). -->
   <div class="rbn-tabs" id="rbn-tabs" role="tablist" hidden>
     <!-- HOME also carries View and Output now. Guides, Layers, Print
          check and the object list are things you reach for constantly and
@@ -343,8 +345,7 @@
          can just be back on home"). -->
     <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
       aria-selected="true"
-      title="Everything that formats what you have selected, plus guides,
- layers and the print check">Home</button>
+      title="Slide actions, guides, layers and the print check">Home</button>
     <!-- Animate lives on this tab too. On its own it was one group of
          six small buttons under a whole tab of its own, and Insert had
          room to spare — two half-empty tabs read worse than one full one
@@ -360,6 +361,15 @@
       aria-selected="false"
       title="How the page itself looks — its size, layout and
  background">Design</button>
+    <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
+      aria-selected="false"
+      title="Format and arrange what is selected">Object</button>
+    <!-- RIBBON layout, not slide layout. This permanent door sits outside
+         #edit-tools, so no chosen layout, tab filter, per-button preference
+         or width rung can hide the way to choose another arrangement. -->
+    <button class="dbtn rbn-layouts" id="rbn-layouts"
+      title="Choose a different arrangement of the ribbon">
+      <i data-ic="layouts"></i> Ribbon layouts</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
     <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
@@ -860,7 +870,7 @@
                spot"). One feature, one door: the top bar, or Ctrl+F. -->
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
-          <span class="rbn-grp" data-tab="home">
+          <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
               <!-- Bring-to-front, send-to-back and the two rotates used to
                    sit here as bare glyphs (&#8613; &#8615; &#10226;
@@ -943,7 +953,7 @@
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
                the colours all the time?") -->
-          <span class="rbn-grp" data-tab="home">
+          <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
               <!-- ids on the wrappers, so the button and its swatch menu
                    are ONE thing to move: a ribbon layout that took the
@@ -1025,7 +1035,7 @@
             </span>
             <span class="rbn-lab">Colour</span>
           </span>
-          <span class="rbn-grp" data-tab="home">
+          <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-smaller"
                 title="Smaller text">A&#8722;</button>
@@ -1124,7 +1134,7 @@
             </span>
             <span class="rbn-lab">Text</span>
           </span>
-          <span class="rbn-grp" data-tab="home">
+          <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
               <span class="rbn-stack rbn-cols">
                 <span class="rbn-col">
@@ -1206,7 +1216,7 @@
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>
-          <span class="rbn-grp" data-tab="home">
+          <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
               <!-- The only ribbon control the flip book gets. Everything
@@ -1252,7 +1262,7 @@
                you want almost every time and needs no cell selected
                first; the header row is a switch rather than a separate
                kind of row, so turning it off moves no data. -->
-          <span class="rbn-grp rbn-tbl" data-tab="home">
+          <span class="rbn-grp rbn-tbl" data-tab="object">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-tbl-rowplus"
                 title="Add a row at the bottom">&#43; Row</button>

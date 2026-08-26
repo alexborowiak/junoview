@@ -56,8 +56,8 @@ documents. You build slides by pointing at the document:
   stays on the left, tabs above) with drawing tools — **+ Text** (click
   to place a text box, type straight into it), **+ Arrow** and **+ Box**
   (drag to draw), **+ Cell** (below), **Select** to move things (text
-  moves by its ⠿ handle) and **Delete** / `Del`. Selecting any item
-  reveals a **format bar**: six colours, text size **A− / A+**, line
+  moves by its ⠿ handle) and **Delete** / `Del`. Selecting any item opens
+  the contextual **Object** tab: colours, text size **A− / A+**, line
   thickness, **Dash**, **Fill** for boxes, **Bg** to strip a text box's
   background. Everything is stored with the slide in percent
   coordinates, so it scales with the screen and shows in playback.

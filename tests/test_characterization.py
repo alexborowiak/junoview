@@ -335,8 +335,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-EXPECTED_MD5 = "c384a4c0bf418c2e8e2930975dbcf75e"
-EXPECTED_BYTES = 2959629
+# Moved 2026-08-26 for T60: Default gained a contextual Object tab and the
+# tab strip gained the permanent Ribbon layouts door; help/README now tell
+# ribbon arrangements from slide layouts. Editor-only, pinned by
+# tests/test_ribbon_layouts.py and tests/test_slide_editor.py.
+EXPECTED_MD5 = "182fed7cf6297680fa30c6dc41124c01"
+EXPECTED_BYTES = 2962527
 
 
 def _render_example() -> str:

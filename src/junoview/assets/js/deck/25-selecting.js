@@ -86,9 +86,10 @@
       syncRibbonGroups();
       return;
     }
-    /* THE TAB FOLLOWS THE SELECTION. Every selection-driven group lives
-       on Home, so clicking a figure while you happened to be on Insert
-       or Design silently left its tools on a tab you were not looking at
+    /* THE TAB FOLLOWS THE SELECTION. Default gives selection-driven
+       controls an Object tab; other ribbon layouts name their own target.
+       Clicking a figure while you happened to be elsewhere still has to
+       reveal its tools instead of leaving them on a tab you cannot see
        — which is how "the ability to lock cells" appeared to vanish when
        it had simply moved one tab away (2026-08-20, user).
        Not while a drawing tool is armed: placing five shapes in a row
@@ -1948,4 +1949,3 @@
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,selAnnot);}
   }
-

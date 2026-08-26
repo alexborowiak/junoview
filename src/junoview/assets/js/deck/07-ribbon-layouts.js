@@ -134,8 +134,15 @@
     h.groupTabs.forEach(function(x){
       if(x.tab) x.el.setAttribute('data-tab',x.tab);
     });
-    if(h.strip) h.strip.kids.forEach(function(k){
-      h.strip.el.appendChild(k);});
+    if(h.strip){
+      /* Generated layouts build their own tab buttons. Remove those before
+         the saved markup is appended, or custom -> Default leaves both sets
+         in the strip (including duplicate ids). Non-tab children are the
+         permanent layout chooser, hint, spring and fold button; appending
+         their saved nodes restores their exact order. */
+      $$('.rbn-tab',h.strip.el).forEach(function(b){b.remove();});
+      h.strip.kids.forEach(function(k){h.strip.el.appendChild(k);});
+    }
     TABS=h.tabs.slice();
   }
   /* THE FAMILIES, and why the gallery needs them at all. Eighteen cards
@@ -163,10 +170,10 @@
   }
   function rbnLayouts(){
     return [{id:'default',name:'Default',
-      blurb:'The arrangement the app ships with: Home, Insert, Design.',
-      selTab:'home',fromMarkup:true,family:'default',
+      blurb:'The arrangement the app ships with: Home, Insert, Design, and a contextual Object tab.',
+      selTab:'object',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},
-            {id:'design',label:'Design'}],
+            {id:'design',label:'Design'},{id:'object',label:'Object'}],
       groups:[]}].concat(RIBBON_LAYOUTS||[]);
   }
   function rbnLayoutById(id){
@@ -188,6 +195,25 @@
     var l=rbnLayoutById(rbnCurrentId());
     var t=(l&&l.selTab)||'home';
     return TABS.indexOf(t)>=0?t:TABS[0];
+  }
+  function syncRibbonLayoutDoor(){
+    var b=$('#rbn-layouts'); if(!b) return;
+    var lay=rbnLayoutById(rbnCurrentId());
+    var name=(lay&&lay.name)||'Default';
+    b.title='Choose a different arrangement of the ribbon. Current: '+name;
+    b.setAttribute('aria-label','Ribbon layouts. Current: '+name);
+  }
+  function initRibbonLayoutDoor(){
+    var b=$('#rbn-layouts'); if(!b) return;
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      /* A folded ribbon has no measured bottom, so unfold it before the
+         gallery positions itself beneath the arrangement being previewed. */
+      if(typeof ribbonFolded==='function'&&ribbonFolded())
+        setRibbonFold(false);
+      openRibbonGallery();
+    });
+    syncRibbonLayoutDoor();
   }
   /* the tab strip, built from whichever layout is on. The markup's own
      buttons carry tooltips worth keeping, so Default gets them back
@@ -287,6 +313,7 @@
        a browser). showFmt ends by calling syncRibbonGroups itself. */
     if(typeof showFmt==='function') showFmt();
     else syncRibbonGroups();
+    syncRibbonLayoutDoor();
     if(!quiet) toast('Ribbon layout: '+lay.name);
   }
   /* WHAT A LAYOUT MISSED, for the tests to read. Reports; changes

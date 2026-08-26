@@ -835,7 +835,7 @@
     return $$('#edit-tools .rbn-grp').filter(function(g){
       return ribbonControls(g).length>1;});
   }
-  /* the picker shows the TAB YOU ARE LOOKING AT. All three tabs together
+  /* the picker shows the TAB YOU ARE LOOKING AT. All tabs together
      is 87 controls in a floating menu, which is a wall rather than a
      list — and you customise a ribbon while looking at the thing you
      want moved, not by scrolling for it. applyRibbonPrefs still walks
@@ -1001,10 +1001,10 @@
      display:none — not visibility — so it costs nothing in the width the
      fit ladder measures. The ladder itself is unchanged, and with a third
      of the groups in the row it now almost never has to fire.
-     Home is where everything selection-driven lives, deliberately: the
-     tools for the thing you just clicked must be in ONE named place you
-     can go back to, not on a tab that appears and disappears. */
-  var TABS=['home','insert','design'];
+     Object is where everything selection-driven lives. It is contextual,
+     so Home keeps its page-level meaning instead of growing a different
+     ribbon every time the canvas selection changes (2026-08-26, user). */
+  var TABS=['home','insert','design','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -2065,4 +2065,3 @@
     return (s&&s.annots||[]).map(function(a,i){return {a:a,i:i};})
       .filter(function(p){return p.a.k==='cell';});
   }
-

@@ -509,19 +509,22 @@ def test_the_ribbon_is_tabbed(out):
     unchanged underneath -- with a third of the groups in the row it
     simply almost never has to fire.
 
-    Home is where everything selection-driven lives, deliberately. The
-    tools for the thing you just clicked have to be in ONE named place you
-    can go back to, not on a tab that appears and disappears under you.
+    Object is the one named place for selection-driven controls. It appears
+    with a selection and leaves again when it has no controls to offer, so
+    clicking a thing no longer takes Home over and changes its contents.
     """
     assert 'class="rbn-tabs" id="rbn-tabs"' in out
-    # THREE tabs since 2026-08-20. Five left two of them nearly empty
+    # Three page-level tabs since 2026-08-20. Five left two nearly empty
     # (user: "some of those tabs have nothing on them now. Insert and
     # animate can be one the one" / "View can just be back on home"), and
-    # a tab with one small group in it is worse than no tab at all.
-    for t in ("home", "insert", "design"):
+    # a fourth contextual tab now keeps an ordinary selection from
+    # rewriting Home (2026-08-26, user).
+    for t in ("home", "insert", "design", "object"):
         assert f'id="rbn-tab-{t}"' in out, t
         assert f"'{t}'" in out
-    assert "var TABS=['home','insert','design'];" in out
+    assert "var TABS=['home','insert','design','object'];" in out
+    assert out.count('class="rbn-grp" data-tab="object"') == 5
+    assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
     assert 'id="rbn-tab-view"' not in out
     # a browser remembering one of the retired tabs lands on its new host
@@ -1508,6 +1511,7 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     assert "if(typeof fitEditRibbon==='function') fitEditRibbon();" in out
     # applied once, from the tail, never mid-file
     assert ("  renderPresTabs();\n"
+            "  initRibbonLayoutDoor();\n"
             "  /* the ribbon you kept: applied once here, at the tail") in out
 
 

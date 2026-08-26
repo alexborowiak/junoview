@@ -127,8 +127,8 @@ body.deck-open{overflow:hidden;}
 .qat-play{flex:none;white-space:nowrap;}
 
 /* ---------- the tab strip ---------------------------------------------
-   One job's worth of groups at a time. The strip carries no controls of
-   its own beyond the tabs and the hint, so it stays one button high. */
+   One job's worth of groups at a time. Tabs, the permanent ribbon-layout
+   chooser and the hint stay in one button-high strip. */
 .rbn-tabs{display:flex;align-items:stretch;gap:2px;padding:0 10px;
   background:var(--chrome-1,#0e1926);border-bottom:1px solid #ffffff14;
   flex:none;height:28px;overflow-x:clip;}
@@ -141,6 +141,10 @@ body.deck-open{overflow:hidden;}
 .rbn-tab[aria-selected="true"]{color:#fff;
   border-bottom-color:var(--cyan);}
 .rbn-tab[hidden]{display:none;}
+.rbn-tabs .rbn-layouts{align-self:center;display:inline-flex;
+  align-items:center;gap:5px;padding:2px 8px;line-height:1;flex:none;
+  font-size:10px;white-space:nowrap;}
+.rbn-tabs .rbn-layouts .bic{width:14px;height:14px;}
 /* a group belongs to exactly one tab and is out of the row entirely when
    that tab is not the one showing — display:none, never visibility, so it
    costs no width in the fit measurement */

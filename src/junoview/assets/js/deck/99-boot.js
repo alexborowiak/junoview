@@ -31,6 +31,7 @@
   syncCustomTypes();
   status();
   renderPresTabs();
+  initRibbonLayoutDoor();
   /* the ribbon you kept: applied once here, at the tail, after every
      declaration and every group's markup is real. It must not run
      mid-file — it walks #edit-tools and calls fitEditRibbon (T11).
