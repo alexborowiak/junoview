@@ -343,8 +343,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # closes with the editor, resets moved contextual controls, and warns when
 # a horizontal layout still cannot fit. Editor-only, pinned by
 # tests/test_ribbon_layouts.py.
-EXPECTED_MD5 = "19a45cfe44cbf8ea6084cd03482ad85e"
-EXPECTED_BYTES = 2965784
+# Moved 2026-08-26 for TASKS T59: permanent Design buttons now open the
+# deck's token editor and the page tidy report without a selection; every
+# ribbon layout places them explicitly. Editor/help changes, pinned by
+# tests/test_slide_editor.py and tests/test_ribbon_layouts.py.
+EXPECTED_MD5 = "e30055b1877fc553fd2aeb20378d0a8f"
+EXPECTED_BYTES = 2969434
 
 
 def _render_example() -> str:

@@ -1199,7 +1199,7 @@
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
         b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Deck colours and everything using it follows.';
+          +'Design \u2192 Design tokens and everything using it follows.';
         b.setAttribute('aria-label',nm+' (deck colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -1286,6 +1286,10 @@
       });
     },0);
   }
+  (function(){
+    var b=$('#dsg-tokens');
+    if(b) b.addEventListener('click',function(){openTokenPicker(this);});
+  })();
   function setToken(kind,key,val){
     pres.tokens=pres.tokens||{};
     if(kind==='c'){

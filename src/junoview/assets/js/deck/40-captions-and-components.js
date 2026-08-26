@@ -1090,14 +1090,6 @@
      /* the LAYOUT sibling of the two rows above: same gesture, but what
         travels is the arrangement rather than the look (TASKS T8) */
      ['x:layout','Lay these out like a group I click…'],
-     /* the REPORT-first sibling of "Tidy into a row" above: that one
-        rearranges what you selected, this one looks at the whole page
-        and asks first (TASKS T9) */
-     ['o:tidyup','Tidy up this page…'],
-     /* the deck's own colours, reached from the menu that is shown for
-        every kind of item — the Design tab's own row is the other door
-        (TASKS T12) */
-     ['k:tokens','This deck\u2019s colours and corner…'],
      /* SELECTING is not arranging, but this is the menu that is shown
         for every kind of item and already keeps the "everything like
         this one" verbs — and the ribbon has no width to spare for a
@@ -1105,8 +1097,6 @@
      ['s:by','Select everything on this slide like this…']],'al',
     function(what){
       if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}
-      if(what==='o:tidyup'){showTidyPane();return;}
-      if(what==='k:tokens'){openTokenPicker($('#fmt-align-btn'));return;}
       if(what.indexOf('a:')===0){
         if(typeof window.SemDeckApplyDlg==='function')
           window.SemDeckApplyDlg();
@@ -2076,4 +2066,3 @@
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
     else renderSlide();
   });
-

@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 17 open items, T42–T55 and T57–T59, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 16 open items, T42–T55 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -968,7 +968,7 @@ file before touching anything.
   - the Header/Footer prompts list `{name} {date} {n} {N}` and never
     mention `{sn}`, `{sN}` or `{sec}`.
 
-- [ ] **T59 · S — A deck-wide command must not hide behind a
+- [x] **T59 · S — A deck-wide command must not hide behind a
   selection.** Two of them sit in the format bar's Arrange dropdown,
   which is hidden whenever nothing is selected — so the way to reach a
   setting about the WHOLE DECK is to first select an object that has
@@ -978,6 +978,11 @@ file before touching anything.
   Compare T52's guide tool, which has the same shape of problem from a
   different direction: no ribbon button, only a right-click row and the
   ruler corner.
+  *2026-08-26.* **Design tokens** now has a permanent word-and-icon door
+  in Design's deck-level group, and **Tidy page** has one in its Slide/Page
+  group. Their selection-only Arrange rows are gone. Every alternative
+  ribbon layout places both controls explicitly beside their semantic
+  neighbours, so neither can fall into an arbitrary catch-all group.
 
 - [ ] **T58 · L — Verify, then act on, the figures group (T17–T22).**
   24 findings whose refuter never ran, so **re-check each one before

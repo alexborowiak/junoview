@@ -73,6 +73,16 @@ def test_every_layout_places_exactly_the_same_controls(out):
             f"extra {sorted(got - want)}")
 
 
+def test_deck_wide_commands_are_explicit_in_every_layout(out):
+    """Tokens and page tidy do not belong to an arbitrary rest group.
+    Every arrangement places each permanent Design control exactly once,
+    so switching layouts cannot hide or duplicate either door.
+    """
+    for lid, ids in _layouts(out):
+        for cid in ("dsg-tokens", "dsg-tidy"):
+            assert ids.count(cid) == 1, f"{lid} places {cid} {ids.count(cid)}x"
+
+
 def test_one_group_per_layout_catches_a_control_nobody_placed(out):
     """A control added by a later version is one the catalogue has never
     heard of. Dropping it silently would be the button-that-vanished

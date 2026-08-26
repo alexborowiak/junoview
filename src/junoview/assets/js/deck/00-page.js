@@ -1890,4 +1890,6 @@
     });
     var rr=$('#tidypane-rerun');
     if(rr) rr.addEventListener('click',renderTidyPane);
+    var open=$('#dsg-tidy');
+    if(open) open.addEventListener('click',showTidyPane);
   })();

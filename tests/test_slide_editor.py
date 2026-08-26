@@ -1357,7 +1357,12 @@ def test_tidy_up_reports_before_it_rearranges(out):
     assert 'id="tidypane"' in out and 'id="tidypane-list"' in out
     assert "function tidyFindings(){" in out
     assert "function showTidyPane(){" in out
-    assert "['o:tidyup','Tidy up this page…']," in out
+    assert 'id="dsg-tidy"' in out
+    tidy = out[out.index('id="dsg-tidy"'):]
+    tidy = tidy[:tidy.index("</button>")]
+    assert '<svg class="bic"' in tidy and "Tidy page" in tidy
+    assert "if(open) open.addEventListener('click',showTidyPane);" in out
+    assert "['o:tidyup','Tidy up this page" not in out
     # every fix is attached to its own row's button
     assert "act.addEventListener('click',function(){\n      var n=f.fix()" \
         in out
@@ -1599,6 +1604,21 @@ def test_a_token_is_a_reference_not_a_copy(out):
     assert "var col=tokVal(a.color)||'#ff6b57';" in out
     assert "if(a.fillc) return tokVal(a.fillc);" in out
     assert "if(a.color) host.style.color=tokVal(a.color);" in out
+
+
+def test_design_tokens_have_a_permanent_design_door(out):
+    """A setting for the whole deck cannot require selecting an object
+    merely to reveal its contextual Arrange menu. Its button stays on
+    Design and travels with every ribbon layout like any other control.
+    """
+    assert 'id="dsg-tokens"' in out
+    tokens = out[out.index('id="dsg-tokens"'):]
+    tokens = tokens[:tokens.index("</button>")]
+    assert '<svg class="bic"' in tokens and "Design tokens" in tokens
+    assert "var b=$('#dsg-tokens');" in out
+    assert "openTokenPicker(this);" in out
+    assert "['k:tokens','This deck" not in out
+    assert "Design \\u2192 Design tokens" in out
 
 
 def test_the_deck_registry_survives_a_save(out):
