@@ -203,6 +203,16 @@
     b.title='Choose a different arrangement of the ribbon. Current: '+name;
     b.setAttribute('aria-label','Ribbon layouts. Current: '+name);
   }
+  function rbnOverflowNotice(bar){
+    var clipped=!!(bar&&!deckEl.classList.contains('rbn-side')
+      &&bar.clientWidth&&bar.scrollWidth>bar.clientWidth+1);
+    /* A gallery sits above the deck's stacking context, so a deck toast
+       would be hidden behind it. When the chooser is open, put the remedy
+       in the chooser itself; callers without a gallery still get a toast. */
+    var note=$('#rbn-gal-warn');
+    if(note) note.hidden=!clipped;
+    return clipped;
+  }
   function initRibbonLayoutDoor(){
     var b=$('#rbn-layouts'); if(!b) return;
     b.addEventListener('click',function(e){
@@ -314,7 +324,15 @@
     if(typeof showFmt==='function') showFmt();
     else syncRibbonGroups();
     syncRibbonLayoutDoor();
-    if(!quiet) toast('Ribbon layout: '+lay.name);
+    /* The fit ladder has deliberately exhausted every non-destructive
+       rung at this point. Some experimental layouts put so many controls
+       in one group that the horizontal ribbon still cannot fit; say so
+       and name the existing remedy instead of clipping buttons silently. */
+    var clipped=rbnOverflowNotice(bar);
+    if(clipped&&!$('#rbn-gal-warn'))
+      toast('This ribbon layout is wider than the window \u2014 '
+        +'turn on Side toolbar to reach all of it.');
+    else if(!quiet) toast('Ribbon layout: '+lay.name);
   }
   /* WHAT A LAYOUT MISSED, for the tests to read. Reports; changes
      nothing — the same split validate_deck makes against the loader. */
@@ -379,8 +397,13 @@
   function rbnGalleryPlace(){
     var ov=$('#rbn-gallery'),bar=$('#edit-tools');
     if(!ov||!bar) return;
-    var r=bar.getBoundingClientRect();
+    var side=deckEl.classList.contains('rbn-side');
+    var anchor=side?$('#rbn-tabs'):bar;
+    var r=(anchor||bar).getBoundingClientRect();
     ov.style.top=Math.max(0,Math.round(r.bottom))+'px';
+    var br=bar.getBoundingClientRect();
+    ov.style.right=side
+      ?Math.max(0,Math.round(window.innerWidth-br.left))+'px':'0px';
   }
   /* the words a card answers to when you type in the filter: its name,
      what it is for, its family, and the labels of the tabs and groups it
@@ -498,10 +521,21 @@
       +'through. Nothing is lost either way: every layout holds the same '
       +'controls, and <b>Default</b> puts them back exactly as they '
       +'ship.</div>'
+      +'<div class="rbn-gwarn" id="rbn-gal-warn" role="status" hidden>'
+      +'<span><b>This ribbon layout is wider than the window.</b> The '
+      +'right-hand toolbar keeps every control reachable.</span>'
+      +'<button class="dbtn" id="rbn-gal-side">'+bic('dockright')
+      +' Use Side toolbar</button></div>'
       +'<div class="rbn-gal" id="rbn-gal-list"></div>';
     document.body.appendChild(ov);
     ov.querySelector('#rbn-gal-close')
       .addEventListener('click',rbnGalleryClose);
+    ov.querySelector('#rbn-gal-side').addEventListener('click',function(){
+      /* In the layouts that need this remedy, #vw-side itself can be one
+         of the clipped controls. Its existing handler owns persistence,
+         aria state, fitting and zoom, so this is a reachable second door. */
+      var side=$('#vw-side'); if(side) side.click();
+    });
     var gfind=ov.querySelector('#rbn-gal-find');
     gfind.addEventListener('input',rbnGalleryFill);
     /* the deck's own shortcuts must not fire while you are typing a
@@ -510,6 +544,7 @@
     gfind.addEventListener('keydown',function(e){e.stopPropagation();});
     rbnGalleryFill();
     rbnGalleryPlace();
+    rbnOverflowNotice(bar);
     window.addEventListener('resize',rbnGalleryPlace);
     document.addEventListener('keydown',rbnGalleryKey,true);
   }

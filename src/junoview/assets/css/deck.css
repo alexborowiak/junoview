@@ -2110,6 +2110,12 @@ body.light .fp-tielab{color:var(--ink-3);}
 .rbn-gnote{font-size:11px;line-height:1.55;color:#8fa6b8;
   padding:8px 16px 0;}
 .rbn-gnote b{color:#dbe7ef;font-weight:600;}
+.rbn-gwarn{margin:8px 16px 0;padding:7px 10px;border-radius:6px;
+  border:1px solid #ef9f2766;background:#ef9f2714;color:#e8c88f;
+  font-size:11px;line-height:1.45;display:flex;align-items:center;gap:10px;}
+.rbn-gwarn[hidden]{display:none!important;}
+.rbn-gwarn b{color:#f0d39f;font-weight:650;}
+.rbn-gwarn .dbtn{margin-left:auto;flex:none;}
 .rbn-gal{flex:1;min-height:0;overflow-y:auto;padding:8px 16px 20px;}
 .rbn-ggrid{display:grid;gap:10px;margin-bottom:6px;
   grid-template-columns:repeat(auto-fill,minmax(250px,1fr));}
@@ -2150,6 +2156,9 @@ body.light .rbn-gallery{background:#fff;}
 body.light .rbn-gt,body.light .rbn-card{color:var(--ink);}
 body.light .rbn-card{background:#f7f9fb;border-color:var(--rule);}
 body.light .rbn-cgrp{background:#eef2f6;color:var(--ink-2);}
+body.light .rbn-gwarn{background:#fff7e8;color:#704d16;
+  border-color:#d8912570;}
+body.light .rbn-gwarn b{color:#573b11;}
 
 /* ---------- what the deck says, in words ----------
    The lints on the left, the text on the right, both at once: having to

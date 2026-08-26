@@ -339,8 +339,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tab strip gained the permanent Ribbon layouts door; help/README now tell
 # ribbon arrangements from slide layouts. Editor-only, pinned by
 # tests/test_ribbon_layouts.py and tests/test_slide_editor.py.
-EXPECTED_MD5 = "182fed7cf6297680fa30c6dc41124c01"
-EXPECTED_BYTES = 2962527
+# Moved 2026-08-26 for TASKS T56: the gallery now follows a side ribbon,
+# closes with the editor, resets moved contextual controls, and warns when
+# a horizontal layout still cannot fit. Editor-only, pinned by
+# tests/test_ribbon_layouts.py.
+EXPECTED_MD5 = "19a45cfe44cbf8ea6084cd03482ad85e"
+EXPECTED_BYTES = 2965784
 
 
 def _render_example() -> str:

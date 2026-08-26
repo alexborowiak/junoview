@@ -218,9 +218,98 @@ def test_the_gallery_shows_arrangements_and_stays_out_of_the_way(out):
     assert "function openRibbonGallery(){" in out
     assert "function rbnGalleryPlace(){" in out
     assert "ov.style.top=Math.max(0,Math.round(r.bottom))+'px';" in out
+    # A vertical ribbon reaches the viewport bottom, so its bottom cannot
+    # be the gallery's top. The tab strip anchors the top and the ribbon's
+    # measured left edge reserves the right-hand rail instead.
+    assert "var side=deckEl.classList.contains('rbn-side');" in out
+    assert "var anchor=side?$('#rbn-tabs'):bar;" in out
+    assert "window.innerWidth-br.left" in out
+    assert "if(typeof rbnGalleryPlace==='function') rbnGalleryPlace();" in out
+    side_i = out.index("function applySideRibbon(){")
+    side_body = out[side_i:out.index("/* ---- fit the ribbon", side_i)]
+    assert "fitEditRibbon();" in side_body
+    assert "Math.round(window.innerWidth-br.left)" in out
+    assert "+'px':'0px';" in out
     # applying does not close it
     assert "applyRibbonLayout(lay.id,true);" in out
     assert "rbnGalleryFill();" in out
+
+
+def test_the_gallery_closes_with_the_editor(out):
+    """The chooser belongs to edit mode. Presenting or closing the deck
+    must not leave it pinned over the page, and reopening the editor must
+    not retain contextual controls from a previous selection either.
+    """
+    i = out.index("function setUIMode(m){")
+    body = out[i:out.index("\n  function refresh(){", i)]
+    off = body[body.index("if(!editing){"):]
+    assert "rbnGalleryClose();" in off
+    assert body.index("selAnnot=null;selSet=[];") < body.index("showFmt();")
+
+    j = out.index("function closeDeck(){")
+    closed = out[j:out.index("\n  /* ---- URL routing", j)]
+    assert "rbnGalleryClose();" in closed
+
+    k = out.index("function startPick(idx,multi){")
+    picked = out[k:out.index("\n  function ", k + 20)]
+    assert picked.index("rbnGalleryClose();") < picked.index("deckEl.hidden=true")
+
+    close_i = out.index("function rbnGalleryClose(){")
+    gallery_close = out[close_i:out.index("\n  }", close_i)]
+    assert "window.removeEventListener('resize',rbnGalleryPlace);" in gallery_close
+    assert "document.removeEventListener('keydown',rbnGalleryKey,true);" in (
+        gallery_close)
+
+
+def test_an_oversized_layout_names_the_existing_remedy(out):
+    """Experimental one-row layouts may remain wider than the window
+    after every never-wrap density rung. That is allowed, but silently
+    clipping their controls is not: the user is pointed to Side toolbar.
+    """
+    i = out.index("function applyRibbonLayout(id,quiet){")
+    body = out[i:out.index("\n  /* WHAT A LAYOUT MISSED", i)]
+    assert body.index("showFmt();") < body.index("rbnOverflowNotice(bar)")
+    notice_i = out.index("function rbnOverflowNotice(bar){")
+    notice = out[notice_i:out.index("\n  function ", notice_i + 20)]
+    assert "bar.scrollWidth>bar.clientWidth+1" in notice
+    assert "!deckEl.classList.contains('rbn-side')" in notice
+    assert "This ribbon layout is wider than the window" in body
+    assert "turn on Side toolbar to reach all of it" in body
+    # While the chooser is open its z-index is above the deck (and its
+    # toast), so the same warning must also live inside the gallery.
+    assert 'id="rbn-gal-warn" role="status" hidden' in out
+    assert "if(note) note.hidden=!clipped;" in notice
+    assert ".rbn-gwarn{" in out
+    assert ".rbn-gwarn[hidden]{display:none!important;}" in out
+    # The layouts which overflow can clip their own Side control, so the
+    # visible warning provides a reachable word-and-icon action itself.
+    assert 'id="rbn-gal-side">\'+bic(\'dockright\')' in out
+    assert "var side=$('#vw-side'); if(side) side.click();" in out
+
+
+def test_folding_the_ribbon_closes_its_layout_preview(out):
+    """A gallery cannot preview a hidden ribbon, and measuring the folded
+    bar on the next resize would otherwise move the gallery over the tabs.
+    """
+    i = out.index("function setRibbonFold(on){")
+    body = out[i:out.index("\n  /* DELEGATED", i)]
+    assert "if(on&&typeof rbnGalleryClose==='function')" in body
+    assert "rbnGalleryClose();" in body
+
+
+def test_the_overflow_notice_tracks_every_ribbon_refit(out):
+    """Side toggles and window resizes can resolve or recreate overflow
+    while the gallery remains open, so the inline status follows the fit
+    function rather than only the card click that first opened it.
+    """
+    i = out.index("function fitEditRibbon(){")
+    body = out[i:out.index("\n  /* ---- the thin top bar", i)]
+    assert body.count("rbnOverflowNotice(bar);") == 2
+    side = body.index("if(cl.contains('rbn-side')){")
+    assert body.index("ERC.forEach(function(c){cl.remove(c);});") < side
+    assert body.index("cl.remove('erc-nohint')") < side
+    assert side < body.index("rbnOverflowNotice(bar);", side) < body.index(
+        "return;", side)
 
 
 def test_every_control_on_the_ribbon_can_be_addressed(out):

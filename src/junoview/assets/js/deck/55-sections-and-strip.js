@@ -890,9 +890,12 @@
       showVerpane(false);
       animPaneClose();
       filmToPanel();
+      rbnGalleryClose();
     }
-    var fb=$('#et-fmt'); if(fb) fb.hidden=true;
-    var etb=$('#edit-tools'); if(etb) etb.classList.remove('fmt-open');
+    /* A custom layout may have moved contextual controls out of #et-fmt,
+       so hiding that one holder cannot reset the ribbon. showFmt owns the
+       complete list and now sees the cleared selection above. */
+    showFmt();
     if(editing) setTool('select');
     /* real full screen while presenting (browser chrome gone) */
     try{
@@ -991,6 +994,7 @@
         document.exitFullscreen().catch(function(){});
     }catch(err){}
     closeVFull();
+    rbnGalleryClose();
     showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');

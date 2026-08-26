@@ -731,6 +731,12 @@
     var b=$('#vw-side');
     if(b) b.setAttribute('aria-pressed',on?'true':'false');
     applyZoom();           /* the stage just changed width */
+    /* The layout gallery measures the ribbon it deliberately leaves on
+       screen. A side ribbon occupies the right edge instead of the top,
+       so an open gallery has to move with it rather than keeping the old
+       horizontal-ribbon bounds. */
+    fitEditRibbon();
+    if(typeof rbnGalleryPlace==='function') rbnGalleryPlace();
   }
   /* ---- fit the ribbon by DENSITY, never by wrapping, scrolling or
      dropping a word.
@@ -1095,6 +1101,9 @@
     return deckEl.classList.contains('rbn-fold');
   }
   function setRibbonFold(on){
+    /* A chooser that previews a hidden ribbon has lost the thing it is
+       choosing; it would also measure the folded bar at zero on resize. */
+    if(on&&typeof rbnGalleryClose==='function') rbnGalleryClose();
     deckEl.classList.toggle('rbn-fold',!!on);
     var b=$('#rbn-fold');
     if(b){
@@ -1154,14 +1163,15 @@
     foldViewGroup(false);
     sizeRibbonGroups();
     var cl=deckEl.classList;
+    ERC.forEach(function(c){cl.remove(c);});
+    cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
     if(cl.contains('rbn-side')){
       /* a column is not short of width and has no rungs at all — leaving
          one stamped on would shrink the rail's type for no reason */
       ERCW.forEach(function(r){cl.remove(r[0]);});
+      if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
       return;
     }
-    ERC.forEach(function(c){cl.remove(c);});
-    cl.remove('erc-nohint');cl.remove('erc-nostatus');cl.remove('erc-tight');
     if(!bar.clientWidth) return;
     ERCW.forEach(function(r){cl.toggle(r[0],bar.clientWidth<r[1]);});
     /* the reminder text gives up its room before any control tightens */
@@ -1196,6 +1206,7 @@
        instead of stacking into a third row and printing over their own
        label; the tight rung's spacing gave 40px of the ~70px back. Below
        it the remedy is Guides ▸ Toolbar on the right. */
+    if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
   }
   /* ---- the thin top bar must never clip --------------------------------
      #deck-qat is ~14 fixed-width controls on flex-wrap:nowrap, and no

@@ -26,6 +26,7 @@
   function startPick(idx,multi){
     if(typeof idx!=='number') return;
     picking=idx;pickMulti=!!multi;pickAdded=0;
+    rbnGalleryClose();
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
     document.body.classList.remove('creating-docs');

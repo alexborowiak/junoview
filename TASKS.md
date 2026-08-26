@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 18 open items, T42–T59, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 17 open items, T42–T55 and T57–T59, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -915,11 +915,19 @@ file before touching anything.
   provenance pane reads the selection once, at render time, and never
   again.
 
-- [ ] **T56 · S — Ribbon gallery housekeeping.** Nothing removes
+- [x] **T56 · S — Ribbon gallery housekeeping.** Nothing removes
   `#rbn-gallery` when the editor is left, so it stays pinned over
   Present mode; and a few catalogue entries put more controls in one row
   than fit at narrow widths, which the never-wrap ladder can only answer
   by scrolling sideways.
+  *2026-08-26.* Leaving edit mode or closing the deck now closes the
+  gallery and resets every moved contextual control through `showFmt`.
+  The gallery measures around a side toolbar instead of placing itself
+  below the viewport, follows the toolbar when it moves, and closes if
+  the ribbon is folded. An applied horizontal layout that remains
+  over-wide after `fitEditRibbon` now shows a **Use Side toolbar** action
+  inside the gallery, so the remedy stays reachable even when the
+  ribbon's own View controls are among those clipped.
 
 - [x] **T60 · S — Ribbon layouts are visible; selected objects own a
   tab.** The gallery had more than a hundred arrangements and no ordinary

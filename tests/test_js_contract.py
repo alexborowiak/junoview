@@ -87,9 +87,9 @@ RUNTIME_IDS = {
     "deck-review",
     # The ribbon-layout gallery, built per open and removed on close:
     # deck/07-ribbon-layouts.js, THE GALLERY.
-    # (its filter, count and list are reached through the overlay
-    # rather than by id, so only the overlay itself is listed)
-    "rbn-gallery",
+    # Its overflow warning is also looked up directly so applying a
+    # too-wide layout can reveal the remedy above the deck's toast layer.
+    "rbn-gallery", "rbn-gal-warn",
 }
 
 # Lookups of elements that were REMOVED from the markup but whose
