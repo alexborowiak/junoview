@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 12 open items, T43–T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 11 open items, T44–T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -811,12 +811,22 @@ file before touching anything.
   splice. Browser-verified with tied duplicate, repeated and cross-slide
   paste, caption-only duplicate, and four same-slide component instances.
 
-- [ ] **T43 · M — Anchoring survives a resize and an export.**
+- [x] **T43 · M — Anchoring survives a resize and an export.**
   `startResize` treats `a.x`/`a.y` as page coordinates, so resizing any
   anchored item jumps it; and the PowerPoint export ignores anchors
   entirely, so a footer pinned bottom-left at 4/4 lands 4% from the
   TOP-left. T14 built the model and two consumers never learned to read
   it.
+  *2026-08-27.* Resize now snapshots and snaps in page coordinates, then
+  writes through `anchorSet`; its live element, aspect-fitted figures and
+  tied captions use the same resolved positions. The stored-rectangle
+  fallback resolves anchors too, so snap targets and off-screen attached
+  arrows agree. PowerPoint resolves one box per item using the dimensions
+  it will actually export, covering text, images, shapes, drawings,
+  tables, flip books and cell frames. Browser-verified: a bottom-right
+  resize kept its top-left fixed before, during and after the gesture; an
+  anchored image normalised to its visible aspect without jumping; and
+  captured PowerPoint items landed at BL 4/90, BR 76/86 and TC 43/4.
 
 - [ ] **T44 · M — A design token resolves everywhere it is used.** T12's
   tokens work on the stage and nowhere else:

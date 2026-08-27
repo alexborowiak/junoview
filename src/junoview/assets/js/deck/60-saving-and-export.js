@@ -971,8 +971,16 @@
      a light poster and white on a dark one. PowerPoint has no such cascade,
      so the default is resolved HERE — baking a plain '#ffffff' would put
      white text on a white poster, the exact bug the live view already had. */
-  function pptxTextItem(a,centred,ink){
-    return {t:'text',x:a.x,y:a.y,w:a.w||(centred?80:34),h:a.h||8,
+  var PPTX_DIMS={text:[34,8],image:[30,24],rect:[20,14],draw:[10,10],
+    table:[40,20],flip:[40,32],cell:[30,24]};
+  function pptxBox(a,centred){
+    var d=centred?[80,8]:(PPTX_DIMS[a.k]||[0,0]);
+    var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);
+    return {x:p.x,y:p.y,w:w,h:h};
+  }
+  function pptxTextItem(a,centred,ink,box){
+    var b=box||pptxBox(a,centred);
+    return {t:'text',x:b.x,y:b.y,w:b.w,h:b.h,
       rot:a.rot,op:a.op,centred:!!centred,
       text:a.text,sizePct:a.size,color:a.color||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
@@ -1012,10 +1020,14 @@
         if(!flipShowsFrame(s,a,atk)) return;
       }
       if(a.crop) note.cropped++;   /* inset-only trims are dropped too */
+      /* Every editable box leaves in PAGE coordinates. An anchored
+         object's stored x/y are distances from an edge or centre, and
+         its export fallback size matters to that conversion. */
+      var box=(a.k==='arrow')?null:pptxBox(a,false);
       if(a.k==='text'){
-        items.push(pptxTextItem(a,false,ink));
+        items.push(pptxTextItem(a,false,ink,box));
       } else if(a.k==='image'){
-        if(a.src) items.push({t:'image',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
+        if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:a.src});
         else note.skipped++;
       } else if(a.k==='rect'){
@@ -1026,12 +1038,12 @@
         if(a.grad) fillCol='';
         else if(a.fill) fillCol=a.fillc||shapeFill(a.color||'#ff6b57',
           0x2b/255);
-        items.push({t:'rect',x:a.x,y:a.y,w:a.w||20,h:a.h||14,rot:a.rot,
+        items.push({t:'rect',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
           op:a.op,color:a.color,fill:fillCol,grad:a.grad,
           swPct:swOf(a)/SW_REF_H*100,
           dash:LINE_PPT[lineStyle(a)],shape:a.shape});
       } else if(a.k==='draw'){
-        items.push({t:'draw',x:a.x,y:a.y,w:a.w||10,h:a.h||10,rot:a.rot,
+        items.push({t:'draw',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
           op:a.op,color:a.color,swPct:swOf(a)/SW_REF_H*100,
           dash:LINE_PPT[lineStyle(a)],pts:a.pts||[]});
       } else if(a.k==='arrow'){
@@ -1048,7 +1060,7 @@
            for it rather than flattening a table into a grid of
            rectangles - which is not much of an export for anyone who
            then wants to edit the deck (2026-08-20) */
-        items.push({t:'table',x:a.x,y:a.y,w:a.w||40,h:a.h||20,
+        items.push({t:'table',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,rows:tableRows(a).map(function(r){
             return r.map(function(v){return v==null?'':String(v);});}),
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
@@ -1069,7 +1081,7 @@
           var fig=fnd?fnd.querySelector('img'):null;
           if(fig&&fig.src&&fig.src.indexOf('data:')===0) fsrc=fig.src;
         }
-        if(fsrc) items.push({t:'image',x:a.x,y:a.y,w:a.w||40,h:a.h||32,
+        if(fsrc) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:fsrc,
           name:(fsel&&fsel.label)||'Figure'});
         else note.skipped++;
@@ -1078,7 +1090,7 @@
         var node=it?framePart(it.ns,a.part):null;
         var img=node?node.querySelector('img'):null;
         if(img&&img.src&&img.src.indexOf('data:')===0){
-          items.push({t:'image',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
+          items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
             rot:a.rot,op:a.op,src:img.src,name:(it&&it.title)||'Figure'});
           return;
         }
@@ -1096,7 +1108,7 @@
         if(node&&node.querySelector('mjx-container')) note.maths++;
         var txt=(node&&!isTable)?blockText(node):'';
         if(txt){
-          items.push({t:'text',x:a.x,y:a.y,w:a.w||30,h:a.h||24,
+          items.push({t:'text',x:box.x,y:box.y,w:box.w,h:box.h,
             rot:a.rot,op:a.op,text:txt,sizePct:code?1.3:1.8,
             color:tokVal(a.txcol)||ink,font:code?'Consolas':'',
             name:(it&&it.title)||'Text'});
@@ -1868,4 +1880,3 @@
     if(!added) return;
     if(!deckEl.hidden) refresh(); else renderPresTabs();
   }).catch(function(){});
-

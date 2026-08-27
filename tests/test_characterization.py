@@ -358,8 +358,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-26 for TASKS T42: clone and paste now re-issue figure,
 # component-instance and group identities; component sync reads live indexes.
 # Pinned by tests/test_slide_editor.py and tests/test_poster_craft.py.
-EXPECTED_MD5 = "3b9b07aa7cca02a30ccaa6bdef1ebcf6"
-EXPECTED_BYTES = 2974707
+# Moved 2026-08-27 for TASKS T43: resize, figure fitting, caption following,
+# snap/arrow rectangles and PowerPoint boxes now resolve anchored positions.
+# Pinned by tests/test_slide_editor.py and tests/test_pptx_export.py.
+EXPECTED_MD5 = "f1a8b9d087457df2500ed6b9fe559000"
+EXPECTED_BYTES = 2975650
 
 
 def _render_example() -> str:

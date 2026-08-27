@@ -596,7 +596,8 @@
       }
     }
     if(a.w==null||a.h==null) return null;
-    return {l:a.x,r:a.x+a.w,t:a.y,b:a.y+a.h};
+    var ap=anchorPos(a,a.w,a.h);
+    return {l:ap.x,r:ap.x+a.w,t:ap.y,b:ap.y+a.h};
   }
   function snapTargets(layer,s,skip){
     var xs=[0,50,100],ys=[0,50,100];
@@ -980,9 +981,15 @@
     /* a figure frame: first snap the stored rect to the plot it visually
        hugs, then keep the plot's aspect locked while dragging */
     var figRatio=0;
+    function takeFit(f){
+      if(!f) return false;
+      a.w=f.w;a.h=f.h;
+      anchorSet(a,f.x,f.y,f.w,f.h);
+      return true;
+    }
     if(a.k==='cell'&&el&&el.classList.contains('an-figonly')){
       var ff=figFit(layer,a,figImg(el));
-      if(ff){a.x=ff.x;a.y=ff.y;a.w=ff.w;a.h=ff.h;figRatio=ff.ratio;}
+      if(takeFit(ff)) figRatio=ff.ratio;
     }
     /* A PLACED IMAGE gets the same treatment, for the same reason. It did
        not, and the result was the bug you could not put your finger on:
@@ -1001,13 +1008,13 @@
     if(a.k==='image'&&!a.crop&&el){
       var ie=el.querySelector('.an-imgel');
       var fi=ie?figFit(layer,a,ie):null;
-      if(fi){a.x=fi.x;a.y=fi.y;a.w=fi.w;a.h=fi.h;figRatio=fi.ratio;
-        imgFree=true;}   /* ...unless Shift says otherwise, live, below */
+      if(takeFit(fi)){figRatio=fi.ratio;imgFree=true;}
+      /* ...unless Shift says otherwise, live, below */
     }
     var er=el?el.getBoundingClientRect():null;
-    var ox=a.x||0,oy=a.y||0;
     var ow=a.w||(er?er.width/lr.width*100:10);
     var oh=a.h||(er?er.height/lr.height*100:10);
+    var origin=anchorPos(a,ow,oh),ox=origin.x,oy=origin.y;
     var thr=snapThr(layer);
     var targets=snapTargets(layer,s,[idx]);
     /* the same gesture path startMove uses (2026-08-23 perf): sync the
@@ -1027,37 +1034,41 @@
          drag, so you can decide mid-gesture rather than before it */
       var ratio=(imgFree&&ev.shiftKey)?0:figRatio;
       /* the dragged corner moves; the opposite corner stays anchored */
-      if(east) a.w=Math.max(4,ow+dx);
-      if(west){var ww=Math.max(4,ow-dx);a.x=ox+(ow-ww);a.w=ww;}
+      var nx=ox,ny=oy,nw=ow,nh=oh;
+      if(east) nw=Math.max(4,ow+dx);
+      if(west){nw=Math.max(4,ow-dx);nx=ox+(ow-nw);}
       if(a.k!=='text'){
-        if(south) a.h=Math.max(4,oh+dy);
-        if(north){var nh=Math.max(4,oh-dy);a.y=oy+(oh-nh);a.h=nh;}
+        if(south) nh=Math.max(4,oh+dy);
+        if(north){nh=Math.max(4,oh-dy);ny=oy+(oh-nh);}
       }
       var sx=null,sy=null;
       if(!ev.altKey){
         /* the moving edges snap; an aspect-locked figure snaps its width
            and lets the height follow the plot's ratio. A guide only shows
            when the snap actually landed (the 4% minimum can cancel it). */
-        var bx=bestSnap(targets.xs,[east?a.x+a.w:a.x],thr.x);
+        var bx=bestSnap(targets.xs,[east?nx+nw:nx],thr.x);
         if(bx){
-          if(east){if(a.w+bx.d>=4){a.w=a.w+bx.d;sx=bx.at;}}
-          else if(a.w-bx.d>=4){a.x=a.x+bx.d;a.w=a.w-bx.d;sx=bx.at;}
+          if(east){if(nw+bx.d>=4){nw+=bx.d;sx=bx.at;}}
+          else if(nw-bx.d>=4){nx+=bx.d;nw-=bx.d;sx=bx.at;}
         }
         if(a.k!=='text'&&!ratio){
-          var by=bestSnap(targets.ys,[south?a.y+a.h:a.y],thr.y);
+          var by=bestSnap(targets.ys,[south?ny+nh:ny],thr.y);
           if(by){
-            if(south){if(a.h+by.d>=4){a.h=a.h+by.d;sy=by.at;}}
-            else if(a.h-by.d>=4){a.y=a.y+by.d;a.h=a.h-by.d;sy=by.at;}
+            if(south){if(nh+by.d>=4){nh+=by.d;sy=by.at;}}
+            else if(nh-by.d>=4){ny+=by.d;nh-=by.d;sy=by.at;}
           }
         }
       }
       if(ratio&&lr.height){
-        var fh=a.w*(lr.width/(lr.height*ratio));
-        if(north) a.y=oy+oh-fh;   /* keep the bottom edge anchored */
-        a.h=fh;
+        nh=nw*(lr.width/(lr.height*ratio));
+        if(north) ny=oy+oh-nh;   /* keep the bottom edge anchored */
       }
+      a.w=nw;
+      if(a.k!=='text') a.h=nh;
+      anchorSet(a,nx,ny,nw,nh);
       if(el){
-        el.style.left=(a.x||0)+'%';el.style.top=(a.y||0)+'%';
+        var live=anchorPos(a,nw,nh);
+        el.style.left=live.x+'%';el.style.top=live.y+'%';
         if(a.w!=null){el.style.width=a.w+'%';
           if(a.k==='text') el.style.maxWidth='none';}
         if(a.h!=null&&a.k!=='text') el.style.height=a.h+'%';
@@ -1090,8 +1101,11 @@
        figure's width. Its own y is left alone: a caption sits under its
        figure, and where "under" is depends on how tall the caption is,
        which is its words' business. */
-    capA.x=(capO.x||0)+((fig.x||0)-(figO.x||0));
-    if(capO.w) capA.w=capO.w*(w1/w0);
+    var f0=anchorPos(figO,w0,figO.h),f1=anchorPos(fig,w1,fig.h);
+    var c0=anchorPos(capO,capO.w,capO.h);
+    var cw=capO.w?capO.w*(w1/w0):capO.w;
+    if(capO.w) capA.w=cw;
+    anchorSet(capA,c0.x+(f1.x-f0.x),c0.y,cw,capO.h);
   }
   function startRotate(layer,s,idx,ev0){
     ev0.preventDefault();ev0.stopPropagation();

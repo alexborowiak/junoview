@@ -957,11 +957,12 @@
     if(!img||!img.naturalWidth||!img.naturalHeight) return null;
     var lw=layer.clientWidth,lh=layer.clientHeight;
     if(!lw||!lh) return null;
-    var fw=lw*(a.w||34)/100,fh=lh*(a.h||30)/100;
+    var aw=a.w||34,ah=a.h||30,ap=anchorPos(a,aw,ah);
+    var fw=lw*aw/100,fh=lh*ah/100;
     var r=img.naturalWidth/img.naturalHeight;
     var w2=Math.min(fw,fh*r),h2=w2/r;
-    return {x:(a.x||0)+(fw-w2)/2/lw*100,
-            y:(a.y||0)+(fh-h2)/2/lh*100,
+    return {x:ap.x+(fw-w2)/2/lw*100,
+            y:ap.y+(fh-h2)/2/lh*100,
             w:w2/lw*100,h:h2/lh*100,ratio:r};
   }
   function figImg(c){

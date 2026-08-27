@@ -1923,6 +1923,49 @@ def test_an_anchored_item_is_placed_from_what_it_measured(out):
     assert "fitTexts(layer,s,editing);\n    /* ...and AFTER the fit pass" in out
 
 
+def test_resize_keeps_anchored_items_in_page_coordinates(out):
+    """T43. An anchor changes what stored x/y mean; resize still treated
+    them as a top-left point, so the first mousemove teleported a pinned
+    item before changing its size. The gesture now snapshots, snaps and
+    preserves the opposite corner entirely in page space, then uses the
+    anchor inverse once per move.
+
+    Figure fitting and tied-caption following are part of the same
+    gesture. Both must resolve their page positions too, or an anchored
+    image jumps before the drag and a BR figure's stored negative delta
+    sends its caption in the opposite direction.
+    """
+    resize = out[out.index("function startResize(layer,s,idx,ev0,corner){"):
+                 out.index("function capFollowResize(")]
+    assert "var origin=anchorPos(a,ow,oh),ox=origin.x,oy=origin.y;" in resize
+    assert "var nx=ox,ny=oy,nw=ow,nh=oh;" in resize
+    assert "bestSnap(targets.xs,[east?nx+nw:nx]" in resize
+    assert "bestSnap(targets.ys,[south?ny+nh:ny]" in resize
+    assert "anchorSet(a,nx,ny,nw,nh);" in resize
+    assert "var live=anchorPos(a,nw,nh);" in resize
+    assert "el.style.left=(a.x||0)" not in resize
+    assert "anchorSet(a,f.x,f.y,f.w,f.h);" in resize
+    # The asynchronous render-time fit uses the same page-space origin;
+    # otherwise it can undo a correct resize a frame after mouseup.
+    assert "var aw=a.w||34,ah=a.h||30,ap=anchorPos(a,aw,ah);" in out
+    assert "return {x:ap.x+(fw-w2)/2/lw*100," in out
+    caption = out[out.index("function capFollowResize("):
+                  out.index("function startRotate(")]
+    assert "var f0=anchorPos(figO,w0,figO.h)" in caption
+    assert "anchorSet(capA,c0.x+(f1.x-f0.x),c0.y,cw,capO.h);" in caption
+
+
+def test_stored_rect_fallback_resolves_an_anchor(out):
+    """Snap targets and off-screen PowerPoint arrow attachments share
+    annotRectPct's stored-box fallback. Returning raw anchor offsets made
+    both consumers see a bottom-right object near the top-left.
+    """
+    rect = out[out.index("function annotRectPct(layer,s,i){"):
+               out.index("function snapTargets(layer,s,skip){")]
+    assert "var ap=anchorPos(a,a.w,a.h);" in rect
+    assert "return {l:ap.x,r:ap.x+a.w,t:ap.y,b:ap.y+a.h};" in rect
+
+
 def test_everything_that_moves_an_item_goes_through_one_inverse(out):
     """A drag, a nudge, an arrange and a snap all think in PAGE
     coordinates and must not have to know about anchors -- and a
@@ -2001,7 +2044,8 @@ def test_the_caption_takes_the_figures_width_and_only_that(out):
     words sixty times a second.
     """
     assert "function capFollowResize(capA,capO,figO,fig){" in out
-    assert "if(capO.w) capA.w=capO.w*(w1/w0);" in out
+    assert "var cw=capO.w?capO.w*(w1/w0):capO.w;" in out
+    assert "if(capO.w) capA.w=cw;" in out
     assert "if(movedAny) capFollowResize(capA,capO,figO,a);" in out
 
 

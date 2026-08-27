@@ -112,6 +112,25 @@ def test_default_ink_follows_the_page_background(out):
     assert "color:a.color||ink" in out
 
 
+def test_anchored_boxes_export_at_their_page_position(out):
+    """T43. PowerPoint consumes absolute page percentages, while an
+    anchored annotation stores offsets from an edge or the centre. Every
+    editable box is resolved once at this boundary, using the same
+    fallback size that will actually be written -- especially important
+    for auto-height bottom-anchored text.
+    """
+    assert ("var PPTX_DIMS={text:[34,8],image:[30,24],rect:[20,14],"
+            "draw:[10,10],") in out
+    assert "table:[40,20],flip:[40,32],cell:[30,24]};" in out
+    assert "function pptxBox(a,centred){" in out
+    assert "var w=a.w||d[0],h=a.h||d[1],p=anchorPos(a,w,h);" in out
+    items = out[out.index("function pptxItems(s,note,ink,layer){"):
+                out.index("function exportDeckPptx(){")]
+    assert "var box=(a.k==='arrow')?null:pptxBox(a,false);" in items
+    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 7
+    assert "x:a.x,y:a.y" not in items
+
+
 def test_pdf_export_says_it_prints_at_true_page_size(out):
     """The PDF path already handled posters correctly; what it lacked was
     anyone knowing. The menu now says so.
