@@ -109,7 +109,36 @@ def test_default_ink_follows_the_page_background(out):
     the exact bug the live view already had.
     """
     assert "pageIsLight(bg)?'#0b141d':'#ffffff'" in out
-    assert "color:a.color||ink" in out
+    assert "color:tokVal(a.color)||ink" in out
+
+
+def test_design_tokens_are_resolved_before_the_pptx_writer(out):
+    """TASKS T44. The OOXML writer accepts concrete CSS colours, never
+    Junoview's ``@name`` references. Resolve every colour-bearing native
+    item at this translation boundary while leaving the saved deck intact.
+    """
+    text = out[out.index("function pptxTextItem("):
+               out.index("function pptxItems(")]
+    assert "color:tokVal(a.color)||ink" in text
+    assert "?tokVal(a.bgc):''" in text
+
+    items = out[out.index("function pptxItems(s,note,ink,layer){"):
+                out.index("function exportDeckPptx(){")]
+    assert "var lineCol=tokVal(a.color)||'#ff6b57';" in items
+    assert "var grad=tokenGradient(a.grad,lineCol);" in items
+    assert "fillCol=tokVal(a.fillc)||shapeFill(lineCol," in items
+    assert items.count("color:tokVal(a.color)") >= 3  # draw, line, table
+    for raw in ("color:a.color", "grad:a.grad", "fillCol=a.fillc"):
+        assert raw not in items
+
+    # The structural resolver clones first, resolves every stop and keeps
+    # the two-stop projection consumed by pptx.js in sync with that list.
+    grad = out[out.index("function tokenGradient(g,col){"):
+               out.index("function gradCss(g,col){")]
+    assert "var out=deep(g)" in grad
+    assert "cp.c=tokVal(st.c)||fallback;" in grad
+    assert "out.a=out.stops[0].c;" in grad
+    assert "out.b=out.stops[out.stops.length-1].c;" in grad
 
 
 def test_anchored_boxes_export_at_their_page_position(out):

@@ -768,7 +768,7 @@
         ln.style.fontWeight=d.b?'700':'400';
         if(d.i) ln.style.fontStyle='italic';
         if(d.font) ln.style.fontFamily=fontCss(d.font);
-        if(d.color) ln.style.color=d.color;
+        if(d.color) ln.style.color=tokVal(d.color);
         if(d.lh) ln.style.lineHeight=d.lh;
         spec.appendChild(ln);
       });

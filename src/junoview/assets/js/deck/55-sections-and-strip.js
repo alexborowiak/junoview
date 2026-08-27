@@ -1330,7 +1330,7 @@
           t.style.fontWeight=r[2].b?'700':'400';
           if(r[2].i) t.style.fontStyle='italic';
           t.style.fontSize=Math.max(11,Math.min(21,r[2].size*3.1))+'px';
-          if(r[2].color) t.style.color=r[2].color;
+          if(r[2].color) t.style.color=tokVal(r[2].color);
           if(r[2].font) t.style.fontFamily=fontCss(r[2].font);
         }
         b.appendChild(t);

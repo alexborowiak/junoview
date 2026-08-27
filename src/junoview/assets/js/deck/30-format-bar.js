@@ -504,6 +504,7 @@
      and needs no image file */
   function fillSwatch(kind,opt,base){
     var w=34,h=22;
+    var paint=tokVal(base)||'#39a9c0';
     var sv=svgBox('fillsw','0 0 '+w+' '+h,w,h);
     var uid='fsw'+(fillSwatch._n=(fillSwatch._n||0)+1);
     var r=SVG_('rect');
@@ -523,13 +524,14 @@
       return sv;
     }
     if(kind==='solid'||kind==='tint'){
-      r.setAttribute('fill',kind==='tint'?shapeFill(base,0x2b/255):base);
+      r.setAttribute('fill',kind==='tint'
+        ?shapeFill(paint,0x2b/255):paint);
       sv.appendChild(r);return sv;
     }
     /* a gradient: build the paint server the same way drawShapeSvg does,
        so what you pick is exactly what you get */
     var defs=SVG_('defs');
-    var g=opt;
+    var g=tokenGradient(opt,paint);
     var gel=SVG_(g.type==='radial'?'radialGradient':'linearGradient');
     gel.setAttribute('id',uid);
     if(g.type==='radial'){
@@ -545,7 +547,7 @@
     gradStops(g).forEach(function(st){
       var s2=SVG_('stop');
       s2.setAttribute('offset',st.o==null?0:st.o);
-      s2.setAttribute('stop-color',st.c||base);
+      s2.setAttribute('stop-color',st.c);
       gel.appendChild(s2);
     });
     defs.appendChild(gel);sv.appendChild(defs);
@@ -858,7 +860,7 @@
         t.style.fontWeight=d.b?'700':'400';
         if(d.i) t.style.fontStyle='italic';
         t.style.fontSize=Math.max(11,Math.min(21,d.size*3.1))+'px';
-        if(d.color) t.style.color=d.color;
+        if(d.color) t.style.color=tokVal(d.color);
         b.appendChild(t);
         var n=document.createElement('span');
         n.className='jv-stylesz';
@@ -994,7 +996,7 @@
     delete a.fillc;
   }
   function gradPartner(col){
-    var c=parseColor(col);
+    var c=parseColor(tokVal(col));
     if(!c) return '#00000000';
     return 'rgba('+clamp255(c.r)+', '+clamp255(c.g)+', '+clamp255(c.b)
       +', 0.06)';

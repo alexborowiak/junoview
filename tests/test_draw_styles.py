@@ -64,12 +64,13 @@ def test_gradients_linear_and_from_the_centre(out):
     exactly two colours in `a` and `b`, which made a three-colour gradient
     impossible to express at all (user asked for "gradients from different
     directions, multiple colours"). a/b are still read on the way in, so
-    every deck saved before this keeps its gradient, and still written on
-    the way out, so the .pptx exporter needs no changes.
+    every deck saved before this keeps its gradient, and the resolved
+    first/last stops are written on the way out for PowerPoint.
     """
     assert "function cssFill" in out
     assert "function gradStops(g){" in out
     assert "function gradSet(a,g){" in out
+    assert "function tokenGradient(g,col){" in out
     assert "radial-gradient(circle at '" in out
     # the radial form can be off-centre now
     assert "gel.setAttribute('cx',(g.cx==null?50:g.cx)+'%');" in out
@@ -86,7 +87,7 @@ def test_the_boolean_fill_bug_is_fixed(out):
     filled shape exported as a solid black box.
     """
     assert "function shapeFillXml" in out
-    assert "else if(a.fill) fillCol=a.fillc||shapeFill(a.color||'#ff6b57'," in out
+    assert "else if(a.fill) fillCol=tokVal(a.fillc)||shapeFill(lineCol," in out
 
 
 def test_text_can_follow_a_curve(out):

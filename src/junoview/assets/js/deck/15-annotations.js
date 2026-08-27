@@ -486,7 +486,7 @@
       wm.style.opacity=(w.op==null?0.12:w.op);
       wm.style.transform='translate(-50%,-50%) rotate('
         +(w.rot==null?-28:w.rot)+'deg)';
-      if(w.color) wm.style.color=w.color;
+      if(w.color) wm.style.color=tokVal(w.color);
       /* BEHIND everything: a watermark that covers a figure is a mistake,
          not a design */
       slideEl.insertBefore(wm,slideEl.firstChild);
@@ -511,13 +511,14 @@
       el.textContent=furnText(v.text,idx);
       el.style.fontSize=px(v.size,2);
       if(v.align) el.style.textAlign=v.align;
-      if(v.color) el.style.color=v.color;
+      if(v.color) el.style.color=tokVal(v.color);
       slideEl.appendChild(el);
     });
   }
   function renderSlide(){
     var s=pres.slides[cur];
     applyPageBg();          /* this slide may carry its own background */
+    if(mode==='edit') renderTokenSwatches();
     stage.innerHTML='';
     vGroups=[];
     traceSel=0;   /* each slide starts on its first plot's trace */
@@ -1161,8 +1162,6 @@
   /* the deck's tokens, written where CSS can see them. One place, so a
      shape's corner and the page agree without any item storing one. */
   function applyTokens(slideEl){
-    renderTokenSwatches();
-    renderTokenSwatches();
     if(!slideEl) return;
     var t=tokens();
     Object.keys(t.c).forEach(function(k){
@@ -1246,7 +1245,6 @@
       inp.addEventListener('change',function(){
         setToken('c',k,inp.value);
         sw.style.background=inp.value;
-        renderTokenSwatches();
       });
       row.appendChild(inp);
       m.appendChild(row);

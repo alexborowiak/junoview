@@ -958,7 +958,7 @@
     el.style.cssText='width:960px;height:540px;position:relative;';
     if(sl.layout==='title')
       el.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
-    var bg=sl.bg||pres.pageBg||'#0b141d';
+    var bg=tokVal(sl.bg||pres.pageBg||'#0b141d');
     el.style.setProperty('background',bg,'important');
     host.appendChild(el);
     try{attachAnnots(el,sl);paintFurniture(el,i);}catch(err){}

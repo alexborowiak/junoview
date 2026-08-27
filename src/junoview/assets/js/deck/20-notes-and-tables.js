@@ -501,7 +501,7 @@
         spec.style.fontWeight=d.b?'700':'400';
         if(d.i) spec.style.fontStyle='italic';
         spec.style.fontSize=Math.max(11,Math.min(22,d.size*3.1))+'px';
-        if(d.color) spec.style.color=d.color;
+        if(d.color) spec.style.color=tokVal(d.color);
         if(d.font) spec.style.fontFamily=fontCss(d.font);
         row.appendChild(spec);
         var sz=document.createElement('span');sz.className='stm-sz';
@@ -728,6 +728,10 @@
     return r;
   }
   function attachAnnots(slideEl,s){
+    /* Every real slide path comes through here: canvas, playback,
+       presenter previews, print and standalone HTML. Put the deck CSS
+       tokens on the page before any object asks for them. */
+    applyTokens(slideEl);
     var layer=document.createElement('div');
     layer.className='annot-layer tool-'+tool;
     /* while EDITING the layer does not clip: an item nudged past the edge
@@ -1212,7 +1216,7 @@
     if(a.bg!==0&&a.bgc) host.style.background=tokVal(a.bgc);
     /* the rules are page-relative like every other stroke on the canvas */
     host.style.setProperty('--tbl-sw',strokePx(a,layer).toFixed(2)+'px');
-    host.style.setProperty('--tbl-line',a.line||'currentColor');
+    host.style.setProperty('--tbl-line',tokVal(a.line)||'currentColor');
     applyCommon(host,a);
     applyCrop(host,a);
     host.setAttribute('data-idx',i);
@@ -1484,7 +1488,7 @@
           +(selAnnot===which?' sel':'');
         d.style.left=p.x+'%';d.style.top=p.y+'%';
         d.style.fontSize=fontPx(layer,p.size);
-        if(p.color) d.style.color=p.color;   /* default lives in CSS */
+        if(p.color) d.style.color=tokVal(p.color); /* default lives in CSS */
         if(p.b) d.style.fontWeight='700';
         if(p.i) d.style.fontStyle='italic';
         var tdeco=(p.u?'underline ':'')+(p.strike?'line-through':'');
@@ -1734,7 +1738,7 @@
            CSS so .page-light can flip it — a baked '#ffffff' default
            made every template text white-on-white on a light poster
            (2026-08-05 review) */
-        if(a.color) d2.style.color=a.color;
+        if(a.color) d2.style.color=tokVal(a.color);
         if(a.b) d2.style.fontWeight='700';
         if(a.i) d2.style.fontStyle='italic';
         var deco=(a.u?'underline ':'')+(a.strike?'line-through':'');

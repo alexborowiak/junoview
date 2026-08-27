@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 11 open items, T44–T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 10 open items, T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -828,7 +828,7 @@ file before touching anything.
   anchored image normalised to its visible aspect without jumping; and
   captured PowerPoint items landed at BL 4/90, BR 76/86 and TC 43/4.
 
-- [ ] **T44 · M — A design token resolves everywhere it is used.** T12's
+- [x] **T44 · M — A design token resolves everywhere it is used.** T12's
   tokens work on the stage and nowhere else:
   - a deck-colour token on a TEXT box renders as nothing — the text
     renderer assigns `a.color` raw instead of resolving it;
@@ -837,6 +837,19 @@ file before touching anything.
   - the corner-radius token reaches the live stage but not the
     print/export pages.
   (Its editor is also hard to reach at all — that half is T59.)
+  *2026-08-27.* Every stored colour now crosses `tokVal` where it becomes
+  paint: title and body text, shape fills and multi-stop gradients, tables,
+  furniture, style specimens, the film strip, object history and page
+  backgrounds. A non-mutating gradient projection resolves all stops and
+  keeps its PowerPoint `a`/`b` endpoints in sync without baking references
+  into the deck. `attachAnnots` is now the one full-slide token seam, so
+  view mode, presenter/notes previews, print and standalone HTML receive
+  the same radius as the editor. PowerPoint resolves text foregrounds and
+  backgrounds, shape outlines/fills/gradients, freehand, arrows, tables,
+  slide borders and backgrounds before calling the writer. Browser-verified
+  with a six-colour token matrix across stage, film, print and the captured
+  PowerPoint spec; changing Accent updated every output while saved text and
+  gradient stops remained `@accent` references.
 
 - [ ] **T45 · S — Find & replace covers the text that is on the slide.**
   `fields()` skips table cells, so a deck-wide replace never touches

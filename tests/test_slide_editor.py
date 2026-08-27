@@ -373,13 +373,14 @@ def test_slides_have_their_own_background_and_border(out):
     ways across a navigation.
     """
     assert 'id="bg-btn"' in out and 'id="bg-menu"' in out
-    assert "var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';" in out
+    assert ("var bg=tokVal((s0&&s0.bg)||(pres&&pres.pageBg)"
+            "||'#0b141d');") in out
     assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
     assert "if(s.border) o.border=deep(s.border);" in out
     assert "(bd.w||4)/SW_REF_H*h" in out
     # .pptx wants ONE colour, and a gradient background has none - so the
     # export takes its first stop (2026-08-20)
-    assert "return {bg:bgSolid(ent.s.bg||bg),items:its};" in out
+    assert "return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its};" in out
     # renderSlide re-applies, so walking the deck repaints each slide's own
     assert ("applyPageBg();          "
             "/* this slide may carry its own background */") in out
@@ -1687,6 +1688,51 @@ def test_a_token_is_a_reference_not_a_copy(out):
     assert "var col=tokVal(a.color)||'#ff6b57';" in out
     assert "if(a.fillc) return tokVal(a.fillc);" in out
     assert "if(a.color) host.style.color=tokVal(a.color);" in out
+    # Title and ordinary text are separate renderer branches. Both are
+    # paint boundaries, so neither may hand an '@accent' string to CSS.
+    assert "if(p.color) d.style.color=tokVal(p.color);" in out
+    assert "if(a.color) d2.style.color=tokVal(a.color);" in out
+
+
+def test_tokens_resolve_in_previews_gradients_and_every_full_slide(out):
+    """TASKS T44. A reference is only useful if every way of looking at
+    the deck asks the same resolver. This includes the film strip, object
+    history and style specimens, not merely the large editable canvas.
+
+    Gradient resolution returns a copy: an export may resolve ``@accent``
+    for a consumer, but must never bake that colour back into the source
+    model or the cascade is gone after the first export.
+    """
+    assert "function tokenGradient(g,col){" in out
+    assert "var out=deep(g),fallback=tokVal(col)||'#39a9c0';" in out
+    assert "cp.c=tokVal(st.c)||fallback;" in out
+    assert "var st=tokenGradient(g,col).stops.map(function(s2){" in out
+    assert "var g=tokenGradient(a.grad,col);" in out
+
+    mini = out[out.index("function miniText("):
+               out.index("/* ---- the other pages", out.index("function miniText("))]
+    assert "t.style.color=tokVal(a.color);" in mini
+    assert "t.style.background=tokVal(a.bgc);" in mini
+    assert "p.setAttribute('stroke',tokVal(a.color)||'#ff6b57');" in mini
+
+    history = out[out.index("function ohThumb(a){"):
+                  out.index("var ohOid=null")]
+    assert "d.style.color=tokVal(a.color);" in history
+    assert "d.style.background=tokVal(a.bgc);" in history
+    assert "d.style.background=cssFill(a,col);" in history
+
+    # Style definitions can themselves retain a token reference. Every
+    # specimen menu paints through tokVal instead of displaying nothing.
+    assert out.count("style.color=tokVal(") >= 8
+
+    attach = out[out.index("function attachAnnots(slideEl,s){"):
+                 out.index("function flushTextEdits(){")]
+    assert attach.index("applyTokens(slideEl);") < attach.index(
+        "renderAnnots(layer,s);")
+    # The full-slide seam covers the stage, playback, presenter/notes
+    # previews, PDF and standalone HTML. Guide rendering no longer owns it.
+    assert out.count("applyTokens(slideEl);") == 1
+    assert "if(mode==='edit') renderTokenSwatches();" in out
 
 
 def test_design_tokens_have_a_permanent_design_door(out):
@@ -1728,6 +1774,9 @@ def test_corner_and_gap_need_no_per_item_reference(out):
     """
     assert "slideEl.style.setProperty('--tk-rad',t.rad+'px');" in out
     assert "border-radius:var(--tk-rad,4px);" in out
+    attach = out[out.index("function attachAnnots(slideEl,s){"):
+                 out.index("function flushTextEdits(){")]
+    assert "applyTokens(slideEl);" in attach
     # the spacing token is the deck's rhythm, not a constant repeated in
     # three arrange verbs
     assert "?((bb.r-bb.l-sum)/(items.length-1)):tokens().gap;" in out

@@ -562,7 +562,7 @@
   var PAGE_BG_LIGHT={};
   PAGE_BGS.forEach(function(q){PAGE_BG_LIGHT[q[0]]=!!q[2];});
   function pageIsLight(bg){
-    var v=String(bg||'').trim();
+    var v=String(tokVal(bg)||'').trim();
     if(PAGE_BG_LIGHT.hasOwnProperty(v)) return PAGE_BG_LIGHT[v];
     var m=/^#?([0-9a-f]{6})$/i.exec(v);
     if(!m) return false;
@@ -573,7 +573,7 @@
   /* a gradient has no single colour, and the .pptx and the PDF both want
      one - take the first stop, which is the end the eye lands on */
   function bgSolid(bg){
-    var v=String(bg||'').trim();
+    var v=String(tokVal(bg)||'').trim();
     if(v.indexOf('gradient')<0) return v;
     var m=/#([0-9a-f]{3,8})/i.exec(v);
     return m?('#'+m[1]):'#0b141d';
@@ -607,7 +607,7 @@
        presentation-wide default (2026-08-18, user asked for per-slide
        backgrounds "like PowerPoint has") */
     var s0=pres&&pres.slides&&pres.slides[cur];
-    var bg=(s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d';
+    var bg=tokVal((s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d');
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
     /* the chips live in the Background dropdown now, and it rebuilds
@@ -989,7 +989,6 @@
     }
     drawGrid(slideEl);
     drawCustomGuides(slideEl);
-    applyTokens(slideEl);
   }
   /* ---- custom guides, dragged off the rulers -------------------------
      The 12-column grid covers the common case; a real poster usually has
@@ -1244,7 +1243,7 @@
     var layer=stage.querySelector('.annot-layer');
     var slideEl=stage.querySelector('.slide');
     var pg=pageOf(),m=marginPct();
-    var bg=(pres&&pres.pageBg)||'#0b141d';
+    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     function add(idx,sev,what,why){
       out.push({idx:idx,sev:sev,what:what,why:why});
@@ -1287,7 +1286,8 @@
       if(a.k==='text'){
         if(!String(a.text||'').trim())
           add(i,'warn','Empty text box','Nothing typed in it.');
-        var fg=a.color||ink,against=(a.bg!==0&&a.bgc)?a.bgc:bg;
+        var fg=tokVal(a.color)||ink;
+        var against=(a.bg!==0&&a.bgc)?tokVal(a.bgc):bg;
         var cr=contrast(fg,against);
         if(cr!=null&&cr<4.5)
           add(i,cr<3?'err':'warn','Text is hard to read',
@@ -1482,14 +1482,15 @@
     if(a.k==='text'){
       d.classList.add('oh-text');
       d.textContent=String(a.text||'').trim().slice(0,40)||'(empty)';
-      if(a.color) d.style.color=a.color;
-      if(a.bg!==0&&a.bgc) d.style.background=a.bgc;
+      if(a.color) d.style.color=tokVal(a.color);
+      if(a.bg!==0&&a.bgc) d.style.background=tokVal(a.bgc);
     } else if(a.k==='rect'){
-      d.style.borderColor=a.color||'#ff6b57';
-      if(a.fill&&a.fillc) d.style.background=a.fillc;
+      var col=tokVal(a.color)||'#ff6b57';
+      d.style.borderColor=col;
+      if(a.fill||a.grad) d.style.background=cssFill(a,col);
     } else if(a.k==='arrow'){
       d.classList.add('oh-line');
-      d.style.borderColor=a.color||'#ff6b57';
+      d.style.borderColor=tokVal(a.color)||'#ff6b57';
     } else {
       d.classList.add('oh-block');
       d.textContent=annotLabel(a);

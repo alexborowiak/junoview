@@ -1292,12 +1292,12 @@
     t.style.left=(a.x||0)+'%';t.style.top=(a.y||0)+'%';
     if(a.w!=null) t.style.width=a.w+'%';
     t.style.fontSize=Math.max(2,miniHNow*(a.size||2.6)/100).toFixed(2)+'px';
-    if(a.color) t.style.color=a.color;
+    if(a.color) t.style.color=tokVal(a.color);
     if(a.b) t.style.fontWeight='700';
     if(a.i) t.style.fontStyle='italic';
     if(a.align) t.style.textAlign=a.align;
     if(a.font) t.style.fontFamily=fontCss(a.font);
-    if(a.bg!==0&&a.bgc) t.style.background=a.bgc;
+    if(a.bg!==0&&a.bgc) t.style.background=tokVal(a.bgc);
     /* a title is anchored on its CENTRE, the way the canvas anchors it */
     var tr=centred?'translate(-50%,-50%)':'';
     if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
@@ -1335,7 +1335,7 @@
     d.className='mini-diagram free';
     if(!s) return d;
     /* the slide's own background, so a recoloured slide reads as one */
-    if(s.bg) d.style.background=s.bg;
+    if(s.bg) d.style.background=tokVal(s.bg);
     var annots=s.annots||[];
     if(s.layout!=='title'&&!annots.length){
       var e=document.createElement('span');
@@ -1407,6 +1407,8 @@
         var trows=tableRows(a),tcols=tableCols(a);
         var mt=document.createElement('table');
         mt.className='mini-tbl'+(a.grid===0?' nogrid':'');
+        if(a.color) mt.style.color=tokVal(a.color);
+        if(a.bg!==0&&a.bgc) bt.style.background=tokVal(a.bgc);
         mt.style.fontSize=Math.max(1.5,
           miniHNow*(a.size||2.2)/100).toFixed(2)+'px';
         trows.forEach(function(row,ri){
@@ -1442,7 +1444,7 @@
         var p=document.createElementNS(AN_NS,'path');
         p.setAttribute('d',arrowPath(arrowEnds(null,s,a,0),a,100,100));
         p.setAttribute('fill','none');
-        p.setAttribute('stroke',a.color||'#ff6b57');
+        p.setAttribute('stroke',tokVal(a.color)||'#ff6b57');
         p.setAttribute('stroke-width',miniSw(a));
         p.setAttribute('vector-effect','non-scaling-stroke');
         p.setAttribute('stroke-linecap','round');

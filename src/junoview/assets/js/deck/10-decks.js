@@ -1436,16 +1436,33 @@
      gradient impossible to express at all (2026-08-20, user asked for
      "gradients from different directions, multiple colours").
      `a`/`b` are still read on the way IN so every deck saved before this
-     keeps its gradient, and still written on the way OUT so the .pptx
-     exporter — which speaks in two colours — needs no changes. */
+     keeps its gradient, and every paint boundary projects the resolved
+     first/last stops back onto them so the two-colour PowerPoint writer
+     need not understand the multi-stop model. */
   function gradStops(g){
     if(!g) return [];
     if(Array.isArray(g.stops)&&g.stops.length>=2) return g.stops;
     return [{o:0,c:g.a||'#39a9c0'},{o:1,c:g.b||'transparent'}];
   }
+  /* Resolve a gradient at a PAINT boundary without baking its token
+     references back into the deck. Keeping the legacy a/b projection in
+     step with the resolved stop list matters to PowerPoint, whose writer
+     deliberately supports two stops while the canvas supports any number. */
+  function tokenGradient(g,col){
+    if(!g) return g;
+    var out=deep(g),fallback=tokVal(col)||'#39a9c0';
+    out.stops=gradStops(g).map(function(st){
+      var cp=deep(st);
+      cp.c=tokVal(st.c)||fallback;
+      return cp;
+    });
+    out.a=out.stops[0].c;
+    out.b=out.stops[out.stops.length-1].c;
+    return out;
+  }
   function gradCss(g,col){
-    var st=gradStops(g).map(function(s2){
-      return (s2.c||col||'#39a9c0')+' '+Math.round((s2.o||0)*100)+'%';
+    var st=tokenGradient(g,col).stops.map(function(s2){
+      return s2.c+' '+Math.round((s2.o||0)*100)+'%';
     }).join(', ');
     if(g.type==='radial')
       return 'radial-gradient(circle at '
@@ -1506,6 +1523,7 @@
     return svg;
   }
   function drawShapeSvg(shp,col,sw,a,idx,layer){
+    col=tokVal(col)||'#ff6b57';
     var dash=dashPx(a,layer);
     var svg=document.createElementNS(SVGNS,'svg');
     svg.setAttribute('class','an-shape-svg');
@@ -1530,7 +1548,7 @@
            declared as a paint server and referenced */
         var gid='an-grad-'+(idx==null?'x':idx);
         var gd=document.createElementNS(SVGNS,'defs');
-        var g=a.grad;
+        var g=tokenGradient(a.grad,col);
         var gel=document.createElementNS(SVGNS,
           g.type==='radial'?'radialGradient':'linearGradient');
         gel.setAttribute('id',gid);
@@ -1545,16 +1563,16 @@
           gel.setAttribute('cy',(g.cy==null?50:g.cy)+'%');
           gel.setAttribute('r','62%');
         }
-        gradStops(g).forEach(function(st){
+        g.stops.forEach(function(st){
           var s2=document.createElementNS(SVGNS,'stop');
           s2.setAttribute('offset',st.o==null?0:st.o);
-          s2.setAttribute('stop-color',st.c||col||'#39a9c0');
+          s2.setAttribute('stop-color',st.c);
           gel.appendChild(s2);
         });
         gd.appendChild(gel);svg.appendChild(gd);
         fillVal='url(#'+gid+')';
       } else if(a.fill){
-        fillVal=a.fillc||shapeFill(col,0x2b/255);
+        fillVal=tokVal(a.fillc)||shapeFill(col,0x2b/255);
       }
       p.setAttribute('fill',fillVal);
       p.setAttribute('stroke',col);

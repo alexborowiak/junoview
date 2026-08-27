@@ -734,7 +734,7 @@
     }
     /* the page's own background rides into the export — a white poster
        prints white, not the app's navy (2026-08-04) */
-    var bg=(pres&&pres.pageBg)||'#0b141d';
+    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     root.classList.toggle('page-light',pageIsLight(bg));
     var bst=document.createElement('style');
     /* PRINT THE INK. Chrome and Edge default the print dialog's
@@ -767,10 +767,10 @@
         slideEl.innerHTML='<p class="ttl-eyebrow">'+esc(pres.name||'')+'</p>';
       } else slideEl.className='slide slide-blank';
       if(s&&s.bg)
-        slideEl.style.setProperty('background',s.bg,'important');
+        slideEl.style.setProperty('background',tokVal(s.bg),'important');
       if(s&&s.border) slideEl.style.boxShadow='inset 0 0 0 '
         +((s.border.w||4)/SW_REF_H*Math.round(pg.mm[1]/25.4*96)).toFixed(2)
-        +'px '+(s.border.c||'#39a9c0');
+        +'px '+(tokVal(s.border.c)||'#39a9c0');
       page.appendChild(slideEl);
       root.appendChild(page);            /* in the DOM before annots render */
       if(s) attachAnnots(slideEl,s);     /* view-style; fontPx reads 720px */
@@ -982,9 +982,9 @@
     var b=box||pptxBox(a,centred);
     return {t:'text',x:b.x,y:b.y,w:b.w,h:b.h,
       rot:a.rot,op:a.op,centred:!!centred,
-      text:a.text,sizePct:a.size,color:a.color||ink,
+      text:a.text,sizePct:a.size,color:tokVal(a.color)||ink,
       b:a.b,i:a.i,u:a.u,strike:a.strike,align:a.align||(centred?'center':''),
-      bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?a.bgc:'',
+      bullets:!!a.list,bgc:(a.bg!==0&&a.bgc)?tokVal(a.bgc):'',
       arc:a.arc,font:fontPpt(a.font)};
   }
   /* one slide's annots -> spec items, plus a tally of what could not go */
@@ -1034,23 +1034,25 @@
         /* `a.fill` is a BOOLEAN — "tint with my own line colour" — so the
            actual paint has to be resolved here. Passing the boolean
            through made every filled shape export solid black. */
+        var lineCol=tokVal(a.color)||'#ff6b57';
+        var grad=tokenGradient(a.grad,lineCol);
         var fillCol='';
-        if(a.grad) fillCol='';
-        else if(a.fill) fillCol=a.fillc||shapeFill(a.color||'#ff6b57',
+        if(grad) fillCol='';
+        else if(a.fill) fillCol=tokVal(a.fillc)||shapeFill(lineCol,
           0x2b/255);
         items.push({t:'rect',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
-          op:a.op,color:a.color,fill:fillCol,grad:a.grad,
+          op:a.op,color:lineCol,fill:fillCol,grad:grad,
           swPct:swOf(a)/SW_REF_H*100,
           dash:LINE_PPT[lineStyle(a)],shape:a.shape});
       } else if(a.k==='draw'){
         items.push({t:'draw',x:box.x,y:box.y,w:box.w,h:box.h,rot:a.rot,
-          op:a.op,color:a.color,swPct:swOf(a)/SW_REF_H*100,
+          op:a.op,color:tokVal(a.color),swPct:swOf(a)/SW_REF_H*100,
           dash:LINE_PPT[lineStyle(a)],pts:a.pts||[]});
       } else if(a.k==='arrow'){
         var ea=arrowEnds(layer,s,a,0);
         var hz=headSize(a);
         items.push({t:'line',x1:ea.x1,y1:ea.y1,x2:ea.x2,y2:ea.y2,
-          color:a.color,swPct:swOf(a)/SW_REF_H*100,
+          color:tokVal(a.color),swPct:swOf(a)/SW_REF_H*100,
           dash:LINE_PPT[lineStyle(a)],op:a.op,
           head:(HEAD_BY[headEnd(a)]||{}).ppt||'none',
           tail:(HEAD_BY[headStart(a)]||{}).ppt||'none',
@@ -1064,7 +1066,8 @@
           rot:a.rot,op:a.op,rows:tableRows(a).map(function(r){
             return r.map(function(v){return v==null?'':String(v);});}),
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
-          sizePct:a.size||2.2,color:a.color||ink,font:fontPpt(a.font)});
+          sizePct:a.size||2.2,color:tokVal(a.color)||ink,
+          font:fontPpt(a.font)});
       } else if(a.k==='flip'){
         /* the frame this exported page is FOR. pptxItems is handed the
            slide plus, for an exploded page, which frame it represents —
@@ -1121,7 +1124,7 @@
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
     var pg=pageOf(),note={skipped:0,cropped:0,maths:0};
-    var bg=(pres&&pres.pageBg)||'#0b141d';
+    var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     var out=JunoPptx.build({
       title:pres.name||'presentation',
@@ -1134,9 +1137,9 @@
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
-          color:ent.s.border.c||'#39a9c0',
+          color:tokVal(ent.s.border.c)||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});
-        return {bg:bgSolid(ent.s.bg||bg),items:its};
+        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its};
       }),
     });
     var a=document.createElement('a');
