@@ -1865,6 +1865,9 @@
       markDirty();
       var l=stage.querySelector('.annot-layer');
       if(l){renderAnnots(l,pres.slides[cur]);paintSel(l);}
+      /* Some fixes remove the selected object without going through
+         selectAnnot. Keep every selection-dependent surface honest. */
+      showFmt();
       toast(n+' object'+(n===1?'':'s')+' tidied \u2014 Ctrl+Z undoes it');
       renderTidyPane();
     });

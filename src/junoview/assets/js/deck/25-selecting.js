@@ -94,6 +94,7 @@
     var s=pres.slides[cur];
     var a=(s&&selAnnot!==null)?annotByIdx(s,selAnnot):null;
     syncInspectorPanes();
+    if(window.SemDeckFindSync) window.SemDeckFindSync();
     if(!a){
       bar.hidden=true;
       /* ...AND EVERY CONTEXTUAL CONTROL, one at a time. Hiding the bar

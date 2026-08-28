@@ -585,9 +585,9 @@ def test_bullets_are_a_real_list_model(out):
 def test_find_and_replace_searches_the_model(out):
     """A browser find can only see the one slide that happens to be
     rendered, which for a deck is the wrong answer almost every time. So
-    Ctrl+F searches the MODEL: every text box, list item, title and
-    subtitle on every slide (2026-08-20, user: "needs to be a search and
-    replace of text and stuff, that is pretty standard").
+    Ctrl+F searches the MODEL: every text box, list item, title, subtitle
+    and table cell on every slide (2026-08-20, user: "needs to be a search
+    and replace of text and stuff, that is pretty standard").
 
     A placed notebook card is deliberately NOT searchable -- its words
     belong to the notebook, and rewriting them here would put the slide
@@ -601,6 +601,16 @@ def test_find_and_replace_searches_the_model(out):
     assert "if(cur!==h.f.si){cur=h.f.si;refresh();}" in out
     # an empty match must never loop forever
     assert "if(!m[0].length) re.lastIndex++;" in out
+    # T45: a table contributes one writable field per cell. The closure
+    # writes only that cell, and the hit says exactly where it came from.
+    fields = out[out.index("function fields(){"):
+                 out.index("function rx(){")]
+    assert "if(a.k==='table'){" in fields
+    assert "tableNormalise(a);" in fields
+    assert "a.rows.forEach(function(row,r){" in fields
+    assert "row.forEach(function(_,c){" in fields
+    assert "+(r+1)+', column '+(c+1)" in fields
+    assert "set:function(v){a.rows[r][c]=v;}" in fields
 
 
 def test_tables_are_a_real_item_kind(out):
@@ -1251,6 +1261,36 @@ def test_find_and_replace_has_a_formatting_half(out):
     assert "function critsMatch(a,crit){" in out
     # ...and an empty criteria set matches nothing on purpose
     assert "if(!a||!crit||!crit.length) return false;" in out
+    # T45: the non-modal half follows real canvas selection changes,
+    # including deselection, through the same showFmt convergence point.
+    show = out[out.index("function showFmt(){"):
+               out.index("function syncRibbonGroups(){")]
+    assert show.index("window.SemDeckFindSync()") < show.index("if(!a){")
+    # Slide navigation has several paths that deliberately skip showFmt,
+    # so renderSlide carries the same guarded synchronization seam.
+    render = out[out.index("function renderSlide()"):
+                 out.index("/* ---------- free annotations:")]
+    assert (render.index("syncInspectorPanes();") <
+            render.index("window.SemDeckFindSync()"))
+    assert "window.SemDeckFindSync=fmtSync;" in out
+    # showFmt also runs on hover previews and continuous resize. Remembering
+    # the actual object keeps those rerenders from wiping checked rows, and
+    # still notices replacement at the same slide/index.
+    assert "var fmtPanel=$('#find-fmt'),mode='text',fmtBuiltFor=null;" in out
+    assert "?((s2.annots||[])[selAnnot]||null):null;" in out
+    assert "fmtBuiltFor=ref;" in out
+    assert "if(pop.hidden||mode!=='fmt') return;" in out
+    assert "if(fmtRef()===fmtBuiltFor) return;" in out
+    # Two removals bypass both selection entry points: Tidy's duplicate
+    # fixer, and an empty text editor on blur. They explicitly converge,
+    # and the latter remaps later indexes before doing so.
+    tidy = out[out.index("function tidyRow(f){"):
+               out.index("function renderTidyPane(){")]
+    assert tidy.index("paintSel(l);") < tidy.index("showFmt();")
+    assert "else if(typeof selAnnot==='number'&&selAnnot>idx) selAnnot--;" \
+           in out
+    assert "return typeof i2==='number'&&i2>idx?i2-1:i2;" in out
+    assert "renderAnnots(layer,s2);\n        showFmt();" in out
 
 
 def test_a_formatting_sweep_is_not_the_selection_rule(out):

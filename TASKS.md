@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 10 open items, T45, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 9 open items, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -851,11 +851,21 @@ file before touching anything.
   PowerPoint spec; changing Accent updated every output while saved text and
   gradient stops remained `@accent` references.
 
-- [ ] **T45 · S — Find & replace covers the text that is on the slide.**
+- [x] **T45 · S — Find & replace covers the text that is on the slide.**
   `fields()` skips table cells, so a deck-wide replace never touches
   table text — and the count it shows you first is wrong for the same
   reason. Also: the formatting half's `fmtBuild()` is never rebuilt when
   the canvas selection changes underneath the non-modal popover.
+  *2026-08-28.* A table now contributes one model field per normalized
+  cell, with its exact row and column in the hit label, so counts and both
+  replace verbs operate without crossing cell boundaries. Formatting Find
+  follows the primary canvas object through ordinary selection, slide
+  navigation and the two direct-removal paths, while an object-identity
+  guard preserves the user's checked criteria during live rerenders. Empty
+  text deletion also remaps later selection indexes before synchronizing.
+  Browser-verified across three table hits on two slides, saved replacement
+  text, same-object rerenders, object switches, multi-selection primary
+  changes and navigation deselection.
 
 - [x] **T46 · S — Match layout applies to the slide it captured.** The
   `layout` branch applies `matchArm.idxs` to the CURRENT slide rather

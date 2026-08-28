@@ -867,8 +867,15 @@
       if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html){
         s2.annots.splice(idx,1);
         if(selAnnot===idx) selAnnot=null;
-        selSet=selSet.filter(function(i2){return i2!==idx;});
+        else if(typeof selAnnot==='number'&&selAnnot>idx) selAnnot--;
+        /* A mousedown on another object can select it before this blur.
+           Removing the empty editor shifts every later annotation index. */
+        selSet=selSet.filter(function(i2){return i2!==idx;})
+          .map(function(i2){
+            return typeof i2==='number'&&i2>idx?i2-1:i2;
+          });
         renderAnnots(layer,s2);
+        showFmt();
       }
       /* MATHS YOU JUST TYPED. Committing a text box writes into the
          element in place — that is the whole point of the edit path,

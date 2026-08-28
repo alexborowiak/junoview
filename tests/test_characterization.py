@@ -361,11 +361,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-27 for TASKS T43: resize, figure fitting, caption following,
 # snap/arrow rectangles and PowerPoint boxes now resolve anchored positions.
 # Pinned by tests/test_slide_editor.py and tests/test_pptx_export.py.
-# Moved 2026-08-27 for TASKS T44: colour tokens now resolve at every paint
-# and PowerPoint boundary, and every full slide receives the deck CSS tokens.
-# Pinned by tests/test_slide_editor.py and tests/test_pptx_export.py.
-EXPECTED_MD5 = "d552d21500019dc9150f24062bbafa53"
-EXPECTED_BYTES = 2977123
+# Moved 2026-08-28 for TASKS T45: table cells join the find/replace model,
+# and its formatting half follows live object selection without losing edits.
+# Pinned by tests/test_slide_editor.py.
+EXPECTED_MD5 = "5981fae61b22cbdef7fc7af382804ce9"
+EXPECTED_BYTES = 2979307
 
 
 def _render_example() -> str:

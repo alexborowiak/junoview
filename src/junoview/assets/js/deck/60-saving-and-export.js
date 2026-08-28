@@ -1489,7 +1489,26 @@
             set:function(v){s.sub=v;}});
         }
         (s.annots||[]).forEach(function(a,i){
-          if(!a||a.k!=='text') return;
+          if(!a) return;
+          if(a.k==='table'){
+            /* A table is many independent strings, not one blob: a hit
+               names the exact cell, selects its table on arrival, and a
+               replacement cannot spill across a cell boundary. */
+            tableNormalise(a);
+            a.rows.forEach(function(row,r){
+              row.forEach(function(_,c){
+                out.push({si:si,idx:i,label:itemLabel(s,i)+' · row '
+                  +(r+1)+', column '+(c+1),
+                  get:function(){
+                    var v=a.rows[r][c];
+                    return v==null?'':String(v);
+                  },
+                  set:function(v){a.rows[r][c]=v;}});
+              });
+            });
+            return;
+          }
+          if(a.k!=='text') return;
           out.push({si:si,idx:i,label:itemLabel(s,i),
             get:function(){return a.text||'';},
             set:function(v){
@@ -1622,11 +1641,15 @@
       ['color','Colour','text arrow rect draw',function(a,v){
         a.color=v;}]
     ];
-    var fmtPanel=$('#find-fmt'),mode='text';
+    var fmtPanel=$('#find-fmt'),mode='text',fmtBuiltFor=null;
     function fmtRef(){
       var s2=pres.slides[cur];
-      var ids=selIdxs();
-      return (s2&&(s2.annots||[])[ids[ids.length-1]])||null;
+      /* The ribbon and every inspector describe the PRIMARY selection.
+         In a multi-selection, clicking another selected member changes
+         selAnnot without reordering selSet, so selSet's last index can
+         point at a different object from the one the user just chose. */
+      return (s2&&typeof selAnnot==='number')
+        ?((s2.annots||[])[selAnnot]||null):null;
     }
     /* WHICH OBJECTS A SWEEP TOUCHES — and it is NOT annotsBy's rule.
        annotsBy answers "what can I select", so it leaves out hidden
@@ -1653,6 +1676,7 @@
       if(!fmtPanel) return;
       fmtPanel.innerHTML='';
       var ref=fmtRef();
+      fmtBuiltFor=ref;
       if(!ref){
         var p0=document.createElement('div');
         p0.className='ff-none';
@@ -1784,6 +1808,15 @@
       });
       recount();
     }
+    /* showFmt runs for every real selection change, but also for hover
+       previews and continuous gestures that reselect the SAME object.
+       Rebuilding for those would erase the criteria and edits a person
+       has already ticked into this non-modal popover. */
+    function fmtSync(){
+      if(pop.hidden||mode!=='fmt') return;
+      if(fmtRef()===fmtBuiltFor) return;
+      fmtBuild();
+    }
     function setMode(m){
       mode=m;
       $$('#find-pop [data-fmode]').forEach(function(el){
@@ -1834,7 +1867,8 @@
       if(b) b.addEventListener('click',function(){
         if(pop.hidden) open(); else close();});
     });
-    window.SemDeckFind=open;   /* the Ctrl+F binding, below */
+    window.SemDeckFind=open;       /* the Ctrl+F binding, below */
+    window.SemDeckFindSync=fmtSync;/* selection bridge from showFmt */
   })();
 
   /* ---------- tabs opened / closed while the page lives ---------- */
