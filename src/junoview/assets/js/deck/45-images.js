@@ -1571,58 +1571,127 @@
         both sides properly. Same renderer either way — there is no
         second drawing of a slide anywhere in this file, and this does
         not become the first. */
-  var HIST_KEEP=20;
-  function histKey(){return 'dhist:'+SCOPE+':'+(pres.name||'untitled');}
-  function histVKey(id){return histKey()+':'+id;}
-  function histIndex(){
-    return idbGet(histKey()).then(function(v){
+  var HIST_KEEP=20,histOps=Promise.resolve();
+  function histKeyFor(name){
+    return 'dhist:'+SCOPE+':'+(name||'untitled');
+  }
+  function histVKeyFor(name,id){return histKeyFor(name)+':'+id;}
+  /* A snapshot is two IndexedDB writes (record, then index). Serialising
+     that pair prevents two quick Saves from reading the same old index
+     and letting the last writer silently erase the other one's entry.
+     Rename migration uses this queue too, so it cannot cut across a
+     save that was already in flight. */
+  function histRun(fn){
+    var run=histOps.then(fn).catch(function(){return false;});
+    histOps=run.then(function(){});
+    return run;
+  }
+  function histIndexAt(name){
+    return idbGet(histKeyFor(name)).then(function(v){
       return Array.isArray(v)?v:[];
-    }).catch(function(){return [];});
+    });
+  }
+  function histIndex(){
+    var name=pres.name;
+    return histOps.then(function(){return histIndexAt(name);})
+      .catch(function(){return [];});
   }
   /* the whole deck as it stands, in the form a save would write */
   function histText(){
     ensureSids();
     return JSON.stringify(normPres(pres));
   }
-  function snapTake(why){
-    if(!pres||!pres.slides) return Promise.resolve(false);
-    var txt;
-    try{txt=histText();}catch(e){return Promise.resolve(false);}
-    return histIndex().then(function(ix){
-      /* DEDUPED. Open, look, close should cost nothing, and a history
-         with the same deck in it nine times cannot be read. */
-      if(ix.length&&ix[ix.length-1].len===txt.length
-         &&ix[ix.length-1].n===pres.slides.length)
-        return idbGet(histVKey(ix[ix.length-1].id)).then(function(prev){
-          if(prev===txt) return false;
-          return snapWrite(ix,txt,why);
-        }).catch(function(){return snapWrite(ix,txt,why);});
-      return snapWrite(ix,txt,why);
-    }).catch(function(){return false;});
+  /* Capture synchronously. No delayed IndexedDB callback is allowed to
+     discover that the deck was renamed, edited, or given another slide
+     while a file/server write was awaiting its result. */
+  function histCapture(){
+    if(!pres||!pres.slides) return null;
+    try{return {name:pres.name||'untitled',txt:histText(),
+      n:pres.slides.length};}
+    catch(e){return null;}
   }
-  function snapWrite(ix,txt,why){
+  function snapTake(why,captured,ready){
+    var cap=captured||histCapture();
+    if(!cap) return Promise.resolve(false);
+    var gate=(ready===undefined)
+      ?Promise.resolve(true)
+      :Promise.resolve(ready).catch(function(){return false;});
+    /* Queue NOW, even when the successful write is still pending. A
+       rename initiated after the Save then waits behind this operation
+       and migrates the snapshot to the new name. */
+    return histRun(function(){
+      return gate.then(function(ok){
+        if(!ok) return false;
+        return histIndexAt(cap.name).then(function(ix){
+          /* DEDUPED. Open, look, close should cost nothing, and a history
+             with the same deck in it nine times cannot be read. */
+          if(ix.length&&ix[ix.length-1].len===cap.txt.length
+             &&ix[ix.length-1].n===cap.n)
+            return idbGet(histVKeyFor(cap.name,ix[ix.length-1].id))
+              .then(function(prev){
+                if(prev===cap.txt) return false;
+                return snapWrite(cap,ix,why);
+              });
+          return snapWrite(cap,ix,why);
+        });
+      });
+    });
+  }
+  function snapWrite(cap,ix,why){
     var id='v'+(Date.now().toString(36))
       +Math.random().toString(36).slice(2,5);
     var ent={id:id,at:Date.now(),why:why||'saved',
-      n:(pres.slides||[]).length,len:txt.length};
+      n:cap.n,len:cap.txt.length};
     var next=ix.concat([ent]);
     var drop=next.length>HIST_KEEP?next.splice(0,next.length-HIST_KEEP):[];
-    return idbPut(histVKey(id),txt).then(function(){
-      return idbPut(histKey(),next);
+    return idbPut(histVKeyFor(cap.name,id),cap.txt).then(function(){
+      return idbPut(histKeyFor(cap.name),next);
     }).then(function(){
       /* the record goes only after the index no longer names it, so a
          crash between the two leaves an orphan rather than a listed
          snapshot that cannot be opened */
       return Promise.all(drop.map(function(d){
-        return idbDel(histVKey(d.id)).catch(function(){});
+        return idbDel(histVKeyFor(cap.name,d.id)).catch(function(){});
       }));
     }).then(function(){return true;}).catch(function(){return false;});
   }
   function snapRead(id){
-    return idbGet(histVKey(id)).then(function(t){
+    var name=pres.name;
+    return histOps.then(function(){
+      return idbGet(histVKeyFor(name,id));
+    }).then(function(t){
       if(typeof t!=='string') return null;
       try{return JSON.parse(t);}catch(e){return null;}
     }).catch(function(){return null;});
+  }
+  /* Move every version with the deck. New records and their index are
+     durable before any old key is removed, so interruption can leave
+     harmless orphans but never a listed snapshot that cannot open. */
+  function histRename(oldName,newName){
+    if(!oldName||!newName||oldName===newName)
+      return Promise.resolve(false);
+    return histRun(function(){
+      return histIndexAt(oldName).then(function(ix){
+        if(!ix.length) return false;
+        return Promise.all(ix.map(function(ent){
+          return idbGet(histVKeyFor(oldName,ent.id)).then(function(txt){
+            if(typeof txt!=='string') return null;
+            return idbPut(histVKeyFor(newName,ent.id),txt)
+              .then(function(){return ent;});
+          });
+        })).then(function(copied){
+          var next=copied.filter(function(ent){return !!ent;});
+          return idbPut(histKeyFor(newName),next).then(function(){
+            return idbDel(histKeyFor(oldName));
+          }).then(function(){
+            return Promise.all(ix.map(function(ent){
+              return idbDel(histVKeyFor(oldName,ent.id))
+                .catch(function(){});
+            }));
+          }).then(function(){return true;});
+        });
+      });
+    });
   }
   /* run something with a DIFFERENT deck in place. buildSlideNode and
      miniDiagram both read the live `pres`, and giving either a "which
@@ -1727,6 +1796,57 @@
       rail.appendChild(b);
     });
   }
+  /* The diagrams make a forty-slide comparison cheap. A real render is
+     opt-in per row, built by the same 960×540 renderer used by presenter
+     and notes previews, then scaled into the two comparison columns. */
+  function histFullSlides(row,r,then,btn){
+    var old=row.querySelector('.dh-full');
+    if(old){
+      old.remove();row.classList.remove('dh-open');
+      btn.setAttribute('aria-expanded','false');
+      btn.innerHTML=bic('expand')+' Show full slides';
+      return;
+    }
+    var full=document.createElement('div');full.className='dh-full';
+    var made=[];
+    [['then',r.a,then,r.ai],['now',r.b,pres,r.bi]]
+      .forEach(function(side){
+        var cell=document.createElement('div');
+        cell.className='dh-fullcell';
+        var cap=document.createElement('span');cap.className='dh-cap';
+        cap.textContent=side[0]+(side[1]?' · full slide':' — not there');
+        cell.appendChild(cap);
+        if(side[1]&&side[3]>=0){
+          var frame=document.createElement('div');
+          frame.className='dh-fullframe';
+          var node=withDeck(side[2],function(){
+            return buildSlideNode(side[3],true);
+          });
+          if(node){
+            /* History is a comparison, never a second live editor. */
+            node.setAttribute('inert','');
+            node.setAttribute('aria-hidden','true');
+            frame.appendChild(node);made.push({frame:frame,node:node});
+          }
+          cell.appendChild(frame);
+        } else {
+          var miss=document.createElement('div');
+          miss.className='dh-fullmissing';miss.textContent='No slide here';
+          cell.appendChild(miss);
+        }
+        full.appendChild(cell);
+      });
+    row.appendChild(full);
+    made.forEach(function(p){
+      var k=Math.min((p.frame.clientWidth||480)/960,
+        (p.frame.clientHeight||270)/540);
+      p.node.style.transform='scale('+(k||0.5).toFixed(4)+')';
+      p.node.style.transformOrigin='top left';
+    });
+    row.classList.add('dh-open');
+    btn.setAttribute('aria-expanded','true');
+    btn.innerHTML=bic('minus')+' Hide full slides';
+  }
   function histCompare(ov,ent){
     var body=ov.querySelector('#dh-body');
     body.innerHTML='<div class="selpane-empty">Reading…</div>';
@@ -1786,6 +1906,14 @@
         });
         var acts=document.createElement('div');
         acts.className='dh-acts';
+        var look=document.createElement('button');
+        look.className='dbtn dh-look';
+        look.innerHTML=bic('expand')+' Show full slides';
+        look.setAttribute('aria-expanded','false');
+        look.addEventListener('click',function(){
+          histFullSlides(row,r,then,look);
+        });
+        acts.appendChild(look);
         if(r.a&&(r.st==='removed'||r.st==='changed')){
           var rb=document.createElement('button');
           rb.className='dbtn dh-one';
@@ -1820,15 +1948,16 @@
       :'Slide '+(at+1)+' is back');
   }
   function histRestoreDeck(then){
+    var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     var copy=JSON.parse(JSON.stringify(then));
     copy.name=pres.name;      /* the NAME is where you are, not where it was */
-    pres.slides=copy.slides||[];
-    ['sections','cuts','tokens','components','notes','pad','talkMins',
-     'pageBg','page','showNums'].forEach(function(k){
-      if(copy[k]===undefined) delete pres[k]; else pres[k]=copy[k];
-    });
-    cur=0;selAnnot=null;selSet=[];
-    markDirty();refresh();renderFilm();
+    pres=copy;              /* replace/delete every normPres key together */
+    if((pres.page||null)!==pageWas||(pres.pageBg||null)!==bgWas) deckZoom=0;
+    cur=0;activePane=-1;selAnnot=null;selSet=[];
+    /* Installs this version's custom type registry and discards undo
+       entries whose object references belong to the replaced deck. */
+    histReset();
+    markDirty();refresh();renderFilm();renderPresTabs();renderPresRow();
     toast('Back to the older version — the deck as it was is in the '
       +'history too, so this is undoable');
   }

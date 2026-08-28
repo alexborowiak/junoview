@@ -125,8 +125,16 @@ def test_saved_file_is_a_browser_openable_html_wrapper(out, tmp_path):
 
     assert "function junoviewFileHtml(){" in out
     assert "function parseDeckText(txt){" in out
-    # both writers write the wrapper; the project save stays raw JSON
-    assert "w.write(junoviewFileHtml())" in out
+    # Both writers write the wrapper; the project save stays raw JSON.  The
+    # picker freezes its text before the asynchronous write so history can
+    # record exactly the bytes that reached disk.
+    picker = out[out.index("function saveToFile(silent){"):
+                 out.index("/* WHERE it goes, never WHICH file")]
+    assert "fileText=junoviewFileHtml();" in picker
+    assert "w.write(fileText)" in picker
+    assert picker.index("fileText=junoviewFileHtml();") < picker.index(
+        "w.write(fileText)"
+    )
     assert "new Blob([junoviewFileHtml()],{type:'text/html'});" in out
     # the download and the picker both carry the openable double suffix
     assert "+'.junoview.html';" in out

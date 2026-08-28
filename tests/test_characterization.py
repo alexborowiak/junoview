@@ -364,8 +364,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-28 for TASKS T45: table cells join the find/replace model,
 # and its formatting half follows live object selection without losing edits.
 # Pinned by tests/test_slide_editor.py.
-EXPECTED_MD5 = "5981fae61b22cbdef7fc7af382804ce9"
-EXPECTED_BYTES = 2979307
+# Moved 2026-08-28 for TASKS T47: explicit saves, serial history migration,
+# whole-deck restore and lazy full-slide comparisons complete version history;
+# saved custom types also normalise safely before boot. Pinned by
+# tests/test_version_history.py and tests/test_slide_sections.py.
+EXPECTED_MD5 = "fc2535826907157466e1c4fafbf5bf8e"
+EXPECTED_BYTES = 2988921
 
 
 def _render_example() -> str:

@@ -17,6 +17,14 @@
     var cp=deep(pres);delete cp.origin;out.push(cp);
     return out;
   }
+  function deckSaveSig(p){
+    try{
+      var c=deep(p);delete c.origin;return JSON.stringify(c);
+    }catch(e){return null;}
+  }
+  function stillSaved(name,sig){
+    return !!sig&&pres&&pres.name===name&&deckSaveSig(pres)===sig;
+  }
   /* strip "stem::" when only one notebook is open, so decks saved from a
      single tab stay compatible with sidecars and --embed-deck */
   function plainIfSingle(list){
@@ -44,8 +52,38 @@
     return false;
   }
   /* ---------- app mode: save to project + autosave ---------- */
+  function projectSaved(next,silent,conflict,savedName,savedSig){
+    /* The request wrote the click-time copy. If the user typed or renamed
+       while it was in flight, that newer live deck is still a draft: do
+       not delete its pending browser copy, report it as saved, OR replace
+       projectPres with the stale request. The last point matters on a
+       rename: doing so resurrects the old name beside the live new one. */
+    var exact=stillSaved(savedName,savedSig);
+    if(exact){
+      projectPres=next;
+      cancelDraftWrite();
+      lsDel(PFX+(savedName||'untitled'));
+      source='saved';
+    } else {
+      source='draft';scheduleDraftWrite();
+    }
+    saveStamp=new Date();saveKind=silent?'auto':'manual';
+    status();renderPresRow();
+    if(conflict){
+      renderPresTabs();
+      docToastOnce('Another window changed this project — merged '
+        +'its changes in. Your "'+savedName+'" is intact.');
+    } else if(!silent){
+      toast('Saved "'+savedName+'" to junoview_project.json'+embNote());
+    }
+    return true;
+  }
   function saveToProject(silent,embed){
     flushTextEdits();   /* the words still in the DOM are part of the save */
+    /* Mint slide ids before both payloads are frozen. History and the
+       successful file must describe the same bytes, not adjacent states. */
+    var savedHist=!silent?histCapture():null;
+    var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
     var merged=mergedPresentations();
     /* a deliberate Save writes the self-contained form (figures inside)
        into junoview_project.json; the every-second autosave stays refs-
@@ -55,17 +93,10 @@
        but self-contained, so the file does not sit refs-only between a
        manual Save and the next one. */
     var body=(silent&&!embed)?merged:embedAssets(deep(merged));
-    return APP.api('/api/save',{presentations:body,rev:projectRev})
+    var op=APP.api('/api/save',{presentations:body,rev:projectRev})
       .then(function(j){
         if(j&&typeof j.rev==='number') projectRev=j.rev;
-        projectPres=merged;
-        cancelDraftWrite();   /* or the pending write resurrects the draft */
-        lsDel(PFX+(pres.name||'untitled'));
-        saveStamp=new Date();saveKind=silent?'auto':'manual';
-        source='saved';status();renderPresRow();
-        if(!silent)
-          toast('Saved "'+pres.name+'" to junoview_project.json'
-            +embNote());
+        return projectSaved(merged,silent,false,savedName,savedSig);
       }).catch(function(e){
         /* ANOTHER WINDOW GOT THERE FIRST. This whole payload is every
            presentation the tab knows about, so before the server grew a
@@ -74,30 +105,36 @@
            typed a character (2026-08-22). Now: take their list, keep the
            one deck this window is actually editing, and write that. */
         if(e&&e.status===409&&e.data&&Array.isArray(e.data.presentations)){
+          /* Reconcile the frozen request, not whichever deck/name happens
+             to be live when the 409 arrives. A rename while the request
+             is in flight must not make `mine` vanish from the retry. */
           var theirs=e.data.presentations.filter(function(p){
-            return !p||p.name!==pres.name;});
+            return !p||p.name!==savedName;});
           var mine=merged.filter(function(p){
-            return p&&p.name===pres.name;});
+            return p&&p.name===savedName;});
           projectRev=e.data.rev;
           var reconciled=theirs.concat(mine);
           return APP.api('/api/save',
             {presentations:reconciled,rev:projectRev})
             .then(function(j2){
               if(j2&&typeof j2.rev==='number') projectRev=j2.rev;
-              projectPres=reconciled;
-              saveStamp=new Date();saveKind=silent?'auto':'manual';
-              source='saved';status();renderPresTabs();renderPresRow();
-              docToastOnce('Another window changed this project — merged '
-                +'its changes in. Your "'+pres.name+'" is intact.');
+              return projectSaved(reconciled,silent,true,
+                savedName,savedSig);
             }).catch(function(e2){
               toast('Save failed after a conflict: '
                 +((e2&&e2.message)||e2)+' — use File › Download a copy.',
                 9000);
+              return false;
             });
         }
         if(!silent)
           toast('Save failed: '+(e&&e.message?e.message:e));
+        return false;
       });
+    /* Enqueued immediately but gated on op=true: a rename after this
+       click waits behind the saved snapshot and migrates it as one unit. */
+    if(savedHist) snapTake('saved',savedHist,op);
+    return op;
   }
   /* one conflict notice per settling period: the autosave retries every
      1.2s, and a notice per retry would be a strobe */
@@ -338,7 +375,15 @@
   function saveToFile(silent){
     flushTextEdits();
     if(!fileHandle&&silent) return Promise.resolve(false);
-    return (fileHandle?Promise.resolve(fileHandle):pickSaveFile())
+    var savedHist=!silent?histCapture():null;
+    var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
+    var fileText;
+    try{fileText=junoviewFileHtml();}
+    catch(e){
+      if(!silent) toast('Save failed: '+((e&&e.message)||e));
+      return Promise.resolve(false);
+    }
+    var op=(fileHandle?Promise.resolve(fileHandle):pickSaveFile())
       .then(function(h){
         if(!h) return false;
         return (silent?permOK(h):permAsk(h)).then(function(ok){
@@ -348,7 +393,7 @@
             return false;
           }
           return h.createWritable().then(function(w){
-            return Promise.resolve(w.write(junoviewFileHtml()))
+            return Promise.resolve(w.write(fileText))
               .then(function(){return w.close();});
           }).then(function(){
             /* the browser copy STAYS. Deleting it made the file the ONLY
@@ -357,7 +402,9 @@
                from the app (2026-08-20, user: "I made a presentation for
                tomorrow and now am locked out of it"). */
             saveStamp=new Date();saveKind=silent?'auto':'manual';
-            source='saved';status();renderTargetBtn();renderPresRow();
+            if(stillSaved(savedName,savedSig)) source='saved';
+            else {source='draft';scheduleDraftWrite();}
+            status();renderTargetBtn();renderPresRow();
             if(!silent) toast('Saved to '+(fileName||'your file')+embNote());
             return true;
           });
@@ -367,6 +414,8 @@
           toast('Save failed: '+((e&&e.message)||e));
         return false;
       });
+    if(savedHist) snapTake('saved',savedHist,op);
+    return op;
   }
   /* WHERE it goes, never WHICH file. The filename is the widest thing
      that could ever land in this bar, it changes under you when you pick
@@ -530,8 +579,14 @@
     /* the typed word first: a paragraph still in the DOM is not in the
        deck, and Save must not report a state it did not save */
     flushTextEdits();
+    var savedHist=histCapture(); /* also mints ids before serialisation */
     var ok=lsSet(PFX+(pres.name||'untitled'),JSON.stringify(pres));
-    lsSet(PFX+'last',pres.name||'untitled');
+    /* The pointer is convenient, not the save. Its quota result must not
+       reverse or clear the outcome of writing the actual deck. */
+    if(ok){
+      try{localStorage.setItem(PFX+'last',pres.name||'untitled');}
+      catch(e){}
+    }
     if(!ok){
       /* DO NOT stamp a save that did not happen. This branch used to set
          saveStamp/saveKind and toast success unconditionally, so a write
@@ -544,7 +599,7 @@
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
        same rule the notebook's snapshots follow (T32) */
-    snapTake('saved');
+    if(savedHist) snapTake('saved',savedHist);
     saveStamp=new Date();saveKind='manual';
     status();
     toast('Kept in this browser — it also autosaves as you edit. '
@@ -648,7 +703,10 @@
     writeBtn.addEventListener('click',function(){
       closeMenu();
       if(!requireName()) return;
-      (async function(){
+      var savedHist=histCapture();
+      var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
+      var savedMerged=mergedPresentations();
+      var op=(async function(){
         try{
           var picks=await window.showOpenFilePicker({types:[{
             description:'Jupyter notebook',
@@ -659,27 +717,32 @@
           nb.metadata=nb.metadata||{};
           nb.metadata.semantic=nb.metadata.semantic||{};
           nb.metadata.semantic.presentations=
-            plainIfSingle(mergedPresentations());
+            plainIfSingle(savedMerged);
           delete nb.metadata.semantic.deck;
           var w=await h.createWritable();
           await w.write(JSON.stringify(nb,null,1));
           await w.close();
           var stem0=APP.order[0];
-          nbPres=mergedPresentations().map(function(p){
+          nbPres=savedMerged.map(function(p){
             var c=normPres(p,null);c.origin=stem0;return c;});
-          cancelDraftWrite();   /* the save just made the draft obsolete */
-          lsDel(PFX+(pres.name||'untitled'));
-          /* EVERY EXPLICIT SAVE is a point you might want back -- the
-       same rule the notebook's snapshots follow (T32) */
-    snapTake('saved');
-    saveStamp=new Date();saveKind='manual';
-          source='saved';status();renderPresRow();
-          toast('Saved "'+pres.name+'" into '+f.name);
+          if(stillSaved(savedName,savedSig)){
+            cancelDraftWrite();
+            lsDel(PFX+savedName);
+            source='saved';
+          } else {
+            source='draft';scheduleDraftWrite();
+          }
+          saveStamp=new Date();saveKind='manual';
+          status();renderPresRow();
+          toast('Saved "'+savedName+'" into '+f.name);
+          return true;
         }catch(e){
           if(!e||e.name!=='AbortError')
             toast('Save failed: '+(e&&e.message?e.message:e));
+          return false;
         }
       })();
+      if(savedHist) snapTake('saved',savedHist,op);
     });
   } else {
     writeBtn.hidden=true;
@@ -1442,14 +1505,26 @@
     }
     /* the draft moves with the name, rather than being deleted under the
        old one and re-created under the new one on the next save */
+    flushTextEdits();
     flushDraftWrite();   /* migrate the CURRENT state, not a stale draft */
-    var draft=lsGet(PFX+old);
-    if(draft!=null){lsSet(PFX+nm,draft);lsDel(PFX+old);}
+    /* Rename itself is an unsaved edit, even when this deck had no draft
+       before. Put the complete current state under the new key NOW; the
+       debounced markDirty below is redundancy, not the only copy. */
+    var moved=deep(pres);moved.name=nm;
+    if(!lsSet(PFX+nm,JSON.stringify(moved))){
+      toast('Could not rename — this browser could not keep the moved '
+        +'draft. Your presentation is still called “'+old+'”.',9000);
+      return false;
+    }
+    lsDel(PFX+old);
     /* the folder rides on the presentation object itself (p.folder), so
        it needs no separate move — but the SAVED copies are matched by
        name and do */
     projectPres.forEach(function(p){if(p.name===old) p.name=nm;});
     nbPres.forEach(function(p){if(p.name===old) p.name=nm;});
+    /* Queued behind any Save already in flight. Snapshot JSON can keep
+       its historical name because restore deliberately preserves `nm`. */
+    histRename(old,nm);
     pres.name=nm;
     saveProject();
     markDirty();status();renderPresTabs();renderPresRow();

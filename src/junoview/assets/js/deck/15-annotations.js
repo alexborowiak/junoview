@@ -1099,7 +1099,7 @@
     small:  {label:'Small',      size:2.0},
     caption:{label:'Caption',    size:1.7, i:1, color:'#8aa0b0'}
   };
-  var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];
+  var STYLE_ORDER=BUILTIN_STYLE_IDS.slice();
   /* the HEADING styles, for "apply to all headings" */
   var HEADING_STYLES=['title','h1','h2','h3'];
   /* ---- DESIGN TOKENS ---------------------------------------------------
@@ -1470,7 +1470,6 @@
      scale reads top to bottom. And it is a SEPARATE key from pres.styles
      because the style manager's reset does `delete pres.styles`: "back to
      the built-in sizes" must never mean "throw away the types I made". */
-  var BUILTIN_STYLE_IDS=STYLE_ORDER.slice();
   function customTypes(){
     if(!Array.isArray(pres.types)) pres.types=[];
     return pres.types;

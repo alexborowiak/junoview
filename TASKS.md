@@ -13,16 +13,16 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 9 open items, T47–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 8 open items, T48–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
 built and, more usefully, what was rejected and why.
 
 **One caveat that governs the lot:** every finding is a *claim about
-code* until somebody drives it. Only the three ticked items in group 9
-were verified in a browser. 24 of the 84 (the figures group, gathered in
-T58) were never even double-checked and are leads, not conclusions.
+code* until somebody drives it. Completed items in group 9 are verified
+in a browser. 24 of the 84 (the figures group, gathered in T58) were never
+even double-checked and are leads, not conclusions.
 
 ---
 
@@ -876,7 +876,7 @@ file before touching anything.
   and deliberately leaves Match Layout armed. Back on that slide, the
   same gesture completes normally.
 
-- [ ] **T47 · M — Version history records and restores the whole deck.**
+- [x] **T47 · M — Version history records and restores the whole deck.**
   - in app mode the explicit Save never takes a snapshot, so the history
     only ever holds the "opened" entry — the feature is empty in the
     mode it is mostly used in;
@@ -887,6 +887,18 @@ file before touching anything.
     `pres.name` and nothing migrates them;
   - the promised "real render on demand" in the diff does not exist: a
     row is two 74px mini diagrams and nothing opens.
+  *2026-08-28.* Every explicit save target now records the exact
+  click-time deck only after its write succeeds; autosaves do not. History
+  transactions are serial, rename copies records before publishing the new
+  index and deleting the old namespace, and a delayed save cannot resurrect
+  an old name or discard edits made while it was in flight. Whole-version
+  restore replaces the normalized deck object (preserving only its current
+  name), resets custom types and undo state, and therefore restores present
+  keys while deleting current-only ones. Each diff row keeps its cheap
+  diagrams and can lazily open two inert full renders. Browser-verified
+  across 53 save/failure/conflict/rename/diff/restore/file checks plus a
+  delayed-save rename race. That pass also exposed and fixed an earlier
+  boot-order bug which made a saved custom text type abort the editor.
 
 - [ ] **T48 · M — The presenter's controls exist while presenting.**
   - T25's Running-late button lives in `#play-menu` inside `#deck-qat`,

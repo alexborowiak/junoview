@@ -108,11 +108,13 @@ def test_a_decks_history_goes_in_indexeddb(out):
     ONE RECORD PER SNAPSHOT plus a small index: keeping the list in one
     record would rewrite every snapshot on every save.
     """
-    assert "function histKey(){return 'dhist:'+SCOPE+':'" in out
-    assert "function histVKey(id){return histKey()+':'+id;}" in out
-    assert "function snapWrite(ix,txt,why){" in out
+    assert "function histKeyFor(name){" in out
+    assert "return 'dhist:'+SCOPE+':'+(name||'untitled');" in out
+    assert "function histVKeyFor(name,id){return histKeyFor(name)+':'+id;}" \
+        in out
+    assert "function snapWrite(cap,ix,why){" in out
     assert "function idbDel(k){" in out
-    assert "var HIST_KEEP=20;" in out
+    assert "var HIST_KEEP=20,histOps=Promise.resolve();" in out
 
 
 def test_the_same_snapshot_rule_the_notebook_uses(out):
@@ -126,10 +128,75 @@ def test_the_same_snapshot_rule_the_notebook_uses(out):
     that cannot be opened.
     """
     assert "snapTake('opened');" in out
-    assert out.count("snapTake('saved');") == 2
-    assert "if(prev===txt) return false;" in out
-    i = out.index("return idbPut(histKey(),next);")
-    assert "idbDel(histVKey(d.id))" in out[i:i + 500]
+    # Browser Save captures before writing, and records only beyond its
+    # failed-write return. The pointer write is deliberately best-effort.
+    browser = out[out.index("if(saveBtn) saveBtn.addEventListener"):
+                  out.index('/* ---- the "Saved to" picker')]
+    assert browser.index("var savedHist=histCapture();") < \
+        browser.index("var ok=lsSet(")
+    assert browser.index("if(!ok){") < \
+        browser.index("if(savedHist) snapTake('saved',savedHist);")
+    assert "if(ok){\n      try{localStorage.setItem(PFX+'last'" in browser
+    # Project and file saves enqueue a captured snapshot immediately, but
+    # its success promise gates the write. silent autosaves capture none.
+    project = out[out.index("function saveToProject(silent,embed){"):
+                  out.index("/* one conflict notice per settling period")]
+    project_result = out[out.index("function projectSaved("):
+                         out.index("function saveToProject(")]
+    assert "var exact=stillSaved(savedName,savedSig);" in project_result
+    assert project_result.index("if(exact){") < \
+        project_result.index("projectPres=next;")
+    assert "var savedHist=!silent?histCapture():null;" in project
+    assert project.count("return projectSaved(") == 2
+    # A delayed conflict reconciles the click-time deck even if the live
+    # presentation was renamed while the first request was in flight.
+    assert "p.name!==savedName" in project
+    assert "p&&p.name===savedName" in project
+    assert "p.name!==pres.name" not in project
+    assert "if(savedHist) snapTake('saved',savedHist,op);" in project
+    file_save = out[out.index("function saveToFile(silent){"):
+                    out.index("/* WHERE it goes, never WHICH file")]
+    assert "var savedHist=!silent?histCapture():null;" in file_save
+    assert file_save.index("return w.close();") < \
+        file_save.index("if(savedHist) snapTake('saved',savedHist,op);")
+    autosave = out[out.index("function scheduleAutosave(){"):
+                   out.index("/* always-visible Save button")]
+    assert "snapTake(" not in autosave
+    assert "if(prev===cap.txt) return false;" in out
+    i = out.index("return idbPut(histKeyFor(cap.name),next);")
+    assert "idbDel(histVKeyFor(cap.name,d.id))" in out[i:i + 500]
+
+
+def test_snapshot_transactions_capture_identity_and_are_serial(out):
+    """Nothing inside a delayed write may rediscover the live deck name,
+    text, or slide count. The complete read/dedupe/write operation is one
+    queue entry, so rapid saves cannot overwrite each other's index."""
+    capture = out[out.index("function histCapture(){"):
+                  out.index("function snapTake(")]
+    assert "name:pres.name||'untitled',txt:histText()" in capture
+    assert "n:pres.slides.length" in capture
+    take = out[out.index("function snapTake("):
+               out.index("function snapRead(")]
+    assert "return histRun(function(){" in take
+    assert "histIndexAt(cap.name)" in take
+    assert "histVKeyFor(cap.name" in take
+    write = take[take.index("function snapWrite("):]
+    assert "pres." not in write
+    assert "n:cap.n,len:cap.txt.length" in write
+
+
+def test_history_moves_with_a_rename_without_breaking_old_records(out):
+    """Copy records, publish the new index, then remove the old namespace.
+    A crash may leave unlisted orphans, but never a listed missing record."""
+    move = out[out.index("function histRename(oldName,newName){"):
+               out.index("/* run something with a DIFFERENT deck")]
+    record_put = move.index("idbPut(histVKeyFor(newName,ent.id),txt)")
+    index_put = move.index("idbPut(histKeyFor(newName),next)")
+    old_index_del = move.index("idbDel(histKeyFor(oldName))")
+    old_record_del = move.index("idbDel(histVKeyFor(oldName,ent.id))")
+    assert record_put < index_put < old_index_del < old_record_del
+    assert "return histRun(function(){" in move
+    assert "histRename(old,nm);" in out
 
 
 def test_the_diff_pairs_slides_by_name_not_by_position(out):
@@ -165,6 +232,17 @@ def test_the_old_deck_is_drawn_by_the_renderer_that_draws_the_new_one(out):
     assert "function withDeck(obj,fn){" in out
     assert "try{return fn();}finally{pres=saved;}" in out
     assert "return miniDiagram(side[1]);}));" in out
+    full = out[out.index("function histFullSlides("):
+               out.index("function histCompare(")]
+    assert "btn.innerHTML=bic('expand')+' Show full slides';" in full
+    assert "btn.setAttribute('aria-expanded','false');" in full
+    assert "return buildSlideNode(side[3],true);" in full
+    assert full.index("withDeck(side[2]") < \
+        full.index("return buildSlideNode(side[3],true);")
+    assert "node.setAttribute('inert','');" in full
+    assert ".dh-full{grid-column:2/4;" in out
+    assert ".dh-fullframe .slide{" in out and "pointer-events:none;" in out
+    assert ".dh-row.st-same.dh-open{opacity:1;}" in out
 
 
 def test_going_back_is_itself_undoable(out):
@@ -181,6 +259,31 @@ def test_going_back_is_itself_undoable(out):
     assert "snapTake('before putting a slide back')" in out
     assert "function histRestoreSlide(r,then){" in out
     assert "if(r.bi>=0){pres.slides[r.bi]=copy;at=r.bi;}" in out
+
+
+def test_whole_history_restore_replaces_the_whole_deck(out):
+    """A whitelist drifts whenever normPres grows. Replace the object so
+    all saved keys return, absent keys disappear, and histReset installs
+    the restored custom types before this becomes a new draft."""
+    restore = out[out.index("function histRestoreDeck(then){"):
+                  out.index("function openHistory(){")]
+    assert "copy.name=pres.name;" in restore
+    assert "pres=copy;" in restore
+    assert restore.index("pres=copy;") < restore.index("histReset();")
+    assert restore.index("histReset();") < restore.index("markDirty();")
+    assert "pres.slides=copy.slides" not in restore
+    assert "activePane=-1" in restore and "deckZoom=0" in restore
+
+
+def test_saved_custom_types_are_safe_during_early_normalisation(out):
+    """projectPres normalises before the boot sequence and before the
+    style-registry fragment's initialisers. Its built-in-id guard therefore
+    has to exist before normPres, or merely opening a saved custom type
+    aborts the assembled editor before any hook is exported."""
+    ids = "var BUILTIN_STYLE_IDS=["
+    assert out.index(ids) < out.index("function normPres(p,stem){")
+    assert out.count(ids) == 1
+    assert "var STYLE_ORDER=BUILTIN_STYLE_IDS.slice();" in out
 
 
 def test_the_two_histories_do_not_pretend_to_be_each_other(out):

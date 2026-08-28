@@ -1005,7 +1005,12 @@ def test_renaming_is_one_committed_action(out):
     """
     assert "function renamePresentation(nm){" in out
     assert "if(taken.indexOf(nm)>=0){" in out
-    assert "if(draft!=null){lsSet(PFX+nm,draft);lsDel(PFX+old);}" in out
+    # The new draft must be durable before the only old copy is removed.
+    rename = out[out.index("function renamePresentation(nm){"):
+                 out.index("menuAction('#mi-del'")]
+    assert "if(!lsSet(PFX+nm,JSON.stringify(moved))){" in rename
+    assert rename.index("if(!lsSet(PFX+nm") < rename.index("lsDel(PFX+old);")
+    assert rename.index("histRename(old,nm);") < rename.index("pres.name=nm;")
     # the per-keystroke handler is gone, and BOTH doors call the one
     # implementation
     assert "if(old&&old!==pres.name) lsDel(PFX+old);" not in out
@@ -1489,8 +1494,11 @@ def test_the_project_file_is_not_clobbered_by_a_second_window(out):
     (2026-08-22). The client now echoes the revision it last saw."""
     assert "{presentations:body,rev:projectRev}" in out
     assert "if(e&&e.status===409&&e.data" in out
-    # the merge keeps THIS window's deck and takes everyone else's
-    assert "return !p||p.name!==pres.name;});" in out
+    # The merge keeps the click-time deck and takes everyone else's. It
+    # must not rediscover pres.name after the request -- the user may have
+    # renamed the live deck while the first write was in flight.
+    assert "return !p||p.name!==savedName;});" in out
+    assert "return p&&p.name===savedName;});" in out
     # api() has to carry the status and body, or there is nothing to merge
     assert "err.status=r.status;err.data=j;" in out
 

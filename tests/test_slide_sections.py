@@ -169,26 +169,26 @@ def test_a_deck_can_invent_its_own_text_types(out):
     id is built in -- so one live registry fixes all of them at once and
     changes none of them.
     """
-    assert "var BUILTIN_STYLE_IDS=STYLE_ORDER.slice();" in out
+    # normPres runs while projectPres is initialised, before the later
+    # style-registry initialisers. The canonical built-in list must already
+    # exist there or a saved custom type aborts the assembled editor.
+    ids = "var BUILTIN_STYLE_IDS=["
+    assert out.index(ids) < out.index("function normPres(p,stem){")
     assert "function syncCustomTypes(){" in out
     assert "function styleOrder(){" in out
     for fn in ("customTypes", "mintTypeId", "addCustomType",
                "deleteCustomType", "isHeadingStyle", "headingStyles"):
         assert f"function {fn}(" in out
-    # STYLE_ORDER itself is untouched: BUILTIN_STYLE_IDS is taken from it
-    assert "var STYLE_ORDER=['title','h1','h2','h3','body','small','caption'];" in out
+    # The registry order is a copy, so menus cannot mutate the canonical
+    # early list while appending a deck's own types.
+    assert "var STYLE_ORDER=BUILTIN_STYLE_IDS.slice();" in out
 
 
 def test_syncing_the_registry_survives_running_before_it_exists(out):
-    """histReset runs during boot, from loadPresentation -- and the first
-    presentation is loaded ABOVE the line that assigns STYLE_DEFAULTS.
-
-    Function declarations hoist; ``var`` initialisers do not, so the
-    registry is genuinely undefined on that one call. It threw, the whole
-    deck IIFE died from that point on, and the editor silently lost every
-    handler wired below it. Nothing in the rendered HTML shows that, which
-    is why it is pinned here.
-    """
+    """The boot sequence now installs the first presentation after the
+    registry exists. Keep syncCustomTypes soft on an early future caller:
+    function declarations hoist, ``var`` initialisers do not, and a throw
+    here silently kills the rest of the assembled editor."""
     assert "if(!STYLE_DEFAULTS) return;" in out
     # ...and the boot sequence calls it again once everything is declared
     assert "syncCustomTypes();\n  status();" in out

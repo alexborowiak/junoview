@@ -92,6 +92,12 @@
     var it=resolveRef(ref);
     return it?it.ns:String(ref);
   }
+  /* normPres runs while projectPres is initialised, before the style
+     registry fragment's var initialisers. Keep the built-in ids here so
+     a saved deck with custom types can be normalised without reaching an
+     as-yet undefined BUILTIN_STYLE_IDS (and keep one canonical list). */
+  var BUILTIN_STYLE_IDS=[
+    'title','h1','h2','h3','body','small','caption'];
   function normPres(p,stem){
     /* deep-copy a presentation, namespacing plain anchors (against
        `stem` when it came from one notebook, else best-effort);
