@@ -1305,6 +1305,11 @@
      +'this is what you get.']
   ];
   var TRANS_MS=420;
+  function transLabel(kind){
+    var lab='';
+    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
+    return lab;
+  }
   /* the transition to use ARRIVING at slide i: the slide's own, else its
      section's, else none. */
   function transFor(i){
@@ -1367,9 +1372,30 @@
       var r=el.getBoundingClientRect();
       if(!r.width||!r.height) return;
       map[keys[i]]={x:r.left-lr.left,y:r.top-lr.top,
-        w:r.width,h:r.height};
+        w:r.width,h:r.height,in:flipInnerBox(el,lr)};
     });
     _flipFrom={map:map,lr:{w:lr.width,h:lr.height}};
+  }
+  /* THE CONTENT, not the box. T27 promised "slides, grows or shrinks",
+     and zooming into a region is the third of those — but a content zoom
+     (a.ts, written as `zoom` on the body node) and a crop (a.crop,
+     written as a clip-path on the same node) change what you see INSIDE
+     an item without moving the .an-item by a pixel. playFlip compared
+     only the .an-item, so its "nothing moved" guard threw exactly that
+     case away (2026-08-26 audit, T57).
+     Found by the style the renderer actually writes rather than by class
+     name, because the same two properties are written onto a cell body,
+     a locked version card and an image by three different branches. */
+  function flipInnerEl(el){
+    if(!el||!el.querySelector) return null;
+    return el.querySelector('[style*="zoom"],[style*="clip-path"]');
+  }
+  function flipInnerBox(el,lr){
+    var n=flipInnerEl(el); if(!n) return null;
+    var r=n.getBoundingClientRect();
+    if(!r.width||!r.height) return null;
+    return {x:r.left-lr.left,y:r.top-lr.top,w:r.width,h:r.height,
+      clip:n.style.clipPath||n.style.webkitClipPath||''};
   }
   /* put the survivors back where they were, then let them travel */
   function playFlip(){
@@ -1396,7 +1422,7 @@
     if(kind!=='move') return;
     var lr=layer.getBoundingClientRect();
     if(!lr.width||!lr.height) return;
-    var keys=flipKeys(sl),moved=[];
+    var keys=flipKeys(sl),moved=[],clipped=[];
     Object.keys(keys).forEach(function(i){
       var was=from.map[keys[i]];
       if(!was) return;
@@ -1407,6 +1433,37 @@
       var now={x:r.left-lr.left,y:r.top-lr.top,w:r.width,h:r.height};
       var dx=was.x-now.x,dy=was.y-now.y;
       var sx=was.w/now.w,sy=was.h/now.h;
+      /* THE SAME FLIP, one level in. Done before the box's own guard, so
+         a zoom or a crop that left the box alone still animates. */
+      var innerEl=flipInnerEl(el),wasIn=was.in;
+      if(innerEl&&wasIn){
+        var nowIn=flipInnerBox(el,lr);
+        if(nowIn){
+          var idx2=wasIn.x-nowIn.x,idy=wasIn.y-nowIn.y;
+          var isx=wasIn.w/nowIn.w,isy=wasIn.h/nowIn.h;
+          if(Math.abs(idx2)>=1||Math.abs(idy)>=1
+             ||Math.abs(isx-1)>=0.01||Math.abs(isy-1)>=0.01){
+            var ibase=innerEl.style.transform||'';
+            innerEl.dataset.jvFlip=ibase;
+            innerEl.style.transformOrigin='0 0';
+            innerEl.style.transition='none';
+            innerEl.style.transform='translate('+idx2+'px,'+idy+'px)'
+              +' scale('+isx.toFixed(4)+','+isy.toFixed(4)+') '+ibase;
+            moved.push(innerEl);
+          }
+          /* a crop is a clip-path, which the browser will interpolate
+             between two insets of the same shape — so hand it the old
+             one and let the transition do the rest */
+          if(wasIn.clip&&nowIn.clip&&wasIn.clip!==nowIn.clip
+             &&/^inset\(/.test(wasIn.clip)&&/^inset\(/.test(nowIn.clip)){
+            innerEl.dataset.jvClip=nowIn.clip;
+            innerEl.style.transition='none';
+            innerEl.style.clipPath=wasIn.clip;
+            innerEl.style.webkitClipPath=wasIn.clip;
+            clipped.push(innerEl);
+          }
+        }
+      }
       /* a pixel here and there is not a move; animating it would only
          add a shimmer to a slide that did not change */
       if(Math.abs(dx)<1&&Math.abs(dy)<1
@@ -1422,12 +1479,19 @@
         +sx.toFixed(4)+','+sy.toFixed(4)+') '+base;
       moved.push(el);
     });
-    if(!moved.length) return;
+    if(!moved.length&&!clipped.length) return;
     void layer.offsetWidth;         /* one reflow for the whole set */
     moved.forEach(function(el){
       el.style.transition='transform '+TRANS_MS+'ms cubic-bezier('
         +'.4,0,.2,1)';
       el.style.transform=el.dataset.jvFlip||'';
+    });
+    clipped.forEach(function(el){
+      var tr=el.style.transition;
+      el.style.transition=(tr&&tr!=='none'?tr+',':'')
+        +'clip-path '+TRANS_MS+'ms cubic-bezier(.4,0,.2,1)';
+      el.style.clipPath=el.dataset.jvClip;
+      el.style.webkitClipPath=el.dataset.jvClip;
     });
     setTimeout(function(){
       moved.forEach(function(el){
@@ -1438,22 +1502,35 @@
         el.style.transform=el.dataset.jvFlip||'';
         delete el.dataset.jvFlip;
       });
+      clipped.forEach(function(el){
+        el.style.transition='';
+        delete el.dataset.jvClip;
+      });
     },TRANS_MS+80);
   }
+  /* CUT IS AN ANSWER, not the absence of one. TRANS[0][0] is '', and
+     this used to `delete sl.trans` for any falsy kind — so "arrives cut"
+     and "stop overriding the section" were the same write, and inside a
+     section defaulting to Fade there was no way to say the first:
+     transFor fell straight back to the section while the toast claimed
+     the slide arrived cut (2026-08-26 audit, T57).
+     `null` is the clear now, and '' is a real override. A SECTION needs
+     no such distinction — nothing sits above one for its Cut to be
+     confused with — which is why setSectionTrans below still deletes. */
   function setTrans(i,kind){
     var sl=(pres.slides||[])[i]; if(!sl) return;
-    if(kind) sl.trans=kind; else delete sl.trans;
+    if(kind==null) delete sl.trans; else sl.trans=String(kind);
     markDirty();renderFilm();
-    var lab='';
-    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
-    toast('This slide arrives: '+lab.toLowerCase());
+    toast(kind==null
+      ?('This slide arrives however its section says: '
+        +transLabel(transFor(i)).toLowerCase())
+      :('This slide arrives: '+transLabel(kind).toLowerCase()));
   }
   function setSectionTrans(id,kind){
     var m=(pres.sections||{})[id]; if(!m) return;
     if(kind) m.trans=kind; else delete m.trans;
     markDirty();renderFilm();
-    var lab='';
-    TRANS.forEach(function(t){if(t[0]===(kind||'')) lab=t[1];});
+    var lab=transLabel(kind);
     toast('Every slide in this section arrives: '+lab.toLowerCase());
   }
   /* ---- FINDING A SLIDE WHILE YOU ARE TALKING --------------------------
@@ -1497,6 +1574,38 @@
           });
         });
       if(a.cap&&typeof a.cap==='string') on.push(a.cap);
+      /* A NOTEBOOK CARD'S WORDS ARE ON THE SLIDE. This loop knew about
+         text, tables and captions, and the only route to a cell was the
+         single slideTitle() call below — which returns one title. So a
+         paragraph of prose placed from a notebook was visibly on the
+         slide and invisible to the presenter's own search (2026-08-26
+         audit, T57). embBody has already parsed the html for
+         cellFacets; nothing here is new work. */
+      if(a.k==='cell'&&a.ref){
+        var it=resolveRef(a.ref);
+        if(it&&it.title) on.push(it.title);
+        var bn=(typeof embBody==='function')?embBody(a.ref):null;
+        /* A LIVE PAGE keeps the card in the notebook's own DOM rather
+           than in the embedded map, and a deck can be opened either way
+           — so ask the map first and the page second, and never come
+           back with nothing when the words are plainly there. */
+        var live=(!bn&&typeof cardEl==='function')?cardEl(a.ref):null;
+        var bt=String((bn&&bn.textContent)||(live&&live.textContent)||'')
+          .replace(/\s+/g,' ').trim();
+        /* THE CODE COUNTS TOO. A frame showing a code card draws the code,
+           so a name defined in it is as visibly on the slide as a
+           paragraph is — and the commonest thing anyone hunts a slide by
+           is the function that made the figure. */
+        var ef=(typeof embFor==='function')?embFor(a.ref):null;
+        var ct=(ef&&ef.code)?String(ef.code).replace(/\s+/g,' ').trim():'';
+        /* GENEROUS, because this string is what the search MATCHES and
+           the snippet is cut from around the hit rather than from the
+           front of it — a tight cap here would put a word plainly on
+           the slide back out of reach, which is the whole defect. The
+           bound is only about the cost of running this per keystroke. */
+        [bt,ct].forEach(function(w){
+          if(w) on.push(w.length>4000?w.slice(0,4000):w);});
+      }
     });
     var t=slideTitle(sl);
     if(t) on.push(t);

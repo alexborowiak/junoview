@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 2 open items, T57 and T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 1 open item, T58 — a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -1118,7 +1118,7 @@ file before touching anything.
   labels or ids. Help and README distinguish a ribbon arrangement from a
   slide layout.
 
-- [ ] **T57 · S — The smaller ones, gathered.** Each is a line or two.
+- [x] **T57 · S — The smaller ones, gathered.** Each is a line or two.
   - Alt-drag clones on mousedown at zero offset and commits on mouseup
     even if the gesture never moved — an invisible exact-overlap copy
     with no toast, where Ctrl+D offsets by `CLONE_OFF` precisely so a
@@ -1140,6 +1140,44 @@ file before touching anything.
     move/scale is really move-and-scale-the-box;
   - the Header/Footer prompts list `{name} {date} {n} {N}` and never
     mention `{sn}`, `{sN}` or `{sec}`.
+  *2026-08-29.* All nine.
+  **Alt-drag** now takes its clone back off in `mu()` when the gesture
+  never moved, and puts the selection back — the clone was quiet, so
+  nothing has to come off the undo stack either. **The pane's Duplicate**
+  ends with `selectMany(l,added)`. **`selRects`** takes a `sizeOnly` flag
+  and `sameSize` is its one caller: a position lock is about position,
+  and only a full lock excuses an item from a resize. **"Put the ribbon
+  back to normal"** calls `applyRibbonLayout(rbnCurrentId(),true)`, which
+  restores the markup's own child order through `rbnRestoreHome` and
+  re-applies the current arrangement — the "reload the page" advice was a
+  leftover from before that snapshot existed. **Speaker notes** commit
+  quietly and take one `histPush` when you leave the box (blur, close, or
+  the editor walking to another slide), instead of one full-deck snapshot
+  per keystroke. **`slideWords`** grew a `cell` branch: the card's title,
+  its body (from the embedded map, or the live notebook DOM when the deck
+  was opened against one) and its CODE, capped generously because that
+  string is what the search MATCHES and the snippet is cut from around
+  the hit. **`setTrans`** stores `''` for an explicit Cut and clears only
+  on `null`, and the slide menu grew a "Use the section default (…)" row
+  — Cut had been quietly wired to mean both, so inside a section it was
+  unreachable. `setSectionTrans` deliberately keeps the old write:
+  nothing sits above a section for its Cut to be confused with.
+  **`playFlip`** now measures the CONTENT as well as the box —
+  `flipInnerEl` finds the node the renderer writes `zoom`/`clip-path`
+  onto, and the same FLIP runs one level in, with a crop interpolated as
+  a clip-path — so T27's third promise, zooming into a region, animates
+  instead of being discarded by the "nothing moved" guard. **The
+  Header/Footer prompts and both ribbon tooltips** now name `{sn}`,
+  `{sN}` and `{sec}`.
+  Browser-verified in Edge across 39 checks over two fixtures: the
+  Alt-click and Alt-drag pair with its undo, the position-locked resize,
+  the pane's batch duplicate, the notes undo, the ribbon order restore,
+  and the whole Cut/section-default cycle with its toasts and ticks, plus
+  a word from inside a card's code finding the slide it is on. The flip's
+  content half is verified in code and by confirming in the browser that
+  the zoom really is written where `flipInnerEl` looks: headless reports
+  `prefers-reduced-motion: reduce`, which `motionOK()` correctly honours,
+  so the transition itself does not run there.
 
 - [x] **T59 · S — A deck-wide command must not hide behind a
   selection.** Two of them sit in the format bar's Arrange dropdown,

@@ -56,15 +56,23 @@
   if(backBtn) backBtn.addEventListener('click',function(){
     zMove(false);});
   /* ---- Row / Grid arrange + "Make same size" (multi-selection) ---- */
-  function selRects(){
-    /* the selected, laid-out items with their VISUAL rects (an aspect-
-       fitted figure answers with the plot it shows, not its stored box) */
+  /* the selected, laid-out items with their VISUAL rects (an aspect-
+     fitted figure answers with the plot it shows, not its stored box).
+
+     `sizeOnly` names which lock excuses an item. A POSITION LOCK IS
+     ABOUT POSITION: this filtered on pinned() for every caller, so
+     "Match widths to the widest" silently skipped a position-locked box
+     and said nothing about it — a size verb refusing on the strength of
+     a promise about where things are (2026-08-26 audit, T57). Only a
+     FULL lock takes an item out of a resize. */
+  function selRects(sizeOnly){
     var s=pres.slides[cur]; if(!s) return [];
     var l=stage.querySelector('.annot-layer'); if(!l) return [];
     return selSet.filter(function(i){return typeof i==='number';})
       .map(function(i){
         var a=(s.annots||[])[i];
-        if(!a||a.k==='arrow'||pinned(a)||a.hide) return null;
+        if(!a||a.k==='arrow'||a.hide) return null;
+        if(sizeOnly?lockedAll(a):pinned(a)) return null;
         var r=annotRectPct(l,s,i);
         return r?{i:i,a:a,r:r,w:r.r-r.l,h:r.b-r.t}:null;
       }).filter(Boolean);
@@ -128,7 +136,7 @@
     rerenderSel();
   }
   function sameSize(mode){
-    var items=selRects(); if(items.length<2) return;
+    var items=selRects(true); if(items.length<2) return;
     var nums=selSet.filter(function(i){return typeof i==='number';});
     var ref=null;
     if(mode==='first'||mode==='last'){

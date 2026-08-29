@@ -2379,3 +2379,30 @@ def test_a_fully_locked_object_cannot_be_deleted(out):
     assert "if(held) toast(held+' fully locked item'" in out
     # and it is the KEPT list that gets spliced, not the original
     assert "kept.sort(function(x,y){return y-x;}).forEach(function(i){" in out
+
+
+def test_the_panes_duplicate_keeps_the_whole_batch_selected(out):
+    """Ctrl+D leaves every copy selected; the pane selected only the
+    last one, so duplicating five rows from it meant re-selecting four
+    of them before the copies could be moved anywhere (2026-08-26 audit,
+    T57).
+    """
+    pane_dup = out[out.index("function dupAnnots(idxs){"):]
+    pane_dup = pane_dup[:pane_dup.index("renderSelPane();")]
+    assert "selectMany(l,added);" in pane_dup
+    assert "selectAnnot(l,added[added.length-1]);" not in pane_dup
+
+
+def test_the_furniture_prompts_name_every_token_they_accept(out):
+    """{sn}, {sN} and {sec} shipped with T25 and were documented only in
+    help.html -- the Header and Footer prompts, which are where anyone
+    is standing when they need them, listed four tokens and stopped
+    (2026-08-26 audit, T57).
+    """
+    assert out.count("{sn}/{sN} the number and count within the section, ") \
+        == 2
+    assert out.count("+'{sec} its name.\\nLeave it empty to remove it.'") == 2
+    # ...and the ribbon tooltips, which are the other place you read
+    # before clicking
+    assert "{sn} and {sN} the same within the" in out
+    assert "{sn}/{sN} the same within the section," in out

@@ -271,8 +271,12 @@
         var sl=pres.slides[cur]; if(!sl) return;
         var v=ta.value;
         if(v.trim()) sl.notes=v; else delete sl.notes;
-        markDirty();presenterPush();
+        /* quiet, and one undo entry on blur — see the notes editor's
+           copy of this handler (T57) */
+        markDirty(true);presenterPush();
       });
+      ta.addEventListener('blur',function(){
+        if(typeof histPush==='function') histPush();});
     }
     var gi=$('#np-goal');
     if(gi){

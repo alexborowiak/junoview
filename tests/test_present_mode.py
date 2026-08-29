@@ -432,3 +432,30 @@ def test_the_presenter_window_searches_from_this_side(out):
     assert "send({jv:'cmd',do:'goto',n:h.i});" in out
     assert "e.stopPropagation();      /* the arrow keys below drive the TALK */" \
         in out
+
+
+def test_the_words_on_a_notebook_card_are_words_on_the_slide(out):
+    """slideWords knew about text boxes, table cells and captions; the
+    only route to a CELL was one slideTitle() call, which returns a
+    title. So a paragraph of prose placed from a notebook was visibly on
+    the slide and invisible to the presenter's own search (2026-08-26
+    audit, T57).
+
+    embBody has already parsed that html for cellFacets, so nothing here
+    is new work -- it was simply never asked.
+    """
+    words = out[out.index("function slideWords(sl){"):
+                out.index("function slideHits(q){")]
+    assert "if(a.k==='cell'&&a.ref){" in words
+    assert "var it=resolveRef(a.ref);" in words
+    assert "var bn=(typeof embBody==='function')?embBody(a.ref):null;" in words
+    # a live page keeps the card in the notebook's own DOM rather than in
+    # the embedded map, and a deck can be opened either way
+    assert ("var live=(!bn&&typeof cardEl==='function')"
+            "?cardEl(a.ref):null;") in words
+    # the CODE counts too: a frame showing a code card draws the code, so
+    # a name defined in it is as visibly on the slide as a paragraph
+    assert "var ef=(typeof embFor==='function')?embFor(a.ref):null;" in words
+    # generous, because this string is what the search MATCHES and the
+    # snippet is cut from around the hit rather than from the front of it
+    assert "if(w) on.push(w.length>4000?w.slice(0,4000):w);" in words

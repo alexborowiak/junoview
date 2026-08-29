@@ -1619,3 +1619,57 @@ def test_each_lint_shows_what_it_counted(out):
     assert "why:wc+' words and '+ic+' things on it." in out
     assert "return '\\u201c'+f+'\\u201d \\u00d7'+surfaces[k][f];" in out \
         or "'” ×'+surfaces[k][f]" in out
+
+
+def test_a_position_lock_does_not_excuse_an_item_from_a_resize(out):
+    """selRects filtered on pinned() for every caller, so the SIZE-only
+    verbs skipped position-locked items too: "Match widths to the widest"
+    silently left one out and said nothing about it -- a size verb
+    refusing on the strength of a promise about where things are
+    (2026-08-26 audit, T57).
+    """
+    assert "function selRects(sizeOnly){" in out
+    assert "if(sizeOnly?lockedAll(a):pinned(a)) return null;" in out
+    # only sameSize asks for the size-only reading; the movement verbs
+    # keep the pinned filter they are actually about
+    assert "var items=selRects(true); if(items.length<2) return;" in out
+    assert out.count("selRects(true)") == 1
+
+
+def test_an_alt_click_that_never_moved_is_not_a_copy(out):
+    """The clone is made on mousedown precisely so that it is the copy
+    that travels. When the gesture turns out to be a click, that left an
+    exact-overlap duplicate on top of its original -- nothing to see and
+    no toast -- where Ctrl+D offsets by CLONE_OFF so a copy is never
+    invisible (2026-08-26 audit, T57).
+    """
+    assert "var cloning=false,cloneIdx=null,selWas=selIdxs().slice();" in out
+    assert "cloning=true;cloneIdx=clones.slice();" in out
+    assert "if(cloning&&!movedAny&&cloneIdx&&cloneIdx.length){" in out
+    # spliced from the back, or the second index is wrong by one
+    assert ("cloneIdx.slice().sort(function(p,q){return q-p;})\n"
+            "          .forEach(function(ci){ann.splice(ci,1);});") in out
+    # the selection you had, back; and nothing to undo, because the
+    # clone was made quietly in the first place
+    assert "if(selWas.length) selectMany(layer,selWas);" in out
+    assert "markDirty(true);\n        return;" in out
+
+
+def test_speaker_notes_cost_one_undo_entry_not_one_per_keystroke(out):
+    """Per-slide notes ride inside `slides`, so an un-quiet markDirty
+    stringified every slide in the deck and pushed an undo entry for
+    EACH KEYSTROKE -- filling the 50-entry stack with single characters
+    and evicting the slide edits undo is for. markDirty's own comment
+    describes the pattern; both notes inputs were simply not following
+    it (2026-08-26 audit, T57).
+    """
+    # the overlay editor...
+    assert ("if(ta.value.trim()) sl.notes=ta.value; else delete sl.notes;"
+            in out)
+    # ...and the pane, which is the same handler written twice
+    assert "markDirty(true);presenterPush();" in out
+    # the entry is taken when you leave: on close, on blur, and when the
+    # editor walks to another slide
+    assert "if(ov&&typeof histPush==='function') histPush();" in out
+    assert ("ta.addEventListener('blur',function(){\n"
+            "        if(typeof histPush==='function') histPush();});") in out

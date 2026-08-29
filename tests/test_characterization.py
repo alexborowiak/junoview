@@ -401,8 +401,19 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # of shipping literal "$$ ... $$", counting it so the existing warning fires.
 # Three deck.js fragments changed. Pinned by tests/test_slide_editor.py and
 # tests/test_pptx_export.py, and verified in Edge across 19 checks.
-EXPECTED_MD5 = "d8347cae22b79f8c16d849a55adb85a4"
-EXPECTED_BYTES = 3027817
+# Moved 2026-08-29 for TASKS T57, the gathered small ones: an explicit Cut is
+# now a real per-slide override (with a row for going back to the section's
+# default), a flip animates content zoom and crop as well as the box, a card's
+# words -- body AND code -- join the presenter's search, "Put the ribbon back
+# to normal" restores order instead of asking for a reload, the pane's
+# Duplicate keeps the whole batch, the size-only Arrange verbs stop skipping
+# position-locked items, speaker notes cost one undo entry per sitting rather
+# than one per keystroke, an Alt-click that never moved leaves no invisible
+# copy, and the Header/Footer prompts and tooltips name {sn}/{sN}/{sec}.
+# Six deck.js fragments and deck.html changed. Pinned by the four editor test
+# files, and verified in Edge across 39 checks.
+EXPECTED_MD5 = "2b862497849a791604aef2aabaf4b319"
+EXPECTED_BYTES = 3037771
 
 
 def _render_example() -> str:

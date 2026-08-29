@@ -1731,6 +1731,8 @@
   var notesEdIdx=-1;
   function notesEdClose(){
     var ov=$('#deck-notesed');
+    /* the one undo entry for everything typed in this sitting */
+    if(ov&&typeof histPush==='function') histPush();
     if(ov) ov.remove();
     document.removeEventListener('keydown',notesEdKey,true);
     notesEdIdx=-1;
@@ -1772,6 +1774,8 @@
     var n=(pres.slides||[]).length;
     var to=Math.max(0,Math.min(n-1,notesEdIdx+d));
     if(to===notesEdIdx) return;
+    /* leaving a slide ends its paragraph, the same way closing does */
+    if(typeof histPush==='function') histPush();
     notesEdIdx=to;
     /* the deck follows the editor: you are looking at this slide now */
     if(cur!==to){cur=to;selAnnot=null;selSet=[];refresh();}
@@ -1823,7 +1827,14 @@
     ta.addEventListener('input',function(){
       var sl=(pres.slides||[])[notesEdIdx]; if(!sl) return;
       if(ta.value.trim()) sl.notes=ta.value; else delete sl.notes;
-      markDirty();
+      /* QUIET. Per-slide notes ride inside `slides`, so an un-quiet
+         markDirty stringified every slide in the deck and pushed an undo
+         entry FOR EACH KEYSTROKE — filling the 50-entry stack with
+         single characters and evicting the slide edits undo is for.
+         markDirty's own comment describes exactly this pattern; the
+         notes editor was simply not following it (2026-08-26 audit,
+         T57). The entry is taken once, when you leave the box. */
+      markDirty(true);
       var pv=ov.querySelector('#nse-prev');
       if(pv) pv.innerHTML=notesHtml(sl.notes||'')
         ||'<p class="nse-none">Nothing yet.</p>';

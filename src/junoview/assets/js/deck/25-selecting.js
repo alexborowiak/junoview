@@ -774,7 +774,7 @@
        Alt also turns snapping off mid-drag (see `mm`) -- but not during
        a clone drag, where Alt was pressed to say "copy", not "ignore the
        guides", and where you have to keep holding it the whole way. */
-    var cloning=false;
+    var cloning=false,cloneIdx=null,selWas=selIdxs().slice();
     if(ev0.altKey&&typeof idx==='number'){
       var pick=selIdxs();
       if(pick.indexOf(idx)<0) pick=[idx];
@@ -782,7 +782,7 @@
         var m=(s.annots||[])[i];return m&&!lockedAll(m);});
       var clones=cloneAnnots(pick,0,0);
       if(clones.length){
-        cloning=true;
+        cloning=true;cloneIdx=clones.slice();
         /* quiet: the mouseup at the end of this gesture takes the one
            undo entry, and it should undo the clone and its move together
            -- they are one gesture */
@@ -953,6 +953,25 @@
       document.removeEventListener('mousemove',mm);
       document.removeEventListener('mouseup',mu);
       clearSnapGuides(layer);
+      /* AN ALT-CLICK THAT NEVER MOVED IS NOT A COPY. The clone is made on
+         mousedown precisely so that it is the copy that travels — but
+         when the gesture turns out to be a click, that left an
+         exact-overlap duplicate sitting on top of its original, with
+         nothing to see and no toast, where Ctrl+D offsets by CLONE_OFF
+         so that a copy is never invisible (2026-08-26 audit, T57).
+         Taken back off here, with the selection you had put back. The
+         clone was made quietly, so nothing has to come off the undo
+         stack either. */
+      if(cloning&&!movedAny&&cloneIdx&&cloneIdx.length){
+        var ann=s.annots||[];
+        cloneIdx.slice().sort(function(p,q){return q-p;})
+          .forEach(function(ci){ann.splice(ci,1);});
+        renderAnnots(layer,s);
+        if(selWas.length) selectMany(layer,selWas);
+        else {selAnnot=null;selSet=[];paintSel(layer);showFmt();}
+        markDirty(true);
+        return;
+      }
       /* the ONE rebuild per gesture (a moveless click keeps the old
          no-render path, so double-click-to-type is undisturbed) */
       if(movedAny){renderAnnots(layer,s);paintSel(layer);}

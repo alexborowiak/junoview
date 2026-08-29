@@ -351,9 +351,12 @@ def test_it_composes_with_the_per_button_customiser(out):
     the preferences after -- or the preferences would sort a group the
     control is about to leave.
     """
-    assert "applyRibbonLayout(rbnCurrentId(),true);" in out
-    i = out.index("applyRibbonLayout(rbnCurrentId(),true);")
-    assert "applyRibbonPrefs();" in out[i:i + 400]
+    # the BOOT call, not merely the first one in the file: T57 gave the
+    # same pair to "Put the ribbon back to normal", which is a second
+    # caller and sits earlier in the concatenation
+    assert ("applyRibbonLayout(rbnCurrentId(),true);\n"
+            "  applyRibbonPrefs();") in out
+    assert out.count("applyRibbonLayout(rbnCurrentId(),true);") == 2
     assert "Ribbon layouts\\u2026" in out or "Ribbon layouts" in out
 
 

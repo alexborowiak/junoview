@@ -468,13 +468,30 @@
        about one slide, and this is where you are looking at it. */
     menuHead(m,'how it arrives'
       +(motionOK()?'':' — not on this machine'));
+    var nowT=(oSl&&typeof oSl.trans==='string')?oSl.trans:null;
+    var secM=(oSl&&oSl.sec)?((pres.sections||{})[oSl.sec]||null):null;
     TRANS.forEach(function(t){
-      var now=(oSl&&typeof oSl.trans==='string')?oSl.trans:null;
-      var eff=transFor(i);
-      var b=row(t[1]+((now===null&&t[0]===eff&&eff)
-        ?' (from the section)':''),function(){setTrans(i,t[0]);},t[2]);
-      if((now===null?eff:now)===t[0]) b.classList.add('on');
+      var b=row(t[1],function(){setTrans(i,t[0]);},t[2]);
+      /* ticked on the slide's OWN answer. Outside a section there is
+         nothing to inherit, so the effective one is its own. */
+      var mine=(nowT===null)?(secM?null:transFor(i)):nowT;
+      if(mine===t[0]) b.classList.add('on');
     });
+    /* THE WAY BACK, which is why Cut had quietly been wired to mean both
+       "arrive cut" and "stop overriding": there was no row for the
+       second, so the falsy value did double duty and an explicit Cut
+       inside a section was unreachable (T57). Offered only inside a
+       section, the only place an override has anything to fall back
+       to. */
+    if(secM){
+      var sd=(typeof secM.trans==='string')?secM.trans:'';
+      var ub=row('Use the section default ('
+        +transLabel(sd).toLowerCase()+')',
+        function(){setTrans(i,null);},
+        'Stop deciding it on this slide \u2014 \u201c'
+        +(secM.name||'this section')+'\u201d decides');
+      if(nowT===null) ub.classList.add('on');
+    }
     menuHead(m,poster?'this page':'this slide');
     row((oSl&&oSl.opt)?'✓ Optional':'Mark it optional',function(){
       toggleOptional(i);},
@@ -2037,14 +2054,16 @@
     furnEdit('head','Header',
       'A line along the top of every page.\n'
       +'{name} the presentation, {date} today, {n} this page, {N} the '
-      +'total.\nLeave it empty to remove it.','{name}');
+      +'total, {sn}/{sN} the number and count within the section, '
+      +'{sec} its name.\nLeave it empty to remove it.','{name}');
   });
   var ftB=$('#dc-foot');
   if(ftB) ftB.addEventListener('click',function(){
     furnEdit('foot','Footer',
       'A line along the bottom of every page.\n'
       +'{name} the presentation, {date} today, {n} this page, {N} the '
-      +'total.\nLeave it empty to remove it.','{n} / {N}');
+      +'total, {sn}/{sN} the number and count within the section, '
+      +'{sec} its name.\nLeave it empty to remove it.','{n} / {N}');
   });
   var numB=$('#dc-nums');
   if(numB) numB.addEventListener('click',function(){

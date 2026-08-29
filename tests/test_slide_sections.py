@@ -806,3 +806,53 @@ def test_reduced_motion_is_answered_rather_than_ignored(out):
     assert "matchMedia('(prefers-reduced-motion: reduce)').matches" in out
     assert "if(!from||mode!=='view'||!motionOK()) return;" in out
     assert "not on this machine" in out
+
+
+def test_cut_is_an_answer_and_not_the_absence_of_one(out):
+    """TRANS[0][0] is '', and setTrans deleted s.trans for any falsy
+    kind -- so "this one arrives cut" and "stop overriding the section"
+    were the same write. Inside a section defaulting to Fade the first
+    was unreachable: transFor fell straight back to the section while
+    the toast claimed the slide arrived cut (2026-08-26 audit, T57).
+    """
+    assert "if(kind==null) delete sl.trans; else sl.trans=String(kind);" \
+        in out
+    # ...which needs a row that MEANS "stop overriding", or the falsy
+    # value goes straight back to doing double duty
+    assert "function(){setTrans(i,null);}," in out
+    assert "row('Use the section default ('" in out
+    # offered only where an override has something to fall back to
+    assert ("var secM=(oSl&&oSl.sec)?((pres.sections||{})[oSl.sec]||null)"
+            ":null;") in out
+    # a SECTION keeps the old write: nothing sits above one for its Cut
+    # to be confused with
+    assert "if(kind) m.trans=kind; else delete m.trans;" in out
+    # one label lookup, three callers
+    assert "function transLabel(kind){" in out
+
+
+def test_a_flip_animates_the_content_and_not_only_the_box(out):
+    """T27 promised "slides, grows or shrinks", and zooming into a region
+    is the third. But a content zoom (a.ts, written as `zoom`) and a crop
+    (a.crop, written as a clip-path) change what is INSIDE an item
+    without moving the .an-item by a pixel -- and playFlip compared only
+    the .an-item, so its "nothing moved" guard discarded exactly that
+    case (2026-08-26 audit, T57).
+
+    The inner node is found by the style the renderer actually writes,
+    not by class name: the same two properties are written onto a cell
+    body, a locked version card and an image by three different
+    branches.
+    """
+    assert "function flipInnerEl(el){" in out
+    assert ("return el.querySelector('[style*=\"zoom\"],"
+            "[style*=\"clip-path\"]');") in out
+    assert "function flipInnerBox(el,lr){" in out
+    assert "w:r.width,h:r.height,in:flipInnerBox(el,lr)};" in out
+    # the same FLIP one level in, and the same restore-never-clear rule
+    assert "innerEl.dataset.jvFlip=ibase;" in out
+    assert "moved.push(innerEl);" in out
+    # a crop interpolates as a clip-path, given the old one to start from
+    assert "innerEl.dataset.jvClip=nowIn.clip;" in out
+    assert "clipped.push(innerEl);" in out
+    assert "if(!moved.length&&!clipped.length) return;" in out

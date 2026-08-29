@@ -966,11 +966,15 @@
       $$('#edit-tools .rbn-hid').forEach(function(el){
         el.classList.remove('rbn-hid');});
       m.remove();
-      /* order cannot be un-appended, so the honest thing is to say a
-         reload restores it rather than to pretend otherwise */
-      toast('Buttons are all back. The original ORDER returns when the '
-        +'page is reloaded.');
-      applyRibbonPrefs();
+      /* ORDER CAN BE RESTORED NOW. This said "reload the page" under a
+         comment that order 'cannot be un-appended', which was true when
+         T11 shipped and stopped being true the moment the layout engine
+         took a snapshot of the markup's own child order: rbnRestoreHome
+         puts it back exactly, and applyRibbonLayout re-applies whichever
+         arrangement is on and calls applyRibbonPrefs itself (2026-08-26
+         audit, T57). */
+      applyRibbonLayout(rbnCurrentId(),true);
+      toast('Every button is back, in its original order.');
     });
     m.appendChild(rb);
     var bar=$('#edit-tools');
@@ -1960,7 +1964,11 @@
     if(!added.length) return;
     markDirty();
     var l=stage.querySelector('.annot-layer');
-    if(l){renderAnnots(l,s);selectAnnot(l,added[added.length-1]);}
+    /* the WHOLE batch, the way Ctrl+D leaves it. Selecting the last copy
+       alone meant duplicating five rows from the pane and then having to
+       re-select four of them to move the copies anywhere (2026-08-26
+       audit, T57). */
+    if(l){renderAnnots(l,s);selectMany(l,added);}
     renderSelPane();
   }
   /* ---- panes are yours to place: drag by the header, resize by the
