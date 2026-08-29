@@ -1338,7 +1338,7 @@ drives it — the suite is substring greps.
   (4) CONFIRMED — no free crop at all; needs `a.crop.path` as a polygon
   plus a draw gesture.
 
-- [ ] **T65 · M — An image resizes only diagonally, and has no
+- [x] **T65 · M — An image resizes only diagonally, and has no
   numbers.** "Why can pictures it seems only be dragged on diagonal, so
   can't be made taller or wider. Also where are all the options that I
   said, like keep square, and also having the width, height, and

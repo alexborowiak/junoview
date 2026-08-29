@@ -1764,7 +1764,7 @@
     if(!a){toast('Select an object first');return;}
     var pane=$('#objhist'); if(!pane) return;
     ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-     '#tidypane','#provpane'].forEach(function(sel){
+     '#tidypane','#provpane','#sizepane'].forEach(function(sel){
       var o=$(sel); if(o) o.hidden=true;});
     pane.hidden=false;
     syncInspectorPanes(true);

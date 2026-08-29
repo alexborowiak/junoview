@@ -609,6 +609,9 @@
     scheduleAutosave();
     if(!quiet) histPush();
     renderSelPane();   /* keep the Objects pane in step (no-op if closed) */
+    /* and the numbers, which are the same fact about the same slide
+       (T65). Same no-op-when-closed contract. */
+    if(typeof sizePaneSync==='function') sizePaneSync();
     /* Object history is derived on demand from undo plus the live model.
        When its pane is open, a COMMITTED edit must redraw that final
        "now" row; quiet slider/typing previews would otherwise parse 24

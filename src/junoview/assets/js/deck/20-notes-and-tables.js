@@ -714,14 +714,26 @@
   /* the ⠿ move handle is gone: everything drags from its own body now,
      and the handle was both fiddly to hit and sat on top of the artwork
      you were trying to judge (2026-08-07, user) */
-  function mkResize(tip){
-    /* all four corners resize (anchored on the opposite corner) */
+  /* EIGHT handles, not four. "Why can pictures it seems only be dragged
+     on diagonal, so can't be made taller or wider" (2026-08-29, user,
+     T65): the four corners were the whole set, so there was no gesture
+     that changed one dimension. A corner anchors the opposite corner; a
+     SIDE anchors the opposite edge and leaves the other axis alone.
+     `noH` drops the top and bottom handles for an item that has no
+     height of its own -- a text box auto-heights from its words, which
+     is why startResize guards every height write with a.k!=='text'.
+     An n/s handle on one would be a control that cannot do anything. */
+  function mkResize(tip,noH){
     var frag=document.createDocumentFragment();
-    ['nw','ne','sw','se'].forEach(function(cn){
+    var sides=noH?['nw','ne','sw','se','e','w']
+      :['nw','ne','sw','se','n','e','s','w'];
+    sides.forEach(function(cn){
       var r=document.createElement('span');
       r.className='an-resize an-rs-'+cn;
       r.dataset.corner=cn;
-      r.title=tip||'Drag to resize';
+      r.title=tip||(cn.length===2?'Drag to resize'
+        :(cn==='e'||cn==='w')?'Drag to change the width'
+        :'Drag to change the height');
       frag.appendChild(r);
     });
     return frag;
@@ -1865,7 +1877,9 @@
         applyCommon(d2,a);
         d2.setAttribute('data-idx',i);
         
-        if(editing){d2.appendChild(mkResize());
+        /* a text box has width and no height: only the six handles that
+           can actually change something (T65) */
+        if(editing){d2.appendChild(mkResize(null,1));
           d2.appendChild(mkRotate());}
         /* {fig} RESOLVES AT RENDER, never in the stored words (T18).
            Not while the box is being edited: what you type is what is

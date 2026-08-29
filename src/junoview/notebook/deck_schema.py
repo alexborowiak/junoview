@@ -147,6 +147,12 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
     "oid": (str, "This object's durable name, used to follow it through "
                  "its own history and to match it across slides for a "
                  "\"move\" transition."),
+    "lockar": (int, "1 to keep this item's shape while it is dragged by "
+                    "a resize handle: the other side follows, so a logo "
+                    "stays square and a plot keeps its proportions. The "
+                    "shape itself is not stored -- it is read off the box "
+                    "when the drag begins -- and holding Shift during a "
+                    "drag does the opposite of whatever this says."),
 }
 
 #: The kinds of thing that can sit on a slide, and what each one needs to

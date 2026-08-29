@@ -128,6 +128,7 @@ Whatever its kind, an item may also carry these.
 | `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
 | `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
 | `oid` | str | This object's durable name, used to follow it through its own history and to match it across slides for a "move" transition. |
+| `lockar` | int | 1 to keep this item's shape while it is dragged by a resize handle: the other side follows, so a logo stays square and a plot keeps its proportions. The shape itself is not stored — it is read off the box when the drag begins — and holding Shift during a drag does the opposite of whatever this says. |
 
 `hide` and `priv` are deliberate opposites: one is hidden from **you**
 while you work and shown to everyone afterwards, the other is shown to

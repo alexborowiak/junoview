@@ -902,11 +902,22 @@ def test_an_image_resizes_the_picture_not_the_letterbox(out):
     """
     assert "if(a.k==='image'&&!a.crop&&el){" in out
     assert "var ie=el.querySelector('.an-imgel');" in out
-    assert "var ratio=(imgFree&&ev.shiftKey)?0:figRatio;" in out
+    # Shift is the momentary OPPOSITE of whatever lock is in force now,
+    # not just a release for pictures (T65)
+    assert "var ratio=baseRatio" in out
+    assert "?((canFree&&ev.shiftKey)?0:baseRatio)" in out
+    assert ":(ev.shiftKey?boxRatio:0);" in out
     # the snap ladder and the height derivation both follow the LIVE
     # decision, not the one made at mousedown
-    assert "if(a.k!=='text'&&!ratio){" in out
-    assert "if(ratio&&lr.height){" in out
+    # the height only snaps on a drag that OWNS the vertical axis; a
+    # ratio-locked drag lets the leading axis snap and the other follow
+    assert ("if(a.k!=='text'&&(north||south)&&(!ratio||axisY)){") in out
+    # T65: the axis that LEADS depends on the handle -- a side handle
+    # dragged vertically has the height lead and the width follow, which
+    # the four-corner version could not express
+    assert "if(ratio&&lr.height&&lr.width){" in out
+    assert "if(axisY&&a.k!=='text'){" in out
+    assert "nw=nh*(lr.height*ratio/lr.width);" in out
     # and the handle says so
     assert "'Drag to resize — the picture keeps its shape. '" in out
 

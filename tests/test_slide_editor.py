@@ -1465,7 +1465,7 @@ def test_tidy_up_reports_before_it_rearranges(out):
     assert "act.addEventListener('click',function(){\n      var n=f.fix()" \
         in out
     # it joins the panes that share the corner and the remembered geometry
-    assert "'stdpane','tidypane','objhist','provpane','flippane']" in out
+    assert "'stdpane','tidypane','objhist','provpane','flippane','sizepane']" in out
 
 
 def test_the_tidy_tolerances_are_named_and_argued(out):
@@ -1594,7 +1594,7 @@ def test_object_inspectors_follow_the_live_selection(out):
     # event, so markDirty has its own open-pane refresh.
     assert "if(!quiet&&ohp&&!ohp.hidden) renderObjHist();" in out
     # Opening one subject inspector closes the other.
-    assert "'#tidypane','#provpane'].forEach(function(sel){" in out
+    assert "'#tidypane','#provpane','#sizepane'].forEach(function(sel){" in out
 
 
 def test_a_ribbon_of_your_own(out):
@@ -2227,7 +2227,7 @@ def test_a_frame_can_say_where_it_came_from(out):
     # and the trace door is the existing one, not a second drawing
     assert "if(window.SemTrace&&pr[0]) window.SemTrace.open(pr[0],pr[1]);" \
         in out
-    assert "'stdpane','tidypane','objhist','provpane','flippane']" in out
+    assert "'stdpane','tidypane','objhist','provpane','flippane','sizepane']" in out
 
 
 def test_staleness_is_answered_honestly_or_not_at_all(out):
@@ -2663,3 +2663,67 @@ def test_bold_on_a_title_actually_shows(out):
     # the div's own weight stays: it is what the SUBTITLE (no forced
     # span weight of its own) has always used, and it still works there
     assert "if(p.b) d.style.fontWeight='700';" in out
+
+
+def test_an_object_has_eight_resize_handles(out):
+    """"Why can pictures it seems only be dragged on diagonal, so can't
+    be made taller or wider" (2026-08-29, T65). mkResize emitted the four
+    corners and nothing else, so there was no gesture that changed one
+    dimension. A corner anchors the opposite corner; a side anchors the
+    opposite edge and leaves the other axis alone.
+
+    A TEXT box gets six: it auto-heights from its words, which is why
+    startResize guards every height write with a.k!=='text', so a top or
+    bottom handle on one would be a control that cannot do anything.
+    """
+    assert "var sides=noH?['nw','ne','sw','se','e','w']" in out
+    assert "      :['nw','ne','sw','se','n','e','s','w'];" in out
+    assert "if(editing){d2.appendChild(mkResize(null,1));" in out
+    assert ".an-rs-n,.an-rs-s{left:50%;margin-left:-11px;" in out
+    # a one-axis drag must not let the OTHER axis move: with four
+    # corners every handle moved both, so the snap else-arms were only
+    # ever reached by a real west/north drag
+    assert "var axisX=(east||west)&&!(north||south);" in out
+    assert "var axisY=(north||south)&&!(east||west);" in out
+    assert "if(east||west){" in out
+
+
+def test_keep_shape_is_a_per_item_flag_with_shift_as_its_opposite(out):
+    """"Where are all the options that I said, like keep square." Shift
+    only ever RELEASED a picture's built-in ratio; it did not constrain
+    anything else. It is now the momentary opposite of whatever is in
+    force, and `a.lockar` is the durable answer.
+
+    Per item, not a session mode: a logo must stay square forever while
+    the text box beside it must not, and the flag has to travel in the
+    deck file. It needs no deck-key plumbing -- normPres deep-copies
+    annots wholesale -- but ANNOT_COMMON and DECK-FORMAT.md are a matched
+    pair, so it is documented in both.
+    """
+    assert "var baseRatio=figRatio||(a.lockar?boxRatio:0);" in out
+    assert "var canFree=imgFree||!!a.lockar;" in out
+    assert "?((canFree&&ev.shiftKey)?0:baseRatio)" in out
+    assert ":(ev.shiftKey?boxRatio:0);" in out
+    assert 'id="fmt-lockar"' in out
+    assert "show('#fmt-lockar',hasBox,hasBox&&!!a.lockar);" in out
+
+
+def test_size_and_position_are_typeable_in_millimetres(out):
+    """"Having the width, height, and position (x,y)." A pane rather
+    than a ribbon row: four number fields plus labels and units is a
+    fixed width fitEditRibbon has no rung for, and the numbers have to
+    be readable while you drag something at the far corner of an A0.
+
+    Millimetres, because a percentage of an A0 means nothing to anyone
+    -- the model stays in page percent and the pane is a lens over it.
+    Every write goes through anchorSet, or a pinned item would teleport
+    the way T43 fixed once already.
+    """
+    assert 'id="sizepane"' in out and 'id="fmt-sizepos"' in out
+    for f in ("sz-w", "sz-h", "sz-x", "sz-y"):
+        assert f'id="{f}"' in out
+    assert "function pctMm(v,horiz){" in out
+    assert "function sizePaneSync(){" in out
+    # it follows the selection, the drag, and any committed edit
+    assert "if(typeof sizePaneSync==='function') sizePaneSync();" in out
+    assert out.count("if(typeof sizePaneSync==='function') sizePaneSync();") >= 3

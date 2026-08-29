@@ -1856,6 +1856,183 @@
     var pb=$('#fmt-prov');
     if(pb) pb.addEventListener('click',showProvPane);
   })();
+  /* ---- SIZE AND POSITION, IN NUMBERS (T65) ---------------------------
+     "where are all the options that I said, like keep square, and also
+     having the width, height, and position (x,y)" (2026-08-29, user).
+
+     IN MILLIMETRES, because a percentage of an A0 means nothing to
+     anyone; the model stays in page percent and this pane is a lens over
+     it, never a second coordinate system.
+
+     IT WRITES THROUGH anchorSet, ALWAYS. The four fields are PAGE
+     coordinates of the item's top-left corner. A pinned item stores an
+     offset from ITS OWN corner instead, so assigning a.x/a.y from a text
+     field would reproduce the T43 teleport with no drag to blame it on.
+
+     IT DESCRIBES THE PRIMARY SELECTION, the same subject the ribbon and
+     the two inspector panes take -- group expansion belongs to bulk
+     verbs, not to a readout. */
+  function sizeSubject(){
+    var s=pres.slides[cur];
+    var a=(s&&typeof selAnnot==='number')?(s.annots||[])[selAnnot]:null;
+    return (a&&a.k!=='arrow')?a:null;
+  }
+  function sizeIdx(a){
+    var s=pres.slides[cur];
+    return ((s&&s.annots)||[]).indexOf(a);
+  }
+  /* the box in page percent. annotRectPct is the one reader that already
+     answers correctly for an auto-height text box and an aspect-fitted
+     figure frame -- both of which have no stored h to read. */
+  function sizeRect(a){
+    var s=pres.slides[cur];
+    var layer=stage.querySelector('.annot-layer');
+    var i=sizeIdx(a);
+    var r=(i>=0)?annotRectPct(layer,s,i):null;
+    if(r) return r;
+    var ap=anchorPos(a,a.w||0,a.h||0);
+    return {l:ap.x,t:ap.y,r:ap.x+(a.w||0),b:ap.y+(a.h||0)};
+  }
+  /* is this item's shape held? Either because you said so, or because it
+     is one of the two kinds startResize fits to its picture anyway. */
+  function sizeArLocked(a){
+    if(!a) return false;
+    if(a.lockar) return true;
+    if(a.k==='image'&&!a.crop) return true;
+    var layer=stage.querySelector('.annot-layer');
+    var i=sizeIdx(a);
+    var el=(layer&&i>=0)
+      ?layer.querySelector('.an-item[data-idx="'+i+'"]'):null;
+    return !!(el&&el.classList.contains('an-figonly'));
+  }
+  function sizePaneSync(){
+    var p=$('#sizepane'); if(!p||p.hidden) return;
+    var a=sizeSubject(),cb=$('#sz-lockar'),note=$('#sz-note');
+    var keys=['w','h','x','y'];
+    if(!a){
+      keys.forEach(function(k){
+        var el=$('#sz-'+k);
+        if(el){el.value='';el.disabled=true;}});
+      if(cb){cb.checked=false;cb.disabled=true;}
+      if(note) note.textContent='Select one object on the page. An arrow '
+        +'is two endpoints rather than a box, so it has none of these.';
+      return;
+    }
+    var r=sizeRect(a);
+    var v={w:r.r-r.l,h:r.b-r.t,x:r.l,y:r.t};
+    var all=lockedAll(a),pos=pinned(a),isText=(a.k==='text');
+    keys.forEach(function(k){
+      var el=$('#sz-'+k); if(!el) return;
+      var horiz=(k==='w'||k==='x');
+      el.disabled=all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos);
+      /* never overwrite the field you are typing in -- the rule every
+         input in the notes pane already keeps */
+      if(document.activeElement!==el)
+        el.value=Math.round(pctMm(v[k],horiz)*10)/10;
+    });
+    if(cb){cb.disabled=all;cb.checked=!!a.lockar;}
+    if(note) note.textContent=
+      (all?'Fully locked — unlock it to change any of these. ':'')
+      +(!all&&pos?'Position locked — its size is still yours. ':'')
+      +(isText?'A text box heights itself from its words, so Height is a '
+        +'readout. ':'')
+      +(a.anch?('Pinned '+((ANCHORS[a.anch]||[a.anch])[0]+'')
+        .toLowerCase()+' — X and Y are still measured from the top '
+        +'left of the page, and the pin is kept.'):'');
+  }
+  /* ONE write, whichever field you typed in. */
+  function sizePaneWrite(k,mm){
+    var a=sizeSubject(); if(!a||lockedAll(a)) return;
+    var s=pres.slides[cur];
+    var layer=stage.querySelector('.annot-layer');
+    var r=sizeRect(a);
+    var w=r.r-r.l,h=r.b-r.t,x=r.l,y=r.t;
+    var horiz=(k==='w'||k==='x');
+    var val=mmPct(mm,horiz);
+    if(!isFinite(val)) return;
+    if(k==='x'||k==='y'){
+      if(pinned(a)) return;
+      if(k==='x') x=val; else y=val;
+    } else if(k==='w'){
+      if(!(val>0)) return;
+      /* a locked shape keeps its shape here too -- typing a width that
+         letterboxes the picture is the bug this task is about */
+      if(w>0&&h>0&&sizeArLocked(a)) h=h*(val/w);
+      w=val;
+    } else {
+      if(!(val>0)||a.k==='text') return;
+      if(w>0&&h>0&&sizeArLocked(a)) w=w*(val/h);
+      h=val;
+    }
+    a.w=w;
+    if(a.k!=='text') a.h=h;
+    anchorSet(a,x,y,w,h);
+    /* quiet while you type, one undo entry when you leave the field --
+       the pattern the notes editor settled on (T57) */
+    markDirty(true);
+    if(layer){renderAnnots(layer,s);paintSel(layer);}
+    sizePaneSync();
+  }
+  function toggleAspectLock(v){
+    var s=pres.slides[cur];
+    var idxs=selIdxs().filter(function(i){return typeof i==='number';});
+    if(!idxs.length){toast('Select an object first');return;}
+    var a0=(s.annots||[])[idxs[0]];
+    var on=(v===undefined)?!(a0&&a0.lockar):!!v;
+    idxs.forEach(function(i){
+      var a=(s.annots||[])[i];
+      if(!a||a.k==='arrow') return;
+      if(on) a.lockar=1; else delete a.lockar;
+    });
+    markDirty();showFmt();sizePaneSync();
+    /* nothing is stored about WHAT the shape is: the ratio is read off
+       the box when a drag starts, so locking never resizes anything */
+    toast(on?'Shape kept — drag any handle and it stays this shape '
+      +'(hold Shift to stretch it anyway)'
+      :'Shape free — width and height move independently again');
+  }
+  function showSizePane(on){
+    var p=$('#sizepane'); if(!p) return;
+    if(on){
+      /* the panes share one corner -- the rule showVerpane has kept
+         since they were first docked */
+      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
+       '#tidypane','#objhist','#provpane','#flippane']
+        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
+      var ob=$('#objects-btn');
+      if(ob) ob.setAttribute('aria-pressed','false');
+      var nb=$('#notes-btn');
+      if(nb) nb.setAttribute('aria-pressed','false');
+      if(typeof showVerpane==='function') showVerpane(false);
+    }
+    p.hidden=!on;
+    if(on) sizePaneSync();
+    syncPaneDock();
+  }
+  (function(){
+    var sb=$('#fmt-sizepos'),p=$('#sizepane');
+    if(sb&&p) sb.addEventListener('click',function(){
+      showSizePane(p.hidden);});
+    var cl=$('#sizepane-close');
+    if(cl) cl.addEventListener('click',function(){showSizePane(false);});
+    var lk=$('#fmt-lockar');
+    if(lk) lk.addEventListener('click',function(){toggleAspectLock();});
+    var cbx=$('#sz-lockar');
+    if(cbx) cbx.addEventListener('change',function(){
+      toggleAspectLock(cbx.checked);});
+    ['w','h','x','y'].forEach(function(k){
+      var el=$('#sz-'+k); if(!el) return;
+      /* the canvas owns arrows, Delete and every single-letter tool key;
+         a number field has to keep its own keystrokes */
+      el.addEventListener('keydown',function(e){e.stopPropagation();});
+      el.addEventListener('input',function(){
+        var n=parseFloat(el.value);
+        if(isFinite(n)) sizePaneWrite(k,n);
+      });
+      el.addEventListener('blur',function(){
+        if(typeof histPush==='function') histPush();});
+    });
+  })();
   (function(){
     var cl=$('#provpane-close');
     if(cl) cl.addEventListener('click',function(){

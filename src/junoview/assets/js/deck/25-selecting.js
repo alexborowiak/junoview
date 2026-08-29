@@ -50,7 +50,7 @@
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
-    +'#fmt-caption #fmt-prov '
+    +'#fmt-caption #fmt-prov #fmt-lockar #fmt-sizepos '
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
@@ -67,6 +67,12 @@
      here, including deselection and title/subtitle pseudo-items. */
   var inspectorSig='';
   function syncInspectorPanes(force){
+    /* the numbers pane is an inspector too, and a cheap one -- four
+       value writes, and an immediate return when it is closed. It sits
+       ABOVE the signature gate on purpose: the gate exists to stop
+       24-snapshot history walks during a slider preview, and this does
+       no walking (T65). */
+    if(typeof sizePaneSync==='function') sizePaneSync();
     var hp=$('#objhist');
     var pp=$('#provpane');
     var histOpen=!!hp&&!hp.hidden,provOpen=!!pp&&!pp.hidden;
@@ -330,6 +336,14 @@
     /* for anything that came OUT of a notebook, which since T58 means a
        flip book as well as a placed cell */
     show('#fmt-prov',isNum&&!!provRef(a));
+    /* SIZE, SHAPE AND POSITION -- for anything that is a box. An arrow
+       is two endpoints and has neither (T65). */
+    var hasBox=isNum&&kind!=='arrow';
+    show('#fmt-sizepos',hasBox);
+    show('#fmt-lockar',hasBox,hasBox&&!!a.lockar);
+    var lab=$('#fmt-lockar');
+    if(lab&&hasBox) lab.innerHTML=(a.lockar?bic('unlock'):bic('lock'))
+      +' Keep shape';
     /* ONE BUTTON, TWO STATES — the pattern #fmt-revert above already
        uses. A figure without a caption gets "Caption"; one with a
        caption gets "Untie caption", which until now had no door but a
@@ -706,12 +720,25 @@
     });
     return best;
   }
+  /* PAGE PERCENT <-> MILLIMETRES, both directions, in one place. The
+     model is percent because a deck has to survive a page-shape change;
+     every number a human reads or types is millimetres, because that is
+     what the rulers, the gap badges and the print shop speak (T7, T65).
+     `horiz` picks which side of the page the percentage is OF -- x and w
+     are percentages of the width, y and h of the height. */
+  function pctMm(v,horiz){
+    var pg=pageOf();
+    return v/100*((horiz?pg.mm[0]:pg.mm[1])||0);
+  }
+  function mmPct(v,horiz){
+    var pg=pageOf(),m=(horiz?pg.mm[0]:pg.mm[1])||0;
+    return m?(v/m*100):0;
+  }
   /* a distance across the page, in the millimetres the rulers speak.
      A percentage means nothing to anyone laying out an A0 poster, and
      the badge exists precisely so the number can be read (T7). */
   function gapMm(v,horiz){
-    var pg=pageOf();
-    var mm=Math.abs(v)/100*(horiz?pg.mm[0]:pg.mm[1]);
+    var mm=Math.abs(pctMm(v,horiz));
     return (mm<10?Math.round(mm*10)/10:Math.round(mm))+' mm';
   }
   function drawGapMarks(layer,marks){
@@ -1064,6 +1091,28 @@
     var ow=a.w||(er?er.width/lr.width*100:10);
     var oh=a.h||(er?er.height/lr.height*100:10);
     var origin=anchorPos(a,ow,oh),ox=origin.x,oy=origin.y;
+    /* THE ASPECT LOCK (T65). Two sources, one number. A figure frame and
+       an uncropped picture bring their own ratio (figRatio, above); any
+       other item the user has locked with "Keep shape" is held to the
+       shape it has RIGHT NOW, read off the box at mousedown -- the lock
+       says "stay this shape", never "become square", which is why
+       nothing is stored on the item but the flag.
+       SHIFT IS THE MOMENTARY OPPOSITE of whatever is in force: it frees
+       a locked item and constrains an unlocked one, which is what every
+       drawing tool has taught people to expect. It used only to free,
+       and only a picture. The one exception is a figure frame, whose box
+       IS its plot -- freeing it just banks letterbox again, so Shift
+       cannot reach it (that is what imgFree marks). */
+    var boxRatio=(oh>0&&lr.height&&lr.width)
+      ?((ow*lr.width)/(oh*lr.height)):0;
+    var baseRatio=figRatio||(a.lockar?boxRatio:0);
+    var canFree=imgFree||!!a.lockar;
+    /* A ONE-AXIS HANDLE. The untouched axis is not this drag's business:
+       nothing below writes to it, and only an aspect lock may move it --
+       centred, so the item grows evenly either side rather than lurching
+       towards whichever edge happened to be first in the source. */
+    var axisX=(east||west)&&!(north||south);
+    var axisY=(north||south)&&!(east||west);
     var thr=snapThr(layer);
     var targets=snapTargets(layer,s,[idx]);
     /* the same gesture path startMove uses (2026-08-23 perf): sync the
@@ -1079,9 +1128,11 @@
       movedAny=true;
       var p=pctPoint(layer,ev);
       var dx=p.x-start.x,dy=p.y-start.y;
-      /* Shift releases a picture's aspect lock for this moment of the
-         drag, so you can decide mid-gesture rather than before it */
-      var ratio=(imgFree&&ev.shiftKey)?0:figRatio;
+      /* Shift is the momentary opposite of the lock that is in force, so
+         you can decide mid-gesture rather than before it (T65) */
+      var ratio=baseRatio
+        ?((canFree&&ev.shiftKey)?0:baseRatio)
+        :(ev.shiftKey?boxRatio:0);
       /* the dragged corner moves; the opposite corner stays anchored */
       var nx=ox,ny=oy,nw=ow,nh=oh;
       if(east) nw=Math.max(4,ow+dx);
@@ -1095,12 +1146,22 @@
         /* the moving edges snap; an aspect-locked figure snaps its width
            and lets the height follow the plot's ratio. A guide only shows
            when the snap actually landed (the 4% minimum can cancel it). */
-        var bx=bestSnap(targets.xs,[east?nx+nw:nx],thr.x);
-        if(bx){
-          if(east){if(nw+bx.d>=4){nw+=bx.d;sx=bx.at;}}
-          else if(nw-bx.d>=4){nx+=bx.d;nw-=bx.d;sx=bx.at;}
+        /* ONLY THE AXIS BEING DRAGGED SNAPS. With four corners every
+           handle moved both axes, so the `else` arms below were only
+           ever reached by a real west/north drag. A side handle makes
+           east AND west false, and the else arm would then slide the
+           left edge sideways during a purely vertical drag (T65). */
+        if(east||west){
+          var bx=bestSnap(targets.xs,[east?nx+nw:nx],thr.x);
+          if(bx){
+            if(east){if(nw+bx.d>=4){nw+=bx.d;sx=bx.at;}}
+            else if(nw-bx.d>=4){nx+=bx.d;nw-=bx.d;sx=bx.at;}
+          }
         }
-        if(a.k!=='text'&&!ratio){
+        /* an aspect-locked drag snaps the axis that LEADS and lets the
+           other follow: width for a corner or a side handle, height when
+           the gesture is vertical-only */
+        if(a.k!=='text'&&(north||south)&&(!ratio||axisY)){
           var by=bestSnap(targets.ys,[south?ny+nh:ny],thr.y);
           if(by){
             if(south){if(nh+by.d>=4){nh+=by.d;sy=by.at;}}
@@ -1108,9 +1169,21 @@
           }
         }
       }
-      if(ratio&&lr.height){
-        nh=nw*(lr.width/(lr.height*ratio));
-        if(north) ny=oy+oh-nh;   /* keep the bottom edge anchored */
+      if(ratio&&lr.height&&lr.width){
+        if(axisY&&a.k!=='text'){
+          /* dragged by a top or bottom edge: the HEIGHT leads and the
+             width follows. The other way round is what the four-corner
+             version did, and on a side handle it computed nh from an
+             unchanged nw -- an aspect-locked figure would not have moved
+             at all (T65). The width grows either side, because a side
+             handle names no horizontal edge to anchor. */
+          nw=nh*(lr.height*ratio/lr.width);
+          nx=ox+(ow-nw)/2;
+        } else {
+          nh=nw*(lr.width/(lr.height*ratio));
+          if(axisX) ny=oy+(oh-nh)/2;   /* ditto, vertically */
+          else if(north) ny=oy+oh-nh;  /* keep the bottom edge anchored */
+        }
       }
       a.w=nw;
       if(a.k!=='text') a.h=nh;
@@ -1124,6 +1197,9 @@
       }
       if(anyArrow) redrawArrows(layer,s);
       drawSnapGuides(layer,sx,sy);
+      /* the numbers move with the drag: a readout that only caught up on
+         mouseup would be the wrong number for the whole gesture (T65) */
+      if(typeof sizePaneSync==='function') sizePaneSync();
     }
     function mu(){
       document.removeEventListener('mousemove',mm);

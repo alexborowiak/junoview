@@ -2121,7 +2121,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
-   'stdpane','tidypane','objhist','provpane','flippane']
+   'stdpane','tidypane','objhist','provpane','flippane','sizepane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');

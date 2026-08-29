@@ -450,8 +450,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # title looked bold whatever you did. The span now reads --ttl-w, which the
 # renderer sets only once Bold has been touched: untouched 600, on 700,
 # off 400. deck.css and deck.js.
-EXPECTED_MD5 = "3e3bc2d0295a93553f75af42959bfeea"
-EXPECTED_BYTES = 3068221
+# Moved 2026-08-29 for T65: every box gains four SIDE resize handles (a text
+# box six, having no height of its own), one-axis drags leave the other axis
+# alone, `a.lockar` is a per-item Keep-shape with Shift as its momentary
+# opposite, and a Size & position pane types W/H/X/Y in page millimetres
+# through anchorSet. deck.html, deck.css, five deck.js fragments, the
+# layout catalogue (two new atoms x 108), deck_schema.py and DECK-FORMAT.md.
+EXPECTED_MD5 = "859a844821c870481264d4287b952008"
+EXPECTED_BYTES = 3088864
 
 
 def _render_example() -> str:
