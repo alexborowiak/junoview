@@ -424,8 +424,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # collects, knows about trims and is named where it is opened. Six deck.js
 # fragments, deck.html, deck.css and two new icons. Pinned by test_provenance
 # and test_slide_editor, and verified in Edge across 30 checks.
-EXPECTED_MD5 = "6ad718c875722270c81e9486f98f4b78"
-EXPECTED_BYTES = 3062437
+# Moved 2026-08-29, T52 follow-up: `guides` joins normPres's deck-level key
+# loop (it was in histRestore's list and not this one, so guides survived
+# Ctrl+Z and the draft and died on re-open), and the help paragraph that told
+# the reader to drag a guide box by any edge to MOVE it — which T52 made
+# resize — is rewritten to match the code, with R/G/H/B added to the only
+# keyboard table in the repo. deck.js and help.html changed.
+EXPECTED_MD5 = "016cafc218353366f9f3f7a96f1cef6a"
+EXPECTED_BYTES = 3064091
 
 
 def _render_example() -> str:

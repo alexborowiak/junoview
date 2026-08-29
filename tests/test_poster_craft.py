@@ -402,3 +402,22 @@ def test_a_guide_box_alone_still_gets_a_layer_to_draw_in(out):
     assert "if(mode!=='edit'||!guidesShown()||guidesEmpty(cg)){" in out
     # the old one-sided test is gone
     assert "(!cg.x.length&&!cg.y.length)" not in out
+
+
+def test_your_guides_survive_being_re_opened(out):
+    """normPres REBUILDS the deck field by field, so a deck-level key it
+    does not name does not survive. `guides` was named in histRestore's
+    key list and not in normPres's, twelve lines of code away -- so a
+    guide survived Ctrl+Z and survived the localStorage draft, and
+    vanished the moment the deck was re-opened from the saved copy, the
+    project file or a loaded JSON.
+
+    T4 shipped that; T52 made it worse by putting guides in the undo
+    snapshot and writing a comment saying they belong to the deck. This
+    is the sixth instance of the bug class tests/test_deck_schema_parity
+    exists to catch -- and it could not catch this one, because it
+    derives its expectation FROM normPres, which was missing the key too
+    (2026-08-29).
+    """
+    assert ("['wmark','head','foot','styles','tokens',\n"
+            "     'components','cuts','guides'].forEach(function(k){") in out

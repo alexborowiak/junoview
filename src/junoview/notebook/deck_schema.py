@@ -79,6 +79,10 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "sections": (dict, "{id: {name, fold}}. Membership is the slide's "
                        "`sec` tag; the ORDER is read back off the slide "
                        "list and never stored."),
+    "guides": (dict, "The guides you drew on this page: {x, y} lists of "
+                     "line positions and `b` of [x, y, w, h] boxes, all "
+                     "in page percentages. An editing aid -- never "
+                     "rendered in present mode or any export."),
     "wmark": (dict, "Watermark across every page."),
     "head": (dict, "Running header."),
     "foot": (dict, "Running footer."),

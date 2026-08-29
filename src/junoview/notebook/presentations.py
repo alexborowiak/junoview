@@ -212,8 +212,13 @@ def as_presentations(obj: Any) -> list:
         # groups. Losing it here would leave every instance in the deck
         # carrying a cmp id that points at nothing -- they would still
         # draw, and would silently stop being linked (2026-08-25).
+        # "guides" is the poster's own lines and boxes. They are an
+        # editing aid, never ink -- but they are the author's work and
+        # they belong to the deck, so dropping them here loses them on
+        # every save-and-reopen, which is what happened until
+        # 2026-08-29.
         for key in ("wmark", "head", "foot", "styles", "sections",
-                    "tokens", "components", "cuts"):
+                    "tokens", "components", "cuts", "guides"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

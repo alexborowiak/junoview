@@ -9,6 +9,7 @@ tables so the prose cannot drift away from the code.
 
 from __future__ import annotations
 
+import pathlib
 import re
 from pathlib import Path
 
@@ -218,3 +219,18 @@ def test_the_schema_covers_what_the_loader_actually_keeps():
         f"loader keeps slide keys the schema omits: {unknown_s}"
     # and the round trip really is clean by the validator's own lights
     assert validate_deck(out) == []
+
+
+def test_the_guides_you_drew_are_a_documented_deck_key():
+    """They are an editing aid and never ink -- but they are the
+    author's work and they belong to the deck, so both normalisers and
+    the schema have to name them or they die on save (2026-08-29)."""
+    from junoview.notebook.deck_schema import DECK_KEYS
+    assert "guides" in DECK_KEYS
+    assert DECK_KEYS["guides"][0] is dict
+    src = pathlib.Path(__file__).resolve().parent.parent / "src"
+    pres = (src / "junoview" / "notebook" / "presentations.py").read_text(
+        encoding="utf-8")
+    assert '"components", "cuts", "guides"' in pres
+    fmt = (src.parent / "DECK-FORMAT.md").read_text(encoding="utf-8")
+    assert "| `guides` | dict |" in fmt

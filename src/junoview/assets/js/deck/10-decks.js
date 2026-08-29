@@ -254,8 +254,18 @@
        `tokens` joins them: an item that references '@accent' and a deck
        that has forgotten what accent means renders the fallback, which
        is the quiet failure this list exists to prevent (T12). */
+    /* `guides` joins them, and is the sixth instance of exactly the bug
+       this list exists to stop. normPres REBUILDS `out` field by field,
+       so a deck-level key it does not name does not survive -- and
+       guides were named in histRestore's key list but not here, twelve
+       lines of code away. The effect: a guide survived Ctrl+Z and
+       survived the localStorage draft, and vanished the moment the deck
+       was re-opened from the saved copy, the project file or a loaded
+       JSON. T4 shipped that; T52 made it worse by putting guides in the
+       undo snapshot and writing a comment saying they belong to the
+       deck (2026-08-29). */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts'].forEach(function(k){
+     'components','cuts','guides'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are

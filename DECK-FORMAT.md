@@ -39,6 +39,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `filters` | dict | For a view: its saved filters. Tolerated on read and never written back. |
 | `folder` | str | The folder the deck is filed under in the rail. |
 | `foot` | dict | Running footer. |
+| `guides` | dict | The guides you drew on this page: {x, y} lists of line positions and `b` of [x, y, w, h] boxes, all in page percentages. An editing aid — never rendered in present mode or any export. |
 | `head` | dict | Running header. |
 | `kind` | str | Only ever "view" — a saved filtered view of one notebook rather than a deck of slides. |
 | `name` | str | What the deck is called. |

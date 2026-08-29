@@ -95,6 +95,11 @@ DECK_SENTINELS = {
     "components": {"c1": {"name": "FigureCaption", "w": 30, "h": 10,
                           "items": []}},
     "cuts": {"k1": {"name": "20-min"}},
+    # the lines and boxes you drew on a poster. An editing aid that is
+    # never ink -- but it is the author's work, and it belongs to the
+    # deck, so it has to survive the rebuild like any other deck key
+    # (added 2026-08-29, the sixth instance of this bug class).
+    "guides": {"x": [25], "y": [50], "b": [[10, 10, 30, 20]]},
 }
 
 SLIDE_SENTINELS = {
