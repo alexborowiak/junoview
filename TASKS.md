@@ -1305,7 +1305,7 @@ drives it — the suite is substring greps.
   widened to **Insert object** (notebook figure, local image, or a
   path — images already take paths).
 
-- [ ] **T62 · S — Bold is a lie on a title.** "Text always seems to
+- [x] **T62 · S — Bold is a lie on a title.** "Text always seems to
   revert to bold; e.g. resizing a text box, back to bold."
   *Verified PARTIAL, and NOT what it looked like.* The resize/fit theory
   is refuted: `applyStyleTo`'s five callers are all explicit user

@@ -2645,3 +2645,21 @@ def test_a_centred_list_keeps_its_markers_with_its_words(out):
     """
     assert "if(a.align==='center'||a.align==='right')" in out
     assert "d2.style.listStylePosition='inside';" in out
+
+
+def test_bold_on_a_title_actually_shows(out):
+    """The renderer writes font-weight onto the .an-title div, but the
+    CSS weight sits on the inner .an-tx span -- which is more specific
+    for that element than anything inherited. So Bold changed the model
+    and nothing on screen, and a title looked bold whatever you did
+    (2026-08-29, user: "text always seems to revert to bold").
+
+    Three states on purpose: untouched keeps the designed 600, on is
+    700, off is a real 400. That is what makes the toggle a toggle.
+    """
+    assert ".an-title.t-main .an-tx{font-weight:var(--ttl-w,600);" in out
+    assert "if(p.b!==undefined)" in out
+    assert "d.style.setProperty('--ttl-w',p.b?'700':'400');" in out
+    # the div's own weight stays: it is what the SUBTITLE (no forced
+    # span weight of its own) has always used, and it still works there
+    assert "if(p.b) d.style.fontWeight='700';" in out

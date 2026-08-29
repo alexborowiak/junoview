@@ -2673,7 +2673,14 @@ ol.an-ul{list-style:decimal;}
   max-width:88%;text-align:center;display:flex;gap:.4em;
   align-items:flex-start;justify-content:center;
   font-family:var(--sans);line-height:1.2;}
-.an-title.t-main .an-tx{font-weight:600;letter-spacing:-.018em;}
+/* A TITLE'S DESIGNED WEIGHT, and no more than that. This rule sits on
+   the inner span, so it beat the weight the renderer writes on the .an-
+   title div — Bold changed the model and nothing on screen, and a title
+   looked bold whatever you did (2026-08-29, user: "text always seems to
+   revert to bold"). 600 is still what a title looks like when nobody has
+   said otherwise; --ttl-w is set only once you have touched Bold. */
+.an-title.t-main .an-tx{font-weight:var(--ttl-w,600);
+  letter-spacing:-.018em;}
 .slide-titlefree .ttl-eyebrow{position:absolute;top:7%;left:0;right:0;
   text-align:center;font-family:var(--mono);font-size:11px;
   letter-spacing:.24em;text-transform:uppercase;color:var(--cyan);}

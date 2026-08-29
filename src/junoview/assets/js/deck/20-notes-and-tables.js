@@ -1573,6 +1573,13 @@
         d.style.fontSize=fontPx(layer,p.size);
         if(p.color) d.style.color=tokVal(p.color); /* default lives in CSS */
         if(p.b) d.style.fontWeight='700';
+        /* ...and tell the SPAN too. Its own CSS weight is more specific
+           than anything inherited from here, so the div's 700 never
+           reached the words. Three states on purpose: untouched keeps
+           the designed 600, on is 700, and off is a real 400 — which is
+           what makes the toggle a toggle (T62). */
+        if(p.b!==undefined)
+          d.style.setProperty('--ttl-w',p.b?'700':'400');
         if(p.i) d.style.fontStyle='italic';
         var tdeco=(p.u?'underline ':'')+(p.strike?'line-through':'');
         if(tdeco.trim()) d.style.textDecoration=tdeco.trim();

@@ -444,8 +444,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # instead of shoving every later control along; and the maths palette keys
 # and the text-type menu grow enough to read a glyph. deck.html, deck.css
 # and the layout catalogue.
-EXPECTED_MD5 = "0a186c386a14a22db86e2cc7a7788d12"
-EXPECTED_BYTES = 3067347
+# Moved 2026-08-29 for T62: a title's inner span carried font-weight:600 in
+# CSS, which is more specific than the weight the renderer writes on the
+# .an-title div -- so Bold changed the model and nothing on screen, and a
+# title looked bold whatever you did. The span now reads --ttl-w, which the
+# renderer sets only once Bold has been touched: untouched 600, on 700,
+# off 400. deck.css and deck.js.
+EXPECTED_MD5 = "3e3bc2d0295a93553f75af42959bfeea"
+EXPECTED_BYTES = 3068221
 
 
 def _render_example() -> str:
