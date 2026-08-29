@@ -592,6 +592,107 @@ def test_running_late_starts_from_here(out):
     assert "if(c.length) sl.cuts=c; else delete sl.cuts;" in out
 
 
+def test_a_named_cut_has_a_complete_lifecycle(out):
+    """T50. A version is not complete if it can only be created.
+
+    Rename keeps the stable id every slide stores. Delete removes that id
+    everywhere in one undoable mutation, drops empty containers, and says
+    plainly that a sole membership becoming absent makes the slide
+    universal under T24's documented model.
+    """
+    start = out.index("function cutMap(){")
+    registry = out[start:out.index("  /* a slide is in a cut", start)]
+    # Looking at the menu/review must not recreate an empty registry.
+    cut_map = registry[:registry.index("function cutList(){")]
+    assert "return (pres&&pres.cuts)||{};" in cut_map
+    assert "pres.cuts={}" not in cut_map
+    assert "if(!pres.cuts) pres.cuts={};" in registry
+    assert "function renameCut(id){" in registry
+    assert "function delCut(id){" in registry
+
+    rename = registry[registry.index("function renameCut(id){"):
+                      registry.index("function delCut(id){")]
+    assert "d.name=v;" in rename
+    assert "sl.cuts" not in rename
+
+    delete = registry[registry.index("function delCut(id){"):]
+    assert "delete pres.cuts[id];" in delete
+    assert "sl.cuts.filter(function(c){return c!==id;});" in delete
+    assert "if(keep.length) sl.cuts=keep; else delete sl.cuts;" in delete
+    assert "if(!Object.keys(pres.cuts).length) delete pres.cuts;" in delete
+    assert "if(wasActive) showCut='';" in delete
+    assert delete.count("markDirty();") == 1
+    assert "will return to every version" in delete
+
+
+def test_a_cut_filter_belongs_to_one_deck_and_one_run(out):
+    """The session filter must not leak to another deck's coincidental
+    k1, survive Undo after its definition disappears, or carry Running
+    late into the next rehearsal.
+    """
+    assert "var runFilterPres=null;" in out
+    start = out.index("function activeCut(){")
+    active = out[start:out.index("  function renameCut(id){", start)]
+    assert "if(runFilterPres!==pres){" in active
+    assert "runFilterPres=pres;showCut='';lateFrom=-1;" in active
+    assert "if(showCut&&!hasCut(showCut)) showCut='';" in active
+    assert "if(!inCut(sl,activeCut())) return true;" in out
+
+    start = out.index("function setUIMode(m){")
+    mode = out[start:out.index("  function refresh(){", start)]
+    assert "var startingTalk=(m==='view'&&mode!=='view');" in mode
+    assert mode.index("if(slideSkipped(cur)){") < mode.index("rehStart();")
+    assert "if(to>=0) cur=to;" in mode
+    assert "has no slides — showing every slide" in mode
+    assert "else if(endingTalk){\n      rehStop();lateFrom=-1;" in mode
+    assert "if(startingTalk||endingTalk) presenterSync();" in mode
+    # Back on the first shown slide is a no-op, never raw cur-1.
+    assert "go(pv>=0?pv:cur);" in out
+
+
+def test_each_cut_row_can_select_rename_and_delete(out):
+    """Lifecycle controls live beside the named thing and remain worded.
+    aria-pressed reuses the menu's existing visible tick and exposes the
+    one active version to assistive technology.
+    """
+    start = out.index("function syncCuts(){")
+    menu = out[start:out.index("    wrap.addEventListener", start)]
+    assert "$$('.pl-cut',menu).forEach(function(n){n.remove();});" in menu
+    assert "var selected=activeCut();" in menu
+    assert "box.className='pl-cutrow';box.dataset.cut=c.id;" in menu
+    assert "choose.textContent=c.name;" in menu
+    assert "choose.setAttribute('aria-pressed'" in menu
+    assert "[bic('pen'),'Rename'" in menu
+    assert "[bic('exit'),'Delete'" in menu
+    assert "b.appendChild(document.createTextNode(p[1]));" in menu
+    assert "if(p[2]()) syncCuts();" in menu
+    assert "nm=nm.trim();if(!nm) return;" in menu
+    assert '.dc-mi[aria-pressed="true"]::before' in out
+    assert ".pl-cutrow{display:grid;" in out
+
+
+def test_the_strip_spells_out_optional_and_not_shown(out):
+    """T50. Rows stay in the editor; state is a word badge plus a scoped
+    visual treatment, not a hidden slide or unexplained coloured dot.
+    The dimming deliberately leaves controls and the current inline editor
+    at full strength.
+    """
+    start = out.index("function renderFilm(){")
+    film = out[start:out.index("  function clearFilmMarks(){", start)]
+    assert "var filmCut=activeCut(),skipped=slideSkipped(i);" in film
+    assert "+(s.opt?' opt':'')+(skipped?' cut':'');" in film
+    assert "mark('opt','optional'" in film
+    assert "mark('cut','not shown'" in film
+    assert "?'Not shown in the “'" in film
+    assert ".film-row.opt .film-mark.opt{color:#f0a848;}" in out
+    assert ".film-mark.cut{color:#9aabba;}" in out
+    assert ".film-row.cut:not(.current) .mini-diagram" in out
+    assert ".film-row.cut:not(.current) .film-t" in out
+    assert ".film-row.cut:not(.current) .film-n" in out
+    assert ".film-row.cut{background-image:" in out
+    assert ".film-row.cut{display:none" not in out
+
+
 def test_the_overview_is_a_navigation_layer_not_a_canvas(out):
     """TASKS T26, and TASKS.md is careful about what it is: "the
     realistic scope of the infinite-canvas wish -- an overview /

@@ -376,8 +376,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # population, and visible private SVG arrow/line ink is marked in the editor
 # and presenter after every draw. Pinned by tests/test_visibility.py and
 # verified in Edge across the review Blob and all three render audiences.
-EXPECTED_MD5 = "adb7765daddf91a24f073de43c64bb34"
-EXPECTED_BYTES = 2992981
+# Moved 2026-08-29 for TASKS T50: named cuts can be renamed and deleted as
+# one undoable lifecycle, active filtering belongs to one open deck/run, and
+# explicit optional/not-shown words make the cut state visible in the strip.
+# Pinned by tests/test_slide_sections.py and verified in Edge across 39 cut,
+# persistence, undo, navigation and run-lifecycle checks.
+EXPECTED_MD5 = "2a31b005a0b36a25a445aba2332247fb"
+EXPECTED_BYTES = 3000193
 
 
 def _render_example() -> str:

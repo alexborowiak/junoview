@@ -198,12 +198,20 @@
          where you are standing, and it is also the row refreshThumb goes
          looking for on every edit — hide it and the live thumbnail dies */
       if(fold[i]&&i!==cur) return;
+      var filmCut=activeCut(),skipped=slideSkipped(i);
       var row=document.createElement('div');
       row.className='film-row'+(i===cur?' current':'')
-        +(fold[i]?' peek':'')+(s.sec?' in-sec':'');
+        +(fold[i]?' peek':'')+(s.sec?' in-sec':'')
+        +(s.opt?' opt':'')+(skipped?' cut':'');
       row.dataset.idx=i;
       row.draggable=true;
-      row.title='Drag to reorder';
+      var rowTips=['Drag to reorder'];
+      if(s.opt) rowTips.push('Optional: Running late can skip this slide');
+      if(skipped) rowTips.push(filmCut&&!inCut(s,filmCut)
+        ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
+          +'” version'
+        :'Skipped by Running late');
+      row.title=rowTips.join('\n');
       row.addEventListener('contextmenu',function(ev){
         ev.preventDefault();openFilmMenu(i,ev,null);});
       row.addEventListener('dragstart',function(e){
@@ -241,6 +249,18 @@
       }
       var tt=document.createElement('span');tt.className='film-t';
       tt.textContent=filmText(s);lbl.appendChild(tt);
+      var marks=document.createElement('span');marks.className='film-marks';
+      function mark(cls,text,title){
+        var tag=document.createElement('span');
+        tag.className='film-mark '+cls;tag.textContent=text;tag.title=title;
+        marks.appendChild(tag);
+      }
+      if(s.opt) mark('opt','optional','Running late can skip this slide');
+      if(skipped) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
+        ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
+          +'” version'
+        :'Skipped by Running late');
+      if(marks.childNodes.length) lbl.appendChild(marks);
       if(i!==cur) lbl.addEventListener('click',function(){
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
       row.appendChild(lbl);
@@ -844,13 +864,32 @@
     syncLateButton();
   }
   function setUIMode(m){
+    var startingTalk=(m==='view'&&mode!=='view');
+    var endingTalk=(m!=='view'&&mode==='view');
+    /* Running late belongs to ONE run. A named version survives the run,
+       but its first audience slide must actually belong to it (T50). */
+    if(startingTalk){
+      lateFrom=-1;
+      if(slideSkipped(cur)){
+        var to=nextShown(cur,1);
+        if(to<0) to=nextShown(cur,-1);
+        if(to>=0) cur=to;
+        else {
+          var emptyName=(cutMap()[activeCut()]||{}).name||'version';
+          showCut='';
+          toast('“'+emptyName+'” has no slides — showing every slide');
+        }
+      }
+    }
     /* entering Present must not leave a fresher deck in memory than in
        the draft — the debounced write lands before the talk starts */
     if(m==='view') flushDraftWrite();
     /* a rehearsal is exactly "present mode, from when it starts to when
        it ends" -- so it begins and ends where the mode does (T29) */
-    if(m==='view'&&mode!=='view') rehStart();
-    else if(m!=='view'&&mode==='view') rehStop();
+    if(startingTalk) rehStart();
+    else if(endingTalk){
+      rehStop();lateFrom=-1;
+    }
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
     deckEl.classList.toggle('creating',creating);
@@ -936,6 +975,7 @@
     /* the bar's title depends on the mode, and openDeck calls status()
        BEFORE the mode is set — so it is refreshed once more here */
     status();
+    if(startingTalk||endingTalk) presenterSync();
   }
   function refresh(){
     if(mode==='create'){renderCreate();}
@@ -1130,6 +1170,7 @@
     function syncCuts(){
       $$('.pl-cut',menu).forEach(function(n){n.remove();});
       var list=cutList();
+      var selected=activeCut();
       var anchor=$('#pl-here');
       if(!anchor||!anchor.parentNode) return;
       function add(el){
@@ -1144,7 +1185,7 @@
         b.className='dbtn dc-mi';
         b.textContent=label;
         if(why) b.title=why;
-        if((showCut||'')===id) b.classList.add('on');
+        b.setAttribute('aria-pressed',(selected===id).toString());
         b.addEventListener('click',function(e){
           e.stopPropagation();menu.hidden=true;setCut(id);syncCuts();});
         add(b);
@@ -1152,7 +1193,30 @@
       opt('','Every slide','The whole deck, which is what a deck with '
         +'no cuts always shows');
       list.forEach(function(c){
-        opt(c.id,c.name,'Only the slides that name this version');});
+        var box=document.createElement('div');
+        box.className='pl-cutrow';box.dataset.cut=c.id;
+        var choose=document.createElement('button');
+        choose.className='dbtn dc-mi pl-cutpick';
+        choose.textContent=c.name;
+        choose.title='Only the slides that name this version';
+        choose.setAttribute('aria-pressed',(selected===c.id).toString());
+        choose.addEventListener('click',function(e){
+          e.stopPropagation();menu.hidden=true;setCut(c.id);syncCuts();});
+        box.appendChild(choose);
+        [[bic('pen'),'Rename',function(){return renameCut(c.id);}],
+         [bic('exit'),'Delete',function(){return delCut(c.id);}]]
+          .forEach(function(p){
+            var b=document.createElement('button');
+            b.className='dbtn pl-cutact';
+            b.innerHTML=p[0]+' ';
+            b.appendChild(document.createTextNode(p[1]));
+            b.title=p[1]+' the “'+c.name+'” version';
+            b.addEventListener('click',function(e){
+              e.stopPropagation();if(p[2]()) syncCuts();});
+            box.appendChild(b);
+          });
+        add(box);
+      });
       var nb=document.createElement('button');
       nb.className='dbtn dc-mi';
       nb.textContent='New version…';
@@ -1161,9 +1225,10 @@
       nb.addEventListener('click',function(e){
         e.stopPropagation();menu.hidden=true;
         var nm=prompt('Name for this version:','20-min');
-        if(!nm) return;
-        var id=newCut(nm.trim());
-        toast('“'+nm.trim()+'” created — right-click a '
+        if(nm==null) return;
+        nm=nm.trim();if(!nm) return;
+        var id=newCut(nm);if(!id) return;
+        toast('“'+nm+'” created — right-click a '
           +'slide to put it in');
         setCut(id);syncCuts();
       });

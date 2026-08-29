@@ -807,6 +807,15 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
 .dc-mi[aria-pressed="true"]{color:#fff;}
 .dc-mi[aria-pressed="true"]::before{content:"\2713  ";color:var(--cyan);}
 .dc-mi[disabled]{opacity:.45;cursor:default;}
+/* A named version is one selectable row plus its lifecycle. Keep the
+   verbs worded and beside the name; a hidden right-click route is not a
+   lifecycle (T50). */
+#play-menu{min-width:min(330px,calc(100vw - 16px));}
+.pl-cutrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;
+  gap:3px;align-items:stretch;}
+.pl-cutpick{min-width:0;white-space:normal;}
+.pl-cutact{font-size:10px;padding:5px 7px;white-space:nowrap;}
+.pl-cutact .bic{width:10px;height:10px;}
 /* the label is a bare chevron now, so there is nothing left to clip —
    and an ellipsis on a live control is hiding a word by another name */
 .dbtn.dc-target{font-family:var(--mono);font-size:10.5px;
@@ -2933,11 +2942,27 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
   white-space:nowrap;}
 .film-label .film-n{font-family:var(--mono);font-size:9.5px;color:#6c8093;
   width:15px;flex:none;text-align:right;}
+/* Optional and omitted are words in the strip, not secret state in a
+   context menu. Only the thumbnail/title dim: controls and the current
+   inline editor stay fully usable (T50). */
+.film-marks{display:flex;align-items:center;gap:3px;margin-left:auto;
+  flex:none;}
+.film-mark{font-family:var(--mono);font-size:7.5px;letter-spacing:.04em;
+  line-height:1;padding:2px 4px;border:1px solid currentColor;
+  border-radius:8px;white-space:nowrap;}
+.film-row.opt .film-mark.opt{color:#f0a848;}
+.film-mark.cut{color:#9aabba;}
+.film-row.cut:not(.current) .mini-diagram,
+.film-row.cut:not(.current) .film-t,
+.film-row.cut:not(.current) .film-n{opacity:.42;}
+.film-row.cut{background-image:linear-gradient(90deg,#71879a 0 2px,
+  transparent 2px);}
 /* the selected slide expands: number on top, big editor, title below */
 .film-row.current .film-label{flex-direction:column;align-items:stretch;
   gap:6px;cursor:default;}
 .film-row.current .film-n{align-self:flex-start;text-align:left;
   color:var(--cyan);}
+.film-row.current .film-marks{align-self:flex-start;margin-left:0;}
 .film-view{width:100%;min-width:0;}
 .film-view .pane-editor{width:100%;margin:0;}
 /* --mini-h is read back in JS (MINI_H in deck.js) to size thumbnail type

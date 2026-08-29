@@ -322,8 +322,9 @@ def test_the_clock_starts_and_stops_where_present_mode_does(out):
     so far belongs to the slide you are LEAVING, which is why the mark
     is taken in go() before the render rather than after it.
     """
-    assert "if(m==='view'&&mode!=='view') rehStart();" in out
-    assert "else if(m!=='view'&&mode==='view') rehStop();" in out
+    assert "var startingTalk=(m==='view'&&mode!=='view');" in out
+    assert "if(startingTalk) rehStart();" in out
+    assert "else if(endingTalk){\n      rehStop();lateFrom=-1;" in out
     assert "rehSlideChanged();" in out
     assert out.index("rehSlideChanged();") < out.index("    refresh();\n"
                                                       "    playFlip();")

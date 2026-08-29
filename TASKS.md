@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 6 open items, T50–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 5 open items, T51–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -942,11 +942,25 @@ file before touching anything.
   Blob, both figure lints, the exact density sentence, selection/redraw,
   presenter and audience renders with a three-slide fixture (31 checks).
 
-- [ ] **T50 · M — Cuts are a lifecycle, not one verb.** `newCut` is the
+- [x] **T50 · M — Cuts are a lifecycle, not one verb.** `newCut` is the
   only cut verb there is: no rename, no delete, and nothing is ever
   removed from `pres.cuts`. And `renderFilm` builds each row's class
   from current/peek/in-sec only — there is no `opt` or `cut` class — so
   T24's marks are invisible in the strip they are about.
+  *2026-08-29.* The Present menu now gives every named version visible
+  Rename and Delete actions; rename keeps the stable id, while delete
+  removes that id from the registry and every slide in one undoable edit,
+  without deleting a slide. Removing a slide's sole membership deliberately
+  returns it to the documented universal state, and deleting the last version
+  leaves no phantom empty map. The active version is session state owned by
+  its open deck, is repaired across undo/redo and deck switches, and playback
+  cannot start or step backwards onto an excluded slide. The strip now says
+  **optional** and **not shown** on `.opt`/`.cut` rows, with dimming scoped away
+  from the current row and its controls; Running late resets at each run
+  boundary. Help records the lifecycle and the universal-state consequence.
+  Browser-verified create, rename, delete, membership changes, undo/redo,
+  persistence, same-id deck switching, filtered navigation, Running late,
+  accessible selection and runtime errors across three fixtures (39 checks).
 
 - [ ] **T51 · M — The Python deck API is finished and reachable.**
   - there is no way to delete a slide, and the obvious attempts silently

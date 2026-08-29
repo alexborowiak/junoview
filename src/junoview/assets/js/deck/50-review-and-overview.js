@@ -594,23 +594,37 @@
      from the CURRENT slide onward, because the ones you have already
      shown are not the problem. */
   function cutMap(){
-    if(!pres.cuts) pres.cuts={};
-    return pres.cuts;
+    /* Reads must not recreate an empty map after the last version is
+       deleted. newCut is the one lifecycle verb allowed to create it. */
+    return (pres&&pres.cuts)||{};
+  }
+  function hasCut(id){
+    return Object.prototype.hasOwnProperty.call(cutMap(),id);
   }
   function cutList(){
     var m=cutMap();
     return Object.keys(m).map(function(id){
-      return {id:id,name:(m[id]&&m[id].name)||id};
+      return {id:id,name:String((m[id]&&m[id].name)||id)};
     }).sort(function(a,b){return a.name.localeCompare(b.name);});
   }
   function cutId(){
     var m=cutMap(),n=1;
-    while(m['k'+n]) n++;
+    while(Object.prototype.hasOwnProperty.call(m,'k'+n)) n++;
     return 'k'+n;
   }
+  function cutNameTaken(name,except){
+    var want=String(name||'').toLowerCase();
+    return cutList().some(function(c){
+      return c.id!==except&&c.name.toLowerCase()===want;});
+  }
   function newCut(name){
+    name=String(name||'').trim()||'Short version';
+    if(cutNameTaken(name,'')){
+      toast('There is already a version called “'+name+'”');return '';
+    }
     var id=cutId();
-    cutMap()[id]={name:name||'Short version'};
+    if(!pres.cuts) pres.cuts={};
+    pres.cuts[id]={name:name};
     markDirty();
     return id;
   }
@@ -619,6 +633,58 @@
      not a property of the document, and sending someone a deck must not
      send them your rehearsal. Same argument matchPick makes. */
   var showCut='',lateFrom=-1;
+  var runFilterPres=null;
+  /* A cut and Running late belong to one open deck, not to the next deck
+     that happens to reuse k1. Also repair a deleted/stale active id at the
+     one read boundary rather than asking every caller to remember (T50). */
+  function activeCut(){
+    if(runFilterPres!==pres){
+      runFilterPres=pres;showCut='';lateFrom=-1;
+    }
+    if(showCut&&!hasCut(showCut)) showCut='';
+    return showCut;
+  }
+  function renameCut(id){
+    if(!hasCut(id)) return false;
+    var d=cutMap()[id]; if(!d) return false;
+    var old=d.name||id;
+    var v=prompt('Name this version:',old);
+    if(v==null) return false;
+    v=v.trim(); if(!v||v===old) return false;
+    if(cutNameTaken(v,id)){
+      toast('There is already a version called “'+v+'”');return false;
+    }
+    d.name=v;
+    markDirty();renderFilm();presenterSync&&presenterSync();
+    toast('Version renamed to “'+v+'”');
+    return true;
+  }
+  function delCut(id){
+    if(!hasCut(id)) return false;
+    var d=cutMap()[id]; if(!d) return false;
+    var name=d.name||id;
+    var universal=(pres.slides||[]).filter(function(sl){
+      return sl&&Array.isArray(sl.cuts)&&sl.cuts.length
+        &&sl.cuts.every(function(c){return c===id;});}).length;
+    if(!confirm('Delete the version “'+name+'”? Slides stay in the deck. '
+      +(universal?(universal+' slide'+(universal===1?'':'s')
+        +' that names no other version will return to every version.')
+        :'No slide will become universal.')))
+      return false;
+    var wasActive=activeCut()===id;
+    delete pres.cuts[id];
+    (pres.slides||[]).forEach(function(sl){
+      if(!sl||!Array.isArray(sl.cuts)) return;
+      var keep=sl.cuts.filter(function(c){return c!==id;});
+      if(keep.length) sl.cuts=keep; else delete sl.cuts;
+    });
+    if(!Object.keys(pres.cuts).length) delete pres.cuts;
+    if(wasActive) showCut='';
+    markDirty();renderFilm();presenterSync&&presenterSync();
+    toast('Deleted “'+name+'” — every slide stayed'
+      +(wasActive?' · showing every slide':''));
+    return true;
+  }
   /* a slide is in a cut when it names it — and a slide that names no
      cuts is in all of them, which is what makes an existing deck a
      complete "everything" version on the day this ships. */
@@ -634,7 +700,7 @@
   function slideSkipped(i){
     var sl=(pres.slides||[])[i];
     if(!sl) return false;
-    if(!inCut(sl,showCut)) return true;
+    if(!inCut(sl,activeCut())) return true;
     if(lateFrom>=0&&i>lateFrom&&sl.opt) return true;
     return false;
   }
@@ -657,6 +723,8 @@
     return out;
   }
   function setCut(id){
+    activeCut();
+    if(id&&!hasCut(id)) id='';
     showCut=id||'';
     /* landing on a slide the cut excludes would be a talk that starts
        on a slide it is not showing */
@@ -690,6 +758,7 @@
     syncLateButton();
   }
   function runLate(on){
+    var cut=activeCut();
     lateFrom=on?cur:-1;
     syncLateButton();
     renderFilm();
@@ -697,7 +766,7 @@
     if(!on){toast('Back to the full run');return 0;}
     var n=0;
     (pres.slides||[]).forEach(function(sl,i){
-      if(i>cur&&sl&&sl.opt&&inCut(sl,showCut)) n++;});
+      if(i>cur&&sl&&sl.opt&&inCut(sl,cut)) n++;});
     toast(n?(n+' optional slide'+(n===1?'':'s')
       +' will be skipped from here'):'No optional slides left to skip');
     return n;
@@ -710,7 +779,7 @@
       :'No longer optional');
   }
   function toggleSlideCut(i,id){
-    var sl=(pres.slides||[])[i]; if(!sl||!id) return;
+    var sl=(pres.slides||[])[i]; if(!sl||!id||!hasCut(id)) return;
     var c=(sl.cuts||[]).slice();
     var at=c.indexOf(id);
     if(at>=0) c.splice(at,1); else c.push(id);
@@ -760,7 +829,9 @@
       presenterSync();}
     else {
       var pv=nextShown(cur,-1);
-      go(pv>=0?pv:cur-1);
+      /* At the first slide in a cut, Back is a no-op. Raw cur-1 can be
+         a slide this version explicitly leaves out (T50). */
+      go(pv>=0?pv:cur);
     }
   }
 
