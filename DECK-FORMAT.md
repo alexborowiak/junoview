@@ -7,7 +7,7 @@ A deck is JSON. It travels in three places — a notebook's
 the app's project file — and `junoview.notebook.presentations`
 normalises all three into the one shape described here.
 
-**Two functions, deliberately opposite.** `_as_presentations` *coerces*
+**Two functions, deliberately opposite.** `as_presentations` *coerces*
 and never complains: it rebuilds a deck field by field, drops what it
 does not recognise and skips what it cannot use, which is why a deck
 saved months ago still opens. `deck_schema.validate_deck` *complains*
@@ -71,6 +71,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `grpmeta` | dict | Names for the groups on this slide. |
 | `hidden` | list | Card refs kept out of this slide's code trail. |
 | `label` | str | A name for this version of a poster. |
+| `lay` | str | The id of the slide template last applied; annotations hold its actual geometry. |
 | `layout` | str | Which pane arrangement this slide uses. |
 | `notes` | str | Speaker notes for this slide. |
 | `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
@@ -149,6 +150,32 @@ A colour field (`color`, `fillc`, `bgc`, `txcol`, `bgcol`) holds a CSS
 colour — or a **token reference**: the string `@accent`, naming an
 entry in the deck's `tokens.c`. A reference is not a copy, so changing
 the token changes every item wearing it.
+
+## Editing a deck from Python
+
+The public API is a live view over the file's JSON: it changes the same dicts
+the editor reads, so fields added by a newer browser are not lost on save.
+The numbered verbs are 1-based, like the numbers on screen; ordinary indexing
+through `deck.slides` remains Python's usual zero-based indexing.
+
+```python
+from junoview import Deck, open_deck
+
+deck = open_deck("talk.junoview.html", name="Conference talk")
+deck.slide(3).figures["toe_map"].place(x=8, w=60)
+deck.remove_slide(7)
+problems = deck.save("talk.json")   # the explicit target chooses JSON
+
+# Data already in memory uses the same live view.
+view = Deck.from_json(deck.raw)
+```
+
+`save()` returns the validator's problems and writes unless `strict=True`
+finds an error. An `.ipynb` target requires a deck opened from a notebook,
+because this API does not invent notebook cells; an `.html` target requires
+an existing Junoview HTML wrapper, because the wrapper belongs to the browser
+exporter. Any other explicit suffix writes JSON. A suffixless target, or
+`save()` with no new path, preserves the source form.
 
 ## Checking a file
 

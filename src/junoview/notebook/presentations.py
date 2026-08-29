@@ -86,6 +86,11 @@ def as_presentations(obj: Any) -> list:
                 n = _LAYOUT_PANES[lay]
                 panes = (raw_panes + [None] * n)[:n]
                 slide: dict = {"layout": lay, "panes": panes}
+                # Applying a modern template turns the old pane skeleton into
+                # blank/free annotations. `lay` is the template id the gallery
+                # reads back to keep the right card selected (T51).
+                if isinstance(s.get("lay"), str) and s["lay"].strip():
+                    slide["lay"] = s["lay"].strip()
                 if lay == "title":
                     slide["title"] = str(s.get("title") or "")
                     slide["sub"] = str(s.get("sub") or "")

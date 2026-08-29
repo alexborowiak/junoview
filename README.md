@@ -283,6 +283,11 @@ Deck-wide **Design tokens** and the page-wide **Tidy page** report stay on
 **→ [PRESENTATIONS.md](PRESENTATIONS.md)** covers the builder, decks that mix
 several notebooks, and where presentations are saved.
 
+Decks can also be edited without opening the browser. Use
+`from junoview import open_deck` for a live Python view with slide, item, move,
+remove and save operations. [DECK-FORMAT.md](DECK-FORMAT.md#editing-a-deck-from-python)
+has the API example and the complete file format.
+
 ## Live in Jupyter
 
 The static page is for sharing. When you want to *explore*, `SemanticNotebook`

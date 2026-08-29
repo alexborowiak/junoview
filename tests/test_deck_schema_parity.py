@@ -98,6 +98,7 @@ DECK_SENTINELS = {
 }
 
 SLIDE_SENTINELS = {
+    "lay": "title-figure",
     "label": "poster v2",
     "sec": "s1",
     "bg": "#123456",

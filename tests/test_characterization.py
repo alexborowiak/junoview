@@ -381,8 +381,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # explicit optional/not-shown words make the cut state visible in the strip.
 # Pinned by tests/test_slide_sections.py and verified in Edge across 39 cut,
 # persistence, undo, navigation and run-lifecycle checks.
-EXPECTED_MD5 = "2a31b005a0b36a25a445aba2332247fb"
-EXPECTED_BYTES = 3000193
+# Moved 2026-08-29 for TASKS T51: normPres now keeps the applied slide-template
+# id (`lay`) so all layout galleries reselect it after a saved-deck reload.
+# The Python API/schema/public-surface changes do not enter the rendered page.
+# Pinned by schema parity and verified in Edge across 10 template-round-trip
+# and gallery-selection checks.
+EXPECTED_MD5 = "93c27af2454d7fd81cf9ce63369fc320"
+EXPECTED_BYTES = 3000465
 
 
 def _render_example() -> str:

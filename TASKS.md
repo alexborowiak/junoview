@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 5 open items, T51–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 4 open items, T52–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -962,7 +962,7 @@ file before touching anything.
   persistence, same-id deck switching, filtered navigation, Running late,
   accessible selection and runtime errors across three fixtures (39 checks).
 
-- [ ] **T51 · M — The Python deck API is finished and reachable.**
+- [x] **T51 · M — The Python deck API is finished and reachable.**
   - there is no way to delete a slide, and the obvious attempts silently
     no-op;
   - `save()` picks the output format from the SOURCE file rather than
@@ -972,6 +972,19 @@ file before touching anything.
     editor writes into every deck it saves;
   - the API is not reachable from junoview's public API and is
     documented nowhere outside this file.
+  *2026-08-29.* `Deck.remove_slide(n)` now mutates the stored list with the
+  same clamped, 1-based numbering as the other structural verbs, reports
+  whether anything was removed, and the empty-deck move path is harmless.
+  An explicit save target now owns its format: notebook and HTML targets
+  require the real source structure, every other suffix writes JSON, and a
+  suffixless target preserves the source form — so no JSON or HTML is written
+  under a lying extension. Multi-deck documents and unrelated notebook data
+  remain intact. `lay` is now a documented string field carried by both JS
+  and Python normalisers, so the applied template survives project saves and
+  reloads. `Deck` and `open_deck` are public without colliding with the model's
+  `Item`; README, DECK-FORMAT and ARCHITECTURE point to the live-view API.
+  Browser-verified import, apply, persistence, deck switching and all three
+  gallery selections with no runtime errors (10 checks).
 
 - [ ] **T52 · S — Guides are editable, undoable and hideable.** T4
   shipped draw-and-delete: a guide box can be moved but never resized

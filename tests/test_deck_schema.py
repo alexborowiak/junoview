@@ -31,10 +31,24 @@ DOC = Path(__file__).resolve().parent.parent / "DECK-FORMAT.md"
 
 def test_a_good_deck_has_nothing_said_about_it():
     deck = {"name": "demo", "slides": [
-        {"layout": "full", "panes": ["clim"],
+        {"layout": "full", "lay": "title-figure", "panes": ["clim"],
          "annots": [{"k": "text", "x": 10, "y": 20, "text": "hello"}]},
     ]}
     assert validate_deck(deck) == []
+
+
+def test_lay_is_a_template_id_not_the_closed_structural_layout_catalogue():
+    """Frontend template ids grow independently of the six legacy pane
+    layouts. Validate their type, but do not reject a newer template name.
+    """
+    deck = {"name": "demo", "slides": [
+        {"layout": "blank", "lay": "poster-from-2028", "panes": []},
+    ]}
+    assert validate_deck(deck) == []
+    deck["slides"][0]["lay"] = 7
+    got = validate_deck(deck)
+    assert len(got) == 1 and got[0].level == "error"
+    assert got[0].path.endswith("slides[0].lay")
 
 
 def test_it_reports_every_problem_not_just_the_first():
@@ -187,7 +201,8 @@ def test_the_schema_covers_what_the_loader_actually_keeps():
         "foot": {"text": "f"}, "styles": {"h1": {"size": 44}},
         "tokens": {"c": {"accent": "#39a9c0"}},
         "slides": [{
-            "layout": "title", "panes": [], "title": "T", "sub": "S",
+            "layout": "title", "lay": "poster-title", "panes": [],
+            "title": "T", "sub": "S",
             "tprops": {"size": 44}, "sprops": {"size": 20},
             "annots": [{"k": "text", "x": 1, "y": 1}],
             "hidden": ["demo::clim"], "label": "v2", "sec": "s1",

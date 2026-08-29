@@ -124,6 +124,10 @@
       slides:(p.slides||[]).map(function(s){
         var o={layout:s.layout,
           panes:(s.panes||[]).map(ns)};
+        /* Applying a template turns the old pane skeleton into free
+           annotations (`layout: blank`). `lay` is the template id the
+           gallery needs to keep its applied card selected after reload. */
+        if(typeof s.lay==='string'&&s.lay) o.lay=s.lay;
         /* the name you gave a poster version. Not carrying it here meant
            it survived until the next load and then silently became
            "empty slide" again (2026-08-10) */

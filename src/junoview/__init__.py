@@ -33,6 +33,7 @@ from __future__ import annotations
 
 __version__ = "0.2.0"
 
+from .notebook.deck_api import Deck, open_deck
 from .notebook.directives import split_directives
 from .notebook.loader import (
     doc_from_url,
@@ -55,6 +56,8 @@ __all__ = [
     # reading notebooks
     "split_directives", "parse_notebook", "render_outputs",
     "load_doc", "doc_from_url", "render_notebook_file", "embed_deck",
+    # editing decks
+    "Deck", "open_deck",
     # rendering
     "render_page", "render_shell", "render_html",
     "build_graph_svg", "highlight_python", "md_to_html",

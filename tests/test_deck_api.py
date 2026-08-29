@@ -212,6 +212,29 @@ def test_moving_a_slide_uses_the_numbers_on_the_screen():
     assert d.slide(2).title == "A claim"
 
 
+def test_removing_a_slide_changes_the_stored_list_not_a_wrapper_copy():
+    """The elements of ``slides`` are live handles, but its outer list is
+    only a view. Structural verbs therefore live on Deck and use the same
+    1-based, clamped positions as the editor's visible slide numbers.
+    """
+    raw = _deck()
+    first, second = raw["slides"]
+    d = Deck.from_json(raw)
+    assert d.remove_slide(1) is True
+    assert raw["slides"] == [second]
+    assert d.slide(1).raw is second
+    assert d.remove_slide(99) is True       # clamps to the last slide
+    assert raw["slides"] == []
+    assert d.remove_slide(1) is False
+    d.move_slide(1, 2)                      # empty is also a safe no-op
+
+    low = Deck.from_json({"name": "low", "slides": [first, second]})
+    assert low.remove_slide(0) is True      # clamps to the first slide
+    assert low.slide(1).raw is second
+    assert Deck.from_json({"name": "bad", "slides": None}) \
+        .remove_slide(1) is False
+
+
 # ---------------------------------------------------------------------------
 # files
 # ---------------------------------------------------------------------------
@@ -268,6 +291,58 @@ def test_the_html_wrapper_the_browser_writes_is_kept(tmp_path):
     assert obj["presentations"][0]["slides"][1]["notes"] == "new note"
 
 
+def test_html_to_json_uses_the_target_and_keeps_sibling_decks(tmp_path):
+    """T51's complete Save As regression: the explicit target beats the
+    HTML source, removal reaches the selected deck's stored list, a newer
+    ``lay`` key survives, and a sibling deck is untouched.
+    """
+    a, b = _deck(), _deck()
+    b["name"] = "Another"
+    b["slides"][1]["lay"] = "title-figure"
+    payload = {"presentations": [a, b]}
+    page = ('<!doctype html><html><body><h1>Original wrapper</h1>'
+            '<script type="application/json" id="junoview-data">\n'
+            + json.dumps(payload) + '\n</script></body></html>\n')
+    source = tmp_path / "talk.junoview.html"
+    source.write_text(page, encoding="utf-8", newline="\n")
+
+    d = Deck.open(source, name="Another")
+    assert d.remove_slide(1) is True
+    target = tmp_path / "copy.deck.JSON"
+    d.save(target)
+    first = target.read_bytes()
+    d.save(target)
+    assert target.read_bytes() == first and b"\r\n" not in first
+    assert first.lstrip().startswith(b"{") and b"<html" not in first
+    assert source.read_text(encoding="utf-8") == page
+
+    suffixless = tmp_path / "wrapper-copy"
+    d.save(suffixless)
+    assert suffixless.read_text(encoding="utf-8").lstrip().startswith(
+        "<!doctype html>")
+
+    reopened = open_deck(target, name="Another")
+    assert len(reopened.slides) == 1
+    assert reopened.slide(1).raw["lay"] == "title-figure"
+    sibling = open_deck(target, name="The talk")
+    assert len(sibling.slides) == 2
+
+
+@pytest.mark.parametrize("suffix, phrase", [
+    (".ipynb", "opened from a notebook"),
+    (".html", "existing .junoview.html wrapper"),
+])
+def test_save_refuses_to_disguise_json_as_a_structured_format(
+        tmp_path, suffix, phrase):
+    """A wrapper/notebook cannot be invented without coercing the document.
+    Raising is safer than valid deck JSON wearing a lying file extension.
+    """
+    target = tmp_path / ("wrong" + suffix)
+    with pytest.raises(ValueError, match=phrase):
+        Deck.from_json(_deck()).save(target)
+    assert not target.exists()
+
+
 def test_a_notebook_keeps_everything_except_its_deck(tmp_path):
     """Decks travel in metadata.semantic.presentations. Everything else
     in the notebook -- its cells, its kernel, its other metadata -- is
@@ -281,18 +356,37 @@ def test_a_notebook_keeps_everything_except_its_deck(tmp_path):
     p.write_text(json.dumps(nb), encoding="utf-8")
     d = Deck.open(p)
     d.slide(2).figures["toe_map"].place(x=99)
-    d.save()
-    back = json.loads(p.read_text(encoding="utf-8"))
+    target = tmp_path / "copy.IPYNB"
+    d.save(target)
+    back = json.loads(target.read_text(encoding="utf-8"))
     assert back["cells"] == nb["cells"]
     assert back["metadata"]["kernelspec"] == {"name": "python3"}
     got = back["metadata"]["semantic"]["presentations"][0]
     assert got["slides"][1]["annots"][0]["x"] == 99
+    # An explicit JSON target is still the whole document, by to_json's
+    # contract; it is JSON rather than a notebook-shaped file in disguise.
+    json_target = tmp_path / "copy.json"
+    d.save(json_target)
+    assert json.loads(json_target.read_text(encoding="utf-8"))["cells"] \
+        == nb["cells"]
 
 
 def test_open_deck_is_the_same_door_under_a_function_name(tmp_path):
     p = tmp_path / "d.junoview"
     p.write_text(json.dumps(_deck()), encoding="utf-8")
     assert open_deck(p).name == Deck.open(p).name
+
+
+def test_deck_and_open_deck_are_on_the_public_package_surface():
+    import junoview
+    from junoview import Deck as PublicDeck
+    from junoview import open_deck as public_open_deck
+
+    assert PublicDeck is junoview.Deck is Deck
+    assert public_open_deck is junoview.open_deck is open_deck
+    assert {"Deck", "open_deck"} <= set(junoview.__all__)
+    # deck_api.Item would collide with the notebook model's long-public Item.
+    assert junoview.Item is not Item
 
 
 def test_asking_for_a_deck_that_is_not_there_says_what_is(tmp_path):

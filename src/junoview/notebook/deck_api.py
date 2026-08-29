@@ -418,6 +418,12 @@ class Deck:
 
     @property
     def slides(self) -> list[Slide]:
+        """Live slide handles, in order.
+
+        Editing a handle changes the stored slide. Change the list itself
+        through :meth:`add_slide`, :meth:`move_slide` and
+        :meth:`remove_slide`; this returned list is only the current view.
+        """
         return [Slide(s) for s in self.raw.get("slides") or []
                 if isinstance(s, dict)]
 
@@ -473,11 +479,25 @@ class Deck:
     def move_slide(self, frm: int, to: int) -> None:
         """Move a slide, both positions 1-based."""
         slides = self.raw.get("slides")
-        if not isinstance(slides, list):
+        if not isinstance(slides, list) or not slides:
             return
         i = max(0, min(int(frm) - 1, len(slides) - 1))
         j = max(0, min(int(to) - 1, len(slides) - 1))
         slides.insert(j, slides.pop(i))
+
+    def remove_slide(self, n: int) -> bool:
+        """Remove slide *n*, counting from 1.
+
+        Positions outside the deck clamp to its first or last slide, as the
+        other structural verbs do. Returns ``False`` when there is no stored
+        slide to remove.
+        """
+        slides = self.raw.get("slides")
+        if not isinstance(slides, list) or not slides:
+            return False
+        i = max(0, min(int(n) - 1, len(slides) - 1))
+        del slides[i]
+        return True
 
     # -- checking and writing -----------------------------------------
     def problems(self) -> list[Problem]:
@@ -496,9 +516,11 @@ class Deck:
 
         Reports rather than raising, which is T33's split kept: a deck
         with a warning in it is still a deck, and a script that would
-        rather stop passes ``strict=True``. An ``.ipynb`` is rewritten
-        with only its deck changed; a ``.junoview.html`` keeps its
-        wrapper and only the JSON block inside it moves.
+        rather stop passes ``strict=True``. The target suffix chooses the
+        writer: an ``.ipynb`` target needs a notebook-backed deck; an
+        ``.html`` target keeps an existing Junoview wrapper; every other
+        explicit suffix writes JSON. A suffixless target preserves the
+        source form.
         """
         target = Path(path) if path is not None else self.path
         if target is None:
@@ -508,18 +530,31 @@ class Deck:
             raise ValueError("; ".join(f"{p.path}: {p.message}"
                                        for p in found
                                        if p.level == "error"))
-        if self._kind == "notebook" or target.suffix.lower() == ".ipynb":
+        suffix = target.suffix.lower()
+        html_source = (self._source.lstrip().startswith("<")
+                       and _HTML_BLOCK_RE.search(self._source) is not None)
+        if suffix == ".ipynb":
+            if self._kind != "notebook":
+                raise ValueError("an .ipynb target needs a deck opened from "
+                                 "a notebook; choose a JSON target instead")
             text = json.dumps(self.document, indent=1,
                               ensure_ascii=False) + "\n"
-        elif self._source.lstrip().startswith("<") and _HTML_BLOCK_RE.search(
-                self._source):
+        elif suffix in (".html", ".htm"):
+            if not html_source:
+                raise ValueError("an HTML target needs a deck opened from an "
+                                 "existing .junoview.html wrapper; choose a "
+                                 "JSON target instead")
             # KEEP THE WRAPPER. It is a real page with a name, an icon and
             # instructions for opening it; rebuilding it here would mean a
             # second copy of that markup, drifting from deck.js's.
-            body = json.dumps(self.document, ensure_ascii=False)
-            text = _HTML_BLOCK_RE.sub(
-                lambda m: m.group(1) + "\n" + body.replace("<", "\\u003c")
-                + "\n" + m.group(3), self._source, count=1)
+            text = _html_with_document(self._source, self.document)
+        elif suffix:
+            text = self.to_json()
+        elif self._kind == "notebook":
+            text = json.dumps(self.document, indent=1,
+                              ensure_ascii=False) + "\n"
+        elif html_source:
+            text = _html_with_document(self._source, self.document)
         else:
             text = self.to_json()
         target.write_text(text, encoding="utf-8", newline="\n")
@@ -539,6 +574,15 @@ def open_deck(path: str | Path, name: str | None = None) -> Deck:
 # --------------------------------------------------------------------------
 # helpers
 # --------------------------------------------------------------------------
+
+def _html_with_document(source: str, document: Any) -> str:
+    """Replace one browser-export wrapper's JSON block, byte-for-byte
+    everywhere else."""
+    body = json.dumps(document, ensure_ascii=False)
+    return _HTML_BLOCK_RE.sub(
+        lambda m: m.group(1) + "\n" + body.replace("<", "\\u003c")
+        + "\n" + m.group(3), source, count=1)
+
 
 def _pick(decks: list, name: str | None) -> int:
     if not decks:

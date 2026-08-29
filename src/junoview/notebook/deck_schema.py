@@ -98,6 +98,8 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
 #: Slide-level keys.
 SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "layout": (str, "Which pane arrangement this slide uses."),
+    "lay": (str, "The id of the slide template last applied; annotations "
+                 "hold its actual geometry."),
     "panes": (list, "One card anchor per pane, or null for an empty one."),
     "title": (str, "Title-slide heading."),
     "sub": (str, "Title-slide subheading."),
