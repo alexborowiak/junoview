@@ -878,14 +878,24 @@
      IndexedDB costs it nothing it was not already paying. */
   function useOriginals(root){
     var jobs=[];
+    function swap(o){
+      if(!o||!o.okey||!o.src) return;
+      jobs.push(originalOf(o).then(function(full){
+        if(!full||full===o.src) return;
+        $$('.an-imgel,img',root).forEach(function(im){
+          if(im.getAttribute('src')===o.src) im.src=full;});
+      }));
+    }
     (pres.slides||[]).forEach(function(sl){
       (sl.annots||[]).forEach(function(a){
-        if(!a||a.k!=='image'||!a.okey||!a.src) return;
-        jobs.push(originalOf(a).then(function(full){
-          if(!full||full===a.src) return;
-          $$('.an-imgel',root).forEach(function(im){
-            if(im.getAttribute('src')===a.src) im.src=full;});
-        }));
+        if(!a) return;
+        if(a.k==='image'){swap(a);return;}
+        /* A FLIP BOOK'S FRAMES ARE PICTURES TOO. They are the fourth
+           door a picture comes in by, and the only one that was not
+           asked here — so a flip book printed its display copies while
+           every other picture on the page printed at full resolution
+           (2026-08-26 audit, T58). */
+        if(a.k==='flip'&&Array.isArray(a.frames)) a.frames.forEach(swap);
       });
     });
     if(!jobs.length) return Promise.resolve();
@@ -918,9 +928,18 @@
       window.removeEventListener('afterprint',cleanup);
     }
     window.addEventListener('afterprint',cleanup);
-    /* let layout + MathJax settle, then open the print dialog */
-    setTimeout(function(){try{window.print();}catch(e){}
-      setTimeout(cleanup,800);},120);
+    /* THROUGH afterTypeset, like every other export. This went straight
+       to window.print() after a 120ms guess, so useOriginals never ran
+       for the PDF — the one output that is printed on paper got the
+       display copies, which is the whole of T21 undone. The comment
+       above useOriginals claimed "every path that turns a print root
+       into a file goes through afterTypeset"; this was the path that
+       did not (2026-08-26 audit, T58). afterTypeset also waits for
+       MathJax, which is what the 120ms was standing in for. */
+    afterTypeset(root,function(){
+      try{window.print();}catch(e){}
+      setTimeout(cleanup,800);
+    });
     return root;   /* returned for headless testing */
   }
   window.SemDeckPrint=printDeck;   /* test hook */
@@ -932,6 +951,7 @@
   window.SemDeckLinkedImages=linkedImages;          /* test hook */
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
+  menuAction('#mi-refresh-figs',function(){resyncAllFigures();});
   menuAction('#mi-hist',openHistory);
   menuAction('#mi-review',openReview);
   menuAction('#mi-pdf',function(){printDeck();});
@@ -1218,6 +1238,11 @@
      reading it threw ReferenceError, so exporting any deck or poster that
      contained a single line or arrow produced no file and — because the
      throw escaped before the toast — no message either (2026-08-10). */
+  /* the retained original for a display copy, or the display copy when
+     there is none — ONE lookup, so no branch can forget it */
+  function pptxSrc(note,src){
+    return (note&&note.orig&&note.orig[src])||src;
+  }
   function pptxItems(s,note,ink,layer){
     var items=[];
     if(s.layout==='title'){
@@ -1264,7 +1289,7 @@
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
-          rot:a.rot,op:a.op,src:a.src});
+          rot:a.rot,op:a.op,src:pptxSrc(note,a.src)});
         else note.skipped++;
       } else if(a.k==='rect'){
         /* `a.fill` is a BOOLEAN — "tint with my own line colour" — so the
@@ -1321,7 +1346,7 @@
           if(fig&&fig.src&&fig.src.indexOf('data:')===0) fsrc=fig.src;
         }
         if(fsrc) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
-          rot:a.rot,op:a.op,src:fsrc,
+          rot:a.rot,op:a.op,src:pptxSrc(note,fsrc),
           name:(fsel&&fsel.label)||'Figure'});
         else note.skipped++;
       } else if(a.k==='cell'){
@@ -1356,10 +1381,40 @@
     });
     return items;
   }
+  /* EVERY ORIGINAL THIS EXPORT WILL NEED, resolved before the build.
+     JunoPptx.build is synchronous and pptxItems with it, so the
+     IndexedDB lookup cannot happen inside them — it happens once, here,
+     and is handed down as a plain {displaySrc: fullBytes} map. */
+  function pptxOriginals(){
+    var jobs=[],out={};
+    function want(o){
+      if(!o||!o.okey||!o.src||out[o.src]!==undefined) return;
+      out[o.src]=null;
+      jobs.push(originalOf(o).then(function(full){
+        if(full&&full!==o.src) out[o.src]=full;}));
+    }
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(!a) return;
+        if(a.k==='image') want(a);
+        else if(a.k==='flip'&&Array.isArray(a.frames)) a.frames.forEach(want);
+      });
+    });
+    if(!jobs.length) return Promise.resolve(out);
+    return Promise.all(jobs).then(function(){return out;},
+      function(){return out;});
+  }
   function exportDeckPptx(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
-    var pg=pageOf(),note={skipped:0,cropped:0,maths:0};
+    /* a .pptx leaves this machine and is re-scaled by whoever opens it,
+       so it is one of the two consumers that most wants the full bytes —
+       and it was embedding a.src, which is the shrunk display copy
+       (2026-08-26 audit, T58) */
+    return pptxOriginals().then(pptxBuildAndSave);
+  }
+  function pptxBuildAndSave(orig){
+    var pg=pageOf(),note={skipped:0,cropped:0,maths:0,orig:orig||{}};
     var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     var out=JunoPptx.build({

@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 1 open item, T58 — a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **Complete as of 2026-08-29.** Every entry is now a design record: what the audit found, what survived verification, and what was done about it. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -1195,7 +1195,7 @@ file before touching anything.
   ribbon layout places both controls explicitly beside their semantic
   neighbours, so neither can fall into an arbitrary catch-all group.
 
-- [ ] **T58 · L — Verify, then act on, the figures group (T17–T22).**
+- [x] **T58 · L — Verify, then act on, the figures group (T17–T22).**
   24 findings whose refuter never ran, so **re-check each one before
   believing it.** The strongest-looking leads: `printDeck` never calls
   `afterTypeset`, so the PDF/print export never swaps the hi-res
@@ -1210,6 +1210,56 @@ file before touching anything.
   command anywhere, only a tie between two objects that already exist;
   and `figFonts` collects each SVG figure's font sizes that nothing
   ever reads.
+  *2026-08-29.* **Verified first, as the entry asks: 21 of the 24 held
+  and 3 died.** Dead: `cloneAnnots` and `pasteBuf` both re-key `cap` and
+  re-point `capOf` already — `independentCopies` does it for both doors,
+  with a comment saying why — and the provenance pane *is* re-rendered
+  on a selection change, by `syncInspectorPanes`, which the reader's
+  three-caller count missed. The other 21 are fixed.
+  **Captions.** The reference list is built AFTER `figNumbers()` rather
+  than before it, so it can appear at all — it was gated on ids that
+  only the call two lines below it minted, which meant that on a deck
+  where nothing had been tied or numbered the section could never
+  render, on any deck, ever. It lists every figure in a scrolling run
+  instead of the first eight. `addCaption` is the command T17 never
+  had — a box under the figure, at its width, tied and numbered, with
+  the caret in it — reachable from a canvas row and from `#fmt-caption`,
+  which is one button in two states (Caption / Untie caption) the way
+  `#fmt-revert` already is. Deleting a figure unties its caption and
+  freezes the number it was showing, so the words stay what they said.
+  `numberCaption` and `refCaption` insert their token INTO `a.html`
+  rather than deleting it. A component records the tie as a relation
+  between members and mints the pair fresh per placement. A
+  position-locked caption still takes its figure's width and is no
+  longer dragged by it. `{fig}` distinguishes three misses instead of
+  two. All four caption rows wear icons, two of them new (`unlink`,
+  `caption`).
+  **Provenance.** `provOf` asks `provRef`, so a flip book — which
+  `isFigure` has always counted as a figure — has provenance, staleness
+  and re-sync like anything else. The lineage and plot-trace jumps close
+  the deck first: `.deck` is an opaque full-window overlay and they had
+  been scrolling cards into view behind it. `staleFigures`/
+  `resyncAllFigures` and **File ▸ Update figures from the notebook**
+  give figures the deck-wide door pictures already had. The pane has a
+  ribbon door (`#fmt-prov`) beside the three commands of its own family,
+  and every button in it wears an icon.
+  **Originals.** `printDeck` goes through `afterTypeset`, so the PDF —
+  the one output that ends up on paper — finally gets the full bytes;
+  the claim that "every path that turns a print root into a file goes
+  through afterTypeset" was false when it was written. `refreshLinked
+  Images` keeps the newly-read bytes as the new original instead of
+  leaving `okey` naming the file as it was on first insert. The .pptx
+  resolves originals before the build and hands them down as a map.
+  A flip book's frames retain originals, and `useOriginals` walks them.
+  **The lint.** It reads the `sizes` `figFonts` was already collecting,
+  gained a trim check (the deck's own `a.crop` insets need no metadata),
+  counts figures in its summary line, and says "figures" in the button,
+  the tooltip and the pane that open it.
+  Browser-verified in Edge across 30 checks on a fixture deck: the
+  reference list on a virgin deck, the rich run surviving the insert,
+  add-then-untie from the ribbon, provenance for a flip book with iconed
+  buttons, delete-unties-and-freezes, the deck-wide update, the renamed
+  lint and both exports still building — with no runtime errors.
 
 ---
 

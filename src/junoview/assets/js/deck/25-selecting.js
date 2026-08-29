@@ -50,6 +50,7 @@
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
+    +'#fmt-caption #fmt-prov '
     +'#fmt-crop #fmt-same #fmt-style #fmt-sw #fmt-head #fmt-bend '
     +'#fmt-fillstyle #fmt-shape '
     +'#fmt-align-btn #fmt-para #fmt-size #fmt-op '
@@ -326,6 +327,29 @@
     show('#fmt-tbl-grid',isTbl,isTbl&&a.grid!==0);
     show('#fmt-replace',kind==='cell');
     show('#fmt-locate',kind==='cell'&&!!a.ref);
+    /* for anything that came OUT of a notebook, which since T58 means a
+       flip book as well as a placed cell */
+    show('#fmt-prov',isNum&&!!provRef(a));
+    /* ONE BUTTON, TWO STATES — the pattern #fmt-revert above already
+       uses. A figure without a caption gets "Caption"; one with a
+       caption gets "Untie caption", which until now had no door but a
+       right-click row (2026-08-26 audit, T58). */
+    var figSel=isNum&&isFigure(a);
+    show('#fmt-caption',figSel);
+    if(figSel){
+      var cb=$('#fmt-caption'),hasCap=capHasOne(a);
+      if(cb){
+        cb.innerHTML=hasCap?(bic('unlink')+' Untie caption')
+          :(bic('caption')+' Caption');
+        cb.title=hasCap
+          ?'Let them be two ordinary objects again. The words stay '
+            +'exactly where they are; they simply stop following the '
+            +'figure.'
+          :'Put a caption under this figure — at its width, already '
+            +'tied to it and already numbered, so it follows the '
+            +'figure and renumbers itself when slides move.';
+      }
+    }
     var lockedV=(kind==='cell')&&!!(a.lockver&&a.lockver.commit);
     var frozen=(kind==='cell')&&frozenFrames.has(a);
     var hasPrev=(kind==='cell')&&!!a.ref
@@ -812,7 +836,10 @@
       var m=(s.annots||[])[i];
       if(!m||!m.cap) return;
       var ci=capOfFig(s,m);
-      if(ci>=0&&movers.indexOf(ci)<0)
+      /* a POSITION LOCK is about position, and every direct mover
+         already honours it — this was the one path that dragged a
+         pinned item anyway (2026-08-26 audit, T58) */
+      if(ci>=0&&movers.indexOf(ci)<0&&!pinned(s.annots[ci]))
         capOrig[i]={a:s.annots[ci],o:deep(s.annots[ci])};
     });
     var single=(typeof idx!=='number')?deep(a):null;
@@ -1127,6 +1154,10 @@
     var c0=anchorPos(capO,capO.w,capO.h);
     var cw=capO.w?capO.w*(w1/w0):capO.w;
     if(capO.w) capA.w=cw;
+    /* A POSITION LOCK IS ABOUT POSITION — the rule T57 settled for the
+       Arrange verbs, and the same one here: a pinned caption still takes
+       its figure's width, and stays exactly where it was put. */
+    if(pinned(capA)) return;
     anchorSet(capA,c0.x+(f1.x-f0.x),c0.y,cw,capO.h);
   }
   function startRotate(layer,s,idx,ev0){
@@ -1463,7 +1494,7 @@
     m.className='sh-menu canvas-menu';m.id='canvas-menu';
     /* the click, in page percentages, frozen at open time */
     var at=pctPoint(layer,ev);
-    function row(label,keys,fn,title,icon){
+    function row(label,keys,fn,title,icon,host){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';
       /* the icon is trusted bic() markup; the LABEL stays a text node */
@@ -1476,7 +1507,7 @@
       if(title) b.title=title;
       b.addEventListener('click',function(e){
         e.stopPropagation();m.remove();fn();});
-      m.appendChild(b);
+      (host||m).appendChild(b);
       return b;
     }
     var n=selIdxs().length;
@@ -1510,37 +1541,67 @@
                 +'Type {fig} in it for its number');},
             'It moves with the figure and takes its width when the '
             +'figure is resized. It is still an ordinary text box you '
-            +'can select and restyle on its own.');
+            +'can select and restyle on its own.','link');
         }
       } else if(capSel.length===1){
         var one=capAn[capSel[0]];
+        /* ADD ONE, rather than tie two things that already exist. T17
+           shipped only the tie, and only when exactly two objects were
+           selected — so there was no answer at all to "caption this",
+           which is one command on the picture in every other tool and
+           is how anyone actually writes a caption (2026-08-26 audit,
+           T58). */
+        if(one&&isFigure(one)&&!capHasOne(one)){
+          menuHead(m,'figure');
+          row('Add a caption','',function(){addCaption(capSel[0]);},
+            'A text box under it, at its width, already tied and '
+            +'already numbered — type the words','caption');
+        }
         if(one&&(one.cap||one.capOf)){
           menuHead(m,'figure');
           if(one.capOf) row('Number it — put “Figure N” in front','',
             function(){numberCaption(capSel[0]);},
             'Writes {fig} into the caption, which renders as the '
-            +'figure’s number and renumbers itself when slides move');
+            +'figure’s number and renumbers itself when slides move',
+            'numbers');
           row(one.capOf?'Untie this caption'
             :'Untie this figure’s caption','',
             function(){
               if(untieCaption(capSel[0]))
-                toast('Untied — they are two ordinary objects');});
+                toast('Untied — they are two ordinary objects');},
+            null,'unlink');
         }
         /* a reference from ANY text box to a figure */
         if(one&&one.k==='text'&&!one.capOf){
+          /* NUMBER FIRST, THEN LIST. The list was built from figures
+             that already had a `cap` — and `cap` is minted by
+             figNumbers(), which was called two lines further down,
+             INSIDE `if(figs.length)`. On any deck where nothing had ever
+             been tied or numbered no figure had a cap, so the list came
+             back empty, the guard failed, figNumbers never ran, and the
+             section could not appear: not on this deck, not on any deck,
+             ever (2026-08-26 audit, T58). */
+          var fmap=figNumbers();
           var figs=[];
           (pres.slides||[]).forEach(function(sl){
             (sl.annots||[]).forEach(function(x){
-              if(isFigure(x)&&x.cap) figs.push(x);});});
+              if(isFigure(x)&&!x.hide&&x.cap) figs.push(x);});});
           if(figs.length){
             menuHead(m,'refer to a figure');
-            var fmap=figNumbers();
-            figs.slice(0,8).forEach(function(x){
+            /* EVERY figure, in a box that scrolls when there are many.
+               `.slice(0,8)` threw the rest away silently — on the poster
+               tool whose sibling task is written around "regenerate 30
+               figures", seven eighths of a deck could not be referred
+               to at all. */
+            var fbox=document.createElement('div');
+            fbox.className='menu-scroll';
+            m.appendChild(fbox);
+            figs.forEach(function(x){
               var num=fmap[x.cap]?fmap[x.cap].n:'?';
               row('Insert a reference to Figure '+num,'',function(){
                 refCaption(capSel[0],x.cap);},
                 'Writes {fig:'+x.cap+'}, which follows that figure’s '
-                +'number wherever it ends up');
+                +'number wherever it ends up','locate',fbox);
             });
           }
         }
@@ -1636,7 +1697,7 @@
           row('Where this came from…','',showProvPane,
             'The notebook and cell that made it, every cell in its '
             +'lineage, and whether the notebook has moved on since',
-            'locate');
+            'tree');
         }
       }
       row('History of this object…','',showObjHist,
@@ -2000,6 +2061,34 @@
         :'Those '+held+' items are fully locked — unlock them first');
       return;
     }
+    /* A CAPTION WHOSE FIGURE HAS GONE is rubbish somebody else has to
+       find: the review lint exists partly to report exactly this. Untie
+       it here instead. The caption STAYS — it is an ordinary text box
+       and the words in it are yours — it simply stops claiming to
+       belong to something that is not there (2026-08-26 audit, T58). */
+    var untied=0,fmapDel=null;
+    kept.forEach(function(i){
+      var f=(s.annots||[])[i];
+      if(!f||!f.cap) return;
+      var ci=capOfFig(s,f);
+      if(ci<0||kept.indexOf(ci)>=0) return;
+      var c=s.annots[ci];
+      /* FREEZE THE NUMBER IT WAS SHOWING. `{fig}` means "the number of
+         the figure I am tied to", so the moment that figure goes the
+         token has nothing left to say — and an untied box still
+         holding one renders '[not a caption]' where a second ago it
+         read 'Figure 3'. The words it was showing are the words it
+         keeps. */
+      fmapDel=fmapDel||figNumbers();
+      var hitDel=fmapDel[f.cap];
+      if(hitDel){
+        var nDel=String(hitDel.n);
+        c.text=String(c.text||'').replace(/\{fig\}/g,nDel);
+        if(c.html) c.html=String(c.html).replace(/\{fig\}/g,nDel);
+      }
+      delete c.capOf;
+      untied++;
+    });
     kept.sort(function(x,y){return y-x;}).forEach(function(i){
       if(i>=0&&i<s.annots.length) s.annots.splice(i,1);});
     if(!s.annots.length) delete s.annots;
@@ -2010,6 +2099,36 @@
     /* say what was NOT deleted, or a mixed selection looks like Delete
        half-worked for no reason */
     if(held) toast(held+' fully locked item'+(held===1?'':'s')+' kept');
+    else if(untied) toast(untied+' caption'+(untied===1?'':'s')
+      +' untied — the text is still there');
+  }
+  /* does this figure already have a caption on this slide */
+  function capHasOne(a){
+    var s=pres.slides[cur];
+    return !!(a&&a.cap&&s&&capOfFig(s,a)>=0);
+  }
+  /* T17 shipped the TIE. This is the command: make the box, put it
+     under the figure at the figure's width, tie it, number it, and
+     leave the caret in it. */
+  function addCaption(i){
+    var s2=pres.slides[cur];
+    var f=s2&&(s2.annots||[])[i];
+    if(!f||!isFigure(f)) return 0;
+    var l=stage.querySelector('.annot-layer');
+    var r=l?annotRectPct(l,s2,i):null;
+    var x=r?r.l:(f.x||10);
+    var y=(r?r.b:((f.y||10)+(f.h||20)))+1;
+    var w=r?(r.r-r.l):(f.w||40);
+    s2.annots=s2.annots||[];
+    s2.annots.push({k:'text',x:Math.max(0,x),y:Math.min(96,y),
+      w:Math.max(6,w),size:1.8,bg:0,style:'caption',
+      text:'Figure {fig}. '});
+    var ci=s2.annots.length-1;
+    tieCaption(i,ci);
+    var l2=stage.querySelector('.annot-layer');
+    if(l2){selectAnnot(l2,ci);focusText(l2,ci);}
+    toast('Caption added — it follows the figure and numbers itself');
+    return 1;
   }
   function groupSel(){
     var s=pres.slides[cur]; if(!s||!s.annots) return;

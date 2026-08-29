@@ -83,6 +83,14 @@
              named in the report (2026-08-22). -->
         <button class="dc-mi" id="mi-refresh-img"><i data-ic="reload"></i>
           Refresh pictures from their files</button>
+        <!-- The same door for FIGURES. Re-sync existed only as a
+             per-figure button inside the provenance pane, shown only
+             when that one figure was stale - so there was no way to ask
+             "has anything on this deck moved on?" at all, though the
+             picture half of the same idea had both doors (2026-08-29,
+             T58). -->
+        <button class="dc-mi" id="mi-refresh-figs"><i data-ic="reload"></i>
+          Update figures from the notebook</button>
         <div class="dc-msep"></div>
         <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
         <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
@@ -556,9 +564,11 @@
                    'standardise text', and checked if all headings
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Check whether the headings, paragraphs and captions
- across the whole deck look the same as each other"><i data-ic="scope"></i>
-   Standardise text</button>
+                title="Check whether the headings, paragraphs and
+ captions across the whole deck look the same as each other &mdash; and
+ whether the figures do: their size on the page, their content zoom,
+ their trims and, for SVG figures, their type"><i data-ic="scope"></i>
+   Standardise</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -1281,9 +1291,27 @@
               <button class="dbtn etm" id="fmt-replace"
                 title="Swap in a different notebook card"><i data-ic="swap"></i>
                 Replace</button>
+              <!-- T17 shipped a TIE between two objects that already
+                   existed, and only when exactly two were selected. This
+                   is the command: caption THIS, which is how a caption
+                   gets written in every other tool (2026-08-29, T58). It
+                   shows for a figure that has not got one yet. -->
+              <button class="dbtn etm" id="fmt-caption" hidden
+                title="Put a caption under this figure &mdash; at its
+ width, already tied to it and already numbered. Once it has one, the
+ same button unties it"><i data-ic="caption"></i> Caption</button>
               <button class="dbtn etm" id="fmt-locate"
                 title="Jump to this card in its notebook &mdash; see where
  the plot came from"><i data-ic="locate"></i> Locate in notebook</button>
+              <!-- The pane's only door was a canvas right-click row,
+                   while its three nearest neighbours - Locate, Previous
+                   figure and the version lock - all sit here and are all
+                   notebook-provenance commands for the selected frame
+                   (2026-08-29, T58). -->
+              <button class="dbtn etm" id="fmt-prov"
+                title="Where this figure came from &mdash; the notebook
+ and cell that made it, every cell in its lineage, and whether the
+ notebook has moved on since"><i data-ic="tree"></i> Where from&#8230;</button>
               <button class="dbtn etm" id="fmt-revert"
                 title="Swap this frame between the LIVE figure and the one
  from before the last notebook refresh (rescue a figure a re-run
@@ -1344,7 +1372,7 @@
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Standardise text</span>
+        <div class="selpane-h"><span>Standardise text and figures</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"

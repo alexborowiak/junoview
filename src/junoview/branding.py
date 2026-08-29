@@ -318,6 +318,18 @@ _ICON_PATHS = {
     "frame": '<rect x="2.4" y="3.2" width="11.2" height="9.6" rx="1" '
              'stroke-dasharray="2.7 2.3"/>',
     # document-wide actions in the thin top bar
+    # a broken chain: untie. `link` on its own would have said the
+    # opposite of what the row does, and reusing a neighbour's glyph is
+    # the named defect T39/T54 swept for.
+    "unlink": '<path d="M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 '
+              '0 0 1 4.1 4.1l-.9.9"/>'
+              '<path d="M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 '
+              '0 0 1-4.1-4.1l.9-.9"/>'
+              '<path d="M2.4 2.4l11.2 11.2"/>',
+    # a picture with a line of words under it: a caption is a text box
+    # that belongs to a figure, and neither `text` nor `image` says that
+    "caption": '<rect x="2.2" y="2.4" width="11.6" height="7.2" rx="1"/>'
+               '<path d="M2.2 12.2h8.4"/><path d="M2.2 14.2h5.6"/>',
     "find": '<circle cx="7" cy="7" r="4.3"/>'
             '<path d="m10.2 10.2 3.6 3.6"/>',
     "undo": '<path d="M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6"/>'

@@ -145,14 +145,44 @@
     }
 
     /* ---- 3. the SVG figures that can answer about their type ---- */
-    var fams={},read=0;
+    var fams={},sizeSets={},read=0;
     boxes.forEach(function(p){
       var f=figFonts(p.a);
       if(!f) return;
       read++;
       f.fams.forEach(function(nm){(fams[nm]=fams[nm]||[]).push(p);});
+      /* the figure's whole set of sizes, as one key: the question is
+         whether two figures agree, not which sizes exist */
+      var key=f.sizes.slice().sort().join('|');
+      if(key) (sizeSets[key]=sizeSets[key]||[]).push(p);
     });
     var fk=Object.keys(fams);
+    /* THE SIZES IT WAS ALREADY COLLECTING. figFonts returned {fams,
+       sizes} and nothing ever read `.sizes` — so "flag mismatched
+       fonts/SIZES" was half-built: the numbers were gathered on every
+       run and thrown away (2026-08-26 audit, T58). Reported per FIGURE
+       rather than per value, because one figure legitimately uses
+       several sizes (a title, then ticks); what reads as careless is
+       two figures whose type has nothing in common. */
+    var szk=Object.keys(sizeSets);
+    if(read>=2&&szk.length>1){
+      szk.sort(function(x,y){
+        return sizeSets[y].length-sizeSets[x].length;});
+      var odds=[];
+      szk.slice(1).forEach(function(k){
+        odds=odds.concat(sizeSets[k]);});
+      out.push({kind:'figsize',sev:'info',
+        head:odds.length+' figure'+(odds.length===1?' uses':'s use')
+          +' different type sizes from the rest',
+        why:'Most are set at '+szk[0].replace(/\|/g,', ')+'. Read from '
+          +'the SVG itself, so only the '+read+' vector figure'
+          +(read===1?'':'s')+' could be asked. Two figures shown at the '
+          +'same width whose type differs like this will not look like '
+          +'a pair \u2014 and the fix is one rcParams in the notebook, '
+          +'which is why there is no button here.',
+        list:odds,
+        act:null});
+    }
     if(read>=2&&fk.length>1){
       fk.sort(function(x,y){return fams[y].length-fams[x].length;});
       out.push({kind:'figfont',sev:'info',
@@ -166,6 +196,36 @@
           +'button here.',
         list:fams[fk[fk.length-1]],
         act:null});
+    }
+    /* ---- 4. trimmed on some figures and not others ---- */
+    /* The "where metadata allows" argument covers a PNG's INTERNAL
+       margins — there is nothing in the file to read. But the deck
+       holds per-figure trim insets of its own, written by the trim
+       handles, and they need no metadata at all: a.crop's t/r/b/l are
+       right here. Two figures side by side, one trimmed to its axes and
+       one not, is exactly the "different margins" the spec names
+       (2026-08-26 audit, T58). */
+    var trimmed=boxes.filter(function(p){
+      var c=p.a.crop;
+      return !!(c&&(c.t||c.r||c.b||c.l));});
+    if(trimmed.length&&trimmed.length<boxes.length){
+      var few=(trimmed.length*2<=boxes.length);
+      var odd2=few?trimmed:boxes.filter(function(p){
+        return trimmed.indexOf(p)<0;});
+      out.push({kind:'figtrim',sev:'info',
+        head:odd2.length+' figure'+(odd2.length===1?' is':'s are')
+          +(few?' trimmed and the rest are not'
+               :' untrimmed and the rest are'),
+        why:'A trim changes how much white space a figure carries round '
+          +'its plot, so a trimmed figure and an untrimmed one at the '
+          +'same width put their axes at different sizes. This is the '
+          +'deck\u2019s own trim, not anything inside the file.',
+        list:odd2,
+        act:few?null:'Clear the trims',
+        fix:few?null:(function(o){return function(){
+          o.forEach(function(p){delete p.a.crop;});
+          return o.length;
+        };})(odd2)});
     }
     return out;
   }
@@ -636,9 +696,16 @@
     var list=$('#stdpane-list'),head=$('#stdpane-count');
     if(!list) return;
     var r=standardise();
-    if(head) head.textContent=r.findings.length
-      ?(r.findings.length+' to look at · '+r.boxes+' text boxes')
-      :('nothing drifting · '+r.boxes+' text boxes');
+    /* THE FIGURE FINDINGS ARE IN THIS PANE and were not in this count,
+       so a deck whose only problem was its figures read "nothing
+       drifting" above a list of figure findings (2026-08-26 audit,
+       T58) */
+    var figs=figBoxes().length,fl=figLint().length;
+    var n=r.findings.length+fl;
+    var what=r.boxes+' text box'+(r.boxes===1?'':'es')
+      +(figs?(' · '+figs+' figure'+(figs===1?'':'s')):'');
+    if(head) head.textContent=n
+      ?(n+' to look at · '+what):('nothing drifting · '+what);
     list.innerHTML='';
     if(!r.findings.length){
       /* TWO empty states. Saying "all fine" to a deck that has never used

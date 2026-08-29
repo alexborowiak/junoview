@@ -73,10 +73,22 @@
         }).then(function(f){
           return readAsDataURL(f);
         }).then(function(src){
-          return shrinkDataUrl(src);
-        }).then(function(src){
+          return shrinkDataUrl(src).then(function(small){
+            return {full:src,small:small};});
+        }).then(function(r){
+          var src=r.small;
           if(!src||src===e.a.src) {ok++;return;}
           e.a.src=src;ok++;
+          /* THE ORIGINAL MOVES WITH THE PICTURE. Only a.src was
+             replaced, so a.okey went on naming the bytes of the file as
+             it was when first inserted — and every export that swaps
+             originals in (T21) then put the OLD picture on the page,
+             which is worse than a stale one, not better (2026-08-26
+             audit, T58). */
+          var was=e.a.okey;
+          if(r.full&&r.full!==src) keepOriginal(e.a,r.full);
+          else if(was) delete e.a.okey;
+          if(was&&was!==e.a.okey){try{idbDel(was);}catch(err){}}
         }).catch(function(){
           lost.push({si:e.si,name:e.a.fname||'a picture'});
         });
@@ -400,7 +412,16 @@
         rd.onload=function(){
           var probe=new Image();
           probe.onload=function(){
-            got[i]={src:shrinkImage(probe,rd.result)};fin();};
+            var small=shrinkImage(probe,rd.result);
+            got[i]={src:small};
+            /* placeImage was factored out precisely because "putting the
+               original aside in each door is three chances to forget".
+               The flip book is the fourth door, and it forgot
+               (2026-08-26 audit, T58). A frame is not an annot, so it
+               carries its own okey and useOriginals walks frames. */
+            if(rd.result&&rd.result!==small)
+              keepOriginal(got[i],rd.result);
+            fin();};
           probe.onerror=function(){got[i]={src:rd.result};fin();};
           probe.src=rd.result;
         };

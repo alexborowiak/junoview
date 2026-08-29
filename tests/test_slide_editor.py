@@ -2136,7 +2136,8 @@ def test_a_caption_is_never_moved_twice(out):
     assert "function dropTiedCaptions(s,idxs){" in out
     assert "var idxs=dropTiedCaptions(s,selIdxs());" in out
     assert "dropTiedCaptions(s,idxs).forEach(function(i){" in out
-    assert "if(ci>=0&&movers.indexOf(ci)<0)" in out
+    assert ("if(ci>=0&&movers.indexOf(ci)<0"
+            "&&!pinned(s.annots[ci]))") in out
 
 
 def test_the_caption_takes_the_figures_width_and_only_that(out):
@@ -2172,7 +2173,10 @@ def test_a_figure_number_is_never_stored(out):
     assert "?(a.text||''):figSubst(a.text,a,_figMap);" in out
     # a reference to a figure that has gone says so, rather than
     # rendering a wrong number
-    assert "return hit?String(hit.n):(id?'[missing figure]':" in out
+    # three misses, said apart: a caption whose figure was deleted or
+    # hidden used to read '[not a caption]', which is wrong on its face
+    assert "if(id) return '[missing figure]';" in out
+    assert "return key?'[figure not shown]':'[not a caption]';" in out
     # and the walk happens once per render, not once per text box
     assert "})?figNumbers():null;" in out
 
@@ -2289,22 +2293,77 @@ def test_a_picture_keeps_its_original_out_of_the_draft(out):
 
 def test_the_export_gets_the_original_and_the_canvas_does_not(out):
     """A 6000px PNG drawn at 30% of a slide costs real time on every
-    repaint for detail no screen can show. The export is the only
-    consumer that wants the full bytes -- and it is already asynchronous
-    for MathJax, so waiting on IndexedDB costs it nothing it was not
+    repaint for detail no screen can show. The exports are the consumers
+    that want the full bytes -- and they are already asynchronous for
+    MathJax, so waiting on IndexedDB costs them nothing they were not
     already paying.
 
-    Every path that turns a print root into a file goes through
-    afterTypeset, so that is the one place all of them share: the PDF,
-    the standalone HTML, and anything added later.
+    afterTypeset is where the swap happens, and the claim that "every
+    path that turns a print root into a file goes through afterTypeset"
+    was false when it was written: printDeck went straight to
+    window.print() after a 120ms guess, so the PDF -- the one output
+    that ends up on paper -- printed the display copies (2026-08-26
+    audit, T58).
     """
     assert "function useOriginals(root){" in out
-    assert "if(im.getAttribute('src')===a.src) im.src=full;});" in out
+    assert "if(im.getAttribute('src')===o.src) im.src=full;});" in out
     assert "try{return useOriginals(root).then(go);}catch(e){}" in out
     # best-effort throughout: with no IndexedDB the picture still works,
     # it just has no original to fall back on -- which is what happened
     # to every image before this existed
     assert "}).catch(function(){return a.src||null;});" in out
+    # ...and the PDF really does go through it now
+    assert ("afterTypeset(root,function(){\n"
+            "      try{window.print();}catch(e){}") in out
+    # a flip book's frames are pictures too -- the fourth door, and the
+    # only one this was not asked about
+    assert ("if(a.k==='flip'&&Array.isArray(a.frames)) "
+            "a.frames.forEach(swap);") in out
+
+
+def test_a_refreshed_picture_refreshes_its_original_too(out):
+    """refreshLinkedImages replaced a.src and left a.okey naming the
+    bytes of the file as it was when first inserted, so every export
+    that swaps originals in put the OLD picture on the page -- which is
+    worse than a stale one, not better (2026-08-26 audit, T58).
+    """
+    assert "return shrinkDataUrl(src).then(function(small){" in out
+    assert "return {full:src,small:small};});" in out
+    assert "if(r.full&&r.full!==src) keepOriginal(e.a,r.full);" in out
+    # a picture that no longer needs an original loses the stale key
+    assert "else if(was) delete e.a.okey;" in out
+    assert "if(was&&was!==e.a.okey){try{idbDel(was);}catch(err){}}" in out
+
+
+def test_the_powerpoint_export_embeds_the_original(out):
+    """A .pptx leaves this machine and is re-scaled by whoever opens it,
+    so it is one of the two consumers that most wants the full bytes --
+    and it was embedding a.src, the shrunk display copy.
+
+    JunoPptx.build is synchronous and pptxItems with it, so the
+    IndexedDB lookup happens once before the build and is handed down as
+    a plain map rather than being awaited inside them.
+    """
+    assert "function pptxOriginals(){" in out
+    assert "return pptxOriginals().then(pptxBuildAndSave);" in out
+    assert "function pptxBuildAndSave(orig){" in out
+    # ONE lookup, so no branch can forget it
+    assert "function pptxSrc(note,src){" in out
+    assert "return (note&&note.orig&&note.orig[src])||src;" in out
+    assert "rot:a.rot,op:a.op,src:pptxSrc(note,a.src)});" in out
+    assert "rot:a.rot,op:a.op,src:pptxSrc(note,fsrc)," in out
+
+
+def test_a_flip_books_frames_keep_their_originals(out):
+    """placeImage was factored out precisely because "putting the
+    original aside in each door is three chances to forget". The flip
+    book is the fourth door, and it forgot. A frame is not an
+    annotation, so it carries its own okey and useOriginals walks
+    frames.
+    """
+    assert "var small=shrinkImage(probe,rd.result);" in out
+    assert "if(rd.result&&rd.result!==small)" in out
+    assert "keepOriginal(got[i],rd.result);" in out
 
 
 def test_the_figure_lint_is_honest_about_what_it_can_read(out):
@@ -2406,3 +2465,138 @@ def test_the_furniture_prompts_name_every_token_they_accept(out):
     # before clicking
     assert "{sn} and {sN} the same within the" in out
     assert "{sn}/{sN} the same within the section," in out
+
+
+def test_the_figure_reference_list_can_actually_appear(out):
+    """The list was built from figures that already had a `cap` -- and
+    `cap` is minted by figNumbers(), which was called two lines further
+    down, INSIDE `if(figs.length)`. On any deck where nothing had ever
+    been tied or numbered, no figure had a cap, the list came back
+    empty, the guard failed, figNumbers never ran, and the section could
+    not appear: not on that deck, not on any deck, ever (2026-08-26
+    audit, T58).
+    """
+    menu = out[out.index("function openCanvasMenu(layer,s,ev){"):]
+    menu = menu[:menu.index("function deleteSel(){")]
+    # number FIRST, then collect
+    assert menu.index("var fmap=figNumbers();") < menu.index("var figs=[];")
+    assert "if(isFigure(x)&&!x.hide&&x.cap) figs.push(x);" in menu
+    # ...and every figure, not the first eight
+    assert "figs.slice(0,8).forEach" not in menu
+    assert "figs.forEach(function(x){" in menu
+    assert "fbox.className='menu-scroll';" in menu
+    assert ".menu-scroll{max-height:210px;overflow-y:auto;" in out
+
+
+def test_a_caption_is_something_you_add_not_only_something_you_tie(out):
+    """T17 shipped a TIE between two objects that already existed, and
+    only when exactly two were selected, one figure and one text box,
+    and only from the canvas right-click. There was no answer at all to
+    "caption this" -- which is one command on the picture in every other
+    tool (2026-08-26 audit, T58).
+    """
+    assert "function addCaption(i){" in out
+    # at the figure's own width and position, measured not guessed
+    assert "var r=l?annotRectPct(l,s2,i):null;" in out
+    assert "text:'Figure {fig}. '});" in out
+    assert "tieCaption(i,ci);" in out
+    # a door on the canvas AND one on the ribbon, and the ribbon one is
+    # the same button in two states -- the #fmt-revert pattern
+    assert "row('Add a caption','',function(){addCaption(capSel[0]);}," in out
+    assert 'id="fmt-caption"' in out
+    assert "cb.innerHTML=hasCap?(bic('unlink')+' Untie caption')" in out
+    assert ":(bic('caption')+' Caption');" in out
+    assert "show('#fmt-caption',figSel);" in out
+
+
+def test_deleting_a_figure_unties_its_caption(out):
+    """The tie's own design note says "delete the figure and the caption
+    is orphaned rubbish" and then never handled it -- the review lint
+    exists partly to find what this leaves behind (2026-08-26 audit,
+    T58). The caption stays; it stops claiming to belong to something
+    that is not there.
+    """
+    assert "var untied=0,fmapDel=null;" in out
+    assert "delete c.capOf;" in out
+    assert "if(ci<0||kept.indexOf(ci)>=0) return;" in out
+    # and it keeps the number the caption was SHOWING: {fig} means "the
+    # figure I am tied to", so once that figure is gone the token has
+    # nothing left to say and would render where a number had been
+    assert "fmapDel=fmapDel||figNumbers();" in out
+    assert r"c.text=String(c.text||'').replace(/\{fig\}/g,nDel);" in out
+    assert "+' untied — the text is still there');" in out
+
+
+def test_the_caption_rows_carry_icons_like_their_neighbours(out):
+    """Every row T17 and T18 added was words-only, in a menu whose
+    immediate neighbours all carry glyphs (2026-08-26 audit, T58).
+    """
+    assert "+'can select and restyle on its own.','link');" in out
+    assert "+'figure’s number and renumbers itself when slides move',\n" \
+        "            'numbers');" in out
+    assert "            null,'unlink');" in out
+    assert "+'number wherever it ends up','locate',fbox);" in out
+
+
+def test_inserting_a_figure_token_keeps_the_rich_runs(out):
+    """Both commands used to `delete a.html` -- the rich-text store --
+    throwing away every bold word and every colour in the box, and the
+    toast said nothing about it. a.html is rendered through figSubst
+    exactly as a.text is, so the token can simply go in (2026-08-26
+    audit, T58).
+    """
+    assert "function richPrefix(html,txt){" in out
+    assert "function richSuffix(html,txt){" in out
+    assert "if(a.html) a.html=richPrefix(a.html,'Figure {fig}. ');" in out
+    assert "if(a.html) a.html=richSuffix(a.html,ref);" in out
+    # inside the first element, not before it
+    assert "return m?(s.slice(0,m[0].length)+txt+s.slice(m[0].length))" in out
+
+
+def test_a_component_keeps_the_caption_tie(out):
+    """cap/capOf are not in MATCH_PROPS and must not be -- they are
+    deck-wide ids, not a look -- so a component made from a figure and
+    its caption lost the tie, which the file's own header claims rides
+    along (2026-08-26 audit, T58).
+
+    The definition records "member 3 is the caption of member 1"; each
+    placement mints the pair fresh, because an id in a definition would
+    give every instance the same one.
+    """
+    assert "if(fn!=null&&fn!==n) items[n].capOfIdx=fn;" in out
+    assert "if(it.capOfIdx==null) return;" in out
+    assert "if(!fa.cap) fa.cap=figId();" in out
+    assert "ca.capOf=caps[it.capOfIdx];" in out
+    # ...and the definition still does not carry the ids themselves
+    assert "'cap'" not in out[out.index("var MATCH_PROPS=["):
+                              out.index("var MATCH_PROPS=[") + 400]
+
+
+def test_the_figure_lint_reads_the_sizes_it_collects_and_knows_trims(out):
+    """figFonts returned {fams, sizes} and nothing ever read `.sizes`, so
+    "flag mismatched fonts/SIZES" was half-built. And the deck holds
+    per-figure trim insets of its own, which need no metadata at all --
+    the third thing the spec names (2026-08-26 audit, T58).
+    """
+    assert "var fams={},sizeSets={},read=0;" in out
+    assert "var key=f.sizes.slice().sort().join('|');" in out
+    assert "kind:'figsize'" in out
+    assert "kind:'figtrim'" in out
+    assert "return !!(c&&(c.t||c.r||c.b||c.l));});" in out
+    # the trim check can fix itself when the odd ones are the trimmed few
+    assert "o.forEach(function(p){delete p.a.crop;});" in out
+
+
+def test_the_figure_lint_is_named_where_it_is_opened(out):
+    """Its only door was a button called "Standardise text" whose tooltip
+    named headings, paragraphs and captions; the pane it opened was
+    headed "Standardise text" and its count line counted text boxes
+    (2026-08-26 audit, T58).
+    """
+    assert "Standardise</button>" in out
+    assert "whether the figures do: their size on the page" in out
+    assert "<span>Standardise text and figures</span>" in out
+    # ...and the count includes them, or a deck whose only problem is its
+    # figures reads "nothing drifting" above a list of figure findings
+    assert "var figs=figBoxes().length,fl=figLint().length;" in out
+    assert "var n=r.findings.length+fl;" in out

@@ -412,8 +412,20 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # copy, and the Header/Footer prompts and tooltips name {sn}/{sN}/{sec}.
 # Six deck.js fragments and deck.html changed. Pinned by the four editor test
 # files, and verified in Edge across 39 checks.
-EXPECTED_MD5 = "2b862497849a791604aef2aabaf4b319"
-EXPECTED_BYTES = 3037771
+# Moved 2026-08-29 for TASKS T58, the figures group: the figure-reference list
+# can appear at all (it was built from ids nothing had minted yet), a caption
+# is something you ADD and not only a tie between two objects, deleting a
+# figure unties its caption and freezes the number it was showing, inserting a
+# figure token keeps the rich runs, a component keeps the tie, a position lock
+# stops a caption being dragged by its figure, a flip book has provenance, the
+# lineage jump leaves the deck it was hidden behind, there is a deck-wide
+# figure update, the retained originals reach the PDF and the .pptx and a flip
+# book's frames retain one at all, and the figure lint reads the sizes it
+# collects, knows about trims and is named where it is opened. Six deck.js
+# fragments, deck.html, deck.css and two new icons. Pinned by test_provenance
+# and test_slide_editor, and verified in Edge across 30 checks.
+EXPECTED_MD5 = "6ad718c875722270c81e9486f98f4b78"
+EXPECTED_BYTES = 3062437
 
 
 def _render_example() -> str:

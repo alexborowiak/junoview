@@ -210,3 +210,67 @@ def test_tree_tools_live_on_the_ribbon_and_expand_opens_code(out):
     # ...and the floating toolbar it replaced is gone
     assert ".tree-toolbar{display:none;" in out
     assert "document.body.classList.toggle('tree-mode',isTree);" in out
+
+
+def test_a_flip_book_has_provenance_like_any_other_figure(out):
+    """isFigure counts a flip book as a figure, the save path treats its
+    frames as refs exactly like a placed cell, and T18 numbers it. Only
+    provOf disagreed -- it returned null for anything that was not
+    k==='cell' -- so six notebook figures in one object had no
+    provenance, no staleness answer and no way to be re-synced
+    (2026-08-26 audit, T58).
+    """
+    assert "function provRef(a){" in out
+    assert "if(a.k==='cell') return a.ref||'';" in out
+    assert "var fr=flipFrames(a),sel=fr[a.at||0]||fr[0];" in out
+    # provOf now asks provRef rather than testing the kind itself
+    assert "var ref=provRef(a);\n    if(!ref) return null;" in out
+
+
+def test_the_lineage_jump_leaves_the_deck_it_is_hidden_behind(out):
+    """`.deck` is an opaque full-window overlay, so scrolling a card into
+    view behind it produced no visible effect whatever -- from inside the
+    editor the lineage buttons and "Open the plot trace" looked broken
+    (2026-08-26 audit, T58).
+    """
+    assert "function provJumpOut(fn){" in out
+    assert "if(typeof closeDeck==='function') closeDeck();" in out
+    # BOTH jumps go through it, or the next one added forgets
+    assert out.count("provJumpOut(function(){") == 2
+    assert "b.title='Open this cell in its notebook (leaves the editor)';" \
+        in out
+
+
+def test_there_is_a_deck_wide_figure_update_and_not_only_a_per_figure_one(out):
+    """provState could only ever answer for one annotation, because
+    renderProvPane was its only caller. So there was no way to ask "has
+    anything on this deck moved on?" -- while the parallel feature for
+    pictures got both doors (2026-08-26 audit, T58).
+    """
+    assert "function staleFigures(){" in out
+    assert "function resyncAllFigures(){" in out
+    # the same door the picture half has, in the same menu
+    assert 'id="mi-refresh-figs"' in out
+    assert "menuAction('#mi-refresh-figs',function(){resyncAllFigures();});" \
+        in out
+    # saying nothing is stale is an answer too
+    assert "Every figure on this deck already matches its notebook" in out
+    assert "window.SemDeckStaleFigures=staleFigures;" in out
+
+
+def test_the_provenance_pane_has_a_ribbon_door_and_wears_icons(out):
+    """Its only door was a canvas right-click row, while its three
+    nearest neighbours -- Locate in notebook, Previous figure and the
+    version lock -- all sit on the format bar and are all
+    notebook-provenance commands for the selected frame.
+
+    And every button the pane built was words-only, against the
+    icon-plus-words convention every other pane follows.
+    """
+    assert 'id="fmt-prov"' in out
+    assert "show('#fmt-prov',isNum&&!!provRef(a));" in out
+    assert "if(pb) pb.addEventListener('click',showProvPane);" in out
+    # icons on the three kinds of button the pane builds
+    assert "b.innerHTML=bic('locate')+' ';" in out
+    assert "jump.innerHTML=bic('route')+' Open the plot trace';" in out
+    assert "up.innerHTML=bic('reload')" in out

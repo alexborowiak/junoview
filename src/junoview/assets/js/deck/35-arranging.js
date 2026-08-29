@@ -1614,19 +1614,66 @@
      leaves position, crop and size alone, because those live on the
      annotation and were never part of the snapshot. The renderer still
      never executes anything: the notebook is re-run by the user. */
+  /* WHICH REFERENCE THIS OBJECT IS SHOWING. A placed cell has one;
+     a FLIP BOOK has one per frame and shows the frame it is on — and
+     isFigure counts a flip book as a figure, the save path treats its
+     frames as refs exactly like a placed cell, and T18 numbers it. Only
+     provOf disagreed, so six notebook figures in one object had no
+     provenance, no staleness answer and no way to be re-synced
+     (2026-08-26 audit, T58). */
+  function provRef(a){
+    if(!a) return '';
+    if(a.k==='cell') return a.ref||'';
+    if(a.k==='flip'){
+      var fr=flipFrames(a),sel=fr[a.at||0]||fr[0];
+      return (sel&&sel.ref)||'';
+    }
+    return '';
+  }
   function provOf(a){
-    if(!a||a.k!=='cell'||!a.ref) return null;
-    var live=ITEMS[a.ref]||null;
-    if(!live&&String(a.ref).indexOf('::')<0){
+    var ref=provRef(a);
+    if(!ref) return null;
+    var live=ITEMS[ref]||null;
+    if(!live&&String(ref).indexOf('::')<0){
       for(var i=0;i<APP.order.length;i++){
-        var k=nsKey(APP.order[i],a.ref);
+        var k=nsKey(APP.order[i],ref);
         if(ITEMS[k]){live=ITEMS[k];break;}
       }
     }
-    var saved=embFor(a.ref)||null;
-    var it=resolveRef(a.ref);
-    return {live:live,saved:saved,it:it,ref:a.ref};
+    var saved=embFor(ref)||null;
+    var it=resolveRef(ref);
+    return {live:live,saved:saved,it:it,ref:ref};
   }
+  /* EVERY figure on the deck whose notebook has moved on. provState
+     could only ever answer for one annotation, because renderProvPane
+     was its only caller — so there was no deck-wide staleness list and
+     no deck-wide update, while the parallel feature for pictures got
+     both doors (2026-08-26 audit, T58). */
+  function staleFigures(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,ai){
+        if(!a||a.hide||!provRef(a)) return;
+        var st=provState(provOf(a));
+        if(st==='stale'||st==='nosaved') out.push({si:si,ai:ai,a:a,st:st});
+      });
+    });
+    return out;
+  }
+  function resyncAllFigures(){
+    var list=staleFigures();
+    if(!list.length){
+      toast('Every figure on this deck already matches its notebook');
+      return 0;
+    }
+    var n=0;
+    list.forEach(function(p){if(resyncFigure(p.a)) n++;});
+    toast(n?(n+' figure'+(n===1?'':'s')+' updated from the notebook '
+      +'\u2014 position, size and crop unchanged')
+      :'Could not read the live cards \u2014 is the notebook still open?');
+    return n;
+  }
+  window.SemDeckStaleFigures=staleFigures;   /* test hook */
   /* the only staleness question this format can answer honestly: does
      the deck's saved copy still say what the notebook says? */
   function provState(p){
@@ -1718,11 +1765,19 @@
       steps.forEach(function(stp){
         var b=document.createElement('button');
         b.className='dbtn vw-opt';
-        b.textContent=stp.title||stp.card||'a cell';
-        b.title='Open this cell in its notebook';
+        b.innerHTML=bic('locate')+' ';
+        b.appendChild(document.createTextNode(
+          stp.title||stp.card||'a cell'));
+        b.title='Open this cell in its notebook (leaves the editor)';
         b.addEventListener('click',function(){
-          if(window.SemApp&&window.SemApp.traceGoto)
-            window.SemApp.traceGoto(stp.card);
+          /* LEAVE THE DECK FIRST. `.deck` is an opaque full-window
+             overlay, so scrolling a card into view behind it produced
+             no visible effect whatever — the button looked broken
+             (2026-08-26 audit, T58). */
+          provJumpOut(function(){
+            if(window.SemApp&&window.SemApp.traceGoto)
+              window.SemApp.traceGoto(stp.card);
+          });
         });
         list.appendChild(b);
       });
@@ -1732,10 +1787,12 @@
     list.appendChild(ah);
     var jump=document.createElement('button');
     jump.className='dbtn vw-opt';
-    jump.textContent='Open the plot trace';
+    jump.innerHTML=bic('route')+' Open the plot trace';
     jump.title='Every cell that built this figure, in execution order';
     jump.addEventListener('click',function(){
-      if(window.SemTrace&&pr[0]) window.SemTrace.open(pr[0],pr[1]);
+      provJumpOut(function(){
+        if(window.SemTrace&&pr[0]) window.SemTrace.open(pr[0],pr[1]);
+      });
     });
     list.appendChild(jump);
 
@@ -1746,7 +1803,8 @@
       list.appendChild(uh);
       var up=document.createElement('button');
       up.className='dbtn vw-opt';
-      up.textContent='Take the notebook\u2019s version of this figure';
+      up.innerHTML=bic('reload')
+        +' Take the notebook\u2019s version of this figure';
       up.title='Replaces the copy saved with the deck. Where it sits, '
         +'its size and its crop are on the frame, not the snapshot, so '
         +'none of them change.';
@@ -1778,6 +1836,13 @@
     if(l) renderAnnots(l,pres.slides[cur]);
     return 1;
   }
+  /* ONE way out of the deck, used by both jumps. The editor is closed
+     rather than merely hidden so that coming back is the ordinary
+     "open the presentation" path and nothing is left half-torn-down. */
+  function provJumpOut(fn){
+    try{if(typeof closeDeck==='function') closeDeck();}catch(e){}
+    setTimeout(fn,60);
+  }
   function showProvPane(){
     var pane=$('#provpane'); if(!pane) return;
     ['#selpane','#animpane','#preflight','#notespane','#stdpane',
@@ -1787,6 +1852,10 @@
     syncInspectorPanes(true);
     syncPaneDock();
   }
+  (function(){
+    var pb=$('#fmt-prov');
+    if(pb) pb.addEventListener('click',showProvPane);
+  })();
   (function(){
     var cl=$('#provpane-close');
     if(cl) cl.addEventListener('click',function(){
@@ -1848,6 +1917,12 @@
     return t.replace(/\{fig(?::([A-Za-z0-9_]+))?\}/g,function(_,id){
       var key=id||(a&&a.capOf)||(a&&a.cap);
       var hit=key?map[key]:null;
-      return hit?String(hit.n):(id?'[missing figure]':'[not a caption]');
+      if(hit) return String(hit.n);
+      /* THREE MISSES, and they used to read as two: a caption whose
+         figure was deleted or hidden got '[not a caption]', which is
+         wrong on its face — it IS a caption — and is not what the review
+         pane promises to say about it (2026-08-26 audit, T58). */
+      if(id) return '[missing figure]';
+      return key?'[figure not shown]':'[not a caption]';
     });
   }

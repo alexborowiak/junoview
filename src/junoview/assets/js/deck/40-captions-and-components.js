@@ -71,6 +71,23 @@
   /* the tokens are typed OR inserted. Inserted, because nobody guesses
      a syntax, and typed, because anyone who has learned it should not
      have to hunt for a menu (T18). */
+  /* PUT THE TOKEN INTO THE MARKUP, not instead of it. Both of the
+     commands below used to `delete a.html`, throwing away every bold
+     word and every colour in the box and saying nothing about it —
+     a.html is rendered through figSubst exactly as a.text is, so the
+     token can simply go in (2026-08-26 audit, T58). Inside the first
+     element rather than before it, so a box whose markup starts with a
+     block does not gain a stray text node outside it. */
+  function richPrefix(html,txt){
+    var s=String(html||'');
+    var m=/^\s*<([a-z][a-z0-9]*)\b[^>]*>/i.exec(s);
+    return m?(s.slice(0,m[0].length)+txt+s.slice(m[0].length)):(txt+s);
+  }
+  function richSuffix(html,txt){
+    var s=String(html||'');
+    var m=/<\/([a-z][a-z0-9]*)>\s*$/i.exec(s);
+    return m?(s.slice(0,m.index)+txt+s.slice(m.index)):(s+txt);
+  }
   function numberCaption(i){
     var s2=pres.slides[cur];
     var a=s2&&(s2.annots||[])[i];
@@ -78,7 +95,7 @@
     var t=String(a.text||'');
     if(t.indexOf('{fig}')>=0){toast('It already has its number');return;}
     a.text='Figure {fig}. '+t;
-    delete a.html;      /* a plain-text edit cannot keep rich runs */
+    if(a.html) a.html=richPrefix(a.html,'Figure {fig}. ');
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s2);paintSel(l);}
@@ -88,8 +105,9 @@
     var s2=pres.slides[cur];
     var a=s2&&(s2.annots||[])[i];
     if(!a||a.k!=='text') return;
-    a.text=String(a.text||'')+(a.text?' ':'')+'Figure {fig:'+figKey+'}';
-    delete a.html;
+    var ref=(a.text?' ':'')+'Figure {fig:'+figKey+'}';
+    a.text=String(a.text||'')+ref;
+    if(a.html) a.html=richSuffix(a.html,ref);
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s2);paintSel(l);}
@@ -342,6 +360,22 @@
       if(a.nohead) it.nohead=a.nohead;
       return it;
     });
+    /* the tie, as a relation between MEMBERS. `cap`/`capOf` are not in
+       MATCH_PROPS and must not be — they are deck-wide ids, not a look —
+       so a component made from a figure and its caption lost the tie
+       altogether, which the file's own header claims rides along
+       (2026-08-26 audit, T58). */
+    var capMember={};
+    boxes.forEach(function(x,n){
+      var a=s2.annots[x.i];
+      if(a&&a.cap) capMember[a.cap]=n;
+    });
+    boxes.forEach(function(x,n){
+      var a=s2.annots[x.i];
+      if(!a||!a.capOf) return;
+      var fn=capMember[a.capOf];
+      if(fn!=null&&fn!==n) items[n].capOfIdx=fn;
+    });
     var id=nextCmpId();
     cmpStore()[id]={name:name||'Component',w:W,h:H,items:items};
     /* the objects you defined it FROM become its first instance, so the
@@ -382,6 +416,22 @@
       s2.annots.push(a);made.push(s2.annots.length-1);
     });
     if(!made.length) return 0;
+    /* RE-TIE, with an id of this instance's own. The definition records
+       "member 3 is the caption of member 1" rather than a `cap` id,
+       because an id in a definition would give every instance the same
+       one — the duplicate-id state independentCopies exists to prevent.
+       So the pair is minted fresh here, per placement (T58). */
+    var caps={};
+    (def.items||[]).forEach(function(it,n){
+      if(it.capOfIdx==null) return;
+      var fa=s2.annots[made[it.capOfIdx]],ca=s2.annots[made[n]];
+      if(!fa||!ca) return;
+      if(!caps[it.capOfIdx]){
+        if(!fa.cap) fa.cap=figId();
+        caps[it.capOfIdx]=fa.cap;
+      }
+      ca.capOf=caps[it.capOfIdx];
+    });
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s2);selectMany(l,made);}
@@ -1135,6 +1185,20 @@
      ['largest','Match the largest'],
      ['smallest','Match the smallest']],'same',
     function(mode){sameSize(mode);});
+  var capBtn=$('#fmt-caption');
+  if(capBtn) capBtn.addEventListener('click',function(){
+    if(typeof selAnnot!=='number') return;
+    var s3=pres.slides[cur],fa=s3&&(s3.annots||[])[selAnnot];
+    if(!fa) return;
+    /* the same two states the button is showing */
+    var ci=fa.cap?capOfFig(s3,fa):-1;
+    if(ci>=0){
+      if(untieCaption(ci))
+        toast('Untied — they are two ordinary objects');
+      return;
+    }
+    addCaption(selAnnot);
+  });
   var repBtn=$('#fmt-replace');
   if(repBtn) repBtn.addEventListener('click',function(){
     if(typeof selAnnot==='number') startPick(selAnnot);

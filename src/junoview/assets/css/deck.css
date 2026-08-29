@@ -1902,6 +1902,11 @@ select#fmt-font[hidden]{display:none;}
 .pgrid-vrule{position:absolute;width:0;border-left:1px solid color-mix(in srgb,var(--accent) 14%,transparent);}
 .page-light .pgrid-rule{border-top-color:#1f6f8a2e;}
 .page-light .pgrid-vrule{border-left-color:#1f6f8a2e;}
+/* A RUN OF ROWS THAT CAN BE LONG. The figure-reference list used to be
+   capped at eight with no way to reach the rest; a deck can hold thirty
+   figures and every one of them has to be referable. Only the run
+   scrolls, so the rows above and below it stay put. */
+.menu-scroll{max-height:210px;overflow-y:auto;overscroll-behavior:contain;}
 /* guides you drag off the rulers yourself; they belong to the poster and
    are saved with it, but are still guides — never ink */
 .cguides{position:absolute;inset:0;z-index:5;pointer-events:none;}
