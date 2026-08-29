@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **Complete as of 2026-08-29.** Every entry is now a design record: what the audit found, what survived verification, and what was done about it. |
+| **TASKS.md** (this file), **groups 10–12** | **The queue.** The 2026-08-29 hand-test, T60–T93, every code-answerable claim already verified and refuted — read the verdict before working one. Groups 1–9 are the design record. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -1260,6 +1260,292 @@ file before touching anything.
   add-then-untie from the ribbon, provenance for a flip book with iconed
   buttons, delete-unties-and-freezes, the deck-wide update, the renamed
   lint and both exports still building — with no runtime errors.
+
+---
+
+## 10. Bugs — the 2026-08-29 hand-test
+
+Reported by the user after working in the editor for real, worst-first:
+things that LOSE WORK, then things that block ordinary work, then things
+that are merely wrong.
+
+**Every code-answerable claim below was verified before being written
+here** (six readers, then an independent refuter per finding whose only
+job was to prove it wrong). 34 claims were read; **12 died.** Those are
+kept, struck through in the note, because knowing a thing is NOT broken
+is worth as much as knowing it is — and because two of them were wrong
+in the user's favour, not ours.
+
+Two cautions carried over from group 9: `docs/` is a GENERATED build,
+last rebuilt 2026-08-24 and now 63 `src/` commits behind, and the service
+worker serves the one before that. Several reports below are against a
+build, not against the code. And a claim is a claim until somebody
+drives it — the suite is substring greps.
+
+- [ ] **T60 · S — An empty text box deletes itself, and takes your
+  bullet with it.** "Creating dot points with no text seems to delete
+  the cell, but also when you unclick it it deletes."
+  *Verified CONFIRMED.* `editableText`'s blur handler splices any
+  `k:'text'` annot with blank text and no `html`. A list reaches it:
+  the element IS the `<ul>`, so `el.innerHTML` is a bare `<li>` run,
+  and `sanitizeRich`'s rich test does not list `li`, so `a.html` is
+  deleted on every blur of an unstyled list — then the box goes. There
+  IS an undo entry (the blur ends in a non-quiet `markDirty`), but
+  nothing says so. Fix: skip the auto-delete when `listOf(a)` is set,
+  or add `li` to the rich selector; say it with a toast naming Ctrl+Z.
+
+- [ ] **T61 · M — A new slide should not be a notebook frame, and the
+  insert door should be "insert object".** "New slides that have just
+  the notebook cell can't be deleted, also please don't make that the
+  default. Also the notebook cells should be just 'insert object', that
+  can come from a notebook or local image or something."
+  *Verified: the "can't be deleted" half is REFUTED* — the placeholder
+  selects and deletes like any other item. The rest stands as a design
+  ask: a new slide starts EMPTY, and the insert door is renamed and
+  widened to **Insert object** (notebook figure, local image, or a
+  path — images already take paths).
+
+- [ ] **T62 · S — Bold is a lie on a title.** "Text always seems to
+  revert to bold; e.g. resizing a text box, back to bold."
+  *Verified PARTIAL, and NOT what it looked like.* The resize/fit theory
+  is refuted: `applyStyleTo`'s five callers are all explicit user
+  actions and `fitTexts` never writes the model. The real cause is a
+  hard `font-weight` on titles in `deck.css:2676`, so the Bold toggle
+  changes the model and nothing on screen. Separately `applyStyleTo`
+  does bake `b` over a hand-set weight when you re-stamp a style, which
+  is worth making visible. Not deck corruption; a small CSS fix.
+
+- [ ] **T63 · S — Selecting several objects selects everything.**
+  "Selecting multiple objects can be bugged, it just results in
+  everything being selected."
+  *NOT YET VERIFIED — the only entry in this group that was not.*
+  Suspect `startMarquee` / `selSet` and its interaction with groups and
+  locked items. Reproduce in a browser first.
+
+- [ ] **T64 · L — Crop, properly. (design first)** "The crop is still
+  really buggy... the clicking button should just automatically do the
+  trim by edges... then the crop by shape was supposed to be you put a
+  shape over the top and it crops just that part, and there is no free
+  crop as well where you can just draw a shape. These are amateur. I
+  asked for photoshop quality and this disappoints."
+  *Verified: three of four stand.* (1) CONFIRMED — `#fmt-crop` opens a
+  submenu; make the button itself arm edge-trim and put the shape
+  presets behind a caret. (2) **REFUTED** — the drag handler does move
+  the grabbed edge; it does not recentre or zoom. (3) PARTIAL —
+  `a.crop.shape` exists but `cropCss` returns the shape clip and
+  ignores the inset, so the shape cannot be positioned or sized over the
+  picture; that is the "put a shape over the top" the user meant.
+  (4) CONFIRMED — no free crop at all; needs `a.crop.path` as a polygon
+  plus a draw gesture.
+
+- [ ] **T65 · M — An image resizes only diagonally, and has no
+  numbers.** "Why can pictures it seems only be dragged on diagonal, so
+  can't be made taller or wider. Also where are all the options that I
+  said, like keep square, and also having the width, height, and
+  position (x,y)."
+  *Verified — and the earlier triage was wrong in the user's favour.*
+  There are no per-side handles: `mkResize` emits exactly four corners
+  and the CSS has only those four. (The per-side handles in
+  45-images.js are the CROP trim handles.) `startResize` already
+  branches on east/west/north/south, so adding n/e/s/w costs no gesture
+  maths. Aspect lock exists as Shift and is documented only in a
+  tooltip. No numeric W/H/X/Y anywhere — add a row in page millimetres.
+
+- [ ] **T66 · M — Match slide should be click-the-thumbnail.** "You have
+  to cross reference with the thumbnails on the side. It would be good
+  if you just clicked it, then clicked the thumbnail of the slides you
+  wanted to match."
+  *Verified CONFIRMED (a wrong door, not a broken feature).* Matching
+  works. Reuse the existing `armMatch`/`matchHit` armed-state shape at
+  slide level: arm from `#hm-match`, let a click on a `.film-row` pick,
+  press Done.
+
+- [x] **T67 · S — ~~The notebook picker's code filters do nothing.~~**
+  "Code filtering options for notebook doesn't work when adding a figure
+  from a notebook."
+  *Verified REFUTED.* There is no picker filter bar at all — the deck's
+  card picker is `#pickbar` and carries none. Those are the NOTEBOOK's
+  own filters, and their handlers re-query and re-render (`cycleF` →
+  `writeF` → `applyFilt`). `body.picking` only adds a cursor, so they
+  stay live during a pick. If the real complaint is "I filter, then
+  place a card and the frame ignores it", that is deliberate:
+  `cloneBody` strips the filter classes so a placed frame is not
+  silently missing rows. **Ask the user which they meant.**
+
+- [x] **T68 · S — ~~Lock figures is always greyed out.~~** "The lock is
+  always greyed out" and "it also never works."
+  *Verified REFUTED — an environment, not a defect.* `#fmt-lockver`
+  enables for exactly one condition: a placed cell frame with a ref, in
+  the **app** build (`APP.mode==='app'`, which only the local server
+  renders). Static exports and the web build show it disabled with a
+  tooltip that says why. Almost certainly the same cause as T84 below.
+
+- [ ] **T69 · S — Present mode: the code arrow cannot be turned off,
+  and the slide does not fill the screen.**
+  *Verified CONFIRMED, both halves.* Needs a persisted deck flag
+  (whitelisted in `normPres` — see the T52 follow-up for why that is not
+  optional) read by `updateVNav`/`renderSlide`, and the letterbox maths
+  in the playback branch.
+
+- [ ] **T70 · S — The saved-to chip does not fit its own box.** "Please
+  make sure everything is fitting inside its box (come on). Also please
+  put that next to the save button, also please make there be an
+  auto-save timer."
+  *Verified CONFIRMED.* The chip needs an inline-block inner span for
+  `text-overflow:ellipsis` to fire at all; then move it beside Save and
+  make the autosave interval a visible, settable thing.
+
+- [ ] **T71 · S — Insert-text's option boxes are too small to see the
+  symbols.**
+  *Verified PARTIAL.* `#tx-type-menu` lacks the width/padding rule the
+  format bar's Styles menu has.
+
+- [ ] **T72 · M — Bullets sit oddly, and you cannot leave one.** "Dot
+  points can't really be deleted, you can just remove the lines. Dot
+  points sit in a weird way."
+  *Verified PARTIAL.* Turning the whole list off DOES work (press the
+  pressed Bullets button). What does not: leaving the list from inside
+  it — `sanitizeRich` flattens any browser-native escape back to plain
+  lines and the renderer re-bullets them. And a centred list keeps its
+  markers in the fixed 1.15em gutter, which is the "weird way". Pairs
+  with T60.
+
+- [ ] **T73 · S — Click, click-click, click-click-click.** "Double click
+  a word should highlight it, triple click should highlight the line,
+  and quadruple should do entire box."
+  *Verified CONFIRMED, trivial.* The dblclick handler unconditionally
+  collapses the caret with `caretRangeFromPoint`, so word-select can
+  never work inside a box already being edited. Guard it on
+  `el.isContentEditable` captured before `beginEdit()`. Triple-click
+  already works; quadruple needs adding.
+
+- [ ] **T74 · M — Markdown cells, beside the LaTeX ones.** "Can there be
+  like the latex cells, can we have markdown cells as well."
+  *NEW as an insert kind.* Rich text and a Markdown export exist; "type
+  Markdown, see it rendered" as a first-class box does not.
+
+- [ ] **T75 · S — The notebook rail: no search, overcrowded, and New
+  Notebook is on the wrong side.**
+  *Verified PARTIAL.* No search control exists; add one filtering both
+  `#tabstrip` and `#presstrip`. Same rail as the earlier "lock notebooks
+  where the slide thumbnails are is the worst" report — fix together.
+
+---
+
+## 11. Layout and placement — the same pass
+
+- [ ] **T76 · M — Animations, re-thought. (design first)** "The
+  animation bubbles that appear are the worst, like you can't get rid of
+  them. There should just be a symbol next to the slide thumbnails that
+  indicates there are animations."
+  *Verified CONFIRMED.* The build-step badges are drawn unconditionally
+  in the editor. Gate them on the animation pane being open (or a view
+  toggle beside Rulers/Grid), mark the thumbnail instead, and cut the
+  options back.
+
+- [ ] **T77 · S — The home view is a mess at the top.**
+  *Verified PARTIAL.* The header is already hidden; the cut list is the
+  hero/wordmark/tag block and the welcome drop, which can fold into the
+  Open button.
+
+- [ ] **T78 · S — The thumbnail strip is squeezed by buttons that are
+  not even in it.**
+  *Verified CONFIRMED.* `#dc-nbs`' bulk-action rows take height from the
+  strip. Make it collapsible or reduce it to one row plus an overflow
+  menu.
+
+- [x] **T79 · S — ~~Clicking an object should bring up its tab.~~**
+  *Verified REFUTED.* It does: `selectAnnot` → `showFmt` →
+  `ribbonSelTab()` → `setTab`, deferred to the last line so every
+  contextual control is un-hidden first. The only suppressions are by
+  design (already on the tab; a tool armed; you just drew). Stale build.
+
+- [ ] **T80 · S — Growing the thumbnails eats the ribbon.**
+  *Verified CONFIRMED.* `--film-w` is clamped to 46vw with no regard for
+  the ribbon's measured floor. Clamp against it instead.
+
+- [ ] **T81 · S — Home group order.** "The layout for slides should be
+  below the new slides, and the duplicate and match slides should be one
+  over another."
+  *Verified CONFIRMED, trivial.* Move `#hm-delslide` ahead of
+  `#hm-laywrap` and the 3x2 row-major grid lands as asked.
+
+- [ ] **T82 · S — The Cancel button shifts the row it appears in.**
+  "When clicking a button to insert things, the cancel button appears in
+  a weird spot."
+  *Verified — the mechanism is not what it looked like.* `#et-cancel` is
+  a STATIC node that always sits between Line and Arrow; only its
+  `hidden` bit changes, so un-hiding it pushes everything after it
+  along. Move it to the end of the group, or reserve its width with
+  `visibility:hidden`.
+
+- [x] **T83 · S — ~~Where is the Layouts button?~~**
+  *Verified REFUTED — but there is a real naming bug.* BOTH doors exist:
+  `#lay-drop` on **Design** says "Layouts", `#hm-laywrap` on **Home**
+  says "Layout". The singular/plural split means they do not read as the
+  same feature. Rename one.
+
+- [x] **T84 · S — ~~View's buttons lost their icons.~~**
+  *Verified REFUTED.* Every View button carries its `data-ic` in current
+  source, and the T52 browser run shows all of them drawn. This is the
+  stale `docs/` build. **Rebuild `docs/` before believing any report of
+  this shape.**
+
+- [ ] **T85 · S — Where is the desktop-app download?**
+  *NEW.* The Electron path exists for development; there is no
+  user-facing door to it.
+
+- [ ] **T86 · M — Flip books: buttons per image, and animations.**
+  *Verified: the tie is REFUTED as broken* — `a.fb`/`flipShows` work, so
+  the complaint is findability. Genuinely new: one button per figure
+  instead of prev/next, and driving a flip book from the build sequence.
+
+---
+
+## 12. Features asked for in the same pass
+
+- [ ] **T87 · L — A real design surface for the deck's type. (design
+  first)** "Where was the button where people can 'standardise
+  presentation'... controlling things like 'global heading layouts'...
+  Then it would be cool if you could also 'show outlines of all
+  objects'."
+  *Three-quarters built and scattered.* `#dsg-std`, style sets, the
+  Apply dialog and T5's `SELECT_CRIT` all exist. Missing: the
+  full-screen view that puts them together, the drag-the-default-
+  position gesture, and the all-slides outline overlay. Build the
+  surface on what is there; do not build a second Apply.
+
+- [ ] **T88 · M — Present mode's side panel.** "An option to 'turn off
+  animations'... a global text bigger or smaller."
+  *NEW.* Skipping builds is the load-bearing half.
+
+- [ ] **T89 · S — Every feature whose only door is a right-click.**
+  Consolidates the user's "what happened to X" reports, all of which
+  turned out to be **findability, not absence**: components/clones,
+  object matching, arrangements (custom slide layouts), per-object
+  history, and the provenance pane. Each ships and works; each is
+  reachable only from the canvas context menu or a menu two levels
+  down. Genuinely missing: a "show me every instance of this component"
+  row, which `cmpInstances(id)` already computes.
+
+- [ ] **T90 · L — Version branches.** "Where is the version and then you
+  can create branches of version."
+  *Verified: history ships, branching does not.* Not a small edit — a
+  parent id on the entry, a non-linear index that `HIST_KEEP=20`'s
+  head-drop cannot corrupt, and a way to show the shape.
+
+- [ ] **T91 · M — Sources beyond Jupyter. (design first)** "Something
+  for things like Overleaf, Excel etc."
+  *Verified: the refresh contract really is source-agnostic.* A new
+  source needs a Document producer (`parse_X` → `notebook.model.
+  Document`) and nothing else on the render or deck path.
+
+- [ ] **T92 · S — Paste code and have it format.**
+  *NEW.* The highlighter exists; this is a paste path into it.
+
+- [ ] **T93 · S — Duplicate without context.**
+  *NEW.* Duplicate the object, drop its `ref`, provenance and frame
+  binding.
 
 ---
 
