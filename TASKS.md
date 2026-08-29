@@ -1282,7 +1282,7 @@ worker serves the one before that. Several reports below are against a
 build, not against the code. And a claim is a claim until somebody
 drives it — the suite is substring greps.
 
-- [ ] **T60 · S — An empty text box deletes itself, and takes your
+- [x] **T60 · S — An empty text box deletes itself, and takes your
   bullet with it.** "Creating dot points with no text seems to delete
   the cell, but also when you unclick it it deletes."
   *Verified CONFIRMED.* `editableText`'s blur handler splices any
@@ -1409,8 +1409,14 @@ drives it — the suite is substring greps.
   lines and the renderer re-bullets them. And a centred list keeps its
   markers in the fixed 1.15em gutter, which is the "weird way". Pairs
   with T60.
+  *2026-08-29: half done.* The markers now travel with the words — a
+  centred or right-aligned list gets `list-style-position:inside`,
+  which is the "sit in a weird way" half. Still open: leaving a list
+  from INSIDE it (Backspace at the start, or Enter-Enter out), which
+  `sanitizeRich` flattens back to plain lines the renderer re-bullets.
+  Turning the whole list off from the Bullets button always worked.
 
-- [ ] **T73 · S — Click, click-click, click-click-click.** "Double click
+- [x] **T73 · S — Click, click-click, click-click-click.** "Double click
   a word should highlight it, triple click should highlight the line,
   and quadruple should do entire box."
   *Verified CONFIRMED, trivial.* The dblclick handler unconditionally

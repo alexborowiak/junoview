@@ -2600,3 +2600,48 @@ def test_the_figure_lint_is_named_where_it_is_opened(out):
     # figures reads "nothing drifting" above a list of figure findings
     assert "var figs=figBoxes().length,fl=figLint().length;" in out
     assert "var n=r.findings.length+fl;" in out
+
+
+def test_an_empty_bullet_is_not_an_abandoned_box(out):
+    """A box drawn and abandoned removes itself on blur, which is right.
+    A LIST is the one box that is deliberately empty for a moment -- you
+    make the bullet first and type second -- and it reached the same
+    branch even after you had made one, because sanitizeRich does not
+    count a bare <li> as rich, so a.html was stripped on the way through
+    and the box then looked abandoned.
+
+    So making a dot point and clicking away deleted the whole box,
+    bullet and all (2026-08-29, user: "creating dot points with no text
+    seems to delete the cell, but also when you unclick it it deletes").
+    """
+    assert ("if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html\n"
+            "         &&!listOf(a2)){") in out
+    # ...and when it DOES delete one, it says so: the blur's markDirty is
+    # not quiet, so there was always an undo entry and never a word
+    assert r"Empty text box removed \u2014 Ctrl+Z puts it back" in out
+
+
+def test_double_click_selects_a_word_once_you_are_editing(out):
+    """caretRangeFromPoint returns a COLLAPSED range, and it was run on
+    every double-click -- including ones fired inside a box already being
+    edited -- so it threw away the word the browser had just selected and
+    left a bare caret. Word-select could never work (2026-08-29).
+
+    Two and three clicks are the browser's own (word, then line); there
+    is no native fourth, so "select everything in this box" is added.
+    """
+    assert "var wasEditing=el.isContentEditable;" in out
+    assert "if(wasEditing) return;   /* let the browser select the word */" \
+        in out
+    assert "if(e.detail<4||!el.isContentEditable) return;" in out
+    assert "r2.selectNodeContents(el);" in out
+
+
+def test_a_centred_list_keeps_its_markers_with_its_words(out):
+    """list-style-position defaults to `outside`, which pins every bullet
+    to the fixed 1.15em gutter -- so a centred list had its words in the
+    middle and its dots stranded at the left margin. Only the alignments
+    where it is wrong: a left-aligned list wants its hanging indent.
+    """
+    assert "if(a.align==='center'||a.align==='right')" in out
+    assert "d2.style.listStylePosition='inside';" in out

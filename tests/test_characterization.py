@@ -430,8 +430,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the reader to drag a guide box by any edge to MOVE it — which T52 made
 # resize — is rewritten to match the code, with R/G/H/B added to the only
 # keyboard table in the repo. deck.js and help.html changed.
-EXPECTED_MD5 = "016cafc218353366f9f3f7a96f1cef6a"
-EXPECTED_BYTES = 3064091
+# Moved 2026-08-29 for T60/T72/T73: an empty LIST no longer deletes itself on
+# blur (a list is deliberately empty for a moment, and sanitizeRich strips the
+# bare <li> that would have saved it), the delete that does happen says
+# Ctrl+Z, a double-click inside a box already being edited no longer wipes the
+# word the browser just selected, four clicks take the whole box, and a
+# centred list keeps its markers with its words. deck.js only.
+EXPECTED_MD5 = "ccc9250e8608fb73cb02dfadb4b176dc"
+EXPECTED_BYTES = 3066718
 
 
 def _render_example() -> str:

@@ -828,13 +828,36 @@
       var sg=pres.slides[cur],ag=sg&&annotByIdx(sg,idx);
       if(ag&&ag.grp!=null&&inGroup!==ag.grp) return;
       e.stopPropagation();
+      /* WHICH CLICK THIS IS. The caret-placing below is right for the
+         double-click that OPENS the box — you want the caret where you
+         pointed, not at the end. It was running on every double-click,
+         including ones fired inside a box already being edited, and
+         caretRangeFromPoint returns a COLLAPSED range: so it threw away
+         the word the browser had just selected and left a bare caret.
+         Double-click-to-select-a-word could never work (2026-08-29). */
+      var wasEditing=el.isContentEditable;
       beginEdit();
+      if(wasEditing) return;   /* let the browser select the word */
       /* put the caret where the words were double-clicked, not at the end */
       try{
         var r=document.caretRangeFromPoint
           ? document.caretRangeFromPoint(e.clientX,e.clientY):null;
         if(r){var sel=window.getSelection();sel.removeAllRanges();
           sel.addRange(r);}
+      }catch(err){}
+    });
+    /* ...and the FOURTH click takes the whole box. Two and three are the
+       browser's own (word, then line); there is no native fourth, and
+       "select everything in here" is the one people reach for before
+       restyling a caption. `detail` counts the clicks in a run. */
+    el.addEventListener('click',function(e){
+      if(e.detail<4||!el.isContentEditable) return;
+      e.preventDefault();e.stopPropagation();
+      try{
+        var r2=document.createRange();
+        r2.selectNodeContents(el);
+        var s3=window.getSelection();
+        s3.removeAllRanges();s3.addRange(r2);
       }catch(err){}
     });
     /* Spellcheck ON while editing. It used to be off everywhere, which
@@ -883,9 +906,19 @@
       endEdit();
       /* a text box with nothing in it is invisible once deselected (they
          are born with no placeholder and no background) — so an empty one
-         removes itself rather than haunting the slide */
+         removes itself rather than haunting the slide.
+
+         NOT A LIST, THOUGH. A list is the one box that is deliberately
+         empty for a moment: you make the bullet first and type second.
+         And it reaches here even when you have typed nothing visible,
+         because sanitizeRich does not count a bare `<li>` as rich, so
+         `a.html` is stripped on the way through and the box then looks
+         abandoned. Making a dot point and clicking away deleted the
+         whole box, bullet and all (2026-08-29, user: "creating dot
+         points with no text seems to delete the cell"). */
       var s2=pres.slides[cur],a2=s2&&(s2.annots||[])[idx];
-      if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html){
+      if(a2&&a2.k==='text'&&!String(a2.text||'').trim()&&!a2.html
+         &&!listOf(a2)){
         s2.annots.splice(idx,1);
         if(selAnnot===idx) selAnnot=null;
         else if(typeof selAnnot==='number'&&selAnnot>idx) selAnnot--;
@@ -897,6 +930,10 @@
           });
         renderAnnots(layer,s2);
         showFmt();
+        /* the blur's own markDirty below is not quiet, so there IS an
+           undo entry for this — nothing said so, which is what made an
+           accidental delete feel permanent */
+        toast('Empty text box removed \u2014 Ctrl+Z puts it back');
       }
       /* MATHS YOU JUST TYPED. Committing a text box writes into the
          element in place — that is the whole point of the edit path,
@@ -1790,6 +1827,15 @@
         var deco=(a.u?'underline ':'')+(a.strike?'line-through':'');
         if(deco.trim()) d2.style.textDecoration=deco.trim();
         if(a.align) d2.style.textAlign=a.align;
+      /* MARKERS TRAVEL WITH THE WORDS. `list-style-position` defaults to
+         `outside`, which pins every bullet to the fixed 1.15em gutter —
+         so a centred or right-aligned list had its words in the middle
+         and its dots stranded at the left margin, which is the "dot
+         points sit in a weird way" (2026-08-29). Only for the alignments
+         where it is wrong: a left-aligned list wants the hanging indent
+         it already has. */
+      if(a.align==='center'||a.align==='right')
+        d2.style.listStylePosition='inside';
         if(a.font) d2.style.fontFamily=fontCss(a.font);
         /* a.lh is a MULTIPLE of the type size, the way every word
            processor states it, so it survives every zoom and page size
