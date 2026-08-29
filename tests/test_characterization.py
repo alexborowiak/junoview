@@ -368,8 +368,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # whole-deck restore and lazy full-slide comparisons complete version history;
 # saved custom types also normalise safely before boot. Pinned by
 # tests/test_version_history.py and tests/test_slide_sections.py.
-EXPECTED_MD5 = "fc2535826907157466e1c4fafbf5bf8e"
-EXPECTED_BYTES = 2988921
+# Moved 2026-08-29 for TASKS T48: the in-talk Running late control, filtered
+# presenter previews/counts, Notes teardown, and complete rehearsal exit/
+# repaint paths now agree. Pinned by tests/test_present_mode.py and verified
+# in Edge across 23 presenter, cut, pane and lifecycle checks.
+EXPECTED_MD5 = "2d1a2c79fc4ae043f45daf30c1090086"
+EXPECTED_BYTES = 2991466
 
 
 def _render_example() -> str:

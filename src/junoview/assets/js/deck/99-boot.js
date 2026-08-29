@@ -30,6 +30,7 @@
      time boot finishes, whatever path loaded the presentation. */
   syncCustomTypes();
   status();
+  initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
   /* the ribbon you kept: applied once here, at the tail, after every

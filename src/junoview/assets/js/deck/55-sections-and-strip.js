@@ -841,6 +841,7 @@
         :'Leave the editor and go back to the builder. Nothing is closed '
           +'or lost.';
     }
+    syncLateButton();
   }
   function setUIMode(m){
     /* entering Present must not leave a fresher deck in memory than in
@@ -886,12 +887,21 @@
       var sp=$('#selpane'); if(sp) sp.hidden=true;
       var ob=$('#objects-btn');
       if(ob) ob.setAttribute('aria-pressed','false');
+      /* Notes are an editing pane too. Leaving it open put the pane over
+         the audience's slide after the ribbon disappeared (T48). */
+      var np=$('#notespane'); if(np) np.hidden=true;
+      var nb=$('#notes-btn');
+      if(nb) nb.setAttribute('aria-pressed','false');
       /* ...and so is the Versions pane. Put the strip back where the
          builder expects to find it before the builder renders. */
       showVerpane(false);
       animPaneClose();
       filmToPanel();
       rbnGalleryClose();
+      /* MutationObserver catches every ordinary pane toggle, but it is
+         asynchronous; presenting must fit the page before this turn's
+         render/fullscreen work starts. */
+      syncPaneDock();
     }
     /* A custom layout may have moved contextual controls out of #et-fmt,
        so hiding that one holder cannot reset the ribbon. showFmt owns the
@@ -990,6 +1000,10 @@
       +'goes out one version at a time; open Versions to switch.';
   }
   function closeDeck(){
+    /* SPA navigation does not fire pagehide. Home/hash routing can close
+       this surface directly, so it is just as real an end to a rehearsal
+       as the visible Stop presenting button (T48). */
+    if(mode==='view') rehStop();
     try{
       if(document.fullscreenElement)
         document.exitFullscreen().catch(function(){});
@@ -1109,9 +1123,10 @@
       if(b) b.addEventListener('click',function(e){
         e.stopPropagation();menu.hidden=true;fn();});
     }
-    /* WHICH VERSION, and the late escape (T24/T25). Built rather than
-       written into the markup because both lists are the deck's, and a
-       deck with no cuts must show nothing at all here. */
+    /* WHICH VERSION (T24). Built rather than written into the markup
+       because the list is the deck's, and a deck with no cuts must show
+       nothing at all here. Running late is in the presenter bar: an
+       edit-only menu was the one place it could not work mid-talk. */
     function syncCuts(){
       $$('.pl-cut',menu).forEach(function(n){n.remove();});
       var list=cutList();
@@ -1153,17 +1168,6 @@
         setCut(id);syncCuts();
       });
       add(nb);
-      var lb=document.createElement('button');
-      lb.className='dbtn dc-mi';
-      if(lateFrom>=0) lb.classList.add('on');
-      lb.textContent=(lateFrom>=0)?'Running late: on'
-        :'Running late — skip the optional ones';
-      lb.title='From where you are now, skip every slide marked '
-        +'optional. What you have already shown is not the problem.';
-      lb.addEventListener('click',function(e){
-        e.stopPropagation();menu.hidden=true;
-        runLate(lateFrom<0);syncCuts();});
-      add(lb);
       var sep=document.createElement('div');
       sep.className='hd-lab';sep.textContent='play';
       add(sep);
@@ -1604,6 +1608,12 @@
          else on a keyboard, and the map it opens is the one T26 already
          built -- so this is a door, not a second piece of navigation
          (T30). */
+      if(!e.ctrlKey&&!e.metaKey&&!e.altKey
+         &&(e.key==='l'||e.key==='L')){
+        var late=$('#deck-late');
+        if(late){e.preventDefault();late.click();}
+        return;
+      }
       if(e.key==='/'||((e.ctrlKey||e.metaKey)&&(e.key==='f'||e.key==='F'))){
         e.preventDefault();
         openOverview();
@@ -1639,7 +1649,8 @@
      like the document ribbon's (the data-kbd chip in app.js) */
   [['#dc-play','F5'],['#dc-undo','Ctrl+Z'],['#dc-redo','Ctrl+Y'],
    ['#dc-save','Ctrl+S'],['#fmt-dup','Ctrl+D'],
-   ['#zoom-in','+'],['#zoom-out','-'],['#zoom-val','0']]
+   ['#zoom-in','+'],['#zoom-out','-'],['#zoom-val','0'],
+   ['#deck-late','L']]
     .forEach(function(p){
       var el=$(p[0]); if(el) el.dataset.kbd=p[1];});
 

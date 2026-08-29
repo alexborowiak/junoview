@@ -974,15 +974,17 @@
     if(!doc||!doc.getElementById('jvp-now')) return;
     var n=(pres.slides||[]).length;
     var sl=pres.slides[cur]||{};
+    var shown=shownSlides(),shownAt=shown.indexOf(cur);
+    var next=nextShown(cur,1);
     /* the two slide previews */
-    [['jvp-now',cur],['jvp-next',cur+1]].forEach(function(pr){
+    [['jvp-now',cur],['jvp-next',next]].forEach(function(pr){
       var box=doc.getElementById(pr[0]);
       if(!box) return;
       box.innerHTML='';
       /* THE PRESENTER VIEW IS THE PRIVATE ONE. This is the whole
          point of T31: the same slide, drawn twice, and only this copy
          carries what you wrote for yourself. */
-      var node=(pr[1]<n)?buildSlideNode(pr[1],true):null;
+      var node=(pr[1]>=0&&pr[1]<n)?buildSlideNode(pr[1],true):null;
       if(node){
         var im=doc.importNode(node,true);
         box.appendChild(im);
@@ -1004,7 +1006,7 @@
       ?notesHtml(sl.notes)
       :'<p class="jvp-nonotes">No notes for this slide.</p>';
     var ct=doc.getElementById('jvp-count');
-    if(ct) ct.textContent=(cur+1)+' / '+n;
+    if(ct) ct.textContent=(shownAt>=0?shownAt+1:0)+' / '+shown.length;
     var gl=doc.getElementById('jvp-goal');
     if(gl){
       var g=slideGoal(sl),st=rehFor(sl),bits=[];
@@ -1022,7 +1024,8 @@
     }
     presWin.__jvState={start:presStart,paused:presPaused,
       pauseAt:presPauseAt,goal:slideGoal(sl),
-      talk:pres.talkMins||0,slide:cur,count:n};
+      talk:pres.talkMins||0,slide:shownAt,count:shown.length,
+      slideIndex:cur};
   }
   function presenterHtml(){
     /* every stylesheet the deck uses, so the imported slide nodes look

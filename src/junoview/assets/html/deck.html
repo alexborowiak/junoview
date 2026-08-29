@@ -31,10 +31,16 @@
          the document's own bar (2026-08-07, user). -->
     <span class="deck-title" id="deck-title"></span>
     <span class="deck-spring"></span>
-    <!-- Present is a VIEW of the document, not an editing tool, so it
-         sits with the document controls — top right, out of the way of
-         the things you are actually clicking while you lay a page out -->
-    <span class="deck-topright" id="deck-topright"></span>
+    <!-- The controls you need DURING the talk live in the bar that stays
+         visible during the talk. Running late used to live in Present's
+         edit-only menu, which made it disappear at the exact moment it
+         became useful (2026-08-29, T48). -->
+    <span class="deck-topright" id="deck-topright">
+      <button class="dbtn" id="deck-late" type="button" hidden
+        aria-pressed="false"
+        title="Skip the remaining optional slides from here (L)">
+        <i data-ic="flag"></i> Running late</button>
+    </span>
   </div>
   <!-- the left COLUMN is the notebooks content and then the thumbnails,
        and nothing else. File / Save / undo / redo used to sit between

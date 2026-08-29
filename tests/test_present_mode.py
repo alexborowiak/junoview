@@ -139,6 +139,88 @@ def test_presenter_view_is_a_second_window(out):
     assert "function presenterSync(){" in out
 
 
+def test_running_late_is_reachable_during_the_talk(out):
+    """T48. The original T25 control was built inside ``#play-menu``.
+    That menu belongs to ``#deck-qat``, and present mode hides the whole
+    QAT -- so the mid-talk escape hatch existed only before or after the
+    talk.
+
+    The presenter bar is the chrome that remains on screen. Its control
+    keeps both its words and icon, says when it is on, and ``L`` clicks
+    that same button so the mouse and keyboard routes cannot drift.
+    """
+    assert 'id="deck-topright"' in out
+    assert 'id="deck-late"' in out
+    assert "function syncLateButton(){" in out
+    assert "b.hidden=(mode!=='view');" in out
+    assert "b.setAttribute('aria-pressed',on?'true':'false');" in out
+    assert "b.innerHTML=bic('flag')+(on?' Running late: on'" in out
+    assert "var late=$('#deck-late');" in out
+    assert "if(late){e.preventDefault();late.click();}" in out
+    assert "['#deck-late','L']" in out
+    assert "presentation bar (or press <kbd>L</kbd>)" in out
+    # There is no second, unreachable copy left in Present's edit menu.
+    assert "lb.textContent=(lateFrom>=0)?'Running late: on'" not in out
+
+
+def test_presenting_closes_the_notes_pane_before_render(out):
+    """An editing pane must not survive the transition after its ribbon
+    button disappears. The synchronous dock update matters: the observer
+    runs on a later turn, after present mode has already fitted the slide.
+    """
+    start = out.index("function setUIMode(m){")
+    body = out[start:out.index("  function refresh(){", start)]
+    assert "var np=$('#notespane'); if(np) np.hidden=true;" in body
+    assert "var nb=$('#notes-btn');" in body
+    assert "if(nb) nb.setAttribute('aria-pressed','false');" in body
+    assert "syncPaneDock();" in body
+    assert body.index("np.hidden=true") < body.index("syncPaneDock();")
+    assert body.index("syncPaneDock();") < body.index("renderSlide();")
+
+
+def test_presenter_preview_and_numbering_follow_the_playback_filter(out):
+    """Named cuts and Running late can leave gaps in raw slide indexes.
+    The presenter must preview the slide ``advance`` will actually reach,
+    and both halves of its counter must describe that same shown set.
+    """
+    start = out.index("function presenterPush(){")
+    body = out[start:out.index("  function presenterHtml(){", start)]
+    assert "var shown=shownSlides(),shownAt=shown.indexOf(cur);" in body
+    assert "var next=nextShown(cur,1);" in body
+    assert "['jvp-next',next]" in body
+    assert "pr[1]>=0&&pr[1]<n" in body
+    assert "(shownAt>=0?shownAt+1:0)+' / '+shown.length" in body
+    assert "count:shown.length" in body
+    assert "['jvp-next',cur+1]" not in body
+    assert "(cur+1)+' / '+n" not in body
+
+
+def test_every_real_rehearsal_exit_records_and_repaints(out):
+    """Stopping via the UI, SPA routing, and closing the physical page
+    are all ends to a run. Merely changing windows is not. A kept run also
+    redraws the already-selected Rehearsals tab instead of leaving its
+    empty-state message behind.
+    """
+    start = out.index("function rehStop(){")
+    stop = out[start:out.index("  function rehStats(){", start)]
+    assert "rehSave(runs);" in stop
+    assert "renderReh();" in stop
+    assert stop.index("rehSave(runs);") < stop.index("renderReh();")
+
+    start = out.index("function lastChance(e){")
+    leave = out[start:out.index("  function editableText(", start)]
+    assert "if(e&&e.type==='pagehide'){" in leave
+    assert "try{rehStop();}catch(err){}" in leave
+    assert "window.addEventListener('pagehide',lastChance);" in leave
+    hidden = leave[leave.index("visibilitychange"):]
+    assert "if(document.visibilityState==='hidden') lastChance();" in hidden
+    assert "lastChance(document" not in hidden
+
+    start = out.index("function closeDeck(){")
+    close = out[start:out.index("  /* ---- URL routing hooks", start)]
+    assert "if(mode==='view') rehStop();" in close
+
+
 def test_speaker_notes_and_time_goals(out):
     """Notes are per slide and never drawn on the page -- they exist for
     the presenter view and for you. The per-slide goal is in minutes and

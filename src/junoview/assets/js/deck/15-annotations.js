@@ -1956,6 +1956,10 @@
     rehSave(runs);
     toast('Rehearsal recorded — '+fmtMins(total/60)+' over '
       +rehSeen+' slide'+(rehSeen===1?'':'s'));
+    /* renderNotesPane deliberately does not own tab bodies. Refresh the
+       history itself so an already-open Rehearsals tab stops saying
+       "No rehearsals yet" as soon as this run lands (T48). */
+    renderReh();
     renderNotesPane();
   }
   /* mean seconds per slide, by sid, across every kept run */

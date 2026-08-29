@@ -636,6 +636,16 @@
       if(!slideSkipped(i)) return i;
     return -1;
   }
+  /* One ordered answer for presenter numbering as well as playback.
+     Raw deck indexes are wrong as soon as a named cut or Running late
+     removes anything between two shown slides (T48). */
+  function shownSlides(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,i){
+      if(!slideSkipped(i)) out.push(i);
+    });
+    return out;
+  }
   function setCut(id){
     showCut=id||'';
     /* landing on a slide the cut excludes would be a talk that starts
@@ -653,8 +663,25 @@
   /* T25. One control, mid-talk, that drops the rest of the optional
      slides. From HERE onward: what you have already shown is not the
      problem, and un-showing it is not on offer. */
+  function syncLateButton(){
+    var b=$('#deck-late'); if(!b) return;
+    var on=lateFrom>=0;
+    b.hidden=(mode!=='view');
+    b.setAttribute('aria-pressed',on?'true':'false');
+    b.innerHTML=bic('flag')+(on?' Running late: on':' Running late');
+    b.title=on?'Show the remaining optional slides again (L)'
+      :'Skip the remaining optional slides from here (L)';
+  }
+  function initPresenterControls(){
+    var b=$('#deck-late');
+    if(b) b.addEventListener('click',function(){
+      runLate(lateFrom<0);
+    });
+    syncLateButton();
+  }
   function runLate(on){
     lateFrom=on?cur:-1;
+    syncLateButton();
     renderFilm();
     presenterSync&&presenterSync();
     if(!on){toast('Back to the full run');return 0;}

@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 8 open items, T48–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 7 open items, T49–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -900,7 +900,7 @@ file before touching anything.
   delayed-save rename race. That pass also exposed and fixed an earlier
   boot-order bug which made a saved custom text type abort the editor.
 
-- [ ] **T48 · M — The presenter's controls exist while presenting.**
+- [x] **T48 · M — The presenter's controls exist while presenting.**
   - T25's Running-late button lives in `#play-menu` inside `#deck-qat`,
     which `syncTopBar` HIDES whenever mode is not edit/create — the one
     control the whole task is about is unreachable exactly when it is
@@ -913,6 +913,16 @@ file before touching anything.
   - finishing a rehearsal never re-renders the Rehearsals tab, so it
     still reads "No rehearsals yet"; and a rehearsal ended by closing
     the tab records nothing, because the unload path never stops the run.
+  *2026-08-29.* Running late now has one labelled, stateful control in the
+  presenter bar, with its `L` shortcut routed through the same button; the
+  unreachable edit-menu copy is gone. Entering playback closes Notes and
+  synchronously releases its dock. The presenter window now gets its next
+  preview, ordinal and total from the same skipped-slide model as playback,
+  including the end sentinel. A kept rehearsal immediately redraws its tab;
+  page exit and SPA deck exit stop and save the run, while merely hiding the
+  page remains a draft flush. Browser-verified across a five-slide named-cut
+  deck, optional skipping, popup previews, keyboard/mouse toggles, pane state,
+  all three rehearsal exits and both windows' runtime errors (23 checks).
 
 - [ ] **T49 · S — The review export must not carry private text.** T31's
   privacy and T35's export disagree:

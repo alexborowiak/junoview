@@ -765,11 +765,17 @@
      (beforeunload is skipped on mobile and unreliable on a crash); both
      are cheap, because the flush's own markDirty writes the draft. */
   (function(){
-    function lastChance(){
+    function lastChance(e){
       try{flushTextEdits();}catch(e){}
       /* the draft write is debounced now — a closing tab cannot wait */
       try{flushDraftWrite();}catch(e){}
+      if(e&&e.type==='pagehide'){
+        try{rehStop();}catch(err){}
+      }
     }
+    /* Only leaving the page ends the run. Visibility hidden also fires
+       when the speaker changes windows, and must remain a flush rather
+       than quietly chopping the rehearsal in two (T48). */
     window.addEventListener('pagehide',lastChance);
     document.addEventListener('visibilitychange',function(){
       if(document.visibilityState==='hidden') lastChance();
