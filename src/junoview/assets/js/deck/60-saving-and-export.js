@@ -1030,6 +1030,168 @@
     host.remove();
     return out.replace(/\n{3,}/g,'\n\n').trim();
   }
+  /* ---- AN EQUATION, FLATTENED TO CHARACTERS ---------------------------
+     A text box built by the Maths button went into the .pptx as the
+     literal "$$ E = mc^2 $$", dollar signs and all, and the export's own
+     "Equations came across as plain text" warning stayed silent, because
+     it was only ever raised for maths inside a notebook CELL (2026-08-26
+     audit, T53).
+
+     Flattened FROM THE SOURCE, not from the rendered MathJax that
+     blockText lifts for cells. Only the slide on screen has typeset
+     output — typesetting is a promise and this export is synchronous —
+     so reading the DOM would give real characters on one slide and raw
+     LaTeX on the next, which is worse than either answer everywhere.
+
+     The vocabulary is the equation palette's own: what the app offered
+     to write is what it undertakes to read back. Anything else keeps its
+     command word, spelled without the backslash, which is still the name
+     of what it is.  */
+  var TEX_CHAR={
+    alpha:'α',beta:'β',gamma:'γ',delta:'δ',
+    epsilon:'ε',varepsilon:'ε',zeta:'ζ',eta:'η',
+    theta:'θ',vartheta:'ϑ',iota:'ι',kappa:'κ',
+    lambda:'λ',mu:'μ',nu:'ν',xi:'ξ',pi:'π',
+    rho:'ρ',sigma:'σ',tau:'τ',upsilon:'υ',
+    phi:'φ',varphi:'φ',chi:'χ',psi:'ψ',
+    omega:'ω',
+    Gamma:'Γ',Delta:'Δ',Theta:'Θ',Lambda:'Λ',
+    Xi:'Ξ',Pi:'Π',Sigma:'Σ',Phi:'Φ',Psi:'Ψ',
+    Omega:'Ω',
+    times:'×',div:'÷',pm:'±',mp:'∓',cdot:'·',
+    ast:'∗',circ:'∘',leq:'≤',le:'≤',geq:'≥',
+    ge:'≥',neq:'≠',ne:'≠',approx:'≈',
+    equiv:'≡',sim:'∼',propto:'∝',ll:'≪',
+    gg:'≫','in':'∈',notin:'∉',subset:'⊂',
+    cup:'∪',cap:'∩',forall:'∀',exists:'∃',
+    nabla:'∇',partial:'∂',infty:'∞',
+    sum:'∑',prod:'∏',int:'∫',iint:'∬',
+    oint:'∮',lim:'lim',
+    to:'→',gets:'←',rightarrow:'→',leftarrow:'←',
+    mapsto:'↦',Rightarrow:'⇒',Leftarrow:'⇐',
+    Leftrightarrow:'⇔',uparrow:'↑',downarrow:'↓'
+  };
+  var TEX_SUP={'0':'⁰','1':'¹','2':'²','3':'³',
+    '4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸',
+    '9':'⁹','+':'⁺','-':'⁻','=':'⁼','(':'⁽',
+    ')':'⁾',n:'ⁿ',i:'ⁱ'};
+  var TEX_SUB={'0':'₀','1':'₁','2':'₂','3':'₃',
+    '4':'₄','5':'₅','6':'₆','7':'₇','8':'₈',
+    '9':'₉','+':'₊','-':'₋','=':'₌','(':'₍',
+    ')':'₎',a:'ₐ',e:'ₑ',i:'ᵢ',j:'ⱼ',
+    k:'ₖ',l:'ₗ',m:'ₘ',n:'ₙ',o:'ₒ',
+    p:'ₚ',r:'ᵣ',s:'ₛ',t:'ₜ',u:'ᵤ',
+    v:'ᵥ',x:'ₓ'};
+  /* {a}{b} after a command, or the single token that stands in for a
+     brace group ("x^2"). Returns [body, rest] or null. */
+  function texGroup(src){
+    if(src.charAt(0)!=='{'){
+      if(!src) return null;
+      return [src.charAt(0),src.slice(1)];
+    }
+    var d=0;
+    for(var i=0;i<src.length;i++){
+      var c=src.charAt(i);
+      if(c==='{') d++;
+      else if(c==='}'&&!--d) return [src.slice(1,i),src.slice(i+1)];
+    }
+    return null;
+  }
+  function texScript(body,table){
+    var out='';
+    for(var i=0;i<body.length;i++){
+      var ch=table[body.charAt(i)];
+      if(ch===undefined) return null;
+      out+=ch;
+    }
+    return out;
+  }
+  function texPlain(src){
+    var out='',rest=String(src||''),g;
+    while(rest){
+      var m=/^\\([A-Za-z]+)/.exec(rest);
+      if(m){
+        rest=rest.slice(m[0].length);
+        var name=m[1];
+        /* the wrappers whose whole job is how a thing is SET, not what
+           it says: their contents are the text and they go away */
+        if(/^(text|mathrm|mathbf|mathbb|mathcal|mathit|operatorname|bar|overline|hat|vec|dot|ddot|tilde|underline|left|right|displaystyle)$/
+            .test(name)){
+          if(name==='left'||name==='right'||name==='displaystyle') continue;
+          g=texGroup(rest);
+          if(g){out+=texPlain(g[0]);rest=g[1];}
+          continue;
+        }
+        if(name==='frac'||name==='binom'){
+          g=texGroup(rest);
+          if(!g){out+=name;continue;}
+          var num=texPlain(g[0]),g2=texGroup(g[1]);
+          if(!g2){out+=num;rest=g[1];continue;}
+          out+=(name==='frac')?('('+num+')/('+texPlain(g2[0])+')')
+                              :('C('+num+', '+texPlain(g2[0])+')');
+          rest=g2[1];
+          continue;
+        }
+        if(name==='sqrt'){
+          var root='';
+          var rm=/^\[([^\]]*)\]/.exec(rest);
+          if(rm){root=texPlain(rm[1]);rest=rest.slice(rm[0].length);}
+          g=texGroup(rest);
+          out+=root+'√('+(g?texPlain(g[0]):'')+')';
+          if(g) rest=g[1];
+          continue;
+        }
+        out+=(TEX_CHAR[name]!==undefined?TEX_CHAR[name]:name);
+        /* THE SPACE AFTER A COMMAND WORD, which LaTeX reads as the
+           delimiter that ends the name rather than as a space. Eaten
+           only when it was doing that job and nothing else — that is,
+           when a letter or digit follows ("\partial u" -> "∂u"). Eating
+           it unconditionally welded the symbol to the next token
+           ("\alpha + \beta" -> "α+ β", because the source's space before
+           the + had already been spent). */
+        if(/^ [A-Za-z0-9]/.test(rest)) rest=rest.slice(1);
+        continue;
+      }
+      var c0=rest.charAt(0);
+      if(c0==='\\'){
+        /* \, \; \: \! and \\ : spacing and a line break */
+        var c1=rest.charAt(1);
+        out+=(c1==='!'||c1===undefined)?'':(c1==='\\'?' ':' ');
+        rest=rest.slice(2);
+        continue;
+      }
+      if(c0==='^'||c0==='_'){
+        g=texGroup(rest.slice(1));
+        if(!g){rest=rest.slice(1);continue;}
+        var inner=texPlain(g[0]);
+        var lifted=texScript(inner,c0==='^'?TEX_SUP:TEX_SUB);
+        out+=(lifted!==null)?lifted:(c0+'('+inner+')');
+        rest=g[1];
+        continue;
+      }
+      if(c0==='{'||c0==='}'||c0==='&'){rest=rest.slice(1);continue;}
+      out+=c0;rest=rest.slice(1);
+    }
+    return out;
+  }
+  /* WHICH DOLLARS ARE MATHS. "$5 and $10" is prose and has to leave the
+     export exactly as it was typed, so an inline pair only counts when
+     its body actually reads as TeX — a command, a power or a subscript.
+     Display $$…$$ is never ambiguous, and neither is a box the Maths
+     button built, which is what `sure` says. */
+  function texish(b){return /\\[A-Za-z]|[\^_]/.test(b||'');}
+  function mathsPlain(src,sure){
+    var hit=false;
+    var out=String(src||'').replace(
+      /\$\$([\s\S]+?)\$\$|\$([^$\n]+)\$/g,
+      function(all,disp,inline){
+        var body=(disp!==undefined)?disp:inline;
+        if(disp===undefined&&!sure&&!texish(body)) return all;
+        hit=true;
+        return texPlain(body).replace(/\s+/g,' ').trim();
+      });
+    return {text:out,hit:hit};
+  }
   /* An unset colour means "whatever the page CSS says", which is dark ink on
      a light poster and white on a dark one. PowerPoint has no such cascade,
      so the default is resolved HERE — baking a plain '#ffffff' would put
@@ -1063,7 +1225,11 @@
         var p=titleProps(s,which),val=(which==='t')?s.title:s.sub;
         if(!String(val||'').trim()) return;
         var it=pptxTextItem(p,true,ink);
-        it.text=val;
+        /* a title carries LaTeX as readily as a text box does, and it
+           went out with its dollar signs on (T53) */
+        var mp=mathsPlain(val,false);
+        if(mp.hit) note.maths++;
+        it.text=mp.text;
         items.push(it);
       });
     }
@@ -1088,7 +1254,14 @@
          its export fallback size matters to that conversion. */
       var box=(a.k==='arrow')?null:pptxBox(a,false);
       if(a.k==='text'){
-        items.push(pptxTextItem(a,false,ink,box));
+        var ti=pptxTextItem(a,false,ink,box);
+        /* `a.maths` means the Maths button built this box, so the whole
+           of it is the equation and there is nothing to be careful about
+           — an ordinary box has to earn the flattening (T53) */
+        var tp=mathsPlain(ti.text,!!a.maths);
+        if(tp.hit) note.maths++;
+        ti.text=tp.text;
+        items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:a.src});
@@ -1216,7 +1389,9 @@
       +'use Export PDF for those)';
     if(note.cropped) msg+='. '+note.cropped+' crop'
       +(note.cropped===1?'':'s')+' not carried';
-    if(note.maths) msg+='. Equations came across as plain text';
+    if(note.maths) msg+='. '+note.maths+' equation'
+      +(note.maths===1?'':'s')+' came across as plain text \u2014 '
+      +'PowerPoint has no LaTeX, so they were flattened to characters';
     toast(msg);
     /* one honest tally for the caller: the builder counts items IT could not
        write, this counts cells that never became items — reporting only one

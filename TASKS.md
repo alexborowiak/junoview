@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 3 open items, T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 2 open items, T57 and T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -1023,10 +1023,38 @@ file before touching anything.
   with no runtime errors; the ribbon still fits unclipped at 1024, 1180
   and 1366px.
 
-- [ ] **T53 · S — Maths survives the title slide and the export.** The
+- [x] **T53 · S — Maths survives the title slide and the export.** The
   re-typeset gate asks only about `s.annots`, so LaTeX in a title
   slide's title or subtitle is thrown away; and a deck text box built by
   the Maths button exports to PowerPoint as literal `$$ … $$`.
+  *2026-08-29.* `hasMaths` split into `hasMathsStr` (the question at the
+  string level) and `slideHasMaths` (the question for a whole slide,
+  title and subtitle included), and the render gate now asks the latter
+  — a title slide keeps its words outside `s.annots`, which is the whole
+  reason the annot-only gate could not see them. The commit path gained
+  the same widening, so maths typed INTO a title typesets when you click
+  away rather than staying raw until something else rebuilt the layer.
+  A third half turned up while driving it: MathJax replaces the text
+  node with its own markup, so opening a typeset box for editing put the
+  caret among rendered glyphs and the commit read those back as the new
+  source — one edit and the LaTeX was gone. `beginEdit` now puts the
+  stored source back first, in `editableText`, so titles and ordinary
+  text boxes are both covered by one place.
+  For the export, `mathsPlain`/`texPlain` flatten an equation to
+  characters — `$$ \frac{\partial u}{\partial t} = \alpha \nabla^2 u $$`
+  leaves as `(∂u)/(∂t) = α ∇² u` — from the SOURCE rather than from the
+  rendered MathJax `blockText` lifts for cells, because only the slide on
+  screen has typeset output and this export is synchronous. The
+  vocabulary is the equation palette's own; anything else keeps its
+  command word without the backslash. Both the text-box and the title
+  branches count what they flattened, so the export's existing
+  "Equations came across as plain text" warning finally fires for deck
+  maths, now with a count and the reason. Prose dollars ("$5 and $10")
+  are left exactly as typed: an inline pair is only flattened when its
+  body reads as TeX, or when `a.maths` says the Maths button built it.
+  Browser-verified in Edge on a deck whose title slide carries LaTeX:
+  19 checks over the rebuild gate, the edit round-trip, the re-typeset
+  on commit and all four exported strings, with no runtime errors.
 
 - [x] **T54 · S — Menu and pane icons say the right thing.** T39 swept
   the RIBBON; the menus were not in it.

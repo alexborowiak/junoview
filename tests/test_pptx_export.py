@@ -166,3 +166,56 @@ def test_pdf_export_says_it_prints_at_true_page_size(out):
     """
     assert "TRUE size" in out
     assert "841&#215;1189mm" in out or "841×1189mm" in out
+
+
+def test_a_deck_equation_is_flattened_rather_than_shipped_as_latex(out):
+    """A text box built by the Maths button went into the .pptx as the
+    literal "$$ E = mc^2 $$", dollar signs and all, and the export's own
+    "Equations came across as plain text" warning stayed silent -- it was
+    only ever raised for maths inside a notebook CELL (2026-08-26 audit,
+    T53).
+
+    Flattened from the SOURCE rather than from the rendered MathJax that
+    blockText lifts for cells: only the slide on screen has typeset
+    output and this export is synchronous, so reading the DOM would give
+    characters on one slide and raw LaTeX on the next.
+    """
+    assert "function mathsPlain(src,sure){" in out
+    assert "function texPlain(src){" in out
+    # both branches that carry deck words, not just one
+    assert "var tp=mathsPlain(ti.text,!!a.maths);" in out
+    assert "var mp=mathsPlain(val,false);" in out
+    assert out.count("note.maths++") == 3      # cell, text box, title
+    # ...and the toast now counts them and says why
+    assert "came across as plain text \\u2014 " in out
+    assert "PowerPoint has no LaTeX, so they were flattened" in out
+
+
+def test_prose_dollars_are_not_mistaken_for_maths_by_the_export(out):
+    """"It cost $5 and $10" matches the render gate's inline pattern, and
+    the gate can afford that -- the cost is a needless MathJax pass. The
+    export cannot: it REWRITES the words. So an inline pair only counts
+    when its body actually reads as TeX, and a box the Maths button built
+    says so for itself.
+    """
+    assert "function texish(b){return /\\\\[A-Za-z]|[\\^_]/.test(b||'');}" \
+        in out
+    assert "if(disp===undefined&&!sure&&!texish(body)) return all;" in out
+
+
+def test_the_flattening_vocabulary_is_the_palette_the_app_offers(out):
+    """What the equation palette offered to write is what the export
+    undertakes to read back. Anything else keeps its command word,
+    spelled without the backslash, which is still the name of what it is.
+    """
+    assert "var TEX_CHAR={" in out and "var TEX_SUP={" in out
+    assert "var TEX_SUB={" in out
+    # the structures no single run of text can otherwise express
+    assert "?('('+num+')/('+texPlain(g2[0])+')')" in out
+    assert "out+=root+'\u221a('+(g?texPlain(g[0]):'')+')';" in out
+    # a power lifts to real superscript characters where they exist, and
+    # falls back to ^(...) where they do not -- never silently dropped
+    assert "out+=(lifted!==null)?lifted:(c0+'('+inner+')');" in out
+    # the space after a command word is LaTeX's delimiter, and is only
+    # eaten when that is the only job it was doing
+    assert "if(/^ [A-Za-z0-9]/.test(rest)) rest=rest.slice(1);" in out

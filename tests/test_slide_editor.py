@@ -688,9 +688,11 @@ def test_equations_reuse_the_text_box_and_mathjax(out):
     cost for nothing.
     """
     assert 'id="dc-maths"' in out
-    # the gate is one named predicate now (hasMaths), so the question it
-    # asks can be widened without hunting for an inlined copy of it
-    assert "if((s.annots||[]).some(hasMaths)) typeset(layer);" in out
+    # the gate is one named predicate, so the question it asks can be
+    # widened without hunting for an inlined copy of it -- and it was
+    # widened, to slideHasMaths, when a title slide turned out to keep
+    # its LaTeX somewhere s.annots could not see it (T53)
+    assert "if(slideHasMaths(s)) typeset(layer);" in out
     # ...and since 2026-08-20 there is a real EDITOR in front of it. The
     # button used to drop "$$ E = mc^2 $$" on the slide and walk away --
     # no preview, no symbols, no way to tell whether what you typed was
@@ -1680,13 +1682,19 @@ def test_inline_maths_survives_a_rebuild_of_the_layer(out):
     the typeset (there is maths in here somewhere).
     """
     assert "function hasMaths(a){" in out
-    assert "if((s.annots||[]).some(hasMaths)) typeset(layer);" in out
+    assert "if(slideHasMaths(s)) typeset(layer);" in out
     # kept cheap: renderAnnots runs on every mousemove of a drag, so the
     # no-maths case must cost one indexOf and no regex
-    assert "var src=(t.indexOf('$')>=0)?t:((h.indexOf('$')>=0)?h:'');" in out
-    assert "if(!src) return false;" in out
+    assert "if(!src||src.indexOf('$')<0) return false;" in out
+    assert "return hasMathsStr((t.indexOf('$')>=0)?t:h);" in out
     # a lone $ in prose must not drag the layer through MathJax
     assert "||/\\$[^$\\n]+\\$/.test(src);" in out
+    # a title slide keeps its words OUTSIDE s.annots, so the whole-slide
+    # question has to ask about those too or every rebuild eats them
+    assert "function slideHasMaths(s){" in out
+    assert ("return s.layout==='title'\n"
+            "      &&(hasMathsStr(s.title||'')||hasMathsStr(s.sub||''));") \
+        in out
     # ...and isMaths keeps its own, stricter question
     assert "show('#fmt-eqedit',isMaths(a)&&isNum);" in out
 
@@ -1699,9 +1707,17 @@ def test_maths_typesets_the_moment_you_click_away(out):
     happened to rebuild the layer.
 
     While the box is BEING edited the maths is deliberately left raw
-    under the caret; the typeset belongs at the commit.
+    under the caret; the typeset belongs at the commit. Which is only
+    true if the raw source is what is under the caret -- MathJax having
+    replaced the text node with its own markup, opening a typeset box
+    for editing used to put the caret among rendered glyphs, and the
+    commit read those back as the new source (T53).
     """
-    assert "if(hasMaths(a2)) typeset(layer);" in out
+    assert "?hasMathsStr((idx==='t'?(s2&&s2.title):(s2&&s2.sub))||'')\n" \
+        "         :hasMaths(a2)) typeset(layer);" in out
+    assert "if(!rich&&el.querySelector&&el.querySelector('mjx-container')){" \
+        in out
+    assert "if(raw) el.textContent=raw;" in out
 
 
 def test_a_token_is_a_reference_not_a_copy(out):
@@ -1885,7 +1901,7 @@ def test_the_fit_pass_runs_at_the_text_commit_too(out):
     height was measured before the words arrived -- the same shape of
     bug T16's typeset hit, found the same way.
     """
-    assert ("      if(hasMaths(a2)) typeset(layer);\n"
+    assert (":hasMaths(a2)) typeset(layer);\n"
             "      /* and re-fit, for the same reason") in out
     assert "fitTexts(layer,s2,true);" in out
 

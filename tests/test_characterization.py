@@ -393,8 +393,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # are placed in all 108 ribbon arrangements. Pinned by tests/test_poster_
 # craft.py and tests/test_ribbon_layouts.py, and verified in Edge across the
 # resize, move, hide/show, undo and clear-confirm paths.
-EXPECTED_MD5 = "4c7480e3b8432a2ef28249ae8fc6ede9"
-EXPECTED_BYTES = 3018659
+# Moved 2026-08-29 for TASKS T53: the re-typeset gate is slideHasMaths, which
+# can see a title slide's title and subtitle (they are strings on the slide,
+# not annots, so the old annot-only gate threw their LaTeX away on every layer
+# rebuild); opening a typeset box for editing puts the source back under the
+# caret; and the PowerPoint export flattens an equation to characters instead
+# of shipping literal "$$ ... $$", counting it so the existing warning fires.
+# Three deck.js fragments changed. Pinned by tests/test_slide_editor.py and
+# tests/test_pptx_export.py, and verified in Edge across 19 checks.
+EXPECTED_MD5 = "d8347cae22b79f8c16d849a55adb85a4"
+EXPECTED_BYTES = 3027817
 
 
 def _render_example() -> str:

@@ -790,6 +790,17 @@
        make it normal moving controls"). */
     var editMode=(el.tagName==='UL'||rich)?'true':'plaintext-only';
     function beginEdit(){
+      /* WHAT YOU EDIT IS WHAT YOU TYPED. MathJax replaces the text node
+         with its own <mjx-container>, so putting a caret into a typeset
+         box put it among rendered glyphs — and the commit reads the
+         element back as the new source, so one edit turned the LaTeX
+         into whatever those glyphs flatten to. Ask the model for the
+         stored string and put it back before the caret lands. Not for
+         `rich`, which owns its own markup and never carries maths. */
+      if(!rich&&el.querySelector&&el.querySelector('mjx-container')){
+        var raw=getVal();
+        if(raw) el.textContent=raw;
+      }
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
       el.focus();
       var host=el.closest?el.closest('.an-item'):null;
@@ -890,7 +901,13 @@
          until something else happened to rebuild the layer, which is a
          very strange thing to have to discover (2026-08-25, found in
          the browser while closing TASKS T16). */
-      if(hasMaths(a2)) typeset(layer);
+      /* a title or subtitle is a string on the slide and not an
+         annot, so a2 is undefined for it and this gate never fired —
+         the maths you had just typed into a title stayed raw until
+         something else rebuilt the layer (T53) */
+      if((idx==='t'||idx==='s')
+         ?hasMathsStr((idx==='t'?(s2&&s2.title):(s2&&s2.sub))||'')
+         :hasMaths(a2)) typeset(layer);
       /* and re-fit, for the same reason: the words that just arrived are
          the ones the fit height is about (T15) */
       fitTexts(layer,s2,true);
@@ -1992,8 +2009,11 @@
     /* the layer is rebuilt on every change, which throws away whatever
        MathJax had already typeset - so ask for it again, but ONLY when
        the slide actually carries maths. Typesetting a whole layer on
-       every mousemove of a drag would be a real cost for nothing. */
-    if((s.annots||[]).some(hasMaths)) typeset(layer);
+       every mousemove of a drag would be a real cost for nothing.
+       slideHasMaths, not `s.annots.some(hasMaths)`: a title slide's
+       title and subtitle are strings on the slide, so the annot-only
+       question threw their LaTeX away on every rebuild (T53). */
+    if(slideHasMaths(s)) typeset(layer);
     /* build animations: number the builds in the editor; in playback, hide the
        ones not yet revealed and animate the one just revealed */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){

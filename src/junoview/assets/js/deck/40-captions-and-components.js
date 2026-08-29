@@ -2034,17 +2034,34 @@
     return !!(a&&a.k==='text'
       &&(a.maths||/^\s*\$[\s\S]*\$\s*$/.test(a.text||'')));
   }
-  function hasMaths(a){
-    if(!a||a.k!=='text') return false;
-    if(a.maths) return true;
-    var t=a.text||'',h=a.html||'';
-    var src=(t.indexOf('$')>=0)?t:((h.indexOf('$')>=0)?h:'');
-    if(!src) return false;
+  /* THE SAME QUESTION AT THE STRING LEVEL. A title slide's title and
+     subtitle are plain strings on the slide rather than entries in
+     s.annots, so every caller that only knew how to ask about an annot
+     answered "no maths here" for them — and the re-typeset gate is one
+     of those callers, which is why LaTeX in a title was thrown away by
+     every layer rebuild (2026-08-26 audit, T53). */
+  function hasMathsStr(src){
+    if(!src||src.indexOf('$')<0) return false;
     /* display $$…$$, or an inline $…$ pair that does not span a line —
        a lone $ in prose ("$5") must not drag the whole layer through
        MathJax on every frame */
     return /\$\$[\s\S]*\$\$/.test(src)
       ||/\$[^$\n]+\$/.test(src);
+  }
+  function hasMaths(a){
+    if(!a||a.k!=='text') return false;
+    if(a.maths) return true;
+    var t=a.text||'',h=a.html||'';
+    return hasMathsStr((t.indexOf('$')>=0)?t:h);
+  }
+  /* "does anything on this slide need MathJax" — ONE function, because
+     the answer is asked by the render gate and by the export, and the
+     two disagreeing is exactly how the title case got lost. */
+  function slideHasMaths(s){
+    if(!s) return false;
+    if((s.annots||[]).some(hasMaths)) return true;
+    return s.layout==='title'
+      &&(hasMathsStr(s.title||'')||hasMathsStr(s.sub||''));
   }
   var qrBtn=$('#dc-qr');
   if(qrBtn) qrBtn.addEventListener('click',function(){
