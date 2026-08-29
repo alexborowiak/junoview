@@ -1118,6 +1118,45 @@
      SUGGESTS: every slide, its best match, a thumbnail, and a tick you
      can clear. */
   var ARRKEY='jv-deck-arr:';
+  /* THE THREE ROWS IN THE LAYOUTS MENU (T89). Wired from THE BOOT
+     SEQUENCE, never mid-file: this walks the DOM and the deck's markup
+     is only guaranteed real at the tail.
+
+     Saving is done HERE rather than by reaching into the dialog, because
+     arrList / arrFromSlide / arrSave are file-scope and the dialog's
+     #ar-save handler is not. The dialog re-seeds on open, so an
+     arrangement saved from the menu is in the library the next time it
+     is looked at. */
+  function initReuseDoors(){
+    function shut(){var lm=$('#lay-menu'); if(lm) lm.hidden=true;}
+    var a=$('#lay-arrs');
+    if(a) a.addEventListener('click',function(e){
+      e.stopPropagation();shut();
+      if(typeof window.SemDeckArrange==='function') window.SemDeckArrange();
+    });
+    var g=$('#lay-give');
+    if(g) g.addEventListener('click',function(e){
+      e.stopPropagation();shut();
+      if(typeof window.SemDeckMatchMany==='function')
+        window.SemDeckMatchMany();
+    });
+    var sv=$('#lay-arrsave');
+    if(sv) sv.addEventListener('click',function(e){
+      e.stopPropagation();shut();
+      var sl=pres.slides[cur];
+      if(!sl||!(sl.annots||[]).length){
+        toast('Lay something out on this slide first');return;}
+      var nm=prompt('Call this arrangement:',
+        slideTitle(sl).slice(0,30)||'Arrangement');
+      if(nm==null) return;
+      nm=nm.trim(); if(!nm) return;
+      var l=arrList();
+      l.push(arrFromSlide(sl,nm));
+      arrSave(l);
+      toast('“'+nm+'” saved — offered on every deck you '
+        +'open here');
+    });
+  }
   function arrList(){
     try{
       var l=JSON.parse(lsGet(ARRKEY+SCOPE)||'[]');
@@ -1230,6 +1269,48 @@
   function matchLabelOf(sl,i){
     var a=(sl&&sl.annots||[])[i];
     return a?annotLabel(a):'object';
+  }
+  /* THE THREE POINT-AT-IT VERBS, as a menu of their own (T89).
+     They ship as rows inside the Arrange menu, which lives on the
+     CONTEXTUAL Object tab: select something, find the tab, open the
+     menu, scroll past thirty alignment rows. That is three clicks and a
+     scroll for the one gesture in this editor that is genuinely worth
+     knowing about. The Objects pane is open while you work, so it gets
+     the same three rows behind one button.
+
+     Nothing new happens here: each row calls armMatch with the same
+     direction string the Arrange menu passes it. */
+  function matchMenuAt(btn){
+    var old=$('#objmatch-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu';m.id='objmatch-menu';
+    menuHead(m,'point at what to match');
+    [['to','Copy this look to objects I click…',
+      'Then click each object that should take it'],
+     ['from','Take the look of an object I click…',
+      'Then click the one object whose look you want here'],
+     ['layout','Lay these out like a group I click…',
+      'Then click a group whose arrangement these should copy. The '
+      +'look does not travel — only the positions and sizes']]
+      .forEach(function(o){
+        var b=document.createElement('button');
+        b.className='dbtn vw-opt';
+        /* the icon is trusted bic() markup; the LABEL stays a text node */
+        b.innerHTML=bic('swap')+' ';
+        b.appendChild(document.createTextNode(o[1]));
+        b.title=o[2];
+        b.addEventListener('click',function(e){
+          e.stopPropagation();m.remove();armMatch(o[0]);});
+        m.appendChild(b);
+      });
+    document.body.appendChild(m);
+    floatMenu(btn,m);
+    setTimeout(function(){
+      document.addEventListener('click',function once(e){
+        if(!m.contains(e.target)) m.remove();
+        document.removeEventListener('click',once);
+      });
+    },0);
   }
   function armMatch(dir){
     var s=pres.slides[cur],idxs=selIdxs().filter(function(i){

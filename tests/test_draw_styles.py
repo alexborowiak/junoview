@@ -241,7 +241,11 @@ def test_the_fit_actually_runs_on_a_fresh_page(out):
     """
     assert "new ResizeObserver(function(){" in out
     assert "fitEditRibbon();applyZoom();" in out
-    assert "if(m==='edit') requestAnimationFrame(fitEditRibbon);" in out
+    # T80 added the strip's ceiling to the same first-real-width moment
+    # (a width restored from localStorage must be clamped before it can
+    # eat the row), so the guarded rAF now runs both
+    assert "if(m==='edit') requestAnimationFrame(function(){" in out
+    assert "fitFilmMax();fitEditRibbon();});" in out
     # a fit measured against the fallback font would otherwise stick
     assert "document.fonts.ready.then" in out
 

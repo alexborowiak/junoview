@@ -1327,7 +1327,50 @@
     });
     return copies;
   }
-  function cloneAnnots(idxs,dx,dy){
+  /* ---- A COPY WITH NO SOURCE (T93) ----------------------------------
+     "Would be good if there was a 'duplicate without context' option."
+     (2026-08-29, user.)
+
+     A plain duplicate of a figure frame is a SECOND VIEW OF THE SAME
+     CARD: same notebook cell, same facet of it, same pinned commit.
+     That is the right default and exactly the wrong thing when what you
+     are about to do is aim the copy somewhere else -- you want the size,
+     the crop, the border, the caption tie and the animation, and then
+     you have to unpick three separate bindings before the copy can point
+     anywhere. The emptied frame is not a broken state: a cell with no
+     ref draws the "Click to add from notebook" button, which is the
+     affordance this whole feature is asking for.
+
+     ONE LIST, READ TWICE. hasContext decides whether the door is even
+     offered; stripContext takes the context away. They must name the
+     same fields, so they live in the same breath.
+
+     WHAT IS DELIBERATELY NOT HERE. A component instance (cmp/ci/cinst)
+     keeps its link -- its content lives in the definition, so cutting it
+     leaves an empty husk rather than a free object. cap/capOf are ties
+     BETWEEN the copies and independentCopies has already re-keyed them.
+     oid is re-minted by ensureOids the moment it collides. */
+  function hasContext(a){
+    if(!a) return false;
+    if(a.k==='cell') return !!(a.ref||a.part||a.lockver);
+    if(a.k==='image') return !!a.fkey;
+    if(a.k==='flip') return !!(a.frames&&a.frames.length);
+    return false;
+  }
+  function stripContext(cp){
+    if(!cp) return cp;
+    /* the notebook card, the facet of it this frame shows, and the
+       commit it was pinned to */
+    delete cp.ref;delete cp.part;delete cp.lockver;
+    /* a picture's link back to the file it came from -- what Refresh
+       follows, and the only thing fkey is for */
+    delete cp.fkey;delete cp.fname;
+    /* a flip book is a LIST of refs; emptied, it is exactly the newborn
+       flip book the Insert button makes */
+    if(cp.k==='flip'){cp.frames=[];cp.at=0;}
+    return cp;
+  }
+  function cloneAnnots(idxs,dx,dy,bare){
     var s=pres.slides[cur];
     if(!s||!s.annots) return [];
     var live=idxs.filter(function(i){
@@ -1336,6 +1379,7 @@
     var first=s.annots.length,made=[];
     var srcs=live.map(function(i){return s.annots[i];});
     var copies=independentCopies(srcs,s,s.grpmeta);
+    if(bare) copies.forEach(stripContext);
     copies.forEach(function(cp){
       /* its own build step, rather than sharing the source's */
       if(cp.anim) cp.anim={type:cp.anim.type,order:nextAnimOrder(s)};
@@ -1362,7 +1406,7 @@
     });
     return made;
   }
-  function duplicateSel(){
+  function duplicateSel(bare){
     var s=pres.slides[cur]; if(!s||!s.annots) return;
     /* a fully locked item cannot even be clicked, so an unlocked twin
        dropped on top of it would be a puzzle rather than a duplicate. A
@@ -1370,11 +1414,20 @@
     var idxs=selIdxs().filter(function(i){
       var a=s.annots[i];return a&&!lockedAll(a);});
     if(!idxs.length) return;
-    var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);
+    var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF,bare);
     if(!made.length) return;
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectMany(l,made);}
+    /* SAY SO. A stripped picture looks identical to the original at the
+       moment it lands -- only its Refresh link is gone -- so the one
+       difference that matters is the one thing nobody can see. The
+       stripped FRAME does go visibly empty, and the toast is what says
+       that was on purpose rather than a figure that failed to load. */
+    if(bare) toast(made.length===1
+      ?'Copied without its source — it tracks nothing now'
+      :made.length+' copied without their sources — they track '
+        +'nothing now');
   }
   /* ---- copy / cut / paste ------------------------------------------
      Ctrl+D duplicates in place, which is not the same thing: it cannot
@@ -1692,6 +1745,28 @@
     fr.readAsDataURL(file);
     return true;
   }
+  /* CODE PASTED ONTO THE CANVAS, with no box open to receive it -- the
+     other half of T92. Same detector, same look, and it lands the way
+     pasteImageFile lands a screenshot: push, markDirty, re-render,
+     select, say so. Centred on its own computed width and placed high,
+     because code is usually the thing being talked about rather than
+     the thing in the corner. */
+  function pasteCodeBox(txt){
+    var s=pres.slides[cur];if(!s) return false;
+    var f=codeFence(txt);
+    var src=(f?f.src:txt).replace(/\r/g,'').replace(/\s+$/,'');
+    if(!src) return false;
+    s.annots=s.annots||[];
+    var na={k:'text',x:8,y:14};
+    codeBoxify(na,src);
+    na.x=Math.max(4,50-na.w/2);
+    s.annots.push(na);
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    toast('Code pasted — Ctrl+Z undoes it');
+    return true;
+  }
   /* Ctrl+Shift+V / Ctrl+Alt+V are preventDefaulted on keydown, but not
      every engine agrees that this stops the paste event — and one that
      still fires would run the plain paste on top of the placed one. The
@@ -1730,7 +1805,19 @@
         return;
       }
     }
-    if(clipBuf.length){e.preventDefault();pasteBuf();}
+    if(clipBuf.length){e.preventDefault();pasteBuf();return;}
+    /* NOTHING USED TO HAPPEN HERE. Ctrl+V with plain text on the
+       clipboard and no box open fell off the end of this handler and did
+       nothing at all, which is why code can have the branch without
+       taking anything away from anyone (T92).
+       Deliberately AFTER the internal buffer, not before: the note above
+       argues a fresh internal copy must beat a stale OS clipboard, and
+       that does not stop being true because the stale thing is text
+       rather than an image. So this fires only when there is nothing of
+       ours to paste. `mk` is the plain text already read off the event
+       for the marker test -- no second read, and no navigator.clipboard
+       permission prompt. */
+    if(mk&&looksLikeCode(mk)){e.preventDefault();pasteCodeBox(mk);}
   });
 
   /* nudge the selection with the arrow keys (Shift = bigger step) */
@@ -1802,7 +1889,11 @@
     if(l){renderAnnots(l,s);paintSel(l);}
   }
   var dupBtn=$('#fmt-dup');
-  if(dupBtn) dupBtn.addEventListener('click',duplicateSel);
+  /* WRAPPED, not passed straight through. duplicateSel now takes a
+     `bare` flag and a listener is handed the MouseEvent as its first
+     argument -- which is truthy, so the ribbon's Duplicate button would
+     silently have become the stripped duplicate (T93). */
+  if(dupBtn) dupBtn.addEventListener('click',function(){duplicateSel();});
   var grpBtn=$('#fmt-group');
   if(grpBtn) grpBtn.addEventListener('click',groupSel);
   var ungBtn=$('#fmt-ungroup');

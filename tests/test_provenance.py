@@ -150,7 +150,10 @@ def test_presentation_trail_has_its_own_filters_and_folds(out):
     assert ".vo-sec-chev" in out and ".vo-sec-eye" in out
     assert ".vo-sec-body.vo-sec-fold{display:none" in out
     # the trail toolbar clears the up arrow, and its buttons match the docs
-    assert "padding:64px 0 60px" in out
+    # the sides are 78px since T69: playback gave up the stage's padding
+    # so the slide can fill the screen, and the trail took the reading
+    # margin over (2026-08-29)
+    assert "padding:64px 78px 60px" in out
     assert ".vo-xall,.vo-fbtn{font-family:var(--mono);font-size:11px" in out
 
 

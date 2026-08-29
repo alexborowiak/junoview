@@ -452,6 +452,68 @@
   }
   /* every instance of a component, across the whole deck, as
      {si, idxs:[…]} — the unit an update walks */
+  /* EVERY INSTANCE, AS A LIST YOU CAN WALK (T89).
+
+     cmpInstances has computed this since components shipped —
+     cmpSyncAll walks it on every push, cmpPush counts it for its
+     tooltip — but nothing ever DREW it. So "where else did I put
+     this?" had no answer short of paging through the deck by eye, on
+     the one feature whose entire point is that a thing appears in
+     several places at once.
+
+     btn is optional: from the Objects pane it is the tool that opened
+     it, and floatMenu hangs the list under it. From the canvas menu
+     there is no button left to hang from — row() removes the menu
+     before it calls you — so the list is placed near the top of the
+     stage instead. */
+  function cmpInstMenu(id,btn){
+    var old=$('#cmp-inst-menu'); if(old) old.remove();
+    var def=cmpStore()[id]||{};
+    var list=cmpInstances(id);
+    var m=document.createElement('div');
+    m.className='sh-menu match-menu';m.id='cmp-inst-menu';
+    menuHead(m,'“'+(def.name||'this component')+'” is in '
+      +list.length+' place'+(list.length===1?'':'s'));
+    if(!list.length) menuHead(m,'nothing is using it yet');
+    list.forEach(function(g){
+      var sl=(pres.slides||[])[g.si];
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      var n=document.createElement('span');n.className='fh-n';
+      n.textContent=(g.si+1);b.appendChild(n);
+      var t=document.createElement('span');
+      t.textContent=slideTitle(sl)+' — '+g.idxs.length+' object'
+        +(g.idxs.length===1?'':'s');
+      b.appendChild(t);
+      if(g.si===cur&&selSet.indexOf(g.idxs[0])>=0) b.classList.add('on');
+      b.title='Go to slide '+(g.si+1)+' with this instance selected';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.remove();
+        cur=g.si;
+        selSet=g.idxs.slice();
+        selAnnot=g.idxs[g.idxs.length-1];
+        refresh();
+        toast('Slide '+(g.si+1)+' — this instance is selected');
+      });
+      m.appendChild(b);
+    });
+    document.body.appendChild(m);
+    if(btn) floatMenu(btn,m);
+    else {
+      m.style.position='fixed';m.style.zIndex='240';
+      m.style.right='auto';m.style.bottom='auto';
+      var sr=stage.getBoundingClientRect();
+      m.style.left=Math.round(Math.max(8,
+        sr.left+sr.width/2-(m.offsetWidth||180)/2))+'px';
+      m.style.top=Math.round(sr.top+40)+'px';
+    }
+    setTimeout(function(){
+      document.addEventListener('click',function once(e){
+        if(!m.contains(e.target)) m.remove();
+        document.removeEventListener('click',once);
+      });
+    },0);
+  }
   function cmpInstances(id){
     var seen={},out=[];
     (pres.slides||[]).forEach(function(sl,si){

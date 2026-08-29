@@ -685,6 +685,32 @@
   function renderNbsMenu(){
     buildNbsInto($('#dc-nbs'),true);
   }
+  /* T78: THE COLUMN'S HEIGHT IS THE STRIP'S HEIGHT. Everything above
+     the thumbnails is height the thumbnails do not get, and this block
+     was a header, one row per notebook and FIVE full-width buttons --
+     around 180px of a laptop's column, spent on actions you use once a
+     session (2026-08-29, user: "slide thumbnails seem to be compressed
+     by the buttons that are on the top right ... even though they are
+     above, they seem to compress the thumbnail view"). Three answers,
+     smallest first: the four rare actions fold into one More menu, the
+     rows scroll inside a capped box instead of pushing the strip down,
+     and the whole body folds away from a header that keeps the count.
+     The list still shows by default -- it is the way back and the
+     open/closed state, which is the 2026-08-20 invariant. */
+  var NBS_FOLD_KEY='junoview-nbs-fold';
+  /* a per-BROWSER preference, like the ribbon fold: it says how you like
+     this column, not what the presentation is, so it is not a deck field
+     and needs none of the four places one of those lives in */
+  function nbsFolded(){
+    try{return localStorage.getItem(NBS_FOLD_KEY)==='1';}
+    catch(e){return false;}
+  }
+  function setNbsFolded(v){
+    try{
+      if(v) localStorage.setItem(NBS_FOLD_KEY,'1');
+      else localStorage.removeItem(NBS_FOLD_KEY);
+    }catch(e){}
+  }
   function buildNbsInto(m,column){
     if(!m) return;
     m.innerHTML='';
@@ -698,7 +724,36 @@
       h.title='Back to all notebooks. Nothing is closed or lost.';
       h.addEventListener('click',function(){closeDeck();});
     }
-    m.appendChild(h);
+    /* the header is a ROW now: the way back on the left, then the count
+       (so folding costs no information) and the fold itself */
+    var head=document.createElement('div');head.className='dc-nbs-head';
+    head.appendChild(h);
+    var nbBody=document.createElement('div');nbBody.className='dc-nbs-body';
+    if(column){
+      var nOpen=0;
+      info.forEach(function(n){if(n.open) nOpen++;});
+      var sum=document.createElement('span');sum.className='dc-nbs-sum';
+      sum.textContent=info.length+' listed · '+nOpen+' open';
+      sum.title=info.length+' notebook'+(info.length===1?'':'s')+' in this '
+        +'presentation, '+nOpen+' of them open';
+      head.appendChild(sum);
+      var tg=document.createElement('button');tg.className='dbtn dc-nbs-tog';
+      var shut=nbsFolded();
+      var paintTog=function(){
+        tg.innerHTML=shut?bic('expand')+' Show':bic('collapse')+' Hide';
+        tg.title=shut
+          ?'Show the notebook list and its actions again'
+          :'Fold the list away and give the height to the thumbnails';
+        tg.setAttribute('aria-expanded',(!shut).toString());
+        m.classList.toggle('nbs-folded',shut);
+      };
+      tg.addEventListener('click',function(e){
+        e.stopPropagation();shut=!shut;setNbsFolded(shut);paintTog();});
+      head.appendChild(tg);
+      paintTog();
+    }
+    m.appendChild(head);
+    m.appendChild(nbBody);
     info.forEach(function(n){
       /* openable-but-closed = "avail"; can't be opened here = "gone" */
       var cls=n.open?'open':(n.openable?'avail':'gone');
@@ -726,26 +781,41 @@
           APP.openPath(n.path);
           setTimeout(renderNbsMenu,600);});
       } else if(n.path){row.title=n.path;}
-      m.appendChild(row);
+      nbBody.appendChild(row);
     });
     if(nbsCanOpen()){
       var acts=document.createElement('div');acts.className='dc-nbacts';
       var ob=document.createElement('button');ob.className='dbtn';
-      ob.textContent='Open notebooks';
+      ob.innerHTML=bic('open')+' Open notebooks';
       ob.title='Open every notebook this presentation uses that is not '
         +'already open';
       ob.addEventListener('click',function(){openPresNbs(true);});
       var rb=document.createElement('button');rb.className='dbtn';
-      rb.textContent='Refresh all';
+      rb.innerHTML=bic('reload')+' Refresh all';
       rb.title='Reload every notebook this presentation uses from disk / URL';
       rb.addEventListener('click',function(){openPresNbs(false);});
-      acts.appendChild(ob);acts.appendChild(rb);m.appendChild(acts);
+      acts.appendChild(ob);nbBody.appendChild(acts);
+      /* FOUR ROWS BECAME ONE. Refresh all and the three lock actions are
+         once-a-session verbs, and the lock three HAD to stack full width
+         -- their labels are phrases, not words (2026-08-21) -- so four
+         rows of buttons stood permanently in front of the thumbnails.
+         They keep their words, their icons and their
+         disabled-with-a-reason treatment; they just wait behind More.
+         The menu floats (position:fixed, set by floatMenu), so the
+         capped scrolling body cannot clip it. */
+      var mb=document.createElement('button');mb.className='dbtn';
+      mb.innerHTML=bic('menu')+' More';
+      mb.setAttribute('aria-haspopup','true');
+      mb.setAttribute('aria-expanded','false');
+      mb.title='Refresh every notebook, and lock or unlock every figure';
+      acts.appendChild(mb);
       /* shown everywhere, working only in the app - see the per-figure
          Lock button for why (2026-08-20) */
       if(true){
         var appMode=(APP.mode==='app');
         var acts2=document.createElement('div');
-        acts2.className='dc-nbacts dc-nbacts-stack';
+        acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;
+        acts2.appendChild(rb);
         var la=document.createElement('button');la.className='dbtn';
         la.disabled=!appMode;
         la.innerHTML=bic('lock')+' Lock all figures';
@@ -766,14 +836,32 @@
         lv.title='Fetch every locked figure’s content from git — the '
           +'notebooks don’t need to be open';
         lv.addEventListener('click',function(){loadLockedVersions();});
+        menuHead(acts2,'every figure at once');
         acts2.appendChild(la);acts2.appendChild(ua);
         acts2.appendChild(lv);
-        m.appendChild(acts2);
+        nbBody.appendChild(acts2);
+        var armed=false;
+        var closer=function(e){
+          if(acts2.contains(e.target)) return;
+          acts2.hidden=true;mb.setAttribute('aria-expanded','false');
+          document.removeEventListener('click',closer);armed=false;
+        };
+        mb.addEventListener('click',function(e){
+          e.stopPropagation();
+          var willOpen=acts2.hidden;
+          acts2.hidden=!willOpen;
+          mb.setAttribute('aria-expanded',willOpen.toString());
+          if(!willOpen) return;
+          floatMenu(mb,acts2);
+          if(armed) return;
+          armed=true;
+          setTimeout(function(){document.addEventListener('click',closer);},0);
+        });
       }
     } else {
       var note=document.createElement('div');note.className='dc-nbs-empty';
       note.textContent='Open / refresh is available in the Junoview app.';
-      m.appendChild(note);
+      nbBody.appendChild(note);
     }
   }
   /* ---- the Home tab's Slides group -----------------------------------
@@ -982,8 +1070,12 @@
     }
     applySideRibbon();
     syncViewBtns();
-    /* entering edit mode is the first moment the ribbon has a real width */
-    if(m==='edit') requestAnimationFrame(fitEditRibbon);
+    /* entering edit mode is the first moment the ribbon has a real width
+       -- and therefore the first moment the strip's ceiling can be
+       measured. A width restored from localStorage is clamped by
+       --film-max here rather than eating the row on open (T80) */
+    if(m==='edit') requestAnimationFrame(function(){
+      fitFilmMax();fitEditRibbon();});
     if(creating||editing){
       activePane=-1;
       renderCreate();
@@ -1277,9 +1369,37 @@
         ?'Clicking a figure or a text box now enlarges it while presenting'
         :'Back to a plain click moving the talk on');
     });
+    /* THE CODE TRAIL DOOR (T69). ONE flag suppresses the trail, the
+       "Show code" pill, the up/down arrows and the scroll region
+       together, because updateVNav shows the pill purely from whether a
+       .vtrace node exists and renderSlide is the only thing that ever
+       builds one -- so the gate goes there and nothing else has to know.
+       Stored as hideTrace (SUPPRESSION) rather than showTrace, so every
+       deck already saved keeps the trail it has with no migration. */
+    function syncTrace(){
+      var b=$('#pl-trace'); if(!b) return;
+      b.textContent='Show the code trail under the slide: '
+        +(pres&&pres.hideTrace?'off':'on');
+      b.title=pres&&pres.hideTrace
+        ?'Off: the slide is the whole screen and nothing scrolls under '
+          +'it. The lineage is still there in the notebook.'
+        :'On: the cells that made each figure sit under the slide -- '
+          +'scroll, or press the Show code pill, to reach them.';
+    }
+    mi('#pl-trace',function(){
+      if(pres.hideTrace) delete pres.hideTrace; else pres.hideTrace=1;
+      markDirty();syncTrace();
+      /* the menu lives in the builder chrome, so this is normally set
+         between talks -- but re-render if it somehow fires mid-talk */
+      if(mode==='view') renderSlide();
+      toast(pres.hideTrace
+        ?'The code trail is hidden while presenting'
+        :'The code trail is back under every slide');
+    });
     var plBtn=$('#dc-playmore');
-    if(plBtn) plBtn.addEventListener('click',syncTap);
-    syncTap();
+    if(plBtn) plBtn.addEventListener('click',function(){
+      syncTap();syncTrace();});
+    syncTap();syncTrace();
   })();
   $('#dc-play').addEventListener('click',function(){
     presentFrom=mode;setUIMode('view');});
@@ -1615,6 +1735,16 @@
           ?(allA.length+' item'+(allA.length===1?'':'s')+' selected')
           :'Nothing on this slide to select');
       }
+      /* T93, AND IT MUST COME FIRST. The plain branch below matches 'D'
+         as well as 'd', and e.key is 'D' whenever Shift is down -- so
+         Ctrl+Shift+D already fired today as a silent alias for plain
+         Duplicate. Putting the variant above it spends no new key and
+         retires the alias. Exactly the ordering the two placed pastes
+         further down are written around. */
+      else if((e.ctrlKey||e.metaKey)&&e.shiftKey
+              &&(e.key==='d'||e.key==='D')){
+        e.preventDefault();duplicateSel(1);
+      }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='d'||e.key==='D')){
         e.preventDefault();duplicateSel();
       }
@@ -1917,9 +2047,13 @@
       e.preventDefault();
       h.classList.add('on');
       try{h.setPointerCapture(e.pointerId);}catch(err){}
+      /* the ceiling is measured ONCE, here: the ribbon cannot change what
+         it holds while you are holding the handle, and re-measuring would
+         stamp the whole density ladder on and off sixty times a second */
+      var hi=fitFilmMax();
       var w=0;
       function mv(ev){
-        w=Math.max(150,Math.min(900,ev.clientX));
+        w=Math.max(150,Math.min(hi,ev.clientX));
         deckEl.style.setProperty('--film-w',w+'px');
         /* the stage just lost or gained that width, so the page has to
            re-fit as you drag or the slide sits wrong until you let go */
@@ -1933,6 +2067,11 @@
            off the new width, and doing that on every pointermove would
            rebuild sixty <svg>s a second */
         if(w){lsSet(FILMWKEY+SCOPE,String(w));renderFilm();}
+        /* ...and ONE run of the fit ladder, so the row settles on the rung
+           its new width earns. #edit-tools' ResizeObserver re-fits it live
+           as the column moves; this is what guarantees the final state,
+           and re-publishes --film-max for the next drag (T80) */
+        fitFilmMax();fitEditRibbon();
       }
       document.addEventListener('pointermove',mv);
       document.addEventListener('pointerup',up);

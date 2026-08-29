@@ -480,6 +480,38 @@ def test_notebooks_pane_survives_its_own_actions(out):
     assert "APP.openPath(n.path);hideNbsMenu();" not in out
 
 
+def test_the_notebook_block_stops_squeezing_the_thumbnails(out):
+    """T78: everything above the thumbnails is height the thumbnails do
+    not get, and #dc-nbs was a header, a row per notebook and five
+    full-width buttons (2026-08-29, user: "slide thumbnails seem to be
+    compressed by the buttons that are on the top right ... even though
+    they are above, they seem to compress the thumbnail view"). Three
+    cures, none of which loses the list itself -- it is the way back and
+    the open/closed state (2026-08-20).
+    """
+    # ONE action row: Open notebooks, then More for the once-a-session rest
+    assert "acts.appendChild(ob);nbBody.appendChild(acts);" in out
+    assert "mb.innerHTML=bic('menu')+' More';" in out
+    assert "acts2.className='sh-menu nbs-more-menu';acts2.hidden=true;" in out
+    assert "dc-nbacts-stack" not in out           # the stacked trio is gone
+    # ...the actions are not: same words, same app-only treatment
+    for label in ("Open notebooks", "Refresh all", "Lock all figures",
+                  "Unlock all", "Load locked versions"):
+        assert label in out
+    assert "la.disabled=!appMode;" in out and "ua.disabled=!appMode;" in out
+    # rows AND actions live in one body that scrolls instead of pushing
+    assert "nbBody.appendChild(row);" in out
+    assert ".dc-nbs-body{max-height:24vh;overflow-y:auto;}" in out
+    assert ".dc-nbs.nbs-folded .dc-nbs-body{display:none;}" in out
+    # the fold is a per-browser preference, worded, and keeps the count
+    assert "var NBS_FOLD_KEY='junoview-nbs-fold';" in out
+    assert "bic('expand')+' Show':bic('collapse')+' Hide'" in out
+    assert "sum.className='dc-nbs-sum';" in out
+    # the menu's rules must outrank .sh-menu's grid/absolute, which come
+    # LATER in deck.css -- one class would lose and the body would clip it
+    assert ".sh-menu.nbs-more-menu{position:fixed;" in out
+
+
 def test_browser_saves_offer_a_way_out(out):
     """"autosaved to browser" is one power cut from gone, so the readout
     itself is the door: clickable, titled, and it opens the save-to-file
@@ -1043,8 +1075,8 @@ def test_every_object_copy_gets_independent_relationship_identities(out):
     figure array order safe.
     """
     assert "function independentCopies(srcs,s,sourceMeta){" in out
-    clone = out[out.index("function cloneAnnots(idxs,dx,dy){"):
-                out.index("function duplicateSel(){")]
+    clone = out[out.index("function cloneAnnots(idxs,dx,dy,bare){"):
+                out.index("function duplicateSel(bare){")]
     paste = out[out.index("function pasteBuf(how,at){"):
                 out.index("/* an image on the system clipboard")]
     assert "independentCopies(srcs,s,s.grpmeta)" in clone
@@ -1095,8 +1127,8 @@ def test_duplicating_clones_the_whole_selection(out):
     top of an unclickable original is a puzzle, not a duplicate. A
     POSITION-locked one (T3) clones happily -- the copy is a free item.
     """
-    assert "function cloneAnnots(idxs,dx,dy){" in out
-    assert "var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF);" in out
+    assert "function cloneAnnots(idxs,dx,dy,bare){" in out
+    assert "var made=cloneAnnots(idxs,CLONE_OFF,CLONE_OFF,bare);" in out
     # one new group id per source group, allocated before any push --
     # nextGrp reads the max off s.annots and would repeat itself
     assert "if(gmap[gk]==null) gmap[gk]=gnext++;" in out
@@ -1654,10 +1686,16 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     # the invariants hold by construction: nothing changes a label, and
     # the row is re-fitted after every change
     assert "if(typeof fitEditRibbon==='function') fitEditRibbon();" in out
-    # applied once, from the tail, never mid-file
-    assert ("  renderPresTabs();\n"
-            "  initRibbonLayoutDoor();\n"
-            "  /* the ribbon you kept: applied once here, at the tail") in out
+    # applied once, from the tail, never mid-file. Asserted as an ORDER
+    # rather than as adjacent lines: T89's initReuseDoors now sits
+    # between them, and it belongs in the boot sequence for the same
+    # reason -- it walks the deck's markup.
+    # anchored on the boot CALL (newline + two spaces), which is unique;
+    # the bare name also appears at each definition site
+    _boot = out[out.index("\n  renderPresTabs();"):]
+    assert _boot.index("\n  initRibbonLayoutDoor();") < _boot.index(
+        "  /* the ribbon you kept: applied once here, at the tail")
+    assert "\n  initReuseDoors();" in _boot[:800]
 
 
 def test_each_ribbon_group_is_keyed_by_its_own_name(out):

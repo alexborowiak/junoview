@@ -172,6 +172,24 @@
       </span>
     </span>
     </span>
+    <!-- THE SAVE READOUT, beside the button it reports on. It lived at
+         the far end of the bar, two springs away from Save, so the fact
+         and the control that produces it were at opposite ends of the
+         window (2026-08-29, T70, user: "please put that next to the save
+         button"). -->
+    <span class="deck-status" id="deck-status"></span>
+    <!-- how often it saves itself, said out loud rather than buried as a
+         File-menu toggle you had to open the menu to read. It is a MENU
+         now, not a toggle: "every 5 seconds" is a setting, and the same
+         button counts the seconds down so the timer can be watched while
+         it runs (T70, user: "please make there be an auto-save timer").
+         aria-haspopup was already on this button and had never had a
+         menu behind it. -->
+    <span class="dc-menuwrap">
+      <button class="dbtn qat-btn qat-auto" id="qat-auto" hidden
+        aria-haspopup="true" aria-expanded="false"></button>
+      <div class="dc-menu" id="auto-menu" hidden></div>
+    </span>
     <!-- ONE cell, like the zoom stepper: undo and redo are the same
          decision in two directions and must never end up on different
          lines. In the side rail's wrapping flow they did exactly that
@@ -261,6 +279,17 @@
                is claimed; the rest of the slide still advances. -->
           <button class="dc-mi" id="pl-tap">Click a figure to enlarge it:
             off</button>
+          <!-- THE CODE TRAIL, on or off. It is the whole point of a
+               Junoview deck for some talks and unwanted noise for the
+               rest, and until now there was no door at all: the trail,
+               the "Show code" pill and the scroll region appeared
+               whenever the slide happened to have a lineage (2026-08-29,
+               user: "there is no option to remove the 'show code' little
+               arrow that appears with something in presentations").
+               A menu row and not a ribbon button, so it costs no ribbon
+               width and no arrangement in 07-ribbon-layouts.js. -->
+          <button class="dc-mi" id="pl-trace">Show the code trail under
+            the slide: on</button>
         </div>
       </span>
     </span>
@@ -456,6 +485,30 @@
                       title="Arrange this slide, with room around
  everything">Airy</button>
                   </div>
+                  <!-- THE THIRD ANSWER to "lay this page out" (T89).
+                       Arrange what is here; start from a ready-made one;
+                       or use one you saved yourself. The third was
+                       reachable only from Home &rsaquo; Match slide &rsaquo;
+                       Arrangements&hellip; &mdash; behind a button named
+                       after a different verb, in a tab that is not about
+                       layout at all. These are rows in a dropdown, not
+                       ribbon controls: ribbonControls() reads the row's
+                       direct children, so nothing here needs a seat in
+                       any of the layouts. -->
+                  <div class="hd-lab">or one you saved yourself</div>
+                  <button class="dbtn vw-opt" id="lay-arrs"
+                    title="Layouts you have saved, with a thumbnail of
+ each &mdash; and which slides each one would fit"
+                ><i data-ic="layouts"></i> Arrangements&#8230;</button>
+                  <button class="dbtn vw-opt" id="lay-arrsave"
+                    title="Save the way THIS page is laid out, under a
+ name. Only the shape travels &mdash; no words and no figures are
+ kept"><i data-ic="plus"></i> Save this slide as an
+ arrangement</button>
+                  <button class="dbtn vw-opt" id="lay-give"
+                    title="Choose which other slides take the arrangement
+ of this one"><i data-ic="inherit"></i> Give this slide&rsquo;s layout
+ to&#8230;</button>
                   <div class="hd-lab">or start from a ready-made one</div>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>

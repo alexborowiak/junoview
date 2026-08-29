@@ -610,7 +610,13 @@
     /* playback: the code trace flows beneath the slide — scroll (or
        ArrowDown) between them; steps expand in place */
     stage.classList.remove('scrolly');
-    if(mode==='view'&&s){
+    /* hideTrace is one gate for four things: no .vtrace node means
+       updateVNav finds nothing and leaves #deck-down and #deck-up
+       hidden, .scrolly is never added so the stage does not scroll, and
+       the .vpage wrapper is never built so the slide keeps the whole
+       stage (T69). lineageFor is skipped outright -- suppressed work,
+       not hidden work. */
+    if(mode==='view'&&s&&!pres.hideTrace){
       var lin=lineageFor(s);
       vGroups=lin.groups;
       if(vGroups.length){
@@ -1074,6 +1080,171 @@
          and the caller threw a.html away */
       rich:!!tpl.content.querySelector(
         'span[style],font,b,strong,i,em,u,s,ul,ol')};
+  }
+  /* ---- PASTED CODE (T92) ----------------------------------------------
+     "Like how Slack you can paste code and it formats" (2026-08-29,
+     user). The highlighter this deck owns is highlight_python() in
+     render/highlight.py -- the real Python tokenizer, which is why card
+     chrome is right about f-strings. It cannot help here: it is Python,
+     it runs at RENDER time, and a paste happens in a browser holding a
+     standalone deck with no Python in it. This is its twin, named for
+     the pairing. THE PALETTE IS WHAT MUST STAY IN STEP: these eight
+     literals are core.css's pre.code rules, so a pasted box and a card's
+     code trail are one look. Change one, change both.
+     COLOUR GOES INLINE, NOT IN A CLASS: sanitizeRich (just above) strips
+     every attribute and re-adds style.color alone, so a class="kw" would
+     be deleted at the next blur. Inline colour is the one thing that
+     survives into the model, the draft, the file and the PDF. */
+  var CODE_INK={bg:'#0e1b25',fg:'#c9d6e0',kw:'#6bb8d6',bn:'#86c5a8',
+    st:'#d8a36a',nu:'#c98fd0',co:'#5d7185',op:'#9fb1c0'};
+  /* keyword beats builtin on a clash, as tokenize+keyword order them */
+  var CODE_WORDS={};
+  ('False None True and as assert async await break class continue def '
+   +'del elif else except finally for from global if import in is lambda '
+   +'nonlocal not or pass raise return try while with yield'
+  ).split(' ').forEach(function(w){CODE_WORDS[w]='kw';});
+  ('abs all any bool dict enumerate filter float format getattr hasattr '
+   +'int isinstance len list map max min open print range repr round set '
+   +'sorted str sum super tuple type zip'
+  ).split(' ').forEach(function(w){if(!CODE_WORDS[w]) CODE_WORDS[w]='bn';});
+  /* the prose veto's vocabulary. EVERY WORD THAT IS ALSO A PYTHON
+     KEYWORD IS DELIBERATELY ABSENT (in, is, for, with, and, or, not, as,
+     from) or the veto would fire hardest on the most code-shaped paste
+     there is. "a" and "an" too: a one-letter variable and a .csv
+     extension are not an English article. */
+  var PROSE_WORDS={};
+  ('the an of to that this these those its we our you your they '
+   +'their there was were been are have has had will would should could '
+   +'can may but so because however therefore also very more most such '
+   +'than then when which who what about into over under after before '
+   +'between each both some any'
+  ).split(' ').forEach(function(w){PROSE_WORDS[w]=1;});
+  function codeEsc(s){
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;');
+  }
+  /* built from small literals, not one 130-column line: .source means no
+     hand-doubled backslashes to get wrong */
+  var CODE_TOK=new RegExp([
+    /"""[\s\S]*?"""|'''[\s\S]*?'''/.source,
+    /"(?:\\.|[^"\\\n])*"?|'(?:\\.|[^'\\\n])*'?/.source,
+    /#[^\n]*/.source,
+    /\d[\w.]*/.source,
+    /[A-Za-z_]\w*/.source,
+    /[-+*\/%=<>!&|^~@:,.;()[\]{}]+/.source
+  ].join('|'),'g');
+  /* the JS twin of highlight_python(): same classes, same colours, same
+     promise that anything it cannot classify comes out as escaped plain
+     text. Whitespace between tokens is copied verbatim -- .an-tx is
+     pre-wrap, so the indentation you pasted is what you see. */
+  function hlPython(src){
+    var out='',last=0,m,t,c0,cls;
+    CODE_TOK.lastIndex=0;
+    while((m=CODE_TOK.exec(src))){
+      t=m[0];cls='';
+      if(m.index>last) out+=codeEsc(src.slice(last,m.index));
+      last=m.index+t.length;
+      c0=t.charAt(0);
+      if(c0==='#') cls='co';
+      else if(c0==='"'||c0==="'") cls='st';
+      else if(c0>='0'&&c0<='9') cls='nu';
+      else if(/[A-Za-z_]/.test(c0)) cls=CODE_WORDS[t]||'';
+      else cls='op';
+      out+=cls?('<span style="color:'+CODE_INK[cls]+'">'+codeEsc(t)
+        +'</span>'):codeEsc(t);
+    }
+    if(last<src.length) out+=codeEsc(src.slice(last));
+    return out;
+  }
+  /* A FENCE IS NOT A GUESS -- it is somebody SAYING this is code, so it
+     skips the heuristic and the fence itself is stripped. */
+  function codeFence(txt){
+    var m=/^\s*```+[ \t]*([A-Za-z0-9_+#-]*)[ \t]*\r?\n([\s\S]*?)\r?\n?```+\s*$/
+      .exec(String(txt||''));
+    return m?{src:m[2],lang:(m[1]||'').toLowerCase()}:null;
+  }
+  /* six things a line can do that prose does not. NAMED, because the
+     rule below is "two DIFFERENT ones": one signal repeating down a page
+     is a coincidence, two is a grammar. */
+  var CODE_TESTS=[
+    ['kw',/^\s*(def|class|import|from|return|raise|yield|assert|elif|else|for|while|if|try|except|finally|with|async|await|print|@\w)\b/],
+    ['set',/^\s*[A-Za-z_][\w.]*(\[[^\]]*\])?\s*(=|\+=|-=|\*=|\/=)[^=]/],
+    ['call',/[A-Za-z_]\w*\([^)]*\)/],
+    ['open',/[:{[(,;]\s*$/],
+    ['hash',/^\s*#(?!\s*[A-Z][a-z]+\s)/],
+    ['ind',/^(\t| {2,})\S/]];
+  /* DOES THIS LOOK LIKE CODE? 0, or why. A FALSE POSITIVE (your sentence
+     becomes a black rectangle) is far worse than a false negative (it
+     stays prose and you carry on), so every gate is a veto and all of
+     them have to pass.
+     A ONE-LINE PASTE IS NEVER CODE. That rule alone removes the worst
+     mistakes: "I set x = 3 and it worked" is an assignment to any regex
+     you care to write, and it is a sentence.
+     Then two DISTINCT kinds, half the lines carrying one, and one of
+     keyword/assignment/comment among them -- a call plus a trailing
+     comma is a bibliography, not a program.
+     Then the prose vetoes. Function-word density is the strong one:
+     English runs 30-40% of the list above and code under 3%, so 18% is
+     the empty middle, and it waits for enough words to mean anything.
+     Sentence shape catches the paragraph that happens to be full of
+     brackets. Checked against 24 real pastes before it shipped. */
+  function looksLikeCode(txt){
+    var s=String(txt||'').replace(/\r/g,'');
+    if(codeFence(s)) return 'fence';
+    if(s.length>20000) return 0;      /* a document, not a snippet */
+    var live=s.split('\n').filter(function(l){return l.trim();});
+    if(live.length<2||live.length>400) return 0;
+    /* markdown's other code block: every line indented four spaces */
+    if(live.every(function(l){return /^(\t| {4})\S/.test(l);}))
+      return 'block';
+    var hits={},kinds=0,n=0;
+    live.forEach(function(l){
+      var got=0;
+      CODE_TESTS.forEach(function(t){
+        if(t[1].test(l)){if(!hits[t[0]]){hits[t[0]]=1;kinds++;}got=1;}});
+      if(got) n++;
+    });
+    if(kinds<2||n<live.length*0.5) return 0;
+    if(!hits.kw&&!hits.set&&!hits.hash) return 0;
+    var words=s.toLowerCase().match(/[a-z']+/g)||[],stop=0;
+    words.forEach(function(w){if(PROSE_WORDS[w]) stop++;});
+    if(words.length>=25&&stop/words.length>0.18) return 0;
+    var sent=0;
+    live.forEach(function(l){
+      if(/^["'(]?[A-Z].*[.!?]["')]?$/.test(l.trim())) sent++;});
+    if(sent>live.length*0.4) return 0;
+    return 'shape';
+  }
+  /* MAKE THIS TEXT BOX A CODE BOX. No new annot kind and NO NEW
+     PERSISTED FIELD on purpose: every value written here already
+     round-trips for a text box, so normPres, as_presentations, DECK_KEYS
+     and DECK-FORMAT.md need to know nothing and nothing is dropped on
+     reload. The BOX-level font is what reaches PowerPoint (pptx.js
+     writes item.font as a:latin, Mono meaning Consolas); the per-token
+     colours are for the screen, the PDF and the printer. bgc is set
+     explicitly, not left to the theme, so the dark palette still reads
+     on a white A0 that page-light has flipped. */
+  function codeBoxify(a,src){
+    var longest=0;
+    String(src).split('\n').forEach(function(l){
+      if(l.length>longest) longest=l.length;});
+    a.text=src;
+    a.html=hlPython(src);
+    a.font='mono';a.size=1.8;a.lh=1.45;a.align='left';
+    a.bgc=CODE_INK.bg;a.color=CODE_INK.fg;
+    /* a curve, a bullet or a heading style means nothing to a code block
+       and a stale one would fight the look just asked for */
+    delete a.arc;delete a.list;delete a.b;delete a.i;delete a.style;
+    /* WIDE ENOUGH FOR THE LONGEST LINE, because code that wraps is code
+       you cannot read. A mono glyph is about 0.62em; type size is a
+       percent of page HEIGHT and width a percent of page WIDTH, so the
+       aspect has to come back in -- which is what makes this right on a
+       16:9 slide and on an A0 poster both. Clamped: one 300-character
+       line must not make a box wider than the page. */
+    var pg=pageOf();
+    a.w=Math.max(24,Math.min(88,
+      Math.round(longest*0.62*(a.size)*(pg.mm[1]/pg.mm[0])+3)));
+    return a;
   }
   /* ---- TEXT STYLES ----------------------------------------------------
      A named look a text box can WEAR rather than a set of properties it

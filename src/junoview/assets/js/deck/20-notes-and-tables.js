@@ -1021,6 +1021,58 @@
          must not fire — they would arm a tool mid-sentence */
       e.stopPropagation();
     });
+    /* PASTE CODE, GET CODE (T92). Slack's trick with one rule that keeps
+       it safe: ONLY INTO AN EMPTY BOX. Converting a box you are halfway
+       through writing would rewrite its font, background and width under
+       your caret -- and a monospace RUN inside a prose box is not merely
+       unbuilt but impossible, because sanitizeRich keeps colour and
+       nothing else, so an inline mono span would lose its font at the
+       next blur and leave coloured prose behind. A paste into a box with
+       words in it falls through to the browser's plain paste, as before.
+       Ctrl+Shift+V says "plain, please". Armed on keydown for a beat
+       rather than read off the paste event, which carries no modifiers
+       -- the shape tookPaste uses in 30-format-bar.js. Inside a text box
+       that chord is free: the keydown handler above stops it reaching
+       the canvas's paste-in-place. */
+    var codePlain=0;
+    el.addEventListener('keydown',function(e){
+      if((e.ctrlKey||e.metaKey)&&e.shiftKey
+         &&(e.key==='v'||e.key==='V')){
+        codePlain=1;
+        setTimeout(function(){codePlain=0;},300);
+      }
+    });
+    el.addEventListener('paste',function(e){
+      if(!el.isContentEditable) return;
+      if(codePlain){codePlain=0;return;}
+      var cd=e.clipboardData;if(!cd) return;
+      var txt='';
+      try{txt=cd.getData('text/plain')||'';}catch(err){return;}
+      if(!txt) return;
+      var s5=pres.slides[cur],a5=s5&&annotByIdx(s5,idx);
+      /* a title, a subtitle and a bullet list all reach editableText and
+         none of them is a thing to turn into a code block */
+      if(!a5||a5.k!=='text'||listOf(a5)) return;
+      if(String(el.innerText||'').trim()) return;
+      if(!looksLikeCode(txt)) return;
+      var f5=codeFence(txt);
+      var src5=(f5?f5.src:txt).replace(/\r/g,'').replace(/\s+$/,'');
+      if(!src5) return;
+      e.preventDefault();e.stopPropagation();
+      codeBoxify(a5,src5);
+      /* the model is already right, so DO NOT go through commitNow: it
+         would read the words back out of innerText and give whitespace
+         one more chance to be normalised. Re-render instead, which ends
+         the edit -- correct, the box is finished. Removing a focused
+         node fires no blur in Chrome or Firefox, so nothing races this.
+         markDirty is loud on purpose: the toast promises an undo and
+         histPush is what makes that true. */
+      markDirty();
+      var l5=stage.querySelector('.annot-layer');
+      if(l5){renderAnnots(l5,s5);selectAnnot(l5,idx);}
+      toast('Pasted as code — Ctrl+Z undoes it, or '
+        +'Ctrl+Shift+V pastes it as plain text');
+    });
     el.addEventListener('mousedown',function(e){
       if(tool!=='select') return;   /* placing mode: draw over me */
       /* the span owns the mouse only while TYPING (caret placement).

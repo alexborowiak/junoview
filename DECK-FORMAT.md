@@ -41,6 +41,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `foot` | dict | Running footer. |
 | `guides` | dict | The guides you drew on this page: {x, y} lists of line positions and `b` of [x, y, w, h] boxes, all in page percentages. An editing aid — never rendered in present mode or any export. |
 | `head` | dict | Running header. |
+| `hideTrace` | int | 1 when the code trail under the slide is suppressed in playback — the trail, the "Show code" pill and the scroll region all go. |
 | `kind` | str | Only ever "view" — a saved filtered view of one notebook rather than a deck of slides. |
 | `name` | str | What the deck is called. |
 | `nb` | str | For a view: which notebook it is a view of. |

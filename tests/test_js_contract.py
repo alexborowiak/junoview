@@ -58,6 +58,16 @@ RUNTIME_IDS = {
     # Auto-arrange's live count badge: deck.js ~line 12696, n.id='aa-n'
     # (the rest of the aa- dialog is static markup in deck.html).
     "aa-n",
+    # The two "show me the others" popups T89 added, both built the same
+    # way as the canvas menu -- created on open, removed on close, never
+    # shipped in the markup (35-arranging.js openObjMatchMenu and
+    # 40-captions-and-components.js openCmpInstMenu).
+    "objmatch-menu", "cmp-inst-menu",
+    # The saved-to chip's countdown, written into #qat-auto's innerHTML
+    # by syncAutoChip (60-saving-and-export.js) rather than shipped in
+    # the markup, because the chip is rebuilt whenever the cadence or
+    # the pending state changes (T70).
+    "qat-tick",
     # Dropdown menus the deck builds on first open rather than shipping
     # in the markup: deck.js ~line 15375 (film strip's view menu) and
     # ~line 11853 (the matching bar's property menu).

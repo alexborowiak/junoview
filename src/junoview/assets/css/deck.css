@@ -87,8 +87,24 @@ body.deck-open{overflow:hidden;}
   background:var(--chrome-0,#0b141d);color:#eaf2f8;
   border:1px solid var(--cyan);border-radius:6px;padding:3px 9px;
   min-width:190px;outline:none;}
-.deck-qat .deck-status{height:22px;font-size:10px;flex:none;
-  max-width:26ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* THE READOUT, beside the Save button it reports on. It was 10px, and
+   its ellipsis had never once fired: text-overflow needs a BLOCK
+   CONTAINER, and .deck-status is an inline-flex, whose bare text is an
+   anonymous flex item no ellipsis can reach — so "autosaved to
+   presentation.junoview.html · 12:41" was sliced off mid-glyph at 26ch
+   (2026-08-29, T70, user: "make sure everything is fitting inside its
+   box"). inline-block centres by line-height exactly as align-items did,
+   and gives the ellipsis somewhere to land. */
+.deck-qat .deck-status{display:inline-block;height:24px;line-height:24px;
+  font-size:11px;flex:none;max-width:34ch;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap;}
+/* the display above outranks the base :empty rule (equal specificity,
+   later in the file), so without this an empty pill draws as a stub */
+.deck-qat .deck-status:empty{display:none;}
+/* the countdown rewrites itself once a second; a fixed cell keeps the
+   button — and so the whole bar — from twitching on every tick */
+.deck-qat .qat-auto .qat-tick{display:inline-block;min-width:4.2ch;
+  text-align:right;font-variant-numeric:tabular-nums;}
 /* ---- fitQat's rungs (see fitQat in deck.js): this bar never clips.
    Rung 1 drops the save readout (informative, not a control; the Save
    button's tooltip carries the same words). Rung 2 tightens spacing and
@@ -531,11 +547,35 @@ body.light .sp-act:hover{color:var(--ink);background:#00000010;}
   scroll-snap-type:y proximity;padding-top:0;padding-bottom:0;}
 /* the slide fills the viewport EXACTLY so the code trace sits fully
    below the fold — its buttons never peek out under the slide */
-.vpage{height:100%;box-sizing:border-box;padding:22px 0 8px;
+/* PLAYBACK FILLS THE SCREEN. The stage's 78px side padding exists to
+   clear the arrows and its 26/6 to float the page clear of the ribbon --
+   both are EDITING affordances, and in a talk they were 156px of dead
+   width and 32px of dead height that sizeSlideTo fed straight into the
+   fit. On a 1920x1029 stage that sized the page to 1744x981: an 88px
+   band down each side and 24px top and bottom (2026-08-29, user: "in
+   presentations it doesn't seem to fill the full screen, there is a
+   large margin"). Nothing needs the room -- the arrows, the Show code
+   pill and the slide count are all position:absolute over the stage
+   already. Same stage now fits the page at 1829x1029: full height, and
+   the 45px left over per side is the honest 16:9 letterbox rather than
+   padding.
+   Specificity 0,3,0, so it beats the 860px media query's bare
+   .deck-stage and, being later in the file, .deck-stage.scrolly and
+   .deck.pane-open too; .deck.rbn-side is toggled off unless
+   mode==='edit' so it cannot fight this. */
+.deck:not(.editing) .deck-stage{padding:0;}
+/* ...and the page wrapper gives up its own 22+8 for the same reason:
+   height:100% now really is the viewport, so the slide sized to the
+   full stage height sits in it exactly instead of overflowing it by
+   30px and bleeding over the trail. */
+.vpage{height:100%;box-sizing:border-box;padding:0;
   display:flex;flex-direction:column;min-width:0;
   scroll-snap-align:start;}
 .vtrace{scroll-snap-align:start;display:flex;flex-direction:column;
-  gap:14px;padding:64px 0 60px;min-height:70%;}   /* top clears the ↑ arrow */
+  gap:14px;padding:64px 78px 60px;min-height:70%;}
+/* top clears the ↑ arrow; the 78px sides are the reading margin the
+   stage used to provide, moved onto the thing that actually needs to be
+   inset to be read. The slide above goes full-bleed instead. */
 .vtrace .vo-groups{flex:none;align-items:flex-start;}
 .vtrace .vo-col{overflow:visible;}
 /* several plots: the thumbnails PICK which trace shows */
@@ -880,15 +920,23 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   margin-top:4px;border-top:1px solid #ffffff14;}
 .dc-nbacts .dbtn{flex:1 1 92px;min-width:0;text-align:center;
   justify-content:center;font-size:11.5px;}
-/* THE LOCK ROW STACKS. Its three labels are phrases, not words ("Lock all
-   figures", "Load locked versions"), and side by side in a ~280px column
-   each was squeezed to three wrapped lines while the third still fell off
-   the right edge, unreadable and half unclickable (2026-08-21, user: "the
-   lock things can't all be seen"). One per row, full width, left-aligned
-   so the icon column lines up. */
-.dc-nbacts-stack{flex-direction:column;}
-.dc-nbacts-stack .dbtn{flex:none;width:100%;text-align:left;
-  justify-content:flex-start;white-space:normal;}
+/* THE LOCK ROW STACKED, and the stack cost the thumbnails three rows of
+   the column (T78). Its three labels are phrases, not words ("Lock all
+   figures", "Load locked versions"), so side by side in a ~280px column
+   they were unreadable and half unclickable (2026-08-21, user: "the lock
+   things can't all be seen") -- one per row, full width, left aligned is
+   still right. They live in the More menu now, where the rows they need
+   are the menu's and not the strip's; .nbs-more-menu carries the rule. */
+/* the notebook block's own header row: way back, count, fold */
+.dc-nbs-head{display:flex;align-items:center;gap:6px;}
+.dc-nbs-head .dc-nbs-menuh{flex:1;min-width:0;}
+.dc-nbs-sum{font-family:var(--mono);font-size:9.5px;color:#7e93a4;
+  flex:none;white-space:nowrap;}
+.dbtn.dc-nbs-tog{flex:none;font-size:10.5px;padding:3px 7px;}
+.dc-nbs.nbs-folded .dc-nbs-body{display:none;}
+/* THE ROWS SCROLL RATHER THAN PUSH: a deck built from eight notebooks is
+   eight rows, and every one of them used to come off the strip below. */
+.dc-nbs-body{max-height:24vh;overflow-y:auto;}
 #pres-name{width:100%;background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#dce6ee;font-family:var(--sans);font-size:12.5px;padding:7px 9px;
   border-radius:6px;box-sizing:border-box;}
@@ -991,8 +1039,13 @@ body.slide-editing .apptop{display:none;}
    user: "the thumbnail part should be dragable to make bigger or
    smaller"). The old expression stays as the clamp's default, so a
    session that has never touched the handle is unchanged. */
+/* The upper bound is MEASURED, not 46vw. The column and the ribbon are
+   two tracks of one grid, so a strip dragged past the width the row of
+   tools needs clips the end of that row off (overflow-x:clip, and no rung
+   left). fitFilmMax() publishes the ribbon's own floor as --film-max; the
+   46vw fallback is what this said before JS has run once (T80). */
 .deck.editing .deck-create{
-  width:clamp(150px,var(--film-w,min(var(--dc-w),200px)),46vw);
+  width:clamp(150px,var(--film-w,min(var(--dc-w),200px)),var(--film-max,46vw));
   border-right:1px solid #ffffff22;}
 .deck.creating .deck-create{width:min(var(--dc-w),94vw);}
 .deck.editing #layout-row{display:none;}
@@ -1708,7 +1761,7 @@ select#fmt-font[hidden]{display:none;}
    thumbnail part") */
 /* the notebooks content at the column top: pane rows reused verbatim */
 .dc-nbs{display:none;}
-.deck.editing .dc-nbs{display:block;padding:8px 8px 6px;
+.deck.editing .dc-nbs{display:block;flex:none;padding:8px 8px 6px;
   border-bottom:1px solid #ffffff14;}
 .dc-nbs .dc-nbs-menuh{cursor:pointer;border-radius:6px;padding:4px 6px;}
 .dc-nbs .dc-nbs-menuh:hover{background:color-mix(in srgb,var(--accent)
@@ -3136,7 +3189,8 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
    which is exactly why app.js's #dc-resize cannot be reused here. */
 .film-resize{display:none;position:fixed;top:0;bottom:0;width:6px;
   z-index:130;cursor:col-resize;
-  left:calc(clamp(150px,var(--film-w,min(var(--dc-w),200px)),46vw) - 3px);}
+  left:calc(clamp(150px,var(--film-w,min(var(--dc-w),200px)),
+    var(--film-max,46vw)) - 3px);}
 .deck.editing .film-resize{display:block;}
 .deck.editing.strip-off .film-resize,
 .deck.editing.poster-page .film-resize{display:none;}
@@ -3291,6 +3345,14 @@ body.jv-spot .deck-stage{pointer-events:none;}
 .sh-menu.match-menu{position:fixed;z-index:220;display:block;
   width:236px;padding:5px;max-height:60vh;overflow-y:auto;}
 .match-menu .vw-opt{width:100%;text-align:left;}
+/* the notebook column's More menu (T78). Both class names are needed:
+   .sh-menu's grid and position:absolute come LATER in this file, so a
+   one-class rule would lose to them and the menu would be clipped by the
+   scrolling body it is built inside. */
+.sh-menu.nbs-more-menu{position:fixed;z-index:220;display:block;
+  width:230px;padding:5px;}
+.nbs-more-menu .dbtn{display:block;width:100%;text-align:left;
+  white-space:normal;margin-top:3px;}
 /* the folded View group's menu. A row stands in for a toggle button, so
    it has to show the toggle's state — otherwise folding the group would
    lose the one thing a visible toggle was chosen for (2026-08-22). */

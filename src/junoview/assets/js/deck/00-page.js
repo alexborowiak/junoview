@@ -709,7 +709,13 @@
        padding: 52px of it horizontally and 28px vertically while
        editing, so it was wrong in both directions already. `gap` is the
        breathing room that guess was really providing. */
-    var cs=window.getComputedStyle(stage),gap=16;
+    /* the 16px of breathing room is an EDITING affordance too -- a page
+       floating just clear of the chrome. In playback the page IS the
+       screen, so it goes with the stage padding: aw and ah become the
+       whole stage, and the 1920x1029 stage that fitted the page at
+       1744x981 (88px of dead canvas each side, 24px top and bottom)
+       now fits it at 1829x1029 -- full height, no dead height at all. */
+    var cs=window.getComputedStyle(stage),gap=(mode==='edit')?16:0;
     var padX=(parseFloat(cs.paddingLeft)||0)+(parseFloat(cs.paddingRight)||0);
     var padY=(parseFloat(cs.paddingTop)||0)+(parseFloat(cs.paddingBottom)||0);
     var aw=stage.clientWidth-padX-gap,ah=stage.clientHeight-padY-gap;

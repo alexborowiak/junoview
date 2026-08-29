@@ -468,20 +468,67 @@
     renderTargetBtn();renderSaveBtn();status();
   }
   var AUTOKEY='semopts:'+SCOPE+':autosave';
-  var autosaveOn=(APP.mode==='app')&&lsGet(AUTOKEY)!=='0';
-  var autoTimer=null;
+  /* HOW OFTEN, not just whether. The interval was a hardcoded 1200ms
+     debounce: invisible, unsettable, and — being a debounce — restarted
+     by every keystroke, so it only ever fired once you had stopped
+     working. It is a countdown you can read and choose now (2026-08-29,
+     T70, user: "please make there be an auto-save timer"). "Off" is the
+     same fact as the old on/off flag, so the two doors write one setting
+     and cannot disagree. */
+  var AUTOSECKEY='semopts:'+SCOPE+':autosecs';
+  var AUTO_STEPS=[2,5,15,30,60,300];
+  var autosaveOn=lsGet(AUTOKEY)!=='0';
+  var autoSecs=(function(){
+    var n=parseInt(lsGet(AUTOSECKEY),10);
+    return AUTO_STEPS.indexOf(n)>=0?n:2;
+  })();
+  var autoTimer=null,autoDue=0,autoTick=null;
+  function autoSecsLabel(s){
+    return s<60?(s+' seconds'):((s/60)+' minute'+(s>60?'s':''));
+  }
+  /* THE BROWSER IS A DESTINATION TOO. Its deck was already written to
+     localStorage 300ms after every keystroke by scheduleDraftWrite, but
+     nothing stamped that write — so the readout said "unsaved" about a
+     deck that was on disk, and the autosave control, which returned
+     early for every target but project and file, did nothing whatsoever
+     on the target most people are on (T70). */
+  function autoSaveBrowser(){
+    flushTextEdits();
+    flushDraftWrite();
+    if(lsIsFull()){status();return;}
+    saveStamp=new Date();saveKind='auto';source='saved';
+    status();
+  }
+  function cancelAutosave(){
+    clearTimeout(autoTimer);autoTimer=null;autoDue=0;
+    clearInterval(autoTick);autoTick=null;
+  }
+  function autoSaveNow(){
+    autoTimer=null;autoDue=0;
+    clearInterval(autoTick);autoTick=null;
+    if(saveTarget==='file') saveToFile(true);
+    else if(saveTarget==='project'&&APP.mode==='app') saveToProject(true);
+    else autoSaveBrowser();
+    renderAutoTick();
+  }
   function scheduleAutosave(){
     /* a remembered file autosaves too — silently, and only while the
        browser still grants write permission (after a reload it waits for
        the first Save click, which carries the user gesture it needs) */
-    if(saveTarget==='file'){
-      clearTimeout(autoTimer);
-      autoTimer=setTimeout(function(){saveToFile(true);},1200);
-      return;
+    if(!autosaveOn||!autoSecs
+      ||(saveTarget==='project'&&APP.mode!=='app')){
+      cancelAutosave();renderAutoTick();return;
     }
-    if(!autosaveOn||APP.mode!=='app'||saveTarget!=='project') return;
-    clearTimeout(autoTimer);
-    autoTimer=setTimeout(function(){saveToProject(true);},1200);
+    /* A TIMER, NOT A DEBOUNCE: a countdown already running is left to
+       finish, or "every 5 minutes" would never arrive while you typed —
+       which is the only stretch of time it is there for. */
+    if(!autoTimer){
+      autoDue=Date.now()+autoSecs*1000;
+      autoTimer=setTimeout(autoSaveNow,autoSecs*1000);
+      clearInterval(autoTick);
+      autoTick=setInterval(renderAutoTick,1000);
+      renderAutoTick();
+    }
     /* ...AND PUT THE FIGURES BACK. The 1.2s autosave is deliberately
        refs-only, because embedding rewrites megabytes to a synced disk on
        every keystroke. But it is also the LAST writer: you would click
@@ -504,50 +551,111 @@
        setting you have to go looking for to check is a save setting you
        do not trust (2026-08-20, user asked for "autosave frequency" in
        the thin bar). */
+    var on=autosaveOn&&!!autoSecs;
     var mi=$('#mi-autosave');
     if(mi){
-      mi.hidden=(APP.mode!=='app');
-      mi.textContent='Autosave: '+(autosaveOn?'on':'off');
+      mi.hidden=false;
+      mi.textContent='Autosave: '
+        +(on?('every '+autoSecsLabel(autoSecs)):'off');
     }
     var qa=$('#qat-auto');
     if(qa){
-      /* only the app build autosaves to the project; a file target
-         autosaves unconditionally and has nothing to toggle */
-      qa.hidden=(APP.mode!=='app');
+      /* every target autosaves now — the project, a remembered file and
+         the browser — so this is never a control with nothing to say */
+      qa.hidden=false;
       /* the reload icon plus a two-width label: fitQat's compaction rung
-         swaps "Autosave" for "Auto" — shortened, never hidden */
+         swaps "Autosave" for "Auto" — shortened, never hidden. The
+         countdown is its own span so the tick can rewrite four
+         characters a second without re-measuring the bar. */
       qa.innerHTML=bic('reload')
         +' <span class="qat-long">Autosave</span>'
         +'<span class="qat-short">Auto</span> '
-        +(autosaveOn?'on':'off');
-      qa.setAttribute('aria-pressed',autosaveOn?'true':'false');
-      qa.title=autosaveOn
-        ?('Autosaving to '+whereSaved()+' about a second after you stop '
-          +'typing. Click to turn it off.')
+        +(on?(autoSecs<60?(autoSecs+'s'):((autoSecs/60)+'m')):'off')
+        +'<span class="qat-tick" id="qat-tick"></span>';
+      qa.setAttribute('aria-pressed',on?'true':'false');
+      qa.title=on
+        ?('Saving to '+whereSaved()+' every '+autoSecsLabel(autoSecs)
+          +' while you work. Click to change how often, or turn it off.')
         :'Autosave is off — your work is only written when you press '
-          +'Save. Click to turn it on.';
+          +'Save. Click to choose how often it should save itself.';
+      renderAutoTick();
       /* the label just changed width — re-judge the thin bar */
       requestAnimationFrame(fitQat);
     }
   }
-  function toggleAutosave(){
-    autosaveOn=!autosaveOn;
-    lsSet(AUTOKEY,autosaveOn?'1':'0');
-    renderAutosaveItem();renderSaveBtn();status();
-    toast(autosaveOn
-      ?('Autosave on — saving to '+whereSaved()+' as you work')
-      :'Autosave off — press Save to write your changes');
+  /* the countdown, and ONLY the countdown: no innerHTML, no fitQat. A
+     once-a-second re-measure of a fourteen-control bar is how a visible
+     timer turns into a stutter. */
+  function renderAutoTick(){
+    var t=$('#qat-tick');
+    if(!t) return;
+    var left=autoDue?Math.max(0,Math.ceil((autoDue-Date.now())/1000)):0;
+    var txt=left?(' · '+left+'s'):'';
+    if(t.textContent!==txt) t.textContent=txt;
   }
-  var qatAuto=$('#qat-auto');
-  if(qatAuto) qatAuto.addEventListener('click',toggleAutosave);
+  /* ONE writer for both doors. secs===0 is "off" and leaves the chosen
+     interval remembered, so turning it back on restores it. */
+  function setAutosave(secs){
+    autosaveOn=!!secs;
+    if(secs) autoSecs=secs;
+    lsSet(AUTOKEY,autosaveOn?'1':'0');
+    lsSet(AUTOSECKEY,String(autoSecs));
+    cancelAutosave();
+    renderAutosaveItem();renderSaveBtn();status();
+    if(autosaveOn){
+      scheduleAutosave();
+      toast('Autosaving to '+whereSaved()+' every '
+        +autoSecsLabel(autoSecs));
+    } else toast('Autosave off — press Save to write your changes');
+  }
+  /* the picker. The button has carried aria-haspopup since it was added
+     and had never had a menu behind it (T70). Floated like every other
+     menu in this bar, so the qat's scroll floor cannot clip it. */
+  (function(){
+    var btn=$('#qat-auto'),menu=$('#auto-menu');
+    if(!btn||!menu) return;
+    var wrap=btn.parentNode;
+    function close(){menu.hidden=true;
+      btn.setAttribute('aria-expanded','false');}
+    function build(){
+      menu.innerHTML='';
+      var h=document.createElement('div');
+      h.className='dc-mhead';h.textContent='autosave every';
+      menu.appendChild(h);
+      AUTO_STEPS.forEach(function(s){
+        var o=document.createElement('button');
+        o.className='dc-mi';o.type='button';
+        o.textContent='Every '+autoSecsLabel(s);
+        if(autosaveOn&&autoSecs===s) o.setAttribute('aria-pressed','true');
+        o.addEventListener('click',function(e){
+          e.stopPropagation();close();setAutosave(s);});
+        menu.appendChild(o);
+      });
+      var sep=document.createElement('div');
+      sep.className='dc-msep';menu.appendChild(sep);
+      var off=document.createElement('button');
+      off.className='dc-mi';off.type='button';
+      off.textContent='Off — only when I press Save';
+      if(!autosaveOn) off.setAttribute('aria-pressed','true');
+      off.addEventListener('click',function(e){
+        e.stopPropagation();close();setAutosave(0);});
+      menu.appendChild(off);
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=menu.hidden;
+      if(open) build();
+      menu.hidden=!open;
+      btn.setAttribute('aria-expanded',open.toString());
+      if(open) floatMenu(btn,menu);
+    });
+    document.addEventListener('click',function(e){
+      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
+  })();
   var miAuto=$('#mi-autosave');
   if(miAuto) miAuto.addEventListener('click',function(){
     closeMenu();
-    autosaveOn=!autosaveOn;
-    lsSet(AUTOKEY,autosaveOn?'1':'0');
-    renderAutosaveItem();renderSaveBtn();status();
-    if(autosaveOn){scheduleAutosave();toast('Autosave on');}
-    else toast('Autosave off — use the Save button');
+    setAutosave(autosaveOn?0:autoSecs);
   });
 
   /* always-visible Save button; the File menu keeps the rest */

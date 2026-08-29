@@ -176,6 +176,14 @@ def as_presentations(obj: Any) -> list:
         # against normPres so the sixth never happens (2026-08-23).
         if p.get("tapzoom"):
             entry["tapzoom"] = 1
+        # the code trail under the slide, suppressed (T69, 2026-08-29).
+        # Same truthy -> 1 rule as tapzoom, and named here for the same
+        # reason: this rebuild names every field it keeps, so a key it
+        # does not name dies on the next project save. The parity test
+        # (tests/test_deck_schema_parity.py) diffs this function against
+        # normPres, which is what turns the omission into a red test.
+        if p.get("hideTrace"):
+            entry["hideTrace"] = 1
         if isinstance(p.get("pageBg"), str) and p["pageBg"].strip():
             entry["pageBg"] = p["pageBg"].strip()
         # deck-level furniture, the whole-talk notes/pad and named styles:

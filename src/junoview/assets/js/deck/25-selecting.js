@@ -508,7 +508,11 @@
        lines of bookkeeping maintained for no reader (2026-08-17 audit). */
     sizeRibbonGroups();
     /* groups appearing or leaving changes the width the row needs, so the
-       density has to be re-judged every time the selection does */
+       density has to be re-judged every time the selection does -- and so
+       does the STRIP's ceiling, because the contextual groups raise the
+       ribbon's floor by ~90px and a strip still sitting at its old width
+       is exactly how clicking an object ate the row (T80) */
+    fitFilmMax();
     fitEditRibbon();
   }
   /* How many columns each group needs to fill two rows ACROSS: half its
@@ -1620,6 +1624,19 @@
       row('Duplicate','Ctrl+D',duplicateSel,
         'An independent copy, just clear of this one — or Alt-drag '
         +'on the page to place it as you go','copy');
+      /* T93. Offered only when something in the selection actually HAS
+         a source to drop -- on three text boxes this would be a second
+         Duplicate with a longer name, and a menu row that does nothing
+         is worse than no row. Same rule the figure/caption rows below
+         follow: appear exactly when they apply and ask nothing.
+         hasContext and stripContext are one list, in the CLONES section
+         of 30-format-bar.js. */
+      if(selIdxs().some(function(i){
+        return hasContext((pres.slides[cur].annots||[])[i]);}))
+        row('Duplicate without its source','Ctrl+Shift+D',function(){
+          duplicateSel(1);},
+          'The same box, size, styling and crop — pointing at '
+          +'nothing, so you can aim it at a different figure','unlink');
       row('Cut','Ctrl+X',function(){
         var c=cutSel();
         if(c) toast(c+' item'+(c===1?'':'s')+' cut');});
@@ -1752,6 +1769,15 @@
           'The other '+(cN-1)+' instance'+(cN===2?'':'s')
           +' take this arrangement and look. Their own words and '
           +'figures are untouched.');
+        /* WHERE ELSE IS THIS? The section could push a look to every
+           other instance and could cut this one loose from them, but it
+           could not tell you they existed — the count only ever
+           appeared inside a tooltip on a different row (T89). */
+        row('Every instance of this component…',String(cN),
+          function(){cmpInstMenu(cInst.cmp);},
+          'Every place in the deck it has been put, as a list — '
+          +'pick one to go to that slide with the instance already '
+          +'selected','locate');
         row('Detach this one','',function(){
           var k=cmpDetach(cur,cInst.cinst);
           if(k) toast(k+' object'+(k===1?'':'s')

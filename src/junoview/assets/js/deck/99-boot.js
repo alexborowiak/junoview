@@ -33,6 +33,10 @@
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  /* the three saved-layout rows in the Layouts menu (T89). Here, not
+     mid-file: it walks the deck's markup, which is only guaranteed real
+     by the time the boot sequence runs. */
+  initReuseDoors();
   /* the ribbon you kept: applied once here, at the tail, after every
      declaration and every group's markup is real. It must not run
      mid-file — it walks #edit-tools and calls fitEditRibbon (T11).

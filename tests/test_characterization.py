@@ -462,8 +462,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # going blue, which is 'it just results in everything being selected'. Plus a
 # lost mouseup no longer leaves the band live, and Ctrl+A now selects the
 # objects instead of falling through to the browser's Select All.
-EXPECTED_MD5 = "978c28fc6353f9e3dfe3e2408b50b872"
-EXPECTED_BYTES = 3092485
+# Moved 2026-08-29 for the second hand-test wave, T69/T70/T77/T78/T80/T89/
+# T92/T93: a per-deck hideTrace flag (four-place plumbing) with a Present-menu
+# door, playback sized without editing padding, the saved-to chip fitted and
+# moved beside Save with a settable autosave cadence, the home view's top
+# folded, the notebook actions collapsed out of the strip's height, the strip
+# clamped against the ribbon's floor, real doors for the five right-click-only
+# features, pasted code detected and highlighted, and Duplicate-without-its-
+# source. deck.html, both stylesheets, app.js and six deck.js fragments.
+EXPECTED_MD5 = "186b2c6e7b5d930524a2a549c48a1942"
+EXPECTED_BYTES = 3147127
 
 
 def _render_example() -> str:

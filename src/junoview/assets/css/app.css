@@ -543,18 +543,36 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
 .welcome-more{padding:36px 0 10px;border-top:1px solid var(--line);
   max-width:900px;margin:0 auto;}
 .welcome-steps{max-width:560px;margin-left:auto;margin-right:auto;}
-/* big centered hero logo, then the wordmark below it */
-.welcome-hero{display:flex;justify-content:center;margin-bottom:4px;}
-.welcome-hero .jv-logo{width:clamp(88px,15vw,132px);height:auto;
-  filter:drop-shadow(0 6px 18px #0007);}
-.welcome-wordmark{font-family:var(--mono);font-size:clamp(42px,8.5vw,66px);
+/* ONE lockup, not three stacked rows: the mark on the left, the name and
+   the tagline beside it. A 132px logo row, a 66px wordmark row and a
+   tagline row were ~300px of identity before the first button, and the
+   rail's own brand button already shows the same mark and the same word
+   (2026-08-29, T77). Grid, so the mark spans both text rows and stays
+   optically tied to them; on a narrow window it goes back to a centred
+   column, where a single stack is the right shape anyway. */
+.welcome-id{display:grid;grid-template-columns:auto minmax(0,1fr);
+  column-gap:20px;row-gap:3px;align-items:center;justify-content:center;
+  text-align:left;margin:0 0 26px;}
+.welcome-hero{grid-row:1 / span 2;display:flex;align-items:center;
+  justify-content:center;margin:0;}
+.welcome-hero .jv-logo{width:clamp(54px,7vw,78px);height:auto;
+  filter:drop-shadow(0 4px 12px #0006);}
+.welcome-wordmark{font-family:var(--mono);font-size:clamp(30px,4.4vw,44px);
   font-weight:600;letter-spacing:.06em;color:var(--cyan-deep);
-  margin:2px 0 12px;}
+  margin:0;line-height:1.05;}
+@media (max-width:640px){
+  .welcome-id{grid-template-columns:1fr;row-gap:6px;text-align:center;
+    justify-items:center;}
+  .welcome-hero{grid-row:auto;}
+}
 .ww-dot{display:none;}
 /* the Junoview mark (peacock-eye ocellus) — sized by context */
 .jv-logo{flex:none;display:inline-block;vertical-align:middle;}
-.welcome-tag{font-size:clamp(17px,2.4vw,21px);line-height:1.5;font-weight:500;
-  color:var(--ink-2);margin:0 auto 20px;max-width:560px;}
+/* the tagline is the lockup's second row now, so it neither centres
+   itself nor carries the gap down to the buttons -- .welcome-id does */
+.welcome-tag{font-size:clamp(15.5px,1.7vw,18px);line-height:1.45;
+  font-weight:500;color:var(--ink-2);margin:0;max-width:44ch;}
+@media (max-width:640px){.welcome-tag{margin:0 auto;}}
 .welcome-lead{font-size:15.5px;line-height:1.65;color:var(--ink-3);
   margin:0 auto 30px;max-width:580px;}
 .welcome-lead b{color:var(--ink-2);}
@@ -614,8 +632,15 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);
   color:var(--cyan-deep);font-family:var(--mono);font-size:15px;font-weight:600;
   display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
-.welcome-drop{font-size:14.5px;color:var(--ink-3);margin:18px 0 0;}
+/* the drop hint is a SUB-LABEL on Open now, not a line of prose under the
+   button row: the same words, one fewer band on the first screen. It sits
+   on its own line INSIDE the button (flex-basis:100% below), which is why
+   it carries no margin of its own. */
+.welcome-drop{display:block;font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.04em;font-weight:400;color:var(--ink-3);margin:0;}
 .welcome-drop b{color:var(--ink-2);}
+.welcome-btns .welcome-drop{flex:1 0 100%;text-align:center;
+  margin-top:1px;opacity:.9;}
 /* ---- "jump back in": the two things you might be coming back to ----
    Recent notebooks and the presentations built from them, side by side.
    Both columns hide themselves when empty, and the band with them --
@@ -656,8 +681,13 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 @keyframes recent-slide{from{background-position:-44% 0;}
   to{background-position:144% 0;}}
 .welcome-btns{display:flex;gap:12px;justify-content:center;
-  flex-wrap:wrap;margin-top:4px;}
-.welcome-btns .dbtn{font-size:16px;font-weight:600;padding:14px 26px;
+  flex-wrap:wrap;align-items:stretch;margin-top:0;}
+/* each button is its own wrapping flex row, so Open's sub-label drops to
+   a second line INSIDE it; align-items:stretch keeps the other three the
+   same height, so the row is still one row of equal buttons */
+.welcome-btns .dbtn{display:inline-flex;flex-wrap:wrap;
+  align-items:center;justify-content:center;gap:2px 10px;
+  font-size:16px;font-weight:600;padding:12px 24px;
   border-radius:10px;border:1.5px solid var(--cyan-deep);cursor:pointer;
   transition:all .15s;}
 .welcome-btns .dbtn.primary{background:var(--cyan-deep);
@@ -1316,7 +1346,7 @@ body:not(.light) .welcome-note b{color:#8fe0f0;}
    The reel's own rules live once, above. */
 body:not(.light) .welcome-steps li{color:#b3c2ce;}
 body:not(.light) .ws-n{background:color-mix(in srgb,var(--accent) 15%,transparent);color:#8fe0f0;}
-body:not(.light) .welcome-drop{color:#7e93a4;}
+body:not(.light) .welcome-drop{color:#93aabb;}
 body:not(.light) .welcome-drop b{color:#c9d6e2;}
 body:not(.light) .recent-i{background:var(--chrome-3,#101c28);
   border-color:#ffffff22;color:#5fc3d8;}

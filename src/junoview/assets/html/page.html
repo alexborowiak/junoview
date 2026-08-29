@@ -371,10 +371,20 @@
     &#8592; Back to your notebooks</button>
   <div class="welcome-box">
     <div class="welcome-top">
-      <div class="welcome-hero">{logo}</div>
-      <div class="welcome-wordmark">Junoview</div>
-      <p class="welcome-tag">Build a presentation, or open a notebook and
-        pull the figures straight out of your analysis.</p>
+      <!-- ONE identity block, not three stacked rows. The mark, the
+           name and the tagline each owned a full-width row and about
+           300px of the first screen before a single button could be
+           reached (2026-08-29, T77: "why is there all that unnecessary
+           stuff at the top ... it looks seriously manky"). The inner
+           class names are unchanged on purpose: they are pinned by
+           tests/test_onboarding.py, and it is the CSS that now lays
+           them out as a lockup rather than a column. -->
+      <div class="welcome-id">
+        <div class="welcome-hero">{logo}</div>
+        <div class="welcome-wordmark">Junoview</div>
+        <p class="welcome-tag">Build a presentation, or open a notebook and
+          pull the figures straight out of your analysis.</p>
+      </div>
       <!-- START HERE, whichever "here" you meant. The front door used to
            offer only ways of opening a NOTEBOOK, so a presentation was
            something you could reach only after loading one -- and by now
@@ -385,8 +395,17 @@
       <div class="welcome-btns">
         <button class="dbtn primary" id="welcome-new"><i data-ic="plus"></i>
           New presentation</button>
-        <button class="dbtn ghost" id="welcome-open"><i data-ic="open"></i>
-          Open local files&#8230;</button>
+        <!-- THE DROP HINT LIVES HERE, on the button that means the same
+             thing. It used to be its own row of prose under the button
+             row -- a whole band of the first screen restating what Open
+             already offers (2026-08-29, T77). Class and id stay adjacent
+             and "Open local files" stays on one line: both are pinned. -->
+        <button class="dbtn ghost" id="welcome-open"
+          title="Open notebooks (.ipynb) from your computer &mdash; or
+ just drop them anywhere in this window"
+          ><i data-ic="open"></i>Open local files&#8230;
+          <span class="welcome-drop">&hellip; or drop them here</span>
+        </button>
         <button class="dbtn ghost" id="welcome-url"><i data-ic="link"></i>
           From GitHub / URL&#8230;</button>
         <button class="dbtn ghost" id="welcome-demo"

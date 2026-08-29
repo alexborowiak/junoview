@@ -1279,6 +1279,68 @@
        it the remedy is Guides ▸ Toolbar on the right. */
     if(typeof rbnOverflowNotice==='function') rbnOverflowNotice(bar);
   }
+  /* ---- the strip may not eat the ribbon --------------------------------
+     The slide column and the ribbon are two tracks of ONE grid, so every
+     pixel the strip's drag handle takes comes straight out of the row of
+     tools -- and the drag was clamped to 46vw/900px, numbers that know
+     nothing about how wide the tools actually are. Past the bottom of the
+     ladder there is no rung left and .edit-tools is overflow-x:clip, so
+     the right-hand end of the row is simply cut off; with an object
+     selected the contextual groups need ~90px more, which is why it bit
+     there first (2026-08-29, T80, user: "making the thumbnail view bigger
+     can result in the ribbon getting eaten").
+     ribbonMinW MEASURES that floor rather than guessing it: it stamps on
+     the whole ladder at once -- every width rung, both text drops, the
+     tight rung and a folded View group -- reads what the row still needs,
+     then puts the classes and the fold back exactly as it found them.
+     That is the state fitEditRibbon reaches at the bottom of its own
+     climb, so the two cannot disagree. */
+  function ribbonMinW(){
+    var bar=$('#edit-tools');
+    if(!bar||bar.hidden||mode!=='edit') return 0;
+    /* nothing to measure: a folded bar reads 0 (the same reason
+       fitEditRibbon bails), and a side-docked one is a column that does
+       not compete with the strip for width at all */
+    if(deckEl.classList.contains('rbn-fold')) return 0;
+    if(deckEl.classList.contains('rbn-side')) return 0;
+    if(!bar.clientWidth) return 0;
+    var cl=deckEl.classList,rungs=[],had={},wasFolded=viewFolded,min;
+    ERCW.forEach(function(r){rungs.push(r[0]);});
+    ERC.forEach(function(c){rungs.push(c);});
+    rungs.push('erc-nohint');rungs.push('erc-nostatus');rungs.push('erc-tight');
+    rungs.forEach(function(c){had[c]=cl.contains(c);cl.add(c);});
+    foldViewGroup(true);
+    sizeRibbonGroups();
+    /* scrollWidth, not clientWidth: the groups are flex:none, so this is
+       what the row NEEDS and is independent of the box it is sitting in */
+    min=bar.scrollWidth;
+    rungs.forEach(function(c){cl.toggle(c,had[c]);});
+    foldViewGroup(wasFolded);
+    sizeRibbonGroups();
+    return min;
+  }
+  /* The ceiling the strip is allowed to reach, published to CSS as
+     --film-max so ONE number drives the rendered column, the handle's own
+     position and the drag. The two old caps stay as the other terms: 46vw
+     and the 900px the drag has always stopped at.
+     The last measured floor is REMEMBERED, so folding the ribbon -- the
+     one state where the floor cannot be read -- does not let the strip
+     lurch wider only to be shoved back the moment it unfolds. */
+  var filmFloorW=0;
+  function fitFilmMax(){
+    var W=deckEl.clientWidth||window.innerWidth||0;
+    if(!W) return 900;
+    var f=ribbonMinW();
+    if(f) filmFloorW=f;
+    var hi=Math.min(900,Math.round(W*0.46));
+    if(filmFloorW) hi=Math.min(hi,W-filmFloorW);
+    /* 150px is the strip's own minimum and wins the tie: below the
+       ribbon's floor the honest answer is the side toolbar, which
+       rbnOverflowNotice already offers, not a strip too narrow to read */
+    hi=Math.max(150,Math.round(hi));
+    deckEl.style.setProperty('--film-max',hi+'px');
+    return hi;
+  }
   /* ---- the thin top bar must never clip --------------------------------
      #deck-qat is ~14 fixed-width controls on flex-wrap:nowrap, and no
      fitter covered it: below ~750-800px the RIGHT end — Present, the
@@ -1523,7 +1585,7 @@
       setZoom(Math.max(0.25,(deckZoom||1)/1.25));});
     if(zv) zv.addEventListener('click',function(){setZoom(0);});
     window.addEventListener('resize',function(){
-      if(!deckEl.hidden){fitEditRibbon();fitQat();applyZoom();}});
+      if(!deckEl.hidden){fitFilmMax();fitEditRibbon();fitQat();applyZoom();}});
     /* the ribbon's height CHANGES now (the contextual format groups
        leave the layout when hidden), and so does the page picker — any
        toolbar reflow resizes the stage, so the page re-fits itself
@@ -1893,6 +1955,73 @@
         markDirty();renderSelPane();
       });
     list.appendChild(bar2);
+    /* ---- REUSE, WHERE YOU ARE ALREADY LOOKING (T89) ------------------
+       Five features shipped, worked, and could be reached only from a
+       canvas right-click or from three clicks into the contextual
+       Object tab: components, the per-object history, the provenance
+       pane, and the two point-at-it matching verbs. A feature behind a
+       right-click is a feature nobody finds, and the ribbon has no width
+       to sell them — but this pane is open while you work, lists
+       what is on the slide, and already carries the organise verbs.
+
+       Nothing here is new behaviour. Every button calls the same
+       function its right-click row calls, and each one is disabled
+       rather than lying when the selection cannot answer it.
+
+       A SECOND bar rather than five more buttons on the first: those
+       five are about arranging what is on the slide, these are about
+       doing something again elsewhere. .sp-tools wraps, so neither bar
+       can push the other off. */
+    var lab3=document.createElement('div');
+    lab3.className='hd-lab';
+    lab3.textContent='reuse what is selected';
+    list.appendChild(lab3);
+    var bar3=document.createElement('div');bar3.className='sp-tools';
+    function tool3(label,title,on,fn){
+      var b=document.createElement('button');
+      /* innerHTML: the labels are fixed strings written just below,
+         each carrying a bic() icon before its words */
+      b.className='dbtn sp-tool';b.innerHTML=label;b.title=title;
+      b.disabled=!on;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();fn(b);});
+      bar3.appendChild(b);
+    }
+    /* the PRIMARY selection, the same subject the ribbon and the two
+       inspector panes take — a group's last array member is not
+       necessarily the item you clicked */
+    var prim=(typeof selAnnot==='number')?ann[selAnnot]:null;
+    var primInst=(prim&&prim.cmp&&prim.cinst)?prim:null;
+    tool3(bic('group')+' Make component',
+      'Save the arrangement and look of the selected items as a named '
+      +'thing you can place again. Each copy keeps its own words and '
+      +'its own figure',selN.length>=1&&!primInst,
+      function(){
+        var nm=prompt('Name for the component:','FigureCaption');
+        if(nm===null) return;
+        nm=nm.trim(); if(!nm) return;
+        var id=cmpDefine(nm,selN);
+        toast(id?('“'+nm+'” saved — place it again from '
+          +'the canvas menu'):'Nothing there that could be saved');
+        renderSelPane();
+      });
+    tool3(bic('locate')+' Every instance',
+      'Every place in this deck this component has been put — pick '
+      +'one to go there',!!primInst,
+      function(b){cmpInstMenu(primInst.cmp,b);});
+    tool3(bic('history')+' History',
+      'Every state this object has been through that the undo stack '
+      +'still remembers, and a button to put any of them back',
+      !!prim,function(){showObjHist();});
+    tool3(bic('tree')+' Where from',
+      'The notebook and cell that made this figure, every cell in its '
+      +'lineage, and whether the notebook has moved on since',
+      !!(prim&&provRef(prim)),function(){showProvPane();});
+    tool3(bic('swap')+' Match…',
+      'Copy this look onto objects you then click, take another '
+      +'object’s look for this one, or lay these out like a group '
+      +'you click',selN.length>=1,function(b){matchMenuAt(b);});
+    list.appendChild(bar3);
     /* NAMED FOLDERS first — filing, not grouping. Renaming one renames
        it on every item in it, because the name IS the folder (there is no
        folder object to rename). */

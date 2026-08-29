@@ -439,13 +439,38 @@ def test_the_slide_column_can_be_dragged_wider(out):
     The old expression stays as the clamp's DEFAULT, so a session that has
     never touched the handle is unchanged.
     """
-    assert "clamp(150px,var(--film-w,min(var(--dc-w),200px)),46vw)" in out
+    assert ("clamp(150px,var(--film-w,min(var(--dc-w),200px)),"
+            "var(--film-max,46vw))") in out
     assert 'id="film-resize"' in out
     # --film-w on the deck, never --dc-w: the document view's own margin
     # reads that one, so overloading it makes dragging the slide column
     # shove the notebook sideways
     assert "deckEl.style.setProperty('--film-w',w+'px');" in out
     assert "min(var(--dc-w),200px)" in out
+
+
+def test_the_strip_cannot_eat_the_ribbon(out):
+    """The column and the ribbon are two tracks of ONE grid, so the drag
+    has to stop where the ribbon's floor starts. 46vw knows nothing about
+    how wide the tools are, and past the floor #edit-tools is
+    overflow-x:clip -- the end of the row just vanishes, worst with an
+    object selected because the contextual groups need ~90px more (T80).
+
+    The floor is MEASURED at the bottom of the density ladder, not
+    guessed, and published as --film-max so the CSS clamp, the handle's
+    position and the drag all obey one number.
+    """
+    assert "function ribbonMinW(){" in out
+    assert "function fitFilmMax(){" in out
+    assert "deckEl.style.setProperty('--film-max',hi+'px');" in out
+    # what the row NEEDS, read off flex:none groups at the tightest rung
+    assert "min=bar.scrollWidth;" in out
+    # the drag obeys the measured ceiling, not the old blind 900px
+    assert "w=Math.max(150,Math.min(hi,ev.clientX));" in out
+    # ...and the ladder is re-run once the handle is let go
+    assert "fitFilmMax();fitEditRibbon();" in out
+    # the measurement leaves the ribbon exactly as it found it
+    assert "rungs.forEach(function(c){cl.toggle(c,had[c]);});" in out
 
 
 def test_a_thumbnail_grows_with_the_room_it_is_given(out):

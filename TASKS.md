@@ -1380,14 +1380,14 @@ drives it — the suite is substring greps.
   renders). Static exports and the web build show it disabled with a
   tooltip that says why. Almost certainly the same cause as T84 below.
 
-- [ ] **T69 · S — Present mode: the code arrow cannot be turned off,
+- [x] **T69 · S — Present mode: the code arrow cannot be turned off,
   and the slide does not fill the screen.**
   *Verified CONFIRMED, both halves.* Needs a persisted deck flag
   (whitelisted in `normPres` — see the T52 follow-up for why that is not
   optional) read by `updateVNav`/`renderSlide`, and the letterbox maths
   in the playback branch.
 
-- [ ] **T70 · S — The saved-to chip does not fit its own box.** "Please
+- [x] **T70 · S — The saved-to chip does not fit its own box.** "Please
   make sure everything is fitting inside its box (come on). Also please
   put that next to the save button, also please make there be an
   auto-save timer."
@@ -1449,12 +1449,12 @@ drives it — the suite is substring greps.
   toggle beside Rulers/Grid), mark the thumbnail instead, and cut the
   options back.
 
-- [ ] **T77 · S — The home view is a mess at the top.**
+- [x] **T77 · S — The home view is a mess at the top.**
   *Verified PARTIAL.* The header is already hidden; the cut list is the
   hero/wordmark/tag block and the welcome drop, which can fold into the
   Open button.
 
-- [ ] **T78 · S — The thumbnail strip is squeezed by buttons that are
+- [x] **T78 · S — The thumbnail strip is squeezed by buttons that are
   not even in it.**
   *Verified CONFIRMED.* `#dc-nbs`' bulk-action rows take height from the
   strip. Make it collapsible or reduce it to one row plus an overflow
@@ -1466,7 +1466,7 @@ drives it — the suite is substring greps.
   contextual control is un-hidden first. The only suppressions are by
   design (already on the tab; a tool armed; you just drew). Stale build.
 
-- [ ] **T80 · S — Growing the thumbnails eats the ribbon.**
+- [x] **T80 · S — Growing the thumbnails eats the ribbon.**
   *Verified CONFIRMED.* `--film-w` is clamped to 46vw with no regard for
   the ribbon's measured floor. Clamp against it instead.
 
@@ -1526,7 +1526,7 @@ drives it — the suite is substring greps.
   animations'... a global text bigger or smaller."
   *NEW.* Skipping builds is the load-bearing half.
 
-- [ ] **T89 · S — Every feature whose only door is a right-click.**
+- [x] **T89 · S — Every feature whose only door is a right-click.**
   Consolidates the user's "what happened to X" reports, all of which
   turned out to be **findability, not absence**: components/clones,
   object matching, arrangements (custom slide layouts), per-object
@@ -1547,10 +1547,10 @@ drives it — the suite is substring greps.
   source needs a Document producer (`parse_X` → `notebook.model.
   Document`) and nothing else on the render or deck path.
 
-- [ ] **T92 · S — Paste code and have it format.**
+- [x] **T92 · S — Paste code and have it format.**
   *NEW.* The highlighter exists; this is a paste path into it.
 
-- [ ] **T93 · S — Duplicate without context.**
+- [x] **T93 · S — Duplicate without context.**
   *NEW.* Duplicate the object, drop its `ref`, provenance and frame
   binding.
 

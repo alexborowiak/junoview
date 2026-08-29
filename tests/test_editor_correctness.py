@@ -812,7 +812,11 @@ def test_the_side_rail_packs_two_up_rather_than_one_per_line(out):
     # a cell stays whole wherever it lands -- but must NOT claim a whole
     # line, which is what pushed undo/redo onto one of their own
     assert ".deck.rbn-side .rbn-cell{height:auto;}" in out
-    assert "flex:1 0 100%" not in out
+    # scoped to the side rail: T77 gives the home view's welcome-drop a
+    # full-width row of its own, which is a different element in a
+    # different sheet and a deliberate one
+    _rail = out[out.index(".deck.rbn-side .rbn-row{"):]
+    assert "flex:1 0 100%" not in _rail[:2000]
     # one width for the rail, so the stage, rulers, arrow and Objects pane
     # cannot drift apart
     assert ".deck.rbn-side{--rbn-side-w:226px;}" in out
@@ -846,8 +850,15 @@ def test_the_save_readout_lives_under_save(out):
     """
     # the readout sits inline in the top bar now, capped in characters
     # so a long filename can never reach the controls beside it
-    assert (".deck-qat .deck-status{height:22px;font-size:10px;"
-            "flex:none;") in out
+    # ...and it is a BLOCK container, or the ellipsis it asks for can
+    # never fire: an inline-flex's bare text is an anonymous flex item,
+    # so 26ch of "autosaved to <file> · 12:41" was sliced off mid-glyph
+    # rather than ellipsised (T70)
+    assert (".deck-qat .deck-status{display:inline-block;height:24px;"
+            "line-height:24px;") in out
+    # the display above outranks the base :empty rule, so the empty pill
+    # has to be hidden again or it draws as a bare stub
+    assert ".deck-qat .deck-status:empty{display:none;}" in out
     assert "var st=$('#deck-status'),bar=$('#edit-tools');" not in out
 
 

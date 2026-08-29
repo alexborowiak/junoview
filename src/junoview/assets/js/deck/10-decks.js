@@ -203,6 +203,10 @@
     if(typeof p.folder==='string'&&p.folder) out.folder=p.folder;
     if(p.showNums) out.showNums=1;   /* keep the slide-numbers preference */
     if(p.tapzoom) out.tapzoom=1;     /* tap-to-enlarge, same rule */
+    /* the code trail under the slide, switched off (T69). Same truthy
+       -> 1 storage as the two flags above; suppression rather than an
+       opt-in so an old deck keeps the trail it already had. */
+    if(p.hideTrace) out.hideTrace=1;
     if(typeof p.page==='string'&&p.page) out.page=p.page;  /* page preset */
     /* the page background survives every load path — normPres dropping
        it turned saved white posters navy again (2026-08-05 review) */
@@ -487,10 +491,15 @@
   function markSaveClickable(el){
     var toBrowser=(saveTarget!=='file'&&saveTarget!=='project');
     el.classList.toggle('clickable',toBrowser);
+    /* the pill ellipsises when the bar is tight, so the sentence it is
+       showing has to survive somewhere — the tooltip is that place, and
+       the click hint used to replace it wholesale (T70) */
+    var txt=el.textContent?el.textContent+' — ':'';
     el.title=toBrowser
-      ?'Saves stay in this browser. Click to save now — use the ▾ beside '
-        +'Save to keep a .junoview.html file on your computer instead.'
-      :'';
+      ?txt+'Saves stay in this browser. Click to save now — use the ▾ '
+        +'beside Save to keep a .junoview.html file on your computer '
+        +'instead.'
+      :txt;
   }
   function whereSaved(){
     if(saveTarget==='project') return 'project';
@@ -538,8 +547,11 @@
     var ti=$('#deck-title');
     if(ti) ti.textContent=(mode==='edit'&&pres&&pres.name)?pres.name:'';
     var el=$('#deck-status');
-    var auto=APP.mode==='app'
-      &&(typeof autosaveOn==='undefined'||autosaveOn);
+    /* every target autosaves now, not just the app build's project file
+       (T70), so the "saving…" half of the readout is no longer gated on
+       the mode — only on the setting itself */
+    var auto=(typeof autosaveOn==='undefined'||autosaveOn)
+      &&(typeof autoSecs==='undefined'||autoSecs>0);
     /* A FULL BROWSER OUTRANKS EVERY OTHER READING. Once localStorage has
        refused a write, "saved" is a lie about the only copy there is, so
        it says so and keeps saying so until a write succeeds. */
@@ -694,7 +706,8 @@
      SLIDE notes live on the slide and are covered. */
   function histState(){
     return JSON.stringify({slides:pres.slides||[],talkMins:pres.talkMins||0,
-      showNums:pres.showNums||0,tapzoom:pres.tapzoom||0,wmark:pres.wmark||null,
+      showNums:pres.showNums||0,tapzoom:pres.tapzoom||0,
+      hideTrace:pres.hideTrace||0,wmark:pres.wmark||null,
       head:pres.head||null,foot:pres.foot||null,
       /* an empty styles object and no styles object are the same deck —
          serialise them the same way or merely READING a style (which
@@ -760,6 +773,7 @@
     pres.slides=d.slides||[];
     if(d.showNums) pres.showNums=1; else delete pres.showNums;
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
+    if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     ['wmark','head','foot','styles','tokens','components','cuts',
      'guides','page','pageBg','cropMarks'].forEach(function(k){

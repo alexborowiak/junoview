@@ -70,6 +70,9 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "cropMarks": (int, "1 when trim marks are printed outside the page."),
     "showNums": (int, "1 when slide numbers are drawn."),
     "tapzoom": (int, "1 when tapping an item enlarges it in playback."),
+    "hideTrace": (int, "1 when the code trail under the slide is "
+                       "suppressed in playback -- the trail, the "
+                       "Show code pill and the scroll region all go."),
     "talkMins": ((int, float), "How long the whole talk should run."),
     "notes": (str, "Whole-talk speaker notes (per-slide notes live on "
                    "the slide)."),

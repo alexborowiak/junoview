@@ -81,6 +81,10 @@ DECK_SENTINELS = {
     "pageBg": "#ffffff",
     "showNums": 1,
     "tapzoom": 1,
+    # the code trail under the slide, switched off from the Present menu
+    # (T69, 2026-08-29). A deck key like any other, and one the
+    # field-by-field Python rebuild would shed without this.
+    "hideTrace": 1,
     "cropMarks": 1,
     "talkMins": 25,
     "notes": "whole-talk notes",
