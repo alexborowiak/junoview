@@ -372,8 +372,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # presenter previews/counts, Notes teardown, and complete rehearsal exit/
 # repaint paths now agree. Pinned by tests/test_present_mode.py and verified
 # in Edge across 23 presenter, cut, pane and lifecycle checks.
-EXPECTED_MD5 = "2d1a2c79fc4ae043f45daf30c1090086"
-EXPECTED_BYTES = 2991466
+# Moved 2026-08-29 for TASKS T49: review text and its lints share one public
+# population, and visible private SVG arrow/line ink is marked in the editor
+# and presenter after every draw. Pinned by tests/test_visibility.py and
+# verified in Edge across the review Blob and all three render audiences.
+EXPECTED_MD5 = "adb7765daddf91a24f073de43c64bb34"
+EXPECTED_BYTES = 2992981
 
 
 def _render_example() -> str:

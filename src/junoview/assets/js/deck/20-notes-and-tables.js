@@ -1138,6 +1138,17 @@
       });
     }
   }
+  /* One private marking pass for both ordinary HTML items and the visible
+     SVG stroke an arrow/line owns. Kept as a verb because fitted figures
+     redraw their attached arrows after the main render pass (T49). */
+  function markPrivateItems(layer,s){
+    if(!privShown()) return;
+    $$('.an-item[data-idx],.an-arrow-line[data-idx]',layer)
+      .forEach(function(el){
+        var a=(s.annots||[])[+el.getAttribute('data-idx')];
+        if(a&&a.priv) el.classList.add('an-priv');
+      });
+  }
   /* Redraw JUST the arrows against the layer as it stands now. A figure
      frame settles into its aspect-fitted box asynchronously (fitFigFrame
      retries until the <img> reports a natural size), so an arrow attached
@@ -1163,6 +1174,7 @@
       if(a.priv&&!privShown()) return;      /* T31 */
       drawArrow(layer,s,a,i,svg,svgTop,defs,editing);
     });
+    markPrivateItems(layer,s);
     if(editing) paintSel(layer);
   }
   /* several figures on a slide all settle within a frame or two of each
@@ -1968,14 +1980,15 @@
     _arrows.forEach(function(i){
       drawArrow(layer,s,(s.annots||[])[i],i,svg,svgTop,defs,editing);
     });
+    /* The visible strokes live in svgTop. Attach it before the shared
+       privacy/build passes query the layer; it is still the last child,
+       so the z-order promise above is unchanged (T49). */
+    layer.appendChild(svgTop);
     /* ONE marking pass rather than a class in each of the nine branches
        that build an item. A private thing has to LOOK private in both
        places it is drawn -- the editor and the presenter view -- or you
        cannot tell what the audience is seeing (T31). */
-    if(privShown()) $$('.an-item',layer).forEach(function(el){
-      var a=(s.annots||[])[+el.getAttribute('data-idx')];
-      if(a&&a.priv) el.classList.add('an-priv');
-    });
+    markPrivateItems(layer,s);
     /* the layer is rebuilt on every change, which throws away whatever
        MathJax had already typeset - so ask for it again, but ONLY when
        the slide actually carries maths. Typesetting a whole layer on
@@ -2014,7 +2027,6 @@
         }
       });
     }
-    layer.appendChild(svgTop);
     /* ---- SHRINK TO FIT, AND SAY SO WHEN IT CANNOT ---------------------
        (TASKS T15.) Two halves of one question: does this text fit in the
        space you meant it to have, and what should happen when it does

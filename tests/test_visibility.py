@@ -507,10 +507,56 @@ def test_a_private_item_looks_private_in_both_places_it_is_drawn(out):
     this", and an unmarked one looks exactly like a slide that is about
     to embarrass you.
     """
-    assert "if(privShown()) $$('.an-item',layer).forEach(function(el){" in out
+    assert "function markPrivateItems(layer,s){" in out
+    assert ("$$('.an-item[data-idx],.an-arrow-line[data-idx]',layer)"
+            in out)
+    # attached arrows are rebuilt after their figure finishes fitting;
+    # that second path must restore the marker too
+    assert out.count("markPrivateItems(layer,s);") == 2
+    start = out.index("function renderAnnots(layer,s){")
+    render = out[start:out.index("  function selectAnnot(", start)]
+    assert render.index("layer.appendChild(svgTop);") \
+        < render.index("markPrivateItems(layer,s);")
     assert "if(a&&a.priv) el.classList.add('an-priv');" in out
     assert ".an-item.an-priv{outline:1.5px dashed" in out
     assert '.an-item.an-priv::after{content:"only me"' in out
+    # an SVG path cannot render ::after, so the visible line itself gets
+    # the amber signal without replacing its chosen colour or dash
+    assert ".an-arrow-line.an-priv{filter:drop-shadow(" in out
+    assert ".an-arrow-line.an-priv.sel{filter:" in out
+
+
+def test_review_privacy_has_one_audience_population(out):
+    """T49. The review body already dropped private things, but three
+    side doors disagreed: a tied caption bypassed that guard, private text
+    could count as a figure mention, and private objects inflated only the
+    item half of the density sentence.
+
+    Each now uses the same public population as the markdown it explains.
+    """
+    assert "function reviewCaption(sl,a){" in out
+    assert "return ca&&!ca.hide&&!ca.priv?ca:null;" in out
+    start = out.index("function revFigLine(sl,a,map){")
+    figure = out[start:out.index("  function revHeading(sl){", start)]
+    assert "var ca=reviewCaption(sl,a);" in figure
+    assert "var cap=ca?revText(ca).trim():'';" in figure
+    assert "figSubst(cap,ca,map)" in figure
+
+    start = out.index("function reviewLints(){")
+    lints = out[start:out.index("  /* THE PANEL.", start)]
+    text_pool = lints[lints.index("var texts=[];"):
+                      lints.index("/* --- 1.")]
+    figure_lint = lints[lints.index("/* --- 1."):
+                        lints.index("/* --- 2.")]
+    caption_lint = lints[lints.index("/* --- 2."):
+                         lints.index("/* --- 4.")]
+    density_lint = lints[lints.index("/* --- 4."):
+                         lints.index("/* COLLECT THE SURFACES")]
+    assert "if(!a||a.hide||a.priv) return;" in text_pool
+    assert "if(!isFigure(a)||a.hide||a.priv) return;" in figure_lint
+    assert "if(reviewCaption(sl,a)) return;" in figure_lint
+    assert "if(!a||a.hide||a.priv||a.k!=='text') return;" in caption_lint
+    assert "return a&&!a.hide&&!a.priv&&!a.capOf;" in density_lint
 
 
 def test_the_menu_says_what_the_promise_actually_is(out):

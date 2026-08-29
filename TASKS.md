@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 7 open items, T49–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 6 open items, T50–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -924,7 +924,7 @@ file before touching anything.
   deck, optional skipping, popup previews, keyboard/mouse toggles, pane state,
   all three rehearsal exits and both windows' runtime errors (23 checks).
 
-- [ ] **T49 · S — The review export must not carry private text.** T31's
+- [x] **T49 · S — The review export must not carry private text.** T31's
   privacy and T35's export disagree:
   - a private caption attached to a public figure is exported verbatim
     in the figure line — in the export that is meant to travel;
@@ -933,6 +933,14 @@ file before touching anything.
   - a private arrow or line is drawn with no "only me" marking at all;
   - the density lint's two numbers count two different populations, so
     the sentence it prints contradicts itself.
+  *2026-08-29.* Figure lines now borrow only public, visible captions, and
+  the figure, orphan-caption, spelling and density lints all inspect the
+  same audience-visible population as the Markdown they explain. Private
+  arrow/line ink carries the amber only-me signal in the editor and
+  presenter, including after its SVG path is redrawn; audience playback
+  still omits it. Browser-verified the textarea and generated Markdown
+  Blob, both figure lints, the exact density sentence, selection/redraw,
+  presenter and audience renders with a three-slide fixture (31 checks).
 
 - [ ] **T50 · M — Cuts are a lifecycle, not one verb.** `newCut` is the
   only cut verb there is: no rename, no delete, and nothing is ever

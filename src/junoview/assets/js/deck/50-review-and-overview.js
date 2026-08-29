@@ -64,6 +64,13 @@
         .split(/\s+/).filter(Boolean).length;
     return n;
   }
+  /* capOfFig answers the editor's MODEL question and must see every tied
+     caption. A review asks the narrower audience question instead. */
+  function reviewCaption(sl,a){
+    var ci=capOfFig(sl,a);
+    var ca=ci>=0?(sl.annots||[])[ci]:null;
+    return ca&&!ca.hide&&!ca.priv?ca:null;
+  }
   /* WHERE A FIGURE CAME FROM, in one line. The deck knows this and no
      other export of it does. */
   function revFigLine(sl,a,map){
@@ -73,9 +80,12 @@
       :a.k==='flip'?'a flip book':'a frame'));
     var num=(a.cap&&map[a.cap])?map[a.cap].n:0;
     if(num) bits[0]='Figure '+num+' — '+bits[0];
-    var ci=capOfFig(sl,a);
-    var cap=ci>=0?revText((sl.annots||[])[ci]).trim():'';
-    if(cap) bits.push('“'+figSubst(cap,(sl.annots||[])[ci],map)+'”');
+    var ca=reviewCaption(sl,a);
+    /* A caption normally travels WITH its figure, which used to bypass
+       deckReview's private/hidden guard entirely. Apply the same audience
+       boundary before borrowing its words (T49). */
+    var cap=ca?revText(ca).trim():'';
+    if(cap) bits.push('“'+figSubst(cap,ca,map)+'”');
     if(a.ref) bits.push('from '+a.ref);
     else if(a.k==='image') bits.push('pasted in, not from a notebook');
     if(a.k==='flip'&&Array.isArray(a.frames))
@@ -192,7 +202,7 @@
     (pres.slides||[]).forEach(function(sl,si){
       var texts=[];
       (sl.annots||[]).forEach(function(a){
-        if(!a||a.hide) return;
+        if(!a||a.hide||a.priv) return;
         var t=revText(a); if(t) texts.push(t);
       });
       if(sl.notes) texts.push(String(sl.notes));
@@ -200,8 +210,8 @@
       var all=texts.join(' ');
       /* --- 1. a figure nobody mentions --- */
       (sl.annots||[]).forEach(function(a,i){
-        if(!isFigure(a)||a.hide) return;
-        if(capOfFig(sl,a)>=0) return;         /* it has a caption */
+        if(!isFigure(a)||a.hide||a.priv) return;
+        if(reviewCaption(sl,a)) return;       /* a PUBLIC caption */
         var num=(a.cap&&map[a.cap])?map[a.cap].n:0;
         var nm=a.ref?String(a.ref).split('::').pop():'';
         var named=(num&&new RegExp('\\bfig(?:ure)?\\.?\\s*'+num+'\\b','i')
@@ -218,7 +228,7 @@
       });
       /* --- 2. a caption with no figure --- */
       (sl.annots||[]).forEach(function(a,i){
-        if(!a||a.hide||a.k!=='text') return;
+        if(!a||a.hide||a.priv||a.k!=='text') return;
         var t=revText(a).trim();
         var looks=/^\s*(fig(ure)?\.?\s*\d|table\s*\d)/i.test(t);
         if(a.capOf){
@@ -240,7 +250,7 @@
       /* --- 4. a slide with a lot on it --- */
       var wc=slideWordCount(sl);
       var ic=(sl.annots||[]).filter(function(a){
-        return a&&!a.hide&&!a.capOf;}).length;
+        return a&&!a.hide&&!a.priv&&!a.capOf;}).length;
       if(wc>DENSE_WORDS||ic>DENSE_ITEMS)
         out.push({sev:'warn',si:si,i:null,
           head:'Slide '+(si+1)+': a lot on one slide',
