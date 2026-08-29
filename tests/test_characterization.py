@@ -456,8 +456,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # opposite, and a Size & position pane types W/H/X/Y in page millimetres
 # through anchorSet. deck.html, deck.css, five deck.js fragments, the
 # layout catalogue (two new atoms x 108), deck_schema.py and DECK-FORMAT.md.
-EXPECTED_MD5 = "859a844821c870481264d4287b952008"
-EXPECTED_BYTES = 3088864
+# Moved 2026-08-29 for T63: startMarquee was the one drag-starter in the file
+# that never called preventDefault, so a marquee press also began a NATIVE
+# text selection and dragged it over every box the band crossed -- the page
+# going blue, which is 'it just results in everything being selected'. Plus a
+# lost mouseup no longer leaves the band live, and Ctrl+A now selects the
+# objects instead of falling through to the browser's Select All.
+EXPECTED_MD5 = "978c28fc6353f9e3dfe3e2408b50b872"
+EXPECTED_BYTES = 3092485
 
 
 def _render_example() -> str:

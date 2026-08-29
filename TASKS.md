@@ -1315,7 +1315,7 @@ drives it — the suite is substring greps.
   does bake `b` over a hand-set weight when you re-stamp a style, which
   is worth making visible. Not deck corruption; a small CSS fix.
 
-- [ ] **T63 · S — Selecting several objects selects everything.**
+- [x] **T63 · S — Selecting several objects selects everything.**
   "Selecting multiple objects can be bugged, it just results in
   everything being selected."
   *NOT YET VERIFIED — the only entry in this group that was not.*

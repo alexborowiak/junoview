@@ -1590,6 +1590,31 @@
       if(e.key==='Delete'||e.key==='Backspace'){
         e.preventDefault();deleteSel();
       }
+      /* SELECT EVERYTHING ON THIS SLIDE. There was no Ctrl+A at all, so
+         the one shortcut every person reaches for when "selecting
+         multiple objects" fell straight through to the BROWSER's
+         Select All: the entire document highlighted and not one object
+         selected -- "it just results in everything being selected"
+         (T63). Hidden and fully locked items stay out, the same rule
+         the marquee follows; hold Alt as well to sweep the locked ones
+         in, exactly as an Alt-marquee does. A caret in a text box never
+         reaches here (the isContentEditable early return above), so
+         Ctrl+A still means "select these words" while typing. */
+      else if((e.ctrlKey||e.metaKey)&&(e.key==='a'||e.key==='A')){
+        e.preventDefault();
+        var sA=pres.slides[cur],lA=stage.querySelector('.annot-layer');
+        var allA=[];
+        ((sA&&sA.annots)||[]).forEach(function(a,i){
+          if(!a||a.hide) return;
+          if(lockedAll(a)&&!e.altKey) return;
+          allA.push(i);
+        });
+        leaveGroup(lA);
+        selectMany(lA,allA);
+        toast(allA.length
+          ?(allA.length+' item'+(allA.length===1?'':'s')+' selected')
+          :'Nothing on this slide to select');
+      }
       else if((e.ctrlKey||e.metaKey)&&(e.key==='d'||e.key==='D')){
         e.preventDefault();duplicateSel();
       }

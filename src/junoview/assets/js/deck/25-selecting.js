@@ -1477,6 +1477,23 @@
      "click empty space to deselect" is unchanged. */
   var MARQUEE_PX=4;
   function startMarquee(layer,s,ev0){
+    /* THE ONE DRAG-STARTER IN THIS FILE THAT USED NOT TO. Every other
+       one preventDefaults (startMove, startResize, startRotate,
+       startEndpoint, startMidPoint) and the handler's own
+       ev.preventDefault sits AFTER the select-tool block, so a marquee
+       press was the single press the browser still got to act on: it
+       began a NATIVE TEXT SELECTION and dragged it across every text
+       box, table and notebook card the band crossed. That is the whole
+       page going blue while you are trying to pick three items -- "it
+       just results in everything being selected" (T63).
+       preventDefault also stops the browser moving focus, and an
+       on-canvas edit commits on BLUR (see editableText), so the caret
+       is taken out deliberately first -- otherwise clicking empty
+       space would leave you still typing into the box you clicked
+       away from, with the words uncommitted. */
+    var ae=document.activeElement;
+    if(ae&&ae.isContentEditable&&layer.contains(ae)) ae.blur();
+    ev0.preventDefault();
     var add=ev0.shiftKey||ev0.ctrlKey||ev0.metaKey;
     /* HOLD ALT TO SWEEP UP FULLY LOCKED ITEMS TOO. A lock means "not by
        accident", not "never again", and the Objects pane being the only
@@ -1491,6 +1508,17 @@
     var p0=pctPoint(layer,ev0);
     var band=null,moved=false;
     function mm(ev){
+      /* A MOUSEUP OUTSIDE THE WINDOW NEVER ARRIVES. Release the button
+         over the browser chrome or off-screen -- easy, the band is
+         being dragged at a page edge -- and `mu` never ran: the band
+         stayed on the layer and this handler carried on with the
+         button UP, growing over the whole page and rewriting selSet on
+         every move, until the next click's mouseup fired the stale `mu`
+         and committed "everything selected" (T63). ev.buttons is 0
+         once nothing is held, which is the one question that tells a
+         live drag from a dead one; `mu` is a hoisted declaration, so
+         calling it from here is fine. */
+      if(!ev.buttons){mu();return;}
       var p=pctPoint(layer,ev);
       if(!moved){
         var dx=Math.abs(p.x-p0.x)*layer.clientWidth/100;

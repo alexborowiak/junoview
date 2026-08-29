@@ -2587,6 +2587,12 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    export clip to the page, which is what a page is. */
 .annot-layer.an-spill{overflow:visible;}
 .deck.editing .annot-layer{pointer-events:auto;cursor:crosshair;}
+/* A PLACED CARD IS NOT A DOCUMENT. Its markdown, tables and code are
+   never edited in place, so nothing is lost by making them unselectable
+   -- and it is belt-and-braces behind startMarquee's preventDefault for
+   the blue smear of T63. Deliberately NOT applied to .an-text/.an-tx:
+   those ARE edited in place and must stay selectable. */
+.deck.editing .an-item.an-cell{user-select:none;-webkit-user-select:none;}
 .deck.editing .annot-layer.tool-select{cursor:default;}
 .deck.editing .annot-layer:not(.tool-select) .an-item,
 .deck.editing .annot-layer:not(.tool-select) .an-item *{

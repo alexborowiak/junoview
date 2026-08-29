@@ -762,6 +762,20 @@ def test_marquee_and_group_entry(out):
     assert "band.className='an-marquee';" in out
     assert "if(dx<MARQUEE_PX&&dy<MARQUEE_PX) return;" in out
     assert "} else startMarquee(layer,s,ev);" in out
+    # T63: the marquee press is the one press the browser used to get to
+    # act on, so a drag to pick three items painted a native text
+    # selection over every box it crossed -- "everything being selected".
+    # Sliced, because ev0.preventDefault() appears in five other drags.
+    _mq = out[out.index("function startMarquee(layer,s,ev0){"):][:1800]
+    assert "ev0.preventDefault();" in _mq
+    assert "if(ae&&ae.isContentEditable&&layer.contains(ae)) ae.blur();" in _mq
+    # ...and a mouseup that never arrives (released outside the window)
+    # must not leave the band live, growing over the whole slide
+    assert "if(!ev.buttons){mu();return;}" in out
+    # there was no Ctrl+A at all, so it fell through to the BROWSER's
+    # Select All: the whole document blue and no object selected
+    assert "else if((e.ctrlKey||e.metaKey)&&(e.key==='a'||e.key==='A')){" in out
+    assert "Select everything on the slide" in out
     # ctrl joins shift as an additive modifier -- half the world reaches
     # for it first and it did nothing at all before
     assert "if((ev.shiftKey||ev.ctrlKey||ev.metaKey)&&typeof idx==='number')" \
