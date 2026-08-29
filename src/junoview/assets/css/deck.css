@@ -1091,7 +1091,7 @@ body.slide-editing .apptop{display:none;}
 .rbn-row>.sh-drop.tx-split>.dbtn[data-tool]{flex:1;min-width:0;}
 .rbn-row>.sh-drop.tx-split>.tx-caret{flex:none;padding-left:4px;
   padding-right:4px;}
-.tx-type-menu{min-width:210px;}
+.tx-type-menu{min-width:248px;}
 /* two or three controls that are ONE decision and therefore ONE cell —
    the zoom stepper, for instance, whose minus and plus must never end up
    on different rows */
@@ -3305,8 +3305,13 @@ body.light .vw-more-menu .vw-opt.on{color:var(--ink);}
 .eq-palh{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;
   text-transform:uppercase;color:#7d93a6;margin:7px 0 3px;}
 .eq-palrow{display:flex;flex-wrap:wrap;gap:3px;}
-.eq-key{font-family:var(--mono);font-size:11px;padding:3px 7px;
-  min-width:30px;background:var(--btn-bg,#ffffff0a);
+/* BIG ENOUGH TO READ THE GLYPH. These keys are set in maths precisely
+   so you can find sigma by looking for a sigma -- at 11px in a 24px box
+   a sigma and a summation sign are the same smudge (2026-08-29, user:
+   "the text options in the insert text have boxes too small and can't
+   see symbols"). */
+.eq-key{font-family:var(--mono);font-size:12.5px;padding:4px 8px;
+  min-width:34px;background:var(--btn-bg,#ffffff0a);
   border:1px solid var(--btn-border,#ffffff22);border-radius:5px;
   color:var(--btn-ink,#cdd9e3);cursor:pointer;}
 .eq-key:hover{border-color:var(--cyan);color:#fff;}
@@ -3386,7 +3391,7 @@ body.light .aa-scope .find-ck:hover{background:#00000008;}
 body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
   color:var(--ink);border-color:var(--line);}
 /* a typeset key needs room for a fraction without growing the whole row */
-.eq-key-tex{font-size:12px;padding:2px 7px;min-height:24px;
+.eq-key-tex{font-size:15.5px;padding:4px 8px;min-height:32px;
   display:inline-flex;align-items:center;justify-content:center;}
 .eq-key-tex mjx-container{margin:0!important;}
 

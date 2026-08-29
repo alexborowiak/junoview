@@ -436,8 +436,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Ctrl+Z, a double-click inside a box already being edited no longer wipes the
 # word the browser just selected, four clicks take the whole box, and a
 # centred list keeps its markers with its words. deck.js only.
-EXPECTED_MD5 = "ccc9250e8608fb73cb02dfadb4b176dc"
-EXPECTED_BYTES = 3066718
+# Moved 2026-08-29 for T71/T81/T82/T83, the chrome placement cluster: the
+# Slides group reorders so Layouts sits under New slide and Match under
+# Duplicate; Home's slide-layout door is renamed Layouts to match Design's,
+# so the two read as one feature; #et-cancel moves to the END of the Insert
+# group (in the markup and in all 108 arrangements) so un-hiding it appends
+# instead of shoving every later control along; and the maths palette keys
+# and the text-type menu grow enough to read a glyph. deck.html, deck.css
+# and the layout catalogue.
+EXPECTED_MD5 = "0a186c386a14a22db86e2cc7a7788d12"
+EXPECTED_BYTES = 3067347
 
 
 def _render_example() -> str:

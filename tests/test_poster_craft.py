@@ -421,3 +421,57 @@ def test_your_guides_survive_being_re_opened(out):
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
             "     'components','cuts','guides'].forEach(function(k){") in out
+
+
+def test_the_slides_group_reads_in_the_order_asked_for(out):
+    """"The layout for slides should be below the new slides, and the
+    duplicate and match slides should be one over another" (2026-08-29).
+    Source order IS the layout once the row wraps into columns, so this
+    is a markup reorder and nothing else: New slide, Duplicate, Delete /
+    Layouts, Match puts Layouts under New slide and Match under
+    Duplicate.
+    """
+    order = [out.index('id="hm-newslide"'), out.index('id="hm-dupslide"'),
+             out.index('id="hm-delslide"'), out.index('id="hm-laywrap"'),
+             out.index('id="hm-match"')]
+    assert order == sorted(order), "the Slides group is out of order"
+
+
+def test_both_layout_doors_are_called_the_same_thing(out):
+    """Two doors onto the same picker, on two tabs -- Design said
+    "Layouts" and Home said "Layout", so they never read as the same
+    feature and the user could not find "the button for different
+    layouts" (2026-08-29). One word.
+    """
+    # the two SLIDE-layout doors, #lay-btn on Design and #hm-lay on Home.
+    # (#fmt-para is also called "Layout" and is a different feature -- the
+    # paragraph one -- so it is deliberately left alone.)
+    lay = out[out.index('id="lay-btn"'):]
+    assert "Layouts &#9662;" in lay[:lay.index("</button>")]
+    hm = out[out.index('id="hm-lay"'):]
+    assert "Layouts &#9662;" in hm[:hm.index("</button>")]
+
+
+def test_cancel_is_last_so_arming_a_tool_shifts_nothing(out):
+    """#et-cancel is a static node whose `hidden` bit is all that
+    changes, and it sat between Line and Arrow -- so arming a tool
+    un-hid it and pushed every control after it along, which is why it
+    "appears in a weird spot, next to the options you click"
+    (2026-08-29). At the end of the group, un-hiding appends.
+    """
+    ins = out[out.index('id="et-cell"'):out.index('>Insert</span>')]
+    assert ins.index('id="et-cancel"') > ins.index('id="dc-draw"')
+    assert ins.index('id="et-cancel"') > ins.index('id="et-arrow"')
+
+
+def test_the_maths_palette_keys_are_big_enough_to_read(out):
+    """The keys are set in maths precisely so you can find sigma by
+    looking for a sigma -- and at 11px in a 24px box a sigma and a
+    summation sign are the same smudge (2026-08-29, user: "the text
+    options in the insert text have boxes too small and can't see
+    symbols").
+    """
+    assert ".eq-key-tex{font-size:15.5px;padding:4px 8px;min-height:32px;" \
+        in out
+    assert "min-width:34px;background:var(--btn-bg,#ffffff0a);" in out
+    assert ".tx-type-menu{min-width:248px;}" in out

@@ -1395,7 +1395,7 @@ drives it — the suite is substring greps.
   `text-overflow:ellipsis` to fire at all; then move it beside Save and
   make the autosave interval a visible, settable thing.
 
-- [ ] **T71 · S — Insert-text's option boxes are too small to see the
+- [x] **T71 · S — Insert-text's option boxes are too small to see the
   symbols.**
   *Verified PARTIAL.* `#tx-type-menu` lacks the width/padding rule the
   format bar's Styles menu has.
@@ -1470,13 +1470,13 @@ drives it — the suite is substring greps.
   *Verified CONFIRMED.* `--film-w` is clamped to 46vw with no regard for
   the ribbon's measured floor. Clamp against it instead.
 
-- [ ] **T81 · S — Home group order.** "The layout for slides should be
+- [x] **T81 · S — Home group order.** "The layout for slides should be
   below the new slides, and the duplicate and match slides should be one
   over another."
   *Verified CONFIRMED, trivial.* Move `#hm-delslide` ahead of
   `#hm-laywrap` and the 3x2 row-major grid lands as asked.
 
-- [ ] **T82 · S — The Cancel button shifts the row it appears in.**
+- [x] **T82 · S — The Cancel button shifts the row it appears in.**
   "When clicking a button to insert things, the cancel button appears in
   a weird spot."
   *Verified — the mechanism is not what it looked like.* `#et-cancel` is
@@ -1485,7 +1485,8 @@ drives it — the suite is substring greps.
   along. Move it to the end of the group, or reserve its width with
   `visibility:hidden`.
 
-- [x] **T83 · S — ~~Where is the Layouts button?~~**
+- [x] **T83 · S — ~~Where is the Layouts button?~~ (the naming bug it hid,
+  fixed)**
   *Verified REFUTED — but there is a real naming bug.* BOTH doors exist:
   `#lay-drop` on **Design** says "Layouts", `#hm-laywrap` on **Home**
   says "Layout". The singular/plural split means they do not read as the

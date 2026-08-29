@@ -837,16 +837,6 @@
  slides. Drag on the page to draw it, the same way you draw a shape; drop
  an end on an item to attach it."
                 ><i data-ic="hline"></i> Line</button>
-              <!-- The way OUT of an armed tool. Escape has always done
-                   this, but nothing said so, so picking Line or Shape and
-                   changing your mind left you with no visible exit
-                   (2026-08-10, user: "there is no way to get out of the
-                   line create option if you don't want to create a line").
-                   It is hidden until a tool is armed, so it costs no
-                   width in the ribbon's resting state. -->
-              <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
-                title="Stop drawing and go back to selecting (Esc)"
-                ><i data-ic="exit"></i> Cancel</button>
               <button class="dbtn rbn-sm et" id="et-arrow" data-tool="arrow"
                 aria-pressed="false" title="Draw an arrow — a line with a
  head. Drop an end on an item to attach it, and the arrow follows that
@@ -870,6 +860,21 @@
                    is how a feature goes unused (2026-08-22) -->
               <input type="file" id="fp-img-file" accept="image/*" multiple
                 hidden>
+              <!-- The way OUT of an armed tool. Escape has always done
+                   this, but nothing said so, so picking Line or Shape and
+                   changing your mind left you with no visible exit
+                   (2026-08-10, user: "there is no way to get out of the
+                   line create option if you don't want to create a line").
+                   It is hidden until a tool is armed, so it costs no
+                   width in the ribbon's resting state -- and it is LAST
+                   in the group so that un-hiding it APPENDS. It used to
+                   sit between Line and Arrow, so arming a tool shoved
+                   every control after it along and Cancel appeared to
+                   land beside whatever you had just clicked (2026-08-29,
+                   user: "the cancel button appears in a weird spot"). -->
+              <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
+                title="Stop drawing and go back to selecting (Esc)"
+                ><i data-ic="exit"></i> Cancel</button>
             </span>
             <span class="rbn-lab">Insert</span>
           </span>
@@ -887,11 +892,13 @@
               <button class="dbtn rbn-sm" id="hm-dupslide"
                 title="Duplicate this slide, in place"><i data-ic="copy"></i>
                 Duplicate</button>
+              <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
+                title="Delete this slide"><i data-ic="exit"></i> Delete</button>
               <span class="sh-drop" id="hm-laywrap">
                 <button class="dbtn rbn-sm" id="hm-lay"
                   aria-haspopup="true" aria-expanded="false"
                   title="Ready-made arrangements for this page">
-                  <i data-ic="layouts"></i> Layout &#9662;</button>
+                  <i data-ic="layouts"></i> Layouts &#9662;</button>
                 <div class="sh-menu lay-menu" id="hm-lay-menu" hidden>
                   <div class="lay-picker" id="layout-home-grid"
                     aria-label="Slide layouts"></div>
@@ -904,8 +911,6 @@
  styling of everything on it, matched up by kind. Your content stays
  exactly where it is; only the arrangement travels"><i data-ic="swap"></i> Match slide
                 &#9662;</button>
-              <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
-                title="Delete this slide"><i data-ic="exit"></i> Delete</button>
             </span>
             <span class="rbn-lab">Slides</span>
           </span>
