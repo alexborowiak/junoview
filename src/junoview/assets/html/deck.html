@@ -593,6 +593,27 @@
                 title="A margin box and a grid to lay out against &mdash;
  items snap to both. Guides, not ink: never printed or exported"
                 ><i data-ic="grid"></i> Grid <kbd>G</kbd></button>
+              <!-- THE GUIDE PAIR, next to the Grid they extend. A guide
+                   you drew yourself was reachable only from the canvas
+                   right-click row and from the ruler corner - which is
+                   inside `#rulers`, so it does not exist at all unless
+                   Rulers are on. A drawing tool whose only door is
+                   hidden behind another toggle is a tool nobody finds
+                   (2026-08-29). Show/hide first, because it governs what
+                   the tool draws; both sit with Rulers and Grid, which
+                   is where anyone already looks for a guide. -->
+              <button class="dbtn rbn-sm" id="vw-guides"
+                aria-pressed="true"
+                title="Show the guides you drew yourself &mdash; the lines
+ dragged off a ruler and the guide boxes. Hidden, they neither draw nor
+ snap; they are still in the deck, so this is not a delete"
+                ><i data-ic="guides"></i> Guides <kbd>H</kbd></button>
+              <button class="dbtn rbn-sm et" id="vw-guidebox"
+                data-tool="guide" aria-pressed="false"
+                title="Draw a guide box &mdash; an area to lay out inside.
+ Drag its edges to resize, its corner grip to move it. An editing aid:
+ it snaps, and it is never printed, exported or shown while presenting"
+                ><i data-ic="frame"></i> Guide box <kbd>B</kbd></button>
               <button class="dbtn rbn-sm" id="vw-full"
                 aria-pressed="false"
                 title="Edit full screen &mdash; the browser chrome goes

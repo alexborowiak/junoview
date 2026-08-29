@@ -715,6 +715,15 @@
          here — Ctrl+Z must never open or close one (2026-08-22). The
          tags themselves ride inside `slides`. */
       sections:secNames(),
+      /* the guides you drew are content: they belong to the deck, they
+         are saved and re-opened with it, and drawing one is an edit like
+         any other. They were left out, so a mis-drawn guide box and a
+         mis-clicked "Clear every guide" were both unreachable by Ctrl+Z —
+         the only edits in the editor that were (2026-08-29, audit T52).
+         WHETHER THEY ARE SHOWN stays out, on the same argument that keeps
+         a section's fold state out: that is a way of looking at the page,
+         and lives in the browser's view state. */
+      guides:pres.guides||null,
       page:pres.page||null,pageBg:pres.pageBg||null,
       cropMarks:pres.cropMarks||0});
   }
@@ -740,7 +749,7 @@
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'page','pageBg','cropMarks'].forEach(function(k){
+     'guides','page','pageBg','cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     /* types are restored with their own statement rather than by joining
@@ -791,6 +800,10 @@
       if(typeof syncTopBar==='function') syncTopBar();
       if(typeof applySideRibbon==='function') applySideRibbon();
     }
+    /* the guide layer is not the annot layer: it hangs off the slide and
+       caches the signature it last drew, so an undo across a guide edit
+       has to ask it again or the restored model is invisible */
+    if(typeof syncGuides==='function') syncGuides();
     /* nothing is selected after a restore — clear the format bar */
     if(typeof showFmt==='function') showFmt();
   }

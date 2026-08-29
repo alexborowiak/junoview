@@ -1651,7 +1651,12 @@
         e.preventDefault();
         if(spotEl) closeSpot(); else if(spotHover) spotlight(spotHover);
       }
-      /* R rulers, G grid — plain keys, so Ctrl+G still groups */
+      /* R rulers, G grid — plain keys, so Ctrl+G still groups. H and B
+         join them for the guides you drew yourself: H shows or hides
+         them (Photoshop's Ctrl+H, without the Ctrl this row does not
+         use), B arms the Box. Each DRIVES THE REAL BUTTON rather than
+         calling the handler, so the key and the ribbon can never come to
+         disagree about what the toggle now says. */
       else if(!e.ctrlKey&&!e.metaKey&&(e.key==='r'||e.key==='R')){
         e.preventDefault();
         var rb=$('#vw-rulers'); if(rb) rb.click();
@@ -1659,6 +1664,18 @@
       else if(!e.ctrlKey&&!e.metaKey&&(e.key==='g'||e.key==='G')){
         e.preventDefault();
         var gb=$('#vw-grid'); if(gb) gb.click();
+      }
+      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='h'||e.key==='H')){
+        e.preventDefault();
+        var hb=$('#vw-guides'); if(hb) hb.click();
+      }
+      else if(!e.ctrlKey&&!e.metaKey&&(e.key==='b'||e.key==='B')){
+        e.preventDefault();
+        var bb=$('#vw-guidebox');
+        /* the button is the door, but it can be hidden by the fit ladder
+           or by T11's customiser, and a shortcut must not go with it */
+        if(bb&&!bb.hidden) bb.click();
+        else setTool(tool==='guide'?'select':'guide');
       }
       /* page zoom from the keyboard, mirroring the -/Fit/+ buttons */
       else if(!e.ctrlKey&&!e.metaKey

@@ -1918,12 +1918,47 @@ select#fmt-font[hidden]{display:none;}
 .cg-box{position:absolute;pointer-events:none;
   border:1px dashed #46a892aa;
   background:color-mix(in srgb,#46a892 4%,transparent);}
-.cg-edge{position:absolute;pointer-events:auto;cursor:move;}
-.cg-e-t{left:0;right:0;top:-4px;height:8px;}
-.cg-e-b{left:0;right:0;bottom:-4px;height:8px;}
-.cg-e-l{top:0;bottom:0;left:-4px;width:8px;}
-.cg-e-r{top:0;bottom:0;right:-4px;width:8px;}
+/* EACH STRIP RESIZES ITS OWN SIDE. All four used to run the same move
+   handler, and one `cursor:move` on the lot was the tell: a guide box
+   could be dragged anywhere and never made bigger (2026-08-29). The
+   cursors now say which way each one goes, corners take the two sides
+   they touch, and the corners come AFTER the edges in the markup so the
+   overlap at a corner resizes both rather than whichever the browser
+   hit-tested first. */
+.cg-edge{position:absolute;pointer-events:auto;}
+.cg-e-t{left:0;right:0;top:-4px;height:8px;cursor:ns-resize;}
+.cg-e-b{left:0;right:0;bottom:-4px;height:8px;cursor:ns-resize;}
+.cg-e-l{top:0;bottom:0;left:-4px;width:8px;cursor:ew-resize;}
+.cg-e-r{top:0;bottom:0;right:-4px;width:8px;cursor:ew-resize;}
+.cg-corner{position:absolute;pointer-events:auto;width:11px;height:11px;}
+.cg-c-tl{left:-5px;top:-5px;cursor:nwse-resize;}
+.cg-c-tr{right:-5px;top:-5px;cursor:nesw-resize;}
+.cg-c-bl{left:-5px;bottom:-5px;cursor:nesw-resize;}
+.cg-c-br{right:-5px;bottom:-5px;cursor:nwse-resize;}
+/* THE MOVE GRIP, because resizing took the edges. A visible handle beats
+   a modifier nobody is told about (the modifier stays as the shortcut).
+   Above the top edge rather than inside it: the middle of a guide box is
+   the area you are laying out INSIDE, and must go on taking clicks for
+   whatever is under it. */
+.cg-grip{position:absolute;pointer-events:auto;cursor:move;
+  left:50%;margin-left:-9px;top:-11px;width:18px;height:9px;
+  border:1px solid #46a892aa;border-bottom:0;border-radius:3px 3px 0 0;
+  background:color-mix(in srgb,#46a892 30%,transparent);}
+/* a box sitting against the top of the page has no room above it */
+.cg-box.cg-lowgrip>.cg-grip{top:1px;border-bottom:1px solid #46a892aa;
+  border-radius:0 0 3px 3px;}
 .cg-box:hover{border-color:#46a892;}
+.cg-box:hover>.cg-grip,.cg-box.cg-live>.cg-grip{background:#46a892;}
+/* WHAT YOU ARE ACTUALLY MAKING, while you make it: a poster's guide box
+   is a physical area ("the figure well is 380mm"), and that number was
+   only knowable by drawing the box and then measuring it against the
+   ruler. Inside the box, so it is never clipped off the page, and
+   pointer-events:none so it never eats the drag it is describing. */
+.cg-box.cg-live{border-style:solid;border-color:#46a892;}
+.cg-tip{position:absolute;left:2px;top:2px;pointer-events:none;
+  padding:1px 5px;border-radius:3px;white-space:nowrap;
+  font:600 11px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:#04231e;background:#46a892;}
 /* guides are an editing aid: never in print, export or playback */
 .deck:not(.editing) .pgrid,.deck:not(.editing) .rulers,
 .deck:not(.editing) .cguides{display:none;}

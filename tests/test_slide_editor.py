@@ -1803,7 +1803,7 @@ def test_the_deck_registry_survives_a_save(out):
     # references it, so it is an edit like any other
     assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
     assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
-            "     'page','pageBg',") in out
+            "     'guides','page','pageBg',") in out
 
 
 def test_corner_and_gap_need_no_per_item_reference(out):

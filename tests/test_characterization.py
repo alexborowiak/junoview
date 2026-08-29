@@ -386,8 +386,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # The Python API/schema/public-surface changes do not enter the rendered page.
 # Pinned by schema parity and verified in Edge across 10 template-round-trip
 # and gallery-selection checks.
-EXPECTED_MD5 = "93c27af2454d7fd81cf9ce63369fc320"
-EXPECTED_BYTES = 3000465
+# Moved 2026-08-29 for TASKS T52: guide boxes gained per-side resize handles,
+# corners and a move grip (markup + CSS), custom guides gained a show/hide
+# view toggle and the guide-box tool gained a ribbon button -- so deck.html,
+# deck.css and four deck.js fragments all changed, and both new control ids
+# are placed in all 108 ribbon arrangements. Pinned by tests/test_poster_
+# craft.py and tests/test_ribbon_layouts.py, and verified in Edge across the
+# resize, move, hide/show, undo and clear-confirm paths.
+EXPECTED_MD5 = "4c7480e3b8432a2ef28249ae8fc6ede9"
+EXPECTED_BYTES = 3018659
 
 
 def _render_example() -> str:

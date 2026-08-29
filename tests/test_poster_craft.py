@@ -253,15 +253,65 @@ def test_a_guide_box_is_never_an_annotation(out):
 def test_a_guide_box_is_click_through_except_at_its_edges(out):
     """A guide box is mostly empty middle. One clickable rectangle would
     swallow every click on the canvas underneath it -- which, for a box
-    drawn round the figure well, is most of the page. Four edge strips
-    listen; nothing else does.
+    drawn round the figure well, is most of the page. Edge strips,
+    corners and the move grip listen; nothing else does.
     """
     assert ".cg-box{position:absolute;pointer-events:none;" in out
-    assert ".cg-edge{position:absolute;pointer-events:auto;cursor:move;}" \
+    assert ".cg-edge{position:absolute;pointer-events:auto;}" in out
+    assert ".cg-corner{position:absolute;pointer-events:auto;" in out
+    # the grip sits ABOVE the top edge, never over the area you are
+    # laying out inside -- that middle has to go on taking clicks
+    assert ".cg-grip{position:absolute;pointer-events:auto;cursor:move;" in out
+    assert "left:50%;margin-left:-9px;top:-11px;" in out
+    assert "var GB_SIDES=['t','r','b','l'],GB_CORNERS=['tl','tr','bl','br'];" \
         in out
-    assert "'<i class=\"cg-edge cg-e-t\"></i><i class=\"cg-edge cg-e-r\">" \
+
+
+def test_each_guide_box_handle_resizes_its_own_side(out):
+    """T4 shipped a box that could be moved and never resized: all four
+    strips ran startGuideBoxMove, so the only way to change one was to
+    delete it and draw it again (2026-08-26 audit, T52).
+
+    Each handle now names the coordinates it owns in ``data-side``, and
+    'l' has to rewrite x AND w together or dragging the left edge would
+    walk the right one along with it.
+    """
+    assert "function startGuideBoxResize(ev,i,side){" in out
+    assert "var west=side.indexOf('l')>=0,east=side.indexOf('r')>=0;" in out
+    assert "if(west){b[0]=o[0]+dx;b[2]=o[2]-dx;}" in out
+    assert "if(north){b[1]=o[1]+dy;b[3]=o[3]-dy;}" in out
+    # the cursor says which way each one goes -- one cursor:move on all
+    # four was the tell that all four did the same thing
+    assert ".cg-e-t{left:0;right:0;top:-4px;height:8px;cursor:ns-resize;}" \
         in out
-    assert "startGuideBoxMove(e,+gb.parentNode.dataset.i);" in out
+    assert ".cg-c-tl{left:-5px;top:-5px;cursor:nwse-resize;}" in out
+    # ...and MOVING still exists: the grip is the door, Alt/Shift the
+    # shortcut, and the dispatcher is the one place that decides
+    assert "if(sd==='move'||e.altKey||e.shiftKey) startGuideBoxMove(e,gi);" \
+        in out
+    assert "else startGuideBoxResize(e,gi,sd);" in out
+    # a side pulled through its opposite must not reach the model as a
+    # negative width -- it would draw nothing and snap to the wrong line
+    assert "function gbNorm(b){" in out
+    assert "if(w<0){x+=w;w=-w;}" in out
+    # pulled shut is the same as drawn too small: gone, not un-grabbable
+    assert "if(b[2]<GBOX_MIN||b[3]<GBOX_MIN) cg.b.splice(i,1);" in out
+
+
+def test_a_guide_box_says_how_big_it_is_while_you_drag_it(out):
+    """A guide box on a poster is a physical area -- "the figure well is
+    380mm across" -- and that number was only knowable by drawing the box
+    and then measuring it against the ruler.
+    """
+    assert "function gbTip(i,b,kind){" in out
+    # the page's own millimetres, the units the rulers already speak
+    assert "var mm=pageOf().mm;" in out.split("function gbTip(")[1][:600]
+    # size while resizing, position while moving
+    assert "gbTip(i,cg.b[i],'pos');" in out
+    # live only: four permanent labels would shout over the layout
+    assert "function gbTipClear(){" in out
+    assert ".cg-tip{position:absolute;left:2px;top:2px;pointer-events:none;" \
+        in out
 
 
 def test_a_guide_box_snaps_and_puts_the_tool_back(out):
@@ -274,17 +324,65 @@ def test_a_guide_box_snaps_and_puts_the_tool_back(out):
     """
     assert "xs.push(v[0],v[0]+v[2]/2,v[0]+v[2]);" in out
     assert "ys.push(v[1],v[1]+v[3]/2,v[1]+v[3]);" in out
-    assert "setCustomGuides(cg);drawCustomGuides(slideEl);\n      " \
-        "/* one box, then back to selecting." in out
+    assert "setCustomGuides(cg);drawCustomGuides(slideEl);gbTipClear();\n" \
+        "      /* one box, then back to selecting." in out
     # a drag under the threshold was a click, and leaves nothing behind
     assert "if(box[2]<GBOX_MIN||box[3]<GBOX_MIN) cg.b.splice(idx,1);" in out
     # dropped with its middle off the page: the line guides' delete
     # gesture, not a second one to learn
     assert "if(cx<0||cx>100||cy<0||cy>100) cg.b.splice(i,1);" in out
-    # three doors: the ruler corner, the right-click menu, and the tool
-    assert "if(mode==='edit') setTool('guide');});" in out
-    assert "row('Draw a guide box','',function(){setTool('guide');}," in out
+    # FOUR doors now, and the ribbon button is the one anybody finds:
+    # the ruler corner lives inside #rulers, so it does not exist at all
+    # unless Rulers are on (2026-08-26 audit, T52)
+    assert 'id="vw-guidebox"' in out and 'data-tool="guide"' in out
+    assert "function armGuideBox(){" in out
+    assert "if(mode==='edit') setTool('guide');" in out
+    assert "if(rc) rc.addEventListener('click',armGuideBox);" in out
+    assert "row('Draw a guide box','B',armGuideBox," in out
     assert "function clearGuides(boxesOnly){" in out
+
+
+def test_clearing_every_guide_asks_first_and_is_undoable(out):
+    """One unconfirmed click took every guide on the poster, and guides
+    were outside the undo snapshot, so there was no way back at all
+    (2026-08-26 audit, T52). Both halves, or neither is enough.
+    """
+    # undo reaches them: recorded...
+    assert "guides:pres.guides||null," in out
+    # ...and restored, in the same array as every other deck-level key
+    assert "'guides','page','pageBg','cropMarks'].forEach(function(k){" in out
+    # the guide layer caches the signature it last drew, so an undo has
+    # to ask it again or the restored model is invisible
+    assert "if(typeof syncGuides==='function') syncGuides();" in out
+    # ...and the question is asked above one, not for a click you can
+    # obviously just repeat
+    assert "if(n>1&&!confirm('Clear '+n+' guides?" in out
+    assert "Ctrl+Z brings them back.')) return;" in out
+
+
+def test_guides_can_be_hidden_without_being_deleted(out):
+    """There was no show/hide toggle short of permanent deletion, which
+    made "get these out of my way for a minute" mean "delete them"
+    (2026-08-26 audit, T52).
+    """
+    # a view flag beside rulers and grid, defaulting ON -- your own
+    # guides are things you drew, not furniture you asked for
+    assert "var guides={rulers:false,grid:false,side:false,custom:true};" \
+        in out
+    assert "if('custom' in _g) guides.custom=!!_g.custom;}" in out
+    assert "function guidesShown(){ return guides.custom!==false; }" in out
+    # BOTH halves: hidden guides neither draw...
+    assert "if(mode!=='edit'||!guidesShown()||guidesEmpty(cg)){" in out
+    # ...nor snap. An invisible line that still pulls items onto itself
+    # is worse than either state.
+    assert "var cg=guidesShown()?customGuides():{x:[],y:[],b:[]};" in out
+    # the same ribbon wiring Rulers and Grid use, and a key of its own
+    assert 'id="vw-guides"' in out
+    assert "if(cgv) cgv.setAttribute('aria-pressed',guidesShown()" in out
+    assert "var hb=$('#vw-guides'); if(hb) hb.click();" in out
+    # arming the tool un-hides what it is about to draw -- once, in
+    # setTool, so every door onto it is covered
+    assert "if(t==='guide') showCustomGuides(true);" in out
 
 
 def test_a_guide_box_alone_still_gets_a_layer_to_draw_in(out):
@@ -301,6 +399,6 @@ def test_a_guide_box_alone_still_gets_a_layer_to_draw_in(out):
     assert "function guidesEmpty(g){" in out
     assert "return !g.x.length&&!g.y.length&&!g.b.length;" in out
     assert "if(guidesEmpty(g)) delete pres.guides;" in out
-    assert "if(mode!=='edit'||guidesEmpty(cg)){" in out
+    assert "if(mode!=='edit'||!guidesShown()||guidesEmpty(cg)){" in out
     # the old one-sided test is gone
     assert "(!cg.x.length&&!cg.y.length)" not in out

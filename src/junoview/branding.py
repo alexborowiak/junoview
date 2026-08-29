@@ -195,6 +195,14 @@ _ICON_PATHS = {
               '1.2"/>',
     "grid": '<path d="M5.4 2.4v11.2M10.6 2.4v11.2"/>'
             '<path d="M2.4 5.4h11.2M2.4 10.6h11.2"/>',
+    # YOUR OWN guides, as opposed to the fixed 12-column "grid": a page
+    # with two dashed lines you put there. It has to read apart from both
+    # its neighbours in the View group -- "grid" is a hash of solid rules
+    # with no page round it, and "frame" (the guide-box TOOL) is the
+    # dashed box with no page and no lines.
+    "guides": '<rect x="2.2" y="2.6" width="11.6" height="10.8" rx="1"/>'
+              '<path d="M6.2 2.6v10.8" stroke-dasharray="2.4 2"/>'
+              '<path d="M2.2 9.6h11.6" stroke-dasharray="2.4 2"/>',
     # a flag on a pole: the print check
     "flag": '<path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/>',
     # document furniture (Design tab). Header reuses "docktop" above.

@@ -613,8 +613,10 @@
        guide you cannot snap to would be worse than none */
     var g=guideTargets();
     xs=xs.concat(g.xs);ys=ys.concat(g.ys);
-    /* guides you dragged off the rulers yourself */
-    var cg=customGuides();
+    /* guides you dragged off the rulers yourself — and only while
+       they are shown: an invisible line that still pulls items onto
+       itself is worse than either state (2026-08-29) */
+    var cg=guidesShown()?customGuides():{x:[],y:[],b:[]};
     xs=xs.concat(cg.x);ys=ys.concat(cg.y);
     /* a guide box contributes its edges AND its middles: lining things up
        with one is the entire reason for drawing it */
@@ -1668,9 +1670,22 @@
     }
     var cgm=customGuides();
     menuHead(m,'guides');
-    row('Draw a guide box','',function(){setTool('guide');},
-        'An editing aid to lay out inside \u2014 it snaps, and it is '
-        +'never printed, exported or shown while presenting','frame');
+    row('Draw a guide box','B',armGuideBox,
+        'An editing aid to lay out inside \u2014 drag its edges to '
+        +'resize and its grip to move it. It snaps, and it is never '
+        +'printed, exported or shown while presenting','frame');
+    /* SHOWN OR HIDDEN, which is not drawn or deleted. Offered only once
+       there is something to hide, so an empty page does not carry a
+       toggle for nothing. */
+    if(cgm.b.length||cgm.x.length||cgm.y.length){
+      var gShown=guidesShown();
+      var gvb=row(gShown?'\u2713 Show your guides':'Show your guides','H',
+        function(){showCustomGuides(!gShown);},
+        'Hidden, they neither draw nor snap. They stay in the deck, so '
+        +'this gets them out of the way \u2014 it is not a delete',
+        'guides');
+      if(gShown) gvb.classList.add('on');
+    }
     if(cgm.b.length)
       row('Clear the '+cgm.b.length+' guide box'
         +(cgm.b.length===1?'':'es'),'',function(){clearGuides(true);});
@@ -1894,6 +1909,10 @@
        impossible rather than fixing the one instance of it. */
     if(!TOOLS[t]) t='select';
     tool=t;
+    /* arming the guide-box tool with your own guides hidden would draw a
+       box you could not see. Here rather than in each of the three doors
+       onto it, so the generic `.et` wiring is covered too. */
+    if(t==='guide') showCustomGuides(true);
     $$('#edit-tools .et').forEach(function(b){
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
     var shb=$('#sh-btn');   /* the Shapes dropdown draws the 'rect' tool */

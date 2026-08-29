@@ -1378,7 +1378,7 @@ def test_undo_can_see_the_whole_presentation_not_just_its_slides(out):
     assert "?pres.styles:null," in out
     # ...and restored, not merely recorded
     assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
-            "     'page','pageBg',") in out
+            "     'guides','page','pageBg',") in out
     assert "'cropMarks'].forEach(function(k){" in out
     # an empty styles object and no styles object are the same deck, or
     # merely READING a style records a phantom undo step

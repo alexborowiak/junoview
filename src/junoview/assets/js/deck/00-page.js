@@ -799,12 +799,18 @@
      margin, and a column grid that items snap to. All three are editing
      aids — they are excluded from playback, print and every export. */
   var GUIDE_KEY='junoview:deck:guides';
-  var guides={rulers:false,grid:false,side:false};
+  /* `custom` is the odd one out and defaults ON: the other three are
+     furniture you ask for, while your own guides are things you drew and
+     would not expect to have to switch back on. It exists so that
+     "get these out of my way for a minute" stops meaning "delete them" —
+     which was the only way to make a guide go away (2026-08-29). */
+  var guides={rulers:false,grid:false,side:false,custom:true};
   try{
     var _g=JSON.parse(localStorage.getItem(GUIDE_KEY)||'{}');
     if(_g&&typeof _g==='object'){
       guides.rulers=!!_g.rulers;guides.grid=!!_g.grid;
-      guides.side=!!_g.side;guides.sideSet=!!_g.sideSet;}
+      guides.side=!!_g.side;guides.sideSet=!!_g.sideSet;
+      if('custom' in _g) guides.custom=!!_g.custom;}
   }catch(e){}
   function saveGuides(){
     try{localStorage.setItem(GUIDE_KEY,JSON.stringify(guides));}catch(e){}
@@ -1001,6 +1007,27 @@
     return {x:(g.x||[]).slice(),y:(g.y||[]).slice(),
             b:(g.b||[]).map(function(v){return v.slice();})};
   }
+  /* HIDDEN MEANS HIDDEN, both halves. Asked in the two places that must
+     agree — whether to draw them, and whether they still pull items onto
+     themselves — because a guide you cannot see that goes on snapping is
+     an invisible magnet, which is worse than either state. It is a way
+     of LOOKING at the page, so it lives in the browser's view state
+     beside rulers and grid, not in the deck. */
+  function guidesShown(){ return guides.custom!==false; }
+  function showCustomGuides(on){
+    on=!!on;
+    if(guidesShown()===on) return;
+    guides.custom=on;saveGuides();
+    if(typeof syncViewBtns==='function') syncViewBtns();
+    syncGuides();
+  }
+  /* ONE opener for the doors onto the guide-box tool that are not the
+     ribbon button (the canvas row, the ruler corner): neither of them
+     can rely on the generic `.et` wiring, and neither is only reachable
+     while editing. The un-hide lives in setTool, so every door gets it. */
+  function armGuideBox(){
+    if(mode==='edit') setTool('guide');
+  }
   function setCustomGuides(g){
     if(!pres) return;
     if(guidesEmpty(g)) delete pres.guides;
@@ -1030,7 +1057,7 @@
     if(!slideEl) return;
     var host=slideEl.querySelector('.cguides');
     var cg=customGuides();
-    if(mode!=='edit'||guidesEmpty(cg)){
+    if(mode!=='edit'||!guidesShown()||guidesEmpty(cg)){
       if(host) host.remove(); return;
     }
     if(!host){
@@ -1051,18 +1078,29 @@
       +cg.y.map(function(v,i){
         return '<i class="cguide cg-h" data-ax="y" data-i="'+i
           +'" style="top:'+v+'%"></i>';}).join('')
-      /* FOUR EDGE STRIPS, not one clickable rectangle. A guide box is
-         mostly empty middle, and an element taking pointer events across
-         its whole area would swallow every click on the canvas beneath
-         it — which, for a box drawn round the figure well, is most of
-         the page. The strips are the only part that listens. */
+      /* EDGE STRIPS AND CORNERS, not one clickable rectangle. A guide box
+         is mostly empty middle, and an element taking pointer events
+         across its whole area would swallow every click on the canvas
+         beneath it — which, for a box drawn round the figure well, is
+         most of the page. The handles are the only part that listens,
+         and each one now says in `data-side` which coordinates it owns:
+         't'/'r'/'b'/'l' one side, 'tl'…'br' the two they meet at, and
+         'move' the grip that takes the whole box. */
       +cg.b.map(function(v,i){
-        return '<i class="cg-box" data-i="'+i+'" style="left:'+v[0]
+        return '<i class="cg-box'+(v[1]<2.2?' cg-lowgrip':'')
+          +'" data-i="'+i+'" style="left:'+v[0]
           +'%;top:'+v[1]+'%;width:'+v[2]+'%;height:'+v[3]+'%">'
-          +'<i class="cg-edge cg-e-t"></i><i class="cg-edge cg-e-r"></i>'
-          +'<i class="cg-edge cg-e-b"></i><i class="cg-edge cg-e-l"></i>'
+          +GB_SIDES.map(function(sd){
+            return '<i class="cg-edge cg-e-'+sd+'" data-side="'+sd
+              +'"></i>';}).join('')
+          +GB_CORNERS.map(function(sd){
+            return '<i class="cg-corner cg-c-'+sd+'" data-side="'+sd
+              +'"></i>';}).join('')
+          +'<i class="cg-grip" data-side="move" title="Drag to move the '
+          +'whole box (or hold Alt on any edge)"></i>'
           +'</i>';}).join('');
   }
+  var GB_SIDES=['t','r','b','l'],GB_CORNERS=['tl','tr','bl','br'];
   /* ---- guide BOXES: a region to lay out inside ------------------------
      A guide LINE answers "is this edge where I said"; a guide BOX answers
      "does this belong in this area at all" — the title band, the figure
@@ -1077,6 +1115,48 @@
 
      Stored as [x,y,w,h] in page percentages, beside the lines. */
   var GBOX_MIN=1.5;      /* under this it was a click, not a drag */
+  /* ONE normaliser for a box that has just been dragged. Rounding to the
+     two decimals the model stores was already done in three places; the
+     un-flip is new, and is what lets a side be pulled straight through
+     its opposite the way every other resize handle in the app behaves.
+     A negative width must never reach the model — it would draw nothing
+     and snap items to a line left of where the box appears. */
+  function gbNorm(b){
+    var x=b[0],y=b[1],w=b[2],h=b[3];
+    if(w<0){x+=w;w=-w;}
+    if(h<0){y+=h;h=-h;}
+    return [x,y,w,h].map(function(v){return Math.round(v*100)/100;});
+  }
+  /* WHAT YOU ARE ACTUALLY MAKING, while you make it. A guide box on a
+     poster is a physical area — "the figure well is 380mm across" — and
+     until now the only way to learn that number was to draw the box and
+     then read it off the ruler. Live only: four permanent labels would
+     shout over the layout they describe. */
+  function gbTip(i,b,kind){
+    var slideEl=stage?stage.querySelector('.slide'):null;
+    if(!slideEl) return;
+    var el=slideEl.querySelector('.cg-box[data-i="'+i+'"]');
+    if(!el) return;
+    var t=el.querySelector('.cg-tip');
+    if(!t){t=document.createElement('i');t.className='cg-tip';
+      el.appendChild(t);}
+    el.classList.add('cg-live');
+    var mm=pageOf().mm;
+    t.textContent=(kind==='pos')
+      ?Math.round(b[0]/100*mm[0])+', '+Math.round(b[1]/100*mm[1])+' mm'
+      :Math.round(Math.abs(b[2])/100*mm[0])+' \u00d7 '
+        +Math.round(Math.abs(b[3])/100*mm[1])+' mm';
+  }
+  /* cleared by the layer, not by index: the gesture that ends may have
+     just deleted the box it was describing, and `data-i` then names a
+     different one */
+  function gbTipClear(){
+    var slideEl=stage?stage.querySelector('.slide'):null;
+    if(!slideEl) return;
+    $$('.cg-tip',slideEl).forEach(function(t){t.remove();});
+    $$('.cg-box.cg-live',slideEl).forEach(function(el){
+      el.classList.remove('cg-live');});
+  }
   function startGuideBox(layer,p0){
     var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
     var cg=customGuides();
@@ -1090,13 +1170,14 @@
          one-commit-per-gesture contract the line guides follow */
       if(pres) pres.guides=liveGuides(cg);
       drawCustomGuides(slideEl);
+      gbTip(idx,box);
     }
     function up(){
       document.removeEventListener('mousemove',mv);
       document.removeEventListener('mouseup',up);
       if(box[2]<GBOX_MIN||box[3]<GBOX_MIN) cg.b.splice(idx,1);
-      else cg.b[idx]=box.map(function(v){return Math.round(v*100)/100;});
-      setCustomGuides(cg);drawCustomGuides(slideEl);
+      else cg.b[idx]=gbNorm(box);
+      setCustomGuides(cg);drawCustomGuides(slideEl);gbTipClear();
       /* one box, then back to selecting. A guide is furniture you put
          down, not a mode to live in — and a tool that stays armed is a
          tool that gets left armed (cf. #et-cancel's whole reason). */
@@ -1119,6 +1200,7 @@
                o[1]+(e.clientY-sy)/sr.height*100,o[2],o[3]];
       if(pres) pres.guides=liveGuides(cg);
       drawCustomGuides(slideEl);
+      gbTip(i,cg.b[i],'pos');
     }
     function up(){
       document.removeEventListener('mousemove',mv);
@@ -1128,19 +1210,77 @@
          deleted, and a box has no business needing a new gesture */
       var cx=b[0]+b[2]/2,cy=b[1]+b[3]/2;
       if(cx<0||cx>100||cy<0||cy>100) cg.b.splice(i,1);
-      else cg.b[i]=b.map(function(v){return Math.round(v*100)/100;});
-      setCustomGuides(cg);drawCustomGuides(slideEl);
+      else cg.b[i]=gbNorm(b);
+      setCustomGuides(cg);drawCustomGuides(slideEl);gbTipClear();
+    }
+    document.addEventListener('mousemove',mv);
+    document.addEventListener('mouseup',up);
+  }
+  /* RESIZE, one side at a time — the half of a guide box that was never
+     built. All four strips ran startGuideBoxMove, so a box could be put
+     anywhere and never made to fit anything: you deleted it and drew it
+     again (2026-08-29, audit T52). `side` names the coordinates this
+     handle owns and nothing else moves — 'l' rewrites x AND w so the
+     right edge stays put, 'r' rewrites w alone, and a corner does one of
+     each. Pull a side through its opposite and gbNorm un-flips it on the
+     way into the model, the way a shape's handles behave. */
+  function startGuideBoxResize(ev,i,side){
+    ev.preventDefault();
+    var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
+    var cg=customGuides(),o=cg.b[i];
+    if(!o) return;
+    o=o.slice();
+    var sr=slideEl.getBoundingClientRect();
+    var sx=ev.clientX,sy=ev.clientY;
+    var west=side.indexOf('l')>=0,east=side.indexOf('r')>=0;
+    var north=side.indexOf('t')>=0,south=side.indexOf('b')>=0;
+    function mv(e){
+      if(!sr.width||!sr.height) return;
+      var dx=(e.clientX-sx)/sr.width*100,dy=(e.clientY-sy)/sr.height*100;
+      var b=o.slice();
+      if(west){b[0]=o[0]+dx;b[2]=o[2]-dx;}
+      else if(east){b[2]=o[2]+dx;}
+      if(north){b[1]=o[1]+dy;b[3]=o[3]-dy;}
+      else if(south){b[3]=o[3]+dy;}
+      cg.b[i]=b;
+      if(pres) pres.guides=liveGuides(cg);
+      drawCustomGuides(slideEl);
+      gbTip(i,b);
+    }
+    function up(){
+      document.removeEventListener('mousemove',mv);
+      document.removeEventListener('mouseup',up);
+      var b=gbNorm(cg.b[i]);
+      /* pulled shut. The initial draw treats a box this small as a click
+         rather than a drag, and a guide with no area is one you can never
+         get hold of again — so the same threshold ends it here. */
+      if(b[2]<GBOX_MIN||b[3]<GBOX_MIN) cg.b.splice(i,1);
+      else cg.b[i]=b;
+      setCustomGuides(cg);drawCustomGuides(slideEl);gbTipClear();
     }
     document.addEventListener('mousemove',mv);
     document.addEventListener('mouseup',up);
   }
   function clearGuides(boxesOnly){
     var cg=customGuides();
+    var n=cg.b.length+(boxesOnly?0:cg.x.length+cg.y.length);
+    if(!n) return;
+    /* ASK, ABOVE ONE. This was a single unconfirmed click that took every
+       guide on the poster, and there was no way back at all — guides were
+       outside the undo snapshot (2026-08-29, audit T52). Both halves are
+       fixed, which is why the question is only asked when it is worth
+       asking: one guide is a click you can obviously repeat, a page's
+       worth of them is not. */
+    if(n>1&&!confirm('Clear '+n+' guides?\n\n'
+        +(boxesOnly?'Every guide box on this deck.'
+                   :'Every guide box and every line dragged off a ruler.')
+        +' Ctrl+Z brings them back.')) return;
     cg.b=[];
     if(!boxesOnly){cg.x=[];cg.y=[];}
     setCustomGuides(cg);
     drawCustomGuides(stage.querySelector('.slide'));
-    toast(boxesOnly?'Guide boxes cleared':'Guides cleared');
+    toast((boxesOnly?'Guide boxes cleared':'Guides cleared')
+      +' \u2014 Ctrl+Z brings them back');
   }
   /* drag a NEW guide out of a ruler, or an existing one to move/remove */
   function startGuideDrag(ev,axis,existing){
@@ -1160,8 +1300,8 @@
       cg[axis][idx]=Math.max(-4,Math.min(104,v));
       /* live geometry only while the mouse is down: the model updates in
          place and the guide layer repaints, but the commit (markDirty:
-         full-deck stringify + localStorage write + a no-op histPush,
-         guides being outside the undo snapshot) waits for mouseup — the
+         full-deck stringify + localStorage write + one undo entry, guides
+         riding in the snapshot since 2026-08-29) waits for mouseup — the
          same one-commit-per-gesture contract item drags follow. It used
          to run per mousemove, ~60 stringify+write/s (2026-08-23 perf). */
       if(pres) pres.guides=liveGuides(cg);
@@ -1192,13 +1332,18 @@
        the same idea one dimension up: each ruler lays down a guide line,
        so their corner lays down a guide area (2026-08-25) */
     var rc=$('#ruler-corner');
-    if(rc) rc.addEventListener('click',function(){
-      if(mode==='edit') setTool('guide');});
+    if(rc) rc.addEventListener('click',armGuideBox);
     if(stage) stage.addEventListener('mousedown',function(e){
-      var gb=e.target.closest?e.target.closest('.cg-edge'):null;
-      if(gb&&gb.parentNode){
+      var gb=e.target.closest
+        ?e.target.closest('.cg-edge,.cg-corner,.cg-grip'):null;
+      if(gb&&gb.parentNode&&gb.parentNode.classList.contains('cg-box')){
         e.stopPropagation();
-        startGuideBoxMove(e,+gb.parentNode.dataset.i);
+        var gi=+gb.parentNode.dataset.i,sd=gb.dataset.side;
+        /* TWO GESTURES ON ONE BOX, and the handle decides which. The grip
+           is the door; Alt or Shift on any handle is the shortcut, for
+           the same reason every other drag in the editor has one. */
+        if(sd==='move'||e.altKey||e.shiftKey) startGuideBoxMove(e,gi);
+        else startGuideBoxResize(e,gi,sd);
         return;
       }
       var g=e.target.closest?e.target.closest('.cguide'):null;

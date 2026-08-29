@@ -1240,6 +1240,11 @@
     var r=$('#vw-rulers'),g=$('#vw-grid'),f=$('#vw-full'),sd=$('#vw-side');
     if(r) r.setAttribute('aria-pressed',guides.rulers?'true':'false');
     if(g) g.setAttribute('aria-pressed',guides.grid?'true':'false');
+    /* #vw-guidebox is NOT here: it is an `et` tool, so setTool owns its
+       pressed state along with every other tool's. This one is a view
+       toggle like its two neighbours and is owned here. */
+    var cgv=$('#vw-guides');
+    if(cgv) cgv.setAttribute('aria-pressed',guidesShown()?'true':'false');
     if(f) f.setAttribute('aria-pressed',editFull?'true':'false');
     /* out of the menu and into the row, so it shows its state too */
     if(sd) sd.setAttribute('aria-pressed',
@@ -1257,6 +1262,7 @@
      opens them as a menu, which is ~300px back — far more than the 66px
      the row was over (2026-08-22). */
   var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
+    ['vw-guides','Guides'],['vw-guidebox','Guide box'],
     ['vw-full','Full screen'],['vw-side','Side toolbar'],
     ['vw-check','Check'],['objects-btn','Layers'],['notes-btn','Notes']];
   var viewFolded=false,viewWasHidden=null;
@@ -1385,6 +1391,15 @@
     if(g) g.addEventListener('click',function(){
       guides.grid=!guides.grid;saveGuides();syncViewBtns();
       renderSlide();});
+    /* SHOW/HIDE, not delete. Only the hiding half says so out loud: a
+       guide going away used to mean it was gone, and nothing else in the
+       editor makes something invisible without also removing it. */
+    var cgv=$('#vw-guides');
+    if(cgv) cgv.addEventListener('click',function(){
+      var on=!guidesShown();
+      showCustomGuides(on);
+      if(!on) toast('Guides hidden \u2014 still in the deck, and they '
+        +'stop snapping until you show them again');});
     if(sd) sd.addEventListener('click',function(){
       guides.side=!wantSide();guides.sideSet=true;
       saveGuides();applySideRibbon();});

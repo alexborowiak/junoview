@@ -13,7 +13,7 @@ Everything about what is left to do is in two files, both in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 9** | **The queue.** 4 open items, T52–T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
+| **TASKS.md** (this file), **group 9** | **The queue.** 3 open items, T53 and T57–T58, each a theme with sub-bullets. Start here to pick something up. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
@@ -986,13 +986,42 @@ file before touching anything.
   Browser-verified import, apply, persistence, deck switching and all three
   gallery selections with no runtime errors (10 checks).
 
-- [ ] **T52 · S — Guides are editable, undoable and hideable.** T4
+- [x] **T52 · S — Guides are editable, undoable and hideable.** T4
   shipped draw-and-delete: a guide box can be moved but never resized
   (all four edge strips run `startGuideBoxMove`), guides are outside
   undo, "Clear every guide" is one unconfirmed click, there is no
   show/hide toggle short of permanent deletion, and the tool has no
   ribbon button — its only doors are a right-click row and the ruler
   corner.
+  *2026-08-29.* A guide box now has EIGHT resize handles rather than four
+  move handles: each edge strip rewrites only the coordinates it owns
+  (`'l'` moves x and w together so the far edge holds still), each corner
+  takes the two sides it meets at, and `gbNorm` un-flips a side pulled
+  through its opposite so a negative width never reaches the model.
+  Moving did not go away — it moved onto a visible grip above the top
+  edge, with Alt or Shift on any handle as the shortcut; the grip is
+  outside the box because the middle of a guide box is the area you are
+  laying out INSIDE and has to go on taking clicks. Every drag now reads
+  out what it is making in the page's own millimetres (size while
+  resizing, position while moving), which was previously only knowable by
+  drawing the box and measuring it against a ruler.
+  `pres.guides` joins the undo snapshot, so a drag, a draw and a clear
+  are all Ctrl+Z-able — they were the only edits in the editor that were
+  not — and `histRestore` re-asks `syncGuides` because the guide layer
+  caches the signature it last drew. Clearing asks first above one guide
+  and says Ctrl+Z in the toast. `guides.custom` is a view flag beside
+  rulers/grid, defaulting on, honoured in BOTH places that must agree —
+  hidden guides neither draw nor snap, because an invisible line that
+  still pulls items onto itself is worse than either state. Two worded
+  ribbon buttons in the View group with Rulers and Grid: **Guides** (H,
+  a new `guides` glyph) and **Guide box** (B, `frame`, an `et` tool so
+  `setTool` owns its pressed state); both are placed in all 108 ribbon
+  arrangements and in the View group's fold menu, and arming the tool by
+  any door un-hides what it is about to draw. Browser-verified in Edge:
+  40 checks over resize per side and per corner, the grip, Alt+drag,
+  undo/redo, hide/show, the keys, the confirm and the clear-then-undo,
+  with no runtime errors; the ribbon still fits unclipped at 1024, 1180
+  and 1366px.
 
 - [ ] **T53 · S — Maths survives the title slide and the export.** The
   re-typeset gate asks only about `s.annots`, so LaTeX in a title
