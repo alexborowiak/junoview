@@ -467,6 +467,11 @@
   var pres=null, source='auto', mode='view', cur=0, activePane=0;
   function loadPresentation(name){
     flushDraftWrite();   /* the outgoing deck's last edits reach its draft */
+    /* a DIFFERENT deck has a different history: the head and the
+       branch belong to the one being closed, and carrying them
+       across would parent the new deck's first snapshot onto the
+       old deck's tree (T90) */
+    histHead=null;histBranch='';
     deckZoom=0;   /* zoom is per-session, reset per presentation */
     var d=loadDraft(name);
     if(d){pres=d;source='draft';histReset();return;}

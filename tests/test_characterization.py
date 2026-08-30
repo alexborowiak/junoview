@@ -509,8 +509,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-30 for T91: app.js now accepts .md/.tex/.csv and friends
 # in its drop handler, and three strings that said "ipynb" say what the
 # tool can actually open.
-EXPECTED_MD5 = "375a01f0f36a0b0b46487fe07fe4f6e4"
-EXPECTED_BYTES = 3215831
+# Moved 2026-08-30 for T90: the version history is a tree. Snapshots
+# carry a parent and a branch name, the rail draws the shape, and the
+# panel gains a Start a branch button and an on-which-branch chip.
+EXPECTED_MD5 = "567751725b738f81ded2ae9797b64c83"
+EXPECTED_BYTES = 3222746
 
 
 def _render_example() -> str:

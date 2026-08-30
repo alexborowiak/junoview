@@ -1959,6 +1959,34 @@
         second drawing of a slide anywhere in this file, and this does
         not become the first. */
   var HIST_KEEP=20,histOps=Promise.resolve();
+  /* ---- BRANCHES (T90, 2026-08-29) ------------------------------------
+     "Where is the version and then you can create branches of version."
+
+     A history was a LIST: every snapshot followed the one before it, so
+     going back to an older version and carrying on from there quietly
+     rewrote what "before" meant -- the older version and the newer one
+     both claimed the same line, and the newer work looked like a
+     continuation of something it had nothing to do with.
+
+     Three things make it a tree, and the third is the one that bites.
+
+     `histHead` is where the LIVE deck sits: the snapshot it descends
+     from. Every new snapshot records it as `p`, then becomes it. Going
+     back to an older version moves the head THERE, so the next save
+     forks rather than pretending the detour never happened.
+
+     `br` is the branch's name, inherited from the parent so a branch
+     costs one naming and not one per save.
+
+     And HIST_KEEP=20 still evicts the oldest entry, which on a tree can
+     be an entry other entries descend from -- so eviction SPLICES:
+     every child of a dropped entry is re-pointed at that entry's own
+     parent before it goes. A tree that loses its oldest snapshot stays
+     one connected tree; it just gets shallower. Without that, half the
+     history becomes unreachable rows pointing at an id that is not
+     there, which is the bug this design is most likely to have had. */
+  var histHead=null;   /* the snapshot the live deck descends from */
+  var histBranch='';   /* ...and the branch it is on ('' = the trunk) */
   function histKeyFor(name){
     return 'dhist:'+SCOPE+':'+(name||'untitled');
   }
@@ -2029,8 +2057,26 @@
       +Math.random().toString(36).slice(2,5);
     var ent={id:id,at:Date.now(),why:why||'saved',
       n:cap.n,len:cap.txt.length};
+    /* absent-is-default, the rule the deck format follows everywhere: a
+       trunk snapshot with no parent stores neither key, so a history
+       written before branches existed reads as a trunk and is right */
+    if(histHead) ent.p=histHead;
+    if(histBranch) ent.br=histBranch;
     var next=ix.concat([ent]);
+    histHead=id;
     var drop=next.length>HIST_KEEP?next.splice(0,next.length-HIST_KEEP):[];
+    /* SPLICE, don't sever. The dropped entries are the oldest, and on a
+       tree the oldest can have children; re-point each child at its
+       grandparent so the tree stays connected and merely gets shallower
+       (T90). Done oldest-first so a run of dropped ancestors collapses
+       correctly in one pass. */
+    drop.forEach(function(d){
+      next.forEach(function(e2){
+        if(e2.p===d.id){
+          if(d.p) e2.p=d.p; else delete e2.p;
+        }
+      });
+    });
     return idbPut(histVKeyFor(cap.name,id),cap.txt).then(function(){
       return idbPut(histKeyFor(cap.name),next);
     }).then(function(){
@@ -2159,6 +2205,25 @@
     if(e.key==='Escape'){
       e.preventDefault();e.stopPropagation();histPanelClose();}
   }
+  /* HOW DEEP EACH SNAPSHOT SITS. An entry whose parent is not in the
+     index is a ROOT rather than a lost row: that is what an evicted
+     ancestor looks like from here, and the splice in snapWrite means it
+     can only happen to a history written before branches existed (T90). */
+  function histDepths(ix){
+    var by={},depth={};
+    ix.forEach(function(e){by[e.id]=e;});
+    function of(e,guard){
+      if(depth[e.id]!=null) return depth[e.id];
+      var p=e.p&&by[e.p];
+      /* guard: a hand-edited store could name a cycle, and a stack
+         overflow inside a history panel is a poor way to find out */
+      var d=(!p||guard>HIST_KEEP)?0:of(p,guard+1)+1;
+      depth[e.id]=d;
+      return d;
+    }
+    ix.forEach(function(e){of(e,0);});
+    return depth;
+  }
   function histRows(ov,ix){
     var rail=ov.querySelector('#dh-list');
     rail.innerHTML='';
@@ -2168,16 +2233,38 @@
         +'save it, so the history starts filling from now.</div>';
       return;
     }
+    var depth=histDepths(ix),lastBr=null,kids={};
+    ix.forEach(function(e){if(e.p) kids[e.p]=(kids[e.p]||0)+1;});
     ix.slice().reverse().forEach(function(e){
+      var br=e.br||'';
+      /* a heading whenever the branch changes on the way down, so the
+         shape reads without drawing a graph (T90) */
+      if(br!==lastBr){
+        var h=document.createElement('div');
+        h.className='dh-brlab';
+        h.innerHTML=bic('route')+' '+esc(br||'main');
+        rail.appendChild(h);
+        lastBr=br;
+      }
       var b=document.createElement('button');
-      b.className='dh-snap'+(e.id===histSel?' on':'');
+      b.className='dh-snap'+(e.id===histSel?' on':'')
+        +(e.id===histHead?' head':'')
+        +((kids[e.id]||0)>1?' forked':'');
+      b.style.setProperty('--dh-depth',String(Math.min(6,depth[e.id]||0)));
       var l1=document.createElement('span');
-      l1.className='dh-when';l1.textContent=histWhen(e.at);
+      l1.className='dh-when';
+      l1.textContent=histWhen(e.at)
+        +(e.id===histHead?' · you are here':'');
       var l2=document.createElement('span');
       l2.className='dh-why';
-      l2.textContent=e.why+' · '+e.n+' slide'+(e.n===1?'':'s');
+      l2.textContent=e.why+' · '+e.n+' slide'+(e.n===1?'':'s')
+        +((kids[e.id]||0)>1
+          ?(' · '+kids[e.id]+' branches from here'):'');
       b.appendChild(l1);b.appendChild(l2);
-      b.title=new Date(e.at).toLocaleString();
+      b.title=new Date(e.at).toLocaleString()
+        +(br?('\nBranch: '+br):'\nMain line')
+        +(e.id===histHead
+          ?'\nThis is where the deck you are editing came from':'');
       b.addEventListener('click',function(){
         histSel=e.id;histRows(ov,ix);histCompare(ov,e);});
       rail.appendChild(b);
@@ -2267,9 +2354,33 @@
           +' slides with the '+d.rows.filter(function(r){
             return r.a;}).length+' from '+histWhen(ent.at)+'?')) return;
         snapTake('before going back').then(function(){
-          histRestoreDeck(then);histPanelClose();});
+          histRestoreDeck(then,ent.id,ent.br||'');histPanelClose();});
       });
       body.appendChild(restoreAll);
+      /* THE ASK ITSELF. Same restore, plus a name -- so the work you do
+         next is recorded as descending from THIS version instead of
+         from whatever happened to be latest (T90). */
+      var branch=document.createElement('button');
+      branch.className='dbtn dh-all dh-branch';
+      branch.innerHTML=bic('route')+' Start a branch from here\u2026';
+      branch.title='Go back to this version AND give what you do next '
+        +'its own name, so it shows as a branch instead of overwriting '
+        +'the line you were on';
+      branch.addEventListener('click',function(){
+        var suggest=ent.br?(ent.br+' 2'):'alternative';
+        var nm=prompt('Call this branch:',suggest);
+        if(nm===null) return;
+        nm=nm.trim()||suggest;
+        snapTake('before branching').then(function(){
+          histRestoreDeck(then,ent.id,nm);
+          histPanelClose();
+          snapTake('branched: '+nm);
+          toast('On branch \u201c'+nm+'\u201d \u2014 what you save next '
+            +'descends from '+histWhen(ent.at)+', not from where you '
+            +'were');
+        });
+      });
+      body.appendChild(branch);
       d.rows.forEach(function(r){
         var row=document.createElement('div');
         row.className='dh-row st-'+r.st;
@@ -2334,7 +2445,13 @@
     toast(r.bi>=0?'Slide '+(at+1)+' is the older one again'
       :'Slide '+(at+1)+' is back');
   }
-  function histRestoreDeck(then){
+  function histRestoreDeck(then,fromId,branch){
+    /* WHERE YOU NOW ARE IN THE TREE. Restoring puts the live deck at
+       that snapshot, so the next save descends from IT -- which is what
+       makes carrying on from an old version a fork rather than a lie
+       about what came before (T90). */
+    if(fromId!==undefined) histHead=fromId||null;
+    if(branch!==undefined) histBranch=branch||'';
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     var copy=JSON.parse(JSON.stringify(then));
     copy.name=pres.name;      /* the NAME is where you are, not where it was */
@@ -2354,7 +2471,10 @@
     ov.className='deck-history';ov.id='deck-history';
     ov.innerHTML='<div class="dh-head">'
       +'<span class="dh-t">History of “'+esc(pres.name||'this deck')
-      +'”</span><span class="deck-spring"></span>'
+      +'”</span>'
+      +'<span class="dh-onbr">'+bic('route')+' on '
+      +esc(histBranch||'main')+'</span>'
+      +'<span class="deck-spring"></span>'
       +'<button class="dbtn" id="dh-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dh-main">'
       +'<div class="dh-rail" id="dh-list"></div>'

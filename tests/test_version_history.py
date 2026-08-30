@@ -265,8 +265,11 @@ def test_whole_history_restore_replaces_the_whole_deck(out):
     """A whitelist drifts whenever normPres grows. Replace the object so
     all saved keys return, absent keys disappear, and histReset installs
     the restored custom types before this becomes a new draft."""
-    restore = out[out.index("function histRestoreDeck(then){"):
+    # T90 gave it two more parameters -- where in the TREE this puts the
+    # live deck -- so the signature is matched by its stem.
+    restore = out[out.index("function histRestoreDeck(then"):
                   out.index("function openHistory(){")]
+    assert "function histRestoreDeck(then,fromId,branch){" in out
     assert "copy.name=pres.name;" in restore
     assert "pres=copy;" in restore
     assert restore.index("pres=copy;") < restore.index("histReset();")
@@ -296,3 +299,57 @@ def test_the_two_histories_do_not_pretend_to_be_each_other(out):
     assert "class=\"dh-git\"" in out or "git.className='dh-git'" in out
     assert "the moments '" in out
     assert "its Version history menu " in out
+
+# ---------------------------------------------------------------------------
+# branches (T90)
+# ---------------------------------------------------------------------------
+
+def test_a_snapshot_records_which_one_it_descends_from(out):
+    """A history was a LIST: going back to an older version and carrying
+    on quietly rewrote what "before" meant. A parent makes it a tree."""
+    assert "var histHead=null;" in out
+    assert "if(histHead) ent.p=histHead;" in out
+    assert "if(histBranch) ent.br=histBranch;" in out
+    # absent-is-default, so a history written before branches reads as
+    # a trunk and is right
+    assert "ent.p=histHead" in out and "ent.p=histHead||''" not in out
+    assert "histHead=id;" in out
+
+
+def test_going_back_to_a_version_moves_you_there_in_the_tree(out):
+    """Otherwise the next save claims to descend from work it has
+    nothing to do with -- which is the whole defect branching fixes."""
+    assert "function histRestoreDeck(then,fromId,branch){" in out
+    assert "if(fromId!==undefined) histHead=fromId||null;" in out
+    assert "histRestoreDeck(then,ent.id,ent.br||'')" in out
+
+
+def test_evicting_the_oldest_snapshot_splices_rather_than_severs(out):
+    """THE load-bearing line. HIST_KEEP still drops the oldest entry, and
+    on a tree the oldest can be one that others descend from -- so every
+    child of a dropped entry is re-pointed at that entry's own parent
+    before it goes. Without it, half a history becomes rows pointing at
+    an id that is not there.
+    """
+    drop = out[out.index("var drop=next.length>HIST_KEEP"):]
+    drop = drop[:drop.index("return idbPut(histVKeyFor")]
+    assert "drop.forEach(function(d){" in drop
+    assert "if(e2.p===d.id){" in drop
+    assert "if(d.p) e2.p=d.p; else delete e2.p;" in drop
+
+
+def test_an_orphan_reads_as_a_root_rather_than_a_lost_row(out):
+    """What an evicted ancestor looks like from the rail. It also stops a
+    hand-edited store's cycle from overflowing the stack inside a panel.
+    """
+    assert "function histDepths(ix){" in out
+    assert "var d=(!p||guard>HIST_KEEP)?0:of(p,guard+1)+1;" in out
+
+
+def test_a_different_deck_starts_on_its_own_trunk(out):
+    """Carrying the head across would parent the new deck's first
+    snapshot onto the old deck's tree."""
+    load = out[out.index("function loadPresentation(name){"):]
+    load = load[:load.index("function ")+400]
+    assert "histHead=null;histBranch='';" in load
+

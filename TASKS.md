@@ -1546,7 +1546,7 @@ drives it — the suite is substring greps.
   down. Genuinely missing: a "show me every instance of this component"
   row, which `cmpInstances(id)` already computes.
 
-- [ ] **T90 · L — Version branches.** "Where is the version and then you
+- [x] **T90 · L — Version branches.** "Where is the version and then you
   can create branches of version."
   *Verified: history ships, branching does not.* Not a small edit — a
   parent id on the entry, a non-linear index that `HIST_KEEP=20`'s
