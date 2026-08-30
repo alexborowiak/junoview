@@ -536,8 +536,19 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the server read off SOURCES; and four strings that promised .ipynb only
 # say what the tool can actually open, including the file input's accept
 # list. page.html and app.js.
-EXPECTED_MD5 = "9fe26b2fb8a47ca49e580af05dac145c"
-EXPECTED_BYTES = 3247756
+# Moved 2026-08-30 for T107: cropped pictures and slide transitions now
+# reach PowerPoint. pptx.js grew srcRect (in 1000ths of a percent, before
+# <a:stretch> or the part is rejected) with the shape's own box shrunk to
+# the visible fraction and moved to where it was -- srcRect trims the
+# source and fillRect then STRETCHES the remainder, so the insets alone
+# would blow the picture back up -- plus prstGeom for a preset crop
+# outline and a <p:transition> after <p:clrMapOvr>. The deck hands over
+# a.crop, its shape and transFor(ent.i), and counts only the freehand
+# outlines that really cannot be carried. help.html's honesty list is
+# rewritten around what is true now, and gained the four losses it never
+# mentioned: notes, builds, links and the freehand crop.
+EXPECTED_MD5 = "3153977e871ae9f18b07d8e8e9d68dbc"
+EXPECTED_BYTES = 3251615
 
 
 def _render_example() -> str:

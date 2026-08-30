@@ -563,10 +563,15 @@ it) at the page's <b>true size</b> &mdash; an A0 poster comes out as a
 real 841&#215;1189mm page, ready for the print shop.</li>
 <li><i>File &rarr; Export PowerPoint</i> writes a <code>.pptx</code>.
 Text stays <b>editable</b> in PowerPoint, figures and images come across
-as pictures, and boxes and arrows become real shapes. A placed cell
-showing a <b>table</b> cannot convert (it is reported, not silently
-dropped), crops are not carried, and equations arrive as plain text
-&mdash; use Export PDF when any of those matter.</li>
+as pictures, and boxes and arrows become real shapes. Cropped
+pictures keep their trim and their shape, and slide transitions come
+across (<i>Move matching objects</i> becomes a push, which is the
+nearest PowerPoint has). What does <b>not</b> travel: a placed cell
+showing a <b>table</b>, a crop you drew freehand, equations (they
+arrive as plain text, since PowerPoint has no LaTeX), speaker notes,
+object builds, and links. Everything in that list is counted and named
+when you export, not silently dropped &mdash; use Export PDF when any of
+it matters.</li>
 <li><b><i data-ic="play"></i> Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one

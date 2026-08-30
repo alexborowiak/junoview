@@ -1989,7 +1989,7 @@ worst-first.
 
 ### PowerPoint export
 
-- [ ] **T107 · S — Crops and transitions can survive the trip today.**
+- [x] **T107 · S — Crops and transitions can survive the trip today.**
   *Verified CONFIRMED, and both are genuinely small.* Crops: the only
   line touching `a.crop` in 2,336 lines is `note.cropped++`; the fix is
   `<a:srcRect>` inside `<a:blipFill>` in `pptx.js:picShape` — 1000ths of

@@ -254,3 +254,125 @@ def test_text_that_would_break_the_xml_is_escaped():
     slide = ET.fromstring(z.read("ppt/slides/slide1.xml"))
     texts = [t.text for t in slide.iter(q("a", "t"))]
     assert 'a & b < c > d "e" \'f\'' in texts
+
+
+# ---------------------------------------------------------------------------
+# crops and transitions (T107)
+# ---------------------------------------------------------------------------
+#
+# Both were counted as losses and disclosed in a toast. Both are now
+# carried, and these check the thing a string could not: that the picture
+# ends up the right size in the right place, and that the transition part
+# lands where the schema wants it.
+
+
+def _slide(data, n=1):
+    z = zipfile.ZipFile(io.BytesIO(data))
+    assert z.testzip() is None
+    return z, ET.fromstring(z.read(f"ppt/slides/slide{n}.xml"))
+
+
+def _cropped(crop, shape=""):
+    item = {"t": "image", "x": 20, "y": 10, "w": 40, "h": 30, "src": PNG}
+    if crop:
+        item["crop"] = crop
+    if shape:
+        item["cropShape"] = shape
+    return build_pptx({"title": "c", "widthMm": W_MM, "heightMm": H_MM,
+                       "slides": [{"bg": "#fff", "items": [item]}]})[0]
+
+
+def test_a_crop_trims_the_source_and_shrinks_the_shape_to_match():
+    """The two currencies differ, and getting only one of them right is
+    the visible bug. Junoview's crop is a CSS inset() mask: what is left
+    stays exactly where it was. DrawingML's srcRect trims the source and
+    then fillRect STRETCHES the remainder over the whole shape -- so
+    passing the insets through alone blows the picture back up to its
+    uncropped size, in the uncropped box.
+    """
+    data = _cropped({"l": 10, "r": 20, "t": 25, "b": 5})
+    z, slide = _slide(data)
+    pic = next(slide.iter(q("p", "pic")))
+
+    src = next(pic.iter(q("a", "srcRect")))
+    # 1000ths of a percent
+    assert (src.get("l"), src.get("t"), src.get("r"), src.get("b")) == \
+        ("10000", "25000", "20000", "5000")
+
+    off = next(pic.iter(q("a", "off")))
+    ext = next(pic.iter(q("a", "ext")))
+    # x 20% + 10% of a 40%-wide box = 24% across; y 10% + 25% of 30% = 17.5%
+    assert int(off.get("x")) == round(0.24 * W_MM * EMU_PER_MM)
+    assert int(off.get("y")) == round(0.175 * H_MM * EMU_PER_MM)
+    # 70% of 40% wide, 70% of 30% tall
+    assert int(ext.get("cx")) == round(0.28 * W_MM * EMU_PER_MM)
+    assert int(ext.get("cy")) == round(0.21 * H_MM * EMU_PER_MM)
+
+
+def test_srcRect_comes_before_stretch():
+    """The schema fixes the order inside <a:blipFill>, and PowerPoint
+    rejects the part rather than ignoring the element."""
+    xml = zipfile.ZipFile(io.BytesIO(
+        _cropped({"l": 5, "r": 5}))).read("ppt/slides/slide1.xml")\
+        .decode("utf-8")
+    assert xml.index("<a:srcRect") < xml.index("<a:stretch")
+
+
+def test_an_uncropped_picture_is_exactly_as_it_was():
+    """No srcRect, no moved box: the change must be invisible to every
+    image that has no crop."""
+    z, slide = _slide(_cropped(None))
+    pic = next(slide.iter(q("p", "pic")))
+    assert not list(pic.iter(q("a", "srcRect")))
+    off = next(pic.iter(q("a", "off")))
+    assert int(off.get("x")) == round(0.20 * W_MM * EMU_PER_MM)
+
+
+def test_a_crop_that_would_leave_nothing_is_ignored_rather_than_inverted():
+    """l+r >= 100 is a degenerate crop; srcRect would make it a negative
+    extent, which is a corrupt part rather than a small picture."""
+    z, slide = _slide(_cropped({"l": 60, "r": 60}))
+    pic = next(slide.iter(q("p", "pic")))
+    assert not list(pic.iter(q("a", "srcRect")))
+
+
+def test_a_crop_shape_becomes_the_preset_geometry():
+    """The shapes are drawn INSIDE the trim box, so the same four
+    handles move and size them -- which is exactly prstGeom over the
+    cropped extent."""
+    z, slide = _slide(_cropped({"t": 10, "b": 10}, shape="circle"))
+    geom = next(slide.iter(q("a", "prstGeom")))
+    assert geom.get("prst") == "ellipse"
+
+
+def test_a_transition_lands_after_the_colour_map():
+    """<p:transition> is not a free-floating element: the schema puts it
+    after <p:clrMapOvr>, and out of order is a repair prompt."""
+    data, _ = build_pptx({
+        "title": "t", "widthMm": W_MM, "heightMm": H_MM,
+        "slides": [{"bg": "#fff", "trans": "fade", "items": []},
+                   {"bg": "#fff", "trans": "move", "items": []},
+                   {"bg": "#fff", "trans": "", "items": []}]})
+    z = zipfile.ZipFile(io.BytesIO(data))
+    assert z.testzip() is None
+
+    one = z.read("ppt/slides/slide1.xml").decode("utf-8")
+    assert "<p:transition" in one
+    assert one.index("<p:clrMapOvr") < one.index("<p:transition")
+    assert "<p:fade/>" in one
+
+    # `move` has no faithful OOXML equivalent this writer can be sure of,
+    # so it is approximated rather than silently promised
+    assert "<p:push" in z.read("ppt/slides/slide2.xml").decode("utf-8")
+
+    # `cut` IS the absence of a transition, and writes nothing
+    assert "<p:transition" not in z.read("ppt/slides/slide3.xml")\
+        .decode("utf-8")
+
+
+def test_a_slide_with_no_transition_key_at_all_is_unchanged():
+    """Every existing caller passed {bg, items} and must keep working."""
+    data, _ = build_pptx({"title": "t", "widthMm": W_MM, "heightMm": H_MM,
+                          "slides": [{"bg": "#fff", "items": []}]})
+    assert "<p:transition" not in zipfile.ZipFile(io.BytesIO(data))\
+        .read("ppt/slides/slide1.xml").decode("utf-8")

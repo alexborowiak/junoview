@@ -68,16 +68,36 @@ def test_menu_entry_and_test_hook(out):
 
 
 def test_what_cannot_convert_is_reported_not_silently_dropped(out):
-    """A frame showing a table has no PowerPoint equivalent and a crop is a
-    CSS clip-path, not a picture crop. Both are counted and named in the
-    toast, and the count the caller sees is the SUM of what the deck could
-    not turn into an item and what the writer could not write — reporting
-    one of the two would read as "nothing was lost".
+    """A frame showing a table has no PowerPoint equivalent, and a
+    hand-drawn crop outline has none either. Both are counted and named
+    in the toast, and the count the caller sees is the SUM of what the
+    deck could not turn into an item and what the writer could not write
+    — reporting one of the two would read as "nothing was lost".
+
+    The crop half narrowed at T107: rectangular trims and preset outlines
+    ARE carried now, so only a freehand path is counted. A tally that
+    still claimed every crop was lost would be the same dishonesty in the
+    other direction.
     """
-    assert "note.skipped++" in out and "note.cropped++" in out
+    assert "note.skipped++" in out and "if(a.crop&&a.crop.path)" in out
     assert "could not convert (code or a table" in out
     assert "skipped:note.skipped+out.skipped" in out
-    assert "not carried" in out
+    assert "hand-drawn crop" in out and "not carried" in out
+
+
+def test_a_crop_and_a_transition_are_handed_to_the_writer(out):
+    """The deck half of T107. The writer's own half is checked against
+    real bytes in tests/test_pptx_bytes.py; this is the wiring, which no
+    ZIP can show is missing — an item that never carries its crop simply
+    exports as an uncropped picture, correctly.
+    """
+    # a path crop has no preset to become, so it is not sent
+    assert "crop:(a.crop&&!a.crop.path)?a.crop:null" in out
+    assert "cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''" in out
+    # transFor is the same answer present mode uses, and ent.i is the
+    # SOURCE slide, which matters because a flip book explodes one slide
+    # into several output slides
+    assert "trans:transFor(ent.i)" in out
 
 
 def test_prose_and_code_frames_still_come_across_as_text(out):

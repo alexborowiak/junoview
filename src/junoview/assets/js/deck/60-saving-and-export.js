@@ -1385,7 +1385,12 @@
         var atk=(note.frame!=null)?note.frame:(fbk?(fbk.at||0):0);
         if(!flipShowsFrame(s,a,atk)) return;
       }
-      if(a.crop) note.cropped++;   /* inset-only trims are dropped too */
+      /* a crop is carried unless it is one of the two the writer
+         cannot express: a hand-drawn outline (custGeom, not a preset)
+         and a trim that leaves nothing. Counting only what is really
+         lost is the point -- the toast used to say every crop was
+         dropped, which stopped being true here (T107). */
+      if(a.crop&&a.crop.path) note.cropped++;
       /* Every editable box leaves in PAGE coordinates. An anchored
          object's stored x/y are distances from an edge or centre, and
          its export fallback size matters to that conversion. */
@@ -1401,7 +1406,10 @@
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
-          rot:a.rot,op:a.op,src:pptxSrc(note,a.src)});
+          rot:a.rot,op:a.op,src:pptxSrc(note,a.src),
+          /* a path crop has no preset to become, so it is not sent */
+          crop:(a.crop&&!a.crop.path)?a.crop:null,
+          cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''});
         else note.skipped++;
       } else if(a.k==='rect'){
         /* `a.fill` is a BOOLEAN — "tint with my own line colour" — so the
@@ -1542,7 +1550,12 @@
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:tokVal(ent.s.border.c)||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});
-        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its};
+        /* transFor() reads the slide's own transition, else its
+           section's -- the same answer present mode uses. ent.i is the
+           SOURCE slide index, which matters because a flip book
+           explodes one slide into several output slides. */
+        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its,
+          trans:transFor(ent.i)};
       }),
     });
     var a=document.createElement('a');
@@ -1554,8 +1567,9 @@
     if(note.skipped) msg+='. '+note.skipped+' cell'
       +(note.skipped===1?'':'s')+' could not convert (code or a table — '
       +'use Export PDF for those)';
-    if(note.cropped) msg+='. '+note.cropped+' crop'
-      +(note.cropped===1?'':'s')+' not carried';
+    if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
+      +(note.cropped===1?'':'s')+' not carried (PowerPoint has no '
+      +'freehand mask \u2014 the trim is, the outline is not)';
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
       +'PowerPoint has no LaTeX, so they were flattened to characters';

@@ -380,7 +380,9 @@ def test_slides_have_their_own_background_and_border(out):
     assert "(bd.w||4)/SW_REF_H*h" in out
     # .pptx wants ONE colour, and a gradient background has none - so the
     # export takes its first stop (2026-08-20)
-    assert "return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its};" in out
+    # (T107 added the slide's transition beside it; the background half
+    # is what this line is here for)
+    assert "return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its," in out
     # renderSlide re-applies, so walking the deck repaints each slide's own
     assert ("applyPageBg();          "
             "/* this slide may carry its own background */") in out
@@ -2433,7 +2435,9 @@ def test_the_powerpoint_export_embeds_the_original(out):
     # ONE lookup, so no branch can forget it
     assert "function pptxSrc(note,src){" in out
     assert "return (note&&note.orig&&note.orig[src])||src;" in out
-    assert "rot:a.rot,op:a.op,src:pptxSrc(note,a.src)});" in out
+    # (T107 added crop/cropShape to the same push; the src half is what
+    # this line is here for)
+    assert "rot:a.rot,op:a.op,src:pptxSrc(note,a.src)," in out
     assert "rot:a.rot,op:a.op,src:pptxSrc(note,fsrc)," in out
 
 

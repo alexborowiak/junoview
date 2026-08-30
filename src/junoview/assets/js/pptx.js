@@ -394,17 +394,71 @@ window.JunoPptx = (function () {
       + '</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
   }
 
+  /* A CROP, in the two currencies that differ.
+     Junoview's `crop` trims each edge by a percentage of the item's own
+     box and does NOT rescale what is left -- it is a CSS `inset()` mask,
+     so the visible part stays exactly where it was on the page.
+     DrawingML's <a:srcRect> also trims by percentage (in 1000ths), but
+     <a:stretch><a:fillRect/> then stretches the remainder over the whole
+     shape. Passing the insets through alone would therefore blow the
+     picture back up to its uncropped size.
+     So the shape's own box is shrunk to the visible fraction and moved
+     to where that fraction was, and srcRect trims the source to match.
+     The two together reproduce the mask. srcRect must come BEFORE
+     <a:stretch> inside <a:blipFill> or PowerPoint rejects the part. */
+  function cropRect(item) {
+    var c = item.crop;
+    if (!c) return null;
+    var l = Math.max(0, +c.l || 0), r = Math.max(0, +c.r || 0);
+    var t = Math.max(0, +c.t || 0), b = Math.max(0, +c.b || 0);
+    if (l + r >= 100 || t + b >= 100) return null;   /* nothing left */
+    if (!(l || r || t || b)) return null;
+    return { l: l, r: r, t: t, b: b };
+  }
+
+  /* SLIDE TRANSITIONS. Junoview has three and PowerPoint has
+     dozens, so this maps only what is honest. `cut` is the absence of a
+     transition and writes nothing. `fade` is <p:fade>, which is the
+     same effect. `move` -- Junoview's object-continuity morph -- has no
+     faithful equivalent in the OOXML this writer can be sure of, so it
+     is approximated by `push` and the caller is told, rather than
+     silently promised something PowerPoint will not do.
+     <p:transition> belongs AFTER <p:clrMapOvr> in the slide part. */
+  var TRANSITION = { fade: '<p:fade/>', move: '<p:push dir="l"/>' };
+
+  function transition(kind) {
+    var body = TRANSITION[kind];
+    if (!body) return '';
+    return '<p:transition spd="med">' + body + '</p:transition>';
+  }
+
   function picShape(item, id, rid, page) {
+    var c = cropRect(item), geo = item, src = '';
+    if (c) {
+      geo = { x: (item.x || 0) + (item.w || 0) * c.l / 100,
+        y: (item.y || 0) + (item.h || 0) * c.t / 100,
+        w: (item.w || 0) * (100 - c.l - c.r) / 100,
+        h: (item.h || 0) * (100 - c.t - c.b) / 100,
+        rot: item.rot };
+      src = '<a:srcRect l="' + Math.round(c.l * 1000) + '" t="'
+        + Math.round(c.t * 1000) + '" r="' + Math.round(c.r * 1000)
+        + '" b="' + Math.round(c.b * 1000) + '"/>';
+    }
+    var geom = SHAPE_GEOM[item.cropShape] || 'rect';
     return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
       + esc(item.name || ('Picture ' + id)) + '"/><p:cNvPicPr/><p:nvPr/>'
       + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
       + (item.op != null && item.op < 1
         ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
-      + '</a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill>'
-      + '<p:spPr>' + xfrm(item, page)
-      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
+      + '</a:blip>' + src + '<a:stretch><a:fillRect/></a:stretch>'
+      + '</p:blipFill>'
+      + '<p:spPr>' + xfrm(geo, page)
+      + '<a:prstGeom prst="' + geom + '"><a:avLst/></a:prstGeom>'
+      + '</p:spPr></p:pic>';
   }
 
+  /* declared below picShape, which reads it: `var` hoists and
+     picShape only runs from build(), long after this line. */
   var SHAPE_GEOM = { rect: 'rect', ellipse: 'ellipse', oval: 'ellipse',
     circle: 'ellipse', round: 'roundRect', roundRect: 'roundRect',
     diamond: 'diamond', triangle: 'triangle', star: 'star5' };
@@ -609,7 +663,7 @@ window.JunoPptx = (function () {
       return { rels: rels,
         xml: XML_HEAD + '<p:sld' + nsAttrs() + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
-          + '</p:sld>' };
+          + transition(slide.trans) + '</p:sld>' };
     });
 
     slideXml.forEach(function (s, i) {
