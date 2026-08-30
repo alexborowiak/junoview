@@ -491,8 +491,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Markdown, and Edit markdown beside Edit equation) placed in all 108
 # ribbon arrangements, the editor dialog, the .an-md rules, and one new
 # documented annot field.
-EXPECTED_MD5 = "c8ebe6e2040cf455626f5bb612d111ca"
-EXPECTED_BYTES = 3179851
+# Moved 2026-08-30 for T76: the build badges are gated on the Timeline
+# pane being open, the filmstrip gains a build-count mark, and the
+# Timeline button's tooltip says it is the switch.
+EXPECTED_MD5 = "8317b24245d033686e5eec5c3f90fcab"
+EXPECTED_BYTES = 3182781
 
 
 def _render_example() -> str:

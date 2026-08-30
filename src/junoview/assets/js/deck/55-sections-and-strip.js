@@ -256,6 +256,15 @@
         marks.appendChild(tag);
       }
       if(s.opt) mark('opt','optional','Running late can skip this slide');
+      /* T76: the numbered bubbles on the slide now show only while the
+         Timeline pane is open, so the STRIP is what tells you a slide is
+         animated at all. A COUNT, not a dot — "three builds" is the thing
+         you want to know before you click into the slide, and it is the
+         same number the bubbles are showing. */
+      var nbuild=slideBuildSteps(s).count;
+      if(nbuild) mark('anim','▸'+nbuild,
+        nbuild+(nbuild===1?' build':' builds')+' on this slide'
+        +'\nOpen Animate ▸ Timeline to see the build numbers');
       if(skipped) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'

@@ -1724,11 +1724,25 @@ select#fmt-font[hidden]{display:none;}
 .an-anim-fade{animation:anIn-fade .45s ease;}
 .an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
 .an-anim-zoom{animation:anIn-zoom .45s ease;}
-/* the build-order badge shown in the editor */
+/* the build-order badge shown in the editor — and ONLY while the Timeline
+   pane is open (T76, user: "the animation bubbles that appear are the
+   worst, like you can't get rid of them").
+   GATED IN CSS, not in the renderer. Seven places close #animpane and only
+   one of them re-renders the annot layer: `set(false)` in the pane's own
+   block does, while six others just assign .hidden=true (showObjHist,
+   showTidyPane, the Standards pane, the Notes pane, showProvPane,
+   showSizePane, showFlipPane). A JS gate would therefore have left the
+   bubbles standing in six cases out of seven until some unrelated edit
+   forced a redraw — which is the complaint all over again. As a selector
+   it is simply always right, and opening the pane costs no re-render
+   because the badges are still built on every render.
+   What says a slide is animated when the pane is shut is the filmstrip's
+   ▸N mark, which wears this same amber on purpose. */
 .an-buildno{position:absolute;top:-9px;left:-9px;z-index:5;min-width:16px;
   height:16px;border-radius:8px;background:var(--amber);color:#241a05;
-  font-family:var(--mono);font-size:10px;font-weight:700;display:flex;
+  font-family:var(--mono);font-size:10px;font-weight:700;display:none;
   align-items:center;justify-content:center;padding:0 3px;pointer-events:none;}
+.deck-stagewrap:has(#animpane:not([hidden])) .an-buildno{display:flex;}
 /* optional per-deck slide numbers (bottom-right, part of the slide) */
 .slide-pageno{position:absolute;right:2.6%;bottom:3.2%;z-index:4;
   font-family:var(--mono);font-size:2.4vh;line-height:1;color:#8aa0b0;
@@ -3070,6 +3084,11 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
   border-radius:8px;white-space:nowrap;}
 .film-row.opt .film-mark.opt{color:#f0a848;}
 .film-mark.cut{color:#9aabba;}
+/* ▸N — this slide has N builds. Deliberately the SAME amber as
+   .an-buildno: the strip mark and the on-slide bubbles are one fact
+   shown at two zoom levels, and the colour is the only thing tying them
+   together once the bubbles are gated behind the pane (T76). */
+.film-mark.anim{color:var(--amber);}
 .film-row.cut:not(.current) .mini-diagram,
 .film-row.cut:not(.current) .film-t,
 .film-row.cut:not(.current) .film-n{opacity:.42;}

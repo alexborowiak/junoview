@@ -1440,7 +1440,7 @@ drives it — the suite is substring greps.
 
 ## 11. Layout and placement — the same pass
 
-- [ ] **T76 · M — Animations, re-thought. (design first)** "The
+- [x] **T76 · M — Animations, re-thought. (design first)** "The
   animation bubbles that appear are the worst, like you can't get rid of
   them. There should just be a symbol next to the slide thumbnails that
   indicates there are animations."
@@ -1448,6 +1448,17 @@ drives it — the suite is substring greps.
   in the editor. Gate them on the animation pane being open (or a view
   toggle beside Rulers/Grid), mark the thumbnail instead, and cut the
   options back.
+  *Done 2026-08-30, except the last clause.* The gate is a CSS selector
+  rather than a renderer check, because seven places close `#animpane`
+  and only one re-renders the annot layer — a JS gate would have left
+  the badges standing in six cases out of seven, which is the complaint
+  over again. The thumbnail carries `▸N`, a count in the same amber as
+  the badges. **"Cut the options back" was NOT done, deliberately.**
+  That clause was this file's editorial addition, not the user's ask
+  (they asked for the bubbles to go and the thumbnail to say so, both of
+  which ship). Deleting Rise and Zoom would remove working capability
+  from a tool whose standing brief is to match or exceed PowerPoint, and
+  taking a feature away is the user's call, not this file's.
 
 - [x] **T77 · S — The home view is a mess at the top.**
   *Verified PARTIAL.* The header is already hidden; the cut list is the

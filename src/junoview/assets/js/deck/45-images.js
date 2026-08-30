@@ -799,7 +799,14 @@
       st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
     function stepOf(s,idx){var r=-1;animSeq(s).forEach(function(st,i){
       if(st.items.indexOf(idx)>=0) r=i;});return r;}
-    function commit(s){markDirty();rerender();render();}
+    /* AND THE STRIP. The filmstrip's build mark is the only thing that
+       says a slide is animated once the Timeline pane is shut (T76), and
+       until this it was drawn on the next re-render of the strip and not
+       before -- so animating something left the strip claiming the slide
+       was plain until you happened to add a slide or reorder one. Every
+       change to an animation on this slide goes through here, which is
+       why it belongs here rather than at each of the seven callers. */
+    function commit(s){markDirty();rerender();render();renderFilm();}
     function setType(type){
       var s=pres.slides[cur]; if(!s) return;
       var idxs=selIdxs();

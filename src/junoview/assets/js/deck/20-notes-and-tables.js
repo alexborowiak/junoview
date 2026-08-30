@@ -2203,7 +2203,14 @@
        question threw their LaTeX away on every rebuild (T53). */
     if(slideHasMaths(s)) typeset(layer);
     /* build animations: number the builds in the editor; in playback, hide the
-       ones not yet revealed and animate the one just revealed */
+       ones not yet revealed and animate the one just revealed.
+       The editor's .an-buildno badges are still BUILT on every render, but
+       deck.css shows them only while the Timeline pane (#animpane) is open
+       (T76, user: "the animation bubbles ... you can't get rid of them").
+       Do NOT "fix" the missing bubbles here: the pane is the one place you
+       are actually reading build numbers, and everywhere else they were
+       clutter with no off switch. The filmstrip's ▸N mark is what says a
+       slide is animated when the pane is shut. */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
       var steps=slideBuildSteps(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
