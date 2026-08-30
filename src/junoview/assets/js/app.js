@@ -246,6 +246,74 @@
     t.addEventListener('click',function(){activate(stem);});
     return t;
   }
+  /* ---- THE RAIL FILTER (T75) -------------------------------------
+     Applied to the DOM after each render rather than folded into the two
+     renderers: renderTabs lives here and renderPresTabs lives in the
+     deck's own IIFE, so a filter each would be two implementations of
+     one rule -- and they would disagree about the empty state, which is
+     the only interesting part. Rows are hidden, never removed, so
+     clearing the field costs no re-render and nothing loses its
+     handlers. A label whose whole list is filtered away goes with it,
+     the same rule #pr-nblabel already follows when nothing is open. */
+  function railFilter(){
+    var f=$('#rail-find');
+    var q=f?String(f.value||'').trim().toLowerCase():'';
+    var x=$('#rail-find-x');
+    if(x) x.hidden=!q;
+    var shown=0,total=0;
+    ['#tabstrip','#presstrip'].forEach(function(sel){
+      var strip=$(sel); if(!strip) return;
+      var any=false;
+      [].forEach.call(strip.children,function(row){
+        /* a folder is a heading over its own rows: it survives if its
+           NAME matches or if anything inside it did */
+        var name=(row.textContent||'').toLowerCase();
+        var hit=!q||name.indexOf(q)>=0;
+        total++;
+        row.classList.toggle('pr-filtered',!hit);
+        if(hit){any=true;shown++;}
+      });
+      strip.classList.toggle('pr-filtering',!!q);
+    });
+    var nbl=$('#pr-nblabel');
+    if(nbl){
+      var ts=$('#tabstrip');
+      nbl.hidden=!ts||![].some.call(ts.children,function(r){
+        return !r.classList.contains('pr-filtered');});
+    }
+    var none=$('#pr-find-none');
+    if(none) none.hidden=!(q&&total&&!shown);
+  }
+  window.SemApp=window.SemApp||{};
+  window.SemApp.railFilter=railFilter;
+  (function(){
+    var f=$('#rail-find'); if(!f) return;
+    f.addEventListener('input',railFilter);
+    f.addEventListener('keydown',function(e){
+      /* the field owns its own keys: the document handler bails inside an
+         input, but Escape has to mean "clear" here rather than nothing */
+      if(e.key==='Escape'){
+        e.preventDefault();e.stopPropagation();
+        if(f.value){f.value='';railFilter();}
+        else f.blur();
+      }
+    });
+    var x=$('#rail-find-x');
+    if(x) x.addEventListener('click',function(){
+      f.value='';railFilter();f.focus();});
+    /* Ctrl+K from anywhere. NOT through APP_KEYS: that table clicks its
+       element, which does nothing to an input, and it stands down while
+       a deck is open -- but the rail is on screen the whole time and
+       jumping to another notebook mid-edit is exactly when you want it. */
+    document.addEventListener('keydown',function(e){
+      if(e.defaultPrevented||e.altKey||e.shiftKey) return;
+      if(!(e.ctrlKey||e.metaKey)) return;
+      if(String(e.key).toLowerCase()!=='k') return;
+      if(document.body.classList.contains('doc-presenting')) return;
+      e.preventDefault();
+      f.focus();f.select();
+    });
+  })();
   function renderTabs(){
     if(!tabstrip){refreshChrome();return;}
     tabstrip.innerHTML='';
@@ -271,6 +339,7 @@
        not there (2026-08-20) */
     var nbl=$('#pr-nblabel');
     if(nbl) nbl.hidden=!tabstrip.childNodes.length;
+    railFilter();   /* a rebuilt strip arrives unfiltered (T75) */
     renderRailNbs();
     refreshChrome();
   }

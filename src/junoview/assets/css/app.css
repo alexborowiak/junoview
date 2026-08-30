@@ -1749,3 +1749,26 @@ body.light .vars-menubtn{color:var(--ink-2);}
 /* the rail's reveal tab points back INTO the page: the same
    panel-and-arrow icon as #pr-collapse, mirrored */
 .presrail-show .bic{transform:scaleX(-1);}
+
+/* T75: the rail's filter. One field over both strips. */
+.pr-find{display:flex;align-items:center;gap:5px;margin:6px 4px 2px;
+  padding:3px 6px;border:1px solid #ffffff24;border-radius:7px;
+  background:#ffffff0d;}
+.pr-find-ic{display:flex;color:#4e93a6;flex:none;}
+.pr-find-ic svg{width:12px;height:12px;}
+.pr-find-in{flex:1 1 auto;min-width:0;background:transparent;border:0;
+  color:inherit;font:inherit;font-size:11px;padding:3px 0;outline:none;}
+.pr-find-in::placeholder{color:#5d7a8c;}
+.pr-find-in::-webkit-search-cancel-button{display:none;}
+.pr-find-x{display:flex;align-items:center;justify-content:center;
+  flex:none;background:transparent;border:0;color:#8fa6b6;cursor:pointer;
+  padding:2px;border-radius:4px;}
+.pr-find-x:hover{background:#ffffff1a;color:#e6eef5;}
+.pr-find-x svg{width:11px;height:11px;}
+.pr-find-none{font-family:var(--mono);font-size:9px;letter-spacing:.12em;
+  text-transform:uppercase;color:#6b8496;padding:8px 10px;}
+/* hidden, not removed: clearing the field costs no re-render */
+.pr-filtered{display:none !important;}
+/* no room for a field at 46px, the rule .prb-full already follows */
+body.presrail-min .pr-find,
+body.presrail-min .pr-find-none{display:none;}

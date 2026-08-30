@@ -1430,7 +1430,7 @@ drives it — the suite is substring greps.
   *NEW as an insert kind.* Rich text and a Markdown export exist; "type
   Markdown, see it rendered" as a first-class box does not.
 
-- [ ] **T75 · S — The notebook rail: no search, overcrowded, and New
+- [x] **T75 · S — The notebook rail: no search, overcrowded, and New
   Notebook is on the wrong side.**
   *Verified PARTIAL.* No search control exists; add one filtering both
   `#tabstrip` and `#presstrip`. Same rail as the earlier "lock notebooks

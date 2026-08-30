@@ -245,6 +245,27 @@
     title="Back to your notebooks — closes the presentation builder">
     <span class="pr-ico"><i data-ic="doc"></i></span>
     <span class="pr-t">Notebooks</span></button>
+  <!-- ONE FIELD, BOTH LISTS (T75, 2026-08-29: "there is no search bar
+       for notebooks", and the rail is crowded once a handful of things
+       are open). "Find the thing I am looking for" is one question, and
+       the rail is one list of things -- a search over notebooks with a
+       second search over presentations underneath it would be two
+       answers to it. It sits ABOVE both strips for the same reason.
+       Hidden when the rail is collapsed to icons, the rule .prb-full
+       already follows: there is no room for a field 46px wide. -->
+  <div class="pr-find" id="pr-find">
+    <span class="pr-find-ic"><i data-ic="find"></i></span>
+    <input type="search" id="rail-find" class="pr-find-in"
+      autocomplete="off" spellcheck="false"
+      placeholder="Find&#8230; (Ctrl+K)"
+      aria-label="Find a notebook or presentation"
+      title="Filter the open notebooks and the presentations below by
+ name. Ctrl+K puts the caret here; Escape clears it">
+    <button class="pr-find-x" id="rail-find-x" type="button" hidden
+      aria-label="Clear the filter"
+      title="Clear the filter (Esc)"><i data-ic="exit"></i></button>
+  </div>
+  <div class="pr-find-none" id="pr-find-none" hidden>nothing matches</div>
   <!-- OPEN notebooks, listed under the button that names them. Same shape
        as the presentations list below: a label, then the things you can
        switch to (2026-08-20). -->

@@ -498,8 +498,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # frames pane, a button-per-figure bar, a stop timeline that lets an
 # animated book's frames follow its build, and a tie hint that no longer
 # hides itself.
-EXPECTED_MD5 = "79d619687239b19c3daa19084aa42748"
-EXPECTED_BYTES = 3189884
+# Moved 2026-08-30 for T75: the rail gains one search field over both
+# strips, a clear button, an empty-state line and a Ctrl+K.
+EXPECTED_MD5 = "9e5d2ef12232106c3d73254cf5a4522e"
+EXPECTED_BYTES = 3195987
 
 
 def _render_example() -> str:

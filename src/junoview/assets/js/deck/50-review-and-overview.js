@@ -949,6 +949,10 @@
   }
   function renderPresTabs(){
     if(!presstrip) return;
+    /* the rail's filter is re-applied at the end of this: the strip is
+       rebuilt from scratch here, so it arrives unfiltered and a deck
+       created while a filter is live would otherwise appear out of
+       nowhere in a list that is meant to be showing only matches (T75) */
     presstrip.innerHTML='';
     var savedList=allSaved();
     var savedNames=savedList.map(function(p){return p.name;});
@@ -1086,6 +1090,9 @@
     });
     var docsBtn=document.getElementById('pr-docs');
     if(docsBtn) docsBtn.classList.toggle('current',!editing);
+    /* ...and re-applied, now the rows are back (T75) */
+    var A2=window.SemApp;
+    if(A2&&typeof A2.railFilter==='function') A2.railFilter();
   }
   /* drag & drop filing: onto a folder header (or an item inside one)
      files it; onto empty rail space moves it back to the top level */
