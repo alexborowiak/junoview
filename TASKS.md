@@ -1616,7 +1616,7 @@ worst-first.
   explains that `assets/**/*` was rejected because it sweeps up
   `__pycache__/*.pyc`.
 
-- [ ] **T96 · S — The test that was supposed to catch T95, and could
+- [x] **T96 · S — The test that was supposed to catch T95, and could
   never have.**
   `tests/test_characterization.py:557`
   `test_assets_load_from_the_installed_package` is named for this defect

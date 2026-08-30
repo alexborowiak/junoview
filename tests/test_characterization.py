@@ -554,11 +554,21 @@ def test_rendering_is_deterministic():
     assert _render_example() == _render_example()
 
 
-def test_assets_load_from_the_installed_package():
-    """Every asset resolves through importlib.resources and is non-empty.
+def test_every_asset_loader_returns_something():
+    """Every named loader resolves and is non-empty.
 
-    This is what fails first if package-data is misdeclared: imports still work
-    from a source checkout, and only an installed wheel goes missing its CSS.
+    This used to be called ``test_assets_load_from_the_installed_package``
+    and its docstring claimed to be "what fails first if package-data is
+    misdeclared". It could not be: pyproject's ``pythonpath = ["src", ...]``
+    puts the checkout ahead of any installed copy, so this resolved off
+    disk and stayed green through the 141 commits in which the wheel
+    shipped no deck fragments at all (T95). A test that claims coverage it
+    does not have is worse than no test, so the claim is gone and the name
+    says only what it does: the loaders work.
+
+    Packaging itself is tests/test_packaging.py, which compares the
+    declared package-data patterns against the files on disk and needs no
+    installed copy to be honest about it.
     """
     from junoview import assets
 
