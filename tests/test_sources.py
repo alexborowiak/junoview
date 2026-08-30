@@ -706,3 +706,119 @@ def test_the_image_rule_runs_before_the_link_rule():
 
     out = md_to_html("![a](x.png)")
     assert "!<a" not in out and "<img" in out
+
+
+# ---------------------------------------------------------------------------
+# align, tabular and cross-references (T103)
+# ---------------------------------------------------------------------------
+#
+# _tex_plain says outright that it is not a TeX engine and that stays
+# true. These are the three things a paper does on every page that the
+# producer was printing as source: an aligned derivation, a table, and a
+# cross-reference.
+
+TEX_TABLE = r"""
+\begin{table}
+  \caption{Stations used.}
+  \label{tab:stations}
+  \begin{tabular}{lrr}
+    \toprule
+    Station & Anomaly & Years \\
+    \midrule
+    Leeds & 1.2 & 40 \\
+    York  & 0.9 & 38 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+"""
+
+
+def test_a_tabular_becomes_a_real_table():
+    """It used to be dumped as escaped LaTeX in a <pre>: readable only
+    to someone who can already read LaTeX, which is not who is looking
+    at a rendered page."""
+    doc = parse_latex(TEX_TABLE)
+    body = [it for it in _items(doc) if it.kind == "dataset"][0]\
+        .outputs[0].payload
+    assert body.startswith('<table class="jv-tbl">')
+    assert "<th>Station</th>" in body
+    assert "<td>Leeds</td>" in body and "<td>1.2</td>" in body
+    # the rules are formatting, not data
+    assert "toprule" not in body and "midrule" not in body
+    # and neither is the column spec
+    assert "lrr" not in body
+
+
+def test_a_table_with_no_tabular_still_shows_its_source():
+    """Some table environments hold a graphic or a package's own macro.
+    Falling back to the old <pre> beats showing nothing."""
+    doc = parse_latex(r"\begin{table}\caption{C}"
+                      r"\includegraphics{t.png}\end{table}")
+    body = [it for it in _items(doc) if it.kind == "dataset"][0]\
+        .outputs[0].payload
+    assert "<pre" in body
+
+
+def test_align_keeps_its_alignment():
+    r"""`align` is a display environment MathJax will not find inside
+    $$. Its inline-able twin is `aligned`; without it every & and \\
+    printed as itself."""
+    doc = parse_latex(r"\begin{align} a &= b \\ &= c \end{align}")
+    cap = [it for it in _items(doc) if it.is_note][0].caption
+    assert cap.startswith("$$\\begin{aligned}")
+    assert cap.endswith("\\end{aligned}$$")
+    assert "&=" in cap
+    # one line: md_to_html joins a multi-line paragraph with <br>, and an
+    # element inside the maths stops MathJax
+    assert "\n" not in cap
+
+
+def test_a_plain_equation_is_left_exactly_as_it_was():
+    doc = parse_latex(r"\begin{equation} E = mc^2 \end{equation}")
+    cap = [it for it in _items(doc) if it.is_note][0].caption
+    assert cap == "$$E = mc^2$$"
+
+
+def test_a_ref_becomes_a_link_to_the_card_it_names():
+    """A forward reference is ordinary in a paper, so refs are marked
+    during the read and resolved once at the end. The link is markdown
+    because note captions render through md_to_html -- which only
+    started rendering links at T102."""
+    doc = parse_latex(
+        r"See Figure~\ref{fig:trend}." + "\n" + TEX)
+    note = [it for it in _items(doc) if it.is_note][0]
+    assert "](#fig-trend)" in note.caption
+    assert "The trend over the record." in note.caption
+
+
+def test_an_unknown_ref_reads_exactly_as_it_used_to():
+    """The marker must never leak. A label that does not exist falls
+    back to the bracketed key that was there before T103."""
+    doc = parse_latex(r"See \ref{nosuch} here.")
+    cap = [it for it in _items(doc) if it.is_note][0].caption
+    assert "[nosuch]" in cap
+    assert "\ue000" not in cap and "\ue001" not in cap
+
+
+def test_a_citation_is_still_only_a_key():
+    """A .bib is a second input file and load_doc has no slot for one,
+    so \\cite has nowhere to resolve to and says so by staying a key."""
+    doc = parse_latex(r"As \cite{smith2020} showed.")
+    assert "[smith2020]" in [it for it in _items(doc) if it.is_note][0].caption
+
+
+def test_the_preamble_is_not_prose():
+    r"""\title was printed as a paragraph AND read as the document's
+    title, so every .tex opened with its own title twice."""
+    doc = parse_latex("\\documentclass{article}\n"
+                      "\\usepackage[utf8]{inputenc}\n"
+                      "\\title{A Warming Record}\n"
+                      "\\author{AB}\n"
+                      "\\begin{document}\\maketitle\nReal prose.\n"
+                      "\\end{document}")
+    assert doc.title == "A Warming Record"
+    body = " ".join(it.caption for it in _items(doc))
+    assert "Real prose." in body
+    for gone in ("documentclass", "usepackage", "\\title", "AB",
+                 "maketitle"):
+        assert gone not in body, gone

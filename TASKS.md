@@ -1923,7 +1923,7 @@ worst-first.
   are not rewritten at all — that one is two `re.sub` rules in
   `render/markdown.py:inline`, applied after the escape.
 
-- [ ] **T103 · M — The LaTeX producer: `align`, `tabular`, and `\ref`.**
+- [x] **T103 · M — The LaTeX producer: `align`, `tabular`, and `\ref`.**
   *Verified CONFIRMED.* `_tex_plain` says outright it is not a TeX
   engine, and that stays true — this is not a request for one.
   Three bounded wins: `align` currently loses its alignment (emit

@@ -426,6 +426,35 @@ _TEX_LABEL = re.compile(r"\\label\s*\{([^}]*)\}")
 _TEX_COMMENT = re.compile(r"(?<!\\)%.*$", re.M)
 
 
+#: Private-use sentinels around an unresolved \\ref key. They cannot
+#: occur in real text, and whatever is left at the end is rewritten back
+#: to the bracketed key that was there before T103, so a reference to a
+#: label that does not exist reads exactly as it used to.
+_REF_OPEN, _REF_CLOSE = "\ue000", "\ue001"
+_REF_RE = re.compile(_REF_OPEN + r"([^\ue001]*)" + _REF_CLOSE)
+
+
+def _resolve_refs(doc: Document, labels: dict[str, tuple[str, str]]) -> None:
+    """Turn every \\ref marker into a link to the card it names.
+
+    Note captions render through md_to_html, so a markdown link is all
+    this has to emit -- which only became true with T102's inline link
+    rule. An unknown label falls back to the bracketed key.
+    """
+    def one(m: re.Match) -> str:
+        key = m.group(1)
+        found = labels.get(key)
+        if not found:
+            return "[" + key + "]"
+        anchor, name = found
+        return "[" + (name or key) + "](#" + anchor + ")"
+
+    for sec in doc.sections:
+        for item in sec.items:
+            if item.caption:
+                item.caption = _REF_RE.sub(one, item.caption)
+
+
 def _tex_plain(s: str) -> str:
     """Enough de-TeXing to read. Not a TeX engine and not pretending to be.
 
@@ -434,9 +463,25 @@ def _tex_plain(s: str) -> str:
     away the one part of a LaTeX document this tool can render properly.
     """
     s = _TEX_COMMENT.sub("", s)
+    # the preamble is instructions to LaTeX, not prose. \title in
+    # particular was being printed as a paragraph AND read as the
+    # document's title, so every .tex opened with its own title twice
+    # (T103). \include/\input are deliberately NOT here: they name
+    # content this cannot read, and silently dropping them would lose it
+    # without saying so.
+    s = re.sub(r"\\(?:documentclass|usepackage|title|author|date|"
+               r"maketitle|bibliographystyle|bibliography|pagestyle)\b"
+               r"\s*(?:\[[^\]]*\])?\s*(?:\{[^{}]*\})?", "", s)
     s = re.sub(r"\\(?:textbf|textit|emph|texttt)\s*\{([^{}]*)\}",
                r"**\1**", s)
-    s = re.sub(r"\\(?:cite[a-z]*|ref|eqref)\s*\{([^}]*)\}", r"[\1]", s)
+    # \cite has nowhere to resolve to -- a .bib is a second input file
+    # and load_doc has no slot for one -- so a citation stays a key in
+    # brackets. A \ref DOES have somewhere to go, but not yet: a forward
+    # reference is ordinary, so it becomes a marker here and is resolved
+    # once the whole document has been read (T103).
+    s = re.sub(r"\\cite[a-z]*\s*\{([^}]*)\}", r"[\1]", s)
+    s = re.sub(r"\\(?:ref|eqref)\s*\{([^}]*)\}",
+               _REF_OPEN + r"\1" + _REF_CLOSE, s)
     s = re.sub(r"\\(?:label|index)\s*\{[^}]*\}", "", s)
     s = re.sub(r"\\(?:item)\b", "-", s)
     s = re.sub(r"\\begin\{(itemize|enumerate|document|abstract)\}", "", s)
@@ -444,6 +489,41 @@ def _tex_plain(s: str) -> str:
     s = re.sub(r"\\\\", "\n", s)
     s = re.sub(r"[ \t]+", " ", s)
     return s.strip()
+
+
+_TEX_TABULAR = re.compile(
+    r"\\begin\{(tabular|tabularx|longtable|array)\}", re.S)
+_TEX_RULES = re.compile(
+    r"\\(?:hline|toprule|midrule|bottomrule|cline\s*\{[^}]*\}"
+    r"|addlinespace(?:\s*\[[^\]]*\])?)")
+
+
+def _tex_table_rows(body: str) -> list[list[str]]:
+    """The rows of the first tabular inside a table environment.
+
+    Not a LaTeX engine: `&` splits cells and `\\\\` splits rows, rules are
+    dropped, and \\multicolumn keeps only its content. That is enough for
+    the tables people actually write, and it beats the previous answer,
+    which was to print the LaTeX source in a <pre> (T103).
+    """
+    m = _TEX_TABULAR.search(body)
+    if not m:
+        return []
+    inner, _ = _tex_env_body(body, m.end(), m.group(1))
+    inner = _TEX_COMMENT.sub("", inner)
+    # the column spec, {lcr|p{3cm}}, is an argument rather than content
+    spec = _braced(inner, 1) if inner.lstrip().startswith("{") else ""
+    if spec:
+        inner = inner[inner.index("{") + len(spec) + 2:]
+    inner = _TEX_RULES.sub("", inner)
+    inner = re.sub(r"\\multicolumn\s*\{[^}]*\}\s*\{[^}]*\}\s*\{([^{}]*)\}",
+                   r"\1", inner)
+    rows = []
+    for raw in re.split(r"\\\\", inner):
+        cells = [_tex_plain(c) for c in raw.split("&")]
+        if any(c for c in cells):
+            rows.append(cells)
+    return rows
 
 
 def _tex_env_body(text: str, start: int, name: str) -> tuple[str, int]:
@@ -480,6 +560,10 @@ def parse_latex(text: str, title: str | None = None,
                    or "Untitled document")
     pos = 0
     prose: list[str] = []
+    #: \label{...} -> (anchor, the name to show). Filled as the document
+    #: is read and spent once at the end, because a forward reference is
+    #: ordinary in a paper.
+    labels: dict[str, tuple[str, str]] = {}
 
     def flush() -> None:
         body = _tex_plain("\n".join(prose))
@@ -523,21 +607,36 @@ def parse_latex(text: str, title: str | None = None,
             if label:
                 item.item_id = _slug(label, st["used"])
                 item.anchor = item.item_id
+                labels[label] = (item.anchor,
+                                 cap or label or "Figure")
             item.labelled = bool(cap or label)
         elif kind == "table":
             tid = _slug(label or "table", st["used"])
-            _add(doc, st, Item(
+            rows = _tex_table_rows(body)
+            out = (_table_html(rows) if rows else
+                   '<pre class="tex-table">'
+                   + html.escape(_TEX_COMMENT.sub("", body).strip())
+                   + "</pre>")
+            item = _add(doc, st, Item(
                 kind="dataset", title=cap or label or "Table",
-                outputs=[_html_out(
-                    '<pre class="tex-table">'
-                    + html.escape(_TEX_COMMENT.sub("", body).strip())
-                    + "</pre>", ot="table")],
+                outputs=[_html_out(out, ot="table")],
                 caption=cap, labelled=bool(cap or label),
                 item_id=tid, anchor=tid))
+            if label:
+                labels[label] = (item.anchor or tid,
+                                 cap or label or "Table")
         elif kind in ("equation", "align"):
             # left as LaTeX on purpose: the page typesets it
-            _note(doc, st, "$$" + _TEX_COMMENT.sub("", body).strip() + "$$",
-                  title=cap or "Equation")
+            maths = _TEX_COMMENT.sub("", body).strip()
+            if kind == "align":
+                # `align` is a DISPLAY environment MathJax will not find
+                # inside $$; `aligned` is its inline-able twin, and
+                # without it every & and \\ printed as itself (T103)
+                maths = r"\begin{aligned}" + maths + r"\end{aligned}"
+            # one line: md_to_html joins a multi-line paragraph with
+            # <br>, and an element inside the maths stops MathJax
+            maths = re.sub(r"\s*\n\s*", " ", maths)
+            _note(doc, st, "$$" + maths + "$$", title=cap or "Equation")
         else:
             cid = _slug("listing", st["used"])
             _add(doc, st, Item(
@@ -550,6 +649,7 @@ def parse_latex(text: str, title: str | None = None,
     flush()
     if not doc.sections:
         _ensure(doc, st)
+    _resolve_refs(doc, labels)
     return doc
 
 
