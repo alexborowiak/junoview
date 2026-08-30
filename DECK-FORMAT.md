@@ -129,6 +129,8 @@ Whatever its kind, an item may also carry these.
 | `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
 | `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
 | `oid` | str | This object's durable name, used to follow it through its own history and to match it across slides for a "move" transition. |
+| `md` | int | 1 when this text box's words are Markdown source and what is drawn is that source rendered — headings, bullets, numbers, quotes, code, emphasis and links. Editing goes through the Markdown editor rather than the caret, because the face of the box is the output. |
+| `maths` | int | 1 when this text box was built by the equation editor: its words are LaTeX between `$` or `$$` delimiters, typeset after every edit. |
 | `lockar` | int | 1 to keep this item's shape while it is dragged by a resize handle: the other side follows, so a logo stays square and a plot keeps its proportions. The shape itself is not stored — it is read off the box when the drag begins — and holding Shift during a drag does the opposite of whatever this says. |
 
 `hide` and `priv` are deliberate opposites: one is hidden from **you**

@@ -1775,8 +1775,14 @@ def test_maths_typesets_the_moment_you_click_away(out):
     """
     assert "?hasMathsStr((idx==='t'?(s2&&s2.title):(s2&&s2.sub))||'')\n" \
         "         :hasMaths(a2)) typeset(layer);" in out
-    assert "if(!rich&&el.querySelector&&el.querySelector('mjx-container')){" \
-        in out
+    # T74 widened the guard rather than adding a second one: a
+    # MARKDOWN box is the identical trap (what you see is notesHtml's
+    # <h3>/<ul>, and the commit reads the element back as the new
+    # source), so the question is now asked of the class as well.
+    # Both roads in still end at the same "put the stored string back
+    # before the caret lands".
+    assert "if(el.querySelector&&(el.classList.contains('an-md')" in out
+    assert "||(!rich&&el.querySelector('mjx-container')))){" in out
     assert "if(raw) el.textContent=raw;" in out
 
 

@@ -33,7 +33,8 @@
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
        below stops flagging them on every first selection (2026-08-24) */
-    +'#fmt-eqedit #fmt-stylewrap-tx #fmt-style-tx #fmt-style-menu-tx '
+    +'#fmt-eqedit #fmt-mdedit '
+    +'#fmt-stylewrap-tx #fmt-style-tx #fmt-style-menu-tx '
     +'#fmt-tbl-rowplus #fmt-tbl-rowminus #fmt-tbl-colplus '
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
@@ -210,6 +211,9 @@
     /* spacing applies to any run of words, including a table's */
     show('#fmt-lhwrap',(isText||isTbl)&&isNum);
     show('#fmt-eqedit',isMaths(a)&&isNum);
+    /* a markdown box's face is the RENDERING, so the way in is the
+       editor rather than the caret (T74) */
+    show('#fmt-mdedit',!!(a&&a.k==='text'&&a.md)&&isNum);
     var szIn=$('#fmt-size');
     if(szIn&&(isText||isTbl)&&document.activeElement!==szIn)
       szIn.value=Math.round((a.size||(isTbl?2.2:2.6))*5.4);

@@ -876,6 +876,20 @@
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><i data-ic="maths"></i> Maths</button>
+              <!-- MARKDOWN, beside LaTeX, for the same reason LaTeX is
+                   here: some content is quicker to type than to lay out
+                   (2026-08-29, user: "can there be like the latex cells,
+                   can we have markdown cells as well"). It is an ordinary
+                   text box underneath, so it moves, colours, scales and
+                   exports like any other -- the only new thing is that
+                   its words are source and its face is that source
+                   rendered. The renderer is notesHtml, which T28 already
+                   wrote for speaker notes: escape first, then mark up,
+                   and links whitelisted by scheme. -->
+              <button class="dbtn rbn-sm" id="dc-md"
+                title="Add a Markdown box - headings, bullets, numbers,
+ links, quotes, code and emphasis, typed as text and rendered on the
+ slide"><i data-ic="markdown"></i> Markdown</button>
               <button class="dbtn rbn-sm" id="dc-qr"
                 title="Ask for a link and put a QR code on the page —
  point a phone at it to open your repo, paper or data. Generated here, so
@@ -1189,6 +1203,12 @@
               <button class="dbtn etm" id="fmt-eqedit" hidden
                 title="Open this equation in the equation editor"
                 ><i data-ic="maths"></i> Edit equation</button>
+              <!-- and the same door for markdown, for the same reason:
+                   what you see is the RENDERING, so typing into it on the
+                   canvas would be typing into the output -->
+              <button class="dbtn etm" id="fmt-mdedit" hidden
+                title="Open this box in the Markdown editor"
+                ><i data-ic="markdown"></i> Edit markdown</button>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
                   aria-haspopup="true" aria-expanded="false"
@@ -1792,6 +1812,45 @@
       <span class="deck-spring"></span>
       <button class="dbtn" id="eq-cancel">Cancel</button>
       <button class="dbtn primary" id="eq-ok">Put it on the slide</button>
+    </div>
+  </div>
+</div>
+<!-- THE MARKDOWN EDITOR. Deliberately the equation editor's shape and
+     the equation editor's classes: source on the left, live preview on
+     the right, Ctrl+Enter to commit, Esc to leave. Two editors for
+     "type a language, see it set" that looked different from each other
+     would be two ideas about the same thing. -->
+<div class="eq-dlg" id="md-dlg" hidden role="dialog"
+  aria-label="Markdown editor">
+  <div class="eq-box">
+    <div class="eq-head">
+      <span class="eq-t">Markdown</span>
+      <span class="deck-spring"></span>
+      <button class="dbtn dc-icon" id="md-close" aria-label="Cancel" title="Cancel (Esc)"
+        ><i data-ic="exit"></i></button>
+    </div>
+    <div class="eq-main">
+      <div class="eq-left">
+        <textarea id="md-src" class="eq-src" spellcheck="false"
+          autocomplete="off" aria-label="Markdown source"></textarea>
+        <div class="md-help">
+          <b># heading</b> &middot; <b>- bullet</b> &middot;
+          <b>1. number</b> &middot; <b>**bold**</b> &middot;
+          <b>*italic*</b> &middot; <b>`code`</b> &middot;
+          <b>&gt; quote</b> &middot; <b>---</b> &middot;
+          <b>[words](https://…)</b> &middot; <b>[words](#7)</b> jumps to
+          slide 7 &middot; <b>{fig:id}</b> is a figure number
+        </div>
+      </div>
+      <div class="eq-right">
+        <div class="eq-plab">preview</div>
+        <div class="eq-prev md-prev" id="md-prev"></div>
+      </div>
+    </div>
+    <div class="eq-foot">
+      <span class="deck-spring"></span>
+      <button class="dbtn" id="md-cancel">Cancel</button>
+      <button class="dbtn primary" id="md-ok">Put it on the slide</button>
     </div>
   </div>
 </div>

@@ -1425,7 +1425,7 @@ drives it — the suite is substring greps.
   `el.isContentEditable` captured before `beginEdit()`. Triple-click
   already works; quadruple needs adding.
 
-- [ ] **T74 · M — Markdown cells, beside the LaTeX ones.** "Can there be
+- [x] **T74 · M — Markdown cells, beside the LaTeX ones.** "Can there be
   like the latex cells, can we have markdown cells as well."
   *NEW as an insert kind.* Rich text and a Markdown export exist; "type
   Markdown, see it rendered" as a first-class box does not.

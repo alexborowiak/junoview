@@ -813,7 +813,15 @@
          into whatever those glyphs flatten to. Ask the model for the
          stored string and put it back before the caret lands. Not for
          `rich`, which owns its own markup and never carries maths. */
-      if(!rich&&el.querySelector&&el.querySelector('mjx-container')){
+      /* A MARKDOWN BOX IS THE SAME TRAP (T74): the box you are looking
+         at holds the <h3>/<ul>/<p> notesHtml made, and the commit reads
+         the element back as the new source -- so a caret landing in a
+         rendered box and one keystroke would turn "## Results" into
+         "Results" and the markdown would be gone. Asked of the CLASS,
+         not of `rich`: what has to come back is the stored string, and
+         that is true however the box happens to be edited. */
+      if(el.querySelector&&(el.classList.contains('an-md')
+         ||(!rich&&el.querySelector('mjx-container')))){
         var raw=getVal();
         if(raw) el.textContent=raw;
       }
@@ -947,6 +955,19 @@
            accidental delete feel permanent */
         toast('Empty text box removed \u2014 Ctrl+Z puts it back');
       }
+      /* MARKDOWN YOU JUST TYPED. Committing a text box writes into the
+         element in place, so renderAnnots -- the only thing that turns
+         source into markup -- never runs, and the box would sit there
+         showing its own asterisks until something else happened to
+         rebuild the layer. Exactly the shape of the maths gate below,
+         and BEFORE it, because the fit pass at the end of this handler
+         measures what is on screen and what is on screen is now the
+         rendering. ONE ELEMENT, not the whole layer: `el` is the node
+         that just lost focus and is still in the DOM, and re-rendering
+         a whole layer from inside a blur is a bigger promise than this
+         needs (T74). */
+      if(a2&&a2.md&&String(a2.text||'').trim())
+        el.innerHTML=notesHtml(figSubst(a2.text,a2));
       /* MATHS YOU JUST TYPED. Committing a text box writes into the
          element in place — that is the whole point of the edit path,
          and it means renderAnnots (which carries the re-typeset gate)
@@ -980,7 +1001,11 @@
       var m=/^\s*([-*\u2022]|1[.)])\s$/.exec(t);
       if(!m) return;
       var s3=pres.slides[cur],a3=s3&&annotByIdx(s3,idx);
-      if(!a3||a3.k!=='text') return;
+      /* NOT IN A MARKDOWN BOX (T74). "- " there is a bullet you MEANT,
+         written in the language of the box; this handler would answer
+         it by emptying the box, deleting a.html and turning it into a
+         real list -- the source gone on the second keystroke. */
+      if(!a3||a3.k!=='text'||a3.md) return;
       var kind=/^1/.test(m[1])?'number':'bullet';
       el.textContent='';
       a3.text='';delete a3.html;
@@ -1052,7 +1077,11 @@
       var s5=pres.slides[cur],a5=s5&&annotByIdx(s5,idx);
       /* a title, a subtitle and a bullet list all reach editableText and
          none of them is a thing to turn into a code block */
-      if(!a5||a5.k!=='text'||listOf(a5)) return;
+      /* ...and not a markdown box: a fenced paste is markdown's OWN
+         code block, and codeBoxify would answer it by repainting the
+         box mono-on-navy and writing an a.html the renderer then
+         ignores -- a state with no way back out (T74) */
+      if(!a5||a5.k!=='text'||listOf(a5)||a5.md) return;
       if(String(el.innerText||'').trim()) return;
       if(!looksLikeCode(txt)) return;
       var f5=codeFence(txt);
@@ -1964,8 +1993,21 @@
           });
         } else {
           tx2=document.createElement('span');
-          tx2.className='an-tx';
-          if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
+          /* A MARKDOWN BOX RENDERS FROM ITS SOURCE, EVERY TIME (T74).
+             `a.text` is the markdown you typed and the only copy
+             stored; the markup is derived here and dies with the layer,
+             so it can never go stale against the words -- which is the
+             one thing `a.html` has to be careful about. It is the same
+             notesHtml the notes pane, the notes overlay and the
+             presenter view already use, so there is ONE markdown in
+             this editor, it is the fifty-line subset T28 argued for,
+             and it escapes every character before it marks anything up.
+             Ahead of a.html on purpose: a stale rich copy left behind
+             by some earlier life of the box must not outrank the
+             source. */
+          tx2.className='an-tx'+(a.md?' an-md':'');
+          if(a.md) tx2.innerHTML=notesHtml(showTx);
+          else if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
           else tx2.textContent=showTx||'';
         }
         if(editing){
@@ -1986,7 +2028,12 @@
                  more, you have left the list, and the model follows. */
               if(listOf(a)&&!/<li[\s>]/i.test(String(a.html||'')))
                 delete a.list;},
-            i,true);
+            /* a markdown box is NOT rich: what you edit is the SOURCE,
+               so plaintext-only is the right editor (Enter must give a
+               newline, not a <div>) and `a.html` has to stay empty, or
+               a copy of the rendered markup would be saved beside the
+               words and outlive them (T74) */
+            i,!a.md);
         }
         d2.appendChild(tx2);
         layer.appendChild(d2);

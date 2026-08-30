@@ -1893,6 +1893,89 @@
       if(typeof selAnnot==='number') open(selAnnot);});
     window.SemDeckEquation=open;
   })();
+  /* ---- THE MARKDOWN EDITOR (T74) ---------------------------------------
+     "Can there be like the latex cells, can we have markdown cells as
+     well." So: the equation editor's exact shape, because both answer
+     the same question -- type a language, see it set, put it on the
+     slide. Source left, live preview right, Ctrl+Enter commits, Esc
+     leaves.
+
+     NOTHING NEW RENDERS IT. notesHtml is the fifty-line markdown subset
+     T28 wrote for speaker notes, and its rules are the ones that matter
+     here too: every character is escaped before a tag is added, links
+     are whitelisted by scheme, and {fig:id} is the deck's own figure
+     reference. A second markdown implementation would be a second set
+     of answers to "is this safe" and "what does a reference mean".
+
+     ONE NEW PERSISTED FIELD, `md`, and it is an ANNOT field -- annots
+     are deep-copied on save and load, so it needs ANNOT_COMMON and
+     DECK-FORMAT.md and nothing else. */
+  (function(){
+    var dlg=$('#md-dlg'); if(!dlg) return;
+    var src=$('#md-src'),prev=$('#md-prev');
+    var editIdx=null;
+    function render(){
+      prev.innerHTML=notesHtml(src.value||'');
+    }
+    function open(idx){
+      editIdx=(typeof idx==='number')?idx:null;
+      var s2=pres.slides[cur];
+      var a=(editIdx!=null)?(s2&&s2.annots||[])[editIdx]:null;
+      src.value=a?(a.text||''):'## A heading\n\nSome words, with '
+        +'**emphasis** and a [link](https://example.org).\n\n'
+        +'- a point\n- another one';
+      dlg.hidden=false;
+      $('#md-ok').textContent=(editIdx!=null)?'Update it'
+        :'Put it on the slide';
+      src.focus();src.select();
+      render();
+    }
+    function close(){dlg.hidden=true;editIdx=null;}
+    function commit(){
+      var md=src.value.replace(/\s+$/,'');
+      if(!md.trim()){close();return;}
+      var s2=pres.slides[cur];
+      if(!s2){toast('Add a slide first');close();return;}
+      s2.annots=s2.annots||[];
+      var idx;
+      if(editIdx!=null&&s2.annots[editIdx]){
+        s2.annots[editIdx].text=md;
+        /* a markdown box has no rich-text layer: a.html would be a
+           second, stale copy of the same words */
+        delete s2.annots[editIdx].html;
+        delete s2.annots[editIdx].list;
+        idx=editIdx;
+      } else {
+        s2.annots.push({k:'text',x:14,y:18,w:52,text:md,
+          size:2.4,bg:0,align:'left',md:1});
+        idx=s2.annots.length-1;
+      }
+      markDirty();setTool('select');
+      var l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s2);selectAnnot(l,idx);}
+      else renderSlide();
+      close();
+    }
+    src.addEventListener('input',render);
+    src.addEventListener('keydown',function(e){
+      /* the canvas listens for single keys; a textarea must keep its
+         own -- the same guard the equation source carries */
+      e.stopPropagation();
+      if(e.key==='Escape'){e.preventDefault();close();}
+      else if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){
+        e.preventDefault();commit();}
+    });
+    $('#md-ok').addEventListener('click',commit);
+    $('#md-cancel').addEventListener('click',close);
+    $('#md-close').addEventListener('click',close);
+    dlg.addEventListener('click',function(e){if(e.target===dlg) close();});
+    var mb=$('#dc-md');
+    if(mb) mb.addEventListener('click',function(){open(null);});
+    var eb=$('#fmt-mdedit');
+    if(eb) eb.addEventListener('click',function(){
+      if(typeof selAnnot==='number') open(selAnnot);});
+    window.SemDeckMarkdown=open;
+  })();
   /* ---- THE APPLY DIALOG ------------------------------------------------
      One surface answering the three questions the old "apply to all
      headings" answered for you: WHAT type, WHICH properties, WHICH

@@ -150,6 +150,14 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
     "oid": (str, "This object's durable name, used to follow it through "
                  "its own history and to match it across slides for a "
                  "\"move\" transition."),
+    "md": (int, "1 when this text box's words are Markdown source and "
+                "what is drawn is that source rendered -- headings, "
+                "bullets, numbers, quotes, code, emphasis and links. "
+                "Editing goes through the Markdown editor rather than "
+                "the caret, because the face of the box is the output."),
+    "maths": (int, "1 when this text box was built by the equation "
+                   "editor: its words are LaTeX between $ or $$ "
+                   "delimiters, typeset after every edit."),
     "lockar": (int, "1 to keep this item's shape while it is dragged by "
                     "a resize handle: the other side follows, so a logo "
                     "stays square and a plot keeps its proportions. The "

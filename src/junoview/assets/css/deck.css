@@ -3640,3 +3640,30 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .deck.slide-matching #film-list .film-row:hover .film-label{
   outline-style:solid;background:rgba(47,111,159,.10);}
 .deck.slide-matching #film-list .film-ctr{opacity:.35;}
+
+/* T74: a markdown box on a slide. Everything is in em of the BOX's own
+   type size, the rule a.lh, a.pspace and a.ind already follow, so a
+   markdown box means the same thing on a 16:9 slide and an A0 poster. */
+.an-md{display:block;text-align:inherit;}
+.an-md>:first-child{margin-top:0;}
+.an-md>:last-child{margin-bottom:0;}
+.an-md h3,.an-md h4,.an-md h5{
+  margin:.5em 0 .25em;line-height:1.15;font-weight:700;}
+.an-md h3{font-size:1.45em;}
+.an-md h4{font-size:1.2em;}
+.an-md h5{font-size:1.05em;}
+.an-md p{margin:.35em 0;}
+.an-md ul,.an-md ol{margin:.35em 0;padding-left:1.3em;}
+.an-md li{margin:.12em 0;}
+.an-md blockquote{margin:.4em 0;padding-left:.7em;
+  border-left:.16em solid currentColor;opacity:.82;}
+.an-md code{font-family:var(--mono,ui-monospace,Consolas,monospace);
+  font-size:.9em;padding:0 .2em;border-radius:.2em;
+  background:rgba(127,127,127,.18);}
+.an-md hr{border:0;border-top:.08em solid currentColor;opacity:.4;
+  margin:.5em 0;}
+.an-md a{color:inherit;text-decoration:underline;}
+/* the editor's cheat sheet, under the source box */
+.md-help{font-size:11px;line-height:1.7;color:#54677a;padding:8px 2px 0;}
+.md-help b{font-weight:600;color:#28394a;}
+.md-prev{overflow:auto;}
