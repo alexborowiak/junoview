@@ -2160,6 +2160,25 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 .page-light .an-flipnav{background:#ffffffb3;border-color:#00000026;
   color:#16202b;}
 .page-light .an-flipn{color:#44525c;}
+/* ONE BUTTON PER FIGURE: the arrows are a walk, these are a menu. They
+   wrap on purpose — a nine-figure book is a row of nine names, and a nav
+   bar that scrolled sideways on a slide would be worse than two lines of
+   buttons (T86). */
+.an-flipbtns{flex-wrap:wrap;gap:4px;}
+.an-flipbtn{background:#00000059;border:1px solid #ffffff2e;color:#e6eef4;
+  border-radius:11px;min-width:22px;height:22px;line-height:1;cursor:pointer;
+  font-size:11px;font-family:var(--sans);padding:0 8px;display:flex;
+  align-items:center;justify-content:center;}
+.an-flipbtn:hover:not([disabled]){border-color:var(--cyan);
+  background:#0000008c;}
+.an-flipbtn.on{border-color:var(--accent);
+  background:color-mix(in srgb,var(--accent) 34%,#00000059);}
+.an-flipbtn[disabled]{cursor:default;}
+.page-light .an-flipbtn{background:#ffffffb3;border-color:#00000026;
+  color:#16202b;}
+.page-light .an-flipbtn.on{background:color-mix(in srgb,var(--accent) 26%,#fff);}
+/* the stepping chooser, above the frame list it describes */
+.fp-opt{display:flex;flex-direction:column;gap:4px;padding:0 12px 8px;}
 /* an item belonging to another figure. Dimmed rather than hidden while
    editing: you have to be able to see and click the caption you are about
    to tie to figure 4 while you are standing on figure 1. In playback it

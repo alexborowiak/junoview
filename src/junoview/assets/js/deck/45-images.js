@@ -240,11 +240,16 @@
       if(list) list.innerHTML='<div class="selpane-empty">Select a flip '
         +'book on the slide to see its figures.</div>';
       var tie0=$('#fp-tie'); if(tie0) tie0.hidden=true;
+      var op0=$('#fp-opt'); if(op0) op0.hidden=true;
       return;
     }
     var fr=flipFrames(a);
     if(ttl) ttl.textContent='Flip book — '+fr.length+' figure'
       +(fr.length===1?'':'s');
+    /* how it steps is this book's own property, so the chooser follows
+       the pane's item rather than showing the last thing you picked */
+    var op=$('#fp-opt'); if(op) op.hidden=false;
+    var nav=$('#fp-nav'); if(nav) nav.value=a.fbtn?'btn':'';
     list.innerHTML='';
     if(!fr.length){
       list.innerHTML='<div class="selpane-empty">No figures yet. '
@@ -353,8 +358,23 @@
     var s=pres.slides[cur],hits=selIdxs().filter(function(i){
       var x=(s.annots||[])[i];return x&&x.k!=='flip';});
     host.innerHTML='';
-    if(!hits.length||!flipFrames(a).length){
+    if(!flipFrames(a).length){
       host.hidden=true;
+      return;
+    }
+    /* THE TIE HAS TO ADVERTISE ITSELF. Tying a caption to a figure has
+       worked since the day the flip book landed, and hid completely
+       unless you happened to have something selected while this pane was
+       open — so it was asked for again as though it did not exist (T86).
+       An empty panel that says what it is for costs three lines. */
+    if(!hits.length){
+      host.hidden=false;
+      var hint=document.createElement('div');
+      hint.className='fp-tielab';
+      hint.textContent='Select any text or object on the slide to tie it '
+        +'to one of these figures — it can show with that figure only, '
+        +'from it onwards, or up to it.';
+      host.appendChild(hint);
       return;
     }
     host.hidden=false;
@@ -408,6 +428,12 @@
     });
     var cl=$('#flippane-close');
     if(cl) cl.addEventListener('click',function(){showFlipPane(false);});
+    var nav=$('#fp-nav');
+    if(nav) nav.addEventListener('change',function(){
+      var a=flipPaneItem(); if(!a) return;
+      if(nav.value==='btn') a.fbtn=1; else delete a.fbtn;
+      markDirty();renderSlide();renderFlipPane();
+    });
     var ac=$('#fp-add-cells');
     if(ac) ac.addEventListener('click',function(){
       if(flipPaneItem()) startPick(flipSel,true);});

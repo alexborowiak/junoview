@@ -164,6 +164,10 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                     "shape itself is not stored -- it is read off the box "
                     "when the drag begins -- and holding Shift during a "
                     "drag does the opposite of whatever this says."),
+    "fbtn": (int, "Flip books only: 1 to give the book one button per "
+                  "figure instead of the back/forward arrows, so any "
+                  "figure is one click away. A named frame names its "
+                  "button."),
 }
 
 #: The kinds of thing that can sit on a slide, and what each one needs to

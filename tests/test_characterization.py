@@ -494,8 +494,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-30 for T76: the build badges are gated on the Timeline
 # pane being open, the filmstrip gains a build-count mark, and the
 # Timeline button's tooltip says it is the switch.
-EXPECTED_MD5 = "8317b24245d033686e5eec5c3f90fcab"
-EXPECTED_BYTES = 3182781
+# Moved 2026-08-30 for T86: flip books gain a Stepping chooser in the
+# frames pane, a button-per-figure bar, a stop timeline that lets an
+# animated book's frames follow its build, and a tie hint that no longer
+# hides itself.
+EXPECTED_MD5 = "79d619687239b19c3daa19084aa42748"
+EXPECTED_BYTES = 3189884
 
 
 def _render_example() -> str:

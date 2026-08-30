@@ -1513,7 +1513,7 @@ drives it — the suite is substring greps.
   *NEW.* The Electron path exists for development; there is no
   user-facing door to it.
 
-- [ ] **T86 · M — Flip books: buttons per image, and animations.**
+- [x] **T86 · M — Flip books: buttons per image, and animations.**
   *Verified: the tie is REFUTED as broken* — `a.fb`/`flipShows` work, so
   the complaint is findability. Genuinely new: one button per figure
   instead of prev/next, and driving a flip book from the build sequence.

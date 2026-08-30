@@ -819,21 +819,56 @@
     flipsOn(s).forEach(function(p){if(!hit&&p.a.fid===id) hit=p.a;});
     return hit;
   }
-  /* the extra playback stops this slide's flip books contribute: one per
-     frame AFTER the first, because the first is what the slide opens on */
-  function flipStops(s){
-    var n=0;
+  /* ---- THE ONE TIMELINE ------------------------------------------------
+     Every stop on a slide — the builds and the flip books' frames — in one
+     sequence, and this is the only place that says what order they come in.
+
+     BUILDS FIRST, THEN THE FRAMES was the whole story, because a build is
+     usually the heading or the frame itself arriving and the figure
+     walking through its steps is what you then talk over. That is still
+     the story for a flip book with no build of its own.
+
+     A FLIP BOOK THAT HAS A BUILD HAS SAID WHERE IN THE TALK IT BELONGS
+     (T86, user: "flip books also need a way of appearing with
+     animations"). So its frames follow it THERE: the figure appears on
+     step 2, walks through its frames, and the conclusion arrives on step
+     3 — rather than every frame waiting for every other build on the
+     slide to finish first. Give it a build and its frames come with it;
+     give it none and nothing about the old order changes.
+
+     Returns {count, stop, base}: `count` is every stop on the slide,
+     `stop[b]` is the stop the build step b occupies, and `base[i]` is how
+     many stops precede the first advance of the flip book at annot i — so
+     its frame is revealCount-base[i], clamped. ONE cursor still, and the
+     frame still derived from it rather than stored beside it. */
+  function flipPlan(s){
+    var steps=slideBuildSteps(s),anch={},tail=[];
     flipsOn(s).forEach(function(p){
-      n+=Math.max(0,flipFrames(p.a).length-1);});
-    return n;
+      var b=(p.a&&p.a.anim)?steps.map[p.a.anim.order||0]:null;
+      if(b==null) tail.push(p);
+      else (anch[b]||(anch[b]=[])).push(p);
+    });
+    var n=0,stop=[],base={};
+    function frames(p){
+      base[p.i]=n;
+      n+=Math.max(0,flipFrames(p.a).length-1);
+    }
+    for(var b=0;b<steps.count;b++){
+      stop[b]=n;n++;
+      (anch[b]||[]).forEach(frames);
+    }
+    tail.forEach(frames);
+    return {count:n,stop:stop,base:base};
   }
-  /* every stop on a slide: the builds first, then the frames.
-     Builds first because a build is usually the heading or the frame
-     itself arriving, and the figure walking through its steps is what you
-     then talk over — putting the frames first would make a title animate
-     in after the picture had already finished. */
   function slideStops(s){
-    return slideBuildSteps(s).count+flipStops(s);
+    return flipPlan(s).count;
+  }
+  /* how many stops come before this flip book's first advance, or null
+     when it is not on this slide at all */
+  function flipBase(s,a){
+    var plan=flipPlan(s),base=null;
+    flipsOn(s).forEach(function(p){if(p.a===a) base=plan.base[p.i];});
+    return base;
   }
   /* which frame this flip book is showing right now. In the editor that is
      wherever you left its arrows; in playback it is read off revealCount,
@@ -852,14 +887,12 @@
       return Math.max(0,Math.min(last,a.at||0));
     }
     if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
-    var left=Math.max(0,revealCount-slideBuildSteps(s).count),hit=0;
-    flipsOn(s).forEach(function(p){
-      var span=Math.max(0,flipFrames(p.a).length-1);
-      var take=Math.min(span,left);
-      if(p.a===a) hit=take;
-      left-=take;
-    });
-    return hit;
+    /* READ OFF THE ONE CURSOR, never stored beside it: the plan says
+       which stops belong to this flip book, and how many of them have
+       been taken is the frame it is on. */
+    var base=flipBase(s,a);
+    if(base==null) return 0;
+    return Math.max(0,Math.min(last,revealCount-base));
   }
   /* is this item's frame the one showing? An item with no binding always
      shows, and — deliberately — so does one whose flip book has been
@@ -893,18 +926,25 @@
   function flipStep(idx,d){
     var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
     if(!a||a.k!=='flip') return;
+    flipGo(idx,flipAtNow(s,a)+d);
+  }
+  /* STRAIGHT TO A FIGURE. One button per figure jumps, the arrows step,
+     and both land here — a jump that meant anything the arrows did not
+     would be the second cursor this whole feature exists to avoid (T86). */
+  function flipGo(idx,to){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='flip') return;
     var fr=flipFrames(a);
     if(fr.length<2) return;
+    to=Math.max(0,Math.min(fr.length-1,to));
     if(mode==='view'){
-      var before=0;
-      flipsOn(s).forEach(function(p){
-        if(p.i<idx) before+=Math.max(0,flipFrames(p.a).length-1);});
-      var lo=slideBuildSteps(s).count+before,hi=lo+fr.length-1;
-      revealCount=Math.max(lo,Math.min(hi,revealCount+d));
+      var base=flipBase(s,a);
+      if(base==null) return;
+      revealCount=base+to;
       renderSlide();presenterSync();
       return;
     }
-    a.at=Math.max(0,Math.min(fr.length-1,(a.at||0)+d));
+    a.at=to;
     /* markDirty(true): flipping through your own figures to look at them
        is not an edit and must not fill the undo stack */
     markDirty(true);renderSlide();renderFlipPane();

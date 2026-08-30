@@ -2123,7 +2123,40 @@
           }
         }
         fl.appendChild(fst);
-        if(fr.length>1){
+        if(fr.length>1&&a.fbtn){
+          /* ONE BUTTON PER FIGURE (T86, user: "it would be cool if you
+             could have an option for 'buttons per image'"). The arrows
+             are a walk; these are a menu — with nine figures, reaching
+             figure 7 in front of an audience should not be six clicks.
+             Real <button>s for the same reason the arrows are: the
+             click-to-advance handler already skips button,a,input,select,
+             so jumping to a figure cannot also advance the slide. A named
+             frame names its button, so the row reads the way the frames
+             pane does. */
+          var fbtns=document.createElement('div');
+          fbtns.className='an-flipbar an-flipbtns';
+          fr.forEach(function(fd,fi){
+            var jb=document.createElement('button');
+            jb.className='an-flipbtn'+(fi===at?' on':'');
+            jb.type='button';
+            jb.textContent=(fd&&fd.label)?fd.label:String(fi+1);
+            jb.title='Go to '+frameLabel(fd,fi);
+            if(fi===at) jb.setAttribute('aria-current','true');
+            /* an EXPORTED page IS one frame, so there is nowhere to go:
+               the row stays as the printed index of where you are, which
+               is what tells a reader on paper this is step 2 of 3 */
+            if(flipForce!=null) jb.disabled=true;
+            jb.addEventListener('click',function(ev){
+              ev.stopPropagation();ev.preventDefault();flipGo(i,fi);});
+            /* the layer's own mousedown starts a MOVE on whatever is
+               under the pointer; without this, dragging off a button
+               drags the whole flip book across the slide */
+            jb.addEventListener('mousedown',function(ev){
+              ev.stopPropagation();});
+            fbtns.appendChild(jb);
+          });
+          fl.appendChild(fbtns);
+        } else if(fr.length>1){
           var fbar=document.createElement('div');
           fbar.className='an-flipbar';
           /* real <button>s, which is what makes them safe in playback:
@@ -2212,7 +2245,7 @@
        clutter with no off switch. The filmstrip's ▸N mark is what says a
        slide is animated when the pane is shut. */
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
-      var steps=slideBuildSteps(s);
+      var steps=slideBuildSteps(s),plan=flipPlan(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
          class (the fat invisible hit path under the items does), so an
          ANIMATED arrow was never hidden before its build and simply sat
@@ -2231,8 +2264,15 @@
             +' (items on the same build appear together)';
           el.appendChild(bd);
         } else if(mode==='view'){
-          if(st>=revealCount) el.classList.add('an-prebuild');
-          else if(st===revealCount-1){
+          /* WHICH STOP, not which build number: a flip book with a build
+             of its own puts its frames straight after itself, so anything
+             built behind one sits later in the sequence than its build
+             number says (T86). The badge above stays the BUILD number,
+             which is what the animation pane counts. */
+          var sp=plan.stop[st];
+          if(sp==null) sp=st;
+          if(sp>=revealCount) el.classList.add('an-prebuild');
+          else if(sp===revealCount-1){
             var atype=ba.anim.type||'fade';
             /* "appear" is instant (no keyframe); rise/zoom animate transform,
                which would fight a rotation and snap — a rotated item fades */

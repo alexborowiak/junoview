@@ -48,11 +48,15 @@ def test_the_frame_is_derived_from_the_one_playback_cursor(out):
     this whole feature exists to stop people hand-doing.
     """
     assert "function flipAtNow(s,a){" in out
-    assert "function flipStops(s){" in out
+    assert "function flipPlan(s){" in out
     assert "function slideStops(s){" in out
-    # builds first, then frames: a title that animates in must not arrive
-    # after the picture has finished walking through its steps
-    assert "return slideBuildSteps(s).count+flipStops(s);" in out
+    # ONE timeline. Builds first and frames after was the whole story
+    # until a flip book could carry a build of its own (T86): one that
+    # does puts its frames straight after itself, one that does not still
+    # walks once every build on the slide is up.
+    assert "return flipPlan(s).count;" in out
+    assert "if(b==null) tail.push(p);" in out
+    assert "else (anch[b]||(anch[b]=[])).push(p);" in out
     assert "if(mode==='view'&&s&&revealCount<slideStops(s)){" in out
     # stepping BACK into a slide lands it fully built AND on the last frame
     assert "var s=pres.slides[i];return s?slideStops(s):0;" in out
@@ -106,9 +110,10 @@ def test_the_arrows_are_buttons_so_playback_does_not_swallow_them(out):
 def test_an_arrow_moves_the_talk_not_a_private_cursor(out):
     """Otherwise the arrow and the space bar would disagree about where you
     are in the deck."""
-    body = out.split("function flipStep(idx,d){")[1].split("\n  }")[0]
+    body = out.split("function flipGo(idx,to){")[1].split("\n  }")[0]
     assert "if(mode==='view'){" in body
-    assert "revealCount=Math.max(lo,Math.min(hi,revealCount+d));" in body
+    assert "revealCount=base+to;" in body
+    assert "flipGo(idx,flipAtNow(s,a)+d);" in out
     # in the editor, flipping through your own figures is not an edit
     assert "markDirty(true);renderSlide();renderFlipPane();" in body
 
@@ -151,6 +156,49 @@ def test_a_printed_page_carries_no_arrows_to_press(out):
     """Each exported page IS one frame, so the counter stays -- it tells a
     reader on paper they are looking at step 2 of 3 -- and the arrows go."""
     assert "if(flipForce!=null) return;" in out
+
+
+def test_one_button_per_figure_is_the_other_way_to_step(out):
+    """"It would be cool if you could have an option for 'buttons per
+    image'" (T86). The arrows are a walk; the buttons are a menu -- with
+    nine figures, reaching figure 7 in front of an audience should not be
+    six clicks.
+
+    Per flip book, chosen in the frames pane: it is a property of the
+    book, and a stepping choice is not worth a ribbon control.
+    """
+    assert "if(fr.length>1&&a.fbtn){" in out
+    assert "jb.className='an-flipbtn'+(fi===at?' on':'');" in out
+    assert "ev.stopPropagation();ev.preventDefault();flipGo(i,fi);});" in out
+    assert 'id="fp-nav"' in out
+    assert "if(nav.value==='btn') a.fbtn=1; else delete a.fbtn;" in out
+    # a jump and a step are ONE verb, or they would disagree about where
+    # the talk is
+    assert "function flipGo(idx,to){" in out
+
+
+def test_an_animated_flip_book_walks_where_its_build_is(out):
+    """"Flip books also need a way of appearing with animations" (T86).
+
+    Give the book a build and it has said where in the talk it belongs, so
+    its figures follow it THERE rather than waiting for every other build
+    on the slide. One timeline, and still one cursor.
+    """
+    assert "var b=(p.a&&p.a.anim)?steps.map[p.a.anim.order||0]:null;" in out
+    assert "stop[b]=n;n++;" in out
+    assert "function flipBase(s,a){" in out
+    # so a build BEHIND one sits later in the sequence than its own build
+    # number, which is the question an-prebuild has to ask
+    assert "var sp=plan.stop[st];" in out
+    assert "if(sp>=revealCount) el.classList.add('an-prebuild');" in out
+
+
+def test_the_tie_says_what_it_is_for_before_you_use_it(out):
+    """The tie has worked since the flip book landed and hid unless you
+    happened to have something selected with the pane open -- so it was
+    asked for again as though it did not exist (T86)."""
+    assert "if(!hits.length){" in out
+    assert "Select any text or object on the slide to tie it " in out
 
 
 def test_filling_a_flip_book_is_one_gesture_not_twelve(out):
