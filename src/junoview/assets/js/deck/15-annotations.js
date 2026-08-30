@@ -517,6 +517,11 @@
   }
   function renderSlide(){
     var s=pres.slides[cur];
+    /* the talk's text multiplier, applied to the stage and therefore to
+       every layer under it. Forced back to 1 outside a talk so it can
+       never reach the editor, a print or an export (T88). */
+    stage.style.setProperty('--talk-text',
+      (mode==='view'?talkText:1).toFixed(3));
     applyPageBg();          /* this slide may carry its own background */
     if(mode==='edit') renderTokenSwatches();
     stage.innerHTML='';
@@ -772,6 +777,19 @@
   /* build animations: items carrying a.anim reveal one step at a time during
      playback (click / arrow / space); revealCount is how many are shown */
   var revealCount=0;
+  /* ---- WHAT THE TALK ITSELF CAN BE TOLD (T88, 2026-08-29) -------------
+     "An option to 'turn off animations' ... a global text bigger or
+     smaller." Both are about the ROOM rather than about the deck, so
+     neither is persisted: they survive between runs in this session
+     because a projector does not change between runs, and they are
+     applied only while mode==='view' so nothing they do can reach a
+     PDF, a .pptx or the editor.
+       talkNoBuilds -- every build appears at once. Flip books still
+         step, because their frames are content and not decoration.
+       talkText     -- a multiplier over every text size on the page.
+         A MULTIPLIER, not a rewrite of a.size: nothing is edited, so
+         there is no undo entry and nothing to put back afterwards. */
+  var talkNoBuilds=0, talkText=1;
   /* ---- THE FLIP BOOK ---------------------------------------------------
      (2026-08-22, user: "people create figures with small additions and then
      need to create layers of figures or heaps of new slides each with a new
@@ -959,6 +977,13 @@
   /* a build "step" is a distinct anim.order — items sharing an order appear
      TOGETHER on the same click. Returns {map: order->step-index, count} */
   function slideBuildSteps(s){
+    /* THE ONE GATE (T88). Everything downstream reads this: flipPlan
+       counts its stops from it, so the space bar walks straight to the
+       next slide; the reveal pass looks a build's step up in `map` and
+       returns early when it is missing, so nothing is ever held back.
+       mode==='view' only -- the editor and the filmstrip's build mark
+       must go on telling the truth about what the deck contains. */
+    if(talkNoBuilds&&mode==='view') return {map:{},count:0};
     var seen={};
     (s&&s.annots||[]).forEach(function(a){
       if(a&&a.anim) seen[a.anim.order||0]=1;});

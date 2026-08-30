@@ -1008,6 +1008,12 @@
     if(startingTalk) rehStart();
     else if(endingTalk){
       rehStop();lateFrom=-1;
+      /* the panel belongs to the run; the SETTINGS survive it, because a
+         projector does not change between runs (T88) */
+      var tp=$('#talkpane');
+      if(tp) tp.hidden=true;
+      var tbn=$('#talkbtn');
+      if(tbn) tbn.setAttribute('aria-expanded','false');
     }
     mode=m;
     var creating=(m==='create'), editing=(m==='edit');
@@ -1887,6 +1893,29 @@
         e.preventDefault();
         openOverview();
         var fi=$('#ovw-find'); if(fi) fi.focus();
+        return;
+      }
+      /* THE TALK'S OWN KEYS (T88). In front of a room the panel is the
+         slow way to reach either of these, so both are one key -- and
+         they are only bound in view mode, where nothing else claims
+         them. */
+      if(!e.ctrlKey&&!e.metaKey&&!e.altKey
+         &&(e.key==='a'||e.key==='A')){
+        e.preventDefault();
+        if(window.SemDeckTalk) window.SemDeckTalk.builds(!talkNoBuilds);
+        return;
+      }
+      if(!e.ctrlKey&&!e.metaKey&&!e.altKey
+         &&(e.key==='t'||e.key==='T')){
+        var tb=$('#talkbtn');
+        if(tb){e.preventDefault();tb.click();}
+        return;
+      }
+      if(!e.ctrlKey&&!e.metaKey&&!e.altKey
+         &&(e.key==='+'||e.key==='='||e.key==='-'||e.key==='0')){
+        e.preventDefault();
+        if(window.SemDeckTalk)
+          window.SemDeckTalk.zoom(e.key==='-'?1/1.12:e.key==='0'?0:1.12);
         return;
       }
       if(e.key==='ArrowRight'||e.key==='PageDown'

@@ -1381,7 +1381,8 @@
     var ap0=anchorPos(a,a.w,a.h);
     host.style.left=ap0.x+'%';host.style.top=ap0.y+'%';
     host.style.width=(a.w||40)+'%';host.style.height=(a.h||20)+'%';
-    host.style.fontSize=fontPx(layer,a.size||2.2);
+    host.style.fontSize='calc('+fontPx(layer,a.size||2.2)
+      +' * var(--talk-text,1))';   /* T88 */
     if(a.lh) host.style.lineHeight=a.lh;
     if(a.color) host.style.color=tokVal(a.color);
     /* a.bg===0 is "no fill", and the format bar's swatch has always read
@@ -1663,7 +1664,8 @@
         d.className='an-item an-title'+(which==='t'?' t-main':'')
           +(selAnnot===which?' sel':'');
         d.style.left=p.x+'%';d.style.top=p.y+'%';
-        d.style.fontSize=fontPx(layer,p.size);
+        d.style.fontSize='calc('+fontPx(layer,p.size)
+          +' * var(--talk-text,1))';   /* T88 */
         if(p.color) d.style.color=tokVal(p.color); /* default lives in CSS */
         if(p.b) d.style.fontWeight='700';
         /* ...and tell the SPAN too. Its own CSS weight is more specific
@@ -1923,8 +1925,11 @@
         d2.style.left=ap4.x+'%';d2.style.top=ap4.y+'%';
         /* the fit multiplier rides on the element as a variable, so
            shrink-to-fit never rewrites a.size (T15) */
+        /* --talk-text is 1 everywhere but a live talk (T88); it rides
+           in the same calc as the fit multiplier because both are
+           "scale what a.size asked for" and neither writes the model */
         d2.style.fontSize='calc('+fontPx(layer,a.size)
-          +' * var(--an-fit,1))';
+          +' * var(--an-fit,1) * var(--talk-text,1))';
         /* only an EXPLICIT colour goes inline: the default comes from
            CSS so .page-light can flip it — a baked '#ffffff' default
            made every template text white-on-white on a light poster

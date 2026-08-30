@@ -3705,3 +3705,31 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .md-help{font-size:11px;line-height:1.7;color:#54677a;padding:8px 2px 0;}
 .md-help b{font-weight:600;color:#28394a;}
 .md-prev{overflow:auto;}
+
+/* T88: the talk panel. Present mode only -- .deck is neither .creating
+   nor .editing then, the same test .deck-count already uses one line up
+   from here. Never printed: it is chrome, and chrome does not export. */
+.talkbtn{position:absolute;right:18px;bottom:38px;z-index:8;
+  opacity:.35;transition:opacity .15s ease;}
+.talkbtn:hover,.talkbtn[aria-expanded="true"]{opacity:1;}
+.deck.creating .talkbtn,.deck.editing .talkbtn,
+.deck.creating .talkpane,.deck.editing .talkpane{display:none;}
+.talkpane{position:absolute;right:18px;bottom:74px;z-index:9;width:266px;
+  background:var(--chrome-2,#16273a);border:1px solid #ffffff26;
+  border-radius:10px;padding:10px;box-shadow:0 18px 44px #000a;
+  display:flex;flex-direction:column;gap:8px;}
+.talkpane[hidden]{display:none;}
+.tk-h{display:flex;align-items:center;justify-content:space-between;
+  font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+  text-transform:uppercase;color:#4e93a6;}
+.tk-row{display:flex;align-items:center;gap:8px;
+  justify-content:space-between;}
+.tk-lab{font-size:11px;color:#9fb3c2;flex:none;}
+.tk-grp{display:flex;align-items:center;gap:3px;}
+.tk-b{display:flex;align-items:center;gap:6px;font-size:11px;}
+.tk-b[aria-pressed="true"]{background:var(--amber);color:#241a05;
+  border-color:transparent;}
+.tk-state{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;
+  text-transform:uppercase;opacity:.75;}
+.tk-note{margin:0;font-size:10px;line-height:1.5;color:#6b8496;}
+@media print{.talkbtn,.talkpane{display:none !important;}}

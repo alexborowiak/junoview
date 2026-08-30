@@ -1533,7 +1533,7 @@ drives it — the suite is substring greps.
   position gesture, and the all-slides outline overlay. Build the
   surface on what is there; do not build a second Apply.
 
-- [ ] **T88 · M — Present mode's side panel.** "An option to 'turn off
+- [x] **T88 · M — Present mode's side panel.** "An option to 'turn off
   animations'... a global text bigger or smaller."
   *NEW.* Skipping builds is the load-bearing half.
 

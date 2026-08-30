@@ -500,8 +500,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # hides itself.
 # Moved 2026-08-30 for T75: the rail gains one search field over both
 # strips, a clear button, an empty-state line and a Ctrl+K.
-EXPECTED_MD5 = "9e5d2ef12232106c3d73254cf5a4522e"
-EXPECTED_BYTES = 3195987
+# Moved 2026-08-30 for T88: present mode gains a Talk button and panel
+# (skip builds, text size), their keys, and a --talk-text multiplier in
+# the three places a page sizes text.
+EXPECTED_MD5 = "156e4805d0df65ae9cdd2aa6b7d962c7"
+EXPECTED_BYTES = 3205844
 
 
 def _render_example() -> str:

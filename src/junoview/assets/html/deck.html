@@ -1737,6 +1737,48 @@
         aria-label="Show the code trace that made this slide">
         <span class="cp-arr">&#8595;</span> Show code</button>
       <span class="deck-count" id="deck-count"></span>
+      <!-- THE TALK PANEL (T88). Only while presenting: these are settings
+           about the ROOM, not about the deck, and a deck that carried
+           them would be a deck that looked different on someone else's
+           projector. Both also on a key, because reaching for a panel in
+           front of an audience is what you are trying to avoid. -->
+      <button class="dbtn talkbtn" id="talkbtn" aria-haspopup="true"
+        aria-expanded="false"
+        title="Talk settings — skip the builds, or make every word on the
+ page bigger for the back of the room (T)"><i data-ic="present"></i>
+        Talk&#8230;</button>
+      <aside class="talkpane" id="talkpane" hidden role="dialog"
+        aria-label="Talk settings">
+        <div class="tk-h"><span>This talk</span>
+          <button class="dbtn dc-icon" id="talkpane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="tk-row">
+          <span class="tk-lab">Builds</span>
+          <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
+            ><i data-ic="stagger"></i> Skip builds
+            <span class="tk-state">playing</span></button>
+        </div>
+        <div class="tk-row">
+          <span class="tk-lab">Text size</span>
+          <span class="tk-grp">
+            <button class="dbtn rbn-ico" id="talk-smaller"
+              aria-label="Smaller text"
+              title="Smaller, for a screen you are close to (&minus;)"
+              >&#8722;</button>
+            <button class="dbtn rbn-sm" id="talk-reset" disabled
+              title="Back to the size the deck was made at (0)"
+              >100%</button>
+            <span class="tk-val" id="talk-size" aria-live="polite"
+              hidden>100%</span>
+            <button class="dbtn rbn-ico" id="talk-bigger"
+              aria-label="Bigger text"
+              title="Bigger, for the back of the room (+)">+</button>
+          </span>
+        </div>
+        <p class="tk-note">Neither is saved with the deck &mdash; they
+          are about the room you are in, so nothing here reaches a PDF,
+          a .pptx or anyone else&rsquo;s copy.</p>
+      </aside>
       <!-- the zoom cluster, pinned to the corner of the canvas the way
            every other page-based editor does it. It floats over the stage
            rather than sitting in its flow, so it costs no height at all,

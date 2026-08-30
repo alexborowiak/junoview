@@ -808,6 +808,71 @@
   }
   /* advance: reveal the next build, else move to the next slide (no-op at the
      very end, so the final slide never collapses back to its pre-build state) */
+  /* ---- THE TALK PANEL (T88) ---------------------------------------
+     Present mode has no ribbon and no rail on purpose, so the two things
+     you might want to change mid-talk had nowhere to live. One button in
+     the corner beside the slide count, one small panel, and both
+     settings also on a key -- because reaching for a panel in front of a
+     room is exactly what you do not want to do. */
+  function syncTalk(){
+    var p=$('#talkpane'); if(!p) return;
+    var b=$('#talk-builds');
+    if(b){
+      b.setAttribute('aria-pressed',talkNoBuilds?'true':'false');
+      b.title=talkNoBuilds
+        ? 'Builds are being skipped: everything on a slide is there as '
+          +'soon as you arrive. Press again to play them (A)'
+        : 'Skip the builds: every slide arrives complete, so one click '
+          +'is one slide. Flip books still step (A)';
+      var lab=b.querySelector('.tk-state');
+      if(lab) lab.textContent=talkNoBuilds?'skipped':'playing';
+    }
+    var v=$('#talk-size');
+    if(v) v.textContent=Math.round(talkText*100)+'%';
+    var r=$('#talk-reset');
+    if(r) r.disabled=(talkText===1);
+  }
+  function talkBuilds(on){
+    talkNoBuilds=on?1:0;
+    /* a slide part-way through its builds must not be left showing
+       fewer things than it now claims to have */
+    if(talkNoBuilds) revealCount=0;
+    syncTalk();renderSlide();presenterSync();
+    toast(talkNoBuilds
+      ? 'Builds skipped \u2014 every slide arrives complete'
+      : 'Builds are playing again');
+  }
+  function talkZoom(mult){
+    var was=talkText;
+    talkText=Math.max(0.6,Math.min(2.2,
+      mult===0?1:Math.round(talkText*mult*100)/100));
+    if(talkText===was) return;
+    syncTalk();renderSlide();
+  }
+  (function(){
+    var btn=$('#talkbtn'),pane=$('#talkpane');
+    if(!btn||!pane) return;
+    function open(on){
+      pane.hidden=!on;
+      btn.setAttribute('aria-expanded',on?'true':'false');
+      if(on) syncTalk();
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();open(pane.hidden);});
+    var cl=$('#talkpane-close');
+    if(cl) cl.addEventListener('click',function(){open(false);});
+    var b=$('#talk-builds');
+    if(b) b.addEventListener('click',function(){
+      talkBuilds(!talkNoBuilds);});
+    var sm=$('#talk-smaller');
+    if(sm) sm.addEventListener('click',function(){talkZoom(1/1.12);});
+    var bg=$('#talk-bigger');
+    if(bg) bg.addEventListener('click',function(){talkZoom(1.12);});
+    var rs=$('#talk-reset');
+    if(rs) rs.addEventListener('click',function(){talkZoom(0);});
+    window.SemDeckTalk={open:open,builds:talkBuilds,zoom:talkZoom,
+      sync:syncTalk};
+  })();
   function advance(){
     var s=pres.slides[cur];
     /* a flip book's frames are stops in this same sequence, so the space
