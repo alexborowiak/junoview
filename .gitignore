@@ -15,10 +15,16 @@ venv/
 .coverage
 htmlcov/
 
-# Browser profiles left behind by headless-browser test runs.
-# `python tools/clean_scratch.py` removes them.
+# Browser profiles and renders left behind by headless-browser runs.
+# `python tools/clean_scratch.py` removes them. Both naming schemes are
+# listed: the CDP recipe in CLAUDE.md has used `edge-profile-<task>/`
+# inside .browser-check/ since 2026-08-26, and that directory reached
+# 3.8 GB while matching nothing here (T99).
+.browser-check/
 edgeprof*/
 chromeprof*/
+edge-profile*/
+chrome-profile*/
 
 # Local working state, not part of the project
 junoview_project.json

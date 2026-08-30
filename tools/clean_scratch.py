@@ -1,9 +1,14 @@
 """Delete scratch left behind by test runs and builds.
 
-Headless-browser tests create a throwaway profile directory per run, and those
-accumulate in the repo root -- a few hundred megabytes and several hundred
-folders after a busy week. They are gitignored, so this only ever removes
-untracked files.
+Headless-browser runs create a throwaway profile directory each, plus the
+multi-megabyte page renders they were driving. They accumulate in the repo
+root and in `.browser-check/` -- gigabytes and several hundred folders after
+a busy week, which on a OneDrive checkout is also sync traffic. They are
+gitignored, so this only ever removes untracked files.
+
+Keep the patterns below in step with .gitignore. A profile directory that
+one of them knows about and the other does not is invisible to whichever
+you happen to ask; tests/test_repo_hygiene.py holds them together.
 
     python tools/clean_scratch.py          # show what would go
     python tools/clean_scratch.py --yes    # actually delete
@@ -18,7 +23,14 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 
-DIR_PATTERNS = ["edgeprof*", "chromeprof*", "__pycache__",
+# Two generations of browser scratch. The older runs dropped
+# `edgeprof<n>/` in the repo root; the CDP recipe in CLAUDE.md puts
+# `edge-profile-<task>/` and its page renders inside `.browser-check/`.
+# Only the first was listed, so this tool reported ~10 MB while 3.8 GB
+# sat beside it (T99). The container is enough: the redundancy filter
+# below drops anything nested inside an already-doomed directory.
+DIR_PATTERNS = [".browser-check", "edgeprof*", "chromeprof*",
+                "edge-profile*", "chrome-profile*", "__pycache__",
                 ".pytest_cache", ".ruff_cache", "*.egg-info"]
 FILE_PATTERNS = ["scratch_*.html", "*_spliced.html"]
 

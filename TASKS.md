@@ -1849,7 +1849,7 @@ worst-first.
   cannot re-stale it. Note `00-page.js:2` carries a count too, and that
   one moves `EXPECTED_MD5`.
 
-- [ ] **T99 · S — 3.8 GB of browser scratch that no tool can see.**
+- [x] **T99 · S — 3.8 GB of browser scratch that no tool can see.**
   *Verified CONFIRMED by running the cleaner.* `.browser-check/` is one
   of only two untracked paths, holds nine persistent Edge profiles and
   fourteen 3 MB render snapshots, and is matched by nothing:
