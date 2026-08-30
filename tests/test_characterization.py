@@ -554,8 +554,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # kinds; the deck hands over ent.s.notes and the toast says how many slides
 # carried them. A deck with no notes produces exactly the bytes it did
 # before -- none of the new parts is written unless something needs it.
-EXPECTED_MD5 = "315b11423405202aa52e2861cc0f1a40"
-EXPECTED_BYTES = 3256392
+# Moved 2026-08-30 for T109: a placed cell showing a TABLE now scrapes into
+# a real PowerPoint table instead of being counted as unconvertible --
+# pptx.js's table builder already tolerated the shape, and grid:1 is what
+# keeps the rules. And the export names what it will cost BEFORE writing the
+# file: pptxLosses runs the same pptxItems enumeration dry, so it can never
+# disagree with the export, and asks only when something really will be
+# lost, and the post-export toast stops sending people to the PDF for a
+# table. deck.js only.
+EXPECTED_MD5 = "4dfffa4c1f1ebe8e4d71e9bb9db9eb57"
+EXPECTED_BYTES = 3260532
 
 
 def _render_example() -> str:

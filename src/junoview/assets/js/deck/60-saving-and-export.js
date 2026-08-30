@@ -1479,10 +1479,31 @@
           return;
         }
         /* no figure to lift — but prose and code ARE just text, and a text
-           box beats an empty slide. A table or a rich repr is neither: its
-           meaning is in a layout PowerPoint cannot rebuild, so it is
-           reported instead of being flattened into gibberish. */
-        var isTable=!!(node&&node.querySelector('table'));
+           box beats an empty slide. A rich repr is neither: its meaning
+           is in a layout PowerPoint cannot rebuild, so it is reported
+           instead of being flattened into gibberish. A TABLE is the
+           exception, and used to be counted with them: pptx.js has had a
+           real table builder since the deck's own table kind, and it
+           already tolerates the shape a scrape produces — a missing
+           `cols` falls back to an equal split and a short row yields ''
+           per cell. So the meaning survives, editable, and the biggest
+           single entry in the "could not convert" tally goes with it
+           (T109). */
+        var tbl=node&&node.querySelector('table');
+        var isTable=!!tbl;
+        if(isTable){
+          var rows=scrapeTable(tbl);
+          if(rows.length){
+            items.push({t:'table',x:box.x,y:box.y,w:box.w,h:box.h,
+              rot:a.rot,op:a.op,rows:rows,
+              /* grid:1 or the rules vanish and a scraped table arrives
+                 as loose text in a box */
+              thead:!!tbl.querySelector('thead th, thead td'),grid:1,
+              sizePct:1.6,color:tokVal(a.txcol)||ink,
+              name:(it&&it.title)||'Table'});
+            return;
+          }
+        }
         /* a <pre> means the frame IS code; a bare inline <code> is just
            prose with a code span in it, and setting the whole note in
            monospace for one `groupby(...)` reads as a bug */
@@ -1500,6 +1521,33 @@
       }
     });
     return items;
+  }
+  /* A RENDERED TABLE, back into rows of strings. Deliberately the
+     visible text and nothing else: colspans, nested markup and the
+     pandas index are all layout, and a scrape that tried to keep them
+     would produce a table that is wrong rather than plain. The cap is
+     what PowerPoint stays usable at; past it the frame is better as a
+     picture, and says so. */
+  var SCRAPE_ROWS=60, SCRAPE_COLS=20;
+  function scrapeTable(tbl){
+    var out=[],n=0;
+    var trs=tbl.querySelectorAll('tr');
+    for(var i=0;i<trs.length&&out.length<SCRAPE_ROWS;i++){
+      var cells=trs[i].querySelectorAll('th,td');
+      if(!cells.length) continue;
+      var row=[];
+      for(var j=0;j<cells.length&&j<SCRAPE_COLS;j++)
+        row.push((cells[j].textContent||'').trim());
+      if(row.join('')==='') continue;
+      n=Math.max(n,row.length);
+      out.push(row);
+    }
+    /* tableShape reads the column count off row 0, so a header shorter
+       than its body would truncate every row under it */
+    return out.map(function(r){
+      while(r.length<n) r.push('');
+      return r;
+    });
   }
   /* EVERY ORIGINAL THIS EXPORT WILL NEED, resolved before the build.
      JunoPptx.build is synchronous and pptxItems with it, so the
@@ -1527,11 +1575,52 @@
   function exportDeckPptx(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
+    /* what this will cost, BEFORE the file is in the downloads folder
+       (T109). Silent when there is nothing to lose. */
+    if(!pptxConfirmLosses()) return;
     /* a .pptx leaves this machine and is re-scaled by whoever opens it,
        so it is one of the two consumers that most wants the full bytes —
        and it was embedding a.src, which is the shrunk display copy
        (2026-08-26 audit, T58) */
     return pptxOriginals().then(pptxBuildAndSave);
+  }
+  /* WHAT THIS EXPORT WILL COST, said before it happens. The tally
+     already existed and was read out in a toast AFTERWARDS, which is
+     the wrong end: by then the file is in the downloads folder and the
+     choice — export the PDF instead — has been made for you. This runs
+     the same enumeration dry and, only when something really will be
+     lost, asks. Nothing to lose means no dialog, so the ordinary export
+     is still one click (T109). */
+  function pptxLosses(){
+    var note={skipped:0,cropped:0,maths:0,orig:{}};
+    var lost=[];
+    outputSlides().forEach(function(ent){
+      note.frame=ent.f;
+      pptxItems(ent.s,note,'#ffffff',null);
+      note.frame=null;
+    });
+    if(note.skipped) lost.push(note.skipped+' placed cell'
+      +(note.skipped===1?'':'s')+' that PowerPoint has no shape for');
+    if(note.maths) lost.push(note.maths+' equation'
+      +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
+      +'arrive as plain characters');
+    if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
+      +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
+      +'is not');
+    var builds=0,links=0;
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){if(a&&a.anim) builds++;});
+    });
+    if(builds) lost.push(builds+' object build'
+      +(builds===1?'':'s')+' — the objects arrive, the timing does not');
+    return lost;
+  }
+  function pptxConfirmLosses(){
+    var lost=pptxLosses();
+    if(!lost.length) return true;
+    return confirm('Export to PowerPoint?\n\nEverything else comes '
+      +'across, but this will not:\n\n\u2022 '+lost.join('\n\u2022 ')
+      +'\n\nExport PDF keeps all of it exactly as you see it.');
   }
   function pptxBuildAndSave(orig){
     var pg=pageOf(),note={skipped:0,cropped:0,maths:0,orig:orig||{}};
@@ -1573,9 +1662,11 @@
       return e.s&&e.s.notes&&e.s.notes.trim();}).length;
     if(noted) msg+='. Speaker notes came across on '+noted+' slide'
       +(noted===1?'':'s');
+    /* tables convert now (T109), so naming them here would send
+       people to the PDF for something that already worked */
     if(note.skipped) msg+='. '+note.skipped+' cell'
-      +(note.skipped===1?'':'s')+' could not convert (code or a table — '
-      +'use Export PDF for those)';
+      +(note.skipped===1?'':'s')+' could not convert (a rich output with '
+      +'no picture and no text — use Export PDF for those)';
     if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
       +(note.cropped===1?'':'s')+' not carried (PowerPoint has no '
       +'freehand mask \u2014 the trim is, the outline is not)';

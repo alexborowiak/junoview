@@ -2009,7 +2009,7 @@ worst-first.
   largest single loss a real user meets, because a talk without its notes
   is not a talk.
 
-- [ ] **T109 · S — Say what will be lost before the export, not after.**
+- [x] **T109 · S — Say what will be lost before the export, not after.**
   *Verified CONFIRMED.* `pptxItems` already computes the `note` tally;
   running the map dry into a dialog before the download is the seam. And
   `help.html:564-570` is honest about tables, crops and equations while

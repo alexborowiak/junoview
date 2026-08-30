@@ -80,7 +80,11 @@ def test_what_cannot_convert_is_reported_not_silently_dropped(out):
     other direction.
     """
     assert "note.skipped++" in out and "if(a.crop&&a.crop.path)" in out
-    assert "could not convert (code or a table" in out
+    # not "code or a table" any more: code has always come across as
+    # text and tables do since T109, so the message names what is
+    # actually left
+    assert "could not convert (a rich output with " in out
+    assert "no picture and no text" in out
     assert "skipped:note.skipped+out.skipped" in out
     assert "hand-drawn crop" in out and "not carried" in out
 
@@ -186,7 +190,9 @@ def test_anchored_boxes_export_at_their_page_position(out):
     items = out[out.index("function pptxItems(s,note,ink,layer){"):
                 out.index("function exportDeckPptx(){")]
     assert "var box=(a.k==='arrow')?null:pptxBox(a,false);" in items
-    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 7
+    # every push resolves the box once, at this boundary. 8 since T109
+    # added the scraped-notebook-table push beside the other seven.
+    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 8
     assert "x:a.x,y:a.y" not in items
 
 
@@ -249,3 +255,46 @@ def test_the_flattening_vocabulary_is_the_palette_the_app_offers(out):
     # the space after a command word is LaTeX's delimiter, and is only
     # eaten when that is the only job it was doing
     assert "if(/^ [A-Za-z0-9]/.test(rest)) rest=rest.slice(1);" in out
+
+
+def test_a_notebook_table_becomes_a_real_powerpoint_table(out):
+    """T109. A placed cell showing a table was counted with the rich
+    reprs and reported as unconvertible. pptx.js has had a real table
+    builder since the deck's own table kind, and it already tolerates the
+    shape a scrape produces -- a missing `cols` falls back to an equal
+    split and a short row yields '' per cell. So the meaning survives,
+    editable, and the biggest single entry in the tally goes with it.
+    """
+    assert "function scrapeTable(tbl){" in out
+    # grid:1, or the rules vanish and a scraped table arrives as loose
+    # text in a box
+    assert "thead:!!tbl.querySelector('thead th, thead td'),grid:1," in out
+    # the column count is read off row 0, so a short header would
+    # truncate every row under it
+    assert "while(r.length<n) r.push('');" in out
+    # and it is still capped: past a point the frame is better as a
+    # picture
+    assert "var SCRAPE_ROWS=60, SCRAPE_COLS=20;" in out
+
+
+def test_the_losses_are_named_before_the_file_is_written(out):
+    """T109. The tally already existed and was read out in a toast
+    AFTERWARDS, which is the wrong end -- by then the file is in the
+    downloads folder and the choice, export the PDF instead, has been
+    made for you. The same enumeration runs dry first.
+    """
+    assert "function pptxLosses(){" in out
+    assert "function pptxConfirmLosses(){" in out
+    # it runs pptxItems, so it can never disagree with what the export
+    # actually does
+    losses = out[out.index("function pptxLosses(){"):
+                 out.index("function pptxConfirmLosses(){")]
+    assert "pptxItems(ent.s,note,'#ffffff',null);" in losses
+    assert "note.skipped" in losses and "note.maths" in losses
+    assert "note.cropped" in losses and "a.anim" in losses
+    # nothing to lose means no dialog: the ordinary export stays one click
+    assert "if(!lost.length) return true;" in out
+    # and it gates the export rather than merely reporting
+    assert "if(!pptxConfirmLosses()) return;" in out
+    assert out.index("if(!pptxConfirmLosses()) return;") \
+        < out.index("return pptxOriginals().then(pptxBuildAndSave);")
