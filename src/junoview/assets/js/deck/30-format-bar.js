@@ -1725,6 +1725,23 @@
            go to IndexedDB so a crop can be exported at the resolution
            it was actually cropped from (T21) */
         var payload=shrinkImage(img,fr.result,IMG_VIEW_EDGE);
+        /* A FRAME ASKED FOR THIS ONE (T61). The object-frame menu's
+           clipboard row lands here rather than in placeImage, so the
+           waiting frame has to be honoured in both places -- and
+           takeObjInto is read once and cleared either way, so an answer
+           nobody consumed can never aim the NEXT picture at a frame the
+           user has long forgotten. */
+        var into=takeObjInto();
+        if(into){
+          into.k='image';into.src=payload;delete into.ref;
+          if(payload!==fr.result) keepOriginal(into,fr.result);
+          markDirty();setTool('select');
+          var li=stage.querySelector('.annot-layer');
+          if(li){renderAnnots(li,s);
+            selectAnnot(li,(s.annots||[]).indexOf(into));}
+          toast('Pasted into the frame');
+          return;
+        }
         var na={k:'image',x:50-w/2,y:50-h/2,w:w,h:h,src:payload};
         s.annots.push(na);
         /* the ORIGINAL, kept aside. Only worth keeping when it is

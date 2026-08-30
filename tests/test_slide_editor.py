@@ -2787,3 +2787,31 @@ def test_size_and_position_are_typeable_in_millimetres(out):
     # it follows the selection, the drag, and any committed edit
     assert "if(typeof sizePaneSync==='function') sizePaneSync();" in out
     assert out.count("if(typeof sizePaneSync==='function') sizePaneSync();") >= 3
+
+
+def test_a_new_slide_is_empty_and_the_frame_asks_what_goes_in_it(out):
+    """"New slides that have just the notebook cell ... please don't make
+    that the default. Also the notebook cells should be just 'insert
+    object', that can come from a notebook or local image or something."
+    (2026-08-29, user, T61.)
+
+    Three parts, and the third is the one that bites. emptySlide() stamps
+    nothing, so the slide SAYS it is empty and offers the door rather
+    than showing a frame nobody asked for -- and .slide-emptyhint, which
+    the stylesheet had dressed in both themes while nothing built it, is
+    finally built. The frame's own door names every source it can take, a
+    path among them. And BOTH roads a picture can arrive by honour the
+    waiting frame: the clipboard row does not go through placeImage, so a
+    single check in a single place would have left that row landing its
+    picture in the middle of the slide while the frame it promised sat
+    empty -- and the unconsumed answer still armed.
+    """
+    assert "return {layout:'blank',panes:[],annots:[]};" in out
+    assert "annots:[fullFrame(null)]" not in out
+    assert "eh.className='slide-emptyhint';" in out
+    assert "function openObjSrc(btn,idx){" in out
+    for src in ("bic('cellcard')", "bic('image')", "bic('paste')",
+                "bic('link')"):
+        assert src in out
+    # read once and cleared, at BOTH funnels a picture can arrive by
+    assert out.count("var into=takeObjInto();") == 2

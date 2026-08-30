@@ -556,6 +556,51 @@
       applyPage();
       applyZoom();   /* every mode: playback letterboxes to the page too */
       attachAnnots(slideEl,s);
+      /* AN EMPTY SLIDE SAYS SO, AND OFFERS THE DOOR (T61) --------------
+         emptySlide() no longer stamps a notebook frame, so a new slide
+         really is empty - and a bare canvas with nothing written on it
+         is the other way to get this wrong. The hint is the
+         .slide-emptyhint the stylesheet has always carried rules for
+         (in both themes); renderAnnots drops it the moment the slide
+         holds anything, so placing something never has to re-render the
+         whole slide to be rid of it.
+         HERE, and never in attachAnnots: the thumbnails, the presenter
+         previews and every export come through that one, and none of
+         them is a place to be told how to insert something. */
+      if(mode==='edit'&&s.layout!=='title'&&!(s.annots||[]).length){
+        var eh=document.createElement('p');
+        eh.className='slide-emptyhint';
+        var ehw=document.createElement('span');
+        ehw.innerHTML='<b>This slide is empty.</b><br>Insert an object '
+          +'— a figure from a notebook, a picture on this computer '
+          +'or a path — or draw Text, a Table or a Shape.<br>';
+        var ehb=document.createElement('button');
+        ehb.className='dbtn';ehb.type='button';
+        /* the hint itself is click-through so it can never eat a drag
+           on the canvas; the one button in it has to opt back in */
+        ehb.style.pointerEvents='auto';ehb.style.marginTop='10px';
+        ehb.innerHTML=bic('cellcard')+' Insert object';
+        ehb.title='A figure, table or note from a notebook, a picture '
+          +'on this computer, or a path — you pick which';
+        ehb.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          /* the frame first, then the SAME chooser an empty frame
+             opens - one menu, whichever end you come at it from. It is
+             opened on the new frame's own button because this one is
+             gone the moment refresh() rebuilds the stage. */
+          s.annots=s.annots||[];
+          s.annots.push(fullFrame(null));
+          var at=s.annots.length-1;
+          markDirty();refresh();
+          var l2=stage.querySelector('.annot-layer');
+          var host=l2&&l2.querySelector('.an-cell[data-idx="'+at+'"]');
+          openObjSrc((host&&host.querySelector('.an-cellpick'))
+            ||host||stage,at);
+        });
+        ehw.appendChild(ehb);
+        eh.appendChild(ehw);
+        slideEl.appendChild(eh);
+      }
       typeset(slideEl);
       if(mode==='edit') checkFigDpi(slideEl);
       /* the annot layer exists only now, and the rulers shade the
@@ -905,7 +950,7 @@
     if(a.name) return a.name;
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
-      return it&&it.title?it.title.slice(0,18):'Cell';}
+      return it&&it.title?it.title.slice(0,18):'Empty frame';}
     if(a.k==='image'||a.k==='flip'||a.k==='table'
        ||a.k==='arrow'||a.k==='draw') return annotLabel(a);
     return 'item';

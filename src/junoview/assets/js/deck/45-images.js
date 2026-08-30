@@ -470,7 +470,10 @@
     var m=$('#obj-src-menu');
     if(!m){
       m=document.createElement('div');
-      m.className='sh-menu obj-src-menu';m.id='obj-src-menu';
+      /* vw-menu, or the rows tile: a bare .sh-menu is the shape
+         gallery's three-column grid, which is why every worded menu in
+         this file names the class that makes it a column */
+      m.className='sh-menu vw-menu obj-src-menu';m.id='obj-src-menu';
       m.hidden=true;document.body.appendChild(m);
       /* the same outside-click close every drawn menu in the editor
          uses; there is no shared closer to call */
@@ -485,7 +488,7 @@
        like artwork nobody consumes */
     [[bic('cellcard'),'A figure from a notebook',
       'Any figure, table or note in an open notebook. This is what the '
-      +'frame always did; now it is one choice of three',
+      +'frame always did; now it is one answer among several',
       function(){objInto=-1;startPick(idx);}],
      [bic('image'),'A picture from this computer',
       'Choose an image file. Junoview keeps a link to the file where the '
@@ -493,7 +496,15 @@
       function(){objInto=idx;var b=$('#et-image'); if(b) b.click();}],
      [bic('paste'),'A picture on the clipboard',
       'Paste a screenshot or a copied image straight into this frame',
-      function(){objInto=idx;pasteObjImage();}]
+      function(){objInto=idx;pasteObjImage();}],
+     [bic('link'),'A path or a link',
+      'Any address this page can load — a file path or a URL. The '
+      +'address is what is kept, so the picture stays exactly as '
+      +'portable as the address is',
+      function(){
+        var p=prompt('Path or link to a picture:','');
+        if(!p||!p.trim()) return;
+        objInto=idx;placeImage(p.trim(),0);}]
     ].forEach(function(r){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';
@@ -523,7 +534,8 @@
         var ts=items[i].types||[];
         for(var j=0;j<ts.length;j++){
           if(ts[j].indexOf('image/')===0)
-            return items[i].getType(ts[j]).then(pasteImageFile);
+            return items[i].getType(ts[j]).then(function(b){
+              if(!pasteImageFile(b)) giveUp();});
         }
       }
       giveUp();

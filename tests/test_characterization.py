@@ -483,8 +483,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-30 for T66: Match slide is armed and pointed at the
 # thumbnails now, so the button's tooltip says so, the match menu grows
 # two rows that arm it, and the strip gains a picker look.
-EXPECTED_MD5 = "b757720cf1bc6a00ca36e82b4a6c7bec"
-EXPECTED_BYTES = 3162205
+# Moved 2026-08-30, T61 follow-up: the empty-slide hint is finally built
+# (the stylesheet had dressed it for both themes while nothing created
+# it), the object chooser gains a path row and the class that makes it a
+# column, and the clipboard road honours the waiting frame.
+EXPECTED_MD5 = "95ccfcd258d217018881b39cb5282dba"
+EXPECTED_BYTES = 3166134
 
 
 def _render_example() -> str:
