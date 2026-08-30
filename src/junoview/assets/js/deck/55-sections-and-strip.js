@@ -1668,6 +1668,9 @@
          picker — so it goes first and swallows the key */
       if(slideArm){e.preventDefault();cancelSlideMatch();return;}
       if(matchArm){e.preventDefault();cancelMatch();return;}
+      /* a lasso owns the pointer while it is being drawn, so nothing
+         else can be happening underneath it (T64) */
+      if(freeArm){e.preventDefault();endFreeCrop(false);return;}
       if(vf&&!vf.hidden) closeVFull();
       /* trim mode is the innermost state: the first Esc leaves IT,
          keeping the selection, before any tool/selection drops */

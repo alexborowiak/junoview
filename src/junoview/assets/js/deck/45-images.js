@@ -684,6 +684,104 @@
     if(l&&pres.slides[cur]){renderAnnots(l,pres.slides[cur]);paintSel(l);}
     if(on) toast('Drag the edge handles to trim. Esc to finish.');
   }
+  /* ---- FREE CROP: DRAW THE OUTLINE (T64) ------------------------------
+     A lasso over the selected picture. Points are collected in PERCENT
+     of the item's own box, which is the currency every other geometry in
+     this format uses -- so a drawn crop survives a resize, a page-size
+     change and an export without a single conversion.
+
+     It runs on an OVERLAY laid over the annot layer rather than through
+     the canvas mousedown handler: that handler is the gatekeeper for
+     selection, marquee, resize, rotate, group entry and eight tools, and
+     a tenth mode inside it would be the tenth reason it is hard to
+     reason about. The overlay wants the pointer and nothing else does.
+
+     Douglas-Peucker would be the tidy way to thin the points; a fixed
+     minimum spacing is two lines and is indistinguishable at the sizes a
+     clip-path is drawn at, so that is what this does. */
+  var freeArm=null;
+  function armFreeCrop(){
+    var s=pres.slides[cur];
+    var idx=(typeof selAnnot==='number')?selAnnot:null;
+    var a=(idx!=null)&&(s&&s.annots||[])[idx];
+    if(!a||(a.k!=='image'&&a.k!=='cell')){
+      toast('Select a picture or a figure first');
+      return;
+    }
+    var layer=stage.querySelector('.annot-layer');
+    var host=layer&&layer.querySelector('.an-item[data-idx="'+idx+'"]');
+    if(!layer||!host){toast('Select a picture or a figure first');return;}
+    if(freeArm) endFreeCrop(false);
+    var ov=document.createElement('div');
+    ov.className='crop-lasso';
+    var svg=document.createElementNS(SVGNS,'svg');
+    svg.setAttribute('class','cl-ink');
+    svg.setAttribute('preserveAspectRatio','none');
+    svg.setAttribute('viewBox','0 0 100 100');
+    var path=document.createElementNS(SVGNS,'polygon');
+    path.setAttribute('class','cl-poly');
+    svg.appendChild(path);ov.appendChild(svg);
+    var hint=document.createElement('div');
+    hint.className='cl-hint';
+    hint.textContent='Drag around what you want to keep \u2014 Esc to '
+      +'stop';
+    ov.appendChild(hint);
+    layer.appendChild(ov);
+    freeArm={idx:idx,ov:ov,poly:path,pts:[],host:host,layer:layer};
+    var box=host.getBoundingClientRect();
+    function at(ev){
+      return [((ev.clientX-box.left)/(box.width||1))*100,
+              ((ev.clientY-box.top)/(box.height||1))*100];
+    }
+    function push(p){
+      var pts=freeArm.pts,last=pts[pts.length-1];
+      if(last&&Math.abs(last[0]-p[0])<1.2&&Math.abs(last[1]-p[1])<1.2)
+        return;
+      pts.push([Math.max(-5,Math.min(105,p[0])),
+                Math.max(-5,Math.min(105,p[1]))]);
+      freeArm.poly.setAttribute('points',pts.map(function(q){
+        return q[0].toFixed(2)+','+q[1].toFixed(2);}).join(' '));
+    }
+    ov.addEventListener('pointerdown',function(ev){
+      ev.preventDefault();ev.stopPropagation();
+      box=host.getBoundingClientRect();
+      freeArm.pts=[];freeArm.drawing=1;
+      try{ov.setPointerCapture(ev.pointerId);}catch(e){}
+      push(at(ev));
+    });
+    ov.addEventListener('pointermove',function(ev){
+      if(!freeArm||!freeArm.drawing) return;
+      ev.preventDefault();push(at(ev));
+    });
+    ov.addEventListener('pointerup',function(ev){
+      if(!freeArm||!freeArm.drawing) return;
+      ev.preventDefault();ev.stopPropagation();
+      freeArm.drawing=0;
+      endFreeCrop(true);
+    });
+    toast('Drag around the part of the picture you want to keep');
+  }
+  function endFreeCrop(commit){
+    if(!freeArm) return;
+    var f=freeArm; freeArm=null;
+    if(f.ov&&f.ov.parentNode) f.ov.parentNode.removeChild(f.ov);
+    if(!commit) return;
+    if(f.pts.length<3){
+      toast('That outline was too small to crop with \u2014 nothing '
+        +'changed');
+      return;
+    }
+    var s=pres.slides[cur],a=(s&&s.annots||[])[f.idx];
+    if(!a) return;
+    a.crop=a.crop||{};
+    a.crop.path=f.pts.map(function(p){
+      return [Math.round(p[0]*100)/100,Math.round(p[1]*100)/100];});
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,f.idx);}
+    toast('Cropped to your outline \u2014 Ctrl+Z undoes it, and Reset '
+      +'in the Crop menu clears it');
+  }
   function mkCropHandles(host,layer,s2,idx){
     var a=s2.annots[idx]; if(!a) return;
     ['t','r','b','l'].forEach(function(side){
@@ -732,7 +830,8 @@
       host.appendChild(h);
     });
   }
-  wireFloatDropdown('fmt-cropwrap','fmt-crop','fmt-crop-menu',
+  /* ...on the CARET, not on the button: the button is the trim now */
+  wireFloatDropdown('fmt-cropwrap','fmt-crop-caret','fmt-crop-menu',
     CROP_SHAPES,'shape',function(shape){
       fmtApply(function(a){
         a.crop=a.crop||{};
@@ -747,17 +846,32 @@
      the crop menu, live on the selection: trimming whitespace off a
      figure is the single most common poster edit. ---- */
   (function(){
-    var menu=$('#fmt-crop-menu'),btn=$('#fmt-crop');
+    var menu=$('#fmt-crop-menu'),btn=$('#fmt-crop-caret');
     if(!menu||!btn) return;
-    var tm=document.createElement('button');tm.type='button';
-    tm.className='ci-trim';
-    tm.innerHTML=bic('crop')+' Trim by dragging the edges';
-    tm.addEventListener('click',function(e){
+    /* the button itself arms the trim -- the row that used to say so is
+       gone from the menu, because a menu row for what the button beside
+       it already does is a second answer to one question (T64) */
+    var cb=$('#fmt-crop');
+    if(cb) cb.addEventListener('click',function(e){
       e.stopPropagation();
       menu.hidden=true;btn.setAttribute('aria-expanded','false');
-      setCropMode(true);
+      setCropMode(!cropMode);
     });
-    menu.insertBefore(tm,menu.firstChild);
+    /* DRAW THE OUTLINE YOURSELF. "There is no free crop as well where
+       you can just draw a shape" -- there was not, and the shape
+       gallery is no substitute for one: nine presets cannot follow the
+       edge of a coastline or a brain scan. */
+    var fc=document.createElement('button');fc.type='button';
+    fc.className='ci-trim';
+    fc.innerHTML=bic('pen')+' Draw the crop yourself';
+    fc.title='Drag around the part you want to keep. Everything outside '
+      +'the outline is hidden; the picture itself is untouched';
+    fc.addEventListener('click',function(e){
+      e.stopPropagation();
+      menu.hidden=true;btn.setAttribute('aria-expanded','false');
+      armFreeCrop();
+    });
+    menu.insertBefore(fc,menu.firstChild);
     var row=document.createElement('div');row.className='crop-inset';
     var lab=document.createElement('span');lab.className='ci-lab';
     lab.textContent='Trim edges %';row.appendChild(lab);
@@ -786,14 +900,18 @@
     });
     var rs=document.createElement('button');rs.type='button';
     rs.className='ci-reset';rs.textContent='Reset';
-    rs.title='Clear the trim';
+    /* ALL OF IT. It used to clear the trim and leave the shape, so
+       pressing Reset on a star-cropped picture left it star-cropped --
+       a button named for undoing everything that undid two thirds of it
+       (T64). The picture is never altered by any of this, so there is
+       nothing to lose by putting it all back. */
+    rs.title='Clear every crop on this picture — the trim, the shape '
+      +'and any outline you drew';
     rs.addEventListener('click',function(e){
       e.stopPropagation();
       SIDES.forEach(function(p){inputs[p[0]].value='';});
       fmtApply(function(a){
-        if(!a.crop) return;
-        delete a.crop.t;delete a.crop.r;delete a.crop.b;delete a.crop.l;
-        if(!a.crop.shape) delete a.crop;
+        if(a.crop) delete a.crop;
       });
     });
     row.appendChild(rs);

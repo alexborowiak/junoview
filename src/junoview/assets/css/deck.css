@@ -3733,3 +3733,17 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   text-transform:uppercase;opacity:.75;}
 .tk-note{margin:0;font-size:10px;line-height:1.5;color:#6b8496;}
 @media print{.talkbtn,.talkpane{display:none !important;}}
+
+/* T64: the free-crop lasso. An overlay over the annot layer, so the
+   canvas mousedown handler -- gatekeeper for selection, marquee, resize,
+   rotate, group entry and eight tools -- never learns about it. */
+.crop-lasso{position:absolute;inset:0;z-index:40;cursor:crosshair;
+  background:#0006;touch-action:none;}
+.cl-ink{position:absolute;inset:0;width:100%;height:100%;
+  pointer-events:none;overflow:visible;}
+.cl-poly{fill:#ffffff1f;stroke:var(--amber,#f0a848);stroke-width:.5;
+  vector-effect:non-scaling-stroke;stroke-dasharray:3 2;}
+.cl-hint{position:absolute;left:50%;top:8px;transform:translateX(-50%);
+  background:var(--chrome-2,#16273a);color:#dce7f0;font-size:11px;
+  padding:4px 9px;border-radius:6px;white-space:nowrap;
+  pointer-events:none;box-shadow:0 6px 18px #0008;}

@@ -1371,11 +1371,26 @@
                 title="Re-read this picture from the file it came
  from. If that file has moved, the picture is left exactly as it
  is"><i data-ic="reload"></i> Refresh</button>
-              <span class="sh-drop" id="fmt-cropwrap" hidden>
-                <button class="dbtn etm" id="fmt-crop" aria-haspopup="true"
+              <!-- THE BUTTON DOES THE COMMON THING (T64, 2026-08-29,
+                   user: "the clicking button should just automatically do
+                   the trim by edges"). It used to open a submenu, so the
+                   one crop everybody wants -- pull the whitespace off the
+                   edges of a figure -- was two clicks and a read behind a
+                   gallery of stars and arrows. Now the button arms the
+                   edge handles and the caret holds the shapes, which is
+                   the split Insert > Text already uses. The wrapper keeps
+                   its id, so none of the 108 ribbon arrangements moves. -->
+              <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
+                <button class="dbtn etm" id="fmt-crop"
+                  title="Trim the edges: drag the four handles on the
+ picture. This is the crop you want nine times in ten &mdash; the caret
+ beside it holds the shapes and the free-hand crop"><i data-ic="crop"></i>
+                  Crop</button>
+                <button class="dbtn etm tx-caret" id="fmt-crop-caret"
+                  aria-label="Crop shapes" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Crop to a shape (rectangle, ellipse, star, …)">
-                  <i data-ic="crop"></i> Crop &#9662;</button>
+                  title="Crop to a shape, or draw the outline yourself"
+                  >&#9662;</button>
                 <div class="sh-menu" id="fmt-crop-menu" hidden></div>
               </span>
               <!-- "where are all the options that I said, like keep

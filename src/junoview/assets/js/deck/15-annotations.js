@@ -1106,24 +1106,62 @@
     ['ellipse','Ellipse'],['circle','Circle'],['triangle','Triangle'],
     ['diamond','Diamond'],['pentagon','Pentagon'],['hexagon','Hexagon'],
     ['star','Star'],['arrow','Arrow']];
+  /* THE SHAPES ARE POINTS NOW, not finished clip-path strings (T64,
+     2026-08-29). They were strings, and cropCss returned the string and
+     RETURNED -- so a shape crop threw the trim insets away and the shape
+     was permanently a full-bleed one stretched over the whole frame.
+     There was no way to move it, no way to size it, and the user's own
+     description of what it was for ("you put a shape over the top and it
+     crops just that part") could not be carried out at all.
+     As points, the trim box IS the shape's box: the four edge handles
+     that already exist move and size the shape over the picture, and the
+     two features stop being alternatives. */
+  var CROP_POLY={
+    triangle:[[50,0],[100,100],[0,100]],
+    diamond:[[50,0],[100,50],[50,100],[0,50]],
+    pentagon:[[50,0],[100,38],[82,100],[18,100],[0,38]],
+    hexagon:[[25,0],[75,0],[100,50],[75,100],[25,100],[0,50]],
+    star:[[50,0],[61,35],[98,35],[68,57],[79,91],[50,70],
+      [21,91],[32,57],[2,35],[39,35]],
+    arrow:[[0,30],[55,30],[55,8],[100,50],[55,92],[55,70],[0,70]]};
+  /* the icons and the shape gallery want the shape at full size; the
+     page wants it in its trim box. One table, two readers. */
   var CROP_CLIP={
     round:'inset(0 round 14%)',
     ellipse:'ellipse(50% 50% at 50% 50%)',
-    circle:'circle(50% at 50% 50%)',
-    triangle:'polygon(50% 0%,100% 100%,0% 100%)',
-    diamond:'polygon(50% 0%,100% 50%,50% 100%,0% 50%)',
-    pentagon:'polygon(50% 0%,100% 38%,82% 100%,18% 100%,0% 38%)',
-    hexagon:'polygon(25% 0%,75% 0%,100% 50%,75% 100%,25% 100%,0% 50%)',
-    star:'polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,'
-      +'21% 91%,32% 57%,2% 35%,39% 35%)',
-    arrow:'polygon(0% 30%,55% 30%,55% 8%,100% 50%,55% 92%,55% 70%,0% 70%)'};
+    circle:'circle(50% at 50% 50%)'};
+  Object.keys(CROP_POLY).forEach(function(k){
+    CROP_CLIP[k]=polyClip(CROP_POLY[k],0,0,0,0);});
+  function polyClip(pts,t,r,b,l){
+    var w=100-l-r,h=100-t-b;
+    return 'polygon('+pts.map(function(p){
+      return (l+p[0]*w/100).toFixed(2)+'% '
+        +(t+p[1]*h/100).toFixed(2)+'%';}).join(',')+')';
+  }
   function cropCss(a){
     if(!a||!a.crop) return '';
     var c=a.crop,sh=c.shape||'rect';
-    if(sh!=='rect'&&CROP_CLIP[sh]) return CROP_CLIP[sh];
-    var t=c.t||0,r=c.r||0,b=c.b||0,l=c.l||0;
-    if(t||r||b||l) return 'inset('+t+'% '+r+'% '+b+'% '+l+'%)';
-    return '';
+    var t=+c.t||0,r=+c.r||0,b=+c.b||0,l=+c.l||0;
+    /* A SHAPE YOU DREW YOURSELF wins over everything: it is already in
+       the box's own coordinates, so no trim is applied over it -- the
+       outline you drew is the crop, which is the whole point of it. */
+    if(c.path&&c.path.length>2) return polyClip(c.path,0,0,0,0);
+    if(sh==='rect')
+      return (t||r||b||l)?('inset('+t+'% '+r+'% '+b+'% '+l+'%)'):'';
+    var w=100-l-r,h=100-t-b;
+    /* trimmed past itself: show nothing rather than an inside-out shape */
+    if(w<=0||h<=0) return 'inset(50%)';
+    if(sh==='round')
+      return 'inset('+t+'% '+r+'% '+b+'% '+l+'% round '
+        +(Math.min(w,h)*0.14).toFixed(2)+'%)';
+    if(sh==='ellipse')
+      return 'ellipse('+(w/2).toFixed(2)+'% '+(h/2).toFixed(2)+'% at '
+        +(l+w/2).toFixed(2)+'% '+(t+h/2).toFixed(2)+'%)';
+    if(sh==='circle')
+      return 'circle('+(Math.min(w,h)/2).toFixed(2)+'% at '
+        +(l+w/2).toFixed(2)+'% '+(t+h/2).toFixed(2)+'%)';
+    if(CROP_POLY[sh]) return polyClip(CROP_POLY[sh],t,r,b,l);
+    return (t||r||b||l)?('inset('+t+'% '+r+'% '+b+'% '+l+'%)'):'';
   }
   function applyCrop(el,a){
     if(!el) return;

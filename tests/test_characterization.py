@@ -503,8 +503,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-30 for T88: present mode gains a Talk button and panel
 # (skip builds, text size), their keys, and a --talk-text multiplier in
 # the three places a page sizes text.
-EXPECTED_MD5 = "156e4805d0df65ae9cdd2aa6b7d962c7"
-EXPECTED_BYTES = 3205844
+# Moved 2026-08-30 for T64: Crop splits into a button that trims and a
+# caret that holds the shapes, the shapes are points drawn inside the
+# trim box, and a free-hand lasso writes a.crop.path.
+EXPECTED_MD5 = "7c4543c2c802614a07ccba81b6faa2da"
+EXPECTED_BYTES = 3215387
 
 
 def _render_example() -> str:

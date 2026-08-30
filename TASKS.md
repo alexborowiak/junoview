@@ -1322,7 +1322,7 @@ drives it — the suite is substring greps.
   Suspect `startMarquee` / `selSet` and its interaction with groups and
   locked items. Reproduce in a browser first.
 
-- [ ] **T64 · L — Crop, properly. (design first)** "The crop is still
+- [x] **T64 · L — Crop, properly. (design first)** "The crop is still
   really buggy... the clicking button should just automatically do the
   trim by edges... then the crop by shape was supposed to be you put a
   shape over the top and it crops just that part, and there is no free

@@ -2073,7 +2073,11 @@
         if(a.crop) im.classList.add('an-cropped');
         applyCrop(img,a);
         im.appendChild(img);
-        if(editing){if(cropMode&&selAnnot===i) mkCropHandles(im,layer,s,i);
+        /* a DRAWN crop has no edges to drag: the outline is the crop,
+           and four inset handles over it would claim to move something
+           they cannot (T64) */
+        if(editing){if(cropMode&&selAnnot===i&&!(a.crop&&a.crop.path))
+            mkCropHandles(im,layer,s,i);
           else {im.appendChild(mkResize(a.crop
               ?'Drag to resize the crop window'
               :'Drag to resize — the picture keeps its shape. '
