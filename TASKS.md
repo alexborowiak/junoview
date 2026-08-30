@@ -2038,7 +2038,7 @@ worst-first.
 
 ### Tests that prove behaviour rather than spelling
 
-- [ ] **T111 · S — Run `pptx.js` and read the ZIP it makes.**
+- [x] **T111 · S — Run `pptx.js` and read the ZIP it makes.**
   The hand-written OOXML writer is pinned only by string presence, and
   its correctness is binary-format correctness — a valid-looking string
   in an invalid package still opens with a repair prompt. A reader
