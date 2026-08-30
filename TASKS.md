@@ -1567,6 +1567,426 @@ drives it — the suite is substring greps.
 
 ---
 
+## 13. The 2026-08-30 external review — [reviews/](reviews/)
+
+Two reviews landed on the same commit (`23956c4`) from outside this
+backlog's own habits. `reviews/2026-08-30_19-01.md` is the bug/hygiene
+pass; `reviews/2026-08-30_19-22.md` is the missing-features pass. They
+are the first reading of this repo that asked *"what does an installed
+copy do?"* rather than *"what does the source do?"*, and that question
+found the worst defect the project has had.
+
+**How this group was written.** Every claim in both files was re-read
+against the source at `23956c4` by one reader, then handed to a second
+reader whose only job was to REFUTE it by opening the code. 126 claims
+were graded; **four died** and are recorded struck through, because
+knowing a thing is NOT broken is worth as much as knowing it is. Several
+survived but with the reviewers' *seam* corrected — those corrections are
+in the notes, and they matter: three of the fixes the reviews proposed
+would have edited dead code.
+
+**These boxes are the first unticked ones in this file since group 8.**
+Groups 9–12 are now closed and carry dated completion notes (T97). If you
+are an agent picking this up: everything above this line is the design
+record. **This group is the queue.** Take it from the top; it runs
+worst-first.
+
+### Packaging — nothing else matters until this is right
+
+- [ ] **T95 · S — A published wheel contains no deck editor at all.**
+  *Verified CONFIRMED, twice, by two readers who each built a wheel.*
+  `pyproject.toml`'s `[tool.setuptools.package-data]` declares
+  `assets/js/*.js`; a setuptools glob does not cross `/`, so none of the
+  fifteen `assets/js/deck/*.js` fragments is packaged. There is no
+  `MANIFEST.in`, no `setup.py`, no `include-package-data` — that list is
+  the whole declaration. A wheel built from `HEAD` holds **zero** deck
+  fragments, and so does the sdist, so `python -m build`'s
+  wheel-from-sdist path is broken the same way. `assets.deck_js()` then
+  raises `FileNotFoundError` on `deck/00-page.js`, from
+  `render/page.py:122`, which is unconditional — so **every render path
+  dies for an installed user**, not just the editor.
+  *Why nobody noticed:* the source checkout and the generated `docs/`
+  both read the files off disk beside the package. `pyproject.toml` was
+  last touched in `3adf3f5`, which is an ancestor of `79f6c19` — the T36
+  commit that split `deck.js` into `deck/`. T36 updated CI's JS syntax
+  check and never touched package data. CI's `build` job does install the
+  wheel and render a notebook (`ci.yml:47-68`), which is exactly the right
+  check; it has therefore been **red since T36**, 141 commits back.
+  Fix: one line. Keep the by-extension style — the comment above it
+  explains that `assets/**/*` was rejected because it sweeps up
+  `__pycache__/*.pyc`.
+
+- [ ] **T96 · S — The test that was supposed to catch T95, and could
+  never have.**
+  `tests/test_characterization.py:557`
+  `test_assets_load_from_the_installed_package` is named for this defect
+  and its docstring says "this is what fails first if package-data is
+  misdeclared" — but `pyproject.toml:76` puts `src` first on
+  `pythonpath`, so it resolves from the checkout and passes green against
+  a wheel missing all fifteen fragments. It shadows an installed wheel
+  and can never test what it claims. It also omits `widget.css`,
+  `widget-media.css` and `widget.js`.
+  Fix: a real one — glob each declared package-data pattern against
+  `src/junoview` and assert the match set covers every non-`__pycache__`
+  file under `assets/`. That catches the NEXT subdirectory as well as
+  this one, and needs no network, no `build`, and no setuptools (bare
+  `python` on this machine has none). `tomllib` is 3.11+ and CI's matrix
+  includes 3.10, so guard the import rather than assuming it.
+  Rename or delete the false-comfort test in the same commit; a test that
+  claims coverage it does not have is worse than no test.
+
+### The backlog's own honesty
+
+- [ ] **T97 · S — Groups 10–12 are closed, and every note still reads as
+  an open work order.**
+  *Verified CONFIRMED.* `grep '\[ \]' TASKS.md` returned **zero** across
+  1586 lines — nothing was open — while the header called groups 10–12
+  "the queue". Worse, 29 of the 34 checked entries kept present-tense
+  unfinished wording: T72 "Still open", T87 "Missing:", T89 "Genuinely
+  missing", T90 "branching does not", T73 "quadruple needs adding", and
+  so on. Each was closed by a real commit naming its T-number — the ticks
+  were honest, the prose around them was not. That is precisely the
+  failure the review was asked to look for: an agent cannot tell a
+  historical diagnosis from live work.
+  *The completion notes already exist.* `tests/test_characterization.py`
+  L433–520 holds a dated, per-task record for all thirty implemented
+  group 10–12 entries, written when each `EXPECTED_MD5` moved. This is
+  transcription from a repo file, not archaeology through `git log`.
+  Also in scope: the "Where the work lives" table and the "GROUP 9 IS THE
+  LIVE QUEUE" bullet, and the **duplicate `T60`** — group 9's ribbon-
+  layouts entry and group 10's empty-text-box entry share the number, and
+  `15-annotations.js:1234` cites one of them ambiguously.
+  ~~Group 9 is an offender too.~~ *REFUTED* — all 22 group-9 entries
+  already carry the dated paragraph this task adds to 10–12. Use
+  T76 (L1451–1461) as the template; it is the one entry in groups 10–12
+  that got it right, including an explicit "NOT done, deliberately".
+
+- [ ] **T98 · S — The first three files an agent is told to trust are
+  wrong about the code.**
+  *Verified CONFIRMED — six edits, one more than the review found.*
+  `ARCHITECTURE.md:66`, `AGENTS.md:37`, `AGENTS.md:66`, `CLAUDE.md:60`
+  and `TASKS.md:34` all say the deck is **fourteen** files; `DECK_PARTS`
+  has fifteen. `AGENTS.md:84-88` still describes a single
+  `assets/js/deck.js` of ~18,000 lines, which has not existed since T36 —
+  that bullet actively misinforms and contradicts the same file's
+  line 37. `CLAUDE.md:9` says "~460 tests"; there are 774. Prefer "the
+  files `DECK_PARTS` names" to a hard count, so the sixteenth fragment
+  cannot re-stale it. Note `00-page.js:2` carries a count too, and that
+  one moves `EXPECTED_MD5`.
+
+- [ ] **T99 · S — 3.8 GB of browser scratch that no tool can see.**
+  *Verified CONFIRMED by running the cleaner.* `.browser-check/` is one
+  of only two untracked paths, holds nine persistent Edge profiles and
+  fourteen 3 MB render snapshots, and is matched by nothing:
+  `.gitignore` knows `edgeprof*`/`chromeprof*`, but the directories are
+  named `edge-profile*`, and `tools/clean_scratch.py`'s `DIR_PATTERNS`
+  does not list the container either — its dry run reports 9.5 MB while
+  missing the 3.8 GB beside it. The redundancy filter at
+  `clean_scratch.py:33-36` already collapses nested matches under a
+  doomed parent, so adding the container alone is enough. Decide about
+  `reviews/` in the same pass: it is evidence, so it should be tracked,
+  not ignored.
+
+### Reach — sources that parse but cannot be opened
+
+- [ ] **T100 · M — T91's sources work everywhere except the app.**
+  *Verified CONFIRMED; a refuter enumerated the whole route table trying
+  to break it and could not.* The registry, the four producers,
+  `load_doc`'s suffix dispatch, the CLI and the Pyodide bridge all ship
+  and all work. What does not is every door into **app mode**:
+  `state.py:_list_dir` lists only directories, `.ipynb` and `.junoview`;
+  `routes.py:_resolve_nb_path` rejects every other suffix and `_open_nb`
+  calls it; `_parse_nb` demands notebook JSON and calls `parse_notebook`
+  rather than `doc_from_text`; `app.js:submitOpenInput` and the app-mode
+  drop handler filter to `.ipynb`. The same `.tex` file renders from the
+  CLI, opens in the web build, and is refused by the desktop app.
+  *Two corrections to the review's seam, both load-bearing.*
+  (1) `source_label` and `SOURCE_SUFFIXES` are **dead exports** — nothing
+  in `src/` imports them. Consuming them IS the work. (2) The copy fix
+  the review proposed is dead code: `page.html:593`'s placeholder is
+  overwritten unconditionally by `showDlg()` at `app.js:5501-5502`.
+  The live strings are `app.js:5493-5498`/`5501-5502` and the welcome
+  block at `page.html:425-427` and `435-436`.
+  *Do not widen these:* `_add_note`, `_git_state`, `_version_cards`,
+  `_versions` and `_open_version` must stay notebook-only —
+  `insert_note_cell` and `_git_show_notebook` both assume a notebook, and
+  `_store_version` globs `*.ipynb`. Guarding `routes.py:197` on the
+  suffix costs a `.tex` its version history; that is an acceptable first
+  cut but it must be **said**, not silently done, or the Versions menu is
+  just empty.
+
+- [ ] **T101 · M — A figure sitting beside a Markdown or LaTeX source
+  never displays.**
+  *Verified CONFIRMED.* `sources.py:_img_item` keeps the relative path
+  verbatim and emits it straight into `<img src>`; its own comment admits
+  the path is wrong once output is not saved beside the source.
+  `load_doc` knows the source `Path` and does not pass its parent on. In
+  app mode `routes.py` serves only `/` and `/api/list` on GET, so
+  `fig/trend.png` 404s. And `\includegraphics{fig/trend.pdf}` becomes an
+  `<img>` no browser renders — the test that "covers" it
+  (`tests/test_sources.py:56,145`) asserts string preservation, not a
+  visible figure.
+  *Three fixes, one seam:* thread an optional base directory through
+  `doc_from_text` into the four producers, following `parse_table`'s
+  existing keyword precedent; branch `_img_item` on suffix so
+  raster/SVG stays an `<img>` and PDF/EPS becomes a named link card; and
+  emit **no** `<img>` at all for an empty `src`, which is the cheapest
+  part and independent of the rest. `web_parse` has no directory to pass
+  and should pass `None` explicitly. Prefer embedding at parse time to
+  opening a static route: `routes.py:_resolve_path` is **not** a
+  containment check — it `expanduser`s and resolves, so an absolute path
+  escapes the root.
+
+- [ ] **T102 · S — The Markdown producer: front matter, tables, and more
+  than one figure.**
+  *Verified CONFIRMED.* Front matter is not stripped, so a YAML block
+  becomes body text and the title falls back to the filename —
+  `parse_latex` already does exactly this shape with `_TEX_TITLE`. Pipe
+  tables are not recognised, though `parse_table` holds an HTML emitter
+  worth factoring out. `last_fig` is a single slot, so two uncaptioned
+  images in a row lose the first. Inline `![alt](src)` and `[text](url)`
+  are not rewritten at all — that one is two `re.sub` rules in
+  `render/markdown.py:inline`, applied after the escape.
+
+- [ ] **T103 · M — The LaTeX producer: `align`, `tabular`, and `\ref`.**
+  *Verified CONFIRMED.* `_tex_plain` says outright it is not a TeX
+  engine, and that stays true — this is not a request for one.
+  Three bounded wins: `align` currently loses its alignment (emit
+  `$$\begin{aligned}…\end{aligned}$$`, two lines); `tabular` is dumped as
+  escaped raw LaTeX in a `<pre>` when the `&`/`\\` grid maps onto the
+  same emitter T102 factors out; and `\ref` can be resolved in a second
+  pass from the label→item map the parser already builds. A `.bib`
+  bibliography is out of scope — `load_doc`'s signature has no slot for a
+  second input file.
+
+### Accessibility
+
+- [ ] **T104 · M — The deck goes full-screen and the page underneath
+  stays live.**
+  *Verified CONFIRMED, with the review's own emphasis corrected.*
+  `body.deck-open` only sets `overflow:hidden` — but `deck.css:22` is
+  **not** the seam, because `inert` cannot be set from CSS and the three
+  channels CSS *can* isolate are already isolated (scroll lock, an opaque
+  fixed `z-index:100` surface, and `.apptop` dropped from the tab order).
+  The whole fix is JS: `55-sections-and-strip.js` toggles the class at
+  `:1045-1047` without making the shell inert, without a dialog boundary,
+  and without restoring focus on close, so Tab walks into a ~12,670 px
+  document nobody can see and a screen reader meets two applications at
+  once.
+  *Make it mode-aware, not "the deck is open".* In **create** mode
+  `.deck.creating` is a side panel and the notebook behind it is a live
+  drag source by design — isolating it would break a shipped gesture.
+  ~~Copy the history full-view path.~~ *REFUTED* — that `inert` belongs
+  to the embedded preview and `tests/test_version_history.py:242` pins
+  it; it is not a modal pattern.
+  A separate S-sized fix falls out of the same survey and needs none of
+  the design work: the overview panel's Escape branch is dead code
+  (its capture-phase listener wins), and `07-ribbon-layouts.js:382-389`
+  already shows the shape that works.
+
+- [ ] **T105 · M — Every image the deck draws carries `alt=""`.**
+  *Verified CONFIRMED, and smaller than the review sized it.*
+  `DECK_KEYS`/`SLIDE_KEYS`/`ANNOT_COMMON` have no alt, description,
+  decorative or reading-order field, and every rendered image is
+  therefore explicitly decorative — including the ones carrying the
+  science.
+  *The minimum honest slice is four files*, because persistence, undo,
+  copy/paste, components, print, standalone HTML and the 108-layout
+  catalogue all carry a new annotation key with **zero** code changes,
+  and `_check_annot` never consults `ANNOT_COMMON`: (1)
+  `20-notes-and-tables.js:2106,2148` inside `renderAnnots` — the single
+  load-bearing edit, since `buildSlideNode` and `buildPrintRoot` both
+  funnel through it and `exportDeckHtml` serialises the latter, so
+  present, presenter, PDF and standalone all follow; (2) the five
+  genuinely decorative thumbnails get `alt="" aria-hidden`; (3) one more
+  `reviewLints` block for images with no alt and no `decorative`;
+  (4) `ANNOT_COMMON` and the `DECK-FORMAT.md` item table — which should
+  also gain the missing `name` row while they are open.
+  PowerPoint's `descr` is two lines once the field exists.
+
+- [ ] **T106 · design first — An authorable reading order.**
+  `orderedIdx()` is a top/left visual heuristic, and six callers inherit
+  it — builds, review, matching. Overriding it means a durable key on
+  `oid`, a resolver the six share, and a decision about whether
+  `renderAnnots`' DOM order follows it (today it walks storage order).
+  Design it before adding more object kinds; retrofitting semantics after
+  charts and media multiplies the migration.
+
+### PowerPoint export
+
+- [ ] **T107 · S — Crops and transitions can survive the trip today.**
+  *Verified CONFIRMED, and both are genuinely small.* Crops: the only
+  line touching `a.crop` in 2,336 lines is `note.cropped++`; the fix is
+  `<a:srcRect>` inside `<a:blipFill>` in `pptx.js:picShape` — 1000ths of
+  a percent, and it **must** come before `<a:stretch>`. Transitions:
+  `transFor` is directly callable from the export site (both live in the
+  one concatenated IIFE, and `DECK_PARTS` orders `45-images` before
+  `60-saving-and-export`), the slide map already has `ent.i` in hand, and
+  `<p:transition>` goes after `<p:clrMapOvr>`. Map only `fade`/`move`,
+  conservatively, and keep counting whatever is still approximated.
+
+- [ ] **T108 · M — Speaker notes never reach the Notes page.**
+  *Verified CONFIRMED.* The writer emits `<p:notesSz>` and then no notes
+  slide and no notes master, and `pptxBuildAndSave` passes each slide
+  only `{bg, items}` — `sl.notes` is never handed over. Deck side is one
+  field on the spec; writer side is boilerplate that can reuse
+  `emptyTree()` and the master's own `clrMap` literal. This is the
+  largest single loss a real user meets, because a talk without its notes
+  is not a talk.
+
+- [ ] **T109 · S — Say what will be lost before the export, not after.**
+  *Verified CONFIRMED.* `pptxItems` already computes the `note` tally;
+  running the map dry into a dialog before the download is the seam. And
+  `help.html:564-570` is honest about tables, crops and equations while
+  saying nothing about notes, links, builds or transitions — so a user
+  reads a complete-looking list that is missing its biggest entries.
+  Fix the prose in the same commit, minding the four string pins in
+  `tests/test_pptx_export.py`.
+  Related and nearly free: `tableShape()` already tolerates the shape a
+  notebook-table scraper would produce (missing `cols` falls back to an
+  equal split, a short row yields `''`), so exporting notebook tables as
+  real PowerPoint tables costs no writer change — but pass `grid:1`, or
+  they arrive with no rules at all.
+
+- [ ] **T110 · design first — Equations, builds, masters and links.**
+  The four losses that are NOT small, recorded so nobody re-scopes them
+  as quick wins. Equations: `texPlain` is a single-pass string rewriter
+  with no parse tree, so OMML structure cannot be recovered from it — a
+  real fix is a second LaTeX front end. Builds: `<p:timing>` must target
+  shape ids that are an internal counter in `build()` the deck never
+  sees, and flip books explode one slide into N before export. Masters:
+  every box is written as an independent `txBox` with direct formatting,
+  so promoting titles to placeholders changes how their formatting
+  resolves. Hyperlinks: the writer half is small, but there is no `a.link`
+  on any annotation, no UI, no normaliser entry and no live-view or PDF
+  story — it is a feature (T118), not an export gap.
+
+### Tests that prove behaviour rather than spelling
+
+- [ ] **T111 · S — Run `pptx.js` and read the ZIP it makes.**
+  The hand-written OOXML writer is pinned only by string presence, and
+  its correctness is binary-format correctness — a valid-looking string
+  in an invalid package still opens with a repair prompt. A reader
+  **proved this works today**: `_js_engine()` (already in
+  `tests/test_js_contract.py`, VS Code's Electron as node) loads
+  `pptx.js` with a one-line `window` shim and returns real bytes.
+  ~30 lines: a `run_js()` helper, then stdlib `zipfile` (`testzip()`
+  checks every CRC and the central directory for free) and
+  `xml.etree` for the parts and the EMU scaling. `pptx.js:11` says
+  outright that its seam exists so it can be tested on its own.
+
+- [ ] **T112 · S — The stale-write guard has no test at all.**
+  Two windows on one project is the shape that loses work, and
+  `state.save_presentations`/`StaleWrite` and the revision check in
+  `routes.py` are covered by nothing — a reader looked hard and found
+  none. Three assertions against a `tmp_path` root: save at `rev=0`,
+  `pytest.raises(StaleWrite)` on a stale write, and the exception
+  carrying the current revision and presentations. Pure stdlib.
+
+### Strategic — decide before building
+
+These are not tasks in the sense the rest of this file uses. Each is a
+subsystem, and the first product decision is whether junoview stays a
+notebook-first presentation tool or takes on Office interchange. The
+reviews' bottom line, which this backlog accepts: **the distinctive core
+is already stronger than a small PowerPoint clone**, and indiscriminate
+feature copying is the wrong direction. Positive evidence for each
+absence is an exhaustive registry or schema, not a search that found
+nothing.
+
+- [ ] **T113 · design first — Is Excel in scope at all?** `SOURCES` has
+  no `.xlsx` and `tests/test_sources.py:225-232` asserts so deliberately;
+  the code calls CSV "the Excel half", which a static 500-row preview of
+  one delimited table is not. Adding `openpyxl` breaks two load-bearing
+  promises (stdlib-only, Pyodide parity), so the choice is between an
+  optional local-only extra, a stdlib `zipfile`+XML reader, a separate
+  `workbook/` subsystem, or saying plainly that CSV is a document source.
+  **A bytes seam has to be opened first** — every producer today takes
+  text, and `loader.py`, `web_parse` and the web loader all assume
+  `read_text`. Nothing about a workbook can start before that.
+
+- [ ] **T114 · design first — PowerPoint import.** The export vocabulary
+  is an if/else chain ending in `skipped++`, and the only importer takes
+  junoview JSON or polyglot HTML. A `.pptx` is a ZIP of related parts, so
+  it needs its own boundary rather than growing `notebook/sources.py` —
+  and it wants to become a *deck*, while every `SOURCES` producer returns
+  a `Document`. That mismatch is the design question. `pptx.js` can
+  decompress with the platform's `DecompressionStream`, so the JS route
+  is cheaper than the reviews assumed. Never claim a round trip without a
+  loss report; macro formats read-only.
+
+- [ ] **T115 · design first — Masters and inherited layouts.** `lay` is
+  documented as "the id of the template last applied; annotations hold
+  its actual geometry" — applying a layout stamps coordinates, and the
+  exporter writes exactly one blank layout and one empty master.
+  Real inheritance needs template identity, placeholder identity,
+  per-slide overrides and a migration for flattened decks. **Do not
+  rebuild what components already are:** `cmpPlaceOne`, the `cmp`/`ci`/
+  `cinst` triple, `cmpInstances` and the Detach escape all ship, and
+  reusable content is not the same thing as placeholder inheritance —
+  say which is which before writing either.
+
+- [ ] **T116 · design first — A media annotation kind.** The kinds are
+  exhaustively text, cell, rect, image, arrow, draw, table, flip. A
+  notebook's stored `<video>` output does display, which is the
+  confusing part — but there is no media item, no Insert door
+  (`accept="image/*"` in two places), no captions and no export path.
+  Storage first: images already had to move originals to IndexedDB when
+  localStorage quota blew, and recordings are far larger.
+
+- [ ] **T117 · design first — Native data-bound charts.** No chart,
+  diagram, editable path or 3D object exists; a figure exports as a
+  picture, so nobody can recolour a series in PowerPoint. The
+  notebook-first answer is not to clone the chart dialog: it is a durable
+  binding from a deck object to a notebook anchor plus a small
+  declarative chart schema that keeps provenance. That is the genuine
+  "and more". `20-notes-and-tables.js:771` already draws cloned Plotly
+  JSON specs in cell frames and is the seam a native chart would reuse.
+
+- [ ] **T118 · M — An object-level action model.** *Verified PARTIAL —
+  more ships than the review found.* The `mdHref` allowlist, the
+  `jvn-goto`/`data-slide` convention with its CSS, the shared `goto`
+  command and durable `oid`/`sid` all exist; notes already jump to a
+  slide. What is missing is assigning a URL or slide jump to any selected
+  **object**, and present-mode click behaviour. The stage handler belongs
+  beside the existing playback click delegation, which already has the
+  `closest('button,a,input,select')` bail-out to hook into. An action is
+  an allow-listed field, never arbitrary JavaScript; internal targets use
+  `sid`, not slide number.
+
+- [ ] **T119 · design first — Hosted accounts, collaboration, live
+  audience.** Explicitly cut in this file and described as future work in
+  `help.html`. Recorded here as one entry because they are one
+  dependency: identity. Nothing — comments, presence, share links, polls,
+  captions, cloud recording — can be built before a hosted service is
+  designed with auth, tenancy, retention and a security review. The local
+  app must stay localhost-only and token-guarded. Do not grow this out of
+  the file server one public route at a time.
+
+- [ ] **T120 · design first — An extension model.** A new source format
+  means editing the Python registry and its synchronised UI gates; a new
+  object kind means edits through the whole assembled IIFE, schema,
+  normaliser, clipboard, history and exporters. `SOURCES` is the closest
+  thing to a real plugin point and could take an entry-points bridge;
+  `DECK_PARTS` cannot, because the no-build-step/`file://` constraint is
+  deliberate. `deck_api.py` is the honest automation seam and should stay
+  a lossless view over JSON rather than exposing IIFE internals.
+
+- [ ] **T121 · M — The review panel: one exportable report, a timing
+  lint, and JSON out.** *Verified PARTIAL — seven checking surfaces
+  already ship*, not two: `preflight`, `reviewLints`, `standardise`,
+  `tidyFindings`, `provState`/`staleFigures`, `renderReh` and `deckDiff`.
+  ~~Provenance gaps are a missing dimension.~~ *REFUTED* — they ship;
+  only the report integration is missing. So this is consolidation, not
+  new machinery: concatenate `reviewLints` rows into the exported review
+  text; add a timing lint, which is near-trivial because `rehStats`
+  already produces the over/under verdict in the same IIFE; and add a
+  JSON download beside the Markdown one so CI can read it. Configurable
+  thresholds and suppressions need a whitelist entry in the deck-save
+  path or they will not survive a save — that half is M on its own.
+
+---
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,
