@@ -37,6 +37,7 @@ one that opens with the odd paragraph in the wrong place.
 
 from __future__ import annotations
 
+import base64
 import csv
 import html
 import io
@@ -105,22 +106,114 @@ def _html_out(payload: str, ot: str = "print") -> RenderedOutput:
     return RenderedOutput(kind="html", payload=payload, ot=ot)
 
 
-def _img_item(doc: Document, st: dict, src: str, alt: str,
-              caption: str = "") -> Item:
-    """A figure card pointing at an image the source file referred to.
+#: What a browser will draw from a data: URI, and what it will not.
+#: The second list matters as much as the first: \includegraphics{x.pdf}
+#: is the ORDINARY case in a LaTeX project, and putting it in an <img>
+#: renders a broken-image icon while the test that "covered" it only ever
+#: asserted the string survived (T101).
+_IMG_MIME = {
+    ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+    ".gif": "image/gif", ".webp": "image/webp", ".avif": "image/avif",
+    ".bmp": "image/bmp", ".svg": "image/svg+xml",
+}
+_NOT_AN_IMAGE = {".pdf": "PDF", ".eps": "EPS", ".ps": "PostScript"}
 
-    The path is kept EXACTLY as written. These files live beside their
-    figures, so a relative path is right when the page is saved beside
-    them and wrong when it is not -- and rewriting it to a guess would be
-    wrong in a way that is harder to see.
+#: Above this, keep the path rather than inline the bytes. A figure this
+#: large is a scan or a mistake, and either way doubling it into base64
+#: hurts more than a missing picture does.
+_EMBED_CAP = 20 * 1024 * 1024
+
+#: Suffix order for \includegraphics{fig/trend}, which LaTeX writes
+#: without one. pdflatex prefers PDF; the browser cannot draw it, so the
+#: raster forms are tried first and the PDF only to NAME the file.
+_GRAPHIC_TRY = (".png", ".jpg", ".jpeg", ".pdf", ".svg", ".gif", ".webp")
+
+
+def _find_asset(src: str, base: Path | None) -> Path | None:
+    """The file a source's image reference points at, or None.
+
+    ``base`` is the directory the source file was read from, and is None
+    whenever there is no filesystem to look in -- the Pyodide build, a
+    dropped file, a URL. In that case nothing resolves and the reference
+    is left exactly as written, which is the old behaviour and still the
+    right one there.
     """
+    if not src or base is None or "://" in src or src.startswith("data:"):
+        return None
+    try:
+        p = (base / src).resolve() if not Path(src).is_absolute() \
+            else Path(src).resolve()
+    except (OSError, ValueError):
+        return None
+    if p.is_file():
+        return p
+    if not p.suffix:                      # \includegraphics{fig/trend}
+        for ext in _GRAPHIC_TRY:
+            cand = p.with_suffix(ext)
+            if cand.is_file():
+                return cand
+    return None
+
+
+def _img_body(src: str, alt: str, base: Path | None) -> str:
+    """The markup for one referenced image.
+
+    Three outcomes, and the point of the task is that they are three
+    rather than one. A raster or SVG that resolves on disk is EMBEDDED,
+    so the page shows the figure wherever it is later saved -- which is
+    what every other figure in this tool already does, notebook outputs
+    included. Something a browser cannot draw says so and names the file
+    instead of drawing a broken-image icon. Anything that does not
+    resolve keeps the path exactly as written, because a relative path is
+    right when the page sits beside its figures and a guess is wrong in a
+    way that is harder to see.
+    """
+    esc_alt = html.escape(alt, quote=True)
+    if not src.strip():
+        # \begin{figure} with no \includegraphics. An <img src=""> here
+        # asks the browser to re-fetch the PAGE and draw it as an image.
+        return ('<div class="src-nofig">This figure names no image '
+                "file.</div>")
+    found = _find_asset(src, base)
+    name = html.escape(Path(src).name)
+    if found is not None:
+        kind = _NOT_AN_IMAGE.get(found.suffix.lower())
+        if kind:
+            return (f'<div class="src-nofig">{name} is a {kind} figure, '
+                    "which a browser cannot draw. It is still beside the "
+                    "document.</div>")
+        mime = _IMG_MIME.get(found.suffix.lower())
+        try:
+            size = found.stat().st_size
+        except OSError:
+            size = _EMBED_CAP + 1
+        if mime and size <= _EMBED_CAP:
+            try:
+                raw = found.read_bytes()
+            except OSError:
+                raw = b""
+            if raw:
+                b64 = base64.b64encode(raw).decode("ascii")
+                return (f'<img src="data:{mime};base64,{b64}" '
+                        f'alt="{esc_alt}" loading="lazy">')
+    elif _NOT_AN_IMAGE.get(Path(src).suffix.lower()):
+        kind = _NOT_AN_IMAGE[Path(src).suffix.lower()]
+        return (f'<div class="src-nofig">{name} is a {kind} figure, '
+                "which a browser cannot draw.</div>")
+    return (f'<img src="{html.escape(src, quote=True)}" '
+            f'alt="{esc_alt}" loading="lazy">')
+
+
+def _img_item(doc: Document, st: dict, src: str, alt: str,
+              caption: str = "", base: Path | None = None) -> Item:
+    """A figure card for an image the source file referred to."""
     iid = _slug(alt or "figure", st["used"])
-    body = (f'<img src="{html.escape(src, quote=True)}" '
-            f'alt="{html.escape(alt, quote=True)}" loading="lazy">')
+    body = _img_body(src, alt, base)
     return _add(doc, st, Item(
         kind="figure", title=alt or Path(src).stem or "Figure",
         outputs=[RenderedOutput(kind="image", payload=body,
-                                has_image=True, ot="plot", pt="image")],
+                                has_image='<img ' in body,
+                                ot="plot", pt="image")],
         caption=caption, item_id=iid, anchor=iid))
 
 
@@ -134,7 +227,8 @@ _MD_IMG_ONLY = re.compile(r"^\s*!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)"
                           r"\s*$")
 
 
-def parse_markdown(text: str, title: str | None = None) -> Document:
+def parse_markdown(text: str, title: str | None = None,
+                   base: Path | None = None) -> Document:
     """Markdown (and Quarto) into cards.
 
     A heading opens a section (``#``/``##``) or a subsection (``###`` and
@@ -209,7 +303,8 @@ def parse_markdown(text: str, title: str | None = None) -> Document:
         m = _MD_IMG_ONLY.match(line)
         if m:
             flush()
-            last_fig = _img_item(doc, st, m.group(2), m.group(1))
+            last_fig = _img_item(doc, st, m.group(2), m.group(1),
+                                 base=base)
             i += 1
             continue
 
@@ -308,7 +403,8 @@ def _tex_env_body(text: str, start: int, name: str) -> tuple[str, int]:
     return text[start:], len(text)
 
 
-def parse_latex(text: str, title: str | None = None) -> Document:
+def parse_latex(text: str, title: str | None = None,
+                base: Path | None = None) -> Document:
     """A ``.tex`` file into cards -- the Overleaf half of T91."""
     src = str(text).replace("\r\n", "\n").replace("\r", "\n")
     m = _TEX_TITLE.search(src)
@@ -355,7 +451,7 @@ def parse_latex(text: str, title: str | None = None) -> Document:
         if kind == "figure":
             g = _TEX_GRAPHIC.search(body)
             item = _img_item(doc, st, g.group(1) if g else "",
-                             cap or label or "Figure", cap)
+                             cap or label or "Figure", cap, base=base)
             if label:
                 item.item_id = _slug(label, st["used"])
                 item.anchor = item.item_id
@@ -397,7 +493,8 @@ TABLE_ROW_CAP = 500          # rows drawn; the count still tells the truth
 
 
 def parse_table(text: str, title: str | None = None,
-                delim: str | None = None) -> Document:
+                delim: str | None = None,
+                base: Path | None = None) -> Document:
     """A csv/tsv into one dataset card.
 
     The delimiter is SNIFFED and then checked against the obvious ones,
@@ -450,7 +547,12 @@ def parse_table(text: str, title: str | None = None,
 # the registry
 # ---------------------------------------------------------------------------
 
-def _from_notebook(text: str, title: str | None = None) -> Document:
+def _from_notebook(text: str, title: str | None = None,
+                   base: Path | None = None) -> Document:
+    # `base` is accepted and ignored: a notebook carries its
+    # outputs inside itself, so it has no files beside it to find.
+    # Every producer takes the same keyword so doc_from_text does
+    # not need to know which ones care.
     return parse_notebook(json.loads(text), title=title)
 
 
@@ -478,8 +580,14 @@ def source_label(name: str | Path) -> str:
 
 
 def doc_from_text(name: str | Path, text: str,
-                  title: str | None = None) -> Document:
+                  title: str | None = None,
+                  base: Path | None = None) -> Document:
     """Dispatch on the filename's suffix. Unknown suffixes read as markdown.
+
+    ``base`` is the directory the text was read from, when there is one.
+    It is what lets a figure beside the document be found and embedded
+    (T101); pass None -- the default -- for text with no home on disk,
+    which is every path through the Pyodide build.
 
     Falling back to markdown rather than refusing is deliberate: the
     files that reach this without a suffix we know are READMEs, notes and
@@ -493,4 +601,4 @@ def doc_from_text(name: str | Path, text: str,
     if producer is parse_table:
         return parse_table(text, title=title or Path(str(name)).stem,
                            delim="\t" if suffix == ".tsv" else None)
-    return producer(text, title=title)
+    return producer(text, title=title, base=base)

@@ -142,7 +142,15 @@ def test_latex_sections_and_environments_become_cards():
     assert "figure" in kinds
     assert "dataset" in kinds        # the table environment
     figs = [it for it in _items(doc) if it.kind == "figure"]
-    assert 'src="fig/trend.pdf"' in figs[0].outputs[0].payload
+    # NOT an <img src="fig/trend.pdf">. This assertion used to check the
+    # string survived, which it did -- into an <img> no browser can draw,
+    # because \includegraphics{...pdf} is the ordinary case in a LaTeX
+    # project and a PDF is not a web image (T101). The card now names the
+    # file it cannot draw.
+    body = figs[0].outputs[0].payload
+    assert "<img" not in body
+    assert "trend.pdf" in body and "PDF" in body
+    assert figs[0].outputs[0].has_image is False
     assert figs[0].caption == "The trend over the record."
 
 
@@ -278,7 +286,7 @@ def test_a_tex_file_renders_a_whole_page(tmp_path: Path):
     out = render_notebook_file(src)
     assert out.startswith("<!doctype html>")
     assert "A Warming Record" in out
-    assert "fig/trend.pdf" in out
+    assert "trend.pdf" in out                # named, not drawn (T101)
     assert "The trend over the record" in out
 
 
@@ -475,3 +483,132 @@ def test_the_doors_say_what_they_accept():
     assert "Markdown, LaTeX or csv files anywhere" in js
     assert "<b>.md</b>" in page
     assert "accept=\".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv," in page
+
+
+# ---------------------------------------------------------------------------
+# figures beside the source (T101)
+# ---------------------------------------------------------------------------
+#
+# A .md or a .tex refers to its figures by a path relative to ITSELF. The
+# producer emitted that path verbatim, so it resolved against wherever the
+# OUTPUT landed -- right only when the two sit in the same directory, and
+# a 404 in the app, where nothing serves the source's folder at all.
+
+
+def test_a_figure_beside_a_markdown_file_is_embedded(tmp_path: Path):
+    """The page shows the figure wherever it is later saved, which is
+    what every other figure in this tool already does."""
+    from junoview.notebook.loader import load_doc
+
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4"
+        "890000000a49444154789c6360000002000100ffff03000006000557bfabd400"
+        "00000049454e44ae426082")
+    (tmp_path / "fig").mkdir()
+    (tmp_path / "fig" / "trend.png").write_bytes(png)
+    (tmp_path / "notes.md").write_text(
+        "# Notes\n\n![The trend](fig/trend.png)\n\nProse.\n",
+        encoding="utf-8")
+
+    doc = load_doc(tmp_path / "notes.md")
+    fig = [it for it in _items(doc) if it.kind == "figure"][0]
+    body = fig.outputs[0].payload
+    assert body.startswith('<img src="data:image/png;base64,')
+    assert "fig/trend.png" not in body
+    assert fig.outputs[0].has_image is True
+
+
+def test_an_unresolvable_path_is_still_left_exactly_as_written(tmp_path: Path):
+    """A relative path is RIGHT when the page sits beside its figures.
+    Rewriting it to a guess would be wrong in a way that is harder to
+    see, so a reference that finds nothing is left alone."""
+    from junoview.notebook.loader import load_doc
+
+    (tmp_path / "notes.md").write_text(
+        "![A](fig/missing.png)\n", encoding="utf-8")
+    doc = load_doc(tmp_path / "notes.md")
+    body = [it for it in _items(doc) if it.kind == "figure"][0]\
+        .outputs[0].payload
+    assert 'src="fig/missing.png"' in body
+
+
+def test_with_no_directory_to_look_in_nothing_is_resolved():
+    """The Pyodide build has no filesystem, and a dropped file has no
+    home. base=None is the default for exactly that reason."""
+    doc = doc_from_text("notes.md", "![A](fig/trend.png)\n")
+    body = [it for it in _items(doc) if it.kind == "figure"][0]\
+        .outputs[0].payload
+    assert 'src="fig/trend.png"' in body
+
+
+def test_a_pdf_figure_says_so_instead_of_drawing_a_broken_icon(tmp_path):
+    r"""\includegraphics{trend.pdf} is the ordinary case in a LaTeX
+    project, and a browser will not render a PDF in an <img>."""
+    from junoview.notebook.loader import load_doc
+
+    (tmp_path / "trend.pdf").write_bytes(b"%PDF-1.4\n")
+    (tmp_path / "p.tex").write_text(
+        "\\begin{figure}\\includegraphics{trend.pdf}"
+        "\\caption{C}\\end{figure}\n", encoding="utf-8")
+    body = [it for it in _items(load_doc(tmp_path / "p.tex"))
+            if it.kind == "figure"][0].outputs[0].payload
+    assert "<img" not in body
+    assert "trend.pdf" in body and "PDF" in body
+
+
+def test_an_extensionless_graphic_finds_the_file_latex_would(tmp_path):
+    r"""LaTeX writes \includegraphics{fig/trend} with no suffix and lets
+    the engine choose. The raster forms are tried before the PDF, because
+    the PDF can only be named."""
+    from junoview.notebook.loader import load_doc
+
+    png = bytes.fromhex(
+        "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4"
+        "890000000a49444154789c6360000002000100ffff03000006000557bfabd400"
+        "00000049454e44ae426082")
+    (tmp_path / "fig").mkdir()
+    (tmp_path / "fig" / "trend.png").write_bytes(png)
+    (tmp_path / "fig" / "trend.pdf").write_bytes(b"%PDF-1.4\n")
+    (tmp_path / "p.tex").write_text(
+        "\\begin{figure}\\includegraphics{fig/trend}\\end{figure}\n",
+        encoding="utf-8")
+    body = [it for it in _items(load_doc(tmp_path / "p.tex"))
+            if it.kind == "figure"][0].outputs[0].payload
+    assert body.startswith('<img src="data:image/png;base64,')
+
+
+def test_a_figure_naming_no_file_does_not_ask_for_the_page_itself():
+    """\begin{figure} with no \\includegraphics used to emit
+    <img src="">, which asks the browser to re-fetch the PAGE and draw
+    it as an image."""
+    doc = parse_latex(
+        "\\begin{figure}\\caption{Empty}\\end{figure}\n")
+    body = [it for it in _items(doc) if it.kind == "figure"][0]\
+        .outputs[0].payload
+    assert "<img" not in body
+    assert 'src=""' not in body
+
+
+def test_an_oversized_figure_keeps_its_path_rather_than_doubling(tmp_path):
+    """Base64 is 4/3 the size. Past the cap a missing picture costs less
+    than the page it would make."""
+    from junoview.notebook import sources
+
+    big = tmp_path / "big.png"
+    big.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 64)
+    old = sources._EMBED_CAP
+    try:
+        sources._EMBED_CAP = 8
+        body = sources._img_body("big.png", "A", tmp_path)
+    finally:
+        sources._EMBED_CAP = old
+    assert 'src="big.png"' in body
+
+
+def test_a_notebook_ignores_the_directory_it_came_from(tmp_path):
+    """Every producer takes `base` so doc_from_text need not know which
+    ones care. A notebook carries its outputs inside itself."""
+    nb = '{"cells": [{"cell_type": "markdown", "id": "m", '\
+         '"source": "hi"}]}'
+    doc = doc_from_text("x.ipynb", nb, base=tmp_path)
+    assert _kinds(doc) == ["note"]

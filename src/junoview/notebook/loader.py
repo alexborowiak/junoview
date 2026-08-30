@@ -36,7 +36,13 @@ def load_doc(path: Path, title: str | None = None,
     # by SUFFIX, not by assuming JSON: a .tex or a .csv is as much a
     # source as a notebook is, and the producer table is the one place
     # that says which (T91)
-    doc = doc_from_text(path, path.read_text(encoding="utf-8"), title=title)
+    # base=path.parent: a .md or .tex refers to its figures by a path
+    # relative to ITSELF, and load_doc is the only caller that knows what
+    # that is. Without it the reference was emitted verbatim and resolved
+    # against wherever the OUTPUT landed, which is right only when the two
+    # sit in the same directory (T101).
+    doc = doc_from_text(path, path.read_text(encoding="utf-8"), title=title,
+                        base=path.parent)
     doc.source_name = path.stem
     if deck_path is None:
         # a deck saved from the browser lands next to the notebook as

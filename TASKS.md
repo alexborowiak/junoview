@@ -1890,7 +1890,7 @@ worst-first.
   cut but it must be **said**, not silently done, or the Versions menu is
   just empty.
 
-- [ ] **T101 · M — A figure sitting beside a Markdown or LaTeX source
+- [x] **T101 · M — A figure sitting beside a Markdown or LaTeX source
   never displays.**
   *Verified CONFIRMED.* `sources.py:_img_item` keeps the relative path
   verbatim and emits it straight into `<img src>`; its own comment admits
