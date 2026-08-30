@@ -1552,7 +1552,7 @@ drives it — the suite is substring greps.
   parent id on the entry, a non-linear index that `HIST_KEEP=20`'s
   head-drop cannot corrupt, and a way to show the shape.
 
-- [ ] **T91 · M — Sources beyond Jupyter. (design first)** "Something
+- [x] **T91 · M — Sources beyond Jupyter. (design first)** "Something
   for things like Overleaf, Excel etc."
   *Verified: the refresh contract really is source-agnostic.* A new
   source needs a Document producer (`parse_X` → `notebook.model.

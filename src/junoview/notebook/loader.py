@@ -1,4 +1,9 @@
-"""Getting notebooks from where they live: disk, or a URL.
+"""Getting documents from where they live: disk, or a URL.
+
+Not just notebooks any more. ``load_doc`` dispatches on the suffix
+through :mod:`junoview.notebook.sources`, so a ``.tex``, a ``.md`` or a
+``.csv`` opens exactly as a ``.ipynb`` does and everything downstream --
+cards, decks, refresh, export -- works on it unchanged (T91).
 
 GitHub ``blob`` links are rewritten to their raw form and cache-busted, because
 the raw CDN otherwise serves minutes-stale content -- long enough for someone to
@@ -18,6 +23,7 @@ from ..render.page import render_html
 from .model import Document
 from .parser import parse_notebook
 from .presentations import as_presentations, deck_json
+from .sources import doc_from_text
 
 
 def load_doc(path: Path, title: str | None = None,
@@ -27,8 +33,10 @@ def load_doc(path: Path, title: str | None = None,
     Deck priority: explicit deck_path > <notebook>.deck.json sidecar >
     embedded metadata (parse_notebook already loaded that).
     """
-    nb = json.loads(path.read_text(encoding="utf-8"))
-    doc = parse_notebook(nb, title=title)
+    # by SUFFIX, not by assuming JSON: a .tex or a .csv is as much a
+    # source as a notebook is, and the producer table is the one place
+    # that says which (T91)
+    doc = doc_from_text(path, path.read_text(encoding="utf-8"), title=title)
     doc.source_name = path.stem
     if deck_path is None:
         # a deck saved from the browser lands next to the notebook as

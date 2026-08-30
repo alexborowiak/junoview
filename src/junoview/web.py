@@ -27,6 +27,7 @@ from ._write import write_text
 from .branding import FAVICON, LOGO_SVG
 from .notebook.loader import stem_for
 from .notebook.parser import parse_notebook
+from .notebook.sources import doc_from_text
 from .render.page import render_page, render_shell
 
 # A fixed timestamp for every zip member. Without it the archive's bytes change
@@ -36,10 +37,15 @@ _ZIP_EPOCH = (1980, 1, 1, 0, 0, 0)
 
 
 def web_parse(name: str, text: str, taken_json: str = "[]") -> str:
-    """Bridge for the Pyodide build: notebook JSON text -> shell HTML."""
-    nb = json.loads(text)
-    doc = parse_notebook(nb)
-    base = re.sub(r"\.ipynb$", "", str(name), flags=re.I) or "notebook"
+    """Bridge for the Pyodide build: one dropped file's text -> shell HTML.
+
+    Dispatches through the same producer table the CLI uses, so a
+    ``.tex``, a ``.md`` or a ``.csv`` dropped on the web build opens the
+    way it does locally -- with no JavaScript parser to keep in step
+    (T91).
+    """
+    doc = doc_from_text(name, text)
+    base = re.sub(r"\.[A-Za-z0-9]+$", "", str(name)) or "notebook"
     doc.source_name = stem_for(Path(base + ".ipynb"),
                                 set(json.loads(taken_json)))
     return render_shell(doc)

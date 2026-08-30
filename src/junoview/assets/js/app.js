@@ -5320,11 +5320,17 @@
       alert('Could not open '+name+': '+((e&&e.message)||e));
     }
   }
+  /* WHAT THIS TOOL CAN OPEN (T91). Kept in step with SOURCES in
+     notebook/sources.py, which is where the parsing actually happens --
+     this list only decides which dropped files are worth handing over.
+     A file that gets past it and cannot be parsed says so; a file that
+     never gets here silently does nothing, which is the worse failure. */
+  var SRC_RE=/\.(ipynb|md|markdown|qmd|tex|latex|csv|tsv)$/i;
   function webOpenFiles(files){
     Array.prototype.slice.call(files||[]).forEach(function(f){
       if(isDeckPath(f.name)){
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
-      } else if(/\.ipynb$/i.test(f.name)){
+      } else if(SRC_RE.test(f.name)){
         f.text().then(function(txt){webParseText(f.name,txt);});
       } else if(/\.html?$/i.test(f.name)){
         /* a renamed save is still worth a try — the importer says
@@ -5486,13 +5492,13 @@
       if(dlgPath) dlgPath.textContent='Open notebooks';
       if(inp) inp.placeholder='…or paste a notebook URL '
         +'(GitHub links work) and hit Open';
-      dlgList.innerHTML='<div class="odlg-empty">Drop .ipynb files '
+      dlgList.innerHTML='<div class="odlg-empty">Drop notebooks '
         +'anywhere in the window, use &#8220;Choose files&#8230;&#8221;, '
         +'or paste a URL below.<br><br>Everything runs in your browser '
         +'&#8212; notebooks are never uploaded anywhere.</div>';
       return;
     }
-    if(inp) inp.placeholder='…or paste a folder, .ipynb path or URL '
+    if(inp) inp.placeholder='…or paste a folder, file path or URL '
       +'and hit Open';
     listDir(dlgDir||APP.root||'');
   }
@@ -5741,7 +5747,8 @@
       var v=inp.value.trim(); if(!v) return;
       if(isWeb){
         if(isUrl(v)) webOpenUrl(v,false);
-        else alert('Paste an http(s) link to a .ipynb file, or use '
+        else alert('Paste an http(s) link to a notebook, .md, .tex '
+          +'or .csv file, or use '
           +'Choose files / drag-and-drop.');
         return;
       }

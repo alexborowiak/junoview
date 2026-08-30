@@ -506,8 +506,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-30 for T64: Crop splits into a button that trims and a
 # caret that holds the shapes, the shapes are points drawn inside the
 # trim box, and a free-hand lasso writes a.crop.path.
-EXPECTED_MD5 = "7c4543c2c802614a07ccba81b6faa2da"
-EXPECTED_BYTES = 3215387
+# Moved 2026-08-30 for T91: app.js now accepts .md/.tex/.csv and friends
+# in its drop handler, and three strings that said "ipynb" say what the
+# tool can actually open.
+EXPECTED_MD5 = "375a01f0f36a0b0b46487fe07fe4f6e4"
+EXPECTED_BYTES = 3215831
 
 
 def _render_example() -> str:
