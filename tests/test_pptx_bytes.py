@@ -376,3 +376,141 @@ def test_a_slide_with_no_transition_key_at_all_is_unchanged():
                           "slides": [{"bg": "#fff", "items": []}]})
     assert "<p:transition" not in zipfile.ZipFile(io.BytesIO(data))\
         .read("ppt/slides/slide1.xml").decode("utf-8")
+
+
+# ---------------------------------------------------------------------------
+# speaker notes (T108)
+# ---------------------------------------------------------------------------
+#
+# The writer emitted <p:notesSz> and then no notes master and no notes
+# slides, so a talk exported without the half that is the talk. A notes
+# page needs parts in three places and relationships in both directions,
+# and every one of those is a silent failure on its own -- which is
+# exactly what a substring cannot see and a package walk can.
+
+
+def _with_notes(*notes):
+    return build_pptx({
+        "title": "n", "widthMm": W_MM, "heightMm": H_MM,
+        "slides": [{"bg": "#fff", "notes": n, "items": [
+            {"t": "text", "x": 1, "y": 1, "w": 90, "text": "body"}]}
+            for n in notes]})
+
+
+def test_a_slide_with_notes_gets_a_notes_page():
+    data, _ = _with_notes("Remember the caveat about 1998.")
+    z = zipfile.ZipFile(io.BytesIO(data))
+    assert z.testzip() is None
+    assert "ppt/notesSlides/notesSlide1.xml" in z.namelist()
+    assert "ppt/notesMasters/notesMaster1.xml" in z.namelist()
+    notes = ET.fromstring(z.read("ppt/notesSlides/notesSlide1.xml"))
+    assert notes.tag == q("p", "notes")
+    texts = [t.text for t in notes.iter(q("a", "t"))]
+    assert "Remember the caveat about 1998." in texts
+
+
+def test_the_notes_placeholder_is_the_body_placeholder():
+    """type="body" idx="1" is what makes it THE notes text rather than a
+    stray text box sitting on the notes page."""
+    data, _ = _with_notes("hello")
+    z = zipfile.ZipFile(io.BytesIO(data))
+    notes = ET.fromstring(z.read("ppt/notesSlides/notesSlide1.xml"))
+    ph = next(notes.iter(q("p", "ph")))
+    assert ph.get("type") == "body" and ph.get("idx") == "1"
+
+
+def test_the_relationship_runs_in_both_directions():
+    """The slide points at its notes page and the notes page points back
+    at the slide. One direction alone is a notes page PowerPoint never
+    opens."""
+    data, _ = _with_notes("hello")
+    z = zipfile.ZipFile(io.BytesIO(data))
+
+    slide_rels = ET.fromstring(z.read("ppt/slides/_rels/slide1.xml.rels"))
+    targets = [r.get("Target") for r in slide_rels.findall("r:Relationship", NS)]
+    assert "../notesSlides/notesSlide1.xml" in targets
+
+    notes_rels = ET.fromstring(
+        z.read("ppt/notesSlides/_rels/notesSlide1.xml.rels"))
+    back = [r.get("Target") for r in notes_rels.findall("r:Relationship", NS)]
+    assert "../slides/slide1.xml" in back
+    assert "../notesMasters/notesMaster1.xml" in back
+
+
+def test_the_presentation_declares_the_notes_master_in_schema_order():
+    """CT_Presentation is a sequence: sldMasterIdLst, notesMasterIdLst,
+    then sldIdLst. Out of order is a repair prompt, not a warning."""
+    data, _ = _with_notes("hello")
+    xml = zipfile.ZipFile(io.BytesIO(data)).read("ppt/presentation.xml")\
+        .decode("utf-8")
+    assert xml.index("<p:sldMasterIdLst") < xml.index("<p:notesMasterIdLst")
+    assert xml.index("<p:notesMasterIdLst") < xml.index("<p:sldIdLst")
+
+
+def test_the_new_parts_are_declared_and_every_link_resolves():
+    """The same two package-wide invariants the rest of this file
+    checks, re-run over a deck that has notes -- because the parts, the
+    rels, the content types and presentation.xml are written in four
+    places and all four have to agree."""
+    data, _ = _with_notes("one", "", "three")
+    z = zipfile.ZipFile(io.BytesIO(data))
+    names = set(z.namelist())
+
+    root = ET.fromstring(z.read("[Content_Types].xml"))
+    overrides = {o.get("PartName", "").lstrip("/")
+                 for o in root.findall("ct:Override", NS)}
+    assert "ppt/notesSlides/notesSlide1.xml" in overrides
+    assert "ppt/notesSlides/notesSlide3.xml" in overrides
+    assert "ppt/notesMasters/notesMaster1.xml" in overrides
+    for part in overrides:
+        assert part in names, part
+
+    import posixpath as pp
+    for rels in [n for n in names if n.endswith(".rels")]:
+        base = pp.dirname(pp.dirname(rels))
+        for rel in ET.fromstring(z.read(rels)).findall("r:Relationship", NS):
+            resolved = pp.normpath(pp.join(base, rel.get("Target", "")))
+            assert resolved in names, f"{rels} -> {resolved}"
+
+
+def test_only_the_slides_with_notes_get_a_part():
+    """A notes page for every slide would put an empty Notes page under
+    each one, which is worse than none."""
+    data, _ = _with_notes("one", "", "three")
+    names = zipfile.ZipFile(io.BytesIO(data)).namelist()
+    assert "ppt/notesSlides/notesSlide1.xml" in names
+    assert "ppt/notesSlides/notesSlide2.xml" not in names
+    assert "ppt/notesSlides/notesSlide3.xml" in names
+
+
+def test_whitespace_only_notes_do_not_count_as_notes():
+    data, _ = _with_notes("   \n\t ")
+    names = zipfile.ZipFile(io.BytesIO(data)).namelist()
+    assert not [n for n in names if "notesSlide" in n]
+    assert not [n for n in names if "notesMaster" in n]
+
+
+def test_a_deck_with_no_notes_is_byte_for_byte_what_it_was():
+    """The notes master appears only when something needs it, so every
+    existing export is unchanged -- which is the cheapest possible proof
+    that this did not disturb anything."""
+    plain = {"title": "n", "widthMm": W_MM, "heightMm": H_MM,
+             "slides": [{"bg": "#fff", "items": [
+                 {"t": "text", "x": 1, "y": 1, "w": 90, "text": "body"}]}]}
+    a, _ = build_pptx(plain)
+    b, _ = build_pptx({**plain, "slides": [
+        {**plain["slides"][0], "notes": ""}]})
+    assert a == b
+    assert "<p:notesMasterIdLst" not in zipfile.ZipFile(io.BytesIO(a))\
+        .read("ppt/presentation.xml").decode("utf-8")
+
+
+def test_notes_keep_their_line_breaks_and_escape_their_text():
+    """A paragraph per line, because the Notes page is where people put
+    a list -- and an ampersand in a note must not corrupt the part."""
+    data, _ = _with_notes("first line\nsecond & third\nlast")
+    z = zipfile.ZipFile(io.BytesIO(data))
+    notes = ET.fromstring(z.read("ppt/notesSlides/notesSlide1.xml"))
+    texts = [t.text for t in notes.iter(q("a", "t"))]
+    assert texts == ["first line", "second & third", "last"]
+    assert len(list(notes.iter(q("a", "p")))) == 3

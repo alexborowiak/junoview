@@ -1554,8 +1554,13 @@
            section's -- the same answer present mode uses. ent.i is the
            SOURCE slide index, which matters because a flip book
            explodes one slide into several output slides. */
+        /* sl.notes is what the Notes pane writes and the presenter
+           console reads; PowerPoint's Notes page is plain text, so it
+           goes across as it is. A flip book's extra output slides share
+           the source slide's notes, which is the same thing the
+           presenter sees on each of them. */
         return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its,
-          trans:transFor(ent.i)};
+          trans:transFor(ent.i),notes:ent.s.notes||''};
       }),
     });
     var a=document.createElement('a');
@@ -1564,6 +1569,10 @@
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
     var msg='PowerPoint saved — text stays editable'+outputNote();
+    var noted=outputSlides().filter(function(e){
+      return e.s&&e.s.notes&&e.s.notes.trim();}).length;
+    if(noted) msg+='. Speaker notes came across on '+noted+' slide'
+      +(noted===1?'':'s');
     if(note.skipped) msg+='. '+note.skipped+' cell'
       +(note.skipped===1?'':'s')+' could not convert (code or a table — '
       +'use Export PDF for those)';

@@ -2000,7 +2000,7 @@ worst-first.
   `<p:transition>` goes after `<p:clrMapOvr>`. Map only `fade`/`move`,
   conservatively, and keep counting whatever is still approximated.
 
-- [ ] **T108 · M — Speaker notes never reach the Notes page.**
+- [x] **T108 · M — Speaker notes never reach the Notes page.**
   *Verified CONFIRMED.* The writer emits `<p:notesSz>` and then no notes
   slide and no notes master, and `pptxBuildAndSave` passes each slide
   only `{bg, items}` — `sl.notes` is never handed over. Deck side is one

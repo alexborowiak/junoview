@@ -547,8 +547,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # outlines that really cannot be carried. help.html's honesty list is
 # rewritten around what is true now, and gained the four losses it never
 # mentioned: notes, builds, links and the freehand crop.
-EXPECTED_MD5 = "3153977e871ae9f18b07d8e8e9d68dbc"
-EXPECTED_BYTES = 3251615
+# Moved 2026-08-30 for T108: speaker notes reach PowerPoint's Notes page.
+# pptx.js grew a notes master, a notesSlide part per slide that has notes,
+# relationships in both directions, the notesMasterIdLst that must sit
+# between sldMasterIdLst and sldIdLst, and content types for both new part
+# kinds; the deck hands over ent.s.notes and the toast says how many slides
+# carried them. A deck with no notes produces exactly the bytes it did
+# before -- none of the new parts is written unless something needs it.
+EXPECTED_MD5 = "315b11423405202aa52e2861cc0f1a40"
+EXPECTED_BYTES = 3256392
 
 
 def _render_example() -> str:

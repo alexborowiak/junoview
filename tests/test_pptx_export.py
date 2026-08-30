@@ -100,6 +100,16 @@ def test_a_crop_and_a_transition_are_handed_to_the_writer(out):
     assert "trans:transFor(ent.i)" in out
 
 
+def test_speaker_notes_are_handed_over_and_reported(out):
+    """T108. The Notes page is plain text, so sl.notes -- what the Notes
+    pane writes and the presenter console reads -- goes across as it is.
+    The toast says how many slides carried notes, because a silent
+    success reads the same as a silent loss.
+    """
+    assert "notes:ent.s.notes||''" in out
+    assert "Speaker notes came across on " in out
+
+
 def test_prose_and_code_frames_still_come_across_as_text(out):
     """An empty slide is worse than imperfect text: a placed note or code
     cell has no figure to lift, but it IS text, so it becomes a text box.

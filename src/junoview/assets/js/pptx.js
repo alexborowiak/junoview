@@ -594,6 +594,49 @@ window.JunoPptx = (function () {
       + '</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>';
   }
 
+  /* SPEAKER NOTES. A notes page is its own part, and it needs three
+     things around it or PowerPoint will not show it: a notes MASTER
+     (one, shared), a notesSlide part per slide that has notes, and a
+     relationship in BOTH directions -- the slide points at its notes
+     page and the notes page points back at the slide. The writer emitted
+     <p:notesSz> and then none of it, so a talk exported without the half
+     that is the talk.
+
+     Only slides that actually have notes get a part, and the notes
+     master appears only when at least one does, so a deck with no notes
+     produces exactly the bytes it produced before. */
+  function notesBody(text) {
+    var lines = String(text).replace(/\r\n/g, '\n').split('\n');
+    return lines.map(function (ln) {
+      return '<a:p><a:r><a:rPr lang="en-US" dirty="0"/><a:t>'
+        + esc(ln) + '</a:t></a:r></a:p>';
+    }).join('');
+  }
+
+  function notesSlideXml(text) {
+    /* type="body" idx="1" is what makes it THE notes placeholder rather
+       than a stray text box on the notes page. */
+    var sp = '<p:sp><p:nvSpPr><p:cNvPr id="2" name="Notes Placeholder 1"/>'
+      + '<p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>'
+      + '<p:ph type="body" idx="1"/></p:nvPr></p:nvSpPr><p:spPr/>'
+      + '<p:txBody><a:bodyPr/><a:lstStyle/>' + notesBody(text)
+      + '</p:txBody></p:sp>';
+    var tree = emptyTree('Notes').replace('</p:spTree>',
+      function () { return sp + '</p:spTree>'; });
+    return XML_HEAD + '<p:notes' + nsAttrs() + '><p:cSld>' + tree
+      + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
+      + '</p:notes>';
+  }
+
+  function notesMasterXml() {
+    return XML_HEAD + '<p:notesMaster' + nsAttrs() + '><p:cSld>'
+      + emptyTree('Notes Master') + '</p:cSld>'
+      + '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2"'
+      + ' accent1="accent1" accent2="accent2" accent3="accent3"'
+      + ' accent4="accent4" accent5="accent5" accent6="accent6"'
+      + ' hlink="hlink" folHlink="folHlink"/></p:notesMaster>';
+  }
+
   function emptyTree(name) {
     return '<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name="' + name + '"/>'
       + '<p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm>'
@@ -666,13 +709,42 @@ window.JunoPptx = (function () {
           + transition(slide.trans) + '</p:sld>' };
     });
 
+    /* which slides have notes, decided once: the parts, the rels,
+       the content types and presentation.xml all have to agree, and
+       three of the four are written far apart. */
+    var noted = slides.map(function (s) {
+      return (s && typeof s.notes === 'string' && s.notes.trim())
+        ? s.notes : '';
+    });
+    var anyNotes = noted.some(Boolean);
+
     slideXml.forEach(function (s, i) {
       zip.addText('ppt/slides/slide' + (i + 1) + '.xml', s.xml);
+      var rels = s.rels.concat([{ id: 'rIdL' + (i + 1),
+        type: DOC_NS + '/relationships/slideLayout',
+        target: '../slideLayouts/slideLayout1.xml' }]);
+      if (noted[i]) {
+        rels.push({ id: 'rIdN' + (i + 1),
+          type: DOC_NS + '/relationships/notesSlide',
+          target: '../notesSlides/notesSlide' + (i + 1) + '.xml' });
+        zip.addText('ppt/notesSlides/notesSlide' + (i + 1) + '.xml',
+          notesSlideXml(noted[i]));
+        zip.addText('ppt/notesSlides/_rels/notesSlide' + (i + 1)
+          + '.xml.rels', relsDoc([
+            { id: 'rId1', type: DOC_NS + '/relationships/notesMaster',
+              target: '../notesMasters/notesMaster1.xml' },
+            { id: 'rId2', type: DOC_NS + '/relationships/slide',
+              target: '../slides/slide' + (i + 1) + '.xml' }]));
+      }
       zip.addText('ppt/slides/_rels/slide' + (i + 1) + '.xml.rels',
-        relsDoc(s.rels.concat([{ id: 'rIdL' + (i + 1),
-          type: DOC_NS + '/relationships/slideLayout',
-          target: '../slideLayouts/slideLayout1.xml' }])));
+        relsDoc(rels));
     });
+    if (anyNotes) {
+      zip.addText('ppt/notesMasters/notesMaster1.xml', notesMasterXml());
+      zip.addText('ppt/notesMasters/_rels/notesMaster1.xml.rels', relsDoc([
+        { id: 'rId1', type: DOC_NS + '/relationships/theme',
+          target: '../theme/theme1.xml' }]));
+    }
     media.forEach(function (m) { zip.add('ppt/media/' + m.name, m.bytes); });
 
     zip.addText('ppt/slideLayouts/slideLayout1.xml',
@@ -707,7 +779,13 @@ window.JunoPptx = (function () {
     zip.addText('ppt/presentation.xml',
       XML_HEAD + '<p:presentation' + nsAttrs() + ' saveSubsetFonts="1">'
       + '<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/>'
-      + '</p:sldMasterIdLst><p:sldIdLst>' + sldIds + '</p:sldIdLst>'
+      + '</p:sldMasterIdLst>'
+      /* the schema fixes this order: sldMasterIdLst, notesMasterIdLst,
+         then sldIdLst */
+      + (anyNotes
+        ? '<p:notesMasterIdLst><p:notesMasterId r:id="rIdNotesM"/>'
+          + '</p:notesMasterIdLst>' : '')
+      + '<p:sldIdLst>' + sldIds + '</p:sldIdLst>'
       + '<p:sldSz cx="' + page.wEmu + '" cy="' + page.hEmu + '"/>'
       + '<p:notesSz cx="' + page.hEmu + '" cy="' + page.wEmu + '"/>'
       + '</p:presentation>');
@@ -719,6 +797,11 @@ window.JunoPptx = (function () {
         type: DOC_NS + '/relationships/slide',
         target: 'slides/slide' + (i + 1) + '.xml' });
     });
+    if (anyNotes) {
+      presRels.push({ id: 'rIdNotesM',
+        type: DOC_NS + '/relationships/notesMaster',
+        target: 'notesMasters/notesMaster1.xml' });
+    }
     presRels.push({ id: 'rIdTheme', type: DOC_NS + '/relationships/theme',
       target: 'theme/theme1.xml' });
     zip.addText('ppt/_rels/presentation.xml.rels', relsDoc(presRels));
@@ -762,7 +845,17 @@ window.JunoPptx = (function () {
       overrides += '<Override PartName="/ppt/slides/slide' + (i + 1)
         + '.xml" ContentType="application/vnd.openxmlformats-officedocument.'
         + 'presentationml.slide+xml"/>';
+      if (noted[i]) {
+        overrides += '<Override PartName="/ppt/notesSlides/notesSlide'
+          + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-'
+          + 'officedocument.presentationml.notesSlide+xml"/>';
+      }
     });
+    if (anyNotes) {
+      overrides += '<Override PartName="/ppt/notesMasters/notesMaster1.xml"'
+        + ' ContentType="application/vnd.openxmlformats-officedocument.'
+        + 'presentationml.notesMaster+xml"/>';
+    }
     zip.addText('[Content_Types].xml',
       XML_HEAD + '<Types xmlns="http://schemas.openxmlformats.org/package/'
       + '2006/content-types">' + defaults + overrides + '</Types>');
