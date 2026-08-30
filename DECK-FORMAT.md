@@ -134,6 +134,14 @@ Whatever its kind, an item may also carry these.
 | `maths` | int | 1 when this text box was built by the equation editor: its words are LaTeX between `$` or `$$` delimiters, typeset after every edit. |
 | `lockar` | int | 1 to keep this item's shape while it is dragged by a resize handle: the other side follows, so a logo stays square and a plot keeps its proportions. The shape itself is not stored — it is read off the box when the drag begins — and holding Shift during a drag does the opposite of whatever this says. |
 | `fbtn` | int | Flip books only: 1 to give the book one button per figure instead of the back/forward arrows, so any figure is one click away. A named frame names its button. |
+| `name` | str | What to call this object in the Objects pane, in the Selection Pane of an exported `.pptx`, and anywhere else it has to be listed. Absent means the object is described by its kind and its content. |
+| `alt` | str | What this picture **shows**, for somebody who cannot see it: the image's alt text in every rendered page, and its description in an exported `.pptx`. A **caption** says what to think about the figure and everyone reads it; **alt text** says what is in it and is read instead of it. |
+| `dec` | int | 1 when this picture carries no information — a rule, a texture, a logo already named in the words. It is then marked decorative and skipped by a screen reader, rather than announced as an unlabelled image. Empty alt text is how you set it, because "I have not written this yet" and "there is nothing to write" must not look the same. |
+
+`alt` and `dec` are the two halves of one answer, and a picture with
+neither is a picture nobody has decided about yet: it falls back to
+whatever the object is already called, because "unlabelled image" helps
+nobody.
 
 `hide` and `priv` are deliberate opposites: one is hidden from **you**
 while you work and shown to everyone afterwards, the other is shown to

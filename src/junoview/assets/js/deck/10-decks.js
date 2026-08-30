@@ -1864,7 +1864,11 @@
     var src=paneImgSrc(g.it.ns);
     if(src){
       var im=document.createElement('img');
-      im.src=src;im.alt='';w.appendChild(im);
+      /* a thumbnail is a picture OF something already named beside it,
+         so it really is decorative -- aria-hidden says so instead of
+         leaving a screen reader to guess from an empty alt (T105) */
+      im.src=src;im.alt='';im.setAttribute('aria-hidden','true');
+      w.appendChild(im);
     }
     var tl=document.createElement('span');tl.className='vo-plot-t';
     tl.textContent=g.it.title;w.appendChild(tl);

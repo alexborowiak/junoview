@@ -570,8 +570,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # order and the accessibility tree. Named surfaces rather than a sweep over
 # body's children, because the deck reaches OUT to page-level overlays.
 # deck.js only; browser-verified both ways.
-EXPECTED_MD5 = "7fa5281d800f9cdbb66574518d430878"
-EXPECTED_BYTES = 3264594
+# Moved 2026-08-30 for T105: a picture on a slide can say what it shows.
+# Every image the deck drew carried a hard-coded alt="", so renderAnnots
+# grew altAttrs (three states: written, decorative + aria-hidden, or the
+# object's own name); the five genuinely decorative thumbnails now say so;
+# the canvas menu gained an Alt text row and setAltText; reviewLints gained
+# a fourth lint for the pictures nobody has decided about; and pptx.js emits
+# descr. deck.js, pptx.js, deck_schema.py and DECK-FORMAT.md, which also
+# gained the `name` row it had been missing all along.
+EXPECTED_MD5 = "a011702ee4edb0e9eed55e7771d3f899"
+EXPECTED_BYTES = 3270421
 
 
 def _render_example() -> str:

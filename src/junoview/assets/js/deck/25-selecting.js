@@ -1579,6 +1579,29 @@
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
   }
+  /* Empty means DECORATIVE, and the prompt says so rather than
+     leaving "I skipped this box" and "this picture carries nothing"
+     looking the same. Cancel changes nothing, which is what Escape has
+     to mean here (T105). */
+  function setAltText(idxs){
+    var ans=(pres.slides[cur].annots||[]);
+    var first=ans[idxs[0]]||{};
+    var was=first.dec?'':(first.alt||'');
+    var got=prompt('What does this picture show? Somebody who cannot '
+      +'see it reads this instead of it.\n\nLeave it empty to mark the '
+      +'picture decorative \u2014 a rule, a texture, a logo already '
+      +'named in the words.',was);
+    if(got===null) return;
+    got=got.trim();
+    idxs.forEach(function(i){
+      var a=ans[i]; if(!a) return;
+      if(got){delete a.dec;a.alt=got;}
+      else {delete a.alt;a.dec=1;}
+    });
+    markDirty();renderSlide();
+    toast(got?'Alt text set':'Marked decorative \u2014 a screen reader '
+      +'will skip '+(idxs.length===1?'it':'them'));
+  }
   /* ---- THE CANVAS RIGHT-CLICK MENU -------------------------------------
      Paste has three answers now (the plain one, in place, here) and a
      ribbon cannot grow three buttons for one verb without becoming the
@@ -1654,6 +1677,27 @@
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* ALT TEXT (T105). On the right-click menu and nowhere else, for
+         the same reason T5's select-by-type is: the ribbon never wraps,
+         so a control that applies to one kind of object earns its place
+         on the menu that already knows what you clicked. Offered only
+         when the selection actually contains a picture -- a row that
+         does nothing is worse than no row. */
+      var altSel=selIdxs().filter(function(i){
+        var a=(pres.slides[cur].annots||[])[i];
+        return a&&(a.k==='image'||a.k==='flip');});
+      if(altSel.length){
+        var one0=(pres.slides[cur].annots||[])[altSel[0]];
+        menuHead(m,'what it shows');
+        row(one0&&one0.dec?'Alt text \u2014 marked decorative'
+          :((one0&&one0.alt)?'Alt text \u2014 written':'Alt text\u2026'),
+          '',function(){setAltText(altSel);},
+          'What this picture shows, for somebody who cannot see it. A '
+          +'caption says what to think about the figure and everyone '
+          +'reads it; alt text says what is IN it and is read instead '
+          +'of it. Leave it empty to mark the picture decorative.',
+          'caption');
+      }
       /* A FIGURE AND ITS CAPTION (T17). Two objects selected, one of
          them a figure and one a text box, is an unambiguous "tie
          these" — so the row appears exactly then and asks nothing. */

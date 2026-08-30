@@ -572,3 +572,89 @@ def test_the_menu_says_what_the_promise_actually_is(out):
     assert "menuHead(m,'who sees it');" in out
     assert "a PDF or PowerPoint. Like your speaker notes" in out
     assert "it is stored in " in out
+
+
+# ---------------------------------------------------------------------------
+# what a picture says it shows (T105)
+# ---------------------------------------------------------------------------
+#
+# Every image the deck drew carried alt="" -- the markup for "this
+# carries no information, skip it" -- asserted for every figure in the
+# deck, including the ones carrying the science. Browser-verified
+# 2026-08-30 over an imported three-image deck: one with alt got its
+# alt and no aria-hidden, one marked decorative got alt="" plus
+# aria-hidden="true", one with neither fell back to its object name, and
+# the review reported exactly that third one.
+
+
+def test_the_renderer_has_three_answers_not_one(out):
+    """alt="" is one of them, not the default. Browser-verified: the
+    three states came out as written."""
+    assert "function altAttrs(img,a,extra){" in out
+    # decorative: empty alt AND aria-hidden, because empty alt alone
+    # still leaves the element in the tree as an unnamed image
+    assert "img.setAttribute('aria-hidden','true');" in out
+    # written: what the author wrote
+    assert "var t=(a&&a.alt)||annotLabel(a)||'';" in out
+    # neither: the object's own name beats "unlabelled image"
+    assert "img.alt=t;" in out
+
+
+def test_the_one_funnel_is_where_it_happens(out):
+    """buildSlideNode and buildPrintRoot both go through renderAnnots and
+    exportDeckHtml serialises buildPrintRoot, so present mode, the
+    presenter view, PDF and the standalone HTML all follow from this one
+    site -- and none of them needed touching."""
+    assert "altAttrs(img,a);" in out
+    assert "altAttrs(fim,a,fdef&&fdef.label);" in out
+    # the hard-coded empties are gone from the two annotation images
+    assert "img.className='an-imgel';img.src=a.src||'';img.alt='';" not in out
+    assert "fim.className='an-flipimg';fim.src=fdef.src;fim.alt='';" not in out
+
+
+def test_the_thumbnails_say_they_are_decorative(out):
+    """These five really ARE decorative -- a thumbnail is a picture of
+    something already named beside it -- so aria-hidden states it rather
+    than leaving a screen reader to infer it from an empty alt."""
+    assert out.count("/* decorative (T105) */") == 4
+    assert "im.src=src;im.alt='';im.setAttribute('aria-hidden','true');" in out
+
+
+def test_alt_text_has_a_door_that_costs_no_ribbon_width(out):
+    """The ribbon never wraps, so a control for one kind of object earns
+    its place on the menu that already knows what you clicked -- the same
+    reasoning as T5's select-by-type. Offered only when the selection
+    actually holds a picture: a row that does nothing is worse than no
+    row."""
+    assert "function setAltText(idxs){" in out
+    assert "return a&&(a.k==='image'||a.k==='flip');});" in out
+    assert "if(altSel.length){" in out
+    # the label says which of the three states this picture is in
+    assert "'Alt text \\u2014 marked decorative'" in out
+    # empty means decorative, and the prompt says so -- "I have not
+    # written this yet" and "there is nothing to write" must not look
+    # the same
+    assert "if(got){delete a.dec;a.alt=got;}" in out
+    assert "else {delete a.alt;a.dec=1;}" in out
+    # cancel changes nothing, which is what Escape has to mean
+    assert "if(got===null) return;" in out
+
+
+def test_the_review_reports_only_the_undecided_pictures(out):
+    """NOT "has no alt text": a picture is allowed to carry nothing, and
+    saying so is a real answer. The only state worth reporting is the one
+    nobody has decided about. Browser-verified: of three images -- one
+    described, one decorative, one neither -- the review named exactly
+    one."""
+    assert "This picture does not say what it shows" in out
+    assert "if(a.dec||(a.alt&&String(a.alt).trim())) return;" in out
+
+
+def test_the_export_carries_the_description(out):
+    """descr is what PowerPoint's own accessibility checker reads. It is
+    one attribute and it had nowhere to come from until the deck grew the
+    field."""
+    assert "function descrAttr(item) {" in out
+    assert "if (item.dec) return '';" in out
+    assert "return item.alt ? ' descr=\"' + esc(item.alt) + '\"' : '';" in out
+    assert "alt:a.alt,dec:a.dec," in out

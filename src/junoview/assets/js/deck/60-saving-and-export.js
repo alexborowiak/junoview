@@ -1407,6 +1407,9 @@
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
           rot:a.rot,op:a.op,src:pptxSrc(note,a.src),
+          /* what the picture shows, for PowerPoint's own accessibility
+             checker and for a screen reader opening the deck (T105) */
+          alt:a.alt,dec:a.dec,
           /* a path crop has no preset to become, so it is not sent */
           crop:(a.crop&&!a.crop.path)?a.crop:null,
           cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''});

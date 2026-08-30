@@ -1648,6 +1648,32 @@
      not a feature. The menu says which of the two it is. */
   var privCtx=false;
   function privShown(){return privCtx||mode==='edit';}
+  /* WHAT A PICTURE SAYS IT SHOWS (T105).
+     Every image the deck draws had alt="" hard-coded, which is the
+     markup for "this carries no information, skip it" -- asserted, for
+     every figure in the deck, including the ones carrying the science.
+     This is the ONE load-bearing site: buildSlideNode and buildPrintRoot
+     both funnel through renderAnnots, and exportDeckHtml serialises
+     buildPrintRoot, so present mode, the presenter view, PDF and the
+     standalone HTML all follow from here.
+
+     Three states, and alt="" is only one of them. `a.dec` means the
+     author said it is decorative, and alt="" is then correct and is
+     paired with aria-hidden so nothing announces it at all. `a.alt` is
+     what they wrote. Neither means we do not know, and the honest
+     fallback is whatever the object is already called -- its name, its
+     caption, its title -- because "unlabelled image" helps nobody. */
+  function altAttrs(img,a,extra){
+    if(a&&a.dec){
+      img.alt='';
+      img.setAttribute('aria-hidden','true');
+      return;
+    }
+    var t=(a&&a.alt)||annotLabel(a)||'';
+    if(extra&&t&&String(extra).trim()) t+=' \u2014 '+extra;
+    else if(extra&&!t) t=String(extra);
+    img.alt=t;
+  }
   function renderAnnots(layer,s){
     /* the one funnel every slide render passes through, which makes it
        the only place identity has to be minted — see WHAT HAS THIS
@@ -2103,8 +2129,9 @@
         applyCommon(im,a);
         im.setAttribute('data-idx',i);
         var img=document.createElement('img');
-        img.className='an-imgel';img.src=a.src||'';img.alt='';
+        img.className='an-imgel';img.src=a.src||'';
         img.draggable=false;
+        altAttrs(img,a);
         if(a.crop) im.classList.add('an-cropped');
         applyCrop(img,a);
         im.appendChild(img);
@@ -2145,8 +2172,12 @@
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){
           var fim=document.createElement('img');
-          fim.className='an-flipimg';fim.src=fdef.src;fim.alt='';
+          fim.className='an-flipimg';fim.src=fdef.src;
           fim.draggable=false;
+          /* a flip book's frames are one figure shown many ways, so the
+             book's alt text describes each of them; a named frame adds
+             which one is showing */
+          altAttrs(fim,a,fdef&&fdef.label);
           fst.appendChild(fim);
         } else if(fdef&&fdef.ref){
           var fnode=framePart(fdef.ref,fdef.part);

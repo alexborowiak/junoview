@@ -176,6 +176,22 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                   "figure instead of the back/forward arrows, so any "
                   "figure is one click away. A named frame names its "
                   "button."),
+    "name": (str, "What to call this object in the Objects pane, the "
+                  "Selection Pane of an exported .pptx, and anywhere "
+                  "else it has to be listed. Absent means the object is "
+                  "described by its kind and its content."),
+    "alt": (str, "What this picture SHOWS, for somebody who cannot see "
+                 "it: it becomes the image's alt text in every rendered "
+                 "page and its description in an exported .pptx. A "
+                 "caption says what to think about the figure and is "
+                 "read by everyone; alt text says what is in it and is "
+                 "read instead of it."),
+    "dec": (int, "1 when this picture carries no information -- a rule, "
+                 "a texture, a logo already named in the text. It is "
+                 "then marked decorative and skipped by a screen reader "
+                 "rather than announced as an unlabelled image, which "
+                 "is the correct answer for it and the wrong answer for "
+                 "everything else."),
 }
 
 #: The kinds of thing that can sit on a slide, and what each one needs to

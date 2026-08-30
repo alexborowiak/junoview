@@ -301,6 +301,27 @@
           +'. Pick one — an audience reads the difference as a '
           +'distinction.'});
     });
+    /* --- 4. a picture nobody has described (T105) ---
+       Deliberately NOT "has no alt text": a picture is allowed to carry
+       nothing, and saying so is a real answer. What this reports is the
+       picture nobody has decided about, which is the only state that is
+       an omission rather than a choice. It reads the same field the
+       renderer does, so a deck this is quiet about is a deck whose alt
+       text is really there. */
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.priv) return;
+        if(a.k!=='image'&&a.k!=='flip') return;
+        if(a.dec||(a.alt&&String(a.alt).trim())) return;
+        out.push({sev:'warn',si:si,i:i,
+          head:'This picture does not say what it shows',
+          why:'Somebody who cannot see it gets “'
+            +(annotLabel(a)||'image')+'” — the name of the box, not '
+            +'what is in it. Right-click the picture and write its alt '
+            +'text, or leave that empty to mark it decorative if it '
+            +'really carries nothing.'});
+      });
+    });
     return out;
   }
   /* THE PANEL. The lints first, because they are the reason to open it
@@ -1419,6 +1440,7 @@
     if(src){
       var m=document.createElement('img');
       m.src=src;m.alt='';m.loading='lazy';
+      m.setAttribute('aria-hidden','true');   /* decorative (T105) */
       w.appendChild(m);
     } else if(it.kind==='note'){
       w.className+=' is-note';
@@ -1863,6 +1885,7 @@
         if(a.src){
           var im=document.createElement('img');
           im.src=a.src;im.alt='';im.loading='lazy';im.draggable=false;
+          im.setAttribute('aria-hidden','true');   /* decorative (T105) */
           if(a.crop) bx.classList.add('is-crop');
           bx.appendChild(im);
         }
@@ -1879,6 +1902,7 @@
           var fim2=document.createElement('img');
           fim2.src=ff.src;fim2.alt='';fim2.loading='lazy';
           fim2.draggable=false;
+          fim2.setAttribute('aria-hidden','true');  /* decorative (T105) */
           bf.appendChild(fim2);
         } else if(ff&&ff.ref){
           var fnode2=framePart(ff.ref,ff.part);
@@ -1886,6 +1910,7 @@
           if(fimg2&&fimg2.src){
             var fc=document.createElement('img');
             fc.src=fimg2.src;fc.alt='';fc.loading='lazy';fc.draggable=false;
+            fc.setAttribute('aria-hidden','true');  /* decorative (T105) */
             bf.appendChild(fc);
           }
         }

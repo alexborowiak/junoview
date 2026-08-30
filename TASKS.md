@@ -1959,7 +1959,7 @@ worst-first.
   (its capture-phase listener wins), and `07-ribbon-layouts.js:382-389`
   already shows the shape that works.
 
-- [ ] **T105 · M — Every image the deck draws carries `alt=""`.**
+- [x] **T105 · M — Every image the deck draws carries `alt=""`.**
   *Verified CONFIRMED, and smaller than the review sized it.*
   `DECK_KEYS`/`SLIDE_KEYS`/`ANNOT_COMMON` have no alt, description,
   decorative or reading-order field, and every rendered image is

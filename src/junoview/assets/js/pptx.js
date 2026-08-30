@@ -432,6 +432,15 @@ window.JunoPptx = (function () {
     return '<p:transition spd="med">' + body + '</p:transition>';
   }
 
+  /* A shape's non-visual DESCRIPTION is what PowerPoint's own
+     accessibility checker reads and what a screen reader announces. It
+     is one attribute, and it had nowhere to come from until the deck
+     grew an alt field (T105). */
+  function descrAttr(item) {
+    if (item.dec) return '';
+    return item.alt ? ' descr="' + esc(item.alt) + '"' : '';
+  }
+
   function picShape(item, id, rid, page) {
     var c = cropRect(item), geo = item, src = '';
     if (c) {
@@ -446,7 +455,8 @@ window.JunoPptx = (function () {
     }
     var geom = SHAPE_GEOM[item.cropShape] || 'rect';
     return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
-      + esc(item.name || ('Picture ' + id)) + '"/><p:cNvPicPr/><p:nvPr/>'
+      + esc(item.name || ('Picture ' + id)) + '"' + descrAttr(item)
+      + '/><p:cNvPicPr/><p:nvPr/>'
       + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
       + (item.op != null && item.op < 1
         ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
