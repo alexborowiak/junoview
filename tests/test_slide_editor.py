@@ -1775,15 +1775,30 @@ def test_maths_typesets_the_moment_you_click_away(out):
     """
     assert "?hasMathsStr((idx==='t'?(s2&&s2.title):(s2&&s2.sub))||'')\n" \
         "         :hasMaths(a2)) typeset(layer);" in out
-    # T74 widened the guard rather than adding a second one: a
-    # MARKDOWN box is the identical trap (what you see is notesHtml's
-    # <h3>/<ul>, and the commit reads the element back as the new
-    # source), so the question is now asked of the class as well.
-    # Both roads in still end at the same "put the stored string back
-    # before the caret lands".
-    assert "if(el.querySelector&&(el.classList.contains('an-md')" in out
-    assert "||(!rich&&el.querySelector('mjx-container')))){" in out
+    # T74 widened the guard for markdown boxes; porting the parallel
+    # branch's T53 (2026-08-30) then found the maths half had never
+    # fired at all. It was gated on `!rich`, on the stated premise that
+    # a rich box "never carries maths" -- but the annot call site passes
+    # !a.md, so rich is TRUE for every text box that is not markdown,
+    # the equation editor's own box included. Titles pass no rich
+    # argument, which is why only THEY were ever protected.
+    #
+    # So the question is asked of what the box HOLDS, not of a flag,
+    # and a rich box gets its stored markup back through the sanitiser
+    # rather than only its plain string.
+    assert "function restoreSource(){" in out
+    assert "function beginEdit(){\n      restoreSource();" in out
+    assert "if(el.classList.contains('an-md')){" in out
+    assert "if(!el.querySelector('mjx-container')) return;" in out
+    assert "var h=getHtml&&getHtml();" in out
+    assert "if(h) el.innerHTML=sanitizeRich(h).html;" in out
     assert "if(raw) el.textContent=raw;" in out
+    # and the seventh argument that carries a box's own markup in
+    assert "function editableText(layer,el,getVal,setVal,idx,rich,getHtml){" \
+        in out
+    assert "i,!a.md,function(){return a.html;});" in out
+    # the OLD gate is gone: leaving it would silently re-break this
+    assert "||(!rich&&el.querySelector('mjx-container')))){" not in out
 
 
 def test_a_token_is_a_reference_not_a_copy(out):

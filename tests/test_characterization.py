@@ -514,8 +514,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # panel gains a Start a branch button and an on-which-branch chip.
 # Moved 2026-08-30 for T87: a Design button placed in all 108 ribbon
 # arrangements, the design surface it opens, and its stylesheet.
-EXPECTED_MD5 = "a7701a5c7778cb34eb5036161c93f5ad"
-EXPECTED_BYTES = 3242454
+# Moved 2026-08-30 for the parallel-branch reconcile: guides un-hide on
+# a ruler drag, beginEdit restores a typeset box's source for rich boxes
+# too, the Same-size gate matches its verb, and the two notes-pane time
+# fields go quiet.
+EXPECTED_MD5 = "c84ef0c90e1e1e13723fedd428c6f431"
+EXPECTED_BYTES = 3245605
 
 
 def _render_example() -> str:

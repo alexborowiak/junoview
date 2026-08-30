@@ -281,7 +281,13 @@
        drops arrows (no box), locked and hidden items, so two selected
        arrows offered "Same size" and then did nothing at all when you
        picked from it (2026-08-07 audit). */
-    show('#fmt-samewrap',selRects().length>=2);
+    /* selRects(TRUE), the same size-only reading sameSize itself uses.
+       Gated on the plain selRects it counted `pinned` items out, so
+       selecting two POSITION-LOCKED boxes hid the control -- and the
+       four modes behind it were unreachable in exactly the case the
+       verb had just been fixed to handle. A gate stricter than its own
+       verb is a feature you cannot get at (2026-08-30). */
+    show('#fmt-samewrap',selRects(true).length>=2);
     /* the menu now covers single-item actions (order, rotate) too */
     show('#fmt-alignwrap',isNum);
     var plainText=isText&&typeof selAnnot==='number';

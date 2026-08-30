@@ -285,8 +285,15 @@
         var sl=pres.slides[cur]; if(!sl) return;
         var v=parseFloat(gi.value);
         if(v>0) sl.goal=v; else delete sl.goal;
-        markDirty();renderNotesPane();presenterPush();
+        /* QUIET, and one undo entry on blur -- the rule #np-notes above
+           already follows. Typing "10.5" here pushed four whole-deck
+           snapshots, and the history keeps twenty, so setting the times
+           on a few slides quietly evicted real work from the undo
+           stack. Found by the parallel branch's T57 (2026-08-30). */
+        markDirty(true);renderNotesPane();presenterPush();
       });
+      gi.addEventListener('blur',function(){
+        if(typeof histPush==='function') histPush();});
     }
     var gc=$('#np-goalclear');
     if(gc) gc.addEventListener('click',function(){
@@ -296,10 +303,14 @@
     var ti=$('#np-total');
     if(ti){
       ti.addEventListener('keydown',function(e){e.stopPropagation();});
+      /* ...and the whole-talk total beside it, which has the same
+         handler and the same defect. NEITHER branch caught this one. */
+      ti.addEventListener('blur',function(){
+        if(typeof histPush==='function') histPush();});
       ti.addEventListener('input',function(){
         var v=parseFloat(ti.value);
         if(v>0) pres.talkMins=v; else delete pres.talkMins;
-        markDirty();renderNotesPane();presenterPush();
+        markDirty(true);renderNotesPane();presenterPush();
       });
     }
     /* three kinds of note, one pane: this slide, the whole talk, and a
@@ -797,7 +808,7 @@
       if(document.visibilityState==='hidden') lastChance();
     });
   })();
-  function editableText(layer,el,getVal,setVal,idx,rich){
+  function editableText(layer,el,getVal,setVal,idx,rich,getHtml){
     /* Text is NOT editable on contact. It used to be, which is why a text
        box could only be moved by a little ⠿ handle: clicking the words
        put a caret in them instead of picking the box up. So: click to
@@ -805,26 +816,46 @@
        what every other tool on the machine does (2026-08-07, user: "just
        make it normal moving controls"). */
     var editMode=(el.tagName==='UL'||rich)?'true':'plaintext-only';
-    function beginEdit(){
-      /* WHAT YOU EDIT IS WHAT YOU TYPED. MathJax replaces the text node
-         with its own <mjx-container>, so putting a caret into a typeset
-         box put it among rendered glyphs — and the commit reads the
-         element back as the new source, so one edit turned the LaTeX
-         into whatever those glyphs flatten to. Ask the model for the
-         stored string and put it back before the caret lands. Not for
-         `rich`, which owns its own markup and never carries maths. */
-      /* A MARKDOWN BOX IS THE SAME TRAP (T74): the box you are looking
-         at holds the <h3>/<ul>/<p> notesHtml made, and the commit reads
-         the element back as the new source -- so a caret landing in a
-         rendered box and one keystroke would turn "## Results" into
-         "Results" and the markdown would be gone. Asked of the CLASS,
-         not of `rich`: what has to come back is the stored string, and
-         that is true however the box happens to be edited. */
-      if(el.querySelector&&(el.classList.contains('an-md')
-         ||(!rich&&el.querySelector('mjx-container')))){
+    /* WHAT YOU EDIT IS WHAT YOU TYPED. Two renderers replace the text
+       node with markup of their own -- MathJax with an <mjx-container>,
+       and notesHtml with the <h4>/<ul>/<p> of a markdown box -- and the
+       blur commit reads the element back as the new source. So a caret
+       landing in either, plus one keystroke, turned "$$E = mc^2$$" or
+       "## Results" into whatever those glyphs flatten to.
+
+       THE MATHS HALF WAS GATED ON `!rich` AND SO NEVER FIRED (found by
+       the parallel branch's T53, ported 2026-08-30). The comment that
+       stood here claimed `rich` "owns its own markup and never carries
+       maths", and that premise is false in this codebase: the annot
+       call site passes `!a.md`, so rich is TRUE for every text box that
+       is not a markdown box -- the equation editor's own box included,
+       since it writes {k:'text',...,maths:1} and no html. Titles and
+       subtitles pass no rich argument at all, which is why THEY were
+       protected and the equations on the page were not. Double-clicking
+       an equation box, the ordinary way to edit anything else, cost you
+       the LaTeX; the box then no longer matched hasMaths, so it would
+       never be typeset again either.
+
+       Asked of what the box actually HOLDS, not of a flag: a rich box
+       restores its stored markup through the sanitiser, anything else
+       restores the model's string. */
+    function restoreSource(){
+      if(!el.querySelector) return;
+      if(el.classList.contains('an-md')){
+        var md=getVal();
+        if(md) el.textContent=md;
+        return;
+      }
+      if(!el.querySelector('mjx-container')) return;
+      var h=getHtml&&getHtml();
+      if(h) el.innerHTML=sanitizeRich(h).html;
+      else {
         var raw=getVal();
         if(raw) el.textContent=raw;
       }
+    }
+    function beginEdit(){
+      restoreSource();
       try{el.contentEditable=editMode;}catch(e){el.contentEditable='true';}
       el.focus();
       var host=el.closest?el.closest('.an-item'):null;
@@ -2037,8 +2068,12 @@
                so plaintext-only is the right editor (Enter must give a
                newline, not a <div>) and `a.html` has to stay empty, or
                a copy of the rendered markup would be saved beside the
-               words and outlive them (T74) */
-            i,!a.md);
+               words and outlive them (T74).
+               The seventh argument is how a typeset box gets its own
+               formatting back rather than only its plain string: with
+               no a.html there is nothing to restore but the LaTeX, and
+               with one the box keeps its bold and its colours too. */
+            i,!a.md,function(){return a.html;});
         }
         d2.appendChild(tx2);
         layer.appendChild(d2);

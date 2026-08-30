@@ -271,7 +271,11 @@ def test_controls_that_cannot_act_say_so(out):
     did nothing. Arrange shares a menu with single-item actions, so it
     stays reachable and explains itself instead.
     """
-    assert "show('#fmt-samewrap',selRects().length>=2);" in out
+    # ...and it asks for the SIZE-only reading, because that is what the
+    # verb behind it uses. Gated on the plain selRects, two
+    # position-locked boxes hid the control while sameSize would have
+    # resized them happily (ported from the parallel branch, 2026-08-30).
+    assert "show('#fmt-samewrap',selRects(true).length>=2);" in out
     assert "function needTwo(items,what){" in out
     assert "if(needTwo(items,'line up')) return;" in out
     assert "Select at least three items to space them out evenly" in out
@@ -1652,10 +1656,16 @@ def test_a_position_lock_does_not_excuse_an_item_from_a_resize(out):
     """
     assert "function selRects(sizeOnly){" in out
     assert "if(sizeOnly?lockedAll(a):pinned(a)) return null;" in out
-    # only sameSize asks for the size-only reading; the movement verbs
-    # keep the pinned filter they are actually about
+    # TWO callers ask for the size-only reading: the verb, and the gate
+    # that offers it. Everything else keeps the pinned filter it is
+    # actually about. It was one, and the odd one out was the gate --
+    # which meant the fix below could not be reached from the ribbon in
+    # exactly the case it was written for (2026-08-30).
     assert "var items=selRects(true); if(items.length<2) return;" in out
-    assert out.count("selRects(true)") == 1
+    assert "show('#fmt-samewrap',selRects(true).length>=2);" in out
+    assert out.count("selRects(true)") == 2
+    # the MOVEMENT verbs must not have drifted onto it
+    assert "selRects()" in out
 
 
 def test_an_alt_click_that_never_moved_is_not_a_copy(out):

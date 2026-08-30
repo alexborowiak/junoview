@@ -1164,6 +1164,10 @@
       el.classList.remove('cg-live');});
   }
   function startGuideBox(layer,p0){
+    /* the same invariant, on the other kind of guide. Reached through
+       setTool today, which already un-hides -- stated here anyway so
+       the rule holds wherever a future door calls it from. */
+    showCustomGuides(true);
     var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
     var cg=customGuides();
     var box=[p0.x,p0.y,0,0];
@@ -1291,6 +1295,18 @@
   /* drag a NEW guide out of a ruler, or an existing one to move/remove */
   function startGuideDrag(ev,axis,existing){
     ev.preventDefault();
+    /* EVERY DOOR THAT LAYS ONE DOWN TURNS THEM BACK ON FIRST.
+       setTool covers the guide-BOX tool, but the rulers call this
+       directly -- and `guides.custom` and `guides.rulers` are separate
+       flags, so Rulers can be on while guides are hidden. In that state
+       drawCustomGuides bailed and tore the layer down while up() went
+       on committing the guide to pres.guides: the drag looked like it
+       had done nothing, so you did it again, and again, and a later
+       Show guides revealed a pile of lines you had no memory of
+       placing. An invisible line that still pulls items onto itself is
+       worse than either state -- which is the rule showCustomGuides was
+       written for. Found by the parallel branch's T52 (2026-08-30). */
+    showCustomGuides(true);
     var slideEl=stage.querySelector('.slide'); if(!slideEl) return;
     var cg=customGuides();
     var idx=(existing==null)
