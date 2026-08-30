@@ -2050,7 +2050,7 @@ worst-first.
   `xml.etree` for the parts and the EMU scaling. `pptx.js:11` says
   outright that its seam exists so it can be tested on its own.
 
-- [ ] **T112 · S — The stale-write guard has no test at all.**
+- [x] **T112 · S — The stale-write guard has no test at all.**
   Two windows on one project is the shape that loses work, and
   `state.save_presentations`/`StaleWrite` and the revision check in
   `routes.py` are covered by nothing — a reader looked hard and found
