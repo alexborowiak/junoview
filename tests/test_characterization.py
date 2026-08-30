@@ -562,8 +562,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # disagree with the export, and asks only when something really will be
 # lost, and the post-export toast stops sending people to the PDF for a
 # table. deck.js only.
-EXPECTED_MD5 = "4dfffa4c1f1ebe8e4d71e9bb9db9eb57"
-EXPECTED_BYTES = 3260532
+# Moved 2026-08-30 for T104: opening the deck full-screen now makes the eight
+# surfaces of the document application behind it `inert` and aria-hidden, and
+# moves focus into the editor; closing restores all of it and puts focus back
+# where it was. CSS had already isolated scroll, pointer and paint, but
+# `inert` is not a CSS property, so the notebook underneath stayed in the tab
+# order and the accessibility tree. Named surfaces rather than a sweep over
+# body's children, because the deck reaches OUT to page-level overlays.
+# deck.js only; browser-verified both ways.
+EXPECTED_MD5 = "7fa5281d800f9cdbb66574518d430878"
+EXPECTED_BYTES = 3264594
 
 
 def _render_example() -> str:

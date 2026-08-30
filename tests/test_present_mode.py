@@ -459,3 +459,91 @@ def test_the_words_on_a_notebook_card_are_words_on_the_slide(out):
     # generous, because this string is what the search MATCHES and the
     # snippet is cut from around the hit rather than from the front of it
     assert "if(w) on.push(w.length>4000?w.slice(0,4000):w);" in words
+
+
+# ---------------------------------------------------------------------------
+# the deck isolates the page behind it (T104)
+# ---------------------------------------------------------------------------
+#
+# These are source pins, and the thing they pin is not one a source pin
+# can prove -- so it was proved in a browser instead, and the run is
+# recorded in each docstring. What these hold is that the mechanism is
+# still wired the way that run found it working.
+
+
+def test_the_document_behind_the_deck_goes_inert(out):
+    """Browser-verified 2026-08-30, Edge over a rendered example page.
+
+    Before opening: all eight surfaces live, focus on #presrail-home.
+    With the deck open in edit mode: all eight carried `inert` and
+    aria-hidden="true", and focus had moved to #dc-file inside the deck.
+    After closing: all eight live again with no aria-hidden left behind,
+    and focus back on #presrail-home.
+
+    Before this, `inert` appeared nowhere in the deck's own chrome. CSS
+    had isolated scroll, pointer and paint; it cannot isolate the TAB
+    ORDER or the accessibility tree, because `inert` is not a CSS
+    property. So Tab walked off the editor into a ~12,670px document
+    nobody could see, and a screen reader met two applications at once.
+    """
+    assert "function deckIsolate(on){" in out
+    assert "el.setAttribute('inert','');" in out
+    assert "el.setAttribute('aria-hidden','true');" in out
+    assert "el.removeAttribute('inert');" in out
+    assert "el.removeAttribute('aria-hidden');" in out
+
+
+def test_it_isolates_named_surfaces_rather_than_sweeping_the_body(out):
+    """A sweep over every child of <body> would take the page-level
+    overlays the deck REACHES OUT to -- Help, the open dialog, the
+    figure lightbox -- and break them. These eight are the document
+    application behind the deck and nothing else.
+    """
+    assert ("var DECK_BEHIND = ['#apptop', '#presrail', '#presrail-show', "
+            "'#docs',") in out
+    assert ("'#welcome', '#present-bar', '#present-bar-show', "
+            "'#stylepanel'];") in out
+    # and it never un-inerts something that was inert for its own reason
+    assert "if(!el||el.hasAttribute('inert')) return;" in out
+
+
+def test_isolation_and_the_deck_open_class_are_one_expression(out):
+    """Create mode is a SIDE PANEL: the notebook beside it is a live drag
+    source, by design, and isolating it would break a shipped gesture.
+    `deck-open` already means exactly "full screen, not creating", so the
+    isolation reads the same variable rather than recomputing the
+    condition -- the two cannot drift apart.
+    """
+    assert "var full=!creating&&!deckEl.hidden;" in out
+    assert "document.body.classList.toggle('deck-open',full);" in out
+    assert "deckIsolate(full);" in out
+    assert "if(full) deckTakeFocus();" in out
+
+
+def test_focus_goes_in_and_comes_back(out):
+    """Focus has to GO somewhere when the background stops accepting it,
+    or it sits on a control that is now inert and the next Tab restarts
+    at the top of the document. And it has to come back, or closing the
+    editor leaves the page focused on nothing.
+    """
+    assert "function deckTakeFocus(){" in out
+    assert "function deckReturnFocus(){" in out
+    # the first VISIBLE control: focusing inside a display:none subtree
+    # silently does nothing, which looks exactly like the code not
+    # running (it did, on the first browser pass -- #dc-file is the
+    # first visible one, and the markup's first is not)
+    assert "if(el.hidden||el.offsetParent===null) continue;" in out
+    assert "if(document.activeElement===el) return;" in out
+    # and never restores focus to something that is now inert or gone
+    assert ("if(!back||!back.isConnected||back.hasAttribute('inert')) "
+            "return;") in out
+
+
+def test_closing_undoes_all_of_it(out):
+    """Leaving the page inert after the deck closes would be a worse bug
+    than the one this fixes: the whole application would stop responding
+    to the keyboard with nothing on screen to explain it."""
+    close = out[out.index("function closeDeck(){"):]
+    close = close[:close.index("window.SemApp.deckState")]
+    assert "deckIsolate(false);" in close
+    assert "deckReturnFocus();" in close

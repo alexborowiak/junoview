@@ -1936,7 +1936,7 @@ worst-first.
 
 ### Accessibility
 
-- [ ] **T104 · M — The deck goes full-screen and the page underneath
+- [x] **T104 · M — The deck goes full-screen and the page underneath
   stays live.**
   *Verified CONFIRMED, with the review's own emphasis corrected.*
   `body.deck-open` only sets `overflow:hidden` — but `deck.css:22` is

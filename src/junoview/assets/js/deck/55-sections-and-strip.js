@@ -1043,8 +1043,12 @@
       (creating||editing)&&!deckEl.hidden);
     document.body.classList.toggle('slide-editing',
       editing&&!deckEl.hidden);
-    document.body.classList.toggle('deck-open',
-      !creating&&!deckEl.hidden);
+    var full=!creating&&!deckEl.hidden;
+    document.body.classList.toggle('deck-open',full);
+    /* the same condition as the class, so the two can never disagree
+       about whether this is a full-screen surface (T104) */
+    deckIsolate(full);
+    if(full) deckTakeFocus();
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
     if(!editing){                   /* Objects pane is an editing tool */
@@ -1114,6 +1118,88 @@
   function routeSync(){
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
+  /* ---- BACKGROUND ISOLATION -------------------------------------
+     The deck is `position:fixed` over the whole window, and CSS had
+     already isolated the three channels CSS can: the background does
+     not scroll (`body.deck-open{overflow:hidden}`), it cannot be
+     clicked through (an opaque z-index:100 surface) and the app's top
+     bar leaves the tab order while editing. What CSS cannot do is the
+     fourth channel, and `inert` is not a CSS property: the notebook
+     underneath stayed in the accessibility tree and in the TAB ORDER.
+     So Tab walked off the editor into a document nobody could see --
+     around 12,670px of it -- and a screen reader met two applications
+     at once, one of them invisible (2026-08-30 review).
+
+     Named surfaces rather than "every child of body except the deck".
+     The deck reaches OUT to page-level overlays -- Help, the open
+     dialog, the figure lightbox, its own floating menus -- and a sweep
+     would take those with it and break them. These eight are the
+     document application behind the deck and nothing else.
+
+     MODE-AWARE. `creating` is a side panel, not a full-screen surface:
+     the notebook beside it is a live drag source, by design, and
+     isolating it would break a shipped gesture. So this follows
+     `deck-open`, which is already exactly "not creating". */
+  var DECK_BEHIND = ['#apptop', '#presrail', '#presrail-show', '#docs',
+    '#welcome', '#present-bar', '#present-bar-show', '#stylepanel'];
+  var deckInerted = [];
+  var deckFocusReturn = null;
+
+  function deckIsolate(on){
+    if(on){
+      if(deckInerted.length) return;          /* already isolated */
+      DECK_BEHIND.forEach(function(sel){
+        var el=$(sel);
+        /* something already inert is inert for its own reason, and
+           un-inerting it on close would be this feature breaking
+           another one */
+        if(!el||el.hasAttribute('inert')) return;
+        el.setAttribute('inert','');
+        el.setAttribute('aria-hidden','true');
+        deckInerted.push(el);
+      });
+      return;
+    }
+    deckInerted.forEach(function(el){
+      el.removeAttribute('inert');
+      el.removeAttribute('aria-hidden');
+    });
+    deckInerted=[];
+  }
+
+  /* Focus has to GO somewhere when the background stops accepting it,
+     or it stays on a control that is now inert and the next Tab starts
+     from the top of the document. And it has to come back, or closing
+     the editor leaves the page focused on nothing. */
+  function deckTakeFocus(){
+    var live=document.activeElement;
+    if(live&&live!==document.body&&!deckEl.contains(live))
+      deckFocusReturn=live;
+    if(deckEl.contains(document.activeElement)) return;
+    /* the first VISIBLE control, not the first in the markup. The deck
+       carries a dozen panels that are hidden most of the time, and
+       focusing something inside a display:none subtree silently does
+       nothing -- which looks exactly like this function not running. */
+    var cand=deckEl.querySelectorAll(
+      'button:not([disabled]),[href],input:not([disabled]),'
+      +'select:not([disabled]),textarea:not([disabled]),[tabindex]');
+    for(var i=0;i<cand.length;i++){
+      var el=cand[i];
+      if(el.hidden||el.offsetParent===null) continue;
+      try{el.focus();}catch(err){continue;}
+      if(document.activeElement===el) return;
+    }
+    /* nothing focusable yet (the ribbon builds on first render), so the
+       surface itself takes it -- which is what keeps Tab inside */
+    if(!deckEl.hasAttribute('tabindex')) deckEl.setAttribute('tabindex','-1');
+    try{deckEl.focus();}catch(err){}
+  }
+  function deckReturnFocus(){
+    var back=deckFocusReturn;
+    deckFocusReturn=null;
+    if(!back||!back.isConnected||back.hasAttribute('inert')) return;
+    try{back.focus();}catch(err){}
+  }
   function openDeck(m){
     deckEl.hidden=false;
     histReset();   /* undo history starts fresh per editing session */
@@ -1182,6 +1268,8 @@
     showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
+    deckIsolate(false);
+    deckReturnFocus();
     document.body.classList.remove('creating-docs');
     document.body.classList.remove('slide-editing');
     deckEl.classList.remove('creating');
