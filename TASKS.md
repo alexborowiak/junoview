@@ -1522,7 +1522,7 @@ drives it — the suite is substring greps.
 
 ## 12. Features asked for in the same pass
 
-- [ ] **T87 · L — A real design surface for the deck's type. (design
+- [x] **T87 · L — A real design surface for the deck's type. (design
   first)** "Where was the button where people can 'standardise
   presentation'... controlling things like 'global heading layouts'...
   Then it would be cool if you could also 'show outlines of all

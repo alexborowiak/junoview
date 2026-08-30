@@ -97,6 +97,9 @@ RUNTIME_IDS = {
     # BE. Its rail and body are reached through the overlay rather than
     # by id, so only the overlay itself is looked up globally.
     "deck-history",
+    # The design surface, built the same way and deliberately the same
+    # shape: deck/50-review-and-overview.js, THE DESIGN SURFACE (T87).
+    "deck-design",
     # The review panel, likewise: deck.js, WHAT THE DECK SAYS, IN WORDS.
     "deck-review",
     # The ribbon-layout gallery, built per open and removed on close:

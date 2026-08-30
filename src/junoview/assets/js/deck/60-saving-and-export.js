@@ -1061,6 +1061,10 @@
   window.SemDeckPrintRoot=buildPrintRoot;
   menuAction('#mi-refresh-figs',function(){resyncAllFigures();});
   menuAction('#mi-hist',openHistory);
+  (function(){
+    var b=$('#dsg-design');
+    if(b) b.addEventListener('click',function(){openDesign();});
+  })();
   menuAction('#mi-review',openReview);
   menuAction('#mi-pdf',function(){printDeck();});
   /* ---- standalone HTML export (2026-08-04): ONE self-contained .html

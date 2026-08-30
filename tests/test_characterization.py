@@ -512,8 +512,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-30 for T90: the version history is a tree. Snapshots
 # carry a parent and a branch name, the rail draws the shape, and the
 # panel gains a Start a branch button and an on-which-branch chip.
-EXPECTED_MD5 = "567751725b738f81ded2ae9797b64c83"
-EXPECTED_BYTES = 3222746
+# Moved 2026-08-30 for T87: a Design button placed in all 108 ribbon
+# arrangements, the design surface it opens, and its stylesheet.
+EXPECTED_MD5 = "a7701a5c7778cb34eb5036161c93f5ad"
+EXPECTED_BYTES = 3242454
 
 
 def _render_example() -> str:

@@ -1510,6 +1510,331 @@
     p.setAttribute('stroke-width',miniSw(a));
     p.removeAttribute('stroke-dasharray');
   }
+  /* ---- THE DESIGN SURFACE (T87, 2026-08-29) ---------------------------
+     "Where was the button where people can 'standardise presentation'...
+     controlling things like 'global heading layouts'... Then it would be
+     cool if you could also 'show outlines of all objects'."
+
+     Three quarters of this was already built and scattered: the style
+     registry (pres.styles) decides what a Heading looks like, the
+     Standardise pane finds type that has drifted from it, the Apply
+     dialog pushes a look across a deck, and T5's selection criteria find
+     every box of a kind. What was missing was a PLACE -- one screen that
+     puts a deck's type in front of you and lets you change it -- plus
+     two things that did not exist at all: a default POSITION for a named
+     type, and a way to see every object on every slide as an outline.
+
+     Built on what is there, deliberately:
+       * it writes pres.styles, the same registry styleDef reads, so a
+         change here is the same change the Styles menu makes;
+       * it re-stamps through applyStyleTo, the one function that puts a
+         style onto a box, rather than writing size/weight/colour itself;
+       * the outline sheet is miniDiagram, the renderer the film strip
+         and the overview map already use.
+     And it is NOT a second Apply dialog. Apply answers "which slides,
+     which properties, which type"; this answers "what does a Heading
+     look like in this deck". Position is the one thing here that Apply
+     cannot express, and it is a button you press, never something
+     applyStyleTo does on your behalf -- a style stamp that yanked boxes
+     across the page would be unusable. */
+  var dgSel='title', dgOutline=false;
+
+  function dgStyleRec(id){
+    var st=deckStyles();
+    if(!st[id]) st[id]={};
+    return st[id];
+  }
+  /* every box wearing a named type, as {s, i, a} across the whole deck */
+  function dgWearers(id){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,ai){
+        if(a&&a.k==='text'&&a.style===id) out.push({s:si,i:ai,a:a});});
+    });
+    return out;
+  }
+  /* re-stamp the registry onto everything wearing it. THE point of a
+     standardise surface: a definition nobody is wearing is a preference,
+     not a standard. */
+  function dgRestamp(id){
+    var n=0;
+    dgWearers(id).forEach(function(w){applyStyleTo(w.a,id);n++;});
+    return n;
+  }
+  function dgClose(){
+    var ov=$('#deck-design');
+    if(ov) ov.remove();
+    document.removeEventListener('keydown',dgKey,true);
+  }
+  function dgKey(e){
+    if(!$('#deck-design')) return;
+    if(e.key==='Escape'){
+      e.preventDefault();e.stopPropagation();dgClose();}
+  }
+  function dgSpecimen(el,id){
+    var d=styleDef(id); if(!d) return;
+    el.style.fontWeight=d.b?'700':'400';
+    el.style.fontStyle=d.i?'italic':'normal';
+    el.style.fontFamily=d.font?fontCss(d.font):'';
+    el.style.color=d.color?tokVal(d.color):'';
+    /* the LADDER has to read as a ladder, so sizes are shown in
+       proportion to each other rather than at their page size -- 7.2% of
+       an A0 sheet does not fit in a rail */
+    el.style.fontSize=(11+(d.size||2.6)*1.9)+'px';
+  }
+  function dgRail(ov){
+    var rail=ov.querySelector('#dg-list');
+    rail.innerHTML='';
+    styleOrder().forEach(function(id){
+      var d=styleDef(id); if(!d) return;
+      var b=document.createElement('button');
+      b.className='dg-row'+(id===dgSel?' on':'');
+      var nm=document.createElement('span');
+      nm.className='dg-name';nm.textContent=d.label||id;
+      dgSpecimen(nm,id);
+      var ct=document.createElement('span');
+      ct.className='dg-count';
+      var n=dgWearers(id).length;
+      ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
+      b.appendChild(nm);b.appendChild(ct);
+      b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
+        +(n?(', worn by '+n+' box'+(n===1?'':'es')):', not used yet');
+      b.addEventListener('click',function(){
+        dgSel=id;dgRail(ov);dgBody(ov);});
+      rail.appendChild(b);
+    });
+  }
+  /* ---- the board: where a named type SITS by default ------------------
+     The one genuinely new idea. A style has always said how a Heading
+     looks and never where it goes, so "global heading layouts" could not
+     be expressed at all. x/y/w live on the same pres.styles record, so
+     no new deck key and no new documentation: `styles` is already "this
+     deck's overrides of the named text types". */
+  function dgBoard(host,id){
+    var rec=dgStyleRec(id);
+    var board=document.createElement('div');
+    board.className='dg-board';
+    var page=pageOf();
+    board.style.aspectRatio=(page.mm[0]/page.mm[1]).toFixed(4);
+    var ghost=document.createElement('div');
+    ghost.className='dg-ghost';
+    function paint(){
+      ghost.style.left=(rec.x!=null?rec.x:8)+'%';
+      ghost.style.top=(rec.y!=null?rec.y:6)+'%';
+      ghost.style.width=(rec.w!=null?rec.w:60)+'%';
+    }
+    var lab=document.createElement('span');
+    lab.className='dg-ghostlab';
+    lab.textContent=(styleDef(id)||{}).label||id;
+    dgSpecimen(lab,id);
+    ghost.appendChild(lab);
+    var grip=document.createElement('span');
+    grip.className='dg-ghostgrip';
+    grip.title='Drag to set how wide this type is by default';
+    ghost.appendChild(grip);
+    paint();
+    board.appendChild(ghost);
+    host.appendChild(board);
+
+    function drag(ev,mode){
+      ev.preventDefault();ev.stopPropagation();
+      var r=board.getBoundingClientRect();
+      var x0=ev.clientX,y0=ev.clientY;
+      var sx=(rec.x!=null?rec.x:8),sy=(rec.y!=null?rec.y:6);
+      var sw=(rec.w!=null?rec.w:60);
+      function mv(e2){
+        var dx=(e2.clientX-x0)/(r.width||1)*100;
+        var dy=(e2.clientY-y0)/(r.height||1)*100;
+        if(mode==='w') rec.w=Math.max(6,Math.min(100,Math.round(sw+dx)));
+        else {
+          rec.x=Math.max(0,Math.min(98,Math.round(sx+dx)));
+          rec.y=Math.max(0,Math.min(98,Math.round(sy+dy)));
+        }
+        paint();
+      }
+      function up(){
+        document.removeEventListener('pointermove',mv);
+        document.removeEventListener('pointerup',up);
+        markDirty();dgBody($('#deck-design'));
+      }
+      document.addEventListener('pointermove',mv);
+      document.addEventListener('pointerup',up);
+    }
+    ghost.addEventListener('pointerdown',function(e){drag(e,'xy');});
+    grip.addEventListener('pointerdown',function(e){drag(e,'w');});
+  }
+  function dgSectionHead(host,text,sub){
+    var h=document.createElement('div');
+    h.className='dg-h';h.textContent=text;
+    host.appendChild(h);
+    if(sub){
+      var p=document.createElement('p');
+      p.className='dg-sub';p.textContent=sub;
+      host.appendChild(p);
+    }
+  }
+  function dgBody(ov){
+    if(!ov) return;
+    var body=ov.querySelector('#dg-body');
+    body.innerHTML='';
+    var id=dgSel,d=styleDef(id);
+    if(!d){body.innerHTML='<div class="selpane-empty">Pick a type on '
+      +'the left.</div>';return;}
+    var rec=dgStyleRec(id);
+    var wear=dgWearers(id);
+
+    /* ---- how it looks ---- */
+    dgSectionHead(body,'How “'+(d.label||id)+'” looks',
+      'Changing it here changes every box wearing it, everywhere in the '
+      +'deck. That is what makes it a standard rather than a preference.');
+    var spec=document.createElement('div');
+    spec.className='dg-spec';
+    spec.textContent='The quick brown fox jumps over the lazy dog';
+    dgSpecimen(spec,id);
+    body.appendChild(spec);
+
+    var row=document.createElement('div');row.className='dg-ctrls';
+    function ctl(label,title,on,fn){
+      var b=document.createElement('button');
+      b.className='dbtn dg-b';b.textContent=label;b.title=title;
+      if(on!=null) b.setAttribute('aria-pressed',on?'true':'false');
+      b.addEventListener('click',function(){
+        fn();markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);});
+      row.appendChild(b);
+      return b;
+    }
+    ctl('−','Smaller',null,function(){
+      rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
+    var sz=document.createElement('span');
+    sz.className='dg-size';
+    sz.textContent=(d.size||2.6).toFixed(1)+'%';
+    sz.title='The type size, as a percentage of the page height — so it '
+      +'means the same thing on a 16:9 slide and an A0 poster';
+    row.appendChild(sz);
+    ctl('+','Bigger',null,function(){
+      rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
+    ctl('B','Bold',!!d.b,function(){
+      if(d.b) rec.b=0; else rec.b=1;});
+    ctl('I','Italic',!!d.i,function(){
+      if(d.i) rec.i=0; else rec.i=1;});
+    ['left','center','right'].forEach(function(al){
+      ctl(al==='left'?'←':al==='right'?'→':'↔',
+        'Align '+al,(d.align||'left')===al,function(){rec.align=al;});
+    });
+    var col=document.createElement('input');
+    col.type='color';col.className='dg-col';
+    col.value=(d.color&&/^#/.test(d.color))?d.color:'#e6eef5';
+    col.title='The colour every box of this type takes';
+    col.addEventListener('input',function(){
+      rec.color=col.value;markDirty();dgRestamp(id);refresh();});
+    col.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
+    row.appendChild(col);
+    var rst=document.createElement('button');
+    rst.className='dbtn dg-b';rst.textContent='Reset';
+    rst.title='Back to this type’s built-in look';
+    rst.addEventListener('click',function(){
+      var st=deckStyles();
+      var keep={};
+      ['x','y','w'].forEach(function(k){
+        if(st[id]&&st[id][k]!=null) keep[k]=st[id][k];});
+      st[id]=keep;
+      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+    });
+    row.appendChild(rst);
+    body.appendChild(row);
+
+    /* ---- where it sits ---- */
+    dgSectionHead(body,'Where “'+(d.label||id)+'” sits',
+      'Drag the box to set where this type goes by default, and the '
+      +'handle on its right edge to set how wide it is. Nothing moves '
+      +'until you press the button underneath — a style stamp that '
+      +'dragged your boxes about would be unusable.');
+    dgBoard(body,id);
+    var put=document.createElement('button');
+    put.className='dbtn primary dg-put';
+    put.innerHTML=bic('align')+' Put all '+wear.length+' of them there';
+    put.disabled=!wear.length;
+    put.title=wear.length
+      ?('Move every box wearing this type onto that rectangle, on every '
+        +'slide. Ctrl+Z undoes the lot.')
+      :'Nothing in this deck wears this type yet';
+    put.addEventListener('click',function(){
+      var n=0;
+      wear.forEach(function(w){
+        w.a.x=(rec.x!=null?rec.x:8);
+        w.a.y=(rec.y!=null?rec.y:6);
+        w.a.w=(rec.w!=null?rec.w:60);
+        /* an anchored box measures from its anchor, so a default
+           position has to clear the anchor or it lands somewhere else */
+        delete w.a.anch;
+        n++;
+      });
+      if(!n) return;
+      markDirty();refresh();renderFilm();dgBody(ov);
+      toast(n+' '+(d.label||id)+' box'+(n===1?'':'es')
+        +' moved — Ctrl+Z undoes it');
+    });
+    body.appendChild(put);
+
+    /* ---- every object, outlined ---- */
+    dgSectionHead(body,'Every object, outlined',
+      'The whole deck at once, with a box drawn round everything on '
+      +'every slide. This is how you find the one heading that is 3mm '
+      +'off, or the figure nobody lined up.');
+    var tg=document.createElement('button');
+    tg.className='dbtn dg-b';
+    tg.setAttribute('aria-pressed',dgOutline?'true':'false');
+    tg.innerHTML=bic('outline')+(dgOutline?' Outlines on':' Outlines off');
+    tg.title='Draw a box round every object on every slide';
+    tg.addEventListener('click',function(){
+      dgOutline=!dgOutline;dgBody(ov);});
+    body.appendChild(tg);
+    var sheet=document.createElement('div');
+    sheet.className='dg-sheet'+(dgOutline?' outlined':'');
+    (pres.slides||[]).forEach(function(sl,i){
+      var cell=document.createElement('button');
+      cell.className='dg-cell';
+      cell.title='Slide '+(i+1)+' — click to go there';
+      cell.appendChild(miniDiagram(sl));
+      var n=document.createElement('span');
+      n.className='dg-celln';n.textContent=(i+1);
+      cell.appendChild(n);
+      cell.addEventListener('click',function(){
+        cur=i;activePane=-1;selAnnot=null;selSet=[];
+        dgClose();refresh();
+      });
+      sheet.appendChild(cell);
+    });
+    body.appendChild(sheet);
+  }
+  function openDesign(){
+    dgClose();
+    var ov=document.createElement('div');
+    ov.className='deck-design';ov.id='deck-design';
+    ov.innerHTML='<div class="dh-head">'
+      +'<span class="dh-t">Design of “'+esc(pres.name||'this deck')
+      +'”</span><span class="deck-spring"></span>'
+      +'<button class="dbtn" id="dg-check">'+bic('scope')
+      +' Check for drift</button>'
+      +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
+      +'</div><div class="dg-main">'
+      +'<div class="dg-rail" id="dg-list"></div>'
+      +'<div class="dg-body" id="dg-body"></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector('#dg-close').addEventListener('click',dgClose);
+    ov.querySelector('#dg-check').addEventListener('click',function(){
+      /* the drift CHECK stays where it is: this surface says what the
+         standard is, that pane says who is not keeping to it, and one
+         doing both would be a screen answering two questions */
+      dgClose();
+      var b=$('#dsg-std');
+      if(b) b.click();
+    });
+    document.addEventListener('keydown',dgKey,true);
+    if(styleOrder().indexOf(dgSel)<0) dgSel=styleOrder()[0]||'title';
+    dgRail(ov);dgBody(ov);
+  }
+  window.SemDeckDesign=openDesign;
   function miniDiagram(s){
     var d=document.createElement('span');
     d.className='mini-diagram free';
