@@ -228,6 +228,10 @@ _ICON_PATHS = {
     # slide actions
     "copy": '<rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/>'
             '<path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/>',
+    # a clipboard with its clip -- the OTHER half of copy, and distinct
+    # from it at 16px because the clip reads even when the body does not
+    "paste": '<rect x="3.4" y="3" width="9.2" height="11" rx="1.2"/>'
+             '<path d="M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z"/>',
     "swap": '<path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 '
             '2.4"/><path d="M13.6 10.7H4"/>'
             '<path d="m6.4 8.3-2.4 2.4 2.4 2.4"/>',

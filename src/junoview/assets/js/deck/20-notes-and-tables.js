@@ -1865,12 +1865,20 @@
              zoom in and out"). */
           pb.style.fontSize=fontPx(layer,1.15);
           pb.textContent=a.ref?('missing: '+a.ref)
-            :'Click to add from notebook';
+            :'Click to add an object';
           pb.addEventListener('mousedown',function(e){
             if(tool==='select') e.stopPropagation();});
           pb.addEventListener('click',function(e){
             if(tool!=='select') return;
-            e.stopPropagation();startPick(i);});
+            e.stopPropagation();
+            /* a frame that has LOST its card wants that card back, so
+               it goes straight to the picker; an empty one has not
+               decided yet and is asked (T61). It used to say "click to
+               add from notebook" and mean it: there was no gesture
+               anywhere that put a picture inside a frame you had
+               drawn. */
+            if(a.ref){startPick(i);return;}
+            openObjSrc(pb,i);});
           c.appendChild(pb);
         }
         if(editing){

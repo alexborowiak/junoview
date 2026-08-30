@@ -63,6 +63,10 @@ RUNTIME_IDS = {
     # shipped in the markup (35-arranging.js openObjMatchMenu and
     # 40-captions-and-components.js openCmpInstMenu).
     "objmatch-menu", "cmp-inst-menu",
+    # What goes in an object frame: built on first open and then kept,
+    # because it floats over the canvas rather than living in a ribbon
+    # group (45-images.js openObjSrc, T61).
+    "obj-src-menu",
     # The saved-to chip's countdown, written into #qat-auto's innerHTML
     # by syncAutoChip (60-saving-and-export.js) rather than shipped in
     # the markup, because the chip is rebuilt whenever the cadence or

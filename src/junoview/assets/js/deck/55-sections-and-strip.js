@@ -1949,7 +1949,10 @@
     if(!target||target.k!=='cell'||target.ref){
       if(slideCells(s).length===0){
         s.annots=s.annots||[];
-        s.annots.push({k:'cell',x:8,y:8,w:84,h:84,ref:null});
+        /* the SAME rect a blank slide used to be born with, so
+           clicking a card onto an empty slide lands exactly where it
+           always did now that emptySlide leaves the page bare (T61) */
+        s.annots.push(fullFrame(null));
         target=annotByIdx(s,s.annots.length-1);
       } else {
         var best=null;

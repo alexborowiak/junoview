@@ -1294,7 +1294,7 @@ drives it — the suite is substring greps.
   nothing says so. Fix: skip the auto-delete when `listOf(a)` is set,
   or add `li` to the rich selector; say it with a toast naming Ctrl+Z.
 
-- [ ] **T61 · M — A new slide should not be a notebook frame, and the
+- [x] **T61 · M — A new slide should not be a notebook frame, and the
   insert door should be "insert object".** "New slides that have just
   the notebook cell can't be deleted, also please don't make that the
   default. Also the notebook cells should be just 'insert object', that

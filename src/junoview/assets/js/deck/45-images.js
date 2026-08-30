@@ -147,6 +147,22 @@
     var s=pres.slides[cur]; if(!s) return;
     var l=stage.querySelector('.annot-layer');
     var lr=l?l.getBoundingClientRect():null;
+    /* INTO A FRAME, when one asked for this picture. Drawing a frame
+       and then having the picture land centred on the slide at a size
+       of its own choosing would make the frame pointless, so an object
+       frame waiting on a source is filled in place and keeps its rect
+       (T61). objInto is cleared by takeObjInto whichever way it goes. */
+    var into=takeObjInto();
+    if(into){
+      into.k='image';into.src=src;delete into.ref;
+      if(link&&link.key){into.fkey=link.key;into.fname=link.name||'';}
+      if(full&&full!==src) keepOriginal(into,full);
+      markDirty();
+      setTool('select');
+      if(l){renderAnnots(l,s);
+        selectAnnot(l,(s.annots||[]).indexOf(into));}
+      return;
+    }
     var w=40,h=32;
     if(ar&&lr&&lr.height){h=w*(lr.width/lr.height)*ar;}
     h=Math.max(8,Math.min(86,h));
@@ -438,6 +454,81 @@
       }
     });
   })();
+  /* ---- WHAT GOES IN AN OBJECT FRAME ----------------------------------
+     An empty frame is a hole of a known size and position; this is the
+     menu that fills it. Every row lands in THAT frame rather than
+     dropping something centred on the slide, which is the entire reason
+     to have drawn a frame first (T61, 2026-08-29). */
+  var objInto=-1;      /* the frame the next placeImage should fill */
+  function takeObjInto(){
+    var i=objInto; objInto=-1;
+    var s=pres.slides[cur];
+    var a=s&&(s.annots||[])[i];
+    return (a&&a.k==='cell'&&!a.ref)?a:null;
+  }
+  function openObjSrc(btn,idx){
+    var m=$('#obj-src-menu');
+    if(!m){
+      m=document.createElement('div');
+      m.className='sh-menu obj-src-menu';m.id='obj-src-menu';
+      m.hidden=true;document.body.appendChild(m);
+      /* the same outside-click close every drawn menu in the editor
+         uses; there is no shared closer to call */
+      document.addEventListener('click',function(e){
+        if(!m.hidden&&!m.contains(e.target)) m.hidden=true;});
+    }
+    m.innerHTML='';
+    menuHead(m,'put in this frame');
+    /* the icons are written out as literal bic() calls rather than
+       looked up from a key in the row: the icon contract test reads this
+       source, and artwork reached through a loop variable looks to it
+       like artwork nobody consumes */
+    [[bic('cellcard'),'A figure from a notebook',
+      'Any figure, table or note in an open notebook. This is what the '
+      +'frame always did; now it is one choice of three',
+      function(){objInto=-1;startPick(idx);}],
+     [bic('image'),'A picture from this computer',
+      'Choose an image file. Junoview keeps a link to the file where the '
+      +'browser allows it, so Refresh can re-read it later',
+      function(){objInto=idx;var b=$('#et-image'); if(b) b.click();}],
+     [bic('paste'),'A picture on the clipboard',
+      'Paste a screenshot or a copied image straight into this frame',
+      function(){objInto=idx;pasteObjImage();}]
+    ].forEach(function(r){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      b.title=r[2];
+      b.innerHTML=r[0]+' '+r[1];
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.hidden=true;r[3]();});
+      m.appendChild(b);
+    });
+    m.hidden=false;
+    floatMenu(btn,m);
+  }
+  /* Ctrl+V already puts a clipboard image on the slide; this is the same
+     road with a destination. navigator.clipboard.read is the only way to
+     PULL rather than wait for a paste event, and it is permissioned and
+     missing on some engines -- so it says what to do instead rather than
+     failing silently. */
+  function pasteObjImage(){
+    function giveUp(){
+      objInto=-1;
+      toast('This browser will not hand over the clipboard on its own '
+        +'\u2014 click the frame and press Ctrl+V instead');
+    }
+    if(!navigator.clipboard||!navigator.clipboard.read){giveUp();return;}
+    navigator.clipboard.read().then(function(items){
+      for(var i=0;i<items.length;i++){
+        var ts=items[i].types||[];
+        for(var j=0;j<ts.length;j++){
+          if(ts[j].indexOf('image/')===0)
+            return items[i].getType(ts[j]).then(pasteImageFile);
+        }
+      }
+      giveUp();
+    }).catch(giveUp);
+  }
   var etImage=$('#et-image'),imgFile=$('#img-file');
   if(etImage&&imgFile) etImage.addEventListener('click',function(){
     /* showOpenFilePicker hands back a HANDLE, which is what lets the

@@ -438,7 +438,16 @@
     return {k:'cell',x:r[0],y:r[1],w:r[2],h:r[3],ref:ref||null};
   }
   function emptySlide(){
-    return {layout:'blank',panes:[],annots:[fullFrame(null)]};
+    /* EMPTY. Every new slide used to arrive already carrying one
+       full-page notebook frame, so a deck began by deleting something
+       nobody asked for, and the frame read as the only kind of thing a
+       slide could hold (2026-08-29, user: "new slides that have just
+       the notebook cell ... please don't make that the default").
+       Nothing downstream needs the frame to exist in advance:
+       applyLayout lays its own, the strip's card-click path makes one
+       when a slide has none, and the Object tool draws one where you
+       want it rather than where the template guessed. */
+    return {layout:'blank',panes:[],annots:[]};
   }
   function autoSlides(withDocs){
     var out=[];

@@ -179,7 +179,12 @@ def test_button_names_say_what_they_do(out):
     # fixed with 'text' instead of text box"). The rule is unchanged --
     # every button still says what it does IN WORDS; they just say it in
     # the shortest true word, which buys the row its width back.
-    assert "Cell</button>" in out
+    # "Cell" became "Object" (T61): a frame is a hole of a known size
+    # and what goes in it -- a notebook figure, a picture from this
+    # computer, one on the clipboard -- is chosen afterwards. The rule
+    # this test guards is unchanged; the shortest true word moved.
+    assert "Object</button>" in out
+    assert "Cell</button>" not in out
     assert "Text</button>" in out
     assert "Text box</button>" not in out
     assert "Page size &#9662;" in out or "Page size ▾" in out

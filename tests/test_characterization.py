@@ -478,7 +478,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # install door is offered whenever this is the web build rather than only
 # while the browser has a prompt pending, and help.html gains an install
 # section and loses a stale reference to a single-file semantic_render.py.
-EXPECTED_MD5 = "50dc2903068c08344036325a70d188d2"
+# Moved 2026-08-30 for T61: the insert tool is Object rather than Cell,
+# and its tooltip names all three sources a frame can take.
+EXPECTED_MD5 = "0ca1177f89a3e24776f23a77fd4c305b"
 EXPECTED_BYTES = 3150438
 
 
