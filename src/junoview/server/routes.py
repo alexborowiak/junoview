@@ -27,6 +27,7 @@ from ..notebook.loader import (
 )
 from ..notebook.parser import parse_notebook
 from ..notebook.presentations import as_presentations
+from ..notebook.sources import SOURCE_SUFFIXES, doc_from_text
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
@@ -193,7 +194,7 @@ def _make_handler(state: _AppState):
                     state.note_open(url)
                 return {"stem": doc.source_name, "path": url,
                         "shell": render_shell(doc, path=url)}
-            f = self._resolve_nb_path(raw)
+            f = self._resolve_src_path(raw)
             _store_version(f)   # every open/reload keeps a snapshot
             doc = load_doc(f)
             if into:
@@ -214,11 +215,38 @@ def _make_handler(state: _AppState):
             return f.resolve()
 
         def _resolve_nb_path(self, raw: str) -> Path:
+            """A path that must be a NOTEBOOK.
+
+            Kept strict deliberately. The routes that use it read
+            notebook JSON -- insert_note_cell rewrites cells and
+            _git_show_notebook parses a blob out of git -- and neither
+            has any meaning for a .tex or a .csv. Widening this one
+            resolver was the tempting one-line version of T100 and would
+            have handed those routes files they cannot parse.
+            """
             f = self._resolve_path(raw)
             if not f.exists():
                 raise FileNotFoundError(f"{f} not found")
             if f.suffix.lower() != ".ipynb":
                 raise ValueError(f"{f.name} is not a .ipynb file")
+            return f
+
+        def _resolve_src_path(self, raw: str) -> Path:
+            """A path that must be something this tool can OPEN.
+
+            SOURCE_SUFFIXES is the producer table in notebook/sources.py
+            -- the one place that says what this tool reads -- so the
+            app's gate and the CLI's cannot drift apart. Before T100 the
+            app carried a second, narrower list and the same .tex file
+            opened from the command line while the app refused it.
+            """
+            f = self._resolve_path(raw)
+            if not f.exists():
+                raise FileNotFoundError(f"{f} not found")
+            if f.suffix.lower() not in SOURCE_SUFFIXES:
+                raise ValueError(
+                    f"{f.name} is not a file this can open ("
+                    + ", ".join(SOURCE_SUFFIXES) + ")")
             return f
 
         def _add_note(self, body: dict) -> dict:
@@ -255,7 +283,8 @@ def _make_handler(state: _AppState):
             raw = str(body.get("path") or "").strip().strip('"')
             if not raw or is_url(raw):
                 return {"repo": False}
-            f = self._resolve_nb_path(raw)
+            # git tracks any file, so this follows the source gate
+            f = self._resolve_src_path(raw)
             info = _git_info(f)
             if info.get("repo"):
                 log = _git_file_log(f, 1)
@@ -296,9 +325,12 @@ def _make_handler(state: _AppState):
             raw = str(body.get("path") or "").strip().strip('"')
             if not raw or is_url(raw):
                 return {"versions": []}
-            f = self._resolve_nb_path(raw)
+            f = self._resolve_src_path(raw)
             out = []
-            for v in sorted(_versions_dir(f).glob("*.ipynb"),
+            # snapshots keep the source's own suffix, so a .tex and a
+            # .ipynb sharing a stem share a directory without either
+            # listing the other's history
+            for v in sorted(_versions_dir(f).glob("*" + f.suffix.lower()),
                             reverse=True):
                 stamp = v.stem.split("_", 1)[0]
                 try:
@@ -330,9 +362,10 @@ def _make_handler(state: _AppState):
                 return {"stem": doc.source_name, "path": str(fc),
                         "version": "git:" + commit,
                         "shell": render_shell(doc, path=str(fc))}
-            if not re.fullmatch(r"[\w.\-]+\.ipynb", vid):
+            f = self._resolve_src_path(raw)
+            if not re.fullmatch(r"[\w.\-]+" + re.escape(f.suffix.lower()),
+                                vid):
                 raise ValueError("bad version id")
-            f = self._resolve_nb_path(raw)
             vd = _versions_dir(f).resolve()
             vf = (vd / vid).resolve()
             if vf.parent != vd or not vf.exists():
@@ -344,16 +377,29 @@ def _make_handler(state: _AppState):
                     "shell": render_shell(doc, path=str(f))}
 
         def _parse_nb(self, body: dict) -> dict:
-            nb = body.get("nb")
-            if isinstance(nb, str):
-                nb = json.loads(nb)
-            if not isinstance(nb, dict):
-                raise ValueError("nb must be notebook JSON")
+            """Render a file the browser holds and the server cannot read.
+
+            Two shapes. ``nb`` is notebook JSON, kept for tabs opened
+            before a reload. ``text`` is the file verbatim and dispatches
+            through the producer table on its name, which is how a
+            dropped .md or .tex gets rendered at all (T100) -- the server
+            never sees the dropped file, only what the browser read.
+            """
             name = str(body.get("name") or "notebook.ipynb")
-            base = re.sub(r"\.ipynb$", "", name, flags=re.I) or "notebook"
-            doc = parse_notebook(nb)
+            text = body.get("text")
+            if isinstance(text, str):
+                doc = doc_from_text(name, text)
+            else:
+                nb = body.get("nb")
+                if isinstance(nb, str):
+                    nb = json.loads(nb)
+                if not isinstance(nb, dict):
+                    raise ValueError("send either nb (notebook JSON) or "
+                                     "text (the file's own contents)")
+                doc = parse_notebook(nb)
+            base = Path(name).stem or "notebook"
             doc.source_name = stem_for(Path(base + ".ipynb"),
-                                        state.stems_taken())
+                                       state.stems_taken())
             return {"stem": doc.source_name, "path": "",
                     "shell": render_shell(doc)}
 

@@ -1864,7 +1864,7 @@ worst-first.
 
 ### Reach — sources that parse but cannot be opened
 
-- [ ] **T100 · M — T91's sources work everywhere except the app.**
+- [x] **T100 · M — T91's sources work everywhere except the app.**
   *Verified CONFIRMED; a refuter enumerated the whole route table trying
   to break it and could not.* The registry, the four producers,
   `load_doc`'s suffix dispatch, the CLI and the Pyodide bridge all ship

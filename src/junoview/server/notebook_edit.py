@@ -59,9 +59,15 @@ def _versions_dir(f: Path) -> Path:
 
 
 def _store_version(f: Path, cap: int = 25) -> None:
-    """Automatic notebook snapshots: every open / reload keeps a copy
+    """Automatic source snapshots: every open / reload keeps a copy
     (deduped by content, capped) so earlier runs stay reachable from the
-    tab's Versions menu. Never allowed to block an open."""
+    tab's Versions menu. Never allowed to block an open.
+
+    Keyed on the file's own suffix rather than ``.ipynb`` (T100), so a
+    .tex or a .csv keeps the history a notebook keeps. Two sources
+    sharing a stem share a directory and stay separate, because each
+    lists only its own suffix.
+    """
     try:
         data = f.read_bytes()
         h = hashlib.sha1(data).hexdigest()[:10]
@@ -72,12 +78,13 @@ def _store_version(f: Path, cap: int = 25) -> None:
         gi = d.parent / ".gitignore"
         if not gi.exists():
             gi.write_text("*\n", encoding="utf-8")
-        vers = sorted(d.glob("*.ipynb"))
+        suffix = f.suffix.lower() or ".ipynb"
+        vers = sorted(d.glob("*" + suffix))
         if vers and vers[-1].stem.rsplit("_", 1)[-1] == h:
             return                      # unchanged since the last snapshot
         stamp = time.strftime("%Y%m%d-%H%M%S")
-        (d / f"{stamp}_{h}.ipynb").write_bytes(data)
-        vers = sorted(d.glob("*.ipynb"))
+        (d / f"{stamp}_{h}{suffix}").write_bytes(data)
+        vers = sorted(d.glob("*" + suffix))
         for old in vers[:-cap]:
             old.unlink()
     except Exception:

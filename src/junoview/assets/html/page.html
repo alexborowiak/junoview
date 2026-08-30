@@ -422,8 +422,8 @@
              already offers (2026-08-29, T77). Class and id stay adjacent
              and "Open local files" stays on one line: both are pinned. -->
         <button class="dbtn ghost" id="welcome-open"
-          title="Open notebooks (.ipynb) from your computer &mdash; or
- just drop them anywhere in this window"
+          title="Open notebooks, Markdown, LaTeX or csv files from your
+ computer &mdash; or just drop them anywhere in this window"
           ><i data-ic="open"></i>Open local files&#8230;
           <span class="welcome-drop">&hellip; or drop them here</span>
         </button>
@@ -432,7 +432,8 @@
         <button class="dbtn ghost" id="welcome-demo"
           hidden><i data-ic="play"></i> Try the example notebook</button>
       </div>
-      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
+      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b>,
+        <b>.md</b>, <b>.tex</b> or <b>.csv</b> files anywhere in
         this window.</p>
       <div class="welcome-links">
         <a href="#" id="welcome-tour">Take a tour</a>
@@ -590,7 +591,7 @@
       <div class="odlg-inrow">
         <input id="odlg-input" type="text" spellcheck="false"
           autocomplete="off"
-          placeholder="&#8230;or paste a folder or .ipynb path">
+          placeholder="&#8230;or paste a folder or file path">
         <button class="dbtn" id="odlg-go"
           title="Open the path or URL typed on the left">Open</button>
       </div>
@@ -628,7 +629,8 @@
   </div>
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
-<input type="file" id="fileinput" accept=".ipynb,.junoview,.html"
+<input type="file" id="fileinput"
+  accept=".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv,.junoview,.html"
   multiple hidden>
 <aside class="selpane varspane" id="varspane" hidden>
   <div class="selpane-h"><span>Variables</span>

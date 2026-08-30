@@ -5490,16 +5490,19 @@
       if(up) up.hidden=true;
       if(fb) fb.hidden=false;
       if(dlgPath) dlgPath.textContent='Open notebooks';
-      if(inp) inp.placeholder='…or paste a notebook URL '
-        +'(GitHub links work) and hit Open';
-      dlgList.innerHTML='<div class="odlg-empty">Drop notebooks '
-        +'anywhere in the window, use &#8220;Choose files&#8230;&#8221;, '
+      if(inp) inp.placeholder='…or paste a notebook, .md, .tex or '
+        +'.csv URL (GitHub links work) and hit Open';
+      dlgList.innerHTML='<div class="odlg-empty">Drop notebooks, '
+        +'Markdown, LaTeX or csv files anywhere in the window, use '
+        +'&#8220;Choose files&#8230;&#8221;, '
         +'or paste a URL below.<br><br>Everything runs in your browser '
-        +'&#8212; notebooks are never uploaded anywhere.</div>';
+        +'&#8212; nothing is ever uploaded anywhere.</div>';
       return;
     }
-    if(inp) inp.placeholder='…or paste a folder, file path or URL '
-      +'and hit Open';
+    /* this line, not page.html's placeholder attribute, is what a
+       user reads: showDlg overwrites it on every open (T100). */
+    if(inp) inp.placeholder='…or paste a folder, a notebook/.md/.tex/'
+      +'.csv path, or a URL, and hit Open';
     listDir(dlgDir||APP.root||'');
   }
   function listDir(dir){
@@ -5509,9 +5512,10 @@
       var up=$('#odlg-up');
       up.disabled=!j.parent;up.dataset.parent=j.parent||'';
       dlgList.innerHTML='';
-      if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length)
+      if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length
+         &&!(j.sources||[]).length)
         dlgList.innerHTML='<div class="odlg-empty">'
-          +'No folders or notebooks here.</div>';
+          +'Nothing here this can open.</div>';
       j.dirs.forEach(function(d){
         var b=document.createElement('button');b.className='odlg-i';
         b.innerHTML='<span class="ic">'+bic('open')+'</span>';
@@ -5523,6 +5527,24 @@
       j.notebooks.forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i nb';
         b.innerHTML='<span class="ic">'+bic('nb')+'</span>';
+        var nm=document.createElement('span');nm.className='nm';
+        nm.textContent=n.name;b.appendChild(nm);
+        var sz=document.createElement('span');sz.className='sz';
+        sz.textContent=n.size||'';b.appendChild(sz);
+        b.addEventListener('click',function(){openPath(n.path);});
+        dlgList.appendChild(b);
+      });
+      /* every other source the producer table knows: Markdown,
+         Quarto, LaTeX, csv/tsv. They have parsed since T91 and the
+         browser did not list them, so the app was the one door that
+         could not open a file the CLI could (T100). The row carries the
+         KIND the server read off SOURCES rather than guessing from the
+         extension here -- a second list is how the two drifted apart in
+         the first place. */
+      (j.sources||[]).forEach(function(n){
+        var b=document.createElement('button');b.className='odlg-i src';
+        b.innerHTML='<span class="ic">'+bic('doc')+'</span>';
+        b.title='Open this '+(n.kind||'file');
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
@@ -5752,7 +5774,11 @@
           +'Choose files / drag-and-drop.');
         return;
       }
-      if(isUrl(v)||/\.ipynb$/i.test(v)||isDeckPath(v)) openPath(v);
+      /* a path that names a source OPENS; anything else is still
+         treated as a folder to browse. Before T100 only .ipynb took the
+         first branch, so typing `paper.tex` tried to list it as a
+         directory and reported that it is not a folder. */
+      if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)) openPath(v);
       else listDir(v);
     }
     if(inp) inp.addEventListener('keydown',function(e){
@@ -5797,14 +5823,22 @@
         .forEach(function(f){
           f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
         });
-      files.filter(function(f){return /\.ipynb$/i.test(f.name);})
+      /* SRC_RE, not /\.ipynb$/ (T100). This handler filtered to
+         notebooks in BOTH modes, so dropping a .tex or a .csv did
+         nothing at all -- silently, which is the worse failure the
+         comment on SRC_RE warns about -- even in the web build, whose
+         Choose-files path has taken them since T91. The server side
+         posts `text` rather than `nb` for the same reason: /api/parse
+         dispatches on the name through the producer table, and a
+         notebook is one entry in it. */
+      files.filter(function(f){return SRC_RE.test(f.name);})
         .forEach(function(f){
           if(isWeb){
             f.text().then(function(txt){webParseText(f.name,txt);});
             return;
           }
           f.text().then(function(txt){
-            return api('/api/parse',{name:f.name,nb:txt});
+            return api('/api/parse',{name:f.name,text:txt});
           }).then(function(j){mountShellHTML(j.shell,j.path||'');})
           .catch(function(err){
             alert('Could not open '+f.name+': '+err.message);});

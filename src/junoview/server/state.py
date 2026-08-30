@@ -17,6 +17,7 @@ from .._write import write_text
 from ..notebook.loader import doc_from_url, is_url, load_doc, stem_for
 from ..notebook.parser import parse_notebook
 from ..notebook.presentations import as_presentations
+from ..notebook.sources import source_label
 from ..render.page import render_page
 
 _PROJECT_FILE = "junoview_project.json"
@@ -146,7 +147,7 @@ def _list_dir(raw: str) -> dict:
     if not d.is_dir():
         raise FileNotFoundError(f"{d} is not a folder")
     d = d.resolve()
-    dirs, nbs, decks = [], [], []
+    dirs, nbs, decks, srcs = [], [], [], []
     try:
         entries = sorted(d.iterdir(), key=lambda p: p.name.lower())
     except OSError:
@@ -169,11 +170,22 @@ def _list_dir(raw: str) -> dict:
                 kb = max(1, p.stat().st_size // 1024)
                 decks.append({"name": name, "path": str(p),
                               "size": f"{kb} KB"})
+            elif source_label(name):
+                # every OTHER source the producer table knows: Markdown,
+                # Quarto, LaTeX, csv/tsv. They parsed from the CLI and
+                # from the web build since T91 and were invisible here,
+                # which made the same file openable or not depending on
+                # which door you came through (T100). The label comes
+                # from SOURCES rather than a second list in this file.
+                kb = max(1, p.stat().st_size // 1024)
+                srcs.append({"name": name, "path": str(p),
+                             "size": f"{kb} KB",
+                             "kind": source_label(name)})
         except OSError:
             continue
     parent = str(d.parent) if d.parent != d else ""
     return {"dir": str(d), "parent": parent, "dirs": dirs,
-            "notebooks": nbs, "decks": decks}
+            "notebooks": nbs, "decks": decks, "sources": srcs}
 
 
 def _app_page(state: _AppState) -> str:

@@ -322,3 +322,156 @@ def test_the_browsers_drop_list_matches_the_registry():
         f"app.js accepts {sorted(in_js)} but sources.py handles "
         f"{sorted(SOURCES)}")
 
+
+# ---------------------------------------------------------------------------
+# the app's doors (T100)
+# ---------------------------------------------------------------------------
+#
+# T91 built the producers and every door EXCEPT the local app's. The
+# result was a file that opened from the CLI and from the web build and
+# was refused by the desktop app -- the same file, the same parser, three
+# answers. These pin each door against the registry rather than against a
+# hand-written list, because a second list is how they drifted apart.
+
+
+def test_the_file_browser_lists_every_source_it_can_open(tmp_path: Path):
+    """A file the browser does not list has no door at all: there is no
+    error to read, because nothing was ever offered."""
+    from junoview.server.state import _list_dir
+
+    for name in ("book.ipynb", "notes.md", "paper.tex", "data.csv",
+                 "grid.tsv", "story.qmd", "photo.png"):
+        (tmp_path / name).write_text("x", encoding="utf-8")
+    (tmp_path / "sub").mkdir()
+
+    listing = _list_dir(str(tmp_path))
+    assert [n["name"] for n in listing["notebooks"]] == ["book.ipynb"]
+    assert {s["name"] for s in listing["sources"]} == {
+        "notes.md", "paper.tex", "data.csv", "grid.tsv", "story.qmd"}
+    # the KIND comes off SOURCES, so the browser cannot label a file
+    # something the parser disagrees with
+    kinds = {s["name"]: s["kind"] for s in listing["sources"]}
+    assert kinds["paper.tex"] == "LaTeX"
+    assert kinds["data.csv"] == "Table"
+    # and nothing unopenable is offered
+    assert all(s["name"] != "photo.png" for s in listing["sources"])
+
+
+def test_every_registered_suffix_is_listed(tmp_path: Path):
+    """The parity that matters: add a producer, get a door, for free."""
+    from junoview.server.state import _list_dir
+
+    for i, suffix in enumerate(SOURCES):
+        (tmp_path / f"f{i}{suffix}").write_text("x", encoding="utf-8")
+    listing = _list_dir(str(tmp_path))
+    offered = {Path(n["name"]).suffix.lower()
+               for n in listing["notebooks"] + listing["sources"]}
+    assert offered == set(SOURCES)
+
+
+def test_the_open_route_accepts_a_source_and_the_note_route_does_not(
+        tmp_path: Path):
+    """The split that keeps this safe.
+
+    ``_resolve_src_path`` gates opening; ``_resolve_nb_path`` still gates
+    the routes that read notebook JSON -- inserting a note cell rewrites
+    cells, and a git version parses a blob as a notebook. Widening one
+    resolver for both would have handed those files they cannot parse.
+    """
+    from junoview.server.routes import _make_handler
+    from junoview.server.state import _AppState
+
+    Handler = _make_handler(_AppState(tmp_path))
+    # BaseHTTPRequestHandler.__init__ wants a live socket; the resolvers
+    # reach `state` through the closure only, so an uninitialised instance
+    # is enough and needs no server running
+    h = Handler.__new__(Handler)
+    src = tmp_path / "paper.tex"
+    src.write_text("\\section{Hi}\nprose\n", encoding="utf-8")
+
+    assert h._resolve_src_path(str(src)) == src.resolve()
+    with pytest.raises(ValueError):
+        h._resolve_nb_path(str(src))
+
+    # and something with no producer is refused by BOTH
+    other = tmp_path / "photo.png"
+    other.write_bytes(b"x")
+    with pytest.raises(ValueError):
+        h._resolve_src_path(str(other))
+
+
+def test_a_dropped_source_parses_through_the_producer_table(tmp_path: Path):
+    """/api/parse is the door for a file the server cannot read: the
+    browser holds it, so only its text arrives."""
+    from junoview.server.routes import _make_handler
+    from junoview.server.state import _AppState
+
+    Handler = _make_handler(_AppState(tmp_path))
+    h = Handler.__new__(Handler)
+    out = h._parse_nb({"name": "paper.tex", "text": TEX})
+    assert "A Warming Record" in out["shell"]
+
+    out = h._parse_nb({"name": "d.csv", "text": "a,b\n1,2\n"})
+    assert "<th>a</th>" in out["shell"]
+
+    # the older shape still works, for a tab opened before a reload
+    nb = {"cells": [{"cell_type": "markdown", "id": "m",
+                     "source": "hello"}]}
+    out = h._parse_nb({"name": "x.ipynb", "nb": nb})
+    assert "hello" in out["shell"]
+
+    with pytest.raises(ValueError):
+        h._parse_nb({"name": "x.ipynb"})
+
+
+def test_a_source_keeps_a_version_history_of_its_own_kind(tmp_path: Path):
+    """Snapshots are keyed on the file's own suffix, so opening a .tex
+    keeps history instead of silently keeping none -- and two sources
+    sharing a stem do not list each other's."""
+    from junoview.server.notebook_edit import _store_version, _versions_dir
+
+    tex = tmp_path / "paper.tex"
+    tex.write_text("one", encoding="utf-8")
+    nb = tmp_path / "paper.ipynb"
+    nb.write_text("{}", encoding="utf-8")
+    _store_version(tex)
+    _store_version(nb)
+    tex.write_text("two", encoding="utf-8")
+    _store_version(tex)
+
+    d = _versions_dir(tex)
+    assert len(list(d.glob("*.tex"))) == 2
+    assert len(list(d.glob("*.ipynb"))) == 1
+
+
+def test_every_door_in_app_js_asks_the_same_question():
+    """SRC_RE is the browser's copy of the registry, and the test above
+    pins it to SOURCES. This pins that the doors USE it: before T100 it
+    existed and the drop handler and the typed-path branch both carried
+    their own ipynb-only regex instead, so widening SRC_RE changed
+    nothing a user could reach.
+    """
+    from junoview import assets
+
+    js = assets.app_js()
+    # the window drop handler
+    assert "files.filter(function(f){return SRC_RE.test(f.name);})" in js
+    assert r"/\.ipynb$/i.test(f.name)" not in js
+    # the typed path in the Open dialog
+    assert "if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)) openPath(v);" in js
+    # and app mode posts the file's text, so /api/parse can dispatch
+    assert "api('/api/parse',{name:f.name,text:txt})" in js
+
+
+def test_the_doors_say_what_they_accept():
+    """Three strings promised .ipynb only. The one in page.html that a
+    user never sees is deliberately NOT the fix: showDlg overwrites the
+    placeholder on every open, so editing the attribute alone would have
+    changed nothing."""
+    from junoview import assets
+
+    js, page = assets.app_js(), assets.page_template()
+    assert ".md/.tex/" in js or "notebook/.md/.tex/" in js
+    assert "Markdown, LaTeX or csv files anywhere" in js
+    assert "<b>.md</b>" in page
+    assert "accept=\".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv," in page

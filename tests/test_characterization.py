@@ -526,8 +526,18 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # fragment, and the point of T98 is that the structural claims are
 # true. The count is gone rather than corrected, so the sixteenth
 # fragment cannot re-stale it.
-EXPECTED_MD5 = "c7e740f7b75ed33d95ed246f480ca15e"
-EXPECTED_BYTES = 3245609
+# Moved 2026-08-30 for T100, the doors to the sources T91 built: app.js's
+# window drop handler now filters on SRC_RE instead of carrying its own
+# ipynb-only regex (so a dropped .md/.tex/.csv reaches Python, in the web
+# build as well as the app) and posts the file's TEXT to /api/parse rather
+# than notebook JSON; the Open dialog's typed-path branch asks the same
+# question, so `paper.tex` opens instead of being listed as a folder; the
+# file browser grows a fourth row kind for sources, labelled with the KIND
+# the server read off SOURCES; and four strings that promised .ipynb only
+# say what the tool can actually open, including the file input's accept
+# list. page.html and app.js.
+EXPECTED_MD5 = "9fe26b2fb8a47ca49e580af05dac145c"
+EXPECTED_BYTES = 3247756
 
 
 def _render_example() -> str:
