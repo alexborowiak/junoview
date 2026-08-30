@@ -547,3 +547,93 @@ def test_closing_undoes_all_of_it(out):
     close = close[:close.index("window.SemApp.deckState")]
     assert "deckIsolate(false);" in close
     assert "deckReturnFocus();" in close
+
+
+# ---------------------------------------------------------------------------
+# an object that is a link (T118)
+# ---------------------------------------------------------------------------
+#
+# Browser-verified 2026-08-30 over an imported two-slide deck carrying
+# four links: an https one, an internal jump, a jump to a slide that is
+# not there, and `javascript:alert(1)`. Three were marked; the fourth was
+# refused by the allowlist. In view mode all three had role="link",
+# tabindex="0" and a pointer cursor; in edit mode none did. Clicking the
+# internal jump moved slide 0 -> 1. Clicking the slide itself, away from
+# any link, still advanced 0 -> 1. Clicking the broken one stayed on 0
+# rather than falling through and advancing.
+
+
+def test_an_action_is_an_allow_listed_field_not_a_script(out):
+    """A deck travels, and a deck that can run code is a deck nobody
+    should open. Two kinds and no third without a decision: an external
+    URL held to the same allowlist the markdown links use, and an
+    internal jump. Browser-verified: javascript:alert(1) was refused."""
+    assert "function linkOf(a){" in out
+    assert "if(l.to==='url'){" in out
+    assert "var h=mdHref(l.href);" in out
+    # mdHref also passes "#7", which is a NOTE's form, not this one
+    assert "return (h&&h.charAt(0)!=='#')?{to:'url',href:h}:null;" in out
+
+
+def test_an_internal_jump_follows_the_slide_not_its_number(out):
+    """A slide NUMBER is repointed by any reorder, silently. `sid` is the
+    slide's durable name and already exists for rehearsal timings, so the
+    number is resolved once -- while it still means what the author meant
+    -- and never stored."""
+    assert "if(l.to==='slide'&&typeof l.sid==='string'&&l.sid) {" in out
+    assert "function linkSlideIdx(sid){" in out
+    assert "a.link={to:'slide',sid:pres.slides[idx].sid};" in out
+    assert "ensureSids();" in out
+
+
+def test_a_link_beats_advancing_and_nothing_else_does(out):
+    """The standing rule is that a plain click advances -- that is the
+    gesture a talk runs on and it cannot be overloaded. So a link claims
+    the object itself and nothing else, exactly as tapzoom does.
+    Browser-verified both ways: the link jumped, and a click on the slide
+    away from it still advanced.
+    """
+    assert "var lk=e.target.closest&&e.target.closest('.an-linked');" in out
+    assert "if(lk&&followLink(lk)){e.stopPropagation();return;}" in out
+
+
+def test_a_url_opens_without_handing_over_the_window(out):
+    """A presentation is a window you do not want a linked page able to
+    navigate."""
+    assert "window.open(h,'_blank','noopener,noreferrer');" in out
+
+
+def test_a_broken_jump_says_so_rather_than_advancing(out):
+    """Returning false would let the click fall through to advance, so
+    the audience would see the deck move on as if nothing were wrong.
+    Browser-verified: it stayed on the slide."""
+    assert "toast('That link points at a slide that is no longer here');" in out
+    assert "return true;      /* handled: it must not fall through" in out
+
+
+def test_the_keyboard_promise_is_kept(out):
+    """role="link" and tabindex="0" promise Enter works. Without a
+    handler they would be a promise the page does not keep -- and they
+    are set only while presenting, because in the editor a click SELECTS
+    the object and announcing it as a link would be a lie."""
+    assert "function linkKey(e){" in out
+    assert "if(e.key!=='Enter'&&e.key!==' ') return;" in out
+    assert "slideEl.addEventListener('keydown',linkKey);" in out
+    assert "if(mode!=='edit'){" in out
+
+
+def test_a_link_that_goes_nowhere_is_reported(out):
+    """`sid` stops a REORDER repointing a link; deleting the target
+    still can, and silently. The one lint here that reports a broken
+    thing rather than a debatable one, so it is the only err."""
+    assert "head:'This link goes nowhere'," in out
+    assert "if(linkSlideIdx(l.sid)>=0) return;" in out
+
+
+def test_it_looks_like_a_link_only_while_presenting(out):
+    """In the editor a click selects it, and a pointer cursor would
+    promise otherwise. The outline is on hover and focus rather than
+    always, because a permanent rule under a picture reads as a border.
+    """
+    assert ".deck:not(.editing) .an-linked{cursor:pointer;}" in out
+    assert ".deck:not(.editing) .an-linked:focus-visible{" in out

@@ -584,8 +584,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # well as the readable text, and a JSON door beside it for a check that is
 # not a person. deck.js plus the .rv-head rule that makes the title, not the
 # buttons, give way now that there are four of them.
-EXPECTED_MD5 = "adebf8f661b2fc4cb46d77816e4d1d61"
-EXPECTED_BYTES = 3275069
+# Moved 2026-08-30 for T118: any object can be a link. A new `link` field
+# (allow-listed: a URL through the markdown allowlist, or an internal jump
+# held by the target slide's sid), marked in the DOM from applyCommon and
+# followed by the slide's ONE existing delegated click handler, a keyboard
+# path for the role="link" it sets while presenting, a canvas-menu door
+# that resolves a typed slide NUMBER to a sid once, a review lint for a
+# jump whose target has been deleted, and the hover/focus outline.
+# deck.js, deck.css, deck_schema.py and DECK-FORMAT.md.
+EXPECTED_MD5 = "c8388259ca96cb7c740196bca69bf374"
+EXPECTED_BYTES = 3282827
 
 
 def _render_example() -> str:

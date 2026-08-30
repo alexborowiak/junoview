@@ -2304,6 +2304,15 @@ body.light .rbn-gwarn b{color:#573b11;}
   font-family:var(--sans);}
 .rv-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
   border-bottom:1px solid #ffffff1a;}
+/* AN OBJECT THAT IS A LINK (T118). Only while presenting: in the
+   editor a click selects it, and a pointer cursor would promise
+   otherwise. The underline is on hover and focus rather than always,
+   because a figure is not a word and a permanent rule under a picture
+   reads as a border. */
+.deck:not(.editing) .an-linked{cursor:pointer;}
+.deck:not(.editing) .an-linked:hover,
+.deck:not(.editing) .an-linked:focus-visible{
+  outline:2px solid var(--accent,#39a9c0);outline-offset:3px;}
 /* the TITLE gives way, never the buttons: compacting rather than
    wrapping is the house rule for every control row, and T121 put a
    fourth button here (deck.css) */

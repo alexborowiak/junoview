@@ -352,7 +352,24 @@
                 :' under. There is room for the thing you left out.')});
       }
     }
-    /* --- 6. two slides that are the same slide --- */
+    /* --- 6. a link that goes nowhere (T118) ---
+       An internal jump is stored by `sid` precisely so reordering
+       cannot repoint it -- but DELETING the target still can, and
+       silently. This is the one lint that reports a broken thing
+       rather than a debatable one. */
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,i){
+        var l=a&&a.link;
+        if(!l||l.to!=='slide') return;
+        if(linkSlideIdx(l.sid)>=0) return;
+        out.push({sev:'err',si:si,i:i,
+          head:'This link goes nowhere',
+          why:'It points at a slide that is no longer in the deck. '
+            +'Clicking it while presenting says so and stays put, '
+            +'which is not what you want an audience to see.'});
+      });
+    });
+    /* --- 7. two slides that are the same slide --- */
     var seen={};
     (pres.slides||[]).forEach(function(sl,si){
       var key=(sl.annots||[]).filter(function(a){

@@ -2118,7 +2118,7 @@ nothing.
   "and more". `20-notes-and-tables.js:771` already draws cloned Plotly
   JSON specs in cell frames and is the seam a native chart would reuse.
 
-- [ ] **T118 · M — An object-level action model.** *Verified PARTIAL —
+- [x] **T118 · M — An object-level action model.** *Verified PARTIAL —
   more ships than the review found.* The `mdHref` allowlist, the
   `jvn-goto`/`data-slide` convention with its CSS, the shared `goto`
   command and durable `oid`/`sid` all exist; notes already jump to a

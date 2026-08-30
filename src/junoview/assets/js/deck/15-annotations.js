@@ -614,6 +614,7 @@
       if(mode==='view'){
         /* click anywhere on the slide advances the build / next slide */
         slideEl.style.cursor='pointer';
+        slideEl.addEventListener('keydown',linkKey);
         slideEl.addEventListener('click',function(e){
           if(e.target.closest&&e.target.closest('button,a,input,select'))
             return;
@@ -625,6 +626,12 @@
             var tg=spotTarget(e);
             if(tg){e.stopPropagation();spotlight(tg);return;}
           }
+          /* A LINK BEATS ADVANCING, and only a link does. The
+             standing rule is that a plain click advances -- that is
+             the gesture a talk runs on -- so this claims the object
+             itself and nothing else, exactly as tapzoom does. */
+          var lk=e.target.closest&&e.target.closest('.an-linked');
+          if(lk&&followLink(lk)){e.stopPropagation();return;}
           if(spotEl){closeSpot();return;}
           /* TAP AN ITEM TO ENLARGE IT (2026-08-22, user: "clicking
              figures/text makes full screen"). This is in tension with a
@@ -1084,7 +1091,28 @@
        0.5px guard only stops a collapse to zero. */
     return Math.max(0.5,h*(size||2.6)/100)+'px';
   }
+  /* A linked object is MARKED in the DOM rather than wired here: the
+     slide already has one delegated click handler for playback, and a
+     listener per object would have to be removed on every re-render.
+     The class is what present mode looks for and what the stylesheet
+     reaches (T118). */
+  function linkAttrs(el,a){
+    var l=linkOf(a);
+    if(!l) return;
+    el.classList.add('an-linked');
+    el.setAttribute('data-link',l.to);
+    if(l.to==='url') el.setAttribute('data-href',l.href);
+    else el.setAttribute('data-sid',l.sid);
+    if(mode!=='edit'){
+      /* only while presenting: in the editor a click SELECTS the object,
+         and announcing it as a link would be a lie about what happens */
+      el.setAttribute('role','link');
+      el.setAttribute('tabindex','0');
+    }
+    el.title=(mode==='edit'?'Links to ':'Go to ')+linkLabel(l);
+  }
   function applyCommon(el,a,extraTransform){
+    linkAttrs(el,a);
     if(a.op!=null&&a.op<1) el.style.opacity=a.op;
     var tr=extraTransform||'';
     if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
@@ -1977,6 +2005,75 @@
      own line on purpose. Markdown's "wrap freely" rule is for prose
      someone else will typeset; this is a script you read at speed. */
   var MD_URL=/^(?:https?:\/\/|mailto:)[^\s<>"']+$/i;
+  /* AN OBJECT THAT IS A LINK (T118).
+     Notes have been able to jump to a slide since the presenter view
+     (`[the method](#7)`), and markdown text has had scheme-checked links
+     for as long. What had no answer was the ordinary one: point at THIS
+     picture and say where it goes.
+
+     An action is a documented FIELD with an allow-listed type, never
+     arbitrary script -- a deck travels, and a deck that can run code is
+     a deck nobody should open. Two kinds, and no third without a
+     decision: an external URL held to the same MD_URL allowlist the
+     markdown links use, and an internal jump held by `sid` rather than
+     slide number, so reordering the deck cannot silently repoint it. */
+  function linkOf(a){
+    var l=a&&a.link;
+    if(!l||typeof l!=='object') return null;
+    if(l.to==='url'){
+      var h=mdHref(l.href);
+      /* mdHref also passes "#7", which is a NOTE's form and not this
+         one -- an object link says where it goes by sid */
+      return (h&&h.charAt(0)!=='#')?{to:'url',href:h}:null;
+    }
+    if(l.to==='slide'&&typeof l.sid==='string'&&l.sid) {
+      return {to:'slide',sid:l.sid};
+    }
+    return null;
+  }
+  function linkSlideIdx(sid){
+    var out=-1;
+    (pres.slides||[]).forEach(function(sl,i){
+      if(sl&&sl.sid===sid&&out<0) out=i;});
+    return out;
+  }
+  /* What to call the destination, for a tooltip and for the review. */
+  function linkLabel(l){
+    if(!l) return '';
+    if(l.to==='url') return l.href;
+    var i=linkSlideIdx(l.sid);
+    return i<0?'a slide that is no longer here'
+      :('slide '+(i+1)+' — '+(slideTitle(pres.slides[i])||'untitled'));
+  }
+  /* Following one. The URL half opens in a new tab with `noopener`,
+     because a presentation is a window you do not want a linked page
+     able to navigate. The slide half reuses `go`, which is the same
+     command the presenter console's own jumps send -- so a link and a
+     note's [the method](#7) end up in one code path. */
+  function linkKey(e){
+    if(e.key!=='Enter'&&e.key!==' ') return;
+    var el=e.target&&e.target.closest&&e.target.closest('.an-linked');
+    if(!el||mode==='edit') return;
+    /* role="link" and tabindex="0" promise the keyboard works; without
+       this they would be a promise the page does not keep */
+    if(followLink(el)){e.preventDefault();e.stopPropagation();}
+  }
+  function followLink(el){
+    if(!el) return false;
+    if(el.getAttribute('data-link')==='url'){
+      var h=el.getAttribute('data-href');
+      if(!h) return false;
+      window.open(h,'_blank','noopener,noreferrer');
+      return true;
+    }
+    var i=linkSlideIdx(el.getAttribute('data-sid')||'');
+    if(i<0){
+      toast('That link points at a slide that is no longer here');
+      return true;      /* handled: it must not fall through and advance */
+    }
+    go(i);
+    return true;
+  }
   function mdHref(u){
     u=String(u||'').trim();
     if(/^#\d+$/.test(u)) return u;          /* a slide in this deck */

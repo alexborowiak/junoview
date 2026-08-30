@@ -1583,6 +1583,39 @@
      leaving "I skipped this box" and "this picture carries nothing"
      looking the same. Cancel changes nothing, which is what Escape has
      to mean here (T105). */
+  /* Typed, not scripted. The prompt takes a URL or a slide number,
+     and a slide number is resolved to that slide's `sid` HERE -- once,
+     while the number still means what the author meant -- so the stored
+     link survives every later reorder (T118). */
+  function setObjLink(i){
+    var a=(pres.slides[cur].annots||[])[i]; if(!a) return;
+    var was=a.link?(a.link.to==='url'?a.link.href
+      :('slide '+(linkSlideIdx(a.link.sid)+1))):'';
+    var got=prompt('Where should clicking this go while you present?'
+      +'\n\n\u2022 a link: https://\u2026 or mailto:\u2026'
+      +'\n\u2022 a slide in this deck: its number, like 7'
+      +'\n\nLeave it empty to remove the link.',was);
+    if(got===null) return;
+    got=String(got).trim();
+    if(!got){delete a.link;markDirty();renderSlide();
+      toast('Link removed');return;}
+    var n=got.match(/^(?:slide\s*)?(\d+)$/i);
+    if(n){
+      var idx=parseInt(n[1],10)-1;
+      if(idx<0||idx>=(pres.slides||[]).length){
+        toast('There is no slide '+n[1]);return;}
+      ensureSids();
+      a.link={to:'slide',sid:pres.slides[idx].sid};
+    } else {
+      var h=mdHref(got);
+      if(!h||h.charAt(0)==='#'){
+        toast('That is not a link this can follow \u2014 http, https '
+          +'and mailto only');return;}
+      a.link={to:'url',href:h};
+    }
+    markDirty();renderSlide();
+    toast('Linked to '+linkLabel(a.link));
+  }
   function setAltText(idxs){
     var ans=(pres.slides[cur].annots||[]);
     var first=ans[idxs[0]]||{};
@@ -1686,6 +1719,23 @@
       var altSel=selIdxs().filter(function(i){
         var a=(pres.slides[cur].annots||[])[i];
         return a&&(a.k==='image'||a.k==='flip');});
+      /* LINK (T118). Any object can be one, so unlike Alt text this
+         needs no kind test -- but like it, it lives on the menu that
+         already knows what you clicked rather than on a ribbon that
+         must not wrap. */
+      if(selIdxs().length===1){
+        var lk0=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        menuHead(m,'where it goes');
+        row(lk0&&lk0.link?'Change where this goes':'Make this a link\u2026',
+          '',function(){setObjLink(selIdxs()[0]);},
+          'Clicking it while presenting opens a page or jumps to '
+          +'another slide. An internal jump follows the slide, not its '
+          +'number, so reordering the deck cannot repoint it.','link');
+        if(lk0&&lk0.link)
+          row('Remove the link','',function(){
+            delete lk0.link;markDirty();renderSlide();
+            toast('Link removed');},null,'unlink');
+      }
       if(altSel.length){
         var one0=(pres.slides[cur].annots||[])[altSel[0]];
         menuHead(m,'what it shows');

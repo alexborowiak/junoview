@@ -186,6 +186,13 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                  "caption says what to think about the figure and is "
                  "read by everyone; alt text says what is in it and is "
                  "read instead of it."),
+    "link": (dict, "What happens when this object is clicked while "
+                   "presenting. An ALLOW-LISTED action, never a piece of "
+                   "script: `to` is either \"url\" with an `href` "
+                   "(http, https or mailto only) or \"slide\" with a "
+                   "`sid` -- the target slide's durable name, so "
+                   "reordering the deck cannot break the link the way a "
+                   "slide NUMBER would."),
     "dec": (int, "1 when this picture carries no information -- a rule, "
                  "a texture, a logo already named in the text. It is "
                  "then marked decorative and skipped by a screen reader "
