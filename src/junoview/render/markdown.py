@@ -11,7 +11,7 @@ import html
 import re
 
 from ..notebook.directives import HEADING_RE
-from .sanitize import _sanitize_html
+from .sanitize import _sanitize_html, _url_ok
 
 _MD_CODE_RE = re.compile(r"`([^`]+)`")
 
@@ -23,6 +23,15 @@ _MD_EM_RE = re.compile(r"(?<!\*)\*([^*\n]+)\*(?!\*)")
 
 
 _MD_BULLET_RE = re.compile(r"^\s*[-*+]\s+")
+
+
+#: Inline `![alt](src)` and `[text](url)`. These ran through untouched and
+#: printed as their own source (T102). The image rule has to go first --
+#: a link rule would otherwise eat the `[...](...)` and leave a stray `!`.
+#: Both run AFTER html.escape, so `"` is already `&quot;` and cannot close
+#: the attribute they are written into.
+_MD_IMG_RE = re.compile(r"!\[([^\]]*)\]\(([^)\s]+)\)")
+_MD_LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+)\)")
 
 
 def _md_with_headings(text: str) -> str:
@@ -51,8 +60,21 @@ _MD_HTMLBLOCK_RE = re.compile(r"^\s*<[a-zA-Z!/]", re.M)
 
 
 def md_to_html(text: str) -> str:
+    def _img(m: re.Match) -> str:
+        if not _url_ok(m.group(2)):
+            return m.group(0)
+        return (f'<img src="{m.group(2)}" alt="{m.group(1)}" '
+                'loading="lazy">')
+
+    def _link(m: re.Match) -> str:
+        if not _url_ok(m.group(2)):
+            return m.group(0)
+        return f'<a href="{m.group(2)}">{m.group(1)}</a>'
+
     def inline(s: str) -> str:
         s = _MD_CODE_RE.sub(r"<code>\1</code>", s)
+        s = _MD_IMG_RE.sub(_img, s)
+        s = _MD_LINK_RE.sub(_link, s)
         s = _MD_BOLD_RE.sub(r"<strong>\1</strong>", s)
         s = _MD_EM_RE.sub(r"<em>\1</em>", s)
         return s

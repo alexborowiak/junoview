@@ -225,6 +225,55 @@ _MD_HEAD = re.compile(r"^(#{1,6})\s+(.*?)\s*#*\s*$")
 _MD_FENCE = re.compile(r"^\s*(`{3,}|~{3,})\s*([A-Za-z0-9_+-]*)\s*$")
 _MD_IMG_ONLY = re.compile(r"^\s*!\[([^\]]*)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)"
                           r"\s*$")
+#: `key: value` inside a leading --- fence. Quarto and every static-site
+#: generator start a file this way, and it was landing in the page as
+#: body text with the title falling back to the filename (T102). Read as
+#: a flat key/value list on purpose: this is not a YAML parser and should
+#: not grow into one.
+_MD_FRONT_KEY = re.compile(r"^([A-Za-z][\w-]*)\s*:\s*(.*)$")
+#: The row of dashes under a pipe table's heading. Its presence is what
+#: makes a row of `|` a TABLE rather than a sentence with pipes in it.
+_MD_TABLE_RULE = re.compile(r"^\s*\|?\s*:?-{2,}:?\s*"
+                            r"(\|\s*:?-{2,}:?\s*)*\|?\s*$")
+
+
+def _md_front_matter(lines: list[str]) -> tuple[list[str], str]:
+    """Strip a leading `---` block and return it with any title found.
+
+    parse_latex has read \\title{} since T91; markdown had no equivalent,
+    so a file whose title is in its front matter was called by its
+    filename while the title itself was printed as prose.
+    """
+    if not lines or lines[0].strip() != "---":
+        return lines, ""
+    for end in range(1, len(lines)):
+        if lines[end].strip() in ("---", "..."):
+            title = ""
+            for raw in lines[1:end]:
+                m = _MD_FRONT_KEY.match(raw)
+                if m and m.group(1).lower() == "title":
+                    title = m.group(2).strip().strip("\"'")
+                    break
+            return lines[end + 1:], title
+    return lines, ""            # an unclosed fence is not front matter
+
+
+def _md_table_rows(lines: list[str], i: int) -> tuple[list[list[str]], int]:
+    """The pipe table starting at ``i``, and where it ends."""
+    def split(row: str) -> list[str]:
+        row = row.strip()
+        if row.startswith("|"):
+            row = row[1:]
+        if row.endswith("|"):
+            row = row[:-1]
+        return [c.strip() for c in row.split("|")]
+
+    rows = [split(lines[i])]
+    j = i + 2                            # the heading and its rule
+    while j < len(lines) and "|" in lines[j] and lines[j].strip():
+        rows.append(split(lines[j]))
+        j += 1
+    return rows, j
 
 
 def parse_markdown(text: str, title: str | None = None,
@@ -241,8 +290,9 @@ def parse_markdown(text: str, title: str | None = None,
     paragraph after it becomes its caption -- which is how people
     actually write figures in markdown.
     """
-    doc, st = _doc(title or "Untitled document")
     lines = str(text).replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    lines, front_title = _md_front_matter(lines)
+    doc, st = _doc(title or front_title or "Untitled document")
     para: list[str] = []
     last_fig: Item | None = None
     i = 0
@@ -306,6 +356,24 @@ def parse_markdown(text: str, title: str | None = None,
             last_fig = _img_item(doc, st, m.group(2), m.group(1),
                                  base=base)
             i += 1
+            continue
+
+        # a pipe table becomes the same dataset card a .csv becomes, so
+        # the two kinds of table in this tool are one kind (T102)
+        if ("|" in line and line.strip()
+                and i + 1 < len(lines)
+                and _MD_TABLE_RULE.match(lines[i + 1])
+                and "|" in lines[i + 1]):
+            flush()
+            rows, i = _md_table_rows(lines, i)
+            tid = _slug("table", st["used"])
+            _add(doc, st, Item(
+                kind="dataset", title="Table",
+                outputs=[_html_out(_table_html(rows), ot="table")],
+                caption=f"{max(0, len(rows) - 1)} rows \u00d7 "
+                        f"{max((len(r) for r in rows), default=0)} columns.",
+                labelled=True, item_id=tid, anchor=tid))
+            last_fig = None
             continue
 
         if not line.strip():
@@ -492,6 +560,31 @@ def parse_latex(text: str, title: str | None = None,
 TABLE_ROW_CAP = 500          # rows drawn; the count still tells the truth
 
 
+def _table_html(rows: list[list[str]], n_cols: int = 0) -> str:
+    """Rows of strings into one table. The first row is the heading.
+
+    Shared by parse_table and by markdown's pipe tables (T102), so a
+    table from a .csv and a table from a .md are the same element with
+    the same class and get whatever styling that class ever grows.
+    """
+    n_cols = n_cols or max((len(r) for r in rows), default=0)
+
+    def cell(v: str, tag: str) -> str:
+        return f"<{tag}>{html.escape(str(v))}</{tag}>"
+
+    out = ['<table class="jv-tbl">']
+    if rows:
+        out.append("<thead><tr>"
+                   + "".join(cell(c, "th") for c in rows[0])
+                   + "</tr></thead>")
+    out.append("<tbody>")
+    for r in rows[1:]:
+        r = list(r) + [""] * (n_cols - len(r))
+        out.append("<tr>" + "".join(cell(c, "td") for c in r) + "</tr>")
+    out.append("</tbody></table>")
+    return "".join(out)
+
+
 def parse_table(text: str, title: str | None = None,
                 delim: str | None = None,
                 base: Path | None = None) -> Document:
@@ -516,19 +609,7 @@ def parse_table(text: str, title: str | None = None,
     n_cols = max((len(r) for r in rows), default=0)
     shown = rows[:TABLE_ROW_CAP + 1]
 
-    def cell(v: str, tag: str) -> str:
-        return f"<{tag}>{html.escape(str(v))}</{tag}>"
-
-    out = ['<table class="jv-tbl">']
-    if shown:
-        out.append("<thead><tr>"
-                   + "".join(cell(c, "th") for c in shown[0])
-                   + "</tr></thead>")
-    out.append("<tbody>")
-    for r in shown[1:]:
-        r = list(r) + [""] * (n_cols - len(r))
-        out.append("<tr>" + "".join(cell(c, "td") for c in r) + "</tr>")
-    out.append("</tbody></table>")
+    out = [_table_html(shown, n_cols)]
     if n_rows > TABLE_ROW_CAP:
         # SAY what was left out. A table silently showing its first 500
         # rows is a table lying about the file.

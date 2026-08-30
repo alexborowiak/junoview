@@ -1912,7 +1912,7 @@ worst-first.
   containment check — it `expanduser`s and resolves, so an absolute path
   escapes the root.
 
-- [ ] **T102 · S — The Markdown producer: front matter, tables, and more
+- [x] **T102 · S — The Markdown producer: front matter, tables, and more
   than one figure.**
   *Verified CONFIRMED.* Front matter is not stripped, so a YAML block
   becomes body text and the title falls back to the filename —

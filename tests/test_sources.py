@@ -612,3 +612,97 @@ def test_a_notebook_ignores_the_directory_it_came_from(tmp_path):
          '"source": "hi"}]}'
     doc = doc_from_text("x.ipynb", nb, base=tmp_path)
     assert _kinds(doc) == ["note"]
+
+
+# ---------------------------------------------------------------------------
+# front matter, tables and inline images (T102)
+# ---------------------------------------------------------------------------
+#
+# The markdown producer is a small adapter and stays one. These are the
+# three gaps that made an ordinary file render wrongly rather than
+# plainly: a Quarto header printed as prose, a table printed as pipes,
+# and a link printed as its own source.
+
+
+def test_front_matter_gives_the_document_its_title():
+    """parse_latex has read \\title{} since T91. A markdown file whose
+    title is in its front matter was called by its filename, with the
+    front matter itself printed as body text."""
+    doc = doc_from_text("notes.md",
+                        "---\ntitle: A Warming Record\nauthor: AB\n---\n"
+                        "\n# Intro\n\nProse.\n")
+    assert doc.title == "A Warming Record"
+    body = " ".join(it.caption for it in _items(doc))
+    assert "author" not in body and "AB" not in body
+
+
+def test_an_explicit_title_still_wins_over_front_matter():
+    doc = doc_from_text("notes.md", "---\ntitle: From the file\n---\n",
+                        title="From the caller")
+    assert doc.title == "From the caller"
+
+
+def test_an_unclosed_fence_is_not_front_matter():
+    """A file that opens with a horizontal rule is not a file with a
+    header, and eating the rest of it would be the worst possible
+    reading."""
+    doc = doc_from_text("notes.md", "---\nnot closed\n\n# Real\n")
+    assert doc.title == "Untitled document"
+    # nothing was eaten: the prose still lands (in the implicit opening
+    # section, as any prose before the first heading does) and the
+    # heading still opens its own
+    assert "Real" in [sec.title for sec in doc.sections]
+    assert any("not closed" in it.caption for it in _items(doc))
+
+
+def test_a_pipe_table_becomes_the_same_card_a_csv_becomes():
+    """Two kinds of table in one tool would be two things to style, two
+    things to export and two things to get wrong."""
+    doc = doc_from_text(
+        "notes.md",
+        "| Station | Anomaly |\n|---------|---------|\n"
+        "| Leeds   | 1.2     |\n| York    | 0.9     |\n")
+    tables = [it for it in _items(doc) if it.kind == "dataset"]
+    assert len(tables) == 1
+    body = tables[0].outputs[0].payload
+    assert body.startswith('<table class="jv-tbl">')
+    assert "<th>Station</th>" in body and "<td>Leeds</td>" in body
+    assert "2 rows" in tables[0].caption
+
+
+def test_pipes_without_a_rule_under_them_are_just_prose():
+    """The row of dashes is what makes it a table. A sentence with a
+    pipe in it is a sentence."""
+    doc = doc_from_text("notes.md", "a | b is not a table\n")
+    assert [it.kind for it in _items(doc)] == ["note"]
+
+
+def test_an_inline_image_and_link_render(tmp_path: Path):
+    """These ran through untouched and printed as their own source."""
+    from junoview.render.markdown import md_to_html
+
+    out = md_to_html("See ![the trend](fig/t.png) and "
+                     "[the paper](https://example.org).")
+    assert '<img src="fig/t.png" alt="the trend"' in out
+    assert '<a href="https://example.org">the paper</a>' in out
+
+
+def test_an_inline_url_scheme_is_held_to_the_same_allowlist():
+    """The rewrite reuses _url_ok, the sanitizer's own policy, rather
+    than inventing a second one. A blocked URL is left as the literal
+    text it was, which is visible and harmless."""
+    from junoview.render.markdown import md_to_html
+
+    out = md_to_html("[click](javascript:alert(1))")
+    assert "<a" not in out
+    assert "javascript:alert(1)" in out
+    # data: images are how every notebook figure already arrives
+    assert "<img" in md_to_html("![a](data:image/png;base64,AA==)")
+
+
+def test_the_image_rule_runs_before_the_link_rule():
+    """A link rule reaching ![alt](src) first would leave a stray `!`."""
+    from junoview.render.markdown import md_to_html
+
+    out = md_to_html("![a](x.png)")
+    assert "!<a" not in out and "<img" in out
