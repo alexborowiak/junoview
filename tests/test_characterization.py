@@ -335,7 +335,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # menu to reach them from a point, and the pointer capture they read;
 # deck.css grew the .canvas-menu rules. Editor-only; pinned by
 # tests/test_slide_editor.py's three paste tests.
-# Moved 2026-08-26 for T60: Default gained a contextual Object tab and the
+# Moved 2026-08-26 for T94 (filed as T60; renumbered 2026-08-30, two
+# tasks had the number): Default gained a contextual Object tab and the
 # tab strip gained the permanent Ribbon layouts door; help/README now tell
 # ribbon arrangements from slide layouts. Editor-only, pinned by
 # tests/test_ribbon_layouts.py and tests/test_slide_editor.py.

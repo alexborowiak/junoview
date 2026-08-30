@@ -9,12 +9,14 @@ and audience Q&A, speech analytics, generative-media AI).
 
 ## Where the work lives
 
-Everything about what is left to do is in two files, both in this repo:
+Everything about what is left to do is in these, all in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **groups 10–12** | **The queue.** The 2026-08-29 hand-test, T60–T93, every code-answerable claim already verified and refuted — read the verdict before working one. Groups 1–9 are the design record. |
+| **TASKS.md** (this file), **group 13** | **The queue.** The 2026-08-30 external review, T95–T121, every claim re-read against the source and then handed to a refuter told to prove it wrong — read the verdict before working one. Groups 1–12 are the design record; every entry in them is closed and ends in a dated note saying what shipped. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
+| [**reviews/**](reviews/) | **The evidence for group 13.** Two external reviews of `23956c4` — one on bugs, packaging and hygiene, one on missing features — with the file:line each claim rests on. Group 13's notes record where re-reading disagreed with them, which is often, and the disagreements are the useful part. |
+| `tests/test_characterization.py`, the comment block above `EXPECTED_MD5` | **The build log.** Every deliberate change to the rendered page since the package split, dated, saying what moved and why. Written at the moment the work lands rather than afterwards, which is why group 13's completion notes could be transcribed from it instead of reconstructed from `git log`. |
 
 Groups 1–8 above are all ticked and are now the design record — what was
 built and, more usefully, what was rejected and why.
@@ -22,7 +24,12 @@ built and, more usefully, what was rejected and why.
 **One caveat that governs the lot:** every finding is a *claim about
 code* until somebody drives it. Completed items in group 9 are verified
 in a browser. 24 of the 84 (the figures group, gathered in T58) were never
-even double-checked and are leads, not conclusions.
+even double-checked and are leads, not conclusions. Group 13 is the first
+set whose claims were graded by a reader and then by an independent
+refuter told to prove each one wrong — four died that way, and several
+more survived only with their proposed FIX corrected, which is the more
+useful outcome: three of the fixes the reviews recommended would have
+edited dead code.
 
 ---
 
@@ -42,12 +49,18 @@ even double-checked and are leads, not conclusions.
   (group 3 — the scientific core is the differentiator), then structure,
   styling, presenting. Group 8 refactors run alone, with nothing else in
   flight.
-- **Groups 1–8 are all ticked and are now the design record: what was
-  built and why. GROUP 9 IS THE LIVE QUEUE** (2026-08-26) — what the
-  audit of that shipped work found. Each entry is a theme, and the
-  entries run roughly worst-first, so take them from the top — and read
-  the two caveats at the head of the group before believing any single
-  finding in it.
+- **Groups 1–12 are all ticked and are now the design record: what was
+  built, what was rejected, and why. GROUP 13 IS THE LIVE QUEUE**
+  (2026-08-30) — what two external reviews of the shipped code found.
+  The entries run worst-first, so take them from the top.
+- **A ticked box means the work landed, and the note says what landed.**
+  Every closed entry ends in a dated paragraph naming its commit. Do not
+  re-open a task because its DIAGNOSIS is written in the present tense:
+  the diagnosis is the design record and is preserved as it was written,
+  including the ones that turned out to be wrong. If you find a closed
+  entry with no completion paragraph, that is a bug in this file — the
+  ticks have always been honest, but until T97 the prose around
+  thirty-three of them read as work still waiting.
 
 Repo-wide code rules live in [AGENTS.md](AGENTS.md); machine notes in
 [CLAUDE.md](CLAUDE.md).
@@ -1102,7 +1115,7 @@ file before touching anything.
   inside the gallery, so the remedy stays reachable even when the
   ribbon's own View controls are among those clipped.
 
-- [x] **T60 · S — Ribbon layouts are visible; selected objects own a
+- [x] **T94 · S — Ribbon layouts are visible; selected objects own a
   tab.** The gallery had more than a hundred arrangements and no ordinary
   door: right-clicking the ribbon was the main route, while the documented
   View menu exists only after the width ladder has already folded that
@@ -1117,6 +1130,15 @@ file before touching anything.
   generated layout's tabs first, so switching back cannot duplicate tab
   labels or ids. Help and README distinguish a ribbon arrangement from a
   slide layout.
+
+  *Renumbered 2026-08-30 (T97), from T60.* Two tasks carried the number
+  `T60` — this one and group 10's empty-text-box bug — so a commit
+  saying "T60" was ambiguous. This is the one whose only citation
+  outside TASKS.md was a comment in `tests/test_characterization.py`;
+  the other is cited from `15-annotations.js`, and moving that would
+  have changed the rendered page's bytes to fix a numbering slip. Its
+  implementing commit, `06bed91`, still says T60 in its subject; history
+  is history.
 
 - [x] **T57 · S — The smaller ones, gathered.** Each is a line or two.
   - Alt-drag clones on mousedown at zero offset and commits on mouseup
@@ -1265,6 +1287,9 @@ file before touching anything.
 
 ## 10. Bugs — the 2026-08-29 hand-test
 
+**Closed.** Every entry below landed and ends in a dated completion note naming its
+commit; the four struck through were refuted and needed no code.
+
 Reported by the user after working in the editor for real, worst-first:
 things that LOSE WORK, then things that block ordinary work, then things
 that are merely wrong.
@@ -1294,6 +1319,11 @@ drives it — the suite is substring greps.
   nothing says so. Fix: skip the auto-delete when `listOf(a)` is set,
   or add `li` to the rich selector; say it with a toast naming Ctrl+Z.
 
+  *Done 2026-08-29 — `7290067`.* An empty list survives its blur:
+  `sanitizeRich` was stripping the bare `<li>` that would have
+  saved it, so `a.html` went and the box followed. The deletion
+  that does still happen names Ctrl+Z.
+
 - [x] **T61 · M — A new slide should not be a notebook frame, and the
   insert door should be "insert object".** "New slides that have just
   the notebook cell can't be deleted, also please don't make that the
@@ -1305,6 +1335,12 @@ drives it — the suite is substring greps.
   widened to **Insert object** (notebook figure, local image, or a
   path — images already take paths).
 
+  *Done 2026-08-30 — `3518133`, then `ef53201`.* A slide starts
+  empty, the insert tool is **Object** rather than Cell and its
+  tooltip names all three sources a frame can take, and the empty-
+  slide hint is finally built — the stylesheet had been dressing it
+  for both themes while nothing created it.
+
 - [x] **T62 · S — Bold is a lie on a title.** "Text always seems to
   revert to bold; e.g. resizing a text box, back to bold."
   *Verified PARTIAL, and NOT what it looked like.* The resize/fit theory
@@ -1315,12 +1351,24 @@ drives it — the suite is substring greps.
   does bake `b` over a hand-set weight when you re-stamp a style, which
   is worth making visible. Not deck corruption; a small CSS fix.
 
+  *Done 2026-08-29 — `977e86a`.* The title's inner span reads
+  `--ttl-w`, which the renderer sets only once Bold has been
+  touched: untouched 600, on 700, off 400. Before that the CSS
+  weight outranked the model and Bold changed nothing on screen.
+
 - [x] **T63 · S — Selecting several objects selects everything.**
   "Selecting multiple objects can be bugged, it just results in
   everything being selected."
   *NOT YET VERIFIED — the only entry in this group that was not.*
   Suspect `startMarquee` / `selSet` and its interaction with groups and
   locked items. Reproduce in a browser first.
+
+  *Done 2026-08-29 — `43237ba`.* `startMarquee` was the one drag-
+  starter in the file that never called `preventDefault`, so a
+  marquee press also began a NATIVE text selection — the page going
+  blue, which is what "everything gets selected" meant. A lost
+  mouseup no longer leaves the band live, and Ctrl+A takes the
+  objects instead of falling through to the browser.
 
 - [x] **T64 · L — Crop, properly. (design first)** "The crop is still
   really buggy... the clicking button should just automatically do the
@@ -1338,6 +1386,11 @@ drives it — the suite is substring greps.
   (4) CONFIRMED — no free crop at all; needs `a.crop.path` as a polygon
   plus a draw gesture.
 
+  *Done 2026-08-30 — `6b3f770`.* Crop splits into a button that
+  trims and a caret that holds the shapes, the shapes are points
+  drawn inside the trim box, and a free-hand lasso writes
+  `a.crop.path`.
+
 - [x] **T65 · M — An image resizes only diagonally, and has no
   numbers.** "Why can pictures it seems only be dragged on diagonal, so
   can't be made taller or wider. Also where are all the options that I
@@ -1351,6 +1404,12 @@ drives it — the suite is substring greps.
   maths. Aspect lock exists as Shift and is documented only in a
   tooltip. No numeric W/H/X/Y anywhere — add a row in page millimetres.
 
+  *Done 2026-08-29 — `48090c8`.* Every box gains four SIDE handles
+  (a text box six, having no height of its own), one-axis drags
+  leave the other axis alone, `a.lockar` is a per-item Keep-shape
+  with Shift as its momentary opposite, and a Size & position pane
+  types W/H/X/Y in page millimetres through `anchorSet`.
+
 - [x] **T66 · M — Match slide should be click-the-thumbnail.** "You have
   to cross reference with the thumbnails on the side. It would be good
   if you just clicked it, then clicked the thumbnail of the slides you
@@ -1359,6 +1418,10 @@ drives it — the suite is substring greps.
   works. Reuse the existing `armMatch`/`matchHit` armed-state shape at
   slide level: arm from `#hm-match`, let a click on a `.film-row` pick,
   press Done.
+
+  *Done 2026-08-30 — `1577dec`.* Match slide is armed and pointed
+  at the thumbnails, the button's tooltip says so, the match menu
+  grows two rows that arm it, and the strip gains a picker look.
 
 - [x] **T67 · S — ~~The notebook picker's code filters do nothing.~~**
   "Code filtering options for notebook doesn't work when adding a figure
@@ -1372,6 +1435,11 @@ drives it — the suite is substring greps.
   `cloneBody` strips the filter classes so a placed frame is not
   silently missing rows. **Ask the user which they meant.**
 
+  *Closed 2026-08-30 as refuted.* No code changed and none should.
+  The question in the last line is still unanswered and is not a
+  task — it is a thing to ask the user next time the picker comes
+  up, not work waiting in a queue.
+
 - [x] **T68 · S — ~~Lock figures is always greyed out.~~** "The lock is
   always greyed out" and "it also never works."
   *Verified REFUTED — an environment, not a defect.* `#fmt-lockver`
@@ -1380,12 +1448,20 @@ drives it — the suite is substring greps.
   renders). Static exports and the web build show it disabled with a
   tooltip that says why. Almost certainly the same cause as T84 below.
 
+  *Closed 2026-08-30 as refuted.* No code changed. Worth
+  remembering when the next "it is greyed out" report arrives:
+  the answer was which BUILD it was greyed out in.
+
 - [x] **T69 · S — Present mode: the code arrow cannot be turned off,
   and the slide does not fill the screen.**
   *Verified CONFIRMED, both halves.* Needs a persisted deck flag
   (whitelisted in `normPres` — see the T52 follow-up for why that is not
   optional) read by `updateVNav`/`renderSlide`, and the letterbox maths
   in the playback branch.
+
+  *Done 2026-08-30 — `b4ae980`.* A per-deck `hideTrace` flag, the
+  four-place plumbing a persisted flag needs, and a Present-menu
+  door; playback is sized without the editing padding.
 
 - [x] **T70 · S — The saved-to chip does not fit its own box.** "Please
   make sure everything is fitting inside its box (come on). Also please
@@ -1395,10 +1471,16 @@ drives it — the suite is substring greps.
   `text-overflow:ellipsis` to fire at all; then move it beside Save and
   make the autosave interval a visible, settable thing.
 
+  *Done 2026-08-30 — `b4ae980`.* The chip is fitted, moved beside
+  Save, and the autosave cadence is a visible, settable thing.
+
 - [x] **T71 · S — Insert-text's option boxes are too small to see the
   symbols.**
   *Verified PARTIAL.* `#tx-type-menu` lacks the width/padding rule the
   format bar's Styles menu has.
+
+  *Done 2026-08-29 — `92a7c61`.* The maths palette keys and the
+  text-type menu grew enough to read a glyph.
 
 - [x] **T72 · M — Bullets sit oddly, and you cannot leave one.** "Dot
   points can't really be deleted, you can just remove the lines. Dot
@@ -1416,6 +1498,13 @@ drives it — the suite is substring greps.
   `sanitizeRich` flattens back to plain lines the renderer re-bullets.
   Turning the whole list off from the Bullets button always worked.
 
+  *Done 2026-08-30 — `b162de1`.* `sanitizeRich` now counts `li` as
+  rich — the editable element IS the `<ul>`, so its `innerHTML` is
+  a bare `<li>` run and querying for `ul`/`ol` found nothing, which
+  is why every unstyled list had its markup deleted on every blur.
+  With the markup surviving, committing content with no `<li>` left
+  drops `a.list`, so you can leave a list from inside it.
+
 - [x] **T73 · S — Click, click-click, click-click-click.** "Double click
   a word should highlight it, triple click should highlight the line,
   and quadruple should do entire box."
@@ -1425,10 +1514,19 @@ drives it — the suite is substring greps.
   `el.isContentEditable` captured before `beginEdit()`. Triple-click
   already works; quadruple needs adding.
 
+  *Done 2026-08-29 — `7290067`.* A double-click inside a box
+  already being edited no longer wipes the word the browser just
+  selected, and four clicks take the whole box.
+
 - [x] **T74 · M — Markdown cells, beside the LaTeX ones.** "Can there be
   like the latex cells, can we have markdown cells as well."
   *NEW as an insert kind.* Rich text and a Markdown export exist; "type
   Markdown, see it rendered" as a first-class box does not.
+
+  *Done 2026-08-30 — `691e620`.* Two new controls (Insert >
+  Markdown, and Edit markdown beside Edit equation) placed in all
+  108 ribbon arrangements, the editor dialog, the `.an-md` rules,
+  and one new documented annot field.
 
 - [x] **T75 · S — The notebook rail: no search, overcrowded, and New
   Notebook is on the wrong side.**
@@ -1436,9 +1534,14 @@ drives it — the suite is substring greps.
   `#tabstrip` and `#presstrip`. Same rail as the earlier "lock notebooks
   where the slide thumbnails are is the worst" report — fix together.
 
+  *Done 2026-08-30 — `58a5d69`.* One search field over both strips,
+  a clear button, an empty-state line and a Ctrl+K.
+
 ---
 
 ## 11. Layout and placement — the same pass
+
+**Closed.** Same pass, same verification, same completion notes.
 
 - [x] **T76 · M — Animations, re-thought. (design first)** "The
   animation bubbles that appear are the worst, like you can't get rid of
@@ -1465,11 +1568,16 @@ drives it — the suite is substring greps.
   hero/wordmark/tag block and the welcome drop, which can fold into the
   Open button.
 
+  *Done 2026-08-30 — `b4ae980`.* The home view's top folded.
+
 - [x] **T78 · S — The thumbnail strip is squeezed by buttons that are
   not even in it.**
   *Verified CONFIRMED.* `#dc-nbs`' bulk-action rows take height from the
   strip. Make it collapsible or reduce it to one row plus an overflow
   menu.
+
+  *Done 2026-08-30 — `b4ae980`.* The notebook actions collapsed out
+  of the strip's height.
 
 - [x] **T79 · S — ~~Clicking an object should bring up its tab.~~**
   *Verified REFUTED.* It does: `selectAnnot` → `showFmt` →
@@ -1477,15 +1585,25 @@ drives it — the suite is substring greps.
   contextual control is un-hidden first. The only suppressions are by
   design (already on the tab; a tool armed; you just drew). Stale build.
 
+  *Closed 2026-08-30 as refuted.* No code changed. It was the stale
+  `docs/` build, which is the single most common cause of a report
+  in this group — rebuild before believing one.
+
 - [x] **T80 · S — Growing the thumbnails eats the ribbon.**
   *Verified CONFIRMED.* `--film-w` is clamped to 46vw with no regard for
   the ribbon's measured floor. Clamp against it instead.
+
+  *Done 2026-08-30 — `b4ae980`.* The strip is clamped against the
+  ribbon's measured floor rather than a bare 46vw.
 
 - [x] **T81 · S — Home group order.** "The layout for slides should be
   below the new slides, and the duplicate and match slides should be one
   over another."
   *Verified CONFIRMED, trivial.* Move `#hm-delslide` ahead of
   `#hm-laywrap` and the 3x2 row-major grid lands as asked.
+
+  *Done 2026-08-29 — `92a7c61`.* The Slides group reorders so
+  Layouts sits under New slide and Match under Duplicate.
 
 - [x] **T82 · S — The Cancel button shifts the row it appears in.**
   "When clicking a button to insert things, the cancel button appears in
@@ -1496,6 +1614,10 @@ drives it — the suite is substring greps.
   along. Move it to the end of the group, or reserve its width with
   `visibility:hidden`.
 
+  *Done 2026-08-29 — `92a7c61`.* `#et-cancel` moves to the END of
+  the Insert group — in the markup and in all 108 arrangements — so
+  un-hiding it appends instead of shoving every later control along.
+
 - [x] **T83 · S — ~~Where is the Layouts button?~~ (the naming bug it hid,
   fixed)**
   *Verified REFUTED — but there is a real naming bug.* BOTH doors exist:
@@ -1503,24 +1625,45 @@ drives it — the suite is substring greps.
   says "Layout". The singular/plural split means they do not read as the
   same feature. Rename one.
 
+  *Done 2026-08-29 — `92a7c61`.* Home's slide-layout door is renamed
+  **Layouts** to match Design's, so the two read as one feature.
+
 - [x] **T84 · S — ~~View's buttons lost their icons.~~**
   *Verified REFUTED.* Every View button carries its `data-ic` in current
   source, and the T52 browser run shows all of them drawn. This is the
   stale `docs/` build. **Rebuild `docs/` before believing any report of
   this shape.**
 
+  *Closed 2026-08-30 as refuted.* No code changed; `d047d10` rebuilt
+  `docs/`, which is what the report was actually about.
+
 - [x] **T85 · S — Where is the desktop-app download?**
   *NEW.* The Electron path exists for development; there is no
   user-facing door to it.
+
+  *Done 2026-08-30 — `b162de1`.* The install door is offered
+  whenever this is the web build, rather than only while the browser
+  happens to have a prompt pending, and help.html gains an install
+  section and loses a stale reference to a single-file
+  `semantic_render.py`.
 
 - [x] **T86 · M — Flip books: buttons per image, and animations.**
   *Verified: the tie is REFUTED as broken* — `a.fb`/`flipShows` work, so
   the complaint is findability. Genuinely new: one button per figure
   instead of prev/next, and driving a flip book from the build sequence.
 
+  *Done 2026-08-30 — `f6d6cef`.* Flip books gain a Stepping chooser
+  in the frames pane, a button-per-figure bar, a stop timeline that
+  lets an animated book's frames follow its build, and a tie hint
+  that no longer hides itself.
+
 ---
 
 ## 12. Features asked for in the same pass
+
+**Closed** — with one honest exception. T91 shipped the source
+producers and not the app doors that reach them; its note says so,
+and the remainder is T100 and T101 in group 13.
 
 - [x] **T87 · L — A real design surface for the deck's type. (design
   first)** "Where was the button where people can 'standardise
@@ -1533,9 +1676,18 @@ drives it — the suite is substring greps.
   position gesture, and the all-slides outline overlay. Build the
   surface on what is there; do not build a second Apply.
 
+  *Done 2026-08-30 — `b65e2a0`.* A Design button placed in all 108
+  ribbon arrangements, the design surface it opens, and its
+  stylesheet. Built on `#dsg-std`, the style sets and `SELECT_CRIT`
+  as the note asked; there is still exactly one Apply dialog.
+
 - [x] **T88 · M — Present mode's side panel.** "An option to 'turn off
   animations'... a global text bigger or smaller."
   *NEW.* Skipping builds is the load-bearing half.
+
+  *Done 2026-08-30 — `fbdc715`.* Present mode gains a Talk button
+  and panel (skip builds, text size), their keys, and a
+  `--talk-text` multiplier in the three places a page sizes text.
 
 - [x] **T89 · S — Every feature whose only door is a right-click.**
   Consolidates the user's "what happened to X" reports, all of which
@@ -1546,11 +1698,19 @@ drives it — the suite is substring greps.
   down. Genuinely missing: a "show me every instance of this component"
   row, which `cmpInstances(id)` already computes.
 
+  *Done 2026-08-30 — `b4ae980`.* Real doors for all five right-
+  click-only features, including the "show me every instance" row
+  `cmpInstances(id)` was already computing.
+
 - [x] **T90 · L — Version branches.** "Where is the version and then you
   can create branches of version."
   *Verified: history ships, branching does not.* Not a small edit — a
   parent id on the entry, a non-linear index that `HIST_KEEP=20`'s
   head-drop cannot corrupt, and a way to show the shape.
+
+  *Done 2026-08-30 — `3406351`.* Snapshots carry a parent and a
+  branch name, the rail draws the shape, and the panel gains a
+  **Start a branch** button and an on-which-branch chip.
 
 - [x] **T91 · M — Sources beyond Jupyter. (design first)** "Something
   for things like Overleaf, Excel etc."
@@ -1558,12 +1718,27 @@ drives it — the suite is substring greps.
   source needs a Document producer (`parse_X` → `notebook.model.
   Document`) and nothing else on the render or deck path.
 
+  *Done 2026-08-30 — `daa186f`* — **but only half of what the title
+  promises, which the 2026-08-30 review caught.* The registry, the
+  four producers, `load_doc`'s dispatch, the CLI and the Pyodide
+  bridge all ship. The LOCAL APP still cannot open any of them:
+  `_list_dir`, `_resolve_nb_path`, `_parse_nb`, `submitOpenInput`
+  and the window drop handler are all still `.ipynb`-gated, and the
+  widened `SRC_RE` reaches only web mode's file chooser. A figure
+  beside a `.md` or `.tex` file does not display in any door. That
+  is T100 and T101; this entry stays ticked for what it built.
+
 - [x] **T92 · S — Paste code and have it format.**
   *NEW.* The highlighter exists; this is a paste path into it.
+
+  *Done 2026-08-30 — `b4ae980`.* Pasted code is detected and
+  highlighted.
 
 - [x] **T93 · S — Duplicate without context.**
   *NEW.* Duplicate the object, drop its `ref`, provenance and frame
   binding.
+
+  *Done 2026-08-30 — `b4ae980`.* Duplicate-without-its-source.
 
 ---
 
@@ -1637,7 +1812,7 @@ worst-first.
 
 ### The backlog's own honesty
 
-- [ ] **T97 · S — Groups 10–12 are closed, and every note still reads as
+- [x] **T97 · S — Groups 10–12 are closed, and every note still reads as
   an open work order.**
   *Verified CONFIRMED.* `grep '\[ \]' TASKS.md` returned **zero** across
   1586 lines — nothing was open — while the header called groups 10–12
