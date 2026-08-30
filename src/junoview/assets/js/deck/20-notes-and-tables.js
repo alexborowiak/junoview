@@ -1967,7 +1967,17 @@
                only, so bold inside a bullet — or a sub-level — was thrown
                away the moment the box lost focus. */
             function(v,r){a.text=v;
-              if(r&&r.rich) a.html=r.html; else delete a.html;},
+              if(r&&r.rich) a.html=r.html; else delete a.html;
+              /* THE WAY OUT OF A LIST. `a.list` is a box-wide flag and
+                 the renderer rebuilds a bullet for every line from it,
+                 so every browser-native escape — Backspace at the start
+                 of the first item, Enter twice out of the last — was
+                 undone on the next render and the bullet came back
+                 (2026-08-29, user: "dot points can't really be
+                 deleted"). If nothing you committed is a list item any
+                 more, you have left the list, and the model follows. */
+              if(listOf(a)&&!/<li[\s>]/i.test(String(a.html||'')))
+                delete a.list;},
             i,true);
         }
         d2.appendChild(tx2);

@@ -602,7 +602,15 @@ def test_bullets_are_a_real_list_model(out):
     assert "function setListStyle(a,style){" in out
     assert "function contentLines(a){" in out
     assert "ul:1,ol:1,li:1};" in out
-    assert "'span[style],font,b,strong,i,em,u,s,ul,ol')};" in out
+    # T72: `li` belongs here too. The editable element IS the <ul>, so
+    # its innerHTML is a bare run of <li> with no wrapper -- querying for
+    # ul/ol found nothing, every unstyled list reported rich:false, and
+    # its markup was deleted on every blur.
+    assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li')};" in out
+    # ...and once nothing you committed is a list item, you have left the
+    # list and the model follows
+    assert r"if(listOf(a)&&!/<li[\s>]/i.test(String(a.html||'')))" in out
+    assert "                delete a.list;}," in out
     # a legacy deck stored a.list as the boolean 1
     assert "return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;" \
         in out

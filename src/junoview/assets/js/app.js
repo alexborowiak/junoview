@@ -5746,16 +5746,42 @@
        by web-loader.html; it can also fire later, on this page. Either
        way the welcome screen grows an "Install as an app" link. */
     var wInst=$('#welcome-install'),wInstSep=$('#welcome-install-sep');
+    /* ALWAYS OFFERED, not only when the browser volunteers. The link
+       used to be hidden unless `beforeinstallprompt` had fired, which is
+       Chrome and Edge only, only when the install criteria are met, and
+       never once it is already installed -- so on Firefox, on Safari, on
+       a second visit, there was no door at all and no way to find out
+       there was one ("where is the download desktop app button",
+       2026-08-29). Shown whenever this is the web build; the CLICK is
+       what differs, because only the browser can actually install it. */
+    function canInstall(){
+      try{return matchMedia('(display-mode: standalone)').matches;}
+      catch(e){return false;}
+    }
     function paintInstall(){
-      var on=!!window.__jvInstall;
-      if(wInst) wInst.hidden=!on;
+      var on=(APP.mode==='web')&&!canInstall();
+      if(wInst){
+        wInst.hidden=!on;
+        wInst.textContent=window.__jvInstall
+          ?'Install as an app':'Install as an app\u2026';
+      }
       if(wInstSep) wInstSep.hidden=!on;
     }
     if(wInst) wInst.addEventListener('click',function(e){
       e.preventDefault();
-      var ev=window.__jvInstall; if(!ev) return;
-      window.__jvInstall=null;paintInstall();
-      ev.prompt();
+      var ev=window.__jvInstall;
+      if(ev){
+        window.__jvInstall=null;paintInstall();
+        ev.prompt();
+        return;
+      }
+      /* NO PROMPT TO REPLAY. Say what to do instead of doing nothing --
+         the browsers that never fire the event still install a PWA, they
+         just make you ask for it from their own menu. */
+      docToast('Junoview installs from your browser\u2019s own menu: '
+        +'look for Install Junoview, Install this site as an app, or '
+        +'Add to Home Screen. It then opens in its own window and works '
+        +'offline. There is no separate download.');
     });
     window.addEventListener('beforeinstallprompt',function(e){
       e.preventDefault();window.__jvInstall=e;paintInstall();

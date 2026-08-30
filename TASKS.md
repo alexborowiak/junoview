@@ -1400,7 +1400,7 @@ drives it — the suite is substring greps.
   *Verified PARTIAL.* `#tx-type-menu` lacks the width/padding rule the
   format bar's Styles menu has.
 
-- [ ] **T72 · M — Bullets sit oddly, and you cannot leave one.** "Dot
+- [x] **T72 · M — Bullets sit oddly, and you cannot leave one.** "Dot
   points can't really be deleted, you can just remove the lines. Dot
   points sit in a weird way."
   *Verified PARTIAL.* Turning the whole list off DOES work (press the
@@ -1498,7 +1498,7 @@ drives it — the suite is substring greps.
   stale `docs/` build. **Rebuild `docs/` before believing any report of
   this shape.**
 
-- [ ] **T85 · S — Where is the desktop-app download?**
+- [x] **T85 · S — Where is the desktop-app download?**
   *NEW.* The Electron path exists for development; there is no
   user-facing door to it.
 

@@ -1077,9 +1077,18 @@
     return {html:tpl.innerHTML,
       /* a list is structure worth keeping even with no inline styling in
          it — without ul/ol here a plain bullet list reported rich:false
-         and the caller threw a.html away */
+         and the caller threw a.html away.
+         `li` BELONGS IN THIS LIST TOO, and its absence was doing real
+         damage: the editable element IS the <ul>, so el.innerHTML is a
+         bare run of <li> with no wrapper, and querying for ul/ol found
+         nothing. Every unstyled list therefore reported rich:false and
+         had its markup deleted on every single blur — which is what let
+         an empty one look abandoned and delete itself (T60), and what
+         made leaving a list impossible, because the structure you had
+         just escaped from was rebuilt from a.list on the next render
+         (T72, 2026-08-29). */
       rich:!!tpl.content.querySelector(
-        'span[style],font,b,strong,i,em,u,s,ul,ol')};
+        'span[style],font,b,strong,i,em,u,s,ul,ol,li')};
   }
   /* ---- PASTED CODE (T92) ----------------------------------------------
      "Like how Slack you can paste code and it formats" (2026-08-29,

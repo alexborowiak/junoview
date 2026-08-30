@@ -470,8 +470,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # clamped against the ribbon's floor, real doors for the five right-click-only
 # features, pasted code detected and highlighted, and Duplicate-without-its-
 # source. deck.html, both stylesheets, app.js and six deck.js fragments.
-EXPECTED_MD5 = "186b2c6e7b5d930524a2a549c48a1942"
-EXPECTED_BYTES = 3147127
+# Moved 2026-08-30 for T72 and T85. T72: sanitizeRich now counts `li` as
+# rich -- the editable element IS the <ul>, so its innerHTML is a bare <li>
+# run and querying for ul/ol found nothing, which meant every unstyled list
+# had its markup deleted on every blur -- and committing content with no <li>
+# left now drops a.list, so you can leave a list from inside it. T85: the
+# install door is offered whenever this is the web build rather than only
+# while the browser has a prompt pending, and help.html gains an install
+# section and loses a stale reference to a single-file semantic_render.py.
+EXPECTED_MD5 = "50dc2903068c08344036325a70d188d2"
+EXPECTED_BYTES = 3150438
 
 
 def _render_example() -> str:

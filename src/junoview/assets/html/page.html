@@ -420,8 +420,11 @@
         <span class="wl-sep">&middot;</span>
         <a href="{kofi}" target="_blank"
           rel="noopener">Support &#9829;</a>
-        <!-- web build only: shown when the browser has an install offer
-             pending (captured in web-loader.html, wired in app.js) -->
+        <!-- web build only. Shown whenever this IS the web build and
+             the app is not already running installed -- app.js decides.
+             It used to appear only while the browser had an install
+             offer pending, which meant no door at all on the browsers
+             that never fire that event (2026-08-29, T85). -->
         <span class="wl-sep" id="welcome-install-sep" hidden>&middot;</span>
         <a href="#" id="welcome-install" hidden>Install as an app</a>
       </div>
