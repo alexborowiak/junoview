@@ -2147,7 +2147,7 @@ nothing.
   deliberate. `deck_api.py` is the honest automation seam and should stay
   a lossless view over JSON rather than exposing IIFE internals.
 
-- [ ] **T121 · M — The review panel: one exportable report, a timing
+- [x] **T121 · M — The review panel: one exportable report, a timing
   lint, and JSON out.** *Verified PARTIAL — seven checking surfaces
   already ship*, not two: `preflight`, `reviewLints`, `standardise`,
   `tidyFindings`, `provState`/`staleFigures`, `renderReh` and `deckDiff`.

@@ -322,7 +322,82 @@
             +'really carries nothing.'});
       });
     });
+    /* --- 5. the talk does not fit the time it has (T121) ---
+       Every part of this already existed and none of it was a LINT:
+       slideGoal and goalTotal add the goals up, rehStats holds what
+       each slide actually took, and the notes pane shows the verdict
+       while you are presenting. That is the wrong moment -- the review
+       is where you still have time to cut a slide. So this restates
+       what those already know rather than measuring anything new. */
+    var goal=goalTotal();
+    var st=rehStats(),runs=(st.runs||[]).length;
+    if(goal&&runs){
+      var real=0,timed=0;
+      (pres.slides||[]).forEach(function(sl){
+        var a=sl&&sl.sid?st.by[sl.sid]:null;
+        if(a&&a.n){real+=a.mean/60;timed++;}
+      });
+      /* only worth saying when most of the deck has actually been
+         rehearsed -- half a run extrapolated to a whole talk is a
+         number that looks like evidence and is not */
+      if(timed>=Math.ceil((pres.slides||[]).length/2)&&real){
+        var over=real-goal;
+        if(Math.abs(over)>=Math.max(1,goal*0.1))
+          out.push({sev:over>0?'err':'warn',si:null,i:null,
+            head:over>0?'This runs long':'This runs short',
+            why:'The goals add up to '+fmtMins(goal)+' and '+timed
+              +' rehearsed slide'+(timed===1?'':'s')+' averaged '
+              +fmtMins(real)+' \u2014 '+fmtMins(Math.abs(over))
+              +(over>0?' over. Cut a slide, or move the goal.'
+                :' under. There is room for the thing you left out.')});
+      }
+    }
+    /* --- 6. two slides that are the same slide --- */
+    var seen={};
+    (pres.slides||[]).forEach(function(sl,si){
+      var key=(sl.annots||[]).filter(function(a){
+        return a&&!a.hide&&!a.priv;
+      }).map(function(a){
+        return a.k+':'+(revText(a)||a.src||'').slice(0,80);
+      }).sort().join('|');
+      if(!key||key.length<20) return;    /* an empty slide is not a copy */
+      if(seen[key]!=null){
+        out.push({sev:'warn',si:si,i:null,
+          head:'This slide is a copy of an earlier one',
+          why:'Slide '+(seen[key]+1)+' has the same objects and the '
+            +'same words. A duplicate left in by accident reads as a '
+            +'stutter; one left in on purpose usually wants a build '
+            +'instead.'});
+      } else seen[key]=si;
+    });
     return out;
+  }
+  /* THE WHOLE REVIEW AS ONE THING (T121).
+     The panel showed the lints and the readable text side by side and
+     then exported only the text, so the half you would send to a
+     co-author was the half without the findings in it. The .md now
+     carries both, and there is a JSON door beside it for anything that
+     is not a person -- a pre-submission check in CI, most obviously.
+     Neither recomputes: both read reviewLints(), so an export can never
+     disagree with what the panel just showed you. */
+  function reviewMarkdown(text,lints){
+    if(!lints.length) return text;
+    var head='## What this review found\n\n';
+    var body=lints.map(function(l){
+      var where=(l.si!=null)?('Slide '+(l.si+1)+' \u2014 '):'';
+      return '- **'+(l.sev==='err'?'':'')+where+l.head+'.** '+l.why;
+    }).join('\n');
+    return head+body+'\n\n---\n\n'+text;
+  }
+  function reviewJson(lints){
+    return JSON.stringify({
+      deck:pres.name||'',
+      slides:(pres.slides||[]).length,
+      findings:lints.map(function(l){
+        return {severity:l.sev,slide:(l.si==null?null:l.si+1),
+          object:(l.i==null?null:l.i),title:l.head,detail:l.why};
+      })
+    },null,2);
   }
   /* THE PANEL. The lints first, because they are the reason to open it
      twice; the text below them, because it is the reason to open it at
@@ -351,6 +426,10 @@
       +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
       +'<button class="dbtn" id="rv-dl">'+bic('markdown')
       +' Save as .md</button>'
+      +'<button class="dbtn" id="rv-json" title="The same findings as '
+      +'JSON, for something that is not a person to read \u2014 a '
+      +'pre-submission check, say">'+bic('code')
+      +' Save as .json</button>'
       +'<button class="dbtn" id="rv-close">'+bic('exit')
       +' Close</button></div>'
       +'<div class="rv-main">'
@@ -409,13 +488,26 @@
         :'Select the text and copy it');
     });
     ov.querySelector('#rv-dl').addEventListener('click',function(){
-      var blob=new Blob([text],{type:'text/markdown'});
+      /* the findings AND the readable text: the half you send to a
+         co-author used to be the half without the findings (T121) */
+      var blob=new Blob([reviewMarkdown(text,lints)],
+        {type:'text/markdown'});
       var a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
       a.download=(pres.name||'deck')+'.review.md';
       a.click();
       setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
       toast('Saved — it travels; junoview stays here');
+    });
+    ov.querySelector('#rv-json').addEventListener('click',function(){
+      var blob=new Blob([reviewJson(lints)],{type:'application/json'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=(pres.name||'deck')+'.review.json';
+      a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+      toast(lints.length+' finding'+(lints.length===1?'':'s')
+        +' saved as JSON');
     });
     document.addEventListener('keydown',reviewKey,true);
   }

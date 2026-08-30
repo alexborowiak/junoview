@@ -2304,7 +2304,12 @@ body.light .rbn-gwarn b{color:#573b11;}
   font-family:var(--sans);}
 .rv-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
   border-bottom:1px solid #ffffff1a;}
-.rv-t{font-size:13px;color:#dbe7ef;}
+/* the TITLE gives way, never the buttons: compacting rather than
+   wrapping is the house rule for every control row, and T121 put a
+   fourth button here (deck.css) */
+.rv-t{font-size:13px;color:#dbe7ef;min-width:0;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;}
+.rv-head .dbtn{flex:0 0 auto;}
 .rv-main{flex:1;min-height:0;display:grid;
   grid-template-columns:minmax(280px,1fr) 1.2fr;gap:14px;
   padding:12px 16px 18px;}

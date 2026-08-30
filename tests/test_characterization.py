@@ -578,8 +578,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # a fourth lint for the pictures nobody has decided about; and pptx.js emits
 # descr. deck.js, pptx.js, deck_schema.py and DECK-FORMAT.md, which also
 # gained the `name` row it had been missing all along.
-EXPECTED_MD5 = "a011702ee4edb0e9eed55e7771d3f899"
-EXPECTED_BYTES = 3270421
+# Moved 2026-08-30 for T121: the review became one report. Two lints that
+# restate what the deck already knew (the talk does not fit its slot; a slide
+# is a copy of an earlier one), the .md export now carries the findings as
+# well as the readable text, and a JSON door beside it for a check that is
+# not a person. deck.js plus the .rv-head rule that makes the title, not the
+# buttons, give way now that there are four of them.
+EXPECTED_MD5 = "adebf8f661b2fc4cb46d77816e4d1d61"
+EXPECTED_BYTES = 3275069
 
 
 def _render_example() -> str:

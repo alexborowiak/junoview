@@ -658,3 +658,70 @@ def test_the_export_carries_the_description(out):
     assert "if (item.dec) return '';" in out
     assert "return item.alt ? ' descr=\"' + esc(item.alt) + '\"' : '';" in out
     assert "alt:a.alt,dec:a.dec," in out
+
+
+# ---------------------------------------------------------------------------
+# the review is one report (T121)
+# ---------------------------------------------------------------------------
+#
+# Seven checking surfaces already shipped -- preflight, reviewLints,
+# standardise, tidyFindings, provState/staleFigures, renderReh and
+# deckDiff. So this is consolidation, not new machinery: the two lints
+# added here restate what the deck already knew, and the exports carry
+# what the panel already showed.
+
+
+def test_the_review_says_whether_the_talk_fits(out):
+    """Every part of this existed and none of it was a LINT. slideGoal
+    and goalTotal add the goals up, rehStats holds what each slide
+    actually took, and the notes pane shows the verdict WHILE YOU ARE
+    PRESENTING -- which is the wrong moment. The review is where there
+    is still time to cut a slide.
+    """
+    assert "head:over>0?'This runs long':'This runs short'," in out
+    assert "var st=rehStats(),runs=(st.runs||[]).length;" in out
+    # only when most of the deck has really been rehearsed: half a run
+    # extrapolated to a whole talk is a number that looks like evidence
+    assert "if(timed>=Math.ceil((pres.slides||[]).length/2)&&real){" in out
+    # and only when the gap is worth saying
+    assert "if(Math.abs(over)>=Math.max(1,goal*0.1))" in out
+
+
+def test_the_review_notices_a_slide_that_is_a_copy(out):
+    """A duplicate left in by accident reads as a stutter; one left in on
+    purpose usually wanted a build. An EMPTY slide is not a copy, which
+    is why there is a length floor."""
+    assert "head:'This slide is a copy of an earlier one'," in out
+    assert "if(!key||key.length<20) return;" in out
+
+
+def test_the_exported_review_carries_the_findings(out):
+    """The panel showed the findings and the readable text side by side
+    and then exported only the text -- so the half you would send to a
+    co-author was the half without the findings in it."""
+    assert "function reviewMarkdown(text,lints){" in out
+    assert "var head='## What this review found" in out
+    assert "reviewMarkdown(text,lints)" in out
+
+
+def test_there_is_a_door_for_something_that_is_not_a_person(out):
+    """JSON, for a pre-submission check. It reads the SAME lints the
+    panel just rendered rather than recomputing, so an export cannot
+    disagree with what you were looking at."""
+    assert "function reviewJson(lints){" in out
+    assert "findings:lints.map(function(l){" in out
+    assert "severity:l.sev,slide:(l.si==null?null:l.si+1)," in out
+    assert "'.review.json'" in out
+    assert 'id="rv-json"' in out
+    # words AND an icon, like every other control here
+    assert "+' Save as .json</button>'" in out
+    assert "bic('code')" in out
+
+
+def test_the_review_head_compacts_rather_than_wrapping(out):
+    """The house rule for every control row, and T121 put a fourth
+    button in this one. `.rv-head` is a nowrap flex row, so the risk is
+    not a second line but a squashed button -- the TITLE is what gives
+    way, and the buttons do not shrink."""
+    assert ".rv-head .dbtn{flex:0 0 auto;}" in out
+    assert "white-space:nowrap;text-overflow:ellipsis;}" in out
