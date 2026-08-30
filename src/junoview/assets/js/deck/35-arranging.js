@@ -1339,6 +1339,78 @@
     syncMatchBar();
     if(n) toast(n+' object'+(n===1?'':'s')+' matched. Ctrl+Z undoes it.');
   }
+  /* ---- THE SAME VERB, ONE LEVEL UP (T66, 2026-08-29) -----------------
+     Matching a slide worked, but you picked the other slide out of a
+     menu that listed it by number and title -- so the gesture was read a
+     name in a menu, find the same number in the strip, and hope they are
+     the same slide ("you have to cross reference with the thumbnails on
+     the side. It would be good if you just clicked it, then clicked the
+     thumbnail of the slides you wanted to match").
+     The menu stays -- it is still the fastest way when you know the
+     number -- and this arms the pointing version instead. Deliberately
+     the same shape as matchArm above: same bar, same Esc, same running
+     count, both directions. Which end you have is again which one you
+     noticed first:
+       'from' -- THIS slide takes the layout of the thumbnail you click.
+                 One shot; a slide has one layout, so a second click
+                 would only undo the first.
+       'to'   -- the thumbnails you click take THIS slide's layout.
+                 Stays armed: that is the one that scales. */
+  var slideArm=null;
+  function armSlideMatch(dir){
+    if((pres.slides||[]).length<2){
+      toast('Add another slide first \u2014 there is nothing to match');
+      return;
+    }
+    slideArm={dir:dir,slide:cur,n:0};
+    deckEl.classList.add('matching','slide-matching');
+    syncMatchBar();
+    renderFilm();
+  }
+  function cancelSlideMatch(){
+    if(!slideArm) return;
+    var n=slideArm.n;
+    slideArm=null;
+    deckEl.classList.remove('matching','slide-matching');
+    syncMatchBar();
+    renderFilm();
+    if(n) toast(n+' slide'+(n===1?'':'s')+' matched. Ctrl+Z undoes it.');
+  }
+  /* one click on one thumbnail. Returns true when it consumed the click,
+     which is what stops the strip from also NAVIGATING to that slide. */
+  function slideMatchHit(i){
+    if(!slideArm) return false;
+    var from=(slideArm.dir==='from')?i:slideArm.slide;
+    var to=(slideArm.dir==='from')?slideArm.slide:i;
+    if(from===to){
+      toast('That is the slide you started from');
+      return true;
+    }
+    var r=matchSlide(from,to);
+    if(!r) return true;
+    if(!r.moved){
+      toast('Slide '+(i+1)+' and slide '+(slideArm.slide+1)
+        +' have no matching items \u2014 nothing to copy a layout from');
+      return true;
+    }
+    slideArm.n+=1;
+    markDirty();
+    var note='Matched '+r.moved+' item'+(r.moved===1?'':'s')
+      +' on slide '+(to+1);
+    if(r.missing.length)
+      note+=' \u2014 '+r.missing.length+' kind'
+        +(r.missing.length===1?'':'s')+' had nothing to match';
+    if(slideArm.dir==='from'){
+      cancelSlideMatch();
+      refresh();
+      toast(note+'. Ctrl+Z undoes it.');
+    } else {
+      syncMatchBar();
+      refresh();
+      toast(note+' \u2014 keep clicking, or press Esc');
+    }
+    return true;
+  }
   /* the copy loop, once. Same rule MATCH_PROPS has always followed —
      undefined on the model means DELETE on the target — and the same deep
      copy for the object-valued properties. */
@@ -1556,7 +1628,22 @@
   }
   function syncMatchBar(){
     var bar=$('#matchbar'); if(!bar) return;
-    bar.hidden=!matchArm;
+    bar.hidden=!matchArm&&!slideArm;
+    /* WHAT TRAVELS is an object-level question -- a slide match pairs
+       items up by kind and moves the arrangement, so there is no list of
+       properties to tick */
+    var mp=$('#match-props');
+    if(mp) mp.hidden=!!slideArm;
+    if(slideArm){
+      var w0=$('#match-what');
+      if(w0) w0.innerHTML=(slideArm.dir==='to')
+        ? (bic('swap')+' Click the thumbnails that should be laid out '
+          +'like <b>slide '+(slideArm.slide+1)+'</b>'
+          +(slideArm.n?(' &middot; '+slideArm.n+' done'):''))
+        : (bic('swap')+' Click the thumbnail whose layout <b>slide '
+          +(slideArm.slide+1)+'</b> should take');
+      return;
+    }
     if(!matchArm) return;
     var w=$('#match-what');
     var src=pres.slides[matchArm.slide];
@@ -1578,7 +1665,7 @@
   (function(){
     var mc=$('#match-cancel');
     if(mc) mc.addEventListener('click',function(e){
-      e.stopPropagation();cancelMatch();});
+      e.stopPropagation();cancelSlideMatch();cancelMatch();});
     var mb=$('#match-props'),mm=$('#match-props-menu');
     if(!mb||!mm) return;
     /* the same vocabulary the Apply dialog uses — "size, position, shape,

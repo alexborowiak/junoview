@@ -3629,3 +3629,14 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .pickbar .bic{width:13px;height:13px;vertical-align:-2px;}
 .dc-mi .bic{width:12px;height:12px;vertical-align:-2px;}
 .cellpartbtn .bic{width:10px;height:10px;vertical-align:-1px;}
+
+/* T66: while a slide match is armed every thumbnail is a target, and
+   says so the way the canvas says it during an object match. The strip
+   is the picker now, so it has to look like one. */
+.deck.slide-matching #film-list .film-row{cursor:copy;}
+.deck.slide-matching #film-list .film-row .film-label{
+  outline:2px dashed var(--accent,#2f6f9f);outline-offset:-2px;
+  border-radius:4px;}
+.deck.slide-matching #film-list .film-row:hover .film-label{
+  outline-style:solid;background:rgba(47,111,159,.10);}
+.deck.slide-matching #film-list .film-ctr{opacity:.35;}

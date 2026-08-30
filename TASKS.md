@@ -1351,7 +1351,7 @@ drives it — the suite is substring greps.
   maths. Aspect lock exists as Shift and is documented only in a
   tooltip. No numeric W/H/X/Y anywhere — add a row in page millimetres.
 
-- [ ] **T66 · M — Match slide should be click-the-thumbnail.** "You have
+- [x] **T66 · M — Match slide should be click-the-thumbnail.** "You have
   to cross reference with the thumbnails on the side. It would be good
   if you just clicked it, then clicked the thumbnail of the slides you
   wanted to match."

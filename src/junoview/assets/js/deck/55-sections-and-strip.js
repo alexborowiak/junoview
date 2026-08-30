@@ -261,7 +261,12 @@
           +'” version'
         :'Skipped by Running late');
       if(marks.childNodes.length) lbl.appendChild(marks);
-      if(i!==cur) lbl.addEventListener('click',function(){
+      /* WHILE ARMED the thumbnail is a target, not a destination --
+         and every row is one, including the current slide, which is why
+         this listener is no longer conditional on i!==cur (T66) */
+      lbl.addEventListener('click',function(){
+        if(slideMatchHit(i)) return;
+        if(i===cur) return;
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
       row.appendChild(lbl);
       var ctr=document.createElement('span');ctr.className='film-ctr';
@@ -1646,6 +1651,7 @@
       /* an armed match is the OUTERMOST mode you can be standing in — you
          cannot be trimming or inside a group while the canvas is a
          picker — so it goes first and swallows the key */
+      if(slideArm){e.preventDefault();cancelSlideMatch();return;}
       if(matchArm){e.preventDefault();cancelMatch();return;}
       if(vf&&!vf.hidden) closeVFull();
       /* trim mode is the innermost state: the first Esc leaves IT,

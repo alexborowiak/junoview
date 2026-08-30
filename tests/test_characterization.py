@@ -480,8 +480,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # section and loses a stale reference to a single-file semantic_render.py.
 # Moved 2026-08-30 for T61: the insert tool is Object rather than Cell,
 # and its tooltip names all three sources a frame can take.
-EXPECTED_MD5 = "0ca1177f89a3e24776f23a77fd4c305b"
-EXPECTED_BYTES = 3150438
+# Moved 2026-08-30 for T66: Match slide is armed and pointed at the
+# thumbnails now, so the button's tooltip says so, the match menu grows
+# two rows that arm it, and the strip gains a picker look.
+EXPECTED_MD5 = "b757720cf1bc6a00ca36e82b4a6c7bec"
+EXPECTED_BYTES = 3162205
 
 
 def _render_example() -> str:

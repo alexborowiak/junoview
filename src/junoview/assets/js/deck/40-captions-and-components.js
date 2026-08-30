@@ -1093,10 +1093,33 @@
        have just got this slide looking right and want the rest to follow
        (2026-08-22). Pulling one slide's layout onto this one is still
        below it, unchanged. */
+    /* POINT AT THE THUMBNAIL, first and second, because that is the
+       gesture the user asked for and the one that needs no cross
+       referencing at all (T66). The dialog and the by-name list below
+       both stay: knowing the number is still faster than hunting for
+       it in a sixty-slide strip. */
+    [['to','Lay other slides out like this one\u2026',
+      'Then click each thumbnail in the strip that should take this '
+      +'slide\u2019s arrangement. It stays armed, so one look can go '
+      +'to a dozen slides'],
+     ['from','Lay this slide out like another\u2026',
+      'Then click the one thumbnail in the strip whose arrangement '
+      +'this slide should copy']].forEach(function(o){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      b.innerHTML=bic('swap')+' ';
+      b.appendChild(document.createTextNode(o[1]));
+      b.title=o[2];
+      b.addEventListener('click',function(e){
+        e.stopPropagation();m.remove();armSlideMatch(o[0]);});
+      m.appendChild(b);
+    });
     var push=document.createElement('button');
     push.className='dbtn vw-opt';
     push.innerHTML=bic('inherit')+' Give this slide’s layout to…';
-    push.title='Choose which slides take the arrangement of this one';
+    push.title='Choose which slides take the arrangement of this one, '
+      +'from a list with tick boxes — the same job as pointing at '
+      +'them, when you would rather read the names';
     push.addEventListener('click',function(e){
       e.stopPropagation();m.remove();
       if(typeof window.SemDeckMatchMany==='function')
