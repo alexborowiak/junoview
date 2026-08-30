@@ -5386,7 +5386,21 @@ body.light .rbn-gwarn b{color:#573b11;}
   font-family:var(--sans);}
 .rv-head{display:flex;align-items:center;gap:10px;padding:10px 16px;
   border-bottom:1px solid #ffffff1a;}
-.rv-t{font-size:13px;color:#dbe7ef;}
+/* AN OBJECT THAT IS A LINK (T118). Only while presenting: in the
+   editor a click selects it, and a pointer cursor would promise
+   otherwise. The underline is on hover and focus rather than always,
+   because a figure is not a word and a permanent rule under a picture
+   reads as a border. */
+.deck:not(.editing) .an-linked{cursor:pointer;}
+.deck:not(.editing) .an-linked:hover,
+.deck:not(.editing) .an-linked:focus-visible{
+  outline:2px solid var(--accent,#39a9c0);outline-offset:3px;}
+/* the TITLE gives way, never the buttons: compacting rather than
+   wrapping is the house rule for every control row, and T121 put a
+   fourth button here (deck.css) */
+.rv-t{font-size:13px;color:#dbe7ef;min-width:0;overflow:hidden;
+  white-space:nowrap;text-overflow:ellipsis;}
+.rv-head .dbtn{flex:0 0 auto;}
 .rv-main{flex:1;min-height:0;display:grid;
   grid-template-columns:minmax(280px,1fr) 1.2fr;gap:14px;
   padding:12px 16px 18px;}
@@ -9018,8 +9032,8 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
              already offers (2026-08-29, T77). Class and id stay adjacent
              and "Open local files" stays on one line: both are pinned. -->
         <button class="dbtn ghost" id="welcome-open"
-          title="Open notebooks (.ipynb) from your computer &mdash; or
- just drop them anywhere in this window"
+          title="Open notebooks, Markdown, LaTeX or csv files from your
+ computer &mdash; or just drop them anywhere in this window"
           ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z"/></svg>Open local files&#8230;
           <span class="welcome-drop">&hellip; or drop them here</span>
         </button>
@@ -9028,7 +9042,8 @@ fig<span class="op">.</span>tight_layout<span class="op">(</span><span class="op
         <button class="dbtn ghost" id="welcome-demo"
           hidden><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Try the example notebook</button>
       </div>
-      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b> files anywhere in
+      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b>,
+        <b>.md</b>, <b>.tex</b> or <b>.csv</b> files anywhere in
         this window.</p>
       <div class="welcome-links">
         <a href="#" id="welcome-tour">Take a tour</a>
@@ -9715,10 +9730,15 @@ it) at the page's <b>true size</b> &mdash; an A0 poster comes out as a
 real 841&#215;1189mm page, ready for the print shop.</li>
 <li><i>File &rarr; Export PowerPoint</i> writes a <code>.pptx</code>.
 Text stays <b>editable</b> in PowerPoint, figures and images come across
-as pictures, and boxes and arrows become real shapes. A placed cell
-showing a <b>table</b> cannot convert (it is reported, not silently
-dropped), crops are not carried, and equations arrive as plain text
-&mdash; use Export PDF when any of those matter.</li>
+as pictures, and boxes and arrows become real shapes. Cropped
+pictures keep their trim and their shape, and slide transitions come
+across (<i>Move matching objects</i> becomes a push, which is the
+nearest PowerPoint has). What does <b>not</b> travel: a placed cell
+showing a <b>table</b>, a crop you drew freehand, equations (they
+arrive as plain text, since PowerPoint has no LaTeX), speaker notes,
+object builds, and links. Everything in that list is counted and named
+when you export, not silently dropped &mdash; use Export PDF when any of
+it matters.</li>
 <li><b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one
@@ -9819,7 +9839,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       <div class="odlg-inrow">
         <input id="odlg-input" type="text" spellcheck="false"
           autocomplete="off"
-          placeholder="&#8230;or paste a folder or .ipynb path">
+          placeholder="&#8230;or paste a folder or file path">
         <button class="dbtn" id="odlg-go"
           title="Open the path or URL typed on the left">Open</button>
       </div>
@@ -9857,7 +9877,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
   </div>
 </div>
 <div class="doc-toast" id="doc-toast" hidden></div>
-<input type="file" id="fileinput" accept=".ipynb,.junoview,.html"
+<input type="file" id="fileinput"
+  accept=".ipynb,.md,.markdown,.qmd,.tex,.latex,.csv,.tsv,.junoview,.html"
   multiple hidden>
 <aside class="selpane varspane" id="varspane" hidden>
   <div class="selpane-h"><span>Variables</span>
@@ -17551,16 +17572,19 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       if(up) up.hidden=true;
       if(fb) fb.hidden=false;
       if(dlgPath) dlgPath.textContent='Open notebooks';
-      if(inp) inp.placeholder='…or paste a notebook URL '
-        +'(GitHub links work) and hit Open';
-      dlgList.innerHTML='<div class="odlg-empty">Drop notebooks '
-        +'anywhere in the window, use &#8220;Choose files&#8230;&#8221;, '
+      if(inp) inp.placeholder='…or paste a notebook, .md, .tex or '
+        +'.csv URL (GitHub links work) and hit Open';
+      dlgList.innerHTML='<div class="odlg-empty">Drop notebooks, '
+        +'Markdown, LaTeX or csv files anywhere in the window, use '
+        +'&#8220;Choose files&#8230;&#8221;, '
         +'or paste a URL below.<br><br>Everything runs in your browser '
-        +'&#8212; notebooks are never uploaded anywhere.</div>';
+        +'&#8212; nothing is ever uploaded anywhere.</div>';
       return;
     }
-    if(inp) inp.placeholder='…or paste a folder, file path or URL '
-      +'and hit Open';
+    /* this line, not page.html's placeholder attribute, is what a
+       user reads: showDlg overwrites it on every open (T100). */
+    if(inp) inp.placeholder='…or paste a folder, a notebook/.md/.tex/'
+      +'.csv path, or a URL, and hit Open';
     listDir(dlgDir||APP.root||'');
   }
   function listDir(dir){
@@ -17570,9 +17594,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       var up=$('#odlg-up');
       up.disabled=!j.parent;up.dataset.parent=j.parent||'';
       dlgList.innerHTML='';
-      if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length)
+      if(!j.dirs.length&&!j.notebooks.length&&!(j.decks||[]).length
+         &&!(j.sources||[]).length)
         dlgList.innerHTML='<div class="odlg-empty">'
-          +'No folders or notebooks here.</div>';
+          +'Nothing here this can open.</div>';
       j.dirs.forEach(function(d){
         var b=document.createElement('button');b.className='odlg-i';
         b.innerHTML='<span class="ic">'+bic('open')+'</span>';
@@ -17584,6 +17609,24 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       j.notebooks.forEach(function(n){
         var b=document.createElement('button');b.className='odlg-i nb';
         b.innerHTML='<span class="ic">'+bic('nb')+'</span>';
+        var nm=document.createElement('span');nm.className='nm';
+        nm.textContent=n.name;b.appendChild(nm);
+        var sz=document.createElement('span');sz.className='sz';
+        sz.textContent=n.size||'';b.appendChild(sz);
+        b.addEventListener('click',function(){openPath(n.path);});
+        dlgList.appendChild(b);
+      });
+      /* every other source the producer table knows: Markdown,
+         Quarto, LaTeX, csv/tsv. They have parsed since T91 and the
+         browser did not list them, so the app was the one door that
+         could not open a file the CLI could (T100). The row carries the
+         KIND the server read off SOURCES rather than guessing from the
+         extension here -- a second list is how the two drifted apart in
+         the first place. */
+      (j.sources||[]).forEach(function(n){
+        var b=document.createElement('button');b.className='odlg-i src';
+        b.innerHTML='<span class="ic">'+bic('doc')+'</span>';
+        b.title='Open this '+(n.kind||'file');
         var nm=document.createElement('span');nm.className='nm';
         nm.textContent=n.name;b.appendChild(nm);
         var sz=document.createElement('span');sz.className='sz';
@@ -17813,7 +17856,11 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           +'Choose files / drag-and-drop.');
         return;
       }
-      if(isUrl(v)||/\.ipynb$/i.test(v)||isDeckPath(v)) openPath(v);
+      /* a path that names a source OPENS; anything else is still
+         treated as a folder to browse. Before T100 only .ipynb took the
+         first branch, so typing `paper.tex` tried to list it as a
+         directory and reported that it is not a folder. */
+      if(isUrl(v)||SRC_RE.test(v)||isDeckPath(v)) openPath(v);
       else listDir(v);
     }
     if(inp) inp.addEventListener('keydown',function(e){
@@ -17858,14 +17905,22 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         .forEach(function(f){
           f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
         });
-      files.filter(function(f){return /\.ipynb$/i.test(f.name);})
+      /* SRC_RE, not /\.ipynb$/ (T100). This handler filtered to
+         notebooks in BOTH modes, so dropping a .tex or a .csv did
+         nothing at all -- silently, which is the worse failure the
+         comment on SRC_RE warns about -- even in the web build, whose
+         Choose-files path has taken them since T91. The server side
+         posts `text` rather than `nb` for the same reason: /api/parse
+         dispatches on the name through the producer table, and a
+         notebook is one entry in it. */
+      files.filter(function(f){return SRC_RE.test(f.name);})
         .forEach(function(f){
           if(isWeb){
             f.text().then(function(txt){webParseText(f.name,txt);});
             return;
           }
           f.text().then(function(txt){
-            return api('/api/parse',{name:f.name,nb:txt});
+            return api('/api/parse',{name:f.name,text:txt});
           }).then(function(j){mountShellHTML(j.shell,j.path||'');})
           .catch(function(err){
             alert('Could not open '+f.name+': '+err.message);});
@@ -18369,17 +18424,81 @@ window.JunoPptx = (function () {
       + '</a:tbl></a:graphicData></a:graphic></p:graphicFrame>';
   }
 
+  /* A CROP, in the two currencies that differ.
+     Junoview's `crop` trims each edge by a percentage of the item's own
+     box and does NOT rescale what is left -- it is a CSS `inset()` mask,
+     so the visible part stays exactly where it was on the page.
+     DrawingML's <a:srcRect> also trims by percentage (in 1000ths), but
+     <a:stretch><a:fillRect/> then stretches the remainder over the whole
+     shape. Passing the insets through alone would therefore blow the
+     picture back up to its uncropped size.
+     So the shape's own box is shrunk to the visible fraction and moved
+     to where that fraction was, and srcRect trims the source to match.
+     The two together reproduce the mask. srcRect must come BEFORE
+     <a:stretch> inside <a:blipFill> or PowerPoint rejects the part. */
+  function cropRect(item) {
+    var c = item.crop;
+    if (!c) return null;
+    var l = Math.max(0, +c.l || 0), r = Math.max(0, +c.r || 0);
+    var t = Math.max(0, +c.t || 0), b = Math.max(0, +c.b || 0);
+    if (l + r >= 100 || t + b >= 100) return null;   /* nothing left */
+    if (!(l || r || t || b)) return null;
+    return { l: l, r: r, t: t, b: b };
+  }
+
+  /* SLIDE TRANSITIONS. Junoview has three and PowerPoint has
+     dozens, so this maps only what is honest. `cut` is the absence of a
+     transition and writes nothing. `fade` is <p:fade>, which is the
+     same effect. `move` -- Junoview's object-continuity morph -- has no
+     faithful equivalent in the OOXML this writer can be sure of, so it
+     is approximated by `push` and the caller is told, rather than
+     silently promised something PowerPoint will not do.
+     <p:transition> belongs AFTER <p:clrMapOvr> in the slide part. */
+  var TRANSITION = { fade: '<p:fade/>', move: '<p:push dir="l"/>' };
+
+  function transition(kind) {
+    var body = TRANSITION[kind];
+    if (!body) return '';
+    return '<p:transition spd="med">' + body + '</p:transition>';
+  }
+
+  /* A shape's non-visual DESCRIPTION is what PowerPoint's own
+     accessibility checker reads and what a screen reader announces. It
+     is one attribute, and it had nowhere to come from until the deck
+     grew an alt field (T105). */
+  function descrAttr(item) {
+    if (item.dec) return '';
+    return item.alt ? ' descr="' + esc(item.alt) + '"' : '';
+  }
+
   function picShape(item, id, rid, page) {
+    var c = cropRect(item), geo = item, src = '';
+    if (c) {
+      geo = { x: (item.x || 0) + (item.w || 0) * c.l / 100,
+        y: (item.y || 0) + (item.h || 0) * c.t / 100,
+        w: (item.w || 0) * (100 - c.l - c.r) / 100,
+        h: (item.h || 0) * (100 - c.t - c.b) / 100,
+        rot: item.rot };
+      src = '<a:srcRect l="' + Math.round(c.l * 1000) + '" t="'
+        + Math.round(c.t * 1000) + '" r="' + Math.round(c.r * 1000)
+        + '" b="' + Math.round(c.b * 1000) + '"/>';
+    }
+    var geom = SHAPE_GEOM[item.cropShape] || 'rect';
     return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
-      + esc(item.name || ('Picture ' + id)) + '"/><p:cNvPicPr/><p:nvPr/>'
+      + esc(item.name || ('Picture ' + id)) + '"' + descrAttr(item)
+      + '/><p:cNvPicPr/><p:nvPr/>'
       + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
       + (item.op != null && item.op < 1
         ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
-      + '</a:blip><a:stretch><a:fillRect/></a:stretch></p:blipFill>'
-      + '<p:spPr>' + xfrm(item, page)
-      + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>';
+      + '</a:blip>' + src + '<a:stretch><a:fillRect/></a:stretch>'
+      + '</p:blipFill>'
+      + '<p:spPr>' + xfrm(geo, page)
+      + '<a:prstGeom prst="' + geom + '"><a:avLst/></a:prstGeom>'
+      + '</p:spPr></p:pic>';
   }
 
+  /* declared below picShape, which reads it: `var` hoists and
+     picShape only runs from build(), long after this line. */
   var SHAPE_GEOM = { rect: 'rect', ellipse: 'ellipse', oval: 'ellipse',
     circle: 'ellipse', round: 'roundRect', roundRect: 'roundRect',
     diamond: 'diamond', triangle: 'triangle', star: 'star5' };
@@ -18515,6 +18634,49 @@ window.JunoPptx = (function () {
       + '</a:bgFillStyleLst></a:fmtScheme></a:themeElements></a:theme>';
   }
 
+  /* SPEAKER NOTES. A notes page is its own part, and it needs three
+     things around it or PowerPoint will not show it: a notes MASTER
+     (one, shared), a notesSlide part per slide that has notes, and a
+     relationship in BOTH directions -- the slide points at its notes
+     page and the notes page points back at the slide. The writer emitted
+     <p:notesSz> and then none of it, so a talk exported without the half
+     that is the talk.
+
+     Only slides that actually have notes get a part, and the notes
+     master appears only when at least one does, so a deck with no notes
+     produces exactly the bytes it produced before. */
+  function notesBody(text) {
+    var lines = String(text).replace(/\r\n/g, '\n').split('\n');
+    return lines.map(function (ln) {
+      return '<a:p><a:r><a:rPr lang="en-US" dirty="0"/><a:t>'
+        + esc(ln) + '</a:t></a:r></a:p>';
+    }).join('');
+  }
+
+  function notesSlideXml(text) {
+    /* type="body" idx="1" is what makes it THE notes placeholder rather
+       than a stray text box on the notes page. */
+    var sp = '<p:sp><p:nvSpPr><p:cNvPr id="2" name="Notes Placeholder 1"/>'
+      + '<p:cNvSpPr><a:spLocks noGrp="1"/></p:cNvSpPr><p:nvPr>'
+      + '<p:ph type="body" idx="1"/></p:nvPr></p:nvSpPr><p:spPr/>'
+      + '<p:txBody><a:bodyPr/><a:lstStyle/>' + notesBody(text)
+      + '</p:txBody></p:sp>';
+    var tree = emptyTree('Notes').replace('</p:spTree>',
+      function () { return sp + '</p:spTree>'; });
+    return XML_HEAD + '<p:notes' + nsAttrs() + '><p:cSld>' + tree
+      + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
+      + '</p:notes>';
+  }
+
+  function notesMasterXml() {
+    return XML_HEAD + '<p:notesMaster' + nsAttrs() + '><p:cSld>'
+      + emptyTree('Notes Master') + '</p:cSld>'
+      + '<p:clrMap bg1="lt1" tx1="dk1" bg2="lt2" tx2="dk2"'
+      + ' accent1="accent1" accent2="accent2" accent3="accent3"'
+      + ' accent4="accent4" accent5="accent5" accent6="accent6"'
+      + ' hlink="hlink" folHlink="folHlink"/></p:notesMaster>';
+  }
+
   function emptyTree(name) {
     return '<p:spTree><p:nvGrpSpPr><p:cNvPr id="1" name="' + name + '"/>'
       + '<p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm>'
@@ -18584,16 +18746,45 @@ window.JunoPptx = (function () {
       return { rels: rels,
         xml: XML_HEAD + '<p:sld' + nsAttrs() + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
-          + '</p:sld>' };
+          + transition(slide.trans) + '</p:sld>' };
     });
+
+    /* which slides have notes, decided once: the parts, the rels,
+       the content types and presentation.xml all have to agree, and
+       three of the four are written far apart. */
+    var noted = slides.map(function (s) {
+      return (s && typeof s.notes === 'string' && s.notes.trim())
+        ? s.notes : '';
+    });
+    var anyNotes = noted.some(Boolean);
 
     slideXml.forEach(function (s, i) {
       zip.addText('ppt/slides/slide' + (i + 1) + '.xml', s.xml);
+      var rels = s.rels.concat([{ id: 'rIdL' + (i + 1),
+        type: DOC_NS + '/relationships/slideLayout',
+        target: '../slideLayouts/slideLayout1.xml' }]);
+      if (noted[i]) {
+        rels.push({ id: 'rIdN' + (i + 1),
+          type: DOC_NS + '/relationships/notesSlide',
+          target: '../notesSlides/notesSlide' + (i + 1) + '.xml' });
+        zip.addText('ppt/notesSlides/notesSlide' + (i + 1) + '.xml',
+          notesSlideXml(noted[i]));
+        zip.addText('ppt/notesSlides/_rels/notesSlide' + (i + 1)
+          + '.xml.rels', relsDoc([
+            { id: 'rId1', type: DOC_NS + '/relationships/notesMaster',
+              target: '../notesMasters/notesMaster1.xml' },
+            { id: 'rId2', type: DOC_NS + '/relationships/slide',
+              target: '../slides/slide' + (i + 1) + '.xml' }]));
+      }
       zip.addText('ppt/slides/_rels/slide' + (i + 1) + '.xml.rels',
-        relsDoc(s.rels.concat([{ id: 'rIdL' + (i + 1),
-          type: DOC_NS + '/relationships/slideLayout',
-          target: '../slideLayouts/slideLayout1.xml' }])));
+        relsDoc(rels));
     });
+    if (anyNotes) {
+      zip.addText('ppt/notesMasters/notesMaster1.xml', notesMasterXml());
+      zip.addText('ppt/notesMasters/_rels/notesMaster1.xml.rels', relsDoc([
+        { id: 'rId1', type: DOC_NS + '/relationships/theme',
+          target: '../theme/theme1.xml' }]));
+    }
     media.forEach(function (m) { zip.add('ppt/media/' + m.name, m.bytes); });
 
     zip.addText('ppt/slideLayouts/slideLayout1.xml',
@@ -18628,7 +18819,13 @@ window.JunoPptx = (function () {
     zip.addText('ppt/presentation.xml',
       XML_HEAD + '<p:presentation' + nsAttrs() + ' saveSubsetFonts="1">'
       + '<p:sldMasterIdLst><p:sldMasterId id="2147483648" r:id="rId1"/>'
-      + '</p:sldMasterIdLst><p:sldIdLst>' + sldIds + '</p:sldIdLst>'
+      + '</p:sldMasterIdLst>'
+      /* the schema fixes this order: sldMasterIdLst, notesMasterIdLst,
+         then sldIdLst */
+      + (anyNotes
+        ? '<p:notesMasterIdLst><p:notesMasterId r:id="rIdNotesM"/>'
+          + '</p:notesMasterIdLst>' : '')
+      + '<p:sldIdLst>' + sldIds + '</p:sldIdLst>'
       + '<p:sldSz cx="' + page.wEmu + '" cy="' + page.hEmu + '"/>'
       + '<p:notesSz cx="' + page.hEmu + '" cy="' + page.wEmu + '"/>'
       + '</p:presentation>');
@@ -18640,6 +18837,11 @@ window.JunoPptx = (function () {
         type: DOC_NS + '/relationships/slide',
         target: 'slides/slide' + (i + 1) + '.xml' });
     });
+    if (anyNotes) {
+      presRels.push({ id: 'rIdNotesM',
+        type: DOC_NS + '/relationships/notesMaster',
+        target: 'notesMasters/notesMaster1.xml' });
+    }
     presRels.push({ id: 'rIdTheme', type: DOC_NS + '/relationships/theme',
       target: 'theme/theme1.xml' });
     zip.addText('ppt/_rels/presentation.xml.rels', relsDoc(presRels));
@@ -18683,7 +18885,17 @@ window.JunoPptx = (function () {
       overrides += '<Override PartName="/ppt/slides/slide' + (i + 1)
         + '.xml" ContentType="application/vnd.openxmlformats-officedocument.'
         + 'presentationml.slide+xml"/>';
+      if (noted[i]) {
+        overrides += '<Override PartName="/ppt/notesSlides/notesSlide'
+          + (i + 1) + '.xml" ContentType="application/vnd.openxmlformats-'
+          + 'officedocument.presentationml.notesSlide+xml"/>';
+      }
     });
+    if (anyNotes) {
+      overrides += '<Override PartName="/ppt/notesMasters/notesMaster1.xml"'
+        + ' ContentType="application/vnd.openxmlformats-officedocument.'
+        + 'presentationml.notesMaster+xml"/>';
+    }
     zip.addText('[Content_Types].xml',
       XML_HEAD + '<Types xmlns="http://schemas.openxmlformats.org/package/'
       + '2006/content-types">' + defaults + overrides + '</Types>');
@@ -18695,7 +18907,7 @@ window.JunoPptx = (function () {
 })();
 </script>
 <script>/* ======================================================================
-   deck/ — the presentation builder. ONE IIFE, in fourteen files.
+   deck/ — the presentation builder. ONE IIFE, one file per fragment.
 
    WHY FILES AND NOT MODULES. Everything here shares one closure: `pres`,
    `cur`, `mode`, `selAnnot` and several hundred functions that reach for
@@ -31441,7 +31653,11 @@ window.JunoPptx = (function () {
     var src=paneImgSrc(g.it.ns);
     if(src){
       var im=document.createElement('img');
-      im.src=src;im.alt='';w.appendChild(im);
+      /* a thumbnail is a picture OF something already named beside it,
+         so it really is decorative -- aria-hidden says so instead of
+         leaving a screen reader to guess from an empty alt (T105) */
+      im.src=src;im.alt='';im.setAttribute('aria-hidden','true');
+      w.appendChild(im);
     }
     var tl=document.createElement('span');tl.className='vo-plot-t';
     tl.textContent=g.it.title;w.appendChild(tl);
@@ -32079,6 +32295,7 @@ window.JunoPptx = (function () {
       if(mode==='view'){
         /* click anywhere on the slide advances the build / next slide */
         slideEl.style.cursor='pointer';
+        slideEl.addEventListener('keydown',linkKey);
         slideEl.addEventListener('click',function(e){
           if(e.target.closest&&e.target.closest('button,a,input,select'))
             return;
@@ -32090,6 +32307,12 @@ window.JunoPptx = (function () {
             var tg=spotTarget(e);
             if(tg){e.stopPropagation();spotlight(tg);return;}
           }
+          /* A LINK BEATS ADVANCING, and only a link does. The
+             standing rule is that a plain click advances -- that is
+             the gesture a talk runs on -- so this claims the object
+             itself and nothing else, exactly as tapzoom does. */
+          var lk=e.target.closest&&e.target.closest('.an-linked');
+          if(lk&&followLink(lk)){e.stopPropagation();return;}
           if(spotEl){closeSpot();return;}
           /* TAP AN ITEM TO ENLARGE IT (2026-08-22, user: "clicking
              figures/text makes full screen"). This is in tension with a
@@ -32549,7 +32772,28 @@ window.JunoPptx = (function () {
        0.5px guard only stops a collapse to zero. */
     return Math.max(0.5,h*(size||2.6)/100)+'px';
   }
+  /* A linked object is MARKED in the DOM rather than wired here: the
+     slide already has one delegated click handler for playback, and a
+     listener per object would have to be removed on every re-render.
+     The class is what present mode looks for and what the stylesheet
+     reaches (T118). */
+  function linkAttrs(el,a){
+    var l=linkOf(a);
+    if(!l) return;
+    el.classList.add('an-linked');
+    el.setAttribute('data-link',l.to);
+    if(l.to==='url') el.setAttribute('data-href',l.href);
+    else el.setAttribute('data-sid',l.sid);
+    if(mode!=='edit'){
+      /* only while presenting: in the editor a click SELECTS the object,
+         and announcing it as a link would be a lie about what happens */
+      el.setAttribute('role','link');
+      el.setAttribute('tabindex','0');
+    }
+    el.title=(mode==='edit'?'Links to ':'Go to ')+linkLabel(l);
+  }
   function applyCommon(el,a,extraTransform){
+    linkAttrs(el,a);
     if(a.op!=null&&a.op<1) el.style.opacity=a.op;
     var tr=extraTransform||'';
     if(a.rot) tr+=(tr?' ':'')+'rotate('+a.rot+'deg)';
@@ -33442,6 +33686,75 @@ window.JunoPptx = (function () {
      own line on purpose. Markdown's "wrap freely" rule is for prose
      someone else will typeset; this is a script you read at speed. */
   var MD_URL=/^(?:https?:\/\/|mailto:)[^\s<>"']+$/i;
+  /* AN OBJECT THAT IS A LINK (T118).
+     Notes have been able to jump to a slide since the presenter view
+     (`[the method](#7)`), and markdown text has had scheme-checked links
+     for as long. What had no answer was the ordinary one: point at THIS
+     picture and say where it goes.
+
+     An action is a documented FIELD with an allow-listed type, never
+     arbitrary script -- a deck travels, and a deck that can run code is
+     a deck nobody should open. Two kinds, and no third without a
+     decision: an external URL held to the same MD_URL allowlist the
+     markdown links use, and an internal jump held by `sid` rather than
+     slide number, so reordering the deck cannot silently repoint it. */
+  function linkOf(a){
+    var l=a&&a.link;
+    if(!l||typeof l!=='object') return null;
+    if(l.to==='url'){
+      var h=mdHref(l.href);
+      /* mdHref also passes "#7", which is a NOTE's form and not this
+         one -- an object link says where it goes by sid */
+      return (h&&h.charAt(0)!=='#')?{to:'url',href:h}:null;
+    }
+    if(l.to==='slide'&&typeof l.sid==='string'&&l.sid) {
+      return {to:'slide',sid:l.sid};
+    }
+    return null;
+  }
+  function linkSlideIdx(sid){
+    var out=-1;
+    (pres.slides||[]).forEach(function(sl,i){
+      if(sl&&sl.sid===sid&&out<0) out=i;});
+    return out;
+  }
+  /* What to call the destination, for a tooltip and for the review. */
+  function linkLabel(l){
+    if(!l) return '';
+    if(l.to==='url') return l.href;
+    var i=linkSlideIdx(l.sid);
+    return i<0?'a slide that is no longer here'
+      :('slide '+(i+1)+' — '+(slideTitle(pres.slides[i])||'untitled'));
+  }
+  /* Following one. The URL half opens in a new tab with `noopener`,
+     because a presentation is a window you do not want a linked page
+     able to navigate. The slide half reuses `go`, which is the same
+     command the presenter console's own jumps send -- so a link and a
+     note's [the method](#7) end up in one code path. */
+  function linkKey(e){
+    if(e.key!=='Enter'&&e.key!==' ') return;
+    var el=e.target&&e.target.closest&&e.target.closest('.an-linked');
+    if(!el||mode==='edit') return;
+    /* role="link" and tabindex="0" promise the keyboard works; without
+       this they would be a promise the page does not keep */
+    if(followLink(el)){e.preventDefault();e.stopPropagation();}
+  }
+  function followLink(el){
+    if(!el) return false;
+    if(el.getAttribute('data-link')==='url'){
+      var h=el.getAttribute('data-href');
+      if(!h) return false;
+      window.open(h,'_blank','noopener,noreferrer');
+      return true;
+    }
+    var i=linkSlideIdx(el.getAttribute('data-sid')||'');
+    if(i<0){
+      toast('That link points at a slide that is no longer here');
+      return true;      /* handled: it must not fall through and advance */
+    }
+    go(i);
+    return true;
+  }
   function mdHref(u){
     u=String(u||'').trim();
     if(/^#\d+$/.test(u)) return u;          /* a slide in this deck */
@@ -35434,6 +35747,32 @@ window.JunoPptx = (function () {
      not a feature. The menu says which of the two it is. */
   var privCtx=false;
   function privShown(){return privCtx||mode==='edit';}
+  /* WHAT A PICTURE SAYS IT SHOWS (T105).
+     Every image the deck draws had alt="" hard-coded, which is the
+     markup for "this carries no information, skip it" -- asserted, for
+     every figure in the deck, including the ones carrying the science.
+     This is the ONE load-bearing site: buildSlideNode and buildPrintRoot
+     both funnel through renderAnnots, and exportDeckHtml serialises
+     buildPrintRoot, so present mode, the presenter view, PDF and the
+     standalone HTML all follow from here.
+
+     Three states, and alt="" is only one of them. `a.dec` means the
+     author said it is decorative, and alt="" is then correct and is
+     paired with aria-hidden so nothing announces it at all. `a.alt` is
+     what they wrote. Neither means we do not know, and the honest
+     fallback is whatever the object is already called -- its name, its
+     caption, its title -- because "unlabelled image" helps nobody. */
+  function altAttrs(img,a,extra){
+    if(a&&a.dec){
+      img.alt='';
+      img.setAttribute('aria-hidden','true');
+      return;
+    }
+    var t=(a&&a.alt)||annotLabel(a)||'';
+    if(extra&&t&&String(extra).trim()) t+=' \u2014 '+extra;
+    else if(extra&&!t) t=String(extra);
+    img.alt=t;
+  }
   function renderAnnots(layer,s){
     /* the one funnel every slide render passes through, which makes it
        the only place identity has to be minted — see WHAT HAS THIS
@@ -35889,8 +36228,9 @@ window.JunoPptx = (function () {
         applyCommon(im,a);
         im.setAttribute('data-idx',i);
         var img=document.createElement('img');
-        img.className='an-imgel';img.src=a.src||'';img.alt='';
+        img.className='an-imgel';img.src=a.src||'';
         img.draggable=false;
+        altAttrs(img,a);
         if(a.crop) im.classList.add('an-cropped');
         applyCrop(img,a);
         im.appendChild(img);
@@ -35931,8 +36271,12 @@ window.JunoPptx = (function () {
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){
           var fim=document.createElement('img');
-          fim.className='an-flipimg';fim.src=fdef.src;fim.alt='';
+          fim.className='an-flipimg';fim.src=fdef.src;
           fim.draggable=false;
+          /* a flip book's frames are one figure shown many ways, so the
+             book's alt text describes each of them; a named frame adds
+             which one is showing */
+          altAttrs(fim,a,fdef&&fdef.label);
           fst.appendChild(fim);
         } else if(fdef&&fdef.ref){
           var fnode=framePart(fdef.ref,fdef.part);
@@ -37805,6 +38149,62 @@ window.JunoPptx = (function () {
     document.addEventListener('mousemove',mm);
     document.addEventListener('mouseup',mu);
   }
+  /* Empty means DECORATIVE, and the prompt says so rather than
+     leaving "I skipped this box" and "this picture carries nothing"
+     looking the same. Cancel changes nothing, which is what Escape has
+     to mean here (T105). */
+  /* Typed, not scripted. The prompt takes a URL or a slide number,
+     and a slide number is resolved to that slide's `sid` HERE -- once,
+     while the number still means what the author meant -- so the stored
+     link survives every later reorder (T118). */
+  function setObjLink(i){
+    var a=(pres.slides[cur].annots||[])[i]; if(!a) return;
+    var was=a.link?(a.link.to==='url'?a.link.href
+      :('slide '+(linkSlideIdx(a.link.sid)+1))):'';
+    var got=prompt('Where should clicking this go while you present?'
+      +'\n\n\u2022 a link: https://\u2026 or mailto:\u2026'
+      +'\n\u2022 a slide in this deck: its number, like 7'
+      +'\n\nLeave it empty to remove the link.',was);
+    if(got===null) return;
+    got=String(got).trim();
+    if(!got){delete a.link;markDirty();renderSlide();
+      toast('Link removed');return;}
+    var n=got.match(/^(?:slide\s*)?(\d+)$/i);
+    if(n){
+      var idx=parseInt(n[1],10)-1;
+      if(idx<0||idx>=(pres.slides||[]).length){
+        toast('There is no slide '+n[1]);return;}
+      ensureSids();
+      a.link={to:'slide',sid:pres.slides[idx].sid};
+    } else {
+      var h=mdHref(got);
+      if(!h||h.charAt(0)==='#'){
+        toast('That is not a link this can follow \u2014 http, https '
+          +'and mailto only');return;}
+      a.link={to:'url',href:h};
+    }
+    markDirty();renderSlide();
+    toast('Linked to '+linkLabel(a.link));
+  }
+  function setAltText(idxs){
+    var ans=(pres.slides[cur].annots||[]);
+    var first=ans[idxs[0]]||{};
+    var was=first.dec?'':(first.alt||'');
+    var got=prompt('What does this picture show? Somebody who cannot '
+      +'see it reads this instead of it.\n\nLeave it empty to mark the '
+      +'picture decorative \u2014 a rule, a texture, a logo already '
+      +'named in the words.',was);
+    if(got===null) return;
+    got=got.trim();
+    idxs.forEach(function(i){
+      var a=ans[i]; if(!a) return;
+      if(got){delete a.dec;a.alt=got;}
+      else {delete a.alt;a.dec=1;}
+    });
+    markDirty();renderSlide();
+    toast(got?'Alt text set':'Marked decorative \u2014 a screen reader '
+      +'will skip '+(idxs.length===1?'it':'them'));
+  }
   /* ---- THE CANVAS RIGHT-CLICK MENU -------------------------------------
      Paste has three answers now (the plain one, in place, here) and a
      ribbon cannot grow three buttons for one verb without becoming the
@@ -37880,6 +38280,44 @@ window.JunoPptx = (function () {
         var c=copySel();
         if(c) toast(c+' item'+(c===1?'':'s')+' copied');});
       row('Delete','Del',deleteSel,null,'exit');
+      /* ALT TEXT (T105). On the right-click menu and nowhere else, for
+         the same reason T5's select-by-type is: the ribbon never wraps,
+         so a control that applies to one kind of object earns its place
+         on the menu that already knows what you clicked. Offered only
+         when the selection actually contains a picture -- a row that
+         does nothing is worse than no row. */
+      var altSel=selIdxs().filter(function(i){
+        var a=(pres.slides[cur].annots||[])[i];
+        return a&&(a.k==='image'||a.k==='flip');});
+      /* LINK (T118). Any object can be one, so unlike Alt text this
+         needs no kind test -- but like it, it lives on the menu that
+         already knows what you clicked rather than on a ribbon that
+         must not wrap. */
+      if(selIdxs().length===1){
+        var lk0=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        menuHead(m,'where it goes');
+        row(lk0&&lk0.link?'Change where this goes':'Make this a link\u2026',
+          '',function(){setObjLink(selIdxs()[0]);},
+          'Clicking it while presenting opens a page or jumps to '
+          +'another slide. An internal jump follows the slide, not its '
+          +'number, so reordering the deck cannot repoint it.','link');
+        if(lk0&&lk0.link)
+          row('Remove the link','',function(){
+            delete lk0.link;markDirty();renderSlide();
+            toast('Link removed');},null,'unlink');
+      }
+      if(altSel.length){
+        var one0=(pres.slides[cur].annots||[])[altSel[0]];
+        menuHead(m,'what it shows');
+        row(one0&&one0.dec?'Alt text \u2014 marked decorative'
+          :((one0&&one0.alt)?'Alt text \u2014 written':'Alt text\u2026'),
+          '',function(){setAltText(altSel);},
+          'What this picture shows, for somebody who cannot see it. A '
+          +'caption says what to think about the figure and everyone '
+          +'reads it; alt text says what is IN it and is read instead '
+          +'of it. Leave it empty to mark the picture decorative.',
+          'caption');
+      }
       /* A FIGURE AND ITS CAPTION (T17). Two objects selected, one of
          them a figure and one a text box, is an unambiguous "tie
          these" — so the row appears exactly then and asks nothing. */
@@ -47840,7 +48278,120 @@ window.JunoPptx = (function () {
           +'. Pick one — an audience reads the difference as a '
           +'distinction.'});
     });
+    /* --- 4. a picture nobody has described (T105) ---
+       Deliberately NOT "has no alt text": a picture is allowed to carry
+       nothing, and saying so is a real answer. What this reports is the
+       picture nobody has decided about, which is the only state that is
+       an omission rather than a choice. It reads the same field the
+       renderer does, so a deck this is quiet about is a deck whose alt
+       text is really there. */
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,i){
+        if(!a||a.priv) return;
+        if(a.k!=='image'&&a.k!=='flip') return;
+        if(a.dec||(a.alt&&String(a.alt).trim())) return;
+        out.push({sev:'warn',si:si,i:i,
+          head:'This picture does not say what it shows',
+          why:'Somebody who cannot see it gets “'
+            +(annotLabel(a)||'image')+'” — the name of the box, not '
+            +'what is in it. Right-click the picture and write its alt '
+            +'text, or leave that empty to mark it decorative if it '
+            +'really carries nothing.'});
+      });
+    });
+    /* --- 5. the talk does not fit the time it has (T121) ---
+       Every part of this already existed and none of it was a LINT:
+       slideGoal and goalTotal add the goals up, rehStats holds what
+       each slide actually took, and the notes pane shows the verdict
+       while you are presenting. That is the wrong moment -- the review
+       is where you still have time to cut a slide. So this restates
+       what those already know rather than measuring anything new. */
+    var goal=goalTotal();
+    var st=rehStats(),runs=(st.runs||[]).length;
+    if(goal&&runs){
+      var real=0,timed=0;
+      (pres.slides||[]).forEach(function(sl){
+        var a=sl&&sl.sid?st.by[sl.sid]:null;
+        if(a&&a.n){real+=a.mean/60;timed++;}
+      });
+      /* only worth saying when most of the deck has actually been
+         rehearsed -- half a run extrapolated to a whole talk is a
+         number that looks like evidence and is not */
+      if(timed>=Math.ceil((pres.slides||[]).length/2)&&real){
+        var over=real-goal;
+        if(Math.abs(over)>=Math.max(1,goal*0.1))
+          out.push({sev:over>0?'err':'warn',si:null,i:null,
+            head:over>0?'This runs long':'This runs short',
+            why:'The goals add up to '+fmtMins(goal)+' and '+timed
+              +' rehearsed slide'+(timed===1?'':'s')+' averaged '
+              +fmtMins(real)+' \u2014 '+fmtMins(Math.abs(over))
+              +(over>0?' over. Cut a slide, or move the goal.'
+                :' under. There is room for the thing you left out.')});
+      }
+    }
+    /* --- 6. a link that goes nowhere (T118) ---
+       An internal jump is stored by `sid` precisely so reordering
+       cannot repoint it -- but DELETING the target still can, and
+       silently. This is the one lint that reports a broken thing
+       rather than a debatable one. */
+    (pres.slides||[]).forEach(function(sl,si){
+      (sl.annots||[]).forEach(function(a,i){
+        var l=a&&a.link;
+        if(!l||l.to!=='slide') return;
+        if(linkSlideIdx(l.sid)>=0) return;
+        out.push({sev:'err',si:si,i:i,
+          head:'This link goes nowhere',
+          why:'It points at a slide that is no longer in the deck. '
+            +'Clicking it while presenting says so and stays put, '
+            +'which is not what you want an audience to see.'});
+      });
+    });
+    /* --- 7. two slides that are the same slide --- */
+    var seen={};
+    (pres.slides||[]).forEach(function(sl,si){
+      var key=(sl.annots||[]).filter(function(a){
+        return a&&!a.hide&&!a.priv;
+      }).map(function(a){
+        return a.k+':'+(revText(a)||a.src||'').slice(0,80);
+      }).sort().join('|');
+      if(!key||key.length<20) return;    /* an empty slide is not a copy */
+      if(seen[key]!=null){
+        out.push({sev:'warn',si:si,i:null,
+          head:'This slide is a copy of an earlier one',
+          why:'Slide '+(seen[key]+1)+' has the same objects and the '
+            +'same words. A duplicate left in by accident reads as a '
+            +'stutter; one left in on purpose usually wants a build '
+            +'instead.'});
+      } else seen[key]=si;
+    });
     return out;
+  }
+  /* THE WHOLE REVIEW AS ONE THING (T121).
+     The panel showed the lints and the readable text side by side and
+     then exported only the text, so the half you would send to a
+     co-author was the half without the findings in it. The .md now
+     carries both, and there is a JSON door beside it for anything that
+     is not a person -- a pre-submission check in CI, most obviously.
+     Neither recomputes: both read reviewLints(), so an export can never
+     disagree with what the panel just showed you. */
+  function reviewMarkdown(text,lints){
+    if(!lints.length) return text;
+    var head='## What this review found\n\n';
+    var body=lints.map(function(l){
+      var where=(l.si!=null)?('Slide '+(l.si+1)+' \u2014 '):'';
+      return '- **'+(l.sev==='err'?'':'')+where+l.head+'.** '+l.why;
+    }).join('\n');
+    return head+body+'\n\n---\n\n'+text;
+  }
+  function reviewJson(lints){
+    return JSON.stringify({
+      deck:pres.name||'',
+      slides:(pres.slides||[]).length,
+      findings:lints.map(function(l){
+        return {severity:l.sev,slide:(l.si==null?null:l.si+1),
+          object:(l.i==null?null:l.i),title:l.head,detail:l.why};
+      })
+    },null,2);
   }
   /* THE PANEL. The lints first, because they are the reason to open it
      twice; the text below them, because it is the reason to open it at
@@ -47869,6 +48420,10 @@ window.JunoPptx = (function () {
       +'<button class="dbtn" id="rv-copy">'+bic('copy')+' Copy</button>'
       +'<button class="dbtn" id="rv-dl">'+bic('markdown')
       +' Save as .md</button>'
+      +'<button class="dbtn" id="rv-json" title="The same findings as '
+      +'JSON, for something that is not a person to read \u2014 a '
+      +'pre-submission check, say">'+bic('code')
+      +' Save as .json</button>'
       +'<button class="dbtn" id="rv-close">'+bic('exit')
       +' Close</button></div>'
       +'<div class="rv-main">'
@@ -47927,13 +48482,26 @@ window.JunoPptx = (function () {
         :'Select the text and copy it');
     });
     ov.querySelector('#rv-dl').addEventListener('click',function(){
-      var blob=new Blob([text],{type:'text/markdown'});
+      /* the findings AND the readable text: the half you send to a
+         co-author used to be the half without the findings (T121) */
+      var blob=new Blob([reviewMarkdown(text,lints)],
+        {type:'text/markdown'});
       var a=document.createElement('a');
       a.href=URL.createObjectURL(blob);
       a.download=(pres.name||'deck')+'.review.md';
       a.click();
       setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
       toast('Saved — it travels; junoview stays here');
+    });
+    ov.querySelector('#rv-json').addEventListener('click',function(){
+      var blob=new Blob([reviewJson(lints)],{type:'application/json'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download=(pres.name||'deck')+'.review.json';
+      a.click();
+      setTimeout(function(){URL.revokeObjectURL(a.href);},2000);
+      toast(lints.length+' finding'+(lints.length===1?'':'s')
+        +' saved as JSON');
     });
     document.addEventListener('keydown',reviewKey,true);
   }
@@ -48958,6 +49526,7 @@ window.JunoPptx = (function () {
     if(src){
       var m=document.createElement('img');
       m.src=src;m.alt='';m.loading='lazy';
+      m.setAttribute('aria-hidden','true');   /* decorative (T105) */
       w.appendChild(m);
     } else if(it.kind==='note'){
       w.className+=' is-note';
@@ -49402,6 +49971,7 @@ window.JunoPptx = (function () {
         if(a.src){
           var im=document.createElement('img');
           im.src=a.src;im.alt='';im.loading='lazy';im.draggable=false;
+          im.setAttribute('aria-hidden','true');   /* decorative (T105) */
           if(a.crop) bx.classList.add('is-crop');
           bx.appendChild(im);
         }
@@ -49418,6 +49988,7 @@ window.JunoPptx = (function () {
           var fim2=document.createElement('img');
           fim2.src=ff.src;fim2.alt='';fim2.loading='lazy';
           fim2.draggable=false;
+          fim2.setAttribute('aria-hidden','true');  /* decorative (T105) */
           bf.appendChild(fim2);
         } else if(ff&&ff.ref){
           var fnode2=framePart(ff.ref,ff.part);
@@ -49425,6 +49996,7 @@ window.JunoPptx = (function () {
           if(fimg2&&fimg2.src){
             var fc=document.createElement('img');
             fc.src=fimg2.src;fc.alt='';fc.loading='lazy';fc.draggable=false;
+            fc.setAttribute('aria-hidden','true');  /* decorative (T105) */
             bf.appendChild(fc);
           }
         }
@@ -50832,8 +51404,12 @@ window.JunoPptx = (function () {
       (creating||editing)&&!deckEl.hidden);
     document.body.classList.toggle('slide-editing',
       editing&&!deckEl.hidden);
-    document.body.classList.toggle('deck-open',
-      !creating&&!deckEl.hidden);
+    var full=!creating&&!deckEl.hidden;
+    document.body.classList.toggle('deck-open',full);
+    /* the same condition as the class, so the two can never disagree
+       about whether this is a full-screen surface (T104) */
+    deckIsolate(full);
+    if(full) deckTakeFocus();
     selAnnot=null;selSet=[];
     if(m==='view') revealCount=0;   /* start the build sequence fresh */
     if(!editing){                   /* Objects pane is an editing tool */
@@ -50903,6 +51479,88 @@ window.JunoPptx = (function () {
   function routeSync(){
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
+  /* ---- BACKGROUND ISOLATION -------------------------------------
+     The deck is `position:fixed` over the whole window, and CSS had
+     already isolated the three channels CSS can: the background does
+     not scroll (`body.deck-open{overflow:hidden}`), it cannot be
+     clicked through (an opaque z-index:100 surface) and the app's top
+     bar leaves the tab order while editing. What CSS cannot do is the
+     fourth channel, and `inert` is not a CSS property: the notebook
+     underneath stayed in the accessibility tree and in the TAB ORDER.
+     So Tab walked off the editor into a document nobody could see --
+     around 12,670px of it -- and a screen reader met two applications
+     at once, one of them invisible (2026-08-30 review).
+
+     Named surfaces rather than "every child of body except the deck".
+     The deck reaches OUT to page-level overlays -- Help, the open
+     dialog, the figure lightbox, its own floating menus -- and a sweep
+     would take those with it and break them. These eight are the
+     document application behind the deck and nothing else.
+
+     MODE-AWARE. `creating` is a side panel, not a full-screen surface:
+     the notebook beside it is a live drag source, by design, and
+     isolating it would break a shipped gesture. So this follows
+     `deck-open`, which is already exactly "not creating". */
+  var DECK_BEHIND = ['#apptop', '#presrail', '#presrail-show', '#docs',
+    '#welcome', '#present-bar', '#present-bar-show', '#stylepanel'];
+  var deckInerted = [];
+  var deckFocusReturn = null;
+
+  function deckIsolate(on){
+    if(on){
+      if(deckInerted.length) return;          /* already isolated */
+      DECK_BEHIND.forEach(function(sel){
+        var el=$(sel);
+        /* something already inert is inert for its own reason, and
+           un-inerting it on close would be this feature breaking
+           another one */
+        if(!el||el.hasAttribute('inert')) return;
+        el.setAttribute('inert','');
+        el.setAttribute('aria-hidden','true');
+        deckInerted.push(el);
+      });
+      return;
+    }
+    deckInerted.forEach(function(el){
+      el.removeAttribute('inert');
+      el.removeAttribute('aria-hidden');
+    });
+    deckInerted=[];
+  }
+
+  /* Focus has to GO somewhere when the background stops accepting it,
+     or it stays on a control that is now inert and the next Tab starts
+     from the top of the document. And it has to come back, or closing
+     the editor leaves the page focused on nothing. */
+  function deckTakeFocus(){
+    var live=document.activeElement;
+    if(live&&live!==document.body&&!deckEl.contains(live))
+      deckFocusReturn=live;
+    if(deckEl.contains(document.activeElement)) return;
+    /* the first VISIBLE control, not the first in the markup. The deck
+       carries a dozen panels that are hidden most of the time, and
+       focusing something inside a display:none subtree silently does
+       nothing -- which looks exactly like this function not running. */
+    var cand=deckEl.querySelectorAll(
+      'button:not([disabled]),[href],input:not([disabled]),'
+      +'select:not([disabled]),textarea:not([disabled]),[tabindex]');
+    for(var i=0;i<cand.length;i++){
+      var el=cand[i];
+      if(el.hidden||el.offsetParent===null) continue;
+      try{el.focus();}catch(err){continue;}
+      if(document.activeElement===el) return;
+    }
+    /* nothing focusable yet (the ribbon builds on first render), so the
+       surface itself takes it -- which is what keeps Tab inside */
+    if(!deckEl.hasAttribute('tabindex')) deckEl.setAttribute('tabindex','-1');
+    try{deckEl.focus();}catch(err){}
+  }
+  function deckReturnFocus(){
+    var back=deckFocusReturn;
+    deckFocusReturn=null;
+    if(!back||!back.isConnected||back.hasAttribute('inert')) return;
+    try{back.focus();}catch(err){}
+  }
   function openDeck(m){
     deckEl.hidden=false;
     histReset();   /* undo history starts fresh per editing session */
@@ -50971,6 +51629,8 @@ window.JunoPptx = (function () {
     showVerpane(false);filmToPanel();   /* the strip goes home */
     deckEl.hidden=true;
     document.body.classList.remove('deck-open');
+    deckIsolate(false);
+    deckReturnFocus();
     document.body.classList.remove('creating-docs');
     document.body.classList.remove('slide-editing');
     deckEl.classList.remove('creating');
@@ -53460,7 +54120,12 @@ window.JunoPptx = (function () {
         var atk=(note.frame!=null)?note.frame:(fbk?(fbk.at||0):0);
         if(!flipShowsFrame(s,a,atk)) return;
       }
-      if(a.crop) note.cropped++;   /* inset-only trims are dropped too */
+      /* a crop is carried unless it is one of the two the writer
+         cannot express: a hand-drawn outline (custGeom, not a preset)
+         and a trim that leaves nothing. Counting only what is really
+         lost is the point -- the toast used to say every crop was
+         dropped, which stopped being true here (T107). */
+      if(a.crop&&a.crop.path) note.cropped++;
       /* Every editable box leaves in PAGE coordinates. An anchored
          object's stored x/y are distances from an edge or centre, and
          its export fallback size matters to that conversion. */
@@ -53476,7 +54141,13 @@ window.JunoPptx = (function () {
         items.push(ti);
       } else if(a.k==='image'){
         if(a.src) items.push({t:'image',x:box.x,y:box.y,w:box.w,h:box.h,
-          rot:a.rot,op:a.op,src:pptxSrc(note,a.src)});
+          rot:a.rot,op:a.op,src:pptxSrc(note,a.src),
+          /* what the picture shows, for PowerPoint's own accessibility
+             checker and for a screen reader opening the deck (T105) */
+          alt:a.alt,dec:a.dec,
+          /* a path crop has no preset to become, so it is not sent */
+          crop:(a.crop&&!a.crop.path)?a.crop:null,
+          cropShape:(a.crop&&!a.crop.path)?a.crop.shape:''});
         else note.skipped++;
       } else if(a.k==='rect'){
         /* `a.fill` is a BOOLEAN — "tint with my own line colour" — so the
@@ -53546,10 +54217,31 @@ window.JunoPptx = (function () {
           return;
         }
         /* no figure to lift — but prose and code ARE just text, and a text
-           box beats an empty slide. A table or a rich repr is neither: its
-           meaning is in a layout PowerPoint cannot rebuild, so it is
-           reported instead of being flattened into gibberish. */
-        var isTable=!!(node&&node.querySelector('table'));
+           box beats an empty slide. A rich repr is neither: its meaning
+           is in a layout PowerPoint cannot rebuild, so it is reported
+           instead of being flattened into gibberish. A TABLE is the
+           exception, and used to be counted with them: pptx.js has had a
+           real table builder since the deck's own table kind, and it
+           already tolerates the shape a scrape produces — a missing
+           `cols` falls back to an equal split and a short row yields ''
+           per cell. So the meaning survives, editable, and the biggest
+           single entry in the "could not convert" tally goes with it
+           (T109). */
+        var tbl=node&&node.querySelector('table');
+        var isTable=!!tbl;
+        if(isTable){
+          var rows=scrapeTable(tbl);
+          if(rows.length){
+            items.push({t:'table',x:box.x,y:box.y,w:box.w,h:box.h,
+              rot:a.rot,op:a.op,rows:rows,
+              /* grid:1 or the rules vanish and a scraped table arrives
+                 as loose text in a box */
+              thead:!!tbl.querySelector('thead th, thead td'),grid:1,
+              sizePct:1.6,color:tokVal(a.txcol)||ink,
+              name:(it&&it.title)||'Table'});
+            return;
+          }
+        }
         /* a <pre> means the frame IS code; a bare inline <code> is just
            prose with a code span in it, and setting the whole note in
            monospace for one `groupby(...)` reads as a bug */
@@ -53567,6 +54259,33 @@ window.JunoPptx = (function () {
       }
     });
     return items;
+  }
+  /* A RENDERED TABLE, back into rows of strings. Deliberately the
+     visible text and nothing else: colspans, nested markup and the
+     pandas index are all layout, and a scrape that tried to keep them
+     would produce a table that is wrong rather than plain. The cap is
+     what PowerPoint stays usable at; past it the frame is better as a
+     picture, and says so. */
+  var SCRAPE_ROWS=60, SCRAPE_COLS=20;
+  function scrapeTable(tbl){
+    var out=[],n=0;
+    var trs=tbl.querySelectorAll('tr');
+    for(var i=0;i<trs.length&&out.length<SCRAPE_ROWS;i++){
+      var cells=trs[i].querySelectorAll('th,td');
+      if(!cells.length) continue;
+      var row=[];
+      for(var j=0;j<cells.length&&j<SCRAPE_COLS;j++)
+        row.push((cells[j].textContent||'').trim());
+      if(row.join('')==='') continue;
+      n=Math.max(n,row.length);
+      out.push(row);
+    }
+    /* tableShape reads the column count off row 0, so a header shorter
+       than its body would truncate every row under it */
+    return out.map(function(r){
+      while(r.length<n) r.push('');
+      return r;
+    });
   }
   /* EVERY ORIGINAL THIS EXPORT WILL NEED, resolved before the build.
      JunoPptx.build is synchronous and pptxItems with it, so the
@@ -53594,11 +54313,52 @@ window.JunoPptx = (function () {
   function exportDeckPptx(){
     if(!(pres.slides||[]).length){toast('No slides to export yet');return;}
     if(!window.JunoPptx){toast('PowerPoint export unavailable here');return;}
+    /* what this will cost, BEFORE the file is in the downloads folder
+       (T109). Silent when there is nothing to lose. */
+    if(!pptxConfirmLosses()) return;
     /* a .pptx leaves this machine and is re-scaled by whoever opens it,
        so it is one of the two consumers that most wants the full bytes —
        and it was embedding a.src, which is the shrunk display copy
        (2026-08-26 audit, T58) */
     return pptxOriginals().then(pptxBuildAndSave);
+  }
+  /* WHAT THIS EXPORT WILL COST, said before it happens. The tally
+     already existed and was read out in a toast AFTERWARDS, which is
+     the wrong end: by then the file is in the downloads folder and the
+     choice — export the PDF instead — has been made for you. This runs
+     the same enumeration dry and, only when something really will be
+     lost, asks. Nothing to lose means no dialog, so the ordinary export
+     is still one click (T109). */
+  function pptxLosses(){
+    var note={skipped:0,cropped:0,maths:0,orig:{}};
+    var lost=[];
+    outputSlides().forEach(function(ent){
+      note.frame=ent.f;
+      pptxItems(ent.s,note,'#ffffff',null);
+      note.frame=null;
+    });
+    if(note.skipped) lost.push(note.skipped+' placed cell'
+      +(note.skipped===1?'':'s')+' that PowerPoint has no shape for');
+    if(note.maths) lost.push(note.maths+' equation'
+      +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
+      +'arrive as plain characters');
+    if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
+      +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
+      +'is not');
+    var builds=0,links=0;
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){if(a&&a.anim) builds++;});
+    });
+    if(builds) lost.push(builds+' object build'
+      +(builds===1?'':'s')+' — the objects arrive, the timing does not');
+    return lost;
+  }
+  function pptxConfirmLosses(){
+    var lost=pptxLosses();
+    if(!lost.length) return true;
+    return confirm('Export to PowerPoint?\n\nEverything else comes '
+      +'across, but this will not:\n\n\u2022 '+lost.join('\n\u2022 ')
+      +'\n\nExport PDF keeps all of it exactly as you see it.');
   }
   function pptxBuildAndSave(orig){
     var pg=pageOf(),note={skipped:0,cropped:0,maths:0,orig:orig||{}};
@@ -53617,7 +54377,17 @@ window.JunoPptx = (function () {
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:tokVal(ent.s.border.c)||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});
-        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its};
+        /* transFor() reads the slide's own transition, else its
+           section's -- the same answer present mode uses. ent.i is the
+           SOURCE slide index, which matters because a flip book
+           explodes one slide into several output slides. */
+        /* sl.notes is what the Notes pane writes and the presenter
+           console reads; PowerPoint's Notes page is plain text, so it
+           goes across as it is. A flip book's extra output slides share
+           the source slide's notes, which is the same thing the
+           presenter sees on each of them. */
+        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its,
+          trans:transFor(ent.i),notes:ent.s.notes||''};
       }),
     });
     var a=document.createElement('a');
@@ -53626,11 +54396,18 @@ window.JunoPptx = (function () {
     document.body.appendChild(a);a.click();a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
     var msg='PowerPoint saved — text stays editable'+outputNote();
+    var noted=outputSlides().filter(function(e){
+      return e.s&&e.s.notes&&e.s.notes.trim();}).length;
+    if(noted) msg+='. Speaker notes came across on '+noted+' slide'
+      +(noted===1?'':'s');
+    /* tables convert now (T109), so naming them here would send
+       people to the PDF for something that already worked */
     if(note.skipped) msg+='. '+note.skipped+' cell'
-      +(note.skipped===1?'':'s')+' could not convert (code or a table — '
-      +'use Export PDF for those)';
-    if(note.cropped) msg+='. '+note.cropped+' crop'
-      +(note.cropped===1?'':'s')+' not carried';
+      +(note.skipped===1?'':'s')+' could not convert (a rich output with '
+      +'no picture and no text — use Export PDF for those)';
+    if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
+      +(note.cropped===1?'':'s')+' not carried (PowerPoint has no '
+      +'freehand mask \u2014 the trim is, the outline is not)';
     if(note.maths) msg+='. '+note.maths+' equation'
       +(note.maths===1?'':'s')+' came across as plain text \u2014 '
       +'PowerPoint has no LaTeX, so they were flattened to characters';
