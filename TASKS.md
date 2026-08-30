@@ -1593,7 +1593,7 @@ worst-first.
 
 ### Packaging — nothing else matters until this is right
 
-- [ ] **T95 · S — A published wheel contains no deck editor at all.**
+- [x] **T95 · S — A published wheel contains no deck editor at all.**
   *Verified CONFIRMED, twice, by two readers who each built a wheel.*
   `pyproject.toml`'s `[tool.setuptools.package-data]` declares
   `assets/js/*.js`; a setuptools glob does not cross `/`, so none of the

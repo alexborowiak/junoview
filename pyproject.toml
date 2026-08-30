@@ -64,9 +64,12 @@ py-modules = ["semantic_render", "semantic_widget"]
 # The frontend is real .css/.js/.html files rather than Python string
 # constants, so it has to be declared as package data to reach the wheel.
 # Listed by extension rather than `assets/**/*`, which also sweeps up
-# __pycache__/*.pyc.
-junoview = ["assets/css/*.css", "assets/js/*.js", "assets/html/*.html",
-            "py.typed"]
+# __pycache__/*.pyc -- but a `*` does not cross a `/`, so EVERY directory
+# under assets/ needs its own line. js/deck/ went missing for 141 commits
+# that way (T95): the source checkout reads the files off disk beside the
+# package, so only an installed wheel ever noticed.
+junoview = ["assets/css/*.css", "assets/js/*.js", "assets/js/deck/*.js",
+            "assets/html/*.html", "py.typed"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
