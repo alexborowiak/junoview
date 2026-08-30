@@ -49,8 +49,8 @@ SCRIPTS = ["js/app.js", "js/deck.js", "js/widget.js"]
 
 
 def _read(rel: str, base: Path = ASSETS) -> str:
-    """One asset's text -- and "js/deck.js" now means the fourteen
-    fragments of js/deck/ joined the way the page joins them (T36), so
+    """One asset's text -- and "js/deck.js" now means the fragments
+    of js/deck/ joined the way the page joins them (T36), so
     every check here goes on asking about "deck.js" and gets the same
     text it always did."""
     if rel == "js/deck.js":

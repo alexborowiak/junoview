@@ -34,8 +34,8 @@ parser's internals.
   if you must cross the seam, do it in one named, commented place.
 - **Frontend** → real files under `src/junoview/assets/` (css/js/html). No
   build step, no framework, no minification — keep it that way.
-- The deck editor is `assets/js/deck/`: **one IIFE across fourteen files**,
-  joined by `assets.deck_js()` in the order `DECK_PARTS` names. They share
+- The deck editor is `assets/js/deck/`: **one IIFE across the files
+  `DECK_PARTS` names**, joined by `assets.deck_js()` in that order. They share
   one closure, so they are fragments rather than modules — ES modules are
   not an option anyway, since a rendered page is opened from `file://` as
   often as from a server. A part therefore does not parse alone; the gate
@@ -63,8 +63,8 @@ parser's internals.
   has a one-line description in ARCHITECTURE.md's tree; if your new code
   doesn't fit any existing line, that's a signal to add a module, not to
   grow an unrelated one. Update the tree when you do.
-- **Section banners in big JS files.** `deck.js` and `app.js` are navigated
-  by `/* ---- NAME ---- */` banners (`grep "/* ----"`). New frontend code
+- **Section banners in big JS files.** `app.js` and the `deck/` fragments
+  are navigated by `/* ---- NAME ---- */` banners (`grep "/* ----"`). New frontend code
   goes under the right existing banner, or a new banner — never loose
   between sections.
 - **Comments say *why*, not *what*.** Many test assertions and code
@@ -81,11 +81,17 @@ parser's internals.
   stylesheets and scripts are inert values substituted into them — their
   `{` braces must NOT be escaped, and no stylesheet may ever become a
   template.
-- `assets/js/deck.js` is ONE ~18,000-line IIFE. All load-time execution
-  runs from THE BOOT SEQUENCE at the file's tail. Never add mid-file boot
-  calls or executing sub-IIFEs — a throw during boot silently kills the
-  whole file. (A multi-file split is a tracked task; until it lands, work
-  within this rule.)
+- `assets/js/deck/` is ONE IIFE, split across the files `DECK_PARTS`
+  names (T36; there is no longer an `assets/js/deck.js`). All load-time
+  execution runs from THE BOOT SEQUENCE, which is its own file,
+  `99-boot.js` — last by name as well as by convention. Never add
+  mid-file boot calls or executing sub-IIFEs: a throw during boot
+  silently kills the whole IIFE, not just the fragment it is in.
+- Adding a fragment means creating the file AND listing it in
+  `DECK_PARTS` AND, because a setuptools `*` does not cross a `/`,
+  checking `pyproject.toml` still packages the directory (T95).
+  `tests/test_js_contract.py` and `tests/test_packaging.py` fail on
+  each half.
 - The only runtime network fetches are the pinned CDN URLs precached in
   `assets/js/sw.js` (Pyodide, MathJax, Plotly). Pins must match their
   loaders — `tests/test_js_contract.py` enforces this. Bump a pin in both

@@ -6,7 +6,7 @@ is only what's specific to this machine.
 
 ## Running things
 
-- Tests: `python -m pytest -q` from the repo root (~460 tests, under 15 s).
+- Tests: `python -m pytest -q` from the repo root (781 tests, under 40 s).
   Bare `python` on this machine is a real Python 3.13, not the Store stub.
   pyproject.toml sets `pythonpath = ["src", "tests"]`, so no `pip install -e`
   or PYTHONPATH is needed to run the suite.
@@ -57,7 +57,7 @@ is only what's specific to this machine.
   fetches are the pinned CDN URLs precached in `assets/js/sw.js` (Pyodide,
   MathJax, Plotly); those pins must match their loaders — see
   `tests/test_js_contract.py`.
-- `assets/js/deck/` is ONE IIFE in fourteen files. They are FRAGMENTS,
+- `assets/js/deck/` is ONE IIFE, one file per fragment. They are FRAGMENTS,
   concatenated in the order `assets.DECK_PARTS` names — so a part does not
   parse on its own and your editor will underline its last brace. Check the
   ASSEMBLED file, never a part; `tests/test_js_contract.py` does that for

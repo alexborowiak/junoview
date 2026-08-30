@@ -519,8 +519,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # a ruler drag, beginEdit restores a typeset box's source for rich boxes
 # too, the Same-size gate matches its verb, and the two notes-pane time
 # fields go quiet.
-EXPECTED_MD5 = "c84ef0c90e1e1e13723fedd428c6f431"
-EXPECTED_BYTES = 3245605
+# Moved 2026-08-30 for T98: 00-page.js's own header said the deck was
+# "ONE IIFE, in fourteen files" and DECK_PARTS has held fifteen since
+# 99-boot.js was split out. A comment, so the four bytes are the whole
+# change -- but it is the first line an agent reads when it opens a
+# fragment, and the point of T98 is that the structural claims are
+# true. The count is gone rather than corrected, so the sixteenth
+# fragment cannot re-stale it.
+EXPECTED_MD5 = "c7e740f7b75ed33d95ed246f480ca15e"
+EXPECTED_BYTES = 3245609
 
 
 def _render_example() -> str:

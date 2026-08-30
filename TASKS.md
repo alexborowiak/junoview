@@ -38,8 +38,8 @@ edited dead code.
 - Work 2–4 related tasks per session. One commit per task; tick the box in
   the same commit. Add a dated note under a task if you discover something
   (partial existing support, a blocker, a descoping decision).
-- **[deck.js]** tasks touch the single ~18k-line IIFE — never run two of
-  them in parallel sessions. Respect the boot-sequence rule (CLAUDE.md).
+- **[deck.js]** tasks touch the one IIFE that `assets/js/deck/` is
+  concatenated into — never run two of them in parallel sessions. Respect the boot-sequence rule (CLAUDE.md).
 - Anything that changes rendered page bytes must update `EXPECTED_MD5` in
   `tests/test_characterization.py` in the same commit, with the reason.
 - **(design first)** means: write a short design note (schema, interaction
@@ -1836,7 +1836,7 @@ worst-first.
   T76 (L1451–1461) as the template; it is the one entry in groups 10–12
   that got it right, including an explicit "NOT done, deliberately".
 
-- [ ] **T98 · S — The first three files an agent is told to trust are
+- [x] **T98 · S — The first three files an agent is told to trust are
   wrong about the code.**
   *Verified CONFIRMED — six edits, one more than the review found.*
   `ARCHITECTURE.md:66`, `AGENTS.md:37`, `AGENTS.md:66`, `CLAUDE.md:60`

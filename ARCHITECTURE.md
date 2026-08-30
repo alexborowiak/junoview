@@ -63,8 +63,9 @@ src/junoview/
 │   ├── css/               core.css · app.css · deck.css · widget.css
 │   │                      · widget-media.css  (the widget's responsive rules)
 │   ├── js/                app.js · deck/ · pptx.js · widget.js
-│   │   └── deck/          the slide editor: ONE IIFE, fourteen files
 │   │                      · sw.js  (the web build's offline service worker)
+│   │   └── deck/          the slide editor: ONE IIFE, one file per
+│   │                      fragment, in the order DECK_PARTS names
 │   └── html/              page.html · shell.html · deck.html · help.html · …
 │
 ├── server/            the local GUI app (the only part that writes to disk)

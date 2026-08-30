@@ -129,7 +129,8 @@ _LOOKUP = re.compile(
 def _looked_up_ids() -> set[str]:
     """Every id the frontend asks the DOM for.
 
-    deck.js is now js/deck/ -- fourteen fragments of one IIFE (T36) --
+    deck.js is now js/deck/ -- the fragments DECK_PARTS names, one
+    IIFE between them (T36) --
     so the scan reads what assets.deck_js() assembles rather than a file
     that no longer exists. Same text, one source of truth about which
     parts are in it.

@@ -1,5 +1,5 @@
 /* ======================================================================
-   deck/ — the presentation builder. ONE IIFE, in fourteen files.
+   deck/ — the presentation builder. ONE IIFE, one file per fragment.
 
    WHY FILES AND NOT MODULES. Everything here shares one closure: `pres`,
    `cur`, `mode`, `selAnnot` and several hundred functions that reach for
