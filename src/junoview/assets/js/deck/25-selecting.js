@@ -144,7 +144,17 @@
        syncRibbonGroups bounced straight back off it and the selection
        appeared to do nothing (2026-08-25, found in a browser). Deciding
        now and switching after the controls exist keeps both rules. */
-    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew)?selT:'';
+    /* AN OPEN PANE IS AN OPEN WORKFLOW (T141 / JVUX-06). The Timeline
+       pane's own empty state says "Select an item first" — and doing
+       exactly that used to yank the ribbon from Insert to Object,
+       moving you away from the controls you had just opened. With any
+       inspector pane open, selection still reveals the contextual
+       groups (showFmt below) but no longer STEALS the tab; with none
+       open, the switch behaves as it always has. */
+    var paneOpen=PANE_IDS.some(function(pid){
+      var el=$('#'+pid); return el&&!el.hidden;});
+    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
+      &&!paneOpen)?selT:'';
     justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
