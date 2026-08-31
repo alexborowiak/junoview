@@ -2225,13 +2225,27 @@ What does NOT work is one wrapper, which is T122.
   behind the app's back, one click, "1 figure updated from its source",
   the deck never closing.
 
-- [ ] **T124 · S — The rail should say what kind of thing each tab is.**
+- [x] **T124 · S — The rail should say what kind of thing each tab is.**
   A `.tex` and a `.ipynb` now sit side by side with nothing
   distinguishing them, and the doors that are notebook-only (Insert
   note, Versions from git) are still offered on both — T100 kept those
   routes strict on the server, so they refuse correctly, but refusing is
   not the same as not offering. `source_label()` already names the kind
   and `_list_dir` already returns it.
+  *Done 2026-08-31.* The kind rides on the Document (set in
+  `doc_from_text`, the one dispatch); non-notebook shells wear
+  `data-srckind` (`data-kind` was taken — it is the CARD kind), lead
+  their rail meta line with the kind, and get a kind chip in the
+  open-files list, whose heading follows its contents. The notebook is
+  the unmarked default, so every notebook page stays byte-identical.
+  Insert note is offered only where a note CELL can land (`.ipynb`);
+  and the one genuinely notebook-only Versions door was WIDENED rather
+  than hidden — `git show` hands back text and `doc_from_text`
+  dispatches on the name, so a `.tex`'s commits now open exactly the
+  way a notebook's do (a real tmp-git-repo test pins it). Driven live:
+  heading "open files", LaTeX chip + tooltip on the `.tex` row, meta
+  "LaTeX · 0 figures · …", 0 pencils on the tex and 2 on the notebook,
+  and the heading reverting to "open notebooks" once the tex closed.
 
 ### The 2026-08-31 revisit — "the hard ones", audited live
 

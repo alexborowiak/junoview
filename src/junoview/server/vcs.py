@@ -72,9 +72,11 @@ def _git_file_log(f: Path, n: int = 25) -> list:
         return []
 
 
-def _git_show_notebook(f: Path, commit: str) -> dict:
-    """The notebook's JSON as it was at COMMIT (git show hash:relpath).
-    Bytes + explicit utf-8 — text mode would decode with the locale."""
+def _git_show_text(f: Path, commit: str) -> str:
+    """The file's text as it was at COMMIT (git show hash:relpath).
+    Bytes + explicit utf-8 — text mode would decode with the locale.
+    Split out of _git_show_notebook (T124): a .tex or .md commit is as
+    openable as a notebook's once the result is just text."""
     top = _git_run(f, "rev-parse", "--show-toplevel")
     if top.returncode != 0:
         raise ValueError("not in a git repository")
@@ -93,7 +95,13 @@ def _git_show_notebook(f: Path, commit: str) -> dict:
         raise FileNotFoundError(
             r.stderr.decode("utf-8", "replace").strip()[:200]
             or "commit not found")
-    nb = json.loads(r.stdout.decode("utf-8"))
+    return r.stdout.decode("utf-8")
+
+
+def _git_show_notebook(f: Path, commit: str) -> dict:
+    """That commit's file parsed as notebook JSON, for the routes that
+    need CELLS (locked deck frames) rather than a rendered document."""
+    nb = json.loads(_git_show_text(f, commit))
     if not isinstance(nb, dict) or "cells" not in nb:
         raise ValueError("that commit's file is not a notebook")
     return nb

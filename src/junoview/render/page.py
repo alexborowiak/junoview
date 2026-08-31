@@ -34,6 +34,18 @@ def render_shell(doc: Document, path: str = "") -> str:
     """
     stem = doc.source_name or "notebook"
     path_attr = f' data-path="{html.escape(path)}"' if path else ""
+    # A .tex and a .ipynb used to sit side by side with nothing saying
+    # which was which (T124). The notebook is the unmarked default --
+    # notebook-first is the stated design -- so only OTHER kinds are
+    # stamped and named, which also keeps every already-rendered
+    # notebook page byte-identical.
+    kind = doc.source_kind
+    if kind and kind != "Jupyter notebook":
+        kind_attr = f' data-srckind="{html.escape(kind)}"'
+        meta = f"{kind} \u00b7 {doc_meta(doc)}"
+    else:
+        kind_attr = ""
+        meta = doc_meta(doc)
     # The document's own title is the notebook's first ``# `` heading, which
     # is a section name -- useful, but not this file's name. It rides one
     # line under the file name, and only when it says something the file
@@ -51,9 +63,10 @@ def render_shell(doc: Document, path: str = "") -> str:
     return icons(assets.shell_template().format(
         stem=html.escape(stem),
         path_attr=path_attr,
+        kind_attr=kind_attr,
         title=html.escape(doc.title),
         doctitle=doctitle,
-        meta=html.escape(doc_meta(doc)),
+        meta=html.escape(meta),
         railtabs=render_railtabs(doc),
         nav=render_nav(doc),
         varpanel=render_varpanel(doc),

@@ -32,7 +32,13 @@ from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
 from .state import StaleWrite, _app_page, _AppState, _is_deck_file, _list_dir
-from .vcs import _git_commit_file, _git_file_log, _git_info, _git_show_notebook
+from .vcs import (
+    _git_commit_file,
+    _git_file_log,
+    _git_info,
+    _git_show_notebook,
+    _git_show_text,
+)
 
 
 def _make_handler(state: _AppState):
@@ -354,9 +360,14 @@ def _make_handler(state: _AppState):
             if commit:
                 if not re.fullmatch(r"[0-9a-fA-F]{4,40}", commit):
                     raise ValueError("bad commit id")
-                fc = self._resolve_nb_path(raw)
-                nbc = _git_show_notebook(fc, commit)
-                doc = parse_notebook(nbc)
+                # any SOURCE, not only a notebook (T124): git show hands
+                # back text and doc_from_text dispatches on the name, so
+                # a .tex's commits open exactly the way a notebook's do.
+                # This door used to be OFFERED for every source and then
+                # refused for all but .ipynb.
+                fc = self._resolve_src_path(raw)
+                doc = doc_from_text(fc.name, _git_show_text(fc, commit),
+                                    base=fc.parent)
                 doc.source_name = stem_for(
                     fc, state.stems_taken(skip=fc))
                 return {"stem": doc.source_name, "path": str(fc),

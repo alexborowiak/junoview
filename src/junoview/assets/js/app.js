@@ -360,7 +360,12 @@
       host.hidden=!useful;
       if(!useful) return;
       var h=document.createElement('div');h.className='railnbs-h';
-      h.textContent='open notebooks';host.appendChild(h);
+      /* "open notebooks" over a list holding a .tex was the exact
+         confusion T124 names; the heading follows the contents */
+      h.textContent=list.some(function(s3){
+        var q=APP.shells[s3];return q&&q.kind&&!q.trace;})
+        ?'open files':'open notebooks';
+      host.appendChild(h);
       list.forEach(function(stem){
         var sh=APP.shells[stem]; if(!sh) return;
         var on=(stem===APP.active);
@@ -369,13 +374,20 @@
         b.className='rnb'+(on?' on':'')+(sh.trace?' trace':'');
         b.title=sh.trace
           ?('Plot trace — a sub-tab of '+(sh.source||''))
-          :(sh.path||stem);
+          :((sh.kind?sh.kind+' — ':'')+(sh.path||stem));
         var d=document.createElement('span');d.className='rnb-dot';
         b.appendChild(d);
         var nm=document.createElement('span');nm.className='rnb-nm';
         nm.textContent=sh.trace?('↳ '+(sh.title||'Plot trace'))
           :(sh.label||stem);
         b.appendChild(nm);
+        /* non-notebook kinds wear their name; the notebook stays the
+           unmarked default (T124) */
+        if(sh.kind&&!sh.trace){
+          var kd=document.createElement('span');kd.className='rnb-kind';
+          kd.textContent=sh.kind;
+          b.appendChild(kd);
+        }
         if(!on) b.addEventListener('click',function(){activate(stem);});
         if(sh.trace||APP.mode==='app'||APP.mode==='web'){
           var x=document.createElement('span');x.className='rnb-x';
@@ -3224,6 +3236,10 @@
     if(shell.classList.contains('tracetab')) return;
     var p=shell.dataset.path||'';
     if(!p||/^https?:/i.test(p)) return;
+    /* notes are CELLS: they insert into notebook JSON, and no other
+       source kind has anywhere to put one. The server already refuses
+       (T100); the pencil not appearing is the fix (T124). */
+    if(!/\.ipynb$/i.test(p)) return;
     $$('.card',shell).forEach(function(card){
       var head=$('.cardhead',card); if(!head) return;
       if(head.querySelector('.card-addnote')) return;
@@ -4364,6 +4380,7 @@
     /* ---- register ---- */
     var replaced=!!APP.shells[stem];
     APP.shells[stem]={el:shell,data:data,path:shell.dataset.path||'',
+      kind:shell.dataset.srckind||'',  /* ''=notebook, the default (T124) */
       title:data.title||stem};
     if(APP.order.indexOf(stem)<0) APP.order.push(stem);
     applyFilters();

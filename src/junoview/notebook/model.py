@@ -62,5 +62,6 @@ class Document:
     sections: list[Section] = field(default_factory=list)
     presentations: list = field(default_factory=list)  # named slide decks
     source_name: str = ""          # notebook stem, names deck downloads
+    source_kind: str = ""          # SOURCES label ("LaTeX", ...); "" = notebook
     raw_html: str = ""             # linear "raw notebook" view of the cells
     variables: list = field(default_factory=list)  # NotebookVariable index

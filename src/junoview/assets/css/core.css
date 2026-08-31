@@ -135,6 +135,11 @@ body.prrail-auto .railnbs{display:flex;}
 .rnb.trace .rnb-dot{background:var(--amber);}
 .rnb-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
+.rnb-kind{flex:none;font-size:8.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--chrome-ink-2);
+  border:1px solid color-mix(in srgb,var(--chrome-ink-2) 45%,transparent);
+  border-radius:4px;padding:1px 4px;}
+.rnb.on .rnb-kind{color:var(--chrome-ink);}
 .rnb-x{flex:none;background:none;border:none;color:var(--chrome-ink-2);
   font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;
   cursor:pointer;}

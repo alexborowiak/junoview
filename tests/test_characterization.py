@@ -644,8 +644,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # stem a placed frame references FIRST, then compares; the menu label and
 # toasts say "source" because a .tex or .csv is as refreshable as a
 # notebook since T100. app.js, 35-arranging.js, deck.html.
-EXPECTED_MD5 = "cc91f458081860dce602bad9d4a56a3f"
-EXPECTED_BYTES = 3315606
+# Moved 2026-08-31 for T124: the rail says what kind of thing each tab is.
+# Non-notebook shells wear data-kind + a kind chip in the open-files list
+# (the heading follows the contents), the Insert-note pencil is offered
+# only where a note CELL can land (.ipynb), and a git commit of any source
+# now opens (git show -> doc_from_text). The notebook page moves only
+# because it inlines app.js/core.css; its shell markup is byte-identical.
+EXPECTED_MD5 = "73e2eeaa1c06693d732d657416f3e3ca"
+EXPECTED_BYTES = 3316752
 
 
 def _render_example() -> str:

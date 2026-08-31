@@ -859,3 +859,101 @@ def test_something_a_browser_cannot_draw_is_not_wrapped_as_a_figure():
     out = [it for it in _items(doc) if it.kind == "figure"][0].outputs[0]
     assert "figframe" not in out.payload
     assert out.has_image is False
+# ---------------------------------------------------------------------------
+# the rail says what kind of thing each tab is (T124)
+# ---------------------------------------------------------------------------
+#
+# A .tex and a .ipynb sat side by side with nothing distinguishing them,
+# and the notebook-only doors were offered on both -- refused correctly
+# by the server (T100), but refusing is not the same as not offering.
+
+
+def test_a_source_shell_wears_its_kind_and_a_notebook_stays_unmarked():
+    """The kind rides on the Document (set in doc_from_text, the one
+    dispatch) and the shell stamps + names it. The notebook is the
+    UNMARKED default -- notebook-first is the stated design -- which
+    also keeps every already-rendered notebook page byte-identical."""
+    from junoview.render.page import render_shell
+
+    tex = doc_from_text("paper.tex", TEX)
+    assert tex.source_kind == "LaTeX"
+    tex.source_name = "paper"
+    shell = render_shell(tex, path="C:/x/paper.tex")
+    assert 'data-srckind="LaTeX"' in shell
+    assert "LaTeX \u00b7 " in shell  # the rail meta line leads with it
+
+    nb = doc_from_text("book.ipynb", json.dumps(
+        {"cells": [{"cell_type": "markdown", "id": "m",
+                    "source": "hello"}]}))
+    assert nb.source_kind == "Jupyter notebook"
+    nb.source_name = "book"
+    shell = render_shell(nb, path="C:/x/book.ipynb")
+    # data-kind is the CARD kind (note/figure/...); the shell-level
+    # attribute is data-srckind and a notebook must not wear one
+    assert "data-srckind" not in shell
+
+    # a file with no registered suffix reads as markdown and SAYS so
+    assert doc_from_text("README", "hi").source_kind == "Markdown"
+
+
+def test_the_rail_list_carries_the_kind_and_the_heading_follows():
+    """Client half: the shell's data-kind lands on APP.shells, each
+    non-notebook row wears a kind chip, and the list heading stops
+    claiming "open notebooks" when a .tex is in it."""
+    from junoview import assets
+
+    js = assets.app_js()
+    assert "kind:shell.dataset.srckind||''" in js
+    assert "kd.className='rnb-kind'" in js
+    assert "?'open files':'open notebooks';" in js
+    assert ".rnb-kind{" in assets.core_css()
+
+
+def test_the_insert_note_pencil_is_offered_only_where_a_cell_can_land():
+    """Notes are CELLS: they insert into notebook JSON, so on a .tex the
+    pencil is not offered at all rather than offered and refused."""
+    from junoview import assets
+
+    js = assets.app_js()
+    gate = "if(!/" + "\\" + ".ipynb$/i.test(p)) return;"
+    fn = js[js.index("function wireAddNote"):]
+    fn = fn[:fn.index("\n  }")]
+    assert gate in fn, "wireAddNote no longer gates on .ipynb"
+
+
+def test_a_git_commit_of_any_source_opens(tmp_path: Path):
+    """The one Versions door that WAS notebook-only, widened instead of
+    hidden: git show hands back text and doc_from_text dispatches on the
+    name, so a .tex's commits open exactly the way a notebook's do."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("git"):
+        pytest.skip("no git on this machine")
+
+    def git(*args):
+        r = subprocess.run(["git", "-C", str(tmp_path), *args],
+                           capture_output=True, text=True, timeout=20)
+        assert r.returncode == 0, r.stderr
+        return r.stdout.strip()
+
+    tex = tmp_path / "paper.tex"
+    tex.write_text("\\section{Before}\nold prose\n", encoding="utf-8")
+    git("init", "-q")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    git("add", "paper.tex")
+    git("commit", "-q", "-m", "first")
+    first = git("rev-parse", "--short", "HEAD")
+    tex.write_text("\\section{After}\nnew prose\n", encoding="utf-8")
+
+    from junoview.server.routes import _make_handler
+    from junoview.server.state import _AppState
+
+    Handler = _make_handler(_AppState(tmp_path))
+    h = Handler.__new__(Handler)
+    out = h._open_version({"path": str(tex), "commit": first})
+    assert out["version"] == "git:" + first
+    assert "Before" in out["shell"] and "After" not in out["shell"]
+    # and the reopened version still says what kind of thing it is
+    assert 'data-srckind="LaTeX"' in out["shell"]

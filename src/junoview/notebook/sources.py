@@ -796,8 +796,15 @@ def doc_from_text(name: str | Path, text: str,
     one.
     """
     suffix = Path(str(name)).suffix.lower()
-    _, producer = SOURCES.get(suffix, ("Markdown", parse_markdown))
+    label, producer = SOURCES.get(suffix, ("Markdown", parse_markdown))
     if producer is parse_table:
-        return parse_table(text, title=title or Path(str(name)).stem,
-                           delim="\t" if suffix == ".tsv" else None)
-    return producer(text, title=title, base=base)
+        doc = parse_table(text, title=title or Path(str(name)).stem,
+                          delim="\t" if suffix == ".tsv" else None)
+    else:
+        doc = producer(text, title=title, base=base)
+    # the kind rides on the Document so every consumer -- the shell, the
+    # rail -- can SAY what this file is instead of assuming "notebook"
+    # (T124). Set here, in the one dispatch, so no producer needs to
+    # know its own name.
+    doc.source_kind = label
+    return doc
