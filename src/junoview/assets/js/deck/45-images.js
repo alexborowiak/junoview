@@ -126,7 +126,7 @@
   (function(){
     var mi=$('#mi-refresh-img');
     if(mi) mi.addEventListener('click',function(){
-      var dm=$('#dc-menu'); if(dm) dm.hidden=true;
+      var dm=$('#dc-menu'); if(dm) overlayHide(dm);
       refreshImagesReport();
     });
     var one=$('#fmt-imgrefresh');
@@ -631,23 +631,65 @@
       top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
     menu.style.top=top+'px';
   }
-  /* Open/close/close-on-outside-click, shared by the WORDED dropdowns
-     below and the DRAWN ones (line style, weight, ends, route). It was
-     inline in wireFloatDropdown, so a menu whose rows are pictures rather
-     than a list of strings had no way to reuse any of it (2026-08-17). */
+  /* ---- THE ONE OWNER OF TRANSIENT MENUS (T135 / JVUX-02) ------------
+     Every dropdown used to carry its own open/close pair, and each knew
+     only the siblings its author remembered -- so File and Present
+     could stand open together, Background sat on top of the Layouts
+     gallery, and a menu dismissed by an outside click left its trigger
+     claiming aria-expanded=true (all three reproduced live before this
+     existed). One rule now: at most one transient menu shows; showing
+     a second closes the first; hiding ALWAYS resets the trigger's
+     aria-expanded, whoever asked. The outside click and Escape live
+     here once, installed by overlayBoot from THE BOOT SEQUENCE --
+     never at eval (the T133 rule). Inspector panes are a different
+     class of surface and have their own owner (T136). */
+  var overlayNow=null;
+  function overlayClose(){
+    if(!overlayNow) return;
+    overlayNow.menu.hidden=true;
+    if(overlayNow.btn&&overlayNow.btn.setAttribute)
+      overlayNow.btn.setAttribute('aria-expanded','false');
+    overlayNow=null;
+  }
+  function overlayShow(btn,menu){
+    if(!menu) return;
+    if(overlayNow&&overlayNow.menu!==menu) overlayClose();
+    menu.hidden=false;
+    if(btn&&btn.setAttribute) btn.setAttribute('aria-expanded','true');
+    overlayNow={btn:btn,menu:menu};
+  }
+  function overlayHide(menu){
+    if(!menu) return;
+    if(overlayNow&&overlayNow.menu===menu){overlayClose();return;}
+    menu.hidden=true;
+  }
+  function overlayBoot(){
+    document.addEventListener('click',function(e){
+      if(!overlayNow) return;
+      if(overlayNow.menu.contains(e.target)) return;
+      var b=overlayNow.btn;
+      if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) return;
+      overlayClose();
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key!=='Escape'||!overlayNow) return;
+      var b=overlayNow.btn;
+      overlayClose();
+      /* keyboard dismissal returns focus to the trigger */
+      if(b&&b.focus) b.focus();
+    });
+  }
+  /* Open/close, shared by the WORDED dropdowns below and the DRAWN ones
+     (line style, weight, ends, route) -- now just registration with the
+     one owner above, which is what makes every wired menu exclusive and
+     aria-honest for free. */
   function wireMenuToggle(wrapId,btnId,menuId){
     var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
     if(!wrap||!btn||!menu) return null;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=menu.hidden;
-      menu.hidden=!willOpen;
-      btn.setAttribute('aria-expanded',willOpen.toString());
-      if(willOpen) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+      if(menu.hidden){overlayShow(btn,menu);floatMenu(btn,menu);}
+      else overlayHide(menu);
     });
     return {wrap:wrap,btn:btn,menu:menu};
   }

@@ -1422,9 +1422,8 @@
     viewFolded=on;
   }
   function closeViewMenu(){
-    var m=$('#vw-more-menu'),b=$('#vw-more');
-    if(m&&!m.hidden){m.hidden=true;
-      if(b) b.setAttribute('aria-expanded','false');}
+    var m=$('#vw-more-menu');
+    if(m) overlayHide(m);
   }
   /* the rows DRIVE the real buttons, so each control keeps its one
      implementation and its own state — the same trick the Arrange menu
@@ -1462,8 +1461,7 @@
     gal.addEventListener('click',function(e){
       e.stopPropagation();closeViewMenu();openRibbonGallery();});
     m.appendChild(gal);
-    m.hidden=false;
-    btn.setAttribute('aria-expanded','true');
+    overlayShow(btn,m);
     floatMenu(btn,m);
   }
   (function(){
@@ -1681,7 +1679,7 @@
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
-        pm.hidden=true;pb.setAttribute('aria-expanded','false');
+        overlayHide(pm);
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a
@@ -1697,14 +1695,8 @@
     });
     pb.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=pm.hidden;
-      if(willOpen) closeLayMenu();
-      pm.hidden=!willOpen;
-      pb.setAttribute('aria-expanded',willOpen.toString());
-    });
-    document.addEventListener('click',function(e){
-      if(!pm.hidden&&pd&&!pd.contains(e.target)){
-        pm.hidden=true;pb.setAttribute('aria-expanded','false');}
+      if(pm.hidden) overlayShow(pb,pm);
+      else overlayHide(pm);
     });
   })();
   /* ---- Objects pane (layers v1): list / select / hide / lock ---- */
@@ -2271,17 +2263,12 @@
     if(!lb||!lm) return;
     lb.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=lm.hidden;
-      if(willOpen) closePageMenu();
-      lm.hidden=!willOpen;
-      lb.setAttribute('aria-expanded',willOpen.toString());
-      /* this menu is 442px wide; opened from a toolbar standing on the
-         right-hand edge it ran straight off the screen (2026-08-07,
-         user). floatMenu clamps it into the viewport. */
-      if(willOpen) floatMenu(lb,lm);
-    });
-    document.addEventListener('click',function(e){
-      if(!lm.hidden&&ld&&!ld.contains(e.target)) closeLayMenu();
+      if(lm.hidden){
+        /* this menu is 442px wide; opened from a toolbar standing on
+           the right-hand edge it ran straight off the screen
+           (2026-08-07, user). floatMenu clamps it into the viewport. */
+        overlayShow(lb,lm);floatMenu(lb,lm);
+      } else overlayHide(lm);
     });
   })();
   function slideCells(s){

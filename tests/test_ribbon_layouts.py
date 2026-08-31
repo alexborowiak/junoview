@@ -459,7 +459,7 @@ def test_home_and_design_layouts_menus_carry_the_same_rows(out):
     assert "both('#lay-arrs','#hm-lay-arrs',function(){" in out
     assert ("both('#lay-ideas-btn','#hm-lay-ideas',"
             "function(){openLayoutIdeas();});") in out
-    assert "var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;" in out
+    assert "var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);" in out
 
 
 def test_layout_ideas_previews_are_the_real_computation_on_a_clone(out):

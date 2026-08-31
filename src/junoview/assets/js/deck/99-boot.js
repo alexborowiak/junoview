@@ -33,6 +33,8 @@
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  overlayBoot();              /* the one outside-click + Escape closer
+                                 for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not
      mid-file: it walks the deck's markup, which is only guaranteed real
      by the time the boot sequence runs. */

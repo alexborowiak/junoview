@@ -492,13 +492,13 @@
     [['#lay-menu','#lay-btn'],['#hm-lay-menu','#hm-lay']]
       .forEach(function(p){
         var lm=$(p[0]),lb=$(p[1]);
-        if(lm&&!lm.hidden){lm.hidden=true;
+        if(lm&&!lm.hidden){overlayHide(lm);
           if(lb) lb.setAttribute('aria-expanded','false');}
       });
   }
   function closePageMenu(){
     var pm=$('#page-menu'),pb=$('#page-btn');
-    if(pm&&!pm.hidden){pm.hidden=true;
+    if(pm&&!pm.hidden){overlayHide(pm);
       if(pb) pb.setAttribute('aria-expanded','false');}
   }
   /* ---- page size: slides or a poster — ONE builder for both. The page

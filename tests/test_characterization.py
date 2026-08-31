@@ -693,8 +693,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-08-31 for T134: the dead second deck-status/qat-auto pair
 # left behind by T70 is gone (JVUX-04), and a unique-id test now fails
 # on ANY duplicate id in any template.
-EXPECTED_MD5 = "b3932c1a4aa0bfdd9f4545d6b6aa272f"
-EXPECTED_BYTES = 3375723
+# Moved 2026-08-31 for T135: one owner for every transient menu
+# (JVUX-02). overlayShow/overlayHide in 45-images + overlayBoot from
+# 99-boot; File, Present, Background, Layouts, Page, Thumbnails,
+# shapes, text-style caret, autosave, save-target, View overflow and
+# the notebook-list More menu all route through it — at most one
+# shows, aria-expanded always resets, Escape closes.
+EXPECTED_MD5 = "49ecc4b2084978cda0fc9e746bcbdd47"
+EXPECTED_BYTES = 3374973
 
 
 def _render_example() -> str:

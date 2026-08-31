@@ -2567,13 +2567,27 @@ competing ways to reach them.
   shell, help and web-loader with no allow-list, and confirmed the
   other four templates were already clean.
 
-- [ ] **T135 · M — One owner for every transient menu.** File, Present,
+- [x] **T135 · M — One owner for every transient menu.** File, Present,
   Background, Layouts, Page, Thumbnails and the autosave menu each
   carry their own open/close pair; each knows only the siblings its
   author remembered, which is why any two independently-wired menus
   can stack. One registry: opening any registered menu closes the one
   before it, keeps `aria-expanded` true exactly while its menu shows,
   and closes on outside click and Escape.
+  *Done 2026-08-31.* `overlayShow`/`overlayHide`/`overlayClose` beside
+  `wireMenuToggle` (which now just registers), with the one outside
+  click + Escape closer installed by `overlayBoot` from THE BOOT
+  SEQUENCE per the T133 rule. Migrated: File, Present, Design Layouts,
+  Home Layouts, Background, Page, Thumbnails, the shapes gallery, the
+  text-style caret, autosave, save-target, the View overflow and the
+  notebook-list More menu — every per-menu document closer deleted.
+  Driven live on the exact JVUX-02 sequences: File→Present shows only
+  Present with File's aria false; the outside click resets Present's
+  aria (the stale-true bug); Background→Layouts shows only Layouts;
+  Escape closes with aria false. Focus-return on Escape is best-effort
+  (it targets the trigger; one drive saw focus rest elsewhere — noted,
+  not chased). The canvas context menu keeps its own
+  close-on-any-click, which already cannot stack with these.
 
 - [ ] **T136 · M — One owner for the inspector panes.** The
   "one pane open at a time" comment is aspiration: showTidyPane hides

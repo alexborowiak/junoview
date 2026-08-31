@@ -854,22 +854,11 @@
         acts2.appendChild(la);acts2.appendChild(ua);
         acts2.appendChild(lv);
         nbBody.appendChild(acts2);
-        var armed=false;
-        var closer=function(e){
-          if(acts2.contains(e.target)) return;
-          acts2.hidden=true;mb.setAttribute('aria-expanded','false');
-          document.removeEventListener('click',closer);armed=false;
-        };
         mb.addEventListener('click',function(e){
           e.stopPropagation();
-          var willOpen=acts2.hidden;
-          acts2.hidden=!willOpen;
-          mb.setAttribute('aria-expanded',willOpen.toString());
-          if(!willOpen) return;
+          if(!acts2.hidden){overlayHide(acts2);return;}
+          overlayShow(mb,acts2);
           floatMenu(mb,acts2);
-          if(armed) return;
-          armed=true;
-          setTimeout(function(){document.addEventListener('click',closer);},0);
         });
       }
     } else {
@@ -1367,21 +1356,15 @@
     if(!wrap||!menu) return;
     wrap.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      wrap.setAttribute('aria-expanded',open?'true':'false');
-      /* floated for the same reason as the File menu: the qat's scroll
-         floor must not clip it */
-      if(open) floatMenu(wrap,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==wrap)
-        menu.hidden=true;
+      /* the one owner (T135): the outside click that used to live here
+         forgot aria-expanded, which is the stale state JVUX-02 caught */
+      if(menu.hidden){overlayShow(wrap,menu);floatMenu(wrap,menu);}
+      else overlayHide(menu);
     });
     function mi(id,fn){
       var b=$(id);
       if(b) b.addEventListener('click',function(e){
-        e.stopPropagation();menu.hidden=true;fn();});
+        e.stopPropagation();overlayHide(menu);fn();});
     }
     /* WHICH VERSION (T24). Built rather than written into the markup
        because the list is the deck's, and a deck with no cuts must show
@@ -1407,7 +1390,7 @@
         if(why) b.title=why;
         b.setAttribute('aria-pressed',(selected===id).toString());
         b.addEventListener('click',function(e){
-          e.stopPropagation();menu.hidden=true;setCut(id);syncCuts();});
+          e.stopPropagation();overlayHide(menu);setCut(id);syncCuts();});
         add(b);
       }
       opt('','Every slide','The whole deck, which is what a deck with '
@@ -1421,7 +1404,7 @@
         choose.title='Only the slides that name this version';
         choose.setAttribute('aria-pressed',(selected===c.id).toString());
         choose.addEventListener('click',function(e){
-          e.stopPropagation();menu.hidden=true;setCut(c.id);syncCuts();});
+          e.stopPropagation();overlayHide(menu);setCut(c.id);syncCuts();});
         box.appendChild(choose);
         [[bic('pen'),'Rename',function(){return renameCut(c.id);}],
          [bic('exit'),'Delete',function(){return delCut(c.id);}]]
@@ -1443,7 +1426,7 @@
       nb.title='Name a shorter cut of this same deck — no second '
         +'file, no diverging copies';
       nb.addEventListener('click',function(e){
-        e.stopPropagation();menu.hidden=true;
+        e.stopPropagation();overlayHide(menu);
         var nm=prompt('Name for this version:','20-min');
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
@@ -1603,13 +1586,8 @@
     });
     shBtn.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=shMenu.hidden;
-      shMenu.hidden=!willOpen;
-      shBtn.setAttribute('aria-expanded',willOpen.toString());
-    });
-    document.addEventListener('click',function(e){
-      if(!shMenu.hidden&&shDrop&&!shDrop.contains(e.target)){
-        shMenu.hidden=true;shBtn.setAttribute('aria-expanded','false');}
+      if(shMenu.hidden) overlayShow(shBtn,shMenu);
+      else overlayHide(shMenu);
     });
   })();
   /* ---- WHAT KIND OF TEXT BOX ------------------------------------------
@@ -1667,8 +1645,7 @@
         b.addEventListener('click',function(e){
           e.stopPropagation();
           pendingStyle=r[0];
-          menu.hidden=true;
-          btn.setAttribute('aria-expanded','false');
+          overlayHide(menu);
           syncCaret();
           setTool('text');
         });
@@ -1680,15 +1657,9 @@
          button: the shared tool wiring would otherwise arm setTool(
          undefined) off it */
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&drop&&!drop.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+      if(menu.hidden){
+        build();overlayShow(btn,menu);floatMenu(btn,menu);
+      } else overlayHide(menu);
     });
     syncCaret();
   })();
@@ -2177,16 +2148,12 @@
             b.textContent=v[pg];
             b.setAttribute('aria-pressed',(filmMode()===v[0]).toString());
             b.addEventListener('click',function(ev){
-              ev.stopPropagation();menu.hidden=true;setFilmMode(v[0]);});
+              ev.stopPropagation();overlayHide(menu);setFilmMode(v[0]);});
             menu.appendChild(b);
           });
         }
-        menu.hidden=!open;
-        btn.setAttribute('aria-expanded',open?'true':'false');
-      });
-      document.addEventListener('click',function(e){
-        if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)
-          menu.hidden=true;
+        if(open) overlayShow(btn,menu);
+        else overlayHide(menu);
       });
       syncFilmBtn();
       window.SemDeckFilmBtn=syncFilmBtn;
@@ -2246,24 +2213,15 @@
   });
   /* ---- File menu ---- */
   var fileBtn=$('#dc-file'), fileMenu=$('#dc-menu');
-  function closeMenu(){
-    if(fileMenu&&!fileMenu.hidden){
-      fileMenu.hidden=true;
-      fileBtn.setAttribute('aria-expanded','false');
-    }
-  }
+  function closeMenu(){overlayHide(fileMenu);}
   if(fileBtn){
     fileBtn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=!fileMenu.hidden;
-      fileMenu.hidden=open;
-      fileBtn.setAttribute('aria-expanded',(!open).toString());
-      /* floated (position:fixed) so fitQat's scroll floor can never
-         cut the menu off at the bar's edge */
-      if(!open) floatMenu(fileBtn,fileMenu);
-    });
-    document.addEventListener('click',function(e){
-      if(!fileMenu.hidden&&!fileMenu.contains(e.target)) closeMenu();
+      if(fileMenu.hidden){
+        /* floated (position:fixed) so fitQat's scroll floor can never
+           cut the menu off at the bar's edge */
+        overlayShow(fileBtn,fileMenu);floatMenu(fileBtn,fileMenu);
+      } else overlayHide(fileMenu);
     });
   }
   function menuAction(id,fn){

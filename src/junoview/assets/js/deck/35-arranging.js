@@ -1129,8 +1129,8 @@
      is looked at. */
   function initReuseDoors(){
     function shut(){
-      var lm=$('#lay-menu'); if(lm) lm.hidden=true;
-      var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;
+      var lm=$('#lay-menu'); if(lm) overlayHide(lm);
+      var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);
     }
     /* each row exists twice since Home gained parity (T131): same
        handler, both ids */
@@ -1860,8 +1860,8 @@
       b.addEventListener('click',function(e){
         e.stopPropagation();
         var s=pres.slides[cur]; if(!s) return;
-        var lm=$('#lay-menu'); if(lm) lm.hidden=true;
-        var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;
+        var lm=$('#lay-menu'); if(lm) overlayHide(lm);
+        var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);
         var n=arrangeSlide(s,stage.querySelector('.annot-layer'),
           arrangeOpts(b.getAttribute('data-tidy')));
         if(!n){toast('There is nothing on this slide to arrange');return;}

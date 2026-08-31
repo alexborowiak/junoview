@@ -614,9 +614,7 @@
   (function(){
     var btn=$('#qat-auto'),menu=$('#auto-menu');
     if(!btn||!menu) return;
-    var wrap=btn.parentNode;
-    function close(){menu.hidden=true;
-      btn.setAttribute('aria-expanded','false');}
+    function close(){overlayHide(menu);}
     function build(){
       menu.innerHTML='';
       var h=document.createElement('div');
@@ -643,11 +641,9 @@
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      if(open) floatMenu(btn,menu);
+      if(menu.hidden){
+        build();overlayShow(btn,menu);floatMenu(btn,menu);
+      } else overlayHide(menu);
     });
     document.addEventListener('click',function(e){
       if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
@@ -715,20 +711,16 @@
   });
   /* ---- the "Saved to" picker ---- */
   (function(){
-    var wrap=$('#dc-target')&&$('#dc-target').parentNode;
     var btn=$('#dc-target'),menu=$('#target-menu');
     if(!btn||!menu) return;
-    function close(){menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    function close(){overlayHide(menu);}
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      /* floated so the qat's scroll floor can never clip it */
-      if(open) floatMenu(btn,menu);
+      if(menu.hidden){
+        /* floated so the qat's scroll floor can never clip it */
+        overlayShow(btn,menu);floatMenu(btn,menu);
+      } else overlayHide(menu);
     });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
     var pj=$('#tg-project');
     if(pj) pj.addEventListener('click',function(){
       close();setTarget('project');

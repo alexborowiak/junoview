@@ -96,7 +96,8 @@ def test_menus_are_clamped_onto_the_screen(out):
     toolbar standing on the right-hand edge it ran straight off the
     screen. floatMenu itself only clamped horizontally.
     """
-    assert "if(willOpen) floatMenu(lb,lm);" in out
+    # since T135 the open goes through the one overlay owner
+    assert "overlayShow(lb,lm);floatMenu(lb,lm);" in out
     assert "var mh=menu.offsetHeight||0;" in out
     assert "if(mh&&top+mh>window.innerHeight-8)" in out
 
@@ -534,7 +535,8 @@ def test_the_line_menus_draw_the_option_instead_of_naming_it(out):
             in out)
     # the open/close wiring is shared rather than copied
     assert "function wireMenuToggle(wrapId,btnId,menuId){" in out
-    assert out.count("if(willOpen) floatMenu(btn,menu);") == 1
+    assert out.count(
+        "if(menu.hidden){overlayShow(btn,menu);floatMenu(btn,menu);}") == 1
 
 
 def test_powerpoint_export_survives_a_line_on_the_page(out):
