@@ -16,6 +16,7 @@ one HTTP request, as the single file was.
 
 from __future__ import annotations
 
+import base64
 import hashlib
 import json
 import re
@@ -27,7 +28,7 @@ from ._write import write_text
 from .branding import FAVICON, LOGO_SVG
 from .notebook.loader import stem_for
 from .notebook.parser import parse_notebook
-from .notebook.sources import doc_from_text
+from .notebook.sources import doc_from_bytes, doc_from_text
 from .render.page import render_page, render_shell
 
 # A fixed timestamp for every zip member. Without it the archive's bytes change
@@ -45,6 +46,17 @@ def web_parse(name: str, text: str, taken_json: str = "[]") -> str:
     (T91).
     """
     doc = doc_from_text(name, text)
+    return _web_finish(doc, name, taken_json)
+
+
+def web_parse_b64(name: str, b64: str, taken_json: str = "[]") -> str:
+    """The binary half of the bridge (T113): a dropped .xlsx arrives as
+    base64 because a workbook has no text to hand over."""
+    doc = doc_from_bytes(name, base64.b64decode(b64))
+    return _web_finish(doc, name, taken_json)
+
+
+def _web_finish(doc, name: str, taken_json: str) -> str:
     base = re.sub(r"\.[A-Za-z0-9]+$", "", str(name)) or "notebook"
     doc.source_name = stem_for(Path(base + ".ipynb"),
                                 set(json.loads(taken_json)))

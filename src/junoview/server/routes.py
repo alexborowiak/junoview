@@ -7,6 +7,7 @@ a page it did not serve.
 
 from __future__ import annotations
 
+import base64
 import html
 import http.server
 import json
@@ -27,7 +28,7 @@ from ..notebook.loader import (
 )
 from ..notebook.parser import parse_notebook
 from ..notebook.presentations import as_presentations
-from ..notebook.sources import SOURCE_SUFFIXES, doc_from_text
+from ..notebook.sources import SOURCE_SUFFIXES, doc_from_bytes, doc_from_text
 from ..render.items import render_item
 from ..render.page import render_shell
 from .notebook_edit import _store_version, _versions_dir, insert_note_cell
@@ -36,8 +37,8 @@ from .vcs import (
     _git_commit_file,
     _git_file_log,
     _git_info,
+    _git_show_bytes,
     _git_show_notebook,
-    _git_show_text,
 )
 
 
@@ -360,14 +361,17 @@ def _make_handler(state: _AppState):
             if commit:
                 if not re.fullmatch(r"[0-9a-fA-F]{4,40}", commit):
                     raise ValueError("bad commit id")
-                # any SOURCE, not only a notebook (T124): git show hands
-                # back text and doc_from_text dispatches on the name, so
-                # a .tex's commits open exactly the way a notebook's do.
-                # This door used to be OFFERED for every source and then
-                # refused for all but .ipynb.
+                # any SOURCE, not only a notebook (T124): git show
+                # hands back the file and doc_from_bytes dispatches on
+                # the name, so a .tex's -- or, since T113, a .xlsx's --
+                # commits open exactly the way a notebook's do. This
+                # door used to be OFFERED for every source and then
+                # refused for all but .ipynb. Bytes, because a
+                # workbook commit is a ZIP and decoding would kill it.
                 fc = self._resolve_src_path(raw)
-                doc = doc_from_text(fc.name, _git_show_text(fc, commit),
-                                    base=fc.parent)
+                doc = doc_from_bytes(fc.name,
+                                     _git_show_bytes(fc, commit),
+                                     base=fc.parent)
                 doc.source_name = stem_for(
                     fc, state.stems_taken(skip=fc))
                 return {"stem": doc.source_name, "path": str(fc),
@@ -398,7 +402,12 @@ def _make_handler(state: _AppState):
             """
             name = str(body.get("name") or "notebook.ipynb")
             text = body.get("text")
-            if isinstance(text, str):
+            b64 = body.get("b64")
+            if isinstance(b64, str) and b64:
+                # the binary door (T113): the browser read the file as
+                # bytes because a workbook has no text to send
+                doc = doc_from_bytes(name, base64.b64decode(b64))
+            elif isinstance(text, str):
                 doc = doc_from_text(name, text)
             else:
                 nb = body.get("nb")

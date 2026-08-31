@@ -42,16 +42,20 @@ import csv
 import html
 import io
 import json
+import posixpath
 import re
+import zipfile
 from collections.abc import Callable
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 from .classify import _slug
 from .model import CodeStep, Document, Item, Section
 from .outputs import RenderedOutput
 from .parser import parse_notebook
 
-__all__ = ["SOURCES", "SOURCE_SUFFIXES", "doc_from_text", "source_label"]
+__all__ = ["BINARY_SUFFIXES", "SOURCES", "SOURCE_SUFFIXES",
+           "doc_from_bytes", "doc_from_text", "source_label"]
 
 
 # ---------------------------------------------------------------------------
@@ -743,6 +747,139 @@ def parse_table(text: str, title: str | None = None,
 
 
 # ---------------------------------------------------------------------------
+# .xlsx -- a workbook, read with the stdlib (T113)
+# ---------------------------------------------------------------------------
+#
+# The user's decision (2026-08-31): Excel is in scope as VALUES ONLY --
+# "don't need no fancy filters or anything" -- and junoview's two
+# load-bearing promises (stdlib-only, Pyodide parity) rule out openpyxl.
+# A .xlsx is a ZIP of small XML parts, which the stdlib reads fine: each
+# worksheet becomes a table card, so everything a table card already has
+# -- placing on slides, "Turn into a chart" (T117), "Update figures from
+# their sources" (T123) -- works for a workbook with no further code.
+#
+# Deliberately NOT read, so nobody wonders: formulas (the cached value
+# is shown, which is what the file says the sheet last computed),
+# number formats (a date cell shows its raw serial number), styles,
+# merged-cell spans, charts and every other drawing layer.
+
+def _xl_local(tag: str) -> str:
+    """The tag without its namespace; the files use one default ns."""
+    return tag.rsplit("}", 1)[-1]
+
+
+def _xl_text(el) -> str:
+    """Every <t> under this element, joined -- a shared string is either
+    one <t> or a list of rich runs, and the runs' text is the value."""
+    return "".join(t.text or "" for t in el.iter()
+                   if _xl_local(t.tag) == "t")
+
+
+def _xl_col(ref: str) -> int:
+    """'BC12' -> 54: the 0-based column of a cell reference."""
+    n = 0
+    for ch in ref:
+        if not ch.isalpha():
+            break
+        n = n * 26 + (ord(ch.upper()) - 64)
+    return n - 1
+
+
+def _xl_value(c, shared: list[str]) -> str:
+    t = c.get("t", "n")
+    if t == "inlineStr":
+        return _xl_text(c)
+    v = None
+    for ch in c:
+        if _xl_local(ch.tag) == "v":
+            v = ch.text or ""
+    if v is None:
+        return ""
+    if t == "s":
+        try:
+            return shared[int(v)]
+        except (ValueError, IndexError):
+            return ""
+    if t == "b":
+        return "TRUE" if v.strip() == "1" else "FALSE"
+    return v
+
+
+def _xl_rows(root, shared: list[str]) -> list[list[str]]:
+    rows: list[list[str]] = []
+    for row in root.iter():
+        if _xl_local(row.tag) != "row":
+            continue
+        out: list[str] = []
+        for c in row:
+            if _xl_local(c.tag) != "c":
+                continue
+            ref = c.get("r") or ""
+            col = _xl_col(ref) if ref else len(out)
+            while len(out) < col:
+                out.append("")
+            out.append(_xl_value(c, shared))
+        if any(s.strip() for s in out):
+            rows.append(out)
+    width = max((len(r) for r in rows), default=0)
+    return [r + [""] * (width - len(r)) for r in rows]
+
+
+def parse_workbook(data: bytes, title: str | None = None,
+                   base: Path | None = None) -> Document:
+    """A .xlsx into one table card per worksheet, values only."""
+    try:
+        z = zipfile.ZipFile(io.BytesIO(data))
+        wb = ET.fromstring(z.read("xl/workbook.xml"))
+    except (zipfile.BadZipFile, KeyError) as e:
+        raise ValueError("not a .xlsx workbook (no xl/workbook.xml "
+                         "inside)") from e
+    shared: list[str] = []
+    if "xl/sharedStrings.xml" in z.namelist():
+        shared = [_xl_text(si)
+                  for si in ET.fromstring(z.read("xl/sharedStrings.xml"))
+                  if _xl_local(si.tag) == "si"]
+    rels: dict[str, str] = {}
+    if "xl/_rels/workbook.xml.rels" in z.namelist():
+        for rel in ET.fromstring(z.read("xl/_rels/workbook.xml.rels")):
+            rels[rel.get("Id") or ""] = rel.get("Target") or ""
+    rid_attr = ("{http://schemas.openxmlformats.org/officeDocument"
+                "/2006/relationships}id")
+    sheets: list[tuple[str, str]] = []
+    for el in wb.iter():
+        if _xl_local(el.tag) != "sheet":
+            continue
+        target = rels.get(el.get(rid_attr) or "", "")
+        target = (target[1:] if target.startswith("/")
+                  else posixpath.normpath("xl/" + target))
+        # a chartsheet's target is not under worksheets/ -- skip it
+        if "worksheets/" in target and target in z.namelist():
+            sheets.append((el.get("name") or f"Sheet{len(sheets) + 1}",
+                           target))
+    if not sheets:
+        raise ValueError("this workbook has no worksheets")
+    doc, st = _doc(title or "Workbook")
+    for name, target in sheets:
+        rows = _xl_rows(ET.fromstring(z.read(target)), shared)
+        if len(sheets) > 1:
+            _section(doc, st, name)
+        n_rows = max(0, len(rows) - 1)
+        n_cols = max((len(r) for r in rows), default=0)
+        shown = rows[:TABLE_ROW_CAP + 1]
+        out = [_table_html(shown, n_cols)]
+        if n_rows > TABLE_ROW_CAP:
+            out.append(f'<p class="jv-tbl-more">Showing the first '
+                       f"{TABLE_ROW_CAP} of {n_rows} rows.</p>")
+        tid = _slug("sheet " + name, st["used"])
+        _add(doc, st, Item(
+            kind="dataset", title=name,
+            outputs=[_html_out("".join(out), ot="table")],
+            caption=f"{n_rows} rows × {n_cols} columns.",
+            labelled=True, item_id=tid, anchor=tid))
+    return doc
+
+
+# ---------------------------------------------------------------------------
 # the registry
 # ---------------------------------------------------------------------------
 
@@ -767,7 +904,13 @@ SOURCES: dict[str, tuple[str, Callable[..., Document]]] = {
     ".latex": ("LaTeX", parse_latex),
     ".csv": ("Table", parse_table),
     ".tsv": ("Table", parse_table),
+    ".xlsx": ("Workbook", parse_workbook),
 }
+
+#: The producers that take BYTES, not text. doc_from_text refuses them
+#: (a workbook is a ZIP; there is no text to give it) and every door
+#: routes them through doc_from_bytes instead (T113).
+BINARY_SUFFIXES: frozenset[str] = frozenset({".xlsx"})
 
 SOURCE_SUFFIXES: tuple[str, ...] = tuple(SOURCES)
 
@@ -796,6 +939,9 @@ def doc_from_text(name: str | Path, text: str,
     one.
     """
     suffix = Path(str(name)).suffix.lower()
+    if suffix in BINARY_SUFFIXES:
+        raise ValueError(f"{suffix} is a binary format -- open it from "
+                         "a file (or hand doc_from_bytes the bytes)")
     label, producer = SOURCES.get(suffix, ("Markdown", parse_markdown))
     if producer is parse_table:
         doc = parse_table(text, title=title or Path(str(name)).stem,
@@ -808,3 +954,25 @@ def doc_from_text(name: str | Path, text: str,
     # know its own name.
     doc.source_kind = label
     return doc
+
+
+def doc_from_bytes(name: str | Path, data: bytes,
+                   title: str | None = None,
+                   base: Path | None = None) -> Document:
+    """Like doc_from_text, from the file's BYTES (T113).
+
+    This is the seam every opening door now goes through: a binary
+    suffix goes to its producer whole, everything else decodes as utf-8
+    with newlines normalised -- the same two things ``read_text`` used
+    to do implicitly, done once, here, so the loader, the server routes,
+    the Pyodide bridge and git-show cannot disagree about it.
+    """
+    suffix = Path(str(name)).suffix.lower()
+    if suffix in BINARY_SUFFIXES:
+        label, producer = SOURCES[suffix]
+        doc = producer(data, title=title, base=base)
+        doc.source_kind = label
+        return doc
+    text = (data.decode("utf-8")
+            .replace("\r\n", "\n").replace("\r", "\n"))
+    return doc_from_text(name, text, title=title, base=base)

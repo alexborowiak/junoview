@@ -2106,7 +2106,7 @@ feature copying is the wrong direction. Positive evidence for each
 absence is an exhaustive registry or schema, not a search that found
 nothing.
 
-- [ ] **T113 · design first — Is Excel in scope at all?** `SOURCES` has
+- [x] **T113 · design first — Is Excel in scope at all?** `SOURCES` has
   no `.xlsx` and `tests/test_sources.py:225-232` asserts so deliberately;
   the code calls CSV "the Excel half", which a static 500-row preview of
   one delimited table is not. Adding `openpyxl` breaks two load-bearing
@@ -2116,8 +2116,32 @@ nothing.
   **A bytes seam has to be opened first** — every producer today takes
   text, and `loader.py`, `web_parse` and the web loader all assume
   `read_text`. Nothing about a workbook can start before that.
+  *Decided and done 2026-08-31.* The user's call: in scope, VALUES ONLY
+  ("don't need no fancy filters or anything"), read by the stdlib so
+  both load-bearing promises hold. The bytes seam opened first, as this
+  entry demanded: `doc_from_bytes` is the one door (binary suffixes go
+  to their producer whole; text kinds get the utf-8 decode + newline
+  normalisation `read_text` used to do implicitly), and every opener
+  routes through it — `load_doc` reads bytes for every file, git-show
+  is `_git_show_bytes` with text as a decode on top, `/api/parse` grew
+  a `b64` field, the drop handlers read a `BIN_RE` match as an
+  ArrayBuffer in both modes, and the Pyodide bridge grew `parseB64`.
+  `parse_workbook` itself is ~120 lines of stdlib zipfile+ElementTree:
+  shared strings (rich runs joined), inline strings, booleans, gapped
+  cells, one table card per worksheet (chartsheets skipped), the same
+  500-row honesty cap as CSV. NOT read, on purpose: formulas (the
+  cached value shows), number formats (a date cell shows its serial),
+  styles, merges, drawings. Because a sheet is a table CARD, everything
+  a card has came free — T124's kind chip ("Workbook"), T117's "Turn
+  into a chart", T123's refresh. Driven live end-to-end: book.xlsx in
+  the file browser under its kind, opened as a table, a chart born from
+  the sheet, then the workbook REWRITTEN ON DISK (Jan/Feb/Mar → Q1/Q2)
+  and one File-menu click re-read both the tab and the chart —
+  [[500,400],[1,2]], colours kept. That is the original ask verbatim:
+  "figures can be linked from these types of files as well that can
+  then be refreshed".
 
-- [ ] **T114 · design first — PowerPoint import.** The export vocabulary
+- [x] **T114 · design first — PowerPoint import.** The export vocabulary
   is an if/else chain ending in `skipped++`, and the only importer takes
   junoview JSON or polyglot HTML. A `.pptx` is a ZIP of related parts, so
   it needs its own boundary rather than growing `notebook/sources.py` —
@@ -2126,6 +2150,13 @@ nothing.
   decompress with the platform's `DecompressionStream`, so the JS route
   is cheaper than the reviews assumed. Never claim a round trip without a
   loss report; macro formats read-only.
+  *Decided 2026-08-31: not now — but COME BACK for the full import.*
+  The user's words: "make a note to come back for this for the full
+  import at a later date." Export-side fidelity kept rising all day
+  (charts, builds, links, notes, tables), which raises what a good
+  import can preserve. When it is picked up: the T113 bytes seam is
+  half the plumbing, `DecompressionStream` the other, and the loss
+  report on open is non-negotiable.
 
 - [ ] **T115 · design first — Masters and inherited layouts.** `lay` is
   documented as "the id of the template last applied; annotations hold
@@ -2138,13 +2169,17 @@ nothing.
   reusable content is not the same thing as placeholder inheritance —
   say which is which before writing either.
 
-- [ ] **T116 · design first — A media annotation kind.** The kinds are
+- [x] **T116 · design first — A media annotation kind.** The kinds are
   exhaustively text, cell, rect, image, arrow, draw, table, flip. A
   notebook's stored `<video>` output does display, which is the
   confusing part — but there is no media item, no Insert door
   (`accept="image/*"` in two places), no captions and no export path.
   Storage first: images already had to move originals to IndexedDB when
   localStorage quota blew, and recordings are far larger.
+  *Decided 2026-08-31: not yet.* The user's call, offered with the
+  honest warning that self-contained decks + video collide with the
+  size constraints that shaped the embed store. To be designed when a
+  clip is actually wanted in a talk, not before.
 
 - [x] **T117 · design first — Native data-bound charts.** No chart,
   diagram, editable path or 3D object exists; a figure exports as a
@@ -2191,7 +2226,7 @@ nothing.
   an allow-listed field, never arbitrary JavaScript; internal targets use
   `sid`, not slide number.
 
-- [ ] **T119 · design first — Hosted accounts, collaboration, live
+- [x] **T119 · design first — Hosted accounts, collaboration, live
   audience.** Explicitly cut in this file and described as future work in
   `help.html`. Recorded here as one entry because they are one
   dependency: identity. Nothing — comments, presence, share links, polls,
@@ -2199,8 +2234,11 @@ nothing.
   designed with auth, tenancy, retention and a security review. The local
   app must stay localhost-only and token-guarded. Do not grow this out of
   the file server one public route at a time.
+  *Decided 2026-08-31: parked.* Infrastructure, not a feature — a
+  different kind of project than everything in this file. The paragraph
+  above stands as the design constraint if it is ever taken up.
 
-- [ ] **T120 · design first — An extension model.** A new source format
+- [x] **T120 · design first — An extension model.** A new source format
   means editing the Python registry and its synchronised UI gates; a new
   object kind means edits through the whole assembled IIFE, schema,
   normaliser, clipboard, history and exporters. `SOURCES` is the closest
@@ -2208,6 +2246,11 @@ nothing.
   `DECK_PARTS` cannot, because the no-build-step/`file://` constraint is
   deliberate. `deck_api.py` is the honest automation seam and should stay
   a lossless view over JSON rather than exposing IIFE internals.
+  *Decided 2026-08-31: parked, and worth coming back to.* The user's
+  words: "that is cool to come back to." When it is: `SOURCES` +
+  entry-points for source producers is the honest first plugin point
+  (T113's `doc_from_bytes` made its contract byte-clean), `deck_api.py`
+  the automation seam; `DECK_PARTS` stays closed on purpose.
 
 - [x] **T121 · M — The review panel: one exportable report, a timing
   lint, and JSON out.** *Verified PARTIAL — seven checking surfaces

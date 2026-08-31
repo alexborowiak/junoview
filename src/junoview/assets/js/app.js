@@ -5360,11 +5360,38 @@
      this list only decides which dropped files are worth handing over.
      A file that gets past it and cannot be parsed says so; a file that
      never gets here silently does nothing, which is the worse failure. */
-  var SRC_RE=/\.(ipynb|md|markdown|qmd|tex|latex|csv|tsv)$/i;
+  var SRC_RE=/\.(ipynb|md|markdown|qmd|tex|latex|csv|tsv|xlsx)$/i;
+  /* the BINARY subset (T113): these are read as bytes and sent base64,
+     because a workbook is a ZIP and reading it as text destroys it.
+     Kept in step with BINARY_SUFFIXES in notebook/sources.py. */
+  var BIN_RE=/\.(xlsx)$/i;
+  function fileB64(f){
+    return f.arrayBuffer().then(function(buf){
+      var u8=new Uint8Array(buf),out='',CH=0x8000;
+      for(var i=0;i<u8.length;i+=CH)
+        out+=String.fromCharCode.apply(null,u8.subarray(i,i+CH));
+      return btoa(out);
+    });
+  }
+  function webParseB64(name,b64){
+    if(!webReady()){
+      alert('Python is still loading — try again in a moment.');
+      return;
+    }
+    try{
+      var shell=window.semPy.parseB64(name,b64,APP.order);
+      mountShellHTML(shell,'');
+      hideDlg();
+    }catch(e){
+      alert('Could not open '+name+': '+((e&&e.message)||e));
+    }
+  }
   function webOpenFiles(files){
     Array.prototype.slice.call(files||[]).forEach(function(f){
       if(isDeckPath(f.name)){
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      } else if(BIN_RE.test(f.name)){
+        fileB64(f).then(function(b){webParseB64(f.name,b);});
       } else if(SRC_RE.test(f.name)){
         f.text().then(function(txt){webParseText(f.name,txt);});
       } else if(/\.html?$/i.test(f.name)){
@@ -5868,13 +5895,20 @@
          notebook is one entry in it. */
       files.filter(function(f){return SRC_RE.test(f.name);})
         .forEach(function(f){
+          var bin=BIN_RE.test(f.name);
           if(isWeb){
-            f.text().then(function(txt){webParseText(f.name,txt);});
+            if(bin) fileB64(f).then(function(b){
+              webParseB64(f.name,b);});
+            else f.text().then(function(txt){
+              webParseText(f.name,txt);});
             return;
           }
-          f.text().then(function(txt){
-            return api('/api/parse',{name:f.name,text:txt});
-          }).then(function(j){mountShellHTML(j.shell,j.path||'');})
+          (bin
+            ?fileB64(f).then(function(b){
+              return api('/api/parse',{name:f.name,b64:b});})
+            :f.text().then(function(txt){
+              return api('/api/parse',{name:f.name,text:txt});}))
+          .then(function(j){mountShellHTML(j.shell,j.path||'');})
           .catch(function(err){
             alert('Could not open '+f.name+': '+err.message);});
         });

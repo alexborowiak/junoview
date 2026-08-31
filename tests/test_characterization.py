@@ -679,8 +679,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # click, appear with-previous, the second click, the URL and the slide-2
 # jump, and both T117 charts read back as real charts. help.html's
 # export list rewritten to today's truth (tables travel since T109).
-EXPECTED_MD5 = "0cd983f4ee73bca0d820dd018895bf42"
-EXPECTED_BYTES = 3362304
+# Moved 2026-08-31 for T113: .xlsx is a source (user decision: values
+# only, stdlib only). sources.py gained parse_workbook + doc_from_bytes
+# (the bytes seam every door now routes through); app.js gained BIN_RE +
+# fileB64 + the base64 branches in both drop paths; web-loader.html the
+# parseB64 bridge. The page moves because it inlines app.js.
+EXPECTED_MD5 = "7f7a3edb176962283e0be001529e31f0"
+EXPECTED_BYTES = 3363599
 
 
 def _render_example() -> str:

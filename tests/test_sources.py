@@ -236,7 +236,9 @@ def test_the_registry_is_the_one_list_of_what_can_be_opened():
     for suffix in (".ipynb", ".md", ".qmd", ".tex", ".csv", ".tsv"):
         assert suffix in SOURCES
     assert source_label("paper.tex") == "LaTeX"
-    assert source_label("x.xlsx") == ""      # deliberately not supported
+    # in scope since T113 (user decision 2026-08-31): values only,
+    # read by the stdlib, so the two load-bearing promises hold
+    assert source_label("x.xlsx") == "Workbook"
 
 
 def test_dispatch_goes_by_suffix():
@@ -957,3 +959,166 @@ def test_a_git_commit_of_any_source_opens(tmp_path: Path):
     assert "Before" in out["shell"] and "After" not in out["shell"]
     # and the reopened version still says what kind of thing it is
     assert 'data-srckind="LaTeX"' in out["shell"]
+# ---------------------------------------------------------------------------
+# .xlsx, the stdlib way (T113)
+# ---------------------------------------------------------------------------
+#
+# The user's decision (2026-08-31): Excel is in scope, VALUES ONLY, read
+# with the stdlib so both load-bearing promises (no dependencies, the
+# Pyodide build) hold. The seam that had to open first is doc_from_bytes
+# -- every door used to assume read_text, and a workbook is a ZIP.
+
+
+def _tiny_xlsx() -> bytes:
+    """A real two-sheet workbook, written with zipfile: shared strings
+    (one with RICH RUNS), an inline string, a boolean, and a row with a
+    gapped column -- the shapes a values-only reader must survive."""
+    import io
+    import zipfile
+
+    ns = "http://schemas.openxmlformats.org/spreadsheetml/2006/main"
+    rns = ("http://schemas.openxmlformats.org/officeDocument/2006/"
+           "relationships")
+    pns = "http://schemas.openxmlformats.org/package/2006/relationships"
+    wb = (f'<workbook xmlns="{ns}" xmlns:r="{rns}"><sheets>'
+          '<sheet name="Rainfall" sheetId="1" r:id="rId1"/>'
+          '<sheet name="Notes" sheetId="2" r:id="rId2"/>'
+          "</sheets></workbook>")
+    wb_rels = (f'<Relationships xmlns="{pns}">'
+               f'<Relationship Id="rId1" Type="{rns}/worksheet" '
+               'Target="worksheets/sheet1.xml"/>'
+               f'<Relationship Id="rId2" Type="{rns}/worksheet" '
+               'Target="worksheets/sheet2.xml"/>'
+               f'<Relationship Id="rId3" Type="{rns}/sharedStrings" '
+               'Target="sharedStrings.xml"/></Relationships>')
+    sst = (f'<sst xmlns="{ns}"><si><t>Month</t></si><si><t>Rain</t></si>'
+           "<si><r><t>Ja</t></r><r><t>n</t></r></si>"
+           "<si><t>Feb</t></si></sst>")
+    s1 = (f'<worksheet xmlns="{ns}"><sheetData>'
+          '<row r="1"><c r="A1" t="s"><v>0</v></c>'
+          '<c r="B1" t="s"><v>1</v></c>'
+          '<c r="C1" t="inlineStr"><is><t>Wet</t></is></c></row>'
+          '<row r="2"><c r="A2" t="s"><v>2</v></c><c r="B2"><v>81</v>'
+          '</c><c r="C2" t="b"><v>1</v></c></row>'
+          '<row r="3"><c r="A3" t="s"><v>3</v></c>'
+          '<c r="C3"><v>0</v></c></row>'
+          "</sheetData></worksheet>")
+    s2 = (f'<worksheet xmlns="{ns}"><sheetData>'
+          '<row r="1"><c r="A1" t="inlineStr"><is><t>one cell</t></is>'
+          "</c></row></sheetData></worksheet>")
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("xl/workbook.xml", wb)
+        z.writestr("xl/_rels/workbook.xml.rels", wb_rels)
+        z.writestr("xl/sharedStrings.xml", sst)
+        z.writestr("xl/worksheets/sheet1.xml", s1)
+        z.writestr("xl/worksheets/sheet2.xml", s2)
+    return buf.getvalue()
+
+
+def test_a_workbook_becomes_one_table_card_per_sheet():
+    from junoview.notebook.sources import doc_from_bytes
+
+    doc = doc_from_bytes("t.xlsx", _tiny_xlsx())
+    assert doc.source_kind == "Workbook"
+    assert [sec.title for sec in doc.sections] == ["Rainfall", "Notes"]
+    body = _items(doc)[0].outputs[0].payload
+    # rich runs join, the shared strings resolve, the boolean reads,
+    # and the gapped B3 is an EMPTY cell, not a shifted one
+    assert "<th>Month</th><th>Rain</th><th>Wet</th>" in body
+    assert "<td>Jan</td><td>81</td><td>TRUE</td>" in body
+    assert "<td>Feb</td><td></td><td>0</td>" in body
+    assert _items(doc)[0].kind == "dataset"
+
+
+def test_the_bytes_seam_is_one_door_for_every_kind(tmp_path: Path):
+    """doc_from_bytes decodes + newline-normalises text kinds (the two
+    things read_text did implicitly) and refuses to pretend a workbook
+    has text; load_doc reads BYTES for every file now."""
+    from junoview.notebook.loader import load_doc
+    from junoview.notebook.sources import doc_from_bytes
+
+    md = doc_from_bytes("n.md", b"# Title\r\nprose\r\n")
+    # a CRLF heading parses as a heading -- the \r was normalised away
+    assert [sec.title for sec in md.sections] == ["Title"]
+
+    with pytest.raises(ValueError):
+        doc_from_text("t.xlsx", "not really text")
+
+    f = tmp_path / "book.xlsx"
+    f.write_bytes(_tiny_xlsx())
+    doc = load_doc(f)
+    assert doc.source_kind == "Workbook"
+    assert doc.source_name == "book"
+
+
+def test_the_server_doors_take_a_workbook(tmp_path: Path):
+    """/api/parse grew a b64 field (a dropped workbook has no text to
+    send), the file browser lists .xlsx under its kind, and the shell
+    wears the T124 kind chip for free."""
+    import base64
+
+    from junoview.server.routes import _make_handler
+    from junoview.server.state import _AppState, _list_dir
+
+    (tmp_path / "book.xlsx").write_bytes(_tiny_xlsx())
+    listing = _list_dir(str(tmp_path))
+    assert {x["name"]: x["kind"] for x in listing["sources"]} == {
+        "book.xlsx": "Workbook"}
+
+    Handler = _make_handler(_AppState(tmp_path))
+    h = Handler.__new__(Handler)
+    out = h._parse_nb({"name": "book.xlsx",
+                       "b64": base64.b64encode(_tiny_xlsx()).decode()})
+    assert 'data-srckind="Workbook"' in out["shell"]
+    assert "<td>Jan</td><td>81</td><td>TRUE</td>" in out["shell"]
+
+
+def test_a_git_commit_of_a_workbook_opens(tmp_path: Path):
+    """The T124 door, now on bytes: git show hands back the ZIP whole
+    and doc_from_bytes dispatches -- decoding it would have killed it."""
+    import shutil
+    import subprocess
+
+    if not shutil.which("git"):
+        pytest.skip("no git on this machine")
+
+    def git(*args):
+        r = subprocess.run(["git", "-C", str(tmp_path), *args],
+                           capture_output=True, text=True, timeout=20)
+        assert r.returncode == 0, r.stderr
+        return r.stdout.strip()
+
+    f = tmp_path / "book.xlsx"
+    f.write_bytes(_tiny_xlsx())
+    git("init", "-q")
+    git("config", "user.email", "t@example.com")
+    git("config", "user.name", "t")
+    git("add", "book.xlsx")
+    git("commit", "-q", "-m", "first")
+    first = git("rev-parse", "--short", "HEAD")
+    f.write_bytes(b"changed to junk, not even a zip")
+
+    from junoview.server.routes import _make_handler
+    from junoview.server.state import _AppState
+
+    Handler = _make_handler(_AppState(tmp_path))
+    h = Handler.__new__(Handler)
+    out = h._open_version({"path": str(f), "commit": first})
+    assert "<td>Jan</td><td>81</td><td>TRUE</td>" in out["shell"]
+
+
+def test_the_browser_reads_a_workbook_as_bytes():
+    """The client half of the seam: .xlsx joins SRC_RE (the door), the
+    BIN_RE subset is read as an ArrayBuffer and sent base64 in both
+    modes, and the Pyodide bridge grew the binary call."""
+    from junoview import assets
+
+    js = assets.app_js()
+    assert r"/\.(ipynb|md|markdown|qmd|tex|latex|csv|tsv|xlsx)$/i" in js
+    assert r"var BIN_RE=/\.(xlsx)$/i;" in js
+    assert "function fileB64(f){" in js
+    assert "api('/api/parse',{name:f.name,b64:b});" in js
+    assert "window.semPy.parseB64(name,b64,APP.order);" in js
+    loader = assets.web_loader()
+    assert "sr.web_parse_b64(_wname,_wtext,_wtaken)" in loader

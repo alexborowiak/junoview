@@ -23,7 +23,7 @@ from ..render.page import render_html
 from .model import Document
 from .parser import parse_notebook
 from .presentations import as_presentations, deck_json
-from .sources import doc_from_text
+from .sources import doc_from_bytes
 
 
 def load_doc(path: Path, title: str | None = None,
@@ -41,8 +41,11 @@ def load_doc(path: Path, title: str | None = None,
     # that is. Without it the reference was emitted verbatim and resolved
     # against wherever the OUTPUT landed, which is right only when the two
     # sit in the same directory (T101).
-    doc = doc_from_text(path, path.read_text(encoding="utf-8"), title=title,
-                        base=path.parent)
+    # BYTES, decoded (and newline-normalised) inside doc_from_bytes:
+    # the one seam T113 opened, so a .xlsx and a .tex come through the
+    # same door and no caller has to know which kind it is holding.
+    doc = doc_from_bytes(path, path.read_bytes(), title=title,
+                         base=path.parent)
     doc.source_name = path.stem
     if deck_path is None:
         # a deck saved from the browser lands next to the notebook as

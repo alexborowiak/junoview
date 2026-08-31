@@ -72,11 +72,10 @@ def _git_file_log(f: Path, n: int = 25) -> list:
         return []
 
 
-def _git_show_text(f: Path, commit: str) -> str:
-    """The file's text as it was at COMMIT (git show hash:relpath).
-    Bytes + explicit utf-8 — text mode would decode with the locale.
-    Split out of _git_show_notebook (T124): a .tex or .md commit is as
-    openable as a notebook's once the result is just text."""
+def _git_show_bytes(f: Path, commit: str) -> bytes:
+    """The file's BYTES as they were at COMMIT (git show hash:relpath).
+    Bytes all the way down since T113: a .xlsx commit is a ZIP, and
+    decoding it would destroy it. Text callers decode on top."""
     top = _git_run(f, "rev-parse", "--show-toplevel")
     if top.returncode != 0:
         raise ValueError("not in a git repository")
@@ -95,7 +94,13 @@ def _git_show_text(f: Path, commit: str) -> str:
         raise FileNotFoundError(
             r.stderr.decode("utf-8", "replace").strip()[:200]
             or "commit not found")
-    return r.stdout.decode("utf-8")
+    return r.stdout
+
+
+def _git_show_text(f: Path, commit: str) -> str:
+    """That commit's file as text — split from _git_show_notebook at
+    T124, rebased on bytes at T113."""
+    return _git_show_bytes(f, commit).decode("utf-8")
 
 
 def _git_show_notebook(f: Path, commit: str) -> dict:
