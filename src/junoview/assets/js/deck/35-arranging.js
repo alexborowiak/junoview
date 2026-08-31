@@ -1151,6 +1151,22 @@
     both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
     both('#lay-masters','#hm-lay-masters',function(){
       if(window.SemDeckMasters) window.SemDeckMasters();});
+    /* the first-class doors (T144): the same verbs, on the ribbon */
+    var dm2=$('#dsg-masters');
+    if(dm2) dm2.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(window.SemDeckMasters) window.SemDeckMasters();
+    });
+    var ic2=$('#ins-chart');
+    if(ic2) ic2.addEventListener('click',function(e){
+      e.stopPropagation();
+      var na=window.SemDeckChart&&window.SemDeckChart.place(
+        {cats:['A','B','C'],series:[
+          {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
+        {x:34,y:28});
+      if(na) toast('Chart placed \u2014 right-click it to edit the '
+        +'numbers or change its type');
+    });
     var sv=null;
     ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
       var el=$(id); if(!el) return;

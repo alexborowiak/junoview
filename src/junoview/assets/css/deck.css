@@ -3848,6 +3848,8 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T144: the empty notebook column's worded door */
+.dc-nbs-open{display:block;margin:6px auto 2px;}
 /* T115: masters — the inherited layer, inert behind everything */
 .slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
 .mast-panel{position:fixed;right:16px;top:110px;z-index:420;width:264px;

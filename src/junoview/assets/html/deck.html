@@ -593,6 +593,14 @@
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
                 title="Number every page"><i data-ic="numbers"></i> Numbers</button>
+              <!-- T115's masters hid inside two Layouts menus; the
+                   feature that owns "the look every slide inherits"
+                   belongs on the tab that owns page furniture
+                   (JVUX-11). -->
+              <button class="dbtn rbn-sm" id="dsg-masters"
+                title="Looks slides inherit live &mdash; a background and
+ a furniture component. Change the master and every slide wearing it
+ follows"><i data-ic="inherit"></i> Masters</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
@@ -888,6 +896,15 @@
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
  moves along the row, Enter drops down"><i data-ic="table"></i> Table</button>
+              <!-- T117's chart inserted only from a right-click, so a
+                   user looking at Insert concluded charts did not exist
+                   (JVUX-11). Not an `et` tool: it places at once rather
+                   than arming a draw. -->
+              <button class="dbtn rbn-sm" id="ins-chart"
+                title="A bar chart with sample numbers to replace &mdash;
+ or select a placed table and &ldquo;Turn into a chart&rdquo;. Right-click
+ it to change its type or edit the data. Exports to PowerPoint as a real
+ chart"><i data-ic="plots"></i> Chart</button>
               <!-- NOT an `et` tool. It carried that class without a
                    data-tool, so the shared arming wiring called
                    setTool(undefined): the button lit up as though a tool

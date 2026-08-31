@@ -97,3 +97,28 @@ def test_the_context_menu_folds_and_speaks_menu():
     css = assets.deck_css()
     # the [hidden] fix the first screenshot caught
     assert ".cm-more[hidden]{display:none;}" in css
+
+def test_selection_does_not_steal_an_open_workflow():
+    """T141 / JVUX-06, driven live: with the Timeline pane open on
+    Insert, selecting an object kept the tab on Insert, kept the pane
+    open, and the pane switched from its empty state to the effect
+    chooser; with no pane open the tab switched to Object exactly as
+    before."""
+    out = _out()
+    assert "var paneOpen=PANE_IDS.some(function(pid){" in out
+    assert "&&!paneOpen)?selT:'';" in out
+
+
+def test_chart_and_masters_have_first_class_doors():
+    """T144 / JVUX-11, driven live: Insert's worded Chart button placed
+    a chart (and Ctrl+Z removed it), Design's Masters button opened the
+    panel, and the empty notebook column offers a worded Open
+    notebooks button instead of naming an action with no door."""
+    html = assets.deck_html()
+    assert 'id="ins-chart"' in html and '> Chart</button>' in html
+    assert 'id="dsg-masters"' in html and '> Masters</button>' in html
+    out = _out()
+    assert "var ic2=$('#ins-chart');" in out
+    assert "var dm2=$('#dsg-masters');" in out
+    assert "ob2.className='dbtn dc-nbs-open';" in out
+

@@ -2659,11 +2659,20 @@ competing ways to reach them.
   the style preview drawn on chrome instead of the slide background,
   and the empty-notebook state that names an action with no door.
 
-- [ ] **T141 · S — Selection must not steal an open workflow.**
+- [x] **T141 · S — Selection must not steal an open workflow.**
   Following the Timeline pane's own instruction ("Select an item
   first") switches the ribbon to Object, moving the user away from the
   controls they just opened. With a pane open, selection should reveal
   the contextual tab without activating it.
+  *Done 2026-09-01.* One gate at the decided-here-done-at-the-end site:
+  with ANY inspector pane open, `wantTab` stays empty — the contextual
+  groups still reveal (showFmt), the tab stays yours. Driven live both
+  ways: Timeline open on Insert + select → tab Insert, pane open and
+  showing the effect chooser; no pane + select → tab switches to
+  Object exactly as before. (The drive also re-taught two old lessons:
+  a hidden browser pane's 0×0 rects make blind clicks land on chrome —
+  one closed the deck — and a fresh origin re-runs the welcome tour
+  over everything.)
 
 - [ ] **T142 · design first — One Review centre.** Check (print),
   Tidy (layout), Standardise (styles), Check for drift (styles again)
@@ -2678,12 +2687,20 @@ competing ways to reach them.
   area one component — Save, "Saved to project · just now ▾", autosave
   as a setting inside that menu rather than a second cyan button.
 
-- [ ] **T144 · S — First-class doors for Chart and Master.** T117's
+- [x] **T144 · S — First-class doors for Chart and Master.** T117's
   chart inserts only from a right-click; T115's master hides in two
   Layouts menus. Insert gets a worded Chart button; Design gets
   "Master: <name> ▾" naming the current master with the panel behind
   it; the no-notebook empty column gets its worded Open notebooks
   button.
+  *Done 2026-09-01*, scoped to static labels so ribbon width stays
+  stable: Insert gains a worded Chart button (places the sample chart,
+  Ctrl+Z removes it — driven), Design's furniture group gains Masters
+  (opens the panel, which names what the current slide wears), and the
+  empty notebook column now offers "Open notebooks…" instead of naming
+  an action with no door. The review's dynamic "Master: <name> ▾"
+  label is deferred on purpose — a label that changes width fights
+  fitRibbon.
 
 - [ ] **T145 · design first + USER — Filter cyclers → labelled menus.**
   Plots/Markdown/Code/Output cycle three states invisibly (the Output

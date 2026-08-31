@@ -710,8 +710,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (7 visible rows instead of 31), role=menu/menuitem, and every
 # floatAt popup now closes on Escape. Includes the [hidden] display
 # fix the first screenshot caught.
-EXPECTED_MD5 = "017bb611d3796a326cea20fc960eea35"
-EXPECTED_BYTES = 3376088
+# Moved 2026-09-01 for T141 + T144: selection no longer steals the
+# tab while an inspector pane is open (JVUX-06), and Chart (Insert),
+# Masters (Design) and the empty notebook column got worded doors
+# (JVUX-11). 25-selecting.js, deck.html, 35-arranging.js,
+# 55-sections-and-strip.js, deck.css.
+EXPECTED_MD5 = "c29025c7590ee05c7024ce1944f7bc7d"
+EXPECTED_BYTES = 3379395
 
 
 def _render_example() -> str:

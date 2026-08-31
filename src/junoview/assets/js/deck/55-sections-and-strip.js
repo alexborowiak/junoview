@@ -742,8 +742,22 @@
     m.innerHTML='';
     var info=nbInfo();
     if(!info.length){
-      m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; add cells '
-        +'from your notebooks to a slide.</div>';return;}
+      /* the state used to NAME an action and offer no door (JVUX-11):
+         "add cells from your notebooks" with nothing to click. The
+         worded button is the same Open the tab strip carries. */
+      m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; '
+        +'open one and its figures become things you can place.</div>';
+      if(nbsCanOpen()){
+        var ob2=document.createElement('button');
+        ob2.className='dbtn dc-nbs-open';
+        ob2.innerHTML=(bic('open')||'')+' Open notebooks\u2026';
+        ob2.addEventListener('click',function(e){
+          e.stopPropagation();
+          var tb=$('#tab-open'); if(tb) tb.click();
+        });
+        m.appendChild(ob2);
+      }
+      return;}
     var h=document.createElement('div');h.className='dc-nbs-menuh';
     h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
     if(column){
