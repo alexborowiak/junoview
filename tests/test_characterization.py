@@ -631,8 +631,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # object gets a drag proxy inside the miniature — "move it from here" —
 # writing through shiftAnnot so tied captions travel, with a plain click
 # still navigating. 50-review-and-overview.js and the dg-* rules.
-EXPECTED_MD5 = "5379dd5979ab79a4b9828f533be6bcd1"
-EXPECTED_BYTES = 3303866
+# Moved 2026-08-31 for T131: the Layout ideas chooser (previews of THIS
+# slide's objects under the three tidy presets and your best-fitting saved
+# arrangements, computed by running the real arrangeSlide/arrApply on a
+# clone inside withDeck; click applies) with a row in BOTH Layouts menus --
+# and Home's menu gains parity with Design's, which had been silently
+# hiding the tidy row and the arrangement rows. deck.html, 35-arranging.js,
+# deck.css, and one new runtime id in the contract test.
+EXPECTED_MD5 = "2c7ffae5588ee4ad361b769e9f562b76"
+EXPECTED_BYTES = 3312911
 
 
 def _render_example() -> str:

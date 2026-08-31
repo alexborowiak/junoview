@@ -63,6 +63,9 @@ RUNTIME_IDS = {
     # shipped in the markup (35-arranging.js openObjMatchMenu and
     # 40-captions-and-components.js openCmpInstMenu).
     "objmatch-menu", "cmp-inst-menu",
+    # the layout-ideas chooser, built on open and removed on close like
+    # the two menus above (35-arranging.js openLayoutIdeas, T131)
+    "lay-ideas",
     # What goes in an object frame: built on first open and then kept,
     # because it floats over the canvas rather than living in a ribbon
     # group (45-images.js openObjSrc, T61).

@@ -2329,7 +2329,7 @@ one boot-killing bug the drive itself surfaced.
   the model to exactly (25,15); the sheet filtered to §Methods showed
   cells 2 and 3 only.
 
-- [ ] **T131 · M — Layout ideas: options for the objects you have.**
+- [x] **T131 · M — Layout ideas: options for the objects you have.**
   [deck.js] *Audited: the defining gesture of "a slide designer" is
   absent* — nowhere does the app compute several candidate layouts of
   THIS slide's objects and show them to pick from; choice today is three
@@ -2338,6 +2338,13 @@ one boot-killing bug the drive itself surfaced.
   menu carries. Build the preview chooser (tidy presets + best-fitting
   templates + best-fitting saved arrangements, drawn with miniDiagram,
   click to apply); give Home's menu parity with Design's.
+  *Done 2026-08-31* — with one scope cut, said out loud: built-in
+  TEMPLATES are not previewed (simulating the pane machinery would be a
+  second implementation of it); they stay one row below in the same
+  menu. Driven live: the tidy previews differed from the untouched live
+  slide and clicking Tight applied exactly what was previewed; a saved
+  arrangement appeared as "MyArr · 100%" and re-laid a scattered slide;
+  Esc and click-away closed it; Home's menu carries the full set.
 
 - [ ] **T125 · design first — What a notebook has that a source does
   not, on purpose.** The other half of "notebooks to be a whole thing in

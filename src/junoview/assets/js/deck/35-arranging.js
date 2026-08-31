@@ -1128,20 +1128,31 @@
      arrangement saved from the menu is in the library the next time it
      is looked at. */
   function initReuseDoors(){
-    function shut(){var lm=$('#lay-menu'); if(lm) lm.hidden=true;}
-    var a=$('#lay-arrs');
-    if(a) a.addEventListener('click',function(e){
-      e.stopPropagation();shut();
+    function shut(){
+      var lm=$('#lay-menu'); if(lm) lm.hidden=true;
+      var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;
+    }
+    /* each row exists twice since Home gained parity (T131): same
+       handler, both ids */
+    function both(idA,idB,fn){
+      [idA,idB].forEach(function(id){
+        var el=$(id); if(!el) return;
+        el.addEventListener('click',function(e){
+          e.stopPropagation();shut();fn();});
+      });
+    }
+    both('#lay-arrs','#hm-lay-arrs',function(){
       if(typeof window.SemDeckArrange==='function') window.SemDeckArrange();
     });
-    var g=$('#lay-give');
-    if(g) g.addEventListener('click',function(e){
-      e.stopPropagation();shut();
+    both('#lay-give','#hm-lay-give',function(){
       if(typeof window.SemDeckMatchMany==='function')
         window.SemDeckMatchMany();
     });
-    var sv=$('#lay-arrsave');
-    if(sv) sv.addEventListener('click',function(e){
+    both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
+    var sv=null;
+    ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
+      var el=$(id); if(!el) return;
+      el.addEventListener('click',function(e){
       e.stopPropagation();shut();
       var sl=pres.slides[cur];
       if(!sl||!(sl.annots||[]).length){
@@ -1156,6 +1167,120 @@
       toast('“'+nm+'” saved — offered on every deck you '
         +'open here');
     });
+    });
+  }
+  /* ---- LAYOUT IDEAS (T131) -------------------------------------
+     "There is no like slide designer thing, that gives you options of
+     layouts for the objects you have." Every ingredient existed —
+     content-aware arranging, a personal library with fit scores, the
+     miniature renderer — and the defining gesture did not: nowhere did
+     the app COMPUTE several candidates for THIS slide's objects and
+     show them to pick from. Choice was three spacing presets applied
+     blind, compared by Ctrl+Z.
+
+     The candidates are the three tidy presets RUN on a clone of the
+     slide, plus your best-fitting saved arrangements SIMULATED on a
+     clone — real previews of your actual content, not wireframes of a
+     template. The simulation is withDeck over a shallow copy whose
+     slides array holds only the clone, so arrangeSlide and arrApply
+     run exactly the code a click would run and the live deck cannot
+     be touched. Built-in templates are not previewed here: they stay
+     one row below in the same menu, and simulating the pane machinery
+     for a preview would be a second implementation of it. */
+  function ideaPreviewTidy(id,sl){
+    var c=deep(sl);
+    var scratch=Object.assign({},pres,{slides:[c]});
+    withDeck(scratch,function(){
+      arrangeSlide(c,null,arrangeOpts(id));});
+    return c;
+  }
+  function ideaPreviewArr(arr,sl){
+    var c=deep(sl);
+    var scratch=Object.assign({},pres,{slides:[c]});
+    withDeck(scratch,function(){arrApply(arr,0);});
+    return c;
+  }
+  function closeLayoutIdeas(){
+    var p=$('#lay-ideas'); if(p) p.remove();
+    document.removeEventListener('keydown',ideasKey,true);
+  }
+  function ideasKey(e){
+    if(e.key!=='Escape') return;
+    if(!$('#lay-ideas')) return;
+    e.preventDefault();e.stopPropagation();closeLayoutIdeas();
+  }
+  function openLayoutIdeas(){
+    closeLayoutIdeas();
+    var sl=pres.slides[cur];
+    if(!sl||!(sl.annots||[]).length){
+      toast('Put something on this slide first — ideas are computed '
+        +'from what is there');
+      return;
+    }
+    var p=document.createElement('div');
+    p.className='sh-menu lay-ideas';p.id='lay-ideas';
+    menuHead(p,'ways to lay this slide out');
+    var grid=document.createElement('div');
+    grid.className='li-grid';
+    p.appendChild(grid);
+    var pg=pageOf();
+    var ratio=pg.mm[1]/pg.mm[0];
+    function card(prev,label,note,apply){
+      var b=document.createElement('button');
+      b.className='dbtn li-card';
+      b.title=note||'';
+      var mini=miniDiagram(prev);
+      mini.style.width='150px';
+      mini.style.height=Math.round(150*ratio)+'px';
+      b.appendChild(mini);
+      var t=document.createElement('span');
+      t.className='li-lab';t.textContent=label;
+      b.appendChild(t);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();closeLayoutIdeas();apply();});
+      grid.appendChild(b);
+    }
+    [['tight','Tight'],['normal','Normal'],['airy','Airy']]
+      .forEach(function(t){
+        card(ideaPreviewTidy(t[0],sl),t[1],
+          'Arrange what is on the slide, '+t[1].toLowerCase()+'ly '
+          +'spaced. Ctrl+Z undoes it.',
+          function(){
+            var n=arrangeSlide(pres.slides[cur],
+              stage.querySelector('.annot-layer'),arrangeOpts(t[0]));
+            if(!n){toast('There is nothing on this slide to arrange');
+              return;}
+            markDirty();refresh();
+            toast(n+' item'+(n===1?'':'s')+' arranged \u2014 '
+              +t[1]+'. Ctrl+Z undoes it.');
+          });
+      });
+    /* the best of your own library, best fit first; a poor fit is an
+       honest offer as long as the number says so */
+    arrList().map(function(arr){
+      return {arr:arr,fit:arrScore(arr,sl)};
+    }).sort(function(x,y){return y.fit-x.fit;})
+      .slice(0,3)
+      .forEach(function(o){
+        card(ideaPreviewArr(o.arr,sl),
+          (o.arr.label||o.arr.name||'Arrangement')+' \u00b7 '+Math.round(o.fit*100)+'%',
+          'Your saved arrangement, simulated on this slide\u2019s '
+          +'objects',
+          function(){
+            var n=arrApply(o.arr,cur);
+            markDirty();refresh();
+            toast(n?(n+' item'+(n===1?'':'s')+' laid out like \u201c'
+                +(o.arr.label||o.arr.name||'Arrangement')+'\u201d \u2014 Ctrl+Z undoes it')
+              :'Nothing matched \u201c'+(o.arr.label||o.arr.name||'Arrangement')+'\u201d');
+          });
+      });
+    document.body.appendChild(p);
+    document.addEventListener('keydown',ideasKey,true);
+    setTimeout(function(){
+      document.addEventListener('click',function once(e){
+        document.removeEventListener('click',once);
+        if(!p.contains(e.target)) closeLayoutIdeas();
+      });},0);
   }
   function arrList(){
     try{
@@ -1719,12 +1844,22 @@
     });
   })();
   (function(){
-    var host=$('#lay-tidy'); if(!host) return;
+    /* both copies of the Layouts menu (T131): the Home one used to hide
+       the tidy row entirely, so the same-named button did less work
+       depending on the tab */
+    var hosts=['#lay-tidy','#hm-lay-tidy'].map(function(sel){
+      return $(sel);}).filter(Boolean);
+    if(!hosts.length) return;
+    var host={querySelectorAll:function(q){
+      var out=[];hosts.forEach(function(h){
+        out=out.concat([].slice.call(h.querySelectorAll(q)));});
+      return out;}};
     $$('[data-tidy]',host).forEach(function(b){
       b.addEventListener('click',function(e){
         e.stopPropagation();
         var s=pres.slides[cur]; if(!s) return;
         var lm=$('#lay-menu'); if(lm) lm.hidden=true;
+        var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;
         var n=arrangeSlide(s,stage.querySelector('.annot-layer'),
           arrangeOpts(b.getAttribute('data-tidy')));
         if(!n){toast('There is nothing on this slide to arrange');return;}

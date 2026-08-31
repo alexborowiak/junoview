@@ -484,6 +484,10 @@
                        "difference between things" the user wanted
                        configurable. -->
                   <div class="hd-lab">arrange what is on this slide</div>
+                  <button class="dbtn vw-opt" id="lay-ideas-btn"
+                    title="Several ways to lay out what is on this slide,
+ drawn as previews &mdash; pick one">
+                    <i data-ic="layouts"></i> Layout ideas&#8230;</button>
                   <div class="lay-tidy" id="lay-tidy">
                     <button class="dbtn" data-tidy="tight"
                       title="Arrange this slide, packed close">Tight</button>
@@ -998,6 +1002,35 @@
                   title="Ready-made arrangements for this page">
                   <i data-ic="layouts"></i> Layouts &#9662;</button>
                 <div class="sh-menu lay-menu" id="hm-lay-menu" hidden>
+                  <!-- PARITY WITH DESIGN'S MENU (T131). Two buttons both
+                       said "Layouts" and this one silently hid the
+                       auto-arrange row, the ideas row and the saved
+                       arrangements — two-thirds of the layout system,
+                       depending on which tab you were on. Same rows,
+                       twin ids, one set of wiring. -->
+                  <button class="dbtn vw-opt" id="hm-lay-ideas"
+                    title="Several ways to lay out what is on this slide,
+ drawn as previews — pick one">
+                    <i data-ic="layouts"></i> Layout ideas&#8230;</button>
+                  <div class="lay-tidy" id="hm-lay-tidy"
+                    aria-label="Arrange what is on this slide">
+                    <button class="dbtn" data-tidy="tight">Tight</button>
+                    <button class="dbtn" data-tidy="normal">Normal</button>
+                    <button class="dbtn" data-tidy="airy">Airy</button>
+                  </div>
+                  <button class="dbtn vw-opt" id="hm-lay-arrs"
+                    title="Your saved slide layouts, ranked by how well
+ they fit what is on this slide">
+                    <i data-ic="objects"></i> Arrangements&#8230;</button>
+                  <button class="dbtn vw-opt" id="hm-lay-arrsave"
+                    title="Keep this slide's layout to reuse — the
+ arrangement travels, the words and figures do not">
+                    <i data-ic="copy"></i> Save this slide as an
+ arrangement</button>
+                  <button class="dbtn vw-opt" id="hm-lay-give"
+                    title="Tick the slides that should take this slide's
+ layout"><i data-ic="forward"></i> Give this slide&rsquo;s layout
+ to&#8230;</button>
                   <div class="lay-picker" id="layout-home-grid"
                     aria-label="Slide layouts"></div>
                 </div>

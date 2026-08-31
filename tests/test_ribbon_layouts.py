@@ -432,3 +432,55 @@ def test_escape_empties_the_filter_before_it_closes_the_gallery(out):
     j = out.index("gfind.addEventListener('keydown'")
     assert "e.stopPropagation();" in out[j:j + 80]
     assert "Escape" not in out[j:j + 80]
+
+
+# ---------------------------------------------------------------------------
+# layout ideas, and one Layouts menu equals the other (T131)
+# ---------------------------------------------------------------------------
+#
+# Driven live 2026-08-31: Home's menu opened with the ideas row, the
+# tidy trio, the three arrangement rows and the template grid; the
+# chooser showed three tidy cards whose miniatures were ARRANGED clones
+# (preview positions differed from the live slide, which was untouched);
+# clicking Tight applied exactly the previewed layout; a saved
+# arrangement appeared as "MyArr (dot) 100%" and clicking it laid a
+# scattered slide back out; Esc and click-away both closed it.
+
+
+def test_home_and_design_layouts_menus_carry_the_same_rows(out):
+    """Two buttons both said "Layouts" and Home's silently hid the
+    auto-arrange row, the ideas row and the saved arrangements --
+    two-thirds of the layout system, depending on the tab. Twin ids,
+    one set of wiring, and every handler shuts BOTH menus."""
+    for i in ("hm-lay-ideas", "hm-lay-tidy", "hm-lay-arrs",
+              "hm-lay-arrsave", "hm-lay-give", "lay-ideas-btn"):
+        assert f'id="{i}"' in out
+    assert "var hosts=['#lay-tidy','#hm-lay-tidy']" in out
+    assert "both('#lay-arrs','#hm-lay-arrs',function(){" in out
+    assert ("both('#lay-ideas-btn','#hm-lay-ideas',"
+            "function(){openLayoutIdeas();});") in out
+    assert "var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;" in out
+
+
+def test_layout_ideas_previews_are_the_real_computation_on_a_clone(out):
+    """The defining gesture of "a slide designer": candidates COMPUTED
+    from this slide's objects, shown to pick from. The previews run
+    arrangeSlide/arrApply -- exactly the code a click runs -- inside
+    withDeck over a shallow copy whose slides array holds only a deep
+    clone, so the live deck cannot be touched and the preview cannot
+    disagree with what applying would do."""
+    assert "function ideaPreviewTidy(id,sl){" in out
+    assert "function ideaPreviewArr(arr,sl){" in out
+    assert "var scratch=Object.assign({},pres,{slides:[c]});" in out
+    assert "withDeck(scratch,function(){arrApply(arr,0);});" in out
+    # your library, best fit first, with the number shown
+    assert "return {arr:arr,fit:arrScore(arr,sl)};" in out
+    assert ".sort(function(x,y){return y.fit-x.fit;})" in out
+    # an empty slide gets a sentence, not an empty panel
+    assert "ideas are computed " in out
+
+
+def test_the_chooser_closes_like_the_menus_it_lives_beside(out):
+    assert "function closeLayoutIdeas(){" in out
+    assert "document.addEventListener('keydown',ideasKey,true);" in out
+    assert "if(!p.contains(e.target)) closeLayoutIdeas();" in out
