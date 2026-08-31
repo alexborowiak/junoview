@@ -1704,6 +1704,77 @@
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
   var dgSel='title', dgOutline=false;
+  /* WHICH SLIDES (T130). The put gesture was all-wearers-everywhere and
+     the outline sheet was every-slide-always; the ask named sections
+     and ranges for both. One selector builder, two independent scopes,
+     because "move the headings in section 2" and "show me outlines of
+     slides 4-9" are different questions asked at different moments. */
+  var dgPutScope={kind:'all'}, dgSheetScope={kind:'all'};
+  function dgInScope(sc,si){
+    if(!sc||sc.kind==='all') return true;
+    if(sc.kind==='sec')
+      return ((pres.slides||[])[si]||{}).sec===sc.sec;
+    return (si+1)>=sc.from&&(si+1)<=sc.to;
+  }
+  function dgScopeLabel(sc){
+    if(!sc||sc.kind==='all') return 'on every slide';
+    if(sc.kind==='sec'){
+      var meta=(pres.sections||{})[sc.sec];
+      return 'in \u00a7'+((meta&&meta.name)||'section');
+    }
+    return 'slides '+sc.from+'\u2013'+sc.to;
+  }
+  function dgScopeSelect(sc,onchange){
+    var sel=document.createElement('select');
+    sel.className='dg-scope';
+    sel.title='Which slides this applies to';
+    function opt(v,label){
+      var o=document.createElement('option');
+      o.value=v;o.textContent=label;sel.appendChild(o);return o;
+    }
+    opt('all','on every slide');
+    /* only sections actually in use: an empty registry entry is not a
+       place a slide can be */
+    var used={};
+    (pres.slides||[]).forEach(function(sl){
+      if(sl&&sl.sec) used[sl.sec]=1;});
+    Object.keys(used).forEach(function(id){
+      var meta=(pres.sections||{})[id];
+      opt('sec:'+id,'in \u00a7'+((meta&&meta.name)||'section'));
+    });
+    opt('range','slides\u2026');
+    sel.value=sc.kind==='all'?'all'
+      :sc.kind==='sec'?('sec:'+sc.sec):'range';
+    sel.addEventListener('change',function(){
+      var v=sel.value;
+      if(v==='all'){sc.kind='all';}
+      else if(v.indexOf('sec:')===0){sc.kind='sec';sc.sec=v.slice(4);}
+      else {
+        var total=(pres.slides||[]).length;
+        var got=prompt('Which slides? Like 4-9, or one number.',
+          '1-'+total);
+        var mm=got&&got.match(/^\s*(\d+)\s*(?:[-\u2013]\s*(\d+))?\s*$/);
+        if(!mm){sel.value=sc.kind==='all'?'all'
+          :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
+        sc.kind='range';
+        sc.from=Math.max(1,parseInt(mm[1],10));
+        sc.to=Math.min(total,parseInt(mm[2]||mm[1],10));
+        if(sc.to<sc.from){var t=sc.from;sc.from=sc.to;sc.to=t;}
+      }
+      onchange();
+    });
+    return sel;
+  }
+  /* re-render the body WITHOUT losing where you were in it: a drop in
+     the sheet redraws everything, and snapping back to the top of a
+     long panel would make a second drag a scroll hunt (T130) */
+  function dgBodyKeep(ov){
+    var b=ov&&ov.querySelector('#dg-body');
+    var at=b?b.scrollTop:0;
+    dgBody(ov);
+    b=ov&&ov.querySelector('#dg-body');
+    if(b) b.scrollTop=at;
+  }
 
   function dgStyleRec(id){
     var st=deckStyles();
@@ -1916,17 +1987,30 @@
       +'until you press the button underneath — a style stamp that '
       +'dragged your boxes about would be unusable.');
     dgBoard(body,id);
+    /* the put, scoped (T130): everywhere stays the default, but "these
+       headings, in this section" is the sentence the ask was written
+       in, and a numeric range covers the rest */
+    var putRow=document.createElement('div');
+    putRow.className='dg-putrow';
+    var inScope=function(){
+      return wear.filter(function(w){return dgInScope(dgPutScope,w.s);});
+    };
     var put=document.createElement('button');
     put.className='dbtn primary dg-put';
-    put.innerHTML=bic('align')+' Put all '+wear.length+' of them there';
-    put.disabled=!wear.length;
-    put.title=wear.length
-      ?('Move every box wearing this type onto that rectangle, on every '
-        +'slide. Ctrl+Z undoes the lot.')
-      :'Nothing in this deck wears this type yet';
+    function putSync(){
+      var ws=inScope();
+      put.innerHTML=bic('align')+' Put '
+        +(dgPutScope.kind==='all'?('all '+ws.length):ws.length)
+        +' of them there';
+      put.disabled=!ws.length;
+      put.title=ws.length
+        ?('Move every box wearing this type onto that rectangle, '
+          +dgScopeLabel(dgPutScope)+'. Ctrl+Z undoes the lot.')
+        :('Nothing wears this type '+dgScopeLabel(dgPutScope));
+    }
     put.addEventListener('click',function(){
       var n=0;
-      wear.forEach(function(w){
+      inScope().forEach(function(w){
         w.a.x=(rec.x!=null?rec.x:8);
         w.a.y=(rec.y!=null?rec.y:6);
         w.a.w=(rec.w!=null?rec.w:60);
@@ -1936,11 +2020,14 @@
         n++;
       });
       if(!n) return;
-      markDirty();refresh();renderFilm();dgBody(ov);
+      markDirty();refresh();renderFilm();dgBodyKeep(ov);
       toast(n+' '+(d.label||id)+' box'+(n===1?'':'es')
-        +' moved — Ctrl+Z undoes it');
+        +' moved '+dgScopeLabel(dgPutScope)+' — Ctrl+Z undoes it');
     });
-    body.appendChild(put);
+    putRow.appendChild(put);
+    putRow.appendChild(dgScopeSelect(dgPutScope,putSync));
+    putSync();
+    body.appendChild(putRow);
 
     /* ---- every object, outlined ---- */
     dgSectionHead(body,'Every object, outlined',
@@ -1955,13 +2042,77 @@
     tg.addEventListener('click',function(){
       dgOutline=!dgOutline;dgBody(ov);});
     body.appendChild(tg);
+    var sheetScope=dgScopeSelect(dgSheetScope,function(){dgBodyKeep(ov);});
+    sheetScope.title='Outlines from these slides only';
+    body.appendChild(sheetScope);
     var sheet=document.createElement('div');
     sheet.className='dg-sheet'+(dgOutline?' outlined':'');
     (pres.slides||[]).forEach(function(sl,i){
+      if(!dgInScope(dgSheetScope,i)) return;
       var cell=document.createElement('button');
       cell.className='dg-cell';
-      cell.title='Slide '+(i+1)+' — click to go there';
-      cell.appendChild(miniDiagram(sl));
+      /* the slide's NAME, not just its number: the whole point of
+         hovering is finding out which slide you are looking at (T130) */
+      var nm=slideTitle(sl);
+      cell.title='Slide '+(i+1)+(nm?' \u2014 '+nm:'')
+        +' \u2014 click to go there';
+      var mini=miniDiagram(sl);
+      cell.appendChild(mini);
+      /* MOVE IT FROM HERE (T130). One drag proxy per object, sitting at
+         the same page percentages inside the same relatively-positioned
+         miniature, shown only while outlines are on. A drag writes the
+         move through shiftAnnot -- the one translate helper, so a tied
+         caption travels and an arrow moves by its endpoints exactly as
+         it would on the canvas. A plain click still navigates: nothing
+         is claimed until the pointer has actually moved. */
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.hide||a.k==='arrow') return;
+        var px=document.createElement('span');
+        px.className='dg-drag';
+        px.style.left=(a.x||0)+'%';px.style.top=(a.y||0)+'%';
+        px.style.width=(a.w||10)+'%';px.style.height=(a.h||8)+'%';
+        px.title=(annotLabel(a)||a.k)+' \u2014 slide '+(i+1)
+          +(nm?' ('+nm+')':'')+'. Drag to move it from here.';
+        px.addEventListener('pointerdown',function(e){
+          var sx=e.clientX,sy=e.clientY,dragging=false;
+          var mr=mini.getBoundingClientRect();
+          if(!mr.width||!mr.height) return;
+          try{px.setPointerCapture(e.pointerId);}catch(err){}
+          function mv(ev){
+            var dx=ev.clientX-sx,dy=ev.clientY-sy;
+            if(!dragging&&Math.abs(dx)+Math.abs(dy)<3) return;
+            dragging=true;
+            ev.preventDefault();
+            px.style.transform='translate('+dx+'px,'+dy+'px)';
+          }
+          function up(ev){
+            px.removeEventListener('pointermove',mv);
+            px.removeEventListener('pointerup',up);
+            if(!dragging) return;   /* a plain click: the cell navigates */
+            ev.preventDefault();ev.stopPropagation();
+            px.style.transform='';
+            /* pixels in the miniature are percent of the page, which is
+               the whole reason the proxies live inside it */
+            shiftAnnot(a,(ev.clientX-sx)/mr.width*100,
+              (ev.clientY-sy)/mr.height*100);
+            markDirty();
+            if(i===cur) refresh();
+            renderFilm();
+            dgBodyKeep(ov);
+            toast('Moved on slide '+(i+1)+' \u2014 Ctrl+Z undoes it');
+          }
+          px.addEventListener('pointermove',mv);
+          px.addEventListener('pointerup',up);
+        });
+        /* a completed drag must not fall through as the cell's click */
+        px.addEventListener('click',function(e){
+          if(px.style.transform) return;
+          e.stopPropagation();
+          cur=i;activePane=-1;selAnnot=null;selSet=[];
+          dgClose();refresh();
+        });
+        mini.appendChild(px);
+      });
       var n=document.createElement('span');
       n.className='dg-celln';n.textContent=(i+1);
       cell.appendChild(n);

@@ -274,3 +274,61 @@ def test_both_libraries_are_reachable_from_the_match_menu(out):
     # match the ASCII the label is actually made of
     assert "restyle the whole deck" in out
     assert "window.SemDeckStyleSets=open;" in out
+
+
+# ---------------------------------------------------------------------------
+# the design surface, closer to the described view (T130)
+# ---------------------------------------------------------------------------
+#
+# Driven live 2026-08-31 over a three-slide deck with a section: the put
+# scoped to "in (section)Methods" moved slides 2-3's headings to (8,6) and
+# left slide 1 at (5,5), with the scope named in the toast; every sheet
+# cell's tooltip carried the slide's NAME; outlines-on grew one drag
+# proxy per object; dragging slide 1's heading proxy by +20%/+10% of the
+# miniature moved the model from (5,5) to exactly (25,15); and the sheet
+# scoped to the section showed only cells 2 and 3.
+
+
+def test_the_put_gesture_has_a_scope(out):
+    """It was all-wearers-everywhere; the ask was written in sections
+    and ranges. One selector builder, two independent scopes, because
+    "move the headings in section 2" and "show me outlines of slides
+    4-9" are different questions asked at different moments."""
+    assert "var dgPutScope={kind:'all'}, dgSheetScope={kind:'all'};" in out
+    assert "function dgInScope(sc,si){" in out
+    assert "function dgScopeSelect(sc,onchange){" in out
+    # only sections actually in use are offered
+    assert "if(sl&&sl.sec) used[sl.sec]=1;});" in out
+    # the put filters through the same predicate and says its scope
+    assert "return wear.filter(function(w){return dgInScope(dgPutScope,w.s);});" in out
+    assert "+dgScopeLabel(dgPutScope)+' — Ctrl+Z undoes it');" in out
+
+
+def test_hovering_a_sheet_cell_names_the_slide(out):
+    """The tooltip said only "Slide N" when slideTitle() existed and the
+    Apply dialog already used it -- the whole point of hovering is
+    finding out which slide you are looking at."""
+    assert "var nm=slideTitle(sl);" in out
+    assert ("cell.title='Slide '+(i+1)+(nm?' " + "\\" + "u2014 '+nm:'')") in out
+
+
+def test_objects_can_be_moved_from_the_outline_sheet(out):
+    """"or you can just move it from here as well" -- one drag proxy per
+    object at the same page percentages inside the same relatively-
+    positioned miniature, shown only while outlines are on. The move
+    goes through shiftAnnot, the one translate helper, so a tied caption
+    travels exactly as it would on the canvas; a plain click still
+    navigates, because nothing is claimed until the pointer has moved.
+    """
+    assert "px.className='dg-drag';" in out
+    assert "if(!a||a.hide||a.k==='arrow') return;" in out
+    assert "if(!dragging&&Math.abs(dx)+Math.abs(dy)<3) return;" in out
+    assert "shiftAnnot(a,(ev.clientX-sx)/mr.width*100," in out
+    assert ".dg-sheet.outlined .dg-drag{display:block;}" in out
+    # a drop re-renders WITHOUT losing where you were in the panel
+    assert "function dgBodyKeep(ov){" in out
+
+
+def test_the_outline_sheet_can_show_certain_slides_only(out):
+    assert "if(!dgInScope(dgSheetScope,i)) return;" in out
+    assert "sheetScope.title='Outlines from these slides only';" in out

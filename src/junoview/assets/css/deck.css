@@ -3835,6 +3835,19 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T130: the put button and its slide scope, side by side */
+.dg-putrow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;}
+.dg-scope{background:#0f1c28;color:#dbe7ef;border:1px solid #ffffff2a;
+  border-radius:6px;padding:4px 6px;font:inherit;font-size:11px;
+  max-width:180px;}
+/* the drag proxies live inside the miniature at page percentages;
+   they exist only while outlines are on, so the sheet stays a plain
+   navigator otherwise */
+.dg-drag{position:absolute;display:none;cursor:grab;z-index:3;
+  border-radius:2px;}
+.dg-sheet.outlined .dg-drag{display:block;}
+.dg-sheet.outlined .dg-drag:hover{outline:2px solid #f0a848;
+  background:#f0a84822;}
 .dg-cell{position:relative;background:#ffffff08;border:1px solid #ffffff1a;
   border-radius:6px;padding:5px;cursor:pointer;}
 .dg-cell:hover{border-color:#ffffff3d;}

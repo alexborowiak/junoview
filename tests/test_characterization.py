@@ -624,8 +624,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # to..." row for a selected non-text object, and the Place-component rows
 # move OUT of the selection branch so an empty canvas has a component door.
 # 25-selecting.js only.
-EXPECTED_MD5 = "28db06611648e983affd467af5332075"
-EXPECTED_BYTES = 3296639
+# Moved 2026-08-31 for T130, the design surface closer to the described
+# view: the put gesture gains a slide scope (every slide / a section in
+# use / a typed range) and names it in the toast; sheet cells' tooltips
+# carry the slide's NAME; the outline sheet gains its own scope; and each
+# object gets a drag proxy inside the miniature — "move it from here" —
+# writing through shiftAnnot so tied captions travel, with a plain click
+# still navigating. 50-review-and-overview.js and the dg-* rules.
+EXPECTED_MD5 = "5379dd5979ab79a4b9828f533be6bcd1"
+EXPECTED_BYTES = 3303866
 
 
 def _render_example() -> str:

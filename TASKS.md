@@ -2315,7 +2315,7 @@ one boot-killing bug the drive itself surfaced.
   matchbar up, the Apply dialog opened reading "Apply to 1 shape", and
   an empty-canvas right-click placed a component.
 
-- [ ] **T130 · M — The design surface, closer to the described view.**
+- [x] **T130 · M — The design surface, closer to the described view.**
   [deck.js] *Audited (T87 revisit): full-screen, drag-default-position,
   apply-to-all, outlines toggle all real.* Missing vs the ask: the put
   gesture is all-wearers-only (no section/range scope); outline cells
@@ -2323,6 +2323,11 @@ one boot-killing bug the drive itself surfaced.
   object); outlines cannot be filtered to certain slides; and objects in
   the miniatures cannot be moved from there ("or you can just move it
   from here as well").
+  *Done 2026-08-31.* Driven live: a section-scoped put moved slides 2–3
+  and left slide 1 alone; hover tooltips named the slides; outlines-on
+  grew a proxy per object; a +20%/+10% drag of a miniature proxy moved
+  the model to exactly (25,15); the sheet filtered to §Methods showed
+  cells 2 and 3 only.
 
 - [ ] **T131 · M — Layout ideas: options for the objects you have.**
   [deck.js] *Audited: the defining gesture of "a slide designer" is
