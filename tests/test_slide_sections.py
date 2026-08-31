@@ -829,7 +829,8 @@ def test_reduced_motion_is_answered_rather_than_ignored(out):
     """
     assert "function motionOK(){" in out
     assert "matchMedia('(prefers-reduced-motion: reduce)').matches" in out
-    assert "if(!from||mode!=='view'||!motionOK()) return;" in out
+    # T126 added the talk panel's own animations-off to the same gate
+    assert "if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;" in out
     assert "not on this machine" in out
 
 

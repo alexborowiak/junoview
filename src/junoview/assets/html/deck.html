@@ -273,6 +273,14 @@
  and a clock. Drag it to the other screen, then play.">Presenter
             view&#8230;</button>
           <button class="dc-mi" id="pl-notes">Notes &amp; timing&#8230;</button>
+          <!-- the Talk panel's row in the menu the user called "the
+               present menu" (T126): its only other door is a faint
+               corner button that exists once you are already
+               presenting, which is the wrong side of the decision. -->
+          <button class="dc-mi" id="pl-talk"
+            title="Play from this slide with the talk settings open:
+ skip the animations, or size headings, body text and captions for
+ the room.">Talk settings&#8230;</button>
           <!-- A SETTING and not the new default, because a plain click
                advancing the talk is a standing instruction from
                2026-08-07 and this would overload it. Only the item itself
@@ -1780,9 +1788,9 @@
           <button class="dbtn dc-icon" id="talkpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
         <div class="tk-row">
-          <span class="tk-lab">Builds</span>
+          <span class="tk-lab">Animations</span>
           <button class="dbtn tk-b" id="talk-builds" aria-pressed="false"
-            ><i data-ic="stagger"></i> Skip builds
+            ><i data-ic="stagger"></i> Skip animations
             <span class="tk-state">playing</span></button>
         </div>
         <div class="tk-row">
@@ -1792,14 +1800,57 @@
               aria-label="Smaller text"
               title="Smaller, for a screen you are close to (&minus;)"
               >&#8722;</button>
+            <!-- the button SHOWS the current size and resets it: the
+                 percentage used to live in a hidden span, so the one
+                 number this panel is about was invisible (T126) -->
             <button class="dbtn rbn-sm" id="talk-reset" disabled
+              aria-live="polite"
               title="Back to the size the deck was made at (0)"
               >100%</button>
-            <span class="tk-val" id="talk-size" aria-live="polite"
-              hidden>100%</span>
             <button class="dbtn rbn-ico" id="talk-bigger"
               aria-label="Bigger text"
               title="Bigger, for the back of the room (+)">+</button>
+          </span>
+        </div>
+        <!-- PER-TYPE SIZE (T126). "you can click options into it and
+             just do like 'headings', 'paragraphs', 'captions'" — the
+             other half of the T88 ask. Each multiplies ON TOP of the
+             global size; the middle button shows that type's own
+             percentage and puts it back. A box's type comes from its
+             named text style (headings are title/h1–h3 and any custom
+             type flagged as one; captions are the caption style or a
+             tied caption; body is the rest). -->
+        <div class="tk-row tk-typerow">
+          <span class="tk-lab">Headings</span>
+          <span class="tk-grp">
+            <button class="dbtn rbn-ico" id="talk-h-minus"
+              aria-label="Smaller headings">&#8722;</button>
+            <button class="dbtn rbn-sm" id="talk-h-val" disabled
+              title="Back to the deck&rsquo;s heading size">100%</button>
+            <button class="dbtn rbn-ico" id="talk-h-plus"
+              aria-label="Bigger headings">+</button>
+          </span>
+        </div>
+        <div class="tk-row tk-typerow">
+          <span class="tk-lab">Body text</span>
+          <span class="tk-grp">
+            <button class="dbtn rbn-ico" id="talk-b-minus"
+              aria-label="Smaller body text">&#8722;</button>
+            <button class="dbtn rbn-sm" id="talk-b-val" disabled
+              title="Back to the deck&rsquo;s body size">100%</button>
+            <button class="dbtn rbn-ico" id="talk-b-plus"
+              aria-label="Bigger body text">+</button>
+          </span>
+        </div>
+        <div class="tk-row tk-typerow">
+          <span class="tk-lab">Captions</span>
+          <span class="tk-grp">
+            <button class="dbtn rbn-ico" id="talk-c-minus"
+              aria-label="Smaller captions">&#8722;</button>
+            <button class="dbtn rbn-sm" id="talk-c-val" disabled
+              title="Back to the deck&rsquo;s caption size">100%</button>
+            <button class="dbtn rbn-ico" id="talk-c-plus"
+              aria-label="Bigger captions">+</button>
           </span>
         </div>
         <p class="tk-note">Neither is saved with the deck &mdash; they

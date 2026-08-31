@@ -522,6 +522,12 @@
        never reach the editor, a print or an export (T88). */
     stage.style.setProperty('--talk-text',
       (mode==='view'?talkText:1).toFixed(3));
+    stage.style.setProperty('--talk-head',
+      (mode==='view'?talkType.head:1).toFixed(3));
+    stage.style.setProperty('--talk-body',
+      (mode==='view'?talkType.body:1).toFixed(3));
+    stage.style.setProperty('--talk-cap',
+      (mode==='view'?talkType.cap:1).toFixed(3));
     applyPageBg();          /* this slide may carry its own background */
     if(mode==='edit') renderTokenSwatches();
     stage.innerHTML='';
@@ -791,12 +797,27 @@
      because a projector does not change between runs, and they are
      applied only while mode==='view' so nothing they do can reach a
      PDF, a .pptx or the editor.
-       talkNoBuilds -- every build appears at once. Flip books still
-         step, because their frames are content and not decoration.
+       talkNoBuilds -- every build appears at once and slide
+         transitions stop playing (T126: the ask was "goes without
+         animations", and a fade between slides is an animation).
+         Flip books still step, because their frames are content and
+         not decoration.
        talkText     -- a multiplier over every text size on the page.
          A MULTIPLIER, not a rewrite of a.size: nothing is edited, so
-         there is no undo entry and nothing to put back afterwards. */
+         there is no undo entry and nothing to put back afterwards.
+       talkType     -- the same multiplier idea, per KIND of text
+         (T126): headings, body, captions, each on top of talkText.
+         The bucket comes from the box's named style, which is the
+         only vocabulary of "heading" the deck actually has. */
   var talkNoBuilds=0, talkText=1;
+  var talkType={head:1,body:1,cap:1};
+  /* which per-type multiplier sizes this text box */
+  function talkVarFor(a){
+    if(!a) return '--talk-body';
+    if(a.capOf||a.style==='caption') return '--talk-cap';
+    if(a.style&&isHeadingStyle(a.style)) return '--talk-head';
+    return '--talk-body';
+  }
   /* ---- THE FLIP BOOK ---------------------------------------------------
      (2026-08-22, user: "people create figures with small additions and then
      need to create layers of figures or heaps of new slides each with a new

@@ -1955,7 +1955,8 @@ def test_shrink_to_fit_never_rewrites_the_size_you_chose(out):
     assert "el.style.setProperty('--an-fit',k.toFixed(3));" in out
     # T88 put the talk's text multiplier in the SAME calc, for the same
     # reason: both scale what a.size asked for and neither writes it.
-    assert "* var(--an-fit,1) * var(--talk-text,1))';" in out
+    # T126 appended the per-type multiplier to the same calc
+    assert "* var(--an-fit,1) * var(--talk-text,1) * var(" in out
     # two passes, not a loop: wrapping is not linear in font size
     assert "var got2=el.scrollHeight||0;" in out
     # and a floor, because text shrunk past legibility is a different

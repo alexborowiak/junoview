@@ -950,17 +950,29 @@
     if(b){
       b.setAttribute('aria-pressed',talkNoBuilds?'true':'false');
       b.title=talkNoBuilds
-        ? 'Builds are being skipped: everything on a slide is there as '
-          +'soon as you arrive. Press again to play them (A)'
-        : 'Skip the builds: every slide arrives complete, so one click '
-          +'is one slide. Flip books still step (A)';
+        ? 'Animations are off: every slide arrives complete and slides '
+          +'change with a plain cut. Press again to play them (A)'
+        : 'Skip the animations: builds and slide transitions both, so '
+          +'one click is one slide and nothing moves. Flip books still '
+          +'step (A)';
       var lab=b.querySelector('.tk-state');
       if(lab) lab.textContent=talkNoBuilds?'skipped':'playing';
     }
-    var v=$('#talk-size');
-    if(v) v.textContent=Math.round(talkText*100)+'%';
+    /* the reset button IS the readout: the current size, click to put
+       it back. It used to say 100% forever while the real number sat
+       in a hidden span (T126). */
     var r=$('#talk-reset');
-    if(r) r.disabled=(talkText===1);
+    if(r){
+      r.textContent=Math.round(talkText*100)+'%';
+      r.disabled=(talkText===1);
+    }
+    [['h','head'],['b','body'],['c','cap']].forEach(function(t){
+      var v=$('#talk-'+t[0]+'-val');
+      if(v){
+        v.textContent=Math.round(talkType[t[1]]*100)+'%';
+        v.disabled=(talkType[t[1]]===1);
+      }
+    });
   }
   function talkBuilds(on){
     talkNoBuilds=on?1:0;
@@ -969,14 +981,28 @@
     if(talkNoBuilds) revealCount=0;
     syncTalk();renderSlide();presenterSync();
     toast(talkNoBuilds
-      ? 'Builds skipped \u2014 every slide arrives complete'
-      : 'Builds are playing again');
+      ? 'Animations skipped \u2014 slides arrive complete, and change '
+        +'with a plain cut'
+      : 'Animations are playing again');
   }
-  function talkZoom(mult){
+  /* bucket===undefined scales everything; a bucket name scales that
+     kind of text on top of the global size. 0 always means "put it
+     back", and the GLOBAL reset puts the types back too, because "the
+     size the deck was made at" is one state, not four (T126). */
+  function talkZoom(mult,bucket){
+    if(bucket){
+      var w=talkType[bucket];
+      talkType[bucket]=Math.max(0.6,Math.min(2.2,
+        mult===0?1:Math.round(w*mult*100)/100));
+      if(talkType[bucket]===w) return;
+      syncTalk();renderSlide();
+      return;
+    }
     var was=talkText;
     talkText=Math.max(0.6,Math.min(2.2,
       mult===0?1:Math.round(talkText*mult*100)/100));
-    if(talkText===was) return;
+    if(mult===0) talkType={head:1,body:1,cap:1};
+    if(talkText===was&&mult!==0) return;
     syncTalk();renderSlide();
   }
   (function(){
@@ -1000,6 +1026,15 @@
     if(bg) bg.addEventListener('click',function(){talkZoom(1.12);});
     var rs=$('#talk-reset');
     if(rs) rs.addEventListener('click',function(){talkZoom(0);});
+    [['h','head'],['b','body'],['c','cap']].forEach(function(t){
+      var mi=$('#talk-'+t[0]+'-minus'),pl=$('#talk-'+t[0]+'-plus'),
+        vl=$('#talk-'+t[0]+'-val');
+      if(mi) mi.addEventListener('click',function(){
+        talkZoom(1/1.12,t[1]);});
+      if(pl) pl.addEventListener('click',function(){
+        talkZoom(1.12,t[1]);});
+      if(vl) vl.addEventListener('click',function(){talkZoom(0,t[1]);});
+    });
     window.SemDeckTalk={open:open,builds:talkBuilds,zoom:talkZoom,
       sync:syncTalk};
   })();

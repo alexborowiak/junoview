@@ -1460,6 +1460,13 @@
     mi('#pl-presenter',openPresenter);
     mi('#pl-notes',function(){
       if(window.SemDeckNotes) window.SemDeckNotes();});
+    /* present from here WITH the panel open: the panel's corner button
+       only exists once you are already presenting, so the menu is where
+       the decision actually gets made (T126) */
+    mi('#pl-talk',function(){
+      $('#dc-play').click();
+      setTimeout(function(){
+        if(window.SemDeckTalk) window.SemDeckTalk.open(true);},200);});
     function syncTap(){
       var b=$('#pl-tap'); if(!b) return;
       b.textContent='Click a figure to enlarge it: '

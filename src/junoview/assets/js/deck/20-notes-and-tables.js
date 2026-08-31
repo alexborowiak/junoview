@@ -1721,8 +1721,10 @@
         d.className='an-item an-title'+(which==='t'?' t-main':'')
           +(selAnnot===which?' sel':'');
         d.style.left=p.x+'%';d.style.top=p.y+'%';
+        /* a title slide's title and subtitle are headings for the
+           per-type control's purposes (T126) */
         d.style.fontSize='calc('+fontPx(layer,p.size)
-          +' * var(--talk-text,1))';   /* T88 */
+          +' * var(--talk-text,1) * var(--talk-head,1))';   /* T88 */
         if(p.color) d.style.color=tokVal(p.color); /* default lives in CSS */
         if(p.b) d.style.fontWeight='700';
         /* ...and tell the SPAN too. Its own CSS weight is more specific
@@ -1986,7 +1988,8 @@
            in the same calc as the fit multiplier because both are
            "scale what a.size asked for" and neither writes the model */
         d2.style.fontSize='calc('+fontPx(layer,a.size)
-          +' * var(--an-fit,1) * var(--talk-text,1))';
+          +' * var(--an-fit,1) * var(--talk-text,1) * var('
+          +talkVarFor(a)+',1))';
         /* only an EXPLICIT colour goes inline: the default comes from
            CSS so .page-light can flip it — a baked '#ffffff' default
            made every template text white-on-white on a light poster

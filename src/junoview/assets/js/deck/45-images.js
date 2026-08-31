@@ -1676,7 +1676,10 @@
   function playFlip(){
     var from=_flipFrom;
     _flipFrom=null;
-    if(!from||mode!=='view'||!motionOK()) return;
+    /* "skip animations" means the fade/move between slides too
+       (T126) -- a build held back and a transition still playing would
+       be half an answer to "goes without animations" */
+    if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;
     var kind=transFor(cur);
     var sl=pres.slides[cur];
     var layer=stage?stage.querySelector('.annot-layer'):null;

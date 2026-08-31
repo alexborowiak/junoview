@@ -637,3 +637,66 @@ def test_it_looks_like_a_link_only_while_presenting(out):
     """
     assert ".deck:not(.editing) .an-linked{cursor:pointer;}" in out
     assert ".deck:not(.editing) .an-linked:focus-visible{" in out
+
+
+# ---------------------------------------------------------------------------
+# the Talk panel, finished (T126)
+# ---------------------------------------------------------------------------
+#
+# Driven live 2026-08-31: headings +2 grew only the heading box (125%),
+# captions -1 shrank only the caption (89%), the global step composed on
+# top of both (112%), and one reset restored all four to 100%. The
+# transition half is pinned rather than driven, because the browser pane
+# reports prefers-reduced-motion and transitions are already suppressed
+# there for that separate, correct reason.
+
+
+def test_text_can_be_sized_per_kind_not_just_globally(out):
+    """T88's ask had two halves and only one shipped: "you can click
+    options into it and just do like 'headings', 'paragraphs',
+    'captions'". Each kind multiplies ON TOP of the global size, and the
+    bucket comes from the box's named style -- the only vocabulary of
+    "heading" the deck actually has."""
+    assert "var talkType={head:1,body:1,cap:1};" in out
+    assert "function talkVarFor(a){" in out
+    assert "if(a.capOf||a.style==='caption') return '--talk-cap';" in out
+    assert "if(a.style&&isHeadingStyle(a.style)) return '--talk-head';" in out
+    # a title slide's title is a heading for this control's purposes
+    assert "* var(--talk-text,1) * var(--talk-head,1))';" in out
+    # the vars are forced to 1 outside a talk, like --talk-text always was
+    assert "(mode==='view'?talkType.head:1).toFixed(3));" in out
+    # six worded controls, not a hidden gesture
+    for i in ("talk-h-minus", "talk-h-plus", "talk-b-minus",
+              "talk-b-plus", "talk-c-minus", "talk-c-plus"):
+        assert f'id="{i}"' in out
+
+
+def test_the_global_reset_puts_the_types_back_too(out):
+    """"The size the deck was made at" is one state, not four."""
+    assert "if(mult===0) talkType={head:1,body:1,cap:1};" in out
+
+
+def test_the_reset_button_is_the_readout(out):
+    """The current percentage used to sit in a HIDDEN span while the
+    visible label said 100% forever -- the one number the panel is about
+    was invisible."""
+    assert "r.textContent=Math.round(talkText*100)+'%';" in out
+    assert 'id="talk-size"' not in out
+
+
+def test_the_talk_panel_has_a_row_in_the_present_menu(out):
+    """The user's words were "tick on or off in present menu"; the only
+    other door is a corner button at opacity .35 that exists once you
+    are already presenting -- the wrong side of the decision."""
+    assert 'id="pl-talk"' in out
+    assert "mi('#pl-talk',function(){" in out
+    assert "window.SemDeckTalk.open(true);},200);});" in out
+
+
+def test_skip_animations_means_transitions_too(out):
+    """"Turn off animations so the presentation goes without animations"
+    -- a fade between slides is an animation. Builds were gated; the
+    transition player was not, so half the ask was quietly missing.
+    Flip books still step, because their frames are content."""
+    assert "if(!from||mode!=='view'||!motionOK()||talkNoBuilds) return;" in out
+    assert "Skip animations" in out

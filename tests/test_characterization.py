@@ -598,8 +598,17 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # dropFrameCache -> Object.keys(frameNodeCache) six hundred lines before
 # the declaration -- hoisted name, undefined value, and the whole editor
 # silently dead at boot. Comment-and-position change only.
-EXPECTED_MD5 = "e0e2a7740bd98c55cc5ea8e011e4317f"
-EXPECTED_BYTES = 3283696
+# Moved 2026-08-31 for T126, the Talk panel finished to the T88 ask:
+# three per-type size rows (Headings / Body text / Captions) multiplying
+# on top of the global size, bucketed by the box's named style with
+# title-slide titles counting as headings; a #pl-talk row in the Present
+# menu that presents with the panel open; the animations toggle now also
+# stops slide transitions (playFlip gains the talk gate); and the reset
+# button IS the size readout -- the real percentage used to sit in a
+# hidden span while the label said 100% forever. deck.html and five
+# deck.js fragments; driven live, each row scaling only its own kind.
+EXPECTED_MD5 = "97a08e99e4cd430b60e9c4a5ce282cfe"
+EXPECTED_BYTES = 3289652
 
 
 def _render_example() -> str:
