@@ -3835,6 +3835,17 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T117: charts — the SVG fills its box; the dialog is the numbers */
+.an-chart{overflow:hidden;}
+.an-chartsvg{width:100%;height:100%;display:block;
+  font-family:var(--sans,system-ui);}
+.chart-data{position:fixed;left:50%;top:20%;transform:translateX(-50%);
+  z-index:420;width:min(440px,92vw);padding:10px 12px 12px;}
+.chart-ta{width:100%;min-height:150px;resize:vertical;
+  font-family:var(--mono);font-size:11.5px;line-height:1.5;
+  color:#dbe7ef;background:#0d1722;border:1px solid #ffffff22;
+  border-radius:5px;padding:7px 9px;}
+.chart-btns{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
 /* T106: the reading-order panel and its on-slide numbers */
 .rd-order{position:fixed;right:16px;top:110px;z-index:420;width:252px;
   max-height:64vh;overflow-y:auto;padding:8px 10px 12px;}

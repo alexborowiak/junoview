@@ -564,6 +564,149 @@ window.JunoPptx = (function () {
   var DML_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
   var XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 
+  /* ---- native charts (T117) ---------------------------------------
+     A <p:graphicFrame> on the slide points at a chart part; the part
+     carries the numbers in its caches (c:strCache / c:numCache), so
+     PowerPoint renders, restyles, retypes and recolours it natively.
+     No embedded workbook on purpose: only the "Edit Data" sheet needs
+     one, and that is a second file format -- the cut is recorded in
+     TASKS T117. The Sheet1! formulas name where a workbook WOULD put
+     the values, which is what PowerPoint expects to see. */
+  var CHART_NS = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
+  function chartFrame(item, id, rid, page) {
+    var geo = xfrm(item, page);
+    return '<p:graphicFrame><p:nvGraphicFramePr>'
+      + '<p:cNvPr id="' + id + '" name="Chart ' + id + '"' + descrAttr(item)
+      + '/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>'
+      + geo.replace('<a:xfrm', '<p:xfrm').replace('</a:xfrm>', '</p:xfrm>')
+      + '<a:graphic><a:graphicData uri="' + CHART_NS + '">'
+      + '<c:chart xmlns:c="' + CHART_NS + '" xmlns:r="'
+      + 'http://schemas.openxmlformats.org/officeDocument/2006/'
+      + 'relationships" r:id="' + rid + '"/>'
+      + '</a:graphicData></a:graphic></p:graphicFrame>';
+  }
+  function chartStrCache(col, vals) {
+    return '<c:f>Sheet1!$' + col + '$2:$' + col + '$'
+      + (vals.length + 1) + '</c:f><c:strCache><c:ptCount val="'
+      + vals.length + '"/>' + vals.map(function (v, i) {
+        return '<c:pt idx="' + i + '"><c:v>' + esc(String(v))
+          + '</c:v></c:pt>';
+      }).join('') + '</c:strCache>';
+  }
+  function chartNumCache(col, vals) {
+    return '<c:f>Sheet1!$' + col + '$2:$' + col + '$'
+      + (vals.length + 1) + '</c:f><c:numCache>'
+      + '<c:formatCode>General</c:formatCode><c:ptCount val="'
+      + vals.length + '"/>' + vals.map(function (v, i) {
+        var n = Number(v);
+        return '<c:pt idx="' + i + '"><c:v>' + (isFinite(n) ? n : 0)
+          + '</c:v></c:pt>';
+      }).join('') + '</c:numCache>';
+  }
+  function chartCol(i) {   /* 0 -> B, 1 -> C ... data starts beside cats */
+    return String.fromCharCode(66 + i);
+  }
+  function chartSerHead(item, si) {
+    var se = item.series[si];
+    return '<c:idx val="' + si + '"/><c:order val="' + si + '"/>'
+      + '<c:tx><c:strRef><c:f>Sheet1!$' + chartCol(si) + '$1</c:f>'
+      + '<c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>'
+      + esc(se.name) + '</c:v></c:pt></c:strCache></c:strRef></c:tx>';
+  }
+  function chartAxes(item) {
+    var cat = item.ct === 'scatter' && item.numeric;
+    return '<c:' + (cat ? 'valAx' : 'catAx') + '>'
+      + '<c:axId val="111111111"/><c:scaling>'
+      + '<c:orientation val="minMax"/></c:scaling><c:delete val="0"/>'
+      + '<c:axPos val="b"/><c:crossAx val="222222222"/>'
+      + '</c:' + (cat ? 'valAx' : 'catAx') + '>'
+      + '<c:valAx><c:axId val="222222222"/><c:scaling>'
+      + '<c:orientation val="minMax"/></c:scaling><c:delete val="0"/>'
+      + '<c:axPos val="l"/><c:crossAx val="111111111"/></c:valAx>';
+  }
+  function chartXml(item) {
+    var fill = function (c) {
+      return '<c:spPr>' + solidFill(c, null, '4FB3D9') + '</c:spPr>';
+    };
+    var body = '';
+    if (item.ct === 'pie') {
+      var se0 = item.series[0] || { ys: [] };
+      body = '<c:pieChart><c:varyColors val="1"/><c:ser>'
+        + chartSerHead(item, 0)
+        + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+        + '</c:strRef></c:cat><c:val><c:numRef>'
+        + chartNumCache('B', se0.ys) + '</c:numRef></c:val>'
+        + '</c:ser></c:pieChart>';
+    } else if (item.ct === 'scatter' && item.numeric) {
+      body = '<c:scatterChart><c:scatterStyle val="marker"/>'
+        + '<c:varyColors val="0"/>'
+        + item.series.map(function (se, si) {
+          return '<c:ser>' + chartSerHead(item, si) + fill(se.color)
+            + '<c:xVal><c:numRef>' + chartNumCache('A', item.cats)
+            + '</c:numRef></c:xVal><c:yVal><c:numRef>'
+            + chartNumCache(chartCol(si), se.ys)
+            + '</c:numRef></c:yVal></c:ser>';
+        }).join('')
+        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
+        + '</c:scatterChart>';
+    } else if (item.ct === 'line' || item.ct === 'scatter') {
+      /* a scatter over WORD categories has no x numbers to plot, so it
+         leaves as a marker-only line chart -- same picture */
+      var mk = item.ct === 'scatter'
+        ? '<c:spPr><a:ln w="28575"><a:noFill/></a:ln></c:spPr>' : '';
+      body = '<c:lineChart><c:grouping val="standard"/>'
+        + '<c:varyColors val="0"/>'
+        + item.series.map(function (se, si) {
+          return '<c:ser>' + chartSerHead(item, si)
+            + (item.ct === 'scatter' ? mk : fill(se.color))
+            + '<c:marker><c:symbol val="circle"/><c:size val="5"/>'
+            + fill(se.color) + '</c:marker>'
+            + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+            + '</c:strRef></c:cat><c:val><c:numRef>'
+            + chartNumCache(chartCol(si), se.ys)
+            + '</c:numRef></c:val><c:smooth val="0"/></c:ser>';
+        }).join('')
+        + '<c:marker val="1"/>'
+        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
+        + '</c:lineChart>';
+    } else {
+      body = '<c:barChart><c:barDir val="col"/>'
+        + '<c:grouping val="clustered"/><c:varyColors val="0"/>'
+        + item.series.map(function (se, si) {
+          return '<c:ser>' + chartSerHead(item, si) + fill(se.color)
+            + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+            + '</c:strRef></c:cat><c:val><c:numRef>'
+            + chartNumCache(chartCol(si), se.ys)
+            + '</c:numRef></c:val></c:ser>';
+        }).join('')
+        + '<c:gapWidth val="60"/>'
+        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
+        + '</c:barChart>';
+    }
+    var title = item.title
+      ? '<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r>'
+        + '<a:t>' + esc(item.title) + '</a:t></a:r></a:p></c:rich>'
+        + '</c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted '
+        + 'val="0"/>'
+      : '<c:autoTitleDeleted val="1"/>';
+    return XML_HEAD
+      + '<c:chartSpace xmlns:c="' + CHART_NS + '" xmlns:a="'
+      + 'http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="'
+      + 'http://schemas.openxmlformats.org/officeDocument/2006/'
+      + 'relationships"><c:chart>' + title
+      + '<c:plotArea><c:layout/>' + body
+      + (item.ct === 'pie' ? '' : chartAxes(item))
+      + '</c:plotArea>'
+      + (item.leg ? '<c:legend><c:legendPos val="b"/>'
+        + '<c:overlay val="0"/></c:legend>' : '')
+      + '<c:plotVisOnly val="1"/></c:chart>'
+      /* the deck's ink, or chart text vanishes on a dark slide */
+      + '<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr>'
+      + solidFill(item.ink, null, 'DBE7EF')
+      + '</a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>'
+      + '</c:chartSpace>';
+  }
+
   function relsDoc(entries) {
     return XML_HEAD + '<Relationships xmlns="' + RELS_NS + '">'
       + entries.map(function (r) {
@@ -672,6 +815,7 @@ window.JunoPptx = (function () {
     var zip = new Zip();
     var slides = spec.slides || [];
     var media = [];          /* {name, mime, bytes} */
+    var charts = [];         /* chartSpace XML, one part each (T117) */
     var extensions = {};
     var skipped = 0;
 
@@ -695,6 +839,13 @@ window.JunoPptx = (function () {
         } else if (item.t === 'table') {
           var tbl = tableShape(item, id, page);
           if (tbl) body += tbl; else skipped++;
+        } else if (item.t === 'chart') {
+          if (!item.series || !item.series.length) { skipped++; return; }
+          charts.push(chartXml(item));
+          var crid = 'rIdC' + charts.length;
+          rels.push({ id: crid, type: DOC_NS + '/relationships/chart',
+            target: '../charts/chart' + charts.length + '.xml' });
+          body += chartFrame(item, id, crid, page);
         } else if (item.t === 'rect') {
           body += rectShape(item, id, page);
         } else if (item.t === 'line') {
@@ -756,6 +907,9 @@ window.JunoPptx = (function () {
           target: '../theme/theme1.xml' }]));
     }
     media.forEach(function (m) { zip.add('ppt/media/' + m.name, m.bytes); });
+    charts.forEach(function (x, i) {
+      zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x);
+    });
 
     zip.addText('ppt/slideLayouts/slideLayout1.xml',
       XML_HEAD + '<p:sldLayout' + nsAttrs() + ' type="blank" preserve="1">'
@@ -866,6 +1020,11 @@ window.JunoPptx = (function () {
         + ' ContentType="application/vnd.openxmlformats-officedocument.'
         + 'presentationml.notesMaster+xml"/>';
     }
+    charts.forEach(function (_, i) {
+      overrides += '<Override PartName="/ppt/charts/chart' + (i + 1)
+        + '.xml" ContentType="application/vnd.openxmlformats-'
+        + 'officedocument.drawingml.chart+xml"/>';
+    });
     zip.addText('[Content_Types].xml',
       XML_HEAD + '<Types xmlns="http://schemas.openxmlformats.org/package/'
       + '2006/content-types">' + defaults + overrides + '</Types>');

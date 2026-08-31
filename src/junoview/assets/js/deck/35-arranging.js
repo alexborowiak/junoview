@@ -1954,6 +1954,9 @@
   function provRef(a){
     if(!a) return '';
     if(a.k==='cell') return a.ref||'';
+    /* a chart born from a table card keeps the card's ref (T117), so
+       every door that asks "does this have a source" says yes for it */
+    if(a.k==='chart') return a.ref||'';
     if(a.k==='flip'){
       var fr=flipFrames(a),sel=fr[a.at||0]||fr[0];
       return (sel&&sel.ref)||'';
@@ -2024,15 +2027,20 @@
     });
     return Promise.all(jobs).then(function(res){
       var reread=res.filter(Boolean).length;
+      /* charts re-read their table's NUMBERS on the same click (T117);
+         type, colours, position and size stay the author's. Counted
+         BEFORE the early return, or a deck whose only change was a
+         chart would be told everything already matches. */
+      var cn=(typeof chartResyncAll==='function')?chartResyncAll():0;
       var list=staleFigures();
-      if(!list.length){
+      if(!list.length&&!cn){
         toast(reread
           ?('Re-read '+reread+' source'+(reread===1?'':'s')
             +' \u2014 every figure already matches')
           :'Every figure on this deck already matches its source');
         return 0;
       }
-      var n=0;
+      var n=cn;
       list.forEach(function(p){if(resyncFigure(p.a)) n++;});
       toast(n?(n+' figure'+(n===1?'':'s')+' updated from '
         +(n===1?'its source':'their sources')

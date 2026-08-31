@@ -2127,7 +2127,7 @@ nothing.
   Storage first: images already had to move originals to IndexedDB when
   localStorage quota blew, and recordings are far larger.
 
-- [ ] **T117 · design first — Native data-bound charts.** No chart,
+- [x] **T117 · design first — Native data-bound charts.** No chart,
   diagram, editable path or 3D object exists; a figure exports as a
   picture, so nobody can recolour a series in PowerPoint. The
   notebook-first answer is not to clone the chart dialog: it is a durable
@@ -2135,6 +2135,31 @@ nothing.
   declarative chart schema that keeps provenance. That is the genuine
   "and more". `20-notes-and-tables.js:771` already draws cloned Plotly
   JSON specs in cell frames and is the seam a native chart would reuse.
+  *Done 2026-08-31*, as designed above: `{k:'chart', ct, cats,
+  series:[{name,ys,color}], ref?}` — a new deck part (`47-charts.js`)
+  draws it as plain SVG (bar/line/scatter/pie, legend, axes, no Plotly,
+  works from file://); "Turn into a chart" on a placed table or a frame
+  showing a table card (first row names the series, first column is the
+  category; born from a card it keeps `ref`); "Insert a chart" on the
+  empty canvas; right-click type rows, Edit data… (CSV dialog; editing
+  unlinks `ref` — the numbers are yours then) and a legend toggle. The
+  binding is real: `provRef` answers for charts, so "Update figures
+  from their sources" reloads the source tab from DISK and re-reads the
+  numbers while type, colours, position and size stay (counted before
+  the early return, or a chart-only deck was told everything matched).
+  Export is the point: pptx.js writes a real `<c:chart>` part per chart
+  — clustered bars, marker lines, numeric-x scatter (two `c:valAx`),
+  pie — values cached in the part, deck ink on the chart text, and
+  `test_pptx_bytes.py` proves the parts against PowerPoint's own
+  structural rules (content-type coverage, resolving rels, CRCs).
+  Driven live end-to-end: `data.csv` edited on disk behind the app, one
+  File-menu click, and a chart-ONLY deck re-read it — [81,62,44] became
+  [7,8] with a new category, colours untouched.
+  Cuts said out loud: per-series recolouring happens in PowerPoint
+  after export (the stable palette keeps re-exports consistent); no
+  embedded workbook part (only PowerPoint's "Edit Data" sheet needs it
+  — rendering and restyling do not); no stacking, 3D or secondary axes;
+  a table ANNOT's chart is a copy, not a link (only cards refresh).
 
 - [x] **T118 · M — An object-level action model.** *Verified PARTIAL —
   more ships than the review found.* The `mdHref` allowlist, the

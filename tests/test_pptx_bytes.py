@@ -54,9 +54,20 @@ SPEC = {
              "fill": "#ff0000"},
             {"t": "table", "x": 5, "y": 75, "w": 90, "h": 15, "grid": 1,
              "rows": [["a", "b"], ["1", "2"]]},
+            {"t": "chart", "x": 55, "y": 40, "w": 40, "h": 30, "ct": "bar",
+             "cats": ["Jan", "Feb"], "numeric": False, "leg": True,
+             "ink": "#dbe7ef", "title": "Trend",
+             "series": [{"name": "One", "ys": [3, 5], "color": "#4fb3d9"},
+                        {"name": "Two", "ys": [2, 4],
+                         "color": "#f0a848"}]},
         ]},
         {"bg": "#000000", "items": [
             {"t": "line", "x": 10, "y": 10, "w": 50, "h": 0},
+            {"t": "chart", "x": 10, "y": 30, "w": 40, "h": 30,
+             "ct": "scatter", "cats": ["1", "2", "3"], "numeric": True,
+             "leg": False, "ink": "#111111",
+             "series": [{"name": "S", "ys": [1, 4, 9],
+                         "color": "#8fd18a"}]},
         ]},
     ],
 }
@@ -514,3 +525,39 @@ def test_notes_keep_their_line_breaks_and_escape_their_text():
     texts = [t.text for t in notes.iter(q("a", "t"))]
     assert texts == ["first line", "second & third", "last"]
     assert len(list(notes.iter(q("a", "p")))) == 3
+
+
+# ---------------------------------------------------------------------------
+# native charts (T117)
+# ---------------------------------------------------------------------------
+
+
+def test_a_chart_leaves_as_a_real_chart_part(built):
+    """The point of T117: the numbers travel in a real <c:chart> part,
+    so PowerPoint restyles and recolours it natively. The structural
+    tests above already prove the part is covered by a content type and
+    reached by a resolving relationship; this pins what is IN it."""
+    z, _, _ = built
+    assert "ppt/charts/chart1.xml" in z.namelist()
+    x = z.read("ppt/charts/chart1.xml").decode("utf-8")
+    c = "{http://schemas.openxmlformats.org/drawingml/2006/chart}"
+    assert ET.fromstring(x).tag == c + "chartSpace"
+    # the cached values are what PowerPoint renders (no workbook part,
+    # on purpose -- the cut is recorded in TASKS T117)
+    assert "<c:v>Jan</c:v>" in x and "<c:v>3</c:v>" in x
+    assert "barChart" in x and "<c:v>One</c:v>" in x
+    # the slide reaches it through a graphicFrame
+    s1 = z.read("ppt/slides/slide1.xml").decode("utf-8")
+    assert "graphicFrame" in s1
+    rels = z.read("ppt/slides/_rels/slide1.xml.rels").decode("utf-8")
+    assert "../charts/chart1.xml" in rels
+
+
+def test_a_numeric_scatter_gets_two_value_axes(built):
+    """Numeric categories make a real x axis (c:valAx twice), which is
+    what separates a scatter from a marker-only line chart."""
+    z, _, _ = built
+    x = z.read("ppt/charts/chart2.xml").decode("utf-8")
+    assert "scatterChart" in x
+    assert x.count("<c:valAx>") == 2 and "<c:catAx>" not in x
+

@@ -220,6 +220,10 @@ ANNOT_KINDS: dict[str, tuple[tuple[str, ...], str]] = {
     "draw": (("x", "y"), "A freehand stroke: a box plus points "
                          "normalised inside it."),
     "table": (("x", "y"), "Rows of plain strings, not HTML."),
+    "chart": (("x", "y"), "A native chart: `ct` (bar/line/scatter/pie), "
+                          "`cats`, and `series` [{name, ys, color}] "
+                          "carry the numbers; `ref` links it to the "
+                          "table card it was born from."),
     "flip": (("x", "y"), "A flip book: several figures stepped through "
                          "in place."),
 }

@@ -1044,7 +1044,7 @@
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
       return it&&it.title?it.title.slice(0,18):'Empty frame';}
-    if(a.k==='image'||a.k==='flip'||a.k==='table'
+    if(a.k==='image'||a.k==='flip'||a.k==='table'||a.k==='chart'
        ||a.k==='arrow'||a.k==='draw') return annotLabel(a);
     return 'item';
   }

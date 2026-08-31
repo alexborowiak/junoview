@@ -79,6 +79,7 @@ DECK_PARTS = (
     "35-arranging",
     "40-captions-and-components",
     "45-images",
+    "47-charts",
     "50-review-and-overview",
     "55-sections-and-strip",
     "60-saving-and-export",

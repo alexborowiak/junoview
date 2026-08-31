@@ -663,8 +663,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 35-arranging.js, 45-images.js, 20-notes-and-tables.js, 25-selecting.js,
 # 10-decks.js, deck.css; presentations.py + deck_schema.py + DECK-FORMAT.md
 # carry the key.
-EXPECTED_MD5 = "83e6b2d8cecd00280d81cd115708e3d4"
-EXPECTED_BYTES = 3327463
+# Moved 2026-08-31 for T117: native data-bound charts. A chart annot
+# ({k:'chart', ct, cats, series}) draws as plain SVG (new deck part
+# 47-charts.js), is born from a placed table or table card ("Turn into a
+# chart", keeping ref so Update-figures re-reads the numbers), edits via
+# the chart-data dialog, and exports as a REAL <c:chart> part PowerPoint
+# restyles natively (pptx.js chartFrame/chartXml). Help's export list
+# also corrected: speaker notes have travelled since T108.
+EXPECTED_MD5 = "ebe7ad57bea3c1a844843072186784dd"
+EXPECTED_BYTES = 3355366
 
 
 def _render_example() -> str:

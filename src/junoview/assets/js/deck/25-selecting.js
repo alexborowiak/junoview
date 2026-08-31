@@ -1854,6 +1854,48 @@
             });
         }
       }
+      /* CHARTS (T117). A selected chart edits here; a selected
+         table (or a frame showing a table card) can become one. */
+      (function(){
+        var ci=selIdxs();
+        if(ci.length!==1) return;
+        var ca=(pres.slides[cur].annots||[])[ci[0]];
+        if(!ca) return;
+        if(ca.k==='chart'){
+          menuHead(m,'chart');
+          CHART_TYPES.forEach(function(t){
+            row(((ca.ct||'bar')===t[0]?'\u2713 ':'')+t[1],'',
+              function(){ca.ct=t[0];markDirty();renderSlide();
+                toast(t[1]+' chart');},
+              null,'plots');
+          });
+          row('Edit data\u2026','',function(){
+            window.SemDeckChart.dataDlg(ci[0]);},
+            'The numbers behind this chart, one row per category. '
+            +'Editing them unlinks the chart from its table.','pen');
+          row(ca.leg===0?'Show the legend':'Hide the legend','',
+            function(){
+              if(ca.leg===0) delete ca.leg; else ca.leg=0;
+              markDirty();renderSlide();},null,'eye');
+          if(ca.ref) row('Linked to its table','',function(){},
+            'Update figures from their sources re-reads the numbers; '
+            +'position, type and colours stay yours.','link');
+        } else if(window.SemDeckChart.dataOf(ca)){
+          menuHead(m,'chart');
+          row('Turn into a chart','',function(){
+            var data=window.SemDeckChart.dataOf(ca);
+            if(!data){toast('Could not read numbers out of this '
+              +'table');return;}
+            var na=window.SemDeckChart.place(data,{
+              x:Math.min(64,(ca.x||10)+6),y:Math.min(60,(ca.y||10)+6),
+              ref:ca.k==='cell'?ca.ref:null});
+            if(na) toast('Chart added beside the table \u2014 '
+              +'right-click it to change its type');},
+            'A bar chart of these numbers: first row names the '
+            +'series, first column is the category. Born linked, so '
+            +'updating figures re-reads the table.','plots');
+        }
+      })();
       /* COMPONENTS. The rows differ by what you are pointing at: a
          plain selection can BECOME one; an instance can push its look
          to the definition or leave it. */
@@ -2028,6 +2070,17 @@
       'The order this slide reads in \u2014 builds, figure numbers and '
       +'the review outline all follow it. Numbers show on every object '
       +'while the panel is open.','stagger');
+    row('Insert a chart','',function(){
+      var na=window.SemDeckChart.place(
+        {cats:['A','B','C'],series:[
+          {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
+        {x:Math.max(2,Math.min(64,(at.x||40)-16)),
+         y:Math.max(2,Math.min(58,(at.y||35)-17))});
+      if(na) toast('Chart placed \u2014 right-click it to edit the '
+        +'numbers or change its type');},
+      'A bar chart with sample numbers to replace \u2014 or select a '
+      +'placed table and \u201cTurn into a chart\u201d. Exports to '
+      +'PowerPoint as a real chart.','plots');
     var cgm=customGuides();
     menuHead(m,'guides');
     row('Draw a guide box','B',armGuideBox,

@@ -190,9 +190,9 @@ def test_anchored_boxes_export_at_their_page_position(out):
     items = out[out.index("function pptxItems(s,note,ink,layer){"):
                 out.index("function exportDeckPptx(){")]
     assert "var box=(a.k==='arrow')?null:pptxBox(a,false);" in items
-    # every push resolves the box once, at this boundary. 8 since T109
-    # added the scraped-notebook-table push beside the other seven.
-    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 8
+    # every push resolves the box once, at this boundary. 9 since T117
+    # added the chart push beside T109's scraped-notebook-table one.
+    assert items.count("x:box.x,y:box.y,w:box.w,h:box.h") == 9
     assert "x:a.x,y:a.y" not in items
 
 

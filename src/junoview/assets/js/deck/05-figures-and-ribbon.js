@@ -1728,6 +1728,9 @@
       return 'Table '+((a.rows||[]).length)+'\u00d7'
         +(((a.rows||[])[0]||[]).length);
     if(a.k==='arrow') return a.nohead?'Line':'Arrow';
+    if(a.k==='chart')
+      return 'Chart \u2014 '+(a.ct||'bar')+', '
+        +((a.series||[]).length)+' series';
     if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;

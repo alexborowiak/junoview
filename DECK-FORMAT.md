@@ -119,6 +119,7 @@ optional and defaulted.
 | `image` | `x`, `y` | A placed picture, carried as a data URI. |
 | `rect` | `x`, `y` | A drawn shape; `shape` picks which one. |
 | `table` | `x`, `y` | Rows of plain strings, not HTML. |
+| `chart` | `x`, `y` | A native chart: `ct` (bar/line/scatter/pie), `cats`, and `series` [{name, ys, color}] carry the numbers; `ref` links it to the table card it was born from. It exports as a real PowerPoint chart. |
 | `text` | `x`, `y` | A text box. Auto-heights from its words, so it has no required h. |
 
 ### Fields any item may carry

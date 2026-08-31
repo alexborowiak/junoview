@@ -2123,6 +2123,8 @@
         }
       } else if(a.k==='table'){
         drawTable(layer,s,a,i,editing);
+      } else if(a.k==='chart'){
+        drawChart(layer,s,a,i);
       } else if(a.k==='image'){
         var im=document.createElement('div');
         im.className='an-item an-image'+(selAnnot===i?' sel':'');

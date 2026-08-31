@@ -1452,6 +1452,16 @@
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
           sizePct:a.size||2.2,color:tokVal(a.color)||ink,
           font:fontPpt(a.font)});
+      } else if(a.k==='chart'){
+        /* the numbers travel, so PowerPoint gets a REAL chart it can
+           restyle and recolour \u2014 the point of T117. chartParse
+           resolves palette colours so a re-export stays consistent. */
+        var cd=chartParse(a);
+        items.push({t:'chart',x:box.x,y:box.y,w:box.w,h:box.h,
+          ct:a.ct||'bar',cats:cd.cats,
+          series:cd.series.map(function(se){
+            return {name:se.name,ys:se.ys,color:se.color};}),
+          numeric:cd.numeric,title:a.title||'',leg:a.leg!==0,ink:ink});
       } else if(a.k==='flip'){
         /* the frame this exported page is FOR. pptxItems is handed the
            slide plus, for an exploded page, which frame it represents —

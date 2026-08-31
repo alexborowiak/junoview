@@ -69,6 +69,9 @@ RUNTIME_IDS = {
     # the reading-order panel, built on open and removed on close
     # (45-images.js openReadingOrder, T106)
     "rd-order",
+    # the chart-numbers dialog, built on open and removed on close
+    # (47-charts.js chartDataDlg, T117)
+    "chart-data",
     # What goes in an object frame: built on first open and then kept,
     # because it floats over the canvas rather than living in a ribbon
     # group (45-images.js openObjSrc, T61).
