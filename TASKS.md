@@ -2537,6 +2537,122 @@ design-first items left in group 13:
 
 ---
 
+## 15 · The interaction review (2026-08-31, from reviews/23-07)
+
+A second external review, this time of INTERACTION rather than features:
+how the shipped capability is exposed. Its four claimed mechanical
+defects were all REPRODUCED here before filing (the repo rule: a
+finding is a claim until somebody drives it): duplicate `deck-status`/
+`qat-auto` ids (static count 2 each); File+Present and
+Background+Layouts menus open simultaneously with Present's trigger
+stuck `aria-expanded=true` after close; Tidy+Check panes stacked and
+Standardise's hide-list omitting `#tidypane`; and the object context
+menu at 31 buttons / 13 headings in a 215px THREE-COLUMN grid with
+both scrollbars (`.sh-menu` is `display:grid` 3-col and `.canvas-menu`
+never overrides it — and T106/T115/T117 each added rows to it).
+The review's bottom line, accepted: not fewer capabilities — fewer
+competing ways to reach them.
+
+### Phase 0 — repair the interaction substrate
+
+- [ ] **T134 · S — One save readout, and no duplicate ids anywhere.**
+  deck.html emits `deck-status` and `qat-auto` twice: T70 (2026-08-29)
+  added the improved pair beside Save and left the 2026-08-20 pair
+  standing further down. `$()` is querySelector, so the old pair is
+  dead markup that still fools any DOM count. Delete the old pair; add
+  an assembled-HTML unique-id test over EVERY template (deck, page,
+  shell) — no special-casing these two ids.
+
+- [ ] **T135 · M — One owner for every transient menu.** File, Present,
+  Background, Layouts, Page, Thumbnails and the autosave menu each
+  carry their own open/close pair; each knows only the siblings its
+  author remembered, which is why any two independently-wired menus
+  can stack. One registry: opening any registered menu closes the one
+  before it, keeps `aria-expanded` true exactly while its menu shows,
+  and closes on outside click and Escape.
+
+- [ ] **T136 · M — One owner for the inspector panes.** The
+  "one pane open at a time" comment is aspiration: showTidyPane hides
+  five named siblings, Standardise hides a DIFFERENT five and omits
+  tidypane, Check hides none. The hand-lists have already diverged
+  twice. One controller owns the single open `.selpane`, its trigger's
+  pressed state, and closing on slide/mode change; no feature
+  enumerates sibling selectors again.
+
+- [ ] **T137 · M — The context menu must be readable.** A single
+  readable column (the 3-column `.sh-menu` grid is for icon galleries,
+  not word rows), no horizontal scrolling, immediate actions first,
+  and the long tail of sections behind one "More…" level rather than
+  13 headings deep. The advanced rows keep working — this phase is
+  geometry and grouping, not the Phase-2 inspector move.
+
+- [ ] **T138 · S — Pin what Phase 0 fixed.** The unique-id test
+  (T134); pins that every registered menu/pane goes through the one
+  controller; and the live-drive evidence recorded in docstrings. The
+  review's full browser-test list (screenshots, keyboard paths) needs
+  a browser in CI this repo does not have — recorded as the honest
+  gap, not silently skipped.
+
+### Phase 1+ — one vocabulary, one default (filed, scoped, partly user calls)
+
+- [ ] **T139 · design first + USER — 109 ribbon layouts → three.**
+  The catalogue is 17% of deck-editor JS (6,502 lines) and each layout
+  can re-home controls AND change where selection lands, so no two
+  users share an interface. The review wants Standard / Simple /
+  Compact plus at most one custom. This deletes a shipped feature —
+  the user must call it before any code.
+
+- [ ] **T140 · M — The label glossary.** One stable name per action,
+  spelled without a tooltip: Timeline→Animations, Clear slide→Remove
+  all animations, Keep shape→Lock aspect ratio, Front/Back→Bring to
+  front/Send to back, Maths→Equation, QR→QR code, Flip book→Image
+  sequence (decide), Design-inside-Design→Style system,
+  Standardise→Find inconsistent styles, Check for drift→Find style
+  drift. Plus the four found lies: Background's stale "lives under
+  File" tooltip, "Put all 0 of them there" as a primary button,
+  the style preview drawn on chrome instead of the slide background,
+  and the empty-notebook state that names an action with no door.
+
+- [ ] **T141 · S — Selection must not steal an open workflow.**
+  Following the Timeline pane's own instruction ("Select an item
+  first") switches the ribbon to Object, moving the user away from the
+  controls they just opened. With a pane open, selection should reveal
+  the contextual tab without activating it.
+
+- [ ] **T142 · design first — One Review centre.** Check (print),
+  Tidy (layout), Standardise (styles), Check for drift (styles again)
+  and Export for review are five doors to "is this ready?". Map the
+  existing engines under one worded Review surface with severity,
+  scope and navigation — reuse, do not rewrite.
+
+- [ ] **T143 · M — File owns files.** The 19-row File menu mixes file
+  ops, source sync, page design, exports, settings and two destructive
+  rows with no section names. Split ownership (File / Sources /
+  Export / Design / Settings / Manage) and make the top bar's save
+  area one component — Save, "Saved to project · just now ▾", autosave
+  as a setting inside that menu rather than a second cyan button.
+
+- [ ] **T144 · S — First-class doors for Chart and Master.** T117's
+  chart inserts only from a right-click; T115's master hides in two
+  Layouts menus. Insert gets a worded Chart button; Design gets
+  "Master: <name> ▾" naming the current master with the panel behind
+  it; the no-notebook empty column gets its worded Open notebooks
+  button.
+
+- [ ] **T145 · design first + USER — Filter cyclers → labelled menus.**
+  Plots/Markdown/Code/Output cycle three states invisibly (the Output
+  tooltip still describes two). The review wants explicit menus
+  (Show / Collapse / Hide / Types…) and a Document|Raw|Tree segmented
+  mode. This redesigns a confirmed behaviour — the user calls it.
+
+- [ ] **T146 · M — Words plus icons, in the rendered UI.** The
+  project's own twice-confirmed invariant, audited: theme/help/support
+  buttons, the presentations-panel collapse pair, the advanced filter
+  doors, and the slide-strip row actions are icon-only today, with the
+  icon-contract test explicitly allow-listing them. Fix the surfaces
+  (worded menus where width is tight) and shrink the allow-list.
+
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,
