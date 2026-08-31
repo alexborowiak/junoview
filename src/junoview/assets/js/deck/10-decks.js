@@ -484,6 +484,11 @@
        old deck's tree (T90) */
     histHead=null;histBranch='';
     deckZoom=0;   /* zoom is per-session, reset per presentation */
+    /* ...and then the NEW deck's stored head is read back, through the
+       history queue so any snapshot queued after this waits for it
+       (T127). The nulls above stay: they are the safe answer while the
+       read is in flight. */
+    histSeed();
     var d=loadDraft(name);
     if(d){pres=d;source='draft';histReset();return;}
     var s=savedByName(name);

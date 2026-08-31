@@ -1207,7 +1207,10 @@
        reachable -- the same rule the notebook's own snapshots follow,
        and deduped, so opening and closing without touching anything
        costs nothing (T32) */
-    snapTake('opened');
+    /* the opening snapshot waits for the stored head pointer, so a
+       reload's first entry descends from where you actually were
+       rather than founding a new root (T127) */
+    snapTake('opened',undefined,histSeed());
     status();
     setUIMode(m||'view');
     routeSync();

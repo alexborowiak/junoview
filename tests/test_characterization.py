@@ -607,8 +607,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # button IS the size readout -- the real percentage used to sit in a
 # hidden span while the label said 100% forever. deck.html and five
 # deck.js fragments; driven live, each row scaling only its own kind.
-EXPECTED_MD5 = "97a08e99e4cd430b60e9c4a5ce282cfe"
-EXPECTED_BYTES = 3289652
+# Moved 2026-08-31 for T127: where you are in the version tree survives a
+# reload. A small head pointer {h, br} now lives beside the IndexedDB
+# index, written by every head-mover (snapWrite, histRestoreDeck) and
+# carried by rename; histSeed reads it back through the history queue on
+# every load, validating against the index and falling back to the TIP
+# for pre-pointer histories; openDeck's opening snapshot gates on the
+# seed via snapTake's existing ready parameter. deck.js only.
+EXPECTED_MD5 = "af37df9e81697fe8c1a75935cd865dcc"
+EXPECTED_BYTES = 3292452
 
 
 def _render_example() -> str:

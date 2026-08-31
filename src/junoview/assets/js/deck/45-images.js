@@ -2004,6 +2004,46 @@
     histOps=run.then(function(){});
     return run;
   }
+  /* WHERE YOU ARE IN THE TREE, between sessions (T127).
+     histHead and histBranch were runtime variables and nothing else:
+     a page reload forgot both, the chip reverted to "on main", and the
+     NEXT save wrote a snapshot with no parent -- a brand-new root,
+     quietly fracturing the very tree T90 exists to keep. The pointer
+     is one small idb value beside the index; seeding validates it
+     against the index (the pointed-at snapshot can have been evicted)
+     and a history with no pointer at all -- one from before this fix --
+     falls back to the TIP, which is the old linear assumption and
+     repairs the story rather than re-rooting it. */
+  function histPtrKey(name){return histKeyFor(name)+':head';}
+  function histPtrSave(name){
+    return idbPut(histPtrKey(name),{h:histHead||'',br:histBranch||''})
+      .catch(function(){});
+  }
+  function histSeed(){
+    var name=pres&&pres.name;
+    if(!name) return Promise.resolve(false);
+    return histRun(function(){
+      return idbGet(histPtrKey(name)).then(function(ptr){
+        return histIndexAt(name).then(function(ix){
+          /* the deck can have been switched while this read was queued;
+             writing the OLD deck's pointer onto the new one would be
+             the exact cross-parenting loadPresentation guards against */
+          if(!pres||pres.name!==name) return false;
+          var hit=null;
+          ix.forEach(function(e){
+            if(ptr&&e.id===ptr.h) hit=e;});
+          if(hit){
+            histHead=hit.id;
+            histBranch=(ptr.br!=null&&ptr.br!=='')?ptr.br:(hit.br||'');
+          } else if(ix.length){
+            var tip=ix[ix.length-1];
+            histHead=tip.id;histBranch=tip.br||'';
+          } else {histHead=null;histBranch='';}
+          return true;
+        });
+      });
+    });
+  }
   function histIndexAt(name){
     return idbGet(histKeyFor(name)).then(function(v){
       return Array.isArray(v)?v:[];
@@ -2083,6 +2123,8 @@
     return idbPut(histVKeyFor(cap.name,id),cap.txt).then(function(){
       return idbPut(histKeyFor(cap.name),next);
     }).then(function(){
+      return histPtrSave(cap.name);   /* the head moved (T127) */
+    }).then(function(){
       /* the record goes only after the index no longer names it, so a
          crash between the two leaves an orphan rather than a listed
          snapshot that cannot be opened */
@@ -2118,6 +2160,13 @@
         })).then(function(copied){
           var next=copied.filter(function(ent){return !!ent;});
           return idbPut(histKeyFor(newName),next).then(function(){
+            /* the head pointer renames with its history (T127) */
+            return idbGet(histPtrKey(oldName)).then(function(ptr){
+              if(ptr) return idbPut(histPtrKey(newName),ptr);
+            }).catch(function(){});
+          }).then(function(){
+            return idbDel(histPtrKey(oldName)).catch(function(){});
+          }).then(function(){
             return idbDel(histKeyFor(oldName));
           }).then(function(){
             return Promise.all(ix.map(function(ent){
@@ -2455,6 +2504,7 @@
        about what came before (T90). */
     if(fromId!==undefined) histHead=fromId||null;
     if(branch!==undefined) histBranch=branch||'';
+    if(fromId!==undefined||branch!==undefined) histPtrSave(pres.name);
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     var copy=JSON.parse(JSON.stringify(then));
     copy.name=pres.name;      /* the NAME is where you are, not where it was */

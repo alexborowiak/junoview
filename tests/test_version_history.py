@@ -127,7 +127,9 @@ def test_the_same_snapshot_rule_the_notebook_uses(out):
     crash between the two leaves an orphan rather than a listed snapshot
     that cannot be opened.
     """
-    assert "snapTake('opened');" in out
+    # T127 gates the opening snapshot on the stored head pointer, so a
+    # reload's first entry descends from where you actually were
+    assert "snapTake('opened',undefined,histSeed());" in out
     # Browser Save captures before writing, and records only beyond its
     # failed-write return. The pointer write is deliberately best-effort.
     browser = out[out.index("if(saveBtn) saveBtn.addEventListener"):
@@ -353,3 +355,55 @@ def test_a_different_deck_starts_on_its_own_trunk(out):
     load = load[:load.index("function ")+400]
     assert "histHead=null;histBranch='';" in load
 
+
+
+# ---------------------------------------------------------------------------
+# the branch survives a reload (T127)
+# ---------------------------------------------------------------------------
+#
+# Driven live 2026-08-31: branch "reload-branch" started, the page fully
+# reloaded, and the reopened history read "on reload-branch" with "you
+# are here" on the right snapshot -- where before the fix the chip
+# reverted to "on main" and the next save founded a parentless root.
+# The raw IndexedDB pointer was read back directly: {h:<head id>,
+# br:"reload-branch"}. A fresh deck's opened+saved snapshots still
+# parent correctly through the gated path, and the dedupe still refused
+# two identical-content saves during the same run.
+
+
+def test_where_you_are_in_the_tree_is_stored_beside_the_index(out):
+    """histHead/histBranch were runtime variables and nothing else: a
+    reload forgot both, and the next save quietly fractured the tree
+    T90 exists to keep."""
+    assert "function histPtrKey(name){return histKeyFor(name)+':head';}" in out
+    assert "function histPtrSave(name){" in out
+    assert "function histSeed(){" in out
+    # every writer persists: a new snapshot, and a restore/branch jump
+    assert "return histPtrSave(cap.name);   /* the head moved (T127) */" in out
+    assert ("if(fromId!==undefined||branch!==undefined) "
+            "histPtrSave(pres.name);") in out
+
+
+def test_the_seed_validates_and_falls_back_to_the_tip(out):
+    """The pointed-at snapshot can have been evicted, and a history from
+    before the pointer existed has none at all -- the tip is the old
+    linear assumption and REPAIRS the story rather than re-rooting it.
+    And a deck switched mid-read must not inherit the old deck's
+    pointer, which is the exact cross-parenting loadPresentation's
+    reset guards against."""
+    assert "if(!pres||pres.name!==name) return false;" in out
+    assert "var tip=ix[ix.length-1];" in out
+    assert "histHead=tip.id;histBranch=tip.br||'';" in out
+
+
+def test_the_opening_snapshot_waits_for_the_seed(out):
+    """snapTake's ready-gate already existed for the save path; the
+    opened snapshot now rides it too, so a reload's first entry descends
+    from where you actually were."""
+    assert "snapTake('opened',undefined,histSeed());" in out
+
+
+def test_a_rename_carries_the_pointer_with_its_history(out):
+    assert "return idbGet(histPtrKey(oldName)).then(function(ptr){" in out
+    assert "if(ptr) return idbPut(histPtrKey(newName),ptr);" in out
+    assert "return idbDel(histPtrKey(oldName)).catch(function(){});" in out

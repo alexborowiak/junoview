@@ -2272,7 +2272,7 @@ one boot-killing bug the drive itself surfaced.
   code-pinned rather than driven — this pane reports
   prefers-reduced-motion, which already suppresses them here.
 
-- [ ] **T127 · S — A reload forgets which branch you are on.** [deck.js]
+- [x] **T127 · S — A reload forgets which branch you are on.** [deck.js]
   *Audited (T90 revisit).* Branching itself verified live — the tree, the
   fork ("2 branches from here"), the "on experiment-1" chip. But
   `histHead`/`histBranch` are runtime-only: after a page reload nothing
@@ -2280,6 +2280,15 @@ one boot-killing bug the drive itself surfaced.
   the NEXT save writes a snapshot with no parent — a new root, quietly
   fracturing the tree the feature exists to keep. Persist head+branch
   beside the IndexedDB index and seed them in `openDeck`.
+  *Done 2026-08-31.* A `{h, br}` pointer beside the index, written by
+  every head-mover and carried by rename; `histSeed` reads it back
+  through the history queue, validates against the index, and falls
+  back to the tip for pre-pointer histories; the opening snapshot gates
+  on the seed. Driven live: branch → full reload → "on reload-branch"
+  with "you are here" on the right snapshot, pointer read raw from
+  IndexedDB. Two false alarms during the drive both dissolved on
+  inspection — the "missing" saves were unchanged content the dedupe
+  was RIGHT to refuse.
 
 - [ ] **T128 · S — Paste: prose should land, and code needs an escape
   hatch on the canvas.** [deck.js] *Audited (T92 revisit): code paste
