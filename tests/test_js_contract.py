@@ -422,3 +422,24 @@ def test_eval_time_deck_work_finds_its_stores_already_declared():
         assert out.index(store) < init, (
             f"{store} is declared after the eval-time projectPres "
             "initialiser that can reach it -- the T133 boot-death shape")
+
+def test_no_template_emits_a_duplicate_id():
+    """One id, one element (T134 / JVUX-04). deck.html carried a second
+    deck-status/qat-auto pair for two days short of a year of T70's
+    life: $() is querySelector, so leftovers from a half-finished move
+    are dead markup that still fools every DOM count. No allow-list --
+    a duplicate id is always a bug in the assembled editor."""
+    import re
+    from collections import Counter
+
+    from junoview import assets
+
+    for name, html in [("deck.html", assets.deck_html()),
+                       ("page.html", assets.page_template()),
+                       ("shell.html", assets.shell_template()),
+                       ("help.html", assets.help_html()),
+                       ("web-loader.html", assets.web_loader())]:
+        ids = re.findall(r'id="([^"{}]+)"', html)
+        dupes = {k: v for k, v in Counter(ids).items() if v > 1}
+        assert not dupes, f"{name} emits duplicate id(s): {dupes}"
+

@@ -2555,13 +2555,17 @@ competing ways to reach them.
 
 ### Phase 0 — repair the interaction substrate
 
-- [ ] **T134 · S — One save readout, and no duplicate ids anywhere.**
+- [x] **T134 · S — One save readout, and no duplicate ids anywhere.**
   deck.html emits `deck-status` and `qat-auto` twice: T70 (2026-08-29)
   added the improved pair beside Save and left the 2026-08-20 pair
   standing further down. `$()` is querySelector, so the old pair is
   dead markup that still fools any DOM count. Delete the old pair; add
   an assembled-HTML unique-id test over EVERY template (deck, page,
   shell) — no special-casing these two ids.
+  *Done 2026-08-31.* The 2026-08-20 pair deleted (a comment stands in
+  its place naming the incident); the unique-id test covers deck, page,
+  shell, help and web-loader with no allow-list, and confirmed the
+  other four templates were already clean.
 
 - [ ] **T135 · M — One owner for every transient menu.** File, Present,
   Background, Layouts, Page, Thumbnails and the autosave menu each

@@ -690,8 +690,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # paint (never stamped), bg resolves slide > master > deck, pptx bakes
 # the look (flattening recorded), and the Masters panel hangs off both
 # Layouts menus and the slide right-click.
-EXPECTED_MD5 = "d44b0b23679d40ec51db4c1f4ee16e18"
-EXPECTED_BYTES = 3375579
+# Moved 2026-08-31 for T134: the dead second deck-status/qat-auto pair
+# left behind by T70 is gone (JVUX-04), and a unique-id test now fails
+# on ANY duplicate id in any template.
+EXPECTED_MD5 = "b3932c1a4aa0bfdd9f4545d6b6aa272f"
+EXPECTED_BYTES = 3375723
 
 
 def _render_example() -> str:

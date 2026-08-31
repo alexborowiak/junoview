@@ -216,11 +216,12 @@
     <input class="qat-nameedit" id="qat-nameedit" type="text" hidden
       spellcheck="false" autocomplete="off" aria-label="Presentation name">
     <span class="deck-spring"></span>
-    <span class="deck-status" id="deck-status"></span>
-    <!-- how often it saves itself, said out loud rather than buried as a
-         File-menu toggle you had to open the menu to read -->
-    <button class="dbtn qat-btn" id="qat-auto" hidden
-      aria-haspopup="true"></button>
+    <!-- The SECOND deck-status/qat-auto pair stood here from 2026-08-20
+         until 2026-08-31: T70 moved the readout beside Save and left
+         this one behind, and because $() is querySelector the leftovers
+         were dead markup that still fooled every DOM count (JVUX-04).
+         The unique-id test in test_js_contract.py now fails on ANY
+         duplicate, so a half-finished move cannot park here again. -->
     <!-- Zoom is not here any more. It went to the ribbon, then to this
          bar, and it was wrong in both: it is a property of the CANVAS, so
          it belongs at the canvas, and the bottom-right corner is where
