@@ -40,17 +40,20 @@ def _layouts(out: str) -> list[tuple[str, list[str]]]:
 
 
 def test_the_catalogue_is_a_pile_not_a_handful(out):
-    """The ask was "heaps of different layouts, so I can try a bunch and
-    see what works" (2026-08-25). A chooser with three entries is a
-    decision wearing a disguise.
-    """
+    """REWRITTEN for T139 (user decision, 2026-09-01): the pile became
+    NINE. The 108-alternative catalogue was 17% of the deck editor's
+    JavaScript and meant no two users shared an interface; the user
+    chose Default plus eight of the best, each a genuinely different
+    way of working rather than a permutation. The deleted entries are
+    a git log -p away."""
     lays = _layouts(out)
-    assert len(lays) >= 15, f"only {len(lays)} layouts"
-    # ...and they span the space rather than being one idea relabelled
-    ids = " ".join(i for i, _ in lays)
-    for family in ("familiar-", "scope-", "sources-", "verbs-", "tasks-",
-                   "density-", "journey-"):
-        assert family in ids, f"no {family} layout in the catalogue"
+    ids = [lid for lid, _ in lays]
+    assert ids == ["familiar-office-ribbon", "scope-deck-slide-object",
+                   "sources-own-tab", "density-everyday-first",
+                   "journey-poster-first", "density-one-row",
+                   "web-canvas-rail", "radical-ten-then-more"], ids
+    # a stored id from the old hundred lands on Default, said out loud
+    assert "you are on Default now" in out
 
 
 def test_every_layout_places_exactly_the_same_controls(out):
@@ -371,7 +374,8 @@ def test_every_family_the_gallery_declares_has_layouts_in_it(out):
     i = out.index("var RBN_FAMILIES=[")
     block = out[i:out.index("\n  ];", i)]
     declared = re.findall(r"\['([a-z]+)',", block)
-    assert len(declared) >= 8, declared
+    # five families since the T139 cut to nine layouts
+    assert len(declared) == 5, declared
     # font-family: would match a bare `family:'...'`, hence the [^-]
     used = set(re.findall(r"[^-]family:'([a-z]+)'", out))
     assert set(declared) == used, (
@@ -380,19 +384,14 @@ def test_every_family_the_gallery_declares_has_layouts_in_it(out):
 
 
 def test_the_catalogue_recreates_the_applications_people_already_use(out):
-    """"Think about what photoshop and power point and others have and
-    recreate those" (2026-08-25). Somebody who uses one of these every
-    day should find the shape of it here -- the tab names, what shares a
-    group, what is up front -- which is a harder promise than "there are
-    a lot of layouts", and the one that was actually asked for.
-    """
-    ids = " ".join(i for i, _ in _layouts(out))
-    for app in ("microsoft-powerpoint-2003", "microsoft-word",
-                "adobe-raster-options-bar", "adobe-layout-indesign-frames",
-                "consumer-pres-keynote", "consumer-design-figma-panel",
-                "opensource-inkscape", "opensource-blender",
-                "web-slash-bar", "radical-a-to-z"):
-        assert app in ids, f"no {app} in the catalogue"
+    """REWRITTEN for T139: of the two dozen product imitations, only
+    the Office taxonomy survived the cut -- it is the one hands
+    actually arrive trained on. The rest were retired by the user's
+    decision and live in git history."""
+    assert "familiar-office-ribbon" in out
+    for gone in ("microsoft-powerpoint-2003", "adobe-raster-options-bar",
+                 "consumer-pres-keynote", "opensource-blender"):
+        assert gone not in out, f"{gone} came back"
 
 
 def test_the_gallery_is_filtered_by_what_a_layout_would_give_you(out):

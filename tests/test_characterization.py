@@ -728,8 +728,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # its own on 2026-08-23 and the doc toolbar was left behind), the
 # panel foot pair worded with distinct icons, the deck Ko-fi link
 # worded. Verified single-row at 1280 wide.
-EXPECTED_MD5 = "06e9264526e05742cdcfcc8deea93408"
-EXPECTED_BYTES = 3380076
+# Moved 2026-09-01 for T139 (user decision): 109 ribbon layouts
+# became nine — Default plus eight genuinely different ways of
+# working; ~5,500 lines of catalogue deleted, stale stored ids land
+# on Default with a one-time notice that waits for the deck to be
+# on screen, and the chooser no longer sits inside the tablist role.
+EXPECTED_MD5 = "ef1aea8903e4e5e0fe2ac3647b346506"
+EXPECTED_BYTES = 3072543
 
 
 def _render_example() -> str:

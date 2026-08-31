@@ -389,7 +389,13 @@
        page-level Home tools no longer reshape themselves after an ordinary
        canvas click (2026-08-26, user: "just have an own tab for the
        selected object"). -->
-  <div class="rbn-tabs" id="rbn-tabs" role="tablist" hidden>
+  <div class="rbn-tabs" id="rbn-tabs" hidden>
+    <!-- the tablist ROLE wraps only the four real tabs (T139 /
+         JVUX-05): the layouts chooser beside them is a button,
+         and sitting inside the role it read as a fifth tab to
+         assistive tech. display:contents keeps the flex row
+         identical. -->
+    <span class="rbn-tabset" role="tablist">
     <!-- HOME also carries View and Output now. Guides, Layers, Print
          check and the object list are things you reach for constantly and
          WHILE something is selected, so a tab of their own meant leaving
@@ -416,6 +422,7 @@
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
+    </span>
     <!-- RIBBON layout, not slide layout. This permanent door sits outside
          #edit-tools, so no chosen layout, tab filter, per-button preference
          or width rung can hide the way to choose another arrangement. -->

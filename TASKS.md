@@ -2641,12 +2641,29 @@ competing ways to reach them.
 
 ### Phase 1+ — one vocabulary, one default (filed, scoped, partly user calls)
 
-- [ ] **T139 · design first + USER — 109 ribbon layouts → three.**
+- [x] **T139 · design first + USER — 109 ribbon layouts → three.**
   The catalogue is 17% of deck-editor JS (6,502 lines) and each layout
   can re-home controls AND change where selection lands, so no two
   users share an interface. The review wants Standard / Simple /
   Compact plus at most one custom. This deletes a shipped feature —
   the user must call it before any code.
+  *Decided and done 2026-09-01.* The user's call: "Standard, simple,
+  compact, and a few others you think might work. Maybe like 9 of the
+  best?" Kept: Default, plus Office ribbon (the PowerPoint-trained
+  hands), Deck-slide-object (the scope taxonomy), Sources tab (the
+  notebook-first workflow), Everyday first (frequency), Poster first,
+  Canvas rail (the board-tool feel), Everything in one row (density ≈
+  compact) and Ten things then More (simplicity ≈ simple). The other
+  100 — ten sub-variants each of five bases and two dozen product
+  imitations — deleted (~5,500 lines, the file is 1,022 now, down from
+  6,502); they are one `git log -p` away and the cut essay in the file
+  warns against re-growing the pile. A stored id from the old hundred
+  lands on Default with a one-time notice that WAITS for the deck to
+  be on screen (the first version toasted into a hidden editor —
+  caught live); the chooser sits beside the tabs but outside the
+  tablist ROLE now (display:contents wrapper), so it stops reading as
+  a fifth tab to assistive tech. The three pile-philosophy tests were
+  rewritten to pin the nine and the decision.
 
 - [x] **T140 · M — The label glossary.** One stable name per action,
   spelled without a tooltip: Timeline→Animations, Clear slide→Remove
