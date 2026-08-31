@@ -592,8 +592,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # that resolves a typed slide NUMBER to a sid once, a review lint for a
 # jump whose target has been deleted, and the hover/focus outline.
 # deck.js, deck.css, deck_schema.py and DECK-FORMAT.md.
-EXPECTED_MD5 = "c8388259ca96cb7c740196bca69bf374"
-EXPECTED_BYTES = 3282827
+# Moved 2026-08-31 for T133: the three prepared-frame cache stores moved
+# above EMBED's machinery in 10-decks. `var projectPres=...map(normPres)`
+# runs AT EVAL, and a saved deck carrying inline emb walked embStore ->
+# dropFrameCache -> Object.keys(frameNodeCache) six hundred lines before
+# the declaration -- hoisted name, undefined value, and the whole editor
+# silently dead at boot. Comment-and-position change only.
+EXPECTED_MD5 = "e0e2a7740bd98c55cc5ea8e011e4317f"
+EXPECTED_BYTES = 3283696
 
 
 def _render_example() -> str:

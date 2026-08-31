@@ -383,3 +383,30 @@ def test_no_name_is_declared_twice_at_the_top_of_the_one_iife():
     assert not dupes, (
         "declared twice at the top level of the one IIFE (the later one "
         f"silently wins): { {k: v for k, v in sorted(dupes.items())} }")
+
+
+def test_eval_time_deck_work_finds_its_stores_already_declared():
+    """The boot-order trap, pinned at its one known eval-time exception.
+
+    99-boot.js owns all load-time execution -- except one initialiser
+    that cannot wait: ``var projectPres=...map(normPres)`` in 10-decks
+    runs at EVAL, and when a saved deck carries inline ``emb`` it walks
+    normPres -> embStore -> dropFrameCache -> Object.keys(frameNodeCache).
+    On 2026-08-31 those cache stores were declared six hundred lines
+    AFTER that initialiser: hoisted names, unassigned values, and the
+    whole editor silently gone at boot for any project whose saved deck
+    had embedded copies (T133). ``node --check`` cannot see it and no
+    substring can, so the ORDER is the contract: every store that
+    eval-time path touches must be assigned before the initialiser runs.
+    """
+    from junoview import assets
+
+    out = assets.deck_js()
+    # the fuller form, because a comment beside the store declarations
+    # QUOTES `var projectPres=` and .index would find the quote first
+    init = out.index("var projectPres=(APP.project")
+    for store in ("var EMBED={}", "var embItems={}",
+                  "var frameNodeCache={}", "var snapNodeCache=new Map()"):
+        assert out.index(store) < init, (
+            f"{store} is declared after the eval-time projectPres "
+            "initialiser that can reach it -- the T133 boot-death shape")

@@ -27,6 +27,17 @@
   var EMBED={};          /* ns -> {title,kind,html,code} */
   var embItems={};       /* ns -> the virtual item resolveRef hands out */
   var embSaveT=null;
+  /* the prepared-frame caches (see the invalidation essay above
+     dropFrameCache). Declared HERE, not beside their functions,
+     because embStore -- which dropFrameCache serves -- already runs
+     during EVAL via `var projectPres=...map(normPres)` when a saved
+     deck carries inline emb. On 2026-08-31 that path met the
+     declarations sitting six hundred lines later: hoisted names,
+     unassigned values, Object.keys(undefined), and the whole editor
+     silently gone at boot (T133). Same trap 99-boot.js documents. */
+  var frameNodeCache={};
+  var snapNodeCache=new Map();      /* snapshot html -> {part: node} */
+  var verNodeCache=new WeakMap();   /* version card -> {part: node} */
   function embKey(ref){
     if(!ref) return null;
     if(EMBED[ref]) return ref;
@@ -913,9 +924,11 @@
          key), and locking/unlocking picks a different code path.
      snapNodeCache is content-addressed (keyed by the snapshot HTML
      string itself), so it cannot go stale by construction. */
-  var frameNodeCache={};
-  var snapNodeCache=new Map();      /* snapshot html -> {part: node} */
-  var verNodeCache=new WeakMap();   /* version card -> {part: node} */
+  /* the three cache stores are DECLARED far above, beside EMBED
+     (T133): embStore -> dropFrameCache reads frameNodeCache, and
+     normPres runs embStore AT EVAL TIME through the projectPres
+     initialiser -- so a declaration here was six hundred lines too
+     late the first time a saved deck arrived carrying inline emb. */
   /* drop cached frame nodes for one notebook stem, one full ref, or all
      (both key shapes are prefixes of 'stem::anchor::part') */
   function dropFrameCache(stemOrRef){

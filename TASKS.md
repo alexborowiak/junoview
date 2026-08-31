@@ -2224,6 +2224,100 @@ What does NOT work is one wrapper, which is T122.
   not the same as not offering. `source_label()` already names the kind
   and `_list_dir` already returns it.
 
+### The 2026-08-31 revisit — "the hard ones", audited live
+
+The user asked for the hard features to be re-verified: present-mode
+options, clones/matching, the slide designer, custom layouts, heading
+styles, standardise + outlines, version branches, paste-code, per-object
+versions, and sources-with-refresh. Six readers mapped every one against
+the code; the claims were then DRIVEN in the real app. Everything named
+exists; the entries below are what the audit found short of the ask, plus
+one boot-killing bug the drive itself surfaced.
+
+- [x] **T133 · S — A saved deck with inline embeds kills the whole
+  editor at boot.** *Found by driving, 2026-08-31: three server starts in
+  a row booted to a dead editor.* `var projectPres=…map(normPres)` in
+  10-decks runs AT EVAL, and when a saved deck carries an inline `emb`
+  dict it walks `normPres → embStore → dropFrameCache →
+  Object.keys(frameNodeCache)` — with the cache stores declared six
+  hundred lines LATER. Hoisted names, unassigned values, TypeError, and
+  the IIFE dies exactly the way 99-boot.js warns. Latent until a project
+  file holds a deck with inline embeds, which "Update figures" +
+  save produces in the ordinary course of use.
+  *Done 2026-08-31.* The three cache stores are declared beside `EMBED`,
+  above everything the eval-time path reaches, with the incident written
+  at both sites; a new contract test pins the ORDER in the assembled
+  file, because `node --check` cannot see this and no substring can.
+  Verified live: the same project file that killed three boots now opens.
+
+- [x] **T126 · M — The Talk panel finished to the T88 ask.** [deck.js]
+  *Audited: the panel shipped half of what the user described.* What was
+  missing, in their own words: "you can click options into it and just
+  do like 'headings', 'paragraphs', 'captions'" — no per-type sizing
+  existed, only the global multiplier; "tick on or off in present menu"
+  — no row in the Present menu, only a corner button at opacity .35 that
+  exists once you are already presenting; "goes without animations" —
+  Skip builds left slide transitions playing; and the current text size
+  lived in a HIDDEN span, so the visible label said 100% forever.
+  *Done 2026-08-31.* Three per-type rows (Headings / Body text /
+  Captions), each multiplying on top of the global size, bucketed by the
+  box's named style (`isHeadingStyle`, `caption`/`capOf`, else body) with
+  title-slide titles counting as headings; a `#pl-talk` "Talk settings…"
+  row in the Present menu that presents with the panel open; the
+  animations toggle now also gates `playFlip`, so transitions stop too
+  (flip books still step — frames are content); and the reset button IS
+  the readout. Driven live: headings +2 grew only the heading (125%),
+  captions −1 shrank only the caption (89%), global × composed on top
+  (112%), reset restored all four to 100%. The transition gate is
+  code-pinned rather than driven — this pane reports
+  prefers-reduced-motion, which already suppresses them here.
+
+- [ ] **T127 · S — A reload forgets which branch you are on.** [deck.js]
+  *Audited (T90 revisit).* Branching itself verified live — the tree, the
+  fork ("2 branches from here"), the "on experiment-1" chip. But
+  `histHead`/`histBranch` are runtime-only: after a page reload nothing
+  seeds them from the stored index, so the chip reverts to "on main" and
+  the NEXT save writes a snapshot with no parent — a new root, quietly
+  fracturing the tree the feature exists to keep. Persist head+branch
+  beside the IndexedDB index and seed them in `openDeck`.
+
+- [ ] **T128 · S — Paste: prose should land, and code needs an escape
+  hatch on the canvas.** [deck.js] *Audited (T92 revisit): code paste
+  verified live (mono + 27 highlight spans); prose paste created
+  NOTHING.* Make plain text paste onto the canvas a normal text box
+  (code detection stays for code); make canvas Ctrl+Shift+V paste as
+  plain text when the internal buffer is empty, so a wrong code
+  detection has the same one-key out the in-box path already has.
+  Python-only highlighting is accepted and recorded, not fixed.
+
+- [ ] **T129 · S — Three doors the audit found missing.** [deck.js]
+  (a) Match objects has no canvas right-click row — the menu that
+  already knows what you clicked never offers the one feature named
+  "match objects"; (b) placing a component instance is right-click-only
+  WITH a selection — an empty canvas has no component door at all;
+  (c) the Apply dialog handles shapes/figures in its own code but is
+  reachable only from the TEXT Styles menu. All three are menu rows on
+  surfaces that exist; none costs ribbon width.
+
+- [ ] **T130 · M — The design surface, closer to the described view.**
+  [deck.js] *Audited (T87 revisit): full-screen, drag-default-position,
+  apply-to-all, outlines toggle all real.* Missing vs the ask: the put
+  gesture is all-wearers-only (no section/range scope); outline cells
+  name only "Slide N" on the whole cell (never the title, never per
+  object); outlines cannot be filtered to certain slides; and objects in
+  the miniatures cannot be moved from there ("or you can just move it
+  from here as well").
+
+- [ ] **T131 · M — Layout ideas: options for the objects you have.**
+  [deck.js] *Audited: the defining gesture of "a slide designer" is
+  absent* — nowhere does the app compute several candidate layouts of
+  THIS slide's objects and show them to pick from; choice today is three
+  spacing presets applied blind, and Home's "Layouts ▾" silently hides
+  the auto-arrange and custom-arrangement rows that Design's same-named
+  menu carries. Build the preview chooser (tidy presets + best-fitting
+  templates + best-fitting saved arrangements, drawn with miniDiagram,
+  click to apply); give Home's menu parity with Design's.
+
 - [ ] **T125 · design first — What a notebook has that a source does
   not, on purpose.** The other half of "notebooks to be a whole thing in
   itself": code trails, the dependency graph, variables, git history,
