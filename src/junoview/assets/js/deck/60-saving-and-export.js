@@ -1684,6 +1684,16 @@
         note.frame=ent.f;
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
+        /* the master's look is BAKED into the export (T115): furniture
+           items first (under the content) and the inherited
+           background. PowerPoint-side inheritance would mean real
+           slideLayout parts per master; the flattening is the recorded
+           cut -- the pixels are right, the linkage does not travel. */
+        var mm3=mastOf(ent.s);
+        if(mm3&&mm3.cmp){
+          var msyn3=mastSynth(mm3);
+          if(msyn3) its=pptxItems(msyn3,note,ink,null).concat(its);
+        }
         its.forEach(function(it){
           if(it.link&&it.link.to==='slide')
             it.link=(it.link.si in firstOut)
@@ -1701,7 +1711,8 @@
            goes across as it is. A flip book's extra output slides share
            the source slide's notes, which is the same thing the
            presenter sees on each of them. */
-        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its,
+        return {bg:bgSolid(tokVal(ent.s.bg)
+            ||(mm3&&tokVal(mm3.bg))||bg),items:its,
           trans:transFor(ent.i),notes:ent.s.notes||''};
       }),
     });

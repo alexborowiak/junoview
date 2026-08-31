@@ -396,6 +396,208 @@
     cinstSeq++;
     return 'i'+cinstSeq+Math.random().toString(36).slice(2,5);
   }
+  /* ---- MASTERS (T115) ----------------------------------------------
+     A master is a named LOOK slides inherit live: a background and one
+     furniture component, resolved at render time and never stamped --
+     change the master and every wearer follows on its next paint.
+     Deliberately NOT components rebuilt: a component is reusable
+     CONTENT with instance identity (cmp/ci/cinst, push/detach); a
+     master is slide-level INHERITANCE, and its furniture simply IS a
+     component, so editing the furniture is the component verbs that
+     already ship -- edit any placed instance and push the look.
+     pres.masters = {id: {name, bg, cmp, pos}}; sl.mast = id. */
+  function mastStore(){
+    if(!pres.masters) pres.masters={};
+    return pres.masters;
+  }
+  function mastOf(s2){
+    var id=s2&&s2.mast;
+    return (id&&pres.masters&&pres.masters[id])||null;
+  }
+  function nextMastId(){
+    var st=mastStore(),n=1;
+    while(st['m'+n]) n++;
+    return 'm'+n;
+  }
+  /* the furniture as a throwaway slide: the component's items
+     materialised at the master's corner, with NO instance identity --
+     this is a rendering of the definition, not an instance of it */
+  function mastSynth(m){
+    var def=m&&m.cmp&&cmpStore()[m.cmp]; if(!def) return null;
+    var W=def.w||20,H=def.h||20,pos=m.pos||'c';
+    var ox=(pos==='tl'||pos==='bl')?3
+      :(pos==='tr'||pos==='br')?(97-W):(50-W/2);
+    var oy=(pos==='tl'||pos==='tr')?3
+      :(pos==='bl'||pos==='br')?(97-H):(50-H/2);
+    var s2={annots:[]};
+    (def.items||[]).forEach(function(it){
+      var a={k:it.k};
+      Object.keys(it.props||{}).forEach(function(p){
+        a[p]=(typeof it.props[p]==='object'&&it.props[p])
+          ?deep(it.props[p]):it.props[p];});
+      if(it.shape) a.shape=it.shape;
+      if(it.nohead) a.nohead=it.nohead;
+      cmpPlaceOne(a,it,ox,oy,W,H);
+      s2.annots.push(a);
+    });
+    return s2.annots.length?s2:null;
+  }
+  function mastClose(){
+    var p=$('#mast-panel'); if(p) p.remove();
+    document.removeEventListener('keydown',mastKey,true);
+  }
+  function mastKey(e){
+    if(e.key!=='Escape') return;
+    if(!$('#mast-panel')) return;
+    e.preventDefault();e.stopPropagation();mastClose();
+  }
+  function mastRepaint(){
+    markDirty();renderSlide();renderFilm();
+  }
+  function openMasters(){
+    mastClose();
+    var p=document.createElement('div');
+    p.className='sh-menu mast-panel';p.id='mast-panel';
+    var head=menuHead(p,'masters');
+    var x=document.createElement('button');
+    x.className='dbtn dc-icon rd-close';x.type='button';
+    x.setAttribute('aria-label','Close');x.title='Close';
+    x.innerHTML=bic('exit')||'\u2715';
+    x.addEventListener('click',function(e){e.stopPropagation();
+      mastClose();});
+    head.appendChild(x);
+    var note=document.createElement('div');note.className='rd-note';
+    note.textContent='A look slides inherit, live: a background and a '
+      +'furniture component drawn behind every slide that wears it. '
+      +'Change the master \u2014 or push a new look to its component '
+      +'\u2014 and every wearer follows.';
+    p.appendChild(note);
+    var body=document.createElement('div');
+    p.appendChild(body);
+    function act(label,title,fn){
+      var b=document.createElement('button');
+      b.className='dbtn mast-row';b.type='button';
+      b.textContent=label;if(title) b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      return b;
+    }
+    function render(){
+      body.innerHTML='';
+      var st=mastStore();
+      var s2=pres.slides[cur];
+      var state=document.createElement('div');state.className='rd-state';
+      var cm=mastOf(s2);
+      state.textContent='This slide wears: '
+        +(cm?(cm.name||'a master'):'nothing');
+      body.appendChild(state);
+      Object.keys(st).forEach(function(id){
+        var m=st[id];
+        var h=document.createElement('div');h.className='mast-name';
+        h.textContent=m.name||'Master';
+        body.appendChild(h);
+        body.appendChild(act('Background \u2014 '+(m.bg||'none'),
+          'The page colour every wearer inherits. The slide\u2019s own '
+          +'Background still wins where one is set.',
+          function(){
+            var v=prompt('Background \u2014 #hex or @token, empty '
+              +'to clear','');
+            if(v===null) return;
+            v=v.trim();
+            if(v&&!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)
+               &&v.charAt(0)!=='@'){
+              toast('Like #123456, or a @token name');return;
+            }
+            if(v) m.bg=v; else delete m.bg;
+            mastRepaint();render();
+          }));
+        var cl=cmpList();
+        var cur2=m.cmp&&cmpStore()[m.cmp];
+        body.appendChild(act('Furniture \u2014 '
+          +(cur2?(cur2.name||'component'):'none'),
+          'A component drawn behind every wearer\u2019s content \u2014 '
+          +'a logo, a strap, a footer block. Clicks cycle through the '
+          +'components this deck has. Edit any placed instance and '
+          +'\u201cPush this look\u201d to restyle every wearer.',
+          function(){
+            var ids=[''].concat(cl.map(function(c){return c.id;}));
+            var at=ids.indexOf(m.cmp||'');
+            var nx=ids[(at+1)%ids.length];
+            if(nx) m.cmp=nx; else delete m.cmp;
+            mastRepaint();render();
+          }));
+        if(m.cmp){
+          var POS=[['c','centre'],['tl','top left'],['tr','top right'],
+            ['bl','bottom left'],['br','bottom right']];
+          var pl=POS.filter(function(q){
+            return q[0]===(m.pos||'c');})[0];
+          body.appendChild(act('Corner \u2014 '+pl[1],
+            'Where the furniture sits on the page',
+            function(){
+              var ks=POS.map(function(q){return q[0];});
+              m.pos=ks[(ks.indexOf(m.pos||'c')+1)%ks.length];
+              mastRepaint();render();
+            }));
+        }
+        body.appendChild(act('Wear it \u2014 this slide','',
+          function(){
+            var s3=pres.slides[cur]; if(!s3) return;
+            s3.mast=id;mastRepaint();render();
+            toast('\u201c'+(m.name||'Master')+'\u201d on this slide');
+          }));
+        body.appendChild(act('Wear it \u2014 whole section',
+          'Every slide in this slide\u2019s section',
+          function(){
+            var s3=pres.slides[cur]; if(!s3) return;
+            var n=0;
+            (pres.slides||[]).forEach(function(q){
+              if((q.sec||'')===(s3.sec||'')){q.mast=id;n++;}});
+            mastRepaint();render();
+            toast(n+' slide'+(n===1?'':'s')+' wear \u201c'
+              +(m.name||'Master')+'\u201d now');
+          }));
+        body.appendChild(act('Wear it \u2014 every slide','',
+          function(){
+            (pres.slides||[]).forEach(function(q){q.mast=id;});
+            mastRepaint();render();
+            toast('The whole deck wears \u201c'
+              +(m.name||'Master')+'\u201d');
+          }));
+        body.appendChild(act('Delete this master',
+          'Wearers keep their own content; the inherited look goes',
+          function(){
+            delete mastStore()[id];
+            (pres.slides||[]).forEach(function(q){
+              if(q.mast===id) delete q.mast;});
+            mastRepaint();render();
+          }));
+      });
+      if(cm){
+        body.appendChild(act('Take the master off this slide','',
+          function(){
+            var s3=pres.slides[cur];
+            if(s3) delete s3.mast;
+            mastRepaint();render();
+          }));
+      }
+      var nb=document.createElement('button');
+      nb.className='dbtn mast-new';nb.type='button';
+      nb.innerHTML=(bic('inherit')||'')+' New master\u2026';
+      nb.addEventListener('click',function(e){
+        e.stopPropagation();
+        var nm=prompt('Name this master \u2014 like \u201cSection '
+          +'divider\u201d or \u201cBranded\u201d','');
+        if(nm===null) return;
+        var id=nextMastId();
+        mastStore()[id]={name:nm.trim()||('Master '+id.slice(1))};
+        markDirty();render();
+      });
+      body.appendChild(nb);
+    }
+    render();
+    document.body.appendChild(p);
+    document.addEventListener('keydown',mastKey,true);
+  }
+  window.SemDeckMasters=openMasters;
   function cmpPlace(id,at){
     var def=cmpStore()[id]; if(!def) return 0;
     var s2=pres.slides[cur]; if(!s2) return 0;

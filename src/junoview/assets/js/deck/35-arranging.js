@@ -1149,6 +1149,8 @@
         window.SemDeckMatchMany();
     });
     both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
+    both('#lay-masters','#hm-lay-masters',function(){
+      if(window.SemDeckMasters) window.SemDeckMasters();});
     var sv=null;
     ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
       var el=$(id); if(!el) return;

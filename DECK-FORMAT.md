@@ -49,6 +49,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `pad` | list | The scratchpad's notes. |
 | `page` | str | Page-size preset id ("a4", "a0", "wide", …). |
 | `pageBg` | str | The page's own background colour. |
+| `masters` | dict | {id: {name, bg, cmp, pos}}: looks slides inherit live. `bg` is the wearers' background (the slide's own still wins), `cmp` names the component drawn behind their content, `pos` its corner. Membership is the slide's `mast` tag. |
 | `sections` | dict | {id: {name, fold}}. Membership is the slide's `sec` tag; the ORDER is read back off the slide list and never stored. |
 | `showNums` | int | 1 when slide numbers are drawn. |
 | `slides` | list | The slides, in order. The order IS the story. |
@@ -79,6 +80,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
 | `panes` | list | One card anchor per pane, or null for an empty one. |
 | `rord` | list | The authored reading order: annotation oids, first-to-last. Absent means automatic (top-to-bottom, left-to-right); objects the list does not name read last. |
+| `mast` | str | Which master this slide wears — a look inherited live, never stamped. |
 | `sec` | str | Which section this slide belongs to. |
 | `sprops` | dict | Geometry and look of the subtitle text. |
 | `sub` | str | Title-slide subheading. |

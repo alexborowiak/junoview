@@ -2070,6 +2070,15 @@
       'The order this slide reads in \u2014 builds, figure numbers and '
       +'the review outline all follow it. Numbers show on every object '
       +'while the panel is open.','stagger');
+    row((function(){
+      var mm=(typeof mastOf==='function')
+        &&mastOf(pres.slides[cur]);
+      return 'Master \u2014 '+((mm&&mm.name)||'none')+'\u2026';
+    })(),'',function(){
+      if(window.SemDeckMasters) window.SemDeckMasters();},
+      'A look this slide inherits live \u2014 background and '
+      +'furniture. Set it here for one slide, a section or the deck.',
+      'inherit');
     row('Insert a chart','',function(){
       var na=window.SemDeckChart.place(
         {cats:['A','B','C'],series:[

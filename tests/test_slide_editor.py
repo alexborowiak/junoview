@@ -373,7 +373,8 @@ def test_slides_have_their_own_background_and_border(out):
     ways across a navigation.
     """
     assert 'id="bg-btn"' in out and 'id="bg-menu"' in out
-    assert ("var bg=tokVal((s0&&s0.bg)||(pres&&pres.pageBg)"
+    # slide > master > deck since T115: the slide's colour still wins
+    assert ("var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)"
             "||'#0b141d');") in out
     assert "if(typeof s.bg==='string'&&s.bg) o.bg=s.bg;" in out
     assert "if(s.border) o.border=deep(s.border);" in out
@@ -382,7 +383,9 @@ def test_slides_have_their_own_background_and_border(out):
     # export takes its first stop (2026-08-20)
     # (T107 added the slide's transition beside it; the background half
     # is what this line is here for)
-    assert "return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its," in out
+    # the export inherits the master's bg too since T115
+    assert ("return {bg:bgSolid(tokVal(ent.s.bg)\n"
+            "            ||(mm3&&tokVal(mm3.bg))||bg),items:its,") in out
     # renderSlide re-applies, so walking the deck repaints each slide's own
     assert ("applyPageBg();          "
             "/* this slide may carry its own background */") in out
@@ -713,7 +716,7 @@ def test_page_furniture_is_deck_level_not_an_item(out):
     # `tokens` joined them for the same reason (T12): a deck that has
     # forgotten what "@accent" means renders the fallback instead
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters'].forEach(function(k){") in out
 
 
 def test_equations_reuse_the_text_box_and_mathjax(out):
@@ -1897,12 +1900,12 @@ def test_the_deck_registry_survives_a_save(out):
     sentinel for it.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters'].forEach(function(k){") in out
     # undo reaches it too: a token change repaints every item that
     # references it, so it is an edit like any other
     assert "tokens:(pres.tokens&&Object.keys(pres.tokens).length)" in out
     assert ("['wmark','head','foot','styles','tokens','components','cuts',\n"
-            "     'guides','page','pageBg',") in out
+            "     'guides','masters','page','pageBg',") in out
 
 
 def test_corner_and_gap_need_no_per_item_reference(out):
@@ -2059,7 +2062,7 @@ def test_the_component_library_is_deck_level_and_survives(out):
     obvious.
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters'].forEach(function(k){") in out
     assert "components:(pres.components&&Object.keys(pres.components).length)" \
         in out
 

@@ -2158,7 +2158,7 @@ nothing.
   half the plumbing, `DecompressionStream` the other, and the loss
   report on open is non-negotiable.
 
-- [ ] **T115 · design first — Masters and inherited layouts.** `lay` is
+- [x] **T115 · design first — Masters and inherited layouts.** `lay` is
   documented as "the id of the template last applied; annotations hold
   its actual geometry" — applying a layout stamps coordinates, and the
   exporter writes exactly one blank layout and one empty master.
@@ -2168,6 +2168,32 @@ nothing.
   `cinst` triple, `cmpInstances` and the Detach escape all ship, and
   reusable content is not the same thing as placeholder inheritance —
   say which is which before writing either.
+  *Done 2026-08-31, with the which-is-which said first.* A COMPONENT is
+  reusable content with instance identity (cmp/ci/cinst, push, detach —
+  all shipped); a MASTER is slide-level INHERITANCE:
+  `pres.masters[id] = {name, bg, cmp, pos}` worn by `sl.mast`. The
+  master's furniture simply IS a component, so "restyle every wearer"
+  is the component verbs that already exist — nothing was rebuilt.
+  Resolution is at RENDER time, never stamped: the furniture draws into
+  an inert `.slide-mast` layer behind the content on every paint
+  (view-mode render, pointer-events none), and the background resolves
+  slide > master > deck — so there are no copies to migrate and a deck
+  without `mast` renders exactly as before, which answers the entry's
+  migration demand with "none needed". Doors: Masters… in both Layouts
+  menus (the T131 parity rule) and the slide right-click, which names
+  what the slide wears; the panel creates, sets background/furniture/
+  corner, and wears onto this slide / the section / the whole deck.
+  Both normalisers, both schema tables, DECK-FORMAT and the parity
+  sentinels carry the keys. Export BAKES the look (furniture items
+  under the content, inherited bg) — real per-master slideLayout parts
+  are the recorded cut: the pixels travel, the linkage does not.
+  Thumbnails skip furniture (miniDiagram is a sketch; also recorded).
+  Driven live: "Branded" (#123a2b + a two-object "Logo strap" at
+  bottom-right) worn by the whole deck from the panel; slide 2
+  inherited page and strap; slide 3's own bg beat the master's while
+  keeping the strap; recolouring the slide-1 instance and "Push this
+  look" turned slide 2's furniture pink on its next paint — LIVE
+  inheritance, the point; and a reload brought it all back.
 
 - [x] **T116 · design first — A media annotation kind.** The kinds are
   exhaustively text, cell, rect, image, arrow, draw, table, flip. A

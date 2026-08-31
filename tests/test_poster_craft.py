@@ -350,7 +350,7 @@ def test_clearing_every_guide_asks_first_and_is_undoable(out):
     # undo reaches them: recorded...
     assert "guides:pres.guides||null," in out
     # ...and restored, in the same array as every other deck-level key
-    assert "'guides','page','pageBg','cropMarks'].forEach(function(k){" in out
+    assert "'guides','masters','page','pageBg','cropMarks'].forEach(function(k){" in out
     # the guide layer caches the signature it last drew, so an undo has
     # to ask it again or the restored model is invisible
     assert "if(typeof syncGuides==='function') syncGuides();" in out
@@ -420,7 +420,7 @@ def test_your_guides_survive_being_re_opened(out):
     (2026-08-29).
     """
     assert ("['wmark','head','foot','styles','tokens',\n"
-            "     'components','cuts','guides'].forEach(function(k){") in out
+            "     'components','cuts','guides','masters'].forEach(function(k){") in out
 
 
 def test_the_slides_group_reads_in_the_order_asked_for(out):

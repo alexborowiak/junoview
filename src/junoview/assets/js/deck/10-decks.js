@@ -176,6 +176,11 @@
         if(typeof s.sid==='string'&&s.sid) o.sid=s.sid;
         if(s.border) o.border=deep(s.border);
         if(s.grpmeta) o.grpmeta=deep(s.grpmeta);
+        /* which MASTER this slide wears (T115): a look it inherits
+           live -- background + furniture -- resolved at render time,
+           never stamped. Absent = none, which is every deck saved
+           before masters existed, so there is no migration. */
+        if(typeof s.mast==='string'&&s.mast) o.mast=s.mast;
         /* the authored reading order (T106): oids, first-to-last.
            Absent = automatic (top-to-bottom, left-to-right). Unlisted
            here it dies on the next load, like label before it. */
@@ -288,7 +293,7 @@
        undo snapshot and writing a comment saying they belong to the
        deck (2026-08-29). */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides'].forEach(function(k){
+     'components','cuts','guides','masters'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
@@ -814,7 +819,7 @@
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','page','pageBg','cropMarks'].forEach(function(k){
+     'guides','masters','page','pageBg','cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     /* types are restored with their own statement rather than by joining

@@ -79,6 +79,11 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "pad": (list, "The scratchpad's notes."),
     "types": (list, "Text types this deck invented, beyond the built-in "
                     "seven."),
+    "masters": (dict, "{id: {name, bg, cmp, pos}}: looks slides "
+                       "inherit live. `bg` is the wearers' background "
+                       "(the slide's own still wins), `cmp` names the "
+                       "component drawn behind their content, `pos` its "
+                       "corner. Membership is the slide's `mast` tag."),
     "sections": (dict, "{id: {name, fold}}. Membership is the slide's "
                        "`sec` tag; the ORDER is read back off the slide "
                        "list and never stored."),
@@ -119,6 +124,8 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
                     "first-to-last. Absent means automatic (top-to-"
                     "bottom, left-to-right); objects the list does not "
                     "name read last."),
+    "mast": (str, "Which master this slide wears -- a look "
+                  "inherited live, never stamped."),
     "sec": (str, "Which section this slide belongs to."),
     "bg": (str, "This slide's own background colour."),
     "notes": (str, "Speaker notes for this slide."),

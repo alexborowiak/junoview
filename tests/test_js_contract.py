@@ -72,6 +72,9 @@ RUNTIME_IDS = {
     # the chart-numbers dialog, built on open and removed on close
     # (47-charts.js chartDataDlg, T117)
     "chart-data",
+    # the masters panel, built on open and removed on close
+    # (40-captions-and-components.js openMasters, T115)
+    "mast-panel",
     # What goes in an object frame: built on first open and then kept,
     # because it floats over the canvas rather than living in a ribbon
     # group (45-images.js openObjSrc, T61).

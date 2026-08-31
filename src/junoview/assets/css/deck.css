@@ -3835,6 +3835,15 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T115: masters — the inherited layer, inert behind everything */
+.slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
+.mast-panel{position:fixed;right:16px;top:110px;z-index:420;width:264px;
+  max-height:70vh;overflow-y:auto;padding:8px 10px 12px;}
+.mast-name{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cyan);margin:10px 0 4px;}
+.mast-row{display:block;width:100%;text-align:left;font-size:11.5px;
+  padding:4px 7px;margin:2px 0;}
+.mast-new{display:block;width:100%;text-align:left;margin-top:10px;}
 /* T117: charts — the SVG fills its box; the dialog is the numbers */
 .an-chart{overflow:hidden;}
 .an-chartsvg{width:100%;height:100%;display:block;

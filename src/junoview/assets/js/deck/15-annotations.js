@@ -464,8 +464,25 @@
     /* idempotent: applyZoom calls this again on every resize so the
        furniture rescales with the page, and appending a second copy every
        time would stack watermarks (2026-08-20) */
-    $$('.slide-wmark,.slide-head,.slide-foot',slideEl)
+    $$('.slide-wmark,.slide-head,.slide-foot,.slide-mast',slideEl)
       .forEach(function(n){n.remove();});
+    /* the MASTER's furniture (T115), behind everything like the
+       watermark: resolved from the component definition on every
+       paint, so editing the component updates every wearer with no
+       stamped copies anywhere. Rendered through renderAnnots in view
+       mode -- the layer is inert (pointer-events none, no
+       .annot-layer class), so the editor cannot select into it. */
+    var mm=mastOf(pres.slides[idx]);
+    if(mm&&mm.cmp){
+      var msyn=mastSynth(mm);
+      if(msyn){
+        var ml=document.createElement('div');
+        ml.className='slide-mast';
+        var m0=mode;mode='view';
+        try{renderAnnots(ml,msyn);}finally{mode=m0;}
+        slideEl.insertBefore(ml,slideEl.firstChild);
+      }
+    }
     /* PERCENT OF PAGE HEIGHT, resolved to px here - exactly the currency
        fontPx uses for text items. Left as a CSS percentage it resolved
        against the parent's FONT SIZE instead of the page, so a 12%

@@ -684,8 +684,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (the bytes seam every door now routes through); app.js gained BIN_RE +
 # fileB64 + the base64 branches in both drop paths; web-loader.html the
 # parseB64 bridge. The page moves because it inlines app.js.
-EXPECTED_MD5 = "7f7a3edb176962283e0be001529e31f0"
-EXPECTED_BYTES = 3363599
+# Moved 2026-08-31 for T115: masters — looks slides inherit live.
+# pres.masters {id:{name,bg,cmp,pos}} + sl.mast; furniture is a
+# COMPONENT rendered view-mode into an inert .slide-mast layer on every
+# paint (never stamped), bg resolves slide > master > deck, pptx bakes
+# the look (flattening recorded), and the Masters panel hangs off both
+# Layouts menus and the slide right-click.
+EXPECTED_MD5 = "d44b0b23679d40ec51db4c1f4ee16e18"
+EXPECTED_BYTES = 3375579
 
 
 def _render_example() -> str:

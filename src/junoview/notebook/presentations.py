@@ -151,6 +151,11 @@ def as_presentations(obj: Any) -> list:
                 for k in ("border", "grpmeta"):
                     if isinstance(s.get(k), dict):
                         slide[k] = s[k]
+                # which master this slide wears (T115): a look it
+                # inherits live; absent means none, so old decks need
+                # no migration.
+                if isinstance(s.get("mast"), str) and s["mast"].strip():
+                    slide["mast"] = s["mast"].strip()
                 # the authored reading order (T106): oids, first-to-last.
                 # Losing it here would silently renumber the figures and
                 # rebuild every "one by one" top-to-bottom again.
@@ -234,7 +239,7 @@ def as_presentations(obj: Any) -> list:
         # every save-and-reopen, which is what happened until
         # 2026-08-29.
         for key in ("wmark", "head", "foot", "styles", "sections",
-                    "tokens", "components", "cuts", "guides"):
+                    "tokens", "components", "cuts", "guides", "masters"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed
