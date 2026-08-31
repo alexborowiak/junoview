@@ -6300,7 +6300,20 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
    yet" -- which has to read as unavailable rather than broken. */
 /* five sections deep with a rich selection, so it scrolls rather than
    running off the bottom of the window */
-.canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}
+/* T137 / JVUX-01: .sh-menu's 3-column 210px grid is for icon
+   galleries; on a WORD menu it wrapped 31 labels character by
+   character into thin columns with both scrollbars. One readable
+   column, and the long tail folds behind "More" (cmFold). */
+.canvas-menu{display:block;width:308px;min-width:0;
+  max-width:min(340px,92vw);max-height:72vh;
+  overflow-y:auto;overflow-x:hidden;}
+.canvas-menu .hd-lab{margin-top:6px;}
+/* [hidden] must actually hide: a bare display rule on the class would
+   beat the attribute's UA default, which is exactly how the fold shipped
+   open in its first screenshot */
+.cm-more[hidden]{display:none;}
+.cm-moret{width:100%;text-align:left;margin-top:6px;
+  border-top:1px solid #ffffff1a;border-radius:0;padding-top:8px;}
 .canvas-menu .vw-opt{width:100%;text-align:left;}
 .canvas-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 /* A BUTTON YOU HAVE PUT AWAY. display:none, not [hidden]: showFmt owns
@@ -6922,6 +6935,8 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T144: the empty notebook column's worded door */
+.dc-nbs-open{display:block;margin:6px auto 2px;}
 /* T115: masters — the inherited layer, inert behind everything */
 .slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
 .mast-panel{position:fixed;right:16px;top:110px;z-index:420;width:264px;
@@ -10198,11 +10213,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     <input class="qat-nameedit" id="qat-nameedit" type="text" hidden
       spellcheck="false" autocomplete="off" aria-label="Presentation name">
     <span class="deck-spring"></span>
-    <span class="deck-status" id="deck-status"></span>
-    <!-- how often it saves itself, said out loud rather than buried as a
-         File-menu toggle you had to open the menu to read -->
-    <button class="dbtn qat-btn" id="qat-auto" hidden
-      aria-haspopup="true"></button>
+    <!-- The SECOND deck-status/qat-auto pair stood here from 2026-08-20
+         until 2026-08-31: T70 moved the readout beside Save and left
+         this one behind, and because $() is querySelector the leftovers
+         were dead markup that still fooled every DOM count (JVUX-04).
+         The unique-id test in test_js_contract.py now fails on ANY
+         duplicate, so a half-finished move cannot park here again. -->
     <!-- Zoom is not here any more. It went to the ribbon, then to this
          bar, and it was wrong in both: it is a property of the CANVAS, so
          it belongs at the canvas, and the bottom-right corner is where
@@ -10574,6 +10590,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
                 title="Number every page"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Numbers</button>
+              <!-- T115's masters hid inside two Layouts menus; the
+                   feature that owns "the look every slide inherits"
+                   belongs on the tab that owns page furniture
+                   (JVUX-11). -->
+              <button class="dbtn rbn-sm" id="dsg-masters"
+                title="Looks slides inherit live &mdash; a background and
+ a furniture component. Change the master and every slide wearing it
+ follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
@@ -10869,6 +10893,15 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
  moves along the row, Enter drops down"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg> Table</button>
+              <!-- T117's chart inserted only from a right-click, so a
+                   user looking at Insert concluded charts did not exist
+                   (JVUX-11). Not an `et` tool: it places at once rather
+                   than arming a draw. -->
+              <button class="dbtn rbn-sm" id="ins-chart"
+                title="A bar chart with sample numbers to replace &mdash;
+ or select a placed table and &ldquo;Turn into a chart&rdquo;. Right-click
+ it to change its type or edit the data. Exports to PowerPoint as a real
+ chart"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/><path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/></svg> Chart</button>
               <!-- NOT an `et` tool. It carried that class without a
                    data-tool, so the shared arming wiring called
                    setTool(undefined): the button lit up as though a tool
@@ -19908,13 +19941,13 @@ window.JunoPptx = (function () {
     [['#lay-menu','#lay-btn'],['#hm-lay-menu','#hm-lay']]
       .forEach(function(p){
         var lm=$(p[0]),lb=$(p[1]);
-        if(lm&&!lm.hidden){lm.hidden=true;
+        if(lm&&!lm.hidden){overlayHide(lm);
           if(lb) lb.setAttribute('aria-expanded','false');}
       });
   }
   function closePageMenu(){
     var pm=$('#page-menu'),pb=$('#page-btn');
-    if(pm&&!pm.hidden){pm.hidden=true;
+    if(pm&&!pm.hidden){overlayHide(pm);
       if(pb) pb.setAttribute('aria-expanded','false');}
   }
   /* ---- page size: slides or a poster — ONE builder for both. The page
@@ -20937,13 +20970,11 @@ window.JunoPptx = (function () {
     var btn=$('#vw-check'),pane=$('#preflight'),cl=$('#preflight-close');
     if(btn) btn.addEventListener('click',function(){
       if(!pane) return;
-      pane.hidden=!pane.hidden;
-      btn.setAttribute('aria-pressed',pane.hidden?'false':'true');
-      if(!pane.hidden) renderPreflight();
+      if(pane.hidden){paneShow('preflight');renderPreflight();}
+      else paneHide('preflight');
     });
     if(cl) cl.addEventListener('click',function(){
-      if(pane) pane.hidden=true;
-      if(btn) btn.setAttribute('aria-pressed','false');
+      paneHide('preflight');
     });
     var re=$('#preflight-rerun');
     if(re) re.addEventListener('click',renderPreflight);
@@ -21204,12 +21235,8 @@ window.JunoPptx = (function () {
     var a=s&&typeof selAnnot==='number'&&(s.annots||[])[selAnnot];
     if(!a){toast('Select an object first');return;}
     var pane=$('#objhist'); if(!pane) return;
-    ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-     '#tidypane','#provpane','#sizepane'].forEach(function(sel){
-      var o=$(sel); if(o) o.hidden=true;});
-    pane.hidden=false;
+    paneShow('objhist');
     syncInspectorPanes(true);
-    syncPaneDock();
   }
   (function(){
     var cl=$('#objhist-close'),rr=$('#objhist-rerun');
@@ -21481,11 +21508,8 @@ window.JunoPptx = (function () {
   }
   function showTidyPane(){
     var pane=$('#tidypane'); if(!pane) return;
-    ['#selpane','#animpane','#preflight','#notespane','#stdpane']
-      .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-    pane.hidden=false;
+    paneShow('tidypane');
     renderTidyPane();
-    syncPaneDock();
   }
   (function(){
     var cl=$('#tidypane-close');
@@ -22254,21 +22278,11 @@ window.JunoPptx = (function () {
     if(!btn||!pane) return;
     function set(open){
       if(open){
-        /* the panes share one corner — the rule showVerpane has kept
-           since they were first docked */
-        ['#selpane','#animpane','#preflight','#notespane','#flippane']
-          .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-        var ob=$('#objects-btn');
-        if(ob) ob.setAttribute('aria-pressed','false');
-        var nb=$('#notes-btn');
-        if(nb) nb.setAttribute('aria-pressed','false');
-        if(typeof showVerpane==='function') showVerpane(false);
-      }
-      pane.hidden=!open;
-      btn.setAttribute('aria-pressed',open.toString());
-      /* rendered on open, on ↻ and after a fix — never from markDirty or
-         refresh, or every keystroke would re-survey the whole deck */
-      if(open) renderStdPane();
+        paneShow('stdpane');
+        /* rendered on open, on ↻ and after a fix — never from markDirty
+           or refresh, or every keystroke would re-survey the deck */
+        renderStdPane();
+      } else paneHide('stdpane');
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
@@ -22922,9 +22936,8 @@ window.JunoPptx = (function () {
     viewFolded=on;
   }
   function closeViewMenu(){
-    var m=$('#vw-more-menu'),b=$('#vw-more');
-    if(m&&!m.hidden){m.hidden=true;
-      if(b) b.setAttribute('aria-expanded','false');}
+    var m=$('#vw-more-menu');
+    if(m) overlayHide(m);
   }
   /* the rows DRIVE the real buttons, so each control keeps its one
      implementation and its own state — the same trick the Arrange menu
@@ -22962,8 +22975,7 @@ window.JunoPptx = (function () {
     gal.addEventListener('click',function(e){
       e.stopPropagation();closeViewMenu();openRibbonGallery();});
     m.appendChild(gal);
-    m.hidden=false;
-    btn.setAttribute('aria-expanded','true');
+    overlayShow(btn,m);
     floatMenu(btn,m);
   }
   (function(){
@@ -23181,7 +23193,7 @@ window.JunoPptx = (function () {
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
-        pm.hidden=true;pb.setAttribute('aria-expanded','false');
+        overlayHide(pm);
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a
@@ -23197,14 +23209,8 @@ window.JunoPptx = (function () {
     });
     pb.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=pm.hidden;
-      if(willOpen) closeLayMenu();
-      pm.hidden=!willOpen;
-      pb.setAttribute('aria-expanded',willOpen.toString());
-    });
-    document.addEventListener('click',function(e){
-      if(!pm.hidden&&pd&&!pd.contains(e.target)){
-        pm.hidden=true;pb.setAttribute('aria-expanded','false');}
+      if(pm.hidden) overlayShow(pb,pm);
+      else overlayHide(pm);
     });
   })();
   /* ---- Objects pane (layers v1): list / select / hide / lock ---- */
@@ -23234,6 +23240,43 @@ window.JunoPptx = (function () {
     if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
+  }
+  /* ---- THE ONE OWNER OF INSPECTOR PANES (T136 / JVUX-03) ------------
+     "One pane open at a time" was a comment, not a mechanism: every
+     show function carried its own hand-list of siblings to hide, the
+     lists diverged (Standardise forgot tidypane, Objects hid nothing
+     at all), and Tidy + Check stood open together in the live DOM.
+     The registry below is the mechanism. paneShow(id) hides every
+     other pane, paneHide(id) closes one, and BOTH re-derive each
+     registered trigger's aria-pressed from the DOM -- no feature
+     enumerates sibling selectors again, so a new pane cannot fork the
+     list a tenth time. */
+  var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
+    'stdpane','tidypane','flippane','provpane','sizepane','objhist'];
+  var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
+    notespane:'#notes-btn',preflight:'#vw-check',stdpane:'#dsg-std'};
+  function paneSyncBtns(){
+    Object.keys(PANE_BTN).forEach(function(p){
+      var b=$(PANE_BTN[p]); if(!b) return;
+      var el=$('#'+p);
+      b.setAttribute('aria-pressed',(!!el&&!el.hidden).toString());
+    });
+    /* the Versions strip button repaints itself from the pane state */
+    if(typeof syncStripBtn==='function') syncStripBtn();
+  }
+  function paneShow(id){
+    PANE_IDS.forEach(function(p){
+      if(p===id) return;
+      var el=$('#'+p); if(el) el.hidden=true;
+    });
+    var el2=$('#'+id); if(el2) el2.hidden=false;
+    paneSyncBtns();
+    syncPaneDock();
+  }
+  function paneHide(id){
+    var el=$('#'+id); if(el) el.hidden=true;
+    paneSyncBtns();
+    syncPaneDock();
   }
   /* ---- one pane open at a time, and the stage makes room for it -------
      Every pane is an .selpane in the stage wrapper. Rather than have each
@@ -23759,9 +23802,8 @@ window.JunoPptx = (function () {
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
     if(!ob||!pane) return;
     function set(open){
-      pane.hidden=!open;
-      ob.setAttribute('aria-pressed',open.toString());
-      if(open) renderSelPane();
+      if(open){paneShow('selpane');renderSelPane();}
+      else paneHide('selpane');
     }
     ob.addEventListener('click',function(){set(pane.hidden);});
     if(cl) cl.addEventListener('click',function(){set(false);});
@@ -23771,17 +23813,12 @@ window.JunoPptx = (function () {
     if(!lb||!lm) return;
     lb.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=lm.hidden;
-      if(willOpen) closePageMenu();
-      lm.hidden=!willOpen;
-      lb.setAttribute('aria-expanded',willOpen.toString());
-      /* this menu is 442px wide; opened from a toolbar standing on the
-         right-hand edge it ran straight off the screen (2026-08-07,
-         user). floatMenu clamps it into the viewport. */
-      if(willOpen) floatMenu(lb,lm);
-    });
-    document.addEventListener('click',function(e){
-      if(!lm.hidden&&ld&&!ld.contains(e.target)) closeLayMenu();
+      if(lm.hidden){
+        /* this menu is 442px wide; opened from a toolbar standing on
+           the right-hand edge it ran straight off the screen
+           (2026-08-07, user). floatMenu clamps it into the viewport. */
+        overlayShow(lb,lm);floatMenu(lb,lm);
+      } else overlayHide(lm);
     });
   })();
   function slideCells(s){
@@ -34927,18 +34964,8 @@ window.JunoPptx = (function () {
     var btn=$('#notes-btn'),pane=$('#notespane');
     if(!btn||!pane) return;
     function set(open){
-      if(open){
-        /* the panes share one corner: only one can be what you are
-           looking at, the rule showVerpane has always kept */
-        ['#selpane','#animpane','#preflight'].forEach(function(sel){
-          var o=$(sel); if(o) o.hidden=true;});
-        var ob=$('#objects-btn');
-        if(ob) ob.setAttribute('aria-pressed','false');
-        showVerpane(false);
-      }
-      pane.hidden=!open;
-      btn.setAttribute('aria-pressed',open.toString());
-      if(open) renderNotesPane();
+      if(open){paneShow('notespane');renderNotesPane();}
+      else paneHide('notespane');
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
@@ -37321,7 +37348,17 @@ window.JunoPptx = (function () {
        syncRibbonGroups bounced straight back off it and the selection
        appeared to do nothing (2026-08-25, found in a browser). Deciding
        now and switching after the controls exist keeps both rules. */
-    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew)?selT:'';
+    /* AN OPEN PANE IS AN OPEN WORKFLOW (T141 / JVUX-06). The Timeline
+       pane's own empty state says "Select an item first" — and doing
+       exactly that used to yank the ribbon from Insert to Object,
+       moving you away from the controls you had just opened. With any
+       inspector pane open, selection still reveals the contextual
+       groups (showFmt below) but no longer STEALS the tab; with none
+       open, the switch behaves as it always has. */
+    var paneOpen=PANE_IDS.some(function(pid){
+      var el=$('#'+pid); return el&&!el.hidden;});
+    var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
+      &&!paneOpen)?selT:'';
     justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
@@ -39304,7 +39341,51 @@ window.JunoPptx = (function () {
       row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);},
         'Centred on the point you right-clicked');
     }
+    cmFold(m);
     floatAt(m,ev);
+  }
+  /* THE FOLD (T137). A right-click on one text box reached 31 buttons
+     under 13 headings -- an inspector forced into a popup. The
+     immediate actions stay in sight; every section past the everyday
+     ones folds behind one worded "More" row that says how many rows it
+     holds. Nothing moves surface: the rows keep their handlers, they
+     just wait until asked for. Menus small enough to read whole (the
+     empty-canvas one) never fold. */
+  var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
+    'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
+    'chart':1};
+  function cmFold(m){
+    m.setAttribute('role','menu');
+    $$('button',m).forEach(function(b){
+      b.setAttribute('role','menuitem');});
+    if(m.querySelectorAll('button').length<=12) return;
+    var more=document.createElement('div');
+    more.className='cm-more';more.hidden=true;
+    var folding=false,kids=[].slice.call(m.children);
+    kids.forEach(function(k){
+      if(k.classList&&k.classList.contains('hd-lab')){
+        var t=(k.textContent||'').trim().toLowerCase();
+        folding=!CM_KEEP[t]&&!/objects?$/.test(t);
+      }
+      if(folding) more.appendChild(k);
+    });
+    var n=more.querySelectorAll('button').length;
+    if(!n) return;
+    var t2=document.createElement('button');
+    t2.className='dbtn vw-opt cm-moret';t2.type='button';
+    t2.setAttribute('aria-expanded','false');
+    t2.setAttribute('role','menuitem');
+    t2.innerHTML=(bic('menu')||'')+' More \u2014 '+n+' option'
+      +(n===1?'':'s')+' \u25be';
+    t2.title='Anchoring, components, matching, visibility, reading '
+      +'order, master, chart and guide rows \u2014 everything less '
+      +'everyday, one click away';
+    t2.addEventListener('click',function(e){
+      e.stopPropagation();
+      more.hidden=!more.hidden;
+      t2.setAttribute('aria-expanded',(!more.hidden).toString());
+    });
+    m.appendChild(t2);m.appendChild(more);
   }
   function setLockSel(mode){
     var s=pres.slides[cur]; if(!s||!s.annots) return;
@@ -42757,8 +42838,8 @@ window.JunoPptx = (function () {
      is looked at. */
   function initReuseDoors(){
     function shut(){
-      var lm=$('#lay-menu'); if(lm) lm.hidden=true;
-      var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;
+      var lm=$('#lay-menu'); if(lm) overlayHide(lm);
+      var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);
     }
     /* each row exists twice since Home gained parity (T131): same
        handler, both ids */
@@ -42779,6 +42860,22 @@ window.JunoPptx = (function () {
     both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
     both('#lay-masters','#hm-lay-masters',function(){
       if(window.SemDeckMasters) window.SemDeckMasters();});
+    /* the first-class doors (T144): the same verbs, on the ribbon */
+    var dm2=$('#dsg-masters');
+    if(dm2) dm2.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(window.SemDeckMasters) window.SemDeckMasters();
+    });
+    var ic2=$('#ins-chart');
+    if(ic2) ic2.addEventListener('click',function(e){
+      e.stopPropagation();
+      var na=window.SemDeckChart&&window.SemDeckChart.place(
+        {cats:['A','B','C'],series:[
+          {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
+        {x:34,y:28});
+      if(na) toast('Chart placed \u2014 right-click it to edit the '
+        +'numbers or change its type');
+    });
     var sv=null;
     ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
       var el=$(id); if(!el) return;
@@ -43488,8 +43585,8 @@ window.JunoPptx = (function () {
       b.addEventListener('click',function(e){
         e.stopPropagation();
         var s=pres.slides[cur]; if(!s) return;
-        var lm=$('#lay-menu'); if(lm) lm.hidden=true;
-        var hm=$('#hm-lay-menu'); if(hm) hm.hidden=true;
+        var lm=$('#lay-menu'); if(lm) overlayHide(lm);
+        var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);
         var n=arrangeSlide(s,stage.querySelector('.annot-layer'),
           arrangeOpts(b.getAttribute('data-tidy')));
         if(!n){toast('There is nothing on this slide to arrange');return;}
@@ -43852,12 +43949,8 @@ window.JunoPptx = (function () {
   }
   function showProvPane(){
     var pane=$('#provpane'); if(!pane) return;
-    ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-     '#tidypane','#objhist'].forEach(function(sel){
-      var o=$(sel); if(o) o.hidden=true;});
-    pane.hidden=false;
+    paneShow('provpane');
     syncInspectorPanes(true);
-    syncPaneDock();
   }
   (function(){
     var pb=$('#fmt-prov');
@@ -44000,21 +44093,8 @@ window.JunoPptx = (function () {
   }
   function showSizePane(on){
     var p=$('#sizepane'); if(!p) return;
-    if(on){
-      /* the panes share one corner -- the rule showVerpane has kept
-         since they were first docked */
-      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-       '#tidypane','#objhist','#provpane','#flippane']
-        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-      var ob=$('#objects-btn');
-      if(ob) ob.setAttribute('aria-pressed','false');
-      var nb=$('#notes-btn');
-      if(nb) nb.setAttribute('aria-pressed','false');
-      if(typeof showVerpane==='function') showVerpane(false);
-    }
-    p.hidden=!on;
-    if(on) sizePaneSync();
-    syncPaneDock();
+    if(on){paneShow('sizepane');sizePaneSync();}
+    else paneHide('sizepane');
   }
   (function(){
     var sb=$('#fmt-sizepos'),p=$('#sizepane');
@@ -46762,7 +46842,7 @@ window.JunoPptx = (function () {
   (function(){
     var mi=$('#mi-refresh-img');
     if(mi) mi.addEventListener('click',function(){
-      var dm=$('#dc-menu'); if(dm) dm.hidden=true;
+      var dm=$('#dc-menu'); if(dm) overlayHide(dm);
       refreshImagesReport();
     });
     var one=$('#fmt-imgrefresh');
@@ -46852,20 +46932,12 @@ window.JunoPptx = (function () {
     var p=$('#flippane'); if(!p) return;
     if(on){
       if(typeof idx==='number') flipSel=idx;
-      /* one pane in the corner at a time — the rule showVerpane keeps */
-      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-       '#tidypane','#objhist','#provpane']
-        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-      var ob=$('#objects-btn');
-      if(ob) ob.setAttribute('aria-pressed','false');
-      if(typeof showVerpane==='function') showVerpane(false);
-    }
-    /* un-hide BEFORE rendering: renderFlipPane bails on a hidden pane (it
-       is called from showFmt on every canvas click and must not rebuild a
-       list nobody is looking at), so rendering first drew nothing and the
-       pane opened empty */
-    p.hidden=!on;
-    if(on) renderFlipPane();
+      /* paneShow un-hides BEFORE renderFlipPane runs: it bails on a
+         hidden pane (it is called from showFmt on every canvas click
+         and must not rebuild a list nobody is looking at) */
+      paneShow('flippane');
+      renderFlipPane();
+    } else paneHide('flippane');
   }
   function renderFlipPane(){
     var p=$('#flippane'); if(!p||p.hidden) return;
@@ -47267,23 +47339,65 @@ window.JunoPptx = (function () {
       top=Math.max(8,Math.min(r.top-4-mh,window.innerHeight-mh-8));
     menu.style.top=top+'px';
   }
-  /* Open/close/close-on-outside-click, shared by the WORDED dropdowns
-     below and the DRAWN ones (line style, weight, ends, route). It was
-     inline in wireFloatDropdown, so a menu whose rows are pictures rather
-     than a list of strings had no way to reuse any of it (2026-08-17). */
+  /* ---- THE ONE OWNER OF TRANSIENT MENUS (T135 / JVUX-02) ------------
+     Every dropdown used to carry its own open/close pair, and each knew
+     only the siblings its author remembered -- so File and Present
+     could stand open together, Background sat on top of the Layouts
+     gallery, and a menu dismissed by an outside click left its trigger
+     claiming aria-expanded=true (all three reproduced live before this
+     existed). One rule now: at most one transient menu shows; showing
+     a second closes the first; hiding ALWAYS resets the trigger's
+     aria-expanded, whoever asked. The outside click and Escape live
+     here once, installed by overlayBoot from THE BOOT SEQUENCE --
+     never at eval (the T133 rule). Inspector panes are a different
+     class of surface and have their own owner (T136). */
+  var overlayNow=null;
+  function overlayClose(){
+    if(!overlayNow) return;
+    overlayNow.menu.hidden=true;
+    if(overlayNow.btn&&overlayNow.btn.setAttribute)
+      overlayNow.btn.setAttribute('aria-expanded','false');
+    overlayNow=null;
+  }
+  function overlayShow(btn,menu){
+    if(!menu) return;
+    if(overlayNow&&overlayNow.menu!==menu) overlayClose();
+    menu.hidden=false;
+    if(btn&&btn.setAttribute) btn.setAttribute('aria-expanded','true');
+    overlayNow={btn:btn,menu:menu};
+  }
+  function overlayHide(menu){
+    if(!menu) return;
+    if(overlayNow&&overlayNow.menu===menu){overlayClose();return;}
+    menu.hidden=true;
+  }
+  function overlayBoot(){
+    document.addEventListener('click',function(e){
+      if(!overlayNow) return;
+      if(overlayNow.menu.contains(e.target)) return;
+      var b=overlayNow.btn;
+      if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) return;
+      overlayClose();
+    });
+    document.addEventListener('keydown',function(e){
+      if(e.key!=='Escape'||!overlayNow) return;
+      var b=overlayNow.btn;
+      overlayClose();
+      /* keyboard dismissal returns focus to the trigger */
+      if(b&&b.focus) b.focus();
+    });
+  }
+  /* Open/close, shared by the WORDED dropdowns below and the DRAWN ones
+     (line style, weight, ends, route) -- now just registration with the
+     one owner above, which is what makes every wired menu exclusive and
+     aria-honest for free. */
   function wireMenuToggle(wrapId,btnId,menuId){
     var wrap=$('#'+wrapId),btn=$('#'+btnId),menu=$('#'+menuId);
     if(!wrap||!btn||!menu) return null;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=menu.hidden;
-      menu.hidden=!willOpen;
-      btn.setAttribute('aria-expanded',willOpen.toString());
-      if(willOpen) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+      if(menu.hidden){overlayShow(btn,menu);floatMenu(btn,menu);}
+      else overlayHide(menu);
     });
     return {wrap:wrap,btn:btn,menu:menu};
   }
@@ -47712,20 +47826,8 @@ window.JunoPptx = (function () {
        already tracks the selection, which is everything the second
        button ever added. */
     function set(open){
-      if(open){
-        /* the panes share one corner, so only one can be the thing you
-           are looking at — the same rule showVerpane already keeps */
-        var sp=$('#selpane'); if(sp) sp.hidden=true;
-        var ob=$('#objects-btn');
-        if(ob) ob.setAttribute('aria-pressed','false');
-        var pf=$('#preflight'); if(pf) pf.hidden=true;
-        var sp2=$('#stdpane'); if(sp2) sp2.hidden=true;
-        var fp2=$('#flippane'); if(fp2) fp2.hidden=true;
-        showVerpane(false);
-        render();
-      }
-      pane.hidden=!open;
-      vbtn.setAttribute('aria-pressed',open.toString());
+      if(open){paneShow('animpane');render();}
+      else paneHide('animpane');
     }
     vbtn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
@@ -52029,19 +52131,11 @@ window.JunoPptx = (function () {
   }
   function showVerpane(on){
     var p=$('#verpane'); if(!p) return;
-    /* Objects and Versions are the same 232px shell in the same corner,
-       so only one of them can be the thing you are looking at */
     if(on){
-      var sp=$('#selpane'); if(sp) sp.hidden=true;
-      var ob=$('#objects-btn');
-      if(ob) ob.setAttribute('aria-pressed','false');
-      var pf=$('#preflight'); if(pf) pf.hidden=true;
-      var sp3=$('#stdpane'); if(sp3) sp3.hidden=true;
-      var fp3=$('#flippane'); if(fp3) fp3.hidden=true;
+      paneShow('verpane');
       filmToPane();
       renderFilm();
-    }
-    p.hidden=!on;
+    } else paneHide('verpane');
     var t=$('#verpane-title');
     if(t) t.textContent=pageOf().poster?'Versions':'Slides';
     syncStripBtn();
@@ -52809,11 +52903,23 @@ window.JunoPptx = (function () {
       return {left:ev.clientX,right:ev.clientX,
         top:ev.clientY,bottom:ev.clientY,width:0,height:0};
     }},m);
+    /* outside click OR Escape (T137); both tear down both listeners */
+    function off(e){
+      if(m.contains(e.target)) return;
+      shut();
+    }
+    function esc(e){
+      if(e.key!=='Escape') return;
+      e.preventDefault();e.stopPropagation();shut();
+    }
+    function shut(){
+      m.remove();
+      document.removeEventListener('click',off);
+      document.removeEventListener('keydown',esc);
+    }
     setTimeout(function(){
-      document.addEventListener('click',function off(e){
-        if(m.contains(e.target)) return;
-        m.remove();document.removeEventListener('click',off);
-      });
+      document.addEventListener('click',off);
+      document.addEventListener('keydown',esc);
     },0);
   }
   function presNbs(p){
@@ -53002,8 +53108,22 @@ window.JunoPptx = (function () {
     m.innerHTML='';
     var info=nbInfo();
     if(!info.length){
-      m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; add cells '
-        +'from your notebooks to a slide.</div>';return;}
+      /* the state used to NAME an action and offer no door (JVUX-11):
+         "add cells from your notebooks" with nothing to click. The
+         worded button is the same Open the tab strip carries. */
+      m.innerHTML='<div class="dc-nbs-empty">No notebooks yet &mdash; '
+        +'open one and its figures become things you can place.</div>';
+      if(nbsCanOpen()){
+        var ob2=document.createElement('button');
+        ob2.className='dbtn dc-nbs-open';
+        ob2.innerHTML=(bic('open')||'')+' Open notebooks\u2026';
+        ob2.addEventListener('click',function(e){
+          e.stopPropagation();
+          var tb=$('#tab-open'); if(tb) tb.click();
+        });
+        m.appendChild(ob2);
+      }
+      return;}
     var h=document.createElement('div');h.className='dc-nbs-menuh';
     h.textContent=column?'\u21a9 notebooks':'notebooks in this presentation';
     if(column){
@@ -53126,22 +53246,11 @@ window.JunoPptx = (function () {
         acts2.appendChild(la);acts2.appendChild(ua);
         acts2.appendChild(lv);
         nbBody.appendChild(acts2);
-        var armed=false;
-        var closer=function(e){
-          if(acts2.contains(e.target)) return;
-          acts2.hidden=true;mb.setAttribute('aria-expanded','false');
-          document.removeEventListener('click',closer);armed=false;
-        };
         mb.addEventListener('click',function(e){
           e.stopPropagation();
-          var willOpen=acts2.hidden;
-          acts2.hidden=!willOpen;
-          mb.setAttribute('aria-expanded',willOpen.toString());
-          if(!willOpen) return;
+          if(!acts2.hidden){overlayHide(acts2);return;}
+          overlayShow(mb,acts2);
           floatMenu(mb,acts2);
-          if(armed) return;
-          armed=true;
-          setTimeout(function(){document.addEventListener('click',closer);},0);
         });
       }
     } else {
@@ -53639,21 +53748,15 @@ window.JunoPptx = (function () {
     if(!wrap||!menu) return;
     wrap.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      wrap.setAttribute('aria-expanded',open?'true':'false');
-      /* floated for the same reason as the File menu: the qat's scroll
-         floor must not clip it */
-      if(open) floatMenu(wrap,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==wrap)
-        menu.hidden=true;
+      /* the one owner (T135): the outside click that used to live here
+         forgot aria-expanded, which is the stale state JVUX-02 caught */
+      if(menu.hidden){overlayShow(wrap,menu);floatMenu(wrap,menu);}
+      else overlayHide(menu);
     });
     function mi(id,fn){
       var b=$(id);
       if(b) b.addEventListener('click',function(e){
-        e.stopPropagation();menu.hidden=true;fn();});
+        e.stopPropagation();overlayHide(menu);fn();});
     }
     /* WHICH VERSION (T24). Built rather than written into the markup
        because the list is the deck's, and a deck with no cuts must show
@@ -53679,7 +53782,7 @@ window.JunoPptx = (function () {
         if(why) b.title=why;
         b.setAttribute('aria-pressed',(selected===id).toString());
         b.addEventListener('click',function(e){
-          e.stopPropagation();menu.hidden=true;setCut(id);syncCuts();});
+          e.stopPropagation();overlayHide(menu);setCut(id);syncCuts();});
         add(b);
       }
       opt('','Every slide','The whole deck, which is what a deck with '
@@ -53693,7 +53796,7 @@ window.JunoPptx = (function () {
         choose.title='Only the slides that name this version';
         choose.setAttribute('aria-pressed',(selected===c.id).toString());
         choose.addEventListener('click',function(e){
-          e.stopPropagation();menu.hidden=true;setCut(c.id);syncCuts();});
+          e.stopPropagation();overlayHide(menu);setCut(c.id);syncCuts();});
         box.appendChild(choose);
         [[bic('pen'),'Rename',function(){return renameCut(c.id);}],
          [bic('exit'),'Delete',function(){return delCut(c.id);}]]
@@ -53715,7 +53818,7 @@ window.JunoPptx = (function () {
       nb.title='Name a shorter cut of this same deck — no second '
         +'file, no diverging copies';
       nb.addEventListener('click',function(e){
-        e.stopPropagation();menu.hidden=true;
+        e.stopPropagation();overlayHide(menu);
         var nm=prompt('Name for this version:','20-min');
         if(nm==null) return;
         nm=nm.trim();if(!nm) return;
@@ -53875,13 +53978,8 @@ window.JunoPptx = (function () {
     });
     shBtn.addEventListener('click',function(e){
       e.stopPropagation();
-      var willOpen=shMenu.hidden;
-      shMenu.hidden=!willOpen;
-      shBtn.setAttribute('aria-expanded',willOpen.toString());
-    });
-    document.addEventListener('click',function(e){
-      if(!shMenu.hidden&&shDrop&&!shDrop.contains(e.target)){
-        shMenu.hidden=true;shBtn.setAttribute('aria-expanded','false');}
+      if(shMenu.hidden) overlayShow(shBtn,shMenu);
+      else overlayHide(shMenu);
     });
   })();
   /* ---- WHAT KIND OF TEXT BOX ------------------------------------------
@@ -53939,8 +54037,7 @@ window.JunoPptx = (function () {
         b.addEventListener('click',function(e){
           e.stopPropagation();
           pendingStyle=r[0];
-          menu.hidden=true;
-          btn.setAttribute('aria-expanded','false');
+          overlayHide(menu);
           syncCaret();
           setTool('text');
         });
@@ -53952,15 +54049,9 @@ window.JunoPptx = (function () {
          button: the shared tool wiring would otherwise arm setTool(
          undefined) off it */
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&drop&&!drop.contains(e.target)){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+      if(menu.hidden){
+        build();overlayShow(btn,menu);floatMenu(btn,menu);
+      } else overlayHide(menu);
     });
     syncCaret();
   })();
@@ -54449,16 +54540,12 @@ window.JunoPptx = (function () {
             b.textContent=v[pg];
             b.setAttribute('aria-pressed',(filmMode()===v[0]).toString());
             b.addEventListener('click',function(ev){
-              ev.stopPropagation();menu.hidden=true;setFilmMode(v[0]);});
+              ev.stopPropagation();overlayHide(menu);setFilmMode(v[0]);});
             menu.appendChild(b);
           });
         }
-        menu.hidden=!open;
-        btn.setAttribute('aria-expanded',open?'true':'false');
-      });
-      document.addEventListener('click',function(e){
-        if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)
-          menu.hidden=true;
+        if(open) overlayShow(btn,menu);
+        else overlayHide(menu);
       });
       syncFilmBtn();
       window.SemDeckFilmBtn=syncFilmBtn;
@@ -54518,24 +54605,15 @@ window.JunoPptx = (function () {
   });
   /* ---- File menu ---- */
   var fileBtn=$('#dc-file'), fileMenu=$('#dc-menu');
-  function closeMenu(){
-    if(fileMenu&&!fileMenu.hidden){
-      fileMenu.hidden=true;
-      fileBtn.setAttribute('aria-expanded','false');
-    }
-  }
+  function closeMenu(){overlayHide(fileMenu);}
   if(fileBtn){
     fileBtn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=!fileMenu.hidden;
-      fileMenu.hidden=open;
-      fileBtn.setAttribute('aria-expanded',(!open).toString());
-      /* floated (position:fixed) so fitQat's scroll floor can never
-         cut the menu off at the bar's edge */
-      if(!open) floatMenu(fileBtn,fileMenu);
-    });
-    document.addEventListener('click',function(e){
-      if(!fileMenu.hidden&&!fileMenu.contains(e.target)) closeMenu();
+      if(fileMenu.hidden){
+        /* floated (position:fixed) so fitQat's scroll floor can never
+           cut the menu off at the bar's edge */
+        overlayShow(fileBtn,fileMenu);floatMenu(fileBtn,fileMenu);
+      } else overlayHide(fileMenu);
     });
   }
   function menuAction(id,fn){
@@ -55277,9 +55355,7 @@ window.JunoPptx = (function () {
   (function(){
     var btn=$('#qat-auto'),menu=$('#auto-menu');
     if(!btn||!menu) return;
-    var wrap=btn.parentNode;
-    function close(){menu.hidden=true;
-      btn.setAttribute('aria-expanded','false');}
+    function close(){overlayHide(menu);}
     function build(){
       menu.innerHTML='';
       var h=document.createElement('div');
@@ -55306,11 +55382,9 @@ window.JunoPptx = (function () {
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      if(open) floatMenu(btn,menu);
+      if(menu.hidden){
+        build();overlayShow(btn,menu);floatMenu(btn,menu);
+      } else overlayHide(menu);
     });
     document.addEventListener('click',function(e){
       if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
@@ -55378,20 +55452,16 @@ window.JunoPptx = (function () {
   });
   /* ---- the "Saved to" picker ---- */
   (function(){
-    var wrap=$('#dc-target')&&$('#dc-target').parentNode;
     var btn=$('#dc-target'),menu=$('#target-menu');
     if(!btn||!menu) return;
-    function close(){menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+    function close(){overlayHide(menu);}
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      /* floated so the qat's scroll floor can never clip it */
-      if(open) floatMenu(btn,menu);
+      if(menu.hidden){
+        /* floated so the qat's scroll floor can never clip it */
+        overlayShow(btn,menu);floatMenu(btn,menu);
+      } else overlayHide(menu);
     });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
     var pj=$('#tg-project');
     if(pj) pj.addEventListener('click',function(){
       close();setTarget('project');
@@ -57210,6 +57280,8 @@ window.JunoPptx = (function () {
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  overlayBoot();              /* the one outside-click + Escape closer
+                                 for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not
      mid-file: it walks the deck's markup, which is only guaranteed real
      by the time the boot sequence runs. */
