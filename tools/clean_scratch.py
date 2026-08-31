@@ -17,7 +17,9 @@ you happen to ask; tests/test_repo_hygiene.py holds them together.
 from __future__ import annotations
 
 import argparse
+import os
 import shutil
+import stat
 import sys
 from pathlib import Path
 
@@ -54,6 +56,32 @@ def _size(path: Path) -> int:
     return sum(f.stat().st_size for f in path.rglob("*") if f.is_file())
 
 
+def _force(func, path, _exc):
+    """Clear the read-only bit and try again.
+
+    Browser profiles and tool caches arrive read-only often enough that
+    a plain rmtree gives WinError 5 and stops -- which on 2026-08-31
+    left 3.3 GB of the 4 GB it had just offered to delete, reporting
+    only a line on stderr. Anything still unremovable after this really
+    is held by a process, and is re-raised.
+    """
+    os.chmod(path, stat.S_IWRITE)
+    func(path)
+
+
+def _remove(path: Path) -> None:
+    if not path.is_dir():
+        path.chmod(stat.S_IWRITE)
+        path.unlink()
+        return
+    # onexc is 3.12+; onerror is what 3.10 and 3.11 have, and it still
+    # works (deprecated) after that. pyproject allows 3.10.
+    if sys.version_info >= (3, 12):
+        shutil.rmtree(path, onexc=_force)
+    else:
+        shutil.rmtree(path, onerror=_force)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--yes", action="store_true",
@@ -76,12 +104,15 @@ def main() -> int:
         print("dry run -- pass --yes to delete")
         return 0
 
+    failed = 0
     for path in targets:
         try:
-            shutil.rmtree(path) if path.is_dir() else path.unlink()
+            _remove(path)
         except OSError as exc:
+            failed += 1
             print(f"could not remove {path}: {exc}", file=sys.stderr)
-    print("cleaned")
+    print("cleaned" if not failed
+          else f"cleaned, {failed} item(s) left -- see above")
     return 0
 
 
