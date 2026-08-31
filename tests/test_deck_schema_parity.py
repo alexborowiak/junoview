@@ -119,6 +119,7 @@ SLIDE_SENTINELS = {
     "cuts": ["k1"],
     "trans": "move",
     "sid": "sab12cd",
+    "rord": ["oid2", "oid1"],
     "annots": [{"k": "text", "x": 1, "y": 1}],
     "hidden": ["demo::clim"],
     "title": "The headline",

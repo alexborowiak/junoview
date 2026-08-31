@@ -78,6 +78,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `notes` | str | Speaker notes for this slide. |
 | `opt` | int | 1 when this slide is optional — "Running late" in present mode skips it. |
 | `panes` | list | One card anchor per pane, or null for an empty one. |
+| `rord` | list | The authored reading order: annotation oids, first-to-last. Absent means automatic (top-to-bottom, left-to-right); objects the list does not name read last. |
 | `sec` | str | Which section this slide belongs to. |
 | `sprops` | dict | Geometry and look of the subtitle text. |
 | `sub` | str | Title-slide subheading. |

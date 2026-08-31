@@ -2020,6 +2020,14 @@
         +'the deck file.','eye');
       if(allPriv) pb.classList.add('on');
     }
+    /* the slide's SEQUENCE (T106): always offered, because reading
+       order is a property of the slide, not of a selection */
+    menuHead(m,'slide');
+    row('Reading order\u2026','',function(){
+      if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();},
+      'The order this slide reads in \u2014 builds, figure numbers and '
+      +'the review outline all follow it. Numbers show on every object '
+      +'while the panel is open.','stagger');
     var cgm=customGuides();
     menuHead(m,'guides');
     row('Draw a guide box','B',armGuideBox,

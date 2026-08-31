@@ -151,6 +151,14 @@ def as_presentations(obj: Any) -> list:
                 for k in ("border", "grpmeta"):
                     if isinstance(s.get(k), dict):
                         slide[k] = s[k]
+                # the authored reading order (T106): oids, first-to-last.
+                # Losing it here would silently renumber the figures and
+                # rebuild every "one by one" top-to-bottom again.
+                if isinstance(s.get("rord"), list) and s["rord"]:
+                    rord = [r for r in s["rord"]
+                            if isinstance(r, str) and r]
+                    if rord:
+                        slide["rord"] = rord
                 slides.append(slide)
             elif s.get("kind") == "card" and s.get("anchor"):   # legacy
                 panes = [s["anchor"]] + [b for b in (s.get("beside") or [])

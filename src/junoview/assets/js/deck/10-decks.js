@@ -176,6 +176,14 @@
         if(typeof s.sid==='string'&&s.sid) o.sid=s.sid;
         if(s.border) o.border=deep(s.border);
         if(s.grpmeta) o.grpmeta=deep(s.grpmeta);
+        /* the authored reading order (T106): oids, first-to-last.
+           Absent = automatic (top-to-bottom, left-to-right). Unlisted
+           here it dies on the next load, like label before it. */
+        if(Array.isArray(s.rord)&&s.rord.length){
+          var ro=s.rord.filter(function(x){
+            return typeof x==='string'&&x;});
+          if(ro.length) o.rord=ro;
+        }
         if(s.layout==='title'){
           o.title=String(s.title||'');o.sub=String(s.sub||'');
           if(s.tprops) o.tprops=deep(s.tprops);

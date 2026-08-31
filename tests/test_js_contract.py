@@ -66,6 +66,9 @@ RUNTIME_IDS = {
     # the layout-ideas chooser, built on open and removed on close like
     # the two menus above (35-arranging.js openLayoutIdeas, T131)
     "lay-ideas",
+    # the reading-order panel, built on open and removed on close
+    # (45-images.js openReadingOrder, T106)
+    "rd-order",
     # What goes in an object frame: built on first open and then kept,
     # because it floats over the canvas rather than living in a ribbon
     # group (45-images.js openObjSrc, T61).

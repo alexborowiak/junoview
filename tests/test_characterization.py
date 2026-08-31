@@ -655,8 +655,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # stays notebook-only on purpose (cells: Plot trace, dependency graph,
 # variables, note insertion, figure locks); ARCHITECTURE.md gained the
 # "Notebook-first, on purpose" section with the rule for new features.
-EXPECTED_MD5 = "27b070e31d02c43a19e86ee5ebf2397e"
-EXPECTED_BYTES = 3317593
+# Moved 2026-08-31 for T106: an authorable reading order. sl.rord (oids,
+# first-to-last) overlays orderedIdx's sweep so builds, figure numbers,
+# flip matching and the review export all follow it; the Reading order
+# panel (right-click > slide, or the Timeline pane) writes it, with
+# number badges CSS-gated on the panel like the T76 build bubbles.
+# 35-arranging.js, 45-images.js, 20-notes-and-tables.js, 25-selecting.js,
+# 10-decks.js, deck.css; presentations.py + deck_schema.py + DECK-FORMAT.md
+# carry the key.
+EXPECTED_MD5 = "83e6b2d8cecd00280d81cd115708e3d4"
+EXPECTED_BYTES = 3327463
 
 
 def _render_example() -> str:

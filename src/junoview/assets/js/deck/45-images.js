@@ -1057,6 +1057,16 @@
           list.appendChild(row);});
         menu.appendChild(list);
       }
+      /* the order "One by one" deals the clicks in (T106) */
+      var rb=document.createElement('button');
+      rb.className='anim-mini wide';
+      rb.textContent='Reading order\u2026';
+      rb.title='One by one reveals in READING order \u2014 top to '
+        +'bottom unless you set your own. Figure numbers and the '
+        +'review outline follow the same order.';
+      rb.addEventListener('click',function(e){e.stopPropagation();
+        if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
+      menu.appendChild(rb);
     }
     /* ONE door. There were briefly two — View's Animations and an
        "Animate" button in an Effects group that renamed itself to the
@@ -1158,6 +1168,115 @@
       });
     };
   })();
+  /* ---- READING ORDER (T106) -----------------------------------------
+     The one place the slide's SEQUENCE is authored. orderedIdx's sweep
+     (top-to-bottom, left-to-right) stays the default; this panel writes
+     `sl.rord` — a list of oids, first-to-last — and the resolver in
+     35-arranging overlays it, so builds, figure numbers, flip matching
+     and the review export all follow without knowing it exists.
+     An overlay with an explicit close (Esc or the ✕), NOT click-away:
+     you need to click objects on the canvas while the numbers are
+     showing, and the number badges themselves are CSS-gated on this
+     panel being open — the same trick as the build bubbles (T76). */
+  function rdClose(){
+    var p=$('#rd-order'); if(p) p.remove();
+    document.removeEventListener('keydown',rdKey,true);
+  }
+  function rdKey(e){
+    if(e.key!=='Escape') return;
+    if(!$('#rd-order')) return;
+    e.preventDefault();e.stopPropagation();rdClose();
+  }
+  function openReadingOrder(){
+    rdClose();
+    var s=pres.slides[cur];
+    if(!s||!(s.annots||[]).length){
+      toast('Put something on this slide first \u2014 reading order '
+        +'is read off what is there');
+      return;
+    }
+    ensureOids(s);
+    var p=document.createElement('div');
+    p.className='sh-menu rd-order';p.id='rd-order';
+    var head=menuHead(p,'reading order');
+    var x=document.createElement('button');
+    x.className='dbtn dc-icon rd-close';x.type='button';
+    x.setAttribute('aria-label','Close');x.title='Close';
+    x.innerHTML=bic('exit')||'\u2715';
+    x.addEventListener('click',function(e){e.stopPropagation();
+      rdClose();});
+    head.appendChild(x);
+    var note=document.createElement('div');note.className='rd-note';
+    note.textContent='Builds (One by one), figure numbers and the '
+      +'review outline all say this slide in this order. The numbers '
+      +'show on the slide while this is open.';
+    p.appendChild(note);
+    var state=document.createElement('div');state.className='rd-state';
+    var list=document.createElement('div');list.className='rd-list';
+    p.appendChild(state);p.appendChild(list);
+    var reset=document.createElement('button');
+    reset.className='anim-mini wide rd-reset';
+    reset.textContent='Back to automatic';
+    reset.title='Forget the authored order \u2014 read top to bottom, '
+      +'left to right again';
+    reset.addEventListener('click',function(e){e.stopPropagation();
+      var s2=pres.slides[cur]; if(!s2) return;
+      delete s2.rord;
+      markDirty();rdRepaint();render2();
+      toast('Automatic reading order \u2014 top to bottom. '
+        +'Ctrl+Z brings the authored one back.');
+    });
+    p.appendChild(reset);
+    function rdRepaint(){
+      var s2=pres.slides[cur],l=stage.querySelector('.annot-layer');
+      if(l&&s2){renderAnnots(l,s2);paintSel(l);}
+    }
+    function move(pos,dir){
+      var s2=pres.slides[cur]; if(!s2) return;
+      ensureOids(s2);
+      var ord=orderedIdx(s2);
+      var to=pos+dir;
+      if(to<0||to>=ord.length) return;
+      var t=ord[pos];ord[pos]=ord[to];ord[to]=t;
+      /* the FULL list every time: stale oids drop out, and what you
+         see in the panel is exactly what is stored */
+      s2.rord=ord.map(function(i){return s2.annots[i].oid;});
+      markDirty();rdRepaint();render2();
+    }
+    function render2(){
+      var s2=pres.slides[cur];
+      state.textContent=(s2&&Array.isArray(s2.rord)&&s2.rord.length)
+        ?'Custom \u2014 objects added later read last'
+        :'Automatic \u2014 top to bottom, left to right';
+      reset.hidden=!(s2&&Array.isArray(s2.rord)&&s2.rord.length);
+      list.innerHTML='';
+      var ord=s2?orderedIdx(s2):[];
+      ord.forEach(function(idx,pos){
+        var row=document.createElement('div');row.className='rd-row';
+        var n=document.createElement('span');n.className='rd-num';
+        n.textContent=(pos+1);row.appendChild(n);
+        var lab=document.createElement('span');lab.className='rd-lab';
+        lab.textContent=itemLabel(s2,idx);
+        lab.title=lab.textContent;
+        row.appendChild(lab);
+        [['\u2191',-1,'Read this earlier'],
+         ['\u2193',1,'Read this later']].forEach(function(m){
+          var b=document.createElement('button');b.className='anim-mini';
+          b.textContent=m[0];b.title=m[2];
+          b.setAttribute('aria-label',m[2]);
+          b.disabled=(m[1]<0?pos===0:pos===ord.length-1);
+          b.addEventListener('click',function(e){e.stopPropagation();
+            move(pos,m[1]);});
+          row.appendChild(b);});
+        list.appendChild(row);
+      });
+    }
+    render2();
+    document.body.appendChild(p);
+    document.addEventListener('keydown',rdKey,true);
+    rdRepaint();   /* badges are built on render; make them current */
+  }
+  window.SemDeckReadingOrder=openReadingOrder;
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
     var s=pres.slides[cur];

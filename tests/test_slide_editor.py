@@ -2887,3 +2887,82 @@ def test_the_canvas_has_the_same_paste_plain_escape_the_box_has(out):
 def test_the_code_toast_names_the_way_out(out):
     assert ("Ctrl+Z undoes it, or Ctrl+Shift+V "
             "pastes it as plain text" in out.replace("'\n      +'", ""))
+# ---------------------------------------------------------------------------
+# an authorable reading order (T106)
+# ---------------------------------------------------------------------------
+#
+# orderedIdx's top/left sweep was the only answer, and six consumers
+# inherited it -- builds, figure numbers, flip matching, the review
+# export and its heading. `sl.rord` (oids, first-to-last) now overlays
+# the sweep INSIDE the one resolver, so every consumer follows an
+# authored order without knowing it exists.
+#
+# Driven live 2026-08-31 (port 8617): three boxes Alpha/Bravo/Charlie
+# top-to-bottom read 1/2/3; two clicks of the up arrow on Charlie made
+# it read first and the on-slide badges renumbered to 2/3/1; "One by
+# one" then dealt builds Charlie=0, Alpha=1, Bravo=2 -- the consumer
+# follows. A box added AFTER the order was set (top-most on the page)
+# read LAST; "Back to automatic" put it first again and deleted rord;
+# Esc closed the panel and the badges hid with no re-render; a full
+# page reload brought the authored order back intact through normPres
+# and the project file.
+
+
+def test_the_authored_order_overlays_the_sweep_in_the_one_resolver(out):
+    """rord resolves inside orderedIdx itself, so no consumer can
+    drift; unlisted objects (added later) read last, in sweep order."""
+    assert "var rord=s2.rord;" in out
+    assert "if(!Array.isArray(rord)||!rord.length) return base;" in out
+    assert ("return ranked.map(function(x){return x.i;}).concat(rest);"
+            in out)
+    # z-order is the annots array; reading order must never reshuffle it
+    assert "DOM order stays STORAGE order on purpose" in out
+
+
+def test_the_reading_order_panel_writes_the_full_list_of_oids(out):
+    """Every move writes the WHOLE order (stale oids drop out), reset
+    deletes the key, and oids are minted before any write."""
+    assert "function openReadingOrder(){" in out
+    assert "window.SemDeckReadingOrder=openReadingOrder;" in out
+    assert ("s2.rord=ord.map(function(i){return s2.annots[i].oid;});"
+            in out)
+    assert "delete s2.rord;" in out
+    # ensureOids runs before the panel offers a reorder at all
+    fn = out[out.index("function openReadingOrder(){"):]
+    assert fn.index("ensureOids(s);") < fn.index("rd-row")
+
+
+def test_the_order_badges_are_gated_like_the_build_bubbles():
+    """Built on every render, shown only while #rd-order is open --
+    the T76 pattern, cyan and top-right so amber build numbers stay
+    readable at the same time."""
+    from junoview import assets
+
+    js = assets.deck_js()
+    assert "rb.className='an-readno';rb.textContent=rmap[+raw];" in js
+    css = assets.deck_css()
+    assert "body:has(#rd-order) .an-readno{display:flex;}" in css
+
+
+def test_reading_order_has_a_door_where_you_would_look(out):
+    """The canvas right-click (order is a slide property, offered with
+    or without a selection) and the Timeline pane (builds follow it)."""
+    ellipsis = "Reading order" + "\\" + "u2026"
+    assert out.count(ellipsis) == 2, out.count(ellipsis)
+    assert "menuHead(m,'slide');" in out
+
+
+def test_rord_is_schema_and_survives_the_python_rebuild():
+    """The key is in SLIDE_KEYS (so validate_deck knows it) and the
+    Python rebuild keeps it -- the parity test extracts normPres's kept
+    keys automatically, so this pins the schema half."""
+    from junoview.notebook.deck_schema import SLIDE_KEYS
+    from junoview.notebook.presentations import as_presentations
+
+    assert "rord" in SLIDE_KEYS
+    out2 = as_presentations([{"name": "d", "slides": [
+        {"layout": "blank", "panes": [],
+         "annots": [{"k": "text", "x": 1, "y": 1, "oid": "oa"}],
+         "rord": ["ob", "oa", 7, ""]}]}])
+    # non-strings and empties pruned, order kept
+    assert out2[0]["slides"][0]["rord"] == ["ob", "oa"]

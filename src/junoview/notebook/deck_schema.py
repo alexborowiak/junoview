@@ -115,6 +115,10 @@ SLIDE_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "annots": (list, "Everything placed freely on the slide."),
     "hidden": (list, "Card refs kept out of this slide's code trail."),
     "label": (str, "A name for this version of a poster."),
+    "rord": (list, "The authored reading order: annotation oids, "
+                    "first-to-last. Absent means automatic (top-to-"
+                    "bottom, left-to-right); objects the list does not "
+                    "name read last."),
     "sec": (str, "Which section this slide belongs to."),
     "bg": (str, "This slide's own background colour."),
     "notes": (str, "Speaker notes for this slide."),

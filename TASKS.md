@@ -1979,13 +1979,31 @@ worst-first.
   also gain the missing `name` row while they are open.
   PowerPoint's `descr` is two lines once the field exists.
 
-- [ ] **T106 · design first — An authorable reading order.**
+- [x] **T106 · design first — An authorable reading order.**
   `orderedIdx()` is a top/left visual heuristic, and six callers inherit
   it — builds, review, matching. Overriding it means a durable key on
   `oid`, a resolver the six share, and a decision about whether
   `renderAnnots`' DOM order follows it (today it walks storage order).
   Design it before adding more object kinds; retrofitting semantics after
   charts and media multiplies the migration.
+  *Done 2026-08-31.* The design, decided and recorded: `sl.rord` — a
+  list of oids, first-to-last — overlays the sweep INSIDE `orderedIdx`,
+  so all six consumers follow an authored order without knowing it
+  exists; objects the list does not name (added later, unhidden since)
+  read LAST in sweep order — predictable, and the panel shows the truth
+  on open; and DOM order stays STORAGE order on purpose, because the
+  annots array is z-order and reading order must not reshuffle what
+  overlaps what. The Reading order panel (right-click → slide, or the
+  Timeline pane) lists the slide in order with ↑/↓ per row, numbers
+  every object on the slide while open (badges CSS-gated exactly like
+  the T76 build bubbles — cyan, top-right, so amber build numbers stay
+  readable beside them), and offers "Back to automatic". The key rides
+  normPres, `as_presentations`, `SLIDE_KEYS` and DECK-FORMAT.md — the
+  parity test extracts it from normPres automatically. Driven live:
+  Charlie (bottom box) moved to read first, badges renumbered, "One by
+  one" dealt builds Charlie=0/Alpha=1/Bravo=2, a later-added top-most
+  box read last, reset restored the sweep, Esc hid the badges without a
+  re-render, and a full page reload brought the authored order back.
 
 ### PowerPoint export
 

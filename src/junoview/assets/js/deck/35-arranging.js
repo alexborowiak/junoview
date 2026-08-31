@@ -1878,7 +1878,7 @@
      figure numbering needs the same order and two sweeps that agreed
      today would not agree forever (2026-08-25, T18). */
   function orderedIdx(s2){
-    return (s2.annots||[])
+    var base=(s2.annots||[])
       .map(function(a,i){return {a:a,i:i};})
       .filter(function(p2){return p2.a&&!p2.a.hide;})
       .sort(function(p2,q2){
@@ -1889,6 +1889,33 @@
         return Math.abs(ay-by)>4?(ay-by):(ax-bx);
       })
       .map(function(p2){return p2.i;});
+    /* THE AUTHORED ORDER (T106). `s2.rord` is a list of oids,
+       first-to-last, written by the Reading order panel; absent means
+       the sweep above is the answer, which it was for every deck saved
+       before this existed. Resolved HERE so all six consumers — builds,
+       figure numbers, flip matching, the review export and its heading
+       — inherit it from the one function they already call, and none
+       can drift.
+       Objects the list does not name (added after the order was set,
+       or unhidden since) read LAST, in sweep order among themselves:
+       predictable, and the panel shows the truth the moment it opens.
+       A listed oid that no longer exists is simply ignored.
+       DOM order stays STORAGE order on purpose: the annots array is
+       z-order (Bring forward is a splice), and reading order must not
+       reshuffle what overlaps what. */
+    var rord=s2.rord;
+    if(!Array.isArray(rord)||!rord.length) return base;
+    var pos={};
+    rord.forEach(function(id,n2){
+      if(typeof id==='string'&&!(id in pos)) pos[id]=n2;});
+    var ranked=[],rest=[];
+    base.forEach(function(i){
+      var a=(s2.annots||[])[i];
+      var r=(a&&a.oid!=null)?pos[a.oid]:undefined;
+      if(r!=null) ranked.push({i:i,r:r}); else rest.push(i);
+    });
+    ranked.sort(function(x,y){return x.r-y.r;});
+    return ranked.map(function(x){return x.i;}).concat(rest);
   }
   /* ---- WHERE THIS FIGURE CAME FROM ------------------------------------
      (TASKS T19 and T20.) The deck already knows all of this and had no

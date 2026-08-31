@@ -2322,6 +2322,25 @@
        are actually reading build numbers, and everywhere else they were
        clutter with no off switch. The filmstrip's ▸N mark is what says a
        slide is animated when the pane is shut. */
+    /* reading-order badges (T106): built on every render like the
+       build bubbles below, and CSS-gated the same way (T76) — shown
+       only while the Reading order panel (#rd-order) is open. Cyan and
+       top-RIGHT so an open Timeline's amber top-left build numbers can
+       be read at the same time. */
+    if(editing){
+      var rmap={},rn=0;
+      orderedIdx(s).forEach(function(ri){rmap[ri]=++rn;});
+      $$('.an-item[data-idx],.an-arrow-line[data-idx]',layer)
+        .forEach(function(el){
+          var raw=el.getAttribute('data-idx');
+          if(raw==='t'||raw==='s') return;
+          if(rmap[+raw]==null) return;
+          var rb=document.createElement('span');
+          rb.className='an-readno';rb.textContent=rmap[+raw];
+          rb.title='Reading order: '+rmap[+raw];
+          el.appendChild(rb);
+        });
+    }
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
       var steps=slideBuildSteps(s),plan=flipPlan(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
