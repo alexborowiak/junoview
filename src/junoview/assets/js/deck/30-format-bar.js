@@ -1768,6 +1768,36 @@
      select, say so. Centred on its own computed width and placed high,
      because code is usually the thing being talked about rather than
      the thing in the corner. */
+  /* the ordinary half of pasting words (T128): a text box, in the
+     deck's default body face, centred the way the code box is. Prose
+     used to fall off the END of the paste handler and do nothing at
+     all, which reads as a broken Ctrl+V to anyone arriving from any
+     other slide tool. */
+  function pasteTextBox(txt){
+    var s=pres.slides[cur];if(!s) return false;
+    var src=String(txt).replace(/\r/g,'').trim();
+    if(!src) return false;
+    s.annots=s.annots||[];
+    var na={k:'text',x:8,y:14,text:src,
+      w:Math.max(24,Math.min(60,Math.round(src.length/3)))};
+    na.x=Math.max(4,50-na.w/2);
+    s.annots.push(na);
+    markDirty();
+    var l=stage.querySelector('.annot-layer');
+    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
+    toast('Text pasted \u2014 Ctrl+Z undoes it');
+    return true;
+  }
+  /* Ctrl+Shift+V with NOTHING in the internal buffer means "paste the
+     clipboard as plain text" (T128) -- the same one-key out the in-box
+     paste has had, for the canvas, where a wrong code detection
+     previously left Ctrl+Z as the only exit. Armed for one paste event
+     and self-clearing, the pendingPaste pattern. */
+  var plainPasteT=null;
+  function armPlainPaste(){
+    if(plainPasteT) clearTimeout(plainPasteT);
+    plainPasteT=setTimeout(function(){plainPasteT=null;},300);
+  }
   function pasteCodeBox(txt){
     var s=pres.slides[cur];if(!s) return false;
     var f=codeFence(txt);
@@ -1781,7 +1811,8 @@
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-    toast('Code pasted — Ctrl+Z undoes it');
+    toast('Code pasted \u2014 Ctrl+Z undoes it, or Ctrl+Shift+V '
+      +'pastes it as plain text');
     return true;
   }
   /* Ctrl+Shift+V / Ctrl+Alt+V are preventDefaulted on keydown, but not
@@ -1834,7 +1865,16 @@
        ours to paste. `mk` is the plain text already read off the event
        for the marker test -- no second read, and no navigator.clipboard
        permission prompt. */
+    if(plainPasteT){
+      clearTimeout(plainPasteT);plainPasteT=null;
+      if(mk){e.preventDefault();pasteTextBox(mk);}
+      return;
+    }
     if(mk&&looksLikeCode(mk)){e.preventDefault();pasteCodeBox(mk);}
+    /* and PROSE lands as an ordinary text box. AFTER the code branch,
+       so detection still gets first look; before this line, plain text
+       fell off the end and nothing happened at all (T128). */
+    else if(mk&&mk.trim()){e.preventDefault();pasteTextBox(mk);}
   });
 
   /* nudge the selection with the arrow keys (Shift = bigger step) */

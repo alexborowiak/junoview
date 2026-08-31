@@ -614,8 +614,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # every load, validating against the index and falling back to the TIP
 # for pre-pointer histories; openDeck's opening snapshot gates on the
 # seed via snapTake's existing ready parameter. deck.js only.
-EXPECTED_MD5 = "af37df9e81697fe8c1a75935cd865dcc"
-EXPECTED_BYTES = 3292452
+# Moved 2026-08-31 for T128: pasted PROSE lands as an ordinary text box
+# (it used to fall off the end of the paste handler and do nothing), the
+# code toast names the way out, and Ctrl+Shift+V with an empty internal
+# buffer arms one PLAIN paste -- the canvas's escape from a wrong code
+# detection, mirroring the in-box escape. 30-format-bar and 55-sections.
+EXPECTED_MD5 = "31b6bf40d229fb656b08a0050e7f518c"
+EXPECTED_BYTES = 3294541
 
 
 def _render_example() -> str:

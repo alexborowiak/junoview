@@ -2290,7 +2290,7 @@ one boot-killing bug the drive itself surfaced.
   inspection — the "missing" saves were unchanged content the dedupe
   was RIGHT to refuse.
 
-- [ ] **T128 · S — Paste: prose should land, and code needs an escape
+- [x] **T128 · S — Paste: prose should land, and code needs an escape
   hatch on the canvas.** [deck.js] *Audited (T92 revisit): code paste
   verified live (mono + 27 highlight spans); prose paste created
   NOTHING.* Make plain text paste onto the canvas a normal text box
@@ -2298,6 +2298,10 @@ one boot-killing bug the drive itself surfaced.
   plain text when the internal buffer is empty, so a wrong code
   detection has the same one-key out the in-box path already has.
   Python-only highlighting is accepted and recorded, not fixed.
+  *Done 2026-08-31.* Driven live: a pasted sentence became a plain box,
+  pasted code a monospace one with the new toast, and Ctrl+Shift+V with
+  nothing copied pasted the same code plain — three boxes, mono only in
+  the middle.
 
 - [ ] **T129 · S — Three doors the audit found missing.** [deck.js]
   (a) Match objects has no canvas right-click row — the menu that

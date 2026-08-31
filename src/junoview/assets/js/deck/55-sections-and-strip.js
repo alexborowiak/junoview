@@ -1888,11 +1888,18 @@
          paste event could add: the buffer is ours. */
       else if((e.ctrlKey||e.metaKey)&&e.shiftKey
               &&(e.key==='v'||e.key==='V')){
+        if(!clipBuf.length){
+          /* nothing of ours to place: the same keys become "paste the
+             clipboard as PLAIN text" (T128) -- the canvas's escape from
+             a wrong code detection. No preventDefault: the native paste
+             event is exactly what has to fire. */
+          armPlainPaste();
+          return;
+        }
         e.preventDefault();tookPaste();
-        if(!clipBuf.length) toast('Nothing copied yet');
-        else {pasteBuf('place');
-          toast('Pasted in place — the coordinates it was copied '
-            +'from');}
+        pasteBuf('place');
+        toast('Pasted in place — the coordinates it was copied '
+          +'from');
       }
       else if((e.ctrlKey||e.metaKey)&&e.altKey
               &&(e.key==='v'||e.key==='V')){

@@ -2843,3 +2843,47 @@ def test_a_new_slide_is_empty_and_the_frame_asks_what_goes_in_it(out):
         assert src in out
     # read once and cleared, at BOTH funnels a picture can arrive by
     assert out.count("var into=takeObjInto();") == 2
+
+
+# ---------------------------------------------------------------------------
+# paste: prose lands, and code detection has a canvas escape (T128)
+# ---------------------------------------------------------------------------
+#
+# Driven live 2026-08-31 over one deck: a pasted sentence became a plain
+# text box, pasted code became a monospace highlighted box with the new
+# toast, and Ctrl+Shift+V with an empty internal buffer pasted the SAME
+# code as a plain box -- three boxes, mono only in the middle.
+
+
+def test_pasted_prose_becomes_a_text_box(out):
+    """Plain text used to fall off the end of the paste handler and do
+    nothing at all, which reads as a broken Ctrl+V to anyone arriving
+    from any other slide tool. AFTER the code branch, so detection still
+    gets first look."""
+    assert "function pasteTextBox(txt){" in out
+    assert "else if(mk&&mk.trim()){e.preventDefault();pasteTextBox(mk);}" in out
+    # the source spells the dash as a backslash-u escape, like its
+    # siblings, so the pin must too (a raw string keeps it literal)
+    assert r"toast('Text pasted \u2014 Ctrl+Z undoes it');" in out
+
+
+def test_the_canvas_has_the_same_paste_plain_escape_the_box_has(out):
+    """Inside a text box Ctrl+Shift+V always pasted plain; on the canvas
+    the same keys meant 'paste in place' and, with nothing copied, just
+    a toast -- so a wrong code detection left Ctrl+Z as the only exit.
+    With the internal buffer EMPTY the keys now arm one plain paste and
+    deliberately do NOT preventDefault: the native paste event is
+    exactly what has to fire. Self-clearing, the pendingPaste pattern.
+    """
+    assert "function armPlainPaste(){" in out
+    assert "var plainPasteT=null;" in out
+    assert "armPlainPaste();\n          return;" in out
+    assert "if(plainPasteT){" in out
+    assert "if(mk){e.preventDefault();pasteTextBox(mk);}" in out
+    # placed-paste behaviour with a full buffer is unchanged
+    assert "pasteBuf('place');" in out
+
+
+def test_the_code_toast_names_the_way_out(out):
+    assert ("Ctrl+Z undoes it, or Ctrl+Shift+V "
+            "pastes it as plain text" in out.replace("'\n      +'", ""))
