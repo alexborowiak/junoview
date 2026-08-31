@@ -1653,7 +1653,8 @@ def test_object_inspectors_follow_the_live_selection(out):
     # event, so markDirty has its own open-pane refresh.
     assert "if(!quiet&&ohp&&!ohp.hidden) renderObjHist();" in out
     # Opening one subject inspector closes the other.
-    assert "'#tidypane','#provpane','#sizepane'].forEach(function(sel){" in out
+    # exclusivity is the T136 owner's job now, not a per-feature list
+    assert "paneShow('objhist');" in out
 
 
 def test_a_ribbon_of_your_own(out):

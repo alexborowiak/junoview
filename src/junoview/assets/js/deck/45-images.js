@@ -216,20 +216,12 @@
     var p=$('#flippane'); if(!p) return;
     if(on){
       if(typeof idx==='number') flipSel=idx;
-      /* one pane in the corner at a time — the rule showVerpane keeps */
-      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-       '#tidypane','#objhist','#provpane']
-        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-      var ob=$('#objects-btn');
-      if(ob) ob.setAttribute('aria-pressed','false');
-      if(typeof showVerpane==='function') showVerpane(false);
-    }
-    /* un-hide BEFORE rendering: renderFlipPane bails on a hidden pane (it
-       is called from showFmt on every canvas click and must not rebuild a
-       list nobody is looking at), so rendering first drew nothing and the
-       pane opened empty */
-    p.hidden=!on;
-    if(on) renderFlipPane();
+      /* paneShow un-hides BEFORE renderFlipPane runs: it bails on a
+         hidden pane (it is called from showFmt on every canvas click
+         and must not rebuild a list nobody is looking at) */
+      paneShow('flippane');
+      renderFlipPane();
+    } else paneHide('flippane');
   }
   function renderFlipPane(){
     var p=$('#flippane'); if(!p||p.hidden) return;
@@ -1118,20 +1110,8 @@
        already tracks the selection, which is everything the second
        button ever added. */
     function set(open){
-      if(open){
-        /* the panes share one corner, so only one can be the thing you
-           are looking at — the same rule showVerpane already keeps */
-        var sp=$('#selpane'); if(sp) sp.hidden=true;
-        var ob=$('#objects-btn');
-        if(ob) ob.setAttribute('aria-pressed','false');
-        var pf=$('#preflight'); if(pf) pf.hidden=true;
-        var sp2=$('#stdpane'); if(sp2) sp2.hidden=true;
-        var fp2=$('#flippane'); if(fp2) fp2.hidden=true;
-        showVerpane(false);
-        render();
-      }
-      pane.hidden=!open;
-      vbtn.setAttribute('aria-pressed',open.toString());
+      if(open){paneShow('animpane');render();}
+      else paneHide('animpane');
     }
     vbtn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});

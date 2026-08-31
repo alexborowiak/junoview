@@ -754,21 +754,11 @@
     if(!btn||!pane) return;
     function set(open){
       if(open){
-        /* the panes share one corner — the rule showVerpane has kept
-           since they were first docked */
-        ['#selpane','#animpane','#preflight','#notespane','#flippane']
-          .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-        var ob=$('#objects-btn');
-        if(ob) ob.setAttribute('aria-pressed','false');
-        var nb=$('#notes-btn');
-        if(nb) nb.setAttribute('aria-pressed','false');
-        if(typeof showVerpane==='function') showVerpane(false);
-      }
-      pane.hidden=!open;
-      btn.setAttribute('aria-pressed',open.toString());
-      /* rendered on open, on ↻ and after a fix — never from markDirty or
-         refresh, or every keystroke would re-survey the whole deck */
-      if(open) renderStdPane();
+        paneShow('stdpane');
+        /* rendered on open, on ↻ and after a fix — never from markDirty
+           or refresh, or every keystroke would re-survey the deck */
+        renderStdPane();
+      } else paneHide('stdpane');
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});
@@ -1727,6 +1717,43 @@
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
   }
+  /* ---- THE ONE OWNER OF INSPECTOR PANES (T136 / JVUX-03) ------------
+     "One pane open at a time" was a comment, not a mechanism: every
+     show function carried its own hand-list of siblings to hide, the
+     lists diverged (Standardise forgot tidypane, Objects hid nothing
+     at all), and Tidy + Check stood open together in the live DOM.
+     The registry below is the mechanism. paneShow(id) hides every
+     other pane, paneHide(id) closes one, and BOTH re-derive each
+     registered trigger's aria-pressed from the DOM -- no feature
+     enumerates sibling selectors again, so a new pane cannot fork the
+     list a tenth time. */
+  var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
+    'stdpane','tidypane','flippane','provpane','sizepane','objhist'];
+  var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
+    notespane:'#notes-btn',preflight:'#vw-check',stdpane:'#dsg-std'};
+  function paneSyncBtns(){
+    Object.keys(PANE_BTN).forEach(function(p){
+      var b=$(PANE_BTN[p]); if(!b) return;
+      var el=$('#'+p);
+      b.setAttribute('aria-pressed',(!!el&&!el.hidden).toString());
+    });
+    /* the Versions strip button repaints itself from the pane state */
+    if(typeof syncStripBtn==='function') syncStripBtn();
+  }
+  function paneShow(id){
+    PANE_IDS.forEach(function(p){
+      if(p===id) return;
+      var el=$('#'+p); if(el) el.hidden=true;
+    });
+    var el2=$('#'+id); if(el2) el2.hidden=false;
+    paneSyncBtns();
+    syncPaneDock();
+  }
+  function paneHide(id){
+    var el=$('#'+id); if(el) el.hidden=true;
+    paneSyncBtns();
+    syncPaneDock();
+  }
   /* ---- one pane open at a time, and the stage makes room for it -------
      Every pane is an .selpane in the stage wrapper. Rather than have each
      one remember to tell the stage, ask the DOM: if any is open, dock.
@@ -2251,9 +2278,8 @@
     var ob=$('#objects-btn'),pane=$('#selpane'),cl=$('#selpane-close');
     if(!ob||!pane) return;
     function set(open){
-      pane.hidden=!open;
-      ob.setAttribute('aria-pressed',open.toString());
-      if(open) renderSelPane();
+      if(open){paneShow('selpane');renderSelPane();}
+      else paneHide('selpane');
     }
     ob.addEventListener('click',function(){set(pane.hidden);});
     if(cl) cl.addEventListener('click',function(){set(false);});

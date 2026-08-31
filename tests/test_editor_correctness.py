@@ -173,9 +173,9 @@ def test_versions_open_in_the_same_shell_as_objects(out):
     assert 'id="verpane-close"' in out and 'id="verpane-title"' in out
     assert "function filmToPane(){" in out and "function filmToPanel(){" in out
     assert "body.appendChild(list);" in out
-    # only one of the three panes can own that corner at a time
-    assert "var sp=$('#selpane'); if(sp) sp.hidden=true;" in out
-    assert "var pf=$('#preflight'); if(pf) pf.hidden=true;" in out
+    # only one pane can own that corner at a time — the T136 owner,
+    # not a hand-list per feature
+    assert "paneShow('verpane');" in out
     # and the strip goes home when the editor does, or the builder renders
     # into a list that is no longer inside it
     assert "showVerpane(false);filmToPanel();" in out

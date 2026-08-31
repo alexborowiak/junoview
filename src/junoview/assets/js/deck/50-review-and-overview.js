@@ -2327,19 +2327,11 @@
   }
   function showVerpane(on){
     var p=$('#verpane'); if(!p) return;
-    /* Objects and Versions are the same 232px shell in the same corner,
-       so only one of them can be the thing you are looking at */
     if(on){
-      var sp=$('#selpane'); if(sp) sp.hidden=true;
-      var ob=$('#objects-btn');
-      if(ob) ob.setAttribute('aria-pressed','false');
-      var pf=$('#preflight'); if(pf) pf.hidden=true;
-      var sp3=$('#stdpane'); if(sp3) sp3.hidden=true;
-      var fp3=$('#flippane'); if(fp3) fp3.hidden=true;
+      paneShow('verpane');
       filmToPane();
       renderFilm();
-    }
-    p.hidden=!on;
+    } else paneHide('verpane');
     var t=$('#verpane-title');
     if(t) t.textContent=pageOf().poster?'Versions':'Slides';
     syncStripBtn();

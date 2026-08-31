@@ -1521,13 +1521,11 @@
     var btn=$('#vw-check'),pane=$('#preflight'),cl=$('#preflight-close');
     if(btn) btn.addEventListener('click',function(){
       if(!pane) return;
-      pane.hidden=!pane.hidden;
-      btn.setAttribute('aria-pressed',pane.hidden?'false':'true');
-      if(!pane.hidden) renderPreflight();
+      if(pane.hidden){paneShow('preflight');renderPreflight();}
+      else paneHide('preflight');
     });
     if(cl) cl.addEventListener('click',function(){
-      if(pane) pane.hidden=true;
-      if(btn) btn.setAttribute('aria-pressed','false');
+      paneHide('preflight');
     });
     var re=$('#preflight-rerun');
     if(re) re.addEventListener('click',renderPreflight);
@@ -1788,12 +1786,8 @@
     var a=s&&typeof selAnnot==='number'&&(s.annots||[])[selAnnot];
     if(!a){toast('Select an object first');return;}
     var pane=$('#objhist'); if(!pane) return;
-    ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-     '#tidypane','#provpane','#sizepane'].forEach(function(sel){
-      var o=$(sel); if(o) o.hidden=true;});
-    pane.hidden=false;
+    paneShow('objhist');
     syncInspectorPanes(true);
-    syncPaneDock();
   }
   (function(){
     var cl=$('#objhist-close'),rr=$('#objhist-rerun');
@@ -2065,11 +2059,8 @@
   }
   function showTidyPane(){
     var pane=$('#tidypane'); if(!pane) return;
-    ['#selpane','#animpane','#preflight','#notespane','#stdpane']
-      .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-    pane.hidden=false;
+    paneShow('tidypane');
     renderTidyPane();
-    syncPaneDock();
   }
   (function(){
     var cl=$('#tidypane-close');

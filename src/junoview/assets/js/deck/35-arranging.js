@@ -2224,12 +2224,8 @@
   }
   function showProvPane(){
     var pane=$('#provpane'); if(!pane) return;
-    ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-     '#tidypane','#objhist'].forEach(function(sel){
-      var o=$(sel); if(o) o.hidden=true;});
-    pane.hidden=false;
+    paneShow('provpane');
     syncInspectorPanes(true);
-    syncPaneDock();
   }
   (function(){
     var pb=$('#fmt-prov');
@@ -2372,21 +2368,8 @@
   }
   function showSizePane(on){
     var p=$('#sizepane'); if(!p) return;
-    if(on){
-      /* the panes share one corner -- the rule showVerpane has kept
-         since they were first docked */
-      ['#selpane','#animpane','#preflight','#notespane','#stdpane',
-       '#tidypane','#objhist','#provpane','#flippane']
-        .forEach(function(sel){var o=$(sel); if(o) o.hidden=true;});
-      var ob=$('#objects-btn');
-      if(ob) ob.setAttribute('aria-pressed','false');
-      var nb=$('#notes-btn');
-      if(nb) nb.setAttribute('aria-pressed','false');
-      if(typeof showVerpane==='function') showVerpane(false);
-    }
-    p.hidden=!on;
-    if(on) sizePaneSync();
-    syncPaneDock();
+    if(on){paneShow('sizepane');sizePaneSync();}
+    else paneHide('sizepane');
   }
   (function(){
     var sb=$('#fmt-sizepos'),p=$('#sizepane');

@@ -245,18 +245,8 @@
     var btn=$('#notes-btn'),pane=$('#notespane');
     if(!btn||!pane) return;
     function set(open){
-      if(open){
-        /* the panes share one corner: only one can be what you are
-           looking at, the rule showVerpane has always kept */
-        ['#selpane','#animpane','#preflight'].forEach(function(sel){
-          var o=$(sel); if(o) o.hidden=true;});
-        var ob=$('#objects-btn');
-        if(ob) ob.setAttribute('aria-pressed','false');
-        showVerpane(false);
-      }
-      pane.hidden=!open;
-      btn.setAttribute('aria-pressed',open.toString());
-      if(open) renderNotesPane();
+      if(open){paneShow('notespane');renderNotesPane();}
+      else paneHide('notespane');
     }
     btn.addEventListener('click',function(e){
       e.stopPropagation();set(pane.hidden);});

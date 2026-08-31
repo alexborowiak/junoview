@@ -2589,13 +2589,21 @@ competing ways to reach them.
   not chased). The canvas context menu keeps its own
   close-on-any-click, which already cannot stack with these.
 
-- [ ] **T136 · M — One owner for the inspector panes.** The
+- [x] **T136 · M — One owner for the inspector panes.** The
   "one pane open at a time" comment is aspiration: showTidyPane hides
   five named siblings, Standardise hides a DIFFERENT five and omits
   tidypane, Check hides none. The hand-lists have already diverged
   twice. One controller owns the single open `.selpane`, its trigger's
   pressed state, and closing on slide/mode change; no feature
   enumerates sibling selectors again.
+  *Done 2026-08-31.* `paneShow`/`paneHide` over `PANE_IDS` (all eleven
+  panes) with `PANE_BTN` re-deriving every registered trigger's
+  aria-pressed from the DOM; the eleven show/close sites — Objects
+  (which hid NOTHING before), Animations, Versions, Notes, Check,
+  Standardise, Tidy, Flip, Provenance, Size and Object history — all
+  route through it, and every hand-list is gone. Driven live on the
+  exact JVUX-03 sequence: Tidy→Check→Standardise→Animations→Objects
+  showed exactly ONE pane at every step, aria flipping correctly.
 
 - [ ] **T137 · M — The context menu must be readable.** A single
   readable column (the 3-column `.sh-menu` grid is for icon galleries,

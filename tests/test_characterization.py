@@ -699,8 +699,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # shapes, text-style caret, autosave, save-target, View overflow and
 # the notebook-list More menu all route through it — at most one
 # shows, aria-expanded always resets, Escape closes.
-EXPECTED_MD5 = "49ecc4b2084978cda0fc9e746bcbdd47"
-EXPECTED_BYTES = 3374973
+# Moved 2026-08-31 for T136: one owner for the inspector panes
+# (JVUX-03). paneShow/paneHide + PANE_IDS/PANE_BTN in 05-figures
+# replace eleven diverged hand-lists of sibling selectors; every
+# show/close site routes through them and trigger aria-pressed is
+# re-derived from the DOM.
+EXPECTED_MD5 = "7d81f985854437a61d8cbb80b8f5d1cf"
+EXPECTED_BYTES = 3373100
 
 
 def _render_example() -> str:
