@@ -2624,12 +2624,20 @@ competing ways to reach them.
   incident written into the CSS, because a DOM probe reported the
   attribute as set while the pixels showed the fold open.
 
-- [ ] **T138 · S — Pin what Phase 0 fixed.** The unique-id test
+- [x] **T138 · S — Pin what Phase 0 fixed.** The unique-id test
   (T134); pins that every registered menu/pane goes through the one
   controller; and the live-drive evidence recorded in docstrings. The
   review's full browser-test list (screenshots, keyboard paths) needs
   a browser in CI this repo does not have — recorded as the honest
   gap, not silently skipped.
+  *Done 2026-08-31.* `test_interaction_substrate.py`: the overlay owner
+  boots exactly once from THE BOOT SEQUENCE; every migrated menu calls
+  it by name and the old per-menu closers stay dead; PANE_IDS is
+  diffed against the actual `.selpane` ids in deck.html so a new pane
+  cannot dodge the owner; every show site uses `paneShow`; the fold
+  and its `[hidden]` fix are pinned; and the drive evidence plus the
+  no-browser-CI gap are in the module docstring. The unique-id test
+  landed with T134.
 
 ### Phase 1+ — one vocabulary, one default (filed, scoped, partly user calls)
 
