@@ -740,11 +740,17 @@
                    LOOKING at it — which is what everything else in this
                    group is (2026-08-20, user: "some tabs still now have
                    two few buttons"). -->
+              <!-- ONE door for "is this ready?" (T142 / JVUX-09).
+                   Print check, Tidy, Standardise, the content lints and
+                   source freshness were five separately named surfaces;
+                   this button opens the centre that counts all five and
+                   opens each existing surface from one place. -->
               <button class="dbtn rbn-sm" id="vw-check"
                 aria-pressed="false"
-                title="Check this page before it goes to print: soft
- figures, anything off the page or inside the margin, unreadable text,
- empty frames"><i data-ic="flag"></i> Check</button>
+                title="Is this ready? Five checks in one place: print
+ readiness, layout and spacing, style consistency, content and wording,
+ and whether placed figures still match their sources"
+                ><i data-ic="flag"></i> Review</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
@@ -1563,6 +1569,19 @@
     
     <div class="deck-stagewrap" id="deck-stagewrap">
       
+      <!-- THE REVIEW CENTRE (T142): the five engines run dry for
+           their counts; each row's button opens the existing full
+           surface. T136's pane owner guarantees they cannot stack. -->
+      <aside class="selpane preflight" id="reviewpane" hidden>
+        <div class="selpane-h"><span>Is this ready?</span>
+          <button class="dbtn dc-icon" id="reviewpane-rerun"
+            aria-label="Check again"
+            title="Run the five checks again"><i data-ic="reload"></i></button>
+          <button class="dbtn dc-icon" id="reviewpane-close" aria-label="Close"
+            title="Close"><i data-ic="exit"></i></button></div>
+        <div class="pf-count" id="reviewpane-count"></div>
+        <div class="selpane-list" id="reviewpane-list"></div>
+      </aside>
       <aside class="selpane preflight" id="preflight" hidden>
         <div class="selpane-h"><span>Before you print</span>
           <button class="dbtn dc-icon" id="preflight-rerun" aria-label="Check again"

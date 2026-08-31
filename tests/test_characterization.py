@@ -737,8 +737,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # sections (file / sources / export & share / page / careful) with
 # the destructive pair last in warn colour, and the autosave button
 # stopped painting itself as a second primary action beside Save.
-EXPECTED_MD5 = "cf61aab5d5b136985ee046c667c48053"
-EXPECTED_BYTES = 3072921
+# Moved 2026-09-01 for T142: the Review centre. One worded Review
+# door (the old Check) opens a pane that runs the five existing
+# engines dry for their counts — print, layout, style, content,
+# source freshness — and opens each existing surface from one
+# place; nothing was rewritten and T136 keeps them un-stackable.
+EXPECTED_MD5 = "933523130b859af428bd12238c258c53"
+EXPECTED_BYTES = 3078449
 
 
 def _render_example() -> str:

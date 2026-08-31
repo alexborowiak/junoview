@@ -1387,7 +1387,7 @@
   var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
     ['vw-full','Full screen'],['vw-side','Side toolbar'],
-    ['vw-check','Check'],['objects-btn','Layers'],['notes-btn','Notes']];
+    ['vw-check','Review'],['objects-btn','Layers'],['notes-btn','Notes']];
   var viewFolded=false,viewWasHidden=null;
   function foldViewGroup(on){
     on=!!on;
@@ -1728,9 +1728,10 @@
      enumerates sibling selectors again, so a new pane cannot fork the
      list a tenth time. */
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
-    'stdpane','tidypane','flippane','provpane','sizepane','objhist'];
+    'stdpane','tidypane','flippane','provpane','sizepane','objhist',
+    'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
-    notespane:'#notes-btn',preflight:'#vw-check',stdpane:'#dsg-std'};
+    notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
   function paneSyncBtns(){
     Object.keys(PANE_BTN).forEach(function(p){
       var b=$(PANE_BTN[p]); if(!b) return;

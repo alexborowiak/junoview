@@ -1489,6 +1489,71 @@
     });
     return out;
   }
+  /* ---- THE REVIEW CENTRE (T142 / JVUX-09) ---------------------------
+     "Is this ready?" had five separately named doors — Check (really
+     print preflight), Tidy page, Standardise, Check for drift and
+     Export for review — split by implementation history. This pane is
+     the one answer: each existing ENGINE runs dry for its count, each
+     row's button opens the existing full surface, and nothing was
+     rewritten — the detail views keep every fix they have earned.
+     T136's owner guarantees the surfaces can no longer stack. */
+  function renderReviewPane(){
+    var list=$('#reviewpane-list'),head=$('#reviewpane-count');
+    if(!list) return;
+    list.innerHTML='';
+    var total=0;
+    function cat(name,scope,count,btnLabel,fn,tip){
+      total+=count;
+      var row=document.createElement('div');row.className='rv-cat';
+      var h=document.createElement('div');h.className='rv-cat-h';
+      var nm=document.createElement('span');nm.className='rv-cat-nm';
+      nm.textContent=name;h.appendChild(nm);
+      var ct=document.createElement('span');
+      ct.className='rv-cat-n'+(count?' has':'');
+      ct.textContent=count?String(count):'clear';
+      h.appendChild(ct);
+      row.appendChild(h);
+      var sc=document.createElement('div');sc.className='rv-cat-scope';
+      sc.textContent=scope;row.appendChild(sc);
+      var b=document.createElement('button');
+      b.className='dbtn rv-cat-open';b.type='button';
+      b.innerHTML=btnLabel;
+      if(tip) b.title=tip;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();fn();});
+      row.appendChild(b);
+      list.appendChild(row);
+    }
+    cat('Print & export readiness','this slide',preflight().length,
+      bic('flag')+' Open the print check',
+      function(){paneShow('preflight');renderPreflight();},
+      'Soft figures, items off the page or inside the margin, thin '
+      +'contrast, empty frames');
+    cat('Layout & spacing','this slide',tidyFindings().length,
+      bic('align')+' Open Tidy page',
+      function(){showTidyPane();},
+      'Near-miss alignments, uneven gaps and duplicates');
+    var r=standardise();
+    cat('Style consistency','whole deck',
+      r.findings.length+figLint().length,
+      bic('scope')+' Open Standardise',
+      function(){var b2=$('#dsg-std'); if(b2) b2.click();},
+      'Headings, paragraphs, captions and figures that have drifted '
+      +'apart \u2014 the Style system\u2019s drift check digs deeper');
+    cat('Content & wording','whole deck',reviewLints().length,
+      bic('doc')+' Export for review\u2026',
+      function(){var b3=$('#mi-review'); if(b3) b3.click();},
+      'What the deck SAYS, written out as markdown with its lints '
+      +'riding along');
+    cat('Source freshness','whole deck',staleFigures().length,
+      bic('reload')+' Update figures from their sources',
+      function(){var b4=$('#mi-refresh-figs'); if(b4) b4.click();},
+      'Placed figures whose notebook or file has moved on \u2014 one '
+      +'click re-reads them, keeping position, size and crop');
+    if(head) head.textContent=total
+      ?(total+' to look at, across five checks')
+      :'Five checks, all clear';
+  }
   function renderPreflight(){
     var pane=$('#preflight'),list=$('#preflight-list');
     if(!pane||!list) return;
@@ -1518,12 +1583,19 @@
     });
   }
   (function(){
-    var btn=$('#vw-check'),pane=$('#preflight'),cl=$('#preflight-close');
+    var btn=$('#vw-check'),pane=$('#reviewpane');
     if(btn) btn.addEventListener('click',function(){
       if(!pane) return;
-      if(pane.hidden){paneShow('preflight');renderPreflight();}
-      else paneHide('preflight');
+      if(pane.hidden){paneShow('reviewpane');renderReviewPane();}
+      else paneHide('reviewpane');
     });
+    var rvc=$('#reviewpane-close');
+    if(rvc) rvc.addEventListener('click',function(){
+      paneHide('reviewpane');
+    });
+    var rvr=$('#reviewpane-rerun');
+    if(rvr) rvr.addEventListener('click',renderReviewPane);
+    var cl=$('#preflight-close');
     if(cl) cl.addEventListener('click',function(){
       paneHide('preflight');
     });

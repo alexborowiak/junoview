@@ -140,3 +140,23 @@ def test_the_file_menu_has_named_sections_and_a_warned_tail():
     css = assets.deck_css()
     assert '.deck-qat .qat-auto[aria-pressed="true"]{background:none;' in css
 
+def test_the_review_centre_fronts_the_five_engines():
+    """T142 / JVUX-09, driven live: the Review door opened the centre
+    reading "5 to look at, across five checks" (Print 2, Layout 2,
+    Style 1, Content clear, Sources clear on the test deck), and each
+    row's button opened exactly its one existing surface — never more
+    than one pane visible, per the T136 owner."""
+    html = assets.deck_html()
+    assert 'id="reviewpane"' in html
+    assert "> Review</button>" in html
+    out = _out()
+    assert "function renderReviewPane(){" in out
+    # the engines run DRY for their counts — reuse, not rewrite
+    for engine in ("preflight().length", "tidyFindings().length",
+                   "reviewLints().length", "staleFigures().length",
+                   "r.findings.length+figLint().length"):
+        assert engine in out, engine
+    # each button opens the EXISTING surface
+    assert "paneShow('preflight');renderPreflight();},"
+    assert "function(){showTidyPane();}," in out
+

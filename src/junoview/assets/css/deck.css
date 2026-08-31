@@ -3850,6 +3850,20 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T142: the Review centre's category rows */
+.rv-cat{padding:8px 2px;border-bottom:1px solid #ffffff12;}
+.rv-cat:last-child{border-bottom:none;}
+.rv-cat-h{display:flex;align-items:center;gap:8px;}
+.rv-cat-nm{flex:1;font-size:11.5px;color:#dbe7ef;}
+.rv-cat-n{font-family:var(--mono);font-size:9.5px;color:#8fd18a;
+  border:1px solid #8fd18a44;border-radius:8px;padding:1px 7px;}
+.rv-cat-n.has{color:var(--amber,#f0a848);
+  border-color:#f0a84855;}
+.rv-cat-scope{font-family:var(--mono);font-size:9px;
+  letter-spacing:.08em;text-transform:uppercase;color:#8aa0b0;
+  margin:2px 0 6px;}
+.rv-cat-open{display:block;width:100%;text-align:left;font-size:11px;
+  padding:4px 7px;}
 /* T143: autosave is a SETTING with a countdown, not a second primary
    action beside Save — pressed stops painting it accent (JVUX-07) */
 .deck-qat .qat-auto[aria-pressed="true"]{background:none;
