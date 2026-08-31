@@ -513,7 +513,10 @@ def test_a_figure_beside_a_markdown_file_is_embedded(tmp_path: Path):
     doc = load_doc(tmp_path / "notes.md")
     fig = [it for it in _items(doc) if it.kind == "figure"][0]
     body = fig.outputs[0].payload
-    assert body.startswith('<img src="data:image/png;base64,')
+    # wrapped in .figframe, which is what makes the deck editor treat it
+    # as a figure at all (T122) -- not decoration
+    assert body.startswith('<div class="figframe" data-pt="image">')
+    assert '<img src="data:image/png;base64,' in body
     assert "fig/trend.png" not in body
     assert fig.outputs[0].has_image is True
 
@@ -574,7 +577,8 @@ def test_an_extensionless_graphic_finds_the_file_latex_would(tmp_path):
         encoding="utf-8")
     body = [it for it in _items(load_doc(tmp_path / "p.tex"))
             if it.kind == "figure"][0].outputs[0].payload
-    assert body.startswith('<img src="data:image/png;base64,')
+    assert '<img src="data:image/png;base64,' in body
+    assert body.startswith('<div class="figframe"')
 
 
 def test_a_figure_naming_no_file_does_not_ask_for_the_page_itself():
@@ -822,3 +826,36 @@ def test_the_preamble_is_not_prose():
     for gone in ("documentclass", "usepackage", "\\title", "AB",
                  "maketitle"):
         assert gone not in body, gone
+
+
+def test_a_source_figure_wears_the_same_wrapper_a_notebook_figure_does():
+    """The class is what makes the deck editor SEE a figure (T122).
+
+    ``cellFacets`` decides whether a card has a figure by looking for
+    ``.figframe/.figpager/.plotframe`` in its body, and
+    ``applyPartFilter`` strips a body it does not recognise -- so a bare
+    ``<img>`` here meant a slide frame bound to a .tex figure resolved
+    its title and drew an empty box. Everything else in that chain was
+    already source-agnostic.
+
+    Verified in the real app 2026-08-31: the frame came back
+    ``an-item an-cell an-figonly`` with a ``.cb-part cb-fig`` body and
+    the picture drawn. Before the wrapper, the same frame had an empty
+    ``.cardbody``.
+    """
+    doc = doc_from_text("notes.md", "![A trend](fig/t.png)\n")
+    out = [it for it in _items(doc) if it.kind == "figure"][0].outputs[0]
+    assert out.payload.startswith('<div class="figframe" data-pt="image">')
+    assert "<img " in out.payload
+    assert out.has_image is True
+
+
+def test_something_a_browser_cannot_draw_is_not_wrapped_as_a_figure():
+    """A PDF figure and an empty reference are NOT figures the deck can
+    place, and claiming otherwise would put an empty frame on a slide --
+    which is the bug this fixes, in the other direction."""
+    doc = parse_latex(r"\begin{figure}\includegraphics{t.pdf}"
+                      r"\caption{C}\end{figure}")
+    out = [it for it in _items(doc) if it.kind == "figure"][0].outputs[0]
+    assert "figframe" not in out.payload
+    assert out.has_image is False

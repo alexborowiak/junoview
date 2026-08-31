@@ -13,7 +13,7 @@ Everything about what is left to do is in these, all in this repo:
 
 | | |
 |---|---|
-| **TASKS.md** (this file), **group 13** | **The queue.** The 2026-08-30 external review, T95–T121, every claim re-read against the source and then handed to a refuter told to prove it wrong — read the verdict before working one. Groups 1–12 are the design record; every entry in them is closed and ends in a dated note saying what shipped. |
+| **TASKS.md** (this file), **groups 13–14** | **The queue.** The 2026-08-30 external review, T95–T121, every claim re-read against the source and then handed to a refuter told to prove it wrong — read the verdict before working one. Groups 1–12 are the design record; every entry in them is closed and ends in a dated note saying what shipped. |
 | [**AUDIT-2026-08-26.md**](AUDIT-2026-08-26.md) | **The evidence.** All 84 findings behind group 9, filed under the T-number each belongs to, with file:line, what is wrong, what the reviewer read to confirm it, and the fix suggested. Read this before touching anything. |
 | [**reviews/**](reviews/) | **The evidence for group 13.** Two external reviews of `23956c4` — one on bugs, packaging and hygiene, one on missing features — with the file:line each claim rests on. Group 13's notes record where re-reading disagreed with them, which is often, and the disagreements are the useful part. |
 | `tests/test_characterization.py`, the comment block above `EXPECTED_MD5` | **The build log.** Every deliberate change to the rendered page since the package split, dated, saying what moved and why. Written at the moment the work lands rather than afterwards, which is why group 13's completion notes could be transcribed from it instead of reconstructed from `git log`. |
@@ -2159,6 +2159,96 @@ nothing.
   JSON download beside the Markdown one so CI can read it. Configurable
   thresholds and suppressions need a whitelist entry in the deck-save
   path or they will not survive a save — that half is M on its own.
+
+---
+
+## 14. Notebook-first, and the other sources as good as notebooks
+
+**The direction, in the user's words (2026-08-31):** *"still have a
+prominent notebook thing, but we also want the other [sources] to be
+possible… I want them to maybe have views like notebooks that can be
+opened and selected figures (or can just copy and paste from them and it
+can update with them), but the notebooks to be a whole thing in
+itself."*
+
+So: a notebook stays the centre and keeps everything only a notebook can
+have — code trails, provenance, variables, git versions, note insertion.
+Everything else — Markdown, Quarto, LaTeX, csv, and whatever comes after
+— should be **openable, browsable, and pickable from**, with a figure
+placed on a slide staying tied to its source the way a notebook figure
+does. That is the "and more" the reviews argued for, reached by
+deepening what exists rather than by copying Office.
+
+**How much of it already works, measured rather than assumed.** T100 and
+T101 turned out to have done most of it. A `.tex` opened through the real
+app on 2026-08-31 registers as a shell under its own stem, renders its
+cards, embeds its figure, and — this is the surprising part — a slide
+frame whose `ref` names one of its cards **resolves**, and draws that
+card's title. The picker never checked for a notebook either: it catches
+a click on any rendered `.nbshell .card`. `APP.shells` has always been
+keyed by *stem*, not by kind.
+
+What does NOT work is one wrapper, which is T122.
+
+- [x] **T122 · S — A source's figure is not recognised as a figure.**
+  *Verified by driving the real app.* The notebook path wraps every
+  image in `<div class="figframe" data-pt="…">` (`outputs.py`) or
+  `<div class="cb-part cb-fig">` (`render/items.py`). `_img_item` in
+  `sources.py` emits a bare `<img>`. Everything downstream keys off
+  those classes: `cellFacets` decides `f.figure` by looking for
+  `.figframe,.figpager,.plotframe`, and `applyPartFilter` then strips
+  the body it does not recognise — which is why a frame bound to a
+  `.tex` figure renders its **caption and an empty body**. Observed
+  exactly that: `.an-cell` resolved, `.an-cellhead` read "The trend over
+  the record.", `.cardbody` was `""`.
+  Emit the same wrapper the notebook path emits and the picker, the
+  frame, part filtering, refresh, thumbnails and every export work on a
+  `.md`/`.tex` figure with no further change. Check the `pt` value too —
+  it is what the Object pane and the export read to say what kind of
+  figure this is.
+
+- [ ] **T123 · M — A placed source figure should follow its source.**
+  "…or can just copy and paste from them and it can update with them."
+  Notebook frames have `provState`/`staleFigures`/`resyncFigure` and the
+  "refresh figures" path; a source figure needs the same tie, and
+  `/api/open` already reloads any registered suffix since T100. Read
+  those three functions before writing anything — the question is
+  whether they are keyed to a notebook or merely written as if they
+  were, and T122's evidence says the second is likely.
+
+- [ ] **T124 · S — The rail should say what kind of thing each tab is.**
+  A `.tex` and a `.ipynb` now sit side by side with nothing
+  distinguishing them, and the doors that are notebook-only (Insert
+  note, Versions from git) are still offered on both — T100 kept those
+  routes strict on the server, so they refuse correctly, but refusing is
+  not the same as not offering. `source_label()` already names the kind
+  and `_list_dir` already returns it.
+
+- [ ] **T125 · design first — What a notebook has that a source does
+  not, on purpose.** The other half of "notebooks to be a whole thing in
+  itself": code trails, the dependency graph, variables, git history,
+  note insertion and figure locks are all things a `.tex` has no
+  equivalent for. Write that boundary down once, in help and in
+  ARCHITECTURE.md, so "notebook-first" is a stated design rather than an
+  accident of which features got written first.
+
+### Carried forward from group 13, re-ordered by the same decision
+
+The user chose **notebook-first, deepened** (2026-08-31), so of the nine
+design-first items left in group 13:
+
+- **T117** (native data-bound charts) and **T106** (authorable reading
+  order) are the ones this direction wants next. T117 is the "and more":
+  a deck object bound to a notebook anchor, editable here, exporting as
+  a real PowerPoint chart with its provenance intact — and T105 means
+  the semantic fields to hang it on now exist.
+- **T113** (Excel/workbook), **T114** (`.pptx` import) and **T115**
+  (masters) stay open but move behind those. Note that T113's real
+  blocker is a **bytes seam**: every producer takes text today, and
+  `loader.py`, `web_parse` and the web loader all assume `read_text`.
+  Nothing about a workbook can start before that, and that seam is worth
+  opening on its own terms because it is also what `.pptx` import needs.
+- **T110**, **T116**, **T119** and **T120** stay open and unranked.
 
 ---
 

@@ -206,13 +206,31 @@ def _img_body(src: str, alt: str, base: Path | None) -> str:
 
 def _img_item(doc: Document, st: dict, src: str, alt: str,
               caption: str = "", base: Path | None = None) -> Item:
-    """A figure card for an image the source file referred to."""
+    """A figure card for an image the source file referred to.
+
+    The payload is wrapped in ``.figframe``, which is not decoration: it
+    is how the deck editor RECOGNISES a figure. ``cellFacets`` decides
+    whether a card has a figure by looking for
+    ``.figframe/.figpager/.plotframe`` inside its body, and
+    ``applyPartFilter`` then keeps or strips the body accordingly -- so
+    a bare ``<img>`` here meant a slide frame bound to a ``.tex`` figure
+    resolved its title and drew an EMPTY body. Every other piece of the
+    chain was already source-agnostic: the picker catches a click on any
+    rendered card, ``APP.shells`` is keyed by stem rather than by kind,
+    and ``resolveRef`` found the card. This one wrapper was the whole
+    gap (T122).
+    """
     iid = _slug(alt or "figure", st["used"])
     body = _img_body(src, alt, base)
+    drawable = "<img " in body
+    if drawable:
+        # data-pt names WHICH kind of figure, the way the notebook path
+        # does; the Object pane and the exporters read it.
+        body = f'<div class="figframe" data-pt="image">{body}</div>'
     return _add(doc, st, Item(
         kind="figure", title=alt or Path(src).stem or "Figure",
         outputs=[RenderedOutput(kind="image", payload=body,
-                                has_image='<img ' in body,
+                                has_image=drawable,
                                 ot="plot", pt="image")],
         caption=caption, item_id=iid, anchor=iid))
 
