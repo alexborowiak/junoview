@@ -2708,11 +2708,25 @@ competing ways to reach them.
   one closed the deck — and a fresh origin re-runs the welcome tour
   over everything.)
 
-- [ ] **T142 · design first — One Review centre.** Check (print),
+- [x] **T142 · design first — One Review centre.** Check (print),
   Tidy (layout), Standardise (styles), Check for drift (styles again)
   and Export for review are five doors to "is this ready?". Map the
   existing engines under one worded Review surface with severity,
   scope and navigation — reuse, do not rewrite.
+  *Done 2026-09-01*, as a FRONT, exactly to the reuse rule: the Home
+  ribbon's Check became **Review** and opens the centre — "Is this
+  ready?" — where the five existing engines run DRY for their counts
+  (preflight, tidyFindings, standardise+figLint, reviewLints,
+  staleFigures), each row saying its scope (this slide / whole deck)
+  and carrying one worded button that opens the existing full surface.
+  Nothing was rewritten; the detail views keep every fix they have
+  earned, and T136's pane owner is what makes the five surfaces
+  finally un-stackable. Driven live: "5 to look at, across five
+  checks" (Print 2, Layout 2, Style 1, Content clear, Sources clear),
+  and each button opened exactly its one surface. Per-finding
+  Fix/Ignore/Suppress inside ONE list — the review's fuller vision —
+  would mean rewriting the five renderers into one; recorded as the
+  deliberate cut, revisit if the front proves insufficient.
 
 - [x] **T143 · M — File owns files.** The 19-row File menu mixes file
   ops, source sync, page design, exports, settings and two destructive
