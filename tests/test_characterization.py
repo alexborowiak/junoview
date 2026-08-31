@@ -733,8 +733,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # working; ~5,500 lines of catalogue deleted, stale stored ids land
 # on Default with a one-time notice that waits for the deck to be
 # on screen, and the chooser no longer sits inside the tablist role.
-EXPECTED_MD5 = "ef1aea8903e4e5e0fe2ac3647b346506"
-EXPECTED_BYTES = 3072543
+# Moved 2026-09-01 for T143: the File menu grew its five named
+# sections (file / sources / export & share / page / careful) with
+# the destructive pair last in warn colour, and the autosave button
+# stopped painting itself as a second primary action beside Save.
+EXPECTED_MD5 = "cf61aab5d5b136985ee046c667c48053"
+EXPECTED_BYTES = 3072921
 
 
 def _render_example() -> str:

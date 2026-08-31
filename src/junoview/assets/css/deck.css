@@ -3850,6 +3850,14 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T143: autosave is a SETTING with a countdown, not a second primary
+   action beside Save — pressed stops painting it accent (JVUX-07) */
+.deck-qat .qat-auto[aria-pressed="true"]{background:none;
+  border-color:#ffffff2e;color:var(--chrome-ink,#c9d6e2);}
+/* T143: the File menu's named sections, and its dangerous tail */
+.dc-mhead-warn{color:var(--warn,#ff6b57);}
+.dc-mi-warn{color:var(--warn,#ff6b57);}
+.dc-mi-warn:hover{background:#ff6b5722;}
 /* T139: the tab wrapper is semantic only */
 .rbn-tabset{display:contents;}
 /* T144: the empty notebook column's worded door */

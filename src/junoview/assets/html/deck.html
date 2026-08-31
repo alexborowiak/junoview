@@ -73,41 +73,22 @@
     <div class="dc-menuwrap">
       <button class="dbtn" id="dc-file" aria-haspopup="true"
         aria-expanded="false">File &#9662;</button>
+      <!-- NAMED SECTIONS (T143 / JVUX-07). Nineteen rows separated by
+           anonymous lines mixed file ops, source sync, page setup,
+           exports and two destructive commands; the headings below are
+           the ownership table the review asked for, with the dangerous
+           pair LAST, under its own warning heading, in warn colour.
+           Page background left this menu on 2026-08-20 (user: "why the
+           fuck is page background in file"); slide numbers and crop
+           marks stay as PAGE rows here because print setup is part of
+           getting a file out the door, and Design's furniture group
+           carries the other door to Numbers. -->
       <div class="dc-menu" id="dc-menu" hidden>
+        <div class="dc-mhead">file</div>
         <button class="dc-mi" id="mi-new">New presentation</button>
         <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
-        <div class="dc-msep"></div>
-        <!-- pictures inserted from this computer keep a handle to the
-             file they came from, so they can be re-read on demand.
-             Anything whose file has moved is LEFT as it was and
-             named in the report (2026-08-22). -->
-        <button class="dc-mi" id="mi-refresh-img"><i data-ic="reload"></i>
-          Refresh pictures from their files</button>
-        <!-- The same door for FIGURES. Re-sync existed only as a
-             per-figure button inside the provenance pane, shown only
-             when that one figure was stale - so there was no way to ask
-             "has anything on this deck moved on?" at all, though the
-             picture half of the same idea had both doors (2026-08-29,
-             T58). -->
-        <button class="dc-mi" id="mi-refresh-figs"><i data-ic="reload"></i>
-          Update figures from their sources</button>
-        <div class="dc-msep"></div>
-        <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
-        <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
-        <div class="dc-msep"></div>
-        <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
-        <button class="dc-mi" id="mi-crop"
-          title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
-        <!-- Page background is NOT here any more. It is a property of
-             how the deck LOOKS, and File is where you open, save and
-             export things — it was in this menu because that is where
-             somebody put it, not because it belongs (2026-08-20, user:
-             "why the fuck is page background in file"). It lives with
-             the per-slide background, under Design, where the two can be
-             seen against each other. -->
-        <div class="dc-msep"></div>
+        <button class="dc-mi" id="mi-load">Open a .junoview
+          file&#8230;</button>
         <!-- HISTORY. Beside the saves, because a snapshot is taken by
              a save and what you want it for is undoing one (T32). -->
         <button class="dc-mi" id="mi-hist"
@@ -116,10 +97,23 @@
  back">History&#8230;</button>
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
         <button class="dc-mi" id="mi-autosave" hidden></button>
-        <!-- THE CONTENT, as text. An export, so it sits with the
-             exports; and the lints ride along with it because what a
-             lint says and what the reader reads are the same deck
-             (T35). -->
+        <button class="dc-mi" id="mi-dl">Download a copy
+          (.junoview)</button>
+        <div class="dc-mhead">sources</div>
+        <!-- pictures inserted from this computer keep a handle to the
+             file they came from, so they can be re-read on demand.
+             Anything whose file has moved is LEFT as it was and
+             named in the report (2026-08-22). -->
+        <button class="dc-mi" id="mi-refresh-img"><i data-ic="reload"></i>
+          Refresh pictures from their files</button>
+        <!-- The same door for FIGURES (2026-08-29, T58; one verb that
+             reaches the disk since T123). -->
+        <button class="dc-mi" id="mi-refresh-figs"><i data-ic="reload"></i>
+          Update figures from their sources</button>
+        <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
+        <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+        <div class="dc-mhead">export &amp; share</div>
+        <!-- THE CONTENT, as text (T35). -->
         <button class="dc-mi" id="mi-review"
           title="Write the deck out as markdown — titles, text, figures
  and where each came from, captions and notes — so a colleague or a
@@ -138,12 +132,17 @@
           title="A single .html file anyone can open — no Junoview
  needed. Arrow keys page through it; Ctrl+P prints at page size">Export
  standalone HTML</button>
-        <button class="dc-mi" id="mi-dl">Download a copy
-          (.junoview)</button>
-        <button class="dc-mi" id="mi-load">Open a .junoview
-          file&#8230;</button>
-        <button class="dc-mi" id="mi-discard">Discard changes</button>
-        <button class="dc-mi" id="mi-del">Delete presentation</button>
+        <div class="dc-mhead">page</div>
+        <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
+        <button class="dc-mi" id="mi-crop"
+          title="Add trim marks just outside the page for the print
+ shop to cut to. The page itself keeps its exact size &mdash; the sheet
+ grows by 5mm on every side to hold them">Crop marks: off</button>
+        <div class="dc-mhead dc-mhead-warn">careful — these lose work</div>
+        <button class="dc-mi dc-mi-warn" id="mi-discard">Discard
+          changes</button>
+        <button class="dc-mi dc-mi-warn" id="mi-del">Delete
+          presentation</button>
       </div>
     </div>
     <!-- ONE control, not two. "Save" beside "→ This project ▾" read as

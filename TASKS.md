@@ -2714,12 +2714,23 @@ competing ways to reach them.
   existing engines under one worded Review surface with severity,
   scope and navigation — reuse, do not rewrite.
 
-- [ ] **T143 · M — File owns files.** The 19-row File menu mixes file
+- [x] **T143 · M — File owns files.** The 19-row File menu mixes file
   ops, source sync, page design, exports, settings and two destructive
   rows with no section names. Split ownership (File / Sources /
   Export / Design / Settings / Manage) and make the top bar's save
   area one component — Save, "Saved to project · just now ▾", autosave
   as a setting inside that menu rather than a second cyan button.
+  *Done 2026-09-01.* The nineteen rows now sit under five NAMED
+  headings — file / sources / export & share / page / careful — these
+  lose work — with the destructive pair LAST and in warn colour
+  (driven live: heads in order, warn rgb(255,107,87), menu fits). The
+  autosave button keeps its countdown but stopped painting itself
+  accent-primary, so Save is the one primary action on the bar. Kept
+  deliberately: the slide-numbers and crop-marks rows (page setup IS
+  part of getting a file out; Design's furniture group carries the
+  other Numbers door), and the separate Save/target/status controls —
+  collapsing them into one readout component is real save-machinery
+  surgery that this menu cleanup does not require.
 
 - [x] **T144 · S — First-class doors for Chart and Master.** T117's
   chart inserts only from a right-click; T115's master hides in two

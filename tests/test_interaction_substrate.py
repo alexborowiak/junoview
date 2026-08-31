@@ -122,3 +122,21 @@ def test_chart_and_masters_have_first_class_doors():
     assert "var dm2=$('#dsg-masters');" in out
     assert "ob2.className='dbtn dc-nbs-open';" in out
 
+def test_the_file_menu_has_named_sections_and_a_warned_tail():
+    """T143 / JVUX-07, driven live: five named headings (file, sources,
+    export & share, page, careful) with the two destructive rows LAST,
+    in warn colour; and the autosave button stopped painting itself as
+    a second primary action beside Save."""
+    html = assets.deck_html()
+    i = html.index('id="dc-menu"')
+    j = html.index('</div>', html.index('id="mi-del"'))
+    menu = html[i:j]
+    heads = re.findall(r'class="dc-mhead[^"]*">([^<]+)<', menu)
+    assert heads == ["file", "sources", "export &amp; share", "page",
+                     "careful — these lose work"], heads
+    # the dangerous pair is last, and wears the warning
+    assert menu.rindex('id="mi-del"') > menu.rindex('id="mi-pdf"')
+    assert menu.count('dc-mi-warn') == 2
+    css = assets.deck_css()
+    assert '.deck-qat .qat-auto[aria-pressed="true"]{background:none;' in css
+
