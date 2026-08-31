@@ -670,8 +670,17 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the chart-data dialog, and exports as a REAL <c:chart> part PowerPoint
 # restyles natively (pptx.js chartFrame/chartXml). Help's export list
 # also corrected: speaker notes have travelled since T108.
-EXPECTED_MD5 = "ebe7ad57bea3c1a844843072186784dd"
-EXPECTED_BYTES = 3355366
+# Moved 2026-08-31 for T110: builds and click actions reach PowerPoint.
+# pptxItems attaches animStep/animType and the resolved link to whatever
+# each annot pushed; pptx.js writes a real <p:timing> main sequence (one
+# click per build step, appear exact, everything else an honest fade,
+# counted) and hlinkClick rels (External URL / hlinksldjump to the
+# mapped output slide). Verified in PowerPoint itself over COM: fade on
+# click, appear with-previous, the second click, the URL and the slide-2
+# jump, and both T117 charts read back as real charts. help.html's
+# export list rewritten to today's truth (tables travel since T109).
+EXPECTED_MD5 = "0cd983f4ee73bca0d820dd018895bf42"
+EXPECTED_BYTES = 3362304
 
 
 def _render_example() -> str:

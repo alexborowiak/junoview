@@ -247,8 +247,9 @@ window.JunoPptx = (function () {
       + '"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>';
   }
 
-  function nvSp(id, name, extra) {
-    return '<p:nvSpPr><p:cNvPr id="' + id + '" name="' + esc(name) + '"/>'
+  function nvSp(id, name, extra, link) {
+    return '<p:nvSpPr><p:cNvPr id="' + id + '" name="' + esc(name) + '"'
+      + (link ? '>' + link + '</p:cNvPr>' : '/>')
       + '<p:cNvSpPr' + (extra || '') + '/><p:nvPr/></p:nvSpPr>';
   }
 
@@ -319,7 +320,8 @@ window.JunoPptx = (function () {
     var bodyPr = '<a:bodyPr wrap="square" anchor="'
       + (item.centred ? 'ctr' : 't') + '">' + warp
       + (arc ? '<a:noAutofit/>' : '<a:spAutoFit/>') + '</a:bodyPr>';
-    return '<p:sp>' + nvSp(id, item.name || ('Text ' + id), ' txBox="1"')
+    return '<p:sp>'
+      + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)
       + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill + '</p:spPr>'
       + '<p:txBody>' + bodyPr
@@ -456,7 +458,8 @@ window.JunoPptx = (function () {
     var geom = SHAPE_GEOM[item.cropShape] || 'rect';
     return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
       + esc(item.name || ('Picture ' + id)) + '"' + descrAttr(item)
-      + '/><p:cNvPicPr/><p:nvPr/>'
+      + (item._link ? '>' + item._link + '</p:cNvPr>' : '/>')
+      + '<p:cNvPicPr/><p:nvPr/>'
       + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
       + (item.op != null && item.op < 1
         ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
@@ -487,7 +490,8 @@ window.JunoPptx = (function () {
     var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
-    return '<p:sp>' + nvSp(id, item.name || ('Shape ' + id))
+    return '<p:sp>'
+      + nvSp(id, item.name || ('Shape ' + id), '', item._link)
       + '<p:spPr>' + xfrm(item, page) + '<a:prstGeom prst="'
       + (SHAPE_GEOM[item.shape] || 'rect') + '"><a:avLst/></a:prstGeom>'
       + shapeFillXml(item)
@@ -577,7 +581,8 @@ window.JunoPptx = (function () {
     var geo = xfrm(item, page);
     return '<p:graphicFrame><p:nvGraphicFramePr>'
       + '<p:cNvPr id="' + id + '" name="Chart ' + id + '"' + descrAttr(item)
-      + '/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>'
+      + (item._link ? '>' + item._link + '</p:cNvPr>' : '/>')
+      + '<p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>'
       + geo.replace('<a:xfrm', '<p:xfrm').replace('</a:xfrm>', '</p:xfrm>')
       + '<a:graphic><a:graphicData uri="' + CHART_NS + '">'
       + '<c:chart xmlns:c="' + CHART_NS + '" xmlns:r="'
@@ -707,11 +712,77 @@ window.JunoPptx = (function () {
       + '</c:chartSpace>';
   }
 
+  /* ---- build timing (T110) ----------------------------------------
+     Junoview's builds leave as a real <p:timing> main sequence: one
+     click per build step, every shape on the step revealed together --
+     the same grouping the editor's badges and playback use. Appear and
+     fade are exact; rise and zoom leave as fades, and the export
+     dialog counts them (an entrance spelled as position behaviours is
+     a bigger machine than two effects deserve). The set/animEffect
+     pair per shape is what PowerPoint itself writes for a fade. */
+  function timingXml(anims) {
+    if (!anims.length) return '';
+    var steps = {};
+    anims.forEach(function (an) {
+      (steps[an.step] = steps[an.step] || []).push(an);
+    });
+    var order = Object.keys(steps).map(Number).sort(function (a, b) {
+      return a - b; });
+    var tid = 2;
+    function nid() { tid++; return tid; }
+    var groups = order.map(function (st) {
+      var shapes = steps[st].map(function (an, i) {
+        var preset = an.type === 'appear' ? 1 : 10;
+        var eff = an.type === 'appear' ? ''
+          : '<p:animEffect transition="in" filter="fade"><p:cBhvr>'
+            + '<p:cTn id="' + nid() + '" dur="500"/>'
+            + '<p:tgtEl><p:spTgt spid="' + an.spid + '"/></p:tgtEl>'
+            + '</p:cBhvr></p:animEffect>';
+        return '<p:par><p:cTn id="' + nid() + '" presetID="' + preset
+          + '" presetClass="entr" presetSubtype="0" fill="hold" '
+          + 'grpId="0" nodeType="'
+          + (i === 0 ? 'clickEffect' : 'withEffect') + '">'
+          + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+          + '<p:childTnLst>'
+          + '<p:set><p:cBhvr><p:cTn id="' + nid()
+          + '" dur="1" fill="hold"><p:stCondLst>'
+          + '<p:cond delay="0"/></p:stCondLst></p:cTn>'
+          + '<p:tgtEl><p:spTgt spid="' + an.spid + '"/></p:tgtEl>'
+          + '<p:attrNameLst><p:attrName>style.visibility</p:attrName>'
+          + '</p:attrNameLst></p:cBhvr>'
+          + '<p:to><p:strVal val="visible"/></p:to></p:set>'
+          + eff + '</p:childTnLst></p:cTn></p:par>';
+      }).join('');
+      return '<p:par><p:cTn id="' + nid() + '" fill="hold">'
+        + '<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>'
+        + '<p:childTnLst><p:par><p:cTn id="' + nid() + '" fill="hold">'
+        + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+        + '<p:childTnLst>' + shapes
+        + '</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>';
+    }).join('');
+    var blds = anims.map(function (an) {
+      return '<p:bldP spid="' + an.spid + '" grpId="0"/>';
+    }).join('');
+    return '<p:timing><p:tnLst><p:par>'
+      + '<p:cTn id="1" dur="indefinite" restart="never" '
+      + 'nodeType="tmRoot"><p:childTnLst>'
+      + '<p:seq concurrent="1" nextAc="seek">'
+      + '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+      + '<p:childTnLst>' + groups + '</p:childTnLst></p:cTn>'
+      + '<p:prevCondLst><p:cond evt="onPrev" delay="0">'
+      + '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'
+      + '<p:nextCondLst><p:cond evt="onNext" delay="0">'
+      + '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>'
+      + '</p:seq></p:childTnLst></p:cTn></p:par></p:tnLst>'
+      + '<p:bldLst>' + blds + '</p:bldLst></p:timing>';
+  }
+
   function relsDoc(entries) {
     return XML_HEAD + '<Relationships xmlns="' + RELS_NS + '">'
       + entries.map(function (r) {
         return '<Relationship Id="' + r.id + '" Type="' + r.type
-          + '" Target="' + r.target + '"/>';
+          + '" Target="' + r.target + '"'
+          + (r.mode ? ' TargetMode="' + r.mode + '"' : '') + '/>';
       }).join('') + '</Relationships>';
   }
 
@@ -820,10 +891,29 @@ window.JunoPptx = (function () {
     var skipped = 0;
 
     var slideXml = slides.map(function (slide) {
-      var rels = [], id = 1, body = '';
+      var rels = [], id = 1, body = '', anims = [];
       (slide.items || []).forEach(function (item) {
         if (!item) return;
         id++;
+        /* a click action becomes a real relationship (T110): a URL is
+           an External hyperlink rel, a slide jump a rel to the target
+           slide part plus the hlinksldjump action. The XML rides in
+           the shape's own cNvPr via item._link. */
+        item._link = '';
+        if (item.link && item.link.to === 'url' && item.link.href) {
+          var hrid = 'rIdH' + (rels.length + 1);
+          rels.push({ id: hrid, type: DOC_NS + '/relationships/hyperlink',
+            target: item.link.href, mode: 'External' });
+          item._link = '<a:hlinkClick r:id="' + hrid + '"/>';
+        } else if (item.link && item.link.to === 'slide'
+            && item.link.slide) {
+          var srid = 'rIdH' + (rels.length + 1);
+          rels.push({ id: srid, type: DOC_NS + '/relationships/slide',
+            target: 'slide' + item.link.slide + '.xml' });
+          item._link = '<a:hlinkClick r:id="' + srid
+            + '" action="ppaction://hlinksldjump"/>';
+        }
+        var emitted = body.length;
         if (item.t === 'text') {
           body += textShape(item, id, page);
         } else if (item.t === 'image') {
@@ -856,6 +946,11 @@ window.JunoPptx = (function () {
         } else {
           skipped++;
         }
+        /* only a shape that actually landed can be animated */
+        if (body.length > emitted && item.animStep != null) {
+          anims.push({ spid: id, step: item.animStep,
+            type: item.animType || 'fade' });
+        }
       });
       var bg = '<p:bg><p:bgPr>' + solidFill(slide.bg, null, '0B141D')
         + '<a:effectLst/></p:bgPr></p:bg>';
@@ -867,7 +962,7 @@ window.JunoPptx = (function () {
       return { rels: rels,
         xml: XML_HEAD + '<p:sld' + nsAttrs() + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
-          + transition(slide.trans) + '</p:sld>' };
+          + transition(slide.trans) + timingXml(anims) + '</p:sld>' };
     });
 
     /* which slides have notes, decided once: the parts, the rels,

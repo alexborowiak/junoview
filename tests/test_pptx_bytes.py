@@ -48,10 +48,13 @@ SPEC = {
     "slides": [
         {"bg": "#ffffff", "items": [
             {"t": "text", "x": 10, "y": 20, "w": 50, "text": "Hello",
-             "sizePct": 4, "b": 1},
-            {"t": "image", "x": 5, "y": 50, "w": 20, "h": 20, "src": PNG},
+             "sizePct": 4, "b": 1, "animStep": 0, "animType": "fade",
+             "link": {"to": "url", "href": "https://example.com/x"}},
+            {"t": "image", "x": 5, "y": 50, "w": 20, "h": 20, "src": PNG,
+             "animStep": 0, "animType": "appear"},
             {"t": "rect", "x": 60, "y": 10, "w": 30, "h": 15,
-             "fill": "#ff0000"},
+             "fill": "#ff0000", "animStep": 1, "animType": "fade",
+             "link": {"to": "slide", "slide": 2}},
             {"t": "table", "x": 5, "y": 75, "w": 90, "h": 15, "grid": 1,
              "rows": [["a", "b"], ["1", "2"]]},
             {"t": "chart", "x": 55, "y": 40, "w": 40, "h": 30, "ct": "bar",
@@ -560,4 +563,43 @@ def test_a_numeric_scatter_gets_two_value_axes(built):
     x = z.read("ppt/charts/chart2.xml").decode("utf-8")
     assert "scatterChart" in x
     assert x.count("<c:valAx>") == 2 and "<c:catAx>" not in x
+
+
+# ---------------------------------------------------------------------------
+# builds and click actions (T110)
+# ---------------------------------------------------------------------------
+
+
+def test_builds_leave_as_a_real_timing_tree(built):
+    """One click per build step, shapes on a step revealed together --
+    and every spid the timing targets is a shape that exists on the
+    slide, which is the way a timing tree earns a repair prompt."""
+    z, _, _ = built
+    x = z.read("ppt/slides/slide1.xml").decode("utf-8")
+    assert "<p:timing>" in x and 'nodeType="mainSeq"' in x
+    # two click groups: text+image on click 1, rect on click 2
+    assert x.count('<p:cond delay="indefinite"/>') == 2
+    assert x.count('nodeType="clickEffect"') == 2
+    assert x.count('nodeType="withEffect"') == 1
+    # appear is a bare set; fades add the animEffect
+    assert x.count('filter="fade"') == 2
+    root = ET.fromstring(x)
+    ids = {sp.get("id") for sp in root.iter(q("p", "cNvPr"))}
+    spids = {t.get("spid") for t in root.iter(q("p", "spTgt"))}
+    assert spids and spids <= ids, (spids, ids)
+    # the build list names the same shapes
+    assert x.count("<p:bldP ") == 3
+
+
+def test_click_actions_leave_as_real_hyperlinks(built):
+    """A URL is an External hyperlink rel; a slide jump is a rel to the
+    target slide part plus the hlinksldjump action. The dangling-rel
+    test above already proves the jump target resolves."""
+    z, _, _ = built
+    x = z.read("ppt/slides/slide1.xml").decode("utf-8")
+    assert x.count("<a:hlinkClick ") == 2
+    assert 'action="ppaction://hlinksldjump"' in x
+    rels = z.read("ppt/slides/_rels/slide1.xml.rels").decode("utf-8")
+    assert 'Target="https://example.com/x" TargetMode="External"' in rels
+    assert 'Target="slide2.xml"' in rels
 

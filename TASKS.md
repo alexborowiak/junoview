@@ -2041,7 +2041,7 @@ worst-first.
   real PowerPoint tables costs no writer change — but pass `grid:1`, or
   they arrive with no rules at all.
 
-- [ ] **T110 · design first — Equations, builds, masters and links.**
+- [x] **T110 · design first — Equations, builds, masters and links.**
   The four losses that are NOT small, recorded so nobody re-scopes them
   as quick wins. Equations: `texPlain` is a single-pass string rewriter
   with no parse tree, so OMML structure cannot be recovered from it — a
@@ -2053,6 +2053,25 @@ worst-first.
   resolves. Hyperlinks: the writer half is small, but there is no `a.link`
   on any annotation, no UI, no normaliser entry and no live-view or PDF
   story — it is a feature (T118), not an export gap.
+  *Done 2026-08-31 — two shipped, two recorded.* The diagnosis aged:
+  T118 built `a.link`, which made the links quarter exactly the small
+  writer job predicted, and the builds quarter turned out to need no
+  shape-id plumbing — `build()` records the id of whatever each item
+  emitted and writes a real `<p:timing>` main sequence (one click per
+  build step, same-step objects together; appear exact, everything else
+  an honest fade, rise/zoom counted in the export dialog). Links leave
+  as `hlinkClick` rels — External for URLs, `hlinksldjump` to the
+  mapped output page for slide jumps (flip explosion respected).
+  Verified in POWERPOINT ITSELF over COM automation: the probe deck
+  opened with no repair prompt, MainSequence read back fade-on-click,
+  appear-with-previous and the second click, the two actions resolved
+  to the URL and slide 2 — and both T117 charts read back as real
+  charts (xlColumnClustered ×2 series, xlXYScatter). help.html's export
+  list was rewritten to today's truth while there (tables travel since
+  T109; notes since T108). Still recorded, not built, each for its
+  stated reason: EQUATIONS need a second LaTeX front end (texPlain has
+  no parse tree to make OMML from) — out of scope until someone asks
+  for it by name; MASTERS are T115's design question and stay with it.
 
 ### Tests that prove behaviour rather than spelling
 

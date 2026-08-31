@@ -1357,6 +1357,9 @@
   }
   function pptxItems(s,note,ink,layer){
     var items=[];
+    /* which CLICK each annot appears on, the same grouping the badges
+       and playback use \u2014 exported as real PowerPoint timing (T110) */
+    var bsteps=slideBuildSteps(s).map;
     if(s.layout==='title'){
       ['t','s'].forEach(function(which){
         var p=titleProps(s,which),val=(which==='t')?s.title:s.sub;
@@ -1395,6 +1398,7 @@
          object's stored x/y are distances from an edge or centre, and
          its export fallback size matters to that conversion. */
       var box=(a.k==='arrow')?null:pptxBox(a,false);
+      var pushedAt=items.length;
       if(a.k==='text'){
         var ti=pptxTextItem(a,false,ink,box);
         /* `a.maths` means the Maths button built this box, so the whole
@@ -1532,6 +1536,26 @@
             name:(it&&it.title)||'Text'});
         } else note.skipped++;
       }
+      /* build timing and click actions ride on WHATEVER the branch
+         above pushed for this annot (T110). rise/zoom have no honest
+         entrance twin, so they leave as fades \u2014 counted in the
+         export dialog, never silently. A link to a slide leaves as the
+         DECK index here; the builder maps it to the output page,
+         because a flip book explodes one slide into several. */
+      for(var pq=pushedAt;pq<items.length;pq++){
+        if(a.anim){
+          items[pq].animStep=bsteps[a.anim.order||0];
+          items[pq].animType=a.anim.type||'fade';
+        }
+        if(a.link&&a.link.to==='url'&&a.link.href){
+          items[pq].link={to:'url',href:a.link.href};
+        } else if(a.link&&a.link.to==='slide'&&a.link.sid){
+          var lsi=-1;
+          (pres.slides||[]).forEach(function(s9,i9){
+            if(lsi<0&&s9.sid===a.link.sid) lsi=i9;});
+          if(lsi>=0) items[pq].link={to:'slide',si:lsi};
+        }
+      }
     });
     return items;
   }
@@ -1620,12 +1644,17 @@
     if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
       +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
       +'is not');
-    var builds=0,links=0;
+    /* builds TRAVEL now (T110) \u2014 what is still approximate is
+       the entrance on the two effects PowerPoint spells differently */
+    var soft=0;
     (pres.slides||[]).forEach(function(sl){
-      (sl.annots||[]).forEach(function(a){if(a&&a.anim) builds++;});
+      (sl.annots||[]).forEach(function(a){
+        if(a&&a.anim&&(a.anim.type==='rise'||a.anim.type==='zoom'))
+          soft++;});
     });
-    if(builds) lost.push(builds+' object build'
-      +(builds===1?'':'s')+' — the objects arrive, the timing does not');
+    if(soft) lost.push(soft+' rise/zoom build'
+      +(soft===1?'':'s')+' — the click timing is kept, the entrance '
+      +'plays as a fade');
     return lost;
   }
   function pptxConfirmLosses(){
@@ -1639,16 +1668,27 @@
     var pg=pageOf(),note={skipped:0,cropped:0,maths:0,orig:orig||{}};
     var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
+    /* a slide-jump names a DECK slide; the .pptx page it lands on is
+       the first output page that slide produced (flip books explode) */
+    var ents=outputSlides();
+    var firstOut={};
+    ents.forEach(function(ent,oi){
+      if(!(ent.i in firstOut)) firstOut[ent.i]=oi+1;});
     var out=JunoPptx.build({
       title:pres.name||'presentation',
       widthMm:pg.mm[0],heightMm:pg.mm[1],bg:bg,
-      slides:outputSlides().map(function(ent){
+      slides:ents.map(function(ent){
         /* only the slide on screen has a live layer; the rest resolve
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
         note.frame=ent.f;
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
+        its.forEach(function(it){
+          if(it.link&&it.link.to==='slide')
+            it.link=(it.link.si in firstOut)
+              ?{to:'slide',slide:firstOut[it.link.si]}:null;
+        });
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:tokVal(ent.s.border.c)||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});

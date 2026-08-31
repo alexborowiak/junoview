@@ -219,7 +219,9 @@ def test_a_poster_goes_to_the_printer_one_version_at_a_time(out):
     assert "function outputSlides(){" in out
     assert "if(!pageOf().poster||all.length<2) return all;" in out
     assert "outputSlides().forEach(function(ent,i){" in out
-    assert "slides:outputSlides().map(function(ent){" in out
+    # T110 hoisted the ents list to map slide-jump targets first
+    assert "slides:ents.map(function(ent){" in out
+    assert "var ents=outputSlides();" in out
     # never a silent choice
     assert "function outputNote(){" in out
     assert "a poster '\n      +'goes out one version at a time" in out
