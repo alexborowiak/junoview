@@ -2127,7 +2127,51 @@
       row('Paste here','Ctrl+Alt+V',function(){pasteBuf('here',at);},
         'Centred on the point you right-clicked');
     }
+    cmFold(m);
     floatAt(m,ev);
+  }
+  /* THE FOLD (T137). A right-click on one text box reached 31 buttons
+     under 13 headings -- an inspector forced into a popup. The
+     immediate actions stay in sight; every section past the everyday
+     ones folds behind one worded "More" row that says how many rows it
+     holds. Nothing moves surface: the rows keep their handlers, they
+     just wait until asked for. Menus small enough to read whole (the
+     empty-canvas one) never fold. */
+  var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
+    'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
+    'chart':1};
+  function cmFold(m){
+    m.setAttribute('role','menu');
+    $$('button',m).forEach(function(b){
+      b.setAttribute('role','menuitem');});
+    if(m.querySelectorAll('button').length<=12) return;
+    var more=document.createElement('div');
+    more.className='cm-more';more.hidden=true;
+    var folding=false,kids=[].slice.call(m.children);
+    kids.forEach(function(k){
+      if(k.classList&&k.classList.contains('hd-lab')){
+        var t=(k.textContent||'').trim().toLowerCase();
+        folding=!CM_KEEP[t]&&!/objects?$/.test(t);
+      }
+      if(folding) more.appendChild(k);
+    });
+    var n=more.querySelectorAll('button').length;
+    if(!n) return;
+    var t2=document.createElement('button');
+    t2.className='dbtn vw-opt cm-moret';t2.type='button';
+    t2.setAttribute('aria-expanded','false');
+    t2.setAttribute('role','menuitem');
+    t2.innerHTML=(bic('menu')||'')+' More \u2014 '+n+' option'
+      +(n===1?'':'s')+' \u25be';
+    t2.title='Anchoring, components, matching, visibility, reading '
+      +'order, master, chart and guide rows \u2014 everything less '
+      +'everyday, one click away';
+    t2.addEventListener('click',function(e){
+      e.stopPropagation();
+      more.hidden=!more.hidden;
+      t2.setAttribute('aria-expanded',(!more.hidden).toString());
+    });
+    m.appendChild(t2);m.appendChild(more);
   }
   function setLockSel(mode){
     var s=pres.slides[cur]; if(!s||!s.annots) return;

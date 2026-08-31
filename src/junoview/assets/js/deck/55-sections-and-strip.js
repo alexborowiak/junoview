@@ -537,11 +537,23 @@
       return {left:ev.clientX,right:ev.clientX,
         top:ev.clientY,bottom:ev.clientY,width:0,height:0};
     }},m);
+    /* outside click OR Escape (T137); both tear down both listeners */
+    function off(e){
+      if(m.contains(e.target)) return;
+      shut();
+    }
+    function esc(e){
+      if(e.key!=='Escape') return;
+      e.preventDefault();e.stopPropagation();shut();
+    }
+    function shut(){
+      m.remove();
+      document.removeEventListener('click',off);
+      document.removeEventListener('keydown',esc);
+    }
     setTimeout(function(){
-      document.addEventListener('click',function off(e){
-        if(m.contains(e.target)) return;
-        m.remove();document.removeEventListener('click',off);
-      });
+      document.addEventListener('click',off);
+      document.addEventListener('keydown',esc);
     },0);
   }
   function presNbs(p){

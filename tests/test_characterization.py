@@ -704,8 +704,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # replace eleven diverged hand-lists of sibling selectors; every
 # show/close site routes through them and trigger aria-pressed is
 # re-derived from the DOM.
-EXPECTED_MD5 = "7d81f985854437a61d8cbb80b8f5d1cf"
-EXPECTED_BYTES = 3373100
+# Moved 2026-08-31 for T137: the context menu became readable
+# (JVUX-01). One 308px column instead of the leaked 3-column icon
+# grid, the advanced sections folded behind one counted "More" row
+# (7 visible rows instead of 31), role=menu/menuitem, and every
+# floatAt popup now closes on Escape. Includes the [hidden] display
+# fix the first screenshot caught.
+EXPECTED_MD5 = "017bb611d3796a326cea20fc960eea35"
+EXPECTED_BYTES = 3376088
 
 
 def _render_example() -> str:

@@ -2605,12 +2605,24 @@ competing ways to reach them.
   exact JVUX-03 sequence: Tidy→Check→Standardise→Animations→Objects
   showed exactly ONE pane at every step, aria flipping correctly.
 
-- [ ] **T137 · M — The context menu must be readable.** A single
+- [x] **T137 · M — The context menu must be readable.** A single
   readable column (the 3-column `.sh-menu` grid is for icon galleries,
   not word rows), no horizontal scrolling, immediate actions first,
   and the long tail of sections behind one "More…" level rather than
   13 headings deep. The advanced rows keep working — this phase is
   geometry and grouping, not the Phase-2 inspector move.
+  *Done 2026-08-31.* One 308px column (`.canvas-menu` finally overrides
+  the icon-gallery grid), `cmFold` moves every section past the
+  everyday ones (this object, link, alt, figure, chart, paste) behind
+  one counted "More — N options" row — the text-object menu went from
+  31 visible buttons to 7 — with `role=menu`/`menuitem` and Escape on
+  every `floatAt` popup. Driven live: no horizontal overflow before or
+  after expanding More, a folded row (Reading order…) still opened its
+  panel, the empty-canvas menu never folds, Escape closes. The first
+  screenshot caught `.cm-more{display:block}` beating the `hidden`
+  attribute — fixed with an explicit `[hidden]{display:none}` and the
+  incident written into the CSS, because a DOM probe reported the
+  attribute as set while the pixels showed the fold open.
 
 - [ ] **T138 · S — Pin what Phase 0 fixed.** The unique-id test
   (T134); pins that every registered menu/pane goes through the one

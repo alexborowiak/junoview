@@ -1297,9 +1297,10 @@ def test_select_by_has_two_doors_and_neither_costs_ribbon_width(out):
     assert "if(what==='s:by'){openSelectByMenu($('#fmt-align-btn'));return;}" \
         in out
     assert "menuHead(m,'select on this slide');" in out
-    # a menu five sections deep scrolls rather than running off-screen
-    assert ".canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}" \
-        in out
+    # a long menu scrolls vertically and NEVER horizontally (T137): one
+    # readable column instead of the 3-column icon grid it inherited
+    assert ".canvas-menu{display:block;width:308px;min-width:0;" in out
+    assert "overflow-y:auto;overflow-x:hidden;}" in out
 
 
 def test_find_and_replace_has_a_formatting_half(out):

@@ -3213,7 +3213,20 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
    yet" -- which has to read as unavailable rather than broken. */
 /* five sections deep with a rich selection, so it scrolls rather than
    running off the bottom of the window */
-.canvas-menu{min-width:215px;max-height:72vh;overflow-y:auto;}
+/* T137 / JVUX-01: .sh-menu's 3-column 210px grid is for icon
+   galleries; on a WORD menu it wrapped 31 labels character by
+   character into thin columns with both scrollbars. One readable
+   column, and the long tail folds behind "More" (cmFold). */
+.canvas-menu{display:block;width:308px;min-width:0;
+  max-width:min(340px,92vw);max-height:72vh;
+  overflow-y:auto;overflow-x:hidden;}
+.canvas-menu .hd-lab{margin-top:6px;}
+/* [hidden] must actually hide: a bare display rule on the class would
+   beat the attribute's UA default, which is exactly how the fold shipped
+   open in its first screenshot */
+.cm-more[hidden]{display:none;}
+.cm-moret{width:100%;text-align:left;margin-top:6px;
+  border-top:1px solid #ffffff1a;border-radius:0;padding-top:8px;}
 .canvas-menu .vw-opt{width:100%;text-align:left;}
 .canvas-menu .vw-opt[disabled]{opacity:.45;pointer-events:none;}
 /* A BUTTON YOU HAVE PUT AWAY. display:none, not [hidden]: showFmt owns
