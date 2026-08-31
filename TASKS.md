@@ -2369,13 +2369,22 @@ one boot-killing bug the drive itself surfaced.
   arrangement appeared as "MyArr · 100%" and re-laid a scattered slide;
   Esc and click-away closed it; Home's menu carries the full set.
 
-- [ ] **T125 · design first — What a notebook has that a source does
+- [x] **T125 · design first — What a notebook has that a source does
   not, on purpose.** The other half of "notebooks to be a whole thing in
   itself": code trails, the dependency graph, variables, git history,
   note insertion and figure locks are all things a `.tex` has no
   equivalent for. Write that boundary down once, in help and in
   ARCHITECTURE.md, so "notebook-first" is a stated design rather than an
   accident of which features got written first.
+  *Done 2026-08-31.* One correction to the diagnosis before writing it
+  down: git history is NOT notebook-only any more — T124 widened commit
+  opening to every source, and snapshots were suffix-keyed since T100 —
+  so the boundary is exactly the features that read CELLS (Plot trace,
+  dependency graph, variables, note insertion, figure locks' version
+  cards). help.html's Open section now names what else opens and what
+  stays notebook-only; ARCHITECTURE.md gained "Notebook-first, on
+  purpose" with the rule for new features: Document-consumers must work
+  for every producer (door-parity tests), cell-readers gate at the door.
 
 ### Carried forward from group 13, re-ordered by the same decision
 

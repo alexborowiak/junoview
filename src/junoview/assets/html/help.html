@@ -21,6 +21,20 @@ are saved) &mdash; nothing is re-run here.</li>
 click to switch, <b><i data-ic="reload"></i></b> (beside <b>File
 info</b>) re-reads it after you re-run it in Jupyter,
 <b><i data-ic="exit"></i></b> closes.</li>
+<li><b>Not just notebooks.</b> Markdown (<code>.md</code>,
+<code>.qmd</code>), LaTeX (<code>.tex</code>) and tables
+(<code>.csv</code>/<code>.tsv</code>) open through every one of those
+doors too. They render the same way, keep the same version history
+(snapshots and git commits alike), place figures onto slides that
+<b>Update figures</b> can refresh from disk &mdash; and each
+non-notebook tab says what kind of file it is, in the open-files list
+and its sidebar.</li>
+<li><b>Notebook-only, on purpose.</b> Plot trace, the dependency
+graph, the variables panel, note insertion and figure locks all read
+notebook <i>cells</i> &mdash; code, outputs, execution order &mdash;
+which a <code>.tex</code> or a <code>.csv</code> simply does not have.
+The notebook is the whole thing; other files are sources you can read,
+quote and refresh.</li>
 </ul>
 
 <h3>Filtering what you see</h3>

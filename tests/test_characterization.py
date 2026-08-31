@@ -650,8 +650,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # only where a note CELL can land (.ipynb), and a git commit of any source
 # now opens (git show -> doc_from_text). The notebook page moves only
 # because it inlines app.js/core.css; its shell markup is byte-identical.
-EXPECTED_MD5 = "73e2eeaa1c06693d732d657416f3e3ca"
-EXPECTED_BYTES = 3316752
+# Moved 2026-08-31 for T125: the notebook/source boundary written down.
+# help.html's Open section now says what else opens (every door) and what
+# stays notebook-only on purpose (cells: Plot trace, dependency graph,
+# variables, note insertion, figure locks); ARCHITECTURE.md gained the
+# "Notebook-first, on purpose" section with the rule for new features.
+EXPECTED_MD5 = "27b070e31d02c43a19e86ee5ebf2397e"
+EXPECTED_BYTES = 3317593
 
 
 def _render_example() -> str:

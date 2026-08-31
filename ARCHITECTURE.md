@@ -170,6 +170,39 @@ does not disturb the others:
 
 If you are adding a frontend, consume `Document`; don't reach into the parser.
 
+## Notebook-first, on purpose
+
+Junoview opens more than notebooks: the producer table in
+`notebook/sources.py` turns Markdown, Quarto, LaTeX and CSV/TSV into the
+same `Document`, and every *document-level* door is theirs too — they
+render, list in the file browser under their kind, keep suffix-keyed
+snapshot history, open at any git commit, land on slides, and refresh
+placed figures from disk (T91 → T100 → T123 → T124).
+
+What they do **not** get are the features that read notebook **cells**
+rather than the document: Plot trace and the dependency graph (built
+from code provenance), the variables panel, Insert note (it writes a
+markdown cell into the `.ipynb`), and figure locks' version cards (they
+parse a commit's notebook JSON back into cards). That is a boundary,
+not a backlog. A `.tex` has no cells, no stored outputs and no
+execution order; "support it later" would mean inventing them, which is
+a different product.
+
+The rule when adding a feature, so the boundary stays deliberate:
+
+- If it consumes `Document`, it must work for **every** producer — the
+  door-parity tests in `tests/test_sources.py` fail when a door is
+  narrower than the registry.
+- If it reads cells, gate it on `.ipynb` **at the door** (do not offer
+  it, rather than offer-and-refuse) and keep the server route strict
+  (`_resolve_nb_path`).
+
+The asymmetry runs the other way too: notebooks are the product
+("notebook-first, deepened" — the stated direction, 2026-08-31), and
+the other sources exist so figures can be *quoted* from wherever they
+live — an Overleaf chapter, a data export — and refreshed from their
+source. Junoview is not trying to become a LaTeX or spreadsheet editor.
+
 ## Invariants
 
 Things that are load-bearing and easy to break by accident:
