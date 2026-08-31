@@ -148,6 +148,11 @@ body.prrail-auto .railnbs{display:flex;}
 .rnb.trace .rnb-dot{background:var(--amber);}
 .rnb-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
+.rnb-kind{flex:none;font-size:8.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--chrome-ink-2);
+  border:1px solid color-mix(in srgb,var(--chrome-ink-2) 45%,transparent);
+  border-radius:4px;padding:1px 4px;}
+.rnb.on .rnb-kind{color:var(--chrome-ink);}
 .rnb-x{flex:none;background:none;border:none;color:var(--chrome-ink-2);
   font-size:12px;line-height:1;padding:1px 3px;border-radius:4px;
   cursor:pointer;}
@@ -6917,6 +6922,42 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T117: charts — the SVG fills its box; the dialog is the numbers */
+.an-chart{overflow:hidden;}
+.an-chartsvg{width:100%;height:100%;display:block;
+  font-family:var(--sans,system-ui);}
+.chart-data{position:fixed;left:50%;top:20%;transform:translateX(-50%);
+  z-index:420;width:min(440px,92vw);padding:10px 12px 12px;}
+.chart-ta{width:100%;min-height:150px;resize:vertical;
+  font-family:var(--mono);font-size:11.5px;line-height:1.5;
+  color:#dbe7ef;background:#0d1722;border:1px solid #ffffff22;
+  border-radius:5px;padding:7px 9px;}
+.chart-btns{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
+/* T106: the reading-order panel and its on-slide numbers */
+.rd-order{position:fixed;right:16px;top:110px;z-index:420;width:252px;
+  max-height:64vh;overflow-y:auto;padding:8px 10px 12px;}
+.rd-order .hd-lab{position:relative;padding-right:26px;}
+.rd-close{position:absolute;right:0;top:-4px;}
+.rd-note{font-size:10.5px;color:#9fb2c0;margin:2px 0 8px;
+  line-height:1.35;text-transform:none;letter-spacing:normal;}
+.rd-state{font-family:var(--mono);font-size:9.5px;color:#8aa0b0;
+  margin:0 0 6px;}
+.rd-row{display:flex;align-items:center;gap:6px;padding:3px 2px;}
+.rd-num{flex:none;min-width:16px;height:16px;border-radius:8px;
+  background:var(--cyan);color:#062028;font-family:var(--mono);
+  font-size:10px;font-weight:700;display:flex;align-items:center;
+  justify-content:center;padding:0 3px;}
+.rd-lab{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:11.5px;color:#dbe7ef;}
+.rd-reset{margin-top:8px;}
+/* the number badges: gated exactly like .an-buildno above — always
+   built, shown only while the panel is open */
+.an-readno{position:absolute;top:-9px;right:-9px;z-index:5;min-width:16px;
+  height:16px;border-radius:8px;background:var(--cyan);color:#062028;
+  font-family:var(--mono);font-size:10px;font-weight:700;display:none;
+  align-items:center;justify-content:center;padding:0 3px;
+  pointer-events:none;}
+body:has(#rd-order) .an-readno{display:flex;}
 /* T131: the layout-ideas chooser — live previews of THIS slide */
 .lay-ideas{position:fixed;left:50%;top:18%;transform:translateX(-50%);
   z-index:420;max-width:560px;max-height:70vh;overflow-y:auto;
@@ -9211,6 +9252,20 @@ are saved) &mdash; nothing is re-run here.</li>
 click to switch, <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg></b> (beside <b>File
 info</b>) re-reads it after you re-run it in Jupyter,
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></b> closes.</li>
+<li><b>Not just notebooks.</b> Markdown (<code>.md</code>,
+<code>.qmd</code>), LaTeX (<code>.tex</code>) and tables
+(<code>.csv</code>/<code>.tsv</code>) open through every one of those
+doors too. They render the same way, keep the same version history
+(snapshots and git commits alike), place figures onto slides that
+<b>Update figures</b> can refresh from disk &mdash; and each
+non-notebook tab says what kind of file it is, in the open-files list
+and its sidebar.</li>
+<li><b>Notebook-only, on purpose.</b> Plot trace, the dependency
+graph, the variables panel, note insertion and figure locks all read
+notebook <i>cells</i> &mdash; code, outputs, execution order &mdash;
+which a <code>.tex</code> or a <code>.csv</code> simply does not have.
+The notebook is the whole thing; other files are sources you can read,
+quote and refresh.</li>
 </ul>
 
 <h3>Filtering what you see</h3>
@@ -9753,15 +9808,20 @@ it) at the page's <b>true size</b> &mdash; an A0 poster comes out as a
 real 841&#215;1189mm page, ready for the print shop.</li>
 <li><i>File &rarr; Export PowerPoint</i> writes a <code>.pptx</code>.
 Text stays <b>editable</b> in PowerPoint, figures and images come across
-as pictures, and boxes and arrows become real shapes. Cropped
-pictures keep their trim and their shape, and slide transitions come
-across (<i>Move matching objects</i> becomes a push, which is the
-nearest PowerPoint has). What does <b>not</b> travel: a placed cell
-showing a <b>table</b>, a crop you drew freehand, equations (they
-arrive as plain text, since PowerPoint has no LaTeX), speaker notes,
-object builds, and links. Everything in that list is counted and named
-when you export, not silently dropped &mdash; use Export PDF when any of
-it matters.</li>
+as pictures, boxes and arrows become real shapes, placed tables become
+real PowerPoint tables, a placed <b>chart</b> leaves as a real
+PowerPoint chart &mdash; numbers, series colours and legend, ready to
+restyle over there &mdash; and speaker notes land on each slide's Notes
+page. <b>Builds travel</b>: each click reveals the same objects it does
+here (rise and zoom arrive as fades &mdash; the click timing is exact).
+<b>Links travel</b>: a click action opens its page or jumps to its
+slide in the exported deck too. Cropped pictures keep their trim and
+their shape, and slide transitions come across (<i>Move matching
+objects</i> becomes a push, which is the nearest PowerPoint has). What
+does <b>not</b> travel: a crop you drew freehand, and equations (they
+arrive as plain text, since PowerPoint has no LaTeX). Everything lost
+is counted and named when you export, not silently dropped &mdash; use
+Export PDF when any of it matters.</li>
 <li><b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Present</b> plays full screen. Arrow keys / click
 &larr;/&rarr; step through builds and slides; on slides with code, &darr;
 descends the <b>code trail</b> &mdash; every cell that made the figure, one
@@ -12549,7 +12609,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       host.hidden=!useful;
       if(!useful) return;
       var h=document.createElement('div');h.className='railnbs-h';
-      h.textContent='open notebooks';host.appendChild(h);
+      /* "open notebooks" over a list holding a .tex was the exact
+         confusion T124 names; the heading follows the contents */
+      h.textContent=list.some(function(s3){
+        var q=APP.shells[s3];return q&&q.kind&&!q.trace;})
+        ?'open files':'open notebooks';
+      host.appendChild(h);
       list.forEach(function(stem){
         var sh=APP.shells[stem]; if(!sh) return;
         var on=(stem===APP.active);
@@ -12558,13 +12623,20 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         b.className='rnb'+(on?' on':'')+(sh.trace?' trace':'');
         b.title=sh.trace
           ?('Plot trace — a sub-tab of '+(sh.source||''))
-          :(sh.path||stem);
+          :((sh.kind?sh.kind+' — ':'')+(sh.path||stem));
         var d=document.createElement('span');d.className='rnb-dot';
         b.appendChild(d);
         var nm=document.createElement('span');nm.className='rnb-nm';
         nm.textContent=sh.trace?('↳ '+(sh.title||'Plot trace'))
           :(sh.label||stem);
         b.appendChild(nm);
+        /* non-notebook kinds wear their name; the notebook stays the
+           unmarked default (T124) */
+        if(sh.kind&&!sh.trace){
+          var kd=document.createElement('span');kd.className='rnb-kind';
+          kd.textContent=sh.kind;
+          b.appendChild(kd);
+        }
         if(!on) b.addEventListener('click',function(){activate(stem);});
         if(sh.trace||APP.mode==='app'||APP.mode==='web'){
           var x=document.createElement('span');x.className='rnb-x';
@@ -15413,6 +15485,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     if(shell.classList.contains('tracetab')) return;
     var p=shell.dataset.path||'';
     if(!p||/^https?:/i.test(p)) return;
+    /* notes are CELLS: they insert into notebook JSON, and no other
+       source kind has anywhere to put one. The server already refuses
+       (T100); the pencil not appearing is the fix (T124). */
+    if(!/\.ipynb$/i.test(p)) return;
     $$('.card',shell).forEach(function(card){
       var head=$('.cardhead',card); if(!head) return;
       if(head.querySelector('.card-addnote')) return;
@@ -16553,6 +16629,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     /* ---- register ---- */
     var replaced=!!APP.shells[stem];
     APP.shells[stem]={el:shell,data:data,path:shell.dataset.path||'',
+      kind:shell.dataset.srckind||'',  /* ''=notebook, the default (T124) */
       title:data.title||stem};
     if(APP.order.indexOf(stem)<0) APP.order.push(stem);
     applyFilters();
@@ -18402,8 +18479,9 @@ window.JunoPptx = (function () {
       + '"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm>';
   }
 
-  function nvSp(id, name, extra) {
-    return '<p:nvSpPr><p:cNvPr id="' + id + '" name="' + esc(name) + '"/>'
+  function nvSp(id, name, extra, link) {
+    return '<p:nvSpPr><p:cNvPr id="' + id + '" name="' + esc(name) + '"'
+      + (link ? '>' + link + '</p:cNvPr>' : '/>')
       + '<p:cNvSpPr' + (extra || '') + '/><p:nvPr/></p:nvSpPr>';
   }
 
@@ -18474,7 +18552,8 @@ window.JunoPptx = (function () {
     var bodyPr = '<a:bodyPr wrap="square" anchor="'
       + (item.centred ? 'ctr' : 't') + '">' + warp
       + (arc ? '<a:noAutofit/>' : '<a:spAutoFit/>') + '</a:bodyPr>';
-    return '<p:sp>' + nvSp(id, item.name || ('Text ' + id), ' txBox="1"')
+    return '<p:sp>'
+      + nvSp(id, item.name || ('Text ' + id), ' txBox="1"', item._link)
       + '<p:spPr>' + xfrm(geo, page)
       + '<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>' + fill + '</p:spPr>'
       + '<p:txBody>' + bodyPr
@@ -18611,7 +18690,8 @@ window.JunoPptx = (function () {
     var geom = SHAPE_GEOM[item.cropShape] || 'rect';
     return '<p:pic><p:nvPicPr><p:cNvPr id="' + id + '" name="'
       + esc(item.name || ('Picture ' + id)) + '"' + descrAttr(item)
-      + '/><p:cNvPicPr/><p:nvPr/>'
+      + (item._link ? '>' + item._link + '</p:cNvPr>' : '/>')
+      + '<p:cNvPicPr/><p:nvPr/>'
       + '</p:nvPicPr><p:blipFill><a:blip r:embed="' + rid + '">'
       + (item.op != null && item.op < 1
         ? '<a:alphaModFix amt="' + Math.round(item.op * 100000) + '"/>' : '')
@@ -18642,7 +18722,8 @@ window.JunoPptx = (function () {
     var stroke = '<a:ln w="' + lineWidthEmu(item, page, 0.41667) + '">'
       + solidFill(item.color, item.op, 'FF6B57')
       + dashXml(item.dash) + '</a:ln>';
-    return '<p:sp>' + nvSp(id, item.name || ('Shape ' + id))
+    return '<p:sp>'
+      + nvSp(id, item.name || ('Shape ' + id), '', item._link)
       + '<p:spPr>' + xfrm(item, page) + '<a:prstGeom prst="'
       + (SHAPE_GEOM[item.shape] || 'rect') + '"><a:avLst/></a:prstGeom>'
       + shapeFillXml(item)
@@ -18719,11 +18800,221 @@ window.JunoPptx = (function () {
   var DML_NS = 'http://schemas.openxmlformats.org/drawingml/2006/main';
   var XML_HEAD = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
 
+  /* ---- native charts (T117) ---------------------------------------
+     A <p:graphicFrame> on the slide points at a chart part; the part
+     carries the numbers in its caches (c:strCache / c:numCache), so
+     PowerPoint renders, restyles, retypes and recolours it natively.
+     No embedded workbook on purpose: only the "Edit Data" sheet needs
+     one, and that is a second file format -- the cut is recorded in
+     TASKS T117. The Sheet1! formulas name where a workbook WOULD put
+     the values, which is what PowerPoint expects to see. */
+  var CHART_NS = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
+  function chartFrame(item, id, rid, page) {
+    var geo = xfrm(item, page);
+    return '<p:graphicFrame><p:nvGraphicFramePr>'
+      + '<p:cNvPr id="' + id + '" name="Chart ' + id + '"' + descrAttr(item)
+      + (item._link ? '>' + item._link + '</p:cNvPr>' : '/>')
+      + '<p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr>'
+      + geo.replace('<a:xfrm', '<p:xfrm').replace('</a:xfrm>', '</p:xfrm>')
+      + '<a:graphic><a:graphicData uri="' + CHART_NS + '">'
+      + '<c:chart xmlns:c="' + CHART_NS + '" xmlns:r="'
+      + 'http://schemas.openxmlformats.org/officeDocument/2006/'
+      + 'relationships" r:id="' + rid + '"/>'
+      + '</a:graphicData></a:graphic></p:graphicFrame>';
+  }
+  function chartStrCache(col, vals) {
+    return '<c:f>Sheet1!$' + col + '$2:$' + col + '$'
+      + (vals.length + 1) + '</c:f><c:strCache><c:ptCount val="'
+      + vals.length + '"/>' + vals.map(function (v, i) {
+        return '<c:pt idx="' + i + '"><c:v>' + esc(String(v))
+          + '</c:v></c:pt>';
+      }).join('') + '</c:strCache>';
+  }
+  function chartNumCache(col, vals) {
+    return '<c:f>Sheet1!$' + col + '$2:$' + col + '$'
+      + (vals.length + 1) + '</c:f><c:numCache>'
+      + '<c:formatCode>General</c:formatCode><c:ptCount val="'
+      + vals.length + '"/>' + vals.map(function (v, i) {
+        var n = Number(v);
+        return '<c:pt idx="' + i + '"><c:v>' + (isFinite(n) ? n : 0)
+          + '</c:v></c:pt>';
+      }).join('') + '</c:numCache>';
+  }
+  function chartCol(i) {   /* 0 -> B, 1 -> C ... data starts beside cats */
+    return String.fromCharCode(66 + i);
+  }
+  function chartSerHead(item, si) {
+    var se = item.series[si];
+    return '<c:idx val="' + si + '"/><c:order val="' + si + '"/>'
+      + '<c:tx><c:strRef><c:f>Sheet1!$' + chartCol(si) + '$1</c:f>'
+      + '<c:strCache><c:ptCount val="1"/><c:pt idx="0"><c:v>'
+      + esc(se.name) + '</c:v></c:pt></c:strCache></c:strRef></c:tx>';
+  }
+  function chartAxes(item) {
+    var cat = item.ct === 'scatter' && item.numeric;
+    return '<c:' + (cat ? 'valAx' : 'catAx') + '>'
+      + '<c:axId val="111111111"/><c:scaling>'
+      + '<c:orientation val="minMax"/></c:scaling><c:delete val="0"/>'
+      + '<c:axPos val="b"/><c:crossAx val="222222222"/>'
+      + '</c:' + (cat ? 'valAx' : 'catAx') + '>'
+      + '<c:valAx><c:axId val="222222222"/><c:scaling>'
+      + '<c:orientation val="minMax"/></c:scaling><c:delete val="0"/>'
+      + '<c:axPos val="l"/><c:crossAx val="111111111"/></c:valAx>';
+  }
+  function chartXml(item) {
+    var fill = function (c) {
+      return '<c:spPr>' + solidFill(c, null, '4FB3D9') + '</c:spPr>';
+    };
+    var body = '';
+    if (item.ct === 'pie') {
+      var se0 = item.series[0] || { ys: [] };
+      body = '<c:pieChart><c:varyColors val="1"/><c:ser>'
+        + chartSerHead(item, 0)
+        + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+        + '</c:strRef></c:cat><c:val><c:numRef>'
+        + chartNumCache('B', se0.ys) + '</c:numRef></c:val>'
+        + '</c:ser></c:pieChart>';
+    } else if (item.ct === 'scatter' && item.numeric) {
+      body = '<c:scatterChart><c:scatterStyle val="marker"/>'
+        + '<c:varyColors val="0"/>'
+        + item.series.map(function (se, si) {
+          return '<c:ser>' + chartSerHead(item, si) + fill(se.color)
+            + '<c:xVal><c:numRef>' + chartNumCache('A', item.cats)
+            + '</c:numRef></c:xVal><c:yVal><c:numRef>'
+            + chartNumCache(chartCol(si), se.ys)
+            + '</c:numRef></c:yVal></c:ser>';
+        }).join('')
+        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
+        + '</c:scatterChart>';
+    } else if (item.ct === 'line' || item.ct === 'scatter') {
+      /* a scatter over WORD categories has no x numbers to plot, so it
+         leaves as a marker-only line chart -- same picture */
+      var mk = item.ct === 'scatter'
+        ? '<c:spPr><a:ln w="28575"><a:noFill/></a:ln></c:spPr>' : '';
+      body = '<c:lineChart><c:grouping val="standard"/>'
+        + '<c:varyColors val="0"/>'
+        + item.series.map(function (se, si) {
+          return '<c:ser>' + chartSerHead(item, si)
+            + (item.ct === 'scatter' ? mk : fill(se.color))
+            + '<c:marker><c:symbol val="circle"/><c:size val="5"/>'
+            + fill(se.color) + '</c:marker>'
+            + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+            + '</c:strRef></c:cat><c:val><c:numRef>'
+            + chartNumCache(chartCol(si), se.ys)
+            + '</c:numRef></c:val><c:smooth val="0"/></c:ser>';
+        }).join('')
+        + '<c:marker val="1"/>'
+        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
+        + '</c:lineChart>';
+    } else {
+      body = '<c:barChart><c:barDir val="col"/>'
+        + '<c:grouping val="clustered"/><c:varyColors val="0"/>'
+        + item.series.map(function (se, si) {
+          return '<c:ser>' + chartSerHead(item, si) + fill(se.color)
+            + '<c:cat><c:strRef>' + chartStrCache('A', item.cats)
+            + '</c:strRef></c:cat><c:val><c:numRef>'
+            + chartNumCache(chartCol(si), se.ys)
+            + '</c:numRef></c:val></c:ser>';
+        }).join('')
+        + '<c:gapWidth val="60"/>'
+        + '<c:axId val="111111111"/><c:axId val="222222222"/>'
+        + '</c:barChart>';
+    }
+    var title = item.title
+      ? '<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:r>'
+        + '<a:t>' + esc(item.title) + '</a:t></a:r></a:p></c:rich>'
+        + '</c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted '
+        + 'val="0"/>'
+      : '<c:autoTitleDeleted val="1"/>';
+    return XML_HEAD
+      + '<c:chartSpace xmlns:c="' + CHART_NS + '" xmlns:a="'
+      + 'http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="'
+      + 'http://schemas.openxmlformats.org/officeDocument/2006/'
+      + 'relationships"><c:chart>' + title
+      + '<c:plotArea><c:layout/>' + body
+      + (item.ct === 'pie' ? '' : chartAxes(item))
+      + '</c:plotArea>'
+      + (item.leg ? '<c:legend><c:legendPos val="b"/>'
+        + '<c:overlay val="0"/></c:legend>' : '')
+      + '<c:plotVisOnly val="1"/></c:chart>'
+      /* the deck's ink, or chart text vanishes on a dark slide */
+      + '<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr>'
+      + solidFill(item.ink, null, 'DBE7EF')
+      + '</a:defRPr></a:pPr><a:endParaRPr lang="en-US"/></a:p></c:txPr>'
+      + '</c:chartSpace>';
+  }
+
+  /* ---- build timing (T110) ----------------------------------------
+     Junoview's builds leave as a real <p:timing> main sequence: one
+     click per build step, every shape on the step revealed together --
+     the same grouping the editor's badges and playback use. Appear and
+     fade are exact; rise and zoom leave as fades, and the export
+     dialog counts them (an entrance spelled as position behaviours is
+     a bigger machine than two effects deserve). The set/animEffect
+     pair per shape is what PowerPoint itself writes for a fade. */
+  function timingXml(anims) {
+    if (!anims.length) return '';
+    var steps = {};
+    anims.forEach(function (an) {
+      (steps[an.step] = steps[an.step] || []).push(an);
+    });
+    var order = Object.keys(steps).map(Number).sort(function (a, b) {
+      return a - b; });
+    var tid = 2;
+    function nid() { tid++; return tid; }
+    var groups = order.map(function (st) {
+      var shapes = steps[st].map(function (an, i) {
+        var preset = an.type === 'appear' ? 1 : 10;
+        var eff = an.type === 'appear' ? ''
+          : '<p:animEffect transition="in" filter="fade"><p:cBhvr>'
+            + '<p:cTn id="' + nid() + '" dur="500"/>'
+            + '<p:tgtEl><p:spTgt spid="' + an.spid + '"/></p:tgtEl>'
+            + '</p:cBhvr></p:animEffect>';
+        return '<p:par><p:cTn id="' + nid() + '" presetID="' + preset
+          + '" presetClass="entr" presetSubtype="0" fill="hold" '
+          + 'grpId="0" nodeType="'
+          + (i === 0 ? 'clickEffect' : 'withEffect') + '">'
+          + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+          + '<p:childTnLst>'
+          + '<p:set><p:cBhvr><p:cTn id="' + nid()
+          + '" dur="1" fill="hold"><p:stCondLst>'
+          + '<p:cond delay="0"/></p:stCondLst></p:cTn>'
+          + '<p:tgtEl><p:spTgt spid="' + an.spid + '"/></p:tgtEl>'
+          + '<p:attrNameLst><p:attrName>style.visibility</p:attrName>'
+          + '</p:attrNameLst></p:cBhvr>'
+          + '<p:to><p:strVal val="visible"/></p:to></p:set>'
+          + eff + '</p:childTnLst></p:cTn></p:par>';
+      }).join('');
+      return '<p:par><p:cTn id="' + nid() + '" fill="hold">'
+        + '<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>'
+        + '<p:childTnLst><p:par><p:cTn id="' + nid() + '" fill="hold">'
+        + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
+        + '<p:childTnLst>' + shapes
+        + '</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>';
+    }).join('');
+    var blds = anims.map(function (an) {
+      return '<p:bldP spid="' + an.spid + '" grpId="0"/>';
+    }).join('');
+    return '<p:timing><p:tnLst><p:par>'
+      + '<p:cTn id="1" dur="indefinite" restart="never" '
+      + 'nodeType="tmRoot"><p:childTnLst>'
+      + '<p:seq concurrent="1" nextAc="seek">'
+      + '<p:cTn id="2" dur="indefinite" nodeType="mainSeq">'
+      + '<p:childTnLst>' + groups + '</p:childTnLst></p:cTn>'
+      + '<p:prevCondLst><p:cond evt="onPrev" delay="0">'
+      + '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:prevCondLst>'
+      + '<p:nextCondLst><p:cond evt="onNext" delay="0">'
+      + '<p:tgtEl><p:sldTgt/></p:tgtEl></p:cond></p:nextCondLst>'
+      + '</p:seq></p:childTnLst></p:cTn></p:par></p:tnLst>'
+      + '<p:bldLst>' + blds + '</p:bldLst></p:timing>';
+  }
+
   function relsDoc(entries) {
     return XML_HEAD + '<Relationships xmlns="' + RELS_NS + '">'
       + entries.map(function (r) {
         return '<Relationship Id="' + r.id + '" Type="' + r.type
-          + '" Target="' + r.target + '"/>';
+          + '" Target="' + r.target + '"'
+          + (r.mode ? ' TargetMode="' + r.mode + '"' : '') + '/>';
       }).join('') + '</Relationships>';
   }
 
@@ -18827,14 +19118,34 @@ window.JunoPptx = (function () {
     var zip = new Zip();
     var slides = spec.slides || [];
     var media = [];          /* {name, mime, bytes} */
+    var charts = [];         /* chartSpace XML, one part each (T117) */
     var extensions = {};
     var skipped = 0;
 
     var slideXml = slides.map(function (slide) {
-      var rels = [], id = 1, body = '';
+      var rels = [], id = 1, body = '', anims = [];
       (slide.items || []).forEach(function (item) {
         if (!item) return;
         id++;
+        /* a click action becomes a real relationship (T110): a URL is
+           an External hyperlink rel, a slide jump a rel to the target
+           slide part plus the hlinksldjump action. The XML rides in
+           the shape's own cNvPr via item._link. */
+        item._link = '';
+        if (item.link && item.link.to === 'url' && item.link.href) {
+          var hrid = 'rIdH' + (rels.length + 1);
+          rels.push({ id: hrid, type: DOC_NS + '/relationships/hyperlink',
+            target: item.link.href, mode: 'External' });
+          item._link = '<a:hlinkClick r:id="' + hrid + '"/>';
+        } else if (item.link && item.link.to === 'slide'
+            && item.link.slide) {
+          var srid = 'rIdH' + (rels.length + 1);
+          rels.push({ id: srid, type: DOC_NS + '/relationships/slide',
+            target: 'slide' + item.link.slide + '.xml' });
+          item._link = '<a:hlinkClick r:id="' + srid
+            + '" action="ppaction://hlinksldjump"/>';
+        }
+        var emitted = body.length;
         if (item.t === 'text') {
           body += textShape(item, id, page);
         } else if (item.t === 'image') {
@@ -18850,6 +19161,13 @@ window.JunoPptx = (function () {
         } else if (item.t === 'table') {
           var tbl = tableShape(item, id, page);
           if (tbl) body += tbl; else skipped++;
+        } else if (item.t === 'chart') {
+          if (!item.series || !item.series.length) { skipped++; return; }
+          charts.push(chartXml(item));
+          var crid = 'rIdC' + charts.length;
+          rels.push({ id: crid, type: DOC_NS + '/relationships/chart',
+            target: '../charts/chart' + charts.length + '.xml' });
+          body += chartFrame(item, id, crid, page);
         } else if (item.t === 'rect') {
           body += rectShape(item, id, page);
         } else if (item.t === 'line') {
@@ -18859,6 +19177,11 @@ window.JunoPptx = (function () {
           if (free) body += free; else skipped++;
         } else {
           skipped++;
+        }
+        /* only a shape that actually landed can be animated */
+        if (body.length > emitted && item.animStep != null) {
+          anims.push({ spid: id, step: item.animStep,
+            type: item.animType || 'fade' });
         }
       });
       var bg = '<p:bg><p:bgPr>' + solidFill(slide.bg, null, '0B141D')
@@ -18871,7 +19194,7 @@ window.JunoPptx = (function () {
       return { rels: rels,
         xml: XML_HEAD + '<p:sld' + nsAttrs() + '><p:cSld>' + bg + tree
           + '</p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr>'
-          + transition(slide.trans) + '</p:sld>' };
+          + transition(slide.trans) + timingXml(anims) + '</p:sld>' };
     });
 
     /* which slides have notes, decided once: the parts, the rels,
@@ -18911,6 +19234,9 @@ window.JunoPptx = (function () {
           target: '../theme/theme1.xml' }]));
     }
     media.forEach(function (m) { zip.add('ppt/media/' + m.name, m.bytes); });
+    charts.forEach(function (x, i) {
+      zip.addText('ppt/charts/chart' + (i + 1) + '.xml', x);
+    });
 
     zip.addText('ppt/slideLayouts/slideLayout1.xml',
       XML_HEAD + '<p:sldLayout' + nsAttrs() + ' type="blank" preserve="1">'
@@ -19021,6 +19347,11 @@ window.JunoPptx = (function () {
         + ' ContentType="application/vnd.openxmlformats-officedocument.'
         + 'presentationml.notesMaster+xml"/>';
     }
+    charts.forEach(function (_, i) {
+      overrides += '<Override PartName="/ppt/charts/chart' + (i + 1)
+        + '.xml" ContentType="application/vnd.openxmlformats-'
+        + 'officedocument.drawingml.chart+xml"/>';
+    });
     zip.addText('[Content_Types].xml',
       XML_HEAD + '<Types xmlns="http://schemas.openxmlformats.org/package/'
       + '2006/content-types">' + defaults + overrides + '</Types>');
@@ -22842,6 +23173,9 @@ window.JunoPptx = (function () {
       return 'Table '+((a.rows||[]).length)+'\u00d7'
         +(((a.rows||[])[0]||[]).length);
     if(a.k==='arrow') return a.nohead?'Line':'Arrow';
+    if(a.k==='chart')
+      return 'Chart \u2014 '+(a.ct||'bar')+', '
+        +((a.series||[]).length)+' series';
     if(a.k==='draw') return 'Drawing';
     if(a.k==='rect') return 'Shape — '+(a.shape||'box');
     return a.k;
@@ -30090,6 +30424,14 @@ window.JunoPptx = (function () {
         if(typeof s.sid==='string'&&s.sid) o.sid=s.sid;
         if(s.border) o.border=deep(s.border);
         if(s.grpmeta) o.grpmeta=deep(s.grpmeta);
+        /* the authored reading order (T106): oids, first-to-last.
+           Absent = automatic (top-to-bottom, left-to-right). Unlisted
+           here it dies on the next load, like label before it. */
+        if(Array.isArray(s.rord)&&s.rord.length){
+          var ro=s.rord.filter(function(x){
+            return typeof x==='string'&&x;});
+          if(ro.length) o.rord=ro;
+        }
         if(s.layout==='title'){
           o.title=String(s.title||'');o.sub=String(s.sub||'');
           if(s.tprops) o.tprops=deep(s.tprops);
@@ -32868,7 +33210,7 @@ window.JunoPptx = (function () {
     if(a.k==='rect') return (a.shape?a.shape:'Shape');
     if(a.k==='cell'){var it=a.ref&&resolveRef(a.ref);
       return it&&it.title?it.title.slice(0,18):'Empty frame';}
-    if(a.k==='image'||a.k==='flip'||a.k==='table'
+    if(a.k==='image'||a.k==='flip'||a.k==='table'||a.k==='chart'
        ||a.k==='arrow'||a.k==='draw') return annotLabel(a);
     return 'item';
   }
@@ -36386,6 +36728,8 @@ window.JunoPptx = (function () {
         }
       } else if(a.k==='table'){
         drawTable(layer,s,a,i,editing);
+      } else if(a.k==='chart'){
+        drawChart(layer,s,a,i);
       } else if(a.k==='image'){
         var im=document.createElement('div');
         im.className='an-item an-image'+(selAnnot===i?' sel':'');
@@ -36585,6 +36929,25 @@ window.JunoPptx = (function () {
        are actually reading build numbers, and everywhere else they were
        clutter with no off switch. The filmstrip's ▸N mark is what says a
        slide is animated when the pane is shut. */
+    /* reading-order badges (T106): built on every render like the
+       build bubbles below, and CSS-gated the same way (T76) — shown
+       only while the Reading order panel (#rd-order) is open. Cyan and
+       top-RIGHT so an open Timeline's amber top-left build numbers can
+       be read at the same time. */
+    if(editing){
+      var rmap={},rn=0;
+      orderedIdx(s).forEach(function(ri){rmap[ri]=++rn;});
+      $$('.an-item[data-idx],.an-arrow-line[data-idx]',layer)
+        .forEach(function(el){
+          var raw=el.getAttribute('data-idx');
+          if(raw==='t'||raw==='s') return;
+          if(rmap[+raw]==null) return;
+          var rb=document.createElement('span');
+          rb.className='an-readno';rb.textContent=rmap[+raw];
+          rb.title='Reading order: '+rmap[+raw];
+          el.appendChild(rb);
+        });
+    }
     if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
       var steps=slideBuildSteps(s),plan=flipPlan(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
@@ -38591,6 +38954,48 @@ window.JunoPptx = (function () {
             });
         }
       }
+      /* CHARTS (T117). A selected chart edits here; a selected
+         table (or a frame showing a table card) can become one. */
+      (function(){
+        var ci=selIdxs();
+        if(ci.length!==1) return;
+        var ca=(pres.slides[cur].annots||[])[ci[0]];
+        if(!ca) return;
+        if(ca.k==='chart'){
+          menuHead(m,'chart');
+          CHART_TYPES.forEach(function(t){
+            row(((ca.ct||'bar')===t[0]?'\u2713 ':'')+t[1],'',
+              function(){ca.ct=t[0];markDirty();renderSlide();
+                toast(t[1]+' chart');},
+              null,'plots');
+          });
+          row('Edit data\u2026','',function(){
+            window.SemDeckChart.dataDlg(ci[0]);},
+            'The numbers behind this chart, one row per category. '
+            +'Editing them unlinks the chart from its table.','pen');
+          row(ca.leg===0?'Show the legend':'Hide the legend','',
+            function(){
+              if(ca.leg===0) delete ca.leg; else ca.leg=0;
+              markDirty();renderSlide();},null,'eye');
+          if(ca.ref) row('Linked to its table','',function(){},
+            'Update figures from their sources re-reads the numbers; '
+            +'position, type and colours stay yours.','link');
+        } else if(window.SemDeckChart.dataOf(ca)){
+          menuHead(m,'chart');
+          row('Turn into a chart','',function(){
+            var data=window.SemDeckChart.dataOf(ca);
+            if(!data){toast('Could not read numbers out of this '
+              +'table');return;}
+            var na=window.SemDeckChart.place(data,{
+              x:Math.min(64,(ca.x||10)+6),y:Math.min(60,(ca.y||10)+6),
+              ref:ca.k==='cell'?ca.ref:null});
+            if(na) toast('Chart added beside the table \u2014 '
+              +'right-click it to change its type');},
+            'A bar chart of these numbers: first row names the '
+            +'series, first column is the category. Born linked, so '
+            +'updating figures re-reads the table.','plots');
+        }
+      })();
       /* COMPONENTS. The rows differ by what you are pointing at: a
          plain selection can BECOME one; an instance can push its look
          to the definition or leave it. */
@@ -38757,6 +39162,25 @@ window.JunoPptx = (function () {
         +'the deck file.','eye');
       if(allPriv) pb.classList.add('on');
     }
+    /* the slide's SEQUENCE (T106): always offered, because reading
+       order is a property of the slide, not of a selection */
+    menuHead(m,'slide');
+    row('Reading order\u2026','',function(){
+      if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();},
+      'The order this slide reads in \u2014 builds, figure numbers and '
+      +'the review outline all follow it. Numbers show on every object '
+      +'while the panel is open.','stagger');
+    row('Insert a chart','',function(){
+      var na=window.SemDeckChart.place(
+        {cats:['A','B','C'],series:[
+          {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
+        {x:Math.max(2,Math.min(64,(at.x||40)-16)),
+         y:Math.max(2,Math.min(58,(at.y||35)-17))});
+      if(na) toast('Chart placed \u2014 right-click it to edit the '
+        +'numbers or change its type');},
+      'A bar chart with sample numbers to replace \u2014 or select a '
+      +'placed table and \u201cTurn into a chart\u201d. Exports to '
+      +'PowerPoint as a real chart.','plots');
     var cgm=customGuides();
     menuHead(m,'guides');
     row('Draw a guide box','B',armGuideBox,
@@ -42996,7 +43420,7 @@ window.JunoPptx = (function () {
      figure numbering needs the same order and two sweeps that agreed
      today would not agree forever (2026-08-25, T18). */
   function orderedIdx(s2){
-    return (s2.annots||[])
+    var base=(s2.annots||[])
       .map(function(a,i){return {a:a,i:i};})
       .filter(function(p2){return p2.a&&!p2.a.hide;})
       .sort(function(p2,q2){
@@ -43007,6 +43431,33 @@ window.JunoPptx = (function () {
         return Math.abs(ay-by)>4?(ay-by):(ax-bx);
       })
       .map(function(p2){return p2.i;});
+    /* THE AUTHORED ORDER (T106). `s2.rord` is a list of oids,
+       first-to-last, written by the Reading order panel; absent means
+       the sweep above is the answer, which it was for every deck saved
+       before this existed. Resolved HERE so all six consumers — builds,
+       figure numbers, flip matching, the review export and its heading
+       — inherit it from the one function they already call, and none
+       can drift.
+       Objects the list does not name (added after the order was set,
+       or unhidden since) read LAST, in sweep order among themselves:
+       predictable, and the panel shows the truth the moment it opens.
+       A listed oid that no longer exists is simply ignored.
+       DOM order stays STORAGE order on purpose: the annots array is
+       z-order (Bring forward is a splice), and reading order must not
+       reshuffle what overlaps what. */
+    var rord=s2.rord;
+    if(!Array.isArray(rord)||!rord.length) return base;
+    var pos={};
+    rord.forEach(function(id,n2){
+      if(typeof id==='string'&&!(id in pos)) pos[id]=n2;});
+    var ranked=[],rest=[];
+    base.forEach(function(i){
+      var a=(s2.annots||[])[i];
+      var r=(a&&a.oid!=null)?pos[a.oid]:undefined;
+      if(r!=null) ranked.push({i:i,r:r}); else rest.push(i);
+    });
+    ranked.sort(function(x,y){return x.r-y.r;});
+    return ranked.map(function(x){return x.i;}).concat(rest);
   }
   /* ---- WHERE THIS FIGURE CAME FROM ------------------------------------
      (TASKS T19 and T20.) The deck already knows all of this and had no
@@ -43045,6 +43496,9 @@ window.JunoPptx = (function () {
   function provRef(a){
     if(!a) return '';
     if(a.k==='cell') return a.ref||'';
+    /* a chart born from a table card keeps the card's ref (T117), so
+       every door that asks "does this have a source" says yes for it */
+    if(a.k==='chart') return a.ref||'';
     if(a.k==='flip'){
       var fr=flipFrames(a),sel=fr[a.at||0]||fr[0];
       return (sel&&sel.ref)||'';
@@ -43115,15 +43569,20 @@ window.JunoPptx = (function () {
     });
     return Promise.all(jobs).then(function(res){
       var reread=res.filter(Boolean).length;
+      /* charts re-read their table's NUMBERS on the same click (T117);
+         type, colours, position and size stay the author's. Counted
+         BEFORE the early return, or a deck whose only change was a
+         chart would be told everything already matches. */
+      var cn=(typeof chartResyncAll==='function')?chartResyncAll():0;
       var list=staleFigures();
-      if(!list.length){
+      if(!list.length&&!cn){
         toast(reread
           ?('Re-read '+reread+' source'+(reread===1?'':'s')
             +' \u2014 every figure already matches')
           :'Every figure on this deck already matches its source');
         return 0;
       }
-      var n=0;
+      var n=cn;
       list.forEach(function(p){if(resyncFigure(p.a)) n++;});
       toast(n?(n+' figure'+(n===1?'':'s')+' updated from '
         +(n===1?'its source':'their sources')
@@ -46944,6 +47403,16 @@ window.JunoPptx = (function () {
           list.appendChild(row);});
         menu.appendChild(list);
       }
+      /* the order "One by one" deals the clicks in (T106) */
+      var rb=document.createElement('button');
+      rb.className='anim-mini wide';
+      rb.textContent='Reading order\u2026';
+      rb.title='One by one reveals in READING order \u2014 top to '
+        +'bottom unless you set your own. Figure numbers and the '
+        +'review outline follow the same order.';
+      rb.addEventListener('click',function(e){e.stopPropagation();
+        if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
+      menu.appendChild(rb);
     }
     /* ONE door. There were briefly two — View's Animations and an
        "Animate" button in an Effects group that renamed itself to the
@@ -47045,6 +47514,115 @@ window.JunoPptx = (function () {
       });
     };
   })();
+  /* ---- READING ORDER (T106) -----------------------------------------
+     The one place the slide's SEQUENCE is authored. orderedIdx's sweep
+     (top-to-bottom, left-to-right) stays the default; this panel writes
+     `sl.rord` — a list of oids, first-to-last — and the resolver in
+     35-arranging overlays it, so builds, figure numbers, flip matching
+     and the review export all follow without knowing it exists.
+     An overlay with an explicit close (Esc or the ✕), NOT click-away:
+     you need to click objects on the canvas while the numbers are
+     showing, and the number badges themselves are CSS-gated on this
+     panel being open — the same trick as the build bubbles (T76). */
+  function rdClose(){
+    var p=$('#rd-order'); if(p) p.remove();
+    document.removeEventListener('keydown',rdKey,true);
+  }
+  function rdKey(e){
+    if(e.key!=='Escape') return;
+    if(!$('#rd-order')) return;
+    e.preventDefault();e.stopPropagation();rdClose();
+  }
+  function openReadingOrder(){
+    rdClose();
+    var s=pres.slides[cur];
+    if(!s||!(s.annots||[]).length){
+      toast('Put something on this slide first \u2014 reading order '
+        +'is read off what is there');
+      return;
+    }
+    ensureOids(s);
+    var p=document.createElement('div');
+    p.className='sh-menu rd-order';p.id='rd-order';
+    var head=menuHead(p,'reading order');
+    var x=document.createElement('button');
+    x.className='dbtn dc-icon rd-close';x.type='button';
+    x.setAttribute('aria-label','Close');x.title='Close';
+    x.innerHTML=bic('exit')||'\u2715';
+    x.addEventListener('click',function(e){e.stopPropagation();
+      rdClose();});
+    head.appendChild(x);
+    var note=document.createElement('div');note.className='rd-note';
+    note.textContent='Builds (One by one), figure numbers and the '
+      +'review outline all say this slide in this order. The numbers '
+      +'show on the slide while this is open.';
+    p.appendChild(note);
+    var state=document.createElement('div');state.className='rd-state';
+    var list=document.createElement('div');list.className='rd-list';
+    p.appendChild(state);p.appendChild(list);
+    var reset=document.createElement('button');
+    reset.className='anim-mini wide rd-reset';
+    reset.textContent='Back to automatic';
+    reset.title='Forget the authored order \u2014 read top to bottom, '
+      +'left to right again';
+    reset.addEventListener('click',function(e){e.stopPropagation();
+      var s2=pres.slides[cur]; if(!s2) return;
+      delete s2.rord;
+      markDirty();rdRepaint();render2();
+      toast('Automatic reading order \u2014 top to bottom. '
+        +'Ctrl+Z brings the authored one back.');
+    });
+    p.appendChild(reset);
+    function rdRepaint(){
+      var s2=pres.slides[cur],l=stage.querySelector('.annot-layer');
+      if(l&&s2){renderAnnots(l,s2);paintSel(l);}
+    }
+    function move(pos,dir){
+      var s2=pres.slides[cur]; if(!s2) return;
+      ensureOids(s2);
+      var ord=orderedIdx(s2);
+      var to=pos+dir;
+      if(to<0||to>=ord.length) return;
+      var t=ord[pos];ord[pos]=ord[to];ord[to]=t;
+      /* the FULL list every time: stale oids drop out, and what you
+         see in the panel is exactly what is stored */
+      s2.rord=ord.map(function(i){return s2.annots[i].oid;});
+      markDirty();rdRepaint();render2();
+    }
+    function render2(){
+      var s2=pres.slides[cur];
+      state.textContent=(s2&&Array.isArray(s2.rord)&&s2.rord.length)
+        ?'Custom \u2014 objects added later read last'
+        :'Automatic \u2014 top to bottom, left to right';
+      reset.hidden=!(s2&&Array.isArray(s2.rord)&&s2.rord.length);
+      list.innerHTML='';
+      var ord=s2?orderedIdx(s2):[];
+      ord.forEach(function(idx,pos){
+        var row=document.createElement('div');row.className='rd-row';
+        var n=document.createElement('span');n.className='rd-num';
+        n.textContent=(pos+1);row.appendChild(n);
+        var lab=document.createElement('span');lab.className='rd-lab';
+        lab.textContent=itemLabel(s2,idx);
+        lab.title=lab.textContent;
+        row.appendChild(lab);
+        [['\u2191',-1,'Read this earlier'],
+         ['\u2193',1,'Read this later']].forEach(function(m){
+          var b=document.createElement('button');b.className='anim-mini';
+          b.textContent=m[0];b.title=m[2];
+          b.setAttribute('aria-label',m[2]);
+          b.disabled=(m[1]<0?pos===0:pos===ord.length-1);
+          b.addEventListener('click',function(e){e.stopPropagation();
+            move(pos,m[1]);});
+          row.appendChild(b);});
+        list.appendChild(row);
+      });
+    }
+    render2();
+    document.body.appendChild(p);
+    document.addEventListener('keydown',rdKey,true);
+    rdRepaint();   /* badges are built on render; make them current */
+  }
+  window.SemDeckReadingOrder=openReadingOrder;
   window.addEventListener('resize',function(){
     if(deckEl.hidden) return;
     var s=pres.slides[cur];
@@ -48447,6 +49025,391 @@ window.JunoPptx = (function () {
         histCompare(ov,ix[ix.length-1]);}
     });
   }
+  /* ================================================================
+     47-charts.js — NATIVE DATA-BOUND CHARTS (T117)
+
+     A figure used to leave for PowerPoint as a picture, so nobody could
+     recolour a series on the other side. A chart annotation carries its
+     NUMBERS instead: `{k:'chart', ct, cats, series:[{name,ys,color}]}`,
+     drawn here as plain SVG (no Plotly, no network — a rendered deck
+     opens from file://), and exported by pptx.js as a real <c:chart>
+     part that PowerPoint will restyle, retype and recolour natively.
+
+     The notebook-first half is `ref`: a chart born from a placed table
+     keeps the card reference the way a figure keeps its provenance, so
+     "Update figures from their sources" re-reads the numbers while the
+     chart's position, type and colours stay yours. The renderer never
+     executes anything — the numbers came from a table someone already
+     rendered.
+
+     Deliberate v1 cuts, recorded in TASKS T117: per-series colour
+     editing lives in PowerPoint after export (the palette here is
+     stable, so re-export keeps your colours consistent); no embedded
+     workbook part (values are cached in the chart XML — PowerPoint
+     renders and restyles it fully; only its "Edit Data" sheet needs
+     the workbook, and that is a second file format); no 3D, stacking,
+     or secondary axes.
+
+     This file is a FRAGMENT of the deck IIFE (see 00-page.js): no code
+     here runs at eval time beyond declarations and the window export,
+     per the T133 rule. */
+
+  /* ---- the data model ------------------------------------------------ */
+  var CHART_PALETTE=['#4fb3d9','#f0a848','#8fd18a','#e07a9a',
+    '#b39ddb','#f2d16b'];
+  var CHART_TYPES=[['bar','Bar'],['line','Line'],
+    ['scatter','Scatter'],['pie','Pie']];
+  function chartParse(a){
+    var cats=(Array.isArray(a&&a.cats)?a.cats:[]).map(function(c){
+      return String(c==null?'':c);});
+    var series=(Array.isArray(a&&a.series)?a.series:[])
+      .map(function(se,si){
+        return {name:String((se&&se.name)||('Series '+(si+1))),
+          ys:(Array.isArray(se&&se.ys)?se.ys:[]).map(function(v){
+            var n=Number(v);return isFinite(n)?n:0;}),
+          color:(se&&se.color)||CHART_PALETTE[si%CHART_PALETTE.length]};
+      }).filter(function(se){return se.ys.length;});
+    var n=cats.length;
+    series.forEach(function(se){n=Math.max(n,se.ys.length);});
+    while(cats.length<n) cats.push(String(cats.length+1));
+    return {cats:cats,series:series,
+      numeric:n>0&&cats.every(function(c){
+        return c!==''&&isFinite(Number(c));})};
+  }
+  function chartStep(range){
+    if(!(range>0)) return 1;
+    var raw=range/4,mag=Math.pow(10,Math.floor(Math.log(raw)/Math.LN10));
+    var r=raw/mag;
+    return (r>=5?10:r>=2?5:r>=1?2:1)*mag;
+  }
+  function svgEl(tag){
+    return document.createElementNS('http://www.w3.org/2000/svg',tag);
+  }
+  function svgText(x,y,str,size,fill,anchor){
+    var t=svgEl('text');
+    t.setAttribute('x',x);t.setAttribute('y',y);
+    t.setAttribute('font-size',size);
+    t.setAttribute('fill',fill);
+    if(anchor) t.setAttribute('text-anchor',anchor);
+    t.textContent=str;
+    return t;
+  }
+  /* the whole picture, sized by viewBox so the box scales it; aspect
+     comes from the annot's real page shape so a pie stays round */
+  function chartSvg(a){
+    var d=chartParse(a);
+    var pg=pageOf();
+    var H=300;
+    var W=Math.max(200,Math.min(900,Math.round(
+      H*((a.w||30)*pg.mm[0])/(((a.h||24)||1)*pg.mm[1]))));
+    var svg=svgEl('svg');
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('class','an-chartsvg');
+    svg.setAttribute('preserveAspectRatio','none');
+    var ink='#dbe7ef',dim='#8aa0b0',grid='#8aa0b033';
+    var legend=(a.leg!==0)&&(d.series.length>1||a.ct==='pie');
+    var T=(a.title?30:12),B=H-(legend?48:30),L=46,R=W-12;
+    if(a.title) svg.appendChild(
+      svgText(W/2,19,String(a.title),15,ink,'middle'));
+    if(!d.series.length){
+      svg.appendChild(svgText(W/2,H/2,'No data — right-click '
+        +'→ Edit data…',12,dim,'middle'));
+      return svg;
+    }
+    if(a.ct==='pie'){
+      var ys=d.series[0].ys.map(function(v){return Math.max(0,v);});
+      var tot=ys.reduce(function(x,y){return x+y;},0)||1;
+      var cx=W/2,cy=(T+B)/2,r=Math.min(R-L,B-T)/2;
+      var a0=-Math.PI/2;
+      ys.forEach(function(v,i){
+        var a1=a0+(v/tot)*2*Math.PI;
+        var p=svgEl('path');
+        var x0=cx+r*Math.cos(a0),y0=cy+r*Math.sin(a0);
+        var x1=cx+r*Math.cos(a1),y1=cy+r*Math.sin(a1);
+        p.setAttribute('d','M'+cx+' '+cy+' L'+x0+' '+y0
+          +' A'+r+' '+r+' 0 '+((a1-a0)>Math.PI?1:0)+' 1 '
+          +x1+' '+y1+' Z');
+        p.setAttribute('fill',CHART_PALETTE[i%CHART_PALETTE.length]);
+        svg.appendChild(p);
+        a0=a1;
+      });
+      /* a pie's legend is its categories, one colour each */
+      var lx=12;
+      d.cats.slice(0,ys.length).forEach(function(c,i){
+        var sw=svgEl('rect');
+        sw.setAttribute('x',lx);sw.setAttribute('y',H-22);
+        sw.setAttribute('width',10);sw.setAttribute('height',10);
+        sw.setAttribute('fill',CHART_PALETTE[i%CHART_PALETTE.length]);
+        svg.appendChild(sw);
+        var label=svgText(lx+14,H-13,c,10,dim);
+        svg.appendChild(label);
+        lx+=14+Math.max(30,c.length*6)+10;
+      });
+      return svg;
+    }
+    /* shared y scale for bar / line / scatter */
+    var lo=0,hi=1;
+    d.series.forEach(function(se){se.ys.forEach(function(v){
+      if(v<lo) lo=v; if(v>hi) hi=v;});});
+    if(hi===lo) hi=lo+1;
+    var step=chartStep(hi-lo);
+    lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
+    function Y(v){return B-(v-lo)/(hi-lo)*(B-T);}
+    for(var g=lo;g<=hi+step/2;g+=step){
+      var gl=svgEl('line');
+      gl.setAttribute('x1',L);gl.setAttribute('x2',R);
+      gl.setAttribute('y1',Y(g));gl.setAttribute('y2',Y(g));
+      gl.setAttribute('stroke',g===0?dim:grid);
+      svg.appendChild(gl);
+      svg.appendChild(svgText(L-5,Y(g)+3,
+        String(Math.round(g*1000)/1000),9,dim,'end'));
+    }
+    var n=d.cats.length;
+    var xs=d.numeric&&a.ct!=='bar'
+      ?d.cats.map(function(c){return Number(c);}):null;
+    var xlo=xs?Math.min.apply(null,xs):0;
+    var xhi=xs?Math.max.apply(null,xs):Math.max(1,n-1);
+    if(xhi===xlo) xhi=xlo+1;
+    function X(i){
+      return xs?L+(xs[i]-xlo)/(xhi-xlo)*(R-L)
+        :L+(i+0.5)/n*(R-L);
+    }
+    /* category labels (numeric x draws its own ticks) */
+    if(xs){
+      var xstep=chartStep(xhi-xlo);
+      for(var xv=Math.ceil(xlo/xstep)*xstep;xv<=xhi+xstep/2;xv+=xstep){
+        var px=L+(xv-xlo)/(xhi-xlo)*(R-L);
+        svg.appendChild(svgText(px,B+13,
+          String(Math.round(xv*1000)/1000),9,dim,'middle'));
+      }
+    } else {
+      d.cats.forEach(function(c,i){
+        svg.appendChild(svgText(X(i),B+13,
+          c.length>9?c.slice(0,8)+'…':c,9,dim,'middle'));
+      });
+    }
+    if(a.ct==='line'){
+      d.series.forEach(function(se){
+        var pl=svgEl('polyline');
+        pl.setAttribute('points',se.ys.map(function(v,i){
+          return X(i)+','+Y(v);}).join(' '));
+        pl.setAttribute('fill','none');
+        pl.setAttribute('stroke',se.color);
+        pl.setAttribute('stroke-width',2);
+        svg.appendChild(pl);
+        se.ys.forEach(function(v,i){
+          var c=svgEl('circle');
+          c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
+          c.setAttribute('r',2.6);c.setAttribute('fill',se.color);
+          svg.appendChild(c);
+        });
+      });
+    } else if(a.ct==='scatter'){
+      d.series.forEach(function(se){
+        se.ys.forEach(function(v,i){
+          var c=svgEl('circle');
+          c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
+          c.setAttribute('r',3.4);c.setAttribute('fill',se.color);
+          svg.appendChild(c);
+        });
+      });
+    } else {   /* bar, the default */
+      var ns=d.series.length,gw=(R-L)/n,bw=gw*0.72/ns;
+      d.series.forEach(function(se,si){
+        se.ys.forEach(function(v,i){
+          var x=L+i*gw+gw*0.14+si*bw;
+          var b=svgEl('rect');
+          b.setAttribute('x',x);
+          b.setAttribute('y',Math.min(Y(v),Y(0)));
+          b.setAttribute('width',Math.max(1,bw-1));
+          b.setAttribute('height',Math.max(0.5,Math.abs(Y(v)-Y(0))));
+          b.setAttribute('fill',se.color);
+          svg.appendChild(b);
+        });
+      });
+    }
+    if(legend){
+      var lx2=L;
+      d.series.forEach(function(se){
+        var sw2=svgEl('rect');
+        sw2.setAttribute('x',lx2);sw2.setAttribute('y',H-22);
+        sw2.setAttribute('width',10);sw2.setAttribute('height',10);
+        sw2.setAttribute('fill',se.color);
+        svg.appendChild(sw2);
+        svg.appendChild(svgText(lx2+14,H-13,se.name,10,dim));
+        lx2+=14+Math.max(34,se.name.length*6)+10;
+      });
+    }
+    return svg;
+  }
+  function drawChart(layer,s,a,i){
+    var d2=document.createElement('div');
+    d2.className='an-item an-chart'+(selAnnot===i?' sel':'');
+    var ap=anchorPos(a,a.w,a.h);
+    d2.style.left=ap.x+'%';d2.style.top=ap.y+'%';
+    d2.style.width=(a.w||30)+'%';d2.style.height=(a.h||24)+'%';
+    applyCommon(d2,a);
+    d2.setAttribute('data-idx',i);
+    d2.appendChild(chartSvg(a));
+    layer.appendChild(d2);
+  }
+
+  /* ---- born from a table --------------------------------------------- */
+  /* rows of strings -> {cats, series}: first row is the header (series
+     names), first column the categories. A header the table does not
+     have (every cell numeric) is invented as Series 1..n. */
+  function chartFromRows(rows){
+    rows=(rows||[]).filter(function(r){
+      return Array.isArray(r)&&r.length;});
+    if(rows.length<2||rows[0].length<2) return null;
+    var head=rows[0].map(function(v){return String(v==null?'':v);});
+    var headIsData=head.slice(1).every(function(v){
+      return v!==''&&isFinite(Number(v));});
+    var body=headIsData?rows:rows.slice(1);
+    var names=headIsData
+      ?head.slice(1).map(function(_,i){return 'Series '+(i+1);})
+      :head.slice(1);
+    var cats=[],series=names.map(function(nm,i){
+      return {name:nm||('Series '+(i+1)),ys:[],
+        color:CHART_PALETTE[i%CHART_PALETTE.length]};});
+    body.forEach(function(r){
+      cats.push(String(r[0]==null?'':r[0]));
+      series.forEach(function(se,si){
+        var v=Number(r[si+1]);
+        se.ys.push(isFinite(v)?v:0);
+      });
+    });
+    series=series.filter(function(se){
+      return se.ys.some(function(v){return v!==0;})||se.ys.length;});
+    if(!series.length) return null;
+    return {cats:cats,series:series};
+  }
+  function chartRowsOfCard(ref){
+    /* the LIVE card's table, read off the open shell the same way the
+       provenance pane compares bodies (T20) */
+    try{
+      var b=cloneBody(ref); if(!b) return null;
+      var t=b.querySelector('table'); if(!t) return null;
+      return [].map.call(t.querySelectorAll('tr'),function(tr){
+        return [].map.call(tr.querySelectorAll('th,td'),function(c){
+          return c.textContent.trim();});
+      });
+    }catch(e){return null;}
+  }
+  function chartDataOf(a){
+    if(a.k==='table') return chartFromRows(tableRows(a));
+    if(a.k==='cell'&&a.ref) return chartFromRows(chartRowsOfCard(a.ref));
+    return null;
+  }
+  function placeChart(data,opts){
+    var s=pres.slides[cur]; if(!s) return null;
+    s.annots=s.annots||[];
+    var o=opts||{};
+    var a={k:'chart',ct:o.ct||'bar',
+      x:o.x!=null?o.x:34,y:o.y!=null?o.y:30,w:o.w||32,h:o.h||34,
+      cats:data.cats,series:data.series};
+    if(o.ref) a.ref=o.ref;
+    if(o.title) a.title=o.title;
+    s.annots.push(a);
+    markDirty();refresh();
+    return a;
+  }
+
+  /* ---- editing the numbers ------------------------------------------- */
+  function chartCsvOf(a){
+    var d=chartParse(a);
+    var out=[[''].concat(d.series.map(function(se){return se.name;}))
+      .join(', ')];
+    d.cats.forEach(function(c,i){
+      out.push([c].concat(d.series.map(function(se){
+        return se.ys[i]==null?'':se.ys[i];})).join(', '));
+    });
+    return out.join('\n');
+  }
+  function chartDlgClose(){
+    var p=$('#chart-data'); if(p) p.remove();
+  }
+  function chartDataDlg(idx){
+    chartDlgClose();
+    var s=pres.slides[cur];
+    var a=s&&(s.annots||[])[idx];
+    if(!a||a.k!=='chart') return;
+    var p=document.createElement('div');
+    p.className='sh-menu chart-data';p.id='chart-data';
+    menuHead(p,'the chart’s numbers');
+    var note=document.createElement('div');note.className='rd-note';
+    note.textContent='One row per category. The first row names the '
+      +'series, the first column is the category (numbers make a '
+      +'numeric axis for line and scatter).';
+    p.appendChild(note);
+    var ta=document.createElement('textarea');
+    ta.className='chart-ta';
+    ta.value=chartCsvOf(a);
+    ta.spellcheck=false;
+    p.appendChild(ta);
+    var rowb=document.createElement('div');rowb.className='chart-btns';
+    var ok=document.createElement('button');
+    ok.className='dbtn primary';ok.textContent='Apply';
+    ok.addEventListener('click',function(e){
+      e.stopPropagation();
+      var rows=ta.value.split(/\r?\n/).map(function(ln){
+        return ln.split(',').map(function(c){return c.trim();});
+      }).filter(function(r){return r.join('')!=='';});
+      var data=chartFromRows(rows);
+      if(!data){toast('Could not read that — a header row plus '
+        +'at least one data row, comma-separated');return;}
+      /* keep each series' colour where the name survives the edit */
+      var old={};chartParse(a).series.forEach(function(se){
+        old[se.name]=se.color;});
+      data.series.forEach(function(se){
+        if(old[se.name]) se.color=old[se.name];});
+      a.cats=data.cats;a.series=data.series;
+      /* hand-edited numbers are yours now, not the table's */
+      delete a.ref;
+      markDirty();refresh();chartDlgClose();
+      toast('Chart updated — Ctrl+Z undoes it');
+    });
+    var no=document.createElement('button');
+    no.className='dbtn';no.textContent='Cancel';
+    no.addEventListener('click',function(e){
+      e.stopPropagation();chartDlgClose();});
+    rowb.appendChild(ok);rowb.appendChild(no);
+    p.appendChild(rowb);
+    document.body.appendChild(p);
+    ta.focus();
+  }
+
+  /* ---- refresh from the source --------------------------------------- */
+  /* the chart half of "Update figures from their sources" (T123): a
+     chart that still carries `ref` re-reads the table it came from.
+     Type, colours, position and size are yours and stay; only the
+     numbers move — the same split resyncFigure keeps for snapshots. */
+  function chartResyncAll(){
+    var nn=0;
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.k!=='chart'||!a.ref) return;
+        var data=chartFromRows(chartRowsOfCard(a.ref));
+        if(!data) return;
+        var before=JSON.stringify([chartParse(a).cats,
+          chartParse(a).series.map(function(se){return se.ys;})]);
+        var after=JSON.stringify([data.cats,
+          data.series.map(function(se){return se.ys;})]);
+        if(before===after) return;
+        var old={};chartParse(a).series.forEach(function(se){
+          old[se.name]=se.color;});
+        data.series.forEach(function(se){
+          if(old[se.name]) se.color=old[se.name];});
+        a.cats=data.cats;a.series=data.series;
+        nn++;
+      });
+    });
+    if(nn){markDirty();refresh();}
+    return nn;
+  }
+  window.SemDeckChart={place:placeChart,dataOf:chartDataOf,
+    fromRows:chartFromRows,dataDlg:chartDataDlg,resync:chartResyncAll,
+    svg:chartSvg};
 /* 50-review-and-overview.js — the deck as words, the overview map, cuts, and the builder's sidebar.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
    siblings in filename order by assets.deck_js(). It does not
@@ -54767,6 +55730,9 @@ window.JunoPptx = (function () {
   }
   function pptxItems(s,note,ink,layer){
     var items=[];
+    /* which CLICK each annot appears on, the same grouping the badges
+       and playback use \u2014 exported as real PowerPoint timing (T110) */
+    var bsteps=slideBuildSteps(s).map;
     if(s.layout==='title'){
       ['t','s'].forEach(function(which){
         var p=titleProps(s,which),val=(which==='t')?s.title:s.sub;
@@ -54805,6 +55771,7 @@ window.JunoPptx = (function () {
          object's stored x/y are distances from an edge or centre, and
          its export fallback size matters to that conversion. */
       var box=(a.k==='arrow')?null:pptxBox(a,false);
+      var pushedAt=items.length;
       if(a.k==='text'){
         var ti=pptxTextItem(a,false,ink,box);
         /* `a.maths` means the Maths button built this box, so the whole
@@ -54862,6 +55829,16 @@ window.JunoPptx = (function () {
           cols:tableCols(a),thead:!!a.thead,grid:a.grid!==0,
           sizePct:a.size||2.2,color:tokVal(a.color)||ink,
           font:fontPpt(a.font)});
+      } else if(a.k==='chart'){
+        /* the numbers travel, so PowerPoint gets a REAL chart it can
+           restyle and recolour \u2014 the point of T117. chartParse
+           resolves palette colours so a re-export stays consistent. */
+        var cd=chartParse(a);
+        items.push({t:'chart',x:box.x,y:box.y,w:box.w,h:box.h,
+          ct:a.ct||'bar',cats:cd.cats,
+          series:cd.series.map(function(se){
+            return {name:se.name,ys:se.ys,color:se.color};}),
+          numeric:cd.numeric,title:a.title||'',leg:a.leg!==0,ink:ink});
       } else if(a.k==='flip'){
         /* the frame this exported page is FOR. pptxItems is handed the
            slide plus, for an exploded page, which frame it represents —
@@ -54931,6 +55908,26 @@ window.JunoPptx = (function () {
             color:tokVal(a.txcol)||ink,font:code?'Consolas':'',
             name:(it&&it.title)||'Text'});
         } else note.skipped++;
+      }
+      /* build timing and click actions ride on WHATEVER the branch
+         above pushed for this annot (T110). rise/zoom have no honest
+         entrance twin, so they leave as fades \u2014 counted in the
+         export dialog, never silently. A link to a slide leaves as the
+         DECK index here; the builder maps it to the output page,
+         because a flip book explodes one slide into several. */
+      for(var pq=pushedAt;pq<items.length;pq++){
+        if(a.anim){
+          items[pq].animStep=bsteps[a.anim.order||0];
+          items[pq].animType=a.anim.type||'fade';
+        }
+        if(a.link&&a.link.to==='url'&&a.link.href){
+          items[pq].link={to:'url',href:a.link.href};
+        } else if(a.link&&a.link.to==='slide'&&a.link.sid){
+          var lsi=-1;
+          (pres.slides||[]).forEach(function(s9,i9){
+            if(lsi<0&&s9.sid===a.link.sid) lsi=i9;});
+          if(lsi>=0) items[pq].link={to:'slide',si:lsi};
+        }
       }
     });
     return items;
@@ -55020,12 +56017,17 @@ window.JunoPptx = (function () {
     if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
       +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
       +'is not');
-    var builds=0,links=0;
+    /* builds TRAVEL now (T110) \u2014 what is still approximate is
+       the entrance on the two effects PowerPoint spells differently */
+    var soft=0;
     (pres.slides||[]).forEach(function(sl){
-      (sl.annots||[]).forEach(function(a){if(a&&a.anim) builds++;});
+      (sl.annots||[]).forEach(function(a){
+        if(a&&a.anim&&(a.anim.type==='rise'||a.anim.type==='zoom'))
+          soft++;});
     });
-    if(builds) lost.push(builds+' object build'
-      +(builds===1?'':'s')+' — the objects arrive, the timing does not');
+    if(soft) lost.push(soft+' rise/zoom build'
+      +(soft===1?'':'s')+' — the click timing is kept, the entrance '
+      +'plays as a fade');
     return lost;
   }
   function pptxConfirmLosses(){
@@ -55039,16 +56041,27 @@ window.JunoPptx = (function () {
     var pg=pageOf(),note={skipped:0,cropped:0,maths:0,orig:orig||{}};
     var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
+    /* a slide-jump names a DECK slide; the .pptx page it lands on is
+       the first output page that slide produced (flip books explode) */
+    var ents=outputSlides();
+    var firstOut={};
+    ents.forEach(function(ent,oi){
+      if(!(ent.i in firstOut)) firstOut[ent.i]=oi+1;});
     var out=JunoPptx.build({
       title:pres.name||'presentation',
       widthMm:pg.mm[0],heightMm:pg.mm[1],bg:bg,
-      slides:outputSlides().map(function(ent){
+      slides:ents.map(function(ent){
         /* only the slide on screen has a live layer; the rest resolve
            attached arrow ends from their stored coordinates */
         var lay=(ent.i===cur)?stage.querySelector('.annot-layer'):null;
         note.frame=ent.f;
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
+        its.forEach(function(it){
+          if(it.link&&it.link.to==='slide')
+            it.link=(it.link.si in firstOut)
+              ?{to:'slide',slide:firstOut[it.link.si]}:null;
+        });
         if(ent.s.border) its.unshift({t:'rect',x:0,y:0,w:100,h:100,
           color:tokVal(ent.s.border.c)||'#39a9c0',
           swPct:(ent.s.border.w||4)/SW_REF_H*100,fill:'',name:'Border'});
