@@ -1999,9 +1999,16 @@
     put.className='dbtn primary dg-put';
     function putSync(){
       var ws=inScope();
-      put.innerHTML=bic('align')+' Put '
-        +(dgPutScope.kind==='all'?('all '+ws.length):ws.length)
-        +' of them there';
+      /* "Put all 0 of them there" was the biggest button on the surface
+         (JVUX-10): a zero-target command is an empty state, not a call
+         to action */
+      put.innerHTML=ws.length
+        ?(bic('align')+' Put '
+          +(dgPutScope.kind==='all'?('all '+ws.length):ws.length)
+          +' of them there')
+        :('No boxes wear this style '
+          +esc(dgScopeLabel(dgPutScope)));
+      put.classList.toggle('primary',!!ws.length);
       put.disabled=!ws.length;
       put.title=ws.length
         ?('Move every box wearing this type onto that rectangle, '

@@ -3822,7 +3822,9 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .dg-sub{margin:0 0 10px;font-size:11.5px;line-height:1.55;color:#8fa6b6;
   max-width:62ch;}
 .dg-spec{padding:12px 14px;border:1px solid #ffffff1a;border-radius:8px;
-  background:#ffffff08;line-height:1.3;overflow:hidden;
+  /* the ACTUAL page colour, not chrome: a dark style meant for a light
+     slide was unreadable in its own preview (JVUX-10) */
+  background:var(--page-bg,#ffffff08);line-height:1.3;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
 .dg-ctrls{display:flex;align-items:center;gap:5px;flex-wrap:wrap;
   margin-top:8px;}

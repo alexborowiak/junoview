@@ -715,8 +715,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Masters (Design) and the empty notebook column got worded doors
 # (JVUX-11). 25-selecting.js, deck.html, 35-arranging.js,
 # 55-sections-and-strip.js, deck.css.
-EXPECTED_MD5 = "c29025c7590ee05c7024ce1944f7bc7d"
-EXPECTED_BYTES = 3379395
+# Moved 2026-09-01 for T140: the label glossary. Timeline->Animations,
+# Clear slide->Remove animations, Maths->Equation, QR->QR code,
+# Front/Back->Bring to front/Send to back, Keep shape->Lock ratio,
+# Design-in-Design->Style system, "How it appears"->"Entrance
+# effect" — plus the four lies: the stale Background tooltip, the
+# zero-target "Put all 0 of them there" primary button, the style
+# preview on chrome instead of the page colour, and the Output
+# tooltip describing two of its three states.
+EXPECTED_MD5 = "4cca3c087dbeb9a9898f1a28d8697e3c"
+EXPECTED_BYTES = 3380036
 
 
 def _render_example() -> str:

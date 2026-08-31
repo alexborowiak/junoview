@@ -2648,7 +2648,7 @@ competing ways to reach them.
   Compact plus at most one custom. This deletes a shipped feature —
   the user must call it before any code.
 
-- [ ] **T140 · M — The label glossary.** One stable name per action,
+- [x] **T140 · M — The label glossary.** One stable name per action,
   spelled without a tooltip: Timeline→Animations, Clear slide→Remove
   all animations, Keep shape→Lock aspect ratio, Front/Back→Bring to
   front/Send to back, Maths→Equation, QR→QR code, Flip book→Image
@@ -2658,6 +2658,23 @@ competing ways to reach them.
   File" tooltip, "Put all 0 of them there" as a primary button,
   the style preview drawn on chrome instead of the slide background,
   and the empty-notebook state that names an action with no door.
+  *Done 2026-09-01.* Renamed: Timeline→Animations, Clear slide→Remove
+  animations, Maths→Equation, QR→QR code, Front/Back→Bring to
+  front/Send to back, Keep shape→Lock ratio, the Design tab's inner
+  Design→Style system, and the pane heading How it appears→Entrance
+  effect. Fixed lies: the Background tooltip no longer points at a
+  File item removed a week ago; "Put all 0 of them there" became a
+  plain "No boxes wear this style <scope>" non-primary disabled state;
+  the style preview sits on var(--page-bg) so a dark style meant for a
+  light slide reads in its own preview; the Output tooltip now names
+  all three states (behaviour untouched per the T145 decision); the
+  empty-notebook door landed with T144. KEPT deliberately, with
+  reasons: Flip book (established product vocabulary through help and
+  tests), Object (the 2026-08-25 decision recorded in the markup —
+  a frame is a hole, not notebook content), Markdown, One by one/All
+  at once (scope lives in their titles), Build order (clearer to this
+  audience than "Advance sequence"), and Standardise/Tidy/Check names
+  — those move once, under T142's Review centre, not twice.
 
 - [x] **T141 · S — Selection must not steal an open workflow.**
   Following the Timeline pane's own instruction ("Select an item
@@ -2702,11 +2719,15 @@ competing ways to reach them.
   label is deferred on purpose — a label that changes width fights
   fitRibbon.
 
-- [ ] **T145 · design first + USER — Filter cyclers → labelled menus.**
+- [x] **T145 · design first + USER — Filter cyclers → labelled menus.**
   Plots/Markdown/Code/Output cycle three states invisibly (the Output
   tooltip still describes two). The review wants explicit menus
   (Show / Collapse / Hide / Types…) and a Document|Raw|Tree segmented
   mode. This redesigns a confirmed behaviour — the user calls it.
+  *Decided 2026-09-01: leave as is.* The user's call — the one-click
+  cycle stays. The lying Output tooltip was still fixed under T140 (it
+  described two states of a three-state control), because a tooltip
+  may simplify but must not disagree with the behaviour.
 
 - [ ] **T146 · M — Words plus icons, in the rendered UI.** The
   project's own twice-confirmed invariant, audited: theme/help/support

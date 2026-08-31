@@ -314,8 +314,9 @@ def test_wordless_glyph_buttons_became_worded_menu_rows(out):
     assert "['o:forward','Bring forward one']" in out
     assert "['o:rotl','Rotate left 15°']" in out
     # worded buttons in the row... (icons since 2026-08-24, words intact)
-    assert " Front</button>" in out
-    assert " Back</button>" in out
+    # renamed by T140: the verb carries the missing half of the action
+    assert " Bring to front</button>" in out
+    assert " Send to back</button>" in out
     assert "show('#fmt-front',isNum);" in out
     # ...and the one-step pair still menu-only
     assert "show('#fmt-forward',false);" in out

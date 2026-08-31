@@ -1017,7 +1017,7 @@
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       menu.innerHTML='';
       var h1=document.createElement('div');h1.className='anim-h';
-      h1.textContent='How it appears';menu.appendChild(h1);
+      h1.textContent='Entrance effect';menu.appendChild(h1);
       if(!a||typeof selAnnot!=='number'){
         var em=document.createElement('div');em.className='anim-empty';
         em.textContent='Select an item first, then pick an effect.';
