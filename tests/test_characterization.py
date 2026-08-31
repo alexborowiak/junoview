@@ -638,8 +638,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and Home's menu gains parity with Design's, which had been silently
 # hiding the tidy row and the arrangement rows. deck.html, 35-arranging.js,
 # deck.css, and one new runtime id in the contract test.
-EXPECTED_MD5 = "2c7ffae5588ee4ad361b769e9f562b76"
-EXPECTED_BYTES = 3312911
+# Moved 2026-08-31 for T123: "Update figures" is one verb that reaches the
+# disk. APP.reloadTab reloads a tab in place (/api/open with stem, quiet
+# mount, completion returned; URLs decline); resyncAllFigures reloads every
+# stem a placed frame references FIRST, then compares; the menu label and
+# toasts say "source" because a .tex or .csv is as refreshable as a
+# notebook since T100. app.js, 35-arranging.js, deck.html.
+EXPECTED_MD5 = "cc91f458081860dce602bad9d4a56a3f"
+EXPECTED_BYTES = 3315606
 
 
 def _render_example() -> str:

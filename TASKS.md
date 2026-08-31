@@ -2207,7 +2207,7 @@ What does NOT work is one wrapper, which is T122.
   it is what the Object pane and the export read to say what kind of
   figure this is.
 
-- [ ] **T123 · M — A placed source figure should follow its source.**
+- [x] **T123 · M — A placed source figure should follow its source.**
   "…or can just copy and paste from them and it can update with them."
   Notebook frames have `provState`/`staleFigures`/`resyncFigure` and the
   "refresh figures" path; a source figure needs the same tie, and
@@ -2215,6 +2215,15 @@ What does NOT work is one wrapper, which is T122.
   those three functions before writing anything — the question is
   whether they are keyed to a notebook or merely written as if they
   were, and T122's evidence says the second is likely.
+  *Done 2026-08-31 — the audit confirmed "written as if".* The compare
+  half was already source-agnostic; what was missing was the DISK half:
+  refresh compared against whatever the open tabs held, so a changed
+  file meant a four-step dance across two surfaces. `APP.reloadTab`
+  reloads a referenced tab in place with completion, `resyncAllFigures`
+  re-reads every referenced stem first and then compares, and the label
+  says "from their sources". Driven live: paper.tex edited on disk
+  behind the app's back, one click, "1 figure updated from its source",
+  the deck never closing.
 
 - [ ] **T124 · S — The rail should say what kind of thing each tab is.**
   A `.tex` and a `.ipynb` now sit side by side with nothing

@@ -256,8 +256,13 @@ def test_there_is_a_deck_wide_figure_update_and_not_only_a_per_figure_one(out):
     assert 'id="mi-refresh-figs"' in out
     assert "menuAction('#mi-refresh-figs',function(){resyncAllFigures();});" \
         in out
-    # saying nothing is stale is an answer too
-    assert "Every figure on this deck already matches its notebook" in out
+    # saying nothing is stale is an answer too -- and since T123 it says
+    # "source", because a .tex or a .csv is as refreshable as a notebook
+    assert "Every figure on this deck already matches its source" in out
+    # ...and the click re-reads each referenced tab from DISK first, so
+    # "update" means the file, not whatever the open tab happened to hold
+    assert "function refSourceStems(){" in out
+    assert "return (APP.reloadTab?APP.reloadTab(st):Promise.resolve(false));" in out
     assert "window.SemDeckStaleFigures=staleFigures;" in out
 
 
@@ -277,3 +282,30 @@ def test_the_provenance_pane_has_a_ribbon_door_and_wears_icons(out):
     assert "b.innerHTML=bic('locate')+' ';" in out
     assert "jump.innerHTML=bic('route')+' Open the plot trace';" in out
     assert "up.innerHTML=bic('reload')" in out
+
+
+def test_update_figures_re_reads_the_disk_first(out):
+    """T123, driven live 2026-08-31: paper.tex's caption was edited ON
+    DISK behind the app's back, and one click of File > "Update figures
+    from their sources" re-read the tab in place and updated the placed
+    frame -- toast "1 figure updated from its source" -- with the deck
+    never closing. Before this, "update" compared against whatever the
+    open tabs happened to hold, so a changed FILE meant a four-step
+    dance across two surfaces.
+
+    APP.reloadTab is the app-side half: /api/open with `stem` loads
+    INTO the existing tab (refs keep resolving, the rail grows no
+    twin), quietly, returning completion so the deck can sequence the
+    comparison after the re-read. URL-backed tabs return false -- a URL
+    is not the disk. Web mode skips the reload half honestly: a dropped
+    file left no handle to re-read.
+    """
+    assert "APP.reloadTab=function(stem){" in out
+    assert "return api('/api/open',{path:path,stem:stem}).then(function(j){" in out
+    assert "mountShellHTML(j.shell,j.path||path,true);" in out
+    assert "if(!path||/^https?:/i.test(path)) return Promise.resolve(false);" in out
+    # the deck side sequences: reload every referenced stem, THEN compare
+    assert "var jobs=refSourceStems().map(function(st){" in out
+    assert "return Promise.all(jobs).then(function(res){" in out
+    # and the label finally says what the button now does
+    assert "Update figures from their sources</button>" in out

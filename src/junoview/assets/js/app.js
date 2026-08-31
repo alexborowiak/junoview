@@ -5260,6 +5260,24 @@
       alert('Open failed: '+e.message);});
   }
   APP.openPath=openPath;
+  /* RELOAD ONE OPEN TAB FROM DISK, in place, and report completion
+     (T123). The deck's "Update figures" needs exactly this: openPath
+     re-opens but swallows its promise and drives the Open dialog's
+     busy state, and the per-tab reload button lives on a surface the
+     full-screen deck covers. `stem` keeps the tab: /api/open's `stem`
+     parameter loads INTO it, so refs keep resolving and the rail does
+     not grow a twin. URL-backed tabs return false — a URL is not the
+     disk, and silently refetching it mid-talk-prep is not this verb. */
+  APP.reloadTab=function(stem){
+    if(APP.mode!=='app') return Promise.resolve(false);
+    var sh=APP.shells[stem];
+    var path=sh&&sh.el&&sh.el.dataset.path;
+    if(!path||/^https?:/i.test(path)) return Promise.resolve(false);
+    return api('/api/open',{path:path,stem:stem}).then(function(j){
+      mountShellHTML(j.shell,j.path||path,true);
+      return true;
+    }).catch(function(){return false;});
+  };
   function closeNotebook(stem){
     var sh=APP.shells[stem]; if(!sh) return;
     /* closing a notebook also closes any Plot-trace tabs derived from it */

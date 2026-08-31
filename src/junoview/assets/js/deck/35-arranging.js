@@ -1963,18 +1963,57 @@
     });
     return out;
   }
+  /* every source stem a placed frame points at, whatever kind of
+     file it is -- provRef already answers "does this annot have a
+     source" for cells and flip frames alike (T123) */
+  function refSourceStems(){
+    var stems={};
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        var ref=a&&provRef(a); if(!ref) return;
+        var pr=splitRef(normRef(ref)||String(ref||''));
+        if(pr[0]) stems[pr[0]]=1;
+        if(a.k==='flip'&&Array.isArray(a.frames))
+          a.frames.forEach(function(f){
+            if(!f||!f.ref) return;
+            var fr=splitRef(normRef(f.ref)||String(f.ref||''));
+            if(fr[0]) stems[fr[0]]=1;
+          });
+      });
+    });
+    return Object.keys(stems);
+  }
   function resyncAllFigures(){
-    var list=staleFigures();
-    if(!list.length){
-      toast('Every figure on this deck already matches its notebook');
-      return 0;
-    }
-    var n=0;
-    list.forEach(function(p){if(resyncFigure(p.a)) n++;});
-    toast(n?(n+' figure'+(n===1?'':'s')+' updated from the notebook '
-      +'\u2014 position, size and crop unchanged')
-      :'Could not read the live cards \u2014 is the notebook still open?');
-    return n;
+    /* ONE VERB (T123). "Update figures" used to compare against
+       whatever the open tabs happened to hold, so refreshing a figure
+       whose FILE had changed was a four-step dance: close the deck,
+       find the tab, press its reload button, come back. The re-read
+       from disk is now the first half of this click -- each referenced
+       tab reloads in place, then the comparison runs against what the
+       disk actually says. Web mode skips the reload half honestly: a
+       dropped file left no handle to re-read. */
+    var jobs=refSourceStems().map(function(st){
+      return (APP.reloadTab?APP.reloadTab(st):Promise.resolve(false));
+    });
+    return Promise.all(jobs).then(function(res){
+      var reread=res.filter(Boolean).length;
+      var list=staleFigures();
+      if(!list.length){
+        toast(reread
+          ?('Re-read '+reread+' source'+(reread===1?'':'s')
+            +' \u2014 every figure already matches')
+          :'Every figure on this deck already matches its source');
+        return 0;
+      }
+      var n=0;
+      list.forEach(function(p){if(resyncFigure(p.a)) n++;});
+      toast(n?(n+' figure'+(n===1?'':'s')+' updated from '
+        +(n===1?'its source':'their sources')
+        +' \u2014 position, size and crop unchanged')
+        :'Could not read the live cards \u2014 are their sources '
+          +'still open?');
+      return n;
+    });
   }
   window.SemDeckStaleFigures=staleFigures;   /* test hook */
   /* the only staleness question this format can answer honestly: does
