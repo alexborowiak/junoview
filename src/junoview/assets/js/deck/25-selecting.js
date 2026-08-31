@@ -1900,15 +1900,6 @@
           'Saves the arrangement and look as a named thing you can place '
           +'again. Each copy keeps its own words and figures.');
       }
-      var cAll=cmpList();
-      if(cAll.length){
-        cAll.forEach(function(c){
-          row('Place \u201c'+c.name+'\u201d',String(c.n),function(){
-            var k=cmpPlace(c.id,at);
-            if(k) toast('Placed \u201c'+c.name+'\u201d');},
-            'Drops a linked copy here');
-        });
-      }
       if(selIdxs().length===1){
         var fa=(pres.slides[cur].annots||[])[selIdxs()[0]];
         if(fa&&fa.k==='text'){
@@ -1937,6 +1928,38 @@
       row('History of this object…','',showObjHist,
         'Every state it has been through that the undo stack still '
         +'remembers, and a button to put any of them back','history');
+      /* MATCH OBJECTS (T129). Every other T89 feature got a row on this
+         menu; the one actually NAMED "match objects" never did — its
+         doors were thirty rows down the Arrange dropdown and a button
+         inside the Layers pane, both needing a second surface. Same
+         three verbs as matchMenuAt, armed directly: armMatch validates
+         the selection itself and says what it needs. */
+      menuHead(m,'match');
+      row('Copy this look to objects I click\u2026','',
+        function(){armMatch('to');},
+        'Then click each object that should take it','swap');
+      row('Take the look of an object I click\u2026','',
+        function(){armMatch('from');},
+        'Then click the one object whose look you want here','swap');
+      if(n>=2)
+        row('Lay these out like a group I click\u2026','',
+          function(){armMatch('layout');},
+          'Then click a group whose arrangement these should copy. The '
+          +'look does not travel \u2014 only positions and sizes','group');
+      /* THE APPLY DIALOG, for everything that is not text (T129). Its
+         own code has handled shapes, frames, arrows and tables since it
+         was written — but its only door was the TEXT Styles menu, so a
+         selected rectangle could not reach a dialog built for it. Text
+         keeps its existing door; this one appears for the rest. */
+      if(n===1){
+        var apA=(pres.slides[cur].annots||[])[selIdxs()[0]];
+        if(apA&&apA.k!=='text')
+          row('Apply this look to\u2026','',function(){
+            if(typeof window.SemDeckApplyDlg==='function')
+              window.SemDeckApplyDlg();},
+            'Choose which of its properties travel and which slides '
+            +'they travel to','inherit');
+      }
       /* SELECT BY WHAT THINGS ARE. Inline rather than behind a
          submenu: this is already a menu, and the counts are the point —
          a row that says how many it will take is a row you can trust
@@ -1966,6 +1989,21 @@
           var b=row(o[1],'',function(){setLockSel(o[0]);},o[2],o[3]);
           if(lmNow===o[0]) b.classList.add('on');
         });
+    }
+    /* PLACING A COMPONENT never needed a selection — the definitions
+       are deck-wide and the click point is the menu's own — but the
+       rows sat inside the selection branch, so an EMPTY canvas had no
+       component door at all (T129). Moved here, where both halves of
+       the menu can reach them. */
+    var cAll=cmpList();
+    if(cAll.length){
+      menuHead(m,'components');
+      cAll.forEach(function(c){
+        row('Place \u201c'+c.name+'\u201d',String(c.n),function(){
+          var k=cmpPlace(c.id,at);
+          if(k) toast('Placed \u201c'+c.name+'\u201d');},
+          'Drops a linked copy here');
+      });
     }
     /* WHO SEES THIS. Beside `lock`, because both answer "what can be
        done to this object" rather than "what does it look like" (T31). */

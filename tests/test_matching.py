@@ -194,3 +194,51 @@ def test_object_matching_costs_the_ribbon_nothing(out):
     every kind of item and already carries the make-things-match rows."""
     assert "['x:to','Copy this look to objects I click…']," in out
     assert "if(what.indexOf('x:')===0){armMatch(what.slice(2));return;}" in out
+
+
+# ---------------------------------------------------------------------------
+# the three doors (T129)
+# ---------------------------------------------------------------------------
+#
+# Driven live 2026-08-31 over a two-object deck: right-clicking a
+# selected rectangle showed the two match verbs and armed 'to' (the
+# #matchbar appeared); "Apply this look to..." opened the dialog reading
+# "Apply to 1 shape"; and after making a component, right-clicking EMPTY
+# canvas offered Place "TestCmp", which placed a third object.
+
+
+def test_match_objects_is_on_the_menu_that_knows_what_you_clicked(out):
+    """Every other T89 feature got a canvas-menu row; the one actually
+    NAMED "match objects" never did -- its doors were thirty rows down
+    the Arrange dropdown and a button inside the Layers pane. Same three
+    verbs as matchMenuAt, armed directly: armMatch validates the
+    selection itself and says what it needs."""
+    assert "menuHead(m,'match');" in out
+    assert "function(){armMatch('to');}," in out
+    assert "function(){armMatch('from');}," in out
+    # layout needs two, so its row appears exactly then
+    assert "if(n>=2)" in out
+    assert "function(){armMatch('layout');}," in out
+
+
+def test_the_apply_dialog_opens_for_things_that_are_not_text(out):
+    """Its own code has handled shapes, frames, arrows and tables since
+    it was written -- but its only door was the TEXT Styles menu, so a
+    selected rectangle could not reach a dialog built for it. Text keeps
+    its existing door; the menu row appears for the rest."""
+    assert "if(apA&&apA.k!=='text')" in out
+    assert r"row('Apply this look to\u2026','',function(){" in out
+
+
+def test_placing_a_component_needs_no_selection(out):
+    """The definitions are deck-wide and the click point is the menu's
+    own -- but the Place rows sat inside the selection branch, so an
+    EMPTY canvas had no component door at all."""
+    idx = out.index("var cAll=cmpList();")
+    # the rows now sit AFTER the selection branch's lock section and
+    # before the who-sees-it block, at menu top level
+    assert out.index("menuHead(m,'components');") > idx
+    assert out.index("var cAll=cmpList();") < \
+        out.index("/* WHO SEES THIS. Beside `lock`")
+    # and the lock section (end of the selection branch) comes first
+    assert out.index("'Lock fully',") < idx

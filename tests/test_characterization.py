@@ -619,8 +619,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # code toast names the way out, and Ctrl+Shift+V with an empty internal
 # buffer arms one PLAIN paste -- the canvas's escape from a wrong code
 # detection, mirroring the in-box escape. 30-format-bar and 55-sections.
-EXPECTED_MD5 = "31b6bf40d229fb656b08a0050e7f518c"
-EXPECTED_BYTES = 3294541
+# Moved 2026-08-31 for T129, three doors: the canvas right-click menu gains
+# the two/three match-objects verbs (armMatch directly), an "Apply this look
+# to..." row for a selected non-text object, and the Place-component rows
+# move OUT of the selection branch so an empty canvas has a component door.
+# 25-selecting.js only.
+EXPECTED_MD5 = "28db06611648e983affd467af5332075"
+EXPECTED_BYTES = 3296639
 
 
 def _render_example() -> str:

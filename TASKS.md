@@ -2303,7 +2303,7 @@ one boot-killing bug the drive itself surfaced.
   nothing copied pasted the same code plain — three boxes, mono only in
   the middle.
 
-- [ ] **T129 · S — Three doors the audit found missing.** [deck.js]
+- [x] **T129 · S — Three doors the audit found missing.** [deck.js]
   (a) Match objects has no canvas right-click row — the menu that
   already knows what you clicked never offers the one feature named
   "match objects"; (b) placing a component instance is right-click-only
@@ -2311,6 +2311,9 @@ one boot-killing bug the drive itself surfaced.
   (c) the Apply dialog handles shapes/figures in its own code but is
   reachable only from the TEXT Styles menu. All three are menu rows on
   surfaces that exist; none costs ribbon width.
+  *Done 2026-08-31.* Driven live: the match verbs armed with the
+  matchbar up, the Apply dialog opened reading "Apply to 1 shape", and
+  an empty-canvas right-click placed a component.
 
 - [ ] **T130 · M — The design surface, closer to the described view.**
   [deck.js] *Audited (T87 revisit): full-screen, drag-default-position,
