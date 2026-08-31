@@ -723,8 +723,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # zero-target "Put all 0 of them there" primary button, the style
 # preview on chrome instead of the page colour, and the Output
 # tooltip describing two of its three states.
-EXPECTED_MD5 = "4cca3c087dbeb9a9898f1a28d8697e3c"
-EXPECTED_BYTES = 3380036
+# Moved 2026-09-01 for T146: words plus icons in the rendered UI.
+# Theme/Support/Help worded in the document toolbar (the deck worded
+# its own on 2026-08-23 and the doc toolbar was left behind), the
+# panel foot pair worded with distinct icons, the deck Ko-fi link
+# worded. Verified single-row at 1280 wide.
+EXPECTED_MD5 = "06e9264526e05742cdcfcc8deea93408"
+EXPECTED_BYTES = 3380076
 
 
 def _render_example() -> str:

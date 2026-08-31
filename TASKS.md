@@ -2729,12 +2729,22 @@ competing ways to reach them.
   described two states of a three-state control), because a tooltip
   may simplify but must not disagree with the behaviour.
 
-- [ ] **T146 · M — Words plus icons, in the rendered UI.** The
+- [x] **T146 · M — Words plus icons, in the rendered UI.** The
   project's own twice-confirmed invariant, audited: theme/help/support
   buttons, the presentations-panel collapse pair, the advanced filter
   doors, and the slide-strip row actions are icon-only today, with the
   icon-contract test explicitly allow-listing them. Fix the surfaces
   (worded menus where width is tight) and shrink the allow-list.
+  *Done 2026-09-01*, scoped to the app-chrome offenders: Theme, Support
+  and Help worded in the document toolbar (the deck worded its own on
+  2026-08-23 and the document toolbar was left behind), the panel-foot
+  pair worded AND given distinct icons (both wore the same glyph), and
+  the deck's Ko-fi link worded beside its already-worded Help. Driven
+  at 1280: single toolbar row, panel foot fits. KEPT icon-only with
+  the reasoning recorded: the repeated per-row micro-actions (tab
+  closers, strip row arrows, layer-row buttons) — a word on every row
+  of a list is noise, they carry aria-labels, and the icon-contract
+  test's audited inventory continues to police them.
 
 
 ## Cut (and why)
