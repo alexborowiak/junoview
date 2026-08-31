@@ -6922,6 +6922,15 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T115: masters — the inherited layer, inert behind everything */
+.slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
+.mast-panel{position:fixed;right:16px;top:110px;z-index:420;width:264px;
+  max-height:70vh;overflow-y:auto;padding:8px 10px 12px;}
+.mast-name{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--cyan);margin:10px 0 4px;}
+.mast-row{display:block;width:100%;text-align:left;font-size:11.5px;
+  padding:4px 7px;margin:2px 0;}
+.mast-new{display:block;width:100%;text-align:left;margin-top:10px;}
 /* T117: charts — the SVG fills its box; the dialog is the numbers */
 .an-chart{overflow:hidden;}
 .an-chartsvg{width:100%;height:100%;display:block;
@@ -9253,9 +9262,10 @@ click to switch, <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focu
 info</b>) re-reads it after you re-run it in Jupyter,
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></b> closes.</li>
 <li><b>Not just notebooks.</b> Markdown (<code>.md</code>,
-<code>.qmd</code>), LaTeX (<code>.tex</code>) and tables
-(<code>.csv</code>/<code>.tsv</code>) open through every one of those
-doors too. They render the same way, keep the same version history
+<code>.qmd</code>), LaTeX (<code>.tex</code>), tables
+(<code>.csv</code>/<code>.tsv</code>) and Excel workbooks
+(<code>.xlsx</code> &mdash; values only, one table per sheet) open
+through every one of those doors too. They render the same way, keep the same version history
 (snapshots and git commits alike), place figures onto slides that
 <b>Update figures</b> can refresh from disk &mdash; and each
 non-notebook tab says what kind of file it is, in the open-files list
@@ -10484,6 +10494,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     title="Layouts you have saved, with a thumbnail of
  each &mdash; and which slides each one would fit"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Arrangements&#8230;</button>
+                  <button class="dbtn vw-opt" id="lay-masters"
+                    title="Looks slides inherit live &mdash; a background
+ and a furniture component. Change the master and every slide wearing it
+ follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
                   <button class="dbtn vw-opt" id="lay-arrsave"
                     title="Save the way THIS page is laid out, under a
  name. Only the shape travels &mdash; no words and no figures are
@@ -10990,6 +11004,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     <button class="dbtn" data-tidy="normal">Normal</button>
                     <button class="dbtn" data-tidy="airy">Airy</button>
                   </div>
+                  <button class="dbtn vw-opt" id="hm-lay-masters"
+                    title="Looks slides inherit live &mdash; a background
+ and a furniture component. Change the master and every slide wearing it
+ follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
                   <button class="dbtn vw-opt" id="hm-lay-arrs"
                     title="Your saved slide layouts, ranked by how well
  they fit what is on this slide">
@@ -17609,11 +17627,38 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
      this list only decides which dropped files are worth handing over.
      A file that gets past it and cannot be parsed says so; a file that
      never gets here silently does nothing, which is the worse failure. */
-  var SRC_RE=/\.(ipynb|md|markdown|qmd|tex|latex|csv|tsv)$/i;
+  var SRC_RE=/\.(ipynb|md|markdown|qmd|tex|latex|csv|tsv|xlsx)$/i;
+  /* the BINARY subset (T113): these are read as bytes and sent base64,
+     because a workbook is a ZIP and reading it as text destroys it.
+     Kept in step with BINARY_SUFFIXES in notebook/sources.py. */
+  var BIN_RE=/\.(xlsx)$/i;
+  function fileB64(f){
+    return f.arrayBuffer().then(function(buf){
+      var u8=new Uint8Array(buf),out='',CH=0x8000;
+      for(var i=0;i<u8.length;i+=CH)
+        out+=String.fromCharCode.apply(null,u8.subarray(i,i+CH));
+      return btoa(out);
+    });
+  }
+  function webParseB64(name,b64){
+    if(!webReady()){
+      alert('Python is still loading — try again in a moment.');
+      return;
+    }
+    try{
+      var shell=window.semPy.parseB64(name,b64,APP.order);
+      mountShellHTML(shell,'');
+      hideDlg();
+    }catch(e){
+      alert('Could not open '+name+': '+((e&&e.message)||e));
+    }
+  }
   function webOpenFiles(files){
     Array.prototype.slice.call(files||[]).forEach(function(f){
       if(isDeckPath(f.name)){
         f.text().then(function(txt){importDeckTextSafe(txt,f.name);});
+      } else if(BIN_RE.test(f.name)){
+        fileB64(f).then(function(b){webParseB64(f.name,b);});
       } else if(SRC_RE.test(f.name)){
         f.text().then(function(txt){webParseText(f.name,txt);});
       } else if(/\.html?$/i.test(f.name)){
@@ -18117,13 +18162,20 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
          notebook is one entry in it. */
       files.filter(function(f){return SRC_RE.test(f.name);})
         .forEach(function(f){
+          var bin=BIN_RE.test(f.name);
           if(isWeb){
-            f.text().then(function(txt){webParseText(f.name,txt);});
+            if(bin) fileB64(f).then(function(b){
+              webParseB64(f.name,b);});
+            else f.text().then(function(txt){
+              webParseText(f.name,txt);});
             return;
           }
-          f.text().then(function(txt){
-            return api('/api/parse',{name:f.name,text:txt});
-          }).then(function(j){mountShellHTML(j.shell,j.path||'');})
+          (bin
+            ?fileB64(f).then(function(b){
+              return api('/api/parse',{name:f.name,b64:b});})
+            :f.text().then(function(txt){
+              return api('/api/parse',{name:f.name,text:txt});}))
+          .then(function(j){mountShellHTML(j.shell,j.path||'');})
           .catch(function(err){
             alert('Could not open '+f.name+': '+err.message);});
         });
@@ -19971,7 +20023,10 @@ window.JunoPptx = (function () {
        presentation-wide default (2026-08-18, user asked for per-slide
        backgrounds "like PowerPoint has") */
     var s0=pres&&pres.slides&&pres.slides[cur];
-    var bg=tokVal((s0&&s0.bg)||(pres&&pres.pageBg)||'#0b141d');
+    /* slide > master > deck (T115): the slide's own colour still wins,
+       the master fills in for every wearer that set none */
+    var mbg=(typeof mastOf==='function'&&mastOf(s0)||{}).bg;
+    var bg=tokVal((s0&&s0.bg)||mbg||(pres&&pres.pageBg)||'#0b141d');
     deckEl.style.setProperty('--page-bg',bg);
     deckEl.classList.toggle('page-light',pageIsLight(bg));
     /* the chips live in the Background dropdown now, and it rebuilds
@@ -30424,6 +30479,11 @@ window.JunoPptx = (function () {
         if(typeof s.sid==='string'&&s.sid) o.sid=s.sid;
         if(s.border) o.border=deep(s.border);
         if(s.grpmeta) o.grpmeta=deep(s.grpmeta);
+        /* which MASTER this slide wears (T115): a look it inherits
+           live -- background + furniture -- resolved at render time,
+           never stamped. Absent = none, which is every deck saved
+           before masters existed, so there is no migration. */
+        if(typeof s.mast==='string'&&s.mast) o.mast=s.mast;
         /* the authored reading order (T106): oids, first-to-last.
            Absent = automatic (top-to-bottom, left-to-right). Unlisted
            here it dies on the next load, like label before it. */
@@ -30536,7 +30596,7 @@ window.JunoPptx = (function () {
        undo snapshot and writing a comment saying they belong to the
        deck (2026-08-29). */
     ['wmark','head','foot','styles','tokens',
-     'components','cuts','guides'].forEach(function(k){
+     'components','cuts','guides','masters'].forEach(function(k){
       if(p[k]&&typeof p[k]==='object') out[k]=deep(p[k]);
     });
     /* embedded card snapshots ride the FILE, not the object: they are
@@ -31062,7 +31122,7 @@ window.JunoPptx = (function () {
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','page','pageBg','cropMarks'].forEach(function(k){
+     'guides','masters','page','pageBg','cropMarks'].forEach(function(k){
       if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     /* types are restored with their own statement rather than by joining
@@ -32630,8 +32690,25 @@ window.JunoPptx = (function () {
     /* idempotent: applyZoom calls this again on every resize so the
        furniture rescales with the page, and appending a second copy every
        time would stack watermarks (2026-08-20) */
-    $$('.slide-wmark,.slide-head,.slide-foot',slideEl)
+    $$('.slide-wmark,.slide-head,.slide-foot,.slide-mast',slideEl)
       .forEach(function(n){n.remove();});
+    /* the MASTER's furniture (T115), behind everything like the
+       watermark: resolved from the component definition on every
+       paint, so editing the component updates every wearer with no
+       stamped copies anywhere. Rendered through renderAnnots in view
+       mode -- the layer is inert (pointer-events none, no
+       .annot-layer class), so the editor cannot select into it. */
+    var mm=mastOf(pres.slides[idx]);
+    if(mm&&mm.cmp){
+      var msyn=mastSynth(mm);
+      if(msyn){
+        var ml=document.createElement('div');
+        ml.className='slide-mast';
+        var m0=mode;mode='view';
+        try{renderAnnots(ml,msyn);}finally{mode=m0;}
+        slideEl.insertBefore(ml,slideEl.firstChild);
+      }
+    }
     /* PERCENT OF PAGE HEIGHT, resolved to px here - exactly the currency
        fontPx uses for text items. Left as a CSS percentage it resolved
        against the parent's FONT SIZE instead of the page, so a 12%
@@ -39170,6 +39247,15 @@ window.JunoPptx = (function () {
       'The order this slide reads in \u2014 builds, figure numbers and '
       +'the review outline all follow it. Numbers show on every object '
       +'while the panel is open.','stagger');
+    row((function(){
+      var mm=(typeof mastOf==='function')
+        &&mastOf(pres.slides[cur]);
+      return 'Master \u2014 '+((mm&&mm.name)||'none')+'\u2026';
+    })(),'',function(){
+      if(window.SemDeckMasters) window.SemDeckMasters();},
+      'A look this slide inherits live \u2014 background and '
+      +'furniture. Set it here for one slide, a section or the deck.',
+      'inherit');
     row('Insert a chart','',function(){
       var na=window.SemDeckChart.place(
         {cats:['A','B','C'],series:[
@@ -42691,6 +42777,8 @@ window.JunoPptx = (function () {
         window.SemDeckMatchMany();
     });
     both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
+    both('#lay-masters','#hm-lay-masters',function(){
+      if(window.SemDeckMasters) window.SemDeckMasters();});
     var sv=null;
     ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
       var el=$(id); if(!el) return;
@@ -44420,6 +44508,208 @@ window.JunoPptx = (function () {
     cinstSeq++;
     return 'i'+cinstSeq+Math.random().toString(36).slice(2,5);
   }
+  /* ---- MASTERS (T115) ----------------------------------------------
+     A master is a named LOOK slides inherit live: a background and one
+     furniture component, resolved at render time and never stamped --
+     change the master and every wearer follows on its next paint.
+     Deliberately NOT components rebuilt: a component is reusable
+     CONTENT with instance identity (cmp/ci/cinst, push/detach); a
+     master is slide-level INHERITANCE, and its furniture simply IS a
+     component, so editing the furniture is the component verbs that
+     already ship -- edit any placed instance and push the look.
+     pres.masters = {id: {name, bg, cmp, pos}}; sl.mast = id. */
+  function mastStore(){
+    if(!pres.masters) pres.masters={};
+    return pres.masters;
+  }
+  function mastOf(s2){
+    var id=s2&&s2.mast;
+    return (id&&pres.masters&&pres.masters[id])||null;
+  }
+  function nextMastId(){
+    var st=mastStore(),n=1;
+    while(st['m'+n]) n++;
+    return 'm'+n;
+  }
+  /* the furniture as a throwaway slide: the component's items
+     materialised at the master's corner, with NO instance identity --
+     this is a rendering of the definition, not an instance of it */
+  function mastSynth(m){
+    var def=m&&m.cmp&&cmpStore()[m.cmp]; if(!def) return null;
+    var W=def.w||20,H=def.h||20,pos=m.pos||'c';
+    var ox=(pos==='tl'||pos==='bl')?3
+      :(pos==='tr'||pos==='br')?(97-W):(50-W/2);
+    var oy=(pos==='tl'||pos==='tr')?3
+      :(pos==='bl'||pos==='br')?(97-H):(50-H/2);
+    var s2={annots:[]};
+    (def.items||[]).forEach(function(it){
+      var a={k:it.k};
+      Object.keys(it.props||{}).forEach(function(p){
+        a[p]=(typeof it.props[p]==='object'&&it.props[p])
+          ?deep(it.props[p]):it.props[p];});
+      if(it.shape) a.shape=it.shape;
+      if(it.nohead) a.nohead=it.nohead;
+      cmpPlaceOne(a,it,ox,oy,W,H);
+      s2.annots.push(a);
+    });
+    return s2.annots.length?s2:null;
+  }
+  function mastClose(){
+    var p=$('#mast-panel'); if(p) p.remove();
+    document.removeEventListener('keydown',mastKey,true);
+  }
+  function mastKey(e){
+    if(e.key!=='Escape') return;
+    if(!$('#mast-panel')) return;
+    e.preventDefault();e.stopPropagation();mastClose();
+  }
+  function mastRepaint(){
+    markDirty();renderSlide();renderFilm();
+  }
+  function openMasters(){
+    mastClose();
+    var p=document.createElement('div');
+    p.className='sh-menu mast-panel';p.id='mast-panel';
+    var head=menuHead(p,'masters');
+    var x=document.createElement('button');
+    x.className='dbtn dc-icon rd-close';x.type='button';
+    x.setAttribute('aria-label','Close');x.title='Close';
+    x.innerHTML=bic('exit')||'\u2715';
+    x.addEventListener('click',function(e){e.stopPropagation();
+      mastClose();});
+    head.appendChild(x);
+    var note=document.createElement('div');note.className='rd-note';
+    note.textContent='A look slides inherit, live: a background and a '
+      +'furniture component drawn behind every slide that wears it. '
+      +'Change the master \u2014 or push a new look to its component '
+      +'\u2014 and every wearer follows.';
+    p.appendChild(note);
+    var body=document.createElement('div');
+    p.appendChild(body);
+    function act(label,title,fn){
+      var b=document.createElement('button');
+      b.className='dbtn mast-row';b.type='button';
+      b.textContent=label;if(title) b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      return b;
+    }
+    function render(){
+      body.innerHTML='';
+      var st=mastStore();
+      var s2=pres.slides[cur];
+      var state=document.createElement('div');state.className='rd-state';
+      var cm=mastOf(s2);
+      state.textContent='This slide wears: '
+        +(cm?(cm.name||'a master'):'nothing');
+      body.appendChild(state);
+      Object.keys(st).forEach(function(id){
+        var m=st[id];
+        var h=document.createElement('div');h.className='mast-name';
+        h.textContent=m.name||'Master';
+        body.appendChild(h);
+        body.appendChild(act('Background \u2014 '+(m.bg||'none'),
+          'The page colour every wearer inherits. The slide\u2019s own '
+          +'Background still wins where one is set.',
+          function(){
+            var v=prompt('Background \u2014 #hex or @token, empty '
+              +'to clear','');
+            if(v===null) return;
+            v=v.trim();
+            if(v&&!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)
+               &&v.charAt(0)!=='@'){
+              toast('Like #123456, or a @token name');return;
+            }
+            if(v) m.bg=v; else delete m.bg;
+            mastRepaint();render();
+          }));
+        var cl=cmpList();
+        var cur2=m.cmp&&cmpStore()[m.cmp];
+        body.appendChild(act('Furniture \u2014 '
+          +(cur2?(cur2.name||'component'):'none'),
+          'A component drawn behind every wearer\u2019s content \u2014 '
+          +'a logo, a strap, a footer block. Clicks cycle through the '
+          +'components this deck has. Edit any placed instance and '
+          +'\u201cPush this look\u201d to restyle every wearer.',
+          function(){
+            var ids=[''].concat(cl.map(function(c){return c.id;}));
+            var at=ids.indexOf(m.cmp||'');
+            var nx=ids[(at+1)%ids.length];
+            if(nx) m.cmp=nx; else delete m.cmp;
+            mastRepaint();render();
+          }));
+        if(m.cmp){
+          var POS=[['c','centre'],['tl','top left'],['tr','top right'],
+            ['bl','bottom left'],['br','bottom right']];
+          var pl=POS.filter(function(q){
+            return q[0]===(m.pos||'c');})[0];
+          body.appendChild(act('Corner \u2014 '+pl[1],
+            'Where the furniture sits on the page',
+            function(){
+              var ks=POS.map(function(q){return q[0];});
+              m.pos=ks[(ks.indexOf(m.pos||'c')+1)%ks.length];
+              mastRepaint();render();
+            }));
+        }
+        body.appendChild(act('Wear it \u2014 this slide','',
+          function(){
+            var s3=pres.slides[cur]; if(!s3) return;
+            s3.mast=id;mastRepaint();render();
+            toast('\u201c'+(m.name||'Master')+'\u201d on this slide');
+          }));
+        body.appendChild(act('Wear it \u2014 whole section',
+          'Every slide in this slide\u2019s section',
+          function(){
+            var s3=pres.slides[cur]; if(!s3) return;
+            var n=0;
+            (pres.slides||[]).forEach(function(q){
+              if((q.sec||'')===(s3.sec||'')){q.mast=id;n++;}});
+            mastRepaint();render();
+            toast(n+' slide'+(n===1?'':'s')+' wear \u201c'
+              +(m.name||'Master')+'\u201d now');
+          }));
+        body.appendChild(act('Wear it \u2014 every slide','',
+          function(){
+            (pres.slides||[]).forEach(function(q){q.mast=id;});
+            mastRepaint();render();
+            toast('The whole deck wears \u201c'
+              +(m.name||'Master')+'\u201d');
+          }));
+        body.appendChild(act('Delete this master',
+          'Wearers keep their own content; the inherited look goes',
+          function(){
+            delete mastStore()[id];
+            (pres.slides||[]).forEach(function(q){
+              if(q.mast===id) delete q.mast;});
+            mastRepaint();render();
+          }));
+      });
+      if(cm){
+        body.appendChild(act('Take the master off this slide','',
+          function(){
+            var s3=pres.slides[cur];
+            if(s3) delete s3.mast;
+            mastRepaint();render();
+          }));
+      }
+      var nb=document.createElement('button');
+      nb.className='dbtn mast-new';nb.type='button';
+      nb.innerHTML=(bic('inherit')||'')+' New master\u2026';
+      nb.addEventListener('click',function(e){
+        e.stopPropagation();
+        var nm=prompt('Name this master \u2014 like \u201cSection '
+          +'divider\u201d or \u201cBranded\u201d','');
+        if(nm===null) return;
+        var id=nextMastId();
+        mastStore()[id]={name:nm.trim()||('Master '+id.slice(1))};
+        markDirty();render();
+      });
+      body.appendChild(nb);
+    }
+    render();
+    document.body.appendChild(p);
+    document.addEventListener('keydown',mastKey,true);
+  }
+  window.SemDeckMasters=openMasters;
   function cmpPlace(id,at){
     var def=cmpStore()[id]; if(!def) return 0;
     var s2=pres.slides[cur]; if(!s2) return 0;
@@ -56057,6 +56347,16 @@ window.JunoPptx = (function () {
         note.frame=ent.f;
         var its=pptxItems(ent.s,note,ink,lay);
         note.frame=null;
+        /* the master's look is BAKED into the export (T115): furniture
+           items first (under the content) and the inherited
+           background. PowerPoint-side inheritance would mean real
+           slideLayout parts per master; the flattening is the recorded
+           cut -- the pixels are right, the linkage does not travel. */
+        var mm3=mastOf(ent.s);
+        if(mm3&&mm3.cmp){
+          var msyn3=mastSynth(mm3);
+          if(msyn3) its=pptxItems(msyn3,note,ink,null).concat(its);
+        }
         its.forEach(function(it){
           if(it.link&&it.link.to==='slide')
             it.link=(it.link.si in firstOut)
@@ -56074,7 +56374,8 @@ window.JunoPptx = (function () {
            goes across as it is. A flip book's extra output slides share
            the source slide's notes, which is the same thing the
            presenter sees on each of them. */
-        return {bg:bgSolid(tokVal(ent.s.bg)||bg),items:its,
+        return {bg:bgSolid(tokVal(ent.s.bg)
+            ||(mm3&&tokVal(mm3.bg))||bg),items:its,
           trans:transFor(ent.i),notes:ent.s.notes||''};
       }),
     });

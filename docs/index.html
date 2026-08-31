@@ -148,6 +148,13 @@ window.addEventListener('beforeinstallprompt',function(e){
         py.globals.set('_wtext',text);
         py.globals.set('_wtaken',JSON.stringify(taken||[]));
         return py.runPython('sr.web_parse(_wname,_wtext,_wtaken)');
+      },
+      // the binary half (T113): a .xlsx has no text to hand over
+      parseB64:function(name,b64,taken){
+        py.globals.set('_wname',String(name));
+        py.globals.set('_wtext',b64);
+        py.globals.set('_wtaken',JSON.stringify(taken||[]));
+        return py.runPython('sr.web_parse_b64(_wname,_wtext,_wtaken)');
       }
     };
     document.dispatchEvent(new Event('sem:pyready'));
