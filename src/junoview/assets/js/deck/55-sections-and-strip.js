@@ -1785,6 +1785,11 @@
          picker — so it goes first and swallows the key */
       if(slideArm){e.preventDefault();cancelSlideMatch();return;}
       if(matchArm){e.preventDefault();cancelMatch();return;}
+      /* a transient menu or window is INNER to everything below: its
+         own owner closes it (overlayBoot, in capture) and this ladder
+         must not also step -- belt and braces, in case the two
+         listeners ever run the other way round (T177) */
+      if(typeof overlayNow!=='undefined'&&overlayNow) return;
       /* a lasso owns the pointer while it is being drawn, so nothing
          else can be happening underneath it (T64) */
       if(freeArm){e.preventDefault();endFreeCrop(false);return;}

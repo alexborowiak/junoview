@@ -3660,6 +3660,63 @@ idea; Insert carried thirteen tools and the whole of Animation.
   leaves the strip there as an empty tab always has. The Default
   ribbon layout declares the tab; the eight others keep their own.
 
+- [x] **T177 · L — Windows of options on the Object tab.**
+  THE ASK ITSELF. With a text box selected the Object tab held 41
+  controls; the Text group alone was fifteen bare buttons in a two-row
+  grid, Line & shape was six dropdown doors stacked in three columns,
+  and the Object group had eleven. The user liked the effect gallery
+  (T171) and asked for more of that shape: "their own little window of
+  options."
+  *Done 2026-09-02.* Four windows, each ONE worded door on the ribbon
+  opening a panel with a heading over every section, scrolling if
+  tall, staying open while you work, closing on Escape or a click away:
+  - **Font ▾** — typeface, size (field and stepper), and Bold / Italic
+    / Underline / Strikethrough, with their words now there is room.
+  - **Paragraph ▾** — alignment, the list toggles with indent and
+    outdent, the whole-box indent as a stepper with its count, line
+    spacing, paragraph spacing, and the curve. Every "how the words
+    sit" answer in one room; it replaces the Spacing and Layout menus
+    and the bare list buttons between them, and it opens for a table
+    too (its words take spacing).
+  - **Line ▾** — the four drawn menus (style, weight, arrow ends,
+    route) laid flat as sections, style and weight side by side. A pick
+    leaves the window up, so the weight follows the style without a
+    second trip; the printed thickness moved from the old door's
+    tooltip to the Weight heading.
+  - **Source ▾** — Locate, Where from, Previous figure, Lock figure,
+    Refresh, Replace: one family, rare beside Crop and Keep shape, and
+    each row closes the window as it acts.
+  THE CONTROLS ARE THE SAME ELEMENTS, moved into the windows in the
+  markup rather than copied: every id, handler, pressed state and test
+  addresses the one Bold there has always been, `rbnAtoms` sees a
+  window as one atom, and a ribbon layout that names a member places
+  the window where that member went (`rbnResolve` — Font lands in the
+  Office ribbon's Font group). One owner (`optPanelBoot`, from THE BOOT
+  SEQUENCE) wires every door through `overlayShow`; a window added to
+  the markup needs no JS of its own.
+  Counted after, text box selected: **Arrange 4 · Colour 3 · Text 3 ·
+  Object 2** — twelve where there were 41 — and the ribbon sits on the
+  first width rung at 1400px where it needed three.
+  TWO SHIPPED BUGS FOUND BY DRIVING IT, both invisible to the suite:
+  (1) on deselection every governed id was hidden one by one
+  (2026-08-25), and a button inside a governed wrapper was never shown
+  again, only its wrapper — so after the first deselection, i.e. at
+  boot, the **Colour group, Arrange, Styles, Spacing, Layout, the size
+  field and the opacity slider had all gone**. Driven against the build
+  before this one: same result. Now only the OUTERMOST governed element
+  is hidden, which is exactly the set of atoms a layout moves, and the
+  colour wrappers copy their button's state after it is set rather than
+  one selection behind. (2) Escape on an open menu also ran the deck's
+  own ladder, so closing the Font window deselected the box it was
+  about; the owner now takes the key in capture, as the gallery and the
+  notes editor already did.
+  Driven: Bold from inside Font (pressed, window stays); Centre then
+  Double from Paragraph (marks move, box reads bold / centre / 31px
+  line); a 3pt dashed arrow from two picks in one Line window; Where
+  from… from Source (window closes, pane opens); the window floats
+  clear with the side toolbar on; Office ribbon → Font@Font,
+  Paragraph@Paragraph, Line@Drawing, Source@Picture; Default → back.
+
 
 ## Cut (and why)
 

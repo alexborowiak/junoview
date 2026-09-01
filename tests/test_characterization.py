@@ -850,8 +850,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # group whose two new doors (Click things in order, Reading order)
 # came up from the foot of the pane. deck.html, help.html, three deck
 # fragments, deck.css and core.css.
-EXPECTED_MD5 = "a05ec0a36beb6243ffb714c389d1dd87"
-EXPECTED_BYTES = 3245858
+# T177 2026-09-02: windows of options on the Object tab -- Font,
+# Paragraph, Line and Source -- the real controls moved into them in
+# deck.html, one owner for every door, the deselect path hiding only
+# the outermost governed control (a shipped bug that had emptied the
+# Colour group at boot), and Escape closing a menu in capture. deck.html,
+# deck.css and five deck fragments.
+EXPECTED_MD5 = "71f0758b2ec2b7034d5d2a24d1bb78a3"
+EXPECTED_BYTES = 3266135
 
 
 def _render_example() -> str:

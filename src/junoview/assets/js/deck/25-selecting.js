@@ -29,7 +29,14 @@
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-lhwrap #fmt-lh '
+  var FMT_MANUAL=('#fmt-lhwrap '
+    /* the four windows of options (T177): a wrapper, its door, the
+       rows the Paragraph one builds, and the Weight heading that
+       carries the printed thickness. The wrappers are the atoms a
+       ribbon layout moves; the doors are what showFmt shows. */
+    +'#fmt-fontwrap #fmt-font-btn #fmt-para-align #fmt-para-ind '
+    +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
+    +'#fmt-srcwrap #fmt-src '
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
        below stops flagging them on every first selection (2026-08-24) */
@@ -61,6 +68,11 @@
      govern them. */
   function fmtAllIds(){
     return Object.keys(FMT_KINDS).concat(FMT_MANUAL);
+  }
+  function fmtGovernedSet(){
+    var g={};
+    fmtAllIds().forEach(function(id){g[id]=1;});
+    return g;
   }
   /* Inspectors are about the CURRENT primary selection, not the object
      that happened to be selected when their door was opened. Keep this
@@ -113,9 +125,31 @@
          on screen with it, which is how a tab that should have been
          empty stayed in the strip (2026-08-25, found in a browser).
          Hiding them individually makes the rule a fact about the
-         CONTROL rather than about where it happens to sit. */
+         CONTROL rather than about where it happens to sit.
+         ONLY THE OUTERMOST governed element, though (T177). A button
+         inside a governed wrapper is hidden BY the wrapper, and the
+         wrapper is what the selection branch shows again; hiding the
+         button as well left it hidden for good, because nothing ever
+         showed it. Driven on 2026-09-02 against the build before this
+         one: after the first deselection -- which is to say at boot --
+         the Colour group, Arrange, Styles, Spacing, Layout, the size
+         field and the opacity slider had all gone, and the substring
+         tests could not see it. The outermost governed elements are
+         exactly the atoms a ribbon layout moves, so the 2026-08-25
+         promise still holds. */
+      var gov=fmtGovernedSet();
       fmtAllIds().forEach(function(id){
-        var el=$(id); if(el) el.hidden=true;});
+        var el=$(id); if(!el) return;
+        var p=el.parentNode,inner=false;
+        while(p&&p!==document){
+          if(p.id&&gov['#'+p.id]){inner=true;break;}
+          p=p.parentNode;
+        }
+        if(!inner) el.hidden=true;
+      });
+      /* a window that was open was about the selection that has just
+         gone; an empty window standing open would be a lie (T177) */
+      if(typeof optPanelsClose==='function') optPanelsClose();
       if(et) et.classList.remove('fmt-open');
       /* the pane outlives the selection — it is the SLIDE's build order —
          so it has to be told the selection went away, or its effect
@@ -228,10 +262,17 @@
     var szIn=$('#fmt-size');
     if(szIn&&(isText||isTbl)&&document.activeElement!==szIn)
       szIn.value=Math.round((a.size||(isTbl?2.2:2.6))*5.4);
-    /* alignment, list and curve are reached through the Layout menu, and
-       that menu now applies all three itself — the originals are gone
-       (2026-08-17 audit) */
-    show('#fmt-parawrap',isText&&isNum,!!a.arc);
+    /* THE DOORS OF THE WINDOWS (T177). Each shows when anything inside
+       it would; syncOptDoors below is the safety net that hides one
+       whose contents all stood down. The Paragraph window opens for a
+       table too, because a table's words take spacing. */
+    show('#fmt-fontwrap',isText||cellText||isTbl);
+    show('#fmt-font-btn',isText||cellText||isTbl);
+    show('#fmt-parawrap',(isText||isTbl)&&isNum);
+    show('#fmt-para',(isText||isTbl)&&isNum);
+    var lineKinds=['arrow','rect','draw','table'];
+    show('#fmt-linewrap',isNum&&lineKinds.indexOf(kind)>=0);
+    show('#fmt-line',isNum&&lineKinds.indexOf(kind)>=0);
     /* bullets / numbering / indent. The two list buttons show WHICH list
        is on, which the old menu line could not; indent and outdent only
        appear once there is a list to move a bullet inside. */
@@ -245,23 +286,21 @@
       var spec=FMT_KINDS[id];
       show(id,isNum&&(spec==='*'||spec.split(' ').indexOf(kind)>=0));
     });
-    /* the wrapper around each colour dropdown shows exactly when its
-       button does. Read from the button rather than restated, so the
-       rule for when Colour appears stays in one place (2026-08-25). */
-    ['txcol','fillcol'].forEach(function(k){
-      var cb=$('#fmt-'+k+'-btn'),cw=$('#fmt-'+k+'wrap');
-      if(cb&&cw) cw.hidden=cb.hidden;
-    });
     /* what this weight will actually PRINT. It goes in the tooltip, never
        the label: a label whose width changed with the selected item would
        make the ribbon's required width depend on what you clicked, and
        the fit ladder has no rung left to absorb that. */
-    var lnBtn=$('#fmt-sw');
-    if(lnBtn&&isNum&&!lnBtn.hidden){
+    var lnBtn=$('#fmt-sw'),swW=$('#fmt-swwrap'),swL=$('#fmt-sw-lab');
+    if(lnBtn&&isNum&&swW&&!swW.hidden){
       var mmw=swMm(a);
-      lnBtn.title='Line thickness — '+(mmw<1?mmw.toFixed(2):mmw.toFixed(1))
+      var swSay=(mmw<1?mmw.toFixed(2):mmw.toFixed(1))
         +'mm on this page ('+swPt(a).toFixed(2).replace(/\.?0+$/,'')+'pt)';
+      lnBtn.title='Line thickness — '+swSay;
+      /* ...and on the Weight section's heading inside the Line window,
+         which is where the reader is looking now (T177) */
+      if(swL) swL.textContent='weight — '+swSay;
     }
+    if(swW&&swL) swL.hidden=swW.hidden;
     /* every drawn menu shows which option the selection is ON */
     if(isNum) syncLineMenus(a);
     animPaneSync();animRibbonSync();
@@ -336,6 +375,18 @@
     var fcb=$('#fmt-fillcol-btn');
     if(fcb) fcb.innerHTML=bic('fill')+' '
       +((kind==='rect')?'Fill colour ▾':'Fill ▾');
+    /* the wrapper around each colour dropdown shows exactly when its
+       button does. Read from the button rather than restated, so the
+       rule for when Colour appears stays in one place (2026-08-25).
+       AFTER the two show() calls above, not before them: read first,
+       it copied the button's state from the previous selection, and
+       from the markup's `hidden` on the very first one -- so the
+       Colour group was one selection behind, and absent at the start
+       (found driving T177, 2026-09-02). */
+    ['txcol','fillcol'].forEach(function(k){
+      var cb=$('#fmt-'+k+'-btn'),cw=$('#fmt-'+k+'wrap');
+      if(cb&&cw) cw.hidden=cb.hidden;
+    });
     $$('.swbg',bar).forEach(function(sw){
       sw.hidden=!showBg;
       /* read back from the field the item's renderer actually uses, or
@@ -438,6 +489,12 @@
         if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;});
       ir.hidden=!anyLinked;
     }
+    /* the Source window's door (T177): anything that came from
+       somewhere -- a placed cell, a picture that knows its file, or
+       anything with a provenance to show */
+    var srcOn=(kind==='cell')||(isNum&&!!provRef(a))||!!(ir&&!ir.hidden);
+    show('#fmt-srcwrap',srcOn);
+    show('#fmt-src',srcOn);
     var partsSlot=$('#fmt-parts');
     if(partsSlot){
       partsSlot.innerHTML='';
@@ -480,10 +537,50 @@
           +'showFmt, so they will show for every selection: '
           +stray.join(', '));
     }
+    /* the windows: doors over empty rooms go, headings over empty rows
+       go, and an open window is redrawn for what is selected now */
+    syncOptDoors();
+    if(typeof optPanelsSync==='function') optPanelsSync();
     /* ...and NOW the tab, with the controls that justify it in place.
        setTab re-runs syncRibbonGroups itself, so this is one call or the
        other, never both. */
     if(wantTab) setTab(wantTab); else syncRibbonGroups();
+  }
+  /* ---- THE DOORS OF THE WINDOWS (T177) ---------------------------------
+     A window's door shows when anything inside it would. showFmt says so
+     explicitly for each, and this sweep is the safety net: a heading
+     over a row with nothing showing goes with the row, and a door over a
+     window with nothing showing goes too -- closing the window if it was
+     open, because the selection it was about has changed. A section
+     (.opt-sec) counts as content while it is shown: showFmt governs
+     those by kind, and their rows are built on open. */
+  function optAlive(c,stop){
+    var n=c;
+    while(n&&n!==stop){if(n.hidden) return false;n=n.parentNode;}
+    return true;
+  }
+  function syncOptDoors(){
+    $$('#edit-tools .opt-drop').forEach(function(w){
+      var door=null,panel=null;
+      [].slice.call(w.children).forEach(function(c){
+        if(!door&&c.classList.contains('dbtn')) door=c;
+        if(!panel&&c.classList.contains('opt-panel')) panel=c;
+      });
+      if(!door||!panel) return;
+      $$('.opt-row',panel).forEach(function(r){
+        var any=$$('button,input,select',r).some(function(c){
+          return optAlive(c,r);});
+        r.hidden=!any;
+        var lab=r.previousElementSibling;
+        if(lab&&lab.classList.contains('hd-lab')) lab.hidden=!any;
+      });
+      var any=$$('button,input,select',panel).some(function(c){
+        return !c.classList.contains('opt-sec-btn')&&optAlive(c,panel);})
+        ||$$('.opt-sec',panel).some(function(sc){return optAlive(sc,panel);});
+      if(any) return;
+      door.hidden=true;w.hidden=true;
+      if(!panel.hidden&&typeof overlayHide==='function') overlayHide(panel);
+    });
   }
   /* hide a ribbon group whose controls are all hidden, and drop the divider
      before the first visible group — so the format ribbon stays tidy */

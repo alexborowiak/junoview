@@ -114,7 +114,9 @@ def test_text_can_follow_a_curve(out):
     # alignment and curve share one worded Layout menu; bullets and
     # numbering are buttons of their own, because a toggle you cannot see
     # the state of is the toggle that behaved unpredictably
-    assert "show('#fmt-parawrap',isText&&isNum" in out
+    # ...and the Paragraph window opens for a table too since T177,
+    # because a table's words take spacing
+    assert "show('#fmt-parawrap',(isText||isTbl)&&isNum);" in out
     assert "show('#fmt-bullets',isText&&isNum,lst==='bullet');" in out
     assert "show('#fmt-numbers',isText&&isNum,lst==='number');" in out
 
@@ -133,8 +135,10 @@ def test_curved_text_warps_in_powerpoint_too(out):
     # dropdown, which was permanently hidden and has been removed -- so
     # this passed while pinning a string no user could ever read
     # (2026-08-17 audit)
-    assert "'Curve: gentle sag (round the bottom in PowerPoint)'" in out
-    assert "'Curve: arch down (round the bottom in PowerPoint)'" in out
+    # ...and since T177 the curve is a row of chips in the Paragraph
+    # window, where the sag chips carry the note as their tooltip
+    assert "p[0]<0?'Round the bottom (as PowerPoint calls it)':''" in out
+    assert "[-12,'Gentle sag'],[-30,'Sag']" in out
 
 
 def test_the_ribbon_is_groups_not_rows(out):

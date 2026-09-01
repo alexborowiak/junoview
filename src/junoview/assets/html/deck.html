@@ -1331,38 +1331,78 @@
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-smaller"
-                title="Smaller text">A&#8722;</button>
-              <button class="dbtn etm" id="fmt-bigger"
-                title="Bigger text">A+</button>
-              <span class="fmt-szwrap" id="fmt-szwrap" hidden
-                title="Text size (points)">
-                <input class="fmt-num" id="fmt-size" type="number"
-                  min="6" max="240" step="1"
-                  aria-label="Text size in points">
-                <span class="fmt-unit">pt</span></span>
-              <select class="etm" id="fmt-font" hidden title="Text font">
-                <option value="sans">Sans</option>
-                <option value="serif">Serif</option>
-                <option value="mono">Mono</option>
-                <option value="system">System</option>
-                <option value="hand">Hand</option>
-              </select>
-              <button class="dbtn etm" id="fmt-bold"
-                title="Bold"><b>B</b></button>
-              <button class="dbtn etm" id="fmt-ital"
-                title="Italic"><i>I</i></button>
-              <button class="dbtn etm" id="fmt-under"
-                title="Underline"><u>U</u></button>
-              <button class="dbtn etm" id="fmt-strike"
-                title="Strikethrough"><s>S</s></button>
-              <!-- NAMED STYLES: Title / Heading 1-3 / Body / Small /
-                   Caption. A box wears a style rather than carrying a
-                   pile of properties, which is what makes "apply this
-                   look to all headings" a single edit instead of a hunt
-                   through forty slides (2026-08-20). -->
+              <!-- THREE WINDOWS, NOT FIFTEEN BUTTONS (T177). The Text
+                   group held every text control as a bare button in a
+                   two-row grid: size stepper, size field, the font
+                   list, B I U S, two list toggles, indent, outdent,
+                   Spacing, Layout and Styles. With a text box selected
+                   the Object tab ran to forty-one controls and the eye
+                   had nowhere to rest (2026-09-02, user: "heaps of
+                   buttons that you always have to click through... it
+                   would be good if more things, like the text options,
+                   had their own little window of options").
+                   The controls are the SAME ELEMENTS, moved into the
+                   window in the markup rather than copied: every id,
+                   handler, pressed state and test still addresses the
+                   one Bold there has always been, and a ribbon layout
+                   moves the window as one atom (rbnResolve). The
+                   window stays open while you toggle -- one click to
+                   open, then bold, italic and a size in a row, then
+                   Escape or a click away. -->
+              <span class="sh-drop opt-drop" id="fmt-fontwrap">
+                <button class="dbtn etm" id="fmt-font-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Typeface, size, and bold, italic, underline or
+ strikethrough &mdash; in one window that stays open while you
+ work"><i data-ic="text"></i> Font &#9662;</button>
+                <div class="sh-menu opt-panel font-panel" id="fmt-font-menu"
+                  hidden>
+                  <div class="hd-lab">typeface</div>
+                  <div class="opt-row">
+                    <select class="etm" id="fmt-font" hidden title="Text font">
+                      <option value="sans">Sans</option>
+                      <option value="serif">Serif</option>
+                      <option value="mono">Mono</option>
+                      <option value="system">System</option>
+                      <option value="hand">Hand</option>
+                    </select>
+                  </div>
+                  <div class="hd-lab">size</div>
+                  <div class="opt-row">
+                    <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                      title="Text size (points)">
+                      <input class="fmt-num" id="fmt-size" type="number"
+                        min="6" max="240" step="1"
+                        aria-label="Text size in points">
+                      <span class="fmt-unit">pt</span></span>
+                    <button class="dbtn etm" id="fmt-smaller"
+                      title="Smaller text">A&#8722; Smaller</button>
+                    <button class="dbtn etm" id="fmt-bigger"
+                      title="Bigger text">A+ Bigger</button>
+                  </div>
+                  <div class="hd-lab">emphasis</div>
+                  <!-- WORDS beside the letters now there is room for
+                       them: a lone B was tolerated on the ribbon as a
+                       letter everybody knows, but the rule is words
+                       plus icons and a window has the width to keep
+                       it. -->
+                  <div class="opt-row opt-grid2">
+                    <button class="dbtn etm" id="fmt-bold"
+                      title="Bold"><b>B</b> Bold</button>
+                    <button class="dbtn etm" id="fmt-ital"
+                      title="Italic"><i>I</i> Italic</button>
+                    <button class="dbtn etm" id="fmt-under"
+                      title="Underline"><u>U</u> Underline</button>
+                    <button class="dbtn etm" id="fmt-strike"
+                      title="Strikethrough"><s>S</s> Strikethrough</button>
+                  </div>
+                </div>
+              </span>
               <!-- an equation goes back to the editor it came from, rather
-                   than being typed as raw LaTeX inside a text box -->
+                   than being typed as raw LaTeX inside a text box. Both
+                   of these stay OUTSIDE the windows: they are the one
+                   action such a box needs, and a door behind a door is
+                   the thing T177 exists to remove. -->
               <button class="dbtn etm" id="fmt-eqedit" hidden
                 title="Open this equation in the equation editor"
                 ><i data-ic="maths"></i> Edit equation</button>
@@ -1372,6 +1412,73 @@
               <button class="dbtn etm" id="fmt-mdedit" hidden
                 title="Open this box in the Markdown editor"
                 ><i data-ic="markdown"></i> Edit markdown</button>
+              <!-- THE PARAGRAPH WINDOW: alignment, the two list toggles
+                   with indent and outdent, the whole-box indent, line
+                   and paragraph spacing, and the curve -- every "how the
+                   words sit" answer in one place with a heading over
+                   each. Alignment and curve used to be one worded menu
+                   called Layout and spacing another called Spacing; the
+                   list toggles were bare buttons beside them. The rows
+                   are built on open so each shows which answer is on
+                   (buildParaPanel). -->
+              <span class="sh-drop opt-drop" id="fmt-parawrap">
+                <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="How the words sit: alignment, lists, indent,
+ line and paragraph spacing, and bending the text along a
+ curve"><i data-ic="spacing"></i> Paragraph &#9662;</button>
+                <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
+                  hidden>
+                  <div class="hd-lab">alignment</div>
+                  <div class="opt-row" id="fmt-para-align"></div>
+                  <div class="hd-lab">list</div>
+                  <!-- BULLETS and NUMBERING are buttons that show their
+                       own state, not a line in a dropdown. The old toggle
+                       lived inside a menu called "Layout", so you could
+                       not see whether a list was on, and turning it off
+                       fell back to a stale copy of the text from before
+                       you started (2026-08-20, user: "the bullet list
+                       on/off is cursed. PLEASE DO EVERYTHING PROPERLY").
+                       Inside the window they still show it: the window
+                       is a room, not a menu, and it stays open. -->
+                  <div class="opt-row">
+                    <button class="dbtn etm" id="fmt-bullets"
+                      aria-pressed="false"
+                      title="Bullet list on / off">&#8226; Bullets</button>
+                    <button class="dbtn etm" id="fmt-numbers"
+                      aria-pressed="false"
+                      title="Numbered list on / off">1. Numbers</button>
+                    <button class="dbtn etm" id="fmt-outdent" hidden
+                      title="Move this bullet out one level (Shift+Tab)"><i data-ic="outdent"></i>
+                        Outdent</button>
+                    <button class="dbtn etm" id="fmt-indent" hidden
+                      title="Move this bullet in one level (Tab)"><i data-ic="indent"></i>
+                        Indent</button>
+                  </div>
+                  <div class="hd-lab">indent the whole box</div>
+                  <div class="opt-row" id="fmt-para-ind"></div>
+                  <!-- LINE SPACING, which every word processor has had
+                       since the 1980s and this did not (2026-08-20, user:
+                       "when I say I want all the power point options, why
+                       do you not do all them. Like where is the line
+                       spacing options"). Space BETWEEN paragraphs is the
+                       other half nobody thinks to ask for until their
+                       bullets are touching. A section of this window
+                       now, not a dropdown of its own; the wrapper keeps
+                       its id because showFmt governs it by kind (a
+                       table's words take spacing too). -->
+                  <span class="sh-drop opt-sec" id="fmt-lhwrap">
+                    <div class="sh-menu lh-menu" id="fmt-lh-menu"></div>
+                  </span>
+                  <div class="hd-lab">curve</div>
+                  <div class="opt-row" id="fmt-para-curve"></div>
+                </div>
+              </span>
+              <!-- NAMED STYLES: Title / Heading 1-3 / Body / Small /
+                   Caption. A box wears a style rather than carrying a
+                   pile of properties, which is what makes "apply this
+                   look to all headings" a single edit instead of a hunt
+                   through forty slides (2026-08-20). -->
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
                   aria-haspopup="true" aria-expanded="false"
@@ -1381,131 +1488,102 @@
                 <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
                   hidden></div>
               </span>
-              <!-- BULLETS and NUMBERING are buttons that show their own
-                   state, not a line in a dropdown. The old toggle lived
-                   inside a menu called "Layout", so you could not see
-                   whether a list was on, and turning it off fell back to
-                   a stale copy of the text from before you started
-                   (2026-08-20, user: "the bullet list on/off is cursed.
-                   PLEASE DO EVERYTHING PROPERLY"). -->
-              <button class="dbtn etm" id="fmt-bullets"
-                aria-pressed="false"
-                title="Bullet list on / off">&#8226; List</button>
-              <button class="dbtn etm" id="fmt-numbers"
-                aria-pressed="false"
-                title="Numbered list on / off">1. List</button>
-              <button class="dbtn etm" id="fmt-outdent" hidden
-                title="Move this bullet out one level (Shift+Tab)"><i data-ic="outdent"></i>
-                  Outdent</button>
-              <button class="dbtn etm" id="fmt-indent" hidden
-                title="Move this bullet in one level (Tab)"><i data-ic="indent"></i>
-                  Indent</button>
-              <!-- LINE SPACING, which every word processor has had since
-                   the 1980s and this did not (2026-08-20, user: "when I
-                   say I want all the power point options, why do you not
-                   do all them. Like where is the line spacing options").
-                   Space BETWEEN paragraphs is the other half nobody
-                   thinks to ask for until their bullets are touching. -->
-              <span class="sh-drop" id="fmt-lhwrap">
-                <button class="dbtn etm" id="fmt-lh" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Line spacing, and the gap between paragraphs">
-                  <i data-ic="spacing"></i> Spacing &#9662;</button>
-                <div class="sh-menu lh-menu" id="fmt-lh-menu" hidden></div>
-              </span>
-              <!-- alignment and curve are both "how this text sits"; one
-                   worded menu instead of two controls -->
-              <span class="sh-drop" id="fmt-parawrap">
-                <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="How the text sits: alignment, and bending it
- along a curve"><i data-ic="layouts"></i> Layout &#9662;</button>
-                <div class="sh-menu para-menu" id="fmt-para-menu"
-                  hidden></div>
-              </span>
-              <!-- Align, List and Curve used to be controls here and are
-                   now rows of the Layout menu above. A comment said the
-                   originals stayed "because that menu drives them", which
-                   was true of List alone: Align was applied directly by
-                   the menu, and the whole Curve dropdown — wrapper,
-                   button and a menu of six options built on every load —
-                   sat behind a permanent hidden. Three dead controls kept
-                   alive by one over-general comment (2026-08-17 audit). -->
             </span>
             <span class="rbn-lab">Text</span>
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <span class="rbn-stack rbn-cols">
-                <span class="rbn-col">
-                  <span class="sh-drop" id="fmt-stylewrap">
-                    <button class="dbtn rbn-sm" id="fmt-style"
-                      aria-haspopup="true" aria-expanded="false"
-                      title="Line style — solid, dashed, dotted,
+              <!-- ONE WINDOW FOR THE LINE (T177). Style, Weight, Ends
+                   and Route were four dropdown doors stacked in three
+                   columns; each opened a drawn menu, and setting a
+                   dashed 2pt arrow with a stealth head was three
+                   openings. The four menus are laid FLAT inside one
+                   window as sections, side by side where they fit, and
+                   the window stays open after a pick so the weight
+                   follows the style without a second trip.
+                   The four wrappers keep their ids and their old door
+                   buttons: showFmt governs each section by kind through
+                   FMT_KINDS (a shape has no ends), and the drawn menus
+                   are wired to the buttons by buildLineMenus. The
+                   buttons are display:none inside a window
+                   (.opt-sec-btn) -- present for the wiring, never
+                   shown. -->
+              <span class="sh-drop opt-drop" id="fmt-linewrap">
+                <button class="dbtn rbn-sm" id="fmt-line"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Dash style, thickness, arrow ends and route,
+ drawn rather than named, in one window"><i data-ic="dashes"></i>
+                  Line &#9662;</button>
+                <div class="sh-menu opt-panel line-panel" id="fmt-line-menu"
+                  hidden>
+                  <div class="opt-cols">
+                    <span class="sh-drop opt-sec" id="fmt-stylewrap">
+                      <div class="hd-lab">style</div>
+                      <button class="dbtn rbn-sm opt-sec-btn" id="fmt-style"
+                        aria-haspopup="true" aria-expanded="false"
+                        title="Line style — solid, dashed, dotted,
  dash-dot"><i data-ic="dashes"></i> Style &#9662;</button>
-                    <div class="sh-menu style-menu" id="fmt-style-menu"
-                      hidden></div>
-                  </span>
-                  <!-- a MENU of thicknesses, drawn, the way Word's is.
-                       This was a button that cycled 2 → 3.5 → 5 and told
-                       you the result in a tooltip afterwards: three
-                       weights, none of them visible until you had picked
-                       one, and no way to go back except round again
-                       (2026-08-17, user: "the weight just have all the
-                       options like word does with the different
-                       thicknesses"). -->
-                  <span class="sh-drop" id="fmt-swwrap">
-                    <button class="dbtn rbn-sm" id="fmt-sw"
-                      aria-haspopup="true" aria-expanded="false"
-                      title="Line thickness"><i data-ic="weight"></i>
-                        Weight &#9662;</button>
-                    <div class="sh-menu sw-menu" id="fmt-sw-menu"
-                      hidden></div>
-                  </span>
-                </span>
-                <span class="rbn-col">
-                  <span class="sh-drop" id="fmt-headwrap">
-                    <button class="dbtn rbn-sm" id="fmt-head"
+                      <div class="sh-menu style-menu" id="fmt-style-menu"></div>
+                    </span>
+                    <!-- a MENU of thicknesses, drawn, the way Word's is.
+                         This was a button that cycled 2 → 3.5 → 5 and told
+                         you the result in a tooltip afterwards: three
+                         weights, none of them visible until you had picked
+                         one, and no way to go back except round again
+                         (2026-08-17, user: "the weight just have all the
+                         options like word does with the different
+                         thicknesses"). The heading carries what the
+                         weight will PRINT on this page, which the old
+                         door said in its tooltip. -->
+                    <span class="sh-drop opt-sec" id="fmt-swwrap">
+                      <div class="hd-lab" id="fmt-sw-lab">weight</div>
+                      <button class="dbtn rbn-sm opt-sec-btn" id="fmt-sw"
+                        aria-haspopup="true" aria-expanded="false"
+                        title="Line thickness"><i data-ic="weight"></i>
+                          Weight &#9662;</button>
+                      <div class="sh-menu sw-menu" id="fmt-sw-menu"></div>
+                    </span>
+                  </div>
+                  <span class="sh-drop opt-sec" id="fmt-headwrap">
+                    <div class="hd-lab">arrow ends</div>
+                    <button class="dbtn rbn-sm opt-sec-btn" id="fmt-head"
                       aria-haspopup="true" aria-expanded="false"
                       title="Arrow ends — head shape at each end, and how
  big"><i data-ic="arrow"></i> Ends &#9662;</button>
-                    <div class="sh-menu head-menu" id="fmt-head-menu"
-                      hidden></div>
+                    <div class="sh-menu head-menu" id="fmt-head-menu"></div>
                   </span>
-                  <span class="sh-drop" id="fmt-bendwrap">
-                    <button class="dbtn rbn-sm" id="fmt-bend"
+                  <span class="sh-drop opt-sec" id="fmt-bendwrap">
+                    <div class="hd-lab">route</div>
+                    <button class="dbtn rbn-sm opt-sec-btn" id="fmt-bend"
                       aria-haspopup="true" aria-expanded="false"
                       title="Route — straight, curved, or elbowed round a
  corner"><i data-ic="route"></i> Route &#9662;</button>
-                    <div class="sh-menu bend-menu" id="fmt-bend-menu"
-                      hidden></div>
+                    <div class="sh-menu bend-menu" id="fmt-bend-menu"></div>
                   </span>
-                </span>
-                <span class="rbn-col">
-                  <span class="sh-drop" id="fmt-fillwrap">
-                    <button class="dbtn rbn-sm" id="fmt-fillstyle"
-                      aria-haspopup="true" aria-expanded="false"
-                      title="Fill — none, solid, or a gradient (linear or
+                </div>
+              </span>
+              <span class="sh-drop" id="fmt-fillwrap">
+                <button class="dbtn rbn-sm" id="fmt-fillstyle"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Fill — none, solid, or a gradient (linear or
  radiating from the centre)"><i data-ic="fill"></i> Fill &#9662;</button>
-                    <div class="sh-menu fillstyle-menu"
-                      id="fmt-fillstyle-menu" hidden></div>
-                  </span>
-                  <!-- a PICKER, not a cycler. This stepped through
-                       fifteen shapes one click at a time and could not go
-                       back, so reaching Question from Rectangle was
-                       fourteen clicks — the same complaint Weight got
-                       (2026-08-17, user: "just have all the options like
-                       word does"). The drawn shape menu already existed
-                       for Insert; this simply uses it. -->
-                  <span class="sh-drop" id="fmt-shapewrap">
-                    <button class="dbtn rbn-sm" id="fmt-shape"
-                      aria-haspopup="true" aria-expanded="false"
-                      title="Change the shape"><i data-ic="shapes"></i>
-                        Shape &#9662;</button>
-                    <div class="sh-menu shape-menu" id="fmt-shape-menu"
-                      hidden></div>
-                  </span>
-                </span>
+                <div class="sh-menu fillstyle-menu"
+                  id="fmt-fillstyle-menu" hidden></div>
+              </span>
+              <!-- a PICKER, not a cycler. This stepped through
+                   fifteen shapes one click at a time and could not go
+                   back, so reaching Question from Rectangle was
+                   fourteen clicks — the same complaint Weight got
+                   (2026-08-17, user: "just have all the options like
+                   word does"). The drawn shape menu already existed
+                   for Insert; this simply uses it. -->
+              <span class="sh-drop" id="fmt-shapewrap">
+                <button class="dbtn rbn-sm" id="fmt-shape"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Change the shape"><i data-ic="shapes"></i>
+                    Shape &#9662;</button>
+                <div class="sh-menu shape-menu" id="fmt-shape-menu"
+                  hidden></div>
               </span>
               <!-- Dash and Fill used to be toggle buttons here. The Style
                    and Fill dropdowns replaced them, and they were left in
@@ -1529,10 +1607,6 @@
                 title="Add, reorder and name the figures in this flip
  book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
    Figures&#8230;</button>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came
- from. If that file has moved, the picture is left exactly as it
- is"><i data-ic="reload"></i> Refresh</button>
               <!-- THE BUTTON DOES THE COMMON THING (T64, 2026-08-29,
                    user: "the clicking button should just automatically do
                    the trim by edges"). It used to open a submenu, so the
@@ -1571,9 +1645,6 @@
                 title="Type this object&rsquo;s width, height and
  position in millimetres, instead of dragging for
  them"><i data-ic="rulers"></i> Size &amp; position&#8230;</button>
-              <button class="dbtn etm" id="fmt-replace"
-                title="Swap in a different notebook card"><i data-ic="swap"></i>
-                Replace</button>
               <!-- T17 shipped a TIE between two objects that already
                    existed, and only when exactly two were selected. This
                    is the command: caption THIS, which is how a caption
@@ -1583,6 +1654,23 @@
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
  same button unties it"><i data-ic="caption"></i> Caption</button>
+              <!-- THE SOURCE WINDOW (T177). Six of a placed figure's
+                   buttons were about where it CAME FROM and keeping it
+                   in step: Locate, Where from, Previous figure, Lock
+                   figure, Refresh and Replace. They are one family and
+                   they are rare beside Crop and Keep shape, so they
+                   share one worded door. Each row closes the window as
+                   it acts (data-close): these are things you do and
+                   leave, not settings you adjust. -->
+              <span class="sh-drop opt-drop" id="fmt-srcwrap">
+                <button class="dbtn etm" id="fmt-src" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Where this came from, and keeping it in step with
+ its notebook: find the cell, see its lineage, swap back the previous
+ figure, pin it to a commit, re-read it, or replace it"
+                  ><i data-ic="tree"></i> Source &#9662;</button>
+                <div class="sh-menu opt-panel opt-list" id="fmt-src-menu"
+                  hidden data-close="1">
               <button class="dbtn etm" id="fmt-locate"
                 title="Jump to this card in its notebook &mdash; see where
  the plot came from"><i data-ic="locate"></i> Locate in notebook</button>
@@ -1604,6 +1692,15 @@
                 title="Pin this figure to its notebook&rsquo;s current git
  commit &mdash; refreshes stop changing it, and it renders even with the
  notebook closed"><i data-ic="lock"></i> Lock figure</button>
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came
+ from. If that file has moved, the picture is left exactly as it
+ is"><i data-ic="reload"></i> Refresh</button>
+              <button class="dbtn etm" id="fmt-replace"
+                title="Swap in a different notebook card"><i data-ic="swap"></i>
+                Replace</button>
+                </div>
+              </span>
             </span>
             <span class="rbn-lab">Object</span>
           </span>

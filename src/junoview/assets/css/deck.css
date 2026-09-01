@@ -1535,6 +1535,60 @@ body.slide-editing .apptop{display:none;}
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
   box-shadow:0 14px 38px #0009;width:210px;}
 .sh-menu[hidden]{display:none;}
+/* ---- WINDOWS OF OPTIONS (T177) ----------------------------------------
+   One worded door on the ribbon opens a panel holding a whole cluster of
+   related controls: the font, the paragraph, the line, the source. The
+   REAL controls live inside -- moved there in the markup, not copied --
+   so every handler, state and test keeps addressing the one element it
+   always did, and a ribbon layout moves the window as one atom. A tall
+   window scrolls; nothing is ever clipped. ---- */
+.sh-menu.opt-panel{display:block;width:auto;min-width:236px;
+  max-width:min(92vw,460px);padding:8px 10px 10px;
+  max-height:min(72vh,560px);overflow-y:auto;overflow-x:hidden;}
+/* hidden means hidden, whatever display a row or grid asked for */
+.opt-panel [hidden]{display:none!important;}
+.opt-panel .hd-lab{padding:8px 2px 4px;}
+.opt-panel>.hd-lab:first-child{padding-top:0;}
+.opt-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;}
+.opt-row.opt-grid2{display:grid;grid-template-columns:1fr 1fr;}
+.opt-cols{display:flex;gap:16px;align-items:flex-start;}
+.opt-cols>*{flex:1 1 auto;min-width:0;}
+/* the ribbon's cell-sizing and its density rungs do not reach inside a
+   window (!important, because the rungs are five classes deep): a
+   control here is as tall as its words need and never shrinks */
+.opt-panel .dbtn.etm,.opt-panel .dbtn.rbn-sm{height:auto!important;
+  min-height:26px;padding:4px 9px!important;font-size:11px!important;
+  justify-content:flex-start;white-space:nowrap;display:inline-flex;
+  align-items:center;gap:6px;}
+.opt-panel .opt-grid2>.dbtn{width:100%;}
+.opt-panel select.etm{height:26px;max-width:none!important;width:100%;}
+.opt-panel .fmt-szwrap{height:26px;}
+.opt-panel .fmt-szwrap .fmt-num{width:54px!important;}
+/* a SECTION inside a window: its old door stays in the DOM because
+   the drawn menus are wired to it, and is never shown; its menu is laid
+   flat where a dropdown used to hang */
+.opt-panel .opt-sec{display:block;position:static;}
+.opt-panel .opt-sec>.opt-sec-btn{display:none!important;}
+.opt-panel .opt-sec>.sh-menu{position:static;box-shadow:none;border:none;
+  padding:0;width:auto;max-width:none;background:none;border-radius:0;}
+.opt-panel .opt-sec>.hd-lab{padding-top:8px;}
+.opt-cols>.opt-sec>.hd-lab{padding-top:0;}
+/* worded rows, full width, the way a menu reads */
+.sh-menu.opt-panel.opt-list{display:flex;flex-direction:column;gap:3px;
+  min-width:224px;}
+.opt-panel.opt-list>.dbtn{width:100%;justify-content:flex-start;
+  text-align:left;gap:8px;padding:6px 9px!important;}
+/* a chip: one of several answers, and it shows which one is on */
+.dbtn.opt-chip{padding:4px 10px;font-size:11px;line-height:1.4;}
+.dbtn.opt-chip[aria-pressed="true"]{
+  background:color-mix(in srgb,var(--accent) 22%,transparent);
+  border-color:var(--accent);color:#fff;}
+.dbtn.opt-chip:disabled{opacity:.4;cursor:default;}
+body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
+.opt-val{font-family:var(--mono);font-size:10px;color:#8ba0b2;
+  padding:0 4px;}
+.line-panel .style-menu .sh-opt,.line-panel .sw-menu .sh-opt{
+  padding:3px 6px;}
 .sh-opt{display:flex;flex-direction:column;align-items:center;gap:3px;
   background:none;border:1px solid transparent;border-radius:7px;
   padding:7px 4px 5px;cursor:pointer;color:#c9d6e2;font-family:var(--sans);}

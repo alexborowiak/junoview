@@ -46,6 +46,7 @@
   galBoot();       /* the effect gallery's door (T171) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
+  optPanelBoot();             /* every window of options' door (T177) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not
      mid-file: it walks the deck's markup, which is only guaranteed real
      by the time the boot sequence runs. */

@@ -296,6 +296,20 @@
     el.appendChild(lab);
     return el;
   }
+  /* A CONTROL INSIDE A WINDOW (T177). The catalogue names Bold; Bold
+     lives inside the Font window now, and the WINDOW is the atom. So a
+     name the ribbon no longer carries at the top level resolves to the
+     window holding it, and the window lands where the layout put the
+     first of its members -- Font goes where Bold went, Paragraph where
+     Bullets went, Line where Style went. The catalogue keeps its old
+     vocabulary, and a layout written before the windows still places
+     every control it names. */
+  function rbnResolve(cid,atoms){
+    if(atoms[cid]) return atoms[cid];
+    var el=document.getElementById(cid);
+    var w=(el&&el.closest)?el.closest('.opt-drop'):null;
+    return (w&&atoms[w.id])||null;
+  }
   /* WHAT A LAYOUT DID NOT SAY. A control the catalogue has never heard
      of — one added by a later version — must still land somewhere a
      person can find it, so every layout names one group as the place
@@ -328,9 +342,9 @@
         host.appendChild(el);
         var row=el.querySelector('.rbn-row');
         (g.items||[]).forEach(function(cid){
-          var a=atoms[cid];
-          if(!a||used[cid]) return;
-          used[cid]=1;
+          var a=rbnResolve(cid,atoms);
+          if(!a||used[a.id]) return;
+          used[a.id]=1;
           row.appendChild(a);
         });
       });
@@ -375,9 +389,13 @@
     var atoms=rbnAllAtoms(),seen={},dup=[],unknown=[];
     (lay.groups||[]).forEach(function(g){
       (g.items||[]).forEach(function(cid){
+        var r=rbnResolve(cid,atoms);
+        /* a member of a window is placed BY its window: naming two of
+           them is not naming one control twice (T177) */
+        if(r&&r.id!==cid){seen[r.id]=1;return;}
         if(seen[cid]) dup.push(cid);
         seen[cid]=1;
-        if(!atoms[cid]) unknown.push(cid);
+        if(!r) unknown.push(cid);
       });
     });
     var missing=Object.keys(atoms).filter(function(cid){

@@ -364,6 +364,10 @@
     o.appendChild(node);
     o.addEventListener('click',function(e){
       e.stopPropagation();onPick();
+      /* a menu that is a SECTION of a window stays up: you set the
+         weight after the style without opening the window twice,
+         and showFmt re-marks the rows (T177) */
+      if(menu.closest&&menu.closest('.opt-panel')) return;
       menu.hidden=true;btn.setAttribute('aria-expanded','false');
     });
     menu.appendChild(o);
@@ -680,53 +684,157 @@
       if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
     });
   })();
-  /* alignment, bullets and curve in one worded menu. The curve options
-     are listed inline rather than nested — a menu that opens a menu is
-     worse than a slightly longer list. */
-  wireFloatDropdown('fmt-parawrap','fmt-para','fmt-para-menu',
-    [['a:left','Align left'],['a:center','Align centre'],
-     ['a:right','Align right'],
-     /* indent lives HERE and not on two ribbon buttons of its own:
-        #fmt-indent / #fmt-outdent are the list controls and only make
-        sense with the caret inside a list, whereas this indents the whole
-        box. Two more always-on buttons would have cost the widest ribbon
-        case about 56px it does not have (2026-08-22). */
-     ['i:+','Indent this box'],['i:-','Outdent this box'],
-     ['c:0','Curve: straight'],
-     ['c:12','Curve: gentle arch up'],['c:30','Curve: arch up'],
-     ['c:55','Curve: strong arch up'],
-     ['c:-12','Curve: gentle sag (round the bottom in PowerPoint)'],
-     ['c:-30','Curve: arch down (round the bottom in PowerPoint)']],'pa',
-    function(v){
-      /* Bullets and numbering are BUTTONS in the Text group now, not a
-         line of this menu. Burying a toggle whose state you cannot see
-         inside a dropdown called "Layout" is half of why it never behaved
-         the way anyone expected (2026-08-20, user). */
-      if(v.indexOf('a:')===0){
-        var al=v.slice(2);
-        fmtApply(function(a){a.align=al;});
-        return;
-      }
-      if(v.indexOf('i:')===0){
-        var out=v.slice(2)==='-';
-        fmtApply(function(a){boxIndent(a,out);});
-        return;
-      }
-      var n=+v.slice(2);
-      /* a bullet list has several baselines and no single curve to follow,
-         so curving one turns the list off rather than quietly doing
-         nothing — the two cannot both be true */
-      fmtApply(function(a){
-        if(!n){delete a.arc;return;}
-        /* a list has several baselines and no single curve to follow, so
-           curving one turns the list off rather than quietly doing
-           nothing — the two cannot both be true. It converts the content
-           back to lines instead of DELETING it, which is what the old
-           `delete a.html` did (2026-08-20). */
-        if(listOf(a)) setListStyle(a,0);
-        a.arc=n;
-      });
+  /* ---- THE PARAGRAPH WINDOW (T177) ------------------------------------
+     Alignment, the list toggles, the whole-box indent, line and
+     paragraph spacing, and the curve: every "how the words sit" answer
+     under a heading of its own in ONE window, built on open so each row
+     shows which answer is on. Alignment and curve used to be one worded
+     menu called Layout; spacing was another called Spacing; the list
+     toggles were bare buttons between them (2026-09-02, user: "heaps
+     of buttons that you always have to click through").
+     paraApply is the old Layout menu's handler, kept whole: the model
+     it writes is unchanged. The curve options are listed flat rather
+     than nested -- a menu that opens a menu is worse than a slightly
+     longer list. */
+  var ALIGNS=[['left','Left'],['center','Centre'],['right','Right']];
+  var CURVES=[[0,'Straight'],[12,'Gentle arch'],[30,'Arch'],
+    [55,'Strong arch'],[-12,'Gentle sag'],[-30,'Sag']];
+  function paraApply(v){
+    /* Bullets and numbering are BUTTONS in this window, not a line of
+       a menu: burying a toggle whose state you cannot see inside a
+       dropdown called "Layout" is half of why it never behaved the way
+       anyone expected (2026-08-20, user). */
+    if(v.indexOf('a:')===0){
+      var al=v.slice(2);
+      fmtApply(function(a){a.align=al;});
+      return;
+    }
+    if(v.indexOf('i:')===0){
+      var out=v.slice(2)==='-';
+      fmtApply(function(a){boxIndent(a,out);});
+      return;
+    }
+    var n=+v.slice(2);
+    fmtApply(function(a){
+      if(!n){delete a.arc;return;}
+      /* a list has several baselines and no single curve to follow, so
+         curving one turns the list off rather than quietly doing
+         nothing — the two cannot both be true. It converts the content
+         back to lines instead of DELETING it, which is what the old
+         `delete a.html` did (2026-08-20). */
+      if(listOf(a)) setListStyle(a,0);
+      a.arc=n;
     });
+  }
+  /* one of several answers, and it shows whether it is the one that
+     is on. The window stays open after a pick; the rows are rebuilt
+     by showFmt (optPanelsSync) so the mark moves at once. */
+  function optChip(host,label,on,title,fn){
+    var b=document.createElement('button');
+    b.type='button';b.className='dbtn opt-chip';b.textContent=label;
+    if(title) b.title=title;
+    b.setAttribute('aria-pressed',on?'true':'false');
+    b.addEventListener('click',function(e){e.stopPropagation();fn();});
+    host.appendChild(b);
+    return b;
+  }
+  /* a section is a heading over a row; hiding one hides both */
+  function optSection(row,on){
+    if(!row) return;
+    row.hidden=!on;
+    var lab=row.previousElementSibling;
+    if(lab&&lab.classList.contains('hd-lab')) lab.hidden=!on;
+  }
+  function buildParaPanel(){
+    var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot); if(!a) return;
+    /* a table's WORDS take spacing; alignment, the box indent and the
+       curve are a text box's own */
+    var isTx=(a.k==='text');
+    var al=$('#fmt-para-align'),ind=$('#fmt-para-ind'),
+        cv=$('#fmt-para-curve');
+    [al,ind,cv].forEach(function(h){
+      if(!h) return;
+      h.innerHTML='';optSection(h,isTx);
+    });
+    if(isTx&&al&&ind&&cv){
+      ALIGNS.forEach(function(p){
+        optChip(al,p[1],(a.align||'left')===p[0],
+          'Align '+p[1].toLowerCase(),
+          function(){paraApply('a:'+p[0]);});
+      });
+      /* the whole-box indent is a stepper with its count between the
+         steps, because a level is a number rather than a choice */
+      var steps=Math.round((a.ind||0)/IND_STEP);
+      optChip(ind,'− Out',false,
+        'Move the whole box out one step',
+        function(){paraApply('i:-');}).disabled=!steps;
+      var lvl=document.createElement('span');
+      lvl.className='opt-val';
+      lvl.textContent=steps?(steps+' step'+(steps===1?'':'s')):'none';
+      ind.appendChild(lvl);
+      optChip(ind,'+ In',false,
+        'Move the whole box in one step',
+        function(){paraApply('i:+');}).disabled=steps>=4;
+      CURVES.forEach(function(p){
+        optChip(cv,p[1],(a.arc||0)===p[0],
+          p[0]<0?'Round the bottom (as PowerPoint calls it)':'',
+          function(){paraApply('c:'+p[0]);});
+      });
+    }
+    buildSpacingRows();
+  }
+  /* ---- WINDOWS OF OPTIONS (T177) ---------------------------------------
+     A worded door on the ribbon opens a panel holding a whole cluster of
+     related controls -- the font, the paragraph, the line, the source.
+     The REAL controls live inside, moved there in the markup rather than
+     copied, so every handler and every test keeps addressing the one
+     element it always did, and a ribbon layout moves the window as one
+     atom (rbnResolve). The one owner (overlayShow) makes a window
+     exclusive and closes it on Escape or a click away; a click INSIDE
+     keeps it open, which is what makes it a room rather than a menu:
+     open once, then bold, italic and a size in a row. data-close marks
+     the windows whose rows are things you do and leave (Source), and
+     those close as they act. Every door is wired here, from THE BOOT
+     SEQUENCE, so a window added to the markup needs no JS of its own. */
+  function optBuilder(id){
+    return id==='fmt-para-menu'?buildParaPanel:null;
+  }
+  function optKids(w){
+    var door=null,panel=null;
+    [].slice.call(w.children).forEach(function(c){
+      if(!door&&c.classList.contains('dbtn')) door=c;
+      if(!panel&&c.classList.contains('opt-panel')) panel=c;
+    });
+    return {door:door,panel:panel};
+  }
+  /* rebuild whatever window is open, so a pick inside it shows at once */
+  function optPanelsSync(){
+    $$('.opt-panel').forEach(function(p){
+      if(p.hidden) return;
+      var fn=optBuilder(p.id); if(fn) fn();
+    });
+  }
+  function optPanelsClose(){
+    $$('.opt-panel').forEach(function(p){if(!p.hidden) overlayHide(p);});
+  }
+  function optPanelBoot(){
+    $$('.opt-drop').forEach(function(w){
+      var k=optKids(w),door=k.door,panel=k.panel;
+      if(!door||!panel) return;
+      door.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!panel.hidden){overlayHide(panel);return;}
+        var fn=optBuilder(panel.id); if(fn) fn();
+        overlayShow(door,panel);floatMenu(door,panel);
+      });
+      /* CAPTURE, so a row that stops propagation still closes the
+         window it sits in */
+      if(panel.dataset.close) panel.addEventListener('click',function(e){
+        var b=e.target.closest&&e.target.closest('button');
+        if(b&&panel.contains(b)&&!b.disabled) overlayHide(panel);
+      },true);
+    });
+  }
   /* ---- LINE SPACING ---------------------------------------------------
      A MULTIPLE of the type size, the way every word processor states it -
      so it means the same thing at every zoom and on every page size, and
@@ -747,55 +855,28 @@
     [2,'Double'],[2.5,'2\u00bd'],[3,'Triple']];
   var PS_STEPS=[[0,'None'],[0.25,'Small'],[0.5,'Medium'],[1,'Large'],
     [1.5,'Very large']];
-  (function(){
-    var wrap=$('#fmt-lhwrap'),btn=$('#fmt-lh'),menu=$('#fmt-lh-menu');
-    if(!wrap||!btn||!menu) return;
-    function build(){
-      var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
-      menu.innerHTML='';
-      menuHead(menu,'between lines');
-      LH_STEPS.forEach(function(st){
-        var b=document.createElement('button');
-        b.className='dbtn vw-opt';b.textContent=st[1];
-        b.setAttribute('aria-pressed',
-          (((a&&a.lh)||0)===st[0]).toString());
-        b.addEventListener('click',function(e){
-          e.stopPropagation();
+  /* the two spacing rows, a SECTION of the Paragraph window (T177).
+     Built with the window and rebuilt after every pick, so the chip
+     that is on is the value the box has. #fmt-lhwrap keeps its id
+     because showFmt governs it by kind: a table's words take spacing
+     and a table has no Paragraph rows of its own. */
+  function buildSpacingRows(){
+    var menu=$('#fmt-lh-menu'); if(!menu) return;
+    var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
+    menu.innerHTML='';
+    [['between lines',LH_STEPS,'lh'],
+     ['between paragraphs',PS_STEPS,'pspace']].forEach(function(sec){
+      menuHead(menu,sec[0]);
+      var row=document.createElement('div');row.className='opt-row';
+      sec[1].forEach(function(st){
+        optChip(row,st[1],((a&&a[sec[2]])||0)===st[0],'',function(){
           fmtApply(function(x){
-            if(st[0]) x.lh=st[0]; else delete x.lh;});
-          menu.hidden=true;
+            if(st[0]) x[sec[2]]=st[0]; else delete x[sec[2]];});
         });
-        menu.appendChild(b);
       });
-      menuHead(menu,'between paragraphs');
-      PS_STEPS.forEach(function(st){
-        var b=document.createElement('button');
-        b.className='dbtn vw-opt';b.textContent=st[1];
-        b.setAttribute('aria-pressed',
-          (((a&&a.pspace)||0)===st[0]).toString());
-        b.addEventListener('click',function(e){
-          e.stopPropagation();
-          fmtApply(function(x){
-            if(st[0]) x.pspace=st[0]; else delete x.pspace;});
-          menu.hidden=true;
-        });
-        menu.appendChild(b);
-      });
-    }
-    /* not wireFloatDropdown: rebuilt on every open so the aria-pressed
-       marks track the selection — no static options list to hand over */
-    btn.addEventListener('click',function(e){
-      e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
+      menu.appendChild(row);
     });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
-    });
-  })();
+  }
   /* ---- bullets / numbering / indent ----------------------------------
      Real buttons that show their own state, because a list is something
      you can SEE is on. Indent and outdent drive the browser's own list

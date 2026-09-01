@@ -663,13 +663,21 @@
       if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) return;
       overlayClose();
     });
+    /* CAPTURE, and stopped there. An open menu is the innermost state
+       you can be standing in, so Escape closes it and does nothing
+       else: the ladder in 55-sections-and-strip.js (drop the tool, drop
+       the selection, leave the editor) used to fire on the same key, so
+       closing the Font window deselected the very box it was about
+       (found driving T177, 2026-09-02). The gallery and the notes
+       editor make the same choice for the same reason. */
     document.addEventListener('keydown',function(e){
       if(e.key!=='Escape'||!overlayNow) return;
+      e.preventDefault();e.stopPropagation();
       var b=overlayNow.btn;
       overlayClose();
       /* keyboard dismissal returns focus to the trigger */
       if(b&&b.focus) b.focus();
-    });
+    },true);
   }
   /* Open/close, shared by the WORDED dropdowns below and the DRAWN ones
      (line style, weight, ends, route) -- now just registration with the
