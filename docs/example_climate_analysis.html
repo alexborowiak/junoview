@@ -6413,6 +6413,25 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 .deck.editing.film-auto.film-peek .film-resize{display:block;}
 .film-resize:hover,.film-resize.on{
   background:color-mix(in srgb,var(--accent) 40%,transparent);}
+/* A GRIP YOU CAN SEE. The handle was six transparent pixels that only
+   appeared once the pointer was already on them, so a feature asked for
+   by name (2026-08-22, "the thumbnail part should be dragable to make
+   bigger or smaller") could only be found by accident. Two pixels of
+   hairline at mid height is the affordance every panel splitter uses,
+   and it costs the column no width. */
+.film-resize::before{content:"";position:absolute;left:2px;top:50%;
+  width:2px;height:26px;margin-top:-13px;border-radius:1px;
+  background:#ffffff2e;}
+.film-resize:hover::before,.film-resize.on::before{background:#fff;}
+/* ...and the handle stops at the COLUMN. top:0/bottom:0 is what keeps it
+   glued to the edge while .deck-create scrolls, but it also laid a 6px
+   dead stripe up through the top bar and the tab row -- at the resting
+   200px that is a slice of the save readout, at another rung a slice of
+   a button, and it moves with every drag. Those two rows outrank it in
+   their own bands. 131 clears the handle's 130 and stays under .vfull
+   (135) and .matchbar (150), so nothing that used to paint over the bar
+   stops doing so. */
+.deck-qat,.deck-top,.rbn-tabs{position:relative;z-index:131;}
 @media(max-width:860px){.film-resize{display:none!important;}}
 
 /* ---- how the slides are listed ---------------------------------------
@@ -10477,8 +10496,11 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
            slide column, which is the thing anyone actually wants wider
            (2026-08-22, user: "the thumbnail part should be dragable to
            make bigger or smaller"). -->
-      <div class="film-resize" id="film-resize"
-        title="Drag to make the slide thumbnails bigger or smaller"></div>
+      <div class="film-resize" id="film-resize" role="separator"
+        aria-orientation="vertical" tabindex="0"
+        aria-label="Slide column width"
+        title="Drag to make the slide thumbnails bigger or smaller
+ (or focus it and use the left and right arrow keys)"></div>
     </aside>
   <!-- The ribbon spans the WHOLE window, like the document view's app
        bar — it used to live inside the stage column, so the slide strip
@@ -23169,8 +23191,12 @@ window.JunoPptx = (function () {
        CURRENT width. The ceiling was the current width at every window
        size, so the drag could shrink the column and never widen it, and
        the handle sat frozen against its own limit. Measured on a 1900px
-       window: box 1685px, true need 890px, ceiling 200px where 867px was
-       available. width:max-content asks the flex row what it actually
+       window: box 1685px, true need ~635px, ceiling 200px where 867px
+       was available. (890px is the row's RESTING need; this measures it
+       with the whole ladder stamped on and View folded, which is the
+       state fitEditRibbon reaches at the bottom of its own climb. The
+       shipped number is visible at a 1200px window, where the floor is
+       the binding term: --film-max comes back 545px on a 1185px deck.) width:max-content asks the flex row what it actually
        wants; the bar is already stamped with the whole compaction ladder
        here, and both are put back below. */
     var hadW=bar.style.width;
@@ -49588,6 +49614,26 @@ window.JunoPptx = (function () {
       }
       document.addEventListener('pointermove',mv);
       document.addEventListener('pointerup',up);
+    });
+    /* THE SAME DRAG, FROM THE KEYBOARD (T155). A splitter with no role,
+       no tab stop and no keys is a pointer-only control, and this one
+       owns a width the whole editor is laid out around. The arrows are
+       also the deck's own slide navigation, so the event stops here
+       rather than walking up to the document listener that would change
+       slide under you. */
+    if(h) h.addEventListener('keydown',function(e){
+      var step=0;
+      if(e.key==='ArrowLeft') step=-24;
+      else if(e.key==='ArrowRight') step=24;
+      else return;
+      e.preventDefault();e.stopPropagation();
+      var hi=fitFilmMax();
+      var el=$('#deck-create'); if(!el) return;
+      var now=Math.round(el.getBoundingClientRect().width);
+      var w=Math.max(150,Math.min(hi,now+step));
+      deckEl.style.setProperty('--film-w',w+'px');
+      lsSet(FILMWKEY+SCOPE,String(w));
+      applyZoom();renderFilm();fitFilmMax();fitEditRibbon();
     });
   })();
   /* (the picker's first render runs from THE BOOT SEQUENCE) */
