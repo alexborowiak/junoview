@@ -831,8 +831,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # order, carries a five-effect chooser with its shortcut keys printed on
 # the buttons, paints above the deck, and Rise is renamed Float up on
 # screen.
-EXPECTED_MD5 = "130b46f9b623768553ce8676d6c3862a"
-EXPECTED_BYTES = 3167368
+# Moved 2026-09-01 for T171: the effect gallery replaces the four hidden
+# per-effect buttons with one always-visible Effect door, whose cards
+# preview on the real object and whose pick with nothing selected builds
+# the whole slide in reading order.
+EXPECTED_MD5 = "6ad5a065c4c58cb97f93afda4c08504c"
+EXPECTED_BYTES = 3175997
 
 
 def _render_example() -> str:

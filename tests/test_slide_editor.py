@@ -580,8 +580,10 @@ def test_the_ribbon_is_tabbed(out):
     assert "applyTab();" in block
     assert block.index("applyTab();") < block.index("sizeRibbonGroups();")
     # a poster has no build, so the whole Animate GROUP stands down there
-    assert ("['#anim-clear','#anim-stagger','#anim-together']"
-            ".forEach(function(id){") in out
+    # the gallery's door joins them (T171): it is a slide-wide
+    # control too, and a poster has no build for any of them
+    assert ("['#anim-clear','#anim-stagger','#anim-together',"
+            "'#anim-effect'].forEach(function(id){") in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
 
@@ -3554,9 +3556,69 @@ def test_rise_is_called_float_up(out):
     The stored token stays `rise`: DECK-FORMAT is a contract and only the
     word on screen changes.
     """
-    assert " Float up</button>" in out
-    assert "['rise','Float up']" in out
-    assert ">\n Rise</button>" not in out
+    # the word lives in the two places that SHOW it -- the gallery's
+    # cards and the sequencing bar's chooser -- which share one list,
+    # so they cannot drift into two vocabularies (T171 folded the four
+    # stranded ribbon buttons into the gallery)
+    assert "['rise','Float up','U']" in out
+    assert "Rise</button>" not in out
     # the token is untouched, so every existing deck still means what it said
     assert "['anim-rise','rise']" in out
 
+
+def test_the_effect_gallery_is_always_reachable(out):
+    """T171 -- the thing this whole surface was asked for: "the words are
+    so weird and the options are hard to get to... we need something
+    like this instead of just vanilla buttons."
+
+    What was there: FOUR buttons, each `hidden` until something was
+    selected, and un-hidden by the very click that moves the ribbon to
+    the Object tab -- the one tab they were not on. So the effects were
+    visible for approximately none of the moments they were usable, and
+    the vocabulary could never be learned because you only ever saw it
+    for one click at a time.
+
+    A POPOVER, not tiles in the row, and the measurement decided it: at
+    1366px an inline gallery leaves the slide column 503px against
+    today's 517px -- worse than the status quo -- while this door leaves
+    it 598px. Six PowerPoint-sized tiles would take the column to 239px.
+
+    Driven: the door shows with nothing selected; two clicks (door, card)
+    gave three boxes a one-by-one build in Float up, and the footer said
+    "Everything on this slide, one at a time." BEFORE the click.
+    """
+    assert 'id="anim-effect"' in out
+    assert 'id="anim-eff-menu"' in out
+    # never hidden, and its label never renames itself -- a label whose
+    # width follows the selection makes the row's width depend on what
+    # you clicked, and the fit ladder has no rung left for that
+    assert 'class="dbtn rbn-sm" id="anim-effect"' in out
+    assert "Effect &#9662;" in out
+    # the four stranded buttons are gone
+    for dead in ('id="anim-none"', 'id="anim-fade"', 'id="anim-rise"',
+                 'id="anim-zoom"'):
+        assert dead not in out, dead
+    # one list feeds the gallery AND the sequencing bar, so the two
+    # surfaces cannot drift into two vocabularies
+    assert "SEQ_FX.forEach(function(f){" in out
+    # picking with nothing selected does the whole slide, in READING
+    # order (T106's sweep, never a second one), as one undo step
+    assert "orderedIdx(s).forEach(function(i){" in out
+    assert (r"'Everything on this slide, one at a time \u2014 '+ord") in out
+    # ...and the footer says which it will be BEFORE you click
+    assert "foot.textContent=galScope();" in out
+
+
+def test_the_gallery_previews_on_the_real_object(out):
+    """T171. Hovering a card runs the REAL keyframe on the REAL object,
+    so what you see is what you get, and nothing is stored so there is
+    nothing to undo. Reduced motion suppresses it, since a preview is
+    the most decorative motion in the product.
+    """
+    assert "function galPreview(type){" in out
+    assert "window.matchMedia('(prefers-reduced-motion: reduce)')" in out
+    # re-adding a class already present does nothing: off, reflow, on
+    assert "void el.offsetWidth;" in out
+    # animationend is not a safe cleanup, so a timer always runs
+    assert "galPvT=setTimeout(galPreviewStop,900);" in out
+    assert "b.addEventListener('mouseleave',galPreviewStop);" in out

@@ -297,6 +297,13 @@ _ICON_PATHS = {
                 '<path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/>',
     # a circle with a bar through it: no animation
     "none": '<circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/>',
+    # APPEAR: a box that is simply THERE, with the little rays of
+    # something arriving all at once. It has been an option in the
+    # animation pane since the day the pane landed and never had a
+    # picture, because it never had a button -- the gallery gives it
+    # one (T171).
+    "appear": '<rect x="4.4" y="5.4" width="7.2" height="5.2" rx="1"/>'
+              '<path d="M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5"/>',
     # the three builds, each drawn as what it DOES to the thing:
     # solid giving way to dashed, an arrow coming up into it, and a
     # small one pushing its corners out

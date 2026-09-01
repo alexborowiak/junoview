@@ -151,10 +151,11 @@
        inspector pane open, selection still reveals the contextual
        groups (showFmt below) but no longer STEALS the tab; with none
        open, the switch behaves as it always has. */
-    var paneOpen=PANE_IDS.some(function(pid){
-      var el=$('#'+pid); return el&&!el.hidden;});
+    var hold=PANE_IDS.some(function(pid){
+      var el=$('#'+pid); return el&&!el.hidden;})
+      ||(typeof animGalleryOpen==='function'&&animGalleryOpen());
     var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
-      &&!paneOpen)?selT:'';
+      &&!hold)?selT:'';
     justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font

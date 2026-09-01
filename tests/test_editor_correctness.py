@@ -410,10 +410,17 @@ def test_the_animation_pane_does_not_need_a_selection(out):
     assert "var vbtn=$('#vw-anim'),pane=$('#animpane');" in out
     # the pane outlives the selection, so it is told when one goes away
     assert "function animPaneSync" in out or "animPaneSync=function()" in out
-    # three call sites since T168: selection gained, selection lost, and
-    # the sequencing mode closing -- each is a moment the pane's answer
-    # about the slide can have changed underneath it
-    assert out.count("animPaneSync();") == 3
+    # WHAT it guards, not HOW MANY. This was an exact count and it was
+    # wrong twice in one day -- T168's sequencing mode and T171's gallery
+    # each added a moment when the pane's answer about the slide can
+    # change underneath it, and neither was a regression. The rule is
+    # that every such moment syncs, so assert the moments.
+    assert "animPaneSync();animRibbonSync();" in out       # selection
+    i = out.index("function seqEnd(commitIt){")
+    assert "animPaneSync();" in out[i:i + 900]             # mode closing
+    j = out.index("function galApply(type){")
+    assert "animPaneSync();" in out[j:j + 900]             # whole-slide pick
+    assert out.count("animPaneSync();") >= 3
     # only a deck has builds
     assert "if(vaB) vaB.hidden=!!pg.poster;" in out
 
@@ -1013,7 +1020,10 @@ def test_animations_can_be_removed(out):
     which one is on, and Clear slide strips the whole slide in one press
     instead of item by item.
     """
-    for bid in ("anim-none", "anim-fade", "anim-rise", "anim-zoom",
+    # the four per-effect buttons became one gallery door (T171):
+    # they were hidden until something was selected, and un-hidden by
+    # the very click that moved the ribbon off their tab
+    for bid in ("anim-effect",
                 "anim-clear"):
         assert f'id="{bid}"' in out, bid
     # Animate shares the Insert tab: on its own it was one group of six

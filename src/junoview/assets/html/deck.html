@@ -823,24 +823,40 @@
  appears — and the effect on whatever is selected. The numbered bubbles on
  the slide show only while this pane is open"
                 ><i data-ic="play"></i> Animations</button>
-              <button class="dbtn etm" id="anim-none" hidden
-                title="Remove the animation from the selected items — they
- are simply on the slide from the start"><i data-ic="none"></i> None</button>
-              <button class="dbtn etm" id="anim-fade" hidden
-                title="Fade the selected items in"><i data-ic="fade"></i> Fade</button>
-              <!-- FLOAT UP, not "Rise" (T170, user's own choice on
-                   2026-09-01). No mainstream deck tool ships an entrance
-                   called Rise -- PowerPoint has Float In, Keynote Move
-                   In -- and worse, "Rise" names a DIRECTION while our
-                   icon for it (a box with an arrow beneath) reads as
-                   "align to top", which is a real command in the same
-                   ribbon. The stored token stays 'rise': DECK-FORMAT is
-                   a contract and only the word on screen changes. -->
-              <button class="dbtn etm" id="anim-rise" hidden
-                title="Float the selected items up into place from
- below"><i data-ic="rise"></i> Float up</button>
-              <button class="dbtn etm" id="anim-zoom" hidden
-                title="Zoom the selected items in"><i data-ic="zoom"></i> Zoom</button>
+              <!-- THE EFFECT GALLERY (T171) -- the thing this whole
+                   surface was asked for: "the words are so weird and the
+                   options are hard to get to... we need something like
+                   this instead of just vanilla buttons".
+                   What was here: FOUR buttons, each `hidden` until
+                   something was selected -- and un-hidden by the very
+                   click that moves the ribbon to the Object tab, which
+                   is the one tab they were not on. So the effects were
+                   visible for approximately none of the moments they
+                   were usable, and the vocabulary could never be
+                   learned because you only ever saw it for one click.
+                   THE DOOR IS NEVER HIDDEN. Its label never renames
+                   itself either: a label whose width follows the
+                   selection makes the row's required width depend on
+                   what you clicked, and the fit ladder has no rung left
+                   for that (see #fmt-sw). The current effect rides on
+                   the ICON and on the card marked aria-pressed inside.
+                   A POPOVER rather than tiles in the row, and the
+                   measurement decided it: at 1366px the inline gallery
+                   leaves the slide column 503px against today's 517px,
+                   i.e. WORSE than the status quo, while this door leaves
+                   it 598px -- wider than before. Six PowerPoint-sized
+                   tiles would take the column to 239px, a hair above the
+                   hard floor. The gallery is not a trade-off inline; it
+                   is a regression. -->
+              <span class="sh-drop" id="anim-effwrap">
+                <button class="dbtn rbn-sm" id="anim-effect"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="How things arrive on this slide — None, Appear,
+ Fade, Float up or Grow. Pick one with nothing selected and every object
+ gets it, one per click, in reading order."
+                  ><i data-ic="fade"></i> Effect &#9662;</button>
+                <div class="sh-menu anim-gal" id="anim-eff-menu" hidden></div>
+              </span>
               <!-- the two builds people actually want, in one press
                    each. Setting "one at a time" by hand means selecting
                    every item and stepping its order, which is the kind of

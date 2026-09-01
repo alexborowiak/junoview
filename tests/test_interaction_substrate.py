@@ -105,8 +105,12 @@ def test_selection_does_not_steal_an_open_workflow():
     chooser; with no pane open the tab switched to Object exactly as
     before."""
     out = _out()
-    assert "var paneOpen=PANE_IDS.some(function(pid){" in out
-    assert "&&!paneOpen)?selT:'';" in out
+    # renamed `hold` when the effect GALLERY joined the panes in holding
+    # the tab (T171): it is the same rule -- an open workflow keeps the
+    # tab it is standing on -- applied to a second surface
+    assert "var hold=PANE_IDS.some(function(pid){" in out
+    assert "||(typeof animGalleryOpen==='function'&&animGalleryOpen());" in out
+    assert "&&!hold)?selT:'';" in out
 
 
 def test_chart_and_masters_have_first_class_doors():

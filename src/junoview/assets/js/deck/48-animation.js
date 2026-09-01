@@ -13,6 +13,12 @@
      visible and lands beside its siblings. The early `return` on missing
      markup is kept verbatim: a poster has no animation group. ---- */
   var animPaneSync=function(){},animPaneClose=function(){};
+  /* setType and its re-render live inside animBoot's closure, so the
+     GALLERY -- which boots separately -- cannot reach them. Published
+     the same way the pane's syncs already are, rather than duplicating
+     the write (T171). Caught by driving: the first pick threw
+     "rerender is not defined" and nothing happened. */
+  var animSetType=function(){};
   var animRibbonSync=function(){};
   /* ---- CLICK THINGS IN THE ORDER THEY SHOULD APPEAR (T168) --------
      Asked for in the user's own words: "when you click it becomes the
@@ -190,6 +196,145 @@
     var d=$('#seq-done'); if(d) d.textContent=done?('Finish ('+done+')')
       :'Finish';
   }
+  /* ---- THE EFFECT GALLERY (T171) -----------------------------------
+     One door, never hidden, opening a row of cards. SEQ_FX is the same
+     list the sequencing bar uses, so the two surfaces cannot drift into
+     two vocabularies.
+     PICKING WITH NOTHING SELECTED DOES THE WHOLE SLIDE, one build each
+     in reading order. That is what deletes the empty state -- the door
+     always does something -- and it collapses "one at a time, in Grow"
+     from eleven clicks to two. The footer says which it will be BEFORE
+     you click, because a large silent edit from one card would be worse
+     than no shortcut. */
+  /* the gallery counts as an open workflow: selecting an object while
+     it is up must not move the ribbon out from under it, exactly as
+     T141 ruled for the panes */
+  function animGalleryOpen(){
+    var m=$('#anim-eff-menu');
+    return !!(m&&!m.hidden);
+  }
+  /* ICONS, NAMED LITERALLY. bic() with a computed key works at runtime
+     but is invisible to the icon contract, which scans for literal
+     one-argument icon calls --
+     and artwork with no visible consumer is exactly what that test
+     exists to delete. Written out, the table is also the one place to
+     read what a card looks like. */
+  var FX_IC={none:'none',appear:'appear',fade:'fade',rise:'rise',
+    zoom:'zoom'};
+  function fxIcon(t){
+    if(t==='none') return bic('none');
+    if(t==='appear') return bic('appear');
+    if(t==='rise') return bic('rise');
+    if(t==='zoom') return bic('zoom');
+    return bic('fade');
+  }
+  var galPvEls=[],galPvT=null;
+  function galPreviewStop(){
+    if(galPvT){clearTimeout(galPvT);galPvT=null;}
+    galPvEls.forEach(function(el){
+      el.classList.remove('an-anim-fade','an-anim-rise','an-anim-zoom');});
+    galPvEls=[];
+  }
+  /* the preview runs the REAL keyframe on the REAL object, so what you
+     see is what you will get. Nothing is stored, so nothing to undo. */
+  function galPreview(type){
+    galPreviewStop();
+    if(type==='none'||type==='appear') return;
+    if(window.matchMedia&&
+       window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var s=pres.slides[cur],layer=stage&&stage.querySelector('.annot-layer');
+    if(!s||!layer) return;
+    var idxs=selIdxs();
+    if(!idxs.length) idxs=(s.annots||[]).map(function(_,i){return i;});
+    idxs.slice(0,8).forEach(function(i){
+      var a=(s.annots||[])[i]; if(!a||a.hide) return;
+      var el=layer.querySelector('.an-item[data-idx="'+i+'"]');
+      if(!el) return;
+      /* re-adding a class already there does nothing, so it comes off,
+         the element is reflowed, and it goes back on */
+      el.classList.remove('an-anim-'+type);
+      void el.offsetWidth;
+      el.classList.add('an-anim-'+type);
+      galPvEls.push(el);
+    });
+    /* animationend is not reliable enough to be the only cleanup */
+    galPvT=setTimeout(galPreviewStop,900);
+  }
+  function galScope(){
+    var s=pres.slides[cur],n=selIdxs().length;
+    if(n===1) return itemLabel(s,selIdxs()[0]);
+    if(n>1) return n+' objects, all on one click.';
+    var all=((s&&s.annots)||[]).length;
+    return all?('Everything on this slide, one at a time.')
+      :'Nothing on this slide yet.';
+  }
+  function galApply(type){
+    var s=pres.slides[cur]; if(!s) return;
+    var idxs=selIdxs();
+    if(idxs.length){
+      animSetType(type);
+    } else {
+      /* the whole slide, one build each, in READING order (T106's sweep,
+         never a second one) -- and as ONE undo step */
+      var ord=0;
+      orderedIdx(s).forEach(function(i){
+        var a=(s.annots||[])[i]; if(!a||a.hide) return;
+        if(type==='none') delete a.anim;
+        else a.anim={type:type,order:ord++};
+      });
+      markDirty();renderSlide();renderFilm();
+      if(typeof animPaneSync==='function') animPaneSync();
+      if(typeof animRibbonSync==='function') animRibbonSync();
+      toast(type==='none'
+        ?'Every animation on this slide removed'
+        :('Everything on this slide, one at a time \u2014 '+ord
+          +' click'+(ord===1?'':'s')));
+    }
+    galSync();
+  }
+  function galSync(){
+    var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
+    if(!menu) return;
+    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    var now=(a&&a.anim)?(a.anim.type||'fade'):(a?'none':null);
+    if(btn){
+      var ic=btn.querySelector('.bic,i');
+      var key=(now&&now!=='none')?now:'fade';
+      if(ic&&window.SemIcons&&SemIcons[key]) ic.outerHTML=bic(key);
+    }
+    menu.innerHTML='';
+    var h=document.createElement('div');
+    h.className='anim-galh';h.textContent='How it arrives';
+    menu.appendChild(h);
+    var row=document.createElement('div');row.className='anim-galrow';
+    SEQ_FX.forEach(function(f){
+      var b=document.createElement('button');
+      b.className='sh-opt anim-card'+(now===f[0]?' on':'');
+      b.type='button';
+      b.setAttribute('aria-pressed',now===f[0]?'true':'false');
+      b.innerHTML=fxIcon(f[0])+'<span>'+f[1]+'</span>';
+      b.title=f[1]+' \u2014 '+(f[0]==='none'
+        ?'no animation; it is on the slide from the start'
+        :'hover to see it, click to give it');
+      b.addEventListener('mouseenter',function(){galPreview(f[0]);});
+      b.addEventListener('focus',function(){galPreview(f[0]);});
+      b.addEventListener('mouseleave',galPreviewStop);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();galPreviewStop();
+        galApply(f[0]);overlayHide(menu);});
+      row.appendChild(b);
+    });
+    menu.appendChild(row);
+    var foot=document.createElement('div');
+    foot.className='anim-galfoot';foot.textContent=galScope();
+    menu.appendChild(foot);
+  }
+  function galBoot(){
+    var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
+    if(!btn||!menu) return;
+    wireMenuToggle(btn,menu,galSync);
+    menu.addEventListener('mouseleave',galPreviewStop);
+  }
   function seqBoot(){
     var d=$('#seq-done'),c=$('#seq-cancel'),u=$('#seq-undo');
     if(d) d.addEventListener('click',function(){seqEnd(true);});
@@ -233,6 +378,7 @@
        exactly why the sync belongs here and not at each of the callers. */
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
+    animSetType=function(t){setType(t);};
     function setType(type){
       var s=pres.slides[cur]; if(!s) return;
       var idxs=selIdxs();
@@ -541,6 +687,9 @@
     /* the effect buttons act on the SELECTION, so they show the selected
        item's effect and stand down when there is nothing selected */
     animRibbonSync=function(){
+      /* the gallery's icon and its pressed card follow the selection
+         through the one sync everything else already calls (T171) */
+      if(typeof galSync==='function'&&$('#anim-eff-menu')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       var on=!!a&&typeof selAnnot==='number';
       [['anim-none','none'],['anim-fade','fade'],

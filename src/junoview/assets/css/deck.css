@@ -4001,6 +4001,26 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
    150 for exactly the same reason; this joins it rather than inventing
    a third number. */
 .seqbar{position:fixed;top:0;left:0;right:0;z-index:150;}
+/* T171: the effect gallery. Cards are .sh-opt, which is already
+   icon-over-word, so this only lays them out and gives the popover its
+   heading, its scroller and its footer. The strip shows five and a half
+   cards on purpose: a card CUT at the edge is the scroll affordance,
+   taken from the film strip rather than from PowerPoint's spinners. */
+.anim-gal{display:block;width:392px;max-width:92vw;padding:8px;}
+.anim-galh{font-family:var(--mono);font-size:9px;letter-spacing:.09em;
+  text-transform:uppercase;color:#8aa0b0;padding:0 2px 6px;}
+.anim-galrow{display:flex;gap:6px;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;padding-bottom:4px;}
+.anim-galrow .anim-card{flex:0 0 66px;scroll-snap-align:start;
+  display:flex;flex-direction:column;align-items:center;gap:5px;
+  padding:9px 4px;text-align:center;font-size:10.5px;line-height:1.15;}
+.anim-galrow .anim-card .bic{width:20px;height:20px;}
+.anim-galrow .anim-card.on{background:var(--cyan-deep);color:#fff;
+  border-color:var(--cyan-deep);}
+/* the SCOPE, said before you click: picking with nothing selected is a
+   large edit and it must never be a silent one */
+.anim-galfoot{margin-top:7px;padding-top:7px;border-top:1px solid #ffffff14;
+  font-size:11px;color:#9fb2c2;}
 /* T170: the bar's own furniture. The NAME first, so the mode is a
    thing you can remember afterwards rather than a sentence you were
    reading at the time; then the running state; then the chooser. */

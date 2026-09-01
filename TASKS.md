@@ -3448,6 +3448,44 @@ effects are visible for approximately none of the moments they are usable.
   all. `.matchbar` had already solved this at 150 for exactly this
   reason; the seq bar joins it rather than inventing a third number.
   That is twice today a probe said "fine" and the pixels said otherwise.
+
+- [x] **T171 · M — The effect gallery.** THE ORIGINAL ASK, and it took
+  far too long to reach: "the words are so weird and the options are
+  hard to get to... we need something like this instead of just vanilla
+  buttons." Everything else in this group was built around it first.
+  What was there: FOUR buttons, each `hidden` until something was
+  selected — and un-hidden by the very click that moves the ribbon to
+  the Object tab, which is the one tab they were not on. The effects
+  were visible for approximately none of the moments they were usable,
+  and the vocabulary could never be learned because you only ever saw it
+  for one click.
+  *Done 2026-09-01.* One door, `Effect ▾`, NEVER hidden, whose label
+  never renames itself (a label whose width follows the selection makes
+  the row's required width depend on what you clicked, and the fit
+  ladder has no rung left for that) — the current effect rides on the
+  icon and on the card marked `aria-pressed`. A POPOVER rather than
+  tiles in the row, and the measurement decided it: at 1366px an inline
+  gallery leaves the slide column 503px against today's 517px, i.e.
+  WORSE than the status quo, while this door leaves it 598px. Six
+  PowerPoint-sized tiles would take the column to 239px, a hair above
+  the hard floor.
+  Hovering a card runs the REAL keyframe on the REAL object, cancelled
+  on leave and by a timer because `animationend` is not a safe cleanup,
+  and suppressed under reduced motion. Picking with NOTHING selected
+  gives every object the effect, one build each, in reading order, as
+  one undo step — which deletes the empty state and takes "one at a
+  time, in Float up" from eleven clicks to two. The footer says which it
+  will be BEFORE you click, because a large silent edit from one card
+  would be worse than no shortcut.
+  Driven: the door shows cold; two clicks gave three boxes a build each,
+  toasting "Everything on this slide, one at a time — 3 clicks" with the
+  strip agreeing at ▸3. The drive also caught the bug the tests could
+  not — `setType` and `rerender` are locals of `animBoot`'s closure and
+  the gallery boots separately, so the first pick threw "rerender is not
+  defined" and nothing happened. `setType` is now published the way the
+  pane's syncs already are. And `Appear`, an option in the pane since
+  the day it landed, finally has an icon, because it finally has a
+  button.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this
