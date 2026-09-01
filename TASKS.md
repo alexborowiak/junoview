@@ -3486,6 +3486,34 @@ effects are visible for approximately none of the moments they are usable.
   pane's syncs already are. And `Appear`, an option in the pane since
   the day it landed, finally has an icon, because it finally has a
   button.
+- [x] **T172 · L — Text builds: a bullet, or a sentence, at a time.**
+  "Options for text as well, like the dot point by dot point, line by
+  line, sentence by sentence." Not possible at all before: a build was a
+  property of an ANNOTATION and a list is one annotation, so four
+  bullets meant splitting the box into four boxes by hand — about
+  seventeen actions.
+  *Done 2026-09-01.* The box is cut at RENDER time into `[data-part]`
+  runs and the words are never re-stored, so the in-place editor,
+  search, the .pptx writer and an older junoview all still see one box
+  of text. The cut points come from the STORED text — a list item, a
+  line you pressed Enter on, a sentence — which is why the click count
+  is identical at every zoom, every page size and in the exported deck.
+  A WRAPPED line is deliberately NOT offered: it depends on the box
+  width, so its count would change when you dragged a resize handle, and
+  a build you cannot rehearse against is worse than none. The chooser
+  lives in the pane, not the ribbon: three more word buttons is ~200px
+  of ribbon floor and by T152 every px comes off the slide column.
+  Sentence cutting leaves "Fig. 3", "et al." and "0.05" alone.
+  ONE COUNTER, learned the hard way: `slideBuildSteps` already expands a
+  cut box through `sub[o]`, and the first pass ALSO counted the pieces
+  in `extraStops` — so a three-bullet box was worth five clicks. Caught
+  by driving it (the strip read ▸5 for three bullets); the parallel
+  count is gone and the reveal reads the build steps the pieces occupy.
+  Driving also caught the .pptx writer quietly DROPPING T169's delay:
+  the paragraph split rebuilt each step entry as `{spid,type,para}`
+  without `after`, so an automatic build exported as a click one.
+  Driven: three hard-broken lines, Bullet by bullet, strip ▸3, and
+  Present steps `--- / +-- / ++- / +++`.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this
