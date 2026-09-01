@@ -3294,8 +3294,24 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
   line-height:1.35;}
 /* the thumbnail follows the column: it is a scale model of the slide, so
    it has the slide's shape and grows with the room it is given */
-.film-list .mini-diagram{width:100%;height:auto;aspect-ratio:116/66;
+/* WIDTH:100% IS ONLY TRUE OF THE ROW THAT STACKS (T153). The CURRENT
+   row's .film-label turns column, so there the thumbnail really does own
+   the full width. Every OTHER row is a horizontal flex line -- number,
+   thumbnail, title -- where 100% is a promise the row cannot keep: at
+   flex:none the thumbnail took the whole line, pushed the title to zero
+   width and the row's own controls to zero, overflowed the row by the
+   number's width, and .film-list (overflow-y:auto, so the x axis
+   computes to auto as well) grew a horizontal scrollbar inside a
+   vertical list. Measured at a 200px column: row 171px, content 189px,
+   title 0px. Sharing rows shrink to fit instead. */
+.film-list .film-row.current .mini-diagram{width:100%;height:auto;
+  aspect-ratio:116/66;min-height:var(--mini-h);}
+.film-list .film-row:not(.current) .mini-diagram{flex:1 1 auto;
+  min-width:0;width:auto;height:auto;aspect-ratio:116/66;
   min-height:var(--mini-h);}
+/* ...and the list never scrolls sideways: it is a vertical list, and a
+   horizontal scrollbar in it is always a fitting bug, never a feature */
+.film-list{overflow-x:hidden;}
 
 .deck-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   background:var(--chrome-2,#16273a);border:1px solid var(--cyan);color:#e6eef4;

@@ -2932,6 +2932,43 @@ None of them throws, which is why they survived a 947-test suite.
   rendered page can see that. It surfaced only because a live drive for
   T148 went looking for the Insert tab and there wasn't one.
 
+- [x] **T152 · S — The strip's ceiling was its own current width.**
+  `ribbonMinW()` measures the ribbon's floor with `bar.scrollWidth` —
+  and scrollWidth is floored at the element's own client width, so a bar
+  with slack reports its BOX, never its content. The floor came back as
+  (deck width − strip width), so `fitFilmMax`'s `W - filmFloorW` handed
+  back exactly the strip's CURRENT width: the drag could shrink the
+  column and never widen it, at any window size, frozen against a limit
+  it had produced itself. (User, 2026-09-01: "the drag to re-size
+  doesn't work".)
+  *Done 2026-09-01.* The bar is asked what it WANTS (`width:max-content`)
+  instead of what it has; it is already stamped with the whole
+  compaction ladder at that point, and both are put back. Measured on a
+  1900px window: box 1685px, true need 890px — the ceiling was 200px
+  where 867px was free. Driven live: `--film-max` 200px → 867px, a drag
+  to 500px lands on 500px and back to 260px lands on 260px, the handle
+  following. T80's guard still holds, which is the whole point of having
+  a ceiling: at a 1105px deck, dragging to 1050 clamps to 508 and the
+  ribbon keeps 597px against a 321px need, uncut, four tabs intact.
+
+- [x] **T153 · S — A shared thumbnail row fits the column.**
+  `.film-list .mini-diagram` was `width:100%` for EVERY row. True of the
+  current row, whose `.film-label` turns column — but every other row is
+  a horizontal line of number, thumbnail and title, where at `flex:none`
+  the thumbnail took the whole width, squeezed the title to ZERO and the
+  row's controls to zero, overflowed the row by the number's width, and
+  `.film-list` (`overflow-y:auto`, so the x axis computes to `auto` as
+  well) grew a horizontal scrollbar inside a vertical list. (User:
+  "everything isn't fitting in there correctly".)
+  *Done 2026-09-01.* The blanket rule splits: the stacked current row
+  keeps `width:100%`, a shared row gets `flex:1 1 auto;min-width:0`, and
+  the list is `overflow-x:hidden`, because a vertical list scrolling
+  sideways is always a fitting bug and never a feature. Measured at a
+  200px column before: row 171px, content 189px, title 0px; after: no
+  row overflows, no sideways scroll, the title readable again. The two
+  defects compounded — a column that could not grow past 200px made the
+  oversized thumbnail permanent — which is why they were found together.
+
 
 ## Cut (and why)
 

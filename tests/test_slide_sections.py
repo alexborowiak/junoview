@@ -463,8 +463,14 @@ def test_the_strip_cannot_eat_the_ribbon(out):
     assert "function ribbonMinW(){" in out
     assert "function fitFilmMax(){" in out
     assert "deckEl.style.setProperty('--film-max',hi+'px');" in out
-    # what the row NEEDS, read off flex:none groups at the tightest rung
-    assert "min=bar.scrollWidth;" in out
+    # what the row NEEDS, read off flex:none groups at the tightest rung.
+    # NOT scrollWidth (T152): it is floored at the element's own client
+    # width, so a bar with slack reported its BOX -- the floor came back
+    # as (deck - strip) and the ceiling as the strip's own current width,
+    # which is why the drag could shrink the column but never widen it.
+    assert "bar.style.width='max-content';" in out
+    assert "min=Math.ceil(bar.getBoundingClientRect().width);" in out
+    assert "min=bar.scrollWidth;" not in out
     # the drag obeys the measured ceiling, not the old blind 900px
     assert "w=Math.max(150,Math.min(hi,ev.clientX));" in out
     # ...and the ladder is re-run once the handle is let go

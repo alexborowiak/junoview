@@ -1301,9 +1301,22 @@
     rungs.forEach(function(c){had[c]=cl.contains(c);cl.add(c);});
     foldViewGroup(true);
     sizeRibbonGroups();
-    /* scrollWidth, not clientWidth: the groups are flex:none, so this is
-       what the row NEEDS and is independent of the box it is sitting in */
-    min=bar.scrollWidth;
+    /* WHAT THE ROW NEEDS, WHICH IS NOT WHAT scrollWidth REPORTS (T152).
+       scrollWidth is floored at the element's own client width: a bar
+       with slack returns its BOX, never its content. So this measured
+       (deck width - strip width) instead of the ribbon's real floor, and
+       fitFilmMax's `W - filmFloorW` gave back exactly the strip's
+       CURRENT width. The ceiling was the current width at every window
+       size, so the drag could shrink the column and never widen it, and
+       the handle sat frozen against its own limit. Measured on a 1900px
+       window: box 1685px, true need 890px, ceiling 200px where 867px was
+       available. width:max-content asks the flex row what it actually
+       wants; the bar is already stamped with the whole compaction ladder
+       here, and both are put back below. */
+    var hadW=bar.style.width;
+    bar.style.width='max-content';
+    min=Math.ceil(bar.getBoundingClientRect().width);
+    bar.style.width=hadW;
     rungs.forEach(function(c){cl.toggle(c,had[c]);});
     foldViewGroup(wasFolded);
     sizeRibbonGroups();

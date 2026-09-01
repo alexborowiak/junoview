@@ -763,8 +763,18 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # container - rbnHome snapshots its children, restore puts them back
 # inside it, and generated layouts build their tabs there, so a layout
 # apply (including the one at boot) no longer deletes all four tabs.
-EXPECTED_MD5 = "0dd1dc6dc3f1e919ae4a22efe27c45d8"
-EXPECTED_BYTES = 3090841
+# Moved 2026-09-01 for T152 and T153: the slide strip's resize ceiling
+# is measured from the ribbon's content rather than its box (it used to
+# equal the strip's own current width, so the drag could never widen),
+# and a thumbnail sharing its row with the number and title now shrinks
+# to fit instead of overflowing it.
+# Moved 2026-09-01 for T152 and T153: the slide strip's resize ceiling
+# is measured from the ribbon's content rather than its box (it used to
+# equal the strip's own current width, so the drag could never widen),
+# and a thumbnail sharing its row with the number and title now shrinks
+# to fit instead of overflowing it.
+EXPECTED_MD5 = "0248d0c8875f7a3942901c97bdb3ffd2"
+EXPECTED_BYTES = 3092683
 
 
 def _render_example() -> str:

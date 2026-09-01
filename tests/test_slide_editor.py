@@ -2971,3 +2971,54 @@ def test_rord_is_schema_and_survives_the_python_rebuild():
          "rord": ["ob", "oa", 7, ""]}]}])
     # non-strings and empties pruned, order kept
     assert out2[0]["slides"][0]["rord"] == ["ob", "oa"]
+
+
+def test_the_strips_ceiling_is_measured_from_content_not_from_its_box(out):
+    """T152. `ribbonMinW` measured the ribbon's floor with
+    `bar.scrollWidth`, and scrollWidth is floored at the element's own
+    client width -- a bar with slack reports its BOX, never its content.
+
+    So the floor came back as (deck width - strip width), and
+    fitFilmMax's `W - filmFloorW` handed back exactly the strip's CURRENT
+    width. The ceiling equalled the current width at every window size,
+    which meant the resize handle could shrink the column and never widen
+    it: it sat frozen against a limit it had itself produced. Measured on
+    a 1900px window before the fix: ribbon box 1685px, true need 890px,
+    ceiling 200px where 867px was free. After: 867px, and a drag to 500px
+    lands on 500px.
+    """
+    assert "bar.style.width='max-content';" in out
+    assert "min=Math.ceil(bar.getBoundingClientRect().width);" in out
+    assert "bar.style.width=hadW;" in out
+    # the measurement that could only ever return the box is gone
+    assert "min=bar.scrollWidth;" not in out
+    # the ceiling still has its other two terms, and still protects the
+    # ribbon's floor -- this fix widens the range, it does not remove it
+    assert "var hi=Math.min(900,Math.round(W*0.46));" in out
+    assert "if(filmFloorW) hi=Math.min(hi,W-filmFloorW);" in out
+    assert "deckEl.style.setProperty('--film-max',hi+'px');" in out
+
+
+def test_a_shared_thumbnail_row_fits_the_column(out):
+    """T153. `.film-list .mini-diagram` was `width:100%` for every row.
+
+    On the CURRENT row that is true -- its `.film-label` turns column, so
+    the thumbnail owns the width. On every other row the label is a
+    horizontal flex line (number, thumbnail, title) where 100% is a
+    promise the row cannot keep: at `flex:none` the thumbnail took the
+    whole line, squeezed the title to zero width and the row controls to
+    zero, overflowed the row by the number's width, and `.film-list`
+    (which sets `overflow-y:auto`, so the x axis computes to `auto` too)
+    grew a horizontal scrollbar inside a vertical list. Measured at a
+    200px column: row 171px, content 189px, title 0px.
+    """
+    # the stacked row keeps the full width...
+    assert ".film-list .film-row.current .mini-diagram{width:100%;" in out
+    # ...and a shared row shrinks instead of overflowing
+    assert ".film-list .film-row:not(.current) .mini-diagram{flex:1 1 auto;" \
+        in out
+    assert "min-width:0;width:auto;" in out
+    # the blanket rule that could not tell the two apart is gone
+    assert ".film-list .mini-diagram{width:100%;" not in out
+    # a vertical list never scrolls sideways
+    assert ".film-list{overflow-x:hidden;}" in out
