@@ -3169,3 +3169,29 @@ def test_clicking_an_effect_lights_that_effect(out):
     assert ("function commit(s){markDirty();rerender();render();renderFilm();"
             in out)
     assert "if(typeof animRibbonSync==='function') animRibbonSync();}" in out
+
+
+def test_reduced_motion_stops_the_entrance_effects_too(out):
+    """T157 / JVC-02. Reduced motion cleared slide TRANSITIONS
+    (deck.css's .slide guard) and text transitions (core.css), and left
+    every entrance keyframe running -- so a reader who had asked the OS
+    for less motion still got each build flying in. Measured live before
+    the fix: matchMedia('(prefers-reduced-motion: reduce)').matches was
+    true while the item's animationName was 'anIn-rise', duration 0.5s,
+    playState 'running'.
+
+    Builds are deliberately NOT disabled. .an-prebuild still holds an
+    item back and still releases it on the click, so the deck reveals in
+    the same steps -- it cuts instead of animating, which is what the
+    preference asks for and not one thing more.
+    """
+    # located by its CONTENT: the page carries three reduced-motion
+    # blocks (core.css's transitions, the .slide guard, and this one)
+    guard = ".an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}"
+    assert guard in out
+    i = out.index(guard)
+    assert out.rindex("@media (prefers-reduced-motion:reduce){", 0, i) > 0
+    # the guard sits with what it guards, not paragraphs away
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 1200
+    # the staging class is untouched: the BUILD still happens
+    assert ".an-prebuild{opacity:0!important;" in out

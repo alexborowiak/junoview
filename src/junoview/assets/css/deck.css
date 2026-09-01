@@ -1787,6 +1787,18 @@ select#fmt-font[hidden]{display:none;}
 .an-anim-fade{animation:anIn-fade .45s ease;}
 .an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
 .an-anim-zoom{animation:anIn-zoom .45s ease;}
+/* ...AND THE MACHINE'S ANSWER TO MOTION IS FINAL (T157 / JVC-02). The
+   guard sits HERE, beside what it guards, rather than with the unrelated
+   .slide rule far below: reduced motion cleared slide TRANSITIONS and
+   left every entrance running, so a reader who had asked the OS for less
+   motion still got each build flying in. Builds themselves are
+   untouched, which is the point -- .an-prebuild still holds an item back
+   and still releases it on the click, so the deck reveals in exactly the
+   same steps. It cuts instead of animating, which is what the preference
+   asks for and not one thing more. */
+@media (prefers-reduced-motion:reduce){
+  .an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}
+}
 /* the build-order badge shown in the editor — and ONLY while the Timeline
    pane is open (T76, user: "the animation bubbles that appear are the
    worst, like you can't get rid of them").

@@ -785,8 +785,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # inline transform (deleting the silent rise/zoom-to-fade substitution),
 # no longer end at a literal opacity that fought a.op, and clicking an
 # effect now moves the ribbon's pressed state.
-EXPECTED_MD5 = "98667d144a387a07f073401db71a9c59"
-EXPECTED_BYTES = 3107940
+# Moved 2026-09-01 for T157: prefers-reduced-motion now disables the
+# entrance keyframes as well as transitions; builds still reveal in the
+# same steps, they just cut instead of animating.
+EXPECTED_MD5 = "b9c0d8bd13d3b6dad09e16774c91ba01"
+EXPECTED_BYTES = 3108668
 
 
 def _render_example() -> str:

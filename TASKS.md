@@ -3055,6 +3055,23 @@ effects are visible for approximately none of the moments they are usable.
   `rotate(30deg)` and `opacity:.4` keeps the same rotate matrix at rest,
   mid-animation and after; `translate` runs `0 22px → none`; opacity runs
   `0 → 0.4`, not `0 → 1`; and the pressed state follows Fade then Rise.
+
+- [x] **T157 · S — Reduced motion stops the entrances too.**
+  `prefers-reduced-motion` cleared slide TRANSITIONS and text
+  transitions and left every entrance keyframe running, so a reader who
+  had asked their OS for less motion still got each build flying in
+  (JVC-02). Confirmed live before the fix: the query matched while the
+  item's `animationName` was `anIn-rise`, duration 0.5s, playState
+  running.
+  *Done 2026-09-01.* The guard sits BESIDE the keyframes it guards
+  rather than with the unrelated `.slide` rule far below, so the next
+  effect added is next to the rule that has to cover it. Builds are
+  deliberately untouched: `.an-prebuild` still holds an item back and
+  still releases it on the click, so the deck reveals in exactly the
+  same steps — it cuts instead of animating, which is what the
+  preference asks for and not one thing more. The test locates the
+  guard by its CONTENT, because the page carries three reduced-motion
+  blocks and the first one belongs to core.css.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this
