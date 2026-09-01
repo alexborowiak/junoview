@@ -1579,6 +1579,66 @@
       var o=animOut(a); if(o!=null&&o>mx) mx=o;});
     return mx+1;
   }
+  /* ---- THE WALK-THROUGH (T175) ---------------------------------------
+     Five findings, five plots, one sentence each, in order: the
+     commonest shape a talk has. Tying them one at a time already
+     worked, and was five trips through a menu with the chance to
+     misnumber on every one -- which is the sort of thing that gets a
+     feature called hard to use even though it does exactly what it
+     says.
+
+     READING ORDER on both sides, and the same sweep the rest of the
+     deck uses (orderedIdx) rather than a second one -- so the pairing
+     is the one you would have made by hand, and re-running it after
+     nudging a box gives the same answer.
+
+     NEVER SILENTLY TRUNCATED. Three sentences against five figures is
+     a real thing to do -- you talk over the other two -- so it pairs
+     what it can and the toast says exactly what was left over. A
+     preset that quietly dropped your fourth sentence would be worse
+     than no preset. */
+  function walkPairs(s,bookIdx,idxs){
+    var bk=(s&&s.annots||[])[bookIdx];
+    if(!bk) return null;
+    var slots=[];
+    if(bk.k==='flip'){
+      flipFrames(bk).forEach(function(f,k){slots.push(k);});
+    } else if(bk.k==='chart'){
+      chartSeriesNames(bk).forEach(function(nm){slots.push(nm);});
+    }
+    if(!slots.length) return null;
+    /* the words in reading order, the book itself never among them */
+    var ord=[];
+    orderedIdx(s).forEach(function(i){
+      if(i!==bookIdx&&idxs.indexOf(i)>=0) ord.push(i);});
+    /* anything selected but hidden is skipped by orderedIdx; keep it
+       out rather than pairing it invisibly */
+    return {kind:bk.k,book:bk,slots:slots,words:ord,
+      n:Math.min(slots.length,ord.length)};
+  }
+  function walkApply(bookIdx,idxs,m){
+    var s=pres.slides[cur];
+    var w=walkPairs(s,bookIdx,idxs);
+    if(!w||!w.n) return;
+    ensureOids(s);
+    for(var k=0;k<w.n;k++){
+      var a=(s.annots||[])[w.words[k]]; if(!a) continue;
+      /* one tie replaces the other: an object bound to a figure AND to
+         a series would be asked two questions with one answer */
+      delete a.tie; delete a.fb; delete a.fbf; delete a.fbm;
+      if(w.kind==='flip'){
+        a.fb=w.book.fid;a.fbf=w.slots[k];a.fbm=m;
+      } else {
+        a.tie={to:'series',id:w.book.oid,at:w.slots[k],m:m};
+      }
+    }
+    markDirty();renderSlide();renderFilm();
+    if(typeof renderSelPane==='function') renderSelPane();
+    var left=w.words.length-w.n, spare=w.slots.length-w.n;
+    toast(w.n+' paired up in order'
+      +(left?(' \u2014 '+left+' left over with nothing to sit beside'):'')
+      +(spare?(' \u2014 '+spare+' still free'):''));
+  }
   /* ---- LEAVING (T174) ----------------------------------------------
      `a.anim.out` is a build ORDER: the click on which this object goes
      away again. Absent -- which is every build ever written until now --

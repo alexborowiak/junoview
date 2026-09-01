@@ -840,13 +840,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # flip pages and chart series.
 # Moved 2026-09-01 for T172: text builds - a box arrives a bullet or a
 # sentence at a time, cut at render so the stored words never change.
+# T175 2026-09-01: the walk-through preset adds JS to the deck bundle.
 # T174 2026-09-01: the Layers pane build column, the swap verb and
 # the exit key -- more JS and CSS in the embedded deck bundle.
 # T173 2026-09-01: the chart-series tie (an object bound to the
 # moment one named series is plotted) and the galBoot fix that
 # driving it uncovered -- both add JS to the embedded deck bundle.
-EXPECTED_MD5 = "08f6b1f5c39ba614fb547eebe703a18d"
-EXPECTED_BYTES = 3238579
+EXPECTED_MD5 = "d939f9b25240ebaff1cf47173f53a73b"
+EXPECTED_BYTES = 3243171
 
 
 def _render_example() -> str:

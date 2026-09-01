@@ -1964,6 +1964,45 @@
               'flipbook');
           });
         }
+        /* PAIR THEM ALL UP AT ONCE (T175). Offered above the one-at-a-
+           time rows, because with several things selected it is almost
+           always the thing you meant: the rows below still do one
+           object, and this does the walk.
+           Both readings of "tied" are offered rather than picked for
+           you -- "just this one at a time" is a walk-through, "and
+           everything before it" builds a list up as you go -- because
+           which one you want is a fact about the talk, not about the
+           slide. */
+        (function(){
+          if(tieMine.length<2) return;
+          var books=tieBooks.concat(tieCharts);
+          books.forEach(function(bi){
+            var bk2=(tieS.annots||[])[bi];
+            var w=walkPairs(tieS,bi,tieMine);
+            if(!w||!w.n) return;
+            var what=(w.kind==='flip')?'figure':'series';
+            /* "series" is already its own plural; "2 seriess" is the
+               kind of thing that makes a good feature look unfinished */
+            var whats=(w.kind==='flip')
+              ?('figure'+(w.slots.length===1?'':'s')):'series';
+            [['only','one at a time',
+              'Each one shows only beside its own '+what+' \u2014 a '
+              +'walk-through'],
+             ['from','building up',
+              'Each one arrives with its '+what+' and stays, so the '
+              +'list builds up as you go']].forEach(function(md){
+              row('Pair '+w.n+' up with the '+w.slots.length+' '
+                +whats+' of '
+                +(annotLabel(bk2)||'it')+' \u2014 '+md[1],'',
+                function(){walkApply(bi,tieMine,md[0]);},
+                md[2]+'. In reading order, top to bottom'
+                +(w.words.length>w.n
+                  ?(' \u2014 '+(w.words.length-w.n)+' would be left over')
+                  :''),
+                w.kind==='flip'?'flipbook':'plots');
+            });
+          });
+        })();
         tieCharts.forEach(function(ci){
           /* a chart cannot be tied to its own series */
           var mine2=tieMine.filter(function(i){return i!==ci;});

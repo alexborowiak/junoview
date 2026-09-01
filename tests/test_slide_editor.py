@@ -3731,3 +3731,33 @@ def test_replacing_one_object_with_another_is_one_verb(out):
     assert "gone.out=comes.anim.order||0;" in out
     # re-running it must not push the swap one click further every time
     assert "comes.anim.order=nextAnimOrder(s5);" in out
+
+def test_pairing_words_to_figures_is_one_command(out):
+    """T175. Five findings, five plots, one sentence each, in order, is
+    the commonest shape a talk has -- and tying them one at a time was
+    five trips through a menu with a chance to misnumber on each. One
+    command does the walk.
+
+    Reading order on both sides, through the same sweep the rest of the
+    deck uses, so the pairing is the one you would have made by hand
+    and re-running it gives the same answer.
+    """
+    assert "function walkPairs(s,bookIdx,idxs)" in out
+    assert "function walkApply(bookIdx,idxs,m)" in out
+    # the same sweep, not a second one
+    assert "orderedIdx(s).forEach(function(i){" in out
+    # one tie replaces the other rather than stacking two answers
+    assert "delete a.tie; delete a.fb; delete a.fbf; delete a.fbm;" in out
+    # never silently truncated: three sentences against five figures is
+    # a real thing to do, and the toast has to say what was left over
+    assert "left over with nothing to sit beside" in out
+    # both readings offered rather than chosen for you
+    assert "'one at a time'," in out
+    assert "'building up'," in out
+
+
+def test_a_series_is_its_own_plural(out):
+    """T175, caught by reading the live menu: "Pair 2 up with the 2
+    seriess". A good feature reads as unfinished over one letter.
+    """
+    assert "?('figure'+(w.slots.length===1?'':'s')):'series';" in out

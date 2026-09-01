@@ -3596,6 +3596,31 @@ effects are visible for approximately none of the moments they are usable.
   toast, pane reads `·→1`, By build lists BEFORE under both “on the
   slide to begin with” and “click 1” (as “goes — …”), and Present
   shows BEFORE alone, then AFTER alone.
+- [x] **T175 · M — Pair the words to the figures in one command.**
+  Tying a sentence to a figure has worked since T86 and to a chart
+  series since T173. Doing it five times is five trips through a menu
+  with a chance to misnumber on every one — and five findings, five
+  plots, one sentence each, in order, is the commonest shape a talk
+  has. So it gets one command.
+  *Done 2026-09-01.* Select the words and the thing that steps, and the
+  “shows with” section offers **Pair N up with the N figures/series**,
+  in two readings: *one at a time* (a walk-through — each sentence only
+  beside its own figure) and *building up* (each arrives and stays, so
+  the list grows). Which one you want is a fact about the talk, not
+  about the slide, so both are offered rather than one being picked.
+  READING ORDER on both sides, through `orderedIdx` — the sweep the
+  rest of the deck already uses, never a second one — so the pairing is
+  the one you would have made by hand and re-running it after nudging a
+  box gives the same answer. One tie replaces the other, because an
+  object bound to a figure AND a series would be two questions with one
+  answer. NEVER SILENTLY TRUNCATED: three sentences against five
+  figures is a real thing to do, so it pairs what it can and the toast
+  names what was left over and what is still free.
+  Driven: a 2-series chart set to reveal one at a time, two sentences,
+  Pair → “2 paired up in order”, the Layers build column reads
+  “Series 1”/click 2 and “Series 2”/click 3, and Present gives axes,
+  then Series 1 with Point 1, then Series 2 with Point 2 alone.
+  Also fixed by reading the live menu: it said “2 seriess”.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this
