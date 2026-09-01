@@ -103,3 +103,54 @@ def test_the_chart_dialog_and_styles_exist():
     assert "p.className='sh-menu chart-data';p.id='chart-data';" in out
     css = assets.deck_css()
     assert ".an-chartsvg{" in css and ".chart-ta{" in css
+
+
+def test_a_charts_marks_carry_the_series_they_belong_to(out):
+    """T159, the enabling step for series-addressed build steps.
+
+    chartSvg appended every mark straight onto the <svg>. The drawing
+    loops have always KNOWN which series they were in -- they sit inside
+    `d.series.forEach(function(se){...})` -- and threw that away on the
+    append, leaving one flat bag of shapes. A build step cannot address
+    what has no name, which is why "reveal this plot one line at a time"
+    was impossible here and why every other tool does it by exporting N
+    separate pictures of the same plot.
+
+    Each series' marks now go in `<g data-series="NAME">` and everything
+    that is not a series -- title, gridlines, axis and category labels --
+    goes in the skeleton group, which is the split the slow reveal wants:
+    axes first, then one series at a time.
+
+    Keyed by NAME, never index. `chartResyncAll` already replaces
+    `a.series` wholesale on a refresh and carries the author's per-series
+    COLOUR across by matching `se.name`; a build order keyed the same way
+    survives a column being added, removed or reordered upstream.
+    PowerPoint's animation list is keyed to shape index, which is exactly
+    why theirs breaks when the data moves under it.
+    """
+    assert "function seriesG(name){" in out
+    assert "g.setAttribute('data-series',k);" in out
+    assert "gSkel.setAttribute('data-part','skeleton');" in out
+    # every mark-drawing branch routes through the group, none append flat
+    assert "var gl2=seriesG(se.name);" in out      # line
+    assert "var gs=seriesG(se.name);" in out       # scatter
+    assert "var gb=seriesG(se.name);" in out       # bar
+    # ...and a legend entry travels with its series, or it spoils the build
+    assert "var gL=seriesG(se.name);" in out
+    # the skeleton really does hold the non-series furniture
+    assert "gSkel.appendChild(gl);" in out
+    assert "if(a.title) gSkel.appendChild(" in out
+
+
+def test_a_chart_refresh_carries_author_intent_across_by_name(out):
+    """The precedent T159 builds on, pinned so it cannot quietly change.
+
+    A refresh replaces `a.series` wholesale, so anything the AUTHOR chose
+    per series has to be re-attached afterwards, and the only stable
+    handle is the name. Colour already does this; the series build order
+    will use the same match, which is what makes a build survive the data
+    changing underneath it.
+    """
+    assert "var old={};chartParse(a).series.forEach(function(se){" in out
+    assert "old[se.name]=se.color;});" in out
+    assert "if(old[se.name]) se.color=old[se.name];});" in out

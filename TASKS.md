@@ -3094,6 +3094,32 @@ effects are visible for approximately none of the moments they are usable.
   fell within the first 800 characters of the boot tail, and the new call
   plus its note pushed it past — the window is wider and the ORDER it
   was really guarding is now asserted directly.
+
+- [x] **T159 · S — A chart's marks carry the series they belong to.**
+  The enabling step for the one animation feature that is genuinely
+  ours. `chartSvg` appended every mark straight onto the `<svg>`: the
+  drawing loops have always KNOWN which series they were in — they sit
+  inside `d.series.forEach(function(se){...})` — and threw it away on
+  the append, leaving one flat bag of shapes. A build step cannot
+  address what has no name, which is why "reveal this plot one line at a
+  time" was impossible here, and why every other tool in the chain does
+  it by exporting N SEPARATE PICTURES of the same plot (ggreveal returns
+  a list of plots, beamer wraps `\only` round the block, Quarto renders
+  one version per step, PowerPoint stacks PNGs with series deleted).
+  Junoview is the only one that still HAS the numbers at present time.
+  *Done 2026-09-01.* Each series' marks go in `<g data-series="NAME">`;
+  the title, gridlines, axis and category labels go in the SKELETON
+  group — the split the "slow reveal" wants (Evergreen: axes and
+  gridlines first, then each line). A legend entry travels WITH its
+  series, because a key naming a line the audience cannot see yet is the
+  spoiler the whole technique exists to avoid; the layout is still
+  computed for every series, so nothing reflows as they arrive. Keyed by
+  NAME, never index, and that is the durability story: `chartResyncAll`
+  already carries the author's per-series COLOUR across a refresh by
+  matching `se.name`, so a build order keyed the same way survives a
+  column being added, removed or reordered upstream — where PowerPoint's
+  list is keyed to shape index, which is exactly why theirs breaks.
+  Pie is deliberately left flat: its slices are CATEGORIES, not series.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

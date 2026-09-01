@@ -791,8 +791,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T158: the animation surface moves out of
 # 45-images.js into its own 48-animation.js part, and its executing sub-
 # IIFE becomes animBoot() called from the boot sequence.
-EXPECTED_MD5 = "de910b59f09dbef611dab610376d2b67"
-EXPECTED_BYTES = 3109639
+# Moved 2026-09-01 for T159: a chart's marks are grouped per series (<g
+# data-series>) with the axes and labels in a skeleton group, so a build
+# step can address a series by name.
+EXPECTED_MD5 = "0208939a620eb756d5f44812f0472b85"
+EXPECTED_BYTES = 3111621
 
 
 def _render_example() -> str:

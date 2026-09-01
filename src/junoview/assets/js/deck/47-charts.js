@@ -79,10 +79,44 @@
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
     svg.setAttribute('class','an-chartsvg');
     svg.setAttribute('preserveAspectRatio','none');
+    /* ---- WHICH MARKS BELONG TO WHICH SERIES (T159) ------------------
+       Every mark used to be appended straight onto the <svg>. The loops
+       below have always KNOWN which series they were drawing -- they sit
+       inside `d.series.forEach(function(se){...})` -- and threw that
+       away on the append, leaving one flat bag of shapes. A build step
+       cannot address what has no name.
+
+       So each series' marks go into their own `<g data-series="NAME">`,
+       and everything that is not a series -- title, gridlines, axis
+       labels, category labels, the legend -- goes into the SKELETON
+       group. That is the split the "slow reveal" wants: axes first, then
+       one series at a time.
+
+       Keyed by NAME, never by index, and that is the whole durability
+       story. `chartResyncAll` already replaces `a.series` wholesale on a
+       refresh and carries the author's per-series COLOUR across by
+       matching `se.name` -- so a build order keyed the same way survives
+       a column being added, removed or reordered upstream. PowerPoint's
+       animation list is keyed to shape index, which is exactly why it
+       breaks when the data changes under it. */
+    var gSkel=svgEl('g');
+    gSkel.setAttribute('data-part','skeleton');
+    svg.appendChild(gSkel);
+    var gSeries={};
+    function seriesG(name){
+      var k=String(name==null?'':name);
+      if(!gSeries[k]){
+        var g=svgEl('g');
+        g.setAttribute('data-series',k);
+        svg.appendChild(g);
+        gSeries[k]=g;
+      }
+      return gSeries[k];
+    }
     var ink='#dbe7ef',dim='#8aa0b0',grid='#8aa0b033';
     var legend=(a.leg!==0)&&(d.series.length>1||a.ct==='pie');
     var T=(a.title?30:12),B=H-(legend?48:30),L=46,R=W-12;
-    if(a.title) svg.appendChild(
+    if(a.title) gSkel.appendChild(
       svgText(W/2,19,String(a.title),15,ink,'middle'));
     if(!d.series.length){
       svg.appendChild(svgText(W/2,H/2,'No data — right-click '
@@ -133,8 +167,8 @@
       gl.setAttribute('x1',L);gl.setAttribute('x2',R);
       gl.setAttribute('y1',Y(g));gl.setAttribute('y2',Y(g));
       gl.setAttribute('stroke',g===0?dim:grid);
-      svg.appendChild(gl);
-      svg.appendChild(svgText(L-5,Y(g)+3,
+      gSkel.appendChild(gl);
+      gSkel.appendChild(svgText(L-5,Y(g)+3,
         String(Math.round(g*1000)/1000),9,dim,'end'));
     }
     var n=d.cats.length;
@@ -152,12 +186,12 @@
       var xstep=chartStep(xhi-xlo);
       for(var xv=Math.ceil(xlo/xstep)*xstep;xv<=xhi+xstep/2;xv+=xstep){
         var px=L+(xv-xlo)/(xhi-xlo)*(R-L);
-        svg.appendChild(svgText(px,B+13,
+        gSkel.appendChild(svgText(px,B+13,
           String(Math.round(xv*1000)/1000),9,dim,'middle'));
       }
     } else {
       d.cats.forEach(function(c,i){
-        svg.appendChild(svgText(X(i),B+13,
+        gSkel.appendChild(svgText(X(i),B+13,
           c.length>9?c.slice(0,8)+'…':c,9,dim,'middle'));
       });
     }
@@ -169,26 +203,29 @@
         pl.setAttribute('fill','none');
         pl.setAttribute('stroke',se.color);
         pl.setAttribute('stroke-width',2);
-        svg.appendChild(pl);
+        var gl2=seriesG(se.name);
+        gl2.appendChild(pl);
         se.ys.forEach(function(v,i){
           var c=svgEl('circle');
           c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
           c.setAttribute('r',2.6);c.setAttribute('fill',se.color);
-          svg.appendChild(c);
+          gl2.appendChild(c);
         });
       });
     } else if(a.ct==='scatter'){
       d.series.forEach(function(se){
+        var gs=seriesG(se.name);
         se.ys.forEach(function(v,i){
           var c=svgEl('circle');
           c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
           c.setAttribute('r',3.4);c.setAttribute('fill',se.color);
-          svg.appendChild(c);
+          gs.appendChild(c);
         });
       });
     } else {   /* bar, the default */
       var ns=d.series.length,gw=(R-L)/n,bw=gw*0.72/ns;
       d.series.forEach(function(se,si){
+        var gb=seriesG(se.name);
         se.ys.forEach(function(v,i){
           var x=L+i*gw+gw*0.14+si*bw;
           var b=svgEl('rect');
@@ -197,7 +234,7 @@
           b.setAttribute('width',Math.max(1,bw-1));
           b.setAttribute('height',Math.max(0.5,Math.abs(Y(v)-Y(0))));
           b.setAttribute('fill',se.color);
-          svg.appendChild(b);
+          gb.appendChild(b);
         });
       });
     }
@@ -208,8 +245,13 @@
         sw2.setAttribute('x',lx2);sw2.setAttribute('y',H-22);
         sw2.setAttribute('width',10);sw2.setAttribute('height',10);
         sw2.setAttribute('fill',se.color);
-        svg.appendChild(sw2);
-        svg.appendChild(svgText(lx2+14,H-13,se.name,10,dim));
+        /* the legend entry travels WITH its series (T159). A key naming a
+           line the audience cannot see yet is the spoiler the slow reveal
+           exists to avoid -- the layout is still computed for every
+           series, so nothing reflows as they arrive. */
+        var gL=seriesG(se.name);
+        gL.appendChild(sw2);
+        gL.appendChild(svgText(lx2+14,H-13,se.name,10,dim));
         lx2+=14+Math.max(34,se.name.length*6)+10;
       });
     }
