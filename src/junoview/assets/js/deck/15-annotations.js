@@ -1386,12 +1386,12 @@
      item with no a.fb, so for every deck that exists today this is the
      function that ran before, unchanged. */
   function stepShows(s,a){
-    return flipShows(s,a)&&seriesShows(s,a);
+    return flipShows(s,a)&&seriesShows(s,a)&&!animGone(s,a);
   }
   /* does this item point at any moment at all -- the fast path the hide
      pass takes on the ordinary item, which is nearly every item */
   function stepTied(a){
-    return !!(a&&(a.fb||seriesTie(a)));
+    return !!(a&&(a.fb||seriesTie(a)||animOut(a)!=null));
   }
   /* step a flip book's arrows. In playback the frames ARE stops in the one
      playback sequence, so an arrow moves the talk — otherwise the arrow
@@ -1546,6 +1546,14 @@
          arrives on the first of them */
       var n=textBy(a)?textPieceCount(a):1;
       if(!(o in seen)||n>seen[o]) seen[o]=n;});
+    /* AN EXIT IS A CLAIM ON A STOP TOO (T174). Usually it lands on a
+       build that already exists -- the click the replacement arrives on
+       -- and this changes nothing. It matters for the last one: "goes on
+       one more click at the end" has to BE a click, or the slide would
+       end while the object was still there. */
+    (s&&s.annots||[]).forEach(function(a){
+      var o=animOut(a);
+      if(o!=null&&!(o in seen)) seen[o]=1;});
     var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
     var map={},sub={},last={},at=0;
     keys.forEach(function(o){
@@ -1563,8 +1571,69 @@
   }
   function nextAnimOrder(s){
     var mx=-1;(s&&s.annots||[]).forEach(function(a){
-      if(a&&a.anim&&(a.anim.order||0)>mx) mx=a.anim.order||0;});
+      if(!a||!a.anim) return;
+      if((a.anim.order||0)>mx) mx=a.anim.order||0;
+      /* an EXIT claims an order too (T174), or asking twice for "on one
+         more click at the end" would hand out the same number twice and
+         the second object would leave on the first one's click */
+      var o=animOut(a); if(o!=null&&o>mx) mx=o;});
     return mx+1;
+  }
+  /* ---- LEAVING (T174) ----------------------------------------------
+     `a.anim.out` is a build ORDER: the click on which this object goes
+     away again. Absent -- which is every build ever written until now --
+     means it stays, so no existing deck moves by a pixel.
+
+     This exists because REPLACING one picture with another is the thing
+     people fight PowerPoint over, and a deck that can only ever add to
+     the slide cannot express it: you end up with two figures stacked and
+     a prayer. With an exit it is one fact -- A goes on the click B
+     arrives -- and the Layers pane says so on both rows.
+
+     An order, not a stop: stops shift when a flip book is added
+     anywhere earlier, and a swap that drifted apart the moment you
+     touched something else would be worse than not having it. */
+  function animOut(a){
+    if(!a) return null;
+    var o=a.out;
+    if(typeof o!=='number'||!isFinite(o)||o<0) return null;
+    /* A PEER OF `anim`, NOT PART OF IT, and this is the whole design.
+       The commonest swap of all is "this picture is simply there, and
+       that one replaces it on the first click" -- and an object that is
+       simply there has no `anim` at all to hang an exit off. Putting the
+       exit inside the entrance would have made the ordinary case need a
+       click nobody asked for. Found by driving it, not by reading it.
+       An object that DOES arrive on a click cannot leave before or on
+       that same click: that is not a swap, it is an object nobody would
+       ever see. */
+    if(a.anim&&o<=(a.anim.order||0)) return null;
+    return o|0;
+  }
+  /* has this object's exit been reached? Editing and export are every
+     moment at once, so neither is a moment this can be asked about --
+     the same reason seriesShows fails open there. */
+  function animGone(s,a){
+    var o=animOut(a); if(o==null) return false;
+    if(mode!=='view'||printAll) return false;
+    var st=slideBuildSteps(s).map[o];
+    if(st==null) return false;             /* the build went: it stays */
+    var sp=flipPlan(s).stop[st];
+    if(sp==null) sp=st;
+    return revealCount>sp;
+  }
+  /* what an object is tied to, in words, for a surface that has to say
+     so in one short line. Null when it is tied to nothing. */
+  function tieWhat(s,a){
+    if(!a) return null;
+    var t=seriesTie(a);
+    if(t){
+      var ch=annotByOid(s,t.id);
+      return '\u201c'+t.at+'\u201d'
+        +(ch?(' in '+(annotLabel(ch)||'a chart')):'');
+    }
+    if(a.fb&&a.fbf!=null) return 'figure '+((a.fbf|0)+1)+' of a flip book';
+    if(a.fb) return 'a flip book';
+    return null;
   }
   function itemLabel(s,idx){
     var a=(s&&s.annots||[])[idx]; if(!a) return 'item';

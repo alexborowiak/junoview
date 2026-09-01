@@ -3557,6 +3557,45 @@ effects are visible for approximately none of the moments they are usable.
   (“Axes first, then 2 series — 3 clicks”), words tied to Series 2,
   then Present — press 1 axes, press 2 Series 1, press 3 Series 2 AND
   the sentence.
+- [x] **T174 · L — The Layers pane is the timeline, and an object can leave.**
+  Asked for in one breath with the thing it fixes: “it's really
+  annoying when you want an image replacing another image … it would be
+  cool if the animations was also tied in with the layers, so you can
+  hide layers and build animations this way — like the animations also
+  appears in the layers.” Both halves are one idea: the pane that says
+  whether a thing is SEEN should also say WHEN.
+  *Done 2026-09-01.* Every row now carries a build column — the click it
+  arrives on, an arrow, the click it goes on — read straight down the
+  list. Clicking it opens one popover that sets both ends. A tied object
+  names the click its tie lands on rather than showing a dot: a build
+  column that lied about the one thing it was added for would be worse
+  than no column. **By build** re-reads the same list in playback order,
+  one heading per click, which is the animation pane's job done where
+  you were already looking; **Animate in order** arms the click-
+  everything mode from the list of the things you would be clicking.
+  THE EXIT. `a.out` is the build order on which an object goes away.
+  A PEER of `anim`, not a field inside it — and DRIVING IT is what
+  settled that. The commonest swap of all is “this picture is simply
+  there, and that one replaces it on the first click”, and an object
+  that is simply there has no `anim` to hang an exit off; the first cut
+  put `out` inside `anim`, so the swap verb had to invent an entrance
+  for the outgoing object and the whole thing landed a click late. The
+  badge read `[1]` where it should have read `[·→1]`, which is exactly
+  the kind of thing no substring test can see.
+  An exit rides the ONE hide question — `stepShows` now asks the flip
+  tie, the series tie and the exit together — so the next kind of stop
+  is one edit rather than a hunt. It claims its stop, or “goes on one
+  more click at the end” would end the slide with the object still
+  there. Unresolvable exits fail open, like every other reference.
+  The door is a verb, not a pair of settings: two objects selected is
+  exactly the shape of “make that replace this”, so the right-click
+  menu offers **Replace “A” with “B”** both ways round and does the
+  arithmetic. .pptx gets entrances only, so an exit is counted in the
+  export dialog rather than silently arriving and staying.
+  Driven: two boxes, both “on the slide from the start”, Replace →
+  toast, pane reads `·→1`, By build lists BEFORE under both “on the
+  slide to begin with” and “click 1” (as “goes — …”), and Present
+  shows BEFORE alone, then AFTER alone.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

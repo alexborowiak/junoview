@@ -1554,6 +1554,12 @@
          'only' and 'until' need the words to LEAVE again, which this
          writer has no exit animation for, so those are counted and
          land whole. Failing open beats a paragraph nobody can find. */
+      /* AN EXIT IS COUNTED, NOT SILENTLY DROPPED (T174). PowerPoint
+         has exit animations, but this writer only emits entrances --
+         and a swap that exported as two pictures stacked on top of each
+         other would be worse than being told. */
+      if(typeof animOut==='function'&&animOut(a)!=null)
+        note.exits=(note.exits|0)+1;
       var xt=(typeof seriesTie==='function')?seriesTie(a):null;
       var xstep=null;
       if(xt&&!a.anim){
@@ -1662,7 +1668,7 @@
      lost, asks. Nothing to lose means no dialog, so the ordinary export
      is still one click (T109). */
   function pptxLosses(){
-    var note={skipped:0,cropped:0,maths:0,tied:0,orig:{}};
+    var note={skipped:0,cropped:0,maths:0,tied:0,exits:0,orig:{}};
     var lost=[];
     outputSlides().forEach(function(ent){
       note.frame=ent.f;
@@ -1674,6 +1680,10 @@
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
       +'arrive as plain characters');
+    if(note.exits) lost.push(note.exits+' object'
+      +(note.exits===1?'':'s')+' set to GO on a later click \u2014 this '
+      +'writer emits entrances only, so they arrive and then stay, '
+      +'stacked over whatever was meant to replace them');
     if(note.tied) lost.push(note.tied+' item'+(note.tied===1?'':'s')
       +' tied to a chart series with “only” or “until” '
       +'— PowerPoint is given no way to take them away again, so '
@@ -1721,7 +1731,8 @@
   }
   function pptxBuildAndSave(orig){
     var pg=pageOf(),
-      note={skipped:0,cropped:0,maths:0,tied:0,orig:orig||{}};
+      note={skipped:0,cropped:0,maths:0,tied:0,exits:0,
+        orig:orig||{}};
     var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     /* a slide-jump names a DECK slide; the .pptx page it lands on is
@@ -1787,6 +1798,9 @@
     if(note.skipped) msg+='. '+note.skipped+' cell'
       +(note.skipped===1?'':'s')+' could not convert (a rich output with '
       +'no picture and no text — use Export PDF for those)';
+    if(note.exits) msg+='. '+note.exits+' object'
+      +(note.exits===1?'':'s')+' meant to leave on a later click will '
+      +'stay \u2014 PowerPoint gets entrances only from here';
     if(note.tied) msg+='. '+note.tied+' series-tied item'
       +(note.tied===1?'':'s')+' will stay once shown — '
       +'“only” and “until” need an exit this '

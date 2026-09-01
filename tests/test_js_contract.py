@@ -46,6 +46,9 @@ TEMPLATES = ["deck.html", "page.html", "shell.html", "help.html"]
 # element itself at runtime. Curated by hand -- a new entry needs a note
 # saying where the element is created, so the next reader can re-verify.
 RUNTIME_IDS = {
+    # 05-figures-and-ribbon.js builds this popover on demand from the
+    # Layers pane build column and removes it on close (T174)
+    "step-menu",
     # 47-charts.js builds this popover on demand when you tie an
     # object to a chart SERIES, and removes it on close (T173)
     "series-tie",

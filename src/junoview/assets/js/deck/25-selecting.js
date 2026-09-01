@@ -1984,6 +1984,55 @@
             +'newest, or goes when it arrives','plots');
         });
       }
+      /* REPLACING ONE THING WITH ANOTHER (T174), which is the thing
+         people actually fight PowerPoint over: "it's really annoying
+         when you want an image replacing another image". Two objects
+         selected is exactly the shape of that question, so it is asked
+         here and answered in one click -- the first goes on the same
+         click the second arrives on. Not restricted to images: a table
+         replaced by its chart, or one paragraph by another, is the same
+         move and the same fix.
+         The ORDER is the selection order, and the label says which is
+         which rather than making you guess. */
+      var swapN=selIdxs();
+      if(swapN.length===2){
+        var sA=(pres.slides[cur].annots||[])[swapN[0]];
+        var sB=(pres.slides[cur].annots||[])[swapN[1]];
+        if(sA&&sB){
+          menuHead(m,'one replaces the other');
+          [[0,1],[1,0]].forEach(function(pair){
+            var gone=(pres.slides[cur].annots||[])[swapN[pair[0]]];
+            var comes=(pres.slides[cur].annots||[])[swapN[pair[1]]];
+            row('Replace \u201c'+String(annotLabel(gone)).slice(0,18)
+              +'\u201d with \u201c'+String(annotLabel(comes)).slice(0,18)
+              +'\u201d','',function(){
+              var s5=pres.slides[cur];
+              /* the incoming object needs a click of its own; the
+                 outgoing one leaves on that same click. If it already
+                 has one, that IS the click -- re-running this must not
+                 push the swap one further along every time.
+                 The outgoing object is left exactly as it was. On a
+                 slide with nothing else built that means "simply there,
+                 until it goes", which is what a swap looks like when you
+                 describe it out loud, and it costs no extra click. */
+              if(!comes.anim)
+                comes.anim={type:'fade',order:nextAnimOrder(s5)};
+              if(comes.anim&&gone.anim
+                &&(gone.anim.order||0)>=(comes.anim.order||0))
+                comes.anim.order=nextAnimOrder(s5);
+              gone.out=comes.anim.order||0;
+              markDirty();renderSlide();renderFilm();
+              if(typeof animPaneSync==='function') animPaneSync();
+              if(typeof renderSelPane==='function') renderSelPane();
+              toast('One click: \u201c'
+                +String(annotLabel(gone)).slice(0,18)+'\u201d goes, '
+                +'\u201c'+String(annotLabel(comes)).slice(0,18)
+                +'\u201d arrives');
+            },'One click swaps them over \u2014 no stacking two things '
+              +'up and hoping','exit');
+          });
+        }
+      }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
          time: an anchor is a fact about that item, and a menu that
          set nine of them at once would be a menu nobody could undo in

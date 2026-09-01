@@ -422,6 +422,28 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
 .sp-kind.k-image{background:#46a892;}
 .sp-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
+/* THE BUILD COLUMN (T174). Monospace and a fixed width so the numbers
+   line up as a column you can read straight down -- that is the whole
+   point of putting them here rather than in a tooltip. Dim until the
+   object actually has a build, because the common answer is "no build"
+   and a list of bright dots would be noise. */
+.sp-step{flex:none;display:flex;align-items:center;gap:3px;
+  background:none;border:none;color:#4d5f70;cursor:pointer;
+  font-family:var(--mono);font-size:10px;padding:1px 4px;
+  border-radius:4px;line-height:1;min-width:34px;justify-content:flex-end;}
+.sp-step:hover{color:#fff;background:#ffffff14;}
+.sp-step.on{color:var(--cyan);}
+.sp-step.tied{color:#a07be0;}
+.sp-stepn{letter-spacing:.02em;}
+/* a row listed under the click it LEAVES on, in the by-build view: it is
+   not arriving here, and a list that showed both the same way would read
+   as the object appearing twice */
+.sp-row.sp-leaving .sp-t{opacity:.6;font-style:italic;}
+/* and SAID, not just dimmed: the same object is listed twice in this
+   view -- once where it arrives, once where it goes -- and two identical
+   rows would read as a duplicate rather than as a swap. */
+.sp-row.sp-leaving .sp-t::before{content:"goes — ";
+  font-style:normal;color:#ff6b57;}
 .sp-act{flex:none;background:none;border:none;color:#5f7386;
   cursor:pointer;font-size:12px;padding:1px 3px;border-radius:4px;
   line-height:1;}

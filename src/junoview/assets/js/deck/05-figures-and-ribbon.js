@@ -1903,6 +1903,16 @@
       if(a&&a.fold&&!seen[a.fold]){seen[a.fold]=1;out.push(a.fold);}});
     return out;
   }
+  /* THE LAYERS PANE IS ALSO THE TIMELINE (T174). Asked for directly:
+     "the animations also appears in the layers ... you can hide layers
+     and build animations this way". It is the right place for it --
+     this pane is already open while you work, already lists everything
+     on the slide, and already carries the one control (the eye) that
+     decides whether a thing is seen. A build is the same question asked
+     about a MOMENT rather than about the whole slide, and answering both
+     in one list is what makes a swap -- this picture, then that one --
+     something you can see rather than something you have to remember. */
+  var spByBuild=false;
   function renderSelPane(){
     var pane=$('#selpane'),list=$('#selpane-list');
     if(!pane||pane.hidden||!list) return;
@@ -2012,6 +2022,33 @@
       lk.addEventListener('click',function(e){
         e.stopPropagation();cycleLock(i);});
       r.appendChild(lk);
+      /* THE BUILD, ON THE ROW. A number you can read down the list --
+         which click this arrives on -- and, when it has one, the click
+         it leaves on after an arrow. A dot means "on the slide from the
+         start", which is what nearly everything is. Clicking it opens
+         the one popover that sets both ends. */
+      var inf=spStepInfo(s,a);
+      var bg=document.createElement('button');
+      bg.className='sp-step'+(inf.n!=null?' on':'')
+        +(inf.tie?' tied':'');
+      bg.type='button';
+      var lab=(inf.n!=null?String(inf.n):'\u00b7')
+        +(inf.out!=null?('\u2192'+inf.out):'');
+      /* the icon is trusted bic()/fxIcon() markup; the number is a
+         number this function computed, never anything typed */
+      bg.innerHTML=(inf.tie?bic('flipbook')
+        :(inf.type?fxIcon(inf.type):bic('none')))
+        +'<span class="sp-stepn">'+lab+'</span>';
+      bg.title=spStepTitle(inf);
+      bg.setAttribute('aria-label',bg.title);
+      bg.addEventListener('click',function(e){
+        e.stopPropagation();
+        var l3=stage.querySelector('.annot-layer');
+        if(l3) selectAnnot(l3,i,false);
+        renderSelPane();
+        openStepMenu(i,e.currentTarget);
+      });
+      r.appendChild(bg);
       var dp2=document.createElement('button');
       dp2.className='sp-act';dp2.type='button';dp2.innerHTML=bic('copy');
       dp2.title='Duplicate';
@@ -2073,6 +2110,26 @@
         toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
           +'\u201c'+nm+'\u201d');
       });
+    /* THE TIMELINE VIEW. Layers is stacking order, which is the right
+       default -- it is what the pane is for. But once every row carries
+       a build number, the same list read in PLAYBACK order is the
+       animation pane's job done in the place you were already looking,
+       so it is a toggle rather than a fourth panel to keep in step. */
+    tool(bic(spByBuild?'objects':'play')
+      +(spByBuild?' By layer':' By build'),
+      spByBuild
+        ? 'Back to stacking order \u2014 what is in front of what'
+        : 'Read the slide in playback order instead, one heading per '
+          +'click',
+      true,
+      function(){spByBuild=!spByBuild;renderSelPane();});
+    /* the click-everything mode, reachable from the list of the things
+       you would be clicking */
+    tool(bic('appear')+' Animate in order',
+      'Click your objects in the order you want them to arrive, then '
+      +'Finish \u2014 the same mode as the ribbon\u2019s One by one',
+      ann.length>=1&&typeof seqArmStart==='function',
+      function(){seqArmStart();});
     tool(bic('exit')+' Out of folder','Take the selected items out of '
       +'their folder',
       selN.some(function(i){return s.annots[i]&&s.annots[i].fold;}),
@@ -2149,6 +2206,33 @@
       +'object’s look for this one, or lay these out like a group '
       +'you click',selN.length>=1,function(b){matchMenuAt(b);});
     list.appendChild(bar3);
+    /* IN PLAYBACK ORDER. Folders and groups are deliberately ignored
+       here: they answer "what is this filed under", and this view
+       answers "when does it happen". Everything with no build of its own
+       is listed once at the top, under the click it is already there
+       for. */
+    if(spByBuild){
+      var rows=spByStop(s);
+      rows.forEach(function(grp){
+        var h=document.createElement('div');
+        h.className='hd-lab';
+        h.textContent=grp.head;
+        list.appendChild(h);
+        if(!grp.items.length){
+          var e2=document.createElement('div');
+          e2.className='selpane-empty';
+          e2.textContent='nothing arrives here';
+          list.appendChild(e2);
+          return;
+        }
+        grp.items.forEach(function(i3){
+          var r3=rowEl(ann[i3],i3);
+          if(grp.leaving.indexOf(i3)>=0) r3.classList.add('sp-leaving');
+          list.appendChild(r3);
+        });
+      });
+      return;
+    }
     /* NAMED FOLDERS first — filing, not grouping. Renaming one renames
        it on every item in it, because the name IS the folder (there is no
        folder object to rename). */
@@ -2267,6 +2351,208 @@
     for(var i=ann.length-1;i>=0;i--)
       if(!ann[i]||(ann[i].grp==null&&!ann[i].fold))
         list.appendChild(rowEl(ann[i],i));
+  }
+  /* ---- WHAT THE BUILD COLUMN SAYS (T174) ---------------------------
+     One reader, used by the row badge, its tooltip and the timeline
+     view, so the three cannot disagree about which click something
+     happens on. Stops, not build numbers: a flip book with a build of
+     its own puts its frames straight after itself, so a build behind
+     one sits later in the sequence than its number says. That is the
+     number the space bar counts, and so it is the number to show. */
+  function spStepInfo(s,a){
+    var out={n:null,type:null,out:null,tie:null};
+    if(!a) return out;
+    var bs=slideBuildSteps(s),pl=flipPlan(s);
+    function stopOf(order){
+      var st=bs.map[order];
+      if(st==null) return null;
+      var sp=pl.stop[st];
+      return ((sp==null?st:sp)|0)+1;
+    }
+    if(a.anim){
+      out.type=a.anim.type||'fade';
+      out.n=stopOf(a.anim.order||0);
+    }
+    var o=animOut(a);
+    if(o!=null) out.out=stopOf(o);
+    out.tie=tieWhat(s,a);
+    /* A TIED OBJECT STILL ARRIVES ON A CLICK -- somebody else's, which
+       is the whole point of a tie -- and the column has to say which
+       one. A dot beside a link icon reads as "no build", and a build
+       column that lies about the thing it was added for is worse than
+       no column. The arithmetic is the reveal's: base + the series'
+       position, so this number and the space bar agree. */
+    if(out.n==null&&out.tie){
+      var t2=seriesTie(a);
+      if(t2){
+        var ch=annotByOid(s,t2.id);
+        var si=ch?chartSeriesNames(ch).indexOf(t2.at):-1;
+        var bb=(si<0)?null:stepBase(s,ch);
+        if(bb!=null) out.n=(bb+si)+1;
+      } else if(a.fb&&a.fbf!=null){
+        var bk=null;
+        ((s&&s.annots)||[]).forEach(function(x){
+          if(!bk&&x&&x.k==='flip'&&x.fid===a.fb) bk=x;});
+        var fb=bk?stepBase(s,bk):null;
+        if(fb!=null) out.n=(fb+(a.fbf|0))+1;
+      }
+    }
+    return out;
+  }
+  function spStepTitle(inf){
+    var t=inf.tie
+      ? ('Arrives with '+inf.tie)
+      : inf.n==null
+      ? 'On the slide from the start'
+      : ('Arrives on click '+inf.n
+         +(inf.type&&inf.type!=='none'?(' \u2014 '+fxName(inf.type)):''));
+    if(inf.out!=null) t+=', and goes on click '+inf.out;
+    return t+'. Click to change it.';
+  }
+  function fxName(t){
+    var hit=null;
+    SEQ_FX.forEach(function(f){if(f[0]===t) hit=f[1];});
+    return hit||t;
+  }
+  /* the slide read as a sequence: one group per stop, plus the things
+     that were never given a build and are simply there */
+  function spByStop(s){
+    var ann=(s&&s.annots)||[];
+    var bs=slideBuildSteps(s),pl=flipPlan(s);
+    function stopOf(order){
+      var st=bs.map[order];
+      if(st==null) return null;
+      var sp=pl.stop[st];
+      return (sp==null?st:sp)|0;
+    }
+    var n=Math.max(1,pl.count);
+    var groups=[];
+    var start=[];
+    ann.forEach(function(a,i){if(a&&!a.anim) start.push(i);});
+    groups.push({head:'on the slide to begin with',items:start,
+      leaving:[]});
+    for(var k=0;k<n;k++){
+      var items=[],leaving=[];
+      ann.forEach(function(a,i){
+        if(!a) return;
+        if(a.anim&&stopOf(a.anim.order||0)===k) items.push(i);
+        var o=animOut(a);
+        if(o!=null&&stopOf(o)===k&&items.indexOf(i)<0){
+          items.push(i);leaving.push(i);}
+      });
+      groups.push({head:'click '+(k+1),items:items,leaving:leaving});
+    }
+    return groups;
+  }
+  /* ---- ONE POPOVER, BOTH ENDS OF A BUILD ---------------------------
+     Borrowed wholesale from the series-tie panel (T173): a floating
+     .canvas-menu of rows that RE-RENDERS rather than closing, because
+     "arrives on a click" and "goes on a click" are two answers to one
+     question and a menu that shut after the first would make a swap a
+     two-visit job.
+     It is not the ribbon's effect gallery. That one is about the
+     SELECTION and lives beside its button; this one is about the row
+     you clicked and has to stand next to it. */
+  function spStepClose(){
+    var p=$('#step-menu'); if(p) p.remove();
+  }
+  function openStepMenu(idx,atEl){
+    spStepClose();
+    var s=pres.slides[cur];
+    var a=s&&(s.annots||[])[idx];
+    if(!a) return;
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu';m.id='step-menu';
+    function rowIn(label,fn,title,icon,on){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt'+(on?' on':'');
+      if(icon) b.innerHTML=icon+' ';
+      b.appendChild(document.createTextNode(label));
+      if(title) b.title=title;
+      b.setAttribute('role','menuitem');
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      m.appendChild(b);
+      return b;
+    }
+    function commit(){
+      markDirty();renderSlide();renderFilm();
+      if(typeof animPaneSync==='function') animPaneSync();
+      renderSelPane();build();
+    }
+    function live(){return (pres.slides[cur].annots||[])[idx]||{};}
+    function build(){
+      m.innerHTML='';
+      var a2=live();
+      menuHead(m,'\u201c'+String(annotLabel(a2)).slice(0,24)+'\u201d arrives');
+      var tie=tieWhat(pres.slides[cur],a2);
+      if(tie){
+        /* a tied object's moment is not this menu's to set -- saying so
+           beats offering rows that would silently fight the tie */
+        var note=document.createElement('div');
+        note.className='selpane-empty';
+        note.textContent='with '+tie+'. Change that from its own '
+          +'right-click menu.';
+        m.appendChild(note);
+      } else {
+        SEQ_FX.forEach(function(f){
+          var isNow=(f[0]==='none')?!a2.anim
+            :!!(a2.anim&&(a2.anim.type||'fade')===f[0]);
+          rowIn(f[0]==='none'?'On the slide from the start':f[1],
+            function(){
+              var a3=live();
+              if(f[0]==='none'){delete a3.anim;}
+              else {
+                a3.anim=a3.anim||{order:nextAnimOrder(pres.slides[cur])};
+                a3.anim.type=f[0];
+              }
+              commit();
+            },
+            f[0]==='none'
+              ?'No build of its own \u2014 it is there when the slide is'
+              :('Arrives on its own click, '+f[1].toLowerCase()),
+            fxIcon(f[0]),isNow);
+        });
+      }
+      var a4=live();
+      /* offered even when the object has no build of its own: "simply
+         there, then gone" is the commonest half of a swap */
+      if(!animSeq(pres.slides[cur]).length&&!animOut(a4)) return;
+      menuHead(m,'and then');
+      var nowOut=animOut(a4);
+      rowIn('Stays on the slide',function(){
+        delete live().out;
+        commit();
+      },'What every object did before this existed',bic('none'),
+        nowOut==null);
+      var mine=a4.anim?(a4.anim.order||0):-1;
+      var offered={};
+      animSeq(pres.slides[cur]).forEach(function(st){
+        if(st.order<=mine||offered[st.order]) return;
+        offered[st.order]=1;
+        var inf=spStepInfo(pres.slides[cur],
+          (pres.slides[cur].annots||[])[st.items[0]]);
+        var who=st.items.map(function(i2){
+          return annotLabel((pres.slides[cur].annots||[])[i2]);
+        }).join(', ').slice(0,34);
+        rowIn('Goes when '+who+' arrives',function(){
+          live().out=st.order;
+          commit();
+        },'One click: that arrives, this goes \u2014 which is what '
+          +'replacing a picture actually is'
+          +(inf.n!=null?(' (click '+inf.n+')'):''),
+          bic('exit'),nowOut===st.order);
+      });
+      rowIn('Goes on one more click at the end',function(){
+        live().out=nextAnimOrder(pres.slides[cur]);
+        commit();
+      },'Adds a click of its own, on which this object leaves and '
+        +'nothing arrives',bic('exit'),
+        nowOut!=null&&!offered[nowOut]);
+    }
+    build();
+    deckEl.appendChild(m);
+    overlayShow(atEl,m);
+    floatMenu(atEl,m);
   }
   var GRP_COLORS=['#39a9c0','#ff6b57','#f0a848','#46a892','#a07be0',
     '#8ba0b2'];

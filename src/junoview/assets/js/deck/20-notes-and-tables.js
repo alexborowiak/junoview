@@ -2376,11 +2376,13 @@
        in the editor by design and has no arrows to step, so a dim there
        would be permanent — see seriesShows for the whole argument. */
     (s.annots||[]).forEach(function(a,i){
-      /* the fast path has to know about BOTH kinds of tie (T173), or an
-         item bound only to a chart series is skipped here and never
-         hidden -- the feature would look built and do nothing */
+      /* the fast path has to know about EVERY reason an object might
+         not be on screen -- both kinds of tie (T173) and an exit
+         (T174) -- or a feature is skipped here and quietly does
+         nothing. One predicate, so adding the next kind of stop is one
+         edit rather than a hunt. */
       if(!a) return;
-      if(!a.fb&&!(typeof seriesTie==='function'&&seriesTie(a))) return;
+      if(!(typeof stepTied==='function'?stepTied(a):a.fb)) return;
       /* A TEXT BOOK IS NOT HIDDEN BY ITS TIE -- the tie turns its pages.
          It goes only on a figure it has NO page for, which is a
          different thing from having run out: stale words beside a new

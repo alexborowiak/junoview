@@ -3665,3 +3665,69 @@ def test_a_text_box_can_arrive_a_bullet_at_a_time(out):
     assert "/* A CUT TEXT BOX IS NOT COUNTED HERE (T172)." in out
     # each piece is read off the plan everything else uses
     assert "var jp=plan.stop[st+j];" in out
+
+def test_an_exit_is_a_peer_of_the_entrance_not_a_field_inside_it(out):
+    """T174. `out` is the build order on which an object GOES AWAY --
+    how one picture replaces another, which is the thing people fight
+    PowerPoint over.
+
+    It lives on the ANNOT, not inside `anim`, and driving it is what
+    settled that. The commonest swap of all is "this picture is simply
+    there, and that one replaces it on the first click" -- and an
+    object that is simply there has no `anim` at all to hang an exit
+    off. The first cut put `out` inside `anim`, so the swap verb had to
+    invent an entrance for the outgoing object, which pushed the whole
+    thing onto a second click nobody had asked for.
+    """
+    assert "var o=a.out;" in out
+    # an object that DOES arrive on a click cannot leave on it or before
+    assert "if(a.anim&&o<=(a.anim.order||0)) return null;" in out
+    # and an exit is asked as part of the ONE hide question, so a new
+    # kind of stop cannot be added while an old one is forgotten
+    assert "return flipShows(s,a)&&seriesShows(s,a)&&!animGone(s,a);" in out
+    assert "return !!(a&&(a.fb||seriesTie(a)||animOut(a)!=null));" in out
+
+
+def test_an_exit_claims_its_stop_so_the_slide_cannot_end_early(out):
+    """T174. Usually an exit lands on a build that already exists -- the
+    click the replacement arrives on -- and changes no count at all.
+    It matters for the last one: "goes on one more click at the end"
+    has to BE a click, or the slide would move on while the object was
+    still sitting there.
+    """
+    assert "if(o!=null&&!(o in seen)) seen[o]=1;" in out
+    # and asking twice for that must not hand out the same number twice
+    assert "var o=animOut(a); if(o!=null&&o>mx) mx=o;" in out
+
+
+def test_the_layers_pane_carries_the_build_column(out):
+    """T174, asked for directly: "the animations also appears in the
+    layers ... you can hide layers and build animations this way".
+
+    Layers is where you already are while you work, it already lists
+    everything on the slide, and it already carries the one control that
+    decides whether a thing is seen. A build is the same question asked
+    about a MOMENT, and answering both in one list is what makes a swap
+    -- this picture, then that one -- something you can look at.
+    """
+    # the column, and the popover it opens
+    assert "openStepMenu(idx,atEl)" in out
+    assert "function spStepInfo(s,a)" in out
+    # a TIED object still arrives on somebody else's click, and the
+    # column has to name it rather than showing a dot
+    assert "if(out.n==null&&out.tie){" in out
+    # the list read in playback order, which is the timeline
+    assert "function spByStop(s)" in out
+    assert "head:'on the slide to begin with'" in out
+
+
+def test_replacing_one_object_with_another_is_one_verb(out):
+    """T174. Two objects selected is exactly the shape of the question
+    "make that one replace this one", so it is asked there and answered
+    in a click -- rather than leaving people to set an entrance on one,
+    an exit on the other, and check the numbers match.
+    """
+    assert "menuHead(m,'one replaces the other');" in out
+    assert "gone.out=comes.anim.order||0;" in out
+    # re-running it must not push the swap one click further every time
+    assert "comes.anim.order=nextAnimOrder(s5);" in out
