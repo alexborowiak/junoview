@@ -3160,6 +3160,32 @@ effects are visible for approximately none of the moments they are usable.
   from the data's own order (the order painter is the natural home), and
   the .pptx export, which currently sends a series-built chart as one
   picture on one click and must say so in the loss report.
+
+- [x] **T161 · S — The flip-book tie, reachable from the text.**
+  Tying text to a flip book's page has worked since T86, and its three
+  modes are exactly the distinction a user reached for on 2026-09-01 in
+  their own words ("cumulative... or not cumulative, just the text that
+  is tied to it"): `only` is "Just this figure", `from` is "This figure
+  and every one after", `until` is "This figure and every one before".
+  The feature was not missing. The DOOR was: the only way in was a
+  `Figures…` button that shows only while the FLIP BOOK is selected, so
+  the flow ran backwards from how anyone thinks about it — select the
+  book, open its pane, and only then select your text. It has now been
+  re-requested twice as though it did not exist; T86 answered the first
+  by putting a hint inside the pane, which is the wrong place to be
+  standing to read it.
+  *Done 2026-09-01.* A "shows with" section in the object's own
+  right-click menu, offered whenever the slide has a flip book with
+  frames and the selection is something other than a flip book. It names
+  the tie that already exists ("✓ Shows with figure 2 of …") or offers
+  to make one, and opens the existing control with the selection intact
+  — `showFlipPane` sets which book the pane is about and never touches
+  what is selected, which is why one click lands on "Tie *your text* to"
+  rather than on a pane you then have to re-select through. Nothing was
+  rewritten; the tie panel, its frame list and its three modes are the
+  ones T86 built. The heading is deliberately NOT in T137's `CM_KEEP`,
+  so it folds into "More" on a crowded menu like every other optional
+  section.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

@@ -797,8 +797,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T160: a chart can be built by series - the
 # timeline gives it one stop per series after the skeleton, drawChart
 # hides the series not yet revealed, and a right-click row turns it on.
-EXPECTED_MD5 = "da0586baad6720a89763763808eb03ab"
-EXPECTED_BYTES = 3116730
+# Moved 2026-09-01 for T161: the flip-book tie gains a door from the
+# object being tied - a 'shows with' section in the right-click menu
+# that opens the existing tie control with the selection intact.
+EXPECTED_MD5 = "d9ff6adf4f310d733fc083f35ddc2846"
+EXPECTED_BYTES = 3118973
 
 
 def _render_example() -> str:

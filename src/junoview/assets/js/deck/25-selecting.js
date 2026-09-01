@@ -1841,6 +1841,47 @@
           }
         }
       }
+      /* SHOWS WITH WHICH FIGURE (T161) -- the tie, offered from the
+         thing being TIED.
+         Tying text to a flip book's page has worked since T86 and reads
+         well once you are there: "Just this figure" / "This figure and
+         every one after" / "...and every one before". But its only door
+         was a `Figures...` button that appears only while the FLIP BOOK
+         is selected, so the flow ran backwards from the way anyone
+         thinks about it -- select the book, open its pane, THEN select
+         your text. Asked for again on 2026-09-01 as though it did not
+         exist ("it is hard to tie text to a page on the flipbook"),
+         which is the second time this feature has been re-requested
+         while shipping; T86 added a hint inside the pane, and the pane
+         was still the wrong place to be standing.
+         So: start from the text. `showFlipPane` sets which book the
+         pane is about and never touches the selection, so one click
+         lands on the tie control with your item already named in it. */
+      if(selIdxs().length&&typeof showFlipPane==='function'){
+        var tieS=pres.slides[cur];
+        var tieBooks=[];
+        ((tieS&&tieS.annots)||[]).forEach(function(x,xi){
+          if(x&&x.k==='flip'&&flipFrames(x).length) tieBooks.push(xi);});
+        var tieMine=selIdxs().filter(function(i){
+          var x=(tieS.annots||[])[i];return x&&x.k!=='flip';});
+        if(tieBooks.length&&tieMine.length){
+          menuHead(m,'shows with');
+          tieBooks.forEach(function(bi){
+            var bk=(tieS.annots||[])[bi];
+            var one=tieMine.length===1?(tieS.annots||[])[tieMine[0]]:null;
+            var tied=one&&one.fb===bk.fid&&one.fbf!=null;
+            var lab=tied
+              ?('\u2713 Shows with figure '+((one.fbf|0)+1)
+                +' of '+(annotLabel(bk)||'the flip book'))
+              :('Show with a figure of '
+                +(annotLabel(bk)||'the flip book')+'\u2026');
+            row(lab,'',function(){showFlipPane(true,bi);},
+              'Pick which figure this belongs to, and whether it shows '
+              +'with that figure only, from it onwards, or up to it',
+              'flipbook');
+          });
+        }
+      }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
          time: an anchor is a fact about that item, and a menu that
          set nine of them at once would be a menu nobody could undo in

@@ -3201,3 +3201,42 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 1200
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
+
+
+def test_the_flip_book_tie_has_a_door_from_the_thing_being_tied(out):
+    """T161. Tying text to a flip book's page has worked since T86, and
+    its three modes read well once you are there: "Just this figure",
+    "This figure and every one after", "This figure and every one
+    before". But its only door was a `Figures...` button that appears
+    ONLY while the flip book itself is selected, so the flow ran
+    backwards from the way anyone thinks about it -- select the book,
+    open its pane, and only then select your text.
+
+    It was asked for again on 2026-09-01 as though it did not exist
+    ("it is hard to tie text to a page on the flipbook"), which is the
+    SECOND re-request of a shipped feature: T86 answered the first by
+    adding a hint inside the pane, and the pane was still the wrong
+    place to be standing. The door now starts from the selection.
+    """
+    assert "menuHead(m,'shows with');" in out
+    # offered only when there is something to tie and a book to tie it to
+    assert "if(x&&x.k==='flip'&&flipFrames(x).length) tieBooks.push(xi);" in out
+    assert "if(tieBooks.length&&tieMine.length){" in out
+    # a flip book is not tied to itself
+    assert "var x=(tieS.annots||[])[i];return x&&x.k!=='flip';});" in out
+    # the row reflects the tie that already exists rather than lying
+    assert "var tied=one&&one.fb===bk.fid&&one.fbf!=null;" in out
+    # and it opens the existing control without disturbing the selection,
+    # which is the whole reason one click is enough
+    assert "row(lab,'',function(){showFlipPane(true,bi);}," in out
+
+
+def test_the_three_tie_modes_keep_their_words(out):
+    """The vocabulary T161's door leads to. These three sentences are the
+    feature: "cumulative or not" is exactly the distinction they draw,
+    and they are worth pinning because they were re-invented in a user's
+    own words before anyone found them.
+    """
+    assert "var FLIP_MODES=[['only','Just this figure']," in out
+    assert "['from','This figure and every one after']," in out
+    assert "['until','This figure and every one before']];" in out
