@@ -949,6 +949,11 @@
   function extraStops(a){
     if(!a) return 0;
     if(a.k==='flip') return Math.max(0,flipFrames(a).length-1);
+    /* A CUT TEXT BOX IS NOT COUNTED HERE (T172). `slideBuildSteps`
+       already expands it -- `sub[o]` gives the build as many STEPS as
+       the box has pieces -- so counting it again as extra stops made a
+       three-bullet box worth five clicks instead of three. One counter,
+       and it is the one the build numbers come from. */
     if(a.k==='text') return Math.max(0,textPages(a).length-1);
     if(a.k==='chart'&&a.anim&&a.anim.by==='series')
       return chartSeriesCount(a);
@@ -1395,8 +1400,13 @@
       return ((s.annots[x].anim.order||0)-(s.annots[y].anim.order||0));});
     return arr;
   }
-  /* a build "step" is a distinct anim.order — items sharing an order appear
-     TOGETHER on the same click. Returns {map: order->step-index, count} */
+  /* a build "step" is one CLICK. It is usually a distinct anim.order --
+     items sharing an order appear TOGETHER -- but a text box that
+     arrives a piece at a time (17-text-builds.js) spends several clicks
+     on ONE order, because anim.order is per-annotation and the whole
+     ordering algebra above is built on that.
+     Returns {map: order->FIRST step of that order, sub: order->how many
+     clicks it costs, last: order->its last step, count: every click}. */
   function slideBuildSteps(s){
     /* THE ONE GATE (T88). Everything downstream reads this: flipPlan
        counts its stops from it, so the space bar walks straight to the
@@ -1404,13 +1414,22 @@
        returns early when it is missing, so nothing is ever held back.
        mode==='view' only -- the editor and the filmstrip's build mark
        must go on telling the truth about what the deck contains. */
-    if(talkNoBuilds&&mode==='view') return {map:{},count:0};
+    if(talkNoBuilds&&mode==='view')
+      return {map:{},sub:{},last:{},count:0};
     var seen={};
     (s&&s.annots||[]).forEach(function(a){
-      if(a&&a.anim) seen[a.anim.order||0]=1;});
+      if(!a||!a.anim) return;
+      var o=a.anim.order||0;
+      /* the WIDEST claim on this order wins: two boxes on one build, one
+         of them split four ways, is four clicks and the other box
+         arrives on the first of them */
+      var n=textBy(a)?textPieceCount(a):1;
+      if(!(o in seen)||n>seen[o]) seen[o]=n;});
     var keys=Object.keys(seen).map(Number).sort(function(x,y){return x-y;});
-    var map={};keys.forEach(function(o,i){map[o]=i;});
-    return {map:map,count:keys.length};
+    var map={},sub={},last={},at=0;
+    keys.forEach(function(o){
+      map[o]=at;sub[o]=seen[o];at+=seen[o];last[o]=at-1;});
+    return {map:map,sub:sub,last:last,count:at};
   }
   /* ordered list of steps for the animation pane: [{order, items:[idx,…]}] */
   function animSeq(s){
@@ -1638,6 +1657,33 @@
        hostile HTML can never execute code */
     var tpl=document.createElement('template');
     tpl.innerHTML=String(html||'');
+    /* A BUILD WRAPPER NEVER REACHES THE MODEL. 17-text-builds.js cuts a
+       text box into pieces by wrapping runs in <span class="an-part">
+       at RENDER time. `span` is a rich tag and everything but colour is
+       stripped below, so without this the wrappers would come back
+       through commitNow/blur as a growing pile of bare <span>s inside
+       a.html -- one more layer on every blur, forever. Done HERE rather
+       than at the three callers because a fourth caller is a matter of
+       time, and this is the choke point all of them already go
+       through. */
+    (function(){
+      var w=tpl.content.querySelectorAll('[data-part]'),j,e;
+      for(j=0;j<w.length;j++){
+        e=w[j];
+        if((e.tagName||'').toLowerCase()==='span'
+           &&e.classList.contains('an-part')
+           &&!e.classList.contains('an-blk')){
+          while(e.firstChild) e.parentNode.insertBefore(e.firstChild,e);
+          e.parentNode.removeChild(e);
+          continue;
+        }
+        /* a promoted <li> or <p>: only the marks come off */
+        e.removeAttribute('data-part');
+        e.classList.remove('an-part','an-blk','an-prebuild');
+        var ct=e.getAttribute('class');
+        if(ct!=null&&!ct.trim()) e.removeAttribute('class');
+      }
+    })();
     /* walk with a live cursor (not a stale snapshot) so nodes promoted by
        unwrapping an unknown tag are ALSO inspected — otherwise a dangerous
        element nested one level in survives */

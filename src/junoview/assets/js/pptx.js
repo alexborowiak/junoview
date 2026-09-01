@@ -724,7 +724,24 @@ window.JunoPptx = (function () {
     if (!anims.length) return '';
     var steps = {};
     anims.forEach(function (an) {
-      (steps[an.step] = steps[an.step] || []).push(an);
+      /* A PARAGRAPH BUILD OCCUPIES SEVERAL CLICKS, one per paragraph,
+         starting at the step Junoview gave the shape -- which is the
+         same arithmetic slideBuildSteps does, so the numbers in the
+         Timeline pane and the clicks in PowerPoint are the same
+         numbers. */
+      if (an.by === 'para' && an.paras > 1) {
+        for (var p = 0; p < an.paras; p++)
+          (steps[an.step + p] = steps[an.step + p] || [])
+            .push({ spid: an.spid, type: an.type, para: p,
+                    /* the wait rides along, or the group loop below
+                       reads nothing and the delay is silently
+                       dropped -- caught by T169's own test */
+                    after: an.after | 0 });
+      } else {
+        (steps[an.step] = steps[an.step] || [])
+          .push({ spid: an.spid, type: an.type, para: -1,
+            after: an.after | 0 });
+      }
     });
     var order = Object.keys(steps).map(Number).sort(function (a, b) {
       return a - b; });
@@ -745,10 +762,20 @@ window.JunoPptx = (function () {
       if (gi === 0) afterS = 0;
       var shapes = steps[st].map(function (an, i) {
         var preset = an.type === 'appear' ? 1 : 10;
+        /* one PARAGRAPH of a shape, or the whole shape. <p:txEl> with a
+           single-paragraph <p:pRange> is the only sub-shape target
+           PowerPoint has, which is also why a sentence build cannot go
+           this way and is reported instead. */
+        var tgt = '<p:tgtEl><p:spTgt spid="' + an.spid + '"'
+          + (an.para >= 0
+            ? '><p:txEl><p:pRange st="' + an.para + '" end="' + an.para
+              + '"/></p:txEl></p:spTgt>'
+            : '/>')
+          + '</p:tgtEl>';
         var eff = an.type === 'appear' ? ''
           : '<p:animEffect transition="in" filter="fade"><p:cBhvr>'
             + '<p:cTn id="' + nid() + '" dur="500"/>'
-            + '<p:tgtEl><p:spTgt spid="' + an.spid + '"/></p:tgtEl>'
+            + tgt
             + '</p:cBhvr></p:animEffect>';
         return '<p:par><p:cTn id="' + nid() + '" presetID="' + preset
           + '" presetClass="entr" presetSubtype="0" fill="hold" '
@@ -759,7 +786,7 @@ window.JunoPptx = (function () {
           + '<p:set><p:cBhvr><p:cTn id="' + nid()
           + '" dur="1" fill="hold"><p:stCondLst>'
           + '<p:cond delay="0"/></p:stCondLst></p:cTn>'
-          + '<p:tgtEl><p:spTgt spid="' + an.spid + '"/></p:tgtEl>'
+          + tgt
           + '<p:attrNameLst><p:attrName>style.visibility</p:attrName>'
           + '</p:attrNameLst></p:cBhvr>'
           + '<p:to><p:strVal val="visible"/></p:to></p:set>'
@@ -780,7 +807,12 @@ window.JunoPptx = (function () {
         + '</p:childTnLst></p:cTn></p:par></p:childTnLst></p:cTn></p:par>';
     }).join('');
     var blds = anims.map(function (an) {
-      return '<p:bldP spid="' + an.spid + '" grpId="0"/>';
+      /* build="p" is what makes the pRange targets above mean anything:
+         without it PowerPoint treats the shape as one object and the
+         paragraph timing is ignored. One bldP per SHAPE, which is why
+         this maps the original list and not the expanded steps. */
+      return '<p:bldP spid="' + an.spid + '" grpId="0"'
+        + (an.by === 'para' && an.paras > 1 ? ' build="p"' : '') + '/>';
     }).join('');
     return '<p:timing><p:tnLst><p:par>'
       + '<p:cTn id="1" dur="indefinite" restart="never" '

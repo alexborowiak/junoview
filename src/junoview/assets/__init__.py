@@ -73,6 +73,7 @@ DECK_PARTS = (
     "07-ribbon-layouts",
     "10-decks",
     "15-annotations",
+    "17-text-builds",
     "20-notes-and-tables",
     "25-selecting",
     "30-format-bar",

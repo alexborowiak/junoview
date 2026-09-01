@@ -379,6 +379,23 @@
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
+    /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
+       because it is the same gesture on the same selection, and it
+       resets revealCount for the same reason "One by one" does: the
+       number of stops on this slide just changed under the cursor. */
+    function setBy(by){
+      var s=pres.slides[cur]; if(!s) return;
+      var n=0;
+      selIdxs().forEach(function(i){
+        var a=s.annots[i];
+        if(!a||a.k!=='text'||!a.anim) return;
+        if(by==='para'||by==='sent') a.anim.by=by;
+        else delete a.anim.by;      /* absent IS "all at once" */
+        n++;
+      });
+      if(!n) return;
+      revealCount=0;commit(s);
+    }
     function setType(type){
       var s=pres.slides[cur]; if(!s) return;
       var idxs=selIdxs();
@@ -427,6 +444,59 @@
             setType(p[0]);});
           eff.appendChild(b);});
         menu.appendChild(eff);
+        /* HOW MUCH ARRIVES AT A TIME (2026-08-30, user: "options for
+           text as well, like the dot point by dot point, line by line,
+           sentence by sentence"). Only a text box has pieces, and only
+           an animated one has anywhere to put them.
+           IN THE PANE, NOT THE RIBBON. Three more word buttons in the
+           Animate group is ~200px of ribbon floor, and by T152 every px
+           of that comes off the slide column's ceiling. This is where
+           the build order already lives and where the selection is
+           already tracked. */
+        if(a.anim&&a.k==='text'){
+          var hb=document.createElement('div');hb.className='anim-h';
+          hb.textContent='How much arrives at a time';
+          menu.appendChild(hb);
+          var gr=document.createElement('div');gr.className='anim-eff';
+          [['','All at once','The whole box on one click.'],
+           ['para','Bullet by bullet',
+            'One click per bullet — or per line you pressed Enter '
+            +'on. Those breaks are in the words themselves, so the '
+            +'number of clicks is the same at every zoom and on every '
+            +'page size, and it travels to PowerPoint as a real '
+            +'paragraph build. (A WRAPPED line is not offered: it '
+            +'depends on the box width, so its click count would change '
+            +'when you resized the box.)'],
+           ['sent','Sentence by sentence',
+            'One click per sentence. "Fig. 3", "et al.", "0.05" and '
+            +'initials are left alone; when a cut is in the wrong '
+            +'place, press Enter there and use Bullet by bullet.']
+          ].forEach(function(p){
+            var b=document.createElement('button');
+            b.className='anim-effb';
+            b.textContent=p[1];b.title=p[2];
+            var now=(a.anim.by==='para'||a.anim.by==='sent')
+              ?a.anim.by:'';
+            if(now===p[0]) b.classList.add('on');
+            b.addEventListener('click',function(e){e.stopPropagation();
+              setBy(p[0]);});
+            gr.appendChild(b);});
+          menu.appendChild(gr);
+          var nby=textBy(a)?textPieceCount(a):1;
+          if(nby>1){
+            var nt=document.createElement('div');
+            nt.className='anim-empty';
+            nt.textContent=nby+' pieces — '+nby+' clicks.'
+              +(((a.anim.type==='rise'||a.anim.type==='zoom')
+                 &&a.anim.by==='sent')
+                ?' A sentence inside a paragraph fades in rather than '
+                 +'moving: a run of words has no box of its own to move.'
+                :'')
+              +(a.arc?' This box is curved, so it arrives whole — '
+                 +'curved text is redrawn as one shape.':'');
+            menu.appendChild(nt);
+          }
+        }
         if(a.anim){
           var si0=stepOf(s,selAnnot),q0=animSeq(s);
           var mrow=document.createElement('div');mrow.className='anim-merge';
@@ -447,7 +517,7 @@
         }
       }
       var h2=document.createElement('div');h2.className='anim-h';
-      h2.textContent='Build order — each row is one click';
+      h2.textContent='Build order — one row per build';
       menu.appendChild(h2);
       var seq=animSeq(s);
       /* ---- THE ONE TRUE SEQUENCE (T163) ------------------------------

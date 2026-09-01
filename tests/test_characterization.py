@@ -835,8 +835,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # per-effect buttons with one always-visible Effect door, whose cards
 # preview on the real object and whose pick with nothing selected builds
 # the whole slide in reading order.
-EXPECTED_MD5 = "6ad5a065c4c58cb97f93afda4c08504c"
-EXPECTED_BYTES = 3175997
+# Moved 2026-09-01 for T172: text builds - a text box can arrive a
+# bullet or a sentence at a time, riding the same stepper machinery as
+# flip pages and chart series.
+# Moved 2026-09-01 for T172: text builds - a box arrives a bullet or a
+# sentence at a time, cut at render so the stored words never change.
+EXPECTED_MD5 = "69e34a785fc09151282187bb0feea924"
+EXPECTED_BYTES = 3204956
 
 
 def _render_example() -> str:

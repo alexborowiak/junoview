@@ -207,6 +207,21 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                    "`sid` -- the target slide's durable name, so "
                    "reordering the deck cannot break the link the way a "
                    "slide NUMBER would."),
+    "anim": (dict, "How this item arrives during playback. `type` names "
+                   "the entrance -- appear, fade, rise (shown as Float "
+                   "up), zoom -- and `order` says which build it belongs "
+                   "to: items sharing an order arrive together, on one "
+                   "click. A TEXT box may add `by` to arrive a piece at "
+                   'a time: "para" is one click per bullet, or per line '
+                   'you pressed Enter on; "sent" is one click per '
+                   "sentence. The words are never split in the file -- "
+                   "the pieces are cut when the slide is drawn -- so an "
+                   "absent `by` means the whole box on one click, which "
+                   "is what every deck written before text builds "
+                   "existed already said. There is deliberately no "
+                   "unit for a WRAPPED line: a wrapped line depends on "
+                   "the box width and would change how many clicks the "
+                   "slide takes when the box was resized."),
     "dec": (int, "1 when this picture carries no information -- a rule, "
                  "a texture, a logo already named in the text. It is "
                  "then marked decorative and skipped by a screen reader "

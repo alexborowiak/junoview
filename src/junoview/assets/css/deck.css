@@ -1568,6 +1568,17 @@ body.slide-editing .apptop{display:none;}
 .anim-num{flex:none;width:20px;height:20px;border-radius:50%;
   background:var(--amber);color:#241a05;font-family:var(--mono);font-size:11px;
   font-weight:700;display:flex;align-items:center;justify-content:center;}
+/* a row that costs SEVERAL clicks says so as a range, and a 20px circle
+   cannot hold "3–6". Only then -- an ordinary row is untouched. */
+.anim-num.wide{width:auto;min-width:20px;padding:0 6px;border-radius:10px;}
+/* the pieces inside one row: read-only, because the ↑↓ above still
+   move the whole build order and a piece has no order of its own */
+.anim-subs{display:flex;flex-direction:column;gap:2px;margin:3px 0 1px 28px;}
+.anim-sub{display:flex;gap:6px;align-items:baseline;font-size:11px;
+  color:#8ba0b2;}
+.anim-subn{flex:none;font-family:var(--mono);font-size:10px;color:var(--amber);}
+.anim-subt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
 .anim-chips{flex:1;display:flex;flex-wrap:wrap;gap:4px;min-width:0;}
 .anim-chip{font-size:11px;color:#bcccd8;background:#1c2c3d;border-radius:5px;
   padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
@@ -1797,6 +1808,35 @@ select#fmt-font[hidden]{display:none;}
 .an-anim-fade{animation:anIn-fade .45s ease;}
 .an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
 .an-anim-zoom{animation:anIn-zoom .45s ease;}
+/* ---- TEXT BUILDS: the pieces one box arrives in ----------------------
+   `.an-part` is a RENDER-TIME wrapper (17-text-builds.js). It never
+   reaches the model -- sanitizeRich unwraps it, the caret never enters
+   one -- it is inline so it cannot change a single line break, and it is
+   positioned only so a build badge has something to hang off.
+   The hidden state is the SAME .an-prebuild the whole-item builds use:
+   opacity, never display. A text box auto-heights from its words, so
+   display:none would make it grow line by line and, with a bottom or
+   centre anchor, walk up the slide while it built. */
+.an-part{position:relative;}
+/* A BULLET THAT COULD NOT BE PROMOTED still has to lose its marker while
+   its words are held back. Promotion is refused for a bullet that has
+   SUB-bullets, because hiding it would take them with it -- so the dot
+   is dropped here instead, for exactly as long as the bullet's own words
+   are still to come. A dot sitting on its own in front of nothing reads
+   as a rendering fault, not as a build. */
+.an-text li:has(> .an-part.an-prebuild){list-style-type:none;}
+/* one badge per piece; it borrows .an-buildno wholesale, including the
+   CSS gate that shows it only while the Timeline pane is open (T76) */
+.an-partno{top:-8px;left:-10px;z-index:6;}
+/* REDUCED MOTION. The entrance is decoration; WHAT is on screen is not,
+   so the builds still hold items back and only the movement goes. This
+   was a real gap -- the query below only ever covered .slide -- and a
+   sentence-by-sentence slide made it impossible to ignore: thirty
+   separate animations for a reader who asked the operating system for
+   none. */
+@media (prefers-reduced-motion:reduce){
+  .an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}
+}
 /* ...AND THE MACHINE'S ANSWER TO MOTION IS FINAL (T157 / JVC-02). The
    guard sits HERE, beside what it guards, rather than with the unrelated
    .slide rule far below: reduced motion cleared slide TRANSITIONS and

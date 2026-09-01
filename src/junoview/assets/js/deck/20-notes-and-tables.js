@@ -913,6 +913,15 @@
     el.addEventListener('focus',function(){
       if(!getVal()) el.textContent='';
     });
+    /* THE CARET NEVER ENTERS A BUILD WRAPPER. The pieces a text build is
+       cut into are render-time <span>s (17-text-builds.js): typing
+       inside one would put the caret in markup that is about to be
+       thrown away, and Enter inside one would split the wrapper in two.
+       They come off here and go back on in the blur below -- which has
+       to do it itself, because committing a box writes into the element
+       IN PLACE and never re-renders the layer. That is the same reason
+       the markdown and maths fixups live down there. */
+    el.addEventListener('focus',function(){unsplitParts(el);});
     /* WHAT YOU HAVE TYPED IS NOT IN THE DECK UNTIL THIS RUNS, and until
        2026-08-22 the only thing that ran it was `blur`. So: Ctrl+S while
        typing opened the browser's own Save-page dialog and saved nothing;
@@ -1003,6 +1012,14 @@
       if((idx==='t'||idx==='s')
          ?hasMathsStr((idx==='t'?(s2&&s2.title):(s2&&s2.sub))||'')
          :hasMaths(a2)) typeset(layer);
+      /* ...and the build pieces back ON, for the reason given on the
+         focus handler above: nothing else is going to re-render this
+         layer, so without this the bubbles and the split vanish the
+         moment you click into a box and click out of it again. After
+         the markdown fixup, which rewrites innerHTML, and before the
+         fit pass, which measures what is finally there. */
+      if(a2&&a2.k==='text'&&textBy(a2)&&!a2.arc)
+        splitParts(el,textBy(a2));
       /* and re-fit, for the same reason: the words that just arrived are
          the ones the fit height is about (T15) */
       fitTexts(layer,s2,true);
@@ -2107,6 +2124,19 @@
             i,!a.md,function(){return textPage(a,_pi).h;});
         }
         d2.appendChild(tx2);
+        /* CUT IT INTO PIECES (17-text-builds.js). After the content is
+           in and before the item joins the layer, so the split sees
+           exactly the markup the reader will.
+           NOT while the caret is in this box: the wrappers come off at
+           focus and go back on at blur, so a re-render mid-typing must
+           not put them back underneath the caret.
+           NOT on an ARCED box either -- it is redrawn as SVG on a bowed
+           baseline and its .an-tx is hidden, so there is nothing on
+           screen for a piece to be. It builds as one box. */
+        if(typeof textBy==='function'&&textBy(a)&&!a.arc
+           &&!(editing&&document.activeElement
+               &&d2.contains(document.activeElement)))
+          splitParts(tx2,textBy(a));
         /* ---- TURNING THE PAGES (T163) --------------------------------
            The same bar as a figure book's, with PIPS instead of a
            counter. A reader has to be able to tell at a glance whether
@@ -2434,6 +2464,23 @@
              which is what the animation pane counts. */
           var sp=plan.stop[st];
           if(sp==null) sp=st;
+          /* PIECE BY PIECE (T172). A cut box is on screen from its own
+             build -- the frame it occupies must not jump as bullets
+             arrive -- and its pieces come one per stop after it, read
+             off the same cursor everything else uses. `visibility`, not
+             `display`, so nothing reflows underneath the words. */
+          if(typeof textBy==='function'&&textBy(ba)){
+            /* piece j lives on build step st+j, so it is showing exactly
+               when its own stop has been taken. Read off the same plan
+               everything else uses -- no second cursor. */
+            $$('[data-part]',el).forEach(function(pe){
+              var j=+pe.getAttribute('data-part');
+              var jp=plan.stop[st+j];
+              if(jp==null) jp=st+j;
+              pe.style.visibility=(mode==='view'&&jp>=revealCount)
+                ?'hidden':'';
+            });
+          }
           if(sp>=revealCount) el.classList.add('an-prebuild');
           else if(sp===revealCount-1){
             var atype=ba.anim.type||'fade';

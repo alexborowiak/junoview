@@ -2004,8 +2004,13 @@ def test_the_fit_pass_runs_at_the_text_commit_too(out):
     height was measured before the words arrived -- the same shape of
     bug T16's typeset hit, found the same way.
     """
-    assert (":hasMaths(a2)) typeset(layer);\n"
-            "      /* and re-fit, for the same reason") in out
+    # asserted as an ORDER, not as adjacent lines: T172 puts the
+    # build pieces back on between them, because nothing else
+    # re-renders this layer after a commit. What matters is that the
+    # typeset and the re-fit both happen, in that order.
+    assert ":hasMaths(a2)) typeset(layer);" in out
+    assert out.index(":hasMaths(a2)) typeset(layer);") < \
+        out.index("fitTexts(layer,s2,true);")
     assert "fitTexts(layer,s2,true);" in out
 
 
@@ -3205,7 +3210,10 @@ def test_reduced_motion_stops_the_entrance_effects_too(out):
     i = out.index(guard)
     assert out.rindex("@media (prefers-reduced-motion:reduce){", 0, i) > 0
     # the guard sits with what it guards, not paragraphs away
-    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 1200
+    # the window grew when T172's piece CSS landed between them; what
+    # this guards is that the guard sits WITH the keyframes rather than
+    # paragraphs away, not an exact byte distance
+    assert 0 < i - out.index(".an-anim-zoom{animation:anIn-zoom") < 2600
     # the staging class is untouched: the BUILD still happens
     assert ".an-prebuild{opacity:0!important;" in out
 
@@ -3622,3 +3630,35 @@ def test_the_gallery_previews_on_the_real_object(out):
     # animationend is not a safe cleanup, so a timer always runs
     assert "galPvT=setTimeout(galPreviewStop,900);" in out
     assert "b.addEventListener('mouseleave',galPreviewStop);" in out
+
+
+def test_a_text_box_can_arrive_a_bullet_at_a_time(out):
+    """T172 -- "options for text as well, like the dot point by dot
+    point, line by line, sentence by sentence."
+
+    A box is cut at RENDER time into `[data-part]` runs; the words are
+    never re-stored, so the editor, search, the .pptx writer and an older
+    junoview all still see one box of text. The cut points come from the
+    STORED text -- a list item, a line you pressed Enter on, a sentence
+    -- so the click count is the same at every zoom and page size.
+
+    A WRAPPED line is deliberately not offered: it depends on the box
+    width, so its click count would change when you dragged a resize
+    handle, and a build you cannot rehearse against is worse than none.
+
+    Driven: three hard-broken lines, Bullet by bullet, strip reads 3, and
+    Present goes --- / +-- / ++- / +++ one press at a time.
+    """
+    assert "function textBy(a){" in out
+    assert "function splitParts(el,by){" in out
+    assert "['para','Bullet by bullet'," in out
+    assert "['sent','Sentence by sentence'," in out
+    # the split runs at render, never on the stored words
+    assert "splitParts(tx2,textBy(a));" in out
+    # ...and never under a live caret, or the wrappers land mid-typing
+    assert "&&!(editing&&document.activeElement" in out
+    # ONE counter: slideBuildSteps expands a cut box, and extraStops must
+    # NOT count it again -- that made three bullets worth five clicks
+    assert "/* A CUT TEXT BOX IS NOT COUNTED HERE (T172)." in out
+    # each piece is read off the plan everything else uses
+    assert "var jp=plan.stop[st+j];" in out

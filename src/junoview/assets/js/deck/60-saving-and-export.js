@@ -1651,6 +1651,24 @@
     if(soft) lost.push(soft+' rise/zoom build'
       +(soft===1?'':'s')+' — the click timing is kept, the entrance '
       +'plays as a fade');
+    /* TEXT BUILDS. Bullet by bullet TRAVELS -- it leaves as a real
+       PowerPoint paragraph build. The other two are named. */
+    var sent=0,mdpara=0;
+    (pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.k!=='text'||!a.anim) return;
+        if(a.anim.by==='sent') sent++;
+        else if(a.anim.by==='para'&&a.md
+                &&/(^|\n)[ \t]*(\n|$)/.test(String(a.text||''))) mdpara++;
+      });});
+    if(sent) lost.push(sent+' sentence-by-sentence text build'
+      +(sent===1?'':'s')+' — PowerPoint builds text by PARAGRAPH and '
+      +'has no smaller unit, so each of these arrives as a whole box on '
+      +'one click');
+    if(mdpara) lost.push(mdpara+' Markdown box'+(mdpara===1?'':'es')
+      +' built bullet by bullet — a blank line in the source is a '
+      +'paragraph to PowerPoint and not a bullet here, so it takes a few '
+      +'more clicks there than it does on this slide');
     return lost;
   }
   function pptxConfirmLosses(){
