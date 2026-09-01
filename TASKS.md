@@ -3072,6 +3072,28 @@ effects are visible for approximately none of the moments they are usable.
   preference asks for and not one thing more. The test locates the
   guard by its CONTENT, because the page carries three reduced-motion
   blocks and the first one belongs to core.css.
+
+- [x] **T158 · M — Animation gets its own part, and stops booting itself.**
+  The whole animation surface lived in the middle of `45-images.js` —
+  which already held images, crop, the transient-overlay owner AND
+  transitions — as an EXECUTING SUB-IIFE. That is the pattern CLAUDE.md
+  forbids by name and the one that silently killed the entire editor at
+  boot in T133: a throw inside one takes the enclosing IIFE with it, and
+  every later declaration in every later part simply never happens. With
+  a gallery, hover preview, text builds and an order painter all about
+  to be added here, that was the wrong foundation to build on.
+  *Done 2026-09-01.* 238 lines lifted verbatim into
+  `assets/js/deck/48-animation.js` (listed in `DECK_PARTS` after
+  `47-charts`, or a test fails on the half that is missing); the sub-IIFE
+  body becomes `animBoot()`, called from THE BOOT SEQUENCE with its
+  siblings, where a failure is visible and isolated. The early return on
+  missing markup is kept verbatim — a poster has no animation group.
+  Behaviour-neutral by construction and verified live: no console errors,
+  the effect applies and lights, the pane opens with its build list, the
+  badge shows. One test needed widening: it asserted `initReuseDoors()`
+  fell within the first 800 characters of the boot tail, and the new call
+  plus its note pushed it past — the window is wider and the ORDER it
+  was really guarding is now asserted directly.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

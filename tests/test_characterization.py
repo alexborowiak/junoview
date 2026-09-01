@@ -788,8 +788,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T157: prefers-reduced-motion now disables the
 # entrance keyframes as well as transitions; builds still reveal in the
 # same steps, they just cut instead of animating.
-EXPECTED_MD5 = "b9c0d8bd13d3b6dad09e16774c91ba01"
-EXPECTED_BYTES = 3108668
+# Moved 2026-09-01 for T158: the animation surface moves out of
+# 45-images.js into its own 48-animation.js part, and its executing sub-
+# IIFE becomes animBoot() called from the boot sequence.
+EXPECTED_MD5 = "de910b59f09dbef611dab610376d2b67"
+EXPECTED_BYTES = 3109639
 
 
 def _render_example() -> str:

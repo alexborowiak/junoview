@@ -38,6 +38,10 @@
      ribbon fold's restore -- nothing here has geometry to measure yet. */
   initFilmAuto();
   initRibbonAuto();
+  /* the animation surface (T158). It used to run itself from the
+     middle of 45-images.js; a throw in an executing sub-IIFE takes
+     the whole deck IIFE with it, which is T133 exactly. */
+  animBoot();
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not

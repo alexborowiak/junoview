@@ -1710,7 +1710,13 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     _boot = out[out.index("\n  renderPresTabs();"):]
     assert _boot.index("\n  initRibbonLayoutDoor();") < _boot.index(
         "  /* the ribbon you kept: applied once here, at the tail")
-    assert "\n  initReuseDoors();" in _boot[:800]
+    # a PROXIMITY check, not a byte offset: the window grew when T158
+    # put animBoot() and its note in the sequence. What it guards is
+    # that the door wiring stays near the top of the tail and ahead of
+    # the ribbon restore -- so assert that ordering directly too.
+    assert "\n  initReuseDoors();" in _boot[:1400]
+    assert _boot.index("\n  initReuseDoors();") < _boot.index(
+        "  /* the ribbon you kept: applied once here, at the tail")
 
 
 def test_each_ribbon_group_is_keyed_by_its_own_name(out):
