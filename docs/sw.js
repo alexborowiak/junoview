@@ -7,11 +7,11 @@
    "Install app" offer rides on this too; see web-loader.html for the
    registration and manifest.webmanifest for the identity.
 
-   07aa0967ddbc is replaced by build_web() with a hash of junoview.zip:
+   872836ece740 is replaced by build_web() with a hash of junoview.zip:
    a new build retires the old cache on activate, and an unchanged package
    produces an unchanged worker, so the committed docs/ build stays
    diff-free (same rule as the zip itself). */
-var VERSION = '07aa0967ddbc';
+var VERSION = '872836ece740';
 var CACHE = 'junoview-' + VERSION;
 
 /* the app itself — if any of these fail to cache, the install fails,
@@ -61,8 +61,7 @@ var RUNTIME = [
 /* hosts whose responses may be cached. Anything else (GitHub raw
    notebooks, the GitHub API) is live data and passes straight through —
    caching a notebook here would quietly serve stale science. */
-var HOSTS = ['cdn.jsdelivr.net', 'cdn.plot.ly',
-  'fonts.googleapis.com', 'fonts.gstatic.com'];
+var HOSTS = ['cdn.jsdelivr.net', 'cdn.plot.ly'];
 
 /* DATA, not app shell. The host rule above keeps notebooks fetched from
    GitHub out of the cache, but a notebook served from our OWN origin is

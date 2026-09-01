@@ -12,7 +12,14 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20class%3D%22jv-logo%22%20viewBox%3D%220%200%20200%20200%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20role%3D%22img%22%20aria-label%3D%22Junoview%22%3E%3Cg%20stroke%3D%22%231D9E75%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8%22%3E%3Cline%20x1%3D%22169.55%22%20y1%3D%22118.64%22%20x2%3D%22186.93%22%20y2%3D%22123.29%22/%3E%3Cline%20x1%3D%22150.91%22%20y1%3D%22150.91%22%20x2%3D%22163.64%22%20y2%3D%22163.64%22/%3E%3Cline%20x1%3D%22118.64%22%20y1%3D%22169.55%22%20x2%3D%22123.29%22%20y2%3D%22186.93%22/%3E%3Cline%20x1%3D%2281.36%22%20y1%3D%22169.55%22%20x2%3D%2276.71%22%20y2%3D%22186.93%22/%3E%3Cline%20x1%3D%2249.09%22%20y1%3D%22150.91%22%20x2%3D%2236.36%22%20y2%3D%22163.64%22/%3E%3Cline%20x1%3D%2230.45%22%20y1%3D%22118.64%22%20x2%3D%2213.07%22%20y2%3D%22123.29%22/%3E%3Cline%20x1%3D%2230.45%22%20y1%3D%2281.36%22%20x2%3D%2213.07%22%20y2%3D%2276.71%22/%3E%3Cline%20x1%3D%2249.09%22%20y1%3D%2249.09%22%20x2%3D%2236.36%22%20y2%3D%2236.36%22/%3E%3Cline%20x1%3D%2281.36%22%20y1%3D%2230.45%22%20x2%3D%2276.71%22%20y2%3D%2213.07%22/%3E%3Cline%20x1%3D%22118.64%22%20y1%3D%2230.45%22%20x2%3D%22123.29%22%20y2%3D%2213.07%22/%3E%3Cline%20x1%3D%22150.91%22%20y1%3D%2249.09%22%20x2%3D%22163.64%22%20y2%3D%2236.36%22/%3E%3Cline%20x1%3D%22169.55%22%20y1%3D%2281.36%22%20x2%3D%22186.93%22%20y2%3D%2276.71%22/%3E%3C/g%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2266%22%20fill%3D%22%230F6E56%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2266%22%20fill%3D%22none%22%20stroke%3D%22%23EF9F27%22%20stroke-width%3D%223.5%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2242%22%20fill%3D%22%23185FA5%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2218%22%20fill%3D%22%2304342C%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%2212%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3Ccircle%20cx%3D%22176.21%22%20cy%3D%22144%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3Ccircle%20cx%3D%2223.79%22%20cy%3D%22144%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3C/svg%3E">
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap');
+/* NO WEBFONT IMPORT, deliberately (T150). Every output mode inlines
+   this file verbatim -- the app page, the exported .html, the deck's
+   standalone export (it copies the head's <style> blocks) and the
+   widget's scoped copy -- so an @import of a hosted font meant that
+   "self-contained" quietly included two servers, and a page read on a
+   plane fell back to whatever the OS had. The families below stay
+   FIRST in each stack: anyone who has IBM Plex installed still gets
+   it, and nobody's page waits on a font server to draw its text. */
 
 :root{
   --ink:#16202b; --ink-2:#33414f; --ink-3:#69788a;
@@ -64,9 +71,16 @@
 
 
   --amber:#cf9a4e; --amber-soft:#caa06a66;
-  --sans:'IBM Plex Sans',system-ui,sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-  --serif:'IBM Plex Serif',Georgia,serif;
+  --sans:'IBM Plex Sans',system-ui,'Segoe UI',Roboto,
+    -apple-system,'Helvetica Neue',Arial,sans-serif;
+  /* the mono stack carries the weight of the page (labels, chips, code
+     runs, captions) and had the worst fallback: ui-monospace is ignored
+     by Chrome on Windows and Menlo is macOS-only, so a Windows reader
+     dropped all the way to Courier New. Cascadia/Consolas first, then
+     the mac and Linux defaults. */
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,
+    'SF Mono',Menlo,'DejaVu Sans Mono',monospace;
+  --serif:'IBM Plex Serif',Georgia,'Times New Roman',serif;
   --rad:6px; --rail-w:300px;
 }
 *{box-sizing:border-box}
@@ -7031,6 +7045,11 @@ body:has(#rd-order) .an-readno{display:flex;}
 .dg-sheet.outlined .dg-drag{display:block;}
 .dg-sheet.outlined .dg-drag:hover{outline:2px solid #f0a848;
   background:#f0a84822;}
+/* an arrow's proxy is the bounding box of a LINE, so it can be large and
+   almost entirely empty: it yields to the box proxies it overlaps rather
+   than swallowing their drags. The canvas answers this with a per-pixel
+   distance test (arrowAt); a 116x66px thumbnail cannot. */
+.dg-drag.is-arrow{z-index:2;}
 .dg-cell{position:relative;background:#ffffff08;border:1px solid #ffffff1a;
   border-radius:6px;padding:5px;cursor:pointer;}
 .dg-cell:hover{border-color:#ffffff3d;}
@@ -17631,23 +17650,40 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       alert('Open failed: '+e.message);});
   }
   APP.openPath=openPath;
-  /* RELOAD ONE OPEN TAB FROM DISK, in place, and report completion
+  /* RELOAD ONE OPEN TAB FROM DISK, in place, and report WHAT HAPPENED
      (T123). The deck's "Update figures" needs exactly this: openPath
      re-opens but swallows its promise and drives the Open dialog's
      busy state, and the per-tab reload button lives on a surface the
      full-screen deck covers. `stem` keeps the tab: /api/open's `stem`
      parameter loads INTO it, so refs keep resolving and the rail does
-     not grow a twin. URL-backed tabs return false — a URL is not the
-     disk, and silently refetching it mid-talk-prep is not this verb. */
+     not grow a twin.
+
+     THE RESULT IS TRI-STATE, never a bare boolean (JVR-01). It used to
+     resolve `false` both for a URL-backed tab — declined on purpose, a
+     URL is not the disk — and for a read that BLEW UP, so a deck whose
+     sources had all been deleted was indistinguishable from a deck with
+     nothing to re-read, and the caller went on to say every figure
+     matched its source. {stem,ok,reason,msg} keeps them apart: ok:true
+     with reason 'reread' is the only success, 'failed' is the only one a
+     user must be told about, and 'notapp' (web mode has no handle to
+     re-read), 'closed' and 'url' are honest declines. */
   APP.reloadTab=function(stem){
-    if(APP.mode!=='app') return Promise.resolve(false);
+    function decline(reason){
+      return Promise.resolve(
+        {stem:stem,ok:false,reason:reason,msg:''});
+    }
+    if(APP.mode!=='app') return decline('notapp');
     var sh=APP.shells[stem];
     var path=sh&&sh.el&&sh.el.dataset.path;
-    if(!path||/^https?:/i.test(path)) return Promise.resolve(false);
+    if(!path) return decline('closed');
+    if(/^https?:/i.test(path)) return decline('url');
     return api('/api/open',{path:path,stem:stem}).then(function(j){
       mountShellHTML(j.shell,j.path||path,true);
-      return true;
-    }).catch(function(){return false;});
+      return {stem:stem,ok:true,reason:'reread',msg:''};
+    }).catch(function(e){
+      return {stem:stem,ok:false,reason:'failed',
+        msg:(e&&e.message)||'could not be read'};
+    });
   };
   function closeNotebook(stem){
     var sh=APP.shells[stem]; if(!sh) return;
@@ -24068,8 +24104,22 @@ window.JunoPptx = (function () {
     RBN_HOME={
       holders:holders,
       tabs:TABS.slice(),
+      /* THE TAB SET IS A CONTAINER, and the snapshot has to reach
+         into it (T151). T139 wrapped the four markup tabs in
+         <span class="rbn-tabset" role="tablist"> so the layouts chooser
+         beside them stopped reading as a fifth tab -- but this snapshot
+         only ever took the strip's ELEMENT CHILDREN, which after that
+         change is the span itself and not the buttons inside it. Restore
+         then removed every .rbn-tab (a descendant query, so it reached
+         through the span) and appended back a set that no longer
+         contained them, and applyRibbonLayout runs at boot: the deck
+         came up with an empty tablist and no tabs at all. */
       strip:(function(){
         var s=$('#rbn-tabs');
+        return s?{el:s,kids:[].slice.call(s.children)}:null;
+      })(),
+      tabset:(function(){
+        var s=$('.rbn-tabset');
         return s?{el:s,kids:[].slice.call(s.children)}:null;
       })(),
       groupTabs:groups.map(function(g){
@@ -24096,6 +24146,13 @@ window.JunoPptx = (function () {
          their saved nodes restores their exact order. */
       $$('.rbn-tab',h.strip.el).forEach(function(b){b.remove();});
       h.strip.kids.forEach(function(k){h.strip.el.appendChild(k);});
+    }
+    /* ...and the markup tabs go back INSIDE the tablist, not merely
+       back into the strip (T151). The removal above is a descendant
+       query, so it empties the tabset too; without this the four tabs
+       are gone for the rest of the session. */
+    if(h.tabset){
+      h.tabset.kids.forEach(function(k){h.tabset.el.appendChild(k);});
     }
     TABS=h.tabs.slice();
   }
@@ -24191,7 +24248,12 @@ window.JunoPptx = (function () {
   function rbnBuildTabs(lay){
     var strip=$('#rbn-tabs'); if(!strip) return;
     $$('.rbn-tab',strip).forEach(function(b){b.remove();});
-    var before=strip.firstChild;
+    /* into the TABSET, so a generated layout's tabs sit inside the
+       tablist exactly as the markup ones do (T151). Built as siblings
+       of it they left role="tablist" wrapping nothing, which is the
+       very thing T139 set out to fix. */
+    var set=$('.rbn-tabset',strip)||strip;
+    var before=(set===strip)?strip.firstChild:null;
     lay.tabs.forEach(function(t){
       var b=document.createElement('button');
       b.className='rbn-tab';b.type='button';
@@ -24201,7 +24263,7 @@ window.JunoPptx = (function () {
       b.setAttribute('aria-selected','false');
       b.textContent=t.label;
       if(t.title) b.title=t.title;
-      strip.insertBefore(b,before);
+      if(before) set.insertBefore(b,before); else set.appendChild(b);
     });
   }
   function rbnMakeGroup(lay,g){
@@ -38371,6 +38433,36 @@ window.JunoPptx = (function () {
     });
     return Object.keys(stems);
   }
+  /* THE TOAST, and it has to be true in all four outcomes (JVR-01):
+     everything current, some updated, some failed, all failed. The
+     failure clause comes FIRST and NAMES the sources, because "6
+     figures updated" sitting beside a source that was never read is
+     exactly the sentence that misleads — and because "a source" with no
+     name is not enough to go and look at. `read` is how many sources
+     the disk actually gave back, `bad` the stems whose read threw, `n`
+     the figures updated, `tried` how many stale ones were found. Note
+     what is NOT claimed when anything failed: "every figure matches its
+     source" is narrowed to "the sources that could be read", and with
+     nothing read at all it becomes "nothing was checked against disk". */
+  function resyncMsg(read,bad,n,tried){
+    var fail=bad.length?('Could not read '+bad.length+' source'
+      +(bad.length===1?'':'s')+': '+bad.join(', ')):'';
+    var rest;
+    if(n) rest=n+' figure'+(n===1?'':'s')+' updated from '
+      +(n===1?'its source':'their sources')
+      +' \u2014 position, size and crop unchanged';
+    else if(tried) rest='Could not read the live cards — are their '
+      +'sources still open?';
+    else if(fail) rest=read
+      ?('The '+read+' source'+(read===1?'':'s')
+        +' that could be read already match')
+      :'Nothing was checked against disk';
+    else rest=read
+      ?('Re-read '+read+' source'+(read===1?'':'s')
+        +' \u2014 every figure already matches')
+      :'Every figure on this deck already matches its source';
+    return fail?(fail+'. '+rest):rest;
+  }
   function resyncAllFigures(){
     /* ONE VERB (T123). "Update figures" used to compare against
        whatever the open tabs happened to hold, so refreshing a figure
@@ -38381,10 +38473,25 @@ window.JunoPptx = (function () {
        disk actually says. Web mode skips the reload half honestly: a
        dropped file left no handle to re-read. */
     var jobs=refSourceStems().map(function(st){
-      return (APP.reloadTab?APP.reloadTab(st):Promise.resolve(false));
+      return (APP.reloadTab?APP.reloadTab(st)
+        :Promise.resolve({stem:st,ok:false,reason:'notapp'}));
     });
     return Promise.all(jobs).then(function(res){
-      var reread=res.filter(Boolean).length;
+      /* WHAT THE DISK ACTUALLY SAID (JVR-01). A failed read used to
+         arrive as the same `false` a declined URL arrives as, and the
+         count kept only the truthy ones. So a run in which every
+         read threw went on to compare the saved copies against the SAME
+         cached cards they were taken from, found nothing stale, and said
+         "every figure already matches its source" — a statement about
+         memory dressed as a statement about disk. Only reason 'failed'
+         is a failure; 'notapp', 'url' and 'closed' are honest declines
+         and stay silent, exactly as before. */
+      var reread=0,bad=[];
+      res.forEach(function(r){
+        if(!r) return;
+        if(r.ok){reread++;return;}
+        if(r.reason==='failed') bad.push(r.stem);
+      });
       /* charts re-read their table's NUMBERS on the same click (T117);
          type, colours, position and size stay the author's. Counted
          BEFORE the early return, or a deck whose only change was a
@@ -38392,19 +38499,12 @@ window.JunoPptx = (function () {
       var cn=(typeof chartResyncAll==='function')?chartResyncAll():0;
       var list=staleFigures();
       if(!list.length&&!cn){
-        toast(reread
-          ?('Re-read '+reread+' source'+(reread===1?'':'s')
-            +' \u2014 every figure already matches')
-          :'Every figure on this deck already matches its source');
+        toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
         return 0;
       }
       var n=cn;
       list.forEach(function(p){if(resyncFigure(p.a)) n++;});
-      toast(n?(n+' figure'+(n===1?'':'s')+' updated from '
-        +(n===1?'its source':'their sources')
-        +' \u2014 position, size and crop unchanged')
-        :'Could not read the live cards \u2014 are their sources '
-          +'still open?');
+      toast(resyncMsg(reread,bad,n,list.length),bad.length?7000:0);
       return n;
     });
   }
@@ -46139,6 +46239,13 @@ window.JunoPptx = (function () {
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
   var dgSel='title', dgOutline=false;
+  /* the smallest a drag proxy in the outline sheet may be, in page
+     percent. A horizontal or vertical line's bounding box is
+     zero-thickness and there is nothing to grab; the canvas answers the
+     same question with a 12px tolerance round the segment (arrowAt).
+     6% of a 116x66px miniature is ~7x4px, and the fallback box proxy
+     below is already only 8% tall, so this is no outlier. */
+  var DG_HIT=6;
   /* WHICH SLIDES (T130). The put gesture was all-wearers-everywhere and
      the outline sheet was every-slide-always; the ask named sections
      and ranges for both. One selector builder, two independent scopes,
@@ -46158,6 +46265,19 @@ window.JunoPptx = (function () {
       return 'in \u00a7'+((meta&&meta.name)||'section');
     }
     return 'slides '+sc.from+'\u2013'+sc.to;
+  }
+  /* a typed range, made safe (JVR-05). SORT FIRST, then clamp BOTH
+     ends: clamping the first endpoint only upward and the second only
+     downward and swapping afterwards let a reversed out-of-range input
+     like 999-1 store from=1,to=999 on a twelve-slide deck. dgInScope
+     compares against real slide numbers, so the SELECTION was never
+     wrong -- but dgScopeLabel is the only place a user can read back
+     which slides are in scope, and it read those numbers out. An empty
+     deck yields 1..1 rather than the degenerate 1..0. */
+  function dgRange(a,b,total){
+    var last=Math.max(1,total);
+    function fit(n){return Math.min(last,Math.max(1,n));}
+    return {from:fit(Math.min(a,b)),to:fit(Math.max(a,b))};
   }
   function dgScopeSelect(sc,onchange){
     var sel=document.createElement('select');
@@ -46192,9 +46312,9 @@ window.JunoPptx = (function () {
         if(!mm){sel.value=sc.kind==='all'?'all'
           :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
         sc.kind='range';
-        sc.from=Math.max(1,parseInt(mm[1],10));
-        sc.to=Math.min(total,parseInt(mm[2]||mm[1],10));
-        if(sc.to<sc.from){var t=sc.from;sc.from=sc.to;sc.to=t;}
+        var r=dgRange(parseInt(mm[1],10),
+          parseInt(mm[2]||mm[1],10),total);
+        sc.from=r.from;sc.to=r.to;
       }
       onchange();
     });
@@ -46508,11 +46628,37 @@ window.JunoPptx = (function () {
          it would on the canvas. A plain click still navigates: nothing
          is claimed until the pointer has actually moved. */
       (sl.annots||[]).forEach(function(a){
-        if(!a||a.hide||a.k==='arrow') return;
+        if(!a||a.hide) return;
+        /* AN ARROW IS ITS TWO ENDS, NOT A BOX (JVR-03). It used to be
+           skipped here, which made "Every object" untrue for the one
+           kind whose geometry is x1/y1,x2/y2 -- but the write-back was
+           never the problem: shiftAnnot below already translates both
+           endpoints and any dragged corners, exactly as a canvas drag
+           does. Only the HANDLE was missing, and that is the bounding
+           box of the line the miniature already draws -- arrowEnds is
+           the same call the renderer makes, so a tied end puts the
+           handle where the line really is rather than on the stale
+           stored endpoint. */
+        var bx,by,bw,bh;
+        if(a.k==='arrow'){
+          var ae=arrowEnds(null,sl,a,0);
+          var axs=[ae.x1,ae.x2],ays=[ae.y1,ae.y2];
+          arrowMids(a).forEach(function(m){
+            axs.push(m[0]);ays.push(m[1]);});
+          bx=Math.min.apply(null,axs);by=Math.min.apply(null,ays);
+          bw=Math.max.apply(null,axs)-bx;bh=Math.max.apply(null,ays)-by;
+          if(!isFinite(bx)||!isFinite(by)||!isFinite(bw)||!isFinite(bh))
+            return;
+          /* grow the HIT TARGET about the line without moving the line */
+          if(bw<DG_HIT){bx-=(DG_HIT-bw)/2;bw=DG_HIT;}
+          if(bh<DG_HIT){by-=(DG_HIT-bh)/2;bh=DG_HIT;}
+        } else {
+          bx=(a.x||0);by=(a.y||0);bw=(a.w||10);bh=(a.h||8);
+        }
         var px=document.createElement('span');
-        px.className='dg-drag';
-        px.style.left=(a.x||0)+'%';px.style.top=(a.y||0)+'%';
-        px.style.width=(a.w||10)+'%';px.style.height=(a.h||8)+'%';
+        px.className='dg-drag'+(a.k==='arrow'?' is-arrow':'');
+        px.style.left=bx+'%';px.style.top=by+'%';
+        px.style.width=bw+'%';px.style.height=bh+'%';
         px.title=(annotLabel(a)||a.k)+' \u2014 slide '+(i+1)
           +(nm?' ('+nm+')':'')+'. Drag to move it from here.';
         px.addEventListener('pointerdown',function(e){
