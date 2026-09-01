@@ -3269,6 +3269,35 @@ body.deck-open{overflow:hidden;}
 /* FOLDED: the group row goes, the tab strip stays. A bar that vanishes
    completely leaves you no way to ask for it back (2026-08-20). */
 .deck.rbn-fold>.edit-tools{display:none;}
+/* ---- ...and the bar can put ITSELF away (off by default) --------------
+   TRANSFORM, never display:none. fitEditRibbon and ribbonMinW both bail
+   on a folded bar because it measures 0, and ribbonMinW is what publishes
+   --film-max: a peek that used the fold would swing the strip's ceiling
+   between a real number and nothing sixty times a second. Rolled up the
+   bar is still laid out, still measurable, and the density ladder is
+   unaffected.
+   The ROW goes to zero so the stage takes the height; the bar keeps its
+   106px and parks behind the tab strip, which never moves -- so the
+   guarantee above still holds, there is always something to reach for.
+   `:not(.rbn-fold)` is the present bar's own precedence rule
+   (body.pb-auto.pb-peek:not(.pb-folded), app.css): an explicit fold beats
+   a peek, so the two mechanisms cannot fight. */
+.deck.editing.rbn-auto{grid-template-rows:auto auto 0 minmax(0,1fr);}
+.deck.editing.rbn-auto>.rbn-tabs{position:relative;z-index:2;}
+.deck.editing.rbn-auto>.edit-tools{position:relative;z-index:1;
+  transform:translateY(-100%);transition:transform .18s ease;}
+.deck.editing.rbn-auto.rbn-peek:not(.rbn-fold)>.edit-tools{transform:none;
+  box-shadow:0 18px 40px #00000066;}
+/* the strip's own auto-hide button. Its class is rbn-autobtn and NOT
+   rbn-auto: `rbn-auto` is the deck's state class, and `.rbn-fold` being
+   both a button class and a state class is what once put padding on a
+   position:fixed;inset:0 element (see the note under .rbn-tabs .rbn-fold
+   below). Words plus icon, like every other button here. */
+.rbn-tabs .rbn-autobtn{align-self:center;padding:1px 7px;line-height:1;
+  flex:none;font-size:10px;display:inline-flex;align-items:center;gap:4px;
+  white-space:nowrap;}
+.rbn-tabs .rbn-autobtn .bic{width:12px;height:12px;}
+#rbn-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
 /* SCOPED to the strip. Unscoped, `.rbn-fold` also matched the deck's own
    `.rbn-fold` state class — so folding the tools put 1px 9px of padding on
    a position:fixed;inset:0 element and the stage came out SMALLER than
@@ -4149,6 +4178,24 @@ body.slide-editing .apptop{display:none;}
   width:clamp(150px,var(--film-w,min(var(--dc-w),200px)),var(--film-max,46vw));
   border-right:1px solid #ffffff22;}
 .deck.creating .deck-create{width:min(var(--dc-w),94vw);}
+/* ---- the column hides ITSELF (off by default) -------------------------
+   Same taskbar model as the document view's presentations panel
+   (body.prrail-auto, app.css): the surface leaves, the page takes the
+   width, and it slides back when the pointer reaches the left edge.
+   THE TRACK goes to zero, not the panel. .deck-create is grid track 1,
+   so its clamp width is what holds the stage narrow -- but the PANEL has
+   to keep that width or translateX(-100%) is 100% of nothing and its
+   contents simply overflow a 0px box (the exact failure app.css:411-414
+   records for the rail). Keeping it a grid item on grid-row:2/5 is also
+   what puts it under the QAT with no measured offset.
+   Slides (#vw-versions) is the manual half and stays as it is: it hides
+   the THUMBNAILS inside a column that keeps its width. This hides the
+   column. */
+.deck.editing.film-auto{grid-template-columns:0 minmax(0,1fr);}
+.deck.editing.film-auto>.deck-create{position:relative;z-index:120;
+  transform:translateX(-100%);transition:transform .18s ease;
+  box-shadow:0 0 40px #00000066;}
+.deck.editing.film-auto.film-peek>.deck-create{transform:none;}
 .deck.editing #layout-row{display:none;}
 .deck.editing .dc-resize{display:none;}
 /* ---- PowerPoint-style ribbon: labelled groups, always the same height ----
@@ -6360,6 +6407,10 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 .deck.editing .film-resize{display:block;}
 .deck.editing.strip-off .film-resize,
 .deck.editing.poster-page .film-resize{display:none;}
+/* the handle sits at the column's rendered edge, so it goes where the
+   column goes: gone while it is parked, back while it is peeking */
+.deck.editing.film-auto .film-resize{display:none;}
+.deck.editing.film-auto.film-peek .film-resize{display:block;}
 .film-resize:hover,.film-resize.on{
   background:color-mix(in srgb,var(--accent) 40%,transparent);}
 @media(max-width:860px){.film-resize{display:none!important;}}
@@ -6395,8 +6446,24 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
   line-height:1.35;}
 /* the thumbnail follows the column: it is a scale model of the slide, so
    it has the slide's shape and grows with the room it is given */
-.film-list .mini-diagram{width:100%;height:auto;aspect-ratio:116/66;
+/* WIDTH:100% IS ONLY TRUE OF THE ROW THAT STACKS (T153). The CURRENT
+   row's .film-label turns column, so there the thumbnail really does own
+   the full width. Every OTHER row is a horizontal flex line -- number,
+   thumbnail, title -- where 100% is a promise the row cannot keep: at
+   flex:none the thumbnail took the whole line, pushed the title to zero
+   width and the row's own controls to zero, overflowed the row by the
+   number's width, and .film-list (overflow-y:auto, so the x axis
+   computes to auto as well) grew a horizontal scrollbar inside a
+   vertical list. Measured at a 200px column: row 171px, content 189px,
+   title 0px. Sharing rows shrink to fit instead. */
+.film-list .film-row.current .mini-diagram{width:100%;height:auto;
+  aspect-ratio:116/66;min-height:var(--mini-h);}
+.film-list .film-row:not(.current) .mini-diagram{flex:1 1 auto;
+  min-width:0;width:auto;height:auto;aspect-ratio:116/66;
   min-height:var(--mini-h);}
+/* ...and the list never scrolls sideways: it is a vertical list, and a
+   horizontal scrollbar in it is always a fitting bug, never a feature */
+.film-list{overflow-x:hidden;}
 
 .deck-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
   background:var(--chrome-2,#16273a);border:1px solid var(--cyan);color:#e6eef4;
@@ -10481,6 +10548,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
          same thing, and so does Ctrl+F1, both of which are what
          PowerPoint trains people to reach for. Clicking a tab while it is
          folded brings it back. -->
+    <!-- The pair, the way the presentations panel has one: #pr-collapse
+         puts it away, #pr-auto lets it put itself away. Same word, same
+         icon, same aria contract (pressed = auto-hide is ON).
+         IN THE MARKUP, inside #rbn-tabs and OUTSIDE .rbn-tabset, and not
+         a .rbn-tab: rbnHome() snapshots this strip's children once,
+         before the first layout is applied, and rbnRestoreHome() puts
+         exactly those back. A button created in JS after that snapshot
+         would be re-ordered to the front on the next layout change, and
+         one wearing .rbn-tab would be deleted outright (T151). -->
+    <button class="dbtn rbn-autobtn" id="rbn-auto" aria-pressed="false"
+      title="Auto-hide: the tools roll up and come back when you reach the
+ tab strip. Off by default."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg> Auto-hide</button>
     <button class="dbtn rbn-fold" id="rbn-fold" aria-label="Hide or show the editing tools" aria-pressed="false"
       title="Hide the tools and give the page the room (Ctrl+F1). Click a
  tab, or this, to bring them back">&#9652;</button>
@@ -15312,6 +15391,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       e.stopPropagation();on=!on;apply();});
     document.addEventListener('mousemove',function(e){
       if(!on) return;
+      /* ONE panel answers the left edge. The deck editor is a full-screen
+         surface with its own left column and its own auto-hide, and
+         deckIsolate() has put `inert` on this rail for as long as it is
+         open (2026-08-30 review) -- so peeking it there produced a panel
+         you could see and not click, over the top of the editor's own.
+         The way back out of the editor is #deck-exit in the QAT, which is
+         visible throughout (syncTopBar). */
+      if(document.body.classList.contains('deck-open')) return;
       var peek=document.body.classList.contains('prrail-peek');
       if(!peek&&e.clientX<=4) document.body.classList.add('prrail-peek');
       else if(peek&&e.clientX>Math.max(200,
@@ -22822,6 +22909,93 @@ window.JunoPptx = (function () {
      the tools back, and a bar that vanishes completely leaves you with no
      way to say "I want them again". */
   var FOLDKEY2='jv-deck-fold:';
+  /* ---- ...and the two AUTO-hides -----------------------------------
+     The document view's presentations panel has had one since 2026-08-04
+     (#pr-auto / initRailAuto, app.js): opt-in, remembered, the surface
+     slides away and comes back when the pointer reaches its edge, and
+     `aria-pressed` means auto-hide is ON. The editor's two surfaces --
+     the slide column and the ribbon -- had only manual hides (Slides,
+     and the fold above). Same behaviour, same words, same aria; the KEYS
+     follow this file's convention rather than app.js's, because every
+     other editor preference here is SCOPE-keyed through lsGet/lsSet.
+     DECLARATIONS ONLY. initFilmAuto/initRibbonAuto are called from THE
+     BOOT SEQUENCE in 99-boot.js, never from here. */
+  var FILMAUTOKEY='jv-deck-filmauto:',RBNAUTOKEY='jv-deck-rbnauto:';
+  var filmAuto=false,rbnAuto=false;
+  function filmAutoOn(){return filmAuto;}
+  function setFilmAuto(on){
+    filmAuto=!!on;
+    deckEl.classList.toggle('film-auto',filmAuto);
+    if(!filmAuto) deckEl.classList.remove('film-peek');
+    lsSet(FILMAUTOKEY+SCOPE,filmAuto?'1':'0');
+    /* the stage just changed width, and the ribbon just stopped (or
+       started) sharing the row with a column */
+    applyZoom();
+    fitEditRibbon();
+  }
+  function initFilmAuto(){
+    document.addEventListener('mousemove',function(e){
+      if(!filmAuto||mode!=='edit'||deckEl.hidden) return;
+      /* a poster has no column strip at all (.deck.poster-page .dc-film) */
+      if(pageOf().poster) return;
+      var col=$('#deck-create');
+      var peek=deckEl.classList.contains('film-peek');
+      if(!peek){
+        if(e.clientX<=4) deckEl.classList.add('film-peek');
+        return;
+      }
+      if(!col) return;
+      /* the same 40px margin the present bar leaves, so the column does
+         not vanish the instant you aim at a control near its edge */
+      if(e.clientX>col.getBoundingClientRect().right+40)
+        deckEl.classList.remove('film-peek');
+    });
+  }
+  function setRibbonAuto(on){
+    rbnAuto=!!on;
+    /* one bar, one state: an explicit fold and an auto-hide both claim to
+       hide it, so turning auto on clears the fold rather than stacking
+       two hidden states the user has to undo twice */
+    if(rbnAuto&&ribbonFolded()) setRibbonFold(false);
+    deckEl.classList.toggle('rbn-auto',rbnAuto);
+    if(!rbnAuto) deckEl.classList.remove('rbn-peek');
+    var b=$('#rbn-auto');
+    if(b){
+      b.setAttribute('aria-pressed',rbnAuto?'true':'false');
+      /* the title says what CLICKING will do, the way #pb-auto's does */
+      b.title=rbnAuto
+        ?'Auto-hide is on: the tools roll up and come back when you reach '
+          +'the tab strip. Click to keep them in place.'
+        :'Auto-hide: the tools roll up and come back when you reach the '
+          +'tab strip. Off by default.';
+    }
+    lsSet(RBNAUTOKEY+SCOPE,rbnAuto?'1':'0');
+    applyZoom();            /* the stage just changed height */
+  }
+  function initRibbonAuto(){
+    var b=$('#rbn-auto');
+    if(b) b.addEventListener('click',function(){setRibbonAuto(!rbnAuto);});
+    document.addEventListener('mousemove',function(e){
+      if(!rbnAuto||mode!=='edit'||deckEl.hidden) return;
+      /* an explicit fold beats a peek -- the same precedence the CSS
+         states with :not(.rbn-fold) */
+      if(ribbonFolded()) return;
+      var strip=$('#rbn-tabs'),bar=$('#edit-tools');
+      if(!strip) return;
+      var peek=deckEl.classList.contains('rbn-peek');
+      var s=strip.getBoundingClientRect();
+      if(e.clientY>=s.top-4&&e.clientY<=s.bottom+4
+         &&e.clientX>=s.left&&e.clientX<=s.right){
+        if(!peek) deckEl.classList.add('rbn-peek');
+        return;
+      }
+      if(!peek||!bar) return;
+      var r=bar.getBoundingClientRect();
+      if(e.clientY<s.top-40||e.clientY>r.bottom+40
+         ||e.clientX<r.left-40||e.clientX>r.right+40)
+        deckEl.classList.remove('rbn-peek');
+    });
+  }
   /* how the slide column lists its slides, and how wide it is. Both are
      preferences about the TOOL, not properties of the deck — sending
      someone a presentation must not send them your column width — so
@@ -22987,9 +23161,22 @@ window.JunoPptx = (function () {
     rungs.forEach(function(c){had[c]=cl.contains(c);cl.add(c);});
     foldViewGroup(true);
     sizeRibbonGroups();
-    /* scrollWidth, not clientWidth: the groups are flex:none, so this is
-       what the row NEEDS and is independent of the box it is sitting in */
-    min=bar.scrollWidth;
+    /* WHAT THE ROW NEEDS, WHICH IS NOT WHAT scrollWidth REPORTS (T152).
+       scrollWidth is floored at the element's own client width: a bar
+       with slack returns its BOX, never its content. So this measured
+       (deck width - strip width) instead of the ribbon's real floor, and
+       fitFilmMax's `W - filmFloorW` gave back exactly the strip's
+       CURRENT width. The ceiling was the current width at every window
+       size, so the drag could shrink the column and never widen it, and
+       the handle sat frozen against its own limit. Measured on a 1900px
+       window: box 1685px, true need 890px, ceiling 200px where 867px was
+       available. width:max-content asks the flex row what it actually
+       wants; the bar is already stamped with the whole compaction ladder
+       here, and both are put back below. */
+    var hadW=bar.style.width;
+    bar.style.width='max-content';
+    min=Math.ceil(bar.getBoundingClientRect().width);
+    bar.style.width=hadW;
     rungs.forEach(function(c){cl.toggle(c,had[c]);});
     foldViewGroup(wasFolded);
     sizeRibbonGroups();
@@ -48195,6 +48382,14 @@ window.JunoPptx = (function () {
       if(!deckEl._foldInit){
         deckEl._foldInit=1;
         setRibbonFold(lsGet(FOLDKEY2+SCOPE)==='1');
+        /* the two auto-hides are remembered the same way and come back in
+           the same place, so there is ONE moment where the editor's
+           remembered chrome state is restored -- and it is the first
+           moment the ribbon and the column have real geometry to be
+           measured against. Order matters: the ribbon first, because
+           setFilmAuto ends by re-fitting it. */
+        setRibbonAuto(lsGet(RBNAUTOKEY+SCOPE)==='1');
+        setFilmAuto(lsGet(FILMAUTOKEY+SCOPE)==='1');
       }
     }
     /* The top bar earns its row or it does not appear. While editing it
@@ -49327,6 +49522,26 @@ window.JunoPptx = (function () {
               ev.stopPropagation();overlayHide(menu);setFilmMode(v[0]);});
             menu.appendChild(b);
           });
+          /* ...and the column's own auto-hide, the way the document
+             view's presentations panel has one (#pr-auto). Not a listing
+             mode, so it goes UNDER them as a separate item rather than
+             into FILM_VIEWS -- label() names the button from that list,
+             and "Auto-hide" must never become the button's own label.
+             The Overview entry already set the shape: this menu is "how
+             do I want to look at this deck", and putting the column away
+             is that question. A poster has no column strip to hide. */
+          if(!pageOf().poster){
+            var ab=document.createElement('button');
+            ab.className='dc-mi';
+            ab.textContent='Auto-hide this column';
+            ab.title='The column slides out of the way and comes back when '
+              +'you move the pointer to the left edge. Off by default.';
+            ab.setAttribute('aria-pressed',filmAutoOn().toString());
+            ab.addEventListener('click',function(ev){
+              ev.stopPropagation();overlayHide(menu);
+              setFilmAuto(!filmAutoOn());});
+            menu.appendChild(ab);
+          }
         }
         if(open) overlayShow(btn,menu);
         else overlayHide(menu);
@@ -52064,6 +52279,11 @@ window.JunoPptx = (function () {
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  /* the two auto-hides: their button and pointer listeners only. The
+     remembered STATE is applied on first entry to edit mode, beside the
+     ribbon fold's restore -- nothing here has geometry to measure yet. */
+  initFilmAuto();
+  initRibbonAuto();
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not
