@@ -1731,6 +1731,19 @@
     }
     return 'slides '+sc.from+'\u2013'+sc.to;
   }
+  /* a typed range, made safe (JVR-05). SORT FIRST, then clamp BOTH
+     ends: clamping the first endpoint only upward and the second only
+     downward and swapping afterwards let a reversed out-of-range input
+     like 999-1 store from=1,to=999 on a twelve-slide deck. dgInScope
+     compares against real slide numbers, so the SELECTION was never
+     wrong -- but dgScopeLabel is the only place a user can read back
+     which slides are in scope, and it read those numbers out. An empty
+     deck yields 1..1 rather than the degenerate 1..0. */
+  function dgRange(a,b,total){
+    var last=Math.max(1,total);
+    function fit(n){return Math.min(last,Math.max(1,n));}
+    return {from:fit(Math.min(a,b)),to:fit(Math.max(a,b))};
+  }
   function dgScopeSelect(sc,onchange){
     var sel=document.createElement('select');
     sel.className='dg-scope';
@@ -1764,9 +1777,9 @@
         if(!mm){sel.value=sc.kind==='all'?'all'
           :sc.kind==='sec'?('sec:'+sc.sec):'range';return;}
         sc.kind='range';
-        sc.from=Math.max(1,parseInt(mm[1],10));
-        sc.to=Math.min(total,parseInt(mm[2]||mm[1],10));
-        if(sc.to<sc.from){var t=sc.from;sc.from=sc.to;sc.to=t;}
+        var r=dgRange(parseInt(mm[1],10),
+          parseInt(mm[2]||mm[1],10),total);
+        sc.from=r.from;sc.to=r.to;
       }
       onchange();
     });

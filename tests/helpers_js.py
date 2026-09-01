@@ -31,6 +31,57 @@ ASSETS = Path(__file__).resolve().parent.parent / "src" / "junoview" \
     / "assets"
 
 
+def lift_fn(src: str, name: str) -> str:
+    """Cut one function declaration out of a larger file, by brace depth.
+
+    The deck IIFE as a whole needs a DOM, but a PURE function inside it
+    does not, and a substring assertion cannot tell a correct clamp from
+    a wrong one. Lifting the declaration lets a test run the arithmetic
+    that actually ships instead of describing it.
+    """
+    head = f"function {name}("
+    i = src.index(head)
+    j = src.index("{", i)
+    depth = 0
+    for k in range(j, len(src)):
+        if src[k] == "{":
+            depth += 1
+        elif src[k] == "}":
+            depth -= 1
+            if depth == 0:
+                return src[i:k + 1]
+    raise AssertionError(f"unbalanced braces lifting {name}")
+
+
+def run_fn(src: str, name: str, calls: list[list[object]]) -> list[object]:
+    """Run one lifted function over a list of argument lists.
+
+    Returns None if no JS engine is present, so callers skip rather than
+    fail on a machine without node or VS Code.
+    """
+    import json as _json
+    import subprocess as _sp
+    import tempfile as _tf
+
+    eng = js_engine()
+    if eng is None:
+        return None
+    cmd, env = eng
+    body = lift_fn(src, name)
+    with _tf.TemporaryDirectory() as d:
+        p = Path(d) / "run.js"
+        p.write_text(
+            body + "\nconst calls=" + _json.dumps(calls) + ";\n"
+            + "console.log(JSON.stringify(calls.map("
+            + f"a => {name}.apply(null, a))));\n",
+            encoding="utf-8")
+        r = _sp.run(cmd + [str(p)], capture_output=True, text=True,
+                    env=env, timeout=60)
+        assert r.returncode == 0, r.stderr[:2000]
+        line = [ln for ln in r.stdout.splitlines() if ln.startswith("[")][-1]
+        return _json.loads(line)
+
+
 def js_engine() -> tuple[list[str], dict[str, str]] | None:
     """node, else VS Code's Electron run as node, else None."""
     node = shutil.which("node")

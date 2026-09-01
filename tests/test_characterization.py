@@ -750,8 +750,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # now cover arrows too, whose handle is the drawn line's bounding box
 # (arrowEnds) floored to a grabbable size, and a line proxy yields
 # z-order to the boxes it crosses.
-EXPECTED_MD5 = "3446fe62114623fc323912e90681017c"
-EXPECTED_BYTES = 3087811
+# Moved 2026-09-01 for T149 (JVR-05): the design surface's typed slide
+# range sorts its two endpoints before clamping both into 1..total,
+# instead of clamping one end each way and swapping afterwards. Editor
+# chrome only; the slides a range selects are identical either way, what
+# changes is the stored range and the label built from it.
+EXPECTED_MD5 = "823593e94b26bbfef30ebf2f722c1a88"
+EXPECTED_BYTES = 3088498
 
 
 def _render_example() -> str:

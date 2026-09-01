@@ -2858,12 +2858,29 @@ None of them throws, which is why they survived a 947-test suite.
   is exactly what the canvas does, and the sheet still honours no lock
   for any kind — worth its own entry, not an arrow-only inconsistency.
 
-- [ ] **T149 · S — A typed slide range cannot escape the deck.** The
+- [x] **T149 · S — A typed slide range cannot escape the deck.** The
   design surface's range parser clamps one endpoint each way and THEN
   swaps, so `999-1` on a twelve-slide deck stores 1–999. Selection
   survives it (the consumers re-check), so this is a lying label rather
   than a broken selection — the put button, its tooltip and the toast
   all then describe a range the deck does not have. (JVR-05.)
+
+  *Done 2026-09-01.* One helper, `dgRange(a,b,total)`: sort the pair,
+  then clamp BOTH ends into 1..total (an empty deck yields 1..1 rather
+  than the degenerate 1..0). Brute-forced before and after over
+  total=1..14 and every endpoint pair 0..24: the old code stored an
+  out-of-range endpoint in 5,894 of 8,750 cases, the new one in none —
+  and the SELECTED SLIDE SET is identical in all 8,750, which is the
+  honest scope of this fix. `dgInScope` compares against real slide
+  numbers, so nothing was ever wrongly selected; what was wrong is the
+  only read-back a user gets — the put button's label, its tooltip and
+  the toast, which cheerfully said "slides 1–999". Tested twice over:
+  the substring pin, and — because `dgRange` is pure — a test that LIFTS
+  the shipped function out of the assembled IIFE and RUNS it (new
+  `helpers_js.lift_fn`/`run_fn`, skipping where there is no engine),
+  which is the edge-case-not-substring test the review asked for. It
+  still does not TELL the user their range was narrowed; quiet clamping
+  is what `0-5` has always done, and saying so is a separate decision.
 
 - [ ] **T150 · S — "Self-contained" means it.** `core.css` imports IBM
   Plex from fonts.googleapis.com, so every rendered page — including the

@@ -361,3 +361,59 @@ def test_the_outline_sheet_moves_every_kind_including_arrows(out):
 def test_the_outline_sheet_can_show_certain_slides_only(out):
     assert "if(!dgInScope(dgSheetScope,i)) return;" in out
     assert "sheetScope.title='Outlines from these slides only';" in out
+
+
+def test_a_typed_range_is_sorted_before_it_is_clamped(out):
+    """JVR-05. The parser clamped the first endpoint only upward and
+    the second only downward, THEN swapped, so "999-1" on a twelve-
+    slide deck stored from=1,to=999. The selection was never wrong --
+    dgInScope compares against real slide numbers, and the selected set
+    is identical for every endpoint pair -- but dgScopeLabel is the only
+    read-back of the active scope, and the toast after a put said
+    "moved slides 1-999". Sort first, then clamp both ends."""
+    assert "function dgRange(a,b,total){" in out
+    assert "var last=Math.max(1,total);" in out
+    assert "function fit(n){return Math.min(last,Math.max(1,n));}" in out
+    assert "return {from:fit(Math.min(a,b)),to:fit(Math.max(a,b))};" in out
+    # the call site hands both raw endpoints over and keeps nothing back
+    assert "var r=dgRange(parseInt(mm[1],10)," in out
+    assert "sc.from=r.from;sc.to=r.to;" in out
+    # ...and the old clamp-one-end-each-way-then-swap shape is gone
+    assert "sc.from=Math.max(1,parseInt(mm[1],10));" not in out
+    assert "if(sc.to<sc.from){var t=sc.from;sc.from=sc.to;sc.to=t;}" not in out
+
+
+def test_the_shipped_range_arithmetic_cannot_leave_the_deck(out):
+    """The same fix, RUN rather than read (JVR-05).
+
+    A substring test proves the new shape is present; it cannot prove
+    the shape is right. dgRange is pure, so the function that actually
+    ships is lifted out of the assembled IIFE and executed over the
+    review's own cases plus every endpoint pair in 0..24 -- the stored
+    range must always sit inside 1..total and be ordered. Skips when the
+    machine has no JS engine, exactly as the pptx behavioural tests do.
+    """
+    import pytest
+
+    from helpers_js import run_fn
+
+    # the sweep, plus the review's own out-of-range example spelled out
+    cases = [[a, b, t] for t in (1, 3, 12) for a in range(0, 25)
+             for b in range(0, 25)]
+    cases += [[999, 1, 12], [1, 999, 12], [99, 99, 12], [-4, 7, 12]]
+    got = run_fn(out, "dgRange", cases)
+    if got is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    for (a, b, total), r in zip(cases, got, strict=True):
+        assert 1 <= r["from"] <= total, (a, b, total, r)
+        assert 1 <= r["to"] <= total, (a, b, total, r)
+        assert r["from"] <= r["to"], (a, b, total, r)
+    # the review's own example, and the two neighbours it implies
+    by = {tuple(c): r for c, r in zip(cases, got, strict=True)}
+    assert by[(999, 1, 12)] == {"from": 1, "to": 12}
+    assert by[(1, 999, 12)] == {"from": 1, "to": 12}
+    assert by[(99, 99, 12)] == {"from": 12, "to": 12}
+    assert by[(-4, 7, 12)] == {"from": 1, "to": 7}
+    assert by[(9, 3, 12)] == {"from": 3, "to": 9}
+    assert by[(0, 0, 12)] == {"from": 1, "to": 1}
+    assert by[(20, 15, 12)] == {"from": 12, "to": 12}
