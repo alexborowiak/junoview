@@ -3294,3 +3294,57 @@ def test_the_shows_with_section_is_not_folded_away(out):
     foldable, which put the door behind another door. It is kept now.
     """
     assert "'chart':1,'shows with':1};" in out
+
+
+def test_the_build_list_shows_every_stop_not_only_the_builds(out):
+    """T163. The pane's list is headed "Build order -- each row is one
+    click" and showed anim-order builds ONLY. A flip book's frames and a
+    chart's series builds are clicks too -- they are in the plan playback
+    walks -- so a slide whose entire reveal was a six-figure book said
+    "Nothing animated on this slide yet" while the space bar took five
+    presses through it.
+
+    flipPlan already computed which stepper sits after which build and
+    threw it away; it now hands `anch` and `tail` back, and the stops a
+    build anchors are drawn under it. Read-only on purpose: a page's
+    place in the sequence is decided by its place in its BOOK, and a
+    second way to reorder it here would be two truths about one order.
+
+    Driven live: a three-series chart shows one build row and three
+    sub-rows (then control / then treatment / then baseline), the strip
+    marks 4 clicks and the toast says "4 clicks" -- three surfaces that
+    used to disagree.
+    """
+    assert "return {count:n,stop:stop,base:base,anch:anch,tail:tail};" in out
+    assert "function stepperRows(list,ps){" in out
+    assert "stepperRows(list,plan.anch[si]);" in out
+    assert "stepperRows(list,plan.tail);" in out
+    # a chart contributes its series by NAME, a book its pages
+    assert "chartParse(a).series.forEach(function(se){" in out
+    assert "?('figure '+(ti+2)+' of '+flipFrames(a).length" in out
+    # the empty state distinguishes "nothing" from "no effects, but it steps"
+    assert "if(!seq.length&&!steppersOn(s).length){" in out
+    assert "'No entrance effects here, but this slide takes '" in out
+
+
+def test_a_chart_is_positioned_like_every_other_object(out):
+    """T164, a bug T117 shipped and this session tripped over for hours.
+
+    Every annotation kind declares its own `position:absolute`
+    (.an-table, .an-image, .an-flip...). `.an-chart` was given only
+    `overflow:hidden`. Two consequences, neither visible in a screenshot
+    of a slide with one chart on it:
+
+    the inline left/top drawChart writes were INERT, so a chart rendered
+    at the slide's top-left however you placed it; and an unpositioned
+    element stacks BELOW the arrow hit-layer -- an absolute <svg>
+    covering the whole canvas -- so a chart could not be clicked, could
+    not be selected, and its entire right-click menu (Edit data, chart
+    type, T160's series build) was unreachable.
+
+    Measured live before: chart position 'static', stored left '14%',
+    rendered at (0,0), while a text box beside it was 'absolute' and
+    honoured its 14.9%. After: 'absolute', rendered at (158,127) against
+    an expected (158,127), and the chart selects on a click.
+    """
+    assert ".an-chart{position:absolute;overflow:hidden;}" in out

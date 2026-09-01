@@ -3217,6 +3217,51 @@ effects are visible for approximately none of the moments they are usable.
   That is the join those two features fell through, it needs no new
   stored key and no new ribbon button, and it is the next thing to do
   here.
+
+- [x] **T163 · M — The Animations pane is the one true sequence.**
+  The review's headline recommendation, done. The pane's list is headed
+  "Build order — each row is one click" and showed anim-order builds
+  ONLY, so a flip book's five clicks and (since T160) a chart's series
+  builds were invisible in the one panel that claims to list the clicks.
+  `flipPlan` already worked out which stepper sits after which build and
+  threw that away; it now returns `anch` and `tail`, and the stops a
+  build anchors are drawn beneath it.
+  *Done 2026-09-01.* The sub-rows are READ-ONLY on purpose: a page's
+  place in the sequence is decided by its place in its BOOK, and a
+  second way to reorder it here would be two truths about one order —
+  the book's own pane is where frames move. A chart contributes its
+  series by name, a book its pages by `frameLabel`. The empty state now
+  tells the two cases apart: "Nothing animated on this slide yet" only
+  when nothing steps either, and otherwise "No entrance effects here,
+  but this slide takes N clicks — it steps through what is below."
+  Driven live end to end on a three-series chart: the right-click row
+  toasts "Axes first, then 3 series — 4 clicks", the pane lists one
+  build row plus *then control / then treatment / then baseline*, and
+  the film strip marks ▸4. Three surfaces that disagreed this morning
+  now say the same number.
+
+- [x] **T164 · S — A chart is positioned like every other object.**
+  Found by failing, repeatedly, to select a chart while driving T160 —
+  and assuming it was pointer-events until the DOM said otherwise. Every
+  annotation kind declares its own `position:absolute` (`.an-table`,
+  `.an-image`, `.an-flip`…); `.an-chart` shipped in T117 with only
+  `overflow:hidden`. Two consequences, neither visible in a screenshot
+  of a slide holding one chart: the inline `left`/`top` that `drawChart`
+  writes were INERT, so a chart rendered at the slide's top-left however
+  you placed it; and an unpositioned element stacks BELOW the arrow
+  hit-layer — an absolute `<svg>` covering the whole canvas — so a chart
+  could not be clicked, could not be selected, and its whole right-click
+  menu (Edit data, chart type, and T160's own series build) was
+  unreachable.
+  *Done 2026-09-01.* One declaration. Measured before: chart `static`,
+  stored left `14%`, rendered at (0,0), while a text box beside it was
+  `absolute` and honoured its 14.9%. After: `absolute`, rendered at
+  (158,127) against an expected (158,127), selects on a click, and the
+  series-build row is reachable for the first time since it was written.
+  The lesson worth keeping: T160 was tested, driven and committed
+  against a feature whose door could not be opened, because the tests
+  read the assembled JS and the drive fell back to executing functions.
+  A shipped chart had never been clicked.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

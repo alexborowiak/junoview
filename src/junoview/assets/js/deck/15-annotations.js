@@ -945,7 +945,12 @@
       (anch[b]||[]).forEach(frames);
     }
     tail.forEach(frames);
-    return {count:n,stop:stop,base:base};
+    /* `anch` and `tail` are handed back so the ANIMATIONS PANE can
+       show the same sequence playback walks, instead of re-deriving a
+       weaker one from slideBuildSteps (T163). They were already computed
+       here; throwing them away is what left a flip book's five clicks
+       invisible in a panel headed "Build order". */
+    return {count:n,stop:stop,base:base,anch:anch,tail:tail};
   }
   function slideStops(s){
     return flipPlan(s).count;

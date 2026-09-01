@@ -114,10 +114,74 @@
       h2.textContent='Build order — each row is one click';
       menu.appendChild(h2);
       var seq=animSeq(s);
-      if(!seq.length){
+      /* ---- THE ONE TRUE SEQUENCE (T163) ------------------------------
+         This list used to show anim-order builds ONLY, under a heading
+         that promises "each row is one click". A flip book's frames and
+         (since T160) a chart's series builds are clicks too -- they are
+         in the plan playback walks -- so a slide whose whole reveal was
+         a six-figure book showed "Nothing animated on this slide yet"
+         while the space bar took five presses through it.
+         The stops each build ANCHORS are drawn under it as read-only
+         rows. Read-only on purpose: a frame's place in the sequence is
+         decided by its place in its BOOK, and offering a second way to
+         reorder it here would be two truths about one order. The book's
+         own pane is where frames move. */
+      var plan=flipPlan(s);
+      function stepperRows(list,ps){
+        (ps||[]).forEach(function(p){
+          var a=p.a;
+          var subs=[];
+          if(a.k==='flip'){
+            flipFrames(a).forEach(function(f,fi){
+              if(fi) subs.push(frameLabel(f,fi));});
+          } else if(a.k==='chart'){
+            chartParse(a).series.forEach(function(se){
+              subs.push(se.name);});
+          }
+          subs.forEach(function(t,ti){
+            var r2=document.createElement('div');
+            r2.className='anim-step anim-sub';
+            var n2=document.createElement('span');
+            n2.className='anim-num anim-subnum';
+            n2.textContent='\u21b3';
+            r2.appendChild(n2);
+            var c2=document.createElement('span');
+            c2.className='anim-chips';
+            var chip=document.createElement('span');
+            chip.className='anim-chip anim-subchip';
+            /* no owner name on a sub-row: the build row directly
+               above IS the owner, and repeating it on every page
+               turned the list into a column of the same six words */
+            chip.textContent=a.k==='flip'
+              ?('figure '+(ti+2)+' of '+flipFrames(a).length
+                +(t?(' \u00b7 '+t):''))
+              :('then '+t);
+            chip.title=a.k==='flip'
+              ?('A page of this flip book \u2014 move it in the book '
+                +'itself, not here')
+              :('A series of this chart \u2014 the order follows the '
+                +'data');
+            c2.appendChild(chip);
+            r2.appendChild(c2);
+            list.appendChild(r2);
+          });
+        });
+      }
+      if(!seq.length&&!steppersOn(s).length){
         var e2=document.createElement('div');e2.className='anim-empty';
         e2.textContent='Nothing animated on this slide yet.';
         menu.appendChild(e2);
+      } else if(!seq.length){
+        /* steppers but no builds: the slide DOES walk, so say so */
+        var e3=document.createElement('div');e3.className='anim-empty';
+        var nst=Math.max(0,slideStops(s)-1);
+        e3.textContent='No entrance effects here, but this slide takes '
+          +nst+' click'+(nst===1?'':'s')+' \u2014 it steps through '
+          +'what is below.';
+        menu.appendChild(e3);
+        var l0=document.createElement('div');l0.className='anim-seq';
+        stepperRows(l0,plan.tail);
+        menu.appendChild(l0);
       } else {
         var list=document.createElement('div');list.className='anim-seq';
         seq.forEach(function(st,si){
@@ -146,7 +210,11 @@
               moveStep(si,m[1]);});
             ctr.appendChild(b);});
           row.appendChild(ctr);
-          list.appendChild(row);});
+          list.appendChild(row);
+          stepperRows(list,plan.anch[si]);});
+        /* anything that steps but carries no build of its own lands
+           after every build, exactly as flipPlan lays it out */
+        stepperRows(list,plan.tail);
         menu.appendChild(list);
       }
       /* the order "One by one" deals the clicks in (T106) */

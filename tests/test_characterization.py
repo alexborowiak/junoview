@@ -804,8 +804,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # animations toast count the sequence playback actually walks
 # (slideStops) instead of anim-order builds only, and the shows-with
 # menu section is no longer folded away.
-EXPECTED_MD5 = "d474c5dc0f804f3a77383d45ac5aab49"
-EXPECTED_BYTES = 3121148
+# Moved 2026-09-01 for T163 and T164: the Animations pane lists every
+# stop playback walks (a flip book's pages and a chart's series, under
+# the build that anchors them), and .an-chart is positioned like every
+# other annotation kind - it was static, so its stored x/y were inert
+# and it stacked below the arrow hit-layer and could not be clicked.
+EXPECTED_MD5 = "793ea73356ae496af5a6586b788b7568"
+EXPECTED_BYTES = 3126096
 
 
 def _render_example() -> str:
