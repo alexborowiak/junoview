@@ -816,8 +816,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T166: a flip book with text walking beside it
 # takes one stop per (figure, page of that figure), and a page says
 # which figure it starts from its own right-click menu.
-EXPECTED_MD5 = "99b7b09cc225600510ac4f2048aafd51"
-EXPECTED_BYTES = 3148413
+# Moved 2026-09-01 for T167: the animation feature answers to one name -
+# the ribbon group is Animation, the door and the pane are both
+# Animations, and the two user-facing sites still naming the retired
+# Timeline are corrected.
+EXPECTED_MD5 = "faba7139922dc67e91496dd09fb297af"
+EXPECTED_BYTES = 3148904
 
 
 def _render_example() -> str:

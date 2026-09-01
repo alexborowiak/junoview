@@ -661,7 +661,7 @@
        items:['anim-none','anim-fade','anim-rise','anim-zoom']},
       {id:'of-seq',label:'Sequence',tab:'animate',
        items:['anim-stagger','anim-together']},
-      {id:'of-time',label:'Timeline',tab:'animate',
+      {id:'of-time',label:'Animations',tab:'animate',
        items:['vw-anim','anim-clear']},
      ]},
     {id:'scope-deck-slide-object',

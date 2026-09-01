@@ -3335,6 +3335,22 @@ effects are visible for approximately none of the moments they are usable.
   gains a phantom press that changes nothing. Checked against the
   design's own worked examples: nothing tied `[1,1,1]`; pages 3,1,2
   `[3,1,2]` walk 6; two books beside one figure take the LONGER, `[3,1]`.
+
+- [x] **T167 · S — One feature, one name.**
+  Done before adding another surface to it, because the pile was already
+  growing: the ribbon group said "Animate", the button inside it said
+  "Animations", and the pane that button opens said "Animation pane" —
+  three words touched in a single gesture, one of them a verb where the
+  others are nouns. An independent review counted twelve user-facing
+  words for the same handful of ideas and recommended seven.
+  *Done 2026-09-01.* The group is "Animation" (a category, like INSERT),
+  the door and the pane are both "Animations". "Timeline" was retired by
+  T140 and two USER-FACING sites still sent people to it: help.html
+  named it as a button on the Insert tab, and one of the nine ribbon
+  layouts still labelled a group with it — so anyone on that layout, or
+  anyone reading the help, was hunting for a control that no longer
+  exists. Code comments keep the old word where they are recording
+  history; that is what a comment is for.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

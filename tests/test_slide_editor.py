@@ -3356,3 +3356,21 @@ def test_a_chart_is_positioned_like_every_other_object(out):
     an expected (158,127), and the chart selects on a click.
     """
     assert ".an-chart{position:absolute;overflow:hidden;}" in out
+
+
+def test_the_animation_feature_answers_to_one_name(out):
+    """T167. The ribbon group said "Animate", the button inside it said
+    "Animations", and the pane that button opens said "Animation pane" --
+    three words touched in a single gesture, one of them a verb where the
+    others are nouns. A user learns this vocabulary from the UI alone.
+
+    "Timeline" was retired by T140 and two user-facing sites still sent
+    people to it: the help page named it as a button on the Insert tab,
+    and one of the nine ribbon layouts still labelled a group with it.
+    """
+    assert '<span class="rbn-lab">Animation</span>' in out
+    assert "> Animations</button>" in out
+    assert "<span>Animations</span>" in out
+    # the retired word is gone from everything a user can read
+    assert "<span>Animation pane</span>" not in out
+    assert "label:'Timeline'" not in out
