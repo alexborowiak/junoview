@@ -820,8 +820,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the ribbon group is Animation, the door and the pane are both
 # Animations, and the two user-facing sites still naming the retired
 # Timeline are corrected.
-EXPECTED_MD5 = "faba7139922dc67e91496dd09fb297af"
-EXPECTED_BYTES = 3148904
+# Moved 2026-09-01 for T168: a sequencing mode - click objects in the
+# order they should appear, shift-click to put one on the same click as
+# the last, with the whole run a single undo step.
+EXPECTED_MD5 = "f5d6cce90e61fbebd839a596795067c1"
+EXPECTED_BYTES = 3156484
 
 
 def _render_example() -> str:

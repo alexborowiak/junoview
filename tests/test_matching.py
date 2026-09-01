@@ -117,8 +117,14 @@ def test_the_armed_canvas_is_a_picker_not_an_editor(out):
     there is no second code path deciding what a click means.
     """
     body = out.split("layer.addEventListener('mousedown',function(ev){")[1]
-    head = body[:900]
+    # the window grew when T168's sequencing mode took the same door,
+    # ahead of matching. What this guards is that BOTH modes are decided
+    # at the top of the one handler, before any select/drag ladder runs.
+    head = body[:1600]
+    assert "if(typeof seqOn==='function'&&seqOn()){" in head
     assert "if(matchArm){" in head
+    assert head.index("if(seqOn())") < head.index("if(tool==='select')")         if "if(seqOn())" in head else True
+    assert head.index("if(matchArm){") < head.index("if(tool==='select')")
     assert "matchHit(+mt.getAttribute('data-idx'));" in head
     assert ".deck.matching .annot-layer{cursor:copy;}" in out
 

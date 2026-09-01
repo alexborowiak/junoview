@@ -42,6 +42,7 @@
      middle of 45-images.js; a throw in an executing sub-IIFE takes
      the whole deck IIFE with it, which is T133 exactly. */
   animBoot();
+  seqBoot();       /* the sequencing mode's bar (T168) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not

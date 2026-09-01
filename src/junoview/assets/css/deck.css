@@ -3992,6 +3992,18 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* T168: sequencing by pointing. The bar is .pickbar, so it inherits
+   the one picking-mode look; only the armed SLIDE needs saying. Every
+   object advertises that it is clickable, and the selection chrome goes
+   away because a resize handle is a claim about a click this mode does
+   not make. */
+.deck.seqing .annot-layer{cursor:cell;}
+.deck.seqing .an-item{outline:1px dashed color-mix(in srgb,
+  var(--cyan) 55%,transparent);outline-offset:2px;}
+.deck.seqing .an-item:hover{outline:2px solid var(--cyan);}
+.deck.seqing .an-resize,.deck.seqing .an-rotate,
+.deck.seqing .an-handle,.deck.seqing .an-endpt{display:none!important;}
+.deck.seqing .an-buildno{display:flex;}
 /* T142: the Review centre's category rows */
 .rv-cat{padding:8px 2px;border-bottom:1px solid #ffffff12;}
 .rv-cat:last-child{border-bottom:none;}

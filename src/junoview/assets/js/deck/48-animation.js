@@ -14,6 +14,120 @@
      markup is kept verbatim: a poster has no animation group. ---- */
   var animPaneSync=function(){},animPaneClose=function(){};
   var animRibbonSync=function(){};
+  /* ---- CLICK THINGS IN THE ORDER THEY SHOULD APPEAR (T168) --------
+     Asked for in the user's own words: "when you click it becomes the
+     next thing that's animated... then if you hold down shift and click
+     all those animations appear at the same time."
+
+     It is the answer to the loudest complaint people make about
+     PowerPoint's animation pane -- that ordering means dragging opaque
+     blocks in a list that lags, silently fails and greys itself out.
+     Ordering here is done ON THE OBJECTS, in the order you say them.
+
+     Deliberately the same shape as matchArm (35-arranging.js): a state
+     object, a class on the deck, a .pickbar, Escape to cancel, and a
+     running count that names Ctrl+Z -- because a third way to run a
+     picking mode would be a third thing to learn.
+
+     THE WHOLE SESSION IS ONE UNDO STEP. markDirty() is called ONCE, at
+     Finish, so Ctrl+Z takes back the sequence rather than the last
+     click; the running count in the bar is what tells you where you are
+     while it is open, and "Undo the last one" is the fine-grained
+     escape. */
+  var seqArm=null;
+  function seqOn(){return !!seqArm;}
+  function seqArmStart(){
+    var s=pres.slides[cur]; if(!s) return;
+    /* the numbering starts AFTER whatever the slide already has, so
+       arming does not silently re-order builds you made earlier */
+    seqArm={slide:cur,n:0,base:nextAnimOrder(s),hits:[],
+      before:JSON.stringify(s.annots||[])};
+    deckEl.classList.add('seqing');
+    seqSync();
+  }
+  function seqEnd(commitIt){
+    if(!seqArm) return;
+    var n=seqArm.n,hits=seqArm.hits.length,s=pres.slides[seqArm.slide];
+    if(!commitIt&&s){
+      /* Cancel puts the slide back exactly as it was: a mode that left
+         half a sequence behind would be worse than no mode. */
+      try{s.annots=JSON.parse(seqArm.before);}catch(e){}
+    }
+    seqArm=null;
+    deckEl.classList.remove('seqing');
+    seqSync();
+    renderSlide();renderFilm();
+    if(typeof animPaneSync==='function') animPaneSync();
+    if(commitIt&&hits){
+      markDirty();
+      /* BOTH numbers, because they part company the moment you
+         shift-click: `hits` is what you pointed at, `n` is how many
+         clicks it will take. Saying only one reads as a miscount to
+         whoever did the other -- driven 2026-09-01, three objects in
+         two clicks reported as "2 things". */
+      toast(hits+(hits===1?' thing':' things')
+        +(hits===n?'':(' in '+n+' click'+(n===1?'':'s')))
+        +' in order \u2014 Ctrl+Z undoes the whole run');
+    } else if(!commitIt&&hits){
+      toast('Left as it was');
+    }
+  }
+  /* one click: the next stop, or -- with shift -- the one just used */
+  function seqHit(i,together){
+    if(!seqArm) return;
+    var s=pres.slides[seqArm.slide],a=(s&&s.annots||[])[i];
+    if(!a) return;
+    var ord;
+    if(together&&seqArm.hits.length){
+      ord=seqArm.hits[seqArm.hits.length-1].o;
+    } else {
+      ord=seqArm.base+seqArm.n;
+      seqArm.n++;
+    }
+    if(a.anim) a.anim.order=ord;
+    else a.anim={type:'fade',order:ord};
+    seqArm.hits.push({i:i,o:ord});
+    renderSlide();
+    seqSync();
+  }
+  function seqUndoOne(){
+    if(!seqArm||!seqArm.hits.length) return;
+    var h=seqArm.hits.pop();
+    var s=pres.slides[seqArm.slide],a=(s&&s.annots||[])[h.i];
+    if(a&&a.anim) delete a.anim;
+    /* only step the counter back when that click had taken a NEW stop --
+       a shift-click shared one and never advanced it */
+    var still=seqArm.hits.some(function(x){return x.o===h.o;});
+    if(!still&&seqArm.n) seqArm.n--;
+    renderSlide();seqSync();
+  }
+  function seqSync(){
+    var bar=$('#seqbar'); if(!bar) return;
+    bar.hidden=!seqArm;
+    var w=$('#seq-what'); if(!w||!seqArm) return;
+    var done=seqArm.hits.length;
+    w.innerHTML=bic('stagger')+' Click things in the order they should '
+      +'appear \u2014 <b>next: '+(seqArm.n+1)+'</b>'
+      +(done?(' &middot; '+done+' placed'):'')
+      +' &middot; <b>Shift</b>-click for the same click';
+    var u=$('#seq-undo'); if(u) u.disabled=!done;
+    var d=$('#seq-done'); if(d) d.textContent=done?('Finish ('+done+')')
+      :'Finish';
+  }
+  function seqBoot(){
+    var d=$('#seq-done'),c=$('#seq-cancel'),u=$('#seq-undo');
+    if(d) d.addEventListener('click',function(){seqEnd(true);});
+    if(c) c.addEventListener('click',function(){seqEnd(false);});
+    if(u) u.addEventListener('click',function(){seqUndoOne();});
+    /* Escape CANCELS rather than finishing: the key that gets you out of
+       a mode should never be the key that commits it. Capture, so an
+       overlay's own Escape handler cannot swallow it first. */
+    document.addEventListener('keydown',function(e){
+      if(!seqArm||e.key!=='Escape') return;
+      e.preventDefault();e.stopPropagation();
+      seqEnd(false);
+    },true);
+  }
   function animBoot(){
     var vbtn=$('#vw-anim'),pane=$('#animpane');
     var menu=$('#animpane-body'),cl=$('#animpane-close');
@@ -223,6 +337,19 @@
         stepperRows(list,plan.tail);
         menu.appendChild(list);
       }
+      /* ...and the way to SAY the order by pointing (T168). Beside
+         the list it rewrites, because that is where you are standing
+         when the order is what you are thinking about. */
+      var sq=document.createElement('button');
+      sq.className='anim-mini wide';
+      sq.textContent=bic('stagger')+' Click things in order\u2026';
+      sq.innerHTML=bic('stagger')+' Click things in order\u2026';
+      sq.title='Then click the objects on the slide one after another, '
+        +'in the order they should appear. Shift-click puts one on the '
+        +'same click as the last.';
+      sq.addEventListener('click',function(e){e.stopPropagation();
+        seqArmStart();});
+      menu.appendChild(sq);
       /* the order "One by one" deals the clicks in (T106) */
       var rb=document.createElement('button');
       rb.className='anim-mini wide';

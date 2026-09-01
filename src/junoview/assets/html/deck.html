@@ -2006,6 +2006,19 @@
   </span>
   <button class="dbtn" id="match-cancel">Cancel (Esc)</button>
 </div>
+<!-- SEQUENCING BY POINTING (T168). The user's own gesture: "when you
+     click it becomes the next thing that's animated... hold down shift
+     and click, all those animations appear at the same time". Deliberately
+     the same shape as #matchbar and #pickbar above -- same bar, same
+     Escape, same running count -- because a third way to run a picking
+     mode would be a third thing to learn. -->
+<div class="pickbar seqbar" id="seqbar" hidden>
+  <span id="seq-what"></span>
+  <span class="deck-spring"></span>
+  <button class="dbtn" id="seq-undo">Undo the last one</button>
+  <button class="dbtn primary" id="seq-done">Finish</button>
+  <button class="dbtn" id="seq-cancel">Cancel (Esc)</button>
+</div>
 <div class="pickbar" id="pickbar" hidden>
   <span id="pick-what"><i data-ic="pin"></i> Click a card in the notebook
   to place it in the slide</span>

@@ -3374,3 +3374,55 @@ def test_the_animation_feature_answers_to_one_name(out):
     # the retired word is gone from everything a user can read
     assert "<span>Animation pane</span>" not in out
     assert "label:'Timeline'" not in out
+
+
+def test_you_can_say_the_order_by_pointing(out):
+    """T168, the user's own gesture: "when you click it becomes the next
+    thing that's animated... then if you hold down shift and click all
+    those animations appear at the same time."
+
+    It answers the loudest complaint people make about PowerPoint's
+    animation pane -- that ordering means dragging opaque blocks in a
+    list that lags, silently fails and greys its own buttons out. Here
+    the order is said ON THE OBJECTS, in the order you say it.
+
+    Deliberately the same shape as matchArm: a state object, a class on
+    the deck, a .pickbar, Escape to cancel, a running count naming
+    Ctrl+Z. A third way to run a picking mode would be a third thing to
+    learn.
+
+    Driven live: GAMMA, ALPHA, shift-BETA gave "1 GAMMA" and
+    "2 ALPHA * BETA" -- three objects, two clicks.
+    """
+    assert "var seqArm=null;" in out
+    assert "function seqArmStart(){" in out
+    assert "function seqHit(i,together){" in out
+    # shift shares the stop the last click took, and does NOT advance it
+    assert "ord=seqArm.hits[seqArm.hits.length-1].o;" in out
+    # the modifier is read off the EVENT, not kept as a state to sync
+    assert "seqHit(+st.getAttribute('data-idx'),!!ev.shiftKey);" in out
+    # numbering starts after what the slide already has
+    assert "base:nextAnimOrder(s)," in out
+    # THE WHOLE RUN IS ONE UNDO STEP: markDirty fires once, at Finish
+    body = out[out.index("function seqEnd(commitIt){"):]
+    body = body[:body.index("function seqHit(")]
+    assert body.count("markDirty();") == 1
+    # ...and Cancel puts the slide back exactly as it was
+    assert "s.annots=JSON.parse(seqArm.before);" in out
+
+
+def test_the_armed_slide_says_it_is_a_picker(out):
+    """T168. It IS a mode, and a mode that does not announce itself is
+    what the interaction review criticised. Every object advertises that
+    it is clickable and the selection chrome goes away, because a resize
+    handle is a claim about a click this mode does not make.
+    """
+    assert ".deck.seqing .annot-layer{cursor:cell;}" in out
+    assert ".deck.seqing .an-item:hover{outline:2px solid var(--cyan);}" in out
+    assert ".deck.seqing .an-resize,.deck.seqing .an-rotate," in out
+    # the build numbers show while you are assigning them
+    assert ".deck.seqing .an-buildno{display:flex;}" in out
+    # Escape CANCELS rather than finishing -- the key that gets you out of
+    # a mode must never be the key that commits it
+    assert "if(!seqArm||e.key!=='Escape') return;" in out
+    assert "seqEnd(false);" in out

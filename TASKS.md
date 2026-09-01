@@ -3351,6 +3351,37 @@ effects are visible for approximately none of the moments they are usable.
   anyone reading the help, was hunting for a control that no longer
   exists. Code comments keep the old word where they are recording
   history; that is what a comment is for.
+
+- [x] **T168 · M — Say the order by pointing.**
+  The user's own gesture, in their words: "when you click it becomes the
+  next thing that's animated... then if you hold down shift and click
+  all those animations appear at the same time." It is also the answer
+  to the loudest complaint people make about PowerPoint's animation pane
+  — that ordering means dragging opaque blocks in a list that lags,
+  silently fails and greys its own buttons out. Here the order is said
+  ON THE OBJECTS, in the order you say it.
+  *Done 2026-09-01*, deliberately the same shape as `matchArm`: a state
+  object, a class on the deck, a `.pickbar`, Escape to cancel, and a
+  running count that names Ctrl+Z. A third way to run a picking mode
+  would be a third thing to learn. Shift is read off the EVENT rather
+  than kept as a state to keep in step. Numbering starts after whatever
+  the slide already has, so arming does not silently re-order builds
+  made earlier. THE WHOLE RUN IS ONE UNDO STEP — `markDirty` fires once,
+  at Finish — and Cancel restores the slide exactly as it was, because a
+  mode that left half a sequence behind would be worse than no mode.
+  Driven live: GAMMA, ALPHA, shift-BETA gives "1 GAMMA" and "2 ALPHA ·
+  BETA" in the build list — three objects, two clicks. The finish toast
+  says BOTH numbers, because they part company the moment you
+  shift-click and saying only one reads as a miscount to whoever did the
+  other (it first said "2 things" for three objects).
+  NOT done, and the reason this is T168 and not the whole idea: the
+  DIGIT gesture — "hold down 5 and click, it appears five seconds after
+  the last" — needs a timing model, and Junoview has none at all. It is
+  the first thing here that would store a delay, and a stop that
+  ADVANCES ITSELF is a different playback model from one the space bar
+  drives. Its own task, with the export question answered first: PDF and
+  standalone HTML are fully built so timing means nothing there, while
+  .pptx genuinely has after-previous-with-delay to map onto.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

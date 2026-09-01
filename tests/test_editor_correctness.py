@@ -410,7 +410,10 @@ def test_the_animation_pane_does_not_need_a_selection(out):
     assert "var vbtn=$('#vw-anim'),pane=$('#animpane');" in out
     # the pane outlives the selection, so it is told when one goes away
     assert "function animPaneSync" in out or "animPaneSync=function()" in out
-    assert out.count("animPaneSync();") == 2
+    # three call sites since T168: selection gained, selection lost, and
+    # the sequencing mode closing -- each is a moment the pane's answer
+    # about the slide can have changed underneath it
+    assert out.count("animPaneSync();") == 3
     # only a deck has builds
     assert "if(vaB) vaB.hidden=!!pg.poster;" in out
 

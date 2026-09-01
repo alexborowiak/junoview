@@ -2363,6 +2363,19 @@
          have already committed to. Handled at the top of the one handler
          that owns canvas mousedown, so there is no second code path
          deciding what a click means (2026-08-22). */
+      /* SEQUENCING uses the same door as matching, for the same
+         reason: while a mode is armed the canvas is a picker, and one
+         handler decides what a click means (T168). Shift is read HERE,
+         off the event, because a modifier is a property of the click
+         and not a state to keep in step. */
+      if(typeof seqOn==='function'&&seqOn()){
+        var st=(t.closest&&t.closest('.an-item[data-idx]'));
+        if(st){
+          ev.preventDefault();ev.stopPropagation();
+          seqHit(+st.getAttribute('data-idx'),!!ev.shiftKey);
+        }
+        return;
+      }
       if(matchArm){
         var mt=(t.closest&&t.closest('.an-item[data-idx]'));
         if(mt){
