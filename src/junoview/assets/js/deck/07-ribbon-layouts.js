@@ -186,10 +186,11 @@
   }
   function rbnLayouts(){
     return [{id:'default',name:'Default',
-      blurb:'The arrangement the app ships with: Home, Insert, Design, and a contextual Object tab.',
+      blurb:'The arrangement the app ships with: Home, Insert, Design, Animation, and a contextual Object tab.',
       selTab:'object',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},
-            {id:'design',label:'Design'},{id:'object',label:'Object'}],
+            {id:'design',label:'Design'},{id:'animation',label:'Animation'},
+            {id:'object',label:'Object'}],
       groups:[]}].concat(RIBBON_LAYOUTS||[]);
   }
   function rbnLayoutById(id){

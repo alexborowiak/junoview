@@ -557,16 +557,20 @@ def test_the_ribbon_is_tabbed(out):
     # animate can be one the one" / "View can just be back on home"), and
     # a fourth contextual tab now keeps an ordinary selection from
     # rewriting Home (2026-08-26, user).
-    for t in ("home", "insert", "design", "object"):
+    # ...and Animation is a tab again since T176 (2026-09-02, user:
+    # "animations being its own tab (it doesn't really work under
+    # insert anyway)"): a build is given to a FULL slide, which is the
+    # opposite moment from Insert, and the tab has seven doors now.
+    for t in ("home", "insert", "design", "animation", "object"):
         assert f'id="rbn-tab-{t}"' in out, t
         assert f"'{t}'" in out
-    assert "var TABS=['home','insert','design','object'];" in out
+    assert "var TABS=['home','insert','design','animation','object'];" in out
     assert out.count('class="rbn-grp" data-tab="object"') == 5
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
     assert 'id="rbn-tab-view"' not in out
     # a browser remembering one of the retired tabs lands on its new host
-    assert "if(t==='animate') t='insert';" in out
+    assert "if(t==='animate') t='animation';" in out
     assert "function setTab(t){" in out
     assert "function applyTab(){" in out
     # the filter runs BEFORE anything measures the row
@@ -582,8 +586,11 @@ def test_the_ribbon_is_tabbed(out):
     # a poster has no build, so the whole Animate GROUP stands down there
     # the gallery's door joins them (T171): it is a slide-wide
     # control too, and a poster has no build for any of them
+    # ...and the two Order doors T176 put on the ribbon stand down with
+    # them, for the same reason: a poster has nothing to sequence
     assert ("['#anim-clear','#anim-stagger','#anim-together',"
-            "'#anim-effect'].forEach(function(id){") in out
+            "'#anim-effect',\n     '#anim-seq','#anim-order']"
+            ".forEach(function(id){") in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
 

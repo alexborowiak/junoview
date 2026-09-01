@@ -1071,7 +1071,10 @@
      Object is where everything selection-driven lives. It is contextual,
      so Home keeps its page-level meaning instead of growing a different
      ribbon every time the canvas selection changes (2026-08-26, user). */
-  var TABS=['home','insert','design','object'];
+  /* Animation is a tab of its own again (T176): a build is something
+     you give a slide AFTER it is full, which is the opposite moment
+     from Insert. */
+  var TABS=['home','insert','design','animation','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -1080,10 +1083,11 @@
   function activeTab(){
     if(curTab===null){
       var t=lsGet(tabKey());
-      /* Animate and View were folded into Insert and Home on 2026-08-20;
-         a browser that remembers one of them lands on its new host rather
-         than on a tab that no longer exists */
-      if(t==='animate') t='insert';
+      /* View was folded into Home on 2026-08-20, and the old Animate
+         tab came back as Animation (T176); a browser that remembers
+         either lands on its current home rather than on a tab that
+         no longer exists */
+      if(t==='animate') t='animation';
       else if(t==='view') t='home';
       /* TABS is the ACTIVE LAYOUT's tabs, which need not include
          `home` at all — so the fallback is "the first tab there is"

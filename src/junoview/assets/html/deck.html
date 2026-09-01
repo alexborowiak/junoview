@@ -406,21 +406,25 @@
     <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
       aria-selected="true"
       title="Slide actions, guides, layers and the print check">Home</button>
-    <!-- Animate lives on this tab too. On its own it was one group of
-         six small buttons under a whole tab of its own, and Insert had
-         room to spare — two half-empty tabs read worse than one full one
-         (2026-08-20, user: "some of those tabs have nothing on them now.
-         Insert and animate can be one the one"). They also belong
-         together: both are about putting something on the page and
-         deciding how it arrives. -->
     <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
       aria-selected="false"
-      title="Put something new on the page, and how it appears during
- playback">Insert</button>
+      title="Put something new on the page">Insert</button>
     <button class="rbn-tab" id="rbn-tab-design" role="tab" data-tab="design"
       aria-selected="false"
       title="How the page itself looks — its size, layout and
  background">Design</button>
+    <!-- ANIMATION IS A TAB AGAIN (T176). It was folded into Insert on
+         2026-08-20 when it was one group of six small buttons and
+         Insert had room to spare. Since then the gallery, the two
+         builds, the sequencing mode and the reading order arrived,
+         and a build is not an insertion: you animate a slide AFTER it
+         is full, which is the opposite moment from putting things on
+         it (2026-09-02, user: "animations being its own tab (it
+         doesn't really work under insert anyway)"). -->
+    <button class="rbn-tab" id="rbn-tab-animation" role="tab"
+      data-tab="animation" aria-selected="false"
+      title="How things arrive during playback — the effect, the order,
+ and the builds">Animation</button>
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
@@ -810,12 +814,11 @@
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <!-- ANIMATE. The pane and the effect chooser are the same job
-               and now sit in the same tab instead of the pane hiding
-               under View. The effect buttons act on the selection, so
-               they are hidden without one — the pane is not, because a
+          <!-- ANIMATION, on its own tab (T176). Two groups: what an
+               object DOES when it arrives, and the ORDER the slide
+               reveals things in. The pane is never hidden, because a
                build order is a property of the SLIDE. -->
-          <span class="rbn-grp rbn-anim" data-tab="insert">
+          <span class="rbn-grp rbn-anim" data-tab="animation">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="vw-anim"
                 aria-pressed="false"
@@ -857,16 +860,6 @@
                   ><i data-ic="fade"></i> Effect &#9662;</button>
                 <div class="sh-menu anim-gal" id="anim-eff-menu" hidden></div>
               </span>
-              <!-- the two builds people actually want, in one press
-                   each. Setting "one at a time" by hand means selecting
-                   every item and stepping its order, which is the kind of
-                   fiddling this editor exists to avoid (2026-08-20). -->
-              <button class="dbtn rbn-sm" id="anim-stagger"
-                title="Reveal everything on this slide ONE AT A TIME, in
- reading order — a click per item"><i data-ic="stagger"></i> One by one</button>
-              <button class="dbtn rbn-sm" id="anim-together"
-                title="Reveal everything on this slide on the SAME click —
- one build, everything at once"><i data-ic="together"></i> All at once</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
                 title="Remove EVERY animation on this slide — nothing is
  held back during playback"><i data-ic="exit"></i> Remove
@@ -880,6 +873,36 @@
                  and a review on 2026-09-01 found the surface already
                  using twelve words for the same handful of ideas. -->
             <span class="rbn-lab">Animation</span>
+          </span>
+          <!-- THE ORDER. Four ways to say what comes when, which the
+               tab has room for now: the two builds anyone actually
+               wants, the pointing mode (T168) and the reading order
+               (T106) -- the last two had no door on the ribbon at all
+               and lived as rows at the foot of the pane. -->
+          <span class="rbn-grp rbn-build" data-tab="animation">
+            <span class="rbn-row">
+              <!-- the two builds people actually want, in one press
+                   each. Setting "one at a time" by hand means selecting
+                   every item and stepping its order, which is the kind of
+                   fiddling this editor exists to avoid (2026-08-20). -->
+              <button class="dbtn rbn-sm" id="anim-stagger"
+                title="Reveal everything on this slide ONE AT A TIME, in
+ reading order — a click per item"><i data-ic="stagger"></i> One by one</button>
+              <button class="dbtn rbn-sm" id="anim-together"
+                title="Reveal everything on this slide on the SAME click —
+ one build, everything at once"><i data-ic="together"></i> All at once</button>
+              <button class="dbtn rbn-sm" id="anim-seq"
+                title="Say the order by pointing: click the objects on the
+ slide one after another, in the order they should appear. Shift-click
+ puts one on the same click as the last"><i data-ic="locate"></i> Click
+ things in order&#8230;</button>
+              <button class="dbtn rbn-sm" id="anim-order"
+                title="The order One by one deals the clicks in &mdash;
+ top to bottom unless you set your own. Figure numbers and the review
+ outline follow the same order"><i data-ic="objects"></i> Reading
+ order&#8230;</button>
+            </span>
+            <span class="rbn-lab">Order</span>
           </span>
           <span class="rbn-grp rbn-insert" data-tab="insert">
             <span class="rbn-row">

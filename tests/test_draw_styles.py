@@ -442,7 +442,10 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # fourth tab rather than selection controls being injected into Home.
     for grp in ("rbn-slide", "rbn-view"):
         assert f'class="rbn-grp rbn-fixed {grp}" data-tab=' in out
-    assert "var TABS=['home','insert','design','object'];" in out
+    # Animation is a tab again (T176); Order shares its rung and
+    # follows it by source order
+    assert "var TABS=['home','insert','design','animation','object'];" in out
+    assert ".rbn-build{order:5;}" in out
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more
     assert "rbn-standby" not in out

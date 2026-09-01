@@ -1026,9 +1026,15 @@ def test_animations_can_be_removed(out):
     for bid in ("anim-effect",
                 "anim-clear"):
         assert f'id="{bid}"' in out, bid
-    # Animate shares the Insert tab: on its own it was one group of six
-    # small buttons under a whole tab, and Insert had room to spare
-    assert 'class="rbn-grp rbn-anim" data-tab="insert"' in out
+    # Animation is a tab of its own again (T176): it was folded into
+    # Insert when it was six small buttons, and it is two groups and
+    # seven doors now -- the pointing mode and the reading order came
+    # up from the foot of the pane, where they were a door behind a door
+    assert 'class="rbn-grp rbn-anim" data-tab="animation"' in out
+    assert 'class="rbn-grp rbn-build" data-tab="animation"' in out
+    assert 'id="anim-seq"' in out and 'id="anim-order"' in out
+    assert "e.stopPropagation();seqArmStart();});" in out
+    assert 'class="rbn-grp rbn-anim" data-tab="insert"' not in out
     assert "animRibbonSync=function(){" in out
     assert "revealCount=0;commit(s);" in out
 
@@ -1093,7 +1099,8 @@ def test_high_contrast_re_inks_the_surfaces(out):
     # added without a line here falls back to the default accent and the
     # theme looks half-applied -- which had happened to all four groups
     # added in August
-    for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-tbl"):
+    for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-build",
+                "rbn-tbl"):
         assert f"body.th-colorful .{grp}" in out, grp
     # ...and the two groups that no longer exist are gone from it
     assert "body.th-colorful .rbn-file" not in out

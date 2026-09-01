@@ -846,8 +846,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T173 2026-09-01: the chart-series tie (an object bound to the
 # moment one named series is plotted) and the galBoot fix that
 # driving it uncovered -- both add JS to the embedded deck bundle.
-EXPECTED_MD5 = "d939f9b25240ebaff1cf47173f53a73b"
-EXPECTED_BYTES = 3243171
+# T176 2026-09-02: Animation is a tab of its own again, with an Order
+# group whose two new doors (Click things in order, Reading order)
+# came up from the foot of the pane. deck.html, help.html, three deck
+# fragments, deck.css and core.css.
+EXPECTED_MD5 = "a05ec0a36beb6243ffb714c389d1dd87"
+EXPECTED_BYTES = 3245858
 
 
 def _render_example() -> str:

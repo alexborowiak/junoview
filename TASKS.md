@@ -3629,6 +3629,37 @@ effects are visible for approximately none of the moments they are usable.
   so a column once narrowed could never be widened again. That is why a
   stuck ~200px column was the reported symptom.
 
+### The ribbon, spaced out (2026-09-02, from the user's own review)
+
+The user: "there are just heaps of buttons that you always have to
+click through... it would be good if more things, like the text options,
+had their own little window of options. This would mean a lot of things
+are going to get spaced out a lot more, and there might need to be more
+tabs e.g. like animations being its own tab (it doesn't really work
+under insert anyway)... the text styles under design (should this be
+under design anyway???)". Counted before touching anything: with a text
+box selected the Object tab held **41** controls across six groups, the
+Text group alone fifteen; Design's Type group had seven buttons for one
+idea; Insert carried thirteen tools and the whole of Animation.
+
+- [x] **T176 · S — Animation is a tab of its own.**
+  It was folded into Insert on 2026-08-20 when it was six small buttons
+  and Insert had room to spare. The gallery (T171), the pointing mode
+  (T168) and the reading order (T106) arrived since, and a build is
+  something you give a slide AFTER it is full — the opposite moment
+  from putting things on it, which is why it "doesn't really work under
+  insert".
+  *Done 2026-09-02.* A fifth tab, **Animation**, between Design and
+  Object, with two groups: **Animation** (the pane, the effect gallery,
+  Remove animations) and **Order** (One by one, All at once, and two
+  doors the ribbon never had — **Click things in order…** and
+  **Reading order…**, which lived as rows at the FOOT of the pane, a
+  door behind a door). Both call the pane's own functions: two doors,
+  one implementation. A browser that remembers the retired `animate`
+  tab lands here; a poster hides every one of the seven, so the tab
+  leaves the strip there as an empty tab always has. The Default
+  ribbon layout declares the tab; the eight others keep their own.
+
 
 ## Cut (and why)
 

@@ -532,5 +532,6 @@ def test_every_markup_tab_sits_inside_the_tablist():
                   html, re.S)
     assert m, "the tablist wrapper is gone"
     inside = m.group(1)
-    assert inside.count('class="rbn-tab"') == 4, inside.count('class="rbn-tab"')
-    assert html.count('class="rbn-tab"') == 4, "a tab escaped the tablist"
+    # five since T176 put Animation back on the strip
+    assert inside.count('class="rbn-tab"') == 5, inside.count('class="rbn-tab"')
+    assert html.count('class="rbn-tab"') == 5, "a tab escaped the tablist"

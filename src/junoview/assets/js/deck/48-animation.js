@@ -736,6 +736,18 @@
       revealCount=0;commit(s2);
       toast('Everything appears on one click');
     });
+    /* the pointing mode (T168) and the reading order (T106), on the
+       ribbon at last (T176). Both were rows at the FOOT of the pane,
+       so you had to open the list to find the two ways of rewriting
+       it -- a door behind another door. Same functions the pane rows
+       call; two doors, one implementation. */
+    var sqb=$('#anim-seq');
+    if(sqb) sqb.addEventListener('click',function(e){
+      e.stopPropagation();seqArmStart();});
+    var rob=$('#anim-order');
+    if(rob) rob.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
     var clr=$('#anim-clear');
     if(clr) clr.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;

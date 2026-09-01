@@ -1297,6 +1297,9 @@ body.slide-editing .apptop{display:none;}
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
 .rbn-anim{order:5;}
+/* the Order group shares Animation's rung and follows it by source
+   order: the effect first, then the order things take it in (T176) */
+.rbn-build{order:5;}
 .rbn-insert{order:6;}
 .et-fmt .rbn-grp{order:7;flex:none;}
 .edit-tools.ribbon .et-hint{order:9;margin-left:0;}

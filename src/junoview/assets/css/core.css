@@ -1249,7 +1249,8 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
 body.th-colorful .rbn-slides,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
 body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
-body.th-colorful .rbn-anim{--accent:#6fd8c2;--accent-deep:#2f9c85;}
+body.th-colorful .rbn-anim,body.th-colorful .rbn-build{
+  --accent:#6fd8c2;--accent-deep:#2f9c85;}
 body.th-colorful .rbn-tbl{--accent:#8fc7ff;--accent-deep:#4d8fd6;}
 body.th-colorful .rbn-slide,body.th-colorful #ab-filters,
 body.th-colorful #pt-grp,body.th-colorful #md-grp,
