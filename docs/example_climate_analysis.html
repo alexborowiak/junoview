@@ -4674,6 +4674,16 @@ body.slide-editing .apptop{display:none;}
   padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;max-width:150px;}
 .anim-chip.cur{background:var(--cyan-deep);color:#fff;}
+/* the stops a build ANCHORS (T163): a flip book's pages, a chart's
+   series. Indented and quieter than a build row because they are
+   READ-ONLY here -- a page's place in the sequence is decided by its
+   place in its book, and a second way to reorder it would be two
+   truths about one order. */
+.anim-step.anim-sub{margin-left:18px;background:var(--chrome-4,#0e1824);
+  padding-top:3px;padding-bottom:3px;}
+.anim-num.anim-subnum{background:none;border:none;color:#6c8093;
+  width:14px;height:14px;font-size:11px;}
+.anim-chip.anim-subchip{background:#16232f;color:#9fb2c2;font-style:italic;}
 .anim-stepctr{flex:none;display:flex;gap:2px;}
 .anim-stepctr .anim-mini{padding:3px 6px;}
 .sh-ico path,.sh-ico rect,.sh-ico ellipse,.sh-ico text{transition:fill .1s;}
@@ -4864,14 +4874,42 @@ select#fmt-font[hidden]{display:none;}
 .deck.editing .an-item.grpsel .cellparts{display:none!important;}
 /* build animations: staged items hide until revealed, then animate in */
 .an-prebuild{opacity:0!important;pointer-events:none!important;}
-@keyframes anIn-fade{from{opacity:0}to{opacity:1}}
-@keyframes anIn-rise{from{opacity:0;transform:translateY(22px)}
-  to{opacity:1;transform:none}}
-@keyframes anIn-zoom{from{opacity:0;transform:scale(.85)}
-  to{opacity:1;transform:none}}
+/* TWO RULES, BOTH LEARNED FROM BUGS THESE KEYFRAMES USED TO HAVE (T156).
+
+   1. NEVER THE `transform` SHORTHAND. applyCommon writes a rotated item's
+      rotate() into style.transform, and the shorthand REPLACED it for the
+      animation's duration -- an object would un-rotate, animate, and snap
+      back. The render path papered over it by silently swapping a rotated
+      Rise or Zoom for a Fade (JVC-03): the model said rise, the ribbon
+      said rise, the pane chip said rise, and a fade played. The
+      individual `translate` and `scale` properties are applied BEFORE
+      `transform` in the computed value, so they COMPOSE with that
+      rotate() instead of replacing it, and the substitution is deleted.
+
+   2. NEVER END AT A LITERAL OPACITY. `to{opacity:1}` fought a.op, which
+      applyCommon also writes inline: a 40%-opacity object animated up to
+      FULL and then snapped back to 40% at the end of every build. An
+      omitted `to` keyframe means "the value this element already has", so
+      the fade now lands exactly where the author put it. Same reason the
+      transform keyframes have no `to`. */
+@keyframes anIn-fade{from{opacity:0}}
+@keyframes anIn-rise{from{opacity:0;translate:0 22px}}
+@keyframes anIn-zoom{from{opacity:0;scale:.85}}
 .an-anim-fade{animation:anIn-fade .45s ease;}
 .an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
 .an-anim-zoom{animation:anIn-zoom .45s ease;}
+/* ...AND THE MACHINE'S ANSWER TO MOTION IS FINAL (T157 / JVC-02). The
+   guard sits HERE, beside what it guards, rather than with the unrelated
+   .slide rule far below: reduced motion cleared slide TRANSITIONS and
+   left every entrance running, so a reader who had asked the OS for less
+   motion still got each build flying in. Builds themselves are
+   untouched, which is the point -- .an-prebuild still holds an item back
+   and still releases it on the click, so the deck reveals in exactly the
+   same steps. It cuts instead of animating, which is what the preference
+   asks for and not one thing more. */
+@media (prefers-reduced-motion:reduce){
+  .an-anim-fade,.an-anim-rise,.an-anim-zoom{animation:none!important;}
+}
 /* the build-order badge shown in the editor — and ONLY while the Timeline
    pane is open (T76, user: "the animation bubbles that appear are the
    worst, like you can't get rid of them").
@@ -5312,6 +5350,24 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
    wrap on purpose — a nine-figure book is a row of nine names, and a nav
    bar that scrolled sideways on a slide would be worse than two lines of
    buttons (T86). */
+/* ---------- a flip book made of words ----------
+   The same bar as a figure book's, with PIPS instead of a counter: a
+   reader has to be able to tell at a glance whether the arrows below
+   turn a figure or a paragraph, and dots under words is the one idiom
+   everybody already reads as "there is more text here". They also cost
+   no width, which matters on a box the words have already claimed. The
+   arrows are the flip book's own .an-flipnav, deliberately -- the two
+   books step with the same control, they only count differently. */
+.an-pgbar{gap:6px;padding:2px 0 0;}
+.an-pgpips{display:flex;align-items:center;gap:4px;}
+.an-pgpip{width:6px;height:6px;padding:0;border-radius:50%;cursor:pointer;
+  background:#ffffff3d;border:1px solid transparent;}
+.an-pgpip:hover:not([disabled]){background:#ffffff70;}
+.an-pgpip.on{background:var(--accent);}
+.an-pgpip[disabled]{cursor:default;}
+.page-light .an-pgpip{background:#0000002e;}
+.page-light .an-pgpip:hover:not([disabled]){background:#00000059;}
+.page-light .an-pgpip.on{background:var(--accent);}
 .an-flipbtns{flex-wrap:wrap;gap:4px;}
 .an-flipbtn{background:#00000059;border:1px solid #ffffff2e;color:#e6eef4;
   border-radius:11px;min-width:22px;height:22px;line-height:1;cursor:pointer;
@@ -7073,7 +7129,17 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   padding:4px 7px;margin:2px 0;}
 .mast-new{display:block;width:100%;text-align:left;margin-top:10px;}
 /* T117: charts — the SVG fills its box; the dialog is the numbers */
-.an-chart{overflow:hidden;}
+/* POSITIONED, like every other kind (T164). Charts shipped in T117
+   without a `position`, and every other annotation declares its own
+   (.an-table, .an-image, .an-flip...). Two consequences, both bad and
+   both invisible in a screenshot of a slide with one chart on it:
+   the inline left/top drawChart writes were INERT, so a chart always
+   rendered at the slide's top-left however you placed it; and an
+   unpositioned element stacks below the arrow hit-layer -- an absolute
+   <svg> covering the whole canvas -- so a chart could not be clicked,
+   which is why it could not be selected and why its right-click menu
+   (Edit data, chart type, and T160's series build) was unreachable. */
+.an-chart{position:absolute;overflow:hidden;}
 .an-chartsvg{width:100%;height:100%;display:block;
   font-family:var(--sans,system-ui);}
 .chart-data{position:fixed;left:50%;top:20%;transform:translateX(-50%);
@@ -9624,7 +9690,7 @@ that run.</li>
 <li><b>Crop</b> an image <i>or</i> a notebook cell (figure, markdown or code)
 to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
 one; animate an item so it appears on click
-(<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Timeline</b>, on the Insert tab); and
+(<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animations</b>, on the Insert tab); and
 switch on
 <b>slide numbers</b> from the File menu.</li>
 <li>The <b>View</b> group is for laying a poster out, where the page is
@@ -10977,7 +11043,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  held back during playback"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove
  animations</button>
             </span>
-            <span class="rbn-lab">Animate</span>
+            <!-- ONE FEATURE, ONE NAME (T167). This group was
+                 "Animate", its own button "Animations" and the pane it
+                 opens "Animation pane" -- three words touched in a
+                 single gesture, one of them a verb where the others are
+                 nouns. A user learns this vocabulary from the UI alone,
+                 and a review on 2026-09-01 found the surface already
+                 using twelve words for the same handful of ideas. -->
+            <span class="rbn-lab">Animation</span>
           </span>
           <span class="rbn-grp rbn-insert" data-tab="insert">
             <span class="rbn-row">
@@ -11964,7 +12037,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         </div>
       </aside>
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animation pane</span>
+        <div class="selpane-h"><span>Animations</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
         <div class="selpane-list" id="animpane-body"></div>
@@ -24864,7 +24937,7 @@ window.JunoPptx = (function () {
        items:['anim-none','anim-fade','anim-rise','anim-zoom']},
       {id:'of-seq',label:'Sequence',tab:'animate',
        items:['anim-stagger','anim-together']},
-      {id:'of-time',label:'Timeline',tab:'animate',
+      {id:'of-time',label:'Animations',tab:'animate',
        items:['vw-anim','anim-clear']},
      ]},
     {id:'scope-deck-slide-object',
@@ -28040,10 +28113,182 @@ window.JunoPptx = (function () {
   function flipFrames(a){
     return (a&&Array.isArray(a.frames))?a.frames:[];
   }
+  /* ---- THE SAME BOOK, WITH WORDS IN IT (T163) ------------------------
+     (2026-09-01, user: "flip book for text would be good. Then also if
+     they can be tied to the images flip book or something like that, as
+     sometimes you need lots of text for one image".)
+
+     A text box with PAGES. Deliberately NOT a new kind and NOT a flip
+     book holding text frames. What makes a text box worth having is the
+     caret you type into and the forty properties hanging off it -- size,
+     colour, alignment, lists, markdown, maths, named styles, shrink to
+     fit -- and every one of those is written on the ANNOT. A flip book
+     annot carries none of them and showFmt maps '#fmt-figures' to it, so
+     text frames inside one would be words you could not style; a new
+     kind would be the text renderer written twice.
+     PAGE ONE IS a.text/a.html -- not a copy of them, the same words in
+     the same place -- and a.pg carries pages two onward. Nothing that
+     reads a.text has to learn anything: an older junoview, the .pptx
+     text writer, search, the Objects pane and every export keep seeing
+     page one, which is the right thing to see when you cannot see the
+     rest. A register that swapped the current page into a.text would be
+     the second piece of state this whole feature exists to avoid.
+     The FORM is box-wide and the WORDS are per page: a.list, a.md and
+     a.maths stay properties of the box, because the renderer picks its
+     element (ul/ol vs span) from the box and a form that changed per
+     page would swap the element under your caret. */
+  function textPages(a){
+    if(!a||a.k!=='text') return [];
+    var out=[{t:String(a.text||''),h:a.html||'',
+      f:(a.fbf!=null?(a.fbf|0):null)}];
+    if(Array.isArray(a.pg)) a.pg.forEach(function(p){
+      if(!p||typeof p!=='object') return;
+      out.push({t:String(p.t||''),h:p.h||'',
+        f:(p.f!=null?(p.f|0):null)});
+    });
+    return out;
+  }
+  /* ONE PAGE, read and written where it actually lives. The text editor
+     was always talking to two closures, so pointing them at a page is
+     the whole of the change -- no swap, no register, one copy of each
+     page's words. */
+  function textPage(a,n){
+    if(!a) return {t:'',h:''};
+    if(!n) return {t:String(a.text||''),h:a.html||''};
+    var p=(Array.isArray(a.pg)?a.pg[n-1]:null)||{};
+    return {t:String(p.t||''),h:p.h||''};
+  }
+  function textPageSet(a,n,t,h){
+    if(!a) return;
+    if(!n){
+      a.text=String(t||'');
+      if(h) a.html=h; else delete a.html;
+      return;
+    }
+    if(!Array.isArray(a.pg)) a.pg=[];
+    while(a.pg.length<n) a.pg.push({t:''});
+    var p=a.pg[n-1]||(a.pg[n-1]={});
+    p.t=String(t||'');
+    if(h) p.h=h; else delete p.h;
+  }
   function flipsOn(s){
     var out=[];
     ((s&&s.annots)||[]).forEach(function(a,i){
       if(a&&a.k==='flip') out.push({a:a,i:i});});
+    return out;
+  }
+  /* ---- WHAT ELSE EATS A STOP (T160) ---------------------------------
+     `flipPlan` below was written for flip books, but "one annotation
+     consumes several playback stops" was never a flip-book idea -- it is
+     the shape of EVERY progressive reveal. A chart built by series is
+     the same thing wearing different clothes: its skeleton lands on the
+     build's own stop and each series takes one after it.
+
+     Kept as a SEPARATE list from flipsOn on purpose. Everything that
+     asks "is this a flip book?" -- flipBase, flipAtNow, flipShowsFrame,
+     the frame arrows -- must keep getting flip books and nothing else;
+     only the TIMELINE cares that both kinds eat stops. */
+  function extraStops(a){
+    if(!a) return 0;
+    if(a.k==='flip') return Math.max(0,flipFrames(a).length-1);
+    if(a.k==='text') return Math.max(0,textPages(a).length-1);
+    if(a.k==='chart'&&a.anim&&a.anim.by==='series')
+      return chartSeriesCount(a);
+    return 0;
+  }
+  /* ---- WHICH FIGURE EACH PAGE BELONGS TO (T163) ----------------------
+     A page names its own figure only where the figure CHANGES; every
+     other page inherits the one before it. So "these three paragraphs go
+     with figure 1" is ONE setting rather than three, and the author only
+     ever touches the page where the picture moves on.
+     Page one's figure is a.fbf, which means a box with a single page is
+     EXACTLY today's tie, unchanged.
+     Out of range is CLAMPED rather than dropped. This file's rule is
+     that an unresolvable binding fails open, and for a page "open" has
+     to mean reachable: a page you can never turn to is a lost
+     paragraph, which is worse than a caption that shows too often. */
+  function pageFigs(s,fb,a){
+    var nf=Math.max(1,flipFrames(fb).length),out=[],at=0;
+    textPages(a).forEach(function(p){
+      if(p.f!=null) at=p.f;
+      out.push(Math.max(0,Math.min(nf-1,at)));
+    });
+    return out;
+  }
+  /* every text book walking with this flip book */
+  function booksWith(s,fb){
+    var out=[];
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(x&&x.k==='text'&&x.fb&&fb&&x.fb===fb.fid
+         &&textPages(x).length>1) out.push(x);});
+    return out;
+  }
+  /* ---- THE PAIR WALK (T163) ------------------------------------------
+     A flip book with words walking beside it no longer takes one stop
+     per figure: it takes one per (FIGURE, PAGE OF THAT FIGURE). Figure 2
+     with three paragraphs to say about it is three stops, and figure 3
+     arrives on the fourth.
+     Math.max(1,...) IS LOAD-BEARING: a figure nobody wrote about is
+     still a figure, and summing raw page counts would give it zero stops
+     and skip it entirely -- an invisible, unreachable figure with no
+     error anywhere. That is the off-by-one this arithmetic exists to
+     avoid.
+     Two books on the same figure walk in LOCKSTEP -- they are two
+     columns of one walk, not one queue after another. The shorter one
+     holds its last page, which reads as "this label applies
+     throughout". */
+  function flipSlots(s,fb){
+    var nf=flipFrames(fb).length,c=[],k;
+    for(k=0;k<nf;k++) c[k]=1;
+    booksWith(s,fb).forEach(function(x){
+      var n=[];
+      pageFigs(s,fb,x).forEach(function(f){n[f]=(n[f]||0)+1;});
+      for(k=0;k<nf;k++) if((n[k]||0)>c[k]) c[k]=n[k];
+    });
+    return c;
+  }
+  /* the walk as [{k:figure, j:slot within that figure}] */
+  function flipWalk(s,fb){
+    var out=[];
+    flipSlots(s,fb).forEach(function(n,k){
+      for(var j=0;j<n;j++) out.push({k:k,j:j});
+    });
+    return out;
+  }
+  /* the walk position a figure's own button jumps to */
+  function flipFirstSlot(s,a,k){
+    var walk=flipWalk(s,a);
+    for(var d=0;d<walk.length;d++)
+      if(walk[d].k===k&&walk[d].j===0) return d;
+    return 0;
+  }
+  /* and back: which figure a walk position is on */
+  function flipFigAt(s,a,d){
+    var walk=flipWalk(s,a);
+    if(!walk.length) return 0;
+    var w=walk[Math.max(0,Math.min(walk.length-1,d|0))];
+    return w?w.k:0;
+  }
+  /* ---- WHAT IT IS WORTH ON THIS SLIDE (T163) -------------------------
+     extraStops asks what an annotation is worth ON ITS OWN, which is
+     still the honest question for a chart and is what the lifted-out
+     unit test calls. But a flip book with words walking beside it is
+     worth more than its own figures, and a text book that walks WITH one
+     is worth nothing of its own -- its pages are already stops of that
+     book's walk. That is a fact about the SLIDE, so it gets the slide.
+     The `>0` filter in steppersOn then drops a walking text book for
+     free, which is exactly right: stepBase must return null for it, so
+     that it reads the figure book's base rather than one of its own. */
+  function stopsFor(s,a){
+    if(!a) return 0;
+    if(a.k==='flip') return Math.max(0,flipWalk(s,a).length-1);
+    if(a.k==='text'&&a.fb&&flipById(s,a.fb)) return 0;
+    return extraStops(a);
+  }
+  function steppersOn(s){
+    var out=[];
+    ((s&&s.annots)||[]).forEach(function(a,i){
+      if(a&&stopsFor(s,a)>0) out.push({a:a,i:i});});
     return out;
   }
   function flipById(s,id){
@@ -28075,7 +28320,7 @@ window.JunoPptx = (function () {
      frame still derived from it rather than stored beside it. */
   function flipPlan(s){
     var steps=slideBuildSteps(s),anch={},tail=[];
-    flipsOn(s).forEach(function(p){
+    steppersOn(s).forEach(function(p){
       var b=(p.a&&p.a.anim)?steps.map[p.a.anim.order||0]:null;
       if(b==null) tail.push(p);
       else (anch[b]||(anch[b]=[])).push(p);
@@ -28083,14 +28328,19 @@ window.JunoPptx = (function () {
     var n=0,stop=[],base={};
     function frames(p){
       base[p.i]=n;
-      n+=Math.max(0,flipFrames(p.a).length-1);
+      n+=stopsFor(s,p.a);
     }
     for(var b=0;b<steps.count;b++){
       stop[b]=n;n++;
       (anch[b]||[]).forEach(frames);
     }
     tail.forEach(frames);
-    return {count:n,stop:stop,base:base};
+    /* `anch` and `tail` are handed back so the ANIMATIONS PANE can
+       show the same sequence playback walks, instead of re-deriving a
+       weaker one from slideBuildSteps (T163). They were already computed
+       here; throwing them away is what left a flip book's five clicks
+       invisible in a panel headed "Build order". */
+    return {count:n,stop:stop,base:base,anch:anch,tail:tail};
   }
   function slideStops(s){
     return flipPlan(s).count;
@@ -28102,29 +28352,104 @@ window.JunoPptx = (function () {
     flipsOn(s).forEach(function(p){if(p.a===a) base=plan.base[p.i];});
     return base;
   }
+  /* the same question for anything that steps, charts included (T160) */
+  function stepBase(s,a){
+    var plan=flipPlan(s),base=null;
+    steppersOn(s).forEach(function(p){if(p.a===a) base=plan.base[p.i];});
+    return base;
+  }
+  /* HOW MANY SERIES ARE SHOWING RIGHT NOW. Read off the one cursor, never
+     stored beside it -- the same rule flipAtNow follows. At the moment the
+     chart first appears, revealCount===base and this is 0: the SKELETON
+     alone, axes and gridlines and nothing plotted, which is the whole
+     point of a slow reveal. Each stop after that adds one series.
+     Outside playback a chart is simply whole; an editor that hid your
+     data until you pressed play would be unusable. */
+  function chartSeriesShown(s,a){
+    var n=chartSeriesCount(a);
+    if(!n||!(a.anim&&a.anim.by==='series')) return n;
+    if(mode!=='view') return n;
+    var base=stepBase(s,a);
+    if(base==null) return n;
+    return Math.max(0,Math.min(n,revealCount-base));
+  }
   /* which frame this flip book is showing right now. In the editor that is
      wherever you left its arrows; in playback it is read off revealCount,
      with each flip book on the slide consuming its own frames in reading
      order. */
-  function flipAtNow(s,a){
-    var fr=flipFrames(a),last=Math.max(0,fr.length-1);
-    /* an exporting page is FOR one frame, and says so. It wins over both
-       the editor cursor and the playback one, because printing sets
-       mode='view' and revealCount=99999 to mean "fully built" and would
-       otherwise put every page on the last frame. */
+  /* WHERE IN THE WALK. The flip book's stop index -- which is the figure
+     number only when nothing walks beside it, and that is every deck
+     written before today. a.at and flipForce are both walk indices now
+     for the same reason: one cursor, not two. */
+  function flipStepNow(s,a){
+    var walk=flipWalk(s,a),last=Math.max(0,walk.length-1);
     if(flipForce!=null){
-      var first=flipsOn(s)[0];
-      if(first&&first.a===a)
-        return Math.max(0,Math.min(last,flipForce));
+      if(slideBook(s)===a) return Math.max(0,Math.min(last,flipForce));
       return Math.max(0,Math.min(last,a.at||0));
     }
     if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
-    /* READ OFF THE ONE CURSOR, never stored beside it: the plan says
-       which stops belong to this flip book, and how many of them have
-       been taken is the frame it is on. */
     var base=flipBase(s,a);
     if(base==null) return 0;
     return Math.max(0,Math.min(last,revealCount-base));
+  }
+  /* WHICH PAGE A WALKING TEXT BOOK IS ON. The flip book's stop names a
+     (figure, slot) pair; this book's pages for that figure are taken in
+     order and the slot picks one, HOLDING THE LAST when it has fewer
+     than the slot asks for. -1 means it has nothing at all to say about
+     this figure and must not be on screen: stale words beside a new
+     figure is the failure this feature exists to prevent, and it is a
+     different situation from simply having run out of pages. */
+  function pagePos(s,fb,a){
+    var walk=flipWalk(s,fb);
+    if(!walk.length) return 0;
+    var d=flipStepNow(s,fb);
+    var at=walk[Math.max(0,Math.min(walk.length-1,d))];
+    if(!at) return 0;
+    var mine=[];
+    pageFigs(s,fb,a).forEach(function(f,j){if(f===at.k) mine.push(j);});
+    if(!mine.length) return -1;
+    return mine[Math.min(mine.length-1,at.j)];
+  }
+  /* WHICH PAGE A TEXT BOX IS SHOWING. -1 when it walks with a flip book
+     that is standing on a figure it has no page for. */
+  function textAt(s,a){
+    var n=textPages(a).length,last=Math.max(0,n-1);
+    if(n<2) return 0;
+    var fb=a.fb?flipById(s,a.fb):null;
+    if(fb){
+      var p=pagePos(s,fb,a);
+      return p<0?-1:Math.max(0,Math.min(last,p));
+    }
+    if(flipForce!=null&&slideBook(s)===a)
+      return Math.max(0,Math.min(last,flipForce));
+    if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
+    var base=stepBase(s,a);
+    if(base==null) return 0;
+    return Math.max(0,Math.min(last,revealCount-base));
+  }
+  /* THE SLIDE'S BOOK: the one thing an exported page IS a page of. A
+     flip book when there is one -- the figure is the spine and the words
+     walk beside it -- otherwise a text book turning its own pages. ONE
+     force variable for both, because two would be two cursors. */
+  function slideBook(s){
+    var fl=flipsOn(s)[0];
+    if(fl) return fl.a;
+    var tb=null;
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(!tb&&x&&x.k==='text'&&!x.fb&&textPages(x).length>1) tb=x;});
+    return tb;
+  }
+  /* how many pages the slide's book turns -- the number of output pages
+     this slide explodes into */
+  function bookWalk(s){
+    var b=slideBook(s);
+    if(!b) return [];
+    if(b.k==='flip') return flipWalk(s,b);
+    return textPages(b).map(function(_,j){return {k:0,j:j};});
+  }
+  function flipAtNow(s,a){
+    var fr=flipFrames(a),last=Math.max(0,fr.length-1);
+    return Math.max(0,Math.min(last,flipFigAt(s,a,flipStepNow(s,a))));
   }
   /* is this item's frame the one showing? An item with no binding always
      shows, and — deliberately — so does one whose flip book has been
@@ -28133,6 +28458,13 @@ window.JunoPptx = (function () {
      unresolvable binding fails OPEN. */
   function flipShowsFrame(s,a,at){
     if(!a||!a.fb) return true;
+    /* A TEXT BOOK IS NOT HIDDEN BY ITS TIE. The tie turns its PAGES, so
+       the box is always up and a.fbm means nothing to it; whether it has
+       anything to say about the figure showing now is a separate
+       question, asked by textAt and answered in the hide pass. Gated on
+       having more than one page, so every tie written before today
+       behaves exactly as it did. */
+    if(a.k==='text'&&textPages(a).length>1) return true;
     var fb=flipById(s,a.fb); if(!fb) return true;
     var fr=flipFrames(fb); if(!fr.length) return true;
     var f=a.fbf||0; if(f>=fr.length) return true;
@@ -28158,7 +28490,96 @@ window.JunoPptx = (function () {
   function flipStep(idx,d){
     var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
     if(!a||a.k!=='flip') return;
-    flipGo(idx,flipAtNow(s,a)+d);
+    /* by a STOP, not by a figure: with words walking beside the book,
+       one press of the arrow turns the page and the next one brings the
+       next figure. Stepping by figure would skip every paragraph. */
+    flipGo(idx,flipStepNow(s,a)+d);
+  }
+  /* stepping a text book's OWN pages, when nothing else is driving it.
+     Same shape as flipStep/flipGo and for the same reason: in playback
+     the pages ARE stops in the one sequence, so an arrow moves the talk
+     -- otherwise the arrow and the space bar would disagree about where
+     you are. */
+  /* ---- MAKING A BOOK OUT OF A BOX (T165) ---------------------------
+     The pages, the renderer, the editor, the timeline and the export all
+     landed before this did, which is the third time in one day a
+     capability shipped without a way in. A page you cannot add is not a
+     feature.
+     Appending parks the editor on the new page and returns its index so
+     the caller can put the caret there: writing is why you added it. */
+  function textAddPage(idx){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text') return null;
+    if(!Array.isArray(a.pg)) a.pg=[];
+    a.pg.push({t:'',h:''});
+    a.at=textPages(a).length-1;
+    markDirty();
+    return a.at;
+  }
+  /* ...and the way back. Removing the LAST remaining extra page takes
+     `pg` away entirely, so the box is byte-for-byte an ordinary text box
+     again -- a deck should not carry the ghost of a book somebody
+     unmade. Page one is never removable: it is a.text, i.e. the box. */
+  function textDropPage(idx,n){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text'||!Array.isArray(a.pg)) return;
+    if(!n||n>a.pg.length) return;
+    a.pg.splice(n-1,1);
+    if(!a.pg.length) delete a.pg;
+    var last=textPages(a).length-1;
+    if((a.at||0)>last) a.at=last;
+    if(!a.at) delete a.at;
+    markDirty();
+  }
+  /* ---- WHICH FIGURE A PAGE BELONGS TO (T166) -----------------------
+     Part B's authoring, and the model is what makes it cheap: `pageFigs`
+     carries the figure FORWARD, so a page names one only where it
+     CHANGES. Five pages across three figures is therefore two settings,
+     not five, and the sentence a user says -- "figure 2 starts here" --
+     is exactly the thing stored.
+     Page one is a special case only in where it is kept: it has no `pg`
+     entry, so its figure is `a.fbf`, the same key the tie panel has
+     always written. */
+  function textPageFig(a,n){
+    var pg=Array.isArray(a&&a.pg)?a.pg:[];
+    if(!n) return (a&&a.fbf!=null)?(a.fbf|0):null;
+    var p=pg[n-1];
+    return (p&&p.f!=null)?(p.f|0):null;
+  }
+  function textPageFigSet(a,n,fig){
+    if(!a) return;
+    if(fig==null){
+      if(!n) delete a.fbf;
+      else if(Array.isArray(a.pg)&&a.pg[n-1]) delete a.pg[n-1].f;
+    } else if(!n){
+      a.fbf=fig|0;
+    } else if(Array.isArray(a.pg)&&a.pg[n-1]){
+      a.pg[n-1].f=fig|0;
+    }
+    markDirty();
+  }
+  function textStep(idx,d){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text') return;
+    textGo(idx,Math.max(0,textAt(s,a))+d);
+  }
+  function textGo(idx,to){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text') return;
+    var n=textPages(a).length;
+    if(n<2||(a.fb&&flipById(s,a.fb))) return;
+    to=Math.max(0,Math.min(n-1,to));
+    if(mode==='view'){
+      var base=stepBase(s,a);
+      if(base==null) return;
+      revealCount=base+to;
+      renderSlide();presenterSync();
+      return;
+    }
+    a.at=to;
+    /* markDirty(true): turning your own pages to read them is not an
+       edit and must not fill the undo stack */
+    markDirty(true);renderSlide();renderFlipPane();
   }
   /* STRAIGHT TO A FIGURE. One button per figure jumps, the arrows step,
      and both land here — a jump that meant anything the arrows did not
@@ -28166,9 +28587,12 @@ window.JunoPptx = (function () {
   function flipGo(idx,to){
     var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
     if(!a||a.k!=='flip') return;
-    var fr=flipFrames(a);
-    if(fr.length<2) return;
-    to=Math.max(0,Math.min(fr.length-1,to));
+    /* THE WALK, not the frame list. A one-figure book with three pages
+       of text walking beside it really does step, and `fr.length<2`
+       would refuse to move it. */
+    var walk=flipWalk(s,a);
+    if(walk.length<2) return;
+    to=Math.max(0,Math.min(walk.length-1,to));
     if(mode==='view'){
       var base=flipBase(s,a);
       if(base==null) return;
@@ -31654,10 +32078,16 @@ window.JunoPptx = (function () {
            Not while the box is being edited: what you type is what is
            stored, and a caret sitting inside a substituted number would
            be a caret in text that does not exist. */
+        /* WHICH PAGE (T163). A box with one page is a.text/a.html and
+           nothing below this line changes; a book turns to the page its
+           walk says. -1 means this book has nothing to say about the
+           figure showing now -- it renders its first page and the pass
+           at the end of renderAnnots takes it off the slide. */
+        var _pn=textAt(s,a),_pi=(_pn<0?0:_pn),_pg=textPage(a,_pi);
         var showTx=(editing&&document.activeElement
                     &&d2.contains(document.activeElement))
-          ?(a.text||''):figSubst(a.text,a,_figMap);
-        var showHtml=a.html?figSubst(a.html,a,_figMap):null;
+          ?(_pg.t||''):figSubst(_pg.t,a,_figMap);
+        var showHtml=_pg.h?figSubst(_pg.h,a,_figMap):null;
         var tx2,lst=listOf(a);
         if(lst){
           /* the ELEMENT carries the marker style and a.html carries only
@@ -31665,8 +32095,8 @@ window.JunoPptx = (function () {
              content at all */
           tx2=document.createElement(lst==='number'?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
-          if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
-          else String(a.text||'').split('\n').forEach(function(line){
+          if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
+          else String(_pg.t||'').split('\n').forEach(function(line){
             var li=document.createElement('li');
             li.textContent=line;
             tx2.appendChild(li);
@@ -31687,17 +32117,23 @@ window.JunoPptx = (function () {
              source. */
           tx2.className='an-tx'+(a.md?' an-md':'');
           if(a.md) tx2.innerHTML=notesHtml(showTx);
-          else if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
+          else if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else tx2.textContent=showTx||'';
         }
         if(editing){
+          /* THE PAGE, THROUGH THE SAME TWO CLOSURES (T163). editableText
+             never knew where the words lived -- it was handed accessors
+             -- so pointing them at a page is the whole of the change,
+             and the caret, the debounced commit, __jvFlush, the blur
+             flush, Tab-to-indent, paste-as-code and the maths and
+             markdown re-render gates all keep working untouched. */
           editableText(layer,tx2,
-            function(){return a.text;},
+            function(){return textPage(a,_pi).t;},
             /* rich BOTH ways now. A list used to be saved as plain lines
                only, so bold inside a bullet — or a sub-level — was thrown
                away the moment the box lost focus. */
-            function(v,r){a.text=v;
-              if(r&&r.rich) a.html=r.html; else delete a.html;
+            function(v,r){
+              textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');
               /* THE WAY OUT OF A LIST. `a.list` is a box-wide flag and
                  the renderer rebuilds a bullet for every line from it,
                  so every browser-native escape — Backspace at the start
@@ -31706,7 +32142,7 @@ window.JunoPptx = (function () {
                  (2026-08-29, user: "dot points can't really be
                  deleted"). If nothing you committed is a list item any
                  more, you have left the list, and the model follows. */
-              if(listOf(a)&&!/<li[\s>]/i.test(String(a.html||'')))
+              if(listOf(a)&&!/<li[\s>]/i.test(String(textPage(a,_pi).h||'')))
                 delete a.list;},
             /* a markdown box is NOT rich: what you edit is the SOURCE,
                so plaintext-only is the right editor (Enter must give a
@@ -31717,9 +32153,64 @@ window.JunoPptx = (function () {
                formatting back rather than only its plain string: with
                no a.html there is nothing to restore but the LaTeX, and
                with one the box keeps its bold and its colours too. */
-            i,!a.md,function(){return a.html;});
+            i,!a.md,function(){return textPage(a,_pi).h;});
         }
         d2.appendChild(tx2);
+        /* ---- TURNING THE PAGES (T163) --------------------------------
+           The same bar as a figure book's, with PIPS instead of a
+           counter. A reader has to be able to tell at a glance whether
+           the arrows under a thing turn a figure or a paragraph, and
+           dots under words is the one idiom everybody already reads as
+           "there is more here"; they also cost no width on a box the
+           words have already claimed.
+           A book WALKING WITH a flip book draws nothing: the figure's
+           arrows are the only cursor, which is the same rule that keeps
+           the frame out of a second piece of state. And on an EXPORTED
+           page there is nowhere to go -- each page IS one page -- so the
+           arrows are left off and the pips stay on as the printed index
+           of where you are. */
+        var _pgs=textPages(a);
+        if(_pgs.length>1&&!(a.fb&&flipById(s,a.fb))){
+          var pbar=document.createElement('div');
+          pbar.className='an-flipbar an-pgbar';
+          pbar.style.justifyContent=(a.align==='center')?'center'
+            :(a.align==='right')?'flex-end':'flex-start';
+          var pgNav=function(dz,tip){
+            if(flipForce!=null) return;
+            var nb=document.createElement('button');
+            nb.className='an-flipnav';nb.type='button';
+            nb.textContent=dz<0?'‹':'›';nb.title=tip;
+            nb.disabled=dz<0?(_pi<=0):(_pi>=_pgs.length-1);
+            nb.addEventListener('click',function(ev){
+              ev.stopPropagation();ev.preventDefault();textStep(i,dz);});
+            /* the layer's own mousedown starts a MOVE on whatever is
+               under the pointer; without this, dragging off an arrow
+               drags the whole text box across the slide */
+            nb.addEventListener('mousedown',function(ev){
+              ev.stopPropagation();});
+            pbar.appendChild(nb);
+          };
+          pgNav(-1,'Back');
+          var pips=document.createElement('span');
+          pips.className='an-pgpips';
+          _pgs.forEach(function(_pv,pj){
+            var dot=document.createElement('button');
+            dot.className='an-pgpip'+(pj===_pi?' on':'');
+            dot.type='button';
+            dot.title=(pj+1)+' of '+_pgs.length;
+            dot.setAttribute('aria-label',dot.title);
+            if(pj===_pi) dot.setAttribute('aria-current','true');
+            if(flipForce!=null) dot.disabled=true;
+            dot.addEventListener('click',function(ev){
+              ev.stopPropagation();ev.preventDefault();textGo(i,pj);});
+            dot.addEventListener('mousedown',function(ev){
+              ev.stopPropagation();});
+            pips.appendChild(dot);
+          });
+          pbar.appendChild(pips);
+          pgNav(1,'Forward');
+          d2.appendChild(pbar);
+        }
         layer.appendChild(d2);
         /* Curved text. Drawn as SVG on a bowed baseline, which HTML has no
            way to do — but only when the box is NOT being typed into:
@@ -31900,7 +32391,14 @@ window.JunoPptx = (function () {
        click the caption you are about to tie to frame 4 while you are
        standing on frame 1. */
     (s.annots||[]).forEach(function(a,i){
-      if(!a||!a.fb||flipShows(s,a)) return;
+      if(!a||!a.fb) return;
+      /* A TEXT BOOK IS NOT HIDDEN BY ITS TIE -- the tie turns its pages.
+         It goes only on a figure it has NO page for, which is a
+         different thing from having run out: stale words beside a new
+         figure is the failure this feature exists to prevent. */
+      var gone=(a.k==='text'&&textPages(a).length>1)
+        ?(textAt(s,a)<0):!flipShows(s,a);
+      if(!gone) return;
       var fel=layer.querySelector('[data-idx="'+i+'"]');
       if(!fel) return;
       if(editing) fel.classList.add('an-fbother');
@@ -31990,7 +32488,11 @@ window.JunoPptx = (function () {
             var atype=ba.anim.type||'fade';
             /* "appear" is instant (no keyframe); rise/zoom animate transform,
                which would fight a rotation and snap — a rotated item fades */
-            if(ba.rot&&(atype==='rise'||atype==='zoom')) atype='fade';
+            /* the rotated-item swap is GONE (T156). It existed because
+               the keyframes animated the `transform` SHORTHAND, which
+               replaced the inline rotate(); they now animate `translate`
+               and `scale`, which compose with it. An effect that names
+               itself must be the effect that plays. */
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
           }
         }
@@ -33951,6 +34453,113 @@ window.JunoPptx = (function () {
           }
         }
       }
+      /* PAGES, on the box that would carry them (T165). Offered for one
+         text box at a time: a page is a fact about THIS box, and adding
+         one to nine selected boxes at once is a gesture nobody could
+         undo in their head. Named "page" and "flip book" because those
+         are words the product already uses -- a review this morning
+         found the vocabulary too big to add to. */
+      if(selIdxs().length===1){
+        var pgI=selIdxs()[0];
+        var pgA=(pres.slides[cur].annots||[])[pgI];
+        if(pgA&&pgA.k==='text'&&typeof textAddPage==='function'){
+          var np=textPages(pgA).length;
+          menuHead(m,'flip book');
+          row(np>1?('Add a page \u2014 '+np+' so far'):'Add a page','',
+            function(){
+              var at=textAddPage(pgI);
+              renderSlide();renderFilm();
+              if(at!=null) toast('Page '+(at+1)
+                +' \u2014 click through them like a flip book\u2019s '
+                +'figures');
+            },
+            'Another page of words in the same box. The box turns its '
+            +'pages on a click, the way a flip book turns its figures',
+            'flipbook');
+          /* ...and, once the box walks with a flip book, WHICH FIGURE
+             this page belongs to. Two rows rather than a list of every
+             figure: the model stores a CHANGE, so the only two things
+             worth saying about a page are "the next figure starts here"
+             and "no it does not". (T166) */
+          if(np>1&&pgA.fb){
+            var pgBk=flipById(pres.slides[cur],pgA.fb);
+            var pgN=pgBk?flipFrames(pgBk).length:0;
+            if(pgN>1){
+              var pgAt=Math.max(0,Math.min(np-1,pgA.at||0));
+              var figs=pageFigs(pres.slides[cur],pgBk,pgA);
+              var here=figs[pgAt]||0;
+              var own=textPageFig(pgA,pgAt);
+              if(here<pgN-1) row('Figure '+(here+2)+' starts on this page','',
+                function(){
+                  textPageFigSet(pgA,pgAt,here+1);
+                  renderSlide();renderFilm();
+                  toast('Page '+(pgAt+1)+' onwards goes with figure '
+                    +(here+2));
+                },
+                'Everything from this page on belongs to the next '
+                +'figure, until another page says otherwise','flipbook');
+              if(own!=null&&pgAt>0) row('Keep this page with the one '
+                +'before','',
+                function(){
+                  textPageFigSet(pgA,pgAt,null);
+                  renderSlide();renderFilm();
+                  toast('Page '+(pgAt+1)+' follows the page before it');
+                },
+                'Stops this page starting a new figure — it goes back '
+                +'to whichever figure the page before it is on','undo');
+            }
+          }
+          if(np>1) row('Remove this page','',
+            function(){
+              textDropPage(pgI,pgA.at||0);
+              renderSlide();renderFilm();
+              toast('Page removed');
+            },
+            'Takes away the page you are on. Page one is the box '
+            +'itself and stays','trash');
+        }
+      }
+      /* SHOWS WITH WHICH FIGURE (T161) -- the tie, offered from the
+         thing being TIED.
+         Tying text to a flip book's page has worked since T86 and reads
+         well once you are there: "Just this figure" / "This figure and
+         every one after" / "...and every one before". But its only door
+         was a `Figures...` button that appears only while the FLIP BOOK
+         is selected, so the flow ran backwards from the way anyone
+         thinks about it -- select the book, open its pane, THEN select
+         your text. Asked for again on 2026-09-01 as though it did not
+         exist ("it is hard to tie text to a page on the flipbook"),
+         which is the second time this feature has been re-requested
+         while shipping; T86 added a hint inside the pane, and the pane
+         was still the wrong place to be standing.
+         So: start from the text. `showFlipPane` sets which book the
+         pane is about and never touches the selection, so one click
+         lands on the tie control with your item already named in it. */
+      if(selIdxs().length&&typeof showFlipPane==='function'){
+        var tieS=pres.slides[cur];
+        var tieBooks=[];
+        ((tieS&&tieS.annots)||[]).forEach(function(x,xi){
+          if(x&&x.k==='flip'&&flipFrames(x).length) tieBooks.push(xi);});
+        var tieMine=selIdxs().filter(function(i){
+          var x=(tieS.annots||[])[i];return x&&x.k!=='flip';});
+        if(tieBooks.length&&tieMine.length){
+          menuHead(m,'shows with');
+          tieBooks.forEach(function(bi){
+            var bk=(tieS.annots||[])[bi];
+            var one=tieMine.length===1?(tieS.annots||[])[tieMine[0]]:null;
+            var tied=one&&one.fb===bk.fid&&one.fbf!=null;
+            var lab=tied
+              ?('\u2713 Shows with figure '+((one.fbf|0)+1)
+                +' of '+(annotLabel(bk)||'the flip book'))
+              :('Show with a figure of '
+                +(annotLabel(bk)||'the flip book')+'\u2026');
+            row(lab,'',function(){showFlipPane(true,bi);},
+              'Pick which figure this belongs to, and whether it shows '
+              +'with that figure only, from it onwards, or up to it',
+              'flipbook');
+          });
+        }
+      }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
          time: an anchor is a fact about that item, and a menu that
          set nine of them at once would be a menu nobody could undo in
@@ -33997,6 +34606,37 @@ window.JunoPptx = (function () {
             function(){
               if(ca.leg===0) delete ca.leg; else ca.leg=0;
               markDirty();renderSlide();},null,'eye');
+          /* ONE CLICK FOR THE SLOW REVEAL (T160). Assigning a build
+             number to each series by hand is exactly the drag-a-list-of-
+             opaque-blocks misery people complain about in PowerPoint --
+             where, documented and unfixed, chart series animations
+             cannot be reordered AT ALL. The default order is the one the
+             data is already in, which is nearly always the one you want;
+             the order painter is the escape hatch when it is not. */
+          (function(){
+            var ns=window.SemDeckChart.seriesCount(ca);
+            if(!ns) return;
+            var on=!!(ca.anim&&ca.anim.by==='series');
+            row(on?'\u2713 Reveal series one at a time'
+                  :'Reveal series one at a time','',
+              function(){
+                if(on){
+                  if(ca.anim) delete ca.anim.by;
+                } else {
+                  if(!ca.anim) ca.anim={type:'fade',
+                    order:nextAnimOrder(pres.slides[cur])};
+                  ca.anim.by='series';
+                }
+                markDirty();renderSlide();renderFilm();
+                if(typeof animRibbonSync==='function') animRibbonSync();
+                toast(on?'The whole chart arrives on one click'
+                  :('Axes first, then '+ns+' series \u2014 '
+                    +(ns+1)+' clicks'));
+              },
+              'The axes and gridlines arrive first, then one series per '
+              +'click. The scale is fixed from the start, so nothing '
+              +'moves as the lines come in.','stagger');
+          })();
           if(ca.ref) row('Linked to its table','',function(){},
             'Update figures from their sources re-reads the numbers; '
             +'position, type and colours stay yours.','link');
@@ -34257,9 +34897,15 @@ window.JunoPptx = (function () {
      holds. Nothing moves surface: the rows keep their handlers, they
      just wait until asked for. Menus small enough to read whole (the
      empty-canvas one) never fold. */
+  /* 'shows with' EARNS ITS PLACE HERE (T162). T161 added it and left it
+     foldable "like every other optional section" -- which put the door
+     built to fix a discoverability problem behind another door. This
+     section exists precisely because the feature had been re-requested
+     twice as though it did not exist; folding it repeats the mistake it
+     was written to correct. */
   var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
     'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
-    'chart':1};
+    'chart':1,'shows with':1,'flip book':1};
   function cmFold(m){
     m.setAttribute('role','menu');
     $$('button',m).forEach(function(b){
@@ -42620,236 +43266,6 @@ window.JunoPptx = (function () {
       });
     });
   })();
-  var animPaneSync=function(){},animPaneClose=function(){};
-  var animRibbonSync=function(){};
-  /* ---- animation PANE: effect + build order. Items on the same build appear
-     TOGETHER; each build is one click in playback. ---- */
-  (function(){
-    var vbtn=$('#vw-anim'),pane=$('#animpane');
-    var menu=$('#animpane-body'),cl=$('#animpane-close');
-    if(!vbtn||!pane||!menu) return;
-    menu.classList.add('anim-pane');
-    function rerender(){
-      var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
-      if(l){renderAnnots(l,s);paintSel(l);}
-    }
-    function renumber(s){animSeq(s).forEach(function(st,i){
-      st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
-    function stepOf(s,idx){var r=-1;animSeq(s).forEach(function(st,i){
-      if(st.items.indexOf(idx)>=0) r=i;});return r;}
-    /* AND THE STRIP. The filmstrip's build mark is the only thing that
-       says a slide is animated once the Timeline pane is shut (T76), and
-       until this it was drawn on the next re-render of the strip and not
-       before -- so animating something left the strip claiming the slide
-       was plain until you happened to add a slide or reorder one. Every
-       change to an animation on this slide goes through here, which is
-       why it belongs here rather than at each of the seven callers. */
-    function commit(s){markDirty();rerender();render();renderFilm();}
-    function setType(type){
-      var s=pres.slides[cur]; if(!s) return;
-      var idxs=selIdxs();
-      var no=nextAnimOrder(s);            /* new anims share one build step */
-      idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
-        if(type==='none') delete a.anim;
-        else if(a.anim) a.anim.type=type;
-        else a.anim={type:type,order:no};});
-      commit(s);
-    }
-    function mergeUp(){
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      if(!a||!a.anim) return;var q=animSeq(s),si=stepOf(s,selAnnot);
-      if(si>0){a.anim.order=q[si-1].order;renumber(s);commit(s);}
-    }
-    function splitOwn(){
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      if(!a||!a.anim) return;
-      a.anim.order=(a.anim.order||0)+0.5;renumber(s);commit(s);
-    }
-    function moveStep(si,dir){
-      var s=pres.slides[cur],q=animSeq(s),tj=si+dir;
-      if(tj<0||tj>=q.length) return;
-      var oa=q[si].order,ob=q[tj].order;
-      q[si].items.forEach(function(i){s.annots[i].anim.order=ob;});
-      q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
-      renumber(s);commit(s);
-    }
-    function render(){
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      menu.innerHTML='';
-      var h1=document.createElement('div');h1.className='anim-h';
-      h1.textContent='Entrance effect';menu.appendChild(h1);
-      if(!a||typeof selAnnot!=='number'){
-        var em=document.createElement('div');em.className='anim-empty';
-        em.textContent='Select an item first, then pick an effect.';
-        menu.appendChild(em);
-      } else {
-        var eff=document.createElement('div');eff.className='anim-eff';
-        [['none','None'],['appear','Appear'],['fade','Fade'],
-         ['rise','Rise'],['zoom','Zoom']].forEach(function(p){
-          var b=document.createElement('button');b.className='anim-effb';
-          b.textContent=p[1];
-          if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
-          b.addEventListener('click',function(e){e.stopPropagation();
-            setType(p[0]);});
-          eff.appendChild(b);});
-        menu.appendChild(eff);
-        if(a.anim){
-          var si0=stepOf(s,selAnnot),q0=animSeq(s);
-          var mrow=document.createElement('div');mrow.className='anim-merge';
-          var mb=document.createElement('button');mb.className='anim-mini wide';
-          mb.textContent='↑ Appear with previous';mb.disabled=(si0<=0);
-          mb.title='Reveal this on the same click as the build above';
-          mb.addEventListener('click',function(e){e.stopPropagation();
-            mergeUp();});
-          mrow.appendChild(mb);
-          if(q0[si0]&&q0[si0].items.length>1){
-            var sb=document.createElement('button');sb.className='anim-mini wide';
-            sb.textContent='↓ Own click';
-            sb.addEventListener('click',function(e){e.stopPropagation();
-              splitOwn();});
-            mrow.appendChild(sb);
-          }
-          menu.appendChild(mrow);
-        }
-      }
-      var h2=document.createElement('div');h2.className='anim-h';
-      h2.textContent='Build order — each row is one click';
-      menu.appendChild(h2);
-      var seq=animSeq(s);
-      if(!seq.length){
-        var e2=document.createElement('div');e2.className='anim-empty';
-        e2.textContent='Nothing animated on this slide yet.';
-        menu.appendChild(e2);
-      } else {
-        var list=document.createElement('div');list.className='anim-seq';
-        seq.forEach(function(st,si){
-          var row=document.createElement('div');row.className='anim-step';
-          var n=document.createElement('span');n.className='anim-num';
-          n.textContent=(si+1);row.appendChild(n);
-          var chips=document.createElement('span');chips.className='anim-chips';
-          st.items.forEach(function(idx){
-            var c=document.createElement('span');
-            c.className='anim-chip'+(idx===selAnnot?' cur':'');
-            c.textContent=itemLabel(s,idx)+' · '
-              +((s.annots[idx].anim.type)||'fade');
-            c.addEventListener('click',function(e){e.stopPropagation();
-              var l=stage.querySelector('.annot-layer');
-              if(l) selectAnnot(l,idx); render();});
-            chips.appendChild(c);});
-          row.appendChild(chips);
-          var ctr=document.createElement('span');ctr.className='anim-stepctr';
-          [['↑',-1],['↓',1]].forEach(function(m){
-            var b=document.createElement('button');b.className='anim-mini';
-            b.textContent=m[0];
-            b.title=m[1]<0?'Move this build earlier':'Move this build later';
-            b.setAttribute('aria-label',b.title);
-            b.disabled=(m[1]<0?si===0:si===seq.length-1);
-            b.addEventListener('click',function(e){e.stopPropagation();
-              moveStep(si,m[1]);});
-            ctr.appendChild(b);});
-          row.appendChild(ctr);
-          list.appendChild(row);});
-        menu.appendChild(list);
-      }
-      /* the order "One by one" deals the clicks in (T106) */
-      var rb=document.createElement('button');
-      rb.className='anim-mini wide';
-      rb.textContent='Reading order\u2026';
-      rb.title='One by one reveals in READING order \u2014 top to '
-        +'bottom unless you set your own. Figure numbers and the '
-        +'review outline follow the same order.';
-      rb.addEventListener('click',function(e){e.stopPropagation();
-        if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
-      menu.appendChild(rb);
-    }
-    /* ONE door. There were briefly two — View's Animations and an
-       "Animate" button in an Effects group that renamed itself to the
-       selected item's effect. Same pane, different groups, different
-       names, both pressed at once (2026-08-17, user: "WHY IS ANIMATIONS
-       AND APPEAR NOT IN THE SAME PLACE"). The pane's effect chooser
-       already tracks the selection, which is everything the second
-       button ever added. */
-    function set(open){
-      if(open){paneShow('animpane');render();}
-      else paneHide('animpane');
-    }
-    vbtn.addEventListener('click',function(e){
-      e.stopPropagation();set(pane.hidden);});
-    if(cl) cl.addEventListener('click',function(){set(false);});
-    /* the effect chooser at the top tracks the selection, so an open pane
-       has to follow it rather than showing whatever was picked last */
-    animPaneSync=function(){if(!pane.hidden) render();};
-    animPaneClose=function(){set(false);};
-    /* ---- the Animate TAB's own buttons --------------------------------
-       "There doesn't seem to be a way to remove animations" (2026-08-20,
-       user) — there was one, the None effect, but it was inside a pane
-       you had to know to open, with an item selected, and it looked like
-       any other effect rather than like a removal. The effects are now
-       buttons in the ribbon where you can see which one is on, None reads
-       as the undo it is, and Clear slide strips the whole slide in one
-       press without hunting item by item. */
-    [['anim-none','none'],['anim-fade','fade'],
-     ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
-      var b=$('#'+p[0]);
-      if(b) b.addEventListener('click',function(){setType(p[1]);});
-    });
-    /* ---- the two builds anyone actually wants ------------------------
-       Setting "one at a time" by hand means selecting every item on the
-       slide and stepping its build order one at a time, which is exactly
-       the fiddling this editor exists to remove (2026-08-20).
-       Reading order, not array order: the array is the order you happened
-       to draw things in, which is nobody's idea of a sequence. */
-    /* orderedIdx is at the top of the file now: figure NUMBERS read the
-       same order (T18), and a figure numbered differently from the way
-       it builds would be two answers to one question. */
-    var stag=$('#anim-stagger');
-    if(stag) stag.addEventListener('click',function(){
-      var s2=pres.slides[cur]; if(!s2) return;
-      var order=orderedIdx(s2);
-      if(!order.length){toast('Nothing on this slide yet');return;}
-      order.forEach(function(i,n){
-        var a=s2.annots[i];
-        a.anim={type:(a.anim&&a.anim.type)||'fade',order:n};
-      });
-      revealCount=0;commit(s2);
-      toast(order.length+' items, one click each \u2014 in reading order');
-    });
-    var tog=$('#anim-together');
-    if(tog) tog.addEventListener('click',function(){
-      var s2=pres.slides[cur]; if(!s2) return;
-      var order=orderedIdx(s2);
-      if(!order.length){toast('Nothing on this slide yet');return;}
-      order.forEach(function(i){
-        var a=s2.annots[i];
-        a.anim={type:(a.anim&&a.anim.type)||'fade',order:0};
-      });
-      revealCount=0;commit(s2);
-      toast('Everything appears on one click');
-    });
-    var clr=$('#anim-clear');
-    if(clr) clr.addEventListener('click',function(){
-      var s=pres.slides[cur]; if(!s) return;
-      var n=0;
-      (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
-      if(!n){toast('Nothing on this slide is animated');return;}
-      revealCount=0;commit(s);
-      toast('Cleared '+n+(n===1?' animation':' animations')
-        +' — everything is on the slide from the start');
-    });
-    /* the effect buttons act on the SELECTION, so they show the selected
-       item's effect and stand down when there is nothing selected */
-    animRibbonSync=function(){
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      var on=!!a&&typeof selAnnot==='number';
-      [['anim-none','none'],['anim-fade','fade'],
-       ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
-        var b=$('#'+p[0]); if(!b) return;
-        b.hidden=!on;
-        b.setAttribute('aria-pressed',
-          (on&&(a.anim?a.anim.type:'none')===p[1]).toString());
-      });
-    };
-  })();
   /* ---- READING ORDER (T106) -----------------------------------------
      The one place the slide's SEQUENCE is authored. orderedIdx's sweep
      (top-to-bottom, left-to-right) stays the default; this panel writes
@@ -44432,6 +44848,15 @@ window.JunoPptx = (function () {
   }
   /* the whole picture, sized by viewBox so the box scales it; aspect
      comes from the annot's real page shape so a pie stays round */
+  /* how many addressable series this chart has. One number, used by the
+     timeline (extraStops) and by the renderer, so they cannot disagree
+     about how many clicks a chart is worth (T160). Pie is excluded: its
+     slices are CATEGORIES, and "reveal one category at a time" is a
+     different feature with a different meaning. */
+  function chartSeriesCount(a){
+    if(!a||a.k!=='chart'||a.ct==='pie') return 0;
+    return chartParse(a).series.length;
+  }
   function chartSvg(a){
     var d=chartParse(a);
     var pg=pageOf();
@@ -44442,10 +44867,44 @@ window.JunoPptx = (function () {
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
     svg.setAttribute('class','an-chartsvg');
     svg.setAttribute('preserveAspectRatio','none');
+    /* ---- WHICH MARKS BELONG TO WHICH SERIES (T159) ------------------
+       Every mark used to be appended straight onto the <svg>. The loops
+       below have always KNOWN which series they were drawing -- they sit
+       inside `d.series.forEach(function(se){...})` -- and threw that
+       away on the append, leaving one flat bag of shapes. A build step
+       cannot address what has no name.
+
+       So each series' marks go into their own `<g data-series="NAME">`,
+       and everything that is not a series -- title, gridlines, axis
+       labels, category labels, the legend -- goes into the SKELETON
+       group. That is the split the "slow reveal" wants: axes first, then
+       one series at a time.
+
+       Keyed by NAME, never by index, and that is the whole durability
+       story. `chartResyncAll` already replaces `a.series` wholesale on a
+       refresh and carries the author's per-series COLOUR across by
+       matching `se.name` -- so a build order keyed the same way survives
+       a column being added, removed or reordered upstream. PowerPoint's
+       animation list is keyed to shape index, which is exactly why it
+       breaks when the data changes under it. */
+    var gSkel=svgEl('g');
+    gSkel.setAttribute('data-part','skeleton');
+    svg.appendChild(gSkel);
+    var gSeries={};
+    function seriesG(name){
+      var k=String(name==null?'':name);
+      if(!gSeries[k]){
+        var g=svgEl('g');
+        g.setAttribute('data-series',k);
+        svg.appendChild(g);
+        gSeries[k]=g;
+      }
+      return gSeries[k];
+    }
     var ink='#dbe7ef',dim='#8aa0b0',grid='#8aa0b033';
     var legend=(a.leg!==0)&&(d.series.length>1||a.ct==='pie');
     var T=(a.title?30:12),B=H-(legend?48:30),L=46,R=W-12;
-    if(a.title) svg.appendChild(
+    if(a.title) gSkel.appendChild(
       svgText(W/2,19,String(a.title),15,ink,'middle'));
     if(!d.series.length){
       svg.appendChild(svgText(W/2,H/2,'No data — right-click '
@@ -44496,8 +44955,8 @@ window.JunoPptx = (function () {
       gl.setAttribute('x1',L);gl.setAttribute('x2',R);
       gl.setAttribute('y1',Y(g));gl.setAttribute('y2',Y(g));
       gl.setAttribute('stroke',g===0?dim:grid);
-      svg.appendChild(gl);
-      svg.appendChild(svgText(L-5,Y(g)+3,
+      gSkel.appendChild(gl);
+      gSkel.appendChild(svgText(L-5,Y(g)+3,
         String(Math.round(g*1000)/1000),9,dim,'end'));
     }
     var n=d.cats.length;
@@ -44515,12 +44974,12 @@ window.JunoPptx = (function () {
       var xstep=chartStep(xhi-xlo);
       for(var xv=Math.ceil(xlo/xstep)*xstep;xv<=xhi+xstep/2;xv+=xstep){
         var px=L+(xv-xlo)/(xhi-xlo)*(R-L);
-        svg.appendChild(svgText(px,B+13,
+        gSkel.appendChild(svgText(px,B+13,
           String(Math.round(xv*1000)/1000),9,dim,'middle'));
       }
     } else {
       d.cats.forEach(function(c,i){
-        svg.appendChild(svgText(X(i),B+13,
+        gSkel.appendChild(svgText(X(i),B+13,
           c.length>9?c.slice(0,8)+'…':c,9,dim,'middle'));
       });
     }
@@ -44532,26 +44991,29 @@ window.JunoPptx = (function () {
         pl.setAttribute('fill','none');
         pl.setAttribute('stroke',se.color);
         pl.setAttribute('stroke-width',2);
-        svg.appendChild(pl);
+        var gl2=seriesG(se.name);
+        gl2.appendChild(pl);
         se.ys.forEach(function(v,i){
           var c=svgEl('circle');
           c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
           c.setAttribute('r',2.6);c.setAttribute('fill',se.color);
-          svg.appendChild(c);
+          gl2.appendChild(c);
         });
       });
     } else if(a.ct==='scatter'){
       d.series.forEach(function(se){
+        var gs=seriesG(se.name);
         se.ys.forEach(function(v,i){
           var c=svgEl('circle');
           c.setAttribute('cx',X(i));c.setAttribute('cy',Y(v));
           c.setAttribute('r',3.4);c.setAttribute('fill',se.color);
-          svg.appendChild(c);
+          gs.appendChild(c);
         });
       });
     } else {   /* bar, the default */
       var ns=d.series.length,gw=(R-L)/n,bw=gw*0.72/ns;
       d.series.forEach(function(se,si){
+        var gb=seriesG(se.name);
         se.ys.forEach(function(v,i){
           var x=L+i*gw+gw*0.14+si*bw;
           var b=svgEl('rect');
@@ -44560,7 +45022,7 @@ window.JunoPptx = (function () {
           b.setAttribute('width',Math.max(1,bw-1));
           b.setAttribute('height',Math.max(0.5,Math.abs(Y(v)-Y(0))));
           b.setAttribute('fill',se.color);
-          svg.appendChild(b);
+          gb.appendChild(b);
         });
       });
     }
@@ -44571,8 +45033,13 @@ window.JunoPptx = (function () {
         sw2.setAttribute('x',lx2);sw2.setAttribute('y',H-22);
         sw2.setAttribute('width',10);sw2.setAttribute('height',10);
         sw2.setAttribute('fill',se.color);
-        svg.appendChild(sw2);
-        svg.appendChild(svgText(lx2+14,H-13,se.name,10,dim));
+        /* the legend entry travels WITH its series (T159). A key naming a
+           line the audience cannot see yet is the spoiler the slow reveal
+           exists to avoid -- the layout is still computed for every
+           series, so nothing reflows as they arrive. */
+        var gL=seriesG(se.name);
+        gL.appendChild(sw2);
+        gL.appendChild(svgText(lx2+14,H-13,se.name,10,dim));
         lx2+=14+Math.max(34,se.name.length*6)+10;
       });
     }
@@ -44586,7 +45053,27 @@ window.JunoPptx = (function () {
     d2.style.width=(a.w||30)+'%';d2.style.height=(a.h||24)+'%';
     applyCommon(d2,a);
     d2.setAttribute('data-idx',i);
-    d2.appendChild(chartSvg(a));
+    var svg=chartSvg(a);
+    /* THE SERIES REVEAL (T160). The axes were computed from ALL the data
+       before a single mark was drawn, so they are fixed from the first
+       frame -- which is the exact defect of the way everyone else does
+       this. Exporting N pictures of the same plot rescales each one, so
+       the plot JUMPS as you step through it; here the frame is nailed
+       down and the lines arrive into it.
+       Hidden with visibility, not display: a hidden <g> still occupies
+       its place in the layout and still contributes to nothing that
+       moves, so nothing reflows as series arrive. */
+    var shown=chartSeriesShown(s,a);
+    var names=chartParse(a).series.map(function(se){return se.name;});
+    if(shown<names.length){
+      names.forEach(function(nm,si){
+        if(si<shown) return;
+        var g=svg.querySelector('g[data-series="'+String(nm)
+          .replace(/"/g,'\\"')+'"]');
+        if(g) g.style.visibility='hidden';
+      });
+    }
+    d2.appendChild(svg);
     layer.appendChild(d2);
   }
 
@@ -44745,7 +45232,354 @@ window.JunoPptx = (function () {
   }
   window.SemDeckChart={place:placeChart,dataOf:chartDataOf,
     fromRows:chartFromRows,dataDlg:chartDataDlg,resync:chartResyncAll,
+    seriesCount:chartSeriesCount,
     svg:chartSvg};
+  /* ---- ANIMATION: the effect, the build order, and the pane ---------
+     Lifted out of 45-images.js on 2026-09-01 (T158), which had grown to
+     hold images, crop, the transient-overlay owner, transitions AND all
+     of this. Nothing here changed in the move except the two lines that
+     stop it booting itself.
+
+     IT USED TO BE AN EXECUTING SUB-IIFE -- `(function(){...})()` right
+     here in the middle of a part -- which is the pattern that silently
+     killed the whole editor at boot in T133: a throw inside one of those
+     takes the enclosing IIFE with it, and every later declaration in
+     every later part simply never happens. Its body is now `animBoot()`,
+     called from THE BOOT SEQUENCE with the rest, where a failure is
+     visible and lands beside its siblings. The early `return` on missing
+     markup is kept verbatim: a poster has no animation group. ---- */
+  var animPaneSync=function(){},animPaneClose=function(){};
+  var animRibbonSync=function(){};
+  function animBoot(){
+    var vbtn=$('#vw-anim'),pane=$('#animpane');
+    var menu=$('#animpane-body'),cl=$('#animpane-close');
+    if(!vbtn||!pane||!menu) return;
+    menu.classList.add('anim-pane');
+    function rerender(){
+      var s=pres.slides[cur],l=stage.querySelector('.annot-layer');
+      if(l){renderAnnots(l,s);paintSel(l);}
+    }
+    function renumber(s){animSeq(s).forEach(function(st,i){
+      st.items.forEach(function(idx){s.annots[idx].anim.order=i;});});}
+    function stepOf(s,idx){var r=-1;animSeq(s).forEach(function(st,i){
+      if(st.items.indexOf(idx)>=0) r=i;});return r;}
+    /* AND THE STRIP. The filmstrip's build mark is the only thing that
+       says a slide is animated once the Timeline pane is shut (T76), and
+       until this it was drawn on the next re-render of the strip and not
+       before -- so animating something left the strip claiming the slide
+       was plain until you happened to add a slide or reorder one. Every
+       change to an animation on this slide goes through here, which is
+       why it belongs here rather than at each of the seven callers. */
+    /* ...and animRibbonSync, or the RIBBON KEEPS THE OLD ANSWER (T156).
+       `render` here is the PANE's render; nothing on this path told the
+       ribbon. So clicking Fade left None lit, and the highlight only
+       corrected itself when you re-selected the object -- you pressed the
+       button, nothing moved, and the honest reading was that it had not
+       worked. Every change to an animation goes through here, which is
+       exactly why the sync belongs here and not at each of the callers. */
+    function commit(s){markDirty();rerender();render();renderFilm();
+      if(typeof animRibbonSync==='function') animRibbonSync();}
+    function setType(type){
+      var s=pres.slides[cur]; if(!s) return;
+      var idxs=selIdxs();
+      var no=nextAnimOrder(s);            /* new anims share one build step */
+      idxs.forEach(function(i){var a=s.annots[i]; if(!a) return;
+        if(type==='none') delete a.anim;
+        else if(a.anim) a.anim.type=type;
+        else a.anim={type:type,order:no};});
+      commit(s);
+    }
+    function mergeUp(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a||!a.anim) return;var q=animSeq(s),si=stepOf(s,selAnnot);
+      if(si>0){a.anim.order=q[si-1].order;renumber(s);commit(s);}
+    }
+    function splitOwn(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a||!a.anim) return;
+      a.anim.order=(a.anim.order||0)+0.5;renumber(s);commit(s);
+    }
+    function moveStep(si,dir){
+      var s=pres.slides[cur],q=animSeq(s),tj=si+dir;
+      if(tj<0||tj>=q.length) return;
+      var oa=q[si].order,ob=q[tj].order;
+      q[si].items.forEach(function(i){s.annots[i].anim.order=ob;});
+      q[tj].items.forEach(function(i){s.annots[i].anim.order=oa;});
+      renumber(s);commit(s);
+    }
+    function render(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      menu.innerHTML='';
+      var h1=document.createElement('div');h1.className='anim-h';
+      h1.textContent='Entrance effect';menu.appendChild(h1);
+      if(!a||typeof selAnnot!=='number'){
+        var em=document.createElement('div');em.className='anim-empty';
+        em.textContent='Select an item first, then pick an effect.';
+        menu.appendChild(em);
+      } else {
+        var eff=document.createElement('div');eff.className='anim-eff';
+        [['none','None'],['appear','Appear'],['fade','Fade'],
+         ['rise','Rise'],['zoom','Zoom']].forEach(function(p){
+          var b=document.createElement('button');b.className='anim-effb';
+          b.textContent=p[1];
+          if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');
+          b.addEventListener('click',function(e){e.stopPropagation();
+            setType(p[0]);});
+          eff.appendChild(b);});
+        menu.appendChild(eff);
+        if(a.anim){
+          var si0=stepOf(s,selAnnot),q0=animSeq(s);
+          var mrow=document.createElement('div');mrow.className='anim-merge';
+          var mb=document.createElement('button');mb.className='anim-mini wide';
+          mb.textContent='↑ Appear with previous';mb.disabled=(si0<=0);
+          mb.title='Reveal this on the same click as the build above';
+          mb.addEventListener('click',function(e){e.stopPropagation();
+            mergeUp();});
+          mrow.appendChild(mb);
+          if(q0[si0]&&q0[si0].items.length>1){
+            var sb=document.createElement('button');sb.className='anim-mini wide';
+            sb.textContent='↓ Own click';
+            sb.addEventListener('click',function(e){e.stopPropagation();
+              splitOwn();});
+            mrow.appendChild(sb);
+          }
+          menu.appendChild(mrow);
+        }
+      }
+      var h2=document.createElement('div');h2.className='anim-h';
+      h2.textContent='Build order — each row is one click';
+      menu.appendChild(h2);
+      var seq=animSeq(s);
+      /* ---- THE ONE TRUE SEQUENCE (T163) ------------------------------
+         This list used to show anim-order builds ONLY, under a heading
+         that promises "each row is one click". A flip book's frames and
+         (since T160) a chart's series builds are clicks too -- they are
+         in the plan playback walks -- so a slide whose whole reveal was
+         a six-figure book showed "Nothing animated on this slide yet"
+         while the space bar took five presses through it.
+         The stops each build ANCHORS are drawn under it as read-only
+         rows. Read-only on purpose: a frame's place in the sequence is
+         decided by its place in its BOOK, and offering a second way to
+         reorder it here would be two truths about one order. The book's
+         own pane is where frames move. */
+      var plan=flipPlan(s);
+      function stepperRows(list,ps){
+        (ps||[]).forEach(function(p){
+          var a=p.a;
+          var subs=[];
+          if(a.k==='flip'){
+            flipFrames(a).forEach(function(f,fi){
+              if(fi) subs.push(frameLabel(f,fi));});
+          } else if(a.k==='chart'){
+            chartParse(a).series.forEach(function(se){
+              subs.push(se.name);});
+          }
+          subs.forEach(function(t,ti){
+            var r2=document.createElement('div');
+            r2.className='anim-step anim-sub';
+            var n2=document.createElement('span');
+            n2.className='anim-num anim-subnum';
+            n2.textContent='\u21b3';
+            r2.appendChild(n2);
+            var c2=document.createElement('span');
+            c2.className='anim-chips';
+            var chip=document.createElement('span');
+            chip.className='anim-chip anim-subchip';
+            /* no owner name on a sub-row: the build row directly
+               above IS the owner, and repeating it on every page
+               turned the list into a column of the same six words */
+            chip.textContent=a.k==='flip'
+              ?('figure '+(ti+2)+' of '+flipFrames(a).length
+                +(t?(' \u00b7 '+t):''))
+              :('then '+t);
+            chip.title=a.k==='flip'
+              ?('A page of this flip book \u2014 move it in the book '
+                +'itself, not here')
+              :('A series of this chart \u2014 the order follows the '
+                +'data');
+            c2.appendChild(chip);
+            r2.appendChild(c2);
+            list.appendChild(r2);
+          });
+        });
+      }
+      if(!seq.length&&!steppersOn(s).length){
+        var e2=document.createElement('div');e2.className='anim-empty';
+        e2.textContent='Nothing animated on this slide yet.';
+        menu.appendChild(e2);
+      } else if(!seq.length){
+        /* steppers but no builds: the slide DOES walk, so say so */
+        var e3=document.createElement('div');e3.className='anim-empty';
+        /* slideStops IS the click count: an item hides while
+           sp>=revealCount and the largest sp is count-1, so `count`
+           presses is what fully builds the slide. Subtracting one here
+           told a two-page text box it took "0 clicks" while the film
+           strip, reading the same function, said 1 (caught by driving
+           it, 2026-09-01). */
+        var nst=slideStops(s);
+        e3.textContent='No entrance effects here, but this slide takes '
+          +nst+' click'+(nst===1?'':'s')+' \u2014 it steps through '
+          +'what is below.';
+        menu.appendChild(e3);
+        var l0=document.createElement('div');l0.className='anim-seq';
+        stepperRows(l0,plan.tail);
+        menu.appendChild(l0);
+      } else {
+        var list=document.createElement('div');list.className='anim-seq';
+        seq.forEach(function(st,si){
+          var row=document.createElement('div');row.className='anim-step';
+          var n=document.createElement('span');n.className='anim-num';
+          n.textContent=(si+1);row.appendChild(n);
+          var chips=document.createElement('span');chips.className='anim-chips';
+          st.items.forEach(function(idx){
+            var c=document.createElement('span');
+            c.className='anim-chip'+(idx===selAnnot?' cur':'');
+            c.textContent=itemLabel(s,idx)+' · '
+              +((s.annots[idx].anim.type)||'fade');
+            c.addEventListener('click',function(e){e.stopPropagation();
+              var l=stage.querySelector('.annot-layer');
+              if(l) selectAnnot(l,idx); render();});
+            chips.appendChild(c);});
+          row.appendChild(chips);
+          var ctr=document.createElement('span');ctr.className='anim-stepctr';
+          [['↑',-1],['↓',1]].forEach(function(m){
+            var b=document.createElement('button');b.className='anim-mini';
+            b.textContent=m[0];
+            b.title=m[1]<0?'Move this build earlier':'Move this build later';
+            b.setAttribute('aria-label',b.title);
+            b.disabled=(m[1]<0?si===0:si===seq.length-1);
+            b.addEventListener('click',function(e){e.stopPropagation();
+              moveStep(si,m[1]);});
+            ctr.appendChild(b);});
+          row.appendChild(ctr);
+          list.appendChild(row);
+          stepperRows(list,plan.anch[si]);});
+        /* anything that steps but carries no build of its own lands
+           after every build, exactly as flipPlan lays it out */
+        stepperRows(list,plan.tail);
+        menu.appendChild(list);
+      }
+      /* the order "One by one" deals the clicks in (T106) */
+      var rb=document.createElement('button');
+      rb.className='anim-mini wide';
+      rb.textContent='Reading order\u2026';
+      rb.title='One by one reveals in READING order \u2014 top to '
+        +'bottom unless you set your own. Figure numbers and the '
+        +'review outline follow the same order.';
+      rb.addEventListener('click',function(e){e.stopPropagation();
+        if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
+      menu.appendChild(rb);
+    }
+    /* ONE door. There were briefly two — View's Animations and an
+       "Animate" button in an Effects group that renamed itself to the
+       selected item's effect. Same pane, different groups, different
+       names, both pressed at once (2026-08-17, user: "WHY IS ANIMATIONS
+       AND APPEAR NOT IN THE SAME PLACE"). The pane's effect chooser
+       already tracks the selection, which is everything the second
+       button ever added. */
+    function set(open){
+      if(open){paneShow('animpane');render();}
+      else paneHide('animpane');
+    }
+    vbtn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    /* the effect chooser at the top tracks the selection, so an open pane
+       has to follow it rather than showing whatever was picked last */
+    animPaneSync=function(){if(!pane.hidden) render();};
+    animPaneClose=function(){set(false);};
+    /* ---- the Animate TAB's own buttons --------------------------------
+       "There doesn't seem to be a way to remove animations" (2026-08-20,
+       user) — there was one, the None effect, but it was inside a pane
+       you had to know to open, with an item selected, and it looked like
+       any other effect rather than like a removal. The effects are now
+       buttons in the ribbon where you can see which one is on, None reads
+       as the undo it is, and Clear slide strips the whole slide in one
+       press without hunting item by item. */
+    [['anim-none','none'],['anim-fade','fade'],
+     ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+      var b=$('#'+p[0]);
+      if(b) b.addEventListener('click',function(){setType(p[1]);});
+    });
+    /* ---- the two builds anyone actually wants ------------------------
+       Setting "one at a time" by hand means selecting every item on the
+       slide and stepping its build order one at a time, which is exactly
+       the fiddling this editor exists to remove (2026-08-20).
+       Reading order, not array order: the array is the order you happened
+       to draw things in, which is nobody's idea of a sequence. */
+    /* orderedIdx is at the top of the file now: figure NUMBERS read the
+       same order (T18), and a figure numbered differently from the way
+       it builds would be two answers to one question. */
+    var stag=$('#anim-stagger');
+    if(stag) stag.addEventListener('click',function(){
+      var s2=pres.slides[cur]; if(!s2) return;
+      var order=orderedIdx(s2);
+      if(!order.length){toast('Nothing on this slide yet');return;}
+      order.forEach(function(i,n){
+        var a=s2.annots[i];
+        a.anim={type:(a.anim&&a.anim.type)||'fade',order:n};
+      });
+      revealCount=0;commit(s2);
+      toast(order.length+' items, one click each \u2014 in reading order');
+    });
+    var tog=$('#anim-together');
+    if(tog) tog.addEventListener('click',function(){
+      var s2=pres.slides[cur]; if(!s2) return;
+      var order=orderedIdx(s2);
+      if(!order.length){toast('Nothing on this slide yet');return;}
+      order.forEach(function(i){
+        var a=s2.annots[i];
+        a.anim={type:(a.anim&&a.anim.type)||'fade',order:0};
+      });
+      revealCount=0;commit(s2);
+      toast('Everything appears on one click');
+    });
+    var clr=$('#anim-clear');
+    if(clr) clr.addEventListener('click',function(){
+      var s=pres.slides[cur]; if(!s) return;
+      /* SAY WHAT IS LEFT (T162). This deleted `a.anim` and then
+         claimed "everything is on the slide from the start" -- untrue on
+         exactly the slides the feature exists for. A flip book still
+         steps, and a caption tied to figure 3 still waits for figure 3,
+         because neither is an `a.anim`. Worse, the guard fired
+         "Nothing on this slide is animated" about a slide the space bar
+         walks in five clicks. Both sentences now count what REMAINS,
+         using the same plan playback uses. Deleting the flip book's own
+         frames is deliberately NOT done here: "Remove animations" is
+         about the reveal, and a flip book is CONTENT -- taking its
+         figures away would destroy work this button never promised to
+         touch. */
+      var n=0;
+      (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
+      var left=slideStops(s);   /* the clicks still in the slide */
+      if(!n){
+        toast(left
+          ?('Nothing here has an entrance effect, but the slide still '
+            +'takes '+left+' more click'+(left===1?'':'s')
+            +' — that is its flip book')
+          :'Nothing on this slide is animated');
+        return;
+      }
+      revealCount=0;commit(s);
+      toast('Cleared '+n+(n===1?' animation':' animations')
+        +(left?(' — '+left+' click'+(left===1?'':'s')
+                +' left, stepping the flip book')
+              :' — everything is on the slide from the start'));
+    });
+    /* the effect buttons act on the SELECTION, so they show the selected
+       item's effect and stand down when there is nothing selected */
+    animRibbonSync=function(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var on=!!a&&typeof selAnnot==='number';
+      [['anim-none','none'],['anim-fade','fade'],
+       ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        b.hidden=!on;
+        b.setAttribute('aria-pressed',
+          (on&&(a.anim?a.anim.type:'none')===p[1]).toString());
+      });
+    };
+  }
 /* 50-review-and-overview.js — the deck as words, the overview map, cuts, and the builder's sidebar.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
    siblings in filename order by assets.deck_js(). It does not
@@ -47624,10 +48458,19 @@ window.JunoPptx = (function () {
          animated at all. A COUNT, not a dot — "three builds" is the thing
          you want to know before you click into the slide, and it is the
          same number the bubbles are showing. */
-      var nbuild=slideBuildSteps(s).count;
+      /* THE NUMBER THE SPACE BAR WILL USE (T162). This counted
+         `slideBuildSteps`, i.e. anim-order builds only -- so a slide
+         whose whole reveal is a six-figure flip book, or a chart built
+         by series, was marked as having NOTHING on it. `flipPlan` is
+         the sequence playback actually walks, and `slideStops` is its
+         length; three surfaces used to re-derive a weaker answer from
+         `slideBuildSteps` and each told the reader a different number
+         from the one the space bar takes. The door named in the tip is
+         the one that exists: T140 retired "Timeline". */
+      var nbuild=slideStops(s);
       if(nbuild) mark('anim','▸'+nbuild,
-        nbuild+(nbuild===1?' build':' builds')+' on this slide'
-        +'\nOpen Animate ▸ Timeline to see the build numbers');
+        nbuild+(nbuild===1?' click':' clicks')+' to walk this slide'
+        +'\nOpen Insert ▸ Animations to see the order');
       if(skipped) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'
@@ -48622,10 +49465,15 @@ window.JunoPptx = (function () {
          The FIRST flip book on the slide is the one that explodes it.
          Two of them multiplying into a grid of pages is nobody's
          intention, and the second simply rests on its own frame. */
-      var fl=flipsOn(s)[0];
-      var n=fl?flipFrames(fl.a).length:0;
-      if(n>1){
-        for(var f=0;f<n;f++) all.push({s:s,i:i,f:f});
+      /* THE SLIDE'S BOOK, not merely its first flip book (T165): a
+         slide whose only book is made of words explodes too, or four
+         fifths of its text would leave the building silently. And a
+         flip book with words walking beside it explodes over its WALK,
+         so figure 2's three paragraphs are three output pages rather
+         than one page showing the last of them. */
+      var walk=bookWalk(s);
+      if(walk.length>1){
+        for(var f=0;f<walk.length;f++) all.push({s:s,i:i,f:f});
         return;
       }
       all.push({s:s,i:i,f:null});
@@ -52330,6 +53178,10 @@ window.JunoPptx = (function () {
      ribbon fold's restore -- nothing here has geometry to measure yet. */
   initFilmAuto();
   initRibbonAuto();
+  /* the animation surface (T158). It used to run itself from the
+     middle of 45-images.js; a throw in an executing sub-IIFE takes
+     the whole deck IIFE with it, which is T133 exactly. */
+  animBoot();
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not
