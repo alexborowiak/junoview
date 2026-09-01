@@ -2031,6 +2031,36 @@
     });
     return Object.keys(stems);
   }
+  /* THE TOAST, and it has to be true in all four outcomes (JVR-01):
+     everything current, some updated, some failed, all failed. The
+     failure clause comes FIRST and NAMES the sources, because "6
+     figures updated" sitting beside a source that was never read is
+     exactly the sentence that misleads — and because "a source" with no
+     name is not enough to go and look at. `read` is how many sources
+     the disk actually gave back, `bad` the stems whose read threw, `n`
+     the figures updated, `tried` how many stale ones were found. Note
+     what is NOT claimed when anything failed: "every figure matches its
+     source" is narrowed to "the sources that could be read", and with
+     nothing read at all it becomes "nothing was checked against disk". */
+  function resyncMsg(read,bad,n,tried){
+    var fail=bad.length?('Could not read '+bad.length+' source'
+      +(bad.length===1?'':'s')+': '+bad.join(', ')):'';
+    var rest;
+    if(n) rest=n+' figure'+(n===1?'':'s')+' updated from '
+      +(n===1?'its source':'their sources')
+      +' \u2014 position, size and crop unchanged';
+    else if(tried) rest='Could not read the live cards — are their '
+      +'sources still open?';
+    else if(fail) rest=read
+      ?('The '+read+' source'+(read===1?'':'s')
+        +' that could be read already match')
+      :'Nothing was checked against disk';
+    else rest=read
+      ?('Re-read '+read+' source'+(read===1?'':'s')
+        +' \u2014 every figure already matches')
+      :'Every figure on this deck already matches its source';
+    return fail?(fail+'. '+rest):rest;
+  }
   function resyncAllFigures(){
     /* ONE VERB (T123). "Update figures" used to compare against
        whatever the open tabs happened to hold, so refreshing a figure
@@ -2041,10 +2071,25 @@
        disk actually says. Web mode skips the reload half honestly: a
        dropped file left no handle to re-read. */
     var jobs=refSourceStems().map(function(st){
-      return (APP.reloadTab?APP.reloadTab(st):Promise.resolve(false));
+      return (APP.reloadTab?APP.reloadTab(st)
+        :Promise.resolve({stem:st,ok:false,reason:'notapp'}));
     });
     return Promise.all(jobs).then(function(res){
-      var reread=res.filter(Boolean).length;
+      /* WHAT THE DISK ACTUALLY SAID (JVR-01). A failed read used to
+         arrive as the same `false` a declined URL arrives as, and the
+         count kept only the truthy ones. So a run in which every
+         read threw went on to compare the saved copies against the SAME
+         cached cards they were taken from, found nothing stale, and said
+         "every figure already matches its source" — a statement about
+         memory dressed as a statement about disk. Only reason 'failed'
+         is a failure; 'notapp', 'url' and 'closed' are honest declines
+         and stay silent, exactly as before. */
+      var reread=0,bad=[];
+      res.forEach(function(r){
+        if(!r) return;
+        if(r.ok){reread++;return;}
+        if(r.reason==='failed') bad.push(r.stem);
+      });
       /* charts re-read their table's NUMBERS on the same click (T117);
          type, colours, position and size stay the author's. Counted
          BEFORE the early return, or a deck whose only change was a
@@ -2052,19 +2097,12 @@
       var cn=(typeof chartResyncAll==='function')?chartResyncAll():0;
       var list=staleFigures();
       if(!list.length&&!cn){
-        toast(reread
-          ?('Re-read '+reread+' source'+(reread===1?'':'s')
-            +' \u2014 every figure already matches')
-          :'Every figure on this deck already matches its source');
+        toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
         return 0;
       }
       var n=cn;
       list.forEach(function(p){if(resyncFigure(p.a)) n++;});
-      toast(n?(n+' figure'+(n===1?'':'s')+' updated from '
-        +(n===1?'its source':'their sources')
-        +' \u2014 position, size and crop unchanged')
-        :'Could not read the live cards \u2014 are their sources '
-          +'still open?');
+      toast(resyncMsg(reread,bad,n,list.length),bad.length?7000:0);
       return n;
     });
   }

@@ -2789,6 +2789,71 @@ competing ways to reach them.
   test's audited inventory continues to police them.
 
 
+## 16 · The four live bugs (2026-09-01, from the review status pass)
+
+Marking the five review reports off (2026-09-01) sorted 82 findings into
+done / partly done / deferred / declined / open. Most of the open pile is
+depth — animation timing, accessibility checking, Office parity — but
+four entries were plain defects, each still reproducible in current
+source and each scouted before a line was written. They share a shape
+worth naming: every one of them is the CODE SAYING SOMETHING THAT IS NOT
+TRUE. A refresh that failed reports success; a sheet called "Every
+object" cannot move one kind; a range the user typed is stored as
+something else; a page described as self-contained phones a third party.
+None of them throws, which is why they survived a 947-test suite.
+
+- [x] **T147 · S — A failed source read is never reported as up to
+  date.** `APP.reloadTab` erases every `/api/open` rejection into the
+  same `false` it returns for a deliberately-declined URL tab, and
+  `resyncAllFigures` counts truthiness — so a run in which every disk
+  read threw compares the saved snapshots against the same cached cards
+  they were taken from, finds nothing stale, and toasts "Every figure on
+  this deck already matches its source". Provenance is the whole
+  feature; a false "matches its source" is worse than a visible failure,
+  because the user stops looking. (JVR-01, and again as half of JVC-11.)
+
+  *Done 2026-09-01.* `APP.reloadTab` now resolves `{stem,ok,reason,msg}`:
+  `reread` is the only success, `failed` the only outcome a user must be
+  told about, and `notapp` (web mode has no handle to re-read), `closed`
+  and `url` are honest declines that stay silent exactly as before. The
+  deck counts reasons rather than truthiness, and one builder —
+  `resyncMsg` — writes the toast for all four outcomes, putting the
+  failure clause FIRST and NAMING the sources, because "6 figures
+  updated" beside a source that was never read is precisely the sentence
+  that misleads. With anything failed, "every figure matches its source"
+  narrows to "the sources that could be read", and with nothing read at
+  all it becomes "Nothing was checked against disk"; a failure toast
+  lasts 7000ms instead of the default. The test pins the ordering inside
+  `resyncMsg`, so the unqualified claim cannot be reached with a failure
+  in hand. NOT done, and each worth its own entry: the provenance pane
+  still has no sixth state for "this figure's source could not be
+  re-read" (its five are all live-vs-saved claims, and `nolive` actively
+  misreads a failed refresh as "That notebook is not open"), and a deck
+  whose sources are all CLOSED still gets the clean toast — the same
+  over-claim, a different cause.
+
+- [ ] **T148 · S — "Every object" can move every object.** The design
+  surface's outlined sheet skips `a.k==='arrow'` before building a drag
+  proxy, so arrows are the one kind the sheet named after totality
+  cannot move. Either give an arrow a proxy that translates both
+  endpoints — reusing the canvas's own write-back, not a second one — or
+  stop calling the sheet what it is not. (JVR-03.)
+
+- [ ] **T149 · S — A typed slide range cannot escape the deck.** The
+  design surface's range parser clamps one endpoint each way and THEN
+  swaps, so `999-1` on a twelve-slide deck stores 1–999. Selection
+  survives it (the consumers re-check), so this is a lying label rather
+  than a broken selection — the put button, its tooltip and the toast
+  all then describe a range the deck does not have. (JVR-05.)
+
+- [ ] **T150 · S — "Self-contained" means it.** `core.css` imports IBM
+  Plex from fonts.googleapis.com, so every rendered page — including the
+  static export the README calls "shareable, self-contained", and every
+  deck emailed to a colleague — fetches a font from a third party and
+  degrades to an unstyled fallback offline. AGENTS.md states the
+  no-external-assets invariant that this breaks. (JVR-06.)
+
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

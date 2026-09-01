@@ -5277,23 +5277,40 @@
       alert('Open failed: '+e.message);});
   }
   APP.openPath=openPath;
-  /* RELOAD ONE OPEN TAB FROM DISK, in place, and report completion
+  /* RELOAD ONE OPEN TAB FROM DISK, in place, and report WHAT HAPPENED
      (T123). The deck's "Update figures" needs exactly this: openPath
      re-opens but swallows its promise and drives the Open dialog's
      busy state, and the per-tab reload button lives on a surface the
      full-screen deck covers. `stem` keeps the tab: /api/open's `stem`
      parameter loads INTO it, so refs keep resolving and the rail does
-     not grow a twin. URL-backed tabs return false — a URL is not the
-     disk, and silently refetching it mid-talk-prep is not this verb. */
+     not grow a twin.
+
+     THE RESULT IS TRI-STATE, never a bare boolean (JVR-01). It used to
+     resolve `false` both for a URL-backed tab — declined on purpose, a
+     URL is not the disk — and for a read that BLEW UP, so a deck whose
+     sources had all been deleted was indistinguishable from a deck with
+     nothing to re-read, and the caller went on to say every figure
+     matched its source. {stem,ok,reason,msg} keeps them apart: ok:true
+     with reason 'reread' is the only success, 'failed' is the only one a
+     user must be told about, and 'notapp' (web mode has no handle to
+     re-read), 'closed' and 'url' are honest declines. */
   APP.reloadTab=function(stem){
-    if(APP.mode!=='app') return Promise.resolve(false);
+    function decline(reason){
+      return Promise.resolve(
+        {stem:stem,ok:false,reason:reason,msg:''});
+    }
+    if(APP.mode!=='app') return decline('notapp');
     var sh=APP.shells[stem];
     var path=sh&&sh.el&&sh.el.dataset.path;
-    if(!path||/^https?:/i.test(path)) return Promise.resolve(false);
+    if(!path) return decline('closed');
+    if(/^https?:/i.test(path)) return decline('url');
     return api('/api/open',{path:path,stem:stem}).then(function(j){
       mountShellHTML(j.shell,j.path||path,true);
-      return true;
-    }).catch(function(){return false;});
+      return {stem:stem,ok:true,reason:'reread',msg:''};
+    }).catch(function(e){
+      return {stem:stem,ok:false,reason:'failed',
+        msg:(e&&e.message)||'could not be read'};
+    });
   };
   function closeNotebook(stem){
     var sh=APP.shells[stem]; if(!sh) return;

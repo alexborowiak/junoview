@@ -742,8 +742,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # engines dry for their counts — print, layout, style, content,
 # source freshness — and opens each existing surface from one
 # place; nothing was rewritten and T136 keeps them un-stackable.
-EXPECTED_MD5 = "933523130b859af428bd12238c258c53"
-EXPECTED_BYTES = 3078449
+# Moved 2026-09-01 for T147 (JVR-01): APP.reloadTab reports a tri-state
+# instead of a bare false, and the update-figures toast names the
+# sources whose read failed rather than claiming every figure matches
+# its source.
+EXPECTED_MD5 = "eabf6e2dfa4851d97f56651ee8f852b9"
+EXPECTED_BYTES = 3085687
 
 
 def _render_example() -> str:

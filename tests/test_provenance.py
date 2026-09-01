@@ -262,8 +262,52 @@ def test_there_is_a_deck_wide_figure_update_and_not_only_a_per_figure_one(out):
     # ...and the click re-reads each referenced tab from DISK first, so
     # "update" means the file, not whatever the open tab happened to hold
     assert "function refSourceStems(){" in out
-    assert "return (APP.reloadTab?APP.reloadTab(st):Promise.resolve(false));" in out
+    assert "return (APP.reloadTab?APP.reloadTab(st)" in out
+    assert ":Promise.resolve({stem:st,ok:false,reason:'notapp'}));" in out
     assert "window.SemDeckStaleFigures=staleFigures;" in out
+
+
+def test_a_failed_source_read_is_never_reported_as_up_to_date(out):
+    """JVR-01. `APP.reloadTab` used to erase every /api/open rejection to
+    the same `false` it returns for a deliberately-declined URL tab, and
+    `resyncAllFigures` counted truthiness -- so a run whose every disk
+    read threw went on to compare the saved snapshots against the SAME
+    cached cards they were taken from, found nothing stale, and toasted
+    "Every figure on this deck already matches its source". Provenance is
+    the whole feature; a false "matches its source" is worse than a
+    visible refresh failure, because the user stops looking.
+    """
+    # the catch no longer erases the error into a bare false. Scoped to
+    # reloadTab: the same shape is legitimate elsewhere (image history,
+    # save), where false means "did not happen", not "disk says fine".
+    fn = out[out.index("APP.reloadTab=function(stem){"):]
+    fn = fn[:fn.index(chr(10) + "  };")]
+    assert ".catch(function(){return false;});" not in fn
+    assert "return {stem:stem,ok:false,reason:'failed'," in out
+    assert "return {stem:stem,ok:true,reason:'reread',msg:''};" in out
+    # the three honest declines stay apart from the one real failure
+    assert "if(APP.mode!=='app') return decline('notapp');" in out
+    assert "if(!path) return decline('closed');" in out
+    assert "if(/^https?:/i.test(path)) return decline('url');" in out
+    # the deck counts REASONS, never truthiness
+    assert "var reread=0,bad=[];" in out
+    assert "if(r.reason==='failed') bad.push(r.stem);" in out
+    assert "res.filter(Boolean).length" not in out
+    # one message builder, true in all four outcomes
+    assert "function resyncMsg(read,bad,n,tried){" in out
+    assert "var fail=bad.length?('Could not read '+bad.length+' source'" in out
+    assert "+' that could be read already match')" in out
+    assert ":'Nothing was checked against disk';" in out
+    # the all-current claim is reachable ONLY with nothing failed: it is
+    # the tail of the else branch that `if(fail)` has already taken
+    body = out[out.index("function resyncMsg(read,bad,n,tried){"):]
+    body = body[:body.index("function resyncAllFigures(){")]
+    assert body.index("else if(fail) rest=read") < \
+        body.index("Every figure on this deck already matches its source")
+    # both toasts route through it, and a failure outlasts the default
+    assert "toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);" in out
+    assert "toast(resyncMsg(reread,bad,n,list.length)," \
+        "bad.length?7000:0);" in out
 
 
 def test_the_provenance_pane_has_a_ribbon_door_and_wears_icons(out):
@@ -303,7 +347,8 @@ def test_update_figures_re_reads_the_disk_first(out):
     assert "APP.reloadTab=function(stem){" in out
     assert "return api('/api/open',{path:path,stem:stem}).then(function(j){" in out
     assert "mountShellHTML(j.shell,j.path||path,true);" in out
-    assert "if(!path||/^https?:/i.test(path)) return Promise.resolve(false);" in out
+    assert "if(!path) return decline('closed');" in out
+    assert "if(/^https?:/i.test(path)) return decline('url');" in out
     # the deck side sequences: reload every referenced stem, THEN compare
     assert "var jobs=refSourceStems().map(function(st){" in out
     assert "return Promise.all(jobs).then(function(res){" in out
