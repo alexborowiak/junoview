@@ -2252,6 +2252,26 @@
       document.addEventListener('pointermove',mv);
       document.addEventListener('pointerup',up);
     });
+    /* THE SAME DRAG, FROM THE KEYBOARD (T155). A splitter with no role,
+       no tab stop and no keys is a pointer-only control, and this one
+       owns a width the whole editor is laid out around. The arrows are
+       also the deck's own slide navigation, so the event stops here
+       rather than walking up to the document listener that would change
+       slide under you. */
+    if(h) h.addEventListener('keydown',function(e){
+      var step=0;
+      if(e.key==='ArrowLeft') step=-24;
+      else if(e.key==='ArrowRight') step=24;
+      else return;
+      e.preventDefault();e.stopPropagation();
+      var hi=fitFilmMax();
+      var el=$('#deck-create'); if(!el) return;
+      var now=Math.round(el.getBoundingClientRect().width);
+      var w=Math.max(150,Math.min(hi,now+step));
+      deckEl.style.setProperty('--film-w',w+'px');
+      lsSet(FILMWKEY+SCOPE,String(w));
+      applyZoom();renderFilm();fitFilmMax();fitEditRibbon();
+    });
   })();
   /* (the picker's first render runs from THE BOOT SEQUENCE) */
   /* title-slide text fields (panel); the slide canvas mirrors them */

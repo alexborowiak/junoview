@@ -3002,6 +3002,34 @@ None of them throws, which is why they survived a 947-test suite.
   shoving it; both survive a reload; with rail auto-hide also on, the
   left edge gives the column and not the inert rail.
 
+- [x] **T155 · S — The handle you can see, reach, and click past.**
+  Three defects at the same site as T152, found by the parallel audit of
+  it. (a) `.film-resize` is `position:fixed;top:0;bottom:0` — glued to
+  the column edge while `.deck-create` scrolls, but also a SIX-PIXEL
+  DEAD STRIPE straight up through the save readout and the tab row,
+  which moved with every drag. (b) It had no paint at rest, so a feature
+  asked for by name (2026-08-22, "the thumbnail part should be dragable
+  to make bigger or smaller") could only be found by accident. (c) It
+  was a bare `<div>`: no role, no tab stop, no keys, for a width the
+  whole editor is laid out around.
+  *Done 2026-09-01.* The two chrome rows take `z-index:131`, one above
+  the handle's 130 and still under `.vfull` and `.matchbar`; a 2×26px
+  hairline grip paints at rest and brightens on hover; and the handle
+  becomes `role="separator"` with `aria-orientation`, a label, a tab
+  stop and Left/Right arrows at 24px a press — stopping the event, since
+  those arrows are also the deck's slide navigation. Driven live:
+  `elementFromPoint` at the handle's x now returns `deck-status` on the
+  save bar and `rbn-tabs` on the tab row (both were `film-resize`), the
+  grip computes 2×26 at rest, and five Right presses take the column
+  200→320px, three Left 320→248px, with the slide unchanged.
+  The same audit corrected a number in T152's own comment: 890px is the
+  ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
+  whole ladder stamped on. It also named the mechanism that made this
+  bite so hard — a ONE-WAY RATCHET: dragging left worked, and `up()`'s
+  `fitFilmMax()` then republished the ceiling AT the new smaller width,
+  so a column once narrowed could never be widened again. That is why a
+  stuck ~200px column was the reported symptom.
+
 
 ## Cut (and why)
 

@@ -777,8 +777,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # ribbon, matching the presentations panel's own pattern; the ribbon
 # parks by transform so the strip's ceiling cannot lurch, and the rail's
 # edge-reveal stands down while the deck is open.
-EXPECTED_MD5 = "b63baf4cd2db09d5dbcb828b9321cd3c"
-EXPECTED_BYTES = 3103401
+# Moved 2026-09-01 for T155: the slide-column resize handle stops laying
+# a dead stripe over the save bar and tab row, paints a grip at rest,
+# and takes keyboard focus with arrow-key resize.
+EXPECTED_MD5 = "37a17b51a10c6a091a1957553ad35a2a"
+EXPECTED_BYTES = 3106054
 
 
 def _render_example() -> str:

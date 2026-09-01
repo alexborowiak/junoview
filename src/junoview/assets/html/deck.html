@@ -367,8 +367,11 @@
            slide column, which is the thing anyone actually wants wider
            (2026-08-22, user: "the thumbnail part should be dragable to
            make bigger or smaller"). -->
-      <div class="film-resize" id="film-resize"
-        title="Drag to make the slide thumbnails bigger or smaller"></div>
+      <div class="film-resize" id="film-resize" role="separator"
+        aria-orientation="vertical" tabindex="0"
+        aria-label="Slide column width"
+        title="Drag to make the slide thumbnails bigger or smaller
+ (or focus it and use the left and right arrow keys)"></div>
     </aside>
   <!-- The ribbon spans the WHOLE window, like the document view's app
        bar — it used to live inside the stage column, so the slide strip

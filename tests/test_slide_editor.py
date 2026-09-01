@@ -2983,8 +2983,10 @@ def test_the_strips_ceiling_is_measured_from_content_not_from_its_box(out):
     width. The ceiling equalled the current width at every window size,
     which meant the resize handle could shrink the column and never widen
     it: it sat frozen against a limit it had itself produced. Measured on
-    a 1900px window before the fix: ribbon box 1685px, true need 890px,
-    ceiling 200px where 867px was free. After: 867px, and a drag to 500px
+    a 1900px window before the fix: ribbon box 1685px, true need ~635px,
+    ceiling 200px where 867px was free (890px is the row's RESTING
+    need; the code measures ~635px, with the whole ladder stamped on).
+    After: 867px, and a drag to 500px
     lands on 500px.
     """
     assert "bar.style.width='max-content';" in out
@@ -3089,3 +3091,29 @@ def test_the_decks_left_edge_is_not_claimed_by_the_inert_rail(out):
     i = out.index("function initRailAuto(")
     block = out[i:i + 1400]
     assert "deck-open" in block or "deckOpen" in block
+
+
+def test_the_resize_handle_can_be_seen_reached_and_clicked_past(out):
+    """T155, the three things left over once T152 made the drag work.
+
+    (1) `.film-resize` is `position:fixed;top:0;bottom:0` -- glued to the
+    column's edge while `.deck-create` scrolls, but also a 6px dead
+    stripe straight up through the save bar and the tab row, moving with
+    every drag. Those rows outrank it in their own bands now.
+    (2) It had no paint at rest, so a feature asked for by name
+    (2026-08-22, "the thumbnail part should be dragable") could only be
+    found by accident.
+    (3) It was a bare div: no role, no tab stop, no keys, for a width the
+    whole editor is laid out around.
+    """
+    # the chrome rows win their own pixels back
+    assert ".deck-qat,.deck-top,.rbn-tabs{position:relative;z-index:131;}" in out
+    # a grip you can see before you touch it
+    assert ".film-resize::before{content:\"\";" in out
+    assert (".film-resize:hover::before,"
+            ".film-resize.on::before{background:#fff;}") in out
+    # and a keyboard route that does not fall through to slide navigation
+    assert 'role="separator"' in out
+    assert 'aria-label="Slide column width"' in out
+    assert "if(e.key==='ArrowLeft') step=-24;" in out
+    assert "e.preventDefault();e.stopPropagation();" in out

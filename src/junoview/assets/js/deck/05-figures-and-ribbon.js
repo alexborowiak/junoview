@@ -1396,8 +1396,12 @@
        CURRENT width. The ceiling was the current width at every window
        size, so the drag could shrink the column and never widen it, and
        the handle sat frozen against its own limit. Measured on a 1900px
-       window: box 1685px, true need 890px, ceiling 200px where 867px was
-       available. width:max-content asks the flex row what it actually
+       window: box 1685px, true need ~635px, ceiling 200px where 867px
+       was available. (890px is the row's RESTING need; this measures it
+       with the whole ladder stamped on and View folded, which is the
+       state fitEditRibbon reaches at the bottom of its own climb. The
+       shipped number is visible at a 1200px window, where the floor is
+       the binding term: --film-max comes back 545px on a 1185px deck.) width:max-content asks the flex row what it actually
        wants; the bar is already stamped with the whole compaction ladder
        here, and both are put back below. */
     var hadW=bar.style.width;
