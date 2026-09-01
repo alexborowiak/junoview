@@ -2939,6 +2939,14 @@
       e.stopPropagation();on=!on;apply();});
     document.addEventListener('mousemove',function(e){
       if(!on) return;
+      /* ONE panel answers the left edge. The deck editor is a full-screen
+         surface with its own left column and its own auto-hide, and
+         deckIsolate() has put `inert` on this rail for as long as it is
+         open (2026-08-30 review) -- so peeking it there produced a panel
+         you could see and not click, over the top of the editor's own.
+         The way back out of the editor is #deck-exit in the QAT, which is
+         visible throughout (syncTopBar). */
+      if(document.body.classList.contains('deck-open')) return;
       var peek=document.body.classList.contains('prrail-peek');
       if(!peek&&e.clientX<=4) document.body.classList.add('prrail-peek');
       else if(peek&&e.clientX>Math.max(200,

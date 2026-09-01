@@ -33,6 +33,11 @@
   initPresenterControls();
   renderPresTabs();
   initRibbonLayoutDoor();
+  /* the two auto-hides: their button and pointer listeners only. The
+     remembered STATE is applied on first entry to edit mode, beside the
+     ribbon fold's restore -- nothing here has geometry to measure yet. */
+  initFilmAuto();
+  initRibbonAuto();
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   /* the three saved-layout rows in the Layouts menu (T89). Here, not

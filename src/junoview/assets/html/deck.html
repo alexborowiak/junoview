@@ -438,6 +438,18 @@
          same thing, and so does Ctrl+F1, both of which are what
          PowerPoint trains people to reach for. Clicking a tab while it is
          folded brings it back. -->
+    <!-- The pair, the way the presentations panel has one: #pr-collapse
+         puts it away, #pr-auto lets it put itself away. Same word, same
+         icon, same aria contract (pressed = auto-hide is ON).
+         IN THE MARKUP, inside #rbn-tabs and OUTSIDE .rbn-tabset, and not
+         a .rbn-tab: rbnHome() snapshots this strip's children once,
+         before the first layout is applied, and rbnRestoreHome() puts
+         exactly those back. A button created in JS after that snapshot
+         would be re-ordered to the front on the next layout change, and
+         one wearing .rbn-tab would be deleted outright (T151). -->
+    <button class="dbtn rbn-autobtn" id="rbn-auto" aria-pressed="false"
+      title="Auto-hide: the tools roll up and come back when you reach the
+ tab strip. Off by default."><i data-ic="autohide"></i> Auto-hide</button>
     <button class="dbtn rbn-fold" id="rbn-fold" aria-label="Hide or show the editing tools" aria-pressed="false"
       title="Hide the tools and give the page the room (Ctrl+F1). Click a
  tab, or this, to bring them back">&#9652;</button>

@@ -168,6 +168,35 @@ body.deck-open{overflow:hidden;}
 /* FOLDED: the group row goes, the tab strip stays. A bar that vanishes
    completely leaves you no way to ask for it back (2026-08-20). */
 .deck.rbn-fold>.edit-tools{display:none;}
+/* ---- ...and the bar can put ITSELF away (off by default) --------------
+   TRANSFORM, never display:none. fitEditRibbon and ribbonMinW both bail
+   on a folded bar because it measures 0, and ribbonMinW is what publishes
+   --film-max: a peek that used the fold would swing the strip's ceiling
+   between a real number and nothing sixty times a second. Rolled up the
+   bar is still laid out, still measurable, and the density ladder is
+   unaffected.
+   The ROW goes to zero so the stage takes the height; the bar keeps its
+   106px and parks behind the tab strip, which never moves -- so the
+   guarantee above still holds, there is always something to reach for.
+   `:not(.rbn-fold)` is the present bar's own precedence rule
+   (body.pb-auto.pb-peek:not(.pb-folded), app.css): an explicit fold beats
+   a peek, so the two mechanisms cannot fight. */
+.deck.editing.rbn-auto{grid-template-rows:auto auto 0 minmax(0,1fr);}
+.deck.editing.rbn-auto>.rbn-tabs{position:relative;z-index:2;}
+.deck.editing.rbn-auto>.edit-tools{position:relative;z-index:1;
+  transform:translateY(-100%);transition:transform .18s ease;}
+.deck.editing.rbn-auto.rbn-peek:not(.rbn-fold)>.edit-tools{transform:none;
+  box-shadow:0 18px 40px #00000066;}
+/* the strip's own auto-hide button. Its class is rbn-autobtn and NOT
+   rbn-auto: `rbn-auto` is the deck's state class, and `.rbn-fold` being
+   both a button class and a state class is what once put padding on a
+   position:fixed;inset:0 element (see the note under .rbn-tabs .rbn-fold
+   below). Words plus icon, like every other button here. */
+.rbn-tabs .rbn-autobtn{align-self:center;padding:1px 7px;line-height:1;
+  flex:none;font-size:10px;display:inline-flex;align-items:center;gap:4px;
+  white-space:nowrap;}
+.rbn-tabs .rbn-autobtn .bic{width:12px;height:12px;}
+#rbn-auto[aria-pressed="true"]{color:var(--cyan);border-color:var(--cyan);}
 /* SCOPED to the strip. Unscoped, `.rbn-fold` also matched the deck's own
    `.rbn-fold` state class — so folding the tools put 1px 9px of padding on
    a position:fixed;inset:0 element and the stage came out SMALLER than
@@ -1048,6 +1077,24 @@ body.slide-editing .apptop{display:none;}
   width:clamp(150px,var(--film-w,min(var(--dc-w),200px)),var(--film-max,46vw));
   border-right:1px solid #ffffff22;}
 .deck.creating .deck-create{width:min(var(--dc-w),94vw);}
+/* ---- the column hides ITSELF (off by default) -------------------------
+   Same taskbar model as the document view's presentations panel
+   (body.prrail-auto, app.css): the surface leaves, the page takes the
+   width, and it slides back when the pointer reaches the left edge.
+   THE TRACK goes to zero, not the panel. .deck-create is grid track 1,
+   so its clamp width is what holds the stage narrow -- but the PANEL has
+   to keep that width or translateX(-100%) is 100% of nothing and its
+   contents simply overflow a 0px box (the exact failure app.css:411-414
+   records for the rail). Keeping it a grid item on grid-row:2/5 is also
+   what puts it under the QAT with no measured offset.
+   Slides (#vw-versions) is the manual half and stays as it is: it hides
+   the THUMBNAILS inside a column that keeps its width. This hides the
+   column. */
+.deck.editing.film-auto{grid-template-columns:0 minmax(0,1fr);}
+.deck.editing.film-auto>.deck-create{position:relative;z-index:120;
+  transform:translateX(-100%);transition:transform .18s ease;
+  box-shadow:0 0 40px #00000066;}
+.deck.editing.film-auto.film-peek>.deck-create{transform:none;}
 .deck.editing #layout-row{display:none;}
 .deck.editing .dc-resize{display:none;}
 /* ---- PowerPoint-style ribbon: labelled groups, always the same height ----
@@ -3259,6 +3306,10 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 .deck.editing .film-resize{display:block;}
 .deck.editing.strip-off .film-resize,
 .deck.editing.poster-page .film-resize{display:none;}
+/* the handle sits at the column's rendered edge, so it goes where the
+   column goes: gone while it is parked, back while it is peeking */
+.deck.editing.film-auto .film-resize{display:none;}
+.deck.editing.film-auto.film-peek .film-resize{display:block;}
 .film-resize:hover,.film-resize.on{
   background:color-mix(in srgb,var(--accent) 40%,transparent);}
 @media(max-width:860px){.film-resize{display:none!important;}}

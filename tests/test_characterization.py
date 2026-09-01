@@ -773,8 +773,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # equal the strip's own current width, so the drag could never widen),
 # and a thumbnail sharing its row with the number and title now shrinks
 # to fit instead of overflowing it.
-EXPECTED_MD5 = "0248d0c8875f7a3942901c97bdb3ffd2"
-EXPECTED_BYTES = 3092683
+# Moved 2026-09-01 for T154: auto-hide for the slide column and the
+# ribbon, matching the presentations panel's own pattern; the ribbon
+# parks by transform so the strip's ceiling cannot lurch, and the rail's
+# edge-reveal stands down while the deck is open.
+EXPECTED_MD5 = "b63baf4cd2db09d5dbcb828b9321cd3c"
+EXPECTED_BYTES = 3103401
 
 
 def _render_example() -> str:

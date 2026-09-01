@@ -2969,6 +2969,39 @@ None of them throws, which is why they survived a 947-test suite.
   defects compounded — a column that could not grow past 200px made the
   oversized thumbnail permanent — which is why they were found together.
 
+- [x] **T154 · M — Auto-hide for the slide column and the ribbon.**
+  The document view's presentations panel has had auto-hide since T85
+  (`#pr-auto`); the editor's two big chrome surfaces had only MANUAL
+  hides — and the column's (`strip-off`) drops the thumbnails while
+  keeping the column's width, so it gave the slide nothing back. (User,
+  2026-09-01: "there is no autohide on this and the ribbon as well".)
+  *Done 2026-09-01*, matching the exemplar rather than inventing a
+  second pattern: opt-in, OFF by default, remembered per deck through
+  the deck's own SCOPE-keyed `lsGet`/`lsSet`, revealed by reaching for
+  the edge each left from, `aria-pressed` carrying the state, words plus
+  icon. The column's toggle is the last row of the Thumbnails chooser
+  (the column has no panel foot, and `.film-adds` is the row T153 just
+  stopped clipping — a new row there would undo that); the ribbon's is a
+  worded button beside the fold, authored in deck.html OUTSIDE
+  `.rbn-tabset` and not wearing `.rbn-tab`, or T151's snapshot would
+  treat it as a tab and delete it. Two collisions had to be solved for
+  it to work at all. (1) The ribbon parks by TRANSFORM, never
+  `display:none`: `fitEditRibbon` and `ribbonMinW` both bail on a
+  zero-width bar, and `ribbonMinW` publishes `--film-max`, so a
+  display-based hide would have re-published the ceiling on every park
+  and peek and made the column lurch — driven, it holds at 508px
+  throughout. (2) `initRailAuto`'s mousemove had NO deck guard, so with
+  rail auto-hide on, the left edge inside the editor slid in the
+  presentations rail that `deckIsolate` (T104) marks `inert` — a panel
+  that appeared and could not be clicked, and the same edge the column
+  now needs. The rail stands down while the deck is open; that
+  pre-existing defect is fixed here because this feature exposed it.
+  Driven live: column parks at x=-200 and the stage gains all 200px,
+  peeks back at the left edge, re-parks on leaving; the ribbon rolls up
+  behind the tab strip (bar y -43) and peeks over the canvas without
+  shoving it; both survive a reload; with rail auto-hide also on, the
+  left edge gives the column and not the inert rail.
+
 
 ## Cut (and why)
 

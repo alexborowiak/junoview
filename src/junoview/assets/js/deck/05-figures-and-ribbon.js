@@ -1136,6 +1136,93 @@
      the tools back, and a bar that vanishes completely leaves you with no
      way to say "I want them again". */
   var FOLDKEY2='jv-deck-fold:';
+  /* ---- ...and the two AUTO-hides -----------------------------------
+     The document view's presentations panel has had one since 2026-08-04
+     (#pr-auto / initRailAuto, app.js): opt-in, remembered, the surface
+     slides away and comes back when the pointer reaches its edge, and
+     `aria-pressed` means auto-hide is ON. The editor's two surfaces --
+     the slide column and the ribbon -- had only manual hides (Slides,
+     and the fold above). Same behaviour, same words, same aria; the KEYS
+     follow this file's convention rather than app.js's, because every
+     other editor preference here is SCOPE-keyed through lsGet/lsSet.
+     DECLARATIONS ONLY. initFilmAuto/initRibbonAuto are called from THE
+     BOOT SEQUENCE in 99-boot.js, never from here. */
+  var FILMAUTOKEY='jv-deck-filmauto:',RBNAUTOKEY='jv-deck-rbnauto:';
+  var filmAuto=false,rbnAuto=false;
+  function filmAutoOn(){return filmAuto;}
+  function setFilmAuto(on){
+    filmAuto=!!on;
+    deckEl.classList.toggle('film-auto',filmAuto);
+    if(!filmAuto) deckEl.classList.remove('film-peek');
+    lsSet(FILMAUTOKEY+SCOPE,filmAuto?'1':'0');
+    /* the stage just changed width, and the ribbon just stopped (or
+       started) sharing the row with a column */
+    applyZoom();
+    fitEditRibbon();
+  }
+  function initFilmAuto(){
+    document.addEventListener('mousemove',function(e){
+      if(!filmAuto||mode!=='edit'||deckEl.hidden) return;
+      /* a poster has no column strip at all (.deck.poster-page .dc-film) */
+      if(pageOf().poster) return;
+      var col=$('#deck-create');
+      var peek=deckEl.classList.contains('film-peek');
+      if(!peek){
+        if(e.clientX<=4) deckEl.classList.add('film-peek');
+        return;
+      }
+      if(!col) return;
+      /* the same 40px margin the present bar leaves, so the column does
+         not vanish the instant you aim at a control near its edge */
+      if(e.clientX>col.getBoundingClientRect().right+40)
+        deckEl.classList.remove('film-peek');
+    });
+  }
+  function setRibbonAuto(on){
+    rbnAuto=!!on;
+    /* one bar, one state: an explicit fold and an auto-hide both claim to
+       hide it, so turning auto on clears the fold rather than stacking
+       two hidden states the user has to undo twice */
+    if(rbnAuto&&ribbonFolded()) setRibbonFold(false);
+    deckEl.classList.toggle('rbn-auto',rbnAuto);
+    if(!rbnAuto) deckEl.classList.remove('rbn-peek');
+    var b=$('#rbn-auto');
+    if(b){
+      b.setAttribute('aria-pressed',rbnAuto?'true':'false');
+      /* the title says what CLICKING will do, the way #pb-auto's does */
+      b.title=rbnAuto
+        ?'Auto-hide is on: the tools roll up and come back when you reach '
+          +'the tab strip. Click to keep them in place.'
+        :'Auto-hide: the tools roll up and come back when you reach the '
+          +'tab strip. Off by default.';
+    }
+    lsSet(RBNAUTOKEY+SCOPE,rbnAuto?'1':'0');
+    applyZoom();            /* the stage just changed height */
+  }
+  function initRibbonAuto(){
+    var b=$('#rbn-auto');
+    if(b) b.addEventListener('click',function(){setRibbonAuto(!rbnAuto);});
+    document.addEventListener('mousemove',function(e){
+      if(!rbnAuto||mode!=='edit'||deckEl.hidden) return;
+      /* an explicit fold beats a peek -- the same precedence the CSS
+         states with :not(.rbn-fold) */
+      if(ribbonFolded()) return;
+      var strip=$('#rbn-tabs'),bar=$('#edit-tools');
+      if(!strip) return;
+      var peek=deckEl.classList.contains('rbn-peek');
+      var s=strip.getBoundingClientRect();
+      if(e.clientY>=s.top-4&&e.clientY<=s.bottom+4
+         &&e.clientX>=s.left&&e.clientX<=s.right){
+        if(!peek) deckEl.classList.add('rbn-peek');
+        return;
+      }
+      if(!peek||!bar) return;
+      var r=bar.getBoundingClientRect();
+      if(e.clientY<s.top-40||e.clientY>r.bottom+40
+         ||e.clientX<r.left-40||e.clientX>r.right+40)
+        deckEl.classList.remove('rbn-peek');
+    });
+  }
   /* how the slide column lists its slides, and how wide it is. Both are
      preferences about the TOOL, not properties of the deck — sending
      someone a presentation must not send them your column width — so

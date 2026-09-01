@@ -1045,6 +1045,14 @@
       if(!deckEl._foldInit){
         deckEl._foldInit=1;
         setRibbonFold(lsGet(FOLDKEY2+SCOPE)==='1');
+        /* the two auto-hides are remembered the same way and come back in
+           the same place, so there is ONE moment where the editor's
+           remembered chrome state is restored -- and it is the first
+           moment the ribbon and the column have real geometry to be
+           measured against. Order matters: the ribbon first, because
+           setFilmAuto ends by re-fitting it. */
+        setRibbonAuto(lsGet(RBNAUTOKEY+SCOPE)==='1');
+        setFilmAuto(lsGet(FILMAUTOKEY+SCOPE)==='1');
       }
     }
     /* The top bar earns its row or it does not appear. While editing it
@@ -2177,6 +2185,26 @@
               ev.stopPropagation();overlayHide(menu);setFilmMode(v[0]);});
             menu.appendChild(b);
           });
+          /* ...and the column's own auto-hide, the way the document
+             view's presentations panel has one (#pr-auto). Not a listing
+             mode, so it goes UNDER them as a separate item rather than
+             into FILM_VIEWS -- label() names the button from that list,
+             and "Auto-hide" must never become the button's own label.
+             The Overview entry already set the shape: this menu is "how
+             do I want to look at this deck", and putting the column away
+             is that question. A poster has no column strip to hide. */
+          if(!pageOf().poster){
+            var ab=document.createElement('button');
+            ab.className='dc-mi';
+            ab.textContent='Auto-hide this column';
+            ab.title='The column slides out of the way and comes back when '
+              +'you move the pointer to the left edge. Off by default.';
+            ab.setAttribute('aria-pressed',filmAutoOn().toString());
+            ab.addEventListener('click',function(ev){
+              ev.stopPropagation();overlayHide(menu);
+              setFilmAuto(!filmAutoOn());});
+            menu.appendChild(ab);
+          }
         }
         if(open) overlayShow(btn,menu);
         else overlayHide(menu);

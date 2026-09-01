@@ -3022,3 +3022,70 @@ def test_a_shared_thumbnail_row_fits_the_column(out):
     assert ".film-list .mini-diagram{width:100%;" not in out
     # a vertical list never scrolls sideways
     assert ".film-list{overflow-x:hidden;}" in out
+
+
+def test_the_slide_column_and_the_ribbon_can_auto_hide(out):
+    """T154. The document view's presentations panel has had auto-hide
+    since T85 (#pr-auto); the deck editor's two big chrome surfaces had
+    only MANUAL hides -- and the column's manual hide (`strip-off`) drops
+    the thumbnails while keeping the column's width, so it gave the slide
+    nothing back. Both now match the exemplar: opt-in, off by default,
+    remembered, revealed by reaching for the edge they left from.
+    """
+    # the deck's own state classes, one pair each
+    assert ".deck.editing.film-auto{grid-template-columns:0 minmax(0,1fr);}" \
+        in out
+    assert ".deck.editing.rbn-auto{grid-template-rows:auto auto 0 " \
+        "minmax(0,1fr);}" in out
+    # the column travels rather than disappearing, so the stage gets the
+    # width AND the panel keeps a width to slide back in with
+    assert "transform:translateX(-100%);" in out
+    assert ".deck.editing.film-auto.film-peek>.deck-create{transform:none;}" \
+        in out
+    # an explicit fold beats a peek, exactly as the presenter bar does
+    assert ".deck.editing.rbn-auto.rbn-peek:not(.rbn-fold)>.edit-tools" in out
+    assert "if(ribbonFolded()) return;" in out
+    # both remembered, in the deck's own SCOPE-keyed convention
+    assert "FILMAUTOKEY" in out and "RBNAUTOKEY" in out
+    # words plus icon, and the state is aria-pressed -- never a bare glyph
+    assert "Auto-hide this column" in out
+    assert 'id="rbn-auto"' in out
+    assert "Auto-hide</button>" in out or "Auto-hide<" in out
+
+
+def test_the_ribbons_auto_hide_cannot_move_the_strips_ceiling(out):
+    """T154 x T152. `fitEditRibbon` and `ribbonMinW` both bail on
+    `rbn-fold` because a display:none bar measures zero, and ribbonMinW is
+    what publishes `--film-max`. If the ribbon's auto-hide had reused that
+    display:none, every park and peek would have re-published the ceiling
+    and the slide column would lurch wider and be shoved back.
+
+    So the auto-hide is a TRANSFORM, not a display change: the bar keeps
+    its box and its measurements, and only its painted position moves.
+    Driven live: parking and peeking the ribbon left --film-max at 508px
+    throughout.
+    """
+    i = out.index(".deck.editing.rbn-auto>.edit-tools")
+    block = out[i:i + 240]
+    assert "transform:translateY(-100%)" in block
+    assert "display:none" not in block
+    # the button is not the state class -- .rbn-fold being both is what
+    # once put padding on a position:fixed;inset:0 element
+    assert ".rbn-tabs .rbn-autobtn{" in out
+
+
+def test_the_decks_left_edge_is_not_claimed_by_the_inert_rail(out):
+    """T154, and a defect it had to fix to work at all.
+
+    `initRailAuto`'s mousemove had no deck guard, so with rail auto-hide
+    on, reaching the left edge INSIDE the deck editor slid the
+    presentations rail in over the deck -- a panel that `deckIsolate`
+    (T104) has marked `inert`, so it appeared and could not be used. The
+    film column's own reveal uses that same edge, so the two would have
+    fought. The rail now stands down while the deck is open.
+    """
+    assert "prrail-peek" in out
+    # the guard names the deck, and sits in the rail's own listener
+    i = out.index("function initRailAuto(")
+    block = out[i:i + 1400]
+    assert "deck-open" in block or "deckOpen" in block
