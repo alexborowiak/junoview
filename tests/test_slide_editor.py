@@ -614,7 +614,9 @@ def test_bullets_are_a_real_list_model(out):
     assert "'span[style],font,b,strong,i,em,u,s,ul,ol,li')};" in out
     # ...and once nothing you committed is a list item, you have left the
     # list and the model follows
-    assert r"if(listOf(a)&&!/<li[\s>]/i.test(String(a.html||'')))" in out
+    # asked of the PAGE you just committed, not of the box (T165)
+    assert (r"if(listOf(a)&&!/<li[\s>]/i.test("
+            r"String(textPage(a,_pi).h||'')))") in out
     assert "                delete a.list;}," in out
     # a legacy deck stored a.list as the boolean 1
     assert "return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;" \
@@ -1809,7 +1811,9 @@ def test_maths_typesets_the_moment_you_click_away(out):
     # and the seventh argument that carries a box's own markup in
     assert "function editableText(layer,el,getVal,setVal,idx,rich,getHtml){" \
         in out
-    assert "i,!a.md,function(){return a.html;});" in out
+    # the editor's accessors point at the current PAGE now (T165); the
+    # closures are what made paging cost the in-place editor nothing
+    assert "i,!a.md,function(){return textPage(a,_pi).h;});" in out
     # the OLD gate is gone: leaving it would silently re-break this
     assert "||(!rich&&el.querySelector('mjx-container')))){" not in out
 
@@ -2267,7 +2271,8 @@ def test_a_figure_number_is_never_stored(out):
     """
     assert "function figNumbers(){" in out
     assert "function figSubst(txt,a,map){" in out
-    assert "?(a.text||''):figSubst(a.text,a,_figMap);" in out
+    # read off the page being shown (T165) -- still never stored
+    assert "?(_pg.t||''):figSubst(_pg.t,a,_figMap);" in out
     # a reference to a figure that has gone says so, rather than
     # rendering a wrong number
     # three misses, said apart: a caption whose figure was deleted or
@@ -3273,7 +3278,10 @@ def test_removing_animations_says_what_is_left(out):
     the flip book's frames is deliberately not done: this button is about
     the reveal, and a flip book is CONTENT.
     """
-    assert "var left=Math.max(0,slideStops(s)-1);" in out
+    # slideStops IS the click count -- an item hides while sp>=revealCount
+    # and the largest sp is count-1. The -1 this once had told a two-page
+    # text box it took "0 clicks" while the strip said 1 (T165).
+    assert "var left=slideStops(s);" in out
     assert "'Nothing here has an entrance effect, but the slide still '" in out
     assert "' left, stepping the flip book')" in out
     # the claim survives ONLY as the else-branch of the ternary, so it
@@ -3293,7 +3301,7 @@ def test_the_shows_with_section_is_not_folded_away(out):
     re-requested twice as though it did not exist -- and left it
     foldable, which put the door behind another door. It is kept now.
     """
-    assert "'chart':1,'shows with':1};" in out
+    assert "'chart':1,'shows with':1,'flip book':1};" in out
 
 
 def test_the_build_list_shows_every_stop_not_only_the_builds(out):

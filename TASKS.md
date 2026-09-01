@@ -3262,6 +3262,52 @@ effects are visible for approximately none of the moments they are usable.
   against a feature whose door could not be opened, because the tests
   read the assembled JS and the drive fell back to executing functions.
   A shipped chart had never been clicked.
+
+- [x] **T165 · L — A text box that carries pages.**
+  User, 2026-09-01: "flip book for text would be good... sometimes you
+  need lots of text for one image." A box you click through, instead of
+  stacking animations.
+  *Done 2026-09-01*, and the model is the interesting part. NOT a new
+  kind (that is the text renderer, the editor and the whole `#fmt-*`
+  bar written twice) and NOT a flip book with text frames: every text
+  property — size, colour, font, align, list, markdown, maths, style,
+  shrink-to-fit — lives on the ANNOT, and a flip annot carries none of
+  them, so it would give you words you could not style, bullet or write
+  in markdown. Worse than the two text boxes it replaces. So `k` stays
+  `text` and the box grows `pg`, the pages after the first. PAGE ONE
+  STAYS IN `a.text`/`a.html` — everything that reads a text box (an
+  older junoview, the .pptx writer, search, the Objects pane, the notes)
+  keeps working AND keeps being right, seeing page one when it cannot
+  see the rest. The alternative, mirroring a.text to whatever page is
+  showing, is a register: two copies going stale on every autosave.
+  The in-place editor cost nothing, which is what settled the design:
+  `editableText` never knew where the words lived — it was handed
+  accessors — so pointing them at a page is the whole change, and the
+  caret, the debounced commit, blur flush, Tab-to-indent, paste-as-code
+  and the maths and markdown gates all keep working untouched. It steps
+  through the door T160 built for chart series (`steppersOn`/
+  `extraStops`), deliberately NOT through `flipsOn`, so everything that
+  asks "is this a flip book?" keeps getting flip books.
+  Driven live: add a page from the right-click menu, pips appear with
+  the current one filled, type "SECOND PAGE" on page two, click the
+  first pip and page one still says "FIRST PAGE" — each page holding its
+  own words. The film strip and the Animations pane both say 1 click.
+  TWO THINGS THE DRIVE CAUGHT that the tests could not.
+  (1) The 18 sites built the model, the renderer, the editor, the
+  timeline and the export — and NO DOOR. `textAddPage` did not exist.
+  That is the third time today a capability shipped with no way in, and
+  the reason the drive matters more than the suite here.
+  (2) A phantom `-1`. T162 and T163 both wrote `slideStops(s)-1`,
+  reasoning that arrival is free — but an item hides while
+  `sp>=revealCount` and the largest `sp` is `count-1`, so `count`
+  presses is exactly what builds the slide. A two-page box was told it
+  took "0 clicks" while the strip, reading the same function, said 1.
+  Both sentences now use `slideStops` directly.
+  NOT done: Part B, many text pages per FIGURE. The arithmetic is
+  specified and the load-bearing detail is written down — `c[k] =
+  max(1, pages tied to figure k)`, because summing raw page counts makes
+  a figure nobody wrote about vanish entirely, and `extraStops = |P|-1`
+  or every slide with a book gains a phantom stop at the end.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

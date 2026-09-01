@@ -189,6 +189,7 @@ def test_a_series_build_takes_one_stop_per_series(out):
                       lift_fn(out, "chartParse"),
                       lift_fn(out, "chartSeriesCount"),
                       lift_fn(out, "flipFrames"),
+                      lift_fn(out, "textPages"),
                       lift_fn(out, "extraStops")])
     cases = (
         "const line3={k:'chart',ct:'line',"

@@ -1841,6 +1841,39 @@
           }
         }
       }
+      /* PAGES, on the box that would carry them (T165). Offered for one
+         text box at a time: a page is a fact about THIS box, and adding
+         one to nine selected boxes at once is a gesture nobody could
+         undo in their head. Named "page" and "flip book" because those
+         are words the product already uses -- a review this morning
+         found the vocabulary too big to add to. */
+      if(selIdxs().length===1){
+        var pgI=selIdxs()[0];
+        var pgA=(pres.slides[cur].annots||[])[pgI];
+        if(pgA&&pgA.k==='text'&&typeof textAddPage==='function'){
+          var np=textPages(pgA).length;
+          menuHead(m,'flip book');
+          row(np>1?('Add a page \u2014 '+np+' so far'):'Add a page','',
+            function(){
+              var at=textAddPage(pgI);
+              renderSlide();renderFilm();
+              if(at!=null) toast('Page '+(at+1)
+                +' \u2014 click through them like a flip book\u2019s '
+                +'figures');
+            },
+            'Another page of words in the same box. The box turns its '
+            +'pages on a click, the way a flip book turns its figures',
+            'flipbook');
+          if(np>1) row('Remove this page','',
+            function(){
+              textDropPage(pgI,pgA.at||0);
+              renderSlide();renderFilm();
+              toast('Page removed');
+            },
+            'Takes away the page you are on. Page one is the box '
+            +'itself and stays','trash');
+        }
+      }
       /* SHOWS WITH WHICH FIGURE (T161) -- the tie, offered from the
          thing being TIED.
          Tying text to a flip book's page has worked since T86 and reads
@@ -2227,7 +2260,7 @@
      was written to correct. */
   var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
     'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
-    'chart':1,'shows with':1};
+    'chart':1,'shows with':1,'flip book':1};
   function cmFold(m){
     m.setAttribute('role','menu');
     $$('button',m).forEach(function(b){

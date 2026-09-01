@@ -113,7 +113,9 @@ def test_an_arrow_moves_the_talk_not_a_private_cursor(out):
     body = out.split("function flipGo(idx,to){")[1].split("\n  }")[0]
     assert "if(mode==='view'){" in body
     assert "revealCount=base+to;" in body
-    assert "flipGo(idx,flipAtNow(s,a)+d);" in out
+    # by a STOP, not by a figure (T165): with words walking beside the
+    # book, one press turns the page and the next brings the next figure
+    assert "flipGo(idx,flipStepNow(s,a)+d);" in out
     # in the editor, flipping through your own figures is not an edit
     assert "markDirty(true);renderSlide();renderFlipPane();" in body
 
@@ -134,8 +136,11 @@ def test_the_export_explodes_a_flip_book_into_real_slides(out):
     them multiplying into a grid of pages is nobody's intention.
     """
     body = out.split("function outputSlides(){")[1].split("\n  }")[0]
-    assert "var fl=flipsOn(s)[0];" in body
-    assert "for(var f=0;f<n;f++) all.push({s:s,i:i,f:f});" in body
+    # THE SLIDE'S BOOK, not merely its first flip book (T165): a slide
+    # whose only book is made of words has to explode too, or four
+    # fifths of its text would leave the building silently
+    assert "var walk=bookWalk(s);" in body
+    assert "for(var f=0;f<walk.length;f++) all.push({s:s,i:i,f:f});" in body
     # both export paths carry the frame: .pptx through note.frame, and
     # print/PDF/standalone HTML through flipForce
     assert "note.frame=ent.f;" in out
@@ -148,7 +153,10 @@ def test_a_forced_frame_beats_both_cursors(out):
     """Printing sets mode='view' and revealCount=99999 to mean "fully
     built", which would otherwise put every exported page on the last
     frame."""
-    body = out.split("function flipAtNow(s,a){")[1].split("\n  }")[0]
+    # the precedence moved down into flipStepNow when the cursor became
+    # a WALK position rather than a frame index (T165); flipAtNow now
+    # derives the figure from it. Same rule, one layer lower.
+    body = out.split("function flipStepNow(s,a){")[1].split("\n  }")[0]
     assert body.index("if(flipForce!=null){") < body.index("if(mode!=='view')")
 
 
@@ -292,3 +300,55 @@ def test_python_rebuild_keeps_a_flip_book_whole():
     assert len(a[0]["frames"]) == 2
     assert a[0]["frames"][0]["label"] == "Raw"
     assert a[1]["fb"] == "k1" and a[1]["fbf"] == 1 and a[1]["fbm"] == "from"
+
+
+def test_a_text_box_can_carry_pages(out):
+    """T165. "Flip book for text would be good" -- a box you click
+    through, instead of stacking animations.
+
+    NOT a new kind, and NOT a flip book with text frames. Every text
+    property (size, colour, font, align, list, markdown, maths, style,
+    shrink-to-fit) lives on the ANNOT, and a flip annot carries none of
+    them -- words you could not style, bullet or write in markdown would
+    be worse than the two text boxes this replaces. So k stays 'text'
+    and the box grows `pg`, the pages after the first. PAGE ONE STAYS IN
+    a.text/a.html: everything that reads a text box -- an older
+    junoview, the .pptx writer, search, the Objects pane, the notes --
+    keeps working and keeps being RIGHT, seeing page one when it cannot
+    see the rest.
+
+    The in-place editor cost nothing: editableText never knew where the
+    words lived, it was handed accessors, so pointing them at a page is
+    the whole change.
+    """
+    assert "function textPages(a){" in out
+    assert "function textPage(a,n){" in out
+    assert "function textPageSet(a,n,t,h){" in out
+    # page one is the box itself, never a copy of it
+    assert "if(!n) return {t:String(a.text||''),h:a.html||''};" in out
+    # the editor reads and writes the page being shown
+    assert "function(){return textPage(a,_pi).t;}," in out
+    assert "textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');" in out
+    # and it walks through the door T160 built for charts, not flipsOn --
+    # everything asking "is this a flip book?" must keep getting flip books
+    assert "if(a.k==='text') return Math.max(0,textPages(a).length-1);" in out
+
+
+def test_a_page_can_be_added_and_taken_away(out):
+    """T165's door. The pages, the renderer, the editor, the timeline and
+    the export all landed before this did -- the third time in one day a
+    capability shipped without a way in. A page you cannot add is not a
+    feature.
+
+    Removing the last extra page takes `pg` away entirely, so the box is
+    byte-for-byte an ordinary text box again: a deck should not carry the
+    ghost of a book somebody unmade.
+    """
+    assert "function textAddPage(idx){" in out
+    assert "a.pg.push({t:'',h:''});" in out
+    assert "function textDropPage(idx,n){" in out
+    assert "if(!a.pg.length) delete a.pg;" in out
+    # offered for ONE text box at a time, and never folded away
+    assert "if(pgA&&pgA.k==='text'&&typeof textAddPage==='function'){" in out
+    assert "menuHead(m,'flip book');" in out
+    assert "'chart':1,'shows with':1,'flip book':1};" in out

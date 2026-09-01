@@ -2029,10 +2029,16 @@
            Not while the box is being edited: what you type is what is
            stored, and a caret sitting inside a substituted number would
            be a caret in text that does not exist. */
+        /* WHICH PAGE (T163). A box with one page is a.text/a.html and
+           nothing below this line changes; a book turns to the page its
+           walk says. -1 means this book has nothing to say about the
+           figure showing now -- it renders its first page and the pass
+           at the end of renderAnnots takes it off the slide. */
+        var _pn=textAt(s,a),_pi=(_pn<0?0:_pn),_pg=textPage(a,_pi);
         var showTx=(editing&&document.activeElement
                     &&d2.contains(document.activeElement))
-          ?(a.text||''):figSubst(a.text,a,_figMap);
-        var showHtml=a.html?figSubst(a.html,a,_figMap):null;
+          ?(_pg.t||''):figSubst(_pg.t,a,_figMap);
+        var showHtml=_pg.h?figSubst(_pg.h,a,_figMap):null;
         var tx2,lst=listOf(a);
         if(lst){
           /* the ELEMENT carries the marker style and a.html carries only
@@ -2040,8 +2046,8 @@
              content at all */
           tx2=document.createElement(lst==='number'?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
-          if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
-          else String(a.text||'').split('\n').forEach(function(line){
+          if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
+          else String(_pg.t||'').split('\n').forEach(function(line){
             var li=document.createElement('li');
             li.textContent=line;
             tx2.appendChild(li);
@@ -2062,17 +2068,23 @@
              source. */
           tx2.className='an-tx'+(a.md?' an-md':'');
           if(a.md) tx2.innerHTML=notesHtml(showTx);
-          else if(a.html) tx2.innerHTML=sanitizeRich(showHtml).html;
+          else if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else tx2.textContent=showTx||'';
         }
         if(editing){
+          /* THE PAGE, THROUGH THE SAME TWO CLOSURES (T163). editableText
+             never knew where the words lived -- it was handed accessors
+             -- so pointing them at a page is the whole of the change,
+             and the caret, the debounced commit, __jvFlush, the blur
+             flush, Tab-to-indent, paste-as-code and the maths and
+             markdown re-render gates all keep working untouched. */
           editableText(layer,tx2,
-            function(){return a.text;},
+            function(){return textPage(a,_pi).t;},
             /* rich BOTH ways now. A list used to be saved as plain lines
                only, so bold inside a bullet — or a sub-level — was thrown
                away the moment the box lost focus. */
-            function(v,r){a.text=v;
-              if(r&&r.rich) a.html=r.html; else delete a.html;
+            function(v,r){
+              textPageSet(a,_pi,v,(r&&r.rich)?r.html:'');
               /* THE WAY OUT OF A LIST. `a.list` is a box-wide flag and
                  the renderer rebuilds a bullet for every line from it,
                  so every browser-native escape — Backspace at the start
@@ -2081,7 +2093,7 @@
                  (2026-08-29, user: "dot points can't really be
                  deleted"). If nothing you committed is a list item any
                  more, you have left the list, and the model follows. */
-              if(listOf(a)&&!/<li[\s>]/i.test(String(a.html||'')))
+              if(listOf(a)&&!/<li[\s>]/i.test(String(textPage(a,_pi).h||'')))
                 delete a.list;},
             /* a markdown box is NOT rich: what you edit is the SOURCE,
                so plaintext-only is the right editor (Enter must give a
@@ -2092,9 +2104,64 @@
                formatting back rather than only its plain string: with
                no a.html there is nothing to restore but the LaTeX, and
                with one the box keeps its bold and its colours too. */
-            i,!a.md,function(){return a.html;});
+            i,!a.md,function(){return textPage(a,_pi).h;});
         }
         d2.appendChild(tx2);
+        /* ---- TURNING THE PAGES (T163) --------------------------------
+           The same bar as a figure book's, with PIPS instead of a
+           counter. A reader has to be able to tell at a glance whether
+           the arrows under a thing turn a figure or a paragraph, and
+           dots under words is the one idiom everybody already reads as
+           "there is more here"; they also cost no width on a box the
+           words have already claimed.
+           A book WALKING WITH a flip book draws nothing: the figure's
+           arrows are the only cursor, which is the same rule that keeps
+           the frame out of a second piece of state. And on an EXPORTED
+           page there is nowhere to go -- each page IS one page -- so the
+           arrows are left off and the pips stay on as the printed index
+           of where you are. */
+        var _pgs=textPages(a);
+        if(_pgs.length>1&&!(a.fb&&flipById(s,a.fb))){
+          var pbar=document.createElement('div');
+          pbar.className='an-flipbar an-pgbar';
+          pbar.style.justifyContent=(a.align==='center')?'center'
+            :(a.align==='right')?'flex-end':'flex-start';
+          var pgNav=function(dz,tip){
+            if(flipForce!=null) return;
+            var nb=document.createElement('button');
+            nb.className='an-flipnav';nb.type='button';
+            nb.textContent=dz<0?'‹':'›';nb.title=tip;
+            nb.disabled=dz<0?(_pi<=0):(_pi>=_pgs.length-1);
+            nb.addEventListener('click',function(ev){
+              ev.stopPropagation();ev.preventDefault();textStep(i,dz);});
+            /* the layer's own mousedown starts a MOVE on whatever is
+               under the pointer; without this, dragging off an arrow
+               drags the whole text box across the slide */
+            nb.addEventListener('mousedown',function(ev){
+              ev.stopPropagation();});
+            pbar.appendChild(nb);
+          };
+          pgNav(-1,'Back');
+          var pips=document.createElement('span');
+          pips.className='an-pgpips';
+          _pgs.forEach(function(_pv,pj){
+            var dot=document.createElement('button');
+            dot.className='an-pgpip'+(pj===_pi?' on':'');
+            dot.type='button';
+            dot.title=(pj+1)+' of '+_pgs.length;
+            dot.setAttribute('aria-label',dot.title);
+            if(pj===_pi) dot.setAttribute('aria-current','true');
+            if(flipForce!=null) dot.disabled=true;
+            dot.addEventListener('click',function(ev){
+              ev.stopPropagation();ev.preventDefault();textGo(i,pj);});
+            dot.addEventListener('mousedown',function(ev){
+              ev.stopPropagation();});
+            pips.appendChild(dot);
+          });
+          pbar.appendChild(pips);
+          pgNav(1,'Forward');
+          d2.appendChild(pbar);
+        }
         layer.appendChild(d2);
         /* Curved text. Drawn as SVG on a bowed baseline, which HTML has no
            way to do — but only when the box is NOT being typed into:
@@ -2275,7 +2342,14 @@
        click the caption you are about to tie to frame 4 while you are
        standing on frame 1. */
     (s.annots||[]).forEach(function(a,i){
-      if(!a||!a.fb||flipShows(s,a)) return;
+      if(!a||!a.fb) return;
+      /* A TEXT BOOK IS NOT HIDDEN BY ITS TIE -- the tie turns its pages.
+         It goes only on a figure it has NO page for, which is a
+         different thing from having run out: stale words beside a new
+         figure is the failure this feature exists to prevent. */
+      var gone=(a.k==='text'&&textPages(a).length>1)
+        ?(textAt(s,a)<0):!flipShows(s,a);
+      if(!gone) return;
       var fel=layer.querySelector('[data-idx="'+i+'"]');
       if(!fel) return;
       if(editing) fel.classList.add('an-fbother');

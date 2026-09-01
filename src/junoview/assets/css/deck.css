@@ -2249,6 +2249,24 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
    wrap on purpose — a nine-figure book is a row of nine names, and a nav
    bar that scrolled sideways on a slide would be worse than two lines of
    buttons (T86). */
+/* ---------- a flip book made of words ----------
+   The same bar as a figure book's, with PIPS instead of a counter: a
+   reader has to be able to tell at a glance whether the arrows below
+   turn a figure or a paragraph, and dots under words is the one idiom
+   everybody already reads as "there is more text here". They also cost
+   no width, which matters on a box the words have already claimed. The
+   arrows are the flip book's own .an-flipnav, deliberately -- the two
+   books step with the same control, they only count differently. */
+.an-pgbar{gap:6px;padding:2px 0 0;}
+.an-pgpips{display:flex;align-items:center;gap:4px;}
+.an-pgpip{width:6px;height:6px;padding:0;border-radius:50%;cursor:pointer;
+  background:#ffffff3d;border:1px solid transparent;}
+.an-pgpip:hover:not([disabled]){background:#ffffff70;}
+.an-pgpip.on{background:var(--accent);}
+.an-pgpip[disabled]{cursor:default;}
+.page-light .an-pgpip{background:#0000002e;}
+.page-light .an-pgpip:hover:not([disabled]){background:#00000059;}
+.page-light .an-pgpip.on{background:var(--accent);}
 .an-flipbtns{flex-wrap:wrap;gap:4px;}
 .an-flipbtn{background:#00000059;border:1px solid #ffffff2e;color:#e6eef4;
   border-radius:11px;min-width:22px;height:22px;line-height:1;cursor:pointer;

@@ -809,8 +809,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the build that anchors them), and .an-chart is positioned like every
 # other annotation kind - it was static, so its stored x/y were inert
 # and it stacked below the arrow hit-layer and could not be clicked.
-EXPECTED_MD5 = "793ea73356ae496af5a6586b788b7568"
-EXPECTED_BYTES = 3126096
+# Moved 2026-09-01 for T165: a text box can carry pages (a.pg) and
+# clicks through them like a flip book, with page one still living in
+# a.text; the editor's accessors point at the current page, and the
+# timeline counts a page as a stop.
+EXPECTED_MD5 = "f32af1626e9dfb879109fa0c1630c3c7"
+EXPECTED_BYTES = 3145713
 
 
 def _render_example() -> str:

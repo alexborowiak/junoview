@@ -871,6 +871,64 @@
   function flipFrames(a){
     return (a&&Array.isArray(a.frames))?a.frames:[];
   }
+  /* ---- THE SAME BOOK, WITH WORDS IN IT (T163) ------------------------
+     (2026-09-01, user: "flip book for text would be good. Then also if
+     they can be tied to the images flip book or something like that, as
+     sometimes you need lots of text for one image".)
+
+     A text box with PAGES. Deliberately NOT a new kind and NOT a flip
+     book holding text frames. What makes a text box worth having is the
+     caret you type into and the forty properties hanging off it -- size,
+     colour, alignment, lists, markdown, maths, named styles, shrink to
+     fit -- and every one of those is written on the ANNOT. A flip book
+     annot carries none of them and showFmt maps '#fmt-figures' to it, so
+     text frames inside one would be words you could not style; a new
+     kind would be the text renderer written twice.
+     PAGE ONE IS a.text/a.html -- not a copy of them, the same words in
+     the same place -- and a.pg carries pages two onward. Nothing that
+     reads a.text has to learn anything: an older junoview, the .pptx
+     text writer, search, the Objects pane and every export keep seeing
+     page one, which is the right thing to see when you cannot see the
+     rest. A register that swapped the current page into a.text would be
+     the second piece of state this whole feature exists to avoid.
+     The FORM is box-wide and the WORDS are per page: a.list, a.md and
+     a.maths stay properties of the box, because the renderer picks its
+     element (ul/ol vs span) from the box and a form that changed per
+     page would swap the element under your caret. */
+  function textPages(a){
+    if(!a||a.k!=='text') return [];
+    var out=[{t:String(a.text||''),h:a.html||'',
+      f:(a.fbf!=null?(a.fbf|0):null)}];
+    if(Array.isArray(a.pg)) a.pg.forEach(function(p){
+      if(!p||typeof p!=='object') return;
+      out.push({t:String(p.t||''),h:p.h||'',
+        f:(p.f!=null?(p.f|0):null)});
+    });
+    return out;
+  }
+  /* ONE PAGE, read and written where it actually lives. The text editor
+     was always talking to two closures, so pointing them at a page is
+     the whole of the change -- no swap, no register, one copy of each
+     page's words. */
+  function textPage(a,n){
+    if(!a) return {t:'',h:''};
+    if(!n) return {t:String(a.text||''),h:a.html||''};
+    var p=(Array.isArray(a.pg)?a.pg[n-1]:null)||{};
+    return {t:String(p.t||''),h:p.h||''};
+  }
+  function textPageSet(a,n,t,h){
+    if(!a) return;
+    if(!n){
+      a.text=String(t||'');
+      if(h) a.html=h; else delete a.html;
+      return;
+    }
+    if(!Array.isArray(a.pg)) a.pg=[];
+    while(a.pg.length<n) a.pg.push({t:''});
+    var p=a.pg[n-1]||(a.pg[n-1]={});
+    p.t=String(t||'');
+    if(h) p.h=h; else delete p.h;
+  }
   function flipsOn(s){
     var out=[];
     ((s&&s.annots)||[]).forEach(function(a,i){
@@ -891,14 +949,104 @@
   function extraStops(a){
     if(!a) return 0;
     if(a.k==='flip') return Math.max(0,flipFrames(a).length-1);
+    if(a.k==='text') return Math.max(0,textPages(a).length-1);
     if(a.k==='chart'&&a.anim&&a.anim.by==='series')
       return chartSeriesCount(a);
     return 0;
   }
+  /* ---- WHICH FIGURE EACH PAGE BELONGS TO (T163) ----------------------
+     A page names its own figure only where the figure CHANGES; every
+     other page inherits the one before it. So "these three paragraphs go
+     with figure 1" is ONE setting rather than three, and the author only
+     ever touches the page where the picture moves on.
+     Page one's figure is a.fbf, which means a box with a single page is
+     EXACTLY today's tie, unchanged.
+     Out of range is CLAMPED rather than dropped. This file's rule is
+     that an unresolvable binding fails open, and for a page "open" has
+     to mean reachable: a page you can never turn to is a lost
+     paragraph, which is worse than a caption that shows too often. */
+  function pageFigs(s,fb,a){
+    var nf=Math.max(1,flipFrames(fb).length),out=[],at=0;
+    textPages(a).forEach(function(p){
+      if(p.f!=null) at=p.f;
+      out.push(Math.max(0,Math.min(nf-1,at)));
+    });
+    return out;
+  }
+  /* every text book walking with this flip book */
+  function booksWith(s,fb){
+    var out=[];
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(x&&x.k==='text'&&x.fb&&fb&&x.fb===fb.fid
+         &&textPages(x).length>1) out.push(x);});
+    return out;
+  }
+  /* ---- THE PAIR WALK (T163) ------------------------------------------
+     A flip book with words walking beside it no longer takes one stop
+     per figure: it takes one per (FIGURE, PAGE OF THAT FIGURE). Figure 2
+     with three paragraphs to say about it is three stops, and figure 3
+     arrives on the fourth.
+     Math.max(1,...) IS LOAD-BEARING: a figure nobody wrote about is
+     still a figure, and summing raw page counts would give it zero stops
+     and skip it entirely -- an invisible, unreachable figure with no
+     error anywhere. That is the off-by-one this arithmetic exists to
+     avoid.
+     Two books on the same figure walk in LOCKSTEP -- they are two
+     columns of one walk, not one queue after another. The shorter one
+     holds its last page, which reads as "this label applies
+     throughout". */
+  function flipSlots(s,fb){
+    var nf=flipFrames(fb).length,c=[],k;
+    for(k=0;k<nf;k++) c[k]=1;
+    booksWith(s,fb).forEach(function(x){
+      var n=[];
+      pageFigs(s,fb,x).forEach(function(f){n[f]=(n[f]||0)+1;});
+      for(k=0;k<nf;k++) if((n[k]||0)>c[k]) c[k]=n[k];
+    });
+    return c;
+  }
+  /* the walk as [{k:figure, j:slot within that figure}] */
+  function flipWalk(s,fb){
+    var out=[];
+    flipSlots(s,fb).forEach(function(n,k){
+      for(var j=0;j<n;j++) out.push({k:k,j:j});
+    });
+    return out;
+  }
+  /* the walk position a figure's own button jumps to */
+  function flipFirstSlot(s,a,k){
+    var walk=flipWalk(s,a);
+    for(var d=0;d<walk.length;d++)
+      if(walk[d].k===k&&walk[d].j===0) return d;
+    return 0;
+  }
+  /* and back: which figure a walk position is on */
+  function flipFigAt(s,a,d){
+    var walk=flipWalk(s,a);
+    if(!walk.length) return 0;
+    var w=walk[Math.max(0,Math.min(walk.length-1,d|0))];
+    return w?w.k:0;
+  }
+  /* ---- WHAT IT IS WORTH ON THIS SLIDE (T163) -------------------------
+     extraStops asks what an annotation is worth ON ITS OWN, which is
+     still the honest question for a chart and is what the lifted-out
+     unit test calls. But a flip book with words walking beside it is
+     worth more than its own figures, and a text book that walks WITH one
+     is worth nothing of its own -- its pages are already stops of that
+     book's walk. That is a fact about the SLIDE, so it gets the slide.
+     The `>0` filter in steppersOn then drops a walking text book for
+     free, which is exactly right: stepBase must return null for it, so
+     that it reads the figure book's base rather than one of its own. */
+  function stopsFor(s,a){
+    if(!a) return 0;
+    if(a.k==='flip') return Math.max(0,flipWalk(s,a).length-1);
+    if(a.k==='text'&&a.fb&&flipById(s,a.fb)) return 0;
+    return extraStops(a);
+  }
   function steppersOn(s){
     var out=[];
     ((s&&s.annots)||[]).forEach(function(a,i){
-      if(a&&extraStops(a)>0) out.push({a:a,i:i});});
+      if(a&&stopsFor(s,a)>0) out.push({a:a,i:i});});
     return out;
   }
   function flipById(s,id){
@@ -938,7 +1086,7 @@
     var n=0,stop=[],base={};
     function frames(p){
       base[p.i]=n;
-      n+=extraStops(p.a);
+      n+=stopsFor(s,p.a);
     }
     for(var b=0;b<steps.count;b++){
       stop[b]=n;n++;
@@ -987,25 +1135,79 @@
      wherever you left its arrows; in playback it is read off revealCount,
      with each flip book on the slide consuming its own frames in reading
      order. */
-  function flipAtNow(s,a){
-    var fr=flipFrames(a),last=Math.max(0,fr.length-1);
-    /* an exporting page is FOR one frame, and says so. It wins over both
-       the editor cursor and the playback one, because printing sets
-       mode='view' and revealCount=99999 to mean "fully built" and would
-       otherwise put every page on the last frame. */
+  /* WHERE IN THE WALK. The flip book's stop index -- which is the figure
+     number only when nothing walks beside it, and that is every deck
+     written before today. a.at and flipForce are both walk indices now
+     for the same reason: one cursor, not two. */
+  function flipStepNow(s,a){
+    var walk=flipWalk(s,a),last=Math.max(0,walk.length-1);
     if(flipForce!=null){
-      var first=flipsOn(s)[0];
-      if(first&&first.a===a)
-        return Math.max(0,Math.min(last,flipForce));
+      if(slideBook(s)===a) return Math.max(0,Math.min(last,flipForce));
       return Math.max(0,Math.min(last,a.at||0));
     }
     if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
-    /* READ OFF THE ONE CURSOR, never stored beside it: the plan says
-       which stops belong to this flip book, and how many of them have
-       been taken is the frame it is on. */
     var base=flipBase(s,a);
     if(base==null) return 0;
     return Math.max(0,Math.min(last,revealCount-base));
+  }
+  /* WHICH PAGE A WALKING TEXT BOOK IS ON. The flip book's stop names a
+     (figure, slot) pair; this book's pages for that figure are taken in
+     order and the slot picks one, HOLDING THE LAST when it has fewer
+     than the slot asks for. -1 means it has nothing at all to say about
+     this figure and must not be on screen: stale words beside a new
+     figure is the failure this feature exists to prevent, and it is a
+     different situation from simply having run out of pages. */
+  function pagePos(s,fb,a){
+    var walk=flipWalk(s,fb);
+    if(!walk.length) return 0;
+    var d=flipStepNow(s,fb);
+    var at=walk[Math.max(0,Math.min(walk.length-1,d))];
+    if(!at) return 0;
+    var mine=[];
+    pageFigs(s,fb,a).forEach(function(f,j){if(f===at.k) mine.push(j);});
+    if(!mine.length) return -1;
+    return mine[Math.min(mine.length-1,at.j)];
+  }
+  /* WHICH PAGE A TEXT BOX IS SHOWING. -1 when it walks with a flip book
+     that is standing on a figure it has no page for. */
+  function textAt(s,a){
+    var n=textPages(a).length,last=Math.max(0,n-1);
+    if(n<2) return 0;
+    var fb=a.fb?flipById(s,a.fb):null;
+    if(fb){
+      var p=pagePos(s,fb,a);
+      return p<0?-1:Math.max(0,Math.min(last,p));
+    }
+    if(flipForce!=null&&slideBook(s)===a)
+      return Math.max(0,Math.min(last,flipForce));
+    if(mode!=='view') return Math.max(0,Math.min(last,a.at||0));
+    var base=stepBase(s,a);
+    if(base==null) return 0;
+    return Math.max(0,Math.min(last,revealCount-base));
+  }
+  /* THE SLIDE'S BOOK: the one thing an exported page IS a page of. A
+     flip book when there is one -- the figure is the spine and the words
+     walk beside it -- otherwise a text book turning its own pages. ONE
+     force variable for both, because two would be two cursors. */
+  function slideBook(s){
+    var fl=flipsOn(s)[0];
+    if(fl) return fl.a;
+    var tb=null;
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(!tb&&x&&x.k==='text'&&!x.fb&&textPages(x).length>1) tb=x;});
+    return tb;
+  }
+  /* how many pages the slide's book turns -- the number of output pages
+     this slide explodes into */
+  function bookWalk(s){
+    var b=slideBook(s);
+    if(!b) return [];
+    if(b.k==='flip') return flipWalk(s,b);
+    return textPages(b).map(function(_,j){return {k:0,j:j};});
+  }
+  function flipAtNow(s,a){
+    var fr=flipFrames(a),last=Math.max(0,fr.length-1);
+    return Math.max(0,Math.min(last,flipFigAt(s,a,flipStepNow(s,a))));
   }
   /* is this item's frame the one showing? An item with no binding always
      shows, and — deliberately — so does one whose flip book has been
@@ -1014,6 +1216,13 @@
      unresolvable binding fails OPEN. */
   function flipShowsFrame(s,a,at){
     if(!a||!a.fb) return true;
+    /* A TEXT BOOK IS NOT HIDDEN BY ITS TIE. The tie turns its PAGES, so
+       the box is always up and a.fbm means nothing to it; whether it has
+       anything to say about the figure showing now is a separate
+       question, asked by textAt and answered in the hide pass. Gated on
+       having more than one page, so every tie written before today
+       behaves exactly as it did. */
+    if(a.k==='text'&&textPages(a).length>1) return true;
     var fb=flipById(s,a.fb); if(!fb) return true;
     var fr=flipFrames(fb); if(!fr.length) return true;
     var f=a.fbf||0; if(f>=fr.length) return true;
@@ -1039,7 +1248,69 @@
   function flipStep(idx,d){
     var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
     if(!a||a.k!=='flip') return;
-    flipGo(idx,flipAtNow(s,a)+d);
+    /* by a STOP, not by a figure: with words walking beside the book,
+       one press of the arrow turns the page and the next one brings the
+       next figure. Stepping by figure would skip every paragraph. */
+    flipGo(idx,flipStepNow(s,a)+d);
+  }
+  /* stepping a text book's OWN pages, when nothing else is driving it.
+     Same shape as flipStep/flipGo and for the same reason: in playback
+     the pages ARE stops in the one sequence, so an arrow moves the talk
+     -- otherwise the arrow and the space bar would disagree about where
+     you are. */
+  /* ---- MAKING A BOOK OUT OF A BOX (T165) ---------------------------
+     The pages, the renderer, the editor, the timeline and the export all
+     landed before this did, which is the third time in one day a
+     capability shipped without a way in. A page you cannot add is not a
+     feature.
+     Appending parks the editor on the new page and returns its index so
+     the caller can put the caret there: writing is why you added it. */
+  function textAddPage(idx){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text') return null;
+    if(!Array.isArray(a.pg)) a.pg=[];
+    a.pg.push({t:'',h:''});
+    a.at=textPages(a).length-1;
+    markDirty();
+    return a.at;
+  }
+  /* ...and the way back. Removing the LAST remaining extra page takes
+     `pg` away entirely, so the box is byte-for-byte an ordinary text box
+     again -- a deck should not carry the ghost of a book somebody
+     unmade. Page one is never removable: it is a.text, i.e. the box. */
+  function textDropPage(idx,n){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text'||!Array.isArray(a.pg)) return;
+    if(!n||n>a.pg.length) return;
+    a.pg.splice(n-1,1);
+    if(!a.pg.length) delete a.pg;
+    var last=textPages(a).length-1;
+    if((a.at||0)>last) a.at=last;
+    if(!a.at) delete a.at;
+    markDirty();
+  }
+  function textStep(idx,d){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text') return;
+    textGo(idx,Math.max(0,textAt(s,a))+d);
+  }
+  function textGo(idx,to){
+    var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
+    if(!a||a.k!=='text') return;
+    var n=textPages(a).length;
+    if(n<2||(a.fb&&flipById(s,a.fb))) return;
+    to=Math.max(0,Math.min(n-1,to));
+    if(mode==='view'){
+      var base=stepBase(s,a);
+      if(base==null) return;
+      revealCount=base+to;
+      renderSlide();presenterSync();
+      return;
+    }
+    a.at=to;
+    /* markDirty(true): turning your own pages to read them is not an
+       edit and must not fill the undo stack */
+    markDirty(true);renderSlide();renderFlipPane();
   }
   /* STRAIGHT TO A FIGURE. One button per figure jumps, the arrows step,
      and both land here — a jump that meant anything the arrows did not
@@ -1047,9 +1318,12 @@
   function flipGo(idx,to){
     var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
     if(!a||a.k!=='flip') return;
-    var fr=flipFrames(a);
-    if(fr.length<2) return;
-    to=Math.max(0,Math.min(fr.length-1,to));
+    /* THE WALK, not the frame list. A one-figure book with three pages
+       of text walking beside it really does step, and `fr.length<2`
+       would refuse to move it. */
+    var walk=flipWalk(s,a);
+    if(walk.length<2) return;
+    to=Math.max(0,Math.min(walk.length-1,to));
     if(mode==='view'){
       var base=flipBase(s,a);
       if(base==null) return;

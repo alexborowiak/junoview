@@ -1268,10 +1268,15 @@
          The FIRST flip book on the slide is the one that explodes it.
          Two of them multiplying into a grid of pages is nobody's
          intention, and the second simply rests on its own frame. */
-      var fl=flipsOn(s)[0];
-      var n=fl?flipFrames(fl.a).length:0;
-      if(n>1){
-        for(var f=0;f<n;f++) all.push({s:s,i:i,f:f});
+      /* THE SLIDE'S BOOK, not merely its first flip book (T165): a
+         slide whose only book is made of words explodes too, or four
+         fifths of its text would leave the building silently. And a
+         flip book with words walking beside it explodes over its WALK,
+         so figure 2's three paragraphs are three output pages rather
+         than one page showing the last of them. */
+      var walk=bookWalk(s);
+      if(walk.length>1){
+        for(var f=0;f<walk.length;f++) all.push({s:s,i:i,f:f});
         return;
       }
       all.push({s:s,i:i,f:null});

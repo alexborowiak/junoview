@@ -174,7 +174,13 @@
       } else if(!seq.length){
         /* steppers but no builds: the slide DOES walk, so say so */
         var e3=document.createElement('div');e3.className='anim-empty';
-        var nst=Math.max(0,slideStops(s)-1);
+        /* slideStops IS the click count: an item hides while
+           sp>=revealCount and the largest sp is count-1, so `count`
+           presses is what fully builds the slide. Subtracting one here
+           told a two-page text box it took "0 clicks" while the film
+           strip, reading the same function, said 1 (caught by driving
+           it, 2026-09-01). */
+        var nst=slideStops(s);
         e3.textContent='No entrance effects here, but this slide takes '
           +nst+' click'+(nst===1?'':'s')+' \u2014 it steps through '
           +'what is below.';
@@ -309,7 +315,7 @@
          touch. */
       var n=0;
       (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
-      var left=Math.max(0,slideStops(s)-1);
+      var left=slideStops(s);   /* the clicks still in the slide */
       if(!n){
         toast(left
           ?('Nothing here has an entrance effect, but the slide still '
