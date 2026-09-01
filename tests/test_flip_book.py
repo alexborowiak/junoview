@@ -352,3 +352,102 @@ def test_a_page_can_be_added_and_taken_away(out):
     assert "if(pgA&&pgA.k==='text'&&typeof textAddPage==='function'){" in out
     assert "menuHead(m,'flip book');" in out
     assert "'chart':1,'shows with':1,'flip book':1};" in out
+
+
+def test_text_pages_and_figures_walk_in_pairs(out):
+    """T166, Part B, RUN rather than read.
+
+    A flip book with words walking beside it no longer takes one stop per
+    figure: it takes one per (FIGURE, PAGE OF THAT FIGURE). Figure 2 with
+    three paragraphs to say about it is three stops.
+
+    Two off-by-ones decide whether this works, and both are one
+    character. `flipSlots` starts every figure at 1 and only RAISES it --
+    summing raw page counts would give a figure nobody wrote about zero
+    slots and SKIP IT ENTIRELY, invisible and unreachable with no error.
+    And `extraStops` is |walk|-1, not |walk|, or every slide carrying a
+    book gains a phantom press at the end that changes nothing.
+
+    Executed against the shipped functions because an off-by-one here
+    strands a page past the end of a slide, which no substring can see.
+    """
+    import json
+    import os
+    import subprocess
+    import tempfile
+
+    import pytest
+
+    from helpers_js import js_engine, lift_fn
+
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    cmd, env = eng
+
+    body = "\n".join([lift_fn(out, "flipFrames"), lift_fn(out, "textPages"),
+                      lift_fn(out, "pageFigs"), lift_fn(out, "booksWith"),
+                      lift_fn(out, "flipSlots"), lift_fn(out, "flipWalk")])
+    cases = (
+        "function book(n){ var f=[]; for(var i=0;i<n;i++)"
+        "  f.push({label:'F'+(i+1)});"
+        "  return {k:'flip',fid:'B',frames:f}; }"
+        "function words(pages,figs){"
+        "  var a={k:'text',fb:'B',text:pages[0]||'',pg:[]};"
+        "  if(figs[0]!=null) a.fbf=figs[0];"
+        "  for(var i=1;i<pages.length;i++){"
+        "    var p={t:pages[i],h:''};"
+        "    if(figs[i]!=null) p.f=figs[i];"
+        "    a.pg.push(p); }"
+        "  return a; }"
+        "function W(fb,bs){ var s={annots:[fb].concat(bs||[])};"
+        "  return {slots:flipSlots(s,fb),walk:flipWalk(s,fb).length}; }"
+        "console.log(JSON.stringify({"
+        "  plain3: W(book(3),[]),"
+        "  pages312: W(book(3),[words([1,2,3,4,5,6],"
+        "    [0,null,null,1,2,null])]),"
+        "  allOnFig0: W(book(3),[words([1,2,3,4,5],"
+        "    [0,null,null,null,null])]),"
+        "  twoBooks: W(book(2),[words([1,2],[0,null]),"
+        "    words([1,2,3],[0,null,null])])}));"
+    )
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "r.js")
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(body + cases)
+        r = subprocess.run(cmd + [p], capture_output=True, text=True,
+                           env=env, timeout=90)
+    assert r.returncode == 0, r.stderr[:1500]
+    got = json.loads([ln for ln in r.stdout.splitlines()
+                      if ln.startswith("{")][-1])
+
+    # nothing tied: one stop per figure, exactly as before Part B
+    assert got["plain3"]["slots"] == [1, 1, 1]
+    assert got["plain3"]["walk"] == 3
+    # the worked example: pages 3,1,2 across three figures
+    assert got["pages312"]["slots"] == [3, 1, 2]
+    assert got["pages312"]["walk"] == 6
+    # THE TRAP: every page on figure 1, and figures 2 and 3 are STILL
+    # stops. Summing raw counts would delete them from the talk.
+    assert got["allOnFig0"]["slots"] == [5, 1, 1]
+    assert got["allOnFig0"]["walk"] == 7
+    # two books beside one figure: the longer one sets the slot count
+    assert got["twoBooks"]["slots"] == [3, 1]
+
+
+def test_a_page_names_its_figure_only_where_it_changes(out):
+    """T166's authoring, and the reason it is two rows rather than a list
+    of every figure. `pageFigs` carries the figure FORWARD, so a page
+    stores one only where it CHANGES -- five pages across three figures
+    is two settings, not five, and the sentence stored is the sentence a
+    person says: "figure 2 starts here".
+    """
+    assert "function textPageFig(a,n){" in out
+    assert "function textPageFigSet(a,n,fig){" in out
+    # page one's figure is a.fbf, the key the tie panel has always used
+    assert "if(!n) return (a&&a.fbf!=null)?(a.fbf|0):null;" in out
+    # the two sentences worth saying about a page
+    assert "' starts on this page'" in out
+    assert "'Keep this page with the one '" in out
+    # and the carry-forward is what makes that enough
+    assert "if(p.f!=null) at=p.f;" in out

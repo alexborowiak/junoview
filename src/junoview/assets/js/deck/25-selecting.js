@@ -1864,6 +1864,39 @@
             'Another page of words in the same box. The box turns its '
             +'pages on a click, the way a flip book turns its figures',
             'flipbook');
+          /* ...and, once the box walks with a flip book, WHICH FIGURE
+             this page belongs to. Two rows rather than a list of every
+             figure: the model stores a CHANGE, so the only two things
+             worth saying about a page are "the next figure starts here"
+             and "no it does not". (T166) */
+          if(np>1&&pgA.fb){
+            var pgBk=flipById(pres.slides[cur],pgA.fb);
+            var pgN=pgBk?flipFrames(pgBk).length:0;
+            if(pgN>1){
+              var pgAt=Math.max(0,Math.min(np-1,pgA.at||0));
+              var figs=pageFigs(pres.slides[cur],pgBk,pgA);
+              var here=figs[pgAt]||0;
+              var own=textPageFig(pgA,pgAt);
+              if(here<pgN-1) row('Figure '+(here+2)+' starts on this page','',
+                function(){
+                  textPageFigSet(pgA,pgAt,here+1);
+                  renderSlide();renderFilm();
+                  toast('Page '+(pgAt+1)+' onwards goes with figure '
+                    +(here+2));
+                },
+                'Everything from this page on belongs to the next '
+                +'figure, until another page says otherwise','flipbook');
+              if(own!=null&&pgAt>0) row('Keep this page with the one '
+                +'before','',
+                function(){
+                  textPageFigSet(pgA,pgAt,null);
+                  renderSlide();renderFilm();
+                  toast('Page '+(pgAt+1)+' follows the page before it');
+                },
+                'Stops this page starting a new figure — it goes back '
+                +'to whichever figure the page before it is on','undo');
+            }
+          }
           if(np>1) row('Remove this page','',
             function(){
               textDropPage(pgI,pgA.at||0);

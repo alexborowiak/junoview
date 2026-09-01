@@ -1289,6 +1289,33 @@
     if(!a.at) delete a.at;
     markDirty();
   }
+  /* ---- WHICH FIGURE A PAGE BELONGS TO (T166) -----------------------
+     Part B's authoring, and the model is what makes it cheap: `pageFigs`
+     carries the figure FORWARD, so a page names one only where it
+     CHANGES. Five pages across three figures is therefore two settings,
+     not five, and the sentence a user says -- "figure 2 starts here" --
+     is exactly the thing stored.
+     Page one is a special case only in where it is kept: it has no `pg`
+     entry, so its figure is `a.fbf`, the same key the tie panel has
+     always written. */
+  function textPageFig(a,n){
+    var pg=Array.isArray(a&&a.pg)?a.pg:[];
+    if(!n) return (a&&a.fbf!=null)?(a.fbf|0):null;
+    var p=pg[n-1];
+    return (p&&p.f!=null)?(p.f|0):null;
+  }
+  function textPageFigSet(a,n,fig){
+    if(!a) return;
+    if(fig==null){
+      if(!n) delete a.fbf;
+      else if(Array.isArray(a.pg)&&a.pg[n-1]) delete a.pg[n-1].f;
+    } else if(!n){
+      a.fbf=fig|0;
+    } else if(Array.isArray(a.pg)&&a.pg[n-1]){
+      a.pg[n-1].f=fig|0;
+    }
+    markDirty();
+  }
   function textStep(idx,d){
     var s=pres.slides[cur],a=((s&&s.annots)||[])[idx];
     if(!a||a.k!=='text') return;

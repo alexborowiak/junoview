@@ -3308,6 +3308,33 @@ effects are visible for approximately none of the moments they are usable.
   max(1, pages tied to figure k)`, because summing raw page counts makes
   a figure nobody wrote about vanish entirely, and `extraStops = |P|-1`
   or every slide with a book gains a phantom stop at the end.
+
+- [x] **T166 · M — Many text pages for one figure (Part B).**
+  "Sometimes you need lots of text for one image." A flip book with
+  words walking beside it stops taking one stop per FIGURE and takes one
+  per (figure, page-of-that-figure): figure 2 with three paragraphs to
+  say about it is three stops, and the book's own arrow turns the page
+  before it turns the figure.
+  *Done 2026-09-01.* The arithmetic shipped with T165 (`flipSlots`,
+  `flipWalk`, `pageFigs`, `pagePos`, `booksWith`); what was missing —
+  for the FOURTH time in a day — was the door. It is two rows in the
+  text box's own right-click menu, and it is two rather than a list of
+  every figure because of the model: `pageFigs` carries the figure
+  FORWARD, so a page stores one only where it CHANGES. Five pages across
+  three figures is two settings, and the sentence stored is the sentence
+  a person says — "figure 2 starts on this page", with "keep this page
+  with the one before" to take it back. Page one keeps its figure in
+  `a.fbf`, the key the tie panel has always written, so a one-page box
+  is byte-for-byte the tie T86 built.
+  The two off-by-ones the design warned about are both one character and
+  both now proven by EXECUTING the shipped functions rather than reading
+  them: `flipSlots` starts every figure at 1 and only raises it, so
+  putting all five pages on figure 1 still leaves figures 2 and 3 as
+  stops (`[5,1,1]`, walk 7) instead of deleting them from the talk; and
+  the walk is `|P|-1` beyond arrival, or every slide carrying a book
+  gains a phantom press that changes nothing. Checked against the
+  design's own worked examples: nothing tied `[1,1,1]`; pages 3,1,2
+  `[3,1,2]` walk 6; two books beside one figure take the LONGER, `[3,1]`.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

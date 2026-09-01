@@ -813,8 +813,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # clicks through them like a flip book, with page one still living in
 # a.text; the editor's accessors point at the current page, and the
 # timeline counts a page as a stop.
-EXPECTED_MD5 = "f32af1626e9dfb879109fa0c1630c3c7"
-EXPECTED_BYTES = 3145713
+# Moved 2026-09-01 for T166: a flip book with text walking beside it
+# takes one stop per (figure, page of that figure), and a page says
+# which figure it starts from its own right-click menu.
+EXPECTED_MD5 = "99b7b09cc225600510ac4f2048aafd51"
+EXPECTED_BYTES = 3148413
 
 
 def _render_example() -> str:
