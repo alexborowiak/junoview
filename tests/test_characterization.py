@@ -840,8 +840,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # flip pages and chart series.
 # Moved 2026-09-01 for T172: text builds - a box arrives a bullet or a
 # sentence at a time, cut at render so the stored words never change.
-EXPECTED_MD5 = "69e34a785fc09151282187bb0feea924"
-EXPECTED_BYTES = 3204956
+# T173 2026-09-01: the chart-series tie (an object bound to the
+# moment one named series is plotted) and the galBoot fix that
+# driving it uncovered -- both add JS to the embedded deck bundle.
+EXPECTED_MD5 = "2042a3040fb4cd88e2ae52318b1c5575"
+EXPECTED_BYTES = 3218605
 
 
 def _render_example() -> str:

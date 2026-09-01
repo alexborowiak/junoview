@@ -78,6 +78,17 @@
     if(!a||a.k!=='chart'||a.ct==='pie') return 0;
     return chartParse(a).series.length;
   }
+  /* THE NAMES, in build order, and the one place they are read off.
+     drawChart, the tie picker and seriesShows all address a series by
+     name (T159/T160) -- three copies of `chartParse(a).series.map(...)`
+     is three chances for one of them to start disagreeing about what a
+     series is called, which is the whole failure mode a name-keyed
+     build exists to avoid. Pie is excluded here for the same reason it
+     is excluded above: its slices are categories, not series. */
+  function chartSeriesNames(a){
+    if(!a||a.k!=='chart'||a.ct==='pie') return [];
+    return chartParse(a).series.map(function(se){return se.name;});
+  }
   function chartSvg(a){
     var d=chartParse(a);
     var pg=pageOf();
@@ -285,7 +296,7 @@
        its place in the layout and still contributes to nothing that
        moves, so nothing reflows as series arrive. */
     var shown=chartSeriesShown(s,a);
-    var names=chartParse(a).series.map(function(se){return se.name;});
+    var names=chartSeriesNames(a);
     if(shown<names.length){
       names.forEach(function(nm,si){
         if(si<shown) return;
@@ -407,11 +418,25 @@
         old[se.name]=se.color;});
       data.series.forEach(function(se){
         if(old[se.name]) se.color=old[se.name];});
+      /* A TIE POINTS AT A SERIES BY NAME (T162), and a hand edit can
+         rename or drop one. The tie then fails OPEN -- the item shows
+         all the time rather than vanishing -- but silently reverting to
+         "always shown" is still a change worth being told about, and
+         this is the one moment the old names and the new ones are both
+         in hand. */
+      var nowNm={};data.series.forEach(function(se){nowNm[se.name]=1;});
+      var orph=0;
+      (s.annots||[]).forEach(function(x){
+        if(!x||!x.tie||x.tie.to!=='series'||x.tie.id!==a.oid) return;
+        if(old[x.tie.at]!==undefined&&!nowNm[x.tie.at]) orph++;});
       a.cats=data.cats;a.series=data.series;
       /* hand-edited numbers are yours now, not the table's */
       delete a.ref;
       markDirty();refresh();chartDlgClose();
-      toast('Chart updated — Ctrl+Z undoes it');
+      toast('Chart updated — Ctrl+Z undoes it'
+        +(orph?('. '+orph+' item'+(orph===1?'':'s')+' tied to a series '
+          +'that is no longer in the numbers — '
+          +(orph===1?'it shows':'they show')+' all the time now'):''));
     });
     var no=document.createElement('button');
     no.className='dbtn';no.textContent='Cancel';
@@ -421,6 +446,104 @@
     p.appendChild(rowb);
     document.body.appendChild(p);
     ta.focus();
+  }
+
+  /* ---- WHICH SERIES DOES THIS BELONG TO (T162) ------------------------
+     The second door of the object menu's "shows with" section. A flip
+     book has a pane with its figures already listed, so T161 could just
+     open it and point; a chart has no pane, and inventing one for a
+     two-line question would be a new surface to keep in step for
+     nothing. So this borrows openTokenPicker's idiom instead: a floating
+     .canvas-menu of rows, dismissed by clicking away or by Escape.
+
+     IT RE-RENDERS RATHER THAN CLOSING. Every row is one commit and the
+     slide behind redraws, so you watch the answer as you pick it -- and
+     the mode rows cannot mean anything until a series is chosen, so a
+     menu that closed on the first click would make "just this one" a
+     two-visit job. */
+  function seriesTieClose(){
+    var p=$('#series-tie'); if(p) p.remove();
+  }
+  function openSeriesTie(ci,idxs,ev){
+    seriesTieClose();
+    var s=pres.slides[cur];
+    var ch=s&&(s.annots||[])[ci];
+    if(!ch||ch.k!=='chart') return;
+    /* idempotent, and the tie needs the chart to have a durable name.
+       renderAnnots already calls it on every render; this is belt and
+       braces for a chart placed and tied inside one frame. */
+    ensureOids(s);
+    /* a chart cannot tie to itself, and an item with no annot behind it
+       is a stale index */
+    var mine=(idxs||[]).filter(function(i){
+      return i!==ci&&(s.annots||[])[i];});
+    if(!mine.length) return;
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu';m.id='series-tie';
+    function rowIn(host,label,fn,title,icon){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt';
+      /* the icon is trusted bic() markup; the LABEL stays a text node --
+         a series is named by its data and could contain anything */
+      if(icon) b.innerHTML=bic(icon)+' ';
+      b.appendChild(document.createTextNode(label));
+      if(title) b.title=title;
+      b.setAttribute('role','menuitem');
+      b.addEventListener('click',function(e){
+        e.stopPropagation();fn();});
+      host.appendChild(b);
+      return b;
+    }
+    function first(){return (s.annots||[])[mine[0]]||{};}
+    /* the tie the SELECTION already has to THIS chart, or null. Read off
+       the first item, the way renderTiePanel does: a mixed selection
+       shows the first one's answer and one click makes them agree. */
+    function tieNow(){
+      var t=first().tie;
+      return (t&&t.to==='series'&&t.id===ch.oid)?t:null;
+    }
+    function setTie(name,md){
+      mine.forEach(function(i){
+        var x=(s.annots||[])[i]; if(!x) return;
+        if(name==null) delete x.tie;
+        else x.tie={to:'series',id:ch.oid,at:name,m:md||'from'};
+      });
+      markDirty();renderSlide();build();
+    }
+    function build(){
+      m.innerHTML='';
+      menuHead(m,mine.length===1
+        ?('“'+annotLabel(first()).slice(0,26)+'” shows with')
+        :(mine.length+' items show with'));
+      var now=tieNow();
+      var b0=rowIn(m,'Nothing — always shown',function(){setTie(null);},
+        'The default: it is on the slide from the moment its own build '
+        +'lets it be','none');
+      if(!now) b0.classList.add('on');
+      /* EVERY series, in a box that scrolls when there are many -- the
+         lesson the figure-reference list learned the hard way (T58) */
+      var box=document.createElement('div');
+      box.className='menu-scroll';m.appendChild(box);
+      chartSeriesNames(ch).forEach(function(nm){
+        var on=!!(now&&now.at===nm);
+        var b=rowIn(box,(on?'✓ ':'')+nm,function(){
+          setTie(nm,(now&&now.m)||'from');},
+          'Appears with this series of '
+          +(annotLabel(ch)||'the chart'),'plots');
+        if(on) b.classList.add('on');
+      });
+      if(!now) return;
+      menuHead(m,'and then');
+      SERIES_MODES.forEach(function(md){
+        var on=(now.m||'from')===md[0];
+        var b=rowIn(m,(on?'✓ ':'')+md[1],function(){
+          setTie(now.at,md[0]);},SERIES_TIPS[md[0]],'stagger');
+        if(on) b.classList.add('on');
+      });
+    }
+    m.setAttribute('role','menu');
+    build();
+    floatAt(m,ev);
   }
 
   /* ---- refresh from the source --------------------------------------- */
@@ -453,5 +576,6 @@
   }
   window.SemDeckChart={place:placeChart,dataOf:chartDataOf,
     fromRows:chartFromRows,dataDlg:chartDataDlg,resync:chartResyncAll,
-    seriesCount:chartSeriesCount,
+    seriesCount:chartSeriesCount,seriesNames:chartSeriesNames,
+    tieDlg:openSeriesTie,
     svg:chartSvg};

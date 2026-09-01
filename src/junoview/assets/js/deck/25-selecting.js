@@ -1924,15 +1924,31 @@
          So: start from the text. `showFlipPane` sets which book the
          pane is about and never touches the selection, so one click
          lands on the tie control with your item already named in it. */
-      if(selIdxs().length&&typeof showFlipPane==='function'){
+      /* THE SAME SENTENCE, FOR A CHART'S SERIES (T162). A flip book's
+         pages were the only thing on a slide that stepped when T161 was
+         written; T160 made a chart's series the second, and "this
+         sentence appears when the treatment line does" is the identical
+         request. So it is the identical section -- one head, one row per
+         stepper -- rather than a second place to look. */
+      if(selIdxs().length){
         var tieS=pres.slides[cur];
-        var tieBooks=[];
+        var tieBooks=[],tieCharts=[];
         ((tieS&&tieS.annots)||[]).forEach(function(x,xi){
-          if(x&&x.k==='flip'&&flipFrames(x).length) tieBooks.push(xi);});
+          if(!x) return;
+          if(x.k==='flip'&&flipFrames(x).length){tieBooks.push(xi);return;}
+          /* only a chart that actually STEPS. On one that arrives whole
+             there is no moment to tie to, and a row that cannot mean
+             anything is worse than no row -- the rule the figure rows
+             above already follow. */
+          if(x.k==='chart'&&x.anim&&x.anim.by==='series'
+            &&window.SemDeckChart.seriesCount(x)) tieCharts.push(xi);
+        });
         var tieMine=selIdxs().filter(function(i){
           var x=(tieS.annots||[])[i];return x&&x.k!=='flip';});
-        if(tieBooks.length&&tieMine.length){
+        if((tieBooks.length||tieCharts.length)&&tieMine.length)
           menuHead(m,'shows with');
+        if(tieBooks.length&&tieMine.length
+          &&typeof showFlipPane==='function'){
           tieBooks.forEach(function(bi){
             var bk=(tieS.annots||[])[bi];
             var one=tieMine.length===1?(tieS.annots||[])[tieMine[0]]:null;
@@ -1948,6 +1964,25 @@
               'flipbook');
           });
         }
+        tieCharts.forEach(function(ci){
+          /* a chart cannot be tied to its own series */
+          var mine2=tieMine.filter(function(i){return i!==ci;});
+          if(!mine2.length) return;
+          var ca=(tieS.annots||[])[ci];
+          var one2=mine2.length===1?(tieS.annots||[])[mine2[0]]:null;
+          var t2=(one2&&one2.tie&&one2.tie.to==='series'
+            &&one2.tie.id===ca.oid)?one2.tie:null;
+          var lab2=t2
+            ?('✓ Shows with “'+t2.at+'” in '
+              +(annotLabel(ca)||'the chart'))
+            :('Show with a series of '
+              +(annotLabel(ca)||'the chart')+'…');
+          row(lab2,'',function(){
+            window.SemDeckChart.tieDlg(ci,mine2,ev);},
+            'Pick which series this belongs to, and whether it arrives '
+            +'with that series and stays, shows only while it is the '
+            +'newest, or goes when it arrives','plots');
+        });
       }
       /* PINNED TO WHICH CORNER (T14). Offered for one object at a
          time: an anchor is a fact about that item, and a menu that

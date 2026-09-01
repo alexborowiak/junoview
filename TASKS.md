@@ -3514,6 +3514,49 @@ effects are visible for approximately none of the moments they are usable.
   without `after`, so an automatic build exported as a click one.
   Driven: three hard-broken lines, Bullet by bullet, strip ▸3, and
   Present steps `--- / +-- / ++- / +++`.
+- [x] **T173 · L — Words tied to a chart series, not to a click.**
+  T160 made a chart arrive one series at a time; the sentence about
+  that series still arrived on a click of its own, so the two drifted
+  apart the moment you inserted a build anywhere earlier on the slide.
+  A tie fixes the words to the MOMENT instead: `tie:{to:'series',
+  id:<the chart's oid>, at:<the series NAME>, m:'from'|'only'|'until'}`.
+  *Done 2026-09-01.* Bound by NAME, never by index, so a data refresh
+  that reorders the columns cannot silently repoint the sentence at
+  someone else's series. Every unresolvable binding FAILS OPEN — chart
+  deleted, series renamed, build switched off — because an object that
+  becomes invisible forever is the worst thing this feature could do;
+  the same rule flipShowsFrame already followed. `stepShows` asks the
+  flip-book tie and the series tie as ONE question, so the hide pass
+  cannot learn a new stepper and forget an old one, and both halves
+  return true for an object carrying no tie — every deck written before
+  today renders byte-for-byte as it did.
+  The door starts from the SELECTION (the T161 lesson): select the
+  words, right-click, “Show with a series of …”. The panel re-renders
+  in place rather than closing, because the mode rows cannot mean
+  anything until a series is picked.
+  It EXPORTS rather than becoming a loss line: “from” is PowerPoint's
+  own model, so the words arrive on the click that plots that series,
+  at `base+i` — the same arithmetic the reveal uses, so the click you
+  rehearsed is the click you get. “only” and “until” need the words to
+  LEAVE again, which this writer has no exit for; those are counted in
+  the export dialog and land whole.
+  DRIVING IT FOUND A LIVE BOOT-KILLER, and this is the reason to keep
+  doing it. T171's `galBoot` called `wireMenuToggle(btn,menu,galSync)`
+  — that helper takes id STRINGS and does `$('#'+id)`, so it built the
+  selector `#[object HTMLButtonElement]` and threw a SyntaxError from
+  inside THE BOOT SEQUENCE. Everything after it never ran: `overlayBoot`,
+  `initReuseDoors`, `applyRibbonLayout`, `applyRibbonPrefs`,
+  `applyInitialRoute`. The visible symptom was that Insert → Chart did
+  nothing at all, and all 990 tests were green, because the call reads
+  perfectly well as a substring. The gallery is now wired directly (it
+  has to redraw as it opens anyway), and
+  `test_the_shared_menu_wiring_is_only_ever_handed_id_strings` pins the
+  argument shape so the next caller fails in pytest instead of in
+  somebody's browser.
+  Driven: chart placed from the ribbon, “Reveal series one at a time”
+  (“Axes first, then 2 series — 3 clicks”), words tied to Series 2,
+  then Present — press 1 axes, press 2 Series 1, press 3 Series 2 AND
+  the sentence.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

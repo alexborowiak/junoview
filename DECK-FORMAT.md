@@ -132,6 +132,7 @@ Whatever its kind, an item may also carry these.
 | --- | --- | --- |
 | `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
 | `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
+| `tie` | What this item's arrival is bound to: `{to, id, at, m}` — `to:'series'` binds it to a chart's named SERIES (`id` the chart's `oid`, `at` the series NAME so it survives a data refresh), and `m` is only/from/until as for a flip book. |
 | `anim` | How and when this item arrives: `{type, order}` plus the optional `by` (`para`/`sent`, for a text box that arrives a bullet or a sentence at a time) and `after` below. |
 | `after` | Seconds this build waits after the one before it, running itself instead of waiting for a click. Absent means wait for the click. |
 | `oid` | str | This object's durable name, used to follow it through its own history and to match it across slides for a "move" transition. |

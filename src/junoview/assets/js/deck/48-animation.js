@@ -332,7 +332,21 @@
   function galBoot(){
     var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
     if(!btn||!menu) return;
-    wireMenuToggle(btn,menu,galSync);
+    /* WIRED HERE RATHER THAN THROUGH wireMenuToggle, which takes id
+       STRINGS and builds a selector out of them: handed the elements
+       it threw a SyntaxError, and a throw in the boot sequence takes
+       the rest of this IIFE with it -- overlayBoot, initReuseDoors and
+       both ribbon-preference passes never ran, so the Insert ribbon's
+       Chart button silently did nothing. Every test still passed; only
+       clicking the button in a browser showed it (2026-09-01).
+       The gallery also has to REDRAW as it opens -- the ticked effect
+       is a fact about the current selection -- which is the other half
+       of why it does not share that helper. */
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(menu.hidden){galSync();overlayShow(btn,menu);floatMenu(btn,menu);}
+      else overlayHide(menu);
+    });
     menu.addEventListener('mouseleave',galPreviewStop);
   }
   function seqBoot(){

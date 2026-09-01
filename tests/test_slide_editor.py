@@ -3234,9 +3234,12 @@ def test_the_flip_book_tie_has_a_door_from_the_thing_being_tied(out):
     place to be standing. The door now starts from the selection.
     """
     assert "menuHead(m,'shows with');" in out
-    # offered only when there is something to tie and a book to tie it to
-    assert "if(x&&x.k==='flip'&&flipFrames(x).length) tieBooks.push(xi);" in out
-    assert "if(tieBooks.length&&tieMine.length){" in out
+    # offered only when there is something to tie and a book to tie it to.
+    # T173 widened the sweep to collect stepping CHARTS in the same pass,
+    # so this reads the collection, not the shape of one line of it.
+    sweep = "if(x.k==='flip'&&flipFrames(x).length)"
+    assert sweep + "{tieBooks.push(xi);return;}" in out
+    assert "if(tieBooks.length&&tieMine.length" in out
     # a flip book is not tied to itself
     assert "var x=(tieS.annots||[])[i];return x&&x.k!=='flip';});" in out
     # the row reflects the tie that already exists rather than lying

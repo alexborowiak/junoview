@@ -918,6 +918,16 @@
       +'@media print{html,body{-webkit-print-color-adjust:exact!important;'
       +'print-color-adjust:exact!important;}}';
     root.appendChild(bst);
+    /* AN EXPORTED PAGE IS EVERY MOMENT AT ONCE (T162). mode='view' plus
+       revealCount=99999 above means "fully built" -- which to a chart
+       revealed one series at a time reads as the LAST stop, so an item
+       tied to an earlier series would be missing from the PDF and the
+       standalone HTML altogether. A flip book answers this by exploding
+       into one page per frame; a chart exports as one plot and cannot,
+       so every series tie fails open here instead (seriesShows).
+       Cleared beside flipForce below, for the same reason and the same
+       lifetime. */
+    printAll=1;
     outputSlides().forEach(function(ent,i){
       var s=ent.s;
       cur=ent.i;
@@ -958,6 +968,7 @@
     /* put the editor back on its own frame, or every flip book on screen
        would be left showing whatever the last exported page wanted */
     flipForce=null;
+    printAll=0;
     if(typeset) typeset(root);
     return root;
   }
@@ -1534,7 +1545,33 @@
          export dialog, never silently. A link to a slide leaves as the
          DECK index here; the builder maps it to the output page,
          because a flip book explodes one slide into several. */
+      /* A SERIES TIE LEAVES AS A REAL BUILD (T173), not as a line in
+         the loss report. "Show from this series onwards" is exactly
+         PowerPoint's own model -- the words arrive on the click that
+         plots that series and stay -- so it survives the round trip;
+         the arithmetic is the one seriesShows uses, base+i, so the
+         click you rehearsed is the click PowerPoint gives you.
+         'only' and 'until' need the words to LEAVE again, which this
+         writer has no exit animation for, so those are counted and
+         land whole. Failing open beats a paragraph nobody can find. */
+      var xt=(typeof seriesTie==='function')?seriesTie(a):null;
+      var xstep=null;
+      if(xt&&!a.anim){
+        var xch=annotByOid(s,xt.id);
+        if(xch&&xch.k==='chart'&&xch.anim&&xch.anim.by==='series'){
+          var xi=chartSeriesNames(xch).indexOf(xt.at);
+          var xb=(xi<0)?null:stepBase(s,xch);
+          if(xb!=null){
+            if((xt.m||'from')==='from') xstep=xb+xi;
+            else note.tied=(note.tied|0)+1;
+          }
+        }
+      }
       for(var pq=pushedAt;pq<items.length;pq++){
+        if(xstep!=null){
+          items[pq].animStep=xstep;
+          items[pq].animType=(a.anim&&a.anim.type)||'fade';
+        }
         if(a.anim){
           items[pq].animStep=bsteps[a.anim.order||0];
           items[pq].animType=a.anim.type||'fade';
@@ -1625,7 +1662,7 @@
      lost, asks. Nothing to lose means no dialog, so the ordinary export
      is still one click (T109). */
   function pptxLosses(){
-    var note={skipped:0,cropped:0,maths:0,orig:{}};
+    var note={skipped:0,cropped:0,maths:0,tied:0,orig:{}};
     var lost=[];
     outputSlides().forEach(function(ent){
       note.frame=ent.f;
@@ -1637,6 +1674,10 @@
     if(note.maths) lost.push(note.maths+' equation'
       +(note.maths===1?'':'s')+' — PowerPoint has no LaTeX, so they '
       +'arrive as plain characters');
+    if(note.tied) lost.push(note.tied+' item'+(note.tied===1?'':'s')
+      +' tied to a chart series with “only” or “until” '
+      +'— PowerPoint is given no way to take them away again, so '
+      +'they stay on the slide once shown');
     if(note.cropped) lost.push(note.cropped+' hand-drawn crop outline'
       +(note.cropped===1?'':'s')+' — the trim is carried, the outline '
       +'is not');
@@ -1679,7 +1720,8 @@
       +'\n\nExport PDF keeps all of it exactly as you see it.');
   }
   function pptxBuildAndSave(orig){
-    var pg=pageOf(),note={skipped:0,cropped:0,maths:0,orig:orig||{}};
+    var pg=pageOf(),
+      note={skipped:0,cropped:0,maths:0,tied:0,orig:orig||{}};
     var bg=tokVal((pres&&pres.pageBg)||'#0b141d');
     var ink=pageIsLight(bg)?'#0b141d':'#ffffff';
     /* a slide-jump names a DECK slide; the .pptx page it lands on is
@@ -1745,6 +1787,10 @@
     if(note.skipped) msg+='. '+note.skipped+' cell'
       +(note.skipped===1?'':'s')+' could not convert (a rich output with '
       +'no picture and no text — use Export PDF for those)';
+    if(note.tied) msg+='. '+note.tied+' series-tied item'
+      +(note.tied===1?'':'s')+' will stay once shown — '
+      +'“only” and “until” need an exit this '
+      +'writer does not have';
     if(note.cropped) msg+='. '+note.cropped+' hand-drawn crop'
       +(note.cropped===1?'':'s')+' not carried (PowerPoint has no '
       +'freehand mask \u2014 the trim is, the outline is not)';

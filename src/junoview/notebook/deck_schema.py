@@ -190,6 +190,20 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                   "figure instead of the back/forward arrows, so any "
                   "figure is one click away. A named frame names its "
                   "button."),
+    "tie": (dict, "What moment this object belongs to, when something "
+                  "else on the slide steps. `to` names the kind of stop "
+                  '-- "series" is the one written today, a chart '
+                  "revealed one series at a time; `id` is that chart's "
+                  "`oid` and `at` is the series NAME, never an index, "
+                  "so the tie survives a data refresh that reorders the "
+                  'columns; `m` is "from" (arrives with that series and '
+                  'stays -- the default), "only" (only while it is the '
+                  'newest) or "until" (goes when it arrives). A tie '
+                  "that cannot be resolved SHOWS the object and never "
+                  "hides it. A flip-book page tie is the same idea in "
+                  "older keys (fb/fbf/fbm), kept as it is so a deck "
+                  "saved here still opens correctly in an older "
+                  "build."),
     "name": (str, "What to call this object in the Objects pane, the "
                   "Selection Pane of an exported .pptx, and anywhere "
                   "else it has to be listed. Absent means the object is "

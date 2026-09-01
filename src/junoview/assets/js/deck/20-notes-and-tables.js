@@ -2370,15 +2370,29 @@
        In PLAYBACK an item of another frame is removed. In the EDITOR it is
        dimmed instead and left where it is — you have to be able to see and
        click the caption you are about to tie to frame 4 while you are
-       standing on frame 1. */
+       standing on frame 1.
+       A TIE TO A CHART'S SERIES (T162) comes through the same predicate
+       and takes the removal branch only. It never dims: a chart is whole
+       in the editor by design and has no arrows to step, so a dim there
+       would be permanent — see seriesShows for the whole argument. */
     (s.annots||[]).forEach(function(a,i){
-      if(!a||!a.fb) return;
+      /* the fast path has to know about BOTH kinds of tie (T173), or an
+         item bound only to a chart series is skipped here and never
+         hidden -- the feature would look built and do nothing */
+      if(!a) return;
+      if(!a.fb&&!(typeof seriesTie==='function'&&seriesTie(a))) return;
       /* A TEXT BOOK IS NOT HIDDEN BY ITS TIE -- the tie turns its pages.
          It goes only on a figure it has NO page for, which is a
          different thing from having run out: stale words beside a new
          figure is the failure this feature exists to prevent. */
+      /* ONE QUESTION, however many kinds of stop can answer it (T173):
+         a flip book's figure, and now a chart's SERIES. stepShows asks
+         both, and each half returns true for an item that carries no
+         tie of its own -- so a deck written before either existed is
+         byte-for-byte unchanged. */
       var gone=(a.k==='text'&&textPages(a).length>1)
-        ?(textAt(s,a)<0):!flipShows(s,a);
+        ?(textAt(s,a)<0)
+        :!((typeof stepShows==='function')?stepShows(s,a):flipShows(s,a));
       if(!gone) return;
       var fel=layer.querySelector('[data-idx="'+i+'"]');
       if(!fel) return;

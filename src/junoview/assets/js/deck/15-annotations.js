@@ -1272,6 +1272,127 @@
   var FLIP_MODES=[['only','Just this figure'],
     ['from','This figure and every one after'],
     ['until','This figure and every one before']];
+  /* ---- TIED TO A MOMENT, NOT ONLY TO A PAGE (T162) -------------------
+     "it is hard to tie text to a page on the flipbook ... it could be
+     cumulative 'all text beforehand appears with it' or not cumulative,
+     just the text that is tied to it appears" (2026-09-01). For flip-book
+     PAGES that sentence was answered by a.fb / a.fbf / a.fbm above. A
+     chart built by series (T160) is the SECOND thing on a slide that
+     steps, and the same sentence has to work for it: "this line appears
+     when the treatment line does".
+
+     THE STORED SHAPE. One optional object rather than a second trio of
+     flat keys:
+
+         a.tie = {to:'series', id:<the chart's oid>, at:<the series NAME>,
+                  m:'from'|'only'|'until'}
+
+     `to` names WHAT KIND OF STOP is being pointed at, so a third stepper
+     adds a value and not three more keys -- which is the one thing the
+     flip trio cannot do, having baked its kind into its key names.
+     `id` is the chart's `oid`, never its index: every paste, delete and
+     Bring forward splices s.annots, which is the argument flipId already
+     makes. `at` is the series NAME, never its index, for exactly the
+     reason T160 gives -- chartResyncAll replaces a.series wholesale on a
+     refresh and matches by name to carry colour across, so a tie keyed
+     the same way survives a column being added, removed or reordered
+     upstream.
+
+     THE FLIP TIE IS THE SAME IDEA IN OLDER KEYS, AND IS LEFT ALONE. It
+     would read more tidily as {to:'frame', ...} and it is not worth what
+     that rewrite costs -- flipRemap, tieSel, renderTiePanel, pptxItems
+     and the pinned bytes of the rendered page all read a.fb today. The
+     real argument is not the diff, though: a deck is a FILE PEOPLE HAND
+     EACH OTHER. An older build ignores a key it has never heard of, so
+     a.tie fails open over there, which is what we want; a flip tie
+     rewritten into a.tie would silently show every caption on every
+     figure over there, which is not. Old keys keep working byte for
+     byte, the new kind gets the new shape, and `stepShows` is the one
+     predicate both answer to. */
+  /* set by buildPrintRoot for the length of an export. See seriesShows. */
+  var printAll=0;
+  /* A SERIES BUILD IS CUMULATIVE WHERE FRAMES ARE EXCLUSIVE -- series 1
+     is still on the axes when series 2 lands -- so the three words mean
+     slightly different things here, and 'from' rather than 'only' is the
+     sensible default. Listed first because these rows are read in order. */
+  var SERIES_MODES=[['from','This series and every one after'],
+    ['only','Just this series'],
+    ['until','This series and every one before']];
+  var SERIES_TIPS={
+    from:'It arrives with that series and stays for the rest of the '
+      +'slide — the cumulative answer, and the usual one.',
+    only:'It is on screen only while that series is the newest one. The '
+      +'next click takes it away again, and the series itself stays: a '
+      +'chart build adds, it does not swap.',
+    until:'It is there from the start and goes when that series arrives '
+      +'— the question the line answers.'};
+  /* an annot on THIS slide by its durable name. Slide-scoped on purpose:
+     ensureOids de-duplicates WITHIN a slide only, so a chart dragged to
+     another slide stops resolving here -- which is the fail-open case
+     below rather than a wrong answer. */
+  function annotByOid(s,id){
+    var hit=null;
+    ((s&&s.annots)||[]).forEach(function(x){
+      if(!hit&&x&&x.oid===id) hit=x;});
+    return hit;
+  }
+  /* the tie, or null. Validated in ONE place rather than at each call
+     site, because a hand-edited deck can carry anything at all. */
+  function seriesTie(a){
+    var t=a&&a.tie;
+    if(!t||t.to!=='series') return null;
+    if(typeof t.id!=='string'||!t.id) return null;
+    if(typeof t.at!=='string') return null;
+    return t;
+  }
+  /* series i, against a build that has shown `shown` of them so far */
+  function seriesShowsAt(i,shown,m){
+    if(m==='only') return shown===i+1;    /* while it is the newest */
+    if(m==='until') return shown<=i+1;    /* up to and including it */
+    return shown>=i+1;                    /* from it onwards */
+  }
+  function seriesShows(s,a){
+    var t=seriesTie(a); if(!t) return true;
+    /* THE EDITOR AND THE EXPORTED PAGE ARE EVERY MOMENT AT ONCE, so
+       neither is a moment this can be measured against.
+       The editor: a chart is whole there by design (T160), and there is
+       no series cursor to step the way a flip book's arrows step it -- a
+       dim that nothing you can do in the editor will lift is damage, not
+       information. So a series tie behaves like a BUILD: fully drawn
+       while editing, held back only in playback.
+       The export: buildPrintRoot renders with mode='view' and
+       revealCount=99999, which reads as the LAST stop -- so without
+       printAll every 'only' and 'until' item would be missing from the
+       PDF and the standalone HTML entirely. A flip book answers that by
+       exploding into one page per frame; a chart exports as one plot and
+       cannot, so it fails open here instead. */
+    if(mode!=='view'||printAll) return true;
+    /* EVERY UNRESOLVABLE BINDING FAILS OPEN -- the rule flipShowsFrame
+       states above, for the same reason: an item that silently becomes
+       invisible forever is the worst thing this feature could do. The
+       chart deleted or moved to another slide; what resolved no longer
+       a chart; the build turned back off; the series dropped or renamed
+       by a data refresh -- every one of them shows. */
+    var ch=annotByOid(s,t.id);
+    if(!ch||ch.k!=='chart') return true;
+    if(!(ch.anim&&ch.anim.by==='series')) return true;
+    var i=chartSeriesNames(ch).indexOf(t.at);
+    if(i<0) return true;
+    return seriesShowsAt(i,chartSeriesShown(s,ch),t.m||'from');
+  }
+  /* IS THIS ITEM'S MOMENT THE ONE ON SCREEN? One question for every kind
+     of tie, so the hide pass in renderAnnots cannot learn about a new
+     stepper and forget an old one. flipShows already returns true for an
+     item with no a.fb, so for every deck that exists today this is the
+     function that ran before, unchanged. */
+  function stepShows(s,a){
+    return flipShows(s,a)&&seriesShows(s,a);
+  }
+  /* does this item point at any moment at all -- the fast path the hide
+     pass takes on the ordinary item, which is nearly every item */
+  function stepTied(a){
+    return !!(a&&(a.fb||seriesTie(a)));
+  }
   /* step a flip book's arrows. In playback the frames ARE stops in the one
      playback sequence, so an arrow moves the talk — otherwise the arrow
      and the space bar would disagree about where you are. */

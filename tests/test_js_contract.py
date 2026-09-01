@@ -46,6 +46,9 @@ TEMPLATES = ["deck.html", "page.html", "shell.html", "help.html"]
 # element itself at runtime. Curated by hand -- a new entry needs a note
 # saying where the element is created, so the next reader can re-verify.
 RUNTIME_IDS = {
+    # 47-charts.js builds this popover on demand when you tie an
+    # object to a chart SERIES, and removes it on close (T173)
+    "series-tie",
     # The presenter console is a popup window whose whole body is one
     # markup string in deck.js (~line 13950, 'jvp-' = junoview presenter);
     # these lookups run against that popup's document, not the app's.
@@ -480,3 +483,41 @@ def test_no_template_emits_a_duplicate_id():
         dupes = {k: v for k, v in Counter(ids).items() if v > 1}
         assert not dupes, f"{name} emits duplicate id(s): {dupes}"
 
+def test_the_shared_menu_wiring_is_only_ever_handed_id_strings():
+    """wireMenuToggle takes three ID STRINGS and builds `'#'+id` from
+    each. Handed an ELEMENT it produces the selector
+    `#[object HTMLButtonElement]`, and querySelector raises a
+    SyntaxError -- which, thrown from THE BOOT SEQUENCE, takes the rest
+    of the deck IIFE with it: no overlay closer, no reuse doors, no
+    ribbon preferences, and an Insert ribbon whose Chart button silently
+    does nothing at all.
+
+    That shipped in T171 and all 990 tests stayed green, because the
+    call reads perfectly well as a substring. It was found by clicking
+    the button (2026-09-01). This pins the argument SHAPE, so the next
+    caller that reaches for the helper with elements in hand fails here
+    instead of in somebody's browser.
+    """
+    from junoview import assets
+
+    src = assets.deck_js()
+    q = "'" + '"'
+    bad = []
+    for args in re.findall(r"wireMenuToggle\(([^()]*)\)", src):
+        if not args.strip():
+            continue
+        for a in args.split(","):
+            a = a.strip()
+            # the helper's own signature and its one pass-through call
+            if a in ("wrapId", "btnId", "menuId"):
+                continue
+            if not (a[:1] in q and a[-1:] == a[:1]):
+                bad.append(args.strip()[:70])
+                break
+    assert not bad, (
+        "wireMenuToggle is passed something that is not an id string: "
+        + repr(bad)
+        + " -- it does $('#'+arg), so an element there is a SyntaxError "
+        "at boot, and the rest of the deck never wires up. Wire that "
+        "menu directly instead."
+    )
