@@ -3382,6 +3382,44 @@ effects are visible for approximately none of the moments they are usable.
   drives. Its own task, with the export question answered first: PDF and
   standalone HTML are fully built so timing means nothing there, while
   .pptx genuinely has after-previous-with-delay to map onto.
+
+- [x] **T169 · M — A build can run itself, after a pause.**
+  The rest of the user's gesture: "if you hold down 5 and click it
+  appears five seconds after the last animation." Built on the same day
+  as T168 rather than deferred again — the user's words: "stop not doing
+  features cause they are hard."
+  *Done 2026-09-01.* `a.anim.after` is a whole number of seconds, and it
+  is the first TIMING Junoview has ever stored. Absent — every build ever
+  written until now — means wait for the space bar, so no existing deck
+  changes. It is a property of the STOP rather than the object: two
+  things arriving together cannot arrive at two different times, so the
+  click writes it onto every item sharing that order, and holding 0
+  takes a delay back without leaving the mode. The digit has to be
+  TRACKED because a MouseEvent carries shift/ctrl/alt/meta and nothing
+  else; it is swallowed while the mode is armed so a digit cannot also
+  mean whatever else a digit means.
+  THE PLAYBACK MODEL is the part that needed care. A stop on a clock is
+  not a stop on a click, and the failure it must never have is a talk
+  that advances twice in front of an audience: exactly one timer may be
+  pending, and every mover cancels it first — `advance`, `backStep` and
+  `go` all call `autoStop()` before doing anything. A delayed FIRST
+  build still starts counting on arrival, or the feature would need a
+  click to begin not-clicking. The wait is clamped to 60s so a typo
+  cannot park a talk forever, and only a BUILD can carry one: a flip
+  book's frames and a chart's series are positions in a walk, and those
+  are the stops a presenter talks over.
+  EXPORT is real, not a loss line. PowerPoint has this exact idea, so an
+  automatic group leaves as `nodeType="afterGroup"` with a millisecond
+  delay where a click group keeps `delay="indefinite"`. Only the new
+  case declares a nodeType: `clickEffect`/`afterEffect` name individual
+  EFFECTS while a group is a clickPar or an afterGroup, and the click
+  path was verified in PowerPoint itself over COM (T110), so it is left
+  byte-identical. PDF and standalone HTML are fully built, where timing
+  means nothing.
+  Driven live end to end: hold 2 and the bar reads "2 held — next one
+  runs 2s after the last, no click"; the pane row reads "TWO · fade ·
+  +2s"; in Present one space press showed ONE and two seconds later TWO
+  appeared with no further input.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

@@ -730,7 +730,19 @@ window.JunoPptx = (function () {
       return a - b; });
     var tid = 2;
     function nid() { tid++; return tid; }
-    var groups = order.map(function (st) {
+    var groups = order.map(function (st, gi) {
+      /* AFTER PREVIOUS, WITH A DELAY (T169). PowerPoint's own model, so
+         this survives the round trip instead of becoming a line in the
+         loss report: a group whose stop carries `after` waits that many
+         milliseconds and runs itself, where an ordinary group waits
+         `indefinite` -- which is PowerPoint for "on click".
+         The first group on a slide is never automatic: something has to
+         start the sequence, and a slide that began playing itself the
+         moment it appeared would take the talk away from the presenter. */
+      var afterS = 0;
+      steps[st].forEach(function (an) {
+        var v = (an && an.after) | 0; if (v > afterS) afterS = v; });
+      if (gi === 0) afterS = 0;
       var shapes = steps[st].map(function (an, i) {
         var preset = an.type === 'appear' ? 1 : 10;
         var eff = an.type === 'appear' ? ''
@@ -753,8 +765,15 @@ window.JunoPptx = (function () {
           + '<p:to><p:strVal val="visible"/></p:to></p:set>'
           + eff + '</p:childTnLst></p:cTn></p:par>';
       }).join('');
-      return '<p:par><p:cTn id="' + nid() + '" fill="hold">'
-        + '<p:stCondLst><p:cond delay="indefinite"/></p:stCondLst>'
+      /* nodeType is added ONLY for the automatic case. clickEffect and
+         afterEffect name individual EFFECTS; a group is a clickPar or an
+         afterGroup, and the click path here has been verified in
+         PowerPoint itself over COM (T110) with no nodeType at all -- so
+         it is left byte-identical and only the new case declares one. */
+      return '<p:par><p:cTn id="' + nid() + '" fill="hold"'
+        + (afterS ? ' nodeType="afterGroup"' : '') + '>'
+        + '<p:stCondLst><p:cond delay="'
+        + (afterS ? String(afterS * 1000) : 'indefinite') + '"/></p:stCondLst>'
         + '<p:childTnLst><p:par><p:cTn id="' + nid() + '" fill="hold">'
         + '<p:stCondLst><p:cond delay="0"/></p:stCondLst>'
         + '<p:childTnLst>' + shapes
@@ -949,7 +968,10 @@ window.JunoPptx = (function () {
         /* only a shape that actually landed can be animated */
         if (body.length > emitted && item.animStep != null) {
           anims.push({ spid: id, step: item.animStep,
-            type: item.animType || 'fade' });
+            type: item.animType || 'fade',
+            /* the wait travels with the build, or the writer below has
+               nothing to read and the delay is silently dropped (T169) */
+            after: (item.after | 0) || 0 });
         }
       });
       var bg = '<p:bg><p:bgPr>' + solidFill(slide.bg, null, '0B141D')

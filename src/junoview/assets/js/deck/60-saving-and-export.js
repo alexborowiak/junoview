@@ -1538,6 +1538,10 @@
         if(a.anim){
           items[pq].animStep=bsteps[a.anim.order||0];
           items[pq].animType=a.anim.type||'fade';
+          /* a build that runs itself carries its wait out to PowerPoint,
+             which has the same idea (after-previous with a delay), so it
+             survives the round trip instead of becoming a loss line */
+          if(a.anim.after) items[pq].after=a.anim.after|0;
         }
         if(a.link&&a.link.to==='url'&&a.link.href){
           items[pq].link={to:'url',href:a.link.href};

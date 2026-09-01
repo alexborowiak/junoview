@@ -54,6 +54,7 @@ SPEC = {
              "animStep": 0, "animType": "appear"},
             {"t": "rect", "x": 60, "y": 10, "w": 30, "h": 15,
              "fill": "#ff0000", "animStep": 1, "animType": "fade",
+             "after": 5,
              "link": {"to": "slide", "slide": 2}},
             {"t": "table", "x": 5, "y": 75, "w": 90, "h": 15, "grid": 1,
              "rows": [["a", "b"], ["1", "2"]]},
@@ -578,7 +579,13 @@ def test_builds_leave_as_a_real_timing_tree(built):
     x = z.read("ppt/slides/slide1.xml").decode("utf-8")
     assert "<p:timing>" in x and 'nodeType="mainSeq"' in x
     # two click groups: text+image on click 1, rect on click 2
-    assert x.count('<p:cond delay="indefinite"/>') == 2
+    # ONE click group and ONE that runs itself: the rect's step carries
+    # after=5, which is PowerPoint's own after-previous-with-delay, so it
+    # survives the round trip rather than becoming a loss line (T169)
+    assert x.count('<p:cond delay="indefinite"/>') == 1
+    assert x.count('<p:cond delay="5000"/>') == 1
+    assert x.count('nodeType="afterGroup"') == 1
+    # ...and the EFFECT-level names are untouched: a group is a group
     assert x.count('nodeType="clickEffect"') == 2
     assert x.count('nodeType="withEffect"') == 1
     # appear is a bare set; fades add the animEffect

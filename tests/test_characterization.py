@@ -823,8 +823,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T168: a sequencing mode - click objects in the
 # order they should appear, shift-click to put one on the same click as
 # the last, with the whole run a single undo step.
-EXPECTED_MD5 = "f5d6cce90e61fbebd839a596795067c1"
-EXPECTED_BYTES = 3156484
+# Moved 2026-09-01 for T169: a build can carry a delay (a.anim.after)
+# and run itself that many seconds after the one before, set by holding
+# a digit while clicking in the sequencing mode; it leaves as
+# PowerPoint's own after-previous.
+EXPECTED_MD5 = "a5b703892afeaa6b13d9c372efdb189e"
+EXPECTED_BYTES = 3162563
 
 
 def _render_example() -> str:

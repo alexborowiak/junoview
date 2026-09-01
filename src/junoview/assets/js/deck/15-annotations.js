@@ -1100,6 +1100,31 @@
        invisible in a panel headed "Build order". */
     return {count:n,stop:stop,base:base,anch:anch,tail:tail};
   }
+  /* ---- A STOP THAT RUNS ITSELF (T169) -------------------------------
+     `a.anim.after` is a whole number of seconds: this build runs that
+     long after the one before it, with no click. Absent -- which is
+     every build ever written until now -- means wait for the space bar,
+     so every existing deck is untouched.
+     It is a property of the STOP and every item on that stop carries the
+     same value, because two things arriving together cannot arrive at
+     two different times.
+     Only a BUILD can carry one. A flip book's frames and a chart's
+     series are positions in a walk, not objects with an `anim`, so they
+     always wait -- and that is the honest answer rather than an
+     oversight: those are the stops a presenter talks over. */
+  function autoAfter(s,stop){
+    if(!s||stop==null) return 0;
+    var plan=flipPlan(s),seq=animSeq(s),b=-1;
+    for(var i=0;i<plan.stop.length;i++) if(plan.stop[i]===stop) b=i;
+    if(b<0||!seq[b]) return 0;
+    var out=0;
+    seq[b].items.forEach(function(idx){
+      var a=(s.annots||[])[idx];
+      var v=(a&&a.anim&&a.anim.after)|0;
+      if(v>out) out=v;
+    });
+    return Math.max(0,Math.min(60,out));
+  }
   function slideStops(s){
     return flipPlan(s).count;
   }

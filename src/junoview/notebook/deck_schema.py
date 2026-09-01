@@ -158,6 +158,9 @@ ANNOT_COMMON: dict[str, tuple[type, str]] = {
                   "never in a PDF or a .pptx. Like speaker notes it is "
                   "stored in the deck, so a deck file you hand over "
                   "contains it."),
+    "after": (int, "Seconds this build waits after the one before it, "
+                    "running itself instead of waiting for a click. "
+                    "Absent means wait for the click."),
     "oid": (str, "This object's durable name, used to follow it through "
                  "its own history and to match it across slides for a "
                  "\"move\" transition."),

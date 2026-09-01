@@ -3426,3 +3426,77 @@ def test_the_armed_slide_says_it_is_a_picker(out):
     # a mode must never be the key that commits it
     assert "if(!seqArm||e.key!=='Escape') return;" in out
     assert "seqEnd(false);" in out
+
+
+def test_a_build_can_run_itself_after_a_pause(out):
+    """T169, the rest of the user's gesture: "if you hold down 5 and click
+    it appears five seconds after the last animation."
+
+    This is the first thing in Junoview that stores TIMING. `a.anim.after`
+    is a whole number of seconds; absent -- which is every build ever
+    written until now -- means wait for the space bar, so no existing
+    deck changes.
+
+    It is a property of the STOP, not the object: two things arriving
+    together cannot arrive at two different times, so the click writes
+    the delay onto every item sharing that order.
+
+    Driven live: hold 2, click, and the pane row reads "TWO * fade * +2s";
+    in Present one space press showed ONE and two seconds later TWO
+    appeared on its own.
+    """
+    # the digit is TRACKED, because a MouseEvent carries no digit
+    assert "var seqDigit=0;" in out
+    assert "if(e.key>='0'&&e.key<='9'){" in out
+    # ...and swallowed, so it cannot also mean whatever else a digit means
+    assert "seqDigit=+e.key;e.preventDefault();seqSync();" in out
+    # the delay lands on the whole stop, and 0 takes it back
+    assert "if(delay) x.anim.after=delay; else delete x.anim.after;" in out
+    # the pane says a stop runs itself, where the order is read
+    assert "if(aft) c.textContent+=' · +'+aft+'s';" in out
+
+
+def test_one_pending_self_advance_and_any_movement_cancels_it(out):
+    """T169. A stop that runs on a clock instead of a click is a
+    different playback model, and the failure it must never have is a
+    talk that advances twice. So exactly one timer may be pending, and
+    ANY other movement cancels it: a presenter reaching for the space
+    bar, or jumping a slide, has taken control back.
+
+    The first build on a slide is never automatic either -- something
+    has to start the sequence, and a slide that began playing itself the
+    moment it appeared would take the talk away from whoever is giving
+    it.
+    """
+    assert "var autoT=null;" in out
+    assert "function autoStop(){" in out
+    # every mover cancels first
+    body = out[out.index("function advance(){"):]
+    assert body[:80].count("autoStop();") == 1
+    back = out[out.index("function backStep(){"):]
+    assert back[:80].count("autoStop();") == 1
+    goo = out[out.index("function go(n){"):]
+    assert "autoStop();" in goo[:400]
+    # a delayed FIRST build still starts counting on arrival
+    assert "setTimeout(autoArm,0);" in out
+    # and the wait is clamped -- a typo must not park the talk forever
+    assert "return Math.max(0,Math.min(60,out));" in out
+
+
+def test_the_wait_reaches_powerpoint_as_after_previous(out):
+    """T169. PowerPoint has this exact idea -- after-previous with a
+    delay -- so the wait survives the round trip instead of becoming a
+    line in the loss report.
+
+    Only the automatic case declares a nodeType. `clickEffect` and
+    `afterEffect` name individual EFFECTS, while a GROUP is a clickPar or
+    an afterGroup; the click path was verified in PowerPoint itself over
+    COM (T110) with no nodeType at all, so it is left byte-identical.
+    """
+    assert "(afterS ? ' nodeType=\"afterGroup\"' : '')" in out
+    assert "(afterS ? String(afterS * 1000) : 'indefinite')" in out
+    # the first group on a slide is never automatic
+    assert "if (gi === 0) afterS = 0;" in out
+    # and the wait travels all the way from the deck to the writer
+    assert "after: (item.after | 0) || 0 });" in out
+    assert "if(a.anim.after) items[pq].after=a.anim.after|0;" in out

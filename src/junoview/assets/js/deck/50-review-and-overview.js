@@ -920,10 +920,17 @@
   }
   function go(n){
     var prev=cur;
+    /* a pending self-advance belongs to the slide that armed it (T169) */
+    autoStop();
     cur=Math.max(0,Math.min(pres.slides.length-1,n));
     if(cur===prev) return;   /* clamped no-op: keep build + selection state */
     /* stepping back into a slide shows it fully built; forward starts fresh */
     revealCount=(mode==='view'&&cur<prev)?buildsForSlide(cur):0;
+    /* arm on ARRIVAL too: a slide whose first build is delayed should
+       start counting the moment you land on it, not on a click that
+       would defeat the point (T169). Deferred so it arms against the
+       slide that is actually on screen. */
+    setTimeout(autoArm,0);
     selAnnot=null;selSet=[];   /* never carry a selection across slides */
     /* MEASURE BEFORE THE REBUILD. renderSlide empties the stage, so the
        outgoing geometry has to be taken here or it is gone (T27). */
@@ -1038,13 +1045,36 @@
     window.SemDeckTalk={open:open,builds:talkBuilds,zoom:talkZoom,
       sync:syncTalk};
   })();
+  /* THE ONE TIMER. A stop with `after` runs on a clock instead of a
+     click (T169), so exactly one may be pending at a time and ANY other
+     movement cancels it -- a presenter who reaches for the space bar or
+     jumps a slide has taken control back, and a talk that then advanced
+     twice would be the worst possible bug in front of an audience. */
+  var autoT=null;
+  function autoStop(){
+    if(autoT){clearTimeout(autoT);autoT=null;}
+  }
+  function autoArm(){
+    autoStop();
+    if(mode!=='view') return;
+    var s=pres.slides[cur]; if(!s) return;
+    if(revealCount>=slideStops(s)) return;
+    var secs=(typeof autoAfter==='function')?autoAfter(s,revealCount):0;
+    if(!secs) return;
+    autoT=setTimeout(function(){
+      autoT=null;
+      if(mode!=='view') return;
+      advance();
+    },secs*1000);
+  }
   function advance(){
+    autoStop();
     var s=pres.slides[cur];
     /* a flip book's frames are stops in this same sequence, so the space
        bar walks the figure through its steps exactly as it walks a build
        — one gesture for the whole talk (2026-08-22) */
     if(mode==='view'&&s&&revealCount<slideStops(s)){
-      revealCount++;renderSlide();presenterSync();
+      revealCount++;renderSlide();presenterSync();autoArm();
     } else {
       /* THE FILTER LIVES HERE, in the two verbs the whole talk runs on,
          rather than in twenty callers. A cut or a running-late skip is
@@ -1055,6 +1085,7 @@
     }
   }
   function backStep(){
+    autoStop();
     if(mode==='view'&&revealCount>0){revealCount--;renderSlide();
       presenterSync();}
     else {

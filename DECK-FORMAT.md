@@ -132,6 +132,7 @@ Whatever its kind, an item may also carry these.
 | --- | --- | --- |
 | `hide` | int | 1 to leave this out **while editing** — scaffolding you do not want in the way. It is still drawn in playback and print. |
 | `priv` | int | 1 when only you may see it: drawn on your own screen and in the presenter view, never for the audience and never in a PDF or a `.pptx`. Like speaker notes it is stored in the deck, so a deck file you hand over contains it. |
+| `after` | Seconds this build waits after the one before it, running itself instead of waiting for a click. Absent means wait for the click. |
 | `oid` | str | This object's durable name, used to follow it through its own history and to match it across slides for a "move" transition. |
 | `crop` | dict | How this picture or figure is cropped. `t`/`r`/`b`/`l` trim each edge by a percentage; `shape` names one of the preset outlines, drawn **inside** the trim box so the same four handles move and size it; `path` is an outline you drew yourself, a list of `[x, y]` points in percent of the item's own box, which wins over both. The picture itself is never altered — a crop is a mask, so clearing it brings everything back. |
 | `md` | int | 1 when this text box's words are Markdown source and what is drawn is that source rendered — headings, bullets, numbers, quotes, code, emphasis and links. Editing goes through the Markdown editor rather than the caret, because the face of the box is the output. |

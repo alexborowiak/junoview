@@ -36,6 +36,22 @@
      escape. */
   var seqArm=null;
   function seqOn(){return !!seqArm;}
+  /* WHICH DIGIT IS DOWN. A modifier that is a KEY rather than a
+     mouse-button flag has to be tracked, because MouseEvent carries
+     shift/ctrl/alt/meta and nothing else. Held only while the mode is
+     armed, cleared when it ends, and swallowed so a digit cannot also
+     mean whatever else a digit means in the editor. */
+  var seqDigit=0;
+  function seqKeyDown(e){
+    if(!seqArm) return;
+    if(e.key>='0'&&e.key<='9'){
+      seqDigit=+e.key;e.preventDefault();seqSync();
+    }
+  }
+  function seqKeyUp(e){
+    if(!seqArm) return;
+    if(e.key>='0'&&e.key<='9'&&+e.key===seqDigit){seqDigit=0;seqSync();}
+  }
   function seqArmStart(){
     var s=pres.slides[cur]; if(!s) return;
     /* the numbering starts AFTER whatever the slide already has, so
@@ -43,6 +59,9 @@
     seqArm={slide:cur,n:0,base:nextAnimOrder(s),hits:[],
       before:JSON.stringify(s.annots||[])};
     deckEl.classList.add('seqing');
+    seqDigit=0;
+    document.addEventListener('keydown',seqKeyDown,true);
+    document.addEventListener('keyup',seqKeyUp,true);
     seqSync();
   }
   function seqEnd(commitIt){
@@ -53,7 +72,9 @@
          half a sequence behind would be worse than no mode. */
       try{s.annots=JSON.parse(seqArm.before);}catch(e){}
     }
-    seqArm=null;
+    seqArm=null;seqDigit=0;
+    document.removeEventListener('keydown',seqKeyDown,true);
+    document.removeEventListener('keyup',seqKeyUp,true);
     deckEl.classList.remove('seqing');
     seqSync();
     renderSlide();renderFilm();
@@ -86,6 +107,19 @@
     }
     if(a.anim) a.anim.order=ord;
     else a.anim={type:'fade',order:ord};
+    /* THE DIGIT SETS THE DELAY (T169). "Hold down 5 and click, it
+       appears five seconds after the last." 0 clears one, which is how
+       you take a delay back without leaving the mode. It goes on the
+       whole STOP, not the object: a delay is a fact about when this
+       click happens, and two objects arriving together cannot arrive at
+       two different times. */
+    if(!together){
+      var delay=seqDigit;
+      (s.annots||[]).forEach(function(x){
+        if(x&&x.anim&&x.anim.order===ord){
+          if(delay) x.anim.after=delay; else delete x.anim.after;
+        }});
+    }
     seqArm.hits.push({i:i,o:ord});
     renderSlide();
     seqSync();
@@ -109,7 +143,11 @@
     w.innerHTML=bic('stagger')+' Click things in the order they should '
       +'appear \u2014 <b>next: '+(seqArm.n+1)+'</b>'
       +(done?(' &middot; '+done+' placed'):'')
-      +' &middot; <b>Shift</b>-click for the same click';
+      +' &middot; <b>Shift</b>-click for the same click'
+      +(seqDigit
+        ?(' &middot; <b>'+seqDigit+'</b> held \u2014 next one runs '
+          +seqDigit+'s after the last, no click')
+        :' &middot; hold <b>1\u20139</b> to run it after a pause');
     var u=$('#seq-undo'); if(u) u.disabled=!done;
     var d=$('#seq-done'); if(d) d.textContent=done?('Finish ('+done+')')
       :'Finish';
@@ -314,6 +352,11 @@
             c.className='anim-chip'+(idx===selAnnot?' cur':'');
             c.textContent=itemLabel(s,idx)+' · '
               +((s.annots[idx].anim.type)||'fade');
+            /* a stop that RUNS ITSELF says so where the order is read
+               (T169). The number is the wait before it, never a
+               duration -- durations are still fixed in the stylesheet. */
+            var aft=(s.annots[idx].anim.after)|0;
+            if(aft) c.textContent+=' · +'+aft+'s';
             c.addEventListener('click',function(e){e.stopPropagation();
               var l=stage.querySelector('.annot-layer');
               if(l) selectAnnot(l,idx); render();});
