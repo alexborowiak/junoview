@@ -755,8 +755,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # instead of clamping one end each way and swapping afterwards. Editor
 # chrome only; the slides a range selects are identical either way, what
 # changes is the stored range and the label built from it.
-EXPECTED_MD5 = "823593e94b26bbfef30ebf2f722c1a88"
-EXPECTED_BYTES = 3088498
+# Moved 2026-09-01 for T150 (JVR-06): core.css no longer imports IBM
+# Plex from a font CDN, so a rendered page fetches no webfont in any
+# mode; the fallback stacks widened in the same edit, since Windows was
+# landing on Courier New for every mono run.
+EXPECTED_MD5 = "742eb16a635df43ffeb2ec2e8030d907"
+EXPECTED_BYTES = 3089322
 
 
 def _render_example() -> str:

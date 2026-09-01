@@ -10,14 +10,6 @@ function esc(s){return (s==null?'':String(s)).replace(/[&<>"]/g,
 let _icnMap={};
 function bic(k){return _icnMap[k]||'';}
 
-function ensureFonts(){
-  if(document.getElementById('snb-fonts'))return;
-  const l=document.createElement('link');
-  l.id='snb-fonts'; l.rel='stylesheet';
-  l.href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap';
-  document.head.appendChild(l);
-}
-
 function control(p){
   const lbl='<span class="cl">'+esc(p.name)+'</span>';
   if(p.type==='range')
@@ -57,7 +49,6 @@ function shell(model){
 }
 
 function mount(model, el){
-  ensureFonts();
   _icnMap=(model.get('data')||{}).icons||{};
   el.innerHTML='';
   const root=document.createElement('div');

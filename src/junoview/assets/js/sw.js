@@ -61,8 +61,7 @@ var RUNTIME = [
 /* hosts whose responses may be cached. Anything else (GitHub raw
    notebooks, the GitHub API) is live data and passes straight through —
    caching a notebook here would quietly serve stale science. */
-var HOSTS = ['cdn.jsdelivr.net', 'cdn.plot.ly',
-  'fonts.googleapis.com', 'fonts.gstatic.com'];
+var HOSTS = ['cdn.jsdelivr.net', 'cdn.plot.ly'];
 
 /* DATA, not app shell. The host rule above keeps notebooks fetched from
    GitHub out of the cache, but a notebook served from our OWN origin is

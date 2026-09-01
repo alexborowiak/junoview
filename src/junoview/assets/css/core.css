@@ -1,5 +1,12 @@
 
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;1,400&display=swap');
+/* NO WEBFONT IMPORT, deliberately (T150). Every output mode inlines
+   this file verbatim -- the app page, the exported .html, the deck's
+   standalone export (it copies the head's <style> blocks) and the
+   widget's scoped copy -- so an @import of a hosted font meant that
+   "self-contained" quietly included two servers, and a page read on a
+   plane fell back to whatever the OS had. The families below stay
+   FIRST in each stack: anyone who has IBM Plex installed still gets
+   it, and nobody's page waits on a font server to draw its text. */
 
 :root{
   --ink:#16202b; --ink-2:#33414f; --ink-3:#69788a;
@@ -51,9 +58,16 @@
 
 
   --amber:#cf9a4e; --amber-soft:#caa06a66;
-  --sans:'IBM Plex Sans',system-ui,sans-serif;
-  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
-  --serif:'IBM Plex Serif',Georgia,serif;
+  --sans:'IBM Plex Sans',system-ui,'Segoe UI',Roboto,
+    -apple-system,'Helvetica Neue',Arial,sans-serif;
+  /* the mono stack carries the weight of the page (labels, chips, code
+     runs, captions) and had the worst fallback: ui-monospace is ignored
+     by Chrome on Windows and Menlo is macOS-only, so a Windows reader
+     dropped all the way to Courier New. Cascadia/Consolas first, then
+     the mac and Linux defaults. */
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,
+    'SF Mono',Menlo,'DejaVu Sans Mono',monospace;
+  --serif:'IBM Plex Serif',Georgia,'Times New Roman',serif;
   --rad:6px; --rail-w:300px;
 }
 *{box-sizing:border-box}

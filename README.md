@@ -130,7 +130,10 @@ and the URL carries a session token.
 
 ### Static export
 
-For a shareable, self-contained page (no server needed to view it):
+For a shareable, self-contained page — one file, no server, no build step
+and no webfonts, so it renders the same offline as online. (A notebook with
+LaTeX in it still fetches MathJax from a CDN to typeset the equations;
+everything else, figures included, is inline.)
 
 ```bash
 # one notebook -> my_notebook.html next to it

@@ -248,6 +248,43 @@ def test_cdn_pins_match_the_service_worker():
     )
 
 
+def test_no_asset_reaches_for_a_webfont_cdn():
+    """A static export is ONE file someone emails, and it has to look the
+    same on a plane as on Wi-Fi.
+
+    core.css used to open with an @import of IBM Plex from
+    fonts.googleapis.com, and EVERY mode inlines that file verbatim -- the
+    local app, the exported .html, the deck's standalone export (it copies
+    the head's <style> blocks) and the widget's scoped copy -- so
+    "shareable, self-contained" quietly meant "plus two Google hosts", and
+    sw.js allow-listed them for caching without ever precaching them
+    (JVR-06, 2026-09-01). The families stay first in the stacks for anyone
+    who has them installed; nothing is fetched to get them.
+    """
+    # block comments are stripped first: naming a host to explain why it
+    # is NOT used is documentation, and a rule that forbids the
+    # explanation as loudly as the fetch teaches people to delete the
+    # explanation.
+    strip = re.compile(r"/\*.*?\*/|<!--.*?-->", re.S)
+    for path in sorted(ASSETS.rglob("*")):
+        if path.suffix not in (".css", ".js", ".html"):
+            continue
+        text = strip.sub("", path.read_text(encoding="utf-8"))
+        for host in ("fonts.googleapis.com", "fonts.gstatic.com"):
+            assert host not in text, (
+                f"{path.relative_to(ASSETS)} fetches a webfont from "
+                f"{host}; a rendered page must not depend on a font CDN"
+            )
+    # ...and the rendered page agrees, in both modes
+    from junoview.render.page import render_page
+    for mode in ("static", "web"):
+        page = render_page([], mode=mode)
+        assert "fonts.googleapis.com" not in page
+        assert "fonts.gstatic.com" not in page
+    # the stack itself survives -- the fix is "no fetch", not "no Plex"
+    assert "'IBM Plex Sans',system-ui" in render_page([])
+
+
 def _js_engine() -> tuple[list[str], dict[str, str]] | None:
     """Find something that can parse JS: node, else VS Code's Electron.
 

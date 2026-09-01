@@ -2882,12 +2882,31 @@ None of them throws, which is why they survived a 947-test suite.
   still does not TELL the user their range was narrowed; quiet clamping
   is what `0-5` has always done, and saying so is a separate decision.
 
-- [ ] **T150 · S — "Self-contained" means it.** `core.css` imports IBM
+- [x] **T150 · S — "Self-contained" means it.** `core.css` imports IBM
   Plex from fonts.googleapis.com, so every rendered page — including the
   static export the README calls "shareable, self-contained", and every
   deck emailed to a colleague — fetches a font from a third party and
   degrades to an unstyled fallback offline. AGENTS.md states the
   no-external-assets invariant that this breaks. (JVR-06.)
+
+  *Done 2026-09-01*, user's call between the three options: drop the
+  webfont, keep the families. The `@import` is gone from core.css, the
+  widget's `ensureFonts()` link injection with it, and the two font
+  hosts leave sw.js's allow-list (they were allow-listed for runtime
+  caching but never precached, so offline was always the bad case).
+  'IBM Plex Sans/Mono/Serif' stay FIRST in each stack — anyone who has
+  them installed still sees them, nobody waits on a font server — and
+  the fallbacks widened in the same edit, because the mono stack was
+  the worst offender: `ui-monospace` is ignored by Chrome on Windows
+  and `Menlo` is macOS-only, so a Windows reader dropped all the way to
+  Courier New for every label, chip, caption and code run on the page.
+  The whole cost is +73 bytes of CSS. The test is an invariant over
+  EVERY asset, not a pin on this one line, and it strips block comments
+  first so that explaining the absence stays legal. Honest remainder,
+  now said in the README instead of "self-contained" full stop: a
+  notebook with LaTeX still fetches MathJax from a CDN, so the export
+  went from two hosts plus a CDN to one CDN, and only a deck without
+  equations is now literally one file.
 
 
 ## Cut (and why)
