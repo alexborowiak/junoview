@@ -984,7 +984,15 @@
        was plain until you happened to add a slide or reorder one. Every
        change to an animation on this slide goes through here, which is
        why it belongs here rather than at each of the seven callers. */
-    function commit(s){markDirty();rerender();render();renderFilm();}
+    /* ...and animRibbonSync, or the RIBBON KEEPS THE OLD ANSWER (T156).
+       `render` here is the PANE's render; nothing on this path told the
+       ribbon. So clicking Fade left None lit, and the highlight only
+       corrected itself when you re-selected the object -- you pressed the
+       button, nothing moved, and the honest reading was that it had not
+       worked. Every change to an animation goes through here, which is
+       exactly why the sync belongs here and not at each of the callers. */
+    function commit(s){markDirty();rerender();render();renderFilm();
+      if(typeof animRibbonSync==='function') animRibbonSync();}
     function setType(type){
       var s=pres.slides[cur]; if(!s) return;
       var idxs=selIdxs();

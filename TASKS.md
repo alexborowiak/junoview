@@ -3022,6 +3022,39 @@ None of them throws, which is why they survived a 947-test suite.
   save bar and `rbn-tabs` on the tab row (both were `film-resize`), the
   grip computes 2×26 at rest, and five Right presses take the column
   200→320px, three Left 320→248px, with the slide unchanged.
+
+### Animation, rebuilt (2026-09-01, from the user's own review)
+
+The user: "I found them really hard to use... the words are so weird and
+the options are hard to get to... we need something like this instead of
+just vanilla buttons." Measured before touching anything: three clicks to
+fade one object, on the INSERT tab, and the four effect buttons are
+un-hidden by the very click that moves the ribbon off that tab — so the
+effects are visible for approximately none of the moments they are usable.
+
+- [x] **T156 · S — An entrance effect plays the effect it names.**
+  Three defects with ONE cause: the keyframes fought the inline style
+  `applyCommon` writes. (a) `transform:translateY(22px)` REPLACED a
+  rotated item's `rotate()` for the animation's duration, so the render
+  path papered over it by silently swapping a rotated Rise or Zoom for a
+  Fade — the model, the ribbon and the pane chip all said rise, and a
+  fade played (JVC-03, shipping since the feature landed). (b)
+  `to{opacity:1}` fought `a.op`, so a 40%-opacity object animated up to
+  FULL and snapped back on every build — never reported. (c) `commit()`
+  re-rendered the slide, the pane and the strip but never the RIBBON, so
+  clicking Fade left **None** lit until you re-selected the object: you
+  pressed the button, nothing moved, and the honest reading was that it
+  had not worked.
+  *Done 2026-09-01.* The individual `translate`/`scale` properties are
+  applied before `transform` in the computed value, so they COMPOSE with
+  the inline rotate() instead of replacing it; an omitted `to` keyframe
+  means "the value this element already has". Both substitutions and the
+  literal opacity are deleted, and `commit()` — which every animation
+  change goes through, which is why it belongs there and not at its seven
+  callers — now syncs the ribbon. Driven live: an item with
+  `rotate(30deg)` and `opacity:.4` keeps the same rotate matrix at rest,
+  mid-animation and after; `translate` runs `0 22px → none`; opacity runs
+  `0 → 0.4`, not `0 → 1`; and the pressed state follows Fade then Rise.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

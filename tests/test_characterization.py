@@ -780,8 +780,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T155: the slide-column resize handle stops laying
 # a dead stripe over the save bar and tab row, paints a grip at rest,
 # and takes keyboard focus with arrow-key resize.
-EXPECTED_MD5 = "37a17b51a10c6a091a1957553ad35a2a"
-EXPECTED_BYTES = 3106054
+# Moved 2026-09-01 for T156: entrance keyframes animate the individual
+# translate/scale properties so they compose with a rotated item's
+# inline transform (deleting the silent rise/zoom-to-fade substitution),
+# no longer end at a literal opacity that fought a.op, and clicking an
+# effect now moves the ribbon's pressed state.
+EXPECTED_MD5 = "98667d144a387a07f073401db71a9c59"
+EXPECTED_BYTES = 3107940
 
 
 def _render_example() -> str:

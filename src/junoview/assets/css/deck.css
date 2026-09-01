@@ -1763,11 +1763,27 @@ select#fmt-font[hidden]{display:none;}
 .deck.editing .an-item.grpsel .cellparts{display:none!important;}
 /* build animations: staged items hide until revealed, then animate in */
 .an-prebuild{opacity:0!important;pointer-events:none!important;}
-@keyframes anIn-fade{from{opacity:0}to{opacity:1}}
-@keyframes anIn-rise{from{opacity:0;transform:translateY(22px)}
-  to{opacity:1;transform:none}}
-@keyframes anIn-zoom{from{opacity:0;transform:scale(.85)}
-  to{opacity:1;transform:none}}
+/* TWO RULES, BOTH LEARNED FROM BUGS THESE KEYFRAMES USED TO HAVE (T156).
+
+   1. NEVER THE `transform` SHORTHAND. applyCommon writes a rotated item's
+      rotate() into style.transform, and the shorthand REPLACED it for the
+      animation's duration -- an object would un-rotate, animate, and snap
+      back. The render path papered over it by silently swapping a rotated
+      Rise or Zoom for a Fade (JVC-03): the model said rise, the ribbon
+      said rise, the pane chip said rise, and a fade played. The
+      individual `translate` and `scale` properties are applied BEFORE
+      `transform` in the computed value, so they COMPOSE with that
+      rotate() instead of replacing it, and the substitution is deleted.
+
+   2. NEVER END AT A LITERAL OPACITY. `to{opacity:1}` fought a.op, which
+      applyCommon also writes inline: a 40%-opacity object animated up to
+      FULL and then snapped back to 40% at the end of every build. An
+      omitted `to` keyframe means "the value this element already has", so
+      the fade now lands exactly where the author put it. Same reason the
+      transform keyframes have no `to`. */
+@keyframes anIn-fade{from{opacity:0}}
+@keyframes anIn-rise{from{opacity:0;translate:0 22px}}
+@keyframes anIn-zoom{from{opacity:0;scale:.85}}
 .an-anim-fade{animation:anIn-fade .45s ease;}
 .an-anim-rise{animation:anIn-rise .5s cubic-bezier(.2,.7,.2,1);}
 .an-anim-zoom{animation:anIn-zoom .45s ease;}

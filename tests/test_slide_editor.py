@@ -3117,3 +3117,55 @@ def test_the_resize_handle_can_be_seen_reached_and_clicked_past(out):
     assert 'aria-label="Slide column width"' in out
     assert "if(e.key==='ArrowLeft') step=-24;" in out
     assert "e.preventDefault();e.stopPropagation();" in out
+
+
+def test_an_entrance_effect_plays_the_effect_it_names(out):
+    """T156. Three defects with one cause: the keyframes fought the
+    inline style applyCommon writes.
+
+    `transform:translateY(22px)` REPLACED a rotated item's inline
+    rotate() for the animation's duration, so the render path papered
+    over it by silently swapping a rotated Rise or Zoom for a Fade
+    (JVC-03) -- the model said rise, the ribbon said rise, the pane chip
+    said rise, and a fade played. And `to{opacity:1}` fought `a.op`, so a
+    40%-opacity object animated up to FULL and snapped back at the end of
+    every build. The individual `translate`/`scale` properties compose
+    with `transform` instead of replacing it, and an omitted `to`
+    keyframe means "the value this element already has".
+
+    Verified in a browser: with an inline `rotate(30deg)` and
+    `opacity:0.4`, the computed transform is the same rotate matrix at
+    rest, mid-animation and after, `translate` runs 0 22px -> none, and
+    opacity runs 0 -> 0.4, not 0 -> 1.
+    """
+    assert "@keyframes anIn-fade{from{opacity:0}}" in out
+    assert "@keyframes anIn-rise{from{opacity:0;translate:0 22px}}" in out
+    assert "@keyframes anIn-zoom{from{opacity:0;scale:.85}}" in out
+    # the shorthand is what broke rotation; it must not come back
+    assert "transform:translateY(22px)" not in out
+    assert "transform:scale(.85)" not in out
+    # ...nor may an entrance keyframe end at a literal opacity again.
+    # Scoped to the keyframes: the rule is also NAMED in the comment
+    # above them, and a test that forbids its own explanation teaches
+    # people to delete the explanation.
+    kf = out[out.index("@keyframes anIn-fade"):]
+    kf = kf[:kf.index(".an-anim-fade")]
+    assert "to{opacity:1}" not in kf
+    assert "to{" not in kf
+    # and the substitution the shorthand forced is gone
+    assert "atype='fade';" not in out
+
+
+def test_clicking_an_effect_lights_that_effect(out):
+    """T156. `commit()` re-rendered the slide, the pane and the film
+    strip, but never told the RIBBON -- so clicking Fade left None lit,
+    and the highlight only corrected itself when you re-selected the
+    object. You pressed the button, nothing moved, and the honest
+    reading was that it had not worked.
+
+    Every change to an animation goes through commit(), which is exactly
+    why the sync belongs there and not at each of its seven callers.
+    """
+    assert ("function commit(s){markDirty();rerender();render();renderFilm();"
+            in out)
+    assert "if(typeof animRibbonSync==='function') animRibbonSync();}" in out

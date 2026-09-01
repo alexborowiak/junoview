@@ -2365,7 +2365,11 @@
             var atype=ba.anim.type||'fade';
             /* "appear" is instant (no keyframe); rise/zoom animate transform,
                which would fight a rotation and snap — a rotated item fades */
-            if(ba.rot&&(atype==='rise'||atype==='zoom')) atype='fade';
+            /* the rotated-item swap is GONE (T156). It existed because
+               the keyframes animated the `transform` SHORTHAND, which
+               replaced the inline rotate(); they now animate `translate`
+               and `scale`, which compose with it. An effect that names
+               itself must be the effect that plays. */
             if(atype!=='appear') el.classList.add('an-anim-'+atype);
           }
         }
