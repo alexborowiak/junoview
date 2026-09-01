@@ -1704,6 +1704,13 @@
      applyStyleTo does on your behalf -- a style stamp that yanked boxes
      across the page would be unusable. */
   var dgSel='title', dgOutline=false;
+  /* the smallest a drag proxy in the outline sheet may be, in page
+     percent. A horizontal or vertical line's bounding box is
+     zero-thickness and there is nothing to grab; the canvas answers the
+     same question with a 12px tolerance round the segment (arrowAt).
+     6% of a 116x66px miniature is ~7x4px, and the fallback box proxy
+     below is already only 8% tall, so this is no outlier. */
+  var DG_HIT=6;
   /* WHICH SLIDES (T130). The put gesture was all-wearers-everywhere and
      the outline sheet was every-slide-always; the ask named sections
      and ranges for both. One selector builder, two independent scopes,
@@ -2073,11 +2080,37 @@
          it would on the canvas. A plain click still navigates: nothing
          is claimed until the pointer has actually moved. */
       (sl.annots||[]).forEach(function(a){
-        if(!a||a.hide||a.k==='arrow') return;
+        if(!a||a.hide) return;
+        /* AN ARROW IS ITS TWO ENDS, NOT A BOX (JVR-03). It used to be
+           skipped here, which made "Every object" untrue for the one
+           kind whose geometry is x1/y1,x2/y2 -- but the write-back was
+           never the problem: shiftAnnot below already translates both
+           endpoints and any dragged corners, exactly as a canvas drag
+           does. Only the HANDLE was missing, and that is the bounding
+           box of the line the miniature already draws -- arrowEnds is
+           the same call the renderer makes, so a tied end puts the
+           handle where the line really is rather than on the stale
+           stored endpoint. */
+        var bx,by,bw,bh;
+        if(a.k==='arrow'){
+          var ae=arrowEnds(null,sl,a,0);
+          var axs=[ae.x1,ae.x2],ays=[ae.y1,ae.y2];
+          arrowMids(a).forEach(function(m){
+            axs.push(m[0]);ays.push(m[1]);});
+          bx=Math.min.apply(null,axs);by=Math.min.apply(null,ays);
+          bw=Math.max.apply(null,axs)-bx;bh=Math.max.apply(null,ays)-by;
+          if(!isFinite(bx)||!isFinite(by)||!isFinite(bw)||!isFinite(bh))
+            return;
+          /* grow the HIT TARGET about the line without moving the line */
+          if(bw<DG_HIT){bx-=(DG_HIT-bw)/2;bw=DG_HIT;}
+          if(bh<DG_HIT){by-=(DG_HIT-bh)/2;bh=DG_HIT;}
+        } else {
+          bx=(a.x||0);by=(a.y||0);bw=(a.w||10);bh=(a.h||8);
+        }
         var px=document.createElement('span');
-        px.className='dg-drag';
-        px.style.left=(a.x||0)+'%';px.style.top=(a.y||0)+'%';
-        px.style.width=(a.w||10)+'%';px.style.height=(a.h||8)+'%';
+        px.className='dg-drag'+(a.k==='arrow'?' is-arrow':'');
+        px.style.left=bx+'%';px.style.top=by+'%';
+        px.style.width=bw+'%';px.style.height=bh+'%';
         px.title=(annotLabel(a)||a.k)+' \u2014 slide '+(i+1)
           +(nm?' ('+nm+')':'')+'. Drag to move it from here.';
         px.addEventListener('pointerdown',function(e){

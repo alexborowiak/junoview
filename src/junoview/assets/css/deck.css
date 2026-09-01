@@ -3944,6 +3944,11 @@ body:has(#rd-order) .an-readno{display:flex;}
 .dg-sheet.outlined .dg-drag{display:block;}
 .dg-sheet.outlined .dg-drag:hover{outline:2px solid #f0a848;
   background:#f0a84822;}
+/* an arrow's proxy is the bounding box of a LINE, so it can be large and
+   almost entirely empty: it yields to the box proxies it overlaps rather
+   than swallowing their drags. The canvas answers this with a per-pixel
+   distance test (arrowAt); a 116x66px thumbnail cannot. */
+.dg-drag.is-arrow{z-index:2;}
 .dg-cell{position:relative;background:#ffffff08;border:1px solid #ffffff1a;
   border-radius:6px;padding:5px;cursor:pointer;}
 .dg-cell:hover{border-color:#ffffff3d;}

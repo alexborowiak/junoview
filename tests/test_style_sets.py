@@ -320,13 +320,42 @@ def test_objects_can_be_moved_from_the_outline_sheet(out):
     travels exactly as it would on the canvas; a plain click still
     navigates, because nothing is claimed until the pointer has moved.
     """
-    assert "px.className='dg-drag';" in out
-    assert "if(!a||a.hide||a.k==='arrow') return;" in out
+    assert "px.className='dg-drag'+(a.k==='arrow'?' is-arrow':'');" in out
+    assert "if(!a||a.hide) return;" in out
     assert "if(!dragging&&Math.abs(dx)+Math.abs(dy)<3) return;" in out
     assert "shiftAnnot(a,(ev.clientX-sx)/mr.width*100," in out
     assert ".dg-sheet.outlined .dg-drag{display:block;}" in out
     # a drop re-renders WITHOUT losing where you were in the panel
     assert "function dgBodyKeep(ov){" in out
+
+
+def test_the_outline_sheet_moves_every_kind_including_arrows(out):
+    """"Every object, outlined" bailed on k==='arrow' before making a
+    proxy (JVR-03), so the one kind whose geometry is two endpoints
+    rather than a box was the one kind the section could not move. The
+    handle is now the bounding box of the line the miniature already
+    draws -- arrowEnds, the same call the renderer makes -- floored so a
+    straight line is grabbable, and the drop still goes through
+    shiftAnnot, which translates both endpoints and any dragged corners
+    exactly as a canvas drag does. No kind may be skipped again.
+    """
+    from junoview.notebook.deck_schema import ANNOT_KINDS
+
+    start = out.index("/* MOVE IT FROM HERE (T130).")
+    block = out[start:out.index("mini.appendChild(px);", start)]
+    assert "if(!a||a.hide) return;" in block
+    for kind in ANNOT_KINDS:
+        assert f"if(!a||a.hide||a.k==='{kind}')" not in block, (
+            f"the outline sheet excludes {kind} but says 'Every object'")
+    # an arrow's handle is the drawn line's box, corners included
+    assert "var ae=arrowEnds(null,sl,a,0);" in block
+    assert "arrowMids(a).forEach(function(m){" in block
+    assert "if(bw<DG_HIT){bx-=(DG_HIT-bw)/2;bw=DG_HIT;}" in block
+    # ...and the move is the one translate helper, endpoints and all
+    assert "shiftAnnot(a,(ev.clientX-sx)/mr.width*100," in block
+    assert "var DG_HIT=6;" in out
+    # a big, mostly-empty line box must not swallow the boxes it crosses
+    assert ".dg-drag.is-arrow{z-index:2;}" in out
 
 
 def test_the_outline_sheet_can_show_certain_slides_only(out):

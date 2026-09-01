@@ -2832,12 +2832,31 @@ None of them throws, which is why they survived a 947-test suite.
   whose sources are all CLOSED still gets the clean toast — the same
   over-claim, a different cause.
 
-- [ ] **T148 · S — "Every object" can move every object.** The design
+- [x] **T148 · S — "Every object" can move every object.** The design
   surface's outlined sheet skips `a.k==='arrow'` before building a drag
   proxy, so arrows are the one kind the sheet named after totality
   cannot move. Either give an arrow a proxy that translates both
   endpoints — reusing the canvas's own write-back, not a second one — or
   stop calling the sheet what it is not. (JVR-03.)
+
+  *Done 2026-09-01*, by giving arrows a handle rather than renaming the
+  sheet. The write-back was never the problem: `shiftAnnot` already
+  translates `x1/y1,x2/y2` and any dragged corners, exactly as a canvas
+  drag does — only the box to grab was missing, because the proxy read
+  `a.x/a.y/a.w/a.h` and an arrow has none of those (deck_schema calls it
+  out: "two endpoints, not a box"). The handle is now the bounding box
+  of the line the MINIATURE ALREADY DRAWS — `arrowEnds`, the same call
+  the renderer makes, so a tied end puts the handle where the line
+  really is rather than on a stale stored endpoint — floored to
+  `DG_HIT=6`% so a horizontal or vertical line is not a zero-thickness
+  target. `.dg-drag.is-arrow{z-index:2}` is load-bearing, not cosmetic:
+  a line's box is large and mostly empty, so it must yield to the box
+  proxies it crosses instead of swallowing their drags. The test now
+  loops every kind in `ANNOT_KINDS` and fails if the sheet ever excludes
+  one again. Deliberately unchanged: a fully-tied arrow still appears not
+  to move (`arrowEnds` re-derives the drawn end from its target), which
+  is exactly what the canvas does, and the sheet still honours no lock
+  for any kind — worth its own entry, not an arrow-only inconsistency.
 
 - [ ] **T149 · S — A typed slide range cannot escape the deck.** The
   design surface's range parser clamps one endpoint each way and THEN

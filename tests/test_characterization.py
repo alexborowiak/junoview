@@ -746,8 +746,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # instead of a bare false, and the update-figures toast names the
 # sources whose read failed rather than claiming every figure matches
 # its source.
-EXPECTED_MD5 = "eabf6e2dfa4851d97f56651ee8f852b9"
-EXPECTED_BYTES = 3085687
+# Moved 2026-09-01 for T148 (JVR-03): the outline sheet's drag proxies
+# now cover arrows too, whose handle is the drawn line's bounding box
+# (arrowEnds) floored to a grabbable size, and a line proxy yields
+# z-order to the boxes it crosses.
+EXPECTED_MD5 = "3446fe62114623fc323912e90681017c"
+EXPECTED_BYTES = 3087811
 
 
 def _render_example() -> str:
