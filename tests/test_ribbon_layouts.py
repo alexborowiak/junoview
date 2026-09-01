@@ -483,3 +483,54 @@ def test_the_chooser_closes_like_the_menus_it_lives_beside(out):
     assert "function closeLayoutIdeas(){" in out
     assert "document.addEventListener('keydown',ideasKey,true);" in out
     assert "if(!p.contains(e.target)) closeLayoutIdeas();" in out
+
+
+def test_the_tablist_wrapper_survives_a_layout_change(out):
+    """T151, a regression T139 shipped and no substring test could see.
+
+    T139 wrapped the four markup tabs in <span class="rbn-tabset"
+    role="tablist"> so the layouts chooser beside them stopped reading as
+    a fifth tab. But rbnHome() snapshots the STRIP'S ELEMENT CHILDREN,
+    which after that change is the span rather than the buttons inside
+    it, while rbnRestoreHome() removes `.rbn-tab` with a DESCENDANT
+    query -- so restore deleted all four tabs and put back a set that no
+    longer contained them. applyRibbonLayout() calls restore on every
+    apply INCLUDING the one at boot, so the shipped deck came up with an
+    empty tablist and no Home/Insert/Design/Object at all.
+
+    Every test here passed throughout, because the markup this file reads
+    was always right: the breakage was in what the JS did to that markup
+    at runtime. It took opening the editor and counting the tabs. The
+    pins below are the shape of the fix; the guarantee is the drive
+    recorded in TASKS.md.
+    """
+    # the snapshot reaches inside the tablist...
+    assert "tabset:(function(){" in out
+    assert "var s=$('.rbn-tabset');" in out
+    # ...restore puts those children back INTO it...
+    assert "if(h.tabset){" in out
+    assert "h.tabset.kids.forEach(function(k){" \
+        "h.tabset.el.appendChild(k);});" in out
+    # ...and a generated layout builds its tabs there too, so the role
+    # never wraps an empty span
+    assert "var set=$('.rbn-tabset',strip)||strip;" in out
+    assert "if(before) set.insertBefore(b,before); else set.appendChild(b);" \
+        in out
+    assert "strip.insertBefore(b,before);" not in out
+
+
+def test_every_markup_tab_sits_inside_the_tablist():
+    """The other half of T151: role="tablist" must wrap the tabs.
+
+    Checked against the markup rather than the assembled page, because
+    this is a statement about deck.html's structure.
+    """
+    from junoview import assets
+
+    html = assets.load("html/deck.html")
+    m = re.search(r'<span class="rbn-tabset" role="tablist">(.*?)</span>',
+                  html, re.S)
+    assert m, "the tablist wrapper is gone"
+    inside = m.group(1)
+    assert inside.count('class="rbn-tab"') == 4, inside.count('class="rbn-tab"')
+    assert html.count('class="rbn-tab"') == 4, "a tab escaped the tablist"

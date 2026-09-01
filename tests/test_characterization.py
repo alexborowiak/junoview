@@ -759,8 +759,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Plex from a font CDN, so a rendered page fetches no webfont in any
 # mode; the fallback stacks widened in the same edit, since Windows was
 # landing on Courier New for every mono run.
-EXPECTED_MD5 = "742eb16a635df43ffeb2ec2e8030d907"
-EXPECTED_BYTES = 3089322
+# Moved 2026-09-01 for T151: the ribbon's tablist wrapper is now a real
+# container - rbnHome snapshots its children, restore puts them back
+# inside it, and generated layouts build their tabs there, so a layout
+# apply (including the one at boot) no longer deletes all four tabs.
+EXPECTED_MD5 = "0dd1dc6dc3f1e919ae4a22efe27c45d8"
+EXPECTED_BYTES = 3090841
 
 
 def _render_example() -> str:

@@ -2908,6 +2908,30 @@ None of them throws, which is why they survived a 947-test suite.
   went from two hosts plus a CDN to one CDN, and only a deck without
   equations is now literally one file.
 
+- [x] **T151 · S — The tabs T139 deleted.** `rbnHome()` snapshots the
+  strip's ELEMENT CHILDREN and `rbnRestoreHome()` removes `.rbn-tab`
+  with a DESCENDANT query. T139 (2026-09-01) wrapped the four markup
+  tabs in `<span class="rbn-tabset" role="tablist">` so the layouts
+  chooser beside them stopped reading as a fifth tab — after which the
+  snapshot held the span and not the buttons inside it, so restore
+  deleted all four tabs and put back a set that no longer contained
+  them. `applyRibbonLayout()` restores on EVERY apply including the one
+  at boot, so the shipped deck editor came up with an empty tablist and
+  no Home, Insert, Design or Object at all.
+  *Done 2026-09-01.* The tabset is a real container now: `rbnHome`
+  snapshots its children, `rbnRestoreHome` appends them back INSIDE it,
+  and `rbnBuildTabs` builds a generated layout's tabs there too — which
+  T139 had also missed, leaving `role="tablist"` wrapping nothing on
+  every non-default layout, the very thing it set out to fix. Driven
+  live on a fresh boot: four tabs, all inside the role; Office ribbon
+  → Home/Insert/Design/Animate, still inside; back to Default →
+  Home/Insert/Design/Object, no duplicate ids. THE LESSON, which is the
+  reason this entry exists at all: every ribbon test passed the whole
+  time, because the MARKUP was always correct — the damage was what the
+  JS did to that markup at runtime, and no substring test of the
+  rendered page can see that. It surfaced only because a live drive for
+  T148 went looking for the Insert tab and there wasn't one.
+
 
 ## Cut (and why)
 

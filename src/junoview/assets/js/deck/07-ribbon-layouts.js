@@ -114,8 +114,22 @@
     RBN_HOME={
       holders:holders,
       tabs:TABS.slice(),
+      /* THE TAB SET IS A CONTAINER, and the snapshot has to reach
+         into it (T151). T139 wrapped the four markup tabs in
+         <span class="rbn-tabset" role="tablist"> so the layouts chooser
+         beside them stopped reading as a fifth tab -- but this snapshot
+         only ever took the strip's ELEMENT CHILDREN, which after that
+         change is the span itself and not the buttons inside it. Restore
+         then removed every .rbn-tab (a descendant query, so it reached
+         through the span) and appended back a set that no longer
+         contained them, and applyRibbonLayout runs at boot: the deck
+         came up with an empty tablist and no tabs at all. */
       strip:(function(){
         var s=$('#rbn-tabs');
+        return s?{el:s,kids:[].slice.call(s.children)}:null;
+      })(),
+      tabset:(function(){
+        var s=$('.rbn-tabset');
         return s?{el:s,kids:[].slice.call(s.children)}:null;
       })(),
       groupTabs:groups.map(function(g){
@@ -142,6 +156,13 @@
          their saved nodes restores their exact order. */
       $$('.rbn-tab',h.strip.el).forEach(function(b){b.remove();});
       h.strip.kids.forEach(function(k){h.strip.el.appendChild(k);});
+    }
+    /* ...and the markup tabs go back INSIDE the tablist, not merely
+       back into the strip (T151). The removal above is a descendant
+       query, so it empties the tabset too; without this the four tabs
+       are gone for the rest of the session. */
+    if(h.tabset){
+      h.tabset.kids.forEach(function(k){h.tabset.el.appendChild(k);});
     }
     TABS=h.tabs.slice();
   }
@@ -237,7 +258,12 @@
   function rbnBuildTabs(lay){
     var strip=$('#rbn-tabs'); if(!strip) return;
     $$('.rbn-tab',strip).forEach(function(b){b.remove();});
-    var before=strip.firstChild;
+    /* into the TABSET, so a generated layout's tabs sit inside the
+       tablist exactly as the markup ones do (T151). Built as siblings
+       of it they left role="tablist" wrapping nothing, which is the
+       very thing T139 set out to fix. */
+    var set=$('.rbn-tabset',strip)||strip;
+    var before=(set===strip)?strip.firstChild:null;
     lay.tabs.forEach(function(t){
       var b=document.createElement('button');
       b.className='rbn-tab';b.type='button';
@@ -247,7 +273,7 @@
       b.setAttribute('aria-selected','false');
       b.textContent=t.label;
       if(t.title) b.title=t.title;
-      strip.insertBefore(b,before);
+      if(before) set.insertBefore(b,before); else set.appendChild(b);
     });
   }
   function rbnMakeGroup(lay,g){
