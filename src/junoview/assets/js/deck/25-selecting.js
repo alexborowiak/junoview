@@ -2219,9 +2219,15 @@
      holds. Nothing moves surface: the rows keep their handlers, they
      just wait until asked for. Menus small enough to read whole (the
      empty-canvas one) never fold. */
+  /* 'shows with' EARNS ITS PLACE HERE (T162). T161 added it and left it
+     foldable "like every other optional section" -- which put the door
+     built to fix a discoverability problem behind another door. This
+     section exists precisely because the feature had been re-requested
+     twice as though it did not exist; folding it repeats the mistake it
+     was written to correct. */
   var CM_KEEP={'this object':1,'2 objects':1,'where it goes':1,
     'what it shows':1,'figure':1,'refer to a figure':1,'paste':1,
-    'chart':1};
+    'chart':1,'shows with':1};
   function cmFold(m){
     m.setAttribute('role','menu');
     $$('button',m).forEach(function(b){

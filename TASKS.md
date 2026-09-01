@@ -3186,6 +3186,37 @@ effects are visible for approximately none of the moments they are usable.
   ones T86 built. The heading is deliberately NOT in T137's `CM_KEEP`,
   so it folds into "More" on a crowded menu like every other optional
   section.
+
+- [x] **T162 · S — The three surfaces that under-counted the sequence.**
+  An independent review of this whole surface found one missing join
+  wearing three faces. `flipPlan(s)` is the sequence playback walks;
+  the film-strip mark, the "Remove animations" toast and its empty-case
+  guard each re-derived a WEAKER answer from `slideBuildSteps` — builds
+  only — so each told the reader a different number from the one the
+  space bar takes. A slide whose entire reveal is a six-figure flip
+  book, or a chart built by series, was marked as having nothing on it.
+  *Done 2026-09-01*, the cheap two-thirds of it. The strip mark counts
+  `slideStops` and says "5 clicks to walk this slide" rather than
+  "3 builds", and its tip names a door that exists (T140 retired
+  "Timeline", which this tooltip was still sending people to). "Remove
+  animations" now counts what REMAINS: with a flip book left it says how
+  many clicks are still in the slide instead of claiming "everything is
+  on the slide from the start", and the empty guard no longer says
+  "Nothing on this slide is animated" about a slide the space bar walks
+  in five clicks. Deleting the flip book's own frames is deliberately
+  NOT done here — this button is about the reveal, and a flip book is
+  CONTENT.
+  Also fixed here, a defect T161 shipped hours earlier: `shows with` was
+  left out of `CM_KEEP` "like every other optional section", which put
+  the door built to cure a discoverability problem behind the More fold.
+  It is kept open now.
+  NOT done, and the review's headline recommendation: make the
+  ANIMATIONS PANE the one true sequence — list every stop from
+  `flipPlan`, not only the anim-order rows, so a flip book's five clicks
+  and a chart's series builds appear in the panel headed "Build order".
+  That is the join those two features fell through, it needs no new
+  stored key and no new ribbon button, and it is the next thing to do
+  here.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

@@ -3240,3 +3240,57 @@ def test_the_three_tie_modes_keep_their_words(out):
     assert "var FLIP_MODES=[['only','Just this figure']," in out
     assert "['from','This figure and every one after']," in out
     assert "['until','This figure and every one before']];" in out
+
+
+def test_the_slide_mark_counts_the_clicks_the_space_bar_will_take(out):
+    """T162. Three surfaces each re-derived the sequence from
+    `slideBuildSteps` -- anim-order builds only -- while playback walks
+    `flipPlan`. So a slide whose entire reveal is a six-figure flip book,
+    or a chart built series by series, was marked as having NOTHING on
+    it, and each surface told the reader a different number from the one
+    the space bar would take.
+
+    `slideStops` is the length of the plan playback actually uses. The
+    tip also names a door that exists: T140 retired "Timeline".
+    """
+    assert "var nbuild=slideStops(s);" in out
+    assert "' to walk this slide'" in out
+    assert "'\\nOpen Insert \u25b8 Animations to see the order'" in out
+    # the weaker count, and the retired door, are both gone from the mark
+    assert "var nbuild=slideBuildSteps(s).count;" not in out
+    assert "Animate \u25b8 Timeline" not in out
+
+
+def test_removing_animations_says_what_is_left(out):
+    """T162. "Remove animations" deletes `a.anim` and used to claim
+    "everything is on the slide from the start" -- untrue on exactly the
+    slides this feature exists for, because a flip book still steps and a
+    caption tied to figure 3 still waits for figure 3. Neither is an
+    `a.anim`. The guard was worse: it said "Nothing on this slide is
+    animated" about a slide the space bar walks in five clicks.
+
+    Both sentences now count what REMAINS, from the same plan. Deleting
+    the flip book's frames is deliberately not done: this button is about
+    the reveal, and a flip book is CONTENT.
+    """
+    assert "var left=Math.max(0,slideStops(s)-1);" in out
+    assert "'Nothing here has an entrance effect, but the slide still '" in out
+    assert "' left, stepping the flip book')" in out
+    # the claim survives ONLY as the else-branch of the ternary, so it
+    # is said only when nothing is in fact left. Asserted as the CODE
+    # form rather than as a count: the comment above it quotes the old
+    # unconditional sentence, and a test that forbids its own
+    # explanation teaches people to delete the explanation.
+    i = out.index("var clr=$('#anim-clear');")
+    body = out[i:i + 1800]
+    assert "(left?(' \u2014 '+left+' click'+(left===1?'':'s')" in body
+    assert ":' \u2014 everything is on the slide from the start'));" \
+        in body
+
+
+def test_the_shows_with_section_is_not_folded_away(out):
+    """T161 added the "shows with" section to fix a feature that had been
+    re-requested twice as though it did not exist -- and left it
+    foldable, which put the door behind another door. It is kept now.
+    """
+    assert "'chart':1,'shows with':1};" in out

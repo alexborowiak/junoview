@@ -800,8 +800,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T161: the flip-book tie gains a door from the
 # object being tied - a 'shows with' section in the right-click menu
 # that opens the existing tie control with the selection intact.
-EXPECTED_MD5 = "d9ff6adf4f310d733fc083f35ddc2846"
-EXPECTED_BYTES = 3118973
+# Moved 2026-09-01 for T162: the film-strip mark and the Remove-
+# animations toast count the sequence playback actually walks
+# (slideStops) instead of anim-order builds only, and the shows-with
+# menu section is no longer folded away.
+EXPECTED_MD5 = "d474c5dc0f804f3a77383d45ac5aab49"
+EXPECTED_BYTES = 3121148
 
 
 def _render_example() -> str:

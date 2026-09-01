@@ -227,12 +227,34 @@
     var clr=$('#anim-clear');
     if(clr) clr.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;
+      /* SAY WHAT IS LEFT (T162). This deleted `a.anim` and then
+         claimed "everything is on the slide from the start" -- untrue on
+         exactly the slides the feature exists for. A flip book still
+         steps, and a caption tied to figure 3 still waits for figure 3,
+         because neither is an `a.anim`. Worse, the guard fired
+         "Nothing on this slide is animated" about a slide the space bar
+         walks in five clicks. Both sentences now count what REMAINS,
+         using the same plan playback uses. Deleting the flip book's own
+         frames is deliberately NOT done here: "Remove animations" is
+         about the reveal, and a flip book is CONTENT -- taking its
+         figures away would destroy work this button never promised to
+         touch. */
       var n=0;
       (s.annots||[]).forEach(function(a){if(a&&a.anim){delete a.anim;n++;}});
-      if(!n){toast('Nothing on this slide is animated');return;}
+      var left=Math.max(0,slideStops(s)-1);
+      if(!n){
+        toast(left
+          ?('Nothing here has an entrance effect, but the slide still '
+            +'takes '+left+' more click'+(left===1?'':'s')
+            +' — that is its flip book')
+          :'Nothing on this slide is animated');
+        return;
+      }
       revealCount=0;commit(s);
       toast('Cleared '+n+(n===1?' animation':' animations')
-        +' — everything is on the slide from the start');
+        +(left?(' — '+left+' click'+(left===1?'':'s')
+                +' left, stepping the flip book')
+              :' — everything is on the slide from the start'));
     });
     /* the effect buttons act on the SELECTION, so they show the selected
        item's effect and stand down when there is nothing selected */

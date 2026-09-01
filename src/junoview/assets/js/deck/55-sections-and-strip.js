@@ -261,10 +261,19 @@
          animated at all. A COUNT, not a dot — "three builds" is the thing
          you want to know before you click into the slide, and it is the
          same number the bubbles are showing. */
-      var nbuild=slideBuildSteps(s).count;
+      /* THE NUMBER THE SPACE BAR WILL USE (T162). This counted
+         `slideBuildSteps`, i.e. anim-order builds only -- so a slide
+         whose whole reveal is a six-figure flip book, or a chart built
+         by series, was marked as having NOTHING on it. `flipPlan` is
+         the sequence playback actually walks, and `slideStops` is its
+         length; three surfaces used to re-derive a weaker answer from
+         `slideBuildSteps` and each told the reader a different number
+         from the one the space bar takes. The door named in the tip is
+         the one that exists: T140 retired "Timeline". */
+      var nbuild=slideStops(s);
       if(nbuild) mark('anim','▸'+nbuild,
-        nbuild+(nbuild===1?' build':' builds')+' on this slide'
-        +'\nOpen Animate ▸ Timeline to see the build numbers');
+        nbuild+(nbuild===1?' click':' clicks')+' to walk this slide'
+        +'\nOpen Insert ▸ Animations to see the order');
       if(skipped) mark('cut','not shown',filmCut&&!inCut(s,filmCut)
         ?'Not shown in the “'+((cutMap()[filmCut]||{}).name||filmCut)
           +'” version'
