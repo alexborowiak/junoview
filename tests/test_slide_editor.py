@@ -3500,3 +3500,63 @@ def test_the_wait_reaches_powerpoint_as_after_previous(out):
     # and the wait travels all the way from the deck to the writer
     assert "after: (item.after | 0) || 0 });" in out
     assert "if(a.anim.after) items[pq].after=a.anim.after|0;" in out
+
+
+def test_the_sequencing_bar_is_named_and_shows_its_keys(out):
+    """T170. The mode had no NAME -- it was described only by the
+    sentence it was doing, so there was nothing to remember it by
+    afterwards ("I can't remember the mode name, like the 'auto' or
+    'quick'"). It is called what its door calls it, and the name sits
+    first so the bar reads as one thing.
+
+    It also wrote `fade` for everything, so sequencing in any other
+    effect meant going round a second time. Every effect is now a button
+    with its key PRINTED ON IT: a mode whose shortcuts are invisible has
+    no shortcuts.
+    """
+    assert '<span class="seq-name">' in out
+    assert "Click in order</span>" in out
+    assert '<span class="seq-fx" id="seq-fx">' in out
+    # the chooser, its keys, and the state it drives
+    assert "var SEQ_FX=[['none','None','N'],['appear','Appear','A']," in out
+    assert "['fade','Fade','F'],['rise','Float up','U'],"
+    assert "var seqType='fade';" in out
+    assert "b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';" in out
+    # a letter picks an effect, a digit still sets the delay
+    assert "for(var q=0;q<SEQ_FX.length;q++) if(SEQ_FX[q][2]===k){" in out
+    # ...and the click writes the CHOSEN effect
+    assert "else a.anim={type:seqType,order:ord};" in out
+    assert "if(seqType==='none') delete a.anim;" in out
+
+
+def test_the_sequencing_bar_paints_above_the_editor(out):
+    """T170, caught only by looking at the screen. `.pickbar` is
+    z-index 99, which is right for the notebook card picker -- that bar
+    appears when the deck is NOT covering the screen. `.deck` is fixed at
+    100, so the sequencing bar rendered UNDERNEATH the very editor it was
+    describing: the DOM reported it visible, at the right size, in the
+    right place, and the screenshot showed nothing.
+
+    `.matchbar` had already solved this at 150 for the same reason, so
+    this joins it rather than inventing a third number.
+    """
+    assert ".seqbar{position:fixed;top:0;left:0;right:0;z-index:150;}" in out
+    assert ".matchbar{position:fixed;top:0;left:0;right:0;z-index:150;}" in out
+
+
+def test_rise_is_called_float_up(out):
+    """T170, a decision taken on 2026-09-01 and not executed until now.
+    No mainstream deck tool ships an entrance called "Rise" -- PowerPoint
+    has Float In, Keynote Move In -- and worse, "Rise" names a DIRECTION
+    while the icon for it (a box with an arrow beneath) reads as "align
+    to top", a real command in the same ribbon.
+
+    The stored token stays `rise`: DECK-FORMAT is a contract and only the
+    word on screen changes.
+    """
+    assert " Float up</button>" in out
+    assert "['rise','Float up']" in out
+    assert ">\n Rise</button>" not in out
+    # the token is untouched, so every existing deck still means what it said
+    assert "['anim-rise','rise']" in out
+

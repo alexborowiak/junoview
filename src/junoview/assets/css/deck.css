@@ -3992,6 +3992,32 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* the contact sheet */
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
   grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+/* ABOVE THE EDITOR IT IS DESCRIBING (T170). .pickbar's own z-index is
+   99, which is right for the notebook card picker -- that bar appears
+   when the deck is NOT covering the screen. .deck is fixed at 100, so a
+   sequencing bar left at 99 rendered underneath the very editor it was
+   talking about: the DOM reported it visible, at the right size, in the
+   right place, and the screen showed nothing. .matchbar solved this at
+   150 for exactly the same reason; this joins it rather than inventing
+   a third number. */
+.seqbar{position:fixed;top:0;left:0;right:0;z-index:150;}
+/* T170: the bar's own furniture. The NAME first, so the mode is a
+   thing you can remember afterwards rather than a sentence you were
+   reading at the time; then the running state; then the chooser. */
+.seqbar .seq-name{display:inline-flex;align-items:center;gap:5px;
+  font-weight:600;white-space:nowrap;margin-right:4px;}
+.seqbar .seq-name .bic{width:13px;height:13px;}
+.seq-fx{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;
+  margin-left:10px;}
+.seq-fxb{padding:2px 7px;font-size:10.5px;display:inline-flex;
+  align-items:center;gap:5px;white-space:nowrap;}
+.seq-fxb.on{background:#fff;color:var(--cyan-deep);border-color:#fff;}
+/* a key looks like a key, on the button and not only in the tooltip:
+   a mode whose shortcuts are invisible has no shortcuts */
+.seq-fxb kbd{font-family:var(--mono);font-size:9px;line-height:1;
+  padding:1px 3px;border:1px solid currentColor;border-radius:3px;
+  opacity:.75;}
+.seq-fxb.on kbd{opacity:1;}
 /* T168: sequencing by pointing. The bar is .pickbar, so it inherits
    the one picking-mode look; only the armed SLIDE needs saying. Every
    object advertises that it is clickable, and the selection chrome goes

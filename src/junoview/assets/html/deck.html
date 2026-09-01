@@ -828,9 +828,17 @@
  are simply on the slide from the start"><i data-ic="none"></i> None</button>
               <button class="dbtn etm" id="anim-fade" hidden
                 title="Fade the selected items in"><i data-ic="fade"></i> Fade</button>
+              <!-- FLOAT UP, not "Rise" (T170, user's own choice on
+                   2026-09-01). No mainstream deck tool ships an entrance
+                   called Rise -- PowerPoint has Float In, Keynote Move
+                   In -- and worse, "Rise" names a DIRECTION while our
+                   icon for it (a box with an arrow beneath) reads as
+                   "align to top", which is a real command in the same
+                   ribbon. The stored token stays 'rise': DECK-FORMAT is
+                   a contract and only the word on screen changes. -->
               <button class="dbtn etm" id="anim-rise" hidden
-                title="Rise the selected items in from below"><i data-ic="rise"></i>
- Rise</button>
+                title="Float the selected items up into place from
+ below"><i data-ic="rise"></i> Float up</button>
               <button class="dbtn etm" id="anim-zoom" hidden
                 title="Zoom the selected items in"><i data-ic="zoom"></i> Zoom</button>
               <!-- the two builds people actually want, in one press
@@ -2012,8 +2020,19 @@
      the same shape as #matchbar and #pickbar above -- same bar, same
      Escape, same running count -- because a third way to run a picking
      mode would be a third thing to learn. -->
+<!-- THE MODE HAS A NAME (T170). It had none, and was described only
+     by the sentence it was doing -- so there was nothing to remember it
+     by afterwards ("I can't remember the mode name, like the 'auto' or
+     'quick'"). It is called what its door calls it, and the name sits
+     first so the bar reads as one thing. -->
 <div class="pickbar seqbar" id="seqbar" hidden>
+  <span class="seq-name"><i data-ic="stagger"></i> Click in order</span>
   <span id="seq-what"></span>
+  <!-- WHICH EFFECT THE NEXT CLICK GIVES. The mode used to write fade for
+       everything, so a sequence in any other effect meant going round
+       again afterwards. Every button carries its key, because a mode
+       with shortcuts nobody can see has no shortcuts. -->
+  <span class="seq-fx" id="seq-fx"></span>
   <span class="deck-spring"></span>
   <button class="dbtn" id="seq-undo">Undo the last one</button>
   <button class="dbtn primary" id="seq-done">Finish</button>

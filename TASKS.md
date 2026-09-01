@@ -3420,6 +3420,34 @@ effects are visible for approximately none of the moments they are usable.
   runs 2s after the last, no click"; the pane row reads "TWO · fade ·
   +2s"; in Present one space press showed ONE and two seconds later TWO
   appeared with no further input.
+
+- [x] **T170 · S — The mode has a name, an effect, and its keys on show.**
+  Three gaps the user found by looking at the bar. (1) The mode had NO
+  NAME — it was described only by the sentence it was doing, so there
+  was nothing to remember it by ("I can't remember the mode name, like
+  the 'auto' or 'quick'"). It is now called what its door calls it,
+  **Click in order**, with the name first so the bar reads as one thing.
+  (2) It wrote `fade` for everything, so sequencing in any other effect
+  meant going round a second time; the bar now carries the five effects
+  and the next click gives whichever is chosen — including None, which
+  makes a click TAKE an animation away. (3) Every effect button PRINTS
+  ITS KEY (N, A, F, U, G) and repeats it in the tooltip, because a mode
+  whose shortcuts are invisible has no shortcuts; the digits 1–9 keep
+  the delay and the bar says so.
+  Also here, a decision recorded on 2026-09-01 and never executed:
+  **Rise is now Float up** — no mainstream deck tool ships an entrance
+  called Rise, and worse, it names a DIRECTION while our icon for it
+  reads as "align to top", a real command in the same ribbon. The stored
+  token stays `rise`, because DECK-FORMAT is a contract and only the
+  word on screen changes.
+  AND A BUG ONLY THE SCREEN COULD FIND: `.pickbar` is z-index 99, right
+  for the notebook card picker, which appears when the deck is NOT
+  covering the screen. `.deck` is fixed at 100 — so the sequencing bar
+  rendered UNDERNEATH the editor it was describing. The DOM reported it
+  visible, 1439×44, at (46,144), and the screenshot showed nothing at
+  all. `.matchbar` had already solved this at 150 for exactly this
+  reason; the seq bar joins it rather than inventing a third number.
+  That is twice today a probe said "fine" and the pixels said otherwise.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

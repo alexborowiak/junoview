@@ -42,10 +42,25 @@
      armed, cleared when it ends, and swallowed so a digit cannot also
      mean whatever else a digit means in the editor. */
   var seqDigit=0;
+  /* THE EFFECT THE NEXT CLICK GIVES, and the letter that picks it. The
+     mode wrote 'fade' for everything, so sequencing in any other effect
+     meant going round a second time. Keys are the first letter of what
+     is on screen wherever that is free -- F fade, A appear, N none, G
+     grow (zoom's word collides with the canvas magnifier three groups
+     away), U float up -- and every one is PRINTED ON ITS BUTTON,
+     because a mode whose shortcuts are invisible has no shortcuts. */
+  var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
+    ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
+  var seqType='fade';
   function seqKeyDown(e){
     if(!seqArm) return;
     if(e.key>='0'&&e.key<='9'){
       seqDigit=+e.key;e.preventDefault();seqSync();
+      return;
+    }
+    var k=String(e.key||'').toUpperCase();
+    for(var q=0;q<SEQ_FX.length;q++) if(SEQ_FX[q][2]===k){
+      seqType=SEQ_FX[q][0];e.preventDefault();seqSync();return;
     }
   }
   function seqKeyUp(e){
@@ -105,8 +120,12 @@
       ord=seqArm.base+seqArm.n;
       seqArm.n++;
     }
-    if(a.anim) a.anim.order=ord;
-    else a.anim={type:'fade',order:ord};
+    /* the chosen effect, not a hardcoded fade (T170). An object that
+       already has one keeps its own only when the mode has not been
+       told otherwise -- picking an effect is an instruction. */
+    if(a.anim) {a.anim.order=ord;a.anim.type=seqType;}
+    else a.anim={type:seqType,order:ord};
+    if(seqType==='none') delete a.anim;
     /* THE DIGIT SETS THE DELAY (T169). "Hold down 5 and click, it
        appears five seconds after the last." 0 clears one, which is how
        you take a delay back without leaving the mode. It goes on the
@@ -140,14 +159,33 @@
     bar.hidden=!seqArm;
     var w=$('#seq-what'); if(!w||!seqArm) return;
     var done=seqArm.hits.length;
-    w.innerHTML=bic('stagger')+' Click things in the order they should '
-      +'appear \u2014 <b>next: '+(seqArm.n+1)+'</b>'
+    w.innerHTML='<b>next: '+(seqArm.n+1)+'</b>'
       +(done?(' &middot; '+done+' placed'):'')
-      +' &middot; <b>Shift</b>-click for the same click'
+      +' &middot; <b>Shift</b>-click: same click'
       +(seqDigit
-        ?(' &middot; <b>'+seqDigit+'</b> held \u2014 next one runs '
-          +seqDigit+'s after the last, no click')
-        :' &middot; hold <b>1\u20139</b> to run it after a pause');
+        ?(' &middot; <b>'+seqDigit+'</b> held \u2014 runs '+seqDigit
+          +'s after the last')
+        :' &middot; hold <b>1\u20139</b>: run it after a pause');
+    /* THE CHOOSER. Rebuilt rather than diffed: five buttons is cheaper
+       to redraw than to reconcile, and it has to follow both the mouse
+       and the keyboard. */
+    var fx=$('#seq-fx');
+    if(fx){
+      fx.innerHTML='';
+      SEQ_FX.forEach(function(f){
+        var b=document.createElement('button');
+        b.className='dbtn seq-fxb'+(seqType===f[0]?' on':'');
+        b.type='button';
+        b.setAttribute('aria-pressed',seqType===f[0]?'true':'false');
+        b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';
+        b.title=f[1]+' \u2014 press '+f[2]
+          +(f[0]==='none'?'. Clicking then TAKES an animation away.'
+            :'. Every click from now gives this.');
+        b.addEventListener('click',function(e){
+          e.stopPropagation();seqType=f[0];seqSync();});
+        fx.appendChild(b);
+      });
+    }
     var u=$('#seq-undo'); if(u) u.disabled=!done;
     var d=$('#seq-done'); if(d) d.textContent=done?('Finish ('+done+')')
       :'Finish';
@@ -235,7 +273,7 @@
       } else {
         var eff=document.createElement('div');eff.className='anim-eff';
         [['none','None'],['appear','Appear'],['fade','Fade'],
-         ['rise','Rise'],['zoom','Zoom']].forEach(function(p){
+         ['rise','Float up'],['zoom','Zoom']].forEach(function(p){
           var b=document.createElement('button');b.className='anim-effb';
           b.textContent=p[1];
           if((a.anim?a.anim.type:'none')===p[0]) b.classList.add('on');

@@ -827,8 +827,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and run itself that many seconds after the one before, set by holding
 # a digit while clicking in the sequencing mode; it leaves as
 # PowerPoint's own after-previous.
-EXPECTED_MD5 = "a5b703892afeaa6b13d9c372efdb189e"
-EXPECTED_BYTES = 3162563
+# Moved 2026-09-01 for T170: the sequencing mode is named Click in
+# order, carries a five-effect chooser with its shortcut keys printed on
+# the buttons, paints above the deck, and Rise is renamed Float up on
+# screen.
+EXPECTED_MD5 = "130b46f9b623768553ce8676d6c3862a"
+EXPECTED_BYTES = 3167368
 
 
 def _render_example() -> str:
