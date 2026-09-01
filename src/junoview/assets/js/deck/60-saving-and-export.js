@@ -1066,7 +1066,11 @@
   menuAction('#mi-hist',openHistory);
   (function(){
     var b=$('#dsg-design');
-    if(b) b.addEventListener('click',function(){openDesign();});
+    /* a row of the Text styles window since T178: the window goes as
+       the screen opens, the way the other rows there behave */
+    if(b) b.addEventListener('click',function(){
+      if(typeof overlayClose==='function') overlayClose();
+      openDesign();});
   })();
   menuAction('#mi-review',openReview);
   menuAction('#mi-pdf',function(){printDeck();});

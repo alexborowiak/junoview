@@ -68,8 +68,25 @@ def test_insert_groups_by_what_a_tool_does(out):
     which is how Line and Arrow, the same tool with and without a head,
     end up beside each other (2026-08-07, user).
     """
-    place = [out.index('data-tool="cell"'), out.index('data-tool="text"'),
-             out.index('id="et-image"'), out.index('id="dc-qr"')]
+    # ...and since T178 the clusters are three GROUPS under their own
+    # headings rather than two rows of one: Place a thing of a known
+    # kind, Write words in one of three notations, Draw with an armed
+    # tool. Membership and order are what the eye reads, so both are
+    # pinned.
+    def group(label):
+        i = out.index(f">{label}</span>")
+        j = out.rindex('<span class="rbn-grp', 0, i)
+        return out[j:i]
+    place_g, write_g, draw_g = group("Place"), group("Write"), group("Draw")
+    for cid in ("et-cell", "et-image", "et-flip", "et-table", "ins-chart"):
+        assert f'id="{cid}"' in place_g, cid
+    for cid in ("tx-type-btn", "dc-maths", "dc-md", "dc-qr"):
+        assert f'id="{cid}"' in write_g, cid
+    for cid in ("sh-btn", "dc-line", "et-arrow", "dc-draw", "et-cancel"):
+        assert f'id="{cid}"' in draw_g, cid
+    assert out.index(">Place</span>") < out.index(">Write</span>") \
+        < out.index(">Draw</span>")
+    place = [out.index('data-tool="cell"'), out.index('id="et-image"')]
     draw = [out.index('id="sh-btn"'), out.index('id="dc-line"'),
             out.index('data-tool="arrow"'), out.index('id="dc-draw"')]
     assert place == sorted(place), "the placing tools are out of order"
@@ -459,7 +476,8 @@ def test_cancel_is_last_so_arming_a_tool_shifts_nothing(out):
     "appears in a weird spot, next to the options you click"
     (2026-08-29). At the end of the group, un-hiding appends.
     """
-    ins = out[out.index('id="et-cell"'):out.index('>Insert</span>')]
+    # the Draw group since T178 -- Cancel is still its last control
+    ins = out[out.index('id="sh-btn"'):out.index('>Draw</span>')]
     assert ins.index('id="et-cancel"') > ins.index('id="dc-draw"')
     assert ins.index('id="et-cancel"') > ins.index('id="et-arrow"')
 

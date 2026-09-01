@@ -3717,6 +3717,38 @@ idea; Insert carried thirteen tools and the whole of Animation.
   clear with the side toolbar on; Office ribbon → Font@Font,
   Paragraph@Paragraph, Line@Drawing, Source@Picture; Default → back.
 
+- [x] **T178 · M — The deck's type is one window; Insert says what each
+  tool is for.**
+  The user: "the text styles under design (should this be under design
+  anyway???)". YES — the deck's type is a design decision about the
+  whole deck, which is what every other door on that tab is; the
+  per-box Styles door on Object is the other half. What was wrong was
+  the count: Design's Type group had seven buttons for one idea (Text
+  styles, Design tokens, A−, A+, Re-apply, Style system, Standardise).
+  *Done 2026-09-02.* The **Text styles ▾** window is the one room for
+  the deck's type: the per-style list above, and under a heading of
+  its own the whole-deck commands that were four more buttons in the
+  row — **Smaller / Bigger** (every style, in proportion),
+  **Re-apply**, and **Style system…**. They are the real buttons, in
+  the markup, so their wiring is untouched; the style manager builds
+  its rows into a list container so a rebuild leaves them standing,
+  and its door now goes through the one transient-menu owner. Two
+  buttons stay beside the window because they are not type: **Design
+  tokens** (colours, radius, spacing) and **Standardise** (a check, and
+  the button the user went looking for in T87). Seven → three.
+  INSERT, with Animation gone to its own tab, had the width to say
+  what each cluster is FOR, so its thirteen tools are three groups:
+  **Place** (Object, Image, Flip book, Table, Chart), **Write** (Text ▾,
+  Equation, Markdown, QR code) and **Draw** (Shape ▾, Line, Arrow,
+  Draw, and Cancel last, as before). The buttons moved with their
+  comments; not one changed its id, so the nine ribbon layouts, the
+  per-button customiser and every handler are untouched.
+  Driven: Design's Type group reads Text styles ▾ | Design tokens |
+  Standardise; the window lists the seven styles, then Smaller /
+  Bigger / Re-apply and Style system…; Bigger from inside it scales the
+  list and the window stays; Insert reads Place | Write | Draw and
+  drawing an arrow still works from Draw.
+
 
 ## Cut (and why)
 

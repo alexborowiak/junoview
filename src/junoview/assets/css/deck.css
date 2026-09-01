@@ -1289,6 +1289,9 @@ body.slide-editing .apptop{display:none;}
 .rbn-file{order:1;}
 .rbn-slide{order:2;}
 .rbn-view{order:3;}
+/* Design reads Slide, Page furniture, Type -- the markup's order.
+   Without a rung Page furniture sat at 0 and came FIRST (T178). */
+.rbn-furn{order:3;}
 /* ---- everything below here is the CHANGING region. Output and Notebooks
    belong to it because they stand down for a selection: a group that can
    disappear cannot be part of the half that promises never to move. ---- */
@@ -1301,6 +1304,13 @@ body.slide-editing .apptop{display:none;}
    order: the effect first, then the order things take it in (T176) */
 .rbn-build{order:5;}
 .rbn-insert{order:6;}
+/* Write and Draw share Insert's rung and follow it by source order:
+   place a thing, write words, draw a line (T178) */
+.rbn-write{order:6;}
+.rbn-draw{order:6;}
+/* the whole-deck commands at the foot of the Text styles window */
+.style-mgr .opt-row{margin-top:2px;}
+.style-mgr .opt-row .dbtn.rbn-sm{flex:1 1 auto;justify-content:center;}
 .et-fmt .rbn-grp{order:7;flex:none;}
 .edit-tools.ribbon .et-hint{order:9;margin-left:0;}
 .deck-title{font-family:var(--sans);font-size:12.5px;color:#8ba0b2;

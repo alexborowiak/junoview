@@ -637,29 +637,65 @@
                (2026-08-20). -->
           <span class="rbn-grp rbn-type" data-tab="design">
             <span class="rbn-row">
+              <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
+                   styles under design (should this be under design
+                   anyway???)"). The deck's type is a design decision
+                   about the whole deck, which is what every other door
+                   on this tab is; the per-box Styles door on Object is
+                   the other half, for one box. What was wrong was not
+                   the tab but the count: seven buttons for one idea.
+                   The Text styles window is the ONE room for the deck's
+                   type now -- the per-style list above, and below it
+                   the whole-deck commands that used to be four more
+                   buttons in the row: scale everything, re-apply, and
+                   the Style system screen. Design tokens stays out
+                   because it is not type (colours, radius, spacing);
+                   Standardise stays out because it is a CHECK, and the
+                   button the user went looking for (T87). -->
               <span class="sh-drop" id="dsg-stylewrap">
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
                   title="Every named text style in this presentation, with
- its size — change one and every box wearing it follows"><i data-ic="styles"></i> Text
+ its size &mdash; change one and every box wearing it follows. Below
+ them, the whole deck's type at once: bigger, smaller, re-applied, or
+ the Style system screen"><i data-ic="styles"></i> Text
                   styles &#9662;</button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
-                  hidden></div>
+                  hidden>
+                  <!-- the per-style rows, built on open -->
+                  <div id="dsg-style-list"></div>
+                  <div class="hd-lab">the whole deck&rsquo;s type</div>
+                  <div class="opt-row">
+                    <button class="dbtn rbn-sm" id="dsg-scale-down"
+                      title="Make every text style one step smaller —
+ the whole deck's type, in proportion">A&#8722; Smaller</button>
+                    <button class="dbtn rbn-sm" id="dsg-scale-up"
+                      title="Make every text style one step bigger — the
+ whole deck's type, in proportion">A&#43; Bigger</button>
+                    <button class="dbtn rbn-sm" id="dsg-restyle"
+                      title="Re-apply the styles to every box wearing
+ one, on every slide — use it after changing a style by
+ hand"><i data-ic="reload"></i> Re-apply</button>
+                  </div>
+                  <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
+                       2026-08-29: "where was the button where people
+                       can 'standardise presentation'"). Standardise
+                       CHECKS a deck against its own type; this screen
+                       is where that type is decided. Two doors because
+                       they are two questions -- what is the standard,
+                       and who is not keeping to it -- and each opens
+                       the other. -->
+                  <button class="dbtn vw-opt" id="dsg-design"
+                    title="One screen for this deck's type: what a Title,
+ a Heading or a Caption looks like, where each one sits by default, and
+ the whole deck with a box drawn round every object"><i data-ic="palette"></i>
+                    Style system&#8230;</button>
+                </div>
               </span>
               <button class="dbtn rbn-sm" id="dsg-tokens"
                 title="Edit this presentation's reusable colours, corner
  radius and spacing. Everything using a token follows when it changes"
                 ><i data-ic="palette"></i> Design tokens</button>
-              <button class="dbtn rbn-sm" id="dsg-scale-down"
-                title="Make every text style one step smaller — the whole
- deck's type, in proportion">A&#8722;</button>
-              <button class="dbtn rbn-sm" id="dsg-scale-up"
-                title="Make every text style one step bigger — the whole
- deck's type, in proportion">A&#43;</button>
-              <button class="dbtn rbn-sm" id="dsg-restyle"
-                title="Re-apply the styles to every box wearing one, on
- every slide — use it after changing a style by hand"><i data-ic="reload"></i>
-   Re-apply</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -667,18 +703,6 @@
                    would be cool if there was a button that was called
                    'standardise text', and checked if all headings
                    paragraphs, captions, are looking the same"). -->
-              <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
-                   2026-08-29: "where was the button where people can
-                   'standardise presentation'"). Standardise CHECKS a
-                   deck against its own type; Design is where that type
-                   is decided. Two buttons because they are two
-                   questions -- what is the standard, and who is not
-                   keeping to it -- and each opens the other. -->
-              <button class="dbtn rbn-sm" id="dsg-design"
-                title="One screen for this deck's type: what a Title, a
- Heading or a Caption looks like, where each one sits by default, and the
- whole deck with a box drawn round every object"><i data-ic="palette"></i>
-                Style system</button>
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
                 title="Check whether the headings, paragraphs and
  captions across the whole deck look the same as each other &mdash; and
@@ -904,6 +928,14 @@
             </span>
             <span class="rbn-lab">Order</span>
           </span>
+          <!-- THREE GROUPS, NOT ONE (T178). Thirteen tools under one
+               heading read as a wall; with Animation gone to its own
+               tab (T176) the row has the width to say what each cluster
+               is FOR. PLACE puts a thing of a known kind on the page;
+               WRITE puts words on it, in three notations; DRAW arms a
+               tool and draws. Line and Arrow stay adjacent, as they
+               have since 2026-08-07, and Cancel stays LAST of the draw
+               tools so un-hiding it appends (2026-08-29). -->
           <span class="rbn-grp rbn-insert" data-tab="insert">
             <span class="rbn-row">
               <!-- All one size. Three big buttons here were the worst of
@@ -933,28 +965,6 @@
                 title="Draw a frame for an object, then choose what goes in
  it: a figure from a notebook, a picture from this computer, or one on the
  clipboard, or a path"><i data-ic="cellcard"></i> Object</button>
-              <!-- Text, plus a caret that says WHICH KIND of text
-                   (2026-08-22, user: "when creating text boxes or such
-                   you can click an option thing and create it as heading,
-                   paragraph etc. on create"). One wrapper, so
-                   sizeRibbonGroups still counts one cell and the Insert
-                   group keeps its column count; a sibling button would
-                   have taken it from five columns to six.
-                   The caret carries NEITHER `et` NOR data-tool: that
-                   exact pairing is what made #dc-qr call setTool(undefined)
-                   and leave the page armed with a tool that did not
-                   exist (2026-08-17). -->
-              <span class="sh-drop tx-split" id="tx-drop">
-              <button class="dbtn et rbn-sm" data-tool="text"
-                aria-pressed="false"
-                title="Add a text box"><i data-ic="text"></i> Text</button>
-              <button class="dbtn rbn-sm tx-caret" id="tx-type-btn" aria-label="Text box type"
-                aria-haspopup="true" aria-expanded="false"
-                title="Make the next text box a heading, a caption or any
- other named type, instead of a plain one">&#9662;</button>
-              <div class="sh-menu tx-type-menu" id="tx-type-menu"
-                hidden></div>
-              </span>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
@@ -988,6 +998,33 @@
  or select a placed table and &ldquo;Turn into a chart&rdquo;. Right-click
  it to change its type or edit the data. Exports to PowerPoint as a real
  chart"><i data-ic="plots"></i> Chart</button>
+            </span>
+            <span class="rbn-lab">Place</span>
+          </span>
+          <span class="rbn-grp rbn-write" data-tab="insert">
+            <span class="rbn-row">
+              <!-- Text, plus a caret that says WHICH KIND of text
+                   (2026-08-22, user: "when creating text boxes or such
+                   you can click an option thing and create it as heading,
+                   paragraph etc. on create"). One wrapper, so
+                   sizeRibbonGroups still counts one cell and the Insert
+                   group keeps its column count; a sibling button would
+                   have taken it from five columns to six.
+                   The caret carries NEITHER `et` NOR data-tool: that
+                   exact pairing is what made #dc-qr call setTool(undefined)
+                   and leave the page armed with a tool that did not
+                   exist (2026-08-17). -->
+              <span class="sh-drop tx-split" id="tx-drop">
+              <button class="dbtn et rbn-sm" data-tool="text"
+                aria-pressed="false"
+                title="Add a text box"><i data-ic="text"></i> Text</button>
+              <button class="dbtn rbn-sm tx-caret" id="tx-type-btn" aria-label="Text box type"
+                aria-haspopup="true" aria-expanded="false"
+                title="Make the next text box a heading, a caption or any
+ other named type, instead of a plain one">&#9662;</button>
+              <div class="sh-menu tx-type-menu" id="tx-type-menu"
+                hidden></div>
+              </span>
               <!-- NOT an `et` tool. It carried that class without a
                    data-tool, so the shared arming wiring called
                    setTool(undefined): the button lit up as though a tool
@@ -1025,6 +1062,11 @@
  point a phone at it to open your repo, paper or data. Generated here, so
  it works offline and prints crisp at any size (vector)"
                 ><i data-ic="qr"></i> QR code</button>
+            </span>
+            <span class="rbn-lab">Write</span>
+          </span>
+          <span class="rbn-grp rbn-draw" data-tab="insert">
+            <span class="rbn-row">
               <!-- Source order IS the layout: with two rows filled across,
                    the first four land on the top row and the rest below.
                    So things you PLACE sit together up top and things you
@@ -1083,7 +1125,7 @@
                 title="Stop drawing and go back to selecting (Esc)"
                 ><i data-ic="exit"></i> Cancel</button>
             </span>
-            <span class="rbn-lab">Insert</span>
+            <span class="rbn-lab">Draw</span>
           </span>
           <!-- SLIDES, first on Home, the way PowerPoint opens its Home
                tab. Home is where you land, and with nothing selected it

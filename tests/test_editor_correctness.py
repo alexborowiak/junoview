@@ -1100,7 +1100,7 @@ def test_high_contrast_re_inks_the_surfaces(out):
     # theme looks half-applied -- which had happened to all four groups
     # added in August
     for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-build",
-                "rbn-tbl"):
+                "rbn-tbl", "rbn-write", "rbn-draw"):
         assert f"body.th-colorful .{grp}" in out, grp
     # ...and the two groups that no longer exist are gone from it
     assert "body.th-colorful .rbn-file" not in out

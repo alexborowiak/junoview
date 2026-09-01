@@ -386,10 +386,14 @@
     toast('Every text style '+(k>1?'bigger':'smaller')
       +' \u2014 '+n+' box'+(n===1?'':'es')+' followed');
   }
+  /* the open window redraws its list when something outside build()
+     changes the styles -- the whole-deck scale and Re-apply sit INSIDE
+     it now (T178), so a click on Bigger must show the new sizes */
+  var styleMgrSync=null;
   (function(){
-    var wrap=$('#dsg-stylewrap'),btn=$('#dsg-styles'),
-        menu=$('#dsg-style-menu');
-    if(!wrap||!btn||!menu) return;
+    var btn=$('#dsg-styles'),menu=$('#dsg-style-menu');
+    if(!btn||!menu) return;
+    styleMgrSync=function(){if(!menu.hidden) build();};
     var openEdit='';   /* which row's arrow is open; one at a time */
     /* the expander behind one style's arrow. Everything here writes an
        OVERRIDE into pres.styles (or, for a rename, into the custom type
@@ -482,7 +486,11 @@
       return box;
     }
     function build(){
-      menu.innerHTML='';
+      /* into the LIST, not the menu: the whole-deck buttons below
+         it are real controls in the markup and survive every
+         rebuild (T178) */
+      var list=$('#dsg-style-list')||menu;
+      list.innerHTML='';
       /* FIRST, above the individual styles: picking a whole look is the
          thing you do once at the start, and tuning one style is what you
          do afterwards. The old menu offered only the second (2026-08-22). */
@@ -492,12 +500,12 @@
       sets.title='Ready-made looks, and any you have saved. Works even '
         +'on a deck that has never used a named style.';
       sets.addEventListener('click',function(e){
-        e.stopPropagation();menu.hidden=true;
+        e.stopPropagation();overlayHide(menu);
         if(typeof window.SemDeckStyleSets==='function')
           window.SemDeckStyleSets();
       });
-      menu.appendChild(sets);
-      menuHead(menu,'this presentation\u2019s type');
+      list.appendChild(sets);
+      menuHead(list,'this presentation\u2019s type');
       styleOrder().forEach(function(id){
         var d=styleDef(id);
         var row=document.createElement('div');row.className='stm-row';
@@ -547,8 +555,8 @@
           build();
         });
         row.appendChild(arw);
-        menu.appendChild(row);
-        if(openEdit===id) menu.appendChild(styleEditor(id,d,build));
+        list.appendChild(row);
+        if(openEdit===id) list.appendChild(styleEditor(id,d,build));
       });
       /* "people could create their own types" \u2014 the seven built-ins are a
          scale, not a vocabulary, and a deck that needs a Quote had
@@ -564,7 +572,7 @@
         openEdit=t.id;
         markDirty();build();
       });
-      menu.appendChild(add);
+      list.appendChild(add);
       var rst=document.createElement('button');
       rst.className='dbtn vw-opt';
       rst.innerHTML=bic('reset')+' Back to the built-in sizes';
@@ -580,32 +588,33 @@
         build();
         toast('Styles reset \u2014 '+n+' box'+(n===1?'':'es')+' followed');
       });
-      menu.appendChild(rst);
+      list.appendChild(rst);
     }
     /* not wireFloatDropdown: this menu REBUILDS itself on every open
        (build()), so the static options list the helper wants never fits */
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
+      if(!menu.hidden){overlayHide(menu);return;}
+      build();
+      overlayShow(btn,menu);floatMenu(btn,menu);
     });
   })();
   (function(){
     var d=$('#dsg-scale-down');
-    if(d) d.addEventListener('click',function(){scaleStyles(1/1.12);});
+    if(d) d.addEventListener('click',function(e){
+      e.stopPropagation();scaleStyles(1/1.12);
+      if(styleMgrSync) styleMgrSync();});
     var u=$('#dsg-scale-up');
-    if(u) u.addEventListener('click',function(){scaleStyles(1.12);});
+    if(u) u.addEventListener('click',function(e){
+      e.stopPropagation();scaleStyles(1.12);
+      if(styleMgrSync) styleMgrSync();});
     var r=$('#dsg-restyle');
-    if(r) r.addEventListener('click',function(){
+    if(r) r.addEventListener('click',function(e){
+      e.stopPropagation();
       var n=restyleAll(null);
       toast(n?('Re-applied the styles to '+n+' box'+(n===1?'':'es'))
         :'Nothing on this deck is wearing a named style yet');
+      if(styleMgrSync) styleMgrSync();
     });
   })();
   /* ---- LISTS ----------------------------------------------------------

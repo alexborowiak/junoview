@@ -186,3 +186,40 @@ def test_the_windows_are_styled_as_rooms(out):
                      r"overflow-y:auto", out)
     assert ".opt-panel [hidden]{display:none!important;}" in out
     assert ".opt-panel .dbtn.etm,.opt-panel .dbtn.rbn-sm{height:auto!important;" in out
+
+
+def test_the_decks_type_is_one_window_under_design(out):
+    """T178. Yes, under Design: the deck's type is a design decision
+    about the whole deck. What was wrong was seven buttons for one
+    idea. The whole-deck commands are real buttons at the foot of the
+    Text styles window; the style manager builds its rows into a list
+    container so a rebuild leaves them standing. Design tokens and
+    Standardise stay beside it because neither is type.
+    """
+    i = out.index('id="dsg-style-menu"')
+    j = out.index("</div>\n              </span>", i)
+    win = out[i:j]
+    for cid in ("dsg-style-list", "dsg-scale-down", "dsg-scale-up",
+                "dsg-restyle", "dsg-design"):
+        assert f'id="{cid}"' in win, cid
+    assert 'id="dsg-tokens"' not in win and 'id="dsg-std"' not in win
+    assert 'id="dsg-tokens"' in out and 'id="dsg-std"' in out
+    assert "var list=$('#dsg-style-list')||menu;" in out
+    assert "list.innerHTML='';" in out
+    # the door goes through the one owner, like every other window
+    assert "overlayShow(btn,menu);floatMenu(btn,menu);" in out
+
+
+def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
+    """T178. Place a thing of a known kind, write words in one of three
+    notations, draw with an armed tool. The buttons moved with their
+    comments and not one changed its id.
+    """
+    for lab in ("Place", "Write", "Draw"):
+        assert f">{lab}</span>" in out, lab
+    assert out.count('data-tab="insert">') == 3
+    # the whole-deck scale and re-apply redraw the open window's list,
+    # now that they sit inside it
+    assert "if(styleMgrSync) styleMgrSync();" in out
+    assert ">Insert</span>" not in out
+    assert ".rbn-write{order:6;}" in out and ".rbn-draw{order:6;}" in out

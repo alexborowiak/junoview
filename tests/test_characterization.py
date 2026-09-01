@@ -856,8 +856,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the outermost governed control (a shipped bug that had emptied the
 # Colour group at boot), and Escape closing a menu in capture. deck.html,
 # deck.css and five deck fragments.
-EXPECTED_MD5 = "71f0758b2ec2b7034d5d2a24d1bb78a3"
-EXPECTED_BYTES = 3266135
+# T178 2026-09-02: the deck's type is one window (the whole-deck scale,
+# Re-apply and Style system rows sit at the foot of Text styles), Insert
+# is Place / Write / Draw, and Page furniture takes an explicit order so
+# Design reads Slide, Page furniture, Type. deck.html, help.html,
+# deck.css, core.css and two deck fragments.
+EXPECTED_MD5 = "f3604d102cc5b8527aa9e579145933ba"
+EXPECTED_BYTES = 3269829
 
 
 def _render_example() -> str:
