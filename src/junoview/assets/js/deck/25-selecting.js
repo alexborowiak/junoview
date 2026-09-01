@@ -1887,6 +1887,37 @@
             function(){
               if(ca.leg===0) delete ca.leg; else ca.leg=0;
               markDirty();renderSlide();},null,'eye');
+          /* ONE CLICK FOR THE SLOW REVEAL (T160). Assigning a build
+             number to each series by hand is exactly the drag-a-list-of-
+             opaque-blocks misery people complain about in PowerPoint --
+             where, documented and unfixed, chart series animations
+             cannot be reordered AT ALL. The default order is the one the
+             data is already in, which is nearly always the one you want;
+             the order painter is the escape hatch when it is not. */
+          (function(){
+            var ns=window.SemDeckChart.seriesCount(ca);
+            if(!ns) return;
+            var on=!!(ca.anim&&ca.anim.by==='series');
+            row(on?'\u2713 Reveal series one at a time'
+                  :'Reveal series one at a time','',
+              function(){
+                if(on){
+                  if(ca.anim) delete ca.anim.by;
+                } else {
+                  if(!ca.anim) ca.anim={type:'fade',
+                    order:nextAnimOrder(pres.slides[cur])};
+                  ca.anim.by='series';
+                }
+                markDirty();renderSlide();renderFilm();
+                if(typeof animRibbonSync==='function') animRibbonSync();
+                toast(on?'The whole chart arrives on one click'
+                  :('Axes first, then '+ns+' series \u2014 '
+                    +(ns+1)+' clicks'));
+              },
+              'The axes and gridlines arrive first, then one series per '
+              +'click. The scale is fixed from the start, so nothing '
+              +'moves as the lines come in.','stagger');
+          })();
           if(ca.ref) row('Linked to its table','',function(){},
             'Update figures from their sources re-reads the numbers; '
             +'position, type and colours stay yours.','link');

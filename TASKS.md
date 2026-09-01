@@ -3120,6 +3120,46 @@ effects are visible for approximately none of the moments they are usable.
   column being added, removed or reordered upstream — where PowerPoint's
   list is keyed to shape index, which is exactly why theirs breaks.
   Pie is deliberately left flat: its slices are CATEGORIES, not series.
+
+- [x] **T160 · M — A chart can be built by series.**
+  The slow reveal, and the one animation feature that is structurally
+  ours. Every other tool does this by exporting N SEPARATE PICTURES of
+  the same plot, which has a specific defect: each image rescales its
+  own axes, so the plot JUMPS as you step through it. A chart annotation
+  here is live numbers, so the axes are computed from ALL the data
+  before a single mark is drawn and the frame is nailed down from the
+  first click.
+  *Done 2026-09-01.* Three pieces, and the middle one turned out to be a
+  precedent we already owned. (1) `chartSeriesCount(a)` — one number,
+  used by the timeline and the renderer so they cannot disagree about
+  how many clicks a chart is worth. (2) `flipPlan` generalised: "one
+  annotation consumes several playback stops" was written for flip books
+  but was never a flip-book idea, so `flipsOn`/`flipFrames(a).length-1`
+  become `steppersOn`/`extraStops(a)` and a series-built chart takes one
+  stop per series after its own. Kept as a SEPARATE list from `flipsOn`
+  on purpose: everything asking "is this a flip book?" must keep getting
+  flip books and nothing else — only the TIMELINE cares that both kinds
+  eat stops. (3) `drawChart` hides the groups not yet reached, with
+  `visibility` rather than `display` so nothing reflows as series arrive.
+  The door is a right-click row, "Reveal series one at a time", which
+  says what it will cost ("Axes first, then 3 series — 4 clicks");
+  assigning a build number per series by hand is exactly the
+  drag-a-list-of-opaque-blocks misery people complain about in
+  PowerPoint, where chart series animations cannot be reordered AT ALL.
+  Proven by EXECUTING the shipped stop count, not by reading it — an
+  off-by-one is invisible to a substring test and fatal in a talk: three
+  series give 3 extra stops, no build gives 0, a pie gives 0 (its slices
+  are categories), a 4-frame flip book still gives 3, plain text 0.
+  Durability comes free and is the whole differentiator: the build lives
+  on `a.anim`, and `chartResyncAll` replaces only `a.cats`/`a.series`, so
+  the reveal survives "Update figures from their sources" and simply
+  follows however many series the data now has — where PowerPoint's list
+  is keyed to shape INDEX and comes apart when the data moves.
+  NOT done, deliberately, and each worth its own entry: the emphasise
+  step (dim all but one series), a build order over series that differs
+  from the data's own order (the order painter is the natural home), and
+  the .pptx export, which currently sends a series-built chart as one
+  picture on one click and must say so in the loss report.
   The same audit corrected a number in T152's own comment: 890px is the
   ribbon's RESTING need, while `ribbonMinW` measures ~635px with the
   whole ladder stamped on. It also named the mechanism that made this

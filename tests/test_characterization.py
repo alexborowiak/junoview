@@ -794,8 +794,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Moved 2026-09-01 for T159: a chart's marks are grouped per series (<g
 # data-series>) with the axes and labels in a skeleton group, so a build
 # step can address a series by name.
-EXPECTED_MD5 = "0208939a620eb756d5f44812f0472b85"
-EXPECTED_BYTES = 3111621
+# Moved 2026-09-01 for T160: a chart can be built by series - the
+# timeline gives it one stop per series after the skeleton, drawChart
+# hides the series not yet revealed, and a right-click row turns it on.
+EXPECTED_MD5 = "da0586baad6720a89763763808eb03ab"
+EXPECTED_BYTES = 3116730
 
 
 def _render_example() -> str:

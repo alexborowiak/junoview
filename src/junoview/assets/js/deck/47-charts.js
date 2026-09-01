@@ -69,6 +69,15 @@
   }
   /* the whole picture, sized by viewBox so the box scales it; aspect
      comes from the annot's real page shape so a pie stays round */
+  /* how many addressable series this chart has. One number, used by the
+     timeline (extraStops) and by the renderer, so they cannot disagree
+     about how many clicks a chart is worth (T160). Pie is excluded: its
+     slices are CATEGORIES, and "reveal one category at a time" is a
+     different feature with a different meaning. */
+  function chartSeriesCount(a){
+    if(!a||a.k!=='chart'||a.ct==='pie') return 0;
+    return chartParse(a).series.length;
+  }
   function chartSvg(a){
     var d=chartParse(a);
     var pg=pageOf();
@@ -265,7 +274,27 @@
     d2.style.width=(a.w||30)+'%';d2.style.height=(a.h||24)+'%';
     applyCommon(d2,a);
     d2.setAttribute('data-idx',i);
-    d2.appendChild(chartSvg(a));
+    var svg=chartSvg(a);
+    /* THE SERIES REVEAL (T160). The axes were computed from ALL the data
+       before a single mark was drawn, so they are fixed from the first
+       frame -- which is the exact defect of the way everyone else does
+       this. Exporting N pictures of the same plot rescales each one, so
+       the plot JUMPS as you step through it; here the frame is nailed
+       down and the lines arrive into it.
+       Hidden with visibility, not display: a hidden <g> still occupies
+       its place in the layout and still contributes to nothing that
+       moves, so nothing reflows as series arrive. */
+    var shown=chartSeriesShown(s,a);
+    var names=chartParse(a).series.map(function(se){return se.name;});
+    if(shown<names.length){
+      names.forEach(function(nm,si){
+        if(si<shown) return;
+        var g=svg.querySelector('g[data-series="'+String(nm)
+          .replace(/"/g,'\\"')+'"]');
+        if(g) g.style.visibility='hidden';
+      });
+    }
+    d2.appendChild(svg);
     layer.appendChild(d2);
   }
 
@@ -424,4 +453,5 @@
   }
   window.SemDeckChart={place:placeChart,dataOf:chartDataOf,
     fromRows:chartFromRows,dataDlg:chartDataDlg,resync:chartResyncAll,
+    seriesCount:chartSeriesCount,
     svg:chartSvg};

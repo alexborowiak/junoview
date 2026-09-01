@@ -877,6 +877,30 @@
       if(a&&a.k==='flip') out.push({a:a,i:i});});
     return out;
   }
+  /* ---- WHAT ELSE EATS A STOP (T160) ---------------------------------
+     `flipPlan` below was written for flip books, but "one annotation
+     consumes several playback stops" was never a flip-book idea -- it is
+     the shape of EVERY progressive reveal. A chart built by series is
+     the same thing wearing different clothes: its skeleton lands on the
+     build's own stop and each series takes one after it.
+
+     Kept as a SEPARATE list from flipsOn on purpose. Everything that
+     asks "is this a flip book?" -- flipBase, flipAtNow, flipShowsFrame,
+     the frame arrows -- must keep getting flip books and nothing else;
+     only the TIMELINE cares that both kinds eat stops. */
+  function extraStops(a){
+    if(!a) return 0;
+    if(a.k==='flip') return Math.max(0,flipFrames(a).length-1);
+    if(a.k==='chart'&&a.anim&&a.anim.by==='series')
+      return chartSeriesCount(a);
+    return 0;
+  }
+  function steppersOn(s){
+    var out=[];
+    ((s&&s.annots)||[]).forEach(function(a,i){
+      if(a&&extraStops(a)>0) out.push({a:a,i:i});});
+    return out;
+  }
   function flipById(s,id){
     var hit=null;
     flipsOn(s).forEach(function(p){if(!hit&&p.a.fid===id) hit=p.a;});
@@ -906,7 +930,7 @@
      frame still derived from it rather than stored beside it. */
   function flipPlan(s){
     var steps=slideBuildSteps(s),anch={},tail=[];
-    flipsOn(s).forEach(function(p){
+    steppersOn(s).forEach(function(p){
       var b=(p.a&&p.a.anim)?steps.map[p.a.anim.order||0]:null;
       if(b==null) tail.push(p);
       else (anch[b]||(anch[b]=[])).push(p);
@@ -914,7 +938,7 @@
     var n=0,stop=[],base={};
     function frames(p){
       base[p.i]=n;
-      n+=Math.max(0,flipFrames(p.a).length-1);
+      n+=extraStops(p.a);
     }
     for(var b=0;b<steps.count;b++){
       stop[b]=n;n++;
@@ -932,6 +956,27 @@
     var plan=flipPlan(s),base=null;
     flipsOn(s).forEach(function(p){if(p.a===a) base=plan.base[p.i];});
     return base;
+  }
+  /* the same question for anything that steps, charts included (T160) */
+  function stepBase(s,a){
+    var plan=flipPlan(s),base=null;
+    steppersOn(s).forEach(function(p){if(p.a===a) base=plan.base[p.i];});
+    return base;
+  }
+  /* HOW MANY SERIES ARE SHOWING RIGHT NOW. Read off the one cursor, never
+     stored beside it -- the same rule flipAtNow follows. At the moment the
+     chart first appears, revealCount===base and this is 0: the SKELETON
+     alone, axes and gridlines and nothing plotted, which is the whole
+     point of a slow reveal. Each stop after that adds one series.
+     Outside playback a chart is simply whole; an editor that hid your
+     data until you pressed play would be unusable. */
+  function chartSeriesShown(s,a){
+    var n=chartSeriesCount(a);
+    if(!n||!(a.anim&&a.anim.by==='series')) return n;
+    if(mode!=='view') return n;
+    var base=stepBase(s,a);
+    if(base==null) return n;
+    return Math.max(0,Math.min(n,revealCount-base));
   }
   /* which frame this flip book is showing right now. In the editor that is
      wherever you left its arrows; in playback it is read off revealCount,

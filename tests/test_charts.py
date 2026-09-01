@@ -154,3 +154,91 @@ def test_a_chart_refresh_carries_author_intent_across_by_name(out):
     assert "var old={};chartParse(a).series.forEach(function(se){" in out
     assert "old[se.name]=se.color;});" in out
     assert "if(old[se.name]) se.color=old[se.name];});" in out
+
+
+def test_a_series_build_takes_one_stop_per_series(out):
+    """T160, RUN rather than read.
+
+    "One annotation consumes several playback stops" was written for flip
+    books, but it was never a flip-book idea -- it is the shape of every
+    progressive reveal. A chart built by series is the same thing: the
+    skeleton lands on the build's own stop and each series takes one
+    after it, so a three-series chart is four clicks.
+
+    The count is lifted out of the assembled IIFE and EXECUTED, because
+    an off-by-one here is invisible to a substring test and fatal in a
+    talk -- it would strand a series past the end of the slide.
+    """
+    import json
+    import os
+    import re
+    import subprocess
+    import tempfile
+
+    import pytest
+
+    from helpers_js import js_engine, lift_fn
+
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    cmd, env = eng
+
+    pal = re.search(r"var CHART_PALETTE=\[[^\]]*\];", out, re.S).group(0)
+    body = "\n".join([pal,
+                      lift_fn(out, "chartParse"),
+                      lift_fn(out, "chartSeriesCount"),
+                      lift_fn(out, "flipFrames"),
+                      lift_fn(out, "extraStops")])
+    cases = (
+        "const line3={k:'chart',ct:'line',"
+        "cats:['a','b'],series:["
+        "{name:'control',ys:[1,2]},"
+        "{name:'treatment',ys:[2,4]},"
+        "{name:'baseline',ys:[1,1]}]};"
+        "console.log(JSON.stringify({"
+        "count: chartSeriesCount(line3),"
+        "pie: chartSeriesCount(Object.assign({},line3,{ct:'pie'})),"
+        "built: extraStops(Object.assign({},line3,"
+        "  {anim:{type:'fade',order:0,by:'series'}})),"
+        "plain: extraStops(Object.assign({},line3,"
+        "  {anim:{type:'fade',order:0}})),"
+        "flip: extraStops({k:'flip',frames:[1,2,3,4],"
+        "  anim:{type:'fade',order:0}}),"
+        "text: extraStops({k:'text',anim:{type:'fade',order:0}})}));"
+    )
+    with tempfile.TemporaryDirectory() as d:
+        p = os.path.join(d, "r.js")
+        with open(p, "w", encoding="utf-8") as fh:
+            fh.write(body + "\n" + cases)
+        r = subprocess.run(cmd + [p], capture_output=True, text=True,
+                           env=env, timeout=90)
+    assert r.returncode == 0, r.stderr[:1500]
+    got = json.loads([ln for ln in r.stdout.splitlines()
+                      if ln.startswith("{")][-1])
+    assert got["count"] == 3
+    # a pie's slices are CATEGORIES: "one series at a time" means nothing
+    assert got["pie"] == 0
+    # the skeleton takes the build's own stop, then one per series
+    assert got["built"] == 3
+    # a chart with no series build is still exactly one click
+    assert got["plain"] == 0
+    # and the generalisation must not have moved flip books
+    assert got["flip"] == 3
+    assert got["text"] == 0
+
+
+def test_a_series_build_survives_its_data_being_re_read(out):
+    """The build lives on `a.anim`, and a refresh replaces only `a.cats`
+    and `a.series` -- so "reveal series one at a time" survives Update
+    figures from their sources for free, and the stop count simply
+    follows however many series the data now has.
+
+    That is the differentiator over PowerPoint, whose animation list is
+    keyed to shape INDEX and comes apart when the data moves under it.
+    """
+    i = out.index("function chartResyncAll(){")
+    body = out[i:i + 1400]
+    assert "a.cats=data.cats;a.series=data.series;" in body
+    # nothing in the refresh touches the animation
+    assert "a.anim" not in body
