@@ -2424,11 +2424,15 @@ body.light .doc-toast a{color:var(--cyan-deep);}
 body.light .ckf-h{color:var(--ink-3);}
 
 /* ---------- instant tooltips (replaces slow native titles) -------- */
-.apptip{position:fixed;z-index:300;background:var(--chrome-1,#0e1926);color:#dce6ee;
+/* a tooltip is a plain dark bubble, not a button: no accent border, a
+   small radius, and it waits half a second (T207; 2026-09-02, the Arrange
+   menu's tip read as a second copy of the row under it) */
+.apptip{position:fixed;z-index:300;background:#0b1520;color:#dce6ee;
   font-family:var(--sans);font-size:11.5px;line-height:1.45;
-  padding:6px 10px;border-radius:7px;border:1px solid color-mix(in srgb,var(--accent) 33%,transparent);
-  box-shadow:0 6px 24px #00000066;pointer-events:none;max-width:290px;
+  padding:6px 10px;border-radius:5px;border:1px solid #ffffff1a;
+  box-shadow:0 6px 24px #00000080;pointer-events:none;max-width:300px;
   white-space:pre-line;display:none;}
+body.light .apptip{background:#1f2933;color:#f2f6fa;border-color:#00000033;}
 /* the shortcut chip a data-kbd control appends to its tooltip */
 .apptip-kbd{display:inline-block;margin-left:8px;padding:1px 7px;
   border:1px solid #ffffff33;border-bottom-width:2px;border-radius:4px;
@@ -4307,9 +4311,18 @@ body.slide-editing .apptop{display:none;}
    took that pressure off, and a 26px target is small for a thing you hit
    all day (2026-08-20, user: "buttons could also have more height"). The
    two-row grid and its fixed band are unchanged in kind — just taller. */
-.rbn-row{display:grid;grid-auto-flow:row;
-  grid-template-columns:repeat(var(--rbn-cols,4),auto);
-  grid-template-rows:30px 30px;row-gap:5px;column-gap:5px;
+/* T207: COLUMN-MAJOR, the PowerPoint way (2026-09-02, user: "buttons
+   of all shapes and sizes... look at PowerPoint"). Controls fill a
+   column top-to-bottom, two to a column, before the next column
+   starts, so the two buttons that share a column share a width and
+   nothing else does: a row-major grid made every column as wide as
+   its widest member in EITHER row, which is how "U" ended up the
+   width of "Paragraph". A tall control spans both rows and takes a
+   column of its own. The markup pairs neighbours deliberately. The
+   column count is no longer a variable anything sets. */
+.rbn-row{display:grid;grid-auto-flow:column;
+  grid-auto-columns:max-content;
+  grid-template-rows:30px 30px;row-gap:5px;column-gap:4px;
   align-items:stretch;justify-items:stretch;height:65px;}
 /* the tall things span both rows rather than sitting in one */
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
@@ -7595,39 +7608,42 @@ body:has(#rd-order) .an-readno{display:flex;}
   outline:1px solid rgba(240,168,72,.85);outline-offset:0;}
 .dg-sheet.outlined .mini-diagram{background:#0e1a26;}
 
-/* ---- T203: THE STRIP FRAME -------------------------------------------
-   A tile strip is a box with an end: a border round the whole thing, a
-   scrollbar you can see that sits UNDER the tiles instead of on them,
-   and a chevron at the right that opens every tile at once (2026-09-02,
-   user: "the ends kind of just disappear... the horizontal scroll bar
-   is too small and overlaps with them. There needs to be an arrow or
-   something below, that when you click you can see all options"). */
+/* ---- T203/T207: THE STRIP FRAME ---------------------------------------
+   A tile strip is a gallery the PowerPoint way: one row of tiles in
+   sight, the rest wrapped beneath it out of view, and a column at the
+   right with up, down and "show all". No scrollbar anywhere (2026-09-02,
+   user: "bit messy with the bottom scroll bar"). The frame is a box
+   with an edge, the tiles inside it are the one 72x56 tile. */
 .strip-frame{display:flex;align-items:stretch;height:65px;
   border:1px solid #ffffff24;border-radius:8px;background:#ffffff06;
   overflow:hidden;}
-/* no scrollbar-color here: Chrome drops the ::-webkit-scrollbar styling
-   below the moment either scrollbar-* property is set, and the bar
-   comes back at its native 15px, squeezing the tiles (measured T205) */
-.strip-frame>.fx-strip{height:auto;padding:0 2px;scrollbar-width:auto;
-  align-items:flex-start;}
-.strip-frame .fx-tile,.strip-frame .dbtn.lay{height:56px;}
-.strip-frame>.fx-strip::-webkit-scrollbar{height:7px;}
-.strip-frame>.fx-strip::-webkit-scrollbar-thumb{background:#ffffff45;
-  border-radius:4px;}
-.strip-frame>.fx-strip::-webkit-scrollbar-track{background:#ffffff0c;}
-.strip-frame>.fx-strip>*{scroll-snap-align:start;}
-.strip-more{flex:none;width:18px;padding:0;border:0;
-  border-left:1px solid #ffffff24;background:#ffffff0a;color:#c9d6e2;
-  cursor:pointer;font-size:13px;line-height:1;display:flex;
-  align-items:center;justify-content:center;}
-.strip-more:hover{background:color-mix(in srgb,var(--accent) 18%,transparent);
-  color:#fff;}
+/* the STRIP is the scroll box (a fixed height, overflow hidden), so the
+   arrows can move scrollTop; the frame only draws the edge */
+.strip-frame>.fx-strip{height:63px;padding:4px 4px 0;box-sizing:border-box;
+  flex-wrap:wrap;align-content:flex-start;overflow:hidden;
+  scroll-behavior:smooth;scroll-snap-type:none;}
+.strip-frame .fx-tile,.strip-frame .dbtn.lay{height:56px;flex:0 0 72px;
+  scroll-snap-align:none;}
+/* a strip's width is a whole number of tiles: four, or three for the
+   page sizes, so no tile is ever cut at the edge */
+.strip-frame>.fx-strip,.strip-frame>.fx-strip.lay-strip,
+.strip-frame>.fx-strip.shape-strip,.strip-frame>.fx-strip.tx-strip{
+  width:calc(4 * 72px + 3 * 4px + 8px);}
+.strip-frame>.fx-strip.page-strip{width:calc(3 * 72px + 2 * 4px + 8px);}
+.strip-nav{flex:none;width:18px;display:flex;flex-direction:column;
+  border-left:1px solid #ffffff24;background:#ffffff0a;}
+.strip-nav>button{flex:1 1 0;min-height:0;padding:0;border:0;
+  background:none;color:#c9d6e2;cursor:pointer;font-size:8px;line-height:1;
+  display:flex;align-items:center;justify-content:center;}
+.strip-nav>button+button{border-top:1px solid #ffffff14;}
+.strip-nav>.strip-more{font-size:12px;}
+.strip-nav>button:hover:not(:disabled){
+  background:color-mix(in srgb,var(--accent) 18%,transparent);color:#fff;}
+.strip-nav>button[aria-disabled="true"]{opacity:.3;}
 .strip-more[aria-expanded="true"]{background:var(--accent-deep,var(--cyan-deep));color:#fff;}
 body.light .strip-frame{border-color:var(--line);background:#00000005;}
-body.light .strip-frame>.fx-strip::-webkit-scrollbar-thumb{background:#00000040;}
-body.light .strip-frame>.fx-strip::-webkit-scrollbar-track{background:#00000010;}
-body.light .strip-more{border-left-color:var(--line);background:#00000008;
-  color:var(--ink-2);}
+body.light .strip-nav{border-left-color:var(--line);background:#00000008;}
+body.light .strip-nav>button{color:var(--ink-2);}
 /* the window with every tile in it: the strip itself, moved in and
    wrapped, so every tile keeps its wiring; moved back on close */
 /* block, not the menu grid: the strip must have the whole width to wrap in */
@@ -7675,6 +7691,61 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
 body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
+
+/* ---- T207: FLAT AT REST ------------------------------------------------
+   Every button on the ribbon is flat until you reach for it: no border,
+   no fill, the words and the icon in the tab's ink. Hover lifts it with
+   a faint fill; pressed fills it with the deep accent; a gallery keeps
+   its frame because the frame is the box, not the buttons. Outlined
+   boxes on every one of sixty controls were most of what read as "all
+   shapes and sizes" (2026-09-02). PowerPoint's ribbon is flat. */
+.edit-tools .dbtn.rbn-sm,.edit-tools .fx-tile,.edit-tools .dbtn.lay,
+.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
+  border-color:transparent;background:transparent;box-shadow:none;}
+.edit-tools .dbtn.rbn-sm:hover:not(:disabled),
+.edit-tools .fx-tile:hover:not(:disabled),
+.edit-tools .dbtn.lay:hover:not(:disabled),
+.edit-tools .rbn-cell .dbtn:hover:not(:disabled),
+.edit-tools .rbn-foldbtn:hover{
+  background:color-mix(in srgb,var(--accent) 14%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 30%,transparent);}
+.edit-tools .dbtn[aria-pressed="true"],.edit-tools .fx-tile.on,
+.edit-tools .dbtn.lay[aria-pressed="true"],
+.edit-tools .fx-tile[aria-pressed="true"]{
+  background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+.edit-tools .dbtn.dbtn-warn{color:#f0a0a0;}
+.edit-tools .dbtn.dbtn-warn:hover:not(:disabled){
+  background:#e0606022;border-color:#e0606055;}
+/* the colourful theme tints the WORDS, not the boxes, on the ribbon */
+body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"]):not(:hover),
+body.th-colorful .edit-tools .fx-tile:not(.on):not(:hover){
+  border-color:transparent;background:transparent;
+  color:color-mix(in srgb,var(--accent) 60%,#f2f7fa);}
+body.th-colorful .edit-tools .dbtn:hover:not([aria-pressed="true"]),
+body.th-colorful .edit-tools .fx-tile:hover:not(.on){
+  background:color-mix(in srgb,var(--accent) 16%,transparent);
+  border-color:color-mix(in srgb,var(--accent) 35%,transparent);}
+body.light .edit-tools .dbtn.rbn-sm,body.light .edit-tools .fx-tile,
+body.light .edit-tools .dbtn.lay{border-color:transparent;background:transparent;}
+
+/* ---- T207: X Y W H on the Object tab ------------------------------------
+   Two cells in one column: position over size. A label letter, a
+   number in millimetres, typed straight in; Enter or leaving the field
+   is one undo step. */
+.rbn-cell.rbn-geom{gap:6px;padding:0 2px;}
+.rbn-geom .geo{display:flex;align-items:center;gap:4px;
+  font-family:var(--sans);font-size:10.5px;color:#8ba0b2;}
+.rbn-geom input{width:54px;height:24px;padding:0 5px;box-sizing:border-box;
+  font-family:var(--mono);font-size:11px;color:#e8f1f8;
+  background:#ffffff0a;border:1px solid #ffffff22;border-radius:5px;
+  -moz-appearance:textfield;}
+.rbn-geom input::-webkit-outer-spin-button,
+.rbn-geom input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.rbn-geom input:focus{outline:none;border-color:var(--accent);}
+.rbn-geom input:disabled{opacity:.45;}
+body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
+  border-color:var(--line);}
 </style>
 <script>
 window.MathJax = {
@@ -11190,18 +11261,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
               title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
-              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
-              aria-label="Arrange what is on this slide">
-              <button class="dbtn rbn-sm" data-tidy="tight"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
-              <button class="dbtn rbn-sm" data-tidy="normal"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
-              <button class="dbtn rbn-sm" data-tidy="airy"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
-              </div>
               <button class="dbtn rbn-sm" id="hm-lay-arrsave"
               title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save layout&#8230;</button>
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
+              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+              aria-label="Arrange what is on this slide">
+              <button class="dbtn rbn-sm" data-tidy="tight"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
+              <button class="dbtn rbn-sm" data-tidy="normal"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
+              <button class="dbtn rbn-sm" data-tidy="airy"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
+              </div>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
@@ -11232,9 +11303,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="rbn-tall strip-frame" id="page-strip-frame">
                 <span class="fx-strip page-strip" id="page-strip"
                   role="group" aria-label="Page size"></span>
-                <button class="strip-more" type="button" id="page-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show all page sizes">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="page-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="page-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="page-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show all page sizes">&#9662;</button></span></span>
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -11512,9 +11588,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
                   role="group" aria-label="Entrance effect"></span>
-                <button class="strip-more" type="button" id="anim-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every effect">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="anim-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="anim-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="anim-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every effect">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
@@ -11700,12 +11781,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    that kind; click it again to put the tool down. Built
                    by txStripBoot; the caret menu it replaces was the
                    one control on Insert that hid its options. -->
-              <span class="rbn-tall strip-frame" id="tx-strip-frame">
-                <span class="fx-strip tx-strip" id="tx-strip"
-                  role="group" aria-label="Kind of text box"></span>
-                <button class="strip-more" type="button" id="tx-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every kind of text box">&#9662;</button></span>
+              <!-- ONE TEXT BOX TILE (T207; 2026-09-02, user: "the different text
+                   types are kind of weird"). PowerPoint has one Text Box
+                   button; what kind of text it is -- title, heading, body --
+                   is the Styles door on the Object tab once the box exists. -->
+              <span class="rbn-tall fx-strip big-strip" id="tx-strip"
+                role="group" aria-label="Text box"></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Equation</button>
@@ -11730,9 +11811,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
                   role="group" aria-label="Shapes"></span>
-                <button class="strip-more" type="button" id="shape-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every shape">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="shape-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="shape-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="shape-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every shape">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
@@ -11815,9 +11901,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="rbn-tall strip-frame" id="layout-strip-frame">
                 <span class="fx-strip lay-strip" id="layout-strip"
                   role="group" aria-label="New slide, laid out as"></span>
-                <button class="strip-more" type="button" id="layout-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every layout">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="layout-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="layout-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="layout-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every layout">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab">New slide</span>
           </span>
@@ -12315,6 +12406,31 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  handle &mdash; a square stays square and a plot keeps its proportions.
  Hold Shift during a drag to do the opposite of whatever this
  says"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Lock ratio</button>
+              <!-- X, Y, WIDTH AND HEIGHT, ON THE RIBBON (T207; 2026-09-02,
+                   user: "why do objects not have an x-y position and also
+                   not a width and height. Oh they do, it's just under size
+                   and position"). Two cells, one column: position over
+                   size, in millimetres, typed straight in. The Size &
+                   position pane stays for the long form. -->
+              <span class="rbn-cell rbn-geom" id="fmt-geom-xy" hidden
+                role="group" aria-label="Position, in millimetres">
+                <label class="geo" title="Left edge, from the left of the page"
+                  ><span>X</span><input id="rb-x" type="number" step="0.5"
+                  inputmode="decimal" aria-label="X"></label>
+                <label class="geo" title="Top edge, from the top of the page"
+                  ><span>Y</span><input id="rb-y" type="number" step="0.5"
+                  inputmode="decimal" aria-label="Y"></label>
+              </span>
+              <span class="rbn-cell rbn-geom" id="fmt-geom-wh" hidden
+                role="group" aria-label="Size, in millimetres">
+                <label class="geo" title="Width"
+                  ><span>W</span><input id="rb-w" type="number" step="0.5"
+                  inputmode="decimal" aria-label="Width"></label>
+                <label class="geo" title="Height. A text box heights itself
+ from its words, so this is a readout there"
+                  ><span>H</span><input id="rb-h" type="number" step="0.5"
+                  inputmode="decimal" aria-label="Height"></label>
+              </span>
               <button class="dbtn etm" id="fmt-sizepos" hidden
                 title="Type this object&rsquo;s width, height and
  position in millimetres, instead of dragging for
@@ -15963,7 +16079,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       if(y+th>window.innerHeight-6) y=r.top-th-8;
       tipEl.style.left=x+'px';
       tipEl.style.top=Math.max(6,y)+'px';
-    },220);
+    },520);
   });
   document.addEventListener('mouseout',function(e){
     if(tipTarget&&!tipTarget.contains(e.relatedTarget)) hideTip();
@@ -34590,7 +34706,7 @@ window.JunoPptx = (function () {
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-lhwrap '
+  var FMT_MANUAL=('#fmt-geom-xy #fmt-geom-wh #fmt-lhwrap '
     /* the four windows of options (T177): a wrapper, its door, the
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
@@ -35001,6 +35117,7 @@ window.JunoPptx = (function () {
        is two endpoints and has neither (T65). */
     var hasBox=isNum&&kind!=='arrow';
     show('#fmt-sizepos',hasBox);
+    show('#fmt-geom-xy',hasBox);show('#fmt-geom-wh',hasBox);
     show('#fmt-lockar',hasBox,hasBox&&!!a.lockar);
     var lab=$('#fmt-lockar');
     if(lab&&hasBox) lab.innerHTML=(a.lockar?bic('unlock'):bic('lock'))
@@ -41971,14 +42088,18 @@ window.JunoPptx = (function () {
       ?layer.querySelector('.an-item[data-idx="'+i+'"]'):null;
     return !!(el&&el.classList.contains('an-figonly'));
   }
+  /* fills the pane's fields AND the ribbon's (T207: #rb-x/y/w/h on the
+     Object tab), so the ribbon is live whether or not the pane is open */
+  var GEO_HOSTS=['#sz-','#rb-'];
+  function geoEach(k,fn){
+    GEO_HOSTS.forEach(function(pre){var el=$(pre+k); if(el) fn(el);});
+  }
   function sizePaneSync(){
-    var p=$('#sizepane'); if(!p||p.hidden) return;
     var a=sizeSubject(),cb=$('#sz-lockar'),note=$('#sz-note');
     var keys=['w','h','x','y'];
     if(!a){
       keys.forEach(function(k){
-        var el=$('#sz-'+k);
-        if(el){el.value='';el.disabled=true;}});
+        geoEach(k,function(el){el.value='';el.disabled=true;});});
       if(cb){cb.checked=false;cb.disabled=true;}
       if(note) note.textContent='Select one object on the page. An arrow '
         +'is two endpoints rather than a box, so it has none of these.';
@@ -41988,13 +42109,14 @@ window.JunoPptx = (function () {
     var v={w:r.r-r.l,h:r.b-r.t,x:r.l,y:r.t};
     var all=lockedAll(a),pos=pinned(a),isText=(a.k==='text');
     keys.forEach(function(k){
-      var el=$('#sz-'+k); if(!el) return;
       var horiz=(k==='w'||k==='x');
-      el.disabled=all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos);
-      /* never overwrite the field you are typing in -- the rule every
-         input in the notes pane already keeps */
-      if(document.activeElement!==el)
-        el.value=Math.round(pctMm(v[k],horiz)*10)/10;
+      geoEach(k,function(el){
+        el.disabled=all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos);
+        /* never overwrite the field you are typing in -- the rule every
+           input in the notes pane already keeps */
+        if(document.activeElement!==el)
+          el.value=Math.round(pctMm(v[k],horiz)*10)/10;
+      });
     });
     if(cb){cb.disabled=all;cb.checked=!!a.lockar;}
     if(note) note.textContent=
@@ -42074,16 +42196,20 @@ window.JunoPptx = (function () {
     if(cbx) cbx.addEventListener('change',function(){
       toggleAspectLock(cbx.checked);});
     ['w','h','x','y'].forEach(function(k){
-      var el=$('#sz-'+k); if(!el) return;
-      /* the canvas owns arrows, Delete and every single-letter tool key;
-         a number field has to keep its own keystrokes */
-      el.addEventListener('keydown',function(e){e.stopPropagation();});
-      el.addEventListener('input',function(){
-        var n=parseFloat(el.value);
-        if(isFinite(n)) sizePaneWrite(k,n);
+      geoEach(k,function(el){
+        /* the canvas owns arrows, Delete and every single-letter tool
+           key; a number field has to keep its own keystrokes */
+        el.addEventListener('keydown',function(e){
+          e.stopPropagation();
+          if(e.key==='Enter') el.blur();
+        });
+        el.addEventListener('input',function(){
+          var n=parseFloat(el.value);
+          if(isFinite(n)) sizePaneWrite(k,n);
+        });
+        el.addEventListener('blur',function(){
+          if(typeof histPush==='function') histPush();});
       });
-      el.addEventListener('blur',function(){
-        if(typeof histPush==='function') histPush();});
     });
   })();
   (function(){
@@ -45471,33 +45597,68 @@ window.JunoPptx = (function () {
      here once, installed by overlayBoot from THE BOOT SEQUENCE --
      never at eval (the T133 rule). Inspector panes are a different
      class of surface and have their own owner (T136). */
+  /* ...AND IT NESTS (T207; 2026-09-02, user: "options in options is
+     shit and can't be clicked"). Background inside the folded Slide
+     popover, a colour swatch inside the Font window, the layout grid
+     inside a folded Layout group: each is a menu opened from INSIDE an
+     open one, and "at most one shows" closed the parent under it, which
+     took the child with it. The owner keeps a stack now. Showing a menu
+     closes everything that does not contain it and keeps what does;
+     an outside click closes, innermost first, every menu it was outside
+     of and stops at the first it was inside; Escape closes only the
+     innermost. `overlayNow` is still the innermost open menu, for the
+     guards elsewhere that ask whether anything is open. */
+  var overlayStack=[];
   var overlayNow=null;
-  function overlayClose(){
-    if(!overlayNow) return;
-    overlayNow.menu.hidden=true;
-    if(overlayNow.btn&&overlayNow.btn.setAttribute)
-      overlayNow.btn.setAttribute('aria-expanded','false');
-    overlayNow=null;
+  function overlaySync(){
+    overlayNow=overlayStack.length?overlayStack[overlayStack.length-1]:null;
+  }
+  function overlayCloseOne(o){
+    o.menu.hidden=true;
+    if(o.btn&&o.btn.setAttribute) o.btn.setAttribute('aria-expanded','false');
+  }
+  function overlayClose(){                     /* the innermost */
+    if(!overlayStack.length) return;
+    overlayCloseOne(overlayStack.pop());
+    overlaySync();
+  }
+  function overlayCloseAll(){
+    while(overlayStack.length) overlayClose();
   }
   function overlayShow(btn,menu){
     if(!menu) return;
-    if(overlayNow&&overlayNow.menu!==menu) overlayClose();
+    var keep=[];
+    overlayStack.forEach(function(o){
+      if(o.menu===menu) return;                /* re-shown: pushed again */
+      var inside=o.menu.contains(menu)||(btn&&o.menu.contains(btn));
+      if(inside) keep.push(o); else overlayCloseOne(o);
+    });
+    overlayStack=keep;
     menu.hidden=false;
     if(btn&&btn.setAttribute) btn.setAttribute('aria-expanded','true');
-    overlayNow={btn:btn,menu:menu};
+    overlayStack.push({btn:btn,menu:menu});
+    overlaySync();
   }
   function overlayHide(menu){
     if(!menu) return;
-    if(overlayNow&&overlayNow.menu===menu){overlayClose();return;}
-    menu.hidden=true;
+    var at=-1;
+    overlayStack.forEach(function(o,i){if(o.menu===menu) at=i;});
+    if(at<0){menu.hidden=true;return;}
+    /* closing a menu closes the ones opened from inside it */
+    overlayStack.splice(at).reverse().forEach(overlayCloseOne);
+    overlaySync();
   }
   function overlayBoot(){
     document.addEventListener('click',function(e){
-      if(!overlayNow) return;
-      if(overlayNow.menu.contains(e.target)) return;
-      var b=overlayNow.btn;
-      if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) return;
-      overlayClose();
+      if(!overlayStack.length) return;
+      for(var i=overlayStack.length-1;i>=0;i--){
+        var o=overlayStack[i];
+        if(o.menu.contains(e.target)) break;
+        var b=o.btn;
+        if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) break;
+        overlayCloseOne(overlayStack.pop());
+      }
+      overlaySync();
     });
     /* CAPTURE, and stopped there. An open menu is the innermost state
        you can be standing in, so Escape closes it and does nothing
@@ -45507,9 +45668,9 @@ window.JunoPptx = (function () {
        (found driving T177, 2026-09-02). The gallery and the notes
        editor make the same choice for the same reason. */
     document.addEventListener('keydown',function(e){
-      if(e.key!=='Escape'||!overlayNow) return;
+      if(e.key!=='Escape'||!overlayStack.length) return;
       e.preventDefault();e.stopPropagation();
-      var b=overlayNow.btn;
+      var b=overlayNow&&overlayNow.btn;
       overlayClose();
       /* keyboard dismissal returns focus to the trigger */
       if(b&&b.focus) b.focus();
@@ -53159,13 +53320,47 @@ window.JunoPptx = (function () {
   function stripMoreBoot(){
     $$('.strip-frame').forEach(function(frame){
       var strip=frame.querySelector('.fx-strip'),
-          more=frame.querySelector('.strip-more');
+          more=frame.querySelector('.strip-more'),
+          nav=frame.querySelector('.strip-nav'),
+          prev=frame.querySelector('.strip-prev'),
+          next=frame.querySelector('.strip-next');
       if(!strip||!more) return;
+      /* THE GALLERY THE POWERPOINT WAY (T207): one row in sight, the
+         rest wrapped beneath it, an up/down/more column at the right
+         and no scrollbar (2026-09-02, user: "bit messy with the bottom
+         scroll bar"). A step is one row: tile height plus the gap. */
+      var ROW=60;
+      function ends(){
+        if(!prev||!next) return;
+        var top=strip.scrollTop,max=strip.scrollHeight-strip.clientHeight;
+        /* dimmed, never disabled: a strip measured while its tab was
+           hidden reads zero, and a disabled arrow would swallow the very
+           click that would have measured it again */
+        prev.setAttribute('aria-disabled',top<=1?'true':'false');
+        next.setAttribute('aria-disabled',top>=max-1?'true':'false');
+      }
+      if(prev) prev.addEventListener('click',function(e){
+        e.stopPropagation();
+        strip.scrollTop=Math.max(0,Math.round(strip.scrollTop/ROW)*ROW-ROW);
+        setTimeout(ends,0);});
+      if(next) next.addEventListener('click',function(e){
+        e.stopPropagation();
+        strip.scrollTop=Math.round(strip.scrollTop/ROW)*ROW+ROW;
+        setTimeout(ends,0);});
+      strip.addEventListener('scroll',ends);
+      new MutationObserver(function(){setTimeout(ends,0);})
+        .observe(strip,{childList:true});
+      /* the strip is measured when its tab shows, not at boot when the
+         ribbon is hidden and every height reads zero */
+      if(typeof ResizeObserver==='function')
+        new ResizeObserver(function(){ends();}).observe(strip);
+      setTimeout(ends,0);
       var panel=null;
       function home(){
         if(strip.parentNode===frame) return;
-        frame.insertBefore(strip,more);
+        frame.insertBefore(strip,nav||more);
         more.setAttribute('aria-expanded','false');
+        setTimeout(ends,0);
       }
       function build(){
         panel=document.createElement('div');
@@ -53248,9 +53443,9 @@ window.JunoPptx = (function () {
     var strip=$('#tx-strip'); if(!strip) return;
     function build(){
       strip.innerHTML='';
-      var rows=[['','Text',null]];
-      styleOrder().forEach(function(id){
-        rows.push([id,styleDef(id).label,styleDef(id)]);});
+      /* one tile (T207): the kind of text is the Object tab's Styles
+         door once the box exists, as in PowerPoint */
+      var rows=[['','Text box',null]];
       rows.forEach(function(r){
         var b=document.createElement('button');
         b.type='button';b.className='fx-tile tx-tile';
