@@ -908,8 +908,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # alone), Home is New slide / This slide / Keep up to date, Standardise
 # says what it does, the images pane is per slide with a full-screen
 # All images. deck.html, deck.css and two deck fragments.
-EXPECTED_MD5 = "abb510db7e6fe898276894bd6340a917"
-EXPECTED_BYTES = 3319918
+# T205 2026-09-02: one visual system -- one tile size, pressed states in
+# the inherited deep accent, icons on Tight/Normal/Airy, one hue per tab
+# in the colourful theme. deck.html, deck.css, core.css.
+EXPECTED_MD5 = "295ed4c6a050aea1b7c187bee0ca3ca9"
+EXPECTED_BYTES = 3321484
 
 
 def _render_example() -> str:

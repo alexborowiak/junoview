@@ -4181,6 +4181,22 @@ option. Then where has the ability to refresh all images gone?"
   heading per slide that has any, each folding on a click, Open all /
   Fold all, the same rows bigger; a row selects the thing and closes
   the view.
+- [x] **T205 · S — One visual system on the ribbon.**
+  The user (2026-09-02, three tabs screenshotted): "these aren't
+  really working. This is just chaos. Buttons of all shapes and sizes
+  and configurations all over the place."
+  *Done 2026-09-02.* The structure was settled; the faces were not.
+  **One tile**: every tall control — an effect, a layout, a shape, a
+  kind of text, a page size, New slide, the Keep up to date doors — is
+  72 wide with a 22px icon, and 56 tall whether it stands alone or sits
+  in a frame over its scrollbar; the tinted "big" face is gone, the
+  tall shape is the emphasis. **One pressed colour**: a lit control
+  takes the deep accent it inherits, cyan in the default theme and the
+  tab's own hue in the colourful one, instead of cyan in every tab.
+  **Every small button has an icon**: Tight, Normal and Airy were the
+  three that did not. **One hue per tab** in the colourful theme, read
+  from data-tab rather than a hand-kept list of group classes, so a tab
+  is one colour and a group that moves tabs changes with its new home.
 
 
 ## Cut (and why)

@@ -1105,16 +1105,15 @@ def test_high_contrast_re_inks_the_surfaces(out):
     assert "body.th-contrast{--accent:#6fe3ff;" in out
     assert "--chrome:#000000;--chrome-0:#000000;" in out
     assert "body.th-contrast .rbn-tab{color:#c8dae6;}" in out
-    # the colourful theme's per-group hues are a hand-kept list, so a group
-    # added without a line here falls back to the default accent and the
-    # theme looks half-applied -- which had happened to all four groups
-    # added in August
-    for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-build",
-                "rbn-tbl", "rbn-write", "rbn-draw"):
-        assert f"body.th-colorful .{grp}" in out, grp
-    # ...and the two groups that no longer exist are gone from it
-    assert "body.th-colorful .rbn-file" not in out
-    assert "body.th-colorful .rbn-nbs" not in out
+    # the colourful theme's hues used to be a hand-kept list of group
+    # classes, so a group added without a line fell back to the default
+    # accent and the theme looked half-applied. Since T205 a group takes
+    # its TAB's hue from data-tab, so there is no list to keep in step
+    for tab in ("home", "insert", "design", "animation", "view", "object"):
+        assert f'body.th-colorful .rbn-grp[data-tab="{tab}"]' in out, tab
+    for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-build", "rbn-tbl",
+                "rbn-write", "rbn-draw", "rbn-file", "rbn-nbs"):
+        assert f"body.th-colorful .{grp}" not in out, grp
 
 
 def test_fullscreen_takes_the_root_not_the_deck(out):

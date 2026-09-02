@@ -36,7 +36,8 @@ def test_the_frame_has_an_edge_and_a_scrollbar_under_the_tiles(out):
     assert ".strip-frame{display:flex;align-items:stretch;height:65px;" in out
     assert ".strip-frame>.fx-strip::-webkit-scrollbar{height:7px;}" in out
     assert ".strip-more{flex:none;width:18px;" in out
-    assert '.strip-more[aria-expanded="true"]{background:var(--cyan-deep);' in out
+    assert ('.strip-more[aria-expanded="true"]{background:'
+            'var(--accent-deep,var(--cyan-deep));') in out
 
 
 def test_show_all_moves_the_strip_into_a_window_and_back(out):

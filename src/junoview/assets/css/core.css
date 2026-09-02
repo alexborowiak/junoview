@@ -1246,32 +1246,28 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    Table, Animate and Page furniture (2026-08-20, user: "some of the
    themes are not right"). .rbn-file and .rbn-nbs are gone from the
    markup and gone from here with them. */
-body.th-colorful .rbn-slides,body.th-colorful .rbn-layout,
-body.th-colorful .rbn-this,
-body.th-colorful .rbn-arrange,body.th-colorful .rbn-apply,
-body.th-colorful .rbn-sources,body.th-colorful #ab-file{
+/* ONE HUE PER TAB (T205; 2026-09-02, user: "this is just chaos"). A
+   group takes its TAB's colour, read from data-tab, so a tab is one
+   colour and a group that moves between tabs (T204 moved four)
+   changes with its new home instead of carrying the old one along.
+   No list to keep in step any more. */
+body.th-colorful .rbn-grp[data-tab="home"],body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
-body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
-body.th-colorful .rbn-anim,body.th-colorful .rbn-build,
-body.th-colorful .rbn-order,body.th-colorful .rbn-seq,
-body.th-colorful .rbn-timing{
-  --accent:#6fd8c2;--accent-deep:#2f9c85;}
-body.th-colorful .rbn-tbl{--accent:#8fc7ff;--accent-deep:#4d8fd6;}
-body.th-colorful .rbn-slide,body.th-colorful #ab-filters,
+body.th-colorful .rbn-grp[data-tab="insert"],
+body.th-colorful #ab-app,body.th-colorful .presrail{
+  --accent:#a586e8;--accent-deep:#7a52c0;}
+body.th-colorful .rbn-grp[data-tab="design"],body.th-colorful #ab-filters,
 body.th-colorful #pt-grp,body.th-colorful #md-grp,
 body.th-colorful #ck-grp,body.th-colorful #ot-grp{
   --accent:#6b9bff;--accent-deep:#3d6fd9;}
-body.th-colorful .rbn-view,body.th-colorful #ab-view,
+body.th-colorful .rbn-grp[data-tab="animation"]{
+  --accent:#6fd8c2;--accent-deep:#2f9c85;}
+body.th-colorful .rbn-grp[data-tab="view"],body.th-colorful #ab-view,
 body.th-colorful #ab-tree{--accent:#41c493;--accent-deep:#1e8f66;}
+body.th-colorful .rbn-grp[data-tab="object"]{
+  --accent:#e0a5c6;--accent-deep:#b3628f;}
 body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
-body.th-colorful .rbn-insert,body.th-colorful .rbn-write,
-body.th-colorful .rbn-draw,body.th-colorful .rbn-cancel,
-body.th-colorful .rbn-shapes,
-body.th-colorful #ab-app,body.th-colorful .presrail{
-  --accent:#a586e8;--accent-deep:#7a52c0;}
-body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;
-  --accent-deep:#c07f22;}
 body.th-colorful .selpane{--accent:#41c493;--accent-deep:#1e8f66;}
 /* DIRECT rules, not --btn-* tokens: a token defined on body resolves
    its var(--accent) AT body — the same freeze the * alias exists for —
