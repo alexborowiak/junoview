@@ -535,18 +535,18 @@
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
               title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
               <i data-ic="layouts"></i> Layout ideas&#8230;</button>
-              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
-              aria-label="Arrange what is on this slide">
-              <button class="dbtn rbn-sm" data-tidy="tight"><i data-ic="collapse"></i> Tight</button>
-              <button class="dbtn rbn-sm" data-tidy="normal"><i data-ic="spacing"></i> Normal</button>
-              <button class="dbtn rbn-sm" data-tidy="airy"><i data-ic="expand"></i> Airy</button>
-              </div>
               <button class="dbtn rbn-sm" id="hm-lay-arrsave"
               title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
               <i data-ic="copy"></i> Save layout&#8230;</button>
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <i data-ic="objects"></i> Saved layouts&#8230;</button>
+              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+              aria-label="Arrange what is on this slide">
+              <button class="dbtn rbn-sm" data-tidy="tight"><i data-ic="collapse"></i> Tight</button>
+              <button class="dbtn rbn-sm" data-tidy="normal"><i data-ic="spacing"></i> Normal</button>
+              <button class="dbtn rbn-sm" data-tidy="airy"><i data-ic="expand"></i> Airy</button>
+              </div>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
@@ -577,9 +577,14 @@
               <span class="rbn-tall strip-frame" id="page-strip-frame">
                 <span class="fx-strip page-strip" id="page-strip"
                   role="group" aria-label="Page size"></span>
-                <button class="strip-more" type="button" id="page-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show all page sizes">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="page-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="page-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="page-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show all page sizes">&#9662;</button></span></span>
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -857,9 +862,14 @@
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
                   role="group" aria-label="Entrance effect"></span>
-                <button class="strip-more" type="button" id="anim-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every effect">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="anim-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="anim-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="anim-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every effect">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
@@ -1045,12 +1055,12 @@
                    that kind; click it again to put the tool down. Built
                    by txStripBoot; the caret menu it replaces was the
                    one control on Insert that hid its options. -->
-              <span class="rbn-tall strip-frame" id="tx-strip-frame">
-                <span class="fx-strip tx-strip" id="tx-strip"
-                  role="group" aria-label="Kind of text box"></span>
-                <button class="strip-more" type="button" id="tx-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every kind of text box">&#9662;</button></span>
+              <!-- ONE TEXT BOX TILE (T207; 2026-09-02, user: "the different text
+                   types are kind of weird"). PowerPoint has one Text Box
+                   button; what kind of text it is -- title, heading, body --
+                   is the Styles door on the Object tab once the box exists. -->
+              <span class="rbn-tall fx-strip big-strip" id="tx-strip"
+                role="group" aria-label="Text box"></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><i data-ic="maths"></i> Equation</button>
@@ -1075,9 +1085,14 @@
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
                   role="group" aria-label="Shapes"></span>
-                <button class="strip-more" type="button" id="shape-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every shape">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="shape-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="shape-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="shape-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every shape">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
@@ -1160,9 +1175,14 @@
               <span class="rbn-tall strip-frame" id="layout-strip-frame">
                 <span class="fx-strip lay-strip" id="layout-strip"
                   role="group" aria-label="New slide, laid out as"></span>
-                <button class="strip-more" type="button" id="layout-strip-more"
-                  aria-expanded="false" title="Show all"
-                  aria-label="Show every layout">&#9662;</button></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="layout-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="layout-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="layout-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every layout">&#9662;</button></span></span>
             </span>
             <span class="rbn-lab">New slide</span>
           </span>
@@ -1660,6 +1680,31 @@
  handle &mdash; a square stays square and a plot keeps its proportions.
  Hold Shift during a drag to do the opposite of whatever this
  says"><i data-ic="lock"></i> Lock ratio</button>
+              <!-- X, Y, WIDTH AND HEIGHT, ON THE RIBBON (T207; 2026-09-02,
+                   user: "why do objects not have an x-y position and also
+                   not a width and height. Oh they do, it's just under size
+                   and position"). Two cells, one column: position over
+                   size, in millimetres, typed straight in. The Size &
+                   position pane stays for the long form. -->
+              <span class="rbn-cell rbn-geom" id="fmt-geom-xy" hidden
+                role="group" aria-label="Position, in millimetres">
+                <label class="geo" title="Left edge, from the left of the page"
+                  ><span>X</span><input id="rb-x" type="number" step="0.5"
+                  inputmode="decimal" aria-label="X"></label>
+                <label class="geo" title="Top edge, from the top of the page"
+                  ><span>Y</span><input id="rb-y" type="number" step="0.5"
+                  inputmode="decimal" aria-label="Y"></label>
+              </span>
+              <span class="rbn-cell rbn-geom" id="fmt-geom-wh" hidden
+                role="group" aria-label="Size, in millimetres">
+                <label class="geo" title="Width"
+                  ><span>W</span><input id="rb-w" type="number" step="0.5"
+                  inputmode="decimal" aria-label="Width"></label>
+                <label class="geo" title="Height. A text box heights itself
+ from its words, so this is a readout there"
+                  ><span>H</span><input id="rb-h" type="number" step="0.5"
+                  inputmode="decimal" aria-label="Height"></label>
+              </span>
               <button class="dbtn etm" id="fmt-sizepos" hidden
                 title="Type this object&rsquo;s width, height and
  position in millimetres, instead of dragging for

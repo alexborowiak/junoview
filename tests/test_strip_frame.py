@@ -11,7 +11,7 @@ Text boxes with no text should still be there."
 
 from __future__ import annotations
 
-STRIPS = ("page-strip", "anim-strip", "tx-strip", "shape-strip", "layout-strip")
+STRIPS = ("page-strip", "anim-strip", "shape-strip", "layout-strip")
 
 
 def test_every_tile_strip_sits_in_a_frame_with_a_door(out):
@@ -32,10 +32,25 @@ def test_every_tile_strip_sits_in_a_frame_with_a_door(out):
     assert 'aria-label="Show every effect"' in out
 
 
-def test_the_frame_has_an_edge_and_a_scrollbar_under_the_tiles(out):
+def test_the_frame_has_an_edge_and_arrows_instead_of_a_scrollbar(out):
+    """T207: the gallery the PowerPoint way. One row of whole tiles in
+    sight, the rest wrapped beneath, an up/down/more column at the right,
+    no scrollbar anywhere ("bit messy with the bottom scroll bar")."""
     assert ".strip-frame{display:flex;align-items:stretch;height:65px;" in out
-    assert ".strip-frame>.fx-strip::-webkit-scrollbar{height:7px;}" in out
-    assert ".strip-more{flex:none;width:18px;" in out
+    assert "::-webkit-scrollbar" not in out.split(".strip-frame{")[1][:1200]
+    assert (".strip-frame>.fx-strip{height:63px;padding:4px 4px 0;"
+            "box-sizing:border-box;") in out
+    assert "flex-wrap:wrap;align-content:flex-start;overflow:hidden;" in out
+    assert "width:calc(4 * 72px + 3 * 4px + 8px);}" in out
+    assert (".strip-frame>.fx-strip.page-strip{"
+            "width:calc(3 * 72px + 2 * 4px + 8px);}") in out
+    assert ".strip-nav{flex:none;width:18px;display:flex;flex-direction:column;" in out
+    for sid in STRIPS:
+        assert f'<button class="strip-prev" type="button" id="{sid}-prev"' in out, sid
+        assert f'<button class="strip-next" type="button" id="{sid}-next"' in out, sid
+    assert "var ROW=60;" in out
+    assert "prev.setAttribute('aria-disabled',top<=1?'true':'false');" in out
+    assert "new ResizeObserver(function(){ends();}).observe(strip);" in out
     assert ('.strip-more[aria-expanded="true"]{background:'
             'var(--accent-deep,var(--cyan-deep));') in out
 
@@ -49,7 +64,7 @@ def test_show_all_moves_the_strip_into_a_window_and_back(out):
     assert "panel.className='sh-menu strip-all';" in out
     assert "panel.id=strip.id+'-all';" in out
     assert "panel.appendChild(strip);" in out
-    assert "frame.insertBefore(strip,more);" in out
+    assert "frame.insertBefore(strip,nav||more);" in out
     assert "}).observe(panel,{attributes:true,attributeFilter:['hidden']});" in out
     assert "setTimeout(function(){overlayHide(panel);},0);" in out
     assert ".sh-menu.strip-all .fx-strip{display:flex;flex-wrap:wrap;" in out

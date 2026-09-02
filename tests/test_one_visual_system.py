@@ -22,7 +22,7 @@ def test_every_tall_control_is_the_one_tile(out):
                  ".big-strip .fx-tile{height:56px;}",
                  ".rbn-row>.fx-strip.big-strip{align-items:center;}",
                  ".rbn-row>#hm-newslide.big-tile{width:72px;height:56px;align-self:center;}",
-                 ".strip-frame>.fx-strip{height:auto;padding:0 2px;",
+                 ".strip-frame>.fx-strip{height:63px;padding:4px 4px 0;",
                  ".sh-menu.strip-all .fx-strip>*{flex:0 0 auto;height:56px;}"):
         assert rule in out, rule
     # the tinted "big" face is gone: the tall shape is the emphasis

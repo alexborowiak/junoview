@@ -2714,7 +2714,7 @@
       if(y+th>window.innerHeight-6) y=r.top-th-8;
       tipEl.style.left=x+'px';
       tipEl.style.top=Math.max(6,y)+'px';
-    },220);
+    },520);
   });
   document.addEventListener('mouseout',function(e){
     if(tipTarget&&!tipTarget.contains(e.relatedTarget)) hideTip();

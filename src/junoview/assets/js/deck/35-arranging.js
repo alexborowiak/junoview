@@ -2361,14 +2361,18 @@
       ?layer.querySelector('.an-item[data-idx="'+i+'"]'):null;
     return !!(el&&el.classList.contains('an-figonly'));
   }
+  /* fills the pane's fields AND the ribbon's (T207: #rb-x/y/w/h on the
+     Object tab), so the ribbon is live whether or not the pane is open */
+  var GEO_HOSTS=['#sz-','#rb-'];
+  function geoEach(k,fn){
+    GEO_HOSTS.forEach(function(pre){var el=$(pre+k); if(el) fn(el);});
+  }
   function sizePaneSync(){
-    var p=$('#sizepane'); if(!p||p.hidden) return;
     var a=sizeSubject(),cb=$('#sz-lockar'),note=$('#sz-note');
     var keys=['w','h','x','y'];
     if(!a){
       keys.forEach(function(k){
-        var el=$('#sz-'+k);
-        if(el){el.value='';el.disabled=true;}});
+        geoEach(k,function(el){el.value='';el.disabled=true;});});
       if(cb){cb.checked=false;cb.disabled=true;}
       if(note) note.textContent='Select one object on the page. An arrow '
         +'is two endpoints rather than a box, so it has none of these.';
@@ -2378,13 +2382,14 @@
     var v={w:r.r-r.l,h:r.b-r.t,x:r.l,y:r.t};
     var all=lockedAll(a),pos=pinned(a),isText=(a.k==='text');
     keys.forEach(function(k){
-      var el=$('#sz-'+k); if(!el) return;
       var horiz=(k==='w'||k==='x');
-      el.disabled=all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos);
-      /* never overwrite the field you are typing in -- the rule every
-         input in the notes pane already keeps */
-      if(document.activeElement!==el)
-        el.value=Math.round(pctMm(v[k],horiz)*10)/10;
+      geoEach(k,function(el){
+        el.disabled=all||(k==='h'&&isText)||((k==='x'||k==='y')&&pos);
+        /* never overwrite the field you are typing in -- the rule every
+           input in the notes pane already keeps */
+        if(document.activeElement!==el)
+          el.value=Math.round(pctMm(v[k],horiz)*10)/10;
+      });
     });
     if(cb){cb.disabled=all;cb.checked=!!a.lockar;}
     if(note) note.textContent=
@@ -2464,16 +2469,20 @@
     if(cbx) cbx.addEventListener('change',function(){
       toggleAspectLock(cbx.checked);});
     ['w','h','x','y'].forEach(function(k){
-      var el=$('#sz-'+k); if(!el) return;
-      /* the canvas owns arrows, Delete and every single-letter tool key;
-         a number field has to keep its own keystrokes */
-      el.addEventListener('keydown',function(e){e.stopPropagation();});
-      el.addEventListener('input',function(){
-        var n=parseFloat(el.value);
-        if(isFinite(n)) sizePaneWrite(k,n);
+      geoEach(k,function(el){
+        /* the canvas owns arrows, Delete and every single-letter tool
+           key; a number field has to keep its own keystrokes */
+        el.addEventListener('keydown',function(e){
+          e.stopPropagation();
+          if(e.key==='Enter') el.blur();
+        });
+        el.addEventListener('input',function(){
+          var n=parseFloat(el.value);
+          if(isFinite(n)) sizePaneWrite(k,n);
+        });
+        el.addEventListener('blur',function(){
+          if(typeof histPush==='function') histPush();});
       });
-      el.addEventListener('blur',function(){
-        if(typeof histPush==='function') histPush();});
     });
   })();
   (function(){

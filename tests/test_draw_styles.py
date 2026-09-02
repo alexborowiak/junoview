@@ -472,9 +472,15 @@ def test_groups_fill_across_the_rows_not_down_the_columns(out):
     columns"). The column count is computed per group from how many
     controls are actually visible.
     """
-    assert "grid-auto-flow:row;" in out
-    assert "grid-template-columns:repeat(var(--rbn-cols,4),auto);" in out
-    assert "row.style.setProperty('--rbn-cols',Math.max(1,Math.ceil(n/2)));" in out
+    # ...and since T207 the grid is COLUMN-major, the PowerPoint way: two
+    # to a column, a tall control spanning both rows, the markup pairing
+    # neighbours deliberately so the two that share a column share a
+    # width and nothing else does (2026-09-02, user: "buttons of all
+    # shapes and sizes... look at PowerPoint"). The column count is no
+    # longer a variable anything sets.
+    assert ".rbn-row{display:grid;grid-auto-flow:column;" in out
+    assert "  grid-auto-columns:max-content;" in out
+    assert "grid-template-columns:repeat(var(--rbn-cols,4),auto);" not in out
     # controls that are one decision stay one cell, so a stepper's minus
     # and plus can never land on different rows
     assert ".rbn-cell{display:flex;align-items:stretch;gap:3px;height:30px;}" in out

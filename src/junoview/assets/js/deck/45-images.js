@@ -788,33 +788,68 @@
      here once, installed by overlayBoot from THE BOOT SEQUENCE --
      never at eval (the T133 rule). Inspector panes are a different
      class of surface and have their own owner (T136). */
+  /* ...AND IT NESTS (T207; 2026-09-02, user: "options in options is
+     shit and can't be clicked"). Background inside the folded Slide
+     popover, a colour swatch inside the Font window, the layout grid
+     inside a folded Layout group: each is a menu opened from INSIDE an
+     open one, and "at most one shows" closed the parent under it, which
+     took the child with it. The owner keeps a stack now. Showing a menu
+     closes everything that does not contain it and keeps what does;
+     an outside click closes, innermost first, every menu it was outside
+     of and stops at the first it was inside; Escape closes only the
+     innermost. `overlayNow` is still the innermost open menu, for the
+     guards elsewhere that ask whether anything is open. */
+  var overlayStack=[];
   var overlayNow=null;
-  function overlayClose(){
-    if(!overlayNow) return;
-    overlayNow.menu.hidden=true;
-    if(overlayNow.btn&&overlayNow.btn.setAttribute)
-      overlayNow.btn.setAttribute('aria-expanded','false');
-    overlayNow=null;
+  function overlaySync(){
+    overlayNow=overlayStack.length?overlayStack[overlayStack.length-1]:null;
+  }
+  function overlayCloseOne(o){
+    o.menu.hidden=true;
+    if(o.btn&&o.btn.setAttribute) o.btn.setAttribute('aria-expanded','false');
+  }
+  function overlayClose(){                     /* the innermost */
+    if(!overlayStack.length) return;
+    overlayCloseOne(overlayStack.pop());
+    overlaySync();
+  }
+  function overlayCloseAll(){
+    while(overlayStack.length) overlayClose();
   }
   function overlayShow(btn,menu){
     if(!menu) return;
-    if(overlayNow&&overlayNow.menu!==menu) overlayClose();
+    var keep=[];
+    overlayStack.forEach(function(o){
+      if(o.menu===menu) return;                /* re-shown: pushed again */
+      var inside=o.menu.contains(menu)||(btn&&o.menu.contains(btn));
+      if(inside) keep.push(o); else overlayCloseOne(o);
+    });
+    overlayStack=keep;
     menu.hidden=false;
     if(btn&&btn.setAttribute) btn.setAttribute('aria-expanded','true');
-    overlayNow={btn:btn,menu:menu};
+    overlayStack.push({btn:btn,menu:menu});
+    overlaySync();
   }
   function overlayHide(menu){
     if(!menu) return;
-    if(overlayNow&&overlayNow.menu===menu){overlayClose();return;}
-    menu.hidden=true;
+    var at=-1;
+    overlayStack.forEach(function(o,i){if(o.menu===menu) at=i;});
+    if(at<0){menu.hidden=true;return;}
+    /* closing a menu closes the ones opened from inside it */
+    overlayStack.splice(at).reverse().forEach(overlayCloseOne);
+    overlaySync();
   }
   function overlayBoot(){
     document.addEventListener('click',function(e){
-      if(!overlayNow) return;
-      if(overlayNow.menu.contains(e.target)) return;
-      var b=overlayNow.btn;
-      if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) return;
-      overlayClose();
+      if(!overlayStack.length) return;
+      for(var i=overlayStack.length-1;i>=0;i--){
+        var o=overlayStack[i];
+        if(o.menu.contains(e.target)) break;
+        var b=o.btn;
+        if(b&&(e.target===b||(b.contains&&b.contains(e.target)))) break;
+        overlayCloseOne(overlayStack.pop());
+      }
+      overlaySync();
     });
     /* CAPTURE, and stopped there. An open menu is the innermost state
        you can be standing in, so Escape closes it and does nothing
@@ -824,9 +859,9 @@
        (found driving T177, 2026-09-02). The gallery and the notes
        editor make the same choice for the same reason. */
     document.addEventListener('keydown',function(e){
-      if(e.key!=='Escape'||!overlayNow) return;
+      if(e.key!=='Escape'||!overlayStack.length) return;
       e.preventDefault();e.stopPropagation();
-      var b=overlayNow.btn;
+      var b=overlayNow&&overlayNow.btn;
       overlayClose();
       /* keyboard dismissal returns focus to the trigger */
       if(b&&b.focus) b.focus();

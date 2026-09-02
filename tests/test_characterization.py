@@ -913,8 +913,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # in the colourful theme. deck.html, deck.css, core.css.
 # T206 2026-09-02: app.js raises the newer-build bar at boot when the
 # loader saw a new service worker take over. app.js only.
-EXPECTED_MD5 = "f7490874ff2ec83db6433ecd04a73330"
-EXPECTED_BYTES = 3321749
+# T207 2026-09-03: the ribbon the PowerPoint way -- galleries with an
+# up/down/more column and no scrollbar, a column-major grid of stacked
+# pairs, flat buttons, nested overlays, one Text box tile, X/Y/W/H on the
+# Object tab, a tooltip that is a bubble not a button. deck.html,
+# deck.css, app.css, app.js and four deck fragments.
+EXPECTED_MD5 = "7c4de0f724380bc13b4500a82d4404bc"
+EXPECTED_BYTES = 3332812
 
 
 def _render_example() -> str:

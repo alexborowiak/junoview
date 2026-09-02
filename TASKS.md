@@ -4214,6 +4214,31 @@ option. Then where has the ability to refresh all images gone?"
   and `window.__jvBuild`, the package hash the worker's cache is keyed
   by) so a screenshot can say which build it is. A first install shows
   nothing: there is no older page to replace.
+- [x] **T207 · L — The ribbon the PowerPoint way.**
+  The user (2026-09-02, six tabs screenshotted beside PowerPoint's):
+  "Bit messy with the bottom scroll bar. Put all the buttons that are
+  buttons together. Then the different text types are kind of weird...
+  buttons in buttons that are confusing and do nothing... Look at
+  PowerPoint, look at how much better that looks... Why do objects not
+  have an x-y position and also not a width and height... Options in
+  options is shit and can't be clicked."
+  *Done 2026-09-03.* **Galleries**: one row of whole tiles in sight,
+  the rest wrapped beneath, an up / down / show-all column at the
+  right, no scrollbar anywhere; a strip is a whole number of tiles
+  wide. **The grid is column-major**: two controls to a column, a tall
+  one spanning both rows, so the two that share a column share a width
+  and nothing else does (a row-major grid had made "U" the width of
+  "Paragraph"). **Flat at rest**: no border and no fill on any ribbon
+  button until you reach for it; pressed is the deep accent; a gallery
+  keeps its frame. **Menus nest**: the overlay owner keeps a stack, so
+  Background inside the folded Slide popover, or a colour inside the
+  Font window, opens instead of closing its parent; an outside click
+  closes only what it was outside of; Escape peels one layer. **One
+  Text box tile** on Insert — the kind of text is the Object tab's
+  Styles door once the box exists. **X, Y, W, H** typed straight in on
+  the Object tab, live with the pane's fields. **Tooltips** are a plain
+  bubble that waits half a second, not a bordered box that read as a
+  second button under the row.
 
 
 ## Cut (and why)

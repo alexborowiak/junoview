@@ -1094,11 +1094,15 @@ body.light .doc-toast a{color:var(--cyan-deep);}
 body.light .ckf-h{color:var(--ink-3);}
 
 /* ---------- instant tooltips (replaces slow native titles) -------- */
-.apptip{position:fixed;z-index:300;background:var(--chrome-1,#0e1926);color:#dce6ee;
+/* a tooltip is a plain dark bubble, not a button: no accent border, a
+   small radius, and it waits half a second (T207; 2026-09-02, the Arrange
+   menu's tip read as a second copy of the row under it) */
+.apptip{position:fixed;z-index:300;background:#0b1520;color:#dce6ee;
   font-family:var(--sans);font-size:11.5px;line-height:1.45;
-  padding:6px 10px;border-radius:7px;border:1px solid color-mix(in srgb,var(--accent) 33%,transparent);
-  box-shadow:0 6px 24px #00000066;pointer-events:none;max-width:290px;
+  padding:6px 10px;border-radius:5px;border:1px solid #ffffff1a;
+  box-shadow:0 6px 24px #00000080;pointer-events:none;max-width:300px;
   white-space:pre-line;display:none;}
+body.light .apptip{background:#1f2933;color:#f2f6fa;border-color:#00000033;}
 /* the shortcut chip a data-kbd control appends to its tooltip */
 .apptip-kbd{display:inline-block;margin-left:8px;padding:1px 7px;
   border:1px solid #ffffff33;border-bottom-width:2px;border-radius:4px;

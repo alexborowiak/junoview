@@ -1636,13 +1636,47 @@
   function stripMoreBoot(){
     $$('.strip-frame').forEach(function(frame){
       var strip=frame.querySelector('.fx-strip'),
-          more=frame.querySelector('.strip-more');
+          more=frame.querySelector('.strip-more'),
+          nav=frame.querySelector('.strip-nav'),
+          prev=frame.querySelector('.strip-prev'),
+          next=frame.querySelector('.strip-next');
       if(!strip||!more) return;
+      /* THE GALLERY THE POWERPOINT WAY (T207): one row in sight, the
+         rest wrapped beneath it, an up/down/more column at the right
+         and no scrollbar (2026-09-02, user: "bit messy with the bottom
+         scroll bar"). A step is one row: tile height plus the gap. */
+      var ROW=60;
+      function ends(){
+        if(!prev||!next) return;
+        var top=strip.scrollTop,max=strip.scrollHeight-strip.clientHeight;
+        /* dimmed, never disabled: a strip measured while its tab was
+           hidden reads zero, and a disabled arrow would swallow the very
+           click that would have measured it again */
+        prev.setAttribute('aria-disabled',top<=1?'true':'false');
+        next.setAttribute('aria-disabled',top>=max-1?'true':'false');
+      }
+      if(prev) prev.addEventListener('click',function(e){
+        e.stopPropagation();
+        strip.scrollTop=Math.max(0,Math.round(strip.scrollTop/ROW)*ROW-ROW);
+        setTimeout(ends,0);});
+      if(next) next.addEventListener('click',function(e){
+        e.stopPropagation();
+        strip.scrollTop=Math.round(strip.scrollTop/ROW)*ROW+ROW;
+        setTimeout(ends,0);});
+      strip.addEventListener('scroll',ends);
+      new MutationObserver(function(){setTimeout(ends,0);})
+        .observe(strip,{childList:true});
+      /* the strip is measured when its tab shows, not at boot when the
+         ribbon is hidden and every height reads zero */
+      if(typeof ResizeObserver==='function')
+        new ResizeObserver(function(){ends();}).observe(strip);
+      setTimeout(ends,0);
       var panel=null;
       function home(){
         if(strip.parentNode===frame) return;
-        frame.insertBefore(strip,more);
+        frame.insertBefore(strip,nav||more);
         more.setAttribute('aria-expanded','false');
+        setTimeout(ends,0);
       }
       function build(){
         panel=document.createElement('div');
@@ -1725,9 +1759,9 @@
     var strip=$('#tx-strip'); if(!strip) return;
     function build(){
       strip.innerHTML='';
-      var rows=[['','Text',null]];
-      styleOrder().forEach(function(id){
-        rows.push([id,styleDef(id).label,styleDef(id)]);});
+      /* one tile (T207): the kind of text is the Object tab's Styles
+         door once the box exists, as in PowerPoint */
+      var rows=[['','Text box',null]];
       rows.forEach(function(r){
         var b=document.createElement('button');
         b.type='button';b.className='fx-tile tx-tile';

@@ -180,7 +180,8 @@ def test_escape_closes_the_window_and_nothing_else(out):
     also fires -- closing the Font window used to deselect the box it
     was about.
     """
-    i = out.index("if(e.key!=='Escape'||!overlayNow) return;")
+    # (the owner keeps a stack since T207; Escape peels the innermost)
+    i = out.index("if(e.key!=='Escape'||!overlayStack.length) return;")
     block = out[i:i + 400]
     assert "e.preventDefault();e.stopPropagation();" in block
     assert "},true);" in block

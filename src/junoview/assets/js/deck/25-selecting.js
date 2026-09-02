@@ -29,7 +29,7 @@
   /* controls whose visibility depends on more than the kind (how many are
      selected, what a placed cell contains, whether the page is a poster).
      Listed so the completeness check knows they are deliberate. */
-  var FMT_MANUAL=('#fmt-lhwrap '
+  var FMT_MANUAL=('#fmt-geom-xy #fmt-geom-wh #fmt-lhwrap '
     /* the four windows of options (T177): a wrapper, its door, the
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
@@ -440,6 +440,7 @@
        is two endpoints and has neither (T65). */
     var hasBox=isNum&&kind!=='arrow';
     show('#fmt-sizepos',hasBox);
+    show('#fmt-geom-xy',hasBox);show('#fmt-geom-wh',hasBox);
     show('#fmt-lockar',hasBox,hasBox&&!!a.lockar);
     var lab=$('#fmt-lockar');
     if(lab&&hasBox) lab.innerHTML=(a.lockar?bic('unlock'):bic('lock'))
