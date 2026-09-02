@@ -1262,7 +1262,8 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
 body.th-colorful .rbn-slides,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
 body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
-body.th-colorful .rbn-anim,body.th-colorful .rbn-build{
+body.th-colorful .rbn-anim,body.th-colorful .rbn-build,
+body.th-colorful .rbn-order,body.th-colorful .rbn-seq{
   --accent:#6fd8c2;--accent-deep:#2f9c85;}
 body.th-colorful .rbn-tbl{--accent:#8fc7ff;--accent-deep:#4d8fd6;}
 body.th-colorful .rbn-slide,body.th-colorful #ab-filters,
@@ -3457,7 +3458,16 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
    stage by the pane's width, and because sizeSlideTo fits the page to
    stage.clientWidth the slide simply gets smaller and stays entirely
    visible. One variable drives both, so they can never disagree. */
-.deck{--pane-w:232px;}
+/* 272px, not 232 (T184): a row is a kind dot, a name, an eye, a lock
+   and a build number, and at 232 the name was the thing that gave way
+   ("Flip book —…"). The user's own width is remembered per pane. */
+.deck{--pane-w:272px;}
+/* the resize handle down the left edge (T184) */
+.selpane-grip{position:absolute;left:0;top:0;bottom:0;width:7px;
+  cursor:ew-resize;border-radius:10px 0 0 10px;z-index:2;}
+.selpane-grip:hover,.selpane-grip:active{
+  background:color-mix(in srgb,var(--accent) 45%,transparent);}
+.sh-menu.sp-actions{min-width:236px;}
 .deck.pane-open .deck-stage{padding-right:calc(var(--pane-w) + 22px);}
 .deck.pane-open.rbn-side .deck-stage{
   padding-right:calc(var(--pane-w) + var(--rbn-side-w) + 12px);}
@@ -3481,8 +3491,8 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
 /* wrap, don't clip: five tools never fit the pane's default width on
    one line, and a clipped "New folder" is a tool that does not exist
    (2026-08-23, seen when the tool labels took their bic() icons) */
-.sp-tools{display:flex;flex-wrap:wrap;gap:5px;padding:2px 2px 8px;}
-.sp-tool{font-size:10px;padding:3px 8px;white-space:nowrap;}
+.sp-tools{display:flex;flex-wrap:wrap;gap:5px;padding:4px 4px 9px;}
+.sp-tool{font-size:10.5px;padding:4px 9px;white-space:nowrap;}
 .sp-tool .bic{width:11px;height:11px;vertical-align:-2px;}
 .sp-tool[disabled]{opacity:.4;cursor:default;}
 .sp-folder{display:flex;align-items:center;gap:6px;padding:5px 6px;
@@ -4403,9 +4413,30 @@ body.slide-editing .apptop{display:none;}
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
 .rbn-anim{order:5;}
-/* the Order group shares Animation's rung and follows it by source
-   order: the effect first, then the order things take it in (T176) */
+/* the Whole slide and Order groups share Animation's rung and follow
+   it by source order: the effect first, then the slide, then the order
+   things take it in (T176, T182) */
 .rbn-build{order:5;}
+.rbn-order{order:5;}
+.rbn-seq{order:5;}
+/* T182: the effect tiles, in the row. A tall cell spanning both rows
+   (rbn-tall counts as two, like a stack), five tiles of icon over word
+   the way PowerPoint's are, the one that is on lit. Disabled with
+   nothing selected. */
+.rbn-row>.rbn-tall{grid-row:1/span 2;}
+.fx-strip{display:flex;gap:4px;align-items:stretch;height:65px;}
+.fx-tile{width:60px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;font-family:var(--sans);font-size:10.5px;
+  line-height:1.1;color:#c9d6e2;background:none;
+  border:1px solid #ffffff1f;border-radius:7px;cursor:pointer;
+  padding:0 2px;}
+.fx-tile .bic{width:20px;height:20px;}
+.fx-tile:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  color:#fff;background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.fx-tile.on{background:var(--cyan-deep);border-color:var(--cyan-deep);color:#fff;}
+.fx-tile:disabled{opacity:.35;cursor:default;}
+body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
+body.light .fx-tile.on{color:#fff;}
 .rbn-insert{order:6;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
@@ -7354,7 +7385,11 @@ body.light .seq-cell b{color:var(--ink);}
   border-radius:5px;padding:7px 9px;}
 .chart-btns{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
 /* T106: the reading-order panel and its on-slide numbers */
-.rd-order{position:fixed;right:16px;top:110px;z-index:420;width:252px;
+/* left:auto, or .sh-menu's left:0 wins the over-constrained box and the
+   panel opens on the LEFT over the slide (T184; the screenshot showed
+   it there) */
+.rd-order{position:fixed;left:auto;right:16px;top:110px;z-index:420;
+  width:252px;
   max-height:64vh;overflow-y:auto;padding:8px 10px 12px;}
 .rd-order .hd-lab{position:relative;padding-right:26px;}
 .rd-close{position:absolute;right:0;top:-4px;}
@@ -9894,7 +9929,7 @@ that run.</li>
 <li><b>Crop</b> an image <i>or</i> a notebook cell (figure, markdown or code)
 to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
 one; animate an item so it appears on click
-(<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animations</b>, on the Animation tab); and
+(<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation order</b>, on the Animation tab); and
 switch on
 <b>slide numbers</b> from the File menu.</li>
 <li>The <b>View</b> group is for laying a poster out, where the page is
@@ -11237,115 +11272,91 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <!-- ANIMATION, on its own tab (T176). Two groups: what an
-               object DOES when it arrives, and the ORDER the slide
-               reveals things in. The pane is never hidden, because a
-               build order is a property of the SLIDE. -->
+          <!-- ANIMATION, on its own tab (T176). Three groups: the
+               EFFECT the selected thing gets, the builds for the WHOLE
+               SLIDE, and the ORDER things come in. -->
+          <!-- THE EFFECTS ARE TILES IN THE ROW (T182), the way
+               PowerPoint's are, so giving the selected thing an
+               entrance is one click with nothing to open first
+               (2026-09-02, user: "didn't we say having those horizontal
+               scrolls like on PowerPoint where there are all the
+               options... so you can just quick click"). T171 measured
+               an inline gallery against a full Insert tab and chose a
+               popover; the Animation tab has the room. The tiles are
+               DISABLED with nothing selected -- "why is there an
+               effect option when there is nothing to appear" -- and the
+               whole-slide builds sit beside them as words. Built by
+               galSync, which the selection already calls. -->
           <span class="rbn-grp rbn-anim" data-tab="animation">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="vw-anim"
-                aria-pressed="false"
-                title="Everything animated on this slide, in the order it
- appears — and the effect on whatever is selected. The numbered bubbles on
- the slide show only while this pane is open"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animations</button>
-              <!-- THE EFFECT GALLERY (T171) -- the thing this whole
-                   surface was asked for: "the words are so weird and the
-                   options are hard to get to... we need something like
-                   this instead of just vanilla buttons".
-                   THE DOOR IS NEVER HIDDEN. Its label never renames
-                   itself either: a label whose width follows the
-                   selection makes the row's required width depend on
-                   what you clicked, and the fit ladder has no rung left
-                   for that (see #fmt-sw). The current effect rides on
-                   the ICON and on the card marked aria-pressed inside.
-                   With nothing selected it does the WHOLE slide; the
-                   one-object case has its own buttons on the Object
-                   tab now (T179). -->
-              <span class="sh-drop" id="anim-effwrap">
-                <button class="dbtn rbn-sm" id="anim-effect"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="How things arrive on this slide — None, Appear,
- Fade, Float up or Grow. Pick one with nothing selected and every object
- gets it, one per click, in reading order."
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg> Effect &#9662;</button>
-                <div class="sh-menu anim-gal" id="anim-eff-menu" hidden></div>
-              </span>
-              <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
-                title="Remove EVERY animation on this slide — nothing is
- held back during playback"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove
- animations</button>
-              <!-- THE TIMELINE IS THE LAYERS PANE (T174), and until
-                   T180 it had no door on this tab: the pane lists every
-                   object with the click it arrives on and, if it
-                   leaves, the click it goes -- which is the answer to
-                   "we had something about animations appearing in
-                   layers? Is that a thing?" (2026-09-02). It drives
-                   Home's Layers button: two doors, one pane. -->
-              <button class="dbtn rbn-sm" id="anim-layers"
-                title="The timeline: every object on this slide with the
- click it arrives on and, if it leaves, the click it goes. Hide, lock and
- reorder from the same list"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
+              <span class="rbn-tall fx-strip" id="anim-strip"
+                role="group" aria-label="Entrance effect"></span>
             </span>
-            <!-- ONE FEATURE, ONE NAME (T167). This group was
-                 "Animate", its own button "Animations" and the pane it
-                 opens "Animation pane" -- three words touched in a
-                 single gesture, one of them a verb where the others are
-                 nouns. A user learns this vocabulary from the UI alone,
-                 and a review on 2026-09-01 found the surface already
-                 using twelve words for the same handful of ideas. -->
-            <span class="rbn-lab">Animation</span>
+            <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
-          <!-- THE ORDER. The two builds anyone actually wants, and the
-               way to say your own order by pointing (T168). The
-               Reading order door that sat here for a day (T176) is
-               gone: "what is reading order and why does it look so
-               confusing" (2026-09-02, user). Set order writes the
-               slide's order too now (T181), so one gesture answers
-               both questions; the panel of arrows is still there for
-               a nudge, from the pane and the right-click. -->
+          <!-- THE WHOLE SLIDE. Names that say what happens
+               (2026-09-02, user: "I don't know what the order buttons
+               do"): One per click, All on one click. -->
           <span class="rbn-grp rbn-build" data-tab="animation">
             <span class="rbn-row">
-              <!-- the two builds people actually want, in one press
-                   each. Setting "one at a time" by hand means selecting
-                   every item and stepping its order, which is the kind of
-                   fiddling this editor exists to avoid (2026-08-20). -->
               <button class="dbtn rbn-sm" id="anim-stagger"
-                title="Reveal everything on this slide ONE AT A TIME, in
- order — a click per item"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> One by one</button>
+                title="Give everything on this slide an entrance, one
+ per click, in order &mdash; top to bottom unless you set your own"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> One per click</button>
               <button class="dbtn rbn-sm" id="anim-together"
-                title="Reveal everything on this slide on the SAME click —
- one build, everything at once"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All at once</button>
-              <!-- A PLAIN NAME (T180; 2026-09-02, user: "what a silly
-                   name for the button"). It was "Click things in
-                   order…", a sentence where a verb was wanted. -->
+                title="Give everything on this slide an entrance, all on
+ the same click"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All on one click</button>
+              <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
+                title="Take every entrance off this slide &mdash; nothing
+ is held back during playback"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove
+ animations</button>
+            </span>
+            <span class="rbn-lab">Whole slide</span>
+          </span>
+          <!-- THE ORDER. Quick animate is the pointing mode (T168): it
+               was "Click things in order…" and then "Set order", and
+               the user named it themselves -- "the quick animations
+               thing with clicking" (2026-09-02). Animation order is
+               the pane that lists the sequence; Layers is the same
+               list read as a timeline (T174). -->
+          <span class="rbn-grp rbn-order" data-tab="animation">
+            <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
-                title="Say the order yourself: click the objects on the
- slide in the order they should come. Shift-click puts one on the same
- click as the last. The controls appear here in the ribbon while you do
- it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Set order</button>
+                title="Click things one after another and each becomes
+ the next to appear. Shift-click puts one on the same click as the
+ last. Finish when you are done"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Quick
+ animate</button>
+              <button class="dbtn rbn-sm" id="vw-anim"
+                aria-pressed="false"
+                title="The list of what appears when on this slide, in
+ order, with arrows to move a step earlier or later. The numbered
+ bubbles on the slide show while it is open"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation order</button>
+              <!-- THE TIMELINE IS THE LAYERS PANE (T174): every object
+                   with the click it arrives on and, if it leaves, the
+                   click it goes. It drives Home's Layers button: two
+                   doors, one pane. -->
+              <button class="dbtn rbn-sm" id="anim-layers"
+                title="Every object on this slide with the click it
+ arrives on and, if it leaves, the click it goes. Hide, lock and reorder
+ from the same list"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
             </span>
             <span class="rbn-lab">Order</span>
           </span>
-          <!-- SETTING THE ORDER, IN THE RIBBON (T180). This was a bar
-               fixed across the top of the window, over the very ribbon
-               it was standing in for (2026-09-02, user: "I hate that
-               there is the thing that pops up... the whole 'Click
-               things in order' options should just appear after a
-               divider on the ribbon"). The three cells are hidden
-               until Set order arms the mode, so the group costs the
-               resting row nothing; seqSync shows them and the ribbon
-               re-fits. The CELLS carry the hidden bit, not the group:
-               syncRibbonGroups decides a group's visibility from its
-               controls and would put the group back. -->
+          <!-- QUICK ANIMATE, IN THE RIBBON (T180). This was a bar fixed
+               across the top of the window, over the very ribbon it
+               was standing in for. The three cells are hidden until the
+               mode arms, so the group costs the resting row nothing;
+               seqSync shows them and the ribbon re-fits. The CELLS
+               carry the hidden bit, not the group: syncRibbonGroups
+               decides a group's visibility from its controls and would
+               put the group back. -->
           <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell" id="seq-what" hidden></span>
-              <!-- WHICH EFFECT THE NEXT CLICK GIVES. The mode used to
-                   write fade for everything, so a sequence in any other
-                   effect meant going round again afterwards. Every
-                   button carries its key, because a mode with shortcuts
-                   nobody can see has no shortcuts. -->
+              <!-- WHICH EFFECT THE NEXT CLICK GIVES. Every button
+                   carries its key, because a mode with shortcuts nobody
+                   can see has no shortcuts. -->
               <span class="rbn-cell seq-fx" id="seq-fx" hidden></span>
               <span class="rbn-cell" id="seq-btns" hidden>
                 <button class="dbtn rbn-sm" id="seq-undo"
@@ -11359,7 +11370,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Cancel (Esc)</button>
               </span>
             </span>
-            <span class="rbn-lab">Set order</span>
+            <span class="rbn-lab">Quick animate</span>
           </span>
           <!-- THREE GROUPS, NOT ONE (T178). Thirteen tools under one
                heading read as a wall; with Animation gone to its own
@@ -12492,7 +12503,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         </div>
       </aside>
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animations</span>
+        <div class="selpane-h"><span>Animation order</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
         <div class="selpane-list" id="animpane-body"></div>
@@ -20876,7 +20887,7 @@ window.JunoPptx = (function () {
        syncRibbonGroups hides a group once nothing in it is showing */
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
-    ['#anim-clear','#anim-stagger','#anim-together','#anim-effect',
+    ['#anim-clear','#anim-stagger','#anim-together','#anim-strip',
      '#anim-seq','#anim-layers'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
@@ -24295,6 +24306,36 @@ window.JunoPptx = (function () {
      in one list is what makes a swap -- this picture, then that one --
      something you can see rather than something you have to remember. */
   var spByBuild=false;
+  /* THE ACTIONS MENU (T184): the pane's twelve verbs as rows of one
+     popover, built on open so each row's enabling reflects the
+     selection now, and opened through the one transient-menu owner so
+     it closes on Escape or a click away. A row that opens a further
+     chooser (Every instance, Match) anchors it to the Actions button. */
+  var spActMenu=null;
+  function openSpActions(btn,acts){
+    if(spActMenu){
+      var was=spActMenu; spActMenu=null;
+      if(!was.hidden){overlayHide(was);was.remove();return;}
+      was.remove();
+    }
+    var m=document.createElement('div');
+    m.className='sh-menu opt-panel opt-list sp-actions';
+    acts.forEach(function(x){
+      if(x.label==='-'){menuHead(m,x.title);return;}
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn vw-opt';
+      b.innerHTML=x.label;b.title=x.title;b.disabled=!x.on;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        overlayHide(m);
+        x.fn(btn);
+      });
+      m.appendChild(b);
+    });
+    document.body.appendChild(m);
+    spActMenu=m;
+    overlayShow(btn,m);floatMenu(btn,m);
+  }
   function renderSelPane(){
     var pane=$('#selpane'),list=$('#selpane-list');
     if(!pane||pane.hidden||!list) return;
@@ -24431,13 +24472,6 @@ window.JunoPptx = (function () {
         openStepMenu(i,e.currentTarget);
       });
       r.appendChild(bg);
-      var dp2=document.createElement('button');
-      dp2.className='sp-act';dp2.type='button';dp2.innerHTML=bic('copy');
-      dp2.title='Duplicate';
-      dp2.setAttribute('aria-label','Duplicate');
-      dp2.addEventListener('click',function(e){
-        e.stopPropagation();dupAnnots([i]);});
-      r.appendChild(dp2);
       r.addEventListener('click',function(ev){
         if(!liveAnnot(i)){renderSelPane();return;}
         var l=stage.querySelector('.annot-layer');
@@ -24452,24 +24486,59 @@ window.JunoPptx = (function () {
        selection, so organising happens where you are looking
        (2026-08-18, user: "create folders and group things ...
        duplicate") */
+    /* ---- THE BAR, KEPT TO THREE (T184) -------------------------------
+       Twelve tool buttons in two wrapping rows stood between the heading
+       and the list, so the pane read as a toolbar with a list under it
+       (2026-09-02, user: "really packed, confusing to look at"). The
+       LIST is the pane. Three things earn a seat above it: the view
+       toggle, the pointing mode, and one door to everything else. Every
+       action keeps its function and its enabling rule -- only the room
+       it takes has changed. */
     var bar2=document.createElement('div');bar2.className='sp-tools';
     var selN=selSet.filter(function(i){return typeof i==='number';});
     function tool(label,title,on,fn){
       var b=document.createElement('button');
       /* innerHTML: the labels are fixed strings written just below,
-         now carrying bic() icons before their words */
+         carrying bic() icons before their words */
       b.className='dbtn sp-tool';b.innerHTML=label;b.title=title;
       b.disabled=!on;
-      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
       bar2.appendChild(b);
+      return b;
     }
-    tool('Group','Group the selected items (Ctrl+G)',selN.length>=2,
+    /* THE TIMELINE VIEW. Layers is stacking order, which is the right
+       default -- it is what the pane is for. But once every row carries
+       a build number, the same list read in PLAYBACK order is the
+       animation pane's job done in the place you were already looking,
+       so it is a toggle rather than a fourth panel to keep in step. */
+    tool(bic(spByBuild?'objects':'play')
+      +(spByBuild?' By layer':' By build'),
+      spByBuild
+        ? 'Back to stacking order — what is in front of what'
+        : 'Read the slide in playback order instead, one heading per '
+          +'click',
+      true,
+      function(){spByBuild=!spByBuild;renderSelPane();});
+    /* the click-everything mode, reachable from the list of the things
+       you would be clicking */
+    tool(bic('appear')+' Quick animate',
+      'Click your objects in the order you want them to arrive, then '
+      +'Finish — the same mode as the Animation tab’s',
+      ann.length>=1&&typeof seqArmStart==='function',
+      function(){seqArmStart();});
+    /* everything else, as rows of one menu. A heading row (label '-')
+       separates arranging what is here from doing it again elsewhere
+       (T89's reuse verbs). */
+    var acts=[];
+    function act(label,title,on,fn){
+      acts.push({label:label,title:title,on:on,fn:fn});}
+    act('Group','Group the selected items (Ctrl+G)',selN.length>=2,
       function(){groupSel();renderSelPane();});
     var inGrp=typeof selAnnot==='number'&&ann[selAnnot]
       &&ann[selAnnot].grp!=null;
-    tool('Ungroup','Ungroup (Ctrl+Shift+G)',inGrp,
+    act('Ungroup','Ungroup (Ctrl+Shift+G)',inGrp,
       function(){ungroupSel();renderSelPane();});
-    tool(bic('copy')+' Duplicate','Duplicate the selected items',
+    act(bic('copy')+' Duplicate','Duplicate the selected items',
       selN.length>=1,
       function(){dupAnnots(selN);});
     /* A FOLDER IS NOT A GROUP. Grouping welds items together — they move
@@ -24480,8 +24549,8 @@ window.JunoPptx = (function () {
        thing").
        A folder is just a name on the items in it: a.fold. Nothing about
        selection, movement or formatting changes. */
-    tool(bic('frame')+' New folder','Put the selected items in a named '
-      +'folder \u2014 filing only, they are NOT grouped',selN.length>=1,
+    act(bic('frame')+' New folder','Put the selected items in a named '
+      +'folder — filing only, they are NOT grouped',selN.length>=1,
       function(){
         var nm=prompt('Name this folder','Folder '
           +(folderNames(s).length+1));
@@ -24490,29 +24559,9 @@ window.JunoPptx = (function () {
         selN.forEach(function(i){if(s.annots[i]) s.annots[i].fold=nm;});
         markDirty();renderSelPane();
         toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
-          +'\u201c'+nm+'\u201d');
+          +'“'+nm+'”');
       });
-    /* THE TIMELINE VIEW. Layers is stacking order, which is the right
-       default -- it is what the pane is for. But once every row carries
-       a build number, the same list read in PLAYBACK order is the
-       animation pane's job done in the place you were already looking,
-       so it is a toggle rather than a fourth panel to keep in step. */
-    tool(bic(spByBuild?'objects':'play')
-      +(spByBuild?' By layer':' By build'),
-      spByBuild
-        ? 'Back to stacking order \u2014 what is in front of what'
-        : 'Read the slide in playback order instead, one heading per '
-          +'click',
-      true,
-      function(){spByBuild=!spByBuild;renderSelPane();});
-    /* the click-everything mode, reachable from the list of the things
-       you would be clicking */
-    tool(bic('appear')+' Animate in order',
-      'Click your objects in the order you want them to arrive, then '
-      +'Finish \u2014 the same mode as the ribbon\u2019s One by one',
-      ann.length>=1&&typeof seqArmStart==='function',
-      function(){seqArmStart();});
-    tool(bic('exit')+' Out of folder','Take the selected items out of '
+    act(bic('exit')+' Out of folder','Take the selected items out of '
       +'their folder',
       selN.some(function(i){return s.annots[i]&&s.annots[i].fold;}),
       function(){
@@ -24520,45 +24569,20 @@ window.JunoPptx = (function () {
           if(s.annots[i]) delete s.annots[i].fold;});
         markDirty();renderSelPane();
       });
-    list.appendChild(bar2);
     /* ---- REUSE, WHERE YOU ARE ALREADY LOOKING (T89) ------------------
        Five features shipped, worked, and could be reached only from a
        canvas right-click or from three clicks into the contextual
        Object tab: components, the per-object history, the provenance
-       pane, and the two point-at-it matching verbs. A feature behind a
-       right-click is a feature nobody finds, and the ribbon has no width
-       to sell them — but this pane is open while you work, lists
-       what is on the slide, and already carries the organise verbs.
-
-       Nothing here is new behaviour. Every button calls the same
-       function its right-click row calls, and each one is disabled
-       rather than lying when the selection cannot answer it.
-
-       A SECOND bar rather than five more buttons on the first: those
-       five are about arranging what is on the slide, these are about
-       doing something again elsewhere. .sp-tools wraps, so neither bar
-       can push the other off. */
-    var lab3=document.createElement('div');
-    lab3.className='hd-lab';
-    lab3.textContent='reuse what is selected';
-    list.appendChild(lab3);
-    var bar3=document.createElement('div');bar3.className='sp-tools';
-    function tool3(label,title,on,fn){
-      var b=document.createElement('button');
-      /* innerHTML: the labels are fixed strings written just below,
-         each carrying a bic() icon before its words */
-      b.className='dbtn sp-tool';b.innerHTML=label;b.title=title;
-      b.disabled=!on;
-      b.addEventListener('click',function(e){
-        e.stopPropagation();fn(b);});
-      bar3.appendChild(b);
-    }
+       pane, and the two point-at-it matching verbs. Every row calls
+       the same function its right-click row calls, and each one is
+       disabled rather than lying when the selection cannot answer it. */
+    act('-','reuse what is selected',true,null);
     /* the PRIMARY selection, the same subject the ribbon and the two
        inspector panes take — a group's last array member is not
        necessarily the item you clicked */
     var prim=(typeof selAnnot==='number')?ann[selAnnot]:null;
     var primInst=(prim&&prim.cmp&&prim.cinst)?prim:null;
-    tool3(bic('group')+' Make component',
+    act(bic('group')+' Make component',
       'Save the arrangement and look of the selected items as a named '
       +'thing you can place again. Each copy keeps its own words and '
       +'its own figure',selN.length>=1&&!primInst,
@@ -24571,23 +24595,28 @@ window.JunoPptx = (function () {
           +'the canvas menu'):'Nothing there that could be saved');
         renderSelPane();
       });
-    tool3(bic('locate')+' Every instance',
+    act(bic('locate')+' Every instance',
       'Every place in this deck this component has been put — pick '
       +'one to go there',!!primInst,
       function(b){cmpInstMenu(primInst.cmp,b);});
-    tool3(bic('history')+' History',
+    act(bic('history')+' History',
       'Every state this object has been through that the undo stack '
       +'still remembers, and a button to put any of them back',
       !!prim,function(){showObjHist();});
-    tool3(bic('tree')+' Where from',
+    act(bic('tree')+' Where from',
       'The notebook and cell that made this figure, every cell in its '
       +'lineage, and whether the notebook has moved on since',
       !!(prim&&provRef(prim)),function(){showProvPane();});
-    tool3(bic('swap')+' Match…',
+    act(bic('swap')+' Match…',
       'Copy this look onto objects you then click, take another '
       +'object’s look for this one, or lay these out like a group '
       +'you click',selN.length>=1,function(b){matchMenuAt(b);});
-    list.appendChild(bar3);
+    var more=tool(bic('menu')+' Actions ▾',
+      'Group, duplicate, file, and reuse what is selected',true,
+      function(b){openSpActions(b,acts);});
+    more.setAttribute('aria-haspopup','true');
+    more.setAttribute('aria-expanded','false');
+    list.appendChild(bar2);
     /* IN PLAYBACK ORDER. Folders and groups are deliberately ignored
        here: they answer "what is this filed under", and this view
        answers "when does it happen". Everything with no build of its own
@@ -24976,6 +25005,38 @@ window.JunoPptx = (function () {
   function wirePane(pane){
     if(!pane||pane._wired) return;pane._wired=1;
     var id=pane.id,h=pane.querySelector('.selpane-h');
+    /* A HANDLE YOU CAN SEE (T184). The native corner grip is a few grey
+       pixels on a dark pane, and a docked pane grows LEFT from its right
+       edge -- so "can't be resized" was the honest reading (2026-09-02,
+       user). This is a full-height strip down the left edge: drag it and
+       the width follows; a pane you have floated moves its left edge.
+       The ResizeObserver below remembers the result, as it does for the
+       corner. */
+    if(!pane.querySelector('.selpane-grip')){
+      var grip=document.createElement('div');
+      grip.className='selpane-grip';grip.title='Drag to resize';
+      grip.addEventListener('pointerdown',function(ev){
+        ev.preventDefault();ev.stopPropagation();
+        var r0=pane.getBoundingClientRect(),right=r0.right;
+        var hostR=pane.offsetParent
+          ?pane.offsetParent.getBoundingClientRect():{left:0};
+        var floating=(pane.style.right==='auto');
+        function mv(e2){
+          var w=Math.max(190,Math.min(window.innerWidth-40,
+            right-e2.clientX));
+          pane.style.width=w+'px';
+          if(floating) pane.style.left=(right-w-hostR.left)+'px';
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+          syncPaneDock();
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      });
+      pane.appendChild(grip);
+    }
     /* MOVED and RESIZED are different states. A pane keeps its docked
        right/bottom anchors until you actually DRAG it; resizing it by the
        corner grip changes its size and nothing else.
@@ -34335,7 +34396,12 @@ window.JunoPptx = (function () {
        open, the switch behaves as it always has. */
     var hold=PANE_IDS.some(function(pid){
       var el=$('#'+pid); return el&&!el.hidden;})
-      ||(typeof animGalleryOpen==='function'&&animGalleryOpen());
+      ||(typeof animGalleryOpen==='function'&&animGalleryOpen())
+      /* the Animation tab carries the selection's own effect tiles
+         (T182): clicking a thing while standing there is how you pick
+         what to animate, and being carried off to Object would take
+         the tiles away in the same click */
+      ||activeTab()==='animation';
     var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
     justDrew=false;
@@ -47471,10 +47537,10 @@ window.JunoPptx = (function () {
   /* the gallery counts as an open workflow: selecting an object while
      it is up must not move the ribbon out from under it, exactly as
      T141 ruled for the panes */
-  function animGalleryOpen(){
-    var m=$('#anim-eff-menu');
-    return !!(m&&!m.hidden);
-  }
+  /* the gallery is a strip of tiles in the row now (T182); nothing
+     is ever "open", and the Animation tab keeps the selection by
+     name in showFmt instead */
+  function animGalleryOpen(){return false;}
   /* ICONS, NAMED LITERALLY. bic() with a computed key works at runtime
      but is invisible to the icon contract, which scans for literal
      one-argument icon calls --
@@ -47522,77 +47588,49 @@ window.JunoPptx = (function () {
     /* animationend is not reliable enough to be the only cleanup */
     galPvT=setTimeout(galPreviewStop,900);
   }
-  function galScope(){
-    var s=pres.slides[cur],n=selIdxs().length;
-    if(n===1) return itemLabel(s,selIdxs()[0]);
-    if(n>1) return n+' objects, all on one click.';
-    var all=((s&&s.annots)||[]).length;
-    return all?('Everything on this slide, one at a time.')
-      :'Nothing on this slide yet.';
-  }
-  function galApply(type){
-    var s=pres.slides[cur]; if(!s) return;
-    var idxs=selIdxs();
-    if(idxs.length){
-      animSetType(type);
-    } else {
-      /* the whole slide, one build each, in READING order (T106's sweep,
-         never a second one) -- and as ONE undo step */
-      var ord=0;
-      orderedIdx(s).forEach(function(i){
-        var a=(s.annots||[])[i]; if(!a||a.hide) return;
-        if(type==='none') delete a.anim;
-        else a.anim={type:type,order:ord++};
-      });
-      markDirty();renderSlide();renderFilm();
-      if(typeof animPaneSync==='function') animPaneSync();
-      if(typeof animRibbonSync==='function') animRibbonSync();
-      toast(type==='none'
-        ?'Every animation on this slide removed'
-        :('Everything on this slide, one at a time \u2014 '+ord
-          +' click'+(ord===1?'':'s')));
-    }
-    galSync();
-  }
+  /* THE STRIP (T182): five tiles in the ribbon's own row, icon over
+     word, the one that is on lit. Rebuilt rather than diffed -- five
+     buttons are cheaper to redraw than to reconcile, and it has to
+     follow the selection. DISABLED with nothing selected: an effect
+     is a fact about a thing, and the whole-slide builds are the two
+     worded buttons beside the strip. */
   function galSync(){
-    var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
-    if(!menu) return;
+    var strip=$('#anim-strip'); if(!strip) return;
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    var on=!!a&&typeof selAnnot==='number';
     var now=(a&&a.anim)?(a.anim.type||'fade'):(a?'none':null);
-    if(btn){
-      var ic=btn.querySelector('.bic,i');
-      var key=(now&&now!=='none')?now:'fade';
-      if(ic&&window.SemIcons&&SemIcons[key]) ic.outerHTML=bic(key);
-    }
-    menu.innerHTML='';
-    var h=document.createElement('div');
-    h.className='anim-galh';h.textContent='How it arrives';
-    menu.appendChild(h);
-    var row=document.createElement('div');row.className='anim-galrow';
+    strip.innerHTML='';
     SEQ_FX.forEach(function(f){
       var b=document.createElement('button');
-      b.className='sh-opt anim-card'+(now===f[0]?' on':'');
+      b.className='fx-tile'+(on&&now===f[0]?' on':'');
       b.type='button';
-      b.setAttribute('aria-pressed',now===f[0]?'true':'false');
+      b.disabled=!on;
+      b.setAttribute('aria-pressed',on&&now===f[0]?'true':'false');
       b.innerHTML=fxIcon(f[0])+'<span>'+f[1]+'</span>';
-      b.title=f[1]+' \u2014 '+(f[0]==='none'
-        ?'no animation; it is on the slide from the start'
-        :'hover to see it, click to give it');
-      b.addEventListener('mouseenter',function(){galPreview(f[0]);});
-      b.addEventListener('focus',function(){galPreview(f[0]);});
+      b.title=on
+        ?(f[0]==='none'?'No entrance \u2014 on the slide from the start'
+          :f[1]+' \u2014 hover to see it, click to give it')
+        :'Select something on the slide first';
+      b.addEventListener('mouseenter',function(){if(on) galPreview(f[0]);});
+      b.addEventListener('focus',function(){if(on) galPreview(f[0]);});
       b.addEventListener('mouseleave',galPreviewStop);
       b.addEventListener('click',function(e){
         e.stopPropagation();galPreviewStop();
-        galApply(f[0]);overlayHide(menu);});
-      row.appendChild(b);
+        if(on) animSetType(f[0]);});
+      strip.appendChild(b);
     });
-    menu.appendChild(row);
-    var foot=document.createElement('div');
-    foot.className='anim-galfoot';foot.textContent=galScope();
-    menu.appendChild(foot);
+    var lab=$('#anim-strip-lab');
+    if(lab) lab.textContent=on?'Effect':'Effect \u2014 select something';
   }
   function galBoot(){
-    var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
+    var strip=$('#anim-strip');
+    if(!strip) return;
+    galSync();
+    strip.addEventListener('mouseleave',galPreviewStop);
+    return;
+    /* what follows is the popover's own wiring, kept only as the
+       record of why the strip is not built through wireMenuToggle */
+    var btn=null,menu=null;
     if(!btn||!menu) return;
     /* WIRED HERE RATHER THAN THROUGH wireMenuToggle, which takes id
        STRINGS and builds a selector out of them: handed the elements
@@ -47915,7 +47953,7 @@ window.JunoPptx = (function () {
          when the order is what you are thinking about. */
       var sq=document.createElement('button');
       sq.className='anim-mini wide';
-      sq.innerHTML=bic('stagger')+' Set order\u2026';
+      sq.innerHTML=bic('stagger')+' Quick animate\u2026';
       sq.title='Then click the objects on the slide one after another, '
         +'in the order they should appear. Shift-click puts one on the '
         +'same click as the last.';
@@ -47986,7 +48024,7 @@ window.JunoPptx = (function () {
         a.anim={type:(a.anim&&a.anim.type)||'fade',order:n};
       });
       revealCount=0;commit(s2);
-      toast(order.length+' items, one click each \u2014 in reading order');
+      toast(order.length+' items, one per click');
     });
     var tog=$('#anim-together');
     if(tog) tog.addEventListener('click',function(){
@@ -48051,7 +48089,7 @@ window.JunoPptx = (function () {
     animRibbonSync=function(){
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
-      if(typeof galSync==='function'&&$('#anim-eff-menu')) galSync();
+      if(typeof galSync==='function'&&$('#anim-strip')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
       OBJ_FX.forEach(function(p){
