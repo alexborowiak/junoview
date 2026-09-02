@@ -196,6 +196,15 @@
     ['seq-what','seq-fx','seq-btns'].forEach(function(id){
       var el=$('#'+id); if(!el) return;
       any=true;el.hidden=!on;});
+    /* the Timing group stands down while the mode has the row,
+       and comes back with the selection when it ends (T185) */
+    if(typeof animRibbonSync==='function') animRibbonSync();
+    /* ...and so do the whole-slide shortcuts: they would fight the
+       mode, and their group is the width the mode's own controls need
+       (measured 20px over at 1400px with them showing, T186) */
+    var poster=!!(pageOf&&pageOf().poster);
+    ['anim-stagger','anim-together','anim-clear'].forEach(function(id){
+      var el=$('#'+id); if(el) el.hidden=on||poster;});
     if(!any) return;
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
     var w=$('#seq-what'); if(!w||!seqArm) return;
@@ -203,7 +212,8 @@
     /* two short lines: the count, then the two modifiers. The second
        line is the first thing the tight rung drops (deck.css), the way
        the hint text is -- words that explain, not words that act */
-    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b>'
+    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b> &middot; click the '
+      +'next thing to appear'
       +(done?(' &middot; '+done+' placed'):'')+'</span>'
       +'<span><b>Shift</b>: same click &middot; '
       +(seqDigit
@@ -402,6 +412,111 @@
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
+    /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
+       PowerPoint's Start box, on the model this deck already has:
+       On click is a stop of its own; With previous is the pane's
+       "Appear with previous" (mergeUp); After previous is T169's
+       delay -- the stop runs itself that many seconds after the
+       one before, no click -- which was reachable only by holding
+       a digit in Quick animate. Every control is disabled until
+       there is a selected build to time, and the group stands down
+       while Quick animate has the row. The second row is T172's
+       text builds, which lived only in the pane. */
+    function setDelay(sec){
+      var s=pres.slides[cur]; if(!s) return;
+      var a=annotByIdx(s,selAnnot); if(!a||!a.anim) return;
+      var ord=a.anim.order||0;
+      /* the whole STOP carries it: two things arriving together
+         cannot arrive at two different times (T169) */
+      (s.annots||[]).forEach(function(x){
+        if(x&&x.anim&&(x.anim.order||0)===ord){
+          if(sec>0) x.anim.after=sec; else delete x.anim.after;}});
+      commit(s);
+    }
+    function timingState(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var num=typeof selAnnot==='number';
+      var on=!!a&&num&&!!a.anim&&!pageOf().poster&&!seqOn();
+      if(!on) return {on:false,text:!!a&&num&&a.k==='text'&&!!a.anim};
+      var q=animSeq(s),si=stepOf(s,selAnnot);
+      var after=(a.anim.after)|0,shared=false;
+      if(si>=0&&q[si].items.length>1){
+        /* it joined an earlier thing's click if it is not the first
+           of its stop in reading order */
+        var first=null;
+        orderedIdx(s).forEach(function(i){
+          if(first===null&&q[si].items.indexOf(i)>=0) first=i;});
+        shared=(first!==selAnnot);
+      }
+      return {on:true,si:si,after:after,shared:shared,
+        mode:after?'after':(shared?'with':'click'),
+        text:a.k==='text',
+        by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:''};
+    }
+    function timingSync(){
+      var st=timingState(),poster=!!pageOf().poster,armed=seqOn();
+      var start=$('#anim-start'),by=$('#anim-by');
+      if(start) start.hidden=poster||armed;
+      if(by) by.hidden=poster||armed||!st.text;
+      [['anim-onclick','click'],['anim-withprev','with'],
+       ['anim-afterprev','after']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        /* nothing to be "with" on the first build */
+        b.disabled=!st.on||(p[1]==='with'&&st.si<=0&&st.mode!=='with');
+        b.setAttribute('aria-pressed',(st.on&&st.mode===p[1]).toString());
+      });
+      var dw=$('#anim-delaywrap'),di=$('#anim-delay');
+      if(dw) dw.hidden=!(st.on&&st.mode==='after');
+      if(di&&st.on&&st.mode==='after'&&document.activeElement!==di)
+        di.value=st.after||1;
+      [['anim-by-all',''],['anim-by-para','para'],
+       ['anim-by-sent','sent']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        b.disabled=!st.on;
+        b.setAttribute('aria-pressed',
+          (st.on&&st.text&&st.by===p[1]).toString());
+      });
+      var lab=$('#anim-timing-lab');
+      if(lab) lab.textContent=st.on?(st.text?'Timing & text':'Timing')
+        :'Timing \u2014 select an animated thing';
+    }
+    var ocb=$('#anim-onclick');
+    if(ocb) ocb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var st=timingState(); if(!st.on) return;
+      if(st.shared) splitOwn();
+      if(st.after) setDelay(0);
+    });
+    var wpb=$('#anim-withprev');
+    if(wpb) wpb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var st=timingState(); if(!st.on||st.si<=0) return;
+      if(st.after) setDelay(0);
+      if(!st.shared) mergeUp();
+    });
+    var apb=$('#anim-afterprev');
+    if(apb) apb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var st=timingState(); if(!st.on) return;
+      if(st.shared) splitOwn();
+      var di=$('#anim-delay');
+      setDelay(Math.max(1,Math.min(60,(+(di&&di.value))||1)));
+    });
+    var din=$('#anim-delay');
+    if(din){
+      din.addEventListener('change',function(){
+        var v=Math.max(1,Math.min(60,(+din.value)||1));
+        din.value=v;setDelay(v);});
+      din.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){e.preventDefault();din.blur();}});
+    }
+    [['anim-by-all',''],['anim-by-para','para'],
+     ['anim-by-sent','sent']].forEach(function(p){
+      var b=$('#'+p[0]); if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();setBy(p[1]);});
+    });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it
        resets revealCount for the same reason "One by one" does: the
@@ -796,6 +911,7 @@
     /* the effect buttons act on the SELECTION, so they show the selected
        item's effect and stand down when there is nothing selected */
     animRibbonSync=function(){
+      timingSync();
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();

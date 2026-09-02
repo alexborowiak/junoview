@@ -1333,6 +1333,22 @@ body.slide-editing .apptop{display:none;}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
 body.light .fx-tile.on{color:#fff;}
+/* T186: the build numbers show whenever the Animation tab is up -- the
+   tab is about them -- and not only while the order pane or Quick
+   animate is (2026-09-02, user: "the animation numbers should appear
+   when on the animation tab always") */
+.deck.tab-animation .an-buildno{display:flex;}
+/* T185: the Timing group. The delay field is the size field's twin. */
+.rbn-timing{order:5;}
+.anim-delaywrap .fmt-num{width:44px;}
+.rbn-timing .dbtn:disabled{opacity:.4;cursor:default;}
+/* WHICH ONE IS ON, said louder than a theme can quiet. The colourful
+   theme paints every .dbtn at three classes deep, which beat the two of
+   .seq-fxb.on and left the lit chip looking like its neighbours
+   (2026-09-02, user: "you can't tell which button you are on"). */
+.rbn-row .seq-fx .seq-fxb[aria-pressed="true"],
+.rbn-row .rbn-cell .dbtn.rbn-sm[aria-pressed="true"]{
+  background:var(--cyan-deep);color:#fff;border-color:var(--cyan-deep);}
 .rbn-insert{order:6;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */

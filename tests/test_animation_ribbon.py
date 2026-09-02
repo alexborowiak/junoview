@@ -97,10 +97,13 @@ def test_the_names_say_what_the_buttons_do(out):
     the pointing mode; the Effect label says when it is waiting.
     """
     assert "One per click</button>" in out
-    assert "All on one click</button>" in out
+    # ...and T186 shortened the other two again and named the group for
+    # whose builds they are: "the whole slide options are confusing"
+    assert "All together</button>" in out
+    assert "Remove all</button>" in out
     assert "Animation order</button>" in out
     assert '<div class="selpane-h"><span>Animation order</span>' in out
-    assert ">Whole slide</span>" in out
+    assert ">Everything on the slide</span>" in out
     for gone in ("One by one</button>", "All at once</button>",
                  "Set order</button>", "Animations</button>"):
         assert gone not in out, gone

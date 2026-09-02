@@ -870,8 +870,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # three-button bar, an Actions menu and a resize handle, and the order
 # panel on the right. deck.html, help.html, deck.css, core.css and
 # four deck fragments.
-EXPECTED_MD5 = "fcfeb6c79876bc862e016105ea997270"
-EXPECTED_BYTES = 3278404
+# T185-T186 2026-09-02: the Timing & text group on the Animation tab
+# (On click / With previous / After previous with a seconds field, and
+# Whole box / By bullet / By sentence), the build numbers whenever the
+# tab is up, the whole-slide group reworded, and the lit chip styled
+# past the colourful theme. deck.html, deck.css, core.css and two deck
+# fragments.
+EXPECTED_MD5 = "2be6aff3c247f318d9838dfd4e7b8ff3"
+EXPECTED_BYTES = 3289106
 
 
 def _render_example() -> str:

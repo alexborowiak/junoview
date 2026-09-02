@@ -3865,6 +3865,42 @@ confusing to look at and can't be re-sized."
   the list, Actions ▾ opens ten rows with Group disabled for one
   selection; the grip drags the pane wider and the stage makes room.
 
+The user, fourth review (2026-09-02): "the animation numbers should
+appear when on the animation tab always... the whole slide options are
+confusing... you can't tell which button you are on... there should be
+a default thing there with time like PowerPoint has, and something like
+'With previous', or 'on click' that you can swap around... where are
+the things for dot points where you can have the options of animating
+by sentence, dot point, etc."
+
+- [x] **T185 · M — Timing, and how much of a text box arrives, on the
+  ribbon.**
+  *Done 2026-09-02.* A **Timing & text** group on the Animation tab,
+  PowerPoint's Start box on the model this deck already had: **On
+  click** (a stop of its own), **With previous** (the previous build's
+  click — the pane's "Appear with previous"), **After previous** with a
+  seconds field (T169's delay: the stop runs itself, no click — which
+  until now you could only set by holding a digit in Quick animate).
+  The state is read off the model, so the lit one is the truth; With
+  previous is disabled on the first build because there is nothing to
+  be with. The second row is T172's **Whole box / By bullet / By
+  sentence**, which lived only in the order pane, shown for a text box
+  with a build. Everything is disabled until a build is selected, the
+  way the tiles are, and the group stands down while Quick animate has
+  the row. No duration control: the entrances are fixed-length CSS
+  keyframes and a per-object duration would be a model change — said
+  here rather than faked.
+
+- [x] **T186 · S — The numbers, the names, and the lit chip.**
+  *Done 2026-09-02.* The build numbers show whenever the Animation tab
+  is up, not only while the order pane or Quick animate is. The whole-
+  slide group is headed **Everything on the slide** with **One per
+  click / All together / Remove all**. Quick animate's status line
+  says what to do — "next: 1 · click the next thing to appear" — and
+  its chosen effect is visibly lit: the colourful theme paints every
+  button three classes deep, which beat the two of `.seq-fxb.on`, so
+  the pressed state is now said at five.
+
 
 ## Cut (and why)
 

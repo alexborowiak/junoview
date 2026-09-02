@@ -838,9 +838,10 @@
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <!-- ANIMATION, on its own tab (T176). Three groups: the
-               EFFECT the selected thing gets, the builds for the WHOLE
-               SLIDE, and the ORDER things come in. -->
+          <!-- ANIMATION, on its own tab (T176). Four groups: the EFFECT
+               the selected thing gets, the builds for EVERYTHING on the
+               slide, the ORDER things come in, and the TIMING of the
+               selected build with how much of a text box arrives. -->
           <!-- THE EFFECTS ARE TILES IN THE ROW (T182), the way
                PowerPoint's are, so giving the selected thing an
                entrance is one click with nothing to open first
@@ -860,24 +861,25 @@
             </span>
             <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
-          <!-- THE WHOLE SLIDE. Names that say what happens
-               (2026-09-02, user: "I don't know what the order buttons
-               do"): One per click, All on one click. -->
+          <!-- EVERYTHING ON THE SLIDE, in one press. Three verbs about
+               the whole slide; the effect they give is Fade, or what
+               each thing already had (2026-09-02, user: "the whole
+               slide options are confusing" -- so the heading says whose
+               they are and each label is one idea). -->
           <span class="rbn-grp rbn-build" data-tab="animation">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-stagger"
-                title="Give everything on this slide an entrance, one
- per click, in order &mdash; top to bottom unless you set your own"
+                title="Every object on this slide arrives, one per click,
+ top to bottom unless you set an order"
                 ><i data-ic="stagger"></i> One per click</button>
               <button class="dbtn rbn-sm" id="anim-together"
-                title="Give everything on this slide an entrance, all on
- the same click"><i data-ic="together"></i> All on one click</button>
+                title="Every object on this slide arrives together, on the
+ first click"><i data-ic="together"></i> All together</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
-                title="Take every entrance off this slide &mdash; nothing
- is held back during playback"><i data-ic="exit"></i> Remove
- animations</button>
+                title="Take the entrance off every object on this slide"
+                ><i data-ic="exit"></i> Remove all</button>
             </span>
-            <span class="rbn-lab">Whole slide</span>
+            <span class="rbn-lab">Everything on the slide</span>
           </span>
           <!-- THE ORDER. Quick animate is the pointing mode (T168): it
                was "Click things in order…" and then "Set order", and
@@ -895,8 +897,7 @@
               <button class="dbtn rbn-sm" id="vw-anim"
                 aria-pressed="false"
                 title="The list of what appears when on this slide, in
- order, with arrows to move a step earlier or later. The numbered
- bubbles on the slide show while it is open"
+ order, with arrows to move a step earlier or later"
                 ><i data-ic="play"></i> Animation order</button>
               <!-- THE TIMELINE IS THE LAYERS PANE (T174): every object
                    with the click it arrives on and, if it leaves, the
@@ -908,6 +909,62 @@
  from the same list"><i data-ic="objects"></i> Layers</button>
             </span>
             <span class="rbn-lab">Order</span>
+          </span>
+          <!-- TIMING, the way PowerPoint's Start box works (T185;
+               2026-09-02, user: "there should be a default thing there
+               with time like PowerPoint has, and something like 'With
+               previous', or 'on click' that you can swap around").
+               Three answers to WHEN the selected build starts, on the
+               model this deck already has: its own click; the previous
+               build's click (the pane's "Appear with previous"); or a
+               number of seconds after the previous build, with no click
+               (T169's delay, which used to be reachable only by holding
+               a digit in Quick animate). The second row is HOW MUCH of
+               a text box arrives at a time (T172), which lived only in
+               the pane -- "where are the things for dot points" -- and
+               shows for a text box. Every control is disabled until
+               there is a selected build to time, the way the tiles are,
+               and the group stands down while Quick animate is armed so
+               the mode's own controls have the row. -->
+          <span class="rbn-grp rbn-timing" data-tab="animation">
+            <span class="rbn-row">
+              <span class="rbn-cell" id="anim-start">
+                <button class="dbtn rbn-sm" id="anim-onclick"
+                  aria-pressed="false"
+                  title="Starts on its own click"
+                  ><i data-ic="locate"></i> On click</button>
+                <button class="dbtn rbn-sm" id="anim-withprev"
+                  aria-pressed="false"
+                  title="Starts on the same click as the build before it"
+                  ><i data-ic="together"></i> With previous</button>
+                <button class="dbtn rbn-sm" id="anim-afterprev"
+                  aria-pressed="false"
+                  title="Starts by itself, this many seconds after the
+ build before it &mdash; no click"
+                  ><i data-ic="reload"></i> After previous</button>
+                <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
+                  title="Seconds after the previous build">
+                  <input class="fmt-num" id="anim-delay" type="number"
+                    min="1" max="60" step="1" value="1"
+                    aria-label="Seconds after the previous build">
+                  <span class="fmt-unit">s</span></span>
+              </span>
+              <span class="rbn-cell" id="anim-by">
+                <button class="dbtn rbn-sm" id="anim-by-all"
+                  aria-pressed="false"
+                  title="The whole text box on one click"
+                  ><i data-ic="text"></i> Whole box</button>
+                <button class="dbtn rbn-sm" id="anim-by-para"
+                  aria-pressed="false"
+                  title="One click per bullet, or per line you pressed
+ Enter on"><i data-ic="indent"></i> By bullet</button>
+                <button class="dbtn rbn-sm" id="anim-by-sent"
+                  aria-pressed="false"
+                  title="One click per sentence"
+                  ><i data-ic="spacing"></i> By sentence</button>
+              </span>
+            </span>
+            <span class="rbn-lab" id="anim-timing-lab">Timing &amp; text</span>
           </span>
           <!-- QUICK ANIMATE, IN THE RIBBON (T180). This was a bar fixed
                across the top of the window, over the very ribbon it

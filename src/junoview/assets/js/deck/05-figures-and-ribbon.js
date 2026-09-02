@@ -1117,6 +1117,10 @@
   function applyTab(){
     var bar=$('#edit-tools'); if(!bar) return;
     var t=activeTab();
+    /* the build numbers show whenever the Animation tab is up (T186):
+       the tab is about them, so they should not wait for the order
+       pane or Quick animate */
+    deckEl.classList.toggle('tab-animation',t==='animation');
     $$('.rbn-grp[data-tab]',bar).forEach(function(g){
       if(g.dataset.tab===t) g.removeAttribute('data-off');
       else g.setAttribute('data-off','1');
