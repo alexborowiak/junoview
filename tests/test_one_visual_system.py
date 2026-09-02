@@ -48,7 +48,8 @@ def test_every_small_button_has_an_icon():
 
 
 def test_the_colourful_theme_is_one_hue_per_tab(out):
-    for tab, hue in (("home", "#f0a848"), ("insert", "#a586e8"), ("design", "#6b9bff"),
-                     ("animation", "#6fd8c2"), ("view", "#41c493"), ("object", "#e0a5c6")):
+    for tab, hue in (("home", "#f0a848"), ("insert", "#a586e8"),
+                     ("design", "#6b9bff"), ("animation", "#6fd8c2"),
+                     ("view", "#41c493"), ("object", "#e0a5c6")):
         i = out.index(f'body.th-colorful .rbn-grp[data-tab="{tab}"]')
         assert hue in out[i:i + 260], tab
