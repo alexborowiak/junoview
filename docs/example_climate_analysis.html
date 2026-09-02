@@ -4558,8 +4558,16 @@ body.light .img-row{color:var(--ink-2);}
 /* T191: a text box born empty shows that it is there and waiting --
    with no placeholder words and no panel (2026-08-19) a fresh box was
    a caret and nothing else, which read as "nothing happened" */
-.deck.editing .an-item.an-text .an-tx[contenteditable="true"]:empty::before{
+/* ...and it stays visible after you click away (T203; 2026-09-02,
+   user: "text boxes with no text should still be there"): the
+   placeholder no longer waits for the caret, and a box with nothing
+   in it wears a faint dashed edge until it has words */
+.deck.editing .an-item.an-text .an-tx:empty::before{
   content:"Type\2026";color:#7e93a4;opacity:.8;pointer-events:none;}
+.deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
+  outline:1px dashed #ffffff3a;outline-offset:-1px;}
+body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
+  outline-color:#0000002e;}
 /* the whole-deck commands at the foot of the Text styles window */
 .style-mgr .opt-row{margin-top:2px;}
 .style-mgr .opt-row .dbtn.rbn-sm{flex:1 1 auto;justify-content:center;}
@@ -7576,6 +7584,55 @@ body:has(#rd-order) .an-readno{display:flex;}
 .dg-sheet.outlined .mini-pane{
   outline:1px solid rgba(240,168,72,.85);outline-offset:0;}
 .dg-sheet.outlined .mini-diagram{background:#0e1a26;}
+
+/* ---- T203: THE STRIP FRAME -------------------------------------------
+   A tile strip is a box with an end: a border round the whole thing, a
+   scrollbar you can see that sits UNDER the tiles instead of on them,
+   and a chevron at the right that opens every tile at once (2026-09-02,
+   user: "the ends kind of just disappear... the horizontal scroll bar
+   is too small and overlaps with them. There needs to be an arrow or
+   something below, that when you click you can see all options"). */
+.strip-frame{display:flex;align-items:stretch;height:65px;
+  border:1px solid #ffffff24;border-radius:8px;background:#ffffff06;
+  overflow:hidden;}
+.strip-frame>.fx-strip{height:auto;padding:2px 2px 0;
+  scrollbar-width:auto;scrollbar-color:#ffffff45 #ffffff0c;}
+.strip-frame>.fx-strip::-webkit-scrollbar{height:7px;}
+.strip-frame>.fx-strip::-webkit-scrollbar-thumb{background:#ffffff45;
+  border-radius:4px;}
+.strip-frame>.fx-strip::-webkit-scrollbar-track{background:#ffffff0c;}
+.strip-frame>.fx-strip>*{scroll-snap-align:start;}
+.strip-more{flex:none;width:18px;padding:0;border:0;
+  border-left:1px solid #ffffff24;background:#ffffff0a;color:#c9d6e2;
+  cursor:pointer;font-size:13px;line-height:1;display:flex;
+  align-items:center;justify-content:center;}
+.strip-more:hover{background:color-mix(in srgb,var(--accent) 18%,transparent);
+  color:#fff;}
+.strip-more[aria-expanded="true"]{background:var(--cyan-deep);color:#fff;}
+body.light .strip-frame{border-color:var(--line);background:#00000005;}
+body.light .strip-frame>.fx-strip{scrollbar-color:#00000040 #00000010;}
+body.light .strip-frame>.fx-strip::-webkit-scrollbar-thumb{background:#00000040;}
+body.light .strip-frame>.fx-strip::-webkit-scrollbar-track{background:#00000010;}
+body.light .strip-more{border-left-color:var(--line);background:#00000008;
+  color:var(--ink-2);}
+/* the window with every tile in it: the strip itself, moved in and
+   wrapped, so every tile keeps its wiring; moved back on close */
+/* block, not the menu grid: the strip must have the whole width to wrap in */
+.sh-menu.strip-all{display:block;position:fixed;z-index:60;left:0;top:0;padding:8px;
+  border-radius:10px;background:var(--chrome-1,#111c26);
+  border:1px solid #ffffff24;box-shadow:0 12px 32px #0009;
+  width:560px;max-width:calc(100vw - 16px);max-height:calc(100vh - 120px);
+  overflow:auto;}
+.sh-menu.strip-all .strip-all-h{font-family:var(--sans);font-size:11px;
+  color:#8ba0b2;margin:0 2px 6px;}
+.sh-menu.strip-all .fx-strip{display:flex;flex-wrap:wrap;gap:6px;
+  height:auto;width:100%;max-width:none;overflow:visible;padding:0;
+  scroll-snap-type:none;}
+.sh-menu.strip-all .fx-strip>*{flex:0 0 auto;height:60px;}
+.sh-menu.strip-all .fx-strip>.hd-lab,.sh-menu.strip-all .fx-strip>.lay-sec{
+  display:none;}
+body.light .sh-menu.strip-all{background:var(--paper,#fff);
+  border-color:var(--line);}
 </style>
 <script>
 window.MathJax = {
@@ -11125,8 +11182,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    proportion, the one in use lit; the strip scrolls
                    and a tile cut at the edge is the affordance. Built
                    from PAGE_PRESETS, the same table the menu was. -->
-              <span class="rbn-tall fx-strip page-strip" id="page-strip"
-                role="group" aria-label="Page size"></span>
+              <span class="rbn-tall strip-frame" id="page-strip-frame">
+                <span class="fx-strip page-strip" id="page-strip"
+                  role="group" aria-label="Page size"></span>
+                <button class="strip-more" type="button" id="page-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show all page sizes">&#9662;</button></span>
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -11401,8 +11462,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                galSync, which the selection already calls. -->
           <span class="rbn-grp rbn-anim" data-tab="animation">
             <span class="rbn-row">
-              <span class="rbn-tall fx-strip" id="anim-strip"
-                role="group" aria-label="Entrance effect"></span>
+              <span class="rbn-tall strip-frame" id="anim-strip-frame">
+                <span class="fx-strip" id="anim-strip"
+                  role="group" aria-label="Entrance effect"></span>
+                <button class="strip-more" type="button" id="anim-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every effect">&#9662;</button></span>
             </span>
             <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
@@ -11588,8 +11653,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    that kind; click it again to put the tool down. Built
                    by txStripBoot; the caret menu it replaces was the
                    one control on Insert that hid its options. -->
-              <span class="rbn-tall fx-strip tx-strip" id="tx-strip"
-                role="group" aria-label="Kind of text box"></span>
+              <span class="rbn-tall strip-frame" id="tx-strip-frame">
+                <span class="fx-strip tx-strip" id="tx-strip"
+                  role="group" aria-label="Kind of text box"></span>
+                <button class="strip-more" type="button" id="tx-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every kind of text box">&#9662;</button></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Equation</button>
@@ -11611,8 +11680,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                door for width; group folding (T187) pays for the strip. -->
           <span class="rbn-grp rbn-shapes" data-tab="insert">
             <span class="rbn-row">
-              <span class="rbn-tall fx-strip shape-strip" id="shape-strip"
-                role="group" aria-label="Shapes"></span>
+              <span class="rbn-tall strip-frame" id="shape-strip-frame">
+                <span class="fx-strip shape-strip" id="shape-strip"
+                  role="group" aria-label="Shapes"></span>
+                <button class="strip-more" type="button" id="shape-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every shape">&#9662;</button></span>
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
@@ -11656,6 +11729,16 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Drawing</span>
           </span>
+          <!-- EVERY TILE STRIP SITS IN A FRAME (T203; 2026-09-02, user:
+               "the side scrolling bars are good, but the ends kind of
+               just disappear... the horizontal scroll bar is too small
+               and overlaps with them. There needs to be an arrow or
+               something below, that when you click you can see all
+               options"). The frame is the box; its scrollbar is a real
+               one under the tiles; the chevron at its end opens every
+               tile at once, wrapped, in a window under the strip
+               (stripMoreBoot). The frame carries the id the ribbon
+               layouts move, so the strip and its door travel as one. -->
           <!-- HOME, BY WHAT YOU DO (T202; 2026-09-02, user: "the
                groupings still make no sense... you can't create a new
                layout with the layouts there, you can only change the
@@ -11673,8 +11756,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-newslide"
                                             title="Add a slide after this one">&#43; New slide</button>
-              <span class="rbn-tall fx-strip lay-strip" id="layout-strip"
-                role="group" aria-label="New slide, laid out as"></span>
+              <span class="rbn-tall strip-frame" id="layout-strip-frame">
+                <span class="fx-strip lay-strip" id="layout-strip"
+                  role="group" aria-label="New slide, laid out as"></span>
+                <button class="strip-more" type="button" id="layout-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every layout">&#9662;</button></span>
             </span>
             <span class="rbn-lab">New slide</span>
           </span>
@@ -25655,7 +25742,9 @@ window.JunoPptx = (function () {
   function rbnResolve(cid,atoms){
     if(atoms[cid]) return atoms[cid];
     var el=document.getElementById(cid);
-    var w=(el&&el.closest)?el.closest('.opt-drop'):null;
+    /* a strip lives in its frame with its Show-all door (T203); the
+       frame is what moves */
+    var w=(el&&el.closest)?el.closest('.opt-drop,.strip-frame'):null;
     return (w&&atoms[w.id])||null;
   }
   /* WHAT A LAYOUT DID NOT SAY. A control the catalogue has never heard
@@ -52957,6 +53046,63 @@ window.JunoPptx = (function () {
      down. It replaces the Shape door ("the shapes should be on their
      own", 2026-09-02). */
   var shapeStripSync=function(){};
+  /* ---- THE STRIP FRAME'S DOOR (T203) ----------------------------------
+     Every tile strip sits in a frame with a chevron at its end. The
+     chevron opens a window under the strip holding EVERY tile at
+     once, wrapped: the strip element itself is moved into the window,
+     so each tile keeps the wiring its builder gave it, and moved back
+     into the frame when the window closes (the overlay owner hides
+     it; an attribute observer sees that and puts the strip home).
+     Picking a tile closes the window, the way a gallery does. */
+  function stripMoreBoot(){
+    $$('.strip-frame').forEach(function(frame){
+      var strip=frame.querySelector('.fx-strip'),
+          more=frame.querySelector('.strip-more');
+      if(!strip||!more) return;
+      var panel=null;
+      function home(){
+        if(strip.parentNode===frame) return;
+        frame.insertBefore(strip,more);
+        more.setAttribute('aria-expanded','false');
+      }
+      function build(){
+        panel=document.createElement('div');
+        panel.className='sh-menu strip-all';
+        panel.id=strip.id+'-all';
+        panel.hidden=true;
+        var h=document.createElement('div');
+        h.className='strip-all-h';
+        h.textContent=strip.getAttribute('aria-label')||'All';
+        panel.appendChild(h);
+        /* inside the editor's own layer: the editor sits above the
+           page, so a window appended to body opens underneath it */
+        ((typeof deckEl!=='undefined'&&deckEl)||document.body)
+          .appendChild(panel);
+        /* a tile picked in the window closes it, after its own
+           handler has run */
+        panel.addEventListener('click',function(e){
+          var t=e.target&&e.target.closest?
+            e.target.closest('.fx-tile,.dbtn.lay'):null;
+          if(t&&panel.contains(t))
+            setTimeout(function(){overlayHide(panel);},0);
+        });
+        new MutationObserver(function(){
+          if(panel.hidden) home();
+        }).observe(panel,{attributes:true,attributeFilter:['hidden']});
+      }
+      more.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!panel) build();
+        if(!panel.hidden){overlayHide(panel);return;}
+        panel.appendChild(strip);
+        overlayShow(more,panel);
+        var fr=frame.getBoundingClientRect(),
+            pw=panel.offsetWidth,vw=window.innerWidth;
+        panel.style.left=Math.max(8,Math.min(fr.left,vw-pw-8))+'px';
+        panel.style.top=(fr.bottom+4)+'px';
+      });
+    });
+  }
   function shapeStripBoot(){
     var strip=$('#shape-strip'); if(!strip) return;
     SHAPE_LIST.forEach(function(pair){
@@ -56420,6 +56566,7 @@ window.JunoPptx = (function () {
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
   shapeStripBoot();           /* the shapes, as tiles (T197) */
   imgPaneBoot();              /* the All images pane's door (T202) */
+  stripMoreBoot();            /* every strip's Show-all door (T203) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */
