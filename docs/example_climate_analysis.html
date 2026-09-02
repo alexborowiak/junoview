@@ -7232,7 +7232,25 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
    right place, and the screen showed nothing. .matchbar solved this at
    150 for exactly the same reason; this joins it rather than inventing
    a third number. */
-.seqbar{position:fixed;top:0;left:0;right:0;z-index:150;}
+/* T180: setting the order happens IN THE RIBBON, as a group of the
+   Animation tab that appears while the mode is armed. It was a bar
+   fixed across the top of the window (z-index 150, over the ribbon it
+   stood in for); the tint and the rule on its left are what say
+   "mode" now that it is a group like any other. */
+.rbn-grp.rbn-seq{background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border-left:2px solid var(--accent);}
+.seq-cell{display:flex;flex-direction:column;justify-content:center;
+  font-size:10px;line-height:1.3;white-space:nowrap;color:#c9d6e2;
+  padding:0 4px;}
+.seq-cell b{color:#fff;}
+body.light .seq-cell{color:#3b4b5a;}
+body.light .seq-cell b{color:var(--ink);}
+/* the modifier hints are the first words to go when the row is
+   tight -- they explain, the tooltips repeat them, and nothing acts
+   on them; the count stays */
+.deck.erc-tight .seq-cell span+span{display:none;}
+.rbn-row>.seq-fx{gap:3px;}
+.rbn-row>.seq-fx .seq-fxb{padding:2px 6px;font-size:10px;gap:4px;}
 /* T171: the effect gallery. Cards are .sh-opt, which is already
    icon-over-word, so this only lays them out and gives the popover its
    heading, its scroller and its footer. The strip shows five and a half
@@ -7256,14 +7274,11 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* T170: the bar's own furniture. The NAME first, so the mode is a
    thing you can remember afterwards rather than a sentence you were
    reading at the time; then the running state; then the chooser. */
-.seqbar .seq-name{display:inline-flex;align-items:center;gap:5px;
-  font-weight:600;white-space:nowrap;margin-right:4px;}
-.seqbar .seq-name .bic{width:13px;height:13px;}
-.seq-fx{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;
-  margin-left:10px;}
+.seq-fx{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;}
 .seq-fxb{padding:2px 7px;font-size:10.5px;display:inline-flex;
   align-items:center;gap:5px;white-space:nowrap;}
-.seq-fxb.on{background:#fff;color:var(--cyan-deep);border-color:#fff;}
+.seq-fxb.on{background:var(--cyan-deep);color:#fff;
+  border-color:var(--cyan-deep);}
 /* a key looks like a key, on the button and not only in the tooltip:
    a mode whose shortcuts are invisible has no shortcuts */
 .seq-fxb kbd{font-family:var(--mono);font-size:9px;line-height:1;
@@ -11238,27 +11253,15 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    surface was asked for: "the words are so weird and the
                    options are hard to get to... we need something like
                    this instead of just vanilla buttons".
-                   What was here: FOUR buttons, each `hidden` until
-                   something was selected -- and un-hidden by the very
-                   click that moves the ribbon to the Object tab, which
-                   is the one tab they were not on. So the effects were
-                   visible for approximately none of the moments they
-                   were usable, and the vocabulary could never be
-                   learned because you only ever saw it for one click.
                    THE DOOR IS NEVER HIDDEN. Its label never renames
                    itself either: a label whose width follows the
                    selection makes the row's required width depend on
                    what you clicked, and the fit ladder has no rung left
                    for that (see #fmt-sw). The current effect rides on
                    the ICON and on the card marked aria-pressed inside.
-                   A POPOVER rather than tiles in the row, and the
-                   measurement decided it: at 1366px the inline gallery
-                   leaves the slide column 503px against today's 517px,
-                   i.e. WORSE than the status quo, while this door leaves
-                   it 598px -- wider than before. Six PowerPoint-sized
-                   tiles would take the column to 239px, a hair above the
-                   hard floor. The gallery is not a trade-off inline; it
-                   is a regression. -->
+                   With nothing selected it does the WHOLE slide; the
+                   one-object case has its own buttons on the Object
+                   tab now (T179). -->
               <span class="sh-drop" id="anim-effwrap">
                 <button class="dbtn rbn-sm" id="anim-effect"
                   aria-haspopup="true" aria-expanded="false"
@@ -11272,6 +11275,17 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Remove EVERY animation on this slide — nothing is
  held back during playback"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove
  animations</button>
+              <!-- THE TIMELINE IS THE LAYERS PANE (T174), and until
+                   T180 it had no door on this tab: the pane lists every
+                   object with the click it arrives on and, if it
+                   leaves, the click it goes -- which is the answer to
+                   "we had something about animations appearing in
+                   layers? Is that a thing?" (2026-09-02). It drives
+                   Home's Layers button: two doors, one pane. -->
+              <button class="dbtn rbn-sm" id="anim-layers"
+                title="The timeline: every object on this slide with the
+ click it arrives on and, if it leaves, the click it goes. Hide, lock and
+ reorder from the same list"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
             </span>
             <!-- ONE FEATURE, ONE NAME (T167). This group was
                  "Animate", its own button "Animations" and the pane it
@@ -11282,11 +11296,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                  using twelve words for the same handful of ideas. -->
             <span class="rbn-lab">Animation</span>
           </span>
-          <!-- THE ORDER. Four ways to say what comes when, which the
-               tab has room for now: the two builds anyone actually
-               wants, the pointing mode (T168) and the reading order
-               (T106) -- the last two had no door on the ribbon at all
-               and lived as rows at the foot of the pane. -->
+          <!-- THE ORDER. The two builds anyone actually wants, and the
+               way to say your own order by pointing (T168). The
+               Reading order door that sat here for a day (T176) is
+               gone: "what is reading order and why does it look so
+               confusing" (2026-09-02, user). Set order writes the
+               slide's order too now (T181), so one gesture answers
+               both questions; the panel of arrows is still there for
+               a nudge, from the pane and the right-click. -->
           <span class="rbn-grp rbn-build" data-tab="animation">
             <span class="rbn-row">
               <!-- the two builds people actually want, in one press
@@ -11295,22 +11312,54 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    fiddling this editor exists to avoid (2026-08-20). -->
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Reveal everything on this slide ONE AT A TIME, in
- reading order — a click per item"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> One by one</button>
+ order — a click per item"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> One by one</button>
               <button class="dbtn rbn-sm" id="anim-together"
                 title="Reveal everything on this slide on the SAME click —
  one build, everything at once"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All at once</button>
+              <!-- A PLAIN NAME (T180; 2026-09-02, user: "what a silly
+                   name for the button"). It was "Click things in
+                   order…", a sentence where a verb was wanted. -->
               <button class="dbtn rbn-sm" id="anim-seq"
-                title="Say the order by pointing: click the objects on the
- slide one after another, in the order they should appear. Shift-click
- puts one on the same click as the last"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Click
- things in order&#8230;</button>
-              <button class="dbtn rbn-sm" id="anim-order"
-                title="The order One by one deals the clicks in &mdash;
- top to bottom unless you set your own. Figure numbers and the review
- outline follow the same order"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Reading
- order&#8230;</button>
+                title="Say the order yourself: click the objects on the
+ slide in the order they should come. Shift-click puts one on the same
+ click as the last. The controls appear here in the ribbon while you do
+ it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Set order</button>
             </span>
             <span class="rbn-lab">Order</span>
+          </span>
+          <!-- SETTING THE ORDER, IN THE RIBBON (T180). This was a bar
+               fixed across the top of the window, over the very ribbon
+               it was standing in for (2026-09-02, user: "I hate that
+               there is the thing that pops up... the whole 'Click
+               things in order' options should just appear after a
+               divider on the ribbon"). The three cells are hidden
+               until Set order arms the mode, so the group costs the
+               resting row nothing; seqSync shows them and the ribbon
+               re-fits. The CELLS carry the hidden bit, not the group:
+               syncRibbonGroups decides a group's visibility from its
+               controls and would put the group back. -->
+          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation">
+            <span class="rbn-row">
+              <span class="rbn-cell seq-cell" id="seq-what" hidden></span>
+              <!-- WHICH EFFECT THE NEXT CLICK GIVES. The mode used to
+                   write fade for everything, so a sequence in any other
+                   effect meant going round again afterwards. Every
+                   button carries its key, because a mode with shortcuts
+                   nobody can see has no shortcuts. -->
+              <span class="rbn-cell seq-fx" id="seq-fx" hidden></span>
+              <span class="rbn-cell" id="seq-btns" hidden>
+                <button class="dbtn rbn-sm" id="seq-undo"
+                  title="Take back the last click, and stay in the
+ mode"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6"/><path d="M5.8 3.4 3 6.2 5.8 9"/></svg> Undo last</button>
+                <button class="dbtn rbn-sm primary" id="seq-done"
+                  title="Keep this order. Ctrl+Z afterwards undoes the
+ whole run"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4"/><path d="M6.2 6.3 3.3 9.2l2.9 2.9"/></svg> Finish</button>
+                <button class="dbtn rbn-sm" id="seq-cancel"
+                  title="Leave the slide exactly as it was"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Cancel (Esc)</button>
+              </span>
+            </span>
+            <span class="rbn-lab">Set order</span>
           </span>
           <!-- THREE GROUPS, NOT ONE (T178). Thirteen tools under one
                heading read as a wall; with Animation gone to its own
@@ -12155,6 +12204,37 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Table</span>
           </span>
+          <!-- ANIMATION, ON THE OBJECT TAB (T179). The selection sends
+               you here, so this is where one click on the thing you
+               just selected has to give it an entrance (2026-09-02,
+               user: "it is still quite a few clicks to add an appear
+               animation to something... in the 'Object' list there is
+               an animation tab which has all the animation options").
+               Five buttons that show which one is on -- the same five
+               the gallery offers, through the same setter -- and
+               nothing hides them the moment they become usable, which
+               is what the old effect buttons did (T171). The gallery
+               on the Animation tab stays for the whole-slide case. -->
+          <span class="rbn-grp rbn-fx" data-tab="object">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-fx-none" aria-pressed="false"
+                title="No entrance — on the slide from the start"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg> None</button>
+              <button class="dbtn etm" id="fmt-fx-appear" aria-pressed="false"
+                title="Appears on its click, with no motion"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4.4" y="5.4" width="7.2" height="5.2" rx="1"/><path d="M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5"/></svg> Appear</button>
+              <button class="dbtn etm" id="fmt-fx-fade" aria-pressed="false"
+                title="Fades in on its click"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg> Fade</button>
+              <button class="dbtn etm" id="fmt-fx-rise" aria-pressed="false"
+                title="Floats up into place on its click"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.4" y="2.4" width="9.2" height="6" rx="1"/><path d="M8 14.4v-3.6"/><path d="m6.1 12.6 1.9-1.8 1.9 1.8"/></svg> Float up</button>
+              <button class="dbtn etm" id="fmt-fx-zoom" aria-pressed="false"
+                title="Grows into place on its click"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg> Grow</button>
+            </span>
+            <span class="rbn-lab">Animation</span>
+          </span>
         </span>
       </div>
   <div class="deck-main">
@@ -12575,30 +12655,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     <div class="dc-menu mp-menu" id="match-props-menu" hidden></div>
   </span>
   <button class="dbtn" id="match-cancel">Cancel (Esc)</button>
-</div>
-<!-- SEQUENCING BY POINTING (T168). The user's own gesture: "when you
-     click it becomes the next thing that's animated... hold down shift
-     and click, all those animations appear at the same time". Deliberately
-     the same shape as #matchbar and #pickbar above -- same bar, same
-     Escape, same running count -- because a third way to run a picking
-     mode would be a third thing to learn. -->
-<!-- THE MODE HAS A NAME (T170). It had none, and was described only
-     by the sentence it was doing -- so there was nothing to remember it
-     by afterwards ("I can't remember the mode name, like the 'auto' or
-     'quick'"). It is called what its door calls it, and the name sits
-     first so the bar reads as one thing. -->
-<div class="pickbar seqbar" id="seqbar" hidden>
-  <span class="seq-name"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> Click in order</span>
-  <span id="seq-what"></span>
-  <!-- WHICH EFFECT THE NEXT CLICK GIVES. The mode used to write fade for
-       everything, so a sequence in any other effect meant going round
-       again afterwards. Every button carries its key, because a mode
-       with shortcuts nobody can see has no shortcuts. -->
-  <span class="seq-fx" id="seq-fx"></span>
-  <span class="deck-spring"></span>
-  <button class="dbtn" id="seq-undo">Undo the last one</button>
-  <button class="dbtn primary" id="seq-done">Finish</button>
-  <button class="dbtn" id="seq-cancel">Cancel (Esc)</button>
 </div>
 <div class="pickbar" id="pickbar" hidden>
   <span id="pick-what"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/><path d="M8 8.4v5.7"/></svg> Click a card in the notebook
@@ -20821,7 +20877,7 @@ window.JunoPptx = (function () {
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
     ['#anim-clear','#anim-stagger','#anim-together','#anim-effect',
-     '#anim-seq','#anim-order'].forEach(function(id){
+     '#anim-seq','#anim-layers'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
@@ -34126,6 +34182,9 @@ window.JunoPptx = (function () {
     +'#fmt-fontwrap #fmt-font-btn #fmt-para-align #fmt-para-ind '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
+    /* the Object tab's effect buttons (T179): animRibbonSync owns
+       their visibility and their pressed state */
+    +'#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom '
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
        below stops flagging them on every first selection (2026-08-24) */
@@ -36523,11 +36582,11 @@ window.JunoPptx = (function () {
     /* the slide's SEQUENCE (T106): always offered, because reading
        order is a property of the slide, not of a selection */
     menuHead(m,'slide');
-    row('Reading order\u2026','',function(){
+    row('Order on this slide\u2026','',function(){
       if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();},
-      'The order this slide reads in \u2014 builds, figure numbers and '
-      +'the review outline all follow it. Numbers show on every object '
-      +'while the panel is open.','stagger');
+      'The order things are numbered in, and the order One by one '
+      +'reveals them. Set order writes it as you click; this panel '
+      +'nudges one thing earlier or later.','stagger');
     row((function(){
       var mm=(typeof mastOf==='function')
         &&mastOf(pres.slides[cur]);
@@ -45096,7 +45155,7 @@ window.JunoPptx = (function () {
     ensureOids(s);
     var p=document.createElement('div');
     p.className='sh-menu rd-order';p.id='rd-order';
-    var head=menuHead(p,'reading order');
+    var head=menuHead(p,'order on this slide');
     var x=document.createElement('button');
     x.className='dbtn dc-icon rd-close';x.type='button';
     x.setAttribute('aria-label','Close');x.title='Close';
@@ -45105,9 +45164,15 @@ window.JunoPptx = (function () {
       rdClose();});
     head.appendChild(x);
     var note=document.createElement('div');note.className='rd-note';
-    note.textContent='Builds (One by one), figure numbers and the '
-      +'review outline all say this slide in this order. The numbers '
-      +'show on the slide while this is open.';
+    /* PLAIN WORDS (T181; 2026-09-02, user: "what is reading order and
+       why does it look so confusing"). Say what the order is FOR,
+       then how to set it, and lead with the way that needs no
+       arrows. */
+    note.textContent='The order things are numbered in, and the order '
+      +'One by one reveals them. Set order on the Animation tab writes '
+      +'it as you click things in turn; the arrows here nudge one '
+      +'thing earlier or later. The numbers show on the slide while '
+      +'this is open.';
     p.appendChild(note);
     var state=document.createElement('div');state.className='rd-state';
     var list=document.createElement('div');list.className='rd-list';
@@ -45144,7 +45209,7 @@ window.JunoPptx = (function () {
     function render2(){
       var s2=pres.slides[cur];
       state.textContent=(s2&&Array.isArray(s2.rord)&&s2.rord.length)
-        ?'Custom \u2014 objects added later read last'
+        ?'Set by you \u2014 anything added later comes last'
         :'Automatic \u2014 top to bottom, left to right';
       reset.hidden=!(s2&&Array.isArray(s2.rord)&&s2.rord.length);
       list.innerHTML='';
@@ -47218,6 +47283,10 @@ window.JunoPptx = (function () {
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
   var seqType='fade';
+  /* the Object tab's effect buttons (T179): id and the type it
+     writes. The same five as SEQ_FX, in the same order. */
+  var OBJ_FX=[['fmt-fx-none','none'],['fmt-fx-appear','appear'],
+    ['fmt-fx-fade','fade'],['fmt-fx-rise','rise'],['fmt-fx-zoom','zoom']];
   function seqKeyDown(e){
     if(!seqArm) return;
     if(e.key>='0'&&e.key<='9'){
@@ -47240,6 +47309,10 @@ window.JunoPptx = (function () {
     seqArm={slide:cur,n:0,base:nextAnimOrder(s),hits:[],
       before:JSON.stringify(s.annots||[])};
     deckEl.classList.add('seqing');
+    /* the controls are a group of the Animation tab (T180), so the
+       mode takes you there; a layout without that tab keeps you
+       where you are and Escape still cancels */
+    if(typeof setTab==='function') setTab('animation');
     seqDigit=0;
     document.addEventListener('keydown',seqKeyDown,true);
     document.addEventListener('keyup',seqKeyUp,true);
@@ -47248,6 +47321,7 @@ window.JunoPptx = (function () {
   function seqEnd(commitIt){
     if(!seqArm) return;
     var n=seqArm.n,hits=seqArm.hits.length,s=pres.slides[seqArm.slide];
+    var hitList=seqArm.hits.slice();
     if(!commitIt&&s){
       /* Cancel puts the slide back exactly as it was: a mode that left
          half a sequence behind would be worse than no mode. */
@@ -47261,6 +47335,25 @@ window.JunoPptx = (function () {
     renderSlide();renderFilm();
     if(typeof animPaneSync==='function') animPaneSync();
     if(commitIt&&hits){
+      /* THE ORDER YOU POINTED IS THE ORDER OF THE SLIDE (T181).
+         Builds and the reading order were two orders set in two
+         places, and the second had a panel nobody could read
+         (2026-09-02, user: "what is reading order... I can't
+         understand this at all and it is my idea"). One gesture
+         now: the sequence you clicked is also `rord`, so figure
+         numbers, One by one and the outline follow it. With the
+         effect set to None it writes ONLY the order -- that is how
+         you number things without animating them. Objects you did
+         not click read last, in sweep order, as orderedIdx says. */
+      if(s){
+        ensureOids(s);
+        var seen={},ro=[];
+        hitList.forEach(function(h){
+          var x=(s.annots||[])[h.i];
+          if(x&&x.oid!=null&&!seen[x.oid]){seen[x.oid]=1;ro.push(x.oid);}
+        });
+        if(ro.length) s.rord=ro;
+      }
       markDirty();
       /* BOTH numbers, because they part company the moment you
          shift-click: `hits` is what you pointed at, `n` is how many
@@ -47321,17 +47414,26 @@ window.JunoPptx = (function () {
     renderSlide();seqSync();
   }
   function seqSync(){
-    var bar=$('#seqbar'); if(!bar) return;
-    bar.hidden=!seqArm;
+    /* the three CELLS of the ribbon group carry the hidden bit
+       (T180): syncRibbonGroups reads a group's visibility off its
+       controls, so hiding the group itself would not hold */
+    var on=!!seqArm,any=false;
+    ['seq-what','seq-fx','seq-btns'].forEach(function(id){
+      var el=$('#'+id); if(!el) return;
+      any=true;el.hidden=!on;});
+    if(!any) return;
+    if(typeof syncRibbonGroups==='function') syncRibbonGroups();
     var w=$('#seq-what'); if(!w||!seqArm) return;
     var done=seqArm.hits.length;
-    w.innerHTML='<b>next: '+(seqArm.n+1)+'</b>'
-      +(done?(' &middot; '+done+' placed'):'')
-      +' &middot; <b>Shift</b>-click: same click'
+    /* two short lines: the count, then the two modifiers. The second
+       line is the first thing the tight rung drops (deck.css), the way
+       the hint text is -- words that explain, not words that act */
+    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b>'
+      +(done?(' &middot; '+done+' placed'):'')+'</span>'
+      +'<span><b>Shift</b>: same click &middot; '
       +(seqDigit
-        ?(' &middot; <b>'+seqDigit+'</b> held \u2014 runs '+seqDigit
-          +'s after the last')
-        :' &middot; hold <b>1\u20139</b>: run it after a pause');
+        ?('<b>'+seqDigit+'</b> held: '+seqDigit+'s pause')
+        :'<b>1\u20139</b>: pause')+'</span>';
     /* THE CHOOSER. Rebuilt rather than diffed: five buttons is cheaper
        to redraw than to reconcile, and it has to follow both the mouse
        and the keyboard. */
@@ -47340,7 +47442,7 @@ window.JunoPptx = (function () {
       fx.innerHTML='';
       SEQ_FX.forEach(function(f){
         var b=document.createElement('button');
-        b.className='dbtn seq-fxb'+(seqType===f[0]?' on':'');
+        b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');
         b.type='button';
         b.setAttribute('aria-pressed',seqType===f[0]?'true':'false');
         b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';
@@ -47813,8 +47915,7 @@ window.JunoPptx = (function () {
          when the order is what you are thinking about. */
       var sq=document.createElement('button');
       sq.className='anim-mini wide';
-      sq.textContent=bic('stagger')+' Click things in order\u2026';
-      sq.innerHTML=bic('stagger')+' Click things in order\u2026';
+      sq.innerHTML=bic('stagger')+' Set order\u2026';
       sq.title='Then click the objects on the slide one after another, '
         +'in the order they should appear. Shift-click puts one on the '
         +'same click as the last.';
@@ -47824,10 +47925,10 @@ window.JunoPptx = (function () {
       /* the order "One by one" deals the clicks in (T106) */
       var rb=document.createElement('button');
       rb.className='anim-mini wide';
-      rb.textContent='Reading order\u2026';
-      rb.title='One by one reveals in READING order \u2014 top to '
-        +'bottom unless you set your own. Figure numbers and the '
-        +'review outline follow the same order.';
+      rb.textContent='Order on this slide\u2026';
+      rb.title='The order things are numbered in, and the order One '
+        +'by one reveals them. Set order writes it as you click; this '
+        +'panel nudges one thing earlier or later.';
       rb.addEventListener('click',function(e){e.stopPropagation();
         if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
       menu.appendChild(rb);
@@ -47858,10 +47959,13 @@ window.JunoPptx = (function () {
        buttons in the ribbon where you can see which one is on, None reads
        as the undo it is, and Clear slide strips the whole slide in one
        press without hunting item by item. */
-    [['anim-none','none'],['anim-fade','fade'],
-     ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+    /* the Object tab's effect buttons (T179): one click on the thing
+       you just selected, through the same setter the pane and the
+       gallery use */
+    OBJ_FX.forEach(function(p){
       var b=$('#'+p[0]);
-      if(b) b.addEventListener('click',function(){setType(p[1]);});
+      if(b) b.addEventListener('click',function(e){
+        e.stopPropagation();setType(p[1]);});
     });
     /* ---- the two builds anyone actually wants ------------------------
        Setting "one at a time" by hand means selecting every item on the
@@ -47904,10 +48008,12 @@ window.JunoPptx = (function () {
     var sqb=$('#anim-seq');
     if(sqb) sqb.addEventListener('click',function(e){
       e.stopPropagation();seqArmStart();});
-    var rob=$('#anim-order');
-    if(rob) rob.addEventListener('click',function(e){
+    /* the timeline IS the Layers pane (T174); this door drives
+       Home's button so there is one pane and one implementation */
+    var lyb=$('#anim-layers');
+    if(lyb) lyb.addEventListener('click',function(e){
       e.stopPropagation();
-      if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
+      var ob=$('#objects-btn'); if(ob) ob.click();});
     var clr=$('#anim-clear');
     if(clr) clr.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;
@@ -47947,9 +48053,8 @@ window.JunoPptx = (function () {
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-eff-menu')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      var on=!!a&&typeof selAnnot==='number';
-      [['anim-none','none'],['anim-fade','fade'],
-       ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+      var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
+      OBJ_FX.forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
         b.hidden=!on;
         b.setAttribute('aria-pressed',
