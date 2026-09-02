@@ -10018,7 +10018,7 @@ one; animate an item so it appears on click
 (<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation order</b>, on the Animation tab); and
 switch on
 <b>slide numbers</b> from the File menu.</li>
-<li>The <b>View</b> group is for laying a poster out, where the page is
+<li>The <b>View</b> tab is for laying a poster out, where the page is
 far bigger than the window: <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/><path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2"/></svg> Rulers</b>
 (<kbd>R</kbd>) down the
 top and left in real millimetres, marking where the pointer is and how far
@@ -10945,16 +10945,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       data-tab="animation" aria-selected="false"
       title="How things arrive during playback — the effect, the order,
  and the builds">Animation</button>
+    <!-- VIEW IS A TAB AGAIN (T200). It was folded into Home on
+         2026-08-20 ("View can just be back on home"); Home has since
+         taken the layout system (T196), and rulers, the grid, full
+         screen, the side toolbar, Review, Layers and Notes are about
+         LOOKING at the page, not about slides (2026-09-02, user: "some
+         of the things in home shouldn't be in home then... new tab
+         with these"). -->
+    <button class="rbn-tab" id="rbn-tab-view" role="tab" data-tab="view"
+      aria-selected="false"
+      title="Rulers, grid and guides; full screen and the side toolbar;
+ the Review, Layers and Notes panes">View</button>
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
     </span>
-    <!-- RIBBON layout, not slide layout. This permanent door sits outside
-         #edit-tools, so no chosen layout, tab filter, per-button preference
-         or width rung can hide the way to choose another arrangement. -->
-    <button class="dbtn rbn-layouts" id="rbn-layouts"
-      title="Choose a different arrangement of the ribbon">
-      <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Ribbon layouts</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
     <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
@@ -10977,6 +10982,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
     <button class="dbtn rbn-autobtn" id="rbn-auto" aria-pressed="false"
       title="Auto-hide: the tools roll up and come back when you reach the
  tab strip. Off by default."><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg> Auto-hide</button>
+    <!-- ON THE RIGHT, beside Auto-hide (T200): it is a setting of
+         the ribbon itself, like the two beside it, and it read as a
+         fifth tab on the left. RIBBON layout, not slide layout. This permanent door sits outside
+         #edit-tools, so no chosen layout, tab filter, per-button preference
+         or width rung can hide the way to choose another arrangement. -->
+    <button class="dbtn rbn-layouts" id="rbn-layouts"
+      title="Choose a different arrangement of the ribbon">
+      <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Ribbon layouts</button>
     <button class="dbtn rbn-fold" id="rbn-fold" aria-label="Hide or show the editing tools" aria-pressed="false"
       title="Hide the tools and give the page the room (Ctrl+F1). Click a
  tab, or this, to bring them back">&#9652;</button>
@@ -11224,7 +11237,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view" data-tab="home">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
             <span class="rbn-row">
               <!-- FOUR BUTTONS, not a menu of four. They were folded
                    behind one dropdown called "Guides" when the row was
@@ -23506,7 +23519,9 @@ window.JunoPptx = (function () {
   /* Animation is a tab of its own again (T176): a build is something
      you give a slide AFTER it is full, which is the opposite moment
      from Insert. */
-  var TABS=['home','insert','design','animation','object'];
+  /* ...and View is one again (T200): the page-looking tools were on
+     Home, and Home took the layout system. */
+  var TABS=['home','insert','design','animation','view','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -23520,7 +23535,8 @@ window.JunoPptx = (function () {
          either lands on its current home rather than on a tab that
          no longer exists */
       if(t==='animate') t='animation';
-      else if(t==='view') t='home';
+      /* `view` is a real tab again (T200), so a browser that remembers
+         it from before 2026-08-20 lands on it */
       /* TABS is the ACTIVE LAYOUT's tabs, which need not include
          `home` at all — so the fallback is "the first tab there is"
          rather than a name that may not exist (2026-08-25) */
@@ -25451,11 +25467,11 @@ window.JunoPptx = (function () {
   }
   function rbnLayouts(){
     return [{id:'default',name:'Default',
-      blurb:'The arrangement the app ships with: Home, Insert, Design, Animation, and a contextual Object tab.',
+      blurb:'The arrangement the app ships with: Home, Insert, Design, Animation, View, and a contextual Object tab.',
       selTab:'object',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},
             {id:'design',label:'Design'},{id:'animation',label:'Animation'},
-            {id:'object',label:'Object'}],
+            {id:'view',label:'View'},{id:'object',label:'Object'}],
       groups:[]}].concat(RIBBON_LAYOUTS||[]);
   }
   function rbnLayoutById(id){
