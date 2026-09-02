@@ -7,6 +7,7 @@
      "junoview" collides with an unrelated asset-management product, so
      the words that earn the click are the problem it solves. -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20class%3D%22jv-logo%22%20viewBox%3D%220%200%20200%20200%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20role%3D%22img%22%20aria-label%3D%22Junoview%22%3E%3Cg%20stroke%3D%22%231D9E75%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%20opacity%3D%220.8%22%3E%3Cline%20x1%3D%22169.55%22%20y1%3D%22118.64%22%20x2%3D%22186.93%22%20y2%3D%22123.29%22/%3E%3Cline%20x1%3D%22150.91%22%20y1%3D%22150.91%22%20x2%3D%22163.64%22%20y2%3D%22163.64%22/%3E%3Cline%20x1%3D%22118.64%22%20y1%3D%22169.55%22%20x2%3D%22123.29%22%20y2%3D%22186.93%22/%3E%3Cline%20x1%3D%2281.36%22%20y1%3D%22169.55%22%20x2%3D%2276.71%22%20y2%3D%22186.93%22/%3E%3Cline%20x1%3D%2249.09%22%20y1%3D%22150.91%22%20x2%3D%2236.36%22%20y2%3D%22163.64%22/%3E%3Cline%20x1%3D%2230.45%22%20y1%3D%22118.64%22%20x2%3D%2213.07%22%20y2%3D%22123.29%22/%3E%3Cline%20x1%3D%2230.45%22%20y1%3D%2281.36%22%20x2%3D%2213.07%22%20y2%3D%2276.71%22/%3E%3Cline%20x1%3D%2249.09%22%20y1%3D%2249.09%22%20x2%3D%2236.36%22%20y2%3D%2236.36%22/%3E%3Cline%20x1%3D%2281.36%22%20y1%3D%2230.45%22%20x2%3D%2276.71%22%20y2%3D%2213.07%22/%3E%3Cline%20x1%3D%22118.64%22%20y1%3D%2230.45%22%20x2%3D%22123.29%22%20y2%3D%2213.07%22/%3E%3Cline%20x1%3D%22150.91%22%20y1%3D%2249.09%22%20x2%3D%22163.64%22%20y2%3D%2236.36%22/%3E%3Cline%20x1%3D%22169.55%22%20y1%3D%2281.36%22%20x2%3D%22186.93%22%20y2%3D%2276.71%22/%3E%3C/g%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2266%22%20fill%3D%22%230F6E56%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2266%22%20fill%3D%22none%22%20stroke%3D%22%23EF9F27%22%20stroke-width%3D%223.5%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2242%22%20fill%3D%22%23185FA5%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%22100%22%20r%3D%2218%22%20fill%3D%22%2304342C%22/%3E%3Ccircle%20cx%3D%22100%22%20cy%3D%2212%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3Ccircle%20cx%3D%22176.21%22%20cy%3D%22144%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3Ccircle%20cx%3D%2223.79%22%20cy%3D%22144%22%20r%3D%227.5%22%20fill%3D%22%23EF9F27%22/%3E%3C/svg%3E">
+<meta name="junoview-build" content="e013490480c3">
 <title>Junoview &mdash; figure-first Jupyter notebook viewer and
  presentation builder</title>
 <meta name="description" content="Read executed Jupyter notebooks as
@@ -117,8 +118,50 @@
    no internet. Registered before Pyodide starts, so the very first visit
    precaches in parallel with the first boot. Fails soft everywhere a
    worker cannot run (file://, plain http). */
-if('serviceWorker' in navigator)
+if('serviceWorker' in navigator){
   navigator.serviceWorker.register('sw.js').catch(function(){});
+  /* A NEWER BUILD ANNOUNCES ITSELF (T206; 2026-09-02). The worker
+     caches the whole app, so the first visit after a deploy boots the
+     PREVIOUS build from cache while the new worker installs and takes
+     over (skipWaiting + claim). Nothing said so, and a reviewer sent
+     screenshots of a build five deploys old, three times, believing
+     nothing had changed. When a new worker takes control of a page
+     that already had one, that page is running the old build: say so,
+     with a Reload button, and keep saying so on the app page the
+     loader is about to document.write over (app.js asks at boot). */
+  var hadWorker=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange',function(){
+    if(!hadWorker) return;              /* first install: nothing older */
+    window.__jvNewBuild=true;
+    if(window.__jvUpdateBar) window.__jvUpdateBar();
+  });
+}
+window.__jvBuild='e013490480c3';
+window.__jvUpdateBar=function(){
+  if(document.getElementById('jv-newbuild')||!document.body) return;
+  var bar=document.createElement('div');
+  bar.id='jv-newbuild';
+  bar.setAttribute('role','status');
+  bar.style.cssText='position:fixed;left:50%;top:10px;transform:translateX(-50%);'
+    +'z-index:100000;display:flex;align-items:center;gap:12px;padding:8px 14px;'
+    +'border-radius:10px;background:#123;color:#e8f1f8;border:1px solid #39a9c0;'
+    +'box-shadow:0 10px 30px #0008;font:13px system-ui,sans-serif;';
+  var t=document.createElement('span');
+  t.textContent='A newer Junoview just arrived. This page is still the '
+    +'previous one.';
+  var b=document.createElement('button');
+  b.type='button';b.textContent='Reload';
+  b.style.cssText='font:inherit;padding:4px 12px;border-radius:7px;'
+    +'border:1px solid #39a9c0;background:#1f7e93;color:#fff;cursor:pointer;';
+  b.addEventListener('click',function(){location.reload();});
+  var x=document.createElement('button');
+  x.type='button';x.textContent='Later';x.setAttribute('aria-label','Later');
+  x.style.cssText='font:inherit;padding:4px 10px;border-radius:7px;'
+    +'border:1px solid #ffffff33;background:none;color:#c9d6e2;cursor:pointer;';
+  x.addEventListener('click',function(){bar.remove();});
+  bar.appendChild(t);bar.appendChild(b);bar.appendChild(x);
+  document.body.appendChild(bar);
+};
 /* the browser's install offer arrives as an event, and this document is
    about to be REPLACED by document.write — the window (and its globals)
    survives that, so the app page can still show a button for it */
