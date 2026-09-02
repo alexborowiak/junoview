@@ -1260,6 +1260,7 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    themes are not right"). .rbn-file and .rbn-nbs are gone from the
    markup and gone from here with them. */
 body.th-colorful .rbn-slides,body.th-colorful .rbn-layout,
+body.th-colorful .rbn-this,
 body.th-colorful .rbn-arrange,body.th-colorful .rbn-apply,
 body.th-colorful .rbn-sources,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
@@ -4471,7 +4472,7 @@ body.light .fx-tile.on{color:#fff;}
 /* Home's layout groups follow Slides; View keeps its seat; the saved
    layouts and the refresh doors come LAST, so they are what folds first
    on a narrow window and the everyday toggles stay in view (T196) */
-.rbn-layout,.rbn-arrange{order:1;}
+.rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
 /* last, so it is what folds first on a narrow window */
 .rbn-apply{order:4;}
@@ -4482,6 +4483,29 @@ body.light .fx-tile.on{color:#fff;}
 .dbtn.dbtn-accent:hover{border-color:var(--cyan);
   background:color-mix(in srgb,var(--accent) 24%,transparent);}
 body.light .dbtn.dbtn-accent{color:var(--ink);}
+/* T202: the Keep up to date tiles -- the effect tiles' shape, wider,
+   with a bigger icon ("make them better buttons, like the animation
+   'effect', full height") -- and the All images pane's rows */
+.big-strip{gap:4px;}
+.fx-tile.big-tile{width:74px;font-size:10.5px;
+  border-color:color-mix(in srgb,var(--accent) 50%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.fx-tile.big-tile .bic{width:24px;height:24px;}
+.fx-tile.big-tile[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.img-row{display:flex;align-items:center;gap:8px;padding:6px 7px;
+  border-radius:7px;cursor:pointer;color:#c9d6e2;}
+.img-row:hover{background:#ffffff0c;}
+.img-th{flex:none;width:46px;height:32px;border-radius:4px;
+  background:var(--chrome-0,#0b141d);border:1px solid #ffffff14;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.img-th img{width:100%;height:100%;object-fit:cover;display:block;}
+.img-th .bic{width:18px;height:18px;opacity:.7;}
+.img-mid{flex:1;min-width:0;}
+.img-t{font-size:12px;}
+.img-from{font-family:var(--mono);font-size:10px;color:#8ba0b2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.light .img-row{color:var(--ink-2);}
 /* a saved layout's tile: the dialog's thumbnail at tile size */
 .lay-strip .lay-savedth{display:block;overflow:hidden;}
 .lay-strip .lay-savedth>*{width:100%;height:100%;}
@@ -11632,88 +11656,86 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Drawing</span>
           </span>
-          <!-- HOME, GROUPED BY WHAT YOU ARE DOING (T201; 2026-09-02,
-               user: "there needs to be a new slide with layout options
-               including the saved layouts together, then there also
-               needs to be the masters, and copy this to other slide,
-               match slide, as one. Then the update figures, and
-               refresh images looks kind confusing, and needs more
-               attention drawn to it"). Five groups, each one job:
-               make a slide; lay it out (the built-in layouts and your
-               saved ones are ONE strip of tiles, with Save beside it);
-               arrange what is on it; push a layout to other slides;
-               keep the sources fresh. -->
+          <!-- HOME, BY WHAT YOU DO (T202; 2026-09-02, user: "the
+               groupings still make no sense... you can't create a new
+               layout with the layouts there, you can only change the
+               layout... make them better buttons, like the animation
+               'effect'... the Masters thing is in an odd spot").
+               NEW SLIDE: the plain button, then every layout -- built
+               in and saved -- as a tile that MAKES a slide laid out that
+               way (changing THIS slide's layout is Design's Layouts
+               door). THIS SLIDE: duplicate, delete, save its layout,
+               manage the saved ones. ARRANGE THIS SLIDE. KEEP UP TO
+               DATE: three tall tiles, the way the effects are. APPLY TO
+               OTHER SLIDES: point at a thumbnail, or tick a list.
+               Masters live on Design, where the page furniture is. -->
           <span class="rbn-grp rbn-slides" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-newslide"
-                              title="Add a slide after this one">&#43; New slide</button>
-              <button class="dbtn rbn-sm" id="hm-dupslide"
-                              title="Duplicate this slide, in place"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg>
-                              Duplicate</button>
-              <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
-                              title="Delete this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Delete</button>
-            </span>
-            <span class="rbn-lab">Slides</span>
-          </span>
-          <span class="rbn-grp rbn-layout" data-tab="home">
-            <span class="rbn-row">
-              <!-- the built-in layouts, then the ones you saved, as one
-                   strip of tiles drawn as themselves (syncSavedTiles
-                   appends the saved ones and keeps them in step) -->
+                                            title="Add a slide after this one">&#43; New slide</button>
               <span class="rbn-tall fx-strip lay-strip" id="layout-strip"
-                role="group" aria-label="Slide layouts"></span>
-              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
-                                  title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
-                                  <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save this layout&#8230;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-arrs"
-                                  title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
-                                  <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> My saved layouts&#8230;</button>
+                role="group" aria-label="New slide, laid out as"></span>
             </span>
-            <span class="rbn-lab">Layout</span>
+            <span class="rbn-lab">New slide</span>
+          </span>
+          <span class="rbn-grp rbn-this" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-dupslide"
+                                            title="Duplicate this slide, in place"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg>
+                                            Duplicate</button>
+              <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
+                                            title="Delete this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Delete</button>
+              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
+                                                title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
+                                                <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save layout&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-arrs"
+                                                title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
+                                                <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
+            </span>
+            <span class="rbn-lab">This slide</span>
           </span>
           <span class="rbn-grp rbn-arrange" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
-                                  title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-                                  <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
+                                                title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
+                                                <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
               <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
-                                                aria-label="Arrange what is on this slide">
-                                                <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
-                                                <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
-                                                <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
-                                              </div>
+                                                              aria-label="Arrange what is on this slide">
+                                                              <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
+                                                              <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
+                                                              <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
+                                                            </div>
             </span>
             <span class="rbn-lab">Arrange this slide</span>
           </span>
-          <!-- KEEP UP TO DATE, with weight (T201): the two commands that
-               reach the notebooks and the files, in words that say
-               where they reach, and drawn in the accent so the eye
-               finds them. -->
           <span class="rbn-grp rbn-sources" data-tab="home">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm dbtn-accent" id="hm-refresh-figs"
-                title="Re-read every placed figure from its notebook, so a
- re-run shows up on the slides"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Update
- figures from notebooks</button>
-              <button class="dbtn rbn-sm dbtn-accent" id="hm-refresh-img"
-                title="Re-read every picture from the file it came from. A
- file that has moved is left as it was, and named"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Reload pictures from files</button>
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Keep up to date">
+                <button class="fx-tile big-tile" id="hm-refresh-figs"
+                  title="Re-read every placed figure from its notebook, so
+ a re-run shows up on the slides"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/><path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/></svg>
+                  <span>Update figures</span></button>
+                <button class="fx-tile big-tile" id="hm-refresh-img"
+                  title="Re-read every picture from the file it came from.
+ A file that has moved is left as it was, and named"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg><span>Reload pictures</span></button>
+                <button class="fx-tile big-tile" id="hm-images"
+                  aria-pressed="false"
+                  title="Every picture and figure in this deck, where each
+ came from, and whether it is locked in place"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg><span>All images</span></button>
+              </span>
             </span>
             <span class="rbn-lab">Keep up to date</span>
           </span>
-          <!-- APPLY TO OTHER SLIDES: the three ways one slide's look
-               reaches others -- point at a thumbnail, tick a list, or
-               share a master. Last, so it is what folds first. -->
           <span class="rbn-grp rbn-apply" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-match"
-                              title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match slide
-                              &#9662;</button>
+                                            title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match slide
+                                            &#9662;</button>
               <button class="dbtn rbn-sm" id="hm-lay-give"
-                                  title="Tick the slides that should take this slide’s layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Copy this layout to other slides&#8230;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-masters"
-                                  title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
+                                                title="Tick the slides that should take this slide’s layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Copy layout to slides&#8230;</button>
             </span>
             <span class="rbn-lab">Apply to other slides</span>
           </span>
@@ -12353,6 +12375,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           thing to look at; its button fixes only that.</div>
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
+      </aside>
+      <!-- ALL IMAGES (T202; 2026-09-02, user: "there should be a global
+           image view, that shows you all the images that there are and
+           their paths, and if they are locked or not"). Every picture
+           and figure across the deck: slide, kind, where it came from,
+           and its lock -- toggled from the row. Rendered on open and on
+           the reload button, never from markDirty. -->
+      <aside class="selpane imgpane" id="imgpane" hidden>
+        <div class="selpane-h"><span>All images</span>
+          <button class="dbtn dc-icon" id="imgpane-rerun" aria-label="Read again"
+            title="Read again"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg></button>
+          <button class="dbtn dc-icon" id="imgpane-close" aria-label="Close"
+            title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
+        <div class="pf-intro">Every picture and figure in this deck, where
+          each came from, and whether it is locked in place. Click a row
+          to go to it; the pin locks or unlocks it.</div>
+        <div class="selpane-list" id="imgpane-list"></div>
       </aside>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
            frame names a card by anchor, chains.py computed the lineage
@@ -20790,6 +20829,15 @@ window.JunoPptx = (function () {
             pres.slides.push(emptySlide());
             cur=0;
           }
+          /* ON HOME, A TILE MAKES A SLIDE (T202): the strip is the New
+             slide gallery, and changing THIS slide's layout is the
+             Design menu's job ("you can't create a new layout with the
+             layouts there, you can only change the layout") */
+          if(sel==='#layout-strip'){
+            if(!layout.poster) lsSet(newLayKey(),layout.id);
+            newVersion(layout);
+            return;
+          }
           var s=pres.slides[cur]; if(!s) return;
           applyLayout(s,layout);
           /* the next New slide takes this layout (T193); a poster
@@ -24055,6 +24103,9 @@ window.JunoPptx = (function () {
         &&!g.classList.contains('rbn-folded')
         &&!g.classList.contains('rbn-fixed')
         &&!g.classList.contains('rbn-seq')
+        /* Keep up to date never folds (T202: the point of it is to be
+           seen) */
+        &&!g.classList.contains('rbn-sources')
         &&!g.classList.contains('rbn-cancel');});
     if(!gs.length) return false;
     gs.sort(function(x,y){
@@ -24382,9 +24433,11 @@ window.JunoPptx = (function () {
      enumerates sibling selectors again, so a new pane cannot fork the
      list a tenth time. */
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
+    'imgpane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
+    imgpane:'#hm-images',
     notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
   function paneSyncBtns(){
     Object.keys(PANE_BTN).forEach(function(p){
@@ -25263,6 +25316,7 @@ window.JunoPptx = (function () {
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
+   'imgpane',
    'stdpane','tidypane','objhist','provpane','flippane','sizepane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){
@@ -34893,7 +34947,7 @@ window.JunoPptx = (function () {
       if(kind==='image'&&a.fname) from=a.fname;
       else if(kind==='cell'&&a.ref){
         var ci2=resolveRef(a.ref);
-        from=(ci2&&ci2.stem)?ci2.stem:String(a.ref);
+        from=(ci2&&(ci2.stem||ci2.nb))||String(a.ref);
       }
       pth.hidden=!from;
       if(from){
@@ -40565,7 +40619,11 @@ window.JunoPptx = (function () {
         window.SemDeckMatchMany();
     });
     both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
-    both('#lay-masters','#hm-lay-masters',function(){
+    /* Home's Masters door is gone (T202: "in an odd spot"); Design
+       has two, on Page furniture and in its Layouts menu */
+    var lm2=$('#lay-masters');
+    if(lm2) lm2.addEventListener('click',function(e){
+      e.stopPropagation();shut();
       if(window.SemDeckMasters) window.SemDeckMasters();});
     /* the first-class doors (T144): the same verbs, on the ribbon */
     var dm2=$('#dsg-masters');
@@ -40739,14 +40797,13 @@ window.JunoPptx = (function () {
       var lb=document.createElement('span');lb.className='lay-lb';
       lb.textContent=arr.label||('Saved '+(i+1));
       b.appendChild(lb);
-      b.title='Your saved layout \u201c'+(arr.label||'')+'\u201d \u2014 lay this '
-        +'slide out like it';
+      b.title='New slide laid out like your saved \u201c'+(arr.label||'')
+        +'\u201d';
       b.addEventListener('click',function(e){
         e.stopPropagation();
-        var n=arrApply(arr,cur);
-        markDirty();refresh();
-        toast(n?(n+' thing'+(n===1?'':'s')+' moved to match \u201c'
-          +(arr.label||'')+'\u201d'):'Nothing here matched that layout');
+        /* a NEW slide carrying the saved shapes (T202); the dialog's
+           Apply is what lays an existing slide out like one */
+        newVersion(null,arr);
       });
       strip.appendChild(b);
     });
@@ -44611,6 +44668,95 @@ window.JunoPptx = (function () {
         +(r.lost.length===1?'was':'were')+' left exactly as before: '
         +names,9000);
     });
+  }
+  /* ---- ALL IMAGES (T202) ----------------------------------------------
+     Every picture and figure across the deck in one list: the slide,
+     the kind, where it came from (a picture's file, a figure's
+     notebook), and its lock, toggled from the row. Rendered on open
+     and on the reload button, never from markDirty -- the survey
+     walks every slide. */
+  function renderImgPane(){
+    var list=$('#imgpane-list'); if(!list) return;
+    list.innerHTML='';
+    var rows=[];
+    (pres.slides||[]).forEach(function(s,si){
+      (s.annots||[]).forEach(function(a,ai){
+        if(!a) return;
+        if(a.k==='image')
+          rows.push({si:si,ai:ai,a:a,kind:'Picture',
+            from:a.fname||'pasted or dropped \u2014 no file to reload'});
+        else if(a.k==='cell'&&a.ref){
+          var ci=resolveRef(a.ref);
+          rows.push({si:si,ai:ai,a:a,kind:'Figure',
+            from:(ci&&(ci.stem||ci.nb))||String(a.ref)});
+        }
+      });
+    });
+    if(!rows.length){
+      list.innerHTML='<div class="selpane-empty">No pictures or figures '
+        +'on any slide yet.</div>';
+      return;
+    }
+    rows.forEach(function(r){
+      var row=document.createElement('div');row.className='img-row';
+      var th=document.createElement('div');th.className='img-th';
+      if(r.kind==='Picture'&&r.a.src){
+        var im=document.createElement('img');im.src=r.a.src;im.alt='';
+        th.appendChild(im);
+      } else th.innerHTML=bic('cellcard');
+      row.appendChild(th);
+      var mid=document.createElement('div');mid.className='img-mid';
+      var t=document.createElement('div');t.className='img-t';
+      t.textContent='Slide '+(r.si+1)+' \u00b7 '+r.kind;
+      mid.appendChild(t);
+      var f=document.createElement('div');f.className='img-from';
+      f.textContent=r.from;f.title=r.from;
+      mid.appendChild(f);
+      row.appendChild(mid);
+      var lm=lockMode(r.a);
+      var lk=document.createElement('button');
+      lk.className='sp-act'+(lm?' on':'')+(lm==='pos'?' half':'');
+      lk.type='button';
+      lk.innerHTML=bic(lm==='pos'?'pin':'lock');
+      lk.title=lm===''?'Not locked. Click to lock its position'
+        :lm==='pos'?'Position locked. Click to unlock'
+        :'Fully locked. Click to unlock';
+      lk.setAttribute('aria-label',lk.title);
+      lk.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+        if(!a2) return;
+        if(lockMode(a2)) delete a2.lock; else a2.lock='pos';
+        markDirty();
+        if(r.si===cur){
+          var l=stage.querySelector('.annot-layer');
+          if(l){renderAnnots(l,s2);paintSel(l);}
+        }
+        renderImgPane();
+      });
+      row.appendChild(lk);
+      row.title='Go to it';
+      row.addEventListener('click',function(){
+        go(r.si);
+        var l=stage.querySelector('.annot-layer');
+        if(l) selectAnnot(l,r.ai);
+      });
+      list.appendChild(row);
+    });
+  }
+  function imgPaneBoot(){
+    var btn=$('#hm-images'),pane=$('#imgpane');
+    if(!btn||!pane) return;
+    function set(open){
+      if(open){paneShow('imgpane');renderImgPane();}
+      else paneHide('imgpane');
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    var cl=$('#imgpane-close');
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    var rr=$('#imgpane-rerun');
+    if(rr) rr.addEventListener('click',renderImgPane);
   }
   (function(){
     /* the Home tab's doors (T196): the File menu rows have always done
@@ -50955,7 +51101,12 @@ window.JunoPptx = (function () {
     });
     return 'Version '+(n+1);
   }
-  function newVersion(){
+  /* `lay` is a layout from the catalogue when a Home tile asked for
+     this slide (T202), `arr` a saved layout whose shapes it should
+     carry; the film strip's + passes its click event, which is
+     neither */
+  function newVersion(lay,arr){
+    if(!(lay&&lay.items)) lay=null;
     var at=pres.slides.length?cur+1:0;
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
@@ -50968,8 +51119,12 @@ window.JunoPptx = (function () {
          user: "when click add new it should remember the last one you
          added. The default slide choice should be the panel, title,
          text"). Blank is still one pick away. */
-      var lay=layoutById(lsGet(newLayKey())||'cell-text');
-      if(lay&&!lay.poster) applyLayout(ns,lay);
+      if(arr&&arr.annots){
+        ns.annots=deep(arr.annots);
+      } else {
+        lay=lay||layoutById(lsGet(newLayKey())||'cell-text');
+        if(lay&&!lay.poster) applyLayout(ns,lay);
+      }
       pres.slides.splice(at,0,ns);
     } else {
       var src=pres.slides[cur];
@@ -56264,6 +56419,7 @@ window.JunoPptx = (function () {
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
   shapeStripBoot();           /* the shapes, as tiles (T197) */
+  imgPaneBoot();              /* the All images pane's door (T202) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */
