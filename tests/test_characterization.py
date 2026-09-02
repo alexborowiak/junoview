@@ -882,8 +882,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # page size as tiles and Colours & spacing; a born-empty box that says
 # "Type...". deck.html, help.html, deck.css, core.css and eight deck
 # fragments.
-EXPECTED_MD5 = "e68d240e28d964117b2690ce37965823"
-EXPECTED_BYTES = 3287027
+# T192-T194 2026-09-02: deselecting returns to the tab you left; New
+# slide takes the layout you last chose, title + panel + text by
+# default; plain words on the tabs and a one-line explainer in the
+# Standardise pane. deck.html, deck.css and three deck fragments.
+EXPECTED_MD5 = "2e77471c1c5fb07c085055143c491197"
+EXPECTED_BYTES = 3288959
 
 
 def _render_example() -> str:

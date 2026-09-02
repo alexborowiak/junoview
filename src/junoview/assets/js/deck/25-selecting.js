@@ -83,6 +83,8 @@
      beside showFmt because every canvas selection path already converges
      here, including deselection and title/subtitle pseudo-items. */
   var inspectorSig='';
+  /* the tab a selection carried you away from, for the way back (T192) */
+  var tabBeforeSel='';
   function syncInspectorPanes(force){
     /* the numbers pane is an inspector too, and a cheap one -- four
        value writes, and an immediate return when it is closed. It sits
@@ -199,6 +201,12 @@
       ||activeTab()==='animation';
     var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
+    /* REMEMBER WHERE YOU WERE (T192). The selection carries you to
+       Object; when it goes, syncRibbonGroups brings you back to the
+       tab you left rather than to Home (2026-09-02, user: "if you are
+       on Insert tab, and you click on an object then unclick, it
+       should go back to Insert"). */
+    if(wantTab) tabBeforeSel=activeTab();
     justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
@@ -631,7 +639,11 @@
        what every application with contextual tabs does. */
     if(!tabHasContent(activeTab())){
       var to='';
+      /* back to the tab the selection took you from, if it still has
+         anything on it; the first tab with content otherwise (T192) */
+      if(tabBeforeSel&&tabHasContent(tabBeforeSel)) to=tabBeforeSel;
       TABS.forEach(function(t){if(!to&&tabHasContent(t)) to=t;});
+      tabBeforeSel='';
       if(to&&to!==activeTab()){curTab=to;lsSet(tabKey(),to);}
     }
     applyTab();

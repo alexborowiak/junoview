@@ -122,11 +122,13 @@
     {id:'quarters',label:'Four panels',items:[
       {k:'cell',x:2,y:2,w:47.5,h:47},{k:'cell',x:50.5,y:2,w:47.5,h:47},
       {k:'cell',x:2,y:51,w:47.5,h:47},{k:'cell',x:50.5,y:51,w:47.5,h:47}]},
-    {id:'text-cell',label:'Text | panel',items:[
+    /* NAMED FOR EVERYTHING ON THEM (T193): both of these carry a title
+       too, which "Text | panel" did not say */
+    {id:'text-cell',label:'Title + text + panel',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
       {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:3},
       {k:'cell',x:49,y:20,w:47,h:76}]},
-    {id:'cell-text',label:'Panel | text',items:[
+    {id:'cell-text',label:'Title + panel + text',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
       {k:'cell',x:4,y:20,w:47,h:76},
       {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:3}]},
@@ -383,6 +385,13 @@
   /* apply a template to a slide: reposition the cards/text it already has
      into the template's slots (in order), fill empty slots with placeholders,
      and keep any free decorations (arrows/images/shapes) the user added. */
+  /* the layout a new slide takes, remembered per project (T193) */
+  function newLayKey(){return 'jv-deck-newlay:'+SCOPE;}
+  function layoutById(id){
+    var hit=null;
+    LAYOUTS.forEach(function(l){if(!hit&&l.id===id) hit=l;});
+    return hit;
+  }
   function applyLayout(s,layout){
     if(!s||!layout) return;
     s.layout='blank';s.lay=layout.id;
@@ -478,6 +487,9 @@
           }
           var s=pres.slides[cur]; if(!s) return;
           applyLayout(s,layout);
+          /* the next New slide takes this layout (T193); a poster
+             template is a page, not a slide, and is not remembered */
+          if(!layout.poster) lsSet(newLayKey(),layout.id);
           activePane=-1;markDirty();refresh();
           closeLayMenu();
         });

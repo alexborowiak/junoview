@@ -2439,7 +2439,17 @@
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
          than "Slide 3" — so no label is stamped here */
-      pres.slides.splice(at,0,emptySlide());
+      var ns=emptySlide();
+      /* THE LAYOUT YOU LAST CHOSE (T193). A new slide arrives laid out
+         the way the last one you picked a layout for was, and a deck
+         that has never picked one starts with a title, a panel and
+         text -- the shape most slides in a talk have (2026-09-02,
+         user: "when click add new it should remember the last one you
+         added. The default slide choice should be the panel, title,
+         text"). Blank is still one pick away. */
+      var lay=layoutById(lsGet(newLayKey())||'cell-text');
+      if(lay&&!lay.poster) applyLayout(ns,lay);
+      pres.slides.splice(at,0,ns);
     } else {
       var src=pres.slides[cur];
       /* name the page you were already on first, so the two read as a

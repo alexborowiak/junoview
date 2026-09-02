@@ -2716,8 +2716,12 @@ def test_the_figure_lint_is_named_where_it_is_opened(out):
     (2026-08-26 audit, T58).
     """
     assert "Standardise</button>" in out
-    assert "whether the figures do: their size on the page" in out
-    assert "<span>Standardise text and figures</span>" in out
+    # the tooltip names the figures too, in plain words since T194
+    assert "and figures placed at different sizes" in out
+    # the one word the ribbon uses, with a line under it saying what the
+    # check checks (T194)
+    assert "<span>Standardise</span>" in out
+    assert '<div class="pf-intro">Text that should look the same but does' in out
     # ...and the count includes them, or a deck whose only problem is its
     # figures reads "nothing drifting" above a list of figure findings
     assert "var figs=figBoxes().length,fl=figLint().length;" in out

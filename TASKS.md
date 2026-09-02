@@ -3970,6 +3970,47 @@ something', that is unnecessary text lol."
   *Done 2026-09-02.* "Type…" in the box until you do; and the Effect
   and Timing labels stop instructing ("that is unnecessary text lol").
 
+The user, sixth review (2026-09-02): "review all the things on the
+tabs though. Like how things like 'standardise' works. I find the text
+and how it looks confusing. Also some things need to be remembered. If
+you are on insert tab, and you click on an object then unclick it
+should go back to insert. When adding a new slide, when click add new
+it should remember the last one you added. The default slide choice
+should be the panel, title, text as well."
+
+- [x] **T192 · XS — Deselecting takes you back to the tab you left.**
+  *Done 2026-09-02.* A selection carries you to Object; when it goes,
+  the ribbon went to Home. It now goes back to the tab the selection
+  took you from, if that tab still has anything on it — Insert stays
+  Insert. A tab you changed to on purpose while something was selected
+  is where you stay.
+
+- [x] **T193 · S — New slide takes the layout you last chose; the
+  default is title, panel, text.**
+  *Done 2026-09-02.* Picking a layout remembers it per project, and New
+  slide applies it; a deck that has never picked one starts with
+  **Title + panel + text** — the shape most slides in a talk have —
+  rather than blank. Blank is one pick away. The two layouts that
+  carried a title without saying so are named for everything on them:
+  Title + panel + text, Title + text + panel.
+
+- [x] **T194 · S — Plain words on the tabs, and a check that says what
+  it checks.**
+  A pass over every ribbon tooltip and menu row against one test: would
+  a first-time reader know what happens when they press it?
+  *Done 2026-09-02.* Rewritten where they would not: Tidy page,
+  Standardise, Text styles, Style system, Re-apply, Masters (three
+  places), Watermark, Numbers, Match slide, Review, Guides, and the
+  Source rows. The Layouts menus lose their private vocabulary:
+  "Arrangements…" is **My saved layouts…**, "Save this slide as an
+  arrangement" is **Save this layout…**, "Give this slide's layout
+  to…" is **Copy this layout to other slides…**; "Where from…" is
+  **Where it came from…**. The Standardise pane opens with one line
+  saying what it is — text that should look the same but does not, and
+  figures placed at different sizes; each row is one thing to look at
+  and its button fixes only that — and its title is the one word on
+  the ribbon.
+
 
 ## Cut (and why)
 

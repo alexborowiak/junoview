@@ -417,6 +417,10 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
   border-bottom:1px solid #ffffff14;}
 .selpane-list{flex:1;overflow-y:auto;padding:5px;}
 .selpane-empty{color:#54677a;font-size:12px;padding:12px;}
+/* T194: the sentence at the top of a check pane that says what it checks */
+.pf-intro{font-size:11.5px;line-height:1.45;color:#9fb2c2;
+  padding:9px 12px 2px;}
+body.light .pf-intro{color:var(--ink-2);}
 .sp-row{display:flex;align-items:center;gap:7px;
   border-radius:7px;padding:6px 7px;color:#c9d6e2;font-size:12px;
   cursor:pointer;}
