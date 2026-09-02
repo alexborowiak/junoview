@@ -886,8 +886,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # slide takes the layout you last chose, title + panel + text by
 # default; plain words on the tabs and a one-line explainer in the
 # Standardise pane. deck.html, deck.css and three deck fragments.
-EXPECTED_MD5 = "2e77471c1c5fb07c085055143c491197"
-EXPECTED_BYTES = 3288959
+# T195-T199 2026-09-02: the bullet marker clear of the box edge; Home's
+# layout system as a tile strip and three groups plus two refresh-all
+# doors; shapes as a strip of their own; the Object tab's path, refresh
+# and lock on the row and its by-bullet trio. deck.html, deck.css,
+# core.css and seven deck fragments.
+EXPECTED_MD5 = "cb4d9a3f972b17fce8b72471895b9c96"
+EXPECTED_BYTES = 3298055
 
 
 def _render_example() -> str:

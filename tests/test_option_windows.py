@@ -93,9 +93,10 @@ def test_the_source_window_holds_the_provenance_family(out):
     """
     src = _window(out, "fmt-srcwrap")
     for cid in ("fmt-src", "fmt-src-menu", "fmt-locate", "fmt-prov",
-                "fmt-revert", "fmt-lockver", "fmt-imgrefresh",
-                "fmt-replace"):
+                "fmt-revert", "fmt-lockver", "fmt-replace"):
         assert f'id="{cid}"' in src, cid
+    # Refresh from file sits on the row beside the path since T198
+    assert 'id="fmt-imgrefresh"' not in src and 'id="fmt-imgrefresh"' in out
     assert 'hidden data-close="1"' in src
     # Caption and Crop stay OUTSIDE: one creates, one is the common edit
     assert 'id="fmt-caption"' not in src and 'id="fmt-cropwrap"' not in src
@@ -226,8 +227,9 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
     """
     for lab in ("Place", "Write", "Draw"):
         assert f">{lab}</span>" in out, lab
-    # four since T188: the Drawing group, shown only while a tool is armed
-    assert out.count('data-tab="insert">') == 4
+    # four since T188 (the Drawing group, shown only while a tool is
+    # armed), five since T197 (Shapes on their own)
+    assert out.count('data-tab="insert">') == 5
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it
     assert "if(styleMgrSync) styleMgrSync();" in out

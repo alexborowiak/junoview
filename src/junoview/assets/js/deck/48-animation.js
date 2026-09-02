@@ -414,6 +414,20 @@
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
+    /* the Object tab's by-bullet trio (T198): a box with no entrance
+       gets a Fade first, so "animate by dot point" is one click */
+    var OBJ_BY=[['fmt-by-all',''],['fmt-by-para','para'],
+      ['fmt-by-sent','sent']];
+    OBJ_BY.forEach(function(p){
+      var b=$('#'+p[0]); if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+        if(!a2||a2.k!=='text') return;
+        if(!a2.anim) setType('fade');
+        setBy(p[1]);
+      });
+    });
     /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
        PowerPoint's Start box, on the model this deck already has:
        On click is a stop of its own; With previous is the pane's
@@ -918,6 +932,18 @@
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
+      /* the by-bullet trio shows for a text box and marks how much
+         of it arrives; with no entrance yet nothing is marked */
+      var isTx=on&&a.k==='text';
+      var byNow=(isTx&&a.anim&&(a.anim.by==='para'||a.anim.by==='sent'))
+        ?a.anim.by:'';
+      [['fmt-by-all',''],['fmt-by-para','para'],['fmt-by-sent','sent']]
+        .forEach(function(p){
+          var b=$('#'+p[0]); if(!b) return;
+          b.hidden=!isTx;
+          b.setAttribute('aria-pressed',
+            (isTx&&!!a.anim&&byNow===p[1]).toString());
+        });
       OBJ_FX.forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
         b.hidden=!on;

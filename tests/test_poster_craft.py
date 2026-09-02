@@ -84,13 +84,15 @@ def test_insert_groups_by_what_a_tool_does(out):
     assert 'id="ins-chart"' not in out
     for cid in ("tx-strip", "dc-maths", "dc-md", "dc-qr"):
         assert f'id="{cid}"' in write_g, cid
-    for cid in ("sh-btn", "dc-line", "et-arrow", "dc-draw"):
+    for cid in ("dc-line", "et-arrow", "dc-draw"):
         assert f'id="{cid}"' in draw_g, cid
+    # ...and the shapes are a strip of their own since T197
+    assert 'id="shape-strip"' in group("Shapes")
     assert 'id="et-cancel"' in group("Drawing")
     assert out.index(">Place</span>") < out.index(">Write</span>") \
-        < out.index(">Draw</span>")
+        < out.index(">Shapes</span>") < out.index(">Draw</span>")
     place = [out.index('data-tool="cell"'), out.index('id="et-image"')]
-    draw = [out.index('id="sh-btn"'), out.index('id="dc-line"'),
+    draw = [out.index('id="shape-strip"'), out.index('id="dc-line"'),
             out.index('data-tool="arrow"'), out.index('id="dc-draw"')]
     assert place == sorted(place), "the placing tools are out of order"
     assert draw == sorted(draw), "the drawing tools are out of order"
@@ -451,10 +453,12 @@ def test_the_slides_group_reads_in_the_order_asked_for(out):
     Layouts, Match puts Layouts under New slide and Match under
     Duplicate.
     """
+    # ...and since T196 the layouts are a group of their own beside
+    # Slides, so the four slide verbs read New, Duplicate, Delete, Match
     order = [out.index('id="hm-newslide"'), out.index('id="hm-dupslide"'),
-             out.index('id="hm-delslide"'), out.index('id="hm-laywrap"'),
-             out.index('id="hm-match"')]
+             out.index('id="hm-delslide"'), out.index('id="hm-match"')]
     assert order == sorted(order), "the Slides group is out of order"
+    assert out.index('id="hm-match"') < out.index('id="layout-strip"')
 
 
 def test_both_layout_doors_are_called_the_same_thing(out):
@@ -468,8 +472,10 @@ def test_both_layout_doors_are_called_the_same_thing(out):
     # paragraph one -- so it is deliberately left alone.)
     lay = out[out.index('id="lay-btn"'):]
     assert "Layouts &#9662;" in lay[:lay.index("</button>")]
-    hm = out[out.index('id="hm-lay"'):]
-    assert "Layouts &#9662;" in hm[:hm.index("</button>")]
+    # Home's door became the tiles themselves (T196), under one word
+    assert 'id="layout-strip"' in out
+    assert '<span class="rbn-lab">Layout</span>' in out
+    assert 'id="hm-lay"' not in out
 
 
 def test_cancel_is_last_so_arming_a_tool_shifts_nothing(out):

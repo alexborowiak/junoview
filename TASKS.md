@@ -4012,6 +4012,61 @@ should be the panel, title, text as well."
   the ribbon.
 
 
+The user, seventh review (2026-09-02): "dot points a bit buggy. The
+dot points appear where the dashed selection line is. Where is the
+animate by dot point thing gone???? Can that be an option when clicking
+on a box with dot points? This is same with things like the slide
+layouts, the match slide options. Like there is so many good options
+in there. This looks odd still the ribbon as well... the shapes should
+be on their own. When selecting an image, the object view should on
+the right have the object paths, refresh from path button, lock
+option. Then where has the ability to refresh all images gone?"
+
+- [x] **T195 · XS — The bullet marker is inside the box.**
+  *Done 2026-09-02.* An outside marker sits about 1em left of its
+  text; at 1.15em of padding it was drawn on the box's edge, under the
+  dashed selection line. 1.7em now, 1.5em for a nested level.
+
+- [x] **T196 · M — Home's layout system opened out; refresh-all has a
+  door.**
+  *Done 2026-09-02.* The Layouts dropdown held the picker, the
+  auto-arrange, the ideas and the saved layouts — two-thirds of the
+  system behind a word. They are groups now: **Layout**, the layouts
+  as tiles drawn as themselves with the one this slide wears lit (the
+  review's sweep already marked the pickers; the strip is one more of
+  them); **Arrange this slide** — Layout ideas…, Tight, Normal, Airy;
+  **Saved layouts** — My saved layouts…, Save this layout…, Copy this
+  layout to other slides…, Masters…; and **Sources** — Update figures,
+  Refresh pictures, which press the File menu rows that have always
+  done this and that nobody found. Every row keeps its id and its
+  wiring. The two rarer groups sit last so they fold first on a narrow
+  window and the View toggles stay in sight. Design's Layouts door
+  stays.
+
+- [x] **T197 · S — Shapes on their own.**
+  *Done 2026-09-02.* Fifteen tiles drawn by the same shapeIcon the
+  Object tab's Shape menu uses, in a Shapes group between Write and
+  Draw, the armed one lit; click it again to put the tool down. T188
+  had kept them behind a door for width; group folding pays for the
+  strip.
+
+- [x] **T198 · S — Where it came from, on the row; by-bullet beside
+  the effects.**
+  *Done 2026-09-02.* Select a picture or a figure and the Object group
+  shows **From** with the file or notebook it came from, **Refresh
+  from file** (out of the Source window, where it was a row nobody
+  saw), and **Lock in place** — the position lock the Layers pane's
+  pin sets, as a button that shows its state. Select a text box and
+  the Animation group offers **Whole box / By bullet / By sentence**
+  beside the five effects; a box with no entrance yet gets a Fade
+  first, so "animate by dot point" is one click.
+  Driven: a bullet box, By bullet → Fade and By bullet lit; Lock in
+  place → pressed; Home reads Slides | Layout | Arrange this slide |
+  View | Saved layouts | Sources with the new slide's layout tile lit;
+  Insert reads Place | Write | Shapes | Draw and a star tile arms the
+  tool and lights.
+
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

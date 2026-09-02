@@ -1035,18 +1035,20 @@
             </span>
             <span class="rbn-lab">Write</span>
           </span>
+          <!-- SHAPES ON THEIR OWN (T197; 2026-09-02, user: "the shapes
+               should be on their own"). Fifteen tiles drawn as
+               themselves, in the row, the armed one lit; click one and
+               the shape tool arms for it. T188 had kept them behind a
+               door for width; group folding (T187) pays for the strip. -->
+          <span class="rbn-grp rbn-shapes" data-tab="insert">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip shape-strip" id="shape-strip"
+                role="group" aria-label="Shapes"></span>
+            </span>
+            <span class="rbn-lab">Shapes</span>
+          </span>
           <span class="rbn-grp rbn-draw" data-tab="insert">
             <span class="rbn-row">
-              <!-- SHAPE stays a drawn gallery behind one door, as
-                   PowerPoint's is: fifteen shapes in the row would
-                   cost the tab its width for a thing you draw once. -->
-              <span class="sh-drop" id="sh-drop">
-                <button class="dbtn rbn-sm" id="sh-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Draw a shape (rectangle, ellipse, star, …)">
-                  <i data-ic="shapes"></i> Shape &#9662;</button>
-                <div class="sh-menu" id="sh-menu" hidden></div>
-              </span>
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
                 title="Draw a line — drag on the page; drop an end on an
@@ -1092,6 +1094,8 @@
                something. These four are the page-level actions you take
                constantly and they were previously only reachable from the
                thumbnail strip's hover controls. -->
+          <!-- SLIDES, first on Home, the way PowerPoint opens its Home
+               tab. -->
           <span class="rbn-grp rbn-slides" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-newslide"
@@ -1101,48 +1105,72 @@
                 Duplicate</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
                 title="Delete this slide"><i data-ic="exit"></i> Delete</button>
-              <span class="sh-drop" id="hm-laywrap">
-                <button class="dbtn rbn-sm" id="hm-lay"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Ready-made arrangements for this page">
-                  <i data-ic="layouts"></i> Layouts &#9662;</button>
-                <div class="sh-menu lay-menu" id="hm-lay-menu" hidden>
-                  <!-- PARITY WITH DESIGN'S MENU (T131). Two buttons both
-                       said "Layouts" and this one silently hid the
-                       auto-arrange row, the ideas row and the saved
-                       arrangements — two-thirds of the layout system,
-                       depending on which tab you were on. Same rows,
-                       twin ids, one set of wiring. -->
-                  <button class="dbtn vw-opt" id="hm-lay-ideas"
-                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-                    <i data-ic="layouts"></i> Layout ideas&#8230;</button>
-                  <div class="lay-tidy" id="hm-lay-tidy"
-                    aria-label="Arrange what is on this slide">
-                    <button class="dbtn" data-tidy="tight">Tight</button>
-                    <button class="dbtn" data-tidy="normal">Normal</button>
-                    <button class="dbtn" data-tidy="airy">Airy</button>
-                  </div>
-                  <button class="dbtn vw-opt" id="hm-lay-masters"
-                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Masters&#8230;</button>
-                  <button class="dbtn vw-opt" id="hm-lay-arrs"
-                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
-                    <i data-ic="objects"></i> My saved layouts&#8230;</button>
-                  <button class="dbtn vw-opt" id="hm-lay-arrsave"
-                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
-                    <i data-ic="copy"></i> Save this layout&#8230;</button>
-                  <button class="dbtn vw-opt" id="hm-lay-give"
-                    title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy this layout to other slides&#8230;</button>
-                  <div class="lay-picker" id="layout-home-grid"
-                    aria-label="Slide layouts"></div>
-                </div>
-              </span>
-              <!-- the least glamorous, most useful button in the app:
-                   make this slide sit like that one (2026-08-20) -->
               <button class="dbtn rbn-sm" id="hm-match"
                 title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
                 &#9662;</button>
             </span>
             <span class="rbn-lab">Slides</span>
+          </span>
+          <!-- THE LAYOUT SYSTEM, OPENED OUT (T196; 2026-09-02, user:
+               "same with things like the slide layouts, the match slide
+               options. Like there is so many good options in there").
+               One dropdown held the picker, the auto-arrange, the ideas
+               and the saved layouts: two-thirds of the system behind a
+               word. They are three groups now -- the layouts as tiles
+               drawn as themselves, the one in use lit; the arrange
+               verbs; the saved ones -- and a fourth for the two
+               refresh-all commands that had only a File menu row
+               ("where has the ability to refresh all images gone?"). -->
+          <span class="rbn-grp rbn-layout" data-tab="home">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip lay-strip" id="layout-strip"
+                role="group" aria-label="Slide layouts"></span>
+            </span>
+            <span class="rbn-lab">Layout</span>
+          </span>
+          <span class="rbn-grp rbn-arrange" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-lay-ideas"
+                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
+                    <i data-ic="layouts"></i> Layout ideas&#8230;</button>
+              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+                                  aria-label="Arrange what is on this slide">
+                                  <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
+                                  <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
+                                  <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
+                                </div>
+            </span>
+            <span class="rbn-lab">Arrange this slide</span>
+          </span>
+          <span class="rbn-grp rbn-saved" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-lay-arrs"
+                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
+                    <i data-ic="objects"></i> My saved layouts&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
+                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
+                    <i data-ic="copy"></i> Save this layout&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-give"
+                    title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy this layout to other slides&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-masters"
+                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Masters&#8230;</button>
+            </span>
+            <span class="rbn-lab">Saved layouts</span>
+          </span>
+          <span class="rbn-grp rbn-sources" data-tab="home">
+            <span class="rbn-row">
+              <!-- two doors, one implementation each: they press the
+                   File menu rows that have always done this -->
+              <button class="dbtn rbn-sm" id="hm-refresh-figs"
+                title="Re-read every placed figure from its notebook, so
+ a re-run shows up on the slides"><i data-ic="reload"></i> Update
+ figures</button>
+              <button class="dbtn rbn-sm" id="hm-refresh-img"
+                title="Re-read every picture from the file it came from.
+ A file that has moved is left as it was, and named"
+                ><i data-ic="reload"></i> Refresh pictures</button>
+            </span>
+            <span class="rbn-lab">Sources</span>
           </span>
           <!-- No Editing group. Find and replace acts on the WHOLE
                presentation, so it belongs with the document's own
@@ -1583,6 +1611,23 @@
                    both contextual: a state you can SEE on the selected
                    object, and a pane you type into. Words plus icons,
                    and both icons are ones the set already carries. -->
+              <!-- WHERE IT CAME FROM, ON THE ROW (T198; 2026-09-02, user:
+                   "when selecting an image, the object view should on
+                   the right have the object paths, refresh from path
+                   button, lock option"). The file a picture came from,
+                   or the notebook a figure did; a button to re-read
+                   it; and a lock that keeps it where it is. -->
+              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
+                title="Where this came from"></span>
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came from.
+ If that file has moved, the picture is left exactly as it is"
+                ><i data-ic="reload"></i> Refresh from file</button>
+              <button class="dbtn etm" id="fmt-lock" hidden
+                aria-pressed="false"
+                title="Keep this where it is: it cannot be dragged, and
+ stays selectable and editable. The Layers pane has the full lock too"
+                ><i data-ic="pin"></i> Lock in place</button>
               <button class="dbtn etm" id="fmt-lockar" hidden
                 aria-pressed="false"
                 title="Keep this object&rsquo;s shape while you drag a
@@ -1632,11 +1677,7 @@
                 Previous figure</button>
               <button class="dbtn etm" id="fmt-lockver"
                 title="Keep this exact figure even when the notebook is re-run — pinned to the notebook’s current version"><i data-ic="lock"></i> Lock figure</button>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came
- from. If that file has moved, the picture is left exactly as it
- is"><i data-ic="reload"></i> Refresh</button>
-              <button class="dbtn etm" id="fmt-replace"
+                            <button class="dbtn etm" id="fmt-replace"
                 title="Put a different notebook card in this frame"><i data-ic="swap"></i>
                 Replace</button>
                 </div>
@@ -1697,6 +1738,23 @@
               <button class="dbtn etm" id="fmt-fx-zoom" aria-pressed="false"
                 title="Grows into place on its click"
                 ><i data-ic="zoom"></i> Grow</button>
+              <!-- HOW MUCH OF A TEXT BOX ARRIVES, here as well as on the
+                   Animation tab (T198; 2026-09-02, user: "where is the
+                   animate by dot point thing gone???? Can that be an
+                   option when clicking on a box with dot points?").
+                   Shown for a text box; picking one on a box with no
+                   entrance gives it a Fade first, so "by bullet" is one
+                   click and not two. -->
+              <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
+                title="The whole box arrives on one click"
+                ><i data-ic="text"></i> Whole box</button>
+              <button class="dbtn etm" id="fmt-by-para" aria-pressed="false"
+                title="One click per bullet, or per line you pressed Enter
+ on. A box with no entrance yet gets a Fade"
+                ><i data-ic="indent"></i> By bullet</button>
+              <button class="dbtn etm" id="fmt-by-sent" aria-pressed="false"
+                title="One click per sentence. A box with no entrance yet
+ gets a Fade"><i data-ic="spacing"></i> By sentence</button>
             </span>
             <span class="rbn-lab">Animation</span>
           </span>

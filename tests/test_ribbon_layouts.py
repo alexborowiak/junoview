@@ -458,7 +458,11 @@ def test_home_and_design_layouts_menus_carry_the_same_rows(out):
     assert "both('#lay-arrs','#hm-lay-arrs',function(){" in out
     assert ("both('#lay-ideas-btn','#hm-lay-ideas',"
             "function(){openLayoutIdeas();});") in out
-    assert "var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);" in out
+    # Home's menu opened out into groups (T196): the same rows are
+    # ribbon buttons now, and there is no Home menu left to close
+    assert '<span class="rbn-lab">Arrange this slide</span>' in out
+    assert '<span class="rbn-lab">Saved layouts</span>' in out
+    assert "$('#hm-lay-menu')" not in out
 
 
 def test_layout_ideas_previews_are_the_real_computation_on_a_clone(out):

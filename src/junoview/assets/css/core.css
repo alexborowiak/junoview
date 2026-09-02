@@ -1246,7 +1246,9 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    Table, Animate and Page furniture (2026-08-20, user: "some of the
    themes are not right"). .rbn-file and .rbn-nbs are gone from the
    markup and gone from here with them. */
-body.th-colorful .rbn-slides,body.th-colorful #ab-file{
+body.th-colorful .rbn-slides,body.th-colorful .rbn-layout,
+body.th-colorful .rbn-arrange,body.th-colorful .rbn-saved,
+body.th-colorful .rbn-sources,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
 body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
 body.th-colorful .rbn-anim,body.th-colorful .rbn-build,
@@ -1264,6 +1266,7 @@ body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
 body.th-colorful .rbn-insert,body.th-colorful .rbn-write,
 body.th-colorful .rbn-draw,body.th-colorful .rbn-cancel,
+body.th-colorful .rbn-shapes,
 body.th-colorful #ab-app,body.th-colorful .presrail{
   --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;

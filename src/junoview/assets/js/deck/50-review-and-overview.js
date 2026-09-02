@@ -1505,7 +1505,7 @@
   function renderControls(){
     updateNumsLabel();updateCropLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-home-grid .lay')
+    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-strip .lay')
       .forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',

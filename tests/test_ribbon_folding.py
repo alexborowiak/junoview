@@ -68,8 +68,10 @@ def test_insert_is_tiles_a_named_cell_and_a_drawing_group(out):
     assert ".deck.erc-tight .et-status span+span{display:none;}" in out
     assert "Notebook cell</button>" in out
     assert 'id="ins-chart"' not in out and "var ic2=$('#ins-chart');" not in out
-    # Shape stays a gallery behind one door, as PowerPoint's is
-    assert 'id="sh-btn"' in out and 'id="sh-menu"' in out
+    # ...and the shapes are tiles of their own since T197 ("the shapes
+    # should be on their own")
+    assert 'id="shape-strip"' in out and "function shapeStripBoot(){" in out
+    assert 'id="sh-btn"' not in out
 
 
 def test_the_page_size_is_tiles_and_tokens_have_a_plain_name(out):

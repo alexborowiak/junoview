@@ -1357,7 +1357,14 @@ body.light .fx-tile.on{color:#fff;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
 .rbn-write{order:6;}
+/* Shapes sit between Write and Draw (T197) */
+.rbn-shapes{order:6;}
 .rbn-draw{order:6;}
+/* Home's layout groups follow Slides; View keeps its seat; the saved
+   layouts and the refresh doors come LAST, so they are what folds first
+   on a narrow window and the everyday toggles stay in view (T196) */
+.rbn-layout,.rbn-arrange{order:1;}
+.rbn-saved,.rbn-sources{order:4;}
 /* the Drawing group follows Draw; it exists only while a tool is armed */
 .rbn-cancel{order:6;}
 /* T187: a FOLDED group is one worded door over a popover holding its
@@ -1369,6 +1376,29 @@ body.light .fx-tile.on{color:#fff;}
   align-items:center;}
 /* T188: the text strip. A specimen "Aa" over the type's name; the strip
    scrolls and a tile cut at the edge is the affordance (T171). */
+/* T196/T197: the layout tiles and the shape tiles are strips too */
+.fx-strip.lay-strip{width:330px;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.lay-strip .dbtn.lay{flex:0 0 66px;scroll-snap-align:start;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:4px 3px;line-height:1.1;}
+.lay-strip .layico2{width:52px;}
+/* the picker writes a heading into each of its homes; the group label
+   is the strip's heading */
+.lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}
+/* the one this slide wears: the review's sweep marks it, as it does
+   in the two menus */
+.lay-strip .dbtn.lay[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);}
+.fx-strip.shape-strip{width:300px;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.shape-strip .fx-tile{flex:0 0 58px;scroll-snap-align:start;}
+.shape-strip .fx-tile .sh-ico{width:26px;height:22px;}
+/* the provenance cell on the Object tab (T198): a label over a name */
+.fmt-path{max-width:170px;}
+.fmt-path b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:block;max-width:170px;}
+.rbn-row .lay-tidy{height:30px;}
 .fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;
   overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;}
 .tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 60px;
@@ -3040,11 +3070,15 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
 /* the box indent COMPOSES with the bullet gutter rather than replacing
    it: 1.15em is what keeps a marker outside its text, so an indented list
    that simply overwrote it would lose its bullets off the left edge */
-.an-tx.an-ul{margin:0;padding-left:calc(1.15em + var(--an-ind,0));}
+/* 1.7em, not 1.15 (T195): an outside marker sits about 1em left of the
+   text, so at 1.15 it was drawn on the box's edge, under the dashed
+   selection line (2026-09-02, user: "the dot points appear where the
+   dashed selection line is") */
+.an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
 ul.an-ul{list-style:disc;}
 ol.an-ul{list-style:decimal;}
 .an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
-.an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.15em;}
+.an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}
 .an-tx.an-ul ul ul{list-style:square;}
 .an-tx.an-ul ol{list-style:lower-alpha;margin:0;padding-left:1.25em;}
 .an-tx.an-ul ol ol{list-style:lower-roman;}

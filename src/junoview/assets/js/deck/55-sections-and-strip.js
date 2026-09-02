@@ -919,7 +919,6 @@
     b=$('#hm-match');
     if(b) b.addEventListener('click',function(e){
       e.stopPropagation();openMatchMenu(this);});
-    wireMenuToggle('hm-laywrap','hm-lay','hm-lay-menu');
   })();
   function renderCreate(){
     renderPresRow();renderControls();renderPresNbs();renderFilm();
@@ -1618,26 +1617,40 @@
     }
     return svg;
   }
-  (function(){
-    var shBtn=$('#sh-btn'),shMenu=$('#sh-menu'),shDrop=$('#sh-drop');
-    if(!shBtn||!shMenu) return;
-    /* Built by the same drawnOpt as every other drawn menu, so the two
-       shape galleries — this one for INSERT and the Line & shape group's
-       for CHANGING one — cannot look like different features. It used to
-       write its own option element and add a caption under each icon,
-       which made this the only drawn menu in the editor that spelled its
-       pictures out (2026-08-17 audit). Names live in the tooltip, as
-       PowerPoint's shape gallery does. */
+  /* ---- THE SHAPE STRIP (T197) ------------------------------------------
+     Fifteen shapes as tiles in the row, each drawn by the same shapeIcon
+     the Object tab's Shape menu uses, so the two cannot look like
+     different features. Click one and the shape tool arms for it; the
+     tile stays lit while it is armed; click it again to put the tool
+     down. It replaces the Shape door ("the shapes should be on their
+     own", 2026-09-02). */
+  var shapeStripSync=function(){};
+  function shapeStripBoot(){
+    var strip=$('#shape-strip'); if(!strip) return;
     SHAPE_LIST.forEach(function(pair){
-      drawnOpt(shMenu,shBtn,pair[1],shapeIcon(pair[0]),'ins:'+pair[0],
-        function(){pendingShape=pair[0];setTool('rect');});
+      var b=document.createElement('button');
+      b.type='button';b.className='fx-tile shape-tile';
+      b.dataset.shape=pair[0];
+      b.appendChild(shapeIcon(pair[0]));
+      var t=document.createElement('span');t.textContent=pair[1];
+      b.appendChild(t);
+      b.title='Draw a '+pair[1].toLowerCase()+' — drag on the slide';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(tool==='rect'&&pendingShape===pair[0]){setTool('select');return;}
+        pendingShape=pair[0];
+        setTool('rect');
+      });
+      strip.appendChild(b);
     });
-    shBtn.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(shMenu.hidden) overlayShow(shBtn,shMenu);
-      else overlayHide(shMenu);
-    });
-  })();
+    shapeStripSync=function(){
+      $$('.shape-tile',strip).forEach(function(b){
+        var on=(tool==='rect'&&pendingShape===b.dataset.shape);
+        b.classList.toggle('on',on);
+        b.setAttribute('aria-pressed',on.toString());
+      });
+    };
+  }
   /* ---- WHAT KIND OF TEXT BOX: THE TEXT STRIP (T188) --------------------
      One tile per kind of box -- plain, then every named type in the
      deck, each drawn as a specimen of itself -- in the row of the Insert

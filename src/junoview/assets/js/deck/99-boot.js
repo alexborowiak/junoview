@@ -45,6 +45,7 @@
   seqBoot();       /* the sequencing mode's bar (T168) */
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
+  shapeStripBoot();           /* the shapes, as tiles (T197) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */

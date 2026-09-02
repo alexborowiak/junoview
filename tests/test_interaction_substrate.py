@@ -51,7 +51,6 @@ def test_every_wired_menu_routes_through_the_owner():
     for site in ("overlayShow(wrap,menu);floatMenu(wrap,menu);",   # Present
                  "overlayShow(fileBtn,fileMenu);",                 # File
                  "overlayShow(lb,lm);floatMenu(lb,lm);",           # Layouts
-                 "overlayShow(shBtn,shMenu);",                     # shapes
                  "overlayShow(mb,acts2);"):                        # nb More
         assert site in out, site
     # the per-menu document closers are gone from the migrated blocks:

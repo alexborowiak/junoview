@@ -44,8 +44,8 @@ def test_presentation_opens_in_editor_with_one_mode_toggle(out):
     # "+ Shapes" dropdown, and Present relocated into the slide tool bar
     assert 'data-tool="cell"' in out and "Notebook cell" in out
     assert "et-bigcell" not in out
-    assert 'id="sh-btn"' in out and 'id="sh-menu"' in out \
-        and "var SHAPE_LIST" in out
+    # the shapes are a strip of tiles since T197
+    assert 'id="shape-strip"' in out and "var SHAPE_LIST" in out
     # ONE mode toggle (dc-edit) swaps slide-editor <-> notebook view; the old
     # separate "et-notebook" button, "Done" and the "Back to slide" pill are
     # gone

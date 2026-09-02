@@ -450,7 +450,7 @@
     var isPoster=!!pg.poster;
     var land=pg.aw>pg.ah;
     var variant=(isPoster?'p':'s')+(land?'l':'p');
-    ['#layout-row','#layout-menu-grid','#layout-home-grid']
+    ['#layout-row','#layout-menu-grid','#layout-strip']
       .forEach(function(sel){
       var row=$(sel); if(!row||row.dataset.built===variant) return;
       row.dataset.built=variant;row.innerHTML='';
@@ -501,7 +501,7 @@
      The catalog is offered from TWO places now — Design ▸ Layouts and
      Home ▸ Layout — so picking from either has to shut both. */
   function closeLayMenu(){
-    [['#lay-menu','#lay-btn'],['#hm-lay-menu','#hm-lay']]
+    [['#lay-menu','#lay-btn']]
       .forEach(function(p){
         var lm=$(p[0]),lb=$(p[1]);
         if(lm&&!lm.hidden){overlayHide(lm);

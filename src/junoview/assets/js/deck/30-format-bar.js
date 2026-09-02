@@ -1045,6 +1045,15 @@
         menu.hidden=true;
     });
   })();
+  /* keep it where it is (T198): the position lock, the same flag the
+     Layers pane's pin sets, toggled from the row */
+  onBtn('#fmt-lock',function(){
+    fmtApply(function(a){
+      /* a FULL lock is the pane's to take off: this button only ever
+         pins or unpins the position */
+      if(a.lock==='pos') delete a.lock;
+      else if(lockMode(a)==='') a.lock='pos';});
+  });
   onBtn('#fmt-bullets',function(){listApply('bullet');});
   onBtn('#fmt-numbers',function(){listApply('number');});
   /* the three alignments, as buttons (T189) */

@@ -124,6 +124,16 @@
     });
   }
   (function(){
+    /* the Home tab's doors (T196): the File menu rows have always done
+       this, and nobody found them there */
+    var hri=$('#hm-refresh-img');
+    if(hri) hri.addEventListener('click',function(e){
+      e.stopPropagation();
+      var m2=$('#mi-refresh-img'); if(m2) m2.click();});
+    var hrf=$('#hm-refresh-figs');
+    if(hrf) hrf.addEventListener('click',function(e){
+      e.stopPropagation();
+      var m3=$('#mi-refresh-figs'); if(m3) m3.click();});
     var mi=$('#mi-refresh-img');
     if(mi) mi.addEventListener('click',function(){
       var dm=$('#dc-menu'); if(dm) overlayHide(dm);

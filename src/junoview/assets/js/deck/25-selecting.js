@@ -38,6 +38,10 @@
     +'#fmt-al-left #fmt-al-center #fmt-al-right '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
+    /* the Object group's provenance row (T198): where it came from,
+       re-read it, keep it in place; and the by-bullet trio, owned by
+       animRibbonSync like the effect buttons */
+    +'#fmt-path #fmt-lock #fmt-by-all #fmt-by-para #fmt-by-sent '
     /* the Object tab's effect buttons (T179): animRibbonSync owns
        their visibility and their pressed state */
     +'#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom '
@@ -513,6 +517,24 @@
         if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;});
       ir.hidden=!anyLinked;
     }
+    /* WHERE IT CAME FROM, on the row (T198): a picture's file, a
+       figure's notebook; and the lock that keeps a thing in place */
+    var pth=$('#fmt-path');
+    if(pth){
+      var from='';
+      if(kind==='image'&&a.fname) from=a.fname;
+      else if(kind==='cell'&&a.ref){
+        var ci2=resolveRef(a.ref);
+        from=(ci2&&ci2.stem)?ci2.stem:String(a.ref);
+      }
+      pth.hidden=!from;
+      if(from){
+        pth.innerHTML='<span>From</span><span><b></b></span>';
+        pth.querySelector('b').textContent=from;
+        pth.title='From '+from;
+      }
+    }
+    show('#fmt-lock',isNum,isNum&&pinned(a));
     /* the Source window's door (T177): anything that came from
        somewhere -- a placed cell, a picture that knows its file, or
        anything with a provenance to show */
@@ -2797,8 +2819,8 @@
     if(t==='guide') showCustomGuides(true);
     $$('#edit-tools .et').forEach(function(b){
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
-    var shb=$('#sh-btn');   /* the Shapes dropdown draws the 'rect' tool */
-    if(shb) shb.setAttribute('aria-pressed',(t==='rect').toString());
+    /* the armed shape's tile lights (T197) */
+    if(typeof shapeStripSync==='function') shapeStripSync();
     var l=stage.querySelector('.annot-layer');
     if(l) l.className='annot-layer tool-'+t;
     /* The way OUT, shown exactly when there is something to get out of.
@@ -2851,7 +2873,10 @@
         guide:'Guide box',draw:'Freehand'}[t]||t;
       if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
         word=styleDef(pendingStyle).label+' box';
-      if(t==='rect'&&pendingShape!=='rect') word=pendingShape;
+      if(t==='rect'&&pendingShape!=='rect'){
+        var shp=SHAPE_LIST.filter(function(p){return p[0]===pendingShape;})[0];
+        word=shp?shp[1]:pendingShape;
+      }
       var how=(t==='text'||t==='cell'||t==='table')
         ?'Drag to draw, or click for the usual size'
         :'Drag on '+pw+' to draw it';
