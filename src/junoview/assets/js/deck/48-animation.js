@@ -339,7 +339,9 @@
       strip.appendChild(b);
     });
     var lab=$('#anim-strip-lab');
-    if(lab) lab.textContent=on?'Effect':'Effect \u2014 select something';
+    /* just "Effect": the greyed tiles already say to select something
+       (2026-09-02, user: "that is unnecessary text lol") */
+    if(lab) lab.textContent='Effect';
   }
   function galBoot(){
     var strip=$('#anim-strip');
@@ -477,8 +479,7 @@
           (st.on&&st.text&&st.by===p[1]).toString());
       });
       var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent=st.on?(st.text?'Timing & text':'Timing')
-        :'Timing \u2014 select an animated thing';
+      if(lab) lab.textContent=(st.on&&st.text)?'Timing & text':'Timing';
     }
     var ocb=$('#anim-onclick');
     if(ocb) ocb.addEventListener('click',function(e){

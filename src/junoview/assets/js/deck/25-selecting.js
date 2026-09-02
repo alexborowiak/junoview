@@ -34,7 +34,8 @@
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
        ribbon layout moves; the doors are what showFmt shows. */
-    +'#fmt-fontwrap #fmt-font-btn #fmt-para-align #fmt-para-ind '
+    +'#fmt-fontwrap #fmt-font-btn #fmt-para-ind '
+    +'#fmt-al-left #fmt-al-center #fmt-al-right '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
     /* the Object tab's effect buttons (T179): animRibbonSync owns
@@ -289,6 +290,13 @@
     show('#fmt-numbers',isText&&isNum,lst==='number');
     show('#fmt-indent',isText&&isNum&&!!lst);
     show('#fmt-outdent',isText&&isNum&&!!lst);
+    /* the three alignments, in the row and showing which is on
+       (T189); they were rows of a menu called Layout, then chips in
+       a window called Paragraph */
+    var alg=isText?(a.align||'left'):'';
+    show('#fmt-al-left',isText&&isNum,alg==='left');
+    show('#fmt-al-center',isText&&isNum,alg==='center');
+    show('#fmt-al-right',isText&&isNum,alg==='right');
     /* the kind-driven controls, all from one table */
     Object.keys(FMT_KINDS).forEach(function(id){
       var spec=FMT_KINDS[id];
@@ -2819,6 +2827,28 @@
          on the obvious, sitting in the middle of the toolbar forever
          (2026-08-10, user: "what is that even there?"). */
       :'';
+    /* THE DRAWING GROUP (T188): the mode's name over a short hint,
+       and Cancel under them, in a group that exists only while a
+       tool is armed. The long hint above is the ladder's first
+       casualty; this one is two lines the group can afford. */
+    var stc=$('#et-status');
+    if(stc){
+      stc.hidden=(t==='select');
+      var word={text:'Text box',arrow:'Arrow',rect:'Shape',line:'Line',
+        cell:'Notebook cell',flip:'Flip book',table:'Table',
+        guide:'Guide box',draw:'Freehand'}[t]||t;
+      if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
+        word=styleDef(pendingStyle).label+' box';
+      if(t==='rect'&&pendingShape!=='rect') word=pendingShape;
+      var how=(t==='text'||t==='cell'||t==='table')
+        ?'Drag to draw, or click for the usual size'
+        :'Drag on '+pw+' to draw it';
+      stc.innerHTML='<span><b>Drawing: '+esc(word)+'</b></span>'
+        +'<span>'+esc(how)+'</span>';
+    }
+    if(typeof txStripSync==='function') txStripSync();
+    /* the group appeared or went, so the row is re-judged */
+    if(typeof syncRibbonGroups==='function') syncRibbonGroups();
   }
   function deleteSel(){
     var s=pres.slides[cur];

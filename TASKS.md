@@ -3901,6 +3901,75 @@ by sentence, dot point, etc."
   button three classes deep, which beat the two of `.seq-fxb.on`, so
   the pressed state is now said at five.
 
+The user, fifth review (2026-09-02): "the insert options like text
+should be like 'Effect' in the animation tab, with all the options
+there... you currently can't insert text, it doesn't work... what
+happened to the notebook cell option, that is gone... when drawing why
+is the cancel button in the weirdest spot, have it appear in its own
+section... what is the charts??? I never wanted that and it is broken.
+Get rid of it... how do you even add dot points any more? Oh it is in
+the Paragraph in the object thing. Please spread them out... too many
+things are in buttons in buttons... do the same with the Design tab...
+what is 'design tokens'?????... why does Effect have 'Select
+something', that is unnecessary text lol."
+
+- [x] **T187 · M — A group that does not fit folds into one door.**
+  Spreading controls out (T189) makes the Object tab wider than any
+  window, and the ladder's last rung was to clip. The rung it needed
+  is PowerPoint's: a group whose row does not fit becomes ONE worded
+  button, named for the group, over a popover holding its row.
+  *Done 2026-09-02.* `fitEditRibbon` unfolds everything before it
+  measures, runs the ladder as before, and then folds from the RIGHT
+  until the bar fits — so a wider window opens the groups out again by
+  itself. The real row is moved into the popover, never copied; the
+  fixed groups, the Drawing group and Quick animate never fold (a
+  mode's exit stays on the bar); a ribbon layout unfolds all before it
+  moves an atom. Driven at 1400px with a text box selected: Animation
+  folds to "Animation ▾", everything else is on the bar, and the
+  popover opens the row exactly as the ribbon lays it out.
+
+- [x] **T188 · M — Insert: the kinds of text box as tiles, Notebook
+  cell by name, Cancel in its own group, no Chart.**
+  *Done 2026-09-02.* The caret menu beside Text — the one control on
+  Insert that hid its options — is a strip of tiles in the row: plain
+  Text, then every named type in the deck, each a specimen "Aa" of
+  itself, lit while armed, click again to put the tool down; a type of
+  your own gets a tile the moment it exists. **Notebook cell** has its
+  name back (T61's "Object" described the frame, not what people look
+  for). A **Drawing** group appears only while a tool is armed: the
+  mode's name over a short hint, and Cancel under them — beside
+  nothing, shifting nothing. **Chart** leaves the ribbon; the feature
+  keeps its right-click door on a placed table. Shape stays a drawn
+  gallery behind one door, as PowerPoint's is: fifteen tiles would
+  cost the tab its width for a thing you draw once.
+  Text insertion itself was found working on the deployed build — a
+  click makes a box and typing lands in it — but the box was BORN
+  INVISIBLE: no placeholder and no panel (your own 2026-08-19 ask), so
+  a fresh box was a caret and nothing else. See T191.
+
+- [x] **T189 · S — The everyday text controls are back in the row.**
+  T177 put every text control behind Font and Paragraph doors; a day
+  later, "how do you even add dot points any more?... too many things
+  are in buttons in buttons."
+  *Done 2026-09-02.* Bold, italic, underline, the two lists and the
+  three alignments (new as buttons, showing which is on) are in the
+  Text group; Font ▾ keeps typeface, size and strike; Paragraph ▾ keeps
+  list levels, the box indent, spacing and the curve. The room this
+  costs is what T187 pays.
+
+- [x] **T190 · S — Design: the page size as tiles; a plain name for
+  the tokens.**
+  *Done 2026-09-02.* The Page size menu is a strip of eight tiles, each
+  drawn at its own proportion so the row reads without reading, the
+  one in use lit, built from the same table the menu was. **Design
+  tokens** is **Colours & spacing** on the button; the dialog keeps the
+  term in its title. Layouts and Background stay as galleries behind a
+  door: previews and swatches, not words.
+
+- [x] **T191 · XS — A born-empty text box says it is there.**
+  *Done 2026-09-02.* "Type…" in the box until you do; and the Effect
+  and Timing labels stop instructing ("that is unnecessary text lol").
+
 
 ## Cut (and why)
 

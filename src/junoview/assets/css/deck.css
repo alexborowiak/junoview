@@ -1354,6 +1354,34 @@ body.light .fx-tile.on{color:#fff;}
    place a thing, write words, draw a line (T178) */
 .rbn-write{order:6;}
 .rbn-draw{order:6;}
+/* the Drawing group follows Draw; it exists only while a tool is armed */
+.rbn-cancel{order:6;}
+/* T187: a FOLDED group is one worded door over a popover holding its
+   row -- the real controls, moved, never copied. The popover lays the
+   row out exactly as the ribbon does. */
+.sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;}
+.rbn-foldmenu .rbn-row{height:auto;}
+.rbn-grp.rbn-folded>.rbn-foldwrap{display:flex;height:65px;
+  align-items:center;}
+/* T188: the text strip. A specimen "Aa" over the type's name; the strip
+   scrolls and a tile cut at the edge is the affordance (T171). */
+.fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;
+  overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 60px;
+  scroll-snap-align:start;}
+.tx-tile-a{display:flex;align-items:center;justify-content:center;
+  height:22px;line-height:1;font-size:16px;font-family:var(--sans);}
+/* T190: the page-size tiles, each drawn at its own proportion */
+.page-ico{display:block;border:1.5px solid currentColor;border-radius:2px;
+  opacity:.85;box-sizing:border-box;}
+/* T188: the armed mode's status, two short lines over Cancel */
+.et-status{min-width:150px;}
+.deck.erc-tight .et-status span+span{display:none;}
+/* T191: a text box born empty shows that it is there and waiting --
+   with no placeholder words and no panel (2026-08-19) a fresh box was
+   a caret and nothing else, which read as "nothing happened" */
+.deck.editing .an-item.an-text .an-tx[contenteditable="true"]:empty::before{
+  content:"Type\2026";color:#7e93a4;opacity:.8;pointer-events:none;}
 /* the whole-deck commands at the foot of the Text styles window */
 .style-mgr .opt-row{margin-top:2px;}
 .style-mgr .opt-row .dbtn.rbn-sm{flex:1 1 auto;justify-content:center;}

@@ -1489,7 +1489,9 @@ def test_the_view_group_folds_rather_than_letting_the_row_clip(out):
     assert "foldViewGroup(true);\n      sizeRibbonGroups();" in out
     # every rung is judged against the FULL row, or a bar folded at 1280px
     # would stay folded after the window is maximised
-    assert "foldViewGroup(false);\n    sizeRibbonGroups();" in out
+    # ...and every folded GROUP opens out too before anything is measured
+    # (T187), for the same reason
+    assert "foldViewGroup(false);\n    rbnUnfoldAll();\n    sizeRibbonGroups();" in out
     # the rows drive the real buttons, so each keeps its implementation
     assert "closeViewMenu();real.click();" in out
     # a row stands in for a toggle, so it has to show the toggle's state

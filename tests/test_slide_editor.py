@@ -326,7 +326,7 @@ def test_page_size_preset_and_zoom(out):
     one builder for slides AND posters; zoom while editing; the preset
     survives JS normPres and the Python save path; PDF exports at size
     """
-    assert "var PAGE_PRESETS" in out and 'id="page-btn"' in out
+    assert "var PAGE_PRESETS" in out and 'id="page-strip"' in out
     assert "--page-ar" in out and "function applyZoom" in out
     assert 'id="zoom-in"' in out and 'id="zoom-out"' in out
     assert "out.page=p.page" in out
@@ -1908,11 +1908,13 @@ def test_design_tokens_have_a_permanent_design_door(out):
     assert 'id="dsg-tokens"' in out
     tokens = out[out.index('id="dsg-tokens"'):]
     tokens = tokens[:tokens.index("</button>")]
-    assert '<svg class="bic"' in tokens and "Design tokens" in tokens
+    # "What is 'design tokens'?????" (2026-09-02, T190): the button says
+    # what the things are; the dialog keeps the term in its title
+    assert '<svg class="bic"' in tokens and "Colours &amp; spacing" in tokens
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out
-    assert "Design \\u2192 Design tokens" in out
+    assert "Design \\u2192 Colours & spacing" in out
 
 
 def test_the_deck_registry_survives_a_save(out):
@@ -3620,7 +3622,9 @@ def test_the_effects_are_tiles_in_the_row(out):
     assert "var strip=$('#anim-strip'); if(!strip) return;" in out
     assert "b.className='fx-tile'+(on&&now===f[0]?' on':'');" in out
     assert "b.disabled=!on;" in out
-    assert "lab.textContent=on?'Effect':'Effect \\u2014 select something';" in out
+    # the label lost its instruction in T191 ("that is unnecessary text
+    # lol"): the greyed tiles already say to select something
+    assert "if(lab) lab.textContent='Effect';" in out
     # one list feeds the strip AND the Quick animate chooser, so the two
     # surfaces cannot drift into two vocabularies
     assert "SEQ_FX.forEach(function(f){" in out

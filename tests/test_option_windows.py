@@ -31,20 +31,28 @@ def test_the_text_group_is_three_doors_not_fifteen_buttons(out):
     spacings and the curve; Styles stays as it was. The controls keep
     their ids: there is still exactly one Bold in the application.
     """
+    # ...and T189 put the everyday ones BACK in the row -- bold, italic,
+    # underline, the two lists, the three alignments -- because "too
+    # many things are in buttons in buttons"; the windows keep what is
+    # set once: typeface, size, strike; list levels, box indent,
+    # spacing, curve
     font = _window(out, "fmt-fontwrap")
     for cid in ("fmt-font-btn", "fmt-font-menu", "fmt-font", "fmt-szwrap",
-                "fmt-size", "fmt-smaller", "fmt-bigger", "fmt-bold",
-                "fmt-ital", "fmt-under", "fmt-strike"):
+                "fmt-size", "fmt-smaller", "fmt-bigger", "fmt-strike"):
         assert f'id="{cid}"' in font, cid
-    # words beside the letters now there is room for them
-    assert "<b>B</b> Bold</button>" in font
+    for cid in ("fmt-bold", "fmt-ital", "fmt-under"):
+        assert f'id="{cid}"' not in font, cid
+        assert f'id="{cid}"' in out, cid
     assert "<s>S</s> Strikethrough</button>" in font
     para = _window(out, "fmt-parawrap")
-    for cid in ("fmt-para", "fmt-para-menu", "fmt-para-align",
-                "fmt-bullets", "fmt-numbers", "fmt-outdent", "fmt-indent",
+    for cid in ("fmt-para", "fmt-para-menu", "fmt-outdent", "fmt-indent",
                 "fmt-para-ind", "fmt-lhwrap", "fmt-lh-menu",
                 "fmt-para-curve"):
         assert f'id="{cid}"' in para, cid
+    for cid in ("fmt-bullets", "fmt-numbers"):
+        assert f'id="{cid}"' not in para, cid
+    for cid in ("fmt-al-left", "fmt-al-center", "fmt-al-right"):
+        assert f'id="{cid}"' in out, cid
     # the old Spacing and Layout doors are gone; the wrapper stays because
     # showFmt governs spacing by kind (a table's words take it too)
     assert 'id="fmt-lh"' not in out
@@ -124,7 +132,8 @@ def test_a_door_shows_when_anything_behind_it_would(out):
     assert "function syncOptDoors(){" in out
     assert "    syncOptDoors();\n" in out
     # every new id is governed, so the completeness audit stays quiet
-    for cid in ("#fmt-fontwrap", "#fmt-font-btn", "#fmt-para-align",
+    for cid in ("#fmt-fontwrap", "#fmt-font-btn", "#fmt-para-ind",
+                "#fmt-al-left", "#fmt-al-center", "#fmt-al-right",
                 "#fmt-linewrap", "#fmt-line", "#fmt-sw-lab",
                 "#fmt-srcwrap", "#fmt-src"):
         assert cid in out[out.index("var FMT_MANUAL="):
@@ -217,7 +226,8 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
     """
     for lab in ("Place", "Write", "Draw"):
         assert f">{lab}</span>" in out, lab
-    assert out.count('data-tab="insert">') == 3
+    # four since T188: the Drawing group, shown only while a tool is armed
+    assert out.count('data-tab="insert">') == 4
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it
     assert "if(styleMgrSync) styleMgrSync();" in out

@@ -750,18 +750,14 @@
     /* a table's WORDS take spacing; alignment, the box indent and the
        curve are a text box's own */
     var isTx=(a.k==='text');
-    var al=$('#fmt-para-align'),ind=$('#fmt-para-ind'),
-        cv=$('#fmt-para-curve');
-    [al,ind,cv].forEach(function(h){
+    /* alignment and the two lists are buttons in the row again
+       (T189); the window keeps what is set once */
+    var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve');
+    [ind,cv].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
-    if(isTx&&al&&ind&&cv){
-      ALIGNS.forEach(function(p){
-        optChip(al,p[1],(a.align||'left')===p[0],
-          'Align '+p[1].toLowerCase(),
-          function(){paraApply('a:'+p[0]);});
-      });
+    if(isTx&&ind&&cv){
       /* the whole-box indent is a stepper with its count between the
          steps, because a level is a number rather than a choice */
       var steps=Math.round((a.ind||0)/IND_STEP);
@@ -1051,6 +1047,11 @@
   })();
   onBtn('#fmt-bullets',function(){listApply('bullet');});
   onBtn('#fmt-numbers',function(){listApply('number');});
+  /* the three alignments, as buttons (T189) */
+  ALIGNS.forEach(function(p){
+    onBtn('#fmt-al-'+(p[0]==='center'?'center':p[0]),function(){
+      paraApply('a:'+p[0]);});
+  });
   /* indent/outdent only mean anything with the caret inside the box, so
      they act on the live contenteditable rather than the model, and the
      blur handler writes the result back like any other typing */

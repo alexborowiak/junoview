@@ -187,11 +187,17 @@ def test_button_names_say_what_they_do(out):
     # and what goes in it -- a notebook figure, a picture from this
     # computer, one on the clipboard -- is chosen afterwards. The rule
     # this test guards is unchanged; the shortest true word moved.
-    assert "Object</button>" in out
-    assert "Cell</button>" not in out
+    # ...and "Notebook cell" since T188 ("what happened to the notebook
+    # cell option, that is gone"): the frame can still hold a picture,
+    # but the notebook is what the button is for and the word people
+    # look for
+    assert "Notebook cell</button>" in out
+    assert "> Object</button>" not in out
     assert "Text</button>" in out
     assert "Text box</button>" not in out
-    assert "Page size &#9662;" in out or "Page size ▾" in out
+    # ...and since T190 the page size is a strip of tiles, each drawn at
+    # its own proportion, rather than a door in front of eight words
+    assert 'id="page-strip"' in out
     # The Guides menu is gone (2026-08-20): Rulers, Grid, Full screen
     # and Side toolbar are four buttons in the row, because a toggle you
     # have to open a menu to read the state of is a toggle nobody trusts

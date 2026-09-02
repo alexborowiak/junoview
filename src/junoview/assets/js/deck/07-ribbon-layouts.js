@@ -324,6 +324,9 @@
   function applyRibbonLayout(id,quiet){
     var bar=$('#edit-tools'); if(!bar) return;
     rbnHome();                       /* snapshot before the first move */
+    /* a folded group has its row inside a popover; the snapshot's
+       holders are the rows themselves, so unfold before moving (T187) */
+    if(typeof rbnUnfoldAll==='function') rbnUnfoldAll();
     var lay=rbnLayoutById(id)||rbnLayoutById('default');
     rbnRestoreHome();                /* always start from the markup */
     rbnLayoutId=lay.id;

@@ -1317,6 +1317,7 @@
        against the full row, or a bar that folded once at 1280px would
        stay folded after you maximised the window. */
     foldViewGroup(false);
+    rbnUnfoldAll();
     sizeRibbonGroups();
     var cl=deckEl.classList;
     ERC.forEach(function(c){cl.remove(c);});
@@ -1350,6 +1351,13 @@
       foldViewGroup(true);
       sizeRibbonGroups();
     }
+    /* STILL OVER: fold the rightmost group into a button that opens
+       its row, and again until it fits (T187) -- the way PowerPoint
+       collapses a group on a narrow window. It is the rung that
+       makes spreading the controls out affordable at all. */
+    var guard=0;
+    while(bar.scrollWidth>bar.clientWidth+1&&guard++<12&&rbnFoldOne())
+      sizeRibbonGroups();
     /* Below the floor the row genuinely does not fit even flattened, and
        the only moves left — clip, scroll, wrap — are all forbidden.
        Standing the toolbar on its end is the layout that has room, and
@@ -1522,6 +1530,75 @@
       viewWasHidden=null;
     }
     viewFolded=on;
+  }
+  /* ---- GROUP FOLDING (T187) --------------------------------------
+     A group whose row does not fit becomes ONE worded button that
+     opens the row as a popover -- the group's own name on the door,
+     its controls untouched inside (the real elements, moved, never
+     copied). fitEditRibbon unfolds everything before it measures and
+     folds from the right until the bar fits, so a wider window opens
+     the groups out again by itself. Never the fixed groups, never the
+     Drawing or Quick animate groups (a mode's exit must stay on the
+     bar), and a layout unfolds all before it moves anything. */
+  function rbnFoldGroup(g){
+    if(!g||g.classList.contains('rbn-folded')) return false;
+    var row=null;
+    [].slice.call(g.children).forEach(function(c){
+      if(!row&&c.classList.contains('rbn-row')) row=c;});
+    if(!row) return false;
+    var lab=g.querySelector('.rbn-lab');
+    var name=(lab&&lab.textContent.trim())||'More';
+    var wrap=document.createElement('span');
+    wrap.className='sh-drop rbn-foldwrap';
+    var btn=document.createElement('button');
+    btn.type='button';btn.className='dbtn rbn-sm rbn-foldbtn';
+    btn.setAttribute('aria-haspopup','true');
+    btn.setAttribute('aria-expanded','false');
+    btn.innerHTML=bic('menu')+' '+esc(name)+' \u25be';
+    btn.title=name+' \u2014 folded because the window is too narrow '
+      +'to show the whole row. Widen the window and it opens out again';
+    var menu=document.createElement('div');
+    menu.className='sh-menu rbn-foldmenu';menu.hidden=true;
+    menu.appendChild(row);
+    wrap.appendChild(btn);wrap.appendChild(menu);
+    g.insertBefore(wrap,lab||null);
+    g.classList.add('rbn-folded');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!menu.hidden){overlayHide(menu);return;}
+      overlayShow(btn,menu);floatMenu(btn,menu);
+    });
+    return true;
+  }
+  function rbnUnfoldGroup(g){
+    var wrap=null;
+    [].slice.call(g.children).forEach(function(c){
+      if(!wrap&&c.classList.contains('rbn-foldwrap')) wrap=c;});
+    if(!wrap) return;
+    var menu=wrap.querySelector('.rbn-foldmenu');
+    if(menu&&!menu.hidden) overlayHide(menu);
+    var row=wrap.querySelector('.rbn-row');
+    if(row) g.insertBefore(row,wrap);
+    wrap.remove();
+    g.classList.remove('rbn-folded');
+  }
+  function rbnUnfoldAll(){
+    $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnUnfoldGroup);
+  }
+  /* the rightmost group ON SCREEN that may fold: flex `order` decides
+     the visual order, so sort by position rather than by markup */
+  function rbnFoldOne(){
+    var bar=$('#edit-tools'); if(!bar) return false;
+    var gs=$$('.rbn-grp',bar).filter(function(g){
+      return !g.hidden&&!g.hasAttribute('data-off')
+        &&!g.classList.contains('rbn-folded')
+        &&!g.classList.contains('rbn-fixed')
+        &&!g.classList.contains('rbn-seq')
+        &&!g.classList.contains('rbn-cancel');});
+    if(!gs.length) return false;
+    gs.sort(function(x,y){
+      return x.getBoundingClientRect().left-y.getBoundingClientRect().left;});
+    return rbnFoldGroup(gs[gs.length-1]);
   }
   function closeViewMenu(){
     var m=$('#vw-more-menu');
@@ -1770,18 +1847,27 @@
     },{passive:false});
   })();
   (function(){
-    var pb=$('#page-btn'),pm=$('#page-menu'),pd=$('#page-drop');
-    if(!pb||!pm) return;
+    var ps=$('#page-strip');
+    if(!ps) return;
+    /* TILES, drawn at their own proportion (T190): a 16:9 slide is a
+       wide box, an A4 portrait a tall one, so the row reads without
+       reading. The one in use is lit by applyPage. */
     PAGE_PRESETS.forEach(function(pg){
       var o=document.createElement('button');
-      o.className='dc-mi page-opt';o.type='button';
+      o.className='fx-tile page-tile';o.type='button';
       o.dataset.page=pg.id;
-      o.textContent=pg.label
-        +(pg.id==='16x9'?'':' · '+pg.mm[0]+'×'+pg.mm[1]+' mm');
+      var ic=document.createElement('span');ic.className='page-ico';
+      var k=Math.min(26/pg.aw,18/pg.ah);
+      ic.style.width=Math.max(8,Math.round(pg.aw*k))+'px';
+      ic.style.height=Math.max(8,Math.round(pg.ah*k))+'px';
+      o.appendChild(ic);
+      var t=document.createElement('span');
+      t.textContent=pg.label.replace(/^Poster\s+/,'').replace(/^Slides\s+/,'');
+      o.appendChild(t);
+      o.title=pg.label+' \u00b7 '+pg.mm[0]+'\u00d7'+pg.mm[1]+' mm';
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
-        overlayHide(pm);
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a
@@ -1793,12 +1879,7 @@
            (unless you have already chosen otherwise) */
         applySideRibbon();
       });
-      pm.appendChild(o);
-    });
-    pb.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(pm.hidden) overlayShow(pb,pm);
-      else overlayHide(pm);
+      ps.appendChild(o);
     });
   })();
   /* ---- Objects pane (layers v1): list / select / hide / lock ---- */

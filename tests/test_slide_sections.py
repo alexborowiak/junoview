@@ -227,11 +227,13 @@ def test_a_text_box_can_be_born_wearing_a_type(out):
     assert "function textBorn(p0){" in out
     assert ("if(pendingStyle&&styleDef(pendingStyle)) "
             "applyStyleTo(a,pendingStyle);") in out
-    assert 'id="tx-type-btn"' in out and 'id="tx-type-menu"' in out
-    # the caret carries NEITHER `et` NOR data-tool: that exact pairing is
-    # what armed setTool(undefined) off #dc-qr
-    caret = out.split('id="tx-type-btn"')[1][:200]
-    assert "data-tool" not in caret
+    # the caret menu became a strip of tiles in the row (T188): one per
+    # kind of box, the plain one keeping the data-tool door, the lit one
+    # the armed kind
+    assert 'id="tx-strip"' in out and "function txStripBoot(){" in out
+    assert "if(!r[0]) b.setAttribute('data-tool','text');" in out
+    assert "if(tool==='text'&&pendingStyle===r[0]){setTool('select');return;}" in out
+    assert 'id="tx-type-btn"' not in out
 
 
 def test_the_armed_type_never_widens_the_ribbon_label(out):
@@ -243,7 +245,9 @@ def test_the_armed_type_never_widens_the_ribbon_label(out):
     exactly where pendingShape already shows.
     """
     assert "Text · " not in out
-    assert "The next text box will be a " in out
+    # since T188 the armed kind is the lit tile in the strip and the
+    # Drawing group's status line -- never a ribbon label's width
+    assert "word=styleDef(pendingStyle).label+' box';" in out
     assert "' box, or click for one that sizes itself')" in out
 
 

@@ -51,7 +51,6 @@ def test_every_wired_menu_routes_through_the_owner():
     for site in ("overlayShow(wrap,menu);floatMenu(wrap,menu);",   # Present
                  "overlayShow(fileBtn,fileMenu);",                 # File
                  "overlayShow(lb,lm);floatMenu(lb,lm);",           # Layouts
-                 "overlayShow(pb,pm);",                            # Page
                  "overlayShow(shBtn,shMenu);",                     # shapes
                  "overlayShow(mb,acts2);"):                        # nb More
         assert site in out, site
@@ -123,10 +122,13 @@ def test_chart_and_masters_have_first_class_doors():
     panel, and the empty notebook column offers a worded Open
     notebooks button instead of naming an action with no door."""
     html = assets.deck_html()
-    assert 'id="ins-chart"' in html and '> Chart</button>' in html
+    # the Chart door left the ribbon again (T188; 2026-09-02, user: "I
+    # never wanted that... get rid of it"); the feature keeps its
+    # right-click door on a placed table
+    assert 'id="ins-chart"' not in html
     assert 'id="dsg-masters"' in html and '> Masters</button>' in html
     out = _out()
-    assert "var ic2=$('#ins-chart');" in out
+    assert "var ic2=$('#ins-chart');" not in out
     assert "var dm2=$('#dsg-masters');" in out
     assert "ob2.className='dbtn dc-nbs-open';" in out
 

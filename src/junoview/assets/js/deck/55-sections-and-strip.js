@@ -1638,79 +1638,73 @@
       else overlayHide(shMenu);
     });
   })();
-  /* ---- WHAT KIND OF TEXT BOX ------------------------------------------
-     The caret beside Insert > Text, built like the Shapes gallery beside
-     it: pick, and the tool arms. Naming a box as you make it is the half
-     of named styles that was missing — until now the only way to get a
-     Heading 2 was to draw a plain box and then go and find the Styles
-     menu (2026-08-22).
-     The armed type is NOT written into the button's label. deck.js
-     records the rule where the format bar is built: a label whose width
-     changes with what you clicked makes the ribbon's required width
-     depend on the selection, and the fit ladder has no rung left to
-     absorb that. It shows in the caret's tooltip, in the pressed state
-     of the menu row, and in the tool hint — exactly where pendingShape
-     shows. */
-  (function(){
-    var btn=$('#tx-type-btn'),menu=$('#tx-type-menu'),drop=$('#tx-drop');
-    if(!btn||!menu) return;
-    function syncCaret(){
-      var d=pendingStyle&&styleDef(pendingStyle);
-      btn.title=d
-        ?('The next text box will be a '+d.label
-          +'. Click to change it or go back to plain text')
-        :'Make the next text box a heading, a caption or any other named '
-          +'type, instead of a plain one';
-    }
+  /* ---- WHAT KIND OF TEXT BOX: THE TEXT STRIP (T188) --------------------
+     One tile per kind of box -- plain, then every named type in the
+     deck, each drawn as a specimen of itself -- in the row of the Insert
+     tab, the way the effects are. Click one and the text tool arms for
+     that kind; the tile stays lit while it is armed; click it again to
+     put the tool down. It replaces the caret menu beside Text, which was
+     the one control on Insert that hid its options (2026-09-02, user:
+     "the insert options like text should be like 'Effect'").
+     The armed kind is NOT written into any button's label (the fit
+     ladder has no rung for a label that follows the selection); it is
+     the lit tile, and the Drawing group's status line. Rebuilt whenever
+     the type registry changes, so a type of your own gets a tile. */
+  var txStripSync=function(){};
+  function txStripBoot(){
+    var strip=$('#tx-strip'); if(!strip) return;
     function build(){
-      menu.innerHTML='';
-      menuHead(menu,'make the next text box a');
-      var rows=[['','Plain text box',null]];
+      strip.innerHTML='';
+      var rows=[['','Text',null]];
       styleOrder().forEach(function(id){
         rows.push([id,styleDef(id).label,styleDef(id)]);});
       rows.forEach(function(r){
         var b=document.createElement('button');
-        b.className='dbtn vw-opt jv-styleopt';
-        b.setAttribute('aria-pressed',(pendingStyle===r[0]).toString());
-        var t=document.createElement('span');
-        t.className='jv-stylename';t.textContent=r[1];
-        /* the row is a SPECIMEN, the same way the Styles menu's rows are:
-           you pick by looking rather than by reading a number */
+        b.type='button';b.className='fx-tile tx-tile';
+        b.dataset.style=r[0];
+        /* the plain tile keeps the door older code and tests know */
+        if(!r[0]) b.setAttribute('data-tool','text');
+        var ic=document.createElement('span');ic.className='tx-tile-a';
+        ic.textContent='Aa';
         if(r[2]){
-          t.style.fontWeight=r[2].b?'700':'400';
-          if(r[2].i) t.style.fontStyle='italic';
-          t.style.fontSize=Math.max(11,Math.min(21,r[2].size*3.1))+'px';
-          if(r[2].color) t.style.color=tokVal(r[2].color);
-          if(r[2].font) t.style.fontFamily=fontCss(r[2].font);
+          ic.style.fontWeight=r[2].b?'700':'400';
+          if(r[2].i) ic.style.fontStyle='italic';
+          ic.style.fontSize=Math.max(11,Math.min(22,r[2].size*3.2))+'px';
+          if(r[2].color) ic.style.color=tokVal(r[2].color);
+          if(r[2].font) ic.style.fontFamily=fontCss(r[2].font);
         }
+        b.appendChild(ic);
+        var t=document.createElement('span');t.textContent=r[1];
         b.appendChild(t);
-        if(r[2]){
-          var n=document.createElement('span');
-          n.className='jv-stylesz';
-          n.textContent=Math.round(r[2].size*5.4)+' pt';
-          b.appendChild(n);
-        }
+        b.title=r[0]
+          ?('Draw a '+r[1]+' box'
+            +(r[2]?(' \u2014 '+Math.round(r[2].size*5.4)+' pt'):''))
+          :'Draw a plain text box \u2014 drag on the slide, or click for '
+           +'one that sizes itself';
         b.addEventListener('click',function(e){
           e.stopPropagation();
+          if(tool==='text'&&pendingStyle===r[0]){setTool('select');return;}
           pendingStyle=r[0];
-          overlayHide(menu);
-          syncCaret();
           setTool('text');
         });
-        menu.appendChild(b);
+        strip.appendChild(b);
+      });
+      mark();
+    }
+    function mark(){
+      $$('.tx-tile',strip).forEach(function(b){
+        var on=(tool==='text'&&pendingStyle===(b.dataset.style||''));
+        b.classList.toggle('on',on);
+        b.setAttribute('aria-pressed',on.toString());
       });
     }
-    btn.addEventListener('click',function(e){
-      /* stopPropagation, and no `et` class and no data-tool on this
-         button: the shared tool wiring would otherwise arm setTool(
-         undefined) off it */
-      e.stopPropagation();
-      if(menu.hidden){
-        build();overlayShow(btn,menu);floatMenu(btn,menu);
-      } else overlayHide(menu);
-    });
-    syncCaret();
-  })();
+    /* setTool calls this on every arm and disarm; the registry calls it
+       when a type is added or removed, and then the strip is rebuilt */
+    txStripSync=function(rebuild){
+      if(rebuild) build(); else mark();
+    };
+    build();
+  }
   var downBtn=$('#deck-down');
   if(downBtn) downBtn.addEventListener('click',scrollToTrace);
   var upBtn=$('#deck-up');

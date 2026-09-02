@@ -496,11 +496,8 @@
           if(lb) lb.setAttribute('aria-expanded','false');}
       });
   }
-  function closePageMenu(){
-    var pm=$('#page-menu'),pb=$('#page-btn');
-    if(pm&&!pm.hidden){overlayHide(pm);
-      if(pb) pb.setAttribute('aria-expanded','false');}
-  }
+  /* the page size is a strip of tiles now (T190); nothing to close */
+  function closePageMenu(){}
   /* ---- page size: slides or a poster — ONE builder for both. The page
      is a per-presentation preset; a poster is just a big page. ---- */
   var PAGE_PRESETS=[
@@ -622,16 +619,11 @@
     deckEl.classList.toggle('custom-page',pg.id!=='16x9');
     deckEl.classList.toggle('poster-page',!!pg.poster);
     applyPageBg();
-    var b=$('#page-btn');
-    /* the group is already called Page, so the button carries only the
-       size — "Poster A0 portrait" under a PAGE heading said "Poster" and
-       "Page" twice and was the widest control in the group */
-    if(b) b.innerHTML='&#9645; '
-      +(pg.id==='16x9'?'Page':esc(pg.label.replace(/^Poster\s+/,'')))
-      +' &#9662;';
-    $$('#page-menu .page-opt').forEach(function(o){
-      o.setAttribute('aria-pressed',
-        (o.dataset.page===pg.id).toString());});
+    /* the page-size tile in use is lit (T190) */
+    $$('#page-strip .page-tile').forEach(function(o){
+      var on=(o.dataset.page===pg.id);
+      o.classList.toggle('on',on);
+      o.setAttribute('aria-pressed',on.toString());});
     /* a poster has no slides, so it is never told about them: the ribbon
        group is "Page", and page numbering — which only means anything to
        a deck you step through — goes away entirely */

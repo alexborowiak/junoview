@@ -78,12 +78,15 @@ def test_insert_groups_by_what_a_tool_does(out):
         j = out.rindex('<span class="rbn-grp', 0, i)
         return out[j:i]
     place_g, write_g, draw_g = group("Place"), group("Write"), group("Draw")
-    for cid in ("et-cell", "et-image", "et-flip", "et-table", "ins-chart"):
+    # T188: no Chart; the text kinds are a strip; Cancel has a group
+    for cid in ("et-cell", "et-image", "et-flip", "et-table"):
         assert f'id="{cid}"' in place_g, cid
-    for cid in ("tx-type-btn", "dc-maths", "dc-md", "dc-qr"):
+    assert 'id="ins-chart"' not in out
+    for cid in ("tx-strip", "dc-maths", "dc-md", "dc-qr"):
         assert f'id="{cid}"' in write_g, cid
-    for cid in ("sh-btn", "dc-line", "et-arrow", "dc-draw", "et-cancel"):
+    for cid in ("sh-btn", "dc-line", "et-arrow", "dc-draw"):
         assert f'id="{cid}"' in draw_g, cid
+    assert 'id="et-cancel"' in group("Drawing")
     assert out.index(">Place</span>") < out.index(">Write</span>") \
         < out.index(">Draw</span>")
     place = [out.index('data-tool="cell"'), out.index('id="et-image"')]
@@ -476,10 +479,13 @@ def test_cancel_is_last_so_arming_a_tool_shifts_nothing(out):
     "appears in a weird spot, next to the options you click"
     (2026-08-29). At the end of the group, un-hiding appends.
     """
-    # the Draw group since T178 -- Cancel is still its last control
-    ins = out[out.index('id="sh-btn"'):out.index('>Draw</span>')]
-    assert ins.index('id="et-cancel"') > ins.index('id="dc-draw"')
-    assert ins.index('id="et-cancel"') > ins.index('id="et-arrow"')
+    # ...and since T188 it is a GROUP of its own, after Draw, with the
+    # mode's name and a short hint over it -- so it appears beside
+    # nothing and shifts nothing ("have it appear in its own section")
+    assert out.index('>Draw</span>') < out.index('id="et-status"') \
+        < out.index('id="et-cancel"') < out.index('>Drawing</span>')
+    assert "var stc=$('#et-status');" in out
+    assert "stc.hidden=(t==='select');" in out
 
 
 def test_the_maths_palette_keys_are_big_enough_to_read(out):

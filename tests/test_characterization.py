@@ -876,8 +876,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tab is up, the whole-slide group reworded, and the lit chip styled
 # past the colourful theme. deck.html, deck.css, core.css and two deck
 # fragments.
-EXPECTED_MD5 = "2be6aff3c247f318d9838dfd4e7b8ff3"
-EXPECTED_BYTES = 3289106
+# T187-T191 2026-09-02: group folding as the ladder's last rung; Insert
+# as a text-kind strip, Notebook cell by name, a Drawing group and no
+# Chart; the everyday text controls back in the Object tab's row; the
+# page size as tiles and Colours & spacing; a born-empty box that says
+# "Type...". deck.html, help.html, deck.css, core.css and eight deck
+# fragments.
+EXPECTED_MD5 = "e68d240e28d964117b2690ce37965823"
+EXPECTED_BYTES = 3287027
 
 
 def _render_example() -> str:
