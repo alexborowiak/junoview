@@ -1363,7 +1363,7 @@ body.light .fx-tile.on{color:#fff;}
 /* Home's layout groups follow Slides; View keeps its seat; the saved
    layouts and the refresh doors come LAST, so they are what folds first
    on a narrow window and the everyday toggles stay in view (T196) */
-.rbn-layout,.rbn-arrange{order:1;}
+.rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
 /* last, so it is what folds first on a narrow window */
 .rbn-apply{order:4;}
@@ -1374,6 +1374,29 @@ body.light .fx-tile.on{color:#fff;}
 .dbtn.dbtn-accent:hover{border-color:var(--cyan);
   background:color-mix(in srgb,var(--accent) 24%,transparent);}
 body.light .dbtn.dbtn-accent{color:var(--ink);}
+/* T202: the Keep up to date tiles -- the effect tiles' shape, wider,
+   with a bigger icon ("make them better buttons, like the animation
+   'effect', full height") -- and the All images pane's rows */
+.big-strip{gap:4px;}
+.fx-tile.big-tile{width:74px;font-size:10.5px;
+  border-color:color-mix(in srgb,var(--accent) 50%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.fx-tile.big-tile .bic{width:24px;height:24px;}
+.fx-tile.big-tile[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);color:#fff;}
+.img-row{display:flex;align-items:center;gap:8px;padding:6px 7px;
+  border-radius:7px;cursor:pointer;color:#c9d6e2;}
+.img-row:hover{background:#ffffff0c;}
+.img-th{flex:none;width:46px;height:32px;border-radius:4px;
+  background:var(--chrome-0,#0b141d);border:1px solid #ffffff14;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.img-th img{width:100%;height:100%;object-fit:cover;display:block;}
+.img-th .bic{width:18px;height:18px;opacity:.7;}
+.img-mid{flex:1;min-width:0;}
+.img-t{font-size:12px;}
+.img-from{font-family:var(--mono);font-size:10px;color:#8ba0b2;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.light .img-row{color:var(--ink-2);}
 /* a saved layout's tile: the dialog's thumbnail at tile size */
 .lay-strip .lay-savedth{display:block;overflow:hidden;}
 .lay-strip .lay-savedth>*{width:100%;height:100%;}

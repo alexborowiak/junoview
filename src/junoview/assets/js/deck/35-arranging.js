@@ -1148,7 +1148,11 @@
         window.SemDeckMatchMany();
     });
     both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
-    both('#lay-masters','#hm-lay-masters',function(){
+    /* Home's Masters door is gone (T202: "in an odd spot"); Design
+       has two, on Page furniture and in its Layouts menu */
+    var lm2=$('#lay-masters');
+    if(lm2) lm2.addEventListener('click',function(e){
+      e.stopPropagation();shut();
       if(window.SemDeckMasters) window.SemDeckMasters();});
     /* the first-class doors (T144): the same verbs, on the ribbon */
     var dm2=$('#dsg-masters');
@@ -1322,14 +1326,13 @@
       var lb=document.createElement('span');lb.className='lay-lb';
       lb.textContent=arr.label||('Saved '+(i+1));
       b.appendChild(lb);
-      b.title='Your saved layout \u201c'+(arr.label||'')+'\u201d \u2014 lay this '
-        +'slide out like it';
+      b.title='New slide laid out like your saved \u201c'+(arr.label||'')
+        +'\u201d';
       b.addEventListener('click',function(e){
         e.stopPropagation();
-        var n=arrApply(arr,cur);
-        markDirty();refresh();
-        toast(n?(n+' thing'+(n===1?'':'s')+' moved to match \u201c'
-          +(arr.label||'')+'\u201d'):'Nothing here matched that layout');
+        /* a NEW slide carrying the saved shapes (T202); the dialog's
+           Apply is what lays an existing slide out like one */
+        newVersion(null,arr);
       });
       strip.appendChild(b);
     });

@@ -485,6 +485,15 @@
             pres.slides.push(emptySlide());
             cur=0;
           }
+          /* ON HOME, A TILE MAKES A SLIDE (T202): the strip is the New
+             slide gallery, and changing THIS slide's layout is the
+             Design menu's job ("you can't create a new layout with the
+             layouts there, you can only change the layout") */
+          if(sel==='#layout-strip'){
+            if(!layout.poster) lsSet(newLayKey(),layout.id);
+            newVersion(layout);
+            return;
+          }
           var s=pres.slides[cur]; if(!s) return;
           applyLayout(s,layout);
           /* the next New slide takes this layout (T193); a poster

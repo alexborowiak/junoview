@@ -194,7 +194,8 @@ def test_a_new_version_is_a_copy_and_names_itself(out):
     replace the strip's content-derived titles -- which are the whole
     reason the strip is readable -- with numbering.
     """
-    assert "function newVersion(){" in out
+    # (a Home tile may name the layout, or a saved layout's shapes: T202)
+    assert "function newVersion(lay,arr){" in out
     assert "function nextVersionName(){" in out
     assert "return 'Version '+(n+1);" in out
     # the page you were on is named too, so the two read as a pair

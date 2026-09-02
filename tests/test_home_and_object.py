@@ -29,19 +29,38 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     # ...regrouped by what you are doing in T201: make a slide, lay it
     # out (built-in and saved layouts as one strip), arrange what is on
     # it, keep the sources fresh, push a layout to other slides
-    for lab in ("Slides", "Layout", "Arrange this slide", "Keep up to date",
-                "Apply to other slides"):
+    # ...and again in T202 ("the groupings still make no sense"): a tile
+    # on Home MAKES a slide, This slide holds what you do to it, Keep up
+    # to date is three tall tiles, Masters went back to Design
+    for lab in ("New slide", "This slide", "Arrange this slide",
+                "Keep up to date", "Apply to other slides"):
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab
-    assert '<span class="rbn-lab">Saved layouts</span>' not in out
+    for gone in ("Saved layouts", "Sources", "Slides"):
+        assert f'<span class="rbn-lab">{gone}</span>' not in out, gone
+    assert 'id="hm-lay-masters"' not in out
     assert "function syncSavedTiles(){" in out
     assert "b.type='button';b.className='dbtn lay lay-saved';" in out
     assert "if(typeof syncSavedTiles==='function') syncSavedTiles();" in out
-    assert 'class="dbtn rbn-sm dbtn-accent" id="hm-refresh-figs"' in out
+    # the strip's tile makes a slide; the Design menu's changes this one
+    assert "if(sel==='#layout-strip'){" in out
+    assert "function newVersion(lay,arr){" in out
+    assert "newVersion(null,arr);" in out
+    assert "ns.annots=deep(arr.annots);" in out
+    for tile in ("hm-refresh-figs", "hm-refresh-img", "hm-images"):
+        assert f'class="fx-tile big-tile" id="{tile}"' in out, tile
+    assert ".fx-tile.big-tile{width:74px;" in out
+    # ...and it never folds: the point of it is to be seen
+    assert "&&!g.classList.contains('rbn-sources')" in out
+    # the All images pane
+    assert 'class="selpane imgpane" id="imgpane" hidden' in out
+    assert "function renderImgPane(){" in out
+    assert "imgpane:'#hm-images'," in out
+    assert "if(lockMode(a2)) delete a2.lock; else a2.lock='pos';" in out
     assert 'id="layout-strip"' in out
     assert "['#layout-row','#layout-menu-grid','#layout-strip']" in out
     assert "#layout-menu-grid .lay,#layout-strip .lay" in out
     for cid in ("hm-lay-ideas", "hm-lay-tidy", "hm-lay-arrs", "hm-lay-arrsave",
-                "hm-lay-give", "hm-lay-masters"):
+                "hm-lay-give"):
         assert f'id="{cid}"' in out, cid
     for gone in ('id="hm-lay"', 'id="hm-laywrap"', 'id="hm-lay-menu"',
                  'id="layout-home-grid"'):
@@ -51,7 +70,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "var m2=$('#mi-refresh-img'); if(m2) m2.click();});" in out
     assert "var m3=$('#mi-refresh-figs'); if(m3) m3.click();});" in out
     # the rarer two sit last, so they fold first and View stays in sight
-    assert ".rbn-layout,.rbn-arrange{order:1;}" in out
+    assert ".rbn-layout,.rbn-this,.rbn-arrange{order:1;}" in out
     assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:4;}" in out
     assert ".lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}" in out
 

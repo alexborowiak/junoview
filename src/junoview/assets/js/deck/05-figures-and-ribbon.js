@@ -1597,6 +1597,9 @@
         &&!g.classList.contains('rbn-folded')
         &&!g.classList.contains('rbn-fixed')
         &&!g.classList.contains('rbn-seq')
+        /* Keep up to date never folds (T202: the point of it is to be
+           seen) */
+        &&!g.classList.contains('rbn-sources')
         &&!g.classList.contains('rbn-cancel');});
     if(!gs.length) return false;
     gs.sort(function(x,y){
@@ -1924,9 +1927,11 @@
      enumerates sibling selectors again, so a new pane cannot fork the
      list a tenth time. */
   var PANE_IDS=['selpane','animpane','verpane','notespane','preflight',
+    'imgpane',
     'stdpane','tidypane','flippane','provpane','sizepane','objhist',
     'reviewpane'];
   var PANE_BTN={selpane:'#objects-btn',animpane:'#vw-anim',
+    imgpane:'#hm-images',
     notespane:'#notes-btn',reviewpane:'#vw-check',stdpane:'#dsg-std'};
   function paneSyncBtns(){
     Object.keys(PANE_BTN).forEach(function(p){
@@ -2805,6 +2810,7 @@
     }).observe(pane);
   }
   ['selpane','animpane','notespane','verpane','preflight','varspane',
+   'imgpane',
    'stdpane','tidypane','objhist','provpane','flippane','sizepane']
     .forEach(function(id){wirePane(document.getElementById(id));});
   (function(){

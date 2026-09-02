@@ -525,7 +525,7 @@
       if(kind==='image'&&a.fname) from=a.fname;
       else if(kind==='cell'&&a.ref){
         var ci2=resolveRef(a.ref);
-        from=(ci2&&ci2.stem)?ci2.stem:String(a.ref);
+        from=(ci2&&(ci2.stem||ci2.nb))||String(a.ref);
       }
       pth.hidden=!from;
       if(from){

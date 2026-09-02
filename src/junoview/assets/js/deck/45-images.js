@@ -123,6 +123,95 @@
         +names,9000);
     });
   }
+  /* ---- ALL IMAGES (T202) ----------------------------------------------
+     Every picture and figure across the deck in one list: the slide,
+     the kind, where it came from (a picture's file, a figure's
+     notebook), and its lock, toggled from the row. Rendered on open
+     and on the reload button, never from markDirty -- the survey
+     walks every slide. */
+  function renderImgPane(){
+    var list=$('#imgpane-list'); if(!list) return;
+    list.innerHTML='';
+    var rows=[];
+    (pres.slides||[]).forEach(function(s,si){
+      (s.annots||[]).forEach(function(a,ai){
+        if(!a) return;
+        if(a.k==='image')
+          rows.push({si:si,ai:ai,a:a,kind:'Picture',
+            from:a.fname||'pasted or dropped \u2014 no file to reload'});
+        else if(a.k==='cell'&&a.ref){
+          var ci=resolveRef(a.ref);
+          rows.push({si:si,ai:ai,a:a,kind:'Figure',
+            from:(ci&&(ci.stem||ci.nb))||String(a.ref)});
+        }
+      });
+    });
+    if(!rows.length){
+      list.innerHTML='<div class="selpane-empty">No pictures or figures '
+        +'on any slide yet.</div>';
+      return;
+    }
+    rows.forEach(function(r){
+      var row=document.createElement('div');row.className='img-row';
+      var th=document.createElement('div');th.className='img-th';
+      if(r.kind==='Picture'&&r.a.src){
+        var im=document.createElement('img');im.src=r.a.src;im.alt='';
+        th.appendChild(im);
+      } else th.innerHTML=bic('cellcard');
+      row.appendChild(th);
+      var mid=document.createElement('div');mid.className='img-mid';
+      var t=document.createElement('div');t.className='img-t';
+      t.textContent='Slide '+(r.si+1)+' \u00b7 '+r.kind;
+      mid.appendChild(t);
+      var f=document.createElement('div');f.className='img-from';
+      f.textContent=r.from;f.title=r.from;
+      mid.appendChild(f);
+      row.appendChild(mid);
+      var lm=lockMode(r.a);
+      var lk=document.createElement('button');
+      lk.className='sp-act'+(lm?' on':'')+(lm==='pos'?' half':'');
+      lk.type='button';
+      lk.innerHTML=bic(lm==='pos'?'pin':'lock');
+      lk.title=lm===''?'Not locked. Click to lock its position'
+        :lm==='pos'?'Position locked. Click to unlock'
+        :'Fully locked. Click to unlock';
+      lk.setAttribute('aria-label',lk.title);
+      lk.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+        if(!a2) return;
+        if(lockMode(a2)) delete a2.lock; else a2.lock='pos';
+        markDirty();
+        if(r.si===cur){
+          var l=stage.querySelector('.annot-layer');
+          if(l){renderAnnots(l,s2);paintSel(l);}
+        }
+        renderImgPane();
+      });
+      row.appendChild(lk);
+      row.title='Go to it';
+      row.addEventListener('click',function(){
+        go(r.si);
+        var l=stage.querySelector('.annot-layer');
+        if(l) selectAnnot(l,r.ai);
+      });
+      list.appendChild(row);
+    });
+  }
+  function imgPaneBoot(){
+    var btn=$('#hm-images'),pane=$('#imgpane');
+    if(!btn||!pane) return;
+    function set(open){
+      if(open){paneShow('imgpane');renderImgPane();}
+      else paneHide('imgpane');
+    }
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();set(pane.hidden);});
+    var cl=$('#imgpane-close');
+    if(cl) cl.addEventListener('click',function(){set(false);});
+    var rr=$('#imgpane-rerun');
+    if(rr) rr.addEventListener('click',renderImgPane);
+  }
   (function(){
     /* the Home tab's doors (T196): the File menu rows have always done
        this, and nobody found them there */

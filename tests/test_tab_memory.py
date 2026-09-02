@@ -31,7 +31,8 @@ def test_new_slide_takes_the_layout_you_last_chose(out):
     slides, and are not remembered."""
     assert "function newLayKey(){return 'jv-deck-newlay:'+SCOPE;}" in out
     assert "function layoutById(id){" in out
-    assert "var lay=layoutById(lsGet(newLayKey())||'cell-text');" in out
+    # (unless a Home tile named one: T202)
+    assert "lay=lay||layoutById(lsGet(newLayKey())||'cell-text');" in out
     assert "if(lay&&!lay.poster) applyLayout(ns,lay);" in out
     assert "if(!layout.poster) lsSet(newLayKey(),layout.id);" in out
     # the two layouts that carried a title without saying so
@@ -45,9 +46,11 @@ def test_the_words_on_the_tabs_say_what_happens(out):
     """T194. A pass over the tooltips and menu rows against one test:
     would a first-time reader know what happens when they press it?"""
     # the Layouts menus lose their private vocabulary
-    assert "My saved layouts&#8230;" in out
-    assert "Save this layout&#8230;" in out
-    assert "Copy this layout to other slides&#8230;" in out
+    # (shortened in T202 so five groups fit a laptop; the tooltips
+    # still say the whole thing)
+    assert "Saved layouts&#8230;" in out
+    assert "Save layout&#8230;" in out
+    assert "Copy layout to slides&#8230;" in out
     assert "Arrangements&#8230;</button>" not in out
     # Standardise says what it checks, on the button and in the pane
     assert ('title="Find text that should match but does not '
@@ -55,9 +58,9 @@ def test_the_words_on_the_tabs_say_what_happens(out):
         'title="Find text that should match but does not — headings' in out
     assert '<div class="pf-intro">Text that should look the same but does' in out
     assert "<span>Standardise</span>" in out
-    # masters, in one sentence, in all three places
+    # masters, in one sentence, in both places (Home's door left in T202)
     assert out.count("A background and a header or footer that many slides "
-                     "share") == 3
+                     "share") == 2
     # the Source rows
     assert "Where it came from&#8230;" in out
     assert "Keep this exact figure even when the notebook is re-run" in out

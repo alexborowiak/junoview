@@ -46,6 +46,7 @@
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
   shapeStripBoot();           /* the shapes, as tiles (T197) */
+  imgPaneBoot();              /* the All images pane's door (T202) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */

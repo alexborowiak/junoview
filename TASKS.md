@@ -4105,6 +4105,33 @@ option. Then where has the ability to refresh all images gone?"
   it folds first on a narrow window. The dialog behind My saved
   layouts… uses the ribbon's words: Saved layouts, Your saved layouts,
   Save this slide's layout, Apply it to these slides, Apply.
+- [x] **T202 · M — Home by what you do, tiles that make a slide, and
+  an All images pane.**
+  The user (2026-09-02, on T201): "The groupings still make no sense.
+  Also you can't create a new layout with the layouts there, you can
+  only change the layout. Also, when I said make things more
+  prominent, I didn't just mean make the buttons longer. I meant make
+  them better buttons, like the animation 'effect', have them as full
+  height width with better icons. Also the Masters thing is in an odd
+  spot, I hate that. Also there should a global image view, that
+  shows you all the images that there are and their paths, and if they
+  are locked or not."
+  *Done 2026-09-02.* **New slide**: the plain button, then every
+  layout — built in and saved — as a tile that MAKES a slide laid out
+  that way (a saved one carries its shapes onto the new slide);
+  changing THIS slide's layout is Design's Layouts door, and the two
+  menus still do that. **This slide**: Duplicate, Delete, Save this
+  layout…, My saved layouts…. **Arrange this slide** as it was.
+  **Keep up to date**: Update figures, Reload pictures and All images
+  as three tall tiles the shape of the effect tiles, a bigger icon
+  over the words, in the accent. **Apply to other slides**: Match
+  slide and Copy this layout to other slides…; Masters left Home for
+  good — Design has it twice, on Page furniture and in its Layouts
+  menu. The **All images** pane lists every picture and figure across
+  the deck: slide, kind, where it came from (a picture's file or
+  "pasted or dropped", a figure's notebook), and its lock, toggled
+  from the row; a row goes to the thing and selects it. Rendered on
+  open and on its Read again button, never from markDirty.
 
 
 ## Cut (and why)

@@ -473,9 +473,10 @@ def test_both_layout_doors_are_called_the_same_thing(out):
     # paragraph one -- so it is deliberately left alone.)
     lay = out[out.index('id="lay-btn"'):]
     assert "Layouts &#9662;" in lay[:lay.index("</button>")]
-    # Home's door became the tiles themselves (T196), under one word
+    # Home's door became the tiles themselves (T196); since T202 a tile
+    # there MAKES a slide, so the group is New slide
     assert 'id="layout-strip"' in out
-    assert '<span class="rbn-lab">Layout</span>' in out
+    assert '<span class="rbn-lab">New slide</span>' in out
     assert 'id="hm-lay"' not in out
 
 

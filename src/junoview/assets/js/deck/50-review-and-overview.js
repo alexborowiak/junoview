@@ -2434,7 +2434,12 @@
     });
     return 'Version '+(n+1);
   }
-  function newVersion(){
+  /* `lay` is a layout from the catalogue when a Home tile asked for
+     this slide (T202), `arr` a saved layout whose shapes it should
+     carry; the film strip's + passes its click event, which is
+     neither */
+  function newVersion(lay,arr){
+    if(!(lay&&lay.items)) lay=null;
     var at=pres.slides.length?cur+1:0;
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
@@ -2447,8 +2452,12 @@
          user: "when click add new it should remember the last one you
          added. The default slide choice should be the panel, title,
          text"). Blank is still one pick away. */
-      var lay=layoutById(lsGet(newLayKey())||'cell-text');
-      if(lay&&!lay.poster) applyLayout(ns,lay);
+      if(arr&&arr.annots){
+        ns.annots=deep(arr.annots);
+      } else {
+        lay=lay||layoutById(lsGet(newLayKey())||'cell-text');
+        if(lay&&!lay.poster) applyLayout(ns,lay);
+      }
       pres.slides.splice(at,0,ns);
     } else {
       var src=pres.slides[cur];

@@ -898,8 +898,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # as tiles in the layout strip, the two refresh doors in the accent, and
 # the saved-layouts dialog in the ribbon's words. deck.html, deck.css,
 # core.css and three deck fragments.
-EXPECTED_MD5 = "fcc955beff635f25a31d2c476120a92f"
-EXPECTED_BYTES = 3301850
+# T202 2026-09-02: Home by what you do -- a tile makes a slide, Keep up
+# to date as tall tiles, Masters back to Design -- and the All images
+# pane. deck.html, deck.css, core.css and seven deck fragments.
+EXPECTED_MD5 = "ec56b4448b27727d8eb068c181a24c07"
+EXPECTED_BYTES = 3309134
 
 
 def _render_example() -> str:
