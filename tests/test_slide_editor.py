@@ -2717,12 +2717,12 @@ def test_the_figure_lint_is_named_where_it_is_opened(out):
     headed "Standardise text" and its count line counted text boxes
     (2026-08-26 audit, T58).
     """
-    assert "Standardise</button>" in out
+    assert "Fix mismatched text&#8230;</button>" in out   # T204's name for it
     # the tooltip names the figures too, in plain words since T194
     assert "and figures placed at different sizes" in out
     # the one word the ribbon uses, with a line under it saying what the
     # check checks (T194)
-    assert "<span>Standardise</span>" in out
+    assert "<span>Mismatched text</span>" in out
     assert '<div class="pf-intro">Text that should look the same but does' in out
     # ...and the count includes them, or a deck whose only problem is its
     # figures reads "nothing drifting" above a list of figure findings

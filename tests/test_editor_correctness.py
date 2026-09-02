@@ -713,7 +713,7 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
     SET this page belongs to, which is the same subject as Layouts and Page
     size.
     """
-    slide = out.split('class="rbn-grp rbn-fixed rbn-slide"')[1].split(
+    slide = out.split('class="rbn-grp rbn-slide"')[1].split(
         ">Slide</span>")[0]
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]

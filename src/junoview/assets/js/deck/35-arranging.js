@@ -1135,25 +1135,23 @@
        handler, both ids */
     function both(idA,idB,fn){
       [idA,idB].forEach(function(id){
-        var el=$(id); if(!el) return;
+        var el=id?$(id):null; if(!el) return;
         el.addEventListener('click',function(e){
           e.stopPropagation();shut();fn();});
       });
     }
-    both('#lay-arrs','#hm-lay-arrs',function(){
+    /* ONE DOOR EACH (T204). The Layouts menu's rows are gone -- the
+       same verbs are the Layout group on Design, beside the menu --
+       so `both` wires one id now, and Masters' only door is Page
+       furniture's. */
+    both('#hm-lay-arrs',null,function(){
       if(typeof window.SemDeckArrange==='function') window.SemDeckArrange();
     });
-    both('#lay-give','#hm-lay-give',function(){
+    both('#hm-lay-give',null,function(){
       if(typeof window.SemDeckMatchMany==='function')
         window.SemDeckMatchMany();
     });
-    both('#lay-ideas-btn','#hm-lay-ideas',function(){openLayoutIdeas();});
-    /* Home's Masters door is gone (T202: "in an odd spot"); Design
-       has two, on Page furniture and in its Layouts menu */
-    var lm2=$('#lay-masters');
-    if(lm2) lm2.addEventListener('click',function(e){
-      e.stopPropagation();shut();
-      if(window.SemDeckMasters) window.SemDeckMasters();});
+    both('#hm-lay-ideas',null,function(){openLayoutIdeas();});
     /* the first-class doors (T144): the same verbs, on the ribbon */
     var dm2=$('#dsg-masters');
     if(dm2) dm2.addEventListener('click',function(e){
@@ -1164,7 +1162,7 @@
        never wanted that... get rid of it"). The feature is still
        reachable from a placed table's right-click, Turn into a chart. */
     var sv=null;
-    ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
+    ['#hm-lay-arrsave'].forEach(function(id){
       var el=$(id); if(!el) return;
       el.addEventListener('click',function(e){
       e.stopPropagation();shut();
@@ -1895,7 +1893,7 @@
     /* both copies of the Layouts menu (T131): the Home one used to hide
        the tidy row entirely, so the same-named button did less work
        depending on the tab */
-    var hosts=['#lay-tidy','#hm-lay-tidy'].map(function(sel){
+    var hosts=['#hm-lay-tidy'].map(function(sel){
       return $(sel);}).filter(Boolean);
     if(!hosts.length) return;
     var host={querySelectorAll:function(q){

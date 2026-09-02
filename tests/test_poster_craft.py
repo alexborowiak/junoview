@@ -458,8 +458,10 @@ def test_the_slides_group_reads_in_the_order_asked_for(out):
     order = [out.index('id="hm-newslide"'), out.index('id="hm-dupslide"'),
              out.index('id="hm-delslide"')]
     assert order == sorted(order), "the Slides group is out of order"
-    # Match slide moved to Apply to other slides (T201), after the strip
-    assert out.index('id="layout-strip"') < out.index('id="hm-match"')
+    # Match slide moved to Apply to other slides (T201), and that group
+    # to Design (T204), where every layout verb lives
+    i = out.index('id="hm-match"')
+    assert 'data-tab="design"' in out[out.rfind('<span class="rbn-grp', 0, i):i]
 
 
 def test_both_layout_doors_are_called_the_same_thing(out):
@@ -472,7 +474,8 @@ def test_both_layout_doors_are_called_the_same_thing(out):
     # (#fmt-para is also called "Layout" and is a different feature -- the
     # paragraph one -- so it is deliberately left alone.)
     lay = out[out.index('id="lay-btn"'):]
-    assert "Layouts &#9662;" in lay[:lay.index("</button>")]
+    # (Change layout since T204: it changes THIS slide's; Home's tiles add one)
+    assert "Change layout &#9662;" in lay[:lay.index("</button>")]
     # Home's door became the tiles themselves (T196); since T202 a tile
     # there MAKES a slide, so the group is New slide
     assert 'id="layout-strip"' in out

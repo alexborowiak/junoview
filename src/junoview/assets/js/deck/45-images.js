@@ -129,74 +129,116 @@
      notebook), and its lock, toggled from the row. Rendered on open
      and on the reload button, never from markDirty -- the survey
      walks every slide. */
+  /* one slide's pictures and figures, in slide order */
+  function imgSurvey(si){
+    var s=pres.slides[si],rows=[];
+    if(!s) return rows;
+    (s.annots||[]).forEach(function(a,ai){
+      if(!a) return;
+      if(a.k==='image')
+        rows.push({si:si,ai:ai,a:a,kind:'Picture',
+          from:a.fname||'pasted or dropped — no file to reload'});
+      else if(a.k==='cell'&&a.ref){
+        var ci=resolveRef(a.ref);
+        rows.push({si:si,ai:ai,a:a,kind:'Figure',
+          from:(ci&&(ci.stem||ci.nb))||String(a.ref)});
+      }
+    });
+    return rows;
+  }
+  /* one row: thumbnail, kind, where from, the pin. `after` runs once
+     the row has taken you to the thing (the full-screen view closes) */
+  function imgRow(r,after){
+    var row=document.createElement('div');row.className='img-row';
+    var th=document.createElement('div');th.className='img-th';
+    if(r.kind==='Picture'&&r.a.src){
+      var im=document.createElement('img');im.src=r.a.src;im.alt='';
+      th.appendChild(im);
+    } else th.innerHTML=bic('cellcard');
+    row.appendChild(th);
+    var mid=document.createElement('div');mid.className='img-mid';
+    var t=document.createElement('div');t.className='img-t';
+    t.textContent=r.kind;
+    mid.appendChild(t);
+    var f=document.createElement('div');f.className='img-from';
+    f.textContent=r.from;f.title=r.from;
+    mid.appendChild(f);
+    row.appendChild(mid);
+    var lm=lockMode(r.a);
+    var lk=document.createElement('button');
+    lk.className='sp-act'+(lm?' on':'')+(lm==='pos'?' half':'');
+    lk.type='button';
+    lk.innerHTML=bic(lm==='pos'?'pin':'lock');
+    lk.title=lm===''?'Not locked. Click to lock its position'
+      :lm==='pos'?'Position locked. Click to unlock'
+      :'Fully locked. Click to unlock';
+    lk.setAttribute('aria-label',lk.title);
+    lk.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+      if(!a2) return;
+      if(lockMode(a2)) delete a2.lock; else a2.lock='pos';
+      markDirty();
+      if(r.si===cur){
+        var l=stage.querySelector('.annot-layer');
+        if(l){renderAnnots(l,s2);paintSel(l);}
+      }
+      renderImgPane();
+      var ov=$('#img-ov'); if(ov&&!ov.hidden) renderImgOverview();
+    });
+    row.appendChild(lk);
+    row.title='Select it';
+    row.addEventListener('click',function(){
+      if(r.si!==cur) go(r.si);
+      var l=stage.querySelector('.annot-layer');
+      if(l) selectAnnot(l,r.ai);
+      if(after) after();
+    });
+    return row;
+  }
+  /* THE PANE IS THIS SLIDE'S (T204; 2026-09-02, user: "the all images
+     thing should just be per slide"). */
   function renderImgPane(){
     var list=$('#imgpane-list'); if(!list) return;
     list.innerHTML='';
-    var rows=[];
-    (pres.slides||[]).forEach(function(s,si){
-      (s.annots||[]).forEach(function(a,ai){
-        if(!a) return;
-        if(a.k==='image')
-          rows.push({si:si,ai:ai,a:a,kind:'Picture',
-            from:a.fname||'pasted or dropped \u2014 no file to reload'});
-        else if(a.k==='cell'&&a.ref){
-          var ci=resolveRef(a.ref);
-          rows.push({si:si,ai:ai,a:a,kind:'Figure',
-            from:(ci&&(ci.stem||ci.nb))||String(a.ref)});
-        }
-      });
-    });
+    var rows=imgSurvey(cur);
     if(!rows.length){
       list.innerHTML='<div class="selpane-empty">No pictures or figures '
-        +'on any slide yet.</div>';
+        +'on this slide.</div>';
       return;
     }
-    rows.forEach(function(r){
-      var row=document.createElement('div');row.className='img-row';
-      var th=document.createElement('div');th.className='img-th';
-      if(r.kind==='Picture'&&r.a.src){
-        var im=document.createElement('img');im.src=r.a.src;im.alt='';
-        th.appendChild(im);
-      } else th.innerHTML=bic('cellcard');
-      row.appendChild(th);
-      var mid=document.createElement('div');mid.className='img-mid';
-      var t=document.createElement('div');t.className='img-t';
-      t.textContent='Slide '+(r.si+1)+' \u00b7 '+r.kind;
-      mid.appendChild(t);
-      var f=document.createElement('div');f.className='img-from';
-      f.textContent=r.from;f.title=r.from;
-      mid.appendChild(f);
-      row.appendChild(mid);
-      var lm=lockMode(r.a);
-      var lk=document.createElement('button');
-      lk.className='sp-act'+(lm?' on':'')+(lm==='pos'?' half':'');
-      lk.type='button';
-      lk.innerHTML=bic(lm==='pos'?'pin':'lock');
-      lk.title=lm===''?'Not locked. Click to lock its position'
-        :lm==='pos'?'Position locked. Click to unlock'
-        :'Fully locked. Click to unlock';
-      lk.setAttribute('aria-label',lk.title);
-      lk.addEventListener('click',function(e){
-        e.stopPropagation();
-        var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
-        if(!a2) return;
-        if(lockMode(a2)) delete a2.lock; else a2.lock='pos';
-        markDirty();
-        if(r.si===cur){
-          var l=stage.querySelector('.annot-layer');
-          if(l){renderAnnots(l,s2);paintSel(l);}
-        }
-        renderImgPane();
+    rows.forEach(function(r){list.appendChild(imgRow(r));});
+  }
+  /* THE FULL-SCREEN VIEW IS EVERY SLIDE'S, under a heading per slide
+     that folds ("have headings that are collapsible for all slides"). */
+  function renderImgOverview(){
+    var body=$('#img-ov-body'); if(!body) return;
+    body.innerHTML='';
+    var total=0,withAny=0;
+    (pres.slides||[]).forEach(function(s,si){
+      var rows=imgSurvey(si);
+      if(!rows.length) return;
+      withAny++;total+=rows.length;
+      var d=document.createElement('details');d.className='img-sec';
+      d.open=true;
+      var sm=document.createElement('summary');
+      sm.textContent='Slide '+(si+1)+' — '
+        +(String(slideTitle(s)||'').trim()||'untitled').slice(0,60)
+        +' · '+rows.length;
+      d.appendChild(sm);
+      var grid=document.createElement('div');grid.className='img-rows';
+      rows.forEach(function(r){
+        grid.appendChild(imgRow(r,function(){overlayHide($('#img-ov'));}));
       });
-      row.appendChild(lk);
-      row.title='Go to it';
-      row.addEventListener('click',function(){
-        go(r.si);
-        var l=stage.querySelector('.annot-layer');
-        if(l) selectAnnot(l,r.ai);
-      });
-      list.appendChild(row);
+      d.appendChild(grid);
+      body.appendChild(d);
     });
+    var sub=$('#img-ov-sub');
+    if(sub) sub.textContent=total?(total+' on '+withAny+' slide'
+      +(withAny===1?'':'s')):'';
+    if(!total)
+      body.innerHTML='<div class="selpane-empty">No pictures or figures '
+        +'on any slide yet.</div>';
   }
   function imgPaneBoot(){
     var btn=$('#hm-images'),pane=$('#imgpane');
@@ -211,6 +253,18 @@
     if(cl) cl.addEventListener('click',function(){set(false);});
     var rr=$('#imgpane-rerun');
     if(rr) rr.addEventListener('click',renderImgPane);
+    /* the full-screen view: an overlay the owner closes on Escape */
+    var all=$('#imgpane-all'),ov=$('#img-ov');
+    if(all&&ov) all.addEventListener('click',function(e){
+      e.stopPropagation();renderImgOverview();overlayShow(all,ov);});
+    var oc=$('#img-ov-close');
+    if(oc) oc.addEventListener('click',function(){overlayHide(ov);});
+    var oo=$('#img-ov-open');
+    if(oo) oo.addEventListener('click',function(){
+      $$('.img-sec',ov).forEach(function(d){d.open=true;});});
+    var of=$('#img-ov-fold');
+    if(of) of.addEventListener('click',function(){
+      $$('.img-sec',ov).forEach(function(d){d.open=false;});});
   }
   (function(){
     /* the Home tab's doors (T196): the File menu rows have always done

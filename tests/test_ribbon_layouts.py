@@ -451,16 +451,19 @@ def test_home_and_design_layouts_menus_carry_the_same_rows(out):
     auto-arrange row, the ideas row and the saved arrangements --
     two-thirds of the layout system, depending on the tab. Twin ids,
     one set of wiring, and every handler shuts BOTH menus."""
+    # ...and since T204 there is ONE set: the rows left the Design menu
+    # (it is the grid alone) and the same verbs are the Layout group
+    # beside it, so each has one id and one seat
     for i in ("hm-lay-ideas", "hm-lay-tidy", "hm-lay-arrs",
-              "hm-lay-arrsave", "hm-lay-give", "lay-ideas-btn"):
+              "hm-lay-arrsave", "hm-lay-give"):
         assert f'id="{i}"' in out
-    assert "var hosts=['#lay-tidy','#hm-lay-tidy']" in out
-    assert "both('#lay-arrs','#hm-lay-arrs',function(){" in out
-    assert ("both('#lay-ideas-btn','#hm-lay-ideas',"
-            "function(){openLayoutIdeas();});") in out
-    # Home's menu opened out into groups (T196): the same rows are
-    # ribbon buttons now, and there is no Home menu left to close
-    assert '<span class="rbn-lab">Arrange this slide</span>' in out
+    for gone in ("lay-ideas-btn", "lay-tidy", "lay-arrs", "lay-arrsave",
+                 "lay-give", "lay-masters"):
+        assert f'id="{gone}"' not in out, gone
+    assert "var hosts=['#hm-lay-tidy']" in out
+    assert "both('#hm-lay-arrs',null,function(){" in out
+    assert "both('#hm-lay-ideas',null,function(){openLayoutIdeas();});" in out
+    assert '<span class="rbn-lab">Layout</span>' in out
     assert '<span class="rbn-lab">Apply to other slides</span>' in out
     assert "$('#hm-lay-menu')" not in out
 

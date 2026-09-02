@@ -904,8 +904,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T203 2026-09-02: every tile strip in a frame with a real scrollbar and
 # a Show-all door; an empty text box stays visible. deck.html, deck.css
 # and three deck fragments.
-EXPECTED_MD5 = "1817aad931102d585422bfe395223fe0"
-EXPECTED_BYTES = 3317210
+# T204 2026-09-02: layout lives on Design (the Layouts menu is the grid
+# alone), Home is New slide / This slide / Keep up to date, Standardise
+# says what it does, the images pane is per slide with a full-screen
+# All images. deck.html, deck.css and two deck fragments.
+EXPECTED_MD5 = "abb510db7e6fe898276894bd6340a917"
+EXPECTED_BYTES = 3319918
 
 
 def _render_example() -> str:

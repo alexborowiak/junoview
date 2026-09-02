@@ -4152,6 +4152,35 @@ option. Then where has the ability to refresh all images gone?"
   no longer vanishes when you click away: the "Type…" placeholder no
   longer waits for the caret, and a box with nothing in it wears a
   faint dashed edge until it has words.
+- [x] **T204 · M — Layout lives on Design; Home is three things; images
+  per slide, and all of them full screen.**
+  The user (2026-09-02): "the Design page should include all the
+  layout stuff I reckon. The arrange this slide, the save layout, and
+  layouts, and the match slide, and copy layout to slides should all
+  be on design tab. Oh there is already a layouts on the design. I
+  think this is getting confusing all the parts everywhere. Need to
+  think about this properly. The standardise thing under type is
+  confusing as well. Like I know what it is, but other people won't."
+  On the images pane: "I like this small view. However, I reckon there
+  needs to be a full screen version of this as well. And also don't
+  have Slide 1. Picture. Have headings that are collapsible for all
+  slides. The all images thing should just be per slide." And: "put
+  the new slide on the left hand side and make it a full button."
+  *Done 2026-09-02.* The rule: **one subject, one place, one name.**
+  **Design ▸ Layout** is everything you do to this slide's layout:
+  Change layout ▾ (the grid alone — its rows are gone), Layout ideas…,
+  Tight/Normal/Airy, Save layout…, Saved layouts…. **Design ▸ Apply to
+  other slides**: Match slide ▾, Copy layout to slides…. Masters stays
+  on Page furniture, its only door. **Home** is three things: New
+  slide — a tall tile at the left, then the layout tiles that add one
+  laid out another way — This slide (Duplicate, Delete), Keep up to
+  date. **Standardise** became **Fix mismatched text…**, and its pane
+  is headed Mismatched text. The images pane is **Images on this
+  slide** — rows say Picture or Figure, no slide number — with an
+  **Every slide** door to a full-screen **All images** view: one
+  heading per slide that has any, each folding on a click, Open all /
+  Fold all, the same rows bigger; a row selects the thing and closes
+  the view.
 
 
 ## Cut (and why)

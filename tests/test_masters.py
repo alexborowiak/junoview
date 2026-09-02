@@ -68,11 +68,11 @@ def test_the_masters_panel_has_doors_where_layouts_live():
     the slide right-click, which names what the slide wears."""
     out = _out()
     html = assets.deck_html()
-    # Home's Masters door is gone (T202: "in an odd spot"); Design keeps
-    # two, on Page furniture and in its Layouts menu
-    assert 'id="lay-masters"' in html and 'id="hm-lay-masters"' not in html
-    assert ("    var lm2=$('#lay-masters');"
-            in out)
+    # Home's Masters door is gone (T202: "in an odd spot"), and so is the
+    # Layouts menu's row (T204: one seat each); Page furniture is the door
+    assert 'id="lay-masters"' not in html and 'id="hm-lay-masters"' not in html
+    assert 'id="dsg-masters"' in html
+    assert "    var dm2=$('#dsg-masters');" in out
     assert "window.SemDeckMasters=openMasters;" in out
     fn = out[out.index("function openMasters(){"):]
     fn = fn[:fn.index("window.SemDeckMasters")]

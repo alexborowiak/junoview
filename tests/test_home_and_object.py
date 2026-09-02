@@ -32,10 +32,12 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     # ...and again in T202 ("the groupings still make no sense"): a tile
     # on Home MAKES a slide, This slide holds what you do to it, Keep up
     # to date is three tall tiles, Masters went back to Design
-    for lab in ("New slide", "This slide", "Arrange this slide",
-                "Keep up to date", "Apply to other slides"):
+    # ...and in T204 the layout groups left Home for Design ("this is
+    # getting confusing all the parts everywhere"); Home is three things
+    for lab in ("New slide", "This slide", "Keep up to date",
+                "Layout", "Apply to other slides"):
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab
-    for gone in ("Saved layouts", "Sources", "Slides"):
+    for gone in ("Saved layouts", "Sources", "Slides", "Arrange this slide"):
         assert f'<span class="rbn-lab">{gone}</span>' not in out, gone
     assert 'id="hm-lay-masters"' not in out
     assert "function syncSavedTiles(){" in out
@@ -71,7 +73,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "var m3=$('#mi-refresh-figs'); if(m3) m3.click();});" in out
     # the rarer two sit last, so they fold first and View stays in sight
     assert ".rbn-layout,.rbn-this,.rbn-arrange{order:1;}" in out
-    assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:4;}" in out
+    assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:1;}" in out
     assert ".lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}" in out
 
 

@@ -198,7 +198,7 @@ def test_arranging_a_slide_needs_no_saved_layout(out):
     """
     assert "function arrangeSlide(sl,layer,opt){" in out
     assert "function isMajorKind(a){" in out
-    assert 'id="lay-tidy"' in out
+    assert 'id="hm-lay-tidy"' in out     # on Design's Layout group since T204
     # the spacing preset is the "difference between things" made
     # configurable, and the size threshold is "the size of something"
     assert "var ARRANGE_PRESETS=[" in out

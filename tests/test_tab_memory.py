@@ -57,10 +57,11 @@ def test_the_words_on_the_tabs_say_what_happens(out):
             '&mdash; headings') in out or \
         'title="Find text that should match but does not — headings' in out
     assert '<div class="pf-intro">Text that should look the same but does' in out
-    assert "<span>Standardise</span>" in out
-    # masters, in one sentence, in both places (Home's door left in T202)
+    assert "<span>Mismatched text</span>" in out
+    # masters, in one sentence, at its one door: Page furniture (Home's
+    # left in T202, the Layouts menu's row in T204)
     assert out.count("A background and a header or footer that many slides "
-                     "share") == 2
+                     "share") == 1
     # the Source rows
     assert "Where it came from&#8230;" in out
     assert "Keep this exact figure even when the notebook is re-run" in out

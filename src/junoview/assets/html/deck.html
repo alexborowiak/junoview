@@ -504,62 +504,67 @@
                (2026-08-20, user: "so the notebook button can be removed
                now. Haven't we put all the functionality on the left hand
                side?"). -->
-          <span class="rbn-grp rbn-fixed rbn-slide" data-tab="design">
+          <!-- LAYOUT, ALL OF IT, IN ONE PLACE (T204; 2026-09-02, user:
+               "the Design page should include all the layout stuff...
+               the arrange this slide, the save layout, and layouts, and
+               the match slide, and copy layout to slides should all be
+               on design tab. Oh there is already a layouts on the
+               design. I think this is getting confusing"). LAYOUT is
+               what you do to THIS slide: change it, arrange what is on
+               it, save it, pick a saved one. APPLY TO OTHER SLIDES is
+               the same shape reaching further. The Home groups that
+               held these are gone, and the Layouts menu is the grid
+               alone, so each verb has one seat. -->
+          <span class="rbn-grp rbn-layout" data-tab="design">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
                 <button class="dbtn rbn-sm" id="lay-btn"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Ready-made arrangements for this page &mdash;
- columns, a hero figure, title layouts"><i data-ic="layouts"></i>
- Layouts &#9662;</button>
+                  title="Lay THIS slide out one of the ready-made ways.
+ Your words and figures stay; they move into the new places"
+                  ><i data-ic="layouts"></i> Change layout &#9662;</button>
+                <!-- the grid alone (T204). The rows that used to sit above
+                     it -- arrange, save, apply, masters -- are the visible
+                     groups beside this door now, so nothing is offered in
+                     two places with two names. -->
                 <div class="sh-menu lay-menu" id="lay-menu" hidden>
-                  <!-- ARRANGE WHAT IS ALREADY HERE, above the ready-made
-                       layouts. Both answer "lay this page out", so they
-                       belong in the same menu — but this one needs no
-                       template at all: it reads the slide and works one
-                       out (2026-08-22, user asked for "an arrange slide
-                       button ... based upon what is there"). The three
-                       buttons are the spacing preset, which is the
-                       "difference between things" the user wanted
-                       configurable. -->
-                  <div class="hd-lab">arrange what is on this slide</div>
-                  <button class="dbtn vw-opt" id="lay-ideas-btn"
-                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-                    <i data-ic="layouts"></i> Layout ideas&#8230;</button>
-                  <div class="lay-tidy" id="lay-tidy">
-                    <button class="dbtn" data-tidy="tight"
-                      title="Arrange this slide, packed close">Tight</button>
-                    <button class="dbtn" data-tidy="normal"
-                      title="Arrange this slide">Normal</button>
-                    <button class="dbtn" data-tidy="airy"
-                      title="Arrange this slide, with room around
- everything">Airy</button>
-                  </div>
-                  <!-- THE THIRD ANSWER to "lay this page out" (T89).
-                       Arrange what is here; start from a ready-made one;
-                       or use one you saved yourself. The third was
-                       reachable only from Home &rsaquo; Match slide &rsaquo;
-                       Arrangements&hellip; &mdash; behind a button named
-                       after a different verb, in a tab that is not about
-                       layout at all. These are rows in a dropdown, not
-                       ribbon controls: ribbonControls() reads the row's
-                       direct children, so nothing here needs a seat in
-                       any of the layouts. -->
-                  <div class="hd-lab">or one you saved yourself</div>
-                  <button class="dbtn vw-opt" id="lay-arrs"
-                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit"
-                ><i data-ic="layouts"></i> My saved layouts&#8230;</button>
-                  <button class="dbtn vw-opt" id="lay-masters"
-                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Masters&#8230;</button>
-                  <button class="dbtn vw-opt" id="lay-arrsave"
-                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures"><i data-ic="plus"></i> Save this layout&#8230;</button>
-                  <button class="dbtn vw-opt" id="lay-give"
-                    title="Tick the slides that should take this slide’s layout"><i data-ic="inherit"></i> Copy this layout to other slides&#8230;</button>
-                  <div class="hd-lab">or start from a ready-made one</div>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>
                 </div>
               </span>
+              <button class="dbtn rbn-sm" id="hm-lay-ideas"
+              title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
+              <i data-ic="layouts"></i> Layout ideas&#8230;</button>
+              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+              aria-label="Arrange what is on this slide">
+              <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
+              <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
+              <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
+              </div>
+              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
+              title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
+              <i data-ic="copy"></i> Save layout&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-arrs"
+              title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
+              <i data-ic="objects"></i> Saved layouts&#8230;</button>
+            </span>
+            <span class="rbn-lab">Layout</span>
+          </span>
+          <span class="rbn-grp rbn-apply" data-tab="design">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-match"
+              title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
+              &#9662;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-give"
+              title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy layout to slides&#8230;</button>
+            </span>
+            <span class="rbn-lab">Apply to other slides</span>
+          </span>
+          <!-- not rbn-fixed any more (T204): with Layout in front of it,
+               a group that never folds would push Layout into a fold
+               on a laptop, and Layout is what this tab is for now -->
+          <span class="rbn-grp rbn-slide" data-tab="design">
+            <span class="rbn-row">
               <button class="dbtn rbn-sm" id="dsg-tidy"
                 title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><i data-ic="align"></i> Tidy page</button>
               <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
@@ -705,7 +710,7 @@
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
                 title="Find text that should match but does not — headings, body text, captions across the whole deck — and figures placed at different sizes. It reports first; each fix is one button"><i data-ic="scope"></i>
-   Standardise</button>
+   Fix mismatched text&#8230;</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -1139,10 +1144,19 @@
                DATE: three tall tiles, the way the effects are. APPLY TO
                OTHER SLIDES: point at a thumbnail, or tick a list.
                Masters live on Design, where the page furniture is. -->
+          <!-- HOME IS THREE THINGS (T204; 2026-09-02, user: "I think this
+               is getting confusing all the parts everywhere. Need to
+               think about this properly"): MAKE a slide, DO something to
+               this one, KEEP it up to date. Everything about how a
+               slide is laid out -- changing it, arranging what is on
+               it, saving and applying a layout -- is one subject and
+               lives on Design, in one place. -->
           <span class="rbn-grp rbn-slides" data-tab="home">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="hm-newslide"
-                                            title="Add a slide after this one">&#43; New slide</button>
+              <button class="fx-tile big-tile rbn-tall" id="hm-newslide"
+                title="Add a slide after this one, laid out like the last
+ one you added. The tiles beside it add one laid out another way"
+                ><i data-ic="plus"></i><span>New slide</span></button>
               <span class="rbn-tall strip-frame" id="layout-strip-frame">
                 <span class="fx-strip lay-strip" id="layout-strip"
                   role="group" aria-label="New slide, laid out as"></span>
@@ -1155,32 +1169,12 @@
           <span class="rbn-grp rbn-this" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-dupslide"
-                                            title="Duplicate this slide, in place"><i data-ic="copy"></i>
-                                            Duplicate</button>
+              title="Duplicate this slide, in place"><i data-ic="copy"></i>
+              Duplicate</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
-                                            title="Delete this slide"><i data-ic="exit"></i> Delete</button>
-              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
-                                                title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
-                                                <i data-ic="copy"></i> Save layout&#8230;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-arrs"
-                                                title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
-                                                <i data-ic="objects"></i> Saved layouts&#8230;</button>
+              title="Delete this slide"><i data-ic="exit"></i> Delete</button>
             </span>
             <span class="rbn-lab">This slide</span>
-          </span>
-          <span class="rbn-grp rbn-arrange" data-tab="home">
-            <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="hm-lay-ideas"
-                                                title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-                                                <i data-ic="layouts"></i> Layout ideas&#8230;</button>
-              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
-                                                              aria-label="Arrange what is on this slide">
-                                                              <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
-                                                              <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
-                                                              <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
-                                                            </div>
-            </span>
-            <span class="rbn-lab">Arrange this slide</span>
           </span>
           <span class="rbn-grp rbn-sources" data-tab="home">
             <span class="rbn-row">
@@ -1196,22 +1190,13 @@
                   ><i data-ic="image"></i><span>Reload pictures</span></button>
                 <button class="fx-tile big-tile" id="hm-images"
                   aria-pressed="false"
-                  title="Every picture and figure in this deck, where each
- came from, and whether it is locked in place"
-                  ><i data-ic="objects"></i><span>All images</span></button>
+                  title="The pictures and figures on this slide, where each
+ came from, and whether it is locked in place. From there, every
+ slide at once"
+                  ><i data-ic="objects"></i><span>Images</span></button>
               </span>
             </span>
             <span class="rbn-lab">Keep up to date</span>
-          </span>
-          <span class="rbn-grp rbn-apply" data-tab="home">
-            <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="hm-match"
-                                            title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
-                                            &#9662;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-give"
-                                                title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy layout to slides&#8230;</button>
-            </span>
-            <span class="rbn-lab">Apply to other slides</span>
           </span>
           <!-- No Editing group. Find and replace acts on the WHOLE
                presentation, so it belongs with the document's own
@@ -1835,7 +1820,7 @@
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Standardise</span>
+        <div class="selpane-h"><span>Mismatched text</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
@@ -1857,16 +1842,35 @@
            and its lock -- toggled from the row. Rendered on open and on
            the reload button, never from markDirty. -->
       <aside class="selpane imgpane" id="imgpane" hidden>
-        <div class="selpane-h"><span>All images</span>
+        <div class="selpane-h"><span>Images on this slide</span>
+          <button class="dbtn rbn-sm" id="imgpane-all" aria-expanded="false"
+            title="Every picture and figure on every slide, full screen,
+ under a heading per slide"><i data-ic="objects"></i> Every slide</button>
           <button class="dbtn dc-icon" id="imgpane-rerun" aria-label="Read again"
             title="Read again"><i data-ic="reload"></i></button>
           <button class="dbtn dc-icon" id="imgpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
-        <div class="pf-intro">Every picture and figure in this deck, where
-          each came from, and whether it is locked in place. Click a row
-          to go to it; the pin locks or unlocks it.</div>
+        <div class="pf-intro">The pictures and figures on this slide, where
+          each came from, and whether it is locked in place. Click one
+          to select it; the pin locks or unlocks it.</div>
         <div class="selpane-list" id="imgpane-list"></div>
       </aside>
+      <!-- ALL IMAGES, FULL SCREEN (T204; 2026-09-02, user: "there needs
+           to be a full screen version of this as well... have headings
+           that are collapsible for all slides"). One heading per slide
+           that has any, open by default, each folding on a click; the
+           same rows as the pane, bigger. Rendered on open. -->
+      <div class="img-ov" id="img-ov" hidden role="dialog" aria-label="All images">
+        <div class="img-ov-h"><span class="img-ov-t">All images</span>
+          <span class="img-ov-sub" id="img-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="img-ov-open"
+            title="Open every slide's heading">Open all</button>
+          <button class="dbtn rbn-sm" id="img-ov-fold"
+            title="Fold every slide's heading to its title">Fold all</button>
+          <button class="dbtn rbn-sm" id="img-ov-close" title="Close (Esc)"
+            ><i data-ic="exit"></i> Close</button></div>
+        <div class="img-ov-body" id="img-ov-body"></div>
+      </div>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
            frame names a card by anchor, chains.py computed the lineage
            at parse time, and the trace view draws it. What was missing

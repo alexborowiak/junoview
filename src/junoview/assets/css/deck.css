@@ -1365,8 +1365,9 @@ body.light .fx-tile.on{color:#fff;}
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
+/* on Design (T204): Layout, then Apply to other slides, then Slide */
 /* last, so it is what folds first on a narrow window */
-.rbn-apply{order:4;}
+.rbn-apply{order:1;}
 /* T201: the two commands that reach the sources, drawn in the accent
    so the eye finds them ("needs more attention drawn to it") */
 .dbtn.dbtn-accent{border-color:color-mix(in srgb,var(--accent) 60%,transparent);
@@ -1436,6 +1437,9 @@ body.light .img-row{color:var(--ink-2);}
 .rbn-row .lay-tidy{height:30px;}
 .fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;
   overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;}
+/* three page sizes in sight and the rest a scroll or the chevron away
+   (T204): Design has to seat Layout in front of this group */
+.fx-strip.page-strip{width:206px;}
 .tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 60px;
   scroll-snap-align:start;}
 .tx-tile-a{display:flex;align-items:center;justify-content:center;
@@ -4524,3 +4528,32 @@ body.light .strip-more{border-left-color:var(--line);background:#00000008;
   display:none;}
 body.light .sh-menu.strip-all{background:var(--paper,#fff);
   border-color:var(--line);}
+
+/* ---- T204: NEW SLIDE AS A TILE, AND ALL IMAGES FULL SCREEN ------------
+   The New slide button is a tall tile at the left of its strip, the
+   shape of the layout tiles it stands beside (2026-09-02, user: "put
+   the new slide on the left hand side and make it a full button"). The
+   full-screen view is every slide's images under a heading each, the
+   headings folding. */
+.rbn-row>#hm-newslide.big-tile{width:74px;}
+.img-ov{position:fixed;inset:0;z-index:400;
+  background:var(--chrome-0,#0b141d);color:#c9d6e2;overflow:auto;
+  padding:16px 28px 40px;font-family:var(--sans);}
+.img-ov[hidden]{display:none;}
+.img-ov-h{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.img-ov-t{font-size:18px;font-weight:600;}
+.img-ov-sub{flex:1;color:#8ba0b2;font-size:12px;}
+.img-sec{border:1px solid #ffffff1c;border-radius:9px;margin:0 0 8px;
+  background:#ffffff05;}
+.img-sec>summary{cursor:pointer;padding:9px 12px;font-size:13px;
+  list-style:none;display:flex;align-items:center;gap:8px;}
+.img-sec>summary::-webkit-details-marker{display:none;}
+.img-sec>summary::before{content:"\25B8";color:#8ba0b2;font-size:11px;}
+.img-sec[open]>summary::before{content:"\25BE";}
+.img-rows{display:grid;gap:6px;padding:0 10px 10px;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));}
+.img-ov .img-row{border:1px solid #ffffff12;}
+.img-ov .img-th{width:72px;height:50px;}
+body.light .img-ov{background:#fff;color:var(--ink-2);}
+body.light .img-sec{border-color:var(--line);background:#00000004;}
+body.light .img-ov .img-row{border-color:var(--line);}

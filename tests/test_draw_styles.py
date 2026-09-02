@@ -286,7 +286,9 @@ def test_nothing_is_ever_clipped_off_the_right(out):
     assert ".deck.erc-tight .edit-tools.fmt-open .rbn-slide{display:none;}" \
         not in out
     assert "cl.add('erc-tight')" in out
-    assert 'class="rbn-grp rbn-fixed rbn-slide"' in out
+    # (the Slide group folds like the rest since T204, so Layout in
+    # front of it stays in sight on a laptop)
+    assert 'class="rbn-grp rbn-slide"' in out
     # the changing half gets a rung the constant half never pays
     assert ".deck.erc-tight .et-fmt .rbn-grp{padding-left:2px;" in out
     assert ".deck.erc-tight .et-fmt .rbn-row .fmt-num{width:32px;}" in out
@@ -450,8 +452,8 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # "some of those tabs have nothing on them now"), so View and Output
     # sit on Home and Animate sits with Insert. Object is the contextual
     # fourth tab rather than selection controls being injected into Home.
-    for grp in ("rbn-slide", "rbn-view"):
-        assert f'class="rbn-grp rbn-fixed {grp}" data-tab=' in out
+    assert 'class="rbn-grp rbn-fixed rbn-view" data-tab=' in out
+    assert 'class="rbn-grp rbn-slide" data-tab=' in out   # folds since T204
     # Animation is a tab again (T176); Order shares its rung and
     # follows it by source order
     assert "var TABS=['home','insert','design','animation','view','object'];" in out
