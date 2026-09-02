@@ -1259,7 +1259,9 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    Table, Animate and Page furniture (2026-08-20, user: "some of the
    themes are not right"). .rbn-file and .rbn-nbs are gone from the
    markup and gone from here with them. */
-body.th-colorful .rbn-slides,body.th-colorful #ab-file{
+body.th-colorful .rbn-slides,body.th-colorful .rbn-layout,
+body.th-colorful .rbn-arrange,body.th-colorful .rbn-saved,
+body.th-colorful .rbn-sources,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
 body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
 body.th-colorful .rbn-anim,body.th-colorful .rbn-build,
@@ -1277,6 +1279,7 @@ body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
 body.th-colorful .rbn-insert,body.th-colorful .rbn-write,
 body.th-colorful .rbn-draw,body.th-colorful .rbn-cancel,
+body.th-colorful .rbn-shapes,
 body.th-colorful #ab-app,body.th-colorful .presrail{
   --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;
@@ -4462,7 +4465,14 @@ body.light .fx-tile.on{color:#fff;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
 .rbn-write{order:6;}
+/* Shapes sit between Write and Draw (T197) */
+.rbn-shapes{order:6;}
 .rbn-draw{order:6;}
+/* Home's layout groups follow Slides; View keeps its seat; the saved
+   layouts and the refresh doors come LAST, so they are what folds first
+   on a narrow window and the everyday toggles stay in view (T196) */
+.rbn-layout,.rbn-arrange{order:1;}
+.rbn-saved,.rbn-sources{order:4;}
 /* the Drawing group follows Draw; it exists only while a tool is armed */
 .rbn-cancel{order:6;}
 /* T187: a FOLDED group is one worded door over a popover holding its
@@ -4474,6 +4484,29 @@ body.light .fx-tile.on{color:#fff;}
   align-items:center;}
 /* T188: the text strip. A specimen "Aa" over the type's name; the strip
    scrolls and a tile cut at the edge is the affordance (T171). */
+/* T196/T197: the layout tiles and the shape tiles are strips too */
+.fx-strip.lay-strip{width:330px;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.lay-strip .dbtn.lay{flex:0 0 66px;scroll-snap-align:start;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:4px 3px;line-height:1.1;}
+.lay-strip .layico2{width:52px;}
+/* the picker writes a heading into each of its homes; the group label
+   is the strip's heading */
+.lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}
+/* the one this slide wears: the review's sweep marks it, as it does
+   in the two menus */
+.lay-strip .dbtn.lay[aria-pressed="true"]{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);}
+.fx-strip.shape-strip{width:300px;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.shape-strip .fx-tile{flex:0 0 58px;scroll-snap-align:start;}
+.shape-strip .fx-tile .sh-ico{width:26px;height:22px;}
+/* the provenance cell on the Object tab (T198): a label over a name */
+.fmt-path{max-width:170px;}
+.fmt-path b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:block;max-width:170px;}
+.rbn-row .lay-tidy{height:30px;}
 .fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;
   overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;}
 .tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 60px;
@@ -6145,11 +6178,15 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
 /* the box indent COMPOSES with the bullet gutter rather than replacing
    it: 1.15em is what keeps a marker outside its text, so an indented list
    that simply overwrote it would lose its bullets off the left edge */
-.an-tx.an-ul{margin:0;padding-left:calc(1.15em + var(--an-ind,0));}
+/* 1.7em, not 1.15 (T195): an outside marker sits about 1em left of the
+   text, so at 1.15 it was drawn on the box's edge, under the dashed
+   selection line (2026-09-02, user: "the dot points appear where the
+   dashed selection line is") */
+.an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
 ul.an-ul{list-style:disc;}
 ol.an-ul{list-style:decimal;}
 .an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
-.an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.15em;}
+.an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}
 .an-tx.an-ul ul ul{list-style:square;}
 .an-tx.an-ul ol{list-style:lower-alpha;margin:0;padding-left:1.25em;}
 .an-tx.an-ul ol ol{list-style:lower-roman;}
@@ -11518,18 +11555,20 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Write</span>
           </span>
+          <!-- SHAPES ON THEIR OWN (T197; 2026-09-02, user: "the shapes
+               should be on their own"). Fifteen tiles drawn as
+               themselves, in the row, the armed one lit; click one and
+               the shape tool arms for it. T188 had kept them behind a
+               door for width; group folding (T187) pays for the strip. -->
+          <span class="rbn-grp rbn-shapes" data-tab="insert">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip shape-strip" id="shape-strip"
+                role="group" aria-label="Shapes"></span>
+            </span>
+            <span class="rbn-lab">Shapes</span>
+          </span>
           <span class="rbn-grp rbn-draw" data-tab="insert">
             <span class="rbn-row">
-              <!-- SHAPE stays a drawn gallery behind one door, as
-                   PowerPoint's is: fifteen shapes in the row would
-                   cost the tab its width for a thing you draw once. -->
-              <span class="sh-drop" id="sh-drop">
-                <button class="dbtn rbn-sm" id="sh-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Draw a shape (rectangle, ellipse, star, …)">
-                  <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="5.6" width="7" height="7" rx="1"/><circle cx="10.6" cy="5.8" r="3.4"/></svg> Shape &#9662;</button>
-                <div class="sh-menu" id="sh-menu" hidden></div>
-              </span>
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
                 title="Draw a line — drag on the page; drop an end on an
@@ -11575,6 +11614,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                something. These four are the page-level actions you take
                constantly and they were previously only reachable from the
                thumbnail strip's hover controls. -->
+          <!-- SLIDES, first on Home, the way PowerPoint opens its Home
+               tab. -->
           <span class="rbn-grp rbn-slides" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-newslide"
@@ -11584,48 +11625,72 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 Duplicate</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
                 title="Delete this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Delete</button>
-              <span class="sh-drop" id="hm-laywrap">
-                <button class="dbtn rbn-sm" id="hm-lay"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Ready-made arrangements for this page">
-                  <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layouts &#9662;</button>
-                <div class="sh-menu lay-menu" id="hm-lay-menu" hidden>
-                  <!-- PARITY WITH DESIGN'S MENU (T131). Two buttons both
-                       said "Layouts" and this one silently hid the
-                       auto-arrange row, the ideas row and the saved
-                       arrangements — two-thirds of the layout system,
-                       depending on which tab you were on. Same rows,
-                       twin ids, one set of wiring. -->
-                  <button class="dbtn vw-opt" id="hm-lay-ideas"
-                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
-                  <div class="lay-tidy" id="hm-lay-tidy"
-                    aria-label="Arrange what is on this slide">
-                    <button class="dbtn" data-tidy="tight">Tight</button>
-                    <button class="dbtn" data-tidy="normal">Normal</button>
-                    <button class="dbtn" data-tidy="airy">Airy</button>
-                  </div>
-                  <button class="dbtn vw-opt" id="hm-lay-masters"
-                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
-                  <button class="dbtn vw-opt" id="hm-lay-arrs"
-                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
-                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> My saved layouts&#8230;</button>
-                  <button class="dbtn vw-opt" id="hm-lay-arrsave"
-                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
-                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save this layout&#8230;</button>
-                  <button class="dbtn vw-opt" id="hm-lay-give"
-                    title="Tick the slides that should take this slide’s layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Copy this layout to other slides&#8230;</button>
-                  <div class="lay-picker" id="layout-home-grid"
-                    aria-label="Slide layouts"></div>
-                </div>
-              </span>
-              <!-- the least glamorous, most useful button in the app:
-                   make this slide sit like that one (2026-08-20) -->
               <button class="dbtn rbn-sm" id="hm-match"
                 title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match slide
                 &#9662;</button>
             </span>
             <span class="rbn-lab">Slides</span>
+          </span>
+          <!-- THE LAYOUT SYSTEM, OPENED OUT (T196; 2026-09-02, user:
+               "same with things like the slide layouts, the match slide
+               options. Like there is so many good options in there").
+               One dropdown held the picker, the auto-arrange, the ideas
+               and the saved layouts: two-thirds of the system behind a
+               word. They are three groups now -- the layouts as tiles
+               drawn as themselves, the one in use lit; the arrange
+               verbs; the saved ones -- and a fourth for the two
+               refresh-all commands that had only a File menu row
+               ("where has the ability to refresh all images gone?"). -->
+          <span class="rbn-grp rbn-layout" data-tab="home">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip lay-strip" id="layout-strip"
+                role="group" aria-label="Slide layouts"></span>
+            </span>
+            <span class="rbn-lab">Layout</span>
+          </span>
+          <span class="rbn-grp rbn-arrange" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-lay-ideas"
+                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
+                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
+              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+                                  aria-label="Arrange what is on this slide">
+                                  <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
+                                  <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
+                                  <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
+                                </div>
+            </span>
+            <span class="rbn-lab">Arrange this slide</span>
+          </span>
+          <span class="rbn-grp rbn-saved" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-lay-arrs"
+                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
+                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> My saved layouts&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
+                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
+                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save this layout&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-give"
+                    title="Tick the slides that should take this slide’s layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Copy this layout to other slides&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-masters"
+                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
+            </span>
+            <span class="rbn-lab">Saved layouts</span>
+          </span>
+          <span class="rbn-grp rbn-sources" data-tab="home">
+            <span class="rbn-row">
+              <!-- two doors, one implementation each: they press the
+                   File menu rows that have always done this -->
+              <button class="dbtn rbn-sm" id="hm-refresh-figs"
+                title="Re-read every placed figure from its notebook, so
+ a re-run shows up on the slides"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Update
+ figures</button>
+              <button class="dbtn rbn-sm" id="hm-refresh-img"
+                title="Re-read every picture from the file it came from.
+ A file that has moved is left as it was, and named"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh pictures</button>
+            </span>
+            <span class="rbn-lab">Sources</span>
           </span>
           <!-- No Editing group. Find and replace acts on the WHOLE
                presentation, so it belongs with the document's own
@@ -12066,6 +12131,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    both contextual: a state you can SEE on the selected
                    object, and a pane you type into. Words plus icons,
                    and both icons are ones the set already carries. -->
+              <!-- WHERE IT CAME FROM, ON THE ROW (T198; 2026-09-02, user:
+                   "when selecting an image, the object view should on
+                   the right have the object paths, refresh from path
+                   button, lock option"). The file a picture came from,
+                   or the notebook a figure did; a button to re-read
+                   it; and a lock that keeps it where it is. -->
+              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
+                title="Where this came from"></span>
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came from.
+ If that file has moved, the picture is left exactly as it is"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh from file</button>
+              <button class="dbtn etm" id="fmt-lock" hidden
+                aria-pressed="false"
+                title="Keep this where it is: it cannot be dragged, and
+ stays selectable and editable. The Layers pane has the full lock too"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/><path d="M8 8.4v5.7"/></svg> Lock in place</button>
               <button class="dbtn etm" id="fmt-lockar" hidden
                 aria-pressed="false"
                 title="Keep this object&rsquo;s shape while you drag a
@@ -12115,11 +12197,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 Previous figure</button>
               <button class="dbtn etm" id="fmt-lockver"
                 title="Keep this exact figure even when the notebook is re-run — pinned to the notebook’s current version"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Lock figure</button>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came
- from. If that file has moved, the picture is left exactly as it
- is"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh</button>
-              <button class="dbtn etm" id="fmt-replace"
+                            <button class="dbtn etm" id="fmt-replace"
                 title="Put a different notebook card in this frame"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg>
                 Replace</button>
                 </div>
@@ -12180,6 +12258,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn etm" id="fmt-fx-zoom" aria-pressed="false"
                 title="Grows into place on its click"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg> Grow</button>
+              <!-- HOW MUCH OF A TEXT BOX ARRIVES, here as well as on the
+                   Animation tab (T198; 2026-09-02, user: "where is the
+                   animate by dot point thing gone???? Can that be an
+                   option when clicking on a box with dot points?").
+                   Shown for a text box; picking one on a box with no
+                   entrance gives it a Fade first, so "by bullet" is one
+                   click and not two. -->
+              <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
+                title="The whole box arrives on one click"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Whole box</button>
+              <button class="dbtn etm" id="fmt-by-para" aria-pressed="false"
+                title="One click per bullet, or per line you pressed Enter
+ on. A box with no entrance yet gets a Fade"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="m3 5.6 2.4 2.4L3 10.4"/></svg> By bullet</button>
+              <button class="dbtn etm" id="fmt-by-sent" aria-pressed="false"
+                title="One click per sentence. A box with no entrance yet
+ gets a Fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> By sentence</button>
             </span>
             <span class="rbn-lab">Animation</span>
           </span>
@@ -20635,7 +20730,7 @@ window.JunoPptx = (function () {
     var isPoster=!!pg.poster;
     var land=pg.aw>pg.ah;
     var variant=(isPoster?'p':'s')+(land?'l':'p');
-    ['#layout-row','#layout-menu-grid','#layout-home-grid']
+    ['#layout-row','#layout-menu-grid','#layout-strip']
       .forEach(function(sel){
       var row=$(sel); if(!row||row.dataset.built===variant) return;
       row.dataset.built=variant;row.innerHTML='';
@@ -20686,7 +20781,7 @@ window.JunoPptx = (function () {
      The catalog is offered from TWO places now — Design ▸ Layouts and
      Home ▸ Layout — so picking from either has to shut both. */
   function closeLayMenu(){
-    [['#lay-menu','#lay-btn'],['#hm-lay-menu','#hm-lay']]
+    [['#lay-menu','#lay-btn']]
       .forEach(function(p){
         var lm=$(p[0]),lb=$(p[1]);
         if(lm&&!lm.hidden){overlayHide(lm);
@@ -34282,6 +34377,10 @@ window.JunoPptx = (function () {
     +'#fmt-al-left #fmt-al-center #fmt-al-right '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
+    /* the Object group's provenance row (T198): where it came from,
+       re-read it, keep it in place; and the by-bullet trio, owned by
+       animRibbonSync like the effect buttons */
+    +'#fmt-path #fmt-lock #fmt-by-all #fmt-by-para #fmt-by-sent '
     /* the Object tab's effect buttons (T179): animRibbonSync owns
        their visibility and their pressed state */
     +'#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom '
@@ -34757,6 +34856,24 @@ window.JunoPptx = (function () {
         if(xa&&xa.k==='image'&&xa.fkey) anyLinked=true;});
       ir.hidden=!anyLinked;
     }
+    /* WHERE IT CAME FROM, on the row (T198): a picture's file, a
+       figure's notebook; and the lock that keeps a thing in place */
+    var pth=$('#fmt-path');
+    if(pth){
+      var from='';
+      if(kind==='image'&&a.fname) from=a.fname;
+      else if(kind==='cell'&&a.ref){
+        var ci2=resolveRef(a.ref);
+        from=(ci2&&ci2.stem)?ci2.stem:String(a.ref);
+      }
+      pth.hidden=!from;
+      if(from){
+        pth.innerHTML='<span>From</span><span><b></b></span>';
+        pth.querySelector('b').textContent=from;
+        pth.title='From '+from;
+      }
+    }
+    show('#fmt-lock',isNum,isNum&&pinned(a));
     /* the Source window's door (T177): anything that came from
        somewhere -- a placed cell, a picture that knows its file, or
        anything with a provenance to show */
@@ -37041,8 +37158,8 @@ window.JunoPptx = (function () {
     if(t==='guide') showCustomGuides(true);
     $$('#edit-tools .et').forEach(function(b){
       b.setAttribute('aria-pressed',(b.dataset.tool===t).toString());});
-    var shb=$('#sh-btn');   /* the Shapes dropdown draws the 'rect' tool */
-    if(shb) shb.setAttribute('aria-pressed',(t==='rect').toString());
+    /* the armed shape's tile lights (T197) */
+    if(typeof shapeStripSync==='function') shapeStripSync();
     var l=stage.querySelector('.annot-layer');
     if(l) l.className='annot-layer tool-'+t;
     /* The way OUT, shown exactly when there is something to get out of.
@@ -37095,7 +37212,10 @@ window.JunoPptx = (function () {
         guide:'Guide box',draw:'Freehand'}[t]||t;
       if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
         word=styleDef(pendingStyle).label+' box';
-      if(t==='rect'&&pendingShape!=='rect') word=pendingShape;
+      if(t==='rect'&&pendingShape!=='rect'){
+        var shp=SHAPE_LIST.filter(function(p){return p[0]===pendingShape;})[0];
+        word=shp?shp[1]:pendingShape;
+      }
       var how=(t==='text'||t==='cell'||t==='table')
         ?'Drag to draw, or click for the usual size'
         :'Drag on '+pw+' to draw it';
@@ -38265,6 +38385,15 @@ window.JunoPptx = (function () {
         menu.hidden=true;
     });
   })();
+  /* keep it where it is (T198): the position lock, the same flag the
+     Layers pane's pin sets, toggled from the row */
+  onBtn('#fmt-lock',function(){
+    fmtApply(function(a){
+      /* a FULL lock is the pane's to take off: this button only ever
+         pins or unpins the position */
+      if(a.lock==='pos') delete a.lock;
+      else if(lockMode(a)==='') a.lock='pos';});
+  });
   onBtn('#fmt-bullets',function(){listApply('bullet');});
   onBtn('#fmt-numbers',function(){listApply('number');});
   /* the three alignments, as buttons (T189) */
@@ -40389,7 +40518,6 @@ window.JunoPptx = (function () {
   function initReuseDoors(){
     function shut(){
       var lm=$('#lay-menu'); if(lm) overlayHide(lm);
-      var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);
     }
     /* each row exists twice since Home gained parity (T131): same
        handler, both ids */
@@ -41129,8 +41257,7 @@ window.JunoPptx = (function () {
         e.stopPropagation();
         var s=pres.slides[cur]; if(!s) return;
         var lm=$('#lay-menu'); if(lm) overlayHide(lm);
-        var hm=$('#hm-lay-menu'); if(hm) overlayHide(hm);
-        var n=arrangeSlide(s,stage.querySelector('.annot-layer'),
+          var n=arrangeSlide(s,stage.querySelector('.annot-layer'),
           arrangeOpts(b.getAttribute('data-tidy')));
         if(!n){toast('There is nothing on this slide to arrange');return;}
         markDirty();refresh();
@@ -44421,6 +44548,16 @@ window.JunoPptx = (function () {
     });
   }
   (function(){
+    /* the Home tab's doors (T196): the File menu rows have always done
+       this, and nobody found them there */
+    var hri=$('#hm-refresh-img');
+    if(hri) hri.addEventListener('click',function(e){
+      e.stopPropagation();
+      var m2=$('#mi-refresh-img'); if(m2) m2.click();});
+    var hrf=$('#hm-refresh-figs');
+    if(hrf) hrf.addEventListener('click',function(e){
+      e.stopPropagation();
+      var m3=$('#mi-refresh-figs'); if(m3) m3.click();});
     var mi=$('#mi-refresh-img');
     if(mi) mi.addEventListener('click',function(){
       var dm=$('#dc-menu'); if(dm) overlayHide(dm);
@@ -47779,6 +47916,20 @@ window.JunoPptx = (function () {
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
+    /* the Object tab's by-bullet trio (T198): a box with no entrance
+       gets a Fade first, so "animate by dot point" is one click */
+    var OBJ_BY=[['fmt-by-all',''],['fmt-by-para','para'],
+      ['fmt-by-sent','sent']];
+    OBJ_BY.forEach(function(p){
+      var b=$('#'+p[0]); if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+        if(!a2||a2.k!=='text') return;
+        if(!a2.anim) setType('fade');
+        setBy(p[1]);
+      });
+    });
     /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
        PowerPoint's Start box, on the model this deck already has:
        On click is a stop of its own; With previous is the pane's
@@ -48283,6 +48434,18 @@ window.JunoPptx = (function () {
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
+      /* the by-bullet trio shows for a text box and marks how much
+         of it arrives; with no entrance yet nothing is marked */
+      var isTx=on&&a.k==='text';
+      var byNow=(isTx&&a.anim&&(a.anim.by==='para'||a.anim.by==='sent'))
+        ?a.anim.by:'';
+      [['fmt-by-all',''],['fmt-by-para','para'],['fmt-by-sent','sent']]
+        .forEach(function(p){
+          var b=$('#'+p[0]); if(!b) return;
+          b.hidden=!isTx;
+          b.setAttribute('aria-pressed',
+            (isTx&&!!a.anim&&byNow===p[1]).toString());
+        });
       OBJ_FX.forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
         b.hidden=!on;
@@ -49798,7 +49961,7 @@ window.JunoPptx = (function () {
   function renderControls(){
     updateNumsLabel();updateCropLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-home-grid .lay')
+    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-strip .lay')
       .forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',
@@ -51868,7 +52031,6 @@ window.JunoPptx = (function () {
     b=$('#hm-match');
     if(b) b.addEventListener('click',function(e){
       e.stopPropagation();openMatchMenu(this);});
-    wireMenuToggle('hm-laywrap','hm-lay','hm-lay-menu');
   })();
   function renderCreate(){
     renderPresRow();renderControls();renderPresNbs();renderFilm();
@@ -52567,26 +52729,40 @@ window.JunoPptx = (function () {
     }
     return svg;
   }
-  (function(){
-    var shBtn=$('#sh-btn'),shMenu=$('#sh-menu'),shDrop=$('#sh-drop');
-    if(!shBtn||!shMenu) return;
-    /* Built by the same drawnOpt as every other drawn menu, so the two
-       shape galleries — this one for INSERT and the Line & shape group's
-       for CHANGING one — cannot look like different features. It used to
-       write its own option element and add a caption under each icon,
-       which made this the only drawn menu in the editor that spelled its
-       pictures out (2026-08-17 audit). Names live in the tooltip, as
-       PowerPoint's shape gallery does. */
+  /* ---- THE SHAPE STRIP (T197) ------------------------------------------
+     Fifteen shapes as tiles in the row, each drawn by the same shapeIcon
+     the Object tab's Shape menu uses, so the two cannot look like
+     different features. Click one and the shape tool arms for it; the
+     tile stays lit while it is armed; click it again to put the tool
+     down. It replaces the Shape door ("the shapes should be on their
+     own", 2026-09-02). */
+  var shapeStripSync=function(){};
+  function shapeStripBoot(){
+    var strip=$('#shape-strip'); if(!strip) return;
     SHAPE_LIST.forEach(function(pair){
-      drawnOpt(shMenu,shBtn,pair[1],shapeIcon(pair[0]),'ins:'+pair[0],
-        function(){pendingShape=pair[0];setTool('rect');});
+      var b=document.createElement('button');
+      b.type='button';b.className='fx-tile shape-tile';
+      b.dataset.shape=pair[0];
+      b.appendChild(shapeIcon(pair[0]));
+      var t=document.createElement('span');t.textContent=pair[1];
+      b.appendChild(t);
+      b.title='Draw a '+pair[1].toLowerCase()+' — drag on the slide';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(tool==='rect'&&pendingShape===pair[0]){setTool('select');return;}
+        pendingShape=pair[0];
+        setTool('rect');
+      });
+      strip.appendChild(b);
     });
-    shBtn.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(shMenu.hidden) overlayShow(shBtn,shMenu);
-      else overlayHide(shMenu);
-    });
-  })();
+    shapeStripSync=function(){
+      $$('.shape-tile',strip).forEach(function(b){
+        var on=(tool==='rect'&&pendingShape===b.dataset.shape);
+        b.classList.toggle('on',on);
+        b.setAttribute('aria-pressed',on.toString());
+      });
+    };
+  }
   /* ---- WHAT KIND OF TEXT BOX: THE TEXT STRIP (T188) --------------------
      One tile per kind of box -- plain, then every named type in the
      deck, each drawn as a specimen of itself -- in the row of the Insert
@@ -56022,6 +56198,7 @@ window.JunoPptx = (function () {
   seqBoot();       /* the sequencing mode's bar (T168) */
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
+  shapeStripBoot();           /* the shapes, as tiles (T197) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */
