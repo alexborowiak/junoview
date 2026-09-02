@@ -1276,7 +1276,7 @@ body.th-colorful #ab-tree{--accent:#41c493;--accent-deep:#1e8f66;}
 body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
 body.th-colorful .rbn-insert,body.th-colorful .rbn-write,
-body.th-colorful .rbn-draw,
+body.th-colorful .rbn-draw,body.th-colorful .rbn-cancel,
 body.th-colorful #ab-app,body.th-colorful .presrail{
   --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .et-fmt .rbn-grp{--accent:#f0a848;
@@ -4459,6 +4459,34 @@ body.light .fx-tile.on{color:#fff;}
    place a thing, write words, draw a line (T178) */
 .rbn-write{order:6;}
 .rbn-draw{order:6;}
+/* the Drawing group follows Draw; it exists only while a tool is armed */
+.rbn-cancel{order:6;}
+/* T187: a FOLDED group is one worded door over a popover holding its
+   row -- the real controls, moved, never copied. The popover lays the
+   row out exactly as the ribbon does. */
+.sh-menu.rbn-foldmenu{display:block;width:auto;padding:8px 10px;}
+.rbn-foldmenu .rbn-row{height:auto;}
+.rbn-grp.rbn-folded>.rbn-foldwrap{display:flex;height:65px;
+  align-items:center;}
+/* T188: the text strip. A specimen "Aa" over the type's name; the strip
+   scrolls and a tile cut at the edge is the affordance (T171). */
+.fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;
+  overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;}
+.tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 60px;
+  scroll-snap-align:start;}
+.tx-tile-a{display:flex;align-items:center;justify-content:center;
+  height:22px;line-height:1;font-size:16px;font-family:var(--sans);}
+/* T190: the page-size tiles, each drawn at its own proportion */
+.page-ico{display:block;border:1.5px solid currentColor;border-radius:2px;
+  opacity:.85;box-sizing:border-box;}
+/* T188: the armed mode's status, two short lines over Cancel */
+.et-status{min-width:150px;}
+.deck.erc-tight .et-status span+span{display:none;}
+/* T191: a text box born empty shows that it is there and waiting --
+   with no placeholder words and no panel (2026-08-19) a fresh box was
+   a caret and nothing else, which read as "nothing happened" */
+.deck.editing .an-item.an-text .an-tx[contenteditable="true"]:empty::before{
+  content:"Type\2026";color:#7e93a4;opacity:.8;pointer-events:none;}
 /* the whole-deck commands at the foot of the Text styles window */
 .style-mgr .opt-row{margin-top:2px;}
 .style-mgr .opt-row .dbtn.rbn-sm{flex:1 1 auto;justify-content:center;}
@@ -9927,7 +9955,7 @@ back. <b>New&#8230;</b> starts one; the
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at its foot collapse or
 auto-hide the rail.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
-content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Object</b> (Insert tab, under Place)
+content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</b> (Insert tab, under Place)
 &mdash; a draggable, resizable frame
 that holds any notebook card: drop it on the slide, then click a card in
 your notebook (from <i>any</i> open tab, so one deck can mix several
@@ -10232,7 +10260,7 @@ colours &mdash; Accent, Warm, Lift, Calm, Ink, Quiet &mdash; plus its
 corner radius and the gap the arrange commands space things at. Give an
 object one from the <b>Deck</b> row at the top of the Colour or Fill
 menu and it <b>follows</b> that colour: change it once with
-<i>Design &rarr;</i> <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> <i>Design tokens</i> and
+<i>Design &rarr;</i> <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> <i>Colours &amp; spacing</i> and
 everything wearing it changes, because nothing kept a copy. A style set
 can bring its own palette with it.</li>
 <li><b>Maths in a text box.</b> Type LaTeX between dollars anywhere in
@@ -11011,14 +11039,15 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Check this whole page for nearly-aligned objects,
  uneven gaps and exact-overlap copies. Opens a report first; nothing moves
  until you choose a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
-              <span class="sh-drop" id="page-drop">
-                <button class="dbtn rbn-sm" id="page-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="How big the page is &mdash; slides (16:9, 4:3)
- or a poster (A4&ndash;A0, portrait or landscape)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4" y="1.8" width="8" height="12.4" rx="1"/></svg>
- Page size &#9662;</button>
-                <div class="sh-menu page-menu" id="page-menu" hidden></div>
-              </span>
+              <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
+                   many of the options there are dropdowns with a
+                   million options that should just already be
+                   visible"). Eight presets, each drawn at its own
+                   proportion, the one in use lit; the strip scrolls
+                   and a tile cut at the edge is the affordance. Built
+                   from PAGE_PRESETS, the same table the menu was. -->
+              <span class="rbn-tall fx-strip page-strip" id="page-strip"
+                role="group" aria-label="Page size"></span>
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -11143,10 +11172,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     Style system&#8230;</button>
                 </div>
               </span>
+              <!-- "What is 'design tokens'?????" (2026-09-02). The word
+                   was the implementation's; the button says what the
+                   things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="Edit this presentation's reusable colours, corner
- radius and spacing. Everything using a token follows when it changes"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Design tokens</button>
+                title="The deck's named colours, corner radius and spacing.
+ Change one and everything using it follows"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Colours &amp; spacing</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -11446,151 +11478,75 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Quick animate</span>
           </span>
-          <!-- THREE GROUPS, NOT ONE (T178). Thirteen tools under one
-               heading read as a wall; with Animation gone to its own
-               tab (T176) the row has the width to say what each cluster
-               is FOR. PLACE puts a thing of a known kind on the page;
-               WRITE puts words on it, in three notations; DRAW arms a
-               tool and draws. Line and Arrow stay adjacent, as they
-               have since 2026-08-07, and Cancel stays LAST of the draw
-               tools so un-hiding it appends (2026-08-29). -->
+          <!-- FOUR GROUPS (T188). Place a thing of a known kind;
+               WRITE, where the kinds of text box are TILES in the row
+               the way the effects are (2026-09-02, user: "the insert
+               options like text should be like 'Effect' in the
+               animation tab, with all the options there"); DRAW; and
+               DRAWING, the armed mode's name, its one-line hint and the
+               way out, in a group of their own that appears only while
+               a tool is armed ("when drawing why is the cancel button
+               in the weirdest spot, have it appear in its own
+               section"). Chart is gone from here ("I never wanted that
+               and it is broken. Get rid of it"); the feature stays
+               reachable from a placed table's right-click. -->
           <span class="rbn-grp rbn-insert" data-tab="insert">
             <span class="rbn-row">
-              <!-- All one size. Three big buttons here were the worst of
-                   the "so many sizes" problem (2026-08-07): nothing shared
-                   a baseline and no size meant anything. Emphasis is
-                   carried by COLOUR now — Present is the one accented
-                   control — so every other button can be identical. -->
-              <!-- IDS ON THE FOUR TOOL BUTTONS. They were the only
-                   controls on the ribbon without one, which meant the
-                   per-button customiser could not reach them and a
-                   ribbon layout could not place them — including the
-                   Cell button, which is the notebook figure button and
-                   exactly the one somebody wants beside Lock figure
-                   (2026-08-25). A group emptied by a layout also stayed
-                   visible because these four never moved out of it. -->
-              <!-- OBJECT, not "Cell". A frame is a hole of a known size
-                   and position; what goes in it is chosen afterwards, and
-                   a notebook figure is only one of the answers. Named for
-                   the notebook, it read as the notebook's own button and
-                   nothing else looked like a way to place a picture
-                   (2026-08-29, user: "the notebook cells should be just
-                   'insert object', that can come from a notebook or local
-                   image or something"). The frame asks; see the chooser
-                   in 45-images.js. -->
+              <!-- NOTEBOOK CELL, by name again (T188; "what happened to
+                   the notebook cell option, that is gone"). T61 called
+                   it Object because the frame can hold a picture too;
+                   the chooser still offers that, but the notebook is
+                   what this button is for and the word people look for. -->
               <button class="dbtn et rbn-sm" id="et-cell" data-tool="cell"
                 aria-pressed="false"
-                title="Draw a frame for an object, then choose what goes in
- it: a figure from a notebook, a picture from this computer, or one on the
- clipboard, or a path"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Object</button>
+                title="Draw a frame, then pick a figure from a notebook to
+ fill it &mdash; or a picture from this computer, the clipboard, or a
+ path"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</button>
               <button class="dbtn rbn-sm" id="et-image"
                 title="Add an image from your computer. You can also
  paste one straight from the clipboard"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg> Image</button>
-              <!-- A real table, not a picture of one. It is DRAWN like
-                   everything else here rather than dropped in at a canned
-                   size, which is the rule the line tool was told off for
-                   breaking (2026-08-10). -->
-              <!-- A FLIP BOOK sits with the PLACE-things rather than the
-                   draw-things: what you are really doing is putting
-                   several notebook figures down at once. It answers the
-                   complaint that a figure built up in steps costs either a
-                   stack of overlaid images or a pile of duplicated slides
-                   (2026-08-22, user). -->
               <button class="dbtn et rbn-sm" id="et-flip" data-tool="flip"
                 aria-pressed="false"
                 title="Draw a flip book: one box holding many figures, with
- arrows to step through them &mdash; in the editor and while presenting.
- Text and objects can be tied to a particular figure"
+ arrows to step through them &mdash; in the editor and while presenting"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg> Flip book</button>
               <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
                 aria-pressed="false"
                 title="Draw a table. Double-click a cell to type; Tab
  moves along the row, Enter drops down"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg> Table</button>
-              <!-- T117's chart inserted only from a right-click, so a
-                   user looking at Insert concluded charts did not exist
-                   (JVUX-11). Not an `et` tool: it places at once rather
-                   than arming a draw. -->
-              <button class="dbtn rbn-sm" id="ins-chart"
-                title="A bar chart with sample numbers to replace &mdash;
- or select a placed table and &ldquo;Turn into a chart&rdquo;. Right-click
- it to change its type or edit the data. Exports to PowerPoint as a real
- chart"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.2h11.2"/><path d="M4.6 13.2V8.1"/><path d="M8 13.2V3.6"/><path d="M11.4 13.2V6.3"/></svg> Chart</button>
             </span>
             <span class="rbn-lab">Place</span>
           </span>
           <span class="rbn-grp rbn-write" data-tab="insert">
             <span class="rbn-row">
-              <!-- Text, plus a caret that says WHICH KIND of text
-                   (2026-08-22, user: "when creating text boxes or such
-                   you can click an option thing and create it as heading,
-                   paragraph etc. on create"). One wrapper, so
-                   sizeRibbonGroups still counts one cell and the Insert
-                   group keeps its column count; a sibling button would
-                   have taken it from five columns to six.
-                   The caret carries NEITHER `et` NOR data-tool: that
-                   exact pairing is what made #dc-qr call setTool(undefined)
-                   and leave the page armed with a tool that did not
-                   exist (2026-08-17). -->
-              <span class="sh-drop tx-split" id="tx-drop">
-              <button class="dbtn et rbn-sm" data-tool="text"
-                aria-pressed="false"
-                title="Add a text box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Text</button>
-              <button class="dbtn rbn-sm tx-caret" id="tx-type-btn" aria-label="Text box type"
-                aria-haspopup="true" aria-expanded="false"
-                title="Make the next text box a heading, a caption or any
- other named type, instead of a plain one">&#9662;</button>
-              <div class="sh-menu tx-type-menu" id="tx-type-menu"
-                hidden></div>
-              </span>
-              <!-- NOT an `et` tool. It carried that class without a
-                   data-tool, so the shared arming wiring called
-                   setTool(undefined): the button lit up as though a tool
-                   were live, Cancel appeared, the page went to a
-                   crosshair, and it stayed that way whether or not you
-                   had actually inserted anything (2026-08-17, user:
-                   "whatever QR code is is confusing"). It is an immediate
-                   insert, like Image beside it — which is why Image never
-                   had the class. -->
-              <!-- LaTeX, typeset by the MathJax the page already loads.
-                   It is an ordinary text box underneath, so it moves,
-                   colours, scales and exports like any other - the only
-                   new thing is that it starts with the delimiters in it
-                   and is typeset after every edit (2026-08-20, user asked
-                   for "Maths inserts"). -->
+              <!-- THE TEXT STRIP: one tile per kind of box -- plain,
+                   then every named type in the deck, each drawn as a
+                   specimen of itself. Click one and the tool arms for
+                   that kind; click it again to put the tool down. Built
+                   by txStripBoot; the caret menu it replaces was the
+                   one control on Insert that hid its options. -->
+              <span class="rbn-tall fx-strip tx-strip" id="tx-strip"
+                role="group" aria-label="Kind of text box"></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Equation</button>
-              <!-- MARKDOWN, beside LaTeX, for the same reason LaTeX is
-                   here: some content is quicker to type than to lay out
-                   (2026-08-29, user: "can there be like the latex cells,
-                   can we have markdown cells as well"). It is an ordinary
-                   text box underneath, so it moves, colours, scales and
-                   exports like any other -- the only new thing is that
-                   its words are source and its face is that source
-                   rendered. The renderer is notesHtml, which T28 already
-                   wrote for speaker notes: escape first, then mark up,
-                   and links whitelisted by scheme. -->
               <button class="dbtn rbn-sm" id="dc-md"
                 title="Add a Markdown box - headings, bullets, numbers,
  links, quotes, code and emphasis, typed as text and rendered on the
  slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8"/><path d="M2.6 7.4h10.8"/><path d="M2.6 10.6h7.2"/></svg> Markdown</button>
               <button class="dbtn rbn-sm" id="dc-qr"
                 title="Ask for a link and put a QR code on the page —
- point a phone at it to open your repo, paper or data. Generated here, so
- it works offline and prints crisp at any size (vector)"
+ point a phone at it to open your repo, paper or data"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.2" width="4.4" height="4.4"/><rect x="9.4" y="2.2" width="4.4" height="4.4"/><rect x="2.2" y="9.4" width="4.4" height="4.4"/><path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/><path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/></svg> QR code</button>
             </span>
             <span class="rbn-lab">Write</span>
           </span>
           <span class="rbn-grp rbn-draw" data-tab="insert">
             <span class="rbn-row">
-              <!-- Source order IS the layout: with two rows filled across,
-                   the first four land on the top row and the rest below.
-                   So things you PLACE sit together up top and things you
-                   DRAW sit together underneath — which is how Line and
-                   Arrow, the same tool with and without a head, finally
-                   end up beside each other (2026-08-07, user). -->
+              <!-- SHAPE stays a drawn gallery behind one door, as
+                   PowerPoint's is: fifteen shapes in the row would
+                   cost the tab its width for a thing you draw once. -->
               <span class="sh-drop" id="sh-drop">
                 <button class="dbtn rbn-sm" id="sh-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -11600,50 +11556,41 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               </span>
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
-                title="Draw a line — a section divider for posters and
- slides. Drag on the page to draw it, the same way you draw a shape; drop
- an end on an item to attach it."
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 8h12"/><path d="M2 5.8v4.4"/><path d="M14 5.8v4.4"/></svg> Line</button>
+                title="Draw a line — drag on the page; drop an end on an
+ item to attach it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2 8h12"/><path d="M2 5.8v4.4"/><path d="M14 5.8v4.4"/></svg> Line</button>
               <button class="dbtn rbn-sm et" id="et-arrow" data-tool="arrow"
                 aria-pressed="false" title="Draw an arrow — a line with a
  head. Drop an end on an item to attach it, and the arrow follows that
  item around"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 12.6 12.6 3.4"/><path d="M7.8 3.4h4.8v4.8"/></svg> Arrow</button>
-              <!-- freehand, LAST of the drawing tools. It briefly sat
-                   between Line and Arrow, which broke the pairing the
-                   side rail's wrap builds from source order: Line+Draw
-                   shared a line and Arrow was orphaned full-width under
-                   them (2026-08-18, user: "some of the buttons are a bit
-                   wonky"). Line and Arrow are the same tool with and
-                   without a head and have been kept adjacent since
-                   2026-08-07; the newcomer goes after, not between. -->
               <button class="dbtn rbn-sm et" id="dc-draw" data-tool="draw"
                 aria-pressed="false"
                 title="Draw freehand — hold the mouse down and scribble.
- It takes a colour, a weight and a line style like any other stroke, and
- it prints and exports as vector"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.6c2.6.4 4-1 4.6-2.4"/><path d="m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z"/></svg> Draw</button>
+ It takes a colour, a weight and a line style like any other stroke"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 13.6c2.6.4 4-1 4.6-2.4"/><path d="m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z"/></svg> Draw</button>
               <input type="file" id="img-file" accept="image/*" hidden>
               <!-- MULTIPLE, unlike the single-image one above it: filling a
                    flip book twelve frames deep one file dialog at a time
                    is how a feature goes unused (2026-08-22) -->
               <input type="file" id="fp-img-file" accept="image/*" multiple
                 hidden>
-              <!-- The way OUT of an armed tool. Escape has always done
-                   this, but nothing said so, so picking Line or Shape and
-                   changing your mind left you with no visible exit
-                   (2026-08-10, user: "there is no way to get out of the
-                   line create option if you don't want to create a line").
-                   It is hidden until a tool is armed, so it costs no
-                   width in the ribbon's resting state -- and it is LAST
-                   in the group so that un-hiding it APPENDS. It used to
-                   sit between Line and Arrow, so arming a tool shoved
-                   every control after it along and Cancel appeared to
-                   land beside whatever you had just clicked (2026-08-29,
-                   user: "the cancel button appears in a weird spot"). -->
-              <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
-                title="Stop drawing and go back to selecting (Esc)"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Cancel</button>
             </span>
             <span class="rbn-lab">Draw</span>
+          </span>
+          <!-- DRAWING: the armed mode, in a group of its own (T188).
+               The name of what you are drawing over a one-line hint,
+               and Cancel under them. Hidden until a tool is armed, so
+               the resting row pays nothing; setTool shows it and the
+               ribbon re-fits. The hint line is the first thing the
+               tight rung drops. -->
+          <span class="rbn-grp rbn-cancel" data-tab="insert">
+            <span class="rbn-row">
+              <span class="rbn-cell seq-cell et-status" id="et-status"
+                hidden></span>
+              <button class="dbtn rbn-sm dbtn-warn" id="et-cancel" hidden
+                title="Stop drawing and go back to selecting (Esc)"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Cancel (Esc)</button>
+            </span>
+            <span class="rbn-lab">Drawing</span>
           </span>
           <!-- SLIDES, first on Home, the way PowerPoint opens its Home
                tab. Home is where you land, and with nothing selected it
@@ -11891,30 +11838,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- THREE WINDOWS, NOT FIFTEEN BUTTONS (T177). The Text
-                   group held every text control as a bare button in a
-                   two-row grid: size stepper, size field, the font
-                   list, B I U S, two list toggles, indent, outdent,
-                   Spacing, Layout and Styles. With a text box selected
-                   the Object tab ran to forty-one controls and the eye
-                   had nowhere to rest (2026-09-02, user: "heaps of
-                   buttons that you always have to click through... it
-                   would be good if more things, like the text options,
-                   had their own little window of options").
-                   The controls are the SAME ELEMENTS, moved into the
-                   window in the markup rather than copied: every id,
-                   handler, pressed state and test still addresses the
-                   one Bold there has always been, and a ribbon layout
-                   moves the window as one atom (rbnResolve). The
-                   window stays open while you toggle -- one click to
-                   open, then bold, italic and a size in a row, then
-                   Escape or a click away. -->
+              <!-- SPREAD OUT (T189). T177 put every text control behind
+                   Font and Paragraph doors; a day later: "how do you
+                   even add dot points any more?... too many things are
+                   in buttons in buttons" (2026-09-02). So the ones you
+                   reach for are back in the row -- bold, italic,
+                   underline, the two lists, and the three alignments
+                   -- and the two windows keep only what is set once:
+                   typeface, size and strike; box indent, spacing and
+                   curve. The room this costs is what group folding
+                   (T187) exists to pay: on a narrow window the
+                   rightmost groups fold into a button rather than
+                   the row clipping. -->
               <span class="sh-drop opt-drop" id="fmt-fontwrap">
                 <button class="dbtn etm" id="fmt-font-btn"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Typeface, size, and bold, italic, underline or
- strikethrough &mdash; in one window that stays open while you
- work"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Font &#9662;</button>
+                  title="Typeface, size and strikethrough"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Font &#9662;</button>
                 <div class="sh-menu opt-panel font-panel" id="fmt-font-menu"
                   hidden>
                   <div class="hd-lab">typeface</div>
@@ -11940,74 +11880,50 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     <button class="dbtn etm" id="fmt-bigger"
                       title="Bigger text">A+ Bigger</button>
                   </div>
-                  <div class="hd-lab">emphasis</div>
-                  <!-- WORDS beside the letters now there is room for
-                       them: a lone B was tolerated on the ribbon as a
-                       letter everybody knows, but the rule is words
-                       plus icons and a window has the width to keep
-                       it. -->
-                  <div class="opt-row opt-grid2">
-                    <button class="dbtn etm" id="fmt-bold"
-                      title="Bold"><b>B</b> Bold</button>
-                    <button class="dbtn etm" id="fmt-ital"
-                      title="Italic"><i>I</i> Italic</button>
-                    <button class="dbtn etm" id="fmt-under"
-                      title="Underline"><u>U</u> Underline</button>
+                  <div class="hd-lab">more</div>
+                  <div class="opt-row">
                     <button class="dbtn etm" id="fmt-strike"
                       title="Strikethrough"><s>S</s> Strikethrough</button>
                   </div>
                 </div>
               </span>
-              <!-- an equation goes back to the editor it came from, rather
-                   than being typed as raw LaTeX inside a text box. Both
-                   of these stay OUTSIDE the windows: they are the one
-                   action such a box needs, and a door behind a door is
-                   the thing T177 exists to remove. -->
+              <button class="dbtn etm" id="fmt-bold"
+                title="Bold"><b>B</b></button>
+              <button class="dbtn etm" id="fmt-ital"
+                title="Italic"><i>I</i></button>
+              <button class="dbtn etm" id="fmt-under"
+                title="Underline"><u>U</u></button>
               <button class="dbtn etm" id="fmt-eqedit" hidden
                 title="Open this equation in the equation editor"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Edit equation</button>
-              <!-- and the same door for markdown, for the same reason:
-                   what you see is the RENDERING, so typing into it on the
-                   canvas would be typing into the output -->
               <button class="dbtn etm" id="fmt-mdedit" hidden
                 title="Open this box in the Markdown editor"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8"/><path d="M2.6 7.4h10.8"/><path d="M2.6 10.6h7.2"/></svg> Edit markdown</button>
-              <!-- THE PARAGRAPH WINDOW: alignment, the two list toggles
-                   with indent and outdent, the whole-box indent, line
-                   and paragraph spacing, and the curve -- every "how the
-                   words sit" answer in one place with a heading over
-                   each. Alignment and curve used to be one worded menu
-                   called Layout and spacing another called Spacing; the
-                   list toggles were bare buttons beside them. The rows
-                   are built on open so each shows which answer is on
-                   (buildParaPanel). -->
+              <!-- BULLETS and NUMBERING are buttons that show their own
+                   state, not a line in a dropdown (2026-08-20, user:
+                   "the bullet list on/off is cursed"). -->
+              <button class="dbtn etm" id="fmt-bullets"
+                aria-pressed="false"
+                title="Bullet list on / off">&#8226; List</button>
+              <button class="dbtn etm" id="fmt-numbers"
+                aria-pressed="false"
+                title="Numbered list on / off">1. List</button>
+              <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
+                title="Align left">Left</button>
+              <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
+                title="Align centre">Centre</button>
+              <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
+                title="Align right">Right</button>
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
-                  title="How the words sit: alignment, lists, indent,
- line and paragraph spacing, and bending the text along a
- curve"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Paragraph &#9662;</button>
+                  title="List levels, the whole-box indent, line and
+ paragraph spacing, and bending the text along a curve"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden>
-                  <div class="hd-lab">alignment</div>
-                  <div class="opt-row" id="fmt-para-align"></div>
-                  <div class="hd-lab">list</div>
-                  <!-- BULLETS and NUMBERING are buttons that show their
-                       own state, not a line in a dropdown. The old toggle
-                       lived inside a menu called "Layout", so you could
-                       not see whether a list was on, and turning it off
-                       fell back to a stale copy of the text from before
-                       you started (2026-08-20, user: "the bullet list
-                       on/off is cursed. PLEASE DO EVERYTHING PROPERLY").
-                       Inside the window they still show it: the window
-                       is a room, not a menu, and it stays open. -->
+                  <div class="hd-lab">list levels</div>
                   <div class="opt-row">
-                    <button class="dbtn etm" id="fmt-bullets"
-                      aria-pressed="false"
-                      title="Bullet list on / off">&#8226; Bullets</button>
-                    <button class="dbtn etm" id="fmt-numbers"
-                      aria-pressed="false"
-                      title="Numbered list on / off">1. Numbers</button>
                     <button class="dbtn etm" id="fmt-outdent" hidden
                       title="Move this bullet out one level (Shift+Tab)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="M5.4 5.6 3 8l2.4 2.4"/></svg>
                         Outdent</button>
@@ -12017,16 +11933,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   </div>
                   <div class="hd-lab">indent the whole box</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
-                  <!-- LINE SPACING, which every word processor has had
-                       since the 1980s and this did not (2026-08-20, user:
-                       "when I say I want all the power point options, why
-                       do you not do all them. Like where is the line
-                       spacing options"). Space BETWEEN paragraphs is the
-                       other half nobody thinks to ask for until their
-                       bullets are touching. A section of this window
-                       now, not a dropdown of its own; the wrapper keeps
-                       its id because showFmt governs it by kind (a
-                       table's words take spacing too). -->
                   <span class="sh-drop opt-sec" id="fmt-lhwrap">
                     <div class="sh-menu lh-menu" id="fmt-lh-menu"></div>
                   </span>
@@ -20811,11 +20717,8 @@ window.JunoPptx = (function () {
           if(lb) lb.setAttribute('aria-expanded','false');}
       });
   }
-  function closePageMenu(){
-    var pm=$('#page-menu'),pb=$('#page-btn');
-    if(pm&&!pm.hidden){overlayHide(pm);
-      if(pb) pb.setAttribute('aria-expanded','false');}
-  }
+  /* the page size is a strip of tiles now (T190); nothing to close */
+  function closePageMenu(){}
   /* ---- page size: slides or a poster — ONE builder for both. The page
      is a per-presentation preset; a poster is just a big page. ---- */
   var PAGE_PRESETS=[
@@ -20937,16 +20840,11 @@ window.JunoPptx = (function () {
     deckEl.classList.toggle('custom-page',pg.id!=='16x9');
     deckEl.classList.toggle('poster-page',!!pg.poster);
     applyPageBg();
-    var b=$('#page-btn');
-    /* the group is already called Page, so the button carries only the
-       size — "Poster A0 portrait" under a PAGE heading said "Poster" and
-       "Page" twice and was the widest control in the group */
-    if(b) b.innerHTML='&#9645; '
-      +(pg.id==='16x9'?'Page':esc(pg.label.replace(/^Poster\s+/,'')))
-      +' &#9662;';
-    $$('#page-menu .page-opt').forEach(function(o){
-      o.setAttribute('aria-pressed',
-        (o.dataset.page===pg.id).toString());});
+    /* the page-size tile in use is lit (T190) */
+    $$('#page-strip .page-tile').forEach(function(o){
+      var on=(o.dataset.page===pg.id);
+      o.classList.toggle('on',on);
+      o.setAttribute('aria-pressed',on.toString());});
     /* a poster has no slides, so it is never told about them: the ribbon
        group is "Page", and page numbering — which only means anything to
        a deck you step through — goes away entirely */
@@ -23780,6 +23678,7 @@ window.JunoPptx = (function () {
        against the full row, or a bar that folded once at 1280px would
        stay folded after you maximised the window. */
     foldViewGroup(false);
+    rbnUnfoldAll();
     sizeRibbonGroups();
     var cl=deckEl.classList;
     ERC.forEach(function(c){cl.remove(c);});
@@ -23813,6 +23712,13 @@ window.JunoPptx = (function () {
       foldViewGroup(true);
       sizeRibbonGroups();
     }
+    /* STILL OVER: fold the rightmost group into a button that opens
+       its row, and again until it fits (T187) -- the way PowerPoint
+       collapses a group on a narrow window. It is the rung that
+       makes spreading the controls out affordable at all. */
+    var guard=0;
+    while(bar.scrollWidth>bar.clientWidth+1&&guard++<12&&rbnFoldOne())
+      sizeRibbonGroups();
     /* Below the floor the row genuinely does not fit even flattened, and
        the only moves left — clip, scroll, wrap — are all forbidden.
        Standing the toolbar on its end is the layout that has room, and
@@ -23985,6 +23891,75 @@ window.JunoPptx = (function () {
       viewWasHidden=null;
     }
     viewFolded=on;
+  }
+  /* ---- GROUP FOLDING (T187) --------------------------------------
+     A group whose row does not fit becomes ONE worded button that
+     opens the row as a popover -- the group's own name on the door,
+     its controls untouched inside (the real elements, moved, never
+     copied). fitEditRibbon unfolds everything before it measures and
+     folds from the right until the bar fits, so a wider window opens
+     the groups out again by itself. Never the fixed groups, never the
+     Drawing or Quick animate groups (a mode's exit must stay on the
+     bar), and a layout unfolds all before it moves anything. */
+  function rbnFoldGroup(g){
+    if(!g||g.classList.contains('rbn-folded')) return false;
+    var row=null;
+    [].slice.call(g.children).forEach(function(c){
+      if(!row&&c.classList.contains('rbn-row')) row=c;});
+    if(!row) return false;
+    var lab=g.querySelector('.rbn-lab');
+    var name=(lab&&lab.textContent.trim())||'More';
+    var wrap=document.createElement('span');
+    wrap.className='sh-drop rbn-foldwrap';
+    var btn=document.createElement('button');
+    btn.type='button';btn.className='dbtn rbn-sm rbn-foldbtn';
+    btn.setAttribute('aria-haspopup','true');
+    btn.setAttribute('aria-expanded','false');
+    btn.innerHTML=bic('menu')+' '+esc(name)+' \u25be';
+    btn.title=name+' \u2014 folded because the window is too narrow '
+      +'to show the whole row. Widen the window and it opens out again';
+    var menu=document.createElement('div');
+    menu.className='sh-menu rbn-foldmenu';menu.hidden=true;
+    menu.appendChild(row);
+    wrap.appendChild(btn);wrap.appendChild(menu);
+    g.insertBefore(wrap,lab||null);
+    g.classList.add('rbn-folded');
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!menu.hidden){overlayHide(menu);return;}
+      overlayShow(btn,menu);floatMenu(btn,menu);
+    });
+    return true;
+  }
+  function rbnUnfoldGroup(g){
+    var wrap=null;
+    [].slice.call(g.children).forEach(function(c){
+      if(!wrap&&c.classList.contains('rbn-foldwrap')) wrap=c;});
+    if(!wrap) return;
+    var menu=wrap.querySelector('.rbn-foldmenu');
+    if(menu&&!menu.hidden) overlayHide(menu);
+    var row=wrap.querySelector('.rbn-row');
+    if(row) g.insertBefore(row,wrap);
+    wrap.remove();
+    g.classList.remove('rbn-folded');
+  }
+  function rbnUnfoldAll(){
+    $$('#edit-tools .rbn-grp.rbn-folded').forEach(rbnUnfoldGroup);
+  }
+  /* the rightmost group ON SCREEN that may fold: flex `order` decides
+     the visual order, so sort by position rather than by markup */
+  function rbnFoldOne(){
+    var bar=$('#edit-tools'); if(!bar) return false;
+    var gs=$$('.rbn-grp',bar).filter(function(g){
+      return !g.hidden&&!g.hasAttribute('data-off')
+        &&!g.classList.contains('rbn-folded')
+        &&!g.classList.contains('rbn-fixed')
+        &&!g.classList.contains('rbn-seq')
+        &&!g.classList.contains('rbn-cancel');});
+    if(!gs.length) return false;
+    gs.sort(function(x,y){
+      return x.getBoundingClientRect().left-y.getBoundingClientRect().left;});
+    return rbnFoldGroup(gs[gs.length-1]);
   }
   function closeViewMenu(){
     var m=$('#vw-more-menu');
@@ -24233,18 +24208,27 @@ window.JunoPptx = (function () {
     },{passive:false});
   })();
   (function(){
-    var pb=$('#page-btn'),pm=$('#page-menu'),pd=$('#page-drop');
-    if(!pb||!pm) return;
+    var ps=$('#page-strip');
+    if(!ps) return;
+    /* TILES, drawn at their own proportion (T190): a 16:9 slide is a
+       wide box, an A4 portrait a tall one, so the row reads without
+       reading. The one in use is lit by applyPage. */
     PAGE_PRESETS.forEach(function(pg){
       var o=document.createElement('button');
-      o.className='dc-mi page-opt';o.type='button';
+      o.className='fx-tile page-tile';o.type='button';
       o.dataset.page=pg.id;
-      o.textContent=pg.label
-        +(pg.id==='16x9'?'':' · '+pg.mm[0]+'×'+pg.mm[1]+' mm');
+      var ic=document.createElement('span');ic.className='page-ico';
+      var k=Math.min(26/pg.aw,18/pg.ah);
+      ic.style.width=Math.max(8,Math.round(pg.aw*k))+'px';
+      ic.style.height=Math.max(8,Math.round(pg.ah*k))+'px';
+      o.appendChild(ic);
+      var t=document.createElement('span');
+      t.textContent=pg.label.replace(/^Poster\s+/,'').replace(/^Slides\s+/,'');
+      o.appendChild(t);
+      o.title=pg.label+' \u00b7 '+pg.mm[0]+'\u00d7'+pg.mm[1]+' mm';
       o.addEventListener('click',function(e){
         e.stopPropagation();
         if(pg.id==='16x9') delete pres.page; else pres.page=pg.id;
-        overlayHide(pm);
         deckZoom=0;
         markDirty();applyPage();refresh();
         /* Changing the page can change WHERE the File controls belong: a
@@ -24256,12 +24240,7 @@ window.JunoPptx = (function () {
            (unless you have already chosen otherwise) */
         applySideRibbon();
       });
-      pm.appendChild(o);
-    });
-    pb.addEventListener('click',function(e){
-      e.stopPropagation();
-      if(pm.hidden) overlayShow(pb,pm);
-      else overlayHide(pm);
+      ps.appendChild(o);
     });
   })();
   /* ---- Objects pane (layers v1): list / select / hide / lock ---- */
@@ -25539,6 +25518,9 @@ window.JunoPptx = (function () {
   function applyRibbonLayout(id,quiet){
     var bar=$('#edit-tools'); if(!bar) return;
     rbnHome();                       /* snapshot before the first move */
+    /* a folded group has its row inside a popover; the snapshot's
+       holders are the rows themselves, so unfold before moving (T187) */
+    if(typeof rbnUnfoldAll==='function') rbnUnfoldAll();
     var lay=rbnLayoutById(id)||rbnLayoutById('default');
     rbnRestoreHome();                /* always start from the markup */
     rbnLayoutId=lay.id;
@@ -30469,7 +30451,7 @@ window.JunoPptx = (function () {
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
         b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Design tokens and everything using it follows.';
+          +'Design \u2192 Colours & spacing and everything using it follows.';
         b.setAttribute('aria-label',nm+' (deck colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -30746,6 +30728,8 @@ window.JunoPptx = (function () {
      histReset() does, that being the one funnel every new presentation
      passes through. */
   function syncCustomTypes(){
+    /* a type of your own gets a tile on Insert (T188) */
+    if(typeof txStripSync==='function') txStripSync(true);
     /* Impossible by construction since 2026-08-23: the first
        presentation loads from THE BOOT SEQUENCE at the end of the file,
        after STYLE_DEFAULTS is assigned, so this guard never fires. It
@@ -34318,7 +34302,8 @@ window.JunoPptx = (function () {
        rows the Paragraph one builds, and the Weight heading that
        carries the printed thickness. The wrappers are the atoms a
        ribbon layout moves; the doors are what showFmt shows. */
-    +'#fmt-fontwrap #fmt-font-btn #fmt-para-align #fmt-para-ind '
+    +'#fmt-fontwrap #fmt-font-btn #fmt-para-ind '
+    +'#fmt-al-left #fmt-al-center #fmt-al-right '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
     /* the Object tab's effect buttons (T179): animRibbonSync owns
@@ -34573,6 +34558,13 @@ window.JunoPptx = (function () {
     show('#fmt-numbers',isText&&isNum,lst==='number');
     show('#fmt-indent',isText&&isNum&&!!lst);
     show('#fmt-outdent',isText&&isNum&&!!lst);
+    /* the three alignments, in the row and showing which is on
+       (T189); they were rows of a menu called Layout, then chips in
+       a window called Paragraph */
+    var alg=isText?(a.align||'left'):'';
+    show('#fmt-al-left',isText&&isNum,alg==='left');
+    show('#fmt-al-center',isText&&isNum,alg==='center');
+    show('#fmt-al-right',isText&&isNum,alg==='right');
     /* the kind-driven controls, all from one table */
     Object.keys(FMT_KINDS).forEach(function(id){
       var spec=FMT_KINDS[id];
@@ -37103,6 +37095,28 @@ window.JunoPptx = (function () {
          on the obvious, sitting in the middle of the toolbar forever
          (2026-08-10, user: "what is that even there?"). */
       :'';
+    /* THE DRAWING GROUP (T188): the mode's name over a short hint,
+       and Cancel under them, in a group that exists only while a
+       tool is armed. The long hint above is the ladder's first
+       casualty; this one is two lines the group can afford. */
+    var stc=$('#et-status');
+    if(stc){
+      stc.hidden=(t==='select');
+      var word={text:'Text box',arrow:'Arrow',rect:'Shape',line:'Line',
+        cell:'Notebook cell',flip:'Flip book',table:'Table',
+        guide:'Guide box',draw:'Freehand'}[t]||t;
+      if(t==='text'&&pendingStyle&&styleDef(pendingStyle))
+        word=styleDef(pendingStyle).label+' box';
+      if(t==='rect'&&pendingShape!=='rect') word=pendingShape;
+      var how=(t==='text'||t==='cell'||t==='table')
+        ?'Drag to draw, or click for the usual size'
+        :'Drag on '+pw+' to draw it';
+      stc.innerHTML='<span><b>Drawing: '+esc(word)+'</b></span>'
+        +'<span>'+esc(how)+'</span>';
+    }
+    if(typeof txStripSync==='function') txStripSync();
+    /* the group appeared or went, so the row is re-judged */
+    if(typeof syncRibbonGroups==='function') syncRibbonGroups();
   }
   function deleteSel(){
     var s=pres.slides[cur];
@@ -37968,18 +37982,14 @@ window.JunoPptx = (function () {
     /* a table's WORDS take spacing; alignment, the box indent and the
        curve are a text box's own */
     var isTx=(a.k==='text');
-    var al=$('#fmt-para-align'),ind=$('#fmt-para-ind'),
-        cv=$('#fmt-para-curve');
-    [al,ind,cv].forEach(function(h){
+    /* alignment and the two lists are buttons in the row again
+       (T189); the window keeps what is set once */
+    var ind=$('#fmt-para-ind'),cv=$('#fmt-para-curve');
+    [ind,cv].forEach(function(h){
       if(!h) return;
       h.innerHTML='';optSection(h,isTx);
     });
-    if(isTx&&al&&ind&&cv){
-      ALIGNS.forEach(function(p){
-        optChip(al,p[1],(a.align||'left')===p[0],
-          'Align '+p[1].toLowerCase(),
-          function(){paraApply('a:'+p[0]);});
-      });
+    if(isTx&&ind&&cv){
       /* the whole-box indent is a stepper with its count between the
          steps, because a level is a number rather than a choice */
       var steps=Math.round((a.ind||0)/IND_STEP);
@@ -38269,6 +38279,11 @@ window.JunoPptx = (function () {
   })();
   onBtn('#fmt-bullets',function(){listApply('bullet');});
   onBtn('#fmt-numbers',function(){listApply('number');});
+  /* the three alignments, as buttons (T189) */
+  ALIGNS.forEach(function(p){
+    onBtn('#fmt-al-'+(p[0]==='center'?'center':p[0]),function(){
+      paraApply('a:'+p[0]);});
+  });
   /* indent/outdent only mean anything with the caret inside the box, so
      they act on the live contenteditable rather than the model, and the
      blur handler writes the result back like any other typing */
@@ -40413,16 +40428,9 @@ window.JunoPptx = (function () {
       e.stopPropagation();
       if(window.SemDeckMasters) window.SemDeckMasters();
     });
-    var ic2=$('#ins-chart');
-    if(ic2) ic2.addEventListener('click',function(e){
-      e.stopPropagation();
-      var na=window.SemDeckChart&&window.SemDeckChart.place(
-        {cats:['A','B','C'],series:[
-          {name:'Series 1',ys:[3,5,2]},{name:'Series 2',ys:[2,3,4]}]},
-        {x:34,y:28});
-      if(na) toast('Chart placed \u2014 right-click it to edit the '
-        +'numbers or change its type');
-    });
+    /* the Chart button left the ribbon (T188; 2026-09-02, user: "I
+       never wanted that... get rid of it"). The feature is still
+       reachable from a placed table's right-click, Turn into a chart. */
     var sv=null;
     ['#lay-arrsave','#hm-lay-arrsave'].forEach(function(id){
       var el=$(id); if(!el) return;
@@ -47708,7 +47716,9 @@ window.JunoPptx = (function () {
       strip.appendChild(b);
     });
     var lab=$('#anim-strip-lab');
-    if(lab) lab.textContent=on?'Effect':'Effect \u2014 select something';
+    /* just "Effect": the greyed tiles already say to select something
+       (2026-09-02, user: "that is unnecessary text lol") */
+    if(lab) lab.textContent='Effect';
   }
   function galBoot(){
     var strip=$('#anim-strip');
@@ -47846,8 +47856,7 @@ window.JunoPptx = (function () {
           (st.on&&st.text&&st.by===p[1]).toString());
       });
       var lab=$('#anim-timing-lab');
-      if(lab) lab.textContent=st.on?(st.text?'Timing & text':'Timing')
-        :'Timing \u2014 select an animated thing';
+      if(lab) lab.textContent=(st.on&&st.text)?'Timing & text':'Timing';
     }
     var ocb=$('#anim-onclick');
     if(ocb) ocb.addEventListener('click',function(e){
@@ -52580,79 +52589,73 @@ window.JunoPptx = (function () {
       else overlayHide(shMenu);
     });
   })();
-  /* ---- WHAT KIND OF TEXT BOX ------------------------------------------
-     The caret beside Insert > Text, built like the Shapes gallery beside
-     it: pick, and the tool arms. Naming a box as you make it is the half
-     of named styles that was missing — until now the only way to get a
-     Heading 2 was to draw a plain box and then go and find the Styles
-     menu (2026-08-22).
-     The armed type is NOT written into the button's label. deck.js
-     records the rule where the format bar is built: a label whose width
-     changes with what you clicked makes the ribbon's required width
-     depend on the selection, and the fit ladder has no rung left to
-     absorb that. It shows in the caret's tooltip, in the pressed state
-     of the menu row, and in the tool hint — exactly where pendingShape
-     shows. */
-  (function(){
-    var btn=$('#tx-type-btn'),menu=$('#tx-type-menu'),drop=$('#tx-drop');
-    if(!btn||!menu) return;
-    function syncCaret(){
-      var d=pendingStyle&&styleDef(pendingStyle);
-      btn.title=d
-        ?('The next text box will be a '+d.label
-          +'. Click to change it or go back to plain text')
-        :'Make the next text box a heading, a caption or any other named '
-          +'type, instead of a plain one';
-    }
+  /* ---- WHAT KIND OF TEXT BOX: THE TEXT STRIP (T188) --------------------
+     One tile per kind of box -- plain, then every named type in the
+     deck, each drawn as a specimen of itself -- in the row of the Insert
+     tab, the way the effects are. Click one and the text tool arms for
+     that kind; the tile stays lit while it is armed; click it again to
+     put the tool down. It replaces the caret menu beside Text, which was
+     the one control on Insert that hid its options (2026-09-02, user:
+     "the insert options like text should be like 'Effect'").
+     The armed kind is NOT written into any button's label (the fit
+     ladder has no rung for a label that follows the selection); it is
+     the lit tile, and the Drawing group's status line. Rebuilt whenever
+     the type registry changes, so a type of your own gets a tile. */
+  var txStripSync=function(){};
+  function txStripBoot(){
+    var strip=$('#tx-strip'); if(!strip) return;
     function build(){
-      menu.innerHTML='';
-      menuHead(menu,'make the next text box a');
-      var rows=[['','Plain text box',null]];
+      strip.innerHTML='';
+      var rows=[['','Text',null]];
       styleOrder().forEach(function(id){
         rows.push([id,styleDef(id).label,styleDef(id)]);});
       rows.forEach(function(r){
         var b=document.createElement('button');
-        b.className='dbtn vw-opt jv-styleopt';
-        b.setAttribute('aria-pressed',(pendingStyle===r[0]).toString());
-        var t=document.createElement('span');
-        t.className='jv-stylename';t.textContent=r[1];
-        /* the row is a SPECIMEN, the same way the Styles menu's rows are:
-           you pick by looking rather than by reading a number */
+        b.type='button';b.className='fx-tile tx-tile';
+        b.dataset.style=r[0];
+        /* the plain tile keeps the door older code and tests know */
+        if(!r[0]) b.setAttribute('data-tool','text');
+        var ic=document.createElement('span');ic.className='tx-tile-a';
+        ic.textContent='Aa';
         if(r[2]){
-          t.style.fontWeight=r[2].b?'700':'400';
-          if(r[2].i) t.style.fontStyle='italic';
-          t.style.fontSize=Math.max(11,Math.min(21,r[2].size*3.1))+'px';
-          if(r[2].color) t.style.color=tokVal(r[2].color);
-          if(r[2].font) t.style.fontFamily=fontCss(r[2].font);
+          ic.style.fontWeight=r[2].b?'700':'400';
+          if(r[2].i) ic.style.fontStyle='italic';
+          ic.style.fontSize=Math.max(11,Math.min(22,r[2].size*3.2))+'px';
+          if(r[2].color) ic.style.color=tokVal(r[2].color);
+          if(r[2].font) ic.style.fontFamily=fontCss(r[2].font);
         }
+        b.appendChild(ic);
+        var t=document.createElement('span');t.textContent=r[1];
         b.appendChild(t);
-        if(r[2]){
-          var n=document.createElement('span');
-          n.className='jv-stylesz';
-          n.textContent=Math.round(r[2].size*5.4)+' pt';
-          b.appendChild(n);
-        }
+        b.title=r[0]
+          ?('Draw a '+r[1]+' box'
+            +(r[2]?(' \u2014 '+Math.round(r[2].size*5.4)+' pt'):''))
+          :'Draw a plain text box \u2014 drag on the slide, or click for '
+           +'one that sizes itself';
         b.addEventListener('click',function(e){
           e.stopPropagation();
+          if(tool==='text'&&pendingStyle===r[0]){setTool('select');return;}
           pendingStyle=r[0];
-          overlayHide(menu);
-          syncCaret();
           setTool('text');
         });
-        menu.appendChild(b);
+        strip.appendChild(b);
+      });
+      mark();
+    }
+    function mark(){
+      $$('.tx-tile',strip).forEach(function(b){
+        var on=(tool==='text'&&pendingStyle===(b.dataset.style||''));
+        b.classList.toggle('on',on);
+        b.setAttribute('aria-pressed',on.toString());
       });
     }
-    btn.addEventListener('click',function(e){
-      /* stopPropagation, and no `et` class and no data-tool on this
-         button: the shared tool wiring would otherwise arm setTool(
-         undefined) off it */
-      e.stopPropagation();
-      if(menu.hidden){
-        build();overlayShow(btn,menu);floatMenu(btn,menu);
-      } else overlayHide(menu);
-    });
-    syncCaret();
-  })();
+    /* setTool calls this on every arm and disarm; the registry calls it
+       when a type is added or removed, and then the strip is rebuilt */
+    txStripSync=function(rebuild){
+      if(rebuild) build(); else mark();
+    };
+    build();
+  }
   var downBtn=$('#deck-down');
   if(downBtn) downBtn.addEventListener('click',scrollToTrace);
   var upBtn=$('#deck-up');
@@ -56020,6 +56023,7 @@ window.JunoPptx = (function () {
   animBoot();
   seqBoot();       /* the sequencing mode's bar (T168) */
   galBoot();       /* the effect gallery's door (T171) */
+  txStripBoot();              /* the kinds of text box, as tiles (T188) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */
