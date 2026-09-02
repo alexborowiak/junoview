@@ -1625,6 +1625,63 @@
      down. It replaces the Shape door ("the shapes should be on their
      own", 2026-09-02). */
   var shapeStripSync=function(){};
+  /* ---- THE STRIP FRAME'S DOOR (T203) ----------------------------------
+     Every tile strip sits in a frame with a chevron at its end. The
+     chevron opens a window under the strip holding EVERY tile at
+     once, wrapped: the strip element itself is moved into the window,
+     so each tile keeps the wiring its builder gave it, and moved back
+     into the frame when the window closes (the overlay owner hides
+     it; an attribute observer sees that and puts the strip home).
+     Picking a tile closes the window, the way a gallery does. */
+  function stripMoreBoot(){
+    $$('.strip-frame').forEach(function(frame){
+      var strip=frame.querySelector('.fx-strip'),
+          more=frame.querySelector('.strip-more');
+      if(!strip||!more) return;
+      var panel=null;
+      function home(){
+        if(strip.parentNode===frame) return;
+        frame.insertBefore(strip,more);
+        more.setAttribute('aria-expanded','false');
+      }
+      function build(){
+        panel=document.createElement('div');
+        panel.className='sh-menu strip-all';
+        panel.id=strip.id+'-all';
+        panel.hidden=true;
+        var h=document.createElement('div');
+        h.className='strip-all-h';
+        h.textContent=strip.getAttribute('aria-label')||'All';
+        panel.appendChild(h);
+        /* inside the editor's own layer: the editor sits above the
+           page, so a window appended to body opens underneath it */
+        ((typeof deckEl!=='undefined'&&deckEl)||document.body)
+          .appendChild(panel);
+        /* a tile picked in the window closes it, after its own
+           handler has run */
+        panel.addEventListener('click',function(e){
+          var t=e.target&&e.target.closest?
+            e.target.closest('.fx-tile,.dbtn.lay'):null;
+          if(t&&panel.contains(t))
+            setTimeout(function(){overlayHide(panel);},0);
+        });
+        new MutationObserver(function(){
+          if(panel.hidden) home();
+        }).observe(panel,{attributes:true,attributeFilter:['hidden']});
+      }
+      more.addEventListener('click',function(e){
+        e.stopPropagation();
+        if(!panel) build();
+        if(!panel.hidden){overlayHide(panel);return;}
+        panel.appendChild(strip);
+        overlayShow(more,panel);
+        var fr=frame.getBoundingClientRect(),
+            pw=panel.offsetWidth,vw=window.innerWidth;
+        panel.style.left=Math.max(8,Math.min(fr.left,vw-pw-8))+'px';
+        panel.style.top=(fr.bottom+4)+'px';
+      });
+    });
+  }
   function shapeStripBoot(){
     var strip=$('#shape-strip'); if(!strip) return;
     SHAPE_LIST.forEach(function(pair){

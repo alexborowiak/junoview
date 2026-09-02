@@ -4132,6 +4132,26 @@ option. Then where has the ability to refresh all images gone?"
   "pasted or dropped", a figure's notebook), and its lock, toggled
   from the row; a row goes to the thing and selects it. Rendered on
   open and on its Read again button, never from markDirty.
+- [x] **T203 · S — The strip frame, and an empty text box that stays.**
+  The user (2026-09-02): "When a text box has no text, when you click
+  object it disappears. Text boxes with no text should still be there.
+  The side scrolling bars are good, but the ends kind of just
+  disappear and looks odd, maybe they need a line on the other side or
+  a box around the whole thing. The horizontal scroll bar is too small
+  and overlaps with them. There needs to be an arrow or something
+  below, that when you click you can see all options."
+  *Done 2026-09-02.* Every tile strip (layouts, effects, text kinds,
+  shapes, page sizes) sits in a **frame**: a border round the whole
+  thing, a scrollbar you can see that sits under the tiles rather than
+  on them, and a chevron at the right end. The chevron opens a window
+  under the strip with **every tile at once**, wrapped — the strip
+  element itself is moved into the window so each tile keeps its
+  wiring, and moved home when the window closes; picking a tile closes
+  it, the way a gallery does. The frame carries the id the ribbon
+  layouts move, so strip and door travel as one. An **empty text box**
+  no longer vanishes when you click away: the "Type…" placeholder no
+  longer waits for the caret, and a box with nothing in it wears a
+  faint dashed edge until it has words.
 
 
 ## Cut (and why)

@@ -569,8 +569,12 @@
                    proportion, the one in use lit; the strip scrolls
                    and a tile cut at the edge is the affordance. Built
                    from PAGE_PRESETS, the same table the menu was. -->
-              <span class="rbn-tall fx-strip page-strip" id="page-strip"
-                role="group" aria-label="Page size"></span>
+              <span class="rbn-tall strip-frame" id="page-strip-frame">
+                <span class="fx-strip page-strip" id="page-strip"
+                  role="group" aria-label="Page size"></span>
+                <button class="strip-more" type="button" id="page-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show all page sizes">&#9662;</button></span>
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -845,8 +849,12 @@
                galSync, which the selection already calls. -->
           <span class="rbn-grp rbn-anim" data-tab="animation">
             <span class="rbn-row">
-              <span class="rbn-tall fx-strip" id="anim-strip"
-                role="group" aria-label="Entrance effect"></span>
+              <span class="rbn-tall strip-frame" id="anim-strip-frame">
+                <span class="fx-strip" id="anim-strip"
+                  role="group" aria-label="Entrance effect"></span>
+                <button class="strip-more" type="button" id="anim-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every effect">&#9662;</button></span>
             </span>
             <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
@@ -1032,8 +1040,12 @@
                    that kind; click it again to put the tool down. Built
                    by txStripBoot; the caret menu it replaces was the
                    one control on Insert that hid its options. -->
-              <span class="rbn-tall fx-strip tx-strip" id="tx-strip"
-                role="group" aria-label="Kind of text box"></span>
+              <span class="rbn-tall strip-frame" id="tx-strip-frame">
+                <span class="fx-strip tx-strip" id="tx-strip"
+                  role="group" aria-label="Kind of text box"></span>
+                <button class="strip-more" type="button" id="tx-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every kind of text box">&#9662;</button></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><i data-ic="maths"></i> Equation</button>
@@ -1055,8 +1067,12 @@
                door for width; group folding (T187) pays for the strip. -->
           <span class="rbn-grp rbn-shapes" data-tab="insert">
             <span class="rbn-row">
-              <span class="rbn-tall fx-strip shape-strip" id="shape-strip"
-                role="group" aria-label="Shapes"></span>
+              <span class="rbn-tall strip-frame" id="shape-strip-frame">
+                <span class="fx-strip shape-strip" id="shape-strip"
+                  role="group" aria-label="Shapes"></span>
+                <button class="strip-more" type="button" id="shape-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every shape">&#9662;</button></span>
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
@@ -1100,6 +1116,16 @@
             </span>
             <span class="rbn-lab">Drawing</span>
           </span>
+          <!-- EVERY TILE STRIP SITS IN A FRAME (T203; 2026-09-02, user:
+               "the side scrolling bars are good, but the ends kind of
+               just disappear... the horizontal scroll bar is too small
+               and overlaps with them. There needs to be an arrow or
+               something below, that when you click you can see all
+               options"). The frame is the box; its scrollbar is a real
+               one under the tiles; the chevron at its end opens every
+               tile at once, wrapped, in a window under the strip
+               (stripMoreBoot). The frame carries the id the ribbon
+               layouts move, so the strip and its door travel as one. -->
           <!-- HOME, BY WHAT YOU DO (T202; 2026-09-02, user: "the
                groupings still make no sense... you can't create a new
                layout with the layouts there, you can only change the
@@ -1117,8 +1143,12 @@
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-newslide"
                                             title="Add a slide after this one">&#43; New slide</button>
-              <span class="rbn-tall fx-strip lay-strip" id="layout-strip"
-                role="group" aria-label="New slide, laid out as"></span>
+              <span class="rbn-tall strip-frame" id="layout-strip-frame">
+                <span class="fx-strip lay-strip" id="layout-strip"
+                  role="group" aria-label="New slide, laid out as"></span>
+                <button class="strip-more" type="button" id="layout-strip-more"
+                  aria-expanded="false" title="Show all"
+                  aria-label="Show every layout">&#9662;</button></span>
             </span>
             <span class="rbn-lab">New slide</span>
           </span>

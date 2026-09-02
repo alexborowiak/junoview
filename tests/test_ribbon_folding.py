@@ -94,7 +94,7 @@ def test_a_born_empty_text_box_says_it_is_there(out):
     text". The box now says Type... until you do, and the Effect and
     Timing labels stop instructing.
     """
-    assert ('.deck.editing .an-item.an-text .an-tx[contenteditable="true"]'
-            ':empty::before{') in out
+    # (and since T203 it says so whether or not the caret is in it)
+    assert '.deck.editing .an-item.an-text .an-tx:empty::before{' in out
     assert "if(lab) lab.textContent='Effect';" in out
     assert "if(lab) lab.textContent=(st.on&&st.text)?'Timing & text':'Timing';" in out

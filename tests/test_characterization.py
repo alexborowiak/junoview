@@ -901,8 +901,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T202 2026-09-02: Home by what you do -- a tile makes a slide, Keep up
 # to date as tall tiles, Masters back to Design -- and the All images
 # pane. deck.html, deck.css, core.css and seven deck fragments.
-EXPECTED_MD5 = "ec56b4448b27727d8eb068c181a24c07"
-EXPECTED_BYTES = 3309134
+# T203 2026-09-02: every tile strip in a frame with a real scrollbar and
+# a Show-all door; an empty text box stays visible. deck.html, deck.css
+# and three deck fragments.
+EXPECTED_MD5 = "1817aad931102d585422bfe395223fe0"
+EXPECTED_BYTES = 3317210
 
 
 def _render_example() -> str:

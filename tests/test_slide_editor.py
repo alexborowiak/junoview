@@ -3623,7 +3623,9 @@ def test_the_effects_are_tiles_in_the_row(out):
     label reads "Effect -- select something"; select a box on the
     Animation tab (the tab keeps the selection) and Fade is one click.
     """
-    assert 'id="anim-strip"' in out and 'class="rbn-tall fx-strip"' in out
+    # (since T203 the strip sits in a frame, and the frame is the tall cell)
+    assert 'id="anim-strip"' in out and 'class="fx-strip" id="anim-strip"' in out
+    assert 'class="rbn-tall strip-frame" id="anim-strip-frame"' in out
     assert 'id="anim-effect"' not in out and 'id="anim-eff-menu"' not in out
     assert "var strip=$('#anim-strip'); if(!strip) return;" in out
     assert "b.className='fx-tile'+(on&&now===f[0]?' on':'');" in out

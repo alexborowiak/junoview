@@ -307,7 +307,9 @@
   function rbnResolve(cid,atoms){
     if(atoms[cid]) return atoms[cid];
     var el=document.getElementById(cid);
-    var w=(el&&el.closest)?el.closest('.opt-drop'):null;
+    /* a strip lives in its frame with its Show-all door (T203); the
+       frame is what moves */
+    var w=(el&&el.closest)?el.closest('.opt-drop,.strip-frame'):null;
     return (w&&atoms[w.id])||null;
   }
   /* WHAT A LAYOUT DID NOT SAY. A control the catalogue has never heard
