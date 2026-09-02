@@ -911,8 +911,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T205 2026-09-02: one visual system -- one tile size, pressed states in
 # the inherited deep accent, icons on Tight/Normal/Airy, one hue per tab
 # in the colourful theme. deck.html, deck.css, core.css.
-EXPECTED_MD5 = "295ed4c6a050aea1b7c187bee0ca3ca9"
-EXPECTED_BYTES = 3321484
+# T206 2026-09-02: app.js raises the newer-build bar at boot when the
+# loader saw a new service worker take over. app.js only.
+EXPECTED_MD5 = "f7490874ff2ec83db6433ecd04a73330"
+EXPECTED_BYTES = 3321749
 
 
 def _render_example() -> str:

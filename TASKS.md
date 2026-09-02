@@ -4197,6 +4197,23 @@ option. Then where has the ability to refresh all images gone?"
   three that did not. **One hue per tab** in the colourful theme, read
   from data-tab rather than a hand-kept list of group classes, so a tab
   is one colour and a group that moves tabs changes with its new home.
+- [x] **T206 · S — A newer build announces itself.**
+  Three times on 2026-09-02 the user reviewed a screenshot of a build
+  several deploys old ("still looking off... why is the view button so
+  small... I hate the sources being a menu" — a Home tab with no View
+  tab and Sources folded, five pushes behind) believing nothing had
+  changed. The cause is the offline app working as designed: the
+  service worker caches everything, so the first visit after a deploy
+  boots the PREVIOUS build from cache while the new worker installs and
+  takes over, and nothing said so.
+  *Done 2026-09-02.* When a new worker takes control of a page that
+  already had one, the loader raises a bar — "A newer Junoview just
+  arrived. This page is still the previous one." — with Reload and
+  Later; app.js raises it again on the app page the loader writes over.
+  The build is stamped into the page (`<meta name="junoview-build">`
+  and `window.__jvBuild`, the package hash the worker's cache is keyed
+  by) so a screenshot can say which build it is. A first install shows
+  nothing: there is no older page to replace.
 
 
 ## Cut (and why)

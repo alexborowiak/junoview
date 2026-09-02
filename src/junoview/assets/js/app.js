@@ -6034,6 +6034,10 @@
      measure, TOC, tooltip host) are order-safe where they are — each
      only touches what is declared above it — but do not add more. */
   initRailAuto();
+  /* the loader learnt a newer build took over while this page was
+     booting from the cache (T206); the loader's own bar died with the
+     document it wrote over, so raise it again here */
+  if(window.__jvNewBuild&&window.__jvUpdateBar) window.__jvUpdateBar();
   $$('.nbshell').forEach(function(sh){initShell(sh);});
   if(APP.order.length) activate(APP.order[0]);
   else renderTabs();

@@ -114,6 +114,23 @@ def test_build_web_emits_the_offline_installable_app():
         assert pin in sw and pin in idx
         assert "serviceWorker" in idx and "manifest.webmanifest" in idx
         assert "beforeinstallprompt" in idx
+        # T206: a newer build announces itself. The first visit after a
+        # deploy boots the previous build from the worker's cache while
+        # the new worker takes over; the loader now says so with a Reload
+        # button, and stamps the build so a screenshot can name it.
+        version = sw.split("var VERSION = '")[1].split("'")[0]
+        assert len(version) == 12
+        assert "__JV_VERSION__" not in idx
+        assert f'<meta name="junoview-build" content="{version}">' in idx
+        assert f"window.__jvBuild='{version}';" in idx
+        assert "addEventListener('controllerchange'" in idx
+        assert "if(!hadWorker) return;" in idx
+        assert "window.__jvUpdateBar=function(){" in idx
+        assert "bar.id='jv-newbuild';" in idx
+        # ...and the app page raises the bar again after document.write
+        from junoview import assets
+        assert ("if(window.__jvNewBuild&&window.__jvUpdateBar) "
+                "window.__jvUpdateBar();") in assets.app_js()
         man = json.loads((Path(td) / "manifest.webmanifest")
                          .read_text(encoding="utf-8"))
         assert man["display"] == "standalone"

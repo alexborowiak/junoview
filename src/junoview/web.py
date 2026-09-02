@@ -123,10 +123,15 @@ def find_gifs() -> Path | None:
 def build_web(outdir: Path, example: Path | None = None) -> None:
     """Write a deployable static web app (index.html + the packaged renderer)."""
     outdir.mkdir(parents=True, exist_ok=True)
-    loader = assets.web_loader().replace(
-        "<title>", f'<link rel="icon" href="{FAVICON}">\n<title>', 1)
-    write_text(outdir / "index.html", loader)
     zip_path = bundle_package(outdir / "junoview.zip")
+    # the package hash is the build's name: the worker's cache key, and
+    # the stamp the loader shows so a screenshot can say which build it
+    # is (T206 -- three stale-build screenshots in one day)
+    version = hashlib.md5(zip_path.read_bytes()).hexdigest()[:12]
+    loader = assets.web_loader().replace(
+        "<title>", f'<link rel="icon" href="{FAVICON}">\n'
+        f'<meta name="junoview-build" content="{version}">\n<title>', 1)
+    write_text(outdir / "index.html", loader.replace("__JV_VERSION__", version))
     write_text(outdir / ".nojekyll", "")
 
     # The offline, installable app: a service worker plus a manifest turn
@@ -136,7 +141,6 @@ def build_web(outdir: Path, example: Path | None = None) -> None:
     # hash (token replace, NOT str.format -- the JS is full of braces) so a
     # new build retires the old cache while an unchanged package produces
     # byte-identical output, same as the zip itself.
-    version = hashlib.md5(zip_path.read_bytes()).hexdigest()[:12]
     write_text(outdir / "sw.js",
                assets.sw_js().replace("__JV_VERSION__", version))
     manifest = {
