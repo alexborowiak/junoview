@@ -998,7 +998,7 @@
     ensureOids(s);
     var p=document.createElement('div');
     p.className='sh-menu rd-order';p.id='rd-order';
-    var head=menuHead(p,'reading order');
+    var head=menuHead(p,'order on this slide');
     var x=document.createElement('button');
     x.className='dbtn dc-icon rd-close';x.type='button';
     x.setAttribute('aria-label','Close');x.title='Close';
@@ -1007,9 +1007,15 @@
       rdClose();});
     head.appendChild(x);
     var note=document.createElement('div');note.className='rd-note';
-    note.textContent='Builds (One by one), figure numbers and the '
-      +'review outline all say this slide in this order. The numbers '
-      +'show on the slide while this is open.';
+    /* PLAIN WORDS (T181; 2026-09-02, user: "what is reading order and
+       why does it look so confusing"). Say what the order is FOR,
+       then how to set it, and lead with the way that needs no
+       arrows. */
+    note.textContent='The order things are numbered in, and the order '
+      +'One by one reveals them. Set order on the Animation tab writes '
+      +'it as you click things in turn; the arrows here nudge one '
+      +'thing earlier or later. The numbers show on the slide while '
+      +'this is open.';
     p.appendChild(note);
     var state=document.createElement('div');state.className='rd-state';
     var list=document.createElement('div');list.className='rd-list';
@@ -1046,7 +1052,7 @@
     function render2(){
       var s2=pres.slides[cur];
       state.textContent=(s2&&Array.isArray(s2.rord)&&s2.rord.length)
-        ?'Custom \u2014 objects added later read last'
+        ?'Set by you \u2014 anything added later comes last'
         :'Automatic \u2014 top to bottom, left to right';
       reset.hidden=!(s2&&Array.isArray(s2.rord)&&s2.rord.length);
       list.innerHTML='';

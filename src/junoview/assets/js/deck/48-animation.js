@@ -58,6 +58,10 @@
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
   var seqType='fade';
+  /* the Object tab's effect buttons (T179): id and the type it
+     writes. The same five as SEQ_FX, in the same order. */
+  var OBJ_FX=[['fmt-fx-none','none'],['fmt-fx-appear','appear'],
+    ['fmt-fx-fade','fade'],['fmt-fx-rise','rise'],['fmt-fx-zoom','zoom']];
   function seqKeyDown(e){
     if(!seqArm) return;
     if(e.key>='0'&&e.key<='9'){
@@ -80,6 +84,10 @@
     seqArm={slide:cur,n:0,base:nextAnimOrder(s),hits:[],
       before:JSON.stringify(s.annots||[])};
     deckEl.classList.add('seqing');
+    /* the controls are a group of the Animation tab (T180), so the
+       mode takes you there; a layout without that tab keeps you
+       where you are and Escape still cancels */
+    if(typeof setTab==='function') setTab('animation');
     seqDigit=0;
     document.addEventListener('keydown',seqKeyDown,true);
     document.addEventListener('keyup',seqKeyUp,true);
@@ -88,6 +96,7 @@
   function seqEnd(commitIt){
     if(!seqArm) return;
     var n=seqArm.n,hits=seqArm.hits.length,s=pres.slides[seqArm.slide];
+    var hitList=seqArm.hits.slice();
     if(!commitIt&&s){
       /* Cancel puts the slide back exactly as it was: a mode that left
          half a sequence behind would be worse than no mode. */
@@ -101,6 +110,25 @@
     renderSlide();renderFilm();
     if(typeof animPaneSync==='function') animPaneSync();
     if(commitIt&&hits){
+      /* THE ORDER YOU POINTED IS THE ORDER OF THE SLIDE (T181).
+         Builds and the reading order were two orders set in two
+         places, and the second had a panel nobody could read
+         (2026-09-02, user: "what is reading order... I can't
+         understand this at all and it is my idea"). One gesture
+         now: the sequence you clicked is also `rord`, so figure
+         numbers, One by one and the outline follow it. With the
+         effect set to None it writes ONLY the order -- that is how
+         you number things without animating them. Objects you did
+         not click read last, in sweep order, as orderedIdx says. */
+      if(s){
+        ensureOids(s);
+        var seen={},ro=[];
+        hitList.forEach(function(h){
+          var x=(s.annots||[])[h.i];
+          if(x&&x.oid!=null&&!seen[x.oid]){seen[x.oid]=1;ro.push(x.oid);}
+        });
+        if(ro.length) s.rord=ro;
+      }
       markDirty();
       /* BOTH numbers, because they part company the moment you
          shift-click: `hits` is what you pointed at, `n` is how many
@@ -161,17 +189,26 @@
     renderSlide();seqSync();
   }
   function seqSync(){
-    var bar=$('#seqbar'); if(!bar) return;
-    bar.hidden=!seqArm;
+    /* the three CELLS of the ribbon group carry the hidden bit
+       (T180): syncRibbonGroups reads a group's visibility off its
+       controls, so hiding the group itself would not hold */
+    var on=!!seqArm,any=false;
+    ['seq-what','seq-fx','seq-btns'].forEach(function(id){
+      var el=$('#'+id); if(!el) return;
+      any=true;el.hidden=!on;});
+    if(!any) return;
+    if(typeof syncRibbonGroups==='function') syncRibbonGroups();
     var w=$('#seq-what'); if(!w||!seqArm) return;
     var done=seqArm.hits.length;
-    w.innerHTML='<b>next: '+(seqArm.n+1)+'</b>'
-      +(done?(' &middot; '+done+' placed'):'')
-      +' &middot; <b>Shift</b>-click: same click'
+    /* two short lines: the count, then the two modifiers. The second
+       line is the first thing the tight rung drops (deck.css), the way
+       the hint text is -- words that explain, not words that act */
+    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b>'
+      +(done?(' &middot; '+done+' placed'):'')+'</span>'
+      +'<span><b>Shift</b>: same click &middot; '
       +(seqDigit
-        ?(' &middot; <b>'+seqDigit+'</b> held \u2014 runs '+seqDigit
-          +'s after the last')
-        :' &middot; hold <b>1\u20139</b>: run it after a pause');
+        ?('<b>'+seqDigit+'</b> held: '+seqDigit+'s pause')
+        :'<b>1\u20139</b>: pause')+'</span>';
     /* THE CHOOSER. Rebuilt rather than diffed: five buttons is cheaper
        to redraw than to reconcile, and it has to follow both the mouse
        and the keyboard. */
@@ -180,7 +217,7 @@
       fx.innerHTML='';
       SEQ_FX.forEach(function(f){
         var b=document.createElement('button');
-        b.className='dbtn seq-fxb'+(seqType===f[0]?' on':'');
+        b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');
         b.type='button';
         b.setAttribute('aria-pressed',seqType===f[0]?'true':'false');
         b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';
@@ -653,8 +690,7 @@
          when the order is what you are thinking about. */
       var sq=document.createElement('button');
       sq.className='anim-mini wide';
-      sq.textContent=bic('stagger')+' Click things in order\u2026';
-      sq.innerHTML=bic('stagger')+' Click things in order\u2026';
+      sq.innerHTML=bic('stagger')+' Set order\u2026';
       sq.title='Then click the objects on the slide one after another, '
         +'in the order they should appear. Shift-click puts one on the '
         +'same click as the last.';
@@ -664,10 +700,10 @@
       /* the order "One by one" deals the clicks in (T106) */
       var rb=document.createElement('button');
       rb.className='anim-mini wide';
-      rb.textContent='Reading order\u2026';
-      rb.title='One by one reveals in READING order \u2014 top to '
-        +'bottom unless you set your own. Figure numbers and the '
-        +'review outline follow the same order.';
+      rb.textContent='Order on this slide\u2026';
+      rb.title='The order things are numbered in, and the order One '
+        +'by one reveals them. Set order writes it as you click; this '
+        +'panel nudges one thing earlier or later.';
       rb.addEventListener('click',function(e){e.stopPropagation();
         if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
       menu.appendChild(rb);
@@ -698,10 +734,13 @@
        buttons in the ribbon where you can see which one is on, None reads
        as the undo it is, and Clear slide strips the whole slide in one
        press without hunting item by item. */
-    [['anim-none','none'],['anim-fade','fade'],
-     ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+    /* the Object tab's effect buttons (T179): one click on the thing
+       you just selected, through the same setter the pane and the
+       gallery use */
+    OBJ_FX.forEach(function(p){
       var b=$('#'+p[0]);
-      if(b) b.addEventListener('click',function(){setType(p[1]);});
+      if(b) b.addEventListener('click',function(e){
+        e.stopPropagation();setType(p[1]);});
     });
     /* ---- the two builds anyone actually wants ------------------------
        Setting "one at a time" by hand means selecting every item on the
@@ -744,10 +783,12 @@
     var sqb=$('#anim-seq');
     if(sqb) sqb.addEventListener('click',function(e){
       e.stopPropagation();seqArmStart();});
-    var rob=$('#anim-order');
-    if(rob) rob.addEventListener('click',function(e){
+    /* the timeline IS the Layers pane (T174); this door drives
+       Home's button so there is one pane and one implementation */
+    var lyb=$('#anim-layers');
+    if(lyb) lyb.addEventListener('click',function(e){
       e.stopPropagation();
-      if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
+      var ob=$('#objects-btn'); if(ob) ob.click();});
     var clr=$('#anim-clear');
     if(clr) clr.addEventListener('click',function(){
       var s=pres.slides[cur]; if(!s) return;
@@ -787,9 +828,8 @@
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-eff-menu')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      var on=!!a&&typeof selAnnot==='number';
-      [['anim-none','none'],['anim-fade','fade'],
-       ['anim-rise','rise'],['anim-zoom','zoom']].forEach(function(p){
+      var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
+      OBJ_FX.forEach(function(p){
         var b=$('#'+p[0]); if(!b) return;
         b.hidden=!on;
         b.setAttribute('aria-pressed',

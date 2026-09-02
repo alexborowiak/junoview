@@ -854,27 +854,15 @@
                    surface was asked for: "the words are so weird and the
                    options are hard to get to... we need something like
                    this instead of just vanilla buttons".
-                   What was here: FOUR buttons, each `hidden` until
-                   something was selected -- and un-hidden by the very
-                   click that moves the ribbon to the Object tab, which
-                   is the one tab they were not on. So the effects were
-                   visible for approximately none of the moments they
-                   were usable, and the vocabulary could never be
-                   learned because you only ever saw it for one click.
                    THE DOOR IS NEVER HIDDEN. Its label never renames
                    itself either: a label whose width follows the
                    selection makes the row's required width depend on
                    what you clicked, and the fit ladder has no rung left
                    for that (see #fmt-sw). The current effect rides on
                    the ICON and on the card marked aria-pressed inside.
-                   A POPOVER rather than tiles in the row, and the
-                   measurement decided it: at 1366px the inline gallery
-                   leaves the slide column 503px against today's 517px,
-                   i.e. WORSE than the status quo, while this door leaves
-                   it 598px -- wider than before. Six PowerPoint-sized
-                   tiles would take the column to 239px, a hair above the
-                   hard floor. The gallery is not a trade-off inline; it
-                   is a regression. -->
+                   With nothing selected it does the WHOLE slide; the
+                   one-object case has its own buttons on the Object
+                   tab now (T179). -->
               <span class="sh-drop" id="anim-effwrap">
                 <button class="dbtn rbn-sm" id="anim-effect"
                   aria-haspopup="true" aria-expanded="false"
@@ -888,6 +876,17 @@
                 title="Remove EVERY animation on this slide — nothing is
  held back during playback"><i data-ic="exit"></i> Remove
  animations</button>
+              <!-- THE TIMELINE IS THE LAYERS PANE (T174), and until
+                   T180 it had no door on this tab: the pane lists every
+                   object with the click it arrives on and, if it
+                   leaves, the click it goes -- which is the answer to
+                   "we had something about animations appearing in
+                   layers? Is that a thing?" (2026-09-02). It drives
+                   Home's Layers button: two doors, one pane. -->
+              <button class="dbtn rbn-sm" id="anim-layers"
+                title="The timeline: every object on this slide with the
+ click it arrives on and, if it leaves, the click it goes. Hide, lock and
+ reorder from the same list"><i data-ic="objects"></i> Layers</button>
             </span>
             <!-- ONE FEATURE, ONE NAME (T167). This group was
                  "Animate", its own button "Animations" and the pane it
@@ -898,11 +897,14 @@
                  using twelve words for the same handful of ideas. -->
             <span class="rbn-lab">Animation</span>
           </span>
-          <!-- THE ORDER. Four ways to say what comes when, which the
-               tab has room for now: the two builds anyone actually
-               wants, the pointing mode (T168) and the reading order
-               (T106) -- the last two had no door on the ribbon at all
-               and lived as rows at the foot of the pane. -->
+          <!-- THE ORDER. The two builds anyone actually wants, and the
+               way to say your own order by pointing (T168). The
+               Reading order door that sat here for a day (T176) is
+               gone: "what is reading order and why does it look so
+               confusing" (2026-09-02, user). Set order writes the
+               slide's order too now (T181), so one gesture answers
+               both questions; the panel of arrows is still there for
+               a nudge, from the pane and the right-click. -->
           <span class="rbn-grp rbn-build" data-tab="animation">
             <span class="rbn-row">
               <!-- the two builds people actually want, in one press
@@ -911,22 +913,54 @@
                    fiddling this editor exists to avoid (2026-08-20). -->
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Reveal everything on this slide ONE AT A TIME, in
- reading order — a click per item"><i data-ic="stagger"></i> One by one</button>
+ order — a click per item"><i data-ic="stagger"></i> One by one</button>
               <button class="dbtn rbn-sm" id="anim-together"
                 title="Reveal everything on this slide on the SAME click —
  one build, everything at once"><i data-ic="together"></i> All at once</button>
+              <!-- A PLAIN NAME (T180; 2026-09-02, user: "what a silly
+                   name for the button"). It was "Click things in
+                   order…", a sentence where a verb was wanted. -->
               <button class="dbtn rbn-sm" id="anim-seq"
-                title="Say the order by pointing: click the objects on the
- slide one after another, in the order they should appear. Shift-click
- puts one on the same click as the last"><i data-ic="locate"></i> Click
- things in order&#8230;</button>
-              <button class="dbtn rbn-sm" id="anim-order"
-                title="The order One by one deals the clicks in &mdash;
- top to bottom unless you set your own. Figure numbers and the review
- outline follow the same order"><i data-ic="objects"></i> Reading
- order&#8230;</button>
+                title="Say the order yourself: click the objects on the
+ slide in the order they should come. Shift-click puts one on the same
+ click as the last. The controls appear here in the ribbon while you do
+ it"><i data-ic="locate"></i> Set order</button>
             </span>
             <span class="rbn-lab">Order</span>
+          </span>
+          <!-- SETTING THE ORDER, IN THE RIBBON (T180). This was a bar
+               fixed across the top of the window, over the very ribbon
+               it was standing in for (2026-09-02, user: "I hate that
+               there is the thing that pops up... the whole 'Click
+               things in order' options should just appear after a
+               divider on the ribbon"). The three cells are hidden
+               until Set order arms the mode, so the group costs the
+               resting row nothing; seqSync shows them and the ribbon
+               re-fits. The CELLS carry the hidden bit, not the group:
+               syncRibbonGroups decides a group's visibility from its
+               controls and would put the group back. -->
+          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation">
+            <span class="rbn-row">
+              <span class="rbn-cell seq-cell" id="seq-what" hidden></span>
+              <!-- WHICH EFFECT THE NEXT CLICK GIVES. The mode used to
+                   write fade for everything, so a sequence in any other
+                   effect meant going round again afterwards. Every
+                   button carries its key, because a mode with shortcuts
+                   nobody can see has no shortcuts. -->
+              <span class="rbn-cell seq-fx" id="seq-fx" hidden></span>
+              <span class="rbn-cell" id="seq-btns" hidden>
+                <button class="dbtn rbn-sm" id="seq-undo"
+                  title="Take back the last click, and stay in the
+ mode"><i data-ic="undo"></i> Undo last</button>
+                <button class="dbtn rbn-sm primary" id="seq-done"
+                  title="Keep this order. Ctrl+Z afterwards undoes the
+ whole run"><i data-ic="return"></i> Finish</button>
+                <button class="dbtn rbn-sm" id="seq-cancel"
+                  title="Leave the slide exactly as it was"
+                  ><i data-ic="exit"></i> Cancel (Esc)</button>
+              </span>
+            </span>
+            <span class="rbn-lab">Set order</span>
           </span>
           <!-- THREE GROUPS, NOT ONE (T178). Thirteen tools under one
                heading read as a wall; with Animation gone to its own
@@ -1771,6 +1805,37 @@
             </span>
             <span class="rbn-lab">Table</span>
           </span>
+          <!-- ANIMATION, ON THE OBJECT TAB (T179). The selection sends
+               you here, so this is where one click on the thing you
+               just selected has to give it an entrance (2026-09-02,
+               user: "it is still quite a few clicks to add an appear
+               animation to something... in the 'Object' list there is
+               an animation tab which has all the animation options").
+               Five buttons that show which one is on -- the same five
+               the gallery offers, through the same setter -- and
+               nothing hides them the moment they become usable, which
+               is what the old effect buttons did (T171). The gallery
+               on the Animation tab stays for the whole-slide case. -->
+          <span class="rbn-grp rbn-fx" data-tab="object">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-fx-none" aria-pressed="false"
+                title="No entrance — on the slide from the start"
+                ><i data-ic="none"></i> None</button>
+              <button class="dbtn etm" id="fmt-fx-appear" aria-pressed="false"
+                title="Appears on its click, with no motion"
+                ><i data-ic="appear"></i> Appear</button>
+              <button class="dbtn etm" id="fmt-fx-fade" aria-pressed="false"
+                title="Fades in on its click"
+                ><i data-ic="fade"></i> Fade</button>
+              <button class="dbtn etm" id="fmt-fx-rise" aria-pressed="false"
+                title="Floats up into place on its click"
+                ><i data-ic="rise"></i> Float up</button>
+              <button class="dbtn etm" id="fmt-fx-zoom" aria-pressed="false"
+                title="Grows into place on its click"
+                ><i data-ic="zoom"></i> Grow</button>
+            </span>
+            <span class="rbn-lab">Animation</span>
+          </span>
         </span>
       </div>
   <div class="deck-main">
@@ -2191,30 +2256,6 @@
     <div class="dc-menu mp-menu" id="match-props-menu" hidden></div>
   </span>
   <button class="dbtn" id="match-cancel">Cancel (Esc)</button>
-</div>
-<!-- SEQUENCING BY POINTING (T168). The user's own gesture: "when you
-     click it becomes the next thing that's animated... hold down shift
-     and click, all those animations appear at the same time". Deliberately
-     the same shape as #matchbar and #pickbar above -- same bar, same
-     Escape, same running count -- because a third way to run a picking
-     mode would be a third thing to learn. -->
-<!-- THE MODE HAS A NAME (T170). It had none, and was described only
-     by the sentence it was doing -- so there was nothing to remember it
-     by afterwards ("I can't remember the mode name, like the 'auto' or
-     'quick'"). It is called what its door calls it, and the name sits
-     first so the bar reads as one thing. -->
-<div class="pickbar seqbar" id="seqbar" hidden>
-  <span class="seq-name"><i data-ic="stagger"></i> Click in order</span>
-  <span id="seq-what"></span>
-  <!-- WHICH EFFECT THE NEXT CLICK GIVES. The mode used to write fade for
-       everything, so a sequence in any other effect meant going round
-       again afterwards. Every button carries its key, because a mode
-       with shortcuts nobody can see has no shortcuts. -->
-  <span class="seq-fx" id="seq-fx"></span>
-  <span class="deck-spring"></span>
-  <button class="dbtn" id="seq-undo">Undo the last one</button>
-  <button class="dbtn primary" id="seq-done">Finish</button>
-  <button class="dbtn" id="seq-cancel">Cancel (Esc)</button>
 </div>
 <div class="pickbar" id="pickbar" hidden>
   <span id="pick-what"><i data-ic="pin"></i> Click a card in the notebook

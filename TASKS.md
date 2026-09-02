@@ -3749,6 +3749,67 @@ idea; Insert carried thirteen tools and the whole of Animation.
   list and the window stays; Insert reads Place | Write | Draw and
   drawing an arrow still works from Draw.
 
+The user, on the new build (2026-09-02, second review): "it is still
+quite a few clicks to add an appear animation to something. I would
+like in the 'Object' list there is an animation tab, which has all the
+animation options... I hate that there is the thing that pops up in the
+animation tab... the whole 'Click things in order' options should just
+appear after a divider on the ribbon. Also what a silly name for the
+button... What is reading order and why does it look so confusing... I
+can't understand this at all and it is my idea... we had something
+about animations appearing in layers? Is that a thing?"
+
+- [x] **T179 · S — One click gives the selected object its entrance.**
+  Counted first: select a box, Animation tab, Effect ▾, card — three
+  clicks and a tab change to give one thing a Fade, on a tab the
+  selection had just moved you OFF. The effect buttons T171 retired
+  had been on the wrong tab; the fix is the right one.
+  *Done 2026-09-02.* An **Animation** group on the Object tab — the
+  tab the selection sends you to — with **None / Appear / Fade /
+  Float up / Grow** as buttons that show which one is on, through the
+  same `setType` the pane and the gallery use. One click. Hidden on a
+  poster, which has no build. The gallery stays on the Animation tab
+  for the whole-slide case.
+
+- [x] **T180 · M — Setting the order happens in the ribbon, and the
+  door has a plain name.**
+  The pointing mode (T168) put a bar fixed across the top of the
+  window, over the very ribbon it stood in for, and its door was a
+  sentence: "Click things in order…".
+  *Done 2026-09-02.* The door is **Set order**. Arming it takes you to
+  the Animation tab and a **Set order** group appears after the
+  divider — the running count and the Shift / 1–9 hints on two lines,
+  the five effect chips with their keys, Undo the last one, Finish,
+  Cancel — tinted and ruled on its left so it reads as a mode. The
+  three cells carry the hidden bit (a group's visibility is read off
+  its controls, so hiding the group itself would not hold) and the
+  ribbon re-fits as they show. Nothing pops over anything. The
+  Animation tab also gains **Layers**: the timeline is the Layers pane
+  (T174 — every object with the click it arrives on and, if it leaves,
+  the click it goes), and it had no door where animation lives. That
+  is the answer to "is that a thing?": yes, and now it is one click
+  from here.
+
+- [x] **T181 · S — The order you point is the order of the slide.**
+  Builds and the reading order were two orders set in two places, and
+  the second had a floating panel of arrows under a paragraph nobody
+  could read.
+  *Done 2026-09-02.* Finish in Set order also writes the clicked
+  sequence as the slide's order (`rord`), so figure numbers, One by
+  one and the review outline follow the order you pointed — and with
+  the effect set to None it writes ONLY the order, which is how you
+  number things without animating them. Anything you did not click
+  comes last, in sweep order, as it always has. The **Reading order**
+  door leaves the ribbon; the panel keeps its arrows for a nudge,
+  reached from the Animations pane and the right-click, renamed
+  **Order on this slide…** and explained in one plain paragraph: what
+  the order is for, then how to set it, Set order first.
+  Driven: select a box → Object tab → Fade is one click and lights;
+  Set order → the tab switches and the group appears, three clicks
+  with Appear → Finish writes builds 1–3 AND `rord` in that order, and
+  the panel reads "Set by you"; Escape cancels and the group goes;
+  Layers from the Animation tab opens the pane with the build column.
+
 
 ## Cut (and why)
 

@@ -1032,7 +1032,11 @@ def test_animations_can_be_removed(out):
     # up from the foot of the pane, where they were a door behind a door
     assert 'class="rbn-grp rbn-anim" data-tab="animation"' in out
     assert 'class="rbn-grp rbn-build" data-tab="animation"' in out
-    assert 'id="anim-seq"' in out and 'id="anim-order"' in out
+    # ...and T180 renamed the pointing mode's door "Set order", moved
+    # its controls into the ribbon, dropped the Reading order door
+    # (Set order writes that order too) and added Layers, the timeline
+    assert 'id="anim-seq"' in out and 'id="anim-layers"' in out
+    assert 'id="anim-order"' not in out
     assert "e.stopPropagation();seqArmStart();});" in out
     assert 'class="rbn-grp rbn-anim" data-tab="insert"' not in out
     assert "animRibbonSync=function(){" in out

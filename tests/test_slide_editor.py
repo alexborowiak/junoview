@@ -589,7 +589,7 @@ def test_the_ribbon_is_tabbed(out):
     # ...and the two Order doors T176 put on the ribbon stand down with
     # them, for the same reason: a poster has nothing to sequence
     assert ("['#anim-clear','#anim-stagger','#anim-together',"
-            "'#anim-effect',\n     '#anim-seq','#anim-order']"
+            "'#anim-effect',\n     '#anim-seq','#anim-layers']"
             ".forEach(function(id){") in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
@@ -2977,7 +2977,9 @@ def test_the_order_badges_are_gated_like_the_build_bubbles():
 def test_reading_order_has_a_door_where_you_would_look(out):
     """The canvas right-click (order is a slide property, offered with
     or without a selection) and the Timeline pane (builds follow it)."""
-    ellipsis = "Reading order" + "\\" + "u2026"
+    # renamed by T181 -- "what is reading order and why does it look so
+    # confusing" -- to say what the panel is: the order on this slide
+    ellipsis = "Order on this slide" + "\\" + "u2026"
     assert out.count(ellipsis) == 2, out.count(ellipsis)
     assert "menuHead(m,'slide');" in out
 
@@ -3534,9 +3536,11 @@ def test_the_sequencing_bar_is_named_and_shows_its_keys(out):
     with its key PRINTED ON IT: a mode whose shortcuts are invisible has
     no shortcuts.
     """
-    assert '<span class="seq-name">' in out
-    assert "Click in order</span>" in out
-    assert '<span class="seq-fx" id="seq-fx">' in out
+    # ...and since T180 the mode is a GROUP of the Animation tab, named
+    # by its label, with its three cells hidden until Set order arms it
+    assert 'class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation"' in out
+    assert '<span class="rbn-lab">Set order</span>' in out
+    assert '<span class="rbn-cell seq-fx" id="seq-fx" hidden>' in out
     # the chooser, its keys, and the state it drives
     assert "var SEQ_FX=[['none','None','N'],['appear','Appear','A']," in out
     assert "['fade','Fade','F'],['rise','Float up','U'],"
@@ -3560,7 +3564,10 @@ def test_the_sequencing_bar_paints_above_the_editor(out):
     `.matchbar` had already solved this at 150 for the same reason, so
     this joins it rather than inventing a third number.
     """
-    assert ".seqbar{position:fixed;top:0;left:0;right:0;z-index:150;}" in out
+    # T180 retired the bar altogether: the controls are a ribbon group
+    # now, which paints where the ribbon paints and needs no z-index
+    assert ".seqbar{" not in out
+    assert ".rbn-grp.rbn-seq{background:" in out
     assert ".matchbar{position:fixed;top:0;left:0;right:0;z-index:150;}" in out
 
 
@@ -3581,7 +3588,8 @@ def test_rise_is_called_float_up(out):
     assert "['rise','Float up','U']" in out
     assert "Rise</button>" not in out
     # the token is untouched, so every existing deck still means what it said
-    assert "['anim-rise','rise']" in out
+    # the effect buttons moved to the Object tab (T179) and kept the name
+    assert "['fmt-fx-rise','rise']" in out
 
 
 def test_the_effect_gallery_is_always_reachable(out):

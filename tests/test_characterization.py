@@ -861,8 +861,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # is Place / Write / Draw, and Page furniture takes an explicit order so
 # Design reads Slide, Page furniture, Type. deck.html, help.html,
 # deck.css, core.css and two deck fragments.
-EXPECTED_MD5 = "f3604d102cc5b8527aa9e579145933ba"
-EXPECTED_BYTES = 3269829
+# T179-T181 2026-09-02: the five effect buttons on the Object tab, the
+# sequencing controls as a ribbon group instead of a fixed bar (with a
+# Layers door and Set order for a name), and Finish writing the slide's
+# order too. deck.html, deck.css and four deck fragments.
+EXPECTED_MD5 = "90f4022734a403a836cbbf4409bae115"
+EXPECTED_BYTES = 3276904
 
 
 def _render_example() -> str:

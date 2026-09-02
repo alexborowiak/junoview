@@ -37,6 +37,9 @@
     +'#fmt-fontwrap #fmt-font-btn #fmt-para-align #fmt-para-ind '
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
+    /* the Object tab's effect buttons (T179): animRibbonSync owns
+       their visibility and their pressed state */
+    +'#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom '
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
        below stops flagging them on every first selection (2026-08-24) */
@@ -2434,11 +2437,11 @@
     /* the slide's SEQUENCE (T106): always offered, because reading
        order is a property of the slide, not of a selection */
     menuHead(m,'slide');
-    row('Reading order\u2026','',function(){
+    row('Order on this slide\u2026','',function(){
       if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();},
-      'The order this slide reads in \u2014 builds, figure numbers and '
-      +'the review outline all follow it. Numbers show on every object '
-      +'while the panel is open.','stagger');
+      'The order things are numbered in, and the order One by one '
+      +'reveals them. Set order writes it as you click; this panel '
+      +'nudges one thing earlier or later.','stagger');
     row((function(){
       var mm=(typeof mastOf==='function')
         &&mastOf(pres.slides[cur]);

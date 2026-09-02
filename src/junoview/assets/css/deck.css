@@ -4129,7 +4129,25 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
    right place, and the screen showed nothing. .matchbar solved this at
    150 for exactly the same reason; this joins it rather than inventing
    a third number. */
-.seqbar{position:fixed;top:0;left:0;right:0;z-index:150;}
+/* T180: setting the order happens IN THE RIBBON, as a group of the
+   Animation tab that appears while the mode is armed. It was a bar
+   fixed across the top of the window (z-index 150, over the ribbon it
+   stood in for); the tint and the rule on its left are what say
+   "mode" now that it is a group like any other. */
+.rbn-grp.rbn-seq{background:color-mix(in srgb,var(--accent) 12%,transparent);
+  border-left:2px solid var(--accent);}
+.seq-cell{display:flex;flex-direction:column;justify-content:center;
+  font-size:10px;line-height:1.3;white-space:nowrap;color:#c9d6e2;
+  padding:0 4px;}
+.seq-cell b{color:#fff;}
+body.light .seq-cell{color:#3b4b5a;}
+body.light .seq-cell b{color:var(--ink);}
+/* the modifier hints are the first words to go when the row is
+   tight -- they explain, the tooltips repeat them, and nothing acts
+   on them; the count stays */
+.deck.erc-tight .seq-cell span+span{display:none;}
+.rbn-row>.seq-fx{gap:3px;}
+.rbn-row>.seq-fx .seq-fxb{padding:2px 6px;font-size:10px;gap:4px;}
 /* T171: the effect gallery. Cards are .sh-opt, which is already
    icon-over-word, so this only lays them out and gives the popover its
    heading, its scroller and its footer. The strip shows five and a half
@@ -4153,14 +4171,11 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 /* T170: the bar's own furniture. The NAME first, so the mode is a
    thing you can remember afterwards rather than a sentence you were
    reading at the time; then the running state; then the chooser. */
-.seqbar .seq-name{display:inline-flex;align-items:center;gap:5px;
-  font-weight:600;white-space:nowrap;margin-right:4px;}
-.seqbar .seq-name .bic{width:13px;height:13px;}
-.seq-fx{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;
-  margin-left:10px;}
+.seq-fx{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;}
 .seq-fxb{padding:2px 7px;font-size:10.5px;display:inline-flex;
   align-items:center;gap:5px;white-space:nowrap;}
-.seq-fxb.on{background:#fff;color:var(--cyan-deep);border-color:#fff;}
+.seq-fxb.on{background:var(--cyan-deep);color:#fff;
+  border-color:var(--cyan-deep);}
 /* a key looks like a key, on the button and not only in the tooltip:
    a mode whose shortcuts are invisible has no shortcuts */
 .seq-fxb kbd{font-family:var(--mono);font-size:9px;line-height:1;

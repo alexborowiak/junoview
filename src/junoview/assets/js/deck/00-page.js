@@ -647,7 +647,7 @@
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
     ['#anim-clear','#anim-stagger','#anim-together','#anim-effect',
-     '#anim-seq','#anim-order'].forEach(function(id){
+     '#anim-seq','#anim-layers'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
