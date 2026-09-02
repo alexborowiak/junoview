@@ -26,8 +26,17 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     slide, Saved layouts and Sources. Every row keeps its id and its
     wiring; the picker renders into the strip as its third home; the
     review's sweep lights the one this slide wears."""
-    for lab in ("Layout", "Arrange this slide", "Saved layouts", "Sources"):
+    # ...regrouped by what you are doing in T201: make a slide, lay it
+    # out (built-in and saved layouts as one strip), arrange what is on
+    # it, keep the sources fresh, push a layout to other slides
+    for lab in ("Slides", "Layout", "Arrange this slide", "Keep up to date",
+                "Apply to other slides"):
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab
+    assert '<span class="rbn-lab">Saved layouts</span>' not in out
+    assert "function syncSavedTiles(){" in out
+    assert "b.type='button';b.className='dbtn lay lay-saved';" in out
+    assert "if(typeof syncSavedTiles==='function') syncSavedTiles();" in out
+    assert 'class="dbtn rbn-sm dbtn-accent" id="hm-refresh-figs"' in out
     assert 'id="layout-strip"' in out
     assert "['#layout-row','#layout-menu-grid','#layout-strip']" in out
     assert "#layout-menu-grid .lay,#layout-strip .lay" in out
@@ -43,7 +52,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "var m3=$('#mi-refresh-figs'); if(m3) m3.click();});" in out
     # the rarer two sit last, so they fold first and View stays in sight
     assert ".rbn-layout,.rbn-arrange{order:1;}" in out
-    assert ".rbn-saved,.rbn-sources{order:4;}" in out
+    assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:4;}" in out
     assert ".lay-strip>.hd-lab,.lay-strip>.lay-sec{display:none;}" in out
 
 

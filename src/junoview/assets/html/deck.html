@@ -1100,90 +1100,90 @@
             </span>
             <span class="rbn-lab">Drawing</span>
           </span>
-          <!-- SLIDES, first on Home, the way PowerPoint opens its Home
-               tab. Home is where you land, and with nothing selected it
-               would otherwise hold one lonely Find button over an empty
-               row: the format groups only arrive once you click
-               something. These four are the page-level actions you take
-               constantly and they were previously only reachable from the
-               thumbnail strip's hover controls. -->
-          <!-- SLIDES, first on Home, the way PowerPoint opens its Home
-               tab. -->
+          <!-- HOME, GROUPED BY WHAT YOU ARE DOING (T201; 2026-09-02,
+               user: "there needs to be a new slide with layout options
+               including the saved layouts together, then there also
+               needs to be the masters, and copy this to other slide,
+               match slide, as one. Then the update figures, and
+               refresh images looks kind confusing, and needs more
+               attention drawn to it"). Five groups, each one job:
+               make a slide; lay it out (the built-in layouts and your
+               saved ones are ONE strip of tiles, with Save beside it);
+               arrange what is on it; push a layout to other slides;
+               keep the sources fresh. -->
           <span class="rbn-grp rbn-slides" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-newslide"
-                title="Add a slide after this one">&#43; New slide</button>
+                              title="Add a slide after this one">&#43; New slide</button>
               <button class="dbtn rbn-sm" id="hm-dupslide"
-                title="Duplicate this slide, in place"><i data-ic="copy"></i>
-                Duplicate</button>
+                              title="Duplicate this slide, in place"><i data-ic="copy"></i>
+                              Duplicate</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
-                title="Delete this slide"><i data-ic="exit"></i> Delete</button>
-              <button class="dbtn rbn-sm" id="hm-match"
-                title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
-                &#9662;</button>
+                              title="Delete this slide"><i data-ic="exit"></i> Delete</button>
             </span>
             <span class="rbn-lab">Slides</span>
           </span>
-          <!-- THE LAYOUT SYSTEM, OPENED OUT (T196; 2026-09-02, user:
-               "same with things like the slide layouts, the match slide
-               options. Like there is so many good options in there").
-               One dropdown held the picker, the auto-arrange, the ideas
-               and the saved layouts: two-thirds of the system behind a
-               word. They are three groups now -- the layouts as tiles
-               drawn as themselves, the one in use lit; the arrange
-               verbs; the saved ones -- and a fourth for the two
-               refresh-all commands that had only a File menu row
-               ("where has the ability to refresh all images gone?"). -->
           <span class="rbn-grp rbn-layout" data-tab="home">
             <span class="rbn-row">
+              <!-- the built-in layouts, then the ones you saved, as one
+                   strip of tiles drawn as themselves (syncSavedTiles
+                   appends the saved ones and keeps them in step) -->
               <span class="rbn-tall fx-strip lay-strip" id="layout-strip"
                 role="group" aria-label="Slide layouts"></span>
+              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
+                                  title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
+                                  <i data-ic="copy"></i> Save this layout&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-arrs"
+                                  title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
+                                  <i data-ic="objects"></i> My saved layouts&#8230;</button>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
           <span class="rbn-grp rbn-arrange" data-tab="home">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
-                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-                    <i data-ic="layouts"></i> Layout ideas&#8230;</button>
+                                  title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
+                                  <i data-ic="layouts"></i> Layout ideas&#8230;</button>
               <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
-                                  aria-label="Arrange what is on this slide">
-                                  <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
-                                  <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
-                                  <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
-                                </div>
+                                                aria-label="Arrange what is on this slide">
+                                                <button class="dbtn rbn-sm" data-tidy="tight">Tight</button>
+                                                <button class="dbtn rbn-sm" data-tidy="normal">Normal</button>
+                                                <button class="dbtn rbn-sm" data-tidy="airy">Airy</button>
+                                              </div>
             </span>
             <span class="rbn-lab">Arrange this slide</span>
           </span>
-          <span class="rbn-grp rbn-saved" data-tab="home">
-            <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="hm-lay-arrs"
-                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
-                    <i data-ic="objects"></i> My saved layouts&#8230;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-arrsave"
-                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
-                    <i data-ic="copy"></i> Save this layout&#8230;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-give"
-                    title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy this layout to other slides&#8230;</button>
-              <button class="dbtn rbn-sm" id="hm-lay-masters"
-                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Masters&#8230;</button>
-            </span>
-            <span class="rbn-lab">Saved layouts</span>
-          </span>
+          <!-- KEEP UP TO DATE, with weight (T201): the two commands that
+               reach the notebooks and the files, in words that say
+               where they reach, and drawn in the accent so the eye
+               finds them. -->
           <span class="rbn-grp rbn-sources" data-tab="home">
             <span class="rbn-row">
-              <!-- two doors, one implementation each: they press the
-                   File menu rows that have always done this -->
-              <button class="dbtn rbn-sm" id="hm-refresh-figs"
-                title="Re-read every placed figure from its notebook, so
- a re-run shows up on the slides"><i data-ic="reload"></i> Update
- figures</button>
-              <button class="dbtn rbn-sm" id="hm-refresh-img"
-                title="Re-read every picture from the file it came from.
- A file that has moved is left as it was, and named"
-                ><i data-ic="reload"></i> Refresh pictures</button>
+              <button class="dbtn rbn-sm dbtn-accent" id="hm-refresh-figs"
+                title="Re-read every placed figure from its notebook, so a
+ re-run shows up on the slides"><i data-ic="reload"></i> Update
+ figures from notebooks</button>
+              <button class="dbtn rbn-sm dbtn-accent" id="hm-refresh-img"
+                title="Re-read every picture from the file it came from. A
+ file that has moved is left as it was, and named"
+                ><i data-ic="reload"></i> Reload pictures from files</button>
             </span>
-            <span class="rbn-lab">Sources</span>
+            <span class="rbn-lab">Keep up to date</span>
+          </span>
+          <!-- APPLY TO OTHER SLIDES: the three ways one slide's look
+               reaches others -- point at a thumbnail, tick a list, or
+               share a master. Last, so it is what folds first. -->
+          <span class="rbn-grp rbn-apply" data-tab="home">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="hm-match"
+                              title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
+                              &#9662;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-give"
+                                  title="Tick the slides that should take this slide’s layout"><i data-ic="forward"></i> Copy this layout to other slides&#8230;</button>
+              <button class="dbtn rbn-sm" id="hm-lay-masters"
+                                  title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Masters&#8230;</button>
+            </span>
+            <span class="rbn-lab">Apply to other slides</span>
           </span>
           <!-- No Editing group. Find and replace acts on the WHOLE
                presentation, so it belongs with the document's own
@@ -2355,10 +2355,10 @@
      applied yet, so a rule keyed on it would rearrange slides you were
      happy with (2026-08-22). -->
 <div class="aa-dlg" id="ar-dlg" hidden role="dialog"
-  aria-label="Arrangements">
+  aria-label="Saved layouts">
   <div class="aa-box ar-box">
     <div class="aa-head">
-      <span class="eq-t">Arrangements</span>
+      <span class="eq-t">Saved layouts</span>
       <span class="deck-spring"></span>
       <button class="dbtn dc-icon" id="ar-close" aria-label="Cancel" title="Cancel (Esc)"
         ><i data-ic="exit"></i></button>
@@ -2366,16 +2366,16 @@
     <div class="aa-main">
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">Your arrangements</span>
+          <span class="eq-t">Your saved layouts</span>
           <span class="deck-spring"></span>
           <button class="dbtn aa-b" id="ar-save">&#43; Save this
-            slide</button>
+            slide&rsquo;s layout</button>
         </div>
         <div class="ar-lib" id="ar-lib"></div>
       </div>
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">What would be arranged</span>
+          <span class="eq-t">Apply it to these slides</span>
           <span class="deck-spring"></span>
           <button class="dbtn aa-b" id="ar-all">All</button>
           <button class="dbtn aa-b" id="ar-none">None</button>
@@ -2387,7 +2387,7 @@
       <span class="aa-count" id="ar-count"></span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="ar-cancel">Close</button>
-      <button class="dbtn primary" id="ar-ok">Arrange</button>
+      <button class="dbtn primary" id="ar-ok">Apply</button>
     </div>
   </div>
 </div>

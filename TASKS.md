@@ -4084,6 +4084,29 @@ option. Then where has the ability to refresh all images gone?"
   the fold, with the ribbon's other settings.
 
 
+- [x] **T201 · S — Home, grouped by what you are doing.**
+  The user (2026-09-02): "there needs to be a new slide with layout
+  options including the saved layouts together, then there also needs
+  to be the masters, and copy this to other slide, match slide, as
+  one. Then the update figures, and refresh images looks kind
+  confusing, and needs more attention drawn to it. There could be
+  better grouping here."
+  *Done 2026-09-02.* Five groups, each one job. **Slides**: New,
+  Duplicate, Delete. **Layout**: the built-in layouts and the ones you
+  saved are ONE strip of tiles — a saved layout is drawn by the same
+  thumbnail the dialog uses and appended after the built-ins, kept in
+  step whenever the store is written — with Save this layout… and My
+  saved layouts… beside it. **Arrange this slide**: Layout ideas…,
+  Tight, Normal, Airy. **Keep up to date**: Update figures from
+  notebooks and Reload pictures from files, in words that say where
+  they reach and drawn in the accent so the eye finds them. **Apply to
+  other slides**: Match slide, Copy this layout to other slides…,
+  Masters… — the three ways one slide's look reaches others, last so
+  it folds first on a narrow window. The dialog behind My saved
+  layouts… uses the ribbon's words: Saved layouts, Your saved layouts,
+  Save this slide's layout, Apply it to these slides, Apply.
+
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

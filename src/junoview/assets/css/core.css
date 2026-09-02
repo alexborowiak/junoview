@@ -1247,7 +1247,7 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    themes are not right"). .rbn-file and .rbn-nbs are gone from the
    markup and gone from here with them. */
 body.th-colorful .rbn-slides,body.th-colorful .rbn-layout,
-body.th-colorful .rbn-arrange,body.th-colorful .rbn-saved,
+body.th-colorful .rbn-arrange,body.th-colorful .rbn-apply,
 body.th-colorful .rbn-sources,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
 body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}

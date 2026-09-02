@@ -496,6 +496,7 @@
         row.appendChild(b);
       });
     });
+      if(typeof syncSavedTiles==='function') syncSavedTiles();
   }
   /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
      The catalog is offered from TWO places now — Design ▸ Layouts and

@@ -456,9 +456,10 @@ def test_the_slides_group_reads_in_the_order_asked_for(out):
     # ...and since T196 the layouts are a group of their own beside
     # Slides, so the four slide verbs read New, Duplicate, Delete, Match
     order = [out.index('id="hm-newslide"'), out.index('id="hm-dupslide"'),
-             out.index('id="hm-delslide"'), out.index('id="hm-match"')]
+             out.index('id="hm-delslide"')]
     assert order == sorted(order), "the Slides group is out of order"
-    assert out.index('id="hm-match"') < out.index('id="layout-strip"')
+    # Match slide moved to Apply to other slides (T201), after the strip
+    assert out.index('id="layout-strip"') < out.index('id="hm-match"')
 
 
 def test_both_layout_doors_are_called_the_same_thing(out):

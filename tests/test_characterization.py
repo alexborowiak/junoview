@@ -894,8 +894,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T200 2026-09-02: a View tab for the page-looking tools, and Ribbon
 # layouts beside Auto-hide on the right. deck.html, help.html and two
 # deck fragments.
-EXPECTED_MD5 = "6564791adab378debdb341d8e1ecf8f9"
-EXPECTED_BYTES = 3299115
+# T201 2026-09-02: Home regrouped by what you are doing, saved layouts
+# as tiles in the layout strip, the two refresh doors in the accent, and
+# the saved-layouts dialog in the ribbon's words. deck.html, deck.css,
+# core.css and three deck fragments.
+EXPECTED_MD5 = "fcc955beff635f25a31d2c476120a92f"
+EXPECTED_BYTES = 3301850
 
 
 def _render_example() -> str:

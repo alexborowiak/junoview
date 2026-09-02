@@ -461,7 +461,7 @@ def test_home_and_design_layouts_menus_carry_the_same_rows(out):
     # Home's menu opened out into groups (T196): the same rows are
     # ribbon buttons now, and there is no Home menu left to close
     assert '<span class="rbn-lab">Arrange this slide</span>' in out
-    assert '<span class="rbn-lab">Saved layouts</span>' in out
+    assert '<span class="rbn-lab">Apply to other slides</span>' in out
     assert "$('#hm-lay-menu')" not in out
 
 

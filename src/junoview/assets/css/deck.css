@@ -1364,7 +1364,19 @@ body.light .fx-tile.on{color:#fff;}
    layouts and the refresh doors come LAST, so they are what folds first
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-arrange{order:1;}
-.rbn-saved,.rbn-sources{order:4;}
+.rbn-sources{order:2;}
+/* last, so it is what folds first on a narrow window */
+.rbn-apply{order:4;}
+/* T201: the two commands that reach the sources, drawn in the accent
+   so the eye finds them ("needs more attention drawn to it") */
+.dbtn.dbtn-accent{border-color:color-mix(in srgb,var(--accent) 60%,transparent);
+  background:color-mix(in srgb,var(--accent) 14%,transparent);color:#eaf6fa;}
+.dbtn.dbtn-accent:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--accent) 24%,transparent);}
+body.light .dbtn.dbtn-accent{color:var(--ink);}
+/* a saved layout's tile: the dialog's thumbnail at tile size */
+.lay-strip .lay-savedth{display:block;overflow:hidden;}
+.lay-strip .lay-savedth>*{width:100%;height:100%;}
 /* the Drawing group follows Draw; it exists only while a tool is armed */
 .rbn-cancel{order:6;}
 /* T187: a FOLDED group is one worded door over a popover holding its

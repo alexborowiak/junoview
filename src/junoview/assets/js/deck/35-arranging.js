@@ -1298,7 +1298,42 @@
       return Array.isArray(l)?l:[];
     }catch(e){return [];}
   }
-  function arrSave(list){lsSet(ARRKEY+SCOPE,JSON.stringify(list));}
+  function arrSave(list){
+    lsSet(ARRKEY+SCOPE,JSON.stringify(list));
+    syncSavedTiles();
+  }
+  /* ---- SAVED LAYOUTS IN THE STRIP (T201) --------------------------
+     Each layout you saved is a tile after the built-in ones, drawn
+     by the same miniDiagram the Saved layouts dialog uses, so the two
+     cannot look like different things. Rebuilt whenever the store is
+     written and whenever the picker is; picking one lays THIS slide
+     out the way that one was (arrApply, the dialog's own verb). */
+  function syncSavedTiles(){
+    var strip=$('#layout-strip'); if(!strip) return;
+    $$('.lay-saved',strip).forEach(function(t){t.remove();});
+    if(pageOf().poster) return;
+    arrList().forEach(function(arr,i){
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn lay lay-saved';
+      b.dataset.arr=String(i);
+      var th=document.createElement('span');th.className='layico2 lay-savedth';
+      th.appendChild(miniDiagram({layout:'blank',panes:[],annots:arr.annots||[]}));
+      b.appendChild(th);
+      var lb=document.createElement('span');lb.className='lay-lb';
+      lb.textContent=arr.label||('Saved '+(i+1));
+      b.appendChild(lb);
+      b.title='Your saved layout \u201c'+(arr.label||'')+'\u201d \u2014 lay this '
+        +'slide out like it';
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var n=arrApply(arr,cur);
+        markDirty();refresh();
+        toast(n?(n+' thing'+(n===1?'':'s')+' moved to match \u201c'
+          +(arr.label||'')+'\u201d'):'Nothing here matched that layout');
+      });
+      strip.appendChild(b);
+    });
+  }
   function arrById(id){
     var hit=null;
     arrList().forEach(function(a){if(a&&a.id===id) hit=a;});

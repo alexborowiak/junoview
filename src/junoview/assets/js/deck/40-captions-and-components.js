@@ -871,7 +871,8 @@
         +'out'):'Nothing chosen';
       var ok=$('#ar-ok');
       if(ok){ok.disabled=!n;
-        ok.textContent=n?('Arrange '+n+' slide'+(n===1?'':'s')):'Arrange';}
+        /* the ribbon's verb (T201): a layout is APPLIED to slides */
+        ok.textContent=n?('Apply to '+n+' slide'+(n===1?'':'s')):'Apply';}
     }
     /* the thumbnail of what it would arrange TO. miniDiagram draws any
        slide-shaped thing, and an arrangement IS a slide, so this is free
@@ -885,7 +886,7 @@
       var list=arrList();
       if(!list.length){
         host.innerHTML='<div class="selpane-empty">None yet. Lay a slide '
-          +'out the way you like it, then “Save this slide” — the words '
+          +'out the way you like it, then “Save this slide’s layout” — the words '
           +'and figures are not kept, only the arrangement.</div>';
         return;
       }
