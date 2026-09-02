@@ -3522,6 +3522,10 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
   border-bottom:1px solid #ffffff14;}
 .selpane-list{flex:1;overflow-y:auto;padding:5px;}
 .selpane-empty{color:#54677a;font-size:12px;padding:12px;}
+/* T194: the sentence at the top of a check pane that says what it checks */
+.pf-intro{font-size:11.5px;line-height:1.45;color:#9fb2c2;
+  padding:9px 12px 2px;}
+body.light .pf-intro{color:var(--ink-2);}
 .sp-row{display:flex;align-items:center;gap:7px;
   border-radius:7px;padding:6px 7px;color:#c9d6e2;font-size:12px;
   cursor:pointer;}
@@ -10990,8 +10994,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                        configurable. -->
                   <div class="hd-lab">arrange what is on this slide</div>
                   <button class="dbtn vw-opt" id="lay-ideas-btn"
-                    title="Several ways to lay out what is on this slide,
- drawn as previews &mdash; pick one">
+                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
                     <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
                   <div class="lay-tidy" id="lay-tidy">
                     <button class="dbtn" data-tidy="tight"
@@ -11014,31 +11017,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                        any of the layouts. -->
                   <div class="hd-lab">or one you saved yourself</div>
                   <button class="dbtn vw-opt" id="lay-arrs"
-                    title="Layouts you have saved, with a thumbnail of
- each &mdash; and which slides each one would fit"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Arrangements&#8230;</button>
+                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> My saved layouts&#8230;</button>
                   <button class="dbtn vw-opt" id="lay-masters"
-                    title="Looks slides inherit live &mdash; a background
- and a furniture component. Change the master and every slide wearing it
- follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
+                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
                   <button class="dbtn vw-opt" id="lay-arrsave"
-                    title="Save the way THIS page is laid out, under a
- name. Only the shape travels &mdash; no words and no figures are
- kept"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Save this slide as an
- arrangement</button>
+                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Save this layout&#8230;</button>
                   <button class="dbtn vw-opt" id="lay-give"
-                    title="Choose which other slides take the arrangement
- of this one"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Give this slide&rsquo;s layout
- to&#8230;</button>
+                    title="Tick the slides that should take this slide’s layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Copy this layout to other slides&#8230;</button>
                   <div class="hd-lab">or start from a ready-made one</div>
                   <div class="lay-picker" id="layout-menu-grid"
                     aria-label="Slide layouts"></div>
                 </div>
               </span>
               <button class="dbtn rbn-sm" id="dsg-tidy"
-                title="Check this whole page for nearly-aligned objects,
- uneven gaps and exact-overlap copies. Opens a report first; nothing moves
- until you choose a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
+                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
               <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
                    many of the options there are dropdowns with a
                    million options that should just already be
@@ -11082,8 +11075,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="dc-wmark"
                 aria-pressed="false"
-                title="A word across every page - DRAFT, CONFIDENTIAL, your
- name. Sits behind the content, never over it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3" y="2.2" width="10" height="11.6" rx="1"/><path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/></svg>
+                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3" y="2.2" width="10" height="11.6" rx="1"/><path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/></svg>
    Watermark</button>
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
@@ -11098,15 +11090,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  section, and {sec} its name"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M1.8 9.8h12.4"/><path d="M4.4 11.7h5.4"/></svg> Footer</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
-                title="Number every page"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Numbers</button>
+                title="A number on every slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Numbers</button>
               <!-- T115's masters hid inside two Layouts menus; the
                    feature that owns "the look every slide inherits"
                    belongs on the tab that owns page furniture
                    (JVUX-11). -->
               <button class="dbtn rbn-sm" id="dsg-masters"
-                title="Looks slides inherit live &mdash; a background and
- a furniture component. Change the master and every slide wearing it
- follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters</button>
+                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
@@ -11135,10 +11125,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop" id="dsg-stylewrap">
                 <button class="dbtn rbn-sm" id="dsg-styles"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Every named text style in this presentation, with
- its size &mdash; change one and every box wearing it follows. Below
- them, the whole deck's type at once: bigger, smaller, re-applied, or
- the Style system screen"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Text
+                  title="The named kinds of text in this deck — Title, Heading, Body, Caption — and what each looks like. Change one and every box of that kind follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Text
                   styles &#9662;</button>
                 <div class="sh-menu style-mgr" id="dsg-style-menu"
                   hidden>
@@ -11153,9 +11140,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                       title="Make every text style one step bigger — the
  whole deck's type, in proportion">A&#43; Bigger</button>
                     <button class="dbtn rbn-sm" id="dsg-restyle"
-                      title="Re-apply the styles to every box wearing
- one, on every slide — use it after changing a style by
- hand"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Re-apply</button>
+                      title="Re-apply the named looks to every box wearing one. Use it after changing a style by hand"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Re-apply</button>
                   </div>
                   <!-- THE BUTTON THE USER WENT LOOKING FOR (T87,
                        2026-08-29: "where was the button where people
@@ -11166,9 +11151,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                        and who is not keeping to it -- and each opens
                        the other. -->
                   <button class="dbtn vw-opt" id="dsg-design"
-                    title="One screen for this deck's type: what a Title,
- a Heading or a Caption looks like, where each one sits by default, and
- the whole deck with a box drawn round every object"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg>
+                    title="One screen for the deck’s type: what each kind of text looks like, where it usually sits, and every slide with a box drawn round each object"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg>
                     Style system&#8230;</button>
                 </div>
               </span>
@@ -11187,10 +11170,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    'standardise text', and checked if all headings
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Check whether the headings, paragraphs and
- captions across the whole deck look the same as each other &mdash; and
- whether the figures do: their size on the page, their content zoom,
- their trims and, for SVG figures, their type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg>
+                title="Find text that should match but does not — headings, body text, captions across the whole deck — and figures placed at different sizes. It reports first; each fix is one button"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg>
    Standardise</button>
             </span>
             <span class="rbn-lab">Type</span>
@@ -11240,9 +11220,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    is where anyone already looks for a guide. -->
               <button class="dbtn rbn-sm" id="vw-guides"
                 aria-pressed="true"
-                title="Show the guides you drew yourself &mdash; the lines
- dragged off a ruler and the guide boxes. Hidden, they neither draw nor
- snap; they are still in the deck, so this is not a delete"
+                title="Show or hide the guides you drew — lines dragged off a ruler and guide boxes. Hidden guides do not snap, and they are not deleted"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.6" width="11.6" height="10.8" rx="1"/><path d="M6.2 2.6v10.8" stroke-dasharray="2.4 2"/><path d="M2.2 9.6h11.6" stroke-dasharray="2.4 2"/></svg> Guides <kbd>H</kbd></button>
               <button class="dbtn rbn-sm et" id="vw-guidebox"
                 data-tool="guide" aria-pressed="false"
@@ -11273,9 +11251,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    opens each existing surface from one place. -->
               <button class="dbtn rbn-sm" id="vw-check"
                 aria-pressed="false"
-                title="Is this ready? Five checks in one place: print
- readiness, layout and spacing, style consistency, content and wording,
- and whether placed figures still match their sources"
+                title="Is this ready? Print, layout, style, wording and whether the figures are still current, all checked in one place"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Review</button>
               <!-- Layers is a panel you show or hide — a way of LOOKING
                    at the page, not a property of it. Called Layers, not
@@ -11621,8 +11597,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                        depending on which tab you were on. Same rows,
                        twin ids, one set of wiring. -->
                   <button class="dbtn vw-opt" id="hm-lay-ideas"
-                    title="Several ways to lay out what is on this slide,
- drawn as previews — pick one">
+                    title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
                     <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
                   <div class="lay-tidy" id="hm-lay-tidy"
                     aria-label="Arrange what is on this slide">
@@ -11631,22 +11606,15 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     <button class="dbtn" data-tidy="airy">Airy</button>
                   </div>
                   <button class="dbtn vw-opt" id="hm-lay-masters"
-                    title="Looks slides inherit live &mdash; a background
- and a furniture component. Change the master and every slide wearing it
- follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
+                    title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters&#8230;</button>
                   <button class="dbtn vw-opt" id="hm-lay-arrs"
-                    title="Your saved slide layouts, ranked by how well
- they fit what is on this slide">
-                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Arrangements&#8230;</button>
+                    title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
+                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> My saved layouts&#8230;</button>
                   <button class="dbtn vw-opt" id="hm-lay-arrsave"
-                    title="Keep this slide's layout to reuse — the
- arrangement travels, the words and figures do not">
-                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save this slide as an
- arrangement</button>
+                    title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
+                    <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save this layout&#8230;</button>
                   <button class="dbtn vw-opt" id="hm-lay-give"
-                    title="Tick the slides that should take this slide's
- layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Give this slide&rsquo;s layout
- to&#8230;</button>
+                    title="Tick the slides that should take this slide’s layout"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg> Copy this layout to other slides&#8230;</button>
                   <div class="lay-picker" id="layout-home-grid"
                     aria-label="Slide layouts"></div>
                 </div>
@@ -11654,10 +11622,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <!-- the least glamorous, most useful button in the app:
                    make this slide sit like that one (2026-08-20) -->
               <button class="dbtn rbn-sm" id="hm-match"
-                title="Match slide layouts by pointing: click here, then
- click the thumbnails in the strip. The position, size and styling of
- everything travels, matched up by kind; your content stays exactly where
- it is"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match slide
+                title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match slide
                 &#9662;</button>
             </span>
             <span class="rbn-lab">Slides</span>
@@ -12131,9 +12096,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop opt-drop" id="fmt-srcwrap">
                 <button class="dbtn etm" id="fmt-src" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Where this came from, and keeping it in step with
- its notebook: find the cell, see its lineage, swap back the previous
- figure, pin it to a commit, re-read it, or replace it"
+                  title="Where this figure came from, and keeping it in step with its notebook"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/><rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/><rect x="10" y="11" width="4.4" height="3.2" rx=".8"/><path d="M8 5v3.2M3.8 11V8.2h8.4V11"/></svg> Source &#9662;</button>
                 <div class="sh-menu opt-panel opt-list" id="fmt-src-menu"
                   hidden data-close="1">
@@ -12146,24 +12109,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    notebook-provenance commands for the selected frame
                    (2026-08-29, T58). -->
               <button class="dbtn etm" id="fmt-prov"
-                title="Where this figure came from &mdash; the notebook
- and cell that made it, every cell in its lineage, and whether the
- notebook has moved on since"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/><rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/><rect x="10" y="11" width="4.4" height="3.2" rx=".8"/><path d="M8 5v3.2M3.8 11V8.2h8.4V11"/></svg> Where from&#8230;</button>
+                title="The notebook and cell this figure came from, every cell that fed it, and whether the notebook has moved on since"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.8" y="1.8" width="4.4" height="3.2" rx=".8"/><rect x="1.6" y="11" width="4.4" height="3.2" rx=".8"/><rect x="10" y="11" width="4.4" height="3.2" rx=".8"/><path d="M8 5v3.2M3.8 11V8.2h8.4V11"/></svg> Where it came from&#8230;</button>
               <button class="dbtn etm" id="fmt-revert"
-                title="Swap this frame between the LIVE figure and the one
- from before the last notebook refresh (rescue a figure a re-run
- broke without giving up the others)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/></svg>
+                title="Swap between the live figure and the one from before the last refresh — to rescue a figure a re-run broke"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/></svg>
                 Previous figure</button>
               <button class="dbtn etm" id="fmt-lockver"
-                title="Pin this figure to its notebook&rsquo;s current git
- commit &mdash; refreshes stop changing it, and it renders even with the
- notebook closed"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Lock figure</button>
+                title="Keep this exact figure even when the notebook is re-run — pinned to the notebook’s current version"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Lock figure</button>
               <button class="dbtn etm" id="fmt-imgrefresh" hidden
                 title="Re-read this picture from the file it came
  from. If that file has moved, the picture is left exactly as it
  is"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh</button>
               <button class="dbtn etm" id="fmt-replace"
-                title="Swap in a different notebook card"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg>
+                title="Put a different notebook card in this frame"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg>
                 Replace</button>
                 </div>
               </span>
@@ -12262,11 +12219,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
            whole buttons (so they cannot carry chips plus an action), and
            its strings are pinned by the poster tests. -->
       <aside class="selpane preflight" id="stdpane" hidden>
-        <div class="selpane-h"><span>Standardise text and figures</span>
+        <div class="selpane-h"><span>Standardise</span>
           <button class="dbtn dc-icon" id="stdpane-rerun" aria-label="Check again"
             title="Check again"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg></button>
           <button class="dbtn dc-icon" id="stdpane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
+        <!-- WHAT THIS IS, in one line (T194; 2026-09-02, user: "how
+             things like standardise work... I find the text and how
+             it looks confusing"). A check with no sentence saying what
+             it checks is a list of complaints. -->
+        <div class="pf-intro">Text that should look the same but does
+          not, and figures placed at different sizes. Each row is one
+          thing to look at; its button fixes only that.</div>
         <div class="pf-count" id="stdpane-count"></div>
         <div class="selpane-list" id="stdpane-list"></div>
       </aside>
@@ -20343,11 +20307,13 @@ window.JunoPptx = (function () {
     {id:'quarters',label:'Four panels',items:[
       {k:'cell',x:2,y:2,w:47.5,h:47},{k:'cell',x:50.5,y:2,w:47.5,h:47},
       {k:'cell',x:2,y:51,w:47.5,h:47},{k:'cell',x:50.5,y:51,w:47.5,h:47}]},
-    {id:'text-cell',label:'Text | panel',items:[
+    /* NAMED FOR EVERYTHING ON THEM (T193): both of these carry a title
+       too, which "Text | panel" did not say */
+    {id:'text-cell',label:'Title + text + panel',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
       {k:'text',x:5,y:23,w:40,h:60,text:'Body text',size:3},
       {k:'cell',x:49,y:20,w:47,h:76}]},
-    {id:'cell-text',label:'Panel | text',items:[
+    {id:'cell-text',label:'Title + panel + text',items:[
       {k:'text',x:5,y:5,w:90,h:11,text:'Title',size:5,b:1},
       {k:'cell',x:4,y:20,w:47,h:76},
       {k:'text',x:56,y:23,w:39,h:60,text:'Body text',size:3}]},
@@ -20604,6 +20570,13 @@ window.JunoPptx = (function () {
   /* apply a template to a slide: reposition the cards/text it already has
      into the template's slots (in order), fill empty slots with placeholders,
      and keep any free decorations (arrows/images/shapes) the user added. */
+  /* the layout a new slide takes, remembered per project (T193) */
+  function newLayKey(){return 'jv-deck-newlay:'+SCOPE;}
+  function layoutById(id){
+    var hit=null;
+    LAYOUTS.forEach(function(l){if(!hit&&l.id===id) hit=l;});
+    return hit;
+  }
   function applyLayout(s,layout){
     if(!s||!layout) return;
     s.layout='blank';s.lay=layout.id;
@@ -20699,6 +20672,9 @@ window.JunoPptx = (function () {
           }
           var s=pres.slides[cur]; if(!s) return;
           applyLayout(s,layout);
+          /* the next New slide takes this layout (T193); a poster
+             template is a page, not a slide, and is not remembered */
+          if(!layout.poster) lsSet(newLayKey(),layout.id);
           activePane=-1;markDirty();refresh();
           closeLayMenu();
         });
@@ -34351,6 +34327,8 @@ window.JunoPptx = (function () {
      beside showFmt because every canvas selection path already converges
      here, including deselection and title/subtitle pseudo-items. */
   var inspectorSig='';
+  /* the tab a selection carried you away from, for the way back (T192) */
+  var tabBeforeSel='';
   function syncInspectorPanes(force){
     /* the numbers pane is an inspector too, and a cheap one -- four
        value writes, and an immediate return when it is closed. It sits
@@ -34467,6 +34445,12 @@ window.JunoPptx = (function () {
       ||activeTab()==='animation';
     var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
+    /* REMEMBER WHERE YOU WERE (T192). The selection carries you to
+       Object; when it goes, syncRibbonGroups brings you back to the
+       tab you left rather than to Home (2026-09-02, user: "if you are
+       on Insert tab, and you click on an object then unclick, it
+       should go back to Insert"). */
+    if(wantTab) tabBeforeSel=activeTab();
     justDrew=false;
     var kind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
     /* a table is not a text box, but its WORDS take the same size, font
@@ -34899,7 +34883,11 @@ window.JunoPptx = (function () {
        what every application with contextual tabs does. */
     if(!tabHasContent(activeTab())){
       var to='';
+      /* back to the tab the selection took you from, if it still has
+         anything on it; the first tab with content otherwise (T192) */
+      if(tabBeforeSel&&tabHasContent(tabBeforeSel)) to=tabBeforeSel;
       TABS.forEach(function(t){if(!to&&tabHasContent(t)) to=t;});
+      tabBeforeSel='';
       if(to&&to!==activeTab()){curTab=to;lsSet(tabKey(),to);}
     }
     applyTab();
@@ -50744,7 +50732,17 @@ window.JunoPptx = (function () {
     if(!pageOf().poster){
       /* a DECK's slides are named by what is on them, which is more use
          than "Slide 3" — so no label is stamped here */
-      pres.slides.splice(at,0,emptySlide());
+      var ns=emptySlide();
+      /* THE LAYOUT YOU LAST CHOSE (T193). A new slide arrives laid out
+         the way the last one you picked a layout for was, and a deck
+         that has never picked one starts with a title, a panel and
+         text -- the shape most slides in a talk have (2026-09-02,
+         user: "when click add new it should remember the last one you
+         added. The default slide choice should be the panel, title,
+         text"). Blank is still one pick away. */
+      var lay=layoutById(lsGet(newLayKey())||'cell-text');
+      if(lay&&!lay.poster) applyLayout(ns,lay);
+      pres.slides.splice(at,0,ns);
     } else {
       var src=pres.slides[cur];
       /* name the page you were already on first, so the two read as a
