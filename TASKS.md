@@ -4067,6 +4067,23 @@ option. Then where has the ability to refresh all images gone?"
   tool and lights.
 
 
+- [x] **T200 · S — A View tab, and Ribbon layouts beside Auto-hide.**
+  The user (2026-09-02): "some of the things in home shouldn't be in
+  home then. Like the guides, grid, review, side toolbar, and result
+  they are not really home screen things are they. New tab with these.
+  Also put the ribbon layouts button on the other side with the
+  autohide."
+  *Done 2026-09-02.* View was folded into Home on 2026-08-20 when Home
+  was thin; Home has since taken the layout system (T196), and rulers,
+  the grid and guides, full screen, the side toolbar, Review, Layers
+  and Notes are about looking at the page. They are a **View** tab
+  between Animation and Object; a browser that remembers the old `view`
+  tab lands on it. Home reads Slides | Layout | Arrange this slide |
+  Saved layouts | Sources. **Ribbon layouts** moves from beside the
+  tabs, where it read as a fifth tab, to the right beside Auto-hide and
+  the fold, with the ribbon's other settings.
+
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

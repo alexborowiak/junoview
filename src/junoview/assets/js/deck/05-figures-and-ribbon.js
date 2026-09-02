@@ -1074,7 +1074,9 @@
   /* Animation is a tab of its own again (T176): a build is something
      you give a slide AFTER it is full, which is the opposite moment
      from Insert. */
-  var TABS=['home','insert','design','animation','object'];
+  /* ...and View is one again (T200): the page-looking tools were on
+     Home, and Home took the layout system. */
+  var TABS=['home','insert','design','animation','view','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -1088,7 +1090,8 @@
          either lands on its current home rather than on a tab that
          no longer exists */
       if(t==='animate') t='animation';
-      else if(t==='view') t='home';
+      /* `view` is a real tab again (T200), so a browser that remembers
+         it from before 2026-08-20 lands on it */
       /* TABS is the ACTIVE LAYOUT's tabs, which need not include
          `home` at all — so the fallback is "the first tab there is"
          rather than a name that may not exist (2026-08-25) */

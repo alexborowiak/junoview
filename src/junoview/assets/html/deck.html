@@ -425,16 +425,21 @@
       data-tab="animation" aria-selected="false"
       title="How things arrive during playback — the effect, the order,
  and the builds">Animation</button>
+    <!-- VIEW IS A TAB AGAIN (T200). It was folded into Home on
+         2026-08-20 ("View can just be back on home"); Home has since
+         taken the layout system (T196), and rulers, the grid, full
+         screen, the side toolbar, Review, Layers and Notes are about
+         LOOKING at the page, not about slides (2026-09-02, user: "some
+         of the things in home shouldn't be in home then... new tab
+         with these"). -->
+    <button class="rbn-tab" id="rbn-tab-view" role="tab" data-tab="view"
+      aria-selected="false"
+      title="Rulers, grid and guides; full screen and the side toolbar;
+ the Review, Layers and Notes panes">View</button>
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
     </span>
-    <!-- RIBBON layout, not slide layout. This permanent door sits outside
-         #edit-tools, so no chosen layout, tab filter, per-button preference
-         or width rung can hide the way to choose another arrangement. -->
-    <button class="dbtn rbn-layouts" id="rbn-layouts"
-      title="Choose a different arrangement of the ribbon">
-      <i data-ic="layouts"></i> Ribbon layouts</button>
     <span class="deck-spring"></span>
     <span class="et-hint" id="et-hint"></span>
     <!-- The tools fold away. On a laptop the ribbon is ~100px of a 700px
@@ -457,6 +462,14 @@
     <button class="dbtn rbn-autobtn" id="rbn-auto" aria-pressed="false"
       title="Auto-hide: the tools roll up and come back when you reach the
  tab strip. Off by default."><i data-ic="autohide"></i> Auto-hide</button>
+    <!-- ON THE RIGHT, beside Auto-hide (T200): it is a setting of
+         the ribbon itself, like the two beside it, and it read as a
+         fifth tab on the left. RIBBON layout, not slide layout. This permanent door sits outside
+         #edit-tools, so no chosen layout, tab filter, per-button preference
+         or width rung can hide the way to choose another arrangement. -->
+    <button class="dbtn rbn-layouts" id="rbn-layouts"
+      title="Choose a different arrangement of the ribbon">
+      <i data-ic="layouts"></i> Ribbon layouts</button>
     <button class="dbtn rbn-fold" id="rbn-fold" aria-label="Hide or show the editing tools" aria-pressed="false"
       title="Hide the tools and give the page the room (Ctrl+F1). Click a
  tab, or this, to bring them back">&#9652;</button>
@@ -704,7 +717,7 @@
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view" data-tab="home">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
             <span class="rbn-row">
               <!-- FOUR BUTTONS, not a menu of four. They were folded
                    behind one dropdown called "Guides" when the row was

@@ -536,6 +536,11 @@ def test_every_markup_tab_sits_inside_the_tablist():
                   html, re.S)
     assert m, "the tablist wrapper is gone"
     inside = m.group(1)
-    # five since T176 put Animation back on the strip
-    assert inside.count('class="rbn-tab"') == 5, inside.count('class="rbn-tab"')
-    assert html.count('class="rbn-tab"') == 5, "a tab escaped the tablist"
+    # five since T176 put Animation back on the strip, six since T200's
+    # View tab
+    assert inside.count('class="rbn-tab"') == 6, inside.count('class="rbn-tab"')
+    assert html.count('class="rbn-tab"') == 6, "a tab escaped the tablist"
+    # and the Ribbon layouts door sits with the ribbon's own settings on
+    # the right, after Auto-hide, not beside the tabs (T200)
+    assert html.index('id="rbn-auto"') < html.index('id="rbn-layouts"') \
+        < html.index('id="rbn-fold"')

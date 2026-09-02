@@ -563,14 +563,16 @@ def test_the_ribbon_is_tabbed(out):
     # "animations being its own tab (it doesn't really work under
     # insert anyway)"): a build is given to a FULL slide, which is the
     # opposite moment from Insert, and the tab has seven doors now.
-    for t in ("home", "insert", "design", "animation", "object"):
+    # ...and View since T200 (2026-09-02, user: "some of the things in
+    # home shouldn't be in home then... new tab with these"): Home took
+    # the layout system, and the page-looking tools are their own tab
+    for t in ("home", "insert", "design", "animation", "view", "object"):
         assert f'id="rbn-tab-{t}"' in out, t
         assert f"'{t}'" in out
-    assert "var TABS=['home','insert','design','animation','object'];" in out
+    assert "var TABS=['home','insert','design','animation','view','object'];" in out
     assert out.count('class="rbn-grp" data-tab="object"') == 5
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
-    assert 'id="rbn-tab-view"' not in out
     # a browser remembering one of the retired tabs lands on its new host
     assert "if(t==='animate') t='animation';" in out
     assert "function setTab(t){" in out

@@ -686,7 +686,8 @@ def test_view_and_output_became_one_group(out):
     View is for; the 2026-08-07 distinction was really about Present, and
     Present is in neither of them now.
     """
-    assert 'class="rbn-grp rbn-fixed rbn-view" data-tab="home"' in out
+    # ...on a View tab of its own since T200
+    assert 'class="rbn-grp rbn-fixed rbn-view" data-tab="view"' in out
     assert 'class="rbn-grp rbn-out"' not in out
     assert ">Output</span>" not in out
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(

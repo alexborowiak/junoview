@@ -891,8 +891,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # doors; shapes as a strip of their own; the Object tab's path, refresh
 # and lock on the row and its by-bullet trio. deck.html, deck.css,
 # core.css and seven deck fragments.
-EXPECTED_MD5 = "cb4d9a3f972b17fce8b72471895b9c96"
-EXPECTED_BYTES = 3298055
+# T200 2026-09-02: a View tab for the page-looking tools, and Ribbon
+# layouts beside Auto-hide on the right. deck.html, help.html and two
+# deck fragments.
+EXPECTED_MD5 = "6564791adab378debdb341d8e1ecf8f9"
+EXPECTED_BYTES = 3299115
 
 
 def _render_example() -> str:
