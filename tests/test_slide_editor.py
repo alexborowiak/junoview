@@ -419,7 +419,9 @@ def test_panes_dock_beside_the_page_and_are_draggable_and_remembered(out):
     assert ".selpane{resize:both;overflow:hidden;" in out
     # docking: one width variable drives the pane and the stage's padding,
     # so they can never disagree
-    assert ".deck{--pane-w:232px;}" in out
+    # 272 since T184: a row is a dot, a name, an eye, a lock and a build
+    # number, and at 232 the name was what gave way
+    assert ".deck{--pane-w:272px;}" in out
     assert (".deck.pane-open .deck-stage{"
             "padding-right:calc(var(--pane-w) + 22px);}") in out
     assert "function syncPaneDock(){" in out
@@ -3391,8 +3393,11 @@ def test_the_animation_feature_answers_to_one_name(out):
     and one of the nine ribbon layouts still labelled a group with it.
     """
     assert '<span class="rbn-lab">Animation</span>' in out
-    assert "> Animations</button>" in out
-    assert "<span>Animations</span>" in out
+    # ...and since T183 the button and the pane it opens share the name
+    # the user gives that list: "the animation order"
+    assert "> Animation order</button>" in out
+    assert "<span>Animation order</span>" in out
+    assert "> Animations</button>" not in out
     # the retired word is gone from everything a user can read
     assert "<span>Animation pane</span>" not in out
     assert "label:'Timeline'" not in out

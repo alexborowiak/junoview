@@ -109,7 +109,11 @@ def test_selection_does_not_steal_an_open_workflow():
     # the tab (T171): it is the same rule -- an open workflow keeps the
     # tab it is standing on -- applied to a second surface
     assert "var hold=PANE_IDS.some(function(pid){" in out
-    assert "||(typeof animGalleryOpen==='function'&&animGalleryOpen());" in out
+    assert "||(typeof animGalleryOpen==='function'&&animGalleryOpen())" in out
+    # ...and the Animation tab itself holds the selection (T182): its
+    # effect tiles are what you came for, and Object would take them
+    # away in the same click
+    assert "||activeTab()==='animation';" in out
     assert "&&!hold)?selT:'';" in out
 
 

@@ -418,9 +418,12 @@ def test_the_animation_pane_does_not_need_a_selection(out):
     assert "animPaneSync();animRibbonSync();" in out       # selection
     i = out.index("function seqEnd(commitIt){")
     assert "animPaneSync();" in out[i:i + 900]             # mode closing
-    j = out.index("function galApply(type){")
-    assert "animPaneSync();" in out[j:j + 900]             # whole-slide pick
-    assert out.count("animPaneSync();") >= 3
+    # the whole-slide pick left with the popover (T182): the tiles act on
+    # the selection through setType, whose commit() calls the pane's own
+    # render, and the whole-slide builds go through the same commit
+    assert "function galApply(type){" not in out
+    assert "function commit(s){markDirty();rerender();render();renderFilm();" in out
+    assert out.count("animPaneSync();") >= 2
     # only a deck has builds
     assert "if(vaB) vaB.hidden=!!pg.poster;" in out
 
