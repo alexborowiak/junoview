@@ -1263,7 +1263,8 @@ body.th-colorful .rbn-slides,body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
 body.th-colorful .rbn-furn{--accent:#e0a5c6;--accent-deep:#b3628f;}
 body.th-colorful .rbn-anim,body.th-colorful .rbn-build,
-body.th-colorful .rbn-order,body.th-colorful .rbn-seq{
+body.th-colorful .rbn-order,body.th-colorful .rbn-seq,
+body.th-colorful .rbn-timing{
   --accent:#6fd8c2;--accent-deep:#2f9c85;}
 body.th-colorful .rbn-tbl{--accent:#8fc7ff;--accent-deep:#4d8fd6;}
 body.th-colorful .rbn-slide,body.th-colorful #ab-filters,
@@ -4437,6 +4438,22 @@ body.slide-editing .apptop{display:none;}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
 body.light .fx-tile.on{color:#fff;}
+/* T186: the build numbers show whenever the Animation tab is up -- the
+   tab is about them -- and not only while the order pane or Quick
+   animate is (2026-09-02, user: "the animation numbers should appear
+   when on the animation tab always") */
+.deck.tab-animation .an-buildno{display:flex;}
+/* T185: the Timing group. The delay field is the size field's twin. */
+.rbn-timing{order:5;}
+.anim-delaywrap .fmt-num{width:44px;}
+.rbn-timing .dbtn:disabled{opacity:.4;cursor:default;}
+/* WHICH ONE IS ON, said louder than a theme can quiet. The colourful
+   theme paints every .dbtn at three classes deep, which beat the two of
+   .seq-fxb.on and left the lit chip looking like its neighbours
+   (2026-09-02, user: "you can't tell which button you are on"). */
+.rbn-row .seq-fx .seq-fxb[aria-pressed="true"],
+.rbn-row .rbn-cell .dbtn.rbn-sm[aria-pressed="true"]{
+  background:var(--cyan-deep);color:#fff;border-color:var(--cyan-deep);}
 .rbn-insert{order:6;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
@@ -11272,9 +11289,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">View</span>
           </span>
-          <!-- ANIMATION, on its own tab (T176). Three groups: the
-               EFFECT the selected thing gets, the builds for the WHOLE
-               SLIDE, and the ORDER things come in. -->
+          <!-- ANIMATION, on its own tab (T176). Four groups: the EFFECT
+               the selected thing gets, the builds for EVERYTHING on the
+               slide, the ORDER things come in, and the TIMING of the
+               selected build with how much of a text box arrives. -->
           <!-- THE EFFECTS ARE TILES IN THE ROW (T182), the way
                PowerPoint's are, so giving the selected thing an
                entrance is one click with nothing to open first
@@ -11294,24 +11312,25 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab" id="anim-strip-lab">Effect</span>
           </span>
-          <!-- THE WHOLE SLIDE. Names that say what happens
-               (2026-09-02, user: "I don't know what the order buttons
-               do"): One per click, All on one click. -->
+          <!-- EVERYTHING ON THE SLIDE, in one press. Three verbs about
+               the whole slide; the effect they give is Fade, or what
+               each thing already had (2026-09-02, user: "the whole
+               slide options are confusing" -- so the heading says whose
+               they are and each label is one idea). -->
           <span class="rbn-grp rbn-build" data-tab="animation">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-stagger"
-                title="Give everything on this slide an entrance, one
- per click, in order &mdash; top to bottom unless you set your own"
+                title="Every object on this slide arrives, one per click,
+ top to bottom unless you set an order"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.8h4.6"/><path d="M5.7 8h4.6"/><path d="M9 12.2h4.6"/></svg> One per click</button>
               <button class="dbtn rbn-sm" id="anim-together"
-                title="Give everything on this slide an entrance, all on
- the same click"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All on one click</button>
+                title="Every object on this slide arrives together, on the
+ first click"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All together</button>
               <button class="dbtn rbn-sm dbtn-warn" id="anim-clear"
-                title="Take every entrance off this slide &mdash; nothing
- is held back during playback"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove
- animations</button>
+                title="Take the entrance off every object on this slide"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Remove all</button>
             </span>
-            <span class="rbn-lab">Whole slide</span>
+            <span class="rbn-lab">Everything on the slide</span>
           </span>
           <!-- THE ORDER. Quick animate is the pointing mode (T168): it
                was "Click things in order…" and then "Set order", and
@@ -11329,8 +11348,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="vw-anim"
                 aria-pressed="false"
                 title="The list of what appears when on this slide, in
- order, with arrows to move a step earlier or later. The numbered
- bubbles on the slide show while it is open"
+ order, with arrows to move a step earlier or later"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation order</button>
               <!-- THE TIMELINE IS THE LAYERS PANE (T174): every object
                    with the click it arrives on and, if it leaves, the
@@ -11342,6 +11360,62 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  from the same list"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers</button>
             </span>
             <span class="rbn-lab">Order</span>
+          </span>
+          <!-- TIMING, the way PowerPoint's Start box works (T185;
+               2026-09-02, user: "there should be a default thing there
+               with time like PowerPoint has, and something like 'With
+               previous', or 'on click' that you can swap around").
+               Three answers to WHEN the selected build starts, on the
+               model this deck already has: its own click; the previous
+               build's click (the pane's "Appear with previous"); or a
+               number of seconds after the previous build, with no click
+               (T169's delay, which used to be reachable only by holding
+               a digit in Quick animate). The second row is HOW MUCH of
+               a text box arrives at a time (T172), which lived only in
+               the pane -- "where are the things for dot points" -- and
+               shows for a text box. Every control is disabled until
+               there is a selected build to time, the way the tiles are,
+               and the group stands down while Quick animate is armed so
+               the mode's own controls have the row. -->
+          <span class="rbn-grp rbn-timing" data-tab="animation">
+            <span class="rbn-row">
+              <span class="rbn-cell" id="anim-start">
+                <button class="dbtn rbn-sm" id="anim-onclick"
+                  aria-pressed="false"
+                  title="Starts on its own click"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> On click</button>
+                <button class="dbtn rbn-sm" id="anim-withprev"
+                  aria-pressed="false"
+                  title="Starts on the same click as the build before it"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> With previous</button>
+                <button class="dbtn rbn-sm" id="anim-afterprev"
+                  aria-pressed="false"
+                  title="Starts by itself, this many seconds after the
+ build before it &mdash; no click"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> After previous</button>
+                <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
+                  title="Seconds after the previous build">
+                  <input class="fmt-num" id="anim-delay" type="number"
+                    min="1" max="60" step="1" value="1"
+                    aria-label="Seconds after the previous build">
+                  <span class="fmt-unit">s</span></span>
+              </span>
+              <span class="rbn-cell" id="anim-by">
+                <button class="dbtn rbn-sm" id="anim-by-all"
+                  aria-pressed="false"
+                  title="The whole text box on one click"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Whole box</button>
+                <button class="dbtn rbn-sm" id="anim-by-para"
+                  aria-pressed="false"
+                  title="One click per bullet, or per line you pressed
+ Enter on"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="m3 5.6 2.4 2.4L3 10.4"/></svg> By bullet</button>
+                <button class="dbtn rbn-sm" id="anim-by-sent"
+                  aria-pressed="false"
+                  title="One click per sentence"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> By sentence</button>
+              </span>
+            </span>
+            <span class="rbn-lab" id="anim-timing-lab">Timing &amp; text</span>
           </span>
           <!-- QUICK ANIMATE, IN THE RIBBON (T180). This was a bar fixed
                across the top of the window, over the very ribbon it
@@ -23506,6 +23580,10 @@ window.JunoPptx = (function () {
   function applyTab(){
     var bar=$('#edit-tools'); if(!bar) return;
     var t=activeTab();
+    /* the build numbers show whenever the Animation tab is up (T186):
+       the tab is about them, so they should not wait for the order
+       pane or Quick animate */
+    deckEl.classList.toggle('tab-animation',t==='animation');
     $$('.rbn-grp[data-tab]',bar).forEach(function(g){
       if(g.dataset.tab===t) g.removeAttribute('data-off');
       else g.setAttribute('data-off','1');
@@ -47487,6 +47565,15 @@ window.JunoPptx = (function () {
     ['seq-what','seq-fx','seq-btns'].forEach(function(id){
       var el=$('#'+id); if(!el) return;
       any=true;el.hidden=!on;});
+    /* the Timing group stands down while the mode has the row,
+       and comes back with the selection when it ends (T185) */
+    if(typeof animRibbonSync==='function') animRibbonSync();
+    /* ...and so do the whole-slide shortcuts: they would fight the
+       mode, and their group is the width the mode's own controls need
+       (measured 20px over at 1400px with them showing, T186) */
+    var poster=!!(pageOf&&pageOf().poster);
+    ['anim-stagger','anim-together','anim-clear'].forEach(function(id){
+      var el=$('#'+id); if(el) el.hidden=on||poster;});
     if(!any) return;
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
     var w=$('#seq-what'); if(!w||!seqArm) return;
@@ -47494,7 +47581,8 @@ window.JunoPptx = (function () {
     /* two short lines: the count, then the two modifiers. The second
        line is the first thing the tight rung drops (deck.css), the way
        the hint text is -- words that explain, not words that act */
-    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b>'
+    w.innerHTML='<span><b>next: '+(seqArm.n+1)+'</b> &middot; click the '
+      +'next thing to appear'
       +(done?(' &middot; '+done+' placed'):'')+'</span>'
       +'<span><b>Shift</b>: same click &middot; '
       +(seqDigit
@@ -47693,6 +47781,111 @@ window.JunoPptx = (function () {
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
+    /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
+       PowerPoint's Start box, on the model this deck already has:
+       On click is a stop of its own; With previous is the pane's
+       "Appear with previous" (mergeUp); After previous is T169's
+       delay -- the stop runs itself that many seconds after the
+       one before, no click -- which was reachable only by holding
+       a digit in Quick animate. Every control is disabled until
+       there is a selected build to time, and the group stands down
+       while Quick animate has the row. The second row is T172's
+       text builds, which lived only in the pane. */
+    function setDelay(sec){
+      var s=pres.slides[cur]; if(!s) return;
+      var a=annotByIdx(s,selAnnot); if(!a||!a.anim) return;
+      var ord=a.anim.order||0;
+      /* the whole STOP carries it: two things arriving together
+         cannot arrive at two different times (T169) */
+      (s.annots||[]).forEach(function(x){
+        if(x&&x.anim&&(x.anim.order||0)===ord){
+          if(sec>0) x.anim.after=sec; else delete x.anim.after;}});
+      commit(s);
+    }
+    function timingState(){
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      var num=typeof selAnnot==='number';
+      var on=!!a&&num&&!!a.anim&&!pageOf().poster&&!seqOn();
+      if(!on) return {on:false,text:!!a&&num&&a.k==='text'&&!!a.anim};
+      var q=animSeq(s),si=stepOf(s,selAnnot);
+      var after=(a.anim.after)|0,shared=false;
+      if(si>=0&&q[si].items.length>1){
+        /* it joined an earlier thing's click if it is not the first
+           of its stop in reading order */
+        var first=null;
+        orderedIdx(s).forEach(function(i){
+          if(first===null&&q[si].items.indexOf(i)>=0) first=i;});
+        shared=(first!==selAnnot);
+      }
+      return {on:true,si:si,after:after,shared:shared,
+        mode:after?'after':(shared?'with':'click'),
+        text:a.k==='text',
+        by:(a.anim.by==='para'||a.anim.by==='sent')?a.anim.by:''};
+    }
+    function timingSync(){
+      var st=timingState(),poster=!!pageOf().poster,armed=seqOn();
+      var start=$('#anim-start'),by=$('#anim-by');
+      if(start) start.hidden=poster||armed;
+      if(by) by.hidden=poster||armed||!st.text;
+      [['anim-onclick','click'],['anim-withprev','with'],
+       ['anim-afterprev','after']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        /* nothing to be "with" on the first build */
+        b.disabled=!st.on||(p[1]==='with'&&st.si<=0&&st.mode!=='with');
+        b.setAttribute('aria-pressed',(st.on&&st.mode===p[1]).toString());
+      });
+      var dw=$('#anim-delaywrap'),di=$('#anim-delay');
+      if(dw) dw.hidden=!(st.on&&st.mode==='after');
+      if(di&&st.on&&st.mode==='after'&&document.activeElement!==di)
+        di.value=st.after||1;
+      [['anim-by-all',''],['anim-by-para','para'],
+       ['anim-by-sent','sent']].forEach(function(p){
+        var b=$('#'+p[0]); if(!b) return;
+        b.disabled=!st.on;
+        b.setAttribute('aria-pressed',
+          (st.on&&st.text&&st.by===p[1]).toString());
+      });
+      var lab=$('#anim-timing-lab');
+      if(lab) lab.textContent=st.on?(st.text?'Timing & text':'Timing')
+        :'Timing \u2014 select an animated thing';
+    }
+    var ocb=$('#anim-onclick');
+    if(ocb) ocb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var st=timingState(); if(!st.on) return;
+      if(st.shared) splitOwn();
+      if(st.after) setDelay(0);
+    });
+    var wpb=$('#anim-withprev');
+    if(wpb) wpb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var st=timingState(); if(!st.on||st.si<=0) return;
+      if(st.after) setDelay(0);
+      if(!st.shared) mergeUp();
+    });
+    var apb=$('#anim-afterprev');
+    if(apb) apb.addEventListener('click',function(e){
+      e.stopPropagation();
+      var st=timingState(); if(!st.on) return;
+      if(st.shared) splitOwn();
+      var di=$('#anim-delay');
+      setDelay(Math.max(1,Math.min(60,(+(di&&di.value))||1)));
+    });
+    var din=$('#anim-delay');
+    if(din){
+      din.addEventListener('change',function(){
+        var v=Math.max(1,Math.min(60,(+din.value)||1));
+        din.value=v;setDelay(v);});
+      din.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter'){e.preventDefault();din.blur();}});
+    }
+    [['anim-by-all',''],['anim-by-para','para'],
+     ['anim-by-sent','sent']].forEach(function(p){
+      var b=$('#'+p[0]); if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();setBy(p[1]);});
+    });
     /* HOW FINELY A TEXT BOX ARRIVES (17-text-builds.js). Beside setType
        because it is the same gesture on the same selection, and it
        resets revealCount for the same reason "One by one" does: the
@@ -48087,6 +48280,7 @@ window.JunoPptx = (function () {
     /* the effect buttons act on the SELECTION, so they show the selected
        item's effect and stand down when there is nothing selected */
     animRibbonSync=function(){
+      timingSync();
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
