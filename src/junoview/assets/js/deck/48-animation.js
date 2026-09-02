@@ -246,10 +246,10 @@
   /* the gallery counts as an open workflow: selecting an object while
      it is up must not move the ribbon out from under it, exactly as
      T141 ruled for the panes */
-  function animGalleryOpen(){
-    var m=$('#anim-eff-menu');
-    return !!(m&&!m.hidden);
-  }
+  /* the gallery is a strip of tiles in the row now (T182); nothing
+     is ever "open", and the Animation tab keeps the selection by
+     name in showFmt instead */
+  function animGalleryOpen(){return false;}
   /* ICONS, NAMED LITERALLY. bic() with a computed key works at runtime
      but is invisible to the icon contract, which scans for literal
      one-argument icon calls --
@@ -297,77 +297,49 @@
     /* animationend is not reliable enough to be the only cleanup */
     galPvT=setTimeout(galPreviewStop,900);
   }
-  function galScope(){
-    var s=pres.slides[cur],n=selIdxs().length;
-    if(n===1) return itemLabel(s,selIdxs()[0]);
-    if(n>1) return n+' objects, all on one click.';
-    var all=((s&&s.annots)||[]).length;
-    return all?('Everything on this slide, one at a time.')
-      :'Nothing on this slide yet.';
-  }
-  function galApply(type){
-    var s=pres.slides[cur]; if(!s) return;
-    var idxs=selIdxs();
-    if(idxs.length){
-      animSetType(type);
-    } else {
-      /* the whole slide, one build each, in READING order (T106's sweep,
-         never a second one) -- and as ONE undo step */
-      var ord=0;
-      orderedIdx(s).forEach(function(i){
-        var a=(s.annots||[])[i]; if(!a||a.hide) return;
-        if(type==='none') delete a.anim;
-        else a.anim={type:type,order:ord++};
-      });
-      markDirty();renderSlide();renderFilm();
-      if(typeof animPaneSync==='function') animPaneSync();
-      if(typeof animRibbonSync==='function') animRibbonSync();
-      toast(type==='none'
-        ?'Every animation on this slide removed'
-        :('Everything on this slide, one at a time \u2014 '+ord
-          +' click'+(ord===1?'':'s')));
-    }
-    galSync();
-  }
+  /* THE STRIP (T182): five tiles in the ribbon's own row, icon over
+     word, the one that is on lit. Rebuilt rather than diffed -- five
+     buttons are cheaper to redraw than to reconcile, and it has to
+     follow the selection. DISABLED with nothing selected: an effect
+     is a fact about a thing, and the whole-slide builds are the two
+     worded buttons beside the strip. */
   function galSync(){
-    var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
-    if(!menu) return;
+    var strip=$('#anim-strip'); if(!strip) return;
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    var on=!!a&&typeof selAnnot==='number';
     var now=(a&&a.anim)?(a.anim.type||'fade'):(a?'none':null);
-    if(btn){
-      var ic=btn.querySelector('.bic,i');
-      var key=(now&&now!=='none')?now:'fade';
-      if(ic&&window.SemIcons&&SemIcons[key]) ic.outerHTML=bic(key);
-    }
-    menu.innerHTML='';
-    var h=document.createElement('div');
-    h.className='anim-galh';h.textContent='How it arrives';
-    menu.appendChild(h);
-    var row=document.createElement('div');row.className='anim-galrow';
+    strip.innerHTML='';
     SEQ_FX.forEach(function(f){
       var b=document.createElement('button');
-      b.className='sh-opt anim-card'+(now===f[0]?' on':'');
+      b.className='fx-tile'+(on&&now===f[0]?' on':'');
       b.type='button';
-      b.setAttribute('aria-pressed',now===f[0]?'true':'false');
+      b.disabled=!on;
+      b.setAttribute('aria-pressed',on&&now===f[0]?'true':'false');
       b.innerHTML=fxIcon(f[0])+'<span>'+f[1]+'</span>';
-      b.title=f[1]+' \u2014 '+(f[0]==='none'
-        ?'no animation; it is on the slide from the start'
-        :'hover to see it, click to give it');
-      b.addEventListener('mouseenter',function(){galPreview(f[0]);});
-      b.addEventListener('focus',function(){galPreview(f[0]);});
+      b.title=on
+        ?(f[0]==='none'?'No entrance \u2014 on the slide from the start'
+          :f[1]+' \u2014 hover to see it, click to give it')
+        :'Select something on the slide first';
+      b.addEventListener('mouseenter',function(){if(on) galPreview(f[0]);});
+      b.addEventListener('focus',function(){if(on) galPreview(f[0]);});
       b.addEventListener('mouseleave',galPreviewStop);
       b.addEventListener('click',function(e){
         e.stopPropagation();galPreviewStop();
-        galApply(f[0]);overlayHide(menu);});
-      row.appendChild(b);
+        if(on) animSetType(f[0]);});
+      strip.appendChild(b);
     });
-    menu.appendChild(row);
-    var foot=document.createElement('div');
-    foot.className='anim-galfoot';foot.textContent=galScope();
-    menu.appendChild(foot);
+    var lab=$('#anim-strip-lab');
+    if(lab) lab.textContent=on?'Effect':'Effect \u2014 select something';
   }
   function galBoot(){
-    var btn=$('#anim-effect'),menu=$('#anim-eff-menu');
+    var strip=$('#anim-strip');
+    if(!strip) return;
+    galSync();
+    strip.addEventListener('mouseleave',galPreviewStop);
+    return;
+    /* what follows is the popover's own wiring, kept only as the
+       record of why the strip is not built through wireMenuToggle */
+    var btn=null,menu=null;
     if(!btn||!menu) return;
     /* WIRED HERE RATHER THAN THROUGH wireMenuToggle, which takes id
        STRINGS and builds a selector out of them: handed the elements
@@ -690,7 +662,7 @@
          when the order is what you are thinking about. */
       var sq=document.createElement('button');
       sq.className='anim-mini wide';
-      sq.innerHTML=bic('stagger')+' Set order\u2026';
+      sq.innerHTML=bic('stagger')+' Quick animate\u2026';
       sq.title='Then click the objects on the slide one after another, '
         +'in the order they should appear. Shift-click puts one on the '
         +'same click as the last.';
@@ -761,7 +733,7 @@
         a.anim={type:(a.anim&&a.anim.type)||'fade',order:n};
       });
       revealCount=0;commit(s2);
-      toast(order.length+' items, one click each \u2014 in reading order');
+      toast(order.length+' items, one per click');
     });
     var tog=$('#anim-together');
     if(tog) tog.addEventListener('click',function(){
@@ -826,7 +798,7 @@
     animRibbonSync=function(){
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
-      if(typeof galSync==='function'&&$('#anim-eff-menu')) galSync();
+      if(typeof galSync==='function'&&$('#anim-strip')) galSync();
       var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
       var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
       OBJ_FX.forEach(function(p){

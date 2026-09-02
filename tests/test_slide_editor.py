@@ -589,7 +589,7 @@ def test_the_ribbon_is_tabbed(out):
     # ...and the two Order doors T176 put on the ribbon stand down with
     # them, for the same reason: a poster has nothing to sequence
     assert ("['#anim-clear','#anim-stagger','#anim-together',"
-            "'#anim-effect',\n     '#anim-seq','#anim-layers']"
+            "'#anim-strip',\n     '#anim-seq','#anim-layers']"
             ".forEach(function(id){") in out
     # the chosen tab is remembered per project
     assert "function tabKey(){return 'jv-deck-tab:'+SCOPE;}" in out
@@ -3539,7 +3539,9 @@ def test_the_sequencing_bar_is_named_and_shows_its_keys(out):
     # ...and since T180 the mode is a GROUP of the Animation tab, named
     # by its label, with its three cells hidden until Set order arms it
     assert 'class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation"' in out
-    assert '<span class="rbn-lab">Set order</span>' in out
+    # ...named by the user themselves: "the quick animations thing with
+    # clicking" (T183)
+    assert '<span class="rbn-lab">Quick animate</span>' in out
     assert '<span class="rbn-cell seq-fx" id="seq-fx" hidden>' in out
     # the chooser, its keys, and the state it drives
     assert "var SEQ_FX=[['none','None','N'],['appear','Appear','A']," in out
@@ -3592,47 +3594,40 @@ def test_rise_is_called_float_up(out):
     assert "['fmt-fx-rise','rise']" in out
 
 
-def test_the_effect_gallery_is_always_reachable(out):
-    """T171 -- the thing this whole surface was asked for: "the words are
-    so weird and the options are hard to get to... we need something
-    like this instead of just vanilla buttons."
+def test_the_effects_are_tiles_in_the_row(out):
+    """T171 put the effects behind an Effect door because the Insert tab
+    had no width for tiles. T182 lays them in the row of the Animation
+    tab, the way PowerPoint's are, so giving the selected thing an
+    entrance is one click with nothing to open first (2026-09-02, user:
+    "didn't we say having those horizontal scrolls like on PowerPoint
+    where there are all the options... so you can just quick click").
 
-    What was there: FOUR buttons, each `hidden` until something was
-    selected, and un-hidden by the very click that moves the ribbon to
-    the Object tab -- the one tab they were not on. So the effects were
-    visible for approximately none of the moments they were usable, and
-    the vocabulary could never be learned because you only ever saw it
-    for one click at a time.
+    DISABLED with nothing selected -- "why is there an effect option when
+    there is nothing to appear" -- and the label says so. The whole-slide
+    builds are the two worded buttons beside the strip.
 
-    A POPOVER, not tiles in the row, and the measurement decided it: at
-    1366px an inline gallery leaves the slide column 503px against
-    today's 517px -- worse than the status quo -- while this door leaves
-    it 598px. Six PowerPoint-sized tiles would take the column to 239px.
-
-    Driven: the door shows with nothing selected; two clicks (door, card)
-    gave three boxes a one-by-one build in Float up, and the footer said
-    "Everything on this slide, one at a time." BEFORE the click.
+    Driven: with nothing selected the five tiles are disabled and the
+    label reads "Effect -- select something"; select a box on the
+    Animation tab (the tab keeps the selection) and Fade is one click.
     """
-    assert 'id="anim-effect"' in out
-    assert 'id="anim-eff-menu"' in out
-    # never hidden, and its label never renames itself -- a label whose
-    # width follows the selection makes the row's width depend on what
-    # you clicked, and the fit ladder has no rung left for that
-    assert 'class="dbtn rbn-sm" id="anim-effect"' in out
-    assert "Effect &#9662;" in out
-    # the four stranded buttons are gone
+    assert 'id="anim-strip"' in out and 'class="rbn-tall fx-strip"' in out
+    assert 'id="anim-effect"' not in out and 'id="anim-eff-menu"' not in out
+    assert "var strip=$('#anim-strip'); if(!strip) return;" in out
+    assert "b.className='fx-tile'+(on&&now===f[0]?' on':'');" in out
+    assert "b.disabled=!on;" in out
+    assert "lab.textContent=on?'Effect':'Effect \\u2014 select something';" in out
+    # one list feeds the strip AND the Quick animate chooser, so the two
+    # surfaces cannot drift into two vocabularies
+    assert "SEQ_FX.forEach(function(f){" in out
+    # the four stranded buttons stay gone
     for dead in ('id="anim-none"', 'id="anim-fade"', 'id="anim-rise"',
                  'id="anim-zoom"'):
         assert dead not in out, dead
-    # one list feeds the gallery AND the sequencing bar, so the two
-    # surfaces cannot drift into two vocabularies
-    assert "SEQ_FX.forEach(function(f){" in out
-    # picking with nothing selected does the whole slide, in READING
-    # order (T106's sweep, never a second one), as one undo step
-    assert "orderedIdx(s).forEach(function(i){" in out
-    assert (r"'Everything on this slide, one at a time \u2014 '+ord") in out
-    # ...and the footer says which it will be BEFORE you click
-    assert "foot.textContent=galScope();" in out
+    # a tall cell counts as two, like a stack, so the grid is one column
+    assert ".rbn-row>.rbn-tall{grid-row:1/span 2;}" in out
+    # the Animation tab keeps the selection: the tiles are what you
+    # came for, and Object would take them away in the same click
+    assert "||activeTab()==='animation';" in out
 
 
 def test_the_gallery_previews_on_the_real_object(out):

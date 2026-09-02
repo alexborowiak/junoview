@@ -646,7 +646,7 @@
        syncRibbonGroups hides a group once nothing in it is showing */
     var vaB=$('#vw-anim');
     if(vaB) vaB.hidden=!!pg.poster;
-    ['#anim-clear','#anim-stagger','#anim-together','#anim-effect',
+    ['#anim-clear','#anim-stagger','#anim-together','#anim-strip',
      '#anim-seq','#anim-layers'].forEach(function(id){
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');

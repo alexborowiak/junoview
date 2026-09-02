@@ -1023,7 +1023,8 @@ def test_animations_can_be_removed(out):
     # the four per-effect buttons became one gallery door (T171):
     # they were hidden until something was selected, and un-hidden by
     # the very click that moved the ribbon off their tab
-    for bid in ("anim-effect",
+    # ...and T182 made the gallery a strip of tiles in the row itself
+    for bid in ("anim-strip",
                 "anim-clear"):
         assert f'id="{bid}"' in out, bid
     # Animation is a tab of its own again (T176): it was folded into

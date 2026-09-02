@@ -1917,6 +1917,36 @@
      in one list is what makes a swap -- this picture, then that one --
      something you can see rather than something you have to remember. */
   var spByBuild=false;
+  /* THE ACTIONS MENU (T184): the pane's twelve verbs as rows of one
+     popover, built on open so each row's enabling reflects the
+     selection now, and opened through the one transient-menu owner so
+     it closes on Escape or a click away. A row that opens a further
+     chooser (Every instance, Match) anchors it to the Actions button. */
+  var spActMenu=null;
+  function openSpActions(btn,acts){
+    if(spActMenu){
+      var was=spActMenu; spActMenu=null;
+      if(!was.hidden){overlayHide(was);was.remove();return;}
+      was.remove();
+    }
+    var m=document.createElement('div');
+    m.className='sh-menu opt-panel opt-list sp-actions';
+    acts.forEach(function(x){
+      if(x.label==='-'){menuHead(m,x.title);return;}
+      var b=document.createElement('button');
+      b.type='button';b.className='dbtn vw-opt';
+      b.innerHTML=x.label;b.title=x.title;b.disabled=!x.on;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        overlayHide(m);
+        x.fn(btn);
+      });
+      m.appendChild(b);
+    });
+    document.body.appendChild(m);
+    spActMenu=m;
+    overlayShow(btn,m);floatMenu(btn,m);
+  }
   function renderSelPane(){
     var pane=$('#selpane'),list=$('#selpane-list');
     if(!pane||pane.hidden||!list) return;
@@ -2053,13 +2083,6 @@
         openStepMenu(i,e.currentTarget);
       });
       r.appendChild(bg);
-      var dp2=document.createElement('button');
-      dp2.className='sp-act';dp2.type='button';dp2.innerHTML=bic('copy');
-      dp2.title='Duplicate';
-      dp2.setAttribute('aria-label','Duplicate');
-      dp2.addEventListener('click',function(e){
-        e.stopPropagation();dupAnnots([i]);});
-      r.appendChild(dp2);
       r.addEventListener('click',function(ev){
         if(!liveAnnot(i)){renderSelPane();return;}
         var l=stage.querySelector('.annot-layer');
@@ -2074,24 +2097,59 @@
        selection, so organising happens where you are looking
        (2026-08-18, user: "create folders and group things ...
        duplicate") */
+    /* ---- THE BAR, KEPT TO THREE (T184) -------------------------------
+       Twelve tool buttons in two wrapping rows stood between the heading
+       and the list, so the pane read as a toolbar with a list under it
+       (2026-09-02, user: "really packed, confusing to look at"). The
+       LIST is the pane. Three things earn a seat above it: the view
+       toggle, the pointing mode, and one door to everything else. Every
+       action keeps its function and its enabling rule -- only the room
+       it takes has changed. */
     var bar2=document.createElement('div');bar2.className='sp-tools';
     var selN=selSet.filter(function(i){return typeof i==='number';});
     function tool(label,title,on,fn){
       var b=document.createElement('button');
       /* innerHTML: the labels are fixed strings written just below,
-         now carrying bic() icons before their words */
+         carrying bic() icons before their words */
       b.className='dbtn sp-tool';b.innerHTML=label;b.title=title;
       b.disabled=!on;
-      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
       bar2.appendChild(b);
+      return b;
     }
-    tool('Group','Group the selected items (Ctrl+G)',selN.length>=2,
+    /* THE TIMELINE VIEW. Layers is stacking order, which is the right
+       default -- it is what the pane is for. But once every row carries
+       a build number, the same list read in PLAYBACK order is the
+       animation pane's job done in the place you were already looking,
+       so it is a toggle rather than a fourth panel to keep in step. */
+    tool(bic(spByBuild?'objects':'play')
+      +(spByBuild?' By layer':' By build'),
+      spByBuild
+        ? 'Back to stacking order — what is in front of what'
+        : 'Read the slide in playback order instead, one heading per '
+          +'click',
+      true,
+      function(){spByBuild=!spByBuild;renderSelPane();});
+    /* the click-everything mode, reachable from the list of the things
+       you would be clicking */
+    tool(bic('appear')+' Quick animate',
+      'Click your objects in the order you want them to arrive, then '
+      +'Finish — the same mode as the Animation tab’s',
+      ann.length>=1&&typeof seqArmStart==='function',
+      function(){seqArmStart();});
+    /* everything else, as rows of one menu. A heading row (label '-')
+       separates arranging what is here from doing it again elsewhere
+       (T89's reuse verbs). */
+    var acts=[];
+    function act(label,title,on,fn){
+      acts.push({label:label,title:title,on:on,fn:fn});}
+    act('Group','Group the selected items (Ctrl+G)',selN.length>=2,
       function(){groupSel();renderSelPane();});
     var inGrp=typeof selAnnot==='number'&&ann[selAnnot]
       &&ann[selAnnot].grp!=null;
-    tool('Ungroup','Ungroup (Ctrl+Shift+G)',inGrp,
+    act('Ungroup','Ungroup (Ctrl+Shift+G)',inGrp,
       function(){ungroupSel();renderSelPane();});
-    tool(bic('copy')+' Duplicate','Duplicate the selected items',
+    act(bic('copy')+' Duplicate','Duplicate the selected items',
       selN.length>=1,
       function(){dupAnnots(selN);});
     /* A FOLDER IS NOT A GROUP. Grouping welds items together — they move
@@ -2102,8 +2160,8 @@
        thing").
        A folder is just a name on the items in it: a.fold. Nothing about
        selection, movement or formatting changes. */
-    tool(bic('frame')+' New folder','Put the selected items in a named '
-      +'folder \u2014 filing only, they are NOT grouped',selN.length>=1,
+    act(bic('frame')+' New folder','Put the selected items in a named '
+      +'folder — filing only, they are NOT grouped',selN.length>=1,
       function(){
         var nm=prompt('Name this folder','Folder '
           +(folderNames(s).length+1));
@@ -2112,29 +2170,9 @@
         selN.forEach(function(i){if(s.annots[i]) s.annots[i].fold=nm;});
         markDirty();renderSelPane();
         toast(selN.length+' item'+(selN.length===1?'':'s')+' filed under '
-          +'\u201c'+nm+'\u201d');
+          +'“'+nm+'”');
       });
-    /* THE TIMELINE VIEW. Layers is stacking order, which is the right
-       default -- it is what the pane is for. But once every row carries
-       a build number, the same list read in PLAYBACK order is the
-       animation pane's job done in the place you were already looking,
-       so it is a toggle rather than a fourth panel to keep in step. */
-    tool(bic(spByBuild?'objects':'play')
-      +(spByBuild?' By layer':' By build'),
-      spByBuild
-        ? 'Back to stacking order \u2014 what is in front of what'
-        : 'Read the slide in playback order instead, one heading per '
-          +'click',
-      true,
-      function(){spByBuild=!spByBuild;renderSelPane();});
-    /* the click-everything mode, reachable from the list of the things
-       you would be clicking */
-    tool(bic('appear')+' Animate in order',
-      'Click your objects in the order you want them to arrive, then '
-      +'Finish \u2014 the same mode as the ribbon\u2019s One by one',
-      ann.length>=1&&typeof seqArmStart==='function',
-      function(){seqArmStart();});
-    tool(bic('exit')+' Out of folder','Take the selected items out of '
+    act(bic('exit')+' Out of folder','Take the selected items out of '
       +'their folder',
       selN.some(function(i){return s.annots[i]&&s.annots[i].fold;}),
       function(){
@@ -2142,45 +2180,20 @@
           if(s.annots[i]) delete s.annots[i].fold;});
         markDirty();renderSelPane();
       });
-    list.appendChild(bar2);
     /* ---- REUSE, WHERE YOU ARE ALREADY LOOKING (T89) ------------------
        Five features shipped, worked, and could be reached only from a
        canvas right-click or from three clicks into the contextual
        Object tab: components, the per-object history, the provenance
-       pane, and the two point-at-it matching verbs. A feature behind a
-       right-click is a feature nobody finds, and the ribbon has no width
-       to sell them — but this pane is open while you work, lists
-       what is on the slide, and already carries the organise verbs.
-
-       Nothing here is new behaviour. Every button calls the same
-       function its right-click row calls, and each one is disabled
-       rather than lying when the selection cannot answer it.
-
-       A SECOND bar rather than five more buttons on the first: those
-       five are about arranging what is on the slide, these are about
-       doing something again elsewhere. .sp-tools wraps, so neither bar
-       can push the other off. */
-    var lab3=document.createElement('div');
-    lab3.className='hd-lab';
-    lab3.textContent='reuse what is selected';
-    list.appendChild(lab3);
-    var bar3=document.createElement('div');bar3.className='sp-tools';
-    function tool3(label,title,on,fn){
-      var b=document.createElement('button');
-      /* innerHTML: the labels are fixed strings written just below,
-         each carrying a bic() icon before its words */
-      b.className='dbtn sp-tool';b.innerHTML=label;b.title=title;
-      b.disabled=!on;
-      b.addEventListener('click',function(e){
-        e.stopPropagation();fn(b);});
-      bar3.appendChild(b);
-    }
+       pane, and the two point-at-it matching verbs. Every row calls
+       the same function its right-click row calls, and each one is
+       disabled rather than lying when the selection cannot answer it. */
+    act('-','reuse what is selected',true,null);
     /* the PRIMARY selection, the same subject the ribbon and the two
        inspector panes take — a group's last array member is not
        necessarily the item you clicked */
     var prim=(typeof selAnnot==='number')?ann[selAnnot]:null;
     var primInst=(prim&&prim.cmp&&prim.cinst)?prim:null;
-    tool3(bic('group')+' Make component',
+    act(bic('group')+' Make component',
       'Save the arrangement and look of the selected items as a named '
       +'thing you can place again. Each copy keeps its own words and '
       +'its own figure',selN.length>=1&&!primInst,
@@ -2193,23 +2206,28 @@
           +'the canvas menu'):'Nothing there that could be saved');
         renderSelPane();
       });
-    tool3(bic('locate')+' Every instance',
+    act(bic('locate')+' Every instance',
       'Every place in this deck this component has been put — pick '
       +'one to go there',!!primInst,
       function(b){cmpInstMenu(primInst.cmp,b);});
-    tool3(bic('history')+' History',
+    act(bic('history')+' History',
       'Every state this object has been through that the undo stack '
       +'still remembers, and a button to put any of them back',
       !!prim,function(){showObjHist();});
-    tool3(bic('tree')+' Where from',
+    act(bic('tree')+' Where from',
       'The notebook and cell that made this figure, every cell in its '
       +'lineage, and whether the notebook has moved on since',
       !!(prim&&provRef(prim)),function(){showProvPane();});
-    tool3(bic('swap')+' Match…',
+    act(bic('swap')+' Match…',
       'Copy this look onto objects you then click, take another '
       +'object’s look for this one, or lay these out like a group '
       +'you click',selN.length>=1,function(b){matchMenuAt(b);});
-    list.appendChild(bar3);
+    var more=tool(bic('menu')+' Actions ▾',
+      'Group, duplicate, file, and reuse what is selected',true,
+      function(b){openSpActions(b,acts);});
+    more.setAttribute('aria-haspopup','true');
+    more.setAttribute('aria-expanded','false');
+    list.appendChild(bar2);
     /* IN PLAYBACK ORDER. Folders and groups are deliberately ignored
        here: they answer "what is this filed under", and this view
        answers "when does it happen". Everything with no build of its own
@@ -2598,6 +2616,38 @@
   function wirePane(pane){
     if(!pane||pane._wired) return;pane._wired=1;
     var id=pane.id,h=pane.querySelector('.selpane-h');
+    /* A HANDLE YOU CAN SEE (T184). The native corner grip is a few grey
+       pixels on a dark pane, and a docked pane grows LEFT from its right
+       edge -- so "can't be resized" was the honest reading (2026-09-02,
+       user). This is a full-height strip down the left edge: drag it and
+       the width follows; a pane you have floated moves its left edge.
+       The ResizeObserver below remembers the result, as it does for the
+       corner. */
+    if(!pane.querySelector('.selpane-grip')){
+      var grip=document.createElement('div');
+      grip.className='selpane-grip';grip.title='Drag to resize';
+      grip.addEventListener('pointerdown',function(ev){
+        ev.preventDefault();ev.stopPropagation();
+        var r0=pane.getBoundingClientRect(),right=r0.right;
+        var hostR=pane.offsetParent
+          ?pane.offsetParent.getBoundingClientRect():{left:0};
+        var floating=(pane.style.right==='auto');
+        function mv(e2){
+          var w=Math.max(190,Math.min(window.innerWidth-40,
+            right-e2.clientX));
+          pane.style.width=w+'px';
+          if(floating) pane.style.left=(right-w-hostR.left)+'px';
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+          syncPaneDock();
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      });
+      pane.appendChild(grip);
+    }
     /* MOVED and RESIZED are different states. A pane keeps its docked
        right/bottom anchors until you actually DRAG it; resizing it by the
        corner grip changes its size and nothing else.

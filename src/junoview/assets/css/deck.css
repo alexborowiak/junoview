@@ -354,7 +354,16 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
    stage by the pane's width, and because sizeSlideTo fits the page to
    stage.clientWidth the slide simply gets smaller and stays entirely
    visible. One variable drives both, so they can never disagree. */
-.deck{--pane-w:232px;}
+/* 272px, not 232 (T184): a row is a kind dot, a name, an eye, a lock
+   and a build number, and at 232 the name was the thing that gave way
+   ("Flip book —…"). The user's own width is remembered per pane. */
+.deck{--pane-w:272px;}
+/* the resize handle down the left edge (T184) */
+.selpane-grip{position:absolute;left:0;top:0;bottom:0;width:7px;
+  cursor:ew-resize;border-radius:10px 0 0 10px;z-index:2;}
+.selpane-grip:hover,.selpane-grip:active{
+  background:color-mix(in srgb,var(--accent) 45%,transparent);}
+.sh-menu.sp-actions{min-width:236px;}
 .deck.pane-open .deck-stage{padding-right:calc(var(--pane-w) + 22px);}
 .deck.pane-open.rbn-side .deck-stage{
   padding-right:calc(var(--pane-w) + var(--rbn-side-w) + 12px);}
@@ -378,8 +387,8 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
 /* wrap, don't clip: five tools never fit the pane's default width on
    one line, and a clipped "New folder" is a tool that does not exist
    (2026-08-23, seen when the tool labels took their bic() icons) */
-.sp-tools{display:flex;flex-wrap:wrap;gap:5px;padding:2px 2px 8px;}
-.sp-tool{font-size:10px;padding:3px 8px;white-space:nowrap;}
+.sp-tools{display:flex;flex-wrap:wrap;gap:5px;padding:4px 4px 9px;}
+.sp-tool{font-size:10.5px;padding:4px 9px;white-space:nowrap;}
 .sp-tool .bic{width:11px;height:11px;vertical-align:-2px;}
 .sp-tool[disabled]{opacity:.4;cursor:default;}
 .sp-folder{display:flex;align-items:center;gap:6px;padding:5px 6px;
@@ -1300,9 +1309,30 @@ body.slide-editing .apptop{display:none;}
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
 .rbn-anim{order:5;}
-/* the Order group shares Animation's rung and follows it by source
-   order: the effect first, then the order things take it in (T176) */
+/* the Whole slide and Order groups share Animation's rung and follow
+   it by source order: the effect first, then the slide, then the order
+   things take it in (T176, T182) */
 .rbn-build{order:5;}
+.rbn-order{order:5;}
+.rbn-seq{order:5;}
+/* T182: the effect tiles, in the row. A tall cell spanning both rows
+   (rbn-tall counts as two, like a stack), five tiles of icon over word
+   the way PowerPoint's are, the one that is on lit. Disabled with
+   nothing selected. */
+.rbn-row>.rbn-tall{grid-row:1/span 2;}
+.fx-strip{display:flex;gap:4px;align-items:stretch;height:65px;}
+.fx-tile{width:60px;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:5px;font-family:var(--sans);font-size:10.5px;
+  line-height:1.1;color:#c9d6e2;background:none;
+  border:1px solid #ffffff1f;border-radius:7px;cursor:pointer;
+  padding:0 2px;}
+.fx-tile .bic{width:20px;height:20px;}
+.fx-tile:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  color:#fff;background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.fx-tile.on{background:var(--cyan-deep);border-color:var(--cyan-deep);color:#fff;}
+.fx-tile:disabled{opacity:.35;cursor:default;}
+body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
+body.light .fx-tile.on{color:#fff;}
 .rbn-insert{order:6;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
@@ -4251,7 +4281,11 @@ body.light .seq-cell b{color:var(--ink);}
   border-radius:5px;padding:7px 9px;}
 .chart-btns{display:flex;gap:8px;margin-top:9px;justify-content:flex-end;}
 /* T106: the reading-order panel and its on-slide numbers */
-.rd-order{position:fixed;right:16px;top:110px;z-index:420;width:252px;
+/* left:auto, or .sh-menu's left:0 wins the over-constrained box and the
+   panel opens on the LEFT over the slide (T184; the screenshot showed
+   it there) */
+.rd-order{position:fixed;left:auto;right:16px;top:110px;z-index:420;
+  width:252px;
   max-height:64vh;overflow-y:auto;padding:8px 10px 12px;}
 .rd-order .hd-lab{position:relative;padding-right:26px;}
 .rd-close{position:absolute;right:0;top:-4px;}

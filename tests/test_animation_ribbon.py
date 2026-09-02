@@ -12,6 +12,8 @@ These pin the shape. What it does was driven in a browser (TASKS.md).
 
 from __future__ import annotations
 
+import re
+
 
 def test_one_click_gives_the_selected_object_an_entrance(out):
     """T179. Five effect buttons on the Object tab -- the tab the
@@ -55,8 +57,10 @@ def test_setting_the_order_happens_in_the_ribbon(out):
         assert f'id="{cid}"' in out, cid
     assert "b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');" in out
     # a plain name for the door -- a verb, not a sentence
-    assert "Set order</button>" in out
-    assert "Click things in order" not in out
+    # ...then "Quick animate", the user's own name for it (T183)
+    assert re.search(r"Quick\s+animate</button>", out)
+    assert "Set order</button>" not in out
+    assert "things in order&#8230;</button>" not in out
 
 
 def test_the_order_you_point_is_the_order_of_the_slide(out):
@@ -83,3 +87,46 @@ def test_the_timeline_has_a_door_on_the_animation_tab(out):
     """
     assert 'id="anim-layers"' in out
     assert "var ob=$('#objects-btn'); if(ob) ob.click();});" in out
+
+
+def test_the_names_say_what_the_buttons_do(out):
+    """T183. "I don't know what half these buttons mean... I don't know
+    what the order buttons do." One per click and All on one click say
+    what happens to the whole slide; Animation order names the pane
+    that lists the sequence; Quick animate is the user's own name for
+    the pointing mode; the Effect label says when it is waiting.
+    """
+    assert "One per click</button>" in out
+    assert "All on one click</button>" in out
+    assert "Animation order</button>" in out
+    assert '<div class="selpane-h"><span>Animation order</span>' in out
+    assert ">Whole slide</span>" in out
+    for gone in ("One by one</button>", "All at once</button>",
+                 "Set order</button>", "Animations</button>"):
+        assert gone not in out, gone
+
+
+def test_the_layers_pane_is_a_list_with_three_buttons_over_it(out):
+    """T184. Twelve tool buttons in two wrapping rows stood between the
+    heading and the list. Three remain -- the view toggle, Quick animate
+    and Actions -- and the rest are rows of one menu built on open, each
+    keeping its function and its enabling rule. The per-row Duplicate
+    went with them, which is what gives the name its room. A handle
+    down the left edge resizes the pane, because the native corner grip
+    was invisible and a docked pane grows to the left.
+    """
+    assert "function openSpActions(btn,acts){" in out
+    assert "act(bic('frame')+' New folder'" in out
+    assert "act(bic('swap')+' Match…'" in out
+    assert "tool(bic('menu')+' Actions ▾'" in out
+    assert "tool3(" not in out and "var dp2=" not in out
+    assert "grip.className='selpane-grip'" in out
+    assert ".selpane-grip{position:absolute;left:0;top:0;bottom:0;width:7px;" in out
+    assert ".deck{--pane-w:272px;}" in out
+
+
+def test_the_order_panel_opens_on_the_right(out):
+    """T184. .sh-menu's left:0 was winning the over-constrained box, so
+    the panel opened on the LEFT over the slide -- the screenshot showed
+    it there. Pop-ups belong on the right, over nothing."""
+    assert ".rd-order{position:fixed;left:auto;right:16px;top:110px;" in out

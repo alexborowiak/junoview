@@ -190,7 +190,12 @@
        open, the switch behaves as it always has. */
     var hold=PANE_IDS.some(function(pid){
       var el=$('#'+pid); return el&&!el.hidden;})
-      ||(typeof animGalleryOpen==='function'&&animGalleryOpen());
+      ||(typeof animGalleryOpen==='function'&&animGalleryOpen())
+      /* the Animation tab carries the selection's own effect tiles
+         (T182): clicking a thing while standing there is how you pick
+         what to animate, and being carried off to Object would take
+         the tiles away in the same click */
+      ||activeTab()==='animation';
     var wantTab=(activeTab()!==selT&&tool==='select'&&!justDrew
       &&!hold)?selT:'';
     justDrew=false;

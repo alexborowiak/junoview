@@ -3810,6 +3810,61 @@ about animations appearing in layers? Is that a thing?"
   the panel reads "Set by you"; Escape cancels and the group goes;
   Layers from the Animation tab opens the pane with the build column.
 
+The user, third review of the day (2026-09-02), with PowerPoint's
+Animations tab beside ours: "what do these options mean, why is there
+an effect option when there is nothing to appear... didn't we say
+having those horizontal scrolls like on PowerPoint where there are all
+the options... so you can just quick click... I don't know what half
+these buttons mean, like the 'set order' one that is the 'quick
+animations' thing with clicking... Pop-ups like that should always
+appear on the rhs... the layers thing is good, but also really packed,
+confusing to look at and can't be re-sized."
+
+- [x] **T182 · M — The effects are tiles in the row.**
+  T171 measured an inline gallery against a full Insert tab and chose
+  a popover. The Animation tab has the room, and a door in front of
+  five tiles is one click too many every time.
+  *Done 2026-09-02.* The Effect group is a strip of five tiles in the
+  ribbon's own row — icon over word, the way PowerPoint's are, the one
+  that is on lit — built by the same `galSync` the selection already
+  calls. DISABLED with nothing selected, and the group label says
+  "Effect — select something": an effect is a fact about a thing, and
+  the whole-slide builds are the two worded buttons beside it. The
+  Animation tab now KEEPS the selection instead of carrying you to
+  Object: clicking a thing while standing there is how you choose what
+  to animate. The Effect door, its popover and the whole-slide pick
+  inside it are gone.
+
+- [x] **T183 · S — Names that say what the buttons do.**
+  *Done 2026-09-02.* **One per click** and **All on one click** (were
+  One by one / All at once) under a **Whole slide** heading; **Quick
+  animate** (was Set order, was Click things in order…) — the user's
+  own words for it, on the ribbon, in the Layers pane and in the
+  Animation order pane; **Animation order** (was Animations) for the
+  button and the pane it opens, since "the animation order" is what
+  the user calls that list. Tooltips shortened to one sentence each.
+
+- [x] **T184 · M — The Layers pane is a list, and pop-ups sit on the
+  right.**
+  *Done 2026-09-02.* The pane's twelve tool buttons in two wrapping
+  rows become three — By build, Quick animate, **Actions ▾** — and the
+  other nine are rows of one menu built on open (Group, Ungroup,
+  Duplicate, New folder, Out of folder; then Make component, Every
+  instance, History, Where from, Match…), each keeping its function
+  and its enabling rule. The per-row Duplicate went with them, which
+  is what gives the object's name its room, and the default width is
+  272px. A **handle down the left edge** resizes every pane — the
+  native corner grip was a few grey pixels on a dark pane, and a
+  docked pane grows to the LEFT, so "can't be resized" was the honest
+  reading. The Order on this slide panel opens on the right: `.sh-menu`'s
+  `left:0` had been winning the over-constrained box and it opened on
+  the left over the slide, exactly where the screenshot showed it.
+  Driven: nothing selected → five tiles disabled, label "Effect —
+  select something"; select a box from the Animation tab → tab stays,
+  tiles enable, Fade lights in one click; Layers → three buttons over
+  the list, Actions ▾ opens ten rows with Group disabled for one
+  selection; the grip drags the pane wider and the stage makes room.
+
 
 ## Cut (and why)
 

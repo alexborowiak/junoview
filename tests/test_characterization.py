@@ -865,8 +865,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # sequencing controls as a ribbon group instead of a fixed bar (with a
 # Layers door and Set order for a name), and Finish writing the slide's
 # order too. deck.html, deck.css and four deck fragments.
-EXPECTED_MD5 = "90f4022734a403a836cbbf4409bae115"
-EXPECTED_BYTES = 3276904
+# T182-T184 2026-09-02: the effect tiles in the ribbon's row, the
+# names that say what the buttons do, the Layers pane as a list with a
+# three-button bar, an Actions menu and a resize handle, and the order
+# panel on the right. deck.html, help.html, deck.css, core.css and
+# four deck fragments.
+EXPECTED_MD5 = "fcfeb6c79876bc862e016105ea997270"
+EXPECTED_BYTES = 3278404
 
 
 def _render_example() -> str:
