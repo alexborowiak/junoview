@@ -1066,7 +1066,7 @@
   menuAction('#mi-refresh-figs',function(){resyncAllFigures();});
   menuAction('#mi-hist',openHistory);
   (function(){
-    var b=$('#dsg-design');
+    var b=$('#dsg-design-btn');
     /* a row of the Text styles window since T178: the window goes as
        the screen opens, the way the other rows there behave */
     if(b) b.addEventListener('click',function(){

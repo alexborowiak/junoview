@@ -56,7 +56,8 @@ RUNTIME_IDS = {
     # markup string in deck.js (~line 13950, 'jvp-' = junoview presenter);
     # these lookups run against that popup's document, not the app's.
     "jvp-clock", "jvp-count", "jvp-goal", "jvp-next-b", "jvp-notes",
-    "jvp-now", "jvp-pause", "jvp-prev", "jvp-reset", "jvp-slideclock",
+    "jvp-now", "jvp-pace", "jvp-pause", "jvp-prev", "jvp-reset",
+    "jvp-slideclock",
     "jvp-talk", "jvp-find", "jvp-hits",
     # The PDF/print export builds a throwaway container:
     # deck.js ~line 17471, root.id='print-root'.

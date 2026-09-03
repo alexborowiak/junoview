@@ -354,6 +354,8 @@ _ICON_PATHS = {
     "return": '<path d="M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4"/>'
               '<path d="M6.2 6.3 3.3 9.2l2.9 2.9"/>',
     # the reset arc wearing clock hands: automatic version history
+    "clock": '<circle cx="8" cy="8" r="6"/>'
+             '<path d="M8 4.6V8l2.4 1.5"/>',
     "history": '<path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/>'
                '<path d="M2.4 2.2v3.1h3.1"/>'
                '<path d="M8 5.2V8l2.2 1.3"/>',

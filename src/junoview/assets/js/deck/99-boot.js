@@ -51,7 +51,6 @@
   ohOverviewBoot();           /* History of this object, full screen */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
-  styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */

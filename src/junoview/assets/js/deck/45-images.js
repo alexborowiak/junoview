@@ -1424,10 +1424,29 @@
       tt.textContent=want?('talk '+want+' min')
         :(tot?('planned '+fmtMins(tot)):'');
     }
+    /* ---- T222: ARE YOU RUNNING LATE ---------------------------------
+       The bar showed the clock and how much of the slot was left, but
+       never the number that changes what you do next: whether you are
+       behind FOR WHERE YOU ARE (2026-09-03, user: "the running late
+       [thing] should be in the presentation view"). Planned-so-far is
+       the sum of the per-slide targets up to and including this one;
+       with no targets set it is the slot shared out evenly, which is
+       the assumption a speaker makes anyway. */
+    var planned=0;
+    if(shownAt>=0){
+      var goals=0,any=false;
+      shown.slice(0,shownAt+1).forEach(function(ix){
+        var g=slideGoal(pres.slides[ix]);
+        if(g){goals+=g;any=true;}
+      });
+      if(any) planned=goals*60;
+      else if(pres.talkMins&&shown.length)
+        planned=pres.talkMins*60*(shownAt+1)/shown.length;
+    }
     presWin.__jvState={start:presStart,paused:presPaused,
       pauseAt:presPauseAt,goal:slideGoal(sl),
       talk:pres.talkMins||0,slide:shownAt,count:shown.length,
-      slideIndex:cur};
+      planned:Math.round(planned),slideIndex:cur};
   }
   function presenterHtml(){
     /* every stylesheet the deck uses, so the imported slide nodes look
@@ -1447,6 +1466,13 @@
       +'.jvp-clock.over{color:#ff8a7a;}'
       +'.jvp-sub{font-family:var(--mono,monospace);font-size:12px;'
       +'color:#8ea4b6;display:flex;flex-direction:column;gap:2px;}'
+      +'.jvp-pace{font-family:var(--mono,monospace);font-size:15px;'
+      +'padding:5px 11px;border-radius:8px;white-space:nowrap;'
+      +'border:1px solid #ffffff2b;background:#ffffff0f;}'
+      +'.jvp-pace.late{background:#ff6b571f;border-color:#ff6b57;'
+      +'color:#ff9d8c;}'
+      +'.jvp-pace.ahead{background:#46a8921f;border-color:#46a892;'
+      +'color:#7fd7c0;}'
       +'.jvp-sp{flex:1;}'
       +'.jvp-b{font-family:var(--mono,monospace);font-size:12px;'
       +'padding:7px 13px;border-radius:7px;cursor:pointer;'
@@ -1506,6 +1532,7 @@
       +'<span class="jvp-sub"><span id="jvp-count"></span>'
       +'<span id="jvp-goal"></span><span id="jvp-talk"></span>'
       +'<span id="jvp-slideclock"></span></span>'
+      +'<span class="jvp-pace" id="jvp-pace"></span>'
       +'<span class="jvp-sp"></span>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
       +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
@@ -1636,6 +1663,25 @@
       cl.textContent=Math.floor(sec/60)+':'+('0'+(sec%60)).slice(-2);
       var over=st.talk&&sec>st.talk*60;
       cl.classList.toggle('over',!!over);
+      /* T222: behind or ahead of where the plan says you should be */
+      var pc=d.getElementById('jvp-pace');
+      if(pc){
+        if(!st.planned){pc.textContent='';pc.className='jvp-pace';}
+        else {
+          var off=sec-st.planned;
+          var mm=Math.floor(Math.abs(off)/60),
+              ss=('0'+(Math.abs(off)%60)).slice(-2);
+          pc.textContent=Math.abs(off)<30?'on time'
+            :(mm+':'+ss+(off>0?' behind':' ahead'));
+          pc.className='jvp-pace'
+            +(Math.abs(off)<30?'':(off>0?' late':' ahead'));
+          pc.title=Math.abs(off)<30
+            ?'You are where the plan says you should be'
+            :('By this slide the plan expects '
+              +Math.floor(st.planned/60)+':'
+              +('0'+(st.planned%60)).slice(-2)+' on the clock');
+        }
+      }
       var sc=d.getElementById('jvp-slideclock');
       if(sc){
         if(!st.talk) sc.textContent='';

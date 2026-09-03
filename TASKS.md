@@ -4539,6 +4539,37 @@ option. Then where has the ability to refresh all images gone?"
   way back. It mounts inside the editor now, and the pane closes it
   before it destroys the button it hangs from. Driven before and after.
 
+- [x] **T222 - Two symbols, two buttons, and whether you are running
+  late.**
+  The user (2026-09-03): "Presentation mode: the running late [thing]
+  should be in the presentation view... Notes and timing should be two
+  different buttons. Layers and images button uses same symbol... I
+  said style system should be its own button." Also asked what had
+  happened to the per-image lock and to a figure's provenance.
+  *Done 2026-09-03.* **Symbols**: Images wore the Layers icon; it has
+  its own now, and the rule was generalised -- within one ribbon group,
+  two buttons you can see at once must not share an icon. Six pairs
+  broke it (Text styles / Style system, Spacing / Paragraph, Change
+  layout / Layout ideas, Check / Before you print, Reload pictures /
+  Images, Duplicate / Same size); each got its own. The Table group's
+  +/- pairs are exempt: Add row and Add column share a plus and are
+  told apart by their words. **Notes and Timing** are two buttons. They
+  open the same pane on different tabs, which is what the pane has been
+  built to do since T29 and nothing pointed at. **Running late**: the
+  presenter bar showed the clock and how much of the slot was left, but
+  never whether you are behind FOR THE SLIDE YOU ARE ON. It now reads
+  "on time", "2:10 behind" or "1:30 ahead", coloured, against
+  planned-so-far -- the sum of the per-slide targets up to here, or the
+  slot shared out evenly when no targets are set. **Style system** had
+  two doors, a row inside the Text styles window and a ribbon button
+  that forwarded its click to that row. The row is gone and the button
+  carries the handler. **The lock and the provenance** are both still
+  there -- the lock on every row of the All images pane and its
+  full-screen view, the provenance at Where it came from -- and are now
+  pinned so they cannot quietly go. There is no git information
+  captured anywhere in junoview today; that would be new work, not a
+  restoration.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

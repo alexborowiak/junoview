@@ -552,7 +552,7 @@
               </span>
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
               title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-              <i data-ic="layouts"></i> Layout ideas&#8230;</button>
+              <i data-ic="grid"></i> Layout ideas&#8230;</button>
               <button class="dbtn rbn-sm" id="hm-lay-arrsave"
               title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
               <i data-ic="copy"></i> Save layout&#8230;</button>
@@ -710,9 +710,6 @@
                        they are two questions -- what is the standard,
                        and who is not keeping to it -- and each opens
                        the other. -->
-                  <button class="dbtn vw-opt" id="dsg-design"
-                    title="One screen for the deck’s type: what each kind of text looks like, where it usually sits, and every slide with a box drawn round each object"><i data-ic="palette"></i>
-                    Style system&#8230;</button>
                 </div>
               </span>
               <!-- "What is 'design tokens'?????" (2026-09-02). The word
@@ -740,7 +737,7 @@
               <button class="dbtn rbn-sm" id="dsg-design-btn"
                 title="One screen for the deck's type: what each kind of
  text looks like, and every slide with a box round each object"
-                ><i data-ic="styles"></i> Style system&#8230;</button>
+                ><i data-ic="outline"></i> Style system&#8230;</button>
             </span>
             <span class="rbn-lab">The whole deck</span>
           </span>
@@ -834,7 +831,7 @@
               <button class="dbtn rbn-sm" id="vw-preflight"
                 title="Whether this page will print well: soft figures,
  things off the page or in the margin, thin contrast, empty frames"
-                ><i data-ic="flag"></i> Before you print</button>
+                ><i data-ic="doc"></i> Before you print</button>
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
@@ -1218,9 +1215,17 @@
                 title="Play from this slide with the talk settings open: skip
  the animations, or size headings, body text and captions for the room"
                 ><i data-ic="theme"></i> Talk settings&#8230;</button>
+              <!-- T222: two buttons, not one (2026-09-03, user:
+                   "notes and timing should be two different buttons").
+                   They open the same pane on different tabs, which is
+                   what the pane was already built to do. -->
               <button class="dbtn rbn-sm" id="pr-notes"
-                title="Your speaker notes, and how long each slide took"
+                title="Your speaker notes for each slide"
                 ><i data-ic="style"></i> Notes &amp; timing&#8230;</button>
+              <button class="dbtn rbn-sm" id="pr-timing"
+                title="How long you want each slide to take, how long
+ the whole talk is, and what your rehearsals actually took"
+                ><i data-ic="clock"></i> Timing</button>
               <button class="dbtn rbn-sm" id="pr-tap" aria-pressed="false"
                 title="While presenting, a click on a figure enlarges it"
                 ><i data-ic="zoom"></i> Click to enlarge figures</button>
@@ -1290,13 +1295,13 @@
                 <button class="fx-tile big-tile" id="hm-refresh-img"
                   title="Re-read every picture from the file it came from.
  A file that has moved is left as it was, and named"
-                  ><i data-ic="image"></i><span>Reload pictures</span></button>
+                  ><i data-ic="reload"></i><span>Reload pictures</span></button>
                 <button class="fx-tile big-tile" id="hm-images"
                   aria-pressed="false"
                   title="The pictures and figures on this slide, where each
  came from, and whether it is locked in place. From there, every
  slide at once"
-                  ><i data-ic="objects"></i><span>Images</span></button>
+                  ><i data-ic="image"></i><span>Images</span></button>
               </span>
             </span>
             <span class="rbn-lab">Keep up to date</span>
@@ -1386,7 +1391,7 @@
               <span class="sh-drop" id="fmt-samewrap" hidden>
                 <button class="dbtn etm" id="fmt-same" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Make the selected items the same size"><i data-ic="copy"></i>
+                  title="Make the selected items the same size"><i data-ic="width"></i>
                   Same size &#9662;</button>
                 <div class="sh-menu same-menu" id="fmt-same-menu"
                   hidden></div>
@@ -1578,7 +1583,7 @@
                   aria-expanded="false"
                   title="List levels, the whole-box indent, line and
  paragraph spacing, and bending the text along a curve"
-                  ><i data-ic="spacing"></i> Paragraph &#9662;</button>
+                  ><i data-ic="route"></i> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
                   <div class="hd-lab">list levels</div>

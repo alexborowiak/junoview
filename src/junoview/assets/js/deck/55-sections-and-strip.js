@@ -1640,7 +1640,8 @@
   function presentTabBoot(){
     [['pr-here','pl-here'],['pr-start','pl-start'],
      ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],
-     ['pr-notes','pl-notes'],['pr-tap','pl-tap'],['pr-trace','pl-trace']]
+     ['pr-notes','pl-notes'],['pr-timing','pl-notes'],
+     ['pr-tap','pl-tap'],['pr-trace','pl-trace']]
       .forEach(function(p){
         var b=$('#'+p[0]),row=$('#'+p[1]);
         if(!b||!row) return;
@@ -1648,6 +1649,16 @@
           e.stopPropagation();
           var pm=$('#play-menu'); if(pm&&!pm.hidden) overlayHide(pm);
           row.click();
+          /* T222: Notes and Timing share the pane and differ by the
+             tab they land on -- the pane has had those tabs since
+             T29 and nothing pointed at them */
+          if(p[0]==='pr-notes'||p[0]==='pr-timing'){
+            var want=(p[0]==='pr-timing')?'deck':'slide';
+            setTimeout(function(){
+              var t=$('.np-tab[data-np="'+want+'"]');
+              if(t) t.click();
+            },0);
+          }
           setTimeout(presentTabSync,0);
         });
       });
@@ -1674,14 +1685,6 @@
       if(!b||!row) return;
       var on=/:\s*on\s*$/.test(row.textContent||'');
       b.setAttribute('aria-pressed',on?'true':'false');
-    });
-  }
-  /* the Style system screen's own door on the Design tab (T212) */
-  function styleSystemDoorBoot(){
-    var b=$('#dsg-design-btn'); if(!b) return;
-    b.addEventListener('click',function(e){
-      e.stopPropagation();
-      var d=$('#dsg-design'); if(d) d.click();
     });
   }
   function stripMoreBoot(){

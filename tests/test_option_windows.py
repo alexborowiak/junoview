@@ -222,8 +222,15 @@ def test_the_decks_type_is_one_window_under_design(out):
     j = out.index("</div>\n              </span>", i)
     win = out[i:j]
     for cid in ("dsg-style-list", "dsg-scale-down", "dsg-scale-up",
-                "dsg-restyle", "dsg-design"):
+                "dsg-restyle"):
         assert f'id="{cid}"' in win, cid
+    # ...and the Style system screen is NOT one of them: it had a row here
+    # and a button on the ribbon, and the button merely forwarded a click
+    # to the row (2026-09-03, user: "I said style system should be its own
+    # button"). One door now, and it carries the handler itself.
+    assert 'id="dsg-design"' not in out
+    assert 'id="dsg-design-btn"' in out
+    assert "    var b=$('#dsg-design-btn');" in out
     assert 'id="dsg-tokens"' not in win and 'id="dsg-std"' not in win
     assert 'id="dsg-tokens"' in out and 'id="dsg-std"' in out
     assert "var list=$('#dsg-style-list')||menu;" in out
