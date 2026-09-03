@@ -4288,6 +4288,12 @@ option. Then where has the ability to refresh all images gone?"
   tooltip and the help page "Colours & spacing", the help page
   "Standardise text". All say Review, Mismatched text, Palette and
   "the ▾ beside Save" now, and a test refuses the old names.
+- [x] **T211 · S — The Masters panel closes like every other menu.**
+  *Done 2026-09-03.* It was appended to the body with its own Escape
+  listener and no outside-click dismissal, so it sat under the editor's
+  layer and only its ✕ closed it. It opens on the overlay stack inside
+  the editor now: Escape peels it, an outside click closes it, the door
+  toggles it.
 
 
 ## Cut (and why)

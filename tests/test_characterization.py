@@ -927,8 +927,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T210 2026-09-03: every sentence names controls by their current names
 # (Review, Mismatched text, Palette, the chevron beside Save). Five deck
 # fragments and help.html.
-EXPECTED_MD5 = "88f4eb587ed598fdf6cb079a185f3ee2"
-EXPECTED_BYTES = 3333694
+# T211 2026-09-03: the Masters panel on the overlay stack, inside the
+# editor's layer. 40-captions-and-components.js only.
+EXPECTED_MD5 = "0e66dacb8d64799a1d1d63e655af3304"
+EXPECTED_BYTES = 3334060
 
 
 def _render_example() -> str:

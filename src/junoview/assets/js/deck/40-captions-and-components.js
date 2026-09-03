@@ -443,7 +443,8 @@
     return s2.annots.length?s2:null;
   }
   function mastClose(){
-    var p=$('#mast-panel'); if(p) p.remove();
+    var p=$('#mast-panel');
+    if(p){if(!p.hidden) overlayHide(p); p.remove();}
     document.removeEventListener('keydown',mastKey,true);
   }
   function mastKey(e){
@@ -592,8 +593,14 @@
       body.appendChild(nb);
     }
     render();
-    document.body.appendChild(p);
-    document.addEventListener('keydown',mastKey,true);
+    /* on the overlay stack, inside the editor's layer (T211): Escape and an
+       outside click close it the way every other menu closes */
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(p);
+    p.hidden=true;
+    overlayShow($('#dsg-masters'),p);
+    new MutationObserver(function(){
+      if(p.hidden&&p.parentNode) p.remove();
+    }).observe(p,{attributes:true,attributeFilter:['hidden']});
   }
   window.SemDeckMasters=openMasters;
   function cmpPlace(id,at){
