@@ -1568,12 +1568,38 @@
           <span class="rbn-grp rbn-paragrp" data-tab="object"
             data-fold-ic="spacing">
             <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-bullets"
-                aria-pressed="false"
-                title="Bullet list on / off"><i data-ic="bullets"></i> List</button>
-              <button class="dbtn etm" id="fmt-numbers"
-                aria-pressed="false"
-                title="Numbered list on / off"><i data-ic="numlist"></i> Numbered</button>
+              <!-- T227: each is a split control. The button turns the
+                   list on with the kind you last chose; the caret
+                   opens the kinds, drawn (2026-09-03, user: "there
+                   are no different types of bullet points, and
+                   different lists"). -->
+              <span class="sh-drop tx-split" id="fmt-bulletswrap">
+                <button class="dbtn etm" id="fmt-bullets"
+                  aria-pressed="false"
+                  title="Bullet list on / off. The caret beside it
+ holds the kinds of bullet"><i data-ic="bullets"></i> List</button>
+                <button class="dbtn etm tx-caret" id="fmt-bullets-caret"
+                  aria-label="Kinds of bullet" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Dot, ring, square, dash, arrow or tick"
+                  >&#9662;</button>
+                <div class="sh-menu ls-menu" id="fmt-bullets-menu"
+                  hidden></div>
+              </span>
+              <span class="sh-drop tx-split" id="fmt-numberswrap">
+                <button class="dbtn etm" id="fmt-numbers"
+                  aria-pressed="false"
+                  title="Numbered list on / off. The caret beside it
+ holds the kinds of numbering"><i data-ic="numlist"></i> Numbered</button>
+                <button class="dbtn etm tx-caret" id="fmt-numbers-caret"
+                  aria-label="Kinds of numbering" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="1. 2. 3., 1) 2) 3), a. b. c., A. B. C.,
+ i. ii. iii. or I. II. III."
+                  >&#9662;</button>
+                <div class="sh-menu ls-menu" id="fmt-numbers-menu"
+                  hidden></div>
+              </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
                 title="Align left"><i data-ic="alignleft"></i> Left</button>

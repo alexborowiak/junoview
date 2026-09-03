@@ -3157,8 +3157,27 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* ---- T227: KINDS OF BULLET, KINDS OF NUMBERING ----------------------
+   The element carries the kind as a class and the content is only the
+   items, so a marker is a rule here and never a rewrite of the words.
+   The families keep their old defaults, so every deck written before
+   this looks exactly as it did. */
 ul.an-ul{list-style:disc;}
 ol.an-ul{list-style:decimal;}
+ul.an-ul.an-ul-bullet{list-style-type:disc;}
+ul.an-ul.an-ul-circle{list-style-type:circle;}
+ul.an-ul.an-ul-square{list-style-type:square;}
+ul.an-ul.an-ul-dash{list-style-type:"\2013\00a0";}
+ul.an-ul.an-ul-arrow{list-style-type:"\25b8\00a0";}
+ul.an-ul.an-ul-check{list-style-type:"\2713\00a0";}
+ol.an-ul.an-ul-number{list-style-type:decimal;}
+ol.an-ul.an-ul-alpha{list-style-type:lower-alpha;}
+ol.an-ul.an-ul-alpha-upper{list-style-type:upper-alpha;}
+ol.an-ul.an-ul-roman{list-style-type:lower-roman;}
+ol.an-ul.an-ul-roman-upper{list-style-type:upper-roman;}
+/* a closing bracket is the one shape list-style-type cannot say */
+ol.an-ul.an-ul-paren{list-style-type:decimal;}
+ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
 .an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}
 .an-tx.an-ul ul ul{list-style:square;}
@@ -4620,6 +4639,19 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
 body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
+
+/* the two galleries: three lines with the marker they would draw */
+.sh-menu.ls-menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:4px;width:250px;padding:7px;}
+.ls-opt{gap:5px;}
+.ls-prev{display:flex;flex-direction:column;gap:3px;width:100%;}
+.ls-row{display:flex;align-items:center;gap:4px;}
+.ls-mark{font-family:var(--mono);font-size:9px;color:#9fb3c4;
+  min-width:13px;text-align:right;}
+.ls-bar{flex:1;height:2px;border-radius:1px;background:#ffffff33;}
+.ls-opt[aria-pressed="true"] .ls-bar{background:var(--accent,#39a9c0);}
+.ls-opt[aria-pressed="true"] .ls-mark{color:#fff;}
+body.light .ls-bar{background:#00000026;}
 
 /* ---- T226: MAKING A LAYOUT --------------------------------------------
    The board is the page and the slots are what a layout is made of, so

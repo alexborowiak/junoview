@@ -692,9 +692,56 @@
      (2026-08-20, user: "the bullet list on/off is cursed. PLEASE DO
      EVERYTHING PROPERLY"). One content field, converted on the way in and
      on the way out, is the fix. */
+  /* ---- KINDS OF LIST (T227) ----------------------------------------
+     (2026-09-03, user: "there are no different types of bullet
+     points, and different lists.") There were two: a disc and 1-2-3.
+     The machinery never needed more than a word -- `a.list` holds the
+     style NAME, the rendered element carries it as a class, and the
+     content is only the items -- so each kind here is one entry and
+     one CSS rule, and switching between them rewrites nothing.
+     The marker in the third column is what the picker draws and what
+     `::marker` shows, so the gallery cannot disagree with the page. */
+  var LIST_KINDS=[
+    ['bullet','Dot','\u2022',0],
+    ['circle','Ring','\u25e6',0],
+    ['square','Square','\u25aa',0],
+    ['dash','Dash','\u2013',0],
+    ['arrow','Arrow','\u25b8',0],
+    ['check','Tick','\u2713',0],
+    ['number','1. 2. 3.','1.',1],
+    ['paren','1) 2) 3)','1)',1],
+    ['alpha','a. b. c.','a.',1],
+    ['alpha-upper','A. B. C.','A.',1],
+    ['roman','i. ii. iii.','i.',1],
+    ['roman-upper','I. II. III.','I.',1]
+  ];
+  function listKind(id){
+    var hit=null;
+    LIST_KINDS.forEach(function(k){if(!hit&&k[0]===id) hit=k;});
+    return hit;
+  }
+  function listIsOrdered(id){
+    var k=listKind(id);
+    return !!(k&&k[3]);
+  }
+  /* the nth marker a kind draws, for the gallery's preview */
+  function listMarker(id,n){
+    var k=listKind(id); if(!k) return '\u2022';
+    if(!k[3]) return k[2];
+    var tail=(id==='paren')?')':'.';
+    if(id==='alpha') return 'abc'.charAt(n-1)+tail;
+    if(id==='alpha-upper') return 'ABC'.charAt(n-1)+tail;
+    if(id==='roman') return ['i','ii','iii'][n-1]+tail;
+    if(id==='roman-upper') return ['I','II','III'][n-1]+tail;
+    return n+tail;
+  }
   function listOf(a){
     /* an older deck stored a.list as the boolean 1 */
-    return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;
+    var v=a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;
+    /* a kind this build does not know falls back to its family's
+       default rather than to no list at all */
+    if(v&&!listKind(v)) v=(v==='number')?'number':'bullet';
+    return v;
   }
   /* strip markup for the plain projection */
   function plainOf(html){
@@ -739,6 +786,11 @@
     var was=listOf(a);
     style=style||0;
     if(was===style) return;
+    /* T227: LIST TO LIST IS A WORD. Both being lists, the content is
+       already the items and only the marker changes -- and going
+       through contentLines would flatten every nested level, which
+       is what switching bullets to numbering used to do. */
+    if(was&&style){a.list=style;return;}
     var lines=contentLines(a);
     if(style){
       /* an empty line still needs a bullet to stand on */
@@ -2134,7 +2186,7 @@
           /* the ELEMENT carries the marker style and a.html carries only
              the items, so switching bullets to numbering rewrites no
              content at all */
-          tx2=document.createElement(lst==='number'?'ol':'ul');
+          tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
           if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else String(_pg.t||'').split('\n').forEach(function(line){

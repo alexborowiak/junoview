@@ -1114,8 +1114,70 @@
       if(a.lock==='pos') delete a.lock;
       else if(lockMode(a)==='') a.lock='pos';});
   });
-  onBtn('#fmt-bullets',function(){listApply('bullet');});
-  onBtn('#fmt-numbers',function(){listApply('number');});
+  /* T227: the button applies the kind you last chose in its own
+     gallery, so the second bullet list you make is the kind you
+     wanted rather than a disc again */
+  var lastBullet='bullet',lastNumber='number';
+  onBtn('#fmt-bullets',function(){listApply(lastBullet);});
+  onBtn('#fmt-numbers',function(){listApply(lastNumber);});
+  /* the two galleries: every kind drawn as three lines with its own
+     marker, from the one table the renderer reads */
+  function listGalleryBoot(){
+    /* the two doors are written out rather than looped: wireMenuToggle
+       takes id STRINGS and does $('#'+arg), and the contract test
+       insists on seeing literals so an element can never be passed */
+    var galleries=[
+      {w:wireMenuToggle('fmt-bulletswrap','fmt-bullets-caret',
+        'fmt-bullets-menu'),ord:0},
+      {w:wireMenuToggle('fmt-numberswrap','fmt-numbers-caret',
+        'fmt-numbers-menu'),ord:1}];
+    galleries.forEach(function(g){
+        var w=g.w;
+        if(!w) return;
+        LIST_KINDS.filter(function(k){return !!k[3]===!!g.ord;})
+          .forEach(function(k){
+            var o=document.createElement('button');
+            o.className='sh-opt ls-opt';
+            o.title=k[1];o.setAttribute('aria-label',k[1]);
+            o.dataset.list=k[0];
+            var prev=document.createElement('span');
+            prev.className='ls-prev';
+            [1,2,3].forEach(function(n){
+              var row=document.createElement('span');
+              row.className='ls-row';
+              var m=document.createElement('span');
+              m.className='ls-mark';m.textContent=listMarker(k[0],n);
+              var bar=document.createElement('span');
+              bar.className='ls-bar';
+              row.appendChild(m);row.appendChild(bar);
+              prev.appendChild(row);
+            });
+            o.appendChild(prev);
+            var t=document.createElement('span');
+            t.className='sh-opt-t';t.textContent=k[1];
+            o.appendChild(t);
+            o.addEventListener('click',function(e){
+              e.stopPropagation();
+              if(g.ord) lastNumber=k[0]; else lastBullet=k[0];
+              /* picking a kind TURNS THE LIST ON as well: a gallery
+                 that needed the button pressed first would be a
+                 second click for the same decision */
+              fmtApply(function(a){
+                if(a.k!=='text') return;
+                setListStyle(a,k[0]);
+              });
+              overlayHide(w.menu);
+            });
+            w.menu.appendChild(o);
+          });
+      });
+  }
+  /* which kind is on, marked in whichever gallery owns it */
+  function listGallerySync(lst){
+    $$('.ls-opt').forEach(function(o){
+      o.setAttribute('aria-pressed',(o.dataset.list===lst).toString());
+    });
+  }
   /* the three alignments, as buttons (T189) */
   ALIGNS.forEach(function(p){
     onBtn('#fmt-al-'+(p[0]==='center'?'center':p[0]),function(){

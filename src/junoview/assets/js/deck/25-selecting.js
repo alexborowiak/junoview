@@ -52,6 +52,11 @@
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
     +'#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
+    /* the split wrappers and their carets: the wrapper has to be
+     governed or the deselect sweep hides the caret, and a hidden
+     caret collapses the whole control through the :has() rule */
+    +'#fmt-bulletswrap #fmt-bullets-caret #fmt-bullets-menu '
+    +'#fmt-numberswrap #fmt-numbers-caret #fmt-numbers-menu '
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
@@ -302,8 +307,15 @@
        is on, which the old menu line could not; indent and outdent only
        appear once there is a list to move a bullet inside. */
     var lst=isText?listOf(a):0;
-    show('#fmt-bullets',isText&&isNum,lst==='bullet');
-    show('#fmt-numbers',isText&&isNum,lst==='number');
+    /* T227: pressed when ANY kind of that family is on, and the
+       gallery marks which one */
+    /* the split wrappers are controls too, so they need a rule of
+       their own or the deselect sweep hides them for good */
+    show('#fmt-bulletswrap',isText&&isNum);
+    show('#fmt-numberswrap',isText&&isNum);
+    show('#fmt-bullets',isText&&isNum,!!lst&&!listIsOrdered(lst));
+    show('#fmt-numbers',isText&&isNum,!!lst&&listIsOrdered(lst));
+    if(typeof listGallerySync==='function') listGallerySync(lst);
     show('#fmt-indent',isText&&isNum&&!!lst);
     show('#fmt-outdent',isText&&isNum&&!!lst);
     /* the three alignments, in the row and showing which is on

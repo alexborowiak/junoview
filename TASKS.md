@@ -4675,6 +4675,31 @@ option. Then where has the ability to refresh all images gone?"
   to the project and reopened. `layouts` is carried by both
   normalisers now, with a sentinel, like `types` before it.
 
+- [x] **T227 - Kinds of bullet, kinds of numbering.**
+  The user (2026-09-03): "There are no different types of bullet points,
+  and different lists."
+  *Done 2026-09-03.* There were two: a filled disc and 1. 2. 3. The
+  machinery never needed more than a word -- `a.list` holds the style
+  NAME, the rendered element carries it as a class, and the content is
+  only the items -- so each kind is one table entry and one CSS rule.
+  Six bullets (dot, ring, square, dash, arrow, tick) and six numberings
+  (1. 2. 3., 1) 2) 3), a. b. c., A. B. C., i. ii. iii., I. II. III.).
+  A closing bracket is the one shape `list-style-type` cannot say, so
+  that one is a `::marker` rule. Each button is a split control: it
+  turns the list on with the kind you last chose, and its caret opens a
+  gallery where every kind is drawn as three lines with its own marker,
+  from the same table the renderer reads. The families keep their old
+  defaults, so every deck written before this looks exactly as it did.
+  *The latent bug this fixed:* switching bullets to numbering ran the
+  content through `contentLines`, which flattens every nested level --
+  a two-level list came back as one. Both being lists, only the word
+  changes now.
+  *The bug the browser caught:* a split wrapper that is not in the
+  governed list gets its caret hidden by the deselect sweep, and a
+  hidden caret takes the whole control down through the
+  `:has(>.dbtn[hidden])` rule. Green in every substring test; invisible
+  in the ribbon.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

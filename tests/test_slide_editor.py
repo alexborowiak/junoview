@@ -639,10 +639,13 @@ def test_bullets_are_a_real_list_model(out):
             r"String(textPage(a,_pi).h||'')))") in out
     assert "                delete a.list;}," in out
     # a legacy deck stored a.list as the boolean 1
-    assert "return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;" \
-        in out
+    assert ("var v=a&&a.list?(a.list===true||a.list===1?'bullet'"
+            ":a.list):0;") in out
+    # ...and since T227 a kind this build does not know falls back to
+    # its family rather than to no list at all
+    assert "if(v&&!listKind(v)) v=(v==='number')?'number':'bullet';" in out
     # the marker is on the ELEMENT, the items are the content
-    assert "tx2=document.createElement(lst==='number'?'ol':'ul');" in out
+    assert "tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');" in out
     assert "ol.an-ul{list-style:decimal;}" in out
     # Tab makes a sub-bullet, the way every outliner does -- and only
     # inside a list, where it has something to mean

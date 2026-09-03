@@ -119,8 +119,11 @@ def test_text_can_follow_a_curve(out):
     # T220: list levels, the box indent and the curve are a text box's
     # own; a table's words take spacing, which is a door of its own now
     assert "show('#fmt-parawrap',isText&&isNum);" in out
-    assert "show('#fmt-bullets',isText&&isNum,lst==='bullet');" in out
-    assert "show('#fmt-numbers',isText&&isNum,lst==='number');" in out
+    # (T227: pressed for ANY kind of that family; the gallery marks which)
+    assert ("show('#fmt-bullets',isText&&isNum,"
+            "!!lst&&!listIsOrdered(lst));") in out
+    assert ("show('#fmt-numbers',isText&&isNum,"
+            "!!lst&&listIsOrdered(lst));") in out
 
 
 def test_curved_text_warps_in_powerpoint_too(out):

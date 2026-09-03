@@ -986,8 +986,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # fragment, a board with slots on the Design tab, pres.layouts carried
 # through both normalisers, and the picker drawing yours beside the
 # built-ins.
-EXPECTED_MD5 = "8c80a386f4868ab7ad3eff6c33a67ec7"
-EXPECTED_BYTES = 3404645
+# 2026-09-03, T227: twelve kinds of list instead of two -- six bullet
+# markers and six numberings -- each button a split control with a
+# drawn gallery, and switching kind no longer rewrites the content.
+EXPECTED_MD5 = "bde1c16b7dd90e9380e57e341b9b5588"
+EXPECTED_BYTES = 3413452
 
 
 def _render_example() -> str:
