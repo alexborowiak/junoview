@@ -1279,6 +1279,8 @@ body.th-colorful .rbn-grp[data-tab="view"],body.th-colorful #ab-view,
 body.th-colorful #ab-tree{--accent:#41c493;--accent-deep:#1e8f66;}
 body.th-colorful .rbn-grp[data-tab="object"]{
   --accent:#e0a5c6;--accent-deep:#b3628f;}
+body.th-colorful .rbn-grp[data-tab="present"]{
+  --accent:#e06a9a;--accent-deep:#b34472;}
 body.th-colorful .rbn-out,body.th-colorful #ab-size,
 body.th-colorful #ab-scope{--accent:#e06a9a;--accent-deep:#b34472;}
 body.th-colorful .selpane{--accent:#41c493;--accent-deep:#1e8f66;}
@@ -4421,7 +4423,7 @@ body.slide-editing .apptop{display:none;}
    of the bar — ~560px of it once File stopped carrying Close the editor
    ("there is lot's of weird space around"). ---- */
 .rbn-file{order:1;}
-.rbn-slide{order:2;}
+.rbn-slide{order:0;}      /* T215: the page itself first on Design */
 .rbn-view{order:3;}
 /* Design reads Slide, Page furniture, Type -- the markup's order.
    Without a rung Page furniture sat at 0 and came FIRST (T178). */
@@ -4433,12 +4435,12 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
-.rbn-anim{order:5;}
+.rbn-anim{order:1;}
 /* the Whole slide and Order groups share Animation's rung and follow
    it by source order: the effect first, then the slide, then the order
    things take it in (T176, T182) */
-.rbn-build{order:5;}
-.rbn-order{order:5;}
+.rbn-build{order:3;}
+.rbn-order{order:4;}
 .rbn-seq{order:5;}
 /* T182: the effect tiles, in the row. A tall cell spanning both rows
    (rbn-tall counts as two, like a stack), five tiles of icon over word
@@ -4471,7 +4473,7 @@ body.light .fx-tile.on{color:#fff;}
    when on the animation tab always") */
 .deck.tab-animation .an-buildno{display:flex;}
 /* T185: the Timing group. The delay field is the size field's twin. */
-.rbn-timing{order:5;}
+.rbn-timing{order:2;}     /* T215: timing sits beside the effect */
 .anim-delaywrap .fmt-num{width:44px;}
 .rbn-timing .dbtn:disabled{opacity:.4;cursor:default;}
 /* WHICH ONE IS ON, said louder than a theme can quiet. The colourful
@@ -4493,6 +4495,7 @@ body.light .fx-tile.on{color:#fff;}
    on a narrow window and the everyday toggles stay in view (T196) */
 .rbn-layout,.rbn-this,.rbn-arrange{order:1;}
 .rbn-sources{order:2;}
+.rbn-show{order:3;}
 /* on Design (T204): Layout, then Apply to other slides, then Slide */
 /* last, so it is what folds first on a narrow window */
 .rbn-apply{order:1;}
@@ -7370,12 +7373,12 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .dg-row.on{background:#ffffff14;border-color:#ffffff2b;}
 .dg-name{line-height:1.15;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
-.dg-count{font-family:var(--mono);font-size:9px;color:#6b8496;
+.dg-count{font-family:var(--mono);font-size:10px;color:#8ba0b2;
   flex:none;}
-.dg-h{font-family:var(--mono);font-size:9px;letter-spacing:.18em;
+.dg-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
   text-transform:uppercase;color:#4e93a6;margin:22px 0 4px;}
 .dg-h:first-child{margin-top:0;}
-.dg-sub{margin:0 0 10px;font-size:11.5px;line-height:1.55;color:#8fa6b6;
+.dg-sub{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:#a7bccb;
   max-width:62ch;}
 .dg-spec{padding:12px 14px;border:1px solid #ffffff1a;border-radius:8px;
   /* the ACTUAL page colour, not chrome: a dark style meant for a light
@@ -7507,8 +7510,13 @@ body.light .seq-cell b{color:var(--ink);}
 .dc-nbs-open{display:block;margin:6px auto 2px;}
 /* T115: masters — the inherited layer, inert behind everything */
 .slide-mast{position:absolute;inset:0;pointer-events:none;z-index:0;}
-.mast-panel{position:fixed;right:16px;top:110px;z-index:420;width:264px;
-  max-height:70vh;overflow-y:auto;padding:8px 10px 12px;}
+/* T215: a PANEL -- block layout (the .sh-menu grid had spread its note
+   over three columns), wide enough to read, on the overlay stack */
+.sh-menu.mast-panel{display:block;position:fixed;left:auto;right:16px;top:110px;
+  z-index:420;width:320px;max-height:70vh;overflow-y:auto;
+  padding:10px 12px 14px;}
+.mast-panel .rd-note{font-size:12px;line-height:1.5;}
+.mast-panel .rd-state{font-size:11px;margin:6px 0;}
 .mast-name{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--cyan);margin:10px 0 4px;}
 .mast-row{display:block;width:100%;text-align:left;font-size:11.5px;
@@ -7795,6 +7803,25 @@ body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
 .img-ov .pf-row .pf-what{font-size:14px;font-weight:600;}
 .img-ov .pf-row .pf-why{font-size:12.5px;}
 body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
+
+/* ---- T215: ROOM TO READ ON A BIG SCREEN ----------------------------------
+   The ribbon's sizes were set for a laptop; on a wide monitor (2026-09-03,
+   user: "some of the text is maybe too small now") the words grow a step
+   while the geometry stays. */
+@media (min-width:1600px){
+  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12px;}
+  .edit-tools .fx-tile{font-size:11.5px;}
+  .edit-tools .rbn-lab{font-size:10.5px;}
+  .edit-tools .rbn-cell .cell-lab{font-size:10px;}
+  .rbn-tab{font-size:13px;}
+}
+
+/* ---- T216: Full screen in the top bar; the Present tab ------------------ */
+.deck-top .qat-full{margin-right:6px;}
+.deck-top .qat-full[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+.rbn-play{order:1;}
+.rbn-talk{order:2;}
 </style>
 <script>
 window.MathJax = {
@@ -10270,7 +10297,7 @@ that run.</li>
 <li><b>Crop</b> an image <i>or</i> a notebook cell (figure, markdown or code)
 to a shape; <b>group</b> items (shift-click, then Ctrl+G) so they move as
 one; animate an item so it appears on click
-(<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation order</b>, on the Animation tab); and
+(<b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation pane</b>, on the Animation tab); and
 switch on
 <b>slide numbers</b> from the File menu.</li>
 <li>The <b>View</b> tab is for laying a poster out, where the page is
@@ -10556,7 +10583,7 @@ colours &mdash; Accent, Warm, Lift, Calm, Ink, Quiet &mdash; plus its
 corner radius and the gap the arrange commands space things at. Give an
 object one from the <b>Deck</b> row at the top of the Colour or Fill
 menu and it <b>follows</b> that colour: change it once with
-<i>Design &rarr;</i> <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> <i>Palette</i> and
+<i>Design &rarr;</i> <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> <i>Deck colours</i> and
 everything wearing it changes, because nothing kept a copy. A style set
 can bring its own palette with it.</li>
 <li><b>Maths in a text box.</b> Type LaTeX between dollars anywhere in
@@ -11028,6 +11055,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
          slide and the clock (2026-08-20, user asked for "the different
          screens one with the slides and the other with like notes and the
          next slide"). -->
+    <!-- Full screen lives up here beside Present (T216; 2026-09-03, user:
+         "the full screen needs to go up the top where present is") -->
+    <button class="dbtn qat-full" id="vw-full" aria-pressed="false"
+      title="Edit full screen: the browser chrome goes away and the page
+ gets the whole display (Esc to leave). Unlike Present, you keep every
+ editing tool"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Full screen</button>
     <span class="dc-savegrp qat-playgrp">
       <button class="dbtn primary qat-play" id="dc-play"
         title="Play this full screen, from this page (F5)">
@@ -11211,6 +11244,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       aria-selected="false"
       title="Rulers, grid and guides; full screen and the side toolbar;
  the Review, Layers and Notes panes">View</button>
+    <button class="rbn-tab" id="rbn-tab-present" role="tab" data-tab="present"
+      title="Play the talk, presenter view, notes and timing, talk settings">Present</button>
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
@@ -11323,6 +11358,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
               <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
               </div>
+              <button class="dbtn rbn-sm" id="dsg-tidy"
+                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
@@ -11341,8 +11378,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                on a laptop, and Layout is what this tab is for now -->
           <span class="rbn-grp rbn-slide" data-tab="design">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="dsg-tidy"
-                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2v12"/><rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/><rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/></svg> Tidy page</button>
               <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
                    many of the options there are dropdowns with a
                    million options that should just already be
@@ -11409,7 +11444,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
    Watermark</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
-                title="A number on every slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Numbers</button>
+                title="A number on every slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Page numbers</button>
               <!-- T115's masters hid inside two Layouts menus; the
                    feature that owns "the look every slide inherits"
                    belongs on the tab that owns page furniture
@@ -11478,10 +11513,11 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    was the implementation's; the button says what the
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="Six named colours the deck shares, plus corner radius
- and spacing. Give a box one from the Deck row of a colour menu; change
- it here and every box follows"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Palette&#8230;</button>
+                aria-haspopup="true" aria-expanded="false"
+                title="The six colours this deck shares. Any box can wear one
+ (the Deck row at the top of its colour menu); change a colour here and
+ every box wearing it changes too"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Deck colours &#9662;</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -11554,11 +11590,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Draw a guide box to lay out inside. It snaps, and
  is never printed, exported or shown while presenting"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="3.2" width="11.2" height="9.6" rx="1" stroke-dasharray="2.7 2.3"/></svg> Guide box <kbd>B</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-full"
-                aria-pressed="false"
-                title="Edit full screen &mdash; the browser chrome goes
- away and the page gets the whole display (Esc to leave). Unlike Present,
- you keep every editing tool"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Full screen</button>
               <button class="dbtn rbn-sm" id="vw-side"
                 aria-pressed="false"
                 title="Stand the toolbar up on the right-hand edge, so the
@@ -11694,7 +11725,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 aria-pressed="false"
                 title="The list of what appears when on this slide, in
  order, with arrows to move a step earlier or later"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation order</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg> Animation pane</button>
               <!-- THE TIMELINE IS THE LAYERS PANE (T174): every object
                    with the click it arrives on and, if it leaves, the
                    click it goes. It drives Home's Layers button: two
@@ -11930,6 +11961,46 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                tile at once, wrapped, in a window under the strip
                (stripMoreBoot). The frame carries the id the ribbon
                layouts move, so the strip and its door travel as one. -->
+          <!-- PRESENT (T216; 2026-09-03, user: "Present also needs its own
+               tab with all those options as buttons now"). The rows of
+               the Present menu, as buttons: each presses its row, so the
+               behaviour stays in one place and the two can never drift. -->
+          <span class="rbn-grp rbn-play" data-tab="present">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Play">
+                <button class="fx-tile big-tile" id="pr-here"
+                  title="Play full screen from this slide (F5)"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.2 3.2v9.6l7.8-4.8Z"/></svg><span>From this slide</span></button>
+                <button class="fx-tile big-tile" id="pr-start"
+                  title="Play full screen from the first slide"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.8" width="12.4" height="9" rx="1"/><path d="m6.8 6.1 3 1.9-3 1.9Z"/><path d="M8 11.8v1.6"/></svg><span>From the start</span></button>
+                <button class="fx-tile big-tile" id="pr-presenter"
+                  title="A second window with your notes, the next slide and a
+ clock. Drag it to the other screen, then play"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M9.8 2.4v11.2"/><path d="M11.5 5h1.2M11.5 7.4h1.2"/></svg><span>Presenter view</span></button>
+              </span>
+            </span>
+            <span class="rbn-lab">Play</span>
+          </span>
+          <span class="rbn-grp rbn-talk" data-tab="present">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="pr-talk"
+                title="Play from this slide with the talk settings open: skip
+ the animations, or size headings, body text and captions for the room"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> Talk settings&#8230;</button>
+              <button class="dbtn rbn-sm" id="pr-notes"
+                title="Your speaker notes, and how long each slide took"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/><path d="m9.2 4 2.8 2.8"/></svg> Notes &amp; timing&#8230;</button>
+              <button class="dbtn rbn-sm" id="pr-tap" aria-pressed="false"
+                title="While presenting, a click on a figure enlarges it"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg> Click to enlarge figures</button>
+              <button class="dbtn rbn-sm" id="pr-trace" aria-pressed="false"
+                title="Show the code trail under each slide while presenting"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.6 5.2 2.4 8l3.2 2.8"/><path d="M10.4 5.2 13.6 8l-3.2 2.8"/></svg> Code trail</button>
+            </span>
+            <span class="rbn-lab">During the talk</span>
+          </span>
           <!-- HOME, BY WHAT YOU DO (T202; 2026-09-02, user: "the
                groupings still make no sense... you can't create a new
                layout with the layouts there, you can only change the
@@ -12001,6 +12072,20 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               </span>
             </span>
             <span class="rbn-lab">Keep up to date</span>
+          </span>
+          <!-- LAYERS ON HOME (T216; 2026-09-03, user: "the layers is really
+               important that needs to go in home"): a second door to the
+               same pane View has, pressed-state mirrored from it -->
+          <span class="rbn-grp rbn-show" data-tab="home">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Show">
+                <button class="fx-tile big-tile" id="hm-layers" aria-pressed="false"
+                  title="Every object on this slide as a list: reorder, hide,
+ lock, group"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg><span>Layers</span></button>
+              </span>
+            </span>
+            <span class="rbn-lab">Show</span>
           </span>
           <!-- No Editing group. Find and replace acts on the WHOLE
                presentation, so it belongs with the document's own
@@ -12640,10 +12725,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Check again</button>
           <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
             ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
-        <div class="pf-intro">Text that should look the same but does not,
-          and figures placed at different sizes. Each card is one thing to
-          look at; its button fixes only that. A slide chip takes you
-          there.</div>
+        <div class="pf-intro">Boxes that look alike should share a named
+          style, so changing them later is one edit. Each card is one group
+          of boxes, or of figures; its button fixes just that group. A slide
+          chip takes you to the box.</div>
         <div class="img-ov-body std-list" id="std-ov-body"></div>
       </div>
       <div class="img-ov" id="tidy-ov" hidden role="dialog"
@@ -12887,7 +12972,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         </div>
       </aside>
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animation order</span>
+        <div class="selpane-h"><span>Animation pane</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button></div>
         <div class="selpane-list" id="animpane-body"></div>
@@ -23362,8 +23447,8 @@ window.JunoPptx = (function () {
           +inner[0].odd.length+' of '+b.boxes.length+' differ.')
         :('Their '+inner[0].prop.label+' and '+(inner.length-1)+' other '
           +'thing'+(inner.length===2?'':'s')+' do not agree.');
-    return 'They already match each other. Calling them '+d.label
-      +' means changing them all later is one edit instead of '
+    return 'They match each other now. Give them the '+d.label
+      +' style and a later change to all of them is one edit, not '
       +b.boxes.length+'.';
   }
   function standardise(){
@@ -23383,10 +23468,10 @@ window.JunoPptx = (function () {
         return !stdMatchesStyle(p.a,d);});
       if(!odd.length) return;
       out.push({kind:'named',style:id,list:list,odd:odd,sev:'warn',
-        head:odd.length+' of '+list.length+' '+d.label+' boxes have '
-          +'drifted',
-        why:'They wear the '+d.label+' style but have been changed by '
-          +'hand since. Re-applying the style puts them back.'});
+        head:odd.length+' of '+list.length+' '+d.label+' boxes no '
+          +'longer match the style',
+        why:'They have the '+d.label+' style but were changed by hand '
+          +'afterwards. Putting the style back makes them match again.'});
     });
     /* PASS TWO — the boxes wearing nothing, which on most decks is all of
        them. Bands first, names second, drift within a band third. */
@@ -23401,7 +23486,7 @@ window.JunoPptx = (function () {
         sev:inner.length?'warn':'info',
         head:b.boxes.length+' boxes at about '+Math.round(b.size*5.4)
           +' pt'+(inner.length?(' — '+inner[0].odd.length
-            +' do not match'):' wear no style'),
+            +' do not match'):', no named style yet'),
         why:stdBandWhy(b,d,inner)});
       ['x','w'].forEach(function(k){
         var g=stdGeom(b.boxes,k,k==='x'?STD_POS_TOL:STD_W_TOL);
@@ -23508,24 +23593,24 @@ window.JunoPptx = (function () {
       act.textContent='Line all '+f.g.all.length+' up';
       act.addEventListener('click',function(){stdAlign(f.g);});
     } else if(f.kind==='named'){
-      act.textContent='Put these '+f.odd.length+' back to '
-        +styleDef(f.style).label;
+      act.textContent='Put the '+styleDef(f.style).label+' style back on '
+        +'these '+f.odd.length;
       act.addEventListener('click',function(){
         stdFix(f.odd,function(a){applyStyleTo(a,f.style);},
           f.odd.length+' box'+(f.odd.length===1?'':'es')+' put back');
       });
     } else {
-      act.textContent='Make all '+f.band.boxes.length+' '
-        +styleDef(f.band.suggest).label;
-      act.title='Names this size, and pulls the odd ones into line with '
-        +'the rest. The majority do not move.';
+      act.textContent='Give all '+f.band.boxes.length+' the '
+        +styleDef(f.band.suggest).label+' style';
+      act.title='Every box here gets the '+styleDef(f.band.suggest).label
+        +' style; the odd ones move to match the rest, the rest stay put.';
       act.addEventListener('click',function(){stdAdopt(f.band);});
     }
     box.appendChild(act);
     if(f.kind==='band'&&f.inner&&f.inner.length){
       var alt=document.createElement('button');
       alt.className='dbtn std-do std-do2';
-      alt.textContent='Just make them match each other';
+      alt.textContent='Just make them match, no style';
       alt.title='Fix the '+f.inner[0].prop.label+' without giving them a '
         +'named style';
       alt.addEventListener('click',function(){stdFlatten(f.inner[0]);});
@@ -23937,7 +24022,7 @@ window.JunoPptx = (function () {
      from Insert. */
   /* ...and View is one again (T200): the page-looking tools were on
      Home, and Home took the layout system. */
-  var TABS=['home','insert','design','animation','view','object'];
+  var TABS=['home','insert','design','animation','view','present','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -24370,7 +24455,7 @@ window.JunoPptx = (function () {
      the row was over (2026-08-22). */
   var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
-    ['vw-full','Full screen'],['vw-side','Side toolbar'],
+    ['vw-side','Side toolbar'],
     ['vw-check','Review'],['objects-btn','Layers'],['notes-btn','Notes']];
   var viewFolded=false,viewWasHidden=null;
   function foldViewGroup(on){
@@ -25893,7 +25978,7 @@ window.JunoPptx = (function () {
       selTab:'object',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},
             {id:'design',label:'Design'},{id:'animation',label:'Animation'},
-            {id:'view',label:'View'},{id:'object',label:'Object'}],
+            {id:'view',label:'View'},{id:'present',label:'Present'},{id:'object',label:'Object'}],
       groups:[]}].concat(RIBBON_LAYOUTS||[]);
   }
   function rbnLayoutById(id){
@@ -30957,7 +31042,7 @@ window.JunoPptx = (function () {
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
         b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Palette and everything using it follows.';
+          +'Design \u2192 Deck colours and everything using it follows.';
         b.setAttribute('aria-label',nm+' (deck colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -30977,13 +31062,13 @@ window.JunoPptx = (function () {
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'this deck\u2019s colours');
+    menuHead(m,'deck colours');
     var note=document.createElement('div');
     note.className='ff-none';
-    note.textContent='Six named colours the whole deck shares. Give a '
-      +'box one from the Deck row of its Colour or Fill menu; change '
-      +'the name here and every box wearing it follows. Nothing holds '
-      +'a copy.';
+    note.textContent='These six colours are shared by the whole deck. '
+      +'Any box can wear one: pick it from the Deck row at the top of '
+      +'the box\u2019s colour menu. Change a colour here and every box '
+      +'wearing it changes with it.';
     m.appendChild(note);
     var t=tokens();
     Object.keys(t.c).forEach(function(k){
@@ -50981,6 +51066,10 @@ window.JunoPptx = (function () {
       var nm=document.createElement('span');
       nm.className='dg-name';nm.textContent=d.label||id;
       dgSpecimen(nm,id);
+      /* the rail is chrome, not a slide: the style's own colour could be
+         the page's ink and vanish here (2026-09-03, "a lot of the text
+         can't be read"); weight, italic and size still draw the ladder */
+      nm.style.color='';
       var ct=document.createElement('span');
       ct.className='dg-count';
       var n=dgWearers(id).length;
@@ -51080,6 +51169,10 @@ window.JunoPptx = (function () {
     spec.className='dg-spec';
     spec.textContent='The quick brown fox jumps over the lazy dog';
     dgSpecimen(spec,id);
+    /* on the deck's actual page colour, so a specimen reads the way the
+       slide will */
+    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
+    if(!d.color) spec.style.color=tokVal('@ink');
     body.appendChild(spec);
 
     var row=document.createElement('div');row.className='dg-ctrls';
@@ -53399,6 +53492,49 @@ window.JunoPptx = (function () {
      into the frame when the window closes (the overlay owner hides
      it; an attribute observer sees that and puts the strip home).
      Picking a tile closes the window, the way a gallery does. */
+  /* THE PRESENT TAB (T216): every button presses the Present menu's row
+     of the same name, and the two toggles read their state off the
+     row's words, so nothing is decided twice. LAYERS ON HOME: a tile
+     that presses View's Layers button and mirrors its pressed state. */
+  function presentTabBoot(){
+    [['pr-here','pl-here'],['pr-start','pl-start'],
+     ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],
+     ['pr-notes','pl-notes'],['pr-tap','pl-tap'],['pr-trace','pl-trace']]
+      .forEach(function(p){
+        var b=$('#'+p[0]),row=$('#'+p[1]);
+        if(!b||!row) return;
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          var pm=$('#play-menu'); if(pm&&!pm.hidden) overlayHide(pm);
+          row.click();
+          setTimeout(presentTabSync,0);
+        });
+      });
+    var tap=$('#pl-tap'),tr=$('#pl-trace');
+    [tap,tr].forEach(function(row){
+      if(row) new MutationObserver(presentTabSync)
+        .observe(row,{childList:true,characterData:true,subtree:true});
+    });
+    presentTabSync();
+    var hl=$('#hm-layers'),ob=$('#objects-btn');
+    if(hl&&ob){
+      hl.addEventListener('click',function(e){
+        e.stopPropagation();ob.click();});
+      var mirror=function(){
+        hl.setAttribute('aria-pressed',ob.getAttribute('aria-pressed')||'false');};
+      new MutationObserver(mirror)
+        .observe(ob,{attributes:true,attributeFilter:['aria-pressed']});
+      mirror();
+    }
+  }
+  function presentTabSync(){
+    [['pr-tap','pl-tap'],['pr-trace','pl-trace']].forEach(function(p){
+      var b=$('#'+p[0]),row=$('#'+p[1]);
+      if(!b||!row) return;
+      var on=/:\s*on\s*$/.test(row.textContent||'');
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+  }
   /* the Style system screen's own door on the Design tab (T212) */
   function styleSystemDoorBoot(){
     var b=$('#dsg-design-btn'); if(!b) return;
@@ -56956,6 +57092,7 @@ window.JunoPptx = (function () {
   imgPaneBoot();              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
+  presentTabBoot();           /* the Present tab and Layers on Home (T216) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */
