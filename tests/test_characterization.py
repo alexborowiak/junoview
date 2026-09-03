@@ -922,8 +922,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Left/Centre/Right as runs; every tooltip the audit flagged rewritten;
 # the Palette door; the token picker on the overlay stack. deck.html,
 # deck.css and six deck fragments.
-EXPECTED_MD5 = "9de6ff2775c52ce23b1c39b3bee9d120"
-EXPECTED_BYTES = 3326689
+# T209 2026-09-03: Mismatched text, Tidy page and Layout ideas open full
+# screen. deck.html, deck.css and three deck fragments.
+EXPECTED_MD5 = "caf3c69a032333c70ebd238ad1f134d0"
+EXPECTED_BYTES = 3333676
 
 
 def _render_example() -> str:

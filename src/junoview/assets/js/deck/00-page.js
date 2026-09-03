@@ -2125,8 +2125,7 @@
     box.appendChild(act);
     return box;
   }
-  function renderTidyPane(){
-    var list=$('#tidypane-list'),head=$('#tidypane-count');
+  function renderTidyInto(list,head){
     if(!list) return;
     var f=tidyFindings();
     if(head) head.textContent=f.length
@@ -2144,7 +2143,22 @@
     }
     f.forEach(function(x){list.appendChild(tidyRow(x));});
   }
+  function renderTidyOverview(){
+    renderTidyInto($('#tidy-ov-body'),$('#tidy-ov-sub'));
+  }
+  function renderTidyPane(){
+    renderTidyInto($('#tidypane-list'),$('#tidypane-count'));
+    var ov=$('#tidy-ov');
+    if(ov&&!ov.hidden) renderTidyOverview();
+  }
+  /* full screen since T209: the pane is still wired for the pane owner,
+     but every door opens the view */
   function showTidyPane(){
+    var ov=$('#tidy-ov');
+    if(ov){
+      if(!ov.hidden){overlayHide(ov);return;}
+      renderTidyOverview();overlayShow($('#dsg-tidy'),ov);return;
+    }
     var pane=$('#tidypane'); if(!pane) return;
     paneShow('tidypane');
     renderTidyPane();
@@ -2159,4 +2173,13 @@
     if(rr) rr.addEventListener('click',renderTidyPane);
     var open=$('#dsg-tidy');
     if(open) open.addEventListener('click',showTidyPane);
+    var ov=$('#tidy-ov');
+    var oc=$('#tidy-ov-close');
+    if(oc) oc.addEventListener('click',function(){overlayHide(ov);});
+    var orr=$('#tidy-ov-rerun');
+    if(orr) orr.addEventListener('click',renderTidyOverview);
+    if(ov) ov.addEventListener('click',function(e){
+      if(e.target.closest&&e.target.closest('.std-chip'))
+        setTimeout(function(){overlayHide(ov);},0);
+    });
   })();

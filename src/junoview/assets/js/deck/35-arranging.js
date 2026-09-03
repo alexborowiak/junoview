@@ -1213,7 +1213,8 @@
     return c;
   }
   function closeLayoutIdeas(){
-    var p=$('#lay-ideas'); if(p) p.remove();
+    var p=$('#lay-ideas');
+    if(p){if(!p.hidden) overlayHide(p); p.remove();}
     document.removeEventListener('keydown',ideasKey,true);
   }
   function ideasKey(e){
@@ -1229,9 +1230,24 @@
         +'from what is there');
       return;
     }
+    /* FULL SCREEN (T209): a header like the other full-screen views,
+       cards a third of the window wide, on the overlay stack so Escape
+       and an outside click close it the same way everywhere */
     var p=document.createElement('div');
     p.className='sh-menu lay-ideas';p.id='lay-ideas';
-    menuHead(p,'ways to lay this slide out');
+    var h=document.createElement('div');h.className='img-ov-h';
+    var ht=document.createElement('span');ht.className='img-ov-t';
+    ht.textContent='Ways to lay this slide out';h.appendChild(ht);
+    var hs=document.createElement('span');hs.className='img-ov-sub';
+    hs.textContent='Worked out from what is on the slide. Click one; '
+      +'Ctrl+Z undoes it.';
+    h.appendChild(hs);
+    var hc=document.createElement('button');hc.className='dbtn rbn-sm';
+    hc.innerHTML=bic('exit')+' Close';hc.title='Close (Esc)';
+    hc.addEventListener('click',function(e){
+      e.stopPropagation();closeLayoutIdeas();});
+    h.appendChild(hc);
+    p.appendChild(h);
     var grid=document.createElement('div');
     grid.className='li-grid';
     p.appendChild(grid);
@@ -1242,8 +1258,9 @@
       b.className='dbtn li-card';
       b.title=note||'';
       var mini=miniDiagram(prev);
-      mini.style.width='150px';
-      mini.style.height=Math.round(150*ratio)+'px';
+      var W=Math.max(220,Math.min(420,Math.round(window.innerWidth*0.28)));
+      mini.style.width=W+'px';
+      mini.style.height=Math.round(W*ratio)+'px';
       b.appendChild(mini);
       var t=document.createElement('span');
       t.className='li-lab';t.textContent=label;
@@ -1286,13 +1303,12 @@
               :'Nothing matched \u201c'+(o.arr.label||o.arr.name||'Arrangement')+'\u201d');
           });
       });
-    document.body.appendChild(p);
-    document.addEventListener('keydown',ideasKey,true);
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        document.removeEventListener('click',once);
-        if(!p.contains(e.target)) closeLayoutIdeas();
-      });},0);
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(p);
+    p.hidden=true;
+    overlayShow($('#hm-lay-ideas'),p);
+    new MutationObserver(function(){
+      if(p.hidden&&p.parentNode) p.remove();
+    }).observe(p,{attributes:true,attributeFilter:['hidden']});
   }
   function arrList(){
     try{

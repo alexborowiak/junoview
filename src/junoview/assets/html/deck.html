@@ -1834,6 +1834,41 @@
             ><i data-ic="exit"></i> Close</button></div>
         <div class="img-ov-body" id="img-ov-body"></div>
       </div>
+      <!-- MISMATCHED TEXT and TIDY PAGE, FULL SCREEN (T209; 2026-09-02,
+           user: "this mismatched text thing is a good idea, but horrible
+           execution. It is so small in the side bar. Some of these
+           things should not be sidebars but should always open as full
+           screen"). The same cards the panes drew, laid out in a grid
+           with room to read; a slide chip goes there and closes the
+           view; a fix re-renders it. The panes stay in the markup for
+           the pane owner and the tests, but the ribbon doors open these. -->
+      <div class="img-ov" id="std-ov" hidden role="dialog"
+        aria-label="Mismatched text">
+        <div class="img-ov-h"><span class="img-ov-t">Mismatched text</span>
+          <span class="img-ov-sub" id="std-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
+            ><i data-ic="reload"></i> Check again</button>
+          <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
+            ><i data-ic="exit"></i> Close</button></div>
+        <div class="pf-intro">Text that should look the same but does not,
+          and figures placed at different sizes. Each card is one thing to
+          look at; its button fixes only that. A slide chip takes you
+          there.</div>
+        <div class="img-ov-body std-list" id="std-ov-body"></div>
+      </div>
+      <div class="img-ov" id="tidy-ov" hidden role="dialog"
+        aria-label="Tidy up this page">
+        <div class="img-ov-h"><span class="img-ov-t">Tidy up this page</span>
+          <span class="img-ov-sub" id="tidy-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="tidy-ov-rerun" title="Look again"
+            ><i data-ic="reload"></i> Look again</button>
+          <button class="dbtn rbn-sm" id="tidy-ov-close" title="Close (Esc)"
+            ><i data-ic="exit"></i> Close</button></div>
+        <div class="pf-intro">Things on this page that are nearly lined up,
+          gaps that are nearly even, and copies pasted on top of each
+          other. Nothing moves until you press a fix.</div>
+        <div class="img-ov-body std-list" id="tidy-ov-body"></div>
+      </div>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
            frame names a card by anchor, chains.py computed the lineage
            at parse time, and the trace view draws it. What was missing

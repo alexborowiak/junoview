@@ -487,9 +487,14 @@ def test_layout_ideas_previews_are_the_real_computation_on_a_clone(out):
 
 
 def test_the_chooser_closes_like_the_menus_it_lives_beside(out):
+    """Since T209 it is on the overlay stack with everything else: Escape
+    and an outside click reach it through overlayBoot, not listeners of
+    its own."""
     assert "function closeLayoutIdeas(){" in out
-    assert "document.addEventListener('keydown',ideasKey,true);" in out
-    assert "if(!p.contains(e.target)) closeLayoutIdeas();" in out
+    assert "overlayShow($('#hm-lay-ideas'),p);" in out
+    assert "if(p){if(!p.hidden) overlayHide(p); p.remove();}" in out
+    assert "document.addEventListener('keydown',ideasKey,true);" not in out
+    assert "if(!p.contains(e.target)) closeLayoutIdeas();" not in out
 
 
 def test_the_tablist_wrapper_survives_a_layout_change(out):

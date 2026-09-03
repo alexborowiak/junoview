@@ -692,8 +692,10 @@
     }
     return box;
   }
-  function renderStdPane(){
-    var list=$('#stdpane-list'),head=$('#stdpane-count');
+  /* the pane and the full-screen view (T209) draw the same cards; the
+     target is a parameter, and the pane's renderer refreshes the view
+     when it is open so a fix pressed there redraws there */
+  function renderStdInto(list,head){
     if(!list) return;
     var r=standardise();
     /* THE FIGURE FINDINGS ARE IN THIS PANE and were not in this count,
@@ -738,6 +740,14 @@
     r.findings.forEach(function(f){list.appendChild(stdRow(f));});
     appendFigLint(list);
   }
+  function renderStdOverview(){
+    renderStdInto($('#std-ov-body'),$('#std-ov-sub'));
+  }
+  function renderStdPane(){
+    renderStdInto($('#stdpane-list'),$('#stdpane-count'));
+    var ov=$('#std-ov');
+    if(ov&&!ov.hidden) renderStdOverview();
+  }
   /* the figure half (T22), in the same pane and under its own heading:
      the same question — does the deck agree with itself — asked of a
      different material. It is appended after the text findings in both
@@ -760,12 +770,29 @@
         renderStdPane();
       } else paneHide('stdpane');
     }
+    /* the ribbon door opens the FULL-SCREEN view (T209); the pane is
+       still there for the pane owner but nothing on the ribbon opens it */
+    var ov=$('#std-ov');
     btn.addEventListener('click',function(e){
-      e.stopPropagation();set(pane.hidden);});
+      e.stopPropagation();
+      if(ov){
+        if(!ov.hidden){overlayHide(ov);return;}
+        renderStdOverview();overlayShow(btn,ov);return;
+      }
+      set(pane.hidden);});
     var cl=$('#stdpane-close');
     if(cl) cl.addEventListener('click',function(){set(false);});
     var rr=$('#stdpane-rerun');
     if(rr) rr.addEventListener('click',renderStdPane);
+    var oc=$('#std-ov-close');
+    if(oc) oc.addEventListener('click',function(){overlayHide(ov);});
+    var orr=$('#std-ov-rerun');
+    if(orr) orr.addEventListener('click',renderStdOverview);
+    /* a slide chip goes to the slide, so the view gets out of the way */
+    if(ov) ov.addEventListener('click',function(e){
+      if(e.target.closest&&e.target.closest('.std-chip'))
+        setTimeout(function(){overlayHide(ov);},0);
+    });
   })();
   window.SemDeckPreflight=preflight;                 /* test hook */
   window.SemDeckStandardise=standardise;             /* test hook */

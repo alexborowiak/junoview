@@ -69,7 +69,8 @@ def test_show_all_moves_the_strip_into_a_window_and_back(out):
     assert "setTimeout(function(){overlayHide(panel);},0);" in out
     assert ".sh-menu.strip-all .fx-strip{display:flex;flex-wrap:wrap;" in out
     # the ribbon layouts move the frame, strip and door together
-    assert "el.closest('.opt-drop,.strip-frame')" in out
+    # (...and a segmented run since T209: B I U travel as one)
+    assert "el.closest('.opt-drop,.strip-frame,.rbn-cell')" in out
 
 
 def test_an_empty_text_box_stays_visible(out):

@@ -309,7 +309,9 @@
     var el=document.getElementById(cid);
     /* a strip lives in its frame with its Show-all door (T203); the
        frame is what moves */
-    var w=(el&&el.closest)?el.closest('.opt-drop,.strip-frame'):null;
+    /* ...and a segmented run (T209): a layout that names fmt-bold moves
+       the B I U run it sits in, not one letter out of it */
+    var w=(el&&el.closest)?el.closest('.opt-drop,.strip-frame,.rbn-cell'):null;
     return (w&&atoms[w.id])||null;
   }
   /* WHAT A LAYOUT DID NOT SAY. A control the catalogue has never heard

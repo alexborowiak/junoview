@@ -4261,6 +4261,23 @@ option. Then where has the ability to refresh all images gone?"
   the **Palette…**, and its tooltip says what a named colour is and how
   to give a box one; the picker sits on the overlay stack so Escape and
   an outside click close it like every other menu.
+- [x] **T209 · M — Mismatched text, Tidy page and Layout ideas open
+  full screen.**
+  The user (2026-09-02): "This mismatched text thing is a good idea,
+  but horrible execution. It is so small in the side bar. Some of
+  these things should not be sidebars but should always open as full
+  screen and also need to be proper buttons." And a screenshot of the
+  Layout ideas popover overflowing its own heading under an open menu.
+  *Done 2026-09-03.* **Mismatched text** and **Tidy page** open as
+  full-screen views under the same header the All images view has: a
+  one-line intro, a count, Check again, Close; the same cards the
+  panes drew, in a grid with room to read them. A slide chip goes to
+  the slide and closes the view so you see where it took you; a fix
+  redraws the view. The renderers take their target, so the panes are
+  still there for the pane owner and the tests, but every door opens
+  the view. **Layout ideas** is full screen too, its cards a third of
+  the window wide, with a header and Close, on the overlay stack like
+  everything else so Escape and an outside click behave the same way.
 
 
 ## Cut (and why)

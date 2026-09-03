@@ -4458,9 +4458,13 @@ body.light .seq-cell b{color:var(--ink);}
   pointer-events:none;}
 body:has(#rd-order) .an-readno{display:flex;}
 /* T131: the layout-ideas chooser — live previews of THIS slide */
-.lay-ideas{position:fixed;left:50%;top:18%;transform:translateX(-50%);
-  z-index:420;max-width:560px;max-height:70vh;overflow-y:auto;
-  padding:10px 12px 14px;}
+/* T209: full screen, like All images; the cards a third of the window
+   wide so a layout can actually be read */
+.sh-menu.lay-ideas{display:block;position:fixed;inset:0;left:0;top:0;
+  transform:none;width:auto;max-width:none;max-height:none;z-index:400;
+  padding:16px 28px 40px;overflow:auto;border:0;border-radius:0;
+  box-shadow:none;background:var(--chrome-0,#0b141d);}
+body.light .sh-menu.lay-ideas{background:#fff;}
 .li-grid{display:flex;flex-wrap:wrap;gap:10px;}
 .li-card{display:flex;flex-direction:column;align-items:center;gap:5px;
   padding:7px;}
@@ -4647,3 +4651,22 @@ body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
 .rbn-cell#tx-run-style .dbtn,.rbn-cell#tx-run-align .dbtn{padding:3px 7px;}
 .rbn-cell#tx-run-style .dbtn.etm{min-width:28px;justify-content:center;}
 .rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}
+
+/* ---- T209: THE REVIEW VIEWS, FULL SCREEN --------------------------------
+   Mismatched text and Tidy page draw their cards into a grid with room
+   to read, under the same header the All images view has. */
+.img-ov .pf-intro{margin:-4px 0 14px;max-width:760px;font-size:13px;}
+.std-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
+  gap:10px;align-content:start;}
+.img-ov .std-find{margin:0;background:#ffffff05;border:1px solid #ffffff14;
+  border-left:3px solid #f0a848;border-radius:9px;padding:12px 14px;}
+.img-ov .std-find.std-info{border-left-color:#39a9c0;}
+.img-ov .std-h{font-size:14px;}
+.img-ov .std-why{font-size:12.5px;}
+.img-ov .pf-ok{grid-column:1/-1;font-size:14px;max-width:760px;}
+.img-ov .hd-lab{grid-column:1/-1;margin-top:6px;}
+.img-ov .std-find.std-fig{grid-column:auto;}
+body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
+.lay-ideas .li-grid{gap:16px;}
+.lay-ideas .li-card{padding:10px;}
+.lay-ideas .li-lab{font-size:13px;}
