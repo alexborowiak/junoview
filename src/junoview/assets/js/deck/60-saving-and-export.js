@@ -671,8 +671,8 @@
           :' — autosave is OFF, only this button saves'));
     } else {
       saveBtn.setAttribute('data-tip','Kept in this browser '
-        +'automatically as you edit — Save confirms it. Switch '
-        +'"Saved to" to keep it as a file on your computer');
+        +'automatically as you edit — Save confirms it. The \u25be beside '
+        +'Save keeps it as a file on your computer instead');
     }
     saveBtn.removeAttribute('title');
   }
@@ -698,7 +698,8 @@
          (2026-08-22). */
       status();
       toast('NOT saved — this browser is full. Use File › Download a '
-        +'copy, or switch "Saved to" to a file on your computer.',9000);
+        +'copy, or the \u25be beside Save to keep a file on your computer.',
+        9000);
       return;
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
@@ -707,7 +708,7 @@
     saveStamp=new Date();saveKind='manual';
     status();
     toast('Kept in this browser — it also autosaves as you edit. '
-      +'Switch "Saved to" to a file to keep it on your computer.');
+      +'The \u25be beside Save keeps it as a file on your computer.');
   });
   /* ---- the "Saved to" picker ---- */
   (function(){

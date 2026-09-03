@@ -4278,6 +4278,16 @@ option. Then where has the ability to refresh all images gone?"
   the view. **Layout ideas** is full screen too, its cards a third of
   the window wide, with a header and Close, on the overlay stack like
   everything else so Escape and an outside click behave the same way.
+- [x] **T210 · S — Every sentence names controls by their current
+  names.**
+  *Done 2026-09-03.* A sweep for the names retired across T176–T209
+  found them alive in sentences: the Review centre's rows still said
+  "Open the print check" and "Open Standardise", a ribbon layout's
+  blurb "the print check", three save toasts and a tooltip "Saved to"
+  (a switch that became the chevron beside Save), the Deck swatch's
+  tooltip and the help page "Colours & spacing", the help page
+  "Standardise text". All say Review, Mismatched text, Palette and
+  "the ▾ beside Save" now, and a test refuses the old names.
 
 
 ## Cut (and why)

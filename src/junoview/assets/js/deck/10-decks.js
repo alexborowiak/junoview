@@ -398,8 +398,8 @@
         if(typeof status==='function') status();
         if(typeof toast==='function')
           toast('This browser is full — that edit was NOT kept. Use '
-            +'File › Download a copy, or Saved to › a file on '
-            +'your computer.',9000);
+            +'File › Download a copy, or the \u25be beside Save to keep '
+            +'a file on your computer.',9000);
       }
       return false;
     }

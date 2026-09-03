@@ -860,7 +860,7 @@
      ]},
     {id:'journey-poster-first',
      name:'Poster first',
-     blurb:'Try this for A0 posters and other one-page work: page setup, guides and the print check lead, and everything that only exists for a talk is quarantined.',
+     blurb:'Try this for A0 posters and other one-page work: page setup, guides and Review lead, and everything that only exists for a talk is quarantined.',
      family:'principles',
      selTab:'content',
      tabs:[{id:'page',label:'Page'},{id:'content',label:'Content'},{id:'talk',label:'Talk'}],

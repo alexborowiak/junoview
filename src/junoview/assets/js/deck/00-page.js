@@ -1540,7 +1540,7 @@
       list.appendChild(row);
     }
     cat('Print & export readiness','this slide',preflight().length,
-      bic('flag')+' Open the print check',
+      bic('flag')+' Open Review',
       function(){paneShow('preflight');renderPreflight();},
       'Soft figures, items off the page or inside the margin, thin '
       +'contrast, empty frames');
@@ -1551,7 +1551,7 @@
     var r=standardise();
     cat('Style consistency','whole deck',
       r.findings.length+figLint().length,
-      bic('scope')+' Open Standardise',
+      bic('scope')+' Open Mismatched text',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
       'Headings, paragraphs, captions and figures that have drifted '
       +'apart \u2014 the Style system\u2019s drift check digs deeper');

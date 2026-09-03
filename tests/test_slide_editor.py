@@ -1918,7 +1918,7 @@ def test_design_tokens_have_a_permanent_design_door(out):
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out
-    assert "Design \\u2192 Colours & spacing" in out
+    assert "Design \\u2192 Palette" in out
 
 
 def test_the_deck_registry_survives_a_save(out):

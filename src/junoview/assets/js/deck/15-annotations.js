@@ -2266,7 +2266,7 @@
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
         b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Colours & spacing and everything using it follows.';
+          +'Design \u2192 Palette and everything using it follows.';
         b.setAttribute('aria-label',nm+' (deck colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built

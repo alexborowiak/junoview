@@ -924,8 +924,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # deck.css and six deck fragments.
 # T209 2026-09-03: Mismatched text, Tidy page and Layout ideas open full
 # screen. deck.html, deck.css and three deck fragments.
-EXPECTED_MD5 = "caf3c69a032333c70ebd238ad1f134d0"
-EXPECTED_BYTES = 3333676
+# T210 2026-09-03: every sentence names controls by their current names
+# (Review, Mismatched text, Palette, the chevron beside Save). Five deck
+# fragments and help.html.
+EXPECTED_MD5 = "88f4eb587ed598fdf6cb079a185f3ee2"
+EXPECTED_BYTES = 3333694
 
 
 def _render_example() -> str:
