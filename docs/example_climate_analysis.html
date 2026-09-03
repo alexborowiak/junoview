@@ -1266,7 +1266,8 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    No list to keep in step any more. */
 body.th-colorful .rbn-grp[data-tab="home"],body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
-body.th-colorful .rbn-grp[data-tab="insert"],
+body.th-colorful .rbn-grp[data-tab="images"],
+body.th-colorful .rbn-grp[data-tab="text"],
 body.th-colorful #ab-app,body.th-colorful .presrail{
   --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .rbn-grp[data-tab="design"],body.th-colorful #ab-filters,
@@ -4980,7 +4981,13 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
    are"). Every row draws the real thing and keeps its name in the
    tooltip. currentColor throughout, so the preview brightens with the row
    it is in and the selected one reads as selected. ---- */
-.sh-menu.style-menu,.sh-menu.sw-menu{display:flex;flex-direction:column;
+/* T220: the SWATCH menus are no longer swept in with the drawn
+   line-style menu. That rule stacked their chips one per row under
+   the deck-colour row, which made the popup literally T-shaped
+   (2026-09-03, user: "why does the text colour look like a T?").
+   They lay out as a pad now: a labelled row of the deck's colours,
+   a labelled block of presets, then recents. */
+.sh-menu.style-menu{display:flex;flex-direction:column;
   gap:2px;width:auto;}
 .style-menu .sh-opt,.sw-menu .sh-opt{flex-direction:row;align-items:center;
   gap:8px;padding:4px 8px;}
@@ -5307,9 +5314,15 @@ select#fmt-font[hidden]{display:none;}
 .deck.poster-page .dc-film{display:none!important;}
 .deck.poster-page .deck-count{display:none!important;}
 .deck.poster-page .deck-arrow{display:none!important;}
-/* the colour popups: one row of swatches, roomy hit targets */
-.sw-menu{display:flex;align-items:center;gap:7px;padding:9px 11px;}
-.sw-menu .fmt-lab{display:none;}
+/* the colour popups: a pad of roomy hit targets, headed by name */
+.sh-menu.sw-menu{display:flex;flex-wrap:wrap;align-items:center;
+  gap:7px;width:198px;padding:10px 11px;}
+.sw-menu .fmt-lab{display:block;flex:0 0 100%;margin:2px 0 -1px;}
+.sw-menu>.sw-tokrow,.sw-menu>.sw-recrow{flex:0 0 100%;}
+.sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+.sw-tokrow>.fmt-lab{flex:0 0 100%;}
+/* hidden still means hidden, whatever display the rows above ask for */
+.sw-menu [hidden]{display:none!important;}
 /* ---- page background + LIGHT pages (2026-08-04): pres.pageBg sets
    --page-bg on the deck; a light colour flips .page-light, which
    recolours the DEFAULT chrome (text boxes, frames, page numbers) for
@@ -7717,6 +7730,43 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
 body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
+
+/* ---- T220: QUICK COLOURS AND A VISIBLE SIZE ----------------------------
+   The deck's six colours sit in the row as two segmented cells, one for
+   the words and one for the box; the size is a third, holding the
+   number, its unit and the two steppers. Nothing here opens a menu
+   (2026-09-03, user: "DON'T HAVE EVERYTHING ALWAYS HIDDEN BEHIND
+   SEVERAL CLICKS"). */
+.qk-cell{align-items:center;}
+.qk-sw{width:15px;height:15px;border-radius:50%;padding:0;flex:none;
+  cursor:pointer;border:1.5px solid #ffffff33;margin-right:3px;}
+.qk-cell>.qk-sw:last-child{margin-right:5px;}
+.qk-sw:hover{border-color:#fff;transform:scale(1.14);}
+.qk-sw.on{border-color:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent);}
+body.light .qk-sw{border-color:#00000033;}
+.edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.fmt-szwrap{display:flex;
+  align-items:center;gap:3px;padding:0 6px;align-self:center;}
+#fmt-sizecell .fmt-num{width:42px;}
+.edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.dbtn{min-width:30px;
+  justify-content:center;}
+/* the typeface, on the row rather than in a window */
+.edit-tools select#fmt-font{max-width:104px;align-self:center;height:26px;}
+
+/* ---- T220: THE HISTORY OF ONE OBJECT, FULL SCREEN ---------------------
+   The rows the dock pane draws, as cards with room to read. */
+.oh-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:10px;align-content:start;}
+.img-ov .oh-row{background:#ffffff05;border:1px solid #ffffff14;
+  border-left:3px solid #ffffff26;border-radius:9px;padding:12px 14px;
+  gap:12px;}
+.img-ov .oh-row.oh-now{border-left-color:var(--cyan);}
+.img-ov .oh-thumb{width:62px;max-height:52px;}
+.img-ov .oh-h{font-size:11px;}
+.img-ov .oh-what{font-size:13px;}
+.img-ov .oh-do{font-size:12px;padding:5px 10px;}
+.img-ov .pf-ok{grid-column:1/-1;}
+body.light .img-ov .oh-row{background:#00000004;border-color:var(--line);}
 
 /* ---- T219: A BUTTON LOOKS LIKE A BUTTON ---------------------------------
    T207 made every ribbon control flat at rest, the way PowerPoint's
@@ -10334,7 +10384,7 @@ back. <b>New&#8230;</b> starts one; the
 <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="4" height="11.2" rx="1"/><path d="M14.2 8H8"/><path d="M10.4 5.8 8 8l2.4 2.2"/></svg></b> buttons at its foot collapse or
 auto-hide the rail.</li>
 <li>A presentation opens straight in the <b>slide editor</b>. Add
-content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</b> (Insert tab, under Place)
+content with <b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.8" width="11.6" height="10.4" rx="1.2"/><path d="M2.2 5.6h11.6"/><path d="M4.8 11.2V8.6"/><path d="M7.6 11.2V7.2"/><path d="M10.4 11.2V9.4"/></svg> Notebook cell</b> (Images tab, under Place)
 &mdash; a draggable, resizable frame
 that holds any notebook card: drop it on the slide, then click a card in
 your notebook (from <i>any</i> open tab, so one deck can mix several
@@ -10645,7 +10695,7 @@ can bring its own palette with it.</li>
 <li><b>Maths in a text box.</b> Type LaTeX between dollars anywhere in
 your words &mdash; <code>$z = x - \bar{x}$</code> inside a sentence, or
 <code>$$&hellip;$$</code> on its own for a display equation &mdash; and it
-renders as soon as you click away. <i>Insert &rarr; Equation</i> opens a
+renders as soon as you click away. <i>Text &rarr; Equation</i> opens a
 proper editor with a preview and a symbol palette if you would rather not
 type it blind. It stays maths through exports: the standalone HTML and
 the PDF both bake in the rendered formula, so they need no internet to
@@ -11270,9 +11320,19 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       aria-selected="true"
       title="Add, duplicate and delete slides, and keep figures and
  pictures up to date">Home</button>
-    <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
+    <!-- T220: INSERT IS TWO TABS. One tab held four galleries and
+         eleven doors, and the kinds of text box had been collapsed to a
+         single tile to make them fit (2026-09-03, user: "let's split
+         Insert into Images and Text, one with all the image things like
+         notebook cell, image, flip book, and the lines arrows"). Split,
+         each half has room for what it is: Images keeps the galleries,
+         Text gets one tile per kind of box back. -->
+    <button class="rbn-tab" id="rbn-tab-images" role="tab" data-tab="images"
       aria-selected="false"
-      title="Put something new on the page">Insert</button>
+      title="Figures, pictures, shapes and lines">Images</button>
+    <button class="rbn-tab" id="rbn-tab-text" role="tab" data-tab="text"
+      aria-selected="false"
+      title="Text boxes, tables, equations and Markdown">Text</button>
     <button class="rbn-tab" id="rbn-tab-design" role="tab" data-tab="design"
       aria-selected="false"
       title="How the page itself looks — its size, layout and
@@ -11895,7 +11955,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                section"). Chart is gone from here ("I never wanted that
                and it is broken. Get rid of it"); the feature stays
                reachable from a placed table's right-click. -->
-          <span class="rbn-grp rbn-insert" data-tab="insert" data-fold-ic="cellcard">
+          <span class="rbn-grp rbn-insert" data-tab="images" data-fold-ic="cellcard">
             <span class="rbn-row">
               <!-- NOTEBOOK CELL, by name again (T188; "what happened to
                    the notebook cell option, that is gone"). T61 called
@@ -11916,14 +11976,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Draw a flip book: one box holding many figures, with
  arrows to step through them &mdash; in the editor and while presenting"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg> Flip book</button>
-              <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
-                aria-pressed="false"
-                title="Draw a table. Double-click a cell to type; Tab
- moves along the row, Enter drops down"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg> Table</button>
             </span>
             <span class="rbn-lab">Place</span>
           </span>
-          <span class="rbn-grp rbn-write" data-tab="insert" data-fold-ic="text">
+          <span class="rbn-grp rbn-write" data-tab="text" data-fold-ic="text">
             <span class="rbn-row">
               <!-- THE TEXT STRIP: one tile per kind of box -- plain,
                    then every named type in the deck, each drawn as a
@@ -11931,12 +11987,23 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    that kind; click it again to put the tool down. Built
                    by txStripBoot; the caret menu it replaces was the
                    one control on Insert that hid its options. -->
-              <!-- ONE TEXT BOX TILE (T207; 2026-09-02, user: "the different text
-                   types are kind of weird"). PowerPoint has one Text Box
-                   button; what kind of text it is -- title, heading, body --
-                   is the Styles door on the Object tab once the box exists. -->
-              <span class="rbn-tall fx-strip big-strip" id="tx-strip"
-                role="group" aria-label="Text box"></span>
+              <!-- ONE TILE PER KIND OF BOX, AGAIN (T220; 2026-09-03,
+                   user: "what happened to being able to insert text
+                   boxes by type"). T207 collapsed them to a single tile
+                   to buy width on a tab that also held four galleries;
+                   Text is its own tab now, so they are back, in a frame
+                   with the same arrows every other gallery has. -->
+              <span class="rbn-tall strip-frame" id="tx-strip-frame">
+                <span class="fx-strip tx-strip" id="tx-strip"
+                  role="group" aria-label="Kinds of text box"></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="tx-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="tx-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="tx-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every kind of text box">&#9662;</button></span></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Equation</button>
@@ -11944,10 +12011,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Add a Markdown box - headings, bullets, numbers,
  links, quotes, code and emphasis, typed as text and rendered on the
  slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8"/><path d="M2.6 7.4h10.8"/><path d="M2.6 10.6h7.2"/></svg> Markdown</button>
-              <button class="dbtn rbn-sm" id="dc-qr"
-                title="Ask for a link and put a QR code on the page —
- point a phone at it to open your repo, paper or data"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.2" width="4.4" height="4.4"/><rect x="9.4" y="2.2" width="4.4" height="4.4"/><rect x="2.2" y="9.4" width="4.4" height="4.4"/><path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/><path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/></svg> QR code</button>
+              <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
+                aria-pressed="false"
+                title="Draw a table. Double-click a cell to type; Tab
+ moves along the row, Enter drops down"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg> Table</button>
             </span>
             <span class="rbn-lab">Write</span>
           </span>
@@ -11956,7 +12023,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="insert" data-fold-ic="shapes">
+          <span class="rbn-grp rbn-shapes" data-tab="images" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
@@ -11972,7 +12039,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
-          <span class="rbn-grp rbn-draw" data-tab="insert" data-fold-ic="pen">
+          <span class="rbn-grp rbn-draw" data-tab="images" data-fold-ic="pen">
             <span class="rbn-row">
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
@@ -12002,7 +12069,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                the resting row pays nothing; setTool shows it and the
                ribbon re-fits. The hint line is the first thing the
                tight rung drops. -->
-          <span class="rbn-grp rbn-cancel" data-tab="insert" data-fold-ic="pen">
+          <span class="rbn-grp rbn-cancel" data-tab="images" data-fold-ic="pen">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell et-status" id="et-status"
                 hidden></span>
@@ -12292,6 +12359,22 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
+              <!-- T220: THE DECK'S SIX COLOURS, ON THE ROW. Both doors
+                   stay for everything else, but the colours this deck is
+                   actually built from are one click, not three
+                   (2026-09-03, user: "I would prefer if some of these
+                   were quick options that we can see. AGAIN, DON'T HAVE
+                   EVERYTHING ALWAYS HIDDEN BEHIND SEVERAL CLICKS").
+                   Filled by quickSwatchBoot from the same tokens the
+                   picker offers, applied through the same setter. -->
+              <span class="rbn-cell rbn-seg qk-cell" id="fmt-txquick" hidden
+                role="group" aria-label="Text colour">
+                <span class="cell-lab">Text</span>
+              </span>
+              <span class="rbn-cell rbn-seg qk-cell" id="fmt-bgquick" hidden
+                role="group" aria-label="Fill colour">
+                <span class="cell-lab">Fill</span>
+              </span>
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
                 <input class="fmt-range" id="fmt-op" type="range"
@@ -12302,44 +12385,33 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           </span>
           <span class="rbn-grp" data-tab="object" data-fold-ic="text">
             <span class="rbn-row">
-              <!-- T208: Font over Styles; B I U over Left Centre Right as two runs;
-                   bullets over numbers; Paragraph; the two editors when they apply -->
-              <span class="sh-drop opt-drop" id="fmt-fontwrap">
-                <button class="dbtn etm" id="fmt-font-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Typeface, size and strikethrough"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Font &#9662;</button>
-                <div class="sh-menu opt-panel font-panel" id="fmt-font-menu"
-                  hidden>
-                  <div class="hd-lab">typeface</div>
-                  <div class="opt-row">
-                    <select class="etm" id="fmt-font" hidden title="Text font">
-                      <option value="sans">Sans</option>
-                      <option value="serif">Serif</option>
-                      <option value="mono">Mono</option>
-                      <option value="system">System</option>
-                      <option value="hand">Hand</option>
-                    </select>
-                  </div>
-                  <div class="hd-lab">size</div>
-                  <div class="opt-row">
-                    <span class="fmt-szwrap" id="fmt-szwrap" hidden
-                      title="Text size (points)">
-                      <input class="fmt-num" id="fmt-size" type="number"
-                        min="6" max="240" step="1"
-                        aria-label="Text size in points">
-                      <span class="fmt-unit">pt</span></span>
-                    <button class="dbtn etm" id="fmt-smaller"
-                      title="Smaller text">A&#8722; Smaller</button>
-                    <button class="dbtn etm" id="fmt-bigger"
-                      title="Bigger text">A+ Bigger</button>
-                  </div>
-                  <div class="hd-lab">more</div>
-                  <div class="opt-row">
-                    <button class="dbtn etm" id="fmt-strike"
-                      title="Strikethrough"><s>S</s> Strikethrough</button>
-                  </div>
-                </div>
+              <!-- T220: THE TYPEFACE AND THE SIZE ARE ON THE ROW.
+                   T177 had put them in a Font window because the row was
+                   full; the Animation group leaving this tab paid for
+                   them (2026-09-03, user: "this would allow things like
+                   the text size to be actually always visible as it
+                   should be. That should not be behind two clicks").
+                   The size is one segmented cell -- the number, its
+                   unit, and the two steppers are one decision. -->
+              <select class="etm" id="fmt-font" hidden title="Typeface">
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+                <option value="system">System</option>
+                <option value="hand">Handwritten</option>
+              </select>
+              <span class="rbn-cell rbn-seg" id="fmt-sizecell" hidden
+                role="group" aria-label="Text size">
+                <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                  title="Text size (points)">
+                  <input class="fmt-num" id="fmt-size" type="number"
+                    min="6" max="240" step="1"
+                    aria-label="Text size in points">
+                  <span class="fmt-unit">pt</span></span>
+                <button class="dbtn etm" id="fmt-smaller"
+                  title="Smaller text">A&#8722; Smaller</button>
+                <button class="dbtn etm" id="fmt-bigger"
+                  title="Bigger text">A+ Bigger</button>
               </span>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
@@ -12350,13 +12422,27 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
                   hidden></div>
               </span>
-              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
+              <!-- T220: line spacing is a door on the row, not a section
+                   inside the Paragraph window. It keeps its id and its
+                   menu; only the door is new. -->
+              <span class="sh-drop opt-drop" id="fmt-lhwrap">
+                <button class="dbtn etm" id="fmt-lh-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Space between the lines, and between the
+ paragraphs, of this box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Spacing &#9662;</button>
+                <div class="sh-menu opt-panel lh-menu" id="fmt-lh-menu"
+                  hidden data-built="1"></div>
+              </span>
+              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group"
+                aria-label="Bold, italic, underline, strikethrough">
                 <button class="dbtn etm" id="fmt-bold"
                 title="Bold"><b>B</b></button>
                 <button class="dbtn etm" id="fmt-ital"
                 title="Italic"><i>I</i></button>
                 <button class="dbtn etm" id="fmt-under"
                 title="Underline"><u>U</u></button>
+                <button class="dbtn etm" id="fmt-strike"
+                title="Strikethrough"><s>S</s></button>
               </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
@@ -12379,7 +12465,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
  paragraph spacing, and bending the text along a curve"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
-                  hidden>
+                  hidden data-built="1">
                   <div class="hd-lab">list levels</div>
                   <div class="opt-row">
                     <button class="dbtn etm" id="fmt-outdent" hidden
@@ -12391,9 +12477,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   </div>
                   <div class="hd-lab">indent the whole box</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
-                  <span class="sh-drop opt-sec" id="fmt-lhwrap">
-                    <div class="sh-menu lh-menu" id="fmt-lh-menu"></div>
-                  </span>
                   <div class="hd-lab">curve</div>
                   <div class="opt-row" id="fmt-para-curve"></div>
                 </div>
@@ -12600,6 +12683,17 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Add, reorder and name the figures in this flip
  book, and tie text or objects to one of them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg>
    Figures&#8230;</button>
+              <!-- T220: HISTORY, WHERE YOU CAN SEE IT. The per-object
+                   history (T10) could only be reached from a canvas
+                   right-click or from the Layers pane's Actions menu --
+                   a menu, in a pane, behind a button (2026-09-03, user:
+                   "there is too much hidden inside menus inside menus
+                   inside menus, like in the layers"). One button, and it
+                   opens full screen like the other reviews. -->
+              <button class="dbtn etm" id="fmt-hist" hidden
+                title="Every state this object has been through that the
+ undo stack still remembers, with a button to put any of them back"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/><path d="M8 5.2V8l2.2 1.3"/></svg> History&#8230;</button>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
@@ -12628,59 +12722,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   Gridlines</button>
             </span>
             <span class="rbn-lab">Table</span>
-          </span>
-          <!-- ANIMATION, ON THE OBJECT TAB (T179). The selection sends
-               you here, so this is where one click on the thing you
-               just selected has to give it an entrance (2026-09-02,
-               user: "it is still quite a few clicks to add an appear
-               animation to something... in the 'Object' list there is
-               an animation tab which has all the animation options").
-               Five buttons that show which one is on -- the same five
-               the gallery offers, through the same setter -- and
-               nothing hides them the moment they become usable, which
-               is what the old effect buttons did (T171). The gallery
-               on the Animation tab stays for the whole-slide case. -->
-          <span class="rbn-grp rbn-fx" data-tab="object" data-fold-ic="appear">
-            <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-fx-none" aria-pressed="false"
-                title="No entrance — on the slide from the start"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg> None</button>
-              <button class="dbtn etm" id="fmt-fx-appear" aria-pressed="false"
-                title="Appears on its click, with no motion"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="4.4" y="5.4" width="7.2" height="5.2" rx="1"/><path d="M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5"/></svg> Appear</button>
-              <button class="dbtn etm" id="fmt-fx-fade" aria-pressed="false"
-                title="Fades in on its click"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg> Fade</button>
-              <button class="dbtn etm" id="fmt-fx-rise" aria-pressed="false"
-                title="Floats up into place on its click"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.4" y="2.4" width="9.2" height="6" rx="1"/><path d="M8 14.4v-3.6"/><path d="m6.1 12.6 1.9-1.8 1.9 1.8"/></svg> Float up</button>
-              <button class="dbtn etm" id="fmt-fx-zoom" aria-pressed="false"
-                title="Grows into place on its click"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg> Grow</button>
-              <!-- HOW MUCH OF A TEXT BOX ARRIVES, here as well as on the
-                   Animation tab (T198; 2026-09-02, user: "where is the
-                   animate by dot point thing gone???? Can that be an
-                   option when clicking on a box with dot points?").
-                   Shown for a text box; picking one on a box with no
-                   entrance gives it a Fade first, so "by bullet" is one
-                   click and not two. -->
-              <!-- the three as one run (T212), so an effect never shares
-                   a column with how much of the text arrives -->
-              <span class="rbn-cell rbn-seg" id="tx-run-by" role="group"
-                aria-label="How much of the text arrives per click">
-              <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
-                title="The whole box arrives on one click"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Whole box</button>
-              <button class="dbtn etm" id="fmt-by-para" aria-pressed="false"
-                title="One click per bullet, or per line you pressed Enter
- on. A box with no entrance yet gets a Fade"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6"/><path d="m3 5.6 2.4 2.4L3 10.4"/></svg> By bullet</button>
-              <button class="dbtn etm" id="fmt-by-sent" aria-pressed="false"
-                title="One click per sentence. A box with no entrance yet
- gets a Fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> By sentence</button>
-              </span>
-            </span>
-            <span class="rbn-lab">Animation</span>
           </span>
         </span>
       </div>
@@ -12768,6 +12809,17 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <button class="dbtn rbn-sm" id="img-ov-close" title="Close (Esc)"
             ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
         <div class="img-ov-body" id="img-ov-body"></div>
+      </div>
+      <!-- THE HISTORY OF ONE OBJECT, FULL SCREEN (T220). The same
+           states the dock pane lists, with room for the thumbnails. -->
+      <div class="img-ov" id="oh-ov" hidden role="dialog"
+        aria-label="History of this object">
+        <div class="img-ov-h"><span class="img-ov-t"
+          id="oh-ov-t">History of this object</span>
+          <span class="img-ov-sub" id="oh-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="oh-ov-close" title="Close (Esc)"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
+        <div class="img-ov-body oh-list" id="oh-ov-body"></div>
       </div>
       <!-- MISMATCHED TEXT and TIDY PAGE, FULL SCREEN (T209; 2026-09-02,
            user: "this mismatched text thing is a good idea, but horrible
@@ -13547,7 +13599,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "qr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.2\" width=\"4.4\" height=\"4.4\"/><rect x=\"9.4\" y=\"2.2\" width=\"4.4\" height=\"4.4\"/><rect x=\"2.2\" y=\"9.4\" width=\"4.4\" height=\"4.4\"/><path d=\"M9.4 9.4h2v2h-2Z\"/><path d=\"M13.8 9.4v1.8\"/><path d=\"M9.4 13.8h1.8\"/><path d=\"M13 12.6v1.2h.8\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -20835,7 +20887,7 @@ window.JunoPptx = (function () {
      content               LISTS · TABLES · format bar wiring · FILL PANEL
      arranging             copy/cut/paste · STACKING ORDER · MATCH ANOTHER
                            SLIDE · ARRANGE THIS SLIDE · ARRANGEMENTS
-     extras                QR generator · EQUATION EDITOR · images ·
+     extras                EQUATION EDITOR · images ·
                            FRAMES PANE · animation PANE · PRESENTER VIEW
      shell                 presentations rail · CUSTOM VIEW · thumbnails ·
                            THE OUTLINE · SLIDE SECTIONS · mode switching
@@ -22578,9 +22630,12 @@ window.JunoPptx = (function () {
     return d;
   }
   var ohOid=null;
-  function renderObjHist(){
-    var list=$('#objhist-list'),head=$('#objhist-count');
-    var ttl=$('#objhist-t');
+  /* T220: the same states, drawn into whichever host asks -- the
+     dock pane or the full-screen view. The pane was the only home,
+     and it could only be opened from a right-click menu or from a
+     menu inside the Layers pane (2026-09-03, user: "there is too
+     much hidden inside menus inside menus inside menus"). */
+  function renderObjHistInto(list,head,ttl){
     if(!list) return;
     list.innerHTML='';
     /* Deselecting or moving to a title is not deletion. The pane follows
@@ -22640,6 +22695,30 @@ window.JunoPptx = (function () {
       }
       list.appendChild(row);
     });
+  }
+  function renderObjHist(){
+    renderObjHistInto($('#objhist-list'),$('#objhist-count'),
+      $('#objhist-t'));
+  }
+  function renderObjHistOverview(){
+    renderObjHistInto($('#oh-ov-body'),$('#oh-ov-sub'),$('#oh-ov-t'));
+  }
+  /* THE DOOR, ON THE RIBBON (T220). One button on the Object tab,
+     opening the full-screen view the other reviews use. */
+  function ohOverviewBoot(){
+    var btn=$('#fmt-hist'),ov=$('#oh-ov');
+    if(!btn||!ov) return;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a){toast('Select something first');return;}
+      ensureOids(s);
+      ohOid=a.oid;
+      renderObjHistOverview();
+      overlayShow(btn,ov);
+    });
+    var cl=$('#oh-ov-close');
+    if(cl) cl.addEventListener('click',function(){overlayHide(ov);});
   }
   /* the fit height is taken from what the box is NOW: you set it by
      making the box the size you want and saying "stay this big", which
@@ -24106,7 +24185,10 @@ window.JunoPptx = (function () {
      from Insert. */
   /* ...and View is one again (T200): the page-looking tools were on
      Home, and Home took the layout system. */
-  var TABS=['home','insert','design','animation','view','present','object'];
+  /* ...and Insert is Images and Text (T220): one tab was holding
+     four galleries and eleven doors. */
+  var TABS=['home','images','text','design','animation','view',
+    'present','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -24120,6 +24202,9 @@ window.JunoPptx = (function () {
          either lands on its current home rather than on a tab that
          no longer exists */
       if(t==='animate') t='animation';
+      /* Insert split in two (T220); a browser that remembers it
+         lands on the half that kept the galleries */
+      if(t==='insert') t='images';
       /* `view` is a real tab again (T200), so a browser that remembers
          it from before 2026-08-20 lands on it */
       /* TABS is the ACTIVE LAYOUT's tabs, which need not include
@@ -26066,7 +26151,8 @@ window.JunoPptx = (function () {
     return [{id:'default',name:'Default',
       blurb:'The arrangement the app ships with: Home, Insert, Design, Animation, View, and a contextual Object tab.',
       selTab:'object',fromMarkup:true,family:'default',
-      tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},
+      tabs:[{id:'home',label:'Home'},{id:'images',label:'Images'},
+            {id:'text',label:'Text'},
             {id:'design',label:'Design'},{id:'animation',label:'Animation'},
             {id:'view',label:'View'},{id:'present',label:'Present'},{id:'object',label:'Object'}],
       groups:[]}].concat(RIBBON_LAYOUTS||[]);
@@ -26545,7 +26631,7 @@ window.JunoPptx = (function () {
          'fmt-rotl','fmt-rotr','fmt-arline','fmt-argrid',
          'fmt-samewrap']},
       {id:'of-text',label:'Text',tab:'insert',
-       items:['tx-strip','dc-maths','dc-md','dc-qr']},
+       items:['tx-strip','dc-maths','dc-md']},
       {id:'of-illus',label:'Illustrations',tab:'insert',
        items:['et-image','shape-strip-frame','dc-line','dc-draw','et-table',
          'et-flip','et-arrow','et-cancel']},
@@ -26591,7 +26677,7 @@ window.JunoPptx = (function () {
        items:['hm-newslide','hm-dupslide','hm-laywrap','hm-match',
          'hm-delslide','lay-drop','dsg-tidy']},
       {id:'sl-insert',label:'Insert',tab:'slide',
-       items:['tx-strip','et-image','dc-maths','dc-md','dc-qr']},
+       items:['tx-strip','et-image','dc-maths','dc-md']},
       {id:'sl-draw',label:'Draw',tab:'slide',
        items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip',
          'et-arrow','et-cancel']},
@@ -26646,7 +26732,7 @@ window.JunoPptx = (function () {
        items:['et-image','fmt-cropwrap','fmt-lockar','fmt-sizepos',
          'fmt-parts']},
       {id:'s1-typed',label:'Typed content',tab:'sources',
-       items:['tx-strip','dc-maths','dc-md','dc-qr']},
+       items:['tx-strip','dc-maths','dc-md']},
       {id:'s1-drawn',label:'Drawn content',tab:'sources',
        items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip',
          'et-arrow','et-cancel']},
@@ -26728,7 +26814,7 @@ window.JunoPptx = (function () {
        items:['dsg-scale-down','dsg-scale-up','dsg-restyle','dsg-design','dsg-std',
          'hm-match']},
       {id:'day-maths',label:'Other inserts',tab:'more',
-       items:['dc-maths','dc-md','dc-qr','dc-draw']},
+       items:['dc-maths','dc-md','dc-draw']},
       {id:'day-workspace',label:'Workspace',tab:'more',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-check','objects-btn','vw-morewrap']},
@@ -26753,7 +26839,7 @@ window.JunoPptx = (function () {
       {id:'j3-proof',label:'Proof and versions',tab:'page',
        items:['vw-check','vw-versions']},
       {id:'j3-insert',label:'Insert',tab:'content',
-       items:['tx-strip','et-image','dc-maths','dc-md','dc-qr','shape-strip-frame','dc-line',
+       items:['tx-strip','et-image','dc-maths','dc-md','shape-strip-frame','dc-line',
          'dc-draw','et-table','et-flip','et-arrow','et-cancel']},
       {id:'j3-figures',label:'Figure source',tab:'content',
        items:['fmt-figures','fmt-replace','fmt-caption','fmt-imgrefresh',
@@ -26799,7 +26885,7 @@ window.JunoPptx = (function () {
          'hm-delslide','lay-drop','dsg-tidy','page-strip-frame','bg-drop','dc-wmark',
          'dc-head','dc-foot','dc-nums','vw-versions']},
       {id:'one-insert',label:'Insert and sources',tab:'all',
-       items:['tx-strip','et-image','dc-maths','dc-md','dc-qr','shape-strip-frame','dc-line',
+       items:['tx-strip','et-image','dc-maths','dc-md','shape-strip-frame','dc-line',
          'dc-draw','fmt-figures','fmt-replace','fmt-caption','fmt-locate',
          'fmt-prov','fmt-imgrefresh','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
@@ -26841,7 +26927,7 @@ window.JunoPptx = (function () {
          'et-cancel']},
       {id:'mi-place',label:'Place',tab:'mi-rail',
        items:['et-cell','et-image','et-table','et-flip','dc-maths','dc-md',
-         'dc-qr']},
+         'dc-md']},
       {id:'mi-frames',label:'Frames',tab:'mi-rail',
        items:['hm-newslide','hm-dupslide','hm-laywrap','hm-match',
          'hm-delslide']},
@@ -26925,7 +27011,7 @@ window.JunoPptx = (function () {
          'fmt-headwrap','fmt-bendwrap']},
       {id:'tt-ins',label:'Insert',tab:'tt-more',
        items:['et-table','et-flip','shape-strip-frame','dc-line','et-arrow',
-         'dc-draw','dc-maths','dc-md','dc-qr','et-cancel']},
+         'dc-draw','dc-maths','dc-md','et-cancel']},
       {id:'tt-lay',label:'Slides',tab:'tt-more',
        items:['hm-laywrap','hm-match']},
       {id:'tt-page',label:'Page',tab:'tt-more',
@@ -27616,6 +27702,9 @@ window.JunoPptx = (function () {
        whole-deck snapshots per input event. */
     var ohp=$('#objhist');
     if(!quiet&&ohp&&!ohp.hidden) renderObjHist();
+    /* ...and the full-screen view, if that is the one open (T220) */
+    var ohv=$('#oh-ov');
+    if(!quiet&&ohv&&!ohv.hidden) renderObjHistOverview();
     refreshThumb(cur);
   }
   /* ---- keep the CURRENT slide's thumbnail live -------------------------
@@ -34995,12 +35084,10 @@ window.JunoPptx = (function () {
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
     /* the Object group's provenance row (T198): where it came from,
-       re-read it, keep it in place; and the by-bullet trio, owned by
-       animRibbonSync like the effect buttons */
-    +'#fmt-path #fmt-lock #fmt-by-all #fmt-by-para #fmt-by-sent '
-    /* the Object tab's effect buttons (T179): animRibbonSync owns
-       their visibility and their pressed state */
-    +'#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom '
+       re-read it, keep it in place. The by-bullet trio and the effect
+       buttons left this tab in T220. */
+    +'#fmt-path #fmt-lock '
+
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
        below stops flagging them on every first selection (2026-08-24) */
@@ -35019,6 +35106,7 @@ window.JunoPptx = (function () {
        be governed or it shows for everything, forever (2026-08-25). */
     +'#fmt-txcolwrap #fmt-fillcolwrap '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
+    +'#fmt-sizecell #fmt-txquick #fmt-bgquick #fmt-lh-btn '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
@@ -35227,6 +35315,9 @@ window.JunoPptx = (function () {
     show('#fmt-under',isText,!!a.u);
     show('#fmt-strike',isText,!!a.strike);
     show('#fmt-szwrap',isText||isTbl);
+    /* T220: the size cell is on the row now that the Font window
+       is gone */
+    show('#fmt-sizecell',isText||cellText||isTbl);
     /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
        already the deck's title style by definition */
     show('#fmt-stylewrap-tx',isText&&isNum);
@@ -35243,9 +35334,11 @@ window.JunoPptx = (function () {
        it would; syncOptDoors below is the safety net that hides one
        whose contents all stood down. The Paragraph window opens for a
        table too, because a table's words take spacing. */
-    show('#fmt-fontwrap',isText||cellText||isTbl);
+    show('#fmt-lh-btn',(isText||isTbl)&&isNum);
     show('#fmt-font-btn',isText||cellText||isTbl);
-    show('#fmt-parawrap',(isText||isTbl)&&isNum);
+    /* T220: list levels, the box indent and the curve are a text
+       box's own; a table's words take spacing, which is its own door */
+    show('#fmt-parawrap',isText&&isNum);
     show('#fmt-para',(isText||isTbl)&&isNum);
     var lineKinds=['arrow','rect','draw','table'];
     show('#fmt-linewrap',isNum&&lineKinds.indexOf(kind)>=0);
@@ -35340,6 +35433,8 @@ window.JunoPptx = (function () {
        guessing which one was the outline (2026-08-19, user: "'colour' vs
        'fill colour' is confusing — is that border?") */
     show('#fmt-txcol-btn',kind!=='image');
+    show('#fmt-txquick',kind!=='image');
+    if(typeof quickSwatchSync==='function') quickSwatchSync();
     var tcb=$('#fmt-txcol-btn');
     /* innerHTML, not textContent: this button is RENAMED for whatever is
        selected, and textContent would delete the icon with the old word
@@ -35354,6 +35449,7 @@ window.JunoPptx = (function () {
        background colour but no fill STYLE (2026-08-20, user: "confusing
        there is a fill and fill colour") */
     show('#fmt-fillcol-btn',showBg&&kind!=='rect');
+    show('#fmt-bgquick',showBg&&kind!=='rect');
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');
@@ -35493,6 +35589,8 @@ window.JunoPptx = (function () {
       }
     }
     show('#fmt-lock',isNum,isNum&&pinned(a));
+    /* T220: what this object has been through, one click away */
+    show('#fmt-hist',isNum);
     /* the Source window's door (T177): anything that came from
        somewhere -- a placed cell, a picture that knows its file, or
        anything with a provenance to show */
@@ -35578,6 +35676,12 @@ window.JunoPptx = (function () {
         var lab=r.previousElementSibling;
         if(lab&&lab.classList.contains('hd-lab')) lab.hidden=!any;
       });
+      /* T220: a window whose rows are BUILT when it opens is not
+         empty just because it is closed. Before spacing moved out of
+         the Paragraph window, its .opt-sec kept the sweep happy; with
+         that gone the door vanished for every text box. showFmt alone
+         decides these two. */
+      if(panel.dataset.built) return;
       var any=$$('button,input,select',panel).some(function(c){
         return !c.classList.contains('opt-sec-btn')&&optAlive(c,panel);})
         ||$$('.opt-sec',panel).some(function(sc){return optAlive(sc,panel);});
@@ -37752,12 +37856,13 @@ window.JunoPptx = (function () {
   var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,
     table:1,flip:1,guide:1};
   function setTool(t){
-    /* An unknown tool used to be armed happily: #dc-qr carried the generic
+    /* An unknown tool used to be armed happily: the QR button (since
+       removed, T220) carried the generic
        `et` class with no data-tool, so the shared wiring ran
        setTool(undefined) and left the editor in a state no code handles —
        the button pressed, Cancel showing, the layer classed
        `tool-undefined`, the hint empty, and clicks on the page doing
-       nothing. Worse, that wiring runs AFTER the QR handler's own
+       nothing. Worse, that wiring ran AFTER that handler's own
        setTool('select'), so it clobbered the cleanup and the state
        survived a successful insert (2026-08-17).
        The stray class is gone; this makes the whole family of that bug
@@ -37835,6 +37940,15 @@ window.JunoPptx = (function () {
         +'<span>'+esc(how)+'</span>';
     }
     if(typeof txStripSync==='function') txStripSync();
+    /* THE DRAWING GROUP FOLLOWS THE TAB THAT ARMED THE TOOL (T220).
+       It used to live on Insert, which was the only tab a tool could
+       be armed from; Images and Text can both arm one, and a group
+       whose Cancel is on the other tab is a trap. */
+    var cg=$('.rbn-grp.rbn-cancel');
+    if(cg&&t!=='select'&&typeof activeTab==='function'){
+      var at=activeTab();
+      if(at==='images'||at==='text') cg.setAttribute('data-tab',at);
+    }
     /* the group appeared or went, so the row is re-judged */
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
   }
@@ -38723,6 +38837,75 @@ window.JunoPptx = (function () {
     }
     buildSpacingRows();
   }
+  /* ---- T220: THE DECK'S SIX COLOURS, ON THE ROW ------------------------
+     Two runs, one for the words and one for the box, each holding the
+     six colours the deck is actually built from. They store the
+     REFERENCE (@accent), like the token chips inside the picker, so a
+     deck that changes its colours changes these too; they preview on
+     hover through the same machinery the picker uses; and they leave
+     both doors in place for every other colour (2026-09-03, user: "I
+     would prefer if some of these were quick options that we can see").
+     Six is the count the 2026-08-05 review settled on -- fourteen
+     always-visible circles shouted louder than the page. */
+  var quickSwatchSync=function(){};
+  function quickSwatchBoot(){
+    var hosts=[['#fmt-txquick','text'],['#fmt-bgquick','fill']]
+      .map(function(p){return {el:$(p[0]),target:p[1]};})
+      .filter(function(h){return !!h.el;});
+    if(!hosts.length) return;
+    function curColor(target){
+      var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
+      if(!a) return '';
+      return (target==='text'?a.color:(a.fillc||a.bgc))||'';
+    }
+    function build(){
+      var t=tokens().c;
+      hosts.forEach(function(h){
+        /* the caption stays; the swatches are rebuilt */
+        $$('.qk-sw',h.el).forEach(function(o){o.remove();});
+        Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+          var ref='@'+k,val=t[k];
+          var b=document.createElement('button');
+          b.type='button';b.className='qk-sw';
+          b.dataset.c=ref;
+          b.style.background=val;
+          b.title=(TOKEN_LABELS[k]||k)+' \u2014 '+val
+            +(h.target==='text'?', on the words':', behind them');
+          b.setAttribute('aria-label',b.title);
+          b.addEventListener('mousedown',function(e){
+            /* keep the caret, so a highlighted run recolours */
+            if(activeTextEditable()) e.preventDefault();
+          });
+          b.addEventListener('click',function(e){
+            e.stopPropagation();pvEnd(false);
+            if(h.target==='text') applyTextColor(ref);
+            else applyFillColor(ref);
+          });
+          b.addEventListener('mouseenter',function(){
+            pvEnd(true);
+            pvShow(h.target==='text'?textMut(ref):fillMut(ref));
+          });
+          b.addEventListener('mouseleave',function(){pvEnd(false);});
+          h.el.appendChild(b);
+        });
+      });
+      mark();
+    }
+    function mark(){
+      hosts.forEach(function(h){
+        var now=curColor(h.target);
+        $$('.qk-sw',h.el).forEach(function(b){
+          var on=(now===b.dataset.c);
+          b.classList.toggle('on',on);
+          b.setAttribute('aria-pressed',on.toString());
+        });
+      });
+    }
+    quickSwatchSync=function(rebuild){
+      if(rebuild) build(); else mark();
+    };
+    build();
+  }
   /* ---- WINDOWS OF OPTIONS (T177) ---------------------------------------
      A worded door on the ribbon opens a panel holding a whole cluster of
      related controls -- the font, the paragraph, the line, the source.
@@ -38737,7 +38920,11 @@ window.JunoPptx = (function () {
      those close as they act. Every door is wired here, from THE BOOT
      SEQUENCE, so a window added to the markup needs no JS of its own. */
   function optBuilder(id){
-    return id==='fmt-para-menu'?buildParaPanel:null;
+    if(id==='fmt-para-menu') return buildParaPanel;
+    /* T220: spacing is its own door on the row now, so it builds
+       itself rather than riding on the Paragraph window */
+    if(id==='fmt-lh-menu') return buildSpacingRows;
+    return null;
   }
   function optKids(w){
     var door=null,panel=null;
@@ -44118,246 +44305,14 @@ window.JunoPptx = (function () {
   if(pickCancel) pickCancel.addEventListener('click',function(){
     endPick();
   });
-  /* ---- QR generator (2026-08-04): byte mode, ECC level M, versions
-     1-10 (~200 chars — plenty for a repo / DOI link), all 8 masks with
-     spec penalty scoring; output is vector SVG so it prints crisp at A0.
-     Self-contained on purpose: a poster QR must not depend on someone
-     else's URL-shortener service. Verified by machine-decoding the
-     rendered output (see tests). ---- */
-  var QR_M_TAB=[            /* [version, ecPerBlock, data cw per block] */
-    [1,10,[16]],[2,16,[28]],[3,26,[44]],[4,18,[32,32]],[5,24,[43,43]],
-    [6,16,[27,27,27,27]],[7,18,[31,31,31,31]],[8,22,[38,38,39,39]],
-    [9,22,[36,36,36,37,37]],[10,26,[43,43,43,43,44]]];
-  var QR_ALIGN=[[],[6,18],[6,22],[6,26],[6,30],[6,34],[6,22,38],
-    [6,24,42],[6,26,46],[6,28,50]];
-  var GF_EXP=new Array(512),GF_LOG=new Array(256);
-  (function(){
-    var x=1,i;
-    for(i=0;i<255;i++){
-      GF_EXP[i]=x;GF_LOG[x]=i;
-      x<<=1; if(x&256) x^=0x11d;
-    }
-    for(i=255;i<512;i++) GF_EXP[i]=GF_EXP[i-255];
-  })();
-  function gfMul(a,b){return (a&&b)?GF_EXP[GF_LOG[a]+GF_LOG[b]]:0;}
-  function rsEc(data,n){
-    var g=[1],i,j;                 /* generator, highest degree first */
-    for(i=0;i<n;i++){
-      var ng=[],k;
-      for(k=0;k<=g.length;k++) ng.push(0);
-      for(j=0;j<g.length;j++){
-        ng[j]^=g[j];
-        ng[j+1]^=gfMul(g[j],GF_EXP[i]);
-      }
-      g=ng;
-    }
-    var res=[];
-    for(i=0;i<n;i++) res.push(0);
-    for(i=0;i<data.length;i++){
-      var f=data[i]^res[0];
-      res.shift();res.push(0);
-      if(f) for(j=0;j<n;j++) res[j]^=gfMul(g[j+1],f);
-    }
-    return res;
-  }
-  function qrMatrix(text){
-    var bytes=[],enc=encodeURIComponent(text),i,j,x,y;
-    for(i=0;i<enc.length;i++){
-      if(enc[i]==='%'){bytes.push(parseInt(enc.substr(i+1,2),16));i+=2;}
-      else bytes.push(enc.charCodeAt(i));
-    }
-    var ver=0,tab=null,dataCw=0;
-    for(i=0;i<QR_M_TAB.length;i++){
-      var cw=0;
-      for(j=0;j<QR_M_TAB[i][2].length;j++) cw+=QR_M_TAB[i][2][j];
-      if(4+(QR_M_TAB[i][0]<10?8:16)+bytes.length*8<=cw*8){
-        ver=QR_M_TAB[i][0];tab=QR_M_TAB[i];dataCw=cw;break;}
-    }
-    if(!ver) return null;
-    var bits=[];
-    function put(v,n){for(var k=n-1;k>=0;k--) bits.push((v>>k)&1);}
-    put(4,4);
-    put(bytes.length,ver<10?8:16);
-    for(i=0;i<bytes.length;i++) put(bytes[i],8);
-    put(0,Math.min(4,dataCw*8-bits.length));
-    while(bits.length%8) bits.push(0);
-    var data=[];
-    for(i=0;i<bits.length;i+=8){
-      var v8=0;
-      for(j=0;j<8;j++) v8=(v8<<1)|bits[i+j];
-      data.push(v8);
-    }
-    var pi=0;
-    while(data.length<dataCw) data.push([0xec,0x11][(pi++)%2]);
-    var blocks=[],ecs=[],off=0,maxD=0;
-    for(i=0;i<tab[2].length;i++){
-      var d=data.slice(off,off+tab[2][i]);off+=tab[2][i];
-      blocks.push(d);ecs.push(rsEc(d,tab[1]));
-      maxD=Math.max(maxD,d.length);
-    }
-    var seq=[];
-    for(i=0;i<maxD;i++) for(j=0;j<blocks.length;j++)
-      if(i<blocks[j].length) seq.push(blocks[j][i]);
-    for(i=0;i<tab[1];i++) for(j=0;j<ecs.length;j++)
-      seq.push(ecs[j][i]);
-    var N=17+ver*4,m=[],rsv=[];
-    for(y=0;y<N;y++){
-      var r1=[],r2=[];
-      for(x=0;x<N;x++){r1.push(0);r2.push(0);}
-      m.push(r1);rsv.push(r2);
-    }
-    function set(px,py,v){
-      if(px<0||py<0||px>=N||py>=N) return;
-      m[py][px]=v?1:0;rsv[py][px]=1;
-    }
-    function finder(cx,cy){
-      for(var dy=-1;dy<=7;dy++)for(var dx=-1;dx<=7;dx++)
-        set(cx+dx,cy+dy,dx>=0&&dx<=6&&dy>=0&&dy<=6
-          &&(dx===0||dx===6||dy===0||dy===6
-             ||(dx>=2&&dx<=4&&dy>=2&&dy<=4)));
-    }
-    finder(0,0);finder(N-7,0);finder(0,N-7);
-    for(i=8;i<N-8;i++){
-      if(!rsv[6][i]) set(i,6,i%2===0);
-      if(!rsv[i][6]) set(6,i,i%2===0);
-    }
-    var ac=QR_ALIGN[ver-1];
-    for(i=0;i<ac.length;i++) for(j=0;j<ac.length;j++){
-      var cy=ac[i],cx=ac[j];
-      /* skip only the three FINDER corners. An alignment pattern that
-         crosses the timing lines (any middle coordinate from v7 up) IS
-         drawn — an any-reserved-cell test silently dropped those two
-         patterns and shifted the whole bit stream (2026-08-04). */
-      if((cy<9&&cx<9)||(cy<9&&cx>N-10)||(cy>N-10&&cx<9)) continue;
-      for(var dy2=-2;dy2<=2;dy2++)for(var dx2=-2;dx2<=2;dx2++)
-        set(cx+dx2,cy+dy2,
-          Math.max(Math.abs(dx2),Math.abs(dy2))!==1);
-    }
-    set(8,N-8,1);                              /* the dark module */
-    for(i=0;i<9;i++){rsv[8][i]=1;rsv[i][8]=1;}
-    for(i=N-8;i<N;i++){rsv[8][i]=1;rsv[i][8]=1;}
-    if(ver>=7) for(i=0;i<6;i++) for(j=N-11;j<N-8;j++){
-      rsv[j][i]=1;rsv[i][j]=1;}
-    var bi=0,total=seq.length*8;
-    function bitAt(k){return (seq[k>>3]>>(7-(k&7)))&1;}
-    var cx2=N-1,up=true;
-    while(cx2>0){
-      if(cx2===6) cx2--;
-      for(var yy=0;yy<N;yy++){
-        var py2=up?N-1-yy:yy;
-        for(var xx=0;xx<2;xx++){
-          var px2=cx2-xx;
-          if(rsv[py2][px2]) continue;
-          m[py2][px2]=bi<total?bitAt(bi):0;bi++;
-        }
-      }
-      up=!up;cx2-=2;
-    }
-    function maskBit(mk,my,mx){
-      switch(mk){
-        case 0:return (mx+my)%2===0;
-        case 1:return my%2===0;
-        case 2:return mx%3===0;
-        case 3:return (mx+my)%3===0;
-        case 4:return (Math.floor(my/2)+Math.floor(mx/3))%2===0;
-        case 5:return (mx*my)%2+(mx*my)%3===0;
-        case 6:return ((mx*my)%2+(mx*my)%3)%2===0;
-        default:return ((mx+my)%2+(mx*my)%3)%2===0;
-      }
-    }
-    function fmtBits(mk){
-      var d=mk,v=d<<10,k;      /* EC level M = 00, then 3 mask bits */
-      for(k=14;k>=10;k--) if((v>>k)&1) v^=0x537<<(k-10);
-      return ((d<<10)|v)^0x5412;
-    }
-    function writeFormat(c,mk){
-      var f=fmtBits(mk),k,bit;
-      for(k=0;k<15;k++){
-        bit=(f>>k)&1;
-        if(k<6) c[k][8]=bit;
-        else if(k===6) c[7][8]=bit;
-        else if(k===7) c[8][8]=bit;
-        else if(k===8) c[8][7]=bit;
-        else c[8][14-k]=bit;
-        if(k<8) c[8][N-1-k]=bit;
-        else c[N-15+k][8]=bit;
-      }
-    }
-    function writeVersion(c){
-      var v=ver<<12,k;
-      for(k=17;k>=12;k--) if((v>>k)&1) v^=0x1f25<<(k-12);
-      v|=ver<<12;
-      for(k=0;k<18;k++){
-        var bit=(v>>k)&1,a2=Math.floor(k/3),b2=k%3+N-11;
-        c[a2][b2]=bit;c[b2][a2]=bit;
-      }
-    }
-    function penalty(c){
-      var p=0,py,px,run,v;
-      for(py=0;py<N;py++){
-        run=1;
-        for(px=1;px<=N;px++){
-          if(px<N&&c[py][px]===c[py][px-1]) run++;
-          else{if(run>=5)p+=3+run-5;run=1;}
-        }
-      }
-      for(px=0;px<N;px++){
-        run=1;
-        for(py=1;py<=N;py++){
-          if(py<N&&c[py][px]===c[py-1][px]) run++;
-          else{if(run>=5)p+=3+run-5;run=1;}
-        }
-      }
-      for(py=0;py<N-1;py++)for(px=0;px<N-1;px++){
-        v=c[py][px];
-        if(c[py][px+1]===v&&c[py+1][px]===v&&c[py+1][px+1]===v) p+=3;
-      }
-      var P1=[1,0,1,1,1,0,1,0,0,0,0],P2=[0,0,0,0,1,0,1,1,1,0,1];
-      function scan(get){
-        for(var a2=0;a2<N;a2++)for(var b2=0;b2<=N-11;b2++){
-          var o1=true,o2=true;
-          for(var k=0;k<11;k++){
-            var vv=get(a2,b2+k);
-            if(vv!==P1[k]) o1=false;
-            if(vv!==P2[k]) o2=false;
-          }
-          if(o1) p+=40;
-          if(o2) p+=40;
-        }
-      }
-      scan(function(a2,b2){return c[a2][b2];});
-      scan(function(a2,b2){return c[b2][a2];});
-      var dark=0;
-      for(py=0;py<N;py++)for(px=0;px<N;px++) dark+=c[py][px];
-      p+=Math.floor(Math.abs(dark*100/(N*N)-50)/5)*10;
-      return p;
-    }
-    var best=null,bestPen=1e9;
-    for(var mk=0;mk<8;mk++){
-      var c=[];
-      for(y=0;y<N;y++) c.push(m[y].slice());
-      for(y=0;y<N;y++)for(x=0;x<N;x++)
-        if(!rsv[y][x]&&maskBit(mk,y,x)) c[y][x]^=1;
-      writeFormat(c,mk);
-      if(ver>=7) writeVersion(c);
-      var pen=penalty(c);
-      if(pen<bestPen){bestPen=pen;best=c;}
-    }
-    return best;
-  }
-  function qrSvgData(text){
-    var m2=qrMatrix(text); if(!m2) return null;
-    var n=m2.length,q=4,S=n+q*2,d='';
-    for(var y=0;y<n;y++)for(var x=0;x<n;x++)
-      if(m2[y][x]) d+='M'+(x+q)+' '+(y+q)+'h1v1h-1z';
-    var svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '
-      +S+' '+S+'" shape-rendering="crispEdges">'
-      +'<rect width="'+S+'" height="'+S+'" fill="#fff"/>'
-      +'<path d="'+d+'" fill="#000"/></svg>';
-    return 'data:image/svg+xml;base64,'
-      +btoa(unescape(encodeURIComponent(svg)));
-  }
-  window.SemDeckQr=qrMatrix;   /* test hook */
+  /* ---- The QR generator was removed on 2026-09-03 (T220) --------------
+     It shipped for posters in 2026-08-04 and was never asked for again;
+     the user, seeing its button on Insert: "please get rid of QR code,
+     I don't know what the fuck that is, but it sucks." Roughly 240
+     lines of encoder went with the door rather than staying as a
+     capability nothing could reach. `git show ca39b03^` has it if a
+     poster ever wants one back. Existing decks are unaffected: a QR
+     was inserted as an ordinary image, so it still renders. */
   /* Line has NO handler here: it is a tool now (data-tool="line"), wired
      generically with every other .et button, and drawn by dragging like a
      shape. A listener here would fire ALONGSIDE that wiring, so clicking
@@ -45033,31 +44988,6 @@ window.JunoPptx = (function () {
     return s.layout==='title'
       &&(hasMathsStr(s.title||'')||hasMathsStr(s.sub||''));
   }
-  var qrBtn=$('#dc-qr');
-  if(qrBtn) qrBtn.addEventListener('click',function(){
-    var s=pres.slides[cur];
-    if(!s){toast('Add a slide first');return;}
-    var url=prompt('Link for the QR code (repo / paper / data):',
-      'https://');
-    if(!url||url==='https://') return;
-    var src=qrSvgData(url);
-    if(!src){
-      toast('That link is too long for a QR code (about 200 characters '
-        +'at most)');
-      return;
-    }
-    var l=stage.querySelector('.annot-layer');
-    var lr=l?l.getBoundingClientRect():null;
-    var w2=12,h2=12;
-    if(lr&&lr.height) h2=w2*(lr.width/lr.height);
-    h2=Math.max(4,Math.min(60,h2));
-    s.annots=s.annots||[];
-    s.annots.push({k:'image',x:84,y:Math.max(2,94-h2),w:w2,h:h2,src:src});
-    markDirty();
-    setTool('select');
-    if(l){renderAnnots(l,s);selectAnnot(l,s.annots.length-1);}
-    else renderSlide();
-  });
 /* 45-images.js — placing images, where they came from, and cropping them.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
    siblings in filename order by assets.deck_js(). It does not
@@ -48388,10 +48318,6 @@ window.JunoPptx = (function () {
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
   var seqType='fade';
-  /* the Object tab's effect buttons (T179): id and the type it
-     writes. The same five as SEQ_FX, in the same order. */
-  var OBJ_FX=[['fmt-fx-none','none'],['fmt-fx-appear','appear'],
-    ['fmt-fx-fade','fade'],['fmt-fx-rise','rise'],['fmt-fx-zoom','zoom']];
   function seqKeyDown(e){
     if(!seqArm) return;
     if(e.key>='0'&&e.key<='9'){
@@ -48744,20 +48670,6 @@ window.JunoPptx = (function () {
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
-    /* the Object tab's by-bullet trio (T198): a box with no entrance
-       gets a Fade first, so "animate by dot point" is one click */
-    var OBJ_BY=[['fmt-by-all',''],['fmt-by-para','para'],
-      ['fmt-by-sent','sent']];
-    OBJ_BY.forEach(function(p){
-      var b=$('#'+p[0]); if(!b) return;
-      b.addEventListener('click',function(e){
-        e.stopPropagation();
-        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
-        if(!a2||a2.k!=='text') return;
-        if(!a2.anim) setType('fade');
-        setBy(p[1]);
-      });
-    });
     /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
        PowerPoint's Start box, on the model this deck already has:
        On click is a stop of its own; With previous is the pane's
@@ -49160,14 +49072,6 @@ window.JunoPptx = (function () {
        buttons in the ribbon where you can see which one is on, None reads
        as the undo it is, and Clear slide strips the whole slide in one
        press without hunting item by item. */
-    /* the Object tab's effect buttons (T179): one click on the thing
-       you just selected, through the same setter the pane and the
-       gallery use */
-    OBJ_FX.forEach(function(p){
-      var b=$('#'+p[0]);
-      if(b) b.addEventListener('click',function(e){
-        e.stopPropagation();setType(p[1]);});
-    });
     /* ---- the two builds anyone actually wants ------------------------
        Setting "one at a time" by hand means selecting every item on the
        slide and stepping its build order one at a time, which is exactly
@@ -49254,26 +49158,12 @@ window.JunoPptx = (function () {
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
-      /* the by-bullet trio shows for a text box and marks how much
-         of it arrives; with no entrance yet nothing is marked */
-      var isTx=on&&a.k==='text';
-      var byNow=(isTx&&a.anim&&(a.anim.by==='para'||a.anim.by==='sent'))
-        ?a.anim.by:'';
-      [['fmt-by-all',''],['fmt-by-para','para'],['fmt-by-sent','sent']]
-        .forEach(function(p){
-          var b=$('#'+p[0]); if(!b) return;
-          b.hidden=!isTx;
-          b.setAttribute('aria-pressed',
-            (isTx&&!!a.anim&&byNow===p[1]).toString());
-        });
-      OBJ_FX.forEach(function(p){
-        var b=$('#'+p[0]); if(!b) return;
-        b.hidden=!on;
-        b.setAttribute('aria-pressed',
-          (on&&(a.anim?a.anim.type:'none')===p[1]).toString());
-      });
+      /* T220: the Object tab's own copy of the effects and the
+         by-bullet trio is gone -- an entrance is the Animation tab's
+         job, and the Object tab was the more crowded of the two
+         (2026-09-03, user: "getting rid of the animations from the
+         object page would be good. This only needs to go on
+         animations"). What is left here is the Animation tab's. */
     };
   }
 /* 50-review-and-overview.js — the deck as words, the overview map, cuts, and the builder's sidebar.
@@ -53768,9 +53658,13 @@ window.JunoPptx = (function () {
     var strip=$('#tx-strip'); if(!strip) return;
     function build(){
       strip.innerHTML='';
-      /* one tile (T207): the kind of text is the Object tab's Styles
-         door once the box exists, as in PowerPoint */
+      /* ONE TILE PER KIND (T188, back in T220): plain, then every
+         named type in the deck, each drawn as a specimen of itself.
+         T207 had collapsed these to one tile for width; Text is its
+         own tab now and the width is there. */
       var rows=[['','Text box',null]];
+      styleOrder().forEach(function(id){
+        rows.push([id,styleDef(id).label,styleDef(id)]);});
       rows.forEach(function(r){
         var b=document.createElement('button');
         b.type='button';b.className='fx-tile tx-tile';
@@ -57188,7 +57082,9 @@ window.JunoPptx = (function () {
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
   shapeStripBoot();           /* the shapes, as tiles (T197) */
-  imgPaneBoot();              /* the All images pane's door (T202) */
+  imgPaneBoot();
+  quickSwatchBoot();          /* the deck's six colours, on the row */
+  ohOverviewBoot();           /* History of this object, full screen */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
