@@ -1810,9 +1810,13 @@
     var strip=$('#tx-strip'); if(!strip) return;
     function build(){
       strip.innerHTML='';
-      /* one tile (T207): the kind of text is the Object tab's Styles
-         door once the box exists, as in PowerPoint */
+      /* ONE TILE PER KIND (T188, back in T220): plain, then every
+         named type in the deck, each drawn as a specimen of itself.
+         T207 had collapsed these to one tile for width; Text is its
+         own tab now and the width is there. */
       var rows=[['','Text box',null]];
+      styleOrder().forEach(function(id){
+        rows.push([id,styleDef(id).label,styleDef(id)]);});
       rows.forEach(function(r){
         var b=document.createElement('button');
         b.type='button';b.className='fx-tile tx-tile';

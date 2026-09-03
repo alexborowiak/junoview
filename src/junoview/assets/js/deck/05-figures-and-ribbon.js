@@ -1096,7 +1096,10 @@
      from Insert. */
   /* ...and View is one again (T200): the page-looking tools were on
      Home, and Home took the layout system. */
-  var TABS=['home','insert','design','animation','view','present','object'];
+  /* ...and Insert is Images and Text (T220): one tab was holding
+     four galleries and eleven doors. */
+  var TABS=['home','images','text','design','animation','view',
+    'present','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -1110,6 +1113,9 @@
          either lands on its current home rather than on a tab that
          no longer exists */
       if(t==='animate') t='animation';
+      /* Insert split in two (T220); a browser that remembers it
+         lands on the half that kept the galleries */
+      if(t==='insert') t='images';
       /* `view` is a real tab again (T200), so a browser that remembers
          it from before 2026-08-20 lands on it */
       /* TABS is the ACTIVE LAYOUT's tabs, which need not include

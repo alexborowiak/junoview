@@ -57,8 +57,9 @@ def test_the_masters_panel_is_a_panel(out):
 
 def test_the_present_tab_and_its_buttons(out):
     assert 'id="rbn-tab-present" role="tab" data-tab="present"' in out
-    assert ("var TABS=['home','insert','design','animation','view','present',"
-            "'object'];") in out
+    # (Insert became Images and Text in T220)
+    assert ("var TABS=['home','images','text','design','animation','view',\n"
+            "    'present','object'];") in out
     assert "{id:'view',label:'View'},{id:'present',label:'Present'}" in out
     for cid in ("pr-here", "pr-start", "pr-presenter", "pr-talk", "pr-notes",
                 "pr-tap", "pr-trace"):

@@ -566,11 +566,14 @@ def test_the_ribbon_is_tabbed(out):
     # ...and View since T200 (2026-09-02, user: "some of the things in
     # home shouldn't be in home then... new tab with these"): Home took
     # the layout system, and the page-looking tools are their own tab
-    for t in ("home", "insert", "design", "animation", "view", "object"):
+    # ...and since T220 Insert is two tabs, Images and Text
+    for t in ("home", "images", "text", "design", "animation", "view",
+              "object"):
         assert f'id="rbn-tab-{t}"' in out, t
         assert f"'{t}'" in out
-    assert ("var TABS=['home','insert','design','animation','view','present',"
-            "'object'];") in out
+    assert 'id="rbn-tab-insert"' not in out
+    assert ("var TABS=['home','images','text','design','animation','view',\n"
+            "    'present','object'];") in out
     assert out.count('class="rbn-grp" data-tab="object"') == 5
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
@@ -3403,7 +3406,10 @@ def test_the_animation_feature_answers_to_one_name(out):
     people to it: the help page named it as a button on the Insert tab,
     and one of the nine ribbon layouts still labelled a group with it.
     """
-    assert '<span class="rbn-lab">Animation</span>' in out
+    # (the label was the Object tab's Animation group, which went in
+    # T220; the tab itself carries the name now)
+    assert 'id="rbn-tab-animation" role="tab"' in out
+    assert '>Animation</button>' in out
     # ...and since T183 the button and the pane it opens share the name
     # the user gives that list: "the animation order"
     # T215: named for what it is, the way PowerPoint's is
@@ -3606,8 +3612,9 @@ def test_rise_is_called_float_up(out):
     assert "['rise','Float up','U']" in out
     assert "Rise</button>" not in out
     # the token is untouched, so every existing deck still means what it said
-    # the effect buttons moved to the Object tab (T179) and kept the name
-    assert "['fmt-fx-rise','rise']" in out
+    # the effect buttons moved to the Object tab in T179 and left it
+    # again in T220; the gallery is the one place that names them
+    assert "['fmt-fx-rise','rise']" not in out
 
 
 def test_the_effects_are_tiles_in_the_row(out):

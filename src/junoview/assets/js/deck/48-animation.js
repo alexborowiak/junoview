@@ -58,10 +58,6 @@
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
   var seqType='fade';
-  /* the Object tab's effect buttons (T179): id and the type it
-     writes. The same five as SEQ_FX, in the same order. */
-  var OBJ_FX=[['fmt-fx-none','none'],['fmt-fx-appear','appear'],
-    ['fmt-fx-fade','fade'],['fmt-fx-rise','rise'],['fmt-fx-zoom','zoom']];
   function seqKeyDown(e){
     if(!seqArm) return;
     if(e.key>='0'&&e.key<='9'){
@@ -414,20 +410,6 @@
     function commit(s){markDirty();rerender();render();renderFilm();
       if(typeof animRibbonSync==='function') animRibbonSync();}
     animSetType=function(t){setType(t);};
-    /* the Object tab's by-bullet trio (T198): a box with no entrance
-       gets a Fade first, so "animate by dot point" is one click */
-    var OBJ_BY=[['fmt-by-all',''],['fmt-by-para','para'],
-      ['fmt-by-sent','sent']];
-    OBJ_BY.forEach(function(p){
-      var b=$('#'+p[0]); if(!b) return;
-      b.addEventListener('click',function(e){
-        e.stopPropagation();
-        var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
-        if(!a2||a2.k!=='text') return;
-        if(!a2.anim) setType('fade');
-        setBy(p[1]);
-      });
-    });
     /* ---- TIMING, AND HOW MUCH OF A TEXT BOX ARRIVES (T185) --------
        PowerPoint's Start box, on the model this deck already has:
        On click is a stop of its own; With previous is the pane's
@@ -830,14 +812,6 @@
        buttons in the ribbon where you can see which one is on, None reads
        as the undo it is, and Clear slide strips the whole slide in one
        press without hunting item by item. */
-    /* the Object tab's effect buttons (T179): one click on the thing
-       you just selected, through the same setter the pane and the
-       gallery use */
-    OBJ_FX.forEach(function(p){
-      var b=$('#'+p[0]);
-      if(b) b.addEventListener('click',function(e){
-        e.stopPropagation();setType(p[1]);});
-    });
     /* ---- the two builds anyone actually wants ------------------------
        Setting "one at a time" by hand means selecting every item on the
        slide and stepping its build order one at a time, which is exactly
@@ -924,25 +898,11 @@
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
-      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
-      var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;
-      /* the by-bullet trio shows for a text box and marks how much
-         of it arrives; with no entrance yet nothing is marked */
-      var isTx=on&&a.k==='text';
-      var byNow=(isTx&&a.anim&&(a.anim.by==='para'||a.anim.by==='sent'))
-        ?a.anim.by:'';
-      [['fmt-by-all',''],['fmt-by-para','para'],['fmt-by-sent','sent']]
-        .forEach(function(p){
-          var b=$('#'+p[0]); if(!b) return;
-          b.hidden=!isTx;
-          b.setAttribute('aria-pressed',
-            (isTx&&!!a.anim&&byNow===p[1]).toString());
-        });
-      OBJ_FX.forEach(function(p){
-        var b=$('#'+p[0]); if(!b) return;
-        b.hidden=!on;
-        b.setAttribute('aria-pressed',
-          (on&&(a.anim?a.anim.type:'none')===p[1]).toString());
-      });
+      /* T220: the Object tab's own copy of the effects and the
+         by-bullet trio is gone -- an entrance is the Animation tab's
+         job, and the Object tab was the more crowded of the two
+         (2026-09-03, user: "getting rid of the animations from the
+         object page would be good. This only needs to go on
+         animations"). What is left here is the Animation tab's. */
     };
   }

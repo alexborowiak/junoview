@@ -43,11 +43,16 @@ def test_the_grid_is_column_major_and_the_buttons_share_one_surface(out):
             ':not(:hover),') in out
 
 
-def test_one_text_box_tile_on_insert(out):
-    assert 'class="rbn-tall fx-strip big-strip" id="tx-strip"' in out
-    assert 'id="tx-strip-frame"' not in out
+def test_the_kinds_of_text_box_are_tiles_again(out):
+    """T207 collapsed them to a single tile to buy width on an Insert tab
+    that also held four galleries. T220 split that tab in two, so Text has
+    the width and they are back -- one tile per named kind, in a frame
+    with the same arrows every other gallery has (2026-09-03, user: "what
+    happened to being able to insert text boxes by type")."""
+    assert 'class="rbn-tall strip-frame" id="tx-strip-frame"' in out
+    assert 'class="fx-strip tx-strip" id="tx-strip"' in out
     assert "var rows=[['','Text box',null]];" in out
-    assert "rows.push([id,styleDef(id).label,styleDef(id)]);" not in out
+    assert "rows.push([id,styleDef(id).label,styleDef(id)]);" in out
 
 
 def test_x_y_width_and_height_sit_on_the_object_tab(out):

@@ -79,10 +79,14 @@ def test_insert_groups_by_what_a_tool_does(out):
         return out[j:i]
     place_g, write_g, draw_g = group("Place"), group("Write"), group("Draw")
     # T188: no Chart; the text kinds are a strip; Cancel has a group
-    for cid in ("et-cell", "et-image", "et-flip", "et-table"):
+    for cid in ("et-cell", "et-image", "et-flip"):
         assert f'id="{cid}"' in place_g, cid
+    # (Table is typed content, so T220 moved it to Write with the rest)
+    assert 'id="et-table"' not in place_g
     assert 'id="ins-chart"' not in out
-    for cid in ("tx-strip", "dc-maths", "dc-md", "dc-qr"):
+    # (QR went in T220 at the user's request; Table joined the typed
+    # content it belongs with)
+    for cid in ("tx-strip", "dc-maths", "dc-md", "et-table"):
         assert f'id="{cid}"' in write_g, cid
     for cid in ("dc-line", "et-arrow", "dc-draw"):
         assert f'id="{cid}"' in draw_g, cid

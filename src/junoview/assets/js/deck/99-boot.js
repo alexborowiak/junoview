@@ -46,7 +46,9 @@
   galBoot();       /* the effect gallery's door (T171) */
   txStripBoot();              /* the kinds of text box, as tiles (T188) */
   shapeStripBoot();           /* the shapes, as tiles (T197) */
-  imgPaneBoot();              /* the All images pane's door (T202) */
+  imgPaneBoot();
+  quickSwatchBoot();          /* the deck's six colours, on the row */
+  ohOverviewBoot();           /* History of this object, full screen */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */

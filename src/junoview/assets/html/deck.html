@@ -412,9 +412,19 @@
       aria-selected="true"
       title="Add, duplicate and delete slides, and keep figures and
  pictures up to date">Home</button>
-    <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
+    <!-- T220: INSERT IS TWO TABS. One tab held four galleries and
+         eleven doors, and the kinds of text box had been collapsed to a
+         single tile to make them fit (2026-09-03, user: "let's split
+         Insert into Images and Text, one with all the image things like
+         notebook cell, image, flip book, and the lines arrows"). Split,
+         each half has room for what it is: Images keeps the galleries,
+         Text gets one tile per kind of box back. -->
+    <button class="rbn-tab" id="rbn-tab-images" role="tab" data-tab="images"
       aria-selected="false"
-      title="Put something new on the page">Insert</button>
+      title="Figures, pictures, shapes and lines">Images</button>
+    <button class="rbn-tab" id="rbn-tab-text" role="tab" data-tab="text"
+      aria-selected="false"
+      title="Text boxes, tables, equations and Markdown">Text</button>
     <button class="rbn-tab" id="rbn-tab-design" role="tab" data-tab="design"
       aria-selected="false"
       title="How the page itself looks — its size, layout and
@@ -1037,7 +1047,7 @@
                section"). Chart is gone from here ("I never wanted that
                and it is broken. Get rid of it"); the feature stays
                reachable from a placed table's right-click. -->
-          <span class="rbn-grp rbn-insert" data-tab="insert" data-fold-ic="cellcard">
+          <span class="rbn-grp rbn-insert" data-tab="images" data-fold-ic="cellcard">
             <span class="rbn-row">
               <!-- NOTEBOOK CELL, by name again (T188; "what happened to
                    the notebook cell option, that is gone"). T61 called
@@ -1058,14 +1068,10 @@
                 title="Draw a flip book: one box holding many figures, with
  arrows to step through them &mdash; in the editor and while presenting"
                 ><i data-ic="flipbook"></i> Flip book</button>
-              <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
-                aria-pressed="false"
-                title="Draw a table. Double-click a cell to type; Tab
- moves along the row, Enter drops down"><i data-ic="table"></i> Table</button>
             </span>
             <span class="rbn-lab">Place</span>
           </span>
-          <span class="rbn-grp rbn-write" data-tab="insert" data-fold-ic="text">
+          <span class="rbn-grp rbn-write" data-tab="text" data-fold-ic="text">
             <span class="rbn-row">
               <!-- THE TEXT STRIP: one tile per kind of box -- plain,
                    then every named type in the deck, each drawn as a
@@ -1073,12 +1079,23 @@
                    that kind; click it again to put the tool down. Built
                    by txStripBoot; the caret menu it replaces was the
                    one control on Insert that hid its options. -->
-              <!-- ONE TEXT BOX TILE (T207; 2026-09-02, user: "the different text
-                   types are kind of weird"). PowerPoint has one Text Box
-                   button; what kind of text it is -- title, heading, body --
-                   is the Styles door on the Object tab once the box exists. -->
-              <span class="rbn-tall fx-strip big-strip" id="tx-strip"
-                role="group" aria-label="Text box"></span>
+              <!-- ONE TILE PER KIND OF BOX, AGAIN (T220; 2026-09-03,
+                   user: "what happened to being able to insert text
+                   boxes by type"). T207 collapsed them to a single tile
+                   to buy width on a tab that also held four galleries;
+                   Text is its own tab now, so they are back, in a frame
+                   with the same arrows every other gallery has. -->
+              <span class="rbn-tall strip-frame" id="tx-strip-frame">
+                <span class="fx-strip tx-strip" id="tx-strip"
+                  role="group" aria-label="Kinds of text box"></span>
+                <span class="strip-nav">
+                  <button class="strip-prev" type="button" id="tx-strip-prev"
+                    title="Back a row" aria-label="Back a row">&#9650;</button>
+                  <button class="strip-next" type="button" id="tx-strip-next"
+                    title="Next row" aria-label="Next row">&#9660;</button>
+                  <button class="strip-more" type="button" id="tx-strip-more"
+                    aria-expanded="false" title="Show all"
+                    aria-label="Show every kind of text box">&#9662;</button></span></span>
               <button class="dbtn rbn-sm" id="dc-maths"
                 title="Add an equation, written in LaTeX between $$ and $$
  - it is typeset as you type"><i data-ic="maths"></i> Equation</button>
@@ -1086,10 +1103,10 @@
                 title="Add a Markdown box - headings, bullets, numbers,
  links, quotes, code and emphasis, typed as text and rendered on the
  slide"><i data-ic="markdown"></i> Markdown</button>
-              <button class="dbtn rbn-sm" id="dc-qr"
-                title="Ask for a link and put a QR code on the page —
- point a phone at it to open your repo, paper or data"
-                ><i data-ic="qr"></i> QR code</button>
+              <button class="dbtn et rbn-sm" id="et-table" data-tool="table"
+                aria-pressed="false"
+                title="Draw a table. Double-click a cell to type; Tab
+ moves along the row, Enter drops down"><i data-ic="table"></i> Table</button>
             </span>
             <span class="rbn-lab">Write</span>
           </span>
@@ -1098,7 +1115,7 @@
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="insert" data-fold-ic="shapes">
+          <span class="rbn-grp rbn-shapes" data-tab="images" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
@@ -1114,7 +1131,7 @@
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
-          <span class="rbn-grp rbn-draw" data-tab="insert" data-fold-ic="pen">
+          <span class="rbn-grp rbn-draw" data-tab="images" data-fold-ic="pen">
             <span class="rbn-row">
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
@@ -1144,7 +1161,7 @@
                the resting row pays nothing; setTool shows it and the
                ribbon re-fits. The hint line is the first thing the
                tight rung drops. -->
-          <span class="rbn-grp rbn-cancel" data-tab="insert" data-fold-ic="pen">
+          <span class="rbn-grp rbn-cancel" data-tab="images" data-fold-ic="pen">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell et-status" id="et-status"
                 hidden></span>
@@ -1434,6 +1451,22 @@
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
+              <!-- T220: THE DECK'S SIX COLOURS, ON THE ROW. Both doors
+                   stay for everything else, but the colours this deck is
+                   actually built from are one click, not three
+                   (2026-09-03, user: "I would prefer if some of these
+                   were quick options that we can see. AGAIN, DON'T HAVE
+                   EVERYTHING ALWAYS HIDDEN BEHIND SEVERAL CLICKS").
+                   Filled by quickSwatchBoot from the same tokens the
+                   picker offers, applied through the same setter. -->
+              <span class="rbn-cell rbn-seg qk-cell" id="fmt-txquick" hidden
+                role="group" aria-label="Text colour">
+                <span class="cell-lab">Text</span>
+              </span>
+              <span class="rbn-cell rbn-seg qk-cell" id="fmt-bgquick" hidden
+                role="group" aria-label="Fill colour">
+                <span class="cell-lab">Fill</span>
+              </span>
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
                 <input class="fmt-range" id="fmt-op" type="range"
@@ -1444,44 +1477,33 @@
           </span>
           <span class="rbn-grp" data-tab="object" data-fold-ic="text">
             <span class="rbn-row">
-              <!-- T208: Font over Styles; B I U over Left Centre Right as two runs;
-                   bullets over numbers; Paragraph; the two editors when they apply -->
-              <span class="sh-drop opt-drop" id="fmt-fontwrap">
-                <button class="dbtn etm" id="fmt-font-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Typeface, size and strikethrough"
-                  ><i data-ic="text"></i> Font &#9662;</button>
-                <div class="sh-menu opt-panel font-panel" id="fmt-font-menu"
-                  hidden>
-                  <div class="hd-lab">typeface</div>
-                  <div class="opt-row">
-                    <select class="etm" id="fmt-font" hidden title="Text font">
-                      <option value="sans">Sans</option>
-                      <option value="serif">Serif</option>
-                      <option value="mono">Mono</option>
-                      <option value="system">System</option>
-                      <option value="hand">Hand</option>
-                    </select>
-                  </div>
-                  <div class="hd-lab">size</div>
-                  <div class="opt-row">
-                    <span class="fmt-szwrap" id="fmt-szwrap" hidden
-                      title="Text size (points)">
-                      <input class="fmt-num" id="fmt-size" type="number"
-                        min="6" max="240" step="1"
-                        aria-label="Text size in points">
-                      <span class="fmt-unit">pt</span></span>
-                    <button class="dbtn etm" id="fmt-smaller"
-                      title="Smaller text">A&#8722; Smaller</button>
-                    <button class="dbtn etm" id="fmt-bigger"
-                      title="Bigger text">A+ Bigger</button>
-                  </div>
-                  <div class="hd-lab">more</div>
-                  <div class="opt-row">
-                    <button class="dbtn etm" id="fmt-strike"
-                      title="Strikethrough"><s>S</s> Strikethrough</button>
-                  </div>
-                </div>
+              <!-- T220: THE TYPEFACE AND THE SIZE ARE ON THE ROW.
+                   T177 had put them in a Font window because the row was
+                   full; the Animation group leaving this tab paid for
+                   them (2026-09-03, user: "this would allow things like
+                   the text size to be actually always visible as it
+                   should be. That should not be behind two clicks").
+                   The size is one segmented cell -- the number, its
+                   unit, and the two steppers are one decision. -->
+              <select class="etm" id="fmt-font" hidden title="Typeface">
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+                <option value="system">System</option>
+                <option value="hand">Handwritten</option>
+              </select>
+              <span class="rbn-cell rbn-seg" id="fmt-sizecell" hidden
+                role="group" aria-label="Text size">
+                <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                  title="Text size (points)">
+                  <input class="fmt-num" id="fmt-size" type="number"
+                    min="6" max="240" step="1"
+                    aria-label="Text size in points">
+                  <span class="fmt-unit">pt</span></span>
+                <button class="dbtn etm" id="fmt-smaller"
+                  title="Smaller text">A&#8722; Smaller</button>
+                <button class="dbtn etm" id="fmt-bigger"
+                  title="Bigger text">A+ Bigger</button>
               </span>
               <span class="sh-drop" id="fmt-stylewrap-tx">
                 <button class="dbtn etm" id="fmt-style-tx"
@@ -1492,13 +1514,27 @@
                 <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
                   hidden></div>
               </span>
-              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
+              <!-- T220: line spacing is a door on the row, not a section
+                   inside the Paragraph window. It keeps its id and its
+                   menu; only the door is new. -->
+              <span class="sh-drop opt-drop" id="fmt-lhwrap">
+                <button class="dbtn etm" id="fmt-lh-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Space between the lines, and between the
+ paragraphs, of this box"><i data-ic="spacing"></i> Spacing &#9662;</button>
+                <div class="sh-menu opt-panel lh-menu" id="fmt-lh-menu"
+                  hidden data-built="1"></div>
+              </span>
+              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group"
+                aria-label="Bold, italic, underline, strikethrough">
                 <button class="dbtn etm" id="fmt-bold"
                 title="Bold"><b>B</b></button>
                 <button class="dbtn etm" id="fmt-ital"
                 title="Italic"><i>I</i></button>
                 <button class="dbtn etm" id="fmt-under"
                 title="Underline"><u>U</u></button>
+                <button class="dbtn etm" id="fmt-strike"
+                title="Strikethrough"><s>S</s></button>
               </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
@@ -1521,7 +1557,7 @@
  paragraph spacing, and bending the text along a curve"
                   ><i data-ic="spacing"></i> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
-                  hidden>
+                  hidden data-built="1">
                   <div class="hd-lab">list levels</div>
                   <div class="opt-row">
                     <button class="dbtn etm" id="fmt-outdent" hidden
@@ -1533,9 +1569,6 @@
                   </div>
                   <div class="hd-lab">indent the whole box</div>
                   <div class="opt-row" id="fmt-para-ind"></div>
-                  <span class="sh-drop opt-sec" id="fmt-lhwrap">
-                    <div class="sh-menu lh-menu" id="fmt-lh-menu"></div>
-                  </span>
                   <div class="hd-lab">curve</div>
                   <div class="opt-row" id="fmt-para-curve"></div>
                 </div>
@@ -1742,6 +1775,17 @@
                 title="Add, reorder and name the figures in this flip
  book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
    Figures&#8230;</button>
+              <!-- T220: HISTORY, WHERE YOU CAN SEE IT. The per-object
+                   history (T10) could only be reached from a canvas
+                   right-click or from the Layers pane's Actions menu --
+                   a menu, in a pane, behind a button (2026-09-03, user:
+                   "there is too much hidden inside menus inside menus
+                   inside menus, like in the layers"). One button, and it
+                   opens full screen like the other reviews. -->
+              <button class="dbtn etm" id="fmt-hist" hidden
+                title="Every state this object has been through that the
+ undo stack still remembers, with a button to put any of them back"
+                ><i data-ic="history"></i> History&#8230;</button>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
@@ -1770,59 +1814,6 @@
                   Gridlines</button>
             </span>
             <span class="rbn-lab">Table</span>
-          </span>
-          <!-- ANIMATION, ON THE OBJECT TAB (T179). The selection sends
-               you here, so this is where one click on the thing you
-               just selected has to give it an entrance (2026-09-02,
-               user: "it is still quite a few clicks to add an appear
-               animation to something... in the 'Object' list there is
-               an animation tab which has all the animation options").
-               Five buttons that show which one is on -- the same five
-               the gallery offers, through the same setter -- and
-               nothing hides them the moment they become usable, which
-               is what the old effect buttons did (T171). The gallery
-               on the Animation tab stays for the whole-slide case. -->
-          <span class="rbn-grp rbn-fx" data-tab="object" data-fold-ic="appear">
-            <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-fx-none" aria-pressed="false"
-                title="No entrance — on the slide from the start"
-                ><i data-ic="none"></i> None</button>
-              <button class="dbtn etm" id="fmt-fx-appear" aria-pressed="false"
-                title="Appears on its click, with no motion"
-                ><i data-ic="appear"></i> Appear</button>
-              <button class="dbtn etm" id="fmt-fx-fade" aria-pressed="false"
-                title="Fades in on its click"
-                ><i data-ic="fade"></i> Fade</button>
-              <button class="dbtn etm" id="fmt-fx-rise" aria-pressed="false"
-                title="Floats up into place on its click"
-                ><i data-ic="rise"></i> Float up</button>
-              <button class="dbtn etm" id="fmt-fx-zoom" aria-pressed="false"
-                title="Grows into place on its click"
-                ><i data-ic="zoom"></i> Grow</button>
-              <!-- HOW MUCH OF A TEXT BOX ARRIVES, here as well as on the
-                   Animation tab (T198; 2026-09-02, user: "where is the
-                   animate by dot point thing gone???? Can that be an
-                   option when clicking on a box with dot points?").
-                   Shown for a text box; picking one on a box with no
-                   entrance gives it a Fade first, so "by bullet" is one
-                   click and not two. -->
-              <!-- the three as one run (T212), so an effect never shares
-                   a column with how much of the text arrives -->
-              <span class="rbn-cell rbn-seg" id="tx-run-by" role="group"
-                aria-label="How much of the text arrives per click">
-              <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
-                title="The whole box arrives on one click"
-                ><i data-ic="text"></i> Whole box</button>
-              <button class="dbtn etm" id="fmt-by-para" aria-pressed="false"
-                title="One click per bullet, or per line you pressed Enter
- on. A box with no entrance yet gets a Fade"
-                ><i data-ic="indent"></i> By bullet</button>
-              <button class="dbtn etm" id="fmt-by-sent" aria-pressed="false"
-                title="One click per sentence. A box with no entrance yet
- gets a Fade"><i data-ic="spacing"></i> By sentence</button>
-              </span>
-            </span>
-            <span class="rbn-lab">Animation</span>
           </span>
         </span>
       </div>
@@ -1910,6 +1901,17 @@
           <button class="dbtn rbn-sm" id="img-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
         <div class="img-ov-body" id="img-ov-body"></div>
+      </div>
+      <!-- THE HISTORY OF ONE OBJECT, FULL SCREEN (T220). The same
+           states the dock pane lists, with room for the thumbnails. -->
+      <div class="img-ov" id="oh-ov" hidden role="dialog"
+        aria-label="History of this object">
+        <div class="img-ov-h"><span class="img-ov-t"
+          id="oh-ov-t">History of this object</span>
+          <span class="img-ov-sub" id="oh-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="oh-ov-close" title="Close (Esc)"
+            ><i data-ic="exit"></i> Close</button></div>
+        <div class="img-ov-body oh-list" id="oh-ov-body"></div>
       </div>
       <!-- MISMATCHED TEXT and TIDY PAGE, FULL SCREEN (T209; 2026-09-02,
            user: "this mismatched text thing is a good idea, but horrible

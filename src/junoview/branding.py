@@ -161,11 +161,6 @@ _ICON_PATHS = {
     "image": '<rect x="2" y="3" width="12" height="10" rx="1.2"/>'
              '<circle cx="5.7" cy="6.4" r="1.1"/>'
              '<path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/>',
-    "qr": '<rect x="2.2" y="2.2" width="4.4" height="4.4"/>'
-          '<rect x="9.4" y="2.2" width="4.4" height="4.4"/>'
-          '<rect x="2.2" y="9.4" width="4.4" height="4.4"/>'
-          '<path d="M9.4 9.4h2v2h-2Z"/><path d="M13.8 9.4v1.8"/>'
-          '<path d="M9.4 13.8h1.8"/><path d="M13 12.6v1.2h.8"/>',
     "layouts": '<rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/>'
                '<rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/>'
                '<rect x="2" y="8.8" width="12" height="4.6" rx=".8"/>',

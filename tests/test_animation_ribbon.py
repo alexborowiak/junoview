@@ -15,23 +15,26 @@ from __future__ import annotations
 import re
 
 
-def test_one_click_gives_the_selected_object_an_entrance(out):
-    """T179. Five effect buttons on the Object tab -- the tab the
-    selection sends you to -- showing which one is on, through the same
-    setter the pane and the gallery use. The old effect buttons were on
-    the one tab a selection moved you OFF (T171); these are on the one
-    it moves you TO.
+def test_an_entrance_is_the_animation_tabs_job(out):
+    """T179 had put five effect buttons and the by-bullet trio on the
+    Object tab as well, so a selection could be animated without
+    changing tab. T220 took them off again: the Object tab was the more
+    crowded of the two, and the second copy was what was crowding it
+    (2026-09-03, user: "getting rid of the animations from the object
+    page would be good. This only needs to go on animations. This would
+    allow things like the text size to be actually always visible").
     """
-    assert 'class="rbn-grp rbn-fx" data-tab="object"' in out
+    assert 'class="rbn-grp rbn-fx" data-tab="object"' not in out
     for cid in ("none", "appear", "fade", "rise", "zoom"):
-        assert f'id="fmt-fx-{cid}"' in out, cid
-    assert "var OBJ_FX=[['fmt-fx-none','none'],['fmt-fx-appear','appear']," in out
-    assert "e.stopPropagation();setType(p[1]);});" in out
-    # animRibbonSync owns their visibility and pressed state, and a
-    # poster -- which has no build -- never shows them
-    assert "var on=!!a&&typeof selAnnot==='number'&&!pageOf().poster;" in out
-    # governed, so the completeness audit stays quiet
-    assert "#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom" in out
+        assert f'id="fmt-fx-{cid}"' not in out, cid
+    for gone in ("var OBJ_FX=", "var OBJ_BY=", "#fmt-fx-none #fmt-fx-appear",
+                 'id="tx-run-by"', 'id="fmt-by-all"'):
+        assert gone not in out, gone
+    # what animRibbonSync is left holding is the Animation tab's own
+    assert ("      if(typeof galSync==='function'&&$('#anim-strip')) galSync();\n"
+            "      /* T220: the Object tab's own copy of the effects") in out
+    # the gallery and the timing group are untouched
+    assert 'id="anim-strip"' in out and 'id="anim-by-all"' in out
     # the unlabeled Object groups are still the five they were
     assert out.count('class="rbn-grp" data-tab="object"') == 5
 

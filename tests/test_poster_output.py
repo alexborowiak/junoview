@@ -230,15 +230,3 @@ def test_the_save_readout_says_where(out):
     assert "el.textContent='saved to '+whereSaved()+' · '+fmtT(saveStamp);" in out
 
 
-def test_qr_generator_is_self_contained_and_vector(out):
-    """A poster QR must not depend on a third-party service: the encoder
-    (byte mode, ECC M, versions 1-10, spec mask scoring) lives in deck.js
-    and emits crisp vector SVG. Machine-decode-verified out of band.
-    """
-    assert "var QR_M_TAB=" in out and "function qrMatrix" in out
-    assert "function qrSvgData" in out
-    assert "window.SemDeckQr=qrMatrix;" in out
-    assert 'id="dc-qr"' in out
-    # the v7+ regression: alignment patterns on the timing lines are
-    # DRAWN — only the three finder corners are skipped
-    assert "(cy<9&&cx<9)||(cy<9&&cx>N-10)||(cy>N-10&&cx<9)" in out

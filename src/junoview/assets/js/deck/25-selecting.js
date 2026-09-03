@@ -39,12 +39,10 @@
     +'#fmt-para-curve #fmt-linewrap #fmt-line #fmt-sw-lab '
     +'#fmt-srcwrap #fmt-src '
     /* the Object group's provenance row (T198): where it came from,
-       re-read it, keep it in place; and the by-bullet trio, owned by
-       animRibbonSync like the effect buttons */
-    +'#fmt-path #fmt-lock #fmt-by-all #fmt-by-para #fmt-by-sent '
-    /* the Object tab's effect buttons (T179): animRibbonSync owns
-       their visibility and their pressed state */
-    +'#fmt-fx-none #fmt-fx-appear #fmt-fx-fade #fmt-fx-rise #fmt-fx-zoom '
+       re-read it, keep it in place. The by-bullet trio and the effect
+       buttons left this tab in T220. */
+    +'#fmt-path #fmt-lock '
+
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
        below stops flagging them on every first selection (2026-08-24) */
@@ -63,6 +61,7 @@
        be governed or it shows for everything, forever (2026-08-25). */
     +'#fmt-txcolwrap #fmt-fillcolwrap '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
+    +'#fmt-sizecell #fmt-txquick #fmt-bgquick #fmt-lh-btn '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
@@ -271,6 +270,9 @@
     show('#fmt-under',isText,!!a.u);
     show('#fmt-strike',isText,!!a.strike);
     show('#fmt-szwrap',isText||isTbl);
+    /* T220: the size cell is on the row now that the Font window
+       is gone */
+    show('#fmt-sizecell',isText||cellText||isTbl);
     /* named styles are for TEXT BOXES: a title/subtitle pseudo-item is
        already the deck's title style by definition */
     show('#fmt-stylewrap-tx',isText&&isNum);
@@ -287,9 +289,11 @@
        it would; syncOptDoors below is the safety net that hides one
        whose contents all stood down. The Paragraph window opens for a
        table too, because a table's words take spacing. */
-    show('#fmt-fontwrap',isText||cellText||isTbl);
+    show('#fmt-lh-btn',(isText||isTbl)&&isNum);
     show('#fmt-font-btn',isText||cellText||isTbl);
-    show('#fmt-parawrap',(isText||isTbl)&&isNum);
+    /* T220: list levels, the box indent and the curve are a text
+       box's own; a table's words take spacing, which is its own door */
+    show('#fmt-parawrap',isText&&isNum);
     show('#fmt-para',(isText||isTbl)&&isNum);
     var lineKinds=['arrow','rect','draw','table'];
     show('#fmt-linewrap',isNum&&lineKinds.indexOf(kind)>=0);
@@ -384,6 +388,8 @@
        guessing which one was the outline (2026-08-19, user: "'colour' vs
        'fill colour' is confusing — is that border?") */
     show('#fmt-txcol-btn',kind!=='image');
+    show('#fmt-txquick',kind!=='image');
+    if(typeof quickSwatchSync==='function') quickSwatchSync();
     var tcb=$('#fmt-txcol-btn');
     /* innerHTML, not textContent: this button is RENAMED for whatever is
        selected, and textContent would delete the icon with the old word
@@ -398,6 +404,7 @@
        background colour but no fill STYLE (2026-08-20, user: "confusing
        there is a fill and fill colour") */
     show('#fmt-fillcol-btn',showBg&&kind!=='rect');
+    show('#fmt-bgquick',showBg&&kind!=='rect');
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');
@@ -537,6 +544,8 @@
       }
     }
     show('#fmt-lock',isNum,isNum&&pinned(a));
+    /* T220: what this object has been through, one click away */
+    show('#fmt-hist',isNum);
     /* the Source window's door (T177): anything that came from
        somewhere -- a placed cell, a picture that knows its file, or
        anything with a provenance to show */
@@ -622,6 +631,12 @@
         var lab=r.previousElementSibling;
         if(lab&&lab.classList.contains('hd-lab')) lab.hidden=!any;
       });
+      /* T220: a window whose rows are BUILT when it opens is not
+         empty just because it is closed. Before spacing moved out of
+         the Paragraph window, its .opt-sec kept the sweep happy; with
+         that gone the door vanished for every text box. showFmt alone
+         decides these two. */
+      if(panel.dataset.built) return;
       var any=$$('button,input,select',panel).some(function(c){
         return !c.classList.contains('opt-sec-btn')&&optAlive(c,panel);})
         ||$$('.opt-sec',panel).some(function(sc){return optAlive(sc,panel);});
@@ -2796,12 +2811,13 @@
   var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,
     table:1,flip:1,guide:1};
   function setTool(t){
-    /* An unknown tool used to be armed happily: #dc-qr carried the generic
+    /* An unknown tool used to be armed happily: the QR button (since
+       removed, T220) carried the generic
        `et` class with no data-tool, so the shared wiring ran
        setTool(undefined) and left the editor in a state no code handles —
        the button pressed, Cancel showing, the layer classed
        `tool-undefined`, the hint empty, and clicks on the page doing
-       nothing. Worse, that wiring runs AFTER the QR handler's own
+       nothing. Worse, that wiring ran AFTER that handler's own
        setTool('select'), so it clobbered the cleanup and the state
        survived a successful insert (2026-08-17).
        The stray class is gone; this makes the whole family of that bug
@@ -2879,6 +2895,15 @@
         +'<span>'+esc(how)+'</span>';
     }
     if(typeof txStripSync==='function') txStripSync();
+    /* THE DRAWING GROUP FOLLOWS THE TAB THAT ARMED THE TOOL (T220).
+       It used to live on Insert, which was the only tab a tool could
+       be armed from; Images and Text can both arm one, and a group
+       whose Cancel is on the other tab is a trap. */
+    var cg=$('.rbn-grp.rbn-cancel');
+    if(cg&&t!=='select'&&typeof activeTab==='function'){
+      var at=activeTab();
+      if(at==='images'||at==='text') cg.setAttribute('data-tab',at);
+    }
     /* the group appeared or went, so the row is re-judged */
     if(typeof syncRibbonGroups==='function') syncRibbonGroups();
   }

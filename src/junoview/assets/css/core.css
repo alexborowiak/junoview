@@ -1253,7 +1253,8 @@ body.th-contrast .rbn-grp{border-right-color:#ffffff66;}
    No list to keep in step any more. */
 body.th-colorful .rbn-grp[data-tab="home"],body.th-colorful #ab-file{
   --accent:#f0a848;--accent-deep:#c07f22;}
-body.th-colorful .rbn-grp[data-tab="insert"],
+body.th-colorful .rbn-grp[data-tab="images"],
+body.th-colorful .rbn-grp[data-tab="text"],
 body.th-colorful #ab-app,body.th-colorful .presrail{
   --accent:#a586e8;--accent-deep:#7a52c0;}
 body.th-colorful .rbn-grp[data-tab="design"],body.th-colorful #ab-filters,

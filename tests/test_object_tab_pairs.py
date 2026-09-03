@@ -29,13 +29,16 @@ def test_the_text_group_has_two_runs_and_deliberate_pairs():
     html = assets.deck_html()
     row = _row(html, "Text")
     ids = _ids(row)
-    # Font over Styles, then the two runs, then bullets over numbers
-    order = ["fmt-fontwrap", "fmt-stylewrap-tx", "tx-run-style", "tx-run-align",
+    # T220 dissolved the Font window: the typeface and the size cell are
+    # the first pair, then Styles over Spacing, then the two runs, then
+    # bullets over numbers, then Paragraph
+    order = ["fmt-font", "fmt-sizecell", "fmt-stylewrap-tx", "fmt-lhwrap",
+             "tx-run-style", "tx-run-align",
              "fmt-bullets", "fmt-numbers", "fmt-parawrap"]
     at = [ids.index(i) for i in order]
     assert at == sorted(at), order
     style = row[row.index('id="tx-run-style"'):row.index('id="tx-run-align"')]
-    for cid in ("fmt-bold", "fmt-ital", "fmt-under"):
+    for cid in ("fmt-bold", "fmt-ital", "fmt-under", "fmt-strike"):
         assert f'id="{cid}"' in style, cid
     align = row[row.index('id="tx-run-align"'):row.index('id="fmt-bullets"')]
     for cid in ("fmt-al-left", "fmt-al-center", "fmt-al-right"):

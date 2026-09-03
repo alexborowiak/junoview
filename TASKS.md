@@ -4447,6 +4447,54 @@ option. Then where has the ability to refresh all images gone?"
   and the count in plain words.
 
 
+- [x] **T220 - Nothing that matters sits behind two clicks: the Object
+  tab sheds its second Animation, Insert becomes Images and Text.**
+  The user (2026-09-03): "Getting rid of the animations from the object
+  page would be good. This only needs to go on animations. This would
+  allow things like the text size to be actually always visible as it
+  should be. That should not be behind two clicks. Please think about
+  things like that... there should be a 'history of object' button...
+  Oh that is in the layers, there is too much hidden inside menus
+  inside menus inside menus inside menus, like in the layers. PLEASE
+  FUCKING STOP DOING THIS... Why does the text colour look like a T? I
+  would prefer if some of these were quick options that we can see...
+  What happened to being able to insert text boxes by type. Please get
+  rid of QR code... Let's split Insert into Images and Text."
+  *Done 2026-09-03.* **What paid for it**: T179 had put a second copy
+  of the Animation tab on the Object tab -- five effect buttons and the
+  by-bullet trio. It is gone; an entrance is the Animation tab's job.
+  **On the row now**: the typeface, the size (one segmented cell
+  holding the number, its unit and the two steppers) and line spacing,
+  all of which were one click into a window; strikethrough joined B I U
+  as a fourth segment, so the Font window had nothing left and was
+  deleted. **Quick colours**: the deck's six colours sit in the row as
+  two runs, words and box, storing the reference so a deck that
+  changes its colours changes these; both doors stay for the rest.
+  **The T**: the swatch popup was swept in with the drawn line-style
+  menu, whose rule stacks rows in a column -- with the deck row across
+  the top and every preset chip in a column beneath it, the popup was
+  literally T-shaped. It lays out as a pad now. **History**: the
+  per-object history has existed since T10 and could only be reached
+  from a canvas right-click or from a popover inside the Layers pane.
+  It is a button on the Object tab, opening the full-screen view the
+  other reviews use; one renderer serves the pane and the view, and an
+  edit redraws whichever is open. **Insert split**: Images keeps
+  Notebook cell, Image, Flip book, the shapes gallery, Line, Arrow and
+  Draw; Text gets the boxes, Table, Equation and Markdown. The Drawing
+  group follows whichever half armed the tool. A browser that remembers
+  `insert` lands on Images. **Text boxes by type**: T207 had collapsed
+  them to one tile for width; Text is its own tab now, so there is a
+  tile per named kind again, in a frame with the usual arrows. **QR**:
+  removed whole -- door, handler, the ~240-line encoder and its icon --
+  rather than left as a capability with no door. Existing decks are
+  unaffected: a QR was inserted as an ordinary image.
+  *The bug this round shipped and the browser caught:* moving spacing
+  out of the Paragraph window left that window looking empty to
+  `syncOptDoors`, which hides a door over an empty window -- so the
+  Paragraph door vanished for every text box, with 1,100 substring
+  tests green. A window that fills itself on open now says so
+  (`data-built`).
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

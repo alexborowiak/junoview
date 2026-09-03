@@ -116,7 +116,9 @@ def test_text_can_follow_a_curve(out):
     # the state of is the toggle that behaved unpredictably
     # ...and the Paragraph window opens for a table too since T177,
     # because a table's words take spacing
-    assert "show('#fmt-parawrap',(isText||isTbl)&&isNum);" in out
+    # T220: list levels, the box indent and the curve are a text box's
+    # own; a table's words take spacing, which is a door of its own now
+    assert "show('#fmt-parawrap',isText&&isNum);" in out
     assert "show('#fmt-bullets',isText&&isNum,lst==='bullet');" in out
     assert "show('#fmt-numbers',isText&&isNum,lst==='number');" in out
 
@@ -456,8 +458,8 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     assert 'class="rbn-grp rbn-slide" data-tab=' in out   # folds since T204
     # Animation is a tab again (T176); Order shares its rung and
     # follows it by source order
-    assert ("var TABS=['home','insert','design','animation','view','present',"
-            "'object'];") in out
+    assert ("var TABS=['home','images','text','design','animation','view',\n"
+            "    'present','object'];") in out
     assert ".rbn-build{order:3;}" in out
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more

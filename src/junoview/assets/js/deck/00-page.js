@@ -53,7 +53,7 @@
      content               LISTS · TABLES · format bar wiring · FILL PANEL
      arranging             copy/cut/paste · STACKING ORDER · MATCH ANOTHER
                            SLIDE · ARRANGE THIS SLIDE · ARRANGEMENTS
-     extras                QR generator · EQUATION EDITOR · images ·
+     extras                EQUATION EDITOR · images ·
                            FRAMES PANE · animation PANE · PRESENTER VIEW
      shell                 presentations rail · CUSTOM VIEW · thumbnails ·
                            THE OUTLINE · SLIDE SECTIONS · mode switching
@@ -1796,9 +1796,12 @@
     return d;
   }
   var ohOid=null;
-  function renderObjHist(){
-    var list=$('#objhist-list'),head=$('#objhist-count');
-    var ttl=$('#objhist-t');
+  /* T220: the same states, drawn into whichever host asks -- the
+     dock pane or the full-screen view. The pane was the only home,
+     and it could only be opened from a right-click menu or from a
+     menu inside the Layers pane (2026-09-03, user: "there is too
+     much hidden inside menus inside menus inside menus"). */
+  function renderObjHistInto(list,head,ttl){
     if(!list) return;
     list.innerHTML='';
     /* Deselecting or moving to a title is not deletion. The pane follows
@@ -1858,6 +1861,30 @@
       }
       list.appendChild(row);
     });
+  }
+  function renderObjHist(){
+    renderObjHistInto($('#objhist-list'),$('#objhist-count'),
+      $('#objhist-t'));
+  }
+  function renderObjHistOverview(){
+    renderObjHistInto($('#oh-ov-body'),$('#oh-ov-sub'),$('#oh-ov-t'));
+  }
+  /* THE DOOR, ON THE RIBBON (T220). One button on the Object tab,
+     opening the full-screen view the other reviews use. */
+  function ohOverviewBoot(){
+    var btn=$('#fmt-hist'),ov=$('#oh-ov');
+    if(!btn||!ov) return;
+    btn.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+      if(!a){toast('Select something first');return;}
+      ensureOids(s);
+      ohOid=a.oid;
+      renderObjHistOverview();
+      overlayShow(btn,ov);
+    });
+    var cl=$('#oh-ov-close');
+    if(cl) cl.addEventListener('click',function(){overlayHide(ov);});
   }
   /* the fit height is taken from what the box is NOW: you set it by
      making the box the size you want and saying "stay this big", which

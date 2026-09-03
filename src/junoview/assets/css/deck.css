@@ -1869,7 +1869,13 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
    are"). Every row draws the real thing and keeps its name in the
    tooltip. currentColor throughout, so the preview brightens with the row
    it is in and the selected one reads as selected. ---- */
-.sh-menu.style-menu,.sh-menu.sw-menu{display:flex;flex-direction:column;
+/* T220: the SWATCH menus are no longer swept in with the drawn
+   line-style menu. That rule stacked their chips one per row under
+   the deck-colour row, which made the popup literally T-shaped
+   (2026-09-03, user: "why does the text colour look like a T?").
+   They lay out as a pad now: a labelled row of the deck's colours,
+   a labelled block of presets, then recents. */
+.sh-menu.style-menu{display:flex;flex-direction:column;
   gap:2px;width:auto;}
 .style-menu .sh-opt,.sw-menu .sh-opt{flex-direction:row;align-items:center;
   gap:8px;padding:4px 8px;}
@@ -2196,9 +2202,15 @@ select#fmt-font[hidden]{display:none;}
 .deck.poster-page .dc-film{display:none!important;}
 .deck.poster-page .deck-count{display:none!important;}
 .deck.poster-page .deck-arrow{display:none!important;}
-/* the colour popups: one row of swatches, roomy hit targets */
-.sw-menu{display:flex;align-items:center;gap:7px;padding:9px 11px;}
-.sw-menu .fmt-lab{display:none;}
+/* the colour popups: a pad of roomy hit targets, headed by name */
+.sh-menu.sw-menu{display:flex;flex-wrap:wrap;align-items:center;
+  gap:7px;width:198px;padding:10px 11px;}
+.sw-menu .fmt-lab{display:block;flex:0 0 100%;margin:2px 0 -1px;}
+.sw-menu>.sw-tokrow,.sw-menu>.sw-recrow{flex:0 0 100%;}
+.sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
+.sw-tokrow>.fmt-lab{flex:0 0 100%;}
+/* hidden still means hidden, whatever display the rows above ask for */
+.sw-menu [hidden]{display:none!important;}
 /* ---- page background + LIGHT pages (2026-08-04): pres.pageBg sets
    --page-bg on the deck; a light colour flips .page-light, which
    recolours the DEFAULT chrome (text boxes, frames, page numbers) for
@@ -4606,6 +4618,43 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
 body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
+
+/* ---- T220: QUICK COLOURS AND A VISIBLE SIZE ----------------------------
+   The deck's six colours sit in the row as two segmented cells, one for
+   the words and one for the box; the size is a third, holding the
+   number, its unit and the two steppers. Nothing here opens a menu
+   (2026-09-03, user: "DON'T HAVE EVERYTHING ALWAYS HIDDEN BEHIND
+   SEVERAL CLICKS"). */
+.qk-cell{align-items:center;}
+.qk-sw{width:15px;height:15px;border-radius:50%;padding:0;flex:none;
+  cursor:pointer;border:1.5px solid #ffffff33;margin-right:3px;}
+.qk-cell>.qk-sw:last-child{margin-right:5px;}
+.qk-sw:hover{border-color:#fff;transform:scale(1.14);}
+.qk-sw.on{border-color:#fff;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent);}
+body.light .qk-sw{border-color:#00000033;}
+.edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.fmt-szwrap{display:flex;
+  align-items:center;gap:3px;padding:0 6px;align-self:center;}
+#fmt-sizecell .fmt-num{width:42px;}
+.edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.dbtn{min-width:30px;
+  justify-content:center;}
+/* the typeface, on the row rather than in a window */
+.edit-tools select#fmt-font{max-width:104px;align-self:center;height:26px;}
+
+/* ---- T220: THE HISTORY OF ONE OBJECT, FULL SCREEN ---------------------
+   The rows the dock pane draws, as cards with room to read. */
+.oh-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:10px;align-content:start;}
+.img-ov .oh-row{background:#ffffff05;border:1px solid #ffffff14;
+  border-left:3px solid #ffffff26;border-radius:9px;padding:12px 14px;
+  gap:12px;}
+.img-ov .oh-row.oh-now{border-left-color:var(--cyan);}
+.img-ov .oh-thumb{width:62px;max-height:52px;}
+.img-ov .oh-h{font-size:11px;}
+.img-ov .oh-what{font-size:13px;}
+.img-ov .oh-do{font-size:12px;padding:5px 10px;}
+.img-ov .pf-ok{grid-column:1/-1;}
+body.light .img-ov .oh-row{background:#00000004;border-color:var(--line);}
 
 /* ---- T219: A BUTTON LOOKS LIKE A BUTTON ---------------------------------
    T207 made every ribbon control flat at rest, the way PowerPoint's

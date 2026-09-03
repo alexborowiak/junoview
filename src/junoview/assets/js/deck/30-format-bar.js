@@ -771,6 +771,75 @@
     }
     buildSpacingRows();
   }
+  /* ---- T220: THE DECK'S SIX COLOURS, ON THE ROW ------------------------
+     Two runs, one for the words and one for the box, each holding the
+     six colours the deck is actually built from. They store the
+     REFERENCE (@accent), like the token chips inside the picker, so a
+     deck that changes its colours changes these too; they preview on
+     hover through the same machinery the picker uses; and they leave
+     both doors in place for every other colour (2026-09-03, user: "I
+     would prefer if some of these were quick options that we can see").
+     Six is the count the 2026-08-05 review settled on -- fourteen
+     always-visible circles shouted louder than the page. */
+  var quickSwatchSync=function(){};
+  function quickSwatchBoot(){
+    var hosts=[['#fmt-txquick','text'],['#fmt-bgquick','fill']]
+      .map(function(p){return {el:$(p[0]),target:p[1]};})
+      .filter(function(h){return !!h.el;});
+    if(!hosts.length) return;
+    function curColor(target){
+      var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
+      if(!a) return '';
+      return (target==='text'?a.color:(a.fillc||a.bgc))||'';
+    }
+    function build(){
+      var t=tokens().c;
+      hosts.forEach(function(h){
+        /* the caption stays; the swatches are rebuilt */
+        $$('.qk-sw',h.el).forEach(function(o){o.remove();});
+        Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+          var ref='@'+k,val=t[k];
+          var b=document.createElement('button');
+          b.type='button';b.className='qk-sw';
+          b.dataset.c=ref;
+          b.style.background=val;
+          b.title=(TOKEN_LABELS[k]||k)+' \u2014 '+val
+            +(h.target==='text'?', on the words':', behind them');
+          b.setAttribute('aria-label',b.title);
+          b.addEventListener('mousedown',function(e){
+            /* keep the caret, so a highlighted run recolours */
+            if(activeTextEditable()) e.preventDefault();
+          });
+          b.addEventListener('click',function(e){
+            e.stopPropagation();pvEnd(false);
+            if(h.target==='text') applyTextColor(ref);
+            else applyFillColor(ref);
+          });
+          b.addEventListener('mouseenter',function(){
+            pvEnd(true);
+            pvShow(h.target==='text'?textMut(ref):fillMut(ref));
+          });
+          b.addEventListener('mouseleave',function(){pvEnd(false);});
+          h.el.appendChild(b);
+        });
+      });
+      mark();
+    }
+    function mark(){
+      hosts.forEach(function(h){
+        var now=curColor(h.target);
+        $$('.qk-sw',h.el).forEach(function(b){
+          var on=(now===b.dataset.c);
+          b.classList.toggle('on',on);
+          b.setAttribute('aria-pressed',on.toString());
+        });
+      });
+    }
+    quickSwatchSync=function(rebuild){
+      if(rebuild) build(); else mark();
+    };
+    build();
+  }
   /* ---- WINDOWS OF OPTIONS (T177) ---------------------------------------
      A worded door on the ribbon opens a panel holding a whole cluster of
      related controls -- the font, the paragraph, the line, the source.
@@ -785,7 +854,11 @@
      those close as they act. Every door is wired here, from THE BOOT
      SEQUENCE, so a window added to the markup needs no JS of its own. */
   function optBuilder(id){
-    return id==='fmt-para-menu'?buildParaPanel:null;
+    if(id==='fmt-para-menu') return buildParaPanel;
+    /* T220: spacing is its own door on the row now, so it builds
+       itself rather than riding on the Paragraph window */
+    if(id==='fmt-lh-menu') return buildSpacingRows;
+    return null;
   }
   function optKids(w){
     var door=null,panel=null;

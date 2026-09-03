@@ -447,37 +447,21 @@ def test_no_pane_covers_the_toolbar(out):
     assert ".deck.rbn-side .selpane{right:var(--rbn-side-w);}" in out
 
 
-def test_qr_code_inserts_rather_than_arming_a_tool_that_does_not_exist(out):
-    """QR code carried the generic `et` class -- the one that marks a
-    DRAWING tool -- but had no `data-tool`. So the shared arming wiring
-    ran `setTool(undefined)` and the button behaved like a tool nobody
-    wrote: it lit up as pressed, Cancel appeared, the layer was classed
-    `tool-undefined` and went to a crosshair, the hint was blank, and
-    clicking the page did nothing (2026-08-17, user: "whatever QR code is
-    is confusing. Sounds like adding a qr code" -- it does, and that was
-    the problem: it also armed a phantom).
-
-    Worse, the generic wiring is registered after the QR handler, so its
-    setTool(undefined) clobbered the handler's own setTool('select') and
-    the state survived a SUCCESSFUL insert too. Cancelling the prompt left
-    it as well, having inserted nothing.
-
-    Measured before: cancel -> `tool-undefined`, Cancel shown, QR pressed,
-    0 items added. After: cancel -> `tool-select`, no Cancel, nothing
-    added; accept -> the QR code lands and the editor stays in select.
-
-    It is an immediate insert, like Image beside it -- which is exactly
-    why Image never had the class.
+def test_an_unknown_tool_name_can_never_arm_the_editor(out):
+    """The QR button (removed in T220 at the user's request: "please get
+    rid of QR code, I don't know what the fuck that is, but it sucks")
+    carried the generic `et` class with no data-tool, so the shared
+    wiring ran setTool(undefined) and left the editor in a state no code
+    handles. The button is gone; the guard that made the whole family of
+    that bug impossible stays, and is what this pins.
     """
-    qr = out.split('id="dc-qr"')[0]
-    assert qr.rstrip().endswith('<button class="dbtn rbn-sm"'), \
-        "dc-qr must not carry the `et` (drawing tool) class"
-    # ...and an unknown tool can never arm again, for anything
-    assert ("var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1,\n"
-            "    table:1,flip:1,guide:1};") in out
+    assert "var TOOLS={select:1,text:1,arrow:1,rect:1,line:1,cell:1,draw:1," in out
+    assert "    table:1,flip:1,guide:1};" in out
     assert "if(!TOOLS[t]) t='select';" in out
-    # the label says what it does and why you would want one
-    assert "Ask for a link and put a QR code on the page" in out
+    # and no trace of the door, its handler or its icon is left behind
+    for gone in ('id="dc-qr"', "qrMatrix", "QR_M_TAB", "SemDeckQr",
+                 'data-ic="qr"'):
+        assert gone not in out, gone
 
 
 def test_weight_is_a_menu_of_drawn_thicknesses_not_a_cycle(out):
@@ -1113,7 +1097,9 @@ def test_high_contrast_re_inks_the_surfaces(out):
     # classes, so a group added without a line fell back to the default
     # accent and the theme looked half-applied. Since T205 a group takes
     # its TAB's hue from data-tab, so there is no list to keep in step
-    for tab in ("home", "insert", "design", "animation", "view", "object"):
+    # (Insert became Images and Text in T220)
+    for tab in ("home", "images", "text", "design", "animation", "view",
+                "object"):
         assert f'body.th-colorful .rbn-grp[data-tab="{tab}"]' in out, tab
     for grp in ("rbn-slides", "rbn-furn", "rbn-anim", "rbn-build", "rbn-tbl",
                 "rbn-write", "rbn-draw", "rbn-file", "rbn-nbs"):

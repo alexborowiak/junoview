@@ -36,10 +36,10 @@ def test_the_three_bad_pairs_are_paired_now():
     assert lay.index("hm-lay-tidy") < lay.index("dsg-tidy")
     furn = _ids(_row(html, "Page furniture"))
     assert furn[:4] == ["dc-head", "dc-foot", "dc-wmark", "dc-nums"]
-    anim = _row(html, "Animation", start='<span class="et-fmt" id="et-fmt" hidden>')
-    run = anim[anim.index('id="tx-run-by"'):]
-    for cid in ("fmt-by-all", "fmt-by-para", "fmt-by-sent"):
-        assert f'id="{cid}"' in run, cid
+    # the Object tab's own Animation group went in T220 -- an entrance is
+    # the Animation tab's job, and the by-bullet trio went with it
+    assert '<span class="rbn-lab">Animation</span>' not in html
+    assert 'id="tx-run-by"' not in html
 
 
 def test_the_redundant_door_and_the_boxed_doors_are_gone(out):

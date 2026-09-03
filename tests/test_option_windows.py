@@ -33,22 +33,28 @@ def test_the_text_group_is_three_doors_not_fifteen_buttons(out):
     """
     # ...and T189 put the everyday ones BACK in the row -- bold, italic,
     # underline, the two lists, the three alignments -- because "too
-    # many things are in buttons in buttons"; the windows keep what is
-    # set once: typeface, size, strike; list levels, box indent,
-    # spacing, curve
-    font = _window(out, "fmt-fontwrap")
-    for cid in ("fmt-font-btn", "fmt-font-menu", "fmt-font", "fmt-szwrap",
-                "fmt-size", "fmt-smaller", "fmt-bigger", "fmt-strike"):
-        assert f'id="{cid}"' in font, cid
-    for cid in ("fmt-bold", "fmt-ital", "fmt-under"):
-        assert f'id="{cid}"' not in font, cid
+    # many things are in buttons in buttons".
+    # T220 finished the job: the Font window is GONE. The Animation group
+    # leaving the Object tab paid for the typeface and the size on the
+    # row (2026-09-03, user: "this would allow things like the text size
+    # to be actually always visible as it should be. That should not be
+    # behind two clicks"), and strikethrough joined B I U as a fourth
+    # segment.
+    for gone in ('id="fmt-fontwrap"', 'id="fmt-font-btn"',
+                 'id="fmt-font-menu"'):
+        assert gone not in out, gone
+    for cid in ("fmt-font", "fmt-sizecell", "fmt-szwrap", "fmt-size",
+                "fmt-smaller", "fmt-bigger", "fmt-strike"):
         assert f'id="{cid}"' in out, cid
-    assert "<s>S</s> Strikethrough</button>" in font
+    style = out[out.index('id="tx-run-style"'):out.index('id="tx-run-align"')]
+    assert 'id="fmt-strike"' in style
     para = _window(out, "fmt-parawrap")
     for cid in ("fmt-para", "fmt-para-menu", "fmt-outdent", "fmt-indent",
-                "fmt-para-ind", "fmt-lhwrap", "fmt-lh-menu",
-                "fmt-para-curve"):
+                "fmt-para-ind", "fmt-para-curve"):
         assert f'id="{cid}"' in para, cid
+    # ...and spacing left it for a door of its own on the row (T220)
+    assert 'id="fmt-lhwrap"' not in para
+    assert 'id="fmt-lh-btn"' in out and 'id="fmt-lh-menu"' in out
     for cid in ("fmt-bullets", "fmt-numbers"):
         assert f'id="{cid}"' not in para, cid
     for cid in ("fmt-al-left", "fmt-al-center", "fmt-al-right"):
@@ -61,6 +67,10 @@ def test_the_text_group_is_three_doors_not_fifteen_buttons(out):
     assert "function buildSpacingRows(){" in out
     for cid in ("fmt-bold", "fmt-font", "fmt-bullets", "fmt-smaller"):
         assert out.count(f'id="{cid}"') == 1, cid
+    # a window that fills itself when it opens is not empty just because
+    # it is closed -- without this the Paragraph door vanished for every
+    # text box the moment spacing moved out of it (T220)
+    assert "if(panel.dataset.built) return;" in out
 
 
 def test_the_line_window_lays_four_drawn_menus_flat(out):
@@ -126,14 +136,15 @@ def test_a_door_shows_when_anything_behind_it_would(out):
     the safety net: a heading over an empty row goes with the row, and a
     door over an empty window goes too.
     """
-    assert "show('#fmt-fontwrap',isText||cellText||isTbl);" in out
-    assert "show('#fmt-parawrap',(isText||isTbl)&&isNum);" in out
+    assert "show('#fmt-sizecell',isText||cellText||isTbl);" in out
+    assert "show('#fmt-parawrap',isText&&isNum);" in out
+    assert "show('#fmt-lh-btn',(isText||isTbl)&&isNum);" in out
     assert "show('#fmt-linewrap',isNum&&lineKinds.indexOf(kind)>=0);" in out
     assert "show('#fmt-srcwrap',srcOn);" in out
     assert "function syncOptDoors(){" in out
     assert "    syncOptDoors();\n" in out
     # every new id is governed, so the completeness audit stays quiet
-    for cid in ("#fmt-fontwrap", "#fmt-font-btn", "#fmt-para-ind",
+    for cid in ("#fmt-sizecell", "#fmt-lh-btn", "#fmt-para-ind",
                 "#fmt-al-left", "#fmt-al-center", "#fmt-al-right",
                 "#fmt-linewrap", "#fmt-line", "#fmt-sw-lab",
                 "#fmt-srcwrap", "#fmt-src"):
@@ -229,8 +240,12 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
     for lab in ("Place", "Write", "Draw"):
         assert f">{lab}</span>" in out, lab
     # four since T188 (the Drawing group, shown only while a tool is
-    # armed), five since T197 (Shapes on their own)
-    assert out.count('data-tab="insert" data-fold-ic=') == 5
+    # armed), five since T197 (Shapes on their own) -- and since T220 the
+    # tab is two: Images keeps Place, Shapes, Draw and Drawing; Text has
+    # Write to itself
+    assert out.count('data-tab="images" data-fold-ic=') == 4
+    assert out.count('data-tab="text" data-fold-ic=') == 1
+    assert 'data-tab="insert"' not in out
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it
     assert "if(styleMgrSync) styleMgrSync();" in out

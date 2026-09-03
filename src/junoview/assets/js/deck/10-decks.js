@@ -674,6 +674,9 @@
        whole-deck snapshots per input event. */
     var ohp=$('#objhist');
     if(!quiet&&ohp&&!ohp.hidden) renderObjHist();
+    /* ...and the full-screen view, if that is the one open (T220) */
+    var ohv=$('#oh-ov');
+    if(!quiet&&ohv&&!ohv.hidden) renderObjHistOverview();
     refreshThumb(cur);
   }
   /* ---- keep the CURRENT slide's thumbnail live -------------------------

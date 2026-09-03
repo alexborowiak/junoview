@@ -100,13 +100,11 @@ def test_where_it_came_from_is_on_the_row(out):
     """T198. From, Refresh from file and Lock in place in the Object
     group; the by-bullet trio beside the effects, with a Fade first for a
     box that has no entrance."""
-    for cid in ("fmt-path", "fmt-lock", "fmt-imgrefresh",
-                "fmt-by-all", "fmt-by-para", "fmt-by-sent"):
+    # (the by-bullet trio went back to the Animation tab in T220)
+    for cid in ("fmt-path", "fmt-lock", "fmt-imgrefresh"):
         assert f'id="{cid}"' in out, cid
     assert "if(kind==='image'&&a.fname) from=a.fname;" in out
     assert "show('#fmt-lock',isNum,isNum&&pinned(a));" in out
     assert "else if(lockMode(a)==='') a.lock='pos';});" in out
-    assert "if(!a2.anim) setType('fade');\n        setBy(p[1]);" in out
-    assert "b.hidden=!isTx;" in out
     # governed, so the completeness audit stays quiet
-    assert "#fmt-path #fmt-lock #fmt-by-all #fmt-by-para #fmt-by-sent" in out
+    assert "#fmt-path #fmt-lock " in out

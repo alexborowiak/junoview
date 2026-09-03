@@ -951,8 +951,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # rungs no longer shrink them, menu and dialog headings are words, and
 # the Saved layouts dialog is restructured (deck.css, deck.html, the
 # arrangements dialog's wording in 40-captions-and-components.js).
-EXPECTED_MD5 = "e95ab3968fa112e3eccd24d3b1bfa69f"
-EXPECTED_BYTES = 3354996
+# 2026-09-03, T220: the Object tab's Animation group and the Font window
+# are gone (typeface, size and spacing are on the row, strikethrough
+# joined B I U, the deck's six colours are quick swatches, History is a
+# button opening a full-screen view); Insert became the Images and Text
+# tabs, the kinds of text box are tiles again, and the QR code feature
+# was removed entirely -- door, ~240-line encoder and icon. The help
+# page follows the two new tab names.
+EXPECTED_MD5 = "103ba5cc4c7474bfdd9d3e2428ea6c3e"
+EXPECTED_BYTES = 3352118
 
 
 def _render_example() -> str:
