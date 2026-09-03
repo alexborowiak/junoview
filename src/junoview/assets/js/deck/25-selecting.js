@@ -439,12 +439,15 @@
     /* SIZE, SHAPE AND POSITION -- for anything that is a box. An arrow
        is two endpoints and has neither (T65). */
     var hasBox=isNum&&kind!=='arrow';
-    show('#fmt-sizepos',hasBox);
+    /* the door to the pane that types the same four numbers as the
+       ribbon's own fields is retired from the ribbon (T212); the pane
+       stays for the pane owner */
+    show('#fmt-sizepos',false);
     show('#fmt-geom-xy',hasBox);show('#fmt-geom-wh',hasBox);
     show('#fmt-lockar',hasBox,hasBox&&!!a.lockar);
     var lab=$('#fmt-lockar');
     if(lab&&hasBox) lab.innerHTML=(a.lockar?bic('unlock'):bic('lock'))
-      +' Keep shape';
+      +' Lock aspect ratio';
     /* ONE BUTTON, TWO STATES — the pattern #fmt-revert above already
        uses. A figure without a caption gets "Caption"; one with a
        caption gets "Untie caption", which until now had no door but a

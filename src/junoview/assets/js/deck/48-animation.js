@@ -230,7 +230,7 @@
         b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');
         b.type='button';
         b.setAttribute('aria-pressed',seqType===f[0]?'true':'false');
-        b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';
+        b.innerHTML=bic(f[0])+' '+f[1]+' <kbd>'+f[2]+'</kbd>';
         b.title=f[1]+' \u2014 press '+f[2]
           +(f[0]==='none'?'. Clicking then TAKES an animation away.'
             :'. Every click from now gives this.');

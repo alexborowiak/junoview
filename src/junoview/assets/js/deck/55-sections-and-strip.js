@@ -1633,6 +1633,14 @@
      into the frame when the window closes (the overlay owner hides
      it; an attribute observer sees that and puts the strip home).
      Picking a tile closes the window, the way a gallery does. */
+  /* the Style system screen's own door on the Design tab (T212) */
+  function styleSystemDoorBoot(){
+    var b=$('#dsg-design-btn'); if(!b) return;
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var d=$('#dsg-design'); if(d) d.click();
+    });
+  }
   function stripMoreBoot(){
     $$('.strip-frame').forEach(function(frame){
       var strip=frame.querySelector('.fx-strip'),

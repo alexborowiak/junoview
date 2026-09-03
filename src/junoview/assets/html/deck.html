@@ -134,9 +134,9 @@
         <div class="dc-mhead">page</div>
         <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
         <button class="dc-mi" id="mi-crop"
-          title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
+          title="Add trim marks outside the page for the print shop to
+ cut to. The sheet grows by 5mm a side; the page keeps its size"
+          >Crop marks: off</button>
         <div class="dc-mhead dc-mhead-warn">careful — these lose work</div>
         <button class="dc-mi dc-mi-warn" id="mi-discard">Discard
           changes</button>
@@ -543,6 +543,7 @@
               <i data-ic="objects"></i> Saved layouts&#8230;</button>
               <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
+              <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i> Tight</button>
               <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><i data-ic="spacing"></i> Normal</button>
               <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><i data-ic="expand"></i> Airy</button>
@@ -574,6 +575,14 @@
                    proportion, the one in use lit; the strip scrolls
                    and a tile cut at the edge is the affordance. Built
                    from PAGE_PRESETS, the same table the menu was. -->
+              <span class="sh-drop" id="bg-drop">
+                <button class="dbtn rbn-sm" id="bg-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Background colour and border, for this slide or
+ for every slide"
+                  ><i data-ic="fill"></i> Background &#9662;</button>
+                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
+              </span>
               <span class="rbn-tall strip-frame" id="page-strip-frame">
                 <span class="fx-strip page-strip" id="page-strip"
                   role="group" aria-label="Page size"></span>
@@ -585,14 +594,6 @@
                   <button class="strip-more" type="button" id="page-strip-more"
                     aria-expanded="false" title="Show all"
                     aria-label="Show all page sizes">&#9662;</button></span></span>
-              <span class="sh-drop" id="bg-drop">
-                <button class="dbtn rbn-sm" id="bg-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Background colour and border, for this slide or
- for every slide"
-                  ><i data-ic="fill"></i> Background &#9662;</button>
-                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
-              </span>
               <!-- The strip listing the OTHER pages belongs with the page
                    controls, not under View: it is the set this page is one
                    of, which is exactly what Layouts and Page size are
@@ -616,10 +617,6 @@
                by accident (2026-08-20). -->
           <span class="rbn-grp rbn-furn" data-tab="design">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="dc-wmark"
-                aria-pressed="false"
-                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><i data-ic="wmark"></i>
-   Watermark</button>
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
                 title="A line along the top of every page. {name}, {date},
@@ -631,6 +628,10 @@
                 title="A line along the bottom of every page. {n} and {N}
  are the page number and the total, {sn} and {sN} the same within the
  section, and {sec} its name"><i data-ic="footer"></i> Footer</button>
+              <button class="dbtn rbn-sm" id="dc-wmark"
+                aria-pressed="false"
+                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><i data-ic="wmark"></i>
+   Watermark</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
                 title="A number on every slide"><i data-ic="numbers"></i> Numbers</button>
@@ -639,7 +640,7 @@
                    belongs on the tab that owns page furniture
                    (JVUX-11). -->
               <button class="dbtn rbn-sm" id="dsg-masters"
-                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Masters</button>
+                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><i data-ic="inherit"></i> Slide master&#8230;</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
@@ -702,10 +703,9 @@
                    was the implementation's; the button says what the
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="The deck's palette: six named colours (Accent, Warm,
- Lift, Calm, Ink, Quiet), the corner radius and the gap between things.
- Give a box a named colour from the Deck row of its Colour or Fill
- menu; change the name here and every box wearing it follows"
+                title="Six named colours the deck shares, plus corner radius
+ and spacing. Give a box one from the Deck row of a colour menu; change
+ it here and every box follows"
                 ><i data-ic="palette"></i> Palette&#8230;</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
@@ -718,6 +718,12 @@
                 title="Find headings, body text, captions and figures that
  do not match across the deck, and fix each with one click"><i data-ic="scope"></i>
    Fix mismatched text&#8230;</button>
+              <!-- the whole-deck type screen was a row inside the Text styles
+                   menu: a screen behind a menu behind a door (T212) -->
+              <button class="dbtn rbn-sm" id="dsg-design-btn"
+                title="One screen for the deck's type: what each kind of
+ text looks like, and every slide with a box round each object"
+                ><i data-ic="styles"></i> Style system&#8230;</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -1302,7 +1308,7 @@
             <span class="rbn-row">
               <!-- T208: text colour over fill; opacity beside them -->
               <span class="sh-drop" id="fmt-txcolwrap">
-                <button class="dbtn" id="fmt-txcol-btn" hidden
+                <button class="dbtn etm" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
                   title="Colour of the selected text / line / shape"><i data-ic="palette"></i>
                     Colour &#9662;</button>
@@ -1334,7 +1340,7 @@
                 </div>
               </span>
               <span class="sh-drop" id="fmt-fillcolwrap">
-                <button class="dbtn" id="fmt-fillcol-btn" hidden
+                <button class="dbtn etm" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
                   title="Fill / background colour of the selected box"><i data-ic="fill"></i>
                     Fill &#9662;</button>
@@ -1430,18 +1436,18 @@
               </span>
               <span class="rbn-cell" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
-                title="Align left">Left</button>
+                title="Align left"><i data-ic="alignleft"></i> Left</button>
                 <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
-                title="Align centre">Centre</button>
+                title="Align centre"><i data-ic="aligncentre"></i> Centre</button>
                 <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
-                title="Align right">Right</button>
+                title="Align right"><i data-ic="alignright"></i> Right</button>
               </span>
               <button class="dbtn etm" id="fmt-bullets"
                 aria-pressed="false"
-                title="Bullet list on / off">&#8226; List</button>
+                title="Bullet list on / off"><i data-ic="bullets"></i> List</button>
               <button class="dbtn etm" id="fmt-numbers"
                 aria-pressed="false"
-                title="Numbered list on / off">1. List</button>
+                title="Numbered list on / off"><i data-ic="numlist"></i> Numbered</button>
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
@@ -1592,7 +1598,7 @@
               <button class="dbtn etm" id="fmt-lockar" hidden
                 aria-pressed="false"
                 title="Keep the proportions while you drag a handle. Hold
- Shift while dragging to do the opposite"><i data-ic="lock"></i> Keep shape</button>
+ Shift while dragging to do the opposite"><i data-ic="lock"></i> Lock aspect ratio</button>
               <span class="rbn-cell rbn-geom" id="fmt-geom-xy" hidden
                 role="group" aria-label="Position, in millimetres">
                 <label class="geo" title="Left edge, from the left of the page"
@@ -1615,8 +1621,8 @@
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
- picture. This is the crop you want nine times in ten &mdash; the caret
- beside it holds the shapes and the free-hand crop"><i data-ic="crop"></i>
+ picture. The caret beside it holds the shapes and the free-hand crop"
+                  ><i data-ic="crop"></i>
                   Crop</button>
                 <button class="dbtn etm tx-caret" id="fmt-crop-caret"
                   aria-label="Crop shapes" aria-haspopup="true"
@@ -1681,13 +1687,13 @@
           <span class="rbn-grp rbn-tbl" data-tab="object">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-tbl-rowplus"
-                title="Add a row at the bottom">&#43; Row</button>
+                title="Add a row at the bottom"><i data-ic="plus"></i> Row</button>
               <button class="dbtn etm" id="fmt-tbl-rowminus"
-                title="Remove the last row">&#8722; Row</button>
+                title="Remove the last row"><i data-ic="minus"></i> Row</button>
               <button class="dbtn etm" id="fmt-tbl-colplus"
-                title="Add a column on the right">&#43; Column</button>
+                title="Add a column on the right"><i data-ic="plus"></i> Column</button>
               <button class="dbtn etm" id="fmt-tbl-colminus"
-                title="Remove the last column">&#8722; Column</button>
+                title="Remove the last column"><i data-ic="minus"></i> Column</button>
               <button class="dbtn etm" id="fmt-tbl-head"
                 aria-pressed="false"
                 title="Treat the first row as headings"><i data-ic="table"></i>
@@ -1734,6 +1740,10 @@
                    Shown for a text box; picking one on a box with no
                    entrance gives it a Fade first, so "by bullet" is one
                    click and not two. -->
+              <!-- the three as one run (T212), so an effect never shares
+                   a column with how much of the text arrives -->
+              <span class="rbn-cell" id="tx-run-by" role="group"
+                aria-label="How much of the text arrives per click">
               <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
                 title="The whole box arrives on one click"
                 ><i data-ic="text"></i> Whole box</button>
@@ -1744,6 +1754,7 @@
               <button class="dbtn etm" id="fmt-by-sent" aria-pressed="false"
                 title="One click per sentence. A box with no entrance yet
  gets a Fade"><i data-ic="spacing"></i> By sentence</button>
+              </span>
             </span>
             <span class="rbn-lab">Animation</span>
           </span>

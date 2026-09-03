@@ -1914,7 +1914,7 @@ def test_design_tokens_have_a_permanent_design_door(out):
     # what the things are; since T208 it is the Palette, and its tooltip
     # says what a named colour is ("what does colours and spacing do?")
     assert '<svg class="bic"' in tokens and "Palette&#8230;" in tokens
-    assert "six named colours (Accent, Warm," in tokens
+    assert "Six named colours the deck shares" in tokens
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out
@@ -3562,7 +3562,7 @@ def test_the_sequencing_bar_is_named_and_shows_its_keys(out):
     assert "var SEQ_FX=[['none','None','N'],['appear','Appear','A']," in out
     assert "['fade','Fade','F'],['rise','Float up','U'],"
     assert "var seqType='fade';" in out
-    assert "b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';" in out
+    assert "b.innerHTML=bic(f[0])+' '+f[1]+' <kbd>'+f[2]+'</kbd>';" in out
     # a letter picks an effect, a digit still sets the delay
     assert "for(var q=0;q<SEQ_FX.length;q++) if(SEQ_FX[q][2]===k){" in out
     # ...and the click writes the CHOSEN effect

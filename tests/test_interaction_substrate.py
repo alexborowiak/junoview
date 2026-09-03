@@ -125,7 +125,7 @@ def test_chart_and_masters_have_first_class_doors():
     # never wanted that... get rid of it"); the feature keeps its
     # right-click door on a placed table
     assert 'id="ins-chart"' not in html
-    assert 'id="dsg-masters"' in html and '> Masters</button>' in html
+    assert 'id="dsg-masters"' in html and '> Slide master&#8230;</button>' in html
     out = _out()
     assert "var ic2=$('#ins-chart');" not in out
     assert "var dm2=$('#dsg-masters');" in out

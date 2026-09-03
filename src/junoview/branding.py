@@ -241,6 +241,14 @@ _ICON_PATHS = {
              '<path d="m4.9 8.9 3.1-3.1 3.1 3.1"/>',
     "back": '<path d="M2.8 13.2h10.4"/><path d="M8 2.4v7.8"/>'
             '<path d="m4.9 7.1 3.1 3.1 3.1-3.1"/>',
+    # T212: alignment, lists -- the four ribbon buttons that had no icon
+    "alignleft": '<path d="M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7"/>',
+    "aligncentre": '<path d="M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7"/>',
+    "alignright": '<path d="M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7"/>',
+    "bullets": '<circle cx="3.4" cy="4.6" r="1.2"/><circle cx="3.4" cy="11.4" r="1.2"/>'
+               '<path d="M6.6 4.6h7M6.6 11.4h7"/>',
+    "numlist": '<path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/>'
+               '<path d="M6.6 4.6h7M6.6 11.4h7"/>',
     "align": '<path d="M2.6 2v12"/>'
              '<rect x="4.8" y="3.6" width="8.8" height="2.8" rx=".8"/>'
              '<rect x="4.8" y="9.6" width="5.4" height="2.8" rx=".8"/>',

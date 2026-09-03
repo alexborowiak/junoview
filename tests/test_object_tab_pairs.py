@@ -76,8 +76,8 @@ def test_the_palette_door_says_what_a_named_colour_is():
     i = html.index('id="dsg-tokens"')
     btn = html[i:html.index("</button>", i)]
     assert "Palette&#8230;" in btn
-    assert "six named colours (Accent, Warm," in btn
-    assert "change the name here and every box wearing it follows" in btn
+    assert "Six named colours the deck shares" in btn
+    assert "it here and every box follows" in btn
     js = assets.deck_js()
     # on the overlay stack, so Escape and an outside click close it
     assert "overlayShow(anchor,m);" in js

@@ -4294,6 +4294,30 @@ option. Then where has the ability to refresh all images gone?"
   layer and only its ✕ closed it. It opens on the overlay stack inside
   the editor now: Escape peels it, an outside click closes it, the door
   toggles it.
+- [x] **T212 · M — What the adversarial check found still wrong.**
+  Three checkers read the current files against every complaint in the
+  2026-09-02 brief and a refuter tried to knock each finding down.
+  *Done 2026-09-03.* What stood, and is fixed: three groups still made
+  bad vertical pairs (Design › Slide had Tidy page and Background each
+  over an empty cell either side of the page strip; Page furniture
+  split Header from Footer; the Object tab's Animation group put Grow
+  over Whole box) — reordered, and the by-bullet trio is one run. The
+  Size & position door stayed on the ribbon beside the X Y W H fields
+  it duplicated — retired. The two colour doors were bare buttons and
+  stayed boxed; the light theme boxed every Object-tab button — both
+  flat now, and Finish keeps its fill. The pre-T207 scrollbar rules
+  were still shipped and won or lost on cascade order alone — deleted;
+  the Change layout gallery still scrolled with a scrollbar and
+  third-size tiles — the one tile, wrapped. Nine ribbon buttons had no
+  icon (Left, Centre, Right, the two lists, the four table buttons) and
+  the Quick animate effect rows had none — drawn. The Palette tooltip
+  T208 wrote was 249 characters; it and two others are under the cap,
+  and the test now enforces 160. Keep shape is Lock aspect ratio,
+  Masters is Slide master…, the spacing trio wears a Spacing caption,
+  Style system… is a button of its own on Design, the help page says
+  Layers, Paragraph and Review. Every ribbon layout named `page-drop`,
+  an id gone since T190, so every non-default layout silently lost the
+  page sizes — fixed, and a test now checks every id a layout names.
 
 
 ## Cut (and why)

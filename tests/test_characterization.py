@@ -929,8 +929,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # fragments and help.html.
 # T211 2026-09-03: the Masters panel on the overlay stack, inside the
 # editor's layer. 40-captions-and-components.js only.
-EXPECTED_MD5 = "0e66dacb8d64799a1d1d63e655af3304"
-EXPECTED_BYTES = 3334060
+# T212 2026-09-03: what the adversarial check found still wrong -- three
+# groups repaired, the Size & position door retired, colour doors and the
+# light theme flat, dead scrollbar rules gone, the Change layout gallery
+# as tiles, icons on nine buttons, names, help, the layouts' dead ids.
+# deck.html, deck.css, help.html, branding.py and five deck fragments.
+EXPECTED_MD5 = "10bf2bcb6f3f176a6fefd4d26348c530"
+EXPECTED_BYTES = 3337863
 
 
 def _render_example() -> str:
