@@ -7733,6 +7733,121 @@ body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
 
+/* ---- T226: MAKING A LAYOUT --------------------------------------------
+   The board is the page and the slots are what a layout is made of, so
+   they are drawn at page percentages exactly as the design screen's
+   ghost is. Nothing here renders content: a layout is a shape. */
+.lb-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  margin:2px 0 12px;}
+.lb-board{position:relative;width:min(100%,760px);margin:0 0 14px;
+  background:var(--chrome-0,#0b141d);border:1px solid #ffffff22;
+  border-radius:10px;overflow:hidden;}
+.lb-slot{position:absolute;box-sizing:border-box;border-radius:6px;
+  cursor:move;display:flex;align-items:flex-start;padding:5px 7px;
+  border:1.5px dashed #ffffff4d;background:#ffffff0a;color:#c9d6e2;
+  font-family:var(--sans);font-size:12px;}
+.lb-slot.lb-cell{border-style:solid;
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  background:color-mix(in srgb,var(--accent) 10%,transparent);}
+.lb-slot.on{border-color:var(--accent);
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 45%,transparent);}
+.lb-lab{pointer-events:none;overflow:hidden;white-space:nowrap;
+  text-overflow:ellipsis;}
+.lb-grip{position:absolute;right:-4px;bottom:-4px;width:12px;height:12px;
+  border-radius:3px;background:var(--accent,#39a9c0);cursor:nwse-resize;}
+.lb-foot{display:flex;align-items:center;gap:10px;margin:14px 0 6px;}
+.lb-name{flex:0 1 280px;height:30px;padding:0 9px;box-sizing:border-box;
+  font-family:var(--sans);font-size:13px;color:#e8f1f8;
+  background:#ffffff0a;border:1px solid #ffffff26;border-radius:7px;}
+.lb-mine{margin-top:14px;max-width:620px;}
+.lb-row{display:flex;align-items:center;gap:8px;padding:5px 2px;
+  border-top:1px solid #ffffff14;}
+.lb-rowt{flex:1;min-width:0;font-family:var(--sans);font-size:13px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+body.light .lb-board{background:var(--paper-2);border-color:var(--line);}
+body.light .lb-name{background:#00000006;border-color:var(--line);
+  color:var(--ink);}
+
+/* ---- T225: a checkpoint reads as one ----------------------------------
+   Every other snapshot is something that happened to you; this is one
+   you chose, so it is marked in the rail and never evicted. */
+.dh-snap.checkpoint{border-left:3px solid var(--accent,#39a9c0);}
+.dh-snap.checkpoint .dh-why{color:#8fd4e4;}
+
+/* ---- T224: EVERY BOX OF A KIND, IN A TABLE ----------------------------
+   One row per box, wherever it is: tick several, then Match style of and
+   click the one they should follow. The grid's column count comes from
+   the header row it was built with, so the text and object views can
+   have different columns without two stylesheets. */
+.dgt{margin:6px 0 18px;}
+.dgt-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  margin-bottom:8px;}
+.dgt-count{font-family:var(--sans);font-size:12px;color:#8ea3b5;
+  margin-left:auto;}
+.dgt-grid{display:grid;
+  grid-template-columns:26px 44px minmax(120px,1.6fr)
+    repeat(calc(var(--dgt-cols) - 5),minmax(56px,.7fr)) 34px 34px;
+  gap:1px;background:#ffffff12;border:1px solid #ffffff1c;
+  border-radius:9px;overflow:hidden;max-height:52vh;overflow-y:auto;}
+.dgt-h{background:var(--chrome-1,#0e1926);font-family:var(--sans);
+  font-size:11px;font-weight:600;color:#9fb3c4;padding:7px 8px;
+  position:sticky;top:0;z-index:1;}
+.dgt-c{background:var(--chrome-2,#16273a);padding:5px 8px;
+  font-family:var(--sans);font-size:12px;color:#dce6ee;cursor:pointer;
+  display:flex;align-items:center;min-width:0;}
+.dgt-c.on{background:color-mix(in srgb,var(--accent) 22%,var(--chrome-2,#16273a));}
+.dgt-c:hover{background:color-mix(in srgb,var(--accent) 12%,var(--chrome-2,#16273a));}
+.dgt-what{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:block;line-height:1.9;}
+.dgt-si{font-family:var(--mono);color:#8ea3b5;}
+.dgt-n{width:100%;min-width:0;height:24px;padding:0 5px;box-sizing:border-box;
+  font-family:var(--mono);font-size:11.5px;color:#e8f1f8;
+  background:#ffffff0d;border:1px solid #ffffff22;border-radius:5px;}
+.dgt-n:focus{border-color:var(--cyan);outline:none;}
+.dgt-face{font-family:var(--mono);font-size:11px;color:#9fb3c4;}
+.dgt-sw{width:16px;height:16px;border-radius:50%;
+  border:1.5px solid #ffffff33;display:block;}
+.dgt-sw.dgt-none{background:var(--chrome-0,#0b141d);position:relative;
+  overflow:hidden;}
+.dgt-sw.dgt-none::after{content:"";position:absolute;left:-2px;right:-2px;
+  top:50%;height:1.5px;background:#ff6b57;transform:rotate(-45deg);}
+.dgt-ck{cursor:pointer;}
+/* the slide the strip is filtering by */
+.dg-cell.dg-pick{outline:2px solid var(--cyan);outline-offset:2px;}
+body.light .dgt-c{background:#fff;color:var(--ink);}
+body.light .dgt-h{background:var(--chrome-1,#f4f7fa);}
+body.light .dgt-n{background:#00000006;border-color:var(--line);
+  color:var(--ink);}
+
+/* ---- T223: A STYLE SAYS EVERYTHING ------------------------------------
+   The typeface and three colours, in both places a style can be edited:
+   the Text styles window's inline editor and the Style system screen.
+   Each colour can also be told to be nothing at all, which is a
+   different answer from having said nothing. */
+.stm-erow .stm-font,.dg-ctrls .dg-font{font-family:var(--sans);
+  font-size:11.5px;padding:3px 6px;border-radius:6px;
+  background:var(--chrome-1,#0e1926);border:1px solid #ffffff26;
+  color:#dce6ee;max-width:120px;}
+.stm-col,.dg-colw{display:inline-flex;align-items:center;gap:5px;
+  padding:0 2px;}
+.stm-collab,.dg-collab{font-family:var(--sans);font-size:11px;
+  color:#8ea3b5;}
+.stm-colin,.dg-ctrls .dg-col{width:26px;height:22px;padding:0;
+  border:1px solid #ffffff33;border-radius:5px;background:none;
+  cursor:pointer;}
+body.light .stm-erow .stm-font,body.light .dg-ctrls .dg-font{
+  background:#fff;border-color:var(--line);color:var(--ink);}
+/* the numbers beside the drag board */
+.dg-nums{display:flex;gap:14px;align-items:center;margin:8px 0 2px;}
+.dg-num{display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--sans);font-size:12px;color:#9fb3c4;}
+.dg-num input{width:62px;height:26px;padding:0 6px;box-sizing:border-box;
+  font-family:var(--mono);font-size:12px;color:#e8f1f8;
+  background:#ffffff0a;border:1px solid #ffffff26;border-radius:6px;}
+.dg-numpc{color:#7e93a4;}
+body.light .dg-num input{background:#00000006;border-color:var(--line);
+  color:var(--ink);}
+
 /* ---- T221: A BUTTON IS ITS OWN WIDTH ------------------------------------
    The grid stretched every cell to its column, so a lone button sharing
    a column with a three-button run was drawn that run's width -- which
@@ -11028,6 +11143,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           file&#8230;</button>
         <!-- HISTORY. Beside the saves, because a snapshot is taken by
              a save and what you want it for is undoing one (T32). -->
+        <!-- T225: a checkpoint you take on purpose, beside the
+             history it lands in -->
+        <button class="dc-mi" id="mi-check"
+          title="Save this exact version under a name you choose. It
+ is kept even when older versions are dropped, and you can go back to
+ it or start a branch from it">Save a checkpoint&#8230;</button>
         <button class="dc-mi" id="mi-hist"
           title="Every version this deck has been saved as, what is
  different about each, and a way to put one slide or the whole thing
@@ -11489,7 +11610,16 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               </span>
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
               title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
-              <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="8.8" y="2.6" width="5.2" height="4.6" rx=".8"/><rect x="2" y="8.8" width="12" height="4.6" rx=".8"/></svg> Layout ideas&#8230;</button>
+              <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M5.4 2.4v11.2M10.6 2.4v11.2"/><path d="M2.4 5.4h11.2M2.4 10.6h11.2"/></svg> Layout ideas&#8230;</button>
+              <!-- T226: a layout of your own, built rather than
+                   recorded (2026-09-03, user: "it would be great if
+                   people could make their own slide layouts").
+                   Save layout beside it records the slide you have;
+                   this designs the one you have not made yet. -->
+              <button class="dbtn rbn-sm" id="hm-lay-new"
+                title="Design a slide layout of your own: put the
+ slots where you want them, name it, and it joins the New slide
+ gallery"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z"/><path d="M4.6 8.4h4M4.6 10.8h2.6"/><path d="M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z"/></svg> New layout&#8230;</button>
               <button class="dbtn rbn-sm" id="hm-lay-arrsave"
               title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save layout&#8230;</button>
@@ -11647,9 +11777,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                        they are two questions -- what is the standard,
                        and who is not keeping to it -- and each opens
                        the other. -->
-                  <button class="dbtn vw-opt" id="dsg-design"
-                    title="One screen for the deck’s type: what each kind of text looks like, where it usually sits, and every slide with a box drawn round each object"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg>
-                    Style system&#8230;</button>
                 </div>
               </span>
               <!-- "What is 'design tokens'?????" (2026-09-02). The word
@@ -11677,7 +11804,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="dsg-design-btn"
                 title="One screen for the deck's type: what each kind of
  text looks like, and every slide with a box round each object"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style system&#8230;</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.6" width="12.4" height="10.8" rx="1.2"/><path d="M6.2 2.6v10.8"/><path d="M3.2 5.6h1.8M3.2 8h1.8"/></svg> Style system&#8230;</button>
             </span>
             <span class="rbn-lab">The whole deck</span>
           </span>
@@ -11771,7 +11898,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="vw-preflight"
                 title="Whether this page will print well: soft figures,
  things off the page or in the margin, thin contrast, empty frames"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Before you print</button>
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg> Before you print</button>
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
@@ -12155,9 +12282,17 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Play from this slide with the talk settings open: skip
  the animations, or size headings, body text and captions for the room"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.6"/><path d="M8 2.4v11.2"/><path d="M8 4.6a3.4 3.4 0 0 1 0 6.8"/></svg> Talk settings&#8230;</button>
+              <!-- T222: two buttons, not one (2026-09-03, user:
+                   "notes and timing should be two different buttons").
+                   They open the same pane on different tabs, which is
+                   what the pane was already built to do. -->
               <button class="dbtn rbn-sm" id="pr-notes"
-                title="Your speaker notes, and how long each slide took"
+                title="Your speaker notes for each slide"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z"/><path d="m9.2 4 2.8 2.8"/></svg> Notes &amp; timing&#8230;</button>
+              <button class="dbtn rbn-sm" id="pr-timing"
+                title="How long you want each slide to take, how long
+ the whole talk is, and what your rehearsals actually took"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6"/><path d="M8 4.6V8l2.4 1.5"/></svg> Timing</button>
               <button class="dbtn rbn-sm" id="pr-tap" aria-pressed="false"
                 title="While presenting, a click on a figure enlarges it"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg> Click to enlarge figures</button>
@@ -12227,13 +12362,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 <button class="fx-tile big-tile" id="hm-refresh-img"
                   title="Re-read every picture from the file it came from.
  A file that has moved is left as it was, and named"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg><span>Reload pictures</span></button>
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg><span>Reload pictures</span></button>
                 <button class="fx-tile big-tile" id="hm-images"
                   aria-pressed="false"
                   title="The pictures and figures on this slide, where each
  came from, and whether it is locked in place. From there, every
  slide at once"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg><span>Images</span></button>
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3" width="12" height="10" rx="1.2"/><circle cx="5.7" cy="6.4" r="1.1"/><path d="m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12"/></svg><span>Images</span></button>
               </span>
             </span>
             <span class="rbn-lab">Keep up to date</span>
@@ -12323,7 +12458,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop" id="fmt-samewrap" hidden>
                 <button class="dbtn etm" id="fmt-same" aria-haspopup="true"
                   aria-expanded="false"
-                  title="Make the selected items the same size"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg>
+                  title="Make the selected items the same size"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 8h12.8"/><path d="M4.2 5.4 1.6 8l2.6 2.6"/><path d="M11.8 5.4 14.4 8l-2.6 2.6"/></svg>
                   Same size &#9662;</button>
                 <div class="sh-menu same-menu" id="fmt-same-menu"
                   hidden></div>
@@ -12515,7 +12650,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   aria-expanded="false"
                   title="List levels, the whole-box indent, line and
  paragraph spacing, and bending the text along a curve"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Paragraph &#9662;</button>
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6"/><path d="m9.8 2.8 2.4 2.4-2.4 2.4"/></svg> Paragraph &#9662;</button>
                 <div class="sh-menu opt-panel para-panel" id="fmt-para-menu"
                   hidden data-built="1">
                   <div class="hd-lab">list levels</div>
@@ -12869,6 +13004,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <button class="dbtn rbn-sm" id="img-ov-close" title="Close (Esc)"
             ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
         <div class="img-ov-body" id="img-ov-body"></div>
+      </div>
+      <!-- MAKE A LAYOUT (T226). The board is the page; the slots are
+           what a layout is made of. What comes out is an entry in the
+           same shape the built-in catalogue uses. -->
+      <div class="img-ov" id="lay-make" hidden role="dialog"
+        aria-label="Make a slide layout">
+        <div class="img-ov-h"><span class="img-ov-t">Make a slide
+          layout</span>
+          <span class="img-ov-sub">Put the slots where you want them,
+            give it a name, and it joins the New slide gallery.</span>
+          <button class="dbtn rbn-sm" id="lay-make-new"
+            title="Start again from a blank board">Start again</button>
+          <button class="dbtn rbn-sm" id="lay-make-close"
+            title="Close (Esc)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
+        <div class="img-ov-body" id="lay-make-body"></div>
       </div>
       <!-- THE HISTORY OF ONE OBJECT, FULL SCREEN (T220). The same
            states the dock pane lists, with room for the thumbnails. -->
@@ -13659,7 +13809,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "clock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6\"/><path d=\"M8 4.6V8l2.4 1.5\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -21281,9 +21431,18 @@ window.JunoPptx = (function () {
      and keep any free decorations (arrows/images/shapes) the user added. */
   /* the layout a new slide takes, remembered per project (T193) */
   function newLayKey(){return 'jv-deck-newlay:'+SCOPE;}
+  /* T226: the catalogue is the built-in table plus whatever this
+     deck has made. One list, so a layout of your own is a layout in
+     every sense -- applyLayout stamps it, the picker draws it, and
+     New slide remembers it -- rather than a second kind of thing. */
+  function allLayouts(){
+    var mine=(pres&&Array.isArray(pres.layouts))?pres.layouts:[];
+    return LAYOUTS.concat(mine.filter(function(l){
+      return l&&l.id&&Array.isArray(l.items);}));
+  }
   function layoutById(id){
     var hit=null;
-    LAYOUTS.forEach(function(l){if(!hit&&l.id===id) hit=l;});
+    allLayouts().forEach(function(l){if(!hit&&l.id===id) hit=l;});
     return hit;
   }
   function applyLayout(s,layout){
@@ -21346,9 +21505,12 @@ window.JunoPptx = (function () {
     var variant=(isPoster?'p':'s')+(land?'l':'p');
     ['#layout-row','#layout-menu-grid','#layout-strip']
       .forEach(function(sel){
-      var row=$(sel); if(!row||row.dataset.built===variant) return;
-      row.dataset.built=variant;row.innerHTML='';
-      var list=LAYOUTS.filter(function(l){
+      /* T226: the family AND how many layouts there are, so making
+         one of your own makes the pickers draw again */
+      var stamp=variant+':'+((pres&&pres.layouts)?pres.layouts.length:0);
+      var row=$(sel); if(!row||row.dataset.built===stamp) return;
+      row.dataset.built=stamp;row.innerHTML='';
+      var list=allLayouts().filter(function(l){
         return !!l.poster===isPoster&&l.id!=='blank';});
       if(isPoster) list=list.slice().sort(function(a,b){
         return (!!a.land===land?0:1)-(!!b.land===land?0:1);});
@@ -26725,7 +26887,7 @@ window.JunoPptx = (function () {
        items:['page-strip-frame','lay-drop','dsg-tidy','bg-drop']},
       {id:'of-type',label:'Type',tab:'design',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std']},
+         'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'of-view',label:'View',tab:'design',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-check','vw-morewrap']},
@@ -26751,7 +26913,7 @@ window.JunoPptx = (function () {
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'dk-type',label:'Type styles',tab:'deck',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std']},
+         'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'dk-view',label:'View',tab:'deck',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-morewrap']},
@@ -26847,7 +27009,7 @@ window.JunoPptx = (function () {
        items:['page-strip-frame','bg-drop']},
       {id:'s1-type',label:'Type',tab:'deck',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std']},
+         'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'s1-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
      ]},
@@ -26895,7 +27057,7 @@ window.JunoPptx = (function () {
       {id:'day-page',label:'Page and furniture',tab:'more',
        items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'day-deck-styling',label:'Deck styling',tab:'more',
-       items:['dsg-scale-down','dsg-scale-up','dsg-restyle','dsg-design','dsg-std',
+       items:['dsg-scale-down','dsg-scale-up','dsg-restyle','dsg-design-btn','dsg-std',
          'hm-match']},
       {id:'day-maths',label:'Other inserts',tab:'more',
        items:['dc-maths','dc-md','dc-draw']},
@@ -26916,7 +27078,7 @@ window.JunoPptx = (function () {
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'j3-type',label:'Type',tab:'page',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std']},
+         'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'j3-guides',label:'Workspace',tab:'page',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn']},
@@ -26976,7 +27138,7 @@ window.JunoPptx = (function () {
          'et-table','et-flip','et-arrow','et-cancel']},
       {id:'one-text',label:'Text',tab:'all',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std','fmt-stylewrap-tx','fmt-font',
+         'dsg-restyle','dsg-design-btn','dsg-std','fmt-stylewrap-tx','fmt-font',
          'fmt-szwrap','fmt-smaller','fmt-bigger','fmt-bold',
          'fmt-ital','fmt-under','fmt-strike','fmt-eqedit','fmt-mdedit',
          'fmt-bullets','fmt-numbers','fmt-outdent','fmt-indent',
@@ -27046,7 +27208,7 @@ window.JunoPptx = (function () {
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'mi-type',label:'Type',tab:'mi-board',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std']},
+         'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'mi-view',label:'View',tab:'mi-board',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-full',
          'vw-side','vw-check','vw-morewrap']},
@@ -27102,7 +27264,7 @@ window.JunoPptx = (function () {
        items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'tt-type',label:'Type',tab:'tt-more',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
-         'dsg-restyle','dsg-design','dsg-std']},
+         'dsg-restyle','dsg-design-btn','dsg-std']},
       {id:'tt-anim',label:'Animate',tab:'tt-more',
        items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'tt-rest',label:'The rest',tab:'tt-more',rest:1,
@@ -27359,6 +27521,20 @@ window.JunoPptx = (function () {
        silently redefine Heading 1 for everybody who opened the file.
        It cannot ride the ['wmark','head','foot','styles'] loop below —
        that loop takes objects and this is a list. */
+    /* T226: the slide layouts this deck designed. Filtered the same
+       way as types: an entry with no id or no slot list is unusable,
+       and one claiming a built-in id would redefine "Title" for
+       everyone who opened the file. */
+    if(Array.isArray(p.layouts)&&p.layouts.length){
+      var lys=[];
+      p.layouts.forEach(function(l){
+        if(!l||typeof l!=='object'||!l.id) return;
+        if(!Array.isArray(l.items)) return;
+        if(LAYOUTBYID&&LAYOUTBYID[l.id]) return;
+        lys.push(deep(l));
+      });
+      if(lys.length) out.layouts=lys;
+    }
     if(Array.isArray(p.types)&&p.types.length){
       var tps=[];
       p.types.forEach(function(t){
@@ -27864,7 +28040,9 @@ window.JunoPptx = (function () {
      with single characters and evict the slide edits undo is for. Per
      SLIDE notes live on the slide and are covered. */
   function histState(){
-    return JSON.stringify({slides:pres.slides||[],talkMins:pres.talkMins||0,
+    return JSON.stringify({slides:pres.slides||[],
+      layouts:pres.layouts||[],
+      talkMins:pres.talkMins||0,
       showNums:pres.showNums||0,tapzoom:pres.tapzoom||0,
       hideTrace:pres.hideTrace||0,wmark:pres.wmark||null,
       head:pres.head||null,foot:pres.foot||null,
@@ -31239,6 +31417,20 @@ window.JunoPptx = (function () {
     rad:4,      /* px, the corner of a drawn box */
     gap:3       /* % of the page, the rhythm the arrange verbs use */
   };
+  /* ---- WHAT A STYLE CAN SAY (T223) ---------------------------------
+     One list, because there were four and they had already drifted:
+     syncCustomTypes copied eight fields, addCustomType seven (it
+     silently dropped `head`), the style editor eight and applyStyleTo
+     baked eight. A field added to a style had to be remembered in all
+     of them or it half-worked.
+     `bg` and `bdc` are new (2026-09-03, user: "in the text styles you
+     can only change size and bold and stuff. I said I wanted also
+     colours of text, background colour, box border colour, font
+     style. I said I wanted everything"). Both take a colour or the
+     string 'none'; 'none' is a real answer, and different from not
+     saying, which is why they are not just absent-or-set. */
+  var STYLE_FIELDS=['b','i','font','color','align','lh','pspace',
+    'head','bg','bdc'];
   var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
     calm:'Calm',ink:'Ink',quiet:'Quiet'};
   function tokens(){
@@ -31604,8 +31796,8 @@ window.JunoPptx = (function () {
       if(!t||!t.id||BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
       var d={label:String(t.label||'Style'),
         size:(typeof t.size==='number'&&t.size>0)?t.size:2.6};
-      ['b','i','font','color','align','lh','pspace','head']
-        .forEach(function(k){if(t[k]!==undefined) d[k]=t[k];});
+      STYLE_FIELDS.forEach(function(k){
+        if(t[k]!==undefined) d[k]=t[k];});
       STYLE_DEFAULTS[t.id]=d;
     });
   }
@@ -31644,8 +31836,10 @@ window.JunoPptx = (function () {
   function addCustomType(label,base){
     var b=styleDef(base)||STYLE_DEFAULTS.body;
     var t={id:mintTypeId(),label:String(label||'My style'),size:b.size};
-    ['b','i','font','color','align','lh','pspace']
-      .forEach(function(k){if(b[k]!==undefined) t[k]=b[k];});
+    /* `head` travels too now: a style based on Heading 2 is a
+       heading, and the old list quietly said otherwise */
+    STYLE_FIELDS.forEach(function(k){
+      if(b[k]!==undefined) t[k]=b[k];});
     customTypes().push(t);
     syncCustomTypes();
     return t;
@@ -31702,6 +31896,16 @@ window.JunoPptx = (function () {
     if(d.align) a.align=d.align;
     if(d.lh) a.lh=d.lh; else delete a.lh;
     if(d.pspace) a.pspace=d.pspace; else delete a.pspace;
+    /* T223: the colour behind the words. 'none' is transparent,
+       which is a.bg=0 -- the same shape the format bar's swatch has
+       always written. */
+    if(d.bg==='none'){a.bg=0;delete a.bgc;}
+    else if(d.bg){a.bg=1;a.bgc=d.bg;}
+    else {delete a.bg;delete a.bgc;}
+    /* ...and the colour of its edge */
+    if(d.bdc&&d.bdc!=='none') a.bdc=d.bdc;
+    else if(d.bdc==='none') a.bdc='none';
+    else delete a.bdc;
   }
   /* ---- SPEAKER NOTES + TIMING ------------------------------------------
      Notes are per slide and are never drawn on the page: they exist for
@@ -32872,7 +33076,7 @@ window.JunoPptx = (function () {
       over.label=STYLE_DEFAULTS[id].label;
       over.size=Math.max(0.8,Math.min(24,
         Math.round(d.size*k*100)/100));
-      ['b','i','font','color','align'].forEach(function(pr){
+      STYLE_FIELDS.forEach(function(pr){
         if(d[pr]!==undefined) over[pr]=d[pr];});
       deckStyles()[id]=over;
     });
@@ -32904,9 +33108,8 @@ window.JunoPptx = (function () {
            a partial override plus a later base change reads as a style
            that half-followed */
         o.label=d.label;o.size=d.size;
-        ['b','i','font','color','align','lh','pspace','head']
-          .forEach(function(k){
-            if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
+        STYLE_FIELDS.forEach(function(k){
+          if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
         deckStyles()[id]=o;
         return o;
       }
@@ -32933,6 +33136,67 @@ window.JunoPptx = (function () {
         'Counts as a heading — for "apply to all headings", the outline '
         +'view and the standardise check'));
       box.appendChild(row);
+      /* ---- T223: THE REST OF WHAT A STYLE IS -----------------------
+         The typeface, the colour of the words, the colour behind them
+         and the colour of the edge. Each writes the same override
+         record the toggles do and re-stamps every box wearing it. */
+      var crow=document.createElement('div');crow.className='stm-erow';
+      var fsel=document.createElement('select');
+      fsel.className='stm-font';
+      fsel.title='The typeface every box of this style takes';
+      [['','Default face'],['sans','Sans'],['serif','Serif'],
+       ['mono','Mono'],['system','System'],['hand','Handwritten']]
+        .forEach(function(pr){
+          var o=document.createElement('option');
+          o.value=pr[0];o.textContent=pr[1];
+          if((d.font||'')===pr[0]) o.selected=true;
+          fsel.appendChild(o);
+        });
+      fsel.addEventListener('click',function(e){e.stopPropagation();});
+      fsel.addEventListener('change',function(){
+        var o=over();
+        if(fsel.value) o.font=fsel.value; else delete o.font;
+        restyleAll([id]);build();
+      });
+      crow.appendChild(fsel);
+      /* a colour, and a way to say NONE -- which is a different
+         answer from not having said anything */
+      function colCtl(key,label,fallback,none){
+        var wrap=document.createElement('span');
+        wrap.className='stm-col';
+        var lb=document.createElement('span');
+        lb.className='stm-collab';lb.textContent=label;
+        wrap.appendChild(lb);
+        var ci=document.createElement('input');
+        ci.type='color';ci.className='stm-colin';
+        var v=d[key];
+        ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
+        ci.title=label+' \u2014 everywhere in this deck';
+        ci.addEventListener('click',function(e){e.stopPropagation();});
+        ci.addEventListener('change',function(){
+          var o=over();o[key]=ci.value;
+          restyleAll([id]);build();
+        });
+        wrap.appendChild(ci);
+        if(none){
+          var nb=document.createElement('button');
+          nb.className='dbtn stm-tg';nb.textContent=none;
+          nb.title='No '+label.toLowerCase()+' at all';
+          nb.setAttribute('aria-pressed',(v==='none').toString());
+          nb.addEventListener('click',function(e){
+            e.stopPropagation();
+            var o=over();
+            if(v==='none') delete o[key]; else o[key]='none';
+            restyleAll([id]);build();
+          });
+          wrap.appendChild(nb);
+        }
+        return wrap;
+      }
+      crow.appendChild(colCtl('color','Words','#e6eef5',''));
+      crow.appendChild(colCtl('bg','Behind','#16273a','None'));
+      crow.appendChild(colCtl('bdc','Edge','#8aa0b0','None'));
+      box.appendChild(crow);
       var ren=document.createElement('input');
       ren.className='stm-ren';ren.type='text';ren.value=d.label;
       ren.placeholder='name for this style';
@@ -33025,7 +33289,7 @@ window.JunoPptx = (function () {
             over.label=STYLE_DEFAULTS[id].label;
             over.size=Math.max(0.8,Math.min(24,
               Math.round(d.size*pr[1]*100)/100));
-            ['b','i','font','color','align'].forEach(function(k2){
+            STYLE_FIELDS.forEach(function(k2){
               if(d[k2]!==undefined) over[k2]=d[k2];});
             deckStyles()[id]=over;
             restyleAll([id]);
@@ -34537,6 +34801,10 @@ window.JunoPptx = (function () {
           d2.style.background=tokVal(a.bgc);
           d2.style.borderColor='transparent';
         }
+        /* T223: an explicit edge colour wins over both the default
+           and the transparent edge a background sets */
+        if(a.bdc) d2.style.borderColor=
+          (a.bdc==='none')?'transparent':tokVal(a.bdc);
         if(a.w){d2.style.width=a.w+'%';d2.style.maxWidth='none';}
         applyCommon(d2,a);
         d2.setAttribute('data-idx',i);
@@ -43968,7 +44236,9 @@ window.JunoPptx = (function () {
       styleOrder().forEach(function(id){
         var d=styleDef(id); if(!d) return;
         var o={size:d.size};
-        ['b','i','font','color','align','lh','pspace'].forEach(function(k){
+        /* T223: the one vocabulary, so a saved set keeps the
+           colours and the edge as well as the size and weight */
+        STYLE_FIELDS.forEach(function(k){
           if(d[k]!==undefined) o[k]=d[k];});
         st[id]=o;
       });
@@ -46502,10 +46772,29 @@ window.JunoPptx = (function () {
       tt.textContent=want?('talk '+want+' min')
         :(tot?('planned '+fmtMins(tot)):'');
     }
+    /* ---- T222: ARE YOU RUNNING LATE ---------------------------------
+       The bar showed the clock and how much of the slot was left, but
+       never the number that changes what you do next: whether you are
+       behind FOR WHERE YOU ARE (2026-09-03, user: "the running late
+       [thing] should be in the presentation view"). Planned-so-far is
+       the sum of the per-slide targets up to and including this one;
+       with no targets set it is the slot shared out evenly, which is
+       the assumption a speaker makes anyway. */
+    var planned=0;
+    if(shownAt>=0){
+      var goals=0,any=false;
+      shown.slice(0,shownAt+1).forEach(function(ix){
+        var g=slideGoal(pres.slides[ix]);
+        if(g){goals+=g;any=true;}
+      });
+      if(any) planned=goals*60;
+      else if(pres.talkMins&&shown.length)
+        planned=pres.talkMins*60*(shownAt+1)/shown.length;
+    }
     presWin.__jvState={start:presStart,paused:presPaused,
       pauseAt:presPauseAt,goal:slideGoal(sl),
       talk:pres.talkMins||0,slide:shownAt,count:shown.length,
-      slideIndex:cur};
+      planned:Math.round(planned),slideIndex:cur};
   }
   function presenterHtml(){
     /* every stylesheet the deck uses, so the imported slide nodes look
@@ -46525,6 +46814,13 @@ window.JunoPptx = (function () {
       +'.jvp-clock.over{color:#ff8a7a;}'
       +'.jvp-sub{font-family:var(--mono,monospace);font-size:12px;'
       +'color:#8ea4b6;display:flex;flex-direction:column;gap:2px;}'
+      +'.jvp-pace{font-family:var(--mono,monospace);font-size:15px;'
+      +'padding:5px 11px;border-radius:8px;white-space:nowrap;'
+      +'border:1px solid #ffffff2b;background:#ffffff0f;}'
+      +'.jvp-pace.late{background:#ff6b571f;border-color:#ff6b57;'
+      +'color:#ff9d8c;}'
+      +'.jvp-pace.ahead{background:#46a8921f;border-color:#46a892;'
+      +'color:#7fd7c0;}'
       +'.jvp-sp{flex:1;}'
       +'.jvp-b{font-family:var(--mono,monospace);font-size:12px;'
       +'padding:7px 13px;border-radius:7px;cursor:pointer;'
@@ -46584,6 +46880,7 @@ window.JunoPptx = (function () {
       +'<span class="jvp-sub"><span id="jvp-count"></span>'
       +'<span id="jvp-goal"></span><span id="jvp-talk"></span>'
       +'<span id="jvp-slideclock"></span></span>'
+      +'<span class="jvp-pace" id="jvp-pace"></span>'
       +'<span class="jvp-sp"></span>'
       +'<button class="jvp-b" id="jvp-pause">Pause</button>'
       +'<button class="jvp-b" id="jvp-reset">Reset clock</button>'
@@ -46714,6 +47011,25 @@ window.JunoPptx = (function () {
       cl.textContent=Math.floor(sec/60)+':'+('0'+(sec%60)).slice(-2);
       var over=st.talk&&sec>st.talk*60;
       cl.classList.toggle('over',!!over);
+      /* T222: behind or ahead of where the plan says you should be */
+      var pc=d.getElementById('jvp-pace');
+      if(pc){
+        if(!st.planned){pc.textContent='';pc.className='jvp-pace';}
+        else {
+          var off=sec-st.planned;
+          var mm=Math.floor(Math.abs(off)/60),
+              ss=('0'+(Math.abs(off)%60)).slice(-2);
+          pc.textContent=Math.abs(off)<30?'on time'
+            :(mm+':'+ss+(off>0?' behind':' ahead'));
+          pc.className='jvp-pace'
+            +(Math.abs(off)<30?'':(off>0?' late':' ahead'));
+          pc.title=Math.abs(off)<30
+            ?'You are where the plan says you should be'
+            :('By this slide the plan expects '
+              +Math.floor(st.planned/60)+':'
+              +('0'+(st.planned%60)).slice(-2)+' on the clock');
+        }
+      }
       var sc=d.getElementById('jvp-slideclock');
       if(sc){
         if(!st.talk) sc.textContent='';
@@ -47273,7 +47589,16 @@ window.JunoPptx = (function () {
       n:pres.slides.length};}
     catch(e){return null;}
   }
-  function snapTake(why,captured,ready){
+  /* ---- T225: A CHECKPOINT IS A SNAPSHOT YOU MEANT ------------------
+     (2026-09-03, user: "there should be version of presentations
+     where you can save a checkpoint then go back, or then go into a
+     new branch.") The tree, the branches and the restore have been
+     here since T90; every snapshot in it was a side-effect of
+     opening, saving or restoring, none had a name you chose, and
+     the keep-the-newest-twenty rule threw them away in arrival
+     order -- so the one version you actually cared about was the
+     one most likely to go. `mark` names it and keeps it. */
+  function snapTake(why,captured,ready,mark){
     var cap=captured||histCapture();
     if(!cap) return Promise.resolve(false);
     var gate=(ready===undefined)
@@ -47292,15 +47617,17 @@ window.JunoPptx = (function () {
              &&ix[ix.length-1].n===cap.n)
             return idbGet(histVKeyFor(cap.name,ix[ix.length-1].id))
               .then(function(prev){
-                if(prev===cap.txt) return false;
-                return snapWrite(cap,ix,why);
+                /* a checkpoint is taken even when nothing changed:
+                   you are marking THIS moment, not this content */
+                if(prev===cap.txt&&!mark) return false;
+                return snapWrite(cap,ix,why,mark);
               });
-          return snapWrite(cap,ix,why);
+          return snapWrite(cap,ix,why,mark);
         });
       });
     });
   }
-  function snapWrite(cap,ix,why){
+  function snapWrite(cap,ix,why,mark){
     var id='v'+(Date.now().toString(36))
       +Math.random().toString(36).slice(2,5);
     var ent={id:id,at:Date.now(),why:why||'saved',
@@ -47310,9 +47637,21 @@ window.JunoPptx = (function () {
        written before branches existed reads as a trunk and is right */
     if(histHead) ent.p=histHead;
     if(histBranch) ent.br=histBranch;
+    if(mark) ent.mk=1;              /* T225: kept, and shown as kept */
     var next=ix.concat([ent]);
     histHead=id;
-    var drop=next.length>HIST_KEEP?next.splice(0,next.length-HIST_KEEP):[];
+    /* T225: a checkpoint is never the one thrown away. Only the
+       unmarked ones are candidates, oldest first; if a deck were
+       ever all checkpoints the list simply grows, which is the
+       answer the user asked for. */
+    var over=next.length-HIST_KEEP,drop=[];
+    for(var di=0;di<next.length&&over>0;di++){
+      if(next[di].mk) continue;
+      drop.push(next[di]);over--;
+    }
+    drop.forEach(function(d){
+      var at=next.indexOf(d); if(at>=0) next.splice(at,1);
+    });
     /* SPLICE, don't sever. The dropped entries are the oldest, and on a
        tree the oldest can have children; re-point each child at its
        grandparent so the tree stays connected and merely gets shallower
@@ -47506,6 +47845,7 @@ window.JunoPptx = (function () {
       var b=document.createElement('button');
       b.className='dh-snap'+(e.id===histSel?' on':'')
         +(e.id===histHead?' head':'')
+        +(e.mk?' checkpoint':'')
         +((kids[e.id]||0)>1?' forked':'');
       b.style.setProperty('--dh-depth',String(Math.min(6,depth[e.id]||0)));
       var l1=document.createElement('span');
@@ -47723,6 +48063,20 @@ window.JunoPptx = (function () {
     toast('Back to the older version — the deck as it was is in the '
       +'history too, so this is undoable');
   }
+  /* T225: the one gesture the tree was missing. It is an ordinary
+     snapshot with a name and a mark, so going back to it and
+     branching from it are the buttons that already exist. */
+  function histCheckpoint(ov){
+    var nm=prompt('Call this checkpoint:','before the rewrite');
+    if(nm===null) return;
+    nm=nm.trim()||'checkpoint';
+    snapTake('checkpoint: '+nm,undefined,undefined,1).then(function(){
+      toast('Checkpoint \u201c'+nm+'\u201d saved \u2014 it is kept '
+        +'even when older versions are dropped');
+      if(ov&&document.body.contains(ov))
+        histIndex().then(function(ix){histRows(ov,ix);});
+    });
+  }
   function openHistory(){
     histPanelClose();
     var ov=document.createElement('div');
@@ -47733,6 +48087,8 @@ window.JunoPptx = (function () {
       +'<span class="dh-onbr">'+bic('route')+' on '
       +esc(histBranch||'main')+'</span>'
       +'<span class="deck-spring"></span>'
+      +'<button class="dbtn primary" id="dh-check">'+bic('flag')
+      +' Save a checkpoint\u2026</button>'
       +'<button class="dbtn" id="dh-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dh-main">'
       +'<div class="dh-rail" id="dh-list"></div>'
@@ -47757,6 +48113,8 @@ window.JunoPptx = (function () {
     }
     document.body.appendChild(ov);
     ov.querySelector('#dh-close').addEventListener('click',histPanelClose);
+    ov.querySelector('#dh-check')
+      .addEventListener('click',function(){histCheckpoint(ov);});
     document.addEventListener('keydown',histPanelKey,true);
     histIndex().then(function(ix){
       histRows(ov,ix);
@@ -51128,232 +51486,277 @@ window.JunoPptx = (function () {
        an A0 sheet does not fit in a rail */
     el.style.fontSize=(11+(d.size||2.6)*1.9)+'px';
   }
-  function dgRail(ov){
-    var rail=ov.querySelector('#dg-list');
-    rail.innerHTML='';
-    styleOrder().forEach(function(id){
-      var d=styleDef(id); if(!d) return;
-      var b=document.createElement('button');
-      b.className='dg-row'+(id===dgSel?' on':'');
-      var nm=document.createElement('span');
-      nm.className='dg-name';nm.textContent=d.label||id;
-      dgSpecimen(nm,id);
-      /* the rail is chrome, not a slide: the style's own colour could be
-         the page's ink and vanish here (2026-09-03, "a lot of the text
-         can't be read"); weight, italic and size still draw the ladder */
-      nm.style.color='';
-      var ct=document.createElement('span');
-      ct.className='dg-count';
-      var n=dgWearers(id).length;
-      ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
-      b.appendChild(nm);b.appendChild(ct);
-      b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
-        +(n?(', worn by '+n+' box'+(n===1?'':'es')):', not used yet');
-      b.addEventListener('click',function(){
-        dgSel=id;dgRail(ov);dgBody(ov);});
-      rail.appendChild(b);
+  /* ---- T224: EVERY BOX OF A KIND, IN A TABLE --------------------------
+     (2026-09-03, user: "I wanted more than just titles, also images
+     etc... There should be unselect all, and select all button... I want
+     full customisation here as well, font, font size, background colour,
+     then why doesn't it show the x and y position as well... Would be
+     good if there was also a table of them all to the right, which has
+     things like colour, font etc. of them all and you can make them all
+     match, or change them individually here, or change title colours in
+     a range... it would be good if you could click a bunch and they get
+     selected, then you click a button that says 'match style of', then
+     click one and they all match to that. And you can choose as well
+     what gets matched, whether it's all, or just position, or colour, or
+     font etc. Do you get the point of this? So it is hard to make things
+     match across slides, so this will help with this."
+
+     The screen already knew how to change what a KIND looks like. What
+     it could not do is the thing the ask is actually about: see the
+     boxes themselves, side by side, and pull the odd one into line. The
+     table is that. It is the same annots the canvas renders -- no copy,
+     no import step -- so an edit here is an edit there. */
+  var dgMarked={},dgMatchArm=false,dgMatchWhat='all',dgSheetPick=-1;
+  /* `text` is every text box whatever style it wears, or none: a box
+     that has never been given a named style appeared in no table at
+     all, and an unstyled box is exactly the thing you go looking for */
+  var DG_OBJ_KINDS=[['text','Text boxes, all of them','text'],
+    ['cell','Figures','cellcard'],
+    ['image','Pictures','image'],['rect','Shapes','shapes'],
+    ['table','Tables','table'],['flip','Flip books','flipbook'],
+    ['arrow','Arrows and lines','arrow']];
+  function dgIsObj(){return /^obj:/.test(dgSel);}
+  function dgObjKind(){return dgSel.slice(4);}
+  function dgKindLabel(){
+    if(!dgIsObj()){
+      var d=styleDef(dgSel);
+      return (d&&d.label)||dgSel;
+    }
+    var k=dgObjKind(),out=k;
+    DG_OBJ_KINDS.forEach(function(p){if(p[0]===k) out=p[1];});
+    return out;
+  }
+  function dgAnnotMatches(a){
+    if(!a) return false;
+    if(dgIsObj()){
+      var k=dgObjKind();
+      if(k==='arrow') return a.k==='arrow'||a.k==='line'||a.k==='draw';
+      return a.k===k;
+    }
+    return a.k==='text'&&a.style===dgSel;
+  }
+  /* every box of the chosen kind, everywhere, in slide order */
+  function dgRows(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      /* a slide picked in the strip narrows the table to it */
+      if(dgSheetPick>=0&&si!==dgSheetPick) return;
+      (sl.annots||[]).forEach(function(a,ai){
+        if(dgAnnotMatches(a)) out.push({si:si,ai:ai,a:a});
+      });
     });
+    return out;
   }
-  /* ---- the board: where a named type SITS by default ------------------
-     The one genuinely new idea. A style has always said how a Heading
-     looks and never where it goes, so "global heading layouts" could not
-     be expressed at all. x/y/w live on the same pres.styles record, so
-     no new deck key and no new documentation: `styles` is already "this
-     deck's overrides of the named text types". */
-  function dgBoard(host,id){
-    var rec=dgStyleRec(id);
-    var board=document.createElement('div');
-    board.className='dg-board';
-    var page=pageOf();
-    board.style.aspectRatio=(page.mm[0]/page.mm[1]).toFixed(4);
-    var ghost=document.createElement('div');
-    ghost.className='dg-ghost';
-    function paint(){
-      ghost.style.left=(rec.x!=null?rec.x:8)+'%';
-      ghost.style.top=(rec.y!=null?rec.y:6)+'%';
-      ghost.style.width=(rec.w!=null?rec.w:60)+'%';
-    }
-    var lab=document.createElement('span');
-    lab.className='dg-ghostlab';
-    lab.textContent=(styleDef(id)||{}).label||id;
-    dgSpecimen(lab,id);
-    ghost.appendChild(lab);
-    var grip=document.createElement('span');
-    grip.className='dg-ghostgrip';
-    grip.title='Drag to set how wide this type is by default';
-    ghost.appendChild(grip);
-    paint();
-    board.appendChild(ghost);
-    host.appendChild(board);
-
-    function drag(ev,mode){
-      ev.preventDefault();ev.stopPropagation();
-      var r=board.getBoundingClientRect();
-      var x0=ev.clientX,y0=ev.clientY;
-      var sx=(rec.x!=null?rec.x:8),sy=(rec.y!=null?rec.y:6);
-      var sw=(rec.w!=null?rec.w:60);
-      function mv(e2){
-        var dx=(e2.clientX-x0)/(r.width||1)*100;
-        var dy=(e2.clientY-y0)/(r.height||1)*100;
-        if(mode==='w') rec.w=Math.max(6,Math.min(100,Math.round(sw+dx)));
-        else {
-          rec.x=Math.max(0,Math.min(98,Math.round(sx+dx)));
-          rec.y=Math.max(0,Math.min(98,Math.round(sy+dy)));
-        }
-        paint();
-      }
-      function up(){
-        document.removeEventListener('pointermove',mv);
-        document.removeEventListener('pointerup',up);
-        markDirty();dgBody($('#deck-design'));
-      }
-      document.addEventListener('pointermove',mv);
-      document.addEventListener('pointerup',up);
-    }
-    ghost.addEventListener('pointerdown',function(e){drag(e,'xy');});
-    grip.addEventListener('pointerdown',function(e){drag(e,'w');});
+  function dgRowKey(r){return r.si+':'+r.ai;}
+  function dgMarkedRows(rows){
+    return rows.filter(function(r){return dgMarked[dgRowKey(r)];});
   }
-  function dgSectionHead(host,text,sub){
-    var h=document.createElement('div');
-    h.className='dg-h';h.textContent=text;
-    host.appendChild(h);
-    if(sub){
-      var p=document.createElement('p');
-      p.className='dg-sub';p.textContent=sub;
-      host.appendChild(p);
-    }
+  /* WHAT TRAVELS when you match. Each answer is a list of annot fields;
+     'all' is every field the others name, so the chooser cannot drift
+     out of step with itself. */
+  var DG_MATCH={
+    pos:['x','y'],
+    size:['w','h','size'],
+    colour:['color','bg','bgc','bdc','fill','fillc'],
+    font:['font','b','i','align','lh','pspace']
+  };
+  function dgMatchFields(){
+    if(dgMatchWhat!=='all') return DG_MATCH[dgMatchWhat]||[];
+    var out=[];
+    Object.keys(DG_MATCH).forEach(function(k){
+      DG_MATCH[k].forEach(function(f){
+        if(out.indexOf(f)<0) out.push(f);});
+    });
+    return out;
   }
-  function dgBody(ov){
-    if(!ov) return;
-    var body=ov.querySelector('#dg-body');
-    body.innerHTML='';
-    var id=dgSel,d=styleDef(id);
-    if(!d){body.innerHTML='<div class="selpane-empty">Pick a type on '
-      +'the left.</div>';return;}
-    var rec=dgStyleRec(id);
-    var wear=dgWearers(id);
-
-    /* ---- how it looks ---- */
-    dgSectionHead(body,'How “'+(d.label||id)+'” looks',
-      'Changing it here changes every box wearing it, everywhere in the '
-      +'deck. That is what makes it a standard rather than a preference.');
-    var spec=document.createElement('div');
-    spec.className='dg-spec';
-    spec.textContent='The quick brown fox jumps over the lazy dog';
-    dgSpecimen(spec,id);
-    /* on the deck's actual page colour, so a specimen reads the way the
-       slide will */
-    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
-    if(!d.color) spec.style.color=tokVal('@ink');
-    body.appendChild(spec);
-
-    var row=document.createElement('div');row.className='dg-ctrls';
-    function ctl(label,title,on,fn){
+  function dgMatchTo(src,rows){
+    var fields=dgMatchFields(),n=0;
+    rows.forEach(function(r){
+      if(r.a===src) return;
+      fields.forEach(function(f){
+        if(src[f]===undefined) delete r.a[f];
+        else r.a[f]=(typeof src[f]==='object'&&src[f])
+          ?deep(src[f]):src[f];
+      });
+      /* a matched box is no longer anchored to whatever it was: the
+         position it was given is the position it keeps */
+      if(fields.indexOf('x')>=0) delete r.a.anch;
+      n++;
+    });
+    return n;
+  }
+  function dgSwatch(v,fallback){
+    var s=document.createElement('span');
+    s.className='dgt-sw';
+    if(!v||v==='none'){s.classList.add('dgt-none');s.title='none';}
+    else {s.style.background=tokVal(v);s.title=v;}
+    if(!v&&fallback) s.title='default';
+    return s;
+  }
+  function dgNum(r,key,step){
+    var inp=document.createElement('input');
+    inp.type='number';inp.step=step||'0.5';inp.className='dgt-n';
+    inp.value=(r.a[key]!=null)?Math.round(r.a[key]*10)/10:'';
+    inp.title=key.toUpperCase()+' of this box';
+    inp.addEventListener('click',function(e){e.stopPropagation();});
+    inp.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter') inp.blur();
+    });
+    inp.addEventListener('change',function(){
+      var v=parseFloat(inp.value);
+      if(!isFinite(v)){delete r.a[key];}
+      else r.a[key]=Math.round(v*10)/10;
+      if(key==='x'||key==='y') delete r.a.anch;
+      markDirty();refresh();renderFilm();
+      var ov=$('#deck-design'); if(ov) dgBodyKeep(ov);
+    });
+    return inp;
+  }
+  function dgTable(body,ov){
+    var rows=dgRows();
+    var wrap=document.createElement('div');wrap.className='dgt';
+    var bar=document.createElement('div');bar.className='dgt-bar';
+    function btn(label,title,fn,cls){
       var b=document.createElement('button');
-      b.className='dbtn dg-b';b.textContent=label;b.title=title;
-      if(on!=null) b.setAttribute('aria-pressed',on?'true':'false');
-      b.addEventListener('click',function(){
-        fn();markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);});
-      row.appendChild(b);
+      b.className='dbtn dg-b'+(cls?' '+cls:'');
+      b.innerHTML=label;b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
+      bar.appendChild(b);
       return b;
     }
-    ctl('−','Smaller',null,function(){
-      rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
-    var sz=document.createElement('span');
-    sz.className='dg-size';
-    sz.textContent=(d.size||2.6).toFixed(1)+'%';
-    sz.title='The type size, as a percentage of the page height — so it '
-      +'means the same thing on a 16:9 slide and an A0 poster';
-    row.appendChild(sz);
-    ctl('+','Bigger',null,function(){
-      rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
-    ctl('B','Bold',!!d.b,function(){
-      if(d.b) rec.b=0; else rec.b=1;});
-    ctl('I','Italic',!!d.i,function(){
-      if(d.i) rec.i=0; else rec.i=1;});
-    ['left','center','right'].forEach(function(al){
-      ctl(al==='left'?'←':al==='right'?'→':'↔',
-        'Align '+al,(d.align||'left')===al,function(){rec.align=al;});
+    btn('Select all','Tick every box of this kind, on every slide',
+      function(){
+        rows.forEach(function(r){dgMarked[dgRowKey(r)]=1;});
+        dgBodyKeep(ov);
+      }).disabled=!rows.length;
+    btn('Unselect all','Clear every tick',function(){
+      dgMarked={};dgBodyKeep(ov);}).disabled=!rows.length;
+    var marked=dgMarkedRows(rows);
+    var mb=btn(dgMatchArm
+        ?'Now click the one to match'
+        :(bic('swap')+' Match style of…'),
+      dgMatchArm
+        ?'Click the row you want the ticked boxes to look like'
+        :'Tick the boxes to change, press this, then click the one they '
+         +'should match',
+      function(){dgMatchArm=!dgMatchArm;dgBodyKeep(ov);},
+      dgMatchArm?'primary':'');
+    mb.disabled=!marked.length&&!dgMatchArm;
+    var what=document.createElement('select');
+    what.className='dg-scope';
+    [['all','everything'],['pos','only where it sits'],
+     ['size','only how big it is'],['colour','only its colours'],
+     ['font','only its type']].forEach(function(pr){
+      var o=document.createElement('option');
+      o.value=pr[0];o.textContent='match '+pr[1];
+      if(dgMatchWhat===pr[0]) o.selected=true;
+      what.appendChild(o);
     });
-    var col=document.createElement('input');
-    col.type='color';col.className='dg-col';
-    col.value=(d.color&&/^#/.test(d.color))?d.color:'#e6eef5';
-    col.title='The colour every box of this type takes';
-    col.addEventListener('input',function(){
-      rec.color=col.value;markDirty();dgRestamp(id);refresh();});
-    col.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
-    row.appendChild(col);
-    var rst=document.createElement('button');
-    rst.className='dbtn dg-b';rst.textContent='Reset';
-    rst.title='Back to this type’s built-in look';
-    rst.addEventListener('click',function(){
-      var st=deckStyles();
-      var keep={};
-      ['x','y','w'].forEach(function(k){
-        if(st[id]&&st[id][k]!=null) keep[k]=st[id][k];});
-      st[id]=keep;
-      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
-    });
-    row.appendChild(rst);
-    body.appendChild(row);
-
-    /* ---- where it sits ---- */
-    dgSectionHead(body,'Where “'+(d.label||id)+'” sits',
-      'Drag the box to set where this type goes by default, and the '
-      +'handle on its right edge to set how wide it is. Nothing moves '
-      +'until you press the button underneath — a style stamp that '
-      +'dragged your boxes about would be unusable.');
-    dgBoard(body,id);
-    /* the put, scoped (T130): everywhere stays the default, but "these
-       headings, in this section" is the sentence the ask was written
-       in, and a numeric range covers the rest */
-    var putRow=document.createElement('div');
-    putRow.className='dg-putrow';
-    var inScope=function(){
-      return wear.filter(function(w){return dgInScope(dgPutScope,w.s);});
-    };
-    var put=document.createElement('button');
-    put.className='dbtn primary dg-put';
-    function putSync(){
-      var ws=inScope();
-      /* "Put all 0 of them there" was the biggest button on the surface
-         (JVUX-10): a zero-target command is an empty state, not a call
-         to action */
-      put.innerHTML=ws.length
-        ?(bic('align')+' Put '
-          +(dgPutScope.kind==='all'?('all '+ws.length):ws.length)
-          +' of them there')
-        :('No boxes wear this style '
-          +esc(dgScopeLabel(dgPutScope)));
-      put.classList.toggle('primary',!!ws.length);
-      put.disabled=!ws.length;
-      put.title=ws.length
-        ?('Move every box wearing this type onto that rectangle, '
-          +dgScopeLabel(dgPutScope)+'. Ctrl+Z undoes the lot.')
-        :('Nothing wears this type '+dgScopeLabel(dgPutScope));
+    what.title='What travels when you match: everything, or just one '
+      +'part of it';
+    what.addEventListener('change',function(){
+      dgMatchWhat=what.value;dgBodyKeep(ov);});
+    bar.appendChild(what);
+    var count=document.createElement('span');
+    count.className='dgt-count';
+    if(dgSheetPick>=0){
+      var only=document.createElement('button');
+      only.className='dbtn dg-b primary';
+      only.textContent='Slide '+(dgSheetPick+1)+' only — show all';
+      only.title='The strip below is filtering this table. Click to '
+        +'see every slide again.';
+      only.addEventListener('click',function(e){
+        e.stopPropagation();dgSheetPick=-1;dgBodyKeep(ov);});
+      bar.appendChild(only);
     }
-    put.addEventListener('click',function(){
-      var n=0;
-      inScope().forEach(function(w){
-        w.a.x=(rec.x!=null?rec.x:8);
-        w.a.y=(rec.y!=null?rec.y:6);
-        w.a.w=(rec.w!=null?rec.w:60);
-        /* an anchored box measures from its anchor, so a default
-           position has to clear the anchor or it lands somewhere else */
-        delete w.a.anch;
-        n++;
-      });
-      if(!n) return;
-      markDirty();refresh();renderFilm();dgBodyKeep(ov);
-      toast(n+' '+(d.label||id)+' box'+(n===1?'':'es')
-        +' moved '+dgScopeLabel(dgPutScope)+' — Ctrl+Z undoes it');
-    });
-    putRow.appendChild(put);
-    putRow.appendChild(dgScopeSelect(dgPutScope,putSync));
-    putSync();
-    body.appendChild(putRow);
+    count.textContent=rows.length
+      ?(marked.length?(marked.length+' of '+rows.length+' ticked')
+        :(rows.length+' box'+(rows.length===1?'':'es')))
+      :'none in this deck';
+    bar.appendChild(count);
+    wrap.appendChild(bar);
 
-    /* ---- every object, outlined ---- */
+    if(!rows.length){
+      var e=document.createElement('div');
+      e.className='pf-ok';
+      e.textContent='Nothing in this deck is a '+dgKindLabel()+' yet.';
+      wrap.appendChild(e);
+      body.appendChild(wrap);
+      return;
+    }
+    var tbl=document.createElement('div');tbl.className='dgt-grid';
+    /* the size and the face are columns whenever the rows are text,
+       whether they were chosen by style or as plain text boxes */
+    var isTx=!dgIsObj()||dgObjKind()==='text';
+    var heads=['','Slide','What',' X',' Y',' W'];
+    if(isTx) heads=heads.concat(['Size','Face']);
+    heads=heads.concat(['Words','Behind']);
+    heads.forEach(function(h){
+      var c=document.createElement('div');
+      c.className='dgt-h';c.textContent=h.trim();
+      tbl.appendChild(c);
+    });
+    tbl.style.setProperty('--dgt-cols',heads.length);
+    rows.forEach(function(r){
+      var on=!!dgMarked[dgRowKey(r)];
+      var cells=[];
+      function cell(node,cls){
+        var c=document.createElement('div');
+        c.className='dgt-c'+(cls?' '+cls:'')+(on?' on':'');
+        if(typeof node==='string') c.textContent=node;
+        else if(node) c.appendChild(node);
+        cells.push(c);
+        return c;
+      }
+      var ck=document.createElement('input');
+      ck.type='checkbox';ck.checked=on;ck.className='dgt-ck';
+      ck.title='Tick this box for Match style of';
+      ck.addEventListener('click',function(e){e.stopPropagation();});
+      ck.addEventListener('change',function(){
+        if(ck.checked) dgMarked[dgRowKey(r)]=1;
+        else delete dgMarked[dgRowKey(r)];
+        dgBodyKeep(ov);
+      });
+      cell(ck,'dgt-ckc');
+      cell(String(r.si+1),'dgt-si');
+      cell(annotLabel(r.a),'dgt-what');
+      cell(dgNum(r,'x'),'dgt-num');
+      cell(dgNum(r,'y'),'dgt-num');
+      cell(dgNum(r,'w'),'dgt-num');
+      if(isTx){
+        cell(dgNum(r,'size','0.1'),'dgt-num');
+        var f=document.createElement('span');
+        f.className='dgt-face';f.textContent=r.a.font||'default';
+        cell(f,'dgt-face-c');
+      }
+      cell(dgSwatch(r.a.color,1),'dgt-swc');
+      cell(dgSwatch(r.a.bg===0?'none':r.a.bgc,1),'dgt-swc');
+      cells.forEach(function(c){
+        /* the row is the click target: matching, and going to look at it */
+        c.addEventListener('click',function(){
+          if(dgMatchArm){
+            var n=dgMatchTo(r.a,dgMarkedRows(dgRows()));
+            dgMatchArm=false;
+            if(n){markDirty();refresh();renderFilm();
+              toast(n+' box'+(n===1?'':'es')+' now match slide '
+                +(r.si+1)+' — Ctrl+Z undoes it');}
+            dgBodyKeep(ov);
+            return;
+          }
+          if(ck.checked){delete dgMarked[dgRowKey(r)];ck.checked=false;}
+          else {dgMarked[dgRowKey(r)]=1;ck.checked=true;}
+          dgBodyKeep(ov);
+        });
+        tbl.appendChild(c);
+      });
+    });
+    wrap.appendChild(tbl);
+    body.appendChild(wrap);
+  }
+  /* T224: the outline sheet, lifted out of dgBody so the object
+     views can show it too. Not one line of it changed. */
+  function dgSheet(body,ov){
     dgSectionHead(body,'Every object, outlined',
       'The whole deck at once, with a box drawn round everything on '
       +'every slide. This is how you find the one heading that is 3mm '
@@ -51455,24 +51858,389 @@ window.JunoPptx = (function () {
           px.addEventListener('pointerup',up);
         });
         /* a completed drag must not fall through as the cell's click */
+        /* T224: a click TICKS this box in the table rather than
+           closing the screen (2026-09-03, user: "clicking one of the
+           slides down the bottom takes you to the slide, it should
+           just select it and bring up the types of objects and you
+           can click on the different ones to show where they are").
+           A box of another kind switches the rail to ITS kind, which
+           is the same gesture read the other way round. */
         px.addEventListener('click',function(e){
           if(px.style.transform) return;
           e.stopPropagation();
-          cur=i;activePane=-1;selAnnot=null;selSet=[];
-          dgClose();refresh();
+          if(!dgAnnotMatches(a)){
+            dgSel=(a.k==='text'&&a.style)?a.style:('obj:'+a.k);
+            dgMarked={};dgMatchArm=false;
+            dgRail(ov);dgBody(ov);
+            return;
+          }
+          var ai=(sl.annots||[]).indexOf(a);
+          var k2=i+':'+ai;
+          if(dgMarked[k2]) delete dgMarked[k2]; else dgMarked[k2]=1;
+          dgBodyKeep(ov);
         });
         mini.appendChild(px);
       });
       var n=document.createElement('span');
       n.className='dg-celln';n.textContent=(i+1);
       cell.appendChild(n);
+      /* ...and the slide itself narrows the table to it rather than
+         walking you out of the screen. Click it again for all of them. */
+      cell.classList.toggle('dg-pick',dgSheetPick===i);
       cell.addEventListener('click',function(){
-        cur=i;activePane=-1;selAnnot=null;selSet=[];
-        dgClose();refresh();
+        dgSheetPick=(dgSheetPick===i)?-1:i;
+        dgBodyKeep(ov);
       });
       sheet.appendChild(cell);
     });
     body.appendChild(sheet);
+  }
+  function dgRail(ov){
+    var rail=ov.querySelector('#dg-list');
+    rail.innerHTML='';
+    styleOrder().forEach(function(id){
+      var d=styleDef(id); if(!d) return;
+      var b=document.createElement('button');
+      b.className='dg-row'+(id===dgSel?' on':'');
+      var nm=document.createElement('span');
+      nm.className='dg-name';nm.textContent=d.label||id;
+      dgSpecimen(nm,id);
+      /* the rail is chrome, not a slide: the style's own colour could be
+         the page's ink and vanish here (2026-09-03, "a lot of the text
+         can't be read"); weight, italic and size still draw the ladder */
+      nm.style.color='';
+      var ct=document.createElement('span');
+      ct.className='dg-count';
+      var n=dgWearers(id).length;
+      ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
+      b.appendChild(nm);b.appendChild(ct);
+      b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
+        +(n?(', worn by '+n+' box'+(n===1?'':'es')):', not used yet');
+      b.addEventListener('click',function(){
+        dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+      rail.appendChild(b);
+    });
+    /* T224: and the things that are not text. A figure has no style
+       registry to edit, but it has a position, a size and a place in
+       the table -- which is what the ask was about (2026-09-03,
+       user: "I wanted more than just titles, also images etc"). */
+    var hd=document.createElement('div');
+    hd.className='hd-lab';hd.textContent='everything else';
+    rail.appendChild(hd);
+    DG_OBJ_KINDS.forEach(function(pr){
+      var key='obj:'+pr[0];
+      var b2=document.createElement('button');
+      b2.className='dg-row'+(key===dgSel?' on':'');
+      var nm2=document.createElement('span');
+      nm2.className='dg-name';
+      nm2.innerHTML=bic(pr[2])+' '+esc(pr[1]);
+      var ct2=document.createElement('span');ct2.className='dg-count';
+      var was=dgSel; dgSel=key;
+      var n2=dgRows().length;
+      dgSel=was;
+      ct2.textContent=n2?String(n2):'none';
+      b2.appendChild(nm2);b2.appendChild(ct2);
+      b2.title=pr[1]+' in this deck'+(n2?(': '+n2):': none yet');
+      b2.addEventListener('click',function(){
+        dgSel=key;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+      rail.appendChild(b2);
+    });
+  }
+  /* ---- the board: where a named type SITS by default ------------------
+     The one genuinely new idea. A style has always said how a Heading
+     looks and never where it goes, so "global heading layouts" could not
+     be expressed at all. x/y/w live on the same pres.styles record, so
+     no new deck key and no new documentation: `styles` is already "this
+     deck's overrides of the named text types". */
+  function dgBoard(host,id){
+    var rec=dgStyleRec(id);
+    var board=document.createElement('div');
+    board.className='dg-board';
+    var page=pageOf();
+    board.style.aspectRatio=(page.mm[0]/page.mm[1]).toFixed(4);
+    var ghost=document.createElement('div');
+    ghost.className='dg-ghost';
+    function paint(){
+      ghost.style.left=(rec.x!=null?rec.x:8)+'%';
+      ghost.style.top=(rec.y!=null?rec.y:6)+'%';
+      ghost.style.width=(rec.w!=null?rec.w:60)+'%';
+    }
+    var lab=document.createElement('span');
+    lab.className='dg-ghostlab';
+    lab.textContent=(styleDef(id)||{}).label||id;
+    dgSpecimen(lab,id);
+    ghost.appendChild(lab);
+    var grip=document.createElement('span');
+    grip.className='dg-ghostgrip';
+    grip.title='Drag to set how wide this type is by default';
+    ghost.appendChild(grip);
+    paint();
+    board.appendChild(ghost);
+    host.appendChild(board);
+
+    function drag(ev,mode){
+      ev.preventDefault();ev.stopPropagation();
+      var r=board.getBoundingClientRect();
+      var x0=ev.clientX,y0=ev.clientY;
+      var sx=(rec.x!=null?rec.x:8),sy=(rec.y!=null?rec.y:6);
+      var sw=(rec.w!=null?rec.w:60);
+      function mv(e2){
+        var dx=(e2.clientX-x0)/(r.width||1)*100;
+        var dy=(e2.clientY-y0)/(r.height||1)*100;
+        if(mode==='w') rec.w=Math.max(6,Math.min(100,Math.round(sw+dx)));
+        else {
+          rec.x=Math.max(0,Math.min(98,Math.round(sx+dx)));
+          rec.y=Math.max(0,Math.min(98,Math.round(sy+dy)));
+        }
+        paint();
+      }
+      function up(){
+        document.removeEventListener('pointermove',mv);
+        document.removeEventListener('pointerup',up);
+        markDirty();dgBody($('#deck-design'));
+      }
+      document.addEventListener('pointermove',mv);
+      document.addEventListener('pointerup',up);
+    }
+    ghost.addEventListener('pointerdown',function(e){drag(e,'xy');});
+    grip.addEventListener('pointerdown',function(e){drag(e,'w');});
+  }
+  function dgSectionHead(host,text,sub){
+    var h=document.createElement('div');
+    h.className='dg-h';h.textContent=text;
+    host.appendChild(h);
+    if(sub){
+      var p=document.createElement('p');
+      p.className='dg-sub';p.textContent=sub;
+      host.appendChild(p);
+    }
+  }
+  function dgBody(ov){
+    if(!ov) return;
+    var body=ov.querySelector('#dg-body');
+    body.innerHTML='';
+    var id=dgSel,d=styleDef(id);
+    /* T224: an object kind has no look to edit -- it has a table */
+    if(dgIsObj()){
+      dgSectionHead(body,'Every '+dgKindLabel().toLowerCase()
+        +' in this deck',
+        'Tick the ones you want to line up, then Match style of and '
+        +'click the one they should follow. Or type a number straight '
+        +'into the table.');
+      dgTable(body,ov);
+      dgSheet(body,ov);
+      return;
+    }
+    if(!d){body.innerHTML='<div class="selpane-empty">Pick a type on '
+      +'the left.</div>';return;}
+    var rec=dgStyleRec(id);
+    var wear=dgWearers(id);
+
+    /* ---- how it looks ---- */
+    dgSectionHead(body,'How “'+(d.label||id)+'” looks',
+      'Changing it here changes every box wearing it, everywhere in the '
+      +'deck. That is what makes it a standard rather than a preference.');
+    var spec=document.createElement('div');
+    spec.className='dg-spec';
+    spec.textContent='The quick brown fox jumps over the lazy dog';
+    dgSpecimen(spec,id);
+    /* on the deck's actual page colour, so a specimen reads the way the
+       slide will */
+    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
+    if(!d.color) spec.style.color=tokVal('@ink');
+    body.appendChild(spec);
+
+    var row=document.createElement('div');row.className='dg-ctrls';
+    function ctl(label,title,on,fn){
+      var b=document.createElement('button');
+      b.className='dbtn dg-b';b.textContent=label;b.title=title;
+      if(on!=null) b.setAttribute('aria-pressed',on?'true':'false');
+      b.addEventListener('click',function(){
+        fn();markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);});
+      row.appendChild(b);
+      return b;
+    }
+    ctl('−','Smaller',null,function(){
+      rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
+    var sz=document.createElement('span');
+    sz.className='dg-size';
+    sz.textContent=(d.size||2.6).toFixed(1)+'%';
+    sz.title='The type size, as a percentage of the page height — so it '
+      +'means the same thing on a 16:9 slide and an A0 poster';
+    row.appendChild(sz);
+    ctl('+','Bigger',null,function(){
+      rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
+    ctl('B','Bold',!!d.b,function(){
+      if(d.b) rec.b=0; else rec.b=1;});
+    ctl('I','Italic',!!d.i,function(){
+      if(d.i) rec.i=0; else rec.i=1;});
+    ['left','center','right'].forEach(function(al){
+      ctl(al==='left'?'←':al==='right'?'→':'↔',
+        'Align '+al,(d.align||'left')===al,function(){rec.align=al;});
+    });
+    /* ---- T223: EVERYTHING A STYLE IS, not size and bold ------------
+       (2026-09-03, user: "I said I wanted also colours of text,
+       background colour, box border colour, font style. I said I
+       wanted everything.") The typeface, then three colours, each
+       writing the same override record the size and weight do. */
+    var fsel=document.createElement('select');
+    fsel.className='dg-font';
+    fsel.title='The typeface every box of this type takes';
+    [['','Default face'],['sans','Sans'],['serif','Serif'],
+     ['mono','Mono'],['system','System'],['hand','Handwritten']]
+      .forEach(function(pr){
+        var o=document.createElement('option');
+        o.value=pr[0];o.textContent=pr[1];
+        if((d.font||'')===pr[0]) o.selected=true;
+        fsel.appendChild(o);
+      });
+    fsel.addEventListener('change',function(){
+      if(fsel.value) rec.font=fsel.value; else delete rec.font;
+      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+    });
+    row.appendChild(fsel);
+    function dgCol(key,label,fallback,none){
+      var wrap=document.createElement('span');wrap.className='dg-colw';
+      var lb=document.createElement('span');
+      lb.className='dg-collab';lb.textContent=label;
+      wrap.appendChild(lb);
+      var ci=document.createElement('input');
+      ci.type='color';ci.className='dg-col';
+      var v=d[key];
+      ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
+      ci.title=label+' \u2014 every box of this type';
+      ci.addEventListener('input',function(){
+        rec[key]=ci.value;markDirty();dgRestamp(id);refresh();});
+      ci.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
+      wrap.appendChild(ci);
+      if(none){
+        var nb=document.createElement('button');
+        nb.className='dbtn dg-b';nb.textContent=none;
+        nb.title='No '+label.toLowerCase()+' at all';
+        nb.setAttribute('aria-pressed',(v==='none').toString());
+        nb.addEventListener('click',function(){
+          if(v==='none') delete rec[key]; else rec[key]='none';
+          markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+        });
+        wrap.appendChild(nb);
+      }
+      return wrap;
+    }
+    row.appendChild(dgCol('color','Words','#e6eef5',''));
+    row.appendChild(dgCol('bg','Behind','#16273a','None'));
+    row.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));
+    var rst=document.createElement('button');
+    rst.className='dbtn dg-b';rst.textContent='Reset';
+    rst.title='Back to this type’s built-in look';
+    rst.addEventListener('click',function(){
+      var st=deckStyles();
+      var keep={};
+      ['x','y','w'].forEach(function(k){
+        if(st[id]&&st[id][k]!=null) keep[k]=st[id][k];});
+      st[id]=keep;
+      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+    });
+    row.appendChild(rst);
+    body.appendChild(row);
+
+    /* ---- where it sits ---- */
+    dgSectionHead(body,'Where “'+(d.label||id)+'” sits',
+      'Drag the box to set where this type goes by default, and the '
+      +'handle on its right edge to set how wide it is. Nothing moves '
+      +'until you press the button underneath — a style stamp that '
+      +'dragged your boxes about would be unusable.');
+    dgBoard(body,id);
+    /* ---- T223: THE NUMBERS, TOO ------------------------------------
+       Dragging sets it roughly; typing sets it exactly, and it is the
+       only way to make two decks agree (2026-09-03, user: "why
+       doesn't it show the x and y position as well, and then things
+       like the size"). Percent of the page, the same currency the
+       whole model uses. */
+    var nums=document.createElement('div');nums.className='dg-nums';
+    [['x','X',8],['y','Y',6],['w','Width',60]].forEach(function(pr){
+      var cell=document.createElement('label');cell.className='dg-num';
+      var lb=document.createElement('span');lb.textContent=pr[1];
+      cell.appendChild(lb);
+      var inp=document.createElement('input');
+      inp.type='number';inp.step='0.5';inp.min='-50';inp.max='150';
+      inp.value=(rec[pr[0]]!=null?rec[pr[0]]:pr[2]);
+      inp.title=pr[1]+' as a percentage of the page';
+      inp.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter') inp.blur();
+      });
+      inp.addEventListener('change',function(){
+        var v=parseFloat(inp.value);
+        if(!isFinite(v)) return;
+        rec[pr[0]]=Math.round(v*10)/10;
+        markDirty();dgBodyKeep(ov);
+      });
+      cell.appendChild(inp);
+      var pc=document.createElement('span');
+      pc.className='dg-numpc';pc.textContent='%';
+      cell.appendChild(pc);
+      nums.appendChild(cell);
+    });
+    body.appendChild(nums);
+    /* the put, scoped (T130): everywhere stays the default, but "these
+       headings, in this section" is the sentence the ask was written
+       in, and a numeric range covers the rest */
+    var putRow=document.createElement('div');
+    putRow.className='dg-putrow';
+    var inScope=function(){
+      return wear.filter(function(w){return dgInScope(dgPutScope,w.s);});
+    };
+    var put=document.createElement('button');
+    put.className='dbtn primary dg-put';
+    function putSync(){
+      var ws=inScope();
+      /* a zero-target command was the biggest button on the surface
+         (JVUX-10): a zero-target command is an empty state, not a call
+         to action */
+      /* T223: "the button says 'put all 8 of them there', what the
+         heck. Do you think about writing? 'Apply to all'" */
+      put.innerHTML=ws.length
+        ?(bic('align')+' Apply to '
+          +(dgPutScope.kind==='all'&&ws.length>1
+            ?('all '+ws.length+' boxes')
+            :(ws.length+' box'+(ws.length===1?'':'es'))))
+        :('No boxes wear this style '
+          +esc(dgScopeLabel(dgPutScope)));
+      put.classList.toggle('primary',!!ws.length);
+      put.disabled=!ws.length;
+      put.title=ws.length
+        ?('Move every box wearing this type onto that rectangle, '
+          +dgScopeLabel(dgPutScope)+'. Ctrl+Z undoes the lot.')
+        :('Nothing wears this type '+dgScopeLabel(dgPutScope));
+    }
+    put.addEventListener('click',function(){
+      var n=0;
+      inScope().forEach(function(w){
+        w.a.x=(rec.x!=null?rec.x:8);
+        w.a.y=(rec.y!=null?rec.y:6);
+        w.a.w=(rec.w!=null?rec.w:60);
+        /* an anchored box measures from its anchor, so a default
+           position has to clear the anchor or it lands somewhere else */
+        delete w.a.anch;
+        n++;
+      });
+      if(!n) return;
+      markDirty();refresh();renderFilm();dgBodyKeep(ov);
+      toast(n+' '+(d.label||id)+' box'+(n===1?'':'es')
+        +' moved '+dgScopeLabel(dgPutScope)+' — Ctrl+Z undoes it');
+    });
+    putRow.appendChild(put);
+    putRow.appendChild(dgScopeSelect(dgPutScope,putSync));
+    putSync();
+    body.appendChild(putRow);
+
+    /* ---- T224: every box of this type, in a table ---- */
+    dgSectionHead(body,'Every \u201c'+(d.label||id)+'\u201d in this deck',
+      'One row per box, wherever it is. Type into it to change one; '
+      +'tick several and use Match style of to pull them into line '
+      +'with a box you already like.');
+    dgTable(body,ov);
+    dgSheet(body,ov);
   }
   function openDesign(){
     dgClose();
@@ -51933,6 +52701,283 @@ window.JunoPptx = (function () {
     if(pres.sections) delete pres.sections[id];
     if(cur>=pres.slides.length) cur=Math.max(0,pres.slides.length-1);
     normSections();markDirty();refresh();
+  }
+/* 52-layout-builder.js — making a slide layout of your own.
+   ONE FRAGMENT of deck.js's single IIFE, concatenated with its
+   siblings in filename order by assets.deck_js(). It does not
+   parse alone and is not meant to: see 00-page.js. */
+
+  /* ---- LAYOUTS OF YOUR OWN (T226) --------------------------------------
+     (2026-09-03, user: "it would be great if people could make their own
+     slide layouts.")
+
+     Two things already existed and neither was this. The built-in
+     LAYOUTS catalogue is a fixed table in the source. "Save this
+     slide's layout" records an ARRANGEMENT -- the boxes of a slide you
+     already made, kept without their words -- which is the right tool
+     when the slide exists and the wrong one when it does not: you
+     cannot design the shape you want and then fill it.
+
+     So: a board, some slots, a name. What comes out is an entry in
+     exactly the shape LAYOUTS uses, kept on the deck as `pres.layouts`,
+     and from there it is a layout in every sense -- it appears in the
+     New slide strip and in Change layout, applyLayout stamps it, and
+     the picker draws its thumbnail with the same layIcon the built-ins
+     use. There is no second code path; the catalogue simply got longer
+     and part of it is yours. */
+  var LB_SLOTS=[
+    ['title','Title',{k:'text',w:88,h:12,text:'Title',size:5,b:1}],
+    ['head','Heading',{k:'text',w:80,h:9,text:'Heading',size:3.6,b:1}],
+    ['body','Body text',{k:'text',w:80,h:30,text:'Body text',size:2.8}],
+    ['cell','Figure panel',{k:'cell',w:44,h:50}]
+  ];
+  var lbItems=[],lbSel=-1,lbName='',lbEdit='';
+  function myLayouts(){
+    if(!Array.isArray(pres.layouts)) pres.layouts=[];
+    return pres.layouts;
+  }
+  function mintLayoutId(){
+    var n=1,ids={};
+    myLayouts().forEach(function(l){if(l&&l.id) ids[l.id]=1;});
+    while(ids['my'+n]||layoutById('my'+n)) n++;
+    return 'my'+n;
+  }
+  function lbClose(){
+    var ov=$('#lay-make'); if(ov) overlayHide(ov);
+  }
+  /* the board: one absolutely-positioned proxy per slot, in page
+     percent, dragged and resized the way the design screen's ghost is */
+  function lbBoard(host){
+    var pg=pageOf();
+    var board=document.createElement('div');
+    board.className='lb-board';
+    board.style.aspectRatio=(pg.aw||16)+' / '+(pg.ah||9);
+    lbItems.forEach(function(it,i){
+      var el=document.createElement('div');
+      el.className='lb-slot lb-'+(it.k==='cell'?'cell':'text')
+        +(i===lbSel?' on':'');
+      el.style.left=it.x+'%';el.style.top=it.y+'%';
+      el.style.width=it.w+'%';el.style.height=(it.h||10)+'%';
+      var lab=document.createElement('span');
+      lab.className='lb-lab';
+      lab.textContent=(it.k==='cell')?'Figure panel':(it.text||'Text');
+      el.appendChild(lab);
+      var grip=document.createElement('span');
+      grip.className='lb-grip';grip.title='Drag to resize';
+      el.appendChild(grip);
+      function at(ev){
+        var r=board.getBoundingClientRect();
+        return {x:(ev.clientX-r.left)/r.width*100,
+                y:(ev.clientY-r.top)/r.height*100,r:r};
+      }
+      function drag(ev,mode){
+        ev.preventDefault();ev.stopPropagation();
+        lbSel=i;
+        var st=at(ev),ox=it.x,oy=it.y,ow=it.w,oh=it.h||10;
+        function mv(e2){
+          var p=at(e2);
+          if(mode==='move'){
+            it.x=Math.max(0,Math.min(100-ow,
+              Math.round((ox+p.x-st.x)*10)/10));
+            it.y=Math.max(0,Math.min(100-oh,
+              Math.round((oy+p.y-st.y)*10)/10));
+          } else {
+            it.w=Math.max(5,Math.min(100-it.x,
+              Math.round((ow+p.x-st.x)*10)/10));
+            it.h=Math.max(4,Math.min(100-it.y,
+              Math.round((oh+p.y-st.y)*10)/10));
+          }
+          lbRender();
+        }
+        function up(){
+          document.removeEventListener('pointermove',mv);
+          document.removeEventListener('pointerup',up);
+        }
+        document.addEventListener('pointermove',mv);
+        document.addEventListener('pointerup',up);
+      }
+      el.addEventListener('pointerdown',function(e){drag(e,'move');});
+      grip.addEventListener('pointerdown',function(e){drag(e,'size');});
+      board.appendChild(el);
+    });
+    host.appendChild(board);
+  }
+  function lbRender(){
+    var ov=$('#lay-make'); if(!ov) return;
+    var body=ov.querySelector('#lay-make-body'); if(!body) return;
+    var keep=body.scrollTop;
+    body.innerHTML='';
+
+    var add=document.createElement('div');add.className='lb-bar';
+    var al=document.createElement('span');
+    al.className='cell-lab';al.textContent='Add a slot';
+    add.appendChild(al);
+    LB_SLOTS.forEach(function(pr){
+      var b=document.createElement('button');
+      b.className='dbtn dg-b';
+      b.innerHTML=bic(pr[2].k==='cell'?'cellcard':'text')+' '+esc(pr[1]);
+      b.title='Put a '+pr[1].toLowerCase()+' on the layout';
+      b.addEventListener('click',function(){
+        var base=pr[2],y=6;
+        lbItems.forEach(function(it){
+          y=Math.max(y,(it.y||0)+(it.h||10)+3);});
+        var it={k:base.k,x:6,y:Math.min(88,y),w:base.w,h:base.h};
+        if(base.k!=='cell'){
+          it.text=base.text;it.size=base.size;
+          if(base.b) it.b=1;
+        }
+        lbItems.push(it);lbSel=lbItems.length-1;lbRender();
+      });
+      add.appendChild(b);
+    });
+    var del=document.createElement('button');
+    del.className='dbtn dg-b dbtn-warn';
+    del.innerHTML=bic('exit')+' Remove the chosen slot';
+    del.disabled=lbSel<0;
+    del.title='Take the highlighted slot off the layout';
+    del.addEventListener('click',function(){
+      if(lbSel<0) return;
+      lbItems.splice(lbSel,1);lbSel=-1;lbRender();
+    });
+    add.appendChild(del);
+    body.appendChild(add);
+
+    lbBoard(body);
+
+    /* the numbers, for the same reason the design screen has them:
+       dragging is rough and typing is how two layouts agree */
+    if(lbSel>=0&&lbItems[lbSel]){
+      var it2=lbItems[lbSel];
+      var nums=document.createElement('div');nums.className='dg-nums';
+      [['x','X'],['y','Y'],['w','Width'],['h','Height']]
+        .forEach(function(pr){
+        var cell=document.createElement('label');cell.className='dg-num';
+        var lb=document.createElement('span');lb.textContent=pr[1];
+        cell.appendChild(lb);
+        var inp=document.createElement('input');
+        inp.type='number';inp.step='0.5';inp.min='0';inp.max='100';
+        inp.value=(it2[pr[0]]!=null?it2[pr[0]]:10);
+        inp.addEventListener('keydown',function(e){
+          e.stopPropagation();
+          if(e.key==='Enter') inp.blur();
+        });
+        inp.addEventListener('change',function(){
+          var v=parseFloat(inp.value);
+          if(isFinite(v)) it2[pr[0]]=Math.round(v*10)/10;
+          lbRender();
+        });
+        cell.appendChild(inp);
+        var pc=document.createElement('span');
+        pc.className='dg-numpc';pc.textContent='%';
+        cell.appendChild(pc);
+        nums.appendChild(cell);
+      });
+      body.appendChild(nums);
+    }
+
+    var foot=document.createElement('div');foot.className='lb-foot';
+    var nm=document.createElement('input');
+    nm.className='lb-name';nm.type='text';nm.value=lbName;
+    nm.placeholder='Call this layout';
+    nm.title='The name it shows under its tile';
+    nm.addEventListener('keydown',function(e){e.stopPropagation();});
+    nm.addEventListener('input',function(){lbName=nm.value;});
+    foot.appendChild(nm);
+    var save=document.createElement('button');
+    save.className='dbtn primary';
+    save.innerHTML=bic('copy')+' '+(lbEdit?'Save changes':'Save this layout');
+    save.disabled=!lbItems.length;
+    save.title=lbItems.length
+      ?'Keep it. It joins the New slide gallery and Change layout.'
+      :'Put at least one slot on it first';
+    save.addEventListener('click',function(){
+      if(!lbItems.length) return;
+      var label=(lbName||'').trim()||'My layout';
+      var list=myLayouts(),hit=null;
+      if(lbEdit) list.forEach(function(l){if(l.id===lbEdit) hit=l;});
+      if(hit){hit.label=label;hit.items=deep(lbItems);}
+      else list.push({id:mintLayoutId(),label:label,items:deep(lbItems)});
+      markDirty();
+      /* the pickers cache what they built, so make them build again */
+      lbInvalidate();
+      renderLayoutPicker();
+      renderControls();
+      lbClose();
+      toast('“'+label+'” saved — it is in the New slide '
+        +'gallery and in Change layout');
+    });
+    foot.appendChild(save);
+    body.appendChild(foot);
+
+    if(myLayouts().length){
+      var mine=document.createElement('div');mine.className='lb-mine';
+      var h=document.createElement('div');
+      h.className='hd-lab';h.textContent='layouts you have made';
+      mine.appendChild(h);
+      myLayouts().forEach(function(l){
+        var row=document.createElement('div');row.className='lb-row';
+        var t=document.createElement('span');
+        t.className='lb-rowt';
+        t.textContent=l.label+' · '+(l.items||[]).length+' slot'
+          +((l.items||[]).length===1?'':'s');
+        row.appendChild(t);
+        var ed=document.createElement('button');
+        ed.className='dbtn dg-b';ed.textContent='Edit';
+        ed.title='Open this layout on the board';
+        ed.addEventListener('click',function(){
+          lbEdit=l.id;lbName=l.label;lbItems=deep(l.items||[]);
+          lbSel=-1;lbRender();
+        });
+        row.appendChild(ed);
+        var rm=document.createElement('button');
+        rm.className='dbtn dg-b dbtn-warn';rm.textContent='Delete';
+        rm.title='Slides already laid out this way keep their boxes';
+        rm.addEventListener('click',function(){
+          var at=myLayouts().indexOf(l);
+          if(at>=0) myLayouts().splice(at,1);
+          if(lbEdit===l.id){lbEdit='';lbName='';lbItems=[];lbSel=-1;}
+          markDirty();lbInvalidate();renderLayoutPicker();
+          renderControls();lbRender();
+        });
+        row.appendChild(rm);
+        mine.appendChild(row);
+      });
+      body.appendChild(mine);
+    }
+    body.scrollTop=keep;
+  }
+  /* the three pickers cache the family they drew; a new layout has to
+     make them draw again */
+  function lbInvalidate(){
+    ['#layout-row','#layout-menu-grid','#layout-strip'].forEach(
+      function(sel){
+        var row=$(sel); if(row) delete row.dataset.built;
+      });
+  }
+  function lbOpen(){
+    var ov=$('#lay-make'),btn=$('#hm-lay-new');
+    if(!ov) return;
+    if(!lbEdit&&!lbItems.length){
+      /* a layout that starts empty is a blank page you have to furnish;
+         starting from a title is the shape almost every slide has */
+      lbItems=[{k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1}];
+      lbName='';lbSel=0;
+    }
+    lbRender();
+    overlayShow(btn,ov);
+  }
+  function layoutBuilderBoot(){
+    var b=$('#hm-lay-new');
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();lbOpen();});
+    var c=$('#lay-make-close');
+    if(c) c.addEventListener('click',lbClose);
+    var n=$('#lay-make-new');
+    if(n) n.addEventListener('click',function(){
+      lbEdit='';lbName='';lbSel=0;
+      lbItems=[{k:'text',x:6,y:6,w:88,h:12,text:'Title',size:5,b:1}];
+      lbRender();
+    });
   }
 /* 55-sections-and-strip.js — sections as units, the film strip and its menus, and mode switching.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
@@ -53576,7 +54621,8 @@ window.JunoPptx = (function () {
   function presentTabBoot(){
     [['pr-here','pl-here'],['pr-start','pl-start'],
      ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],
-     ['pr-notes','pl-notes'],['pr-tap','pl-tap'],['pr-trace','pl-trace']]
+     ['pr-notes','pl-notes'],['pr-timing','pl-notes'],
+     ['pr-tap','pl-tap'],['pr-trace','pl-trace']]
       .forEach(function(p){
         var b=$('#'+p[0]),row=$('#'+p[1]);
         if(!b||!row) return;
@@ -53584,6 +54630,16 @@ window.JunoPptx = (function () {
           e.stopPropagation();
           var pm=$('#play-menu'); if(pm&&!pm.hidden) overlayHide(pm);
           row.click();
+          /* T222: Notes and Timing share the pane and differ by the
+             tab they land on -- the pane has had those tabs since
+             T29 and nothing pointed at them */
+          if(p[0]==='pr-notes'||p[0]==='pr-timing'){
+            var want=(p[0]==='pr-timing')?'deck':'slide';
+            setTimeout(function(){
+              var t=$('.np-tab[data-np="'+want+'"]');
+              if(t) t.click();
+            },0);
+          }
           setTimeout(presentTabSync,0);
         });
       });
@@ -53610,14 +54666,6 @@ window.JunoPptx = (function () {
       if(!b||!row) return;
       var on=/:\s*on\s*$/.test(row.textContent||'');
       b.setAttribute('aria-pressed',on?'true':'false');
-    });
-  }
-  /* the Style system screen's own door on the Design tab (T212) */
-  function styleSystemDoorBoot(){
-    var b=$('#dsg-design-btn'); if(!b) return;
-    b.addEventListener('click',function(e){
-      e.stopPropagation();
-      var d=$('#dsg-design'); if(d) d.click();
     });
   }
   function stripMoreBoot(){
@@ -55596,8 +56644,11 @@ window.JunoPptx = (function () {
   window.SemDeckPrintRoot=buildPrintRoot;
   menuAction('#mi-refresh-figs',function(){resyncAllFigures();});
   menuAction('#mi-hist',openHistory);
+  /* T225: the checkpoint row, through the same helper every other File
+     row uses -- so it closes the menu the way its neighbours do */
+  menuAction('#mi-check',function(){histCheckpoint(null);});
   (function(){
-    var b=$('#dsg-design');
+    var b=$('#dsg-design-btn');
     /* a row of the Text styles window since T178: the window goes as
        the screen opens, the way the other rows there behave */
     if(b) b.addEventListener('click',function(){
@@ -57173,9 +58224,9 @@ window.JunoPptx = (function () {
   imgPaneBoot();
   quickSwatchBoot();          /* the deck's six colours, on the row */
   ohOverviewBoot();           /* History of this object, full screen */
+  layoutBuilderBoot();        /* layouts of your own (T226) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
-  styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
