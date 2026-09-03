@@ -1783,6 +1783,13 @@
      slide that does not exist; the thing a person actually needs off a
      timeline row is "which one was this" — the shape, the colour, and
      the words if it had any. */
+  /* big enough that a 38px schematic would be a lie about it */
+  function ohIsBig(a){
+    if(!a) return false;
+    if(a.k==='table'||a.k==='cell'||a.k==='flip'||a.k==='chart')
+      return true;
+    return ((a.w||0)*(a.h||0))>=1200;
+  }
   function ohThumb(a){
     var d=document.createElement('div');
     d.className='oh-thumb';
@@ -1846,31 +1853,71 @@
       list.appendChild(g);
       return;
     }
+    /* ---- T229: A TABLE, NOT A STACK OF CARDS ------------------------
+       (2026-09-03, user: "the history is kind of weird. Make it when a
+       list that are all rows, and columns are some of the info. 'Put it
+       back to this' should be revert lol. Then there should be a
+       preview if it is small, says a shape, or a preview button if it
+       is something large like a table.")
+       Four columns: when, what changed, what it looked like, and the
+       way back. A small object draws its schematic in the row; a big
+       one -- a table, a figure, a flip book -- is a button, because a
+       116px schematic of a table says nothing and a row tall enough to
+       say something is not a row any more. */
+    var head=document.createElement('div');
+    head.className='oh-head';
+    ['When','What changed','Looked like',''].forEach(function(t){
+      var c=document.createElement('div');
+      c.className='oh-hc';c.textContent=t;head.appendChild(c);
+    });
+    list.appendChild(head);
     hist.forEach(function(e,k){
       var row=document.createElement('div');
       row.className='oh-row'+(e.now?' oh-now':'');
-      row.appendChild(ohThumb(e.a));
-      var body=document.createElement('div');
-      body.className='oh-body';
-      var h=document.createElement('div');
-      h.className='oh-h';
-      h.textContent=e.now?'now':(k===hist.length-1?'earliest kept'
+      var when=document.createElement('div');
+      when.className='oh-c oh-when';
+      when.textContent=e.now?'now':(k===hist.length-1?'earliest kept'
         :(k+' step'+(k===1?'':'s')+' ago'));
-      body.appendChild(h);
-      var w=document.createElement('div');
-      w.className='oh-what';w.textContent=e.what;
-      body.appendChild(w);
-      row.appendChild(body);
+      row.appendChild(when);
+      var what=document.createElement('div');
+      what.className='oh-c oh-what';what.textContent=e.what;
+      what.title=e.what;
+      row.appendChild(what);
+      var look=document.createElement('div');
+      look.className='oh-c oh-look';
+      if(ohIsBig(e.a)){
+        var pb=document.createElement('button');
+        pb.className='dbtn oh-prev';
+        pb.textContent='Preview';
+        pb.title='Draw this state large enough to read';
+        pb.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          var open=row.classList.toggle('oh-open');
+          pb.textContent=open?'Hide':'Preview';
+          if(open){
+            var big=ohThumb(e.a);
+            big.classList.add('oh-big');
+            row.appendChild(big);
+          } else {
+            var b2=row.querySelector('.oh-big');
+            if(b2) b2.remove();
+          }
+        });
+        look.appendChild(pb);
+      } else look.appendChild(ohThumb(e.a));
+      row.appendChild(look);
+      var act=document.createElement('div');
+      act.className='oh-c oh-act';
       if(!e.now){
         var b=document.createElement('button');
-        b.className='dbtn oh-do';b.textContent='Put it back to this';
-        b.title='Writes this state onto the object as it stands now. It '
-          +'is an ordinary edit \u2014 Ctrl+Z undoes it, and nothing '
-          +'else on the page moves.';
-        b.addEventListener('click',function(){
-          ohRestore(e.a);});
-        row.appendChild(b);
+        b.className='dbtn oh-do';b.textContent='Revert';
+        b.title='Put the object back to this state. It is an ordinary '
+          +'edit \u2014 Ctrl+Z undoes it, and nothing else on the page '
+          +'moves.';
+        b.addEventListener('click',function(){ohRestore(e.a);});
+        act.appendChild(b);
       }
+      row.appendChild(act);
       list.appendChild(row);
     });
   }

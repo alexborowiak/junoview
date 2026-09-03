@@ -4700,6 +4700,49 @@ option. Then where has the ability to refresh all images gone?"
   `:has(>.dbtn[hidden])` rule. Green in every substring test; invisible
   in the ribbon.
 
+- [x] **T228/T229 - The strip stops fighting you; the history reads as
+  a table; clones and optional slides get doors.**
+  The user (2026-09-03, two screenshots of the strip): "I don't know why
+  the thumbnails only view for a slide has the title still, also when
+  you hover over a slide it brings up all the options around moving and
+  duplicating. These are not needed here as you can just do that with
+  other buttons or click and drag and just make it really hard to
+  actually click on a slide. Also the slide numbers are way too small...
+  The history is kind of weird. Make it when a list that are all rows,
+  and columns are some of the info. 'Put it back to this' should be
+  revert lol. Then there should be a preview if it is small, says a
+  shape, or a preview button if it is something large like a table...
+  Put the notes with the home next to layers. I like the notes. Also
+  make the time not just in 30 second intervals, but can be seconds and
+  minutes... Where is the clone object features as well and then the
+  ability to see the clones... How are slides made optional? The click
+  to enlarge figures should work on pictures as well."
+  *Done 2026-09-03.* **The strip**: no controls on a slide row. Four
+  buttons appeared over every thumbnail on hover, on top of the thing
+  you were trying to click; reordering is the drag the row already is,
+  Duplicate and Delete are on Home, and the right-click menu keeps all
+  of them -- move and rename included, which only the hover row had.
+  Thumbnails view shows thumbnails: the title was printed beside every
+  one, which is what "Thumbnails and headings" is for. Slide numbers go
+  from 9.5px mono to 12.5px. **Notes** is a tile on Home beside Layers,
+  because it is a thing you write while building. **Optional** is a
+  button in This slide; it had been a row in a right-click menu, which
+  is why the user had to ask how. **A target in seconds**: minutes and
+  seconds are two boxes writing the one stored number, which is still
+  minutes, so every deck already written reads back unchanged.
+  **History** is four columns -- when, what changed, what it looked
+  like, and Revert. A small object draws its schematic in the row; a
+  table, figure, flip book or chart gets a Preview button that opens a
+  bigger one, because a 38px schematic of a table says nothing.
+  **Clones**: Make clones and Its clones (N) are buttons on the Object
+  tab, calling exactly what the Layers pane's Actions rows called.
+  *On tap-to-enlarge:* driven live, it works, and it works on pictures
+  -- the handler claims any `.an-item`. What looks broken is the
+  geometry: an object that already spans the slide cannot be made
+  bigger, so the spotlight dims the room and appears to do nothing.
+  Left as it is; the rule that it never shrinks a figure is the older
+  and better one.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

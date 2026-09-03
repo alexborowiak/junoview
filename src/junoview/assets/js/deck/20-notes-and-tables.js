@@ -197,8 +197,13 @@
     var ta=$('#np-notes'),gi=$('#np-goal'),ti=$('#np-total'),
         tot=$('#np-tot');
     if(ta&&document.activeElement!==ta) ta.value=(sl&&sl.notes)||'';
+    /* T228: the target is stored in minutes and typed in two boxes,
+       so 2:20 is sayable */
+    var gs=$('#np-goalsec'),g0=slideGoal(sl)||0;
     if(gi&&document.activeElement!==gi)
-      gi.value=slideGoal(sl)||'';
+      gi.value=g0?Math.floor(g0):'';
+    if(gs&&document.activeElement!==gs)
+      gs.value=g0?Math.round((g0-Math.floor(g0))*60):'';
     if(ti&&document.activeElement!==ti)
       ti.value=pres.talkMins||'';
     var dn=$('#np-decknotes');
@@ -268,22 +273,40 @@
       ta.addEventListener('blur',function(){
         if(typeof histPush==='function') histPush();});
     }
+    /* T228: the target is two boxes, minutes and seconds, and both
+       write the one stored number -- which is still minutes, so every
+       deck already written reads back unchanged */
+    function goalWrite(){
+      var sl=pres.slides[cur]; if(!sl) return;
+      var gi2=$('#np-goal'),gs2=$('#np-goalsec');
+      var m=parseFloat(gi2&&gi2.value)||0;
+      var sec=parseFloat(gs2&&gs2.value)||0;
+      var v=Math.round((m+sec/60)*1000)/1000;
+      if(v>0) sl.goal=v; else delete sl.goal;
+      markDirty(true);presenterPush();
+    }
+    var gs=$('#np-goalsec');
+    if(gs){
+      gs.addEventListener('keydown',function(e){e.stopPropagation();});
+      gs.addEventListener('input',goalWrite);
+      gs.addEventListener('blur',function(){
+        if(typeof histPush==='function') histPush();
+        renderNotesPane();});
+    }
     var gi=$('#np-goal');
     if(gi){
       gi.addEventListener('keydown',function(e){e.stopPropagation();});
-      gi.addEventListener('input',function(){
-        var sl=pres.slides[cur]; if(!sl) return;
-        var v=parseFloat(gi.value);
-        if(v>0) sl.goal=v; else delete sl.goal;
-        /* QUIET, and one undo entry on blur -- the rule #np-notes above
-           already follows. Typing "10.5" here pushed four whole-deck
-           snapshots, and the history keeps twenty, so setting the times
-           on a few slides quietly evicted real work from the undo
-           stack. Found by the parallel branch's T57 (2026-08-30). */
-        markDirty(true);renderNotesPane();presenterPush();
-      });
+      /* QUIET, and one undo entry on blur -- the rule #np-notes above
+         already follows. Typing "10.5" here pushed four whole-deck
+         snapshots, and the history keeps twenty, so setting the times
+         on a few slides quietly evicted real work from the undo
+         stack. Found by the parallel branch's T57 (2026-08-30).
+         The pane is NOT redrawn on every keystroke either: it would
+         rewrite the two boxes under the caret (T228). */
+      gi.addEventListener('input',goalWrite);
       gi.addEventListener('blur',function(){
-        if(typeof histPush==='function') histPush();});
+        if(typeof histPush==='function') histPush();
+        renderNotesPane();});
     }
     var gc=$('#np-goalclear');
     if(gc) gc.addEventListener('click',function(){

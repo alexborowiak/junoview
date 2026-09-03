@@ -203,10 +203,12 @@ def test_a_new_version_is_a_copy_and_names_itself(out):
     # a deck still names its slides by what is on them
     assert "if(!pageOf().poster){" in out
     assert "if(s.label) return s.label;" in out
-    # an autoname is a starting point: Rename is a button, because the
-    # row's own click re-renders the strip and would detach a dblclick
-    # target before the second click landed
-    assert "'Rename this version'" in out
+    # an autoname is a starting point, and Rename is a row of the
+    # strip's own menu since T228 took the hover controls off the rows
+    # ("they just make it really hard to actually click on a slide").
+    # A menu row, not a dblclick: the row's own click re-renders the
+    # strip and would detach a dblclick target before the second landed.
+    assert "row('Rename this version" in out
     # the name has to survive BOTH whitelists or it silently reverts
     assert "if(typeof s.label==='string'&&s.label) o.label=s.label;" in out
 

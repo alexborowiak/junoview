@@ -989,8 +989,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-03, T227: twelve kinds of list instead of two -- six bullet
 # markers and six numberings -- each button a split control with a
 # drawn gallery, and switching kind no longer rewrites the content.
-EXPECTED_MD5 = "bde1c16b7dd90e9380e57e341b9b5588"
-EXPECTED_BYTES = 3413452
+# 2026-09-03, T228/T229: the slide strip lost its per-row hover
+# controls and its titles in Thumbnails view and got bigger numbers;
+# Notes and Optional got doors on Home; a slide target can be given in
+# seconds; the object history is a four-column table with Revert and a
+# preview button for large objects; and clones got two ribbon doors.
+EXPECTED_MD5 = "ce3314b7cff350070651c39fe8cf75a2"
+EXPECTED_BYTES = 3423837
 
 
 def _render_example() -> str:

@@ -673,6 +673,31 @@
      there is no button left to hang from — row() removes the menu
      before it calls you — so the list is placed near the top of the
      stage instead. */
+  /* T229: the two ribbon doors. They call exactly what the Layers
+     pane's rows called; the pane keeps its rows. */
+  function cloneDoorsBoot(){
+    var mk=$('#fmt-cmp-make');
+    if(mk) mk.addEventListener('click',function(e){
+      e.stopPropagation();
+      var idxs=selIdxs().filter(function(i){return typeof i==='number';});
+      if(!idxs.length){toast('Select something first');return;}
+      var nm=prompt('Name for this set of clones:','FigureCaption');
+      if(nm===null) return;
+      nm=nm.trim(); if(!nm) return;
+      var id=cmpDefine(nm,idxs);
+      toast(id?('\u201c'+nm+'\u201d saved \u2014 place another from '
+        +'the canvas menu, and every copy follows the original')
+        :'Nothing there that could be saved');
+      if(typeof renderSelPane==='function') renderSelPane();
+      if(typeof showFmt==='function') showFmt();
+    });
+    var fd=$('#fmt-cmp-find');
+    if(fd) fd.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+      if(a2&&a2.cmp) cmpInstMenu(a2.cmp,fd);
+    });
+  }
   function cmpInstMenu(id,btn){
     var old=$('#cmp-inst-menu'); if(old) old.remove();
     var def=cmpStore()[id]||{};

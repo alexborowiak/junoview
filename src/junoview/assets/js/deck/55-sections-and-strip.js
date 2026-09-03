@@ -286,39 +286,18 @@
         if(slideMatchHit(i)) return;
         if(i===cur) return;
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
+      /* T228: NO CONTROLS ON THE ROW. Four buttons appeared over
+         every slide on hover -- move up, move down, duplicate,
+         delete -- on top of the thumbnail you were trying to click
+         (2026-09-03, user: "when you hover over a slide it brings up
+         all the options around moving and duplicating. These are not
+         needed here as you can just do that with other buttons or
+         click and drag and just make it really hard to actually click
+         on a slide"). Reordering is the drag the row already is;
+         Duplicate and Delete are on Home; and the right-click menu
+         keeps every one of them, move included. A poster's Rename
+         goes there too. */
       row.appendChild(lbl);
-      var ctr=document.createElement('span');ctr.className='film-ctr';
-      var poster=pageOf().poster;
-      var acts=[['↑',function(){moveSlide(i,-1);},
-                 poster?'Move this version up':'Move slide up'],
-                ['↓',function(){moveSlide(i,1);},
-                 poster?'Move this version down':'Move slide down'],
-                [bic('copy'),function(){dupSlide(i);},
-                 poster?'Duplicate this version':'Duplicate slide'],
-                [bic('exit'),function(){delSlide(i);},
-                 poster?'Delete this version':'Delete slide']];
-      /* an autoname is a starting point, not a decision. This goes on a
-         BUTTON rather than a double-click on the row: the row's own click
-         re-renders the strip, so by the time a dblclick arrived the node
-         it was editing had already been replaced (2026-08-10). */
-      if(poster) acts.splice(2,0,[bic('pen'),function(){
-        var s2=pres.slides[i]; if(!s2) return;
-        var v=prompt('Name this version:',s2.label||slideTitle(s2));
-        if(v==null) return;
-        v=v.trim();
-        if(v) s2.label=v; else delete s2.label;
-        markDirty();renderFilm();
-      },'Rename this version']);
-      acts.forEach(function(p){
-        var b=document.createElement('button');b.className='film-mini';
-        b.innerHTML=p[0];   /* fixed strings / bic() markup from above */
-        b.title=p[2];
-        b.setAttribute('aria-label',p[2]);
-        b.addEventListener('click',function(ev){
-          ev.stopPropagation();p[1]();});
-        ctr.appendChild(b);
-      });
-      row.appendChild(ctr);
       list.appendChild(row);
     });
   }
@@ -534,6 +513,16 @@
       });
     }
     menuHead(m,poster?'this page':'this slide');
+    row('Move it up',function(){moveSlide(i,-1);},null,'prev');
+    row('Move it down',function(){moveSlide(i,1);},null,'next');
+    if(pageOf().poster) row('Rename this version\u2026',function(){
+      var s2=pres.slides[i]; if(!s2) return;
+      var v=prompt('Name this version:',s2.label||slideTitle(s2));
+      if(v==null) return;
+      v=v.trim();
+      if(v) s2.label=v; else delete s2.label;
+      markDirty();renderFilm();
+    },null,'pen');
     row('Duplicate',function(){dupSlide(i);},null,'copy');
     row('Delete',function(){delSlide(i);},null,'exit');
     floatAt(m,ev);
@@ -1637,6 +1626,35 @@
      of the same name, and the two toggles read their state off the
      row's words, so nothing is decided twice. LAYERS ON HOME: a tile
      that presses View's Layers button and mirrors its pressed state. */
+  /* T228: the two doors the ribbon was missing. Notes was reachable
+     only from the Present tab, which is the wrong tab for something
+     you write while building (2026-09-03, user: "put the notes with
+     the home next to layers. I like the notes"); and a slide could
+     only be made optional from a right-click menu on the strip
+     ("how are slides made optional?"). */
+  function homeDoorsBoot(){
+    var n=$('#hm-notes');
+    if(n) n.addEventListener('click',function(e){
+      e.stopPropagation();
+      var row=$('#pl-notes'); if(row) row.click();
+    });
+    var o=$('#hm-optional');
+    if(o) o.addEventListener('click',function(e){
+      e.stopPropagation();toggleOptional(cur);syncHomeDoors();
+    });
+    syncHomeDoors();
+  }
+  function syncHomeDoors(){
+    var o=$('#hm-optional'); if(!o) return;
+    var s=(pres&&pres.slides)?pres.slides[cur]:null;
+    var on=!!(s&&s.opt);
+    o.setAttribute('aria-pressed',on?'true':'false');
+    o.title=on
+      ?'This slide is optional: Running late will skip it. Click to '
+        +'make it required again'
+      :'Mark this slide optional, so Running late can skip it when '
+        +'the talk overruns';
+  }
   function presentTabBoot(){
     [['pr-here','pl-here'],['pr-start','pl-start'],
      ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],

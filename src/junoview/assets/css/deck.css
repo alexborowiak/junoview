@@ -3157,6 +3157,41 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* ---- T229: THE OBJECT'S HISTORY IS A TABLE ----------------------------
+   Four columns -- when, what changed, what it looked like, and the way
+   back -- because a stack of cards made every state look like an event
+   rather than a row you compare against its neighbours. A big object's
+   preview is a button: a 38px schematic of a table says nothing. */
+.oh-head,.oh-row{display:grid;
+  grid-template-columns:96px minmax(0,1fr) 76px 78px;
+  align-items:center;gap:9px;padding:6px 12px;}
+.oh-head{font-family:var(--sans);font-size:11px;font-weight:600;
+  color:#8ea3b5;border-bottom:1px solid #ffffff1c;position:sticky;top:0;
+  background:var(--chrome-2,#16273a);z-index:1;}
+.oh-row{border-left:3px solid transparent;border-bottom:1px solid #ffffff10;}
+.oh-row.oh-open{grid-template-rows:auto auto;}
+.oh-c{min-width:0;}
+.oh-when{font-family:var(--sans);font-size:11.5px;color:#9fb3c4;}
+.oh-look{display:flex;align-items:center;}
+.oh-act{display:flex;justify-content:flex-end;}
+.oh-prev{font-size:11px;padding:3px 8px;}
+.oh-big{grid-column:1/-1;width:100%;max-height:none;height:150px;
+  margin-top:6px;}
+.img-ov .oh-head,.img-ov .oh-row{grid-template-columns:130px minmax(0,1fr)
+  96px 96px;}
+.img-ov .oh-list{display:block;}
+body.light .oh-head{background:#fff;}
+
+/* ---- T228: THUMBNAILS MEANS THUMBNAILS ---------------------------------
+   The strip's Thumbnails view still printed every slide's title beside
+   the picture, which is what "Thumbnails and headings" is for
+   (2026-09-03, user: "I don't know why the thumbnails only view for a
+   slide has the title still"). */
+#film-list[data-fv="thumb"] .film-t{display:none;}
+/* ...and the current slide keeps its name, because that row is the
+   inline editor and the name is its heading */
+#film-list[data-fv="thumb"] .film-row.current .film-t{display:block;}
+
 /* ---- T227: KINDS OF BULLET, KINDS OF NUMBERING ----------------------
    The element carries the kind as a class and the content is only the
    items, so a marker is a rule here and never a rewrite of the words.
@@ -3558,8 +3593,10 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
   text-align:left;min-width:0;font-family:var(--sans);}
 .film-label .film-t{overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
-.film-label .film-n{font-family:var(--mono);font-size:9.5px;color:#6c8093;
-  width:15px;flex:none;text-align:right;}
+/* T228: a slide number you can read. It was 9.5px in the mono face
+   (2026-09-03, user: "the slide numbers are way too small"). */
+.film-label .film-n{font-family:var(--mono);font-size:12.5px;
+  color:#8ea3b5;width:22px;flex:none;text-align:right;}
 /* Optional and omitted are words in the strip, not secret state in a
    context menu. Only the thumbnail/title dim: controls and the current
    inline editor stay fully usable (T50). */

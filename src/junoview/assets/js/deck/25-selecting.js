@@ -41,7 +41,7 @@
     /* the Object group's provenance row (T198): where it came from,
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
-    +'#fmt-path #fmt-lock '
+    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-find '
 
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
@@ -562,6 +562,16 @@
     show('#fmt-lock',isNum,isNum&&pinned(a));
     /* T220: what this object has been through, one click away */
     show('#fmt-hist',isNum);
+    /* T229: making a set of clones, and finding the ones that exist */
+    var selCount=selIdxs().length;
+    var cmpOn=!!(a&&a.cmp&&a.cinst);
+    show('#fmt-cmp-make',isNum&&selCount>=1&&!cmpOn);
+    show('#fmt-cmp-find',cmpOn);
+    var cf=$('#fmt-cmp-find');
+    if(cf&&cmpOn&&typeof cmpInstances==='function'){
+      var cn=cmpInstances(a.cmp).length;
+      cf.innerHTML=bic('locate')+' Its clones ('+cn+')';
+    }
     /* the Source window's door (T177): anything that came from
        somewhere -- a placed cell, a picture that knows its file, or
        anything with a provenance to show */

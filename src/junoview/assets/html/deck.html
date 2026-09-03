@@ -1294,6 +1294,13 @@
               <button class="dbtn rbn-sm" id="hm-dupslide"
               title="Duplicate this slide, in place"><i data-ic="copy"></i>
               Duplicate</button>
+              <!-- T228: how a slide is made optional. It was a row in
+                   a right-click menu on the strip, which is why the
+                   user had to ask. -->
+              <button class="dbtn rbn-sm" id="hm-optional"
+                aria-pressed="false"
+                title="Mark this slide optional, so Running late can
+ skip it when the talk overruns"><i data-ic="flag"></i> Optional</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
               title="Delete this slide"><i data-ic="exit"></i> Delete</button>
             </span>
@@ -1328,6 +1335,13 @@
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Show">
+                <!-- T228: Notes beside Layers. It is a thing you
+                     write while building, so it belongs on the tab
+                     you build from. -->
+                <button class="fx-tile big-tile" id="hm-notes"
+                  title="Your speaker notes for this slide, how long
+ you want it to take, and what your rehearsals actually took"
+                  ><i data-ic="doc"></i><span>Notes</span></button>
                 <button class="fx-tile big-tile" id="hm-layers" aria-pressed="false"
                   title="Every object on this slide as a list: reorder, hide,
  lock, group"><i data-ic="objects"></i><span>Layers</span></button>
@@ -1863,6 +1877,20 @@
                   min="0" max="100" step="1" aria-label="Opacity percent">
                 <span class="fmt-opval" id="fmt-opval">100%</span></span>
               </span>
+              <!-- T229: CLONES, WHERE YOU CAN SEE THEM (2026-09-03,
+                   user: "where is the clone object features as well
+                   and then the ability to see the clones"). Both were
+                   rows inside the Layers pane's Actions popover --
+                   a menu, in a pane, behind a button. -->
+              <button class="dbtn etm" id="fmt-cmp-make" hidden
+                title="Save the selected items as a named thing you
+ can place again. Every copy keeps its own words and its own figure,
+ and changing the original changes them all"
+                ><i data-ic="group"></i> Make clones&#8230;</button>
+              <button class="dbtn etm" id="fmt-cmp-find" hidden
+                title="Every place in this deck this clone has been
+ put — pick one to go there"
+                ><i data-ic="locate"></i> Its clones</button>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
@@ -2218,9 +2246,18 @@
           <label class="np-lab" for="np-goal">How long you want to spend
             here</label>
           <div class="np-row">
+            <!-- T228: minutes AND seconds. It was one field stepping
+                 in halves of a minute, so a two-and-a-half-minute
+                 slide was the finest thing you could ask for
+                 (2026-09-03, user: "make the time not just in 30
+                 second intervals, but can be seconds and minutes"). -->
             <input id="np-goal" class="np-goal" type="number" min="0"
-              max="180" step="0.5" placeholder="—">
-            <span class="np-unit">minutes</span>
+              max="180" step="1" placeholder="—">
+            <span class="np-unit">min</span>
+            <input id="np-goalsec" class="np-goal" type="number" min="0"
+              max="59" step="1" placeholder="—"
+              aria-label="Seconds">
+            <span class="np-unit">sec</span>
             <button class="dbtn np-clear" id="np-goalclear" aria-label="No target for this slide"
               title="No target for this slide"><i data-ic="exit"></i>
               </button>
