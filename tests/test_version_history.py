@@ -112,7 +112,8 @@ def test_a_decks_history_goes_in_indexeddb(out):
     assert "return 'dhist:'+SCOPE+':'+(name||'untitled');" in out
     assert "function histVKeyFor(name,id){return histKeyFor(name)+':'+id;}" \
         in out
-    assert "function snapWrite(cap,ix,why){" in out
+    # (a fourth argument since T225: a checkpoint is marked)
+    assert "function snapWrite(cap,ix,why,mark){" in out
     assert "function idbDel(k){" in out
     assert "var HIST_KEEP=20,histOps=Promise.resolve();" in out
 
@@ -164,7 +165,9 @@ def test_the_same_snapshot_rule_the_notebook_uses(out):
     autosave = out[out.index("function scheduleAutosave(){"):
                    out.index("/* always-visible Save button")]
     assert "snapTake(" not in autosave
-    assert "if(prev===cap.txt) return false;" in out
+    # ...unless it is a checkpoint, which marks THIS moment
+    # rather than this content (T225)
+    assert "if(prev===cap.txt&&!mark) return false;" in out
     i = out.index("return idbPut(histKeyFor(cap.name),next);")
     assert "idbDel(histVKeyFor(cap.name,d.id))" in out[i:i + 500]
 
@@ -333,8 +336,11 @@ def test_evicting_the_oldest_snapshot_splices_rather_than_severs(out):
     before it goes. Without it, half a history becomes rows pointing at
     an id that is not there.
     """
-    drop = out[out.index("var drop=next.length>HIST_KEEP"):]
+    # (T225: only UNMARKED entries are candidates, so a checkpoint is
+    # never the one thrown away -- but the splice is unchanged)
+    drop = out[out.index("var over=next.length-HIST_KEEP"):]
     drop = drop[:drop.index("return idbPut(histVKeyFor")]
+    assert "      if(next[di].mk) continue;" in drop
     assert "drop.forEach(function(d){" in drop
     assert "if(e2.p===d.id){" in drop
     assert "if(d.p) e2.p=d.p; else delete e2.p;" in drop

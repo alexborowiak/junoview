@@ -4631,6 +4631,26 @@ option. Then where has the ability to refresh all images gone?"
   two rows and matching them to the third moved all three to the same
   X, Y, W and size, and the thumbnails followed.
 
+- [x] **T225 - A checkpoint you take on purpose, and one that
+  survives.**
+  The user (2026-09-03): "Also there should be version of presentations
+  where you can save a checkpoint then go back, or then go into a new
+  branch. I think this is a thing with posters, but needs to be here as
+  well."
+  *Done 2026-09-03.* Most of this already existed and was invisible:
+  the branching version tree has been here since T90, and the poster's
+  Versions is a different feature entirely. What was missing is the
+  deliberate part. Every snapshot was a side-effect of opening, saving
+  or restoring; none had a name you chose; and the keep-the-newest-
+  twenty rule dropped them in arrival order, so the version you
+  actually cared about was the one most likely to go. A checkpoint is
+  now a snapshot with a name and a mark: it is taken even when nothing
+  has changed, because you are marking the MOMENT rather than the
+  content, and eviction only ever considers unmarked ones. Two doors,
+  both reaching the same gesture -- a File row beside the History it
+  lands in, and a button in the history screen. Going back to one and
+  branching from one are the buttons that were already there.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

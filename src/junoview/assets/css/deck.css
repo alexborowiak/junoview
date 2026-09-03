@@ -4621,6 +4621,12 @@ body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
 
+/* ---- T225: a checkpoint reads as one ----------------------------------
+   Every other snapshot is something that happened to you; this is one
+   you chose, so it is marked in the rail and never evicted. */
+.dh-snap.checkpoint{border-left:3px solid var(--accent,#39a9c0);}
+.dh-snap.checkpoint .dh-why{color:#8fd4e4;}
+
 /* ---- T224: EVERY BOX OF A KIND, IN A TABLE ----------------------------
    One row per box, wherever it is: tick several, then Match style of and
    click the one they should follow. The grid's column count comes from

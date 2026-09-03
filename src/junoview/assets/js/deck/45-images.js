@@ -2241,7 +2241,16 @@
       n:pres.slides.length};}
     catch(e){return null;}
   }
-  function snapTake(why,captured,ready){
+  /* ---- T225: A CHECKPOINT IS A SNAPSHOT YOU MEANT ------------------
+     (2026-09-03, user: "there should be version of presentations
+     where you can save a checkpoint then go back, or then go into a
+     new branch.") The tree, the branches and the restore have been
+     here since T90; every snapshot in it was a side-effect of
+     opening, saving or restoring, none had a name you chose, and
+     the keep-the-newest-twenty rule threw them away in arrival
+     order -- so the one version you actually cared about was the
+     one most likely to go. `mark` names it and keeps it. */
+  function snapTake(why,captured,ready,mark){
     var cap=captured||histCapture();
     if(!cap) return Promise.resolve(false);
     var gate=(ready===undefined)
@@ -2260,15 +2269,17 @@
              &&ix[ix.length-1].n===cap.n)
             return idbGet(histVKeyFor(cap.name,ix[ix.length-1].id))
               .then(function(prev){
-                if(prev===cap.txt) return false;
-                return snapWrite(cap,ix,why);
+                /* a checkpoint is taken even when nothing changed:
+                   you are marking THIS moment, not this content */
+                if(prev===cap.txt&&!mark) return false;
+                return snapWrite(cap,ix,why,mark);
               });
-          return snapWrite(cap,ix,why);
+          return snapWrite(cap,ix,why,mark);
         });
       });
     });
   }
-  function snapWrite(cap,ix,why){
+  function snapWrite(cap,ix,why,mark){
     var id='v'+(Date.now().toString(36))
       +Math.random().toString(36).slice(2,5);
     var ent={id:id,at:Date.now(),why:why||'saved',
@@ -2278,9 +2289,21 @@
        written before branches existed reads as a trunk and is right */
     if(histHead) ent.p=histHead;
     if(histBranch) ent.br=histBranch;
+    if(mark) ent.mk=1;              /* T225: kept, and shown as kept */
     var next=ix.concat([ent]);
     histHead=id;
-    var drop=next.length>HIST_KEEP?next.splice(0,next.length-HIST_KEEP):[];
+    /* T225: a checkpoint is never the one thrown away. Only the
+       unmarked ones are candidates, oldest first; if a deck were
+       ever all checkpoints the list simply grows, which is the
+       answer the user asked for. */
+    var over=next.length-HIST_KEEP,drop=[];
+    for(var di=0;di<next.length&&over>0;di++){
+      if(next[di].mk) continue;
+      drop.push(next[di]);over--;
+    }
+    drop.forEach(function(d){
+      var at=next.indexOf(d); if(at>=0) next.splice(at,1);
+    });
     /* SPLICE, don't sever. The dropped entries are the oldest, and on a
        tree the oldest can have children; re-point each child at its
        grandparent so the tree stays connected and merely gets shallower
@@ -2474,6 +2497,7 @@
       var b=document.createElement('button');
       b.className='dh-snap'+(e.id===histSel?' on':'')
         +(e.id===histHead?' head':'')
+        +(e.mk?' checkpoint':'')
         +((kids[e.id]||0)>1?' forked':'');
       b.style.setProperty('--dh-depth',String(Math.min(6,depth[e.id]||0)));
       var l1=document.createElement('span');
@@ -2691,6 +2715,20 @@
     toast('Back to the older version — the deck as it was is in the '
       +'history too, so this is undoable');
   }
+  /* T225: the one gesture the tree was missing. It is an ordinary
+     snapshot with a name and a mark, so going back to it and
+     branching from it are the buttons that already exist. */
+  function histCheckpoint(ov){
+    var nm=prompt('Call this checkpoint:','before the rewrite');
+    if(nm===null) return;
+    nm=nm.trim()||'checkpoint';
+    snapTake('checkpoint: '+nm,undefined,undefined,1).then(function(){
+      toast('Checkpoint \u201c'+nm+'\u201d saved \u2014 it is kept '
+        +'even when older versions are dropped');
+      if(ov&&document.body.contains(ov))
+        histIndex().then(function(ix){histRows(ov,ix);});
+    });
+  }
   function openHistory(){
     histPanelClose();
     var ov=document.createElement('div');
@@ -2701,6 +2739,8 @@
       +'<span class="dh-onbr">'+bic('route')+' on '
       +esc(histBranch||'main')+'</span>'
       +'<span class="deck-spring"></span>'
+      +'<button class="dbtn primary" id="dh-check">'+bic('flag')
+      +' Save a checkpoint\u2026</button>'
       +'<button class="dbtn" id="dh-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dh-main">'
       +'<div class="dh-rail" id="dh-list"></div>'
@@ -2725,6 +2765,8 @@
     }
     document.body.appendChild(ov);
     ov.querySelector('#dh-close').addEventListener('click',histPanelClose);
+    ov.querySelector('#dh-check')
+      .addEventListener('click',function(){histCheckpoint(ov);});
     document.addEventListener('keydown',histPanelKey,true);
     histIndex().then(function(ix){
       histRows(ov,ix);

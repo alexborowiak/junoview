@@ -979,8 +979,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # box of a kind, with ticks, Select all / Unselect all and Match style
 # of; the rail lists objects as well as text styles; and a slide in
 # the strip narrows the table instead of closing the screen.
-EXPECTED_MD5 = "2ad8ce3a8f477fdaaf465565f75fa113"
-EXPECTED_BYTES = 3385423
+# 2026-09-03, T225: a checkpoint you take on purpose -- a named,
+# marked snapshot that eviction never drops -- with a door in the File
+# menu and one in the history screen.
+EXPECTED_MD5 = "ce98376dce26750472751713a5a738d8"
+EXPECTED_BYTES = 3388427
 
 
 def _render_example() -> str:

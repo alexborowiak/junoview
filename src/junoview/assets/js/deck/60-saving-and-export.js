@@ -1065,6 +1065,9 @@
   window.SemDeckPrintRoot=buildPrintRoot;
   menuAction('#mi-refresh-figs',function(){resyncAllFigures();});
   menuAction('#mi-hist',openHistory);
+  /* T225: the checkpoint row, through the same helper every other File
+     row uses -- so it closes the menu the way its neighbours do */
+  menuAction('#mi-check',function(){histCheckpoint(null);});
   (function(){
     var b=$('#dsg-design-btn');
     /* a row of the Text styles window since T178: the window goes as
