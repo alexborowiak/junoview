@@ -521,8 +521,8 @@
           +inner[0].odd.length+' of '+b.boxes.length+' differ.')
         :('Their '+inner[0].prop.label+' and '+(inner.length-1)+' other '
           +'thing'+(inner.length===2?'':'s')+' do not agree.');
-    return 'They already match each other. Calling them '+d.label
-      +' means changing them all later is one edit instead of '
+    return 'They match each other now. Give them the '+d.label
+      +' style and a later change to all of them is one edit, not '
       +b.boxes.length+'.';
   }
   function standardise(){
@@ -542,10 +542,10 @@
         return !stdMatchesStyle(p.a,d);});
       if(!odd.length) return;
       out.push({kind:'named',style:id,list:list,odd:odd,sev:'warn',
-        head:odd.length+' of '+list.length+' '+d.label+' boxes have '
-          +'drifted',
-        why:'They wear the '+d.label+' style but have been changed by '
-          +'hand since. Re-applying the style puts them back.'});
+        head:odd.length+' of '+list.length+' '+d.label+' boxes no '
+          +'longer match the style',
+        why:'They have the '+d.label+' style but were changed by hand '
+          +'afterwards. Putting the style back makes them match again.'});
     });
     /* PASS TWO — the boxes wearing nothing, which on most decks is all of
        them. Bands first, names second, drift within a band third. */
@@ -560,7 +560,7 @@
         sev:inner.length?'warn':'info',
         head:b.boxes.length+' boxes at about '+Math.round(b.size*5.4)
           +' pt'+(inner.length?(' — '+inner[0].odd.length
-            +' do not match'):' wear no style'),
+            +' do not match'):', no named style yet'),
         why:stdBandWhy(b,d,inner)});
       ['x','w'].forEach(function(k){
         var g=stdGeom(b.boxes,k,k==='x'?STD_POS_TOL:STD_W_TOL);
@@ -667,24 +667,24 @@
       act.textContent='Line all '+f.g.all.length+' up';
       act.addEventListener('click',function(){stdAlign(f.g);});
     } else if(f.kind==='named'){
-      act.textContent='Put these '+f.odd.length+' back to '
-        +styleDef(f.style).label;
+      act.textContent='Put the '+styleDef(f.style).label+' style back on '
+        +'these '+f.odd.length;
       act.addEventListener('click',function(){
         stdFix(f.odd,function(a){applyStyleTo(a,f.style);},
           f.odd.length+' box'+(f.odd.length===1?'':'es')+' put back');
       });
     } else {
-      act.textContent='Make all '+f.band.boxes.length+' '
-        +styleDef(f.band.suggest).label;
-      act.title='Names this size, and pulls the odd ones into line with '
-        +'the rest. The majority do not move.';
+      act.textContent='Give all '+f.band.boxes.length+' the '
+        +styleDef(f.band.suggest).label+' style';
+      act.title='Every box here gets the '+styleDef(f.band.suggest).label
+        +' style; the odd ones move to match the rest, the rest stay put.';
       act.addEventListener('click',function(){stdAdopt(f.band);});
     }
     box.appendChild(act);
     if(f.kind==='band'&&f.inner&&f.inner.length){
       var alt=document.createElement('button');
       alt.className='dbtn std-do std-do2';
-      alt.textContent='Just make them match each other';
+      alt.textContent='Just make them match, no style';
       alt.title='Fix the '+f.inner[0].prop.label+' without giving them a '
         +'named style';
       alt.addEventListener('click',function(){stdFlatten(f.inner[0]);});
@@ -1096,7 +1096,7 @@
      from Insert. */
   /* ...and View is one again (T200): the page-looking tools were on
      Home, and Home took the layout system. */
-  var TABS=['home','insert','design','animation','view','object'];
+  var TABS=['home','insert','design','animation','view','present','object'];
   /* SCOPE is declared further down the file, so the remembered tab is read
      on first use rather than here — `var` hoisting would otherwise key it
      under the string "undefined" */
@@ -1529,7 +1529,7 @@
      the row was over (2026-08-22). */
   var VIEW_FOLD=[['vw-rulers','Rulers'],['vw-grid','Grid'],
     ['vw-guides','Guides'],['vw-guidebox','Guide box'],
-    ['vw-full','Full screen'],['vw-side','Side toolbar'],
+    ['vw-side','Side toolbar'],
     ['vw-check','Review'],['objects-btn','Layers'],['notes-btn','Notes']];
   var viewFolded=false,viewWasHidden=null;
   function foldViewGroup(on){

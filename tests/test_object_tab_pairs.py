@@ -75,11 +75,12 @@ def test_the_palette_door_says_what_a_named_colour_is():
     html = assets.deck_html()
     i = html.index('id="dsg-tokens"')
     btn = html[i:html.index("</button>", i)]
-    assert "Palette&#8230;" in btn
-    assert "Six named colours the deck shares" in btn
-    assert "it here and every box follows" in btn
+    # T215: a door with a chevron like Background, named for what it holds
+    assert "Deck colours &#9662;" in btn
+    assert "The six colours this deck shares" in btn
+    assert "every box wearing it changes too" in btn
     js = assets.deck_js()
     # on the overlay stack, so Escape and an outside click close it
     assert "overlayShow(anchor,m);" in js
     assert "if(open){overlayHide(open);return;}" in js
-    assert "Six named colours the whole deck shares." in js
+    assert "These six colours are shared by the whole deck." in js

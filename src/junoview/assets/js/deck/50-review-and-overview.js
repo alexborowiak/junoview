@@ -1880,6 +1880,10 @@
       var nm=document.createElement('span');
       nm.className='dg-name';nm.textContent=d.label||id;
       dgSpecimen(nm,id);
+      /* the rail is chrome, not a slide: the style's own colour could be
+         the page's ink and vanish here (2026-09-03, "a lot of the text
+         can't be read"); weight, italic and size still draw the ladder */
+      nm.style.color='';
       var ct=document.createElement('span');
       ct.className='dg-count';
       var n=dgWearers(id).length;
@@ -1979,6 +1983,10 @@
     spec.className='dg-spec';
     spec.textContent='The quick brown fox jumps over the lazy dog';
     dgSpecimen(spec,id);
+    /* on the deck's actual page colour, so a specimen reads the way the
+       slide will */
+    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');
+    if(!d.color) spec.style.color=tokVal('@ink');
     body.appendChild(spec);
 
     var row=document.createElement('div');row.className='dg-ctrls';

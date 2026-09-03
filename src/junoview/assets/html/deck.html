@@ -253,6 +253,12 @@
          slide and the clock (2026-08-20, user asked for "the different
          screens one with the slides and the other with like notes and the
          next slide"). -->
+    <!-- Full screen lives up here beside Present (T216; 2026-09-03, user:
+         "the full screen needs to go up the top where present is") -->
+    <button class="dbtn qat-full" id="vw-full" aria-pressed="false"
+      title="Edit full screen: the browser chrome goes away and the page
+ gets the whole display (Esc to leave). Unlike Present, you keep every
+ editing tool"><i data-ic="expand"></i> Full screen</button>
     <span class="dc-savegrp qat-playgrp">
       <button class="dbtn primary qat-play" id="dc-play"
         title="Play this full screen, from this page (F5)">
@@ -436,6 +442,8 @@
       aria-selected="false"
       title="Rulers, grid and guides; full screen and the side toolbar;
  the Review, Layers and Notes panes">View</button>
+    <button class="rbn-tab" id="rbn-tab-present" role="tab" data-tab="present"
+      title="Play the talk, presenter view, notes and timing, talk settings">Present</button>
     <button class="rbn-tab" id="rbn-tab-object" role="tab" data-tab="object"
       aria-selected="false"
       title="Format and arrange what is selected">Object</button>
@@ -548,6 +556,8 @@
               <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><i data-ic="spacing"></i> Normal</button>
               <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><i data-ic="expand"></i> Airy</button>
               </div>
+              <button class="dbtn rbn-sm" id="dsg-tidy"
+                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><i data-ic="align"></i> Tidy page</button>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
@@ -566,8 +576,6 @@
                on a laptop, and Layout is what this tab is for now -->
           <span class="rbn-grp rbn-slide" data-tab="design">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="dsg-tidy"
-                title="Find things on this page that are nearly lined up, gaps that are nearly even, and copies pasted on top of each other. Nothing moves until you press a fix"><i data-ic="align"></i> Tidy page</button>
               <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
                    many of the options there are dropdowns with a
                    million options that should just already be
@@ -634,7 +642,7 @@
    Watermark</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
-                title="A number on every slide"><i data-ic="numbers"></i> Numbers</button>
+                title="A number on every slide"><i data-ic="numbers"></i> Page numbers</button>
               <!-- T115's masters hid inside two Layouts menus; the
                    feature that owns "the look every slide inherits"
                    belongs on the tab that owns page furniture
@@ -703,10 +711,11 @@
                    was the implementation's; the button says what the
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="Six named colours the deck shares, plus corner radius
- and spacing. Give a box one from the Deck row of a colour menu; change
- it here and every box follows"
-                ><i data-ic="palette"></i> Palette&#8230;</button>
+                aria-haspopup="true" aria-expanded="false"
+                title="The six colours this deck shares. Any box can wear one
+ (the Deck row at the top of its colour menu); change a colour here and
+ every box wearing it changes too"
+                ><i data-ic="palette"></i> Deck colours &#9662;</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -779,11 +788,6 @@
                 title="Draw a guide box to lay out inside. It snaps, and
  is never printed, exported or shown while presenting"
                 ><i data-ic="frame"></i> Guide box <kbd>B</kbd></button>
-              <button class="dbtn rbn-sm" id="vw-full"
-                aria-pressed="false"
-                title="Edit full screen &mdash; the browser chrome goes
- away and the page gets the whole display (Esc to leave). Unlike Present,
- you keep every editing tool"><i data-ic="expand"></i> Full screen</button>
               <button class="dbtn rbn-sm" id="vw-side"
                 aria-pressed="false"
                 title="Stand the toolbar up on the right-hand edge, so the
@@ -919,7 +923,7 @@
                 aria-pressed="false"
                 title="The list of what appears when on this slide, in
  order, with arrows to move a step earlier or later"
-                ><i data-ic="play"></i> Animation order</button>
+                ><i data-ic="play"></i> Animation pane</button>
               <!-- THE TIMELINE IS THE LAYERS PANE (T174): every object
                    with the click it arrives on and, if it leaves, the
                    click it goes. It drives Home's Layers button: two
@@ -1155,6 +1159,46 @@
                tile at once, wrapped, in a window under the strip
                (stripMoreBoot). The frame carries the id the ribbon
                layouts move, so the strip and its door travel as one. -->
+          <!-- PRESENT (T216; 2026-09-03, user: "Present also needs its own
+               tab with all those options as buttons now"). The rows of
+               the Present menu, as buttons: each presses its row, so the
+               behaviour stays in one place and the two can never drift. -->
+          <span class="rbn-grp rbn-play" data-tab="present">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Play">
+                <button class="fx-tile big-tile" id="pr-here"
+                  title="Play full screen from this slide (F5)"
+                  ><i data-ic="play"></i><span>From this slide</span></button>
+                <button class="fx-tile big-tile" id="pr-start"
+                  title="Play full screen from the first slide"
+                  ><i data-ic="present"></i><span>From the start</span></button>
+                <button class="fx-tile big-tile" id="pr-presenter"
+                  title="A second window with your notes, the next slide and a
+ clock. Drag it to the other screen, then play"
+                  ><i data-ic="dockright"></i><span>Presenter view</span></button>
+              </span>
+            </span>
+            <span class="rbn-lab">Play</span>
+          </span>
+          <span class="rbn-grp rbn-talk" data-tab="present">
+            <span class="rbn-row">
+              <button class="dbtn rbn-sm" id="pr-talk"
+                title="Play from this slide with the talk settings open: skip
+ the animations, or size headings, body text and captions for the room"
+                ><i data-ic="theme"></i> Talk settings&#8230;</button>
+              <button class="dbtn rbn-sm" id="pr-notes"
+                title="Your speaker notes, and how long each slide took"
+                ><i data-ic="style"></i> Notes &amp; timing&#8230;</button>
+              <button class="dbtn rbn-sm" id="pr-tap" aria-pressed="false"
+                title="While presenting, a click on a figure enlarges it"
+                ><i data-ic="zoom"></i> Click to enlarge figures</button>
+              <button class="dbtn rbn-sm" id="pr-trace" aria-pressed="false"
+                title="Show the code trail under each slide while presenting"
+                ><i data-ic="code"></i> Code trail</button>
+            </span>
+            <span class="rbn-lab">During the talk</span>
+          </span>
           <!-- HOME, BY WHAT YOU DO (T202; 2026-09-02, user: "the
                groupings still make no sense... you can't create a new
                layout with the layouts there, you can only change the
@@ -1226,6 +1270,20 @@
               </span>
             </span>
             <span class="rbn-lab">Keep up to date</span>
+          </span>
+          <!-- LAYERS ON HOME (T216; 2026-09-03, user: "the layers is really
+               important that needs to go in home"): a second door to the
+               same pane View has, pressed-state mirrored from it -->
+          <span class="rbn-grp rbn-show" data-tab="home">
+            <span class="rbn-row">
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Show">
+                <button class="fx-tile big-tile" id="hm-layers" aria-pressed="false"
+                  title="Every object on this slide as a list: reorder, hide,
+ lock, group"><i data-ic="objects"></i><span>Layers</span></button>
+              </span>
+            </span>
+            <span class="rbn-lab">Show</span>
           </span>
           <!-- No Editing group. Find and replace acts on the WHOLE
                presentation, so it belongs with the document's own
@@ -1865,10 +1923,10 @@
             ><i data-ic="reload"></i> Check again</button>
           <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
-        <div class="pf-intro">Text that should look the same but does not,
-          and figures placed at different sizes. Each card is one thing to
-          look at; its button fixes only that. A slide chip takes you
-          there.</div>
+        <div class="pf-intro">Boxes that look alike should share a named
+          style, so changing them later is one edit. Each card is one group
+          of boxes, or of figures; its button fixes just that group. A slide
+          chip takes you to the box.</div>
         <div class="img-ov-body std-list" id="std-ov-body"></div>
       </div>
       <div class="img-ov" id="tidy-ov" hidden role="dialog"
@@ -2112,7 +2170,7 @@
         </div>
       </aside>
       <aside class="selpane animpane" id="animpane" hidden>
-        <div class="selpane-h"><span>Animation order</span>
+        <div class="selpane-h"><span>Animation pane</span>
           <button class="dbtn dc-icon" id="animpane-close" aria-label="Close"
             title="Close"><i data-ic="exit"></i></button></div>
         <div class="selpane-list" id="animpane-body"></div>

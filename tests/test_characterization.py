@@ -937,8 +937,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T213/T214 2026-09-03: every remaining private menu joins the overlay
 # stack; Before you print opens full screen with a door of its own on
 # View. deck.html, deck.css and six deck fragments.
-EXPECTED_MD5 = "9013c385ad7e5dc5a68d1c0ae450cc2f"
-EXPECTED_BYTES = 3340095
+# T215-T217 2026-09-03: the morning review -- Design leads with the page,
+# Tidy page under Spacing, Timing beside Effect, Page numbers, Animation
+# pane, the Masters panel as a panel, Deck colours, bigger words on a big
+# screen; a Present tab, Full screen up top, Layers on Home; Mismatched
+# text in plain words and a readable Style system. deck.html, deck.css,
+# core.css, help.html and six deck fragments.
+EXPECTED_MD5 = "c625e87212306ecffa2d208a4c59176e"
+EXPECTED_BYTES = 3348489
 
 
 def _render_example() -> str:

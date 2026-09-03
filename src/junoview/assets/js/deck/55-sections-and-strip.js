@@ -1633,6 +1633,49 @@
      into the frame when the window closes (the overlay owner hides
      it; an attribute observer sees that and puts the strip home).
      Picking a tile closes the window, the way a gallery does. */
+  /* THE PRESENT TAB (T216): every button presses the Present menu's row
+     of the same name, and the two toggles read their state off the
+     row's words, so nothing is decided twice. LAYERS ON HOME: a tile
+     that presses View's Layers button and mirrors its pressed state. */
+  function presentTabBoot(){
+    [['pr-here','pl-here'],['pr-start','pl-start'],
+     ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],
+     ['pr-notes','pl-notes'],['pr-tap','pl-tap'],['pr-trace','pl-trace']]
+      .forEach(function(p){
+        var b=$('#'+p[0]),row=$('#'+p[1]);
+        if(!b||!row) return;
+        b.addEventListener('click',function(e){
+          e.stopPropagation();
+          var pm=$('#play-menu'); if(pm&&!pm.hidden) overlayHide(pm);
+          row.click();
+          setTimeout(presentTabSync,0);
+        });
+      });
+    var tap=$('#pl-tap'),tr=$('#pl-trace');
+    [tap,tr].forEach(function(row){
+      if(row) new MutationObserver(presentTabSync)
+        .observe(row,{childList:true,characterData:true,subtree:true});
+    });
+    presentTabSync();
+    var hl=$('#hm-layers'),ob=$('#objects-btn');
+    if(hl&&ob){
+      hl.addEventListener('click',function(e){
+        e.stopPropagation();ob.click();});
+      var mirror=function(){
+        hl.setAttribute('aria-pressed',ob.getAttribute('aria-pressed')||'false');};
+      new MutationObserver(mirror)
+        .observe(ob,{attributes:true,attributeFilter:['aria-pressed']});
+      mirror();
+    }
+  }
+  function presentTabSync(){
+    [['pr-tap','pl-tap'],['pr-trace','pl-trace']].forEach(function(p){
+      var b=$('#'+p[0]),row=$('#'+p[1]);
+      if(!b||!row) return;
+      var on=/:\s*on\s*$/.test(row.textContent||'');
+      b.setAttribute('aria-pressed',on?'true':'false');
+    });
+  }
   /* the Style system screen's own door on the Design tab (T212) */
   function styleSystemDoorBoot(){
     var b=$('#dsg-design-btn'); if(!b) return;

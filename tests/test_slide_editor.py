@@ -569,7 +569,8 @@ def test_the_ribbon_is_tabbed(out):
     for t in ("home", "insert", "design", "animation", "view", "object"):
         assert f'id="rbn-tab-{t}"' in out, t
         assert f"'{t}'" in out
-    assert "var TABS=['home','insert','design','animation','view','object'];" in out
+    assert ("var TABS=['home','insert','design','animation','view','present',"
+            "'object'];") in out
     assert out.count('class="rbn-grp" data-tab="object"') == 5
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
@@ -1729,7 +1730,7 @@ def test_hiding_a_ribbon_button_composes_with_showFmt(out):
     # put animBoot() and its note in the sequence. What it guards is
     # that the door wiring stays near the top of the tail and ahead of
     # the ribbon restore -- so assert that ordering directly too.
-    assert "\n  initReuseDoors();" in _boot[:1400]
+    assert "\n  initReuseDoors();" in _boot[:2600]
     assert _boot.index("\n  initReuseDoors();") < _boot.index(
         "  /* the ribbon you kept: applied once here, at the tail")
 
@@ -1913,12 +1914,12 @@ def test_design_tokens_have_a_permanent_design_door(out):
     # "What is 'design tokens'?????" (2026-09-02, T190): the button says
     # what the things are; since T208 it is the Palette, and its tooltip
     # says what a named colour is ("what does colours and spacing do?")
-    assert '<svg class="bic"' in tokens and "Palette&#8230;" in tokens
-    assert "Six named colours the deck shares" in tokens
+    assert '<svg class="bic"' in tokens and "Deck colours &#9662;" in tokens
+    assert "The six colours this deck shares" in tokens
     assert "var b=$('#dsg-tokens');" in out
     assert "openTokenPicker(this);" in out
     assert "['k:tokens','This deck" not in out
-    assert "Design \\u2192 Palette" in out
+    assert "Design \\u2192 Deck colours" in out
 
 
 def test_the_deck_registry_survives_a_save(out):
@@ -3405,11 +3406,11 @@ def test_the_animation_feature_answers_to_one_name(out):
     assert '<span class="rbn-lab">Animation</span>' in out
     # ...and since T183 the button and the pane it opens share the name
     # the user gives that list: "the animation order"
-    assert "> Animation order</button>" in out
-    assert "<span>Animation order</span>" in out
+    # T215: named for what it is, the way PowerPoint's is
+    assert "> Animation pane</button>" in out
+    assert "<span>Animation pane</span>" in out
     assert "> Animations</button>" not in out
     # the retired word is gone from everything a user can read
-    assert "<span>Animation pane</span>" not in out
     assert "label:'Timeline'" not in out
 
 

@@ -190,7 +190,7 @@
       selTab:'object',fromMarkup:true,family:'default',
       tabs:[{id:'home',label:'Home'},{id:'insert',label:'Insert'},
             {id:'design',label:'Design'},{id:'animation',label:'Animation'},
-            {id:'view',label:'View'},{id:'object',label:'Object'}],
+            {id:'view',label:'View'},{id:'present',label:'Present'},{id:'object',label:'Object'}],
       groups:[]}].concat(RIBBON_LAYOUTS||[]);
   }
   function rbnLayoutById(id){

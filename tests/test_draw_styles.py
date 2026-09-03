@@ -435,7 +435,7 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # File left the bar for the left column (2026-08-19) and then for the
     # top bar (2026-08-20)
     assert 'class="rbn-grp rbn-fixed rbn-file"' not in out
-    assert ".rbn-slide{order:2;}" in out
+    assert ".rbn-slide{order:0;}" in out   # T215: the page itself first
     assert ".rbn-view{order:3;}" in out
     # Output is GONE (2026-08-20): Print check was its only control, and
     # one button under its own heading is a heading doing no work (user:
@@ -443,7 +443,7 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     # ways of LOOKING at the page; Type took its slot in the order.
     assert ".rbn-out{order:4;}" not in out
     assert ".rbn-type{order:4;}" in out
-    assert ".rbn-anim{order:5;}" in out
+    assert ".rbn-anim{order:1;}" in out   # T215: Effect first, Timing beside it
     assert ".rbn-insert{order:6;}" in out
     assert ".et-fmt .rbn-grp{order:7;flex:none;}" in out
     # every group declares its tab, and a group off-tab is OUT of the row
@@ -456,8 +456,9 @@ def test_the_bar_has_a_constant_half_and_a_changing_half(out):
     assert 'class="rbn-grp rbn-slide" data-tab=' in out   # folds since T204
     # Animation is a tab again (T176); Order shares its rung and
     # follows it by source order
-    assert "var TABS=['home','insert','design','animation','view','object'];" in out
-    assert ".rbn-build{order:5;}" in out
+    assert ("var TABS=['home','insert','design','animation','view','present',"
+            "'object'];") in out
+    assert ".rbn-build{order:3;}" in out
     assert ".rbn-grp[data-off]{display:none!important;}" in out
     # ...so nothing needs to stand down for a selection any more
     assert "rbn-standby" not in out

@@ -27,9 +27,13 @@ def _ids(row: str) -> list[str]:
 
 def test_the_three_bad_pairs_are_paired_now():
     html = assets.deck_html()
+    # (T215 moved Tidy page into Layout, paired with Spacing, and put the
+    # page itself first on Design)
     slide = _ids(_row(html, "Slide"))
-    at = [slide.index(i) for i in ("dsg-tidy", "bg-drop", "page-strip-frame")]
-    assert at == sorted(at), at
+    assert slide.index("bg-drop") < slide.index("page-strip-frame")
+    assert "dsg-tidy" not in slide
+    lay = _ids(_row(html, "Layout"))
+    assert lay.index("hm-lay-tidy") < lay.index("dsg-tidy")
     furn = _ids(_row(html, "Page furniture"))
     assert furn[:4] == ["dc-head", "dc-foot", "dc-wmark", "dc-nums"]
     anim = _row(html, "Animation", start='<span class="et-fmt" id="et-fmt" hidden>')

@@ -22,7 +22,7 @@ def test_the_review_centre_and_toasts_use_current_names(out):
                  "guides and the print check lead"):
         assert gone not in out, gone
     for now in ("' Open Before you print'", "' Open Mismatched text'",
-                "Design \\u2192 Palette and everything using it follows.",
+                "Design \\u2192 Deck colours and everything using it follows.",
                 "guides and Review lead"):
         assert now in out, now
 
@@ -33,4 +33,4 @@ def test_help_uses_current_names():
     assert "<i>Standardise text</i>" not in help_html
     assert "<i>Colours &amp; spacing</i>" not in help_html
     assert "<i>Fix mismatched text</i>" in help_html
-    assert "<i>Palette</i>" in help_html
+    assert "<i>Deck colours</i>" in help_html

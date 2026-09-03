@@ -2266,7 +2266,7 @@
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
         b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Palette and everything using it follows.';
+          +'Design \u2192 Deck colours and everything using it follows.';
         b.setAttribute('aria-label',nm+' (deck colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -2286,13 +2286,13 @@
     var old=$('#tok-pop'); if(old) old.remove();
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
-    menuHead(m,'this deck\u2019s colours');
+    menuHead(m,'deck colours');
     var note=document.createElement('div');
     note.className='ff-none';
-    note.textContent='Six named colours the whole deck shares. Give a '
-      +'box one from the Deck row of its Colour or Fill menu; change '
-      +'the name here and every box wearing it follows. Nothing holds '
-      +'a copy.';
+    note.textContent='These six colours are shared by the whole deck. '
+      +'Any box can wear one: pick it from the Deck row at the top of '
+      +'the box\u2019s colour menu. Change a colour here and every box '
+      +'wearing it changes with it.';
     m.appendChild(note);
     var t=tokens();
     Object.keys(t.c).forEach(function(k){

@@ -101,8 +101,8 @@ def test_the_names_say_what_the_buttons_do(out):
     # whose builds they are: "the whole slide options are confusing"
     assert "All together</button>" in out
     assert "Remove all</button>" in out
-    assert "Animation order</button>" in out
-    assert '<div class="selpane-h"><span>Animation order</span>' in out
+    assert "Animation pane</button>" in out   # T215: named for what it is
+    assert '<div class="selpane-h"><span>Animation pane</span>' in out
     assert ">Everything on the slide</span>" in out
     for gone in ("One by one</button>", "All at once</button>",
                  "Set order</button>", "Animations</button>"):

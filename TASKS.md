@@ -4336,6 +4336,57 @@ option. Then where has the ability to refresh all images gone?"
   again, Close, a row selecting the thing and closing the view; a door
   of its own on View beside Review, and the Review centre's row says
   "Open Before you print" for the view it opens.
+- [x] **T215 · M — The morning review: orders, names, the Masters
+  panel, room to read.**
+  The user (2026-09-03, on a big screen): "some of the text is maybe
+  too small now... tight, normal, airy are all on different columns
+  and empty below. Also the tidy page is weirdly by itself. Perhaps the
+  slide stuff should be first as well. The masters box is already
+  really weird... the timing should go next to the effect. Also the
+  button 'animation order' should be called 'animation pane'... In
+  page furniture 'numbers' should be 'page numbers'. I still don't get
+  what the Palette button is for, and don't know why it has an
+  ellipsis."
+  *Done 2026-09-03.* Design leads with the page itself (page size,
+  Background); Tidy page moved into Layout under the Spacing run, the
+  two arrange-what-is-here verbs sharing a column. Animation reads
+  Effect, Timing, Everything on the slide, Order. Page numbers;
+  Animation pane (button and pane). The Masters panel had inherited
+  the menu grid and spread its one sentence over three columns: a
+  block panel, 320px, anchored right, readable. Palette… is **Deck
+  colours ▾**, a door with a chevron like Background, and both its
+  tooltip and the panel say in one breath what a shared colour is and
+  how a box gets one. On screens 1600px and wider the ribbon's words
+  grow a step.
+- [x] **T216 · M — A Present tab; Full screen up top; Layers on
+  Home.**
+  The user (2026-09-03): "The layers is really important that needs to
+  go in home, and the full screen needs to go up the top where present
+  is. Present also needs its own tab with all those options as buttons
+  now."
+  *Done 2026-09-03.* A **Present** tab: Play (From this slide, From the
+  start, Presenter view as tiles) and During the talk (Talk settings…,
+  Notes & timing…, Click to enlarge figures, Code trail). Every button
+  presses the Present menu's row of the same name, and the two toggles
+  read their state off the row's words, so nothing is decided twice.
+  **Full screen** sits in the top bar beside Present and no longer
+  folds with View. **Layers** is a tile on Home in a Show group, a
+  second door to the pane View has, its pressed state mirrored.
+- [x] **T217 · S — Mismatched text in plain words; the Style system
+  readable.**
+  The user (2026-09-03): "the fix mismatched text is good I think, but
+  I am really confused by it... Style system... a lot of the text can't
+  be read under this."
+  *Done 2026-09-03.* The view's intro says what the check is for
+  ("boxes that look alike should share a named style, so changing them
+  later is one edit"); a card says "N boxes at about X pt, no named
+  style yet" or "N of M Heading boxes no longer match the style"; its
+  button says "Give all N the Heading 1 style" or "Put the Heading
+  style back on these N", and the alternative "Just make them match, no
+  style". The Style system's rail drew each name in the style's own
+  colour, which could be the page's ink and vanish on the chrome: names
+  now use the rail's ink and keep weight, italic and size; the specimen
+  sits on the deck's actual page colour; the small labels are a size up.
 
 
 ## Cut (and why)
