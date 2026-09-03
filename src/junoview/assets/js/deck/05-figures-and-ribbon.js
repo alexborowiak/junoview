@@ -2047,10 +2047,32 @@
      selection now, and opened through the one transient-menu owner so
      it closes on Escape or a click away. A row that opens a further
      chooser (Every instance, Match) anchors it to the Actions button. */
-  var spActMenu=null;
+  var spActMenu=null,spActBtn=null;
+  /* IT GOES WHEN ITS ANCHOR DOES (T221). The pane rebuilds its whole
+     list on any change, which destroys the button this popover hangs
+     under; the popover stayed, floating over the canvas anchored to a
+     detached node, and the pane's own buttons stop propagation so the
+     owner's outside-click never reached it (2026-09-03, user: "this
+     box from the layers can never be removed"). Driven live before
+     and after: By build left it standing, and does not now. */
+  function closeSpActions(){
+    var m=spActMenu; if(!m) return;
+    spActMenu=null;spActBtn=null;
+    overlayHide(m);if(m.parentNode) m.remove();
+  }
+  function spActionsBoot(){
+    var pane=$('#selpane'); if(!pane) return;
+    pane.addEventListener('click',function(e){
+      if(!spActMenu) return;
+      if(spActMenu.contains(e.target)) return;
+      if(spActBtn&&(e.target===spActBtn
+        ||(spActBtn.contains&&spActBtn.contains(e.target)))) return;
+      closeSpActions();
+    },true);
+  }
   function openSpActions(btn,acts){
     if(spActMenu){
-      var was=spActMenu; spActMenu=null;
+      var was=spActMenu; spActMenu=null;spActBtn=null;
       if(!was.hidden){overlayHide(was);was.remove();return;}
       was.remove();
     }
@@ -2068,13 +2090,15 @@
       });
       m.appendChild(b);
     });
-    document.body.appendChild(m);
-    spActMenu=m;
+    /* inside the editor's layer, like every other runtime menu (T213) */
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    spActMenu=m;spActBtn=btn;
     overlayShow(btn,m);floatMenu(btn,m);
   }
   function renderSelPane(){
     var pane=$('#selpane'),list=$('#selpane-list');
     if(!pane||pane.hidden||!list) return;
+    closeSpActions();          /* its anchor is about to be destroyed */
     list.innerHTML='';
     var s=pres.slides[cur];
     var ann=(s&&s.annots)||[];

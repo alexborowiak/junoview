@@ -705,7 +705,10 @@ def test_zoom_is_a_view_control_and_the_page_strip_is_a_page_control(out):
         ">Slide</span>")[0]
     view = out.split('class="rbn-grp rbn-fixed rbn-view"')[1].split(
         ">View</span>")[0]
-    assert 'id="vw-versions"' in slide and 'id="vw-versions"' not in view
+    # ...and T221 sent the strip's toggle back to View at the user's
+    # word: "please move the slides button to view, that is a view". It
+    # opens and closes a strip in the WINDOW; the page is unchanged.
+    assert 'id="vw-versions"' in view and 'id="vw-versions"' not in slide
     # ZOOM has since left View entirely, for the thin bar across the top
     # (2026-08-20). Same reasoning, taken one step further: it is the one
     # control you reach for on every tab, and a control a tab can take

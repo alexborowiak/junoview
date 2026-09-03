@@ -48,7 +48,8 @@
   shapeStripBoot();           /* the shapes, as tiles (T197) */
   imgPaneBoot();
   quickSwatchBoot();          /* the deck's six colours, on the row */
-  ohOverviewBoot();           /* History of this object, full screen */              /* the All images pane's door (T202) */
+  ohOverviewBoot();           /* History of this object, full screen */
+  spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */

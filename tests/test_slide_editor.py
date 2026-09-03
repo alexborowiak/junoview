@@ -574,7 +574,10 @@ def test_the_ribbon_is_tabbed(out):
     assert 'id="rbn-tab-insert"' not in out
     assert ("var TABS=['home','images','text','design','animation','view',\n"
             "    'present','object'];") in out
-    assert out.count('class="rbn-grp" data-tab="object"') == 5
+    # (three since T221 gave Font and Paragraph classes of their own)
+    assert out.count('class="rbn-grp" data-tab="object"') == 3
+    assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in out
+    assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in out
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     assert 'id="rbn-tab-animate"' not in out
     # a browser remembering one of the retired tabs lands on its new host
@@ -999,8 +1002,9 @@ def test_no_group_is_a_heading_over_one_button(out):
     # Animate gained the two builds anyone actually wants
     assert 'id="anim-stagger"' in out and 'id="anim-together"' in out
     assert "function orderedIdx(s2){" in out
-    # Design gained the deck-level type manager
-    assert 'class="rbn-grp rbn-type" data-tab="design"' in out
+    # Design gained the deck-level type manager -- which moved to the
+    # Text tab in T221, the deck's type being text
+    assert 'class="rbn-grp rbn-type" data-tab="text"' in out
     assert 'id="dsg-styles"' in out
     assert "function scaleStyles(k){" in out
     # `scope` (2026-08-22) is an array of slide indexes, or null/omitted

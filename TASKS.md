@@ -4495,6 +4495,50 @@ option. Then where has the ability to refresh all images gone?"
   tests green. A window that fills itself on open now says so
   (`data-built`).
 
+- [x] **T221 - Font and Paragraph; the deck's type joins Text; the
+  popover that would not go.**
+  The user (2026-09-03, four screenshots): "With the Text [tab] I mean a
+  lot of other things in there as well: text styles, deck colours, style
+  system, find mismatched text. All of these are text related... why is
+  the background button so weird. Gross. Please move the slides button
+  to view, that is a view. That layout looks hectic, why is tidy page
+  huge? ... This box from the layers can never be removed... The object
+  menu still looks horrible... what is the difference between text and
+  deck? ... There should be a text style (e.g. colour, fill, font, font
+  size), then a text idk something else that has the (list, paragraph
+  left, spacing). Why does the button with A- also have the word
+  smaller. That is weird. Why is the strike through button huge. The
+  transparent isn't labelled and is just a weird little thing to drag.
+  This history button is so small."
+  *Done 2026-09-03.* **The Object tab** is Font then Paragraph, split
+  the way the user described it: how the letters look (typeface, size,
+  B I U S, Styles, the two colour doors and their quick swatches), then
+  how the block is set (lists, alignment, Spacing, Paragraph). The
+  Colour group is gone as a separate thing; a colour is how the letters
+  look. **The deck's type** -- Text styles, Deck colours, Style system,
+  Fix mismatched text -- left Design for the Text tab, under the heading
+  "The whole deck". **Design**: Background is a tall tile beside the
+  page sizes rather than a half-height button alone over an empty cell;
+  the page-strip toggle went back to View, where a thing that opens and
+  closes a strip in the window belongs. **A cell is its own width**: the
+  grid stretched every cell to its column, which is why Tidy page was
+  drawn the width of Spacing | Tight | Normal | Airy. Cells start-align
+  now, as PowerPoint's do. **The small things**: A- and A+ lost the
+  words the user called weird; B I U S are four segments of one width;
+  opacity wears the caption "Opacity"; History is a tall tile, and it
+  sits in Arrange rather than Object because Object folds first on a
+  laptop and a folded History is worse than a small one. **The colour
+  popup** heads its rows "This deck's colours" and "Standard colours"
+  instead of "Deck" and "Text", which read as a difference in what they
+  colour.
+  *The second shipped bug the browser caught:* the Layers pane's Actions
+  popover was appended to `document.body` and anchored to a button the
+  pane destroys on every rebuild, and the pane's own buttons stop
+  propagation before the overlay owner's outside-click listener sees
+  them -- so pressing By build left it standing over the canvas with no
+  way back. It mounts inside the editor now, and the pane closes it
+  before it destroys the button it hangs from. Driven before and after.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

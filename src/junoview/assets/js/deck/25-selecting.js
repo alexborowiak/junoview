@@ -61,7 +61,7 @@
        be governed or it shows for everything, forever (2026-08-25). */
     +'#fmt-txcolwrap #fmt-fillcolwrap '
     +'#fmt-fillcol-btn #fmt-txlab #fmt-bglab #fmt-szwrap #fmt-smaller '
-    +'#fmt-sizecell #fmt-txquick #fmt-bgquick #fmt-lh-btn '
+    +'#fmt-sizecell #fmt-txquick #fmt-bgquick #fmt-lh-btn #fmt-opcell '
     +'#fmt-bigger #fmt-bold #fmt-ital #fmt-under #fmt-strike #fmt-font '
     +'#fmt-parawrap '
     +'#fmt-replace #fmt-locate #fmt-revert #fmt-lockver #fmt-parts '
@@ -405,6 +405,10 @@
        there is a fill and fill colour") */
     show('#fmt-fillcol-btn',showBg&&kind!=='rect');
     show('#fmt-bgquick',showBg&&kind!=='rect');
+    /* T221: the opacity slider wears its name now, so the caption
+       goes with the slider rather than standing on its own */
+    var opw=$('#fmt-opwrap');
+    show('#fmt-opcell',!!opw&&!opw.hidden);
     /* a shape now has two Fill buttons — this one picks the COLOUR, the
        one in Line & shape picks none/solid/gradient. Say which is which. */
     var fcb=$('#fmt-fillcol-btn');

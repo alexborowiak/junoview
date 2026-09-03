@@ -1214,7 +1214,7 @@ body.slide-editing .apptop{display:none;}
 .rbn-row{display:grid;grid-auto-flow:column;
   grid-auto-columns:max-content;
   grid-template-rows:30px 30px;row-gap:5px;column-gap:4px;
-  align-items:stretch;justify-items:stretch;height:65px;}
+  align-items:stretch;justify-items:start;height:65px;}
 /* the tall things span both rows rather than sitting in one */
 .rbn-row>.rbn-stack{grid-row:1/span 2;}
 /* a dropdown's WRAPPER is the cell; the button fills it */
@@ -1328,6 +1328,8 @@ body.slide-editing .apptop{display:none;}
    under its own heading is a heading doing no work. It sits with the
    other ways of LOOKING at the page now (2026-08-20). */
 .rbn-type{order:4;}
+.rbn-fontgrp{order:2;}
+.rbn-paragrp{order:3;}
 .rbn-anim{order:1;}
 /* the Whole slide and Order groups share Animation's rung and follow
    it by source order: the effect first, then the slide, then the order
@@ -4618,6 +4620,33 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
 body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
+
+/* ---- T221: A BUTTON IS ITS OWN WIDTH ------------------------------------
+   The grid stretched every cell to its column, so a lone button sharing
+   a column with a three-button run was drawn that run's width -- which
+   is how Tidy page ended up the size of Spacing | Tight | Normal | Airy
+   (2026-09-03, user: "that layout looks hectic, why is tidy page
+   huge?"). Cells start-align now, the way PowerPoint's do; the things
+   that must fill their cell say so here. */
+.rbn-row>.rbn-cell,.rbn-row>.sh-drop,.rbn-row>.dc-menuwrap,
+.rbn-row>.strip-frame,.rbn-row>.fx-strip{justify-self:stretch;}
+.rbn-row>.rbn-cell.rbn-seg{justify-self:start;}
+/* Background is a tall tile now, so its menu hangs off a 72px door */
+#bg-drop.rbn-tall{justify-self:start;}
+#bg-drop.rbn-tall>.fx-tile{width:72px;height:56px;align-self:center;}
+/* the opacity slider inside its captioned run */
+#fmt-opcell .fmt-opwrap{display:flex;align-items:center;gap:5px;
+  padding:0 8px 0 4px;align-self:center;}
+#fmt-opcell .fmt-range{width:84px;}
+/* B I U S: four segments of one width, so the S is not the wide one */
+.rbn-cell#tx-run-style .dbtn.etm{min-width:30px;justify-content:center;
+  padding-left:4px;padding-right:4px;}
+/* ...and A- / A+ are glyphs, so they get the same treatment */
+#fmt-sizecell .dbtn.etm{min-width:30px;justify-content:center;
+  padding-left:4px;padding-right:4px;}
+/* History is a tall tile at the end of the Object group */
+.rbn-row>#fmt-hist.big-tile{width:72px;height:56px;align-self:center;
+  grid-row:1/span 2;}
 
 /* ---- T220: QUICK COLOURS AND A VISIBLE SIZE ----------------------------
    The deck's six colours sit in the row as two segmented cells, one for

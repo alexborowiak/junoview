@@ -36,7 +36,10 @@ def test_an_entrance_is_the_animation_tabs_job(out):
     # the gallery and the timing group are untouched
     assert 'id="anim-strip"' in out and 'id="anim-by-all"' in out
     # the unlabeled Object groups are still the five they were
-    assert out.count('class="rbn-grp" data-tab="object"') == 5
+    # (three since T221 gave Font and Paragraph classes of their own)
+    assert out.count('class="rbn-grp" data-tab="object"') == 3
+    assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in out
+    assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in out
 
 
 def test_setting_the_order_happens_in_the_ribbon(out):

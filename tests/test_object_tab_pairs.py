@@ -25,22 +25,30 @@ def _ids(row: str) -> list[str]:
     return re.findall(r'\bid="([a-z0-9-]+)"', row)
 
 
-def test_the_text_group_has_two_runs_and_deliberate_pairs():
+def test_font_and_paragraph_are_two_groups_with_deliberate_pairs():
+    """T221 split the one Text group in two, the way the user described
+    it: "there should be a text style (e.g. colour, fill, font, font
+    size), then a text idk something else that has the (list, paragraph
+    left, spacing)". How the letters look is Font; how the block is set
+    is Paragraph. The colour doors moved into Font with their swatches."""
     html = assets.deck_html()
-    row = _row(html, "Text")
-    ids = _ids(row)
-    # T220 dissolved the Font window: the typeface and the size cell are
-    # the first pair, then Styles over Spacing, then the two runs, then
-    # bullets over numbers, then Paragraph
-    order = ["fmt-font", "fmt-sizecell", "fmt-stylewrap-tx", "fmt-lhwrap",
-             "tx-run-style", "tx-run-align",
-             "fmt-bullets", "fmt-numbers", "fmt-parawrap"]
-    at = [ids.index(i) for i in order]
+    font = _ids(_row(html, "Font"))
+    order = ["fmt-font", "fmt-sizecell", "fmt-stylewrap-tx", "tx-run-style",
+             "fmt-txcolwrap", "fmt-fillcolwrap", "fmt-txquick", "fmt-bgquick"]
+    at = [font.index(i) for i in order]
     assert at == sorted(at), order
-    style = row[row.index('id="tx-run-style"'):row.index('id="tx-run-align"')]
+    para = _ids(_row(html, "Paragraph"))
+    # bullets over numbers, the alignment run over Spacing, then Paragraph
+    order2 = ["fmt-bullets", "fmt-numbers", "tx-run-align", "fmt-lhwrap",
+              "fmt-parawrap"]
+    at2 = [para.index(i) for i in order2]
+    assert at2 == sorted(at2), order2
+    row = _row(html, "Font")
+    style = row[row.index('id="tx-run-style"'):row.index('id="fmt-txcolwrap"')]
     for cid in ("fmt-bold", "fmt-ital", "fmt-under", "fmt-strike"):
         assert f'id="{cid}"' in style, cid
-    align = row[row.index('id="tx-run-align"'):row.index('id="fmt-bullets"')]
+    prow = _row(html, "Paragraph")
+    align = prow[prow.index('id="tx-run-align"'):prow.index('id="fmt-lhwrap"')]
     for cid in ("fmt-al-left", "fmt-al-center", "fmt-al-right"):
         assert f'id="{cid}"' in align, cid
 

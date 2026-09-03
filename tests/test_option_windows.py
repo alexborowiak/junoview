@@ -244,7 +244,9 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
     # tab is two: Images keeps Place, Shapes, Draw and Drawing; Text has
     # Write to itself
     assert out.count('data-tab="images" data-fold-ic=') == 4
-    assert out.count('data-tab="text" data-fold-ic=') == 1
+    # two since T221 moved the deck's type here ("text styles, deck
+    # colours, style system, find mismatched text... all text related")
+    assert out.count('data-tab="text" data-fold-ic=') == 2
     assert 'data-tab="insert"' not in out
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it

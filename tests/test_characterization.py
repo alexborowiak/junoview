@@ -958,8 +958,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # tabs, the kinds of text box are tiles again, and the QR code feature
 # was removed entirely -- door, ~240-line encoder and icon. The help
 # page follows the two new tab names.
-EXPECTED_MD5 = "103ba5cc4c7474bfdd9d3e2428ea6c3e"
-EXPECTED_BYTES = 3352118
+# 2026-09-03, T221: the Object tab's one Text group became Font and
+# Paragraph and absorbed the colour doors; the deck's type moved from
+# Design to the Text tab; Background is a tall tile and the page-strip
+# toggle went back to View; ribbon cells start-align rather than
+# stretch; opacity got a caption and History a tile; the Layers pane's
+# Actions popover mounts inside the editor and is dismissible, and
+# History sits in Arrange, the group that never folds.
+EXPECTED_MD5 = "de3a14395d1cdc3828954e52e4247177"
+EXPECTED_BYTES = 3357235
 
 
 def _render_example() -> str:

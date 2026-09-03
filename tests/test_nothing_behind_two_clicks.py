@@ -35,16 +35,21 @@ def test_the_typeface_the_size_and_the_spacing_are_on_the_row(out):
     """Three controls that were one click into a window each. The size is
     one segmented cell: the number, its unit and the two steppers are one
     decision, so they can never land in different columns."""
-    row = _row(assets.deck_html(), "Text")
+    html = assets.deck_html()
+    row = _row(html, "Font")
     for cid in ("fmt-font", "fmt-sizecell", "fmt-szwrap", "fmt-size",
-                "fmt-smaller", "fmt-bigger", "fmt-lhwrap", "fmt-lh-btn"):
+                "fmt-smaller", "fmt-bigger"):
         assert f'id="{cid}"' in row, cid
+    # spacing is how the BLOCK is set, so it sits in Paragraph (T221)
+    para = _row(html, "Paragraph")
+    for cid in ("fmt-lhwrap", "fmt-lh-btn"):
+        assert f'id="{cid}"' in para, cid
     assert 'class="rbn-cell rbn-seg" id="fmt-sizecell"' in row
     # the Font window and its door are gone, not merely emptied
     for gone in ('id="fmt-fontwrap"', 'id="fmt-font-btn"', 'id="fmt-font-menu"'):
         assert gone not in out, gone
     # strikethrough is the fourth segment of B I U, not a window's "more" row
-    style = row[row.index('id="tx-run-style"'):row.index('id="tx-run-align"')]
+    style = row[row.index('id="tx-run-style"'):row.index('id="fmt-txcolwrap"')]
     assert 'id="fmt-strike"' in style
     assert "<s>S</s> Strikethrough</button>" not in out
     # spacing keeps its menu and its id; only the door is new
@@ -70,7 +75,9 @@ def test_the_deck_s_six_colours_are_on_the_row(out):
     """Two runs, words and box, each holding the six colours the deck is
     actually built from -- stored as references, so a deck that changes
     its colours changes these too."""
-    row = _row(assets.deck_html(), "Colour")
+    # (the colour doors and their swatches joined Font in T221 -- a
+    # colour is how the letters look)
+    row = _row(assets.deck_html(), "Font")
     for cid in ("fmt-txquick", "fmt-bgquick"):
         assert f'class="rbn-cell rbn-seg qk-cell" id="{cid}"' in row, cid
     assert "function quickSwatchBoot(){" in out
@@ -105,7 +112,9 @@ def test_history_is_a_button_not_a_menu_in_a_pane(out):
     were a canvas right-click and the Layers pane's Actions popover. It
     is a button on the Object tab now, opening the full-screen view the
     other reviews use, and the pane keeps working."""
-    row = _row(assets.deck_html(), "Object")
+    # (T221 moved it into Arrange -- the group of things you DO to an
+    # object, and the one that never folds)
+    row = _row(assets.deck_html(), "Arrange")
     assert 'id="fmt-hist"' in row
     assert "show('#fmt-hist',isNum);" in out
     assert 'class="img-ov" id="oh-ov"' in out
@@ -190,12 +199,15 @@ def test_the_qr_code_feature_is_gone_whole(out):
 def test_the_object_tab_kept_its_five_unlabelled_groups(out):
     """Arrange, Colour, Text, Line & shape, Object -- plus Table. Losing
     Animation must not have taken anything else with it."""
-    assert out.count('class="rbn-grp" data-tab="object"') == 5
+    # (three unlabelled since T221 named Font and Paragraph)
+    assert out.count('class="rbn-grp" data-tab="object"') == 3
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     html = assets.deck_html()
-    for lab in ("Arrange", "Colour", "Text", "Line &amp; shape", "Object",
+    for lab in ("Arrange", "Font", "Paragraph", "Line &amp; shape", "Object",
                 "Table"):
         assert f'<span class="rbn-lab">{lab}</span>' in html, lab
-    # every id the Text row names is still exactly one control
-    ids = re.findall(r'\bid="([a-z0-9-]+)"', _row(html, "Text"))
-    assert len(ids) == len(set(ids)), ids
+    assert '<span class="rbn-lab">Colour</span>' not in html
+    # every id the two rows name is still exactly one control
+    for lab in ("Font", "Paragraph"):
+        ids = re.findall(r'\bid="([a-z0-9-]+)"', _row(html, lab))
+        assert len(ids) == len(set(ids)), (lab, ids)

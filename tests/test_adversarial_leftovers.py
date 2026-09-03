@@ -76,8 +76,10 @@ def test_every_ribbon_button_has_an_icon_and_a_short_tooltip():
             continue                      # the gallery's own arrows
         if "tx-caret" in attrs or "seq-" in attrs or 'class="sw' in attrs:
             continue                      # split carets, swatches
-        if "Smaller" in inner or "Bigger" in inner:
-            continue                      # the A-/A+ glyph is the icon
+        if "A&#8722;" in inner or "A&#43;" in inner or "A+" in inner:
+            continue     # T221: A- / A+ are the glyph, and the user asked
+                         # for the words off them ("why does the button
+                         # with A- also have the word smaller")
         if "data-ic" not in inner and "<b>" not in inner and "<i>" not in inner \
                 and "<u>" not in inner and "<s>" not in inner:
             bare.append(re.sub(r"\s+", " ", inner)[:40])

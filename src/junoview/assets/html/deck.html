@@ -593,12 +593,16 @@
                    proportion, the one in use lit; the strip scrolls
                    and a tile cut at the edge is the affordance. Built
                    from PAGE_PRESETS, the same table the menu was. -->
-              <span class="sh-drop" id="bg-drop">
-                <button class="dbtn rbn-sm" id="bg-btn"
+              <!-- T221: a tall tile, like the page sizes beside it. It
+                   was a half-height button alone in its column with an
+                   empty cell under it (2026-09-03, user: "why is the
+                   background button so weird. Gross"). -->
+              <span class="sh-drop rbn-tall" id="bg-drop">
+                <button class="fx-tile big-tile" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
                   title="Background colour and border, for this slide or
  for every slide"
-                  ><i data-ic="fill"></i> Background &#9662;</button>
+                  ><i data-ic="fill"></i><span>Background</span></button>
                 <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
               </span>
               <span class="rbn-tall strip-frame" id="page-strip-frame">
@@ -612,19 +616,6 @@
                   <button class="strip-more" type="button" id="page-strip-more"
                     aria-expanded="false" title="Show all"
                     aria-label="Show all page sizes">&#9662;</button></span></span>
-              <!-- The strip listing the OTHER pages belongs with the page
-                   controls, not under View: it is the set this page is one
-                   of, which is exactly what Layouts and Page size are
-                   about (2026-08-17, user: "the view and slide is very
-                   confused ... the 'Slides' is slide?"). A poster's other
-                   pages are versions, so the label follows the page kind,
-                   and the group heading follows it too — SLIDE for a deck,
-                   PAGE for a poster. -->
-              <button class="dbtn rbn-sm" id="vw-versions"
-                aria-pressed="false" hidden
-                title="Other versions of this poster — drafts and variants.
- Opens the strip; close it again to give the page the whole window"
-                ><i data-ic="versions"></i> Versions</button>
             </span>
             <span class="rbn-lab">Slide</span>
           </span>
@@ -667,7 +658,14 @@
                pushing its look outwards, which meant you had to have a box
                of that style on the slide you happened to be on
                (2026-08-20). -->
-          <span class="rbn-grp rbn-type" data-tab="design" data-fold-ic="styles">
+          <!-- T221: THE DECK'S TYPE IS TEXT (2026-09-03, user: "with the
+               Text [tab] I mean a lot of other things in there as well:
+               text styles, deck colours, style system, find mismatched
+               text. All of these are text related"). It sat under Design
+               because it is a decision about the whole deck; so is a
+               heading, and the tab that says Text is where a reader
+               looks for it. -->
+          <span class="rbn-grp rbn-type" data-tab="text" data-fold-ic="styles">
             <span class="rbn-row">
               <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
                    styles under design (should this be under design
@@ -744,7 +742,7 @@
  text looks like, and every slide with a box round each object"
                 ><i data-ic="styles"></i> Style system&#8230;</button>
             </span>
-            <span class="rbn-lab">Type</span>
+            <span class="rbn-lab">The whole deck</span>
           </span>
           <!-- TWO groups, not one. Guides and Objects change what YOU see
                while working; Print check and Present are about the
@@ -770,6 +768,17 @@
                    sense, and b. is unnecessary"). A toggle you can see
                    the state of beats a toggle you have to open a menu to
                    read. -->
+              <!-- ...AND BACK UNDER VIEW (T221; 2026-09-03, user: "please
+                   move the slides button to view, that is a view"). It
+                   opens and closes the strip of other pages, which is a
+                   thing you do to the WINDOW, not to the page. Its label
+                   still follows the page kind: Slides for a deck,
+                   Versions for a poster. -->
+              <button class="dbtn rbn-sm" id="vw-versions"
+                aria-pressed="false" hidden
+                title="Other versions of this poster — drafts and variants.
+ Opens the strip; close it again to give the page the whole window"
+                ><i data-ic="versions"></i> Versions</button>
               <button class="dbtn rbn-sm" id="vw-rulers"
                 aria-pressed="false"
                 title="Rulers down the top and left edge, in millimetres
@@ -1339,6 +1348,17 @@
               <button class="dbtn etm" id="fmt-back"
                 title="Send to back - behind everything else on this
  page"><i data-ic="back"></i> Send to back</button>
+              <!-- T221: a tall tile, in the group that never folds. It
+                   was a small button at the end of the Object group
+                   (2026-09-03, user: "this history button is so small"),
+                   which is the wrong weight for the one door to a whole
+                   feature -- and the Object group folds first on a
+                   laptop, which would have hidden it altogether. What you
+                   DO to an object is what this group already holds. -->
+              <button class="fx-tile big-tile" id="fmt-hist" hidden
+                title="Every state this object has been through that the
+ undo stack still remembers, with a button to put any of them back"
+                ><i data-ic="history"></i><span>History</span></button>
               <button class="dbtn etm" id="fmt-group"
                 title="Group the selected items (Ctrl+G)"><i data-ic="group"></i>
                 Group</button>
@@ -1387,9 +1407,64 @@
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
                the colours all the time?") -->
-          <span class="rbn-grp" data-tab="object" data-fold-ic="palette">
+          <!-- T221: FONT AND PARAGRAPH, NOT "COLOUR" AND "TEXT"
+               (2026-09-03, user: "there should be a text style (e.g.
+               colour, fill, font, font size), then a text idk something
+               else that has the (list, paragraph left, spacing)"). How
+               the letters look is one group; how the block is set is the
+               next. The colour doors and their quick swatches move in
+               here, because a colour is how the letters look. -->
+          <span class="rbn-grp rbn-fontgrp" data-tab="object"
+            data-fold-ic="text">
             <span class="rbn-row">
-              <!-- T208: text colour over fill; opacity beside them -->
+              <!-- T220: THE TYPEFACE AND THE SIZE ARE ON THE ROW.
+                   T177 had put them in a Font window because the row was
+                   full; the Animation group leaving this tab paid for
+                   them (2026-09-03, user: "this would allow things like
+                   the text size to be actually always visible as it
+                   should be. That should not be behind two clicks").
+                   The size is one segmented cell -- the number, its
+                   unit, and the two steppers are one decision. -->
+              <select class="etm" id="fmt-font" hidden title="Typeface">
+                <option value="sans">Sans</option>
+                <option value="serif">Serif</option>
+                <option value="mono">Mono</option>
+                <option value="system">System</option>
+                <option value="hand">Handwritten</option>
+              </select>
+              <span class="rbn-cell rbn-seg" id="fmt-sizecell" hidden
+                role="group" aria-label="Text size">
+                <span class="fmt-szwrap" id="fmt-szwrap" hidden
+                  title="Text size (points)">
+                  <input class="fmt-num" id="fmt-size" type="number"
+                    min="6" max="240" step="1"
+                    aria-label="Text size in points">
+                  <span class="fmt-unit">pt</span></span>
+                <button class="dbtn etm" id="fmt-smaller"
+                  title="Smaller text">A&#8722;</button>
+                <button class="dbtn etm" id="fmt-bigger"
+                  title="Bigger text">A+</button>
+              </span>
+              <span class="sh-drop" id="fmt-stylewrap-tx">
+                <button class="dbtn etm" id="fmt-style-tx"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Named text styles — Title, Headings, Body,
+ Caption — and pushing this box's look to all of them"><i data-ic="styles"></i>
+                  Styles &#9662;</button>
+                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
+                  hidden></div>
+              </span>
+              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group"
+                aria-label="Bold, italic, underline, strikethrough">
+                <button class="dbtn etm" id="fmt-bold"
+                title="Bold"><b>B</b></button>
+                <button class="dbtn etm" id="fmt-ital"
+                title="Italic"><i>I</i></button>
+                <button class="dbtn etm" id="fmt-under"
+                title="Underline"><u>U</u></button>
+                <button class="dbtn etm" id="fmt-strike"
+                title="Strikethrough"><s>S</s></button>
+              </span>
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn etm" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
@@ -1397,7 +1472,7 @@
                     Colour &#9662;</button>
                 <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
                   <span class="fmt-lab" id="fmt-txlab" hidden
-                    title="Text colour">Text</span>
+                    title="Colours every deck has">Standard colours</span>
                   <!-- a true red: Coral read as "close enough" until you
                        needed an actual warning red (2026-08-19, user:
                        "more defaults, no red currently!") -->
@@ -1429,7 +1504,7 @@
                     Fill &#9662;</button>
                 <div class="sh-menu sw-menu" id="fmt-fillcol-menu" hidden>
                   <span class="fmt-lab" id="fmt-bglab" hidden
-                    title="Fill / background colour">Fill</span>
+                    title="Colours every deck has">Standard colours</span>
                   <button class="sw swbg trans" data-c="none" hidden
                     title="Transparent box" aria-label="Transparent box"></button>
                   <button class="sw swbg" data-c="#0e1926" hidden
@@ -1467,52 +1542,25 @@
                 role="group" aria-label="Fill colour">
                 <span class="cell-lab">Fill</span>
               </span>
-              <span class="fmt-opwrap" id="fmt-opwrap"
-                title="Opacity (0&ndash;100%)">
-                <input class="fmt-range" id="fmt-op" type="range"
-                  min="0" max="100" step="1" aria-label="Opacity percent">
-                <span class="fmt-opval" id="fmt-opval">100%</span></span>
             </span>
-            <span class="rbn-lab">Colour</span>
+            <span class="rbn-lab">Font</span>
           </span>
-          <span class="rbn-grp" data-tab="object" data-fold-ic="text">
+          <span class="rbn-grp rbn-paragrp" data-tab="object"
+            data-fold-ic="spacing">
             <span class="rbn-row">
-              <!-- T220: THE TYPEFACE AND THE SIZE ARE ON THE ROW.
-                   T177 had put them in a Font window because the row was
-                   full; the Animation group leaving this tab paid for
-                   them (2026-09-03, user: "this would allow things like
-                   the text size to be actually always visible as it
-                   should be. That should not be behind two clicks").
-                   The size is one segmented cell -- the number, its
-                   unit, and the two steppers are one decision. -->
-              <select class="etm" id="fmt-font" hidden title="Typeface">
-                <option value="sans">Sans</option>
-                <option value="serif">Serif</option>
-                <option value="mono">Mono</option>
-                <option value="system">System</option>
-                <option value="hand">Handwritten</option>
-              </select>
-              <span class="rbn-cell rbn-seg" id="fmt-sizecell" hidden
-                role="group" aria-label="Text size">
-                <span class="fmt-szwrap" id="fmt-szwrap" hidden
-                  title="Text size (points)">
-                  <input class="fmt-num" id="fmt-size" type="number"
-                    min="6" max="240" step="1"
-                    aria-label="Text size in points">
-                  <span class="fmt-unit">pt</span></span>
-                <button class="dbtn etm" id="fmt-smaller"
-                  title="Smaller text">A&#8722; Smaller</button>
-                <button class="dbtn etm" id="fmt-bigger"
-                  title="Bigger text">A+ Bigger</button>
-              </span>
-              <span class="sh-drop" id="fmt-stylewrap-tx">
-                <button class="dbtn etm" id="fmt-style-tx"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Named text styles — Title, Headings, Body,
- Caption — and pushing this box's look to all of them"><i data-ic="styles"></i>
-                  Styles &#9662;</button>
-                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
-                  hidden></div>
+              <button class="dbtn etm" id="fmt-bullets"
+                aria-pressed="false"
+                title="Bullet list on / off"><i data-ic="bullets"></i> List</button>
+              <button class="dbtn etm" id="fmt-numbers"
+                aria-pressed="false"
+                title="Numbered list on / off"><i data-ic="numlist"></i> Numbered</button>
+              <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
+                <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
+                title="Align left"><i data-ic="alignleft"></i> Left</button>
+                <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
+                title="Align centre"><i data-ic="aligncentre"></i> Centre</button>
+                <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
+                title="Align right"><i data-ic="alignright"></i> Right</button>
               </span>
               <!-- T220: line spacing is a door on the row, not a section
                    inside the Paragraph window. It keeps its id and its
@@ -1525,31 +1573,6 @@
                 <div class="sh-menu opt-panel lh-menu" id="fmt-lh-menu"
                   hidden data-built="1"></div>
               </span>
-              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group"
-                aria-label="Bold, italic, underline, strikethrough">
-                <button class="dbtn etm" id="fmt-bold"
-                title="Bold"><b>B</b></button>
-                <button class="dbtn etm" id="fmt-ital"
-                title="Italic"><i>I</i></button>
-                <button class="dbtn etm" id="fmt-under"
-                title="Underline"><u>U</u></button>
-                <button class="dbtn etm" id="fmt-strike"
-                title="Strikethrough"><s>S</s></button>
-              </span>
-              <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
-                <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
-                title="Align left"><i data-ic="alignleft"></i> Left</button>
-                <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
-                title="Align centre"><i data-ic="aligncentre"></i> Centre</button>
-                <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
-                title="Align right"><i data-ic="alignright"></i> Right</button>
-              </span>
-              <button class="dbtn etm" id="fmt-bullets"
-                aria-pressed="false"
-                title="Bullet list on / off"><i data-ic="bullets"></i> List</button>
-              <button class="dbtn etm" id="fmt-numbers"
-                aria-pressed="false"
-                title="Numbered list on / off"><i data-ic="numlist"></i> Numbered</button>
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
@@ -1580,7 +1603,7 @@
                 title="Open this box in the Markdown editor"
                 ><i data-ic="markdown"></i> Edit markdown</button>
             </span>
-            <span class="rbn-lab">Text</span>
+            <span class="rbn-lab">Paragraph</span>
           </span>
           <span class="rbn-grp" data-tab="object" data-fold-ic="dashes">
             <span class="rbn-row">
@@ -1782,10 +1805,18 @@
                    "there is too much hidden inside menus inside menus
                    inside menus, like in the layers"). One button, and it
                    opens full screen like the other reviews. -->
-              <button class="dbtn etm" id="fmt-hist" hidden
-                title="Every state this object has been through that the
- undo stack still remembers, with a button to put any of them back"
-                ><i data-ic="history"></i> History&#8230;</button>
+              <!-- T221: opacity says what it is. It was an unlabelled
+                   slider (2026-09-03, user: "the transparent isn't
+                   labelled and is just a weird little thing to drag"). -->
+              <span class="rbn-cell rbn-seg" id="fmt-opcell" hidden
+                role="group" aria-label="Opacity">
+                <span class="cell-lab">Opacity</span>
+              <span class="fmt-opwrap" id="fmt-opwrap"
+                title="Opacity (0&ndash;100%)">
+                <input class="fmt-range" id="fmt-op" type="range"
+                  min="0" max="100" step="1" aria-label="Opacity percent">
+                <span class="fmt-opval" id="fmt-opval">100%</span></span>
+              </span>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>

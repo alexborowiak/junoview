@@ -2253,7 +2253,7 @@
       var isFill=(sel==='#fmt-fillcol-menu');
       var lab=document.createElement('span');
       lab.className='fmt-lab';
-      lab.textContent='Deck';
+      lab.textContent='This deck\u2019s colours';
       lab.title='This deck\u2019s own colours. An item given one of '
         +'these follows it: change the colour once and everything '
         +'wearing it changes.';
