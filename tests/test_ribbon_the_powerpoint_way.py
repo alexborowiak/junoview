@@ -30,8 +30,9 @@ def test_the_grid_is_column_major_and_the_buttons_are_flat(out):
     assert ".rbn-row{display:grid;grid-auto-flow:column;" in out
     assert "grid-template-columns:repeat(var(--rbn-cols" not in out
     # flat at rest, lifted on hover, filled when pressed
-    assert (".edit-tools .dbtn.rbn-sm,.edit-tools .fx-tile,.edit-tools .dbtn.lay,\n"
-            ".edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{\n"
+    assert (".edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile,\n"
+            ".edit-tools .dbtn.lay,.edit-tools .rbn-cell .dbtn,"
+            ".edit-tools .rbn-foldbtn{\n"
             "  border-color:transparent;background:transparent;"
             "box-shadow:none;}") in out
     assert ('body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"])'

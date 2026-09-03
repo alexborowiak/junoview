@@ -601,8 +601,9 @@
     if(lsIsFull()&&saveTarget==='browser'){
       el.textContent='NOT saved — browser full';
       el.className='deck-status unsaved lsfull';
-      el.title='localStorage is full, so edits are no longer being kept. '
-        +'Use File › Download a copy, or switch "Saved to" to a file.';
+      el.title='Browser storage is full, so edits are not being kept. '
+        +'Use File \u203a Download a copy, or the \u25be beside Save to '
+        +'save to a file.';
       return;
     }
     if(source==='draft'){

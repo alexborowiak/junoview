@@ -1199,11 +1199,10 @@
        why does it look so confusing"). Say what the order is FOR,
        then how to set it, and lead with the way that needs no
        arrows. */
-    note.textContent='The order things are numbered in, and the order '
-      +'One by one reveals them. Set order on the Animation tab writes '
-      +'it as you click things in turn; the arrows here nudge one '
-      +'thing earlier or later. The numbers show on the slide while '
-      +'this is open.';
+    note.textContent='The order things are numbered and revealed in. '
+      +'Quick animate on the Animation tab sets it as you click things '
+      +'in turn; the arrows here nudge one thing earlier or later. The '
+      +'numbers show on the slide while this is open.';
     p.appendChild(note);
     var state=document.createElement('div');state.className='rd-state';
     var list=document.createElement('div');list.className='rd-list';

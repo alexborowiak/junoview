@@ -496,10 +496,8 @@
         ?('Pin this figure to its notebook\u2019s current git commit '
           +'\u2014 refreshes stop changing it, and it renders even with '
           +'the notebook closed')
-        :('Locking pins a figure to a git commit, which needs the '
-          +'Junoview app (it reads git through the local server). This '
-          +'page was exported as a standalone file, so there is no '
-          +'repository to pin to.');
+        :('Not available in a standalone export \u2014 locking needs the '
+          +'Junoview app and a git repository');
     }
     /* #fmt-cropwrap: visibility from FMT_KINDS.
        Animation is a BUILD — an item appearing on click as you step
@@ -1887,9 +1885,8 @@
         menuHead(m,'where it goes');
         row(lk0&&lk0.link?'Change where this goes':'Make this a link\u2026',
           '',function(){setObjLink(selIdxs()[0]);},
-          'Clicking it while presenting opens a page or jumps to '
-          +'another slide. An internal jump follows the slide, not its '
-          +'number, so reordering the deck cannot repoint it.','link');
+          'While presenting, a click opens a web page or jumps to '
+          +'another slide in this deck','link');
         if(lk0&&lk0.link)
           row('Remove the link','',function(){
             delete lk0.link;markDirty();renderSlide();
@@ -1901,10 +1898,8 @@
         row(one0&&one0.dec?'Alt text \u2014 marked decorative'
           :((one0&&one0.alt)?'Alt text \u2014 written':'Alt text\u2026'),
           '',function(){setAltText(altSel);},
-          'What this picture shows, for somebody who cannot see it. A '
-          +'caption says what to think about the figure and everyone '
-          +'reads it; alt text says what is IN it and is read instead '
-          +'of it. Leave it empty to mark the picture decorative.',
+          'Describe what the picture shows, for someone who cannot see '
+          +'it. Leave it empty to mark it decorative',
           'caption');
       }
       /* A FIGURE AND ITS CAPTION (T17). Two objects selected, one of
@@ -2369,10 +2364,9 @@
           var onFit=(fa.fit==='shrink');
           row(onFit?'Shrink to fit: on':'Shrink to fit: off','',
             function(){toggleFit(selIdxs()[0]);},
-            'Asks the words to live inside the height they have now. '
-            +'The size you chose is never rewritten — only what is '
-            +'drawn shrinks, and it stops before the text stops being '
-            +'readable.').classList.toggle('on',onFit);
+            'Shrink the drawn text to fit the box\u2019s height. The size '
+            +'you chose is kept, and it never shrinks past readable')
+            .classList.toggle('on',onFit);
           if(fa.fh) row('Forget the fit height','',
             function(){clearFit(selIdxs()[0]);},
             'Back to a box that simply grows with its words');
@@ -2476,10 +2470,8 @@
       menuHead(m,'who sees it');
       var pb=row(allPriv?'\u2713 Only me':'Only me','',function(){
         setPrivSel(!allPriv);},
-        'Drawn on your screen and in the presenter view, marked so you '
-        +'know it is yours. Never drawn for the audience, and never in '
-        +'a PDF or PowerPoint. Like your speaker notes, it is stored in '
-        +'the deck file.','eye');
+        'Show this only on your screen and in presenter view \u2014 never '
+        +'to the audience, or in a PDF or PowerPoint','eye');
       if(allPriv) pb.classList.add('on');
     }
     /* the slide's SEQUENCE (T106): always offered, because reading
@@ -2487,9 +2479,8 @@
     menuHead(m,'slide');
     row('Order on this slide\u2026','',function(){
       if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();},
-      'The order things are numbered in, and the order One by one '
-      +'reveals them. Set order writes it as you click; this panel '
-      +'nudges one thing earlier or later.','stagger');
+      'The order things are numbered and revealed in. Quick animate '
+      +'sets it by clicking; here you nudge one step','stagger');
     row((function(){
       var mm=(typeof mastOf==='function')
         &&mastOf(pres.slides[cur]);

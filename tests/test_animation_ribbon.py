@@ -77,7 +77,7 @@ def test_the_order_you_point_is_the_order_of_the_slide(out):
     # right-click keep theirs, under a name that says what it is
     assert 'id="anim-order"' not in out
     assert "menuHead(p,'order on this slide');" in out
-    assert "Set order on the Animation tab writes " in out
+    assert "Quick animate on the Animation tab sets it as you click things " in out
     assert "?'Set by you \\u2014 anything added later comes last'" in out
 
 

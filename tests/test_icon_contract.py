@@ -124,7 +124,7 @@ def test_menu_and_pane_icons_keep_one_meaning():
     menu_i = deck.index("function openCanvasMenu(layer,s,ev){")
     menu = deck[menu_i:deck.index("\n  function ", menu_i + 20)]
     assert "'Lock position'," in menu and "+'restyle','pin']" in menu
-    assert "+'the deck file.','eye');" in menu
+    assert "+'to the audience, or in a PDF or PowerPoint','eye');" in menu
 
     sec_i = deck.index("function secRow(r){")
     sec = deck[sec_i:deck.index("\n  function ", sec_i + 20)]

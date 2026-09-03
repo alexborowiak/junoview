@@ -115,10 +115,9 @@
         <div class="dc-mhead">export &amp; share</div>
         <!-- THE CONTENT, as text (T35). -->
         <button class="dc-mi" id="mi-review"
-          title="Write the deck out as markdown — titles, text, figures
- and where each came from, captions and notes — so a colleague or a
- language model can review what it SAYS. Junoview stays offline; the
- text is what travels.">Export for review&#8230;</button>
+          title="Save the deck as markdown — every title, text box,
+ caption and note — for a colleague or an AI to read">Export for
+ review&#8230;</button>
         <button class="dc-mi" id="mi-pdf"
           title="Save as PDF at the page's TRUE size — an A0 poster
  exports as a real 841&#215;1189mm page, ready for the print shop">Export
@@ -405,7 +404,8 @@
          can just be back on home"). -->
     <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
       aria-selected="true"
-      title="Slide actions, guides, layers and the print check">Home</button>
+      title="Add, duplicate and delete slides, and keep figures and
+ pictures up to date">Home</button>
     <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
       aria-selected="false"
       title="Put something new on the page">Insert</button>
@@ -543,9 +543,9 @@
               <i data-ic="objects"></i> Saved layouts&#8230;</button>
               <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
-              <button class="dbtn rbn-sm" data-tidy="tight"><i data-ic="collapse"></i> Tight</button>
-              <button class="dbtn rbn-sm" data-tidy="normal"><i data-ic="spacing"></i> Normal</button>
-              <button class="dbtn rbn-sm" data-tidy="airy"><i data-ic="expand"></i> Airy</button>
+              <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i> Tight</button>
+              <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><i data-ic="spacing"></i> Normal</button>
+              <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><i data-ic="expand"></i> Airy</button>
               </div>
             </span>
             <span class="rbn-lab">Layout</span>
@@ -588,9 +588,8 @@
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Background colour and border &mdash; the menu
- offers this slide or every slide. (The tooltip used to point at a File
- item that was removed; JVUX-10 caught it still pointing.)"
+                  title="Background colour and border, for this slide or
+ for every slide"
                   ><i data-ic="fill"></i> Background &#9662;</button>
                 <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
               </span>
@@ -703,9 +702,11 @@
                    was the implementation's; the button says what the
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="The deck's named colours, corner radius and spacing.
- Change one and everything using it follows"
-                ><i data-ic="palette"></i> Colours &amp; spacing</button>
+                title="The deck's palette: six named colours (Accent, Warm,
+ Lift, Calm, Ink, Quiet), the corner radius and the gap between things.
+ Give a box a named colour from the Deck row of its Colour or Fill
+ menu; change the name here and every box wearing it follows"
+                ><i data-ic="palette"></i> Palette&#8230;</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -714,7 +715,8 @@
                    'standardise text', and checked if all headings
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Find text that should match but does not — headings, body text, captions across the whole deck — and figures placed at different sizes. It reports first; each fix is one button"><i data-ic="scope"></i>
+                title="Find headings, body text, captions and figures that
+ do not match across the deck, and fix each with one click"><i data-ic="scope"></i>
    Fix mismatched text&#8230;</button>
             </span>
             <span class="rbn-lab">Type</span>
@@ -768,9 +770,8 @@
                 ><i data-ic="guides"></i> Guides <kbd>H</kbd></button>
               <button class="dbtn rbn-sm et" id="vw-guidebox"
                 data-tool="guide" aria-pressed="false"
-                title="Draw a guide box &mdash; an area to lay out inside.
- Drag its edges to resize, its corner grip to move it. An editing aid:
- it snaps, and it is never printed, exported or shown while presenting"
+                title="Draw a guide box to lay out inside. It snaps, and
+ is never printed, exported or shown while presenting"
                 ><i data-ic="frame"></i> Guide box <kbd>B</kbd></button>
               <button class="dbtn rbn-sm" id="vw-full"
                 aria-pressed="false"
@@ -830,11 +831,9 @@
               <span class="sh-drop" id="vw-morewrap" hidden>
                 <button class="dbtn rbn-sm" id="vw-more"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Rulers, grid, full screen, the side toolbar, the
- print check, layers and notes. They are in here rather than on the bar
- because the window is too narrow to show them and the text controls at
- the same time — widen it, or put the toolbar on the right, and they come
- back out"><i data-ic="menu"></i> View &#9662;</button>
+                  title="Rulers, grid, full screen, side toolbar, Review,
+ Layers and Notes — folded in here while the window is narrow"
+                  ><i data-ic="menu"></i> View &#9662;</button>
                 <div class="sh-menu vw-more-menu" id="vw-more-menu"
                   hidden></div>
               </span>
@@ -1229,22 +1228,13 @@
         <span class="et-fmt" id="et-fmt" hidden>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- Bring-to-front, send-to-back and the two rotates used to
-                   sit here as bare glyphs (&#8613; &#8615; &#10226;
-                   &#10227;) with their meaning only in a tooltip — the
-                   same wordless-button problem as everywhere else. They
-                   now live in this menu, fully worded, which removes four
-                   controls from the row AND adds four labels. -->
+              <!-- T208: paired on purpose (column-major): Duplicate over Arrange,
+                   Bring to front over Send to back, Group over Ungroup; the
+                   rest are the Arrange menu's rows, kept for wiring -->
               <button class="dbtn etm" id="fmt-dup"
                 title="Duplicate everything selected, just clear of the
  originals (Ctrl+D). Alt-drag on the page does the same and lets you
  place the copies as you go"><i data-ic="copy"></i> Duplicate</button>
-              <button class="dbtn etm" id="fmt-group"
-                title="Group the selected items (Ctrl+G)"><i data-ic="group"></i>
-                Group</button>
-              <button class="dbtn etm" id="fmt-ungroup"
-                title="Ungroup (Ctrl+Shift+G)"><i data-ic="ungroup"></i>
-                Ungroup</button>
               <span class="sh-drop" id="fmt-alignwrap">
                 <button class="dbtn etm" id="fmt-align-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -1254,20 +1244,18 @@
                 <div class="sh-menu align-menu" id="fmt-align-menu"
                   hidden></div>
               </span>
-              <!-- WORDED, and back in the row. These two were bare
-                   glyphs with their meaning only in a tooltip, then were
-                   hidden entirely and left reachable only three clicks
-                   deep inside the Arrange menu - which is why they read
-                   as a missing feature (2026-08-20, user asked for "the
-                   bring to forewards send to back"). The one-STEP pair
-                   below stays in the menu: rarer, and the row has to stay
-                   honest about its width. -->
               <button class="dbtn etm" id="fmt-front"
                 title="Bring to front - in front of everything else on
  this page"><i data-ic="front"></i> Bring to front</button>
               <button class="dbtn etm" id="fmt-back"
                 title="Send to back - behind everything else on this
  page"><i data-ic="back"></i> Send to back</button>
+              <button class="dbtn etm" id="fmt-group"
+                title="Group the selected items (Ctrl+G)"><i data-ic="group"></i>
+                Group</button>
+              <button class="dbtn etm" id="fmt-ungroup"
+                title="Ungroup (Ctrl+Shift+G)"><i data-ic="ungroup"></i>
+                Ungroup</button>
               <button class="dbtn etm" id="fmt-forward" hidden
                 title="Bring forward one place (Ctrl+])"><i data-ic="forward"></i>
                   Forward</button>
@@ -1312,11 +1300,7 @@
                the colours all the time?") -->
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- ids on the wrappers, so the button and its swatch menu
-                   are ONE thing to move: a ribbon layout that took the
-                   button and left the menu behind would leave the popup
-                   positioned against nothing (2026-08-25). It also lets
-                   the per-button customiser reach these two at last. -->
+              <!-- T208: text colour over fill; opacity beside them -->
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
@@ -1378,12 +1362,6 @@
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
-              <!-- Opacity sits with COLOUR because that is what it is:
-                   how solid the ink is — a property of the object, not a
-                   playback build (2026-08-17, user). INSIDE the row: as a
-                   sibling of it the group stacked row + slider + label
-                   and overflowed the ribbon's fixed band, printing the
-                   slider over its own caption. -->
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
                 <input class="fmt-range" id="fmt-op" type="range"
@@ -1394,18 +1372,8 @@
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- SPREAD OUT (T189). T177 put every text control behind
-                   Font and Paragraph doors; a day later: "how do you
-                   even add dot points any more?... too many things are
-                   in buttons in buttons" (2026-09-02). So the ones you
-                   reach for are back in the row -- bold, italic,
-                   underline, the two lists, and the three alignments
-                   -- and the two windows keep only what is set once:
-                   typeface, size and strike; box indent, spacing and
-                   curve. The room this costs is what group folding
-                   (T187) exists to pay: on a narrow window the
-                   rightmost groups fold into a button rather than
-                   the row clipping. -->
+              <!-- T208: Font over Styles; B I U over Left Centre Right as two runs;
+                   bullets over numbers; Paragraph; the two editors when they apply -->
               <span class="sh-drop opt-drop" id="fmt-fontwrap">
                 <button class="dbtn etm" id="fmt-font-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -1443,33 +1411,37 @@
                   </div>
                 </div>
               </span>
-              <button class="dbtn etm" id="fmt-bold"
+              <span class="sh-drop" id="fmt-stylewrap-tx">
+                <button class="dbtn etm" id="fmt-style-tx"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Named text styles — Title, Headings, Body,
+ Caption — and pushing this box's look to all of them"><i data-ic="styles"></i>
+                  Styles &#9662;</button>
+                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
+                  hidden></div>
+              </span>
+              <span class="rbn-cell" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
+                <button class="dbtn etm" id="fmt-bold"
                 title="Bold"><b>B</b></button>
-              <button class="dbtn etm" id="fmt-ital"
+                <button class="dbtn etm" id="fmt-ital"
                 title="Italic"><i>I</i></button>
-              <button class="dbtn etm" id="fmt-under"
+                <button class="dbtn etm" id="fmt-under"
                 title="Underline"><u>U</u></button>
-              <button class="dbtn etm" id="fmt-eqedit" hidden
-                title="Open this equation in the equation editor"
-                ><i data-ic="maths"></i> Edit equation</button>
-              <button class="dbtn etm" id="fmt-mdedit" hidden
-                title="Open this box in the Markdown editor"
-                ><i data-ic="markdown"></i> Edit markdown</button>
-              <!-- BULLETS and NUMBERING are buttons that show their own
-                   state, not a line in a dropdown (2026-08-20, user:
-                   "the bullet list on/off is cursed"). -->
+              </span>
+              <span class="rbn-cell" id="tx-run-align" role="group" aria-label="Alignment">
+                <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
+                title="Align left">Left</button>
+                <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
+                title="Align centre">Centre</button>
+                <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
+                title="Align right">Right</button>
+              </span>
               <button class="dbtn etm" id="fmt-bullets"
                 aria-pressed="false"
                 title="Bullet list on / off">&#8226; List</button>
               <button class="dbtn etm" id="fmt-numbers"
                 aria-pressed="false"
                 title="Numbered list on / off">1. List</button>
-              <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
-                title="Align left">Left</button>
-              <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
-                title="Align centre">Centre</button>
-              <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
-                title="Align right">Right</button>
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
@@ -1496,20 +1468,12 @@
                   <div class="opt-row" id="fmt-para-curve"></div>
                 </div>
               </span>
-              <!-- NAMED STYLES: Title / Heading 1-3 / Body / Small /
-                   Caption. A box wears a style rather than carrying a
-                   pile of properties, which is what makes "apply this
-                   look to all headings" a single edit instead of a hunt
-                   through forty slides (2026-08-20). -->
-              <span class="sh-drop" id="fmt-stylewrap-tx">
-                <button class="dbtn etm" id="fmt-style-tx"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Named text styles — Title, Headings, Body,
- Caption — and pushing this box's look to all of them"><i data-ic="styles"></i>
-                  Styles &#9662;</button>
-                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
-                  hidden></div>
-              </span>
+              <button class="dbtn etm" id="fmt-eqedit" hidden
+                title="Open this equation in the equation editor"
+                ><i data-ic="maths"></i> Edit equation</button>
+              <button class="dbtn etm" id="fmt-mdedit" hidden
+                title="Open this box in the Markdown editor"
+                ><i data-ic="markdown"></i> Edit markdown</button>
             </span>
             <span class="rbn-lab">Text</span>
           </span>
@@ -1618,57 +1582,8 @@
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <span class="rbn-partslot" id="fmt-parts" hidden></span>
-              <!-- The only ribbon control the flip book gets. Everything
-                   else it needs — adding, reordering, naming and tying
-                   items to a figure — is in the pane this opens, because
-                   all of it needs the frame LIST visible to make sense
-                   (2026-08-22). It shows only when a flip book is
-                   selected, so it costs the resting ribbon nothing. -->
-              <button class="dbtn etm" id="fmt-figures" hidden
-                title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
-   Figures&#8230;</button>
-              <!-- THE BUTTON DOES THE COMMON THING (T64, 2026-08-29,
-                   user: "the clicking button should just automatically do
-                   the trim by edges"). It used to open a submenu, so the
-                   one crop everybody wants -- pull the whitespace off the
-                   edges of a figure -- was two clicks and a read behind a
-                   gallery of stars and arrows. Now the button arms the
-                   edge handles and the caret holds the shapes, which is
-                   the split Insert > Text already uses. The wrapper keeps
-                   its id, so none of the 108 ribbon arrangements moves. -->
-              <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
-                <button class="dbtn etm" id="fmt-crop"
-                  title="Trim the edges: drag the four handles on the
- picture. This is the crop you want nine times in ten &mdash; the caret
- beside it holds the shapes and the free-hand crop"><i data-ic="crop"></i>
-                  Crop</button>
-                <button class="dbtn etm tx-caret" id="fmt-crop-caret"
-                  aria-label="Crop shapes" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Crop to a shape, or draw the outline yourself"
-                  >&#9662;</button>
-                <div class="sh-menu" id="fmt-crop-menu" hidden></div>
-              </span>
-              <!-- "where are all the options that I said, like keep
-                   square, and also having the width, height, and
-                   position (x,y)" (2026-08-29, user, T65). Two doors,
-                   both contextual: a state you can SEE on the selected
-                   object, and a pane you type into. Words plus icons,
-                   and both icons are ones the set already carries. -->
-              <!-- WHERE IT CAME FROM, ON THE ROW (T198; 2026-09-02, user:
-                   "when selecting an image, the object view should on
-                   the right have the object paths, refresh from path
-                   button, lock option"). The file a picture came from,
-                   or the notebook a figure did; a button to re-read
-                   it; and a lock that keeps it where it is. -->
-              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
-                title="Where this came from"></span>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came from.
- If that file has moved, the picture is left exactly as it is"
-                ><i data-ic="reload"></i> Refresh from file</button>
+              <!-- T208: Lock in place over Keep shape; X Y over W H; Crop over Caption;
+                   Refresh over Size & position; where from over Source -->
               <button class="dbtn etm" id="fmt-lock" hidden
                 aria-pressed="false"
                 title="Keep this where it is: it cannot be dragged, and
@@ -1676,16 +1591,8 @@
                 ><i data-ic="pin"></i> Lock in place</button>
               <button class="dbtn etm" id="fmt-lockar" hidden
                 aria-pressed="false"
-                title="Keep this object&rsquo;s shape while you drag a
- handle &mdash; a square stays square and a plot keeps its proportions.
- Hold Shift during a drag to do the opposite of whatever this
- says"><i data-ic="lock"></i> Lock ratio</button>
-              <!-- X, Y, WIDTH AND HEIGHT, ON THE RIBBON (T207; 2026-09-02,
-                   user: "why do objects not have an x-y position and also
-                   not a width and height. Oh they do, it's just under size
-                   and position"). Two cells, one column: position over
-                   size, in millimetres, typed straight in. The Size &
-                   position pane stays for the long form. -->
+                title="Keep the proportions while you drag a handle. Hold
+ Shift while dragging to do the opposite"><i data-ic="lock"></i> Keep shape</button>
               <span class="rbn-cell rbn-geom" id="fmt-geom-xy" hidden
                 role="group" aria-label="Position, in millimetres">
                 <label class="geo" title="Left edge, from the left of the page"
@@ -1705,27 +1612,33 @@
                   ><span>H</span><input id="rb-h" type="number" step="0.5"
                   inputmode="decimal" aria-label="Height"></label>
               </span>
-              <button class="dbtn etm" id="fmt-sizepos" hidden
-                title="Type this object&rsquo;s width, height and
- position in millimetres, instead of dragging for
- them"><i data-ic="rulers"></i> Size &amp; position&#8230;</button>
-              <!-- T17 shipped a TIE between two objects that already
-                   existed, and only when exactly two were selected. This
-                   is the command: caption THIS, which is how a caption
-                   gets written in every other tool (2026-08-29, T58). It
-                   shows for a figure that has not got one yet. -->
+              <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
+                <button class="dbtn etm" id="fmt-crop"
+                  title="Trim the edges: drag the four handles on the
+ picture. This is the crop you want nine times in ten &mdash; the caret
+ beside it holds the shapes and the free-hand crop"><i data-ic="crop"></i>
+                  Crop</button>
+                <button class="dbtn etm tx-caret" id="fmt-crop-caret"
+                  aria-label="Crop shapes" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Crop to a shape, or draw the outline yourself"
+                  >&#9662;</button>
+                <div class="sh-menu" id="fmt-crop-menu" hidden></div>
+              </span>
               <button class="dbtn etm" id="fmt-caption" hidden
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
  same button unties it"><i data-ic="caption"></i> Caption</button>
-              <!-- THE SOURCE WINDOW (T177). Six of a placed figure's
-                   buttons were about where it CAME FROM and keeping it
-                   in step: Locate, Where from, Previous figure, Lock
-                   figure, Refresh and Replace. They are one family and
-                   they are rare beside Crop and Keep shape, so they
-                   share one worded door. Each row closes the window as
-                   it acts (data-close): these are things you do and
-                   leave, not settings you adjust. -->
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came from.
+ If that file has moved, the picture is left exactly as it is"
+                ><i data-ic="reload"></i> Refresh from file</button>
+              <button class="dbtn etm" id="fmt-sizepos" hidden
+                title="Type this object&rsquo;s width, height and
+ position in millimetres, instead of dragging for
+ them"><i data-ic="rulers"></i> Size &amp; position&#8230;</button>
+              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
+                title="Where this came from"></span>
               <span class="sh-drop opt-drop" id="fmt-srcwrap">
                 <button class="dbtn etm" id="fmt-src" aria-haspopup="true"
                   aria-expanded="false"
@@ -1753,6 +1666,11 @@
                 Replace</button>
                 </div>
               </span>
+              <button class="dbtn etm" id="fmt-figures" hidden
+                title="Add, reorder and name the figures in this flip
+ book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
+   Figures&#8230;</button>
+              <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
           </span>

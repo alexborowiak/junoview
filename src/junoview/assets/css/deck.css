@@ -4590,10 +4590,11 @@ body.light .img-ov .img-row{border-color:var(--line);}
    its frame because the frame is the box, not the buttons. Outlined
    boxes on every one of sixty controls were most of what read as "all
    shapes and sizes" (2026-09-02). PowerPoint's ribbon is flat. */
-.edit-tools .dbtn.rbn-sm,.edit-tools .fx-tile,.edit-tools .dbtn.lay,
-.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
+.edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile,
+.edit-tools .dbtn.lay,.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
   border-color:transparent;background:transparent;box-shadow:none;}
 .edit-tools .dbtn.rbn-sm:hover:not(:disabled),
+.edit-tools .dbtn.etm:hover:not(:disabled),
 .edit-tools .fx-tile:hover:not(:disabled),
 .edit-tools .dbtn.lay:hover:not(:disabled),
 .edit-tools .rbn-cell .dbtn:hover:not(:disabled),
@@ -4637,3 +4638,12 @@ body.light .edit-tools .dbtn.lay{border-color:transparent;background:transparent
 .rbn-geom input:disabled{opacity:.45;}
 body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
   border-color:var(--line);}
+
+/* ---- T208: SEGMENTED RUNS, AND A RUN WITH NOTHING SHOWING IS NOT THERE --
+   B I U and Left Centre Right are one cell each, so the letters sit
+   shoulder to shoulder at their own widths (a grid column had made "U"
+   as wide as whatever stood under it). A cell whose every button is
+   hidden takes no column. */
+.rbn-cell#tx-run-style .dbtn,.rbn-cell#tx-run-align .dbtn{padding:3px 7px;}
+.rbn-cell#tx-run-style .dbtn.etm{min-width:28px;justify-content:center;}
+.rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}

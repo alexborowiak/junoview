@@ -421,11 +421,8 @@
         var w=document.createElement('span');
         w.className='dpi-warn';
         w.textContent='⚠ ≈'+dpi+' dpi';
-        w.title='This figure will print SOFT at this size (≈'+dpi
-          +' dpi; aim for 200+). In the notebook, re-save it sharper — '
-          +'savefig(dpi=300) — or emit vector SVG: '
-          +"%config InlineBackend.figure_formats=['svg'] — "
-          +'then refresh notebooks.';
+        w.title='Will print soft at this size (≈'+dpi+' dpi; aim for '
+          +'200+). Re-save it at dpi=300 or as SVG, then Update figures';
         cell.appendChild(w);
       }
       if(img.complete) judge();
@@ -2292,9 +2289,10 @@
     menuHead(m,'this deck\u2019s colours');
     var note=document.createElement('div');
     note.className='ff-none';
-    note.textContent='Change one and every object wearing it changes '
-      +'with it \u2014 nothing holds a copy. Give an object one from '
-      +'the Deck row of the Colour or Fill menu.';
+    note.textContent='Six named colours the whole deck shares. Give a '
+      +'box one from the Deck row of its Colour or Fill menu; change '
+      +'the name here and every box wearing it follows. Nothing holds '
+      +'a copy.';
     m.appendChild(note);
     var t=tokens();
     Object.keys(t.c).forEach(function(k){
@@ -2346,18 +2344,24 @@
     });
     gr.appendChild(gi);
     m.appendChild(gr);
-    document.body.appendChild(m);
+    /* inside the editor's layer and on the overlay stack (T208): Escape
+       and an outside click close it the way every other menu closes,
+       and a colour picker opened from inside it does not close it */
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    m.hidden=true;
+    overlayShow(anchor,m);
     floatMenu(anchor||$('#dsg-styles')||$('#edit-tools'),m);
-    setTimeout(function(){
-      document.addEventListener('click',function off(e){
-        if(m.contains(e.target)) return;
-        m.remove();document.removeEventListener('click',off);
-      });
-    },0);
+    new MutationObserver(function(){
+      if(m.hidden&&m.parentNode) m.remove();
+    }).observe(m,{attributes:true,attributeFilter:['hidden']});
   }
   (function(){
     var b=$('#dsg-tokens');
-    if(b) b.addEventListener('click',function(){openTokenPicker(this);});
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=$('#tok-pop');
+      if(open){overlayHide(open);return;}
+      openTokenPicker(this);});
   })();
   function setToken(kind,key,val){
     pres.tokens=pres.tokens||{};

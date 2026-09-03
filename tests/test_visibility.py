@@ -570,8 +570,7 @@ def test_the_menu_says_what_the_promise_actually_is(out):
     assert "function setPrivSel(on){" in out
     assert "if(on) a.priv=1; else delete a.priv;" in out
     assert "menuHead(m,'who sees it');" in out
-    assert "a PDF or PowerPoint. Like your speaker notes" in out
-    assert "it is stored in " in out
+    assert "+'to the audience, or in a PDF or PowerPoint','eye');" in out
 
 
 # ---------------------------------------------------------------------------

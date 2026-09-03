@@ -514,10 +514,8 @@
         var cur2=m.cmp&&cmpStore()[m.cmp];
         body.appendChild(act('Furniture \u2014 '
           +(cur2?(cur2.name||'component'):'none'),
-          'A component drawn behind every wearer\u2019s content \u2014 '
-          +'a logo, a strap, a footer block. Clicks cycle through the '
-          +'components this deck has. Edit any placed instance and '
-          +'\u201cPush this look\u201d to restyle every wearer.',
+          'A component drawn behind every slide wearing this master. '
+          +'Click to cycle through the deck\u2019s components',
           function(){
             var ids=[''].concat(cl.map(function(c){return c.id;}));
             var at=ids.indexOf(m.cmp||'');

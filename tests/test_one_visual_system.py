@@ -44,7 +44,9 @@ def test_every_small_button_has_an_icon():
     from junoview import assets
     html = assets.deck_html()
     for tidy, ic in (("tight", "collapse"), ("normal", "spacing"), ("airy", "expand")):
-        assert f'data-tidy="{tidy}"><i data-ic="{ic}"></i>' in html, tidy
+        i = html.index(f'data-tidy="{tidy}"')
+        btn = html[i:html.index("</button>", i)]
+        assert f'<i data-ic="{ic}"></i>' in btn and 'title="' in btn, tidy
 
 
 def test_the_colourful_theme_is_one_hue_per_tab(out):

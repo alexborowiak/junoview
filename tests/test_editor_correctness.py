@@ -1218,7 +1218,7 @@ def test_locking_says_why_it_cannot(out):
     assert "var isCellRef=(kind==='cell')&&!!a.ref;" in out
     assert "show('#fmt-lockver',isCellRef);" in out
     assert "lvb.disabled=!canLock;" in out
-    assert "Locking pins a figure to a git commit" in out
+    assert "Not available in a standalone export" in out
     # ...and the same for Lock all / Unlock all in the notebooks column
     assert "la.disabled=!appMode;" in out
     assert "ua.disabled=!appMode;" in out

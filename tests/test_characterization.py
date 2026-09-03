@@ -918,8 +918,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pairs, flat buttons, nested overlays, one Text box tile, X/Y/W/H on the
 # Object tab, a tooltip that is a bubble not a button. deck.html,
 # deck.css, app.css, app.js and four deck fragments.
-EXPECTED_MD5 = "7c4de0f724380bc13b4500a82d4404bc"
-EXPECTED_BYTES = 3332812
+# T208 2026-09-03: the Object tab paired on purpose with B/I/U and
+# Left/Centre/Right as runs; every tooltip the audit flagged rewritten;
+# the Palette door; the token picker on the overlay stack. deck.html,
+# deck.css and six deck fragments.
+EXPECTED_MD5 = "9de6ff2775c52ce23b1c39b3bee9d120"
+EXPECTED_BYTES = 3326689
 
 
 def _render_example() -> str:

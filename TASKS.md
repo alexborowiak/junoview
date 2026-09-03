@@ -4239,6 +4239,28 @@ option. Then where has the ability to refresh all images gone?"
   the Object tab, live with the pane's fields. **Tooltips** are a plain
   bubble that waits half a second, not a bordered box that read as a
   second button under the row.
+- [x] **T208 · M — The Object tab paired on purpose; tooltips in plain
+  words; the Palette.**
+  The user (2026-09-02): "buttons in buttons that are confusing and do
+  nothing... What does 'colours and spacing' do? I have tried to figure
+  this out so many times, the description makes no sense either...
+  cool features hidden under buttons in stupid places and stupid
+  names."
+  *Done 2026-09-03.* Every Object-tab group's markup is ordered for the
+  column-major grid: Duplicate over Arrange, Bring to front over Send to
+  back, Group over Ungroup; text colour over fill; Font over Styles,
+  then **B I U** and **Left Centre Right** as two segmented runs, bullets
+  over numbers, Paragraph; Lock in place over Keep shape, X Y over W H,
+  Crop over Caption. A run whose every button is hidden takes no
+  column. An audit of all 257 tooltips in the markup and 236 in the
+  scripts found one carrying a maintenance note, six over 160
+  characters, five naming controls that no longer exist ("the print
+  check", "Set order", "One by one", "Saved to") and three ribbon
+  buttons with none; all rewritten, and a test now refuses dates,
+  ticket codes and "used to" in any tooltip. **Colours & spacing** is
+  the **Palette…**, and its tooltip says what a named colour is and how
+  to give a box one; the picker sits on the overlay stack so Escape and
+  an outside click close it like every other menu.
 
 
 ## Cut (and why)

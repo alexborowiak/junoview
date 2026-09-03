@@ -84,7 +84,9 @@ def test_the_page_size_is_tiles_and_tokens_have_a_plain_name(out):
     assert "var k=Math.min(26/pg.aw,18/pg.ah);" in out
     assert "$$('#page-strip .page-tile').forEach(function(o){" in out
     assert "function closePageMenu(){}" in out
-    assert "Colours &amp; spacing</button>" in out
+    # ...and since T208 it is the Palette, with a tooltip that says what a
+    # named colour is ("what does colours and spacing do?")
+    assert "Palette&#8230;</button>" in out
     assert ".page-ico{display:block;border:1.5px solid currentColor;" in out
 
 

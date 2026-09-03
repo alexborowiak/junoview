@@ -613,13 +613,8 @@
           var gr=document.createElement('div');gr.className='anim-eff';
           [['','All at once','The whole box on one click.'],
            ['para','Bullet by bullet',
-            'One click per bullet — or per line you pressed Enter '
-            +'on. Those breaks are in the words themselves, so the '
-            +'number of clicks is the same at every zoom and on every '
-            +'page size, and it travels to PowerPoint as a real '
-            +'paragraph build. (A WRAPPED line is not offered: it '
-            +'depends on the box width, so its click count would change '
-            +'when you resized the box.)'],
+            'One click per bullet, or per line you pressed Enter on. '
+            +'Exports to PowerPoint as a paragraph build'],
            ['sent','Sentence by sentence',
             'One click per sentence. "Fig. 3", "et al.", "0.05" and '
             +'initials are left alone; when a cut is in the wrong '
@@ -803,9 +798,8 @@
       var rb=document.createElement('button');
       rb.className='anim-mini wide';
       rb.textContent='Order on this slide\u2026';
-      rb.title='The order things are numbered in, and the order One '
-        +'by one reveals them. Set order writes it as you click; this '
-        +'panel nudges one thing earlier or later.';
+      rb.title='The order things are numbered and revealed in. Quick '
+        +'animate sets it by clicking; here you nudge one step';
       rb.addEventListener('click',function(e){e.stopPropagation();
         if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
       menu.appendChild(rb);

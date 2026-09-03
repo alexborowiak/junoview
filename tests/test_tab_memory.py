@@ -53,9 +53,8 @@ def test_the_words_on_the_tabs_say_what_happens(out):
     assert "Copy layout to slides&#8230;" in out
     assert "Arrangements&#8230;</button>" not in out
     # Standardise says what it checks, on the button and in the pane
-    assert ('title="Find text that should match but does not '
-            '&mdash; headings') in out or \
-        'title="Find text that should match but does not — headings' in out
+    assert ('title="Find headings, body text, captions and figures that\n'
+            ' do not match across the deck, and fix each with one click"') in out
     assert '<div class="pf-intro">Text that should look the same but does' in out
     assert "<span>Mismatched text</span>" in out
     # masters, in one sentence, at its one door: Page furniture (Home's
