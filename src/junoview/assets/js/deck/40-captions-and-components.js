@@ -704,9 +704,8 @@
       });
       m.appendChild(b);
     });
-    document.body.appendChild(m);
-    if(btn) floatMenu(btn,m);
-    else {
+    overlayMount(btn,m);               /* on the stack (T213) */
+    if(!btn){
       m.style.position='fixed';m.style.zIndex='240';
       m.style.right='auto';m.style.bottom='auto';
       var sr=stage.getBoundingClientRect();
@@ -714,12 +713,6 @@
         sr.left+sr.width/2-(m.offsetWidth||180)/2))+'px';
       m.style.top=Math.round(sr.top+40)+'px';
     }
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)) m.remove();
-        document.removeEventListener('click',once);
-      });
-    },0);
   }
   function cmpInstances(id){
     var seen={},out=[];
@@ -1319,7 +1312,7 @@
       b.appendChild(document.createTextNode(o[1]));
       b.title=o[2];
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.remove();armSlideMatch(o[0]);});
+        e.stopPropagation();overlayDrop(m);armSlideMatch(o[0]);});
       m.appendChild(b);
     });
     var push=document.createElement('button');
@@ -1329,7 +1322,7 @@
       +'from a list with tick boxes — the same job as pointing at '
       +'them, when you would rather read the names';
     push.addEventListener('click',function(e){
-      e.stopPropagation();m.remove();
+      e.stopPropagation();overlayDrop(m);
       if(typeof window.SemDeckMatchMany==='function')
         window.SemDeckMatchMany();
     });
@@ -1343,7 +1336,7 @@
     arr.title='Layouts you have saved, with a thumbnail of each — and '
       +'which slides they would fit';
     arr.addEventListener('click',function(e){
-      e.stopPropagation();m.remove();
+      e.stopPropagation();overlayDrop(m);
       if(typeof window.SemDeckArrange==='function') window.SemDeckArrange();
     });
     m.appendChild(arr);
@@ -1359,7 +1352,7 @@
       var t=document.createElement('span');
       t.textContent=slideTitle(sl);b.appendChild(t);
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.remove();
+        e.stopPropagation();overlayDrop(m);
         var r=matchSlide(i,cur);
         if(!r) return;
         if(!r.moved){
@@ -1378,14 +1371,7 @@
       m.appendChild(b);
     });
     if(!any) menuHead(m,'there is only one slide');
-    document.body.appendChild(m);
-    floatMenu(btn,m);
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)) m.remove();
-        document.removeEventListener('click',once);
-      });
-    },0);
+    overlayMount(btn,m);               /* on the stack (T213) */
   }
   /* one worded menu for everything that arranges: line up, space out,
      stack order, rotate, tidy into a formation */

@@ -145,7 +145,8 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     assert "show('#fmt-fillcol-btn',showBg&&kind!=='rect');" in out
     # picking a swatch closes its popup; the custom swatch keeps its panel
     # (rc = a recent-colour chip, which also closes it — 2026-08-20)
-    assert "if(rc||(sw&&!sw.classList.contains('sw-custom'))){" in out
+    # (through the overlay owner since T213)
+    assert "if(rc||(sw&&!sw.classList.contains('sw-custom'))) overlayHide(menu);" in out
 
 
 def test_freehand_drawing_is_a_first_class_stroke(out):

@@ -4318,6 +4318,24 @@ option. Then where has the ability to refresh all images gone?"
   Layers, Paragraph and Review. Every ribbon layout named `page-drop`,
   an id gone since T190, so every non-default layout silently lost the
   page sizes — fixed, and a test now checks every id a layout names.
+- [x] **T213 · M — Every remaining private menu joins the overlay
+  stack.**
+  *Done 2026-09-03.* The Text and Fill swatch menus, the Fill style
+  menu, the Styles menu, the custom colour popup, the object-source
+  menu, the Match slide menu, the select-by menu, the component
+  instance and match-props menus and the ribbon customise menu each
+  had a private toggle and a one-shot outside-click closer of their
+  own, so Escape never reached them, none closed another, and the
+  custom colour popup closed the Fill menu under it on the first click
+  inside. All go through `overlayShow`/`overlayHide` now, mounted
+  inside the editor's layer by one helper, so a menu opened from
+  inside another keeps its parent and Escape peels one layer.
+- [x] **T214 · S — Before you print opens full screen.**
+  *Done 2026-09-03.* The third card list of the same shape, and the
+  last still a 272px pane: a full-screen view with intro, count, Check
+  again, Close, a row selecting the thing and closing the view; a door
+  of its own on View beside Review, and the Review centre's row says
+  "Open Before you print" for the view it opens.
 
 
 ## Cut (and why)

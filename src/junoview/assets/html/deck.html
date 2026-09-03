@@ -808,6 +808,10 @@
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
                    else (2026-08-19, user) -->
+              <button class="dbtn rbn-sm" id="vw-preflight"
+                title="Whether this page will print well: soft figures,
+ things off the page or in the margin, thin contrast, empty frames"
+                ><i data-ic="flag"></i> Before you print</button>
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
@@ -1879,6 +1883,21 @@
           gaps that are nearly even, and copies pasted on top of each
           other. Nothing moves until you press a fix.</div>
         <div class="img-ov-body std-list" id="tidy-ov-body"></div>
+      </div>
+      <!-- BEFORE YOU PRINT, FULL SCREEN (T214): the third card list of the
+           same shape, and the last one that was still a 272px pane. -->
+      <div class="img-ov" id="pf-ov" hidden role="dialog"
+        aria-label="Before you print">
+        <div class="img-ov-h"><span class="img-ov-t">Before you print</span>
+          <span class="img-ov-sub" id="pf-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="pf-ov-rerun" title="Check again"
+            ><i data-ic="reload"></i> Check again</button>
+          <button class="dbtn rbn-sm" id="pf-ov-close" title="Close (Esc)"
+            ><i data-ic="exit"></i> Close</button></div>
+        <div class="pf-intro">Whether this page will print well: soft
+          figures, things off the page or inside the margin, thin
+          contrast, empty frames. A row selects the thing.</div>
+        <div class="img-ov-body std-list pf-list" id="pf-ov-body"></div>
       </div>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
            frame names a card by anchor, chains.py computed the lineage

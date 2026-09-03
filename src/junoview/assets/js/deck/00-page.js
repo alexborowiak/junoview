@@ -1540,8 +1540,8 @@
       list.appendChild(row);
     }
     cat('Print & export readiness','this slide',preflight().length,
-      bic('flag')+' Open Review',
-      function(){paneShow('preflight');renderPreflight();},
+      bic('flag')+' Open Before you print',
+      function(){showPreflight();},
       'Soft figures, items off the page or inside the margin, thin '
       +'contrast, empty frames');
     cat('Layout & spacing','this slide',tidyFindings().length,
@@ -1569,12 +1569,10 @@
       ?(total+' to look at, across five checks')
       :'Five checks, all clear';
   }
-  function renderPreflight(){
-    var pane=$('#preflight'),list=$('#preflight-list');
-    if(!pane||!list) return;
+  function renderPreflightInto(list,head){
+    if(!list) return;
     var issues=preflight();
     var errs=issues.filter(function(x){return x.sev==='err';}).length;
-    var head=$('#preflight-count');
     if(head) head.textContent=issues.length
       ?(issues.length+' to look at'+(errs?' · '+errs+' serious':''))
       :'Nothing to fix';
@@ -1597,7 +1595,36 @@
       list.appendChild(row);
     });
   }
+  function renderPreflightOverview(){
+    renderPreflightInto($('#pf-ov-body'),$('#pf-ov-sub'));
+  }
+  function renderPreflight(){
+    renderPreflightInto($('#preflight-list'),$('#preflight-count'));
+    var ov=$('#pf-ov');
+    if(ov&&!ov.hidden) renderPreflightOverview();
+  }
+  /* full screen since T214; the pane stays for the pane owner */
+  function showPreflight(){
+    var ov=$('#pf-ov');
+    if(ov){
+      if(!ov.hidden){overlayHide(ov);return;}
+      renderPreflightOverview();overlayShow($('#vw-preflight'),ov);return;
+    }
+    paneShow('preflight');renderPreflight();
+  }
   (function(){
+    var pf=$('#vw-preflight');
+    if(pf) pf.addEventListener('click',function(e){
+      e.stopPropagation();showPreflight();});
+    var pov=$('#pf-ov');
+    var poc=$('#pf-ov-close');
+    if(poc) poc.addEventListener('click',function(){overlayHide(pov);});
+    var por=$('#pf-ov-rerun');
+    if(por) por.addEventListener('click',renderPreflightOverview);
+    if(pov) pov.addEventListener('click',function(e){
+      if(e.target.closest&&e.target.closest('.pf-row'))
+        setTimeout(function(){overlayHide(pov);},0);
+    });
     var btn=$('#vw-check'),pane=$('#reviewpane');
     if(btn) btn.addEventListener('click',function(){
       if(!pane) return;

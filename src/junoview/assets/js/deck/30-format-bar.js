@@ -182,11 +182,10 @@
     if(!btn||!menu) return;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      if(open){renderSwRecents(menu);floatMenu(btn,menu);}
-      else pvEnd(false);
+      if(!menu.hidden){overlayHide(menu);pvEnd(false);return;}
+      renderSwRecents(menu);
+      overlayShow(btn,menu);       /* on the stack (T213) */
+      floatMenu(btn,menu);
     });
     /* CAPTURE phase: any click inside the menu restores the hover preview
        BEFORE a swatch's own apply handler runs, or the apply would land on
@@ -199,8 +198,7 @@
         else applyFillColor(rc.dataset.c);
       }
       var sw=e.target.closest&&e.target.closest('.sw');
-      if(rc||(sw&&!sw.classList.contains('sw-custom'))){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+      if(rc||(sw&&!sw.classList.contains('sw-custom'))) overlayHide(menu);
     });
     menu.addEventListener('mouseover',function(e){
       var sw=e.target.closest&&e.target.closest('.sw,.sw-rc');
@@ -210,11 +208,9 @@
       pvShow(target==='text'?textMut(c):fillMut(c));
     });
     menu.addEventListener('mouseleave',function(){pvEnd(false);});
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');
-        pvEnd(false);}
-    });
+    /* however the owner closes it, the hover preview is put back */
+    new MutationObserver(function(){if(menu.hidden) pvEnd(false);})
+      .observe(menu,{attributes:true,attributeFilter:['hidden']});
   });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('mousedown',function(e){
@@ -674,14 +670,10 @@
        reflect the selection, so the helper's static options never fit */
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
+      if(!menu.hidden){overlayHide(menu);return;}
+      build();
+      overlayShow(btn,menu);       /* on the stack (T213) */
+      floatMenu(btn,menu);
     });
   })();
   /* ---- THE PARAGRAPH WINDOW (T177) ------------------------------------
@@ -1034,15 +1026,10 @@
     var btn=$('#fmt-style-tx');
     if(btn) btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)
-        menu.hidden=true;
+      if(!menu.hidden){overlayHide(menu);return;}
+      build();
+      overlayShow(btn,menu);       /* on the stack (T213) */
+      floatMenu(btn,menu);
     });
   })();
   /* keep it where it is (T198): the position lock, the same flag the
@@ -1219,7 +1206,10 @@
     var c0=parseColor(cpCurrentFor(target))||{r:57,g:169,b:192,a:1};
     cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
     cpRenderRecent();cpSync();
-    cpEl.hidden=false;
+    /* on the stack, INSIDE the swatch menu that opened it (T213): the
+       owner keeps that menu open under it and closes both on Escape,
+       one layer at a time */
+    overlayShow(anchor,cpEl);
     var r=anchor.getBoundingClientRect(),w=236;
     var ph=cpEl.getBoundingClientRect().height||300;
     var left=Math.max(8,Math.min(r.left,window.innerWidth-w-8));
@@ -1248,7 +1238,7 @@
       else {a.bg=1;a.bgc=str;}});
     cpSavedEl=null;cpSavedRange=null;
     cpPushRecent(str);
-    if(cpEl) cpEl.hidden=true;
+    if(cpEl) overlayHide(cpEl);
   }
   (function(){
     var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),al=$('#cp-alpha');
@@ -1273,15 +1263,10 @@
     var swbgc=$('#swbg-custom');
     if(swbgc) swbgc.addEventListener('click',function(){
       openColorPop('fill',swbgc);});
-    document.addEventListener('mousedown',function(e){
-      if(cpEl&&!cpEl.hidden&&!cpEl.contains(e.target)
-         &&e.target!==swc&&e.target!==swbgc){
-        cpEl.hidden=true;pvEnd(false);}   /* closed without applying */
-    });
-    document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&cpEl&&!cpEl.hidden){e.stopPropagation();
-        cpEl.hidden=true;pvEnd(false);}
-    },true);
+    /* closed by the owner (outside click, Escape) or by its own buttons:
+       either way the preview is put back */
+    if(cpEl) new MutationObserver(function(){if(cpEl.hidden) pvEnd(false);})
+      .observe(cpEl,{attributes:true,attributeFilter:['hidden']});
   })();
   var fontSelEl=$('#fmt-font');
   if(fontSelEl){

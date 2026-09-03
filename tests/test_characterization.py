@@ -934,8 +934,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # light theme flat, dead scrollbar rules gone, the Change layout gallery
 # as tiles, icons on nine buttons, names, help, the layouts' dead ids.
 # deck.html, deck.css, help.html, branding.py and five deck fragments.
-EXPECTED_MD5 = "10bf2bcb6f3f176a6fefd4d26348c530"
-EXPECTED_BYTES = 3337863
+# T213/T214 2026-09-03: every remaining private menu joins the overlay
+# stack; Before you print opens full screen with a door of its own on
+# View. deck.html, deck.css and six deck fragments.
+EXPECTED_MD5 = "9013c385ad7e5dc5a68d1c0ae450cc2f"
+EXPECTED_BYTES = 3340095
 
 
 def _render_example() -> str:

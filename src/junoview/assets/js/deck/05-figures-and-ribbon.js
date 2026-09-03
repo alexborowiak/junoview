@@ -984,7 +984,7 @@
       +'currently "'+((rbnLayoutById(rbnCurrentId())||{}).name||'Default')
       +'"';
     lay.addEventListener('click',function(e){
-      e.stopPropagation();m.remove();openRibbonGallery();});
+      e.stopPropagation();overlayDrop(m);openRibbonGallery();});
     m.appendChild(lay);
     var note=document.createElement('div');
     note.className='ff-none';
@@ -1049,7 +1049,7 @@
       ribbonSave(null);
       $$('#edit-tools .rbn-hid').forEach(function(el){
         el.classList.remove('rbn-hid');});
-      m.remove();
+      overlayDrop(m);
       /* ORDER CAN BE RESTORED NOW. This said "reload the page" under a
          comment that order 'cannot be un-appended', which was true when
          T11 shipped and stopped being true the moment the layout engine
@@ -1062,14 +1062,7 @@
     });
     m.appendChild(rb);
     var bar=$('#edit-tools');
-    document.body.appendChild(m);
-    floatMenu(bar,m);
-    setTimeout(function(){
-      document.addEventListener('click',function off(e){
-        if(m.contains(e.target)) return;
-        m.remove();document.removeEventListener('click',off);
-      });
-    },0);
+    overlayMount(bar,m);               /* on the stack (T213) */
   }
   (function(){
     var bar=$('#edit-tools');

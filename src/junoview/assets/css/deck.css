@@ -4677,3 +4677,12 @@ body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
    The spacing trio wears a small caption inside its cell. */
 .rbn-cell .cell-lab{align-self:center;font-family:var(--mono);font-size:9px;
   letter-spacing:.1em;text-transform:uppercase;color:#8ba0b2;padding:0 6px 0 2px;}
+
+/* ---- T214: Before you print, full screen --------------------------------
+   The same rows the pane drew, as cards in the review grid. */
+.img-ov .pf-row{display:flex;flex-direction:column;gap:4px;text-align:left;
+  padding:12px 14px;border-radius:9px;border:1px solid #ffffff14;
+  background:#ffffff05;font-size:13px;}
+.img-ov .pf-row .pf-what{font-size:14px;font-weight:600;}
+.img-ov .pf-row .pf-why{font-size:12.5px;}
+body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}

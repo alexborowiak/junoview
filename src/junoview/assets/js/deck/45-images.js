@@ -645,11 +645,8 @@
          gallery's three-column grid, which is why every worded menu in
          this file names the class that makes it a column */
       m.className='sh-menu vw-menu obj-src-menu';m.id='obj-src-menu';
-      m.hidden=true;document.body.appendChild(m);
-      /* the same outside-click close every drawn menu in the editor
-         uses; there is no shared closer to call */
-      document.addEventListener('click',function(e){
-        if(!m.hidden&&!m.contains(e.target)) m.hidden=true;});
+      overlayHide(m);
+      ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
     }
     m.innerHTML='';
     menuHead(m,'put in this frame');
@@ -682,10 +679,10 @@
       b.title=r[2];
       b.innerHTML=r[0]+' '+r[1];
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.hidden=true;r[3]();});
+        e.stopPropagation();overlayHide(m);r[3]();});
       m.appendChild(b);
     });
-    m.hidden=false;
+    overlayShow(btn,m);
     floatMenu(btn,m);
   }
   /* Ctrl+V already puts a clipboard image on the slide; this is the same
@@ -838,6 +835,24 @@
     /* closing a menu closes the ones opened from inside it */
     overlayStack.splice(at).reverse().forEach(overlayCloseOne);
     overlaySync();
+  }
+  /* A RUNTIME-BUILT MENU (T213): appended inside the editor's layer,
+     shown through the owner, floated under its button, and removed
+     when the owner hides it. `overlayDrop` is what a row calls after a
+     pick: through the owner, so the stack never holds a dead node. */
+  function overlayMount(btn,m){
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    m.hidden=true;
+    overlayShow(btn,m);
+    if(btn) floatMenu(btn,m);
+    new MutationObserver(function(){
+      if(m.hidden&&m.parentNode) m.remove();
+    }).observe(m,{attributes:true,attributeFilter:['hidden']});
+  }
+  function overlayDrop(m){
+    if(!m) return;
+    overlayHide(m);
+    if(m.parentNode) m.remove();
   }
   function overlayBoot(){
     document.addEventListener('click',function(e){

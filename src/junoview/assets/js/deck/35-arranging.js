@@ -569,20 +569,11 @@
       var k=document.createElement('kbd');
       k.textContent=String(r.n);b.appendChild(k);
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.remove();selectBy(r.key,r.val);});
+        e.stopPropagation();overlayDrop(m);selectBy(r.key,r.val);});
       m.appendChild(b);
     });
     if(ev) floatAt(m,ev);
-    else {
-      document.body.appendChild(m);
-      floatMenu(anchor,m);
-      setTimeout(function(){
-        document.addEventListener('click',function off(e){
-          if(m.contains(e.target)) return;
-          m.remove();document.removeEventListener('click',off);
-        });
-      },0);
-    }
+    else overlayMount(anchor,m);        /* on the stack (T213) */
   }
   /* the geometry + look that travel; content never does.
 
@@ -1487,17 +1478,10 @@
         b.appendChild(document.createTextNode(o[1]));
         b.title=o[2];
         b.addEventListener('click',function(e){
-          e.stopPropagation();m.remove();armMatch(o[0]);});
+          e.stopPropagation();overlayDrop(m);armMatch(o[0]);});
         m.appendChild(b);
       });
-    document.body.appendChild(m);
-    floatMenu(btn,m);
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)) m.remove();
-        document.removeEventListener('click',once);
-      });
-    },0);
+    overlayMount(btn,m);               /* on the stack (T213) */
   }
   function armMatch(dir){
     var s=pres.slides[cur],idxs=selIdxs().filter(function(i){
