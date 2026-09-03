@@ -6269,6 +6269,41 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* ---- T229: THE OBJECT'S HISTORY IS A TABLE ----------------------------
+   Four columns -- when, what changed, what it looked like, and the way
+   back -- because a stack of cards made every state look like an event
+   rather than a row you compare against its neighbours. A big object's
+   preview is a button: a 38px schematic of a table says nothing. */
+.oh-head,.oh-row{display:grid;
+  grid-template-columns:96px minmax(0,1fr) 76px 78px;
+  align-items:center;gap:9px;padding:6px 12px;}
+.oh-head{font-family:var(--sans);font-size:11px;font-weight:600;
+  color:#8ea3b5;border-bottom:1px solid #ffffff1c;position:sticky;top:0;
+  background:var(--chrome-2,#16273a);z-index:1;}
+.oh-row{border-left:3px solid transparent;border-bottom:1px solid #ffffff10;}
+.oh-row.oh-open{grid-template-rows:auto auto;}
+.oh-c{min-width:0;}
+.oh-when{font-family:var(--sans);font-size:11.5px;color:#9fb3c4;}
+.oh-look{display:flex;align-items:center;}
+.oh-act{display:flex;justify-content:flex-end;}
+.oh-prev{font-size:11px;padding:3px 8px;}
+.oh-big{grid-column:1/-1;width:100%;max-height:none;height:150px;
+  margin-top:6px;}
+.img-ov .oh-head,.img-ov .oh-row{grid-template-columns:130px minmax(0,1fr)
+  96px 96px;}
+.img-ov .oh-list{display:block;}
+body.light .oh-head{background:#fff;}
+
+/* ---- T228: THUMBNAILS MEANS THUMBNAILS ---------------------------------
+   The strip's Thumbnails view still printed every slide's title beside
+   the picture, which is what "Thumbnails and headings" is for
+   (2026-09-03, user: "I don't know why the thumbnails only view for a
+   slide has the title still"). */
+#film-list[data-fv="thumb"] .film-t{display:none;}
+/* ...and the current slide keeps its name, because that row is the
+   inline editor and the name is its heading */
+#film-list[data-fv="thumb"] .film-row.current .film-t{display:block;}
+
 /* ---- T227: KINDS OF BULLET, KINDS OF NUMBERING ----------------------
    The element carries the kind as a class and the content is only the
    items, so a marker is a rule here and never a rewrite of the words.
@@ -6670,8 +6705,10 @@ body.light .mp-menu .find-ck:hover{background:#00000008;}
   text-align:left;min-width:0;font-family:var(--sans);}
 .film-label .film-t{overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;}
-.film-label .film-n{font-family:var(--mono);font-size:9.5px;color:#6c8093;
-  width:15px;flex:none;text-align:right;}
+/* T228: a slide number you can read. It was 9.5px in the mono face
+   (2026-09-03, user: "the slide numbers are way too small"). */
+.film-label .film-n{font-family:var(--mono);font-size:12.5px;
+  color:#8ea3b5;width:22px;flex:none;text-align:right;}
 /* Optional and omitted are words in the strip, not secret state in a
    context menu. Only the thumbnail/title dim: controls and the current
    inline editor stay fully usable (T50). */
@@ -12378,6 +12415,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="hm-dupslide"
               title="Duplicate this slide, in place"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg>
               Duplicate</button>
+              <!-- T228: how a slide is made optional. It was a row in
+                   a right-click menu on the strip, which is why the
+                   user had to ask. -->
+              <button class="dbtn rbn-sm" id="hm-optional"
+                aria-pressed="false"
+                title="Mark this slide optional, so Running late can
+ skip it when the talk overruns"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Optional</button>
               <button class="dbtn rbn-sm dbtn-warn" id="hm-delslide"
               title="Delete this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Delete</button>
             </span>
@@ -12412,6 +12456,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Show">
+                <!-- T228: Notes beside Layers. It is a thing you
+                     write while building, so it belongs on the tab
+                     you build from. -->
+                <button class="fx-tile big-tile" id="hm-notes"
+                  title="Your speaker notes for this slide, how long
+ you want it to take, and what your rehearsals actually took"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z"/><path d="M9.2 2.4v3.4h3.4"/><path d="M5.4 9h5.2M5.4 11.4h3.4"/></svg><span>Notes</span></button>
                 <button class="fx-tile big-tile" id="hm-layers" aria-pressed="false"
                   title="Every object on this slide as a list: reorder, hide,
  lock, group"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg><span>Layers</span></button>
@@ -12947,6 +12998,20 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   min="0" max="100" step="1" aria-label="Opacity percent">
                 <span class="fmt-opval" id="fmt-opval">100%</span></span>
               </span>
+              <!-- T229: CLONES, WHERE YOU CAN SEE THEM (2026-09-03,
+                   user: "where is the clone object features as well
+                   and then the ability to see the clones"). Both were
+                   rows inside the Layers pane's Actions popover --
+                   a menu, in a pane, behind a button. -->
+              <button class="dbtn etm" id="fmt-cmp-make" hidden
+                title="Save the selected items as a named thing you
+ can place again. Every copy keeps its own words and its own figure,
+ and changing the original changes them all"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" stroke-dasharray="2.6 2.3"/><rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/><circle cx="10.2" cy="10.2" r="2.1"/></svg> Make clones&#8230;</button>
+              <button class="dbtn etm" id="fmt-cmp-find" hidden
+                title="Every place in this deck this clone has been
+ put — pick one to go there"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Its clones</button>
               <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
@@ -13302,9 +13367,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <label class="np-lab" for="np-goal">How long you want to spend
             here</label>
           <div class="np-row">
+            <!-- T228: minutes AND seconds. It was one field stepping
+                 in halves of a minute, so a two-and-a-half-minute
+                 slide was the finest thing you could ask for
+                 (2026-09-03, user: "make the time not just in 30
+                 second intervals, but can be seconds and minutes"). -->
             <input id="np-goal" class="np-goal" type="number" min="0"
-              max="180" step="0.5" placeholder="—">
-            <span class="np-unit">minutes</span>
+              max="180" step="1" placeholder="—">
+            <span class="np-unit">min</span>
+            <input id="np-goalsec" class="np-goal" type="number" min="0"
+              max="59" step="1" placeholder="—"
+              aria-label="Seconds">
+            <span class="np-unit">sec</span>
             <button class="dbtn np-clear" id="np-goalclear" aria-label="No target for this slide"
               title="No target for this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg>
               </button>
@@ -22885,6 +22959,13 @@ window.JunoPptx = (function () {
      slide that does not exist; the thing a person actually needs off a
      timeline row is "which one was this" — the shape, the colour, and
      the words if it had any. */
+  /* big enough that a 38px schematic would be a lie about it */
+  function ohIsBig(a){
+    if(!a) return false;
+    if(a.k==='table'||a.k==='cell'||a.k==='flip'||a.k==='chart')
+      return true;
+    return ((a.w||0)*(a.h||0))>=1200;
+  }
   function ohThumb(a){
     var d=document.createElement('div');
     d.className='oh-thumb';
@@ -22948,31 +23029,71 @@ window.JunoPptx = (function () {
       list.appendChild(g);
       return;
     }
+    /* ---- T229: A TABLE, NOT A STACK OF CARDS ------------------------
+       (2026-09-03, user: "the history is kind of weird. Make it when a
+       list that are all rows, and columns are some of the info. 'Put it
+       back to this' should be revert lol. Then there should be a
+       preview if it is small, says a shape, or a preview button if it
+       is something large like a table.")
+       Four columns: when, what changed, what it looked like, and the
+       way back. A small object draws its schematic in the row; a big
+       one -- a table, a figure, a flip book -- is a button, because a
+       116px schematic of a table says nothing and a row tall enough to
+       say something is not a row any more. */
+    var head=document.createElement('div');
+    head.className='oh-head';
+    ['When','What changed','Looked like',''].forEach(function(t){
+      var c=document.createElement('div');
+      c.className='oh-hc';c.textContent=t;head.appendChild(c);
+    });
+    list.appendChild(head);
     hist.forEach(function(e,k){
       var row=document.createElement('div');
       row.className='oh-row'+(e.now?' oh-now':'');
-      row.appendChild(ohThumb(e.a));
-      var body=document.createElement('div');
-      body.className='oh-body';
-      var h=document.createElement('div');
-      h.className='oh-h';
-      h.textContent=e.now?'now':(k===hist.length-1?'earliest kept'
+      var when=document.createElement('div');
+      when.className='oh-c oh-when';
+      when.textContent=e.now?'now':(k===hist.length-1?'earliest kept'
         :(k+' step'+(k===1?'':'s')+' ago'));
-      body.appendChild(h);
-      var w=document.createElement('div');
-      w.className='oh-what';w.textContent=e.what;
-      body.appendChild(w);
-      row.appendChild(body);
+      row.appendChild(when);
+      var what=document.createElement('div');
+      what.className='oh-c oh-what';what.textContent=e.what;
+      what.title=e.what;
+      row.appendChild(what);
+      var look=document.createElement('div');
+      look.className='oh-c oh-look';
+      if(ohIsBig(e.a)){
+        var pb=document.createElement('button');
+        pb.className='dbtn oh-prev';
+        pb.textContent='Preview';
+        pb.title='Draw this state large enough to read';
+        pb.addEventListener('click',function(ev){
+          ev.stopPropagation();
+          var open=row.classList.toggle('oh-open');
+          pb.textContent=open?'Hide':'Preview';
+          if(open){
+            var big=ohThumb(e.a);
+            big.classList.add('oh-big');
+            row.appendChild(big);
+          } else {
+            var b2=row.querySelector('.oh-big');
+            if(b2) b2.remove();
+          }
+        });
+        look.appendChild(pb);
+      } else look.appendChild(ohThumb(e.a));
+      row.appendChild(look);
+      var act=document.createElement('div');
+      act.className='oh-c oh-act';
       if(!e.now){
         var b=document.createElement('button');
-        b.className='dbtn oh-do';b.textContent='Put it back to this';
-        b.title='Writes this state onto the object as it stands now. It '
-          +'is an ordinary edit \u2014 Ctrl+Z undoes it, and nothing '
-          +'else on the page moves.';
-        b.addEventListener('click',function(){
-          ohRestore(e.a);});
-        row.appendChild(b);
+        b.className='dbtn oh-do';b.textContent='Revert';
+        b.title='Put the object back to this state. It is an ordinary '
+          +'edit \u2014 Ctrl+Z undoes it, and nothing else on the page '
+          +'moves.';
+        b.addEventListener('click',function(){ohRestore(e.a);});
+        act.appendChild(b);
       }
+      row.appendChild(act);
       list.appendChild(row);
     });
   }
@@ -32953,8 +33074,13 @@ window.JunoPptx = (function () {
     var ta=$('#np-notes'),gi=$('#np-goal'),ti=$('#np-total'),
         tot=$('#np-tot');
     if(ta&&document.activeElement!==ta) ta.value=(sl&&sl.notes)||'';
+    /* T228: the target is stored in minutes and typed in two boxes,
+       so 2:20 is sayable */
+    var gs=$('#np-goalsec'),g0=slideGoal(sl)||0;
     if(gi&&document.activeElement!==gi)
-      gi.value=slideGoal(sl)||'';
+      gi.value=g0?Math.floor(g0):'';
+    if(gs&&document.activeElement!==gs)
+      gs.value=g0?Math.round((g0-Math.floor(g0))*60):'';
     if(ti&&document.activeElement!==ti)
       ti.value=pres.talkMins||'';
     var dn=$('#np-decknotes');
@@ -33024,22 +33150,40 @@ window.JunoPptx = (function () {
       ta.addEventListener('blur',function(){
         if(typeof histPush==='function') histPush();});
     }
+    /* T228: the target is two boxes, minutes and seconds, and both
+       write the one stored number -- which is still minutes, so every
+       deck already written reads back unchanged */
+    function goalWrite(){
+      var sl=pres.slides[cur]; if(!sl) return;
+      var gi2=$('#np-goal'),gs2=$('#np-goalsec');
+      var m=parseFloat(gi2&&gi2.value)||0;
+      var sec=parseFloat(gs2&&gs2.value)||0;
+      var v=Math.round((m+sec/60)*1000)/1000;
+      if(v>0) sl.goal=v; else delete sl.goal;
+      markDirty(true);presenterPush();
+    }
+    var gs=$('#np-goalsec');
+    if(gs){
+      gs.addEventListener('keydown',function(e){e.stopPropagation();});
+      gs.addEventListener('input',goalWrite);
+      gs.addEventListener('blur',function(){
+        if(typeof histPush==='function') histPush();
+        renderNotesPane();});
+    }
     var gi=$('#np-goal');
     if(gi){
       gi.addEventListener('keydown',function(e){e.stopPropagation();});
-      gi.addEventListener('input',function(){
-        var sl=pres.slides[cur]; if(!sl) return;
-        var v=parseFloat(gi.value);
-        if(v>0) sl.goal=v; else delete sl.goal;
-        /* QUIET, and one undo entry on blur -- the rule #np-notes above
-           already follows. Typing "10.5" here pushed four whole-deck
-           snapshots, and the history keeps twenty, so setting the times
-           on a few slides quietly evicted real work from the undo
-           stack. Found by the parallel branch's T57 (2026-08-30). */
-        markDirty(true);renderNotesPane();presenterPush();
-      });
+      /* QUIET, and one undo entry on blur -- the rule #np-notes above
+         already follows. Typing "10.5" here pushed four whole-deck
+         snapshots, and the history keeps twenty, so setting the times
+         on a few slides quietly evicted real work from the undo
+         stack. Found by the parallel branch's T57 (2026-08-30).
+         The pane is NOT redrawn on every keystroke either: it would
+         rewrite the two boxes under the caret (T228). */
+      gi.addEventListener('input',goalWrite);
       gi.addEventListener('blur',function(){
-        if(typeof histPush==='function') histPush();});
+        if(typeof histPush==='function') histPush();
+        renderNotesPane();});
     }
     var gc=$('#np-goalclear');
     if(gc) gc.addEventListener('click',function(){
@@ -35548,7 +35692,7 @@ window.JunoPptx = (function () {
     /* the Object group's provenance row (T198): where it came from,
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
-    +'#fmt-path #fmt-lock '
+    +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-find '
 
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
@@ -36069,6 +36213,16 @@ window.JunoPptx = (function () {
     show('#fmt-lock',isNum,isNum&&pinned(a));
     /* T220: what this object has been through, one click away */
     show('#fmt-hist',isNum);
+    /* T229: making a set of clones, and finding the ones that exist */
+    var selCount=selIdxs().length;
+    var cmpOn=!!(a&&a.cmp&&a.cinst);
+    show('#fmt-cmp-make',isNum&&selCount>=1&&!cmpOn);
+    show('#fmt-cmp-find',cmpOn);
+    var cf=$('#fmt-cmp-find');
+    if(cf&&cmpOn&&typeof cmpInstances==='function'){
+      var cn=cmpInstances(a.cmp).length;
+      cf.innerHTML=bic('locate')+' Its clones ('+cn+')';
+    }
     /* the Source window's door (T177): anything that came from
        somewhere -- a placed cell, a picture that knows its file, or
        anything with a provenance to show */
@@ -43943,6 +44097,31 @@ window.JunoPptx = (function () {
      there is no button left to hang from — row() removes the menu
      before it calls you — so the list is placed near the top of the
      stage instead. */
+  /* T229: the two ribbon doors. They call exactly what the Layers
+     pane's rows called; the pane keeps its rows. */
+  function cloneDoorsBoot(){
+    var mk=$('#fmt-cmp-make');
+    if(mk) mk.addEventListener('click',function(e){
+      e.stopPropagation();
+      var idxs=selIdxs().filter(function(i){return typeof i==='number';});
+      if(!idxs.length){toast('Select something first');return;}
+      var nm=prompt('Name for this set of clones:','FigureCaption');
+      if(nm===null) return;
+      nm=nm.trim(); if(!nm) return;
+      var id=cmpDefine(nm,idxs);
+      toast(id?('\u201c'+nm+'\u201d saved \u2014 place another from '
+        +'the canvas menu, and every copy follows the original')
+        :'Nothing there that could be saved');
+      if(typeof renderSelPane==='function') renderSelPane();
+      if(typeof showFmt==='function') showFmt();
+    });
+    var fd=$('#fmt-cmp-find');
+    if(fd) fd.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s2=pres.slides[cur],a2=annotByIdx(s2,selAnnot);
+      if(a2&&a2.cmp) cmpInstMenu(a2.cmp,fd);
+    });
+  }
   function cmpInstMenu(id,btn){
     var old=$('#cmp-inst-menu'); if(old) old.remove();
     var def=cmpStore()[id]||{};
@@ -53451,39 +53630,18 @@ window.JunoPptx = (function () {
         if(slideMatchHit(i)) return;
         if(i===cur) return;
         cur=i;activePane=-1;selAnnot=null;selSet=[];refresh();});
+      /* T228: NO CONTROLS ON THE ROW. Four buttons appeared over
+         every slide on hover -- move up, move down, duplicate,
+         delete -- on top of the thumbnail you were trying to click
+         (2026-09-03, user: "when you hover over a slide it brings up
+         all the options around moving and duplicating. These are not
+         needed here as you can just do that with other buttons or
+         click and drag and just make it really hard to actually click
+         on a slide"). Reordering is the drag the row already is;
+         Duplicate and Delete are on Home; and the right-click menu
+         keeps every one of them, move included. A poster's Rename
+         goes there too. */
       row.appendChild(lbl);
-      var ctr=document.createElement('span');ctr.className='film-ctr';
-      var poster=pageOf().poster;
-      var acts=[['↑',function(){moveSlide(i,-1);},
-                 poster?'Move this version up':'Move slide up'],
-                ['↓',function(){moveSlide(i,1);},
-                 poster?'Move this version down':'Move slide down'],
-                [bic('copy'),function(){dupSlide(i);},
-                 poster?'Duplicate this version':'Duplicate slide'],
-                [bic('exit'),function(){delSlide(i);},
-                 poster?'Delete this version':'Delete slide']];
-      /* an autoname is a starting point, not a decision. This goes on a
-         BUTTON rather than a double-click on the row: the row's own click
-         re-renders the strip, so by the time a dblclick arrived the node
-         it was editing had already been replaced (2026-08-10). */
-      if(poster) acts.splice(2,0,[bic('pen'),function(){
-        var s2=pres.slides[i]; if(!s2) return;
-        var v=prompt('Name this version:',s2.label||slideTitle(s2));
-        if(v==null) return;
-        v=v.trim();
-        if(v) s2.label=v; else delete s2.label;
-        markDirty();renderFilm();
-      },'Rename this version']);
-      acts.forEach(function(p){
-        var b=document.createElement('button');b.className='film-mini';
-        b.innerHTML=p[0];   /* fixed strings / bic() markup from above */
-        b.title=p[2];
-        b.setAttribute('aria-label',p[2]);
-        b.addEventListener('click',function(ev){
-          ev.stopPropagation();p[1]();});
-        ctr.appendChild(b);
-      });
-      row.appendChild(ctr);
       list.appendChild(row);
     });
   }
@@ -53699,6 +53857,16 @@ window.JunoPptx = (function () {
       });
     }
     menuHead(m,poster?'this page':'this slide');
+    row('Move it up',function(){moveSlide(i,-1);},null,'prev');
+    row('Move it down',function(){moveSlide(i,1);},null,'next');
+    if(pageOf().poster) row('Rename this version\u2026',function(){
+      var s2=pres.slides[i]; if(!s2) return;
+      var v=prompt('Name this version:',s2.label||slideTitle(s2));
+      if(v==null) return;
+      v=v.trim();
+      if(v) s2.label=v; else delete s2.label;
+      markDirty();renderFilm();
+    },null,'pen');
     row('Duplicate',function(){dupSlide(i);},null,'copy');
     row('Delete',function(){delSlide(i);},null,'exit');
     floatAt(m,ev);
@@ -54802,6 +54970,35 @@ window.JunoPptx = (function () {
      of the same name, and the two toggles read their state off the
      row's words, so nothing is decided twice. LAYERS ON HOME: a tile
      that presses View's Layers button and mirrors its pressed state. */
+  /* T228: the two doors the ribbon was missing. Notes was reachable
+     only from the Present tab, which is the wrong tab for something
+     you write while building (2026-09-03, user: "put the notes with
+     the home next to layers. I like the notes"); and a slide could
+     only be made optional from a right-click menu on the strip
+     ("how are slides made optional?"). */
+  function homeDoorsBoot(){
+    var n=$('#hm-notes');
+    if(n) n.addEventListener('click',function(e){
+      e.stopPropagation();
+      var row=$('#pl-notes'); if(row) row.click();
+    });
+    var o=$('#hm-optional');
+    if(o) o.addEventListener('click',function(e){
+      e.stopPropagation();toggleOptional(cur);syncHomeDoors();
+    });
+    syncHomeDoors();
+  }
+  function syncHomeDoors(){
+    var o=$('#hm-optional'); if(!o) return;
+    var s=(pres&&pres.slides)?pres.slides[cur]:null;
+    var on=!!(s&&s.opt);
+    o.setAttribute('aria-pressed',on?'true':'false');
+    o.title=on
+      ?'This slide is optional: Running late will skip it. Click to '
+        +'make it required again'
+      :'Mark this slide optional, so Running late can skip it when '
+        +'the talk overruns';
+  }
   function presentTabBoot(){
     [['pr-here','pl-here'],['pr-start','pl-start'],
      ['pr-presenter','pl-presenter'],['pr-talk','pl-talk'],
@@ -58410,6 +58607,8 @@ window.JunoPptx = (function () {
   ohOverviewBoot();           /* History of this object, full screen */
   layoutBuilderBoot();        /* layouts of your own (T226) */
   listGalleryBoot();          /* kinds of bullet and numbering (T227) */
+  homeDoorsBoot();            /* Notes and Optional on Home (T228) */
+  cloneDoorsBoot();           /* clones, on the Object tab (T229) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
