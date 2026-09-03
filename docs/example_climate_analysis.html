@@ -4540,8 +4540,6 @@ body.light .img-row{color:var(--ink-2);}
 /* T188: the text strip. A specimen "Aa" over the type's name; the strip
    scrolls and a tile cut at the edge is the affordance (T171). */
 /* T196/T197: the layout tiles and the shape tiles are strips too */
-.fx-strip.lay-strip{width:330px;overflow-x:auto;overflow-y:hidden;
-  scroll-snap-type:x mandatory;scrollbar-width:thin;}
 .lay-strip .dbtn.lay{flex:0 0 72px;scroll-snap-align:start;display:flex;
   width:72px;min-width:0;white-space:normal;text-align:center;
   flex-direction:column;align-items:center;justify-content:center;
@@ -4554,8 +4552,6 @@ body.light .img-row{color:var(--ink-2);}
    in the two menus */
 .lay-strip .dbtn.lay[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));}
-.fx-strip.shape-strip{width:300px;overflow-x:auto;overflow-y:hidden;
-  scroll-snap-type:x mandatory;scrollbar-width:thin;}
 .shape-strip .fx-tile{flex:0 0 72px;scroll-snap-align:start;}
 .shape-strip .fx-tile .sh-ico{width:26px;height:22px;}
 /* the provenance cell on the Object tab (T198): a label over a name */
@@ -4563,11 +4559,8 @@ body.light .img-row{color:var(--ink-2);}
 .fmt-path b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   display:block;max-width:170px;}
 .rbn-row .lay-tidy{height:30px;}
-.fx-strip.tx-strip,.fx-strip.page-strip{width:312px;overflow-x:auto;
-  overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:thin;}
 /* three page sizes in sight and the rest a scroll or the chevron away
    (T204): Design has to seat Layout in front of this group */
-.fx-strip.page-strip{width:206px;}
 .tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 72px;
   scroll-snap-align:start;}
 .tx-tile-a{display:flex;align-items:center;justify-content:center;
@@ -6467,9 +6460,14 @@ ol.an-ul{list-style:decimal;}
   border-color:var(--cyan-deep);color:#fff;}
 /* the Layouts dropdown: the whole template catalog, off the panel and
    into a ribbon menu */
-.sh-menu.lay-menu{display:block;width:442px;max-height:min(64vh,470px);
-  overflow-y:auto;padding:8px;}
-.lay-menu .lay-picker{margin:0;}
+/* T212: the Change layout gallery is the one tile, wrapped, no scrollbar */
+.sh-menu.lay-menu{display:block;width:580px;max-height:none;
+  overflow:visible;padding:8px;}
+.lay-menu .lay-picker{margin:0;display:flex;flex-wrap:wrap;gap:6px;
+  max-height:none;overflow:visible;}
+.lay-menu .lay-picker .dbtn.lay{flex:0 0 72px;width:72px;height:56px;
+  padding:4px 3px;align-items:center;}
+.lay-menu .lay-picker .layico2{width:56px;}
 /* catalog section headings (Slide layouts / Poster layouts) */
 .lay-sec{grid-column:1/-1;font-family:var(--mono);font-size:9px;
   letter-spacing:.14em;text-transform:uppercase;color:#66798a;
@@ -7731,8 +7729,12 @@ body.th-colorful .edit-tools .dbtn:hover:not([aria-pressed="true"]),
 body.th-colorful .edit-tools .fx-tile:hover:not(.on){
   background:color-mix(in srgb,var(--accent) 16%,transparent);
   border-color:color-mix(in srgb,var(--accent) 35%,transparent);}
-body.light .edit-tools .dbtn.rbn-sm,body.light .edit-tools .fx-tile,
+body.light .edit-tools .dbtn.rbn-sm,body.light .edit-tools .dbtn.etm,
+body.light .edit-tools .rbn-cell .dbtn,body.light .edit-tools .fx-tile,
 body.light .edit-tools .dbtn.lay{border-color:transparent;background:transparent;}
+/* a primary button keeps its fill on the flat ribbon (Finish in Quick animate) */
+.edit-tools .dbtn.rbn-sm.primary,body.light .edit-tools .dbtn.rbn-sm.primary{
+  background:var(--cyan);border-color:var(--cyan);color:#fff;}
 
 /* ---- T207: X Y W H on the Object tab ------------------------------------
    Two cells in one column: position over size. A label letter, a
@@ -7779,6 +7781,11 @@ body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
 .lay-ideas .li-grid{gap:16px;}
 .lay-ideas .li-card{padding:10px;}
 .lay-ideas .li-lab{font-size:13px;}
+
+/* ---- T212: a run says what it is ---------------------------------------
+   The spacing trio wears a small caption inside its cell. */
+.rbn-cell .cell-lab{align-self:center;font-family:var(--mono);font-size:9px;
+  letter-spacing:.1em;text-transform:uppercase;color:#8ba0b2;padding:0 6px 0 2px;}
 </style>
 <script>
 window.MathJax = {
@@ -10305,7 +10312,7 @@ either end moves.</li>
 <li><b>Shape fills.</b> <i>Fill</i> offers none, a tint of the shape's own
 line colour, a solid colour, or a <b>gradient</b> &mdash; linear across,
 linear down, or radiating from the centre.</li>
-<li><b>Curved text.</b> <i>Layout &#9662; &rarr; Curve</i> bends a
+<li><b>Curved text.</b> <i>Paragraph &#9662; &rarr; Curve</i> bends a
 text box along an arc. Click
 into the box and it straightens while you type, then curves again when
 you click away &mdash; a caret cannot sit on a curve. A deeper curve needs
@@ -10351,12 +10358,12 @@ objects on how many slides will change before you do it. Placed notebook
 cards are never rewritten by the text half &mdash; those words belong to
 the notebook.</li>
 <li><b>Locking</b> comes in two strengths, on the right-click menu and on
-the <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Objects pane's lock button (which cycles
+the <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Layers pane's lock button (which cycles
 through them). <b>Lock position</b> pins an item where it is and leaves
 everything else alone &mdash; select it, resize it, restyle it, type in
 it; it just will not drag or nudge. That is usually what a figure frame
 wants. <b>Lock fully</b> takes it off the canvas altogether: no clicking,
-no dragging, no typing. The Objects pane is the way back &mdash; or hold
+no dragging, no typing. The Layers pane is the way back &mdash; or hold
 <kbd>Alt</kbd> while dragging a selection band, which sweeps up fully
 locked items too.</li>
 <li><b>The whole talk at once.</b> The slide strip's view menu has an
@@ -10573,7 +10580,7 @@ press, and each one does that finding only. Things that are out by less
 than a hair are already aligned as far as anyone can see; things out by
 more than a little are a decision, not a slip, and it leaves both
 alone.</li>
-<li><b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Check</b> reads the page the way a
+<li><b><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Review</b> reads the page the way a
 print shop will: figures
 that will print soft, anything off the page or inside the 20mm margin,
 text without enough contrast to read, and empty frames. Click any finding
@@ -10893,9 +10900,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         <div class="dc-mhead">page</div>
         <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
         <button class="dc-mi" id="mi-crop"
-          title="Add trim marks just outside the page for the print
- shop to cut to. The page itself keeps its exact size &mdash; the sheet
- grows by 5mm on every side to hold them">Crop marks: off</button>
+          title="Add trim marks outside the page for the print shop to
+ cut to. The sheet grows by 5mm a side; the page keeps its size"
+          >Crop marks: off</button>
         <div class="dc-mhead dc-mhead-warn">careful — these lose work</div>
         <button class="dc-mi dc-mi-warn" id="mi-discard">Discard
           changes</button>
@@ -11302,6 +11309,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
               <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
+              <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
               <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
               <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
@@ -11333,6 +11341,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    proportion, the one in use lit; the strip scrolls
                    and a tile cut at the edge is the affordance. Built
                    from PAGE_PRESETS, the same table the menu was. -->
+              <span class="sh-drop" id="bg-drop">
+                <button class="dbtn rbn-sm" id="bg-btn"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Background colour and border, for this slide or
+ for every slide"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg> Background &#9662;</button>
+                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
+              </span>
               <span class="rbn-tall strip-frame" id="page-strip-frame">
                 <span class="fx-strip page-strip" id="page-strip"
                   role="group" aria-label="Page size"></span>
@@ -11344,14 +11360,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   <button class="strip-more" type="button" id="page-strip-more"
                     aria-expanded="false" title="Show all"
                     aria-label="Show all page sizes">&#9662;</button></span></span>
-              <span class="sh-drop" id="bg-drop">
-                <button class="dbtn rbn-sm" id="bg-btn"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Background colour and border, for this slide or
- for every slide"
-                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg> Background &#9662;</button>
-                <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
-              </span>
               <!-- The strip listing the OTHER pages belongs with the page
                    controls, not under View: it is the set this page is one
                    of, which is exactly what Layouts and Page size are
@@ -11375,10 +11383,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                by accident (2026-08-20). -->
           <span class="rbn-grp rbn-furn" data-tab="design">
             <span class="rbn-row">
-              <button class="dbtn rbn-sm" id="dc-wmark"
-                aria-pressed="false"
-                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3" y="2.2" width="10" height="11.6" rx="1"/><path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/></svg>
-   Watermark</button>
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
                 title="A line along the top of every page. {name}, {date},
@@ -11390,6 +11394,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="A line along the bottom of every page. {n} and {N}
  are the page number and the total, {sn} and {sN} the same within the
  section, and {sec} its name"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="2.4" width="12.4" height="11.2" rx="1.2"/><path d="M1.8 9.8h12.4"/><path d="M4.4 11.7h5.4"/></svg> Footer</button>
+              <button class="dbtn rbn-sm" id="dc-wmark"
+                aria-pressed="false"
+                title="A faint word across every page — DRAFT, CONFIDENTIAL, your name — behind the content"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3" y="2.2" width="10" height="11.6" rx="1"/><path d="m5.2 11.6 5.6-5.6"/><path d="m5.2 8.2 2.6-2.6"/></svg>
+   Watermark</button>
               <button class="dbtn rbn-sm" id="dc-nums"
                 aria-pressed="false"
                 title="A number on every slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="2.8" width="11.2" height="10.4" rx="1.2"/><path d="m6.6 6.9 1.8-1.4v5"/><path d="M6.4 10.5h4"/></svg> Numbers</button>
@@ -11398,7 +11406,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    belongs on the tab that owns page furniture
                    (JVUX-11). -->
               <button class="dbtn rbn-sm" id="dsg-masters"
-                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Masters</button>
+                title="A background and a header or footer that many slides share. Change the master and every slide using it follows"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.6v8.2"/><path d="m4.8 7.6 3.2 3.2 3.2-3.2"/><path d="M2.6 13.4h10.8"/></svg> Slide master&#8230;</button>
             </span>
             <span class="rbn-lab">Page furniture</span>
           </span>
@@ -11461,10 +11469,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    was the implementation's; the button says what the
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="The deck's palette: six named colours (Accent, Warm,
- Lift, Calm, Ink, Quiet), the corner radius and the gap between things.
- Give a box a named colour from the Deck row of its Colour or Fill
- menu; change the name here and every box wearing it follows"
+                title="Six named colours the deck shares, plus corner radius
+ and spacing. Give a box one from the Deck row of a colour menu; change
+ it here and every box follows"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Palette&#8230;</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
@@ -11477,6 +11484,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Find headings, body text, captions and figures that
  do not match across the deck, and fix each with one click"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg>
    Fix mismatched text&#8230;</button>
+              <!-- the whole-deck type screen was a row inside the Text styles
+                   menu: a screen behind a menu behind a door (T212) -->
+              <button class="dbtn rbn-sm" id="dsg-design-btn"
+                title="One screen for the deck's type: what each kind of
+ text looks like, and every slide with a box round each object"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg> Style system&#8230;</button>
             </span>
             <span class="rbn-lab">Type</span>
           </span>
@@ -12061,7 +12074,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             <span class="rbn-row">
               <!-- T208: text colour over fill; opacity beside them -->
               <span class="sh-drop" id="fmt-txcolwrap">
-                <button class="dbtn" id="fmt-txcol-btn" hidden
+                <button class="dbtn etm" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
                   title="Colour of the selected text / line / shape"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg>
                     Colour &#9662;</button>
@@ -12093,7 +12106,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 </div>
               </span>
               <span class="sh-drop" id="fmt-fillcolwrap">
-                <button class="dbtn" id="fmt-fillcol-btn" hidden
+                <button class="dbtn etm" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
                   title="Fill / background colour of the selected box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg>
                     Fill &#9662;</button>
@@ -12189,18 +12202,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               </span>
               <span class="rbn-cell" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
-                title="Align left">Left</button>
+                title="Align left"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7"/></svg> Left</button>
                 <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
-                title="Align centre">Centre</button>
+                title="Align centre"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7"/></svg> Centre</button>
                 <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
-                title="Align right">Right</button>
+                title="Align right"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7"/></svg> Right</button>
               </span>
               <button class="dbtn etm" id="fmt-bullets"
                 aria-pressed="false"
-                title="Bullet list on / off">&#8226; List</button>
+                title="Bullet list on / off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="3.4" cy="4.6" r="1.2"/><circle cx="3.4" cy="11.4" r="1.2"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> List</button>
               <button class="dbtn etm" id="fmt-numbers"
                 aria-pressed="false"
-                title="Numbered list on / off">1. List</button>
+                title="Numbered list on / off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Numbered</button>
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
@@ -12351,7 +12364,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn etm" id="fmt-lockar" hidden
                 aria-pressed="false"
                 title="Keep the proportions while you drag a handle. Hold
- Shift while dragging to do the opposite"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Keep shape</button>
+ Shift while dragging to do the opposite"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Lock aspect ratio</button>
               <span class="rbn-cell rbn-geom" id="fmt-geom-xy" hidden
                 role="group" aria-label="Position, in millimetres">
                 <label class="geo" title="Left edge, from the left of the page"
@@ -12374,8 +12387,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
- picture. This is the crop you want nine times in ten &mdash; the caret
- beside it holds the shapes and the free-hand crop"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 1.8v9.6h9.6"/><path d="M1.8 4.6h9.6v9.6"/></svg>
+ picture. The caret beside it holds the shapes and the free-hand crop"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 1.8v9.6h9.6"/><path d="M1.8 4.6h9.6v9.6"/></svg>
                   Crop</button>
                 <button class="dbtn etm tx-caret" id="fmt-crop-caret"
                   aria-label="Crop shapes" aria-haspopup="true"
@@ -12440,13 +12453,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <span class="rbn-grp rbn-tbl" data-tab="object">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-tbl-rowplus"
-                title="Add a row at the bottom">&#43; Row</button>
+                title="Add a row at the bottom"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Row</button>
               <button class="dbtn etm" id="fmt-tbl-rowminus"
-                title="Remove the last row">&#8722; Row</button>
+                title="Remove the last row"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg> Row</button>
               <button class="dbtn etm" id="fmt-tbl-colplus"
-                title="Add a column on the right">&#43; Column</button>
+                title="Add a column on the right"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Column</button>
               <button class="dbtn etm" id="fmt-tbl-colminus"
-                title="Remove the last column">&#8722; Column</button>
+                title="Remove the last column"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.6 8h8.8"/></svg> Column</button>
               <button class="dbtn etm" id="fmt-tbl-head"
                 aria-pressed="false"
                 title="Treat the first row as headings"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="3" width="11.6" height="10" rx="1"/><path d="M2.2 6.2h11.6"/><path d="M8 6.2V13"/><path d="M2.2 9.6h11.6"/></svg>
@@ -12493,6 +12506,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    Shown for a text box; picking one on a box with no
                    entrance gives it a Fade first, so "by bullet" is one
                    click and not two. -->
+              <!-- the three as one run (T212), so an effect never shares
+                   a column with how much of the text arrives -->
+              <span class="rbn-cell" id="tx-run-by" role="group"
+                aria-label="How much of the text arrives per click">
               <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
                 title="The whole box arrives on one click"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.4 4.6V3.2h9.2v1.4"/><path d="M8 3.2v9.6"/><path d="M6.2 12.8h3.6"/></svg> Whole box</button>
@@ -12503,6 +12520,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn etm" id="fmt-by-sent" aria-pressed="false"
                 title="One click per sentence. A box with no entrance yet
  gets a Fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> By sentence</button>
+              </span>
             </span>
             <span class="rbn-lab">Animation</span>
           </span>
@@ -13348,7 +13366,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
 <!-- window.SemIcons — the branding.py icon table for DOM built at
      runtime. MUST come before app.js/deck.js so their bic() helpers
      see it at load (see the icon-set comment in branding.py). -->
-<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "qr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.2\" width=\"4.4\" height=\"4.4\"/><rect x=\"9.4\" y=\"2.2\" width=\"4.4\" height=\"4.4\"/><rect x=\"2.2\" y=\"9.4\" width=\"4.4\" height=\"4.4\"/><path d=\"M9.4 9.4h2v2h-2Z\"/><path d=\"M13.8 9.4v1.8\"/><path d=\"M9.4 13.8h1.8\"/><path d=\"M13 12.6v1.2h.8\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>"};</script>
+<script>window.SemIcons={"align": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2v12\"/><rect x=\"4.8\" y=\"3.6\" width=\"8.8\" height=\"2.8\" rx=\".8\"/><rect x=\"4.8\" y=\"9.6\" width=\"5.4\" height=\"2.8\" rx=\".8\"/><\/svg>", "aligncentre": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M4.5 6.6h7M2.4 9.8h11.2M4.5 13h7\"/><\/svg>", "alignleft": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7\"/><\/svg>", "alignright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.4h11.2M6.6 6.6h7M2.4 9.8h11.2M6.6 13h7\"/><\/svg>", "appear": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4.4\" y=\"5.4\" width=\"7.2\" height=\"5.2\" rx=\"1\"/><path d=\"M8 1.8v1.5M8 12.7v1.5M1.8 8h1.5M12.7 8h1.5\"/><\/svg>", "arrow": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 12.6 12.6 3.4\"/><path d=\"M7.8 3.4h4.8v4.8\"/><\/svg>", "autohide": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"4\" height=\"11.2\" rx=\"1\"/><path d=\"M14.2 8H8\"/><path d=\"M10.4 5.8 8 8l2.4 2.2\"/><\/svg>", "back": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 13.2h10.4\"/><path d=\"M8 2.4v7.8\"/><path d=\"m4.9 7.1 3.1 3.1 3.1-3.1\"/><\/svg>", "backward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.4 8 2.3l5.6 3.1L8 8.5Z\"/><path d=\"M8 10.8v3.6\"/><path d=\"m6.1 12.5 1.9 1.9 1.9-1.9\"/><\/svg>", "bullets": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"3.4\" cy=\"4.6\" r=\"1.2\"/><circle cx=\"3.4\" cy=\"11.4\" r=\"1.2\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "caption": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.4\" width=\"11.6\" height=\"7.2\" rx=\"1\"/><path d=\"M2.2 12.2h8.4\"/><path d=\"M2.2 14.2h5.6\"/><\/svg>", "cellcard": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.8\" width=\"11.6\" height=\"10.4\" rx=\"1.2\"/><path d=\"M2.2 5.6h11.6\"/><path d=\"M4.8 11.2V8.6\"/><path d=\"M7.6 11.2V7.2\"/><path d=\"M10.4 11.2V9.4\"/><\/svg>", "code": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.6 5.2 2.4 8l3.2 2.8\"/><path d=\"M10.4 5.2 13.6 8l-3.2 2.8\"/><\/svg>", "collapse": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 6.4H6V3\"/><path d=\"M13.4 9.6H10V13\"/><path d=\"M6 6.4 2.6 3\"/><path d=\"M10 9.6l3.4 3.4\"/><\/svg>", "copy": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.6\" y=\"5.6\" width=\"8.2\" height=\"8.2\" rx=\"1.2\"/><path d=\"M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8\"/><\/svg>", "crop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 1.8v9.6h9.6\"/><path d=\"M1.8 4.6h9.6v9.6\"/><\/svg>", "dashes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.8h10.8\"/><path d=\"M2.6 8h10.8\" stroke-dasharray=\"3 2.4\"/><path d=\"M2.6 12.2h10.8\" stroke-dasharray=\"0 2.8\"/><\/svg>", "doc": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 2.4h6l3.2 3.2v8a.8.8 0 0 1-.8.8H3.4a.8.8 0 0 1-.8-.8V3.2a.8.8 0 0 1 .8-.8Z\"/><path d=\"M9.2 2.4v3.4h3.4\"/><path d=\"M5.4 9h5.2M5.4 11.4h3.4\"/><\/svg>", "dockright": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M9.8 2.4v11.2\"/><path d=\"M11.5 5h1.2M11.5 7.4h1.2\"/><\/svg>", "docktop": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 6.2h12.4\"/><path d=\"M4.4 4.3h5.4\"/><\/svg>", "exit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4 4l8 8\"/><path d=\"M12 4l-8 8\"/><\/svg>", "expand": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 2.6H2.6V6\"/><path d=\"M10 13.4h3.4V10\"/><path d=\"M2.6 2.6 6.8 6.8\"/><path d=\"M13.4 13.4 9.2 9.2\"/><\/svg>", "eye": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8Z\"/><circle cx=\"8\" cy=\"8\" r=\"1.9\"/><\/svg>", "fade": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 3.2v9.6\"/><path d=\"M6.5 3.2v9.6\" stroke-dasharray=\"3.4 1.7\"/><path d=\"M10.1 3.2v9.6\" stroke-dasharray=\"1.7 2.3\"/><path d=\"M13.4 3.2v9.6\" stroke-dasharray=\"0 3.1\"/><\/svg>", "fill": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.6\" y=\"2.6\" width=\"10.8\" height=\"10.8\" rx=\"1.4\"/><path d=\"M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z\" fill=\"currentColor\"/><\/svg>", "find": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"7\" cy=\"7\" r=\"4.3\"/><path d=\"m10.2 10.2 3.6 3.6\"/><\/svg>", "flag": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.8 14.2V2.2\"/><path d=\"M3.8 3h8.4v5H3.8\"/><\/svg>", "flipbook": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3.2\" width=\"12\" height=\"9.6\" rx=\"1.2\"/><path d=\"m6.4 6.1-1.9 1.9 1.9 1.9\"/><path d=\"m9.6 6.1 1.9 1.9-1.9 1.9\"/><\/svg>", "footer": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.4\" width=\"12.4\" height=\"11.2\" rx=\"1.2\"/><path d=\"M1.8 9.8h12.4\"/><path d=\"M4.4 11.7h5.4\"/><\/svg>", "forward": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z\"/><path d=\"M8 5.2V1.6\"/><path d=\"m6.1 3.5 1.9-1.9 1.9 1.9\"/><\/svg>", "frame": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"3.2\" width=\"11.2\" height=\"9.6\" rx=\"1\" stroke-dasharray=\"2.7 2.3\"/><\/svg>", "front": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.8 2.8h10.4\"/><path d=\"M8 13.6V5.8\"/><path d=\"m4.9 8.9 3.1-3.1 3.1 3.1\"/><\/svg>", "grid": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.4 2.4v11.2M10.6 2.4v11.2\"/><path d=\"M2.4 5.4h11.2M2.4 10.6h11.2\"/><\/svg>", "group": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"1.8\" width=\"12.4\" height=\"12.4\" rx=\"1.6\" stroke-dasharray=\"2.6 2.3\"/><rect x=\"4.2\" y=\"4.2\" width=\"4.2\" height=\"4.2\" rx=\".8\"/><circle cx=\"10.2\" cy=\"10.2\" r=\"2.1\"/><\/svg>", "guides": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.6\" width=\"11.6\" height=\"10.8\" rx=\"1\"/><path d=\"M6.2 2.6v10.8\" stroke-dasharray=\"2.4 2\"/><path d=\"M2.2 9.6h11.6\" stroke-dasharray=\"2.4 2\"/><\/svg>", "heart": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 13.3S2.2 9.9 2.2 6.3A2.9 2.9 0 0 1 8 4.7a2.9 2.9 0 0 1 5.8 1.6c0 3.6-5.8 7-5.8 7Z\"/><\/svg>", "help": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M6.2 6.2a1.9 1.9 0 1 1 2.4 2.2v1.1\"/><path d=\"M8.6 12v.1\"/><\/svg>", "history": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><path d=\"M8 5.2V8l2.2 1.3\"/><\/svg>", "hline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2 8h12\"/><path d=\"M2 5.8v4.4\"/><path d=\"M14 5.8v4.4\"/><\/svg>", "image": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"3\" width=\"12\" height=\"10\" rx=\"1.2\"/><circle cx=\"5.7\" cy=\"6.4\" r=\"1.1\"/><path d=\"m4 12 3.3-3.8 2.2 2.3 1.9-2L14 12\"/><\/svg>", "indent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"m3 5.6 2.4 2.4L3 10.4\"/><\/svg>", "info": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"6.2\"/><path d=\"M8 7.4v4\"/><path d=\"M8 4.9v.1\"/><\/svg>", "inherit": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.6v8.2\"/><path d=\"m4.8 7.6 3.2 3.2 3.2-3.2\"/><path d=\"M2.6 13.4h10.8\"/><\/svg>", "layouts": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"8.8\" y=\"2.6\" width=\"5.2\" height=\"4.6\" rx=\".8\"/><rect x=\"2\" y=\"8.8\" width=\"12\" height=\"4.6\" rx=\".8\"/><\/svg>", "link": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.9 9.1a2.9 2.9 0 0 1 0-4.1l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.1 6.9a2.9 2.9 0 0 1 0 4.1l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><\/svg>", "locate": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"4.2\"/><path d=\"M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4\"/><\/svg>", "lock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "markdown": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8\"/><path d=\"M2.6 7.4h10.8\"/><path d=\"M2.6 10.6h7.2\"/><\/svg>", "maths": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2\"/><\/svg>", "menu": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8\"/><\/svg>", "minus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.6 8h8.8\"/><\/svg>", "nb": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"2.6\" width=\"9\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.8 2.6v10.8\"/><path d=\"M2.6 5h1.4\"/><path d=\"M2.6 8h1.4\"/><path d=\"M2.6 11h1.4\"/><\/svg>", "newdeck": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.6\" y=\"3.2\" width=\"9.6\" height=\"7.2\" rx=\"1\"/><path d=\"M3.6 12.8h5.6\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newposter": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"1.8\" width=\"7.6\" height=\"12.4\" rx=\"1\"/><path d=\"M4.2 5h4M4.2 7.4h4M4.2 9.8h2.4\"/><path d=\"M13.4 4.6v5.2\"/><path d=\"M10.8 7.2h5.2\"/><\/svg>", "newview": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 2.6h5.8l2.6 2.6v8.2H2.4Z\"/><path d=\"M4.6 8.4h4M4.6 10.8h2.6\"/><path d=\"M13.9 2.4 15.4 3.9 12 7.3h-1.5V5.8Z\"/><\/svg>", "next": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m5.6 3.2 4.8 4.8-4.8 4.8\"/><\/svg>", "none": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.7\"/><path d=\"M4 4l8 8\"/><\/svg>", "numbers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.4\" y=\"2.8\" width=\"11.2\" height=\"10.4\" rx=\"1.2\"/><path d=\"m6.6 6.9 1.8-1.4v5\"/><path d=\"M6.4 10.5h4\"/><\/svg>", "numlist": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4\"/><path d=\"M6.6 4.6h7M6.6 11.4h7\"/><\/svg>", "objects": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 2.4 14 5.6 8 8.8 2 5.6Z\"/><path d=\"m2 9.2 6 3.2 6-3.2\"/><\/svg>", "open": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 12.6V4.2a1 1 0 0 1 1-1h3.1l1.4 1.6h6a1 1 0 0 1 1 1v6.8a1 1 0 0 1-1 1H2.8a1 1 0 0 1-1-1Z\"/><\/svg>", "outdent": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M7.8 3.8h5.6M7.8 8h5.6M7.8 12.2h5.6\"/><path d=\"M5.4 5.6 3 8l2.4 2.4\"/><\/svg>", "outline": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.6\" width=\"12.4\" height=\"10.8\" rx=\"1.2\"/><path d=\"M6.2 2.6v10.8\"/><path d=\"M3.2 5.6h1.8M3.2 8h1.8\"/><\/svg>", "output": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3.2\" width=\"11.6\" height=\"9.6\" rx=\"1.2\"/><path d=\"M4.6 6.6 6.4 8l-1.8 1.4\"/><path d=\"M8.4 10h3\"/><\/svg>", "pagep": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"4\" y=\"1.8\" width=\"8\" height=\"12.4\" rx=\"1\"/><\/svg>", "palette": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.8\"/><circle cx=\"6\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10\" cy=\"6\" r=\"1\" fill=\"currentColor\"/><circle cx=\"10.5\" cy=\"9.5\" r=\"1\" fill=\"currentColor\"/><\/svg>", "paste": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"3\" width=\"9.2\" height=\"11\" rx=\"1.2\"/><path d=\"M6.2 3.4V2.6a1 1 0 0 1 1-1h1.6a1 1 0 0 1 1 1v.8Z\"/><\/svg>", "pen": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.6c2.6.4 4-1 4.6-2.4\"/><path d=\"m5.6 10.4 5.8-5.8a1.6 1.6 0 0 1 2.3 2.3l-5.8 5.8z\"/><\/svg>", "pin": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z\"/><path d=\"M8 8.4v5.7\"/><\/svg>", "play": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M5.2 3.2v9.6l7.8-4.8Z\"/><\/svg>", "plots": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 13.2h11.2\"/><path d=\"M4.6 13.2V8.1\"/><path d=\"M8 13.2V3.6\"/><path d=\"M11.4 13.2V6.3\"/><\/svg>", "plus": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M8 3.6v8.8\"/><path d=\"M3.6 8h8.8\"/><\/svg>", "present": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"1.8\" y=\"2.8\" width=\"12.4\" height=\"9\" rx=\"1\"/><path d=\"m6.8 6.1 3 1.9-3 1.9Z\"/><path d=\"M8 11.8v1.6\"/><\/svg>", "prev": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"m10.4 3.2-4.8 4.8 4.8 4.8\"/><\/svg>", "qr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"2.2\" width=\"4.4\" height=\"4.4\"/><rect x=\"9.4\" y=\"2.2\" width=\"4.4\" height=\"4.4\"/><rect x=\"2.2\" y=\"9.4\" width=\"4.4\" height=\"4.4\"/><path d=\"M9.4 9.4h2v2h-2Z\"/><path d=\"M13.8 9.4v1.8\"/><path d=\"M9.4 13.8h1.8\"/><path d=\"M13 12.6v1.2h.8\"/><\/svg>", "raw": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.2 3.2 4 12.8\"/><path d=\"M9.8 3.2 12 12.8\"/><path d=\"M2.6 6.4h10.8\"/><path d=\"M2.6 9.6h10.8\"/><\/svg>", "redo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6\"/><path d=\"M10.2 3.4 13 6.2 10.2 9\"/><\/svg>", "reload": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.4 8a5.4 5.4 0 1 1-1.6-3.8\"/><path d=\"M13.6 2.2v3.1h-3.1\"/><\/svg>", "reset": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 8a5.4 5.4 0 1 0 1.6-3.8\"/><path d=\"M2.4 2.2v3.1h3.1\"/><\/svg>", "return": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4\"/><path d=\"M6.2 6.3 3.3 9.2l2.9 2.9\"/><\/svg>", "rise": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.4\" y=\"2.4\" width=\"9.2\" height=\"6\" rx=\"1\"/><path d=\"M8 14.4v-3.6\"/><path d=\"m6.1 12.6 1.9-1.8 1.9 1.8\"/><\/svg>", "rotl": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M12.4 5.4A5 5 0 0 0 3.8 4.9\"/><path d=\"M3.4 2.2v2.9h2.9\"/><\/svg>", "rotr": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.8\" y=\"7.4\" width=\"8.4\" height=\"6.4\" rx=\"1\"/><path d=\"M3.6 5.4A5 5 0 0 1 12.2 4.9\"/><path d=\"M12.6 2.2v2.9H9.7\"/><\/svg>", "route": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.2 13.4V7.6a2.4 2.4 0 0 1 2.4-2.4h6.6\"/><path d=\"m9.8 2.8 2.4 2.4-2.4 2.4\"/><\/svg>", "rulers": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z\"/><path d=\"m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2\"/><\/svg>", "scope": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.4 4.2h7.2\"/><path d=\"M6.4 8h7.2\"/><path d=\"M6.4 11.8h7.2\"/><path d=\"m2.2 4.2.9.9 1.6-1.7\"/><path d=\"m2.2 8 .9.9L4.7 7.2\"/><\/svg>", "shapes": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"5.6\" width=\"7\" height=\"7\" rx=\"1\"/><circle cx=\"10.6\" cy=\"5.8\" r=\"3.4\"/><\/svg>", "spacing": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 2.6h10.8M2.6 13.4h10.8\"/><path d=\"M8 4.9v6.2\"/><path d=\"M6.1 6.6 8 4.7l1.9 1.9\"/><path d=\"M6.1 9.4 8 11.3l1.9-1.9\"/><\/svg>", "stagger": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 3.8h4.6\"/><path d=\"M5.7 8h4.6\"/><path d=\"M9 12.2h4.6\"/><\/svg>", "style": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M10.6 2.6 13.4 5.4 6.2 12.6H3.4V9.8Z\"/><path d=\"m9.2 4 2.8 2.8\"/><\/svg>", "styles": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 12 5.6 4l3.2 8\"/><path d=\"M3.5 9.2h4.2\"/><circle cx=\"11.8\" cy=\"9.9\" r=\"2.1\"/><path d=\"M13.9 7.8V12\"/><\/svg>", "swap": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.4 5.3h9.6\"/><path d=\"m9.6 2.9 2.4 2.4-2.4 2.4\"/><path d=\"M13.6 10.7H4\"/><path d=\"m6.4 8.3-2.4 2.4 2.4 2.4\"/><\/svg>", "table": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"3\" width=\"11.6\" height=\"10\" rx=\"1\"/><path d=\"M2.2 6.2h11.6\"/><path d=\"M8 6.2V13\"/><path d=\"M2.2 9.6h11.6\"/><\/svg>", "text": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3.4 4.6V3.2h9.2v1.4\"/><path d=\"M8 3.2v9.6\"/><path d=\"M6.2 12.8h3.6\"/><\/svg>", "theme": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><circle cx=\"8\" cy=\"8\" r=\"5.6\"/><path d=\"M8 2.4v11.2\"/><path d=\"M8 4.6a3.4 3.4 0 0 1 0 6.8\"/><\/svg>", "together": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M4.6 2.6H2.8v10.8h1.8\"/><path d=\"M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8\"/><\/svg>", "tree": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.8\" y=\"1.8\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"1.6\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><rect x=\"10\" y=\"11\" width=\"4.4\" height=\"3.2\" rx=\".8\"/><path d=\"M8 5v3.2M3.8 11V8.2h8.4V11\"/><\/svg>", "types": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.6h10.8L9.4 8.2v4.3l-2.8-1.6V8.2Z\"/><\/svg>", "undo": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M3 6.2h7.2a3.3 3.3 0 0 1 0 6.6H6.6\"/><path d=\"M5.8 3.4 3 6.2 5.8 9\"/><\/svg>", "ungroup": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 5.2V1.6h3.6\"/><path d=\"M14.4 10.8v3.6h-3.6\"/><rect x=\"3\" y=\"3\" width=\"4.6\" height=\"4.6\" rx=\".8\"/><circle cx=\"11\" cy=\"11\" r=\"2.3\"/><\/svg>", "unlink": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M6.6 9.4a2.9 2.9 0 0 1 .3-3.8l1.6-1.6a2.9 2.9 0 0 1 4.1 4.1l-.9.9\"/><path d=\"M9.4 6.6a2.9 2.9 0 0 1-.3 3.8l-1.6 1.6a2.9 2.9 0 0 1-4.1-4.1l.9-.9\"/><path d=\"M2.4 2.4l11.2 11.2\"/><\/svg>", "unlock": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3.2\" y=\"7.2\" width=\"9.6\" height=\"6.6\" rx=\"1.2\"/><path d=\"M5.4 7.2V5.1a2.6 2.6 0 0 1 5.1-.6\"/><path d=\"M8 9.7v1.6\"/><\/svg>", "versions": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"2.2\" y=\"8.2\" width=\"11.6\" height=\"5.2\" rx=\"1\"/><path d=\"M3.6 5.8h8.8\"/><path d=\"M5 3.4h6\"/><\/svg>", "weight": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M2.6 3.4h10.8\" stroke-width=\"1\"/><path d=\"M2.6 7.7h10.8\" stroke-width=\"2\"/><path d=\"M2.6 12.2h10.8\" stroke-width=\"3.2\"/><\/svg>", "width": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><path d=\"M1.6 8h12.8\"/><path d=\"M4.2 5.4 1.6 8l2.6 2.6\"/><path d=\"M11.8 5.4 14.4 8l-2.6 2.6\"/><\/svg>", "wmark": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"3\" y=\"2.2\" width=\"10\" height=\"11.6\" rx=\"1\"/><path d=\"m5.2 11.6 5.6-5.6\"/><path d=\"m5.2 8.2 2.6-2.6\"/><\/svg>", "zoom": "<svg class=\"bic\" viewBox=\"0 0 16 16\" aria-hidden=\"true\" focusable=\"false\"><rect x=\"5.2\" y=\"5.2\" width=\"5.6\" height=\"5.6\" rx=\".9\"/><path d=\"M2.4 6V2.4h3.6\"/><path d=\"M13.6 10v3.6H10\"/><\/svg>"};</script>
 <script>
 (function(){
   'use strict';
@@ -26304,14 +26322,14 @@ window.JunoPptx = (function () {
          'fmt-rotl','fmt-rotr','fmt-arline','fmt-argrid',
          'fmt-samewrap']},
       {id:'of-text',label:'Text',tab:'insert',
-       items:['tx-drop','dc-maths','dc-md','dc-qr']},
+       items:['tx-strip','dc-maths','dc-md','dc-qr']},
       {id:'of-illus',label:'Illustrations',tab:'insert',
-       items:['et-image','sh-drop','dc-line','dc-draw','et-table',
+       items:['et-image','shape-strip-frame','dc-line','dc-draw','et-table',
          'et-flip','et-arrow','et-cancel']},
       {id:'of-furn',label:'Page furniture',tab:'insert',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'of-setup',label:'Slide setup',tab:'design',
-       items:['page-drop','lay-drop','dsg-tidy','bg-drop']},
+       items:['page-strip-frame','lay-drop','dsg-tidy','bg-drop']},
       {id:'of-type',label:'Type',tab:'design',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design','dsg-std']},
@@ -26321,7 +26339,7 @@ window.JunoPptx = (function () {
       {id:'of-panes',label:'Panes',tab:'design',
        items:['objects-btn','notes-btn','vw-versions']},
       {id:'of-fx',label:'Effects',tab:'animate',
-       items:['anim-none','anim-fade','anim-rise','anim-zoom']},
+       items:['anim-strip-frame']},
       {id:'of-seq',label:'Sequence',tab:'animate',
        items:['anim-stagger','anim-together']},
       {id:'of-time',label:'Animations',tab:'animate',
@@ -26335,7 +26353,7 @@ window.JunoPptx = (function () {
      tabs:[{id:'deck',label:'Deck'},{id:'slide',label:'Slide'},{id:'object',label:'Object'}],
      groups:[
       {id:'dk-page',label:'Page setup',tab:'deck',
-       items:['page-drop','bg-drop']},
+       items:['page-strip-frame','bg-drop']},
       {id:'dk-furn',label:'Page furniture',tab:'deck',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'dk-type',label:'Type styles',tab:'deck',
@@ -26350,13 +26368,12 @@ window.JunoPptx = (function () {
        items:['hm-newslide','hm-dupslide','hm-laywrap','hm-match',
          'hm-delslide','lay-drop','dsg-tidy']},
       {id:'sl-insert',label:'Insert',tab:'slide',
-       items:['tx-drop','et-image','dc-maths','dc-md','dc-qr']},
+       items:['tx-strip','et-image','dc-maths','dc-md','dc-qr']},
       {id:'sl-draw',label:'Draw',tab:'slide',
-       items:['sh-drop','dc-line','dc-draw','et-table','et-flip',
+       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip',
          'et-arrow','et-cancel']},
       {id:'sl-anim',label:'Build order',tab:'slide',
-       items:['vw-anim','anim-none','anim-fade','anim-rise',
-         'anim-zoom','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'ob-arrange',label:'Arrange',tab:'object',
        items:['objects-btn','fmt-dup','fmt-group','fmt-ungroup',
          'fmt-alignwrap','fmt-samewrap','fmt-arline','fmt-argrid',
@@ -26393,8 +26410,7 @@ window.JunoPptx = (function () {
        items:['hm-newslide','hm-dupslide','hm-laywrap','hm-match',
          'hm-delslide','lay-drop','dsg-tidy']},
       {id:'s1-anim',label:'Animate',tab:'slides',
-       items:['vw-anim','anim-none','anim-fade','anim-rise',
-         'anim-zoom','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'s1-view',label:'View',tab:'slides',rest:1,
        items:['vw-full','vw-side','vw-morewrap','notes-btn']},
       {id:'s1-link',label:'Notebook link',tab:'sources',
@@ -26407,9 +26423,9 @@ window.JunoPptx = (function () {
        items:['et-image','fmt-cropwrap','fmt-lockar','fmt-sizepos',
          'fmt-parts']},
       {id:'s1-typed',label:'Typed content',tab:'sources',
-       items:['tx-drop','dc-maths','dc-md','dc-qr']},
+       items:['tx-strip','dc-maths','dc-md','dc-qr']},
       {id:'s1-drawn',label:'Drawn content',tab:'sources',
-       items:['sh-drop','dc-line','dc-draw','et-table','et-flip',
+       items:['shape-strip-frame','dc-line','dc-draw','et-table','et-flip',
          'et-arrow','et-cancel']},
       {id:'s1-guides',label:'Guides and layers',tab:'format',
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox',
@@ -26435,7 +26451,7 @@ window.JunoPptx = (function () {
        items:['fmt-tbl-rowplus','fmt-tbl-rowminus','fmt-tbl-colplus',
          'fmt-tbl-colminus','fmt-tbl-head','fmt-tbl-grid']},
       {id:'s1-page',label:'Page',tab:'deck',
-       items:['page-drop','bg-drop']},
+       items:['page-strip-frame','bg-drop']},
       {id:'s1-type',label:'Type',tab:'deck',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design','dsg-std']},
@@ -26453,7 +26469,7 @@ window.JunoPptx = (function () {
        items:['hm-newslide','hm-dupslide','hm-delslide','hm-laywrap',
          'vw-versions']},
       {id:'day-insert',label:'Insert',tab:'start',
-       items:['tx-drop','et-image','sh-drop','dc-line','et-table',
+       items:['tx-strip','et-image','shape-strip-frame','dc-line','et-table',
          'et-flip','et-arrow','et-cancel']},
       {id:'day-look',label:'Deck look',tab:'start',
        items:['lay-drop','dsg-tidy','bg-drop','dsg-stylewrap','dsg-tokens']},
@@ -26482,10 +26498,9 @@ window.JunoPptx = (function () {
        items:['fmt-tbl-rowplus','fmt-tbl-rowminus','fmt-tbl-colplus',
          'fmt-tbl-colminus','fmt-tbl-head','fmt-tbl-grid']},
       {id:'day-anim',label:'Animation',tab:'format',
-       items:['vw-anim','anim-none','anim-fade','anim-rise',
-         'anim-zoom','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'day-page',label:'Page and furniture',tab:'more',
-       items:['page-drop','dc-wmark','dc-head','dc-foot','dc-nums']},
+       items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'day-deck-styling',label:'Deck styling',tab:'more',
        items:['dsg-scale-down','dsg-scale-up','dsg-restyle','dsg-design','dsg-std',
          'hm-match']},
@@ -26503,7 +26518,7 @@ window.JunoPptx = (function () {
      tabs:[{id:'page',label:'Page'},{id:'content',label:'Content'},{id:'talk',label:'Talk'}],
      groups:[
       {id:'j3-page',label:'Page',tab:'page',
-       items:['page-drop','bg-drop','lay-drop','dsg-tidy']},
+       items:['page-strip-frame','bg-drop','lay-drop','dsg-tidy']},
       {id:'j3-furniture',label:'Page furniture',tab:'page',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'j3-type',label:'Type',tab:'page',
@@ -26515,7 +26530,7 @@ window.JunoPptx = (function () {
       {id:'j3-proof',label:'Proof and versions',tab:'page',
        items:['vw-check','vw-versions']},
       {id:'j3-insert',label:'Insert',tab:'content',
-       items:['tx-drop','et-image','dc-maths','dc-md','dc-qr','sh-drop','dc-line',
+       items:['tx-strip','et-image','dc-maths','dc-md','dc-qr','shape-strip-frame','dc-line',
          'dc-draw','et-table','et-flip','et-arrow','et-cancel']},
       {id:'j3-figures',label:'Figure source',tab:'content',
        items:['fmt-figures','fmt-replace','fmt-caption','fmt-imgrefresh',
@@ -26545,7 +26560,7 @@ window.JunoPptx = (function () {
       {id:'j3-buildorder',label:'Build order',tab:'talk',
        items:['vw-anim','anim-stagger','anim-together','anim-clear']},
       {id:'j3-effects',label:'Effects',tab:'talk',
-       items:['anim-none','anim-fade','anim-rise','anim-zoom']},
+       items:['anim-strip-frame']},
       {id:'j3-delivery',label:'Delivery',tab:'talk',
        items:['notes-btn','vw-full']},
      ]},
@@ -26558,10 +26573,10 @@ window.JunoPptx = (function () {
      groups:[
       {id:'one-slides',label:'Slides',tab:'all',
        items:['hm-newslide','hm-dupslide','hm-laywrap','hm-match',
-         'hm-delslide','lay-drop','dsg-tidy','page-drop','bg-drop','dc-wmark',
+         'hm-delslide','lay-drop','dsg-tidy','page-strip-frame','bg-drop','dc-wmark',
          'dc-head','dc-foot','dc-nums','vw-versions']},
       {id:'one-insert',label:'Insert and sources',tab:'all',
-       items:['tx-drop','et-image','dc-maths','dc-md','dc-qr','sh-drop','dc-line',
+       items:['tx-strip','et-image','dc-maths','dc-md','dc-qr','shape-strip-frame','dc-line',
          'dc-draw','fmt-figures','fmt-replace','fmt-caption','fmt-locate',
          'fmt-prov','fmt-imgrefresh','fmt-revert','fmt-lockver',
          'fmt-parts','fmt-cropwrap','fmt-lockar','fmt-sizepos','et-cell',
@@ -26586,7 +26601,7 @@ window.JunoPptx = (function () {
        items:['fmt-tbl-rowplus','fmt-tbl-rowminus','fmt-tbl-colplus',
          'fmt-tbl-colminus','fmt-tbl-head','fmt-tbl-grid']},
       {id:'one-view',label:'Animate and view',tab:'all',rest:1,
-       items:['vw-anim','anim-none','anim-fade','anim-rise','anim-zoom',
+       items:['vw-anim','anim-strip-frame',
          'anim-stagger','anim-together','anim-clear','vw-rulers',
          'vw-grid','vw-guides','vw-guidebox','vw-full','vw-side',
          'vw-check','objects-btn','notes-btn','vw-morewrap']},
@@ -26599,7 +26614,7 @@ window.JunoPptx = (function () {
      tabs:[{id:'mi-rail',label:'Tools'},{id:'mi-sel',label:'Selection'},{id:'mi-board',label:'Board'}],
      groups:[
       {id:'mi-create',label:'Create',tab:'mi-rail',rest:1,
-       items:['tx-drop','sh-drop','dc-line','et-arrow','dc-draw',
+       items:['tx-strip','shape-strip-frame','dc-line','et-arrow','dc-draw',
          'et-cancel']},
       {id:'mi-place',label:'Place',tab:'mi-rail',
        items:['et-cell','et-image','et-table','et-flip','dc-maths','dc-md',
@@ -26633,7 +26648,7 @@ window.JunoPptx = (function () {
        items:['fmt-tbl-rowplus','fmt-tbl-rowminus','fmt-tbl-colplus',
          'fmt-tbl-colminus','fmt-tbl-head','fmt-tbl-grid']},
       {id:'mi-canvas',label:'Canvas',tab:'mi-board',
-       items:['lay-drop','dsg-tidy','page-drop','bg-drop','vw-versions']},
+       items:['lay-drop','dsg-tidy','page-strip-frame','bg-drop','vw-versions']},
       {id:'mi-furn',label:'Furniture',tab:'mi-board',
        items:['dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'mi-type',label:'Type',tab:'mi-board',
@@ -26645,8 +26660,7 @@ window.JunoPptx = (function () {
       {id:'mi-panes',label:'Panes',tab:'mi-board',
        items:['objects-btn','notes-btn']},
       {id:'mi-play',label:'Play',tab:'mi-board',
-       items:['vw-anim','anim-none','anim-fade','anim-rise',
-         'anim-zoom','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
      ]},
     {id:'radical-ten-then-more',
      name:'Ten things, then More',
@@ -26658,7 +26672,7 @@ window.JunoPptx = (function () {
       {id:'tt-slides',label:'Slides',tab:'tt-start',
        items:['hm-newslide','hm-dupslide','hm-delslide']},
       {id:'tt-add',label:'Add',tab:'tt-start',
-       items:['et-cell','tx-drop','et-image']},
+       items:['et-cell','tx-strip','et-image']},
       {id:'tt-look',label:'Look',tab:'tt-start',
        items:['lay-drop','dsg-tidy','bg-drop']},
       {id:'tt-show',label:'Show',tab:'tt-start',
@@ -26687,18 +26701,17 @@ window.JunoPptx = (function () {
        items:['fmt-shapewrap','fmt-stylewrap','fmt-swwrap',
          'fmt-headwrap','fmt-bendwrap']},
       {id:'tt-ins',label:'Insert',tab:'tt-more',
-       items:['et-table','et-flip','sh-drop','dc-line','et-arrow',
+       items:['et-table','et-flip','shape-strip-frame','dc-line','et-arrow',
          'dc-draw','dc-maths','dc-md','dc-qr','et-cancel']},
       {id:'tt-lay',label:'Slides',tab:'tt-more',
        items:['hm-laywrap','hm-match']},
       {id:'tt-page',label:'Page',tab:'tt-more',
-       items:['page-drop','dc-wmark','dc-head','dc-foot','dc-nums']},
+       items:['page-strip-frame','dc-wmark','dc-head','dc-foot','dc-nums']},
       {id:'tt-type',label:'Type',tab:'tt-more',
        items:['dsg-stylewrap','dsg-tokens','dsg-scale-down','dsg-scale-up',
          'dsg-restyle','dsg-design','dsg-std']},
       {id:'tt-anim',label:'Animate',tab:'tt-more',
-       items:['vw-anim','anim-none','anim-fade','anim-rise',
-         'anim-zoom','anim-stagger','anim-together','anim-clear']},
+       items:['vw-anim','anim-strip-frame','anim-stagger','anim-together','anim-clear']},
       {id:'tt-rest',label:'The rest',tab:'tt-more',rest:1,
        items:['vw-rulers','vw-grid','vw-guides','vw-guidebox','vw-side',
          'vw-morewrap','objects-btn','vw-check','vw-versions']},
@@ -35159,12 +35172,15 @@ window.JunoPptx = (function () {
     /* SIZE, SHAPE AND POSITION -- for anything that is a box. An arrow
        is two endpoints and has neither (T65). */
     var hasBox=isNum&&kind!=='arrow';
-    show('#fmt-sizepos',hasBox);
+    /* the door to the pane that types the same four numbers as the
+       ribbon's own fields is retired from the ribbon (T212); the pane
+       stays for the pane owner */
+    show('#fmt-sizepos',false);
     show('#fmt-geom-xy',hasBox);show('#fmt-geom-wh',hasBox);
     show('#fmt-lockar',hasBox,hasBox&&!!a.lockar);
     var lab=$('#fmt-lockar');
     if(lab&&hasBox) lab.innerHTML=(a.lockar?bic('unlock'):bic('lock'))
-      +' Keep shape';
+      +' Lock aspect ratio';
     /* ONE BUTTON, TWO STATES — the pattern #fmt-revert above already
        uses. A figure without a caption gets "Caption"; one with a
        caption gets "Untie caption", which until now had no door but a
@@ -48349,7 +48365,7 @@ window.JunoPptx = (function () {
         b.className='dbtn rbn-sm seq-fxb'+(seqType===f[0]?' on':'');
         b.type='button';
         b.setAttribute('aria-pressed',seqType===f[0]?'true':'false');
-        b.innerHTML=f[1]+' <kbd>'+f[2]+'</kbd>';
+        b.innerHTML=bic(f[0])+' '+f[1]+' <kbd>'+f[2]+'</kbd>';
         b.title=f[1]+' \u2014 press '+f[2]
           +(f[0]==='none'?'. Clicking then TAKES an animation away.'
             :'. Every click from now gives this.');
@@ -53365,6 +53381,14 @@ window.JunoPptx = (function () {
      into the frame when the window closes (the overlay owner hides
      it; an attribute observer sees that and puts the strip home).
      Picking a tile closes the window, the way a gallery does. */
+  /* the Style system screen's own door on the Design tab (T212) */
+  function styleSystemDoorBoot(){
+    var b=$('#dsg-design-btn'); if(!b) return;
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var d=$('#dsg-design'); if(d) d.click();
+    });
+  }
   function stripMoreBoot(){
     $$('.strip-frame').forEach(function(frame){
       var strip=frame.querySelector('.fx-strip'),
@@ -56913,6 +56937,7 @@ window.JunoPptx = (function () {
   shapeStripBoot();           /* the shapes, as tiles (T197) */
   imgPaneBoot();              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
+  styleSystemDoorBoot();      /* Style system on the ribbon (T212) */
   overlayBoot();              /* the one outside-click + Escape closer
                                  for every transient menu (T135) */
   optPanelBoot();             /* every window of options' door (T177) */
