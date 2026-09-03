@@ -7699,10 +7699,11 @@ body.light .img-ov .img-row{border-color:var(--line);}
    its frame because the frame is the box, not the buttons. Outlined
    boxes on every one of sixty controls were most of what read as "all
    shapes and sizes" (2026-09-02). PowerPoint's ribbon is flat. */
-.edit-tools .dbtn.rbn-sm,.edit-tools .fx-tile,.edit-tools .dbtn.lay,
-.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
+.edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile,
+.edit-tools .dbtn.lay,.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
   border-color:transparent;background:transparent;box-shadow:none;}
 .edit-tools .dbtn.rbn-sm:hover:not(:disabled),
+.edit-tools .dbtn.etm:hover:not(:disabled),
 .edit-tools .fx-tile:hover:not(:disabled),
 .edit-tools .dbtn.lay:hover:not(:disabled),
 .edit-tools .rbn-cell .dbtn:hover:not(:disabled),
@@ -7746,6 +7747,15 @@ body.light .edit-tools .dbtn.lay{border-color:transparent;background:transparent
 .rbn-geom input:disabled{opacity:.45;}
 body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
   border-color:var(--line);}
+
+/* ---- T208: SEGMENTED RUNS, AND A RUN WITH NOTHING SHOWING IS NOT THERE --
+   B I U and Left Centre Right are one cell each, so the letters sit
+   shoulder to shoulder at their own widths (a grid column had made "U"
+   as wide as whatever stood under it). A cell whose every button is
+   hidden takes no column. */
+.rbn-cell#tx-run-style .dbtn,.rbn-cell#tx-run-align .dbtn{padding:3px 7px;}
+.rbn-cell#tx-run-style .dbtn.etm{min-width:28px;justify-content:center;}
+.rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}
 </style>
 <script>
 window.MathJax = {
@@ -10841,10 +10851,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         <div class="dc-mhead">export &amp; share</div>
         <!-- THE CONTENT, as text (T35). -->
         <button class="dc-mi" id="mi-review"
-          title="Write the deck out as markdown — titles, text, figures
- and where each came from, captions and notes — so a colleague or a
- language model can review what it SAYS. Junoview stays offline; the
- text is what travels.">Export for review&#8230;</button>
+          title="Save the deck as markdown — every title, text box,
+ caption and note — for a colleague or an AI to read">Export for
+ review&#8230;</button>
         <button class="dc-mi" id="mi-pdf"
           title="Save as PDF at the page's TRUE size — an A0 poster
  exports as a real 841&#215;1189mm page, ready for the print shop">Export
@@ -11131,7 +11140,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
          can just be back on home"). -->
     <button class="rbn-tab" id="rbn-tab-home" role="tab" data-tab="home"
       aria-selected="true"
-      title="Slide actions, guides, layers and the print check">Home</button>
+      title="Add, duplicate and delete slides, and keep figures and
+ pictures up to date">Home</button>
     <button class="rbn-tab" id="rbn-tab-insert" role="tab" data-tab="insert"
       aria-selected="false"
       title="Put something new on the page">Insert</button>
@@ -11269,9 +11279,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
               <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
-              <button class="dbtn rbn-sm" data-tidy="tight"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
-              <button class="dbtn rbn-sm" data-tidy="normal"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
-              <button class="dbtn rbn-sm" data-tidy="airy"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
+              <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
+              <button class="dbtn rbn-sm" data-tidy="normal" title="Space what is on this slide evenly"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 2.6h10.8M2.6 13.4h10.8"/><path d="M8 4.9v6.2"/><path d="M6.1 6.6 8 4.7l1.9 1.9"/><path d="M6.1 9.4 8 11.3l1.9-1.9"/></svg> Normal</button>
+              <button class="dbtn rbn-sm" data-tidy="airy" title="Spread what is on this slide out, with wider gaps"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 2.6H2.6V6"/><path d="M10 13.4h3.4V10"/><path d="M2.6 2.6 6.8 6.8"/><path d="M13.4 13.4 9.2 9.2"/></svg> Airy</button>
               </div>
             </span>
             <span class="rbn-lab">Layout</span>
@@ -11314,9 +11324,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop" id="bg-drop">
                 <button class="dbtn rbn-sm" id="bg-btn"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Background colour and border &mdash; the menu
- offers this slide or every slide. (The tooltip used to point at a File
- item that was removed; JVUX-10 caught it still pointing.)"
+                  title="Background colour and border, for this slide or
+ for every slide"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg> Background &#9662;</button>
                 <div class="sh-menu bg-menu" id="bg-menu" hidden></div>
               </span>
@@ -11429,9 +11438,11 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    was the implementation's; the button says what the
                    things are. The dialog keeps the term in its title. -->
               <button class="dbtn rbn-sm" id="dsg-tokens"
-                title="The deck's named colours, corner radius and spacing.
- Change one and everything using it follows"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Colours &amp; spacing</button>
+                title="The deck's palette: six named colours (Accent, Warm,
+ Lift, Calm, Ink, Quiet), the corner radius and the gap between things.
+ Give a box a named colour from the Deck row of its Colour or Fill
+ menu; change the name here and every box wearing it follows"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> Palette&#8230;</button>
               <!-- Both words in full, never abbreviated. This is the one
                    control in the editor that looks at the deck's type as
                    a whole rather than at one box, which is what earns it
@@ -11440,7 +11451,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    'standardise text', and checked if all headings
                    paragraphs, captions, are looking the same"). -->
               <button class="dbtn rbn-sm" id="dsg-std" aria-pressed="false"
-                title="Find text that should match but does not — headings, body text, captions across the whole deck — and figures placed at different sizes. It reports first; each fix is one button"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg>
+                title="Find headings, body text, captions and figures that
+ do not match across the deck, and fix each with one click"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6.4 4.2h7.2"/><path d="M6.4 8h7.2"/><path d="M6.4 11.8h7.2"/><path d="m2.2 4.2.9.9 1.6-1.7"/><path d="m2.2 8 .9.9L4.7 7.2"/></svg>
    Fix mismatched text&#8230;</button>
             </span>
             <span class="rbn-lab">Type</span>
@@ -11494,9 +11506,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.6" width="11.6" height="10.8" rx="1"/><path d="M6.2 2.6v10.8" stroke-dasharray="2.4 2"/><path d="M2.2 9.6h11.6" stroke-dasharray="2.4 2"/></svg> Guides <kbd>H</kbd></button>
               <button class="dbtn rbn-sm et" id="vw-guidebox"
                 data-tool="guide" aria-pressed="false"
-                title="Draw a guide box &mdash; an area to lay out inside.
- Drag its edges to resize, its corner grip to move it. An editing aid:
- it snaps, and it is never printed, exported or shown while presenting"
+                title="Draw a guide box to lay out inside. It snaps, and
+ is never printed, exported or shown while presenting"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.4" y="3.2" width="11.2" height="9.6" rx="1" stroke-dasharray="2.7 2.3"/></svg> Guide box <kbd>B</kbd></button>
               <button class="dbtn rbn-sm" id="vw-full"
                 aria-pressed="false"
@@ -11556,11 +11567,9 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop" id="vw-morewrap" hidden>
                 <button class="dbtn rbn-sm" id="vw-more"
                   aria-haspopup="true" aria-expanded="false"
-                  title="Rulers, grid, full screen, the side toolbar, the
- print check, layers and notes. They are in here rather than on the bar
- because the window is too narrow to show them and the text controls at
- the same time — widen it, or put the toolbar on the right, and they come
- back out"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg> View &#9662;</button>
+                  title="Rulers, grid, full screen, side toolbar, Review,
+ Layers and Notes — folded in here while the window is narrow"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8M2.6 8h10.8M2.6 11.8h10.8"/></svg> View &#9662;</button>
                 <div class="sh-menu vw-more-menu" id="vw-more-menu"
                   hidden></div>
               </span>
@@ -11955,22 +11964,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         <span class="et-fmt" id="et-fmt" hidden>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- Bring-to-front, send-to-back and the two rotates used to
-                   sit here as bare glyphs (&#8613; &#8615; &#10226;
-                   &#10227;) with their meaning only in a tooltip — the
-                   same wordless-button problem as everywhere else. They
-                   now live in this menu, fully worded, which removes four
-                   controls from the row AND adds four labels. -->
+              <!-- T208: paired on purpose (column-major): Duplicate over Arrange,
+                   Bring to front over Send to back, Group over Ungroup; the
+                   rest are the Arrange menu's rows, kept for wiring -->
               <button class="dbtn etm" id="fmt-dup"
                 title="Duplicate everything selected, just clear of the
  originals (Ctrl+D). Alt-drag on the page does the same and lets you
  place the copies as you go"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Duplicate</button>
-              <button class="dbtn etm" id="fmt-group"
-                title="Group the selected items (Ctrl+G)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" stroke-dasharray="2.6 2.3"/><rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/><circle cx="10.2" cy="10.2" r="2.1"/></svg>
-                Group</button>
-              <button class="dbtn etm" id="fmt-ungroup"
-                title="Ungroup (Ctrl+Shift+G)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 5.2V1.6h3.6"/><path d="M14.4 10.8v3.6h-3.6"/><rect x="3" y="3" width="4.6" height="4.6" rx=".8"/><circle cx="11" cy="11" r="2.3"/></svg>
-                Ungroup</button>
               <span class="sh-drop" id="fmt-alignwrap">
                 <button class="dbtn etm" id="fmt-align-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -11980,20 +11980,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 <div class="sh-menu align-menu" id="fmt-align-menu"
                   hidden></div>
               </span>
-              <!-- WORDED, and back in the row. These two were bare
-                   glyphs with their meaning only in a tooltip, then were
-                   hidden entirely and left reachable only three clicks
-                   deep inside the Arrange menu - which is why they read
-                   as a missing feature (2026-08-20, user asked for "the
-                   bring to forewards send to back"). The one-STEP pair
-                   below stays in the menu: rarer, and the row has to stay
-                   honest about its width. -->
               <button class="dbtn etm" id="fmt-front"
                 title="Bring to front - in front of everything else on
  this page"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 2.8h10.4"/><path d="M8 13.6V5.8"/><path d="m4.9 8.9 3.1-3.1 3.1 3.1"/></svg> Bring to front</button>
               <button class="dbtn etm" id="fmt-back"
                 title="Send to back - behind everything else on this
  page"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 13.2h10.4"/><path d="M8 2.4v7.8"/><path d="m4.9 7.1 3.1 3.1 3.1-3.1"/></svg> Send to back</button>
+              <button class="dbtn etm" id="fmt-group"
+                title="Group the selected items (Ctrl+G)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" stroke-dasharray="2.6 2.3"/><rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/><circle cx="10.2" cy="10.2" r="2.1"/></svg>
+                Group</button>
+              <button class="dbtn etm" id="fmt-ungroup"
+                title="Ungroup (Ctrl+Shift+G)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.6 5.2V1.6h3.6"/><path d="M14.4 10.8v3.6h-3.6"/><rect x="3" y="3" width="4.6" height="4.6" rx=".8"/><circle cx="11" cy="11" r="2.3"/></svg>
+                Ungroup</button>
               <button class="dbtn etm" id="fmt-forward" hidden
                 title="Bring forward one place (Ctrl+])"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 10.6 8 7.5l5.6 3.1L8 13.7Z"/><path d="M8 5.2V1.6"/><path d="m6.1 3.5 1.9-1.9 1.9 1.9"/></svg>
                   Forward</button>
@@ -12038,11 +12036,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                the colours all the time?") -->
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- ids on the wrappers, so the button and its swatch menu
-                   are ONE thing to move: a ribbon layout that took the
-                   button and left the menu behind would leave the popup
-                   positioned against nothing (2026-08-25). It also lets
-                   the per-button customiser reach these two at last. -->
+              <!-- T208: text colour over fill; opacity beside them -->
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
@@ -12104,12 +12098,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   <span class="sw-recrow" hidden></span>
                 </div>
               </span>
-              <!-- Opacity sits with COLOUR because that is what it is:
-                   how solid the ink is — a property of the object, not a
-                   playback build (2026-08-17, user). INSIDE the row: as a
-                   sibling of it the group stacked row + slider + label
-                   and overflowed the ribbon's fixed band, printing the
-                   slider over its own caption. -->
               <span class="fmt-opwrap" id="fmt-opwrap"
                 title="Opacity (0&ndash;100%)">
                 <input class="fmt-range" id="fmt-op" type="range"
@@ -12120,18 +12108,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <!-- SPREAD OUT (T189). T177 put every text control behind
-                   Font and Paragraph doors; a day later: "how do you
-                   even add dot points any more?... too many things are
-                   in buttons in buttons" (2026-09-02). So the ones you
-                   reach for are back in the row -- bold, italic,
-                   underline, the two lists, and the three alignments
-                   -- and the two windows keep only what is set once:
-                   typeface, size and strike; box indent, spacing and
-                   curve. The room this costs is what group folding
-                   (T187) exists to pay: on a narrow window the
-                   rightmost groups fold into a button rather than
-                   the row clipping. -->
+              <!-- T208: Font over Styles; B I U over Left Centre Right as two runs;
+                   bullets over numbers; Paragraph; the two editors when they apply -->
               <span class="sh-drop opt-drop" id="fmt-fontwrap">
                 <button class="dbtn etm" id="fmt-font-btn"
                   aria-haspopup="true" aria-expanded="false"
@@ -12169,33 +12147,37 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   </div>
                 </div>
               </span>
-              <button class="dbtn etm" id="fmt-bold"
+              <span class="sh-drop" id="fmt-stylewrap-tx">
+                <button class="dbtn etm" id="fmt-style-tx"
+                  aria-haspopup="true" aria-expanded="false"
+                  title="Named text styles — Title, Headings, Body,
+ Caption — and pushing this box's look to all of them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg>
+                  Styles &#9662;</button>
+                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
+                  hidden></div>
+              </span>
+              <span class="rbn-cell" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
+                <button class="dbtn etm" id="fmt-bold"
                 title="Bold"><b>B</b></button>
-              <button class="dbtn etm" id="fmt-ital"
+                <button class="dbtn etm" id="fmt-ital"
                 title="Italic"><i>I</i></button>
-              <button class="dbtn etm" id="fmt-under"
+                <button class="dbtn etm" id="fmt-under"
                 title="Underline"><u>U</u></button>
-              <button class="dbtn etm" id="fmt-eqedit" hidden
-                title="Open this equation in the equation editor"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Edit equation</button>
-              <button class="dbtn etm" id="fmt-mdedit" hidden
-                title="Open this box in the Markdown editor"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8"/><path d="M2.6 7.4h10.8"/><path d="M2.6 10.6h7.2"/></svg> Edit markdown</button>
-              <!-- BULLETS and NUMBERING are buttons that show their own
-                   state, not a line in a dropdown (2026-08-20, user:
-                   "the bullet list on/off is cursed"). -->
+              </span>
+              <span class="rbn-cell" id="tx-run-align" role="group" aria-label="Alignment">
+                <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
+                title="Align left">Left</button>
+                <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
+                title="Align centre">Centre</button>
+                <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
+                title="Align right">Right</button>
+              </span>
               <button class="dbtn etm" id="fmt-bullets"
                 aria-pressed="false"
                 title="Bullet list on / off">&#8226; List</button>
               <button class="dbtn etm" id="fmt-numbers"
                 aria-pressed="false"
                 title="Numbered list on / off">1. List</button>
-              <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
-                title="Align left">Left</button>
-              <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
-                title="Align centre">Centre</button>
-              <button class="dbtn etm" id="fmt-al-right" aria-pressed="false"
-                title="Align right">Right</button>
               <span class="sh-drop opt-drop" id="fmt-parawrap">
                 <button class="dbtn etm" id="fmt-para" aria-haspopup="true"
                   aria-expanded="false"
@@ -12222,20 +12204,12 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   <div class="opt-row" id="fmt-para-curve"></div>
                 </div>
               </span>
-              <!-- NAMED STYLES: Title / Heading 1-3 / Body / Small /
-                   Caption. A box wears a style rather than carrying a
-                   pile of properties, which is what makes "apply this
-                   look to all headings" a single edit instead of a hunt
-                   through forty slides (2026-08-20). -->
-              <span class="sh-drop" id="fmt-stylewrap-tx">
-                <button class="dbtn etm" id="fmt-style-tx"
-                  aria-haspopup="true" aria-expanded="false"
-                  title="Named text styles — Title, Headings, Body,
- Caption — and pushing this box's look to all of them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 12 5.6 4l3.2 8"/><path d="M3.5 9.2h4.2"/><circle cx="11.8" cy="9.9" r="2.1"/><path d="M13.9 7.8V12"/></svg>
-                  Styles &#9662;</button>
-                <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
-                  hidden></div>
-              </span>
+              <button class="dbtn etm" id="fmt-eqedit" hidden
+                title="Open this equation in the equation editor"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M10.9 3c-1.9-.9-2.9.2-2.9 2v6c0 1.8-1 2.9-2.9 2"/></svg> Edit equation</button>
+              <button class="dbtn etm" id="fmt-mdedit" hidden
+                title="Open this box in the Markdown editor"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 4.2h10.8"/><path d="M2.6 7.4h10.8"/><path d="M2.6 10.6h7.2"/></svg> Edit markdown</button>
             </span>
             <span class="rbn-lab">Text</span>
           </span>
@@ -12344,57 +12318,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           </span>
           <span class="rbn-grp" data-tab="object">
             <span class="rbn-row">
-              <span class="rbn-partslot" id="fmt-parts" hidden></span>
-              <!-- The only ribbon control the flip book gets. Everything
-                   else it needs — adding, reordering, naming and tying
-                   items to a figure — is in the pane this opens, because
-                   all of it needs the frame LIST visible to make sense
-                   (2026-08-22). It shows only when a flip book is
-                   selected, so it costs the resting ribbon nothing. -->
-              <button class="dbtn etm" id="fmt-figures" hidden
-                title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg>
-   Figures&#8230;</button>
-              <!-- THE BUTTON DOES THE COMMON THING (T64, 2026-08-29,
-                   user: "the clicking button should just automatically do
-                   the trim by edges"). It used to open a submenu, so the
-                   one crop everybody wants -- pull the whitespace off the
-                   edges of a figure -- was two clicks and a read behind a
-                   gallery of stars and arrows. Now the button arms the
-                   edge handles and the caret holds the shapes, which is
-                   the split Insert > Text already uses. The wrapper keeps
-                   its id, so none of the 108 ribbon arrangements moves. -->
-              <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
-                <button class="dbtn etm" id="fmt-crop"
-                  title="Trim the edges: drag the four handles on the
- picture. This is the crop you want nine times in ten &mdash; the caret
- beside it holds the shapes and the free-hand crop"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 1.8v9.6h9.6"/><path d="M1.8 4.6h9.6v9.6"/></svg>
-                  Crop</button>
-                <button class="dbtn etm tx-caret" id="fmt-crop-caret"
-                  aria-label="Crop shapes" aria-haspopup="true"
-                  aria-expanded="false"
-                  title="Crop to a shape, or draw the outline yourself"
-                  >&#9662;</button>
-                <div class="sh-menu" id="fmt-crop-menu" hidden></div>
-              </span>
-              <!-- "where are all the options that I said, like keep
-                   square, and also having the width, height, and
-                   position (x,y)" (2026-08-29, user, T65). Two doors,
-                   both contextual: a state you can SEE on the selected
-                   object, and a pane you type into. Words plus icons,
-                   and both icons are ones the set already carries. -->
-              <!-- WHERE IT CAME FROM, ON THE ROW (T198; 2026-09-02, user:
-                   "when selecting an image, the object view should on
-                   the right have the object paths, refresh from path
-                   button, lock option"). The file a picture came from,
-                   or the notebook a figure did; a button to re-read
-                   it; and a lock that keeps it where it is. -->
-              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
-                title="Where this came from"></span>
-              <button class="dbtn etm" id="fmt-imgrefresh" hidden
-                title="Re-read this picture from the file it came from.
- If that file has moved, the picture is left exactly as it is"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh from file</button>
+              <!-- T208: Lock in place over Keep shape; X Y over W H; Crop over Caption;
+                   Refresh over Size & position; where from over Source -->
               <button class="dbtn etm" id="fmt-lock" hidden
                 aria-pressed="false"
                 title="Keep this where it is: it cannot be dragged, and
@@ -12402,16 +12327,8 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/><path d="M8 8.4v5.7"/></svg> Lock in place</button>
               <button class="dbtn etm" id="fmt-lockar" hidden
                 aria-pressed="false"
-                title="Keep this object&rsquo;s shape while you drag a
- handle &mdash; a square stays square and a plot keeps its proportions.
- Hold Shift during a drag to do the opposite of whatever this
- says"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Lock ratio</button>
-              <!-- X, Y, WIDTH AND HEIGHT, ON THE RIBBON (T207; 2026-09-02,
-                   user: "why do objects not have an x-y position and also
-                   not a width and height. Oh they do, it's just under size
-                   and position"). Two cells, one column: position over
-                   size, in millimetres, typed straight in. The Size &
-                   position pane stays for the long form. -->
+                title="Keep the proportions while you drag a handle. Hold
+ Shift while dragging to do the opposite"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.2" y="7.2" width="9.6" height="6.6" rx="1.2"/><path d="M5.4 7.2V5.1a2.6 2.6 0 0 1 5.2 0v2.1"/><path d="M8 9.7v1.6"/></svg> Keep shape</button>
               <span class="rbn-cell rbn-geom" id="fmt-geom-xy" hidden
                 role="group" aria-label="Position, in millimetres">
                 <label class="geo" title="Left edge, from the left of the page"
@@ -12431,27 +12348,33 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   ><span>H</span><input id="rb-h" type="number" step="0.5"
                   inputmode="decimal" aria-label="Height"></label>
               </span>
-              <button class="dbtn etm" id="fmt-sizepos" hidden
-                title="Type this object&rsquo;s width, height and
- position in millimetres, instead of dragging for
- them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/><path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2"/></svg> Size &amp; position&#8230;</button>
-              <!-- T17 shipped a TIE between two objects that already
-                   existed, and only when exactly two were selected. This
-                   is the command: caption THIS, which is how a caption
-                   gets written in every other tool (2026-08-29, T58). It
-                   shows for a figure that has not got one yet. -->
+              <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
+                <button class="dbtn etm" id="fmt-crop"
+                  title="Trim the edges: drag the four handles on the
+ picture. This is the crop you want nine times in ten &mdash; the caret
+ beside it holds the shapes and the free-hand crop"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 1.8v9.6h9.6"/><path d="M1.8 4.6h9.6v9.6"/></svg>
+                  Crop</button>
+                <button class="dbtn etm tx-caret" id="fmt-crop-caret"
+                  aria-label="Crop shapes" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Crop to a shape, or draw the outline yourself"
+                  >&#9662;</button>
+                <div class="sh-menu" id="fmt-crop-menu" hidden></div>
+              </span>
               <button class="dbtn etm" id="fmt-caption" hidden
                 title="Put a caption under this figure &mdash; at its
  width, already tied to it and already numbered. Once it has one, the
  same button unties it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.2" y="2.4" width="11.6" height="7.2" rx="1"/><path d="M2.2 12.2h8.4"/><path d="M2.2 14.2h5.6"/></svg> Caption</button>
-              <!-- THE SOURCE WINDOW (T177). Six of a placed figure's
-                   buttons were about where it CAME FROM and keeping it
-                   in step: Locate, Where from, Previous figure, Lock
-                   figure, Refresh and Replace. They are one family and
-                   they are rare beside Crop and Keep shape, so they
-                   share one worded door. Each row closes the window as
-                   it acts (data-close): these are things you do and
-                   leave, not settings you adjust. -->
+              <button class="dbtn etm" id="fmt-imgrefresh" hidden
+                title="Re-read this picture from the file it came from.
+ If that file has moved, the picture is left exactly as it is"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh from file</button>
+              <button class="dbtn etm" id="fmt-sizepos" hidden
+                title="Type this object&rsquo;s width, height and
+ position in millimetres, instead of dragging for
+ them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/><path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2"/></svg> Size &amp; position&#8230;</button>
+              <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
+                title="Where this came from"></span>
               <span class="sh-drop opt-drop" id="fmt-srcwrap">
                 <button class="dbtn etm" id="fmt-src" aria-haspopup="true"
                   aria-expanded="false"
@@ -12479,6 +12402,11 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 Replace</button>
                 </div>
               </span>
+              <button class="dbtn etm" id="fmt-figures" hidden
+                title="Add, reorder and name the figures in this flip
+ book, and tie text or objects to one of them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg>
+   Figures&#8230;</button>
+              <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
           </span>
@@ -27269,8 +27197,9 @@ window.JunoPptx = (function () {
     if(lsIsFull()&&saveTarget==='browser'){
       el.textContent='NOT saved — browser full';
       el.className='deck-status unsaved lsfull';
-      el.title='localStorage is full, so edits are no longer being kept. '
-        +'Use File › Download a copy, or switch "Saved to" to a file.';
+      el.title='Browser storage is full, so edits are not being kept. '
+        +'Use File \u203a Download a copy, or the \u25be beside Save to '
+        +'save to a file.';
       return;
     }
     if(source==='draft'){
@@ -29012,11 +28941,8 @@ window.JunoPptx = (function () {
         var w=document.createElement('span');
         w.className='dpi-warn';
         w.textContent='⚠ ≈'+dpi+' dpi';
-        w.title='This figure will print SOFT at this size (≈'+dpi
-          +' dpi; aim for 200+). In the notebook, re-save it sharper — '
-          +'savefig(dpi=300) — or emit vector SVG: '
-          +"%config InlineBackend.figure_formats=['svg'] — "
-          +'then refresh notebooks.';
+        w.title='Will print soft at this size (≈'+dpi+' dpi; aim for '
+          +'200+). Re-save it at dpi=300 or as SVG, then Update figures';
         cell.appendChild(w);
       }
       if(img.complete) judge();
@@ -30883,9 +30809,10 @@ window.JunoPptx = (function () {
     menuHead(m,'this deck\u2019s colours');
     var note=document.createElement('div');
     note.className='ff-none';
-    note.textContent='Change one and every object wearing it changes '
-      +'with it \u2014 nothing holds a copy. Give an object one from '
-      +'the Deck row of the Colour or Fill menu.';
+    note.textContent='Six named colours the whole deck shares. Give a '
+      +'box one from the Deck row of its Colour or Fill menu; change '
+      +'the name here and every box wearing it follows. Nothing holds '
+      +'a copy.';
     m.appendChild(note);
     var t=tokens();
     Object.keys(t.c).forEach(function(k){
@@ -30937,18 +30864,24 @@ window.JunoPptx = (function () {
     });
     gr.appendChild(gi);
     m.appendChild(gr);
-    document.body.appendChild(m);
+    /* inside the editor's layer and on the overlay stack (T208): Escape
+       and an outside click close it the way every other menu closes,
+       and a colour picker opened from inside it does not close it */
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    m.hidden=true;
+    overlayShow(anchor,m);
     floatMenu(anchor||$('#dsg-styles')||$('#edit-tools'),m);
-    setTimeout(function(){
-      document.addEventListener('click',function off(e){
-        if(m.contains(e.target)) return;
-        m.remove();document.removeEventListener('click',off);
-      });
-    },0);
+    new MutationObserver(function(){
+      if(m.hidden&&m.parentNode) m.remove();
+    }).observe(m,{attributes:true,attributeFilter:['hidden']});
   }
   (function(){
     var b=$('#dsg-tokens');
-    if(b) b.addEventListener('click',function(){openTokenPicker(this);});
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var open=$('#tok-pop');
+      if(open){overlayHide(open);return;}
+      openTokenPicker(this);});
   })();
   function setToken(kind,key,val){
     pres.tokens=pres.tokens||{};
@@ -35173,10 +35106,8 @@ window.JunoPptx = (function () {
         ?('Pin this figure to its notebook\u2019s current git commit '
           +'\u2014 refreshes stop changing it, and it renders even with '
           +'the notebook closed')
-        :('Locking pins a figure to a git commit, which needs the '
-          +'Junoview app (it reads git through the local server). This '
-          +'page was exported as a standalone file, so there is no '
-          +'repository to pin to.');
+        :('Not available in a standalone export \u2014 locking needs the '
+          +'Junoview app and a git repository');
     }
     /* #fmt-cropwrap: visibility from FMT_KINDS.
        Animation is a BUILD — an item appearing on click as you step
@@ -36564,9 +36495,8 @@ window.JunoPptx = (function () {
         menuHead(m,'where it goes');
         row(lk0&&lk0.link?'Change where this goes':'Make this a link\u2026',
           '',function(){setObjLink(selIdxs()[0]);},
-          'Clicking it while presenting opens a page or jumps to '
-          +'another slide. An internal jump follows the slide, not its '
-          +'number, so reordering the deck cannot repoint it.','link');
+          'While presenting, a click opens a web page or jumps to '
+          +'another slide in this deck','link');
         if(lk0&&lk0.link)
           row('Remove the link','',function(){
             delete lk0.link;markDirty();renderSlide();
@@ -36578,10 +36508,8 @@ window.JunoPptx = (function () {
         row(one0&&one0.dec?'Alt text \u2014 marked decorative'
           :((one0&&one0.alt)?'Alt text \u2014 written':'Alt text\u2026'),
           '',function(){setAltText(altSel);},
-          'What this picture shows, for somebody who cannot see it. A '
-          +'caption says what to think about the figure and everyone '
-          +'reads it; alt text says what is IN it and is read instead '
-          +'of it. Leave it empty to mark the picture decorative.',
+          'Describe what the picture shows, for someone who cannot see '
+          +'it. Leave it empty to mark it decorative',
           'caption');
       }
       /* A FIGURE AND ITS CAPTION (T17). Two objects selected, one of
@@ -37046,10 +36974,9 @@ window.JunoPptx = (function () {
           var onFit=(fa.fit==='shrink');
           row(onFit?'Shrink to fit: on':'Shrink to fit: off','',
             function(){toggleFit(selIdxs()[0]);},
-            'Asks the words to live inside the height they have now. '
-            +'The size you chose is never rewritten — only what is '
-            +'drawn shrinks, and it stops before the text stops being '
-            +'readable.').classList.toggle('on',onFit);
+            'Shrink the drawn text to fit the box\u2019s height. The size '
+            +'you chose is kept, and it never shrinks past readable')
+            .classList.toggle('on',onFit);
           if(fa.fh) row('Forget the fit height','',
             function(){clearFit(selIdxs()[0]);},
             'Back to a box that simply grows with its words');
@@ -37153,10 +37080,8 @@ window.JunoPptx = (function () {
       menuHead(m,'who sees it');
       var pb=row(allPriv?'\u2713 Only me':'Only me','',function(){
         setPrivSel(!allPriv);},
-        'Drawn on your screen and in the presenter view, marked so you '
-        +'know it is yours. Never drawn for the audience, and never in '
-        +'a PDF or PowerPoint. Like your speaker notes, it is stored in '
-        +'the deck file.','eye');
+        'Show this only on your screen and in presenter view \u2014 never '
+        +'to the audience, or in a PDF or PowerPoint','eye');
       if(allPriv) pb.classList.add('on');
     }
     /* the slide's SEQUENCE (T106): always offered, because reading
@@ -37164,9 +37089,8 @@ window.JunoPptx = (function () {
     menuHead(m,'slide');
     row('Order on this slide\u2026','',function(){
       if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();},
-      'The order things are numbered in, and the order One by one '
-      +'reveals them. Set order writes it as you click; this panel '
-      +'nudges one thing earlier or later.','stagger');
+      'The order things are numbered and revealed in. Quick animate '
+      +'sets it by clicking; here you nudge one step','stagger');
     row((function(){
       var mm=(typeof mastOf==='function')
         &&mastOf(pres.slides[cur]);
@@ -42798,10 +42722,8 @@ window.JunoPptx = (function () {
         var cur2=m.cmp&&cmpStore()[m.cmp];
         body.appendChild(act('Furniture \u2014 '
           +(cur2?(cur2.name||'component'):'none'),
-          'A component drawn behind every wearer\u2019s content \u2014 '
-          +'a logo, a strap, a footer block. Clicks cycle through the '
-          +'components this deck has. Edit any placed instance and '
-          +'\u201cPush this look\u201d to restyle every wearer.',
+          'A component drawn behind every slide wearing this master. '
+          +'Click to cycle through the deck\u2019s components',
           function(){
             var ids=[''].concat(cl.map(function(c){return c.id;}));
             var at=ids.indexOf(m.cmp||'');
@@ -46008,11 +45930,10 @@ window.JunoPptx = (function () {
        why does it look so confusing"). Say what the order is FOR,
        then how to set it, and lead with the way that needs no
        arrows. */
-    note.textContent='The order things are numbered in, and the order '
-      +'One by one reveals them. Set order on the Animation tab writes '
-      +'it as you click things in turn; the arrows here nudge one '
-      +'thing earlier or later. The numbers show on the slide while '
-      +'this is open.';
+    note.textContent='The order things are numbered and revealed in. '
+      +'Quick animate on the Animation tab sets it as you click things '
+      +'in turn; the arrows here nudge one thing earlier or later. The '
+      +'numbers show on the slide while this is open.';
     p.appendChild(note);
     var state=document.createElement('div');state.className='rd-state';
     var list=document.createElement('div');list.className='rd-list';
@@ -48678,13 +48599,8 @@ window.JunoPptx = (function () {
           var gr=document.createElement('div');gr.className='anim-eff';
           [['','All at once','The whole box on one click.'],
            ['para','Bullet by bullet',
-            'One click per bullet — or per line you pressed Enter '
-            +'on. Those breaks are in the words themselves, so the '
-            +'number of clicks is the same at every zoom and on every '
-            +'page size, and it travels to PowerPoint as a real '
-            +'paragraph build. (A WRAPPED line is not offered: it '
-            +'depends on the box width, so its click count would change '
-            +'when you resized the box.)'],
+            'One click per bullet, or per line you pressed Enter on. '
+            +'Exports to PowerPoint as a paragraph build'],
            ['sent','Sentence by sentence',
             'One click per sentence. "Fig. 3", "et al.", "0.05" and '
             +'initials are left alone; when a cut is in the wrong '
@@ -48868,9 +48784,8 @@ window.JunoPptx = (function () {
       var rb=document.createElement('button');
       rb.className='anim-mini wide';
       rb.textContent='Order on this slide\u2026';
-      rb.title='The order things are numbered in, and the order One '
-        +'by one reveals them. Set order writes it as you click; this '
-        +'panel nudges one thing earlier or later.';
+      rb.title='The order things are numbered and revealed in. Quick '
+        +'animate sets it by clicking; here you nudge one step';
       rb.addEventListener('click',function(e){e.stopPropagation();
         if(window.SemDeckReadingOrder) window.SemDeckReadingOrder();});
       menu.appendChild(rb);
