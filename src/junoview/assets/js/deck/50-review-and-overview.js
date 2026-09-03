@@ -2019,14 +2019,57 @@
       ctl(al==='left'?'←':al==='right'?'→':'↔',
         'Align '+al,(d.align||'left')===al,function(){rec.align=al;});
     });
-    var col=document.createElement('input');
-    col.type='color';col.className='dg-col';
-    col.value=(d.color&&/^#/.test(d.color))?d.color:'#e6eef5';
-    col.title='The colour every box of this type takes';
-    col.addEventListener('input',function(){
-      rec.color=col.value;markDirty();dgRestamp(id);refresh();});
-    col.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
-    row.appendChild(col);
+    /* ---- T223: EVERYTHING A STYLE IS, not size and bold ------------
+       (2026-09-03, user: "I said I wanted also colours of text,
+       background colour, box border colour, font style. I said I
+       wanted everything.") The typeface, then three colours, each
+       writing the same override record the size and weight do. */
+    var fsel=document.createElement('select');
+    fsel.className='dg-font';
+    fsel.title='The typeface every box of this type takes';
+    [['','Default face'],['sans','Sans'],['serif','Serif'],
+     ['mono','Mono'],['system','System'],['hand','Handwritten']]
+      .forEach(function(pr){
+        var o=document.createElement('option');
+        o.value=pr[0];o.textContent=pr[1];
+        if((d.font||'')===pr[0]) o.selected=true;
+        fsel.appendChild(o);
+      });
+    fsel.addEventListener('change',function(){
+      if(fsel.value) rec.font=fsel.value; else delete rec.font;
+      markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+    });
+    row.appendChild(fsel);
+    function dgCol(key,label,fallback,none){
+      var wrap=document.createElement('span');wrap.className='dg-colw';
+      var lb=document.createElement('span');
+      lb.className='dg-collab';lb.textContent=label;
+      wrap.appendChild(lb);
+      var ci=document.createElement('input');
+      ci.type='color';ci.className='dg-col';
+      var v=d[key];
+      ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
+      ci.title=label+' \u2014 every box of this type';
+      ci.addEventListener('input',function(){
+        rec[key]=ci.value;markDirty();dgRestamp(id);refresh();});
+      ci.addEventListener('change',function(){dgRail(ov);dgBody(ov);});
+      wrap.appendChild(ci);
+      if(none){
+        var nb=document.createElement('button');
+        nb.className='dbtn dg-b';nb.textContent=none;
+        nb.title='No '+label.toLowerCase()+' at all';
+        nb.setAttribute('aria-pressed',(v==='none').toString());
+        nb.addEventListener('click',function(){
+          if(v==='none') delete rec[key]; else rec[key]='none';
+          markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
+        });
+        wrap.appendChild(nb);
+      }
+      return wrap;
+    }
+    row.appendChild(dgCol('color','Words','#e6eef5',''));
+    row.appendChild(dgCol('bg','Behind','#16273a','None'));
+    row.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));
     var rst=document.createElement('button');
     rst.className='dbtn dg-b';rst.textContent='Reset';
     rst.title='Back to this type’s built-in look';
@@ -2048,6 +2091,38 @@
       +'until you press the button underneath — a style stamp that '
       +'dragged your boxes about would be unusable.');
     dgBoard(body,id);
+    /* ---- T223: THE NUMBERS, TOO ------------------------------------
+       Dragging sets it roughly; typing sets it exactly, and it is the
+       only way to make two decks agree (2026-09-03, user: "why
+       doesn't it show the x and y position as well, and then things
+       like the size"). Percent of the page, the same currency the
+       whole model uses. */
+    var nums=document.createElement('div');nums.className='dg-nums';
+    [['x','X',8],['y','Y',6],['w','Width',60]].forEach(function(pr){
+      var cell=document.createElement('label');cell.className='dg-num';
+      var lb=document.createElement('span');lb.textContent=pr[1];
+      cell.appendChild(lb);
+      var inp=document.createElement('input');
+      inp.type='number';inp.step='0.5';inp.min='-50';inp.max='150';
+      inp.value=(rec[pr[0]]!=null?rec[pr[0]]:pr[2]);
+      inp.title=pr[1]+' as a percentage of the page';
+      inp.addEventListener('keydown',function(e){
+        e.stopPropagation();
+        if(e.key==='Enter') inp.blur();
+      });
+      inp.addEventListener('change',function(){
+        var v=parseFloat(inp.value);
+        if(!isFinite(v)) return;
+        rec[pr[0]]=Math.round(v*10)/10;
+        markDirty();dgBodyKeep(ov);
+      });
+      cell.appendChild(inp);
+      var pc=document.createElement('span');
+      pc.className='dg-numpc';pc.textContent='%';
+      cell.appendChild(pc);
+      nums.appendChild(cell);
+    });
+    body.appendChild(nums);
     /* the put, scoped (T130): everywhere stays the default, but "these
        headings, in this section" is the sentence the ask was written
        in, and a numeric range covers the rest */
@@ -2060,13 +2135,16 @@
     put.className='dbtn primary dg-put';
     function putSync(){
       var ws=inScope();
-      /* "Put all 0 of them there" was the biggest button on the surface
+      /* a zero-target command was the biggest button on the surface
          (JVUX-10): a zero-target command is an empty state, not a call
          to action */
+      /* T223: "the button says 'put all 8 of them there', what the
+         heck. Do you think about writing? 'Apply to all'" */
       put.innerHTML=ws.length
-        ?(bic('align')+' Put '
-          +(dgPutScope.kind==='all'?('all '+ws.length):ws.length)
-          +' of them there')
+        ?(bic('align')+' Apply to '
+          +(dgPutScope.kind==='all'&&ws.length>1
+            ?('all '+ws.length+' boxes')
+            :(ws.length+' box'+(ws.length===1?'':'es'))))
         :('No boxes wear this style '
           +esc(dgScopeLabel(dgPutScope)));
       put.classList.toggle('primary',!!ws.length);

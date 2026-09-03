@@ -4570,6 +4570,32 @@ option. Then where has the ability to refresh all images gone?"
   captured anywhere in junoview today; that would be new work, not a
   restoration.
 
+- [x] **T223 - A text style says everything.**
+  The user (2026-09-03): "In the text styles, you can only change size
+  and bold and stuff. I said I wanted also colours of text, background
+  colour, box border colour, font style. I said I wanted everything."
+  And of the Style system screen: "why doesn't it show the x and y
+  position as well, and then things like the size... The button says
+  'put all 8 of them there', what the heck. Do you think about writing?
+  'Apply to all'."
+  *Done 2026-09-03.* **One vocabulary**: a style's fields were written
+  out by hand in SIX places and had already drifted -- addCustomType
+  dropped `head`, so a style based on Heading 2 was not a heading, and
+  "save this deck's type as a set" saved no colours. They all read one
+  `STYLE_FIELDS` list now, which is why adding two fields was two lines
+  rather than six. **Two new fields**: `bg`, the colour behind the
+  words, and `bdc`, the colour of the box's edge. Both take a colour or
+  the string 'none' -- 'none' is a real answer and different from not
+  having said anything, so neither is absent-or-set. A text box draws
+  the edge it is given, over the transparent edge a background sets.
+  **Both editors** -- the inline one in the Text styles window and the
+  Style system screen -- offer the whole vocabulary: the typeface, and
+  Words, Behind and Edge with a None for the last two. Neither is
+  allowed to be the poorer one. **Numbers**: the screen shows X, Y and
+  Width as typed percentages beside the drag board. Dragging sets it
+  roughly; typing is the only way to make two decks agree. **Wording**:
+  the button says "Apply to all 8 boxes".
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

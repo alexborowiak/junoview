@@ -1150,7 +1150,9 @@
       styleOrder().forEach(function(id){
         var d=styleDef(id); if(!d) return;
         var o={size:d.size};
-        ['b','i','font','color','align','lh','pspace'].forEach(function(k){
+        /* T223: the one vocabulary, so a saved set keeps the
+           colours and the edge as well as the size and weight */
+        STYLE_FIELDS.forEach(function(k){
           if(d[k]!==undefined) o[k]=d[k];});
         st[id]=o;
       });

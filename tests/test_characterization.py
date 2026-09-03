@@ -970,8 +970,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # running late; the Style system screen has one door instead of two;
 # a clock icon joined branding.py; and six buttons that shared an
 # icon with a neighbour in their own group got their own.
-EXPECTED_MD5 = "173fc746db0f768a089df044037df431"
-EXPECTED_BYTES = 3359762
+# 2026-09-03, T223: a text style carries the typeface, the colour of
+# the words, the colour behind them and the colour of the box's edge;
+# the vocabulary is one STYLE_FIELDS list instead of four; both style
+# editors offer all of it; the Style system screen shows X, Y and
+# Width as numbers and its button says Apply to.
+EXPECTED_MD5 = "8a6c445bb3f32f1f85ef7d045d802c96"
+EXPECTED_BYTES = 3369181
 
 
 def _render_example() -> str:

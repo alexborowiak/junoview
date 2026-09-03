@@ -378,7 +378,7 @@
       over.label=STYLE_DEFAULTS[id].label;
       over.size=Math.max(0.8,Math.min(24,
         Math.round(d.size*k*100)/100));
-      ['b','i','font','color','align'].forEach(function(pr){
+      STYLE_FIELDS.forEach(function(pr){
         if(d[pr]!==undefined) over[pr]=d[pr];});
       deckStyles()[id]=over;
     });
@@ -410,9 +410,8 @@
            a partial override plus a later base change reads as a style
            that half-followed */
         o.label=d.label;o.size=d.size;
-        ['b','i','font','color','align','lh','pspace','head']
-          .forEach(function(k){
-            if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
+        STYLE_FIELDS.forEach(function(k){
+          if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
         deckStyles()[id]=o;
         return o;
       }
@@ -439,6 +438,67 @@
         'Counts as a heading — for "apply to all headings", the outline '
         +'view and the standardise check'));
       box.appendChild(row);
+      /* ---- T223: THE REST OF WHAT A STYLE IS -----------------------
+         The typeface, the colour of the words, the colour behind them
+         and the colour of the edge. Each writes the same override
+         record the toggles do and re-stamps every box wearing it. */
+      var crow=document.createElement('div');crow.className='stm-erow';
+      var fsel=document.createElement('select');
+      fsel.className='stm-font';
+      fsel.title='The typeface every box of this style takes';
+      [['','Default face'],['sans','Sans'],['serif','Serif'],
+       ['mono','Mono'],['system','System'],['hand','Handwritten']]
+        .forEach(function(pr){
+          var o=document.createElement('option');
+          o.value=pr[0];o.textContent=pr[1];
+          if((d.font||'')===pr[0]) o.selected=true;
+          fsel.appendChild(o);
+        });
+      fsel.addEventListener('click',function(e){e.stopPropagation();});
+      fsel.addEventListener('change',function(){
+        var o=over();
+        if(fsel.value) o.font=fsel.value; else delete o.font;
+        restyleAll([id]);build();
+      });
+      crow.appendChild(fsel);
+      /* a colour, and a way to say NONE -- which is a different
+         answer from not having said anything */
+      function colCtl(key,label,fallback,none){
+        var wrap=document.createElement('span');
+        wrap.className='stm-col';
+        var lb=document.createElement('span');
+        lb.className='stm-collab';lb.textContent=label;
+        wrap.appendChild(lb);
+        var ci=document.createElement('input');
+        ci.type='color';ci.className='stm-colin';
+        var v=d[key];
+        ci.value=(v&&v!=='none'&&/^#/.test(v))?v:fallback;
+        ci.title=label+' \u2014 everywhere in this deck';
+        ci.addEventListener('click',function(e){e.stopPropagation();});
+        ci.addEventListener('change',function(){
+          var o=over();o[key]=ci.value;
+          restyleAll([id]);build();
+        });
+        wrap.appendChild(ci);
+        if(none){
+          var nb=document.createElement('button');
+          nb.className='dbtn stm-tg';nb.textContent=none;
+          nb.title='No '+label.toLowerCase()+' at all';
+          nb.setAttribute('aria-pressed',(v==='none').toString());
+          nb.addEventListener('click',function(e){
+            e.stopPropagation();
+            var o=over();
+            if(v==='none') delete o[key]; else o[key]='none';
+            restyleAll([id]);build();
+          });
+          wrap.appendChild(nb);
+        }
+        return wrap;
+      }
+      crow.appendChild(colCtl('color','Words','#e6eef5',''));
+      crow.appendChild(colCtl('bg','Behind','#16273a','None'));
+      crow.appendChild(colCtl('bdc','Edge','#8aa0b0','None'));
+      box.appendChild(crow);
       var ren=document.createElement('input');
       ren.className='stm-ren';ren.type='text';ren.value=d.label;
       ren.placeholder='name for this style';
@@ -531,7 +591,7 @@
             over.label=STYLE_DEFAULTS[id].label;
             over.size=Math.max(0.8,Math.min(24,
               Math.round(d.size*pr[1]*100)/100));
-            ['b','i','font','color','align'].forEach(function(k2){
+            STYLE_FIELDS.forEach(function(k2){
               if(d[k2]!==undefined) over[k2]=d[k2];});
             deckStyles()[id]=over;
             restyleAll([id]);
@@ -2043,6 +2103,10 @@
           d2.style.background=tokVal(a.bgc);
           d2.style.borderColor='transparent';
         }
+        /* T223: an explicit edge colour wins over both the default
+           and the transparent edge a background sets */
+        if(a.bdc) d2.style.borderColor=
+          (a.bdc==='none')?'transparent':tokVal(a.bdc);
         if(a.w){d2.style.width=a.w+'%';d2.style.maxWidth='none';}
         applyCommon(d2,a);
         d2.setAttribute('data-idx',i);

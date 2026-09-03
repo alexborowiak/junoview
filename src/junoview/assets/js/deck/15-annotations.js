@@ -2200,6 +2200,20 @@
     rad:4,      /* px, the corner of a drawn box */
     gap:3       /* % of the page, the rhythm the arrange verbs use */
   };
+  /* ---- WHAT A STYLE CAN SAY (T223) ---------------------------------
+     One list, because there were four and they had already drifted:
+     syncCustomTypes copied eight fields, addCustomType seven (it
+     silently dropped `head`), the style editor eight and applyStyleTo
+     baked eight. A field added to a style had to be remembered in all
+     of them or it half-worked.
+     `bg` and `bdc` are new (2026-09-03, user: "in the text styles you
+     can only change size and bold and stuff. I said I wanted also
+     colours of text, background colour, box border colour, font
+     style. I said I wanted everything"). Both take a colour or the
+     string 'none'; 'none' is a real answer, and different from not
+     saying, which is why they are not just absent-or-set. */
+  var STYLE_FIELDS=['b','i','font','color','align','lh','pspace',
+    'head','bg','bdc'];
   var TOKEN_LABELS={accent:'Accent',warm:'Warm',lift:'Lift',
     calm:'Calm',ink:'Ink',quiet:'Quiet'};
   function tokens(){
@@ -2565,8 +2579,8 @@
       if(!t||!t.id||BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
       var d={label:String(t.label||'Style'),
         size:(typeof t.size==='number'&&t.size>0)?t.size:2.6};
-      ['b','i','font','color','align','lh','pspace','head']
-        .forEach(function(k){if(t[k]!==undefined) d[k]=t[k];});
+      STYLE_FIELDS.forEach(function(k){
+        if(t[k]!==undefined) d[k]=t[k];});
       STYLE_DEFAULTS[t.id]=d;
     });
   }
@@ -2605,8 +2619,10 @@
   function addCustomType(label,base){
     var b=styleDef(base)||STYLE_DEFAULTS.body;
     var t={id:mintTypeId(),label:String(label||'My style'),size:b.size};
-    ['b','i','font','color','align','lh','pspace']
-      .forEach(function(k){if(b[k]!==undefined) t[k]=b[k];});
+    /* `head` travels too now: a style based on Heading 2 is a
+       heading, and the old list quietly said otherwise */
+    STYLE_FIELDS.forEach(function(k){
+      if(b[k]!==undefined) t[k]=b[k];});
     customTypes().push(t);
     syncCustomTypes();
     return t;
@@ -2663,6 +2679,16 @@
     if(d.align) a.align=d.align;
     if(d.lh) a.lh=d.lh; else delete a.lh;
     if(d.pspace) a.pspace=d.pspace; else delete a.pspace;
+    /* T223: the colour behind the words. 'none' is transparent,
+       which is a.bg=0 -- the same shape the format bar's swatch has
+       always written. */
+    if(d.bg==='none'){a.bg=0;delete a.bgc;}
+    else if(d.bg){a.bg=1;a.bgc=d.bg;}
+    else {delete a.bg;delete a.bgc;}
+    /* ...and the colour of its edge */
+    if(d.bdc&&d.bdc!=='none') a.bdc=d.bdc;
+    else if(d.bdc==='none') a.bdc='none';
+    else delete a.bdc;
   }
   /* ---- SPEAKER NOTES + TIMING ------------------------------------------
      Notes are per slide and are never drawn on the page: they exist for
