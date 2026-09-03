@@ -4782,6 +4782,25 @@ option. Then where has the ability to refresh all images gone?"
   input cannot say what a three-level list is -- and its number boxes
   are narrower.
 
+- [x] **T231 - Select all on the slide column, and Apply follows the
+  selection.**
+  The user (2026-09-03): "The thumbnails need a select all and an
+  unselect all as well. The apply to x boxes, should just be for the
+  selection."
+  *Done 2026-09-03.* The slide column picks slides, so it has the same
+  two buttons the table has, and a line saying how many are picked --
+  "none picked, everything counts" when there are none. Select all
+  takes the slides the column is actually showing, which is what its
+  own scope select already decides. **Apply**: by T230 there were three
+  answers to "which slides" -- a scope selector of its own, the ticked
+  rows in the table, and the picked slides -- and only the first of
+  them did anything. The selector is gone, and its state with it; the
+  button reads the selection in the order you would say it aloud: the
+  boxes you ticked, or failing that the slides you picked, or failing
+  that all of them. It says which it means: "Apply to 3 ticked boxes",
+  "Apply to 8 boxes on the 2 slides you picked", "Apply to all 13
+  boxes". Driven live through all three.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

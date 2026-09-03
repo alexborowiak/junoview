@@ -1749,7 +1749,11 @@
      and ranges for both. One selector builder, two independent scopes,
      because "move the headings in section 2" and "show me outlines of
      slides 4-9" are different questions asked at different moments. */
-  var dgPutScope={kind:'all'}, dgSheetScope={kind:'all'};
+  /* T231: the put button's own scope went with the selector -- it
+     reads the selection now, so a second answer to "which slides"
+     would only be a way to disagree with yourself. The sheet keeps
+     one, because it says which slides the column SHOWS. */
+  var dgSheetScope={kind:'all'};
   function dgInScope(sc,si){
     if(!sc||sc.kind==='all') return true;
     if(sc.kind==='sec')
@@ -2210,6 +2214,33 @@
     var sheetScope=dgScopeSelect(dgSheetScope,function(){dgBodyKeep(ov);});
     sheetScope.title='Outlines from these slides only';
     body.appendChild(sheetScope);
+    /* T231: the column picks slides, so it needs the same two buttons
+       the table has (2026-09-03, user: "the thumbnails need a select all
+       and an unselect all as well"). Select all takes the slides this
+       column is actually showing, which is what the scope above says. */
+    var picks=document.createElement('div');picks.className='dg-picks';
+    function pickBtn(label,title,fn){
+      var b=document.createElement('button');
+      b.className='dbtn dg-b';b.textContent=label;b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn();});
+      picks.appendChild(b);
+      return b;
+    }
+    pickBtn('Select all','Pick every slide shown here',function(){
+      (pres.slides||[]).forEach(function(_sl,i){
+        if(dgInScope(dgSheetScope,i)) dgSheetPick[i]=1;});
+      dgBodyKeep(ov);
+    });
+    pickBtn('Unselect all','Clear every picked slide',function(){
+      dgSheetPick={};dgBodyKeep(ov);
+    }).disabled=!dgPickedAny();
+    var pc=document.createElement('span');
+    pc.className='dg-pickn';
+    pc.textContent=dgPickedAny()
+      ?(dgPickedCount()+' picked')
+      :'none picked — everything counts';
+    picks.appendChild(pc);
+    body.appendChild(picks);
     var sheet=document.createElement('div');
     sheet.className='dg-sheet'+(dgOutline?' outlined':'');
     (pres.slides||[]).forEach(function(sl,i){
@@ -2741,31 +2772,55 @@
        in, and a numeric range covers the rest */
     var putRow=document.createElement('div');
     putRow.className='dg-putrow';
-    var inScope=function(){
-      return wear.filter(function(w){return dgInScope(dgPutScope,w.s);});
+    /* ---- T231: APPLY TO WHAT IS SELECTED -----------------------------
+       (2026-09-03, user: "the apply to x boxes, should just be for the
+       selection.") There were three ways to scope this one action --
+       a scope select of its own, the ticked rows in the table, and the
+       slides picked in the column -- and only the first of them did
+       anything. The selector is gone; the button reads the selection,
+       in the order you would say it out loud: the boxes you ticked, or
+       failing that the slides you picked, or failing that all of them. */
+    var pickMode=function(){
+      var ticked=wear.filter(function(w){
+        return dgMarked[w.s+':'+w.i];});
+      if(ticked.length) return {ws:ticked,how:'ticked'};
+      if(dgPickedAny()) return {ws:wear.filter(function(w){
+        return dgSheetPick[w.s];}),how:'picked'};
+      return {ws:wear,how:'all'};
     };
+    var inScope=function(){return pickMode().ws;};
     var put=document.createElement('button');
     put.className='dbtn primary dg-put';
+    function putWhat(){
+      var m=pickMode();
+      if(m.how==='ticked') return m.ws.length+' ticked box'
+        +(m.ws.length===1?'':'es');
+      if(m.how==='picked') return m.ws.length+' box'
+        +(m.ws.length===1?'':'es')+' on the '+dgPickedCount()
+        +' slide'+(dgPickedCount()===1?'':'s')+' you picked';
+      return (m.ws.length>1?'all ':'')+m.ws.length+' box'
+        +(m.ws.length===1?'':'es');
+    }
     function putSync(){
-      var ws=inScope();
+      var m=pickMode(),ws=m.ws;
       /* a zero-target command was the biggest button on the surface
          (JVUX-10): a zero-target command is an empty state, not a call
          to action */
       /* T223: "the button says 'put all 8 of them there', what the
          heck. Do you think about writing? 'Apply to all'" */
       put.innerHTML=ws.length
-        ?(bic('align')+' Apply to '
-          +(dgPutScope.kind==='all'&&ws.length>1
-            ?('all '+ws.length+' boxes')
-            :(ws.length+' box'+(ws.length===1?'':'es'))))
-        :('No boxes wear this style '
-          +esc(dgScopeLabel(dgPutScope)));
+        ?(bic('align')+' Apply to '+esc(putWhat()))
+        :(m.how==='all'
+          ?'No boxes wear this style'
+          :'None of what you selected wears this style');
       put.classList.toggle('primary',!!ws.length);
       put.disabled=!ws.length;
       put.title=ws.length
-        ?('Move every box wearing this type onto that rectangle, '
-          +dgScopeLabel(dgPutScope)+'. Ctrl+Z undoes the lot.')
-        :('Nothing wears this type '+dgScopeLabel(dgPutScope));
+        ?('Move '+putWhat()+' onto that rectangle. Ctrl+Z undoes the lot.'
+          +(m.how==='all'
+            ?' Tick rows in the table, or pick slides on the right, to '
+              +'do fewer.':''))
+        :'Nothing selected wears this type';
     }
     put.addEventListener('click',function(){
       var n=0;
@@ -2781,10 +2836,9 @@
       if(!n) return;
       markDirty();refresh();renderFilm();dgBodyKeep(ov);
       toast(n+' '+(d.label||id)+' box'+(n===1?'':'es')
-        +' moved '+dgScopeLabel(dgPutScope)+' — Ctrl+Z undoes it');
+        +' moved — Ctrl+Z undoes it');
     });
     putRow.appendChild(put);
-    putRow.appendChild(dgScopeSelect(dgPutScope,putSync));
     putSync();
     body.appendChild(putRow);
 

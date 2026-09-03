@@ -3157,6 +3157,12 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* T231: the slide column picks slides, so it gets the same two buttons
+   the table has, and says how many are picked. */
+.dg-picks{display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  margin:8px 0 4px;}
+.dg-pickn{font-family:var(--sans);font-size:11px;color:#8ea3b5;}
+
 /* ---- T230: THE BOARD SHOWS THE REAL BOXES -----------------------------
    The dragged rectangle is the default this style stamps -- thicker,
    amber, and glowing. Behind it, every box that actually wears the

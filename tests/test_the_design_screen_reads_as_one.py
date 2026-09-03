@@ -93,3 +93,30 @@ def test_the_table_edits_the_words_and_its_boxes_are_smaller(out):
     assert "          ?'A list: edit its words on the slide'" in out
     assert ".dgt-n{max-width:74px;}" in out
     assert "    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 34px 34px;" in out
+
+
+def test_the_slide_column_has_select_all_and_unselect_all(out):
+    """It picks slides, so it needs the two buttons the table has."""
+    assert "picks.className='dg-picks';" in out
+    assert "    pickBtn('Select all','Pick every slide shown here',function(){" in out
+    assert "    pickBtn('Unselect all','Clear every picked slide',function(){" in out
+    # Select all takes what the column is showing, which its scope decides
+    assert "        if(dgInScope(dgSheetScope,i)) dgSheetPick[i]=1;});" in out
+    assert "      ?(dgPickedCount()+' picked')" in out
+    assert ".dg-picks{display:flex;align-items:center;gap:6px;" in out
+
+
+def test_apply_is_for_the_selection_and_has_no_scope_of_its_own(out):
+    """Three answers to "which slides" and only one of them did
+    anything. The selector is gone; the button reads the selection."""
+    assert "var dgPutScope" not in out
+    assert "    var pickMode=function(){" in out
+    assert "      if(ticked.length) return {ws:ticked,how:'ticked'};" in out
+    assert "      return {ws:wear,how:'all'};" in out
+    assert "    function putWhat(){" in out
+    assert "      if(m.how==='ticked') return m.ws.length+' ticked box'" in out
+    assert "          ?'No boxes wear this style'" in out
+    assert "          :'None of what you selected wears this style');" in out
+    # ...and the put row is the button alone now
+    assert "    putRow.appendChild(put);" in out
+    assert "    putSync();" in out

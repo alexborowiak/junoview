@@ -999,8 +999,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # captioned clusters, the board draws every real box (and, on request,
 # everything else) with a key, slide picks are cumulative and filter
 # the table, and the table's first column edits the words.
-EXPECTED_MD5 = "4e6b9cfe98b796b80a39364e5ec275c6"
-EXPECTED_BYTES = 3434192
+# 2026-09-03, T231: the slide column got Select all / Unselect all, and
+# the Apply button follows the selection (ticked rows, else picked
+# slides, else all) instead of carrying a scope selector of its own.
+EXPECTED_MD5 = "27d0d04323c896ddfd3ae3e62ae9aa27"
+EXPECTED_BYTES = 3437059
 
 
 def _render_example() -> str:

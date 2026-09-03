@@ -289,19 +289,26 @@ def test_both_libraries_are_reachable_from_the_match_menu(out):
 # scoped to the section showed only cells 2 and 3.
 
 
-def test_the_put_gesture_has_a_scope(out):
-    """It was all-wearers-everywhere; the ask was written in sections
-    and ranges. One selector builder, two independent scopes, because
-    "move the headings in section 2" and "show me outlines of slides
-    4-9" are different questions asked at different moments."""
-    assert "var dgPutScope={kind:'all'}, dgSheetScope={kind:'all'};" in out
+def test_the_put_gesture_follows_the_selection(out):
+    """It was all-wearers-everywhere, then all-wearers-in-a-scope. By
+    T230 there were three answers to "which slides" -- a selector of its
+    own, the ticked rows, and the picked slides -- and only the first
+    did anything (2026-09-03, user: "the apply to x boxes, should just
+    be for the selection"). The selector is gone; the button reads the
+    selection, in the order you would say it aloud."""
+    assert "var dgPutScope" not in out
+    assert "  var dgSheetScope={kind:'all'};" in out
     assert "function dgInScope(sc,si){" in out
     assert "function dgScopeSelect(sc,onchange){" in out
-    # only sections actually in use are offered
+    # only sections actually in use are offered -- the sheet still scopes
     assert "if(sl&&sl.sec) used[sl.sec]=1;});" in out
-    # the put filters through the same predicate and says its scope
-    assert "return wear.filter(function(w){return dgInScope(dgPutScope,w.s);});" in out
-    assert "+dgScopeLabel(dgPutScope)+' — Ctrl+Z undoes it');" in out
+    # ticked rows, else picked slides, else all of them
+    assert "    var pickMode=function(){" in out
+    assert "var ticked=wear.filter(function(w){" in out
+    assert "return dgMarked[w.s+':'+w.i];});" in out
+    assert "      if(ticked.length) return {ws:ticked,how:'ticked'};" in out
+    assert "      if(dgPickedAny()) return {ws:wear.filter(function(w){" in out
+    assert "      return {ws:wear,how:'all'};" in out
 
 
 def test_hovering_a_sheet_cell_names_the_slide(out):

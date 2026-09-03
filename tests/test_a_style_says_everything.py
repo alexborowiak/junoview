@@ -71,10 +71,9 @@ def test_the_screen_shows_the_numbers_not_just_the_drag(out):
 
 
 def test_the_put_button_says_apply(out):
-    assert ("        ?(bic('align')+' Apply to '\n"
-            "          +(dgPutScope.kind==='all'&&ws.length>1\n"
-            "            ?('all '+ws.length+' boxes')\n"
-            "            :(ws.length+' box'+(ws.length===1?'':'es'))))") in out
+    # (T231: the count is whatever the selection is)
+    assert "?(bic('align')+' Apply to '+esc(putWhat()))" in out
+    assert "    function putWhat(){" in out
     # the old wording survives only where it is quoted as history
     assert "' Put '" not in out
     assert "+' of them there')" not in out
