@@ -6269,8 +6269,27 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* ---- T227: KINDS OF BULLET, KINDS OF NUMBERING ----------------------
+   The element carries the kind as a class and the content is only the
+   items, so a marker is a rule here and never a rewrite of the words.
+   The families keep their old defaults, so every deck written before
+   this looks exactly as it did. */
 ul.an-ul{list-style:disc;}
 ol.an-ul{list-style:decimal;}
+ul.an-ul.an-ul-bullet{list-style-type:disc;}
+ul.an-ul.an-ul-circle{list-style-type:circle;}
+ul.an-ul.an-ul-square{list-style-type:square;}
+ul.an-ul.an-ul-dash{list-style-type:"\2013\00a0";}
+ul.an-ul.an-ul-arrow{list-style-type:"\25b8\00a0";}
+ul.an-ul.an-ul-check{list-style-type:"\2713\00a0";}
+ol.an-ul.an-ul-number{list-style-type:decimal;}
+ol.an-ul.an-ul-alpha{list-style-type:lower-alpha;}
+ol.an-ul.an-ul-alpha-upper{list-style-type:upper-alpha;}
+ol.an-ul.an-ul-roman{list-style-type:lower-roman;}
+ol.an-ul.an-ul-roman-upper{list-style-type:upper-roman;}
+/* a closing bracket is the one shape list-style-type cannot say */
+ol.an-ul.an-ul-paren{list-style-type:decimal;}
+ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-tx.an-ul li{margin:.18em 0;white-space:pre-wrap;}
 .an-tx.an-ul ul{list-style:circle;margin:0;padding-left:1.5em;}
 .an-tx.an-ul ul ul{list-style:square;}
@@ -7732,6 +7751,19 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
 body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
+
+/* the two galleries: three lines with the marker they would draw */
+.sh-menu.ls-menu{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:4px;width:250px;padding:7px;}
+.ls-opt{gap:5px;}
+.ls-prev{display:flex;flex-direction:column;gap:3px;width:100%;}
+.ls-row{display:flex;align-items:center;gap:4px;}
+.ls-mark{font-family:var(--mono);font-size:9px;color:#9fb3c4;
+  min-width:13px;text-align:right;}
+.ls-bar{flex:1;height:2px;border-radius:1px;background:#ffffff33;}
+.ls-opt[aria-pressed="true"] .ls-bar{background:var(--accent,#39a9c0);}
+.ls-opt[aria-pressed="true"] .ls-mark{color:#fff;}
+body.light .ls-bar{background:#00000026;}
 
 /* ---- T226: MAKING A LAYOUT --------------------------------------------
    The board is the page and the slots are what a layout is made of, so
@@ -12620,12 +12652,38 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <span class="rbn-grp rbn-paragrp" data-tab="object"
             data-fold-ic="spacing">
             <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-bullets"
-                aria-pressed="false"
-                title="Bullet list on / off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="3.4" cy="4.6" r="1.2"/><circle cx="3.4" cy="11.4" r="1.2"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> List</button>
-              <button class="dbtn etm" id="fmt-numbers"
-                aria-pressed="false"
-                title="Numbered list on / off"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Numbered</button>
+              <!-- T227: each is a split control. The button turns the
+                   list on with the kind you last chose; the caret
+                   opens the kinds, drawn (2026-09-03, user: "there
+                   are no different types of bullet points, and
+                   different lists"). -->
+              <span class="sh-drop tx-split" id="fmt-bulletswrap">
+                <button class="dbtn etm" id="fmt-bullets"
+                  aria-pressed="false"
+                  title="Bullet list on / off. The caret beside it
+ holds the kinds of bullet"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="3.4" cy="4.6" r="1.2"/><circle cx="3.4" cy="11.4" r="1.2"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> List</button>
+                <button class="dbtn etm tx-caret" id="fmt-bullets-caret"
+                  aria-label="Kinds of bullet" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="Dot, ring, square, dash, arrow or tick"
+                  >&#9662;</button>
+                <div class="sh-menu ls-menu" id="fmt-bullets-menu"
+                  hidden></div>
+              </span>
+              <span class="sh-drop tx-split" id="fmt-numberswrap">
+                <button class="dbtn etm" id="fmt-numbers"
+                  aria-pressed="false"
+                  title="Numbered list on / off. The caret beside it
+ holds the kinds of numbering"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 3.2h1.6v3.2M2.6 6.4h1.6M2.4 9.6h2.2l-2.2 2.6h2.4"/><path d="M6.6 4.6h7M6.6 11.4h7"/></svg> Numbered</button>
+                <button class="dbtn etm tx-caret" id="fmt-numbers-caret"
+                  aria-label="Kinds of numbering" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="1. 2. 3., 1) 2) 3), a. b. c., A. B. C.,
+ i. ii. iii. or I. II. III."
+                  >&#9662;</button>
+                <div class="sh-menu ls-menu" id="fmt-numbers-menu"
+                  hidden></div>
+              </span>
               <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
                 title="Align left"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7"/></svg> Left</button>
@@ -33390,9 +33448,56 @@ window.JunoPptx = (function () {
      (2026-08-20, user: "the bullet list on/off is cursed. PLEASE DO
      EVERYTHING PROPERLY"). One content field, converted on the way in and
      on the way out, is the fix. */
+  /* ---- KINDS OF LIST (T227) ----------------------------------------
+     (2026-09-03, user: "there are no different types of bullet
+     points, and different lists.") There were two: a disc and 1-2-3.
+     The machinery never needed more than a word -- `a.list` holds the
+     style NAME, the rendered element carries it as a class, and the
+     content is only the items -- so each kind here is one entry and
+     one CSS rule, and switching between them rewrites nothing.
+     The marker in the third column is what the picker draws and what
+     `::marker` shows, so the gallery cannot disagree with the page. */
+  var LIST_KINDS=[
+    ['bullet','Dot','\u2022',0],
+    ['circle','Ring','\u25e6',0],
+    ['square','Square','\u25aa',0],
+    ['dash','Dash','\u2013',0],
+    ['arrow','Arrow','\u25b8',0],
+    ['check','Tick','\u2713',0],
+    ['number','1. 2. 3.','1.',1],
+    ['paren','1) 2) 3)','1)',1],
+    ['alpha','a. b. c.','a.',1],
+    ['alpha-upper','A. B. C.','A.',1],
+    ['roman','i. ii. iii.','i.',1],
+    ['roman-upper','I. II. III.','I.',1]
+  ];
+  function listKind(id){
+    var hit=null;
+    LIST_KINDS.forEach(function(k){if(!hit&&k[0]===id) hit=k;});
+    return hit;
+  }
+  function listIsOrdered(id){
+    var k=listKind(id);
+    return !!(k&&k[3]);
+  }
+  /* the nth marker a kind draws, for the gallery's preview */
+  function listMarker(id,n){
+    var k=listKind(id); if(!k) return '\u2022';
+    if(!k[3]) return k[2];
+    var tail=(id==='paren')?')':'.';
+    if(id==='alpha') return 'abc'.charAt(n-1)+tail;
+    if(id==='alpha-upper') return 'ABC'.charAt(n-1)+tail;
+    if(id==='roman') return ['i','ii','iii'][n-1]+tail;
+    if(id==='roman-upper') return ['I','II','III'][n-1]+tail;
+    return n+tail;
+  }
   function listOf(a){
     /* an older deck stored a.list as the boolean 1 */
-    return a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;
+    var v=a&&a.list?(a.list===true||a.list===1?'bullet':a.list):0;
+    /* a kind this build does not know falls back to its family's
+       default rather than to no list at all */
+    if(v&&!listKind(v)) v=(v==='number')?'number':'bullet';
+    return v;
   }
   /* strip markup for the plain projection */
   function plainOf(html){
@@ -33437,6 +33542,11 @@ window.JunoPptx = (function () {
     var was=listOf(a);
     style=style||0;
     if(was===style) return;
+    /* T227: LIST TO LIST IS A WORD. Both being lists, the content is
+       already the items and only the marker changes -- and going
+       through contentLines would flatten every nested level, which
+       is what switching bullets to numbering used to do. */
+    if(was&&style){a.list=style;return;}
     var lines=contentLines(a);
     if(style){
       /* an empty line still needs a bullet to stand on */
@@ -34832,7 +34942,7 @@ window.JunoPptx = (function () {
           /* the ELEMENT carries the marker style and a.html carries only
              the items, so switching bullets to numbering rewrites no
              content at all */
-          tx2=document.createElement(lst==='number'?'ol':'ul');
+          tx2=document.createElement(listIsOrdered(lst)?'ol':'ul');
           tx2.className='an-tx an-ul an-ul-'+lst;
           if(_pg.h) tx2.innerHTML=sanitizeRich(showHtml).html;
           else String(_pg.t||'').split('\n').forEach(function(line){
@@ -35449,6 +35559,11 @@ window.JunoPptx = (function () {
     +'#fmt-tbl-colminus #fmt-tbl-head #fmt-tbl-grid '
     +'#fmt-forward #fmt-backward '
     +'#fmt-bullets #fmt-numbers #fmt-indent #fmt-outdent '
+    /* the split wrappers and their carets: the wrapper has to be
+     governed or the deselect sweep hides the caret, and a hidden
+     caret collapses the whole control through the :has() rule */
+    +'#fmt-bulletswrap #fmt-bullets-caret #fmt-bullets-menu '
+    +'#fmt-numberswrap #fmt-numbers-caret #fmt-numbers-menu '
     +'#fmt-dup #fmt-group #fmt-ungroup #fmt-front #fmt-back '
     +'#fmt-rotl #fmt-rotr #fmt-arline #fmt-argrid #fmt-samewrap '
     +'#fmt-alignwrap #fmt-opwrap #fmt-txcol-btn '
@@ -35699,8 +35814,15 @@ window.JunoPptx = (function () {
        is on, which the old menu line could not; indent and outdent only
        appear once there is a list to move a bullet inside. */
     var lst=isText?listOf(a):0;
-    show('#fmt-bullets',isText&&isNum,lst==='bullet');
-    show('#fmt-numbers',isText&&isNum,lst==='number');
+    /* T227: pressed when ANY kind of that family is on, and the
+       gallery marks which one */
+    /* the split wrappers are controls too, so they need a rule of
+       their own or the deselect sweep hides them for good */
+    show('#fmt-bulletswrap',isText&&isNum);
+    show('#fmt-numberswrap',isText&&isNum);
+    show('#fmt-bullets',isText&&isNum,!!lst&&!listIsOrdered(lst));
+    show('#fmt-numbers',isText&&isNum,!!lst&&listIsOrdered(lst));
+    if(typeof listGallerySync==='function') listGallerySync(lst);
     show('#fmt-indent',isText&&isNum&&!!lst);
     show('#fmt-outdent',isText&&isNum&&!!lst);
     /* the three alignments, in the row and showing which is on
@@ -39536,8 +39658,70 @@ window.JunoPptx = (function () {
       if(a.lock==='pos') delete a.lock;
       else if(lockMode(a)==='') a.lock='pos';});
   });
-  onBtn('#fmt-bullets',function(){listApply('bullet');});
-  onBtn('#fmt-numbers',function(){listApply('number');});
+  /* T227: the button applies the kind you last chose in its own
+     gallery, so the second bullet list you make is the kind you
+     wanted rather than a disc again */
+  var lastBullet='bullet',lastNumber='number';
+  onBtn('#fmt-bullets',function(){listApply(lastBullet);});
+  onBtn('#fmt-numbers',function(){listApply(lastNumber);});
+  /* the two galleries: every kind drawn as three lines with its own
+     marker, from the one table the renderer reads */
+  function listGalleryBoot(){
+    /* the two doors are written out rather than looped: wireMenuToggle
+       takes id STRINGS and does $('#'+arg), and the contract test
+       insists on seeing literals so an element can never be passed */
+    var galleries=[
+      {w:wireMenuToggle('fmt-bulletswrap','fmt-bullets-caret',
+        'fmt-bullets-menu'),ord:0},
+      {w:wireMenuToggle('fmt-numberswrap','fmt-numbers-caret',
+        'fmt-numbers-menu'),ord:1}];
+    galleries.forEach(function(g){
+        var w=g.w;
+        if(!w) return;
+        LIST_KINDS.filter(function(k){return !!k[3]===!!g.ord;})
+          .forEach(function(k){
+            var o=document.createElement('button');
+            o.className='sh-opt ls-opt';
+            o.title=k[1];o.setAttribute('aria-label',k[1]);
+            o.dataset.list=k[0];
+            var prev=document.createElement('span');
+            prev.className='ls-prev';
+            [1,2,3].forEach(function(n){
+              var row=document.createElement('span');
+              row.className='ls-row';
+              var m=document.createElement('span');
+              m.className='ls-mark';m.textContent=listMarker(k[0],n);
+              var bar=document.createElement('span');
+              bar.className='ls-bar';
+              row.appendChild(m);row.appendChild(bar);
+              prev.appendChild(row);
+            });
+            o.appendChild(prev);
+            var t=document.createElement('span');
+            t.className='sh-opt-t';t.textContent=k[1];
+            o.appendChild(t);
+            o.addEventListener('click',function(e){
+              e.stopPropagation();
+              if(g.ord) lastNumber=k[0]; else lastBullet=k[0];
+              /* picking a kind TURNS THE LIST ON as well: a gallery
+                 that needed the button pressed first would be a
+                 second click for the same decision */
+              fmtApply(function(a){
+                if(a.k!=='text') return;
+                setListStyle(a,k[0]);
+              });
+              overlayHide(w.menu);
+            });
+            w.menu.appendChild(o);
+          });
+      });
+  }
+  /* which kind is on, marked in whichever gallery owns it */
+  function listGallerySync(lst){
+    $$('.ls-opt').forEach(function(o){
+      o.setAttribute('aria-pressed',(o.dataset.list===lst).toString());
+    });
+  }
   /* the three alignments, as buttons (T189) */
   ALIGNS.forEach(function(p){
     onBtn('#fmt-al-'+(p[0]==='center'?'center':p[0]),function(){
@@ -58225,6 +58409,7 @@ window.JunoPptx = (function () {
   quickSwatchBoot();          /* the deck's six colours, on the row */
   ohOverviewBoot();           /* History of this object, full screen */
   layoutBuilderBoot();        /* layouts of your own (T226) */
+  listGalleryBoot();          /* kinds of bullet and numbering (T227) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
