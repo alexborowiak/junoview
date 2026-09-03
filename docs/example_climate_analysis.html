@@ -10466,7 +10466,7 @@ text can now number within the section as well as within the deck:
 <code>{sn}</code>, <code>{sN}</code> and <code>{sec}</code> are the
 section's number, size and name &mdash; useful for a talk that runs in
 parts.</li>
-<li><b>Do the figures agree with each other?</b> <i>Standardise text</i>
+<li><b>Do the figures agree with each other?</b> <i>Fix mismatched text</i>
 now also looks at the figures across the whole deck: ones shown at a
 noticeably different size from the rest (which is what makes their
 labels come out different sizes), frames zooming their contents
@@ -10540,7 +10540,7 @@ colours &mdash; Accent, Warm, Lift, Calm, Ink, Quiet &mdash; plus its
 corner radius and the gap the arrange commands space things at. Give an
 object one from the <b>Deck</b> row at the top of the Colour or Fill
 menu and it <b>follows</b> that colour: change it once with
-<i>Design &rarr;</i> <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> <i>Colours &amp; spacing</i> and
+<i>Design &rarr;</i> <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg> <i>Palette</i> and
 everything wearing it changes, because nothing kept a copy. A style set
 can bring its own palette with it.</li>
 <li><b>Maths in a text box.</b> Type LaTeX between dollars anywhere in
@@ -22123,7 +22123,7 @@ window.JunoPptx = (function () {
       list.appendChild(row);
     }
     cat('Print & export readiness','this slide',preflight().length,
-      bic('flag')+' Open the print check',
+      bic('flag')+' Open Review',
       function(){paneShow('preflight');renderPreflight();},
       'Soft figures, items off the page or inside the margin, thin '
       +'contrast, empty frames');
@@ -22134,7 +22134,7 @@ window.JunoPptx = (function () {
     var r=standardise();
     cat('Style consistency','whole deck',
       r.findings.length+figLint().length,
-      bic('scope')+' Open Standardise',
+      bic('scope')+' Open Mismatched text',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
       'Headings, paragraphs, captions and figures that have drifted '
       +'apart \u2014 the Style system\u2019s drift check digs deeper');
@@ -26497,7 +26497,7 @@ window.JunoPptx = (function () {
      ]},
     {id:'journey-poster-first',
      name:'Poster first',
-     blurb:'Try this for A0 posters and other one-page work: page setup, guides and the print check lead, and everything that only exists for a talk is quarantined.',
+     blurb:'Try this for A0 posters and other one-page work: page setup, guides and Review lead, and everything that only exists for a talk is quarantined.',
      family:'principles',
      selTab:'content',
      tabs:[{id:'page',label:'Page'},{id:'content',label:'Content'},{id:'talk',label:'Talk'}],
@@ -27104,8 +27104,8 @@ window.JunoPptx = (function () {
         if(typeof status==='function') status();
         if(typeof toast==='function')
           toast('This browser is full — that edit was NOT kept. Use '
-            +'File › Download a copy, or Saved to › a file on '
-            +'your computer.',9000);
+            +'File › Download a copy, or the \u25be beside Save to keep '
+            +'a file on your computer.',9000);
       }
       return false;
     }
@@ -30896,7 +30896,7 @@ window.JunoPptx = (function () {
         b.style.background=t.c[k];
         var nm=TOKEN_LABELS[k]||k;
         b.title=nm+' \u2014 this deck\u2019s colour. Change it in '
-          +'Design \u2192 Colours & spacing and everything using it follows.';
+          +'Design \u2192 Palette and everything using it follows.';
         b.setAttribute('aria-label',nm+' (deck colour)');
         /* WIRED HERE, not by the boot-time sweep. That sweep takes one
            snapshot of $$('#et-fmt .sw...') at load, so a chip built
@@ -54936,8 +54936,8 @@ window.JunoPptx = (function () {
           :' — autosave is OFF, only this button saves'));
     } else {
       saveBtn.setAttribute('data-tip','Kept in this browser '
-        +'automatically as you edit — Save confirms it. Switch '
-        +'"Saved to" to keep it as a file on your computer');
+        +'automatically as you edit — Save confirms it. The \u25be beside '
+        +'Save keeps it as a file on your computer instead');
     }
     saveBtn.removeAttribute('title');
   }
@@ -54963,7 +54963,8 @@ window.JunoPptx = (function () {
          (2026-08-22). */
       status();
       toast('NOT saved — this browser is full. Use File › Download a '
-        +'copy, or switch "Saved to" to a file on your computer.',9000);
+        +'copy, or the \u25be beside Save to keep a file on your computer.',
+        9000);
       return;
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
@@ -54972,7 +54973,7 @@ window.JunoPptx = (function () {
     saveStamp=new Date();saveKind='manual';
     status();
     toast('Kept in this browser — it also autosaves as you edit. '
-      +'Switch "Saved to" to a file to keep it on your computer.');
+      +'The \u25be beside Save keeps it as a file on your computer.');
   });
   /* ---- the "Saved to" picker ---- */
   (function(){
