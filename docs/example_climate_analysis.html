@@ -3263,7 +3263,7 @@ body.deck-open{overflow:hidden;}
   background:var(--chrome-1,#0e1926);border-bottom:1px solid #ffffff14;
   flex:none;height:28px;overflow-x:clip;}
 .rbn-tabs[hidden]{display:none!important;}
-.rbn-tab{font-family:var(--mono);font-size:11px;letter-spacing:.04em;
+.rbn-tab{font-family:var(--sans);font-size:13px;letter-spacing:0;font-weight:500;
   background:none;border:none;border-bottom:2px solid transparent;
   color:#93a8b9;padding:0 13px;cursor:pointer;white-space:nowrap;
   transition:color .12s,border-color .12s;}
@@ -3530,7 +3530,7 @@ body.light .find-fmt .find-ck:hover{background:#00000008;}
   letter-spacing:.14em;text-transform:uppercase;color:#7e93a4;
   border-bottom:1px solid #ffffff14;}
 .selpane-list{flex:1;overflow-y:auto;padding:5px;}
-.selpane-empty{color:#54677a;font-size:12px;padding:12px;}
+.selpane-empty{color:#7f93a5;font-size:12.5px;line-height:1.5;padding:12px;}
 /* T194: the sentence at the top of a check pane that says what it checks */
 .pf-intro{font-size:11.5px;line-height:1.45;color:#9fb2c2;
   padding:9px 12px 2px;}
@@ -4282,7 +4282,7 @@ body.slide-editing .apptop{display:none;}
    and the same button size, so nothing told you where one ended, what
    was a primary action, or what was a toggle. */
 .rbn-grp{display:flex;flex-direction:column;align-items:center;
-  justify-content:space-between;gap:5px;padding:8px 11px 5px;
+  justify-content:space-between;gap:5px;padding:8px 9px 5px;
   position:relative;min-width:0;flex:none;
   border-right:1px solid #ffffff1c;}
 .rbn-grp:last-child{border-right:none;}
@@ -4361,8 +4361,11 @@ body.slide-editing .apptop{display:none;}
    every density rung, which is the same fix the app bar's view column
    already uses for the Tree button that renames itself. */
 #zoom-val{min-width:calc(9ch + 18px);justify-content:center;}
-.rbn-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:#5d7183;line-height:1;white-space:nowrap;
+/* T219: the group's name in words you can read from a desk away --
+   it was 8.5px spaced capitals (2026-09-03, user: "the words like
+   'Slide', 'Layout' and all that are tiny down the bottom") */
+.rbn-lab{font-family:var(--sans);font-size:11.5px;letter-spacing:0;
+  text-transform:none;color:#8ea3b5;line-height:1;white-space:nowrap;
   padding-top:1px;}
 
 /* --- ONE button size, everywhere. Four sizes (big / small / icon /
@@ -4387,8 +4390,9 @@ body.slide-editing .apptop{display:none;}
 .rbn-stack .rbn-col{display:flex;flex-direction:column;gap:3px;
   justify-content:center;}
 .dbtn.rbn-sm{display:flex;align-items:center;gap:6px;padding:3px 8px;
-  font-size:10.5px;white-space:nowrap;min-height:0;line-height:1.5;}
-.dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:13px;height:13px;flex:none;}
+  font-family:var(--sans);font-size:12px;white-space:nowrap;min-height:0;
+  line-height:1.4;}
+.dbtn.rbn-sm i,.dbtn.rbn-sm svg{width:15px;height:15px;flex:none;}
 /* a row of icon-only squares, for things whose icon says it all */
 .dbtn.rbn-ico{display:flex;align-items:center;justify-content:center;
   width:26px;height:26px;padding:0;font-size:12px;}
@@ -4456,11 +4460,11 @@ body.slide-editing .apptop{display:none;}
    configurations all over the place"). */
 .fx-tile{width:72px;display:flex;flex-direction:column;align-items:center;
   min-width:0;white-space:normal;text-align:center;
-  justify-content:center;gap:5px;font-family:var(--sans);font-size:10.5px;
+  justify-content:center;gap:5px;font-family:var(--sans);font-size:11px;
   line-height:1.1;color:#c9d6e2;background:none;
-  border:1px solid #ffffff1f;border-radius:7px;cursor:pointer;
+  border:1px solid #ffffff1f;border-radius:6px;cursor:pointer;
   padding:0 2px;}
-.fx-tile .bic{width:22px;height:22px;}
+.fx-tile .bic{width:24px;height:24px;}
 .fx-tile:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 55%,transparent);
   color:#fff;background:color-mix(in srgb,var(--accent) 10%,transparent);}
 .fx-tile.on{background:var(--accent-deep,var(--cyan-deep));border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
@@ -4612,10 +4616,16 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
   align-items:center;}
 .deck-topslot .deck-status{height:30px;box-sizing:border-box;}
 
-/* --- the compaction ladder. Every stage trades SPACE, never words. --- */
+/* --- the compaction ladder. Every stage trades SPACE, never words. ---
+   ...and since T219 never TYPE either: a rung that shrank the words to
+   10.5px was running on a 1800px monitor, which is how the words were
+   "tiny" on a screen with room to spare (2026-09-03). PowerPoint never
+   shrinks its words; it folds a group, and folding is a tall tile
+   here since T218. So every rung keeps its padding and gap steps and
+   has lost its font-size step. */
 .deck.erc1 .rbn-grp{padding-left:7px;padding-right:7px;}
 .deck.erc1 .rbn-row{gap:4px;}
-.deck.erc2 .dbtn.rbn-sm{padding:2px 6px;font-size:10px;gap:4px;}
+.deck.erc2 .dbtn.rbn-sm{padding:2px 7px;gap:5px;}
 .deck.erc2 .rbn-stack,.deck.erc2 .rbn-stack .rbn-col{gap:2px;}
 /* spend BOX width before type size: on 1366-1440 laptops the ladder ran
    all the way to erc3's small type while the font select sat at its full
@@ -4630,9 +4640,8 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    big/small hierarchy — a label-only wall is the same flat wall that was
    rejected, arrived at from the other side. Density only, to the end. */
 .deck.erc3 .rbn-grp{padding-left:5px;padding-right:5px;}
-.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{font-size:10px;
-  padding-left:5px;padding-right:5px;}
-.deck.erc3 .rbn-lab{font-size:8px;letter-spacing:.1em;}
+.deck.erc3 .dbtn.rbn-sm,.deck.erc3 .rbn-row .dbtn.etm{
+  padding-left:6px;padding-right:6px;}
 .deck.erc3 .rbn-row .fmt-range{width:56px;}
 .deck.erc3 .et-fmt .rbn-row select.etm{max-width:68px;}
 .deck.erc3 .et-fmt .rbn-row .fmt-num{width:34px;}
@@ -4741,12 +4750,11 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck.erc-tight .rbn-grp{padding-left:2px;padding-right:2px;}
 .deck.erc-tight .rbn-row{column-gap:2px;}
 .deck.erc-tight .dbtn.rbn-sm,.deck.erc-tight .rbn-row .dbtn.etm{
-  font-size:9px;padding-left:3px;padding-right:3px;gap:2px;}
+  padding-left:5px;padding-right:5px;gap:4px;}
 /* Narrowing the square glyph buttons (zoom's minus and plus, undo and
    redo) was tried here and measured at zero: none of them is the widest
    control in its grid column, so the column keeps the width of the worded
    button above it and the saving never reaches the row. */
-.deck.erc-tight .rbn-lab{font-size:7.5px;letter-spacing:.06em;}
 
 /* ---- THE CONSTANT HALF OPTS OUT OF THE LADDER ------------------------
    Every rung above trades type and padding for width, and any of them
@@ -4763,8 +4771,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck .edit-tools .rbn-fixed .rbn-row{column-gap:5px;row-gap:5px;}
 .deck .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  font-size:10.5px;padding-left:8px;padding-right:8px;gap:6px;}
-.deck .edit-tools .rbn-fixed .rbn-lab{font-size:8.5px;letter-spacing:.14em;}
+  padding-left:8px;padding-right:8px;gap:6px;}
 .deck .edit-tools .rbn-fixed .rbn-stack{gap:3px;}
 /* ...but it still has to answer to the WINDOW. These rungs are keyed on
    the ribbon's width alone (fitEditRibbon's ERCW, set before it measures
@@ -4776,23 +4783,21 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck.ercw1 .edit-tools .rbn-fixed .rbn-row{column-gap:4px;row-gap:4px;}
 .deck.ercw1 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw1 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  font-size:10px;padding-left:6px;padding-right:6px;gap:4px;}
+  padding-left:7px;padding-right:7px;gap:5px;}
 .deck.ercw2 .edit-tools .rbn-grp.rbn-fixed{padding-left:6px;padding-right:6px;}
 .deck.ercw2 .edit-tools .rbn-fixed .rbn-row{column-gap:3px;row-gap:4px;}
 .deck.ercw2 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw2 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  font-size:9.5px;padding-left:5px;padding-right:5px;gap:3px;}
-.deck.ercw2 .edit-tools .rbn-fixed .rbn-lab{font-size:8px;letter-spacing:.1em;}
+  padding-left:6px;padding-right:6px;gap:4px;}
 .deck.ercw3 .edit-tools .rbn-grp.rbn-fixed{padding-left:4px;padding-right:4px;}
 .deck.ercw3 .edit-tools .rbn-fixed .rbn-row{column-gap:2px;row-gap:3px;}
 .deck.ercw3 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw3 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  font-size:9px;padding-left:4px;padding-right:4px;gap:2px;}
-.deck.ercw3 .edit-tools .rbn-fixed .rbn-lab{font-size:7.5px;letter-spacing:.06em;}
+  padding-left:5px;padding-right:5px;gap:4px;}
 .deck.ercw4 .edit-tools .rbn-grp.rbn-fixed{padding-left:3px;padding-right:3px;}
 .deck.ercw4 .edit-tools .rbn-fixed .dbtn.rbn-sm,
 .deck.ercw4 .edit-tools .rbn-fixed .rbn-row .dbtn.etm{
-  font-size:8.5px;padding-left:3px;padding-right:3px;}
+  padding-left:5px;padding-right:5px;}
 
 /* ---- ...and the changing region pays for it, with a rung of its own.
    It is relaid out on every selection anyway, so extra density there
@@ -4803,7 +4808,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 .deck.erc-tight .et-fmt .rbn-row{column-gap:2px;}
 .deck.erc-tight .et-fmt .dbtn.rbn-sm,
 .deck.erc-tight .et-fmt .rbn-row .dbtn.etm{
-  font-size:8.5px;padding-left:3px;padding-right:3px;gap:2px;}
+  padding-left:5px;padding-right:5px;gap:4px;}
 .deck.erc-tight .et-fmt .rbn-row .fmt-range{width:56px;}
 /* the boxes you type into rather than read: a font name still shows, a
    point size is at most three digits, and neither needs its resting width
@@ -4846,7 +4851,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
    window (!important, because the rungs are five classes deep): a
    control here is as tall as its words need and never shrinks */
 .opt-panel .dbtn.etm,.opt-panel .dbtn.rbn-sm{height:auto!important;
-  min-height:26px;padding:4px 9px!important;font-size:11px!important;
+  min-height:26px;padding:4px 9px!important;font-size:12px!important;
   justify-content:flex-start;white-space:nowrap;display:inline-flex;
   align-items:center;gap:6px;}
 .opt-panel .opt-grid2>.dbtn{width:100%;}
@@ -4896,8 +4901,8 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .sh-menu.vw-menu{display:flex;flex-direction:column;width:236px;
   padding:6px;gap:3px;}
 .vw-opt{display:flex;align-items:center;gap:8px;width:100%;
-  justify-content:flex-start;text-align:left;font-size:11.5px;
-  padding:6px 9px;}
+  justify-content:flex-start;text-align:left;font-family:var(--sans);
+  font-size:12.5px;padding:6px 9px;}
 .vw-opt kbd{margin-left:auto;font-family:var(--mono);font-size:9px;
   border:1px solid #ffffff26;border-radius:3px;padding:0 4px;
   color:#8ba0b2;}
@@ -4989,8 +4994,10 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .sh-menu.head-menu{display:flex;flex-direction:column;gap:2px;width:auto;}
 .hd-row{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
 .hd-row.hd-sz{grid-template-columns:repeat(4,1fr);}
-.hd-lab{font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:#5d7183;padding:4px 3px 1px;}
+/* T219: a heading inside a menu is a word, not 8.5px spaced capitals */
+.hd-lab{font-family:var(--sans);font-size:11px;font-weight:600;letter-spacing:0;
+  text-transform:none;color:#9fb3c4;padding:6px 3px 3px;}
+.hd-lab::first-letter{text-transform:uppercase;}
 .head-menu .sh-opt{padding:3px 1px;}
 .hd-ico{display:block;width:100%;height:16px;}
 .sh-menu.bend-menu{display:grid;grid-template-columns:repeat(5,1fr);
@@ -5014,7 +5021,8 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .an-shape-svg text,.sh-ico text{font-family:var(--sans);}
 .dbtn.et[aria-pressed="true"]{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:#fff;}
-.dbtn.etm{padding:5px 9px;}
+.dbtn.etm{padding:5px 9px;font-family:var(--sans);font-size:12px;}
+.dbtn.etm>svg,.dbtn.etm>i[data-ic]{width:15px;height:15px;flex:none;}
 select#fmt-font{background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   color:#cdd9e3;font-family:var(--mono);font-size:11px;
   padding:5px 6px;border-radius:6px;}
@@ -6506,15 +6514,18 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
   outline-offset:2px;}
 .ms-box{width:min(560px,94vw);}
 
-/* the three spacing presets above the ready-made layouts */
-.lay-tidy{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;
-  padding:0 2px 6px;}
-.lay-tidy .dbtn{font-size:11px;padding:4px 6px;white-space:nowrap;}
+/* the three spacing presets are a segmented run in the ribbon (T219):
+   a three-column grid had put the caption in a column of its own and
+   wrapped Airy under it */
 
 /* ---------- arrangements ----------
    Each row shows what it would arrange TO, drawn by the same miniDiagram
    the film strip uses, so the preview cannot drift from the canvas. */
 .ar-box{width:min(880px,95vw);}
+/* the one thing you can do with an empty library sits under it, as a
+   button the width of the column (T219) */
+.ar-savebtn{display:flex;align-items:center;justify-content:center;gap:7px;
+  margin-top:6px;}
 .ar-lib,.ar-sug{overflow-y:auto;max-height:52vh;padding-right:3px;}
 .ar-row{display:flex;align-items:center;gap:8px;padding:5px 4px;
   border-radius:7px;}
@@ -6527,7 +6538,7 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
   outline:none;width:100%;box-sizing:border-box;}
 .ar-name:hover{border-color:#ffffff1f;}
 .ar-name:focus{border-color:var(--cyan);background:var(--chrome-0,#0b141d);}
-.ar-sub{font-family:var(--mono);font-size:9.5px;color:#7e93a4;
+.ar-sub{font-family:var(--sans);font-size:11px;color:#8ea3b5;
   padding-left:6px;}
 .ar-row:hover .fp-ctr{display:flex;}
 .ar-srow{display:flex;align-items:center;gap:6px;padding:3px 4px;
@@ -7002,8 +7013,11 @@ body.light .vw-more-menu .vw-opt.on{color:var(--ink);}
   border-radius:12px;box-shadow:0 24px 70px #00000088;
   font-family:var(--sans);}
 .eq-head{display:flex;align-items:center;gap:8px;}
-.eq-t{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
-  text-transform:uppercase;color:#8ea4b6;}
+/* T219: a dialog's title is a title; a column's heading is a heading */
+.eq-t{font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:0;
+  text-transform:none;color:#d5e0ea;}
+.aa-head .eq-t,.eq-head .eq-t{font-size:15px;color:#f2f7fa;}
+.aa-box .dbtn,.eq-box .dbtn{font-family:var(--sans);font-size:12.5px;}
 .eq-main{display:flex;gap:10px;min-height:0;flex:1;}
 .eq-left{flex:1.15;min-width:0;display:flex;flex-direction:column;gap:7px;}
 .eq-right{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
@@ -7049,7 +7063,7 @@ body.light .eq-box{background:#fff;border-color:var(--line);}
   border-radius:12px;box-shadow:0 24px 70px #00000088;
   font-family:var(--sans);}
 .aa-head{display:flex;align-items:center;gap:8px;}
-.aa-what{font-size:12.5px;color:#c3d2df;line-height:1.5;
+.aa-what{font-size:13px;color:#c3d2df;line-height:1.5;
   background:var(--chrome-0,#0b141d);border:1px solid #ffffff1a;
   border-radius:8px;padding:8px 10px;display:flex;align-items:center;
   gap:7px;flex-wrap:wrap;}
@@ -7068,8 +7082,9 @@ body.light .eq-box{background:#fff;border-color:var(--line);}
   color:#8ea4b6;}
 .aa-main{display:flex;gap:11px;min-height:0;flex:1;}
 .aa-col{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;}
-.aa-colh{display:flex;align-items:center;gap:5px;}
-.aa-b{padding:2px 8px;font-size:10.5px;}
+.aa-colh{display:flex;align-items:center;gap:6px;padding-bottom:5px;
+  border-bottom:1px solid #ffffff14;}
+.aa-b{padding:3px 9px;font-size:11.5px;}
 .aa-props{max-height:52vh;overflow-y:auto;padding-right:3px;}
 .aa-scope{max-height:52vh;overflow-y:auto;padding-right:3px;}
 .aa-props .find-ck,.aa-scope .find-ck{padding:2px 3px;border-radius:5px;}
@@ -7089,7 +7104,7 @@ body.light .eq-box{background:#fff;border-color:var(--line);}
 .aa-slide-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   min-width:0;}
 .aa-foot{display:flex;align-items:center;gap:8px;}
-.aa-count{font-family:var(--mono);font-size:11px;color:#8ea4b6;}
+.aa-count{font-family:var(--sans);font-size:12px;color:#8ea4b6;}
 /* the matching items on the slide behind, outlined while you hover the
    headline — a pure class toggle over nodes that are already rendered */
 .an-typematch{outline:2px dashed var(--accent)!important;
@@ -7519,7 +7534,8 @@ body.light .seq-cell b{color:var(--ink);}
 .mast-panel .rd-state{font-size:11px;margin:6px 0;}
 .mast-name{font-family:var(--mono);font-size:10px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--cyan);margin:10px 0 4px;}
-.mast-row{display:block;width:100%;text-align:left;font-size:11.5px;
+.mast-row{display:block;width:100%;text-align:left;font-family:var(--sans);
+  font-size:12.5px;
   padding:4px 7px;margin:2px 0;}
 .mast-new{display:block;width:100%;text-align:left;margin-top:10px;}
 /* T117: charts — the SVG fills its box; the dialog is the numbers */
@@ -7702,47 +7718,79 @@ body.light .img-ov{background:#fff;color:var(--ink-2);}
 body.light .img-sec{border-color:var(--line);background:#00000004;}
 body.light .img-ov .img-row{border-color:var(--line);}
 
-/* ---- T207: FLAT AT REST ------------------------------------------------
-   Every button on the ribbon is flat until you reach for it: no border,
-   no fill, the words and the icon in the tab's ink. Hover lifts it with
-   a faint fill; pressed fills it with the deep accent; a gallery keeps
-   its frame because the frame is the box, not the buttons. Outlined
-   boxes on every one of sixty controls were most of what read as "all
-   shapes and sizes" (2026-09-02). PowerPoint's ribbon is flat. */
+/* ---- T219: A BUTTON LOOKS LIKE A BUTTON ---------------------------------
+   T207 made every ribbon control flat at rest, the way PowerPoint's
+   are. On this ribbon, whose icons are small and one colour, flat
+   read as loose words -- "they are all just floating text with icons.
+   This is a mess to look at" (2026-09-03). So every control has a
+   surface again, and ONE surface: the same fill, the same 1px edge,
+   the same 6px corner, at one height per kind -- a small button is a
+   30px box, a tile is 72 by 56, a run is one box with its segments
+   divided inside it. What made boxes chaos before T207 was that the
+   boxes came in every size; the sizes are settled now, so the box can
+   come back. Hover lifts it; pressed fills it with the deep accent. */
+.edit-tools{--rbn-btn:#ffffff0d;--rbn-btn-bd:#ffffff21;--rbn-btn-hi:#ffffff1c;}
+body.light .edit-tools{--rbn-btn:#00000007;--rbn-btn-bd:var(--line);
+  --rbn-btn-hi:#00000010;}
 .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile,
 .edit-tools .dbtn.lay,.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
-  border-color:transparent;background:transparent;box-shadow:none;}
+  background:var(--rbn-btn);border:1px solid var(--rbn-btn-bd);
+  border-radius:6px;box-shadow:none;}
 .edit-tools .dbtn.rbn-sm:hover:not(:disabled),
 .edit-tools .dbtn.etm:hover:not(:disabled),
 .edit-tools .fx-tile:hover:not(:disabled),
 .edit-tools .dbtn.lay:hover:not(:disabled),
 .edit-tools .rbn-cell .dbtn:hover:not(:disabled),
 .edit-tools .rbn-foldbtn:hover{
-  background:color-mix(in srgb,var(--accent) 14%,transparent);
-  border-color:color-mix(in srgb,var(--accent) 30%,transparent);}
+  background:var(--rbn-btn-hi);
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:#fff;}
 .edit-tools .dbtn[aria-pressed="true"],.edit-tools .fx-tile.on,
 .edit-tools .dbtn.lay[aria-pressed="true"],
 .edit-tools .fx-tile[aria-pressed="true"]{
   background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
-.edit-tools .dbtn.dbtn-warn{color:#f0a0a0;}
+.edit-tools .dbtn.dbtn-warn{color:#f0a0a0;border-color:#e0606055;}
 .edit-tools .dbtn.dbtn-warn:hover:not(:disabled){
-  background:#e0606022;border-color:#e0606055;}
-/* the colourful theme tints the WORDS, not the boxes, on the ribbon */
+  background:#e0606022;border-color:#e06060aa;}
+/* the colourful theme tints the box's edge and its words with the tab's hue */
 body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"]):not(:hover),
 body.th-colorful .edit-tools .fx-tile:not(.on):not(:hover){
-  border-color:transparent;background:transparent;
+  border-color:color-mix(in srgb,var(--accent) 30%,transparent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);
   color:color-mix(in srgb,var(--accent) 60%,#f2f7fa);}
 body.th-colorful .edit-tools .dbtn:hover:not([aria-pressed="true"]),
 body.th-colorful .edit-tools .fx-tile:hover:not(.on){
   background:color-mix(in srgb,var(--accent) 16%,transparent);
-  border-color:color-mix(in srgb,var(--accent) 35%,transparent);}
-body.light .edit-tools .dbtn.rbn-sm,body.light .edit-tools .dbtn.etm,
-body.light .edit-tools .rbn-cell .dbtn,body.light .edit-tools .fx-tile,
-body.light .edit-tools .dbtn.lay{border-color:transparent;background:transparent;}
-/* a primary button keeps its fill on the flat ribbon (Finish in Quick animate) */
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);}
+/* a primary button keeps its fill (Finish in Quick animate) */
 .edit-tools .dbtn.rbn-sm.primary,body.light .edit-tools .dbtn.rbn-sm.primary{
   background:var(--cyan);border-color:var(--cyan);color:#fff;}
+/* A RUN is one box. Its buttons are segments divided by a hairline, and
+   its caption -- Spacing -- is the first segment, inside the box, so the
+   word and the choices it names are visibly one control (2026-09-03,
+   user: "the spacing stuff is weird, why is that word where it is?"). */
+.edit-tools .rbn-row>.rbn-cell.rbn-seg{gap:0;background:var(--rbn-btn);
+  border:1px solid var(--rbn-btn-bd);border-radius:6px;overflow:hidden;}
+.edit-tools .rbn-cell.rbn-seg>.dbtn{border:0;border-radius:0;
+  background:transparent;border-left:1px solid var(--rbn-btn-bd);margin:0;}
+.edit-tools .rbn-cell.rbn-seg>.dbtn:first-child,
+.edit-tools .rbn-cell.rbn-seg>.cell-lab+.dbtn{border-left:0;}
+.edit-tools .rbn-cell.rbn-seg>.dbtn:hover:not(:disabled){
+  background:var(--rbn-btn-hi);border-color:var(--rbn-btn-bd);}
+.edit-tools .rbn-cell.rbn-seg>.dbtn[aria-pressed="true"]{
+  background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));}
+.edit-tools .rbn-cell.rbn-seg>.cell-lab{display:flex;align-items:center;
+  align-self:stretch;padding:0 8px 0 9px;
+  border-right:1px solid var(--rbn-btn-bd);}
+/* ...and in the colourful theme a run is tinted as ONE box, its segments
+   clear, so the box does not sit grey under three tinted buttons */
+body.th-colorful .edit-tools .rbn-row>.rbn-cell.rbn-seg{
+  border-color:color-mix(in srgb,var(--accent) 30%,transparent);
+  background:color-mix(in srgb,var(--accent) 7%,transparent);}
+body.th-colorful .edit-tools .rbn-cell.rbn-seg>.dbtn:not([aria-pressed="true"]):not(:hover){
+  background:transparent;
+  border-left-color:color-mix(in srgb,var(--accent) 30%,transparent);}
 
 /* ---- T207: X Y W H on the Object tab ------------------------------------
    Two cells in one column: position over size. A label letter, a
@@ -7792,8 +7840,8 @@ body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
 
 /* ---- T212: a run says what it is ---------------------------------------
    The spacing trio wears a small caption inside its cell. */
-.rbn-cell .cell-lab{align-self:center;font-family:var(--mono);font-size:9px;
-  letter-spacing:.1em;text-transform:uppercase;color:#8ba0b2;padding:0 6px 0 2px;}
+.rbn-cell .cell-lab{align-self:center;font-family:var(--sans);font-size:11.5px;
+  letter-spacing:0;text-transform:none;color:#8ea3b5;padding:0 6px 0 2px;}
 
 /* ---- T214: Before you print, full screen --------------------------------
    The same rows the pane drew, as cards in the review grid. */
@@ -7809,11 +7857,11 @@ body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
    user: "some of the text is maybe too small now") the words grow a step
    while the geometry stays. */
 @media (min-width:1600px){
-  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12px;}
+  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12.5px;}
   .edit-tools .fx-tile{font-size:11.5px;}
-  .edit-tools .rbn-lab{font-size:10.5px;}
-  .edit-tools .rbn-cell .cell-lab{font-size:10px;}
-  .rbn-tab{font-size:13px;}
+  .edit-tools .rbn-lab{font-size:12px;}
+  .edit-tools .rbn-cell .cell-lab{font-size:12px;}
+  .rbn-tab{font-size:13.5px;}
 }
 
 /* ---- T216: Full screen in the top bar; the Present tab ------------------ */
@@ -11359,7 +11407,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 2.4 14 5.6 8 8.8 2 5.6Z"/><path d="m2 9.2 6 3.2 6-3.2"/></svg> Saved layouts&#8230;</button>
-              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
               <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 6.4H6V3"/><path d="M13.4 9.6H10V13"/><path d="M6 6.4 2.6 3"/><path d="M10 9.6l3.4 3.4"/></svg> Tight</button>
@@ -11763,7 +11811,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                the mode's own controls have the row. -->
           <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
-              <span class="rbn-cell" id="anim-start">
+              <span class="rbn-cell rbn-seg" id="anim-start">
                 <button class="dbtn rbn-sm" id="anim-onclick"
                   aria-pressed="false"
                   title="Starts on its own click"
@@ -11789,7 +11837,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     aria-label="Seconds after the previous build">
                   <span class="fmt-unit">s</span></span>
               </span>
-              <span class="rbn-cell" id="anim-by">
+              <span class="rbn-cell rbn-seg" id="anim-by">
                 <button class="dbtn rbn-sm" id="anim-by-all"
                   aria-pressed="false"
                   title="The whole text box on one click"
@@ -12302,7 +12350,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
                   hidden></div>
               </span>
-              <span class="rbn-cell" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
+              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
                 <button class="dbtn etm" id="fmt-bold"
                 title="Bold"><b>B</b></button>
                 <button class="dbtn etm" id="fmt-ital"
@@ -12310,7 +12358,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 <button class="dbtn etm" id="fmt-under"
                 title="Underline"><u>U</u></button>
               </span>
-              <span class="rbn-cell" id="tx-run-align" role="group" aria-label="Alignment">
+              <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
                 title="Align left"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 3.4h11.2M2.4 6.6h7M2.4 9.8h11.2M2.4 13h7"/></svg> Left</button>
                 <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
@@ -12618,7 +12666,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    click and not two. -->
               <!-- the three as one run (T212), so an effect never shares
                    a column with how much of the text arrives -->
-              <span class="rbn-cell" id="tx-run-by" role="group"
+              <span class="rbn-cell rbn-seg" id="tx-run-by" role="group"
                 aria-label="How much of the text arrives per click">
               <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
                 title="The whole box arrives on one click"
@@ -13312,22 +13360,30 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       <button class="dbtn dc-icon" id="ar-close" aria-label="Cancel" title="Cancel (Esc)"
         ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg></button>
     </div>
+    <!-- T219: what the dialog is FOR, in one sentence at the top, then
+         the two halves named as steps (2026-09-03, user: "the most
+         unclear thing ever and I cannot tell what is going on") -->
+    <div class="aa-what">A saved layout is the way one slide is arranged,
+      kept under a name. Give it to other slides and their boxes move into
+      that arrangement; the words and figures stay as they are.</div>
     <div class="aa-main">
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">Your saved layouts</span>
-          <span class="deck-spring"></span>
-          <button class="dbtn aa-b" id="ar-save">&#43; Save this
-            slide&rsquo;s layout</button>
+          <span class="eq-t">1. Layouts you have saved</span>
         </div>
         <div class="ar-lib" id="ar-lib"></div>
+        <button class="dbtn ar-savebtn" id="ar-save"
+          title="Keep the way this slide is arranged, under a name. Only the arrangement is kept, not the words or figures"
+          ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg> Save this slide&rsquo;s layout</button>
       </div>
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">Apply it to these slides</span>
+          <span class="eq-t">2. Slides that will take one</span>
           <span class="deck-spring"></span>
-          <button class="dbtn aa-b" id="ar-all">All</button>
-          <button class="dbtn aa-b" id="ar-none">None</button>
+          <button class="dbtn aa-b" id="ar-all"
+            title="Tick every slide, each with the layout that fits it best">Tick all</button>
+          <button class="dbtn aa-b" id="ar-none"
+            title="Untick every slide">Untick all</button>
         </div>
         <div class="ar-sug" id="ar-sug"></div>
       </div>
@@ -43353,7 +43409,7 @@ window.JunoPptx = (function () {
     function sync(){
       var n=chosen().length,c=$('#ar-count');
       if(c) c.textContent=n?(n+' slide'+(n===1?'':'s')+' will be re-laid '
-        +'out'):'Nothing chosen';
+        +'out'):'No slides ticked';
       var ok=$('#ar-ok');
       if(ok){ok.disabled=!n;
         /* the ribbon's verb (T201): a layout is APPLIED to slides */
@@ -43370,9 +43426,9 @@ window.JunoPptx = (function () {
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">None yet. Lay a slide '
-          +'out the way you like it, then “Save this slide’s layout” — the words '
-          +'and figures are not kept, only the arrangement.</div>';
+        host.innerHTML='<div class="selpane-empty">None saved yet. Arrange '
+          +'a slide the way you like it, then press Save this slide’s '
+          +'layout, below.</div>';
         return;
       }
       list.forEach(function(a){
@@ -43432,8 +43488,9 @@ window.JunoPptx = (function () {
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">Save an arrangement '
-          +'first and every slide will be checked against it here.</div>';
+        host.innerHTML='<div class="selpane-empty">Once a layout is saved, '
+          +'every slide is listed here, with the one that fits it best '
+          +'already ticked.</div>';
         return;
       }
       (pres.slides||[]).forEach(function(sl,i){
