@@ -13,9 +13,10 @@ from __future__ import annotations
 
 
 def test_every_tall_control_is_the_one_tile(out):
-    """72 wide, 22px icon, 56 tall -- alone or in a frame over a bar."""
+    """72 wide, 24px icon (22 until T219), 56 tall -- alone or in a
+    frame over a bar."""
     assert ".fx-tile{width:72px;display:flex;flex-direction:column;" in out
-    assert ".fx-tile .bic{width:22px;height:22px;}" in out
+    assert ".fx-tile .bic{width:24px;height:24px;}" in out
     for rule in (".lay-strip .dbtn.lay{flex:0 0 72px;",
                  ".shape-strip .fx-tile{flex:0 0 72px;",
                  ".tx-strip .fx-tile,.page-strip .fx-tile{flex:0 0 72px;",

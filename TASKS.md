@@ -4406,6 +4406,46 @@ option. Then where has the ability to refresh all images gone?"
   layout too), and New slide adds a slide laid out that way. The strip
   lights the chosen layout, not the one the current slide wears.
 
+- [x] **T219 · M — A button looks like a button; a run is one box; the
+  words can be read; a dialog says what it is for.**
+  The user (2026-09-03, the Design tab and the Saved layouts dialog):
+  "all the buttons still look really weird, and are all over the place.
+  Like the spacing stuff is weird, why is that word where it is? Also
+  the words like 'Slide', 'Layout' and all that are tiny down the
+  bottom. Also, like all of the pop up menus are god awful... This is
+  the most unclear thing ever and I cannot tell what is going on...
+  They are all just floating text with icons. This is a mess to look
+  at."
+  *Done 2026-09-03.* **The surface**: T207 had made every ribbon
+  control flat at rest, the way PowerPoint's are; on a ribbon whose
+  icons are small and one colour that read as loose words. Every
+  control has a surface again, and ONE surface — the same fill,
+  hairline and 6px corner from three variables set once on the ribbon
+  (once more for the light theme), at one height per kind. What had
+  made boxes chaos before T207 was that they came in every size; the
+  sizes were settled in T205-T218, so the box could come back.
+  **Runs**: Spacing | Tight | Normal | Airy is one box, the caption its
+  first segment, the buttons divided by a hairline — the word and the
+  choices it names are visibly one control (a three-column grid had put
+  the caption in a column of its own and wrapped Airy under it). The
+  same for the start run, the by-bullet runs, B I U and the alignments.
+  **Words**: the ribbon is set in the sans, 12px on a button, 11px on a
+  tile, 11.5px for a group's name (8.5px spaced capitals before), 13px
+  on a tab, with a half step up on a wide screen. **The ladder trades
+  space, never type**: the density rungs had shrunk the words to
+  10.5px, and were doing so on a 1800px monitor, which is how the
+  words were "tiny" with room to spare; every rung keeps its padding
+  and gap steps and has lost its font-size step, and folding (a tall
+  tile since T218) takes it from there, the way PowerPoint collapses
+  a group rather than shrink its words. Measured: at 1800 Design folds
+  Type alone; at 1400 it folds three, and the Object tab with a text
+  box selected folds Animation alone. Menu headings, dialog titles and
+  column headings are sentence-case words at three sizes. **Saved layouts**: one sentence at the top says what
+  a saved layout is; the halves are "1. Layouts you have saved" and
+  "2. Slides that will take one"; Save this slide's layout is a real
+  button under the library; Tick all / Untick all; the empty states
+  and the count in plain words.
+
 
 ## Cut (and why)
 

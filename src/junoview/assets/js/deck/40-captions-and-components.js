@@ -866,7 +866,7 @@
     function sync(){
       var n=chosen().length,c=$('#ar-count');
       if(c) c.textContent=n?(n+' slide'+(n===1?'':'s')+' will be re-laid '
-        +'out'):'Nothing chosen';
+        +'out'):'No slides ticked';
       var ok=$('#ar-ok');
       if(ok){ok.disabled=!n;
         /* the ribbon's verb (T201): a layout is APPLIED to slides */
@@ -883,9 +883,9 @@
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">None yet. Lay a slide '
-          +'out the way you like it, then “Save this slide’s layout” — the words '
-          +'and figures are not kept, only the arrangement.</div>';
+        host.innerHTML='<div class="selpane-empty">None saved yet. Arrange '
+          +'a slide the way you like it, then press Save this slide’s '
+          +'layout, below.</div>';
         return;
       }
       list.forEach(function(a){
@@ -945,8 +945,9 @@
       host.innerHTML='';
       var list=arrList();
       if(!list.length){
-        host.innerHTML='<div class="selpane-empty">Save an arrangement '
-          +'first and every slide will be checked against it here.</div>';
+        host.innerHTML='<div class="selpane-empty">Once a layout is saved, '
+          +'every slide is listed here, with the one that fits it best '
+          +'already ticked.</div>';
         return;
       }
       (pres.slides||[]).forEach(function(sl,i){

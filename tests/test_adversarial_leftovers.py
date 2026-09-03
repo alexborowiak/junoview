@@ -46,9 +46,12 @@ def test_the_redundant_door_and_the_boxed_doors_are_gone(out):
     assert "show('#fmt-sizepos',false);" in out
     assert 'class="dbtn etm" id="fmt-txcol-btn"' in out
     assert 'class="dbtn etm" id="fmt-fillcol-btn"' in out
-    # the light theme no longer boxes the Object tab
+    # the light theme boxes the Object tab the way the dark one does since
+    # T219 -- one surface, set once as variables, not a second rule
+    assert ("body.light .edit-tools{--rbn-btn:#00000007;--rbn-btn-bd:var(--line);"
+            in out)
     assert ("body.light .edit-tools .dbtn.rbn-sm,body.light .edit-tools .dbtn.etm,\n"
-            "body.light .edit-tools .rbn-cell .dbtn,") in out
+            "body.light .edit-tools .rbn-cell .dbtn,") not in out
     assert ".edit-tools .dbtn.rbn-sm.primary," in out
 
 

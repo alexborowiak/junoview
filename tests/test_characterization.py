@@ -946,8 +946,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # T218 2026-09-03: a folded group is a tall tile with its own icon; the
 # delay has a cell under the start run; a layout tile chooses and New
 # slide adds. deck.html, deck.css and four deck fragments.
-EXPECTED_MD5 = "9bf8e16a1e36fda1c334e48c1b7f5f31"
-EXPECTED_BYTES = 3351312
+# 2026-09-03, T219: every ribbon control wears one surface again, runs
+# are segmented boxes, the ribbon's words are sans and the density
+# rungs no longer shrink them, menu and dialog headings are words, and
+# the Saved layouts dialog is restructured (deck.css, deck.html, the
+# arrangements dialog's wording in 40-captions-and-components.js).
+EXPECTED_MD5 = "e95ab3968fa112e3eccd24d3b1bfa69f"
+EXPECTED_BYTES = 3354996
 
 
 def _render_example() -> str:

@@ -85,7 +85,9 @@ def test_full_screen_is_up_top_and_layers_is_on_home(out):
 
 def test_big_screen_text_and_readable_style_system(out):
     assert "@media (min-width:1600px){" in out
-    assert "  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12px;}" in out
+    # (a half step over T219's resting 12px: a whole one folded a group
+    # on a 1800px monitor)
+    assert "  .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm{font-size:12.5px;}" in out
     assert "      nm.style.color='';" in out
     assert "    spec.style.background=tokVal((pres&&pres.pageBg)||'#0b141d');" in out
     assert ".dg-sub{margin:0 0 10px;font-size:12.5px;" in out

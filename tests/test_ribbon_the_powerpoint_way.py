@@ -26,15 +26,19 @@ def test_menus_nest_instead_of_closing_their_parent(out):
             "overlayStack[overlayStack.length-1]:null;") in out
 
 
-def test_the_grid_is_column_major_and_the_buttons_are_flat(out):
+def test_the_grid_is_column_major_and_the_buttons_share_one_surface(out):
     assert ".rbn-row{display:grid;grid-auto-flow:column;" in out
     assert "grid-template-columns:repeat(var(--rbn-cols" not in out
-    # flat at rest, lifted on hover, filled when pressed
+    # T207 made these flat at rest; T219 gave them back ONE surface
+    # (2026-09-03, user: "they are all just floating text with icons").
+    # The one rule still covers every kind of ribbon control.
     assert (".edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile,\n"
             ".edit-tools .dbtn.lay,.edit-tools .rbn-cell .dbtn,"
             ".edit-tools .rbn-foldbtn{\n"
-            "  border-color:transparent;background:transparent;"
-            "box-shadow:none;}") in out
+            "  background:var(--rbn-btn);border:1px solid var(--rbn-btn-bd);\n"
+            "  border-radius:6px;box-shadow:none;}") in out
+    assert ("border-color:transparent;background:transparent;box-shadow:none;}"
+            not in out)
     assert ('body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"])'
             ':not(:hover),') in out
 

@@ -549,7 +549,7 @@
               <button class="dbtn rbn-sm" id="hm-lay-arrs"
               title="Layouts you saved from your own slides, with a picture of each — and which slides each one would fit">
               <i data-ic="objects"></i> Saved layouts&#8230;</button>
-              <div class="rbn-cell lay-tidy" id="hm-lay-tidy"
+              <div class="rbn-cell rbn-seg lay-tidy" id="hm-lay-tidy"
               aria-label="Arrange what is on this slide">
               <span class="cell-lab">Spacing</span>
               <button class="dbtn rbn-sm" data-tidy="tight" title="Close up the gaps between what is on this slide"><i data-ic="collapse"></i> Tight</button>
@@ -953,7 +953,7 @@
                the mode's own controls have the row. -->
           <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
-              <span class="rbn-cell" id="anim-start">
+              <span class="rbn-cell rbn-seg" id="anim-start">
                 <button class="dbtn rbn-sm" id="anim-onclick"
                   aria-pressed="false"
                   title="Starts on its own click"
@@ -979,7 +979,7 @@
                     aria-label="Seconds after the previous build">
                   <span class="fmt-unit">s</span></span>
               </span>
-              <span class="rbn-cell" id="anim-by">
+              <span class="rbn-cell rbn-seg" id="anim-by">
                 <button class="dbtn rbn-sm" id="anim-by-all"
                   aria-pressed="false"
                   title="The whole text box on one click"
@@ -1492,7 +1492,7 @@
                 <div class="sh-menu style-tx-menu" id="fmt-style-menu-tx"
                   hidden></div>
               </span>
-              <span class="rbn-cell" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
+              <span class="rbn-cell rbn-seg" id="tx-run-style" role="group" aria-label="Bold, italic, underline">
                 <button class="dbtn etm" id="fmt-bold"
                 title="Bold"><b>B</b></button>
                 <button class="dbtn etm" id="fmt-ital"
@@ -1500,7 +1500,7 @@
                 <button class="dbtn etm" id="fmt-under"
                 title="Underline"><u>U</u></button>
               </span>
-              <span class="rbn-cell" id="tx-run-align" role="group" aria-label="Alignment">
+              <span class="rbn-cell rbn-seg" id="tx-run-align" role="group" aria-label="Alignment">
                 <button class="dbtn etm" id="fmt-al-left" aria-pressed="false"
                 title="Align left"><i data-ic="alignleft"></i> Left</button>
                 <button class="dbtn etm" id="fmt-al-center" aria-pressed="false"
@@ -1808,7 +1808,7 @@
                    click and not two. -->
               <!-- the three as one run (T212), so an effect never shares
                    a column with how much of the text arrives -->
-              <span class="rbn-cell" id="tx-run-by" role="group"
+              <span class="rbn-cell rbn-seg" id="tx-run-by" role="group"
                 aria-label="How much of the text arrives per click">
               <button class="dbtn etm" id="fmt-by-all" aria-pressed="false"
                 title="The whole box arrives on one click"
@@ -2502,22 +2502,30 @@
       <button class="dbtn dc-icon" id="ar-close" aria-label="Cancel" title="Cancel (Esc)"
         ><i data-ic="exit"></i></button>
     </div>
+    <!-- T219: what the dialog is FOR, in one sentence at the top, then
+         the two halves named as steps (2026-09-03, user: "the most
+         unclear thing ever and I cannot tell what is going on") -->
+    <div class="aa-what">A saved layout is the way one slide is arranged,
+      kept under a name. Give it to other slides and their boxes move into
+      that arrangement; the words and figures stay as they are.</div>
     <div class="aa-main">
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">Your saved layouts</span>
-          <span class="deck-spring"></span>
-          <button class="dbtn aa-b" id="ar-save">&#43; Save this
-            slide&rsquo;s layout</button>
+          <span class="eq-t">1. Layouts you have saved</span>
         </div>
         <div class="ar-lib" id="ar-lib"></div>
+        <button class="dbtn ar-savebtn" id="ar-save"
+          title="Keep the way this slide is arranged, under a name. Only the arrangement is kept, not the words or figures"
+          ><i data-ic="copy"></i> Save this slide&rsquo;s layout</button>
       </div>
       <div class="aa-col">
         <div class="aa-colh">
-          <span class="eq-t">Apply it to these slides</span>
+          <span class="eq-t">2. Slides that will take one</span>
           <span class="deck-spring"></span>
-          <button class="dbtn aa-b" id="ar-all">All</button>
-          <button class="dbtn aa-b" id="ar-none">None</button>
+          <button class="dbtn aa-b" id="ar-all"
+            title="Tick every slide, each with the layout that fits it best">Tick all</button>
+          <button class="dbtn aa-b" id="ar-none"
+            title="Untick every slide">Untick all</button>
         </div>
         <div class="ar-sug" id="ar-sug"></div>
       </div>
