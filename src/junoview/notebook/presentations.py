@@ -219,6 +219,16 @@ def as_presentations(obj: Any) -> list:
                      and t["id"]]
             if types:
                 entry["types"] = types
+        # the slide layouts a deck designed (T226). A LIST like "types"
+        # and lost in exactly the same way if it is not carried: the
+        # layout works in the browser, and the deck reopens with every
+        # slide that used it unable to name the layout it wears.
+        if isinstance(p.get("layouts"), list) and p["layouts"]:
+            lays = [ly for ly in p["layouts"]
+                    if isinstance(ly, dict) and isinstance(ly.get("id"), str)
+                    and ly["id"] and isinstance(ly.get("items"), list)]
+            if lays:
+                entry["layouts"] = lays
         # "sections" joins them: a keyed {id: {name, fold}} map, and the
         # per-slide s.sec tag that points into it is carried by the slide
         # builder above. The ORDER is never stored -- it is read back off

@@ -387,9 +387,18 @@
      and keep any free decorations (arrows/images/shapes) the user added. */
   /* the layout a new slide takes, remembered per project (T193) */
   function newLayKey(){return 'jv-deck-newlay:'+SCOPE;}
+  /* T226: the catalogue is the built-in table plus whatever this
+     deck has made. One list, so a layout of your own is a layout in
+     every sense -- applyLayout stamps it, the picker draws it, and
+     New slide remembers it -- rather than a second kind of thing. */
+  function allLayouts(){
+    var mine=(pres&&Array.isArray(pres.layouts))?pres.layouts:[];
+    return LAYOUTS.concat(mine.filter(function(l){
+      return l&&l.id&&Array.isArray(l.items);}));
+  }
   function layoutById(id){
     var hit=null;
-    LAYOUTS.forEach(function(l){if(!hit&&l.id===id) hit=l;});
+    allLayouts().forEach(function(l){if(!hit&&l.id===id) hit=l;});
     return hit;
   }
   function applyLayout(s,layout){
@@ -452,9 +461,12 @@
     var variant=(isPoster?'p':'s')+(land?'l':'p');
     ['#layout-row','#layout-menu-grid','#layout-strip']
       .forEach(function(sel){
-      var row=$(sel); if(!row||row.dataset.built===variant) return;
-      row.dataset.built=variant;row.innerHTML='';
-      var list=LAYOUTS.filter(function(l){
+      /* T226: the family AND how many layouts there are, so making
+         one of your own makes the pickers draw again */
+      var stamp=variant+':'+((pres&&pres.layouts)?pres.layouts.length:0);
+      var row=$(sel); if(!row||row.dataset.built===stamp) return;
+      row.dataset.built=stamp;row.innerHTML='';
+      var list=allLayouts().filter(function(l){
         return !!l.poster===isPoster&&l.id!=='blank';});
       if(isPoster) list=list.slice().sort(function(a,b){
         return (!!a.land===land?0:1)-(!!b.land===land?0:1);});

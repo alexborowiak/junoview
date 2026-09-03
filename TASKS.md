@@ -4651,6 +4651,30 @@ option. Then where has the ability to refresh all images gone?"
   lands in, and a button in the history screen. Going back to one and
   branching from one are the buttons that were already there.
 
+- [x] **T226 - Layouts of your own.**
+  The user (2026-09-03): "It would be great if people could make their
+  own slide layouts."
+  *Done 2026-09-03.* Two things existed and neither was this. The
+  built-in catalogue is a fixed table in the source; "Save this slide's
+  layout" records an ARRANGEMENT of a slide you already made, which is
+  the right tool when the slide exists and the wrong one when it does
+  not -- you could not design a shape and then fill it. **The builder**
+  is a new fragment, `52-layout-builder.js`: a page-shaped board, four
+  kinds of slot (Title, Heading, Body text, Figure panel), drag to move
+  and a grip to resize, the same X/Y/W/H numbers the Style system
+  screen has, and a name. What comes out is an entry in exactly the
+  shape LAYOUTS uses, kept on the deck as `pres.layouts`. From there it
+  is a layout in every sense: `allLayouts()` is the built-ins plus
+  yours, so applyLayout stamps it, the picker draws its thumbnail with
+  the same layIcon, Change layout offers it and New slide remembers it.
+  There is no second code path; the catalogue simply got longer and
+  part of it is yours. Existing ones can be edited or deleted, and a
+  slide already laid out that way keeps its boxes.
+  *The bug class the parity test caught:* a deck key the browser keeps
+  and the Python rebuild sheds works perfectly until the deck is saved
+  to the project and reopened. `layouts` is carried by both
+  normalisers now, with a sentinel, like `types` before it.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

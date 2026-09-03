@@ -559,6 +559,15 @@
               <button class="dbtn rbn-sm" id="hm-lay-ideas"
               title="A few ways to lay out what is already on this slide, drawn as pictures — pick one">
               <i data-ic="grid"></i> Layout ideas&#8230;</button>
+              <!-- T226: a layout of your own, built rather than
+                   recorded (2026-09-03, user: "it would be great if
+                   people could make their own slide layouts").
+                   Save layout beside it records the slide you have;
+                   this designs the one you have not made yet. -->
+              <button class="dbtn rbn-sm" id="hm-lay-new"
+                title="Design a slide layout of your own: put the
+ slots where you want them, name it, and it joins the New slide
+ gallery"><i data-ic="newview"></i> New layout&#8230;</button>
               <button class="dbtn rbn-sm" id="hm-lay-arrsave"
               title="Save the way this slide is laid out, under a name, to use on other slides. Only the shape is kept — no words, no figures">
               <i data-ic="copy"></i> Save layout&#8230;</button>
@@ -1943,6 +1952,21 @@
           <button class="dbtn rbn-sm" id="img-ov-close" title="Close (Esc)"
             ><i data-ic="exit"></i> Close</button></div>
         <div class="img-ov-body" id="img-ov-body"></div>
+      </div>
+      <!-- MAKE A LAYOUT (T226). The board is the page; the slots are
+           what a layout is made of. What comes out is an entry in the
+           same shape the built-in catalogue uses. -->
+      <div class="img-ov" id="lay-make" hidden role="dialog"
+        aria-label="Make a slide layout">
+        <div class="img-ov-h"><span class="img-ov-t">Make a slide
+          layout</span>
+          <span class="img-ov-sub">Put the slots where you want them,
+            give it a name, and it joins the New slide gallery.</span>
+          <button class="dbtn rbn-sm" id="lay-make-new"
+            title="Start again from a blank board">Start again</button>
+          <button class="dbtn rbn-sm" id="lay-make-close"
+            title="Close (Esc)"><i data-ic="exit"></i> Close</button></div>
+        <div class="img-ov-body" id="lay-make-body"></div>
       </div>
       <!-- THE HISTORY OF ONE OBJECT, FULL SCREEN (T220). The same
            states the dock pane lists, with room for the thumbnails. -->

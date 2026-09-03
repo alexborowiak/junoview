@@ -247,6 +247,20 @@
        silently redefine Heading 1 for everybody who opened the file.
        It cannot ride the ['wmark','head','foot','styles'] loop below —
        that loop takes objects and this is a list. */
+    /* T226: the slide layouts this deck designed. Filtered the same
+       way as types: an entry with no id or no slot list is unusable,
+       and one claiming a built-in id would redefine "Title" for
+       everyone who opened the file. */
+    if(Array.isArray(p.layouts)&&p.layouts.length){
+      var lys=[];
+      p.layouts.forEach(function(l){
+        if(!l||typeof l!=='object'||!l.id) return;
+        if(!Array.isArray(l.items)) return;
+        if(LAYOUTBYID&&LAYOUTBYID[l.id]) return;
+        lys.push(deep(l));
+      });
+      if(lys.length) out.layouts=lys;
+    }
     if(Array.isArray(p.types)&&p.types.length){
       var tps=[];
       p.types.forEach(function(t){
@@ -752,7 +766,9 @@
      with single characters and evict the slide edits undo is for. Per
      SLIDE notes live on the slide and are covered. */
   function histState(){
-    return JSON.stringify({slides:pres.slides||[],talkMins:pres.talkMins||0,
+    return JSON.stringify({slides:pres.slides||[],
+      layouts:pres.layouts||[],
+      talkMins:pres.talkMins||0,
       showNums:pres.showNums||0,tapzoom:pres.tapzoom||0,
       hideTrace:pres.hideTrace||0,wmark:pres.wmark||null,
       head:pres.head||null,foot:pres.foot||null,

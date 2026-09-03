@@ -49,6 +49,7 @@
   imgPaneBoot();
   quickSwatchBoot();          /* the deck's six colours, on the row */
   ohOverviewBoot();           /* History of this object, full screen */
+  layoutBuilderBoot();        /* layouts of your own (T226) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */

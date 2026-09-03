@@ -90,6 +90,11 @@ DECK_SENTINELS = {
     "notes": "whole-talk notes",
     "pad": [{"t": "scratch"}],
     "types": [{"id": "quote", "name": "Quote"}],
+    # the slide layouts a deck designed (T226) -- a list like "types",
+    # and lost the same way if the Python rebuild does not carry it
+    "layouts": [{"id": "my1", "label": "Panel over notes",
+                 "items": [{"k": "cell", "x": 6, "y": 20,
+                            "w": 44, "h": 50}]}],
     "sections": {"s1": {"name": "Introduction"}},
     "masters": {"m1": {"name": "Branded", "bg": "#112233"}},
     "wmark": {"text": "DRAFT"},

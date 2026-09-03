@@ -982,8 +982,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-03, T225: a checkpoint you take on purpose -- a named,
 # marked snapshot that eviction never drops -- with a door in the File
 # menu and one in the history screen.
-EXPECTED_MD5 = "ce98376dce26750472751713a5a738d8"
-EXPECTED_BYTES = 3388427
+# 2026-09-03, T226: layouts of your own -- a new 52-layout-builder.js
+# fragment, a board with slots on the Design tab, pres.layouts carried
+# through both normalisers, and the picker drawing yours beside the
+# built-ins.
+EXPECTED_MD5 = "8c80a386f4868ab7ad3eff6c33a67ec7"
+EXPECTED_BYTES = 3404645
 
 
 def _render_example() -> str:

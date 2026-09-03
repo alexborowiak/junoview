@@ -83,6 +83,7 @@ DECK_PARTS = (
     "47-charts",
     "48-animation",
     "50-review-and-overview",
+    "52-layout-builder",
     "55-sections-and-strip",
     "60-saving-and-export",
     "99-boot",
