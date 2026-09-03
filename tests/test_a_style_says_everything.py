@@ -52,9 +52,10 @@ def test_both_style_editors_offer_the_whole_vocabulary(out):
     assert "      crow.appendChild(colCtl('bg','Behind','#16273a','None'));" in out
     assert "      crow.appendChild(colCtl('bdc','Edge','#8aa0b0','None'));" in out
     # the screen
-    assert "    row.appendChild(dgCol('color','Words','#e6eef5',''));" in out
-    assert "    row.appendChild(dgCol('bg','Behind','#16273a','None'));" in out
-    assert "    row.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));" in out
+    # (T230 put them in a captioned Colours cluster)
+    assert "    cg.appendChild(dgCol('color','Words','#e6eef5',''));" in out
+    assert "    cg.appendChild(dgCol('bg','Behind','#16273a','None'));" in out
+    assert "    cg.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));" in out
     assert "    fsel.className='dg-font';" in out
     # both offer the same five faces plus "default"
     assert out.count("['','Default face'],['sans','Sans'],['serif','Serif'],") == 2

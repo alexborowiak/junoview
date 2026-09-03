@@ -1892,7 +1892,22 @@
      boxes themselves, side by side, and pull the odd one into line. The
      table is that. It is the same annots the canvas renders -- no copy,
      no import step -- so an edit here is an edit there. */
-  var dgMarked={},dgMatchArm=false,dgMatchWhat='all',dgSheetPick=-1;
+  var dgMarked={},dgMatchArm=false,dgMatchWhat='all';
+  /* T230: the slides you pick in the strip are a SET, and the table
+     is what they narrow (2026-09-03, user: "when selecting the
+     slide thumbnails on this view it would be good if they stayed
+     selected and became cumulative and that fed into things like
+     the table"). Empty means every slide. */
+  var dgSheetPick={};
+  function dgPickedAny(){
+    for(var k in dgSheetPick) if(dgSheetPick[k]) return true;
+    return false;
+  }
+  function dgPickedCount(){
+    var n=0;
+    for(var k in dgSheetPick) if(dgSheetPick[k]) n++;
+    return n;
+  }
   /* `text` is every text box whatever style it wears, or none: a box
      that has never been given a named style appeared in no table at
      all, and an unstyled box is exactly the thing you go looking for */
@@ -1925,8 +1940,8 @@
   function dgRows(){
     var out=[];
     (pres.slides||[]).forEach(function(sl,si){
-      /* a slide picked in the strip narrows the table to it */
-      if(dgSheetPick>=0&&si!==dgSheetPick) return;
+      /* the slides picked in the strip narrow the table to them */
+      if(dgPickedAny()&&!dgSheetPick[si]) return;
       (sl.annots||[]).forEach(function(a,ai){
         if(dgAnnotMatches(a)) out.push({si:si,ai:ai,a:a});
       });
@@ -2046,14 +2061,16 @@
     bar.appendChild(what);
     var count=document.createElement('span');
     count.className='dgt-count';
-    if(dgSheetPick>=0){
+    if(dgPickedAny()){
+      var np=dgPickedCount();
       var only=document.createElement('button');
       only.className='dbtn dg-b primary';
-      only.textContent='Slide '+(dgSheetPick+1)+' only — show all';
-      only.title='The strip below is filtering this table. Click to '
-        +'see every slide again.';
+      only.textContent=np+' slide'+(np===1?'':'s')+' picked — show all';
+      only.title='The slides you have picked in the column on the '
+        +'right are filtering this table. Click to see every slide '
+        +'again.';
       only.addEventListener('click',function(e){
-        e.stopPropagation();dgSheetPick=-1;dgBodyKeep(ov);});
+        e.stopPropagation();dgSheetPick={};dgBodyKeep(ov);});
       bar.appendChild(only);
     }
     count.textContent=rows.length
@@ -2075,9 +2092,14 @@
     /* the size and the face are columns whenever the rows are text,
        whether they were chosen by style or as plain text boxes */
     var isTx=!dgIsObj()||dgObjKind()==='text';
-    var heads=['','Slide','What',' X',' Y',' W'];
+    /* T230: the first column is the WORDS, and for a plain text box
+       you can type in it (2026-09-03, user: "would be good to edit
+       the text in here as well"). A box with a list, and anything
+       that is not text, shows its label: a one-line input cannot
+       say what a three-level list is. */
+    var heads=['','Slide','Text',' X',' Y',' Width'];
     if(isTx) heads=heads.concat(['Size','Face']);
-    heads=heads.concat(['Words','Behind']);
+    heads=heads.concat(['Colour','Behind']);
     heads.forEach(function(h){
       var c=document.createElement('div');
       c.className='dgt-h';c.textContent=h.trim();
@@ -2106,7 +2128,34 @@
       });
       cell(ck,'dgt-ckc');
       cell(String(r.si+1),'dgt-si');
-      cell(annotLabel(r.a),'dgt-what');
+      if(r.a.k==='text'&&!listOf(r.a)){
+        var ti=document.createElement('input');
+        ti.type='text';ti.className='dgt-tx';
+        ti.value=String(r.a.text||'');
+        ti.title='The words in this box. Enter commits it.';
+        ti.addEventListener('click',function(e){e.stopPropagation();});
+        ti.addEventListener('keydown',function(e){
+          e.stopPropagation();
+          if(e.key==='Enter') ti.blur();
+        });
+        ti.addEventListener('change',function(){
+          var v=ti.value;
+          r.a.text=v;
+          /* the rich copy follows the plain one, escaped -- the
+             same pair setListStyle keeps in step */
+          if(r.a.html!==undefined) r.a.html=esc(v);
+          markDirty();refresh();renderFilm();
+          var ov2=$('#deck-design'); if(ov2) dgBodyKeep(ov2);
+        });
+        cell(ti,'dgt-what');
+      } else {
+        var lb2=document.createElement('span');
+        lb2.className='dgt-lab';lb2.textContent=annotLabel(r.a);
+        lb2.title=listOf(r.a)
+          ?'A list: edit its words on the slide'
+          :annotLabel(r.a);
+        cell(lb2,'dgt-what');
+      }
       cell(dgNum(r,'x'),'dgt-num');
       cell(dgNum(r,'y'),'dgt-num');
       cell(dgNum(r,'w'),'dgt-num');
@@ -2142,7 +2191,10 @@
   }
   /* T224: the outline sheet, lifted out of dgBody so the object
      views can show it too. Not one line of it changed. */
-  function dgSheet(body,ov){
+  function dgSheet(_unused,ov){
+    var body=ov&&ov.querySelector('#dg-sheetcol');
+    if(!body) return;
+    body.innerHTML='';
     dgSectionHead(body,'Every object, outlined',
       'The whole deck at once, with a box drawn round everything on '
       +'every slide. This is how you find the one heading that is 3mm '
@@ -2272,14 +2324,40 @@
       cell.appendChild(n);
       /* ...and the slide itself narrows the table to it rather than
          walking you out of the screen. Click it again for all of them. */
-      cell.classList.toggle('dg-pick',dgSheetPick===i);
+      cell.classList.toggle('dg-pick',!!dgSheetPick[i]);
       cell.addEventListener('click',function(){
-        dgSheetPick=(dgSheetPick===i)?-1:i;
+        /* cumulative: each click adds or removes one */
+        if(dgSheetPick[i]) delete dgSheetPick[i]; else dgSheetPick[i]=1;
         dgBodyKeep(ov);
       });
       sheet.appendChild(cell);
     });
     body.appendChild(sheet);
+  }
+  /* what each colour on the board means, and only for the kinds that
+     are actually there */
+  function dgKeyList(key,id){
+    $$('.dg-keyit',key).forEach(function(n){n.remove();});
+    var mine=document.createElement('span');
+    mine.className='dg-keyit dg-keymine';
+    mine.textContent=(styleDef(id)||{}).label||id;
+    key.appendChild(mine);
+    if(!dgShowOthers) return;
+    var seen={};
+    dgBoardSlides().forEach(function(e){
+      (e.sl.annots||[]).forEach(function(a){
+        if(!a||a.hide) return;
+        if(a.k==='text'&&a.style===id) return;
+        seen[a.k]=1;
+      });
+    });
+    Object.keys(seen).forEach(function(k){
+      var it=document.createElement('span');
+      it.className='dg-keyit';
+      it.style.setProperty('--dg-kc',DG_KIND_COL[k]||'#8aa0b0');
+      it.textContent=k;
+      key.appendChild(it);
+    });
   }
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
@@ -2338,6 +2416,54 @@
      be expressed at all. x/y/w live on the same pres.styles record, so
      no new deck key and no new documentation: `styles` is already "this
      deck's overrides of the named text types". */
+  /* ---- T230: THE BOARD SHOWS THE REAL BOXES ---------------------------
+     (2026-09-03, user: "right now it shows you the masters, but there
+     can be individuals. Would be good if you could see not just the
+     master, but location of all individual headings, then you can also
+     tick a box that shows 'all other items', so you know if your heading
+     is going to overlap with something (should be a colour for every
+     different thing, but the one in question glows and has a thicker
+     border)".)
+     The dragged rectangle is still the default this style stamps. Behind
+     it now sit every box that actually wears the style, and -- when you
+     ask -- everything else on those slides, one colour per kind. So the
+     question "will my heading land on the figure" is answered by looking
+     rather than by pressing the button and undoing it. */
+  var dgShowOthers=false;
+  var DG_KIND_COL={text:'#6b9bff',cell:'#f0a848',image:'#a586e8',
+    rect:'#46a892',table:'#e0a5c6',flip:'#39a9c0',arrow:'#ff6b57',
+    line:'#ff6b57',draw:'#ff6b57',chart:'#7fd7c0'};
+  function dgKindCol(a){
+    return (a&&DG_KIND_COL[a.k])||'#8aa0b0';
+  }
+  function dgBoardSlides(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      if(dgPickedAny()&&!dgSheetPick[si]) return;
+      out.push({sl:sl,si:si});
+    });
+    return out;
+  }
+  function dgGhostsFor(board,id){
+    $$('.dg-real,.dg-other',board).forEach(function(n){n.remove();});
+    dgBoardSlides().forEach(function(e){
+      (e.sl.annots||[]).forEach(function(a){
+        if(!a||a.hide) return;
+        var mine=(a.k==='text'&&a.style===id);
+        if(!mine&&!dgShowOthers) return;
+        var b=document.createElement('div');
+        b.className=mine?'dg-real':'dg-other';
+        b.style.left=(a.x||0)+'%';
+        b.style.top=(a.y||0)+'%';
+        b.style.width=Math.max(1.5,(a.w||10))+'%';
+        b.style.height=Math.max(1.5,(a.h||6))+'%';
+        b.style.borderColor=mine?'':dgKindCol(a);
+        b.title=(mine?'':(annotLabel(a)+' — '))
+          +'slide '+(e.si+1);
+        board.appendChild(b);
+      });
+    });
+  }
   function dgBoard(host,id){
     var rec=dgStyleRec(id);
     var board=document.createElement('div');
@@ -2361,8 +2487,26 @@
     grip.title='Drag to set how wide this type is by default';
     ghost.appendChild(grip);
     paint();
+    dgGhostsFor(board,id);
     board.appendChild(ghost);
     host.appendChild(board);
+    /* the key, and the switch that turns the rest of the page on */
+    var key=document.createElement('div');key.className='dg-key';
+    var ck=document.createElement('label');ck.className='dg-keyck';
+    var box=document.createElement('input');box.type='checkbox';
+    box.checked=dgShowOthers;
+    box.addEventListener('change',function(){
+      dgShowOthers=box.checked;
+      dgGhostsFor(board,id);
+      dgKeyList(key,id);
+    });
+    ck.appendChild(box);
+    ck.appendChild(document.createTextNode(' Show everything else'));
+    ck.title='Draw every other object on these slides too, so you can '
+      +'see what this type would land on';
+    key.appendChild(ck);
+    dgKeyList(key,id);
+    host.appendChild(key);
 
     function drag(ev,mode){
       ev.preventDefault();ev.stopPropagation();
@@ -2437,15 +2581,30 @@
     body.appendChild(spec);
 
     var row=document.createElement('div');row.className='dg-ctrls';
+    /* T230: CLUSTERS, NOT ONE LONG ROW. Thirteen controls sat in one
+       wrap with nothing saying which belonged with which (2026-09-03,
+       user: "the buttons are a bit crammed. There is a lot of things
+       again that feel like they are floating in no where"). Each
+       group is a box with its name on it, the way a ribbon run is. */
+    var cur_=null;
+    function grp(name){
+      var g=document.createElement('div');g.className='dg-grp';
+      var lb=document.createElement('span');
+      lb.className='dg-grplab';lb.textContent=name;
+      g.appendChild(lb);
+      row.appendChild(g);cur_=g;
+      return g;
+    }
     function ctl(label,title,on,fn){
       var b=document.createElement('button');
       b.className='dbtn dg-b';b.textContent=label;b.title=title;
       if(on!=null) b.setAttribute('aria-pressed',on?'true':'false');
       b.addEventListener('click',function(){
         fn();markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);});
-      row.appendChild(b);
+      (cur_||row).appendChild(b);
       return b;
     }
+    grp('Size');
     ctl('−','Smaller',null,function(){
       rec.size=Math.max(0.6,Math.round(((d.size||2.6)-0.2)*10)/10);});
     var sz=document.createElement('span');
@@ -2453,13 +2612,15 @@
     sz.textContent=(d.size||2.6).toFixed(1)+'%';
     sz.title='The type size, as a percentage of the page height — so it '
       +'means the same thing on a 16:9 slide and an A0 poster';
-    row.appendChild(sz);
+    (cur_||row).appendChild(sz);
     ctl('+','Bigger',null,function(){
       rec.size=Math.min(30,Math.round(((d.size||2.6)+0.2)*10)/10);});
+    grp('Weight');
     ctl('B','Bold',!!d.b,function(){
       if(d.b) rec.b=0; else rec.b=1;});
     ctl('I','Italic',!!d.i,function(){
       if(d.i) rec.i=0; else rec.i=1;});
+    grp('Alignment');
     ['left','center','right'].forEach(function(al){
       ctl(al==='left'?'←':al==='right'?'→':'↔',
         'Align '+al,(d.align||'left')===al,function(){rec.align=al;});
@@ -2469,6 +2630,7 @@
        background colour, box border colour, font style. I said I
        wanted everything.") The typeface, then three colours, each
        writing the same override record the size and weight do. */
+    grp('Typeface');
     var fsel=document.createElement('select');
     fsel.className='dg-font';
     fsel.title='The typeface every box of this type takes';
@@ -2484,7 +2646,8 @@
       if(fsel.value) rec.font=fsel.value; else delete rec.font;
       markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
     });
-    row.appendChild(fsel);
+    (cur_||row).appendChild(fsel);
+    grp('Colours');
     function dgCol(key,label,fallback,none){
       var wrap=document.createElement('span');wrap.className='dg-colw';
       var lb=document.createElement('span');
@@ -2512,9 +2675,11 @@
       }
       return wrap;
     }
-    row.appendChild(dgCol('color','Words','#e6eef5',''));
-    row.appendChild(dgCol('bg','Behind','#16273a','None'));
-    row.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));
+    var cg=cur_;
+    cg.appendChild(dgCol('color','Words','#e6eef5',''));
+    cg.appendChild(dgCol('bg','Behind','#16273a','None'));
+    cg.appendChild(dgCol('bdc','Edge','#8aa0b0','None'));
+    grp('');
     var rst=document.createElement('button');
     rst.className='dbtn dg-b';rst.textContent='Reset';
     rst.title='Back to this type’s built-in look';
@@ -2526,7 +2691,7 @@
       st[id]=keep;
       markDirty();dgRestamp(id);refresh();dgRail(ov);dgBody(ov);
     });
-    row.appendChild(rst);
+    (cur_||row).appendChild(rst);
     body.appendChild(row);
 
     /* ---- where it sits ---- */
@@ -2543,6 +2708,9 @@
        like the size"). Percent of the page, the same currency the
        whole model uses. */
     var nums=document.createElement('div');nums.className='dg-nums';
+    var nlab=document.createElement('span');
+    nlab.className='dg-grplab';nlab.textContent='Exactly';
+    nums.appendChild(nlab);
     [['x','X',8],['y','Y',6],['w','Width',60]].forEach(function(pr){
       var cell=document.createElement('label');cell.className='dg-num';
       var lb=document.createElement('span');lb.textContent=pr[1];
@@ -2640,7 +2808,13 @@
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dg-main">'
       +'<div class="dg-rail" id="dg-list"></div>'
-      +'<div class="dg-body" id="dg-body"></div></div>';
+      +'<div class="dg-body" id="dg-body"></div>'
+      /* T230: the slides go DOWN THE SIDE (2026-09-03, user: "the
+         slide thumbnails should be down the side as that's the way
+         people are used to viewing them"). One column, wider than
+         the four-across grid they were in, so their words can be
+         read. */
+      +'<div class="dg-sheetcol" id="dg-sheetcol"></div></div>';
     document.body.appendChild(ov);
     ov.querySelector('#dg-close').addEventListener('click',dgClose);
     ov.querySelector('#dg-check').addEventListener('click',function(){

@@ -994,8 +994,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Notes and Optional got doors on Home; a slide target can be given in
 # seconds; the object history is a four-column table with Revert and a
 # preview button for large objects; and clones got two ribbon doors.
-EXPECTED_MD5 = "ce3314b7cff350070651c39fe8cf75a2"
-EXPECTED_BYTES = 3423837
+# 2026-09-03, T230: the Style system screen's slides moved to a column
+# down the side, its headings became words, its controls became
+# captioned clusters, the board draws every real box (and, on request,
+# everything else) with a key, slide picks are cumulative and filter
+# the table, and the table's first column edits the words.
+EXPECTED_MD5 = "4e6b9cfe98b796b80a39364e5ec275c6"
+EXPECTED_BYTES = 3434192
 
 
 def _render_example() -> str:

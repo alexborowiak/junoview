@@ -3157,6 +3157,45 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
    selection line (2026-09-02, user: "the dot points appear where the
    dashed selection line is") */
 .an-tx.an-ul{margin:0;padding-left:calc(1.7em + var(--an-ind,0));}
+/* ---- T230: THE BOARD SHOWS THE REAL BOXES -----------------------------
+   The dragged rectangle is the default this style stamps -- thicker,
+   amber, and glowing. Behind it, every box that actually wears the
+   style, and on request everything else, one colour per kind. */
+.dg-real{position:absolute;border:1px solid rgba(240,168,72,.55);
+  border-radius:3px;background:rgba(240,168,72,.07);pointer-events:none;}
+.dg-other{position:absolute;border:1px dashed currentColor;
+  border-radius:3px;opacity:.55;pointer-events:none;
+  border-color:#8aa0b0;}
+.dg-ghost{box-shadow:0 0 0 1px rgba(240,168,72,.35),
+  0 0 14px rgba(240,168,72,.45);border-width:2px;z-index:3;}
+.dg-key{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  margin:0 0 12px;font-family:var(--sans);font-size:11.5px;
+  color:#9fb3c4;}
+.dg-keyck{display:inline-flex;align-items:center;gap:6px;cursor:pointer;}
+.dg-keyit{display:inline-flex;align-items:center;gap:5px;}
+.dg-keyit::before{content:"";width:11px;height:11px;border-radius:3px;
+  border:1px dashed var(--dg-kc,#8aa0b0);}
+.dg-keyit.dg-keymine::before{border:2px solid var(--amber,#f0a848);
+  background:rgba(240,168,72,.18);}
+/* the numbers under the board are a captioned group, not three loose
+   fields floating under a picture */
+.dg-nums{border:1px solid #ffffff1c;border-radius:8px;
+  background:#ffffff06;padding:7px 10px;width:max-content;}
+/* the table's boxes were as wide as their column; a percentage never
+   needs five digits */
+.dgt-n{max-width:74px;}
+.dgt-tx{width:100%;min-width:0;height:24px;padding:0 6px;
+  box-sizing:border-box;font-family:var(--sans);font-size:12px;
+  color:#e8f1f8;background:#ffffff0d;border:1px solid #ffffff22;
+  border-radius:5px;}
+.dgt-tx:focus{border-color:var(--cyan);outline:none;}
+.dgt-lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  color:#9fb3c4;}
+body.light .dgt-tx{background:#00000006;border-color:var(--line);
+  color:var(--ink);}
+body.light .dg-grp,body.light .dg-nums{background:#00000005;
+  border-color:var(--line);}
+
 /* ---- T229: THE OBJECT'S HISTORY IS A TABLE ----------------------------
    Four columns -- when, what changed, what it looked like, and the way
    back -- because a stack of cards made every state look like an event
@@ -4347,10 +4386,15 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .dg-row.on{background:#ffffff14;border-color:#ffffff2b;}
 .dg-name{line-height:1.15;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
-.dg-count{font-family:var(--mono);font-size:10px;color:#8ba0b2;
+.dg-count{font-family:var(--sans);font-size:11.5px;color:#8ba0b2;
   flex:none;}
-.dg-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
-  text-transform:uppercase;color:#4e93a6;margin:22px 0 4px;}
+/* T230: a heading, in words. It was 10px spaced capitals -- the very
+   thing the ribbon gave up in T219 -- with three other type sizes
+   stacked under it (2026-09-03, user: "all the text is a bit
+   confusing here. There is text of heaps of different sizes and
+   different width everywhere"). */
+.dg-h{font-family:var(--sans);font-size:15px;font-weight:600;
+  letter-spacing:0;text-transform:none;color:#e8f1f8;margin:26px 0 5px;}
 .dg-h:first-child{margin-top:0;}
 .dg-sub{margin:0 0 10px;font-size:12.5px;line-height:1.55;color:#a7bccb;
   max-width:62ch;}
@@ -4359,11 +4403,19 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
      slide was unreadable in its own preview (JVUX-10) */
   background:var(--page-bg,#ffffff08);line-height:1.3;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
-.dg-ctrls{display:flex;align-items:center;gap:5px;flex-wrap:wrap;
-  margin-top:8px;}
+/* T230: CLUSTERS. Each group is a box with its name on it, so the
+   thirteen controls read as five decisions instead of one crammed
+   row of things floating in nowhere. */
+.dg-ctrls{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;
+  margin-top:10px;}
+.dg-grp{display:flex;align-items:center;gap:4px;padding:6px 9px;
+  border:1px solid #ffffff1c;border-radius:8px;background:#ffffff06;}
+.dg-grplab{font-family:var(--sans);font-size:11px;color:#8ea3b5;
+  margin-right:3px;white-space:nowrap;}
+.dg-grplab:empty{display:none;}
 .dg-b{min-width:30px;}
-.dg-size{font-family:var(--mono);font-size:11px;color:#9fb3c2;
-  min-width:44px;text-align:center;}
+.dg-size{font-family:var(--mono);font-size:12px;color:#cfe0ec;
+  min-width:48px;text-align:center;}
 .dg-col{width:30px;height:26px;padding:0;border:1px solid #ffffff26;
   border-radius:6px;background:transparent;cursor:pointer;}
 /* the board: a slide, and a rectangle you drag on it */
@@ -4381,8 +4433,16 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   background:var(--amber,#f0a848);touch-action:none;}
 .dg-put{margin-bottom:6px;}
 /* the contact sheet */
+/* the contact sheet, a column down the right-hand side */
+.dg-sheetcol{width:250px;flex:none;overflow-y:auto;
+  padding:14px 12px 40px;border-left:1px solid #ffffff14;
+  background:#ffffff04;}
+.dg-sheetcol .dg-h{font-size:13.5px;margin:0 0 4px;}
+.dg-sheetcol .dg-sub{font-size:11.5px;margin-bottom:8px;max-width:none;}
+.dg-sheetcol .dg-putrow{flex-wrap:wrap;}
+.dg-sheetcol .dg-scope{max-width:100%;}
 .dg-sheet{display:grid;gap:10px;margin-top:10px;
-  grid-template-columns:repeat(auto-fill,minmax(148px,1fr));}
+  grid-template-columns:1fr;}
 /* ABOVE THE EDITOR IT IS DESCRIBING (T170). .pickbar's own z-index is
    99, which is right for the notebook card picker -- that bar appears
    when the deck is NOT covering the screen. .deck is fixed at 100, so a
@@ -4742,8 +4802,8 @@ body.light .lb-name{background:#00000006;border-color:var(--line);
 .dgt-count{font-family:var(--sans);font-size:12px;color:#8ea3b5;
   margin-left:auto;}
 .dgt-grid{display:grid;
-  grid-template-columns:26px 44px minmax(120px,1.6fr)
-    repeat(calc(var(--dgt-cols) - 5),minmax(56px,.7fr)) 34px 34px;
+  grid-template-columns:26px 40px minmax(150px,1.7fr)
+    repeat(calc(var(--dgt-cols) - 5),minmax(52px,.5fr)) 34px 34px;
   gap:1px;background:#ffffff12;border:1px solid #ffffff1c;
   border-radius:9px;overflow:hidden;max-height:52vh;overflow-y:auto;}
 .dgt-h{background:var(--chrome-1,#0e1926);font-family:var(--sans);

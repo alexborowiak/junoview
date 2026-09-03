@@ -4743,6 +4743,45 @@ option. Then where has the ability to refresh all images gone?"
   Left as it is; the rule that it never shrinks a figure is the older
   and better one.
 
+- [x] **T230 - The Style system screen reads as one thing.**
+  The user (2026-09-03): "would be good to edit the text in here as
+  well, and maybe the x, y, w and size boxes are too big? The slide
+  thumbnails should be down the side as that's the way people are used
+  to viewing them. This text is hard to view... all the text is a bit
+  confusing here. There is text of heaps of different sizes and
+  different width everywhere, and the buttons are a bit crammed. There
+  is a lot of things again that feel like they are floating in no
+  where." And, mid-round: "when selecting the slide thumbnails on this
+  view it would be good if they stayed selected and became cumulative
+  and that fed into things like the table. And the view of the slide
+  thing... right now it shows you the masters, but there can be
+  individuals. Would be good if you could see not just the master, but
+  location of all individual headings, then you can also tick a box
+  that show 'all other items', so you know if your heading is going to
+  overlap with something (should be a colour for every different thing,
+  but the one in question glows and has a thicker border)."
+  *Done 2026-09-03.* **The slides went down the side**, one column
+  wide enough to read, in a third pane of the screen rather than a
+  four-across grid at the bottom of the body. **The type**: the section
+  headings were 10px spaced capitals -- the thing the ribbon gave up in
+  T219 -- with three other sizes stacked under them; they are 15px
+  sentence-case sans now, and the rail's counts match the rest.
+  **Clusters**: thirteen controls sat in one wrap with nothing saying
+  which belonged with which. They are five captioned boxes -- Size,
+  Weight, Alignment, Typeface, Colours -- plus Reset, and the three
+  numbers under the board are a captioned group rather than fields
+  floating under a picture. **The board shows the real boxes**: the
+  dragged rectangle is still the default the style stamps, thicker and
+  glowing, and behind it sits every box that actually wears the style;
+  a tick draws everything else too, one colour per kind with a key. So
+  "will my heading land on the figure" is answered by looking rather
+  than by pressing the button and undoing it. **The slide picks are a
+  set** and they accumulate; the table and the board both narrow to
+  them. **The table** names its first column Text and lets you type in
+  it for a plain text box -- a list keeps its label, because a one-line
+  input cannot say what a three-level list is -- and its number boxes
+  are narrower.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

@@ -49,9 +49,10 @@ def test_the_table_is_the_real_annots(out):
     assert "      if(key==='x'||key==='y') delete r.a.anch;" in out
     assert "      markDirty();refresh();renderFilm();" in out
     # the columns
-    assert "    var heads=['','Slide','What',' X',' Y',' W'];" in out
+    # (T230: the first column is the words, and editable)
+    assert "    var heads=['','Slide','Text',' X',' Y',' Width'];" in out
     assert "    if(isTx) heads=heads.concat(['Size','Face']);" in out
-    assert "    heads=heads.concat(['Words','Behind']);" in out
+    assert "    heads=heads.concat(['Colour','Behind']);" in out
     assert "    var isTx=!dgIsObj()||dgObjKind()==='text';" in out
 
 
@@ -88,10 +89,12 @@ def test_the_slide_strip_selects_instead_of_walking_you_out(out):
     """Clicking a slide used to close the screen and take you there.
     It narrows the table to that slide; clicking an object in it ticks
     that object, or switches the rail to its kind."""
-    assert "        dgSheetPick=(dgSheetPick===i)?-1:i;" in out
-    assert "      if(dgSheetPick>=0&&si!==dgSheetPick) return;" in out
-    assert "only.textContent='Slide '+(dgSheetPick+1)+' only " in out
-    assert "      cell.classList.toggle('dg-pick',dgSheetPick===i);" in out
+    # T230: the picks are a SET and they accumulate
+    assert ("        if(dgSheetPick[i]) delete dgSheetPick[i]; "
+            "else dgSheetPick[i]=1;") in out
+    assert "      if(dgPickedAny()&&!dgSheetPick[si]) return;" in out
+    assert "      only.textContent=np+' slide'+(np===1?'':'s')+' picked " in out
+    assert "      cell.classList.toggle('dg-pick',!!dgSheetPick[i]);" in out
     # the object proxy
     assert "          if(!dgAnnotMatches(a)){" in out
     assert "            dgSel=(a.k==='text'&&a.style)?a.style:('obj:'+a.k);" in out
@@ -102,7 +105,9 @@ def test_the_slide_strip_selects_instead_of_walking_you_out(out):
 
 def test_the_outline_sheet_serves_both_views(out):
     """It was inline in dgBody, so only the text-style view had it."""
-    assert "  function dgSheet(body,ov){" in out
+    # T230: it draws into the column down the side, not into the body
+    assert "  function dgSheet(_unused,ov){" in out
+    assert "    var body=ov&&ov.querySelector('#dg-sheetcol');" in out
     assert out.count("    dgSheet(body,ov);") == 2
     assert ".dgt-grid{display:grid;" in out
     assert ".dg-cell.dg-pick{outline:2px solid var(--cyan);" in out
