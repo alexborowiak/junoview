@@ -1872,6 +1872,415 @@
        an A0 sheet does not fit in a rail */
     el.style.fontSize=(11+(d.size||2.6)*1.9)+'px';
   }
+  /* ---- T224: EVERY BOX OF A KIND, IN A TABLE --------------------------
+     (2026-09-03, user: "I wanted more than just titles, also images
+     etc... There should be unselect all, and select all button... I want
+     full customisation here as well, font, font size, background colour,
+     then why doesn't it show the x and y position as well... Would be
+     good if there was also a table of them all to the right, which has
+     things like colour, font etc. of them all and you can make them all
+     match, or change them individually here, or change title colours in
+     a range... it would be good if you could click a bunch and they get
+     selected, then you click a button that says 'match style of', then
+     click one and they all match to that. And you can choose as well
+     what gets matched, whether it's all, or just position, or colour, or
+     font etc. Do you get the point of this? So it is hard to make things
+     match across slides, so this will help with this."
+
+     The screen already knew how to change what a KIND looks like. What
+     it could not do is the thing the ask is actually about: see the
+     boxes themselves, side by side, and pull the odd one into line. The
+     table is that. It is the same annots the canvas renders -- no copy,
+     no import step -- so an edit here is an edit there. */
+  var dgMarked={},dgMatchArm=false,dgMatchWhat='all',dgSheetPick=-1;
+  /* `text` is every text box whatever style it wears, or none: a box
+     that has never been given a named style appeared in no table at
+     all, and an unstyled box is exactly the thing you go looking for */
+  var DG_OBJ_KINDS=[['text','Text boxes, all of them','text'],
+    ['cell','Figures','cellcard'],
+    ['image','Pictures','image'],['rect','Shapes','shapes'],
+    ['table','Tables','table'],['flip','Flip books','flipbook'],
+    ['arrow','Arrows and lines','arrow']];
+  function dgIsObj(){return /^obj:/.test(dgSel);}
+  function dgObjKind(){return dgSel.slice(4);}
+  function dgKindLabel(){
+    if(!dgIsObj()){
+      var d=styleDef(dgSel);
+      return (d&&d.label)||dgSel;
+    }
+    var k=dgObjKind(),out=k;
+    DG_OBJ_KINDS.forEach(function(p){if(p[0]===k) out=p[1];});
+    return out;
+  }
+  function dgAnnotMatches(a){
+    if(!a) return false;
+    if(dgIsObj()){
+      var k=dgObjKind();
+      if(k==='arrow') return a.k==='arrow'||a.k==='line'||a.k==='draw';
+      return a.k===k;
+    }
+    return a.k==='text'&&a.style===dgSel;
+  }
+  /* every box of the chosen kind, everywhere, in slide order */
+  function dgRows(){
+    var out=[];
+    (pres.slides||[]).forEach(function(sl,si){
+      /* a slide picked in the strip narrows the table to it */
+      if(dgSheetPick>=0&&si!==dgSheetPick) return;
+      (sl.annots||[]).forEach(function(a,ai){
+        if(dgAnnotMatches(a)) out.push({si:si,ai:ai,a:a});
+      });
+    });
+    return out;
+  }
+  function dgRowKey(r){return r.si+':'+r.ai;}
+  function dgMarkedRows(rows){
+    return rows.filter(function(r){return dgMarked[dgRowKey(r)];});
+  }
+  /* WHAT TRAVELS when you match. Each answer is a list of annot fields;
+     'all' is every field the others name, so the chooser cannot drift
+     out of step with itself. */
+  var DG_MATCH={
+    pos:['x','y'],
+    size:['w','h','size'],
+    colour:['color','bg','bgc','bdc','fill','fillc'],
+    font:['font','b','i','align','lh','pspace']
+  };
+  function dgMatchFields(){
+    if(dgMatchWhat!=='all') return DG_MATCH[dgMatchWhat]||[];
+    var out=[];
+    Object.keys(DG_MATCH).forEach(function(k){
+      DG_MATCH[k].forEach(function(f){
+        if(out.indexOf(f)<0) out.push(f);});
+    });
+    return out;
+  }
+  function dgMatchTo(src,rows){
+    var fields=dgMatchFields(),n=0;
+    rows.forEach(function(r){
+      if(r.a===src) return;
+      fields.forEach(function(f){
+        if(src[f]===undefined) delete r.a[f];
+        else r.a[f]=(typeof src[f]==='object'&&src[f])
+          ?deep(src[f]):src[f];
+      });
+      /* a matched box is no longer anchored to whatever it was: the
+         position it was given is the position it keeps */
+      if(fields.indexOf('x')>=0) delete r.a.anch;
+      n++;
+    });
+    return n;
+  }
+  function dgSwatch(v,fallback){
+    var s=document.createElement('span');
+    s.className='dgt-sw';
+    if(!v||v==='none'){s.classList.add('dgt-none');s.title='none';}
+    else {s.style.background=tokVal(v);s.title=v;}
+    if(!v&&fallback) s.title='default';
+    return s;
+  }
+  function dgNum(r,key,step){
+    var inp=document.createElement('input');
+    inp.type='number';inp.step=step||'0.5';inp.className='dgt-n';
+    inp.value=(r.a[key]!=null)?Math.round(r.a[key]*10)/10:'';
+    inp.title=key.toUpperCase()+' of this box';
+    inp.addEventListener('click',function(e){e.stopPropagation();});
+    inp.addEventListener('keydown',function(e){
+      e.stopPropagation();
+      if(e.key==='Enter') inp.blur();
+    });
+    inp.addEventListener('change',function(){
+      var v=parseFloat(inp.value);
+      if(!isFinite(v)){delete r.a[key];}
+      else r.a[key]=Math.round(v*10)/10;
+      if(key==='x'||key==='y') delete r.a.anch;
+      markDirty();refresh();renderFilm();
+      var ov=$('#deck-design'); if(ov) dgBodyKeep(ov);
+    });
+    return inp;
+  }
+  function dgTable(body,ov){
+    var rows=dgRows();
+    var wrap=document.createElement('div');wrap.className='dgt';
+    var bar=document.createElement('div');bar.className='dgt-bar';
+    function btn(label,title,fn,cls){
+      var b=document.createElement('button');
+      b.className='dbtn dg-b'+(cls?' '+cls:'');
+      b.innerHTML=label;b.title=title;
+      b.addEventListener('click',function(e){e.stopPropagation();fn(b);});
+      bar.appendChild(b);
+      return b;
+    }
+    btn('Select all','Tick every box of this kind, on every slide',
+      function(){
+        rows.forEach(function(r){dgMarked[dgRowKey(r)]=1;});
+        dgBodyKeep(ov);
+      }).disabled=!rows.length;
+    btn('Unselect all','Clear every tick',function(){
+      dgMarked={};dgBodyKeep(ov);}).disabled=!rows.length;
+    var marked=dgMarkedRows(rows);
+    var mb=btn(dgMatchArm
+        ?'Now click the one to match'
+        :(bic('swap')+' Match style of…'),
+      dgMatchArm
+        ?'Click the row you want the ticked boxes to look like'
+        :'Tick the boxes to change, press this, then click the one they '
+         +'should match',
+      function(){dgMatchArm=!dgMatchArm;dgBodyKeep(ov);},
+      dgMatchArm?'primary':'');
+    mb.disabled=!marked.length&&!dgMatchArm;
+    var what=document.createElement('select');
+    what.className='dg-scope';
+    [['all','everything'],['pos','only where it sits'],
+     ['size','only how big it is'],['colour','only its colours'],
+     ['font','only its type']].forEach(function(pr){
+      var o=document.createElement('option');
+      o.value=pr[0];o.textContent='match '+pr[1];
+      if(dgMatchWhat===pr[0]) o.selected=true;
+      what.appendChild(o);
+    });
+    what.title='What travels when you match: everything, or just one '
+      +'part of it';
+    what.addEventListener('change',function(){
+      dgMatchWhat=what.value;dgBodyKeep(ov);});
+    bar.appendChild(what);
+    var count=document.createElement('span');
+    count.className='dgt-count';
+    if(dgSheetPick>=0){
+      var only=document.createElement('button');
+      only.className='dbtn dg-b primary';
+      only.textContent='Slide '+(dgSheetPick+1)+' only — show all';
+      only.title='The strip below is filtering this table. Click to '
+        +'see every slide again.';
+      only.addEventListener('click',function(e){
+        e.stopPropagation();dgSheetPick=-1;dgBodyKeep(ov);});
+      bar.appendChild(only);
+    }
+    count.textContent=rows.length
+      ?(marked.length?(marked.length+' of '+rows.length+' ticked')
+        :(rows.length+' box'+(rows.length===1?'':'es')))
+      :'none in this deck';
+    bar.appendChild(count);
+    wrap.appendChild(bar);
+
+    if(!rows.length){
+      var e=document.createElement('div');
+      e.className='pf-ok';
+      e.textContent='Nothing in this deck is a '+dgKindLabel()+' yet.';
+      wrap.appendChild(e);
+      body.appendChild(wrap);
+      return;
+    }
+    var tbl=document.createElement('div');tbl.className='dgt-grid';
+    /* the size and the face are columns whenever the rows are text,
+       whether they were chosen by style or as plain text boxes */
+    var isTx=!dgIsObj()||dgObjKind()==='text';
+    var heads=['','Slide','What',' X',' Y',' W'];
+    if(isTx) heads=heads.concat(['Size','Face']);
+    heads=heads.concat(['Words','Behind']);
+    heads.forEach(function(h){
+      var c=document.createElement('div');
+      c.className='dgt-h';c.textContent=h.trim();
+      tbl.appendChild(c);
+    });
+    tbl.style.setProperty('--dgt-cols',heads.length);
+    rows.forEach(function(r){
+      var on=!!dgMarked[dgRowKey(r)];
+      var cells=[];
+      function cell(node,cls){
+        var c=document.createElement('div');
+        c.className='dgt-c'+(cls?' '+cls:'')+(on?' on':'');
+        if(typeof node==='string') c.textContent=node;
+        else if(node) c.appendChild(node);
+        cells.push(c);
+        return c;
+      }
+      var ck=document.createElement('input');
+      ck.type='checkbox';ck.checked=on;ck.className='dgt-ck';
+      ck.title='Tick this box for Match style of';
+      ck.addEventListener('click',function(e){e.stopPropagation();});
+      ck.addEventListener('change',function(){
+        if(ck.checked) dgMarked[dgRowKey(r)]=1;
+        else delete dgMarked[dgRowKey(r)];
+        dgBodyKeep(ov);
+      });
+      cell(ck,'dgt-ckc');
+      cell(String(r.si+1),'dgt-si');
+      cell(annotLabel(r.a),'dgt-what');
+      cell(dgNum(r,'x'),'dgt-num');
+      cell(dgNum(r,'y'),'dgt-num');
+      cell(dgNum(r,'w'),'dgt-num');
+      if(isTx){
+        cell(dgNum(r,'size','0.1'),'dgt-num');
+        var f=document.createElement('span');
+        f.className='dgt-face';f.textContent=r.a.font||'default';
+        cell(f,'dgt-face-c');
+      }
+      cell(dgSwatch(r.a.color,1),'dgt-swc');
+      cell(dgSwatch(r.a.bg===0?'none':r.a.bgc,1),'dgt-swc');
+      cells.forEach(function(c){
+        /* the row is the click target: matching, and going to look at it */
+        c.addEventListener('click',function(){
+          if(dgMatchArm){
+            var n=dgMatchTo(r.a,dgMarkedRows(dgRows()));
+            dgMatchArm=false;
+            if(n){markDirty();refresh();renderFilm();
+              toast(n+' box'+(n===1?'':'es')+' now match slide '
+                +(r.si+1)+' — Ctrl+Z undoes it');}
+            dgBodyKeep(ov);
+            return;
+          }
+          if(ck.checked){delete dgMarked[dgRowKey(r)];ck.checked=false;}
+          else {dgMarked[dgRowKey(r)]=1;ck.checked=true;}
+          dgBodyKeep(ov);
+        });
+        tbl.appendChild(c);
+      });
+    });
+    wrap.appendChild(tbl);
+    body.appendChild(wrap);
+  }
+  /* T224: the outline sheet, lifted out of dgBody so the object
+     views can show it too. Not one line of it changed. */
+  function dgSheet(body,ov){
+    dgSectionHead(body,'Every object, outlined',
+      'The whole deck at once, with a box drawn round everything on '
+      +'every slide. This is how you find the one heading that is 3mm '
+      +'off, or the figure nobody lined up.');
+    var tg=document.createElement('button');
+    tg.className='dbtn dg-b';
+    tg.setAttribute('aria-pressed',dgOutline?'true':'false');
+    tg.innerHTML=bic('outline')+(dgOutline?' Outlines on':' Outlines off');
+    tg.title='Draw a box round every object on every slide';
+    tg.addEventListener('click',function(){
+      dgOutline=!dgOutline;dgBody(ov);});
+    body.appendChild(tg);
+    var sheetScope=dgScopeSelect(dgSheetScope,function(){dgBodyKeep(ov);});
+    sheetScope.title='Outlines from these slides only';
+    body.appendChild(sheetScope);
+    var sheet=document.createElement('div');
+    sheet.className='dg-sheet'+(dgOutline?' outlined':'');
+    (pres.slides||[]).forEach(function(sl,i){
+      if(!dgInScope(dgSheetScope,i)) return;
+      var cell=document.createElement('button');
+      cell.className='dg-cell';
+      /* the slide's NAME, not just its number: the whole point of
+         hovering is finding out which slide you are looking at (T130) */
+      var nm=slideTitle(sl);
+      cell.title='Slide '+(i+1)+(nm?' \u2014 '+nm:'')
+        +' \u2014 click to go there';
+      var mini=miniDiagram(sl);
+      cell.appendChild(mini);
+      /* MOVE IT FROM HERE (T130). One drag proxy per object, sitting at
+         the same page percentages inside the same relatively-positioned
+         miniature, shown only while outlines are on. A drag writes the
+         move through shiftAnnot -- the one translate helper, so a tied
+         caption travels and an arrow moves by its endpoints exactly as
+         it would on the canvas. A plain click still navigates: nothing
+         is claimed until the pointer has actually moved. */
+      (sl.annots||[]).forEach(function(a){
+        if(!a||a.hide) return;
+        /* AN ARROW IS ITS TWO ENDS, NOT A BOX (JVR-03). It used to be
+           skipped here, which made "Every object" untrue for the one
+           kind whose geometry is x1/y1,x2/y2 -- but the write-back was
+           never the problem: shiftAnnot below already translates both
+           endpoints and any dragged corners, exactly as a canvas drag
+           does. Only the HANDLE was missing, and that is the bounding
+           box of the line the miniature already draws -- arrowEnds is
+           the same call the renderer makes, so a tied end puts the
+           handle where the line really is rather than on the stale
+           stored endpoint. */
+        var bx,by,bw,bh;
+        if(a.k==='arrow'){
+          var ae=arrowEnds(null,sl,a,0);
+          var axs=[ae.x1,ae.x2],ays=[ae.y1,ae.y2];
+          arrowMids(a).forEach(function(m){
+            axs.push(m[0]);ays.push(m[1]);});
+          bx=Math.min.apply(null,axs);by=Math.min.apply(null,ays);
+          bw=Math.max.apply(null,axs)-bx;bh=Math.max.apply(null,ays)-by;
+          if(!isFinite(bx)||!isFinite(by)||!isFinite(bw)||!isFinite(bh))
+            return;
+          /* grow the HIT TARGET about the line without moving the line */
+          if(bw<DG_HIT){bx-=(DG_HIT-bw)/2;bw=DG_HIT;}
+          if(bh<DG_HIT){by-=(DG_HIT-bh)/2;bh=DG_HIT;}
+        } else {
+          bx=(a.x||0);by=(a.y||0);bw=(a.w||10);bh=(a.h||8);
+        }
+        var px=document.createElement('span');
+        px.className='dg-drag'+(a.k==='arrow'?' is-arrow':'');
+        px.style.left=bx+'%';px.style.top=by+'%';
+        px.style.width=bw+'%';px.style.height=bh+'%';
+        px.title=(annotLabel(a)||a.k)+' \u2014 slide '+(i+1)
+          +(nm?' ('+nm+')':'')+'. Drag to move it from here.';
+        px.addEventListener('pointerdown',function(e){
+          var sx=e.clientX,sy=e.clientY,dragging=false;
+          var mr=mini.getBoundingClientRect();
+          if(!mr.width||!mr.height) return;
+          try{px.setPointerCapture(e.pointerId);}catch(err){}
+          function mv(ev){
+            var dx=ev.clientX-sx,dy=ev.clientY-sy;
+            if(!dragging&&Math.abs(dx)+Math.abs(dy)<3) return;
+            dragging=true;
+            ev.preventDefault();
+            px.style.transform='translate('+dx+'px,'+dy+'px)';
+          }
+          function up(ev){
+            px.removeEventListener('pointermove',mv);
+            px.removeEventListener('pointerup',up);
+            if(!dragging) return;   /* a plain click: the cell navigates */
+            ev.preventDefault();ev.stopPropagation();
+            px.style.transform='';
+            /* pixels in the miniature are percent of the page, which is
+               the whole reason the proxies live inside it */
+            shiftAnnot(a,(ev.clientX-sx)/mr.width*100,
+              (ev.clientY-sy)/mr.height*100);
+            markDirty();
+            if(i===cur) refresh();
+            renderFilm();
+            dgBodyKeep(ov);
+            toast('Moved on slide '+(i+1)+' \u2014 Ctrl+Z undoes it');
+          }
+          px.addEventListener('pointermove',mv);
+          px.addEventListener('pointerup',up);
+        });
+        /* a completed drag must not fall through as the cell's click */
+        /* T224: a click TICKS this box in the table rather than
+           closing the screen (2026-09-03, user: "clicking one of the
+           slides down the bottom takes you to the slide, it should
+           just select it and bring up the types of objects and you
+           can click on the different ones to show where they are").
+           A box of another kind switches the rail to ITS kind, which
+           is the same gesture read the other way round. */
+        px.addEventListener('click',function(e){
+          if(px.style.transform) return;
+          e.stopPropagation();
+          if(!dgAnnotMatches(a)){
+            dgSel=(a.k==='text'&&a.style)?a.style:('obj:'+a.k);
+            dgMarked={};dgMatchArm=false;
+            dgRail(ov);dgBody(ov);
+            return;
+          }
+          var ai=(sl.annots||[]).indexOf(a);
+          var k2=i+':'+ai;
+          if(dgMarked[k2]) delete dgMarked[k2]; else dgMarked[k2]=1;
+          dgBodyKeep(ov);
+        });
+        mini.appendChild(px);
+      });
+      var n=document.createElement('span');
+      n.className='dg-celln';n.textContent=(i+1);
+      cell.appendChild(n);
+      /* ...and the slide itself narrows the table to it rather than
+         walking you out of the screen. Click it again for all of them. */
+      cell.classList.toggle('dg-pick',dgSheetPick===i);
+      cell.addEventListener('click',function(){
+        dgSheetPick=(dgSheetPick===i)?-1:i;
+        dgBodyKeep(ov);
+      });
+      sheet.appendChild(cell);
+    });
+    body.appendChild(sheet);
+  }
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
@@ -1894,8 +2303,33 @@
       b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
         +(n?(', worn by '+n+' box'+(n===1?'':'es')):', not used yet');
       b.addEventListener('click',function(){
-        dgSel=id;dgRail(ov);dgBody(ov);});
+        dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b);
+    });
+    /* T224: and the things that are not text. A figure has no style
+       registry to edit, but it has a position, a size and a place in
+       the table -- which is what the ask was about (2026-09-03,
+       user: "I wanted more than just titles, also images etc"). */
+    var hd=document.createElement('div');
+    hd.className='hd-lab';hd.textContent='everything else';
+    rail.appendChild(hd);
+    DG_OBJ_KINDS.forEach(function(pr){
+      var key='obj:'+pr[0];
+      var b2=document.createElement('button');
+      b2.className='dg-row'+(key===dgSel?' on':'');
+      var nm2=document.createElement('span');
+      nm2.className='dg-name';
+      nm2.innerHTML=bic(pr[2])+' '+esc(pr[1]);
+      var ct2=document.createElement('span');ct2.className='dg-count';
+      var was=dgSel; dgSel=key;
+      var n2=dgRows().length;
+      dgSel=was;
+      ct2.textContent=n2?String(n2):'none';
+      b2.appendChild(nm2);b2.appendChild(ct2);
+      b2.title=pr[1]+' in this deck'+(n2?(': '+n2):': none yet');
+      b2.addEventListener('click',function(){
+        dgSel=key;dgMatchArm=false;dgRail(ov);dgBody(ov);});
+      rail.appendChild(b2);
     });
   }
   /* ---- the board: where a named type SITS by default ------------------
@@ -1972,6 +2406,17 @@
     var body=ov.querySelector('#dg-body');
     body.innerHTML='';
     var id=dgSel,d=styleDef(id);
+    /* T224: an object kind has no look to edit -- it has a table */
+    if(dgIsObj()){
+      dgSectionHead(body,'Every '+dgKindLabel().toLowerCase()
+        +' in this deck',
+        'Tick the ones you want to line up, then Match style of and '
+        +'click the one they should follow. Or type a number straight '
+        +'into the table.');
+      dgTable(body,ov);
+      dgSheet(body,ov);
+      return;
+    }
     if(!d){body.innerHTML='<div class="selpane-empty">Pick a type on '
       +'the left.</div>';return;}
     var rec=dgStyleRec(id);
@@ -2175,126 +2620,13 @@
     putSync();
     body.appendChild(putRow);
 
-    /* ---- every object, outlined ---- */
-    dgSectionHead(body,'Every object, outlined',
-      'The whole deck at once, with a box drawn round everything on '
-      +'every slide. This is how you find the one heading that is 3mm '
-      +'off, or the figure nobody lined up.');
-    var tg=document.createElement('button');
-    tg.className='dbtn dg-b';
-    tg.setAttribute('aria-pressed',dgOutline?'true':'false');
-    tg.innerHTML=bic('outline')+(dgOutline?' Outlines on':' Outlines off');
-    tg.title='Draw a box round every object on every slide';
-    tg.addEventListener('click',function(){
-      dgOutline=!dgOutline;dgBody(ov);});
-    body.appendChild(tg);
-    var sheetScope=dgScopeSelect(dgSheetScope,function(){dgBodyKeep(ov);});
-    sheetScope.title='Outlines from these slides only';
-    body.appendChild(sheetScope);
-    var sheet=document.createElement('div');
-    sheet.className='dg-sheet'+(dgOutline?' outlined':'');
-    (pres.slides||[]).forEach(function(sl,i){
-      if(!dgInScope(dgSheetScope,i)) return;
-      var cell=document.createElement('button');
-      cell.className='dg-cell';
-      /* the slide's NAME, not just its number: the whole point of
-         hovering is finding out which slide you are looking at (T130) */
-      var nm=slideTitle(sl);
-      cell.title='Slide '+(i+1)+(nm?' \u2014 '+nm:'')
-        +' \u2014 click to go there';
-      var mini=miniDiagram(sl);
-      cell.appendChild(mini);
-      /* MOVE IT FROM HERE (T130). One drag proxy per object, sitting at
-         the same page percentages inside the same relatively-positioned
-         miniature, shown only while outlines are on. A drag writes the
-         move through shiftAnnot -- the one translate helper, so a tied
-         caption travels and an arrow moves by its endpoints exactly as
-         it would on the canvas. A plain click still navigates: nothing
-         is claimed until the pointer has actually moved. */
-      (sl.annots||[]).forEach(function(a){
-        if(!a||a.hide) return;
-        /* AN ARROW IS ITS TWO ENDS, NOT A BOX (JVR-03). It used to be
-           skipped here, which made "Every object" untrue for the one
-           kind whose geometry is x1/y1,x2/y2 -- but the write-back was
-           never the problem: shiftAnnot below already translates both
-           endpoints and any dragged corners, exactly as a canvas drag
-           does. Only the HANDLE was missing, and that is the bounding
-           box of the line the miniature already draws -- arrowEnds is
-           the same call the renderer makes, so a tied end puts the
-           handle where the line really is rather than on the stale
-           stored endpoint. */
-        var bx,by,bw,bh;
-        if(a.k==='arrow'){
-          var ae=arrowEnds(null,sl,a,0);
-          var axs=[ae.x1,ae.x2],ays=[ae.y1,ae.y2];
-          arrowMids(a).forEach(function(m){
-            axs.push(m[0]);ays.push(m[1]);});
-          bx=Math.min.apply(null,axs);by=Math.min.apply(null,ays);
-          bw=Math.max.apply(null,axs)-bx;bh=Math.max.apply(null,ays)-by;
-          if(!isFinite(bx)||!isFinite(by)||!isFinite(bw)||!isFinite(bh))
-            return;
-          /* grow the HIT TARGET about the line without moving the line */
-          if(bw<DG_HIT){bx-=(DG_HIT-bw)/2;bw=DG_HIT;}
-          if(bh<DG_HIT){by-=(DG_HIT-bh)/2;bh=DG_HIT;}
-        } else {
-          bx=(a.x||0);by=(a.y||0);bw=(a.w||10);bh=(a.h||8);
-        }
-        var px=document.createElement('span');
-        px.className='dg-drag'+(a.k==='arrow'?' is-arrow':'');
-        px.style.left=bx+'%';px.style.top=by+'%';
-        px.style.width=bw+'%';px.style.height=bh+'%';
-        px.title=(annotLabel(a)||a.k)+' \u2014 slide '+(i+1)
-          +(nm?' ('+nm+')':'')+'. Drag to move it from here.';
-        px.addEventListener('pointerdown',function(e){
-          var sx=e.clientX,sy=e.clientY,dragging=false;
-          var mr=mini.getBoundingClientRect();
-          if(!mr.width||!mr.height) return;
-          try{px.setPointerCapture(e.pointerId);}catch(err){}
-          function mv(ev){
-            var dx=ev.clientX-sx,dy=ev.clientY-sy;
-            if(!dragging&&Math.abs(dx)+Math.abs(dy)<3) return;
-            dragging=true;
-            ev.preventDefault();
-            px.style.transform='translate('+dx+'px,'+dy+'px)';
-          }
-          function up(ev){
-            px.removeEventListener('pointermove',mv);
-            px.removeEventListener('pointerup',up);
-            if(!dragging) return;   /* a plain click: the cell navigates */
-            ev.preventDefault();ev.stopPropagation();
-            px.style.transform='';
-            /* pixels in the miniature are percent of the page, which is
-               the whole reason the proxies live inside it */
-            shiftAnnot(a,(ev.clientX-sx)/mr.width*100,
-              (ev.clientY-sy)/mr.height*100);
-            markDirty();
-            if(i===cur) refresh();
-            renderFilm();
-            dgBodyKeep(ov);
-            toast('Moved on slide '+(i+1)+' \u2014 Ctrl+Z undoes it');
-          }
-          px.addEventListener('pointermove',mv);
-          px.addEventListener('pointerup',up);
-        });
-        /* a completed drag must not fall through as the cell's click */
-        px.addEventListener('click',function(e){
-          if(px.style.transform) return;
-          e.stopPropagation();
-          cur=i;activePane=-1;selAnnot=null;selSet=[];
-          dgClose();refresh();
-        });
-        mini.appendChild(px);
-      });
-      var n=document.createElement('span');
-      n.className='dg-celln';n.textContent=(i+1);
-      cell.appendChild(n);
-      cell.addEventListener('click',function(){
-        cur=i;activePane=-1;selAnnot=null;selSet=[];
-        dgClose();refresh();
-      });
-      sheet.appendChild(cell);
-    });
-    body.appendChild(sheet);
+    /* ---- T224: every box of this type, in a table ---- */
+    dgSectionHead(body,'Every \u201c'+(d.label||id)+'\u201d in this deck',
+      'One row per box, wherever it is. Type into it to change one; '
+      +'tick several and use Match style of to pull them into line '
+      +'with a box you already like.');
+    dgTable(body,ov);
+    dgSheet(body,ov);
   }
   function openDesign(){
     dgClose();

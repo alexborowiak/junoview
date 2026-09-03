@@ -4596,6 +4596,41 @@ option. Then where has the ability to refresh all images gone?"
   roughly; typing is the only way to make two decks agree. **Wording**:
   the button says "Apply to all 8 boxes".
 
+- [x] **T224 - Every box of a kind, in a table you can pull into line.**
+  The user (2026-09-03, of the Style system screen): "I wanted more
+  than just titles, also images etc. Also clicking one of the slides
+  down the bottom takes you to the slide, it should just select it and
+  bring up the types of objects... There should be unselect all, and
+  select all button... Would be good if there was also a table of them
+  all to the right, which has things like colour, font etc. of them all
+  and you can make them all match, or change them individually here, or
+  change title colours in a range... you click a bunch and they get
+  selected, then you click a button that says 'match style of', then
+  click one and they all match to that. And you can choose as well what
+  gets matched, whether it's all, or just position, or colour, or font
+  etc. Do you get the point of this? So it is hard to make things match
+  across slides, so this will help with this."
+  *Done 2026-09-03.* The screen knew how to change what a KIND looks
+  like. It could not do the thing the ask is about: see the boxes
+  themselves side by side and pull the odd one into line. **The table**
+  is one row per box, wherever it is -- slide, what it is, X, Y, W, and
+  for text its size, face and two colours. They are the real annots, so
+  a number typed here is the number the canvas renders. **Ticks**, with
+  Select all and Unselect all, and a count. **Match style of** arms,
+  then a click on any row makes every ticked box follow it; the chooser
+  says what travels -- everything, only where it sits, only how big it
+  is, only its colours, only its type -- and "everything" is the union
+  of the others, so the two cannot drift apart. **The rail** lists
+  objects as well as text styles: text boxes (all of them, whatever
+  style, which is where an unstyled box finally shows up), figures,
+  pictures, shapes, tables, flip books, arrows and lines. **The strip**
+  no longer walks you out of the screen: a slide narrows the table to
+  it, an object in it ticks that object, and an object of another kind
+  switches the rail to its kind. The outline sheet was lifted out of
+  dgBody so both views can show it. Driven on a three-box deck: ticking
+  two rows and matching them to the third moved all three to the same
+  X, Y, W and size, and the thumbnails followed.
+
 ## Cut (and why)
 
 - **Real-time co-editing, shared comments, multi-user change tracking,

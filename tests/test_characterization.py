@@ -975,8 +975,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the vocabulary is one STYLE_FIELDS list instead of four; both style
 # editors offer all of it; the Style system screen shows X, Y and
 # Width as numbers and its button says Apply to.
-EXPECTED_MD5 = "8a6c445bb3f32f1f85ef7d045d802c96"
-EXPECTED_BYTES = 3369181
+# 2026-09-03, T224: the Style system screen gained a table of every
+# box of a kind, with ticks, Select all / Unselect all and Match style
+# of; the rail lists objects as well as text styles; and a slide in
+# the strip narrows the table instead of closing the screen.
+EXPECTED_MD5 = "2ad8ce3a8f477fdaaf465565f75fa113"
+EXPECTED_BYTES = 3385423
 
 
 def _render_example() -> str:
