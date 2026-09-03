@@ -7567,9 +7567,13 @@ body.light .seq-cell b{color:var(--ink);}
   pointer-events:none;}
 body:has(#rd-order) .an-readno{display:flex;}
 /* T131: the layout-ideas chooser — live previews of THIS slide */
-.lay-ideas{position:fixed;left:50%;top:18%;transform:translateX(-50%);
-  z-index:420;max-width:560px;max-height:70vh;overflow-y:auto;
-  padding:10px 12px 14px;}
+/* T209: full screen, like All images; the cards a third of the window
+   wide so a layout can actually be read */
+.sh-menu.lay-ideas{display:block;position:fixed;inset:0;left:0;top:0;
+  transform:none;width:auto;max-width:none;max-height:none;z-index:400;
+  padding:16px 28px 40px;overflow:auto;border:0;border-radius:0;
+  box-shadow:none;background:var(--chrome-0,#0b141d);}
+body.light .sh-menu.lay-ideas{background:#fff;}
 .li-grid{display:flex;flex-wrap:wrap;gap:10px;}
 .li-card{display:flex;flex-direction:column;align-items:center;gap:5px;
   padding:7px;}
@@ -7756,6 +7760,25 @@ body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
 .rbn-cell#tx-run-style .dbtn,.rbn-cell#tx-run-align .dbtn{padding:3px 7px;}
 .rbn-cell#tx-run-style .dbtn.etm{min-width:28px;justify-content:center;}
 .rbn-row>.rbn-cell:not(:has(:not([hidden]))){display:none;}
+
+/* ---- T209: THE REVIEW VIEWS, FULL SCREEN --------------------------------
+   Mismatched text and Tidy page draw their cards into a grid with room
+   to read, under the same header the All images view has. */
+.img-ov .pf-intro{margin:-4px 0 14px;max-width:760px;font-size:13px;}
+.std-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));
+  gap:10px;align-content:start;}
+.img-ov .std-find{margin:0;background:#ffffff05;border:1px solid #ffffff14;
+  border-left:3px solid #f0a848;border-radius:9px;padding:12px 14px;}
+.img-ov .std-find.std-info{border-left-color:#39a9c0;}
+.img-ov .std-h{font-size:14px;}
+.img-ov .std-why{font-size:12.5px;}
+.img-ov .pf-ok{grid-column:1/-1;font-size:14px;max-width:760px;}
+.img-ov .hd-lab{grid-column:1/-1;margin-top:6px;}
+.img-ov .std-find.std-fig{grid-column:auto;}
+body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
+.lay-ideas .li-grid{gap:16px;}
+.lay-ideas .li-card{padding:10px;}
+.lay-ideas .li-lab{font-size:13px;}
 </style>
 <script>
 window.MathJax = {
@@ -12569,6 +12592,41 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <button class="dbtn rbn-sm" id="img-ov-close" title="Close (Esc)"
             ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
         <div class="img-ov-body" id="img-ov-body"></div>
+      </div>
+      <!-- MISMATCHED TEXT and TIDY PAGE, FULL SCREEN (T209; 2026-09-02,
+           user: "this mismatched text thing is a good idea, but horrible
+           execution. It is so small in the side bar. Some of these
+           things should not be sidebars but should always open as full
+           screen"). The same cards the panes drew, laid out in a grid
+           with room to read; a slide chip goes there and closes the
+           view; a fix re-renders it. The panes stay in the markup for
+           the pane owner and the tests, but the ribbon doors open these. -->
+      <div class="img-ov" id="std-ov" hidden role="dialog"
+        aria-label="Mismatched text">
+        <div class="img-ov-h"><span class="img-ov-t">Mismatched text</span>
+          <span class="img-ov-sub" id="std-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="std-ov-rerun" title="Check again"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Check again</button>
+          <button class="dbtn rbn-sm" id="std-ov-close" title="Close (Esc)"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
+        <div class="pf-intro">Text that should look the same but does not,
+          and figures placed at different sizes. Each card is one thing to
+          look at; its button fixes only that. A slide chip takes you
+          there.</div>
+        <div class="img-ov-body std-list" id="std-ov-body"></div>
+      </div>
+      <div class="img-ov" id="tidy-ov" hidden role="dialog"
+        aria-label="Tidy up this page">
+        <div class="img-ov-h"><span class="img-ov-t">Tidy up this page</span>
+          <span class="img-ov-sub" id="tidy-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="tidy-ov-rerun" title="Look again"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Look again</button>
+          <button class="dbtn rbn-sm" id="tidy-ov-close" title="Close (Esc)"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
+        <div class="pf-intro">Things on this page that are nearly lined up,
+          gaps that are nearly even, and copies pasted on top of each
+          other. Nothing moves until you press a fix.</div>
+        <div class="img-ov-body std-list" id="tidy-ov-body"></div>
       </div>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
            frame names a card by anchor, chains.py computed the lineage
@@ -22650,8 +22708,7 @@ window.JunoPptx = (function () {
     box.appendChild(act);
     return box;
   }
-  function renderTidyPane(){
-    var list=$('#tidypane-list'),head=$('#tidypane-count');
+  function renderTidyInto(list,head){
     if(!list) return;
     var f=tidyFindings();
     if(head) head.textContent=f.length
@@ -22669,7 +22726,22 @@ window.JunoPptx = (function () {
     }
     f.forEach(function(x){list.appendChild(tidyRow(x));});
   }
+  function renderTidyOverview(){
+    renderTidyInto($('#tidy-ov-body'),$('#tidy-ov-sub'));
+  }
+  function renderTidyPane(){
+    renderTidyInto($('#tidypane-list'),$('#tidypane-count'));
+    var ov=$('#tidy-ov');
+    if(ov&&!ov.hidden) renderTidyOverview();
+  }
+  /* full screen since T209: the pane is still wired for the pane owner,
+     but every door opens the view */
   function showTidyPane(){
+    var ov=$('#tidy-ov');
+    if(ov){
+      if(!ov.hidden){overlayHide(ov);return;}
+      renderTidyOverview();overlayShow($('#dsg-tidy'),ov);return;
+    }
     var pane=$('#tidypane'); if(!pane) return;
     paneShow('tidypane');
     renderTidyPane();
@@ -22684,6 +22756,15 @@ window.JunoPptx = (function () {
     if(rr) rr.addEventListener('click',renderTidyPane);
     var open=$('#dsg-tidy');
     if(open) open.addEventListener('click',showTidyPane);
+    var ov=$('#tidy-ov');
+    var oc=$('#tidy-ov-close');
+    if(oc) oc.addEventListener('click',function(){overlayHide(ov);});
+    var orr=$('#tidy-ov-rerun');
+    if(orr) orr.addEventListener('click',renderTidyOverview);
+    if(ov) ov.addEventListener('click',function(e){
+      if(e.target.closest&&e.target.closest('.std-chip'))
+        setTimeout(function(){overlayHide(ov);},0);
+    });
   })();
 /* 05-figures-and-ribbon.js — figures agreeing with each other, standardised text, and the ribbon.
    ONE FRAGMENT of deck.js's single IIFE, concatenated with its
@@ -23379,8 +23460,10 @@ window.JunoPptx = (function () {
     }
     return box;
   }
-  function renderStdPane(){
-    var list=$('#stdpane-list'),head=$('#stdpane-count');
+  /* the pane and the full-screen view (T209) draw the same cards; the
+     target is a parameter, and the pane's renderer refreshes the view
+     when it is open so a fix pressed there redraws there */
+  function renderStdInto(list,head){
     if(!list) return;
     var r=standardise();
     /* THE FIGURE FINDINGS ARE IN THIS PANE and were not in this count,
@@ -23425,6 +23508,14 @@ window.JunoPptx = (function () {
     r.findings.forEach(function(f){list.appendChild(stdRow(f));});
     appendFigLint(list);
   }
+  function renderStdOverview(){
+    renderStdInto($('#std-ov-body'),$('#std-ov-sub'));
+  }
+  function renderStdPane(){
+    renderStdInto($('#stdpane-list'),$('#stdpane-count'));
+    var ov=$('#std-ov');
+    if(ov&&!ov.hidden) renderStdOverview();
+  }
   /* the figure half (T22), in the same pane and under its own heading:
      the same question — does the deck agree with itself — asked of a
      different material. It is appended after the text findings in both
@@ -23447,12 +23538,29 @@ window.JunoPptx = (function () {
         renderStdPane();
       } else paneHide('stdpane');
     }
+    /* the ribbon door opens the FULL-SCREEN view (T209); the pane is
+       still there for the pane owner but nothing on the ribbon opens it */
+    var ov=$('#std-ov');
     btn.addEventListener('click',function(e){
-      e.stopPropagation();set(pane.hidden);});
+      e.stopPropagation();
+      if(ov){
+        if(!ov.hidden){overlayHide(ov);return;}
+        renderStdOverview();overlayShow(btn,ov);return;
+      }
+      set(pane.hidden);});
     var cl=$('#stdpane-close');
     if(cl) cl.addEventListener('click',function(){set(false);});
     var rr=$('#stdpane-rerun');
     if(rr) rr.addEventListener('click',renderStdPane);
+    var oc=$('#std-ov-close');
+    if(oc) oc.addEventListener('click',function(){overlayHide(ov);});
+    var orr=$('#std-ov-rerun');
+    if(orr) orr.addEventListener('click',renderStdOverview);
+    /* a slide chip goes to the slide, so the view gets out of the way */
+    if(ov) ov.addEventListener('click',function(e){
+      if(e.target.closest&&e.target.closest('.std-chip'))
+        setTimeout(function(){overlayHide(ov);},0);
+    });
   })();
   window.SemDeckPreflight=preflight;                 /* test hook */
   window.SemDeckStandardise=standardise;             /* test hook */
@@ -25838,7 +25946,9 @@ window.JunoPptx = (function () {
     var el=document.getElementById(cid);
     /* a strip lives in its frame with its Show-all door (T203); the
        frame is what moves */
-    var w=(el&&el.closest)?el.closest('.opt-drop,.strip-frame'):null;
+    /* ...and a segmented run (T209): a layout that names fmt-bold moves
+       the B I U run it sits in, not one letter out of it */
+    var w=(el&&el.closest)?el.closest('.opt-drop,.strip-frame,.rbn-cell'):null;
     return (w&&atoms[w.id])||null;
   }
   /* WHAT A LAYOUT DID NOT SAY. A control the catalogue has never heard
@@ -40864,7 +40974,8 @@ window.JunoPptx = (function () {
     return c;
   }
   function closeLayoutIdeas(){
-    var p=$('#lay-ideas'); if(p) p.remove();
+    var p=$('#lay-ideas');
+    if(p){if(!p.hidden) overlayHide(p); p.remove();}
     document.removeEventListener('keydown',ideasKey,true);
   }
   function ideasKey(e){
@@ -40880,9 +40991,24 @@ window.JunoPptx = (function () {
         +'from what is there');
       return;
     }
+    /* FULL SCREEN (T209): a header like the other full-screen views,
+       cards a third of the window wide, on the overlay stack so Escape
+       and an outside click close it the same way everywhere */
     var p=document.createElement('div');
     p.className='sh-menu lay-ideas';p.id='lay-ideas';
-    menuHead(p,'ways to lay this slide out');
+    var h=document.createElement('div');h.className='img-ov-h';
+    var ht=document.createElement('span');ht.className='img-ov-t';
+    ht.textContent='Ways to lay this slide out';h.appendChild(ht);
+    var hs=document.createElement('span');hs.className='img-ov-sub';
+    hs.textContent='Worked out from what is on the slide. Click one; '
+      +'Ctrl+Z undoes it.';
+    h.appendChild(hs);
+    var hc=document.createElement('button');hc.className='dbtn rbn-sm';
+    hc.innerHTML=bic('exit')+' Close';hc.title='Close (Esc)';
+    hc.addEventListener('click',function(e){
+      e.stopPropagation();closeLayoutIdeas();});
+    h.appendChild(hc);
+    p.appendChild(h);
     var grid=document.createElement('div');
     grid.className='li-grid';
     p.appendChild(grid);
@@ -40893,8 +41019,9 @@ window.JunoPptx = (function () {
       b.className='dbtn li-card';
       b.title=note||'';
       var mini=miniDiagram(prev);
-      mini.style.width='150px';
-      mini.style.height=Math.round(150*ratio)+'px';
+      var W=Math.max(220,Math.min(420,Math.round(window.innerWidth*0.28)));
+      mini.style.width=W+'px';
+      mini.style.height=Math.round(W*ratio)+'px';
       b.appendChild(mini);
       var t=document.createElement('span');
       t.className='li-lab';t.textContent=label;
@@ -40937,13 +41064,12 @@ window.JunoPptx = (function () {
               :'Nothing matched \u201c'+(o.arr.label||o.arr.name||'Arrangement')+'\u201d');
           });
       });
-    document.body.appendChild(p);
-    document.addEventListener('keydown',ideasKey,true);
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        document.removeEventListener('click',once);
-        if(!p.contains(e.target)) closeLayoutIdeas();
-      });},0);
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(p);
+    p.hidden=true;
+    overlayShow($('#hm-lay-ideas'),p);
+    new MutationObserver(function(){
+      if(p.hidden&&p.parentNode) p.remove();
+    }).observe(p,{attributes:true,attributeFilter:['hidden']});
   }
   function arrList(){
     try{
