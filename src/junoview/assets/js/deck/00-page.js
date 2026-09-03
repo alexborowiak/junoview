@@ -489,9 +489,13 @@
              slide gallery, and changing THIS slide's layout is the
              Design menu's job ("you can't create a new layout with the
              layouts there, you can only change the layout") */
+          /* ...and since T218 a tile CHOOSES: it is highlighted as the
+             layout the next New slide will use, and New slide adds it
+             (2026-09-03, user: "clicking on one just highlights it to be
+             added when clicking new slide") */
           if(sel==='#layout-strip'){
             if(!layout.poster) lsSet(newLayKey(),layout.id);
-            newVersion(layout);
+            syncNewSlideMarks();
             return;
           }
           var s=pres.slides[cur]; if(!s) return;
@@ -506,6 +510,18 @@
       });
     });
       if(typeof syncSavedTiles==='function') syncSavedTiles();
+    syncNewSlideMarks();
+  }
+  /* the strip lights the layout the NEXT slide takes, not the one this
+     slide wears (T218); a saved layout is remembered as 'arr:<n>' */
+  function syncNewSlideMarks(){
+    var key=lsGet(newLayKey())||'cell-text';
+    $$('#layout-strip .dbtn.lay').forEach(function(b){
+      var on=b.classList.contains('lay-saved')
+        ?(('arr:'+b.dataset.arr)===key):(b.dataset.lay===key);
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.disabled=false;
+    });
   }
   /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
      The catalog is offered from TWO places now — Design ▸ Layouts and

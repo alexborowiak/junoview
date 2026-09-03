@@ -32,7 +32,7 @@ def test_new_slide_takes_the_layout_you_last_chose(out):
     assert "function newLayKey(){return 'jv-deck-newlay:'+SCOPE;}" in out
     assert "function layoutById(id){" in out
     # (unless a Home tile named one: T202)
-    assert "lay=lay||layoutById(lsGet(newLayKey())||'cell-text');" in out
+    assert "lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key);" in out
     assert "if(lay&&!lay.poster) applyLayout(ns,lay);" in out
     assert "if(!layout.poster) lsSet(newLayKey(),layout.id);" in out
     # the two layouts that carried a title without saying so

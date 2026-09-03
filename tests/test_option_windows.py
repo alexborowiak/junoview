@@ -230,7 +230,7 @@ def test_insert_is_three_groups_that_say_what_a_tool_is_for(out):
         assert f">{lab}</span>" in out, lab
     # four since T188 (the Drawing group, shown only while a tool is
     # armed), five since T197 (Shapes on their own)
-    assert out.count('data-tab="insert">') == 5
+    assert out.count('data-tab="insert" data-fold-ic=') == 5
     # the whole-deck scale and re-apply redraw the open window's list,
     # now that they sit inside it
     assert "if(styleMgrSync) styleMgrSync();" in out

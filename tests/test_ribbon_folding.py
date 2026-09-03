@@ -35,9 +35,10 @@ def test_a_group_that_does_not_fit_folds_into_one_door(out):
     # the real row moves into the popover; nothing is copied
     assert "    menu.appendChild(row);\n" in out
     assert "    if(row) g.insertBefore(row,wrap);\n" in out
-    # the door is words plus an icon, named for the group
-    assert "btn.innerHTML=bic('menu')+' '+esc(name)+' \\u25be';" \
-        in out
+    # the door is words plus an icon, named for the group -- and since T218
+    # it is the one tall tile, the group's own icon over its name
+    assert "btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')" in out
+    assert "+'<span>'+esc(name)+' \\u25be</span>';" in out
     # rightmost ON SCREEN, since flex order decides the visual order
     assert ("return x.getBoundingClientRect().left"
             "-y.getBoundingClientRect().left;") in out

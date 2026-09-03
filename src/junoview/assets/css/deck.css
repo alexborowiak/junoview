@@ -4711,3 +4711,11 @@ body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
   border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
 .rbn-play{order:1;}
 .rbn-talk{order:2;}
+
+/* ---- T218: the folded door is a tile; the delay's cell --------------------- */
+.rbn-grp.rbn-folded>.rbn-foldwrap{align-items:center;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn{height:56px;width:82px;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
+  line-height:1.15;}
+#anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
+#anim-delaycell .cell-lab{padding-left:2px;}

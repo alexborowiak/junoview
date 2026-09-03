@@ -943,8 +943,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # screen; a Present tab, Full screen up top, Layers on Home; Mismatched
 # text in plain words and a readable Style system. deck.html, deck.css,
 # core.css, help.html and six deck fragments.
-EXPECTED_MD5 = "c625e87212306ecffa2d208a4c59176e"
-EXPECTED_BYTES = 3348489
+# T218 2026-09-03: a folded group is a tall tile with its own icon; the
+# delay has a cell under the start run; a layout tile chooses and New
+# slide adds. deck.html, deck.css and four deck fragments.
+EXPECTED_MD5 = "9bf8e16a1e36fda1c334e48c1b7f5f31"
+EXPECTED_BYTES = 3351312
 
 
 def _render_example() -> str:

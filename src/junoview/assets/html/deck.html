@@ -523,7 +523,7 @@
                the same shape reaching further. The Home groups that
                held these are gone, and the Layouts menu is the grid
                alone, so each verb has one seat. -->
-          <span class="rbn-grp rbn-layout" data-tab="design">
+          <span class="rbn-grp rbn-layout" data-tab="design" data-fold-ic="layouts">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
                 <button class="dbtn rbn-sm" id="lay-btn"
@@ -561,7 +561,7 @@
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
-          <span class="rbn-grp rbn-apply" data-tab="design">
+          <span class="rbn-grp rbn-apply" data-tab="design" data-fold-ic="forward">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-match"
               title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><i data-ic="swap"></i> Match slide
@@ -574,7 +574,7 @@
           <!-- not rbn-fixed any more (T204): with Layout in front of it,
                a group that never folds would push Layout into a fold
                on a laptop, and Layout is what this tab is for now -->
-          <span class="rbn-grp rbn-slide" data-tab="design">
+          <span class="rbn-grp rbn-slide" data-tab="design" data-fold-ic="pagep">
             <span class="rbn-row">
               <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
                    many of the options there are dropdowns with a
@@ -623,7 +623,7 @@
                what slide numbers already were - so they live together,
                under Design, and not as items you could drag off the page
                by accident (2026-08-20). -->
-          <span class="rbn-grp rbn-furn" data-tab="design">
+          <span class="rbn-grp rbn-furn" data-tab="design" data-fold-ic="footer">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
@@ -657,7 +657,7 @@
                pushing its look outwards, which meant you had to have a box
                of that style on the slide you happened to be on
                (2026-08-20). -->
-          <span class="rbn-grp rbn-type" data-tab="design">
+          <span class="rbn-grp rbn-type" data-tab="design" data-fold-ic="styles">
             <span class="rbn-row">
               <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
                    styles under design (should this be under design
@@ -748,7 +748,7 @@
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view" data-fold-ic="eye">
             <span class="rbn-row">
               <!-- FOUR BUTTONS, not a menu of four. They were folded
                    behind one dropdown called "Guides" when the row was
@@ -870,7 +870,7 @@
                effect option when there is nothing to appear" -- and the
                whole-slide builds sit beside them as words. Built by
                galSync, which the selection already calls. -->
-          <span class="rbn-grp rbn-anim" data-tab="animation">
+          <span class="rbn-grp rbn-anim" data-tab="animation" data-fold-ic="appear">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
@@ -891,7 +891,7 @@
                each thing already had (2026-09-02, user: "the whole
                slide options are confusing" -- so the heading says whose
                they are and each label is one idea). -->
-          <span class="rbn-grp rbn-build" data-tab="animation">
+          <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Every object on this slide arrives, one per click,
@@ -912,7 +912,7 @@
                thing with clicking" (2026-09-02). Animation order is
                the pane that lists the sequence; Layers is the same
                list read as a timeline (T174). -->
-          <span class="rbn-grp rbn-order" data-tab="animation">
+          <span class="rbn-grp rbn-order" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
                 title="Click things one after another and each becomes
@@ -951,7 +951,7 @@
                there is a selected build to time, the way the tiles are,
                and the group stands down while Quick animate is armed so
                the mode's own controls have the row. -->
-          <span class="rbn-grp rbn-timing" data-tab="animation">
+          <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <span class="rbn-cell" id="anim-start">
                 <button class="dbtn rbn-sm" id="anim-onclick"
@@ -967,8 +967,13 @@
                   title="Starts by itself, this many seconds after the
  build before it &mdash; no click"
                   ><i data-ic="reload"></i> After previous</button>
+
+              </span>
+              <!-- the delay under the start run (T218), so Timing is two rows
+                   deep whatever is selected -->
+              <span class="rbn-cell" id="anim-delaycell">
                 <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
-                  title="Seconds after the previous build">
+                  title="Seconds after the previous build"><span class="cell-lab">Delay</span>
                   <input class="fmt-num" id="anim-delay" type="number"
                     min="1" max="60" step="1" value="1"
                     aria-label="Seconds after the previous build">
@@ -999,7 +1004,7 @@
                carry the hidden bit, not the group: syncRibbonGroups
                decides a group's visibility from its controls and would
                put the group back. -->
-          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation">
+          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell" id="seq-what" hidden></span>
               <!-- WHICH EFFECT THE NEXT CLICK GIVES. Every button
@@ -1032,7 +1037,7 @@
                section"). Chart is gone from here ("I never wanted that
                and it is broken. Get rid of it"); the feature stays
                reachable from a placed table's right-click. -->
-          <span class="rbn-grp rbn-insert" data-tab="insert">
+          <span class="rbn-grp rbn-insert" data-tab="insert" data-fold-ic="cellcard">
             <span class="rbn-row">
               <!-- NOTEBOOK CELL, by name again (T188; "what happened to
                    the notebook cell option, that is gone"). T61 called
@@ -1060,7 +1065,7 @@
             </span>
             <span class="rbn-lab">Place</span>
           </span>
-          <span class="rbn-grp rbn-write" data-tab="insert">
+          <span class="rbn-grp rbn-write" data-tab="insert" data-fold-ic="text">
             <span class="rbn-row">
               <!-- THE TEXT STRIP: one tile per kind of box -- plain,
                    then every named type in the deck, each drawn as a
@@ -1093,7 +1098,7 @@
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="insert">
+          <span class="rbn-grp rbn-shapes" data-tab="insert" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
@@ -1109,7 +1114,7 @@
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
-          <span class="rbn-grp rbn-draw" data-tab="insert">
+          <span class="rbn-grp rbn-draw" data-tab="insert" data-fold-ic="pen">
             <span class="rbn-row">
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
@@ -1139,7 +1144,7 @@
                the resting row pays nothing; setTool shows it and the
                ribbon re-fits. The hint line is the first thing the
                tight rung drops. -->
-          <span class="rbn-grp rbn-cancel" data-tab="insert">
+          <span class="rbn-grp rbn-cancel" data-tab="insert" data-fold-ic="pen">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell et-status" id="et-status"
                 hidden></span>
@@ -1163,7 +1168,7 @@
                tab with all those options as buttons now"). The rows of
                the Present menu, as buttons: each presses its row, so the
                behaviour stays in one place and the two can never drift. -->
-          <span class="rbn-grp rbn-play" data-tab="present">
+          <span class="rbn-grp rbn-play" data-tab="present" data-fold-ic="play">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Play">
@@ -1181,7 +1186,7 @@
             </span>
             <span class="rbn-lab">Play</span>
           </span>
-          <span class="rbn-grp rbn-talk" data-tab="present">
+          <span class="rbn-grp rbn-talk" data-tab="present" data-fold-ic="theme">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="pr-talk"
                 title="Play from this slide with the talk settings open: skip
@@ -1219,15 +1224,14 @@
                slide is laid out -- changing it, arranging what is on
                it, saving and applying a layout -- is one subject and
                lives on Design, in one place. -->
-          <span class="rbn-grp rbn-slides" data-tab="home">
+          <span class="rbn-grp rbn-slides" data-tab="home" data-fold-ic="plus">
             <span class="rbn-row">
               <button class="fx-tile big-tile rbn-tall" id="hm-newslide"
-                title="Add a slide after this one, laid out like the last
- one you added. The tiles beside it add one laid out another way"
+                title="Add a slide after this one, laid out as the highlighted layout"
                 ><i data-ic="plus"></i><span>New slide</span></button>
               <span class="rbn-tall strip-frame" id="layout-strip-frame">
                 <span class="fx-strip lay-strip" id="layout-strip"
-                  role="group" aria-label="New slide, laid out as"></span>
+                  role="group" aria-label="Layout for the next new slide: click one to choose it"></span>
                 <span class="strip-nav">
                   <button class="strip-prev" type="button" id="layout-strip-prev"
                     title="Back a row" aria-label="Back a row">&#9650;</button>
@@ -1239,7 +1243,7 @@
             </span>
             <span class="rbn-lab">New slide</span>
           </span>
-          <span class="rbn-grp rbn-this" data-tab="home">
+          <span class="rbn-grp rbn-this" data-tab="home" data-fold-ic="copy">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-dupslide"
               title="Duplicate this slide, in place"><i data-ic="copy"></i>
@@ -1249,7 +1253,7 @@
             </span>
             <span class="rbn-lab">This slide</span>
           </span>
-          <span class="rbn-grp rbn-sources" data-tab="home">
+          <span class="rbn-grp rbn-sources" data-tab="home" data-fold-ic="reload">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Keep up to date">
@@ -1274,7 +1278,7 @@
           <!-- LAYERS ON HOME (T216; 2026-09-03, user: "the layers is really
                important that needs to go in home"): a second door to the
                same pane View has, pressed-state mirrored from it -->
-          <span class="rbn-grp rbn-show" data-tab="home">
+          <span class="rbn-grp rbn-show" data-tab="home" data-fold-ic="objects">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Show">
@@ -1294,7 +1298,7 @@
                spot"). One feature, one door: the top bar, or Ctrl+F. -->
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="align">
             <span class="rbn-row">
               <!-- T208: paired on purpose (column-major): Duplicate over Arrange,
                    Bring to front over Send to back, Group over Ungroup; the
@@ -1366,7 +1370,7 @@
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
                the colours all the time?") -->
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="palette">
             <span class="rbn-row">
               <!-- T208: text colour over fill; opacity beside them -->
               <span class="sh-drop" id="fmt-txcolwrap">
@@ -1438,7 +1442,7 @@
             </span>
             <span class="rbn-lab">Colour</span>
           </span>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="text">
             <span class="rbn-row">
               <!-- T208: Font over Styles; B I U over Left Centre Right as two runs;
                    bullets over numbers; Paragraph; the two editors when they apply -->
@@ -1545,7 +1549,7 @@
             </span>
             <span class="rbn-lab">Text</span>
           </span>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="dashes">
             <span class="rbn-row">
               <!-- ONE WINDOW FOR THE LINE (T177). Style, Weight, Ends
                    and Route were four dropdown doors stacked in three
@@ -1648,7 +1652,7 @@
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
             <span class="rbn-row">
               <!-- T208: Lock in place over Keep shape; X Y over W H; Crop over Caption;
                    Refresh over Size & position; where from over Source -->
@@ -1746,7 +1750,7 @@
                you want almost every time and needs no cell selected
                first; the header row is a switch rather than a separate
                kind of row, so turning it off moves no data. -->
-          <span class="rbn-grp rbn-tbl" data-tab="object">
+          <span class="rbn-grp rbn-tbl" data-tab="object" data-fold-ic="table">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-tbl-rowplus"
                 title="Add a row at the bottom"><i data-ic="plus"></i> Row</button>
@@ -1778,7 +1782,7 @@
                nothing hides them the moment they become usable, which
                is what the old effect buttons did (T171). The gallery
                on the Animation tab stays for the whole-slide case. -->
-          <span class="rbn-grp rbn-fx" data-tab="object">
+          <span class="rbn-grp rbn-fx" data-tab="object" data-fold-ic="appear">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-fx-none" aria-pressed="false"
                 title="No entrance — on the slide from the start"

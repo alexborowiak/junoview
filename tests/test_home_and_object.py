@@ -46,7 +46,9 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     # the strip's tile makes a slide; the Design menu's changes this one
     assert "if(sel==='#layout-strip'){" in out
     assert "function newVersion(lay,arr){" in out
-    assert "newVersion(null,arr);" in out
+    # (since T218 a saved tile is CHOSEN for the next New slide, like the
+    # built-in tiles; newVersion reads the choice back)
+    assert "lsSet(newLayKey(),'arr:'+b.dataset.arr);" in out
     assert "ns.annots=deep(arr.annots);" in out
     for tile in ("hm-refresh-figs", "hm-refresh-img", "hm-images"):
         assert f'class="fx-tile big-tile" id="{tile}"' in out, tile
@@ -60,7 +62,10 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     assert "if(lockMode(a2)) delete a2.lock; else a2.lock='pos';" in out
     assert 'id="layout-strip"' in out
     assert "['#layout-row','#layout-menu-grid','#layout-strip']" in out
-    assert "#layout-menu-grid .lay,#layout-strip .lay" in out
+    # the slide's own sweep leaves the strip alone since T218: the strip
+    # lights the layout the NEXT slide takes
+    assert "$$('#layout-row .lay,#layout-menu-grid .lay')" in out
+    assert "if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();" in out
     for cid in ("hm-lay-ideas", "hm-lay-tidy", "hm-lay-arrs", "hm-lay-arrsave",
                 "hm-lay-give"):
         assert f'id="{cid}"' in out, cid

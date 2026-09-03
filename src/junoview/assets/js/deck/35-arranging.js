@@ -1335,9 +1335,10 @@
         +'\u201d';
       b.addEventListener('click',function(e){
         e.stopPropagation();
-        /* a NEW slide carrying the saved shapes (T202); the dialog's
-           Apply is what lays an existing slide out like one */
-        newVersion(null,arr);
+        /* chosen for the next New slide (T218); the dialog's Apply is
+           what lays an EXISTING slide out like one */
+        lsSet(newLayKey(),'arr:'+b.dataset.arr);
+        if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
       });
       strip.appendChild(b);
     });

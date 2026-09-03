@@ -1505,13 +1505,15 @@
   function renderControls(){
     updateNumsLabel();updateCropLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-strip .lay')
+    $$('#layout-row .lay,#layout-menu-grid .lay')
       .forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',
         (!!s&&s.lay===b.dataset.lay).toString());
       b.disabled=!s;
     });
+    /* Home's strip lights the layout the NEXT slide takes (T218) */
+    if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
     var te=$('#title-editor'), eb=$('#dc-edit');
     var isTitle=!!s&&s.layout==='title';
     if(te){
@@ -2460,10 +2462,15 @@
          user: "when click add new it should remember the last one you
          added. The default slide choice should be the panel, title,
          text"). Blank is still one pick away. */
+      var key=lsGet(newLayKey())||'cell-text';
+      if(!arr&&!lay&&/^arr:/.test(key)&&typeof arrList==='function'){
+        var hit=arrList()[+key.slice(4)];
+        if(hit&&hit.annots) arr=hit;
+      }
       if(arr&&arr.annots){
         ns.annots=deep(arr.annots);
       } else {
-        lay=lay||layoutById(lsGet(newLayKey())||'cell-text');
+        lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key);
         if(lay&&!lay.poster) applyLayout(ns,lay);
       }
       pres.slides.splice(at,0,ns);

@@ -4387,6 +4387,24 @@ option. Then where has the ability to refresh all images gone?"
   colour, which could be the page's ink and vanish on the chrome: names
   now use the rail's ink and keep weight, italic and size; the specimen
   sits on the deck's actual page colour; the small labels are a size up.
+- [x] **T218 · M — A folded group is a tall tile; the Timing row is
+  full; a layout tile chooses, New slide adds.**
+  The user (2026-09-03, screenshots at a 1300px window): "Same
+  goofiness with buttons still exists. Also the new slide is confusing
+  with the types next to it. The types of slide being selected should
+  be highlighted, and clicking on one just highlights it to be added
+  when clicking new slide."
+  *Done 2026-09-03.* **Folded groups**: at that width Design folds
+  four of its five groups, and a folded group had been a small one-row
+  button with a hole under it. It is a tall tile now, the group's own
+  icon over its name and a chevron — the shape PowerPoint collapses a
+  group into and the one tile every other tall control is. Every group
+  names its icon. **Timing**: the delay field left the start run for a
+  cell of its own beneath it, so the group is two rows deep whatever
+  is selected. **New slide**: a layout tile no longer makes a slide; it
+  is HIGHLIGHTED as the layout the next New slide will use (a saved
+  layout too), and New slide adds a slide laid out that way. The strip
+  lights the chosen layout, not the one the current slide wears.
 
 
 ## Cut (and why)

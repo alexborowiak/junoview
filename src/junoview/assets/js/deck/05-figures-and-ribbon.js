@@ -1571,13 +1571,19 @@
     if(!row) return false;
     var lab=g.querySelector('.rbn-lab');
     var name=(lab&&lab.textContent.trim())||'More';
+    /* THE DOOR IS A TILE (T218): the group's own icon over its name and
+       a chevron, spanning both rows -- the shape PowerPoint collapses a
+       group into, and the one tile every other tall control is. A small
+       one-row button left a hole under it (2026-09-03, "same goofiness
+       with buttons still exists"). */
     var wrap=document.createElement('span');
-    wrap.className='sh-drop rbn-foldwrap';
+    wrap.className='sh-drop rbn-foldwrap rbn-tall';
     var btn=document.createElement('button');
-    btn.type='button';btn.className='dbtn rbn-sm rbn-foldbtn';
+    btn.type='button';btn.className='fx-tile big-tile rbn-foldbtn';
     btn.setAttribute('aria-haspopup','true');
     btn.setAttribute('aria-expanded','false');
-    btn.innerHTML=bic('menu')+' '+esc(name)+' \u25be';
+    btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')
+      +'<span>'+esc(name)+' \u25be</span>';
     btn.title=name+' \u2014 folded because the window is too narrow '
       +'to show the whole row. Widen the window and it opens out again';
     var menu=document.createElement('div');
