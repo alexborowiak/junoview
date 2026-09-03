@@ -7786,6 +7786,15 @@ body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
    The spacing trio wears a small caption inside its cell. */
 .rbn-cell .cell-lab{align-self:center;font-family:var(--mono);font-size:9px;
   letter-spacing:.1em;text-transform:uppercase;color:#8ba0b2;padding:0 6px 0 2px;}
+
+/* ---- T214: Before you print, full screen --------------------------------
+   The same rows the pane drew, as cards in the review grid. */
+.img-ov .pf-row{display:flex;flex-direction:column;gap:4px;text-align:left;
+  padding:12px 14px;border-radius:9px;border:1px solid #ffffff14;
+  background:#ffffff05;font-size:13px;}
+.img-ov .pf-row .pf-what{font-size:14px;font-weight:600;}
+.img-ov .pf-row .pf-why{font-size:12.5px;}
+body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
 </style>
 <script>
 window.MathJax = {
@@ -11574,6 +11583,10 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    at the page, not a property of it. Called Layers, not
                    Objects: the standard name for this list everywhere
                    else (2026-08-19, user) -->
+              <button class="dbtn rbn-sm" id="vw-preflight"
+                title="Whether this page will print well: soft figures,
+ things off the page or in the margin, thin contrast, empty frames"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M3.8 14.2V2.2"/><path d="M3.8 3h8.4v5H3.8"/></svg> Before you print</button>
               <button class="dbtn rbn-sm" id="objects-btn"
                 aria-pressed="false"
                 title="List everything on this page, and hide or lock any
@@ -12645,6 +12658,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           gaps that are nearly even, and copies pasted on top of each
           other. Nothing moves until you press a fix.</div>
         <div class="img-ov-body std-list" id="tidy-ov-body"></div>
+      </div>
+      <!-- BEFORE YOU PRINT, FULL SCREEN (T214): the third card list of the
+           same shape, and the last one that was still a 272px pane. -->
+      <div class="img-ov" id="pf-ov" hidden role="dialog"
+        aria-label="Before you print">
+        <div class="img-ov-h"><span class="img-ov-t">Before you print</span>
+          <span class="img-ov-sub" id="pf-ov-sub"></span>
+          <button class="dbtn rbn-sm" id="pf-ov-rerun" title="Check again"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Check again</button>
+          <button class="dbtn rbn-sm" id="pf-ov-close" title="Close (Esc)"
+            ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4 4l8 8"/><path d="M12 4l-8 8"/></svg> Close</button></div>
+        <div class="pf-intro">Whether this page will print well: soft
+          figures, things off the page or inside the margin, thin
+          contrast, empty frames. A row selects the thing.</div>
+        <div class="img-ov-body std-list pf-list" id="pf-ov-body"></div>
       </div>
       <!-- WHERE THIS FIGURE CAME FROM. The deck already knows: the
            frame names a card by anchor, chains.py computed the lineage
@@ -22141,8 +22169,8 @@ window.JunoPptx = (function () {
       list.appendChild(row);
     }
     cat('Print & export readiness','this slide',preflight().length,
-      bic('flag')+' Open Review',
-      function(){paneShow('preflight');renderPreflight();},
+      bic('flag')+' Open Before you print',
+      function(){showPreflight();},
       'Soft figures, items off the page or inside the margin, thin '
       +'contrast, empty frames');
     cat('Layout & spacing','this slide',tidyFindings().length,
@@ -22170,12 +22198,10 @@ window.JunoPptx = (function () {
       ?(total+' to look at, across five checks')
       :'Five checks, all clear';
   }
-  function renderPreflight(){
-    var pane=$('#preflight'),list=$('#preflight-list');
-    if(!pane||!list) return;
+  function renderPreflightInto(list,head){
+    if(!list) return;
     var issues=preflight();
     var errs=issues.filter(function(x){return x.sev==='err';}).length;
-    var head=$('#preflight-count');
     if(head) head.textContent=issues.length
       ?(issues.length+' to look at'+(errs?' · '+errs+' serious':''))
       :'Nothing to fix';
@@ -22198,7 +22224,36 @@ window.JunoPptx = (function () {
       list.appendChild(row);
     });
   }
+  function renderPreflightOverview(){
+    renderPreflightInto($('#pf-ov-body'),$('#pf-ov-sub'));
+  }
+  function renderPreflight(){
+    renderPreflightInto($('#preflight-list'),$('#preflight-count'));
+    var ov=$('#pf-ov');
+    if(ov&&!ov.hidden) renderPreflightOverview();
+  }
+  /* full screen since T214; the pane stays for the pane owner */
+  function showPreflight(){
+    var ov=$('#pf-ov');
+    if(ov){
+      if(!ov.hidden){overlayHide(ov);return;}
+      renderPreflightOverview();overlayShow($('#vw-preflight'),ov);return;
+    }
+    paneShow('preflight');renderPreflight();
+  }
   (function(){
+    var pf=$('#vw-preflight');
+    if(pf) pf.addEventListener('click',function(e){
+      e.stopPropagation();showPreflight();});
+    var pov=$('#pf-ov');
+    var poc=$('#pf-ov-close');
+    if(poc) poc.addEventListener('click',function(){overlayHide(pov);});
+    var por=$('#pf-ov-rerun');
+    if(por) por.addEventListener('click',renderPreflightOverview);
+    if(pov) pov.addEventListener('click',function(e){
+      if(e.target.closest&&e.target.closest('.pf-row'))
+        setTimeout(function(){overlayHide(pov);},0);
+    });
     var btn=$('#vw-check'),pane=$('#reviewpane');
     if(btn) btn.addEventListener('click',function(){
       if(!pane) return;
@@ -23770,7 +23825,7 @@ window.JunoPptx = (function () {
       +'currently "'+((rbnLayoutById(rbnCurrentId())||{}).name||'Default')
       +'"';
     lay.addEventListener('click',function(e){
-      e.stopPropagation();m.remove();openRibbonGallery();});
+      e.stopPropagation();overlayDrop(m);openRibbonGallery();});
     m.appendChild(lay);
     var note=document.createElement('div');
     note.className='ff-none';
@@ -23835,7 +23890,7 @@ window.JunoPptx = (function () {
       ribbonSave(null);
       $$('#edit-tools .rbn-hid').forEach(function(el){
         el.classList.remove('rbn-hid');});
-      m.remove();
+      overlayDrop(m);
       /* ORDER CAN BE RESTORED NOW. This said "reload the page" under a
          comment that order 'cannot be un-appended', which was true when
          T11 shipped and stopped being true the moment the layout engine
@@ -23848,14 +23903,7 @@ window.JunoPptx = (function () {
     });
     m.appendChild(rb);
     var bar=$('#edit-tools');
-    document.body.appendChild(m);
-    floatMenu(bar,m);
-    setTimeout(function(){
-      document.addEventListener('click',function off(e){
-        if(m.contains(e.target)) return;
-        m.remove();document.removeEventListener('click',off);
-      });
-    },0);
+    overlayMount(bar,m);               /* on the stack (T213) */
   }
   (function(){
     var bar=$('#edit-tools');
@@ -37911,11 +37959,10 @@ window.JunoPptx = (function () {
     if(!btn||!menu) return;
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open.toString());
-      if(open){renderSwRecents(menu);floatMenu(btn,menu);}
-      else pvEnd(false);
+      if(!menu.hidden){overlayHide(menu);pvEnd(false);return;}
+      renderSwRecents(menu);
+      overlayShow(btn,menu);       /* on the stack (T213) */
+      floatMenu(btn,menu);
     });
     /* CAPTURE phase: any click inside the menu restores the hover preview
        BEFORE a swatch's own apply handler runs, or the apply would land on
@@ -37928,8 +37975,7 @@ window.JunoPptx = (function () {
         else applyFillColor(rc.dataset.c);
       }
       var sw=e.target.closest&&e.target.closest('.sw');
-      if(rc||(sw&&!sw.classList.contains('sw-custom'))){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');}
+      if(rc||(sw&&!sw.classList.contains('sw-custom'))) overlayHide(menu);
     });
     menu.addEventListener('mouseover',function(e){
       var sw=e.target.closest&&e.target.closest('.sw,.sw-rc');
@@ -37939,11 +37985,9 @@ window.JunoPptx = (function () {
       pvShow(target==='text'?textMut(c):fillMut(c));
     });
     menu.addEventListener('mouseleave',function(){pvEnd(false);});
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn){
-        menu.hidden=true;btn.setAttribute('aria-expanded','false');
-        pvEnd(false);}
-    });
+    /* however the owner closes it, the hover preview is put back */
+    new MutationObserver(function(){if(menu.hidden) pvEnd(false);})
+      .observe(menu,{attributes:true,attributeFilter:['hidden']});
   });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
     sw.addEventListener('mousedown',function(e){
@@ -38403,14 +38447,10 @@ window.JunoPptx = (function () {
        reflect the selection, so the helper's static options never fit */
     btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!wrap.contains(e.target)) menu.hidden=true;
+      if(!menu.hidden){overlayHide(menu);return;}
+      build();
+      overlayShow(btn,menu);       /* on the stack (T213) */
+      floatMenu(btn,menu);
     });
   })();
   /* ---- THE PARAGRAPH WINDOW (T177) ------------------------------------
@@ -38763,15 +38803,10 @@ window.JunoPptx = (function () {
     var btn=$('#fmt-style-tx');
     if(btn) btn.addEventListener('click',function(e){
       e.stopPropagation();
-      var open=menu.hidden;
-      if(open) build();
-      menu.hidden=!open;
-      btn.setAttribute('aria-expanded',open?'true':'false');
-      if(open) floatMenu(btn,menu);
-    });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&!menu.contains(e.target)&&e.target!==btn)
-        menu.hidden=true;
+      if(!menu.hidden){overlayHide(menu);return;}
+      build();
+      overlayShow(btn,menu);       /* on the stack (T213) */
+      floatMenu(btn,menu);
     });
   })();
   /* keep it where it is (T198): the position lock, the same flag the
@@ -38948,7 +38983,10 @@ window.JunoPptx = (function () {
     var c0=parseColor(cpCurrentFor(target))||{r:57,g:169,b:192,a:1};
     cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
     cpRenderRecent();cpSync();
-    cpEl.hidden=false;
+    /* on the stack, INSIDE the swatch menu that opened it (T213): the
+       owner keeps that menu open under it and closes both on Escape,
+       one layer at a time */
+    overlayShow(anchor,cpEl);
     var r=anchor.getBoundingClientRect(),w=236;
     var ph=cpEl.getBoundingClientRect().height||300;
     var left=Math.max(8,Math.min(r.left,window.innerWidth-w-8));
@@ -38977,7 +39015,7 @@ window.JunoPptx = (function () {
       else {a.bg=1;a.bgc=str;}});
     cpSavedEl=null;cpSavedRange=null;
     cpPushRecent(str);
-    if(cpEl) cpEl.hidden=true;
+    if(cpEl) overlayHide(cpEl);
   }
   (function(){
     var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),al=$('#cp-alpha');
@@ -39002,15 +39040,10 @@ window.JunoPptx = (function () {
     var swbgc=$('#swbg-custom');
     if(swbgc) swbgc.addEventListener('click',function(){
       openColorPop('fill',swbgc);});
-    document.addEventListener('mousedown',function(e){
-      if(cpEl&&!cpEl.hidden&&!cpEl.contains(e.target)
-         &&e.target!==swc&&e.target!==swbgc){
-        cpEl.hidden=true;pvEnd(false);}   /* closed without applying */
-    });
-    document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&cpEl&&!cpEl.hidden){e.stopPropagation();
-        cpEl.hidden=true;pvEnd(false);}
-    },true);
+    /* closed by the owner (outside click, Escape) or by its own buttons:
+       either way the preview is put back */
+    if(cpEl) new MutationObserver(function(){if(cpEl.hidden) pvEnd(false);})
+      .observe(cpEl,{attributes:true,attributeFilter:['hidden']});
   })();
   var fontSelEl=$('#fmt-font');
   if(fontSelEl){
@@ -40346,20 +40379,11 @@ window.JunoPptx = (function () {
       var k=document.createElement('kbd');
       k.textContent=String(r.n);b.appendChild(k);
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.remove();selectBy(r.key,r.val);});
+        e.stopPropagation();overlayDrop(m);selectBy(r.key,r.val);});
       m.appendChild(b);
     });
     if(ev) floatAt(m,ev);
-    else {
-      document.body.appendChild(m);
-      floatMenu(anchor,m);
-      setTimeout(function(){
-        document.addEventListener('click',function off(e){
-          if(m.contains(e.target)) return;
-          m.remove();document.removeEventListener('click',off);
-        });
-      },0);
-    }
+    else overlayMount(anchor,m);        /* on the stack (T213) */
   }
   /* the geometry + look that travel; content never does.
 
@@ -41264,17 +41288,10 @@ window.JunoPptx = (function () {
         b.appendChild(document.createTextNode(o[1]));
         b.title=o[2];
         b.addEventListener('click',function(e){
-          e.stopPropagation();m.remove();armMatch(o[0]);});
+          e.stopPropagation();overlayDrop(m);armMatch(o[0]);});
         m.appendChild(b);
       });
-    document.body.appendChild(m);
-    floatMenu(btn,m);
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)) m.remove();
-        document.removeEventListener('click',once);
-      });
-    },0);
+    overlayMount(btn,m);               /* on the stack (T213) */
   }
   function armMatch(dir){
     var s=pres.slides[cur],idxs=selIdxs().filter(function(i){
@@ -43054,9 +43071,8 @@ window.JunoPptx = (function () {
       });
       m.appendChild(b);
     });
-    document.body.appendChild(m);
-    if(btn) floatMenu(btn,m);
-    else {
+    overlayMount(btn,m);               /* on the stack (T213) */
+    if(!btn){
       m.style.position='fixed';m.style.zIndex='240';
       m.style.right='auto';m.style.bottom='auto';
       var sr=stage.getBoundingClientRect();
@@ -43064,12 +43080,6 @@ window.JunoPptx = (function () {
         sr.left+sr.width/2-(m.offsetWidth||180)/2))+'px';
       m.style.top=Math.round(sr.top+40)+'px';
     }
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)) m.remove();
-        document.removeEventListener('click',once);
-      });
-    },0);
   }
   function cmpInstances(id){
     var seen={},out=[];
@@ -43669,7 +43679,7 @@ window.JunoPptx = (function () {
       b.appendChild(document.createTextNode(o[1]));
       b.title=o[2];
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.remove();armSlideMatch(o[0]);});
+        e.stopPropagation();overlayDrop(m);armSlideMatch(o[0]);});
       m.appendChild(b);
     });
     var push=document.createElement('button');
@@ -43679,7 +43689,7 @@ window.JunoPptx = (function () {
       +'from a list with tick boxes — the same job as pointing at '
       +'them, when you would rather read the names';
     push.addEventListener('click',function(e){
-      e.stopPropagation();m.remove();
+      e.stopPropagation();overlayDrop(m);
       if(typeof window.SemDeckMatchMany==='function')
         window.SemDeckMatchMany();
     });
@@ -43693,7 +43703,7 @@ window.JunoPptx = (function () {
     arr.title='Layouts you have saved, with a thumbnail of each — and '
       +'which slides they would fit';
     arr.addEventListener('click',function(e){
-      e.stopPropagation();m.remove();
+      e.stopPropagation();overlayDrop(m);
       if(typeof window.SemDeckArrange==='function') window.SemDeckArrange();
     });
     m.appendChild(arr);
@@ -43709,7 +43719,7 @@ window.JunoPptx = (function () {
       var t=document.createElement('span');
       t.textContent=slideTitle(sl);b.appendChild(t);
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.remove();
+        e.stopPropagation();overlayDrop(m);
         var r=matchSlide(i,cur);
         if(!r) return;
         if(!r.moved){
@@ -43728,14 +43738,7 @@ window.JunoPptx = (function () {
       m.appendChild(b);
     });
     if(!any) menuHead(m,'there is only one slide');
-    document.body.appendChild(m);
-    floatMenu(btn,m);
-    setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)) m.remove();
-        document.removeEventListener('click',once);
-      });
-    },0);
+    overlayMount(btn,m);               /* on the stack (T213) */
   }
   /* one worded menu for everything that arranges: line up, space out,
      stack order, rotate, tidy into a formation */
@@ -45525,11 +45528,8 @@ window.JunoPptx = (function () {
          gallery's three-column grid, which is why every worded menu in
          this file names the class that makes it a column */
       m.className='sh-menu vw-menu obj-src-menu';m.id='obj-src-menu';
-      m.hidden=true;document.body.appendChild(m);
-      /* the same outside-click close every drawn menu in the editor
-         uses; there is no shared closer to call */
-      document.addEventListener('click',function(e){
-        if(!m.hidden&&!m.contains(e.target)) m.hidden=true;});
+      overlayHide(m);
+      ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
     }
     m.innerHTML='';
     menuHead(m,'put in this frame');
@@ -45562,10 +45562,10 @@ window.JunoPptx = (function () {
       b.title=r[2];
       b.innerHTML=r[0]+' '+r[1];
       b.addEventListener('click',function(e){
-        e.stopPropagation();m.hidden=true;r[3]();});
+        e.stopPropagation();overlayHide(m);r[3]();});
       m.appendChild(b);
     });
-    m.hidden=false;
+    overlayShow(btn,m);
     floatMenu(btn,m);
   }
   /* Ctrl+V already puts a clipboard image on the slide; this is the same
@@ -45718,6 +45718,24 @@ window.JunoPptx = (function () {
     /* closing a menu closes the ones opened from inside it */
     overlayStack.splice(at).reverse().forEach(overlayCloseOne);
     overlaySync();
+  }
+  /* A RUNTIME-BUILT MENU (T213): appended inside the editor's layer,
+     shown through the owner, floated under its button, and removed
+     when the owner hides it. `overlayDrop` is what a row calls after a
+     pick: through the owner, so the stack never holds a dead node. */
+  function overlayMount(btn,m){
+    ((typeof deckEl!=='undefined'&&deckEl)||document.body).appendChild(m);
+    m.hidden=true;
+    overlayShow(btn,m);
+    if(btn) floatMenu(btn,m);
+    new MutationObserver(function(){
+      if(m.hidden&&m.parentNode) m.remove();
+    }).observe(m,{attributes:true,attributeFilter:['hidden']});
+  }
+  function overlayDrop(m){
+    if(!m) return;
+    overlayHide(m);
+    if(m.parentNode) m.remove();
   }
   function overlayBoot(){
     document.addEventListener('click',function(e){
