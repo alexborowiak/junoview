@@ -7822,6 +7822,14 @@ body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
   border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
 .rbn-play{order:1;}
 .rbn-talk{order:2;}
+
+/* ---- T218: the folded door is a tile; the delay's cell --------------------- */
+.rbn-grp.rbn-folded>.rbn-foldwrap{align-items:center;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn{height:56px;width:82px;}
+.rbn-foldwrap .fx-tile.rbn-foldbtn>span{white-space:normal;text-align:center;
+  line-height:1.15;}
+#anim-delaycell .fmt-szwrap{display:flex;align-items:center;gap:4px;}
+#anim-delaycell .cell-lab{padding-left:2px;}
 </style>
 <script>
 window.MathJax = {
@@ -11325,7 +11333,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                the same shape reaching further. The Home groups that
                held these are gone, and the Layouts menu is the grid
                alone, so each verb has one seat. -->
-          <span class="rbn-grp rbn-layout" data-tab="design">
+          <span class="rbn-grp rbn-layout" data-tab="design" data-fold-ic="layouts">
             <span class="rbn-row">
               <span class="sh-drop" id="lay-drop">
                 <button class="dbtn rbn-sm" id="lay-btn"
@@ -11363,7 +11371,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Layout</span>
           </span>
-          <span class="rbn-grp rbn-apply" data-tab="design">
+          <span class="rbn-grp rbn-apply" data-tab="design" data-fold-ic="forward">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-match"
               title="Make this slide sit like another: click here, then click a thumbnail. Positions and sizes travel; your words and figures stay"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg> Match slide
@@ -11376,7 +11384,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <!-- not rbn-fixed any more (T204): with Layout in front of it,
                a group that never folds would push Layout into a fold
                on a laptop, and Layout is what this tab is for now -->
-          <span class="rbn-grp rbn-slide" data-tab="design">
+          <span class="rbn-grp rbn-slide" data-tab="design" data-fold-ic="pagep">
             <span class="rbn-row">
               <!-- THE PAGE SIZE AS TILES (T190; 2026-09-02, user: "so
                    many of the options there are dropdowns with a
@@ -11425,7 +11433,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                what slide numbers already were - so they live together,
                under Design, and not as items you could drag off the page
                by accident (2026-08-20). -->
-          <span class="rbn-grp rbn-furn" data-tab="design">
+          <span class="rbn-grp rbn-furn" data-tab="design" data-fold-ic="footer">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="dc-head"
                 aria-pressed="false"
@@ -11459,7 +11467,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                pushing its look outwards, which meant you had to have a box
                of that style on the slide you happened to be on
                (2026-08-20). -->
-          <span class="rbn-grp rbn-type" data-tab="design">
+          <span class="rbn-grp rbn-type" data-tab="design" data-fold-ic="styles">
             <span class="rbn-row">
               <!-- YES, UNDER DESIGN (T178; 2026-09-02, user: "the text
                    styles under design (should this be under design
@@ -11550,7 +11558,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                and Slide have always stayed through a selection. Guides
                and Objects earn the seat too: an object list is at its most
                useful when you have an object selected (2026-08-17). -->
-          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view">
+          <span class="rbn-grp rbn-fixed rbn-view" data-tab="view" data-fold-ic="eye">
             <span class="rbn-row">
               <!-- FOUR BUTTONS, not a menu of four. They were folded
                    behind one dropdown called "Guides" when the row was
@@ -11672,7 +11680,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                effect option when there is nothing to appear" -- and the
                whole-slide builds sit beside them as words. Built by
                galSync, which the selection already calls. -->
-          <span class="rbn-grp rbn-anim" data-tab="animation">
+          <span class="rbn-grp rbn-anim" data-tab="animation" data-fold-ic="appear">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="anim-strip-frame">
                 <span class="fx-strip" id="anim-strip"
@@ -11693,7 +11701,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                each thing already had (2026-09-02, user: "the whole
                slide options are confusing" -- so the heading says whose
                they are and each label is one idea). -->
-          <span class="rbn-grp rbn-build" data-tab="animation">
+          <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-stagger"
                 title="Every object on this slide arrives, one per click,
@@ -11714,7 +11722,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                thing with clicking" (2026-09-02). Animation order is
                the pane that lists the sequence; Layers is the same
                list read as a timeline (T174). -->
-          <span class="rbn-grp rbn-order" data-tab="animation">
+          <span class="rbn-grp rbn-order" data-tab="animation" data-fold-ic="play">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-seq"
                 title="Click things one after another and each becomes
@@ -11753,7 +11761,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                there is a selected build to time, the way the tiles are,
                and the group stands down while Quick animate is armed so
                the mode's own controls have the row. -->
-          <span class="rbn-grp rbn-timing" data-tab="animation">
+          <span class="rbn-grp rbn-timing" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <span class="rbn-cell" id="anim-start">
                 <button class="dbtn rbn-sm" id="anim-onclick"
@@ -11769,8 +11777,13 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   title="Starts by itself, this many seconds after the
  build before it &mdash; no click"
                   ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> After previous</button>
+
+              </span>
+              <!-- the delay under the start run (T218), so Timing is two rows
+                   deep whatever is selected -->
+              <span class="rbn-cell" id="anim-delaycell">
                 <span class="fmt-szwrap anim-delaywrap" id="anim-delaywrap"
-                  title="Seconds after the previous build">
+                  title="Seconds after the previous build"><span class="cell-lab">Delay</span>
                   <input class="fmt-num" id="anim-delay" type="number"
                     min="1" max="60" step="1" value="1"
                     aria-label="Seconds after the previous build">
@@ -11801,7 +11814,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                carry the hidden bit, not the group: syncRibbonGroups
                decides a group's visibility from its controls and would
                put the group back. -->
-          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation">
+          <span class="rbn-grp rbn-seq" id="seqgrp" data-tab="animation" data-fold-ic="locate">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell" id="seq-what" hidden></span>
               <!-- WHICH EFFECT THE NEXT CLICK GIVES. Every button
@@ -11834,7 +11847,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                section"). Chart is gone from here ("I never wanted that
                and it is broken. Get rid of it"); the feature stays
                reachable from a placed table's right-click. -->
-          <span class="rbn-grp rbn-insert" data-tab="insert">
+          <span class="rbn-grp rbn-insert" data-tab="insert" data-fold-ic="cellcard">
             <span class="rbn-row">
               <!-- NOTEBOOK CELL, by name again (T188; "what happened to
                    the notebook cell option, that is gone"). T61 called
@@ -11862,7 +11875,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Place</span>
           </span>
-          <span class="rbn-grp rbn-write" data-tab="insert">
+          <span class="rbn-grp rbn-write" data-tab="insert" data-fold-ic="text">
             <span class="rbn-row">
               <!-- THE TEXT STRIP: one tile per kind of box -- plain,
                    then every named type in the deck, each drawn as a
@@ -11895,7 +11908,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                themselves, in the row, the armed one lit; click one and
                the shape tool arms for it. T188 had kept them behind a
                door for width; group folding (T187) pays for the strip. -->
-          <span class="rbn-grp rbn-shapes" data-tab="insert">
+          <span class="rbn-grp rbn-shapes" data-tab="insert" data-fold-ic="shapes">
             <span class="rbn-row">
               <span class="rbn-tall strip-frame" id="shape-strip-frame">
                 <span class="fx-strip shape-strip" id="shape-strip"
@@ -11911,7 +11924,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Shapes</span>
           </span>
-          <span class="rbn-grp rbn-draw" data-tab="insert">
+          <span class="rbn-grp rbn-draw" data-tab="insert" data-fold-ic="pen">
             <span class="rbn-row">
               <button class="dbtn rbn-sm et" id="dc-line" data-tool="line"
                 aria-pressed="false"
@@ -11941,7 +11954,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                the resting row pays nothing; setTool shows it and the
                ribbon re-fits. The hint line is the first thing the
                tight rung drops. -->
-          <span class="rbn-grp rbn-cancel" data-tab="insert">
+          <span class="rbn-grp rbn-cancel" data-tab="insert" data-fold-ic="pen">
             <span class="rbn-row">
               <span class="rbn-cell seq-cell et-status" id="et-status"
                 hidden></span>
@@ -11965,7 +11978,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                tab with all those options as buttons now"). The rows of
                the Present menu, as buttons: each presses its row, so the
                behaviour stays in one place and the two can never drift. -->
-          <span class="rbn-grp rbn-play" data-tab="present">
+          <span class="rbn-grp rbn-play" data-tab="present" data-fold-ic="play">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Play">
@@ -11983,7 +11996,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Play</span>
           </span>
-          <span class="rbn-grp rbn-talk" data-tab="present">
+          <span class="rbn-grp rbn-talk" data-tab="present" data-fold-ic="theme">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="pr-talk"
                 title="Play from this slide with the talk settings open: skip
@@ -12021,15 +12034,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                slide is laid out -- changing it, arranging what is on
                it, saving and applying a layout -- is one subject and
                lives on Design, in one place. -->
-          <span class="rbn-grp rbn-slides" data-tab="home">
+          <span class="rbn-grp rbn-slides" data-tab="home" data-fold-ic="plus">
             <span class="rbn-row">
               <button class="fx-tile big-tile rbn-tall" id="hm-newslide"
-                title="Add a slide after this one, laid out like the last
- one you added. The tiles beside it add one laid out another way"
+                title="Add a slide after this one, laid out as the highlighted layout"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg><span>New slide</span></button>
               <span class="rbn-tall strip-frame" id="layout-strip-frame">
                 <span class="fx-strip lay-strip" id="layout-strip"
-                  role="group" aria-label="New slide, laid out as"></span>
+                  role="group" aria-label="Layout for the next new slide: click one to choose it"></span>
                 <span class="strip-nav">
                   <button class="strip-prev" type="button" id="layout-strip-prev"
                     title="Back a row" aria-label="Back a row">&#9650;</button>
@@ -12041,7 +12053,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">New slide</span>
           </span>
-          <span class="rbn-grp rbn-this" data-tab="home">
+          <span class="rbn-grp rbn-this" data-tab="home" data-fold-ic="copy">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="hm-dupslide"
               title="Duplicate this slide, in place"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.6" y="5.6" width="8.2" height="8.2" rx="1.2"/><path d="M10.4 2.4H3.6a1.2 1.2 0 0 0-1.2 1.2v6.8"/></svg>
@@ -12051,7 +12063,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">This slide</span>
           </span>
-          <span class="rbn-grp rbn-sources" data-tab="home">
+          <span class="rbn-grp rbn-sources" data-tab="home" data-fold-ic="reload">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Keep up to date">
@@ -12076,7 +12088,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <!-- LAYERS ON HOME (T216; 2026-09-03, user: "the layers is really
                important that needs to go in home"): a second door to the
                same pane View has, pressed-state mirrored from it -->
-          <span class="rbn-grp rbn-show" data-tab="home">
+          <span class="rbn-grp rbn-show" data-tab="home" data-fold-ic="objects">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Show">
@@ -12096,7 +12108,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                spot"). One feature, one door: the top bar, or Ctrl+F. -->
         </div>
         <span class="et-fmt" id="et-fmt" hidden>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="align">
             <span class="rbn-row">
               <!-- T208: paired on purpose (column-major): Duplicate over Arrange,
                    Bring to front over Send to back, Group over Ungroup; the
@@ -12168,7 +12180,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                always-visible circles said "look at me" louder than the
                poster did (2026-08-05, user: "do you need to display all
                the colours all the time?") -->
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="palette">
             <span class="rbn-row">
               <!-- T208: text colour over fill; opacity beside them -->
               <span class="sh-drop" id="fmt-txcolwrap">
@@ -12240,7 +12252,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Colour</span>
           </span>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="text">
             <span class="rbn-row">
               <!-- T208: Font over Styles; B I U over Left Centre Right as two runs;
                    bullets over numbers; Paragraph; the two editors when they apply -->
@@ -12347,7 +12359,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Text</span>
           </span>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="dashes">
             <span class="rbn-row">
               <!-- ONE WINDOW FOR THE LINE (T177). Style, Weight, Ends
                    and Route were four dropdown doors stacked in three
@@ -12450,7 +12462,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>
-          <span class="rbn-grp" data-tab="object">
+          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
             <span class="rbn-row">
               <!-- T208: Lock in place over Keep shape; X Y over W H; Crop over Caption;
                    Refresh over Size & position; where from over Source -->
@@ -12548,7 +12560,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                you want almost every time and needs no cell selected
                first; the header row is a switch rather than a separate
                kind of row, so turning it off moves no data. -->
-          <span class="rbn-grp rbn-tbl" data-tab="object">
+          <span class="rbn-grp rbn-tbl" data-tab="object" data-fold-ic="table">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-tbl-rowplus"
                 title="Add a row at the bottom"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg> Row</button>
@@ -12580,7 +12592,7 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                nothing hides them the moment they become usable, which
                is what the old effect buttons did (T171). The gallery
                on the Animation tab stays for the whole-slide case. -->
-          <span class="rbn-grp rbn-fx" data-tab="object">
+          <span class="rbn-grp rbn-fx" data-tab="object" data-fold-ic="appear">
             <span class="rbn-row">
               <button class="dbtn etm" id="fmt-fx-none" aria-pressed="false"
                 title="No entrance — on the slide from the start"
@@ -21203,9 +21215,13 @@ window.JunoPptx = (function () {
              slide gallery, and changing THIS slide's layout is the
              Design menu's job ("you can't create a new layout with the
              layouts there, you can only change the layout") */
+          /* ...and since T218 a tile CHOOSES: it is highlighted as the
+             layout the next New slide will use, and New slide adds it
+             (2026-09-03, user: "clicking on one just highlights it to be
+             added when clicking new slide") */
           if(sel==='#layout-strip'){
             if(!layout.poster) lsSet(newLayKey(),layout.id);
-            newVersion(layout);
+            syncNewSlideMarks();
             return;
           }
           var s=pres.slides[cur]; if(!s) return;
@@ -21220,6 +21236,18 @@ window.JunoPptx = (function () {
       });
     });
       if(typeof syncSavedTiles==='function') syncSavedTiles();
+    syncNewSlideMarks();
+  }
+  /* the strip lights the layout the NEXT slide takes, not the one this
+     slide wears (T218); a saved layout is remembered as 'arr:<n>' */
+  function syncNewSlideMarks(){
+    var key=lsGet(newLayKey())||'cell-text';
+    $$('#layout-strip .dbtn.lay').forEach(function(b){
+      var on=b.classList.contains('lay-saved')
+        ?(('arr:'+b.dataset.arr)===key):(b.dataset.lay===key);
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.disabled=false;
+    });
   }
   /* the ribbon's Layouts / Page dropdowns: open one, the other closes.
      The catalog is offered from TWO places now — Design ▸ Layouts and
@@ -24497,13 +24525,19 @@ window.JunoPptx = (function () {
     if(!row) return false;
     var lab=g.querySelector('.rbn-lab');
     var name=(lab&&lab.textContent.trim())||'More';
+    /* THE DOOR IS A TILE (T218): the group's own icon over its name and
+       a chevron, spanning both rows -- the shape PowerPoint collapses a
+       group into, and the one tile every other tall control is. A small
+       one-row button left a hole under it (2026-09-03, "same goofiness
+       with buttons still exists"). */
     var wrap=document.createElement('span');
-    wrap.className='sh-drop rbn-foldwrap';
+    wrap.className='sh-drop rbn-foldwrap rbn-tall';
     var btn=document.createElement('button');
-    btn.type='button';btn.className='dbtn rbn-sm rbn-foldbtn';
+    btn.type='button';btn.className='fx-tile big-tile rbn-foldbtn';
     btn.setAttribute('aria-haspopup','true');
     btn.setAttribute('aria-expanded','false');
-    btn.innerHTML=bic('menu')+' '+esc(name)+' \u25be';
+    btn.innerHTML=bic(g.getAttribute('data-fold-ic')||'menu')
+      +'<span>'+esc(name)+' \u25be</span>';
     btn.title=name+' \u2014 folded because the window is too narrow '
       +'to show the whole row. Widen the window and it opens out again';
     var menu=document.createElement('div');
@@ -41230,9 +41264,10 @@ window.JunoPptx = (function () {
         +'\u201d';
       b.addEventListener('click',function(e){
         e.stopPropagation();
-        /* a NEW slide carrying the saved shapes (T202); the dialog's
-           Apply is what lays an existing slide out like one */
-        newVersion(null,arr);
+        /* chosen for the next New slide (T218); the dialog's Apply is
+           what lays an EXISTING slide out like one */
+        lsSet(newLayKey(),'arr:'+b.dataset.arr);
+        if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
       });
       strip.appendChild(b);
     });
@@ -50691,13 +50726,15 @@ window.JunoPptx = (function () {
   function renderControls(){
     updateNumsLabel();updateCropLabel();
     var s=pres.slides[cur];
-    $$('#layout-row .lay,#layout-menu-grid .lay,#layout-strip .lay')
+    $$('#layout-row .lay,#layout-menu-grid .lay')
       .forEach(function(b){
       /* highlight the template last applied to this slide (if any) */
       b.setAttribute('aria-pressed',
         (!!s&&s.lay===b.dataset.lay).toString());
       b.disabled=!s;
     });
+    /* Home's strip lights the layout the NEXT slide takes (T218) */
+    if(typeof syncNewSlideMarks==='function') syncNewSlideMarks();
     var te=$('#title-editor'), eb=$('#dc-edit');
     var isTitle=!!s&&s.layout==='title';
     if(te){
@@ -51646,10 +51683,15 @@ window.JunoPptx = (function () {
          user: "when click add new it should remember the last one you
          added. The default slide choice should be the panel, title,
          text"). Blank is still one pick away. */
+      var key=lsGet(newLayKey())||'cell-text';
+      if(!arr&&!lay&&/^arr:/.test(key)&&typeof arrList==='function'){
+        var hit=arrList()[+key.slice(4)];
+        if(hit&&hit.annots) arr=hit;
+      }
       if(arr&&arr.annots){
         ns.annots=deep(arr.annots);
       } else {
-        lay=lay||layoutById(lsGet(newLayKey())||'cell-text');
+        lay=lay||layoutById(/^arr:/.test(key)?'cell-text':key);
         if(lay&&!lay.poster) applyLayout(ns,lay);
       }
       pres.slides.splice(at,0,ns);
