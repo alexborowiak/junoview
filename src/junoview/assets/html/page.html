@@ -414,9 +414,21 @@
            user: "it would be good if this wasn't so notebook forward
            now ... the default screen had something more standard, like
            'create new', or open previous"). -->
+      <!-- T240: ONE GRID OF FOUR IDENTICAL CARDS (2026-09-04, user:
+           "the home screen is a bit wild atm ... There is just text,
+           and buttons of different shapes and sizes and organisation
+           everywhere. Please standardise"). They were four buttons
+           sized to their own words, wrapping into two ragged rows,
+           and only one of them carried a second line -- so the row
+           read as four unrelated things. Every card is now the same
+           box with the same three parts: an icon, what it does, and
+           one line saying what that means. The drop hint is on the
+           card that means it and nowhere else. -->
       <div class="welcome-btns">
         <button class="dbtn primary" id="welcome-new"><i data-ic="plus"></i>
-          New presentation</button>
+          <span class="wc-t">New presentation</span>
+          <span class="wc-h">Start from a blank deck &mdash; no notebook
+            needed</span></button>
         <!-- THE DROP HINT LIVES HERE, on the button that means the same
              thing. It used to be its own row of prose under the button
              row -- a whole band of the first screen restating what Open
@@ -425,17 +437,21 @@
         <button class="dbtn ghost" id="welcome-open"
           title="Open notebooks, Markdown, LaTeX or csv files from your
  computer &mdash; or just drop them anywhere in this window"
-          ><i data-ic="open"></i>Open local files&#8230;
-          <span class="welcome-drop">&hellip; or drop them here</span>
+          ><i data-ic="open"></i><span class="wc-t">Open local files&#8230;</span>
+          <span class="wc-h welcome-drop">&hellip; or drop <b>.ipynb</b>,
+            <b>.md</b>, <b>.tex</b> or <b>.csv</b> anywhere in this
+            window</span>
         </button>
         <button class="dbtn ghost" id="welcome-url"><i data-ic="link"></i>
-          From GitHub / URL&#8230;</button>
-        <button class="dbtn ghost" id="welcome-demo"
-          hidden><i data-ic="play"></i> Try the example notebook</button>
+          <span class="wc-t">From GitHub / URL&#8230;</span>
+          <span class="wc-h">Paste a link to a notebook and read it
+            here</span></button>
+        <button class="dbtn ghost" id="welcome-demo" hidden
+          ><i data-ic="play"></i>
+          <span class="wc-t">Try the example notebook</span>
+          <span class="wc-h">A real analysis, already loaded, to look
+            around in</span></button>
       </div>
-      <p class="welcome-drop">&hellip; or drop <b>.ipynb</b>,
-        <b>.md</b>, <b>.tex</b> or <b>.csv</b> files anywhere in
-        this window.</p>
       <div class="welcome-links">
         <a href="#" id="welcome-tour">Take a tour</a>
         <span class="wl-sep">&middot;</span>

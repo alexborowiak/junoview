@@ -1038,8 +1038,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # .deck-top is hidden and the presentations rail is inert, so the two
 # controls that were supposed to be the way out of the editor were
 # both unclickable and there was no way out at all.
-EXPECTED_MD5 = "9469bcd1f6b1490f3d78bf103c162298"
-EXPECTED_BYTES = 3494804
+# 2026-09-04, T240: the welcome screen's four buttons became one grid
+# of four identical cards -- icon, what it does, one line saying what
+# that means -- and the drop hint is said once instead of twice.
+EXPECTED_MD5 = "47af9ea2c7ed910615f3dce41264c42e"
+EXPECTED_BYTES = 3497185
 
 
 def _render_example() -> str:

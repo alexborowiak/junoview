@@ -5019,3 +5019,22 @@ option. Then where has the ability to refresh all images gone?"
   app-or-web and the button would do nothing. Driven on a web build:
   Home closed the deck and showed the welcome; Close returned to the
   builder.
+
+- [x] **T240 - The front door is one grid of identical cards.**
+  The user (2026-09-04): "The home screen is a bit wild atm. Like it
+  could be tidied up and organised a lot more. There is just text, and
+  buttons of different shapes and sizes and organisation everywhere.
+  Please standardise."
+  *Done 2026-09-04.* The four ways in were flex children sized to their
+  own words, so they wrapped into two ragged rows of four different
+  widths -- and only one of them carried a second line, which made the
+  row read as four unrelated things. They are a **grid** now: two
+  across (one when narrow), every card the same box holding the same
+  three parts -- an icon, what it does, and one line saying what that
+  means. Four across was tried and dropped: `.welcome-box` is capped at
+  760px, so it gives a 166px card and a hint that wraps three times.
+  The **drop hint** was said twice, in two type styles -- inside Open
+  and again as a full-width row of mono under the buttons; it is the
+  Open card's second line and nowhere else. The links row is the same
+  sans as the rest of the screen. Driven on a web build at 1400px: four
+  cards, all 344px wide.

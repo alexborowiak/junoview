@@ -639,8 +639,11 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .welcome-drop{display:block;font-family:var(--mono);font-size:10.5px;
   letter-spacing:.04em;font-weight:400;color:var(--ink-3);margin:0;}
 .welcome-drop b{color:var(--ink-2);}
-.welcome-btns .welcome-drop{flex:1 0 100%;text-align:center;
-  margin-top:1px;opacity:.9;}
+/* T240: the drop hint is one card's second line, in that card's own
+   type -- it was a full-width row of mono under the buttons AND a
+   second copy inside Open */
+.welcome-btns .welcome-drop{font-family:var(--sans);font-size:11.5px;
+  letter-spacing:0;color:inherit;text-align:left;}
 /* ---- "jump back in": the two things you might be coming back to ----
    Recent notebooks and the presentations built from them, side by side.
    Both columns hide themselves when empty, and the band with them --
@@ -680,16 +683,36 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
   animation:recent-slide 1.05s ease-in-out infinite;}
 @keyframes recent-slide{from{background-position:-44% 0;}
   to{background-position:144% 0;}}
-.welcome-btns{display:flex;gap:12px;justify-content:center;
-  flex-wrap:wrap;align-items:stretch;margin-top:0;}
-/* each button is its own wrapping flex row, so Open's sub-label drops to
-   a second line INSIDE it; align-items:stretch keeps the other three the
-   same height, so the row is still one row of equal buttons */
-.welcome-btns .dbtn{display:inline-flex;flex-wrap:wrap;
-  align-items:center;justify-content:center;gap:2px 10px;
-  font-size:16px;font-weight:600;padding:12px 24px;
+/* ---- T240: FOUR CARDS, ONE SHAPE ------------------------------------
+   A flex row sized every button to its own words, so four doors
+   wrapped into two ragged rows of different widths and only one of
+   them had a second line. A GRID gives them one box each: two across,
+   four when there is room, one when there is not. Inside, every card
+   is the same three parts in the same places -- icon, what it does,
+   what that means -- so the row reads as one offer with four answers
+   (2026-09-04, user: "buttons of different shapes and sizes and
+   organisation everywhere. Please standardise"). */
+.welcome-btns{display:grid;gap:12px;margin-top:0;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  align-items:stretch;width:100%;}
+/* two across and no more: .welcome-box is capped at 760px, so four
+   columns is a 166px card and a hint that wraps three times */
+@media (max-width:560px){
+  .welcome-btns{grid-template-columns:minmax(0,1fr);}}
+.welcome-btns .dbtn{display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  grid-template-rows:auto auto;gap:2px 10px;
+  align-content:start;justify-items:start;text-align:left;
+  font-size:15px;font-weight:600;padding:13px 15px;min-height:78px;
   border-radius:10px;border:1.5px solid var(--cyan-deep);cursor:pointer;
   transition:all .15s;}
+.welcome-btns .dbtn>.bic{grid-row:1 / span 2;align-self:center;
+  width:18px;height:18px;}
+.wc-t{grid-column:2;font-size:15px;font-weight:600;line-height:1.25;}
+.wc-h{grid-column:2;font-family:var(--sans);font-size:11.5px;
+  font-weight:400;line-height:1.4;letter-spacing:0;opacity:.82;
+  text-transform:none;}
+.welcome-btns .dbtn[hidden]{display:none;}
 .welcome-btns .dbtn.primary{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:#fff;box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 20%,transparent);}
 .welcome-btns .dbtn.primary:hover{background:var(--cyan);
@@ -701,7 +724,9 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 body:not(.light) .welcome-btns .dbtn.ghost{color:#8fe0f0;
   border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent);}
 body:not(.light) .welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);}
-.welcome-links{margin-top:20px;font-size:14px;color:var(--ink-3);}
+/* the same sans as everything else on this screen, one step quieter */
+.welcome-links{margin-top:20px;font-family:var(--sans);font-size:13px;
+  color:var(--ink-3);}
 .welcome-links a{color:var(--cyan-deep);text-decoration:none;}
 .welcome-links a:hover{text-decoration:underline;}
 .wl-sep{margin:0 8px;}
