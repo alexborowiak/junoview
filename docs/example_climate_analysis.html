@@ -5319,8 +5319,27 @@ select#fmt-font[hidden]{display:none;}
 /* the colour popups: a pad of roomy hit targets, headed by name */
 .sh-menu.sw-menu{display:flex;flex-wrap:wrap;align-items:center;
   gap:7px;width:198px;padding:10px 11px;}
+/* the two that hold the picker are wider by its hex box. Scoped to
+   them by id because .sw-menu is also the line panel's stroke-WIDTH
+   menu -- one class, two meanings, since long before T232. */
+#fmt-txcol-menu,#fmt-fillcol-menu{width:216px;}
 .sw-menu .fmt-lab{display:block;flex:0 0 100%;margin:2px 0 -1px;}
 .sw-menu>.sw-tokrow,.sw-menu>.sw-recrow{flex:0 0 100%;}
+/* ---- T232: THE PICKER, AS THE BOTTOM OF THE MENU ---------------------
+   Same element as the floating popup, restyled to be a section: no
+   card of its own, just a rule and the controls under it. It carries
+   hex, rgb and the transparency slider, which is what used to be one
+   click further in behind a rainbow chip. */
+.sw-menu>.color-pop.cp-inline{flex:0 0 100%;position:static;width:auto;
+  background:none;border:none;border-top:1px solid #ffffff1c;
+  border-radius:0;box-shadow:none;padding:9px 0 0;margin:3px 0 0;
+  gap:7px;}
+.cp-inline .cp-native{height:30px;}
+.cp-inline .cp-lab{width:34px;}
+.cp-inline .cp-in{padding:5px 7px;font-size:11.5px;}
+.cp-inline .cp-preview{width:24px;height:24px;}
+.cp-recent[hidden]{display:none!important;}
+body.light .sw-menu>.color-pop.cp-inline{border-top-color:#0000001c;}
 .sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
 .sw-tokrow>.fmt-lab{flex:0 0 100%;}
 /* hidden still means hidden, whatever display the rows above ask for */
@@ -8006,9 +8025,29 @@ body.light .dg-num input{background:#00000006;border-color:var(--line);
 /* ...and A- / A+ are glyphs, so they get the same treatment */
 #fmt-sizecell .dbtn.etm{min-width:30px;justify-content:center;
   padding-left:4px;padding-right:4px;}
-/* History is a tall tile at the end of the Object group */
+/* History is a tall tile in a section of its own (T233) */
 .rbn-row>#fmt-hist.big-tile{width:72px;height:56px;align-self:center;
   grid-row:1/span 2;}
+/* ---- T234: THE FLIP BOOK'S ONE BIG DOOR, AND ITS PAGE TURN ----------
+   "+ Add" is the first control in the Picture group and the same
+   height as History: an empty flip book is a hole, and the button that
+   fills it should not be the smallest thing on the row. The turn
+   itself is one keyframe on the frame that changed -- so it plays in
+   the show, in an exported page, and nowhere else. */
+.rbn-row>#fmt-figures.big-tile{width:72px;height:56px;
+  align-self:center;}
+@keyframes fturn-fade{from{opacity:0;}to{opacity:1;}}
+@keyframes fturn-rise{from{opacity:0;transform:translateY(14px);}
+  to{opacity:1;transform:none;}}
+@keyframes fturn-zoom{from{opacity:0;transform:scale(.93);}
+  to{opacity:1;transform:none;}}
+.an-flipstage.fturn-fade{animation:fturn-fade .3s ease;}
+.an-flipstage.fturn-rise{animation:fturn-rise .34s
+  cubic-bezier(.2,.7,.3,1);}
+.an-flipstage.fturn-zoom{animation:fturn-zoom .3s
+  cubic-bezier(.2,.7,.3,1);}
+@media (prefers-reduced-motion: reduce){
+  .an-flipstage.fturn{animation:none!important;}}
 
 /* ---- T220: QUICK COLOURS AND A VISIBLE SIZE ----------------------------
    The deck's six colours sit in the row as two segmented cells, one for
@@ -11356,9 +11395,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
         <button class="dc-mi" id="tg-browser">This browser</button>
         <button class="dc-mi" id="tg-file">A file on your
           computer&#8230;</button>
+        <!-- T235: A FOLDER, ONCE, FOR EVERYTHING AFTER (2026-09-04,
+             user: "the save to browser thing isn't working too great
+             ... I just got 'browser full' error. Is there a way to
+             make it so that the default is local, and you can set up
+             a default save to location that becomes the default for
+             all?"). Pick it once and Junoview makes its own file in
+             there and keeps saving to it, with no dialog and no
+             browser quota to run into. -->
+        <button class="dc-mi" id="tg-folder">A folder on this
+          computer&#8230;</button>
         <div class="dc-msep"></div>
           <button class="dc-mi" id="tg-pick" hidden>Choose a different
             file&#8230;</button>
+          <button class="dc-mi" id="tg-folder-forget" hidden>Stop using
+            that folder</button>
         </div>
       </span>
     </span>
@@ -12109,6 +12160,46 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                each thing already had (2026-09-02, user: "the whole
                slide options are confusing" -- so the heading says whose
                they are and each label is one idea). -->
+          <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
+               nothing said so (2026-09-04, user: "how do the
+               animations work with the flip books. Can there be a
+               make each flip an animation that appears in animations
+               when selected"). Every figure after the first has
+               always been a click in the show — flipPlan puts them
+               in the one timeline and the Animations pane lists them
+               — but a page turned as a cut and the ribbon never
+               mentioned it. The readout says how many clicks the
+               book is worth; the run says how a page arrives. -->
+          <span class="rbn-grp rbn-flipfx" data-tab="animation"
+            data-fold-ic="flipbook">
+            <span class="rbn-row">
+              <span class="rbn-cell rbn-seg" id="anim-flip-run" hidden
+                role="group" aria-label="How a page of the flip book arrives">
+                <span class="cell-lab">Page turn</span>
+                <button class="dbtn rbn-sm" id="anim-flip-none"
+                  aria-pressed="false"
+                  title="The next figure simply replaces the one
+ before it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg> None</button>
+                <button class="dbtn rbn-sm" id="anim-flip-fade"
+                  aria-pressed="false"
+                  title="Each figure fades in as you turn to
+ it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg> Fade</button>
+                <button class="dbtn rbn-sm" id="anim-flip-rise"
+                  aria-pressed="false"
+                  title="Each figure floats up into
+ place"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="3.4" y="2.4" width="9.2" height="6" rx="1"/><path d="M8 14.4v-3.6"/><path d="m6.1 12.6 1.9-1.8 1.9 1.8"/></svg> Float up</button>
+                <button class="dbtn rbn-sm" id="anim-flip-zoom"
+                  aria-pressed="false"
+                  title="Each figure grows into
+ place"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="5.2" y="5.2" width="5.6" height="5.6" rx=".9"/><path d="M2.4 6V2.4h3.6"/><path d="M13.6 10v3.6H10"/></svg> Grow</button>
+              </span>
+              <span class="rbn-cell seq-cell" id="anim-flip-say" hidden
+                title="Turning a page is a click, exactly like an
+ entrance. The figures are listed under this book in Animation
+ order; their sequence is the book’s own"></span>
+            </span>
+            <span class="rbn-lab">Flip book</span>
+          </span>
           <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-stagger"
@@ -12569,17 +12660,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <button class="dbtn etm" id="fmt-back"
                 title="Send to back - behind everything else on this
  page"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 13.2h10.4"/><path d="M8 2.4v7.8"/><path d="m4.9 7.1 3.1 3.1 3.1-3.1"/></svg> Send to back</button>
-              <!-- T221: a tall tile, in the group that never folds. It
-                   was a small button at the end of the Object group
-                   (2026-09-03, user: "this history button is so small"),
-                   which is the wrong weight for the one door to a whole
-                   feature -- and the Object group folds first on a
-                   laptop, which would have hidden it altogether. What you
-                   DO to an object is what this group already holds. -->
-              <button class="fx-tile big-tile" id="fmt-hist" hidden
-                title="Every state this object has been through that the
- undo stack still remembers, with a button to put any of them back"
-                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/><path d="M8 5.2V8l2.2 1.3"/></svg><span>History</span></button>
               <button class="dbtn etm" id="fmt-group"
                 title="Group the selected items (Ctrl+G)"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="1.8" y="1.8" width="12.4" height="12.4" rx="1.6" stroke-dasharray="2.6 2.3"/><rect x="4.2" y="4.2" width="4.2" height="4.2" rx=".8"/><circle cx="10.2" cy="10.2" r="2.1"/></svg>
                 Group</button>
@@ -12614,6 +12694,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               </span>
             </span>
             <span class="rbn-lab">Arrange</span>
+          </span>
+          <!-- T233: THE OBJECT’S PAST, IN A SECTION OF ITS OWN
+               (2026-09-04, user: "put object history in its own
+               little section"). T221 made it a tall tile so it would
+               read as the door to a whole feature; sitting in Arrange
+               it still read as a fifth way to move something. One
+               control, one label, and it folds to a single clock. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="history">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile" id="fmt-hist" hidden
+                title="Every state this object has been through that the
+ undo stack still remembers, with a button to put any of them back"
+                ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/><path d="M8 5.2V8l2.2 1.3"/></svg><span>History</span></button>
+            </span>
+            <span class="rbn-lab">History</span>
           </span>
           <!-- No Effects group. Its last resident was a SECOND button for
                the Animations pane — "▶ Animate", renaming itself to the
@@ -12689,10 +12784,24 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn etm" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
-                  title="Colour of the selected text / line / shape"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg>
+                  title="Every colour for the words: this deck’s
+ six, the standards, and any colour at all — hex, rgb, and how
+ see-through it is"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.8"/><circle cx="6" cy="6" r="1" fill="currentColor"/><circle cx="10" cy="6" r="1" fill="currentColor"/><circle cx="10.5" cy="9.5" r="1" fill="currentColor"/></svg>
                     Colour &#9662;</button>
+                <!-- T232: ONE DOOR, EVERYTHING BEHIND IT. The
+                     picker used to be a popup opened by a rainbow
+                     "+" chip inside this menu -- a menu inside a
+                     menu (2026-09-04, user: "when clicking the drop
+                     down menu there should be the transparency
+                     adjustor there and all the custom colour stuff
+                     that shouldn't be behind another menu"). The
+                     one #color-pop is mounted in here instead, so
+                     hex, rgb and transparency are part of the menu.
+                     Recently used leads, because that is what the
+                     row on the ribbon now shows. -->
                 <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
-                  <span class="fmt-lab" id="fmt-txlab" hidden
+                  <span class="sw-recrow" hidden></span>
+                  <span class="fmt-lab sw-stdlab" id="fmt-txlab" hidden
                     title="Colours every deck has">Standard colours</span>
                   <!-- a true red: Coral read as "close enough" until you
                        needed an actual warning red (2026-08-19, user:
@@ -12711,20 +12820,18 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     style="background:#ffffff" title="White" aria-label="White"></button>
                   <button class="sw" data-c="#16202b"
                     style="background:#16202b" title="Ink" aria-label="Ink"></button>
-                  <button class="sw sw-custom" id="sw-custom"
-                    data-target="text"
-                    title="Custom colour — hex, rgb or rgba"
-                    aria-label="Custom colour"></button>
-                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <span class="sh-drop" id="fmt-fillcolwrap">
                 <button class="dbtn etm" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
-                  title="Fill / background colour of the selected box"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg>
+                  title="Every colour for the box behind them: this
+ deck’s six, the standards, transparent, and any colour at all —
+ hex, rgb, and how see-through it is"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2.6" y="2.6" width="10.8" height="10.8" rx="1.4"/><path d="M12.4 6v5.6a.8.8 0 0 1-.8.8H6Z" fill="currentColor"/></svg>
                     Fill &#9662;</button>
                 <div class="sh-menu sw-menu" id="fmt-fillcol-menu" hidden>
-                  <span class="fmt-lab" id="fmt-bglab" hidden
+                  <span class="sw-recrow" hidden></span>
+                  <span class="fmt-lab sw-stdlab" id="fmt-bglab" hidden
                     title="Colours every deck has">Standard colours</span>
                   <button class="sw swbg trans" data-c="none" hidden
                     title="Transparent box" aria-label="Transparent box"></button>
@@ -12740,11 +12847,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                     style="background:#f0a848" title="Amber box" aria-label="Amber box"></button>
                   <button class="sw swbg" data-c="#39a9c0" hidden
                     style="background:#39a9c0" title="Cyan box" aria-label="Cyan box"></button>
-                  <button class="sw swbg sw-custom" id="swbg-custom" hidden
-                    data-target="fill"
-                    title="Custom fill colour — hex, rgb or rgba"
-                    aria-label="Custom fill colour"></button>
-                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <!-- T220: THE DECK'S SIX COLOURS, ON THE ROW. Both doors
@@ -12753,14 +12855,21 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                    (2026-09-03, user: "I would prefer if some of these
                    were quick options that we can see. AGAIN, DON'T HAVE
                    EVERYTHING ALWAYS HIDDEN BEHIND SEVERAL CLICKS").
-                   Filled by quickSwatchBoot from the same tokens the
-                   picker offers, applied through the same setter. -->
+                   T232: and it is the colours you LAST USED, padded
+                   out with the deck’s own so it is never empty --
+                   the same list the door shows under "Recently
+                   used", so the row and the door are one thing seen
+                   twice rather than two rival palettes. -->
               <span class="rbn-cell rbn-seg qk-cell" id="fmt-txquick" hidden
-                role="group" aria-label="Text colour">
+                role="group" aria-label="Text colour"
+                title="The colours you used most recently, on the
+ words. Colour ▾ beside it holds every other colour">
                 <span class="cell-lab">Text</span>
               </span>
               <span class="rbn-cell rbn-seg qk-cell" id="fmt-bgquick" hidden
-                role="group" aria-label="Fill colour">
+                role="group" aria-label="Fill colour"
+                title="The colours you used most recently, behind
+ them. Fill ▾ beside it holds every other colour">
                 <span class="cell-lab">Fill</span>
               </span>
             </span>
@@ -12955,10 +13064,19 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>
-          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
+          <!-- T233: ONE GROUP BECAME THREE (2026-09-04, user: "the
+               object ribbon is still a bit all over the place"). It
+               held the two locks, four number boxes, the crop, the
+               caption, the flip book’s figures, where the picture
+               came from, the opacity slider and the clone buttons
+               under one label, so nothing in it looked related to
+               anything else. Each section answers one question now:
+               where is it on the page, what is the picture inside
+               it, and what is the object itself like. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="rulers">
             <span class="rbn-row">
-              <!-- T208: Lock in place over Keep shape; X Y over W H; Crop over Caption;
-                   Refresh over Size & position; where from over Source -->
+              <!-- T208 pairing (column-major): Lock in place over Lock
+                   aspect ratio, X Y over W H -->
               <button class="dbtn etm" id="fmt-lock" hidden
                 aria-pressed="false"
                 title="Keep this where it is: it cannot be dragged, and
@@ -12987,6 +13105,30 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                   ><span>H</span><input id="rb-h" type="number" step="0.5"
                   inputmode="decimal" aria-label="Height"></label>
               </span>
+              <button class="dbtn etm" id="fmt-sizepos" hidden
+                title="Type this object&rsquo;s width, height and
+ position in millimetres, instead of dragging for
+ them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/><path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2"/></svg> Size &amp; position&#8230;</button>
+            </span>
+            <span class="rbn-lab">Size &amp; place</span>
+          </span>
+          <!-- THE PICTURE INSIDE IT: what to put there, how much of it
+               to show, what to call it, and where it came from. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="cellcard">
+            <span class="rbn-row">
+              <!-- T234: THE FLIP BOOK’S ONE BIG DOOR. It was a small
+                   button called "Figures…" in the middle of a group
+                   of nine (2026-09-04, user: "the ‘Figure’ button
+                   really needs to be the first button and a big
+                   button, not small and hidden. And it should just be
+                   called ‘+ Add’, and then there are the options
+                   there"). An empty flip book is a hole, so the door
+                   that fills it is the first thing on the group. -->
+              <button class="fx-tile big-tile rbn-tall" id="fmt-figures"
+                hidden aria-haspopup="true" aria-expanded="false"
+                title="Put figures in this flip book — from a
+ notebook or from your computer — and reorder or name the ones it
+ already has"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M8 3.6v8.8"/><path d="M3.6 8h8.8"/></svg><span>Add</span></button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
@@ -13008,10 +13150,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Re-read this picture from the file it came from.
  If that file has moved, the picture is left exactly as it is"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M13.4 8a5.4 5.4 0 1 1-1.6-3.8"/><path d="M13.6 2.2v3.1h-3.1"/></svg> Refresh from file</button>
-              <button class="dbtn etm" id="fmt-sizepos" hidden
-                title="Type this object&rsquo;s width, height and
- position in millimetres, instead of dragging for
- them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M1.8 11.4 11.4 1.8l2.8 2.8-9.6 9.6Z"/><path d="m4.6 8.6 1.2 1.2M7 6.2l1.2 1.2M9.4 3.8l1.2 1.2"/></svg> Size &amp; position&#8230;</button>
               <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
                 title="Where this came from"></span>
               <span class="sh-drop opt-drop" id="fmt-srcwrap">
@@ -13041,17 +13179,14 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 Replace</button>
                 </div>
               </span>
-              <button class="dbtn etm" id="fmt-figures" hidden
-                title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><rect x="2" y="3.2" width="12" height="9.6" rx="1.2"/><path d="m6.4 6.1-1.9 1.9 1.9 1.9"/><path d="m9.6 6.1 1.9 1.9-1.9 1.9"/></svg>
-   Figures&#8230;</button>
-              <!-- T220: HISTORY, WHERE YOU CAN SEE IT. The per-object
-                   history (T10) could only be reached from a canvas
-                   right-click or from the Layers pane's Actions menu --
-                   a menu, in a pane, behind a button (2026-09-03, user:
-                   "there is too much hidden inside menus inside menus
-                   inside menus, like in the layers"). One button, and it
-                   opens full screen like the other reviews. -->
+              <span class="rbn-partslot" id="fmt-parts" hidden></span>
+            </span>
+            <span class="rbn-lab">Picture</span>
+          </span>
+          <!-- THE OBJECT ITSELF: how see-through it is, and turning it
+               into something you can place again. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
+            <span class="rbn-row">
               <!-- T221: opacity says what it is. It was an unlabelled
                    slider (2026-09-03, user: "the transparent isn't
                    labelled and is just a weird little thing to drag"). -->
@@ -13078,7 +13213,6 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                 title="Every place in this deck this clone has been
  put — pick one to go there"
                 ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="4.2"/><path d="M8 1.6v2.4M8 12v2.4M1.6 8H4M12 8h2.4"/></svg> Its clones</button>
-              <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
           </span>
@@ -30513,6 +30647,15 @@ window.JunoPptx = (function () {
       if(a&&stopsFor(s,a)>0) out.push({a:a,i:i});});
     return out;
   }
+  /* T234: the frame each flip book was last DRAWN at, and WHEN it last
+     moved. Two of them, because one arrow press rebuilds the stage
+     more than once -- flipGo calls markDirty and then renderSlide, and
+     markDirty renders too -- so "did it change since the last render"
+     fires on the first pass and the second pass rebuilds the same node
+     without the class. The turn is a MOMENT instead: the render stamps
+     the clock when the frame moves, and every render inside the next
+     FTURN_MS carries the keyframe. */
+  var flipSeen={},flipTurn={},FTURN_MS=400;
   function flipById(s,id){
     var hit=null;
     flipsOn(s).forEach(function(p){if(!hit&&p.a.fid===id) hit=p.a;});
@@ -31723,7 +31866,10 @@ window.JunoPptx = (function () {
       if(!row){
         row=document.createElement('span');
         row.className='sw-tokrow';
-        menu.insertBefore(row,menu.firstChild);
+        /* T232: under Recently used, over Standard. It used to go
+           first, which put the deck's colours above a row that is
+           now the answer most of the time. */
+        menu.insertBefore(row,menu.querySelector('.sw-stdlab'));
       }
       row.innerHTML='';
       var isFill=(sel==='#fmt-fillcol-menu');
@@ -31846,6 +31992,9 @@ window.JunoPptx = (function () {
       pres.tokens.c[key]=val;
     } else pres.tokens[kind]=val;
     markDirty();
+    /* the ribbon's quick row paints deck references live, so it has
+       to be repainted when one of them changes (T232) */
+    quickSwatchSync(true);
     refresh();
   }
   /* ---- STYLE SETS ------------------------------------------------------
@@ -35346,11 +35495,28 @@ window.JunoPptx = (function () {
            duplicate slides to avoid. */
         var fst=document.createElement('div');
         fst.className='an-flipstage';
+        /* T234: THE PAGE TURN, AS AN EFFECT. Turning a page has
+           always cost a click in the show, but it looked like a cut,
+           so nothing about a flip book said "animation" (2026-09-04,
+           user: "can there be a make each flip an animation that
+           appears in animations when selected"). The class is added
+           only when the frame CHANGED since the last render, so an
+           edit elsewhere on the slide does not replay it. */
+        var fkey=a.fid||(cur+':'+i);
+        if(flipSeen[fkey]!==at){
+          /* not on the FIRST sight of a book: opening a slide is not
+             a page turn */
+          if(flipSeen[fkey]!=null) flipTurn[fkey]=Date.now();
+          flipSeen[fkey]=at;
+        }
+        if(a.fanim&&motionOK()&&flipTurn[fkey]
+          &&(Date.now()-flipTurn[fkey])<FTURN_MS)
+          fst.className+=' fturn fturn-'+a.fanim;
         if(!fr.length){
           var fph=document.createElement('div');
           fph.className='an-flipempty';
           fph.textContent=editing
-            ?'Empty flip book — use Figures ▾ to add frames'
+            ?'Empty flip book — use + Add to put figures in it'
             :'';
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){
@@ -36116,8 +36282,13 @@ window.JunoPptx = (function () {
        names the PART it recolours: "Colour" next to "Fill" left people
        guessing which one was the outline (2026-08-19, user: "'colour' vs
        'fill colour' is confusing — is that border?") */
-    show('#fmt-txcol-btn',kind!=='image');
-    show('#fmt-txquick',kind!=='image');
+    /* T234: not a flip book either. Nothing renders a.color for one
+       -- applyCommon writes opacity and rotation and stops -- so the
+       door was a control that did nothing at all (2026-09-04, user:
+       "why do flip books even have a colour? What does that do?"). */
+    var hasInk=(kind!=='image'&&kind!=='flip');
+    show('#fmt-txcol-btn',hasInk);
+    show('#fmt-txquick',hasInk);
     if(typeof quickSwatchSync==='function') quickSwatchSync();
     var tcb=$('#fmt-txcol-btn');
     /* innerHTML, not textContent: this button is RENAMED for whatever is
@@ -38878,11 +39049,40 @@ window.JunoPptx = (function () {
     }
     else if(c==='none'){a.bg=0;}
     else{a.bg=1;a.bgc=c;}};}
+  /* ---- T232: EVERY COLOUR YOU PICK IS A COLOUR YOU USED -----------
+     One history, written by every path -- a preset swatch, a deck
+     colour, a recent chip, the custom picker -- because the row on
+     the ribbon reads it back (2026-09-04, user: "the quick colour
+     list should also be the last colours used"). A deck reference
+     (@accent) is stored as the reference, so a recent that IS the
+     deck's accent still follows the deck. */
+  function recentColors(){
+    try{
+      var a=JSON.parse(localStorage.getItem('plotline-colors')||'[]');
+      return Array.isArray(a)?a.filter(function(s){
+        return typeof s==='string'&&s&&s!=='none';}):[];
+    }catch(e){return [];}
+  }
+  function pushRecentColor(str){
+    if(typeof str!=='string'||!str||str==='none') return;
+    var arr=recentColors().filter(function(x){return x!==str;});
+    arr.unshift(str);
+    try{localStorage.setItem('plotline-colors',
+      JSON.stringify(arr.slice(0,12)));}catch(e){}
+    quickSwatchSync(true);
+  }
+  /* what a chip for a stored colour is called */
+  function colorLabel(str){
+    var k=tokRef(str);
+    return k?((TOKEN_LABELS[k]||k)+' \u2014 this deck\u2019s colour')
+      :String(str);
+  }
   function applyTextColor(c){
+    pushRecentColor(c);
     if(colorSelection(c)) return;
     fmtApply(textMut(c));
   }
-  function applyFillColor(c){fmtApply(fillMut(c));}
+  function applyFillColor(c){pushRecentColor(c);fmtApply(fillMut(c));}
   /* ---- live preview: hovering a swatch shows the colour ON the page,
      leaving puts it back (2026-08-19, user: colours should preview live).
      The selected item is snapshotted, mutated for the render only, and
@@ -38925,17 +39125,19 @@ window.JunoPptx = (function () {
   function renderSwRecents(menu){
     var box=menu.querySelector('.sw-recrow');
     if(!box) return;
-    var rec=cpRecent().slice(0,6);
+    var rec=recentColors().slice(0,7);
     box.innerHTML='';
     box.hidden=!rec.length;
     if(!rec.length) return;
     var lab=document.createElement('span');
-    lab.className='sw-reclab';lab.textContent='recent';
+    lab.className='fmt-lab';lab.textContent='Recently used';
+    lab.title='The colours you last used, anywhere in this deck \u2014 '
+      +'the same ones the row on the ribbon shows.';
     box.appendChild(lab);
     rec.forEach(function(str){
       var b=document.createElement('button');
-      b.type='button';b.className='sw-rc';b.title=str;
-      b.style.background=str;
+      b.type='button';b.className='sw-rc';b.title=colorLabel(str);
+      b.style.background=tokVal(str);
       b.dataset.c=str;
       box.appendChild(b);
     });
@@ -38944,10 +39146,16 @@ window.JunoPptx = (function () {
    ['#fmt-fillcol-btn','#fmt-fillcol-menu','fill']].forEach(function(pair){
     var btn=$(pair[0]),menu=$(pair[1]),target=pair[2];
     if(!btn||!menu) return;
+    /* T232: keep the caret. Opening the door used to blur the text
+       box, so the picker inside it could only ever colour the whole
+       box -- the preset swatches had solved this for themselves. */
+    btn.addEventListener('mousedown',function(e){
+      if(activeTextEditable()) e.preventDefault();});
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       if(!menu.hidden){overlayHide(menu);pvEnd(false);return;}
       renderSwRecents(menu);
+      cpMountInline(menu,target);  /* the picker IS the menu (T232) */
       overlayShow(btn,menu);       /* on the stack (T213) */
       floatMenu(btn,menu);
     });
@@ -38962,7 +39170,9 @@ window.JunoPptx = (function () {
         else applyFillColor(rc.dataset.c);
       }
       var sw=e.target.closest&&e.target.closest('.sw');
-      if(rc||(sw&&!sw.classList.contains('sw-custom'))) overlayHide(menu);
+      /* T232: every chip in here is a colour now -- the rainbow "+"
+         that had to keep the menu open is gone */
+      if(rc||sw) overlayHide(menu);
     });
     menu.addEventListener('mouseover',function(e){
       var sw=e.target.closest&&e.target.closest('.sw,.sw-rc');
@@ -38972,8 +39182,10 @@ window.JunoPptx = (function () {
       pvShow(target==='text'?textMut(c):fillMut(c));
     });
     menu.addEventListener('mouseleave',function(){pvEnd(false);});
-    /* however the owner closes it, the hover preview is put back */
-    new MutationObserver(function(){if(menu.hidden) pvEnd(false);})
+    /* however the owner closes it, the hover preview is put back and
+       the picker goes home, so the other door can borrow it (T232) */
+    new MutationObserver(function(){
+      if(menu.hidden){pvEnd(false);cpUnmount();}})
       .observe(menu,{attributes:true,attributeFilter:['hidden']});
   });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
@@ -39535,17 +39747,32 @@ window.JunoPptx = (function () {
     }
     buildSpacingRows();
   }
-  /* ---- T220: THE DECK'S SIX COLOURS, ON THE ROW ------------------------
-     Two runs, one for the words and one for the box, each holding the
-     six colours the deck is actually built from. They store the
-     REFERENCE (@accent), like the token chips inside the picker, so a
-     deck that changes its colours changes these too; they preview on
-     hover through the same machinery the picker uses; and they leave
-     both doors in place for every other colour (2026-09-03, user: "I
-     would prefer if some of these were quick options that we can see").
-     Six is the count the 2026-08-05 review settled on -- fourteen
-     always-visible circles shouted louder than the page. */
+  /* ---- T220/T232: THE COLOURS YOU LAST USED, ON THE ROW ---------------
+     Two runs, one for the words and one for the box. T220 filled them
+     with the deck's six tokens, which made the row and the door look
+     like two rival answers to one question (2026-09-04, user: "the
+     colours is confusing how there is you can still click on the drop
+     down menu and then there is also the quick colour list... the
+     quick colour list should also be the last colours used"). Now it
+     is your history, which is the same list the door shows under
+     "Recently used" -- one palette, seen twice -- padded out with the
+     deck's own colours so a deck you just opened still leads with its
+     own six and the row is never empty. A deck reference is stored as
+     the reference, so one of these that IS the accent still follows
+     the deck. Six is the count the 2026-08-05 review settled on --
+     fourteen always-visible circles shouted louder than the page. */
   var quickSwatchSync=function(){};
+  function quickRow(){
+    var out=[],seen={};
+    recentColors().forEach(function(s){
+      if(out.length>=6||seen[s]) return;
+      seen[s]=1;out.push(s);});
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+      var ref='@'+k;
+      if(out.length>=6||seen[ref]) return;
+      seen[ref]=1;out.push(ref);});
+    return out;
+  }
   function quickSwatchBoot(){
     var hosts=[['#fmt-txquick','text'],['#fmt-bgquick','fill']]
       .map(function(p){return {el:$(p[0]),target:p[1]};})
@@ -39557,17 +39784,16 @@ window.JunoPptx = (function () {
       return (target==='text'?a.color:(a.fillc||a.bgc))||'';
     }
     function build(){
-      var t=tokens().c;
+      var row=quickRow();
       hosts.forEach(function(h){
         /* the caption stays; the swatches are rebuilt */
         $$('.qk-sw',h.el).forEach(function(o){o.remove();});
-        Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
-          var ref='@'+k,val=t[k];
+        row.forEach(function(ref){
           var b=document.createElement('button');
           b.type='button';b.className='qk-sw';
           b.dataset.c=ref;
-          b.style.background=val;
-          b.title=(TOKEN_LABELS[k]||k)+' \u2014 '+val
+          b.style.background=tokVal(ref);
+          b.title=colorLabel(ref)
             +(h.target==='text'?', on the words':', behind them');
           b.setAttribute('aria-label',b.title);
           b.addEventListener('mousedown',function(e){
@@ -39988,6 +40214,8 @@ window.JunoPptx = (function () {
      recent-colours strip. Text swatches and the fill swatches each get a
      rainbow "＋" chip that opens it; any CSS colour string is accepted. ---- */
   var cpEl=$('#color-pop'), cpTarget='text', cpRGBA={r:57,g:169,b:192,a:1};
+  /* where it lives when it is nobody's section (T232) */
+  var cpHome=cpEl?cpEl.parentNode:null;
   /* a live text selection captured when the picker opens, so a custom colour
      can recolour just the highlighted run (focus moves to the popup on apply) */
   var cpSavedEl=null, cpSavedRange=null;
@@ -40054,23 +40282,14 @@ window.JunoPptx = (function () {
     pvEnd(true);
     pvShow((cpTarget==='text'?textMut:fillMut)(toStr(cpRGBA)));
   }
-  function cpRecent(){
-    try{return JSON.parse(localStorage.getItem('plotline-colors')||'[]');}
-    catch(e){return [];}
-  }
-  function cpPushRecent(str){
-    var arr=cpRecent().filter(function(x){return x!==str;});
-    arr.unshift(str);
-    try{localStorage.setItem('plotline-colors',
-      JSON.stringify(arr.slice(0,12)));}catch(e){}
-  }
   function cpRenderRecent(){
     var box=$('#cp-recent'); if(!box) return;
     box.innerHTML='';
-    cpRecent().forEach(function(str){
+    recentColors().forEach(function(str){
       var b=document.createElement('button');
-      b.className='cp-rsw cp-sw-chk';b.type='button';b.title=str;
-      b.style.setProperty('--cpc',str);
+      b.className='cp-rsw cp-sw-chk';b.type='button';
+      b.title=colorLabel(str);
+      b.style.setProperty('--cpc',tokVal(str));
       b.addEventListener('click',function(){
         var c=parseColor(str); if(c){cpRGBA=c;cpSync();}});
       box.appendChild(b);
@@ -40089,8 +40308,48 @@ window.JunoPptx = (function () {
     }
     return a.k==='cell'?(a.txcol||null):(a.color||null);
   }
+  /* ---- T232: THE PICKER IS A SECTION OF THE MENU -------------------
+     Mounted into whichever colour door is opening and taken back out
+     when it closes, so ONE element serves both doors and the line
+     panel's floating use -- and hex, rgb and the transparency slider
+     stop being a second click behind a chip. */
+  function cpMountInline(menu,target){
+    if(!cpEl||!menu) return;
+    cpTarget=target;
+    cpSavedEl=null;cpSavedRange=null;
+    if(target==='text'){
+      var te=activeTextEditable();
+      if(te&&selectionInside(te)) try{
+        cpSavedEl=te;
+        cpSavedRange=window.getSelection().getRangeAt(0).cloneRange();
+      }catch(e){cpSavedEl=null;cpSavedRange=null;}
+    }
+    var head=$('#cp-head');
+    if(head) head.textContent=target==='fill'?'Any other fill'
+      :'Any other colour';
+    /* the menu carries the recents across its top; a second copy in
+       here would be the same row twice */
+    var rc=$('#cp-recent'); if(rc) rc.hidden=true;
+    var c0=parseColor(tokVal(cpCurrentFor(target)))
+      ||{r:57,g:169,b:192,a:1};
+    cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpEl.classList.add('cp-inline');
+    cpEl.style.left='';cpEl.style.top='';
+    menu.appendChild(cpEl);
+    cpEl.hidden=false;
+    cpSync();
+  }
+  function cpUnmount(){
+    if(!cpEl||!cpEl.classList.contains('cp-inline')) return;
+    cpEl.hidden=true;
+    cpEl.classList.remove('cp-inline');
+    if(cpHome) cpHome.appendChild(cpEl);
+  }
   function openColorPop(target,anchor){
     if(!cpEl) return;
+    /* never a section and a popup at once (T232) */
+    cpUnmount();
+    var rcf=$('#cp-recent'); if(rcf) rcf.hidden=false;
     cpTarget=target;
     cpSavedEl=null;cpSavedRange=null;
     if(target==='text'){
@@ -40136,8 +40395,12 @@ window.JunoPptx = (function () {
       else if(a.k==='rect'){a.fill=1;a.fillc=str;delete a.grad;}
       else {a.bg=1;a.bgc=str;}});
     cpSavedEl=null;cpSavedRange=null;
-    cpPushRecent(str);
-    if(cpEl) overlayHide(cpEl);
+    pushRecentColor(str);
+    /* mounted in a menu, Apply closes THE MENU -- hiding the section
+       inside an open menu would leave a door standing over a hole */
+    var host=(cpEl&&cpEl.classList.contains('cp-inline'))
+      ?cpEl.parentNode:null;
+    if(host) overlayHide(host); else if(cpEl) overlayHide(cpEl);
   }
   (function(){
     var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),al=$('#cp-alpha');
@@ -40153,15 +40416,9 @@ window.JunoPptx = (function () {
     if(al) al.addEventListener('input',function(){
       cpRGBA.a=(+al.value)/100;cpSync('alpha');});
     var ap=$('#cp-apply'); if(ap) ap.addEventListener('click',cpApply);
-    var swc=$('#sw-custom');
-    if(swc){
-      swc.addEventListener('mousedown',function(e){
-        if(activeTextEditable()) e.preventDefault();});
-      swc.addEventListener('click',function(){openColorPop('text',swc);});
-    }
-    var swbgc=$('#swbg-custom');
-    if(swbgc) swbgc.addEventListener('click',function(){
-      openColorPop('fill',swbgc);});
+    /* T232: no rainbow "+" chips. The picker they opened is the
+       bottom of the menu they sat in, so the chips were a button
+       that opened the thing already on screen. */
     /* closed by the owner (outside click, Escape) or by its own buttons:
        either way the preview is put back */
     if(cpEl) new MutationObserver(function(){if(cpEl.hidden) pvEnd(false);})
@@ -46336,17 +46593,64 @@ window.JunoPptx = (function () {
     sel.addEventListener('change',commit);
     mode.addEventListener('change',commit);
   }
+  /* ---- T234: ONE DOOR, CALLED "+ ADD" ------------------------------
+     The three things you can do to a flip book's contents, on the one
+     button that used to open only the third of them. The pane keeps
+     its own two buttons: you are already looking at the list there,
+     and putting them behind a menu would be hiding what is in the
+     open. */
+  function flipSelIdx(){
+    var s=pres.slides[cur],idx=null;
+    selIdxs().forEach(function(i){
+      var x=(s&&s.annots||[])[i];
+      if(idx===null&&x&&x.k==='flip') idx=i;});
+    return idx;
+  }
+  function flipAddMenu(btn,idx){
+    var old=$('#flip-add-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu';m.id='flip-add-menu';
+    menuHead(m,'put figures in this book');
+    function row(txt,ic,tip,fn){
+      var b=document.createElement('button');
+      b.className='dbtn';b.type='button';
+      b.innerHTML=bic(ic)+' '+esc(txt);
+      b.title=tip;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayHide(m);m.remove();fn();});
+      m.appendChild(b);
+    }
+    row('Figures from a notebook\u2026','cellcard',
+      'Click as many notebook cards as you want, in order \u2014 each '
+      +'becomes a page of this book',function(){startPick(idx,true);});
+    row('Pictures from this computer\u2026','image',
+      'Add pictures as pages. You can pick several at once',
+      function(){
+        flipSel=idx;
+        var fi=$('#fp-img-file');
+        if(fi){fi.value='';fi.click();}
+      });
+    menuHead(m,'the pages it has');
+    row('Reorder and name them\u2026','list',
+      'Open this book\u2019s pages: drag them into order, give them '
+      +'names, and tie text or objects to one of them',
+      function(){showFlipPane(true,idx);});
+    deckEl.appendChild(m);
+    overlayShow(btn,m);floatMenu(btn,m);
+  }
   (function(){
     var fg=$('#fmt-figures');
     if(fg) fg.addEventListener('click',function(e){
       e.stopPropagation();
-      var s=pres.slides[cur],idx=null;
-      selIdxs().forEach(function(i){
-        var x=(s&&s.annots||[])[i];
-        if(idx===null&&x&&x.k==='flip') idx=i;});
+      /* the owner HIDES it on Escape or an outside click, it does
+         not remove it -- so a leftover must not read as open, or
+         the next press would spend itself closing nothing */
+      var open=$('#flip-add-menu');
+      if(open&&!open.hidden){overlayHide(open);open.remove();return;}
+      if(open) open.remove();
+      var idx=flipSelIdx();
       if(idx===null) return;
-      var p=$('#flippane');
-      showFlipPane(!!(p&&p.hidden),idx);
+      flipAddMenu(fg,idx);
     });
     var cl=$('#flippane-close');
     if(cl) cl.addEventListener('click',function(){showFlipPane(false);});
@@ -49192,6 +49496,67 @@ window.JunoPptx = (function () {
      because a mode whose shortcuts are invisible has no shortcuts. */
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
+  /* ---- T234: A FLIP BOOK'S PAGES ARE ANIMATION ------------------------
+     Every figure after the first has always eaten a click -- extraStops
+     counts them, flipPlan sequences them, and the Animations pane lists
+     them under the book. What was missing was any sign of it on the
+     Animation tab, and any way for a page to ARRIVE rather than simply
+     replace the one before (2026-09-04, user: "how do the animations
+     work with the flip books. Can there be a make each flip an
+     animation that appears in animations when selected"). The stored
+     value is a.fanim and the renderer turns it into one CSS keyframe on
+     the frame that changed, so it plays in the show and in an exported
+     page alike. The words are SEQ_FX's, minus Appear -- for a page turn
+     "appear" and "none" are the same thing. */
+  var FLIP_FX=[['','None'],['fade','Fade'],['rise','Float up'],
+    ['zoom','Grow']];
+  function flipFxWord(v){
+    var out='';
+    FLIP_FX.forEach(function(p){if(p[0]===v) out=p[1];});
+    return out;
+  }
+  function flipFxItem(){
+    var s=pres.slides[cur],out=null;
+    selIdxs().forEach(function(i){
+      var x=(s&&s.annots||[])[i];
+      if(!out&&x&&x.k==='flip') out=x;});
+    return out;
+  }
+  function flipFxId(v){return '#anim-flip-'+(v||'none');}
+  function flipFxBoot(){
+    FLIP_FX.forEach(function(pr){
+      var b=$(flipFxId(pr[0]));
+      if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var a=flipFxItem(); if(!a) return;
+        if(pr[0]) a.fanim=pr[0]; else delete a.fanim;
+        markDirty();renderSlide();
+        if(typeof animRibbonSync==='function') animRibbonSync();
+        if(typeof animPaneSync==='function') animPaneSync();
+      });
+    });
+  }
+  function flipFxSync(){
+    var run=$('#anim-flip-run'),say=$('#anim-flip-say');
+    var a=flipFxItem();
+    if(run) run.hidden=!a;
+    if(say) say.hidden=!a;
+    if(!a) return;
+    var now=a.fanim||'';
+    FLIP_FX.forEach(function(pr){
+      var b=$(flipFxId(pr[0]));
+      if(b) b.setAttribute('aria-pressed',(now===pr[0]).toString());
+    });
+    if(say){
+      var n=flipFrames(a).length,clicks=Math.max(0,n-1);
+      say.innerHTML='<span>In the show</span><span><b></b></span>';
+      say.querySelector('b').textContent=n
+        ?(n+' figure'+(n===1?'':'s')+' \u00b7 '+clicks+' click'
+          +(clicks===1?'':'s'))
+        :'no figures yet';
+    }
+  }
   var seqType='fade';
   function seqKeyDown(e){
     if(!seqArm) return;
@@ -49825,7 +50190,9 @@ window.JunoPptx = (function () {
                turned the list into a column of the same six words */
             chip.textContent=a.k==='flip'
               ?('figure '+(ti+2)+' of '+flipFrames(a).length
-                +(t?(' \u00b7 '+t):''))
+                +(t?(' \u00b7 '+t):'')
+                +(a.fanim?(' \u00b7 '+flipFxWord(a.fanim).toLowerCase())
+                  :''))
               :('then '+t);
             chip.title=a.k==='flip'
               ?('A page of this flip book \u2014 move it in the book '
@@ -50030,6 +50397,8 @@ window.JunoPptx = (function () {
        item's effect and stand down when there is nothing selected */
     animRibbonSync=function(){
       timingSync();
+      flipFxSync();
+
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
@@ -56406,6 +56775,16 @@ window.JunoPptx = (function () {
      without asking again (the browser only re-asks for permission). */
   var TGKEY='semopts:'+SCOPE+':savetarget';
   var HKEY='deck:'+SCOPE;
+  /* T235: THE DEFAULT FOLDER. One directory handle, remembered like
+     the file handle beside it, from which Junoview mints its own file
+     the first time it needs one -- so "save on this computer" stops
+     being a dialog you have to answer and starts being the default.
+     Its NAME is kept in localStorage as well, because the menu has to
+     be able to say which folder before IndexedDB has answered. */
+  var DKEY='deckdir:'+SCOPE;
+  var DNKEY='semopts:'+SCOPE+':savedirname';
+  var canPickDir=!!window.showDirectoryPicker;
+  var deckDir=null,deckDirName=lsGet(DNKEY)||'';
   var canPickFile=!!window.showSaveFilePicker;
   var saveTarget=lsGet(TGKEY)
     ||(APP.mode==='app'?'project':'browser');
@@ -56481,6 +56860,37 @@ window.JunoPptx = (function () {
       return h.requestPermission({mode:'readwrite'})
         .then(function(s){return s==='granted';})
         .catch(function(){return false;});
+    });
+  }
+  /* a file name this deck can be found by, from the deck's own name */
+  function deckFileName(){
+    var n=String(pres.name||'presentation').trim()
+      .replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').slice(0,60);
+    return (n||'presentation')+'.junoview.html';
+  }
+  function pickSaveFolder(){
+    if(!canPickDir) return Promise.resolve(null);
+    return window.showDirectoryPicker({mode:'readwrite',
+      id:'junoview-decks'}).then(function(d){
+      deckDir=d;deckDirName=d.name||'';
+      lsSet(DNKEY,deckDirName);
+      idbPut(DKEY,d).catch(function(){});
+      return d;
+    });
+  }
+  /* the file inside the default folder, made if it is not there yet.
+     `silent` is an autosave, which has no user gesture behind it and
+     so must never raise a permission prompt. */
+  function folderFile(silent){
+    if(!deckDir) return Promise.resolve(null);
+    return (silent?permOK(deckDir):permAsk(deckDir)).then(function(ok){
+      if(!ok) return null;
+      return deckDir.getFileHandle(deckFileName(),{create:true})
+        .then(function(h){
+          fileHandle=h;fileName=h.name||deckFileName();
+          idbPut(HKEY,h).catch(function(){});
+          return h;
+        }).catch(function(){return null;});
     });
   }
   function pickSaveFile(){
@@ -56628,7 +57038,10 @@ window.JunoPptx = (function () {
      permission prompt (there is no user gesture behind it) */
   function saveToFile(silent){
     flushTextEdits();
-    if(!fileHandle&&silent) return Promise.resolve(false);
+    /* T235: an autosave with no file can still make one, if there is a
+       default folder to make it in. Without one it stands down, as it
+       always has -- an autosave must never open a file dialog. */
+    if(!fileHandle&&!deckDir&&silent) return Promise.resolve(false);
     var savedHist=!silent?histCapture():null;
     var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
     var fileText;
@@ -56637,7 +57050,9 @@ window.JunoPptx = (function () {
       if(!silent) toast('Save failed: '+((e&&e.message)||e));
       return Promise.resolve(false);
     }
-    var op=(fileHandle?Promise.resolve(fileHandle):pickSaveFile())
+    var op=(fileHandle?Promise.resolve(fileHandle)
+      :(deckDir?folderFile(silent)
+        :(silent?Promise.resolve(null):pickSaveFile())))
       .then(function(h){
         if(!h) return false;
         return (silent?permOK(h):permAsk(h)).then(function(ok){
@@ -56680,7 +57095,9 @@ window.JunoPptx = (function () {
      browser"). The filename is in the tooltip. */
   function targetLabel(){
     if(saveTarget==='project') return 'This project';
-    if(saveTarget==='file') return 'On this computer';
+    if(saveTarget==='file')
+      return deckDirName?('Your '+deckDirName+' folder')
+        :'On this computer';
     return 'In this browser';
   }
   function renderTargetBtn(){
@@ -56698,6 +57115,27 @@ window.JunoPptx = (function () {
     b.classList.toggle('tg-file',saveTarget==='file');
     var pj=$('#tg-project'); if(pj) pj.hidden=(APP.mode!=='app');
     var pk=$('#tg-pick'); if(pk) pk.hidden=(saveTarget!=='file');
+    /* T235: the folder row names the folder once there is one, and a
+       second row appears to undo it */
+    var fd=$('#tg-folder');
+    if(fd){
+      fd.hidden=!canPickDir;
+      fd.textContent=deckDirName
+        ?('Folder: '+deckDirName+' \u2014 change\u2026')
+        :'A folder on this computer\u2026';
+      fd.title=deckDirName
+        ?('Every presentation saves itself into '+deckDirName
+          +' as a .junoview.html file. Nothing to answer, and no '
+          +'browser storage to run out of.')
+        :'Pick one folder and Junoview keeps its own file in there '
+          +'from now on \u2014 for this presentation and every one '
+          +'after it. No dialog each time, and no browser storage to '
+          +'run out of.';
+      fd.setAttribute('aria-pressed',
+        (saveTarget==='file'&&!!deckDirName).toString());
+    }
+    var ff=$('#tg-folder-forget');
+    if(ff) ff.hidden=!deckDirName;
     var tf=$('#tg-file');
     if(tf) tf.textContent=canPickFile
       ?'A file on your computer…'
@@ -56711,6 +57149,7 @@ window.JunoPptx = (function () {
     b.setAttribute('data-tip',
       saveTarget==='file'
         ?'Saving writes '+(fileName||'a .junoview file')
+          +(deckDirName?(' in your '+deckDirName+' folder'):'')
           +' — Junoview remembers it between visits'
         :saveTarget==='project'
           ?'Saving writes junoview_project.json next to your notebooks'
@@ -56951,9 +57390,10 @@ window.JunoPptx = (function () {
          that threw on quota still rendered "saved to browser · 14:32"
          (2026-08-22). */
       status();
-      toast('NOT saved — this browser is full. Use File › Download a '
-        +'copy, or the \u25be beside Save to keep a file on your computer.',
-        9000);
+      toast('NOT saved \u2014 this browser is full. The \u25be beside '
+        +'Save \u203a "A folder on this computer" keeps every '
+        +'presentation as a file instead, with no limit; File \u203a '
+        +'Download a copy saves this one right now.',11000);
       return;
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
@@ -57014,6 +57454,57 @@ window.JunoPptx = (function () {
     });
     var pk=$('#tg-pick');
     if(pk) pk.addEventListener('click',chooseFile);
+    /* T235: pick the folder, and everything after it goes there */
+    var fd=$('#tg-folder');
+    if(fd) fd.addEventListener('click',function(){
+      close();
+      if(!canPickDir){
+        toast('This browser cannot pick a folder \u2014 use File \u203a '
+          +'Download a copy');
+        return;
+      }
+      if(!requireName()) return;
+      pickSaveFolder().then(function(d){
+        if(!d) return;
+        /* a new folder means a new file: forget the old handle, or
+           the next save would write the file you just moved away from */
+        fileHandle=null;fileName='';
+        idbDel(HKEY).catch(function(){});
+        setTarget('file');
+        return saveToFile(false).then(function(){
+          toast('Every presentation now saves itself into '
+            +deckDirName+' \u2014 this one is '+(fileName||'there')
+            +' already.',6000);
+        });
+      }).catch(function(e){
+        if(!e||e.name!=='AbortError')
+          toast('Could not use that folder: '+((e&&e.message)||e));
+      });
+    });
+    var ff=$('#tg-folder-forget');
+    if(ff) ff.addEventListener('click',function(){
+      close();
+      deckDir=null;deckDirName='';
+      lsDel(DNKEY);idbDel(DKEY).catch(function(){});
+      renderTargetBtn();renderSaveBtn();
+      toast('Junoview will ask which file from now on. The file it '
+        +'already made is still there.',6000);
+    });
+    /* the folder is remembered between visits, like the file */
+    idbGet(DKEY).then(function(d){
+      if(!d) return;
+      return permReadOK(d).then(function(ok){
+        if(!ok) return;
+        deckDir=d;deckDirName=d.name||deckDirName;
+        lsSet(DNKEY,deckDirName);
+        /* THE POINT OF IT: a remembered folder means local IS the
+           default, including for a presentation made after it was
+           chosen. Only 'browser' is overridden -- a project build
+           keeps writing junoview_project.json. */
+        if(saveTarget==='browser') setTarget('file');
+        renderTargetBtn();renderSaveBtn();
+      });
+    }).catch(function(){});
     /* a file chosen on an earlier visit is still remembered */
     idbGet(HKEY).then(function(h){
       if(!h) return;
@@ -58903,6 +59394,7 @@ window.JunoPptx = (function () {
   listGalleryBoot();          /* kinds of bullet and numbering (T227) */
   homeDoorsBoot();            /* Notes and Optional on Home (T228) */
   cloneDoorsBoot();           /* clones, on the Object tab (T229) */
+  flipFxBoot();               /* how a flip book's page turns (T234) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */
