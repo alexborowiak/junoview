@@ -979,6 +979,11 @@
     if(editing) requestAnimationFrame(fitQat);
     var tabs=$('#rbn-tabs',deckEl);
     if(tabs) tabs.hidden=(mode!=='edit');
+    /* T239: Home only where there IS one. A rendered page is not the
+       app: goHome's own gate is app-or-web, so offering the button
+       in an exported deck would be a button that does nothing. */
+    var qh=$('#qat-home');
+    if(qh) qh.hidden=!(APP.mode==='app'||APP.mode==='web');
     var xb=$('#deck-exit');
     if(xb){
       /* say where it GOES. "Back" beside an armed drawing tool reads as
@@ -1546,6 +1551,18 @@
   if(redoBtn) redoBtn.addEventListener('click',redo);
   $('#deck-exit').addEventListener('click',function(){
     setUIMode(presentFrom==='edit'?'edit':'create');});
+  /* T239: the same two journeys, from the bar that is actually on
+     screen while you edit. Close is #deck-exit's; Home is the
+     wordmark's, which the rail owns and the rail is inert here. */
+  var qatClose=$('#qat-close');
+  if(qatClose) qatClose.addEventListener('click',function(e){
+    e.stopPropagation();setUIMode('create');});
+  var qatHome=$('#qat-home');
+  if(qatHome) qatHome.addEventListener('click',function(e){
+    e.stopPropagation();
+    if(APP&&typeof APP.goHome==='function') APP.goHome(true);
+    else setUIMode('create');
+  });
 
   $('#deck-prev').addEventListener('click',function(){backStep();});
   $('#deck-next').addEventListener('click',function(){advance();});

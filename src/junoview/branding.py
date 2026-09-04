@@ -350,6 +350,9 @@ _ICON_PATHS = {
             '<path d="M5.8 3.4 3 6.2 5.8 9"/>',
     "redo": '<path d="M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6"/>'
             '<path d="M10.2 3.4 13 6.2 10.2 9"/>',
+    # a roof over a doorway: back to the start screen (T239)
+    "home": '<path d="M2.2 7.6 8 2.6l5.8 5"/>'
+            '<path d="M3.9 8.6v4.8h8.2V8.6"/>',
     # a hooked back-arrow: leave the editor / stop presenting
     "return": '<path d="M13.2 3.6v2.6a3 3 0 0 1-3 3H3.4"/>'
               '<path d="M6.2 6.3 3.3 9.2l2.9 2.9"/>',

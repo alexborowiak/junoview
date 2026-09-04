@@ -4985,6 +4985,11 @@ body.light .dg-num input{background:#00000006;border-color:var(--line);
 /* History is a tile on Home too, the same size as the others (T236) */
 .rbn-row>#hm-history.big-tile{width:72px;height:56px;
   align-self:center;}
+/* ---- T239: THE WAY OUT IS ON THE BAR YOU CAN SEE ---------------------
+   Two rows, like File over Save beside them: the pair is one errand
+   and stacking halves the width it costs the top bar. */
+.qat-way{flex:none;}
+.qat-way .qat-btn{justify-content:flex-start;}
 /* ---- T238: LEAVING IS AN EFFECT, NOT A CUT --------------------------
    The stop an object goes on keeps the element so the exit can play;
    from then on it is invisible and untouchable, and every later stop

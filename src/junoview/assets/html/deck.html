@@ -69,6 +69,22 @@
          group's width, and they are the two halves of the same
          errand. The wrapper stays a plain row inside the builder
          panel's header, which is a one-line bar. -->
+    <!-- T239: THE WAY OUT, WHERE IT WAS ALWAYS BELIEVED TO BE
+         (2026-09-04, user: "there is no home button to go back
+         home"). While you edit, .deck-top is hidden and the
+         presentations rail is minimised AND inert, so #deck-exit
+         down there and the rail’s Notebooks button were both
+         unclickable: there was no way out of the editor at all.
+         Two destinations, because they really are two: Home is the
+         start screen, Close is the builder for this notebook. -->
+    <span class="rbn-stack qat-way">
+      <button class="dbtn qat-btn" id="qat-home"
+        title="Back to the Junoview start screen. Nothing is closed
+ or lost"><i data-ic="home"></i> Home</button>
+      <button class="dbtn qat-btn" id="qat-close"
+        title="Leave the editor and go back to the notebook you were
+ building from"><i data-ic="return"></i> Close</button>
+    </span>
     <span class="rbn-stack">
     <div class="dc-menuwrap">
       <button class="dbtn" id="dc-file" aria-haspopup="true"

@@ -5000,3 +5000,22 @@ option. Then where has the ability to refresh all images gone?"
   button reported the state it had before its own click, because
   refresh() re-runs the ribbon's sync on a selection change and
   pressing a button is not one.
+
+- [x] **T239 - There is a way out of the editor, and it says where it
+  goes.**
+  The user (2026-09-04): "Also for the whole website, a full screen
+  editor is missing. There is no home button to go back home."
+  *Done 2026-09-04.* Worse than reported. While you edit, `.deck-top`
+  is hidden by `syncTopBar` -- so "Close the editor" is not on screen
+  -- and the presentations rail is minimised AND `inert` (deckIsolate,
+  2026-08-30), so its Notebooks button cannot be clicked either.
+  app.js's own comment says "the way back out of the editor is
+  #deck-exit in the QAT, which is visible throughout": it is not in the
+  QAT, it is in the bar the QAT replaces. There was no way out at all.
+  The deck's top bar now leads with a stacked pair, before File --
+  **Home** (the start screen, `APP.goHome`) and **Close** (the notebook
+  you were building from) -- because they really are two destinations.
+  Home hides itself on a rendered page, where `goHome`'s own gate is
+  app-or-web and the button would do nothing. Driven on a web build:
+  Home closed the deck and showed the welcome; Close returned to the
+  builder.

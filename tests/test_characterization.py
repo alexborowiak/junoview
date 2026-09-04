@@ -1034,8 +1034,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # exit has worked since T174 but its only way in was a popover inside
 # the Layers pane -- and leaving became an effect rather than a cut:
 # the stop an object goes on keeps the element so it can fade.
-EXPECTED_MD5 = "ceeb5bf7bd53d67c5a6af53fea8de0b3"
-EXPECTED_BYTES = 3492360
+# 2026-09-04, T239: Home and Close on the deck's top bar. While editing,
+# .deck-top is hidden and the presentations rail is inert, so the two
+# controls that were supposed to be the way out of the editor were
+# both unclickable and there was no way out at all.
+EXPECTED_MD5 = "9469bcd1f6b1490f3d78bf103c162298"
+EXPECTED_BYTES = 3494804
 
 
 def _render_example() -> str:
