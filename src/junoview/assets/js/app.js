@@ -646,11 +646,15 @@
     var b=$('#sec-scope-btn'); if(!b) return;
     seedScope();
     var n=scopeCount(),tot=allSids().length;
-    var lab=(!tot||n===tot)?'All'
-      :(n?(n+' of '+tot):'none');
+    /* T243: say what it MEANS. "Sections: All" reads as a view
+       setting; what it actually decides is which sections the filter
+       buttons act on (2026-09-04, user: "the section filtering is
+       kind of confusing and hard to use"). */
+    var lab=(!tot||n===tot)?'all sections'
+      :(n?(n+' of '+tot+' sections'):'no sections');
     /* write the LABEL, not innerHTML — innerHTML= wiped the scope icon
        (and the .btxt span the ribbon compaction stages hide) */
-    setBtnText(b,'Sections: '+lab+' ▾');
+    setBtnText(b,'Filters act on: '+lab+' ▾');
     b.classList.toggle('on',!!tot&&n!==tot);
   }
   /* ---- which sections the appbar is currently EDITING, and how to read
@@ -801,17 +805,43 @@
     m.innerHTML='';
     var nodes=scopeTree();
     var h=document.createElement('div');h.className='ckf-h';
-    h.textContent='apply the filters to';m.appendChild(h);
-    /* one button, one meaning, one label — always "Select all" */
-    var all=document.createElement('button');
-    all.className='ckf-all';
-    all.textContent='Select all';
-    all.addEventListener('click',function(e){
-      e.stopPropagation();
-      nodes.forEach(function(n){secScope[n.id]=1;});
-      renderScopeMenu();renderScopeBtn();applyFilters();
-    });
-    m.appendChild(all);
+    h.textContent='the filters act on these sections';
+    m.appendChild(h);
+    /* T243: SAY WHAT THE THING IS. The menu named itself "apply the
+       filters to" and then showed a tree; nothing said that each
+       section keeps its own filters, which is the whole point of
+       being able to pick them. */
+    var why=document.createElement('div');
+    why.className='ckf-why';
+    why.textContent='Tick the sections you want the Plots, Markdown, '
+      +'Code and Output buttons to change. Each section remembers its '
+      +'own, so you can hide code in one chapter and keep it in the '
+      +'next.';
+    m.appendChild(why);
+    /* T243: both directions. "Select all" alone meant picking ONE
+       section was a click on every other one. */
+    var bulk=document.createElement('div');
+    bulk.className='ckf-bulk';
+    function bulkBtn(txt,tip,fn){
+      var b2=document.createElement('button');
+      b2.className='ckf-all';b2.type='button';
+      b2.textContent=txt;b2.title=tip;
+      b2.addEventListener('click',function(e){
+        e.stopPropagation();fn();
+        renderScopeMenu();renderScopeBtn();applyFilters();
+      });
+      bulk.appendChild(b2);
+    }
+    bulkBtn('Select all','Every section in this notebook',
+      function(){nodes.forEach(function(n){secScope[n.id]=1;});});
+    bulkBtn('Select none','Clear them all, then tick the ones you want',
+      function(){nodes.forEach(function(n){delete secScope[n.id];});});
+    var cnt2=document.createElement('span');
+    cnt2.className='ckf-count';
+    var picked=nodes.filter(function(n){return !!secScope[n.id];}).length;
+    cnt2.textContent=picked+' of '+nodes.length+' ticked';
+    bulk.appendChild(cnt2);
+    m.appendChild(bulk);
     /* …and, at the foot, send these filters to the other notebooks */
     var many=(APP.order||[]).length>1;
     var cp=document.createElement('button');
@@ -839,6 +869,11 @@
       n.kids.forEach(function(k){
         if(val) secScope[k]=1; else delete secScope[k];});
     }
+    /* T243: OPEN BY DEFAULT. It opened with every heading collapsed,
+       so a ten-section notebook offered one row and picking anything
+       meant expanding first. scopeOpen still remembers what you fold. */
+    nodes.forEach(function(n){
+      if(n.kids.length&&scopeOpen[n.id]===undefined) scopeOpen[n.id]=1;});
     /* a row is visible only while every ancestor is expanded */
     var hideUnder=null;
     nodes.forEach(function(n,i){
@@ -875,6 +910,14 @@
         tw.appendChild(ch);
       }
       row.appendChild(tw);
+      /* T243: A TICK YOU CAN SEE. The whole row was the selector and a
+         9px chevron inside it was the expander -- two gestures in one
+         target, with nothing saying which was which. The box says what
+         the row's state IS, and the row still toggles it. */
+      var bx=document.createElement('span');
+      bx.className='scope-box';
+      bx.setAttribute('aria-hidden','true');
+      row.appendChild(bx);
       var tx=document.createElement('span');tx.className='scope-t';
       tx.textContent=(n.num?n.num+'  ':'')+n.title;
       if(n.kids.length){

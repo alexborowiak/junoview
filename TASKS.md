@@ -5073,3 +5073,21 @@ option. Then where has the ability to refresh all images gone?"
   still there tomorrow. Driven on the example notebook: with Output off
   for the whole notebook the pinned card kept its output while its
   unpinned peer's went `part-off`.
+
+- [x] **T243 - The section scope reads as a list of sections you tick.**
+  The user (2026-09-04): "Also the section filtering is kind of
+  confusing and hard to use."
+  *Done 2026-09-04.* Four things made it so, and all four are fixed.
+  It opened with every heading **collapsed**, so a ten-section notebook
+  offered one row and picking anything meant expanding first; it opens
+  showing them now, and still remembers what you fold. The only bulk
+  control was **Select all**, so picking one section meant clicking
+  every other one; there is Select none beside it and a live "3 of 10
+  ticked". The whole row was the tick and a 9px chevron inside it was
+  the expander -- two gestures in one target with nothing saying which
+  was which; each row carries a **tick box** now, which also shows the
+  half-state when a heading's children disagree. And neither the button
+  ("Sections: All", which reads as a view setting) nor the menu said
+  what it decided: the button says **"Filters act on: all sections"**
+  and the menu opens with one line explaining that each section keeps
+  its own filters, which is the whole reason to be able to pick them.

@@ -683,6 +683,30 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
   animation:recent-slide 1.05s ease-in-out infinite;}
 @keyframes recent-slide{from{background-position:-44% 0;}
   to{background-position:144% 0;}}
+/* ---- T243: THE SECTION SCOPE READS AS A LIST YOU TICK -----------------
+   It opened collapsed (one row on a ten-section notebook), offered only
+   Select all, and made the whole row the selector with a 9px chevron
+   inside it as the expander -- two gestures in one target. */
+.ckf-why{font-family:var(--sans);font-size:11.5px;line-height:1.5;
+  color:var(--ink-3);padding:2px 10px 8px;}
+.ckf-bulk{display:flex;align-items:center;gap:6px;padding:0 8px 8px;
+  border-bottom:1px solid var(--line);margin-bottom:6px;}
+.ckf-bulk .ckf-all{margin:0;}
+.ckf-count{margin-left:auto;font-family:var(--mono);font-size:10px;
+  color:var(--ink-3);}
+.scope-box{flex:none;width:13px;height:13px;border-radius:3px;
+  border:1.5px solid var(--line-2,#9fb0c0);position:relative;
+  background:var(--paper);}
+.scope-row.on .scope-box{background:var(--cyan-deep);
+  border-color:var(--cyan-deep);}
+.scope-row.on .scope-box::after{content:"";position:absolute;
+  left:3.5px;top:.5px;width:4px;height:8px;border:solid #fff;
+  border-width:0 2px 2px 0;transform:rotate(42deg);}
+.scope-row.part .scope-box{border-color:var(--cyan-deep);}
+.scope-row.part .scope-box::after{content:"";position:absolute;
+  left:2px;top:4.5px;width:7px;height:0;border-top:2px solid
+  var(--cyan-deep);}
+
 /* ---- T240: FOUR CARDS, ONE SHAPE ------------------------------------
    A flex row sized every button to its own words, so four doors
    wrapped into two ragged rows of different widths and only one of

@@ -1046,8 +1046,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T242: every cell head grew a pin (the filters cannot
 # reach a pinned cell) and a mark that cycles star / heart / flag, and
 # the sidebar lists both above the sections.
-EXPECTED_MD5 = "9bcc9ccbd0a0d9a31fe406b03430b529"
-EXPECTED_BYTES = 3525887
+# 2026-09-04, T243: the section-scope menu opens showing every section
+# with a tick box, gained Select none and a count, and its button says
+# "Filters act on: all sections" instead of "Sections: All".
+EXPECTED_MD5 = "de543ceaf6abbba8bb36cc7103d36578"
+EXPECTED_BYTES = 3529445
 
 
 def _render_example() -> str:
