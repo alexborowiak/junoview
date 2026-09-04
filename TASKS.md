@@ -5477,3 +5477,37 @@ option. Then where has the ability to refresh all images gone?"
     carrying a word, so it read "Auto-" / "hide" beside a Collapse
     button three times its width. The footer stacks now. Driven at
     1440x900: 34px and 2 lines before, 163px and one line each after.
+
+- [x] **T263 - Six controls that looked live and were not.**
+  The common shape: the button is there, the click lands, and nothing
+  happens -- or, worse, something says it happened.
+  - **The eye on a pinned cell.** T242's pinned short-circuit stripped
+    `cell-off` along with the filter classes, so pressing a pinned
+    card's eye set the class and the very next pass took it off again.
+    A pin is about the FILTERS; the eye is a deliberate press, and it
+    is honoured inside the pinned branch now.
+  - **Undo could not undo a custom slide layout.** `histState` has
+    always snapshotted `pres.layouts`; `histRestore`'s key list never
+    mentioned it, so making or deleting a layout was the one
+    design-level change Ctrl+Z could not reach.
+  - **`validate_deck` warned about every deck that designed a layout.**
+    `layouts` is written by the layout builder, carried by `normPres`
+    and named explicitly by `as_presentations`, but was missing from
+    `DECK_KEYS` -- so the schema called a first-class key unknown. Added
+    there and to DECK-FORMAT.md's table.
+  - **The autosave menu threw on every outside click**, testing an
+    undeclared `wrap` in a strict IIFE. Redundant as well as broken:
+    `overlayShow` already registers the menu with the single overlay
+    owner, which closes it on an outside click and on Escape.
+  - **Import claimed success after storing nothing.** `lsSet` returns a
+    boolean exactly so this cannot happen; `importDeckText` ignored it,
+    so once the draft budget was full every write was discarded, the
+    toast still said "Imported N presentations", and the view switched
+    to a deck that is not stored. It counts what landed and says what
+    did not.
+  - **Opening a deck in Firefox or Safari killed Save.** The
+    `<input type=file>` fallback set `saveTarget='file'` on the promise
+    that "the first Save asks where once" -- but asking needs a save
+    picker, and the only browsers that reach this path are the ones
+    without one. Save and autosave then did nothing at all and said
+    nothing. It keeps the deck as a draft and says so instead.

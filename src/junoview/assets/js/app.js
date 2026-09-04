@@ -1043,8 +1043,14 @@
            none of it, so it is cleared and skipped rather than being
            threaded through every branch as one more exception. */
         if(c.classList.contains('is-pinned')){
-          c.classList.remove('is-hidden','cell-off','collapsed',
-            'expanded');
+          /* T263: the filters do not reach a pinned cell -- but its own
+             EYE still does. cell-off is a deliberate press, not a filter,
+             and stripping it here meant the eye on a pinned card looked
+             live and did nothing at all: the class went back on, the next
+             pass took it off again, and the card never moved. */
+          var poff=c.classList.contains('cell-off');
+          c.classList.remove('collapsed','expanded');
+          c.classList.toggle('is-hidden',poff);
           $$('.part-off,.part-fold,.part-open,.code-off,.pt-off,'
             +'.pt-fold,.pt-open,.ot-off,.ot-fold,.ot-open',c)
             .forEach(function(n){

@@ -1085,8 +1085,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # Off like the buttons; Auto-hide wears the autohide icon; GitHub uses
 # bic('link'); the Tree tooltips say "cell"; Find advertises Ctrl+F; and
 # the rail footer stacks so "Auto-hide" stops wrapping.
-EXPECTED_MD5 = "21fef5b46bea2cb0da0385ad3edf2952"
-EXPECTED_BYTES = 3565308
+# 2026-09-04, T263: six quiet failures repaired -- the eye on a pinned
+# cell, undo reaching a custom layout, the autosave menu's dead outside-
+# click closer, import counting only what it stored, and the file-open
+# fallback not claiming a save target the browser cannot write.
+EXPECTED_MD5 = "9a40b5c78ae33f107a2c999c748aa621"
+EXPECTED_BYTES = 3567604
 
 
 def _render_example() -> str:

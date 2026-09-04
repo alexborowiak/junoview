@@ -715,8 +715,12 @@
         build();overlayShow(btn,menu);floatMenu(btn,menu);
       } else overlayHide(menu);
     });
-    document.addEventListener('click',function(e){
-      if(!menu.hidden&&wrap&&!wrap.contains(e.target)) close();});
+    /* T263: a leftover outside-click closer used to live here, testing
+       an undeclared `wrap` -- so in this strict IIFE every click while
+       the menu was open threw a ReferenceError. It was also redundant:
+       overlayShow registers the menu with the single overlay owner,
+       whose document-click handler closes it on an outside click and
+       whose capture-phase Escape handler closes it on Escape. */
   })();
   var miAuto=$('#mi-autosave');
   if(miAuto) miAuto.addEventListener('click',function(){
@@ -2058,7 +2062,7 @@
       if(!silent) toast('That file does not look like a saved deck');
       return 0;
     }
-    var imported=0,firstName=null;
+    var imported=0,dropped=0,firstName=null;
     list.forEach(function(pr){
       if(!pr||!Array.isArray(pr.slides)) return;
       var np=normPres(pr);
@@ -2068,12 +2072,20 @@
         k++;nm=base+'-'+k;
       }
       np.name=nm;
-      lsSet(PFX+nm,JSON.stringify(np));
+      /* T263: lsSet returns a boolean precisely so this cannot lie. It
+         was ignored, so once the draft budget was full every write was
+         discarded and the toast still said "Imported N presentations" --
+         and the view was then switched to a deck that is not stored. */
+      if(!lsSet(PFX+nm,JSON.stringify(np))){dropped++;return;}
       if(!firstName) firstName=nm;
       imported++;
     });
     if(!imported){
-      if(!silent) toast('No presentations found in that file');
+      if(!silent)
+        toast(dropped
+          ?'There was no room to store them \u2014 free some space '
+            +'by deleting a draft you no longer need'
+          :'No presentations found in that file');
       return 0;
     }
     if(silent){renderPresTabs();return imported;}
@@ -2085,7 +2097,9 @@
     if(deckEl.hidden) openDeck('edit');
     status();refresh();
     toast('Imported '+imported+' presentation'
-      +(imported>1?'s':'')+' (as drafts)');
+      +(imported>1?'s':'')+' (as drafts)'
+      +(dropped?(' \u2014 '+dropped+' would not fit and '
+        +(dropped>1?'were':'was')+' not kept'):''));
     return imported;
   }
   window.SemDeckImport=importDeckText;       /* browser-verification hook */
@@ -2147,8 +2161,21 @@
            itself - but the DESTINATION is still "a file on your
            computer", and the first Save asks where once */
         fileName=nm;fileHandle=null;
-        setTarget('file');
-        toast('Opened \u2014 Save keeps it as a file on your computer');
+        /* T263: ...and it can only ask where if this browser HAS a save
+           picker. Without one, pickSaveFile resolves null, so every Save
+           and every autosave did nothing at all and said nothing. This
+           door is also Chrome's "+ New > Open a .junoview file", where
+           the picker exists and the promise above holds. */
+        if(canPickFile){
+          setTarget('file');
+          toast('Opened \u2014 Save keeps it as a file on your '
+            +'computer');
+        } else {
+          setTarget('browser');
+          toast('Opened \u2014 this browser cannot save straight back '
+            +'to a file, so it is kept here as a draft. Use Download to '
+            +'write it out.');
+        }
       }).catch(function(e){
         toast('Import failed: '+((e&&e.message)||e));
       });

@@ -851,9 +851,15 @@
     if(d.tapzoom) pres.tapzoom=1; else delete pres.tapzoom;
     if(d.hideTrace) pres.hideTrace=1; else delete pres.hideTrace;
     var pageWas=pres.page||null,bgWas=pres.pageBg||null;
+    /* T263: 'layouts' belongs in this list. histState has always
+       snapshotted it, and nothing read it back -- so making or deleting
+       a custom slide layout could not be undone, while every other
+       design-level key could. d.layouts is always emitted and [] is
+       truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','page','pageBg','cropMarks'].forEach(function(k){
-      if(d[k]) pres[k]=d[k]; else delete pres[k];});
+     'guides','masters','layouts','page','pageBg','cropMarks']
+      .forEach(function(k){
+        if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
     /* types are restored with their own statement rather than by joining
        the list above, because the registry has to be re-grafted the

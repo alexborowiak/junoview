@@ -79,6 +79,11 @@ DECK_KEYS: dict[str, tuple[type | tuple[type, ...], str]] = {
     "pad": (list, "The scratchpad's notes."),
     "types": (list, "Text types this deck invented, beyond the built-in "
                     "seven."),
+    "layouts": (list, "Slide layouts this deck designed: [{id, label, "
+                      "items}], each item a slot rect in page percent. "
+                      "They join the built-in catalogue in the New "
+                      "slide gallery and Change layout; a slide names "
+                      "the one it wears in its `lay`."),
     "masters": (dict, "{id: {name, bg, cmp, pos}}: looks slides "
                        "inherit live. `bg` is the wearers' background "
                        "(the slide's own still wins), `cmp` names the "

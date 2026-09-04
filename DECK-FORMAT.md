@@ -49,6 +49,7 @@ supported state, and the editor marks it rather than forbidding it.
 | `pad` | list | The scratchpad's notes. |
 | `page` | str | Page-size preset id ("a4", "a0", "wide", …). |
 | `pageBg` | str | The page's own background colour. |
+| `layouts` | list | Slide layouts this deck designed: [{id, label, items}], each item a slot rect in page percent. They join the built-in catalogue in the New slide gallery and Change layout; a slide names the one it wears in its `lay`. |
 | `masters` | dict | {id: {name, bg, cmp, pos}}: looks slides inherit live. `bg` is the wearers' background (the slide's own still wins), `cmp` names the component drawn behind their content, `pos` its corner. Membership is the slide's `mast` tag. |
 | `sections` | dict | {id: {name, fold}}. Membership is the slide's `sec` tag; the ORDER is read back off the slide list and never stored. |
 | `showNums` | int | 1 when slide numbers are drawn. |

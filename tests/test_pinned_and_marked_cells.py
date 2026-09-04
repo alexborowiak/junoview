@@ -35,8 +35,13 @@ def test_pinned_means_the_filters_do_not_reach_it():
     through as one more exception."""
     app = assets.app_js()
     assert "        if(c.classList.contains('is-pinned')){" in app
-    assert ("          c.classList.remove('is-hidden','cell-off','collapsed',\n"
-            "            'expanded');") in app
+    # T263: the blanket strip used to include 'cell-off' too. A pin is
+    # about the FILTERS; the cell's own eye is a deliberate press, and
+    # clearing it here made the eye on a pinned card look live and do
+    # nothing -- the class went straight back off on the next pass.
+    assert "          var poff=c.classList.contains('cell-off');" in app
+    assert "          c.classList.remove('collapsed','expanded');" in app
+    assert "          c.classList.toggle('is-hidden',poff);" in app
     assert "          $$('.ot-stub',c).forEach(function(n){n.remove();});" in app
     assert "          if(pnav) pnav.classList.remove('nav-hidden','cell-off');" in app
     # it is a skip, not a flag read further down
