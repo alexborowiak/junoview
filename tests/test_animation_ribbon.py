@@ -35,9 +35,11 @@ def test_an_entrance_is_the_animation_tabs_job(out):
             "      /* T220: the Object tab's own copy of the effects") in out
     # the gallery and the timing group are untouched
     assert 'id="anim-strip"' in out and 'id="anim-by-all"' in out
-    # the unlabeled Object groups are still the five they were
-    # (three since T221 gave Font and Paragraph classes of their own)
-    assert out.count('class="rbn-grp" data-tab="object"') == 3
+    # the unlabeled Object groups (three since T221 gave Font and
+    # Paragraph classes of their own; six since T233 split the Object
+    # grab-bag into Size & place / Picture / Object and gave History
+    # a section)
+    assert out.count('class="rbn-grp" data-tab="object"') == 6
     assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in out
     assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in out
 

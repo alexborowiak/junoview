@@ -112,10 +112,11 @@ def test_history_is_a_button_not_a_menu_in_a_pane(out):
     were a canvas right-click and the Layers pane's Actions popover. It
     is a button on the Object tab now, opening the full-screen view the
     other reviews use, and the pane keeps working."""
-    # (T221 moved it into Arrange -- the group of things you DO to an
-    # object, and the one that never folds)
-    row = _row(assets.deck_html(), "Arrange")
+    # (T221 moved it into Arrange; T233 gave it a section of its own,
+    # because in Arrange it read as a fifth way to move something)
+    row = _row(assets.deck_html(), "History")
     assert 'id="fmt-hist"' in row
+    assert 'id="fmt-hist"' not in _row(assets.deck_html(), "Arrange")
     assert "show('#fmt-hist',isNum);" in out
     assert 'class="img-ov" id="oh-ov"' in out
     for cid in ("oh-ov-t", "oh-ov-sub", "oh-ov-close", "oh-ov-body"):
@@ -199,12 +200,14 @@ def test_the_qr_code_feature_is_gone_whole(out):
 def test_the_object_tab_kept_its_five_unlabelled_groups(out):
     """Arrange, Colour, Text, Line & shape, Object -- plus Table. Losing
     Animation must not have taken anything else with it."""
-    # (three unlabelled since T221 named Font and Paragraph)
-    assert out.count('class="rbn-grp" data-tab="object"') == 3
+    # (three unlabelled since T221 named Font and Paragraph; six since
+    # T233 split Object in three and gave History its own section)
+    assert out.count('class="rbn-grp" data-tab="object"') == 6
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out
     html = assets.deck_html()
-    for lab in ("Arrange", "Font", "Paragraph", "Line &amp; shape", "Object",
-                "Table"):
+    for lab in ("Arrange", "History", "Font", "Paragraph",
+                "Line &amp; shape", "Size &amp; place", "Picture",
+                "Object", "Table"):
         assert f'<span class="rbn-lab">{lab}</span>' in html, lab
     assert '<span class="rbn-lab">Colour</span>' not in html
     # every id the two rows name is still exactly one control

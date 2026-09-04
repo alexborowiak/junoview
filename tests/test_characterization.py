@@ -1007,8 +1007,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # so hex, rgb and the transparency slider are one click; the quick
 # swatch rows on the ribbon show the colours you last used, padded
 # out with the deck's own.
-EXPECTED_MD5 = "2388cc9fc4bad38f49de42a7dae3d23f"
-EXPECTED_BYTES = 3443317
+# 2026-09-04, T233: the object's history is a ribbon section of its
+# own, and the Object grab-bag became three -- Size & place, Picture
+# and Object -- so each group answers one question.
+EXPECTED_MD5 = "99dfa778c020e5d15f6f4dcce11ce196"
+EXPECTED_BYTES = 3444148
 
 
 def _render_example() -> str:

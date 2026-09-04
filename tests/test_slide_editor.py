@@ -577,8 +577,10 @@ def test_the_ribbon_is_tabbed(out):
     assert 'id="rbn-tab-insert"' not in out
     assert ("var TABS=['home','images','text','design','animation','view',\n"
             "    'present','object'];") in out
-    # (three since T221 gave Font and Paragraph classes of their own)
-    assert out.count('class="rbn-grp" data-tab="object"') == 3
+    # (three since T221 gave Font and Paragraph classes of their own;
+    # six since T233 split the Object grab-bag in three and gave
+    # History a section of its own)
+    assert out.count('class="rbn-grp" data-tab="object"') == 6
     assert 'class="rbn-grp rbn-fontgrp" data-tab="object"' in out
     assert 'class="rbn-grp rbn-paragrp" data-tab="object"' in out
     assert 'class="rbn-grp rbn-tbl" data-tab="object"' in out

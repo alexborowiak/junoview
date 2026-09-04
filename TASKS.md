@@ -4845,3 +4845,21 @@ option. Then where has the ability to refresh all images gone?"
   reference so a recent that IS the accent still follows the deck.
   Driven live: hex + alpha previewed on the page, Apply closed the
   menu, and the colour appeared at the head of both rows.
+
+- [x] **T233 - The Object tab is sections that answer one question
+  each.**
+  The user (2026-09-04): "Put object history in it's own little
+  section... The object ribbon is still a bit all over the place."
+  *Done 2026-09-04.* **History** is a section of its own. T221 made it
+  a tall tile so it would read as the door to a whole feature, but
+  sitting in Arrange it still read as a fifth way to move something.
+  **The Object group became three.** It held the two locks, four number
+  boxes, the crop, the caption, the flip book's figures, where the
+  picture came from, the opacity slider and the clone buttons under one
+  label, so nothing in it looked related to anything else. Now: *Size &
+  place* (the locks and the four numbers), *Picture* (what figure is in
+  it, how much of it shows, what it is called, where it came from) and
+  *Object* (how see-through it is, and turning it into something you
+  can place again). Driven at 1500 / 1700 / 2100px: the row never
+  wraps, the ladder folds Object first and Size & place second, and a
+  folded group opens on its own name with its controls inside.

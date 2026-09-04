@@ -1382,17 +1382,6 @@
               <button class="dbtn etm" id="fmt-back"
                 title="Send to back - behind everything else on this
  page"><i data-ic="back"></i> Send to back</button>
-              <!-- T221: a tall tile, in the group that never folds. It
-                   was a small button at the end of the Object group
-                   (2026-09-03, user: "this history button is so small"),
-                   which is the wrong weight for the one door to a whole
-                   feature -- and the Object group folds first on a
-                   laptop, which would have hidden it altogether. What you
-                   DO to an object is what this group already holds. -->
-              <button class="fx-tile big-tile" id="fmt-hist" hidden
-                title="Every state this object has been through that the
- undo stack still remembers, with a button to put any of them back"
-                ><i data-ic="history"></i><span>History</span></button>
               <button class="dbtn etm" id="fmt-group"
                 title="Group the selected items (Ctrl+G)"><i data-ic="group"></i>
                 Group</button>
@@ -1427,6 +1416,21 @@
               </span>
             </span>
             <span class="rbn-lab">Arrange</span>
+          </span>
+          <!-- T233: THE OBJECT’S PAST, IN A SECTION OF ITS OWN
+               (2026-09-04, user: "put object history in its own
+               little section"). T221 made it a tall tile so it would
+               read as the door to a whole feature; sitting in Arrange
+               it still read as a fifth way to move something. One
+               control, one label, and it folds to a single clock. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="history">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile" id="fmt-hist" hidden
+                title="Every state this object has been through that the
+ undo stack still remembers, with a button to put any of them back"
+                ><i data-ic="history"></i><span>History</span></button>
+            </span>
+            <span class="rbn-lab">History</span>
           </span>
           <!-- No Effects group. Its last resident was a SECOND button for
                the Animations pane — "▶ Animate", renaming itself to the
@@ -1782,10 +1786,19 @@
             </span>
             <span class="rbn-lab">Line &amp; shape</span>
           </span>
-          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
+          <!-- T233: ONE GROUP BECAME THREE (2026-09-04, user: "the
+               object ribbon is still a bit all over the place"). It
+               held the two locks, four number boxes, the crop, the
+               caption, the flip book’s figures, where the picture
+               came from, the opacity slider and the clone buttons
+               under one label, so nothing in it looked related to
+               anything else. Each section answers one question now:
+               where is it on the page, what is the picture inside
+               it, and what is the object itself like. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="rulers">
             <span class="rbn-row">
-              <!-- T208: Lock in place over Keep shape; X Y over W H; Crop over Caption;
-                   Refresh over Size & position; where from over Source -->
+              <!-- T208 pairing (column-major): Lock in place over Lock
+                   aspect ratio, X Y over W H -->
               <button class="dbtn etm" id="fmt-lock" hidden
                 aria-pressed="false"
                 title="Keep this where it is: it cannot be dragged, and
@@ -1814,6 +1827,21 @@
                   ><span>H</span><input id="rb-h" type="number" step="0.5"
                   inputmode="decimal" aria-label="Height"></label>
               </span>
+              <button class="dbtn etm" id="fmt-sizepos" hidden
+                title="Type this object&rsquo;s width, height and
+ position in millimetres, instead of dragging for
+ them"><i data-ic="rulers"></i> Size &amp; position&#8230;</button>
+            </span>
+            <span class="rbn-lab">Size &amp; place</span>
+          </span>
+          <!-- THE PICTURE INSIDE IT: what to put there, how much of it
+               to show, what to call it, and where it came from. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="cellcard">
+            <span class="rbn-row">
+              <button class="dbtn etm" id="fmt-figures" hidden
+                title="Add, reorder and name the figures in this flip
+ book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
+   Figures&#8230;</button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the
@@ -1835,10 +1863,6 @@
                 title="Re-read this picture from the file it came from.
  If that file has moved, the picture is left exactly as it is"
                 ><i data-ic="reload"></i> Refresh from file</button>
-              <button class="dbtn etm" id="fmt-sizepos" hidden
-                title="Type this object&rsquo;s width, height and
- position in millimetres, instead of dragging for
- them"><i data-ic="rulers"></i> Size &amp; position&#8230;</button>
               <span class="rbn-cell seq-cell fmt-path" id="fmt-path" hidden
                 title="Where this came from"></span>
               <span class="sh-drop opt-drop" id="fmt-srcwrap">
@@ -1868,17 +1892,14 @@
                 Replace</button>
                 </div>
               </span>
-              <button class="dbtn etm" id="fmt-figures" hidden
-                title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
-   Figures&#8230;</button>
-              <!-- T220: HISTORY, WHERE YOU CAN SEE IT. The per-object
-                   history (T10) could only be reached from a canvas
-                   right-click or from the Layers pane's Actions menu --
-                   a menu, in a pane, behind a button (2026-09-03, user:
-                   "there is too much hidden inside menus inside menus
-                   inside menus, like in the layers"). One button, and it
-                   opens full screen like the other reviews. -->
+              <span class="rbn-partslot" id="fmt-parts" hidden></span>
+            </span>
+            <span class="rbn-lab">Picture</span>
+          </span>
+          <!-- THE OBJECT ITSELF: how see-through it is, and turning it
+               into something you can place again. -->
+          <span class="rbn-grp" data-tab="object" data-fold-ic="objects">
+            <span class="rbn-row">
               <!-- T221: opacity says what it is. It was an unlabelled
                    slider (2026-09-03, user: "the transparent isn't
                    labelled and is just a weird little thing to drag"). -->
@@ -1905,7 +1926,6 @@
                 title="Every place in this deck this clone has been
  put — pick one to go there"
                 ><i data-ic="locate"></i> Its clones</button>
-              <span class="rbn-partslot" id="fmt-parts" hidden></span>
             </span>
             <span class="rbn-lab">Object</span>
           </span>

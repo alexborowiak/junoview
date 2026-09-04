@@ -59,9 +59,21 @@ def test_arrange_and_object_groups_pair_what_belongs_together():
     assert ids[:4] == ["fmt-dup", "fmt-alignwrap", "fmt-align-btn", "fmt-align-menu"] \
         or ids[:2] == ["fmt-dup", "fmt-alignwrap"]
     assert ids.index("fmt-front") < ids.index("fmt-back") < ids.index("fmt-group")
+    # T233: the Object grab-bag is three sections. Where it sits on
+    # the page keeps the T208 pairing; the picture inside it leads
+    # with what to put there; the object itself is what is left.
+    place = _ids(_row(html, "Size &amp; place"))
+    assert place.index("fmt-lock") < place.index("fmt-lockar") \
+        < place.index("fmt-geom-xy") < place.index("fmt-geom-wh")
+    pic = _ids(_row(html, "Picture"))
+    assert pic.index("fmt-figures") < pic.index("fmt-cropwrap") \
+        < pic.index("fmt-caption") < pic.index("fmt-srcwrap")
     obj = _ids(_row(html, "Object"))
-    assert obj.index("fmt-lock") < obj.index("fmt-lockar") < obj.index("fmt-geom-xy") \
-        < obj.index("fmt-geom-wh") < obj.index("fmt-cropwrap")
+    assert obj.index("fmt-opcell") < obj.index("fmt-cmp-make") \
+        < obj.index("fmt-cmp-find")
+    # nothing that moved was left behind in the old group
+    for gone in ("fmt-lock", "fmt-cropwrap", "fmt-figures"):
+        assert gone not in obj, gone
 
 
 def test_a_run_with_nothing_showing_takes_no_column(out):
