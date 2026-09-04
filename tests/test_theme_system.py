@@ -28,7 +28,7 @@ def _tokens_for(selector: str) -> dict[str, str]:
     return dict(re.findall(r"--([\w-]+):([^;]+);", match.group(1)))
 
 
-def test_every_original_scheme_supplies_the_whole_theme_contract():
+def test_every_scheme_supplies_the_whole_theme_contract():
     selectors = (
         "body:not(.light)",
         "body.light",
@@ -37,6 +37,11 @@ def test_every_original_scheme_supplies_the_whole_theme_contract():
         "body.th-forestblue",
         "body.th-colorful",
         "body.th-contrast",
+        "body.light.th-warm",
+        "body.th-navy",
+        "body.th-purple",
+        "body.th-dim",
+        "body.light.th-lcontrast",
     )
     for selector in selectors:
         actual = _tokens_for(selector).keys()
@@ -123,3 +128,77 @@ def test_colourful_detached_surfaces_follow_the_active_tab_zone():
     assert "document.body.setAttribute('data-theme-zone',zone)" in app
     assert "document.addEventListener('sem:ribbon-tab'" in app
     assert "new CustomEvent('sem:ribbon-tab'" in deck
+
+
+def _relative_luminance(value: str) -> float:
+    assert re.fullmatch(r"#[0-9a-fA-F]{6}", value), value
+    channels = [int(value[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+    linear = [
+        channel / 12.92 if channel <= 0.04045
+        else ((channel + 0.055) / 1.055) ** 2.4
+        for channel in channels
+    ]
+    return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
+
+
+def _contrast(first: str, second: str) -> float:
+    light, dark = sorted(
+        (_relative_luminance(first), _relative_luminance(second)),
+        reverse=True,
+    )
+    return (light + 0.05) / (dark + 0.05)
+
+
+def test_scheme_text_focus_and_selected_states_meet_contrast_targets():
+    selectors = (
+        "body:not(.light)", "body.light", "body.th-forest",
+        "body.light.th-lforest", "body.th-forestblue",
+        "body.th-colorful", "body.th-contrast", "body.light.th-warm",
+        "body.th-navy", "body.th-purple", "body.th-dim",
+        "body.light.th-lcontrast",
+    )
+    for selector in selectors:
+        tokens = _tokens_for(selector)
+        pairs = (
+            ("ink", "paper", 4.5),
+            ("ink-2", "paper", 4.5),
+            ("ink-3", "paper", 3.0),
+            ("chrome-ink", "chrome-2", 4.5),
+            ("chrome-ink-2", "chrome-2", 4.5),
+            ("chrome-ink-3", "chrome-2", 3.0),
+            ("accent", "paper", 4.5),
+            ("focus", "chrome-2", 3.0),
+            ("on-accent-deep", "accent-deep", 4.5),
+        )
+        for foreground, background, minimum in pairs:
+            ratio = _contrast(tokens[foreground], tokens[background])
+            assert ratio >= minimum, (
+                selector, foreground, background, ratio, minimum
+            )
+
+
+def test_picker_registry_preview_keyboard_and_system_contract():
+    js = assets.app_js()
+    block = js.split("var SCHEMES=[", 1)[1].split("];", 1)[0]
+    ids = [
+        value for value in re.findall(
+            r"^\s+\['([^']+)',", block, re.MULTILINE
+        )
+        if not value.startswith("#")
+    ]
+    assert ids == [
+        "system", "dark", "light", "forest", "forest-light",
+        "forest-blue", "colourful", "contrast-dark", "warm", "navy",
+        "purple", "dim", "contrast-light",
+    ]
+    assert "parts=['page','surface','text','accent']" in js
+    assert "o.setAttribute('role','menuitemradio')" in js
+    assert "o.setAttribute('aria-checked'" in js
+    for key in ("ArrowDown", "ArrowUp", "Home", "End", "Escape"):
+        assert f"e.key==='{key}'" in js
+    assert "matchMedia('(prefers-color-scheme: light)')" in js
+    assert "systemTheme.addEventListener('change',systemThemeChanged)" in js
+    assert "localStorage.setItem('plotline-scheme',activeSchemeId)" in js
+    html = assets.deck_html()
+    assert 'aria-haspopup="menu"' in html
+    assert 'aria-controls="jv-scheme-menu"' in html

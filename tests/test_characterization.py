@@ -1120,8 +1120,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T252: dark colourful carries the active ribbon tab's hue on
 # the body, so detached menus, dialogs and moved controls keep one colour
 # with the tab that opened them; all eight tab pairs are contrast-safe.
-EXPECTED_MD5 = "e4e8f45685ece6439bc94d94d74dd6e2"
-EXPECTED_BYTES = 3580375
+# 2026-09-04, T253: five full surface families and Follow system join the
+# scheme registry; the picker shows four semantic colours, labels its tone,
+# behaves as a keyboard radio menu and preserves stable IDs across reloads.
+EXPECTED_MD5 = "c04fd892b3c4e50d643c1993d8df3f74"
+EXPECTED_BYTES = 3589167
 
 
 def _render_example() -> str:

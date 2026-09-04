@@ -5233,7 +5233,7 @@ option. Then where has the ability to refresh all images gone?"
   Moving a node now changes its layout ancestry without silently changing
   the colourful scheme back to default cyan.
 
-- [ ] **T253 - More themes, with useful previews and accessibility
+- [x] **T253 - More themes, with useful previews and accessibility
   guarantees.**
   After T250-T252 establish full coverage, expand the current seven
   choices with genuinely distinct families rather than accent swaps:
@@ -5243,6 +5243,16 @@ option. Then where has the ability to refresh all images gone?"
   which choices are light/dark/high-contrast, support keyboard focus,
   and preserve the choice. Check normal text, muted text, controls,
   focus rings and selected states against WCAG contrast targets.
+  *Done 2026-09-04.* Warm sepia, navy, purple, neutral dim and light high
+  contrast join the original families, each defining the same complete
+  contract rather than swapping one accent. **Follow system** listens to
+  `prefers-color-scheme` and preserves that preference by stable scheme ID,
+  including live OS changes. Picker rows now show page, raised surface,
+  text and accent, label their Light/Dark/High contrast family, expose
+  radio-menu semantics, use roving focus and support Arrow keys, Home, End
+  and Escape. Tests pin the registry, four-part preview, persistence,
+  system listener and WCAG ratios for normal/muted/subtle ink, chrome,
+  accent links, focus and deep selected states across all twelve palettes.
 
 - [ ] **T254 - Theme coverage is visually tested across the real
   surfaces.**

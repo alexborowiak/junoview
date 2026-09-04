@@ -2659,20 +2659,39 @@
      token set. Reader content follows the app theme; authored figures,
      deck pages and exports keep their own colours, so a swatch still
      tells the truth about what it applies (T250, 2026-09-04). ---- */
-  /* ONE list. Light and dark are themes, not a separate toggle — a
+  /* ONE registry. Light and dark are themes, not a separate toggle — a
      theme is "how the whole chrome looks", and dark-vs-light is exactly
-     that (2026-08-19, user). Each entry is [classes, name, preview]. */
+     that (2026-08-19, user). Each entry is
+     [stable id, body classes, name, family, page/surface/text/accent]. */
   var SCHEMES=[
-    ['','Dark',['#39a9c0','#0e1926']],
-    ['light','Light',['#1f7e93','#fbfcfd']],
-    ['th-forest','Dark forest',['#41c493','#0c211a']],
-    ['light th-lforest','Light forest',['#1e8f66','#f7fbf8']],
-    ['th-forestblue','Dark forest, blue buttons',['#6b9bff','#0c211a']],
-    ['th-colorful','Dark colourful',['#f2b85b','#82a8ff','#62d49b',
-      '#f18ab1']],
-    ['th-contrast','Dark high contrast',['#6fe3ff','#ffffff']]];
+    ['system',null,'Follow system','System',null],
+    ['dark','','Dark','Dark',['#0a1118','#162330','#e6edf3','#58c4db']],
+    ['light','light','Light','Light',
+      ['#eef2f6','#ffffff','#16202b','#116d83']],
+    ['forest','th-forest','Forest','Dark',
+      ['#08130f','#14271f','#e5f1eb','#61d3a4']],
+    ['forest-light','light th-lforest','Forest','Light',
+      ['#eaf3ed','#ffffff','#17261e','#197250']],
+    ['forest-blue','th-forestblue','Forest blue','Dark',
+      ['#08130f','#14271f','#e5f1eb','#7ea6ff']],
+    ['colourful','th-colorful','Colourful','Dark',
+      ['#100f1a','#211f35','#f0ecf7','#b69af2']],
+    ['contrast-dark','th-contrast','High contrast','Dark · High contrast',
+      ['#000000','#121212','#ffffff','#6fe3ff']],
+    ['warm','light th-warm','Warm sepia','Light',
+      ['#ede2cd','#fff9ef','#2c241b','#91431f']],
+    ['navy','th-navy','Navy','Dark',
+      ['#07111f','#12243a','#e7eff8','#77b8ff']],
+    ['purple','th-purple','Purple','Dark',
+      ['#140d1b','#281b33','#f2eaf5','#d39af0']],
+    ['dim','th-dim','Neutral dim','Dark',
+      ['#181a1d','#292d33','#e2e5e9','#9eb6c7']],
+    ['contrast-light','light th-lcontrast','High contrast',
+      'Light · High contrast',['#ffffff','#f0f0f0','#000000','#005a73']]
+  ];
   var ALL_TH=['light','th-forest','th-lforest','th-forestblue',
-    'th-colorful','th-contrast'];
+    'th-colorful','th-contrast','th-warm','th-navy','th-purple','th-dim',
+    'th-lcontrast'];
   /* A detached overlay cannot inherit a ribbon group's custom properties.
      The deck announces its active tab instead, and the body carries that
      semantic zone wherever the overlay is mounted (T252). */
@@ -2688,37 +2707,96 @@
   var initialThemeTab=document.querySelector(
     '.rbn-tab[aria-selected="true"][data-tab]');
   if(initialThemeTab) setThemeZone(initialThemeTab.dataset.tab);
+  var systemTheme=window.matchMedia
+    ?window.matchMedia('(prefers-color-scheme: light)'):null;
+  var activeSchemeId='dark';
+  function schemeFor(id){
+    for(var i=0;i<SCHEMES.length;i++){
+      if(SCHEMES[i][0]===id||SCHEMES[i][1]===id) return SCHEMES[i];
+    }
+    return null;
+  }
+  function systemIsLight(){return !!(systemTheme&&systemTheme.matches);}
+  function previewFor(sc){
+    if(sc[0]!=='system') return sc[4];
+    return schemeFor(systemIsLight()?'light':'dark')[4];
+  }
   function applyScheme(id){
-    var want=id?id.split(' '):[];
+    var sc=schemeFor(id)||schemeFor('dark');
+    activeSchemeId=sc[0];
+    var classes=sc[0]==='system'
+      ?(systemIsLight()?'light':''):sc[1];
+    var want=classes?classes.split(' '):[];
     ALL_TH.forEach(function(cl){
       document.body.classList.toggle(cl,want.indexOf(cl)>=0);});
     /* the old standalone theme key follows along, so anything still
        reading it (and older sessions) agrees about light vs dark */
     applyTheme(want.indexOf('light')>=0);
-    try{localStorage.setItem('plotline-scheme',id);}catch(e){}
+    try{localStorage.setItem('plotline-scheme',activeSchemeId);}catch(e){}
   }
   var schemePref=null;
   try{schemePref=localStorage.getItem('plotline-scheme');}catch(e){}
-  if(schemePref!=null&&schemePref!=='') applyScheme(schemePref);
+  if(schemePref!=null) applyScheme(schemePref);
   else if(themePref==='light') applyScheme('light');
+  else applyScheme('dark');
+  function systemThemeChanged(){
+    if(activeSchemeId==='system') applyScheme('system');
+  }
+  if(systemTheme){
+    if(systemTheme.addEventListener)
+      systemTheme.addEventListener('change',systemThemeChanged);
+    else if(systemTheme.addListener) systemTheme.addListener(systemThemeChanged);
+  }
   var schemeMenu=null;
   function openSchemeMenu(btn){
-    if(schemeMenu){schemeMenu.remove();schemeMenu=null;return;}
+    if(schemeMenu){schemeMenu._jvClose(true);return;}
     var m=document.createElement('div');m.className='jv-scheme-menu';
-    var cur='';
-    try{cur=localStorage.getItem('plotline-scheme')||'';}catch(e){}
+    m.id='jv-scheme-menu';m.setAttribute('role','menu');
+    m.setAttribute('aria-label','Colour scheme');
+    btn.setAttribute('aria-expanded','true');
+    var opts=[];
+    function close(refocus){
+      document.removeEventListener('click',outside,true);
+      m.remove();schemeMenu=null;btn.setAttribute('aria-expanded','false');
+      if(refocus) btn.focus();
+    }
+    function outside(e){
+      if(!m.contains(e.target)&&!btn.contains(e.target)) close(false);
+    }
+    m._jvClose=close;
     SCHEMES.forEach(function(sc){
       var o=document.createElement('button');o.className='jv-scheme-opt';
-      o.setAttribute('aria-pressed',(sc[0]===cur).toString());
-      var dots=document.createElement('span');dots.className='jv-scheme-dots';
-      sc[2].forEach(function(col){
-        var i2=document.createElement('i');i2.style.background=col;
-        dots.appendChild(i2);});
-      var t2=document.createElement('span');t2.textContent=sc[1];
-      o.appendChild(dots);o.appendChild(t2);
+      o.type='button';o.setAttribute('role','menuitemradio');
+      o.setAttribute('aria-checked',(sc[0]===activeSchemeId).toString());
+      o.tabIndex=sc[0]===activeSchemeId?0:-1;
+      var preview=document.createElement('span');
+      preview.className='jv-scheme-preview';preview.setAttribute('aria-hidden','true');
+      var parts=['page','surface','text','accent'];
+      previewFor(sc).forEach(function(col,i){
+        var swatch=document.createElement('i');
+        swatch.className='jv-scheme-'+parts[i];
+        swatch.style.background=col;preview.appendChild(swatch);});
+      var copy=document.createElement('span');copy.className='jv-scheme-copy';
+      var name=document.createElement('span');name.className='jv-scheme-name';
+      name.textContent=sc[2];
+      var family=document.createElement('span');family.className='jv-scheme-family';
+      family.textContent=sc[3]+(sc[0]==='system'
+        ?' · currently '+(systemIsLight()?'light':'dark'):'');
+      copy.appendChild(name);copy.appendChild(family);
+      o.appendChild(preview);o.appendChild(copy);
       o.addEventListener('click',function(){
-        applyScheme(sc[0]);m.remove();schemeMenu=null;});
-      m.appendChild(o);
+        applyScheme(sc[0]);close(true);});
+      opts.push(o);m.appendChild(o);
+    });
+    m.addEventListener('keydown',function(e){
+      var at=opts.indexOf(document.activeElement),next=at;
+      if(e.key==='ArrowDown') next=(at+1+opts.length)%opts.length;
+      else if(e.key==='ArrowUp') next=(at-1+opts.length)%opts.length;
+      else if(e.key==='Home') next=0;
+      else if(e.key==='End') next=opts.length-1;
+      else if(e.key==='Escape'){e.preventDefault();close(true);return;}
+      else return;
+      e.preventDefault();opts[next].focus();
     });
     document.body.appendChild(m);
     var r=btn.getBoundingClientRect();
@@ -2727,10 +2805,9 @@
       r.right-m.offsetWidth))+'px';
     schemeMenu=m;
     setTimeout(function(){
-      document.addEventListener('click',function once(e){
-        if(!m.contains(e.target)){m.remove();schemeMenu=null;}
-        document.removeEventListener('click',once);
-      });
+      document.addEventListener('click',outside,true);
+      var current=opts.filter(function(o){return o.tabIndex===0;})[0];
+      (current||opts[0]).focus();
     },0);
   }
   var deckScheme=$('#deck-scheme');

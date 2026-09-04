@@ -1360,6 +1360,89 @@ body.th-contrast{
   --overlay:#000000e6;--shadow:#000000;--focus:#ffffff;
   --selection:#6fe3ff66;--danger:#ff9b91;--warning:#ffd06e;
   --success:#85e8c9;--on-accent:#000000;--on-accent-deep:#ffffff;}
+/* The additional families change the surfaces as well as the accent. They
+   repeat the whole contract on purpose: adding a token to one theme but not
+   another is a test failure, not a partly-themed component (T253). */
+body.light.th-warm{
+  --ink:#2c241b;--ink-2:#594b3b;--ink-3:#6c5946;
+  --paper:#fbf5e9;--paper-2:#ede2cd;--paper-3:#e6d8bf;
+  --line:#d4c2a5;
+  --chrome:#ede2cd;--chrome-0:#f2e8d7;--chrome-1:#ede2cd;
+  --chrome-2:#fff9ef;--chrome-3:#f7eedf;--chrome-4:#e6d8bf;
+  --chrome-line:#967e5d;--chrome-ink:#2c241b;
+  --chrome-ink-2:#594b3b;--chrome-ink-3:#6c5946;
+  --accent:#91431f;--accent-deep:#7c381c;--accent-soft:#f1d7c6;
+  --btn-bg:#fff9ef;--btn-border:#b99f7c;--btn-ink:#3c3023;
+  --surface-hover:#91431f0d;--surface-active:#91431f1f;
+  --border-strong:#967e5d;--input-bg:#fff9ef;
+  --tooltip-bg:#2c241b;--tooltip-ink:#fbf5e9;
+  --overlay:#2c241b99;--shadow:#594b3b45;--focus:#91431f;
+  --selection:#91431f38;--danger:#a52f27;--warning:#805907;
+  --success:#296844;--on-accent:#ffffff;--on-accent-deep:#ffffff;}
+body.th-navy{
+  --ink:#e7eff8;--ink-2:#a9bcd0;--ink-3:#7e96af;
+  --paper:#0c1a2b;--paper-2:#07111f;--paper-3:#12243a;
+  --line:#2a4561;
+  --chrome:#081526;--chrome-0:#07111f;--chrome-1:#0c1a2b;
+  --chrome-2:#112841;--chrome-3:#0c1a2b;--chrome-4:#142c45;
+  --chrome-line:#2a4561;--chrome-ink:#e7eff8;
+  --chrome-ink-2:#a9bcd0;--chrome-ink-3:#7e96af;
+  --accent:#77b8ff;--accent-deep:#235e9f;--accent-soft:#b8d9ff;
+  --btn-bg:#77b8ff1a;--btn-border:#77b8ff66;--btn-ink:#e7eff8;
+  --surface-hover:#77b8ff1a;--surface-active:#77b8ff2e;
+  --border-strong:#647e98;--input-bg:#142c45;
+  --tooltip-bg:#07111f;--tooltip-ink:#e7eff8;
+  --overlay:#030914d6;--shadow:#000000aa;--focus:#8ec5ff;
+  --selection:#77b8ff4d;--danger:#ff8590;--warning:#f1bd63;
+  --success:#70d0ae;--on-accent:#06182c;--on-accent-deep:#ffffff;}
+body.th-purple{
+  --ink:#f2eaf5;--ink-2:#c7b5cd;--ink-3:#9c84a6;
+  --paper:#1d1426;--paper-2:#140d1b;--paper-3:#281b33;
+  --line:#4b3855;
+  --chrome:#180f21;--chrome-0:#140d1b;--chrome-1:#1d1426;
+  --chrome-2:#2a1d36;--chrome-3:#1d1426;--chrome-4:#2e203b;
+  --chrome-line:#4b3855;--chrome-ink:#f2eaf5;
+  --chrome-ink-2:#c7b5cd;--chrome-ink-3:#9c84a6;
+  --accent:#d39af0;--accent-deep:#81479e;--accent-soft:#e8c8f7;
+  --btn-bg:#d39af01a;--btn-border:#d39af066;--btn-ink:#f2eaf5;
+  --surface-hover:#d39af017;--surface-active:#d39af02b;
+  --border-strong:#806c89;--input-bg:#2e203b;
+  --tooltip-bg:#140d1b;--tooltip-ink:#f2eaf5;
+  --overlay:#09050ed6;--shadow:#000000aa;--focus:#e0b2f5;
+  --selection:#d39af04d;--danger:#ff86a1;--warning:#efb968;
+  --success:#78d1ae;--on-accent:#1a0922;--on-accent-deep:#ffffff;}
+body.th-dim{
+  --ink:#e2e5e9;--ink-2:#b5bbc3;--ink-3:#99a2ac;
+  --paper:#202328;--paper-2:#181a1d;--paper-3:#292d33;
+  --line:#41474f;
+  --chrome:#1b1e22;--chrome-0:#181a1d;--chrome-1:#202328;
+  --chrome-2:#2b2f35;--chrome-3:#202328;--chrome-4:#30343a;
+  --chrome-line:#41474f;--chrome-ink:#e2e5e9;
+  --chrome-ink-2:#b5bbc3;--chrome-ink-3:#99a2ac;
+  --accent:#9eb6c7;--accent-deep:#526c7d;--accent-soft:#c5d4de;
+  --btn-bg:#9eb6c717;--btn-border:#9eb6c75c;--btn-ink:#e2e5e9;
+  --surface-hover:#ffffff12;--surface-active:#ffffff20;
+  --border-strong:#747d87;--input-bg:#30343a;
+  --tooltip-bg:#181a1d;--tooltip-ink:#e2e5e9;
+  --overlay:#0c0d0fd6;--shadow:#000000aa;--focus:#b2cad8;
+  --selection:#9eb6c747;--danger:#f38b84;--warning:#d8b36b;
+  --success:#7cc5a7;--on-accent:#111417;--on-accent-deep:#ffffff;}
+body.light.th-lcontrast{
+  --ink:#000000;--ink-2:#222222;--ink-3:#444444;
+  --paper:#ffffff;--paper-2:#f0f0f0;--paper-3:#e4e4e4;
+  --line:#666666;
+  --chrome:#ffffff;--chrome-0:#ffffff;--chrome-1:#f0f0f0;
+  --chrome-2:#ffffff;--chrome-3:#f7f7f7;--chrome-4:#e5f4f8;
+  --chrome-line:#666666;--chrome-ink:#000000;
+  --chrome-ink-2:#222222;--chrome-ink-3:#444444;
+  --accent:#005a73;--accent-deep:#00465a;--accent-soft:#d5f3fa;
+  --btn-bg:#ffffff;--btn-border:#444444;--btn-ink:#000000;
+  --surface-hover:#005a7314;--surface-active:#005a7329;
+  --border-strong:#000000;--input-bg:#ffffff;
+  --tooltip-bg:#000000;--tooltip-ink:#ffffff;
+  --overlay:#00000099;--shadow:#00000066;--focus:#005a73;
+  --selection:#005a7340;--danger:#8f1710;--warning:#6d4a00;
+  --success:#075f3e;--on-accent:#ffffff;--on-accent-deep:#ffffff;}
 body.th-contrast .rbn-lab,body.th-contrast .abgrp-lab{color:#e6f2fa;}
 /* the bar, the tabs and the zoom cluster added on 2026-08-20 need the
    same treatment as the ribbon: real edges, near-white ink */
@@ -1444,21 +1527,35 @@ body.th-colorful .pr-btn,body.th-colorful .pr-item{
 .jv-scheme-menu{position:fixed;z-index:300;background:var(--chrome-2);
   border:1px solid var(--chrome-line);border-radius:9px;padding:6px;
   box-shadow:0 14px 38px var(--shadow);display:flex;
-  flex-direction:column;gap:2px;}
+  flex-direction:column;gap:2px;width:248px;max-height:min(680px,76vh);
+  overflow-y:auto;}
 .jv-scheme-menu[hidden]{display:none;}
-.jv-scheme-opt{display:flex;align-items:center;gap:8px;background:none;
-  border:1px solid transparent;border-radius:7px;padding:6px 10px;
-  cursor:pointer;color:var(--chrome-ink-2);font-family:var(--sans);
-  font-size:12px;}
+.jv-scheme-opt{display:grid;grid-template-columns:46px minmax(0,1fr);
+  align-items:center;gap:9px;width:100%;background:none;text-align:left;
+  border:1px solid transparent;border-radius:7px;padding:6px 8px;
+  cursor:pointer;color:var(--chrome-ink-2);font-family:var(--sans);}
 .jv-scheme-opt:hover{background:color-mix(in srgb,var(--accent) 13%,
   transparent);border-color:color-mix(in srgb,var(--accent) 40%,
   transparent);}
-.jv-scheme-opt[aria-pressed="true"]{
+.jv-scheme-opt[aria-checked="true"]{
   background:color-mix(in srgb,var(--accent) 20%,transparent);
   border-color:var(--accent);}
-.jv-scheme-dots{display:flex;gap:3px;flex:none;}
-.jv-scheme-dots i{width:10px;height:10px;border-radius:50%;display:block;
-  border:1px solid #00000033;}
+.jv-scheme-opt:focus-visible{outline:2px solid var(--focus);
+  outline-offset:1px;}
+/* Four cells, always in the same order: page, raised surface, text and
+   accent. Two dots could only show "which accent"; this shows whether the
+   whole family is light, dark, warm or high-contrast (T253). */
+.jv-scheme-preview{width:46px;height:30px;display:grid;
+  grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;
+  padding:2px;border:1px solid var(--border-strong);border-radius:5px;
+  overflow:hidden;background:var(--chrome-1);}
+.jv-scheme-preview i{display:block;min-width:0;min-height:0;
+  border-radius:2px;border:1px solid #00000024;}
+.jv-scheme-copy{min-width:0;display:flex;flex-direction:column;gap:2px;}
+.jv-scheme-name{font-size:12px;color:var(--chrome-ink);line-height:1.2;}
+.jv-scheme-family{font-family:var(--mono);font-size:8.5px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--chrome-ink-3);
+  line-height:1.2;}
 /* ---- icon sizing where card/nav chrome swapped an emoji for a .bic
    svg (2026-08-23). These live in core.css because the widget's scoped
    bundle renders the same card chrome. ---- */

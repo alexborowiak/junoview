@@ -449,8 +449,8 @@ def test_app_buttons_sit_at_the_right_end_of_the_ribbon(out):
     # the central page")
     assert "--btn-bg:#ffffff12; --btn-border:#ffffff40;" in out
     assert "*{--cyan:var(--accent); --cyan-deep:var(--accent-deep);" in out
-    assert "['light','Light',['#1f7e93','#fbfcfd']]," in out
-    assert "['light th-lforest','Light forest'" in out
+    assert "['light','light','Light','Light'," in out
+    assert "['forest-light','light th-lforest','Forest','Light'," in out
 
 
 def test_icon_tokens_cannot_fail_silently():
