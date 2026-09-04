@@ -66,7 +66,7 @@ def test_welcome_tour_reel_is_deferred_and_laid_out_in_column(out):
     # caption ABOVE its clip, and readable in the default dark theme
     assert ".wtour figcaption{order:-1;}" in out
     assert "body:not(.light) .wtour figcaption b{color:#fff;}" in out
-    assert "body.light .wtour figcaption b{color:#0f1b28;}" in out
+    assert "body.light .wtour figcaption b{color:var(--ink);}" in out
     # the reel is sized by its CONTAINER, never the viewport: a vw width
     # inside a rail-inset column overflows left, under the fixed rail
     assert (".wtour{margin-top:30px;display:grid;gap:40px;"

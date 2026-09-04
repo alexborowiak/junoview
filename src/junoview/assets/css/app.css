@@ -236,7 +236,7 @@ body.tree-mode #copy-grp{display:none!important;}
 .vw-stack .toggle{width:100%;justify-content:center;}
 .appbar-div{flex:none;width:1px;height:70px;background:#ffffff38;
   margin:1px 0 0;border-radius:1px;}
-body.light .appbar-div{background:#00000026;}
+body.light .appbar-div{background:var(--chrome-line);}
 /* dark variants of the show/hide toggles */
 .appbar .toggle,.present-bar .toggle{border-color:var(--btn-border,#ffffff40);background:var(--btn-bg,#ffffff12);color:var(--btn-ink,#d7e3ec);}
 .appbar-link{text-decoration:none;display:inline-flex;
@@ -647,8 +647,8 @@ body.welcoming .welcome-top{min-height:calc(100vh - 30px);}
    landed too close to the welcome panel's own background to read */
 body:not(.light) .wtour figcaption{color:#dbe6ef;}
 body:not(.light) .wtour figcaption b{color:#fff;}
-body.light .wtour figcaption{color:#33414f;}
-body.light .wtour figcaption b{color:#0f1b28;}
+body.light .wtour figcaption{color:var(--ink-2);}
+body.light .wtour figcaption b{color:var(--ink);}
 body:not(.light) .wquote blockquote{color:#eef4f8;}
 .wtour figcaption b{display:block;color:var(--ink);font-weight:700;
   font-size:19px;line-height:1.35;margin-bottom:7px;}
@@ -984,20 +984,21 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,va
 }
 
 /* ---------- advanced code-type filter menu ---------- */
-.ckfilter-menu{position:fixed;z-index:200;background:var(--chrome-2,#16273a);
-  border:1px solid #ffffff22;border-radius:8px;padding:8px;
-  box-shadow:0 12px 40px #00000066;min-width:150px;}
+.ckfilter-menu{position:fixed;z-index:200;background:var(--chrome-2);
+  border:1px solid var(--chrome-line);border-radius:8px;padding:8px;
+  box-shadow:0 12px 40px var(--shadow);min-width:150px;}
 .ckfilter-menu[hidden]{display:none;}
 .ckf-h{font-family:var(--mono);font-size:9px;letter-spacing:.14em;
-  text-transform:uppercase;color:#7e93a4;padding:2px 6px 6px;}
+  text-transform:uppercase;color:var(--chrome-ink-3);padding:2px 6px 6px;}
 .ckf-row{display:flex;align-items:center;gap:8px;padding:5px 6px;
-  font-family:var(--mono);font-size:11.5px;color:#cdd9e3;cursor:pointer;
+  font-family:var(--mono);font-size:11.5px;color:var(--chrome-ink-2);
+  cursor:pointer;
   border-radius:5px;text-transform:capitalize;}
 /* capitalize is right for the one-word type names it was written for
    ("data", "print"); on a row whose name is a PHRASE it Title Cases A
    Sentence, so a phrase row opts out (T256) */
 .ckf-row.ckf-phrase{text-transform:none;}
-.ckf-row:hover{background:#ffffff0c;}
+.ckf-row:hover{background:var(--surface-hover);}
 .ckf-row input{cursor:pointer;}
 .ckf-dot{width:8px;height:8px;border-radius:3px;flex:none;
   background:var(--ck-code);}
@@ -1055,12 +1056,12 @@ body:not(.light) .welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,va
    exactly the overridden buttons */
 .ckf-state.ovr:hover{color:#fff;border-color:var(--cyan);}
 body.light .ckf-state{border-color:var(--line);color:var(--ink-3);}
-body.light .ckf-state.ovr{color:var(--ink);background:#00000006;}
+body.light .ckf-state.ovr{color:var(--ink);background:var(--surface-hover);}
 /* the light theme needs its own per-state colours: without these the
    generic body.light .ovr rule out-specifies them and Off/Fold read
    identically to On */
 body.light .ckf-state.ovr.s-hidden{color:var(--ink-3);}
-body.light .ckf-state.ovr.s-collapsed{color:#3a7d92;}
+body.light .ckf-state.ovr.s-collapsed{color:var(--accent-deep);}
 body.light .ckf-state:hover,body.light .ckf-state.ovr:hover{
   border-color:var(--cyan);color:var(--ink);}
 /* one click puts every type back under the overall Output filter */
@@ -1085,7 +1086,7 @@ body.light .ckf-reset:hover:enabled{color:var(--ink);}
 .vers-row.on{color:#7fd0e0;}
 .vers-row.on .vers-l{color:#7fd0e0;}
 body.light .vers-row{color:var(--ink-2);}
-body.light .vers-row:hover{background:#00000008;}
+body.light .vers-row:hover{background:var(--surface-hover);}
 .tab-vermark{color:#f0a848;margin-right:4px;flex:none;font-size:12px;}
 #ck-filter-btn.on,#ot-filter-btn.on,#pt-filter-btn.on{
   border-color:var(--cyan);color:#fff;background:color-mix(in srgb,var(--accent) 13%,transparent);}
@@ -1157,9 +1158,10 @@ body.light .scope-row.on{background:color-mix(in srgb,var(--accent) 13%,transpar
   border:1px solid color-mix(in srgb,var(--accent) 20%,transparent);border-radius:5px;padding:5px 7px;
   margin:0 0 6px;cursor:pointer;}
 .ckf-all:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);color:#eaf6fa;}
-body.light .ckfilter-menu{background:#fff;border-color:var(--line);}
+body.light .ckfilter-menu{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
 body.light .ckf-row{color:var(--ink-2);}
-body.light .ckf-row:hover{background:#00000008;}
+body.light .ckf-row:hover{background:var(--surface-hover);}
 
 /* ---------- add-a-note: a pencil on every card (app mode) that writes a
    markdown cell into the .ipynb, with an optional git commit ---------- */
@@ -1279,7 +1281,7 @@ body.light .deck-create .dbtn:hover{border-color:var(--cyan);
   color:var(--ink);}
 body.light .deck-create .dbtn.primary{background:var(--accent-deep);
   border-color:var(--accent-deep);color:var(--on-accent-deep);}
-body.light .deck-create .dbtn.lay .layico i{background:#8ba0b2;}
+body.light .deck-create .dbtn.lay .layico i{background:var(--chrome-ink-3);}
 body.light .deck-create .dbtn.lay[aria-pressed="true"]{
   background:var(--accent-deep);border-color:var(--accent-deep);}
 body.light .dc-presname{color:var(--ink);}
@@ -1293,8 +1295,12 @@ body.light .dc-mi{color:var(--ink-2);}
 body.light .dc-mi:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);}
 body.light .dc-msep{background:var(--line);}
 body.light .deck-status{background:var(--surface-active);color:var(--ink-3);}
-body.light .deck-status.draft{background:#b5731a22;color:#8a5410;}
-body.light .deck-status.saved{background:#2e8a7222;color:#1e6f5a;}
+body.light .deck-status.draft{
+  background:color-mix(in srgb,var(--warning) 15%,transparent);
+  color:var(--warning);}
+body.light .deck-status.saved{
+  background:color-mix(in srgb,var(--success) 15%,transparent);
+  color:var(--success);}
 body.light .film-label{color:var(--ink-2);}
 body.light .film-row.current{background:color-mix(in srgb,var(--accent) 13%,transparent);
   outline-color:color-mix(in srgb,var(--accent) 40%,transparent);}
@@ -1338,7 +1344,7 @@ body.light .edit-tools .dbtn.et[aria-pressed="true"],
 body.light .edit-tools .dbtn.etm[aria-pressed="true"]{
   background:var(--accent-deep);border-color:var(--accent-deep);
   color:var(--on-accent-deep);}
-body.light .et-label{color:#a06a1e;}
+body.light .et-label{color:var(--warning);}
 body.light .et-hint{color:var(--ink-3);}
 body.light select#fmt-font{background:var(--input-bg);
   border-color:var(--border-strong);
@@ -1755,7 +1761,7 @@ body.pbpos-right .pb-exit{order:-1;}
 .pb-toggle[hidden]{display:none!important;}
 body.doc-presenting .pb-toggle{display:inline-flex;}
 .pb-toggle:hover{color:#fff;border-color:var(--cyan);}
-body.light .pb-toggle{background:#fff;border-color:var(--line);
+body.light .pb-toggle{background:var(--btn-bg);border-color:var(--btn-border);
   color:var(--ink-2);}
 /* auto-hide (taskbar style): the bar sits off-screen and slides back the
    moment the pointer reaches that edge. The document keeps the full

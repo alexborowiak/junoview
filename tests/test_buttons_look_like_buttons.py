@@ -26,9 +26,13 @@ def test_every_ribbon_control_wears_the_one_surface(out):
     """Fill, hairline and 6px corner come from three variables set once
     on the ribbon (and once again for the light theme), so no control can
     have a surface of its own."""
-    assert (".edit-tools{--rbn-btn:#ffffff0d;--rbn-btn-bd:#ffffff21;"
-            "--rbn-btn-hi:#ffffff1c;}") in out
-    assert "body.light .edit-tools{--rbn-btn:#00000007;--rbn-btn-bd:var(--line);" in out
+    # T251 moved the three literals onto theme tokens, which is why the
+    # light theme no longer needs a rule of its own: the tokens already
+    # differ per theme. One surface, set once -- more so than before.
+    assert (".edit-tools{--rbn-btn:var(--btn-bg);"
+            "--rbn-btn-bd:var(--btn-border);\n"
+            "  --rbn-btn-hi:var(--surface-active);}") in out
+    assert "body.light .edit-tools{--rbn-btn:" not in out
     assert ("  background:var(--rbn-btn);border:1px solid var(--rbn-btn-bd);\n"
             "  border-radius:6px;box-shadow:none;}") in out
     # flat at rest is gone, and so is the light theme's flat rule

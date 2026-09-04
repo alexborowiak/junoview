@@ -1123,8 +1123,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T253: five full surface families and Follow system join the
 # scheme registry; the picker shows four semantic colours, labels its tone,
 # behaves as a keyboard radio menu and preserves stable IDs across reloads.
-EXPECTED_MD5 = "c04fd892b3c4e50d643c1993d8df3f74"
-EXPECTED_BYTES = 3589167
+# 2026-09-04, T251 (tail): the last of the deck/app colour literals
+# move onto theme tokens -- the ribbon surface variables, and the
+# light overrides that are no longer needed now that the tokens
+# themselves differ per theme.
+EXPECTED_MD5 = "acfaffaa42e1c58e0c2c2f5d9f4bec6a"
+EXPECTED_BYTES = 3590875
 
 
 def _render_example() -> str:

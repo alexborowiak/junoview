@@ -3,7 +3,8 @@
    height, nothing above it), the ribbon and stage share the right track
    (2026-08-19, user). Row 1 is the presenting top bar; rows 2-3 are the
    ribbon and the stage. */
-.deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0,#0b141d);color:#dce6ee;
+.deck{position:fixed;inset:0;z-index:100;background:var(--chrome-0);
+  color:var(--chrome-ink);
   display:grid;grid-template-columns:auto minmax(0,1fr);
   grid-template-rows:auto auto auto minmax(0,1fr);font-family:var(--sans);}
 /* Row 1 is the document's own bar, and only ever ONE of these two is in
@@ -22,15 +23,19 @@
 body.deck-open{overflow:hidden;}
 
 .deck-top{display:flex;align-items:center;gap:9px;padding:10px 18px;
-  border-bottom:1px solid #ffffff14;background:var(--chrome-1,#0e1926);flex:none;}
+  border-bottom:1px solid var(--chrome-line);background:var(--chrome-1);
+  flex:none;}
 .deck-brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.22em;
   text-transform:uppercase;color:var(--cyan);}
 .deck-status{font-family:var(--mono);font-size:10px;padding:0 10px;
   height:30px;box-sizing:border-box;display:inline-flex;align-items:center;
-  border-radius:15px;background:#ffffff12;color:#9fb2c2;letter-spacing:.04em;
+  border-radius:15px;background:var(--surface-active);
+  color:var(--chrome-ink-2);letter-spacing:.04em;
   white-space:nowrap;}
-.deck-status.draft{background:#cf9a4e26;color:#e6b877;}
-.deck-status.saved{background:#46a89226;color:#7fd0bd;}
+.deck-status.draft{background:color-mix(in srgb,var(--warning) 15%,transparent);
+  color:var(--warning);}
+.deck-status.saved{background:color-mix(in srgb,var(--success) 15%,transparent);
+  color:var(--success);}
 .deck-status:empty{display:none;}
 .deck-spring{flex:1;}
 .dbtn{font-family:var(--mono);font-size:11px;
@@ -38,15 +43,18 @@ body.deck-open{overflow:hidden;}
   background:var(--btn-bg,#ffffff0a);color:var(--btn-ink,#cdd9e3);
   padding:6px 11px;border-radius:6px;
   cursor:pointer;transition:all .15s;}
-.dbtn:hover{border-color:var(--cyan);color:#fff;}
+.dbtn:hover{border-color:var(--cyan);color:var(--chrome-ink);}
 /* the way out of a modal state: coral so it reads as "stop", but an
    outline rather than a fill, because it undoes rather than commits */
-.dbtn.dbtn-warn{border-color:#ff6b5766;color:#ff9d8c;}
-.dbtn.dbtn-warn:hover{border-color:#ff6b57;color:#ffbcaf;
-  background:#ff6b571a;}
-.dbtn.primary{background:var(--cyan);border-color:var(--cyan);color:#fff;
+.dbtn.dbtn-warn{border-color:color-mix(in srgb,var(--danger) 45%,transparent);
+  color:var(--danger);}
+.dbtn.dbtn-warn:hover{border-color:var(--danger);color:var(--danger);
+  background:color-mix(in srgb,var(--danger) 12%,transparent);}
+.dbtn.primary{background:var(--cyan);border-color:var(--cyan);
+  color:var(--on-accent);
   font-weight:600;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 40%,transparent),0 2px 12px color-mix(in srgb,var(--accent) 40%,transparent);}
-.dbtn.primary:hover{background:#4bbcd2;border-color:#4bbcd2;
+.dbtn.primary:hover{background:color-mix(in srgb,var(--accent) 88%,white);
+  border-color:color-mix(in srgb,var(--accent) 88%,white);
   box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 53%,transparent),0 2px 16px color-mix(in srgb,var(--accent) 53%,transparent);}
 /* T205: pressed is the DEEP ACCENT the button inherits -- cyan in the
    default theme, the tab's own hue in the colourful one -- so a lit
@@ -65,7 +73,7 @@ body.deck-open{overflow:hidden;}
    column, zoom and Present were groups in the ribbon, and all of it is
    now one line that no tab can take away (2026-08-20, user). */
 .deck-qat{display:flex;align-items:center;gap:6px;padding:4px 10px;
-  border-bottom:1px solid #ffffff14;background:var(--chrome-1,#0e1926);
+  border-bottom:1px solid var(--chrome-line);background:var(--chrome-1);
   flex:none;min-height:34px;flex-wrap:nowrap;overflow-x:clip;}
 .deck-qat[hidden]{display:none!important;}
 /* nowrap + flex:none: a squeezed flex item shrinks to min-content and
@@ -78,17 +86,17 @@ body.deck-open{overflow:hidden;}
 .deck-qat .dc-menuwrap,.deck-qat .dc-savegrp{display:inline-flex;
   align-items:center;height:26px;}
 .qat-sep{width:1px;align-self:stretch;margin:3px 3px;
-  background:#ffffff1c;flex:none;}
+  background:var(--chrome-line);flex:none;}
 .qat-btn{white-space:nowrap;flex:none;}
 /* the name reads as a title, not a button, until you go near it */
-.qat-name{font-family:var(--sans);font-size:12.5px;color:#c6d5e1;
+.qat-name{font-family:var(--sans);font-size:12.5px;color:var(--chrome-ink-2);
   background:none;border:1px solid transparent;border-radius:6px;
   padding:3px 9px;cursor:text;max-width:34vw;white-space:nowrap;
   overflow:hidden;text-overflow:ellipsis;}
-.qat-name:hover{border-color:#ffffff26;color:#fff;}
-.qat-name:empty::before{content:"untitled";color:#6e8394;}
+.qat-name:hover{border-color:var(--chrome-line);color:var(--chrome-ink);}
+.qat-name:empty::before{content:"untitled";color:var(--chrome-ink-3);}
 .qat-nameedit{font-family:var(--sans);font-size:12.5px;
-  background:var(--chrome-0,#0b141d);color:#eaf2f8;
+  background:var(--input-bg);color:var(--chrome-ink);
   border:1px solid var(--cyan);border-radius:6px;padding:3px 9px;
   min-width:190px;outline:none;}
 /* THE READOUT, beside the Save button it reports on. It was 10px, and
@@ -134,8 +142,8 @@ body.deck-open{overflow:hidden;}
    height at all (2026-08-20, user). */
 .deck-zoombar{position:absolute;right:18px;bottom:12px;z-index:8;
   display:none;align-items:stretch;gap:3px;padding:4px;border-radius:9px;
-  background:var(--chrome-1,#0e1926);
-  border:1px solid #ffffff1f;box-shadow:0 6px 20px #00000055;}
+  background:var(--chrome-1);border:1px solid var(--chrome-line);
+  box-shadow:0 6px 20px var(--shadow);}
 .deck.editing .deck-zoombar{display:flex;}
 /* it steps aside for a docked pane, driven by the SAME width variable so
    the two can never disagree */
@@ -150,15 +158,15 @@ body.deck-open{overflow:hidden;}
    One job's worth of groups at a time. Tabs, the permanent ribbon-layout
    chooser and the hint stay in one button-high strip. */
 .rbn-tabs{display:flex;align-items:stretch;gap:2px;padding:0 10px;
-  background:var(--chrome-1,#0e1926);border-bottom:1px solid #ffffff14;
+  background:var(--chrome-1);border-bottom:1px solid var(--chrome-line);
   flex:none;height:28px;overflow-x:clip;}
 .rbn-tabs[hidden]{display:none!important;}
 .rbn-tab{font-family:var(--sans);font-size:13px;letter-spacing:0;font-weight:500;
   background:none;border:none;border-bottom:2px solid transparent;
-  color:#93a8b9;padding:0 13px;cursor:pointer;white-space:nowrap;
+  color:var(--chrome-ink-2);padding:0 13px;cursor:pointer;white-space:nowrap;
   transition:color .12s,border-color .12s;}
-.rbn-tab:hover{color:#e2edf5;}
-.rbn-tab[aria-selected="true"]{color:#fff;
+.rbn-tab:hover{color:var(--chrome-ink);}
+.rbn-tab[aria-selected="true"]{color:var(--chrome-ink);
   border-bottom-color:var(--cyan);}
 .rbn-tab[hidden]{display:none;}
 .rbn-tabs .rbn-layouts{align-self:center;display:inline-flex;
@@ -209,14 +217,14 @@ body.deck-open{overflow:hidden;}
 .rbn-tabs .rbn-fold{align-self:center;padding:1px 9px;line-height:1;
   flex:none;font-size:10px;}
 .rbn-tabs .et-hint{align-self:center;font-family:var(--mono);
-  font-size:10px;color:#7d93a6;white-space:nowrap;padding:0 8px;}
+  font-size:10px;color:var(--chrome-ink-3);white-space:nowrap;padding:0 8px;}
 .deck.erc-nohint .rbn-tabs .et-hint{display:none;}
 
 /* ---------- find & replace -------------------------------------------- */
 .find-pop{position:fixed;top:96px;right:22px;z-index:220;width:308px;
-  background:var(--chrome-3,#101c28);
-  border:1px solid #ffffff26;border-radius:10px;padding:10px;
-  box-shadow:0 18px 52px #00000077;display:flex;flex-direction:column;
+  background:var(--chrome-3);border:1px solid var(--chrome-line);
+  border-radius:10px;padding:10px;box-shadow:0 18px 52px var(--shadow);
+  display:flex;flex-direction:column;
   gap:7px;font-family:var(--sans);}
 .find-pop[hidden]{display:none!important;}
 .find-head{display:flex;align-items:center;justify-content:space-between;}
@@ -288,7 +296,7 @@ body.light .tok-nm{color:var(--ink-2);}
 .sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px;
   width:100%;padding-bottom:3px;margin-bottom:2px;
   border-bottom:1px solid #ffffff14;}
-body.light .find-fmt .find-ck:hover{background:#00000008;}
+body.light .find-fmt .find-ck:hover{background:var(--surface-hover);}
 .find-in{flex:1;min-width:0;font-family:var(--sans);font-size:12px;
   background:var(--chrome-0,#0b141d);color:#eaf2f8;
   border:1px solid #ffffff26;border-radius:6px;padding:5px 8px;
@@ -479,10 +487,11 @@ body.light .pf-intro{color:var(--ink-2);}
 .sp-act.on.half{color:var(--amber);}
 /* opaque: a panel you read lists through must not have the page
    showing through it (2026-08-20) */
-body.light .selpane{background:#fff;border-color:var(--line);}
+body.light .selpane{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
 body.light .sp-row{color:var(--ink-2);}
 body.light .sp-row.sel{background:color-mix(in srgb,var(--accent) 13%,transparent);color:var(--ink);}
-body.light .sp-act:hover{color:var(--ink);background:#00000010;}
+body.light .sp-act:hover{color:var(--ink);background:var(--surface-active);}
 /* FULLY locked objects: visible but untouchable on the canvas */
 .deck.editing .an-locked,.deck.editing .an-locked *{
   pointer-events:none!important;cursor:default!important;}
@@ -736,8 +745,8 @@ body:not(.light) .plot-trace-btn:hover{color:#5fc3d8;border-color:color-mix(in s
 .trace-viewsw{position:absolute;right:0;top:6px;display:flex;gap:6px;}
 .dbtn.tvw.on{background:var(--cyan-deep);border-color:var(--cyan-deep);
   color:var(--on-accent-deep,#fff);}
-body.light .trace-viewsw .dbtn{background:#fff;border-color:var(--line);
-  color:var(--ink-2);}
+body.light .trace-viewsw .dbtn{background:var(--btn-bg);
+  border-color:var(--btn-border);color:var(--btn-ink);}
 body.light .trace-viewsw .dbtn.tvw.on{background:var(--cyan-deep);
   border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 .tracetab-eyebrow{display:block;font-family:var(--mono);font-size:10px;
@@ -747,9 +756,9 @@ body.light .trace-viewsw .dbtn.tvw.on{background:var(--cyan-deep);
 .tracetab-sub{font-size:12.5px;color:#8fa6b4;}
 .tracetab-graph{margin:0 0 18px;}
 .tracetab-graph .plotgraph-wrap{margin:0;}
-body.light .tracetab-head{border-color:#0000000f;}
-body.light .tracetab-t{color:#122029;}
-body.light .tracetab-sub{color:#5a6b76;}
+body.light .tracetab-head{border-color:var(--line);}
+body.light .tracetab-t{color:var(--ink);}
+body.light .tracetab-sub{color:var(--ink-3);}
 /* the ◈ badge + tint that marks a Plot-trace tab in the tab strip */
 /* a Plot-trace SUB-tab: smaller + indented + cyan-tinted so it reads as a
    child of the notebook tab immediately before it */
@@ -765,7 +774,7 @@ body.light .tracetab-sub{color:#5a6b76;}
 .tab.tab-sub::before{content:"";width:8px;height:1px;background:color-mix(in srgb,var(--accent) 40%,transparent);
   margin:0 1px 0 -6px;align-self:center;flex:none;}
 body.light .tab.tab-sub{background:color-mix(in srgb,var(--accent) 7%,transparent);border-color:color-mix(in srgb,var(--accent) 30%,transparent);}
-body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,transparent);color:#0b3a44;}
+body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent-deep);}
 /* per-plot dependency graph */
 .plotgraph-wrap{margin:0 0 18px;padding:12px 12px 6px;
   background:#0e1824;border:1px solid #ffffff12;border-radius:10px;}
@@ -1374,7 +1383,7 @@ body.slide-editing .apptop{display:none;}
   color:var(--on-accent-deep,#fff);}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
-body.light .fx-tile.on{color:#fff;}
+body.light .fx-tile.on{color:var(--on-accent-deep,#fff);}
 /* T186: the build numbers show whenever the Animation tab is up -- the
    tab is about them -- and not only while the order pane or Quick
    animate is (2026-09-02, user: "the animation numbers should appear
@@ -2261,7 +2270,7 @@ select#fmt-font[hidden]{display:none;}
 .dh-when-note{padding:8px 16px 12px;border-top:1px solid #ffffff14;
   font-family:var(--sans);font-size:11px;line-height:1.55;color:#8ea3b5;}
 body.light .dh-h2t,body.light .dh-chwhat{color:var(--ink);}
-body.light .dh-ch{border-bottom-color:#0000000f;}
+body.light .dh-ch{border-bottom-color:var(--line);}
 
 /* ---- T232: THE PICKER, AS THE BOTTOM OF THE MENU ---------------------
    Same element as the floating popup, restyled to be a section: no
@@ -2277,7 +2286,7 @@ body.light .dh-ch{border-bottom-color:#0000000f;}
 .cp-inline .cp-in{padding:5px 7px;font-size:11.5px;}
 .cp-inline .cp-preview{width:24px;height:24px;}
 .cp-recent[hidden]{display:none!important;}
-body.light .sw-menu>.color-pop.cp-inline{border-top-color:#0000001c;}
+body.light .sw-menu>.color-pop.cp-inline{border-top-color:var(--chrome-line);}
 .sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:7px;}
 .sw-tokrow>.fmt-lab{flex:0 0 100%;}
 /* hidden still means hidden, whatever display the rows above ask for */
@@ -2594,7 +2603,7 @@ body.light .sw-menu>.color-pop.cp-inline{border-top-color:#0000001c;}
 .pf-what{font-size:12.5px;color:#dbe7ef;font-weight:600;}
 .pf-why{font-size:11px;color:#8ba0b2;line-height:1.4;}
 .pf-ok{font-size:12px;color:#8ba0b2;line-height:1.5;padding:10px 12px;}
-body.light .pf-row:hover{background:#00000008;}
+body.light .pf-row:hover{background:var(--surface-hover);}
 body.light .pf-what{color:var(--ink);}
 body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
 
@@ -2706,10 +2715,11 @@ body.light .pf-why,body.light .pf-ok,body.light .pf-count{color:var(--ink-3);}
   border:1px solid #ffffff26;color:#dce6ee;font-family:var(--sans);}
 .fp-tiesel:disabled{opacity:.45;}
 body.light .fp-t{color:var(--ink);}
-body.light .fp-t:focus{background:#fff;}
-body.light .fp-tiesel{background:#fff;border-color:var(--line);
+body.light .fp-t:focus{background:var(--input-bg);}
+body.light .fp-tiesel{background:var(--input-bg);
+  border-color:var(--border-strong);
   color:var(--ink);}
-body.light .fp-row:hover{background:#00000008;}
+body.light .fp-row:hover{background:var(--surface-hover);}
 body.light .fp-tielab{color:var(--ink-3);}
 /* the film-strip thumbnail's chip for a flip book */
 .mini-pane.is-flip{background:#243b52;}
@@ -2755,8 +2765,8 @@ body.light .fp-tielab{color:var(--ink-3);}
   border:1px solid #ffffff2b;width:190px;}
 .rbn-gfind:focus{outline:none;border-color:var(--cyan);}
 .rbn-gnone{color:#7d93a6;font-size:12px;padding:14px 2px;}
-body.light .rbn-gfind{background:#fff;color:var(--ink);
-  border-color:var(--rule);}
+body.light .rbn-gfind{background:var(--input-bg);color:var(--ink);
+  border-color:var(--border-strong);}
 .rbn-card{text-align:left;background:#ffffff08;border:1px solid #ffffff1c;
   border-radius:9px;padding:10px 12px;cursor:pointer;display:flex;
   flex-direction:column;gap:5px;color:#dce6ee;}
@@ -2778,13 +2788,16 @@ body.light .rbn-gfind{background:#fff;color:var(--ink);
 .rbn-cgrp{font-size:9.5px;background:#ffffff14;border-radius:4px;
   padding:1px 5px;color:#b9cad8;white-space:nowrap;}
 .rbn-cgrp-dim{color:#7d93a6;font-style:italic;background:transparent;}
-body.light .rbn-gallery{background:#fff;}
+body.light .rbn-gallery{background:var(--chrome-2);}
 body.light .rbn-gt,body.light .rbn-card{color:var(--ink);}
-body.light .rbn-card{background:#f7f9fb;border-color:var(--rule);}
-body.light .rbn-cgrp{background:#eef2f6;color:var(--ink-2);}
-body.light .rbn-gwarn{background:#fff7e8;color:#704d16;
-  border-color:#d8912570;}
-body.light .rbn-gwarn b{color:#573b11;}
+body.light .rbn-card{background:var(--chrome-3);
+  border-color:var(--chrome-line);}
+body.light .rbn-cgrp{background:var(--chrome-1);color:var(--ink-2);}
+body.light .rbn-gwarn{
+  background:color-mix(in srgb,var(--warning) 10%,var(--chrome-2));
+  color:var(--warning);
+  border-color:color-mix(in srgb,var(--warning) 55%,var(--chrome-line));}
+body.light .rbn-gwarn b{color:var(--warning);}
 
 /* ---------- what the deck says, in words ----------
    The lints on the left, the text on the right, both at once: having to
@@ -2833,10 +2846,10 @@ body.light .rbn-gwarn b{color:#573b11;}
   font-size:11.5px;line-height:1.6;padding:12px 14px;border-radius:8px;
   background:#0e1926;color:#dce6ee;border:1px solid #ffffff1f;
   white-space:pre;overflow:auto;}
-body.light .deck-review{background:#fff;}
+body.light .deck-review{background:var(--chrome-0);}
 body.light .rv-t,body.light .rv-lh,body.light .rv-lhead{color:var(--ink);}
-body.light .rv-text{background:#f7f9fb;color:var(--ink);
-  border-color:var(--rule);}
+body.light .rv-text{background:var(--input-bg);color:var(--ink);
+  border-color:var(--border-strong);}
 
 /* ---------- what this deck used to be ----------
    The snapshots on the left, what is different on the right. Only the
@@ -2899,11 +2912,11 @@ body.light .rv-text{background:#f7f9fb;color:var(--ink);
   font-family:var(--mono);font-size:10px;}
 .dh-git{grid-column:1/-1;font-size:10.5px;line-height:1.55;
   color:#7d93a6;padding:8px 16px;border-top:1px solid #ffffff14;}
-body.light .deck-history{background:#fff;}
+body.light .deck-history{background:var(--chrome-0);}
 body.light .dh-t,body.light .dh-snap.on{color:var(--ink);}
 body.light .dh-snap,body.light .dh-head2{color:var(--ink-2);}
-body.light .dh-fullframe,body.light .dh-fullmissing{background:#eef2f5;
-  border-color:var(--rule);}
+body.light .dh-fullframe,body.light .dh-fullmissing{
+  background:var(--chrome-1);border-color:var(--chrome-line);}
 
 /* ---------- things only you can see ----------
    Marked in BOTH places a private item is drawn -- the editor and the
@@ -2998,15 +3011,15 @@ body.light .np-rehrow.sec{color:var(--ink);border-top-color:var(--rule);}
 .jvn-md a{color:var(--cyan);}
 .jvn-md .jvn-goto{cursor:pointer;text-decoration:underline dotted;}
 .np-bigbtn{align-self:flex-start;margin:2px 0 6px;}
-body.light .deck-notesed{background:#fff;}
+body.light .deck-notesed{background:var(--chrome-0);}
 body.light .nse-t{color:var(--ink);}
-body.light .nse-ta{background:#fff;color:var(--ink);
-  border-color:var(--rule);}
-body.light .nse-prev{background:#f7f9fb;color:var(--ink);
-  border-color:var(--rule);}
-body.light .nse-help{background:#f7f9fb;color:var(--ink-2);
-  border-color:var(--rule);}
-body.light .jvn-md code,body.light .nse-help code{background:#eef2f6;
+body.light .nse-ta{background:var(--input-bg);color:var(--ink);
+  border-color:var(--border-strong);}
+body.light .nse-prev{background:var(--chrome-3);color:var(--ink);
+  border-color:var(--chrome-line);}
+body.light .nse-help{background:var(--chrome-3);color:var(--ink-2);
+  border-color:var(--chrome-line);}
+body.light .jvn-md code,body.light .nse-help code{background:var(--chrome-1);
   color:var(--ink);}
 
 /* ---------- the overview map ----------
@@ -3046,13 +3059,13 @@ body.light .jvn-md code,body.light .nse-help code{background:#eef2f6;
 .ovw-find:focus{outline:none;border-color:var(--cyan);}
 .ovw-fn{font-family:var(--mono);font-size:9.5px;color:#7d93a6;
   min-width:62px;}
-body.light .ovw-find{background:#fff;color:var(--ink);
-  border-color:var(--rule);}
+body.light .ovw-find{background:var(--input-bg);color:var(--ink);
+  border-color:var(--border-strong);}
 .ovw-n{font-family:var(--mono);font-size:9px;color:#7d93a6;}
 .ovw-tile .mini-diagram{width:100%;height:76px;}
 .ovw-lab{font-size:10.5px;color:#b9cad8;line-height:1.25;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-body.light .deck-overview{background:#fff;}
+body.light .deck-overview{background:var(--chrome-0);}
 body.light .ovw-t{color:var(--ink);}
 body.light .ovw-lab{color:var(--ink-2);}
 
@@ -3101,7 +3114,7 @@ body.light .oh-h{color:var(--ink-3);}
 .std-do2{opacity:.8;}
 body.light .std-h{color:var(--ink);}
 body.light .std-why{color:var(--ink-3);}
-body.light .std-chip{background:#00000008;border-color:var(--line);
+body.light .std-chip{background:var(--surface-hover);border-color:var(--line);
   color:var(--ink-3);}
 
 /* ---------- toolbar down the right-hand edge (tall pages) ---------- */
@@ -3272,9 +3285,9 @@ body.light .std-chip{background:#00000008;border-color:var(--line);
 .dgt-tx:focus{border-color:var(--cyan);outline:none;}
 .dgt-lab{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   color:#9fb3c4;}
-body.light .dgt-tx{background:#00000006;border-color:var(--line);
+body.light .dgt-tx{background:var(--input-bg);border-color:var(--border-strong);
   color:var(--ink);}
-body.light .dg-grp,body.light .dg-nums{background:#00000005;
+body.light .dg-grp,body.light .dg-nums{background:var(--surface-hover);
   border-color:var(--line);}
 
 /* ---- T229: THE OBJECT'S HISTORY IS A TABLE ----------------------------
@@ -3300,7 +3313,7 @@ body.light .dg-grp,body.light .dg-nums{background:#00000005;
 .img-ov .oh-head,.img-ov .oh-row{grid-template-columns:130px minmax(0,1fr)
   96px 96px;}
 .img-ov .oh-list{display:block;}
-body.light .oh-head{background:#fff;}
+body.light .oh-head{background:var(--chrome-2);}
 
 /* ---- T228: THUMBNAILS MEANS THUMBNAILS ---------------------------------
    The strip's Thumbnails view still printed every slide's title beside
@@ -3628,10 +3641,12 @@ body.picking .card:hover{outline:2px solid #fff;outline-offset:2px;}
   border-radius:5px;background:var(--chrome-1,#0e1926);
   border:1px solid #ffffff26;color:#dce6ee;font-family:var(--sans);}
 body.light .ar-name{color:var(--ink);}
-body.light .ar-name:focus{background:#fff;}
-body.light .ar-ssel{background:#fff;border-color:var(--line);
+body.light .ar-name:focus{background:var(--input-bg);}
+body.light .ar-ssel{background:var(--input-bg);
+  border-color:var(--border-strong);
   color:var(--ink);}
-body.light .ar-row:hover,body.light .ar-srow:hover{background:#00000008;}
+body.light .ar-row:hover,body.light .ar-srow:hover{
+  background:var(--surface-hover);}
 
 /* ---------- style sets ----------
    A gallery, not a menu: every card is SET IN the type it offers, because
@@ -3663,7 +3678,7 @@ body.light .ss-card{background:var(--chrome-1,#f4f7fa);
   border-color:var(--line);color:var(--ink);}
 body.light .ss-note{color:var(--ink-3);}
 body.light .mp-menu .find-ck{color:var(--ink);}
-body.light .mp-menu .find-ck:hover{background:#00000008;}
+body.light .mp-menu .find-ck:hover{background:var(--surface-hover);}
 
 /* pane editor: the current slide as clickable regions */
 /* the current slide's interactive editor — the single big view in the
@@ -4085,12 +4100,12 @@ body.light .vw-more-menu .vw-opt.on{color:var(--ink);}
    that was missing: "insert equation" used to drop $$ E = mc^2 $$ and
    leave you to remember every command yourself (2026-08-20). */
 .eq-dlg{position:fixed;inset:0;z-index:260;display:flex;
-  align-items:center;justify-content:center;background:#000000a8;}
+  align-items:center;justify-content:center;background:var(--overlay);}
 .eq-dlg[hidden]{display:none!important;}
 .eq-box{width:min(820px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:8px;padding:12px 13px 11px;
-  background:var(--chrome-2,#162735);border:1px solid #ffffff26;
-  border-radius:12px;box-shadow:0 24px 70px #00000088;
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:12px;box-shadow:0 24px 70px var(--shadow);
   font-family:var(--sans);}
 .eq-head{display:flex;align-items:center;gap:8px;}
 /* T219: a dialog's title is a title; a column's heading is a heading */
@@ -4130,17 +4145,18 @@ body.light .vw-more-menu .vw-opt.on{color:var(--ink);}
   background:#cf9a4e1f;border:1px solid #cf9a4e4d;border-radius:6px;
   padding:6px 8px;}
 .eq-foot{display:flex;align-items:center;gap:8px;}
-body.light .eq-box{background:#fff;border-color:var(--line);}
+body.light .eq-box{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
 
 /* ---- the Apply dialog -------------------------------------------------
    Same shell as the equation editor, two columns wide instead of one. */
 .aa-dlg{position:fixed;inset:0;z-index:260;display:flex;
-  align-items:center;justify-content:center;background:#000000a8;}
+  align-items:center;justify-content:center;background:var(--overlay);}
 .aa-dlg[hidden]{display:none!important;}
 .aa-box{width:min(760px,94vw);max-height:88vh;display:flex;
   flex-direction:column;gap:9px;padding:12px 13px 11px;
-  background:var(--chrome-2,#162735);border:1px solid #ffffff26;
-  border-radius:12px;box-shadow:0 24px 70px #00000088;
+  background:var(--chrome-2);border:1px solid var(--chrome-line);
+  border-radius:12px;box-shadow:0 24px 70px var(--shadow);
   font-family:var(--sans);}
 .aa-head{display:flex;align-items:center;gap:8px;}
 .aa-what{font-size:13px;color:#c3d2df;line-height:1.5;
@@ -4189,11 +4205,12 @@ body.light .eq-box{background:#fff;border-color:var(--line);}
    headline — a pure class toggle over nodes that are already rendered */
 .an-typematch{outline:2px dashed var(--accent)!important;
   outline-offset:2px;}
-body.light .aa-box{background:#fff;border-color:var(--line);}
+body.light .aa-box{background:var(--chrome-2);
+  border-color:var(--chrome-line);}
 body.light .aa-what{background:var(--chrome-1,#f4f7fa);
-  border-color:var(--line);color:#243444;}
+  border-color:var(--line);color:var(--ink);}
 body.light .aa-props .find-ck:hover,
-body.light .aa-scope .find-ck:hover{background:#00000008;}
+body.light .aa-scope .find-ck:hover{background:var(--surface-hover);}
 body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
   color:var(--ink);border-color:var(--line);}
 /* a typeset key needs room for a fraction without growing the whole row */
@@ -4225,7 +4242,8 @@ body.light .eq-src,body.light .eq-prev{background:var(--paper-2);
 .style-mgr .stm-edit .vw-opt{margin-top:0;}
 body.light .stm-edit{background:var(--chrome-1,#f4f7fa);
   border-color:var(--line);}
-body.light .stm-ren{background:#fff;border-color:var(--line);color:#243444;}
+body.light .stm-ren{background:var(--input-bg);
+  border-color:var(--border-strong);color:var(--ink);}
 .stm-row{display:flex;align-items:center;gap:6px;padding:2px 3px;}
 .stm-spec{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;line-height:1.15;}
@@ -4563,7 +4581,7 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
   font-size:10px;line-height:1.3;white-space:nowrap;color:#c9d6e2;
   padding:0 4px;}
 .seq-cell b{color:#fff;}
-body.light .seq-cell{color:#3b4b5a;}
+body.light .seq-cell{color:var(--ink-2);}
 body.light .seq-cell b{color:var(--ink);}
 /* the modifier hints are the first words to go when the row is
    tight -- they explain, the tooltips repeat them, and nothing acts
@@ -4716,7 +4734,7 @@ body:has(#rd-order) .an-readno{display:flex;}
   transform:none;width:auto;max-width:none;max-height:none;z-index:400;
   padding:16px 28px 40px;overflow:auto;border:0;border-radius:0;
   box-shadow:none;background:var(--chrome-0,#0b141d);}
-body.light .sh-menu.lay-ideas{background:#fff;}
+body.light .sh-menu.lay-ideas{background:var(--chrome-2);}
 .li-grid{display:flex;flex-wrap:wrap;gap:10px;}
 .li-card{display:flex;flex-direction:column;align-items:center;gap:5px;
   padding:7px;}
@@ -4790,8 +4808,10 @@ body.light .sh-menu.lay-ideas{background:#fff;}
 .strip-more[aria-expanded="true"]{
   background:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
-body.light .strip-frame{border-color:var(--line);background:#00000005;}
-body.light .strip-nav{border-left-color:var(--line);background:#00000008;}
+body.light .strip-frame{border-color:var(--line);
+  background:var(--surface-hover);}
+body.light .strip-nav{border-left-color:var(--line);
+  background:var(--surface-hover);}
 body.light .strip-nav>button{color:var(--ink-2);}
 /* the window with every tile in it: the strip itself, moved in and
    wrapped, so every tile keeps its wiring; moved back on close */
@@ -4809,7 +4829,7 @@ body.light .strip-nav>button{color:var(--ink-2);}
 .sh-menu.strip-all .fx-strip>*{flex:0 0 auto;height:56px;}
 .sh-menu.strip-all .fx-strip>.hd-lab,.sh-menu.strip-all .fx-strip>.lay-sec{
   display:none;}
-body.light .sh-menu.strip-all{background:var(--paper,#fff);
+body.light .sh-menu.strip-all{background:var(--chrome-2);
   border-color:var(--line);}
 
 /* ---- T204: NEW SLIDE AS A TILE, AND ALL IMAGES FULL SCREEN ------------
@@ -4837,8 +4857,9 @@ body.light .sh-menu.strip-all{background:var(--paper,#fff);
   grid-template-columns:repeat(auto-fill,minmax(320px,1fr));}
 .img-ov .img-row{border:1px solid #ffffff12;}
 .img-ov .img-th{width:72px;height:50px;}
-body.light .img-ov{background:#fff;color:var(--ink-2);}
-body.light .img-sec{border-color:var(--line);background:#00000004;}
+body.light .img-ov{background:var(--chrome-2);color:var(--ink-2);}
+body.light .img-sec{border-color:var(--line);
+  background:var(--surface-hover);}
 body.light .img-ov .img-row{border-color:var(--line);}
 
 /* the two galleries: three lines with the marker they would draw */
@@ -4852,7 +4873,7 @@ body.light .img-ov .img-row{border-color:var(--line);}
 .ls-bar{flex:1;height:2px;border-radius:1px;background:#ffffff33;}
 .ls-opt[aria-pressed="true"] .ls-bar{background:var(--accent,#39a9c0);}
 .ls-opt[aria-pressed="true"] .ls-mark{color:#fff;}
-body.light .ls-bar{background:#00000026;}
+body.light .ls-bar{background:var(--border-strong);}
 
 /* ---- T226: MAKING A LAYOUT --------------------------------------------
    The board is the page and the slots are what a layout is made of, so
@@ -4886,7 +4907,8 @@ body.light .ls-bar{background:#00000026;}
 .lb-rowt{flex:1;min-width:0;font-family:var(--sans);font-size:13px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 body.light .lb-board{background:var(--paper-2);border-color:var(--line);}
-body.light .lb-name{background:#00000006;border-color:var(--line);
+body.light .lb-name{background:var(--input-bg);
+  border-color:var(--border-strong);
   color:var(--ink);}
 
 /* ---- T225: a checkpoint reads as one ----------------------------------
@@ -4935,9 +4957,10 @@ body.light .lb-name{background:#00000006;border-color:var(--line);
 .dgt-ck{cursor:pointer;}
 /* the slide the strip is filtering by */
 .dg-cell.dg-pick{outline:2px solid var(--cyan);outline-offset:2px;}
-body.light .dgt-c{background:#fff;color:var(--ink);}
+body.light .dgt-c{background:var(--chrome-2);color:var(--ink);}
 body.light .dgt-h{background:var(--chrome-1,#f4f7fa);}
-body.light .dgt-n{background:#00000006;border-color:var(--line);
+body.light .dgt-n{background:var(--input-bg);
+  border-color:var(--border-strong);
   color:var(--ink);}
 
 /* ---- T223: A STYLE SAYS EVERYTHING ------------------------------------
@@ -4966,7 +4989,8 @@ body.light .stm-erow .stm-font,body.light .dg-ctrls .dg-font{
   font-family:var(--mono);font-size:12px;color:#e8f1f8;
   background:#ffffff0a;border:1px solid #ffffff26;border-radius:6px;}
 .dg-numpc{color:#7e93a4;}
-body.light .dg-num input{background:#00000006;border-color:var(--line);
+body.light .dg-num input{background:var(--input-bg);
+  border-color:var(--border-strong);
   color:var(--ink);}
 
 /* ---- T221: A BUTTON IS ITS OWN WIDTH ------------------------------------
@@ -5045,7 +5069,7 @@ body.light .dg-num input{background:#00000006;border-color:var(--line);
 .qk-sw:hover{border-color:#fff;transform:scale(1.14);}
 .qk-sw.on{border-color:#fff;
   box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 70%,transparent);}
-body.light .qk-sw{border-color:#00000033;}
+body.light .qk-sw{border-color:var(--border-strong);}
 .edit-tools .rbn-cell.rbn-seg#fmt-sizecell>.fmt-szwrap{display:flex;
   align-items:center;gap:3px;padding:0 6px;align-self:center;}
 #fmt-sizecell .fmt-num{width:42px;}
@@ -5067,7 +5091,8 @@ body.light .qk-sw{border-color:#00000033;}
 .img-ov .oh-what{font-size:13px;}
 .img-ov .oh-do{font-size:12px;padding:5px 10px;}
 .img-ov .pf-ok{grid-column:1/-1;}
-body.light .img-ov .oh-row{background:#00000004;border-color:var(--line);}
+body.light .img-ov .oh-row{background:var(--surface-hover);
+  border-color:var(--line);}
 
 /* ---- T219: A BUTTON LOOKS LIKE A BUTTON ---------------------------------
    T207 made every ribbon control flat at rest, the way PowerPoint's
@@ -5080,9 +5105,8 @@ body.light .img-ov .oh-row{background:#00000004;border-color:var(--line);}
    divided inside it. What made boxes chaos before T207 was that the
    boxes came in every size; the sizes are settled now, so the box can
    come back. Hover lifts it; pressed fills it with the deep accent. */
-.edit-tools{--rbn-btn:#ffffff0d;--rbn-btn-bd:#ffffff21;--rbn-btn-hi:#ffffff1c;}
-body.light .edit-tools{--rbn-btn:#00000007;--rbn-btn-bd:var(--line);
-  --rbn-btn-hi:#00000010;}
+.edit-tools{--rbn-btn:var(--btn-bg);--rbn-btn-bd:var(--btn-border);
+  --rbn-btn-hi:var(--surface-active);}
 .edit-tools .dbtn.rbn-sm,.edit-tools .dbtn.etm,.edit-tools .fx-tile,
 .edit-tools .dbtn.lay,.edit-tools .rbn-cell .dbtn,.edit-tools .rbn-foldbtn{
   background:var(--rbn-btn);border:1px solid var(--rbn-btn-bd);
@@ -5094,16 +5118,19 @@ body.light .edit-tools{--rbn-btn:#00000007;--rbn-btn-bd:var(--line);
 .edit-tools .rbn-cell .dbtn:hover:not(:disabled),
 .edit-tools .rbn-foldbtn:hover{
   background:var(--rbn-btn-hi);
-  border-color:color-mix(in srgb,var(--accent) 55%,transparent);color:#fff;}
+  border-color:color-mix(in srgb,var(--accent) 55%,transparent);
+  color:var(--chrome-ink);}
 .edit-tools .dbtn[aria-pressed="true"],.edit-tools .fx-tile.on,
 .edit-tools .dbtn.lay[aria-pressed="true"],
 .edit-tools .fx-tile[aria-pressed="true"]{
   background:var(--accent-deep,var(--cyan-deep));
   border-color:var(--accent-deep,var(--cyan-deep));
   color:var(--on-accent-deep,#fff);}
-.edit-tools .dbtn.dbtn-warn{color:#f0a0a0;border-color:#e0606055;}
+.edit-tools .dbtn.dbtn-warn{color:var(--danger);
+  border-color:color-mix(in srgb,var(--danger) 42%,transparent);}
 .edit-tools .dbtn.dbtn-warn:hover:not(:disabled){
-  background:#e0606022;border-color:#e06060aa;}
+  background:color-mix(in srgb,var(--danger) 13%,transparent);
+  border-color:color-mix(in srgb,var(--danger) 70%,transparent);}
 /* the colourful theme tints the box's edge and its words with the tab's hue */
 body.th-colorful .edit-tools .dbtn:not([aria-pressed="true"]):not(:hover),
 body.th-colorful .edit-tools .fx-tile:not(.on):not(:hover){
@@ -5159,8 +5186,8 @@ body.th-colorful .edit-tools .rbn-cell.rbn-seg>.dbtn:not([aria-pressed="true"]):
 .rbn-geom input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 .rbn-geom input:focus{outline:none;border-color:var(--accent);}
 .rbn-geom input:disabled{opacity:.45;}
-body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
-  border-color:var(--line);}
+body.light .rbn-geom input{color:var(--ink-2);background:var(--input-bg);
+  border-color:var(--border-strong);}
 
 /* ---- T208: SEGMENTED RUNS, AND A RUN WITH NOTHING SHOWING IS NOT THERE --
    B I U and Left Centre Right are one cell each, so the letters sit
@@ -5185,7 +5212,8 @@ body.light .rbn-geom input{color:var(--ink-2);background:#00000006;
 .img-ov .pf-ok{grid-column:1/-1;font-size:14px;max-width:760px;}
 .img-ov .hd-lab{grid-column:1/-1;margin-top:6px;}
 .img-ov .std-find.std-fig{grid-column:auto;}
-body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
+body.light .img-ov .std-find{background:var(--surface-hover);
+  border-color:var(--line);}
 .lay-ideas .li-grid{gap:16px;}
 .lay-ideas .li-card{padding:10px;}
 .lay-ideas .li-lab{font-size:13px;}
@@ -5202,7 +5230,8 @@ body.light .img-ov .std-find{background:#00000004;border-color:var(--line);}
   background:#ffffff05;font-size:13px;}
 .img-ov .pf-row .pf-what{font-size:14px;font-weight:600;}
 .img-ov .pf-row .pf-why{font-size:12.5px;}
-body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
+body.light .img-ov .pf-row{background:var(--surface-hover);
+  border-color:var(--line);}
 
 /* ---- T215: ROOM TO READ ON A BIG SCREEN ----------------------------------
    The ribbon's sizes were set for a laptop; on a wide monitor (2026-09-03,
