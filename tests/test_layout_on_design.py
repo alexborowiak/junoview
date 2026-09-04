@@ -58,7 +58,12 @@ def test_home_is_make_do_and_keep(out):
 
 
 def test_standardise_says_what_it_does(out):
-    assert "Fix mismatched text&#8230;</button>" in out
+    # T267 dropped the ellipsis: the dots mean "this will ask you
+    # for something first", and this opens the full-screen list
+    # straight away (2026-09-04, user, twice in one message: "why
+    # does this have elipsis anyway"). The NAME is what T204 fixed
+    # and it is unchanged.
+    assert "Fix mismatched text</button>" in out
     assert "<span>Mismatched text</span>" in out
     assert "<span>Standardise</span>" not in out
 

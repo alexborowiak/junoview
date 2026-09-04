@@ -2737,7 +2737,12 @@ def test_the_figure_lint_is_named_where_it_is_opened(out):
     headed "Standardise text" and its count line counted text boxes
     (2026-08-26 audit, T58).
     """
-    assert "Fix mismatched text&#8230;</button>" in out   # T204's name for it
+    # T267 dropped the ellipsis: the dots mean "this will ask you
+    # for something first", and this opens the full-screen list
+    # straight away (2026-09-04, user, twice in one message: "why
+    # does this have elipsis anyway"). The NAME is what T204 fixed
+    # and it is unchanged.
+    assert "Fix mismatched text</button>" in out   # T204's name for it
     # the tooltip names the figures too, in plain words since T194
     assert "and figures placed at different sizes" in out
     # the one word the ribbon uses, with a line under it saying what the

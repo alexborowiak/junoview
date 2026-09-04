@@ -1103,8 +1103,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # customiser's note, the empty history, the save toast and a 278-char
 # layout blurb. "Check for drift" is now "Fix mismatched text", the name
 # the ribbon already gives that same door.
-EXPECTED_MD5 = "07ce4640dc1da441ee9b8f1312993bb7"
-EXPECTED_BYTES = 3574387
+# 2026-09-04, T267: four controls stop claiming they will ask you
+# something first -- Fix mismatched text, Style system and the .pptx
+# export lose their dots, and "New..." on the rail gains the caret that
+# says it opens a menu.
+EXPECTED_MD5 = "501bc5d54ada5cf29ae02e822ba7686f"
+EXPECTED_BYTES = 3574367
 
 
 def _render_example() -> str:

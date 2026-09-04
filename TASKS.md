@@ -5602,3 +5602,25 @@ option. Then where has the ability to refresh all images gone?"
   One of the twelve is not a trim but a **name**: the Style system's
   "Check for drift" button opens the same thing the ribbon calls
   **"Fix mismatched text"**, and now says so. One door, one name.
+
+- [x] **T267 - The ellipsis means one thing, and only where it is true.**
+  The user (2026-09-04), twice in one message: "'Fix mismatched
+  text...' (why does this have elipsis anyway)" and "'style system...'
+  (why elipsis agian)". It is the third time -- T215 records the same
+  question about the Palette button.
+  *Done 2026-09-04.* There are about 130 ellipses in the product, but
+  most are placeholders ("Find... (Ctrl+K)") or real elisions in prose,
+  so a blanket strip was the wrong tool. What was missing was a **rule**,
+  applied consistently for the first time:
+  - **...** the press asks you for something before anything happens
+    (Rename..., Save to notebook..., Open a .junoview file...);
+  - **the caret** the press opens a menu anchored to that button (T215);
+  - **neither** the press does it, or shows you something.
+  Four controls were breaking it and are fixed. **Fix mismatched
+  text** and **Style system** open a full-screen view immediately and
+  ask nothing -- which is exactly why the dots read as a lie to the
+  person pressing them. The **.pptx export** exports straight away.
+  And **New** on the presentations rail opens a menu, so it wears the
+  caret the rest of the product's menu doors wear. The names T204 and
+  T215 settled are untouched; only the punctuation moved.
+  The rest were checked and left: each one does ask for something.
