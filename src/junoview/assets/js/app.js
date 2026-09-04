@@ -2790,15 +2790,39 @@
      and marks the words, so "where does it say that" is answered by
      looking rather than by turning filters off and trying again. */
   var FIND_SKIP={SCRIPT:1,STYLE:1,SVG:1,CANVAS:1,TEXTAREA:1,INPUT:1};
-  var findHits=[],findAt=-1,findTerm='';
+  var findHits=[],findAt=-1,findTerm='',findOpened=[];
+  /* ---- T245: PUT BACK EXACTLY WHAT FIND OPENED ------------------------
+     findGo un-hides the card a hit is in and forces it expanded, which is
+     the whole point of finding inside folded content; before this, only
+     the .jv-hitopen part flags were taken back off, so a cell you had
+     hidden by hand stayed visible for good and a folded note stayed open
+     (2026-09-04 review, reproduced: with Code Off and one card hidden by
+     its eye, searching "numpy" left card-imports-plotting-style visible
+     and .expanded after the bar closed).
+     Re-running applyFilters() would not do it either: it deliberately
+     KEEPS a note's `expanded` while its filter says collapsed, because
+     that flag is also the reader's own "I opened this one" -- and find's
+     forced expand is indistinguishable from it. So the two flags find
+     actually changes are recorded per card and put back verbatim. */
+  function findRestore(){
+    findOpened.forEach(function(r){
+      r.el.classList.toggle('is-hidden',r.hidden);
+      r.el.classList.toggle('expanded',r.expanded);
+      r.el.classList.remove('jv-hitcard');
+    });
+    findOpened=[];
+    $$('.jv-hitcard').forEach(function(c){
+      c.classList.remove('jv-hitcard');});
+    $$('.jv-hitopen').forEach(function(n){
+      n.classList.remove('jv-hitopen');});
+  }
   function findClear(){
     $$('.jv-hit').forEach(function(m){
       var p2=m.parentNode; if(!p2) return;
       p2.replaceChild(document.createTextNode(m.textContent),m);
       p2.normalize();
     });
-    $$('.jv-hitcard').forEach(function(c){
-      c.classList.remove('jv-hitcard');});
+    findRestore();
     findHits=[];findAt=-1;
   }
   /* wrap every occurrence in the text nodes under `root` */
@@ -2849,6 +2873,14 @@
        read: open the card it is in, and say so by marking the card */
     var card=m.closest&&m.closest('.card');
     if(card){
+      /* T245: remember what this card looked like BEFORE find opened it.
+         jv-hitcard doubles as the "already recorded" flag, so stepping
+         back over a card does not overwrite its original state with the
+         opened one. */
+      if(!card.classList.contains('jv-hitcard'))
+        findOpened.push({el:card,
+          hidden:card.classList.contains('is-hidden'),
+          expanded:card.classList.contains('expanded')});
       card.classList.add('jv-hitcard','expanded');
       card.classList.remove('is-hidden');
       $$('.part-off,.part-fold,.code-off,.ot-off,.ot-fold,.pt-off,'
@@ -2884,9 +2916,9 @@
       var inp=$('#docfind-in');
       if(inp){inp.focus();inp.select();}
     } else {
+      /* findClear -> findRestore already puts back every flag find set,
+         .jv-hitopen included */
       findClear();
-      $$('.jv-hitopen').forEach(function(n){
-        n.classList.remove('jv-hitopen');});
     }
   }
   (function(){

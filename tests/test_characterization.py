@@ -1066,8 +1066,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T257: the "pinned & marked" sidebar block gained a row of
 # show-only chips (All / Pinned / Star / Heart / Flag) and the CSS for
 # them, and applyFilters gained the gate they drive.
-EXPECTED_MD5 = "c546586ae5069e05af3a9fb011169f2b"
-EXPECTED_BYTES = 3558051
+# 2026-09-04, T245: Find records the two card flags it changes to make a
+# hit readable (is-hidden, expanded) and puts them back on close, so the
+# script carries findRestore and findGo's bookkeeping.
+EXPECTED_MD5 = "0fe4f0b76bb982c0993568ac2ac2cd19"
+EXPECTED_BYTES = 3559779
 
 
 def _render_example() -> str:

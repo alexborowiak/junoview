@@ -49,8 +49,13 @@ def test_a_hit_opens_what_the_filters_folded_around_it():
     assert "          n.classList.add('jv-hitopen');});" in app
     css = assets.load("css/app.css")
     assert ".jv-hitopen{display:revert!important;}" in css
-    # ...and closing puts every one of them back
-    assert "      $$('.jv-hitopen').forEach(function(n){" in app
+    # ...and closing puts every one of them back. T245 moved that sweep
+    # out of findOpen into findRestore, beside the card-level flags it
+    # had forgotten -- so a new SEARCH puts them back too, not only a
+    # close.
+    assert "    $$('.jv-hitopen').forEach(function(n){" in app
+    restore = app.split("  function findRestore(){")[1].split("\n  function ")[0]
+    assert "$$('.jv-hitopen')" in restore
     assert "  function findClear(){" in app
     assert "      p2.replaceChild(document.createTextNode(m.textContent),m);" in app
 

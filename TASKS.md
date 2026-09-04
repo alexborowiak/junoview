@@ -5108,7 +5108,7 @@ option. Then where has the ability to refresh all images gone?"
   names that all contain the same three letters is a list you still
   have to read one by one.
 
-- [ ] **T245 - Closing Find restores the view it opened.**
+- [x] **T245 - Closing Find restores the view it opened.**
   Review, 2026-09-04. `findGo()` removes `is-hidden`, adds `expanded`
   and exposes folded parts so the current hit can be read, but
   `findOpen(false)` only removes `jv-hitopen`. A filter-hidden card can
@@ -5116,6 +5116,26 @@ option. Then where has the ability to refresh all images gone?"
   stay expanded. Closing Find must restore the exact pre-find view (or
   reapply the filters without destroying user-open state), with a real
   interaction test covering hidden and folded cards.
+  *Done 2026-09-04.* Reproduced first: with Code Off and
+  `card-imports-plotting-style` hidden by hand with its eye, searching
+  "numpy" opened that card and closing the bar left it out of
+  `.card.is-hidden` and still carrying `.expanded` -- a cell you had
+  chosen to hide, back for good.
+  **Re-running `applyFilters()` is not the fix**, which is why this was
+  worth writing down. That pass deliberately KEEPS a note's `expanded`
+  while its filter says collapsed, because the flag is also the
+  reader's own "I opened this one" -- and find's forced expand is
+  indistinguishable from it. So `findGo` now records the two flags it
+  is about to change, per card, before it changes them, and
+  `findRestore()` puts them back verbatim. `.jv-hitcard` doubles as the
+  "already recorded" mark, so stepping back over a card does not
+  overwrite its original state with the opened one. The `.jv-hitopen`
+  sweep moved in there too, so a **new search** puts the last one back
+  as well -- not only a close.
+  Driven with the same setup plus a hand-folded note: the hidden /
+  expanded / collapsed / part-fold sets and the jv-hit, jv-hitcard and
+  jv-hitopen counts after closing were identical to the snapshot taken
+  before Find was opened.
 
 - [ ] **T246 - Document Find does not erase the Variables match.**
   Review, 2026-09-04. Document hits and the Variables filter both use
