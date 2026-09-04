@@ -850,8 +850,15 @@
     var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
     if(a){
       var r=sanitizeRich(el.innerHTML);
-      a.text=el.innerText;
-      if(r.rich) a.html=r.html; else delete a.html;
+      /* T261: write to the page the box is TURNED TO, not always page
+         one. renderAnnots binds the editor's get/set to textAt(s,a) via
+         textPage/textPageSet; this assigned a.text/a.html directly, so
+         recolouring a run on page 2 of a multi-page text box overwrote
+         page ONE with page two's words -- silently, and persisted by
+         autosave. textAt returns 0 for a single-page box and for the
+         title/subtitle annots, so nothing else changes. */
+      var n=textAt(s,a); if(!(n>0)) n=0;
+      textPageSet(a,n,el.innerText,r.rich?r.html:'');
       markDirty();
     }
     return true;

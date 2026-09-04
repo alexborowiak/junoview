@@ -603,7 +603,12 @@
     gfind.addEventListener('keydown',function(e){e.stopPropagation();});
     rbnGalleryFill();
     rbnGalleryPlace();
-    rbnOverflowNotice(bar);
+    /* T261: `bar` was never declared here, and the IIFE is strict, so
+       this threw a ReferenceError and the two listeners below it were
+       never attached -- Escape did not close the gallery (the very
+       thing rbnGalleryKey's comment says can only live here) and the
+       panel did not re-place itself on resize. */
+    rbnOverflowNotice($('#edit-tools'));
     window.addEventListener('resize',rbnGalleryPlace);
     document.addEventListener('keydown',rbnGalleryKey,true);
   }

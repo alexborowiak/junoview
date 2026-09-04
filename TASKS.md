@@ -5410,3 +5410,41 @@ option. Then where has the ability to refresh all images gone?"
   Help need a scroll, and both also have keys (Ctrl+F, ?). Making the
   whole bar fit at 1440 is a layout decision, not a bug fix, so it is
   left for the user to call.
+
+- [x] **T261 - Five things the audit found broken in the editor.**
+  Unrelated to each other; what they share is that the substring suite
+  was green through all five.
+  1. **Save wrote back to the wrong file.** `openDeckFile` filed the
+     handle it had just been given under `'deckFile'`, a key nothing in
+     the tree reads; the restore path reads `HKEY`. So the file you
+     opened was forgotten on the next visit -- and any handle left
+     under `HKEY` by an earlier Save-as **was** restored and became the
+     live target while `saveTarget` was still `'file'`, so the first
+     autosave after a reload wrote this deck into that other file.
+  2. **Undo deleted the masters.** `histRestore` has always carried
+     `masters` in its delete-what-is-absent list and `histState` never
+     saved it, so `d.masters` was always undefined and every restore
+     took `delete pres.masters`. One Ctrl+Z after ANY edit destroyed
+     the registry while every slide kept its `mast` tag pointing at
+     nothing, and the loss went straight into the draft.
+  3. **Hovering a swatch collapsed a multi-selection.** `pvRender` (the
+     live colour preview) called `selectAnnot`, which with no additive
+     flag sets `selSet=groupMembers(s,idx)` -- `[idx]` for anything
+     ungrouped. Selecting three shapes and moving the pointer over a
+     swatch silently dropped two, and the click then recoloured only
+     the survivor. It uses `paintSel` + `showFmt` now, the pair
+     `fmtApply` already uses on its multi-target branch.
+  4. **The ribbon gallery threw every time it opened.**
+     `rbnOverflowNotice(bar)` with `bar` never declared, in a strict
+     IIFE -- so it threw before its last two statements and neither
+     listener was attached. **Driven A/B**: on a build from before the
+     fix, opening the gallery logged `Uncaught ReferenceError: bar is
+     not defined` and Escape left all 9 cards on screen; after, no
+     error and Escape closes it. That Escape handling is the thing
+     `rbnGalleryKey`'s own comment says cannot live anywhere else.
+  5. **Recolouring text on page 2 overwrote page 1.** `colorSelection`
+     assigned `a.text`/`a.html` directly, while every other writer of a
+     box's words goes through `textPage`/`textPageSet` bound to
+     `textAt(s,a)` -- the page the box is turned to. Highlighting a run
+     on page two of a multi-page text box and picking a colour wrote
+     page two's words over page ONE, silently, and autosave kept it.

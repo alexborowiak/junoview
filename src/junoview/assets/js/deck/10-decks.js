@@ -799,6 +799,16 @@
          that (the same argument styles and types make above) */
       components:(pres.components&&Object.keys(pres.components).length)
         ?pres.components:null,
+      /* T261: a master is a look slides inherit LIVE, and sl.mast points
+         at it, so it is content exactly as components are. histRestore
+         has always had 'masters' in its delete-what-is-absent list while
+         this never saved it -- so every undo, after any edit at all,
+         destroyed the whole registry and left every wearer tagged at
+         nothing. Empty-is-null like its neighbours, so merely opening
+         the Masters panel (mastStore() creates pres.masters={} lazily)
+         does not record a phantom step. */
+      masters:(pres.masters&&Object.keys(pres.masters).length)
+        ?pres.masters:null,
       /* the cut NAMES are content; which cut you happen to be
          rehearsing is not, and lives in a session variable (T24) */
       cuts:(pres.cuts&&Object.keys(pres.cuts).length)?pres.cuts:null,

@@ -161,7 +161,16 @@
   function pvRender(){
     var s=pres.slides[cur];
     var l=stage.querySelector('.annot-layer');
-    if(l&&s){renderAnnots(l,s);selectAnnot(l,selAnnot);}
+    if(!l||!s) return;
+    renderAnnots(l,s);
+    /* T261: paintSel + showFmt, NOT selectAnnot. selectAnnot with no
+       additive flag does `selSet=groupMembers(s,idx)`, which is [idx]
+       for anything ungrouped -- so merely HOVERING a swatch collapsed a
+       multi-selection to one item, and the click that followed then
+       recoloured only that one. This is the pair fmtApply uses on its
+       own targets.length>1 branch. */
+    paintSel(l);
+    showFmt();
   }
   function pvShow(mut){
     var a=pvAnnot();

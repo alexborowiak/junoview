@@ -2116,7 +2116,13 @@
             importDeckText(txt,false);
             /* the handle is what makes Save write back to this very file */
             fileHandle=h;fileName=h.name||f.name||'';
-            idbPut('deckFile',h);
+            /* T261: HKEY, not 'deckFile'. Nothing ever read 'deckFile',
+               so the file you had just opened was forgotten on the next
+               visit -- while any handle left under HKEY by an earlier
+               Save-as WAS restored and became the live target with
+               saveTarget still 'file', so the first autosave after a
+               reload wrote this deck into that other file. */
+            idbPut(HKEY,h).catch(function(){});
             setTarget('file');
             toast('Opened \u2014 Save now writes back to '+fileName);
           });

@@ -1077,8 +1077,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # instead of forced into 34px squares their labels painted out of, Help
 # loses its stale icon-only square, the dead #theme-btn selector goes,
 # and an empty File group hides with its only button.
-EXPECTED_MD5 = "835cb2bb62fd808148f6833c5ce36c66"
-EXPECTED_BYTES = 3561815
+# 2026-09-04, T261: five deck-editor repairs -- the opened file's handle
+# under HKEY, masters in histState, pvRender using paintSel/showFmt,
+# the ribbon gallery resolving its own bar, and colorSelection writing
+# through textPageSet.
+EXPECTED_MD5 = "c3a130fdd93d6c4af76d9aa3adc379e4"
+EXPECTED_BYTES = 3564147
 
 
 def _render_example() -> str:
