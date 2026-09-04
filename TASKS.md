@@ -5271,3 +5271,31 @@ option. Then where has the ability to refresh all images gone?"
   nothing else, On brought all seven back, Fold kept the cards and
   turned their code off, and a **pinned** cell stayed visible under Off
   while its six peers went.
+
+- [x] **T257 - Show only the cells you pinned, or starred.**
+  The user (2026-09-04): "The pins are good, and would be good to have
+  optins that is - show pinned options only, show starts only."
+  *Done 2026-09-04.* T242 gave the marks and a list of them; marking is
+  only half the thought, and this is the other half -- seeing just
+  those cells, in the document itself. A row of chips sits in the
+  "pinned & marked" block with the marks it acts on: **All / Pinned n /
+  Star n / Heart n / Flag n**, each a word plus its icon, each showing
+  how many, and only for a mark the notebook actually uses -- a chip
+  for a mark you have never used is a chip that empties the page. They
+  **wrap**, which the ribbon may never do but a sidebar block may.
+  It is a **gate**, not one more filter: it decides which cells are in
+  play at all and the type filters and section scope act within that.
+  So it runs **before** T242's pin bypass. Pin's promise is that the
+  type and section filters cannot reach a cell; this is not one of
+  those -- it is you saying which cells you are working with -- so a
+  pinned cell is out of view under "only starred" like any other, and
+  "only pinned" is the case where the two agree anyway. It reads the
+  card's own `is-pinned` / `mk-*` classes, so there is no second source
+  of truth to drift. Un-marking the last cell of the mark you are gated
+  to **releases the gate**, rather than leaving an empty notebook with
+  no visible cause.
+  Driven on the example notebook with two pins, one star, one heart and
+  one flag: Pinned showed exactly the two pinned cards of 27, Star
+  exactly the one starred card (the pinned ones gone with the rest),
+  All restored all 27, and dropping the last heart while Heart was on
+  put the whole notebook back.

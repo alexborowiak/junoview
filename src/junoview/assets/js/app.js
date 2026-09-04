@@ -1014,9 +1014,24 @@
   function applyFilters(){
     $$('.nbshell').forEach(function(sh){
       var stem=sh.dataset.nb;
+      /* T257: the gate, read once per notebook */
+      var only=onlyFor(stem);
       /* only the DOCUMENT feed: the tree view holds clones of these same
          cards and must always show every node in full */
       $$('.content .card',sh).forEach(function(c){
+        /* T257: SHOW ONLY WHAT YOU MARKED, and it runs BEFORE the pin
+           bypass below. Pin's promise is that the type and section
+           filters cannot reach a cell; this is not one of those -- it
+           is you saying which cells you are working with at all, so a
+           pinned cell is out of view under "only starred" like any
+           other. "Only pinned" is the case where the two agree. */
+        if(!onlyKeeps(c,only)){
+          c.classList.add('is-hidden');
+          var onav=sh.querySelector('.navitem[data-item="'
+            +c.id.replace(/^card-/,'')+'"]');
+          if(onav) onav.classList.add('nav-hidden');
+          return;
+        }
         /* T242: PINNED MEANS THE FILTERS DO NOT REACH IT. Everything
            below decides what to fold and hide; a pinned cell wants
            none of it, so it is cleared and skipped rather than being
@@ -3884,6 +3899,40 @@
     if(next&&(next.p||next.f)) m[id]=next; else delete m[id];
     writeMarks(stem,m);
   }
+  /* ---- T257: SHOW ONLY WHAT YOU MARKED --------------------------------
+     "would be good to have options that is - show pinned only, show
+     stars only" (2026-09-04, user). Marking a cell is only half of the
+     thought; the other half is being able to see just those. It is a
+     GATE rather than one more filter: it decides which cells are in
+     play at all, and everything else -- the type filters, the section
+     scope -- then acts within that. Kept per notebook beside the marks
+     themselves, so a notebook you left focused opens focused. */
+  var ONLYKEY='semmarkonly:'+location.pathname;
+  var ONLY_KINDS=[{k:'pin',ic:'pin',lab:'Pinned'},
+    {k:'star',ic:'star',lab:'Star'},
+    {k:'heart',ic:'heart',lab:'Heart'},
+    {k:'flag',ic:'flag',lab:'Flag'}];
+  function allOnly(){
+    try{return JSON.parse(localStorage.getItem(ONLYKEY)||'{}')||{};}
+    catch(e){return {};}
+  }
+  function onlyFor(stem){
+    var v=allOnly()[stem];
+    return typeof v==='string'?v:'';
+  }
+  function setOnly(stem,v){
+    var all=allOnly();
+    if(v) all[stem]=v; else delete all[stem];
+    try{localStorage.setItem(ONLYKEY,JSON.stringify(all));}catch(e){}
+  }
+  /* does this card carry the mark the gate is set to? Read off the card's
+     own classes, which paintMark has already put there, so the gate needs
+     no second source of truth. */
+  function onlyKeeps(c,only){
+    if(!only) return true;
+    return only==='pin'?c.classList.contains('is-pinned')
+      :c.classList.contains('mk-'+only);
+  }
   /* paint one card and its sidebar row from the store */
   function paintMark(shell,stem,id){
     var st=markOf(stem,id);
@@ -3931,11 +3980,54 @@
     });
     rows.sort(function(a,b){return (b.st.p?1:0)-(a.st.p?1:0);});
     host.hidden=!rows.length;
-    if(!rows.length) return;
+    if(!rows.length){
+      /* the last mark just went: a gate pointing at nothing would empty
+         the whole notebook with no visible cause */
+      if(onlyFor(stem)){setOnly(stem,'');applyFilters();}
+      return;
+    }
+    /* which marks this notebook actually has — a chip for a mark you
+       have never used is a chip that empties the page */
+    var have={pin:0,star:0,heart:0,flag:0};
+    rows.forEach(function(r){
+      if(r.st.p) have.pin++;
+      if(r.st.f) have[r.st.f]=(have[r.st.f]||0)+1;});
+    var only=onlyFor(stem);
+    if(only&&!have[only]){setOnly(stem,'');only='';}
     var h=document.createElement('div');
     h.className='navmarks-h';
     h.textContent='pinned & marked';
     host.appendChild(h);
+    /* T257: the gate lives here, with the marks it acts on. Words plus
+       icons, and "All" is always present so the way back out is on the
+       row rather than a state you have to remember how to undo. */
+    var bar=document.createElement('div');
+    bar.className='navonly';
+    bar.setAttribute('role','group');
+    bar.setAttribute('aria-label','Show only marked cells');
+    function chip(k,ic,lab,n){
+      var b=document.createElement('button');
+      b.type='button';
+      b.className='navonly-b'+(only===k?' on':'');
+      b.dataset.only=k;
+      b.setAttribute('aria-pressed',only===k?'true':'false');
+      b.title=k?('Show only the '+n+' cell'+(n===1?'':'s')+' you '
+        +(k==='pin'?'pinned':'marked '+k))
+        :'Show every cell again';
+      b.innerHTML=bic(ic)+'<span class="navonly-t">'+lab
+        +(k?(' '+n):'')+'</span>';
+      b.addEventListener('click',function(){
+        setOnly(stem,only===k?'':k);
+        renderMarks(shell,stem);applyFilters();
+      });
+      return b;
+    }
+    /* "All" wears an icon too — words plus icons is the rule for every
+       button, and a bare word among four iconed chips reads as a label */
+    bar.appendChild(chip('','cellcard','All',0));
+    ONLY_KINDS.forEach(function(o){
+      if(have[o.k]) bar.appendChild(chip(o.k,o.ic,o.lab,have[o.k]));});
+    host.appendChild(bar);
     rows.forEach(function(r){
       var a=document.createElement('a');
       a.className='navmark'+(r.st.p?' is-pinned':'')
@@ -4002,6 +4094,8 @@
         var next=MARK_KINDS[at+1]||'';
         setMarkState(stem,id,{p:st.p||0,f:next});
         paintMark(shell,stem,id);renderMarks(shell,stem);
+        /* T257: with a gate on, changing a mark changes what is in view */
+        applyFilters();
       });
     });
     Object.keys(marksFor(stem)).forEach(function(id){

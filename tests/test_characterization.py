@@ -1063,8 +1063,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T256: every card carries data-noout, the three chooser
 # buttons carry the word "Choose" (and plainer tooltips), and app.css
 # gained the hollow dot and the phrase-row rule for the new menu entry.
-EXPECTED_MD5 = "77a21aae4290630db3bcc3e330a24d24"
-EXPECTED_BYTES = 3552596
+# 2026-09-04, T257: the "pinned & marked" sidebar block gained a row of
+# show-only chips (All / Pinned / Star / Heart / Flag) and the CSS for
+# them, and applyFilters gained the gate they drive.
+EXPECTED_MD5 = "c546586ae5069e05af3a9fb011169f2b"
+EXPECTED_BYTES = 3558051
 
 
 def _render_example() -> str:

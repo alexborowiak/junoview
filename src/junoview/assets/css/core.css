@@ -896,6 +896,25 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .navmark.mk-star .navmark-ic{color:var(--amber,#f0a848);opacity:1;}
 .navmark.mk-heart .navmark-ic{color:#e0757c;opacity:1;}
 .navmark.mk-flag .navmark-ic{color:#5fc4ac;opacity:1;}
+/* T257: "show only" -- the gate, on the row with the marks it acts on.
+   Chips WRAP here on purpose: this is a sidebar block, not the ribbon,
+   and the never-wrap rule is about the toolbar. Every chip is a word
+   plus its icon; "All" is always there, so getting back out is a
+   button rather than something you have to remember. */
+.navonly{display:flex;flex-wrap:wrap;gap:4px;padding:2px 4px 7px;}
+.navonly-b{display:inline-flex;align-items:center;gap:4px;
+  font-family:var(--mono);font-size:10.5px;line-height:1;
+  padding:4px 7px;border-radius:5px;cursor:pointer;white-space:nowrap;
+  border:1px solid var(--chrome-line,#ffffff22);
+  background:var(--btn-bg,#ffffff0e);color:var(--chrome-ink-3,#8ea2b3);}
+.navonly-b:hover{border-color:var(--cyan);color:var(--chrome-ink,#e7eff5);}
+.navonly-b .bic{width:11px;height:11px;flex:none;}
+.navonly-b.on{border-color:var(--cyan);color:var(--cyan);
+  background:var(--selection,#238aa02e);}
+.navonly-b[data-only="star"].on{border-color:var(--amber,#f0a848);
+  color:var(--amber,#f0a848);}
+.navonly-b[data-only="heart"].on{border-color:#e0757c;color:#e0757c;}
+.navonly-b[data-only="flag"].on{border-color:#5fc4ac;color:#5fc4ac;}
 /* code fully hidden: the code tucked under figures disappears too */
 .codewrap.code-off{display:none;}
 .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
