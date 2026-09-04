@@ -1231,7 +1231,7 @@ def test_light_themes_re_ink_the_surfaces(out):
     """
     light = out.split("body.light{")[1].split("}", 1)[0]
     assert "--chrome:#eef2f6;--chrome-0:#f4f7fa;" in light
-    assert "--chrome-ink:#243340;" in light
+    assert "--chrome-ink:#16202b;" in light
     assert "--btn-bg:#ffffff;--btn-border:#b9c7d3;" in light
     assert "body.light.th-lforest{" in out
     # the two overrides that carried alpha

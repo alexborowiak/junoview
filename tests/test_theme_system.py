@@ -14,8 +14,10 @@ THEME_TOKENS = {
     "chrome-ink-3",
     "accent", "accent-deep", "accent-soft",
     "btn-bg", "btn-border", "btn-ink",
+    "surface-hover", "surface-active", "border-strong", "input-bg",
+    "tooltip-bg", "tooltip-ink",
     "overlay", "shadow", "focus", "selection",
-    "danger", "warning", "success", "on-accent",
+    "danger", "warning", "success", "on-accent", "on-accent-deep",
 }
 
 
@@ -37,8 +39,11 @@ def test_every_original_scheme_supplies_the_whole_theme_contract():
         "body.th-contrast",
     )
     for selector in selectors:
-        missing = THEME_TOKENS - _tokens_for(selector).keys()
-        assert not missing, f"{selector}: missing {sorted(missing)}"
+        actual = _tokens_for(selector).keys()
+        assert actual == THEME_TOKENS, (
+            f"{selector}: missing {sorted(THEME_TOKENS - actual)}, "
+            f"extra {sorted(actual - THEME_TOKENS)}"
+        )
 
 
 def test_dark_and_forest_themes_change_the_document_as_well_as_chrome():
@@ -58,3 +63,37 @@ def test_the_theme_contract_names_content_and_feedback_colours():
     app = assets.app_js()
     assert "the complete product\n     token set" in app
     assert "Chrome only" not in app
+
+
+def test_representative_surfaces_consume_theme_tokens():
+    """Menus, dialogs, documents and authored output all have a token seam."""
+    core = assets.core_css()
+    app = assets.app_css()
+    deck = assets.deck_css()
+    consumers = (
+        (core, ".stylepanel", "--chrome-2", "--chrome-line", "--shadow"),
+        (core, ".jv-scheme-menu", "--chrome-2", "--chrome-line", "--shadow"),
+        (app, ".help-box", "--chrome-2", "--chrome-line", "--shadow"),
+        (app, ".odlg-box", "--chrome-2", "--chrome-line", "--shadow"),
+        (app, ".note-dlg-box", "--chrome-2", "--chrome-line", "--shadow"),
+        (app, ".apptip", "--tooltip-bg", "--tooltip-ink", "--shadow"),
+        (app, "body:not(.light) .card", "--paper", "--line", "--shadow"),
+        (core, ".figframe", "--output-paper", "--output-ink", "--output-line"),
+        (deck, ".slide-fig .note", "--output-paper", "--output-ink"),
+    )
+    for css, selector, *tokens in consumers:
+        matches = re.findall(re.escape(selector) + r"\{([^}]+)\}", css)
+        assert matches, selector
+        assert any(
+            all(f"var({token}" in rule for token in tokens)
+            for rule in matches
+        ), (selector, tokens)
+
+
+def test_deep_selected_states_have_their_own_contrast_token():
+    core = assets.core_css()
+    app = assets.app_css()
+    deck = assets.deck_css()
+    assert "color:var(--on-accent-deep)" in core
+    assert "color:var(--on-accent-deep)" in app
+    assert "color:var(--on-accent-deep,#fff)" in deck

@@ -52,7 +52,8 @@ body.deck-open{overflow:hidden;}
    default theme, the tab's own hue in the colourful one -- so a lit
    control never wears a colour its neighbours do not */
 .dbtn[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
-  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 .deck-save{display:flex;gap:7px;align-items:center;}
 
 
@@ -734,11 +735,11 @@ body:not(.light) .plot-trace-btn:hover{color:#5fc3d8;border-color:color-mix(in s
 /* Cells | Tree switcher, right in the trace header */
 .trace-viewsw{position:absolute;right:0;top:6px;display:flex;gap:6px;}
 .dbtn.tvw.on{background:var(--cyan-deep);border-color:var(--cyan-deep);
-  color:#fff;}
+  color:var(--on-accent-deep,#fff);}
 body.light .trace-viewsw .dbtn{background:#fff;border-color:var(--line);
   color:var(--ink-2);}
 body.light .trace-viewsw .dbtn.tvw.on{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:#fff;}
+  border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 .tracetab-eyebrow{display:block;font-family:var(--mono);font-size:10px;
   letter-spacing:.22em;text-transform:uppercase;color:#5fc3d8;}
 .tracetab-t{margin:5px 0 2px;font-size:22px;font-weight:650;color:#eef4f8;
@@ -806,7 +807,8 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   overflow:hidden;background:none;}
 .slide-fig .figframe img{max-width:100%;max-height:100%;width:auto;height:auto;
   object-fit:contain;margin:0;}
-.slide-fig .note{background:#f7fafc;color:var(--ink-2);border-radius:12px;
+.slide-fig .note{background:var(--output-paper);color:var(--output-ink-2);
+  border-radius:12px;
   padding:26px 32px;overflow:auto;font-size:16.5px;line-height:1.7;}
 .slide-fig .caption{flex:none;color:#a9bccb;margin-top:12px;padding-left:2px;
   font-size:14.5px;}
@@ -831,7 +833,8 @@ body.light .tab.tab-sub.current{background:color-mix(in srgb,var(--accent) 15%,t
   overflow:hidden;}
 .spane .figframe img{max-width:100%;max-height:100%;width:auto;height:auto;
   object-fit:contain;margin:0;}
-.spane .note{flex:1;min-height:0;background:#f7fafc;color:var(--ink-2);
+.spane .note{flex:1;min-height:0;background:var(--output-paper);
+  color:var(--output-ink-2);
   border-radius:8px;padding:14px 18px;overflow:auto;font-size:13.5px;
   line-height:1.6;}
 .spane .jv-xr,.spane pre.result,.spane pre.stream{overflow:auto;
@@ -1016,7 +1019,8 @@ body.creating-docs .card:hover{outline:2px solid var(--cyan);
   border-radius:6px;box-sizing:border-box;}
 #pres-name:focus{outline:none;border-color:var(--cyan);}
 .dbtn.lay[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
-  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 /* layout picker: little diagrams instead of words */
 .dbtn.lay{padding:5px 7px;line-height:0;}
 .layico{display:grid;gap:2px;width:34px;height:22px;}
@@ -1365,7 +1369,9 @@ body.slide-editing .apptop{display:none;}
 .fx-tile .bic{width:24px;height:24px;}
 .fx-tile:hover:not(:disabled){border-color:color-mix(in srgb,var(--accent) 55%,transparent);
   color:#fff;background:color-mix(in srgb,var(--accent) 10%,transparent);}
-.fx-tile.on{background:var(--accent-deep,var(--cyan-deep));border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+.fx-tile.on{background:var(--accent-deep,var(--cyan-deep));
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 .fx-tile:disabled{opacity:.35;cursor:default;}
 body.light .fx-tile{color:var(--ink-2);border-color:var(--line);}
 body.light .fx-tile.on{color:#fff;}
@@ -1384,7 +1390,9 @@ body.light .fx-tile.on{color:#fff;}
    (2026-09-02, user: "you can't tell which button you are on"). */
 .rbn-row .seq-fx .seq-fxb[aria-pressed="true"],
 .rbn-row .rbn-cell .dbtn.rbn-sm[aria-pressed="true"]{
-  background:var(--accent-deep,var(--cyan-deep));color:#fff;border-color:var(--accent-deep,var(--cyan-deep));}
+  background:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);
+  border-color:var(--accent-deep,var(--cyan-deep));}
 .rbn-insert{order:6;}
 /* Write and Draw share Insert's rung and follow it by source order:
    place a thing, write words, draw a line (T178) */
@@ -1416,7 +1424,8 @@ body.light .dbtn.dbtn-accent{color:var(--ink);}
 .rbn-row>.fx-strip.big-strip{align-items:center;}
 .big-strip .fx-tile{height:56px;}
 .fx-tile.big-tile[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
-  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 .img-row{display:flex;align-items:center;gap:8px;padding:6px 7px;
   border-radius:7px;cursor:pointer;color:#c9d6e2;}
 .img-row:hover{background:#ffffff0c;}
@@ -1721,7 +1730,7 @@ body.light .deck.editing .an-item.an-text:not(.sel):has(.an-tx:empty){
 /* the "+ Shapes" dropdown */
 .sh-drop{position:relative;display:inline-block;}
 #sh-btn[aria-pressed="true"]{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:#fff;}
+  border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 .sh-menu{position:absolute;top:calc(100% + 5px);left:0;z-index:60;
   background:var(--chrome-2,#16273a);border:1px solid #ffffff26;border-radius:9px;padding:6px;
   display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;
@@ -1825,7 +1834,8 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
   color:#cdd9e3;border-radius:7px;padding:7px 6px;font-size:12px;cursor:pointer;
   font-family:var(--sans);}
 .anim-effb:hover{border-color:color-mix(in srgb,var(--accent) 53%,transparent);color:#fff;}
-.anim-effb.on{background:var(--cyan-deep);border-color:var(--cyan);color:#fff;}
+.anim-effb.on{background:var(--cyan-deep);border-color:var(--cyan);
+  color:var(--on-accent-deep,#fff);}
 .anim-merge{display:flex;gap:6px;margin-top:8px;}
 .anim-mini{background:var(--chrome-2,#16273a);border:1px solid #ffffff1f;color:#bcccd8;
   border-radius:6px;padding:5px 8px;font-size:11.5px;cursor:pointer;
@@ -1854,7 +1864,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 .anim-chip{font-size:11px;color:#bcccd8;background:#1c2c3d;border-radius:5px;
   padding:2px 7px;cursor:pointer;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;max-width:150px;}
-.anim-chip.cur{background:var(--cyan-deep);color:#fff;}
+.anim-chip.cur{background:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 /* the stops a build ANCHORS (T163): a flip book's pages, a chart's
    series. Indented and quieter than a build row because they are
    READ-ONLY here -- a page's place in the sequence is decided by its
@@ -1924,7 +1934,7 @@ body.light .dbtn.opt-chip[aria-pressed="true"]{color:var(--ink);}
 /* var() doesn't resolve in an SVG font-family attribute — set it via CSS */
 .an-shape-svg text,.sh-ico text{font-family:var(--sans);}
 .dbtn.et[aria-pressed="true"]{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:#fff;}
+  border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 .dbtn.etm{padding:5px 9px;font-family:var(--sans);font-size:12px;}
 .dbtn.etm>svg,.dbtn.etm>i[data-ic]{width:15px;height:15px;flex:none;}
 select#fmt-font{background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
@@ -1932,7 +1942,7 @@ select#fmt-font{background:var(--chrome-2,#16273a);border:1px solid #ffffff22;
   padding:5px 6px;border-radius:6px;}
 select#fmt-font[hidden]{display:none;}
 .dbtn.etm[aria-pressed="true"]{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:#fff;}
+  border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 /* precise point-size input + opacity slider live in the format bar */
 .fmt-szwrap,.fmt-opwrap{display:inline-flex;align-items:center;gap:4px;
   flex:none;}
@@ -2006,7 +2016,7 @@ select#fmt-font[hidden]{display:none;}
 .cp-preview::after{content:"";position:absolute;inset:0;
   background:var(--cpc,var(--accent));}
 .cp-apply{background:var(--cyan-deep);border-color:var(--cyan-deep);
-  color:#fff;}
+  color:var(--on-accent-deep,#fff);}
 .deck.editing .deck-arrow,.deck.editing .deck-foot{display:none;}
 .slide{position:relative;}
 /* image annotations */
@@ -3483,8 +3493,8 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 .an-cell.an-figonly .figframe img{width:100%;height:100%;
   max-width:none;max-height:none;object-fit:contain;}
 .an-cell .note{flex:1;min-height:0;overflow:auto;
-  background:var(--nb-bg,#f7fafc);
-  color:var(--nb-tx,var(--ink-2));border-radius:6px;padding:10px 14px;
+  background:var(--nb-bg,var(--output-paper));
+  color:var(--nb-tx,var(--output-ink-2));border-radius:6px;padding:10px 14px;
   font-size:13px;}
 /* a recoloured markdown card carries its text colour to every child
    (headings, lists, bold) so the whole note reads in the chosen colour */
@@ -3520,7 +3530,7 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   background:color-mix(in srgb,var(--chrome-1,#0e1926) 93%,transparent);border:1px solid #ffffff2b;border-radius:5px;
   color:#c9d6e2;padding:3px 7px;cursor:pointer;line-height:1;}
 .cellpartbtn.on{background:var(--cyan-deep);border-color:var(--cyan-deep);
-  color:#fff;}
+  color:var(--on-accent-deep,#fff);}
 .cellpartbtn:hover{border-color:var(--cyan);color:#fff;}
 .cellpartbtn.split{color:#9fb2c2;}
 /* the same part-picker, hosted in the top ribbon's Object group */
@@ -3535,7 +3545,7 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
   border-radius:6px;color:#cdd9e3;padding:5px 9px;line-height:normal;}
 #fmt-parts .cellpartbtn:hover{border-color:var(--cyan);color:#fff;}
 #fmt-parts .cellpartbtn.on{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:#fff;}
+  border-color:var(--cyan-deep);color:var(--on-accent-deep,#fff);}
 /* the Layouts dropdown: the whole template catalog, off the panel and
    into a ribbon menu */
 /* T212: the Change layout gallery is the one tile, wrapped, no scrollbar */
@@ -3554,7 +3564,8 @@ ol.an-ul.an-ul-paren>li::marker{content:counter(list-item) ") ";}
 
 /* picking a card for a cell frame */
 .pickbar{position:fixed;top:var(--chrome-h);left:var(--presrail-w);
-  right:0;z-index:99;background:var(--cyan-deep);color:#fff;
+  right:0;z-index:99;background:var(--cyan-deep);
+  color:var(--on-accent-deep,#fff);
   padding:9px 16px;font-size:13px;display:flex;gap:12px;
   align-items:center;box-shadow:0 6px 24px #00000055;}
 .pickbar[hidden]{display:none;}
@@ -4574,7 +4585,8 @@ body.light .seq-cell b{color:var(--ink);}
   display:flex;flex-direction:column;align-items:center;gap:5px;
   padding:9px 4px;text-align:center;font-size:10.5px;line-height:1.15;}
 .anim-galrow .anim-card .bic{width:20px;height:20px;}
-.anim-galrow .anim-card.on{background:var(--cyan-deep);color:#fff;
+.anim-galrow .anim-card.on{background:var(--cyan-deep);
+  color:var(--on-accent-deep,#fff);
   border-color:var(--cyan-deep);}
 /* the SCOPE, said before you click: picking with nothing selected is a
    large edit and it must never be a silent one */
@@ -4586,7 +4598,7 @@ body.light .seq-cell b{color:var(--ink);}
 .seq-fx{display:inline-flex;align-items:center;gap:4px;flex-wrap:nowrap;}
 .seq-fxb{padding:2px 7px;font-size:10.5px;display:inline-flex;
   align-items:center;gap:5px;white-space:nowrap;}
-.seq-fxb.on{background:var(--cyan-deep);color:#fff;
+.seq-fxb.on{background:var(--cyan-deep);color:var(--on-accent-deep,#fff);
   border-color:var(--cyan-deep);}
 /* a key looks like a key, on the button and not only in the tooltip:
    a mode whose shortcuts are invisible has no shortcuts */
@@ -4775,7 +4787,9 @@ body.light .sh-menu.lay-ideas{background:#fff;}
 .strip-nav>button:hover:not(:disabled){
   background:color-mix(in srgb,var(--accent) 18%,transparent);color:#fff;}
 .strip-nav>button[aria-disabled="true"]{opacity:.3;}
-.strip-more[aria-expanded="true"]{background:var(--accent-deep,var(--cyan-deep));color:#fff;}
+.strip-more[aria-expanded="true"]{
+  background:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 body.light .strip-frame{border-color:var(--line);background:#00000005;}
 body.light .strip-nav{border-left-color:var(--line);background:#00000008;}
 body.light .strip-nav>button{color:var(--ink-2);}
@@ -5085,7 +5099,8 @@ body.light .edit-tools{--rbn-btn:#00000007;--rbn-btn-bd:var(--line);
 .edit-tools .dbtn.lay[aria-pressed="true"],
 .edit-tools .fx-tile[aria-pressed="true"]{
   background:var(--accent-deep,var(--cyan-deep));
-  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 .edit-tools .dbtn.dbtn-warn{color:#f0a0a0;border-color:#e0606055;}
 .edit-tools .dbtn.dbtn-warn:hover:not(:disabled){
   background:#e0606022;border-color:#e06060aa;}
@@ -5204,7 +5219,8 @@ body.light .img-ov .pf-row{background:#00000004;border-color:var(--line);}
 /* ---- T216: Full screen in the top bar; the Present tab ------------------ */
 .deck-top .qat-full{margin-right:6px;}
 .deck-top .qat-full[aria-pressed="true"]{background:var(--accent-deep,var(--cyan-deep));
-  border-color:var(--accent-deep,var(--cyan-deep));color:#fff;}
+  border-color:var(--accent-deep,var(--cyan-deep));
+  color:var(--on-accent-deep,#fff);}
 .rbn-play{order:1;}
 .rbn-talk{order:2;}
 

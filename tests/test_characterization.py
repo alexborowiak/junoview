@@ -1114,8 +1114,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T269: the history panel opens reading the newest version
 # against the one before it rather than against "now" (which IS the
 # newest version), and its empty answer names the two things compared.
-EXPECTED_MD5 = "fc693d5e7303ebc83dd6e4e82f391e02"
-EXPECTED_BYTES = 3578085
+# 2026-09-04, T251: complete semantic surface/input/tooltip tokens replace
+# per-component light/dark repairs across the reader, welcome, dialogs and
+# editor chrome; authored light outputs keep a separate readable ink set.
+EXPECTED_MD5 = "c2d5402041551f27f87a3e74021e46fc"
+EXPECTED_BYTES = 3578559
 
 
 def _render_example() -> str:

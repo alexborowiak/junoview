@@ -5193,7 +5193,7 @@ option. Then where has the ability to refresh all images gone?"
   code-kind colours stay data. A set-equality test makes an incomplete
   scheme fail by naming the tokens it omitted.
 
-- [ ] **T251 - Theme tokens replace the light/dark patchwork.**
+- [x] **T251 - Theme tokens replace the light/dark patchwork.**
   Review, 2026-09-04. `body.light` changes the chrome surfaces but does
   not redefine `--chrome-ink*` or `--btn-*`; dozens of
   `body.light .component` overrides repair individual controls, while
@@ -5204,6 +5204,16 @@ option. Then where has the ability to refresh all images gone?"
   those tokens, and add a contract test which fails when a scheme omits
   one. Keep intentional data colours, destructive/warning semantics and
   author-selected deck colours outside that mechanical replacement.
+  *Done 2026-09-04.* The contract now also owns hover/active surfaces,
+  strong borders, input and tooltip surfaces, plus a separate foreground
+  for deep selected-state fills. Reader and welcome surfaces, the help,
+  open and note dialogs, tooltips, theme menu, style panels, rails and the
+  editor's common controls consume those tokens instead of accumulating
+  another `body.light .thing` repair. Rich HTML, figures and slide
+  previews deliberately use fixed `--output-*` ink/paper tokens: they are
+  authored light islands and must not turn white-on-white in a dark app.
+  The contract test now requires exact set equality for every scheme and
+  pins representative consumers across all three stylesheets.
 
 - [ ] **T252 - Dark colourful reaches overlays and dynamically moved
   controls.**
