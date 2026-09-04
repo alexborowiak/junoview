@@ -224,7 +224,7 @@ def render_item(item: Item, sec_id: str = "") -> str:
     return (
         f'<article class="card {kclass}" id="card-{item.item_id}" '
         f'data-kind="{item.kind}" data-role="{role}" '
-        f'data-node="{item.node_id}"{ck_attr} '
+        f'data-node="{html.escape(item.node_id)}"{ck_attr} '
         f'data-secid="{html.escape(sec_id)}" '
         f'data-note="{"1" if item.is_note else "0"}" '
         f'data-noout="{no_out}" '
@@ -586,7 +586,11 @@ def render_raw(nb: dict, outputs_by_idx: dict[int, list] | None = None,
                 f'<div class="rawmd">{_md_with_headings(source)}</div></div>')
         elif ctype == "code":
             n = cell.get("execution_count")
-            label = f"In [{n if n is not None else ' '}]"
+            # T258: nbformat types this int|null, but this reader is
+            # deliberately lenient about types everywhere else, so a
+            # hand-written or crafted .ipynb can put any string here --
+            # and the raw view is rendered for every notebook by default.
+            label = f"In [{html.escape(str(n)) if n is not None else ' '}]"
             if outputs_by_idx is not None and idx in outputs_by_idx:
                 rendered = outputs_by_idx[idx]
             else:

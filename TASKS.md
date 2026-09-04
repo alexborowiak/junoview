@@ -5319,3 +5319,30 @@ option. Then where has the ability to refresh all images gone?"
   exactly the one starred card (the pinned ones gone with the rest),
   All restored all 27, and dropping the last heart while Heart was on
   put the whole notebook back.
+
+- [x] **T258 - A notebook's own strings cannot inject markup.**
+  Audit, 2026-09-04. `render/sanitize.py` exists because rendered pages
+  get shared, but **three sinks** wrote author-controlled strings
+  straight into markup without going near it. All three were confirmed
+  by rendering a crafted notebook, not by reading:
+  - **`data-node` on every card** (`items.py`). `#| id: a"><script>
+    alert(1)</script>` closed the attribute, closed the tag, and put a
+    live `<script>` element in the page. The neighbouring `data-anchor`
+    escapes the SAME string, so this was an oversight, not a decision.
+  - **`data-node` and `data-from`/`data-to` in the provenance SVG**
+    (`graph.py`), where every other value in the same builder escapes.
+  - **the raw view's `In [n]` label** (`items.py`). nbformat types
+    `execution_count` as int|null, but this reader is deliberately
+    lenient about types everywhere else, and the raw view is built for
+    every notebook by default: a string count rendered a live `<img>`.
+  A node id is **not** slugged the way `item_id` is -- it is the
+  author's string, kept verbatim on purpose so deck anchors and
+  `#| depends:` matching keep working -- so escaping at the sinks is
+  the fix, not sanitising at the parser.
+  It matters beyond a shared file: in the local app the same page holds
+  `window.APP.cfg.token`, which grants the file read/write API.
+  The regression test **parses** the output rather than grepping it: a
+  notebook's own text is displayed, so `onerror=` legitimately appears
+  inside escaped content and must keep appearing -- what must never
+  happen is that it becomes a tag or an attribute. Checked both ways:
+  it fails on the unescaped code and passes on the fix.

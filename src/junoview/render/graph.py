@@ -82,7 +82,10 @@ def build_graph_svg(doc: Document, width: int = 268) -> str:
             f'd="M {ax:.1f} {ay + nh/2:.1f} '
             f'C {ax:.1f} {midy:.1f} {bx:.1f} {midy:.1f} '
             f'{bx:.1f} {by - nh/2:.1f}" '
-            f'data-from="{a}" data-to="{b}"/>')
+            # T258: a node id is an AUTHOR string (`#| id:`), never slugged
+            # -- unlike item_id. Every id sink in this file escapes.
+            f'data-from="{html.escape(a)}" '
+            f'data-to="{html.escape(b)}"/>')
 
     # nodes
     for nid, it in id_to_item.items():
@@ -93,8 +96,8 @@ def build_graph_svg(doc: Document, width: int = 268) -> str:
         x = cx - bw / 2
         y = cy - nh / 2
         parts.append(
-            f'<g class="provnode" data-node="{it.node_id}" '
-            f'data-target="{it.item_id}" tabindex="0" '
+            f'<g class="provnode" data-node="{html.escape(it.node_id)}" '
+            f'data-target="{html.escape(it.item_id)}" tabindex="0" '
             f'role="button" aria-label="Go to {html.escape(it.title)}">'
             f'<rect x="{x:.1f}" y="{y:.1f}" rx="5" width="{bw:.1f}" '
             f'height="{nh}" fill="{fill}"/>'
