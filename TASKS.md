@@ -4942,3 +4942,44 @@ option. Then where has the ability to refresh all images gone?"
   holding. Driven live: the menu reads as three sections, and both Home
   buttons work (History opened on "on main" with six versions;
   Checkpoint added a seventh).
+
+- [x] **T237 - The history reads as a version graph.**
+  The user (2026-09-04): "The history is a bit much as well. Like how
+  you can see the git history thing where you can just see the little
+  lines with the dots for versions and then can see branches as
+  different colours from that... there can be named versions, and the
+  default name should just be the time... when a new dot on the
+  timeline should be created, like obviously not every change... a
+  summary of changes from last version... by slide (e.g. slide 14:
+  heading: (color: red -> yellow, image added))... and then also by
+  type (e.g. heading changed red -> yellow (slide 13, 14, 15)), then
+  ways to compare different changes... only showing slides that changed
+  ... but also an ability to view the whole thing. Then the ability to
+  go back to old version and branch from there."
+  *Done 2026-09-04.* The surface moved into `46-history.js` (the store
+  stayed with the other IndexedDB work) and was rebuilt.
+  **The graph**: one lane per branch in its own colour, a dot per
+  version, an elbow where a branch left the line it came from. T90's
+  depth indent was a stand-in that stops reading past two branches.
+  **The name** is the time it was taken unless you give it one -- a
+  pencil on every row does that, and a checkpoint's name IS its
+  version's name now rather than part of the reason.
+  **When a dot appears** is stated on the panel and gained one case: a
+  version at a natural break, after five minutes of work and half a
+  minute of pause, which is the rule that makes Overleaf's timeline
+  readable.
+  **What changed**, not only which slides: a change model that pairs
+  the boxes of two versions of a slide and names the fields that
+  differ, in the same words the object's own history uses. Two readings
+  of it -- *by slide* ("Slide 1 - empty slide: title colour cyan at 25%
+  -> amber") and *by type* (the same change with "slide 1" beside it) --
+  plus the pictures, which now show only the slides that differ unless
+  you tick "every slide".
+  **Any two versions** can be compared, not only a version against the
+  deck you are editing.
+  Driving it caught the real bug: pairing required BOTH sides to lack
+  object ids before falling back to position, so every comparison
+  against a snapshot older than oids reported each box as removed AND
+  added. It is four passes now -- id, same slot, same kind, then what
+  is genuinely new or gone -- and a version row is exactly one graph
+  row high, because a wrapped one broke its own lane into segments.

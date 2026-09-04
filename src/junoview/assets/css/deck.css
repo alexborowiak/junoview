@@ -2213,6 +2213,39 @@ select#fmt-font[hidden]{display:none;}
 #fmt-txcol-menu,#fmt-fillcol-menu{width:216px;}
 .sw-menu .fmt-lab{display:block;flex:0 0 100%;margin:2px 0 -1px;}
 .sw-menu>.sw-tokrow,.sw-menu>.sw-recrow{flex:0 0 100%;}
+/* ---- T237: WHAT CHANGED, IN THREE READINGS ---------------------------
+   By slide ("Slide 14 - Title: colour red -> yellow, picture added"), by
+   type ("title colour red -> yellow - slides 13, 14, 15") and the
+   pictures, which now show only the slides that differ unless you ask
+   for every one. The compare-with picker reads one version against
+   another instead of always against the deck you are editing. */
+.dh-h2t{display:block;font-size:12.5px;color:#dbe7ef;}
+.dh-h2note{display:block;font-family:var(--sans);font-size:11px;
+  color:#8ea3b5;margin-top:3px;}
+.dh-tools{display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  margin:0 0 12px;}
+.dh-vs{display:inline-flex;align-items:center;gap:6px;margin-left:auto;}
+.dh-vslab{font-family:var(--sans);font-size:11px;color:#8ea3b5;}
+.dh-vssel{max-width:230px;}
+.dh-tabs{display:flex;align-items:center;gap:6px;margin:0 0 10px;
+  border-bottom:1px solid #ffffff14;padding-bottom:9px;}
+.dh-tab[aria-pressed="true"]{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 18%,transparent);}
+.dh-every{display:inline-flex;align-items:center;gap:5px;margin-left:auto;
+  font-family:var(--sans);font-size:11.5px;color:#9fb3c4;cursor:pointer;}
+.dh-chlist{display:flex;flex-direction:column;}
+.dh-ch{display:grid;grid-template-columns:190px minmax(0,1fr);gap:12px;
+  align-items:baseline;padding:7px 2px;
+  border-bottom:1px solid #ffffff10;}
+.dh-chslide{font-family:var(--sans);font-size:11.5px;color:#8ea3b5;}
+.dh-chwhat{font-family:var(--sans);font-size:12.5px;color:#dbe7ef;
+  line-height:1.5;}
+.dh-chlead{font-weight:600;}
+.dh-when-note{padding:8px 16px 12px;border-top:1px solid #ffffff14;
+  font-family:var(--sans);font-size:11px;line-height:1.55;color:#8ea3b5;}
+body.light .dh-h2t,body.light .dh-chwhat{color:var(--ink);}
+body.light .dh-ch{border-bottom-color:#0000000f;}
+
 /* ---- T232: THE PICKER, AS THE BOTTOM OF THE MENU ---------------------
    Same element as the floating popup, restyled to be a section: no
    card of its own, just a rule and the controls under it. It carries
@@ -2800,15 +2833,21 @@ body.light .rv-text{background:#f7f9fb;color:var(--ink);
   border-bottom:1px solid #ffffff1a;}
 .dh-t{font-size:13px;color:#dbe7ef;}
 .dh-main{flex:1;min-height:0;display:grid;
-  grid-template-columns:minmax(180px,240px) 1fr;}
+  grid-template-columns:minmax(230px,290px) 1fr;}
 .dh-rail{overflow-y:auto;border-right:1px solid #ffffff14;
   padding:10px 8px;display:flex;flex-direction:column;gap:3px;}
-.dh-snap{text-align:left;background:transparent;border:1px solid
+/* EXACTLY one row high (T237): the graph in the gutter beside it is
+   drawn 46px tall, so a row that wrapped to three lines broke its own
+   lane into segments. The whole line is in the tooltip. */
+.dh-snap{height:46px;text-align:left;background:transparent;
+  border:1px solid
   transparent;border-radius:6px;padding:7px 9px;cursor:pointer;
   display:flex;flex-direction:column;gap:2px;color:#b9cad8;}
 .dh-snap:hover{background:#ffffff0d;}
 .dh-snap.on{background:#ffffff12;border-color:var(--cyan);
   color:#dbe7ef;}
+.dh-when,.dh-why{white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;display:block;max-width:100%;}
 .dh-when{font-size:12px;}
 .dh-why{font-family:var(--mono);font-size:9px;color:#7d93a6;}
 .dh-body{overflow-y:auto;padding:12px 16px 24px;}
@@ -4376,11 +4415,30 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
    rather than a drawn graph -- twenty snapshots four deep is a list with
    steps in it, and a canvas would be a second way of drawing what the
    rail already draws. */
+/* ---- T237: THE GRAPH REPLACED THE INDENT ---------------------------
+   T90 drew the shape of the tree by indenting each row by its depth
+   and heading each run with its branch name, because "the shape reads
+   without drawing a graph". It does not, past two branches
+   (2026-09-04, user: "like how you can see the git history thing
+   where you can just see the little lines with the dots for versions
+   and then can see branches as different colours from that. I really
+   like that design"). Each row now carries an SVG gutter: one lane
+   per branch, in its own colour, with the dot on the lane the version
+   belongs to and an elbow where a branch leaves its parent. */
+.dh-r{display:grid;
+  grid-template-columns:var(--dh-gutter,18px) minmax(0,1fr) 26px;
+  align-items:stretch;gap:0;}
+.dh-gutter{display:block;line-height:0;}
+.dh-gsvg{display:block;}
+.dh-ren{padding:0;width:22px;align-self:center;justify-self:center;
+  opacity:0;font-size:11px;}
+.dh-r:hover .dh-ren,.dh-ren:focus-visible{opacity:1;}
+.dh-ren svg{width:11px;height:11px;}
 .dh-brlab{display:flex;align-items:center;gap:6px;
   font-family:var(--mono);font-size:8.5px;letter-spacing:.18em;
   text-transform:uppercase;color:#4e93a6;padding:10px 8px 4px;}
 .dh-brlab svg{width:11px;height:11px;}
-.dh-snap{margin-left:calc(var(--dh-depth,0) * 11px);
+.dh-snap{border-left:3px solid var(--dh-lane,transparent);
   border-left:2px solid transparent;}
 .dh-snap.head{border-left-color:var(--amber,#f0a848);}
 .dh-snap.head .dh-when{color:var(--amber,#f0a848);}

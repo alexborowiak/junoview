@@ -52,14 +52,18 @@ def test_there_are_two_doors_and_both_lead_to_the_same_gesture(out):
     assert "id=\"dh-check\">'+bic('flag')" in out
     assert "      .addEventListener('click',function(){histCheckpoint(ov);});" in out
     assert "  function histCheckpoint(ov){" in out
-    assert ("    snapTake('checkpoint: '+nm,undefined,undefined,1)"
-            ".then(function(){") in out
+    # T237: the name you give it becomes the VERSION's name, not part
+    # of the reason -- a checkpoint is the one version you meant to find
+    assert ("    snapTake('checkpoint',undefi"
+            "ned,undefined,1).then(function(){") in out
+    assert "      return histSetName(histHead,nm);" in out
 
 
 def test_going_back_and_branching_are_the_buttons_that_were_already_there(out):
     """A checkpoint is an ordinary snapshot with a name and a mark, so
     it needs no restore path of its own."""
-    assert "Start a branch from here" in out
+    # T237 shortened it; the gesture is the same
+    assert "Branch from here" in out
     assert "          histRestoreDeck(then,ent.id,nm);" in out
     assert "          snapTake('branched: '+nm);" in out
     # and the rail shows which ones you chose

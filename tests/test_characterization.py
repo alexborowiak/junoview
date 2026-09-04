@@ -1024,8 +1024,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # and slide numbers dropped in favour of the buttons they already
 # had elsewhere, crop marks moved beside the PDF export, and History
 # and Checkpoint became a Saved versions group on Home.
-EXPECTED_MD5 = "168f708bd44ded329482105bb72e60f9"
-EXPECTED_BYTES = 3461857
+# 2026-09-04, T237: the history surface moved into its own fragment and
+# was rebuilt -- a version graph with one coloured lane per branch,
+# versions named by their time, a change model that says what changed
+# inside a slide (by slide and by type), a compare-with picker for any
+# two versions, a pictures view that shows only what differs, and a
+# version taken at a pause in the work as well as at a save.
+EXPECTED_MD5 = "fd5506500596198e241807a27f335570"
+EXPECTED_BYTES = 3485420
 
 
 def _render_example() -> str:

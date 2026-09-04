@@ -220,7 +220,9 @@ def test_the_diff_pairs_slides_by_name_not_by_position(out):
     assert "function deckDiff(then,now){" in out
     assert "var byName=A.every(function(s2){return s2&&s2.sid;})" in out
     assert ":ai!==i?'moved':'same'" in out
-    assert "compared by position: this snapshot is " in out
+    # T237 moved this note out of the one-line header and gave it a
+    # line of its own under the summary
+    assert "Compared by position: this version is older " in out
 
 
 def test_the_old_deck_is_drawn_by_the_renderer_that_draws_the_new_one(out):
@@ -302,8 +304,8 @@ def test_the_two_histories_do_not_pretend_to_be_each_other(out):
     lists and opens. The panel names that rather than duplicating it.
     """
     assert "class=\"dh-git\"" in out or "git.className='dh-git'" in out
-    assert "the moments '" in out
-    assert "its Version history menu " in out
+    assert "the '\n        +'moments between commits." in out
+    assert ("its Version '\n" "        +'history menu lists the git commits") in out
 
 # ---------------------------------------------------------------------------
 # branches (T90)
@@ -350,8 +352,13 @@ def test_an_orphan_reads_as_a_root_rather_than_a_lost_row(out):
     """What an evicted ancestor looks like from the rail. It also stops a
     hand-edited store's cycle from overflowing the stack inside a panel.
     """
-    assert "function histDepths(ix){" in out
-    assert "var d=(!p||guard>HIST_KEEP)?0:of(p,guard+1)+1;" in out
+    # T237: the depth indent became a real graph, so there is no
+    # depth to compute and no recursion to overflow. An entry whose
+    # parent is not in the index simply has no elbow drawn.
+    assert "function histDepths(ix){" not in out
+    assert "    var pi=e.p!=null?pos[e.p]:null;" in out
+    assert "    if(pi!=null&&pi>i){" in out
+
 
 
 def test_a_different_deck_starts_on_its_own_trunk(out):

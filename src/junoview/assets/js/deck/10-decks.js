@@ -678,6 +678,9 @@
     status();
     scheduleAutosave();
     if(!quiet) histPush();
+    /* T237: a version at a natural break in the work, which is what
+       makes a timeline readable -- see 46-history.js */
+    if(!quiet) histIdleTick();
     renderSelPane();   /* keep the Objects pane in step (no-op if closed) */
     /* and the numbers, which are the same fact about the same slide
        (T65). Same no-op-when-closed contract. */
