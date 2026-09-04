@@ -116,8 +116,7 @@ body.presrail-min{--presrail-w:46px;}
    as that filter's own "advanced" affordance — and it left the row of
    groups with a ragged bottom edge. Width comes from the column
    (align-items:stretch), so there is nothing to keep in sync by hand. */
-#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{padding:0;
-  justify-content:center;width:100%;flex:none;}
+#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{width:100%;flex:none;}
 #ab-app .btn-grp{flex:none;gap:5px;}
 #ab-app .btn-grp>*{flex:none;}
 /* the app group (theme / support / help) sits at the RIGHT END of the
@@ -969,6 +968,10 @@ body:not(.light) #odlg-go:hover:not(:disabled){background:var(--cyan);
 .ckf-row{display:flex;align-items:center;gap:8px;padding:5px 6px;
   font-family:var(--mono);font-size:11.5px;color:#cdd9e3;cursor:pointer;
   border-radius:5px;text-transform:capitalize;}
+/* capitalize is right for the one-word type names it was written for
+   ("data", "print"); on a row whose name is a PHRASE it Title Cases A
+   Sentence, so a phrase row opts out (T256) */
+.ckf-row.ckf-phrase{text-transform:none;}
 .ckf-row:hover{background:#ffffff0c;}
 .ckf-row input{cursor:pointer;}
 .ckf-dot{width:8px;height:8px;border-radius:3px;flex:none;
@@ -981,6 +984,10 @@ body:not(.light) #odlg-go:hover:not(:disabled){background:var(--cyan);
 .ckf-dot.ckmain-plotting{background:var(--accent);}
 .ckf-dot.ckmain-print{background:var(--ck-print);}
 .ckf-dot.ckmain-comments{background:#5f7386;}
+/* T256: the row is an ABSENCE, not a kind of code, so its dot is
+   hollow rather than one more colour in the code-kind ladder */
+.ckf-dot.ckf-noout{background:transparent;
+  border:1px dashed var(--ink-3);}
 .ckf-dot.ot-sw-print{background:#5f7d8c;}
 .ckf-dot.ot-sw-dataset{background:#4d90c0;}
 .ckf-dot.ot-sw-result{background:#9a7cc0;}

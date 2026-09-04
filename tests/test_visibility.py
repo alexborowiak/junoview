@@ -435,9 +435,20 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     happens to be nearby, rather than as that filter's own "advanced"
     affordance -- and it left the row of filter groups ragged along the
     bottom. Help keeps its square, because it stands alone.
+
+    T256 dropped the `padding:0; justify-content:center` half of the rule.
+    That existed only to centre a lone funnel glyph in a wide box; the
+    buttons carry the word "Choose" now, so they are laid out like every
+    other worded sub button. What this test is here for -- the picker
+    spanning the width of the filter above it rather than sitting under
+    it as a square -- is unchanged.
     """
-    assert ("#pt-filter-btn,#ck-filter-btn,#ot-filter-btn{padding:0;\n"
-            "  justify-content:center;width:100%;flex:none;}" in out)
+    assert ("#pt-filter-btn,#ck-filter-btn,#ot-filter-btn"
+            "{width:100%;flex:none;}" in out)
+    # ...and it is a word plus an icon, never the bare funnel again
+    for bid in ("pt-filter-btn", "ck-filter-btn", "ot-filter-btn"):
+        btn = out.split(f'id="{bid}"')[1].split("</button>")[0]
+        assert '<span class="btxt">Choose</span>' in btn, bid
     assert ("#help-btn{padding:0;justify-content:center;width:28px;"
             "min-width:28px;\n  flex:none;}" in out)
     # the width comes from the column, so there is nothing to keep in sync

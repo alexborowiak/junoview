@@ -215,12 +215,19 @@ def render_item(item: Item, sec_id: str = "") -> str:
     # data-labelled: the titled/untitled filters (Plot-types AND
     # Code-types menus) read this — 1 when the author gave the cell a
     # title/caption, 0 for auto-derived names only
+    # T256: a code cell that produced NOTHING. `bare` above already knows
+    # the shape ("a card with no output face IS its code"); this puts a
+    # name on it so the Code-types menu can fold or remove the lot in one
+    # move (2026-09-04, user: "remove/fold code cells without output, as a
+    # lot of the times these are the ones that I don't care about").
+    no_out = "1" if (code_block and not item.outputs) else "0"
     return (
         f'<article class="card {kclass}" id="card-{item.item_id}" '
         f'data-kind="{item.kind}" data-role="{role}" '
         f'data-node="{item.node_id}"{ck_attr} '
         f'data-secid="{html.escape(sec_id)}" '
         f'data-note="{"1" if item.is_note else "0"}" '
+        f'data-noout="{no_out}" '
         f'data-labelled="{1 if item.labelled else 0}" '
         f'data-anchor="{html.escape(item.anchor or item.item_id)}" tabindex="-1">'
         f'<header class="cardhead">'

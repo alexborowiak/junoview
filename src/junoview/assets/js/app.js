@@ -1072,6 +1072,14 @@
           var ckExp=[];
           if(ckT){var vck=otVal(ckHidden[ckT]); if(vck) ckExp.push(vck);}
           var vcl=otVal(ckHidden[cardLab]); if(vcl) ckExp.push(vcl);
+          /* T256: "code that produced nothing" is another dimension of
+             the same question the Code-types menu asks, so it rides the
+             same map. A cell with no plot and no output is ALL code, so
+             folding its code folds the card and hiding it removes the
+             card outright — which is exactly what was asked for
+             (2026-09-04, user: "remove/fold code cells without output"). */
+          if(c.dataset.noout==='1'){
+            var vno=otVal(ckHidden.nooutput); if(vno) ckExp.push(vno);}
           var ckEff=ckExp.length?ckExp.reduce(stricterState):codeState;
           var fig=c.querySelector('.cb-fig'),
               out=c.querySelector('.cb-out'),
@@ -1349,6 +1357,9 @@
       if(t){set[t]=1;ckCounts[t]=(ckCounts[t]||0)+1;}
       var lab=c.dataset.labelled==='1'?'titled':'untitled';
       ckCounts[lab]=(ckCounts[lab]||0)+1;
+      /* T256: and how many of them produced nothing at all */
+      if(c.dataset.noout==='1')
+        ckCounts.nooutput=(ckCounts.nooutput||0)+1;
     });
     return CK_TYPES.filter(function(t){return set[t];});
   }
@@ -1356,14 +1367,18 @@
      On/Fold/Off cycler. Setting it detaches the type from its overall
      filter ("does its own thing") until that menu's reset re-attaches
      it. The whole row cycles, like the old full-row checkbox label. */
+  /* a few rows are not code/output TYPES but questions about the cell,
+     and their slug is not a phrase anyone would say out loud */
+  var TYPE_LABEL={nooutput:'that produced nothing'};
   function typeMenuRow(map,t,count,dotClass){
     var key=MENU_KEY[map];
-    var row=document.createElement('div');row.className='ckf-row';
+    var row=document.createElement('div');
+    row.className='ckf-row'+(TYPE_LABEL[t]?' ckf-phrase':'');
     row.dataset.t=t;row.dataset.map=map;
     var sw=document.createElement('span');
     sw.className='ckf-dot '+dotClass;
     var tx=document.createElement('span');tx.className='ckf-name';
-    tx.textContent=t+' ('+count+')';
+    tx.textContent=(TYPE_LABEL[t]||t)+' ('+count+')';
     var st=document.createElement('button');st.type='button';
     st.className='ckf-state';
     st.title='This type’s own filter: On → Fold → Off. '
@@ -1410,18 +1425,35 @@
     var types=presentCkTypes();
     var ov=overriddenTypes('ck');
     ov.forEach(function(t){
-      if(t==='titled'||t==='untitled') return;   /* rows added below */
+      /* rows added below, on their own terms — they are questions about
+         the CELL, not names of a kind of code */
+      if(t==='titled'||t==='untitled'||t==='nooutput') return;
       if(types.indexOf(t)<0) types.push(t);});
     /* code cells have titles too: the same titled/untitled rows as the
        Plot-types menu, shown when the notebook has both kinds */
     var showLab=((ckCounts.titled||0)>0&&(ckCounts.untitled||0)>0)
       ||ov.indexOf('titled')>=0||ov.indexOf('untitled')>=0;
-    if(!types.length&&!showLab){
+    /* T256: cells that produced nothing at all */
+    var showNo=(ckCounts.nooutput||0)>0||ov.indexOf('nooutput')>=0;
+    if(!types.length&&!showLab&&!showNo){
       m.innerHTML='<div class="ckf-empty">No typed code cells yet</div>';
       return;
     }
+    /* ONE list under ONE heading. The rows are not all "types" — titled
+       and untitled never were, and T256's is a question about what the
+       cell produced — so the heading names what the list decides
+       instead: which code cells you see. */
     var h=document.createElement('div');h.className='ckf-h';
-    h.textContent='show code types';m.appendChild(h);
+    h.textContent='show code cells';m.appendChild(h);
+    /* T256: FIRST, above the type rows, because it is the cut asked for
+       most often — a cell that printed nothing and drew nothing is
+       usually setup you have read once and never want to see again
+       (2026-09-04, user). Fold folds their code; Off removes the cards
+       outright, since with no plot and no output there is nothing else
+       in them. */
+    if(showNo)
+      m.appendChild(typeMenuRow('ck','nooutput',
+        ckCounts.nooutput||0,'ckf-noout'));
     types.forEach(function(t){
       m.appendChild(typeMenuRow('ck',t,ckCounts[t]||0,'ckmain-'+t));
     });

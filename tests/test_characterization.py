@@ -1060,8 +1060,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # (Smaller / Zoom N% / Bigger / Close), a .figmax-scale wrapper the zoom
 # is applied to, and the CSS for both -- so the page carries a little
 # more markup, script and stylesheet than before.
-EXPECTED_MD5 = "3d68494caa9e40ac59bf2c9319181b67"
-EXPECTED_BYTES = 3549600
+# 2026-09-04, T256: every card carries data-noout, the three chooser
+# buttons carry the word "Choose" (and plainer tooltips), and app.css
+# gained the hollow dot and the phrase-row rule for the new menu entry.
+EXPECTED_MD5 = "77a21aae4290630db3bcc3e330a24d24"
+EXPECTED_BYTES = 3552596
 
 
 def _render_example() -> str:

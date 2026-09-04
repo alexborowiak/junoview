@@ -5242,3 +5242,32 @@ option. Then where has the ability to refresh all images gone?"
   After it: 746px fitted, 1455px at 195%, box scrolling 1510 > 1357, a
   drag moving scrollLeft to 80, and each new figure opening at 100%
   instead of inheriting the last one's zoom.
+
+- [x] **T256 - Fold or remove the code cells that produced nothing.**
+  The user (2026-09-04): "would be good to have an option - remove/fold
+  code cells without output, as a lot of the times these are the ones
+  that I don't care about."
+  *Done 2026-09-04.* A cell that printed nothing and drew nothing is
+  usually setup -- the imports, the grid, the intermediate transform --
+  read once and never wanted again; **seven of the example notebook's
+  27 cards** are exactly that. It rides the **Code chooser's** map
+  rather than becoming a fourth top-level filter, because it is the
+  same question that menu already asks (which code cells do I see) and
+  it inherits the whole tri-state machine: its own On / Fold / Off, per
+  section, cleared by the same Reset. And because such a cell has no
+  plot part and no output part, "fold its code" and "remove the card"
+  fall out of the existing rule instead of needing a new branch --
+  `data-noout` on the card is the only new fact.
+  The **door** mattered as much as the filter. The three chooser
+  buttons under Plots / Code / Output were **icon-only funnels**, which
+  is both the rule this project keeps (words PLUS icons, never
+  icon-only) and the standing complaint about things hidden in menus.
+  They say **"Choose"** now beside the funnel, matching the worded
+  Reset next to them, and their tooltips stopped shouting ("Advanced:
+  hide specific CODE cell types" -> "Choose which code cells you see").
+  The menu's one heading covers the whole list -- "show code cells" --
+  because titled/untitled were never "types" either.
+  Driven at 1440x900: Off hid exactly the seven `data-noout` cards and
+  nothing else, On brought all seven back, Fold kept the cards and
+  turned their code off, and a **pinned** cell stayed visible under Off
+  while its six peers went.
