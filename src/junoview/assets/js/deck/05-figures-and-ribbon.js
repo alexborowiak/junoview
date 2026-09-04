@@ -1208,6 +1208,8 @@
       else g.setAttribute('data-off','1');
     });
     syncTabStrip();
+    document.dispatchEvent(new CustomEvent('sem:ribbon-tab',
+      {detail:{tab:t}}));
   }
   function setTab(t){
     if(TABS.indexOf(t)<0||t===activeTab()) return;

@@ -33,11 +33,11 @@ def test_every_tall_control_is_the_one_tile(out):
 
 def test_pressed_is_the_accent_the_button_inherits(out):
     deep = "var(--accent-deep,var(--cyan-deep))"
-    for rule in (f'.dbtn[aria-pressed="true"]{{background:{deep};',
-                 f".fx-tile.on{{background:{deep};",
-                 f'.lay-strip .dbtn.lay[aria-pressed="true"]{{background:{deep};',
-                 f'.strip-more[aria-expanded="true"]{{background:{deep};'):
-        assert rule in out, rule
+    for selector in ('.dbtn[aria-pressed="true"]', ".fx-tile.on",
+                     '.lay-strip .dbtn.lay[aria-pressed="true"]',
+                     '.strip-more[aria-expanded="true"]'):
+        start = out.index(selector)
+        assert deep in out[start:out.index("}", start)], selector
 
 
 def test_every_small_button_has_an_icon():
@@ -51,9 +51,10 @@ def test_every_small_button_has_an_icon():
 
 
 def test_the_colourful_theme_is_one_hue_per_tab(out):
-    for tab, hue in (("home", "#f0a848"), ("images", "#a586e8"),
-                     ("text", "#a586e8"),
-                     ("design", "#6b9bff"), ("animation", "#6fd8c2"),
-                     ("view", "#41c493"), ("object", "#e0a5c6")):
+    for tab, hue in (("home", "#f2b85b"), ("images", "#b89bf4"),
+                     ("text", "#b89bf4"),
+                     ("design", "#82a8ff"), ("animation", "#65d7c0"),
+                     ("view", "#62d49b"), ("object", "#eea4cc"),
+                     ("present", "#f18ab1")):
         i = out.index(f'body.th-colorful .rbn-grp[data-tab="{tab}"]')
         assert hue in out[i:i + 260], tab

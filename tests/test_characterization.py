@@ -1117,8 +1117,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T251: complete semantic surface/input/tooltip tokens replace
 # per-component light/dark repairs across the reader, welcome, dialogs and
 # editor chrome; authored light outputs keep a separate readable ink set.
-EXPECTED_MD5 = "c2d5402041551f27f87a3e74021e46fc"
-EXPECTED_BYTES = 3578559
+# 2026-09-04, T252: dark colourful carries the active ribbon tab's hue on
+# the body, so detached menus, dialogs and moved controls keep one colour
+# with the tab that opened them; all eight tab pairs are contrast-safe.
+EXPECTED_MD5 = "e4e8f45685ece6439bc94d94d74dd6e2"
+EXPECTED_BYTES = 3580375
 
 
 def _render_example() -> str:

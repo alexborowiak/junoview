@@ -2668,11 +2668,26 @@
     ['th-forest','Dark forest',['#41c493','#0c211a']],
     ['light th-lforest','Light forest',['#1e8f66','#f7fbf8']],
     ['th-forestblue','Dark forest, blue buttons',['#6b9bff','#0c211a']],
-    ['th-colorful','Dark colourful',['#f0a848','#6b9bff','#41c493',
-      '#e06a9a']],
+    ['th-colorful','Dark colourful',['#f2b85b','#82a8ff','#62d49b',
+      '#f18ab1']],
     ['th-contrast','Dark high contrast',['#6fe3ff','#ffffff']]];
   var ALL_TH=['light','th-forest','th-lforest','th-forestblue',
     'th-colorful','th-contrast'];
+  /* A detached overlay cannot inherit a ribbon group's custom properties.
+     The deck announces its active tab instead, and the body carries that
+     semantic zone wherever the overlay is mounted (T252). */
+  var THEME_ZONES=['home','images','text','design','animation','view',
+    'present','object'];
+  function setThemeZone(zone){
+    if(THEME_ZONES.indexOf(zone)<0) zone='';
+    if(zone) document.body.setAttribute('data-theme-zone',zone);
+    else document.body.removeAttribute('data-theme-zone');
+  }
+  document.addEventListener('sem:ribbon-tab',function(e){
+    setThemeZone(e.detail&&e.detail.tab);});
+  var initialThemeTab=document.querySelector(
+    '.rbn-tab[aria-selected="true"][data-tab]');
+  if(initialThemeTab) setThemeZone(initialThemeTab.dataset.tab);
   function applyScheme(id){
     var want=id?id.split(' '):[];
     ALL_TH.forEach(function(cl){

@@ -5215,7 +5215,7 @@ option. Then where has the ability to refresh all images gone?"
   The contract test now requires exact set equality for every scheme and
   pins representative consumers across all three stylesheets.
 
-- [ ] **T252 - Dark colourful reaches overlays and dynamically moved
+- [x] **T252 - Dark colourful reaches overlays and dynamically moved
   controls.**
   Review, 2026-09-04. Its accent is scoped to a hand-selected set of
   ribbon/app groups. Menus and dialogs appended to `body`, controls
@@ -5225,6 +5225,13 @@ option. Then where has the ability to refresh all images gone?"
   surface and overlay without depending on where the DOM node happens
   to be mounted; keep the existing one-hue-per-tab rule rather than
   returning to unrelated colours within one tab.
+  *Done 2026-09-04.* The ribbon announces its active semantic tab and
+  `body[data-theme-zone]` carries that hue to menus, dialogs and controls
+  mounted outside the group that launched them. Every tab has one tested,
+  contrast-safe accent/deep pair; Images and Text intentionally share the
+  purple family, while non-editor surfaces have a stable global violet.
+  Moving a node now changes its layout ancestry without silently changing
+  the colourful scheme back to default cyan.
 
 - [ ] **T253 - More themes, with useful previews and accessibility
   guarantees.**

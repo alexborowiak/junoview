@@ -97,3 +97,29 @@ def test_deep_selected_states_have_their_own_contrast_token():
     assert "color:var(--on-accent-deep)" in core
     assert "color:var(--on-accent-deep)" in app
     assert "color:var(--on-accent-deep,#fff)" in deck
+
+
+def test_colourful_detached_surfaces_follow_the_active_tab_zone():
+    css = assets.core_css()
+    app = assets.app_js()
+    deck = assets.deck_js()
+    hues = {
+        "home": ("#f2b85b", "#9a5c00"),
+        "images": ("#b89bf4", "#7150b8"),
+        "text": ("#b89bf4", "#7150b8"),
+        "design": ("#82a8ff", "#3b61ba"),
+        "animation": ("#65d7c0", "#167561"),
+        "view": ("#62d49b", "#19764d"),
+        "object": ("#eea4cc", "#a34276"),
+        "present": ("#f18ab1", "#a63c68"),
+    }
+    for zone, (accent, deep) in hues.items():
+        start = css.index(
+            f'body.th-colorful[data-theme-zone="{zone}"]'
+        )
+        rule = css[start:css.index("}", start)]
+        assert f"--accent:{accent}" in rule, zone
+        assert f"--accent-deep:{deep}" in rule, zone
+    assert "document.body.setAttribute('data-theme-zone',zone)" in app
+    assert "document.addEventListener('sem:ribbon-tab'" in app
+    assert "new CustomEvent('sem:ribbon-tab'" in deck
