@@ -1030,8 +1030,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # inside a slide (by slide and by type), a compare-with picker for any
 # two versions, a pictures view that shows only what differs, and a
 # version taken at a pause in the work as well as at a save.
-EXPECTED_MD5 = "fd5506500596198e241807a27f335570"
-EXPECTED_BYTES = 3485420
+# 2026-09-04, T238: Disappear got a door on the Animation tab -- the
+# exit has worked since T174 but its only way in was a popover inside
+# the Layers pane -- and leaving became an effect rather than a cut:
+# the stop an object goes on keeps the element so it can fade.
+EXPECTED_MD5 = "ceeb5bf7bd53d67c5a6af53fea8de0b3"
+EXPECTED_BYTES = 3492360
 
 
 def _render_example() -> str:

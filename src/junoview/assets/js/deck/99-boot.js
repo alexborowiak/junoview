@@ -54,6 +54,7 @@
   homeDoorsBoot();            /* Notes and Optional on Home (T228) */
   cloneDoorsBoot();           /* clones, on the Object tab (T229) */
   flipFxBoot();               /* how a flip book's page turns (T234) */
+  animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */

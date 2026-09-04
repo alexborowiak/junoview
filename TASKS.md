@@ -4983,3 +4983,20 @@ option. Then where has the ability to refresh all images gone?"
   added. It is four passes now -- id, same slot, same kind, then what
   is genuinely new or gone -- and a version row is exactly one graph
   row high, because a wrapped one broke its own lane into segments.
+
+- [x] **T238 - Disappear has a door, and leaving is an effect.**
+  The user (2026-09-04): "Animations is missing dissapear."
+  *Done 2026-09-04.* The exit has worked since T174 -- an object can go
+  on the click another arrives, which is what replacing a picture
+  actually is -- but its only door was a popover inside the Layers
+  pane's build column, so the effect gallery offered five ways to
+  arrive and none to leave. There is a **Disappear** group on the
+  Animation tab now: the button does the common case (a click of its
+  own), the caret holds "goes when X arrives", and a readout says which
+  click it leaves on. **Leaving is an effect**: the stop an object goes
+  on keeps the element so it can fade out, and every later stop drops
+  it for real. Driving it caught two things -- a slide whose *only*
+  animation was an exit never ran the reveal pass at all, and the
+  button reported the state it had before its own click, because
+  refresh() re-runs the ribbon's sync on a selection change and
+  pressing a button is not one.

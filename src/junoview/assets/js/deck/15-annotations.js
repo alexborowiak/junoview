@@ -1685,7 +1685,22 @@
     if(st==null) return false;             /* the build went: it stays */
     var sp=flipPlan(s).stop[st];
     if(sp==null) sp=st;
-    return revealCount>sp;
+    /* T238: THE CLICK IT GOES ON KEEPS THE ELEMENT, so leaving can
+       be an effect rather than a cut -- the renderer fades it out
+       there and it is opacity:0 and inert from then on. Every later
+       stop drops it for real, and so does the every-moment-at-once
+       reading an export takes. */
+    return revealCount>sp+1;
+  }
+  /* ...and the one stop where it is on its way out */
+  function animGoing(s,a){
+    var o=animOut(a); if(o==null) return false;
+    if(mode!=='view'||printAll) return false;
+    var st=slideBuildSteps(s).map[o];
+    if(st==null) return false;
+    var sp=flipPlan(s).stop[st];
+    if(sp==null) sp=st;
+    return revealCount===sp+1;
   }
   /* what an object is tied to, in words, for a surface that has to say
      so in one short line. Null when it is tied to nothing. */

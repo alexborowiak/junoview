@@ -4985,6 +4985,14 @@ body.light .dg-num input{background:#00000006;border-color:var(--line);
 /* History is a tile on Home too, the same size as the others (T236) */
 .rbn-row>#hm-history.big-tile{width:72px;height:56px;
   align-self:center;}
+/* ---- T238: LEAVING IS AN EFFECT, NOT A CUT --------------------------
+   The stop an object goes on keeps the element so the exit can play;
+   from then on it is invisible and untouchable, and every later stop
+   drops it for real. */
+@keyframes an-out{from{opacity:1;}to{opacity:0;}}
+.an-anim-out{animation:an-out .28s ease forwards;pointer-events:none;}
+@media (prefers-reduced-motion: reduce){
+  .an-anim-out{animation:none;opacity:0;}}
 @keyframes fturn-fade{from{opacity:0;}to{opacity:1;}}
 @keyframes fturn-rise{from{opacity:0;transform:translateY(14px);}
   to{opacity:1;transform:none;}}

@@ -57,6 +57,94 @@
      because a mode whose shortcuts are invisible has no shortcuts. */
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
+  /* ---- T238: DISAPPEAR, WHERE ANIMATION IS -----------------------------
+     The exit has existed since T174 and had one door: a popover inside
+     the Layers pane's build column (2026-09-04, user: "animations is
+     missing dissapear"). The verb and its choices are the pane's --
+     one implementation, two doors -- and the button does the case you
+     want nine times out of ten. */
+  function animOutItem(){
+    var s=pres.slides[cur];
+    if(typeof selAnnot!=='number') return null;
+    return annotByIdx(s,selAnnot)||null;
+  }
+  function animOutBoot(){
+    var b=$('#anim-out');
+    if(b) b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var s=pres.slides[cur],a=animOutItem(); if(!a) return;
+      if(animOut(a)!=null) delete a.out;
+      else a.out=nextAnimOrder(s);
+      markDirty();refresh();
+      /* refresh() does not re-run the ribbon's own sync -- that
+         happens on a SELECTION change, and this is not one, so the
+         button reported the state it had before its own click */
+      animRibbonSync();
+      if(typeof animPaneSync==='function') animPaneSync();
+    });
+    var c=$('#anim-out-caret'),m=$('#anim-out-menu');
+    if(c&&m) c.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!m.hidden){overlayHide(m);return;}
+      animOutMenu(m);
+      overlayShow(c,m);floatMenu(c,m);
+    });
+  }
+  function animOutMenu(m){
+    m.innerHTML='';
+    var s=pres.slides[cur],a=animOutItem(); if(!a) return;
+    var now=animOut(a);
+    function row(txt,tip,ic,on,fn){
+      var b=document.createElement('button');
+      b.className='dbtn sh-opt';b.type='button';
+      b.innerHTML=bic(ic)+' '+esc(txt);
+      b.title=tip;
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayHide(m);fn();
+        markDirty();refresh();animRibbonSync();
+        if(typeof animPaneSync==='function') animPaneSync();
+      });
+      m.appendChild(b);
+    }
+    menuHead(m,'when it goes');
+    row('Stays on the slide',
+      'What every object did before this existed','none',now==null,
+      function(){delete a.out;});
+    var mine=a.anim?(a.anim.order||0):-1,offered={};
+    animSeq(s).forEach(function(st){
+      if(st.order<=mine||offered[st.order]) return;
+      offered[st.order]=1;
+      var who=st.items.map(function(i2){
+        return annotLabel((s.annots||[])[i2]);
+      }).join(', ').slice(0,34);
+      row('Goes when '+who+' arrives',
+        'One click: that arrives, this goes \u2014 which is what '
+        +'replacing a picture actually is','exit',now===st.order,
+        function(){a.out=st.order;});
+    });
+    row('Goes on one more click at the end',
+      'Adds a click of its own, on which this object leaves and '
+      +'nothing arrives','exit',now!=null&&!offered[now],
+      function(){a.out=nextAnimOrder(s);});
+  }
+  function animOutSync(){
+    var wrap=$('#anim-outwrap'),say=$('#anim-out-say');
+    var s=pres.slides[cur],a=animOutItem();
+    var poster=!!(pageOf&&pageOf().poster);
+    if(wrap) wrap.hidden=!a||poster;
+    if(say) say.hidden=!a||poster;
+    if(!a||poster) return;
+    var now=animOut(a),b=$('#anim-out');
+    if(b) b.setAttribute('aria-pressed',(now!=null).toString());
+    if(say){
+      say.innerHTML='<span>Leaves</span><span><b></b></span>';
+      var inf=(now!=null&&typeof spStepInfo==='function')
+        ?spStepInfo(s,a):null;
+      say.querySelector('b').textContent=now==null?'never'
+        :((inf&&inf.out!=null)?('on click '+inf.out):'on a click');
+    }
+  }
   /* ---- T234: A FLIP BOOK'S PAGES ARE ANIMATION ------------------------
      Every figure after the first has always eaten a click -- extraStops
      counts them, flipPlan sequences them, and the Animations pane lists
@@ -959,6 +1047,7 @@
     animRibbonSync=function(){
       timingSync();
       flipFxSync();
+      animOutSync();
 
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */

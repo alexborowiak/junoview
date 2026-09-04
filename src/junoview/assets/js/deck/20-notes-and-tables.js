@@ -2618,7 +2618,10 @@
           el.appendChild(rb);
         });
     }
-    if(s.annots&&s.annots.some(function(a){return a&&a.anim;})){
+    /* T238: an EXIT is a build too, so a slide whose only animation
+       is something leaving still needs this pass */
+    if(s.annots&&s.annots.some(function(a){
+      return a&&(a.anim||animOut(a)!=null);})){
       var steps=slideBuildSteps(s),plan=flipPlan(s);
       /* .an-arrow-line is the visible stroke and carries no .an-item
          class (the fat invisible hit path under the items does), so an
@@ -2628,7 +2631,11 @@
         var raw=el.getAttribute('data-idx');
         if(raw==='t'||raw==='s') return;
         var bi=+raw,ba=(s.annots||[])[bi];
-        if(!ba||!ba.anim) return;
+        if(!ba) return;
+        /* the fade OUT, on the one stop it goes (T238) */
+        if(mode==='view'&&animGoing(s,ba))
+          el.classList.add('an-anim-out');
+        if(!ba.anim) return;
         var st=steps.map[ba.anim.order||0];   /* which build step (0-based) */
         if(st==null) return;
         if(editing){

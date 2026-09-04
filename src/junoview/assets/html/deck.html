@@ -923,6 +923,37 @@
                each thing already had (2026-09-02, user: "the whole
                slide options are confusing" -- so the heading says whose
                they are and each label is one idea). -->
+          <!-- T238: DISAPPEAR, ON THE TAB THAT DOES ANIMATION
+               (2026-09-04, user: "animations is missing dissapear").
+               The exit itself has worked since T174 -- an object can
+               go on the click another arrives, which is what
+               replacing a picture actually is -- but its only door
+               was a popover inside the Layers pane’s build column,
+               so the effect gallery offered five ways to arrive and
+               none to leave. The button is the common case (a click
+               of its own); the caret holds "goes when X arrives". -->
+          <span class="rbn-grp rbn-exit" data-tab="animation"
+            data-fold-ic="exit">
+            <span class="rbn-row">
+              <span class="sh-drop tx-split" id="anim-outwrap" hidden>
+                <button class="dbtn rbn-sm" id="anim-out"
+                  aria-pressed="false"
+                  title="Make this leave the slide on a click of its
+ own. The caret sends it away as something else arrives instead"
+                  ><i data-ic="exit"></i> Disappear</button>
+                <button class="dbtn rbn-sm tx-caret" id="anim-out-caret"
+                  aria-label="When it goes" aria-haspopup="true"
+                  aria-expanded="false"
+                  title="When it goes: on a click of its own, or on
+ the click another object arrives">&#9662;</button>
+                <div class="sh-menu" id="anim-out-menu" hidden></div>
+              </span>
+              <span class="rbn-cell seq-cell" id="anim-out-say" hidden
+                title="An object that leaves still costs a click, so it
+ is part of the sequence like any other step"></span>
+            </span>
+            <span class="rbn-lab">Disappear</span>
+          </span>
           <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
                nothing said so (2026-09-04, user: "how do the
                animations work with the flip books. Can there be a
