@@ -68,6 +68,12 @@
   function refreshChrome(){
     var canOpen=APP.mode==='app'||APP.mode==='web';
     if(openBtn) openBtn.hidden=!canOpen;
+    /* T260: ...and so does the group around it. Open is the only thing in
+       the File section, so without this a shared standalone render carried
+       a "File" caption over an empty box and a divider — about 60px of
+       chrome for nothing, on a bar that was already scrolling sideways. */
+    var fileGrp=$('#ab-file');
+    if(fileGrp) fileGrp.classList.toggle('grp-empty',!canOpen);
     var wel=$('#welcome');
     /* an open presentation owns the window even with no notebook behind
        it — a self-contained deck is a document in its own right */

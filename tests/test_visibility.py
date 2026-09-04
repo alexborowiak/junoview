@@ -449,8 +449,14 @@ def test_type_picker_matches_the_width_of_its_filter(out):
     for bid in ("pt-filter-btn", "ck-filter-btn", "ot-filter-btn"):
         btn = out.split(f'id="{bid}"')[1].split("</button>")[0]
         assert '<span class="btxt">Choose</span>' in btn, bid
-    assert ("#help-btn{padding:0;justify-content:center;width:28px;"
-            "min-width:28px;\n  flex:none;}" in out)
+    # Help's own square rule is gone (T260). Its comment said "Help is
+    # icon-only and stands alone", but Help has carried the word "Help"
+    # for a long time -- so the 28px box just made the word paint over
+    # its neighbour. It is sized by its content now, like every other
+    # worded button, which is what this test's own principle asks for.
+    assert "#help-btn{padding:0;justify-content:center;" not in out
+    assert 'id="help-btn"' in out and "> Help</button>" in out.replace(
+        "</i> Help</button>", "> Help</button>")
     # the width comes from the column, so there is nothing to keep in sync
     assert ".fgrp{flex:none;display:flex;flex-direction:column;" \
            "align-items:stretch;" in out

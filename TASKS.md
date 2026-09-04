@@ -5379,3 +5379,34 @@ option. Then where has the ability to refresh all images gone?"
   declarations disagreeing, which is the failure mode this codebase
   actually has -- and the guard is itself tested against the exact
   shape of the flipSel bug, so it cannot quietly stop working.
+
+- [x] **T260 - The App group stops painting over itself.**
+  Found by driving the rendered page at 1440x900, not by reading. The
+  group at the right of the ribbon -- **Theme, Support, Find, Help** --
+  came back as four **overlapping, illegible clusters of glyphs**, and
+  Help's box started at x=1455 on a 1440-wide viewport.
+  Three rules had drifted away from the markup they were written for.
+  `#ab-app .toggle{width:34px;...}` forced a **square**, but every one
+  of those buttons holds an icon AND a word, and `.appbar .toggle` is
+  `white-space:nowrap` with visible overflow -- so each label painted
+  straight out of its box and across the next button. `#help-btn` had
+  its own square with the comment "Help is icon-only and stands alone",
+  which stopped being true when Help got its word. And `#theme-btn` in
+  the icon-only rule **matches nothing**: the button is `#scheme-btn`.
+  A worded button is sized by its word now; the taller 34px height and
+  the 17px icon stay, because those are what "the app buttons are way
+  too small" (2026-08-18) asked for.
+  The **File group** went the same way: `#tab-open` is hidden unless
+  the page can really open a file, which a shared standalone render
+  cannot -- but the group stayed, so the bar carried a "File" caption
+  over an empty box and a divider, about 60px of chrome for nothing.
+  Driven after the fix at 1440x900: no label paints outside its own
+  button, no two toolbar buttons overlap, every App button shows its
+  word and its icon, and the File group measures 0 wide.
+  *Still true, and worth saying:* at 1440 with the rail open the bar
+  wants 1433px and has 1249, so it scrolls sideways -- the recorded
+  fallback (never a second row, never missing words). Restoring the
+  words costs 106px of that. Theme and Support are on screen; Find and
+  Help need a scroll, and both also have keys (Ctrl+F, ?). Making the
+  whole bar fit at 1440 is a layout decision, not a bug fix, so it is
+  left for the user to call.

@@ -67,8 +67,12 @@ body.presrail-min{--presrail-w:46px;}
    it no floor, so the moment the bar ran short of room these were being
    squeezed to 9px — narrower than the icon inside them — and the App
    group read as a row of slivers (2026-07-31). */
-.appbar .toggle.fz-step,.present-bar .toggle.fz-step,
-#theme-btn,#support-btn{padding:0;justify-content:center;
+/* T260: this used to name #theme-btn and #support-btn as well. There is
+   no #theme-btn -- the button is #scheme-btn -- and neither of those is
+   icon-only any more, so the square rule no longer applies to either.
+   The size steppers are the genuinely icon-only case it was written for. */
+.appbar .toggle.fz-step,.present-bar .toggle.fz-step{
+  padding:0;justify-content:center;
   width:28px;min-width:28px;flex:none;}
 .btxt{display:inline-block;}
 /* a filter GROUP stacks its advanced types picker under its main button
@@ -107,9 +111,10 @@ body.presrail-min{--presrail-w:46px;}
    under it, so it spans both rows beside the Raw/Tree stack */
 #ab-view .abgrp-row,#ab-view .btn-grp{align-items:stretch;}
 #ab-view #doc-present{height:auto;min-height:28px;}
-/* Help is icon-only and stands alone, so it stays a square */
-#help-btn{padding:0;justify-content:center;width:28px;min-width:28px;
-  flex:none;}
+/* T260: Help used to be icon-only, and this rule squared it off. It has
+   carried the word "Help" since; with the square kept, the word simply
+   painted outside the 28px box and over its neighbour. Sized by its
+   content now, like every other worded button. */
 /* The type pickers are NOT standalone: each sits directly under the filter
    it refines and takes that filter's width. A narrow square under a wide
    button reads as a separate control that happens to be nearby, instead of
@@ -133,10 +138,23 @@ body.presrail-min{--presrail-w:46px;}
    buttons are way too small"). Same rule the editor ribbon adopted:
    leftover space lives at the END, where it reads as room. */
 #ab-app{margin-left:14px;padding-right:8px;}
-/* monitor-sized: 28px squares beside worded buttons read as crumbs */
-#ab-app .toggle{width:34px;min-width:34px;height:34px;}
+/* T260: these were 34px SQUARES holding a word each -- Theme, Support,
+   Find, Help. `.appbar .toggle` is white-space:nowrap with visible
+   overflow, so every label painted straight out of its box and across
+   the next one: driven at 1440x900 the group rendered as overlapping,
+   illegible glyphs, and Help's box started at x=1455 on a 1440 viewport.
+   A worded button is sized by its word. They keep the taller 34px height
+   (2026-08-18, user, on a monitor: "the app buttons are way too small")
+   and the bigger icon. */
+#ab-app .toggle{height:34px;min-width:34px;}
 #ab-app .bic{width:17px;height:17px;}
 #ab-file{margin-left:10px;}
+/* T260: Open is hidden unless the page can actually open a file, which a
+   shared standalone render cannot. The GROUP stayed either way, so the
+   bar carried a "File" caption over an empty box and a divider -- ~60px
+   of a bar that was already scrolling sideways. JS hides the group with
+   its button (see fitRibbon's caller). */
+.abgrp.grp-empty{display:none!important;}
 /* Present spans two rows: centre its content in the taller box */
 #ab-view #doc-present{justify-content:center;align-items:center;}
 /* stacked rows inside one section (the two size steppers) */

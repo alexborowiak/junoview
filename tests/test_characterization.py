@@ -1073,8 +1073,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # flipPaneIdx (it was shadowing the flipSel VERB and killing two Arrange
 # menu rows), and 05-figures-and-ribbon.js's dead duplicate STYLE_FIELDS
 # declaration is replaced by a comment saying where the one list lives.
-EXPECTED_MD5 = "57b214f520e008a2592002be255829c1"
-EXPECTED_BYTES = 3560206
+# 2026-09-04, T260: the App group's buttons are sized by their words
+# instead of forced into 34px squares their labels painted out of, Help
+# loses its stale icon-only square, the dead #theme-btn selector goes,
+# and an empty File group hides with its only button.
+EXPECTED_MD5 = "835cb2bb62fd808148f6833c5ce36c66"
+EXPECTED_BYTES = 3561815
 
 
 def _render_example() -> str:

@@ -427,7 +427,15 @@ def test_app_buttons_sit_at_the_right_end_of_the_ribbon(out):
     # as lost crumbs -- same rule as the editor ribbon, leftover space
     # lives at the end
     assert "#ab-app{margin-left:14px;padding-right:8px;}" in out
-    assert "#ab-app .toggle{width:34px;min-width:34px;height:34px;}" in out
+    # T260: they were 34px SQUARES holding a word each. `.appbar .toggle`
+    # is white-space:nowrap with visible overflow, so every label painted
+    # out of its box and across the next one -- driven at 1440x900 the
+    # group rendered as overlapping, illegible glyphs and Help's box
+    # started at x=1455 on a 1440 viewport. A worded button is sized by
+    # its word; the taller 34px height and the bigger icon stay, because
+    # those are what "the app buttons are way too small" asked for.
+    assert "#ab-app .toggle{height:34px;min-width:34px;}" in out
+    assert "#ab-app .bic{width:17px;height:17px;}" in out
     assert 'id="scheme-btn"' in out and 'id="vars-btn"' in out
     # nothing still styles it for the tab row
     assert ".tabsrow #ab-app" not in out
