@@ -51,8 +51,9 @@ def test_the_frame_has_an_edge_and_arrows_instead_of_a_scrollbar(out):
     assert "var ROW=60;" in out
     assert "prev.setAttribute('aria-disabled',top<=1?'true':'false');" in out
     assert "new ResizeObserver(function(){ends();}).observe(strip);" in out
-    assert ('.strip-more[aria-expanded="true"]{background:'
-            'var(--accent-deep,var(--cyan-deep));') in out
+    start = out.index('.strip-more[aria-expanded="true"]')
+    rule = out[start:out.index("}", start)]
+    assert "var(--accent-deep,var(--cyan-deep))" in rule
 
 
 def test_show_all_moves_the_strip_into_a_window_and_back(out):

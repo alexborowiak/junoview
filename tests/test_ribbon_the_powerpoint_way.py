@@ -68,7 +68,8 @@ def test_x_y_width_and_height_sit_on_the_object_tab(out):
 
 
 def test_a_tooltip_is_a_bubble_not_a_button(out):
-    assert ".apptip{position:fixed;z-index:300;background:#0b1520;" in out
+    assert (".apptip{position:fixed;z-index:300;"
+            "background:var(--tooltip-bg);" in out)
     tip = out.split(".apptip{")[1][:400]
     assert ("border:1px solid color-mix(in srgb,var(--accent) 33%,transparent);"
             not in tip)

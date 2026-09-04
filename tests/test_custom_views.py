@@ -55,11 +55,11 @@ def test_view_style_vars_are_honoured_in_dark_mode(out):
     (without this the whole feature silently did nothing in the default
     theme -- an equality-only test walked right past it)
     """
-    assert "body:not(.light) .note{color:var(--md-col,#c3cfda);}" in out
-    assert "body:not(.light) .sectionhead h2{color:var(--hd-col,#e6edf3);}" \
+    assert "body:not(.light) .note{color:var(--md-col,var(--ink-2));}" in out
+    assert "body:not(.light) .sectionhead h2{color:var(--hd-col,var(--ink));}" \
         in out
     assert 'body:not(.light) .card[data-note="1"]{' \
-        'background:var(--md-bg,var(--chrome-3,#101c28));' in out
+        'background:var(--md-bg,var(--paper));' in out
 
 
 def test_view_styles_its_own_notebook_with_override_buttons(out):
