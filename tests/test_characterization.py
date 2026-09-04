@@ -1049,8 +1049,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T243: the section-scope menu opens showing every section
 # with a tick box, gained Select none and a count, and its button says
 # "Filters act on: all sections" instead of "Sections: All".
-EXPECTED_MD5 = "de543ceaf6abbba8bb36cc7103d36578"
-EXPECTED_BYTES = 3529445
+# 2026-09-04, T244: Find in this notebook -- a bar over the document
+# that marks every match, opens whatever the filters had folded around
+# the current one, and puts it all back on close; and the variables
+# filter marks the part of each name that matched.
+EXPECTED_MD5 = "0f16a32ff6228a15f19f0e3c3e29e1d3"
+EXPECTED_BYTES = 3539256
 
 
 def _render_example() -> str:

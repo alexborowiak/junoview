@@ -5091,3 +5091,19 @@ option. Then where has the ability to refresh all images gone?"
   what it decided: the button says **"Filters act on: all sections"**
   and the menu opens with one line explaining that each section keeps
   its own filters, which is the whole reason to be able to pick them.
+
+- [x] **T244 - Find in this notebook, with the matches highlighted.**
+  The user (2026-09-04): "Also would be good for a search feature, and
+  also for the types of variables thing, that it gets highlighted."
+  *Done 2026-09-04.* Nothing looked inside a notebook's content: the
+  rail's box finds notebooks and decks by *name*, and the variables box
+  filters names. **Find** (Ctrl+F, or the button in App) searches the
+  document's own text -- titles, prose, code and output -- marks every
+  match, and steps through them with Enter / Shift+Enter. The half the
+  browser's own Ctrl+F cannot do: a hit inside something the filters
+  folded **opens it**, marks the card it is in, and puts every one of
+  those back when you close the bar. Driven with Code set to Off:
+  "matplotlib" still found its two hits and showed them. And the
+  **variables filter marks the matched letters** -- a filtered list of
+  names that all contain the same three letters is a list you still
+  have to read one by one.

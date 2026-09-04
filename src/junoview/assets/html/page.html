@@ -177,6 +177,16 @@
         title="Support Junoview on Ko-fi — funds an online, hosted version
  with accounts (save + share your docs and talks, like Overleaf)"
         ><i data-ic="heart"></i> Support</a>
+      <!-- T244: FIND, IN THE NOTEBOOK (2026-09-04, user: "would be
+           good for a search feature"). The rail's box finds notebooks
+           by name and the variables box filters names; nothing looked
+           inside the document. The browser's own Ctrl+F cannot see a
+           folded cell or one a filter has hidden, which is most of
+           what this reader does. -->
+      <button class="toggle" id="doc-find"
+        title="Find words anywhere in this notebook — titles, prose,
+ code and output, folded cells included (Ctrl+F)"
+        ><i data-ic="find"></i> Find</button>
       <button class="toggle" id="help-btn"
         title="How to use, and everything this tool can do" aria-label="Help"><i data-ic="help"></i> Help</button>
     </span></span><span class="abgrp-lab">App</span></span>
@@ -627,6 +637,23 @@
   <button class="figmax-close" id="figmax-close"
     title="Close (Esc)"><i data-ic="exit"></i> Close</button>
   <div class="figmax-box" id="figmax-box"></div>
+</div>
+<!-- T244: the find bar. Floated over the document rather than in the
+     header, because it belongs to what you are reading and the header
+     is measured chrome that every view inset itself by. -->
+<div class="docfind" id="docfind" hidden>
+  <i data-ic="find"></i>
+  <input type="search" id="docfind-in" class="docfind-in"
+    placeholder="find in this notebook" aria-label="Find in this notebook"
+    autocomplete="off" spellcheck="false">
+  <span class="docfind-n" id="docfind-n"></span>
+  <button class="docfind-b" id="docfind-prev" type="button"
+    aria-label="Previous match" title="Previous match (Shift+Enter)"
+    >&#9650;</button>
+  <button class="docfind-b" id="docfind-next" type="button"
+    aria-label="Next match" title="Next match (Enter)">&#9660;</button>
+  <button class="docfind-b" id="docfind-x" type="button"
+    aria-label="Close find" title="Close (Esc)"><i data-ic="exit"></i></button>
 </div>
 <div class="ckfilter-menu" id="ck-filter-menu" hidden></div>
 <div class="ckfilter-menu" id="ot-filter-menu" hidden></div>

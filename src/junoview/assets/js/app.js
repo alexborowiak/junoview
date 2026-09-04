@@ -2735,6 +2735,142 @@
     document.addEventListener('mouseup',up);
   });
 
+  /* ---- T244: FIND IN THIS NOTEBOOK ------------------------------------
+     Over the document's own text, because the browser's Ctrl+F cannot
+     see a folded cell or one a filter has hidden -- which is most of
+     what this reader does with a notebook. A hit UNFOLDS what it is in
+     and marks the words, so "where does it say that" is answered by
+     looking rather than by turning filters off and trying again. */
+  var FIND_SKIP={SCRIPT:1,STYLE:1,SVG:1,CANVAS:1,TEXTAREA:1,INPUT:1};
+  var findHits=[],findAt=-1,findTerm='';
+  function findClear(){
+    $$('.jv-hit').forEach(function(m){
+      var p2=m.parentNode; if(!p2) return;
+      p2.replaceChild(document.createTextNode(m.textContent),m);
+      p2.normalize();
+    });
+    $$('.jv-hitcard').forEach(function(c){
+      c.classList.remove('jv-hitcard');});
+    findHits=[];findAt=-1;
+  }
+  /* wrap every occurrence in the text nodes under `root` */
+  function findMark(root,term){
+    var low=term.toLowerCase(),out=[];
+    var walk=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{
+      acceptNode:function(n){
+        if(!n.nodeValue||n.nodeValue.indexOf('\n')===n.nodeValue.length)
+          return NodeFilter.FILTER_REJECT;
+        var p2=n.parentNode;
+        while(p2&&p2!==root){
+          if(FIND_SKIP[p2.nodeName]) return NodeFilter.FILTER_REJECT;
+          if(p2.classList&&p2.classList.contains('jv-hit'))
+            return NodeFilter.FILTER_REJECT;
+          p2=p2.parentNode;
+        }
+        return n.nodeValue.toLowerCase().indexOf(low)>=0
+          ?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+      }});
+    var nodes=[],n2;
+    while((n2=walk.nextNode())) nodes.push(n2);
+    nodes.forEach(function(node){
+      var txt=node.nodeValue,at=txt.toLowerCase().indexOf(low),from=0;
+      var frag=document.createDocumentFragment();
+      while(at>=0){
+        if(at>from)
+          frag.appendChild(document.createTextNode(txt.slice(from,at)));
+        var mk=document.createElement('mark');
+        mk.className='jv-hit';
+        mk.textContent=txt.slice(at,at+term.length);
+        frag.appendChild(mk);out.push(mk);
+        from=at+term.length;
+        at=txt.toLowerCase().indexOf(low,from);
+      }
+      if(from<txt.length)
+        frag.appendChild(document.createTextNode(txt.slice(from)));
+      node.parentNode.replaceChild(frag,node);
+    });
+    return out;
+  }
+  function findGo(d){
+    if(!findHits.length) return;
+    $$('.jv-hit.on').forEach(function(m){m.classList.remove('on');});
+    findAt=(findAt+d+findHits.length)%findHits.length;
+    var m=findHits[findAt];
+    m.classList.add('on');
+    /* a hit inside something the filters folded is a hit you cannot
+       read: open the card it is in, and say so by marking the card */
+    var card=m.closest&&m.closest('.card');
+    if(card){
+      card.classList.add('jv-hitcard','expanded');
+      card.classList.remove('is-hidden');
+      $$('.part-off,.part-fold,.code-off,.ot-off,.ot-fold,.pt-off,'
+        +'.pt-fold',card).forEach(function(n){
+          n.classList.add('jv-hitopen');});
+    }
+    m.scrollIntoView({block:'center',behavior:'smooth'});
+    var nEl=$('#docfind-n');
+    if(nEl) nEl.textContent=(findAt+1)+' / '+findHits.length;
+  }
+  function findRun(term){
+    findClear();
+    findTerm=term||'';
+    var nEl=$('#docfind-n');
+    if(findTerm.length<2){
+      if(nEl) nEl.textContent=findTerm?'keep typing':'';
+      return;
+    }
+    var sh=document.querySelector('.nbshell:not([hidden]) .content')
+      ||document.querySelector('.nbshell .content');
+    if(!sh){if(nEl) nEl.textContent='no notebook';return;}
+    findHits=findMark(sh,findTerm);
+    if(nEl) nEl.textContent=findHits.length
+      ?('0 / '+findHits.length):'nothing found';
+    if(findHits.length){findAt=-1;findGo(1);}
+  }
+  function findOpen(on){
+    var bar=$('#docfind'); if(!bar) return;
+    bar.hidden=!on;
+    var b=$('#doc-find');
+    if(b) b.setAttribute('aria-pressed',on?'true':'false');
+    if(on){
+      var inp=$('#docfind-in');
+      if(inp){inp.focus();inp.select();}
+    } else {
+      findClear();
+      $$('.jv-hitopen').forEach(function(n){
+        n.classList.remove('jv-hitopen');});
+    }
+  }
+  (function(){
+    var b=$('#doc-find');
+    if(b) b.addEventListener('click',function(){
+      findOpen($('#docfind')&&$('#docfind').hidden);});
+    var inp=$('#docfind-in');
+    if(inp){
+      var t=null;
+      inp.addEventListener('input',function(){
+        clearTimeout(t);
+        t=setTimeout(function(){findRun(inp.value.trim());},180);
+      });
+      inp.addEventListener('keydown',function(e){
+        if(e.key==='Enter'){e.preventDefault();findGo(e.shiftKey?-1:1);}
+        else if(e.key==='Escape'){e.preventDefault();findOpen(false);}
+      });
+    }
+    var pv=$('#docfind-prev');
+    if(pv) pv.addEventListener('click',function(){findGo(-1);});
+    var nx=$('#docfind-next');
+    if(nx) nx.addEventListener('click',function(){findGo(1);});
+    var xb=$('#docfind-x');
+    if(xb) xb.addEventListener('click',function(){findOpen(false);});
+    document.addEventListener('keydown',function(e){
+      if(!(e.ctrlKey||e.metaKey)||e.key!=='f') return;
+      /* the deck editor has its own Find and owns the window while
+         it is open */
+      if(document.body.classList.contains('deck-open')) return;
+      e.preventDefault();findOpen(true);
+    });
+  })();
   /* ---- instant tooltips: every [title] becomes a styled tip ------- */
   var tipEl=document.createElement('div');
   tipEl.className='apptip';
@@ -4485,6 +4621,27 @@
         varRows().forEach(function(r){
           var hit=!q||r.dataset.name.indexOf(q)>=0;
           r.classList.toggle('vf-out',!hit);
+          /* T244: SAY WHICH PART MATCHED. A filtered list of names
+             that all contain the same three letters is a list you
+             still have to read one by one (2026-09-04, user: "a
+             search feature, and also for the types of variables
+             thing, that it gets highlighted"). */
+          var nm=r.querySelector('.var-name');
+          if(nm){
+            var raw=nm.dataset.raw||nm.textContent;
+            nm.dataset.raw=raw;
+            if(hit&&q){
+              var at=raw.toLowerCase().indexOf(q);
+              nm.textContent='';
+              nm.appendChild(document.createTextNode(raw.slice(0,at)));
+              var mk=document.createElement('mark');
+              mk.className='jv-hit';
+              mk.textContent=raw.slice(at,at+q.length);
+              nm.appendChild(mk);
+              nm.appendChild(document.createTextNode(
+                raw.slice(at+q.length)));
+            } else nm.textContent=raw;
+          }
           if(hit)any=true;
         });
         /* a heading whose every row is filtered out goes too */

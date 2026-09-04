@@ -683,6 +683,34 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
   animation:recent-slide 1.05s ease-in-out infinite;}
 @keyframes recent-slide{from{background-position:-44% 0;}
   to{background-position:144% 0;}}
+/* ---- T244: FIND IN THIS NOTEBOOK -------------------------------------
+   A bar over the document, not in the header: it belongs to what you are
+   reading, and the header is measured chrome every view insets itself
+   by. A hit opens whatever the filters had folded around it, which the
+   browser's own Ctrl+F cannot do. */
+.docfind{position:fixed;top:calc(var(--chrome-h,54px) + 10px);right:22px;
+  z-index:120;display:flex;align-items:center;gap:6px;
+  background:var(--paper);border:1px solid var(--line);border-radius:9px;
+  padding:6px 8px;box-shadow:0 10px 30px #0000002e;}
+.docfind[hidden]{display:none;}
+.docfind>.bic{width:14px;height:14px;opacity:.6;flex:none;}
+.docfind-in{width:210px;border:none;background:none;outline:none;
+  font-family:var(--sans);font-size:13px;color:var(--ink);}
+.docfind-n{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);
+  min-width:60px;text-align:right;}
+.docfind-b{background:none;border:none;cursor:pointer;color:var(--ink-3);
+  font-size:11px;line-height:1;padding:3px 5px;border-radius:5px;}
+.docfind-b:hover{background:var(--paper-2);color:var(--ink);}
+.docfind-b .bic{width:12px;height:12px;}
+mark.jv-hit{background:color-mix(in srgb,var(--amber,#f0a848) 42%,transparent);
+  color:inherit;border-radius:2px;padding:0 1px;}
+mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
+  box-shadow:0 0 0 2px color-mix(in srgb,var(--amber,#f0a848) 40%,transparent);}
+/* the card a hit is in, and the parts it had to open to show it */
+.card.jv-hitcard{outline:2px solid color-mix(in srgb,var(--amber,#f0a848)
+  55%,transparent);outline-offset:2px;}
+.jv-hitopen{display:revert!important;}
+
 /* ---- T243: THE SECTION SCOPE READS AS A LIST YOU TICK -----------------
    It opened collapsed (one row on a ten-section notebook), offered only
    Select all, and made the whole row the selector with a 9px chevron
