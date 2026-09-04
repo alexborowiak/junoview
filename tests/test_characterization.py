@@ -1041,8 +1041,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T240: the welcome screen's four buttons became one grid
 # of four identical cards -- icon, what it does, one line saying what
 # that means -- and the drop hint is said once instead of twice.
-EXPECTED_MD5 = "47af9ea2c7ed910615f3dce41264c42e"
-EXPECTED_BYTES = 3497185
+# 2026-09-04, T241: the last session's notebooks are offered on the
+# welcome screen instead of being reopened on load.
+EXPECTED_MD5 = "3d333f0f348e1c8d7ad269b802d583e4"
+EXPECTED_BYTES = 3499488
 
 
 def _render_example() -> str:

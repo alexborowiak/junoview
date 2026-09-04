@@ -5038,3 +5038,17 @@ option. Then where has the ability to refresh all images gone?"
   Open card's second line and nowhere else. The links row is the same
   sans as the rest of the screen. Driven on a web build at 1400px: four
   cards, all 344px wide.
+
+- [x] **T241 - What you had open is an offer, not a decision.**
+  The user (2026-09-04): "I do not like how it automatically opens what
+  was last open. That is too aggressive. Just have options to open what
+  was previously open."
+  *Done 2026-09-04.* `restoreWebSession` reopened every notebook of the
+  last session as soon as Python was up -- a page that decides what you
+  are doing before you have said. The list is still kept and still
+  exact; it is put on the welcome screen instead, as one row ("Open the
+  2 notebooks you had open"), because "where I was" is one thought. The
+  individual notebooks are in Recent underneath, as they always were.
+  Taking the offer opens them and leaves the welcome screen; the row
+  goes away once taken. Driven on a web build with a seeded session:
+  nothing opened on load, and the row appeared.

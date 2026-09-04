@@ -84,6 +84,7 @@
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
     renderWelcomePres();
+    renderLastSession();
   }
   APP.refreshChrome=refreshChrome;
   (function(){
@@ -5663,8 +5664,35 @@
   function syncJump(){
     var w=$('#welcome-jump'); if(!w) return;
     var r=$('#welcome-recent'), pz=$('#welcome-pres');
-    w.hidden=!((r&&!r.hidden)||(pz&&!pz.hidden));
+    var ls=$('#welcome-last');
+    w.hidden=!((r&&!r.hidden)||(pz&&!pz.hidden)||(ls&&!ls.hidden));
   }
+  /* T241: the notebooks you had open last time, as a row you press.
+     One button for the lot, because "where I was" is one thought;
+     the individual ones are in Recent underneath. */
+  function renderLastSession(){
+    var host=$('#welcome-last'); if(!host) return;
+    host.innerHTML='';
+    var last=(APP.lastSession||[]);
+    host.hidden=!last.length;
+    syncJump();
+    if(!last.length) return;
+    var h=document.createElement('div');h.className='recent-h';
+    h.textContent='last time';host.appendChild(h);
+    var b=document.createElement('button');
+    b.className='recent-i';b.type='button';
+    b.title=last.join('\n');
+    var ic=document.createElement('span');
+    ic.className='recent-ic';ic.innerHTML=bic('reload');
+    var nm=document.createElement('span');nm.className='recent-nm';
+    nm.textContent='Open the '+last.length+' notebook'
+      +(last.length===1?'':'s')+' you had open';
+    b.appendChild(ic);b.appendChild(nm);
+    b.addEventListener('click',function(){
+      if(APP.openLastSession) APP.openLastSession();});
+    host.appendChild(b);
+  }
+  APP.renderLastSession=renderLastSession;
   function renderRecent(){
     var host=$('#welcome-recent'); if(!host) return;
     host.innerHTML='';
@@ -6018,12 +6046,26 @@
        first visit restored, every later one silently did not).
        window.semPy is set before the dispatch, so it is the reliable
        "already up" flag; the listener only covers the other ordering. */
+    /* T241: IT IS AN OFFER NOW, not a decision. Reopening every
+       notebook of the last session on load is a page that decides
+       what you are doing before you have said (2026-09-04, user: "I
+       do not like how it automatically opens what was last open.
+       That is too aggressive. Just have options to open what was
+       previously open"). The list is still kept and still exact --
+       it is put on the welcome screen with a button instead. */
     function restoreWebSession(){
       var open=[];
       try{open=JSON.parse(
         localStorage.getItem(WEBKEY+':open')||'[]');}catch(e){}
-      open.forEach(function(u){webOpenUrl(u,true);});
+      APP.lastSession=open;
+      if(APP.renderLastSession) APP.renderLastSession();
     }
+    APP.openLastSession=function(){
+      (APP.lastSession||[]).forEach(function(u){webOpenUrl(u,false);});
+      APP.lastSession=[];
+      if(APP.renderLastSession) APP.renderLastSession();
+      goHome(false);
+    };
     if(window.semPy) restoreWebSession();
     else document.addEventListener('sem:pyready',restoreWebSession);
   }
