@@ -4863,3 +4863,33 @@ option. Then where has the ability to refresh all images gone?"
   can place again). Driven at 1500 / 1700 / 2100px: the row never
   wraps, the ladder folds Object first and Size & place second, and a
   folded group opens on its own name with its controls inside.
+
+- [x] **T234 - Flip books: one big "+ Add", no dead colour door, and a
+  page that turns as an animation.**
+  The user (2026-09-04): "for the flip books the 'Figure' button really
+  needs to be the first button and a big button, not small and hidden.
+  And it should just be called '+ Add', and then there are the options
+  there. Why do flip books even have a colour? What does that do? Also
+  how do the animations work with the flip books. Can there be a make
+  each flip an animation that appears in animations when selected."
+  *Done 2026-09-04.* **"+ Add"** is a 72x56 tile at the head of the
+  Picture group, and its menu holds the three things you can do to a
+  book's contents: figures from a notebook, pictures from this
+  computer, and reorder-and-name. The pane keeps its own two buttons --
+  you are looking at the list there, and putting them behind a menu
+  would be hiding what is already in the open. **The colour door is
+  gone for a flip book**: nothing renders `a.color` for one (applyCommon
+  writes opacity and rotation and stops), so it was a control that did
+  nothing at all. **The pages were always animation** -- every figure
+  after the first has always eaten a click, `flipPlan` sequences them
+  and the Animations pane lists them -- but a page turned as a cut and
+  nothing on the ribbon said so. The Animation tab now grows a Flip
+  book group when one is selected: a readout ("3 figures - 2 clicks")
+  and a Page turn run of None / Fade / Float up / Grow, which the
+  renderer turns into one CSS keyframe on the frame that changed, so it
+  plays in the show and in an exported page alike. Driving it caught
+  the real bug: one arrow press rebuilds the stage twice (flipGo calls
+  markDirty, which renders, and then renderSlide), so a
+  since-the-last-render test fired on the first pass and the second
+  pass rebuilt the node without the class. The turn is a moment now,
+  not a diff.

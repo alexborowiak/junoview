@@ -243,12 +243,18 @@ def test_tying_acts_on_the_whole_selection(out):
 
 
 def test_the_flip_book_costs_the_ribbon_one_hidden_button(out):
-    """Everything else it needs -- adding, reordering, naming, tying -- is
-    in the pane, because all of it needs the frame LIST visible to make
-    sense. The one ribbon control shows only when a flip book is selected.
+    """Everything else it needs -- reordering, naming, tying -- is in the
+    pane, because all of it needs the frame LIST visible to make sense.
+    The one ribbon control shows only when a flip book is selected, and
+    since T234 it is the big "+ Add" tile at the head of Picture rather
+    than a small "Figures..." in the middle of nine other buttons.
     """
     assert "'#fmt-figures':'flip'" in out
-    assert 'id="fmt-figures" hidden' in out
+    assert 'class="fx-tile big-tile rbn-tall" id="fmt-figures"' in out
+    assert "<span>Add</span></button>" in out
+    assert "  function flipAddMenu(btn,idx){" in out
+    assert "    menuHead(m,'put figures in this book');" in out
+    assert "      flipAddMenu(fg,idx);" in out
 
 
 def test_a_frames_ref_is_namespaced_like_a_cells(out):

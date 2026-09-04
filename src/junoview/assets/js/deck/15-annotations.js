@@ -1051,6 +1051,15 @@
       if(a&&stopsFor(s,a)>0) out.push({a:a,i:i});});
     return out;
   }
+  /* T234: the frame each flip book was last DRAWN at, and WHEN it last
+     moved. Two of them, because one arrow press rebuilds the stage
+     more than once -- flipGo calls markDirty and then renderSlide, and
+     markDirty renders too -- so "did it change since the last render"
+     fires on the first pass and the second pass rebuilds the same node
+     without the class. The turn is a MOMENT instead: the render stamps
+     the clock when the frame moves, and every render inside the next
+     FTURN_MS carries the keyframe. */
+  var flipSeen={},flipTurn={},FTURN_MS=400;
   function flipById(s,id){
     var hit=null;
     flipsOn(s).forEach(function(p){if(!hit&&p.a.fid===id) hit=p.a;});

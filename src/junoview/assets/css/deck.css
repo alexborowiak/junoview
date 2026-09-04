@@ -4913,9 +4913,29 @@ body.light .dg-num input{background:#00000006;border-color:var(--line);
 /* ...and A- / A+ are glyphs, so they get the same treatment */
 #fmt-sizecell .dbtn.etm{min-width:30px;justify-content:center;
   padding-left:4px;padding-right:4px;}
-/* History is a tall tile at the end of the Object group */
+/* History is a tall tile in a section of its own (T233) */
 .rbn-row>#fmt-hist.big-tile{width:72px;height:56px;align-self:center;
   grid-row:1/span 2;}
+/* ---- T234: THE FLIP BOOK'S ONE BIG DOOR, AND ITS PAGE TURN ----------
+   "+ Add" is the first control in the Picture group and the same
+   height as History: an empty flip book is a hole, and the button that
+   fills it should not be the smallest thing on the row. The turn
+   itself is one keyframe on the frame that changed -- so it plays in
+   the show, in an exported page, and nowhere else. */
+.rbn-row>#fmt-figures.big-tile{width:72px;height:56px;
+  align-self:center;}
+@keyframes fturn-fade{from{opacity:0;}to{opacity:1;}}
+@keyframes fturn-rise{from{opacity:0;transform:translateY(14px);}
+  to{opacity:1;transform:none;}}
+@keyframes fturn-zoom{from{opacity:0;transform:scale(.93);}
+  to{opacity:1;transform:none;}}
+.an-flipstage.fturn-fade{animation:fturn-fade .3s ease;}
+.an-flipstage.fturn-rise{animation:fturn-rise .34s
+  cubic-bezier(.2,.7,.3,1);}
+.an-flipstage.fturn-zoom{animation:fturn-zoom .3s
+  cubic-bezier(.2,.7,.3,1);}
+@media (prefers-reduced-motion: reduce){
+  .an-flipstage.fturn{animation:none!important;}}
 
 /* ---- T220: QUICK COLOURS AND A VISIBLE SIZE ----------------------------
    The deck's six colours sit in the row as two segmented cells, one for

@@ -53,6 +53,7 @@
   listGalleryBoot();          /* kinds of bullet and numbering (T227) */
   homeDoorsBoot();            /* Notes and Optional on Home (T228) */
   cloneDoorsBoot();           /* clones, on the Object tab (T229) */
+  flipFxBoot();               /* how a flip book's page turns (T234) */
   spActionsBoot();            /* the Layers pane's Actions popover (T221) */              /* the All images pane's door (T202) */
   stripMoreBoot();            /* every strip's Show-all door (T203) */
   presentTabBoot();           /* the Present tab and Layers on Home (T216) */

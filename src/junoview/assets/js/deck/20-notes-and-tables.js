@@ -2403,11 +2403,28 @@
            duplicate slides to avoid. */
         var fst=document.createElement('div');
         fst.className='an-flipstage';
+        /* T234: THE PAGE TURN, AS AN EFFECT. Turning a page has
+           always cost a click in the show, but it looked like a cut,
+           so nothing about a flip book said "animation" (2026-09-04,
+           user: "can there be a make each flip an animation that
+           appears in animations when selected"). The class is added
+           only when the frame CHANGED since the last render, so an
+           edit elsewhere on the slide does not replay it. */
+        var fkey=a.fid||(cur+':'+i);
+        if(flipSeen[fkey]!==at){
+          /* not on the FIRST sight of a book: opening a slide is not
+             a page turn */
+          if(flipSeen[fkey]!=null) flipTurn[fkey]=Date.now();
+          flipSeen[fkey]=at;
+        }
+        if(a.fanim&&motionOK()&&flipTurn[fkey]
+          &&(Date.now()-flipTurn[fkey])<FTURN_MS)
+          fst.className+=' fturn fturn-'+a.fanim;
         if(!fr.length){
           var fph=document.createElement('div');
           fph.className='an-flipempty';
           fph.textContent=editing
-            ?'Empty flip book — use Figures ▾ to add frames'
+            ?'Empty flip book — use + Add to put figures in it'
             :'';
           fst.appendChild(fph);
         } else if(fdef&&fdef.src){

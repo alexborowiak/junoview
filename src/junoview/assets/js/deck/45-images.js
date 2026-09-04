@@ -559,17 +559,64 @@
     sel.addEventListener('change',commit);
     mode.addEventListener('change',commit);
   }
+  /* ---- T234: ONE DOOR, CALLED "+ ADD" ------------------------------
+     The three things you can do to a flip book's contents, on the one
+     button that used to open only the third of them. The pane keeps
+     its own two buttons: you are already looking at the list there,
+     and putting them behind a menu would be hiding what is in the
+     open. */
+  function flipSelIdx(){
+    var s=pres.slides[cur],idx=null;
+    selIdxs().forEach(function(i){
+      var x=(s&&s.annots||[])[i];
+      if(idx===null&&x&&x.k==='flip') idx=i;});
+    return idx;
+  }
+  function flipAddMenu(btn,idx){
+    var old=$('#flip-add-menu'); if(old) old.remove();
+    var m=document.createElement('div');
+    m.className='sh-menu canvas-menu';m.id='flip-add-menu';
+    menuHead(m,'put figures in this book');
+    function row(txt,ic,tip,fn){
+      var b=document.createElement('button');
+      b.className='dbtn';b.type='button';
+      b.innerHTML=bic(ic)+' '+esc(txt);
+      b.title=tip;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayHide(m);m.remove();fn();});
+      m.appendChild(b);
+    }
+    row('Figures from a notebook\u2026','cellcard',
+      'Click as many notebook cards as you want, in order \u2014 each '
+      +'becomes a page of this book',function(){startPick(idx,true);});
+    row('Pictures from this computer\u2026','image',
+      'Add pictures as pages. You can pick several at once',
+      function(){
+        flipSel=idx;
+        var fi=$('#fp-img-file');
+        if(fi){fi.value='';fi.click();}
+      });
+    menuHead(m,'the pages it has');
+    row('Reorder and name them\u2026','list',
+      'Open this book\u2019s pages: drag them into order, give them '
+      +'names, and tie text or objects to one of them',
+      function(){showFlipPane(true,idx);});
+    deckEl.appendChild(m);
+    overlayShow(btn,m);floatMenu(btn,m);
+  }
   (function(){
     var fg=$('#fmt-figures');
     if(fg) fg.addEventListener('click',function(e){
       e.stopPropagation();
-      var s=pres.slides[cur],idx=null;
-      selIdxs().forEach(function(i){
-        var x=(s&&s.annots||[])[i];
-        if(idx===null&&x&&x.k==='flip') idx=i;});
+      /* the owner HIDES it on Escape or an outside click, it does
+         not remove it -- so a leftover must not read as open, or
+         the next press would spend itself closing nothing */
+      var open=$('#flip-add-menu');
+      if(open&&!open.hidden){overlayHide(open);open.remove();return;}
+      if(open) open.remove();
+      var idx=flipSelIdx();
       if(idx===null) return;
-      var p=$('#flippane');
-      showFlipPane(!!(p&&p.hidden),idx);
+      flipAddMenu(fg,idx);
     });
     var cl=$('#flippane-close');
     if(cl) cl.addEventListener('click',function(){showFlipPane(false);});

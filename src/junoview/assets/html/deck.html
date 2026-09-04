@@ -922,6 +922,46 @@
                each thing already had (2026-09-02, user: "the whole
                slide options are confusing" -- so the heading says whose
                they are and each label is one idea). -->
+          <!-- T234: A FLIP BOOK’S PAGES ARE ALREADY ANIMATION, and
+               nothing said so (2026-09-04, user: "how do the
+               animations work with the flip books. Can there be a
+               make each flip an animation that appears in animations
+               when selected"). Every figure after the first has
+               always been a click in the show — flipPlan puts them
+               in the one timeline and the Animations pane lists them
+               — but a page turned as a cut and the ribbon never
+               mentioned it. The readout says how many clicks the
+               book is worth; the run says how a page arrives. -->
+          <span class="rbn-grp rbn-flipfx" data-tab="animation"
+            data-fold-ic="flipbook">
+            <span class="rbn-row">
+              <span class="rbn-cell rbn-seg" id="anim-flip-run" hidden
+                role="group" aria-label="How a page of the flip book arrives">
+                <span class="cell-lab">Page turn</span>
+                <button class="dbtn rbn-sm" id="anim-flip-none"
+                  aria-pressed="false"
+                  title="The next figure simply replaces the one
+ before it"><i data-ic="none"></i> None</button>
+                <button class="dbtn rbn-sm" id="anim-flip-fade"
+                  aria-pressed="false"
+                  title="Each figure fades in as you turn to
+ it"><i data-ic="fade"></i> Fade</button>
+                <button class="dbtn rbn-sm" id="anim-flip-rise"
+                  aria-pressed="false"
+                  title="Each figure floats up into
+ place"><i data-ic="rise"></i> Float up</button>
+                <button class="dbtn rbn-sm" id="anim-flip-zoom"
+                  aria-pressed="false"
+                  title="Each figure grows into
+ place"><i data-ic="zoom"></i> Grow</button>
+              </span>
+              <span class="rbn-cell seq-cell" id="anim-flip-say" hidden
+                title="Turning a page is a click, exactly like an
+ entrance. The figures are listed under this book in Animation
+ order; their sequence is the book’s own"></span>
+            </span>
+            <span class="rbn-lab">Flip book</span>
+          </span>
           <span class="rbn-grp rbn-build" data-tab="animation" data-fold-ic="stagger">
             <span class="rbn-row">
               <button class="dbtn rbn-sm" id="anim-stagger"
@@ -1838,10 +1878,19 @@
                to show, what to call it, and where it came from. -->
           <span class="rbn-grp" data-tab="object" data-fold-ic="cellcard">
             <span class="rbn-row">
-              <button class="dbtn etm" id="fmt-figures" hidden
-                title="Add, reorder and name the figures in this flip
- book, and tie text or objects to one of them"><i data-ic="flipbook"></i>
-   Figures&#8230;</button>
+              <!-- T234: THE FLIP BOOK’S ONE BIG DOOR. It was a small
+                   button called "Figures…" in the middle of a group
+                   of nine (2026-09-04, user: "the ‘Figure’ button
+                   really needs to be the first button and a big
+                   button, not small and hidden. And it should just be
+                   called ‘+ Add’, and then there are the options
+                   there"). An empty flip book is a hole, so the door
+                   that fills it is the first thing on the group. -->
+              <button class="fx-tile big-tile rbn-tall" id="fmt-figures"
+                hidden aria-haspopup="true" aria-expanded="false"
+                title="Put figures in this flip book — from a
+ notebook or from your computer — and reorder or name the ones it
+ already has"><i data-ic="plus"></i><span>Add</span></button>
               <span class="sh-drop tx-split" id="fmt-cropwrap" hidden>
                 <button class="dbtn etm" id="fmt-crop"
                   title="Trim the edges: drag the four handles on the

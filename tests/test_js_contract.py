@@ -70,6 +70,9 @@ RUNTIME_IDS = {
     # shipped in the markup (35-arranging.js openObjMatchMenu and
     # 40-captions-and-components.js openCmpInstMenu).
     "objmatch-menu", "cmp-inst-menu",
+    # "+ Add" on a flip book: 45-images.js flipAddMenu builds it on
+    # open and removes it on close, exactly like the canvas menu (T234).
+    "flip-add-menu",
     # the layout-ideas chooser, built on open and removed on close like
     # the two menus above (35-arranging.js openLayoutIdeas, T131)
     "lay-ideas",

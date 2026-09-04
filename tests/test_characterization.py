@@ -1010,8 +1010,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T233: the object's history is a ribbon section of its
 # own, and the Object grab-bag became three -- Size & place, Picture
 # and Object -- so each group answers one question.
-EXPECTED_MD5 = "99dfa778c020e5d15f6f4dcce11ce196"
-EXPECTED_BYTES = 3444148
+# 2026-09-04, T234: a flip book's ribbon control is the big "+ Add"
+# tile at the head of Picture with its three options inside it, the
+# colour door that rendered nothing for a flip book is gone, and a
+# page turn can be an animation -- chosen on the Animation tab, which
+# also says how many clicks the book is worth.
+EXPECTED_MD5 = "aa6c5fe886f9ad6587cd191e9eae1a1c"
+EXPECTED_BYTES = 3455034
 
 
 def _render_example() -> str:

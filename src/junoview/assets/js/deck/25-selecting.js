@@ -399,8 +399,13 @@
        names the PART it recolours: "Colour" next to "Fill" left people
        guessing which one was the outline (2026-08-19, user: "'colour' vs
        'fill colour' is confusing — is that border?") */
-    show('#fmt-txcol-btn',kind!=='image');
-    show('#fmt-txquick',kind!=='image');
+    /* T234: not a flip book either. Nothing renders a.color for one
+       -- applyCommon writes opacity and rotation and stops -- so the
+       door was a control that did nothing at all (2026-09-04, user:
+       "why do flip books even have a colour? What does that do?"). */
+    var hasInk=(kind!=='image'&&kind!=='flip');
+    show('#fmt-txcol-btn',hasInk);
+    show('#fmt-txquick',hasInk);
     if(typeof quickSwatchSync==='function') quickSwatchSync();
     var tcb=$('#fmt-txcol-btn');
     /* innerHTML, not textContent: this button is RENAMED for whatever is

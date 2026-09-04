@@ -57,6 +57,67 @@
      because a mode whose shortcuts are invisible has no shortcuts. */
   var SEQ_FX=[['none','None','N'],['appear','Appear','A'],
     ['fade','Fade','F'],['rise','Float up','U'],['zoom','Grow','G']];
+  /* ---- T234: A FLIP BOOK'S PAGES ARE ANIMATION ------------------------
+     Every figure after the first has always eaten a click -- extraStops
+     counts them, flipPlan sequences them, and the Animations pane lists
+     them under the book. What was missing was any sign of it on the
+     Animation tab, and any way for a page to ARRIVE rather than simply
+     replace the one before (2026-09-04, user: "how do the animations
+     work with the flip books. Can there be a make each flip an
+     animation that appears in animations when selected"). The stored
+     value is a.fanim and the renderer turns it into one CSS keyframe on
+     the frame that changed, so it plays in the show and in an exported
+     page alike. The words are SEQ_FX's, minus Appear -- for a page turn
+     "appear" and "none" are the same thing. */
+  var FLIP_FX=[['','None'],['fade','Fade'],['rise','Float up'],
+    ['zoom','Grow']];
+  function flipFxWord(v){
+    var out='';
+    FLIP_FX.forEach(function(p){if(p[0]===v) out=p[1];});
+    return out;
+  }
+  function flipFxItem(){
+    var s=pres.slides[cur],out=null;
+    selIdxs().forEach(function(i){
+      var x=(s&&s.annots||[])[i];
+      if(!out&&x&&x.k==='flip') out=x;});
+    return out;
+  }
+  function flipFxId(v){return '#anim-flip-'+(v||'none');}
+  function flipFxBoot(){
+    FLIP_FX.forEach(function(pr){
+      var b=$(flipFxId(pr[0]));
+      if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        var a=flipFxItem(); if(!a) return;
+        if(pr[0]) a.fanim=pr[0]; else delete a.fanim;
+        markDirty();renderSlide();
+        if(typeof animRibbonSync==='function') animRibbonSync();
+        if(typeof animPaneSync==='function') animPaneSync();
+      });
+    });
+  }
+  function flipFxSync(){
+    var run=$('#anim-flip-run'),say=$('#anim-flip-say');
+    var a=flipFxItem();
+    if(run) run.hidden=!a;
+    if(say) say.hidden=!a;
+    if(!a) return;
+    var now=a.fanim||'';
+    FLIP_FX.forEach(function(pr){
+      var b=$(flipFxId(pr[0]));
+      if(b) b.setAttribute('aria-pressed',(now===pr[0]).toString());
+    });
+    if(say){
+      var n=flipFrames(a).length,clicks=Math.max(0,n-1);
+      say.innerHTML='<span>In the show</span><span><b></b></span>';
+      say.querySelector('b').textContent=n
+        ?(n+' figure'+(n===1?'':'s')+' \u00b7 '+clicks+' click'
+          +(clicks===1?'':'s'))
+        :'no figures yet';
+    }
+  }
   var seqType='fade';
   function seqKeyDown(e){
     if(!seqArm) return;
@@ -690,7 +751,9 @@
                turned the list into a column of the same six words */
             chip.textContent=a.k==='flip'
               ?('figure '+(ti+2)+' of '+flipFrames(a).length
-                +(t?(' \u00b7 '+t):''))
+                +(t?(' \u00b7 '+t):'')
+                +(a.fanim?(' \u00b7 '+flipFxWord(a.fanim).toLowerCase())
+                  :''))
               :('then '+t);
             chip.title=a.k==='flip'
               ?('A page of this flip book \u2014 move it in the book '
@@ -895,6 +958,8 @@
        item's effect and stand down when there is nothing selected */
     animRibbonSync=function(){
       timingSync();
+      flipFxSync();
+
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
       if(typeof galSync==='function'&&$('#anim-strip')) galSync();
