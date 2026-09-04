@@ -5448,3 +5448,32 @@ option. Then where has the ability to refresh all images gone?"
      `textAt(s,a)` -- the page the box is turned to. Highlighting a run
      on page two of a multi-page text box and picking a colour wrote
      page two's words over page ONE, silently, and autosave kept it.
+
+- [x] **T262 - The words and the icons say the same thing everywhere.**
+  A sweep of the audit's copy and icon findings plus one measured
+  layout fault. Small each; the point is that the UI stops
+  contradicting itself.
+  - **The filters said one thing and showed another.** The buttons read
+    On / Fold / Off; every tooltip, the help page and the tour said
+    "Visible -> Collapsed -> Hidden". Standardised on the words the
+    buttons actually show. Display strings only -- the stored values
+    stay `visible`/`collapsed`/`hidden`, because saved layouts read them.
+  - **Auto-hide wore the pin icon** on the present bar, while its three
+    siblings use `autohide` -- and the comment beside the rail pair says
+    outright "Neither is 'pin' -- nothing is being pinned". This page
+    also has a real pin on every card meaning something else entirely.
+  - **"GitHub" was a raw arrow glyph** in a row of `bic()` icons, two
+    lines below a comment saying the labels carry a `bic()` icon.
+  - **The Tree toolbar called a cell a "node"** in three tooltips, with
+    its own neighbour in the same group saying "cell".
+  - **Five reload buttons, four verbs.** The three full-screen scan
+    views said "Check again", "Check again", "Look again"; the picture
+    list said "Read again" for a job that is not a check at all, and now
+    says "Update this list".
+  - **Ctrl+F was real but advertised nowhere** -- no chip on the button,
+    no row in Help. Both now, with one handler still doing the work.
+  - **The rail's Auto-hide wrapped to two lines.** `#pr-auto` was pinned
+    to a 34px box -- right for an icon-only button, wrong for one
+    carrying a word, so it read "Auto-" / "hide" beside a Collapse
+    button three times its width. The footer stacks now. Driven at
+    1440x900: 34px and 2 lines before, 163px and one line each after.

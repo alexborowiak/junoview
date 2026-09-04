@@ -407,9 +407,15 @@ body.presrail-min .pr-btn .pr-ico{display:flex;align-items:center;
 body.presrail-min .pr-fico{display:none;}
 /* the two panel controls sit together as a pair at the foot of the rail:
    one collapses it, one makes it slide away by itself */
-.pr-foot{margin-top:auto;display:flex;gap:6px;align-items:stretch;}
-.pr-foot .pr-collapse{margin-top:0;flex:1;justify-content:center;}
-.pr-foot #pr-auto{flex:none;width:34px;justify-content:center;}
+/* T262: STACKED, not side by side. #pr-auto used to be pinned to a 34px
+   box -- fine when it was icon-only, but it carries the word "Auto-hide",
+   which then wrapped to "Auto-" / "hide" inside a box a third the width
+   of the Collapse button beside it. The rail is not wide enough for both
+   words on one line, and cropping a word is not an option here, so they
+   take a row each. */
+.pr-foot{margin-top:auto;display:flex;flex-direction:column;gap:6px;
+  align-items:stretch;}
+.pr-foot .pr-collapse{margin-top:0;justify-content:center;}
 #pr-auto .bic{width:14px;height:14px;}
 .pr-collapse{margin-top:auto;background:none;border:1px solid #ffffff1f;
   border-radius:7px;color:#69788a;font-size:13px;padding:5px 0;

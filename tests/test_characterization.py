@@ -1081,8 +1081,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # under HKEY, masters in histState, pvRender using paintSel/showFmt,
 # the ribbon gallery resolving its own bar, and colorSelection writing
 # through textPageSet.
-EXPECTED_MD5 = "c3a130fdd93d6c4af76d9aa3adc379e4"
-EXPECTED_BYTES = 3564147
+# 2026-09-04, T262: the filter tooltips, help and tour now say On/Fold/
+# Off like the buttons; Auto-hide wears the autohide icon; GitHub uses
+# bic('link'); the Tree tooltips say "cell"; Find advertises Ctrl+F; and
+# the rail footer stacks so "Auto-hide" stops wrapping.
+EXPECTED_MD5 = "21fef5b46bea2cb0da0385ad3edf2952"
+EXPECTED_BYTES = 3565308
 
 
 def _render_example() -> str:

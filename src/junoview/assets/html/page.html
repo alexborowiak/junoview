@@ -33,7 +33,7 @@
     <span class="abgrp" id="ab-filters"><span class="abgrp-row"><span class="fgrp" id="pt-grp">
       <button class="toggle tv" id="tv-plots"
         title="Plots / figures — the headline of each cell. Click to cycle:
- Visible -> Collapsed -> Hidden"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+ On -> Fold -> Off"><i data-ic="plots"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="pt-filter-btn" aria-label="Choose which plots"
         title="Choose which plots you see — matplotlib, plotly, bokeh,
  vega, folium, and titled or untitled — each with its own
@@ -41,13 +41,12 @@
     </span>
     <span class="fgrp" id="md-grp">
       <button class="toggle tv" id="tv-markdown"
-        title="Markdown / note cards. Click to cycle: Visible -> Collapsed
- -> Hidden"><i data-ic="markdown"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+        title="Markdown / note cards. Click to cycle: On -> Fold -> Off"><i data-ic="markdown"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
     </span>
     <span class="fgrp" id="ck-grp">
       <button class="toggle tv" id="tv-code"
         title="Code — the source in every cell (imports, prints, plotting, …).
- Click to cycle: Visible -> Collapsed -> Hidden"><i data-ic="code"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+ Click to cycle: On -> Fold -> Off"><i data-ic="code"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ck-filter-btn" aria-label="Choose which code cells"
         title="Choose which code cells you see — including the ones that
  produced nothing at all — each with its own On / Fold / Off"
@@ -58,7 +57,7 @@
         title="Printed output — the tables, values and text a cell prints.
  Everything a notebook produces is 'output'; plots are just the one kind
  pulled out into their own filter (on the left). Clicks cycle
- Show, Collapse, Hide &mdash; the label shows where you are"><i data-ic="output"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
+ On -> Fold -> Off &mdash; the label shows where you are"><i data-ic="output"></i><span class="tdot"></span><span class="btxt"></span><span class="tvstate"></span></button>
       <button class="toggle sub" id="ot-filter-btn" aria-label="Choose which output"
         title="Choose which printed output you see — print, dataset,
  result, error — each with its own On / Fold / Off"
@@ -98,10 +97,10 @@
     <span class="abgrp" id="ab-tree" hidden><span class="abgrp-row">
       <span class="fgrp" id="tree-fold-grp">
         <button class="toggle" id="tree-expand" type="button"
-          title="Expand every node — show each cell's content in the map"
+          title="Expand every cell — show its content in the map"
           ><i data-ic="expand"></i><span class="btxt">Expand all</span></button>
         <button class="toggle sub" id="tree-collapse" type="button"
-          title="Collapse every node back to its title"
+          title="Collapse every cell back to its title"
           ><i data-ic="collapse"></i><span class="btxt">Collapse all</span></button>
       </span>
       <span class="fgrp" id="tree-width-grp">
@@ -109,7 +108,7 @@
           title="Cell width — cycles Small / Medium / Large (drag a cell's
  corner to size just that one)"><i data-ic="width"></i><span class="btxt">Width: M</span></button>
         <button class="toggle sub" id="tree-unhide" type="button" hidden
-          title="Bring back the nodes you hid with their eye"
+          title="Bring back the cells you hid with their eye"
           ><i data-ic="eye"></i><span class="btxt">Unhide all</span></button>
       </span>
     </span><span class="abgrp-lab">Tree</span></span>
@@ -369,11 +368,15 @@
     <button class="toggle" id="pb-move" aria-label="Move these controls to the other edge"
       title="Move these controls to the other edge"
       ><i data-ic="dockright"></i></button>
-    <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself -->
+    <!-- "Auto-hide" names the behaviour; pressed = it is hiding itself.
+         The icon is `autohide`, like the other three Auto-hide controls
+         (the rail pair and the editor ribbon): nothing is being pinned,
+         and this page has a real pin on every card that means something
+         else entirely (T262). -->
     <button class="toggle" id="pb-auto" aria-pressed="true"
       title="Auto-hide: the bar slides away and comes back when you move
- to its edge. Switch it off to keep the bar in place."
-      ><i data-ic="pin"></i><span class="btxt">Auto-hide</span></button>
+ to its edge. Switch it off to keep the bar where it is."
+      ><i data-ic="autohide"></i><span class="btxt">Auto-hide</span></button>
     <button class="toggle pb-exit" id="pb-exit"
       title="Stop presenting and go back to the document (Esc). Nothing is
  closed or lost."><i data-ic="exit"></i>Exit presentation</button>

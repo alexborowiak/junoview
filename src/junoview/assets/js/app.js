@@ -2568,8 +2568,8 @@
       syncToggleBtn();measurePb();relayoutActiveTree();});
     APP.syncPbToggle=syncToggleBtn;
     /* ---- auto-hide is the DEFAULT while presenting (the slide is the
-       point, not the chrome); "Pin" keeps the bar in place, the way a
-       taskbar or a docked panel does ---- */
+       point, not the chrome); switching Auto-hide OFF keeps the bar
+       where it is, the way a taskbar or a docked panel does ---- */
     var AKEY='junoview:presentbar:pinned';
     var pbPinned=false;
     try{pbPinned=localStorage.getItem(AKEY)==='1';}catch(e){}
@@ -2929,6 +2929,11 @@
   }
   (function(){
     var b=$('#doc-find');
+    /* T262: the binding is real (the keydown listener at the foot of this
+       IIFE) but nothing advertised it -- no chip here, no row in Help. The
+       chip is set directly rather than through APP_KEYS so there stays
+       ONE handler for the behaviour and one line for the advertisement. */
+    if(b) b.dataset.kbd='Ctrl+F';
     if(b) b.addEventListener('click',function(){
       findOpen($('#docfind')&&$('#docfind').hidden);});
     var inp=$('#docfind-in');
@@ -3058,10 +3063,11 @@
      text:'Every notebook you open is a tab. Drop .ipynb files anywhere on '
        +'the window, or use + Open.'},
     {sel:'#tv-code',title:'Filter what you see',
-     text:'Plots, Markdown, Code and Output each cycle Visible → '
-       +'Collapsed → Hidden. Code folds the source in EVERY cell at once.'},
+     text:'Plots, Markdown, Code and Output each cycle On → Fold → '
+       +'Off — the words on the buttons. Code folds the source in '
+       +'EVERY cell at once.'},
     {sel:'#ot-filter-btn',title:'Fine-tune by type',
-     text:'The Code types and Output types menus hide specific kinds — '
+     text:'The Choose buttons under each filter pick specific kinds — '
        +'imports, plotting, print, dataset, error…'},
     {sel:'.rail .nav',title:'The sidebar',
      text:'A key at the top; collapse or hide a whole section (also from its '
@@ -4648,7 +4654,7 @@
           var v=$('.rf-v',pend);
           if(v) v.textContent=(e&&e.message)||'could not reach GitHub';
         });
-        acts.appendChild(act('↗ GitHub',
+        acts.appendChild(act(bic('link')+' GitHub',
           'Open this file on GitHub',function(){
             try{window.open('https://github.com/'+gh.owner+'/'+gh.repo
               +'/blob/'+gh.ref+'/'+gh.path,'_blank','noopener');}catch(e){}
@@ -4696,7 +4702,7 @@
           });
         }
         if(g.github){
-          acts.appendChild(act('↗ GitHub',
+          acts.appendChild(act(bic('link')+' GitHub',
             'Open this repository on GitHub',function(){
               try{window.open(g.github,'_blank','noopener');}catch(e){}
             }));
