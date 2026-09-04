@@ -152,6 +152,16 @@
      without asking again (the browser only re-asks for permission). */
   var TGKEY='semopts:'+SCOPE+':savetarget';
   var HKEY='deck:'+SCOPE;
+  /* T235: THE DEFAULT FOLDER. One directory handle, remembered like
+     the file handle beside it, from which Junoview mints its own file
+     the first time it needs one -- so "save on this computer" stops
+     being a dialog you have to answer and starts being the default.
+     Its NAME is kept in localStorage as well, because the menu has to
+     be able to say which folder before IndexedDB has answered. */
+  var DKEY='deckdir:'+SCOPE;
+  var DNKEY='semopts:'+SCOPE+':savedirname';
+  var canPickDir=!!window.showDirectoryPicker;
+  var deckDir=null,deckDirName=lsGet(DNKEY)||'';
   var canPickFile=!!window.showSaveFilePicker;
   var saveTarget=lsGet(TGKEY)
     ||(APP.mode==='app'?'project':'browser');
@@ -227,6 +237,37 @@
       return h.requestPermission({mode:'readwrite'})
         .then(function(s){return s==='granted';})
         .catch(function(){return false;});
+    });
+  }
+  /* a file name this deck can be found by, from the deck's own name */
+  function deckFileName(){
+    var n=String(pres.name||'presentation').trim()
+      .replace(/[\\/:*?"<>|]+/g,'-').replace(/\s+/g,' ').slice(0,60);
+    return (n||'presentation')+'.junoview.html';
+  }
+  function pickSaveFolder(){
+    if(!canPickDir) return Promise.resolve(null);
+    return window.showDirectoryPicker({mode:'readwrite',
+      id:'junoview-decks'}).then(function(d){
+      deckDir=d;deckDirName=d.name||'';
+      lsSet(DNKEY,deckDirName);
+      idbPut(DKEY,d).catch(function(){});
+      return d;
+    });
+  }
+  /* the file inside the default folder, made if it is not there yet.
+     `silent` is an autosave, which has no user gesture behind it and
+     so must never raise a permission prompt. */
+  function folderFile(silent){
+    if(!deckDir) return Promise.resolve(null);
+    return (silent?permOK(deckDir):permAsk(deckDir)).then(function(ok){
+      if(!ok) return null;
+      return deckDir.getFileHandle(deckFileName(),{create:true})
+        .then(function(h){
+          fileHandle=h;fileName=h.name||deckFileName();
+          idbPut(HKEY,h).catch(function(){});
+          return h;
+        }).catch(function(){return null;});
     });
   }
   function pickSaveFile(){
@@ -374,7 +415,10 @@
      permission prompt (there is no user gesture behind it) */
   function saveToFile(silent){
     flushTextEdits();
-    if(!fileHandle&&silent) return Promise.resolve(false);
+    /* T235: an autosave with no file can still make one, if there is a
+       default folder to make it in. Without one it stands down, as it
+       always has -- an autosave must never open a file dialog. */
+    if(!fileHandle&&!deckDir&&silent) return Promise.resolve(false);
     var savedHist=!silent?histCapture():null;
     var savedName=pres.name||'untitled',savedSig=deckSaveSig(pres);
     var fileText;
@@ -383,7 +427,9 @@
       if(!silent) toast('Save failed: '+((e&&e.message)||e));
       return Promise.resolve(false);
     }
-    var op=(fileHandle?Promise.resolve(fileHandle):pickSaveFile())
+    var op=(fileHandle?Promise.resolve(fileHandle)
+      :(deckDir?folderFile(silent)
+        :(silent?Promise.resolve(null):pickSaveFile())))
       .then(function(h){
         if(!h) return false;
         return (silent?permOK(h):permAsk(h)).then(function(ok){
@@ -426,7 +472,9 @@
      browser"). The filename is in the tooltip. */
   function targetLabel(){
     if(saveTarget==='project') return 'This project';
-    if(saveTarget==='file') return 'On this computer';
+    if(saveTarget==='file')
+      return deckDirName?('Your '+deckDirName+' folder')
+        :'On this computer';
     return 'In this browser';
   }
   function renderTargetBtn(){
@@ -444,6 +492,27 @@
     b.classList.toggle('tg-file',saveTarget==='file');
     var pj=$('#tg-project'); if(pj) pj.hidden=(APP.mode!=='app');
     var pk=$('#tg-pick'); if(pk) pk.hidden=(saveTarget!=='file');
+    /* T235: the folder row names the folder once there is one, and a
+       second row appears to undo it */
+    var fd=$('#tg-folder');
+    if(fd){
+      fd.hidden=!canPickDir;
+      fd.textContent=deckDirName
+        ?('Folder: '+deckDirName+' \u2014 change\u2026')
+        :'A folder on this computer\u2026';
+      fd.title=deckDirName
+        ?('Every presentation saves itself into '+deckDirName
+          +' as a .junoview.html file. Nothing to answer, and no '
+          +'browser storage to run out of.')
+        :'Pick one folder and Junoview keeps its own file in there '
+          +'from now on \u2014 for this presentation and every one '
+          +'after it. No dialog each time, and no browser storage to '
+          +'run out of.';
+      fd.setAttribute('aria-pressed',
+        (saveTarget==='file'&&!!deckDirName).toString());
+    }
+    var ff=$('#tg-folder-forget');
+    if(ff) ff.hidden=!deckDirName;
     var tf=$('#tg-file');
     if(tf) tf.textContent=canPickFile
       ?'A file on your computer…'
@@ -457,6 +526,7 @@
     b.setAttribute('data-tip',
       saveTarget==='file'
         ?'Saving writes '+(fileName||'a .junoview file')
+          +(deckDirName?(' in your '+deckDirName+' folder'):'')
           +' — Junoview remembers it between visits'
         :saveTarget==='project'
           ?'Saving writes junoview_project.json next to your notebooks'
@@ -697,9 +767,10 @@
          that threw on quota still rendered "saved to browser · 14:32"
          (2026-08-22). */
       status();
-      toast('NOT saved — this browser is full. Use File › Download a '
-        +'copy, or the \u25be beside Save to keep a file on your computer.',
-        9000);
+      toast('NOT saved \u2014 this browser is full. The \u25be beside '
+        +'Save \u203a "A folder on this computer" keeps every '
+        +'presentation as a file instead, with no limit; File \u203a '
+        +'Download a copy saves this one right now.',11000);
       return;
     }
     /* EVERY EXPLICIT SAVE is a point you might want back -- the
@@ -760,6 +831,57 @@
     });
     var pk=$('#tg-pick');
     if(pk) pk.addEventListener('click',chooseFile);
+    /* T235: pick the folder, and everything after it goes there */
+    var fd=$('#tg-folder');
+    if(fd) fd.addEventListener('click',function(){
+      close();
+      if(!canPickDir){
+        toast('This browser cannot pick a folder \u2014 use File \u203a '
+          +'Download a copy');
+        return;
+      }
+      if(!requireName()) return;
+      pickSaveFolder().then(function(d){
+        if(!d) return;
+        /* a new folder means a new file: forget the old handle, or
+           the next save would write the file you just moved away from */
+        fileHandle=null;fileName='';
+        idbDel(HKEY).catch(function(){});
+        setTarget('file');
+        return saveToFile(false).then(function(){
+          toast('Every presentation now saves itself into '
+            +deckDirName+' \u2014 this one is '+(fileName||'there')
+            +' already.',6000);
+        });
+      }).catch(function(e){
+        if(!e||e.name!=='AbortError')
+          toast('Could not use that folder: '+((e&&e.message)||e));
+      });
+    });
+    var ff=$('#tg-folder-forget');
+    if(ff) ff.addEventListener('click',function(){
+      close();
+      deckDir=null;deckDirName='';
+      lsDel(DNKEY);idbDel(DKEY).catch(function(){});
+      renderTargetBtn();renderSaveBtn();
+      toast('Junoview will ask which file from now on. The file it '
+        +'already made is still there.',6000);
+    });
+    /* the folder is remembered between visits, like the file */
+    idbGet(DKEY).then(function(d){
+      if(!d) return;
+      return permReadOK(d).then(function(ok){
+        if(!ok) return;
+        deckDir=d;deckDirName=d.name||deckDirName;
+        lsSet(DNKEY,deckDirName);
+        /* THE POINT OF IT: a remembered folder means local IS the
+           default, including for a presentation made after it was
+           chosen. Only 'browser' is overridden -- a project build
+           keeps writing junoview_project.json. */
+        if(saveTarget==='browser') setTarget('file');
+        renderTargetBtn();renderSaveBtn();
+      });
+    }).catch(function(){});
     /* a file chosen on an earlier visit is still remembered */
     idbGet(HKEY).then(function(h){
       if(!h) return;

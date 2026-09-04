@@ -169,9 +169,21 @@
         <button class="dc-mi" id="tg-browser">This browser</button>
         <button class="dc-mi" id="tg-file">A file on your
           computer&#8230;</button>
+        <!-- T235: A FOLDER, ONCE, FOR EVERYTHING AFTER (2026-09-04,
+             user: "the save to browser thing isn't working too great
+             ... I just got 'browser full' error. Is there a way to
+             make it so that the default is local, and you can set up
+             a default save to location that becomes the default for
+             all?"). Pick it once and Junoview makes its own file in
+             there and keeps saving to it, with no dialog and no
+             browser quota to run into. -->
+        <button class="dc-mi" id="tg-folder">A folder on this
+          computer&#8230;</button>
         <div class="dc-msep"></div>
           <button class="dc-mi" id="tg-pick" hidden>Choose a different
             file&#8230;</button>
+          <button class="dc-mi" id="tg-folder-forget" hidden>Stop using
+            that folder</button>
         </div>
       </span>
     </span>

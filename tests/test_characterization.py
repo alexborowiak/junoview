@@ -1015,8 +1015,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # colour door that rendered nothing for a flip book is gone, and a
 # page turn can be an animation -- chosen on the Animation tab, which
 # also says how many clicks the book is worth.
-EXPECTED_MD5 = "aa6c5fe886f9ad6587cd191e9eae1a1c"
-EXPECTED_BYTES = 3455034
+# 2026-09-04, T235: a default folder on this computer -- picked once,
+# it becomes the destination for every presentation, Junoview makes
+# its own .junoview.html in it, and a full browser names that as the
+# fix instead of only reporting the failure.
+EXPECTED_MD5 = "5513686bb21fe4478a25a61a3e7ca3dd"
+EXPECTED_BYTES = 3461074
 
 
 def _render_example() -> str:

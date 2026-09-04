@@ -1262,7 +1262,11 @@ def test_the_save_destination_says_where_not_which_file(out):
     going somewhere I will find it again?". The filename is in the
     tooltip. Measured: "This browser" / "A file on your computer...".
     """
-    assert "if(saveTarget==='file') return 'On this computer';" in out
+    # T235: with a default folder set it names the folder, which is the
+    # one thing about "where" that is worth the width
+    assert "    if(saveTarget==='file')" in out
+    assert "      return deckDirName?('Your '+deckDirName+' folder')" in out
+    assert "        :'On this computer';" in out
     assert "return 'In this browser';" in out
     assert "return fileName||'a file (not chosen yet)';" not in out
 
@@ -1532,7 +1536,11 @@ def test_a_failed_browser_save_is_not_reported_as_a_save(out):
     that store IS the presentation (2026-08-22)."""
     assert "function lsIsFull(){return lsFull;}" in out
     # the Save button must not stamp a save that did not happen
-    assert "toast('NOT saved — this browser is full." in out
+    # T235: and it names the fix rather than only the failure
+    assert ("      toast('NOT saved \\u2014 this browser is full. "
+            "The \\u25be beside '") in out
+    assert ("        +'Save \\u203a \"A folder on this computer\" "
+            "keeps every '") in out
     # ...and the readout outranks every other reading while it is true
     assert "el.textContent='NOT saved — browser full';" in out
     # an image is the thing that fills it, so cap what can arrive

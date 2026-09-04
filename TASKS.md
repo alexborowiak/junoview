@@ -4893,3 +4893,27 @@ option. Then where has the ability to refresh all images gone?"
   since-the-last-render test fired on the first pass and the second
   pass rebuilt the node without the class. The turn is a moment now,
   not a diff.
+
+- [x] **T235 - A default folder on this computer, so saving is local by
+  default.**
+  The user (2026-09-04): "the save to browser thing isn't working to
+  great I think. Like I just go 'browser full' error. Is there a way to
+  make it so that there is a way so the default is local, and you can
+  set-up a default save to location that becomes the defaults for all?"
+  *Done 2026-09-04.* Save ▾ has a new row: **A folder on this
+  computer…**. Pick it once and Junoview makes its own
+  `<name>.junoview.html` in there, saves to it, and keeps doing so --
+  for this presentation and every one after, on this visit and the
+  next. The directory handle is remembered in IndexedDB beside the file
+  handle, and restoring it flips the destination off "this browser", so
+  local really is the default rather than one more place you *can*
+  save. An autosave can now mint the file (it never could before, since
+  it must not open a dialog) but still never raises a permission
+  prompt: it queries, and stands down if the answer is no. Choosing a
+  new folder drops the old handle first, or the next save would write
+  the file you just moved away from. The row names the folder once
+  there is one, a second row undoes it, and the "browser is full"
+  message now names this as the fix instead of only reporting the
+  failure. Driven with a stubbed picker: the file was created and
+  written, the destination read "Your Talks folder", and the next
+  autosave said "autosaved to flipcheck.junoview.html".
