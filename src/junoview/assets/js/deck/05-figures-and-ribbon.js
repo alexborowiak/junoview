@@ -501,8 +501,14 @@
   }
   /* every property applyStyleTo would have written, still as written.
      Derived from ONE list shared with applyStyleTo rather than repeated,
-     or a ninth style property would silently stop being noticed. */
-  var STYLE_FIELDS=['size','b','i','font','color','align','lh','pspace'];
+     or a ninth style property would silently stop being noticed.
+     That one list is STYLE_FIELDS, declared in 15-annotations.js. This
+     file used to declare its OWN `var STYLE_FIELDS` here, with a
+     different set ('size' in, head/bg/bdc out) -- and since the parts
+     share one IIFE and 15 is concatenated after 05, 15's list simply
+     replaced it before anything could read either. Nothing here read
+     it, so the deleted copy changed no behaviour; what it did was tell
+     every reader of this file something untrue (T259). */
   function stdMatchesStyle(a,d){
     if(Math.max(stdSize(a),d.size)/Math.min(stdSize(a),d.size)
       >STD_SIZE_TOL) return false;

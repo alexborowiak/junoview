@@ -5346,3 +5346,36 @@ option. Then where has the ability to refresh all images gone?"
   inside escaped content and must keep appearing -- what must never
   happen is that it becomes a tag or an attribute. Checked both ways:
   it fails on the unescaped code and passes on the fix.
+
+- [x] **T259 - One IIFE, one name: Flip left/right comes back.**
+  Audit, 2026-09-04. `assets/js/deck/` is ONE IIFE, so every top-level
+  `function foo` and `var foo` in any part is the SAME binding -- a
+  second declaration does not shadow, it **replaces, for everybody**.
+  Two had collided.
+  **`flipSel`**: `35-arranging.js:219` declares
+  `function flipSel(axis)` (mirror the selection); `45-images.js:335`
+  declared `var flipSel=-1` (which annot the flip-book pane is
+  showing), and 45 is concatenated after 35. By the time any handler
+  could run, `flipSel` was the number `-1`, so "Flip left to right" and
+  "Flip top to bottom" in the Arrange menu called `(-1)('h')` and threw
+  `TypeError: flipSel is not a function` -- which aborted the menu
+  handler, so the menu closed and nothing happened, with no toast and
+  no reason. **Two shipped menu rows were permanently dead**, while
+  `tests/test_slide_editor.py` asserted `"function flipSel(axis){" in
+  out` and stayed green. Confirmed under a real engine first: `typeof`
+  went `function` -> `number` and the call threw. The pane's variable
+  is `flipPaneIdx` now; `flipSelIdx()` (a different, longer name) was
+  left alone.
+  **`STYLE_FIELDS`**: declared in `05-figures-and-ribbon.js` as
+  `['size','b','i',...]` and again in `15-annotations.js` as
+  `['b','i',...,'head','bg','bdc']`. Nothing in 05 read it, so nothing
+  misbehaved -- but the file told every reader something untrue, and
+  test_characterization's own note says the point was to have ONE list.
+  The dead copy is a comment now, saying where the list lives.
+  The fix that matters most is the **general guard**:
+  `tests/test_one_iife_one_name.py` walks the assembled deck IIFE (and
+  app.js) for top-level declarations and fails on any name declared
+  twice, or declared both ways. A substring test cannot see two
+  declarations disagreeing, which is the failure mode this codebase
+  actually has -- and the guard is itself tested against the exact
+  shape of the flipSel bug, so it cannot quietly stop working.

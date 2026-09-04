@@ -1069,8 +1069,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T245: Find records the two card flags it changes to make a
 # hit readable (is-hidden, expanded) and puts them back on close, so the
 # script carries findRestore and findGo's bookkeeping.
-EXPECTED_MD5 = "0fe4f0b76bb982c0993568ac2ac2cd19"
-EXPECTED_BYTES = 3559779
+# 2026-09-04, T259: the flip-book pane's index variable is renamed
+# flipPaneIdx (it was shadowing the flipSel VERB and killing two Arrange
+# menu rows), and 05-figures-and-ribbon.js's dead duplicate STYLE_FIELDS
+# declaration is replaced by a comment saying where the one list lives.
+EXPECTED_MD5 = "57b214f520e008a2592002be255829c1"
+EXPECTED_BYTES = 3560206
 
 
 def _render_example() -> str:

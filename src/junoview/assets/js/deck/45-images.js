@@ -332,7 +332,7 @@
      move/duplicate/remove minis, click to go to it. Anything else would
      have been a second
      idiom for the same job (2026-08-22). */
-  var flipSel=-1;         /* which annot index the pane is showing */
+  var flipPaneIdx=-1;         /* which annot index the pane is showing */
   /* the selected items as indexes, the same rule fmtApply follows: the
      whole multi-selection when there is one, else the primary. Tying six
      labels to one figure has to be one gesture, not six. */
@@ -343,7 +343,7 @@
   }
   function flipPaneItem(){
     var s=pres.slides[cur];
-    var a=s&&(s.annots||[])[flipSel];
+    var a=s&&(s.annots||[])[flipPaneIdx];
     return (a&&a.k==='flip')?a:null;
   }
   /* the name a frame goes by: yours, else the card's own title, else its
@@ -362,7 +362,7 @@
   function showFlipPane(on,idx){
     var p=$('#flippane'); if(!p) return;
     if(on){
-      if(typeof idx==='number') flipSel=idx;
+      if(typeof idx==='number') flipPaneIdx=idx;
       /* paneShow un-hides BEFORE renderFlipPane runs: it bails on a
          hidden pane (it is called from showFmt on every canvas click
          and must not rebuild a list nobody is looking at) */
@@ -586,7 +586,7 @@
     row('Pictures from this computer\u2026','image',
       'Add pictures as pages. You can pick several at once',
       function(){
-        flipSel=idx;
+        flipPaneIdx=idx;
         var fi=$('#fp-img-file');
         if(fi){fi.value='';fi.click();}
       });
@@ -622,7 +622,7 @@
     });
     var ac=$('#fp-add-cells');
     if(ac) ac.addEventListener('click',function(){
-      if(flipPaneItem()) startPick(flipSel,true);});
+      if(flipPaneItem()) startPick(flipPaneIdx,true);});
     var ai=$('#fp-add-img'),fi=$('#fp-img-file');
     if(ai&&fi) ai.addEventListener('click',function(){
       if(!flipPaneItem()) return;

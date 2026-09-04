@@ -600,7 +600,7 @@
       if(fpEl&&!fpEl.hidden){
         selIdxs().forEach(function(i){
           var xf=(s&&s.annots||[])[i];
-          if(xf&&xf.k==='flip') flipSel=i;});
+          if(xf&&xf.k==='flip') flipPaneIdx=i;});
         renderFlipPane();
       }
     }
