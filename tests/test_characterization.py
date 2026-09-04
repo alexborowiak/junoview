@@ -1056,8 +1056,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-04, T250: every colour scheme defines the same full product
 # token contract, including document paper/ink and semantic feedback;
 # dark, forest, colourful and contrast now theme content as well as chrome.
-EXPECTED_MD5 = "314d4cb6125146fcd478d0bee9f5f098"
-EXPECTED_BYTES = 3542325
+# 2026-09-04, T255: the full-screen figure viewer gained a zoom bar
+# (Smaller / Zoom N% / Bigger / Close), a .figmax-scale wrapper the zoom
+# is applied to, and the CSS for both -- so the page carries a little
+# more markup, script and stylesheet than before.
+EXPECTED_MD5 = "3d68494caa9e40ac59bf2c9319181b67"
+EXPECTED_BYTES = 3549600
 
 
 def _render_example() -> str:

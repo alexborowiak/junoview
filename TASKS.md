@@ -5217,3 +5217,28 @@ option. Then where has the ability to refresh all images gone?"
   editor), checking computed tokens/contrast and keeping reference
   screenshots for the places where partial theming is visible rather
   than structurally detectable.
+
+- [x] **T255 - Zoom in, inside a full-screen plot.**
+  The user (2026-09-04): "when viewing plots in full screen you can't
+  zoom in. that would be a really good feature to have".
+  *Done 2026-09-04.* The expand button already gave a figure the whole
+  window, but the window was all it gave: whatever size the plot
+  settled at was the only size it had, which is no use on exactly the
+  plot you open full screen -- a dense map, a small-multiples panel.
+  There is a **bar** now (Smaller / Zoom N% / Bigger / Close, words plus
+  icons like every other bar), the **wheel** zooms about the pointer, a
+  **drag** pans, **double-click** goes 100% <-> 200%, and **+ - 0** do
+  the same from the keyboard. It reads "Zoom 200%", never "Fit" -- that
+  word was tried on the feed's own zoom and rejected (2026-08-07).
+  Two things make it work and neither is optional. The scale is CSS
+  `zoom` rather than a transform, because zoom grows the LAYOUT box, so
+  the viewer overflows and gets real scrollbars for the drag to pan by;
+  a transform paints outside the box and scrolls nothing. And the
+  fitted size is **pinned in px at open**, because the figure carries
+  `max-width:100%` of a box that is itself shrink-to-fit -- left free,
+  every zoom step just re-clamped the image against a wider box. Driven
+  at 1440x900 before the pin: 195% gave a 1304px plot (not 1455px) and
+  `scrollWidth == clientWidth`, so there was nothing to pan at all.
+  After it: 746px fitted, 1455px at 195%, box scrolling 1510 > 1357, a
+  drag moving scrollLeft to 80, and each new figure opening at 100%
+  instead of inheriting the last one's zoom.

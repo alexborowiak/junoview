@@ -984,10 +984,24 @@ body:not(.light) .fz-btn:hover{color:#fff;border-color:var(--cyan);}
   border-radius:10px;padding:10px;}
 .figmax-box img,.figmax-box svg{max-width:100%;max-height:88vh;
   width:auto;height:auto;display:block;margin:0 auto;}
-.figmax-close{position:fixed;top:16px;right:18px;font-family:var(--mono);
-  font-size:12px;padding:7px 12px;border-radius:7px;cursor:pointer;
+/* T255: the zoomed subtree. CSS `zoom` (not a transform) because it
+   grows the LAYOUT box, so .figmax-box gets real scrollbars and a drag
+   can pan with scrollLeft/scrollTop — a transform would paint over the
+   edges and scroll nothing. */
+.figmax-scale{zoom:var(--fmz,1);}
+.figmax.zoomed .figmax-box{cursor:grab;}
+.figmax.zoomed .figmax-box.panning{cursor:grabbing;}
+/* T255: one bar, top right — the same boxed 12px mono control as every
+   other bar in the app, words plus icons */
+.figmax-bar{position:fixed;top:16px;right:18px;display:flex;gap:5px;
+  align-items:center;z-index:2;}
+.figmax-b{font-family:var(--mono);font-size:12px;line-height:1;
+  height:30px;padding:0 10px;border-radius:7px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
   border:1px solid #ffffff30;background:#0d1a24ee;color:#e7eff5;}
-.figmax-close:hover{border-color:var(--cyan);color:#fff;}
+.figmax-b:hover{border-color:var(--cyan);color:#fff;}
+.figmax-b .bic{width:14px;height:14px;flex:none;}
+.figmax-val{min-width:88px;justify-content:center;}
 .figframe{background:#fff;border:1px solid var(--paper-3);border-radius:8px;
   padding:8px;overflow:auto;text-align:center;}
 .figframe img{max-width:100%;height:auto;display:block;margin:0 auto;}

@@ -3609,10 +3609,69 @@
   }
   /* ---- ⤢ : one figure, full screen. The node is CLONED (ids stripped) so
      the live figure in the feed is never detached. ---- */
+  /* ---- T255: ZOOM INSIDE THE FULL-SCREEN FIGURE -----------------------
+     Full screen is where you go to look at a plot closely, and looking
+     closely was the one thing it could not do (2026-09-04, user). The
+     zoom is CSS `zoom` on an inner wrapper, so the box it sits in gets
+     real scrollbars and a drag can pan by moving scrollLeft/scrollTop.
+     The readout is "Zoom N%", never "Fit" -- that word was tried on the
+     feed's own zoom and rejected (2026-08-07, user: "the fit button is
+     confusing... I think you mean zoom"). 100% is the plot at the size
+     the viewer already fits to the screen. */
+  var FM_MIN=0.5,FM_MAX=8,fmZoom=1;
+  /* Pin the wrapper to the size the plot settles at when it is FITTED, in
+     px. Without this the figure keeps `max-width:100%` of a box that is
+     itself shrink-to-fit, so every zoom step just re-clamps it against a
+     wider box and the plot stops growing (and never overflows, so there
+     is nothing to pan). A fixed px box is scaled by `zoom` instead, which
+     overflows .figmax-box and gives it real scrollbars. */
+  function fmFit(){
+    var sc=$('#figmax-scale'); if(!sc) return;
+    sc.style.removeProperty('width');
+    sc.style.removeProperty('height');
+    var z=fmZoom; fmZoom=1;
+    sc.style.removeProperty('--fmz');
+    var r=sc.getBoundingClientRect();
+    if(r.width>1&&r.height>1){
+      sc.style.width=Math.ceil(r.width)+'px';
+      sc.style.height=Math.ceil(r.height)+'px';
+    }
+    fmZoom=z; fmApply();
+  }
+  function fmApply(){
+    var host=$('#figmax'),sc=$('#figmax-scale'),v=$('#figmax-zval');
+    if(!host||!sc) return;
+    if(fmZoom===1) sc.style.removeProperty('--fmz');
+    else sc.style.setProperty('--fmz',fmZoom);
+    host.classList.toggle('zoomed',fmZoom>1);
+    if(v) v.textContent='Zoom '+Math.round(fmZoom*100)+'%';
+    var zo=$('#figmax-zout'),zi=$('#figmax-zin');
+    if(zo) zo.disabled=fmZoom<=FM_MIN+0.001;
+    if(zi) zi.disabled=fmZoom>=FM_MAX-0.001;
+  }
+  /* Zoom about a point, so the pixel under the cursor stays under it.
+     Measured off the wrapper's PAINTED rect, before and after, rather
+     than from scrollLeft: until the plot is big enough to overflow it is
+     centred in the box, so a scroll-origin model is out by the centring
+     gap and the plot jumps sideways on the first step. */
+  function fmZoomTo(z,clientX,clientY){
+    var box=$('#figmax-box'),sc=$('#figmax-scale');
+    if(!box||!sc) return;
+    z=Math.max(FM_MIN,Math.min(FM_MAX,Math.round(z*100)/100));
+    if(z===fmZoom) return;
+    var br=box.getBoundingClientRect(),sr=sc.getBoundingClientRect();
+    var ax=(clientX==null?br.left+br.width/2:clientX);
+    var ay=(clientY==null?br.top+br.height/2:clientY);
+    var cx=(ax-sr.left)/fmZoom,cy=(ay-sr.top)/fmZoom;
+    fmZoom=z;fmApply();
+    var s2=sc.getBoundingClientRect();
+    box.scrollLeft+=(s2.left+cx*z)-ax;
+    box.scrollTop+=(s2.top+cy*z)-ay;
+  }
   function openFigMax(fig){
-    var host=$('#figmax'),box=$('#figmax-box');
-    if(!host||!box||!fig) return;
-    box.innerHTML='';
+    var host=$('#figmax'),box=$('#figmax-box'),sc=$('#figmax-scale');
+    if(!host||!box||!sc||!fig) return;
+    sc.innerHTML='';
     var src=fig.querySelector(
       '.figpage.current, .figframe, .figpager')||fig;
     var cl=src.cloneNode(true);
@@ -3620,27 +3679,82 @@
     if(cl.removeAttribute) cl.removeAttribute('id');
     $$('.figzoom',cl).forEach(function(n){
       if(n.parentNode) n.parentNode.removeChild(n);});
-    box.appendChild(cl);
+    sc.appendChild(cl);
+    /* every figure opens at 100% — a zoom carried over from the last one
+       is a plot that opens already scrolled off its own edge */
+    fmZoom=1;fmApply();
+    box.scrollLeft=0;box.scrollTop=0;
     /* a fullscreen document keeps its own top layer — the overlay must
        live inside it or it paints underneath */
     var fsc=document.fullscreenElement;
     (fsc||document.body).appendChild(host);
     host.hidden=false;
+    /* an image only has a size once it has decoded, and a live embed only
+       after it has laid itself out, so the fit is measured again on both */
+    fmFit();
+    $$('img',sc).forEach(function(im){
+      if(!im.complete) im.addEventListener('load',fmFit,{once:true});});
+    setTimeout(fmFit,120);
     resizeEmbeds(box);
   }
   function closeFigMax(){
-    var host=$('#figmax'),box=$('#figmax-box');
+    var host=$('#figmax'),sc=$('#figmax-scale');
     if(!host) return;
     host.hidden=true;
-    if(box) box.innerHTML='';
+    if(sc){sc.innerHTML='';
+      sc.style.removeProperty('width');sc.style.removeProperty('height');}
+    fmZoom=1;fmApply();
     if(host.parentNode!==document.body) document.body.appendChild(host);
   }
   (function(){
     var host=$('#figmax'); if(!host) return;
+    var box=$('#figmax-box');
     host.addEventListener('click',function(e){
-      if(e.target===host||e.target.id==='figmax-close') closeFigMax();});
+      /* the backdrop closes; the bar and the plot itself do not */
+      if(e.target===host||(e.target.closest&&e.target.closest('#figmax-close')))
+        closeFigMax();});
+    var zi=$('#figmax-zin'),zo=$('#figmax-zout'),zv=$('#figmax-zval');
+    if(zi) zi.addEventListener('click',function(){fmZoomTo(fmZoom*1.25);});
+    if(zo) zo.addEventListener('click',function(){fmZoomTo(fmZoom/1.25);});
+    if(zv) zv.addEventListener('click',function(){fmZoomTo(1);});
+    if(box){
+      box.addEventListener('wheel',function(e){
+        e.preventDefault();
+        fmZoomTo(fmZoom*(e.deltaY<0?1.15:1/1.15),e.clientX,e.clientY);
+      },{passive:false});
+      /* double-click is the quick "closer / back again" */
+      box.addEventListener('dblclick',function(e){
+        fmZoomTo(fmZoom>1?1:2,e.clientX,e.clientY);});
+      /* drag to pan, once there is somewhere to pan to */
+      box.addEventListener('mousedown',function(e){
+        if(e.button!==0||fmZoom<=1) return;
+        e.preventDefault();
+        var x0=e.clientX,y0=e.clientY,
+            sl=box.scrollLeft,st=box.scrollTop;
+        box.classList.add('panning');
+        function mv(ev){
+          box.scrollLeft=sl-(ev.clientX-x0);
+          box.scrollTop=st-(ev.clientY-y0);
+        }
+        function up(){
+          box.classList.remove('panning');
+          document.removeEventListener('mousemove',mv);
+          document.removeEventListener('mouseup',up);
+        }
+        document.addEventListener('mousemove',mv);
+        document.addEventListener('mouseup',up);
+      });
+    }
     document.addEventListener('keydown',function(e){
-      if(e.key==='Escape'&&!host.hidden){e.stopPropagation();closeFigMax();}
+      if(host.hidden) return;
+      if(e.key==='Escape'){e.stopPropagation();closeFigMax();return;}
+      if(e.ctrlKey||e.metaKey||e.altKey) return;
+      if(e.key==='+'||e.key==='='){e.preventDefault();e.stopPropagation();
+        fmZoomTo(fmZoom*1.25);}
+      else if(e.key==='-'||e.key==='_'){e.preventDefault();e.stopPropagation();
+        fmZoomTo(fmZoom/1.25);}
+      else if(e.key==='0'){e.preventDefault();e.stopPropagation();
+        fmZoomTo(1);}
     },true);
   })();
   /* ---- universal figure size for the whole feed (appbar +/-) ---- */

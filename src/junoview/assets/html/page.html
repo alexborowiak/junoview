@@ -633,10 +633,28 @@
   </div>
 </div>
 <div class="drophint" id="drophint" hidden>Drop .ipynb files to open</div>
+<!-- T255: full screen is where you go to LOOK at a plot, and looking
+     closely was the one thing it could not do (2026-09-04, user: "when
+     viewing plots in full screen you can't zoom in"). The bar is words
+     plus icons like every other bar; the wheel and a drag do the same
+     job without it. -->
 <div class="figmax" id="figmax" hidden>
-  <button class="figmax-close" id="figmax-close"
-    title="Close (Esc)"><i data-ic="exit"></i> Close</button>
-  <div class="figmax-box" id="figmax-box"></div>
+  <div class="figmax-bar" id="figmax-bar">
+    <button class="figmax-b" id="figmax-zout" type="button"
+      title="Zoom out (- or the wheel)" aria-label="Zoom out"
+      ><i data-ic="minus"></i> Smaller</button>
+    <button class="figmax-b figmax-val" id="figmax-zval" type="button"
+      title="Zoom level — click to go back to 100% (0)"
+      >Zoom 100%</button>
+    <button class="figmax-b" id="figmax-zin" type="button"
+      title="Zoom in (+ or the wheel)" aria-label="Zoom in"
+      ><i data-ic="plus"></i> Bigger</button>
+    <button class="figmax-b figmax-close" id="figmax-close" type="button"
+      title="Close (Esc)"><i data-ic="exit"></i> Close</button>
+  </div>
+  <div class="figmax-box" id="figmax-box">
+    <div class="figmax-scale" id="figmax-scale"></div>
+  </div>
 </div>
 <!-- T244: the find bar. Floated over the document rather than in the
      header, because it belongs to what you are reading and the header
