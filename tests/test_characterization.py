@@ -1053,8 +1053,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # that marks every match, opens whatever the filters had folded around
 # the current one, and puts it all back on close; and the variables
 # filter marks the part of each name that matched.
-EXPECTED_MD5 = "0f16a32ff6228a15f19f0e3c3e29e1d3"
-EXPECTED_BYTES = 3539256
+# 2026-09-04, T250: every colour scheme defines the same full product
+# token contract, including document paper/ink and semantic feedback;
+# dark, forest, colourful and contrast now theme content as well as chrome.
+EXPECTED_MD5 = "314d4cb6125146fcd478d0bee9f5f098"
+EXPECTED_BYTES = 3542325
 
 
 def _render_example() -> str:

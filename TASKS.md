@@ -5149,7 +5149,7 @@ option. Then where has the ability to refresh all images gone?"
   nothing. Give the widget real persisted pin/mark behaviour, or make
   the shared renderer able to omit app-only card chrome.
 
-- [ ] **T250 - A colour theme covers the whole product, not only the
+- [x] **T250 - A colour theme covers the whole product, not only the
   chrome.**
   The user (2026-09-04): "review the different colour themes, I feel
   like they don't work properly (don't apply to everything), and could
@@ -5164,6 +5164,14 @@ option. Then where has the ability to refresh all images gone?"
   Variables pane, tree, trace, presentation rail and deck editor. Deck
   and exported-slide colours remain document data; surrounding editor
   and reader surfaces follow the app theme.
+  *Done 2026-09-04.* The seven existing schemes now each define the
+  same complete 31-token contract: document paper and ink, every chrome
+  tier and its ink, controls, accent, overlay, focus, selection and
+  semantic feedback. Dark, both forests, Colourful and High contrast
+  now carry their palette through the document background and cards as
+  well as the rail/editor. Authored deck pages, figures and the fixed
+  code-kind colours stay data. A set-equality test makes an incomplete
+  scheme fail by naming the tokens it omitted.
 
 - [ ] **T251 - Theme tokens replace the light/dark patchwork.**
   Review, 2026-09-04. `body.light` changes the chrome surfaces but does

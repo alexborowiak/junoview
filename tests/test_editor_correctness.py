@@ -1095,8 +1095,10 @@ def test_high_contrast_re_inks_the_surfaces(out):
     what anyone turning on high contrast is asking for (2026-08-20, user:
     "some of the themes are not right").
     """
-    assert "body.th-contrast{--accent:#6fe3ff;" in out
-    assert "--chrome:#000000;--chrome-0:#000000;" in out
+    contrast = out.split("body.th-contrast{")[1].split("}", 1)[0]
+    assert "--accent:#6fe3ff;" in contrast
+    assert "--chrome:#000000;--chrome-0:#000000;" in contrast
+    assert "--paper:#090b0d;--paper-2:#000000;" in contrast
     assert "body.th-contrast .rbn-tab{color:#c8dae6;}" in out
     # the colourful theme's hues used to be a hand-kept list of group
     # classes, so a group added without a line fell back to the default
@@ -1227,7 +1229,10 @@ def test_light_themes_re_ink_the_surfaces(out):
     carried an alpha byte it came out washed (2026-08-20, user: "some of
     the menu options in different themes also are too transparent").
     """
-    assert "body.light{--chrome:#eef2f6;--chrome-0:#f4f7fa;" in out
+    light = out.split("body.light{")[1].split("}", 1)[0]
+    assert "--chrome:#eef2f6;--chrome-0:#f4f7fa;" in light
+    assert "--chrome-ink:#243340;" in light
+    assert "--btn-bg:#ffffff;--btn-border:#b9c7d3;" in light
     assert "body.light.th-lforest{" in out
     # the two overrides that carried alpha
     assert "#fffffff5" not in out

@@ -2583,7 +2583,7 @@
   window.SemView={tree:toggleTree,present:enterDocPresent,
     exitPresent:exitDocPresent,buildTree:buildTree,kindFill:TREE_FILL};
 
-  /* ---- theme toggle (chrome only; the slide canvas stays dark) --- */
+  /* ---- theme tone (the authored slide canvas keeps its own colour) --- */
   function applyTheme(light){
     document.body.classList.toggle('light',light);
 
@@ -2594,9 +2594,10 @@
   try{themePref=localStorage.getItem('plotline-theme');}catch(e){}
 
 
-  /* ---- colour SCHEMES: a body class re-defining the chrome tokens.
-     Chrome only — content and exports keep their own colours, or a
-     swatch would lie about what it applies (2026-08-18). ---- */
+  /* ---- colour SCHEMES: a body class re-defining the complete product
+     token set. Reader content follows the app theme; authored figures,
+     deck pages and exports keep their own colours, so a swatch still
+     tells the truth about what it applies (T250, 2026-09-04). ---- */
   /* ONE list. Light and dark are themes, not a separate toggle — a
      theme is "how the whole chrome looks", and dark-vs-light is exactly
      that (2026-08-19, user). Each entry is [classes, name, preview]. */

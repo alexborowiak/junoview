@@ -21,22 +21,28 @@
      transparent background"). Every consumer that wants
      translucency mixes its own with color-mix; none of them wanted
      this. The opaque value is the one every fallback already used. */
-  --chrome:#11202c; --chrome-2:#162735; --chrome-line:#ffffff14;
-  --chrome-ink:#cdd9e3; --chrome-ink-2:#7e93a4;
-  /* ---- the CHROME theme tokens. --accent drives every interactive
-     accent in the app and editor chrome; --chrome-N are the dark
-     surfaces. A colour scheme is nothing but a re-definition of these
-     (2026-08-18, user: "can there be different colour schemes ... dark
-     colourful, high contrast, greens, greens with blue buttons").
-     Content is deliberately NOT themed: page backgrounds, item colours
-     and exports keep their own literals, or a swatch would lie about
-     the colour it applies. */
+  --chrome:#11202c;--chrome-0:#0b141d;--chrome-1:#0e1926;
+  --chrome-2:#162735;--chrome-3:#101c28;--chrome-4:#172838;
+  --chrome-line:#ffffff14;
+  --chrome-ink:#cdd9e3;--chrome-ink-2:#7e93a4;
+  --chrome-ink-3:#607789;
+  /* ---- the PRODUCT theme tokens. --paper-N / --ink-N draw the
+     document and welcome surface; --chrome-N / --chrome-ink-N draw the
+     app, editor, menus and panes; the remaining semantic colours cover
+     interaction and feedback. A scheme redefines the complete set so a
+     new component follows it without needing `body.light .thing` glue.
+     Author-selected deck/figure colours and the fixed code-kind palette
+     remain document data, not app chrome. */
   --accent:#39a9c0; --accent-deep:#1f7e93; --accent-soft:#8fd8ea;
   /* the resting FACE of every button. The first scheme pass only moved
      the accents, so buttons kept their hardcoded white-alpha faces and a
      theme looked like "just the central page" (2026-08-19, user). Now a
      scheme re-inks these and every button follows. */
   --btn-bg:#ffffff12; --btn-border:#ffffff40; --btn-ink:#d7e3ec;
+  --overlay:#07111bb8;--shadow:#00000080;
+  --focus:var(--accent-soft);--selection:#39a9c04d;
+  --danger:#ff796a;--warning:#e0a33a;--success:#46a892;
+  --on-accent:#ffffff;
   /* ---- the CODE-KIND palette: the single CSS source. The JS twin is
      TREE_FILL in app.js (exported as window.SemView.kindFill, which
      deck.js's NODE_FILL reads). One colour serves two kind names where
@@ -1212,29 +1218,61 @@ a:focus-visible,button:focus-visible,.toggle:focus-visible{
 
 
 /* ---- THEMES -------------------------------------------------------
-   One list: light and dark are themes like any other, not a separate
-   toggle (2026-08-19, user: "remove the dark/light button, and have
-   that as just a theme e.g. light, dark, dark forest, light forest, and
-   take them further"). A theme re-inks the accent, the surfaces AND the
-   button faces, so the whole chrome moves together — not just the page.
-   Content (page backgrounds, item colours, swatches, exports) is still
-   never themed. */
-body.th-forest{--chrome:#0e241c;
-  --accent:#41c493;--accent-deep:#1e8f66;
-  --accent-soft:#a9e9cf;
-  --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
-  --chrome-3:#0e241c;--chrome-4:#10281f;
-  --btn-bg:color-mix(in srgb,#41c493 10%,#ffffff06);
-  --btn-border:color-mix(in srgb,#41c493 42%,#ffffff22);
-  --btn-ink:#d7f2e6;}
-body.th-forestblue{--chrome:#0e241c;
-  --accent:#6b9bff;--accent-deep:#3d6fd9;
-  --accent-soft:#c3d6ff;
-  --chrome-0:#0a1712;--chrome-1:#0c211a;--chrome-2:#143028;
-  --chrome-3:#0e241c;--chrome-4:#10281f;
-  --btn-bg:color-mix(in srgb,#6b9bff 12%,#ffffff06);
-  --btn-border:color-mix(in srgb,#6b9bff 48%,#ffffff22);
-  --btn-ink:#dbe6ff;}
+   One complete token contract: a theme owns the reader, welcome page,
+   rail, overlays and editor chrome together. Deck and figure colours
+   are authored content and deliberately remain untouched. */
+body:not(.light){
+  --ink:#e7edf3;--ink-2:#c4d0da;--ink-3:#91a3b2;
+  --paper:#101c28;--paper-2:#0b141d;--paper-3:#1a2a38;
+  --line:#ffffff1f;
+  --chrome:#11202c;--chrome-0:#0b141d;--chrome-1:#0e1926;
+  --chrome-2:#162735;--chrome-3:#101c28;--chrome-4:#172838;
+  --chrome-line:#ffffff1f;--chrome-ink:#d7e3ec;
+  --chrome-ink-2:#91a4b4;--chrome-ink-3:#708697;
+  --accent:#39a9c0;--accent-deep:#1f7e93;--accent-soft:#8fd8ea;
+  --btn-bg:#ffffff12;--btn-border:#ffffff40;--btn-ink:#d7e3ec;
+  --overlay:#050b11cc;--shadow:#00000099;--focus:#8fd8ea;
+  --selection:#39a9c04d;--danger:#ff796a;--warning:#e0a33a;
+  --success:#58bca4;--on-accent:#ffffff;}
+body.light{
+  --ink:#16202b;--ink-2:#33414f;--ink-3:#69788a;
+  --paper:#fbfcfd;--paper-2:#eef2f6;--paper-3:#e2e8ee;
+  --line:#d8e0e8;
+  --chrome:#eef2f6;--chrome-0:#f4f7fa;--chrome-1:#eef2f6;
+  --chrome-2:#ffffff;--chrome-3:#f7f9fb;--chrome-4:#e8eef4;
+  --chrome-line:#0000001f;--chrome-ink:#243340;
+  --chrome-ink-2:#526474;--chrome-ink-3:#71808d;
+  --accent:#238aa0;--accent-deep:#17677a;--accent-soft:#46a9bd;
+  --btn-bg:#ffffff;--btn-border:#b9c7d3;--btn-ink:#263746;
+  --overlay:#1020308f;--shadow:#1a263440;--focus:#17677a;
+  --selection:#238aa03d;--danger:#b83b30;--warning:#98640e;
+  --success:#257a64;--on-accent:#ffffff;}
+body.th-forest{
+  --ink:#e2f0e9;--ink-2:#bed3c8;--ink-3:#8baa9a;
+  --paper:#10271f;--paper-2:#091711;--paper-3:#19352a;
+  --line:#5d8a7347;
+  --chrome:#0e241c;--chrome-0:#07120e;--chrome-1:#0b1d16;
+  --chrome-2:#143028;--chrome-3:#10271f;--chrome-4:#18372c;
+  --chrome-line:#8ac2a52e;--chrome-ink:#daf0e5;
+  --chrome-ink-2:#94b9a6;--chrome-ink-3:#719582;
+  --accent:#41c493;--accent-deep:#1e8f66;--accent-soft:#a9e9cf;
+  --btn-bg:#41c49314;--btn-border:#41c49370;--btn-ink:#d7f2e6;
+  --overlay:#04100acc;--shadow:#00000099;--focus:#a9e9cf;
+  --selection:#41c49345;--danger:#ff8478;--warning:#e8b35b;
+  --success:#68d2a8;--on-accent:#062219;}
+body.th-forestblue{
+  --ink:#e3eee9;--ink-2:#bfd2c9;--ink-3:#8da99b;
+  --paper:#10271f;--paper-2:#091711;--paper-3:#19352a;
+  --line:#5d8a7347;
+  --chrome:#0e241c;--chrome-0:#07120e;--chrome-1:#0b1d16;
+  --chrome-2:#143028;--chrome-3:#10271f;--chrome-4:#18372c;
+  --chrome-line:#8ac2a52e;--chrome-ink:#dcebe4;
+  --chrome-ink-2:#98b4a6;--chrome-ink-3:#759486;
+  --accent:#78a5ff;--accent-deep:#4f78df;--accent-soft:#c3d6ff;
+  --btn-bg:#6b9bff1f;--btn-border:#6b9bff7a;--btn-ink:#e2ebff;
+  --overlay:#04100acc;--shadow:#00000099;--focus:#c3d6ff;
+  --selection:#6b9bff4d;--danger:#ff8478;--warning:#e8b35b;
+  --success:#68d2a8;--on-accent:#07142d;}
 /* High contrast means the SURFACES go too, not just the accent: near
    black behind near white, with real edges. It used to re-ink only the
    accent and the buttons, so it was the ordinary dark theme with brighter
@@ -1250,18 +1288,45 @@ body.th-forestblue{--chrome:#0e241c;
    different themes also are too transparent").
    Setting the tokens fixes every menu at once, including the ones nobody
    has written yet. */
-body.light{--chrome:#eef2f6;--chrome-0:#f4f7fa;--chrome-1:#eef2f6;
-  --chrome-2:#ffffff;--chrome-3:#f7f9fb;--chrome-4:#e8eef4;
-  --chrome-line:#00000014;}
-body.light.th-lforest{--chrome:#eaf4ef;--chrome-0:#f2f9f5;
-  --chrome-1:#eaf4ef;--chrome-2:#ffffff;--chrome-3:#f5fbf8;
-  --chrome-4:#e0efe7;}
-body.th-contrast{--accent:#6fe3ff;--accent-deep:#2fb3d6;
-  --accent-soft:#c8f2ff;
+body.light.th-lforest{
+  --ink:#152a21;--ink-2:#334f42;--ink-3:#627d6f;
+  --paper:#f7fbf8;--paper-2:#e9f3ec;--paper-3:#dbeae0;
+  --line:#bfd6c7;
+  --chrome:#eaf4ef;--chrome-0:#f2f9f5;--chrome-1:#eaf4ef;
+  --chrome-2:#ffffff;--chrome-3:#f5fbf8;--chrome-4:#e0efe7;
+  --chrome-line:#245c3d29;--chrome-ink:#173b2b;
+  --chrome-ink-2:#4d715f;--chrome-ink-3:#698575;
+  --accent:#1e8f66;--accent-deep:#136647;--accent-soft:#5cc9a0;
+  --btn-bg:#ffffff;--btn-border:#a9cbb8;--btn-ink:#1e4734;
+  --overlay:#10281b8f;--shadow:#183d2b3d;--focus:#136647;
+  --selection:#1e8f6638;--danger:#b63e34;--warning:#8c620f;
+  --success:#1e7957;--on-accent:#ffffff;}
+body.th-colorful{
+  --ink:#eeeaf8;--ink-2:#d1c9e3;--ink-3:#a69bbd;
+  --paper:#181728;--paper-2:#0e0d19;--paper-3:#25223a;
+  --line:#bba8e633;
+  --chrome:#171426;--chrome-0:#0d0b16;--chrome-1:#141020;
+  --chrome-2:#211c33;--chrome-3:#191528;--chrome-4:#29213d;
+  --chrome-line:#cfbaff2e;--chrome-ink:#eee9fa;
+  --chrome-ink-2:#b1a5c9;--chrome-ink-3:#8f82aa;
+  --accent:#a586e8;--accent-deep:#7a52c0;--accent-soft:#dacbff;
+  --btn-bg:#a586e81f;--btn-border:#a586e875;--btn-ink:#f1ebff;
+  --overlay:#090711d6;--shadow:#000000a6;--focus:#dacbff;
+  --selection:#a586e84d;--danger:#ff789d;--warning:#f0b458;
+  --success:#63d5b8;--on-accent:#160c2b;}
+body.th-contrast{
+  --ink:#ffffff;--ink-2:#f0f4f7;--ink-3:#c8d3dc;
+  --paper:#090b0d;--paper-2:#000000;--paper-3:#151a1f;
+  --line:#ffffff8f;
   --chrome:#000000;--chrome-0:#000000;--chrome-1:#080a0c;
   --chrome-2:#101418;--chrome-3:#0a0d10;--chrome-4:#141a1f;
-  --chrome-line:#ffffff5c;
-  --btn-bg:#ffffff1f;--btn-border:#ffffffb0;--btn-ink:#ffffff;}
+  --chrome-line:#ffffff8f;--chrome-ink:#ffffff;
+  --chrome-ink-2:#d7e0e7;--chrome-ink-3:#bac8d2;
+  --accent:#6fe3ff;--accent-deep:#2fb3d6;--accent-soft:#c8f2ff;
+  --btn-bg:#ffffff1f;--btn-border:#ffffffb0;--btn-ink:#ffffff;
+  --overlay:#000000e6;--shadow:#000000;--focus:#ffffff;
+  --selection:#6fe3ff66;--danger:#ff9b91;--warning:#ffd06e;
+  --success:#85e8c9;--on-accent:#000000;}
 body.th-contrast .rbn-lab,body.th-contrast .abgrp-lab{color:#e6f2fa;}
 /* the bar, the tabs and the zoom cluster added on 2026-08-20 need the
    same treatment as the ribbon: real edges, near-white ink */
@@ -1323,11 +1388,6 @@ body.th-colorful .pr-btn,body.th-colorful .pr-item{
   border-color:color-mix(in srgb,var(--accent) 55%,#ffffff1a);
   background:color-mix(in srgb,var(--accent) 13%,#ffffff05);
   color:color-mix(in srgb,var(--accent) 55%,#f2f7fa);}
-/* LIGHT FOREST: the light theme with green ink and green-washed chrome */
-body.light.th-lforest{--accent:#1e8f66;--accent-deep:#136647;
-  --accent-soft:#5cc9a0;
-  --paper:#f7fbf8;--paper-2:#e9f3ec;--paper-3:#dbeae0;
-  --line:#c8dccf;}
 /* the theme picker's rows */
 .jv-scheme-menu{position:fixed;z-index:300;background:var(--chrome-2,#16273a);
   border:1px solid #ffffff26;border-radius:9px;padding:6px;
