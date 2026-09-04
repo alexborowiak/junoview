@@ -1089,8 +1089,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # cell, undo reaching a custom layout, the autosave menu's dead outside-
 # click closer, import counting only what it stored, and the file-open
 # fallback not claiming a save target the browser cannot write.
-EXPECTED_MD5 = "9a40b5c78ae33f107a2c999c748aa621"
-EXPECTED_BYTES = 3567604
+# 2026-09-04, T264: the front door is three cards (the example moved to
+# the links row), the making card spans the row, and "jump back in" is
+# two titled columns -- Presentations and Notebooks -- instead of three
+# blocks flowing through one two-column grid.
+EXPECTED_MD5 = "866117fcf8204f2f13269a04106976af"
+EXPECTED_BYTES = 3571661
 
 
 def _render_example() -> str:

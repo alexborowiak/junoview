@@ -25,17 +25,31 @@ def _web() -> str:
 
 
 def test_every_card_is_the_same_three_parts():
+    """T264 made it THREE cards, not four.
+
+    "Try the example notebook" moved to the links row -- it is a
+    first-visit door, not one of the things you come here to do
+    (2026-09-04, user: "the example notebook is in an odd spot, like put
+    that out of the way"). Its card also only ever existed in the web
+    build, so the app build was already showing three cards in a
+    two-column grid: one alone on a ragged second row, which is the very
+    thing T240 set out to stop. What this test is for -- every card the
+    same three parts -- is unchanged.
+    """
     web = _web()
     i = web.index('class="welcome-btns"')
-    j = web.index("</div>", web.index('id="welcome-demo"'))
+    j = web.index("</div>", web.index('id="welcome-url"'))
     block = web[i:j]
-    for cid in ("welcome-new", "welcome-open", "welcome-url",
-                "welcome-demo"):
+    for cid in ("welcome-new", "welcome-open", "welcome-url"):
         assert f'id="{cid}"' in block, cid
+    assert 'id="welcome-demo"' not in block, "the example is not a card"
     # one icon, one title and one hint on each
-    assert block.count('class="wc-t"') == 4, block.count('class="wc-t"')
-    assert block.count('class="wc-h') == 4, block.count('class="wc-h')
-    assert len(re.findall(r'class="bic', block)) == 4
+    assert block.count('class="wc-t"') == 3, block.count('class="wc-t"')
+    assert block.count('class="wc-h') == 3, block.count('class="wc-h')
+    assert len(re.findall(r'class="bic', block)) == 3
+    # ...and it is still reachable, one row down
+    assert 'id="welcome-demo"' in web
+    assert web.index('class="welcome-links"') < web.index('id="welcome-demo"')
 
 
 def test_it_is_a_grid_not_a_wrapping_row():

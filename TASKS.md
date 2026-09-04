@@ -5511,3 +5511,36 @@ option. Then where has the ability to refresh all images gone?"
     picker, and the only browsers that reach this path are the ones
     without one. Save and autosave then did nothing at all and said
     nothing. It keeps the deck as a draft and says so instead.
+
+- [x] **T264 - The front door stops mixing two different things.**
+  The user (2026-09-04): "the '+ new presentation' button has a lot of
+  unnecessary text with it that is really verbose and doesn't add
+  anything... Then the example notebook is in an odd spot, like put
+  that out of the way. Then why are the presentations and the notebooks
+  kind of mixed together, these are really different features. This
+  still looks really messy and hard to look at. Not a fan."
+  *Done 2026-09-04.* Three things, and the mixing one was **mechanical**
+  rather than a matter of taste. `.welcome-jump` was
+  `repeat(auto-fit,minmax(240px,1fr))` capped at 660px, which resolves
+  to exactly two columns -- three would need 772px. So the three blocks
+  flowed in source order **notebooks / notebooks / presentations**, and
+  presentations landed underneath "last time" with dead space beside
+  it, wearing the same 10px mono label as its neighbours. Each kind is
+  its own **titled column** now (Presentations · Notebooks), each hides
+  when empty so one kind still fills the width, and the stutter went
+  with it: the presentations block no longer repeats its column's name,
+  and "recent notebooks" under a Notebooks heading is just "recent".
+  **The example notebook** left the card grid for the links row, beside
+  the other two ways of being shown around. That also fixed something
+  nobody had noticed: its card was web-build only, so the **app build
+  was already showing three cards in a two-column grid** -- one alone
+  on a ragged second row, the very thing T240 set out to stop. Making a
+  presentation now **spans the row** and the two "open a notebook"
+  cards pair up beneath it, which is the same split the columns make.
+  **The verbose line**: "Start from a blank deck - no notebook needed"
+  said the label again in a second vocabulary (a new presentation IS a
+  blank deck) before reaching its one real fact. It is "No notebook
+  needed". Open's `title=` went too: every word of it was already on
+  the visible line below it.
+  Driven at 1440x950: one 700px card over two 344px cards on one row,
+  and two columns at x=375 and x=720.

@@ -86,7 +86,9 @@
     document.body.classList.toggle('welcoming',welcoming);
     var back=$('#welcome-back');
     if(back) back.hidden=!(welcoming&&APP.order.length);
-    var demo=$('#welcome-demo');
+    /* T264: the example is a link in the row below the cards now, and
+       its separator hides with it so the row does not keep a stray dot */
+    var demo=$('#welcome-demo-wrap');
     if(demo) demo.hidden=(APP.mode!=='web');
     renderRecent();
     renderWelcomePres();
@@ -6303,7 +6305,14 @@
     var w=$('#welcome-jump'); if(!w) return;
     var r=$('#welcome-recent'), pz=$('#welcome-pres');
     var ls=$('#welcome-last');
-    w.hidden=!((r&&!r.hidden)||(pz&&!pz.hidden)||(ls&&!ls.hidden));
+    var shown=function(el){return !!(el&&!el.hidden);};
+    /* T264: each KIND is a column that hides with everything in it, so a
+       notebook list with no presentations still fills the width instead
+       of sitting in one half of a two-column grid */
+    var pcol=$('#wj-pres'), ncol=$('#wj-nb');
+    if(pcol) pcol.hidden=!shown(pz);
+    if(ncol) ncol.hidden=!(shown(r)||shown(ls));
+    w.hidden=!(shown(r)||shown(pz)||shown(ls));
   }
   /* T241: the notebooks you had open last time, as a row you press.
      One button for the lot, because "where I was" is one thought;
@@ -6339,7 +6348,7 @@
     syncJump();
     if(!rec.length) return;
     var h=document.createElement('div');h.className='recent-h';
-    h.textContent='recent notebooks';host.appendChild(h);
+    h.textContent='recent';host.appendChild(h);
     rec.slice(0,6).forEach(function(p){
       var sp=splitPath(p);
       var b=document.createElement('button');b.className='recent-i';
@@ -6383,8 +6392,9 @@
     host.hidden=!list.length;
     syncJump();
     if(!list.length) return;
-    var h=document.createElement('div');h.className='recent-h';
-    h.textContent='presentations';host.appendChild(h);
+    /* T264: no sub-heading here — the column this sits in is titled
+       "Presentations", and saying it twice is what made the three
+       blocks read as three peers of the same kind */
     list.slice(0,6).forEach(function(p){
       var kind=p.view?'custom view':p.poster?'poster':'presentation';
       var b=document.createElement('button');b.className='recent-i';

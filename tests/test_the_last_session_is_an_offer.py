@@ -46,7 +46,10 @@ def test_the_offer_is_a_row_on_the_welcome_screen():
             "      +(last.length===1?'':'s')+' you had open';") in app
     # one button for the lot: "where I was" is one thought
     assert "      if(APP.openLastSession) APP.openLastSession();});" in app
-    # ...and the band it sits in knows about it
-    assert ("    w.hidden=!((r&&!r.hidden)||(pz&&!pz.hidden)"
-            "||(ls&&!ls.hidden));") in app
+    # ...and the band it sits in knows about it. T264 split that band
+    # into one column per KIND, so the offer's column has to know too:
+    # the wrapper still hides when all three blocks are empty, and the
+    # Notebooks column hides when the offer and Recent both are.
+    assert ("    w.hidden=!(shown(r)||shown(pz)||shown(ls));") in app
+    assert ("    if(ncol) ncol.hidden=!(shown(r)||shown(ls));") in app
     assert "    renderLastSession();\n  }\n  APP.refreshChrome=refreshChrome;" in app

@@ -440,37 +440,49 @@
            box with the same three parts: an icon, what it does, and
            one line saying what that means. The drop hint is on the
            card that means it and nowhere else. -->
+      <!-- T264: THREE cards, and the making one spans the row
+           (2026-09-04, user: "the '+ new presentation' button has a lot
+           of unnecessary text with it that is really verbose and doesn't
+           add anything ... the example notebook is in an odd spot, like
+           put that out of the way").
+           Making a presentation is its own thing; the two below it are
+           both "open a notebook", so they read as a pair. The example
+           moved to the links row: it is a first-visit door, not one of
+           the three things you come here to do. Its card also only ever
+           existed in the web build, which left the app build with three
+           cards in a two-column grid -- one alone on a ragged second
+           row, which is what T240 set out to stop. -->
       <div class="welcome-btns">
-        <button class="dbtn primary" id="welcome-new"><i data-ic="plus"></i>
+        <button class="dbtn primary wc-wide" id="welcome-new"
+          ><i data-ic="plus"></i>
           <span class="wc-t">New presentation</span>
-          <span class="wc-h">Start from a blank deck &mdash; no notebook
-            needed</span></button>
+          <span class="wc-h">No notebook needed</span></button>
         <!-- THE DROP HINT LIVES HERE, on the button that means the same
              thing. It used to be its own row of prose under the button
              row -- a whole band of the first screen restating what Open
              already offers (2026-08-29, T77). Class and id stay adjacent
-             and "Open local files" stays on one line: both are pinned. -->
+             and "Open local files" stays on one line: both are pinned.
+             T264 dropped this button's title=: every fact in it was on
+             the visible line below. -->
         <button class="dbtn ghost" id="welcome-open"
-          title="Open notebooks, Markdown, LaTeX or csv files from your
- computer &mdash; or just drop them anywhere in this window"
-          ><i data-ic="open"></i><span class="wc-t">Open local files&#8230;</span>
+          ><i data-ic="open"></i><span class="wc-t">Open local files</span>
           <span class="wc-h welcome-drop">&hellip; or drop <b>.ipynb</b>,
             <b>.md</b>, <b>.tex</b> or <b>.csv</b> anywhere in this
             window</span>
         </button>
         <button class="dbtn ghost" id="welcome-url"><i data-ic="link"></i>
-          <span class="wc-t">From GitHub / URL&#8230;</span>
-          <span class="wc-h">Paste a link to a notebook and read it
-            here</span></button>
-        <button class="dbtn ghost" id="welcome-demo" hidden
-          ><i data-ic="play"></i>
-          <span class="wc-t">Try the example notebook</span>
-          <span class="wc-h">A real analysis, already loaded, to look
-            around in</span></button>
+          <span class="wc-t">From GitHub / URL</span>
+          <span class="wc-h">Paste a link to a notebook</span></button>
       </div>
       <div class="welcome-links">
         <a href="#" id="welcome-tour">Take a tour</a>
         <span class="wl-sep">&middot;</span>
+        <!-- T264: the example lives here now, beside the other two ways
+             of being shown around, instead of as a fourth primary card.
+             Still web-build only -- app.js hides the separator with it. -->
+        <span id="welcome-demo-wrap" hidden><a href="#" id="welcome-demo"
+          >Try the example notebook</a>
+        <span class="wl-sep">&middot;</span></span>
         <a href="#" id="welcome-help">How to use</a>
         <span class="wl-sep">&middot;</span>
         <a href="{kofi}" target="_blank"
@@ -489,15 +501,32 @@
            collapses, and once it is away this screen was a dead end for
            anyone who wanted a deck rather than a notebook (2026-08-21,
            user: "you can't get to the presentations from here either"). -->
+      <!-- T264: TWO COLUMNS, TWO DIFFERENT THINGS (2026-09-04,
+           user: "why are the presentations and the notebooks kind of
+           mixed together, these are really different features").
+           They were three peers in one auto-fit grid: .welcome-jump was
+           repeat(auto-fit,minmax(240px,1fr)) capped at 660px, which
+           resolves to exactly two columns, so the three blocks flowed
+           notebooks / notebooks / presentations -- and presentations
+           landed under "last time" with dead space beside it, wearing
+           the same 10px mono label as its neighbours. Each kind is its
+           own titled column now, and each column hides when it is
+           empty so a single kind still fills the width. -->
       <div class="welcome-jump" id="welcome-jump" hidden>
-        <!-- T241: WHAT YOU HAD OPEN IS AN OFFER (2026-09-04, user:
-             "I do not like how it automatically opens what was last
-             open. That is too aggressive. Just have options to open
-             what was previously open"). The list is still kept; it
-             is just not acted on until you say so. -->
-        <div class="recent" id="welcome-last" hidden></div>
-        <div class="recent" id="welcome-recent" hidden></div>
-        <div class="wpres" id="welcome-pres" hidden></div>
+        <section class="wj-col" id="wj-pres" hidden>
+          <h2 class="wj-h"><i data-ic="present"></i> Presentations</h2>
+          <div class="wpres" id="welcome-pres" hidden></div>
+        </section>
+        <section class="wj-col" id="wj-nb" hidden>
+          <h2 class="wj-h"><i data-ic="nb"></i> Notebooks</h2>
+          <!-- T241: WHAT YOU HAD OPEN IS AN OFFER (2026-09-04, user:
+               "I do not like how it automatically opens what was last
+               open. That is too aggressive. Just have options to open
+               what was previously open"). The list is still kept; it
+               is just not acted on until you say so. -->
+          <div class="recent" id="welcome-last" hidden></div>
+          <div class="recent" id="welcome-recent" hidden></div>
+        </section>
       </div>
       <div class="welcome-scrollcue" aria-hidden="true">How it works
         &#8595;</div>
