@@ -1093,8 +1093,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # the links row), the making card spans the row, and "jump back in" is
 # two titled columns -- Presentations and Notebooks -- instead of three
 # blocks flowing through one two-column grid.
-EXPECTED_MD5 = "866117fcf8204f2f13269a04106976af"
-EXPECTED_BYTES = 3571661
+# 2026-09-04, T265: the Deck colours panel says how many boxes wear each
+# colour, its paragraph is one line that depends on whether anything
+# wears one, "Gap the arrange verbs use" is in plain words, and the six
+# dead --tk-<colour> custom properties are no longer written.
+EXPECTED_MD5 = "8feb258b38512eb3a13a056423b36fbf"
+EXPECTED_BYTES = 3575028
 
 
 def _render_example() -> str:

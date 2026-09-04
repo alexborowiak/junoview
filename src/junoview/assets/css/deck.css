@@ -277,6 +277,13 @@ body.light .tok-nm{color:var(--ink-2);}
 /* a deck colour reads as a chip you can point at, not a preset: the
    ring says "this one has a name" */
 .sw.sw-tok{box-shadow:0 0 0 1px #ffffff40 inset,0 0 0 2px #ffffff1a;}
+/* T265: what a deck colour is actually on, beside its name. Quiet, and
+   quieter still when the answer is "nothing" -- the row is an offer at
+   that point, not a fault. */
+.tok-use{flex:none;margin-left:auto;padding-right:8px;
+  font-family:var(--mono);font-size:10px;letter-spacing:.04em;
+  color:var(--chrome-ink-3,#8ea2b3);}
+.tok-use.tok-none{opacity:.55;font-style:italic;}
 .sw-tokrow{display:flex;flex-wrap:wrap;align-items:center;gap:3px;
   width:100%;padding-bottom:3px;margin-bottom:2px;
   border-bottom:1px solid #ffffff14;}

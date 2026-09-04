@@ -5544,3 +5544,36 @@ option. Then where has the ability to refresh all images gone?"
   the visible line below it.
   Driven at 1440x950: one 700px card over two 344px cards on one row,
   and two columns at x=375 and x=720.
+
+- [x] **T265 - Deck colours you can see the effect of.**
+  The user (2026-09-04): "this is for the 'deck colours'. I have never
+  once understood the actual purpose of this and there is a lot of
+  text, but none of it means anything to me, and changing these around
+  I can never figure it out."
+  *Done 2026-09-04.* The reason was **mechanical, not editorial**: on a
+  deck where nothing wears a token, changing one changes nothing on
+  screen -- and the panel gave no sign of that. No default carries a
+  reference, so a new deck's boxes all hold literal hex; you have to
+  find the "Deck" row inside a box's colour menu first, which the panel
+  named but could not do for you. So the answer was never another
+  paragraph.
+  Every row now says **what that colour is on** -- "2 boxes", "1 box",
+  or "not used yet" -- counted by deep-walking the deck rather than
+  checking a list of fields, because a token can sit in `color`, `bgc`,
+  `txcol`, `fillc`, `line`, `bgcol`, `bdc`, a slide's background or
+  border, a gradient stop or a style, and a field added later would
+  silently stop being counted. The 195-character note is **one line**,
+  and which line depends on what is there: with colours in use it says
+  what changing one does; with none in use it says that nothing wears
+  them yet and where to give a box one. T208's contract is untouched --
+  it asked that the **door's tooltip** say what a named colour is and
+  how to give a box one, and that tooltip is unchanged.
+  Two things fixed in passing. **"Gap the arrange verbs use"** was this
+  repo's own name for the align/distribute commands leaking into a
+  user-facing label; it is "Space between arranged boxes". And
+  `applyTokens` was setting **six `--tk-<colour>` custom properties on
+  every slide on every render that nothing reads** -- `grep "var(--tk-"`
+  finds only `--tk-rad`. The colours resolve in JS through `tokVal` at
+  its ~70 paint sites; the dead writes are gone.
+  Driven on a fixture deck with two boxes wearing Accent and one
+  wearing Warm: "Accent 2 boxes · Warm 1 box · Lift not used yet".

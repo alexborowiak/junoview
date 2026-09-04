@@ -2261,14 +2261,55 @@
     var c=tokens().c;
     return c[k]||TOKENS_DEFAULT.c[k]||'#39a9c0';
   }
-  /* the deck's tokens, written where CSS can see them. One place, so a
-     shape's corner and the page agree without any item storing one. */
+  /* the deck's corner radius, written where CSS can see it.
+     T265: this used to write --tk-accent … --tk-quiet as well. NOTHING
+     read them -- the colours are resolved in JS by tokVal at each of its
+     ~70 paint sites, and `grep "var(--tk-"` finds only --tk-rad. Six
+     custom properties set on every slide on every render, for nobody. */
   function applyTokens(slideEl){
     if(!slideEl) return;
     var t=tokens();
-    Object.keys(t.c).forEach(function(k){
-      slideEl.style.setProperty('--tk-'+k,t.c[k]);});
     slideEl.style.setProperty('--tk-rad',t.rad+'px');
+  }
+  /* ---- T265: WHO WEARS THIS COLOUR ------------------------------------
+     "I have never once understood the actual purpose of this ... changing
+     these around I can never figure it out" (2026-09-04, user). The
+     mechanical reason: on a deck where nothing wears a token, changing
+     one changes nothing on screen, and the panel gave no sign of that.
+     A count does what another paragraph could not.
+     Deep-walked rather than checked field by field, because a token can
+     sit in a.color, bgc, txcol, fillc, line, bgcol, bdc, a slide's bg or
+     border, a gradient stop or a style definition — and a field added
+     later would silently stop being counted. */
+  function tokUses(k){
+    var ref='@'+k,out={boxes:0,slides:0,other:0};
+    function hits(v,depth){
+      if(typeof v==='string') return v===ref;
+      if(!v||typeof v!=='object'||depth>6) return false;
+      if(Array.isArray(v)){
+        for(var i=0;i<v.length;i++) if(hits(v[i],depth+1)) return true;
+        return false;
+      }
+      for(var q in v) if(hits(v[q],depth+1)) return true;
+      return false;
+    }
+    (pres&&pres.slides||[]).forEach(function(sl){
+      (sl.annots||[]).forEach(function(a){if(hits(a,0)) out.boxes++;});
+      if(hits(sl.bg,0)||hits(sl.border,0)) out.slides++;
+    });
+    if(hits(pres&&pres.pageBg,0)) out.other++;
+    if(hits(pres&&pres.styles,0)) out.other++;
+    if(hits(pres&&pres.components,0)) out.other++;
+    if(hits(pres&&pres.masters,0)) out.other++;
+    return out;
+  }
+  /* "3 boxes", "2 boxes · 1 slide", or plainly nothing */
+  function tokUsesLabel(u){
+    var bits=[];
+    if(u.boxes) bits.push(u.boxes+' box'+(u.boxes===1?'':'es'));
+    if(u.slides) bits.push(u.slides+' slide'+(u.slides===1?'':'s'));
+    if(u.other) bits.push('the deck');
+    return bits.length?bits.join(' \u00b7 '):'not used yet';
   }
   /* changing a token is an ordinary edit: one markDirty, one undo step,
      and a refresh — which is the cascade, since nothing held a copy */
@@ -2328,14 +2369,21 @@
     var m=document.createElement('div');
     m.className='sh-menu canvas-menu tok-pop';m.id='tok-pop';
     menuHead(m,'deck colours');
+    var t=tokens();
+    /* T265: the note is ONE line now, and it only appears when it is the
+       thing you need. T208 asked for an explanation here ("What does
+       'colours and spacing' mean") and that ask stands -- but on a deck
+       where nothing wears a colour, the useful sentence is not how the
+       mechanism works, it is that nothing is wearing one yet. */
+    var anyUse=Object.keys(t.c).some(function(k){
+      var u=tokUses(k);return !!(u.boxes||u.slides||u.other);});
     var note=document.createElement('div');
     note.className='ff-none';
-    note.textContent='These six colours are shared by the whole deck. '
-      +'Any box can wear one: pick it from the Deck row at the top of '
-      +'the box\u2019s colour menu. Change a colour here and every box '
-      +'wearing it changes with it.';
+    note.textContent=anyUse
+      ?'Change one and every box wearing it changes with it.'
+      :'Nothing wears these yet \u2014 give a box one from the Deck row '
+        +'at the top of its colour menu, then change it here.';
     m.appendChild(note);
-    var t=tokens();
     Object.keys(t.c).forEach(function(k){
       var row=document.createElement('div');row.className='ff-row';
       var sw=document.createElement('span');
@@ -2344,6 +2392,13 @@
       var nm=document.createElement('span');
       nm.className='tok-nm';nm.textContent=TOKEN_LABELS[k]||k;
       row.appendChild(nm);
+      /* T265: what this colour is actually on. Without it the six rows
+         are six abstract names and changing one is an act of faith. */
+      var use=document.createElement('span');
+      var u=tokUses(k);
+      use.className='tok-use'+((u.boxes||u.slides||u.other)?'':' tok-none');
+      use.textContent=tokUsesLabel(u);
+      row.appendChild(use);
       var inp=document.createElement('input');
       inp.type='color';inp.className='ff-in';
       inp.value=/^#[0-9a-f]{6}$/i.test(t.c[k])?t.c[k]:'#39a9c0';
@@ -2373,7 +2428,11 @@
     menuHead(m,'spacing');
     var gr=document.createElement('div');gr.className='ff-row';
     var gl=document.createElement('span');
-    gl.className='tok-nm';gl.textContent='Gap the arrange verbs use';
+    /* T265: was "Gap the arrange verbs use". "Arrange verbs" is this
+       repo's own name for the align/distribute commands (see the
+       comments in 35-arranging.js) and means nothing to anyone reading
+       the panel. */
+    gl.className='tok-nm';gl.textContent='Space between arranged boxes';
     gr.appendChild(gl);
     var gi=document.createElement('input');
     gi.type='number';gi.min='0.5';gi.max='20';gi.step='0.5';

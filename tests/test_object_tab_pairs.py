@@ -106,4 +106,20 @@ def test_the_palette_door_says_what_a_named_colour_is():
     # on the overlay stack, so Escape and an outside click close it
     assert "overlayShow(anchor,m);" in js
     assert "if(open){overlayHide(open);return;}" in js
-    assert "These six colours are shared by the whole deck." in js
+    # T265 replaced the panel's 195-character paragraph with one line
+    # that depends on what is actually there, plus a per-colour count.
+    # T208's contract is on the DOOR's tooltip -- "its tooltip says what
+    # a named colour is and how to give a box one" -- and that is
+    # asserted above, unchanged. The panel's own note was never what
+    # T208 specified, and on a deck where nothing wears a colour the
+    # useful sentence is not how the mechanism works but that nothing
+    # is wearing one yet (2026-09-04, user: "I have never once
+    # understood the actual purpose of this and there is a lot of text,
+    # but none of it means anything to me").
+    assert "      ?'Change one and every box wearing it changes with it.'" in js
+    # the source carries the em dash as a \u escape, so match it literally
+    empty = ":'Nothing wears these yet " + chr(92) + "u2014 give a box one"
+    assert empty in js
+    # ...and each row says what that colour is on
+    assert "  function tokUses(k){" in js
+    assert "      use.textContent=tokUsesLabel(u);" in js
