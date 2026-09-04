@@ -114,11 +114,40 @@
     }
     else if(c==='none'){a.bg=0;}
     else{a.bg=1;a.bgc=c;}};}
+  /* ---- T232: EVERY COLOUR YOU PICK IS A COLOUR YOU USED -----------
+     One history, written by every path -- a preset swatch, a deck
+     colour, a recent chip, the custom picker -- because the row on
+     the ribbon reads it back (2026-09-04, user: "the quick colour
+     list should also be the last colours used"). A deck reference
+     (@accent) is stored as the reference, so a recent that IS the
+     deck's accent still follows the deck. */
+  function recentColors(){
+    try{
+      var a=JSON.parse(localStorage.getItem('plotline-colors')||'[]');
+      return Array.isArray(a)?a.filter(function(s){
+        return typeof s==='string'&&s&&s!=='none';}):[];
+    }catch(e){return [];}
+  }
+  function pushRecentColor(str){
+    if(typeof str!=='string'||!str||str==='none') return;
+    var arr=recentColors().filter(function(x){return x!==str;});
+    arr.unshift(str);
+    try{localStorage.setItem('plotline-colors',
+      JSON.stringify(arr.slice(0,12)));}catch(e){}
+    quickSwatchSync(true);
+  }
+  /* what a chip for a stored colour is called */
+  function colorLabel(str){
+    var k=tokRef(str);
+    return k?((TOKEN_LABELS[k]||k)+' \u2014 this deck\u2019s colour')
+      :String(str);
+  }
   function applyTextColor(c){
+    pushRecentColor(c);
     if(colorSelection(c)) return;
     fmtApply(textMut(c));
   }
-  function applyFillColor(c){fmtApply(fillMut(c));}
+  function applyFillColor(c){pushRecentColor(c);fmtApply(fillMut(c));}
   /* ---- live preview: hovering a swatch shows the colour ON the page,
      leaving puts it back (2026-08-19, user: colours should preview live).
      The selected item is snapshotted, mutated for the render only, and
@@ -161,17 +190,19 @@
   function renderSwRecents(menu){
     var box=menu.querySelector('.sw-recrow');
     if(!box) return;
-    var rec=cpRecent().slice(0,6);
+    var rec=recentColors().slice(0,7);
     box.innerHTML='';
     box.hidden=!rec.length;
     if(!rec.length) return;
     var lab=document.createElement('span');
-    lab.className='sw-reclab';lab.textContent='recent';
+    lab.className='fmt-lab';lab.textContent='Recently used';
+    lab.title='The colours you last used, anywhere in this deck \u2014 '
+      +'the same ones the row on the ribbon shows.';
     box.appendChild(lab);
     rec.forEach(function(str){
       var b=document.createElement('button');
-      b.type='button';b.className='sw-rc';b.title=str;
-      b.style.background=str;
+      b.type='button';b.className='sw-rc';b.title=colorLabel(str);
+      b.style.background=tokVal(str);
       b.dataset.c=str;
       box.appendChild(b);
     });
@@ -180,10 +211,16 @@
    ['#fmt-fillcol-btn','#fmt-fillcol-menu','fill']].forEach(function(pair){
     var btn=$(pair[0]),menu=$(pair[1]),target=pair[2];
     if(!btn||!menu) return;
+    /* T232: keep the caret. Opening the door used to blur the text
+       box, so the picker inside it could only ever colour the whole
+       box -- the preset swatches had solved this for themselves. */
+    btn.addEventListener('mousedown',function(e){
+      if(activeTextEditable()) e.preventDefault();});
     btn.addEventListener('click',function(e){
       e.stopPropagation();
       if(!menu.hidden){overlayHide(menu);pvEnd(false);return;}
       renderSwRecents(menu);
+      cpMountInline(menu,target);  /* the picker IS the menu (T232) */
       overlayShow(btn,menu);       /* on the stack (T213) */
       floatMenu(btn,menu);
     });
@@ -198,7 +235,9 @@
         else applyFillColor(rc.dataset.c);
       }
       var sw=e.target.closest&&e.target.closest('.sw');
-      if(rc||(sw&&!sw.classList.contains('sw-custom'))) overlayHide(menu);
+      /* T232: every chip in here is a colour now -- the rainbow "+"
+         that had to keep the menu open is gone */
+      if(rc||sw) overlayHide(menu);
     });
     menu.addEventListener('mouseover',function(e){
       var sw=e.target.closest&&e.target.closest('.sw,.sw-rc');
@@ -208,8 +247,10 @@
       pvShow(target==='text'?textMut(c):fillMut(c));
     });
     menu.addEventListener('mouseleave',function(){pvEnd(false);});
-    /* however the owner closes it, the hover preview is put back */
-    new MutationObserver(function(){if(menu.hidden) pvEnd(false);})
+    /* however the owner closes it, the hover preview is put back and
+       the picker goes home, so the other door can borrow it (T232) */
+    new MutationObserver(function(){
+      if(menu.hidden){pvEnd(false);cpUnmount();}})
       .observe(menu,{attributes:true,attributeFilter:['hidden']});
   });
   $$('#et-fmt .sw:not(.swbg):not(.sw-custom)').forEach(function(sw){
@@ -771,17 +812,32 @@
     }
     buildSpacingRows();
   }
-  /* ---- T220: THE DECK'S SIX COLOURS, ON THE ROW ------------------------
-     Two runs, one for the words and one for the box, each holding the
-     six colours the deck is actually built from. They store the
-     REFERENCE (@accent), like the token chips inside the picker, so a
-     deck that changes its colours changes these too; they preview on
-     hover through the same machinery the picker uses; and they leave
-     both doors in place for every other colour (2026-09-03, user: "I
-     would prefer if some of these were quick options that we can see").
-     Six is the count the 2026-08-05 review settled on -- fourteen
-     always-visible circles shouted louder than the page. */
+  /* ---- T220/T232: THE COLOURS YOU LAST USED, ON THE ROW ---------------
+     Two runs, one for the words and one for the box. T220 filled them
+     with the deck's six tokens, which made the row and the door look
+     like two rival answers to one question (2026-09-04, user: "the
+     colours is confusing how there is you can still click on the drop
+     down menu and then there is also the quick colour list... the
+     quick colour list should also be the last colours used"). Now it
+     is your history, which is the same list the door shows under
+     "Recently used" -- one palette, seen twice -- padded out with the
+     deck's own colours so a deck you just opened still leads with its
+     own six and the row is never empty. A deck reference is stored as
+     the reference, so one of these that IS the accent still follows
+     the deck. Six is the count the 2026-08-05 review settled on --
+     fourteen always-visible circles shouted louder than the page. */
   var quickSwatchSync=function(){};
+  function quickRow(){
+    var out=[],seen={};
+    recentColors().forEach(function(s){
+      if(out.length>=6||seen[s]) return;
+      seen[s]=1;out.push(s);});
+    Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
+      var ref='@'+k;
+      if(out.length>=6||seen[ref]) return;
+      seen[ref]=1;out.push(ref);});
+    return out;
+  }
   function quickSwatchBoot(){
     var hosts=[['#fmt-txquick','text'],['#fmt-bgquick','fill']]
       .map(function(p){return {el:$(p[0]),target:p[1]};})
@@ -793,17 +849,16 @@
       return (target==='text'?a.color:(a.fillc||a.bgc))||'';
     }
     function build(){
-      var t=tokens().c;
+      var row=quickRow();
       hosts.forEach(function(h){
         /* the caption stays; the swatches are rebuilt */
         $$('.qk-sw',h.el).forEach(function(o){o.remove();});
-        Object.keys(TOKENS_DEFAULT.c).forEach(function(k){
-          var ref='@'+k,val=t[k];
+        row.forEach(function(ref){
           var b=document.createElement('button');
           b.type='button';b.className='qk-sw';
           b.dataset.c=ref;
-          b.style.background=val;
-          b.title=(TOKEN_LABELS[k]||k)+' \u2014 '+val
+          b.style.background=tokVal(ref);
+          b.title=colorLabel(ref)
             +(h.target==='text'?', on the words':', behind them');
           b.setAttribute('aria-label',b.title);
           b.addEventListener('mousedown',function(e){
@@ -1224,6 +1279,8 @@
      recent-colours strip. Text swatches and the fill swatches each get a
      rainbow "＋" chip that opens it; any CSS colour string is accepted. ---- */
   var cpEl=$('#color-pop'), cpTarget='text', cpRGBA={r:57,g:169,b:192,a:1};
+  /* where it lives when it is nobody's section (T232) */
+  var cpHome=cpEl?cpEl.parentNode:null;
   /* a live text selection captured when the picker opens, so a custom colour
      can recolour just the highlighted run (focus moves to the popup on apply) */
   var cpSavedEl=null, cpSavedRange=null;
@@ -1290,23 +1347,14 @@
     pvEnd(true);
     pvShow((cpTarget==='text'?textMut:fillMut)(toStr(cpRGBA)));
   }
-  function cpRecent(){
-    try{return JSON.parse(localStorage.getItem('plotline-colors')||'[]');}
-    catch(e){return [];}
-  }
-  function cpPushRecent(str){
-    var arr=cpRecent().filter(function(x){return x!==str;});
-    arr.unshift(str);
-    try{localStorage.setItem('plotline-colors',
-      JSON.stringify(arr.slice(0,12)));}catch(e){}
-  }
   function cpRenderRecent(){
     var box=$('#cp-recent'); if(!box) return;
     box.innerHTML='';
-    cpRecent().forEach(function(str){
+    recentColors().forEach(function(str){
       var b=document.createElement('button');
-      b.className='cp-rsw cp-sw-chk';b.type='button';b.title=str;
-      b.style.setProperty('--cpc',str);
+      b.className='cp-rsw cp-sw-chk';b.type='button';
+      b.title=colorLabel(str);
+      b.style.setProperty('--cpc',tokVal(str));
       b.addEventListener('click',function(){
         var c=parseColor(str); if(c){cpRGBA=c;cpSync();}});
       box.appendChild(b);
@@ -1325,8 +1373,48 @@
     }
     return a.k==='cell'?(a.txcol||null):(a.color||null);
   }
+  /* ---- T232: THE PICKER IS A SECTION OF THE MENU -------------------
+     Mounted into whichever colour door is opening and taken back out
+     when it closes, so ONE element serves both doors and the line
+     panel's floating use -- and hex, rgb and the transparency slider
+     stop being a second click behind a chip. */
+  function cpMountInline(menu,target){
+    if(!cpEl||!menu) return;
+    cpTarget=target;
+    cpSavedEl=null;cpSavedRange=null;
+    if(target==='text'){
+      var te=activeTextEditable();
+      if(te&&selectionInside(te)) try{
+        cpSavedEl=te;
+        cpSavedRange=window.getSelection().getRangeAt(0).cloneRange();
+      }catch(e){cpSavedEl=null;cpSavedRange=null;}
+    }
+    var head=$('#cp-head');
+    if(head) head.textContent=target==='fill'?'Any other fill'
+      :'Any other colour';
+    /* the menu carries the recents across its top; a second copy in
+       here would be the same row twice */
+    var rc=$('#cp-recent'); if(rc) rc.hidden=true;
+    var c0=parseColor(tokVal(cpCurrentFor(target)))
+      ||{r:57,g:169,b:192,a:1};
+    cpRGBA={r:c0.r,g:c0.g,b:c0.b,a:c0.a};
+    cpEl.classList.add('cp-inline');
+    cpEl.style.left='';cpEl.style.top='';
+    menu.appendChild(cpEl);
+    cpEl.hidden=false;
+    cpSync();
+  }
+  function cpUnmount(){
+    if(!cpEl||!cpEl.classList.contains('cp-inline')) return;
+    cpEl.hidden=true;
+    cpEl.classList.remove('cp-inline');
+    if(cpHome) cpHome.appendChild(cpEl);
+  }
   function openColorPop(target,anchor){
     if(!cpEl) return;
+    /* never a section and a popup at once (T232) */
+    cpUnmount();
+    var rcf=$('#cp-recent'); if(rcf) rcf.hidden=false;
     cpTarget=target;
     cpSavedEl=null;cpSavedRange=null;
     if(target==='text'){
@@ -1372,8 +1460,12 @@
       else if(a.k==='rect'){a.fill=1;a.fillc=str;delete a.grad;}
       else {a.bg=1;a.bgc=str;}});
     cpSavedEl=null;cpSavedRange=null;
-    cpPushRecent(str);
-    if(cpEl) overlayHide(cpEl);
+    pushRecentColor(str);
+    /* mounted in a menu, Apply closes THE MENU -- hiding the section
+       inside an open menu would leave a door standing over a hole */
+    var host=(cpEl&&cpEl.classList.contains('cp-inline'))
+      ?cpEl.parentNode:null;
+    if(host) overlayHide(host); else if(cpEl) overlayHide(cpEl);
   }
   (function(){
     var nat=$('#cp-native'),hx=$('#cp-hex'),rg=$('#cp-rgb'),al=$('#cp-alpha');
@@ -1389,15 +1481,9 @@
     if(al) al.addEventListener('input',function(){
       cpRGBA.a=(+al.value)/100;cpSync('alpha');});
     var ap=$('#cp-apply'); if(ap) ap.addEventListener('click',cpApply);
-    var swc=$('#sw-custom');
-    if(swc){
-      swc.addEventListener('mousedown',function(e){
-        if(activeTextEditable()) e.preventDefault();});
-      swc.addEventListener('click',function(){openColorPop('text',swc);});
-    }
-    var swbgc=$('#swbg-custom');
-    if(swbgc) swbgc.addEventListener('click',function(){
-      openColorPop('fill',swbgc);});
+    /* T232: no rainbow "+" chips. The picker they opened is the
+       bottom of the menu they sat in, so the chips were a button
+       that opened the thing already on screen. */
     /* closed by the owner (outside click, Escape) or by its own buttons:
        either way the preview is put back */
     if(cpEl) new MutationObserver(function(){if(cpEl.hidden) pvEnd(false);})

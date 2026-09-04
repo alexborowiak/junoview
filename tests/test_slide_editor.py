@@ -131,11 +131,14 @@ def test_cell_colour_and_professional_colour_picker(out):
     # (shared with the recent chips and the hover preview)
     assert "if(a.k==='cell') a.txcol=c;" in out
     assert "if(a.k==='cell'){a.bgcol=c;}" in out
-    # professional colour picker: hex / rgb / rgba + alpha + custom swatches
-    assert 'id="color-pop"' in out and 'id="sw-custom"' in out
-    assert 'id="swbg-custom"' in out and 'id="cp-hex"' in out
+    # professional colour picker: hex / rgb / rgba + alpha. Since T232
+    # it is a SECTION of each colour menu rather than a popup behind a
+    # rainbow chip, so the two chips that opened it are gone.
+    assert 'id="color-pop"' in out and 'id="cp-hex"' in out
     assert 'id="cp-rgb"' in out and 'id="cp-alpha"' in out
+    assert 'id="sw-custom"' not in out and 'id="swbg-custom"' not in out
     assert "function parseColor" in out and "function openColorPop" in out
+    assert "function cpMountInline(menu,target){" in out
 
 
 def test_edit_frame_chrome_appears_only_when_selected(out):

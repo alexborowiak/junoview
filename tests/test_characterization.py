@@ -1002,8 +1002,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # 2026-09-03, T231: the slide column got Select all / Unselect all, and
 # the Apply button follows the selection (ticked rows, else picked
 # slides, else all) instead of carrying a scope selector of its own.
-EXPECTED_MD5 = "27d0d04323c896ddfd3ae3e62ae9aa27"
-EXPECTED_BYTES = 3437059
+# 2026-09-04, T232: the custom colour picker became a section of
+# each colour menu rather than a popup behind a rainbow chip in it,
+# so hex, rgb and the transparency slider are one click; the quick
+# swatch rows on the ribbon show the colours you last used, padded
+# out with the deck's own.
+EXPECTED_MD5 = "2388cc9fc4bad38f49de42a7dae3d23f"
+EXPECTED_BYTES = 3443317
 
 
 def _render_example() -> str:

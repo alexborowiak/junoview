@@ -2261,7 +2261,10 @@
       if(!row){
         row=document.createElement('span');
         row.className='sw-tokrow';
-        menu.insertBefore(row,menu.firstChild);
+        /* T232: under Recently used, over Standard. It used to go
+           first, which put the deck's colours above a row that is
+           now the answer most of the time. */
+        menu.insertBefore(row,menu.querySelector('.sw-stdlab'));
       }
       row.innerHTML='';
       var isFill=(sel==='#fmt-fillcol-menu');
@@ -2384,6 +2387,9 @@
       pres.tokens.c[key]=val;
     } else pres.tokens[kind]=val;
     markDirty();
+    /* the ribbon's quick row paints deck references live, so it has
+       to be repainted when one of them changes (T232) */
+    quickSwatchSync(true);
     refresh();
   }
   /* ---- STYLE SETS ------------------------------------------------------

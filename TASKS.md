@@ -4818,3 +4818,30 @@ option. Then where has the ability to refresh all images gone?"
 - **Live interactive embeds** — largely already true: Plotly figures stay
   interactive in rendered pages today.
 - **Text flowing between boxes / across slides** — descoped from T15.
+
+- [x] **T232 - One colour door, and a quick row that is your own
+  history.**
+  The user (2026-09-04): "The colours is confusing how there is you can
+  still click on the drop down menu and then there is also the quick
+  colour list. When clicking the dropdown menu there should be the
+  transparency adjustor there and all the custom colour stuff that
+  shouldn't be behind another menu. The quick colour list should also
+  be the last colours used. Both the background and the text should
+  have transparency options as well."
+  *Done 2026-09-04.* **The picker is the bottom of the menu.** It was a
+  popup opened by a rainbow "+" chip inside the menu -- a menu inside a
+  menu -- so hex, rgb and how see-through a thing is were two clicks in
+  and neither door had them. The one `#color-pop` is now mounted into
+  whichever colour door is opening and taken back out when it closes,
+  so both doors carry the transparency slider and the line panel's
+  floating use of the same element still works. The two "+" chips are
+  gone: they opened the thing already on the screen. **The quick row is
+  your history.** T220 filled it with the deck's six tokens, which made
+  the row and the door read as two rival answers to one question; it is
+  now the colours you last used -- the same list the menu shows under
+  "Recently used" -- padded out with the deck's own so a deck you have
+  just opened still leads with its six. Every path writes that history
+  now, not just the custom picker, and a deck colour is stored as the
+  reference so a recent that IS the accent still follows the deck.
+  Driven live: hex + alpha previewed on the page, Apply closed the
+  menu, and the colour appeared at the head of both rows.

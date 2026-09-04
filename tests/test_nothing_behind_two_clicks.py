@@ -72,9 +72,9 @@ def test_a_window_that_fills_on_open_is_not_empty(out):
 
 
 def test_the_deck_s_six_colours_are_on_the_row(out):
-    """Two runs, words and box, each holding the six colours the deck is
-    actually built from -- stored as references, so a deck that changes
-    its colours changes these too."""
+    """Two runs, words and box. T220 filled them with the deck's six
+    tokens; T232 fills them with the colours you last used, padded out
+    with those tokens so the row is never empty."""
     # (the colour doors and their swatches joined Font in T221 -- a
     # colour is how the letters look)
     row = _row(assets.deck_html(), "Font")
@@ -82,7 +82,7 @@ def test_the_deck_s_six_colours_are_on_the_row(out):
         assert f'class="rbn-cell rbn-seg qk-cell" id="{cid}"' in row, cid
     assert "function quickSwatchBoot(){" in out
     assert "  quickSwatchBoot();" in out
-    assert "b.dataset.c=ref;" in out and "var ref='@'+k,val=t[k];" in out
+    assert "b.dataset.c=ref;" in out and "      var row=quickRow();" in out
     assert "if(h.target==='text') applyTextColor(ref);" in out
     assert "      else applyFillColor(ref);" in out
     # they preview on hover through the same machinery the picker uses

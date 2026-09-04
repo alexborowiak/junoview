@@ -1502,10 +1502,24 @@
               <span class="sh-drop" id="fmt-txcolwrap">
                 <button class="dbtn etm" id="fmt-txcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
-                  title="Colour of the selected text / line / shape"><i data-ic="palette"></i>
+                  title="Every colour for the words: this deck’s
+ six, the standards, and any colour at all — hex, rgb, and how
+ see-through it is"><i data-ic="palette"></i>
                     Colour &#9662;</button>
+                <!-- T232: ONE DOOR, EVERYTHING BEHIND IT. The
+                     picker used to be a popup opened by a rainbow
+                     "+" chip inside this menu -- a menu inside a
+                     menu (2026-09-04, user: "when clicking the drop
+                     down menu there should be the transparency
+                     adjustor there and all the custom colour stuff
+                     that shouldn't be behind another menu"). The
+                     one #color-pop is mounted in here instead, so
+                     hex, rgb and transparency are part of the menu.
+                     Recently used leads, because that is what the
+                     row on the ribbon now shows. -->
                 <div class="sh-menu sw-menu" id="fmt-txcol-menu" hidden>
-                  <span class="fmt-lab" id="fmt-txlab" hidden
+                  <span class="sw-recrow" hidden></span>
+                  <span class="fmt-lab sw-stdlab" id="fmt-txlab" hidden
                     title="Colours every deck has">Standard colours</span>
                   <!-- a true red: Coral read as "close enough" until you
                        needed an actual warning red (2026-08-19, user:
@@ -1524,20 +1538,18 @@
                     style="background:#ffffff" title="White" aria-label="White"></button>
                   <button class="sw" data-c="#16202b"
                     style="background:#16202b" title="Ink" aria-label="Ink"></button>
-                  <button class="sw sw-custom" id="sw-custom"
-                    data-target="text"
-                    title="Custom colour — hex, rgb or rgba"
-                    aria-label="Custom colour"></button>
-                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <span class="sh-drop" id="fmt-fillcolwrap">
                 <button class="dbtn etm" id="fmt-fillcol-btn" hidden
                   aria-haspopup="true" aria-expanded="false"
-                  title="Fill / background colour of the selected box"><i data-ic="fill"></i>
+                  title="Every colour for the box behind them: this
+ deck’s six, the standards, transparent, and any colour at all —
+ hex, rgb, and how see-through it is"><i data-ic="fill"></i>
                     Fill &#9662;</button>
                 <div class="sh-menu sw-menu" id="fmt-fillcol-menu" hidden>
-                  <span class="fmt-lab" id="fmt-bglab" hidden
+                  <span class="sw-recrow" hidden></span>
+                  <span class="fmt-lab sw-stdlab" id="fmt-bglab" hidden
                     title="Colours every deck has">Standard colours</span>
                   <button class="sw swbg trans" data-c="none" hidden
                     title="Transparent box" aria-label="Transparent box"></button>
@@ -1553,11 +1565,6 @@
                     style="background:#f0a848" title="Amber box" aria-label="Amber box"></button>
                   <button class="sw swbg" data-c="#39a9c0" hidden
                     style="background:#39a9c0" title="Cyan box" aria-label="Cyan box"></button>
-                  <button class="sw swbg sw-custom" id="swbg-custom" hidden
-                    data-target="fill"
-                    title="Custom fill colour — hex, rgb or rgba"
-                    aria-label="Custom fill colour"></button>
-                  <span class="sw-recrow" hidden></span>
                 </div>
               </span>
               <!-- T220: THE DECK'S SIX COLOURS, ON THE ROW. Both doors
@@ -1566,14 +1573,21 @@
                    (2026-09-03, user: "I would prefer if some of these
                    were quick options that we can see. AGAIN, DON'T HAVE
                    EVERYTHING ALWAYS HIDDEN BEHIND SEVERAL CLICKS").
-                   Filled by quickSwatchBoot from the same tokens the
-                   picker offers, applied through the same setter. -->
+                   T232: and it is the colours you LAST USED, padded
+                   out with the deck’s own so it is never empty --
+                   the same list the door shows under "Recently
+                   used", so the row and the door are one thing seen
+                   twice rather than two rival palettes. -->
               <span class="rbn-cell rbn-seg qk-cell" id="fmt-txquick" hidden
-                role="group" aria-label="Text colour">
+                role="group" aria-label="Text colour"
+                title="The colours you used most recently, on the
+ words. Colour ▾ beside it holds every other colour">
                 <span class="cell-lab">Text</span>
               </span>
               <span class="rbn-cell rbn-seg qk-cell" id="fmt-bgquick" hidden
-                role="group" aria-label="Fill colour">
+                role="group" aria-label="Fill colour"
+                title="The colours you used most recently, behind
+ them. Fill ▾ beside it holds every other colour">
                 <span class="cell-lab">Fill</span>
               </span>
             </span>

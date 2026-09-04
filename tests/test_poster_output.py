@@ -143,10 +143,10 @@ def test_edit_mode_is_minimal_file_moves_out_colours_in_popups(out):
     # stays for text boxes and cell frames, which have a background
     # colour but no fill STYLE.
     assert "show('#fmt-fillcol-btn',showBg&&kind!=='rect');" in out
-    # picking a swatch closes its popup; the custom swatch keeps its panel
-    # (rc = a recent-colour chip, which also closes it — 2026-08-20)
-    # (through the overlay owner since T213)
-    assert "if(rc||(sw&&!sw.classList.contains('sw-custom'))) overlayHide(menu);" in out
+    # picking a swatch closes its popup (rc = a recent-colour chip,
+    # which also closes it — 2026-08-20; through the overlay owner
+    # since T213). Every chip in there is a colour since T232.
+    assert "      if(rc||sw) overlayHide(menu);" in out
 
 
 def test_freehand_drawing_is_a_first_class_stroke(out):
