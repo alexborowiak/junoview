@@ -1111,8 +1111,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # disagree, the ones that do NOT disagree sit under their own heading
 # below them, and a deck with no text boxes gets a sentence instead of
 # "one edit instead of 0".
-EXPECTED_MD5 = "f05c994db470acca9cca289728886ded"
-EXPECTED_BYTES = 3576727
+# 2026-09-04, T269: the history panel opens reading the newest version
+# against the one before it rather than against "now" (which IS the
+# newest version), and its empty answer names the two things compared.
+EXPECTED_MD5 = "fc693d5e7303ebc83dd6e4e82f391e02"
+EXPECTED_BYTES = 3578085
 
 
 def _render_example() -> str:

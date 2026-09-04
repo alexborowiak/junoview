@@ -370,7 +370,9 @@
         +(e.id===histHead
           ?'\nThis is where the deck you are editing came from':'');
       b.addEventListener('click',function(){
-        histSel=e.id;histRows(ov,ix);histCompare(ov,e);});
+        histSel=e.id;histRows(ov,ix);
+        histAgainst=histAutoAgainst(ix,e);
+        histCompare(ov,e);});
       row.appendChild(b);
       var ren=document.createElement('button');
       ren.className='dbtn dh-ren';
@@ -659,8 +661,17 @@
       var list2=document.createElement('div');
       list2.className='dh-chlist';
       if(!list.length&&histView!=='pic'){
-        list2.innerHTML='<div class="selpane-empty">Nothing is '
-          +'different between these two.</div>';
+        /* T269: an empty answer is still an answer, but it has to say
+           which two it compared -- "nothing is different between these
+           two" on a screen whose two ends you cannot see is what makes
+           the panel feel broken. */
+        list2.innerHTML='<div class="selpane-empty">'
+          +(histAgainst
+            ?'These two versions are the same.'
+            :'This version is the deck you are editing \u2014 nothing '
+             +'has changed since. Pick an older version on the left to '
+             +'see what you have done since then.')
+          +'</div>';
       } else if(histView==='slide') chBySlide(list2,list);
       else if(histView==='type') chByType(list2,list);
       else chSlideRows(list2,d,then,now);
@@ -669,6 +680,20 @@
   }
   /* which version the selected one is being read against ('' = the deck
      you are editing, which is what you want nine times in ten) */
+  /* T269: ...but NOT for the newest version, which is the one this
+     screen opens on. That one IS the deck you are editing, so reading it
+     against "now" is guaranteed to say "no difference" -- the history
+     opened on a dead end every single time (2026-09-04, user: "the
+     history tab looks mid"). For the newest version the useful question
+     is what it changed, so it is read against the one before it.
+     Only ever applied when nothing has been picked by hand: choosing a
+     comparison from the dropdown and then clicking about must keep it. */
+  function histAutoAgainst(ix,ent){
+    if(histAgainst) return histAgainst;
+    if(!ix||ix.length<2||!ent) return '';
+    if(ent.id!==ix[ix.length-1].id) return '';
+    return ix[ix.length-2].id;
+  }
   var histIxCache=[];
   function histAgainstEnt(){
     var hit=null;
@@ -807,6 +832,7 @@
       histRows(ov,ix);
       /* the most recent one is the one you meant */
       if(ix.length){histSel=ix[ix.length-1].id;histRows(ov,ix);
+        histAgainst=histAutoAgainst(ix,ix[ix.length-1]);
         histCompare(ov,ix[ix.length-1]);}
     });
   }

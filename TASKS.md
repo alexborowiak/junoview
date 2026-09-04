@@ -5655,3 +5655,32 @@ option. Then where has the ability to refresh all images gone?"
   body boxes at line spacing 1.25/1.25/1.6: two cards, "Most are 22 pt;
   1 is 23 pt" and "Most are 1.25; 1 is 1.6", and no card claiming
   anything matched.
+
+- [x] **T269 - The history opens on a difference, not on "no
+  difference".**
+  The user (2026-09-04), with a screenshot: "the history tab looks mid."
+  *Done 2026-09-04.* The screenshot says why, and it is not decoration.
+  The panel opens on the newest version -- "20:27 · you are here" --
+  and reads it against **"now (the deck you are editing)"**. Those are
+  the same thing. So the headline is "20:27 → now: no difference", the
+  three view tabs have nothing under them, and the whole right-hand
+  pane is empty. **Every time you open the history, that is what you
+  get first.**
+  `histAgainst` defaults to `''` with the comment "the deck you are
+  editing, which is what you want nine times in ten". That is true of
+  an OLD version -- "what have I done since then" is the usual question
+  -- and false of the newest one, which is the only version the panel
+  ever opens on. For that one the useful question is what it changed,
+  so it is now read against the version before it. Applied only when
+  nothing has been picked by hand: choosing a comparison from the
+  dropdown and then clicking around keeps it.
+  And when there genuinely is no difference, the line says **which two**
+  it compared -- "These two versions are the same", or, against the
+  deck you are editing, that this version IS that deck and an older one
+  is what you want. "Nothing is different between these two", on a
+  screen whose two ends you cannot see, is most of what made it feel
+  broken.
+  *Still open:* "mid" covers more than this, and the rest is a matter
+  of taste rather than a defect -- the empty right pane was a symptom
+  of the comparison, and should fill now. Worth another look with the
+  user on what else they want from it.
