@@ -520,13 +520,38 @@
     if(Math.abs((a.pspace||0)-(d.pspace||0))>0.02) return false;
     return true;
   }
+  /* T268: what the two values ARE. "2 of 7 differ" told you a count and
+     left you to go and look; the whole job of this card is to save you
+     that trip (2026-09-04, user: "the display for that is very confusing
+     and I have no idea how to use it"). */
+  function stdShow(pr,v){
+    if(pr.k==='size') return Math.round(parseFloat(v)*5.4)+' pt';
+    if(pr.k==='b') return +v?'bold':'not bold';
+    if(pr.k==='i') return +v?'italic':'not italic';
+    if(pr.k==='u') return +v?'underlined':'not underlined';
+    if(pr.k==='strike') return +v?'struck through':'not struck through';
+    return String(v||'').trim()||'unset';
+  }
+  /* the odd ones, as their values: "15 pt" or "15 pt and 16 pt" */
+  function stdOddShow(pr,odd){
+    var seen=[],out=[];
+    odd.forEach(function(p){
+      var v=stdShow(pr,pr.get(p.a));
+      if(seen.indexOf(v)<0){seen.push(v);out.push(v);}
+    });
+    if(out.length<=2) return out.join(' and ');
+    return out.slice(0,2).join(', ')+' and '+(out.length-2)+' more';
+  }
   function stdBandWhy(b,d,inner){
-    if(inner.length)
-      return inner.length===1
-        ?('Their '+inner[0].prop.label+' does not agree: '
-          +inner[0].odd.length+' of '+b.boxes.length+' differ.')
-        :('Their '+inner[0].prop.label+' and '+(inner.length-1)+' other '
-          +'thing'+(inner.length===2?'':'s')+' do not agree.');
+    if(inner.length){
+      var i0=inner[0];
+      var first='Most are '+stdShow(i0.prop,i0.mode)+'; '
+        +i0.odd.length+' '+(i0.odd.length===1?'is':'are')+' '
+        +stdOddShow(i0.prop,i0.odd)+'.';
+      return inner.length===1?first
+        :(first+' Their '+(inner.length-1)+' other '
+          +'difference'+(inner.length===2?'':'s')+' go too.');
+    }
     return 'They match each other now. Give them the '+d.label
       +' style and a later change to all of them is one edit, not '
       +b.boxes.length+'.';
@@ -565,8 +590,9 @@
       out.push({kind:'band',band:b,list:b.boxes,inner:inner,
         sev:inner.length?'warn':'info',
         head:b.boxes.length+' boxes at about '+Math.round(b.size*5.4)
-          +' pt'+(inner.length?(' — '+inner[0].odd.length
-            +' do not match'):', no named style yet'),
+          +' pt'+(inner.length?(' — '+inner[0].odd.length+' '
+            +(inner[0].odd.length===1?'has':'have')+' a different '
+            +inner[0].prop.label):', no named style yet'),
         why:stdBandWhy(b,d,inner)});
       ['x','w'].forEach(function(k){
         var g=stdGeom(b.boxes,k,k==='x'?STD_POS_TOL:STD_W_TOL);
@@ -724,7 +750,16 @@
          consistency check that shouts is one people stop opening. */
       var msg=document.createElement('div');
       msg.className='pf-ok';
-      msg.textContent=r.styled
+      /* T268: with no text boxes at all -- a deck you have just made --
+         the second branch used to read "Your text falls into 0 sizes;
+         naming them means changing every heading later is one edit
+         instead of 0", which is where a reader decides the screen is
+         broken. */
+      msg.textContent=!r.boxes
+        ?('No text boxes yet. This checks the words across your slides '
+          +'against each other, so it has nothing to say until there '
+          +'are some.')
+        :r.styled
         ?('Your type is consistent. Every heading, paragraph and caption '
           +'across these '+(pres.slides||[]).length+' slides matches the '
           +'style it wears.')
@@ -743,7 +778,20 @@
       appendFigLint(list);
       return;
     }
-    r.findings.forEach(function(f){list.appendChild(stdRow(f));});
+    /* T268: THE MISMATCHES FIRST, AND ON THEIR OWN. Every band with two
+       or more boxes got a card whether or not anything in it disagreed,
+       so a screen called "Fix mismatched text" opened on cards saying,
+       in words, that these boxes MATCH -- which on a hand-built deck is
+       most of them. The ones that disagree come first now; the ones that
+       merely have no name are an offer, under their own heading, where
+       they read as one. */
+    var bad=r.findings.filter(function(f){return f.sev==='warn';});
+    var ok=r.findings.filter(function(f){return f.sev!=='warn';});
+    bad.forEach(function(f){list.appendChild(stdRow(f));});
+    if(ok.length){
+      if(bad.length) menuHead(list,'these already match');
+      ok.forEach(function(f){list.appendChild(stdRow(f));});
+    }
     appendFigLint(list);
   }
   function renderStdOverview(){

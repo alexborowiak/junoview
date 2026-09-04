@@ -1107,8 +1107,12 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # something first -- Fix mismatched text, Style system and the .pptx
 # export lose their dots, and "New..." on the rail gains the caret that
 # says it opens a menu.
-EXPECTED_MD5 = "501bc5d54ada5cf29ae02e822ba7686f"
-EXPECTED_BYTES = 3574367
+# 2026-09-04, T268: the mismatched-text cards say which two values
+# disagree, the ones that do NOT disagree sit under their own heading
+# below them, and a deck with no text boxes gets a sentence instead of
+# "one edit instead of 0".
+EXPECTED_MD5 = "f05c994db470acca9cca289728886ded"
+EXPECTED_BYTES = 3576727
 
 
 def _render_example() -> str:

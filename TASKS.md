@@ -5624,3 +5624,34 @@ option. Then where has the ability to refresh all images gone?"
   caret the rest of the product's menu doors wear. The names T204 and
   T215 settled are untouched; only the punctuation moved.
   The rest were checked and left: each one does ask for something.
+
+- [x] **T268 - Fix mismatched text stops contradicting its own name.**
+  The user (2026-09-04): "I can also never figure out how to use the
+  'Fix mismatched text...'. But the display for that is very confusing
+  and I have no idea how to use it."
+  *Done 2026-09-04.* Three mechanical faults, none of them verbosity.
+  **The screen argued with its own door.** `standardise()` pushed a card
+  for every size band with two or more boxes *whether or not anything in
+  it disagreed*, and when nothing did, the card said so in words: "They
+  match each other now." On a hand-built deck -- the common case -- that
+  was most of the screen. You opened "Fix mismatched text" and read
+  cards telling you the text matches. The ones that disagree come first
+  now and the rest sit under **"these already match"**, where an offer
+  reads as an offer.
+  **No card said what the two values were.** The head read "4 boxes at
+  about 22 pt — 1 do not match" and the body "Their size does not agree:
+  1 of 4 differ" -- a count, and a trip to go and look. It now reads
+  **"1 has a different size"** and **"Most are 22 pt; 1 is 23 pt."** The
+  same for weight, italics, typeface, alignment and line spacing. (It
+  also fixes the grammar: "1 do not match".)
+  **An empty deck produced nonsense.** With no text boxes -- a deck you
+  have just made, which is exactly when you might go looking -- the
+  message read "Your text falls into 0 sizes; naming them means changing
+  every heading later is one edit instead of 0". That is where a reader
+  decides the screen is broken. It says there is nothing to check yet.
+  The intro paragraph above the cards was **left alone**: T209 records
+  the user asking for it.
+  Driven on a fixture deck with three headings at 22/22/23 pt and three
+  body boxes at line spacing 1.25/1.25/1.6: two cards, "Most are 22 pt;
+  1 is 23 pt" and "Most are 1.25; 1 is 1.6", and no card claiming
+  anything matched.
