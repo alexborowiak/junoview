@@ -1043,8 +1043,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # that means -- and the drop hint is said once instead of twice.
 # 2026-09-04, T241: the last session's notebooks are offered on the
 # welcome screen instead of being reopened on load.
-EXPECTED_MD5 = "3d333f0f348e1c8d7ad269b802d583e4"
-EXPECTED_BYTES = 3499488
+# 2026-09-04, T242: every cell head grew a pin (the filters cannot
+# reach a pinned cell) and a mark that cycles star / heart / flag, and
+# the sidebar lists both above the sections.
+EXPECTED_MD5 = "9bcc9ccbd0a0d9a31fe406b03430b529"
+EXPECTED_BYTES = 3525887
 
 
 def _render_example() -> str:

@@ -22,7 +22,10 @@ def test_scoped_widget_css_keeps_the_card_header_rules():
     assert ".snb-root .cardhead{display:flex" in s
     assert ".snb-root .cardhead .plot-trace-btn{margin-left:auto" in s
     assert ".snb-root .cardtitle{" in s
-    assert ".snb-root .cell-eye{margin-left:auto" in s
+    # T242 gave margin-left:auto to the PIN, which is now the first of
+    # the three head buttons; the eye follows it
+    assert ".snb-root .cell-pin{margin-left:auto;}" in s
+    assert ".snb-root .cell-eye{flex:none" in s
     # the tail of core.css survives too — the old bug ate it wholesale
     assert ".snb-root .caption{" in s
     assert ".snb-root .jv-xr{" in s

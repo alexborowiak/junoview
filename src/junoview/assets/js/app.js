@@ -974,6 +974,25 @@
       /* only the DOCUMENT feed: the tree view holds clones of these same
          cards and must always show every node in full */
       $$('.content .card',sh).forEach(function(c){
+        /* T242: PINNED MEANS THE FILTERS DO NOT REACH IT. Everything
+           below decides what to fold and hide; a pinned cell wants
+           none of it, so it is cleared and skipped rather than being
+           threaded through every branch as one more exception. */
+        if(c.classList.contains('is-pinned')){
+          c.classList.remove('is-hidden','cell-off','collapsed',
+            'expanded');
+          $$('.part-off,.part-fold,.part-open,.code-off,.pt-off,'
+            +'.pt-fold,.pt-open,.ot-off,.ot-fold,.ot-open',c)
+            .forEach(function(n){
+              n.classList.remove('part-off','part-fold','part-open',
+                'code-off','pt-off','pt-fold','pt-open','ot-off',
+                'ot-fold','ot-open');});
+          $$('.ot-stub',c).forEach(function(n){n.remove();});
+          var pnav=sh.querySelector('.navitem[data-item="'
+            +c.id.replace(/^card-/,'')+'"]');
+          if(pnav) pnav.classList.remove('nav-hidden','cell-off');
+          return;
+        }
         /* a per-cell eye can hide one cell regardless of the filters */
         var off=c.classList.contains('cell-off');
         /* EVERY card obeys ITS OWN section's filter state, so one chapter
@@ -3507,6 +3526,105 @@
   /* Per-card behaviours, shared by the docs shell and the Plot-trace tab so
      the trace is a genuine subset of the docs with every control live.
      (Nav/graph wiring stays in initShell — the trace tab has no sidebar.) */
+  /* ---- T242: PINNED AND MARKED CELLS ----------------------------------
+     Two marks, one store. PIN means the filters cannot reach this cell:
+     it shows in full whatever they are set to, which is the answer to
+     "I have one cell that has output I want but I don't want the rest"
+     (2026-09-04). MARK is a bookmark -- star, heart or flag -- and both
+     are listed at the top of the sidebar, because a mark you cannot
+     find again is a mark for nothing. Kept per notebook, so the pins
+     you set on an analysis are still there tomorrow. */
+  var MARKKEY='semmarks:'+location.pathname;
+  var MARK_KINDS=['star','heart','flag'];
+  function allMarks(){
+    try{return JSON.parse(localStorage.getItem(MARKKEY)||'{}')||{};}
+    catch(e){return {};}
+  }
+  function marksFor(stem){
+    var m=allMarks()[stem];
+    return (m&&typeof m==='object')?m:{};
+  }
+  function writeMarks(stem,m){
+    var all=allMarks();
+    if(Object.keys(m).length) all[stem]=m; else delete all[stem];
+    try{localStorage.setItem(MARKKEY,JSON.stringify(all));}catch(e){}
+  }
+  function markOf(stem,id){
+    var e=marksFor(stem)[id];
+    return (e&&typeof e==='object')?e:{};
+  }
+  function setMarkState(stem,id,next){
+    var m=marksFor(stem);
+    if(next&&(next.p||next.f)) m[id]=next; else delete m[id];
+    writeMarks(stem,m);
+  }
+  /* paint one card and its sidebar row from the store */
+  function paintMark(shell,stem,id){
+    var st=markOf(stem,id);
+    var card=shell.querySelector('.card[id="card-'+id+'"]');
+    var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
+    [card,nav].forEach(function(el){
+      if(!el) return;
+      el.classList.toggle('is-pinned',!!st.p);
+      MARK_KINDS.forEach(function(k){
+        el.classList.toggle('mk-'+k,st.f===k);});
+    });
+    if(card){
+      var pb=card.querySelector('.cell-pin');
+      if(pb){
+        pb.setAttribute('aria-pressed',st.p?'true':'false');
+        pb.title=st.p
+          ?'Pinned: the filters cannot hide this cell. Click to unpin'
+          :'Pin this cell: the filters cannot hide it, whatever they '
+            +'are set to';
+      }
+      var mb=card.querySelector('.cell-mark');
+      if(mb){
+        mb.dataset.mark=st.f||'';
+        mb.innerHTML=bic(st.f||'star');
+        mb.setAttribute('aria-pressed',st.f?'true':'false');
+        mb.title=st.f
+          ?('Marked '+st.f+' \u2014 click for the next mark, and again '
+            +'to take it off')
+          :'Mark this cell so you can find it again. Clicks cycle: '
+            +'star, heart, flag, none';
+      }
+    }
+  }
+  /* the list at the top of the sidebar: pinned first, then marked */
+  function renderMarks(shell,stem){
+    var host=shell.querySelector('.navmarks'); if(!host) return;
+    var m=marksFor(stem),ids=Object.keys(m);
+    host.innerHTML='';
+    var rows=[];
+    ids.forEach(function(id){
+      var nav=shell.querySelector('.navitem[data-item="'+id+'"]');
+      if(!nav) return;                 /* a mark from an older notebook */
+      rows.push({id:id,st:m[id],
+        title:(nav.querySelector('.navitem-t')||nav).textContent});
+    });
+    rows.sort(function(a,b){return (b.st.p?1:0)-(a.st.p?1:0);});
+    host.hidden=!rows.length;
+    if(!rows.length) return;
+    var h=document.createElement('div');
+    h.className='navmarks-h';
+    h.textContent='pinned & marked';
+    host.appendChild(h);
+    rows.forEach(function(r){
+      var a=document.createElement('a');
+      a.className='navmark'+(r.st.p?' is-pinned':'')
+        +(r.st.f?(' mk-'+r.st.f):'');
+      a.href='#card-'+r.id;
+      a.title=(r.st.p?'Pinned':'Marked')+': '+r.title;
+      var ic=document.createElement('span');
+      ic.className='navmark-ic';
+      ic.innerHTML=bic(r.st.p?'pin':(r.st.f||'star'));
+      var t=document.createElement('span');
+      t.className='navmark-t';t.textContent=r.title;
+      a.appendChild(ic);a.appendChild(t);
+      host.appendChild(a);
+    });
+  }
   function wireCardBehaviors(shell,stem){
     /* ---- code toggles ---- */
     $$('.codetoggle',shell).forEach(function(btn){
@@ -3534,6 +3652,35 @@
         setCellOff(card.id.replace(/^card-/,''),true);   /* hide this cell */
       });
     });
+    /* T242: the pin and the mark. Pinning a cell you had hidden by
+       hand un-hides it -- the two say opposite things about the same
+       cell and the newer press is the one you meant. */
+    $$('.cell-pin',shell).forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        var card=btn.closest('.card'); if(!card) return;
+        var id=card.id.replace(/^card-/,'');
+        var st=markOf(stem,id);
+        setMarkState(stem,id,{p:st.p?0:1,f:st.f||''});
+        if(!st.p) setCellOff(id,false);
+        paintMark(shell,stem,id);renderMarks(shell,stem);applyFilters();
+      });
+    });
+    $$('.cell-mark',shell).forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        var card=btn.closest('.card'); if(!card) return;
+        var id=card.id.replace(/^card-/,'');
+        var st=markOf(stem,id);
+        var at=MARK_KINDS.indexOf(st.f||'');
+        var next=MARK_KINDS[at+1]||'';
+        setMarkState(stem,id,{p:st.p||0,f:next});
+        paintMark(shell,stem,id);renderMarks(shell,stem);
+      });
+    });
+    Object.keys(marksFor(stem)).forEach(function(id){
+      paintMark(shell,stem,id);});
+    renderMarks(shell,stem);
     $$('.navitem-eye',shell).forEach(function(sp){
       var toggle=function(e){
         e.preventDefault();e.stopPropagation();

@@ -5052,3 +5052,24 @@ option. Then where has the ability to refresh all images gone?"
   Taking the offer opens them and leaves the welcome screen; the row
   goes away once taken. Driven on a web build with a seeded session:
   nothing opened on load, and the row appeared.
+
+- [x] **T242 - Pin a cell past the filters, and mark the ones you want
+  back.**
+  The user (2026-09-04): "Would be good if you could pin cells so they
+  always appear. I currently have one cell that has output I want but I
+  don't want the rest. Also would be good if you could favourite cells
+  as well (maybe a few different ones, like star, heart, etc.), then
+  you can see them down on the side menu as well."
+  *Done 2026-09-04.* Two marks, one store, both on the card head beside
+  the eye. **Pin** means the filters do not reach that cell: it shows
+  in full whatever they are set to, which is exactly "one cell whose
+  output I want while the rest is off". It is a skip at the top of the
+  filter pass rather than one more exception threaded through every
+  branch, and pinning a cell you had hidden by hand un-hides it -- the
+  two say opposite things and the newer press is the one you meant.
+  **Mark** is a bookmark: clicks cycle star, heart, flag, none. Both
+  are listed in a "pinned & marked" block above the sections, pinned
+  first, and both are kept per notebook so the pins on an analysis are
+  still there tomorrow. Driven on the example notebook: with Output off
+  for the whole notebook the pinned card kept its output while its
+  unpinned peer's went `part-off`.

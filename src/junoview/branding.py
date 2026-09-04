@@ -350,6 +350,9 @@ _ICON_PATHS = {
             '<path d="M5.8 3.4 3 6.2 5.8 9"/>',
     "redo": '<path d="M13 6.2H5.8a3.3 3.3 0 0 0 0 6.6h3.6"/>'
             '<path d="M10.2 3.4 13 6.2 10.2 9"/>',
+    # a five-pointed star: one of the marks you can put on a cell (T242)
+    "star": '<path d="m8 2.2 1.8 3.7 4 .6-2.9 2.8.7 4L8 11.4l-3.6 1.9'
+            ' .7-4-2.9-2.8 4-.6Z"/>',
     # a roof over a doorway: back to the start screen (T239)
     "home": '<path d="M2.2 7.6 8 2.6l5.8 5"/>'
             '<path d="M3.9 8.6v4.8h8.2V8.6"/>',

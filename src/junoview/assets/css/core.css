@@ -843,12 +843,53 @@ body:not(.light) .docbar-p{color:#8ba0b2;}
 .cardhead .plot-trace-btn+.cell-eye{margin-left:0;}
 .cardhead .badge,.cardhead .cell-eye{flex:none;}
 /* per-cell eye on the card header: hide this one cell (restore via sidebar) */
-.cell-eye{margin-left:auto;flex:none;background:none;border:none;
+/* ---- T242: THE PIN AND THE MARK -------------------------------------
+   Two more head buttons, the same shape as the eye they sit beside:
+   invisible until you look at the card, and STAYING visible once set,
+   because a pin you cannot see is a filter you cannot explain. */
+.cell-pin,.cell-mark{margin-left:0;flex:none;background:none;
+  border:none;color:var(--ink-3);cursor:pointer;font-size:13px;
+  line-height:1;padding:2px 6px;border-radius:5px;opacity:0;
+  transition:opacity .15s,background .15s,color .15s;}
+.cell-pin{margin-left:auto;}
+.card:hover .cell-pin,.card:hover .cell-mark,
+.cell-pin:focus-visible,.cell-mark:focus-visible{opacity:.55;}
+.cell-pin:hover,.cell-mark:hover{opacity:1;background:var(--paper-2);}
+.card.is-pinned .cell-pin{opacity:1;color:var(--cyan-deep);}
+.cell-mark[aria-pressed="true"]{opacity:1;}
+.mk-star .cell-mark{color:var(--amber,#c98a1e);}
+.mk-heart .cell-mark{color:#d2555c;}
+.mk-flag .cell-mark{color:#2f8f7d;}
+/* a pinned card says so: the filters are set to hide it and it is
+   here anyway, which is a fact the reader needs on the card */
+.card.is-pinned{border-left:3px solid var(--cyan-deep);}
+.cell-eye{flex:none;background:none;border:none;
   color:var(--ink-3);cursor:pointer;font-size:13px;line-height:1;
   padding:2px 6px;border-radius:5px;opacity:0;
   transition:opacity .15s,background .15s;}
 .card:hover .cell-eye,.cell-eye:focus-visible{opacity:.55;}
 .cell-eye:hover{opacity:1;background:var(--paper-2);}
+/* ...and the list of them, above the sections. A mark you cannot find
+   again is a mark for nothing. */
+.navmarks{display:flex;flex-direction:column;gap:1px;
+  padding:0 6px 8px;margin-bottom:6px;
+  border-bottom:1px solid var(--chrome-line,#ffffff14);}
+.navmarks[hidden]{display:none;}
+.navmarks-h{font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--chrome-ink-3,#7d93a6);
+  padding:4px 4px 5px;}
+.navmark{display:flex;align-items:center;gap:8px;padding:4px 6px;
+  border-radius:5px;text-decoration:none;font-size:12.5px;
+  color:var(--chrome-ink-2);}
+.navmark:hover{color:var(--chrome-ink);background:#ffffff08;}
+.navmark-ic{flex:none;display:flex;line-height:0;opacity:.75;}
+.navmark-ic svg{width:12px;height:12px;}
+.navmark-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;}
+.navmark.is-pinned .navmark-ic{color:var(--cyan);opacity:1;}
+.navmark.mk-star .navmark-ic{color:var(--amber,#f0a848);opacity:1;}
+.navmark.mk-heart .navmark-ic{color:#e0757c;opacity:1;}
+.navmark.mk-flag .navmark-ic{color:#5fc4ac;opacity:1;}
 /* code fully hidden: the code tucked under figures disappears too */
 .codewrap.code-off{display:none;}
 .badge{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;
