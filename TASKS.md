@@ -4917,3 +4917,28 @@ option. Then where has the ability to refresh all images gone?"
   failure. Driven with a stubbed picker: the file was created and
   written, the destination read "Your Talks folder", and the next
   autosave said "autosaved to flipcheck.junoview.html".
+
+- [x] **T236 - The File menu holds what only it can do.**
+  The user (2026-09-04): "The file menu has too many options. The auto
+  presentation isn't really a thing. Some of these have buttons
+  elsewhere - the page numbers, the refresh images from files. The
+  history as well I don't like here, should be a button on the home
+  tab."
+  *Done 2026-09-04.* Five sections and nineteen rows became three and
+  twelve. **Auto-build** (figures / figures + docs) is gone: it
+  replaced `pres.slides` wholesale -- the deck you had made, thrown
+  away to lay the notebook out again -- which is what a new
+  presentation already does from a clean start. `autoSlides` stays, as
+  what `defaultPres` is built from. **Both refresh rows** have had Home
+  tiles since T196; the tiles forwarded a click to the menu row, which
+  is how one verb came to have two buttons, and they call the verb
+  directly now. **Slide numbers** are Design → Page furniture →
+  Numbers, and that button toggled the File row the same way; the
+  toggle is a function both would have shared. **Crop marks** moved
+  into export & share, beside the PDF they are for, which emptied the
+  "page" heading. **History and Checkpoint** are a Saved versions group
+  on Home -- they are things you reach for while building, not ways of
+  getting a file out of the door, which is what the menu is left
+  holding. Driven live: the menu reads as three sections, and both Home
+  buttons work (History opened on "on main" with six versions;
+  Checkpoint added a seventh).

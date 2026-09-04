@@ -132,8 +132,9 @@ def test_a_poster_is_not_told_it_has_slides(out):
     # the group is called Page, and only a deck is told about slides
     assert "slideLab.textContent=pg.poster?'Page':'Slide';" in out
     assert "if(nums) nums.hidden=!!pg.poster;" in out
-    # ...and a poster cannot GAIN pages through auto-build
-    assert "['#mi-auto-figs','#mi-auto-figdocs'].forEach" in out
+    # ...and there is no auto-build to gain pages through since T236:
+    # it replaced the whole deck to lay the notebook out again
+    assert "#mi-auto-figs" not in out
     # all of it keyed on the page, so switching back to 16:9 restores it
     assert "deckEl.classList.toggle('poster-page',!!pg.poster);" in out
     # the versions strip is opt-in, and named for what it holds -- it now

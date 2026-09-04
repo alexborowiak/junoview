@@ -693,7 +693,9 @@
       var b2=$(id); if(b2) b2.hidden=!!pg.poster;});
     var slideLab=deckEl.querySelector('.rbn-slide .rbn-lab');
     if(slideLab) slideLab.textContent=pg.poster?'Page':'Slide';
-    var nums=$('#mi-nums');
+    /* T236: numbers are Design's button now, and a poster has no
+       slide numbers to switch on */
+    var nums=$('#dc-nums');
     if(nums) nums.hidden=!!pg.poster;
     /* a poster keeps "+ Add" — its pages are versions, and you need a way
        to make one; it just lives behind the Versions button now */
@@ -732,13 +734,9 @@
        just appeared showed an empty strip. */
     if(!pg.poster&&mode==='edit'){showVerpane(false);filmToPanel();}
     syncStripBtn();
-    /* Auto-build makes ONE SLIDE PER FIGURE. On a deck that is the whole
-       point; on a poster it silently turns one page into seven, which is
-       how a poster ended up with slides at all. Place cells on the page
-       instead — the Insert group does that. */
-    ['#mi-auto-figs','#mi-auto-figdocs'].forEach(function(sel){
-      var el=$(sel); if(el) el.hidden=!!pg.poster;
-    });
+    /* No Auto-build rows to hide on a poster since T236: they replaced
+       the whole deck to lay the notebook out again, which is what a
+       new presentation does from a clean start. */
     renderLayoutPicker();   /* poster pages list poster templates first */
   }
   function sizeSlideTo(slideEl,zoom){
@@ -1590,7 +1588,7 @@
       +'riding along');
     cat('Source freshness','whole deck',staleFigures().length,
       bic('reload')+' Update figures from their sources',
-      function(){var b4=$('#mi-refresh-figs'); if(b4) b4.click();},
+      function(){resyncAllFigures();},
       'Placed figures whose notebook or file has moved on \u2014 one '
       +'click re-reads them, keeping position, size and crop');
     if(head) head.textContent=total

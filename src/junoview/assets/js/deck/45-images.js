@@ -267,21 +267,15 @@
       $$('.img-sec',ov).forEach(function(d){d.open=false;});});
   }
   (function(){
-    /* the Home tab's doors (T196): the File menu rows have always done
-       this, and nobody found them there */
+    /* the Home tab's doors (T196). They forwarded a click to a File
+       menu row, which is how the same verb came to have two buttons;
+       T236 deleted the rows and left these calling the verb. */
     var hri=$('#hm-refresh-img');
     if(hri) hri.addEventListener('click',function(e){
-      e.stopPropagation();
-      var m2=$('#mi-refresh-img'); if(m2) m2.click();});
+      e.stopPropagation();refreshImagesReport();});
     var hrf=$('#hm-refresh-figs');
     if(hrf) hrf.addEventListener('click',function(e){
-      e.stopPropagation();
-      var m3=$('#mi-refresh-figs'); if(m3) m3.click();});
-    var mi=$('#mi-refresh-img');
-    if(mi) mi.addEventListener('click',function(){
-      var dm=$('#dc-menu'); if(dm) overlayHide(dm);
-      refreshImagesReport();
-    });
+      e.stopPropagation();resyncAllFigures();});
     var one=$('#fmt-imgrefresh');
     if(one) one.addEventListener('click',function(e){
       e.stopPropagation();

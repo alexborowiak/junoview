@@ -1019,8 +1019,13 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # it becomes the destination for every presentation, Junoview makes
 # its own .junoview.html in it, and a full browser names that as the
 # fix instead of only reporting the failure.
-EXPECTED_MD5 = "5513686bb21fe4478a25a61a3e7ca3dd"
-EXPECTED_BYTES = 3461074
+# 2026-09-04, T236: the File menu went from five sections and nineteen
+# rows to three and twelve -- Auto-build removed, both refresh rows
+# and slide numbers dropped in favour of the buttons they already
+# had elsewhere, crop marks moved beside the PDF export, and History
+# and Checkpoint became a Saved versions group on Home.
+EXPECTED_MD5 = "168f708bd44ded329482105bb72e60f9"
+EXPECTED_BYTES = 3461857
 
 
 def _render_example() -> str:

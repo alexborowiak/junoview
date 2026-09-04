@@ -101,7 +101,9 @@ def test_shapes_and_rich_slide_object_formatting(out):
     assert 'id="fmt-size"' in out and 'id="fmt-para"' in out
     assert 'id="fmt-under"' in out and 'id="fmt-strike"' in out
     assert 'id="fmt-op"' in out and 'type="range"' in out
-    assert 'id="mi-nums"' in out and "slide-pageno" in out
+    # T236: the numbers toggle is Design's one button now
+    assert 'id="dc-nums"' in out and "slide-pageno" in out
+    assert 'id="mi-nums"' not in out
 
 
 def test_images_crop_grouping_rich_text_and_build_animations(out):

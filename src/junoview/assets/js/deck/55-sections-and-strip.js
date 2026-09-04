@@ -2504,25 +2504,18 @@
   menuAction('#mi-rename',startQatRename);
   var qatName=$('#qat-name');
   if(qatName) qatName.addEventListener('click',startQatRename);
-  menuAction('#mi-auto-figs',function(){
-    pres.slides=autoSlides(false);cur=0;activePane=0;
-    markDirty();refresh();
-    toast(pres.slides.length+' slides: one per figure, in order');
-  });
-  menuAction('#mi-auto-figdocs',function(){
-    pres.slides=autoSlides(true);cur=0;activePane=0;
-    markDirty();refresh();
-    toast(pres.slides.length+' slides: figures + docs, in order');
-  });
-  function updateNumsLabel(){
-    var b=$('#mi-nums');
-    if(b) b.textContent='Slide numbers: '+(pres.showNums?'on':'off');
-  }
-  menuAction('#mi-nums',function(){
+  /* T236: no Auto-build rows. They replaced pres.slides wholesale --
+     the deck you had made, gone, to lay the notebook out again --
+     which is exactly what File > New presentation does from a clean
+     start (autoSlides is still what defaultPres is built from). */
+  /* T236: the numbers toggle is a FUNCTION now, called by the one
+     button that remains -- Design > Page furniture > Numbers. The
+     File row was a second door that button forwarded to. */
+  function toggleSlideNums(){
     if(pres.showNums){delete pres.showNums;} else {pres.showNums=1;}
-    updateNumsLabel();markDirty();refresh();
+    markDirty();refresh();
     toast('Slide numbers '+(pres.showNums?'on':'off'));
-  });
+  }
   function updateCropLabel(){
     var b=$('#mi-crop');
     if(b) b.textContent='Crop marks: '+(pres.cropMarks?'on':'off');
@@ -2611,6 +2604,6 @@
   });
   var numB=$('#dc-nums');
   if(numB) numB.addEventListener('click',function(){
-    var mi=$('#mi-nums'); if(mi) mi.click();
+    toggleSlideNums();
     syncFurnBtns();
   });

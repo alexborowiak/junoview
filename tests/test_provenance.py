@@ -253,8 +253,9 @@ def test_there_is_a_deck_wide_figure_update_and_not_only_a_per_figure_one(out):
     assert "function staleFigures(){" in out
     assert "function resyncAllFigures(){" in out
     # the same door the picture half has, in the same menu
-    assert 'id="mi-refresh-figs"' in out
-    assert "menuAction('#mi-refresh-figs',function(){resyncAllFigures();});" \
+    # T236: on Home only. The File menu copy was the one nobody found
+    assert 'id="hm-refresh-figs"' in out
+    assert "      e.stopPropagation();resyncAllFigures();});" \
         in out
     # saying nothing is stale is an answer too -- and since T123 it says
     # "source", because a .tex or a .csv is as refreshable as a notebook
@@ -353,4 +354,5 @@ def test_update_figures_re_reads_the_disk_first(out):
     assert "var jobs=refSourceStems().map(function(st){" in out
     assert "return Promise.all(jobs).then(function(res){" in out
     # and the label finally says what the button now does
-    assert "Update figures from their sources</button>" in out
+    # T236: the door is Home's tile; the File menu copy is gone
+    assert "<span>Update figures</span></button>" in out

@@ -74,8 +74,9 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
         assert gone not in out, gone
     # the two refresh-all doors press the File menu rows
     assert 'id="hm-refresh-figs"' in out and 'id="hm-refresh-img"' in out
-    assert "var m2=$('#mi-refresh-img'); if(m2) m2.click();});" in out
-    assert "var m3=$('#mi-refresh-figs'); if(m3) m3.click();});" in out
+    # T236: they called the verb directly once the File rows went
+    assert "      e.stopPropagation();refreshImagesReport();});" in out
+    assert "      e.stopPropagation();resyncAllFigures();});" in out
     # the rarer two sit last, so they fold first and View stays in sight
     assert ".rbn-layout,.rbn-this,.rbn-arrange{order:1;}" in out
     assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:1;}" in out

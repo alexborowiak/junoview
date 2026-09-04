@@ -132,17 +132,28 @@ def test_chart_and_masters_have_first_class_doors():
     assert "ob2.className='dbtn dc-nbs-open';" in out
 
 def test_the_file_menu_has_named_sections_and_a_warned_tail():
-    """T143 / JVUX-07, driven live: five named headings (file, sources,
-    export & share, page, careful) with the two destructive rows LAST,
-    in warn colour; and the autosave button stopped painting itself as
-    a second primary action beside Save."""
+    """T143 / JVUX-07, driven live: named headings with the two
+    destructive rows LAST, in warn colour; and the autosave button
+    stopped painting itself as a second primary action beside Save.
+
+    T236 cut it from five sections to three. "sources" held two rows
+    that have had Home buttons since T196 plus two Auto-build rows that
+    threw the deck away; "page" held slide numbers, which is a button on
+    Design, and crop marks, which moved in beside the PDF they are for.
+    """
     html = assets.deck_html()
     i = html.index('id="dc-menu"')
     j = html.index('</div>', html.index('id="mi-del"'))
     menu = html[i:j]
     heads = re.findall(r'class="dc-mhead[^"]*">([^<]+)<', menu)
-    assert heads == ["file", "sources", "export &amp; share", "page",
+    assert heads == ["file", "export &amp; share",
                      "careful — these lose work"], heads
+    # twelve rows you can see, down from nineteen (the thirteenth is
+    # #mi-autosave, hidden unless the build has a project to save to)
+    assert menu.count('class="dc-mi') == 13, menu.count('class="dc-mi')
+    for gone in ("mi-refresh-img", "mi-refresh-figs", "mi-auto-figs",
+                 "mi-auto-figdocs", "mi-nums", "mi-hist", "mi-check"):
+        assert f'id="{gone}"' not in menu, gone
     # the dangerous pair is last, and wears the warning
     assert menu.rindex('id="mi-del"') > menu.rindex('id="mi-pdf"')
     assert menu.count('dc-mi-warn') == 2

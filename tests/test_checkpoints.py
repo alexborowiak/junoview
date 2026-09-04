@@ -43,9 +43,12 @@ def test_there_are_two_doors_and_both_lead_to_the_same_gesture(out):
     """One in the File menu beside the history it lands in, one inside
     the history screen itself."""
     html = assets.deck_html()
-    assert 'id="mi-check"' in html
-    assert "Save a checkpoint&#8230;</button>" in html
-    assert "  menuAction('#mi-check',function(){histCheckpoint(null);});" in out
+    # T236: the File menu's row moved to Home, beside History --
+    # taking one and looking at them are one feature
+    assert 'id="hm-check"' in html and 'id="mi-check"' not in html
+    assert "                Checkpoint&#8230;</button>" in html
+    assert "  function versionDoorsBoot(){" in out
+    assert "      e.stopPropagation();histCheckpoint(null);});" in out
     assert "id=\"dh-check\">'+bic('flag')" in out
     assert "      .addEventListener('click',function(){histCheckpoint(ov);});" in out
     assert "  function histCheckpoint(ov){" in out

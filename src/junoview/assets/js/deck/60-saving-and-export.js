@@ -1185,11 +1185,19 @@
   window.SemDeckLinkedImages=linkedImages;          /* test hook */
   window.SemDeckPages=outputSlides;
   window.SemDeckPrintRoot=buildPrintRoot;
-  menuAction('#mi-refresh-figs',function(){resyncAllFigures();});
-  menuAction('#mi-hist',openHistory);
+  /* T236: History and Checkpoint are Home buttons now. They are
+     things you do WHILE building, not ways of getting a file out of
+     the door, which is what the File menu is left holding. */
+  function versionDoorsBoot(){
+    var hb=$('#hm-history');
+    if(hb) hb.addEventListener('click',function(e){
+      e.stopPropagation();openHistory();});
+    var cb=$('#hm-check');
+    if(cb) cb.addEventListener('click',function(e){
+      e.stopPropagation();histCheckpoint(null);});
+  }
   /* T225: the checkpoint row, through the same helper every other File
      row uses -- so it closes the menu the way its neighbours do */
-  menuAction('#mi-check',function(){histCheckpoint(null);});
   (function(){
     var b=$('#dsg-design-btn');
     /* a row of the Text styles window since T178: the window goes as

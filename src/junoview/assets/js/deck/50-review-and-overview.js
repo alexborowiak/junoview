@@ -1503,7 +1503,7 @@
     renderPresTabs();
   }
   function renderControls(){
-    updateNumsLabel();updateCropLabel();
+    syncFurnBtns();updateCropLabel();
     var s=pres.slides[cur];
     $$('#layout-row .lay,#layout-menu-grid .lay')
       .forEach(function(b){

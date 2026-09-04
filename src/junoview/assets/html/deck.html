@@ -89,35 +89,23 @@
         <button class="dc-mi" id="mi-rename">Rename&#8230;</button>
         <button class="dc-mi" id="mi-load">Open a .junoview
           file&#8230;</button>
-        <!-- HISTORY. Beside the saves, because a snapshot is taken by
-             a save and what you want it for is undoing one (T32). -->
-        <!-- T225: a checkpoint you take on purpose, beside the
-             history it lands in -->
-        <button class="dc-mi" id="mi-check"
-          title="Save this exact version under a name you choose. It
- is kept even when older versions are dropped, and you can go back to
- it or start a branch from it">Save a checkpoint&#8230;</button>
-        <button class="dc-mi" id="mi-hist"
-          title="Every version this deck has been saved as, what is
- different about each, and a way to put one slide or the whole thing
- back">History&#8230;</button>
+        <!-- T236: HISTORY AND CHECKPOINTS MOVED TO HOME (2026-09-04,
+             user: "the history as well I don’t like here, should be
+             a button on the home tab"). They are things you do WHILE
+             building, not ways of getting a file out of the door,
+             which is what the rest of this menu is. -->
         <button class="dc-mi" id="mi-save">Save to notebook&#8230;</button>
         <button class="dc-mi" id="mi-autosave" hidden></button>
         <button class="dc-mi" id="mi-dl">Download a copy
           (.junoview)</button>
-        <div class="dc-mhead">sources</div>
-        <!-- pictures inserted from this computer keep a handle to the
-             file they came from, so they can be re-read on demand.
-             Anything whose file has moved is LEFT as it was and
-             named in the report (2026-08-22). -->
-        <button class="dc-mi" id="mi-refresh-img"><i data-ic="reload"></i>
-          Refresh pictures from their files</button>
-        <!-- The same door for FIGURES (2026-08-29, T58; one verb that
-             reaches the disk since T123). -->
-        <button class="dc-mi" id="mi-refresh-figs"><i data-ic="reload"></i>
-          Update figures from their sources</button>
-        <button class="dc-mi" id="mi-auto-figs">Auto-build: figures</button>
-        <button class="dc-mi" id="mi-auto-figdocs">Auto-build: figures + docs</button>
+        <!-- T236: NO "sources" SECTION. Both refresh rows have had
+             buttons on Home since T196 and the menu copies were the
+             ones nobody found (2026-09-04, user: "some of these have
+             buttons elsewhere - the page numbers, the refresh images
+             from files"); and Auto-build threw away the deck you had
+             made to lay the notebook out again, which is what a NEW
+             presentation already does ("the auto presentation isn’t
+             really a thing"). -->
         <div class="dc-mhead">export &amp; share</div>
         <!-- THE CONTENT, as text (T35). -->
         <button class="dc-mi" id="mi-review"
@@ -128,6 +116,13 @@
           title="Save as PDF at the page's TRUE size — an A0 poster
  exports as a real 841&#215;1189mm page, ready for the print shop">Export
  PDF / print&#8230;</button>
+        <!-- T236: crop marks sit with the export they are for. They
+             were the other half of a "page" section whose first row,
+             slide numbers, is a button on Design. -->
+        <button class="dc-mi" id="mi-crop"
+          title="Add trim marks outside the page for the print shop to
+ cut to. The sheet grows by 5mm a side; the page keeps its size"
+          >Crop marks: off</button>
         <button class="dc-mi" id="mi-pptx"
           title="Save as a PowerPoint .pptx. Text stays editable and
  figures come across as pictures; a placed cell showing code or a table
@@ -137,12 +132,6 @@
           title="A single .html file anyone can open — no Junoview
  needed. Arrow keys page through it; Ctrl+P prints at page size">Export
  standalone HTML</button>
-        <div class="dc-mhead">page</div>
-        <button class="dc-mi" id="mi-nums">Slide numbers: off</button>
-        <button class="dc-mi" id="mi-crop"
-          title="Add trim marks outside the page for the print shop to
- cut to. The sheet grows by 5mm a side; the page keeps its size"
-          >Crop marks: off</button>
         <div class="dc-mhead dc-mhead-warn">careful — these lose work</div>
         <button class="dc-mi dc-mi-warn" id="mi-discard">Discard
           changes</button>
@@ -1383,6 +1372,27 @@
           <!-- LAYERS ON HOME (T216; 2026-09-03, user: "the layers is really
                important that needs to go in home"): a second door to the
                same pane View has, pressed-state mirrored from it -->
+          <!-- T236: SAVED VERSIONS, ON THE TAB YOU BUILD FROM. History
+               was a row in the File menu, among the exports and the
+               two destructive commands, and it is neither of those
+               things: it is what you reach for while you work. The
+               checkpoint comes with it, because taking one and
+               looking at them are one feature. -->
+          <span class="rbn-grp rbn-vers" data-tab="home"
+            data-fold-ic="history">
+            <span class="rbn-row">
+              <button class="fx-tile big-tile rbn-tall" id="hm-history"
+                title="Every version this presentation has been saved
+ as, what is different about each, and a way to put one slide or the
+ whole thing back"><i data-ic="history"></i><span>History</span></button>
+              <button class="dbtn rbn-sm" id="hm-check"
+                title="Save this exact version under a name you
+ choose. It is kept even when older versions are dropped, and you can
+ go back to it or start a branch from it"><i data-ic="pin"></i>
+                Checkpoint&#8230;</button>
+            </span>
+            <span class="rbn-lab">Saved versions</span>
+          </span>
           <span class="rbn-grp rbn-show" data-tab="home" data-fold-ic="objects">
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
