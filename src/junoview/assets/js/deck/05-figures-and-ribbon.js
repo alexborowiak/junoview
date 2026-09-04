@@ -995,8 +995,7 @@
     var note=document.createElement('div');
     note.className='ff-none';
     note.textContent='The '+activeTab()+' tab. Untick to put a button '
-      +'away; the arrows move it within its group. Buttons never move '
-      +'between tabs, and the row still never wraps.';
+      +'away; the arrows move it within its group.';
     m.appendChild(note);
     ribbonGroupsHere().forEach(function(g){
       var gid=ribbonGroupId(g);

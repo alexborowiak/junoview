@@ -5577,3 +5577,28 @@ option. Then where has the ability to refresh all images gone?"
   its ~70 paint sites; the dead writes are gone.
   Driven on a fixture deck with two boxes wearing Accent and one
   wearing Warm: "Accent 2 boxes · Warm 1 box · Lift not used yet".
+
+- [x] **T266 - The prose that explained instead of labelling.**
+  The user (2026-09-04): "Please review across lots of areas if there is
+  unneccarry and/or verbose text", with the Style system's
+  "Every object, outlined / The whole deck at once, with a box drawn
+  round everything on every slide. This is how you find the one heading
+  that is 3mm off, or the figure nobody lined up." given as the example.
+  *Done 2026-09-04.* Thirty-nine candidates were found across the
+  welcome screen, the deck ribbon and panels, and the menus and toasts;
+  each was then **checked against TASKS.md before being cut**, because a
+  great deal of this prose was written in answer to an earlier request
+  and reversing that silently would be worse than the verbosity. **Ten
+  were kept** for exactly that reason -- among them the front door's
+  tagline, its numbered steps, two card hints, and the intro above the
+  mismatched-text cards, all of which the user asked for by name.
+  Twelve were cut. The pattern in all of them: a sentence that argued
+  the design ("That is what makes it a standard rather than a
+  preference"), set a scene ("Try this when you are handing the app to
+  someone on their first day"), or named the implementation ("with its
+  lints riding along", "These are heuristics about the CONTENT", "the
+  row still never wraps"). What replaced them says what the control
+  does, or nothing at all where the control already said it.
+  One of the twelve is not a trim but a **name**: the Style system's
+  "Check for drift" button opens the same thing the ribbon calls
+  **"Fix mismatched text"**, and now says so. One door, one name.

@@ -468,10 +468,8 @@
     host.appendChild(hd);
     var note=document.createElement('div');
     note.className='rv-note';
-    note.textContent='These are heuristics about the CONTENT, and each '
-      +'says what it counted so you can disagree with it. “Before you '
-      +'print” is the other list — that one is about ink and '
-      +'millimetres.';
+    note.textContent='About what the deck says. “Before you print” '
+      +'is the other list — that one is about ink and millimetres.';
     host.appendChild(note);
     lints.forEach(function(l){
       var b=document.createElement('button');
@@ -2200,9 +2198,8 @@
     if(!body) return;
     body.innerHTML='';
     dgSectionHead(body,'Every object, outlined',
-      'The whole deck at once, with a box drawn round everything on '
-      +'every slide. This is how you find the one heading that is 3mm '
-      +'off, or the figure nobody lined up.');
+      'With outlines on, drag a box in a thumbnail to move that object; '
+      +'click one to find it in the table.');
     var tg=document.createElement('button');
     tg.className='dbtn dg-b';
     tg.setAttribute('aria-pressed',dgOutline?'true':'false');
@@ -2599,8 +2596,7 @@
 
     /* ---- how it looks ---- */
     dgSectionHead(body,'How “'+(d.label||id)+'” looks',
-      'Changing it here changes every box wearing it, everywhere in the '
-      +'deck. That is what makes it a standard rather than a preference.');
+      'Changes every box with this style, on every slide.');
     var spec=document.createElement('div');
     spec.className='dg-spec';
     spec.textContent='The quick brown fox jumps over the lazy dog';
@@ -2727,10 +2723,9 @@
 
     /* ---- where it sits ---- */
     dgSectionHead(body,'Where “'+(d.label||id)+'” sits',
-      'Drag the box to set where this type goes by default, and the '
-      +'handle on its right edge to set how wide it is. Nothing moves '
-      +'until you press the button underneath — a style stamp that '
-      +'dragged your boxes about would be unusable.');
+      'Drag the box to set where this type goes by default, and its '
+      +'right edge to set the width. Nothing on the slides moves until '
+      +'you press the button below.');
     dgBoard(body,id);
     /* ---- T223: THE NUMBERS, TOO ------------------------------------
        Dragging sets it roughly; typing sets it exactly, and it is the
@@ -2844,9 +2839,8 @@
 
     /* ---- T224: every box of this type, in a table ---- */
     dgSectionHead(body,'Every \u201c'+(d.label||id)+'\u201d in this deck',
-      'One row per box, wherever it is. Type into it to change one; '
-      +'tick several and use Match style of to pull them into line '
-      +'with a box you already like.');
+      'Type into a row to change one box. Tick several and use Match '
+      +'style of to bring them into line.');
     dgTable(body,ov);
     dgSheet(body,ov);
   }
@@ -2858,7 +2852,7 @@
       +'<span class="dh-t">Design of “'+esc(pres.name||'this deck')
       +'”</span><span class="deck-spring"></span>'
       +'<button class="dbtn" id="dg-check">'+bic('scope')
-      +' Check for drift</button>'
+      +' Fix mismatched text</button>'
       +'<button class="dbtn" id="dg-close">'+bic('exit')+' Close</button>'
       +'</div><div class="dg-main">'
       +'<div class="dg-rail" id="dg-list"></div>'

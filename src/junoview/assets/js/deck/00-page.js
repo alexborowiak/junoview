@@ -1579,13 +1579,13 @@
       r.findings.length+figLint().length,
       bic('scope')+' Open Mismatched text',
       function(){var b2=$('#dsg-std'); if(b2) b2.click();},
-      'Headings, paragraphs, captions and figures that have drifted '
-      +'apart \u2014 the Style system\u2019s drift check digs deeper');
+      'Headings, paragraphs, captions and figures that do not match '
+      +'each other, or no longer match the style they were given');
     cat('Content & wording','whole deck',reviewLints().length,
       bic('doc')+' Export for review\u2026',
       function(){var b3=$('#mi-review'); if(b3) b3.click();},
-      'What the deck SAYS, written out as markdown with its lints '
-      +'riding along');
+      'What the deck says, written out as markdown to send to a reader, '
+      +'with the things to look at alongside it');
     cat('Source freshness','whole deck',staleFigures().length,
       bic('reload')+' Update figures from their sources',
       function(){resyncAllFigures();},

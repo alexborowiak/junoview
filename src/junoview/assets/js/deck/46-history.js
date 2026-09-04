@@ -324,10 +324,8 @@
     var rail=ov.querySelector('#dh-list');
     rail.innerHTML='';
     if(!ix.length){
-      rail.innerHTML='<div class="selpane-empty">Nothing yet. A version '
-        +'is kept when you open this deck, when you save it, when you '
-        +'take a checkpoint, and once you have been working a while and '
-        +'then pause \u2014 so the history starts filling from now.</div>';
+      rail.innerHTML='<div class="selpane-empty">Nothing yet \u2014 the '
+        +'history starts filling from now.</div>';
       return;
     }
     var rows=ix.slice().reverse();

@@ -1015,7 +1015,7 @@
      ]},
     {id:'radical-ten-then-more',
      name:'Ten things, then More',
-     blurb:'Try this when you are handing the app to someone on their first day: exactly ten buttons on Start, enough to make a slide, put a figure on it and show it, a Format tab that stays empty until they click something, and everything that could frighten them behind a tab called More.',
+     blurb:'Ten buttons on Start \u2014 make a slide, put a figure on it, show it. Format fills in when you select something, and the rest is under More.',
      family:'radical',
      selTab:'tt-fmt',
      tabs:[{id:'tt-start',label:'Start'},{id:'tt-fmt',label:'Format'},{id:'tt-more',label:'More'}],

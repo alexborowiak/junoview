@@ -782,8 +782,10 @@
     if(savedHist) snapTake('saved',savedHist);
     saveStamp=new Date();saveKind='manual';
     status();
-    toast('Kept in this browser — it also autosaves as you edit. '
-      +'The \u25be beside Save keeps it as a file on your computer.');
+    /* T266: a toast says what just happened. Where it is kept and what
+       the caret beside Save does are on the button's own tooltip,
+       which is there when you look rather than for four seconds. */
+    toast('Saved to this browser');
   });
   /* ---- the "Saved to" picker ---- */
   (function(){

@@ -1097,8 +1097,14 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # colour, its paragraph is one line that depends on whether anything
 # wears one, "Gap the arrange verbs use" is in plain words, and the six
 # dead --tk-<colour> custom properties are no longer written.
-EXPECTED_MD5 = "8feb258b38512eb3a13a056423b36fbf"
-EXPECTED_BYTES = 3575028
+# 2026-09-04, T266: twelve pieces of UI prose cut back to what the
+# control cannot say for itself -- the Style system's section blurbs, the
+# review centre's "heuristics" note, two ribbon tooltips, the ribbon
+# customiser's note, the empty history, the save toast and a 278-char
+# layout blurb. "Check for drift" is now "Fix mismatched text", the name
+# the ribbon already gives that same door.
+EXPECTED_MD5 = "07ce4640dc1da441ee9b8f1312993bb7"
+EXPECTED_BYTES = 3574387
 
 
 def _render_example() -> str:
