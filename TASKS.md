@@ -5107,3 +5107,105 @@ option. Then where has the ability to refresh all images gone?"
   **variables filter marks the matched letters** -- a filtered list of
   names that all contain the same three letters is a list you still
   have to read one by one.
+
+- [ ] **T245 - Closing Find restores the view it opened.**
+  Review, 2026-09-04. `findGo()` removes `is-hidden`, adds `expanded`
+  and exposes folded parts so the current hit can be read, but
+  `findOpen(false)` only removes `jv-hitopen`. A filter-hidden card can
+  therefore stay visible after Escape, and a folded Markdown card can
+  stay expanded. Closing Find must restore the exact pre-find view (or
+  reapply the filters without destroying user-open state), with a real
+  interaction test covering hidden and folded cards.
+
+- [ ] **T246 - Document Find does not erase the Variables match.**
+  Review, 2026-09-04. Document hits and the Variables filter both use
+  `.jv-hit`, while `findClear()` removes every `.jv-hit` in the page.
+  Running or closing document Find therefore erases the highlighted
+  part of a still-active Variables query. Give the two features
+  separate ownership (separate classes or scoped clearing) and test
+  both being active together.
+
+- [ ] **T247 - Find follows the notebook you switch to.**
+  Review, 2026-09-04. The Find bar and its `findHits` DOM references
+  survive `activate(stem)`. After switching notebooks, Next and
+  Previous still walk matches in the now-hidden old shell. A tab switch
+  must close Find or rerun the current term against the newly active
+  document, and the count must immediately describe that document.
+
+- [ ] **T248 - Pin and mark have one source-cell identity in every
+  view.**
+  Review, 2026-09-04. Tree clones remove their card ids but retain and
+  rewire the new pin/mark buttons, so a click derives the empty id and
+  can persist a meaningless `""` mark. Plot-trace clones retain ids but
+  repaint only the clone, leaving the source document stale until a
+  reload. Either omit these controls from derived views or route every
+  click through a stable source-cell id and repaint every live view and
+  sidebar together.
+
+- [ ] **T249 - The widget does not show dead pin and mark buttons.**
+  Review, 2026-09-04. `render_item()` now emits pin and mark controls for
+  every frontend, but `widget.js` wires neither of them. The widget
+  consequently presents controls which look interactive and do
+  nothing. Give the widget real persisted pin/mark behaviour, or make
+  the shared renderer able to omit app-only card chrome.
+
+- [ ] **T250 - A colour theme covers the whole product, not only the
+  chrome.**
+  The user (2026-09-04): "review the different colour themes, I feel
+  like they don't work properly (don't apply to everything), and could
+  be better and more." Review confirmed the underlying contract is the
+  problem: `core.css` and `app.js` explicitly call schemes "chrome
+  only" and exclude document backgrounds, cards and content. Dark,
+  forest and colourful therefore keep large light/default areas, while
+  Light forest is the lone scheme that also changes `--paper-*`. Define
+  a complete semantic theme contract for page, card, chrome, overlay,
+  control, text, muted text, borders, focus, selection and status
+  colours, then apply it consistently to the reader, welcome screen,
+  Variables pane, tree, trace, presentation rail and deck editor. Deck
+  and exported-slide colours remain document data; surrounding editor
+  and reader surfaces follow the app theme.
+
+- [ ] **T251 - Theme tokens replace the light/dark patchwork.**
+  Review, 2026-09-04. `body.light` changes the chrome surfaces but does
+  not redefine `--chrome-ink*` or `--btn-*`; dozens of
+  `body.light .component` overrides repair individual controls, while
+  roughly 1,500 literal colour occurrences across the three main
+  stylesheets leave each new component another opportunity to miss a
+  theme. Make every scheme provide the complete token set, replace
+  theme-dependent literals and component-specific light fixes with
+  those tokens, and add a contract test which fails when a scheme omits
+  one. Keep intentional data colours, destructive/warning semantics and
+  author-selected deck colours outside that mechanical replacement.
+
+- [ ] **T252 - Dark colourful reaches overlays and dynamically moved
+  controls.**
+  Review, 2026-09-04. Its accent is scoped to a hand-selected set of
+  ribbon/app groups. Menus and dialogs appended to `body`, controls
+  moved between panes, and groups without one of those selectors fall
+  back to the default cyan, so the scheme visibly stops at component
+  boundaries. Give a colourful theme a deterministic hue for every
+  surface and overlay without depending on where the DOM node happens
+  to be mounted; keep the existing one-hue-per-tab rule rather than
+  returning to unrelated colours within one tab.
+
+- [ ] **T253 - More themes, with useful previews and accessibility
+  guarantees.**
+  After T250-T252 establish full coverage, expand the current seven
+  choices with genuinely distinct families rather than accent swaps:
+  warm/sepia reading, navy, purple, neutral dim, and light high
+  contrast, plus a Follow system option. The picker preview must show
+  background, surface, text and accent (not only two accent dots), name
+  which choices are light/dark/high-contrast, support keyboard focus,
+  and preserve the choice. Check normal text, muted text, controls,
+  focus rings and selected states against WCAG contrast targets.
+
+- [ ] **T254 - Theme coverage is visually tested across the real
+  surfaces.**
+  Review, 2026-09-04. Existing theme tests mostly assert that a token or
+  selector substring exists; they do not catch an unthemed new dialog
+  or unreadable computed foreground/background pair. Add a compact
+  browser-driven matrix over every scheme and the representative
+  surfaces (reader, welcome, menus/dialogs, Variables, tree/trace and
+  editor), checking computed tokens/contrast and keeping reference
+  screenshots for the places where partial theming is visible rather
+  than structurally detectable.
