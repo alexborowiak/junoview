@@ -42,6 +42,24 @@
        re-read it, keep it in place. The by-bullet trio and the effect
        buttons left this tab in T220. */
     +'#fmt-path #fmt-lock #fmt-cmp-make #fmt-cmp-find '
+    /* THE HISTORY TILE, AND WHY THE OBJECT TAB WOULD NOT GO AWAY.
+       #fmt-hist (T220's "what this object has been through", given a
+       group of its own by T233) is shown by showFmt but appeared in
+       neither table, so the deselect sweep -- which only reaches ids in
+       fmtGovernedSet() -- could never hide it again. From the first
+       selection onward its group stayed occupied, so tabHasContent
+       ('object') stayed true, the Object tab never left the strip, and
+       the T192 fall-back that returns you to the tab you were on never
+       fired even once. Deselecting left you standing on Object with
+       #et-fmt hidden: an empty ribbon row (2026-09-05, user: "the object
+       tab should only appear when clicking on an object, then when
+       unclicking back to previous tab"). It was the ONLY control on the
+       whole tab with no governed self-or-ancestor. */
+    +'#fmt-hist '
+    /* hidden BY the governed #fmt-cropwrap, listed only so the
+       completeness audit below stops flagging it -- exactly as the
+       bullets and numbers carets above are */
+    +'#fmt-crop-caret '
 
     /* the two children of the governed #fmt-stylewrap-tx wrapper: their
        visibility IS the wrapper's, listed so the completeness audit
@@ -632,7 +650,7 @@
     /* ...and NOW the tab, with the controls that justify it in place.
        setTab re-runs syncRibbonGroups itself, so this is one call or the
        other, never both. */
-    if(wantTab) setTab(wantTab); else syncRibbonGroups();
+    if(wantTab) setTab(wantTab,true); else syncRibbonGroups();
   }
   /* ---- THE DOORS OF THE WINDOWS (T177) ---------------------------------
      A window's door shows when anything inside it would. showFmt says so
@@ -694,7 +712,29 @@
       var vis=false,kids=g.querySelectorAll('button,input,select,.sh-drop');
       for(var i=0;i<kids.length;i++){
         var n=kids[i],blocked=false;
-        while(n&&n!==g){if(n.hidden){blocked=true;break;}n=n.parentNode;}
+        /* A FOLD DOOR IS NOT CONTENT, AND THE DRAWER IT OPENS IS NOT A
+           REASON TO HIDE. rbnFoldGroup (T187) moves the group's whole
+           .rbn-row into a `hidden` .rbn-foldmenu and leaves a tile
+           behind. Both halves fooled this pass, in opposite directions:
+           the door is a visible <button> nothing governs, so a folded
+           group ALWAYS read as occupied -- and that is the other half of
+           why the Object tab would not leave the strip. Once the window
+           was narrow enough for the ladder to fold that group, its
+           controls could all be hidden and the tab still had one visible
+           child forever. Found in a browser on 2026-09-05: after
+           deselecting, the group's five children were the wrap, the
+           "Object ▾" door, and three properly-hidden controls.
+           Skipping the drawer's `hidden` is the matching half: without
+           it a folded group with real content on it would read as empty
+           and be taken off the row entirely. A control one click away is
+           still on the ribbon -- that is what folding MEANS. */
+        if(n.classList.contains('rbn-foldwrap')
+           ||n.classList.contains('rbn-foldbtn')) continue;
+        while(n&&n!==g){
+          if(n.hidden&&!n.classList.contains('rbn-foldmenu')){
+            blocked=true;break;}
+          n=n.parentNode;
+        }
         if(!blocked){vis=true;break;}
       }
       g.hidden=!vis;

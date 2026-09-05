@@ -483,6 +483,40 @@ def test_the_strip_cannot_eat_the_ribbon(out):
     assert "rungs.forEach(function(c){cl.toggle(c,had[c]);});" in out
 
 
+def test_the_strips_ceiling_does_not_move_with_the_ribbon_tab(out):
+    """A group on a tab that is not showing is display:none, so measuring
+    #edit-tools measured ONE TAB. --film-max is the clamp's upper bound on
+    the rendered column, not just the drag's stop, so the whole strip and
+    every thumbnail in it resized when you clicked a tab: at a 1425px deck
+    the per-tab floors ran 484px (View) to 1388px (Design), taking the
+    column 200px -> 150px and the thumbnails down 31% (2026-09-05, user:
+    "the slide thumbnails change size when you click on different
+    ribbons now").
+
+    The walk folds as it goes because the two faults had to be fixed
+    together: this measurement predates T187's group-fold rung, so taking
+    the max over unfolded tabs would have pinned the strip at its 150px
+    minimum everywhere -- worse than the bug. Folded, it is also the
+    state the bottom of fitEditRibbon's climb reaches, so the two cannot
+    disagree.
+    """
+    assert "  function tabGroupsOn(t){" in out
+    # applyTab delegates, so there is one implementation of data-off
+    assert "    tabGroupsOn(t);\n    syncTabStrip();" in out
+    # the walk itself
+    assert ("    var wasTab=activeTab(),"
+            "reFold=$$('#edit-tools .rbn-grp.rbn-folded');") in out
+    assert "      if(!tabHasContent(t)) return;" in out
+    assert "      while(guard++<12&&rbnFoldOne()) sizeRibbonGroups();" in out
+    # ...and it puts the ribbon back the way it found it
+    assert "    tabGroupsOn(wasTab);" in out
+    assert "    reFold.forEach(rbnFoldGroup);" in out
+    # once per ribbon, not once per selection: fitFilmMax runs on every
+    # selection change and this is now eight layouts, not one
+    assert "    if(sig===filmFloorSig&&filmFloorW) return filmFloorW;" in out
+    assert "    filmFloorSig=sig;" in out
+
+
 def test_a_thumbnail_grows_with_the_room_it_is_given(out):
     """MINI_H is the FLOOR now, not the height -- a 460px strip drawing
     3px lettering is not a thumbnail.

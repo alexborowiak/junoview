@@ -30,6 +30,81 @@ def test_every_contextual_control_is_governed(out):
     assert "governed by nothing in " in out
 
 
+def test_every_contextual_control_can_be_hidden_again(out):
+    """The sibling of the test above, and the half it was missing.
+
+    The deselect sweep hides only ids that fmtGovernedSet() names, so a
+    control shown by showFmt but absent from both tables is shown once
+    and never hidden. Its GROUP therefore stays occupied, tabHasContent
+    ('object') stays true forever, the Object tab never leaves the strip
+    and the T192 fall-back that returns you to the tab you came from
+    cannot fire even once. #fmt-hist did exactly that from the day T220
+    added it: deselecting left you standing on Object with #et-fmt
+    hidden, i.e. a blank ribbon row (2026-09-05, user).
+
+    The existing test above checks that a control is SHOWN by a table.
+    This one checks it can be put away, which is a different question
+    and is the one that was open. Whole-token matching, not `in`: a new
+    `#fmt-line` must not be counted as governed because `#fmt-linewrap`
+    happens to be listed.
+    """
+    import re
+
+    from junoview import assets
+
+    html = assets.deck_html()
+    bar = html[html.index('id="et-fmt"'):]
+    bar = bar[:bar.index("</div>", bar.index('id="et-fmt"'))]
+
+    tables = out[out.index("var FMT_KINDS={"):out.index("function fmtGovernedSet")]
+    named = set(re.findall(r"#([a-z0-9-]+)", tables))
+
+    # every id inside the format bar, in markup order, with its ancestors
+    ids = re.findall(r'id="(fmt-[a-z0-9-]+)"', bar)
+    ungoverned = []
+    for i in ids:
+        if i in named:
+            continue
+        # ...or governed by an ancestor: the outermost governed element is
+        # what the sweep hides, and it takes its children with it (T177)
+        at = bar.index(f'id="{i}"')
+        before = bar[:at]
+        if any(a in named for a in re.findall(r'id="(fmt-[a-z0-9-]+)"', before)
+               if before.count("</span>", before.index(f'id="{a}"')) <
+               before.count("<span", before.index(f'id="{a}"'))):
+            continue
+        ungoverned.append(i)
+
+    assert not ungoverned, (
+        "these format-bar controls are in neither FMT_KINDS nor FMT_MANUAL, "
+        "so the deselect sweep cannot reach them and the contextual tab "
+        f"they sit on will never empty: {ungoverned}")
+    # and the one that caused it stays named
+    assert "#fmt-hist " in out
+
+
+def test_a_folded_group_is_judged_by_what_is_in_the_drawer(out):
+    """The other half of why the Object tab would not leave the strip,
+    and the half no substring test could have found.
+
+    rbnFoldGroup (T187) moves a group's whole .rbn-row into a `hidden`
+    .rbn-foldmenu and leaves a tile behind. The emptiness pass counted
+    that tile -- an ungoverned, always-visible <button> -- as content, so
+    once the window was narrow enough for the ladder to fold the object
+    group, every control on it could be hidden and the group still had
+    one visible child. Driven in a browser on 2026-09-05: after
+    deselecting, the group's children were the wrap, an "Object" door
+    tile, and three properly-hidden controls, and it stayed on screen.
+
+    Both halves are needed. Skip only the door and a folded group with
+    real content reads as EMPTY (its controls are inside a hidden menu)
+    and is taken off the row altogether.
+    """
+    assert "        if(n.classList.contains('rbn-foldwrap')" in out
+    assert "           ||n.classList.contains('rbn-foldbtn')) continue;" in out
+    assert "          if(n.hidden&&!n.classList.contains('rbn-foldmenu')){" in out
+
+
 def test_a_poster_is_not_offered_animation(out):
     """Animation is a BUILD: an item appearing on click as you step through
     a deck. A poster is one printed page -- there is no click and nothing
@@ -108,7 +183,14 @@ def test_swap_to_notebooks_goes_to_the_notebooks(out):
     said and is meaningless for a poster.
     """
     assert "if(mode==='edit') closeDeck();" in out
-    assert "if(mode==='edit') setUIMode('create');" not in out
+    # SCOPED to #dc-edit's own handler. Unscoped, this banned the string
+    # anywhere in the deck -- and 2026-09-05's Close fix legitimately
+    # writes "if(mode==='edit') setUIMode('create'); else closeDeck();"
+    # in the QAT, which is the Escape ladder and the right answer there.
+    edit = out[out.index("  var editBtn=$('#dc-edit');"):]
+    edit = edit[:edit.index("var cxBtn=$('#et-cancel');")]
+    assert "if(mode==='edit') closeDeck();" in edit
+    assert "if(mode==='edit') setUIMode('create');" not in edit
 
 
 def test_a_deck_keeps_its_strip_and_a_poster_does_not(out):

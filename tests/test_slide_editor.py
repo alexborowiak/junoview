@@ -589,7 +589,7 @@ def test_the_ribbon_is_tabbed(out):
     assert 'id="rbn-tab-animate"' not in out
     # a browser remembering one of the retired tabs lands on its new host
     assert "if(t==='animate') t='animation';" in out
-    assert "function setTab(t){" in out
+    assert "function setTab(t,transient){" in out
     assert "function applyTab(){" in out
     # the filter runs BEFORE anything measures the row
     # the filter runs BEFORE anything MEASURES the row, which is the
@@ -598,7 +598,11 @@ def test_the_ribbon_is_tabbed(out):
     # empty does not depend on which tab is showing, and the tab
     # decisions need that answer first (2026-08-25).
     i = out.index("function syncRibbonGroups(){")
-    block = out[i:i + 2600]
+    # bounded by the next function DEFINITION, not by a byte count: a
+    # comment added inside the body used to push applyTab() past a fixed
+    # 2600-char window and fail an ordering test for a reason that had
+    # nothing to do with the ordering (2026-09-05)
+    block = out[i:out.index("function sizeRibbonGroups(){", i)]
     assert "applyTab();" in block
     assert block.index("applyTab();") < block.index("sizeRibbonGroups();")
     # a poster has no build, so the whole Animate GROUP stands down there

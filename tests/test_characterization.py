@@ -1127,8 +1127,15 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
-EXPECTED_MD5 = "acfaffaa42e1c58e0c2c2f5d9f4bec6a"
-EXPECTED_BYTES = 3590875
+# 2026-09-05, T270-T272: chrome only, the document half is unchanged.
+# The QAT Close handler grows the second rung of the Escape ladder
+# plus overlayCloseAll (T270); #fmt-hist and #fmt-crop-caret join
+# FMT_MANUAL, setTab takes a `transient` flag and the group-emptiness
+# pass learns to see past a fold door (T271); and ribbonMinW walks
+# every tab, folding as it goes, so the strip stops resizing with the
+# ribbon tab (T272).
+EXPECTED_MD5 = "08bf685c79d99bdf52a267fcf47dd79f"
+EXPECTED_BYTES = 3599076
 
 
 def _render_example() -> str:

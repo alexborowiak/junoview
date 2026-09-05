@@ -36,9 +36,35 @@ def test_both_journeys_are_on_the_bar_you_can_see():
 def test_they_are_two_destinations_not_one(out):
     """Home is the start screen; Close is the notebook you were
     building from."""
-    assert ("  if(qatClose) qatClose.addEventListener('click',function(e){\n"
-            "    e.stopPropagation();setUIMode('create');});") in out
+    assert "  var qatClose=$('#qat-close');" in out
     assert "    if(APP&&typeof APP.goHome==='function') APP.goHome(true);" in out
+
+
+def test_close_climbs_the_same_ladder_escape_does(out):
+    """T239 gave Close one rung. But syncTopBar shows the QAT in create
+    mode too, so the second press re-entered the mode it was already in
+    and the button was visibly dead (2026-09-05, user: "the close button
+    is broken"). It steps out to the builder, then out of the deck --
+    which is what the Esc branch has always done."""
+    assert "    if(mode==='edit') setUIMode('create'); else closeDeck();" in out
+    # ...and Escape's own ladder is still the thing it mirrors
+    assert "      else if(mode==='edit'){setUIMode('create');}" in out
+    assert "      else closeDeck();" in out
+
+
+def test_close_takes_its_open_menus_with_it(out):
+    """closeDeck() hides the deck without emptying the overlay stack, and
+    the handler's stopPropagation keeps the click away from overlayBoot's
+    outside-click listener -- so a menu left open would still be
+    hidden=false the next time the deck opened."""
+    assert "    overlayCloseAll();" in out
+
+
+def test_the_pick_bars_primary_button_is_wired(out):
+    """#pick-done was shown by syncPickbar and referenced nowhere else in
+    the JS tree: the one blue button in the flip-book flow did nothing."""
+    assert "  var pickDone=$('#pick-done');" in out
+    assert "  if(pickDone) pickDone.addEventListener('click',function(){" in out
 
 
 def test_home_hides_where_there_is_no_home(out):

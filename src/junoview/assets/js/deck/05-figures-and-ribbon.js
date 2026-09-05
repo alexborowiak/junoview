@@ -1196,6 +1196,16 @@
       b.classList.toggle('rbn-tab-off',!on&&!tabHasContent(b.dataset.tab));
     });
   }
+  /* the data-off half of applyTab and NOTHING else. ribbonMinW walks
+     every tab to find the widest, and must not dispatch sem:ribbon-tab
+     or repaint the tab strip eight times to do it. */
+  function tabGroupsOn(t){
+    var bar=$('#edit-tools'); if(!bar) return;
+    $$('.rbn-grp[data-tab]',bar).forEach(function(g){
+      if(g.dataset.tab===t) g.removeAttribute('data-off');
+      else g.setAttribute('data-off','1');
+    });
+  }
   function applyTab(){
     var bar=$('#edit-tools'); if(!bar) return;
     var t=activeTab();
@@ -1203,17 +1213,23 @@
        the tab is about them, so they should not wait for the order
        pane or Quick animate */
     deckEl.classList.toggle('tab-animation',t==='animation');
-    $$('.rbn-grp[data-tab]',bar).forEach(function(g){
-      if(g.dataset.tab===t) g.removeAttribute('data-off');
-      else g.setAttribute('data-off','1');
-    });
+    tabGroupsOn(t);
     syncTabStrip();
     document.dispatchEvent(new CustomEvent('sem:ribbon-tab',
       {detail:{tab:t}}));
   }
-  function setTab(t){
+  function setTab(t,transient){
     if(TABS.indexOf(t)<0||t===activeTab()) return;
-    curTab=t;lsSet(tabKey(),t);
+    curTab=t;
+    /* A TAB THE SELECTION CARRIED YOU TO IS NOT A TAB YOU CHOSE. Writing
+       the contextual tab into the preference meant a reload landed you
+       on Object with nothing selected -- an empty row, and then the
+       empty-tab fall-back dropped you somewhere you had never asked to
+       be, rather than back where you were working (2026-09-05, with the
+       #fmt-hist fix that made the fall-back reachable at all). The
+       deliberate setTab('animation') in 48-animation.js IS a choice and
+       still persists. */
+    if(!transient) lsSet(tabKey(),t);
     applyTab();
     /* the row's content just changed wholesale, so its column counts and
        its density both have to be judged again */
@@ -1481,6 +1497,17 @@
     if(deckEl.classList.contains('rbn-fold')) return 0;
     if(deckEl.classList.contains('rbn-side')) return 0;
     if(!bar.clientWidth) return 0;
+    /* MEASURED ONCE PER RIBBON, NOT ONCE PER SELECTION. The walk below
+       is eight max-content layouts with a fold and an unfold around each,
+       and fitFilmMax calls this on every selection change as well as on
+       every tab click. max-content does not depend on the container's
+       width, so the answer only moves when the ribbon's CONTENTS do. */
+    var sig=TABS.join(',')+'|'+TABS.filter(tabHasContent).join(',')+'|'
+      +$$('#edit-tools .rbn-grp').filter(function(g){
+        return !g.hidden;}).length
+      +'|'+$$('#edit-tools .rbn-grp .rbn-row>*').filter(function(n){
+        return !n.hidden;}).length;
+    if(sig===filmFloorSig&&filmFloorW) return filmFloorW;
     var cl=deckEl.classList,rungs=[],had={},wasFolded=viewFolded,min;
     ERCW.forEach(function(r){rungs.push(r[0]);});
     ERC.forEach(function(c){rungs.push(c);});
@@ -1506,11 +1533,53 @@
        here, and both are put back below. */
     var hadW=bar.style.width;
     bar.style.width='max-content';
-    min=Math.ceil(bar.getBoundingClientRect().width);
+    /* EVERY TAB, NOT THE ONE SHOWING, AND FOLDED AS THE LADDER WOULD.
+       Two faults, and they had to be fixed together.
+
+       (1) `.rbn-grp[data-off]` is display:none, so measuring the active
+       tab made --film-max -- and therefore the rendered strip and every
+       thumbnail in it -- a function of which tab you had last clicked.
+       Measured 2026-09-04 on a 1425px deck the per-tab floors ran view
+       484px, present 627, images 690, text 784, animation 1049, home
+       1152, design 1388: clicking Design took --film-max from 656px to
+       150px, the column from 200px to 150px, and every thumbnail shrank
+       31% (2026-09-05, user: "the slide thumbnails change size when you
+       click on different ribbons now").
+
+       (2) This measurement predates T187's group-fold rung and never
+       applied it, so it reported what the row needs UNFOLDED. That was
+       survivable while only one tab was measured; taking the max over
+       all of them would have pinned the strip at its 150px minimum on
+       every tab, which is worse than the bug. So the walk folds every
+       group that may fold -- which is exactly the bottom of
+       fitEditRibbon's own climb, and keeps the two from disagreeing.
+
+       Folding also makes the floors far more uniform across tabs (a
+       folded group is one door tile whatever it holds), so the max is
+       no longer set by whichever tab happens to be fattest. */
+    var wasTab=activeTab(),reFold=$$('#edit-tools .rbn-grp.rbn-folded');
+    min=0;
+    TABS.forEach(function(t){
+      if(!tabHasContent(t)) return;
+      tabGroupsOn(t);
+      sizeRibbonGroups();
+      var guard=0;
+      while(guard++<12&&rbnFoldOne()) sizeRibbonGroups();
+      var w=Math.ceil(bar.getBoundingClientRect().width);
+      if(w>min) min=w;
+      rbnUnfoldAll();
+    });
+    tabGroupsOn(wasTab);
+    reFold.forEach(rbnFoldGroup);
+    sizeRibbonGroups();
+    /* the single-tab reading is still taken, and is still the floor when
+       there is only one tab to have (the 'All tools' layout) */
+    if(!min) min=Math.ceil(bar.getBoundingClientRect().width);
     bar.style.width=hadW;
     rungs.forEach(function(c){cl.toggle(c,had[c]);});
     foldViewGroup(wasFolded);
     sizeRibbonGroups();
+    filmFloorSig=sig;
     return min;
   }
   /* The ceiling the strip is allowed to reach, published to CSS as
@@ -1520,7 +1589,7 @@
      The last measured floor is REMEMBERED, so folding the ribbon -- the
      one state where the floor cannot be read -- does not let the strip
      lurch wider only to be shoved back the moment it unfolds. */
-  var filmFloorW=0;
+  var filmFloorW=0,filmFloorSig='';
   function fitFilmMax(){
     var W=deckEl.clientWidth||window.innerWidth||0;
     if(!W) return 900;

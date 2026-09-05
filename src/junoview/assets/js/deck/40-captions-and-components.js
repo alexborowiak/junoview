@@ -1602,6 +1602,20 @@
   if(pickCancel) pickCancel.addEventListener('click',function(){
     endPick();
   });
+  /* THE PRIMARY BUTTON ON THAT BAR HAD NO HANDLER AT ALL. #pick-done was
+     built by T-flipbook (deck.html) and shown by syncPickbar, but the
+     only reference to it in the whole JS tree was that `d.hidden=` line
+     -- so the one blue button in the multi-pick flow did nothing, and
+     the only way out was Cancel or Escape (found with the Close button,
+     2026-09-05). Bound here beside Cancel rather than inside
+     syncPickbar, which re-runs on every pick and would stack listeners.
+     endPick() with no ref is exactly right: pickAdd has been committing
+     each frame as it went, and endPick records the one history entry
+     for the batch. */
+  var pickDone=$('#pick-done');
+  if(pickDone) pickDone.addEventListener('click',function(){
+    endPick();
+  });
   /* ---- The QR generator was removed on 2026-09-03 (T220) --------------
      It shipped for posters in 2026-08-04 and was never asked for again;
      the user, seeing its button on Insert: "please get rid of QR code,

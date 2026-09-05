@@ -178,7 +178,10 @@ def test_the_selection_opens_the_layouts_own_format_tab(out):
     assert "{id:'object',label:'Object'}" in out
     assert "function ribbonSelTab(){" in out
     assert "var wantTab=(activeTab()!==selT" in out
-    assert "if(wantTab) setTab(wantTab); else syncRibbonGroups();" in out
+    assert "if(wantTab) setTab(wantTab,true); else syncRibbonGroups();" in out
+    # ...and TRANSIENT, so a tab the selection carried you to is not
+    # written to the remembered-tab preference (2026-09-05)
+    assert "    if(!transient) lsSet(tabKey(),t);" in out
 
 
 def test_ribbon_layouts_have_a_persistent_worded_door(out):

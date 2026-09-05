@@ -5711,3 +5711,89 @@ option. Then where has the ability to refresh all images gone?"
   of taste rather than a defect -- the empty right pane was a symptom
   of the comparison, and should fill now. Worth another look with the
   user on what else they want from it.
+
+- [x] **T270 - The Close button stops being dead after the first press.**
+  The user (2026-09-05): "The close button is broken."
+  *Done 2026-09-05.* It was, and the reason is one missing rung. T239
+  put Close on the QAT bound to an unconditional `setUIMode('create')`
+  -- but `syncTopBar` shows the QAT in BOTH edit and create mode, so
+  after the first press you were standing in the builder looking at the
+  same button, and the second press re-entered the mode it was already
+  in. That is not quite a no-op (it re-syncs a dozen panes) but it goes
+  nowhere, so the button visibly stopped working. Its own tooltip
+  promised "go back to the notebook you were building from", which only
+  `closeDeck()` does.
+  Close now climbs **the ladder Escape has always climbed** -- from a
+  slide out to the builder, from the builder out of the deck -- so the
+  keyboard and the button agree and neither press is ever dead.
+  Two things found beside it. `overlayCloseAll()` had been defined since
+  T207 and called from nowhere; `closeDeck()` hides the deck without
+  emptying the overlay stack, and Close's `stopPropagation` keeps the
+  click away from the outside-click handler, so an open menu would have
+  stayed `hidden=false` for the next time the deck opened. It is called
+  here, deliberately. And **#pick-done had no handler at all** -- the one
+  primary button in the flip-book pick flow, shown by `syncPickbar` and
+  referenced nowhere else in the JS tree, did nothing; the only way out
+  was Cancel or Escape. Wired. While there: `Cancel (Esc)` becomes
+  `Stop (Esc)` once a figure is in, because `pickAdd` commits each frame
+  as it is clicked and there is nothing left to cancel.
+
+- [x] **T271 - The Object tab is contextual, the way it says it is.**
+  The user (2026-09-05): "The object tab should only appear when
+  clicking on an object, then when unclicking back to previous tab."
+  *Done 2026-09-05.* The machinery was all there and correct -- an empty
+  tab is dropped from the strip, and T192 already remembered the tab you
+  came from. **Two ungoverned things defeated it, and only a browser
+  could see the second.**
+  **One control.** `#fmt-hist` (T220's History tile) is shown by
+  `showFmt` but appeared in neither `FMT_KINDS` nor `FMT_MANUAL`, so the
+  deselect sweep -- which reaches only ids in `fmtGovernedSet()` -- could
+  never hide it again. From the first selection on, its group stayed
+  occupied and the tab never left the strip. It was the only control on
+  the whole tab with no governed self-or-ancestor.
+  **And a fold door.** With that fixed the tab still would not go.
+  `rbnFoldGroup` (T187) moves a group's row into a `hidden`
+  `.rbn-foldmenu` and leaves a tile behind, and the emptiness pass
+  counted that tile -- an ungoverned, always-visible `<button>` -- as
+  content. So any group the ladder had folded read as occupied forever.
+  Driven in a browser: after deselecting, the group's five children were
+  the wrap, an "Object" door, and three properly-hidden controls. The
+  pass now skips the door AND stops treating the drawer's `hidden` as a
+  reason to hide -- both halves, because skipping only the door makes a
+  folded group with real content read as empty and vanish off the row.
+  Also: a tab the SELECTION carried you to is no longer written to the
+  remembered-tab preference, or a reload landed you on Object with
+  nothing selected.
+  Verified live, 1440x900: standing on Images with nothing selected the
+  Object tab is out of the strip; selecting a figure brings it in and
+  activates it; clicking off the figure takes it away again and returns
+  the ribbon **to Images**.
+
+- [x] **T272 - The slide thumbnails stop resizing when you change
+  ribbon tab.**
+  The user (2026-09-05): "The slide thumbails change size when you click
+  on differe\nt ribons now."
+  *Done 2026-09-05.* `.rbn-grp[data-off]` is `display:none`, so
+  `ribbonMinW` measured **only the tab that was showing**; `fitFilmMax`
+  publishes `--film-max = deckWidth - that floor`, and `.deck-create` is
+  `clamp(150px, --film-w, --film-max)` -- so the ceiling, and with it the
+  rendered column and every thumbnail in it, was a function of which tab
+  you had last clicked. Measured in a browser at 1440x900: `--film-max`
+  ran 150px on Design to 656px on View/Present/Images, taking the column
+  200px -> 150px and each thumbnail 144x82 -> 109x66, a 31% shrink.
+  The walk now measures **every tab and takes the widest**. It also
+  **folds as it goes**, and the two had to be fixed together: this
+  measurement predates T187's group-fold rung, so a max over UNFOLDED
+  tabs would have pinned the strip at its 150px minimum everywhere,
+  which is worse than the bug. Folded is also the state the bottom of
+  `fitEditRibbon`'s own climb reaches, so the two cannot disagree -- and
+  a folded group is one door tile whatever it holds, which is what makes
+  the floors uniform across tabs in the first place.
+  Memoised on a signature of the ribbon's contents, because `fitFilmMax`
+  runs on every selection change and this is now eight max-content
+  layouts rather than one.
+  Verified live A/B against HEAD: after, `--film-max` is 656px on all
+  eight tabs at 1440x900 and 490px on all eight at 1100x800; the column
+  holds 200px and the thumbnail 144x82 throughout, and `scrollWidth >
+  clientWidth` is false on every tab at both sizes -- the ribbon is
+  never clipped, which is the invariant the whole mechanism exists for.

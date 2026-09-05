@@ -8,8 +8,14 @@
      unchanged: the first click is still the answer (2026-08-22). */
   var pickMulti=false,pickAdded=0;
   function syncPickbar(){
-    var w=$('#pick-what'),d=$('#pick-done');
+    var w=$('#pick-what'),d=$('#pick-done'),c=$('#pick-cancel');
     if(d) d.hidden=!pickMulti;
+    /* "Cancel" is a lie once a figure is in: pickAdd commits each frame
+       as it is clicked, so there is nothing left to cancel and the
+       button does exactly what Done does. Say Stop instead of promising
+       an undo that already happened (2026-09-05, found wiring #pick-done,
+       which had no handler at all). */
+    if(c) c.textContent=(pickMulti&&pickAdded)?'Stop (Esc)':'Cancel (Esc)';
     if(!w) return;
     if(!pickMulti){
       w.innerHTML=bic('pin')+' Click a card in the notebook to place it '
