@@ -52,7 +52,12 @@ def _git_file_log(f: Path, n: int = 25) -> list:
     try:
         r = _git_run(f, "log", "--follow", "--name-only", "-n", str(n),
                      "--format=%h%x1f%s%x1f%ad",
-                     "--date=format:%d %b %Y · %H:%M", "--", str(f))
+                     # ASCII on the wire, the separator added below.
+                     # Git on Windows takes the command line through the
+                     # ANSI codepage, so a "·" in the format string came
+                     # back as a replacement char and rode into the deck's
+                     # saved lockver.date (seen 2026-09-05).
+                     "--date=format:%d %b %Y @ %H:%M", "--", str(f))
         if r.returncode != 0:
             return []
         out: list = []
@@ -63,7 +68,8 @@ def _git_file_log(f: Path, n: int = 25) -> list:
                 # always the LAST part, the message everything between
                 out.append({"id": parts[0],
                             "msg": "\x1f".join(parts[1:-1]),
-                            "date": parts[-1] if len(parts) > 2 else "",
+                            "date": (parts[-1].replace(" @ ", " · ")
+                                     if len(parts) > 2 else ""),
                             "path": ""})
             elif line.strip() and out and not out[-1]["path"]:
                 out[-1]["path"] = line.strip()

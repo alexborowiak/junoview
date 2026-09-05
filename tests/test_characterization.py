@@ -1204,8 +1204,16 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "13a8644459817b64da04b02622ed2ccd"
-EXPECTED_BYTES = 3667053
+# 2026-09-05, T297-T300: chrome only. A placed figure captures its
+# own pixels -- embedCapture/embedIfAbsent, from all four gestures
+# that give a frame a ref -- and the capture persists (embSaveSoon);
+# cloneBody and cellFacets read that kept copy BEFORE the open card
+# unless the ref is marked live (refIsLive/setRefLive, pres.live);
+# and the Images rows grow a source line -- figure number, refresh,
+# the live-link switch and the git commit -- with .img-acts/
+# .img-act/.img-num beside .img-from.
+EXPECTED_MD5 = "45398572ff0f3b48552fc86e72cb3949"
+EXPECTED_BYTES = 3676875
 
 
 def _render_example() -> str:

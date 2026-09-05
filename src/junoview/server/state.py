@@ -117,7 +117,7 @@ class _AppState:
         with self.lock:
             if rev is not None and rev != self.revision:
                 raise StaleWrite(self.revision, self.presentations)
-            self.presentations = pres
+            self.presentations = _keep_embedded(self.presentations, pres)
             self.revision += 1
             self._write()
             return self.revision
@@ -133,6 +133,49 @@ class _AppState:
                 continue
             taken.add(stem_for(Path(p), taken))
         return taken
+
+
+def _keep_embedded(old: list, new: list) -> list:
+    """Carry each deck's ``emb`` block forward when the write omits it.
+
+    The editor autosaves the LEAN form -- refs, no figures -- 1.2s after
+    every keystroke, and only rewrites the self-contained form on a
+    deliberate Save or after 20 idle seconds. Because this method
+    replaces the whole array, that lean write DELETED every ``emb``
+    block from junoview_project.json and left it refs-only for most of
+    an editing session. Close the tab in that window, or sync the file
+    to another machine, and the figures existed only in one browser
+    profile's IndexedDB (2026-09-05, user: "I have lost too many
+    things").
+
+    Omission is not deletion, so absence carries forward and an explicit
+    ``emb`` -- including an empty one, which is what a deck with no
+    placed figures sends -- replaces it.
+
+    Matched on the deck's NAME, because a name is the only identity a
+    saved presentation has (``as_presentations`` writes no id). Renaming
+    a deck therefore drops the carry-forward for one write, which is the
+    behaviour this function replaces rather than a new failure: the
+    rename is a deliberate Save, and a deliberate Save sends the
+    self-contained form anyway.
+    """
+    def key(p):
+        return p.get("name") if isinstance(p, dict) else None
+
+    held = {}
+    for p in old or []:
+        k = key(p)
+        if k and isinstance(p.get("emb"), dict) and p["emb"]:
+            held[k] = p["emb"]
+    if not held:
+        return new
+    out = []
+    for p in new or []:
+        k = key(p)
+        if isinstance(p, dict) and k in held and "emb" not in p:
+            p = {**p, "emb": held[k]}
+        out.append(p)
+    return out
 
 
 def _is_deck_file(name: str) -> bool:

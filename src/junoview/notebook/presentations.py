@@ -40,7 +40,13 @@ def as_presentations(obj: Any) -> list:
     elif isinstance(obj, dict) and isinstance(obj.get("presentations"), list):
         pres = obj["presentations"]
     elif isinstance(obj, dict) and isinstance(obj.get("slides"), list):
-        pres = [{"name": obj.get("name") or "deck", "slides": obj["slides"]}]
+        # T300: carry the WHOLE object, not a rebuilt {name, slides}.
+        # This branch used to name two keys and drop the rest, so a
+        # single-deck file lost its embedded snapshots -- and every other
+        # deck-level key -- on the way in. The per-key allow-list below
+        # still decides what survives; this only stops the keys being
+        # thrown away before they reach it.
+        pres = [{**obj, "name": obj.get("name") or "deck"}]
     else:
         return []
     out = []
@@ -248,8 +254,14 @@ def as_presentations(obj: Any) -> list:
         # they belong to the deck, so dropping them here loses them on
         # every save-and-reopen, which is what happened until
         # 2026-08-29.
+        # "live" is the set of refs the author asked to keep as LIVE
+        # links rather than as the kept copy (T298). Dropping it here
+        # would silently turn every live link back into a snapshot on
+        # save-and-reopen -- quiet, and in the one direction the author
+        # explicitly opted out of.
         for key in ("wmark", "head", "foot", "styles", "sections",
-                    "tokens", "components", "cuts", "guides", "masters"):
+                    "tokens", "components", "cuts", "guides", "masters",
+                    "live"):
             if isinstance(p.get(key), dict):
                 entry[key] = p[key]
         # embedded card snapshots — the deck's own copy of every placed

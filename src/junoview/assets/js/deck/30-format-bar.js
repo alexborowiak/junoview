@@ -49,6 +49,9 @@
     a.frames.push({ref:ref});
     /* land on the frame just added, so Done leaves you looking at it */
     a.at=a.frames.length-1;
+    /* T300: and keep its pixels, like every other placement door --
+       provRef reads the SELECTED frame, which is the one just pushed */
+    if(typeof embedIfAbsent==='function') embedIfAbsent(a);
     pickAdded++;markDirty(true);syncPickbar();
   }
   function endPick(ref){
@@ -59,11 +62,21 @@
     if(ref!==undefined&&idx>=0){
       var s=pres.slides[cur];
       var a=s&&(s.annots||[])[idx];
-      if(a&&a.k==='cell'){a.ref=ref;markDirty();}
+      /* T300: the picker is a placement door too. There are four of
+         them (this pair, pickAdd above and the strip's click-to-place)
+         and only one of them capturing would have been the same bug
+         with a smaller blast radius. */
+      if(a&&a.k==='cell'){
+        a.ref=ref;
+        if(typeof embedIfAbsent==='function') embedIfAbsent(a);
+        markDirty();
+      }
       else if(a&&a.k==='flip'){
         a.frames=flipFrames(a).slice();
         a.frames.push({ref:ref});
-        a.at=a.frames.length-1;markDirty();
+        a.at=a.frames.length-1;
+        if(typeof embedIfAbsent==='function') embedIfAbsent(a);
+        markDirty();
       }
     }
     /* a multi-pick has been writing frames as it went with markDirty(true)

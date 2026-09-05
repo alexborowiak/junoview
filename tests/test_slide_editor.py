@@ -2415,9 +2415,13 @@ def test_updating_one_figure_leaves_its_geometry_alone(out):
     re-run by the user, and this takes what it wrote.
     """
     assert "function resyncFigure(a){" in out
-    assert "embStore(normRef(p.ref)||p.ref,e);" in out
+    # T297: the capture moved into embedCapture, which resyncFigure and
+    # the place-a-figure path now share -- one snapshot format, and one
+    # place that remembers to persist it
+    assert "embStore(normRef(ref)||ref,e);" in out
+    assert "    if(!embedCapture(p.ref,p.live)) return 0;" in out
     # the same record shape the save path writes -- one snapshot format
-    assert "var cc=p.live.hasCode?cloneCode(p.ref):null;" in out
+    assert "var cc=live.hasCode?cloneCode(ref):null;" in out
     assert "if(cc) e.code=cc.outerHTML;" in out
 
 

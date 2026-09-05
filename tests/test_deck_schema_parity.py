@@ -110,6 +110,10 @@ DECK_SENTINELS = {
     # deck, so it has to survive the rebuild like any other deck key
     # (added 2026-08-29, the sixth instance of this bug class).
     "guides": {"x": [25], "y": [50], "b": [[10, 10, 30, 20]]},
+    # which figures are LIVE links instead of the deck's kept copy
+    # (T298). Ref-keyed; absence means kept, which is what every deck
+    # written before it wants.
+    "live": {"demo::clim": 1},
 }
 
 SLIDE_SENTINELS = {

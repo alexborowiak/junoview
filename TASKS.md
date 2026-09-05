@@ -6532,3 +6532,79 @@ option. Then where has the ability to refresh all images gone?"
   keep a file. Amber and not red: choosing it is a reasonable thing to
   do and nothing is broken, which is the same distinction and the same
   token T279 settled for the style check.
+
+- [x] **T297 - a figure keeps its pixels from the moment it is placed.**
+  The user (2026-09-05): "most of the images, e.g. from notebooks or
+  paths can dissapear as they are kind of a sim lin. I think that all
+  images should be embedded into the thing, but should have the option
+  to refreshed from the path."
+  *Done 2026-09-05.* EMBED was written on a DELIBERATE save
+  (`embedAssets`), on import, and nowhere else -- so a deck that had
+  only ever autosaved carried refs and no pixels. Close the notebook and
+  the frame did not go blank, it went AWAY:
+  `.deck:not(.editing) .an-cell.empty{display:none}` removes it, so a
+  talk given next week is simply missing a panel. And `embStore` writes
+  MEMORY only -- `embSaveSoon` is what reaches IndexedDB, and
+  `resyncFigure` never called it, so even a deliberate per-figure
+  refresh was gone on the next reload. One capture point now
+  (`embedCapture`), which persists, plus `embedIfAbsent` on placement.
+  It does not overwrite a copy already held: dropping the same figure on
+  a second slide must not re-read the notebook under the first.
+  *Verified live:* placing one figure in the app put 75,280 characters
+  of html into `emb:proj:...` in IndexedDB with no save performed.
+
+- [x] **T298 - the kept copy is what you see; a live link is opt-in.**
+  Same message: "there should be an option 'make sym link', and then on
+  hover tell them it will load from path each time."
+  *Done 2026-09-05.* `cloneBody` read the open card FIRST and the deck's
+  own copy only as a fallback, so re-running a notebook silently
+  rewrote slides that were finished. The kept copy wins now; the
+  notebook is what you go BACK to, deliberately. Liveness is per-REF
+  (`pres.live`, `refIsLive`/`setRefLive`) because two frames showing one
+  cell cannot sensibly disagree, and `cellFacets` reads the same body
+  the render will use -- picking the part from the live card while
+  rendering the kept one is how you get an empty frame. The live card
+  stays the fallback when no snapshot exists: a stale figure beats a
+  blank one. Absence means kept, which is what every deck written before
+  today wants. *Verified live:* a marked snapshot proved the kept copy
+  renders, and the switch round-tripped through save-and-reload.
+
+- [x] **T299 - the Images tab says where a picture came from.**
+  Same message: "The refresh from path shoudl appear with the path when
+  clicking on them ... All these optoins should be in the images tab
+  btw ... One that are form notebooks should have the notebook url, then
+  the image number and also the git commit. With another option of
+  'update to current git commit'."
+  *Done 2026-09-05.* Each row grows a source line under the path: the
+  figure's number ("figure 1 of 7" -- counting FIGURES, not cards, and
+  empty when the notebook is shut, because an ordinal nobody can check
+  is worse than none), then Refresh, then the live-link switch, then the
+  commit. Refresh is ONE figure and says so, against the deck-wide
+  button the user has learned to fear. Both states of the switch explain
+  themselves on hover, because either one can be the surprising one. The
+  commit chip reads the short sha and moving it to the notebook's
+  current commit is a click; it appears in app mode only, because a pin
+  needs a repository to point into. Words rather than more glyphs: the
+  lock chip beside them is already icon-only and three more would be
+  four mysteries in a 260px pane.
+
+- [x] **T300 - the other three placement doors, and the autosave that
+  wiped the file's figures.**
+  *Done 2026-09-05.* The mapping pass found FOUR gestures that give a
+  frame a ref, not one: the strip's click-to-place, the picker's cell
+  branch, its flip branch, and `pickAdd` filling a flip book. All four
+  capture now. Worse, `save_presentations` replaces the whole array and
+  the editor autosaves the LEAN form 1.2s after every keystroke -- so
+  junoview_project.json lost every `emb` block and sat refs-only for
+  most of an editing session, regaining them on a deliberate Save or
+  after 20 idle seconds. Omission is not deletion: `_keep_embedded`
+  carries a deck's block forward when the write omits it, and an
+  explicit `emb` -- including the empty one a figureless deck sends --
+  still replaces it. `as_presentations`'s legacy single-deck branch was
+  rebuilding a bare `{name, slides}` and dropping `emb` with everything
+  else on the way IN; it carries the whole object now and lets the
+  existing allow-list decide. And the git date came back mangled: git on
+  Windows takes its command line through the ANSI codepage, so the "·"
+  in the `--date` format arrived as a replacement character and rode
+  into the saved `lockver.date`. ASCII on the wire, separator added in
+  Python.

@@ -2383,6 +2383,9 @@
     }
     e.preventDefault();e.stopPropagation();
     target.ref=ref;
+    /* T297: keep the pixels NOW, while the notebook is definitely open
+       -- this click is the only moment we can be sure of that */
+    if(typeof embedIfAbsent==='function') embedIfAbsent(target);
     activePane=-1;   /* disarm: adding again needs a fresh frame selection */
     markDirty();refresh();
     card.classList.add('target-flash');

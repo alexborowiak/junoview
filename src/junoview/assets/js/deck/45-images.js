@@ -220,6 +220,122 @@
     });
     return rows;
   }
+  /* T299: WHICH FIGURE THIS IS, AND THE THINGS YOU CAN DO TO IT.
+     Everything about a picture's SOURCE now answers on its row here --
+     the number, the commit, the refresh and the live-link switch
+     (2026-09-05, user: "All these optoins should be in the images tab
+     btw"). Words, not another glyph: the line is full width, and three
+     more unlabelled chips beside the lock would be four mysteries in a
+     260px pane. */
+  var figOrderMemo={};
+  function figOrder(stem){
+    if(figOrderMemo[stem]) return figOrderMemo[stem];
+    var out=[];
+    (SHELLITEMS[stem]||[]).forEach(function(k){
+      try{if(cellFacets(k).figure) out.push(k);}catch(e){}
+    });
+    figOrderMemo[stem]=out;
+    return out;
+  }
+  /* "the image number" (2026-09-05) counted the way a person counts
+     them: among the notebook's figures, not among all its cards. Empty
+     when the notebook is shut -- an ordinal we cannot check is worse
+     than none. */
+  function figNumber(ref){
+    var n=normRef(ref)||String(ref||''),pr=splitRef(n);
+    if(!pr[0]) return '';
+    var ord=figOrder(pr[0]),i=ord.indexOf(n);
+    return i<0?'':('figure '+(i+1)+' of '+ord.length);
+  }
+  function imgRefreshRow(r){
+    var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+    if(!a2) return;
+    if(a2.k==='image'){
+      if(!a2.fkey){toast('This picture was pasted or dropped — there is '
+        +'no file to re-read');return;}
+      refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
+      return;
+    }
+    if(!resyncFigure(a2)){
+      toast('Its notebook is not open, so there is nothing newer to '
+        +'read — the copy in the deck is being shown');
+      return;
+    }
+    toast('Re-read from the notebook, and kept');
+    imgPaneRefresh();
+  }
+  function imgPaneRefresh(){
+    renderImgPane();
+    var ov=$('#img-ov'); if(ov&&!ov.hidden) renderImgOverview();
+  }
+  function imgActs(r){
+    var acts=document.createElement('div');acts.className='img-acts';
+    function act(label,title,fn,on){
+      var b=document.createElement('button');
+      b.type='button';b.className='img-act'+(on?' on':'');
+      b.textContent=label;b.title=title;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();e.preventDefault();fn();});
+      acts.appendChild(b);return b;
+    }
+    var ref=(r.kind==='Figure')&&r.a.ref;
+    if(ref){
+      var num=figNumber(ref);
+      if(num){
+        var sp=document.createElement('span');
+        sp.className='img-num';sp.textContent=num;
+        acts.appendChild(sp);
+      }
+    }
+    act('Refresh',r.kind==='Figure'
+      ?('Re-read this figure from ' + r.from + ' and keep the new copy '
+        + '\u2014 only this one')
+      :(r.a.fkey?('Re-read this picture from '+r.from)
+        :'Pasted or dropped, so there is no file to re-read'),
+      function(){imgRefreshRow(r);});
+    if(ref){
+      var live=(typeof refIsLive==='function')&&refIsLive(ref);
+      act(live?'Live link':'Kept',
+        live
+          ?('Loads from the notebook every time this deck opens. If the '
+            +'notebook moves or changes, so does this figure. Click to '
+            +'keep the copy that is in the deck instead.')
+          :('The copy in the deck is what you see, so it cannot go '
+            +'missing. Click to make it a live link that re-reads from '
+            +'the notebook every time.'),
+        function(){
+          setRefLive(ref,!refIsLive(ref));
+          markDirty();
+          var l=stage.querySelector('.annot-layer');
+          if(l) renderAnnots(l,pres.slides[cur]);
+          imgPaneRefresh();
+        },live);
+      /* the git commit, and the one verb that moves it (2026-09-05:
+         "with another option of update to current git commit"). App
+         mode only, because a pin needs a repository to point into. */
+      if(APP.mode==='app'){
+        var lv=r.a.lockver&&r.a.lockver.commit;
+        act(lv?String(lv):'Pin to commit',
+          lv?('Pinned to commit '+lv+(r.a.lockver.msg
+              ?(' \u201c'+r.a.lockver.msg+'\u201d'):'')
+             +' \u2014 click to move it to the notebook\u2019s current '
+             +'commit')
+            :'Record which commit of the notebook this figure came from',
+          function(){
+            var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
+            if(!a2) return;
+            lockFrame(a2).then(function(ok){
+              if(!ok) return;
+              markDirty();
+              var l=stage.querySelector('.annot-layer');
+              if(l) renderAnnots(l,pres.slides[cur]);
+              imgPaneRefresh();
+            });
+          },!!lv);
+      }
+    }
+    return acts;
+  }
   /* one row: thumbnail, kind, where from, the pin. `after` runs once
      the row has taken you to the thing (the full-screen view closes) */
   function imgRow(r,after){
@@ -237,6 +353,7 @@
     var f=document.createElement('div');f.className='img-from';
     f.textContent=r.from;f.title=r.from;
     mid.appendChild(f);
+    mid.appendChild(imgActs(r));
     row.appendChild(mid);
     var lm=lockMode(r.a);
     var lk=document.createElement('button');

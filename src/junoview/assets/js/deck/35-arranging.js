@@ -2289,17 +2289,47 @@
   /* T20. The snapshot is replaced; the ANNOTATION is not touched at all,
      which is why position, crop and size survive by construction rather
      than by being carefully copied back. */
-  function resyncFigure(a){
-    var p=provOf(a);
-    if(!p||!p.live) return 0;
-    var html=liveCardHtml(p.ref);
+  /* T297: THE ONE PLACE A LIVE CARD BECOMES A KEPT COPY.
+     EMBED used to be written on a DELIBERATE save (embedAssets) or an
+     import and nowhere else, so a deck that had only ever autosaved
+     carried REFERENCES and no pixels: close the notebook, move the
+     file, and every figure on it went blank (2026-09-05, user: "most
+     of the images, e.g. from notebooks or paths can dissapear as they
+     are kind of a sim lin").
+
+     And embStore writes MEMORY only -- embSaveSoon is what reaches
+     IndexedDB. resyncFigure never called it, so even a deliberate
+     per-figure refresh was gone on the next reload. Both halves live
+     here now, so there is one answer to "is this kept" rather than one
+     per caller. */
+  function embedCapture(ref,live){
+    if(!ref||!live) return 0;
+    var html=liveCardHtml(ref);
     if(!html) return 0;
     /* the same record shape the save path writes, keyed the same way —
        one snapshot format, not two */
-    var e={title:p.live.title||'',kind:p.live.kind||'',html:html};
-    var cc=p.live.hasCode?cloneCode(p.ref):null;
+    var e={title:live.title||'',kind:live.kind||'',html:html};
+    var cc=live.hasCode?cloneCode(ref):null;
     if(cc) e.code=cc.outerHTML;
-    embStore(normRef(p.ref)||p.ref,e);
+    embStore(normRef(ref)||ref,e);
+    embSaveSoon();
+    return 1;
+  }
+  /* PLACEMENT, and every other moment the deck first learns of a ref.
+     Deliberately does NOT overwrite a copy we already hold: dropping
+     the same figure onto a second slide must not silently re-read the
+     notebook underneath the first one. Re-reading is what the explicit
+     refresh is for, and it asks first. */
+  function embedIfAbsent(a){
+    var ref=provRef(a);
+    if(!ref||embFor(ref)) return 0;
+    var p=provOf(a);
+    return (p&&p.live)?embedCapture(p.ref,p.live):0;
+  }
+  function resyncFigure(a){
+    var p=provOf(a);
+    if(!p||!p.live) return 0;
+    if(!embedCapture(p.ref,p.live)) return 0;
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,pres.slides[cur]);

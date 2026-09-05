@@ -314,6 +314,16 @@
        absorbed into the session store (and IndexedDB) here, so frames
        still render when the notebook never opens — while drafts written
        on every edit stay ref-sized. Keys are namespaced like refs are. */
+    /* T298: WHICH FIGURES ARE LIVE LINKS. Ref-keyed and namespaced
+       exactly as the emb keys below are, so the two agree about what
+       "this figure" means after a notebook is re-registered. Absence
+       means KEPT, which is what every deck written before today wants:
+       they already hold snapshots, and rendering those is the whole
+       point of having them. */
+    out.live={};
+    if(p.live&&typeof p.live==='object')
+      Object.keys(p.live).forEach(function(k){
+        if(p.live[k]) out.live[ns(k)||k]=1;});
     if(p.emb&&typeof p.emb==='object'){
       Object.keys(p.emb).forEach(function(k){
         var e=p.emb[k];
@@ -994,11 +1004,43 @@
     Object.keys(frameNodeCache).forEach(function(k){
       if(k.indexOf(pfx)===0) delete frameNodeCache[k];});
   }
+  /* T298: A FIGURE IS A KEPT COPY UNLESS YOU ASK FOR A LIVE LINK.
+     cloneBody read the OPEN CARD first and the deck's own copy only as
+     a fallback, so a notebook re-run silently rewrote slides that were
+     finished -- the second half of "I have lost too many things"
+     (2026-09-05). The kept copy now wins, and the notebook is what you
+     go BACK to, deliberately, through Refresh.
+
+     Liveness is per-REF rather than per-box on purpose: two frames
+     showing the same cell cannot sensibly disagree about whether that
+     cell is live, and the refresh, the provenance and the git pin are
+     all keyed by ref already. */
+  function refIsLive(ref){
+    if(!ref||!pres||!pres.live) return false;
+    if(pres.live[ref]) return true;
+    var n=normRef(ref);
+    return !!(n&&pres.live[n]);
+  }
+  function setRefLive(ref,on){
+    if(!ref||!pres) return;
+    if(!pres.live) pres.live={};
+    var k=normRef(ref)||ref;
+    if(on) pres.live[k]=1; else {delete pres.live[k];delete pres.live[ref];}
+    /* invalidation point 4: the frame is cached by ref, and which SOURCE
+       it was built from is exactly what just changed */
+    dropFrameCache(k);
+    if(k!==ref) dropFrameCache(ref);
+  }
   function cloneBody(ref){
+    /* the deck's own copy, already filter-stripped at capture time */
+    if(!refIsLive(ref)){
+      var kept=embBody(ref);
+      if(kept) return stripIds(kept.cloneNode(true));
+    }
     var c=cardEl(ref);
     if(!c){
-      /* notebook not open: fall back to the copy embedded in the deck
-         (already filter-stripped at capture time) */
+      /* no live card either: the copy embedded in the deck is all there
+         is, and for a live link that is still better than a blank */
       var eb=embBody(ref);
       return eb?stripIds(eb.cloneNode(true)):null;
     }
@@ -1034,7 +1076,13 @@
   /* a cell can contribute several things to a slide: its CODE, its
      FIGURE(s) and its printed OUTPUT. A frame shows one 'part'. */
   function cellFacets(ref){
-    var card=cardEl(ref);
+    /* T298: ASK THE BODY THE FRAME WILL ACTUALLY RENDER. Reading the
+       live card here while cloneBody rendered the kept copy would let a
+       re-run notebook that gained a plot make the frame choose part
+       'figure' from a snapshot that has no figure in it -- an empty
+       frame with no way to see why. */
+    var kept=refIsLive(ref)?null:embBody(ref);
+    var card=kept?null:cardEl(ref);
     var it=resolveRef(ref);
     var f={code:!!(it&&it.hasCode),figure:false,output:false};
     var body=null;
@@ -1042,7 +1090,7 @@
       if(!f.code&&card.querySelector('.codeinner')) f.code=true;
       body=$('.cardbody',card);
     } else {
-      body=embBody(ref);   /* the deck's own copy is a cardbody too */
+      body=kept||embBody(ref);   /* the deck's own copy is a cardbody too */
     }
     if(body){
       /* live embeds (plotly/bokeh/vega/folium) are figures too */
