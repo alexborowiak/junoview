@@ -1059,18 +1059,24 @@
       var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
       var curId=a&&a.style;
       menuHead(menu,'apply a style');
-      styleOrder().forEach(function(id){
+      function styleRow(id,isVar){
         var d=styleDef(id);
         var b=document.createElement('button');
-        b.className='dbtn vw-opt jv-styleopt';
+        b.className='dbtn vw-opt jv-styleopt'+(isVar?' jv-stylevar':'');
         b.setAttribute('aria-pressed',(curId===id).toString());
         var t=document.createElement('span');
         t.className='jv-stylename';
         t.textContent=d.label;
         /* the row is a SPECIMEN: it is set in the style it names, so you
-           pick by looking rather than by reading a number */
+           pick by looking rather than by reading a number.
+           T293: and the TYPEFACE too. Two variations of one heading
+           differ in exactly the things this row draws -- colour, weight,
+           slant, face, size -- and the face was the one it left out, so
+           "Heading 1 / Serif" rendered identically to its parent in the
+           one place the user asked for a preview. */
         t.style.fontWeight=d.b?'700':'400';
         if(d.i) t.style.fontStyle='italic';
+        if(d.font) t.style.fontFamily=d.font;
         t.style.fontSize=Math.max(11,Math.min(21,d.size*3.1))+'px';
         if(d.color) t.style.color=tokVal(d.color);
         b.appendChild(t);
@@ -1085,7 +1091,73 @@
           menu.hidden=true;
         });
         menu.appendChild(b);
+      }
+      /* T293: A FAMILY READS AS A FAMILY. Every type used to be one flat
+         row, so a variation of Heading 1 sat after Caption -- last,
+         because styleOrder appends -- with nothing saying what it was a
+         variation OF. Each parent is followed by its own variations,
+         indented, and the flat list is what is left over. */
+      var listed={};
+      styleOrder().forEach(function(id){
+        if(listed[id]||parentOf(id)) return;
+        listed[id]=1;styleRow(id,false);
+        variantsOf(id).forEach(function(v){
+          if(listed[v]) return;
+          listed[v]=1;styleRow(v,true);
+        });
       });
+      styleOrder().forEach(function(id){
+        if(listed[id]) return;      /* an orphaned variation, if any */
+        listed[id]=1;styleRow(id,false);
+      });
+      /* T293: THE VERB THAT MAKES ONE. It is offered against the type
+         the selected box already wears, because that is the only moment
+         "a variation of Heading 1" means anything -- and it starts from
+         the box, so the look you just built by hand becomes the
+         variation rather than something you rebuild inside a dialog.
+         A variation records only what DIFFERS from its parent, so
+         changing Heading 1 later still moves this one. */
+      if(curId){
+        var mkv=document.createElement('button');
+        mkv.className='dbtn vw-opt';
+        mkv.innerHTML=bic('plus')+' New variation of '
+          +esc(styleDef(curId).label)+'\u2026';
+        mkv.title='Name this box\u2019s look as a variation of '
+          +styleDef(curId).label+'. It keeps following '
+          +styleDef(curId).label+' for everything you have not changed.';
+        mkv.addEventListener('click',function(e){
+          e.stopPropagation();
+          menu.hidden=true;
+          var s5=pres.slides[cur],a5=annotByIdx(s5,selAnnot);
+          if(!a5||!a5.style) return;
+          var base=a5.style;
+          var nm=prompt('Call this variation of '
+            +styleDef(base).label+' what?','');
+          if(nm===null) return;
+          nm=String(nm).trim();
+          if(!nm){toast('A variation needs a name');return;}
+          var v=addVariant(nm,base);
+          if(!v){toast('Could not make that variation');return;}
+          /* ONLY THE DIFFERENCES. Comparing against the parent's
+             resolved look is what makes this a variation rather than a
+             copy: a property the box shares with Heading 1 is left
+             unsaid, so it still follows Heading 1. */
+          var p=styleDef(base),o={};
+          if(a5.size&&Math.abs(a5.size-p.size)>0.01) o.size=a5.size;
+          [['b',1],['i',1],['font',''],['color',''],
+           ['lh',0],['pspace',0]].forEach(function(pr){
+            var k=pr[0],mine=a5[k],theirs=p[k];
+            if((mine||pr[1])!==(theirs||pr[1])&&mine!==undefined) o[k]=mine;
+          });
+          if(Object.keys(o).length) deckStyles()[v.id]=o;
+          applyStyleTo(a5,v.id);
+          markDirty();renderSlide();showFmt();
+          toast('\u201c'+nm+'\u201d is a variation of '
+            +p.label+' \u2014 it follows '+p.label
+            +' for everything you did not change.',6000);
+        });
+        menu.appendChild(mkv);
+      }
       menuHead(menu,'this deck');
       var upd=document.createElement('button');
       upd.className='dbtn vw-opt';
@@ -1123,6 +1195,12 @@
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
         if(!a4){menu.hidden=true;return;}
         headingStyles().forEach(function(id){
+          /* T293: NOT THE VARIATIONS. This flattens weight, slant, face
+             and colour across every heading -- which is exactly the set
+             a variation exists to differ in, so one press would erase
+             every variation in the deck. Their parents are in this same
+             list, and moving a parent moves its family. */
+          if(parentOf(id)) return;
           var d4=deckStyles()[id]||{};
           /* SIZE is what makes a heading level a level, so it is the one
              thing this does not flatten */

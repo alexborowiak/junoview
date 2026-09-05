@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T293: chrome only. The Text styles menu nests each type
+# with its variations, offers "New variation of <type>...", previews the
+# typeface, and scrolls; restyleAll expands an id to its family.
 # 2026-09-05, T292: chrome only. A named type may carry `of` and
 # inherit from it -- styleDef walks the family, syncCustomTypes stops
 # defaulting a delta to Body size, isHeadingStyle asks the resolved
@@ -1192,8 +1195,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "a0b7ee5472d4bfa2528e8c5b661b82b6"
-EXPECTED_BYTES = 3653674
+EXPECTED_MD5 = "10d0d10fbeca3c0bb7f2772d7f6d9374"
+EXPECTED_BYTES = 3659064
 
 
 def _render_example() -> str:

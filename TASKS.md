@@ -6398,3 +6398,46 @@ option. Then where has the ability to refresh all images gone?"
   nine cases over the four-object merge, including the cycle guard and
   the deck-to-deck leak guard. Inheritance is arithmetic and a substring
   assertion cannot check arithmetic.
+
+- [x] **T293 - Variations have a door, and a family reads as a family.**
+  The UI half of T292.
+  *Done 2026-09-05.* The Text styles menu lists each type followed by
+  its own variations, indented. Before, `styleOrder()` appended, so a
+  variation of Heading 1 sat **last, after Caption**, with nothing
+  saying what it varied.
+  **"New variation of Heading 1…"** is offered against the type the
+  selected box already wears -- the only moment the phrase means
+  anything -- and it starts from the box, so the look you just built by
+  hand becomes the variation instead of something you rebuild inside a
+  dialog. It records only what DIFFERS from the parent's resolved look:
+  a property the box shares with Heading 1 is left unsaid, and still
+  follows Heading 1.
+  **The specimen shows the typeface now.** Two variations of one heading
+  differ in exactly what that row draws -- colour, weight, slant, face,
+  size -- and the face was the one it left out, so a serif variation
+  rendered identically to its parent in the one place the user asked for
+  a preview.
+  **The menu scrolls.** Seven rows fitted; a family under each heading
+  need not, and `floatMenu` clamps a menu's top edge without ever
+  scrolling it -- so the bottom rows were lost with no scrollbar and no
+  error.
+  Two things driving it caught:
+  - **`restyleAll` matched `a.style` exactly**, so pushing a new look to
+    Heading 1 moved every plain heading and left every variation of it
+    behind. `applyStyleTo` bakes, so a family member carries its
+    parent's old numbers until something re-stamps it: Heading 1 went to
+    6.25 and the varied box stayed at 5 while `styleDef` already
+    resolved it to 6.25. The registry was right and the slides did not
+    know. It expands each id to its family now.
+  - **"Apply this look to ALL headings"** pushes weight, slant, face and
+    colour across every heading -- exactly the set a variation exists to
+    differ in, so one press would have erased every variation in the
+    deck. It skips them; their parents are in the same list, and moving
+    a parent moves the family.
+  Driven end to end: the variation is written as `{id:'t1',
+  label:'Navy', of:'h1'}` with nothing baked; making the second heading
+  bigger and pushing it to Heading 1 takes **both** boxes to 6.25; and
+  the menu reads Title / Heading 1 / — Navy / Heading 2 …
+  *Still to come:* the scoped apply (whole presentation / section /
+  slide range) and the Style system's own list of variations, which is
+  the rest of the user's ask.

@@ -4073,7 +4073,16 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 
 /* ---- the Styles menu: each row is a SPECIMEN of the style it names, so
    you pick by looking rather than by reading a number (2026-08-20) */
-.sh-menu.style-tx-menu{display:block;width:250px;padding:5px;}
+/* T293: it SCROLLS now. The list was seven rows and a fixed height was
+   fine; with a family under each heading it can pass the viewport, and
+   floatMenu clamps a menu's top edge without ever scrolling it -- so the
+   bottom rows were lost with no scrollbar and no error. */
+.sh-menu.style-tx-menu{display:block;width:250px;padding:5px;
+  max-height:min(68vh,520px);overflow-y:auto;}
+/* a variation sits under the type it varies, and says so by sitting in */
+.style-tx-menu .jv-styleopt.jv-stylevar{padding-left:20px;position:relative;}
+.style-tx-menu .jv-styleopt.jv-stylevar::before{content:"";position:absolute;
+  left:9px;top:50%;width:5px;height:1px;background:var(--chrome-ink-3);}
 .jv-styleopt{display:flex!important;align-items:baseline;
   justify-content:space-between;gap:10px;width:100%;text-align:left;}
 .jv-stylename{line-height:1.15;overflow:hidden;text-overflow:ellipsis;

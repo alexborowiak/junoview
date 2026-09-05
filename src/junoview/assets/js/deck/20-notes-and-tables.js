@@ -380,10 +380,27 @@
      exactly the behaviour they always had. */
   function restyleAll(ids,scope){
     var n=0;
+    /* T293: RESTYLING A PARENT RESTYLES ITS FAMILY. applyStyleTo BAKES,
+       so a box wearing a variation of Heading 1 carries Heading 1's old
+       size on it until something re-stamps it -- and this walk matched
+       on a.style exactly, so pushing a new look to Heading 1 moved every
+       plain heading and left every variation of it behind at the old
+       numbers. Driven: Heading 1 went to 6.25 and the varied box stayed
+       at 5, while styleDef already resolved it to 6.25. The registry was
+       right and the slides did not know. */
+    var want=null;
+    if(ids){
+      want={};
+      ids.forEach(function(id){
+        want[id]=1;
+        if(typeof variantsOf==='function')
+          variantsOf(id).forEach(function(v){want[v]=1;});
+      });
+    }
     (pres.slides||[]).forEach(function(sl,si){
       if(scope&&scope.indexOf(si)<0) return;
       (sl.annots||[]).forEach(function(a){
-        if(a&&a.k==='text'&&a.style&&(!ids||ids.indexOf(a.style)>=0)){
+        if(a&&a.k==='text'&&a.style&&(!want||want[a.style])){
           applyStyleTo(a,a.style);n++;
         }
       });
