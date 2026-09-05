@@ -1749,6 +1749,14 @@
      clipboard image pastes straight onto the page — which is how logos
      and screenshots actually arrive. */
   var clipBuf=[],clipGrpMeta={},pendingPaste=null;
+  /* T274: THE BOX THE WORDS ON THE OS CLIPBOARD CAME FROM.
+     Copying with the caret INSIDE a box never reaches copySel -- the
+     deck keydown bails on a contenteditable target -- so the words go
+     to the system clipboard and the object buffer never sees them. The
+     next Ctrl+V on the canvas therefore lands in pasteTextBox, which
+     minted a bare {k:'text'} and lost the type. One slot is enough:
+     it only has to survive from the copy to the paste. */
+  var lastTextCopy=null;   /* {txt, a} */
   function selectedIdxs(){
     var s=pres.slides[cur]; if(!s||!s.annots) return [];
     var out=selSet.filter(function(i){
@@ -2085,13 +2093,31 @@
      used to fall off the END of the paste handler and do nothing at
      all, which reads as a broken Ctrl+V to anyone arriving from any
      other slide tool. */
-  function pasteTextBox(txt){
+  function pasteTextBox(txt,keepType){
     var s=pres.slides[cur];if(!s) return false;
     var src=String(txt).replace(/\r/g,'').trim();
     if(!src) return false;
     s.annots=s.annots||[];
     var na={k:'text',x:8,y:14,text:src,
       w:Math.max(24,Math.min(60,Math.round(src.length/3)))};
+    /* PUT IT BACK THE WAY IT WAS COPIED (T274). Only when the words on
+       the clipboard are the ones we watched leave a box of ours -- so a
+       paste from anywhere else still lands as a plain box, and the
+       memory cannot dress up text it has never seen. keepType is false
+       on T128's Ctrl+Shift+V escape, which means "plain" and has to
+       keep meaning it. */
+    var mem=(keepType&&lastTextCopy&&lastTextCopy.txt===src)
+      ?lastTextCopy.a:null;
+    if(mem){
+      if(mem.style&&STYLE_DEFAULTS[mem.style]) na.style=mem.style;
+      /* the look is BAKED on as well as named, so applyStyleTo is not
+         what is wanted here -- it would overwrite the copied size with
+         the style default and drop the rest */
+      ['size','b','i','u','strike','font','color','align','lh','pspace',
+       'bg','bgc','bdc','md','maths'].forEach(function(k){
+        if(mem[k]!==undefined) na[k]=mem[k];});
+      if(mem.w) na.w=mem.w;
+    }
     na.x=Math.max(4,50-na.w/2);
     s.annots.push(na);
     markDirty();
@@ -2186,7 +2212,7 @@
     /* and PROSE lands as an ordinary text box. AFTER the code branch,
        so detection still gets first look; before this line, plain text
        fell off the end and nothing happened at all (T128). */
-    else if(mk&&mk.trim()){e.preventDefault();pasteTextBox(mk);}
+    else if(mk&&mk.trim()){e.preventDefault();pasteTextBox(mk,true);}
   });
 
   /* nudge the selection with the arrow keys (Shift = bigger step) */

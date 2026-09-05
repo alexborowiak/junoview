@@ -5850,3 +5850,48 @@ option. Then where has the ability to refresh all images gone?"
   accidentally: they asserted the string "Open notebooks", which also
   occurs in help.html, in page.html's rail and in the empty-state door.
   They pin the build line now.
+
+- [x] **T274 - A pasted heading is still a heading.**
+  The user (2026-09-05): "Copying and pasting something that is of type
+  heading doesn't paste as type heading."
+  *Done 2026-09-05.* The report is right, but not about the path anyone
+  would guess, and finding which one it was took a browser.
+  **The object clipboard was never broken.** Driven on a fixture deck
+  with one `style:'h1'` box: select it, Ctrl+C, Ctrl+V -> `style:'h1'`.
+  Ctrl+D -> `style:'h1'`. `copySel` deep-copies whole annots and
+  `pasteBuf`/`cloneAnnots` never touch `style`, so every gesture that
+  goes through the internal buffer keeps the type, along with align,
+  list, name, link and the rest.
+  **What loses it is copying the WORDS.** With the caret inside the box,
+  Ctrl+C never reaches `copySel` -- the deck's keydown returns early on
+  a contenteditable target -- so the words go to the system clipboard
+  and the object buffer never learns the box existed. The next Ctrl+V on
+  the canvas therefore falls through to `pasteTextBox`, which minted a
+  bare `{k:'text'}`: no style, no size, no weight, no alignment. Not a
+  serialise/deserialise loss -- a "new box from defaults" step.
+  A one-slot memory of the last in-box copy fixes it: the box is
+  recorded on `copy`/`cut` inside the editor, where we still know which
+  box it is, and `pasteTextBox` puts the look and the name back when the
+  words on the clipboard are still the ones we watched leave. A paste
+  from another application still lands plain, because the memory only
+  ever matches text it saw go. `applyStyleTo` is deliberately NOT used:
+  it would overwrite the copied size with the style's default.
+  T128's Ctrl+Shift+V escape passes `keepType` false -- "plain" has to
+  keep meaning plain.
+  Driven before and after on the same fixture: before, the pasted box
+  was `style:null, b:0`; after, `style:'h1', size:5, b:1`.
+
+- [ ] **T275 - "Match this slide" can silently delete a heading's type.**
+  Found while driving T274, not reported. `MATCH_PROPS` includes
+  `style`, and the match loops follow "undefined on the model means
+  DELETE on the target" (35-arranging.js:1586-1592, and again at 748-752
+  and 832-835). So matching a typed heading against an untyped model box
+  strips `a.style` while leaving the baked-on look untouched -- the box
+  still LOOKS like a heading and is no longer one, which is exactly the
+  state the outline, "apply to all headings" and the standardiser cannot
+  see. Three call sites: Match this slide, Apply to all of this type,
+  and Arrange.
+  *Not fixed, because it is a product decision, not a slip.* Either
+  matching means "look like this one" and should never clear a NAME the
+  target chose, or it means "be this one" and should. The first reads
+  right, and is a one-line guard; the user should say which.

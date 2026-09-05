@@ -1256,6 +1256,22 @@
         setTimeout(function(){codePlain=0;},300);
       }
     });
+    /* T274: WATCH THE WORDS LEAVE. A caret copy inside a box never
+       reaches copySel -- the deck keydown returns early on a
+       contenteditable target -- so the object buffer never learns this
+       box exists and the next canvas paste built an untyped one. Record
+       the box here, where we still know which it is (`idx` is this
+       editor's own), and pasteTextBox puts it back if the words on the
+       clipboard are still these. Cleared when the selection is empty,
+       so a copy of nothing cannot leave a stale type behind. */
+    function rememberTextCopy(){
+      var s7=pres.slides[cur],a7=s7&&annotByIdx(s7,idx);
+      var sl=String((window.getSelection&&window.getSelection().toString())
+        ||'').replace(/\r/g,'').trim();
+      lastTextCopy=(a7&&a7.k==='text'&&sl)?{txt:sl,a:deep(a7)}:null;
+    }
+    el.addEventListener('copy',rememberTextCopy);
+    el.addEventListener('cut',rememberTextCopy);
     el.addEventListener('paste',function(e){
       if(!el.isContentEditable) return;
       if(codePlain){codePlain=0;return;}

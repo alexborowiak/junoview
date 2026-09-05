@@ -2938,8 +2938,9 @@ def test_pasted_prose_becomes_a_text_box(out):
     nothing at all, which reads as a broken Ctrl+V to anyone arriving
     from any other slide tool. AFTER the code branch, so detection still
     gets first look."""
-    assert "function pasteTextBox(txt){" in out
-    assert "else if(mk&&mk.trim()){e.preventDefault();pasteTextBox(mk);}" in out
+    assert "function pasteTextBox(txt,keepType){" in out
+    assert ("else if(mk&&mk.trim()){e.preventDefault();"
+            "pasteTextBox(mk,true);}") in out
     # the source spells the dash as a backslash-u escape, like its
     # siblings, so the pin must too (a raw string keeps it literal)
     assert r"toast('Text pasted \u2014 Ctrl+Z undoes it');" in out
@@ -2960,6 +2961,34 @@ def test_the_canvas_has_the_same_paste_plain_escape_the_box_has(out):
     assert "if(mk){e.preventDefault();pasteTextBox(mk);}" in out
     # placed-paste behaviour with a full buffer is unchanged
     assert "pasteBuf('place');" in out
+
+
+def test_a_pasted_heading_is_still_a_heading(out):
+    """T274 (2026-09-05, user: "Copying and pasting something that is of
+    type heading doesn't paste as type heading").
+
+    The OBJECT clipboard was never the problem -- driven in a browser,
+    Ctrl+C/Ctrl+V and Ctrl+D both keep style:h1. What loses it is copying
+    the WORDS with the caret inside the box: the deck keydown returns
+    early on a contenteditable target, so copySel never runs, the object
+    buffer never learns the box exists, and the next Ctrl+V on the canvas
+    lands in pasteTextBox -- which minted a bare {k:text} with no style,
+    no size and no weight. Before: style null, b 0. After: style h1,
+    size 5, b 1.
+
+    Only when the words on the clipboard are the ones we watched leave a
+    box of ours, so a paste from another application still lands plain.
+    And NOT on T128's Ctrl+Shift+V escape, where "plain" has to keep
+    meaning plain -- which is what the keepType argument is for."""
+    assert "  var lastTextCopy=null;" in out
+    assert "    function rememberTextCopy(){" in out
+    assert "    el.addEventListener('copy',rememberTextCopy);" in out
+    assert "    el.addEventListener('cut',rememberTextCopy);" in out
+    assert ("    var mem=(keepType&&lastTextCopy&&lastTextCopy.txt===src)"
+            ) in out
+    assert "      if(mem.style&&STYLE_DEFAULTS[mem.style]) na.style=mem.style;" in out
+    # the plain-paste escape stays plain: no second argument there
+    assert "if(mk){e.preventDefault();pasteTextBox(mk);}" in out
 
 
 def test_the_code_toast_names_the_way_out(out):

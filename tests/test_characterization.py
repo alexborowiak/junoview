@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T274: chrome only. pasteTextBox takes a keepType flag and
+# restores the copied box's style and look from a one-slot memory of the
+# last in-box copy, recorded on copy/cut inside the text editor.
 # 2026-09-05, T273: chrome only. The front door loses 'No notebook
 # needed'; each colour quick-run moves behind its own door and loses its
 # caption (and the eight ribbon layouts name it beside that door);
@@ -1139,8 +1142,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "3220355ff1bfbd1d9241944a679a5c7f"
-EXPECTED_BYTES = 3601990
+EXPECTED_MD5 = "9bd06e35ed3855815c45c1513f33c9db"
+EXPECTED_BYTES = 3604403
 
 
 def _render_example() -> str:
