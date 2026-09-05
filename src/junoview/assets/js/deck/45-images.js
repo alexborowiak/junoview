@@ -242,11 +242,23 @@
      whichever page the book happens to be showing. */
   function imgFigRow(si,ai,a,ref,fi){
     var ci=resolveRef(ref);
+    var holder=(a.k==='flip')?(flipFrames(a)[fi|0]||{}):a;
+    /* T309: the notebook's ADDRESS when the figure remembers one, and
+       the stem only as the fallback for figures placed before it did.
+       Elided in the MIDDLE, because a path's useful half is its tail --
+       CSS ellipsis cuts exactly the filename off. */
+    var p=holder&&holder.nbpath;
     var r={si:si,ai:ai,a:a,ref:ref,kind:'Figure',
-      from:(ci&&(ci.stem||ci.nb))||String(ref)};
+      path:p||'',
+      from:p?midElide(String(p),52):((ci&&(ci.stem||ci.nb))||String(ref))};
     if(a.k==='flip'){r.fi=fi;r.kind='Page '+((fi|0)+1);}
     else if(a.k==='chart') r.kind='Chart';
     return r;
+  }
+  function midElide(s,n){
+    if(s.length<=n) return s;
+    return s.slice(0,Math.max(0,Math.floor(n/3)))+'\u2026'
+      +s.slice(s.length-Math.ceil(n*2/3));
   }
   /* T308: WHAT A PICTURE ACTUALLY IS. Three states, not two:
 
@@ -433,7 +445,7 @@
     t.textContent=r.kind;
     mid.appendChild(t);
     var f=document.createElement('div');f.className='img-from';
-    f.textContent=r.from;f.title=r.from;
+    f.textContent=r.from;f.title=r.path||r.from;
     mid.appendChild(f);
     mid.appendChild(imgActs(r));
     row.appendChild(mid);

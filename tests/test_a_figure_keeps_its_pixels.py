@@ -66,7 +66,7 @@ def _run(script: str):
         p = Path(d) / "run.js"
         p.write_text(_prelude() + script, encoding="utf-8")
         r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
-                           env=env, timeout=60)
+                           encoding="utf-8", env=env, timeout=60)
         assert r.returncode == 0, r.stderr[:2000]
         line = [ln for ln in r.stdout.splitlines()
                 if ln.startswith("{") or ln.startswith("[")][-1]
@@ -378,7 +378,7 @@ def _store_run(script):
         p = Path(d) / "run.js"
         p.write_text(pre + script, encoding="utf-8")
         r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
-                           env=env, timeout=60)
+                           encoding="utf-8", env=env, timeout=60)
         assert r.returncode == 0, r.stderr[:2000]
         line = [ln for ln in r.stdout.splitlines() if ln.startswith("{")][-1]
         return json.loads(line)
@@ -744,7 +744,7 @@ def _body_run(script):
         p = Path(d) / "run.js"
         p.write_text(_BODY_STUBS + body + "\n" + script, encoding="utf-8")
         r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
-                           env=env, timeout=60)
+                           encoding="utf-8", env=env, timeout=60)
         assert r.returncode == 0, r.stderr[:2000]
         line = [ln for ln in r.stdout.splitlines() if ln.startswith("{")][-1]
         return json.loads(line)
@@ -912,7 +912,7 @@ def _survey_run(script):
         p = Path(d) / "run.js"
         p.write_text(_SURVEY_STUBS + body + "\n" + script, encoding="utf-8")
         r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
-                           env=env, timeout=60)
+                           encoding="utf-8", env=env, timeout=60)
         assert r.returncode == 0, r.stderr[:2000]
         line = [ln for ln in r.stdout.splitlines() if ln.startswith("{")][-1]
         return json.loads(line)
@@ -965,3 +965,62 @@ def test_a_linked_picture_is_described_as_a_link():
     """)
     assert got["from"][0] == "https://example.com/plot.png"
     assert "only copy" in got["from"][1]
+
+
+# ---------------------------------------------------------------- T309
+
+
+def test_a_figure_remembers_where_its_notebook_was(out):
+    """The user, 2026-09-05: "One that are form notebooks should have the
+    notebook url". There was nowhere to read one from -- a notebook's
+    location lives in APP.shells[stem].path only while its tab is open,
+    it is not in the deck payload, and a ref's stem half is a DISPLAY
+    NAME that stem_for disambiguates by tab-open order. Close the tab and
+    the deck could only guess by matching that name against the
+    ten-entry Recent list."""
+    assert "  function noteSource(a,force){" in out
+    assert "      if(!o||!ref||(o.nbpath&&!force)) return;" in out
+    # every placement door gets it, because they all go through this one
+    assert "  function embedIfAbsent(a){\n    noteSource(a);" in out
+    # ...and a refresh is the moment to learn the notebook has moved
+    assert "    noteSource(a,1);" in out
+
+
+def test_each_page_of_a_book_remembers_its_own_notebook(out):
+    """A flip book's pages can come from different notebooks, so the
+    record goes on the frame, not on the book."""
+    assert ("    if(a.k==='flip'){\n"
+            "      flipFrames(a).forEach(function(f){put(f,f&&f.ref);});") in out
+    assert "    var holder=(a.k==='flip')?(flipFrames(a)[fi|0]||{}):a;" in out
+
+
+def test_a_long_path_keeps_its_filename():
+    """CSS ellipsis cuts the END off, which is the half of a path that
+    identifies the notebook. The row elides the middle instead."""
+    from helpers_js import js_engine, lift_fn
+    eng = js_engine()
+    if eng is None:
+        pytest.skip("no node or VS Code Electron on this machine")
+    cmd, env = eng
+    body = lift_fn(assets.deck_js(), "midElide")
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d) / "run.js"
+        p.write_text(body + """
+          var long='C:/a/very/long/and/deeply/nested/project/folder/tree'
+            +'/that/keeps/going/example_climate_analysis.ipynb';
+          console.log(JSON.stringify({
+            short:midElide('short.ipynb',52),
+            long:midElide(long,52),
+            len:midElide(long,52).length
+          }));
+        """, encoding="utf-8")
+        r = subprocess.run(cmd + [str(p)], capture_output=True, text=True,
+                           encoding="utf-8", env=env, timeout=60)
+        assert r.returncode == 0, r.stderr[:1200]
+        got = json.loads([ln for ln in r.stdout.splitlines()
+                          if ln.startswith("{")][-1])
+    assert got["short"] == "short.ipynb", "a short path is left alone"
+    assert got["long"].endswith("example_climate_analysis.ipynb")
+    assert got["long"].startswith("C:/a/very/lon")
+    assert chr(0x2026) in got["long"], "the middle is elided, not the end"
+    assert got["len"] <= 53

@@ -6769,3 +6769,29 @@ option. Then where has the ability to refresh all images gone?"
   *Verified by running imgSurvey:* a slide holding an image, a linked
   picture, a file-backed picture, a cell, a three-page flip book and a
   chart yields 8 rows. It used to yield 2.
+
+- [x] **T309 - a figure remembers where its notebook was.**
+  The user (2026-09-05): "One that are form notebooks should have the
+  notebook url", and "The refresh from path shoudl appear with the path
+  when clicking on them."
+  *Done 2026-09-05.* There was nowhere to read one from. A notebook's
+  location lives in `APP.shells[stem].path` for exactly as long as its
+  tab is open; it is not in the deck payload, not on the annot, and not
+  in the saved deck. And a ref's stem half is a DISPLAY NAME that
+  `stem_for` disambiguates with -2/-3 by tab-open order, so it is not an
+  identity either -- with the tab shut the deck could only guess by
+  matching that name against the ten-entry Recent list.
+  `noteSource(a)` records it on the annot at placement (all four doors
+  go through `embedIfAbsent`, so all four get it) and again on a
+  refresh, which is the moment to learn the notebook has moved. Per
+  annot rather than a deck-level stem->path map, both because the stem
+  collides and because annots pass through `normPres` and
+  `as_presentations` wholesale -- a deep copy and an isinstance filter,
+  neither of which looks at keys -- so this costs no Python and no
+  schema sentinel. A flip book records one per FRAME, since its pages
+  can come from different notebooks. It is the same idea as `a.fname`,
+  which the picture half has recorded since T21.
+  The row shows the address with its MIDDLE elided, because CSS ellipsis
+  cuts off exactly the half that names the notebook; the full path is
+  the hover. *Verified live:* with no notebook open at all the row still
+  reads `C:\Users\...\nbroot\example_climate_analysis.ipynb`.

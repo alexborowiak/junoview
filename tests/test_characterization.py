@@ -1204,7 +1204,7 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-# 2026-09-05, T297-T308. A placed figure captures its own pixels
+# 2026-09-05, T297-T309. A placed figure captures its own pixels
 # own pixels -- embedCapture/embedIfAbsent, from all four gestures
 # that give a frame a ref -- and the capture persists (embSaveSoon);
 # cloneBody and cellFacets read that kept copy BEFORE the open card
@@ -1229,9 +1229,11 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pages and charts were invisible) and gives a picture three
 # states -- link / file / kept -- so the address-src picture,
 # the only real sym link in the app, stops being labelled
-# pasted-and-unreadable.
-EXPECTED_MD5 = "1ea573c8c88e1947c98136a3962a25e6"
-EXPECTED_BYTES = 3697226
+# pasted-and-unreadable. T309 records the notebook's path on the
+# figure (noteSource -> a.nbpath, per flip frame) so the row can
+# show where it came from once the tab is shut.
+EXPECTED_MD5 = "6ceb925919095346e917d89d40b633ca"
+EXPECTED_BYTES = 3699398
 
 
 def _render_example() -> str:

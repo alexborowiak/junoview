@@ -2376,7 +2376,40 @@
      the same figure onto a second slide must not silently re-read the
      notebook underneath the first one. Re-reading is what the explicit
      refresh is for, and it asks first. */
+  /* T309: WHERE THE NOTEBOOK WAS, kept on the figure itself.
+     The user asked for "the notebook url" on a figure's row and there
+     was nowhere to read one from: a notebook's location lives only in
+     APP.shells[stem].path for as long as its tab is open, it is not in
+     the deck payload, and a ref's stem half is a DISPLAY NAME that
+     stem_for disambiguates with -2/-3 by tab-open order, so it is not
+     an identity either. Close the tab and the deck could only guess by
+     matching that name against the ten-entry Recent list.
+
+     Per-annot rather than a deck-level stem->path map, for that same
+     reason -- and because annots pass through normPres and
+     as_presentations wholesale (a deep copy and an isinstance filter,
+     neither of which looks at keys), so this costs no Python and no
+     schema sentinel. It is the same idea as `a.fname`, which the
+     picture half has recorded at placement since T21.
+
+     Absent means "we never knew", never "". `force` is for a refresh,
+     which is the moment to learn that the notebook has moved. */
+  function noteSource(a,force){
+    if(!a) return;
+    function put(o,ref){
+      if(!o||!ref||(o.nbpath&&!force)) return;
+      var pr=splitRef(normRef(ref)||String(ref));
+      var p=(pr[0]&&typeof nbPathFor==='function')?nbPathFor(pr[0]):null;
+      if(p) o.nbpath=String(p);
+    }
+    if(a.k==='flip'){
+      flipFrames(a).forEach(function(f){put(f,f&&f.ref);});
+      return;
+    }
+    put(a,provRef(a));
+  }
   function embedIfAbsent(a){
+    noteSource(a);
     /* T307: a flip book is N figures, and every one of them has to be
        kept -- otherwise closing the notebook empties every page but
        the one that happened to be showing when it was placed. */
@@ -2405,6 +2438,8 @@
     var p=ref?provOf({k:'cell',ref:ref}):provOf(a);
     if(!p||!p.live) return 0;
     if(!embedCapture(p.ref,p.live)) return 0;
+    /* a refresh is the moment to learn the notebook has moved */
+    noteSource(a,1);
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,pres.slides[cur]);
