@@ -7542,7 +7542,16 @@ body.light .canvas-menu .vw-opt.on{color:var(--ink);}
 
 /* ---- the Styles menu: each row is a SPECIMEN of the style it names, so
    you pick by looking rather than by reading a number (2026-08-20) */
-.sh-menu.style-tx-menu{display:block;width:250px;padding:5px;}
+/* T293: it SCROLLS now. The list was seven rows and a fixed height was
+   fine; with a family under each heading it can pass the viewport, and
+   floatMenu clamps a menu's top edge without ever scrolling it -- so the
+   bottom rows were lost with no scrollbar and no error. */
+.sh-menu.style-tx-menu{display:block;width:250px;padding:5px;
+  max-height:min(68vh,520px);overflow-y:auto;}
+/* a variation sits under the type it varies, and says so by sitting in */
+.style-tx-menu .jv-styleopt.jv-stylevar{padding-left:20px;position:relative;}
+.style-tx-menu .jv-styleopt.jv-stylevar::before{content:"";position:absolute;
+  left:9px;top:50%;width:5px;height:1px;background:var(--chrome-ink-3);}
 .jv-styleopt{display:flex!important;align-items:baseline;
   justify-content:space-between;gap:10px;width:100%;text-align:left;}
 .jv-stylename{line-height:1.15;overflow:hidden;text-overflow:ellipsis;
@@ -7725,6 +7734,12 @@ body.light .eq-box{background:var(--chrome-2);
 .aa-slide-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   min-width:0;}
 .aa-foot{display:flex;align-items:center;gap:8px;}
+.aa-tie{display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-2);
+  cursor:pointer;white-space:nowrap;}
+.aa-tie[hidden]{display:none!important;}
+.aa-tie input{margin:0;cursor:pointer;}
+.aa-tie:hover{color:var(--chrome-ink);}
 .aa-count{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);}
 /* the matching items on the slide behind, outlined while you hover the
    headline — a pure class toggle over nodes that are already rendered */
@@ -8031,6 +8046,15 @@ body.light .np-ftitle,body.light .np-ntitle{color:var(--ink);}
 .dg-row.on{background:#ffffff14;border-color:#ffffff2b;}
 .dg-name{line-height:1.15;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap;}
+/* T295: a variation sits under the type it varies, and its colour
+   rides on a chip -- the NAME is deliberately left uncoloured, because
+   a style whose ink is the page's would vanish against this chrome. */
+.dg-row.dg-rowvar{padding-left:22px;position:relative;}
+.dg-row.dg-rowvar::before{content:"";position:absolute;left:10px;top:50%;
+  width:6px;height:1px;background:var(--chrome-ink-3);}
+.dg-swatch{flex:none;width:11px;height:11px;border-radius:3px;
+  border:1px solid #ffffff33;margin-left:6px;}
+body.light .dg-swatch{border-color:#00000026;}
 .dg-count{font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-2);
   flex:none;}
 /* T230: a heading, in words. It was 10px spaced capitals -- the very
@@ -14775,6 +14799,20 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
       </div>
     </div>
     <div class="aa-foot">
+      <!-- T294: KEEP THEM TIED. Applying a look used to WRITE the
+           properties onto every matching box, which detached them from
+           the style they wore -- the toast said so itself: "they no
+           longer match the ... style, so Re-apply would put them back".
+           Naming the look as a variation instead leaves every box
+           wearing a type, so it still follows its parent for everything
+           the variation does not change. Shown only when the box you
+           copied from wears a text style; there is nothing to be a
+           variation OF otherwise. -->
+      <label class="aa-tie" id="aa-tiewrap" hidden
+        title="Name this look as a variation, so these boxes keep
+ following the style they wear. Without it they are overwritten and stop
+ matching it."><input type="checkbox" id="aa-tie" checked>
+        <span id="aa-tielab">Keep them tied</span></label>
       <span class="aa-count" id="aa-count"></span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="aa-cancel">Cancel</button>
@@ -34180,8 +34218,22 @@ window.JunoPptx = (function () {
     });
     (Array.isArray(pres&&pres.types)?pres.types:[]).forEach(function(t){
       if(!t||!t.id||BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
-      var d={label:String(t.label||'Style'),
-        size:(typeof t.size==='number'&&t.size>0)?t.size:2.6};
+      var d={label:String(t.label||'Style')};
+      /* T292: A VARIATION LEAVES OUT WHAT IT DOES NOT CHANGE, so a
+         missing size means "my parent's", not 2.6. Defaulting it here
+         was right while every type was a full copy, and is exactly
+         wrong now: a variation meaning "Heading 1, but navy" was
+         grafted at BODY size, applyStyleTo shrank every box wearing it,
+         and the whole family then reported as drift. A type with no
+         parent keeps the old answer -- it has nothing to inherit. */
+      if(typeof t.size==='number'&&t.size>0) d.size=t.size;
+      else if(!t.of) d.size=2.6;
+      /* the parent, carried explicitly rather than through STYLE_FIELDS:
+         in that list it would also be copied by addCustomType's loop, so
+         a plain new type based on a variation would silently become a
+         variation of the same parent. Basing a type on one is not the
+         same act as varying it. */
+      if(t.of&&t.of!==t.id) d.of=String(t.of);
       STYLE_FIELDS.forEach(function(k){
         if(t[k]!==undefined) d[k]=t[k];});
       STYLE_DEFAULTS[t.id]=d;
@@ -34203,7 +34255,16 @@ window.JunoPptx = (function () {
      answer, so nothing that worked yesterday changes. */
   function isHeadingStyle(id){
     if(HEADING_STYLES.indexOf(id)>=0) return true;
-    var d=STYLE_DEFAULTS[id];
+    /* T292: ASKED OF THE RESOLVED DEFINITION, not of the raw entry. A
+       variation stores only what it CHANGES, so a variation of Heading
+       1 says nothing about `head` and the raw lookup found nothing --
+       which put it outside the outline, "apply to all headings" and the
+       talk panel's heading bucket, the same four places T291 was about.
+       The root covers a variation of a BUILT-IN heading (whose head-ness
+       is the HEADING_STYLES literal and not a field at all); the
+       resolved flag covers a variation of a custom one. */
+    if(HEADING_STYLES.indexOf(styleRoot(id))>=0) return true;
+    var d=styleDef(id);
     return !!(d&&d.head);
   }
   function headingStyles(){
@@ -34226,9 +34287,74 @@ window.JunoPptx = (function () {
        heading, and the old list quietly said otherwise */
     STYLE_FIELDS.forEach(function(k){
       if(b[k]!==undefined) t[k]=b[k];});
+    /* ...except it did not, for the four bases anyone actually builds a
+       heading from. isHeadingStyle answers for title/h1/h2/h3 out of the
+       HEADING_STYLES LITERAL, so those four carry no `head` key for the
+       loop above to find, and a type based on one came out with head
+       undefined -- not a heading. It dropped out of the outline, out of
+       "apply to all headings", out of the talk panel's heading size
+       bucket and out of standardise's heading rule, silently, until you
+       found the "Heading" toggle in the style editor. The comment above
+       has been claiming otherwise since 2026-08-22.
+       Asked of isHeadingStyle rather than of the field, so the two can
+       never disagree again (T291). */
+    if(isHeadingStyle(base)) t.head=1;
     customTypes().push(t);
     syncCustomTypes();
     return t;
+  }
+  /* T292: a VARIATION, as opposed to a new type based on one. It
+     records the parent and NOTHING else -- no size, no weight, no
+     colour -- so it looks exactly like its parent until you change
+     something, and follows the parent for everything you never touch.
+     addCustomType is the other verb and stays what it was: a full copy
+     that goes its own way from the moment it is made. */
+  function addVariant(label,parent){
+    if(!STYLE_DEFAULTS[parent]) return null;
+    var t={id:mintTypeId(),label:String(label||'Variation'),
+      of:String(parent)};
+    customTypes().push(t);
+    syncCustomTypes();
+    return t;
+  }
+  /* WHAT THIS BOX SAYS THAT ITS PARENT DOES NOT (T294). The whole
+     difference between a variation and a copy: a property the box
+     shares with Heading 1 is left unsaid, so it still follows Heading
+     1. `want` is the dialog's own "what travels" map, or null for
+     everything.
+     Storing the neutral value is a real answer, not a gap: styleDef
+     merges it over the parent and applyStyleTo reads `if(d.b)`, so
+     b:0 clears the bold the parent set. A variation can say "not
+     bold" as well as "navy".
+     Declared here, beside addVariant, because two doors build a
+     variation and one of them must not be a second copy of this. */
+  function variantDeltaFrom(a,parentId,want){
+    var p=styleDef(parentId)||{},o={};
+    function take(k){return !want||want[k];}
+    if(take('size')&&typeof a.size==='number'
+       &&Math.abs(a.size-(p.size||0))>0.005) o.size=a.size;
+    ['b','i','lh','pspace'].forEach(function(k){
+      if(!take(k)) return;
+      var mine=a[k]||0,theirs=p[k]||0;
+      if(mine!==theirs) o[k]=mine;
+    });
+    ['font','color','align'].forEach(function(k){
+      if(!take(k)) return;
+      var mine=a[k]||'',theirs=p[k]||'';
+      if(mine!==theirs) o[k]=mine;
+    });
+    /* applyStyleTo maps a style's `bg` onto a.bg/a.bgc; read it back
+       through the same mapping or a variation could never carry the
+       one thing a colour variation most often is */
+    if(take('bg')){
+      var mine=(a.bg===0)?'none':(a.bg?(a.bgc||''):'');
+      if(mine!==(p.bg||'')) o.bg=mine;
+    }
+    if(take('bdc')){
+      var mb=a.bdc||'';
+      if(mb!==(p.bdc||'')) o.bdc=mb;
+    }
+    return o;
   }
   /* deleting a type must not MOVE anything. applyStyleTo has already
      written every one of its properties onto each box, so dropping the
@@ -34257,14 +34383,61 @@ window.JunoPptx = (function () {
     if(!pres.styles) pres.styles={};
     return pres.styles;
   }
-  function styleDef(id){
+  /* the type this one is a VARIATION OF, or '' (T292) */
+  function parentOf(id){
     var d=STYLE_DEFAULTS[id];
-    if(!d) return null;
-    var over=deckStyles()[id]||{};
-    var out={};
-    Object.keys(d).forEach(function(k){out[k]=d[k];});
-    Object.keys(over).forEach(function(k){out[k]=over[k];});
+    var p=d&&typeof d.of==='string'?d.of:'';
+    return (p&&p!==id&&STYLE_DEFAULTS[p])?p:'';
+  }
+  /* every id from the root of the family down to this one. GUARDED: a
+     deck file can name any parent it likes -- normPres deep-copies a
+     types entry without looking inside it, so {of:'a'} and {of:'b'}
+     pointing at each other both survive a load -- and styleDef runs on
+     the order of forty times per render, which makes an unguarded walk
+     an infinite loop in the hottest function in the registry. */
+  function styleChain(id){
+    var out=[],seen={},cur=id,guard=0;
+    while(cur&&STYLE_DEFAULTS[cur]&&!seen[cur]&&guard++<8){
+      seen[cur]=1;out.unshift(cur);cur=parentOf(cur);
+    }
     return out;
+  }
+  /* T292: A VARIATION INHERITS. The chain resolves root first and the
+     child last, and each link contributes its BASE then its per-deck
+     OVERRIDE -- so "Heading 1, but navy" stores only the colour, and
+     changing Heading 1's size moves every variation of it with one
+     edit. That is the whole reason the registry exists, applied one
+     level further down.
+     A type with no parent resolves to exactly what it always did: a
+     one-link chain, base then override, which is the old two lines. */
+  function styleDef(id){
+    if(!STYLE_DEFAULTS[id]) return null;
+    var out={};
+    styleChain(id).forEach(function(k){
+      var base=STYLE_DEFAULTS[k],over=deckStyles()[k];
+      if(base) Object.keys(base).forEach(function(p){out[p]=base[p];});
+      if(over) Object.keys(over).forEach(function(p){out[p]=over[p];});
+    });
+    /* the family's own bookkeeping, never the parent's: a variation is
+       named for itself and parented to one thing */
+    var mine=STYLE_DEFAULTS[id];
+    out.label=(deckStyles()[id]||{}).label||mine.label;
+    if(mine.of) out.of=mine.of; else delete out.of;
+    return out;
+  }
+  /* is this id a variation of that one, however deep (T292) */
+  function isVariantOf(id,parent){
+    return id!==parent&&styleChain(id).indexOf(parent)>=0;
+  }
+  /* every id in the family below an id, nearest first */
+  function variantsOf(parent){
+    return styleOrder().filter(function(id){
+      return isVariantOf(id,parent);});
+  }
+  /* the root of the family: what a variation is a variation OF */
+  function styleRoot(id){
+    var c=styleChain(id);
+    return c.length?c[0]:id;
   }
   /* stamp a style's properties onto an item. This WRITES them rather than
      resolving at render time, deliberately: every export, the pptx
@@ -35464,10 +35637,27 @@ window.JunoPptx = (function () {
      exactly the behaviour they always had. */
   function restyleAll(ids,scope){
     var n=0;
+    /* T293: RESTYLING A PARENT RESTYLES ITS FAMILY. applyStyleTo BAKES,
+       so a box wearing a variation of Heading 1 carries Heading 1's old
+       size on it until something re-stamps it -- and this walk matched
+       on a.style exactly, so pushing a new look to Heading 1 moved every
+       plain heading and left every variation of it behind at the old
+       numbers. Driven: Heading 1 went to 6.25 and the varied box stayed
+       at 5, while styleDef already resolved it to 6.25. The registry was
+       right and the slides did not know. */
+    var want=null;
+    if(ids){
+      want={};
+      ids.forEach(function(id){
+        want[id]=1;
+        if(typeof variantsOf==='function')
+          variantsOf(id).forEach(function(v){want[v]=1;});
+      });
+    }
     (pres.slides||[]).forEach(function(sl,si){
       if(scope&&scope.indexOf(si)<0) return;
       (sl.annots||[]).forEach(function(a){
-        if(a&&a.k==='text'&&a.style&&(!ids||ids.indexOf(a.style)>=0)){
+        if(a&&a.k==='text'&&a.style&&(!want||want[a.style])){
           applyStyleTo(a,a.style);n++;
         }
       });
@@ -35480,6 +35670,13 @@ window.JunoPptx = (function () {
      out to be bigger than you expected */
   function scaleStyles(k){
     styleOrder().forEach(function(id){
+      /* T292: A VARIATION IS NOT A SIZE OF ITS OWN. Writing one here
+         would give every variation an own size on the first press of
+         Bigger, after which it would never follow its parent again --
+         and the press would ALSO scale it twice, once through the
+         parent it inherits from and once through the copy. Its parent
+         is in this same loop and moving it moves the family. */
+      if(typeof parentOf==='function'&&parentOf(id)) return;
       var d=styleDef(id);
       var over=deckStyles()[id]||{};
       over.label=STYLE_DEFAULTS[id].label;
@@ -35515,9 +35712,19 @@ window.JunoPptx = (function () {
         /* carry the whole resolved definition, not just the one field
            being changed: styleDef merges the override OVER the base, so
            a partial override plus a later base change reads as a style
-           that half-followed */
-        o.label=d.label;o.size=d.size;
+           that half-followed.
+           T292: EXCEPT FOR A VARIATION, where half-following is the
+           entire point. Materialising the resolved definition here would
+           freeze the parent's size, weight and colour into the child the
+           first time anyone touched any toggle -- and the variation
+           would stop following its parent for good, silently, which is
+           the one promise it makes. A variation writes only what it
+           actually says. */
+        var varying=(typeof parentOf==='function')&&!!parentOf(id);
+        o.label=d.label;
+        if(!varying) o.size=d.size;
         STYLE_FIELDS.forEach(function(k){
+          if(varying) return;
           if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
         deckStyles()[id]=o;
         return o;
@@ -42097,18 +42304,24 @@ window.JunoPptx = (function () {
       var s2=pres.slides[cur],a=annotByIdx(s2,selAnnot);
       var curId=a&&a.style;
       menuHead(menu,'apply a style');
-      styleOrder().forEach(function(id){
+      function styleRow(id,isVar){
         var d=styleDef(id);
         var b=document.createElement('button');
-        b.className='dbtn vw-opt jv-styleopt';
+        b.className='dbtn vw-opt jv-styleopt'+(isVar?' jv-stylevar':'');
         b.setAttribute('aria-pressed',(curId===id).toString());
         var t=document.createElement('span');
         t.className='jv-stylename';
         t.textContent=d.label;
         /* the row is a SPECIMEN: it is set in the style it names, so you
-           pick by looking rather than by reading a number */
+           pick by looking rather than by reading a number.
+           T293: and the TYPEFACE too. Two variations of one heading
+           differ in exactly the things this row draws -- colour, weight,
+           slant, face, size -- and the face was the one it left out, so
+           "Heading 1 / Serif" rendered identically to its parent in the
+           one place the user asked for a preview. */
         t.style.fontWeight=d.b?'700':'400';
         if(d.i) t.style.fontStyle='italic';
+        if(d.font) t.style.fontFamily=d.font;
         t.style.fontSize=Math.max(11,Math.min(21,d.size*3.1))+'px';
         if(d.color) t.style.color=tokVal(d.color);
         b.appendChild(t);
@@ -42123,7 +42336,66 @@ window.JunoPptx = (function () {
           menu.hidden=true;
         });
         menu.appendChild(b);
+      }
+      /* T293: A FAMILY READS AS A FAMILY. Every type used to be one flat
+         row, so a variation of Heading 1 sat after Caption -- last,
+         because styleOrder appends -- with nothing saying what it was a
+         variation OF. Each parent is followed by its own variations,
+         indented, and the flat list is what is left over. */
+      var listed={};
+      styleOrder().forEach(function(id){
+        if(listed[id]||parentOf(id)) return;
+        listed[id]=1;styleRow(id,false);
+        variantsOf(id).forEach(function(v){
+          if(listed[v]) return;
+          listed[v]=1;styleRow(v,true);
+        });
       });
+      styleOrder().forEach(function(id){
+        if(listed[id]) return;      /* an orphaned variation, if any */
+        listed[id]=1;styleRow(id,false);
+      });
+      /* T293: THE VERB THAT MAKES ONE. It is offered against the type
+         the selected box already wears, because that is the only moment
+         "a variation of Heading 1" means anything -- and it starts from
+         the box, so the look you just built by hand becomes the
+         variation rather than something you rebuild inside a dialog.
+         A variation records only what DIFFERS from its parent, so
+         changing Heading 1 later still moves this one. */
+      if(curId){
+        var mkv=document.createElement('button');
+        mkv.className='dbtn vw-opt';
+        mkv.innerHTML=bic('plus')+' New variation of '
+          +esc(styleDef(curId).label)+'\u2026';
+        mkv.title='Name this box\u2019s look as a variation of '
+          +styleDef(curId).label+'. It keeps following '
+          +styleDef(curId).label+' for everything you have not changed.';
+        mkv.addEventListener('click',function(e){
+          e.stopPropagation();
+          menu.hidden=true;
+          var s5=pres.slides[cur],a5=annotByIdx(s5,selAnnot);
+          if(!a5||!a5.style) return;
+          var base=a5.style;
+          var nm=prompt('Call this variation of '
+            +styleDef(base).label+' what?','');
+          if(nm===null) return;
+          nm=String(nm).trim();
+          if(!nm){toast('A variation needs a name');return;}
+          var v=addVariant(nm,base);
+          if(!v){toast('Could not make that variation');return;}
+          /* ONLY THE DIFFERENCES -- read by the one helper both
+             doors share (T294) */
+          var p=styleDef(base);
+          var o=variantDeltaFrom(a5,base,null);
+          if(Object.keys(o).length) deckStyles()[v.id]=o;
+          applyStyleTo(a5,v.id);
+          markDirty();renderSlide();showFmt();
+          toast('\u201c'+nm+'\u201d is a variation of '
+            +p.label+' \u2014 it follows '+p.label
+            +' for everything you did not change.',6000);
+        });
+        menu.appendChild(mkv);
+      }
       menuHead(menu,'this deck');
       var upd=document.createElement('button');
       upd.className='dbtn vw-opt';
@@ -42161,6 +42433,12 @@ window.JunoPptx = (function () {
         var s4=pres.slides[cur],a4=annotByIdx(s4,selAnnot);
         if(!a4){menu.hidden=true;return;}
         headingStyles().forEach(function(id){
+          /* T293: NOT THE VARIATIONS. This flattens weight, slant, face
+             and colour across every heading -- which is exactly the set
+             a variation exists to differ in, so one press would erase
+             every variation in the deck. Their parents are in this same
+             list, and moving a parent moves its family. */
+          if(parentOf(id)) return;
           var d4=deckStyles()[id]||{};
           /* SIZE is what makes a heading level a level, so it is the one
              thing this does not flatten */
@@ -48150,8 +48428,25 @@ window.JunoPptx = (function () {
         return;}
       srcA=a;srcKey=typeKeyOf(a);
       srcKind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
-      buildWhat();buildProps();buildScope();syncWords();
+      buildWhat();buildProps();buildScope();tieSync();syncWords();
       dlg.hidden=false;
+    }
+    /* T294: the tie is only on offer when there is something to be a
+       variation OF -- a box wearing a text style. isStyleKey answers
+       exactly that, and it is what the old warning was gated on too. */
+    function tieOn(){
+      var w=$('#aa-tiewrap'),c=$('#aa-tie');
+      return !!(w&&!w.hidden&&c&&c.checked);
+    }
+    function tieSync(){
+      var w=$('#aa-tiewrap'),lab=$('#aa-tielab');
+      if(!w) return;
+      var ok=isStyleKey(srcKey)&&srcA&&srcA.style
+        &&!!STYLE_DEFAULTS[srcA.style];
+      w.hidden=!ok;
+      if(ok&&lab)
+        lab.textContent='Keep them tied to '
+          +styleDef(srcA.style).label;
     }
     function commit(){
       if(!srcA) return;
@@ -48162,6 +48457,7 @@ window.JunoPptx = (function () {
          boxes at about 42 pt" would be naming the size of the box you
          copied FROM rather than the ones that changed */
       var samp=keySample();
+      if(tieOn()){commitAsVariation(idxs,want,samp);return;}
       var n=applyToType(srcKey,srcA,want,idxs);
       close();
       if(!n){toast('Nothing else on those slides is a '
@@ -48174,6 +48470,38 @@ window.JunoPptx = (function () {
           +typeLabel(srcKey,false,samp)+' style, so Re-apply would put '
           +'them back';
       toast(msg+'. Ctrl+Z undoes the lot.');
+    }
+    /* NAME IT AND WEAR IT, rather than write it on and walk away.
+       Every matching box in scope -- the source included, or the box you
+       copied from would be the one odd one out -- ends up wearing a new
+       type whose parent is the style they all already wore. */
+    function commitAsVariation(idxs,want,samp){
+      var base=srcA.style,p=styleDef(base);
+      var nm=prompt('Call this variation of '+p.label+' what?','');
+      if(nm===null) return;                    /* cancelled: stay open */
+      nm=String(nm).trim();
+      if(!nm){toast('A variation needs a name');return;}
+      var hits=[];
+      (idxs||[]).forEach(function(i){
+        var sl=(pres.slides||[])[i]; if(!sl) return;
+        (sl.annots||[]).forEach(function(a){
+          if(a&&a.k==='text'&&typeKeyOf(a)===srcKey) hits.push(a);});
+      });
+      if(!hits.length){
+        toast('Nothing on those slides is a '+typeLabel(srcKey,false,samp));
+        return;
+      }
+      var v=addVariant(nm,base);
+      if(!v){toast('Could not make that variation');return;}
+      var o=variantDeltaFrom(srcA,base,want);
+      if(Object.keys(o).length) deckStyles()[v.id]=o;
+      hits.forEach(function(a){applyStyleTo(a,v.id);});
+      markDirty();refresh();
+      close();
+      toast(hits.length+' '+typeLabel(srcKey,hits.length!==1,samp)
+        +' now wear \u201c'+nm+'\u201d, a variation of '+p.label
+        +' \u2014 change '+p.label+' and they follow. Ctrl+Z undoes '
+        +'the lot.',7000);
     }
     $('#aa-ok').addEventListener('click',commit);
     $('#aa-cancel').addEventListener('click',close);
@@ -55817,10 +56145,10 @@ window.JunoPptx = (function () {
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
-    styleOrder().forEach(function(id){
+    function styleRow(id,isVar){
       var d=styleDef(id); if(!d) return;
       var b=document.createElement('button');
-      b.className='dg-row'+(id===dgSel?' on':'');
+      b.className='dg-row'+(id===dgSel?' on':'')+(isVar?' dg-rowvar':'');
       var nm=document.createElement('span');
       nm.className='dg-name';nm.textContent=d.label||id;
       dgSpecimen(nm,id);
@@ -55828,16 +56156,55 @@ window.JunoPptx = (function () {
          the page's ink and vanish here (2026-09-03, "a lot of the text
          can't be read"); weight, italic and size still draw the ladder */
       nm.style.color='';
+      /* T295: ...WHICH MEANT TWO VARIATIONS DIFFERING ONLY IN COLOUR
+         DREW AS IDENTICAL ROWS -- in the one place the user asked for
+         "the preview should show the colours". Blanking the text is
+         still right; the colour goes on a CHIP instead, which sits on a
+         known ground and so cannot disappear into it. */
+      var chip=null;
+      if(d.color){
+        chip=document.createElement('span');
+        chip.className='dg-swatch';
+        chip.style.background=tokVal(d.color);
+      }
       var ct=document.createElement('span');
       ct.className='dg-count';
       var n=dgWearers(id).length;
       ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
-      b.appendChild(nm);b.appendChild(ct);
+      b.appendChild(nm);
+      if(chip) b.appendChild(chip);
+      b.appendChild(ct);
+      var par=isVar?parentOf(id):'';
       b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
+        +(par?(', a variation of '+(styleDef(par)||{}).label):'')
         +(n?(', worn by '+n+' box'+(n===1?'':'es')):', not used yet');
       b.addEventListener('click',function(){
         dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b);
+    }
+    /* T295: A FAMILY READS AS A FAMILY HERE TOO. styleOrder appends, so
+       a variation of Heading 1 sat last, after Caption, with nothing
+       saying what it varied -- the same complaint the Text styles menu
+       had (T293), on the screen whose whole job is showing you the
+       system.
+       Each variation keeps its OWN row, its own board and its own
+       re-stamp. dgWearers stays an exact match on a.style and must:
+       dgRestamp is built on it and calls applyStyleTo with the SELECTED
+       id, so one loosened predicate would silently repaint every colour
+       variation in its parent's colour the next time anyone nudged
+       Heading 1. */
+    var listed={};
+    styleOrder().forEach(function(id){
+      if(listed[id]||parentOf(id)) return;
+      listed[id]=1;styleRow(id,false);
+      variantsOf(id).forEach(function(v){
+        if(listed[v]) return;
+        listed[v]=1;styleRow(v,true);
+      });
+    });
+    styleOrder().forEach(function(id){
+      if(listed[id]) return;       /* a variation whose parent has gone */
+      listed[id]=1;styleRow(id,false);
     });
     /* T224: and the things that are not text. A figure has no style
        registry to edit, but it has a position, a size and a place in
