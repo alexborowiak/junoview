@@ -6441,3 +6441,41 @@ option. Then where has the ability to refresh all images gone?"
   *Still to come:* the scoped apply (whole presentation / section /
   slide range) and the Style system's own list of variations, which is
   the rest of the user's ask.
+
+- [x] **T294 - Applying a look over a scope can NAME it instead of
+  baking it.**
+  The user (2026-09-05): "you can apply that to all of this type ... in
+  whole presentation or just in section or slide range."
+  *Done 2026-09-05.* **The scope machinery already existed** -- the
+  "Apply this look to…" dialog has had per-slide checkboxes, per-section
+  checkboxes with a half-in state, All slides and a
+  which-properties-travel column since 2026-08-22. What it DID with them
+  was the problem: `applyToType` writes the properties onto every
+  matching box, which detaches them from the style they wore. The code
+  said so itself, in the toast it printed afterwards -- "they no longer
+  match the … style, so Re-apply would put them back". That sentence is
+  the whole argument for this feature, and it was already in the
+  source.
+  One checkbox in the dialog's footer -- **"Keep them tied to Heading
+  1"**, on by default, shown only when the box you copied from wears a
+  text style -- makes Apply name the look as a variation and put every
+  matching box in scope into it, source included. Leave the source out
+  and the box you built the variation from is the one box not wearing
+  it.
+  It respects the dialog's own **what travels** column: a variation that
+  recorded everything would make that column a lie.
+  The delta reader is **one function** used by both doors that build a
+  variation. Two copies of that rule is the shape the 2026-09-05 review
+  named as this codebase's first structural problem, and this is the
+  second door.
+  Two details worth keeping: a NEUTRAL value is a real answer -- `b:0`
+  in the delta clears the bold the parent set, because styleDef merges
+  it over and applyStyleTo reads `if(d.b)` -- so a variation can say
+  "not bold" as well as "navy"; and the background is read back through
+  the same `bg`/`bgc` mapping `applyStyleTo` writes it with, or a colour
+  variation could never carry the one thing it most often is.
+  Driven on three slides of Heading 1 boxes with slide 3 taken out of
+  scope: the count line reads "2 of 3 slides", the two in scope end up
+  wearing `t1/Big navy/of=h1`, the variation stores exactly
+  `{size:6.25}` and nothing else, and slide 3's heading is untouched at
+  `h1@5`.

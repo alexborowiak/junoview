@@ -56,10 +56,11 @@ def test_a_variation_is_born_from_the_box_you_are_looking_at(out):
     everything you did not change."""
     assert "        mkv.innerHTML=bic('plus')+' New variation of '" in out
     assert "          var v=addVariant(nm,base);" in out
-    assert "          var p=styleDef(base),o={};" in out
-    assert ("          if(a5.size&&Math.abs(a5.size-p.size)>0.01) "
-            "o.size=a5.size;") in out
+    # T294 factored the delta out: both doors that build a variation
+    # read it from one helper, so they cannot drift apart
+    assert "          var o=variantDeltaFrom(a5,base,null);" in out
     assert "          if(Object.keys(o).length) deckStyles()[v.id]=o;" in out
+    assert "  function variantDeltaFrom(a,parentId,want){" in out
 
 
 def test_restyling_a_parent_restyles_its_family(out):

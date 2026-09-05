@@ -2765,6 +2765,45 @@
     syncCustomTypes();
     return t;
   }
+  /* WHAT THIS BOX SAYS THAT ITS PARENT DOES NOT (T294). The whole
+     difference between a variation and a copy: a property the box
+     shares with Heading 1 is left unsaid, so it still follows Heading
+     1. `want` is the dialog's own "what travels" map, or null for
+     everything.
+     Storing the neutral value is a real answer, not a gap: styleDef
+     merges it over the parent and applyStyleTo reads `if(d.b)`, so
+     b:0 clears the bold the parent set. A variation can say "not
+     bold" as well as "navy".
+     Declared here, beside addVariant, because two doors build a
+     variation and one of them must not be a second copy of this. */
+  function variantDeltaFrom(a,parentId,want){
+    var p=styleDef(parentId)||{},o={};
+    function take(k){return !want||want[k];}
+    if(take('size')&&typeof a.size==='number'
+       &&Math.abs(a.size-(p.size||0))>0.005) o.size=a.size;
+    ['b','i','lh','pspace'].forEach(function(k){
+      if(!take(k)) return;
+      var mine=a[k]||0,theirs=p[k]||0;
+      if(mine!==theirs) o[k]=mine;
+    });
+    ['font','color','align'].forEach(function(k){
+      if(!take(k)) return;
+      var mine=a[k]||'',theirs=p[k]||'';
+      if(mine!==theirs) o[k]=mine;
+    });
+    /* applyStyleTo maps a style's `bg` onto a.bg/a.bgc; read it back
+       through the same mapping or a variation could never carry the
+       one thing a colour variation most often is */
+    if(take('bg')){
+      var mine=(a.bg===0)?'none':(a.bg?(a.bgc||''):'');
+      if(mine!==(p.bg||'')) o.bg=mine;
+    }
+    if(take('bdc')){
+      var mb=a.bdc||'';
+      if(mb!==(p.bdc||'')) o.bdc=mb;
+    }
+    return o;
+  }
   /* deleting a type must not MOVE anything. applyStyleTo has already
      written every one of its properties onto each box, so dropping the
      NAME leaves the slides looking exactly as they did - the boxes just

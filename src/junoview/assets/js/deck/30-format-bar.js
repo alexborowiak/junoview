@@ -1138,17 +1138,10 @@
           if(!nm){toast('A variation needs a name');return;}
           var v=addVariant(nm,base);
           if(!v){toast('Could not make that variation');return;}
-          /* ONLY THE DIFFERENCES. Comparing against the parent's
-             resolved look is what makes this a variation rather than a
-             copy: a property the box shares with Heading 1 is left
-             unsaid, so it still follows Heading 1. */
-          var p=styleDef(base),o={};
-          if(a5.size&&Math.abs(a5.size-p.size)>0.01) o.size=a5.size;
-          [['b',1],['i',1],['font',''],['color',''],
-           ['lh',0],['pspace',0]].forEach(function(pr){
-            var k=pr[0],mine=a5[k],theirs=p[k];
-            if((mine||pr[1])!==(theirs||pr[1])&&mine!==undefined) o[k]=mine;
-          });
+          /* ONLY THE DIFFERENCES -- read by the one helper both
+             doors share (T294) */
+          var p=styleDef(base);
+          var o=variantDeltaFrom(a5,base,null);
           if(Object.keys(o).length) deckStyles()[v.id]=o;
           applyStyleTo(a5,v.id);
           markDirty();renderSlide();showFmt();

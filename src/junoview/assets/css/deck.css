@@ -4265,6 +4265,12 @@ body.light .eq-box{background:var(--chrome-2);
 .aa-slide-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   min-width:0;}
 .aa-foot{display:flex;align-items:center;gap:8px;}
+.aa-tie{display:inline-flex;align-items:center;gap:6px;
+  font-family:var(--sans);font-size:11.5px;color:var(--chrome-ink-2);
+  cursor:pointer;white-space:nowrap;}
+.aa-tie[hidden]{display:none!important;}
+.aa-tie input{margin:0;cursor:pointer;}
+.aa-tie:hover{color:var(--chrome-ink);}
 .aa-count{font-family:var(--sans);font-size:12px;color:var(--chrome-ink-2);}
 /* the matching items on the slide behind, outlined while you hover the
    headline — a pure class toggle over nodes that are already rendered */

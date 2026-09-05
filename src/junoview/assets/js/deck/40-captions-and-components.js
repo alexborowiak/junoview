@@ -2219,8 +2219,25 @@
         return;}
       srcA=a;srcKey=typeKeyOf(a);
       srcKind=(selAnnot==='t'||selAnnot==='s')?'text':a.k;
-      buildWhat();buildProps();buildScope();syncWords();
+      buildWhat();buildProps();buildScope();tieSync();syncWords();
       dlg.hidden=false;
+    }
+    /* T294: the tie is only on offer when there is something to be a
+       variation OF -- a box wearing a text style. isStyleKey answers
+       exactly that, and it is what the old warning was gated on too. */
+    function tieOn(){
+      var w=$('#aa-tiewrap'),c=$('#aa-tie');
+      return !!(w&&!w.hidden&&c&&c.checked);
+    }
+    function tieSync(){
+      var w=$('#aa-tiewrap'),lab=$('#aa-tielab');
+      if(!w) return;
+      var ok=isStyleKey(srcKey)&&srcA&&srcA.style
+        &&!!STYLE_DEFAULTS[srcA.style];
+      w.hidden=!ok;
+      if(ok&&lab)
+        lab.textContent='Keep them tied to '
+          +styleDef(srcA.style).label;
     }
     function commit(){
       if(!srcA) return;
@@ -2231,6 +2248,7 @@
          boxes at about 42 pt" would be naming the size of the box you
          copied FROM rather than the ones that changed */
       var samp=keySample();
+      if(tieOn()){commitAsVariation(idxs,want,samp);return;}
       var n=applyToType(srcKey,srcA,want,idxs);
       close();
       if(!n){toast('Nothing else on those slides is a '
@@ -2243,6 +2261,38 @@
           +typeLabel(srcKey,false,samp)+' style, so Re-apply would put '
           +'them back';
       toast(msg+'. Ctrl+Z undoes the lot.');
+    }
+    /* NAME IT AND WEAR IT, rather than write it on and walk away.
+       Every matching box in scope -- the source included, or the box you
+       copied from would be the one odd one out -- ends up wearing a new
+       type whose parent is the style they all already wore. */
+    function commitAsVariation(idxs,want,samp){
+      var base=srcA.style,p=styleDef(base);
+      var nm=prompt('Call this variation of '+p.label+' what?','');
+      if(nm===null) return;                    /* cancelled: stay open */
+      nm=String(nm).trim();
+      if(!nm){toast('A variation needs a name');return;}
+      var hits=[];
+      (idxs||[]).forEach(function(i){
+        var sl=(pres.slides||[])[i]; if(!sl) return;
+        (sl.annots||[]).forEach(function(a){
+          if(a&&a.k==='text'&&typeKeyOf(a)===srcKey) hits.push(a);});
+      });
+      if(!hits.length){
+        toast('Nothing on those slides is a '+typeLabel(srcKey,false,samp));
+        return;
+      }
+      var v=addVariant(nm,base);
+      if(!v){toast('Could not make that variation');return;}
+      var o=variantDeltaFrom(srcA,base,want);
+      if(Object.keys(o).length) deckStyles()[v.id]=o;
+      hits.forEach(function(a){applyStyleTo(a,v.id);});
+      markDirty();refresh();
+      close();
+      toast(hits.length+' '+typeLabel(srcKey,hits.length!==1,samp)
+        +' now wear \u201c'+nm+'\u201d, a variation of '+p.label
+        +' \u2014 change '+p.label+' and they follow. Ctrl+Z undoes '
+        +'the lot.',7000);
     }
     $('#aa-ok').addEventListener('click',commit);
     $('#aa-cancel').addEventListener('click',close);

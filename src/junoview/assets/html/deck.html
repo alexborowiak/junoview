@@ -2851,6 +2851,20 @@
       </div>
     </div>
     <div class="aa-foot">
+      <!-- T294: KEEP THEM TIED. Applying a look used to WRITE the
+           properties onto every matching box, which detached them from
+           the style they wore -- the toast said so itself: "they no
+           longer match the ... style, so Re-apply would put them back".
+           Naming the look as a variation instead leaves every box
+           wearing a type, so it still follows its parent for everything
+           the variation does not change. Shown only when the box you
+           copied from wears a text style; there is nothing to be a
+           variation OF otherwise. -->
+      <label class="aa-tie" id="aa-tiewrap" hidden
+        title="Name this look as a variation, so these boxes keep
+ following the style they wear. Without it they are overwritten and stop
+ matching it."><input type="checkbox" id="aa-tie" checked>
+        <span id="aa-tielab">Keep them tied</span></label>
       <span class="aa-count" id="aa-count"></span>
       <span class="deck-spring"></span>
       <button class="dbtn" id="aa-cancel">Cancel</button>
