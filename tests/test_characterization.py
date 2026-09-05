@@ -1127,6 +1127,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T288: chrome only. chartSvg takes its y-scale from the
+# data (zero still forced for bars) and its ink from pageIsLight.
 # 2026-09-05, T287: chrome only. cmpPush re-derives capOfIdx, so
 # "Push this look" no longer deletes the figure-caption tie from the
 # component definition.
@@ -1178,8 +1180,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "a5e11f937a212c9a25cc35d6f85301fa"
-EXPECTED_BYTES = 3637185
+EXPECTED_MD5 = "52de3064803b9dacda18be6d6dd20ccf"
+EXPECTED_BYTES = 3638518
 
 
 def _render_example() -> str:

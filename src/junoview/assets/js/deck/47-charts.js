@@ -133,7 +133,18 @@
       }
       return gSeries[k];
     }
-    var ink='#dbe7ef',dim='#8aa0b0',grid='#8aa0b033';
+    /* T288: THE PAGE'S INK, NOT THE EDITOR'S. These three were the
+       dark chrome's colours written as literals, so every chart on a
+       LIGHT page -- which is every poster, since a new one starts white
+       -- drew its title, axis labels, legend and gridlines in #dbe7ef
+       on white: about 1.2:1, i.e. nothing. buildPrintRoot and the pptx
+       exporter both already ask pageIsLight; the on-screen renderer was
+       the one that did not. */
+    var lightPg=(typeof pageIsLight==='function')
+      &&pageIsLight((pres&&pres.pageBg)||'#0b141d');
+    var ink=lightPg?'#0b141d':'#dbe7ef';
+    var dim=lightPg?'#4a5b68':'#8aa0b0';
+    var grid=lightPg?'#4a5b6833':'#8aa0b033';
     var legend=(a.leg!==0)&&(d.series.length>1||a.ct==='pie');
     var T=(a.title?30:12),B=H-(legend?48:30),L=46,R=W-12;
     if(a.title) gSkel.appendChild(
@@ -174,11 +185,22 @@
       });
       return svg;
     }
-    /* shared y scale for bar / line / scatter */
-    var lo=0,hi=1;
+    /* shared y scale for bar / line / scatter.
+       T288: FROM THE DATA. It started at 0..1 and only ever widened, so
+       a series of 95..105 got an axis of 0..105 and drew as a flat line
+       in the top tenth of the plot -- the shape of the data, which is
+       the whole reason for a chart, was gone.
+       Zero is still forced for BARS, where it is not a preference: a
+       bar's length IS its value, and a bar chart cut off above zero
+       misstates every comparison on it. A line or a scatter says where
+       the points are, and cropping to them is the honest scale. */
+    var lo=Infinity,hi=-Infinity;
     d.series.forEach(function(se){se.ys.forEach(function(v){
+      if(!isFinite(v)) return;
       if(v<lo) lo=v; if(v>hi) hi=v;});});
-    if(hi===lo) hi=lo+1;
+    if(!isFinite(lo)||!isFinite(hi)){lo=0;hi=1;}
+    if(a.ct==='bar'){if(lo>0) lo=0; if(hi<0) hi=0;}
+    if(hi===lo){lo-=0.5;hi+=0.5;}
     var step=chartStep(hi-lo);
     lo=Math.floor(lo/step)*step;hi=Math.ceil(hi/step)*step;
     function Y(v){return B-(v-lo)/(hi-lo)*(B-T);}

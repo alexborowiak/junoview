@@ -6233,3 +6233,26 @@ option. Then where has the ability to refresh all images gone?"
   Same derivation as `cmpMake`'s, over `cmpPush`'s own list. The
   definition still carries no ids, only the index -- that part was
   right and is unchanged.
+
+- [x] **T288 - A chart is drawn to its own data, in the page's own ink.**
+  From the 2026-09-05 review's ordered plan. Two faults in one renderer,
+  both of which make the figure -- the thing this product exists to put
+  on a slide -- say something untrue.
+  **The scale ignored the data.** `var lo=0,hi=1;` and then only ever
+  widened, so a series of 95..105 got an axis of 0..105 and drew as a
+  flat line in the top tenth of the plot. The shape of the data, which
+  is the entire reason for a chart, was gone. It comes from the data
+  now -- **but a BAR still starts at zero**, because that is not a
+  preference: a bar's length IS its value, and a bar chart cut off above
+  zero misstates every comparison on it. A line or a scatter says where
+  the points are, and cropping to them is the honest scale.
+  **The ink was the editor's, not the page's.** `ink`, `dim` and `grid`
+  were the dark chrome's colours written as literals, so every chart on
+  a light page -- which is every poster, since a new one starts white --
+  drew its title, axis labels, legend and gridlines at about 1.2:1.
+  `buildPrintRoot` and the pptx exporter both already ask `pageIsLight`;
+  the on-screen renderer was the one that did not. Same class as T284,
+  one file over, in JS rather than CSS.
+  Driven on a white page with 95..105: the line's axis goes 0..105 ->
+  95..105 and its vertical travel from nothing to 240px; the bar's axis
+  stays 0..150; the ink goes #dbe7ef -> #0b141d.
