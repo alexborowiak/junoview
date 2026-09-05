@@ -55,9 +55,19 @@ def test_junoview_makes_its_own_file_in_there(out):
 
 def test_a_new_folder_drops_the_old_file(out):
     """Otherwise the next save writes the file you just moved away from."""
-    assert ("        fileHandle=null;fileName='';\n"
-            "        idbDel(HKEY).catch(function(){});\n"
-            "        setTarget('file');") in out
+    assert ("      fileHandle=null;fileName='';\n"
+            "      idbDel(HKEY).catch(function(){});\n"
+            "      setTarget('file');") in out
+
+
+def test_choosing_the_folder_has_one_implementation(out):
+    """T283 lifted this out of the menu row's click handler so the
+    first-run prompt runs the same code rather than a second copy: three
+    files each holding their own copy of one action is a shape this
+    codebase already has too much of."""
+    assert "  function chooseSaveFolder(){" in out
+    assert "      close();chooseSaveFolder();\n    });" in out
+    assert "      row('A folder on this computer'" in out
 
 
 def test_the_menu_names_the_folder_and_can_undo_it():

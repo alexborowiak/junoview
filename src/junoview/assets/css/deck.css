@@ -4736,6 +4736,19 @@ body.light .seq-cell b{color:var(--ink);}
   font-family:var(--sans,system-ui);}
 .chart-data{position:fixed;left:50%;top:20%;transform:translateX(-50%);
   z-index:420;width:min(440px,92vw);padding:10px 12px 12px;}
+/* T283: the first-run "where should this be kept?" prompt. Centred and
+   unanchored -- it is a question about the deck, not about a button --
+   so it goes on the overlay stack with a null owner. */
+.save-ask{position:fixed;left:50%;top:26%;transform:translateX(-50%);
+  z-index:430;width:min(430px,92vw);padding:10px 12px 12px;
+  display:flex;flex-direction:column;gap:4px;}
+.save-ask .sa-opt{width:100%;text-align:left;align-items:flex-start;
+  flex-direction:column;gap:2px;padding:9px 11px;height:auto;}
+.sa-t{font-family:var(--sans);font-size:13px;font-weight:600;
+  color:var(--chrome-ink);}
+.sa-n{font-family:var(--sans);font-size:11.5px;font-weight:400;
+  line-height:1.45;color:var(--chrome-ink-3);white-space:normal;}
+.save-ask .sa-opt:hover .sa-n{color:var(--chrome-ink-2);}
 .chart-ta{width:100%;min-height:150px;resize:vertical;
   font-family:var(--mono);font-size:11.5px;line-height:1.5;
   color:#dbe7ef;background:#0d1722;border:1px solid #ffffff22;

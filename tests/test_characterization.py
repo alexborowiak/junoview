@@ -1127,6 +1127,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T283: chrome only. A new deck asks where it will be kept
+# -- project, a folder, or this browser with the quota warning -- once,
+# and chooseSaveFolder becomes the one implementation the prompt and the
+# Save menu share.
 # 2026-09-05, T282: chrome only. The welcome card grid becomes three
 # sections -- Presentations, Posters, Notebooks -- each with its own New
 # in its header; posters get their own list and their own door; the
@@ -1159,8 +1163,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "57c5fdcc340dd66848b7290872ae8823"
-EXPECTED_BYTES = 3624592
+EXPECTED_MD5 = "35ab33e4583a88a5f506e49db149c48a"
+EXPECTED_BYTES = 3629523
 
 
 def _render_example() -> str:

@@ -1424,6 +1424,8 @@
     source='auto';
     cur=0;activePane=0;
     openDeck('edit');   /* land straight in the slide editor */
+    /* T283: and ask where it is going to live, the first time only */
+    if(typeof askWhereToSave==='function') askWhereToSave();
   }
   /* ---- CUSTOM VIEW: a third kind of saved thing (2026-07-29) ---------
      Not slides. A custom view remembers how the NOTEBOOK looks: the
@@ -1490,6 +1492,7 @@
     source='auto';
     cur=0;activePane=-1;
     openDeck('edit');
+    if(typeof askWhereToSave==='function') askWhereToSave();
   }
 
   function renderPresRow(){

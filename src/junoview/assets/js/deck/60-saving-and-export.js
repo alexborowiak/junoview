@@ -537,6 +537,109 @@
     saveTarget=t;lsSet(TGKEY,t);
     renderTargetBtn();renderSaveBtn();status();
   }
+  /* PICK A FOLDER, ONCE, FOR EVERYTHING AFTER (T235). Lifted out of the
+     menu row's handler by T283 so the first-run prompt runs the same
+     code rather than a second copy of it -- three files each holding
+     their own copy of one action is a shape this codebase already has
+     too much of. */
+  function chooseSaveFolder(){
+    if(!canPickDir){
+      toast('This browser cannot pick a folder \u2014 use File \u203a '
+        +'Download a copy');
+      return Promise.resolve(false);
+    }
+    if(!requireName()) return Promise.resolve(false);
+    return pickSaveFolder().then(function(d){
+      if(!d) return false;
+      /* a new folder means a new file: forget the old handle, or
+         the next save would write the file you just moved away from */
+      fileHandle=null;fileName='';
+      idbDel(HKEY).catch(function(){});
+      setTarget('file');
+      return saveToFile(false).then(function(){
+        toast('Every presentation now saves itself into '
+          +deckDirName+' \u2014 this one is '+(fileName||'there')
+          +' already.',6000);
+        return true;
+      });
+    }).catch(function(e){
+      if(!e||e.name!=='AbortError')
+        toast('Could not use that folder: '+((e&&e.message)||e));
+      return false;
+    });
+  }
+  /* ---- WHERE IS THIS GOING TO LIVE? (T283) ----------------------------
+     (2026-09-05, user: "When opening a new file, it should prompt where
+     to save to (local and then there can be a default you select), or
+     browser, with the warning about the browser.")
+
+     Every destination here already existed behind the chevron beside
+     Save -- what did not exist was being ASKED. A deck defaulted to
+     browser storage silently, and T235 records how that ends: "the save
+     to browser thing isn't working too great ... I just got 'browser
+     full' error". Finding out your work lives somewhere with a quota at
+     the moment you exceed it is the worst possible time to learn it.
+
+     Asked ONCE, on the first new deck, and never again: answering writes
+     TGKEY, and the presence of TGKEY is the whole condition. Dismissing
+     answers "this browser" rather than leaving it unset, because a
+     prompt that comes back every time you press New is a nag. */
+  function saveTargetAsked(){return !!lsGet(TGKEY);}
+  /* held in the closure, NOT looked up by id: an id that only ever
+     exists after this function runs is a phantom to
+     test_every_id_the_js_looks_up_exists_somewhere, and it is right to
+     say so -- the check is what catches doors onto nothing. */
+  var saveAskEl=null;
+  function askWhereToSave(){
+    if(saveTargetAsked()) return;
+    if(deckDirName) return;          /* a folder already answers it */
+    if(saveAskEl){overlayHide(saveAskEl);saveAskEl.remove();}
+    var m=document.createElement('div');
+    m.className='sh-menu save-ask';saveAskEl=m;
+    menuHead(m,'where should this be kept?');
+    function row(label,note,fn){
+      var b=document.createElement('button');
+      b.className='dbtn vw-opt sa-opt';
+      var t=document.createElement('span');
+      t.className='sa-t';t.textContent=label;
+      var n=document.createElement('span');
+      n.className='sa-n';n.textContent=note;
+      b.appendChild(t);b.appendChild(n);
+      b.addEventListener('click',function(e){
+        e.stopPropagation();overlayHide(m);fn();
+      });
+      m.appendChild(b);
+      return b;
+    }
+    if(APP.mode==='app')
+      row('This project','Beside the notebook it came from, on this '
+        +'computer.',function(){
+        setTarget('project');
+        toast('Saving to this project. Change it beside Save.',5000);
+      });
+    if(canPickDir)
+      row('A folder on this computer','Pick it once. Every presentation '
+        +'after this one saves itself there too, with nothing to answer '
+        +'and no size limit.',function(){chooseSaveFolder();});
+    row('This browser','Kept in this browser only \u2014 clearing site '
+      +'data loses it, and a deck with figures can fill the space a '
+      +'browser allows.',function(){
+      setTarget('browser');
+      toast('Kept in this browser. Change it beside Save \u2014 a '
+        +'folder on your computer has no size limit.',6000);
+    });
+    deckEl.appendChild(m);
+    /* AFTER the click that opened the deck has finished bubbling. New
+       presentation is reached BY a click -- the front door's New, the
+       rail's, File > New -- and that click carries on to document,
+       where overlayBoot's outside-click handler pops whatever is on the
+       stack. Shown synchronously, this prompt was pushed and immediately
+       closed: built correctly, hidden, zero width. Driven, 2026-09-05. */
+    setTimeout(function(){
+      if(saveTargetAsked()||deckDirName){m.remove();return;}
+      overlayShow(null,m);
+    },80);
+  }
   var AUTOKEY='semopts:'+SCOPE+':autosave';
   /* HOW OFTEN, not just whether. The interval was a hardcoded 1200ms
      debounce: invisible, unsettable, and — being a debounce — restarted
@@ -840,29 +943,7 @@
     /* T235: pick the folder, and everything after it goes there */
     var fd=$('#tg-folder');
     if(fd) fd.addEventListener('click',function(){
-      close();
-      if(!canPickDir){
-        toast('This browser cannot pick a folder \u2014 use File \u203a '
-          +'Download a copy');
-        return;
-      }
-      if(!requireName()) return;
-      pickSaveFolder().then(function(d){
-        if(!d) return;
-        /* a new folder means a new file: forget the old handle, or
-           the next save would write the file you just moved away from */
-        fileHandle=null;fileName='';
-        idbDel(HKEY).catch(function(){});
-        setTarget('file');
-        return saveToFile(false).then(function(){
-          toast('Every presentation now saves itself into '
-            +deckDirName+' \u2014 this one is '+(fileName||'there')
-            +' already.',6000);
-        });
-      }).catch(function(e){
-        if(!e||e.name!=='AbortError')
-          toast('Could not use that folder: '+((e&&e.message)||e));
-      });
+      close();chooseSaveFolder();
     });
     var ff=$('#tg-folder-forget');
     if(ff) ff.addEventListener('click',function(){

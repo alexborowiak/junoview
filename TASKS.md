@@ -6088,3 +6088,42 @@ option. Then where has the ability to refresh all images gone?"
   Driven on a web build at 1180px: three equal columns side by side;
   New poster opens a poster and, back home, it lists under **Posters**
   while Presentations reads "Nothing yet".
+
+- [x] **T283 - A new presentation asks where it is going to live.**
+  The user (2026-09-05): "When opening a new file, it should prompt
+  where to save to (local and then there can be a default you select),
+  or browser, with the warning about the browser."
+  *Done 2026-09-05.* Every destination already existed behind the
+  chevron beside Save -- This project, This browser, A file, and T235's
+  **A folder on this computer**, which is exactly the "default you
+  select". What did not exist was being ASKED. A new deck went to
+  browser storage silently, and T235 records how that ends: "the save to
+  browser thing isn't working too great ... I just got 'browser full'
+  error." Finding out your work lives somewhere with a quota at the
+  moment you exceed it is the worst possible time to learn it.
+  A new presentation or poster now opens a centred prompt: *This
+  project* (app mode only), *A folder on this computer* -- "pick it
+  once, every presentation after this one saves itself there too, with
+  nothing to answer and no size limit" -- and *This browser*, which
+  carries the warning in as many words: "clearing site data loses it,
+  and a deck with figures can fill the space a browser allows."
+  **Asked once.** Answering writes TGKEY, and the presence of TGKEY is
+  the whole condition -- no second key, and no way for the two to
+  disagree. A folder already chosen answers it too.
+  The folder branch was lifted out of `#tg-folder`'s click handler into
+  `chooseSaveFolder()` so the prompt runs the same code rather than a
+  second copy: three files each holding their own copy of one action is
+  a shape this codebase has too much of already (it is the first theme
+  of the 2026-09-05 review).
+  Two things the browser caught. The element is held in the closure
+  rather than looked up by id -- an id that only exists once the
+  function has run is a phantom, and
+  `test_every_id_the_js_looks_up_exists_somewhere` is right to say so.
+  And it is shown one tick late: New is reached BY a click, that click
+  carries on to document, and overlayBoot's outside-click handler popped
+  the prompt off the stack the instant it went on. Shown synchronously
+  it was built correctly, hidden, and zero pixels wide.
+  Driven on a first-run web build: the prompt appears at 430x201 with
+  the two web-mode options (This project correctly absent); choosing
+  This browser closes it, toasts the warning and where to change it,
+  writes `savetarget=browser`, and a second New does not ask again.
