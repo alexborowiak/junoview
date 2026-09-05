@@ -6816,3 +6816,14 @@ option. Then where has the ability to refresh all images gone?"
   many sizes, and they don't align"), so
   `test_one_button_size_with_colour_carrying_emphasis` now also refuses
   any `height:` inside the run's own rule block.
+
+- [x] **T311 - Saved versions is two tiles, like every other pair.**
+  *Done 2026-09-05.* The second half of the same complaint. `History`
+  was a 56px tall tile and `Checkpoint…` a 26px button beside it, so the
+  pair sat at two heights on two baselines with the whole of row two
+  empty under the short one -- the group read as unfinished rather than
+  as the one feature its own code comment says it is ("taking one and
+  looking at them are one feature"). Every other two-item group on Home
+  -- Show (Notes / Layers), Keep up to date (Update / Images) -- is a
+  strip of equal tiles, and this is now the same: both report
+  h56 t75 w72.

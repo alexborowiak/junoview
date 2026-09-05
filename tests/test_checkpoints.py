@@ -46,7 +46,12 @@ def test_there_are_two_doors_and_both_lead_to_the_same_gesture(out):
     # T236: the File menu's row moved to Home, beside History --
     # taking one and looking at them are one feature
     assert 'id="hm-check"' in html and 'id="mi-check"' not in html
-    assert "                Checkpoint&#8230;</button>" in html
+    # T310: a tile beside History's tile, in one strip -- it was a 26px
+    # button next to a 56px tile, so the pair sat at two heights with the
+    # whole of row two empty under the short one
+    assert ("><i data-ic=\"pin\"></i><span>Checkpoint&#8230;</span></button>"
+            in html)
+    assert 'aria-label="Saved versions"' in html
     assert "  function versionDoorsBoot(){" in out
     assert "      e.stopPropagation();histCheckpoint(null);});" in out
     assert "id=\"dh-check\">'+bic('flag')" in out

@@ -1492,15 +1492,27 @@
           <span class="rbn-grp rbn-vers" data-tab="home"
             data-fold-ic="history">
             <span class="rbn-row">
-              <button class="fx-tile big-tile rbn-tall" id="hm-history"
-                title="Every version this presentation has been saved
+              <!-- T310: TWO TILES, like Show and Keep up to date beside
+                   it. History was a tall tile and Checkpoint a 26px
+                   button in row one, so the pair sat at two heights on
+                   two baselines with the whole of row two empty under
+                   the short one -- the group read as unfinished rather
+                   than as the one feature the note above says it is
+                   (2026-09-05, user: "Button spacing and sizing still
+                   weird"). Every other two-item group on this tab is a
+                   strip of equal tiles; this is now the same. -->
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Saved versions">
+                <button class="fx-tile big-tile" id="hm-history"
+                  title="Every version this presentation has been saved
  as, what is different about each, and a way to put one slide or the
  whole thing back"><i data-ic="history"></i><span>History</span></button>
-              <button class="dbtn rbn-sm" id="hm-check"
-                title="Save this exact version under a name you
+                <button class="fx-tile big-tile" id="hm-check"
+                  title="Save this exact version under a name you
  choose. It is kept even when older versions are dropped, and you can
- go back to it or start a branch from it"><i data-ic="pin"></i>
-                Checkpoint&#8230;</button>
+ go back to it or start a branch from it"
+                  ><i data-ic="pin"></i><span>Checkpoint&#8230;</span></button>
+              </span>
             </span>
             <span class="rbn-lab">Saved versions</span>
           </span>
