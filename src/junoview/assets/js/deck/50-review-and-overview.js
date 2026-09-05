@@ -2399,10 +2399,10 @@
   function dgRail(ov){
     var rail=ov.querySelector('#dg-list');
     rail.innerHTML='';
-    styleOrder().forEach(function(id){
+    function styleRow(id,isVar){
       var d=styleDef(id); if(!d) return;
       var b=document.createElement('button');
-      b.className='dg-row'+(id===dgSel?' on':'');
+      b.className='dg-row'+(id===dgSel?' on':'')+(isVar?' dg-rowvar':'');
       var nm=document.createElement('span');
       nm.className='dg-name';nm.textContent=d.label||id;
       dgSpecimen(nm,id);
@@ -2410,16 +2410,55 @@
          the page's ink and vanish here (2026-09-03, "a lot of the text
          can't be read"); weight, italic and size still draw the ladder */
       nm.style.color='';
+      /* T295: ...WHICH MEANT TWO VARIATIONS DIFFERING ONLY IN COLOUR
+         DREW AS IDENTICAL ROWS -- in the one place the user asked for
+         "the preview should show the colours". Blanking the text is
+         still right; the colour goes on a CHIP instead, which sits on a
+         known ground and so cannot disappear into it. */
+      var chip=null;
+      if(d.color){
+        chip=document.createElement('span');
+        chip.className='dg-swatch';
+        chip.style.background=tokVal(d.color);
+      }
       var ct=document.createElement('span');
       ct.className='dg-count';
       var n=dgWearers(id).length;
       ct.textContent=n?(n+' box'+(n===1?'':'es')):'unused';
-      b.appendChild(nm);b.appendChild(ct);
+      b.appendChild(nm);
+      if(chip) b.appendChild(chip);
+      b.appendChild(ct);
+      var par=isVar?parentOf(id):'';
       b.title=(d.label||id)+' — '+(d.size||2.6)+'% of the page height'
+        +(par?(', a variation of '+(styleDef(par)||{}).label):'')
         +(n?(', worn by '+n+' box'+(n===1?'':'es')):', not used yet');
       b.addEventListener('click',function(){
         dgSel=id;dgMatchArm=false;dgRail(ov);dgBody(ov);});
       rail.appendChild(b);
+    }
+    /* T295: A FAMILY READS AS A FAMILY HERE TOO. styleOrder appends, so
+       a variation of Heading 1 sat last, after Caption, with nothing
+       saying what it varied -- the same complaint the Text styles menu
+       had (T293), on the screen whose whole job is showing you the
+       system.
+       Each variation keeps its OWN row, its own board and its own
+       re-stamp. dgWearers stays an exact match on a.style and must:
+       dgRestamp is built on it and calls applyStyleTo with the SELECTED
+       id, so one loosened predicate would silently repaint every colour
+       variation in its parent's colour the next time anyone nudged
+       Heading 1. */
+    var listed={};
+    styleOrder().forEach(function(id){
+      if(listed[id]||parentOf(id)) return;
+      listed[id]=1;styleRow(id,false);
+      variantsOf(id).forEach(function(v){
+        if(listed[v]) return;
+        listed[v]=1;styleRow(v,true);
+      });
+    });
+    styleOrder().forEach(function(id){
+      if(listed[id]) return;       /* a variation whose parent has gone */
+      listed[id]=1;styleRow(id,false);
     });
     /* T224: and the things that are not text. A figure has no style
        registry to edit, but it has a position, a size and a place in

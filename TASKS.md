@@ -6479,3 +6479,39 @@ option. Then where has the ability to refresh all images gone?"
   wearing `t1/Big navy/of=h1`, the variation stores exactly
   `{size:6.25}` and nothing else, and slide 3's heading is untouched at
   `h1@5`.
+
+- [x] **T295 - Variations in the Style system, with their colour
+  visible.**
+  The user (2026-09-05): "These styles should be available in the style
+  system as well to apply to things."
+  *Done 2026-09-05.* They arrive in the rail for free -- it walks
+  `styleOrder()`, which appends every `pres.types` id, and every
+  consumer on that 1200-line surface treats the selection as an opaque
+  string. That is the strongest evidence for the parented-type model
+  over a second field: `dgWearers`, `dgAnnotMatches`, `dgGhostsFor`,
+  `dgKeyList` and the sheet's click handler know nothing but
+  `a.style===id`, and none of them had to learn anything.
+  What did not work was READING it.
+  - `styleOrder` appends, so a variation of Heading 1 sat **last, after
+    Caption**, with nothing saying what it varied. Grouped now, the same
+    way T293 grouped the menu.
+  - The rail **blanks each row's colour on purpose** -- a style whose
+    ink is the page's would vanish against chrome (2026-09-03, "a lot of
+    the text can't be read") -- so two variations differing only in
+    colour drew as two identical rows, in the one place the user asked
+    for a preview of the colours. Blanking the name is still right; the
+    colour goes on a **chip**, which sits on a known ground and cannot
+    disappear into it.
+  **`dgWearers` deliberately stays an exact match on `a.style`.**
+  `dgRestamp` is built on it and calls `applyStyleTo` with the SELECTED
+  id, so one loosened predicate would silently repaint every colour
+  variation in its parent's colour the next time anyone nudged Heading
+  1. A variation gets its own row, its own board and its own re-stamp
+  instead -- which is also what "available to apply to things" means.
+  Driven on a deck with Navy and Coral variations of Heading 1: the rail
+  reads Heading 1 / — Navy / — Coral with the right swatch on each;
+  every board draws exactly its own wearer; **none** is flagged as "no
+  longer matches the style"; and `standardise()` reports no findings at
+  all -- "three Heading 1 boxes, two wearing variations" is correctly
+  not drift, which the parented-type model buys with no code because
+  `standardise()` buckets by exact `a.style`.
