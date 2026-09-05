@@ -6707,3 +6707,35 @@ option. Then where has the ability to refresh all images gone?"
   reads `it`, so every live-path render threw. 840 green tests, a clean
   JS syntax check, and the figure simply did not draw. One page load
   found it. `cloneBody` now has an EXECUTING test.
+
+- [x] **T306 - the figure number comes back when the notebook does.**
+  *Done 2026-09-05.* An empty array is truthy. With the notebook shut
+  `SHELLITEMS[stem]` is gone, so `figOrder` computed `[]` and then handed
+  that same `[]` back for the life of the page -- so opening the notebook
+  never restored the ordinal T299 had just added. Computed while open and
+  then closed, the row kept asserting a number from a card list that no
+  longer existed. Nothing invalidated the memo; the `sem:shell` handlers
+  dropped the frame cache and never touched it. Absence of the notebook
+  is answered above the memo now, and a reload drops it with the frames.
+  *Verified live:* shut → "(none)", reopened → "figure 1 of 7".
+
+- [x] **T307 - the source verbs tell the truth for all four kinds.**
+  *Done 2026-09-05.* `provRef` answers for a flip book with whichever
+  page `a.at` is on, so "Update figures" on a seven-page book compared
+  and refreshed exactly one page and left the other six stale with
+  nothing said -- and `embedIfAbsent` kept the pixels of that one page,
+  so closing the notebook emptied the rest. The two picker doors hid it
+  by setting `a.at` to the frame they had just pushed. `provRefs(a)`
+  gives the whole list, and capture, staleness and the refresh all go
+  through it; `staleFigures` emits one entry per SOURCE and
+  `resyncFigure` takes the ref it was told.
+  And a chart is not its table: `provRef` hands back the source table
+  card, so `resyncFigure` stored a snapshot of the TABLE and reported
+  "Updated from the notebook" while the chart on screen had not moved --
+  and if that card was also placed as a cell frame elsewhere, the
+  capture refreshed THAT figure instead. Charts go through a new
+  `chartResyncOne` (lifted out of `chartResyncAll`, which is now that
+  one-shot in a loop). `chartRowsOfCard` also gained the guard
+  `liveCardHtml` has had since T20: with the notebook shut it was
+  reading the deck's own kept table and calling it a source read, which
+  silently reverted numbers hand-edited through the chart data dialog.

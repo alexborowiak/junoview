@@ -229,6 +229,15 @@
      260px pane. */
   var figOrderMemo={};
   function figOrder(stem){
+    /* T306: AN EMPTY ARRAY IS TRUTHY. With the notebook shut
+       SHELLITEMS[stem] is gone, so this computed [] -- and then handed
+       that same [] back for the life of the page, so opening the
+       notebook never brought the number back. Computed while open and
+       then closed, the row kept asserting an ordinal from a card list
+       that no longer existed. Nothing invalidated the memo: the
+       sem:shell handlers drop frameNodeCache and never touched it.
+       Absence of the notebook is answered directly, above the memo. */
+    if(!SHELLITEMS[stem]) return [];
     if(figOrderMemo[stem]) return figOrderMemo[stem];
     var out=[];
     (SHELLITEMS[stem]||[]).forEach(function(k){

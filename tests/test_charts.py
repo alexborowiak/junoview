@@ -238,7 +238,11 @@ def test_a_series_build_survives_its_data_being_re_read(out):
     That is the differentiator over PowerPoint, whose animation list is
     keyed to shape INDEX and comes apart when the data moves under it.
     """
-    i = out.index("function chartResyncAll(only){")
+    # T307: the body lifted into chartResyncOne so the Images row and
+    # the provenance pane can refresh ONE chart -- resyncFigure used to
+    # hand a chart to the figure path, which snapshotted its source
+    # TABLE and reported success while the chart had not moved.
+    i = out.index("function chartResyncOne(a){")
     body = out[i:i + 1400]
     assert "a.cats=data.cats;a.series=data.series;" in body
     # nothing in the refresh touches the animation

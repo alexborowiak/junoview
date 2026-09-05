@@ -177,7 +177,7 @@ def test_placing_a_figure_keeps_its_pixels_there_and_then(out):
     can be sure the notebook is open. Before T297 nothing was captured
     until a deliberate save, which for an autosaved draft never came."""
     assert "  function embedIfAbsent(a){" in out
-    assert "    if(!ref||embFor(ref)) return 0;" in out
+    assert "      if(!ref||embFor(ref)) return;" in out
     assert ("    target.ref=ref;\n"
             "    /* T297: keep the pixels NOW, while the notebook is "
             "definitely open") in out
@@ -189,7 +189,7 @@ def test_placing_the_same_figure_twice_does_not_re_read_it(out):
     """`embFor(ref)` short-circuits. Dropping a figure onto a second
     slide must not silently re-read the notebook underneath the first
     one -- that is a refresh, and a refresh asks."""
-    assert "    if(!ref||embFor(ref)) return 0;" in out
+    assert "      if(!ref||embFor(ref)) return;" in out
 
 
 def test_the_capture_reaches_the_disk(out):
@@ -467,11 +467,15 @@ def test_the_refresh_reports_only_what_it_actually_changed(out):
     """`touched` is built from the resyncs that RETURNED 1, not from the
     stale list -- a figure whose notebook went away mid-run has nothing
     to put back and must not be offered."""
+    # T307: and it refreshes the SOURCE the entry named. staleFigures
+    # emits one entry per source now, so a flip book's other pages are
+    # no longer left behind by a refresh that claims to cover them --
+    # and `touched` dedupes, because two pages can share a ref.
     assert ("      list.forEach(function(p){\n"
-            "        if(!resyncFigure(p.a)) return;\n"
+            "        if(!resyncFigure(p.a,p.ref)) return;\n"
             "        n++;\n"
-            "        var k=normRef(provRef(p.a));\n"
-            "        if(k) touched.push(k);\n"
+            "        var k=normRef(p.ref||provRef(p.a));\n"
+            "        if(k&&touched.indexOf(k)<0) touched.push(k);\n"
             "      });") in out
     assert "        if(touched.length)" in out
 
@@ -781,3 +785,58 @@ def test_the_staleness_probe_records_no_previous_figure():
         afterRender:Object.keys(frameSnaps).length}));
     """)
     assert got == {"afterProbe": 0, "afterRender": 1}
+
+
+# ---------------------------------------------------------- T306-T307
+
+
+def test_the_figure_number_comes_back_when_the_notebook_does(out):
+    """An empty array is truthy. With the notebook shut SHELLITEMS[stem]
+    is gone, so figOrder computed [] -- and handed that same [] back for
+    the life of the page, so opening the notebook never restored the
+    number. Computed while open and then closed, the row kept asserting
+    an ordinal from a card list that no longer existed. Nothing
+    invalidated the memo."""
+    assert "    if(!SHELLITEMS[stem]) return [];" in out
+    # a reload can add or remove figures, so the memo goes with the frames
+    assert out.count("delete figOrderMemo[e.detail.stem];") == 2
+
+
+def test_a_flip_book_is_as_many_sources_as_it_has_pages(out):
+    """provRef answers for whichever page `a.at` is on, so "Update
+    figures" on a seven-page book compared and refreshed one page and
+    left six stale with nothing said -- and embedIfAbsent kept the pixels
+    of that page only, so closing the notebook emptied the rest. The two
+    picker doors hid it by setting `a.at` to the frame just pushed."""
+    assert "  function provRefs(a){" in out
+    assert ("      flipFrames(a).forEach(function(f){\n"
+            "        if(f&&f.ref&&out.indexOf(f.ref)<0) out.push(f.ref);});") in out
+    # capture and staleness both go through it
+    assert "    provRefs(a).forEach(function(ref){" in out
+    assert "        provRefs(a).forEach(function(ref){" in out
+
+
+def test_a_chart_is_refreshed_as_a_chart(out):
+    """provRef hands back a chart's source TABLE card, so resyncFigure
+    stored a snapshot of the table and reported "Updated from the
+    notebook" while the chart had not moved -- and if that card was also
+    placed as a cell frame on another slide, the capture refreshed THAT
+    figure instead. The numbers live in a.cats/a.series."""
+    assert "  function chartResyncOne(a){" in out
+    assert ("    if(a&&a.k==='chart')\n      return (typeof chartResyncOne"
+            "==='function')?chartResyncOne(a):0;") in out
+    # ...and the deck-wide loop is now the one-shot in a loop, not a copy
+    assert ("      (sl.annots||[]).forEach(function(a){nn+=chartResyncOne(a);});"
+            ) in out
+
+
+def test_a_chart_with_no_notebook_does_not_call_the_snapshot_a_source(out):
+    """cloneBody's no-card branch ignores fromLive and hands back the
+    deck's own snapshot. So with the notebook shut, a chart "refresh from
+    source" read the kept table and, if the numbers had been hand-edited
+    through the chart data dialog, silently reverted them -- with no
+    notebook anywhere in the transaction. liveCardHtml has guarded this
+    since T20; chartRowsOfCard did not."""
+    body = out[out.index("  function chartRowsOfCard(ref){"):]
+    body = body[:body.index("  function chartResyncOne(a){")]
+    assert "      if(!cardEl(ref)) return null;" in body

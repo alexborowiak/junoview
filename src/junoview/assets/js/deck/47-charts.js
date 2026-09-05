@@ -365,6 +365,14 @@
     /* the LIVE card's table, read off the open shell the same way the
        provenance pane compares bodies (T20) */
     try{
+      /* T307: NO NOTEBOOK, NO SOURCE READ. cloneBody's no-card branch
+         ignores fromLive and hands back the deck's own snapshot, so
+         with the notebook shut a "refresh from source" read the kept
+         table and, if the numbers had been hand-edited through the
+         chart data dialog, silently reverted them -- with no notebook
+         anywhere in the transaction. liveCardHtml has guarded this
+         since T20; this did not. */
+      if(!cardEl(ref)) return null;
       var b=cloneBody(ref,1); if(!b) return null;   /* live (T302) */
       var t=b.querySelector('table'); if(!t) return null;
       return [].map.call(t.querySelectorAll('tr'),function(tr){
@@ -573,26 +581,32 @@
      chart that still carries `ref` re-reads the table it came from.
      Type, colours, position and size are yours and stay; only the
      numbers move — the same split resyncFigure keeps for snapshots. */
+  /* T307: ONE CHART, so the Images row's Refresh and the provenance
+     pane can offer a chart the verb that actually moves it. The body is
+     chartResyncAll's forEach, lifted unchanged; the loop below now
+     calls it rather than repeating it. Returns 1 when the numbers
+     moved, so a caller can say nothing rather than claim a refresh. */
+  function chartResyncOne(a){
+    if(!a||a.k!=='chart'||!a.ref) return 0;
+    var data=chartFromRows(chartRowsOfCard(a.ref));
+    if(!data) return 0;
+    var before=JSON.stringify([chartParse(a).cats,
+      chartParse(a).series.map(function(se){return se.ys;})]);
+    var after=JSON.stringify([data.cats,
+      data.series.map(function(se){return se.ys;})]);
+    if(before===after) return 0;
+    var old={};chartParse(a).series.forEach(function(se){
+      old[se.name]=se.color;});
+    data.series.forEach(function(se){
+      if(old[se.name]) se.color=old[se.name];});
+    a.cats=data.cats;a.series=data.series;
+    return 1;
+  }
   function chartResyncAll(only){          /* T280: a slide, or the deck */
     var nn=0;
     (pres.slides||[]).forEach(function(sl,si){
       if(only>=0&&si!==only) return;
-      (sl.annots||[]).forEach(function(a){
-        if(!a||a.k!=='chart'||!a.ref) return;
-        var data=chartFromRows(chartRowsOfCard(a.ref));
-        if(!data) return;
-        var before=JSON.stringify([chartParse(a).cats,
-          chartParse(a).series.map(function(se){return se.ys;})]);
-        var after=JSON.stringify([data.cats,
-          data.series.map(function(se){return se.ys;})]);
-        if(before===after) return;
-        var old={};chartParse(a).series.forEach(function(se){
-          old[se.name]=se.color;});
-        data.series.forEach(function(se){
-          if(old[se.name]) se.color=old[se.name];});
-        a.cats=data.cats;a.series=data.series;
-        nn++;
-      });
+      (sl.annots||[]).forEach(function(a){nn+=chartResyncOne(a);});
     });
     if(nn){markDirty();refresh();}
     return nn;

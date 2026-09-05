@@ -2858,6 +2858,10 @@
        cached frame nodes for this stem must rebuild, which also refills
        frameSnaps for the next revert */
     dropFrameCache(e.detail.stem);
+    /* T306: a reload can add or remove figures, and a close ends
+       the card list entirely, so the ordinal the Images rows quote
+       has to be recomputed with the frames */
+    if(typeof figOrderMemo!=='undefined') delete figOrderMemo[e.detail.stem];
     registerShell(e.detail.stem,e.detail.data||{});
     if(source==='auto'&&(!pres.slides||!pres.slides.length))
       pres=defaultPres();
@@ -2867,6 +2871,10 @@
   document.addEventListener('sem:shellclosed',function(e){
     /* invalidation point 2: frames fall back to the embedded copy */
     dropFrameCache(e.detail.stem);
+    /* T306: a reload can add or remove figures, and a close ends
+       the card list entirely, so the ordinal the Images rows quote
+       has to be recomputed with the frames */
+    if(typeof figOrderMemo!=='undefined') delete figOrderMemo[e.detail.stem];
     unregisterShell(e.detail.stem);
     if(!deckEl.hidden) refresh();
     else renderPresTabs();

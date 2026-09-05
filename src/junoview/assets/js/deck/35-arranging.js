@@ -2009,6 +2009,24 @@
     }
     return '';
   }
+  /* T307: EVERY SOURCE THIS ANNOT HAS, not just the one on show.
+     provRef answers for a flip book with whichever page `a.at` happens
+     to be on, so "Update figures" on a seven-page book compared and
+     refreshed exactly one page and left the other six stale with
+     nothing said -- and embedIfAbsent kept the pixels of that one page
+     only. The two picker doors hid it by setting `a.at` to the frame
+     they had just pushed. */
+  function provRefs(a){
+    if(!a) return [];
+    if(a.k==='flip'){
+      var out=[];
+      flipFrames(a).forEach(function(f){
+        if(f&&f.ref&&out.indexOf(f.ref)<0) out.push(f.ref);});
+      return out;
+    }
+    var r=provRef(a);
+    return r?[r]:[];
+  }
   function provOf(a){
     var ref=provRef(a);
     if(!ref) return null;
@@ -2035,9 +2053,15 @@
     (pres.slides||[]).forEach(function(sl,si){
       if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
-        if(!a||a.hide||!provRef(a)) return;
-        var st=provState(provOf(a));
-        if(st==='stale'||st==='nosaved') out.push({si:si,ai:ai,a:a,st:st});
+        if(!a||a.hide) return;
+        /* T307: one entry per SOURCE, so a flip book's other pages are
+           not silently left behind by the refresh that claims to have
+           covered them */
+        provRefs(a).forEach(function(ref){
+          var st=provState(provOf({k:'cell',ref:ref}));
+          if(st==='stale'||st==='nosaved')
+            out.push({si:si,ai:ai,a:a,st:st,ref:ref});
+        });
       });
     });
     return out;
@@ -2137,10 +2161,10 @@
       }
       var n=cn,touched=[];
       list.forEach(function(p){
-        if(!resyncFigure(p.a)) return;
+        if(!resyncFigure(p.a,p.ref)) return;
         n++;
-        var k=normRef(provRef(p.a));
-        if(k) touched.push(k);
+        var k=normRef(p.ref||provRef(p.a));
+        if(k&&touched.indexOf(k)<0) touched.push(k);
       });
       /* T301: THE BUTTON THE USER LEARNED TO FEAR. It rewrites every
          stale figure in the deck at once, nothing else in the editor can
@@ -2353,13 +2377,32 @@
      notebook underneath the first one. Re-reading is what the explicit
      refresh is for, and it asks first. */
   function embedIfAbsent(a){
-    var ref=provRef(a);
-    if(!ref||embFor(ref)) return 0;
-    var p=provOf(a);
-    return (p&&p.live)?embedCapture(p.ref,p.live):0;
+    /* T307: a flip book is N figures, and every one of them has to be
+       kept -- otherwise closing the notebook empties every page but
+       the one that happened to be showing when it was placed. */
+    var n=0;
+    provRefs(a).forEach(function(ref){
+      if(!ref||embFor(ref)) return;
+      var p=provOf({k:'cell',ref:ref});
+      if(p&&p.live) n+=embedCapture(p.ref,p.live);
+    });
+    return n;
   }
-  function resyncFigure(a){
-    var p=provOf(a);
+  function resyncFigure(a,ref){
+    /* T307: A CHART IS NOT ITS TABLE. provRef hands back the source
+       table card's ref (T117), so this stored a snapshot of the TABLE
+       and reported "Updated from the notebook" while the chart on
+       screen had not moved -- and if that same card was placed as a
+       cell frame on another slide, the capture refreshed THAT figure
+       instead. The chart's numbers live in a.cats/a.series and only
+       chartResyncOne reads them. */
+    if(a&&a.k==='chart')
+      return (typeof chartResyncOne==='function')?chartResyncOne(a):0;
+    /* T307: `ref` names WHICH source, because a flip book has one per
+       page and provRef only ever answers for the page on show. Absent,
+       it means the annot's own single source, which is what every
+       caller before staleFigures learned to enumerate wanted. */
+    var p=ref?provOf({k:'cell',ref:ref}):provOf(a);
     if(!p||!p.live) return 0;
     if(!embedCapture(p.ref,p.live)) return 0;
     markDirty();

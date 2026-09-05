@@ -2414,7 +2414,7 @@ def test_updating_one_figure_leaves_its_geometry_alone(out):
     The renderer still never executes notebook code: the notebook is
     re-run by the user, and this takes what it wrote.
     """
-    assert "function resyncFigure(a){" in out
+    assert "function resyncFigure(a,ref){" in out
     # T297: the capture moved into embedCapture, which resyncFigure and
     # the place-a-figure path now share -- one snapshot format, and one
     # place that remembers to persist it
