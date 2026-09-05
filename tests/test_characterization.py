@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T280: chrome only. Update figures and Reload pictures
+# become one Update tile with a scope menu; five source walkers take an
+# optional slide index and both halves report through one sentence.
 # 2026-09-05, T279: chrome only. The Fix-mismatched-text chips mark and
 # lead with the boxes that actually differ and say what differs; clicking
 # one rings that box on the slide; the Style system board marks a wearer
@@ -1150,8 +1153,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "d873044338fd0d3793ed28a5e46dfb54"
-EXPECTED_BYTES = 3614448
+EXPECTED_MD5 = "a5270199825d7a526dd11e3aa969ba17"
+EXPECTED_BYTES = 3621436
 
 
 def _render_example() -> str:

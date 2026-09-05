@@ -46,9 +46,10 @@
     });
   }
   /* every image on the deck that was put there from a local file */
-  function linkedImages(){
+  function linkedImages(only){          /* T280: a slide, or the deck */
     var out=[];
     (pres.slides||[]).forEach(function(sl,si){
+      if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
         if(a&&a.k==='image'&&a.fkey) out.push({si:si,ai:ai,a:a});});
     });
@@ -100,19 +101,30 @@
   }
   /* the user-facing verb: refresh, then SAY what happened — including,
      by name, anything that could not be found */
-  function refreshImagesReport(list){
-    var n=(list||linkedImages()).length;
+  /* T280: `quiet` hands the reporting to the merged verb, which has a
+     figure half to report as well and one #deck-toast to say it in --
+     pressing both tiles used to race for that element and lose half the
+     answer. It RESOLVES what happened either way, so the merged verb can
+     write one sentence. */
+  function refreshImagesReport(list,quiet){
+    var items=list||linkedImages();
+    var n=items.length;
     if(!n){
-      toast('No pictures on this deck are linked to a file on this '
-        +'computer. Insert one with Image and it will remember where it '
-        +'came from.');
-      return;
+      /* suppressed under the merged verb: on a deck that is all figures
+         this sentence is exactly the wrong thing to say */
+      if(!quiet)
+        toast('No pictures on this deck are linked to a file on this '
+          +'computer. Insert one with Image and it will remember where it '
+          +'came from.');
+      return Promise.resolve({ok:0,lost:[],n:0});
     }
-    toast('Re-reading '+n+' picture'+(n===1?'':'s')+'…');
-    refreshLinkedImages(list).then(function(r){
+    if(!quiet) toast('Re-reading '+n+' picture'+(n===1?'':'s')+'…');
+    return refreshLinkedImages(items).then(function(r){
+      r.n=n;
+      if(quiet) return r;
       if(!r.lost.length){
         toast(r.ok+' picture'+(r.ok===1?'':'s')+' refreshed from disk');
-        return;
+        return r;
       }
       var names=r.lost.slice(0,4).map(function(l){
         return l.name+' (slide '+(l.si+1)+')';}).join(', ');
@@ -121,6 +133,68 @@
         +r.lost.length+' could not be read and '
         +(r.lost.length===1?'was':'were')+' left exactly as before: '
         +names,9000);
+      return r;
+    });
+  }
+  /* ---- ONE VERB FOR BOTH HALVES (T280) ---------------------------------
+     "Update figures" and "Reload pictures" were two tall tiles whose
+     labels differed only in the noun, so you had to classify your own
+     content before you could choose one -- and neither offered a scope:
+     both walked the whole deck. They remain two MECHANISMS (a figure
+     re-reads its notebook through APP.reloadTab; a picture re-reads a
+     file handle out of IndexedDB) because they are two mechanisms. What
+     is merged is the question and the answer.
+     Both halves run QUIET and this writes the one sentence, because
+     there is one #deck-toast and the two of them used to race for it. */
+  function updateFromSources(slideOnly){
+    var only=slideOnly?cur:-1;
+    var where=slideOnly?'this slide':'the presentation';
+    var pics=linkedImages(only);
+    /* "does anything here HAVE a source", which is not the same question
+       as staleFigures' "is anything here out of date" -- asking the
+       second would tell a slide whose figure is perfectly up to date
+       that it has nothing to re-read. provRef is the one predicate that
+       answers it for cells, charts and flip frames alike. */
+    var figs=0;
+    (pres.slides||[]).forEach(function(sl,si){
+      if(only>=0&&si!==only) return;
+      (sl.annots||[]).forEach(function(a){
+        if(a&&!a.hide&&typeof provRef==='function'&&provRef(a)) figs++;});
+    });
+    if(!pics.length&&!figs){
+      /* say WHICH of the two it looked for, or "nothing to update" reads
+         as "this button is broken" on a deck full of pasted pictures */
+      toast('Nothing on '+where+' has a source to re-read \u2014 a figure '
+        +'remembers its notebook and a picture remembers the file it came '
+        +'from, and neither is here yet.');
+      return;
+    }
+    toast('Re-reading '+where+'\u2026');
+    var jobs=[
+      (typeof resyncAllFigures==='function')
+        ? resyncAllFigures(only,true)
+        : Promise.resolve({n:0,reread:0,bad:[],tried:0}),
+      pics.length ? refreshImagesReport(pics,true)
+        : Promise.resolve({ok:0,lost:[],n:0})
+    ];
+    Promise.all(jobs).then(function(res){
+      var f=res[0]||{n:0,bad:[]},p=res[1]||{ok:0,lost:[]};
+      var bits=[];
+      if(f.n) bits.push(f.n+' figure'+(f.n===1?'':'s'));
+      if(p.ok) bits.push(p.ok+' picture'+(p.ok===1?'':'s'));
+      var msg;
+      if(bits.length) msg=bits.join(' and ')+' updated on '+where;
+      else msg='Everything on '+where+' already matches its source';
+      var trouble=[];
+      if(f.bad&&f.bad.length)
+        trouble.push('could not read '+f.bad.length+' notebook source'
+          +(f.bad.length===1?'':'s'));
+      if(p.lost&&p.lost.length)
+        trouble.push(p.lost.length+' picture file'
+          +(p.lost.length===1?'':'s')+' could not be found, and '
+          +(p.lost.length===1?'was':'were')+' left as before');
+      if(trouble.length) msg+=' \u2014 '+trouble.join('; ');
+      toast(msg,trouble.length?9000:0);
     });
   }
   /* ---- ALL IMAGES (T202) ----------------------------------------------
@@ -270,12 +344,42 @@
     /* the Home tab's doors (T196). They forwarded a click to a File
        menu row, which is how the same verb came to have two buttons;
        T236 deleted the rows and left these calling the verb. */
-    var hri=$('#hm-refresh-img');
-    if(hri) hri.addEventListener('click',function(e){
-      e.stopPropagation();refreshImagesReport();});
-    var hrf=$('#hm-refresh-figs');
-    if(hrf) hrf.addEventListener('click',function(e){
-      e.stopPropagation();resyncAllFigures();});
+    /* T280: ONE DOOR, AND IT ASKS WHERE. The two tiles are one tile
+       with a menu: the scope the user asked for, and the route to the
+       inventory that answers "which of these even has a source". */
+    var hub=$('#hm-update'),hum=$('#hm-upd-menu');
+    if(hub&&hum) hub.addEventListener('click',function(e){
+      e.stopPropagation();
+      if(!hum.hidden){overlayHide(hum);return;}
+      hum.innerHTML='';
+      menuHead(hum,'update from sources');
+      [['Just this slide',true,
+        'Re-read the figures and pictures on the slide you are on'],
+       ['The whole presentation',false,
+        'Re-read every figure and picture in the deck']]
+        .forEach(function(r){
+          var b=document.createElement('button');
+          b.className='dbtn vw-opt';
+          b.innerHTML=bic('reload')+' '+esc(r[0]);
+          b.title=r[2];
+          b.addEventListener('click',function(){
+            overlayHide(hum);updateFromSources(r[1]);});
+          hum.appendChild(b);
+        });
+      /* the house pattern for a second section in a menu is another
+         heading, not a rule (menuHead / .hd-lab) */
+      var inv=document.createElement('button');
+      inv.className='dbtn vw-opt';
+      inv.innerHTML=bic('image')+' Where each one came from';
+      inv.title='The pictures and figures on this slide, what each was '
+        +'made from, and whether it is locked in place';
+      inv.addEventListener('click',function(){
+        overlayHide(hum);
+        var ib=$('#hm-images'); if(ib) ib.click();
+      });
+      hum.appendChild(inv);
+      overlayShow(hub,hum);floatMenu(hub,hum);
+    });
     var one=$('#fmt-imgrefresh');
     if(one) one.addEventListener('click',function(e){
       e.stopPropagation();

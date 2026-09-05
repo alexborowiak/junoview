@@ -50,7 +50,7 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
     # built-in tiles; newVersion reads the choice back)
     assert "lsSet(newLayKey(),'arr:'+b.dataset.arr);" in out
     assert "ns.annots=deep(arr.annots);" in out
-    for tile in ("hm-refresh-figs", "hm-refresh-img", "hm-images"):
+    for tile in ("hm-update", "hm-images"):     # T280: two became one
         assert f'class="fx-tile big-tile" id="{tile}"' in out, tile
     assert ".big-strip .fx-tile{height:56px;}" in out   # the one tile (T205)
     # ...and it never folds: the point of it is to be seen
@@ -73,10 +73,14 @@ def test_homes_layout_system_is_groups_and_a_strip(out):
                  'id="layout-home-grid"'):
         assert gone not in out, gone
     # the two refresh-all doors press the File menu rows
-    assert 'id="hm-refresh-figs"' in out and 'id="hm-refresh-img"' in out
+    # T280: ONE door with a scope menu, not two tiles differing only in
+    # their noun. The old ids are gone on purpose.
+    assert 'id="hm-update"' in out and 'id="hm-upd-menu"' in out
+    assert 'id="hm-refresh-figs"' not in out
+    assert 'id="hm-refresh-img"' not in out
     # T236: they called the verb directly once the File rows went
-    assert "      e.stopPropagation();refreshImagesReport();});" in out
-    assert "      e.stopPropagation();resyncAllFigures();});" in out
+    assert "  function updateFromSources(slideOnly){" in out
+    assert "            overlayHide(hum);updateFromSources(r[1]);});" in out
     # the rarer two sit last, so they fold first and View stays in sight
     assert ".rbn-layout,.rbn-this,.rbn-arrange{order:1;}" in out
     assert ".rbn-sources{order:2;}" in out and ".rbn-apply{order:1;}" in out

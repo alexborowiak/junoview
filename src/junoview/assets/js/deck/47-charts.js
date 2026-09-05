@@ -551,9 +551,10 @@
      chart that still carries `ref` re-reads the table it came from.
      Type, colours, position and size are yours and stay; only the
      numbers move — the same split resyncFigure keeps for snapshots. */
-  function chartResyncAll(){
+  function chartResyncAll(only){          /* T280: a slide, or the deck */
     var nn=0;
-    (pres.slides||[]).forEach(function(sl){
+    (pres.slides||[]).forEach(function(sl,si){
+      if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a){
         if(!a||a.k!=='chart'||!a.ref) return;
         var data=chartFromRows(chartRowsOfCard(a.ref));

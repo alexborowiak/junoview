@@ -4338,6 +4338,7 @@ body.light .np-notes,body.light .np-goal{background:var(--paper-2);
 /* line + paragraph spacing */
 .sh-menu.lh-menu{display:block;width:186px;padding:5px;}
 .lh-menu .vw-opt{width:100%;text-align:left;}
+#hm-upd-menu .vw-opt{width:100%;text-align:left;}
 /* paragraph spacing is the gap BETWEEN blocks, so it lands on every line
    of a list and on every <br>-separated run except the first */
 .an-tx.an-ul li + li{margin-top:var(--an-pspace,.18em);}
@@ -5046,7 +5047,9 @@ body.light .dg-num input{background:var(--input-bg);
 .rbn-row>.strip-frame,.rbn-row>.fx-strip{justify-self:stretch;}
 .rbn-row>.rbn-cell.rbn-seg{justify-self:start;}
 /* Background is a tall tile now, so its menu hangs off a 72px door */
-#bg-drop.rbn-tall{justify-self:start;}
+#bg-drop.rbn-tall,#hm-updwrap.rbn-tall{justify-self:start;}
+/* T280: the merged Update tile is the same shape as the two it replaced */
+#hm-updwrap.rbn-tall>.fx-tile{width:72px;height:56px;align-self:center;}
 #bg-drop.rbn-tall>.fx-tile{width:72px;height:56px;align-self:center;}
 /* the opacity slider inside its captioned run */
 #fmt-opcell .fmt-opwrap{display:flex;align-items:center;gap:5px;

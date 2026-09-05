@@ -2028,9 +2028,12 @@
      was its only caller — so there was no deck-wide staleness list and
      no deck-wide update, while the parallel feature for pictures got
      both doors (2026-08-26 audit, T58). */
-  function staleFigures(){
+  /* T280: `only` is a slide index, or undefined/-1 for the whole deck.
+     Defaulted so every existing caller keeps the deck-wide answer. */
+  function staleFigures(only){
     var out=[];
     (pres.slides||[]).forEach(function(sl,si){
+      if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
         if(!a||a.hide||!provRef(a)) return;
         var st=provState(provOf(a));
@@ -2042,9 +2045,10 @@
   /* every source stem a placed frame points at, whatever kind of
      file it is -- provRef already answers "does this annot have a
      source" for cells and flip frames alike (T123) */
-  function refSourceStems(){
+  function refSourceStems(only){
     var stems={};
-    (pres.slides||[]).forEach(function(sl){
+    (pres.slides||[]).forEach(function(sl,si){
+      if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a){
         var ref=a&&provRef(a); if(!ref) return;
         var pr=splitRef(normRef(ref)||String(ref||''));
@@ -2089,7 +2093,10 @@
       :'Every figure on this deck already matches its source';
     return fail?(fail+'. '+rest):rest;
   }
-  function resyncAllFigures(){
+  /* T280: `only` scopes it to one slide; `quiet` hands the reporting to
+     the merged verb, which has a picture half to report as well and only
+     one #deck-toast to say it in. Both default to the old behaviour. */
+  function resyncAllFigures(only,quiet){
     /* ONE VERB (T123). "Update figures" used to compare against
        whatever the open tabs happened to hold, so refreshing a figure
        whose FILE had changed was a four-step dance: close the deck,
@@ -2098,7 +2105,7 @@
        tab reloads in place, then the comparison runs against what the
        disk actually says. Web mode skips the reload half honestly: a
        dropped file left no handle to re-read. */
-    var jobs=refSourceStems().map(function(st){
+    var jobs=refSourceStems(only).map(function(st){
       return (APP.reloadTab?APP.reloadTab(st)
         :Promise.resolve({stem:st,ok:false,reason:'notapp'}));
     });
@@ -2122,16 +2129,17 @@
          type, colours, position and size stay the author's. Counted
          BEFORE the early return, or a deck whose only change was a
          chart would be told everything already matches. */
-      var cn=(typeof chartResyncAll==='function')?chartResyncAll():0;
-      var list=staleFigures();
+      var cn=(typeof chartResyncAll==='function')?chartResyncAll(only):0;
+      var list=staleFigures(only);
       if(!list.length&&!cn){
-        toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
-        return 0;
+        if(!quiet) toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);
+        return {n:0,reread:reread,bad:bad,tried:0};
       }
       var n=cn;
       list.forEach(function(p){if(resyncFigure(p.a)) n++;});
-      toast(resyncMsg(reread,bad,n,list.length),bad.length?7000:0);
-      return n;
+      if(!quiet) toast(resyncMsg(reread,bad,n,list.length),
+        bad.length?7000:0);
+      return {n:n,reread:reread,bad:bad,tried:list.length};
     });
   }
   window.SemDeckStaleFigures=staleFigures;   /* test hook */

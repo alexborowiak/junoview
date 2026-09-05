@@ -1399,14 +1399,33 @@
             <span class="rbn-row">
               <span class="rbn-tall fx-strip big-strip" role="group"
                 aria-label="Keep up to date">
-                <button class="fx-tile big-tile" id="hm-refresh-figs"
-                  title="Re-read every placed figure from its notebook, so
- a re-run shows up on the slides"><i data-ic="plots"></i>
-                  <span>Update figures</span></button>
-                <button class="fx-tile big-tile" id="hm-refresh-img"
-                  title="Re-read every picture from the file it came from.
- A file that has moved is left as it was, and named"
-                  ><i data-ic="reload"></i><span>Reload pictures</span></button>
+                <!-- T280: ONE VERB, AND A SCOPE. This was two tall
+                     tiles side by side, "Update figures" and "Reload
+                     pictures", whose labels differed only in the noun --
+                     so you had to classify your own content before you
+                     could choose a button, and neither offered a scope:
+                     both walked the whole deck (2026-09-05, user: "What
+                     is the difference between update figures and reload
+                     pictures. Also that is a big much that. Should be an
+                     option, and it should then be able to then take you
+                     to the images tab, or update for whole presentation
+                     or just update this slide").
+                     They stay TWO MECHANISMS behind it -- a figure
+                     re-reads its notebook through APP.reloadTab, a
+                     picture re-reads a file handle out of IndexedDB --
+                     because they are two mechanisms. What is merged is
+                     the question you ask and the sentence you get back.
+                     A caret, not an ellipsis: the press opens a menu
+                     (T267). -->
+                <span class="sh-drop rbn-tall" id="hm-updwrap">
+                  <button class="fx-tile big-tile" id="hm-update"
+                    aria-haspopup="true" aria-expanded="false"
+                    title="Re-read the figures and pictures on these
+ slides from wherever they came from -- notebooks for figures, files on
+ this computer for pictures"><i data-ic="reload"></i>
+                    <span>Update &#9662;</span></button>
+                  <div class="sh-menu" id="hm-upd-menu" hidden></div>
+                </span>
                 <button class="fx-tile big-tile" id="hm-images"
                   aria-pressed="false"
                   title="The pictures and figures on this slide, where each

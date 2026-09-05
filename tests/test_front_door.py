@@ -59,7 +59,8 @@ def test_a_picture_can_be_re_read_from_the_file_it_came_from(out):
     IndexedDB store the project handle already uses.
     """
     assert "var FHKEY='imgfile:';" in out
-    assert "function linkedImages(){" in out
+    # T280: takes an optional slide index; undefined is the whole deck
+    assert "function linkedImages(only){" in out
     assert "function refreshLinkedImages(list){" in out
     assert "if(a&&a.k==='image'&&a.fkey) out.push" in out
     # inserted through showOpenFilePicker, because the <input type=file>

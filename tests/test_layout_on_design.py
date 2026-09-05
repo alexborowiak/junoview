@@ -45,8 +45,8 @@ def test_every_layout_verb_sits_on_design(out):
 
 
 def test_home_is_make_do_and_keep(out):
-    for cid in ("hm-newslide", "hm-dupslide", "hm-delslide", "hm-refresh-figs",
-                "hm-refresh-img", "hm-images"):
+    for cid in ("hm-newslide", "hm-dupslide", "hm-delslide",
+                "hm-update", "hm-images"):        # T280: two became one
         assert _group_of(out, cid) == "home", cid
     for lab in ("New slide", "This slide", "Keep up to date"):
         assert f'<span class="rbn-lab">{lab}</span>' in out, lab

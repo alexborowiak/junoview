@@ -31,15 +31,16 @@ def test_nothing_in_it_has_a_button_somewhere_else():
     # both refreshes have been Home tiles since T196
     for gone in ("mi-refresh-img", "mi-refresh-figs"):
         assert f'id="{gone}"' not in menu, gone
-    for door in ("hm-refresh-img", "hm-refresh-figs"):
+    for door in ("hm-update",):          # T280: two doors became one
         assert f'id="{door}"' in assets.deck_html(), door
 
 
 def test_the_forwarding_became_a_call(out):
     """A Home button that clicks a File row is how one verb comes to
     have two buttons; with the rows gone they call the verb."""
-    assert "      e.stopPropagation();refreshImagesReport();});" in out
-    assert "      e.stopPropagation();resyncAllFigures();});" in out
+    # T280: the two forwarding tiles are one door onto one verb
+    assert "  function updateFromSources(slideOnly){" in out
+    assert "            overlayHide(hum);updateFromSources(r[1]);});" in out
     assert "  function toggleSlideNums(){" in out
     assert ("  if(numB) numB.addEventListener('click',function(){\n"
             "    toggleSlideNums();") in out

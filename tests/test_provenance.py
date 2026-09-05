@@ -250,19 +250,21 @@ def test_there_is_a_deck_wide_figure_update_and_not_only_a_per_figure_one(out):
     anything on this deck moved on?" -- while the parallel feature for
     pictures got both doors (2026-08-26 audit, T58).
     """
-    assert "function staleFigures(){" in out
-    assert "function resyncAllFigures(){" in out
+    # T280: both take an optional slide index, and resyncAllFigures a
+    # `quiet` flag -- the merged verb owns the one #deck-toast now
+    assert "function staleFigures(only){" in out
+    assert "function resyncAllFigures(only,quiet){" in out
     # the same door the picture half has, in the same menu
     # T236: on Home only. The File menu copy was the one nobody found
-    assert 'id="hm-refresh-figs"' in out
-    assert "      e.stopPropagation();resyncAllFigures();});" \
+    assert 'id="hm-update"' in out
+    assert "  function updateFromSources(slideOnly){" \
         in out
     # saying nothing is stale is an answer too -- and since T123 it says
     # "source", because a .tex or a .csv is as refreshable as a notebook
     assert "Every figure on this deck already matches its source" in out
     # ...and the click re-reads each referenced tab from DISK first, so
     # "update" means the file, not whatever the open tab happened to hold
-    assert "function refSourceStems(){" in out
+    assert "function refSourceStems(only){" in out
     assert "return (APP.reloadTab?APP.reloadTab(st)" in out
     assert ":Promise.resolve({stem:st,ok:false,reason:'notapp'}));" in out
     assert "window.SemDeckStaleFigures=staleFigures;" in out
@@ -302,13 +304,16 @@ def test_a_failed_source_read_is_never_reported_as_up_to_date(out):
     # the all-current claim is reachable ONLY with nothing failed: it is
     # the tail of the else branch that `if(fail)` has already taken
     body = out[out.index("function resyncMsg(read,bad,n,tried){"):]
-    body = body[:body.index("function resyncAllFigures(){")]
+    body = body[:body.index("function resyncAllFigures(only,quiet){")]
     assert body.index("else if(fail) rest=read") < \
         body.index("Every figure on this deck already matches its source")
-    # both toasts route through it, and a failure outlasts the default
-    assert "toast(resyncMsg(reread,bad,0,0),bad.length?7000:0);" in out
-    assert "toast(resyncMsg(reread,bad,n,list.length)," \
-        "bad.length?7000:0);" in out
+    # both toasts route through it, and a failure outlasts the default.
+    # T280: and both sit behind `if(!quiet)` -- the merged Update verb runs
+    # this half silently and writes ONE sentence covering both halves,
+    # because there is one #deck-toast and the two used to race for it.
+    assert ("if(!quiet) toast(resyncMsg(reread,bad,0,0),"
+            "bad.length?7000:0);") in out
+    assert "      if(!quiet) toast(resyncMsg(reread,bad,n,list.length)," in out
 
 
 def test_the_provenance_pane_has_a_ribbon_door_and_wears_icons(out):
@@ -351,8 +356,10 @@ def test_update_figures_re_reads_the_disk_first(out):
     assert "if(!path) return decline('closed');" in out
     assert "if(/^https?:/i.test(path)) return decline('url');" in out
     # the deck side sequences: reload every referenced stem, THEN compare
-    assert "var jobs=refSourceStems().map(function(st){" in out
+    assert "var jobs=refSourceStems(only).map(function(st){" in out
     assert "return Promise.all(jobs).then(function(res){" in out
-    # and the label finally says what the button now does
-    # T236: the door is Home's tile; the File menu copy is gone
-    assert "<span>Update figures</span></button>" in out
+    # and the label finally says what the button now does.
+    # T236: the door is Home's tile; the File menu copy is gone.
+    # T280: the tile is "Update", with a caret, because it asks WHERE
+    # first -- the noun came off when the pictures half joined it.
+    assert "<span>Update &#9662;</span></button>" in out

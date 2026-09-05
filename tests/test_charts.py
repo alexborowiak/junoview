@@ -65,7 +65,7 @@ def test_update_figures_re_reads_the_chart_numbers_too():
     out = _out()
     assert "if(a.k==='chart') return a.ref||'';" in out
     assert ("var cn=(typeof chartResyncAll==='function')"
-            "?chartResyncAll():0;" in out)
+            "?chartResyncAll(only):0;" in out)   # T280: scoped
     assert "if(!list.length&&!cn){" in out
     # hand-edited numbers unlink: the dialog deletes ref on apply
     fn = out[out.index("function chartDataDlg(idx){"):]
@@ -238,7 +238,7 @@ def test_a_series_build_survives_its_data_being_re_read(out):
     That is the differentiator over PowerPoint, whose animation list is
     keyed to shape INDEX and comes apart when the data moves under it.
     """
-    i = out.index("function chartResyncAll(){")
+    i = out.index("function chartResyncAll(only){")
     body = out[i:i + 1400]
     assert "a.cats=data.cats;a.series=data.series;" in body
     # nothing in the refresh touches the animation

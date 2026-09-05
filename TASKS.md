@@ -5987,3 +5987,42 @@ option. Then where has the ability to refresh all images gone?"
   Driven on a three-slide fixture at 22/22/23 pt: the odd chip leads,
   reads "23 pt, where most are 22 pt", takes you to slide 3 and rings
   that box in 2px amber, which clears itself after a beat.
+
+- [x] **T280 - One Update verb, and it asks where.**
+  The user (2026-09-05): "What is the difference between update figures
+  and reload pictures. Also that is a big much that. Should be an
+  option, and it should then be able to then take you to the images tab,
+  or 'update for whole presentatin' or 'just update this slide' or
+  smoehting (better wording obviosly)."
+  *Done 2026-09-05.* The difference was real and the question was fair:
+  they are two mechanisms. A FIGURE re-reads its notebook through
+  `APP.reloadTab` and compares the deck's embedded snapshot; a PICTURE
+  pulls a File System Access handle out of IndexedDB and re-reads the
+  bytes. Disjoint annotation kinds, disjoint plumbing. But they were two
+  tall tiles side by side whose LABELS differed only in the noun -- so
+  you had to classify your own content before you could choose a button,
+  neither offered a scope (both walked the whole deck), and pressing
+  both raced for the single `#deck-toast`, losing half the answer.
+  T123's "ONE VERB" comment is not a decision that got violated: it
+  unified the disk re-read with the compare inside the FIGURES half. The
+  two nouns were split on purpose by T196 and made tiles by T202.
+  Now: one **Update ▾** tile whose menu is *Just this slide* / *The
+  whole presentation* / *Where each one came from*. A caret rather than
+  an ellipsis, because the press opens a menu (T267). Both halves run
+  quiet and the merged verb writes ONE sentence covering both -- "7
+  figures updated on the presentation", or the trouble from either half
+  in the same line. The third row opens the Images pane, which is the
+  inventory that actually answers "which of these even has a source":
+  that is the "take you to the images tab" half of the ask.
+  Five walkers took an optional slide index -- `staleFigures`,
+  `refSourceStems`, `chartResyncAll`, `linkedImages`,
+  `resyncAllFigures` -- all defaulted so every existing caller keeps the
+  deck-wide answer.
+  One thing the live run caught: the empty-case guard first asked
+  `staleFigures`, which answers "is anything here OUT OF DATE" rather
+  than "does anything here HAVE a source" -- so a slide whose figure was
+  perfectly current was told it had nothing to re-read. It asks
+  `provRef` now.
+  Driven at 1440x900: the group reads Update ▾ | Images; the deck-wide
+  run says "7 figures updated on the presentation" and the slide-scoped
+  run "1 figure updated on this slide"; the third row opens the pane.
