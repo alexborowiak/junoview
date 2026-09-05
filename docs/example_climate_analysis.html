@@ -4835,7 +4835,17 @@ body.slide-editing .apptop{display:none;}
 .rbn-type{order:4;}
 .rbn-fontgrp{order:2;}
 .rbn-paragrp{order:3;}
+/* T289: transitions lead the Animation tab, the way the Transitions
+   tab leads Animations in PowerPoint. Exit and Page turn are given
+   rungs at the same time: without one a group sits at 0 and comes
+   FIRST, which is how "Disappear" and a flip book's page turn were
+   arriving ahead of "Appear" (the same latent bug deck.css:1341
+   already records for Page furniture, and the 2026-09-05 review found
+   again on Home). */
+.rbn-trans{order:0;}
 .rbn-anim{order:1;}
+.rbn-exit{order:3;}
+.rbn-flipfx{order:6;}
 /* the Whole slide and Order groups share Animation's rung and follow
    it by source order: the effect first, then the slide, then the order
    things take it in (T176, T182) */
@@ -12895,6 +12905,50 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
                — but a page turned as a cut and the ribbon never
                mentioned it. The readout says how many clicks the
                book is worth; the run says how a page arrives. -->
+          <!-- T289: HOW A SLIDE ARRIVES, ON THE RIBBON (2026-09-05
+               review: the largest capability with no door in the
+               product). The whole transition model -- including "Move
+               matching objects", which is PowerPoint's Morph and the
+               single most impressive thing this editor does -- could
+               only be reached by RIGHT-CLICKING a filmstrip row. There
+               was nothing on any tab, and PowerPoint gives transitions
+               a tab of their own, so a person arriving from it looked
+               where it should be and concluded the feature did not
+               exist. "Hiding things in menus is the standing
+               complaint."
+               The slide menu keeps its rows: that is where you are
+               looking when you decide a slide is a nice-to-have, and it
+               is also the only place a SECTION default can be set. This
+               is the same three answers, where you would go for them.
+               Apply to all is PowerPoint's own verb and was missing
+               everywhere. -->
+          <span class="rbn-grp rbn-trans" data-tab="animation"
+            data-fold-ic="play">
+            <span class="rbn-row">
+              <span class="rbn-cell rbn-seg" id="trans-run" role="group"
+                aria-label="How this slide arrives">
+                <span class="cell-lab">This slide</span>
+                <button class="dbtn rbn-sm" id="trans-cut"
+                  aria-pressed="false"
+                  title="Nothing &mdash; the next slide is simply
+ there"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5.7"/><path d="M4 4l8 8"/></svg> Cut</button>
+                <button class="dbtn rbn-sm" id="trans-fade"
+                  aria-pressed="false"
+                  title="A short cross-fade"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.8 3.2v9.6"/><path d="M6.5 3.2v9.6" stroke-dasharray="3.4 1.7"/><path d="M10.1 3.2v9.6" stroke-dasharray="1.7 2.3"/><path d="M13.4 3.2v9.6" stroke-dasharray="0 3.1"/></svg>
+                  Fade</button>
+                <button class="dbtn rbn-sm" id="trans-move"
+                  aria-pressed="false"
+                  title="Anything on both slides slides, grows or
+ shrinks from where it was to where it is. Duplicate a slide and move
+ something, and this is what you get"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.4 5.3h9.6"/><path d="m9.6 2.9 2.4 2.4-2.4 2.4"/><path d="M13.6 10.7H4"/><path d="m6.4 8.3-2.4 2.4 2.4 2.4"/></svg>
+                  Move</button>
+              </span>
+              <button class="dbtn rbn-sm" id="trans-all"
+                title="Give every slide in the deck the transition this
+ one has"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M4.6 2.6H2.8v10.8h1.8"/><path d="M6.6 4.2h6.8M6.6 8h6.8M6.6 11.8h6.8"/></svg> All slides</button>
+            </span>
+            <span class="rbn-lab">How it arrives</span>
+          </span>
           <span class="rbn-grp rbn-flipfx" data-tab="animation"
             data-fold-ic="flipbook">
             <span class="rbn-row">
@@ -35872,6 +35926,47 @@ window.JunoPptx = (function () {
   }
   /* colour just the highlighted run inside the text box being edited;
      returns false when there is no live selection to recolour */
+  /* ---- EDITING THE HIGHLIGHTED RUN (T290) ------------------------------
+     colorSelection was the only control that asked "is a run selected?"
+     before writing to the whole box. The write-back below is the fiddly
+     half -- sanitise, find which PAGE of a multi-page box you are on,
+     write both the plain text and the rich html -- so it is shared
+     rather than copied: one action in two places is the shape this
+     codebase already has too much of.
+     Returns false when there is no caret selection, which is the
+     caller's signal to fall back to the box-level property. */
+  function richSelectionEdit(run){
+    var el=activeTextEditable();
+    if(!el||!selectionInside(el)) return false;
+    run();
+    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    if(a){
+      var r=sanitizeRich(el.innerHTML);
+      /* T261: write to the page the box is TURNED TO, not always page
+         one. renderAnnots binds the editor's get/set to textAt(s,a) via
+         textPage/textPageSet; assigning a.text/a.html directly meant
+         recolouring a run on page 2 of a multi-page text box overwrote
+         page ONE with page two's words -- silently, and persisted by
+         autosave. textAt returns 0 for a single-page box and for the
+         title/subtitle annots, so nothing else changes. */
+      var n=textAt(s,a); if(!(n>0)) n=0;
+      textPageSet(a,n,el.innerText,r.rich?r.html:'');
+      markDirty();
+    }
+    return true;
+  }
+  /* B / I / U / S on the highlighted words. styleWithCSS FALSE on
+     purpose: we want real <b>/<i>/<u>/<strike> TAGS, which RICH_TAGS
+     keeps. With it true the browser emits
+     <span style="font-weight:bold">, and sanitizeRich strips every
+     inline style except colour -- so the run would look right until the
+     next blur and then quietly lose its weight. */
+  function runStyleSelection(cmd){
+    return richSelectionEdit(function(){
+      try{document.execCommand('styleWithCSS',false,false);}catch(e){}
+      try{document.execCommand(cmd,false,null);}catch(e){}
+    });
+  }
   function colorSelection(col){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
@@ -42472,10 +42567,34 @@ window.JunoPptx = (function () {
       });
     });
   }
-  onFmt('#fmt-bold',function(a){a.b=a.b?0:1;});
-  onFmt('#fmt-ital',function(a){a.i=a.i?0:1;});
-  onFmt('#fmt-under',function(a){a.u=a.u?0:1;});
-  onFmt('#fmt-strike',function(a){a.strike=a.strike?0:1;});
+  /* T290: THE HIGHLIGHTED WORDS, IF ANY. `a.b` is a fact about the
+     BOX, so pressing Bold with a word selected emboldened the whole
+     paragraph -- and the browser's own Ctrl+B, inside the same box,
+     emboldened just the word, so the two disagreed about what bold
+     means. The colour control one cell away had asked the selection
+     first since T232; these four had not.
+     With nothing highlighted they do exactly what they always did,
+     which is the answer that needs no decision. */
+  function onRun(id,cmd,fn){
+    var b=$(id); if(!b) return;
+    /* keep the caret in the box: a plain click blurs it first and the
+       selection is gone before the handler runs. Same guard the colour
+       door uses (T232). */
+    b.addEventListener('mousedown',function(e){
+      if(activeTextEditable()) e.preventDefault();});
+    b.addEventListener('click',function(){
+      if(runStyleSelection(cmd)){
+        renderSlide();
+        if(typeof showFmt==='function') showFmt();
+        return;
+      }
+      fmtApply(fn);
+    });
+  }
+  onRun('#fmt-bold','bold',function(a){a.b=a.b?0:1;});
+  onRun('#fmt-ital','italic',function(a){a.i=a.i?0:1;});
+  onRun('#fmt-under','underline',function(a){a.u=a.u?0:1;});
+  onRun('#fmt-strike','strikeThrough',function(a){a.strike=a.strike?0:1;});
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out
@@ -50259,10 +50378,46 @@ window.JunoPptx = (function () {
     var sl=(pres.slides||[])[i]; if(!sl) return;
     if(kind==null) delete sl.trans; else sl.trans=String(kind);
     markDirty();renderFilm();
+    if(typeof transRibbonSync==='function') transRibbonSync();
     toast(kind==null
       ?('This slide arrives however its section says: '
         +transLabel(transFor(i)).toLowerCase())
       :('This slide arrives: '+transLabel(kind).toLowerCase()));
+  }
+  /* ---- THE RIBBON'S OWN DOOR ONTO THE ABOVE (T289) -------------------
+     Declarations only; transRibbonBoot runs from THE BOOT SEQUENCE. */
+  function transRibbonBoot(){
+    TRANS.forEach(function(t){
+      var b=$(transBtnId(t[0]));
+      if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        setTrans(cur,t[0]);
+        transRibbonSync();
+      });
+    });
+    var all=$('#trans-all');
+    if(all) all.addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=(pres.slides||[])[cur]; if(!sl) return;
+      /* the EFFECTIVE one, so "all slides" means what you can see on
+         this slide -- inside a section that may be the section's */
+      var kind=(typeof sl.trans==='string')?sl.trans:transFor(cur);
+      (pres.slides||[]).forEach(function(s2){s2.trans=String(kind);});
+      markDirty();renderFilm();transRibbonSync();
+      toast('Every slide arrives: '+transLabel(kind).toLowerCase());
+    });
+  }
+  function transBtnId(kind){
+    return '#trans-'+(kind===''?'cut':(kind==='move'?'move':kind));
+  }
+  function transRibbonSync(){
+    if(!(pres.slides||[]).length) return;
+    var now=transFor(cur);
+    TRANS.forEach(function(t){
+      var b=$(transBtnId(t[0]));
+      if(b) b.setAttribute('aria-pressed',(now===t[0]).toString());
+    });
   }
   function setSectionTrans(id,kind){
     var m=(pres.sections||{})[id]; if(!m) return;
@@ -53243,6 +53398,12 @@ window.JunoPptx = (function () {
       timingSync();
       flipFxSync();
       animOutSync();
+      /* T289: the slide transition is a fact about the SLIDE rather than
+         the selection, but this is the one sync every path already
+         calls -- selection changes, slide changes and markDirty all
+         land here -- so the ribbon's Cut / Fade / Move cannot show a
+         different answer from the slide you are looking at. */
+      if(typeof transRibbonSync==='function') transRibbonSync();
 
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
@@ -54196,6 +54357,12 @@ window.JunoPptx = (function () {
     refresh();
     playFlip();
     presenterSync();
+    /* T289: the transition buttons describe the SLIDE, so they follow
+       it. animRibbonSync -- where the rest of the Animation tab syncs
+       from -- is driven by the SELECTION, and go() clears the selection
+       to null without going through it; driven, the ribbon kept showing
+       the previous slide's answer. */
+    if(typeof transRibbonSync==='function') transRibbonSync();
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
   /* advance: reveal the next build, else move to the next slide (no-op at the
@@ -62454,6 +62621,7 @@ window.JunoPptx = (function () {
   listGalleryBoot();          /* kinds of bullet and numbering (T227) */
   homeDoorsBoot();            /* Notes and Optional on Home (T228) */
   cloneDoorsBoot();           /* clones, on the Object tab (T229) */
+  transRibbonBoot();          /* how a SLIDE arrives (T289) */
   flipFxBoot();               /* how a flip book's page turns (T234) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */
