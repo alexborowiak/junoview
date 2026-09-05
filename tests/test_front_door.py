@@ -107,12 +107,40 @@ def test_the_front_door_offers_a_presentation_not_only_a_notebook():
     """
     web = render_page([], mode="web")
     assert 'id="welcome-new"' in web
-    # PRIMARY, and ahead of both open buttons
+    # T282: it is no longer a primary CARD in a grid of three -- it is the
+    # Presentations section's own New, in that section's header, ahead of
+    # both notebook doors because Presentations is the first section.
     assert web.index('id="welcome-new"') < web.index('id="welcome-open"')
-    new_btn = web.split('id="welcome-new"')[0][-120:]
-    assert "primary" in new_btn
-    # the old primary is demoted rather than removed
-    assert 'class="dbtn ghost" id="welcome-open"' in web
+    assert 'class="wj-new" id="welcome-new"' in web
+    assert 'class="wj-new" id="welcome-open"' in web
+    # ...and making one no longer needs a notebook, which is the point
+    assert 'id="wj-pres"' in web
+
+
+def test_the_front_door_is_three_sections_in_one_order():
+    """T282 (2026-09-05, user: "the home screen should have three
+    sections with the files and a new buttons. Order should be
+    presentation, poster, notebooks grouped together").
+
+    Posters used to be mixed into the presentations list, told apart
+    only by a small icon, and the only door to a new one was in a rail
+    that collapses -- so on a narrow window there was no way to start a
+    poster from the front door at all.
+    """
+    web = render_page([], mode="web")
+    for sid in ("wj-pres", "wj-post", "wj-nb"):
+        assert f'id="{sid}"' in web, sid
+    assert (web.index('id="wj-pres"') < web.index('id="wj-post"')
+            < web.index('id="wj-nb"')), "presentations, posters, notebooks"
+    # each carries its own door, worded and iconned
+    for bid in ("welcome-new", "welcome-newpost", "welcome-open"):
+        assert f'class="wj-new" id="{bid}"' in web, bid
+    # the card grid it replaces is gone
+    assert 'class="welcome-btns"' not in web
+    # ...and a section does NOT hide when it is empty: the header and its
+    # New button are the offer
+    assert 'id="wj-post">' in web
+    assert 'id="wj-none-post"' in web
 
 
 def test_the_tagline_leads_with_presenting():

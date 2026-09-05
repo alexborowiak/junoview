@@ -47,9 +47,10 @@ def test_the_offer_is_a_row_on_the_welcome_screen():
     # one button for the lot: "where I was" is one thought
     assert "      if(APP.openLastSession) APP.openLastSession();});" in app
     # ...and the band it sits in knows about it. T264 split that band
-    # into one column per KIND, so the offer's column has to know too:
-    # the wrapper still hides when all three blocks are empty, and the
-    # Notebooks column hides when the offer and Recent both are.
-    assert ("    w.hidden=!(shown(r)||shown(pz)||shown(ls));") in app
-    assert ("    if(ncol) ncol.hidden=!(shown(r)||shown(ls));") in app
+    # into one column per KIND; T282 made those columns the front door
+    # itself, so none of them hides any more -- an empty Posters section
+    # whose header carries "+ New" is the whole point, and hiding it is
+    # what left "New poster" reachable only from a rail that collapses.
+    assert "    w.hidden=false;" in app
+    assert "    none('#wj-none-post',$('#welcome-post'));" in app
     assert "    renderLastSession();\n  }\n  APP.refreshChrome=refreshChrome;" in app

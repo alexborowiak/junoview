@@ -6393,18 +6393,22 @@
   }
   /* the two "jump back in" columns share a wrapper, which is only worth
      any vertical space when at least one of them has something in it */
+  /* T282: THE SECTIONS ARE THE FRONT DOOR, so none of them hides.
+     T264 made each kind a column that hid with everything in it, which
+     was right while this was a "jump back in" strip under a row of
+     cards. It is the row of cards now: hiding the Posters section
+     because you have never made a poster is exactly what left "New
+     poster" reachable only from a rail that collapses. An empty section
+     shows one word instead. */
   function syncJump(){
     var w=$('#welcome-jump'); if(!w) return;
-    var r=$('#welcome-recent'), pz=$('#welcome-pres');
-    var ls=$('#welcome-last');
+    w.hidden=false;
     var shown=function(el){return !!(el&&!el.hidden);};
-    /* T264: each KIND is a column that hides with everything in it, so a
-       notebook list with no presentations still fills the width instead
-       of sitting in one half of a two-column grid */
-    var pcol=$('#wj-pres'), ncol=$('#wj-nb');
-    if(pcol) pcol.hidden=!shown(pz);
-    if(ncol) ncol.hidden=!(shown(r)||shown(ls));
-    w.hidden=!(shown(r)||shown(pz)||shown(ls));
+    var none=function(id,list){
+      var n=$(id); if(n) n.hidden=shown(list);
+    };
+    none('#wj-none-pres',$('#welcome-pres'));
+    none('#wj-none-post',$('#welcome-post'));
   }
   /* T241: the notebooks you had open last time, as a row you press.
      One button for the lot, because "where I was" is one thought;
@@ -6477,17 +6481,26 @@
      rail shows them; absent entirely in a static export, where deck.js
      never registers the hook. */
   function renderWelcomePres(){
-    var host=$('#welcome-pres'); if(!host) return;
+    var host=$('#welcome-pres'),phost=$('#welcome-post');
+    if(!host) return;
     host.innerHTML='';
-    var list=[];
-    try{list=(APP.deckNames&&APP.deckNames())||[];}catch(e){list=[];}
+    if(phost) phost.innerHTML='';
+    var all=[];
+    try{all=(APP.deckNames&&APP.deckNames())||[];}catch(e){all=[];}
+    /* T282: A POSTER IS ITS OWN KIND. It was in this list, told apart
+       only by a small icon, so "the posters I have made" was a thing you
+       had to read a column for. deckNames already flags it. A custom
+       view stays with the presentations: it is a saved deck-shaped
+       thing, and it has no third section of its own. */
+    var list=all.filter(function(p){return !p.poster;});
+    var posters=all.filter(function(p){return !!p.poster;});
     host.hidden=!list.length;
+    if(phost) phost.hidden=!posters.length;
     syncJump();
-    if(!list.length) return;
-    /* T264: no sub-heading here — the column this sits in is titled
-       "Presentations", and saying it twice is what made the three
-       blocks read as three peers of the same kind */
-    list.slice(0,6).forEach(function(p){
+    /* T264: no sub-heading here — the section this sits in is titled
+       "Presentations", and saying it twice is what made the blocks read
+       as peers of the same kind */
+    function row(p,into){
       var kind=p.view?'custom view':p.poster?'poster':'presentation';
       var b=document.createElement('button');b.className='recent-i';
       b.type='button';
@@ -6510,8 +6523,10 @@
         if(APP.deckChoose) APP.deckChoose(p.name);
         goHome(false);
       });
-      host.appendChild(b);
-    });
+      into.appendChild(b);
+    }
+    list.slice(0,6).forEach(function(p){row(p,host);});
+    if(phost) posters.slice(0,6).forEach(function(p){row(p,phost);});
   }
 
   /* ---- the welcome screen's demo reel ---------------------------------
@@ -6597,6 +6612,15 @@
     if(wNew) wNew.addEventListener('click',function(){
       if(!APP.deckNew) return;
       APP.deckNew();
+      goHome(false);
+    });
+    /* T282: and the same for a poster, which until now could only be
+       started from the presentations rail -- a panel that collapses, and
+       is collapsed by default on a narrow window. */
+    var wPost=$('#welcome-newpost');
+    if(wPost) wPost.addEventListener('click',function(){
+      if(!APP.deckNewPoster) return;
+      APP.deckNewPoster();
       goHome(false);
     });
     /* same dialog, but landed on the URL path: paste a GitHub link */

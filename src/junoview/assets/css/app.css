@@ -657,18 +657,17 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
 .ws-n{flex:none;width:30px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--accent) 9%,transparent);
   color:var(--cyan-deep);font-family:var(--mono);font-size:15px;font-weight:600;
   display:inline-flex;align-items:center;justify-content:center;margin-top:1px;}
-/* the drop hint is a SUB-LABEL on Open now, not a line of prose under the
-   button row: the same words, one fewer band on the first screen. It sits
-   on its own line INSIDE the button (flex-basis:100% below), which is why
-   it carries no margin of its own. */
-.welcome-drop{display:block;font-family:var(--mono);font-size:10.5px;
-  letter-spacing:.04em;font-weight:400;color:var(--ink-3);margin:0;}
+/* the drop hint: the same words, one fewer band on the first screen.
+   T282 put it under the Notebooks section's Open door -- .wj-drop sets
+   the type, this sets the colour and kills the margin. (The old comment
+   here promised a flex-basis:100% that T240's grid had already
+   removed.) */
+.welcome-drop{display:block;font-weight:400;color:var(--ink-3);margin:0;}
 .welcome-drop b{color:var(--ink-2);}
-/* T240: the drop hint is one card's second line, in that card's own
-   type -- it was a full-width row of mono under the buttons AND a
-   second copy inside Open */
-.welcome-btns .welcome-drop{font-family:var(--sans);font-size:11.5px;
-  letter-spacing:0;color:inherit;text-align:left;}
+/* T240 made the drop hint one card's second line, in that card's own
+   type. T282 moved it under the Notebooks section's Open door, where
+   .wj-drop sets that type -- so this rule, which selected inside the
+   deleted card grid, went with it. */
 /* ---- "jump back in": the two things you might be coming back to ----
    Recent notebooks and the presentations built from them, side by side.
    Both columns hide themselves when empty, and the band with them --
@@ -683,9 +682,15 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
    hides itself is `display:none`, so one kind alone still fills the
    width (2026-09-04, user: "why are the presentations and the notebooks
    kind of mixed together, these are really different features"). */
-.welcome-jump{display:grid;grid-template-columns:repeat(auto-fit,
-  minmax(260px,1fr));gap:22px 30px;margin:34px auto 0;text-align:left;
-  width:100%;max-width:660px;align-items:start;}
+/* T282: THREE sections, and they are the front door now rather than
+   a "jump back in" strip under it -- so the grid is explicitly three
+   columns where there is room, not auto-fit, or Posters and Notebooks
+   pair up and leave Presentations alone on a row. */
+.welcome-jump{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:22px 26px;margin:30px auto 0;text-align:left;
+  width:100%;max-width:800px;align-items:start;}
+@media (max-width:720px){
+  .welcome-jump{grid-template-columns:minmax(0,1fr);gap:20px;}}
 .welcome-jump[hidden]{display:none;}
 .wj-col{display:flex;flex-direction:column;gap:10px;min-width:0;}
 .wj-col[hidden]{display:none;}
@@ -697,6 +702,30 @@ body:not(.light) .wquote blockquote{color:#eef4f8;}
   letter-spacing:0;text-transform:none;color:var(--ink-2);
   padding-bottom:7px;border-bottom:1px solid var(--line);}
 .wj-h .bic{width:14px;height:14px;flex:none;opacity:.75;}
+/* the section's own New. Small, worded and iconned like everything else
+   (the words-plus-icon rule), pushed to the far end of the header so the
+   three headers read as a row of names with a door on each. */
+.wj-new{margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+  font-family:var(--sans);font-size:11.5px;font-weight:600;
+  color:var(--cyan-deep);background:var(--surface,#fff);
+  border:1px solid var(--line);border-radius:5px;padding:3px 8px;
+  cursor:pointer;white-space:nowrap;
+  transition:border-color .13s,background .13s,color .13s;}
+.wj-new+.wj-new{margin-left:5px;}
+.wj-new .bic{width:12px;height:12px;opacity:1;}
+.wj-new:hover{border-color:var(--cyan);
+  background:color-mix(in srgb,var(--cyan) 10%,transparent);
+  color:var(--cyan);}
+.wj-new:focus-visible{outline:2px solid var(--cyan);outline-offset:1px;}
+/* an empty section says so in one word rather than collapsing: the
+   header and its New button ARE the offer (T282) */
+.wj-none{font-family:var(--mono);font-size:11px;color:var(--ink-3);
+  padding:2px 1px;}
+.wj-none[hidden]{display:none;}
+.wj-drop{font-family:var(--sans);font-size:11.5px;line-height:1.45;
+  color:var(--ink-3);margin-top:2px;}
+body:not(.light) .wj-new{background:var(--paper);}
+body:not(.light) .wj-none,body:not(.light) .wj-drop{color:var(--ink-3);}
 .recent,.wpres{display:flex;flex-direction:column;gap:6px;min-width:0;}
 .recent[hidden],.wpres[hidden]{display:none;}
 .recent-h{font-family:var(--mono);font-size:10px;letter-spacing:.18em;
@@ -779,57 +808,13 @@ mark.jv-hit.on{background:var(--amber,#f0a848);color:#16202b;
   left:2px;top:4.5px;width:7px;height:0;border-top:2px solid
   var(--cyan-deep);}
 
-/* ---- T240: FOUR CARDS, ONE SHAPE ------------------------------------
-   A flex row sized every button to its own words, so four doors
-   wrapped into two ragged rows of different widths and only one of
-   them had a second line. A GRID gives them one box each: two across,
-   four when there is room, one when there is not. Inside, every card
-   is the same three parts in the same places -- icon, what it does,
-   what that means -- so the row reads as one offer with four answers
-   (2026-09-04, user: "buttons of different shapes and sizes and
-   organisation everywhere. Please standardise"). */
-.welcome-btns{display:grid;gap:12px;margin-top:0;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  align-items:stretch;width:100%;}
-/* two across and no more: .welcome-box is capped at 760px, so four
-   columns is a 166px card and a hint that wraps three times */
-@media (max-width:560px){
-  .welcome-btns{grid-template-columns:minmax(0,1fr);}}
-.welcome-btns .dbtn{display:grid;
-  grid-template-columns:auto minmax(0,1fr);
-  grid-template-rows:auto auto;gap:2px 10px;
-  align-content:start;justify-items:start;text-align:left;
-  font-size:15px;font-weight:600;padding:13px 15px;min-height:78px;
-  border-radius:10px;border:1.5px solid var(--cyan-deep);cursor:pointer;
-  transition:all .15s;}
-.welcome-btns .dbtn>.bic{grid-row:1 / span 2;align-self:center;
-  width:18px;height:18px;}
-.wc-t{grid-column:2;font-size:15px;font-weight:600;line-height:1.25;}
-.wc-h{grid-column:2;font-family:var(--sans);font-size:11.5px;
-  font-weight:400;line-height:1.4;letter-spacing:0;opacity:.82;
-  text-transform:none;}
-.welcome-btns .dbtn[hidden]{display:none;}
-/* T264: making a presentation is its own thing, so it takes the row;
-   the two below it are both "open a notebook" and read as a pair */
-.welcome-btns .wc-wide{grid-column:1 / -1;}
-/* T273: a card with no second line is not a two-row box. It keeps the
-   78px the others have -- shrinking it to its one line would put back
-   the ragged, differently-sized row T240 removed -- but the title sits
-   in the middle of it rather than on top of 30px of dead air. */
-.welcome-btns .dbtn:not(:has(.wc-h)){grid-template-rows:auto;
-  align-content:center;}
-.welcome-btns .dbtn.primary{background:var(--cyan-deep);
-  border-color:var(--cyan-deep);color:var(--on-accent-deep);
-  box-shadow:0 6px 18px color-mix(in srgb,var(--accent) 20%,transparent);}
-.welcome-btns .dbtn.primary:hover{background:var(--cyan);
-  border-color:var(--cyan);}
-.welcome-btns .dbtn.ghost{background:transparent;border-color:var(--cyan);
-  color:var(--cyan-deep);}
-.welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,var(--accent) 9%,transparent);}
-/* dark welcome (default): keep the secondary button clearly readable */
-body:not(.light) .welcome-btns .dbtn.ghost{color:#8fe0f0;
-  border-color:var(--accent);background:color-mix(in srgb,var(--accent) 7%,transparent);}
-body:not(.light) .welcome-btns .dbtn.ghost:hover{background:color-mix(in srgb,var(--accent) 15%,transparent);}
+/* T282: THE CARD GRID IS GONE, and T240's rule went with it rather than
+   being deleted. Its point was that the front door's doors must be one
+   SHAPE rather than buttons sized to their own words -- that now lives
+   in .wj-new above: three section headers, one door on each, all the
+   same box. The .welcome-btns / .wc-t / .wc-h / .wc-wide rules that
+   sized the cards went with the cards, because a rule matching nothing
+   is a rule the next reader has to disprove. */
 /* the same sans as everything else on this screen, one step quieter */
 .welcome-links{margin-top:20px;font-family:var(--sans);font-size:13px;
   color:var(--ink-3);}
@@ -1487,13 +1472,6 @@ body:not(.light) .recent-i:hover{background:color-mix(in srgb,
   var(--accent) 15%,var(--paper));border-color:var(--accent);}
 body:not(.light) .recent-h{color:var(--ink-3);}
 body:not(.light) .welcome-back{color:var(--accent);}
-body:not(.light) .welcome-btns .dbtn{background:var(--paper);
-  border-color:var(--line);color:var(--ink-2);}
-body:not(.light) .welcome-btns .dbtn:hover{border-color:var(--accent);
-  color:var(--ink);}
-body:not(.light) .welcome-btns .dbtn.primary{
-  background:var(--cyan-deep);border-color:var(--cyan-deep);
-  color:var(--on-accent-deep);}
 body:not(.light) .welcome-links a{color:var(--accent);}
 
 /* ---------- drag-drop hint ---------- */

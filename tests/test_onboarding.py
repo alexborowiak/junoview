@@ -39,11 +39,13 @@ def test_web_mode_page_chrome_and_welcome_hero(out):
     # to offer only ways of opening a notebook, so a presentation was
     # something you reached only after loading one
     assert "Build a presentation, or open a notebook" in web_page
-    assert 'class="welcome-btns"' in web_page \
+    # T282: the card grid became three sections, each with its own New
+    assert 'class="welcome-jump"' in web_page \
         and 'id="welcome-open"' in web_page
-    # ...and "New presentation" is the PRIMARY button, ahead of both
+    # ...and "New presentation" is the first section's door, ahead of both
     assert 'id="welcome-new"' in web_page and "'#welcome-new'" in out
     assert "APP.deckNew()" in out
+    assert "'#welcome-newpost'" in out and "APP.deckNewPoster()" in out
     # BOTH open paths are explicit on the welcome: local files and a
     # GitHub/URL button that opens the dialog focused on the URL input
     assert 'id="welcome-url"' in web_page and "'#welcome-url'" in out
@@ -80,8 +82,11 @@ def test_welcome_tour_reel_is_deferred_and_laid_out_in_column(out):
 def test_welcome_open_button_and_getting_started_steps(out):
     """The open-local-files call to action survives HTML reflow, and the
     getting-started steps moved to the bottom (seen on scroll)."""
-    assert "Open\n          local files" in out.replace("\r\n", "\n") \
-        or "Open local files" in re.sub(r"\s+", " ", out)
+    # T282: the words are on the Notebooks section's door now, and the
+    # formats it takes are the drop hint under it
+    flat = re.sub(r"\s+", " ", out)
+    assert 'class="wj-new" id="welcome-open"' in out
+    assert "Open .ipynb, .md, .tex or .csv files from this computer" in flat
     web_page = _web_page()
     assert ('class="welcome-more"' in web_page
             and web_page.count('class="ws-n"') == 4)

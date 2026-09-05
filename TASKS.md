@@ -6049,3 +6049,42 @@ option. Then where has the ability to refresh all images gone?"
   on the ribbon -- path, lock, refresh, together -- the honest way is a
   picture-scoped lock control rather than moving the shared one. Say the
   word and it is a small addition.
+
+- [x] **T282 - The front door is three sections, each with its own New.**
+  The user (2026-09-05): "the home screen should have three sections
+  with the files and a new buttons. Order should be presentation,
+  poster, notebooks grouped together."
+  *Done 2026-09-05.* The card row is gone and its three buttons ARE the
+  three section headers. Making a presentation belongs beside the
+  presentations, not in a separate grid two inches above that repeats
+  the word.
+  **Posters were never a section.** They were rows in the presentations
+  list told apart only by a small icon, and the only door to a new one
+  was `#pr-newpost` in the presentations rail -- a panel that collapses,
+  and is collapsed by default on a narrow window. So on a laptop there
+  was no way to start a poster from the front door at all.
+  `deckNames()` already flagged them; the list is filtered in two now,
+  through ONE row builder so the two cannot drift apart. A custom view
+  stays with the presentations: it is deck-shaped and has no third
+  section of its own.
+  **A section no longer hides when it is empty.** T264 made each kind a
+  column that hid with everything in it, which was right while this was
+  a "jump back in" strip UNDER a row of cards. It is the row of cards
+  now, and hiding Posters because you have never made one is exactly
+  what left New poster unreachable. An empty section says "Nothing yet".
+  The ids are unchanged on purpose -- `#welcome-new`, `#welcome-open`,
+  `#welcome-url` keep their handlers; only `#welcome-newpost` and
+  `SemApp.deckNewPoster` are new. T77's drop hint travels with Open
+  rather than going with the card: it is still the only place the first
+  screen says drag-and-drop works and which formats parse.
+  T240's rule is kept, not dropped: its point was never the GRID, it was
+  that the front door's doors must be one SHAPE rather than buttons
+  sized to their own words. Three headers, one identical door on each.
+  `tests/test_the_front_door_is_one_grid.py` is replaced by
+  `test_the_front_door_is_three_sections.py`, which carries that
+  reasoning forward, and the `.welcome-btns` / `.wc-t` / `.wc-h` /
+  `.wc-wide` rules went with the markup -- a rule matching nothing is a
+  rule the next reader has to disprove.
+  Driven on a web build at 1180px: three equal columns side by side;
+  New poster opens a poster and, back home, it lists under **Posters**
+  while Presentations reads "Nothing yet".

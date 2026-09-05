@@ -1358,6 +1358,9 @@
      (2026-08-22, user: "you can really only create a presentation once
      you have a notebook open"). */
   window.SemApp.deckNew=function(){newPresentation();};
+  /* T282: the front door's Posters section needs the same door the rail
+     has, and the rail collapses. Same shape as deckNew. */
+  window.SemApp.deckNewPoster=function(){newPoster();};
   /* (the chrome redraw for these hooks runs from THE BOOT SEQUENCE) */
   window.SemApp.deckGo=function(slide){   /* move slide, keep the current mode */
     if(deckEl.hidden) return;
