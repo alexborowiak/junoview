@@ -25510,7 +25510,13 @@ window.JunoPptx = (function () {
     var body=null;
     try{
       var el=cardEl(a.ref);
-      body=el?el.querySelector('.cardbody'):embBody(a.ref);
+      /* T303: the same body the frame renders. figLint decides WHICH
+         frames are figures from the kept copy (cellFacets) and then
+         reported their typefaces from the notebook, so "2 figures use
+         different type sizes from the rest" could be a sentence about
+         a figure nobody can see. */
+      var keptB=refIsLive(a.ref)?null:embBody(a.ref);
+      body=keptB||(el?el.querySelector('.cardbody'):embBody(a.ref));
     }catch(e){body=null;}
     if(!body) return null;
     var svg=body.querySelector&&body.querySelector('svg');
@@ -29996,9 +30002,24 @@ window.JunoPptx = (function () {
       Object.keys(p.live).forEach(function(k){
         if(p.live[k]) out.live[ns(k)||k]=1;});
     if(p.emb&&typeof p.emb==='object'){
+      /* T305: A COPY THIS SESSION ALREADY HOLDS IS THE FRESHER ONE.
+         EMBED is session-global and keyed by ref, not per deck, and
+         this absorb had no existence check -- unlike its sibling, the
+         IndexedDB rehydrate, whose comment already states the rule.
+         So importing a .junoview that shares a ref with the deck you
+         have open silently replaced your kept pixels with the file's,
+         with no toast and no way back; and it fired before every one
+         of importDeckText's bail-outs, so even a deck that was NOT
+         imported -- a startup restore of one you already have, or one
+         the localStorage budget dropped -- overwrote them. Two decks
+         in one project file holding different snapshots of one ref did
+         it at page load, before any UI existed. */
       Object.keys(p.emb).forEach(function(k){
         var e=p.emb[k];
-        if(e&&typeof e.html==='string'&&e.html) embStore(ns(k)||k,e);
+        if(!e||typeof e.html!=='string'||!e.html) return;
+        var key=ns(k)||k;
+        if(EMBED[key]&&EMBED[key].html) return;
+        embStore(key,e);
       });
       embSaveSoon();
     }
@@ -30181,7 +30202,23 @@ window.JunoPptx = (function () {
     });
     return out;
   }
-  function defaultPres(){return {name:'presentation',slides:autoSlides(false)};}
+  /* T305: THE DECK NOBODY PLACED STILL HAS TO KEEP ITS PIXELS.
+     autoSlides builds one slide per figure straight out of SHELLITEMS,
+     so the deck a first-time user is handed held N refs and no copies:
+     the four placement doors T297/T300 closed are doors this path never
+     goes through. Edit one box and markDirty writes a refs-only draft;
+     close the notebook or open the page elsewhere and every slide is
+     blank. Capturing here covers all five callers at once, and the
+     notebook is open by construction -- autoSlides read it to build
+     these refs a line ago. */
+  function defaultPres(){
+    var p={name:'presentation',slides:autoSlides(false)};
+    (p.slides||[]).forEach(function(s){
+      (s.annots||[]).forEach(function(a){
+        if(typeof embedIfAbsent==='function') embedIfAbsent(a);});
+    });
+    return p;
+  }
 
   var pres=null, source='auto', mode='view', cur=0, activePane=0;
   function loadPresentation(name){
@@ -30490,6 +30527,19 @@ window.JunoPptx = (function () {
          does not record a phantom step. */
       masters:(pres.masters&&Object.keys(pres.masters).length)
         ?pres.masters:null,
+      /* T304: WHICH FIGURES ARE LIVE LINKS IS AN EDIT. T301's own
+         comment describes this trap for EMBED -- a change that leaves
+         `pres` untouched makes histPush's `st===histSnap` return early,
+         so NO entry is pushed and Ctrl+Z rewinds whatever came before
+         instead. T298's new key walked straight back into it from the
+         other side: setRefLive DOES mutate pres.live, but histState did
+         not serialise it, so the snapshot was identical and the same
+         early return fired. Flip a figure to Live, press Ctrl+Z, and
+         the text box you moved a minute ago jumps back while the switch
+         stays flipped. Empty-serialises-as-null like its neighbours,
+         because setRefLive creates pres.live={} lazily and merely
+         turning a link off must not record a phantom step. */
+      live:(pres.live&&Object.keys(pres.live).length)?pres.live:null,
       /* the cut NAMES are content; which cut you happen to be
          rehearsing is not, and lives in a session variable (T24) */
       cuts:(pres.cuts&&Object.keys(pres.cuts).length)?pres.cuts:null,
@@ -30538,7 +30588,7 @@ window.JunoPptx = (function () {
        design-level key could. d.layouts is always emitted and [] is
        truthy, so this assigns rather than deletes. */
     ['wmark','head','foot','styles','tokens','components','cuts',
-     'guides','masters','layouts','page','pageBg','cropMarks']
+     'guides','masters','layouts','page','pageBg','cropMarks','live']
       .forEach(function(k){
         if(d[k]) pres[k]=d[k]; else delete pres[k];});
     if(d.talkMins) pres.talkMins=d.talkMins; else delete pres.talkMins;
@@ -30736,9 +30786,42 @@ window.JunoPptx = (function () {
     /* per-output fold stubs are filter chrome, not content */
     $$('.ot-stub',b).forEach(function(n){n.remove();});
     $$('.figpager-nav',b).forEach(function(n){n.style.display='';});
+    /* T303: only a LIVE clone is a "previous figure". This line sits
+       in the live-card branch, which a kept ref now returns before
+       reaching -- so the snapshot stopped being taken, which is right.
+       But liveCardHtml passes fromLive=1 to answer the staleness
+       question, and that re-armed it behind the user's back: pressing
+       Previous figure on a kept frame then put a picture on the slide
+       that the slide had never shown. The staleness probe is not a
+       render and must not leave a trail. */
     var it=resolveRef(ref);
-    if(it) frameSnaps[it.ns]=b.outerHTML;
+    if(it&&!fromLive) frameSnaps[it.ns]=b.outerHTML;
     return b;
+  }
+  /* T303: THE CODE FACET WAS STILL A SYM LINK. T298 taught cloneBody
+     to prefer the deck's kept copy and left cloneCode alone, so a
+     placed CODE frame still read the open notebook: re-run it and the
+     code on a finished slide rewrote itself -- the very loss T298
+     shipped to stop -- and splitFrame exists precisely to put a code
+     frame BESIDE a figure frame, so kept and live sat on one slide.
+     Closing the notebook changed a finished slide too, since the kept
+     copy was only the fallback.
+
+     The preference lives HERE and not inside cloneCode because
+     cloneCode has five callers and two of them -- openVFull and the
+     review step box -- show a NOTEBOOK cell's code, not a deck frame.
+     Making cloneCode kept-first would have quietly switched those to
+     the deck's snapshot while the notebook was open. */
+  function frameCode(ref){
+    if(!refIsLive(ref)){
+      var e=embFor(ref);
+      if(e&&e.code){
+        var t=document.createElement('template');t.innerHTML=e.code;
+        var n=t.content.firstElementChild;
+        if(n) return stripIds(n.cloneNode(true));
+      }
+    }
+    return cloneCode(ref);
   }
   function cloneCode(ref){
     var c=cardEl(ref);
@@ -30819,10 +30902,12 @@ window.JunoPptx = (function () {
     var f=cellFacets(ref);
     if(!part||part==='auto'||!hasFacet(f,part)) part=autoPart(f);
     var b;
-    if(part==='code') b=cloneCode(ref)||cloneBody(ref);
+    if(part==='code') b=frameCode(ref)||cloneBody(ref);
     else {
       b=cloneBody(ref);
-      b=b?applyPartFilter(b,part):cloneCode(ref);
+      /* a figure/output frame whose kept body is null falls through to
+         the code, and that fallback must obey the same preference */
+      b=b?applyPartFilter(b,part):frameCode(ref);
     }
     if(b) frameNodeCache[key]=b.cloneNode(true);
     return b;
@@ -45802,6 +45887,24 @@ window.JunoPptx = (function () {
     }
     return '';
   }
+  /* T307: EVERY SOURCE THIS ANNOT HAS, not just the one on show.
+     provRef answers for a flip book with whichever page `a.at` happens
+     to be on, so "Update figures" on a seven-page book compared and
+     refreshed exactly one page and left the other six stale with
+     nothing said -- and embedIfAbsent kept the pixels of that one page
+     only. The two picker doors hid it by setting `a.at` to the frame
+     they had just pushed. */
+  function provRefs(a){
+    if(!a) return [];
+    if(a.k==='flip'){
+      var out=[];
+      flipFrames(a).forEach(function(f){
+        if(f&&f.ref&&out.indexOf(f.ref)<0) out.push(f.ref);});
+      return out;
+    }
+    var r=provRef(a);
+    return r?[r]:[];
+  }
   function provOf(a){
     var ref=provRef(a);
     if(!ref) return null;
@@ -45828,9 +45931,15 @@ window.JunoPptx = (function () {
     (pres.slides||[]).forEach(function(sl,si){
       if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
-        if(!a||a.hide||!provRef(a)) return;
-        var st=provState(provOf(a));
-        if(st==='stale'||st==='nosaved') out.push({si:si,ai:ai,a:a,st:st});
+        if(!a||a.hide) return;
+        /* T307: one entry per SOURCE, so a flip book's other pages are
+           not silently left behind by the refresh that claims to have
+           covered them */
+        provRefs(a).forEach(function(ref){
+          var st=provState(provOf({k:'cell',ref:ref}));
+          if(st==='stale'||st==='nosaved')
+            out.push({si:si,ai:ai,a:a,st:st,ref:ref});
+        });
       });
     });
     return out;
@@ -45930,10 +46039,10 @@ window.JunoPptx = (function () {
       }
       var n=cn,touched=[];
       list.forEach(function(p){
-        if(!resyncFigure(p.a)) return;
+        if(!resyncFigure(p.a,p.ref)) return;
         n++;
-        var k=normRef(provRef(p.a));
-        if(k) touched.push(k);
+        var k=normRef(p.ref||provRef(p.a));
+        if(k&&touched.indexOf(k)<0) touched.push(k);
       });
       /* T301: THE BUTTON THE USER LEARNED TO FEAR. It rewrites every
          stale figure in the deck at once, nothing else in the editor can
@@ -45948,6 +46057,11 @@ window.JunoPptx = (function () {
             'Put them back',
             function(){
               var back=embRestore(touched);
+              /* T305: embRestore unlinks what it restores, so a switch
+                 reading "Live link" after the toast says the opposite
+                 turns the live link ON when pressed. renderImgPane
+                 no-ops on a closed pane, so this is free. */
+              if(typeof imgPaneRefresh==='function') imgPaneRefresh();
               toast(back.n
                 ?('Back to the figures from before \u2014 '+back.n
                   +' of them'+(back.unlinked?(', and '
@@ -46140,16 +46254,70 @@ window.JunoPptx = (function () {
      the same figure onto a second slide must not silently re-read the
      notebook underneath the first one. Re-reading is what the explicit
      refresh is for, and it asks first. */
-  function embedIfAbsent(a){
-    var ref=provRef(a);
-    if(!ref||embFor(ref)) return 0;
-    var p=provOf(a);
-    return (p&&p.live)?embedCapture(p.ref,p.live):0;
+  /* T309: WHERE THE NOTEBOOK WAS, kept on the figure itself.
+     The user asked for "the notebook url" on a figure's row and there
+     was nowhere to read one from: a notebook's location lives only in
+     APP.shells[stem].path for as long as its tab is open, it is not in
+     the deck payload, and a ref's stem half is a DISPLAY NAME that
+     stem_for disambiguates with -2/-3 by tab-open order, so it is not
+     an identity either. Close the tab and the deck could only guess by
+     matching that name against the ten-entry Recent list.
+
+     Per-annot rather than a deck-level stem->path map, for that same
+     reason -- and because annots pass through normPres and
+     as_presentations wholesale (a deep copy and an isinstance filter,
+     neither of which looks at keys), so this costs no Python and no
+     schema sentinel. It is the same idea as `a.fname`, which the
+     picture half has recorded at placement since T21.
+
+     Absent means "we never knew", never "". `force` is for a refresh,
+     which is the moment to learn that the notebook has moved. */
+  function noteSource(a,force){
+    if(!a) return;
+    function put(o,ref){
+      if(!o||!ref||(o.nbpath&&!force)) return;
+      var pr=splitRef(normRef(ref)||String(ref));
+      var p=(pr[0]&&typeof nbPathFor==='function')?nbPathFor(pr[0]):null;
+      if(p) o.nbpath=String(p);
+    }
+    if(a.k==='flip'){
+      flipFrames(a).forEach(function(f){put(f,f&&f.ref);});
+      return;
+    }
+    put(a,provRef(a));
   }
-  function resyncFigure(a){
-    var p=provOf(a);
+  function embedIfAbsent(a){
+    noteSource(a);
+    /* T307: a flip book is N figures, and every one of them has to be
+       kept -- otherwise closing the notebook empties every page but
+       the one that happened to be showing when it was placed. */
+    var n=0;
+    provRefs(a).forEach(function(ref){
+      if(!ref||embFor(ref)) return;
+      var p=provOf({k:'cell',ref:ref});
+      if(p&&p.live) n+=embedCapture(p.ref,p.live);
+    });
+    return n;
+  }
+  function resyncFigure(a,ref){
+    /* T307: A CHART IS NOT ITS TABLE. provRef hands back the source
+       table card's ref (T117), so this stored a snapshot of the TABLE
+       and reported "Updated from the notebook" while the chart on
+       screen had not moved -- and if that same card was placed as a
+       cell frame on another slide, the capture refreshed THAT figure
+       instead. The chart's numbers live in a.cats/a.series and only
+       chartResyncOne reads them. */
+    if(a&&a.k==='chart')
+      return (typeof chartResyncOne==='function')?chartResyncOne(a):0;
+    /* T307: `ref` names WHICH source, because a flip book has one per
+       page and provRef only ever answers for the page on show. Absent,
+       it means the annot's own single source, which is what every
+       caller before staleFigures learned to enumerate wanted. */
+    var p=ref?provOf({k:'cell',ref:ref}):provOf(a);
     if(!p||!p.live) return 0;
     if(!embedCapture(p.ref,p.live)) return 0;
+    /* a refresh is the moment to learn the notebook has moved */
+    noteSource(a,1);
     markDirty();
     var l=stage.querySelector('.annot-layer');
     if(l) renderAnnots(l,pres.slides[cur]);
@@ -48835,7 +49003,12 @@ window.JunoPptx = (function () {
     (pres.slides||[]).forEach(function(sl,si){
       if(only>=0&&si!==only) return;
       (sl.annots||[]).forEach(function(a,ai){
-        if(a&&a.k==='image'&&a.fkey) out.push({si:si,ai:ai,a:a});});
+        /* T308: an address is a source too -- the only one that is
+           re-read on every render. Leaving it out told a slide whose
+           only content was a linked picture that it had "nothing with a
+           source to re-read". */
+        if(a&&a.k==='image'&&(a.fkey||picState(a)==='link'))
+          out.push({si:si,ai:ai,a:a});});
     });
     return out;
   }
@@ -48993,16 +49166,71 @@ window.JunoPptx = (function () {
     if(!s) return rows;
     (s.annots||[]).forEach(function(a,ai){
       if(!a) return;
-      if(a.k==='image')
-        rows.push({si:si,ai:ai,a:a,kind:'Picture',
-          from:a.fname||'pasted or dropped — no file to reload'});
-      else if(a.k==='cell'&&a.ref){
-        var ci=resolveRef(a.ref);
-        rows.push({si:si,ai:ai,a:a,kind:'Figure',
-          from:(ci&&(ci.stem||ci.nb))||String(a.ref)});
+      if(a.k==='image'){
+        var st=picState(a);
+        rows.push({si:si,ai:ai,a:a,kind:'Picture',pic:st,
+          from:st==='link'?String(a.src)
+            :st==='file'?(a.fname||'a file on this computer')
+            :'pasted or dropped — the deck holds the only copy'});
       }
+      else if(a.k==='cell'&&a.ref) rows.push(imgFigRow(si,ai,a,a.ref));
+      /* T308: A BOOK IS AS MANY FIGURES AS IT HAS PAGES, and a chart
+         has a source too. Both were invisible here, in both surfaces,
+         while provRef has always said they have one -- so a deck whose
+         figures are all flip books read "No pictures or figures on this
+         slide" from the tab whose whole job since T299 is telling you
+         what can go missing. */
+      else if(a.k==='flip'){
+        flipFrames(a).forEach(function(f,fi){
+          if(f&&f.ref) rows.push(imgFigRow(si,ai,a,f.ref,fi));
+        });
+      }
+      else if(a.k==='chart'&&a.ref) rows.push(imgFigRow(si,ai,a,a.ref));
     });
     return rows;
+  }
+  /* one figure row, whatever is carrying it. `fi` is the page of a flip
+     book, so the row can name itself and act on ITS ref rather than on
+     whichever page the book happens to be showing. */
+  function imgFigRow(si,ai,a,ref,fi){
+    var ci=resolveRef(ref);
+    var holder=(a.k==='flip')?(flipFrames(a)[fi|0]||{}):a;
+    /* T309: the notebook's ADDRESS when the figure remembers one, and
+       the stem only as the fallback for figures placed before it did.
+       Elided in the MIDDLE, because a path's useful half is its tail --
+       CSS ellipsis cuts exactly the filename off. */
+    var p=holder&&holder.nbpath;
+    var r={si:si,ai:ai,a:a,ref:ref,kind:'Figure',
+      path:p||'',
+      from:p?midElide(String(p),52):((ci&&(ci.stem||ci.nb))||String(ref))};
+    if(a.k==='flip'){r.fi=fi;r.kind='Page '+((fi|0)+1);}
+    else if(a.k==='chart') r.kind='Chart';
+    return r;
+  }
+  function midElide(s,n){
+    if(s.length<=n) return s;
+    return s.slice(0,Math.max(0,Math.floor(n/3)))+'\u2026'
+      +s.slice(s.length-Math.ceil(n*2/3));
+  }
+  /* T308: WHAT A PICTURE ACTUALLY IS. Three states, not two:
+
+       link  a.src is an ADDRESS. The browser re-reads it on every
+             render, so this is the one genuinely sym-linked picture in
+             the app -- and the one the pane used to call "pasted or
+             dropped, no file to reload", which is wrong on both halves.
+       file  a.src is the bytes AND a.fkey names the file they came
+             from, so it can be re-read but cannot go missing.
+       kept  a.src is the bytes and nothing else. It cannot be re-read
+             and it cannot go missing.
+
+     The discriminator is the src itself: everything the app embeds is a
+     data: URI, and the path door (placeImage(p,0) with no link) leaves
+     the address there instead. */
+  function picState(a){
+    if(!a||a.k!=='image') return '';
+    var s=String(a.src||'');
+    if(s&&s.indexOf('data:')!==0) return 'link';
+    return a.fkey?'file':'kept';
   }
   /* T299: WHICH FIGURE THIS IS, AND THE THINGS YOU CAN DO TO IT.
      Everything about a picture's SOURCE now answers on its row here --
@@ -49013,6 +49241,15 @@ window.JunoPptx = (function () {
      260px pane. */
   var figOrderMemo={};
   function figOrder(stem){
+    /* T306: AN EMPTY ARRAY IS TRUTHY. With the notebook shut
+       SHELLITEMS[stem] is gone, so this computed [] -- and then handed
+       that same [] back for the life of the page, so opening the
+       notebook never brought the number back. Computed while open and
+       then closed, the row kept asserting an ordinal from a card list
+       that no longer existed. Nothing invalidated the memo: the
+       sem:shell handlers drop frameNodeCache and never touched it.
+       Absence of the notebook is answered directly, above the memo. */
+    if(!SHELLITEMS[stem]) return [];
     if(figOrderMemo[stem]) return figOrderMemo[stem];
     var out=[];
     (SHELLITEMS[stem]||[]).forEach(function(k){
@@ -49035,12 +49272,19 @@ window.JunoPptx = (function () {
     var s2=pres.slides[r.si],a2=s2&&(s2.annots||[])[r.ai];
     if(!a2) return;
     if(a2.k==='image'){
-      if(!a2.fkey){toast('This picture was pasted or dropped — there is '
-        +'no file to re-read');return;}
+      /* T308: the wording used to say "pasted or dropped" to the one
+         picture that is neither -- an address is exactly the thing that
+         CAN be re-read, and the only picture in the deck that can go
+         missing. Only the third state is genuinely sourceless. */
+      if(picState(a2)==='kept'){
+        toast('This picture was pasted or dropped, so the deck holds the '
+          +'only copy — there is no file to re-read, and nothing to lose');
+        return;
+      }
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
       return;
     }
-    if(!resyncFigure(a2)){
+    if(!resyncFigure(a2,r.ref)){
       toast('Its notebook is not open, so there is nothing newer to '
         +'read — the copy in the deck is being shown');
       return;
@@ -49073,7 +49317,10 @@ window.JunoPptx = (function () {
         e.stopPropagation();e.preventDefault();fn();});
       acts.appendChild(b);return b;
     }
-    var ref=(r.kind==='Figure')&&r.a.ref;
+    /* T308: the ROW's ref. A flip book has one per page and a chart
+       keeps its table's, so reading r.a.ref here showed nothing for a
+       book and the wrong thing for a chart. */
+    var ref=r.ref||((r.kind==='Figure')&&r.a.ref);
     if(ref){
       var num=figNumber(ref);
       if(num){
@@ -49082,11 +49329,15 @@ window.JunoPptx = (function () {
         acts.appendChild(sp);
       }
     }
-    act('Refresh',r.kind==='Figure'
+    act('Refresh',ref
       ?('Re-read this figure from ' + r.from + ' and keep the new copy '
         + '\u2014 only this one')
-      :(r.a.fkey?('Re-read this picture from '+r.from)
-        :'Pasted or dropped, so there is no file to re-read'),
+      :r.pic==='link'
+        ?('Re-read this picture from '+r.from+' \u2014 it is loaded from '
+          +'that address every time, so this is the only copy the deck '
+          +'will ever have of it')
+      :r.pic==='file'?('Re-read this picture from '+r.from)
+      :'Pasted or dropped, so the deck holds the only copy',
       function(){imgRefreshRow(r);});
     if(ref){
       var live=(typeof refIsLive==='function')&&refIsLive(ref);
@@ -49146,7 +49397,7 @@ window.JunoPptx = (function () {
     t.textContent=r.kind;
     mid.appendChild(t);
     var f=document.createElement('div');f.className='img-from';
-    f.textContent=r.from;f.title=r.from;
+    f.textContent=r.from;f.title=r.path||r.from;
     mid.appendChild(f);
     mid.appendChild(imgActs(r));
     row.appendChild(mid);
@@ -52774,6 +53025,14 @@ window.JunoPptx = (function () {
     /* the LIVE card's table, read off the open shell the same way the
        provenance pane compares bodies (T20) */
     try{
+      /* T307: NO NOTEBOOK, NO SOURCE READ. cloneBody's no-card branch
+         ignores fromLive and hands back the deck's own snapshot, so
+         with the notebook shut a "refresh from source" read the kept
+         table and, if the numbers had been hand-edited through the
+         chart data dialog, silently reverted them -- with no notebook
+         anywhere in the transaction. liveCardHtml has guarded this
+         since T20; this did not. */
+      if(!cardEl(ref)) return null;
       var b=cloneBody(ref,1); if(!b) return null;   /* live (T302) */
       var t=b.querySelector('table'); if(!t) return null;
       return [].map.call(t.querySelectorAll('tr'),function(tr){
@@ -52982,26 +53241,32 @@ window.JunoPptx = (function () {
      chart that still carries `ref` re-reads the table it came from.
      Type, colours, position and size are yours and stay; only the
      numbers move — the same split resyncFigure keeps for snapshots. */
+  /* T307: ONE CHART, so the Images row's Refresh and the provenance
+     pane can offer a chart the verb that actually moves it. The body is
+     chartResyncAll's forEach, lifted unchanged; the loop below now
+     calls it rather than repeating it. Returns 1 when the numbers
+     moved, so a caller can say nothing rather than claim a refresh. */
+  function chartResyncOne(a){
+    if(!a||a.k!=='chart'||!a.ref) return 0;
+    var data=chartFromRows(chartRowsOfCard(a.ref));
+    if(!data) return 0;
+    var before=JSON.stringify([chartParse(a).cats,
+      chartParse(a).series.map(function(se){return se.ys;})]);
+    var after=JSON.stringify([data.cats,
+      data.series.map(function(se){return se.ys;})]);
+    if(before===after) return 0;
+    var old={};chartParse(a).series.forEach(function(se){
+      old[se.name]=se.color;});
+    data.series.forEach(function(se){
+      if(old[se.name]) se.color=old[se.name];});
+    a.cats=data.cats;a.series=data.series;
+    return 1;
+  }
   function chartResyncAll(only){          /* T280: a slide, or the deck */
     var nn=0;
     (pres.slides||[]).forEach(function(sl,si){
       if(only>=0&&si!==only) return;
-      (sl.annots||[]).forEach(function(a){
-        if(!a||a.k!=='chart'||!a.ref) return;
-        var data=chartFromRows(chartRowsOfCard(a.ref));
-        if(!data) return;
-        var before=JSON.stringify([chartParse(a).cats,
-          chartParse(a).series.map(function(se){return se.ys;})]);
-        var after=JSON.stringify([data.cats,
-          data.series.map(function(se){return se.ys;})]);
-        if(before===after) return;
-        var old={};chartParse(a).series.forEach(function(se){
-          old[se.name]=se.color;});
-        data.series.forEach(function(se){
-          if(old[se.name]) se.color=old[se.name];});
-        a.cats=data.cats;a.series=data.series;
-        nn++;
-      });
+      (sl.annots||[]).forEach(function(a){nn+=chartResyncOne(a);});
     });
     if(nn){markDirty();refresh();}
     return nn;
@@ -55692,8 +55957,18 @@ window.JunoPptx = (function () {
     });
     return ed;
   }
+  /* T303: THE INDEX HAS TO MATCH THE DECK. This read the live card
+     first -- the order T298 inverted in cloneBody -- and it is
+     miniDiagram's cell branch, so the film strip, the slide overview,
+     the outline sheet, the history rows, the layout-card previews, the
+     saved-arrangement thumbnails and the trace overview all repainted
+     with the notebook's current figure while the slide kept the old
+     one. Inside a single miniDiagram the flip branch already used
+     framePart (kept) and this one did not, so one thumbnail was drawn
+     from two sources. */
   function paneImgSrc(ref){
-    var card=ref?(cardEl(ref)||embBody(ref)):null;
+    var kept=(!ref||refIsLive(ref))?null:embBody(ref);
+    var card=ref?(kept||cardEl(ref)||embBody(ref)):null;
     var img=card?$('.figframe img',card):null;
     return img?img.getAttribute('src'):null;
   }
@@ -60486,9 +60761,27 @@ window.JunoPptx = (function () {
         s.panes=(s.panes||[]).map(strip);
         (s.annots||[]).forEach(function(a){
           if(a.k==='cell'&&a.ref) a.ref=strip(a.ref);
+          /* a flip book's frames are refs too, and they were already
+             being stripped nowhere -- see the same omission normPres
+             had to fix (10-decks.js:262) */
+          if(a.k==='flip'&&Array.isArray(a.frames))
+            a.frames.forEach(function(f){
+              if(f&&f.ref) f.ref=strip(f.ref);});
         });
         if(Array.isArray(s.hidden)) s.hidden=s.hidden.map(strip);
         return s;});
+      /* T304: LIVENESS IS KEYED BY REF, so it has to be stripped with
+         the refs. embedAssets runs after this and keys `emb` by the
+         now-bare ref, so leaving `live` namespaced made the two halves
+         of every single-notebook .junoview.html disagree about the same
+         figure -- and refIsLive would answer "kept" for a ref the
+         author had explicitly made live. */
+      if(c.live&&typeof c.live==='object'){
+        var lv={};
+        Object.keys(c.live).forEach(function(k){
+          if(c.live[k]) lv[strip(k)]=1;});
+        c.live=lv;
+      }
       return c;});
   }
   function requireName(){
@@ -60766,7 +61059,11 @@ window.JunoPptx = (function () {
             var b=cloneBody(ref);
             if(!b) return;
             var e={title:it.title||'',kind:it.kind||'',html:b.outerHTML};
-            var cc=it.hasCode?cloneCode(ref):null;
+            /* T303: html comes from cloneBody (kept) so the code must
+               come from the same preference, or a deliberate save
+               quietly advances half of the snapshot -- and embStore's
+               guard compares only html, so it files no way back */
+            var cc=it.hasCode?frameCode(ref):null;
             if(cc) e.code=cc.outerHTML;
             emb[ref]=e;
             embStore(normRef(ref),e);   /* keep the session copy fresh */
@@ -63267,6 +63564,10 @@ window.JunoPptx = (function () {
        cached frame nodes for this stem must rebuild, which also refills
        frameSnaps for the next revert */
     dropFrameCache(e.detail.stem);
+    /* T306: a reload can add or remove figures, and a close ends
+       the card list entirely, so the ordinal the Images rows quote
+       has to be recomputed with the frames */
+    if(typeof figOrderMemo!=='undefined') delete figOrderMemo[e.detail.stem];
     registerShell(e.detail.stem,e.detail.data||{});
     if(source==='auto'&&(!pres.slides||!pres.slides.length))
       pres=defaultPres();
@@ -63276,6 +63577,10 @@ window.JunoPptx = (function () {
   document.addEventListener('sem:shellclosed',function(e){
     /* invalidation point 2: frames fall back to the embedded copy */
     dropFrameCache(e.detail.stem);
+    /* T306: a reload can add or remove figures, and a close ends
+       the card list entirely, so the ordinal the Images rows quote
+       has to be recomputed with the frames */
+    if(typeof figOrderMemo!=='undefined') delete figOrderMemo[e.detail.stem];
     unregisterShell(e.detail.stem);
     if(!deckEl.hidden) refresh();
     else renderPresTabs();
