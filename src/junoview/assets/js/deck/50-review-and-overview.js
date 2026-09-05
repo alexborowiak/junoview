@@ -939,6 +939,12 @@
     refresh();
     playFlip();
     presenterSync();
+    /* T289: the transition buttons describe the SLIDE, so they follow
+       it. animRibbonSync -- where the rest of the Animation tab syncs
+       from -- is driven by the SELECTION, and go() clears the selection
+       to null without going through it; driven, the ribbon kept showing
+       the previous slide's answer. */
+    if(typeof transRibbonSync==='function') transRibbonSync();
     if(window.SemApp&&window.SemApp.updateHash) window.SemApp.updateHash();
   }
   /* advance: reveal the next build, else move to the next slide (no-op at the

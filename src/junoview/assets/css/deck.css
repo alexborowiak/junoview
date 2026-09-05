@@ -1366,7 +1366,17 @@ body.slide-editing .apptop{display:none;}
 .rbn-type{order:4;}
 .rbn-fontgrp{order:2;}
 .rbn-paragrp{order:3;}
+/* T289: transitions lead the Animation tab, the way the Transitions
+   tab leads Animations in PowerPoint. Exit and Page turn are given
+   rungs at the same time: without one a group sits at 0 and comes
+   FIRST, which is how "Disappear" and a flip book's page turn were
+   arriving ahead of "Appear" (the same latent bug deck.css:1341
+   already records for Page furniture, and the 2026-09-05 review found
+   again on Home). */
+.rbn-trans{order:0;}
 .rbn-anim{order:1;}
+.rbn-exit{order:3;}
+.rbn-flipfx{order:6;}
 /* the Whole slide and Order groups share Animation's rung and follow
    it by source order: the effect first, then the slide, then the order
    things take it in (T176, T182) */

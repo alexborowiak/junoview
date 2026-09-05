@@ -6256,3 +6256,41 @@ option. Then where has the ability to refresh all images gone?"
   Driven on a white page with 95..105: the line's axis goes 0..105 ->
   95..105 and its vertical travel from nothing to 240px; the bar's axis
   stays 0..150; the ink goes #dbe7ef -> #0b141d.
+
+- [x] **T289 - Slide transitions have a door.**
+  From the 2026-09-05 review, which called this the largest capability
+  with no door in the product.
+  *Done 2026-09-05.* The whole transition model -- including **Move
+  matching objects**, which is PowerPoint's Morph and the most
+  impressive single thing this editor does -- could be reached only by
+  RIGHT-CLICKING a filmstrip row. Nothing on any tab. PowerPoint gives
+  transitions a tab of their own, so a person arriving from it looked
+  where it should be, found nothing, and concluded the feature did not
+  exist. "Hiding things in menus is the standing complaint," and this
+  was the largest instance of it.
+  A **How it arrives** group now leads the Animation tab -- Cut, Fade,
+  Move as a segmented run, the way Page turn already does it for flip
+  books -- plus **All slides**, which is PowerPoint's own verb and was
+  missing everywhere: the slide menu sets one slide, the section menu
+  sets one section, and there was no way to say the whole deck. It
+  applies the EFFECTIVE transition, so inside a section it means what
+  you can actually see on this slide.
+  The slide menu keeps its rows. That is where you are looking when you
+  decide a slide is a nice-to-have, and it is the only place a SECTION
+  default can be set.
+  Two things the browser caught. The buttons follow the SLIDE, and
+  `animRibbonSync` -- where the rest of the Animation tab syncs from --
+  is driven by the selection; `go()` clears the selection to null
+  without going through it, so the ribbon kept showing the previous
+  slide's answer until `go()` called the sync directly.
+  And **`.rbn-exit` and `.rbn-flipfx` never had an `order`**, so they
+  sat at 0 and came FIRST: Disappear and a flip book's Page turn were
+  arriving ahead of Appear. Rungs given while the tab was being
+  reordered. deck.css already records this exact failure for Page
+  furniture (T178) and the review found it a third time on Home -- a
+  group without a rung is a bug this codebase keeps re-committing.
+  Driven at 1440x900, with a canary on `overlayBoot` (which boots after
+  this one, so a throw here would have killed it): the group is
+  leftmost, setting Move on slide 1 marks Move, slide 2 shows its own
+  answer, returning to slide 1 shows Move, All slides writes all seven,
+  and the File menu still opens and still closes on an outside click.

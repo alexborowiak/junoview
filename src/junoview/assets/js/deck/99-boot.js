@@ -53,6 +53,7 @@
   listGalleryBoot();          /* kinds of bullet and numbering (T227) */
   homeDoorsBoot();            /* Notes and Optional on Home (T228) */
   cloneDoorsBoot();           /* clones, on the Object tab (T229) */
+  transRibbonBoot();          /* how a SLIDE arrives (T289) */
   flipFxBoot();               /* how a flip book's page turns (T234) */
   animOutBoot();              /* Disappear, on the Animation tab (T238) */
   versionDoorsBoot();         /* History and Checkpoint, on Home (T236) */

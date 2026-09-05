@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T289: chrome only. Slide transitions get a How-it-arrives
+# group leading the Animation tab, with All slides; .rbn-exit and
+# .rbn-flipfx finally get order rungs.
 # 2026-09-05, T288: chrome only. chartSvg takes its y-scale from the
 # data (zero still forced for bars) and its ink from pageIsLight.
 # 2026-09-05, T287: chrome only. cmpPush re-derives capOfIdx, so
@@ -1180,8 +1183,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "52de3064803b9dacda18be6d6dd20ccf"
-EXPECTED_BYTES = 3638518
+EXPECTED_MD5 = "bbcab921d4b8e026796cded64ffb03ed"
+EXPECTED_BYTES = 3644371
 
 
 def _render_example() -> str:

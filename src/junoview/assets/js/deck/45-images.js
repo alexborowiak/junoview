@@ -2129,10 +2129,46 @@
     var sl=(pres.slides||[])[i]; if(!sl) return;
     if(kind==null) delete sl.trans; else sl.trans=String(kind);
     markDirty();renderFilm();
+    if(typeof transRibbonSync==='function') transRibbonSync();
     toast(kind==null
       ?('This slide arrives however its section says: '
         +transLabel(transFor(i)).toLowerCase())
       :('This slide arrives: '+transLabel(kind).toLowerCase()));
+  }
+  /* ---- THE RIBBON'S OWN DOOR ONTO THE ABOVE (T289) -------------------
+     Declarations only; transRibbonBoot runs from THE BOOT SEQUENCE. */
+  function transRibbonBoot(){
+    TRANS.forEach(function(t){
+      var b=$(transBtnId(t[0]));
+      if(!b) return;
+      b.addEventListener('click',function(e){
+        e.stopPropagation();
+        setTrans(cur,t[0]);
+        transRibbonSync();
+      });
+    });
+    var all=$('#trans-all');
+    if(all) all.addEventListener('click',function(e){
+      e.stopPropagation();
+      var sl=(pres.slides||[])[cur]; if(!sl) return;
+      /* the EFFECTIVE one, so "all slides" means what you can see on
+         this slide -- inside a section that may be the section's */
+      var kind=(typeof sl.trans==='string')?sl.trans:transFor(cur);
+      (pres.slides||[]).forEach(function(s2){s2.trans=String(kind);});
+      markDirty();renderFilm();transRibbonSync();
+      toast('Every slide arrives: '+transLabel(kind).toLowerCase());
+    });
+  }
+  function transBtnId(kind){
+    return '#trans-'+(kind===''?'cut':(kind==='move'?'move':kind));
+  }
+  function transRibbonSync(){
+    if(!(pres.slides||[]).length) return;
+    var now=transFor(cur);
+    TRANS.forEach(function(t){
+      var b=$(transBtnId(t[0]));
+      if(b) b.setAttribute('aria-pressed',(now===t[0]).toString());
+    });
   }
   function setSectionTrans(id,kind){
     var m=(pres.sections||{})[id]; if(!m) return;

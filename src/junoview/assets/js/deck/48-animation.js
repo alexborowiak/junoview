@@ -1048,6 +1048,12 @@
       timingSync();
       flipFxSync();
       animOutSync();
+      /* T289: the slide transition is a fact about the SLIDE rather than
+         the selection, but this is the one sync every path already
+         calls -- selection changes, slide changes and markDirty all
+         land here -- so the ribbon's Cut / Fade / Move cannot show a
+         different answer from the slide you are looking at. */
+      if(typeof transRibbonSync==='function') transRibbonSync();
 
       /* the gallery's icon and its pressed card follow the selection
          through the one sync everything else already calls (T171) */
