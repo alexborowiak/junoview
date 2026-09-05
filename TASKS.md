@@ -6350,3 +6350,51 @@ option. Then where has the ability to refresh all images gone?"
   its base. Reverting the one-line fix makes it fail with "a type based
   on 'h1' answers isHeadingStyle=False but its base answers True",
   which is the sentence the old suite could not say.
+
+- [x] **T292 - A variation is a type that inherits from its parent.**
+  The user (2026-09-05): "under Heading 1 you can create variations of
+  what Heading 1 can look like and you can apply that to all of this
+  type ... You should be able to create names for these and the preview
+  should show the colours, font styles, size etc." Asked which way
+  inheritance should go, they chose: **a variation follows its parent.**
+  *Done 2026-09-05 (the model; the UI is T293).*
+  **A variation is a TYPE carrying `of`, not a second field on the box.**
+  A box still wears `a.style` and nothing else, so every consumer keeps
+  working untouched -- and one would actively BREAK under a second
+  field: `standardise()` buckets by exact `a.style`, so "four Heading 1s,
+  two wearing Navy" is silently correct only because the variation is
+  its own type. Every exporter is free for the same reason: pptx, PDF
+  and the standalone HTML read baked fields and never a style id.
+  `styleDef` is the one resolver and now walks the family root-first,
+  each link contributing its base then its per-deck override, child
+  last. It is **guarded to eight links**: `normPres` deep-copies a types
+  entry without looking inside it, so a deck file naming two types as
+  each other's parent survives a load, and `styleDef` runs on the order
+  of forty times per render.
+  **Four places had to be taught, and each would have killed the feature
+  silently:**
+  - `syncCustomTypes` defaulted a size-less type to 2.6 -- Body. Right
+    while every type was a full copy, exactly wrong for a delta: a
+    variation meaning "Heading 1, but navy" was grafted at body size and
+    the whole family then reported as drift. A type with **no** parent
+    keeps the old answer; it has nothing to inherit.
+  - `isHeadingStyle` read the RAW registry entry, so a variation of
+    Heading 1 -- which says nothing about `head` -- was not a heading.
+    Same four consequences as T291. It asks the resolved definition now.
+  - the style editor's `over()` materialises the whole resolved
+    definition on purpose, so a partial override cannot half-follow a
+    later base change. For a variation half-following IS the point, and
+    doing it there would freeze the parent's look into the child on the
+    first toggle.
+  - `scaleStyles` writes an own size onto every id in `styleOrder()`.
+    A variation's parent is in that same loop, so Bigger would have
+    scaled it twice and given it a size it never let go of.
+  `of` is carried explicitly rather than through STYLE_FIELDS: in that
+  list `addCustomType`'s copy loop would pick it up, so a plain new type
+  based on a variation would silently become a variation of the same
+  parent. Basing a type on one is not the same act as varying it, and
+  `addVariant` is the second verb.
+  **Tested by running the shipped registry** in a real JS engine --
+  nine cases over the four-object merge, including the cycle guard and
+  the deck-to-deck leak guard. Inheritance is arithmetic and a substring
+  assertion cannot check arithmetic.

@@ -1127,6 +1127,10 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T292: chrome only. A named type may carry `of` and
+# inherit from it -- styleDef walks the family, syncCustomTypes stops
+# defaulting a delta to Body size, isHeadingStyle asks the resolved
+# definition, and the style editor and scaler leave a variation alone.
 # 2026-09-05, T291: chrome only. addCustomType asks isHeadingStyle(base)
 # and sets head, so a type based on Heading 1 is a heading.
 # 2026-09-05, T290: chrome only. B/I/U/S act on the highlighted run
@@ -1188,8 +1192,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "5356f91301e38f28f4fad783a8ee0018"
-EXPECTED_BYTES = 3648290
+EXPECTED_MD5 = "a0b7ee5472d4bfa2528e8c5b661b82b6"
+EXPECTED_BYTES = 3653674
 
 
 def _render_example() -> str:

@@ -2666,8 +2666,22 @@
     });
     (Array.isArray(pres&&pres.types)?pres.types:[]).forEach(function(t){
       if(!t||!t.id||BUILTIN_STYLE_IDS.indexOf(t.id)>=0) return;
-      var d={label:String(t.label||'Style'),
-        size:(typeof t.size==='number'&&t.size>0)?t.size:2.6};
+      var d={label:String(t.label||'Style')};
+      /* T292: A VARIATION LEAVES OUT WHAT IT DOES NOT CHANGE, so a
+         missing size means "my parent's", not 2.6. Defaulting it here
+         was right while every type was a full copy, and is exactly
+         wrong now: a variation meaning "Heading 1, but navy" was
+         grafted at BODY size, applyStyleTo shrank every box wearing it,
+         and the whole family then reported as drift. A type with no
+         parent keeps the old answer -- it has nothing to inherit. */
+      if(typeof t.size==='number'&&t.size>0) d.size=t.size;
+      else if(!t.of) d.size=2.6;
+      /* the parent, carried explicitly rather than through STYLE_FIELDS:
+         in that list it would also be copied by addCustomType's loop, so
+         a plain new type based on a variation would silently become a
+         variation of the same parent. Basing a type on one is not the
+         same act as varying it. */
+      if(t.of&&t.of!==t.id) d.of=String(t.of);
       STYLE_FIELDS.forEach(function(k){
         if(t[k]!==undefined) d[k]=t[k];});
       STYLE_DEFAULTS[t.id]=d;
@@ -2689,7 +2703,16 @@
      answer, so nothing that worked yesterday changes. */
   function isHeadingStyle(id){
     if(HEADING_STYLES.indexOf(id)>=0) return true;
-    var d=STYLE_DEFAULTS[id];
+    /* T292: ASKED OF THE RESOLVED DEFINITION, not of the raw entry. A
+       variation stores only what it CHANGES, so a variation of Heading
+       1 says nothing about `head` and the raw lookup found nothing --
+       which put it outside the outline, "apply to all headings" and the
+       talk panel's heading bucket, the same four places T291 was about.
+       The root covers a variation of a BUILT-IN heading (whose head-ness
+       is the HEADING_STYLES literal and not a field at all); the
+       resolved flag covers a variation of a custom one. */
+    if(HEADING_STYLES.indexOf(styleRoot(id))>=0) return true;
+    var d=styleDef(id);
     return !!(d&&d.head);
   }
   function headingStyles(){
@@ -2728,6 +2751,20 @@
     syncCustomTypes();
     return t;
   }
+  /* T292: a VARIATION, as opposed to a new type based on one. It
+     records the parent and NOTHING else -- no size, no weight, no
+     colour -- so it looks exactly like its parent until you change
+     something, and follows the parent for everything you never touch.
+     addCustomType is the other verb and stays what it was: a full copy
+     that goes its own way from the moment it is made. */
+  function addVariant(label,parent){
+    if(!STYLE_DEFAULTS[parent]) return null;
+    var t={id:mintTypeId(),label:String(label||'Variation'),
+      of:String(parent)};
+    customTypes().push(t);
+    syncCustomTypes();
+    return t;
+  }
   /* deleting a type must not MOVE anything. applyStyleTo has already
      written every one of its properties onto each box, so dropping the
      NAME leaves the slides looking exactly as they did - the boxes just
@@ -2755,14 +2792,61 @@
     if(!pres.styles) pres.styles={};
     return pres.styles;
   }
-  function styleDef(id){
+  /* the type this one is a VARIATION OF, or '' (T292) */
+  function parentOf(id){
     var d=STYLE_DEFAULTS[id];
-    if(!d) return null;
-    var over=deckStyles()[id]||{};
-    var out={};
-    Object.keys(d).forEach(function(k){out[k]=d[k];});
-    Object.keys(over).forEach(function(k){out[k]=over[k];});
+    var p=d&&typeof d.of==='string'?d.of:'';
+    return (p&&p!==id&&STYLE_DEFAULTS[p])?p:'';
+  }
+  /* every id from the root of the family down to this one. GUARDED: a
+     deck file can name any parent it likes -- normPres deep-copies a
+     types entry without looking inside it, so {of:'a'} and {of:'b'}
+     pointing at each other both survive a load -- and styleDef runs on
+     the order of forty times per render, which makes an unguarded walk
+     an infinite loop in the hottest function in the registry. */
+  function styleChain(id){
+    var out=[],seen={},cur=id,guard=0;
+    while(cur&&STYLE_DEFAULTS[cur]&&!seen[cur]&&guard++<8){
+      seen[cur]=1;out.unshift(cur);cur=parentOf(cur);
+    }
     return out;
+  }
+  /* T292: A VARIATION INHERITS. The chain resolves root first and the
+     child last, and each link contributes its BASE then its per-deck
+     OVERRIDE -- so "Heading 1, but navy" stores only the colour, and
+     changing Heading 1's size moves every variation of it with one
+     edit. That is the whole reason the registry exists, applied one
+     level further down.
+     A type with no parent resolves to exactly what it always did: a
+     one-link chain, base then override, which is the old two lines. */
+  function styleDef(id){
+    if(!STYLE_DEFAULTS[id]) return null;
+    var out={};
+    styleChain(id).forEach(function(k){
+      var base=STYLE_DEFAULTS[k],over=deckStyles()[k];
+      if(base) Object.keys(base).forEach(function(p){out[p]=base[p];});
+      if(over) Object.keys(over).forEach(function(p){out[p]=over[p];});
+    });
+    /* the family's own bookkeeping, never the parent's: a variation is
+       named for itself and parented to one thing */
+    var mine=STYLE_DEFAULTS[id];
+    out.label=(deckStyles()[id]||{}).label||mine.label;
+    if(mine.of) out.of=mine.of; else delete out.of;
+    return out;
+  }
+  /* is this id a variation of that one, however deep (T292) */
+  function isVariantOf(id,parent){
+    return id!==parent&&styleChain(id).indexOf(parent)>=0;
+  }
+  /* every id in the family below an id, nearest first */
+  function variantsOf(parent){
+    return styleOrder().filter(function(id){
+      return isVariantOf(id,parent);});
+  }
+  /* the root of the family: what a variation is a variation OF */
+  function styleRoot(id){
+    var c=styleChain(id);
+    return c.length?c[0]:id;
   }
   /* stamp a style's properties onto an item. This WRITES them rather than
      resolving at render time, deliberately: every export, the pptx

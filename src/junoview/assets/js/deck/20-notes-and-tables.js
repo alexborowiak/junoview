@@ -396,6 +396,13 @@
      out to be bigger than you expected */
   function scaleStyles(k){
     styleOrder().forEach(function(id){
+      /* T292: A VARIATION IS NOT A SIZE OF ITS OWN. Writing one here
+         would give every variation an own size on the first press of
+         Bigger, after which it would never follow its parent again --
+         and the press would ALSO scale it twice, once through the
+         parent it inherits from and once through the copy. Its parent
+         is in this same loop and moving it moves the family. */
+      if(typeof parentOf==='function'&&parentOf(id)) return;
       var d=styleDef(id);
       var over=deckStyles()[id]||{};
       over.label=STYLE_DEFAULTS[id].label;
@@ -431,9 +438,19 @@
         /* carry the whole resolved definition, not just the one field
            being changed: styleDef merges the override OVER the base, so
            a partial override plus a later base change reads as a style
-           that half-followed */
-        o.label=d.label;o.size=d.size;
+           that half-followed.
+           T292: EXCEPT FOR A VARIATION, where half-following is the
+           entire point. Materialising the resolved definition here would
+           freeze the parent's size, weight and colour into the child the
+           first time anyone touched any toggle -- and the variation
+           would stop following its parent for good, silently, which is
+           the one promise it makes. A variation writes only what it
+           actually says. */
+        var varying=(typeof parentOf==='function')&&!!parentOf(id);
+        o.label=d.label;
+        if(!varying) o.size=d.size;
         STYLE_FIELDS.forEach(function(k){
+          if(varying) return;
           if(d[k]!==undefined) o[k]=d[k]; else delete o[k];});
         deckStyles()[id]=o;
         return o;

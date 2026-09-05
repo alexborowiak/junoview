@@ -37,9 +37,10 @@ from junoview import assets
 # -- the IIFE evaluates these in source order and so must this.
 _CONSTS = ("BUILTIN_STYLE_IDS", "STYLE_FIELDS", "STYLE_DEFAULTS",
            "STYLE_ORDER", "HEADING_STYLES")
-_FNS = ("customTypes", "deckStyles", "styleDef", "syncCustomTypes",
-        "styleOrder", "isHeadingStyle", "headingStyles", "mintTypeId",
-        "addCustomType")
+_FNS = ("customTypes", "deckStyles", "parentOf", "styleChain",
+        "styleDef", "syncCustomTypes", "styleOrder", "isHeadingStyle",
+        "headingStyles", "mintTypeId", "addCustomType", "addVariant",
+        "isVariantOf", "variantsOf", "styleRoot", "applyStyleTo")
 
 
 def _const(src: str, name: str) -> str:
