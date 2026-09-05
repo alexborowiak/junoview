@@ -4775,8 +4775,18 @@ body.slide-editing .apptop{display:none;}
    density ladder, which made the ladder read as though it still had a
    lever it had not had for ten days (2026-08-17 audit). --- */
 /* every ribbon button is the same height and sits on the same baseline */
+/* THE HEIGHT OF A RIBBON BUTTON, in one place. A joined run is on this
+   list too (T310): .rbn-cell is a fixed 30px so a dropdown wrapper fills
+   its grid track, and align-items:stretch then pushed the segments
+   inside a run to 29px while every button beside them sat at 26 --
+   nine buttons across Design and Animation standing 3px proud of their
+   own row ("Button spacing and sizing still weird", 2026-09-05). The
+   RUN takes the canonical height and its segments fill it, so the two
+   cannot drift apart again at any density rung. */
 .rbn-row>.dbtn,.rbn-row .sh-drop>.dbtn,
-.rbn-row .dc-menuwrap>.dbtn{height:26px;box-sizing:border-box;}
+.rbn-row .dc-menuwrap>.dbtn,
+.rbn-row>.rbn-cell.rbn-seg{height:26px;box-sizing:border-box;
+  align-self:center;}
 /* two or three small buttons stacked in the height of one big one */
 .rbn-stack{display:flex;flex-direction:column;gap:3px;
   justify-content:center;}
@@ -13463,15 +13473,27 @@ far right) &mdash; it goes through Ko-fi. Thank you.</p>
           <span class="rbn-grp rbn-vers" data-tab="home"
             data-fold-ic="history">
             <span class="rbn-row">
-              <button class="fx-tile big-tile rbn-tall" id="hm-history"
-                title="Every version this presentation has been saved
+              <!-- T310: TWO TILES, like Show and Keep up to date beside
+                   it. History was a tall tile and Checkpoint a 26px
+                   button in row one, so the pair sat at two heights on
+                   two baselines with the whole of row two empty under
+                   the short one -- the group read as unfinished rather
+                   than as the one feature the note above says it is
+                   (2026-09-05, user: "Button spacing and sizing still
+                   weird"). Every other two-item group on this tab is a
+                   strip of equal tiles; this is now the same. -->
+              <span class="rbn-tall fx-strip big-strip" role="group"
+                aria-label="Saved versions">
+                <button class="fx-tile big-tile" id="hm-history"
+                  title="Every version this presentation has been saved
  as, what is different about each, and a way to put one slide or the
  whole thing back"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M2.6 8a5.4 5.4 0 1 0 1.6-3.8"/><path d="M2.4 2.2v3.1h3.1"/><path d="M8 5.2V8l2.2 1.3"/></svg><span>History</span></button>
-              <button class="dbtn rbn-sm" id="hm-check"
-                title="Save this exact version under a name you
+                <button class="fx-tile big-tile" id="hm-check"
+                  title="Save this exact version under a name you
  choose. It is kept even when older versions are dropped, and you can
- go back to it or start a branch from it"><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/><path d="M8 8.4v5.7"/></svg>
-                Checkpoint&#8230;</button>
+ go back to it or start a branch from it"
+                  ><svg class="bic" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M6 1.9h4l-.6 4.2 2.4 2.3H4.2l2.4-2.3Z"/><path d="M8 8.4v5.7"/></svg><span>Checkpoint&#8230;</span></button>
+              </span>
             </span>
             <span class="rbn-lab">Saved versions</span>
           </span>
@@ -48992,7 +49014,12 @@ window.JunoPptx = (function () {
   function shrinkDataUrl(src){
     return new Promise(function(res){
       var probe=new Image();
-      probe.onload=function(){res(shrinkImage(probe,src));};
+      /* T313: the SAME edge the two insert doors and paste pass
+         (IMG_VIEW_EDGE, 1600). Omitting it fell back to IMG_MAX_EDGE
+         (2400), so a refreshed picture came back heavier than the one
+         it replaced -- the opposite of what this function's own comment
+         promises. */
+      probe.onload=function(){res(shrinkImage(probe,src,IMG_VIEW_EDGE));};
       probe.onerror=function(){res(src);};
       probe.src=src;
     });
@@ -49020,17 +49047,35 @@ window.JunoPptx = (function () {
     var items=list||linkedImages();
     if(!items.length) return Promise.resolve({ok:0,lost:[]});
     var ok=0,lost=[];
+    /* T313: WHERE THE BYTES COME FROM, in one place. T308 widened
+       linkedImages to include address-backed pictures -- correctly, an
+       address is a source -- but this reduce knew exactly one way to
+       fetch: idbGet(e.a.fkey). An address picture has no fkey, so
+       idbGet(undefined) rejected and EVERY one of them was reported
+       "could not be read" on every refresh. The landing half below
+       (shrink, swap a.src, move the original) is unchanged and shared. */
+    function picBytes(a){
+      var addr=picAddr(a);
+      if(addr&&!a.fkey){
+        if(!picCanEmbed())
+          return Promise.reject(new Error('needs the Junoview app'));
+        return APP.api('/api/readimage',{path:addr})
+          .then(function(r){
+            if(!r||!r.src) throw new Error('no picture came back');
+            return r.src;
+          });
+      }
+      return idbGet(a.fkey).then(function(h){
+        if(!h) throw 0;
+        return permAsk(h).then(function(granted){
+          if(!granted) throw 0;
+          return h.getFile();
+        });
+      }).then(function(f){return readAsDataURL(f);});
+    }
     return items.reduce(function(chain,e){
       return chain.then(function(){
-        return idbGet(e.a.fkey).then(function(h){
-          if(!h) throw 0;
-          return permAsk(h).then(function(granted){
-            if(!granted) throw 0;
-            return h.getFile();
-          });
-        }).then(function(f){
-          return readAsDataURL(f);
-        }).then(function(src){
+        return picBytes(e.a).then(function(src){
           return shrinkDataUrl(src).then(function(small){
             return {full:src,small:small};});
         }).then(function(r){
@@ -49170,6 +49215,7 @@ window.JunoPptx = (function () {
         var st=picState(a);
         rows.push({si:si,ai:ai,a:a,kind:'Picture',pic:st,
           from:st==='link'?String(a.src)
+            :st==='path'?String(a.psrc)
             :st==='file'?(a.fname||'a file on this computer')
             :'pasted or dropped — the deck holds the only copy'});
       }
@@ -49230,8 +49276,24 @@ window.JunoPptx = (function () {
     if(!a||a.k!=='image') return '';
     var s=String(a.src||'');
     if(s&&s.indexOf('data:')!==0) return 'link';
+    /* T313: EMBEDDED, AND STILL KNOWS WHERE IT CAME FROM. Once the
+       bytes are in a.src the address is no longer visible in it, so it
+       is kept beside them -- which is the whole of the user's ask for
+       this class: "all images should be embedded into the thing, but
+       should have the option to refreshed from the path". */
+    if(a.psrc) return 'path';
     return a.fkey?'file':'kept';
   }
+  /* the address a picture can be re-read from, whichever way it holds
+     one: typed-and-embedded, or still living at it */
+  function picAddr(a){
+    if(!a||a.k!=='image') return '';
+    if(a.psrc) return String(a.psrc);
+    return picState(a)==='link'?String(a.src||''):'';
+  }
+  /* app mode can read a path off the disk; nothing else can, so nothing
+     else offers to */
+  function picCanEmbed(){return APP.mode==='app';}
   /* T299: WHICH FIGURE THIS IS, AND THE THINGS YOU CAN DO TO IT.
      Everything about a picture's SOURCE now answers on its row here --
      the number, the commit, the refresh and the live-link switch
@@ -49279,6 +49341,12 @@ window.JunoPptx = (function () {
       if(picState(a2)==='kept'){
         toast('This picture was pasted or dropped, so the deck holds the '
           +'only copy — there is no file to re-read, and nothing to lose');
+        return;
+      }
+      if(picState(a2)==='link'&&!picCanEmbed()){
+        toast('This picture is loaded from '+picAddr(a2)+' every time the '
+          +'deck opens, so it is always as current as that address is.',
+          7000);
         return;
       }
       refreshImagesReport([{si:r.si,ai:r.ai,a:a2}]);
@@ -49329,13 +49397,16 @@ window.JunoPptx = (function () {
         acts.appendChild(sp);
       }
     }
+    /* T313: one arm per state, because each one means something
+       different by "refresh" */
     act('Refresh',ref
       ?('Re-read this figure from ' + r.from + ' and keep the new copy '
         + '\u2014 only this one')
-      :r.pic==='link'
-        ?('Re-read this picture from '+r.from+' \u2014 it is loaded from '
-          +'that address every time, so this is the only copy the deck '
-          +'will ever have of it')
+      :r.pic==='path'?('Re-read this picture from '+r.from+' and keep the '
+        +'new copy \u2014 only this one')
+      :r.pic==='link'?('Loaded from '+r.from+' every time the deck opens. '
+        +'Nothing is stored, so there is nothing to refresh \u2014 press '
+        +'to read it into the deck instead.')
       :r.pic==='file'?('Re-read this picture from '+r.from)
       :'Pasted or dropped, so the deck holds the only copy',
       function(){imgRefreshRow(r);});
@@ -49553,6 +49624,46 @@ window.JunoPptx = (function () {
       refreshImagesReport(hits);
     });
   })();
+  /* T313: A PATH IS READ, A URL IS LINKED.
+     Every spelling of a computer path resolves to a file: URL, and an
+     http document may not load one as a subresource -- so the door's
+     old promise of "a file path or a URL" produced a broken picture,
+     in the app where it was typed, for the whole path half of itself.
+     In app mode the server reads it (gated to images, magic-checked,
+     capped) and the bytes are kept with the address beside them; a web
+     address stays a link, because it already works and proxying it
+     would make the server reachable as one. */
+  function placeFromAddress(addr){
+    var isUrl=/^https?:\/\//i.test(addr);
+    if(isUrl||!picCanEmbed()){
+      if(!isUrl&&!picCanEmbed())
+        toast('A file on this computer can only be read by the Junoview '
+          +'app. Here, use a web address — or Insert \u203a Picture to '
+          +'choose the file.',7000);
+      placeImage(addr,0);
+      return;
+    }
+    toast('Reading '+addr+'\u2026');
+    APP.api('/api/readimage',{path:addr}).then(function(r){
+      if(!r||!r.src) throw new Error('no picture came back');
+      return shrinkDataUrl(r.src).then(function(small){
+        placeImage(small,0,null,r.src!==small?r.src:null);
+        /* the address rides on the annotation, so the row can show it
+           and Refresh can go back to it */
+        var s=pres.slides[cur],a=s&&(s.annots||[])[selAnnot];
+        if(a&&a.k==='image'){
+          a.psrc=addr;
+          if(r.path) a.ppath=r.path;
+          if(r.name) a.fname=r.name;
+          markDirty();
+        }
+        toast('Kept in the deck, and it remembers '+(r.name||addr));
+        imgPaneRefresh();
+      });
+    }).catch(function(e){
+      toast('Could not read that: '+((e&&e.message)||e),7000);
+    });
+  }
   /* `full` is the ORIGINAL bytes when `src` is a shrunken copy of them.
      One funnel: three different doors insert a picture (the file picker,
      the <input> fallback and the paste), and putting the original aside
@@ -49974,13 +50085,19 @@ window.JunoPptx = (function () {
       'Paste a screenshot or a copied image straight into this frame',
       function(){objInto=idx;pasteObjImage();}],
      [bic('link'),'A path or a link',
-      'Any address this page can load — a file path or a URL. The '
-      +'address is what is kept, so the picture stays exactly as '
-      +'portable as the address is',
+      picCanEmbed()
+        ? 'A file on this computer or a web address. A file is READ and '
+          +'kept in the deck, and remembers where it came from so you '
+          +'can re-read it; a web address is loaded every time.'
+        : 'A web address this page can load. The address is what is '
+          +'kept, so the picture stays exactly as portable as the '
+          +'address is — opening the deck elsewhere re-fetches it.',
       function(){
-        var p=prompt('Path or link to a picture:','');
+        var p=prompt(picCanEmbed()
+          ? 'Path or link to a picture:'
+          : 'Link to a picture (a web address):','');
         if(!p||!p.trim()) return;
-        objInto=idx;placeImage(p.trim(),0);}]
+        objInto=idx;placeFromAddress(p.trim());}]
     ].forEach(function(r){
       var b=document.createElement('button');
       b.className='dbtn vw-opt';
