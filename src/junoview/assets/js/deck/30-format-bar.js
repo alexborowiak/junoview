@@ -1529,10 +1529,34 @@
       });
     });
   }
-  onFmt('#fmt-bold',function(a){a.b=a.b?0:1;});
-  onFmt('#fmt-ital',function(a){a.i=a.i?0:1;});
-  onFmt('#fmt-under',function(a){a.u=a.u?0:1;});
-  onFmt('#fmt-strike',function(a){a.strike=a.strike?0:1;});
+  /* T290: THE HIGHLIGHTED WORDS, IF ANY. `a.b` is a fact about the
+     BOX, so pressing Bold with a word selected emboldened the whole
+     paragraph -- and the browser's own Ctrl+B, inside the same box,
+     emboldened just the word, so the two disagreed about what bold
+     means. The colour control one cell away had asked the selection
+     first since T232; these four had not.
+     With nothing highlighted they do exactly what they always did,
+     which is the answer that needs no decision. */
+  function onRun(id,cmd,fn){
+    var b=$(id); if(!b) return;
+    /* keep the caret in the box: a plain click blurs it first and the
+       selection is gone before the handler runs. Same guard the colour
+       door uses (T232). */
+    b.addEventListener('mousedown',function(e){
+      if(activeTextEditable()) e.preventDefault();});
+    b.addEventListener('click',function(){
+      if(runStyleSelection(cmd)){
+        renderSlide();
+        if(typeof showFmt==='function') showFmt();
+        return;
+      }
+      fmtApply(fn);
+    });
+  }
+  onRun('#fmt-bold','bold',function(a){a.b=a.b?0:1;});
+  onRun('#fmt-ital','italic',function(a){a.i=a.i?0:1;});
+  onRun('#fmt-under','underline',function(a){a.u=a.u?0:1;});
+  onRun('#fmt-strike','strikeThrough',function(a){a.strike=a.strike?0:1;});
   var opRangeEl=$('#fmt-op');
   /* A range fires one `input` per step, so one drag across the opacity
      slider used to push ~100 undo entries and flush every real edit out

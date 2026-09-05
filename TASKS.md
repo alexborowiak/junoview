@@ -6294,3 +6294,30 @@ option. Then where has the ability to refresh all images gone?"
   leftmost, setting Move on slide 1 marks Move, slide 2 shows its own
   answer, returning to slide 1 shows Move, All slides writes all seven,
   and the File menu still opens and still closes on an outside click.
+
+- [x] **T290 - Bold the words you highlighted, not the whole box.**
+  From the 2026-09-05 review's ordered plan.
+  *Done 2026-09-05.* `a.b` is a fact about the BOX, so pressing **B**
+  with a word selected emboldened the whole paragraph -- while the
+  browser's own Ctrl+B, inside that same box, emboldened just the word.
+  Two controls half a second apart disagreed about what bold means.
+  Nothing new was needed. `RICH_TAGS` has kept `b`, `i`, `u` and `s` all
+  along; `sanitizeRich`'s own `rich:` detector already looks for them;
+  and the colour control one cell away has asked the selection first
+  since T232. These four buttons simply never asked.
+  `styleWithCSS` is set **false** on purpose, which is the whole trick:
+  with it true the browser emits `<span style="font-weight:bold">`, and
+  `sanitizeRich` strips every inline style except colour -- so the run
+  would look right until the next blur and then quietly lose its
+  weight. False emits a real `<b>`, which the sanitiser keeps.
+  `colorSelection`'s write-back -- sanitise, find which PAGE of a
+  multi-page box you are on, write both the plain text and the rich
+  html -- is now `richSelectionEdit` and shared rather than copied. One
+  action in two places is the first structural problem the review
+  named.
+  **With nothing highlighted they do exactly what they always did**,
+  which is the answer that needed no decision from anyone.
+  Driven: highlighting "beta" in "alpha beta gamma" and pressing Bold
+  gives `alpha <b>beta</b> gamma` with the box's own `b` still 0, and it
+  survives the blur; with the box merely selected, Bold takes it from
+  `b:0` to `b:1` as before.

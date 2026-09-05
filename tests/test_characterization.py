@@ -1127,6 +1127,9 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # move onto theme tokens -- the ribbon surface variables, and the
 # light overrides that are no longer needed now that the tokens
 # themselves differ per theme.
+# 2026-09-05, T290: chrome only. B/I/U/S act on the highlighted run
+# through the shared richSelectionEdit, emitting real tags the sanitiser
+# keeps; with nothing highlighted they still take the whole box.
 # 2026-09-05, T289: chrome only. Slide transitions get a How-it-arrives
 # group leading the Animation tab, with All slides; .rbn-exit and
 # .rbn-flipfx finally get order rungs.
@@ -1183,8 +1186,8 @@ EXAMPLE = Path(__file__).resolve().parent.parent / "examples" \
 # pass learns to see past a fold door (T271); and ribbonMinW walks
 # every tab, folding as it goes, so the strip stops resizing with the
 # ribbon tab (T272).
-EXPECTED_MD5 = "bbcab921d4b8e026796cded64ffb03ed"
-EXPECTED_BYTES = 3644371
+EXPECTED_MD5 = "62a899c103977bb3c3d2cf7155fe3c6b"
+EXPECTED_BYTES = 3647509
 
 
 def _render_example() -> str:

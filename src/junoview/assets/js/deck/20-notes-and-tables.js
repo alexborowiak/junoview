@@ -842,6 +842,47 @@
   }
   /* colour just the highlighted run inside the text box being edited;
      returns false when there is no live selection to recolour */
+  /* ---- EDITING THE HIGHLIGHTED RUN (T290) ------------------------------
+     colorSelection was the only control that asked "is a run selected?"
+     before writing to the whole box. The write-back below is the fiddly
+     half -- sanitise, find which PAGE of a multi-page box you are on,
+     write both the plain text and the rich html -- so it is shared
+     rather than copied: one action in two places is the shape this
+     codebase already has too much of.
+     Returns false when there is no caret selection, which is the
+     caller's signal to fall back to the box-level property. */
+  function richSelectionEdit(run){
+    var el=activeTextEditable();
+    if(!el||!selectionInside(el)) return false;
+    run();
+    var s=pres.slides[cur],a=annotByIdx(s,selAnnot);
+    if(a){
+      var r=sanitizeRich(el.innerHTML);
+      /* T261: write to the page the box is TURNED TO, not always page
+         one. renderAnnots binds the editor's get/set to textAt(s,a) via
+         textPage/textPageSet; assigning a.text/a.html directly meant
+         recolouring a run on page 2 of a multi-page text box overwrote
+         page ONE with page two's words -- silently, and persisted by
+         autosave. textAt returns 0 for a single-page box and for the
+         title/subtitle annots, so nothing else changes. */
+      var n=textAt(s,a); if(!(n>0)) n=0;
+      textPageSet(a,n,el.innerText,r.rich?r.html:'');
+      markDirty();
+    }
+    return true;
+  }
+  /* B / I / U / S on the highlighted words. styleWithCSS FALSE on
+     purpose: we want real <b>/<i>/<u>/<strike> TAGS, which RICH_TAGS
+     keeps. With it true the browser emits
+     <span style="font-weight:bold">, and sanitizeRich strips every
+     inline style except colour -- so the run would look right until the
+     next blur and then quietly lose its weight. */
+  function runStyleSelection(cmd){
+    return richSelectionEdit(function(){
+      try{document.execCommand('styleWithCSS',false,false);}catch(e){}
+      try{document.execCommand(cmd,false,null);}catch(e){}
+    });
+  }
   function colorSelection(col){
     var el=activeTextEditable();
     if(!el||!selectionInside(el)) return false;
